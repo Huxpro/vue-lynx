@@ -66,7 +66,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -82,7 +82,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -101,7 +101,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -117,7 +117,26 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  examples/vue-router:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../..
+      vue-router:
+        specifier: ^4.5.0
+        version: 4.6.4(vue@3.5.30(typescript@5.9.3))
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -136,7 +155,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -1238,6 +1257,9 @@ packages:
 
   '@vue/compiler-ssr@3.5.30':
     resolution: {integrity: sha512-NsYK6OMTnx109PSL2IAyf62JP6EUdk4Dmj6AkWcJGBvN0dQoMYtVekAmdqgTtWQgEJo+Okstbf/1p7qZr5H+bA==}
+
+  '@vue/devtools-api@6.6.4':
+    resolution: {integrity: sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==}
 
   '@vue/reactivity@3.5.30':
     resolution: {integrity: sha512-179YNgKATuwj9gB+66snskRDOitDiuOZqkYia7mHKJaidOMo/WJxHKF8DuGc4V4XbYTJANlfEKb0yxTQotnx4Q==}
@@ -3062,6 +3084,11 @@ packages:
       jsdom:
         optional: true
 
+  vue-router@4.6.4:
+    resolution: {integrity: sha512-Hz9q5sa33Yhduglwz6g9skT8OBPii+4bFn88w6J+J4MfEo4KRRpmiNG/hHHkdbRFlLBOqxN8y8gf2Fb0MTUgVg==}
+    peerDependencies:
+      vue: ^3.5.0
+
   vue@3.5.30:
     resolution: {integrity: sha512-hTHLc6VNZyzzEH/l7PFGjpcTvUgiaPK5mdLkbjrTeWSRcEfxFrv56g/XckIYlE9ckuobsdwqd5mk2g1sBkMewg==}
     peerDependencies:
@@ -3745,7 +3772,7 @@ snapshots:
 
   '@rsbuild/plugin-vue@1.2.7(@rsbuild/core@1.3.19)(@rspack/core@1.7.8(@swc/helpers@0.5.19))':
     dependencies:
-      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
     optionalDependencies:
       '@rsbuild/core': 1.3.19
     transitivePeerDependencies:
@@ -3753,9 +3780,9 @@ snapshots:
       - '@vue/compiler-sfc'
       - vue
 
-  '@rsbuild/plugin-vue@1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))':
+  '@rsbuild/plugin-vue@1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))':
     dependencies:
-      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
     optionalDependencies:
       '@rsbuild/core': 1.7.3
     transitivePeerDependencies:
@@ -4213,6 +4240,8 @@ snapshots:
     dependencies:
       '@vue/compiler-dom': 3.5.30
       '@vue/shared': 3.5.30
+
+  '@vue/devtools-api@6.6.4': {}
 
   '@vue/reactivity@3.5.30':
     dependencies:
@@ -5711,12 +5740,13 @@ snapshots:
 
   rslog@1.3.2: {}
 
-  rspack-vue-loader@17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19)):
+  rspack-vue-loader@17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3)):
     dependencies:
       '@rspack/lite-tapable': 1.1.0
       chalk: 4.1.2
     optionalDependencies:
       '@rspack/core': 1.7.8(@swc/helpers@0.5.19)
+      vue: 3.5.30(typescript@5.9.3)
 
   sade@1.8.1:
     dependencies:
@@ -6158,6 +6188,11 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  vue-router@4.6.4(vue@3.5.30(typescript@5.9.3)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.30(typescript@5.9.3)
 
   vue@3.5.30(typescript@5.9.3):
     dependencies:
