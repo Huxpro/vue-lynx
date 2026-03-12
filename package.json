@@ -1,0 +1,87 @@
+{
+  "name": "vue-lynx",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Vue 3 framework for building Lynx apps",
+  "keywords": ["vue", "lynx", "vue-lynx", "renderer"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AimWhy/vue-lynx.git"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./runtime/dist/index.d.ts",
+      "import": "./runtime/dist/index.js",
+      "default": "./runtime/dist/index.js"
+    },
+    "./entry-background": {
+      "types": "./runtime/dist/entry-background.d.ts",
+      "import": "./runtime/dist/entry-background.js",
+      "default": "./runtime/dist/entry-background.js"
+    },
+    "./plugin": {
+      "types": "./plugin/dist/index.d.ts",
+      "import": "./plugin/dist/index.js",
+      "default": "./plugin/dist/index.js"
+    },
+    "./main-thread": {
+      "types": "./main-thread/dist/entry-main.d.ts",
+      "import": "./main-thread/dist/entry-main.js",
+      "default": "./main-thread/dist/entry-main.js"
+    },
+    "./internal/ops": {
+      "types": "./internal/src/ops.ts",
+      "import": "./internal/src/ops.ts",
+      "default": "./internal/src/ops.ts"
+    },
+    "./testing-library": {
+      "types": "./testing-library/dist/index.d.ts",
+      "import": "./testing-library/dist/index.js",
+      "default": "./testing-library/dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./runtime/dist/index.js",
+  "types": "./runtime/dist/index.d.ts",
+  "files": [
+    "runtime/dist",
+    "main-thread/dist",
+    "plugin/dist",
+    "internal/src",
+    "testing-library/dist",
+    "CHANGELOG.md",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "pnpm -r --filter='./runtime' --filter='./main-thread' --filter='./plugin' run build",
+    "dev": "pnpm -r --filter='./runtime' --filter='./main-thread' --filter='./plugin' run dev",
+    "test": "cd testing-library && pnpm test",
+    "test:upstream": "cd upstream-tests && pnpm test && pnpm test:dom"
+  },
+  "dependencies": {
+    "@lynx-js/css-extract-webpack-plugin": "^0.4.3",
+    "@lynx-js/react": "^0.7.3",
+    "@lynx-js/runtime-wrapper-webpack-plugin": "^0.1.3",
+    "@lynx-js/template-webpack-plugin": "^0.8.3",
+    "@vue/runtime-core": "^3.5.0"
+  },
+  "devDependencies": {
+    "@lynx-js/type-element-api": "0.0.3",
+    "@lynx-js/types": "3.7.0",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "@rslib/core": "^0.7.0",
+    "rsbuild-plugin-publint": "0.3.4",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@rsbuild/core": "^1.0.0",
+    "@rsbuild/plugin-vue": "^1.2.6"
+  },
+  "peerDependenciesMeta": {
+    "@rsbuild/core": { "optional": false },
+    "@rsbuild/plugin-vue": { "optional": false }
+  },
+  "engines": { "node": ">=18" }
+}

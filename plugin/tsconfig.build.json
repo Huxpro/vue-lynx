@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.json",
+  "extends": "../tsconfig.json",
   "compilerOptions": {
     "composite": true,
     "outDir": "./dist",
@@ -8,11 +8,7 @@
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../../webpack/template-webpack-plugin/tsconfig.build.json" },
-    { "path": "../../webpack/runtime-wrapper-webpack-plugin/tsconfig.build.json" },
-  ],
+  "include": ["src"]
 }
