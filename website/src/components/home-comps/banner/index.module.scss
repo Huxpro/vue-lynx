@@ -1,0 +1,92 @@
+.banner-frame {
+  height: 388px;
+  border-top: 1px solid;
+  border-image: linear-gradient(
+      to right,
+      transparent 30%,
+      rgba(200, 200, 200, 0.5) 50%,
+      transparent 70%
+    )
+    1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+
+  .banner-title {
+    margin-bottom: 44px;
+    color: var(--home-banner-title-color);
+    text-align: center;
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 61px;
+    max-width: 70%;
+    white-space: wrap;
+
+    .vue-lynx-text {
+      background: linear-gradient(
+        270deg,
+        #42b883,
+        #34d399,
+        #00ddff,
+        #34d399,
+        #42b883
+      );
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientMove 6s linear infinite;
+    }
+  }
+
+  .banner-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border-radius: 22px;
+    background: #42b883;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    z-index: 1;
+
+    &:hover {
+      background: #38a376;
+    }
+  }
+}
+
+@media (max-width: 1015px) {
+  .banner-frame {
+    .banner-title {
+      font-size: 2em;
+      line-height: normal;
+    }
+  }
+}
+
+@media (max-width: 500px) {
+  .banner-frame {
+    .banner-title {
+      font-size: 9vw;
+      line-height: normal;
+    }
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
+}

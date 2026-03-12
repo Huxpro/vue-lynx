@@ -1,0 +1,26 @@
+{
+  "go.preview": {
+    "en": "Preview"
+  },
+  "go.qrcode": {
+    "en": "QRCode"
+  },
+  "go.files": {
+    "en": "Files"
+  },
+  "go.scan.message-1": {
+    "en": "Download "
+  },
+  "go.scan.message-2": {
+    "en": "and scan the QR code to get started."
+  },
+  "go.qrcode.copy-link": {
+    "en": "Copy Link"
+  },
+  "go.qrcode.copied": {
+    "en": "Copied"
+  },
+  "go.qrcode.entry": {
+    "en": "Entry"
+  }
+}

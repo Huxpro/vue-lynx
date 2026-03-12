@@ -3,3 +3,4 @@ packages:
   - upstream-tests
   - testing-library
   - examples/*
+  - website

@@ -1,0 +1,155 @@
+import { PackageManagerTabs, Steps } from '@theme';
+
+# Quick Start
+
+Welcome to Vue Lynx! Let's create a Vue Lynx project and start developing.
+
+## System Requirements
+
+- [Node.js 18](https://nodejs.org/en) or later.
+
+## Installation
+
+<Steps>
+
+### Create a new Vue Lynx project
+
+We use [`create-vue-lynx`](https://npmjs.org/package/create-vue-lynx) to scaffold a new project:
+
+<PackageManagerTabs command="create vue-lynx@latest" />
+
+After completing the prompts, `create-vue-lynx` will create a folder with your project name containing a starter app.
+
+### Prepare Lynx Explorer
+
+Lynx Explorer is a sandbox for trying out Lynx quickly.
+
+#### iOS Simulator
+
+1. **Install Xcode** from the [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835).
+
+2. **Download LynxExplorer**
+
+   For Apple Silicon (M1/M2/M3):
+   ```bash
+   curl -LO https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-arm64.app.tar.gz
+   mkdir -p LynxExplorer-arm64.app/
+   tar -zxf LynxExplorer-arm64.app.tar.gz -C LynxExplorer-arm64.app/
+   ```
+
+   For Intel Mac:
+   ```bash
+   curl -LO https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-x86_64.app.tar.gz
+   mkdir -p LynxExplorer-x86_64.app/
+   tar -zxf LynxExplorer-x86_64.app.tar.gz -C LynxExplorer-x86_64.app/
+   ```
+
+3. **Install on Simulator** — Open Xcode, choose **Open Developer Tool** > **Simulator**, then drag the `.app` folder into it.
+
+#### Android
+
+Download the pre-built APK from [GitHub Releases](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-noasan-release.apk) and install on your device.
+
+### Start developing
+
+1. Navigate to the created project:
+
+```bash
+cd <project-name>
+```
+
+2. Install dependencies:
+
+<PackageManagerTabs command="install" />
+
+3. Start the development server:
+
+<PackageManagerTabs command="run dev" />
+
+You will see a QR code in the terminal. Scan it with your Lynx Explorer App, or copy the bundle URL and paste it on the "Enter Card URL" input in Lynx Explorer and hit "Go".
+
+### Make your first change
+
+Open `src/App.vue` in your code editor. The starter app includes an interactive demo — try modifying the template and see the changes update live in Lynx Explorer.
+
+<Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.lynx.bundle" />
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { ref } from 'vue-lynx';
+
+const count = ref(0);
+</script>
+
+<template>
+  <view class="container">
+    <text class="title">Hello Vue Lynx!</text>
+    <view class="card" @tap="count++">
+      <text>Tapped {{ count }} times</text>
+    </view>
+  </view>
+</template>
+
+<style>
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.card {
+  padding: 16px 32px;
+  background-color: #42b883;
+  border-radius: 8px;
+}
+</style>
+```
+
+### Debugging
+
+Visit [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) to download the desktop application. Connect your device via USB and start debugging.
+
+</Steps>
+
+## Project Structure
+
+A scaffolded Vue Lynx project looks like this:
+
+```
+my-app/
+├── src/
+│   ├── App.vue          # Root component
+│   └── main.ts          # Entry point
+├── lynx.config.ts       # Build configuration
+├── package.json
+└── tsconfig.json
+```
+
+The `lynx.config.ts` uses `pluginVueLynx` instead of `pluginReactLynx`:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginVueLynx } from 'vue-lynx/plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      optionsApi: false,
+    }),
+  ],
+});
+```
+
+## Next Steps
+
+- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with interactivity and Main Thread Script
+- [Tutorial: Product Detail](/guide/tutorial-swiper) — Build a touch-swipeable image carousel
+- [API Reference](/guide/api/vue-lynx/) — Explore the vue-lynx API

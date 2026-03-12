@@ -20,7 +20,6 @@
  * ```
  */
 
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,12 +30,10 @@ import { applyCSS } from './css.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 
-export { LAYERS };
+const _pluginDirname = path.dirname(fileURLToPath(import.meta.url));
+const _vueLynxRoot = path.resolve(_pluginDirname, '../..');
 
-const _dirname = path.dirname(fileURLToPath(import.meta.url));
-const vueLynxRoot = path.resolve(_dirname, '../..');
-const vueLynxInternalOpsDist = path.resolve(vueLynxRoot, 'internal/dist/ops.js');
-const vueLynxInternalOpsSource = path.resolve(vueLynxRoot, 'internal/src/ops.ts');
+export { LAYERS };
 
 /**
  * Options for {@link pluginVueLynx}.
@@ -143,15 +140,15 @@ export function pluginVueLynx(
           // "vue" → "vue-lynx" ensures template compiler output
           // imports from the same module instance (singleton shared state)
           chain.resolve.alias.set('vue', 'vue-lynx');
-          // pnpm workspace links can realpath vue-lynx dist files out of
-          // node_modules, which breaks self-references like
-          // "vue-lynx/internal/ops". Alias that subpath explicitly so examples
-          // work both from the published package and from the monorepo.
+
+          // Ensure vue-lynx/internal/ops resolves correctly.
+          // main-thread/dist and runtime/dist import this path, but rspack's
+          // resolution walks up from those directories to the repo root's
+          // node_modules, which may not contain a vue-lynx symlink (pnpm
+          // doesn't create self-referencing symlinks for the workspace root).
           chain.resolve.alias.set(
             'vue-lynx/internal/ops',
-            fs.existsSync(vueLynxInternalOpsDist)
-              ? vueLynxInternalOpsDist
-              : vueLynxInternalOpsSource,
+            path.resolve(_vueLynxRoot, 'internal/dist/ops.js'),
           );
         });
 
