@@ -79,7 +79,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -161,6 +161,25 @@ importers:
         version: 3.4.19(tsx@4.21.0)(yaml@2.8.2)
       typescript:
         specifier: ~5.9.3
+        version: 5.9.3
+
+  examples/vue-router:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../..
+      vue-router:
+        specifier: ^4.5.0
+        version: 4.6.4(vue@3.5.30(typescript@5.9.3))
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
+      typescript:
+        specifier: ^5.0.0
         version: 5.9.3
 
   packages/create-vue-lynx:
@@ -1960,6 +1979,9 @@ packages:
 
   '@vue/compiler-ssr@3.5.30':
     resolution: {integrity: sha512-NsYK6OMTnx109PSL2IAyf62JP6EUdk4Dmj6AkWcJGBvN0dQoMYtVekAmdqgTtWQgEJo+Okstbf/1p7qZr5H+bA==}
+
+  '@vue/devtools-api@6.6.4':
+    resolution: {integrity: sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==}
 
   '@vue/reactivity@3.5.30':
     resolution: {integrity: sha512-179YNgKATuwj9gB+66snskRDOitDiuOZqkYia7mHKJaidOMo/WJxHKF8DuGc4V4XbYTJANlfEKb0yxTQotnx4Q==}
@@ -5014,6 +5036,11 @@ packages:
   vscode-icons-js@11.6.1:
     resolution: {integrity: sha512-rht18IFYv117UlqBn6o9j258SOtwhDBmtVrGwdoLPpSj6Z5LKQIzarQDd/tCRWneU68KEX25+nsh48tAoknKNw==}
 
+  vue-router@4.6.4:
+    resolution: {integrity: sha512-Hz9q5sa33Yhduglwz6g9skT8OBPii+4bFn88w6J+J4MfEo4KRRpmiNG/hHHkdbRFlLBOqxN8y8gf2Fb0MTUgVg==}
+    peerDependencies:
+      vue: ^3.5.0
+
   vue@3.5.30:
     resolution: {integrity: sha512-hTHLc6VNZyzzEH/l7PFGjpcTvUgiaPK5mdLkbjrTeWSRcEfxFrv56g/XckIYlE9ckuobsdwqd5mk2g1sBkMewg==}
     peerDependencies:
@@ -6058,6 +6085,16 @@ snapshots:
       - '@vue/compiler-sfc'
       - vue
 
+  '@rsbuild/plugin-vue@1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))':
+    dependencies:
+      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
+    optionalDependencies:
+      '@rsbuild/core': 2.0.0-beta.6(core-js@3.47.0)
+    transitivePeerDependencies:
+      - '@rspack/core'
+      - '@vue/compiler-sfc'
+      - vue
+
   '@rsdoctor/client@1.2.3': {}
 
   '@rsdoctor/core@1.2.3(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))(webpack@5.105.4)':
@@ -7001,6 +7038,8 @@ snapshots:
     dependencies:
       '@vue/compiler-dom': 3.5.30
       '@vue/shared': 3.5.30
+
+  '@vue/devtools-api@6.6.4': {}
 
   '@vue/reactivity@3.5.30':
     dependencies:
@@ -9845,6 +9884,14 @@ snapshots:
     optionalDependencies:
       '@rspack/core': 1.7.8(@swc/helpers@0.5.19)
 
+  rspack-vue-loader@17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3)):
+    dependencies:
+      '@rspack/lite-tapable': 1.1.0
+      chalk: 4.1.2
+    optionalDependencies:
+      '@rspack/core': 1.7.8(@swc/helpers@0.5.19)
+      vue: 3.5.30(typescript@5.9.3)
+
   rspack-vue-loader@17.5.0(@rspack/core@2.0.0-beta.3(@swc/helpers@0.5.19)):
     dependencies:
       '@rspack/lite-tapable': 1.1.0
@@ -10634,6 +10681,11 @@ snapshots:
   vscode-icons-js@11.6.1:
     dependencies:
       '@types/jasmine': 3.10.19
+
+  vue-router@4.6.4(vue@3.5.30(typescript@5.9.3)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.30(typescript@5.9.3)
 
   vue@3.5.30(typescript@5.9.3):
     dependencies:
