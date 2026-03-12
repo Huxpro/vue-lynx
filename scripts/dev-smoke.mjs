@@ -8,7 +8,6 @@ const cacheDir = path.join(exampleDir, 'node_modules/.cache');
 const timeoutMs = 60_000;
 
 const stripAnsi = (text) => text.replace(
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: ANSI escape stripping
   /\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g,
   '',
 );
@@ -73,7 +72,7 @@ function succeed() {
   if (resolved) return;
   resolved = true;
   stopChild('SIGTERM');
-  console.log('\n[dev-smoke] examples/basic dev server built successfully for web and lynx.');
+  console.info('\n[dev-smoke] examples/basic dev server built successfully for web and lynx.');
 }
 
 await fs.rm(cacheDir, { recursive: true, force: true });
