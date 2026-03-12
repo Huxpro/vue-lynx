@@ -12,8 +12,8 @@
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/qrcode-rsbuild-plugin": "workspace:*",
-    "@lynx-js/rspeedy": "workspace:*",
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
+    "@lynx-js/rspeedy": "^0.13.5",
     "@rsbuild/plugin-vue": "^1.2.6",
     "typescript": "~5.9.3"
   },

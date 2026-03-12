@@ -13,7 +13,7 @@
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/rspeedy": "workspace:*",
+    "@lynx-js/rspeedy": "^0.13.5",
     "@rsbuild/plugin-vue": "^1.2.6",
     "typescript": "^5.0.0"
   },

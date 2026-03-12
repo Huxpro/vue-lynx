@@ -9,7 +9,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@lynx-js/testing-environment": "workspace:*",
+    "@lynx-js/testing-environment": "^0.1.11",
     "vue-lynx": "workspace:*",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

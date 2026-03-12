@@ -27,7 +27,7 @@
 
 本教程假设你已经完成了 [快速开始](https://lynxjs.org/next/guide/start/quick-start.html) 中的环境搭建，并且安装了 LynxExplorer App。
 
-本教程的所有代码位于 `packages/vue/e2e-lynx/src/swiper/` 目录下，包含三个渐进式入口：
+本教程的所有代码位于 `examples/swiper/src/` 目录下，包含三个渐进式入口：
 
 | 入口          | 说明                               | 对应章节                                  |
 | ------------- | ---------------------------------- | ----------------------------------------- |
@@ -1002,7 +1002,7 @@ export function useOffset({
 - **`runOnMainThread`**：背景线程 → 主线程的函数调用桥接（点击跳转动画）
 - **跨线程传值**：背景线程的可序列化值自动传入主线程；主线程函数通过 `main-thread-` 前缀 prop 传递
 
-完整的源码在 `packages/vue/e2e-lynx/src/swiper/` 目录下，包含三个渐进式版本供参考。
+完整的源码在 `examples/swiper/src/` 目录下，包含三个渐进式版本供参考。
 
 ::: info MTS 函数体跨框架复用
 一个有趣的发现：所有 `'main thread'` 标记的函数体（`handleTouchStart`、`updateOffset`、`animate` 等）在 Vue 和 React 版本中**完全相同**。SWC 编译器将这些函数提取到独立的主线程 bundle 中，与框架无关。

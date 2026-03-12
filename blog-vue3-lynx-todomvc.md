@@ -272,4 +272,4 @@ The TodoMVC port demonstrates that real-world Vue applications can run on Lynx w
 
 ---
 
-_Built with Vue 3.5, Lynx 3.2, and rspeedy. Source code in `packages/vue/` of the lynx-stack monorepo._
+_Built with Vue 3.5, Lynx 3.2, and rspeedy. Source code at [github.com/Huxpro/vue-lynx](https://github.com/Huxpro/vue-lynx)._

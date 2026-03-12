@@ -13,7 +13,7 @@
     "vuejs:status": "cd core && git log --oneline -1"
   },
   "devDependencies": {
-    "@lynx-js/testing-environment": "workspace:*",
+    "@lynx-js/testing-environment": "^0.1.11",
     "vue-lynx": "workspace:*",
     "@vue/reactivity": "^3.5.0",
     "@vue/runtime-core": "^3.5.0",

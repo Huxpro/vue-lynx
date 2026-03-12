@@ -27,7 +27,7 @@ The end result is a product detail page. At the top is a full-width image carous
 
 This tutorial assumes you have completed the environment setup in the [Quick Start](https://lynxjs.org/next/guide/start/quick-start.html) guide and have the LynxExplorer app installed.
 
-All source code lives under `packages/vue/e2e-lynx/src/swiper/`, organized into three progressive entry points:
+All source code lives under `examples/swiper/src/`, organized into three progressive entry points:
 
 | Entry         | Description                                                      | Tutorial Section                                                        |
 | ------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -1003,7 +1003,7 @@ Congratulations! You've built a high-performance product detail page with an ima
 - **`runOnMainThread`**: Background thread -> main thread function call bridge (tap-to-jump animation)
 - **Cross-thread value passing**: Serializable background-thread values are automatically passed to main-thread functions; main-thread functions are passed via `main-thread-` prefixed props
 
-The complete source code is in `packages/vue/e2e-lynx/src/swiper/`, with three progressive versions for reference.
+The complete source code is in `examples/swiper/src/`, with three progressive versions for reference.
 
 ::: info MTS Function Bodies Are Reusable Across Frameworks
 An interesting discovery: all `'main thread'`-marked function bodies (`handleTouchStart`, `updateOffset`, `animate`, etc.) are **identical** between the Vue and React versions. The SWC compiler extracts these functions into a standalone main-thread bundle, independent of the framework.

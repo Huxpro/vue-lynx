@@ -55,16 +55,17 @@
     "README.md"
   ],
   "scripts": {
-    "build": "pnpm -r --filter='./runtime' --filter='./main-thread' --filter='./plugin' run build",
-    "dev": "pnpm -r --filter='./runtime' --filter='./main-thread' --filter='./plugin' run dev",
+    "build": "(cd runtime && npx rslib build) && (cd main-thread && npx rslib build) && (cd plugin && npx rslib build)",
+    "dev": "(cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch)",
     "test": "cd testing-library && pnpm test",
     "test:upstream": "cd upstream-tests && pnpm test && pnpm test:dom"
   },
   "dependencies": {
-    "@lynx-js/css-extract-webpack-plugin": "^0.4.3",
-    "@lynx-js/react": "^0.7.3",
+    "@lynx-js/css-extract-webpack-plugin": "^0.7.0",
+    "@lynx-js/react": "^0.116.5",
     "@lynx-js/runtime-wrapper-webpack-plugin": "^0.1.3",
-    "@lynx-js/template-webpack-plugin": "^0.8.3",
+    "@lynx-js/template-webpack-plugin": "^0.10.5",
+    "@lynx-js/webpack-dev-transport": "^0.2.0",
     "@vue/runtime-core": "^3.5.0"
   },
   "devDependencies": {
