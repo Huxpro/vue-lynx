@@ -32,18 +32,28 @@ rspack 1.7.8 inlines `event-registry.ts` into BOTH groups, creating two independ
 
 ## Solution
 
-Store event state on `globalThis.__vueEventState` instead of module-scope variables. `globalThis` is a single runtime object — all inlined copies within one bundle share it.
+Store event state on `globalThis[REGISTRY_STATE_KEY]` instead of module-scope variables. The concrete key is `__VUE_LYNX_EVENT_REGISTRY__`. `globalThis` is a single runtime object — all inlined copies within one bundle share it.
 
 ```ts
-function getState(): VueEventState {
-  if (!g['__vueEventState']) {
-    g['__vueEventState'] = { signCounter: 0, handlers: new Map() };
+const REGISTRY_STATE_KEY = '__VUE_LYNX_EVENT_REGISTRY__';
+
+function getRegistryState(): RegistryState {
+  const g = globalThis as RegistryGlobal;
+  let state = g[REGISTRY_STATE_KEY];
+  if (!state) {
+    state = { signCounter: 0, handlers: new Map() };
+    Object.defineProperty(g, REGISTRY_STATE_KEY, {
+      value: state,
+      configurable: true,
+      enumerable: false,
+      writable: true,
+    });
   }
-  return g['__vueEventState'] as VueEventState;
+  return state;
 }
 ```
 
-Each exported function calls `getState()` on every invocation (no caching) — ensures `resetRegistry()` in tests always works, and the overhead of a single property lookup is negligible at user-interaction rate.
+Each exported function calls `getRegistryState()` on every invocation (no caching) — ensures `resetRegistry()` in tests always works, and the overhead of a single property lookup is negligible at user-interaction rate.
 
 ### Why `globalThis` and NOT `lynxCoreInject` (intentional decision)
 
@@ -61,8 +71,15 @@ ReactLynx uses `lynxCoreInject` for similar cross-module shared state. We intent
 
 | File | Change |
 |---|---|
-| `runtime/src/event-registry.ts` | Module-scope `signCounter`/`handlers` → `globalThis.__vueEventState` via `getState()` accessor. Removed debug `console.info` logs. |
+| `runtime/src/event-registry.ts` | Module-scope `signCounter`/`handlers` → `globalThis[REGISTRY_STATE_KEY]` via `getRegistryState()`. Final key: `__VUE_LYNX_EVENT_REGISTRY__`. Removed debug `console.info` logs. |
 | `runtime/src/entry-background.ts` | Removed debug `console.info` logs only (no functional change). |
+
+## Implementation Notes
+
+- The final code uses `RegistryState`, `REGISTRY_STATE_KEY`, and `getRegistryState()` rather than the draft names `VueEventState`, `getState()`, and `__vueEventState`. The longer key makes bundle inspection less ambiguous when debugging consumer output.
+- The singleton is installed with `Object.defineProperty(..., enumerable: false)` so it does not pollute normal global enumerations, while still remaining resettable in tests (`configurable: true`, `writable: true`).
+- Debug `console.info` statements were kept during bundle forensics, then removed once the scope-hoisting root cause was confirmed.
+- The same PR also carries a separate workspace-only resolver fix in `plugin/src/index.ts` for `vue-lynx/internal/ops`, which was required to make `rspeedy dev` work against a pnpm symlinked workspace. That change is adjacent verification plumbing, not part of the scope-hoisting root cause itself.
 
 ## Rejected Alternatives
 
@@ -76,7 +93,7 @@ ReactLynx uses `lynxCoreInject` for similar cross-module shared state. We intent
 
 ## Verification
 
-- `runtime/` build: clean
-- `testing-library/` tests: 31/31 pass (events, reactivity, rendering, styles, v-if/v-for, ops coverage)
-- `vue-upstream-tests/`: 778 pass, 97 skipped, 0 failures
-- `examples/basic` build: all 5 entries build for both web and lynx targets
+- `runtime/`: `npx rslib build`
+- `plugin/`: `npx rslib build`
+- `examples/basic`: `pnpm run build`
+- `examples/basic`: `pnpm run dev` starts successfully and no longer reports `Can't resolve 'vue-lynx/internal/ops'`
