@@ -20,6 +20,10 @@
  * ```
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import type { RsbuildPlugin } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 
@@ -28,6 +32,11 @@ import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 
 export { LAYERS };
+
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const vueLynxRoot = path.resolve(_dirname, '../..');
+const vueLynxInternalOpsDist = path.resolve(vueLynxRoot, 'internal/dist/ops.js');
+const vueLynxInternalOpsSource = path.resolve(vueLynxRoot, 'internal/src/ops.ts');
 
 /**
  * Options for {@link pluginVueLynx}.
@@ -134,6 +143,16 @@ export function pluginVueLynx(
           // "vue" → "vue-lynx" ensures template compiler output
           // imports from the same module instance (singleton shared state)
           chain.resolve.alias.set('vue', 'vue-lynx');
+          // pnpm workspace links can realpath vue-lynx dist files out of
+          // node_modules, which breaks self-references like
+          // "vue-lynx/internal/ops". Alias that subpath explicitly so examples
+          // work both from the published package and from the monorepo.
+          chain.resolve.alias.set(
+            'vue-lynx/internal/ops',
+            fs.existsSync(vueLynxInternalOpsDist)
+              ? vueLynxInternalOpsDist
+              : vueLynxInternalOpsSource,
+          );
         });
 
         // NOTE: vue-loader runs on ALL layers (no issuerLayer constraint).
