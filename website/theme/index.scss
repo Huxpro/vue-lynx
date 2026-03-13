@@ -47,6 +47,7 @@ $brand-emerald: #34d399;
   --home-features-item-desc-color: rgba(17, 17, 19, 0.65);
   --home-features-item-action-btn-bg: #fff;
   --home-blog-btn-border: 1px solid rgba(17, 17, 19, 0.12);
+  --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(0, 0, 0, 0.85);
 
   // Banner
@@ -66,6 +67,7 @@ $brand-emerald: #34d399;
   --home-features-item-desc-color: rgba(255, 255, 255, 0.65);
   --home-features-item-action-btn-bg: rgba(255, 255, 255, 0.16);
   --home-blog-btn-border: 1px solid rgba(255, 255, 255, 0.12);
+  --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(255, 255, 255, 0.85);
 
   --home-banner-title-color: #fff;
@@ -123,6 +125,27 @@ $brand-emerald: #34d399;
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gradientMoveBtn {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
 // ======== Home layout =========
 .home-layout-container {
   .rp-home-hero__container {
@@ -148,26 +171,42 @@ $brand-emerald: #34d399;
   }
 
   .rp-home-hero__title-brand {
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center;
+    height: 36px;
     width: auto !important;
     max-width: max-content;
-    display: inline-flex !important;
-    align-items: center;
-    margin-bottom: 16px !important;
-    padding: 6px 20px !important;
-    border-radius: 24px !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    background: rgba(0, 0, 0, 0.06) !important;
-    -webkit-background-clip: padding-box !important;
-    background-clip: padding-box !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    backdrop-filter: blur(10px) !important;
-    font-size: 12px !important;
-    font-weight: 400 !important;
-    line-height: 24px !important;
+    flex-shrink: 0;
+    border-radius: 37px !important;
+    border: var(--home-blog-btn-border) !important;
+    background: var(--home-blog-btn-bg, rgba(255, 255, 255, 0.08)) !important;
+    backdrop-filter: blur(24px);
+    color: var(--home-blog-btn-color) !important;
+    -webkit-text-fill-color: var(--home-blog-btn-color) !important;
+    font-weight: 500 !important;
+    line-height: 32px !important;
     letter-spacing: 0 !important;
-    color: rgba(0, 0, 0, 0.65) !important;
-    -webkit-text-fill-color: rgba(0, 0, 0, 0.65) !important;
+    padding: 0 20px !important;
+    margin-bottom: 26px !important;
+    transition: all 0.3s ease;
     cursor: pointer;
+    user-select: none;
+    opacity: 1;
+    animation: fadeIn 0.8s ease-in;
+
+    &:hover {
+      background: linear-gradient(
+        to right,
+        var(--major-brand-color),
+        var(--gradient-brand-color),
+        var(--second-brand-color)
+      ) !important;
+      background-size: 200% 100% !important;
+      animation: gradientMoveBtn 3s ease infinite;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
 
     a {
       color: inherit !important;
@@ -176,24 +215,17 @@ $brand-emerald: #34d399;
     }
   }
 
-  :root.dark & .rp-home-hero__title-brand {
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    background: rgba(255, 255, 255, 0.12) !important;
-    color: rgba(255, 255, 255, 0.85) !important;
-    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
-  }
-
   @media (max-width: 1000px) {
     .rp-home-hero {
       margin-top: 54px;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     .rp-home-hero__title-brand {
-      font-size: 10px !important;
-      padding: 4px 14px !important;
-      margin-bottom: 12px !important;
+      font-size: 12px !important;
+      height: 28px;
+      padding: 0 16px !important;
     }
 
     .rp-home-hero .rp-home-hero__title {
