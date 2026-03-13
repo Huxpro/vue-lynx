@@ -254,10 +254,43 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         mo.observe(shadow, { childList: true, subtree: true });
       }
 
+      // Workaround: web-core reads MouseEvent.x/.y (viewport-relative) for
+      // tap event detail.x/.y. When the <lynx-view> is embedded at a non-zero
+      // offset, coordinates are wrong. Intercept clicks in capture phase and
+      // re-dispatch with lynx-view-relative coordinates.
+      let removeClickFix: (() => void) | undefined;
+      if (shadow) {
+        const adjustClickCoords = (e: Event) => {
+          const me = e as MouseEvent;
+          // Skip our own re-dispatched synthetic events
+          if (!me.isTrusted) return;
+          const rect = el.getBoundingClientRect();
+          me.stopImmediatePropagation();
+          const adjusted = new MouseEvent('click', {
+            bubbles: me.bubbles,
+            cancelable: me.cancelable,
+            composed: me.composed,
+            clientX: me.clientX - rect.left,
+            clientY: me.clientY - rect.top,
+            screenX: me.screenX,
+            screenY: me.screenY,
+            button: me.button,
+            buttons: me.buttons,
+            detail: me.detail,
+            view: me.view,
+          });
+          (me.target as Element)?.dispatchEvent(adjusted);
+        };
+        shadow.addEventListener('click', adjustClickCoords, true);
+        removeClickFix = () =>
+          shadow.removeEventListener('click', adjustClickCoords, true);
+      }
+
       // Fallback: hide loading after timeout
       const timer = setTimeout(() => setRendered(true), 5000);
       return () => {
         clearTimeout(timer);
+        removeClickFix?.();
       };
     }
   }, [ready, show, src]);
