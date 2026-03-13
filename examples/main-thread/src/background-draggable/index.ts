@@ -3,10 +3,11 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * MTS Draggable Demo (Raw) — raw worklet context objects, no SWC transform.
+ * Background Draggable Demo — Background Thread only (no Main Thread APIs).
  *
- * Requires matching registerWorkletInternal() calls in entry-main.ts.
- * See mts-draggable/ for the transform-based version using 'main thread' directive.
+ * A box tracks a scroll-view's scroll position, updated entirely through
+ * Vue's reactive system on the Background Thread. This demonstrates the
+ * baseline behavior without Main Thread optimizations.
  */
 
 import { createApp } from 'vue-lynx';

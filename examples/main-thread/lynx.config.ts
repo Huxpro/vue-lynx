@@ -1,7 +1,3 @@
-// Copyright 2025 The Lynx Authors. All rights reserved.
-// Licensed under the Apache License Version 2.0 that can be found in the
-// LICENSE file in the root directory of this source tree.
-
 import { defineConfig } from '@lynx-js/rspeedy';
 import { pluginVueLynx } from 'vue-lynx/plugin';
 
@@ -12,9 +8,9 @@ export default defineConfig({
   },
   source: {
     entry: {
-      main: './src/index.ts',
-      'h-counter': './src/h-counter.ts',
-      todomvc: './src/todomvc/index.ts',
+      'background-draggable': './src/background-draggable/index.ts',
+      'main-thread-draggable': './src/main-thread-draggable/index.ts',
+      'main-thread-draggable-raw': './src/main-thread-draggable-raw/index.ts',
     },
   },
   plugins: [
@@ -23,4 +19,7 @@ export default defineConfig({
       enableCSSSelector: true,
     }),
   ],
+  output: {
+    filename: '[name].[platform].bundle',
+  },
 });
