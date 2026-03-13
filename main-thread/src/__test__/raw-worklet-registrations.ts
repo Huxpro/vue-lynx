@@ -3,19 +3,19 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * Raw worklet registrations for the mts-draggable-raw demo.
+ * Raw worklet registrations for the main-thread-draggable-raw demo.
  *
  * These are hand-crafted registerWorkletInternal calls that simulate what the
  * SWC worklet transform (Phase 2) auto-generates from 'main thread' directive
  * annotations. They are kept here as a reference/test fixture; production code
- * should use the transform-based approach (see mts-draggable/).
+ * should use the transform-based approach (see main-thread-draggable/).
  *
  * Each call stores a function body in lynxWorkletImpl._workletMap keyed by
  * _wkltId. When native fires the event, runWorklet() looks it up and executes
  * it on the Main Thread with zero thread crossings.
  *
  * Corresponding BG-thread worklet context objects live in:
- *   e2e-lynx/src/mts-draggable-raw/App.vue
+ *   examples/main-thread/src/main-thread-draggable-raw/App.vue
  */
 
 declare function registerWorkletInternal(
@@ -24,12 +24,12 @@ declare function registerWorkletInternal(
   fn: (this: Record<string, unknown>, ...args: unknown[]) => unknown,
 ): void;
 
-// mts-draggable-raw: Scroll handler — moves element via setStyleProperty.
+// main-thread-draggable-raw: Scroll handler — moves element via setStyleProperty.
 // Reads event.detail.scrollTop and translates the MT-ref element.
 // Starts at y=500, moves up as scrollTop increases.
 registerWorkletInternal(
   'main-thread',
-  'mts-draggable-raw:onScroll',
+  'main-thread-draggable-raw:onScroll',
   function(this: Record<string, unknown>, ...args: unknown[]) {
     const event = args[0] as Record<string, unknown>;
     const detail = (event as { detail?: { scrollTop?: number } }).detail;

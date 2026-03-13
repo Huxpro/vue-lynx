@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * MTS Draggable Demo — Phase 2 SWC worklet transform.
+ * Main Thread Draggable Demo — Phase 2 SWC worklet transform.
  *
  * Shows two boxes that track a scroll-view's scroll position:
  *   - Left box: updated via Main Thread (smooth, zero thread crossings)
