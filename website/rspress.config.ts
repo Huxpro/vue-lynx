@@ -58,6 +58,13 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
+          sectionHeaderText: 'Examples',
+        },
+        { text: 'Pinia', link: '/guide/pinia' },
+        {
+          dividerType: 'solid',
+        },
+        {
           sectionHeaderText: 'API Reference',
         },
         ...apiSidebar,
