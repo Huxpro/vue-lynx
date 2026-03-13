@@ -1,4 +1,4 @@
-import React, { type FC, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type FC, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n, useLang, withBase, NoSSR } from '@rspress/core/runtime';
 import {
   Space,
@@ -12,6 +12,7 @@ import {
   Toast,
   Tabs,
   TabPane,
+  Tooltip,
 } from '@douyinfe/semi-ui';
 import { IconList, IconChevronRightStroked } from '@douyinfe/semi-icons';
 import { QRCodeSVG } from 'qrcode.react';
@@ -25,7 +26,7 @@ const WebIframe = React.lazy(() =>
   import('./web-iframe').then((module) => ({ default: module.WebIframe })),
 );
 
-import { IconGithub, IconCopyLink } from '../utils/icon';
+import { IconGithub, IconCopyLink, IconFullscreen, IconExitFullscreen } from '../utils/icon';
 import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import type { SchemaOptionsData } from '../hooks/use-switch-schema';
@@ -36,6 +37,68 @@ const LYNX_EXPLORER_URL =
   '/guide/quick-start#download-lynx-explorer';
 
 const lynxExplorerText = 'Lynx Explorer';
+
+interface WebkitDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => void;
+}
+
+interface WebkitHTMLElement extends HTMLElement {
+  webkitRequestFullscreen?: () => void;
+}
+
+function getFullscreenElement(): Element | null {
+  const doc = document as WebkitDocument;
+  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
+function useFullscreen(ref: React.RefObject<HTMLElement | null>) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => {
+      if (!getFullscreenElement()) {
+        setIsFullscreen(false);
+      }
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
+  }, []);
+
+  const toggle = useCallback(async () => {
+    const el = ref.current as WebkitHTMLElement | null;
+    if (!el) return;
+
+    if (getFullscreenElement()) {
+      const doc = document as WebkitDocument;
+      if (doc.exitFullscreen) {
+        await doc.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      }
+      setIsFullscreen(false);
+    } else {
+      try {
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          el.webkitRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } catch {
+        // iOS Safari doesn't support the Fullscreen API on iPhones —
+        // fall back to a CSS-only fullscreen mode.
+        setIsFullscreen(true);
+      }
+    }
+  }, [ref]);
+
+  return { isFullscreen, toggle, setIsFullscreen };
+}
 
 enum PreviewType {
   Preview = 'Preview',
@@ -93,6 +156,8 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   const [showPreview, setShowPreview] = useState(true);
   const [showFileTree, setShowFileTree] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const { isFullscreen, toggle: toggleFullscreen, setIsFullscreen } = useFullscreen(boxRef);
   const [previewType, setPreviewType] = useState(
     previewImage ? PreviewType.Preview : PreviewType.QRCode,
   );
@@ -131,9 +196,27 @@ export const ExampleContent: FC<ExampleContentProps> = ({
   };
   const qrcodeUrl = qrcodeUrlWithSchema || currentEntryFileUrl;
 
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !getFullscreenElement()) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isFullscreen, setIsFullscreen]);
+
   const showCodeTab = entryData && entryData?.length > 1;
   return (
-    <div className={s.box}>
+    <div className={`${s.box} ${isFullscreen ? s.fullscreen : ''}`} ref={boxRef}>
       <div className={s.container} ref={containerRef}>
         <div className={s.content}>
           <div className={s['code-wrap']}>
@@ -381,6 +464,19 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                 );
               }}
             />
+            <Tooltip content={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} position="top">
+              <Button
+                theme="borderless"
+                icon={
+                  isFullscreen
+                    ? <IconExitFullscreen style={{ color: 'var(--semi-color-text-2)' }} />
+                    : <IconFullscreen style={{ color: 'var(--semi-color-text-2)' }} />
+                }
+                type="tertiary"
+                size="small"
+                onClick={toggleFullscreen}
+              />
+            </Tooltip>
             {rightFooter}
           </Space>
         </div>
