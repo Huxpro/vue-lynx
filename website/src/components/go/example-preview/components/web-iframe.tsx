@@ -76,19 +76,20 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         ),
       };
 
-      // Rewrite relative asset paths in the template to be absolute,
-      // based on the bundle URL's directory. Without this, the browser
-      // resolves relative <img src> against the page URL instead of
-      // the bundle URL.
+      // Rewrite webpack's public path in the bundle JS so that asset
+      // URLs (images etc.) resolve relative to the bundle location,
+      // not the page URL. The bundles are built with the default
+      // publicPath "/" but served from e.g. /examples/hello-world/dist/.
       const baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
       // @ts-ignore
       lynxViewRef.current.customTemplateLoader = async (url: string) => {
         const res = await fetch(url);
         const text = await res.text();
-        // Rewrite relative paths (e.g. "static/image/foo.png") to absolute
+        // Replace webpack public path assignment (e.g. .p="/") with
+        // the actual base URL of the bundle directory
         const rewritten = text.replace(
-          /(")(static\/[^"]+)/g,
-          (_, quote, path) => `${quote}${baseUrl}${path}`,
+          /\.p=\\"/\\"/g,
+          `.p=\\"${baseUrl}\\"`,
         );
         return JSON.parse(rewritten);
       };
