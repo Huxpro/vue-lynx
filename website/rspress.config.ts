@@ -60,6 +60,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'Example',
         },
+        { text: 'Vue Router', link: '/guide/routing' },
         { text: '7 GUIs', link: '/guide/7guis' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         {

@@ -1,0 +1,150 @@
+import { PackageManagerTabs } from '@theme';
+
+# Using Vue Router
+
+Vue Lynx applications can use [Vue Router](https://router.vuejs.org/), the official routing library for Vue, to manage navigation between views. However, since Lynx has no browser `window.location` or History API, you must use [`createMemoryHistory()`](https://router.vuejs.org/api/index.html#creatememoryhistory) instead of `createWebHistory()` — similar to how React Router provides a `MemoryRouter` or TanStack Router provides a memory history for non-browser environments.
+
+<Go example="vue-router" defaultFile="src/App.vue" defaultEntryName="main" />
+
+## Installing Dependencies
+
+<PackageManagerTabs command="install vue-router" />
+
+## Creating the Router
+
+Use `createMemoryHistory()` to create a history instance that keeps routing state entirely in-process, with no dependency on browser APIs:
+
+```ts title="src/router.ts"
+import { createRouter, createMemoryHistory } from 'vue-router';
+import Home from './views/Home.vue';
+import About from './views/About.vue';
+
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', name: 'home', component: Home },
+    { path: '/about', name: 'about', component: About },
+    { path: '/users', name: 'users', component: UserList },
+    { path: '/users/:id', name: 'user-detail', component: UserDetail },
+  ],
+});
+
+export default router;
+```
+
+Then install the router plugin and mount the app:
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx';
+import router from './router';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(router);
+app.mount();
+```
+
+## Using `<RouterView>`
+
+[`<RouterView>`](https://router.vuejs.org/api/index.html#RouterView) renders the component matched by the current route. It works in Lynx without any modifications:
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+</script>
+
+<template>
+  <view>
+    <RouterView />
+  </view>
+</template>
+```
+
+## Navigating Without `<a>` Tags
+
+In a browser, [`<RouterLink>`](https://router.vuejs.org/api/index.html#RouterLink) renders an `<a>` tag by default. Since Lynx has no `<a>` element, you have two options:
+
+### Option 1: RouterLink with `custom` Slot
+
+Use RouterLink's [`custom`](https://router.vuejs.org/api/index.html#RouterLink-Props) prop with the scoped slot API to render Lynx-native elements while retaining `isActive` state:
+
+```vue title="src/NavLink.vue"
+<script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
+defineProps<{
+  to: string;
+  label: string;
+}>();
+</script>
+
+<template>
+  <RouterLink :to="to" custom v-slot="{ navigate, isActive }">
+    <text
+      @tap="navigate"
+      :style="{
+        color: isActive ? '#fff' : '#333',
+        backgroundColor: isActive ? '#1a73e8' : '#e8e8e8',
+        padding: '8px 12px',
+        borderRadius: 16,
+      }"
+    >
+      {{ label }}
+    </text>
+  </RouterLink>
+</template>
+```
+
+### Option 2: Programmatic Navigation
+
+Use the [`useRouter()`](https://router.vuejs.org/api/index.html#useRouter) composable for programmatic navigation:
+
+```vue title="src/views/UserList.vue"
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+function goToUser(id: number) {
+  router.push(`/users/${id}`);
+}
+</script>
+
+<template>
+  <view v-for="user in users" :key="user.id" @tap="goToUser(user.id)">
+    <text>{{ user.name }}</text>
+  </view>
+</template>
+```
+
+You can also use `router.back()` and `router.replace()` as you normally would.
+
+## Dynamic Route Params
+
+Access dynamic route parameters via [`useRoute()`](https://router.vuejs.org/api/index.html#useRoute):
+
+```vue title="src/views/UserDetail.vue"
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const userId = computed(() => route.params.id as string);
+</script>
+
+<template>
+  <view>
+    <text>User ID: {{ userId }}</text>
+  </view>
+</template>
+```
+
+## Why Memory History?
+
+| History mode | Requires browser APIs | Works in Lynx |
+| --- | --- | --- |
+| `createWebHistory()` | Yes (`window.location`, History API) | No |
+| `createWebHashHistory()` | Yes (`window.location`) | No |
+| `createMemoryHistory()` | No | **Yes** |
+
+`createMemoryHistory()` is designed for environments without a browser — SSR, testing, and native runtimes like Lynx. The routing state is stored in a simple in-memory array, so features like `router.push()`, `router.back()`, and dynamic params all work as expected.
