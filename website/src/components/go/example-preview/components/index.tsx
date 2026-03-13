@@ -25,7 +25,12 @@ const WebIframe = React.lazy(() =>
   import('./web-iframe').then((module) => ({ default: module.WebIframe })),
 );
 
-import { IconGithub, IconCopyLink } from '../utils/icon';
+import {
+  IconGithub,
+  IconCopyLink,
+  IconEnterFullscreen,
+  IconExitFullscreen,
+} from '../utils/icon';
 import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import type { SchemaOptionsData } from '../hooks/use-switch-schema';
@@ -114,6 +119,7 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     };
   }, [previewImage, currentEntry, defaultWebPreviewFile]);
   const [tmpCurrentFileName, setTmpCurrentFileName] = useState('');
+  const [isPreviewFullscreen, setIsPreviewFullscreen] = useState(false);
   const t = useI18n();
   const _lang = useLang();
 
@@ -130,6 +136,39 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     setQrcodeUrlWithSchema(schema);
   };
   const qrcodeUrl = qrcodeUrlWithSchema || currentEntryFileUrl;
+
+  useEffect(() => {
+    if (!hasPreview || !showPreview) {
+      setIsPreviewFullscreen(false);
+    }
+  }, [hasPreview, showPreview]);
+
+  useEffect(() => {
+    if (!isPreviewFullscreen) {
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyTouchAction = document.body.style.touchAction;
+    const previousDocumentOverflow = document.documentElement.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsPreviewFullscreen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.documentElement.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
+      document.documentElement.style.overflow = previousDocumentOverflow;
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isPreviewFullscreen]);
 
   const showCodeTab = entryData && entryData?.length > 1;
   return (
@@ -189,123 +228,149 @@ export const ExampleContent: FC<ExampleContentProps> = ({
           </div>
 
           <ResizableContainer show={hasPreview && showPreview}>
-            <div className={s['preview-wrap']}>
+            <div
+              className={`${s['preview-wrap']} ${isPreviewFullscreen ? s.fullscreen : ''}`}
+            >
               <div className={s['preview-wrap-content']}>
-                <RadioGroup
-                  onChange={(e) => setPreviewType(e.target.value)}
-                  value={previewType}
-                  type="button"
-                  style={{
-                    display: 'flex',
-                    width: '100%',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {initState ? (
-                    <>
-                      {previewImage && (
-                        <Radio value={PreviewType.Preview}>
-                          {t('go.preview')}
-                        </Radio>
-                      )}
-                      {hasWebPreview && (
-                        <Radio value={PreviewType.Web}>Web</Radio>
-                      )}
-                      {currentEntry && (
-                        <Radio value={PreviewType.QRCode}>
-                          {t('go.qrcode')}
-                        </Radio>
-                      )}
-                    </>
-                  ) : (
-                    <div style={{ width: '100%', height: '32px' }}></div>
-                  )}
-                </RadioGroup>
-
-                {previewType === PreviewType.QRCode && currentEntry && (
-                  <div className={s.qrcode}>
-                    <Typography.Text
-                      size="small"
-                      type="tertiary"
-                      style={{ margin: '28px 12px', textAlign: 'center' }}
+                <div className={s['preview-header']}>
+                  <div className={s['preview-mode-group']}>
+                    <RadioGroup
+                      onChange={(e) => setPreviewType(e.target.value)}
+                      value={previewType}
+                      type="button"
+                      style={{
+                        display: 'flex',
+                        width: '100%',
+                        justifyContent: 'center',
+                      }}
                     >
-                      {t('go.scan.message-1')}
-                      <Typography.Text
-                        link={{
-                          href: withBase(LYNX_EXPLORER_URL),
-                          target: '_blank',
-                        }}
-                        size="small"
-                        underline
-                      >
-                        {lynxExplorerText}
-                      </Typography.Text>{' '}
-                      {t('go.scan.message-2')}
-                    </Typography.Text>
-                    <div className={s['qrcode-svg']}>
-                      <QRCodeSVG value={qrcodeUrl} />
-                    </div>
-                    <div style={{ marginBottom: '32px' }}>
-                      <CopyToClipboard
-                        onCopy={() => {
-                          Toast.success(t('go.qrcode.copied'));
-                        }}
-                        text={qrcodeUrl}
-                      >
-                        <Button
-                          type="tertiary"
-                          style={{ fontSize: '12px' }}
-                          icon={<IconCopyLink style={{ fontSize: '16px' }} />}
-                        >
-                          {t('go.qrcode.copy-link')}
-                        </Button>
-                      </CopyToClipboard>
-                    </div>
-                    {schemaOptions && (
-                      <SwitchSchema
-                        optionsData={schemaOptions}
-                        currentEntryFileUrl={currentEntryFileUrl}
-                        onSwitchSchema={onSwitchSchema}
-                      />
-                    )}
-                    <div className={s['qrcode-entry']}>
+                      {initState ? (
+                        <>
+                          {previewImage && (
+                            <Radio value={PreviewType.Preview}>
+                              {t('go.preview')}
+                            </Radio>
+                          )}
+                          {hasWebPreview && (
+                            <Radio value={PreviewType.Web}>Web</Radio>
+                          )}
+                          {currentEntry && (
+                            <Radio value={PreviewType.QRCode}>
+                              {t('go.qrcode')}
+                            </Radio>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ width: '100%', height: '32px' }}></div>
+                      )}
+                    </RadioGroup>
+                  </div>
+                  <Button
+                    className={s['preview-fullscreen-button']}
+                    theme="borderless"
+                    type="tertiary"
+                    icon={
+                      isPreviewFullscreen ? (
+                        <IconExitFullscreen style={{ fontSize: '16px' }} />
+                      ) : (
+                        <IconEnterFullscreen style={{ fontSize: '16px' }} />
+                      )
+                    }
+                    aria-label={
+                      isPreviewFullscreen
+                        ? 'Exit preview fullscreen'
+                        : 'Enter preview fullscreen'
+                    }
+                    onClick={() => setIsPreviewFullscreen((value) => !value)}
+                  />
+                </div>
+
+                <div className={s['preview-stage']}>
+                  {previewType === PreviewType.QRCode && currentEntry && (
+                    <div className={s.qrcode}>
                       <Typography.Text
                         size="small"
                         type="tertiary"
-                        style={{ marginRight: '12px', flexShrink: 0 }}
+                        style={{ margin: '28px 12px', textAlign: 'center' }}
                       >
-                        {t('go.qrcode.entry')}
+                        {t('go.scan.message-1')}
+                        <Typography.Text
+                          link={{
+                            href: withBase(LYNX_EXPLORER_URL),
+                            target: '_blank',
+                          }}
+                          size="small"
+                          underline
+                        >
+                          {lynxExplorerText}
+                        </Typography.Text>{' '}
+                        {t('go.scan.message-2')}
                       </Typography.Text>
-                      <Select
-                        style={{ width: '100%', maxWidth: '200px' }}
-                        value={currentEntry}
-                        onChange={(v) => setCurrentEntry(v as string)}
-                      >
-                        {entryFiles?.map((file) => (
-                          <Select.Option key={file.name} value={file.name}>
-                            {file.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
+                      <div className={s['qrcode-svg']}>
+                        <QRCodeSVG value={qrcodeUrl} />
+                      </div>
+                      <div style={{ marginBottom: '32px' }}>
+                        <CopyToClipboard
+                          onCopy={() => {
+                            Toast.success(t('go.qrcode.copied'));
+                          }}
+                          text={qrcodeUrl}
+                        >
+                          <Button
+                            type="tertiary"
+                            style={{ fontSize: '12px' }}
+                            icon={<IconCopyLink style={{ fontSize: '16px' }} />}
+                          >
+                            {t('go.qrcode.copy-link')}
+                          </Button>
+                        </CopyToClipboard>
+                      </div>
+                      {schemaOptions && (
+                        <SwitchSchema
+                          optionsData={schemaOptions}
+                          currentEntryFileUrl={currentEntryFileUrl}
+                          onSwitchSchema={onSwitchSchema}
+                        />
+                      )}
+                      <div className={s['qrcode-entry']}>
+                        <Typography.Text
+                          size="small"
+                          type="tertiary"
+                          style={{ marginRight: '12px', flexShrink: 0 }}
+                        >
+                          {t('go.qrcode.entry')}
+                        </Typography.Text>
+                        <Select
+                          style={{ width: '100%', maxWidth: '200px' }}
+                          value={currentEntry}
+                          onChange={(v) => setCurrentEntry(v as string)}
+                        >
+                          {entryFiles?.map((file) => (
+                            <Select.Option key={file.name} value={file.name}>
+                              {file.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {previewImage && (
-                  <PreviewImg
-                    show={previewType === PreviewType.Preview}
-                    previewImage={previewImage}
-                  />
-                )}
-                {hasWebPreview && (
-                  <NoSSR>
-                    <Suspense fallback={<div>Loading...</div>}>
-                      <WebIframe
-                        show={previewType === PreviewType.Web}
-                        src={defaultWebPreviewFile || ''}
-                      />
-                    </Suspense>
-                  </NoSSR>
-                )}
+                  )}
+                  {previewImage && (
+                    <PreviewImg
+                      show={previewType === PreviewType.Preview}
+                      previewImage={previewImage}
+                    />
+                  )}
+                  {hasWebPreview && (
+                    <NoSSR>
+                      <Suspense fallback={<div>Loading...</div>}>
+                        <WebIframe
+                          show={previewType === PreviewType.Web}
+                          src={defaultWebPreviewFile || ''}
+                        />
+                      </Suspense>
+                    </NoSSR>
+                  )}
+                </div>
               </div>
             </div>
           </ResizableContainer>
