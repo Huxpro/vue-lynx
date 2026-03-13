@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
   getCustomMDXComponent as basicGetCustomMDXComponent,
@@ -13,6 +14,12 @@ import {
 } from '../src/components/home-comps';
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  useEffect(() => {
+    const badge = document.querySelector('.rp-home-hero__badge');
+    if (badge) {
+      badge.innerHTML = `<a href="https://github.com/huxpro/vue-lynx" target="_blank" rel="noreferrer">${badge.textContent}</a>`;
+    }
+  }, []);
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
 

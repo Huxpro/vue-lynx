@@ -47,6 +47,7 @@ $brand-emerald: #34d399;
   --home-features-item-desc-color: rgba(17, 17, 19, 0.65);
   --home-features-item-action-btn-bg: #fff;
   --home-blog-btn-border: 1px solid rgba(17, 17, 19, 0.12);
+  --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(0, 0, 0, 0.85);
 
   // Banner
@@ -66,6 +67,7 @@ $brand-emerald: #34d399;
   --home-features-item-desc-color: rgba(255, 255, 255, 0.65);
   --home-features-item-action-btn-bg: rgba(255, 255, 255, 0.16);
   --home-blog-btn-border: 1px solid rgba(255, 255, 255, 0.12);
+  --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(255, 255, 255, 0.85);
 
   --home-banner-title-color: #fff;
@@ -123,6 +125,27 @@ $brand-emerald: #34d399;
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes gradientMoveBtn {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
 // ======== Home layout =========
 .home-layout-container {
   .rp-home-hero__container {
@@ -147,6 +170,46 @@ $brand-emerald: #34d399;
     }
   }
 
+  .rp-home-hero__badge {
+    font-size: 14px;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 37px;
+    border: var(--home-blog-btn-border);
+    background: var(--home-blog-btn-bg);
+    backdrop-filter: blur(24px);
+    color: var(--home-blog-btn-color);
+    font-weight: 500;
+    line-height: 32px;
+    padding: 0 20px;
+    transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+    animation: fadeIn 0.8s ease-in;
+
+    &:hover {
+      background: linear-gradient(
+        to right,
+        var(--major-brand-color),
+        var(--gradient-brand-color),
+        var(--second-brand-color)
+      );
+      background-size: 200% 100%;
+      animation: gradientMoveBtn 3s ease infinite;
+      color: #fff;
+      -webkit-text-fill-color: #fff;
+    }
+
+    a {
+      color: inherit;
+      -webkit-text-fill-color: inherit;
+      text-decoration: none;
+    }
+  }
+
   .rp-home-hero__title-brand {
     background: none;
   }
@@ -157,7 +220,13 @@ $brand-emerald: #34d399;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
+    .rp-home-hero__badge {
+      font-size: 12px;
+      height: 28px;
+      padding: 0 16px;
+    }
+
     .rp-home-hero .rp-home-hero__title {
       font-size: 2rem;
     }
