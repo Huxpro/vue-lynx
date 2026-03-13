@@ -1,0 +1,45 @@
+import { Badge } from '@theme';
+
+# Introduction <Badge type="warning" outline>Pre-alpha</Badge>
+
+**Vue Lynx** is a Vue 3 custom renderer for [Lynx](https://lynxjs.org), enabling you to build native Lynx applications using Vue's familiar Composition API, single-file components, and reactive data model.
+
+If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Lynx.
+
+## Why Vue Lynx?
+
+- **Familiar Vue 3 API** — Use `ref()`, `computed()`, `v-for`, `v-if`, SFC `<script setup>`, and everything you love about Vue.
+- **Lynx Native Rendering** — Your UI renders through Lynx's high-performance native engine, not a WebView.
+- **Dual-Thread Architecture** — Vue runs on the background thread; the main thread handles native rendering. This separation keeps your app responsive.
+- **Main Thread Script (MTS)** — For latency-sensitive interactions (drag, scroll), mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
+- **Compatible with Lynx Ecosystem** — Works with [Rspeedy](https://lynxjs.org/next/guide/installation), LynxExplorer, Lynx DevTool, and the full Lynx toolchain.
+
+## How It Works
+
+Vue Lynx replaces Vue's DOM renderer with a custom renderer that produces a **ShadowElement** tree on the background thread. Changes are serialized as **ops** (operations) and flushed to the main thread, where they are applied to native Lynx elements.
+
+```
+┌────────────────────┐            ┌────────────────────┐
+│  Background Thread │    ops     │    Main Thread      │
+│  Vue 3 + Renderer  │ ────────▶  │  Native Elements    │
+└────────────────────┘            └────────────────────┘
+```
+
+## Vue vs React on Lynx
+
+Vue Lynx is to Vue what [ReactLynx](https://lynxjs.org/react) is to React. Both target the same Lynx runtime — the difference is the framework you use to describe your UI.
+
+| Feature              | Vue Lynx                             | ReactLynx                            |
+| -------------------- | ------------------------------------ | ------------------------------------ |
+| Create app           | `createApp(App).mount()`             | `root.render(<App />)`               |
+| State                | `const x = ref(val)`                 | `const [x, setX] = useState(val)`    |
+| Template             | SFC `<template>` with directives     | JSX                                  |
+| Lifecycle            | `onMounted(() => ...)`               | `useEffect(() => ..., [])`           |
+| Main Thread Script   | `'main thread'` directive            | `'main thread'` directive            |
+| Main Thread Ref      | `useMainThreadRef(null)`             | `useMainThreadRef(null)`             |
+
+## Next Steps
+
+- [Quick Start](/guide/quick-start) — Create your first Vue Lynx project
+- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with tap-to-like, auto-scroll, and MTS scrollbar
+- [Tutorial: Product Detail](/guide/tutorial-swiper) — Build a touch-swipeable image carousel with snap animation

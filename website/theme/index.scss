@@ -1,0 +1,180 @@
+@use 'sass:color';
+@import './semi.scss';
+
+// ======== Vue Lynx brand colors =========
+$vue-green: #42b883;
+$vue-dark: #35495e;
+$brand-teal: #00ddff;
+$brand-emerald: #34d399;
+
+// ======== Theme variables =========
+:root {
+  // Brand
+  --rp-c-brand: #{$vue-green};
+  --rp-c-brand-dark: #{$vue-green};
+  --rp-c-brand-darker: #{color.adjust($vue-green, $lightness: -10%)};
+  --rp-c-brand-light: #{color.adjust($vue-green, $lightness: 10%)};
+  --rp-c-brand-lighter: #{color.adjust($vue-green, $lightness: 20%)};
+  --rp-c-brand-tint: #{color.adjust($vue-green, $alpha: -0.85)};
+  --rp-c-link: var(--rp-c-brand);
+
+  // Home hero
+  --rp-home-hero-name-background: rgba(0, 0, 0, 0);
+  --rp-home-mask-background-image: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--rp-c-brand-light) 0deg,
+    180deg,
+    #{$brand-teal} 0deg
+  );
+  --rp-home-background-bg: none;
+
+  // Hero text
+  --hero-normal-text-color: #000;
+  --major-brand-color: #{$vue-green};
+  --second-brand-color: #{$brand-teal};
+  --gradient-brand-color: #{$brand-emerald};
+
+  // Features & showcase
+  --home-title-color: #111113;
+  --home-desc-color: #111113;
+  --home-features-item-bg: radial-gradient(
+      94.38% 84.84% at 0% 2.15%,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    rgba(255, 255, 255, 0.5);
+  --home-features-item-bg-border: 1px solid rgba(17, 17, 19, 0.08);
+  --home-features-item-desc-color: rgba(17, 17, 19, 0.65);
+  --home-features-item-action-btn-bg: #fff;
+  --home-blog-btn-border: 1px solid rgba(17, 17, 19, 0.12);
+  --home-blog-btn-color: rgba(0, 0, 0, 0.85);
+
+  // Banner
+  --home-banner-title-color: #060606;
+}
+
+:root.dark {
+  --hero-normal-text-color: #fff;
+  --major-brand-color: #5dd5a8;
+  --second-brand-color: #3deae7;
+  --gradient-brand-color: #{$brand-emerald};
+
+  --home-title-color: #fff;
+  --home-desc-color: rgba(255, 255, 255, 0.65);
+  --home-features-item-bg: rgba(255, 255, 255, 0.03);
+  --home-features-item-bg-border: 1px solid rgba(255, 255, 255, 0.06);
+  --home-features-item-desc-color: rgba(255, 255, 255, 0.65);
+  --home-features-item-action-btn-bg: rgba(255, 255, 255, 0.16);
+  --home-blog-btn-border: 1px solid rgba(255, 255, 255, 0.12);
+  --home-blog-btn-color: rgba(255, 255, 255, 0.85);
+
+  --home-banner-title-color: #fff;
+}
+
+// ======== Hero text styling =========
+.hero-title {
+  animation: fade-in 0.8s ease-out;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  max-width: 100%;
+
+  .brand {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(
+      270deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color),
+      var(--second-brand-color),
+      var(--gradient-brand-color),
+      var(--major-brand-color)
+    );
+    background-size: 200% 100%;
+    animation:
+      fade-in 0.8s ease-out,
+      gradientMove 6s linear infinite;
+  }
+
+  .normal {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: var(--hero-normal-text-color);
+    background-color: var(--hero-normal-text-color);
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
+}
+
+// ======== Home layout =========
+.home-layout-container {
+  .rp-home-hero__container {
+    position: relative;
+
+    &::before {
+      content: '';
+      background-image: var(--rp-home-mask-background-image);
+      filter: blur(80px);
+      opacity: 0.05;
+      z-index: 1000;
+      border-radius: 100%;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      pointer-events: none;
+    }
+  }
+
+  .rp-home-hero__title-brand {
+    background: none;
+  }
+
+  @media (max-width: 1000px) {
+    .rp-home-hero {
+      margin-top: 54px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .rp-home-hero .rp-home-hero__title {
+      font-size: 2rem;
+    }
+  }
+}
+
+// ======== Code block in hero =========
+.home-hero-codeblock .rp-codeblock {
+  background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+
+  @media (max-width: 640px) {
+    margin: 6px 0 !important;
+    background-color: transparent !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+.rspress-home-hero-tagline {
+  color: var(--home-features-item-desc-color);
+}

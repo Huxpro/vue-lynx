@@ -1,0 +1,36 @@
+{
+  "name": "vue-lynx-website",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-examples": "node scripts/prepare-examples.mjs",
+    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts",
+    "dev": "pnpm prepare:docs && rspress dev",
+    "dev:fast": "rspress dev",
+    "build": "pnpm prepare:docs && rspress build",
+    "preview": "rspress preview"
+  },
+  "dependencies": {
+    "@douyinfe/semi-icons": "^2.74.0",
+    "@douyinfe/semi-ui": "^2.75.0",
+    "@lynx-js/web-core": "^0.19.8",
+    "@lynx-js/web-elements": "^0.12.0",
+    "@rspress/core": "^2.0.3",
+    "@rspress/plugin-llms": "^2.0.5",
+    "qrcode.react": "^4.2.0",
+    "react-copy-to-clipboard": "^5.1.0",
+    "swr": "^2.2.5",
+    "vscode-icons-js": "^11.6.1"
+  },
+  "devDependencies": {
+    "@rsbuild/plugin-sass": "^1.5.1",
+    "@shikijs/transformers": "^3.2.1",
+    "@types/react-copy-to-clipboard": "^5.0.7",
+    "sass": "^1.80.0",
+    "tsx": "^4.19.4",
+    "typedoc": "^0.26.11",
+    "typedoc-plugin-markdown": "~4.2.10",
+    "typescript": "~5.6.3"
+  }
+}

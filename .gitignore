@@ -5,3 +5,5 @@ dist/
 upstream-tests/core/
 *.log
 .DS_Store
+website/docs/guide/api/
+website/api-sidebar.json

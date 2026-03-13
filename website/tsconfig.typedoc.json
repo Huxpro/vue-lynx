@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "incremental": false,
+    "isolatedDeclarations": false,
+    "noEmit": true
+  },
+  "include": [
+    "./typedoc-globals.d.ts",
+    "../runtime/src/**/*.ts",
+    "../plugin/src/**/*.ts",
+    "../internal/src/**/*.ts",
+    "../testing-library/src/**/*.ts"
+  ]
+}
