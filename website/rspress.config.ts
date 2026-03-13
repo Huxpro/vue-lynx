@@ -50,7 +50,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'Guide',
         },
-        { text: 'Introduction', link: '/guide/introduction' },
+        { text: 'What is Vue Lynx?', link: '/guide/introduction' },
         { text: 'Quick Start', link: '/guide/quick-start' },
         { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Product Detail (Swiper)', link: '/guide/tutorial-swiper' },

@@ -1,10 +1,10 @@
-# Introduction
+# What is Vue Lynx?
 
 **Vue Lynx** is a Vue 3 custom renderer for [Lynx](https://lynxjs.org), enabling you to build native Lynx applications using Vue's familiar Composition API, single-file components, and reactive data model.
 
 If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Lynx.
 
-## Why Vue Lynx?
+## Main Features
 
 - **Familiar Vue 3 API** — Use `ref()`, `computed()`, `v-for`, `v-if`, SFC `<script setup>`, and everything you love about Vue.
 - **Lynx Native Rendering** — Your UI renders through Lynx's high-performance native engine, not a WebView.
@@ -12,29 +12,62 @@ If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Ly
 - **Main Thread Script (MTS)** — For latency-sensitive interactions (drag, scroll), mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
 - **Compatible with Lynx Ecosystem** — Works with [Rspeedy](https://lynxjs.org/next/guide/installation), LynxExplorer, Lynx DevTool, and the full Lynx toolchain.
 
-## How It Works
+## For Vue Web Developers
 
-Vue Lynx replaces Vue's DOM renderer with a custom renderer that produces a **ShadowElement** tree on the background thread. Changes are serialized as **ops** (operations) and flushed to the main thread, where they are applied to native Lynx elements.
+If you're coming from Vue on the web, most of what you know carries over. Here are the key differences.
+
+### How it works
+
+Vue Lynx replaces Vue's DOM renderer with a [custom renderer](https://vuejs.org/api/custom-renderer) that produces a **ShadowElement** tree on the background thread. Changes are serialized as **ops** (operations) and flushed to the main thread, where they are applied to native Lynx elements.
 
 ```
 ┌────────────────────┐            ┌────────────────────┐
-│  Background Thread │    ops     │    Main Thread      │
-│  Vue 3 + Renderer  │ ────────▶  │  Native Elements    │
+│  Background Thread │    ops     │    Main Thread     │
+│  Vue 3 + Renderer  │ ────────▶  │  Native Elements   │
 └────────────────────┘            └────────────────────┘
 ```
 
-## Vue vs React on Lynx
+### Change your `import`
 
-Vue Lynx is to Vue what [ReactLynx](https://lynxjs.org/react) is to React. Both target the same Lynx runtime — the difference is the framework you use to describe your UI.
+Vue Lynx re-exports the Vue API, so you can replace `vue` with `vue-lynx`:
 
-| Feature              | Vue Lynx                             | ReactLynx                            |
-| -------------------- | ------------------------------------ | ------------------------------------ |
-| Create app           | `createApp(App).mount()`             | `root.render(<App />)`               |
-| State                | `const x = ref(val)`                 | `const [x, setX] = useState(val)`    |
-| Template             | SFC `<template>` with directives     | JSX                                  |
-| Lifecycle            | `onMounted(() => ...)`               | `useEffect(() => ..., [])`           |
-| Main Thread Script   | `'main thread'` directive            | `'main thread'` directive            |
-| Main Thread Ref      | `useMainThreadRef(null)`             | `useMainThreadRef(null)`             |
+```diff
+- import { ref, computed, onMounted } from 'vue';
++ import { ref, computed, onMounted } from 'vue-lynx';
+```
+
+### Different elements
+
+Lynx provides native elements instead of HTML. Use `<view>`, `<text>`, `<image>`, etc. in place of `<div>`, `<span>`, `<img>`:
+
+```diff
+- <div class="card">
+-   <span>{{ message }}</span>
+- </div>
++ <view class="card">
++   <text>{{ message }}</text>
++ </view>
+```
+
+:::info
+Text content must be wrapped in `<text>` — Lynx does not support bare text nodes inside `<view>`.
+:::
+
+### Different events
+
+Lynx uses its own event system. Use `:bindeventname` for events that propagate, and `:catcheventname` for events that don't:
+
+```diff
+- <div @click="handleClick" @touchstart="onTouch">
++ <view :bindtap="handleClick" :bindtouchstart="onTouch">
+```
+
+See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-handling.html) for more details.
+
+### No `document` or `window`
+
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` will not work. Lynx provides its own APIs (e.g. `lynx.reload()`) and extensibility via [NativeModules](https://lynxjs.org/guide/use-native-modules.html) and [Custom Elements](https://lynxjs.org/guide/custom-native-component.html).
+
 
 ## Next Steps
 

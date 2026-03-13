@@ -318,7 +318,7 @@ for (const pkg of packages) {
     text: pkg.label,
     link: `/guide/api/${pkg.dirName}/`,
     collapsible: true,
-    collapsed: sidebarGroups.length > 0,
+    collapsed: true,
     items,
   });
 }
