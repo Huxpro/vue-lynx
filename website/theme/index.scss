@@ -147,8 +147,40 @@ $brand-emerald: #34d399;
     }
   }
 
-  .rp-home-hero__title-brand {
-    background: none;
+  .rp-home-hero__name {
+    width: auto !important;
+    max-width: max-content;
+    display: inline-flex !important;
+    align-items: center;
+    margin-bottom: 16px !important;
+    padding: 6px 20px !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    -webkit-background-clip: padding-box !important;
+    background-clip: padding-box !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(10px) !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 24px !important;
+    letter-spacing: 0 !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+    -webkit-text-fill-color: rgba(0, 0, 0, 0.65) !important;
+    cursor: pointer;
+
+    a {
+      color: inherit !important;
+      -webkit-text-fill-color: inherit !important;
+      text-decoration: none;
+    }
+  }
+
+  :root.dark & .rp-home-hero__name {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
   }
 
   @media (max-width: 1000px) {
@@ -158,6 +190,12 @@ $brand-emerald: #34d399;
   }
 
   @media (max-width: 640px) {
+    .rp-home-hero__name {
+      font-size: 10px !important;
+      padding: 4px 14px !important;
+      margin-bottom: 12px !important;
+    }
+
     .rp-home-hero .rp-home-hero__title {
       font-size: 2rem;
     }
