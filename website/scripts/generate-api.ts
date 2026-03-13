@@ -236,50 +236,30 @@ Vue Lynx Testing Library provides simple utilities for testing Vue 3 Lynx compon
 
 > Inspired by [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro/) and [@lynx-js/react/testing-library](https://lynxjs.org/api/reactlynx-testing-library/)
 
-## Setup
+For setup instructions and examples, see the [VueLynx Testing Library guide](/guide/testing-library).
 
-Install and configure vitest with \`@lynx-js/testing-environment\`:
-
-\`\`\`js
-// vitest.config.js
-import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-  test: {
-    environment: '@lynx-js/testing-environment',
-  },
-});
-\`\`\`
-
-## Usage
-
-\`\`\`vue
-<!-- Counter.vue -->
-<script setup>
-import { ref } from 'vue-lynx';
-const count = ref(0);
-<\/script>
-
-<template>
-  <view>
-    <text data-testid="count">{{ count }}</text>
-    <text data-testid="increment" bindtap="count++">+1</text>
-  </view>
-</template>
-\`\`\`
+## Quick Example
 
 \`\`\`ts
-import { test, expect } from 'vitest';
-import { render, fireEvent } from 'vue-lynx/testing-library';
-import Counter from './Counter.vue';
+import { expect, it, vi } from 'vitest';
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
 
-test('increments count on tap', async () => {
-  const { getByTestId } = render(Counter);
+it('fires tap event', () => {
+  const onClick = vi.fn();
+  const Comp = defineComponent({
+    setup() {
+      return () => h('view', { bindtap: onClick }, [
+        h('text', null, 'Click me'),
+      ]);
+    },
+  });
 
-  expect(getByTestId('count').textContent).toBe('0');
+  const { container, getByText } = render(Comp);
+  fireEvent.tap(container.querySelector('view')!);
 
-  await fireEvent(getByTestId('increment'), 'tap');
-  expect(getByTestId('count').textContent).toBe('1');
+  expect(onClick).toHaveBeenCalledTimes(1);
+  expect(getByText('Click me')).not.toBeNull();
 });
 \`\`\`
 
