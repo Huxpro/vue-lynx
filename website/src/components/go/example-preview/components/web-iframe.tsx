@@ -88,7 +88,7 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         // Replace webpack public path assignment (e.g. .p="/") with
         // the actual base URL of the bundle directory
         const rewritten = text.replace(
-          /\.p=\\"/\\"/g,
+          new RegExp('\\.p=\\\\".\\\\"', 'g'),
           `.p=\\"${baseUrl}\\"`,
         );
         return JSON.parse(rewritten);
