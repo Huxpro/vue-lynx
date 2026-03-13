@@ -5,12 +5,14 @@
  * Replaces the lynx-website pattern of publishing @lynx-example/* npm packages.
  */
 
+import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const EXAMPLES_SRC = path.resolve(__dirname, '../../examples');
+const REPO_ROOT = path.resolve(__dirname, '../..');
+const EXAMPLES_SRC = path.resolve(REPO_ROOT, 'examples');
 const EXAMPLES_DEST = path.resolve(__dirname, '../docs/public/examples');
 const EXAMPLE_GIT_BASE_URL = 'https://github.com/huxpro/vue-lynx/tree/main/examples';
 
@@ -199,11 +201,39 @@ if (fs.existsSync(EXAMPLES_DEST)) {
 }
 fs.mkdirSync(EXAMPLES_DEST, { recursive: true });
 
-// Process each example
+// Discover example directories
 const examples = fs.readdirSync(EXAMPLES_SRC, { withFileTypes: true })
   .filter((d) => d.isDirectory() && !SKIP_DIRS.has(d.name))
   .map((d) => d.name);
 
+// Build examples that don't have dist/ yet (e.g. on CI/Vercel where dist is gitignored)
+const needsBuild = examples.some((example) =>
+  !fs.existsSync(path.join(EXAMPLES_SRC, example, 'dist')),
+);
+
+if (needsBuild) {
+  // Examples depend on vue-lynx (workspace:*), so build the lib first if needed
+  const libBuilt = fs.existsSync(path.join(REPO_ROOT, 'plugin/dist/index.js'));
+  if (!libBuilt) {
+    console.info('Building vue-lynx library (required by examples)...');
+    execSync('pnpm build', { cwd: REPO_ROOT, stdio: 'inherit' });
+  }
+
+  for (const example of examples) {
+    const exampleDir = path.join(EXAMPLES_SRC, example);
+    const distDir = path.join(exampleDir, 'dist');
+    if (!fs.existsSync(distDir)) {
+      console.info(`Building example: ${example} (no dist/ found)`);
+      try {
+        execSync('pnpm build', { cwd: exampleDir, stdio: 'inherit' });
+      } catch (err) {
+        console.error(`  ⚠ Failed to build ${example}:`, err.message);
+      }
+    }
+  }
+}
+
+// Process each example
 for (const example of examples) {
   processExample(example);
 }
