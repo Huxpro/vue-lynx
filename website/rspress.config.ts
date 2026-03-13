@@ -62,6 +62,7 @@ export default defineConfig({
         },
         { text: '7 GUIs', link: '/guide/7guis' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
+        { text: 'Vue Feature Coverage', link: '/guide/vue-feature-coverage' },
         {
           dividerType: 'solid',
         },

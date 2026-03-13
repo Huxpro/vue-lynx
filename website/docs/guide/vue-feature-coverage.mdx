@@ -1,0 +1,55 @@
+# Vue Feature Coverage
+
+Vue Lynx aims to support the full Vue 3 API surface. The core rendering path — Composition API, SFCs, reactivity, directives — is covered by the [basic example](/guide/quick-start) and tutorials.
+
+This page collects examples for Vue features **beyond the core path**: APIs and patterns that are important for broader Vue ecosystem compatibility but may still be experimental or carry caveats on Lynx.
+
+## Options API
+
+Vue 3 ships the Options API alongside the Composition API for backward compatibility.
+By default, Vue Lynx enables it (`optionsApi: true` in the plugin), but you can disable it to reduce bundle size:
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  optionsApi: false, // tree-shakes the Options API runtime (~9 kB)
+})
+```
+
+The example below uses `defineComponent` with `data()`, `computed`, `watch`, `methods`, and the `mounted` lifecycle hook:
+
+<Go
+  example="option-api"
+  defaultFile="src/App.vue"
+  img="/assets/option-api-preview.png"
+/>
+
+{/* ## Transition
+
+Vue's `<Transition>` component applies enter/leave animations when an element is inserted or removed.
+On Lynx, CSS class-based transitions require the CSS Selector feature to be enabled.
+
+> **Status: Experimental** — CSS class-based enter/leave works. `<TransitionGroup>` and move transitions are not yet supported.
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableCSSSelector: true, // required for class-based transitions
+})
+```
+*/}
+
+{/* ## Suspense
+
+Vue's `<Suspense>` displays fallback content while waiting for async components or async `setup()` to resolve.
+
+> **Status: Experimental** — Basic `<Suspense>` with `#default` / `#fallback` slots works. Edge cases around error handling and nested suspense are not fully validated.
+*/}
+
+{/* ## KeepAlive
+
+`<KeepAlive>` is **not supported** on Lynx. It requires an internal storage container created via `createElement('div')`, which produces an orphan native element with undefined behavior. Use manual state caching if you need component persistence.
+*/}
+
+{/* ## Teleport
+
+`<Teleport>` is **not supported** on Lynx. It requires `querySelector` to resolve string targets, which is unavailable in the dual-thread architecture. Content will not be teleported.
+*/}
