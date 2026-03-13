@@ -1,3 +1,8 @@
+<!--
+  SlowContent.vue — Content that appears after the artificial delay.
+  The delay is applied in the defineAsyncComponent wrapper,
+  so this component itself is synchronous.
+-->
 <script setup lang="ts">
 const loadedAt = new Date().toLocaleTimeString()
 </script>

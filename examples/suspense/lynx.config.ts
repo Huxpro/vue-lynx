@@ -16,6 +16,7 @@ export default defineConfig({
   source: {
     entry: {
       main: './src/index.ts',
+      'define-async': './src/define-async.ts',
     },
   },
   plugins: [
