@@ -2,40 +2,21 @@ import { PackageManagerTabs } from '@theme';
 
 # VueLynx Testing Library
 
-Vue Lynx provides a testing library (`vue-lynx-testing-library`) that lets you test Vue Lynx components in Node.js using [Vitest](https://vitest.dev) — no device or emulator required. It renders components through the full dual-thread pipeline and outputs to JSDOM, so you can query and assert against real rendered output.
-
-If you've used [Vue Test Utils](https://test-utils.vuejs.org/) or [React Testing Library](https://testing-library.com/docs/react-testing-library/intro), the API will feel familiar.
-
-## How It Works
-
-The testing library simulates Lynx's dual-thread architecture in a single Node.js process using [`@lynx-js/testing-environment`](https://www.npmjs.com/package/@lynx-js/testing-environment):
-
-```
-┌─────────────────────────┐           ┌─────────────────────────┐
-│   Background Thread     │   ops     │     Main Thread         │
-│   Vue 3 + Renderer      │ ────────▶ │   PAPI → JSDOM          │
-│   (component logic)     │           │   (rendered elements)   │
-└─────────────────────────┘           └─────────────────────────┘
-```
-
-1. `render()` mounts your Vue component on the background thread.
-2. Vue's renderer produces **ops** (operations) that describe element creation, attribute changes, etc.
-3. Ops are applied synchronously to the main thread's PAPI layer, which writes to JSDOM.
-4. You query and assert against the JSDOM container using `@testing-library/dom` queries.
-
-This means your tests exercise the same code path as production — from Vue reactivity through the ops protocol to native element creation.
+The `vue-lynx-testing-library` package offers APIs like `render`, `fireEvent`, and `screen` for testing Vue Lynx components, similar to [Vue Test Utils](https://test-utils.vuejs.org/) and [React Testing Library](https://testing-library.com/), with the dual-threaded architecture abstracted through [`@lynx-js/testing-environment`](https://www.npmjs.com/package/@lynx-js/testing-environment).
 
 ## Setup
 
-### Prerequisites
+### From create-vue-lynx
+
+Using `create-vue-lynx` sets up VueLynx Testing Library automatically, providing pre-configured testing support.
+
+### Adding to an existing project
 
 Install the required dependencies:
 
 <PackageManagerTabs command="add -D vitest jsdom @lynx-js/testing-environment @testing-library/dom @testing-library/jest-dom" />
 
-### Vitest Configuration
-
-Create a `vitest.config.ts` that aliases `vue-lynx` subpaths to their source (or dist) files and registers the setup file:
+For Vitest configuration, create a `vitest.config.ts` that aliases `vue-lynx` subpaths and registers the setup file:
 
 ```ts title="vitest.config.ts"
 import { defineConfig } from 'vitest/config';
@@ -81,9 +62,7 @@ export default defineConfig({
 });
 ```
 
-### Setup File
-
-Create a setup file that initializes the dual-thread testing environment. This runs before any test module is imported, so all Lynx globals are in place when Vue's runtime loads.
+Create a setup file that initializes the dual-thread testing environment. This runs before any test module is imported, so all Lynx globals are in place when Vue's runtime loads:
 
 ```ts title="test/setup.ts"
 import { JSDOM } from 'jsdom';
@@ -108,7 +87,6 @@ const mainThreadFns = {
   updatePage: (globalThis as any).updatePage,
   updateGlobalProps: (globalThis as any).updateGlobalProps,
 };
-
 const mtGlobal = lynxTestingEnv.mainThread.globalThis as any;
 Object.assign(mtGlobal, mainThreadFns);
 
@@ -124,7 +102,6 @@ bgGlobal.publishEvent = publishEventFn;
 (globalThis as any).onSwitchedToMainThread = () => {
   Object.assign(globalThis, mainThreadFns);
 };
-
 (globalThis as any).onSwitchedToBackgroundThread = () => {
   if ((globalThis as any).lynxCoreInject?.tt) {
     (globalThis as any).lynxCoreInject.tt.publishEvent = publishEventFn;
@@ -133,244 +110,344 @@ bgGlobal.publishEvent = publishEventFn;
 };
 ```
 
-## Writing Tests
+## Examples
 
-### Basic Rendering
+### Quick Start
 
-Use `render()` to mount a component and query the output:
+Follow the **Arrange-Act-Assert** pattern: prepare test data, perform operations, then assert results:
 
-```ts title="test/hello.test.ts"
-import { describe, it, expect } from 'vitest';
+```ts
+import '@testing-library/jest-dom';
+import { expect, it, vi } from 'vitest';
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent, screen } from 'vue-lynx-testing-library';
+
+it('basic', async () => {
+  const onClick = vi.fn();
+
+  const Button = defineComponent({
+    props: { onClick: Function },
+    setup(props, { slots }) {
+      return () => h('view', { bindtap: props.onClick }, slots.default?.());
+    },
+  });
+
+  // ARRANGE
+  const { container } = render(
+    defineComponent({
+      setup() {
+        return () =>
+          h(Button, { onClick }, [
+            h('text', { 'data-testid': 'text' }, 'Click me'),
+          ]);
+      },
+    }),
+  );
+
+  expect(onClick).not.toHaveBeenCalled();
+
+  // ACT
+  fireEvent.tap(container.firstElementChild!);
+
+  // ASSERT
+  expect(onClick).toBeCalledTimes(1);
+  expect(screen.getByTestId('text')).toHaveTextContent('Click me');
+});
+```
+
+VueLynx Testing Library uses JSDOM to implement [Element PAPI](https://lynxjs.org/guide/spec.html), ensuring compatibility with [`@testing-library/jest-dom`](https://github.com/testing-library/jest-dom) matchers like `toHaveTextContent`.
+
+### Basic rendering
+
+The `render` method returns a `RenderResult` object with a `container` field containing the rendered result:
+
+```ts
+import '@testing-library/jest-dom';
+import { expect, it } from 'vitest';
 import { h, defineComponent } from 'vue-lynx';
 import { render } from 'vue-lynx-testing-library';
 
-describe('HelloWorld', () => {
-  it('renders a greeting', () => {
-    const Comp = defineComponent({
-      render() {
-        return h('view', null, [
-          h('text', null, 'Hello Lynx'),
-        ]);
-      },
-    });
-
-    const { container } = render(Comp);
-    const textEl = container.querySelector('text');
-    expect(textEl).not.toBeNull();
-    expect(textEl!.textContent).toBe('Hello Lynx');
+it('basic render', () => {
+  const Comp = defineComponent({
+    render() {
+      return h('view', { 'data-testid': 'inner', style: { backgroundColor: 'yellow' } });
+    },
   });
+
+  const { container, getByTestId } = render(Comp);
+  expect(getByTestId('inner')).toBeInTheDocument();
+  expect(container.querySelector('view')).not.toBeNull();
 });
 ```
 
-`render()` returns a `RenderResult` containing:
+### Firing events
 
-| Property | Description |
-|---|---|
-| `container` | The JSDOM root element with all rendered children |
-| `unmount()` | Unmount the current Vue app |
-| `rerender(component, props?)` | Re-render with a new root component |
-| `getByText()`, `queryByRole()`, ... | All [`@testing-library/dom`](https://testing-library.com/docs/queries/about) queries, bound to the container |
+When using `fireEvent`, the event type is determined by the handler property name on the element. The format follows `eventType:eventName` (e.g., `catchEvent:tap` triggers a catch-type tap event). Event handler properties determine the event type:
 
-### Testing Reactivity
+| Event Type | `eventType` | Binding Example | Triggering Example |
+|---|---|---|---|
+| `bind` | `bindEvent` | `bindtap` | `fireEvent.tap(el)` |
+| `catch` | `catchEvent` | `catchtap` | `fireEvent.tap(el, { eventType: 'catchEvent' })` |
+| `capture-bind` | `capture-bind` | `capture-bindtap` | `fireEvent.tap(el, { eventType: 'capture-bind' })` |
+| `capture-catch` | `capture-catch` | `capture-catchtap` | `fireEvent.tap(el, { eventType: 'capture-catch' })` |
 
-After changing reactive state outside of an event handler, call `await nextTick()` twice (once for Vue's scheduler, once for the ops flush to main thread) — or use `waitForUpdate()`:
+You can construct Event objects directly or use the named helpers for automatic construction:
 
 ```ts
-import { describe, it, expect } from 'vitest';
+import { h, defineComponent, nextTick } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
+import { vi, expect, it } from 'vitest';
+
+it('fireEvent', async () => {
+  const handler = vi.fn();
+
+  const Comp = defineComponent({
+    setup() {
+      return () => h('text', { catchtap: handler });
+    },
+  });
+
+  const { container } = render(Comp);
+  const button = container.firstElementChild!;
+
+  expect(handler).toHaveBeenCalledTimes(0);
+
+  // Method 1: Use the named helper
+  fireEvent.tap(button, {
+    eventType: 'catchEvent',
+    key: 'value',
+  });
+
+  expect(handler).toHaveBeenCalledTimes(1);
+
+  // Method 2: Construct the Event object yourself
+  const event = new Event('catchEvent:tap');
+  Object.assign(event, {
+    eventType: 'catchEvent',
+    eventName: 'tap',
+    key: 'value2',
+  });
+  fireEvent(button, event);
+
+  expect(handler).toHaveBeenCalledTimes(2);
+});
+```
+
+The following event helpers are available:
+
+| Helper | Event Name |
+|---|---|
+| `fireEvent.tap(el)` | `tap` |
+| `fireEvent.longtap(el)` | `longtap` |
+| `fireEvent.longpress(el)` | `longpress` |
+| `fireEvent.touchstart(el)` | `touchstart` |
+| `fireEvent.touchmove(el)` | `touchmove` |
+| `fireEvent.touchend(el)` | `touchend` |
+| `fireEvent.touchcancel(el)` | `touchcancel` |
+| `fireEvent.scroll(el)` | `scroll` |
+| `fireEvent.scrollend(el)` | `scrollend` |
+| `fireEvent.focus(el)` | `focus` |
+| `fireEvent.blur(el)` | `blur` |
+| `fireEvent.layoutchange(el)` | `layoutchange` |
+| `fireEvent.transitionend(el)` | `transitionend` |
+| `fireEvent.animationend(el)` | `animationend` |
+
+### Testing reactivity
+
+After changing reactive state, use `await nextTick(); await nextTick()` to wait for Vue's scheduler to flush and for the ops to be applied on the main thread. The convenience helper `waitForUpdate()` wraps both calls:
+
+```ts
 import { h, defineComponent, ref, nextTick } from 'vue-lynx';
 import { render, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
 
-describe('reactivity', () => {
-  it('updates text when ref changes', async () => {
-    const count = ref(0);
+it('updates text when ref changes', async () => {
+  const count = ref(0);
 
-    const Comp = defineComponent({
-      setup() {
-        return () => h('text', null, `Count: ${count.value}`);
-      },
-    });
-
-    const { container } = render(Comp);
-    expect(container.querySelector('text')!.textContent).toBe('Count: 0');
-
-    count.value = 42;
-    await waitForUpdate();
-
-    expect(container.querySelector('text')!.textContent).toBe('Count: 42');
+  const Comp = defineComponent({
+    setup() {
+      return () => h('text', null, `Count: ${count.value}`);
+    },
   });
+
+  const { container } = render(Comp);
+  expect(container.querySelector('text')!.textContent).toBe('Count: 0');
+
+  count.value = 42;
+  await waitForUpdate();
+
+  expect(container.querySelector('text')!.textContent).toBe('Count: 42');
 });
 ```
 
-:::tip Why two `nextTick()` calls?
-Vue Lynx has a dual-thread architecture. The first `nextTick()` waits for Vue's reactive scheduler to flush on the background thread. The second waits for the ops to be applied on the main thread. `waitForUpdate()` wraps both calls for convenience.
+### Testing template refs
+
+Vue Lynx sets a `vue-ref-{id}` attribute on elements, which can be used for snapshot testing to verify ref assignment. The `ShadowElement` (background thread representation) provides `NodesRef` methods like `invoke`, `setNativeProps`, and `animate`:
+
+```ts
+import { h, defineComponent, ShadowElement } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('element ref', () => {
+  const Comp = defineComponent({
+    render() {
+      return h('view', null, [h('text', null, 'hello')]);
+    },
+  });
+
+  const { container } = render(Comp);
+  const view = container.querySelector('view')!;
+
+  // Vue Lynx sets vue-ref-{id} attribute for elements
+  expect(view.hasAttribute('vue-ref-2')).toBe(true);
+});
+
+it('ShadowElement has NodesRef methods', () => {
+  const el = new ShadowElement('view');
+  expect(typeof el.invoke).toBe('function');
+  expect(typeof el.setNativeProps).toBe('function');
+  expect(typeof el.animate).toBe('function');
+});
+```
+
+### Querying page elements
+
+The `screen` object provides query methods like `getByText` and `getByTestId`:
+
+```ts
+import '@testing-library/jest-dom';
+import { h, defineComponent, ref, nextTick } from 'vue-lynx';
+import { render, screen, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('queries rendered elements', async () => {
+  const loaded = ref(false);
+
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        loaded.value
+          ? h('text', { 'data-testid': 'message' }, 'Hello World')
+          : h('text', null, 'Loading...');
+    },
+  });
+
+  render(Comp);
+  expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+  loaded.value = true;
+  await waitForUpdate();
+
+  expect(screen.getByTestId('message')).toHaveTextContent('Hello World');
+});
+```
+
+### Rerendering
+
+The `render` method returns an object with a `rerender` method for testing different component states:
+
+```ts
+import '@testing-library/jest-dom';
+import { h, defineComponent } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('rerender will re-render your component', () => {
+  const Greeting = defineComponent({
+    props: { message: String },
+    render() {
+      return h('text', null, this.message);
+    },
+  });
+
+  const { container, rerender } = render(Greeting, { message: 'hi' });
+  expect(container.querySelector('text')!).toHaveTextContent('hi');
+
+  {
+    const { container } = rerender(Greeting, { message: 'hey' });
+    expect(container.querySelector('text')!).toHaveTextContent('hey');
+  }
+});
+```
+
+### Testing list
+
+The `list` element renders `list-item` children. Items are described declaratively and the native list handles lazy loading:
+
+```ts
+import { h, defineComponent, ref, nextTick } from 'vue-lynx';
+import { render, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('list', async () => {
+  const items = ref([0, 1, 2]);
+
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        h(
+          'list',
+          null,
+          items.value.map((item) =>
+            h('list-item', { key: item, 'item-key': item }, [
+              h('text', null, `${item}`),
+            ]),
+          ),
+        );
+    },
+  });
+
+  const { container } = render(Comp);
+  const list = container.querySelector('list');
+  expect(list).not.toBeNull();
+
+  // Add items reactively
+  items.value = [0, 1, 2, 3];
+  await waitForUpdate();
+
+  expect(container.querySelector('list')).not.toBeNull();
+});
+```
+
+### Testing Main Thread Script
+
+Main Thread Script testing requires no special configuration. Note that background thread methods cannot be called directly from main thread scripts; place callback functions on `globalThis` for assertion:
+
+```ts
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
+import { expect, it, vi } from 'vitest';
+
+it('main thread script', () => {
+  (globalThis as any).cb = vi.fn();
+
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        h('view', {
+          'main-thread-bindtap': {
+            _wkltId: 1,
+            _closure: {},
+          },
+        }, [
+          h('text', null, 'Hello Main Thread Script'),
+        ]);
+    },
+  });
+
+  const { container } = render(Comp);
+  expect(container.querySelector('text')!.textContent).toBe('Hello Main Thread Script');
+});
+```
+
+:::info
+In production, `'main thread'` directive functions are transformed by the build plugin into worklet context objects. In tests, you can pass the worklet context directly as shown above, or use the SWC transform if your Vitest config includes the worklet loader.
 :::
 
-### Testing Events
+### More usage
 
-Use `fireEvent` to simulate Lynx events. Event handlers run through the same pipeline as production — dispatched on the JSDOM element, routed through `publishEvent` to the background thread handler.
-
-```ts
-import { describe, it, expect } from 'vitest';
-import { h, defineComponent, ref, nextTick } from 'vue-lynx';
-import { render, fireEvent } from 'vue-lynx-testing-library';
-
-describe('events', () => {
-  it('handles tap events', async () => {
-    const count = ref(0);
-
-    const Comp = defineComponent({
-      setup() {
-        return () =>
-          h('view', { bindtap: () => count.value++ }, [
-            h('text', null, `${count.value}`),
-          ]);
-      },
-    });
-
-    const { container } = render(Comp);
-    expect(container.querySelector('text')!.textContent).toBe('0');
-
-    fireEvent.tap(container.querySelector('view')!);
-    await nextTick();
-    await nextTick();
-
-    expect(container.querySelector('text')!.textContent).toBe('1');
-  });
-});
-```
-
-#### Supported Events
-
-`fireEvent` provides named helpers for all standard Lynx events:
-
-| Helper | Lynx Event |
-|---|---|
-| `fireEvent.tap(el)` | `bindEvent:tap` |
-| `fireEvent.longtap(el)` | `bindEvent:longtap` |
-| `fireEvent.touchstart(el)` | `bindEvent:touchstart` |
-| `fireEvent.touchmove(el)` | `bindEvent:touchmove` |
-| `fireEvent.touchend(el)` | `bindEvent:touchend` |
-| `fireEvent.touchcancel(el)` | `bindEvent:touchcancel` |
-| `fireEvent.scroll(el)` | `bindEvent:scroll` |
-| `fireEvent.scrollend(el)` | `bindEvent:scrollend` |
-| `fireEvent.focus(el)` | `bindEvent:focus` |
-| `fireEvent.blur(el)` | `bindEvent:blur` |
-| `fireEvent.layoutchange(el)` | `bindEvent:layoutchange` |
-| `fireEvent.transitionend(el)` | `bindEvent:transitionend` |
-| `fireEvent.animationend(el)` | `bindEvent:animationend` |
-| `fireEvent.longpress(el)` | `bindEvent:longpress` |
-
-You can also pass custom event init data:
-
-```ts
-fireEvent.tap(el, { detail: { x: 100, y: 200 } });
-```
-
-To fire `catchEvent` (non-propagating) handlers instead of `bindEvent`:
-
-```ts
-fireEvent.tap(el, { eventType: 'catchEvent' });
-```
-
-### Testing Conditional Rendering
-
-```ts
-import { describe, it, expect } from 'vitest';
-import { h, defineComponent, ref, nextTick, createCommentVNode } from 'vue-lynx';
-import { render } from 'vue-lynx-testing-library';
-
-describe('v-if', () => {
-  it('toggles content reactively', async () => {
-    const show = ref(true);
-
-    const Comp = defineComponent({
-      setup() {
-        return () =>
-          h('view', null, [
-            show.value
-              ? h('text', null, 'visible')
-              : createCommentVNode('v-if'),
-          ]);
-      },
-    });
-
-    const { container } = render(Comp);
-    expect(container.querySelectorAll('text').length).toBe(1);
-
-    show.value = false;
-    await nextTick();
-    await nextTick();
-
-    expect(container.querySelectorAll('text').length).toBe(0);
-  });
-});
-```
-
-### Testing List Rendering
-
-```ts
-import { describe, it, expect } from 'vitest';
-import { h, defineComponent, ref, nextTick } from 'vue-lynx';
-import { render } from 'vue-lynx-testing-library';
-
-describe('v-for', () => {
-  it('updates list reactively', async () => {
-    const items = ref(['Apple', 'Banana']);
-
-    const Comp = defineComponent({
-      setup() {
-        return () =>
-          h(
-            'view',
-            null,
-            items.value.map((item) => h('text', { key: item }, item)),
-          );
-      },
-    });
-
-    const { container } = render(Comp);
-    expect(container.querySelectorAll('text').length).toBe(2);
-
-    items.value = ['Apple', 'Banana', 'Cherry'];
-    await nextTick();
-    await nextTick();
-
-    const texts = container.querySelectorAll('text');
-    expect(texts.length).toBe(3);
-    expect(texts[2]!.textContent).toBe('Cherry');
-  });
-});
-```
-
-### Testing with Props
-
-Pass props to the root component via the second argument to `render()`:
-
-```ts
-const Greeting = defineComponent({
-  props: {
-    name: { type: String, required: true },
-  },
-  render() {
-    return h('text', null, `Hello, ${this.name}!`);
-  },
-});
-
-const { container } = render(Greeting, { name: 'World' });
-expect(container.querySelector('text')!.textContent).toBe('Hello, World!');
-```
-
-### Re-rendering
-
-Use `rerender()` to replace the root component:
-
-```ts
-const { container, rerender } = render(CompA);
-expect(container.querySelector('text')!.textContent).toBe('A');
-
-rerender(CompB);
-expect(container.querySelector('text')!.textContent).toBe('B');
-```
+For additional examples, see the test cases in the [vue-lynx testing-library source code](https://github.com/nicepkg/vue-lynx/tree/main/testing-library/src/__tests__).
 
 ## API Reference
 
@@ -378,44 +455,42 @@ expect(container.querySelector('text')!.textContent).toBe('B');
 
 Mounts a Vue component through the full dual-thread pipeline and returns a `RenderResult`.
 
-- **`component`** — A Vue component (created with `defineComponent`, `h()`, or an SFC).
+- **`component`** — A Vue component (created with `defineComponent` or `h()`).
 - **`props`** *(optional)* — Root props passed to the component.
+
+Returns:
+
+| Property | Description |
+|---|---|
+| `container` | The JSDOM root element containing all rendered children |
+| `unmount()` | Unmount the current Vue app |
+| `rerender(component, props?)` | Re-render with a new root component, returns a new `RenderResult` |
+| `getByText()`, `getByTestId()`, ... | All [`@testing-library/dom`](https://testing-library.com/docs/queries/about) queries, bound to the container |
 
 ### `cleanup()`
 
-Unmounts the current Vue app and clears the JSDOM container. Called automatically after each test via `afterEach` — you typically don't need to call this manually.
+Unmounts the current Vue app and clears the JSDOM container. Called automatically after each test via `afterEach`.
 
 ### `waitForUpdate()`
 
-Waits for all pending Vue reactive updates to flush through the dual-thread pipeline. Equivalent to calling `await nextTick(); await nextTick();`.
+Waits for all pending Vue reactive updates to flush through the dual-thread pipeline. Equivalent to `await nextTick(); await nextTick()`.
 
 ### `fireEvent`
 
-Dispatches Lynx events on JSDOM elements. See [Supported Events](#supported-events) for the full list.
+Dispatches Lynx events on JSDOM elements. See [Firing events](#firing-events) for event types and usage.
 
 ```ts
 fireEvent.tap(element);
-fireEvent.tap(element, eventInit);
+fireEvent.tap(element, { eventType: 'catchEvent', key: 'value' });
 fireEvent(element, new Event('bindEvent:tap'));
 ```
 
 ### `screen`
 
-A convenience object from `@testing-library/dom` for querying the rendered output. Works the same as in React Testing Library:
+A convenience object from `@testing-library/dom` for querying the rendered output:
 
 ```ts
 import { screen } from 'vue-lynx-testing-library';
-
 render(Comp);
-expect(screen.getByText('Hello')).not.toBeNull();
+expect(screen.getByText('Hello')).toBeInTheDocument();
 ```
-
-## Tips
-
-- **Auto-cleanup**: The testing library automatically calls `cleanup()` after each test. You don't need to unmount manually.
-- **Imports**: Import Vue APIs (`ref`, `defineComponent`, `nextTick`, etc.) from `vue-lynx`, not from `vue`. This ensures you use the Vue Lynx custom renderer.
-- **Lynx elements**: Use `<view>`, `<text>`, `<image>`, etc. — not HTML tags. Query with `container.querySelector('view')`, not `container.querySelector('div')`.
-- **`@testing-library/jest-dom`**: You can use matchers like `toHaveTextContent()` for more expressive assertions. Add it to your setup file:
-  ```ts
-  import '@testing-library/jest-dom';
-  ```
