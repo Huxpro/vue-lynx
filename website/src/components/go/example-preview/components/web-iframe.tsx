@@ -78,15 +78,24 @@ const LoadingOverlay = ({ visible }: { visible: boolean }) => {
         height={40}
         style={{ opacity: 0.5 }}
       />
-      <span
-        style={{
-          fontSize: '13px',
-          opacity: 0.4,
-          color: isDark ? '#ffffff' : '#000000',
-        }}
-      >
-        Loading...
-      </span>
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)',
+              animation: `web-iframe-bounce 1.2s ${i * 0.15}s ease-in-out infinite`,
+            }}
+          />
+        ))}
+        <style>{`@keyframes web-iframe-bounce {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}`}</style>
+      </div>
     </div>
   );
 };
