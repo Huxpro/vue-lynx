@@ -1,14 +1,3 @@
-// Copyright 2026 The Lynx Authors. All rights reserved.
-// Licensed under the Apache License Version 2.0 that can be found in the
-// LICENSE file in the root directory of this source tree.
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-/**
- * useOffset — touch handling + offset tracking + cross-thread sync.
- *
- * Port of React Lynx's Swiper/useOffset.ts.
- * All MTS function bodies are identical to the React version.
- */
-
 import {
   runOnBackground,
   runOnMainThread,

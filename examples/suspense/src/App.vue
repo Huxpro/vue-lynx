@@ -1,11 +1,3 @@
-<!--
-  App.vue — Suspense demo root
-  Exercises: <Suspense>, #default/#fallback slots, defineAsyncComponent
-
-  Note: async setup() (top-level await in <script setup>) is NOT supported
-  because vue-lynx does not export `withAsyncContext`. This example focuses
-  on defineAsyncComponent which does trigger the Suspense fallback.
--->
 <script setup lang="ts">
 import { ref, defineAsyncComponent, Suspense } from 'vue-lynx'
 

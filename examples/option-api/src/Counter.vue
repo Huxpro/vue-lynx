@@ -1,7 +1,3 @@
-<!--
-  Counter.vue — Options API sub-component
-  Exercises: props, emits, data, methods, watch, computed
--->
 <script lang="ts">
 import { defineComponent } from 'vue'
 

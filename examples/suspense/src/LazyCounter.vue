@@ -1,7 +1,3 @@
-<!--
-  LazyCounter.vue — Lazy-loaded component via defineAsyncComponent
-  Exercises: code-splitting, Suspense with dynamic import
--->
 <script setup lang="ts">
 import { ref } from 'vue-lynx'
 

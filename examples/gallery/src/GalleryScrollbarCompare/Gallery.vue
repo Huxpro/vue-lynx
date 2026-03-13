@@ -1,16 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Gallery.vue — Gallery with both BTS and MTS scrollbars side by side.
-
-  Shows the BTS scrollbar (right: 3px, gradient) next to the MTS scrollbar
-  (right: 14px, darkkhaki) to visually compare lag vs smoothness.
-  Matching React's ScrollbarCompare entry.
-
-  Tutorial step: gallery-scrollbar-compare
--->
 <script setup lang="ts">
 import { ref, onMounted, nextTick, useMainThreadRef, useTemplateRef } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';

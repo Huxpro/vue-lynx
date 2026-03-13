@@ -1,7 +1,3 @@
-<!--
-  SwiperEmpty — Static horizontal image gallery, no touch interaction.
-  Demonstrates basic linear layout with Lynx's `display: linear`.
--->
 <script setup lang="ts">
 import SwiperItem from '../Components/SwiperItem.vue';
 

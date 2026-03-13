@@ -1,18 +1,3 @@
-// Copyright 2025 The Lynx Authors. All rights reserved.
-// Licensed under the Apache License Version 2.0 that can be found in the
-// LICENSE file in the root directory of this source tree.
-
-/**
- * h() counter E2E entry – no SFC, no compiler, plain render functions.
- *
- * This entry validates the renderer stack in the simplest possible way:
- *   h() + ref() + onMounted() + bindtap
- *   → nodeOps → ops buffer → callLepusMethod('vuePatchUpdate')
- *   → Main Thread applyOps → PAPI → native render
- *
- * Preserved from the original MVP proof-of-concept session.
- */
-
 import {
   createApp,
   defineComponent,

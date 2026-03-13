@@ -1,16 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Gallery.vue — Gallery with auto-scroll feature.
-
-  Demonstrates invoking native element methods via
-  lynx.createSelectorQuery().select().invoke() to start auto-scrolling.
-  Matching React's AddAutoScroll entry.
-
-  Tutorial step: gallery-autoscroll
--->
 <script setup lang="ts">
 import { onMounted, nextTick, useTemplateRef } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';

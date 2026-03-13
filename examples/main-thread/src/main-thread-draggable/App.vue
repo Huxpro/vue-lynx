@@ -1,17 +1,3 @@
-<!-- Copyright 2025 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Main Thread Draggable Demo — Vue port of React Lynx's main-thread-draggable example.
-
-  Left half: scroll-view with large colored blocks
-  Right half: two boxes that track scroll position (start at y=500, move up)
-    - MTDraggable: updated directly on Main Thread via setStyleProperty (smooth)
-    - BGDraggable: updated via Background Thread reactive state (laggy)
-
-  Phase 2: uses 'main thread' directive with SWC worklet transform.
--->
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useMainThreadRef } from 'vue-lynx'

@@ -1,13 +1,3 @@
-<!-- Copyright 2025 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  App.vue — Router shell with tab-style navigation
-
-  Lynx has no <a> tag, so we use RouterLink's `custom` v-slot to render
-  native <text> elements with @tap handlers for navigation.
--->
 <script setup lang="ts">
 import { RouterView, RouterLink } from 'vue-router';
 import NavLink from './NavLink.vue';

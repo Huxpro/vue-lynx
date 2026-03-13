@@ -1,16 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Gallery.vue — Gallery with Background Thread scrollbar.
-
-  Uses the @scroll event on the <list> to drive a custom scrollbar.
-  The scroll handler runs on the Background Thread, so there's a small
-  delay between scrolling and scrollbar updates.
-
-  Tutorial step: gallery-scrollbar
--->
 <script setup lang="ts">
 import { ref, onMounted, nextTick, useTemplateRef } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';

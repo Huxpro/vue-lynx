@@ -1,11 +1,3 @@
-<!-- Copyright 2025 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  App.vue — SFC root component
-  Exercises: interpolation, v-for, dynamic :style/:class, child component, script setup
--->
 <script setup lang="ts">
 import { ref } from 'vue'
 import Counter from './Counter.vue'

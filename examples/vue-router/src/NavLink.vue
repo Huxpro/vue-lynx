@@ -1,13 +1,3 @@
-<!-- Copyright 2025 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  NavLink.vue — Lynx-compatible RouterLink wrapper
-
-  Uses RouterLink's `custom` + v-slot API to render a tappable <text>
-  instead of the default <a> tag (which doesn't exist in Lynx).
--->
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
 

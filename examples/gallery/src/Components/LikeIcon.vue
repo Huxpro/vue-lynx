@@ -1,15 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  LikeIcon.vue — Heart icon with tap-to-like interaction.
-
-  Tapping the heart toggles from white to red (one-way, matching React).
-  Uses PNG images and ripple circle animation.
-
-  Tutorial step: gallery-like-card
--->
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 

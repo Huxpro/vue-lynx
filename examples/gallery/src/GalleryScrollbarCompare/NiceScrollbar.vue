@@ -1,15 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  NiceScrollbar.vue — BTS scrollbar for the comparison demo.
-
-  Positioned at right: 3px to sit next to the MTS scrollbar at right: 14px.
-  Uses full screen height (no -48 offset) matching React's ScrollbarCompare.
-
-  Tutorial step: gallery-scrollbar-compare
--->
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 

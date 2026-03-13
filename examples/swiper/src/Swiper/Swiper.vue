@@ -1,10 +1,3 @@
-<!--
-  Swiper (Full) — composable-based, matching React Lynx's abstraction.
-
-  useUpdateSwiperStyle — containerRef + MT style setter
-  useOffset            — touch handlers + offset clamping + animation + runOnBackground sync
-  useAnimate           — shared RAF animation composable (in ../utils/)
--->
 <script setup lang="ts">
 import { ref } from 'vue';
 import SwiperItem from '../Components/SwiperItem.vue';

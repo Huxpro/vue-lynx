@@ -1,7 +1,3 @@
-<!--
-  App.vue — Options API root component
-  Exercises: data, computed, methods, watch, mounted, components option
--->
 <script lang="ts">
 import { defineComponent } from 'vue'
 import Counter from './Counter.vue'

@@ -1,17 +1,3 @@
-<!-- Copyright 2025 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Background Draggable Demo — Vue port of React Lynx's background-draggable example.
-
-  Left half: scroll-view with large colored blocks
-  Right half: a box that tracks scroll position (start at y=500, move up)
-
-  Position is updated entirely through Vue's reactive system on the Background
-  Thread — no Main Thread APIs are used. Compare with main-thread-draggable/
-  to see the latency difference.
--->
 <script setup lang="ts">
 import { ref } from 'vue'
 

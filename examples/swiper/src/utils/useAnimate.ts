@@ -1,14 +1,3 @@
-// Copyright 2026 The Lynx Authors. All rights reserved.
-// Licensed under the Apache License Version 2.0 that can be found in the
-// LICENSE file in the root directory of this source tree.
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
-/**
- * useAnimate — RAF-based animation composable for Main Thread.
- *
- * Port of React Lynx's utils/useAnimate.ts.
- * All MTS function bodies are identical to the React version.
- */
-
 import { useMainThreadRef } from 'vue-lynx';
 
 export interface AnimationOptions {

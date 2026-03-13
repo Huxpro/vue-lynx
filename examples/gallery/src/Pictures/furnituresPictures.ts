@@ -1,7 +1,3 @@
-// Copyright 2026 The Lynx Authors. All rights reserved.
-// Licensed under the Apache License Version 2.0 that can be found in the
-// LICENSE file in the root directory of this source tree.
-
 import pic0 from './furnitures/0.png';
 import pic1 from './furnitures/1.png';
 import pic10 from './furnitures/10.png';
@@ -24,9 +20,6 @@ export interface Picture {
   height: number;
 }
 
-/**
- * Furniture pictures with dimensions matching the React Gallery original.
- */
 export const furnituresPicturesSubArray: Picture[] = [
   { src: pic0, width: 512, height: 429 },
   { src: pic1, width: 511, height: 437 },
@@ -45,9 +38,6 @@ export const furnituresPicturesSubArray: Picture[] = [
   { src: pic14, width: 512, height: 411 },
 ];
 
-/**
- * Full picture list — repeats the sub-array to simulate a large dataset.
- */
 export const furnituresPictures: Picture[] = [
   ...furnituresPicturesSubArray,
   ...furnituresPicturesSubArray,

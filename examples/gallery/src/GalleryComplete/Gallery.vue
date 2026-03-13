@@ -1,16 +1,3 @@
-<!-- Copyright 2026 The Lynx Authors. All rights reserved.
-     Licensed under the Apache License Version 2.0 that can be found in the
-     LICENSE file in the root directory of this source tree. -->
-
-<!--
-  Gallery.vue — Gallery with Main Thread Script scrollbar.
-
-  Uses :main-thread-bindscroll to handle scroll events directly on
-  the Main Thread. The worklet reads scrollTop/scrollHeight and calls
-  setStyleProperty on the scrollbar thumb ref — no thread crossings.
-
-  Tutorial step: gallery-complete
--->
 <script setup lang="ts">
 import { onMounted, nextTick, useMainThreadRef, useTemplateRef } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';
