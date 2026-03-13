@@ -148,7 +148,34 @@ $brand-emerald: #34d399;
   }
 
   .rp-home-hero__title-brand {
-    background: none;
+    width: auto !important;
+    max-width: max-content;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 20px 6px 16px !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    background: rgba(0, 0, 0, 0.06) !important;
+    background-clip: padding-box !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 24px !important;
+    letter-spacing: 0 !important;
+    color: rgba(0, 0, 0, 0.65) !important;
+    -webkit-text-fill-color: rgba(0, 0, 0, 0.65) !important;
+  }
+
+  span.rp-home-hero__title-brand {
+    -webkit-backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  :root.dark & .rp-home-hero__title-brand {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
   }
 
   @media (max-width: 1000px) {

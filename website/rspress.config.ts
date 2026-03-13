@@ -17,7 +17,7 @@ export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
   description: 'Vue 3 framework for building Lynx apps',
-  // icon: '/vue-lynx.png', // TODO: add favicon
+  icon: '/favicon.png',
   plugins: [pluginLlms()],
   markdown: {
     shiki: {
