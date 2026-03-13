@@ -24,6 +24,7 @@ See the [`examples/`](examples/) directory for complete working examples:
 
 - [`hello-world`](examples/hello-world) — Minimal starter
 - [`basic`](examples/basic) — Core features (events, refs, reactivity)
+- [`todomvc`](examples/todomvc) — TodoMVC with CSS Selectors
 - [`option-api`](examples/option-api) — Options API style
 - [`vue-router`](examples/vue-router) — Vue Router integration
 - [`pinia`](examples/pinia) — Pinia state management
