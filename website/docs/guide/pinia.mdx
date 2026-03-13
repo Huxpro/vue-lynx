@@ -1,0 +1,67 @@
+# Using Pinia
+
+[Pinia](https://pinia.vuejs.org/) is the official state management library for Vue. It provides a type-safe, extensible, and modular store with an intuitive API built on the Composition API.
+
+See also: [Vue.js — State Management](https://vuejs.org/guide/scaling-up/state-management.html#pinia)
+
+<Go example="pinia" defaultFile="src/App.vue" defaultEntryName="main" />
+
+## Installation
+
+```bash
+npm install pinia
+```
+
+## Setup
+
+Register Pinia with your vue-lynx app:
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx';
+import { createPinia } from 'pinia';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(createPinia());
+app.mount();
+```
+
+## Defining a Store
+
+Use `defineStore` with the [setup syntax](https://pinia.vuejs.org/core-concepts/#setup-stores) to create a store:
+
+```ts title="src/stores/counter.ts"
+import { ref, computed } from 'vue';
+import { defineStore } from 'pinia';
+
+export const useCounterStore = defineStore('counter', () => {
+  const count = ref(0);
+  const doubleCount = computed(() => count.value * 2);
+
+  function increment() {
+    count.value++;
+  }
+
+  return { count, doubleCount, increment };
+});
+```
+
+## Using the Store in a Component
+
+```vue title="src/CounterSection.vue"
+<script setup lang="ts">
+import { useCounterStore } from './stores/counter';
+
+const counter = useCounterStore();
+</script>
+
+<template>
+  <view>
+    <text>Count: {{ counter.count }}</text>
+    <text>Double: {{ counter.doubleCount }}</text>
+    <text @tap="counter.increment">+1</text>
+  </view>
+</template>
+```
+
+See [Pinia — Core Concepts](https://pinia.vuejs.org/core-concepts/) for additional resources.

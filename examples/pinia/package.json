@@ -1,0 +1,22 @@
+{
+  "name": "vue-lynx-example-pinia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vue-Lynx + Pinia state management demo",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "pinia": "^3.0.2",
+    "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "typescript": "^5.0.0"
+  },
+  "engines": { "node": ">=18" }
+}
