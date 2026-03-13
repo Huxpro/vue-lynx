@@ -213,7 +213,7 @@ ${lynxApis.map(fmtRow).join('\n')}
 | \`<Teleport>\` | Not Supported | Requires \`querySelector\` renderer option not implemented. |
 
 :::warning
-\`<Transition>\` and \`<TransitionGroup>\` are **experimental**. See the [Transition guide](/guide/transition) for usage details and differences from Vue DOM.
+\`<Transition>\` and \`<TransitionGroup>\` are **experimental**. Always pass an explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. Move (FLIP) animations in \`<TransitionGroup>\` are not supported.
 :::
 
 <Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />
