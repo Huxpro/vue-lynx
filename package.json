@@ -51,6 +51,7 @@
     "plugin/dist",
     "internal/dist",
     "LICENSE",
+    "NOTICE",
     "README.md"
   ],
   "scripts": {
