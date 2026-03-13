@@ -62,6 +62,31 @@ export interface PluginVueLynxOptions {
   enableCSSSelector?: boolean;
 
   /**
+   * Whether to enable CSS inheritance in the Lynx engine.
+   * When enabled, CSS property values (including CSS custom properties /
+   * variables) cascade from parent elements to children, matching standard
+   * CSS behavior. Required for design-token patterns where CSS variables
+   * are set on a parent and consumed by descendants.
+   * @defaultValue false
+   */
+  enableCSSInheritance?: boolean;
+
+  /**
+   * A list of additional CSS properties to inherit beyond the engine defaults.
+   * Only effective when {@link enableCSSInheritance} is `true`.
+   * @defaultValue undefined
+   */
+  customCSSInheritanceList?: string[];
+
+  /**
+   * Whether to enable CSS custom properties (variables) in inline styles.
+   * When enabled, setting `--*` properties via `:style` bindings will be
+   * recognized by the Lynx engine at runtime.
+   * @defaultValue false
+   */
+  enableCSSInlineVariables?: boolean;
+
+  /**
    * Whether to place debug info outside the template bundle.
    * Reduces template size in dev builds.
    * @defaultValue true
@@ -85,6 +110,9 @@ export function pluginVueLynx(
     optionsApi = true,
     prodDevtools = false,
     enableCSSSelector = true,
+    enableCSSInheritance = false,
+    customCSSInheritanceList,
+    enableCSSInlineVariables = false,
     debugInfoOutside = true,
   } = options;
 
@@ -178,7 +206,13 @@ export function pluginVueLynx(
           enableCSSSelector,
           enableCSSInvalidation: enableCSSSelector,
         });
-        applyEntry(api, { enableCSSSelector, debugInfoOutside });
+        applyEntry(api, {
+          enableCSSSelector,
+          enableCSSInheritance,
+          customCSSInheritanceList,
+          enableCSSInlineVariables,
+          debugInfoOutside,
+        });
       },
     },
   ];

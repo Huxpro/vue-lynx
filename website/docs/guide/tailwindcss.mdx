@@ -1,0 +1,211 @@
+# Using Tailwind CSS
+
+[Tailwind CSS](https://tailwindcss.com/) is a utility-first CSS framework. Combined with Vue Lynx, it lets you build native Lynx UIs using the same utility classes you already know from the web.
+
+This guide walks through integrating Tailwind CSS with Vue Lynx, from basic setup to a design-token system with runtime theme switching — inspired by [shadcn/ui](https://ui.shadcn.com/).
+
+<Go example="tailwindcss" defaultFile="src/App.vue" />
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+pnpm add -D tailwindcss @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
+```
+
+- **`@lynx-js/tailwind-preset`** — A Tailwind preset that replaces core plugins with Lynx-compatible equivalents. See the [official Rspeedy docs](https://lynxjs.org/rspeedy/styling.html#using-tailwind-css) for details.
+- **`rsbuild-plugin-tailwindcss`** — Rsbuild integration for Tailwind CSS.
+
+### 2. Configure Tailwind
+
+```ts title="tailwind.config.ts"
+import type { Config } from 'tailwindcss';
+import preset from '@lynx-js/tailwind-preset';
+
+const config: Config = {
+  content: ['./src/**/*.{vue,js,ts}'],
+  presets: [preset],
+};
+
+export default config;
+```
+
+### 3. Configure PostCSS
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    tailwindcss: {},
+  },
+};
+```
+
+### 4. Add the Rsbuild plugin
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginTailwindCSS } from 'rsbuild-plugin-tailwindcss';
+import { pluginVueLynx } from 'vue-lynx/plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx(),
+    pluginTailwindCSS({
+      config: 'tailwind.config.ts',
+      exclude: [/[\\/]node_modules[\\/]/],
+    }),
+  ],
+});
+```
+
+### 5. Import Tailwind in your CSS
+
+```css title="src/App.css"
+@tailwind base;
+@tailwind utilities;
+```
+
+That's it! You can now use Tailwind utility classes on Lynx elements:
+
+```vue title="src/App.vue"
+<template>
+  <view class="p-4 flex flex-col gap-2">
+    <text class="text-blue-500 text-lg font-bold">Hello, Tailwind!</text>
+    <view class="bg-gray-800 rounded-lg p-3">
+      <text class="text-white text-sm">A card with utility classes.</text>
+    </view>
+  </view>
+</template>
+```
+
+## Design Tokens with CSS Variables
+
+A common pattern in modern component libraries (shadcn/ui, Radix Themes, Nuxt UI) is to define a **design language** as CSS custom properties, then reference them from Tailwind. This gives you a single source of truth for colors that can be swapped at runtime.
+
+### Define your tokens
+
+```css title="src/App.css"
+@tailwind base;
+@tailwind utilities;
+
+:root {
+  --color-background: rgba(9, 9, 11, 1);
+  --color-card: rgba(24, 24, 27, 1);
+  --color-card-foreground: rgba(250, 250, 250, 1);
+  --color-primary: rgba(255, 100, 72, 1);
+  --color-primary-foreground: rgba(255, 255, 255, 1);
+  --color-border: rgba(63, 63, 70, 1);
+}
+```
+
+### Wire them into Tailwind
+
+```ts title="tailwind.config.ts"
+const config: Config = {
+  // ...
+  theme: {
+    extend: {
+      colors: {
+        background: 'var(--color-background)',
+        card: {
+          DEFAULT: 'var(--color-card)',
+          foreground: 'var(--color-card-foreground)',
+        },
+        primary: {
+          DEFAULT: 'var(--color-primary)',
+          foreground: 'var(--color-primary-foreground)',
+        },
+        border: 'var(--color-border)',
+      },
+    },
+  },
+};
+```
+
+Now `bg-primary`, `text-card-foreground`, `border-border` all resolve through your CSS variables. The `:root` values act as the default theme.
+
+### Required Lynx flags
+
+For CSS variables to work on Lynx Native, two engine flags must be enabled:
+
+- **`enableCSSInheritance`** — Enables CSS cascade from parent elements to children, so variables defined on a parent (or `:root`) are visible to descendants. See the [Lynx CSS Variable docs](https://lynxjs.org/api/css/properties/css-variable.html).
+- **`enableCSSInlineVariables`** — Enables `--*` properties in inline styles, so `:style` bindings can set CSS variables at runtime.
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableCSSInheritance: true,
+  enableCSSInlineVariables: true,
+})
+```
+
+> These flags are **only needed when using CSS variables**. If your Tailwind config uses static color values (e.g. `primary: '#3b82f6'`), no additional flags are required.
+
+## Runtime Theme Switching
+
+With design tokens wired through CSS variables, switching themes is just a matter of overriding the variable values.
+
+### Approach A: Inline style (recommended)
+
+The most web-familiar approach — set CSS variables via Vue's `:style` binding on a root element. This is how shadcn/ui and Radix Themes handle theming on the web.
+
+Requires both `enableCSSInheritance` and `enableCSSInlineVariables`.
+
+```vue
+<script setup>
+import { ref, computed } from 'vue-lynx'
+
+const themes = {
+  dark: {
+    '--color-background': 'rgba(9, 9, 11, 1)',
+    '--color-primary': 'rgba(255, 100, 72, 1)',
+    // ...
+  },
+  light: {
+    '--color-background': 'rgba(255, 255, 255, 1)',
+    '--color-primary': 'rgba(234, 88, 12, 1)',
+    // ...
+  },
+}
+
+const currentTheme = ref('dark')
+const themeStyle = computed(() => themes[currentTheme.value])
+</script>
+
+<template>
+  <scroll-view :style="themeStyle" class="bg-background">
+    <text class="text-primary">Themed text</text>
+    <view @tap="currentTheme = 'light'">
+      <text>Switch to Light</text>
+    </view>
+  </scroll-view>
+</template>
+```
+
+### Approach B: Element `setProperty` API
+
+A Lynx-native alternative that updates CSS variables directly on an element. Does **not** require `enableCSSInlineVariables` — only `enableCSSInheritance`.
+
+```vue
+<script setup>
+import { ref } from 'vue-lynx'
+
+const root = ref(null)
+
+function switchTheme(name) {
+  const vars = themes[name]
+  root.value?.setProperty(vars)
+}
+</script>
+
+<template>
+  <scroll-view ref="root" class="bg-background">
+    <text class="text-primary">Themed text</text>
+    <view @tap="switchTheme('light')">
+      <text>Switch to Light</text>
+    </view>
+  </scroll-view>
+</template>
+```
+
+See the [Lynx CSS Variable API](https://lynxjs.org/api/css/properties/css-variable.html) for full details on `setProperty`.
