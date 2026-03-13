@@ -65,7 +65,7 @@ export default defineConfig({
         { text: 'Vue Router', link: '/guide/routing' },
         { text: '7 GUIs', link: '/guide/7guis' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
-        { text: 'Testing Library', link: '/guide/testing-library' },
+        { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
         { text: 'Vue Feature Coverage', link: '/guide/vue-feature-coverage' },
         {
           dividerType: 'solid',
