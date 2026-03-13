@@ -15,7 +15,7 @@ import {
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   useEffect(() => {
-    const badge = document.querySelector('.rp-home-hero__name');
+    const badge = document.querySelector('.rp-home-hero__title-brand');
     if (badge) {
       badge.innerHTML = `<a href="https://github.com/huxpro/vue-lynx" target="_blank" rel="noreferrer">${badge.textContent}</a>`;
     }

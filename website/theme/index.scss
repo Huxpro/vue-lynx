@@ -147,7 +147,7 @@ $brand-emerald: #34d399;
     }
   }
 
-  .rp-home-hero__name {
+  .rp-home-hero__title-brand {
     width: auto !important;
     max-width: max-content;
     display: inline-flex !important;
@@ -176,7 +176,7 @@ $brand-emerald: #34d399;
     }
   }
 
-  :root.dark & .rp-home-hero__name {
+  :root.dark & .rp-home-hero__title-brand {
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     background: rgba(255, 255, 255, 0.12) !important;
     color: rgba(255, 255, 255, 0.85) !important;
@@ -190,7 +190,7 @@ $brand-emerald: #34d399;
   }
 
   @media (max-width: 640px) {
-    .rp-home-hero__name {
+    .rp-home-hero__title-brand {
       font-size: 10px !important;
       padding: 4px 14px !important;
       margin-bottom: 12px !important;
