@@ -9,59 +9,6 @@ Vue 3 custom renderer for building [Lynx](https://lynxjs.org) apps.
 [![Website](https://img.shields.io/badge/docs-vue.lynxjs.org-blue)](https://vue.lynxjs.org)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green)](LICENSE)
 
-## Installation
-
-```bash
-npm install vue-lynx
-```
-
-### Peer Dependencies
-
-```bash
-npm install @rsbuild/core @rsbuild/plugin-vue
-```
-
-## Quick Start
-
-Create `lynx.config.ts`:
-
-```ts
-import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginVueLynx } from 'vue-lynx/plugin';
-
-export default defineConfig({
-  plugins: [pluginVueLynx()],
-});
-```
-
-Create `src/App.vue`:
-
-```vue
-<script setup lang="ts">
-import { ref } from 'vue-lynx';
-
-const count = ref(0);
-</script>
-
-<template>
-  <view>
-    <text :style="{ fontSize: '20px' }">Count: {{ count }}</text>
-    <view :bindtap="() => count++">
-      <text>Tap to increment</text>
-    </view>
-  </view>
-</template>
-```
-
-Create `src/index.ts`:
-
-```ts
-import { createApp } from 'vue-lynx';
-import App from './App.vue';
-
-createApp(App).mount();
-```
-
 ## Documentation
 
 Visit **[vue.lynxjs.org](https://vue.lynxjs.org)** for full documentation, including:
