@@ -54,7 +54,13 @@ export default defineConfig({
         { text: 'Quick Start', link: '/guide/quick-start' },
         { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Product Detail (Swiper)', link: '/guide/tutorial-swiper' },
-        { text: 'Routing', link: '/guide/routing' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'Example',
+        },
+        { text: 'Vue Router', link: '/guide/routing' },
         {
           dividerType: 'solid',
         },

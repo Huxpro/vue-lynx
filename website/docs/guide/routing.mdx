@@ -1,10 +1,10 @@
 import { PackageManagerTabs } from '@theme';
 
-# Routing
+# Using Vue Router
 
 Vue Lynx applications can use [Vue Router](https://router.vuejs.org/), the official routing library for Vue, to manage navigation between views. However, since Lynx has no browser `window.location` or History API, you must use [`createMemoryHistory()`](https://router.vuejs.org/api/index.html#creatememoryhistory) instead of `createWebHistory()` — similar to how React Router provides a `MemoryRouter` or TanStack Router provides a memory history for non-browser environments.
 
-<Go example="vue-router" defaultFile="src/App.vue" entry="src" />
+<Go example="vue-router" defaultFile="src/App.vue" defaultEntryName="main" />
 
 ## Installing Dependencies
 

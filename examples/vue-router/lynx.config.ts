@@ -10,6 +10,11 @@ export default defineConfig({
     web: {},
     lynx: {},
   },
+  source: {
+    entry: {
+      main: './src/index.ts',
+    },
+  },
   plugins: [
     pluginVueLynx({
       optionsApi: false,
