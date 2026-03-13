@@ -13,7 +13,7 @@
  *   - globalThis.vuePatchUpdate – receives ops from Background Thread
  */
 
-import { elements } from './element-registry.js';
+import { elements, setRootComponentUniqueId } from './element-registry.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
@@ -80,7 +80,25 @@ g['renderPage'] = function(_data: unknown): void {
   // 2. Hot reload: ensures stale element handles don't persist.
   resetMainThreadState();
   const page = __CreatePage('0', 0);
-  elements.set(PAGE_ROOT_ID, page);
+  // Create a root ComponentElement so DevTool can resolve CSS selectors.
+  // Without this, parent_component_unique_id_ points to the PageElement
+  // which lacks style_sheet_manager(), breaking CSS selector display.
+  const component = __CreateComponent(
+    __GetElementUniqueID(page),   // parent is the page
+    'vue-root',                    // componentID
+    0,                             // cssID (global scope)
+    typeof globDynamicComponentEntry !== 'undefined'
+      ? globDynamicComponentEntry : '',
+    'vue-root',                    // name
+    '/',                           // path
+    null,                          // config
+    null,                          // info
+  );
+  __AppendElement(page, component);
+  setRootComponentUniqueId(__GetElementUniqueID(component));
+  // Store the component (not page) as root so BG-thread INSERT ops
+  // that target PAGE_ROOT_ID append into the component subtree.
+  elements.set(PAGE_ROOT_ID, component);
   __FlushElementTree(page);
   console.info('[vue-mt] renderPage done, page root id=1 stored');
 };

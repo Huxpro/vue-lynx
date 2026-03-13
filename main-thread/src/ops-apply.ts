@@ -12,7 +12,11 @@
 
 import { OP } from 'vue-lynx/internal/ops';
 
-import { elements } from './element-registry.js';
+import {
+  elements,
+  rootComponentUniqueId,
+  setRootComponentUniqueId,
+} from './element-registry.js';
 import {
   createListElement,
   flushListUpdates,
@@ -36,8 +40,8 @@ import {
  * that the generic __CreateElement does not.
  *
  * @param parentComponentUniqueId - The unique ID of the parent component.
- *   Must be 1 (page root) for web PAPI event dispatch: the web runtime
- *   reads `l-p-comp-uid` to route events via `lynxUniqueIdToElement[uid]`.
+ *   Points to the root ComponentElement created in renderPage, which owns
+ *   the style_sheet_manager needed for DevTool CSS selector resolution.
  */
 function createTypedElement(
   type: string,
@@ -93,7 +97,7 @@ export function applyOps(ops: unknown[]): void {
           // Use typed PAPI creators for known element types.
           // Native Lynx sets up type-specific internals (e.g. overflow
           // clipping for __CreateView) that __CreateElement may skip.
-          el = createTypedElement(type, 1);
+          el = createTypedElement(type, rootComponentUniqueId);
           // Associate element with CSS scope 0 (common/global CSS)
           // so the CSS selector engine can match class-based rules.
           __SetCSSId([el], 0);
@@ -109,7 +113,7 @@ export function applyOps(ops: unknown[]): void {
 
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
-        const el = __CreateText(1);
+        const el = __CreateText(rootComponentUniqueId);
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
@@ -261,6 +265,7 @@ export { elements };
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
   elements.clear();
+  setRootComponentUniqueId(1);
   resetListState();
   resetWorkletState();
 }
