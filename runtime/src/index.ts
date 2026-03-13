@@ -44,6 +44,8 @@ import {
 } from './run-on-background.js';
 import { ShadowElement, createPageRoot } from './shadow-element.js';
 import { transformToWorklet } from './transform-to-worklet.js';
+import { Transition } from './Transition.js';
+import { TransitionGroup } from './TransitionGroup.js';
 
 export type { App, Component, ComponentPublicInstance };
 
@@ -387,6 +389,7 @@ export function Teleport(): void {
 // Transition internals:  BaseTransition, BaseTransitionPropsValidators,
 //                        resolveTransitionHooks, setTransitionHooks,
 //                        getTransitionRawChildren, useTransitionState
+//   (BaseTransition is consumed internally by our Transition/TransitionGroup)
 // SSR internals:         ssrContextKey, ssrUtils, createHydrationRenderer
 // Hydration (SSR):       hydrateOnIdle, hydrateOnVisible,
 //                        hydrateOnMediaQuery, hydrateOnInteraction
@@ -446,6 +449,12 @@ export function withKeys(
 ): (...args: unknown[]) => unknown {
   return fn;
 }
+
+// ---------------------------------------------------------------------------
+// Built-in components — Transition
+// ---------------------------------------------------------------------------
+
+export { Transition, TransitionGroup };
 
 // ---------------------------------------------------------------------------
 // Testing utilities

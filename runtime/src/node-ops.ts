@@ -80,6 +80,18 @@ function parseEventProp(key: string): EventSpec | null {
 const elementEventSigns = new Map<number, Map<string, string>>();
 
 // ---------------------------------------------------------------------------
+// Class resolution — merges user :class with transition classes
+// ---------------------------------------------------------------------------
+
+export function resolveClass(el: ShadowElement): string {
+  if (el._transitionClasses.size === 0) return el._baseClass;
+  const parts: string[] = [];
+  if (el._baseClass) parts.push(el._baseClass);
+  for (const cls of el._transitionClasses) parts.push(cls);
+  return parts.join(' ');
+}
+
+// ---------------------------------------------------------------------------
 // RendererOptions implementation
 // ---------------------------------------------------------------------------
 
@@ -249,7 +261,8 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const effective = el._vShowHidden ? { ...style, display: 'none' } : style;
       pushOp(OP.SET_STYLE, el.id, effective);
     } else if (key === 'class') {
-      pushOp(OP.SET_CLASS, el.id, nextValue);
+      el._baseClass = (nextValue as string) ?? '';
+      pushOp(OP.SET_CLASS, el.id, resolveClass(el));
     } else if (key === 'id') {
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
