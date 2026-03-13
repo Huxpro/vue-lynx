@@ -195,6 +195,45 @@ class VueWorkletRuntimePlugin {
   }
 }
 
+const PLUGIN_CSS_CONFIG = 'lynx:vue-css-config';
+
+/**
+ * VueCSSConfigPlugin injects Lynx engine compiler options (like
+ * enableCSSInlineVariables) into the encoded template via the
+ * LynxTemplatePlugin beforeEncode hook.
+ */
+class VueCSSConfigPlugin {
+  constructor(
+    private readonly compilerOptions: Record<string, unknown>,
+  ) {}
+
+  apply(compiler: WebpackCompiler): void {
+    compiler.hooks.thisCompilation.tap(
+      PLUGIN_CSS_CONFIG,
+      (compilation) => {
+        const hooks = LynxTemplatePlugin.getLynxTemplatePluginHooks(
+          // @ts-expect-error Rspack x Webpack compilation type mismatch
+          compilation,
+        ) as {
+          beforeEncode: {
+            tap(
+              name: string,
+              fn: (args: Record<string, unknown>) => Record<string, unknown>,
+            ): void;
+          };
+        };
+        hooks.beforeEncode.tap(PLUGIN_CSS_CONFIG, (args) => {
+          const encodeData = args['encodeData'] as {
+            compilerOptions: Record<string, unknown>;
+          };
+          Object.assign(encodeData.compilerOptions, this.compilerOptions);
+          return args;
+        });
+      },
+    );
+  }
+}
+
 const DEFAULT_INTERMEDIATE = '.rspeedy';
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -208,6 +247,9 @@ const vueLynxRoot = path.resolve(_dirname, '../..');
 
 export interface ApplyEntryOptions {
   enableCSSSelector?: boolean;
+  enableCSSInheritance?: boolean;
+  customCSSInheritanceList?: string[];
+  enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
 }
 
@@ -215,6 +257,43 @@ export function applyEntry(
   api: RsbuildPluginAPI,
   opts: ApplyEntryOptions = {},
 ): void {
+  // ------------------------------------------------------------------
+  // Bidirectional plugin communication (matching pluginReactLynx pattern)
+  // ------------------------------------------------------------------
+
+  // Expose LynxTemplatePlugin hooks so pluginLynxConfig and other plugins
+  // can interact with the Lynx template pipeline.
+  const sLynxTemplatePlugin = Symbol.for('LynxTemplatePlugin');
+  api.expose(sLynxTemplatePlugin, {
+    LynxTemplatePlugin: {
+      getLynxTemplatePluginHooks:
+        LynxTemplatePlugin.getLynxTemplatePluginHooks.bind(
+          LynxTemplatePlugin,
+        ),
+    },
+  });
+
+  // Read Lynx engine config from pluginLynxConfig if present.
+  // pluginLynxConfig exposes config via Symbol.for('lynx.config'), and we
+  // merge matching keys into our resolved options (lynx.config takes priority).
+  const sLynxConfig = Symbol.for('lynx.config');
+  const exposedConfig = api.useExposed(sLynxConfig) as
+    | { config: Record<string, unknown> }
+    | undefined;
+  if (exposedConfig) {
+    const configKeys: Array<keyof ApplyEntryOptions> = [
+      'enableCSSSelector',
+      'enableCSSInheritance',
+      'customCSSInheritanceList',
+      'enableCSSInlineVariables',
+    ];
+    for (const key of configKeys) {
+      if (Object.hasOwn(exposedConfig.config, key)) {
+        (opts as Record<string, unknown>)[key] = exposedConfig.config[key];
+      }
+    }
+  }
+
   // Default to all-in-one chunk splitting to avoid async chunks that break
   // Lynx's single-file bundle requirement (same as React plugin behaviour).
   api.modifyRsbuildConfig((config, { mergeRsbuildConfig }) => {
@@ -434,6 +513,8 @@ export function applyEntry(
               debugInfoOutside: opts.debugInfoOutside ?? true,
               enableCSSSelector: opts.enableCSSSelector ?? true,
               enableCSSInvalidation: opts.enableCSSSelector ?? true,
+              enableCSSInheritance: opts.enableCSSInheritance ?? false,
+              customCSSInheritanceList: opts.customCSSInheritanceList,
               enableRemoveCSSScope: true,
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
@@ -462,6 +543,24 @@ export function applyEntry(
         .plugin(PLUGIN_WORKLET_RUNTIME)
         .use(VueWorkletRuntimePlugin, [workletRuntimePath])
         .end();
+    }
+
+    // ------------------------------------------------------------------
+    // VueCSSConfigPlugin – inject engine compiler options (e.g.
+    // enableCSSInlineVariables) that are not LynxTemplatePlugin options
+    // but need to be set in the encoded template's compilerOptions.
+    // ------------------------------------------------------------------
+    if (isLynx) {
+      const cssConfigOptions: Record<string, unknown> = {};
+      if (opts.enableCSSInlineVariables) {
+        cssConfigOptions['enableCSSInlineVariables'] = true;
+      }
+      if (Object.keys(cssConfigOptions).length > 0) {
+        chain
+          .plugin(PLUGIN_CSS_CONFIG)
+          .use(VueCSSConfigPlugin, [cssConfigOptions])
+          .end();
+      }
     }
 
     // ------------------------------------------------------------------

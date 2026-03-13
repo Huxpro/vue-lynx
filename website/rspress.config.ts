@@ -61,6 +61,7 @@ export default defineConfig({
           sectionHeaderText: 'Example',
         },
         { text: '7 GUIs', link: '/guide/7guis' },
+        { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         {
           dividerType: 'solid',
         },
