@@ -167,6 +167,13 @@ $brand-emerald: #34d399;
     letter-spacing: 0 !important;
     color: rgba(0, 0, 0, 0.65) !important;
     -webkit-text-fill-color: rgba(0, 0, 0, 0.65) !important;
+    cursor: pointer;
+
+    a {
+      color: inherit !important;
+      -webkit-text-fill-color: inherit !important;
+      text-decoration: none;
+    }
   }
 
   :root.dark & .rp-home-hero__name {
@@ -183,6 +190,12 @@ $brand-emerald: #34d399;
   }
 
   @media (max-width: 640px) {
+    .rp-home-hero__name {
+      font-size: 10px !important;
+      padding: 4px 14px !important;
+      margin-bottom: 12px !important;
+    }
+
     .rp-home-hero .rp-home-hero__title {
       font-size: 2rem;
     }
