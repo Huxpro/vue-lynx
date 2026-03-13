@@ -191,6 +191,16 @@ export function pluginVueLynx(
                   iife: false,
                 },
               },
+              swc: {
+                jsc: {
+                  // The Lynx JS engine only supports up to ES2019 syntax.
+                  // Without this, SWC processes node_modules files (via
+                  // source.include) but preserves modern syntax like ?? and
+                  // ??= because its default target is too high.
+                  // Match rspeedy core's pluginSwc behavior.
+                  target: 'es2019',
+                },
+              },
             },
           });
         });
