@@ -90,7 +90,25 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
           /(")(static\/[^"]+)/g,
           (_, quote, path) => `${quote}${baseUrl}${path}`,
         );
-        return JSON.parse(rewritten);
+        const template = JSON.parse(rewritten);
+
+        // Workaround: when no template modules reference publicPath (no asset
+        // imports), rspack omits the local webpack runtime from lepusCode and
+        // emits a bare `__webpack_require__` reference. Inject a minimal shim
+        // so the entry-point executor (`__webpack_require__.x`) can run.
+        if (template.lepusCode?.root) {
+          const root = template.lepusCode.root;
+          if (
+            typeof root === 'string' &&
+            root.includes('__webpack_require__') &&
+            !root.includes('function __webpack_require__')
+          ) {
+            template.lepusCode.root =
+              'var __webpack_require__={p:"/"};' + root;
+          }
+        }
+
+        return template;
       };
 
       lynxViewRef.current.url = src;

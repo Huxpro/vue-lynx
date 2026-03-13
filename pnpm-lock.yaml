@@ -52,6 +52,22 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  examples/7guis:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../..
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   examples/basic:
     dependencies:
       vue-lynx:

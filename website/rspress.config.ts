@@ -58,6 +58,13 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
+          sectionHeaderText: 'Example',
+        },
+        { text: '7 GUIs', link: '/guide/7guis' },
+        {
+          dividerType: 'solid',
+        },
+        {
           sectionHeaderText: 'API Reference',
         },
         ...apiSidebar,
