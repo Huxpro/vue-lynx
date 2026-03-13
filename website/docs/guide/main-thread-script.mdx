@@ -18,26 +18,26 @@ You can try scrolling the scroll-view on the left side of the example. The blue 
 This is because in Lynx's architecture, events are triggered on the main thread, while regular JS event handlers (Vue's `@scroll`, etc.) can only be executed on background threads. Therefore, using regular events to trigger animations introduces multiple thread crossings, resulting in untimely responses and animations lagging behind gestures.
 
 ```
-Without Main Thread Script:
+  Without Main Thread Script:
 
-  ┌─────────────┐       ┌──────────────────┐       ┌─────────────┐
-  │ Main Thread  │ ───▶  │ Background Thread │ ───▶  │ Main Thread  │
-  │ (event fires)│       │ (Vue handler runs)│       │ (render)     │
-  └─────────────┘       └──────────────────┘       └─────────────┘
-        ▲                                                  │
-        └──────────── 2 thread crossings ──────────────────┘
+  ┌────────────────┐      ┌────────────────────┐      ┌────────────────┐
+  │  Main Thread   │      │ Background Thread   │      │  Main Thread   │
+  │  (event fires) │ ──▶  │ (Vue handler runs)  │ ──▶  │  (render)      │
+  └────────────────┘      └────────────────────┘      └────────────────┘
+          ▲                                                    │
+          └─────────────── 2 thread crossings ─────────────────┘
 ```
 
 The main thread script provides the capability to handle events synchronously on the main thread, ensuring synchronous event responses.
 
 ```
-With Main Thread Script:
+  With Main Thread Script:
 
-  ┌──────────────────────────────────────────┐
-  │              Main Thread                  │
-  │  event fires ──▶ handler runs ──▶ render  │
-  └──────────────────────────────────────────┘
-                 0 thread crossings
+  ┌────────────────────────────────────────────────────────────┐
+  │                       Main Thread                          │
+  │   event fires  ──▶  handler runs  ──▶  render              │
+  └────────────────────────────────────────────────────────────┘
+                      0 thread crossings
 ```
 
 ## Use Main Thread Functions to Eliminate Event Response Delay
@@ -194,6 +194,163 @@ const handleTap = (event: MainThread.ITouchEvent) => {
 </template>
 ```
 
-## Learn More
+## Cross-Thread Function Calls
 
-For deeper coverage of cross-thread function calls, shared modules, and other advanced main thread script features, see the [Lynx Main Thread Script guide](https://lynxjs.org/react/main-thread-script).
+The examples so far use `'main thread'` functions as event handlers. But what if you need to call a main thread function from the background thread, or vice versa? Vue Lynx provides `runOnMainThread()` and `runOnBackground()` for bidirectional async communication.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/cross-thread-calls.lynx.bundle"
+  defaultFile="src/cross-thread-calls/App.vue"
+  entry="src/cross-thread-calls"
+/>
+
+In this example, tapping the box triggers a round trip:
+
+1. **Main Thread** `onTap` fires, calls `runOnBackground(incrementCount)()` to update reactive state
+2. **Background Thread** `watch(count)` fires, calls `runOnMainThread(applyColor)(nextColor)` to change the box color
+
+### Asynchronously Invoking Main Thread Functions from the Background Thread
+
+Use `runOnMainThread()` in the background thread to asynchronously execute a main thread function on the main thread:
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef, runOnMainThread } from 'vue-lynx'
+
+const countRef = useMainThreadRef(0)
+
+const addCount = (value: number) => {
+  'main thread'
+  countRef.current += value
+  return countRef.current
+}
+
+async function increaseMainThreadCount() {
+  const result = await runOnMainThread(addCount)(1)
+  console.log(result)
+}
+</script>
+```
+
+### Asynchronously Invoking Non-Main Thread Functions from the Main Thread
+
+Use `runOnBackground()` on the main thread to asynchronously execute a regular function on the background thread:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { runOnBackground } from 'vue-lynx'
+
+const current = ref(0)
+
+const syncIndexToBackground = runOnBackground((nextIndex: number) => {
+  current.value = nextIndex
+  return `Current index updated to ${nextIndex}`
+})
+
+const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
+  'main thread'
+  const index = Math.round(event.detail.scrollTop / 300)
+  const result = await syncIndexToBackground(index)
+  console.log(result)
+}
+</script>
+
+<template>
+  <view>
+    <scroll-view :main-thread-bindscroll="onScrollMainThread" />
+    <text>Current index: {{ current }}</text>
+  </view>
+</template>
+```
+
+## Cross-Thread Shared Modules
+
+By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult. The `shared-module` mechanism allows you to explicitly declare certain modules as shareable between the main thread and the background thread.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.vue"
+  entry={["src/shared-module", "src/shared-module/color-utils.ts"]}
+/>
+
+Add `with { runtime: 'shared' }` after the `import` statement, and the exported variables (including functions, classes, objects, etc.) in that module can be directly called in main thread functions.
+
+```ts
+import { func } from './utils.js' with { runtime: 'shared' }
+
+function mainThreadFunction() {
+  'main thread'
+  func() // Allows calling plain functions in a main thread function
+}
+```
+
+:::info
+Functions in modules imported with `with { runtime: 'shared' }` can be called by main thread functions, but they are not automatically treated as main thread functions. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
+:::
+
+### Referencing Third-Party Libraries
+
+Usually, third-party libraries (e.g., `motion-dom`) contain plain JavaScript functions. If called directly in a main thread function, they will report an error due to the missing `'main thread'` directive.
+
+We can use the Shared Runtime mechanism to import them as shared modules:
+
+```ts
+// Import and use directly
+import { animate } from 'motion-dom' with { runtime: 'shared' }
+
+function onScroll() {
+  'main thread'
+  // Can be called directly in a main thread function
+  animate(element, { opacity: 0 })
+}
+```
+
+To facilitate reuse or avoid the [limitations](#limitations) of Shared Runtime (e.g., losing the shared characteristic after assignment), we recommend **wrapping** it in a main thread function:
+
+```ts
+// src/utils/motion.ts
+// 1. Import the original function as shared
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' }
+
+// 2. Export a new main thread function for encapsulation
+export function animate(...args) {
+  'main thread'
+  return _animate(...args)
+}
+```
+
+In this way, `animate` becomes a standard main thread function that can be freely used in any main thread function, no longer restricted by static analysis:
+
+```ts
+// src/App.vue <script setup>
+import { animate } from './utils/motion'
+
+function onTap() {
+  'main thread'
+  const myAnimate = animate
+  myAnimate(element, { x: 100 })
+}
+```
+
+### Limitations
+
+Only identifiers directly imported via `import` are recognized as "shared". Assigning to a new variable will cause it to lose the shared characteristic:
+
+```ts
+import { func } from './utils.js' with { runtime: 'shared' }
+const anotherFunc = func
+
+function mainThreadFunction() {
+  'main thread'
+  anotherFunc() // Cannot be analyzed at compile time, call fails
+}
+```
+
+### State Isolation
+
+**Variables and states in a Shared Module are completely isolated between the two threads, each possessing independent instances.**
+
+This means that if you modify a variable in a shared module on the main thread, the background thread cannot perceive it, and vice versa. Shared Module only solves the "code sharing" problem, not the "state sharing" problem.
