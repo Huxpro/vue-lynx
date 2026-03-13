@@ -46,6 +46,8 @@ function createTypedElement(
   switch (type) {
     case 'view':
       return __CreateView(parentComponentUniqueId);
+    case 'text':
+      return __CreateText(parentComponentUniqueId);
     case 'image':
       return __CreateImage(parentComponentUniqueId);
     case 'scroll-view':
