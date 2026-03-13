@@ -170,25 +170,21 @@ $brand-emerald: #34d399;
     }
   }
 
-  .rp-home-hero__title-brand {
-    font-size: 14px !important;
-    display: flex !important;
+  .rp-home-hero__badge {
+    font-size: 14px;
+    align-self: center;
+    display: flex;
     align-items: center;
     height: 36px;
-    width: auto !important;
-    max-width: max-content;
     flex-shrink: 0;
-    border-radius: 37px !important;
-    border: var(--home-blog-btn-border) !important;
-    background: var(--home-blog-btn-bg, rgba(255, 255, 255, 0.08)) !important;
+    border-radius: 37px;
+    border: var(--home-blog-btn-border);
+    background: var(--home-blog-btn-bg);
     backdrop-filter: blur(24px);
-    color: var(--home-blog-btn-color) !important;
-    -webkit-text-fill-color: var(--home-blog-btn-color) !important;
-    font-weight: 500 !important;
-    line-height: 32px !important;
-    letter-spacing: 0 !important;
-    padding: 0 20px !important;
-    margin: 0 auto 16px !important;
+    color: var(--home-blog-btn-color);
+    font-weight: 500;
+    line-height: 32px;
+    padding: 0 20px;
     transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
     cursor: pointer;
     user-select: none;
@@ -200,17 +196,22 @@ $brand-emerald: #34d399;
         var(--major-brand-color),
         var(--gradient-brand-color),
         var(--second-brand-color)
-      ) !important;
-      background-size: 200% 100% !important;
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
+      );
+      background-size: 200% 100%;
+      animation: gradientMoveBtn 3s ease infinite;
+      color: #fff;
+      -webkit-text-fill-color: #fff;
     }
 
     a {
-      color: inherit !important;
-      -webkit-text-fill-color: inherit !important;
+      color: inherit;
+      -webkit-text-fill-color: inherit;
       text-decoration: none;
     }
+  }
+
+  .rp-home-hero__title-brand {
+    background: none;
   }
 
   @media (max-width: 1000px) {
@@ -220,10 +221,10 @@ $brand-emerald: #34d399;
   }
 
   @media (max-width: 768px) {
-    .rp-home-hero__title-brand {
-      font-size: 12px !important;
+    .rp-home-hero__badge {
+      font-size: 12px;
       height: 28px;
-      padding: 0 16px !important;
+      padding: 0 16px;
     }
 
     .rp-home-hero .rp-home-hero__title {
