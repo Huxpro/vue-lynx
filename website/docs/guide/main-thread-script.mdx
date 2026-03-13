@@ -1,0 +1,199 @@
+# Main Thread Script
+
+The Main Thread Script is a JS script that can be executed on the main thread. The most common use cases are smooth animations and gesture handling. It addresses the response delay inherent in Lynx's multi-threaded architecture, aiming to achieve a near-native interactive experience.
+
+## Event Response Delay in Lynx
+
+Here is a simple animation: a small square that moves in sync with a `scroll-view`. In the component, we listen to the scroll event, retrieve the current scroll position from the event parameters, and update the square's position immediately:
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/background-draggable.lynx.bundle"
+  defaultFile="src/background-draggable/App.vue"
+  entry="src/background-draggable"
+/>
+
+You can try scrolling the scroll-view on the left side of the example. The blue square on the right will follow the scroll-view's movement. However, you might notice that its movement has an unpredictable delay, especially on devices with lower performance. This delay also increases as the complexity of the page increases.
+
+This is because in Lynx's architecture, events are triggered on the main thread, while regular JS event handlers (Vue's `@scroll`, etc.) can only be executed on background threads. Therefore, using regular events to trigger animations introduces multiple thread crossings, resulting in untimely responses and animations lagging behind gestures.
+
+```
+Without Main Thread Script:
+
+  ┌─────────────┐       ┌──────────────────┐       ┌─────────────┐
+  │ Main Thread  │ ───▶  │ Background Thread │ ───▶  │ Main Thread  │
+  │ (event fires)│       │ (Vue handler runs)│       │ (render)     │
+  └─────────────┘       └──────────────────┘       └─────────────┘
+        ▲                                                  │
+        └──────────── 2 thread crossings ──────────────────┘
+```
+
+The main thread script provides the capability to handle events synchronously on the main thread, ensuring synchronous event responses.
+
+```
+With Main Thread Script:
+
+  ┌──────────────────────────────────────────┐
+  │              Main Thread                  │
+  │  event fires ──▶ handler runs ──▶ render  │
+  └──────────────────────────────────────────┘
+                 0 thread crossings
+```
+
+## Use Main Thread Functions to Eliminate Event Response Delay
+
+### Implementing Animations with Main Thread Script
+
+Synchronizing events using main thread script is very simple. Here we try to modify the previous example.
+
+First, we inform the framework that we want to handle this event on the main thread by using the `main-thread-bindscroll` attribute instead of `@scroll`:
+
+```vue
+<scroll-view :main-thread-bindscroll="onScroll" />
+```
+
+Since `onScroll` is now a main thread event handler, we also need to declare it as a main thread function. This is done by adding a `'main thread'` directive as the first line inside the function body:
+
+```ts
+const onScroll = (event) => {
+  'main thread'
+  // ...
+}
+```
+
+After declaring it as a main thread function, we can no longer call it from the background thread.
+
+Finally, we can now directly manipulate the element's properties on the main thread, so there's no need to use a reactive `ref` to change the position. When using a main thread function as an event handler, we can obtain a reference to the target element using `useMainThreadRef()` and access it via `.current` inside the main thread function. This object allows you to synchronously get and set node properties, such as using `setStyleProperty()` in the example:
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const mtDraggableRef = useMainThreadRef(null)
+
+const onScroll = (event: { detail?: { scrollTop?: number } }) => {
+  'main thread'
+  const scrollTop = event.detail?.scrollTop ?? 0
+  const el = (mtDraggableRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  if (el?.setStyleProperty) {
+    el.setStyleProperty('transform', `translate(0px, ${500 - scrollTop}px)`)
+  }
+}
+</script>
+
+<template>
+  <scroll-view :main-thread-bindscroll="onScroll">
+    <!-- ... -->
+  </scroll-view>
+  <view :main-thread-ref="mtDraggableRef">
+    <!-- ... -->
+  </view>
+</template>
+```
+
+That's all the changes needed. The example below places the components before and after the modification side by side for comparison. You may notice that the animation delay has disappeared!
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/main-thread-draggable.lynx.bundle"
+  defaultFile="src/main-thread-draggable/App.vue"
+  entry="src/main-thread-draggable"
+/>
+
+## Retrieving Data from the Background Thread
+
+You may have noticed that designating a function as a main thread function isolates it from its surrounding context, making it feel like an "island." Its runtime environment is different from other functions, meaning it cannot freely communicate with the background thread.
+
+However, obtaining data from the background thread inside a main thread function is straightforward: just use it directly, as if it were a normal function.
+
+```vue
+<script setup lang="ts">
+const red = 'red'
+
+const addBackgroundColor = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  event.currentTarget.setStyleProperty('background-color', red)
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="addBackgroundColor">
+    <text>Hello World!</text>
+  </view>
+</template>
+```
+
+When the main thread function is defined, it automatically captures external variables from the background thread, such as the `red` variable in the example above. However, you cannot directly modify the values in the background thread.
+
+The values captured by the main thread function are not updated in real time. Instead, they are synchronized from the background thread to the main thread only after the component containing the main thread function re-renders. Additionally, the synchronization requires that the captured values be serializable using `JSON.stringify()`.
+
+To summarize the precautions:
+
+- Main thread functions can and must only run on the main thread. Main thread functions can call each other.
+- Captured variables need to be passed between threads using `JSON.stringify()`, so they must be serializable to JSON.
+- Main thread functions do not support nested definitions.
+- You cannot modify variables captured from the external scope within a main thread function.
+
+## Using `main-thread-ref` to Obtain Node Objects
+
+In the example above, clicking on the view would change its background color. If we want to change the color of only a specific child element, it is not easy to achieve with just `event.target` and `event.currentTarget`. In this case, you can use `main-thread-ref` to obtain a node object usable on the main thread.
+
+Create a `MainThreadRef` using the `useMainThreadRef()` composable, and then assign it to the target node's `main-thread-ref` attribute:
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const red = 'red'
+const textRef = useMainThreadRef(null)
+
+const addBackgroundColor = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  const el = (textRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  el?.setStyleProperty?.('background-color', red)
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="addBackgroundColor">
+    <text :main-thread-ref="textRef">Hello World!</text>
+    <text>Hello World!</text>
+  </view>
+</template>
+```
+
+Note that the `current` property of `MainThreadRef` can only be accessed within a main thread function.
+
+## Maintaining State in Main Thread Functions
+
+Main thread functions cannot modify captured variables. Therefore, if you need to maintain state between main thread functions, you should use `MainThreadRef`:
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const countRef = useMainThreadRef(0)
+
+const handleTap = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  event.currentTarget.setStyleProperty(
+    'background-color',
+    ++countRef.current % 2 ? 'blue' : 'green'
+  )
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="handleTap">
+    <text>Tap me!</text>
+  </view>
+</template>
+```
+
+## Learn More
+
+For deeper coverage of cross-thread function calls, shared modules, and other advanced main thread script features, see the [Lynx Main Thread Script guide](https://lynxjs.org/react/main-thread-script).
