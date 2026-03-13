@@ -59,6 +59,18 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
+    .code-tab-header {
+      display: flex;
+      align-items: stretch;
+      flex-shrink: 0;
+    }
+    .code-tab-actions {
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
     .code-view-container {
       width: 100%;
       height: 100%;
@@ -66,7 +78,8 @@
       min-height: 0;
     }
     .code-tab {
-      width: 100%;
+      flex: 1;
+      min-width: 0;
       :global {
         .semi-tabs-bar {
           padding-left: 20px;
@@ -188,6 +201,40 @@
     .switch-schema {
       display: none;
     }
+  }
+}
+
+.box-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  border-radius: 0;
+  border: none;
+  padding:
+    env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  animation: fullscreen-enter 0.15s ease-out;
+
+  @media (max-width: 600px) {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+@keyframes fullscreen-enter {
+  from {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

@@ -25,7 +25,7 @@ const WebIframe = React.lazy(() =>
   import('./web-iframe').then((module) => ({ default: module.WebIframe })),
 );
 
-import { IconGithub, IconCopyLink } from '../utils/icon';
+import { IconGithub, IconCopyLink, IconFullscreen, IconExitFullscreen } from '../utils/icon';
 import { tabScrollToTop } from '../utils/tool';
 import { useTreeController } from '../hooks/use-tree-controller';
 import type { SchemaOptionsData } from '../hooks/use-switch-schema';
@@ -114,8 +114,28 @@ export const ExampleContent: FC<ExampleContentProps> = ({
     };
   }, [previewImage, currentEntry, defaultWebPreviewFile]);
   const [tmpCurrentFileName, setTmpCurrentFileName] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const t = useI18n();
   const _lang = useLang();
+
+  useEffect(() => {
+    if (isFullscreen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsFullscreen(false);
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [isFullscreen]);
 
   const getContainer = () => containerRef.current as HTMLDivElement;
   const onFileSelect = (v: string) => {
@@ -133,47 +153,68 @@ export const ExampleContent: FC<ExampleContentProps> = ({
 
   const showCodeTab = entryData && entryData?.length > 1;
   return (
-    <div className={s.box}>
+    <div className={`${s.box} ${isFullscreen ? s['box-fullscreen'] : ''}`}>
       <div className={s.container} ref={containerRef}>
         <div className={s.content}>
           <div className={s['code-wrap']}>
             <div className={s['code-tab-container']}>
-              {showCodeTab && (
-                <div
-                  className={s['code-tab']}
-                  ref={(tabsRef) => {
-                    // scroll to active tab
-                    tabScrollToTop(tabsRef);
-                  }}
-                >
-                  <Tabs
-                    activeKey={currentFileName}
-                    onChange={(v) => updateCurrentName(v)}
-                    size="small"
-                    preventScroll={true}
-                    onTabClose={() => {
-                      updateCurrentName(entryData[entryData.length - 1].value);
-                      setTmpCurrentFileName('');
+              <div className={s['code-tab-header']}>
+                {showCodeTab && (
+                  <div
+                    className={s['code-tab']}
+                    ref={(tabsRef) => {
+                      // scroll to active tab
+                      tabScrollToTop(tabsRef);
                     }}
                   >
-                    {entryData.map((file) => (
-                      <TabPane
-                        key={file.value}
-                        itemKey={file.value}
-                        tab={file.label}
-                      />
-                    ))}
-                    {tmpCurrentFileName && (
-                      <TabPane
-                        key={tmpCurrentFileName}
-                        itemKey={tmpCurrentFileName}
-                        tab={tmpCurrentFileName?.split('/').pop()}
-                        closable={true}
-                      />
-                    )}
-                  </Tabs>
+                    <Tabs
+                      activeKey={currentFileName}
+                      onChange={(v) => updateCurrentName(v)}
+                      size="small"
+                      preventScroll={true}
+                      onTabClose={() => {
+                        updateCurrentName(entryData[entryData.length - 1].value);
+                        setTmpCurrentFileName('');
+                      }}
+                    >
+                      {entryData.map((file) => (
+                        <TabPane
+                          key={file.value}
+                          itemKey={file.value}
+                          tab={file.label}
+                        />
+                      ))}
+                      {tmpCurrentFileName && (
+                        <TabPane
+                          key={tmpCurrentFileName}
+                          itemKey={tmpCurrentFileName}
+                          tab={tmpCurrentFileName?.split('/').pop()}
+                          closable={true}
+                        />
+                      )}
+                    </Tabs>
+                  </div>
+                )}
+                <div className={s['code-tab-actions']}>
+                  <Button
+                    theme="borderless"
+                    icon={
+                      isFullscreen ? (
+                        <IconExitFullscreen
+                          style={{ color: 'var(--semi-color-text-2)' }}
+                        />
+                      ) : (
+                        <IconFullscreen
+                          style={{ color: 'var(--semi-color-text-2)' }}
+                        />
+                      )
+                    }
+                    type="tertiary"
+                    size="small"
+                    onClick={() => setIsFullscreen((v) => !v)}
+                  />
                 </div>
-              )}
+              </div>
               <div
                 className={`${s['code-view-container']} ${showCodeTab ? s['code-view-container-tab-show'] : ''}`}
               >
