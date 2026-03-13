@@ -96,7 +96,7 @@ const planBadgeClass = computed(() =>
 
 <template>
   <scroll-view
-    class="w-full min-h-full bg-background"
+    class="w-full h-full bg-background"
     scroll-orientation="vertical"
     :style="themeStyle"
   >
