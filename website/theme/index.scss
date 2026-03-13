@@ -188,11 +188,10 @@ $brand-emerald: #34d399;
     line-height: 32px !important;
     letter-spacing: 0 !important;
     padding: 0 20px !important;
-    margin-bottom: 26px !important;
-    transition: all 0.3s ease;
+    margin: 0 auto 26px !important;
+    transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
     cursor: pointer;
     user-select: none;
-    opacity: 1;
     animation: fadeIn 0.8s ease-in;
 
     &:hover {
@@ -203,7 +202,6 @@ $brand-emerald: #34d399;
         var(--second-brand-color)
       ) !important;
       background-size: 200% 100% !important;
-      animation: gradientMoveBtn 3s ease infinite;
       color: #fff !important;
       -webkit-text-fill-color: #fff !important;
     }
