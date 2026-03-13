@@ -117,6 +117,21 @@ export function pluginVueLynx(
 
       setup(api) {
         api.modifyRsbuildConfig((config, { mergeRsbuildConfig }) => {
+          // By default, Rsbuild does not compile JavaScript files under
+          // node_modules via SWC. Many npm packages ship ES2021+ syntax
+          // (e.g. ??=, ||=) which the Lynx JS engine does not support.
+          // Match the behavior of pluginReactLynx: compile all JS files
+          // (including those in node_modules) unless the user explicitly
+          // sets source.include.
+          const userConfig = api.getRsbuildConfig('original');
+          if (typeof userConfig.source?.include === 'undefined') {
+            config = mergeRsbuildConfig(config, {
+              source: {
+                include: [/\.(?:js|mjs|cjs)$/],
+              },
+            });
+          }
+
           return mergeRsbuildConfig(config, {
             source: {
               define: {
