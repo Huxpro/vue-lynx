@@ -100,6 +100,48 @@ const LoadingOverlay = ({ visible }: { visible: boolean }) => {
   );
 };
 
+/**
+ * Rewrite CSS viewport units (vh/vw) in a Lynx template's styleInfo to use
+ * CSS custom properties (--lynx-vh / --lynx-vw). This fixes viewport-unit
+ * sizing inside the <lynx-view> shadow DOM, where native CSS vh/vw resolve
+ * to the browser viewport rather than the preview container.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: template structure from web-core
+function rewriteViewportUnits(template: any): any {
+  if (!template.styleInfo) return template;
+
+  const rewrite = (value: string) =>
+    value
+      .replace(/(-?\d+\.?\d*)vh/g, (_, num) => {
+        const n = Number.parseFloat(num);
+        if (n === 100) return 'var(--lynx-vh, 100vh)';
+        return `calc(var(--lynx-vh, 100vh) * ${n / 100})`;
+      })
+      .replace(/(-?\d+\.?\d*)vw/g, (_, num) => {
+        const n = Number.parseFloat(num);
+        if (n === 100) return 'var(--lynx-vw, 100vw)';
+        return `calc(var(--lynx-vw, 100vw) * ${n / 100})`;
+      });
+
+  for (const key of Object.keys(template.styleInfo)) {
+    const info = template.styleInfo[key];
+    if (info.content) {
+      info.content = info.content.map((s: string) => rewrite(s));
+    }
+    if (info.rules) {
+      for (const rule of info.rules) {
+        if (rule.decl) {
+          rule.decl = rule.decl.map(([prop, val]: [string, string]) => [
+            prop,
+            rewrite(val),
+          ]);
+        }
+      }
+    }
+  }
+  return template;
+}
+
 export const WebIframe = ({ show, src }: WebIframeProps) => {
   const lynxViewRef = useRef<LynxView>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,15 +181,23 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
   // Set URL only after runtime is ready AND element is mounted
   useEffect(() => {
     if (ready && show && src && lynxViewRef.current && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+
       // @ts-ignore
       lynxViewRef.current.browserConfig = {
-        pixelWidth: Math.round(
-          containerRef.current.clientWidth * window.devicePixelRatio,
-        ),
-        pixelHeight: Math.round(
-          containerRef.current.clientHeight * window.devicePixelRatio,
-        ),
+        pixelWidth: Math.round(containerWidth * window.devicePixelRatio),
+        pixelHeight: Math.round(containerHeight * window.devicePixelRatio),
       };
+
+      // Map CSS viewport units to the preview container dimensions.
+      // In shadow DOM, native vh/vw resolve to the browser viewport,
+      // not the lynx-view container. We define custom properties and
+      // rewrite the bundle CSS to reference them instead.
+      // @ts-ignore
+      lynxViewRef.current.injectStyleRules = [
+        `:host { --lynx-vh: ${containerHeight}px; --lynx-vw: ${containerWidth}px; }`,
+      ];
 
       // Rewrite webpack's public path in the bundle JS so that asset
       // URLs (images etc.) resolve relative to the bundle location,
@@ -181,6 +231,9 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
               'var __webpack_require__={p:"/"};' + root;
           }
         }
+
+        // Rewrite vh/vw units in CSS to use container-relative custom properties
+        rewriteViewportUnits(template);
 
         return template;
       };
