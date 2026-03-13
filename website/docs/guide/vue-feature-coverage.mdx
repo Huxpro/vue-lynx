@@ -23,19 +23,47 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   img="/assets/option-api-preview.png"
 />
 
-{/* ## Transition
+## Transition
 
-Vue's `<Transition>` component applies enter/leave animations when an element is inserted or removed.
-On Lynx, CSS class-based transitions require the CSS Selector feature to be enabled.
+Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
 
-> **Status: Experimental** — CSS class-based enter/leave works. `<TransitionGroup>` and move transitions are not yet supported.
+:::warning
+`<Transition>` and `<TransitionGroup>` are **experimental**. Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable.
+:::
 
-```ts title="lynx.config.ts"
-pluginVueLynx({
-  enableCSSSelector: true, // required for class-based transitions
-})
+```vue
+<script setup>
+import { ref } from 'vue-lynx'
+const show = ref(true)
+</script>
+
+<template>
+  <view @tap="show = !show">
+    <text>Toggle</text>
+  </view>
+  <Transition name="fade" :duration="300">
+    <view v-if="show">
+      <text>Hello Transition!</text>
+    </view>
+  </Transition>
+</template>
+
+<style>
+.fade-enter-active, .fade-leave-active {
+  transition-property: opacity;
+  transition-duration: 300ms;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>
 ```
-*/}
+
+<Go
+  example="transition"
+  defaultFile="src/App.vue"
+  defaultEntryFile="dist/transition.lynx.bundle"
+/>
 
 ## Suspense
 
