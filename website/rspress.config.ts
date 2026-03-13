@@ -53,6 +53,7 @@ export default defineConfig({
         { text: 'Quick Start', link: '/guide/quick-start' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
+        { text: 'Transition', link: '/guide/transition' },
         {
           dividerType: 'solid',
         },

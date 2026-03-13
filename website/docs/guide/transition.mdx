@@ -1,0 +1,146 @@
+# Transition
+
+Vue Lynx provides `<Transition>` and `<TransitionGroup>` components that mirror Vue's [built-in transition system](https://vuejs.org/guide/built-ins/transition.html), adapted for Lynx's dual-thread architecture.
+
+:::: warning Experimental
+`<Transition>` and `<TransitionGroup>` are experimental. CSS class-based enter/leave animations work, but some features behave differently from Vue DOM — see [Differences from Vue DOM](#differences-from-vue-dom) below.
+::::
+
+## `<Transition>`
+
+Applies enter/leave animations to a single element or component toggled by `v-if`, `v-show`, or dynamic components.
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const show = ref(true)
+</script>
+
+<template>
+  <view @tap="show = !show">
+    <text>Toggle</text>
+  </view>
+  <Transition name="fade" :duration="300">
+    <view v-if="show">
+      <text>Hello Transition!</text>
+    </view>
+  </Transition>
+</template>
+
+<style>
+.fade-enter-active, .fade-leave-active {
+  transition-property: opacity;
+  transition-duration: 300ms;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>
+```
+
+### Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `name` | `string` | Transition name prefix (default: `'v'`). Generates class names like `{name}-enter-from`. |
+| `duration` | `number \| { enter: number, leave: number }` | Explicit transition duration in ms. **Recommended** — see [duration prop](#always-set-the-duration-prop). |
+| `type` | `'transition' \| 'animation'` | Which CSS event to listen for (`transitionend` or `animationend`). |
+| `mode` | `'in-out' \| 'out-in'` | Transition sequencing for element switches. |
+| `appear` | `boolean` | Apply transition on initial render. |
+
+### CSS Classes
+
+Same convention as Vue DOM:
+
+| Class | When |
+|-------|------|
+| `{name}-enter-from` | Start state for enter. Added in `beforeEnter`, removed next frame. |
+| `{name}-enter-active` | Active state for enter. Applied during the entire entering phase. |
+| `{name}-enter-to` | End state for enter. Added next frame, removed when transition finishes. |
+| `{name}-leave-from` | Start state for leave. |
+| `{name}-leave-active` | Active state for leave. |
+| `{name}-leave-to` | End state for leave. |
+
+## `<TransitionGroup>`
+
+Applies enter/leave animations to each item in a `v-for` list. Renders a container element (default: `<view>`).
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const items = ref([1, 2, 3])
+let id = 3
+function add() {
+  items.value.splice(Math.floor(Math.random() * items.value.length), 0, ++id)
+}
+function remove() {
+  items.value.splice(Math.floor(Math.random() * items.value.length), 1)
+}
+</script>
+
+<template>
+  <view :style="{ display: 'flex', flexDirection: 'row' }">
+    <view @tap="add"><text>Add</text></view>
+    <view @tap="remove"><text>Remove</text></view>
+  </view>
+  <TransitionGroup name="list" tag="view" :duration="300">
+    <view v-for="item in items" :key="item">
+      <text>Item {{ item }}</text>
+    </view>
+  </TransitionGroup>
+</template>
+
+<style>
+.list-enter-active, .list-leave-active {
+  transition-property: opacity, transform;
+  transition-duration: 300ms;
+}
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+</style>
+```
+
+### Additional Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `tag` | `string` | Container element type (default: `'view'`). |
+
+All `<Transition>` props (`name`, `duration`, `type`, `appear`) are also supported.
+
+## Demo
+
+<Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />
+
+## Differences from Vue DOM
+
+### Always set the `duration` prop
+
+In Vue DOM, `<Transition>` calls `getComputedStyle()` to detect CSS transition/animation duration and property count. This is **not possible** in Lynx's dual-thread model — the background thread cannot synchronously query computed styles from the main thread.
+
+Without `:duration`, Vue Lynx falls back to listening for `transitionend`/`animationend` events. If no CSS transition is defined on the element, these events never fire and the leave animation will never complete (the element won't be removed).
+
+**Always pass an explicit `:duration` prop** to ensure reliable behavior:
+
+```vue
+<Transition name="fade" :duration="300">...</Transition>
+<Transition name="slide" :duration="{ enter: 200, leave: 400 }">...</Transition>
+```
+
+### No `forceReflow`
+
+Vue DOM reads `el.offsetHeight` to force a browser reflow between applying `enter-from` and `enter-to` classes. Vue Lynx instead splits these into **separate ops batches** — the first batch (with `enter-from`) is sent to the main thread, and only after the main thread acknowledges does the second batch (with `enter-to`) follow.
+
+### No move animations in `<TransitionGroup>`
+
+FLIP-based move animations (the `{name}-move` class) require synchronous bounding-rect queries (`getBoundingClientRect()`), which are not available from the background thread. Only enter/leave animations are supported.
+
+### `nextFrame` implementation
+
+Vue DOM uses double `requestAnimationFrame` to ensure the browser has painted the initial state. Vue Lynx uses the flush acknowledgement from the main thread as the frame boundary, with an additional `requestAnimationFrame` on web for reliable rendering.
