@@ -45,9 +45,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   // Cycling typewriter animation — pure DOM, no React state to avoid
   // re-renders that would cause BaseHomeLayout to overwrite our changes.
   useEffect(() => {
-    const dynamicSpan = document.querySelector('.hero-title .dynamic-text');
-    if (!dynamicSpan) return;
-
     let wordIndex = 0;
     let text = cyclingWords[0];
     let deleting = false;
@@ -62,6 +59,10 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     };
 
     const tick = () => {
+      // Re-query every tick — the element may be replaced during hydration.
+      const el = document.querySelector('.hero-title .dynamic-text');
+      if (!el) return schedule(200);
+
       const word = cyclingWords[wordIndex];
 
       if (!deleting && text === word) {
@@ -75,7 +76,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
         }
       } else if (deleting) {
         text = word.substring(0, text.length - 1);
-        dynamicSpan.textContent = text;
+        el.textContent = text;
         if (text === '') {
           deleting = false;
           wordIndex = (wordIndex + 1) % cyclingWords.length;
@@ -85,7 +86,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
         }
       } else {
         text = cyclingWords[wordIndex].substring(0, text.length + 1);
-        dynamicSpan.textContent = text;
+        el.textContent = text;
         schedule(200);
       }
     };
