@@ -63,7 +63,7 @@ interface WebpackCompiler {
       PROCESS_ASSETS_STAGE_ADDITIONAL: number;
       PROCESS_ASSETS_STAGE_PRE_PROCESS: number;
     };
-    RuntimeGlobals: { startup: string };
+    RuntimeGlobals: { startup: string; require: string };
     sources: { RawSource: new(source: string) => unknown };
   };
   hooks: {
@@ -103,12 +103,18 @@ class VueMarkMainThreadPlugin {
       (compilation) => {
         // Force startup code generation for MT entry chunks so that
         // entry module factories actually execute.
+        // We also request RuntimeGlobals.require so that webpack includes
+        // the __webpack_require__ runtime definition. Without it, rspack
+        // may optimize away the runtime when no modules reference
+        // publicPath, leaving bare __webpack_require__ references in the
+        // generated startup code.
         compilation.hooks.additionalTreeRuntimeRequirements.tap(
           PLUGIN_MARK_MAIN_THREAD,
           (chunk, set) => {
             const entryOptions = chunk.getEntryOptions();
             if (entryOptions?.layer === LAYERS.MAIN_THREAD) {
               set.add(RuntimeGlobals.startup);
+              set.add(RuntimeGlobals.require);
             }
           },
         );
