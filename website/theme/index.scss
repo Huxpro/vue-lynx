@@ -81,6 +81,32 @@ $brand-emerald: #34d399;
   white-space: normal;
   max-width: 100%;
 
+  .dynamic-text {
+    background: linear-gradient(
+      270deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color),
+      var(--second-brand-color),
+      var(--gradient-brand-color),
+      var(--major-brand-color)
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    border-right: 4px solid transparent;
+    margin-right: -4px;
+    animation:
+      blink-caret 1s cubic-bezier(1, 0, 0, 1) infinite,
+      fade-in 0.8s ease-out,
+      gradientMove 6s linear infinite;
+
+    @media (max-width: 640px) {
+      border-right-width: 2px;
+      margin-right: -2px;
+    }
+  }
+
   .brand {
     background-clip: text;
     -webkit-background-clip: text;
@@ -104,6 +130,23 @@ $brand-emerald: #34d399;
     -webkit-background-clip: text;
     color: var(--hero-normal-text-color);
     background-color: var(--hero-normal-text-color);
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  49% {
+    border-image: linear-gradient(
+        to bottom,
+        var(--major-brand-color),
+        var(--gradient-brand-color),
+        var(--second-brand-color)
+      )
+      1;
+  }
+  50%,
+  to {
+    border-image: linear-gradient(to bottom, transparent, transparent) 1;
   }
 }
 
@@ -246,4 +289,13 @@ $brand-emerald: #34d399;
 
 .rspress-home-hero-tagline {
   color: var(--home-features-item-desc-color);
+
+  a {
+    color: var(--rp-c-brand);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
