@@ -158,63 +158,42 @@ export const ExampleContent: FC<ExampleContentProps> = ({
         <div className={s.content}>
           <div className={s['code-wrap']}>
             <div className={s['code-tab-container']}>
-              <div className={s['code-tab-header']}>
-                {showCodeTab && (
-                  <div
-                    className={s['code-tab']}
-                    ref={(tabsRef) => {
-                      // scroll to active tab
-                      tabScrollToTop(tabsRef);
+              {showCodeTab && (
+                <div
+                  className={s['code-tab']}
+                  ref={(tabsRef) => {
+                    // scroll to active tab
+                    tabScrollToTop(tabsRef);
+                  }}
+                >
+                  <Tabs
+                    activeKey={currentFileName}
+                    onChange={(v) => updateCurrentName(v)}
+                    size="small"
+                    preventScroll={true}
+                    onTabClose={() => {
+                      updateCurrentName(entryData[entryData.length - 1].value);
+                      setTmpCurrentFileName('');
                     }}
                   >
-                    <Tabs
-                      activeKey={currentFileName}
-                      onChange={(v) => updateCurrentName(v)}
-                      size="small"
-                      preventScroll={true}
-                      onTabClose={() => {
-                        updateCurrentName(entryData[entryData.length - 1].value);
-                        setTmpCurrentFileName('');
-                      }}
-                    >
-                      {entryData.map((file) => (
-                        <TabPane
-                          key={file.value}
-                          itemKey={file.value}
-                          tab={file.label}
-                        />
-                      ))}
-                      {tmpCurrentFileName && (
-                        <TabPane
-                          key={tmpCurrentFileName}
-                          itemKey={tmpCurrentFileName}
-                          tab={tmpCurrentFileName?.split('/').pop()}
-                          closable={true}
-                        />
-                      )}
-                    </Tabs>
-                  </div>
-                )}
-                <div className={s['code-tab-actions']}>
-                  <Button
-                    theme="borderless"
-                    icon={
-                      isFullscreen ? (
-                        <IconExitFullscreen
-                          style={{ color: 'var(--semi-color-text-2)' }}
-                        />
-                      ) : (
-                        <IconFullscreen
-                          style={{ color: 'var(--semi-color-text-2)' }}
-                        />
-                      )
-                    }
-                    type="tertiary"
-                    size="small"
-                    onClick={() => setIsFullscreen((v) => !v)}
-                  />
+                    {entryData.map((file) => (
+                      <TabPane
+                        key={file.value}
+                        itemKey={file.value}
+                        tab={file.label}
+                      />
+                    ))}
+                    {tmpCurrentFileName && (
+                      <TabPane
+                        key={tmpCurrentFileName}
+                        itemKey={tmpCurrentFileName}
+                        tab={tmpCurrentFileName?.split('/').pop()}
+                        closable={true}
+                      />
+                    )}
+                  </Tabs>
                 </div>
-              </div>
+              )}
               <div
                 className={`${s['code-view-container']} ${showCodeTab ? s['code-view-container-tab-show'] : ''}`}
               >
@@ -421,6 +400,23 @@ export const ExampleContent: FC<ExampleContentProps> = ({
                   '_blank',
                 );
               }}
+            />
+            <Button
+              theme="borderless"
+              icon={
+                isFullscreen ? (
+                  <IconExitFullscreen
+                    style={{ color: 'var(--semi-color-text-2)' }}
+                  />
+                ) : (
+                  <IconFullscreen
+                    style={{ color: 'var(--semi-color-text-2)' }}
+                  />
+                )
+              }
+              type="tertiary"
+              size="small"
+              onClick={() => setIsFullscreen((v) => !v)}
             />
             {rightFooter}
           </Space>
