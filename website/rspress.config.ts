@@ -61,6 +61,7 @@ export default defineConfig({
         },
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
+        { text: 'Cross-Thread Shared Modules', link: '/guide/shared-module' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
         {
           dividerType: 'solid',
