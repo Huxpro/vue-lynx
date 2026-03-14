@@ -38,28 +38,12 @@ Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animat
 
 ## Suspense
 
-Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve.
-
-### Async `setup()`
-
-A component with top-level `await` in `<script setup>` becomes an async dependency. When wrapped in `<Suspense>`, the `#fallback` slot is shown until the promise resolves:
+Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
 
 <Go
   example="suspense"
-  defaultFile="src/AsyncSetup.vue"
-  defaultEntryFile="src/index.ts"
+  defaultFile="src/App.vue"
   defaultEntryName="main"
-/>
-
-### `defineAsyncComponent`
-
-`defineAsyncComponent` wraps a component factory that returns a promise. This is useful for simulating slow loads or lazy-loading via static imports with artificial delays:
-
-<Go
-  example="suspense"
-  defaultFile="src/DefineAsync.vue"
-  defaultEntryFile="src/define-async.ts"
-  defaultEntryName="define-async"
 />
 
 {/* ## KeepAlive
