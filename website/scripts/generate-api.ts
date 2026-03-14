@@ -202,6 +202,22 @@ The following APIs are specific to Vue Lynx's dual-thread architecture (Backgrou
 | ------ | ------ |
 ${lynxApis.map(fmtRow).join('\n')}
 
+## Built-in Components
+
+| Component | Status | Notes |
+| --------- | ------ | ----- |
+| \`<Transition>\` | Experimental | CSS class-based enter/leave animations. Requires explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. |
+| \`<TransitionGroup>\` | Experimental | Per-child enter/leave animations. Move (FLIP) animations not supported — \`getBoundingClientRect()\` is unavailable from the background thread. |
+| \`<Suspense>\` | Supported | Re-exported from Vue. Works with \`defineAsyncComponent()\`. |
+| \`<KeepAlive>\` | Not Supported | Requires element recycling not available in Lynx renderer. |
+| \`<Teleport>\` | Not Supported | Requires \`querySelector\` renderer option not implemented. |
+
+:::warning
+\`<Transition>\` and \`<TransitionGroup>\` are **experimental**. Always pass an explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. Move (FLIP) animations in \`<TransitionGroup>\` are not supported.
+:::
+
+<Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />
+
 ## Vue Re-exports
 
 Standard Vue 3 APIs re-exported from \`vue-lynx\`. See [Vue.js API Reference](https://vuejs.org/api/) for full documentation.

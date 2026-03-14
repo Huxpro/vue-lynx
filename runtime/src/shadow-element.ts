@@ -34,6 +34,13 @@ export class ShadowElement {
   // Set to true by vShow when the element should be hidden.
   _vShowHidden = false;
 
+  // Class management for Transition support.
+  // _baseClass: the class string set by the user via :class / class prop.
+  // _transitionClasses: classes added/removed by <Transition> hooks.
+  // The effective class sent to MT = _baseClass + _transitionClasses joined.
+  _baseClass = '';
+  _transitionClasses: Set<string> = new Set();
+
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {
       this.id = ShadowElement.nextId++;

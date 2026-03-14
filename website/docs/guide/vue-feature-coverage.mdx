@@ -22,19 +22,19 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
-{/* ## Transition
+## Transition
 
-Vue's `<Transition>` component applies enter/leave animations when an element is inserted or removed.
-On Lynx, CSS class-based transitions require the CSS Selector feature to be enabled.
+Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
 
-> **Status: Experimental** — CSS class-based enter/leave works. `<TransitionGroup>` and move transitions are not yet supported.
+:::warning
+`<Transition>` and `<TransitionGroup>` are **experimental**. Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable.
+:::
 
-```ts title="lynx.config.ts"
-pluginVueLynx({
-  enableCSSSelector: true, // required for class-based transitions
-})
-```
-*/}
+<Go
+  example="transition"
+  defaultFile="src/App.vue"
+  defaultEntryFile="dist/transition.lynx.bundle"
+/>
 
 ## Suspense
 
