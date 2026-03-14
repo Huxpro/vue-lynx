@@ -72,9 +72,38 @@ function redo() {
 </script>
 
 <template>
-  <view :style="{ padding: 10, gap: 10 }">
-    <!-- Undo / Redo -->
-    <view :style="{ display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'center' }">
+  <!-- Canvas fills the entire view; controls overlay on top -->
+  <view
+    :style="{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', position: 'relative' }"
+    @tap="onCanvasTap"
+  >
+    <!-- Hint text -->
+    <text
+      v-if="circles.length === 0"
+      :style="{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#bbb', fontSize: 14, textAlign: 'center' }"
+    >
+      Tap to draw circles
+    </text>
+
+    <!-- Circles -->
+    <view
+      v-for="circle in circles"
+      :key="circle.id"
+      :style="{
+        position: 'absolute',
+        left: circle.x - circle.r + 'px',
+        top: circle.y - circle.r + 'px',
+        width: circle.r * 2 + 'px',
+        height: circle.r * 2 + 'px',
+        borderRadius: circle.r + 'px',
+        backgroundColor: circle.id === selectedId ? '#ccc' : '#fff',
+        borderWidth: 1,
+        borderColor: '#333',
+      }"
+    />
+
+    <!-- Undo / Redo overlaid at the top -->
+    <view :style="{ position: 'absolute', top: 10, left: 0, right: 0, display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'center' }">
       <view
         :style="{ padding: '6px 16px', backgroundColor: historyIndex > 0 ? '#0077ff' : '#ccc', borderRadius: 6 }"
         @tap="undo"
@@ -89,36 +118,8 @@ function redo() {
       </view>
     </view>
 
-    <!-- Canvas -->
-    <view
-      :style="{ height: 400, backgroundColor: '#f0f0f0', borderRadius: 8, position: 'relative', overflow: 'hidden' }"
-      @tap="onCanvasTap"
-    >
-      <text
-        v-if="circles.length === 0"
-        :style="{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#bbb', fontSize: 14, textAlign: 'center' }"
-      >
-        Tap to draw circles
-      </text>
-      <view
-        v-for="circle in circles"
-        :key="circle.id"
-        :style="{
-          position: 'absolute',
-          left: circle.x - circle.r + 'px',
-          top: circle.y - circle.r + 'px',
-          width: circle.r * 2 + 'px',
-          height: circle.r * 2 + 'px',
-          borderRadius: circle.r + 'px',
-          backgroundColor: circle.id === selectedId ? '#ccc' : '#fff',
-          borderWidth: 1,
-          borderColor: '#333',
-        }"
-      />
-    </view>
-
-    <!-- Adjust controls (shown when a circle is selected) -->
-    <view v-if="selectedId >= 0" :style="{ gap: 8, alignItems: 'center' }">
+    <!-- Adjust controls overlaid at the bottom -->
+    <view v-if="selectedId >= 0" :style="{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center', gap: 8 }">
       <view v-if="!adjusting">
         <view
           :style="{ padding: '8px 20px', backgroundColor: '#0077ff', borderRadius: 6 }"
