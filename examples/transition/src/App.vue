@@ -61,7 +61,7 @@ function onLeave(_el: any, done: () => void) {
 </script>
 
 <template>
-  <scroll-view scroll-orientation="vertical" :style="{ flex: 1, backgroundColor: '#f0f0f0', padding: 16 }">
+  <scroll-view scroll-orientation="vertical" :style="{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', padding: 16 }">
     <text :style="{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }">Transition Demos</text>
 
     <!-- 1. Basic Fade -->
