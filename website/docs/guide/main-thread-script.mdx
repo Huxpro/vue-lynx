@@ -265,3 +265,62 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 </template>
 ```
 
+## Cross-Thread Shared Modules
+
+Sometimes you have utility functions — pure computation, color helpers, math — that need to run on **both** threads. Normally, modules imported in a main thread function are only available on the main thread, and regular imports are only available on the background thread.
+
+The `with { runtime: 'shared' }` import attribute tells Vue Lynx to include a module's code in both thread bundles:
+
+```ts
+import { getNextColor } from './color-utils' with { runtime: 'shared' }
+```
+
+The shared module is a regular TypeScript/JavaScript file — it does **not** need a `'main thread'` directive. It must contain only plain functions and constants (no Vue reactivity, no DOM access, no side effects that depend on a specific thread).
+
+```ts
+// color-utils.ts — shared between both threads
+const COLORS = ['#4FC3F7', '#81C784', '#FFB74D', '#E57373', '#BA68C8']
+
+export function getNextColor(index: number): string {
+  return COLORS[index % COLORS.length]!
+}
+```
+
+Once imported with `{ runtime: 'shared' }`, the exported functions can be called both inside `'main thread'` functions and in regular background thread code:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useMainThreadRef } from 'vue-lynx'
+import { getNextColor } from './color-utils' with { runtime: 'shared' }
+
+// Background Thread: use shared function in computed/watch
+const count = ref(0)
+const currentColor = computed(() => getNextColor(count.value))
+
+// Main Thread: use the same shared function in a tap handler
+const boxRef = useMainThreadRef(null)
+const onTap = () => {
+  'main thread'
+  const color = getNextColor(1)
+  const el = (boxRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  el?.setStyleProperty?.('background-color', color)
+}
+</script>
+```
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.vue"
+  entry="src/shared-module"
+/>
+
+### Rules for shared modules
+
+- The shared module must be a plain JS/TS file with no `'main thread'` directive.
+- Only pure functions and constants are safe — avoid Vue reactivity, DOM APIs, or thread-specific globals.
+- The `with { runtime: 'shared' }` attribute must be on the import statement in the consuming file. The shared module itself requires no special annotation.
+

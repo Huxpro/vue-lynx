@@ -18,14 +18,23 @@
  * filtered out — only `?vue&type=script` imports are preserved. Template
  * and style sub-modules would pull in Vue runtime/CSS processing on the
  * MT layer, which is unnecessary and harmful.
+ *
+ * Imports with `with { runtime: 'shared' }` are also skipped — these are
+ * handled separately by `extractSharedImports()`.
  */
 export function extractLocalImports(source: string): string {
   const specifiers = new Set<string>();
 
   // Match 'from' clause with relative specifier: from './foo' or from "../bar"
+  // but skip lines that contain `with {` (shared runtime imports).
   const fromRe = /from\s+['"](\.[^'"]+)['"]/g;
   let match;
   while ((match = fromRe.exec(source)) !== null) {
+    // Check if this import has `with {` attribute (shared runtime import)
+    const lineStart = source.lastIndexOf('\n', match.index) + 1;
+    const lineEnd = source.indexOf('\n', match.index);
+    const line = source.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+    if (/with\s*\{/.test(line)) continue;
     specifiers.add(match[1]!);
   }
 
@@ -47,6 +56,35 @@ export function extractLocalImports(source: string): string {
     })
     .map(s => `import '${s}';`)
     .join('\n');
+}
+
+/**
+ * Extract import statements with `with { runtime: 'shared' }` attributes.
+ *
+ * These imports reference modules whose code must be available on both
+ * threads. The `with { runtime: 'shared' }` attribute is stripped and
+ * the specifier is prefixed with `!!` (webpack inline loader syntax) to
+ * skip all configured loaders — most importantly worklet-loader-mt,
+ * which would otherwise strip the module's exports. rspack's native
+ * TypeScript compilation still applies, so the shared module's code
+ * is available as regular JS on the MT layer.
+ */
+export function extractSharedImports(source: string): string {
+  // Match import statements containing `with { runtime: 'shared' }`.
+  // SWC may reformat across multiple lines, so we use [\s\S]*? for the
+  // attribute block.
+  const re = /import\s+(.+?)\s+from\s+(['"])([^'"]+)\2\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g;
+  const imports: string[] = [];
+  let match;
+  while ((match = re.exec(source)) !== null) {
+    const specifiers = match[1]!;
+    const quote = match[2]!;
+    const modulePath = match[3]!;
+    // Use `!!` with explicit `builtin:swc-loader` to skip all configured
+    // loaders (especially worklet-loader-mt) while keeping TS compilation.
+    imports.push(`import ${specifiers} from ${quote}!!builtin:swc-loader!${modulePath}${quote};`);
+  }
+  return imports.join('\n');
 }
 
 /**

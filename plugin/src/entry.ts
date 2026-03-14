@@ -366,7 +366,9 @@ export function applyEntry(
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
       .end();
 
-    // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls)
+    // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls).
+    // Shared-runtime modules (imported with `{ runtime: 'shared' }`) are detected
+    // inside the loader itself and passed through unchanged — see worklet-loader-mt.
     const workletMtExclude = chain.module
       .rule('vue:worklet-mt')
       .issuerLayer(LAYERS.MAIN_THREAD)
