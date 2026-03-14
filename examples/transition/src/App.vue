@@ -1,16 +1,3 @@
-<!--
-  Transition Demo — exercises <Transition> and <TransitionGroup>
-
-  Scenarios covered:
-    1. Basic fade (CSS transition)
-    2. Named slide-fade (CSS transition)
-    3. Bounce (CSS @keyframes animation)
-    4. Transition mode="out-in" (component switch)
-    5. Transition with appear
-    6. Explicit :duration prop
-    7. TransitionGroup — list enter/leave
-    8. JS hooks (onBeforeEnter / onEnter / onLeave)
--->
 <script setup lang="ts">
 import { ref } from 'vue'
 
