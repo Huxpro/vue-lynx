@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
   getCustomMDXComponent as basicGetCustomMDXComponent,
@@ -16,12 +16,6 @@ import {
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [displayText, setDisplayText] = useState(cyclingWords[0]);
-  const [delta, setDelta] = useState(200);
-  const [isPaused, setIsPaused] = useState(false);
-
   // Badge → GitHub link
   useEffect(() => {
     const badge = document.querySelector('.rp-home-hero__badge');
@@ -48,48 +42,62 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     }
   }, []);
 
-  // Cycling typewriter animation
-  const updateText = useCallback(() => {
+  // Cycling typewriter animation — pure DOM, no React state to avoid
+  // re-renders that would cause BaseHomeLayout to overwrite our changes.
+  useEffect(() => {
     const dynamicSpan = document.querySelector('.hero-title .dynamic-text');
     if (!dynamicSpan) return;
 
-    const currentWord = cyclingWords[currentWordIndex];
+    let wordIndex = 0;
+    let text = cyclingWords[0];
+    let deleting = false;
+    let paused = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
 
-    if (!isDeleting && displayText === currentWord) {
-      if (!isPaused) {
-        setIsPaused(true);
-        setDelta(2000);
-      } else {
-        setIsPaused(false);
-        setIsDeleting(true);
-        setDelta(100);
+    const schedule = (delay: number) => {
+      if (!cancelled) {
+        timerId = setTimeout(tick, delay);
       }
-    } else if (isDeleting) {
-      const newText = currentWord.substring(0, displayText.length - 1);
-      setDisplayText(newText);
-      dynamicSpan.textContent = newText;
-      if (newText === '') {
-        setIsDeleting(false);
-        setCurrentWordIndex((prev) => (prev + 1) % cyclingWords.length);
-        setDelta(140);
-      } else {
-        setDelta(100);
-      }
-    } else {
-      const newText = cyclingWords[currentWordIndex].substring(
-        0,
-        displayText.length + 1,
-      );
-      setDisplayText(newText);
-      dynamicSpan.textContent = newText;
-      setDelta(200);
-    }
-  }, [currentWordIndex, isDeleting, displayText, isPaused]);
+    };
 
-  useEffect(() => {
-    const ticker = setInterval(updateText, delta);
-    return () => clearInterval(ticker);
-  }, [updateText, delta]);
+    const tick = () => {
+      const word = cyclingWords[wordIndex];
+
+      if (!deleting && text === word) {
+        if (!paused) {
+          paused = true;
+          schedule(2000);
+        } else {
+          paused = false;
+          deleting = true;
+          schedule(100);
+        }
+      } else if (deleting) {
+        text = word.substring(0, text.length - 1);
+        dynamicSpan.textContent = text;
+        if (text === '') {
+          deleting = false;
+          wordIndex = (wordIndex + 1) % cyclingWords.length;
+          schedule(140);
+        } else {
+          schedule(100);
+        }
+      } else {
+        text = cyclingWords[wordIndex].substring(0, text.length + 1);
+        dynamicSpan.textContent = text;
+        schedule(200);
+      }
+    };
+
+    // Start with a pause on the initial word
+    schedule(2000);
+
+    return () => {
+      cancelled = true;
+      if (timerId !== null) clearTimeout(timerId);
+    };
+  }, []);
   const { pre: PreWithCodeButtonGroup, code: Code } =
     basicGetCustomMDXComponent();
 
