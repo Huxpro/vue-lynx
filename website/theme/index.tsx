@@ -35,7 +35,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     const tagline =
       document.querySelector('.rspress-home-hero-tagline') ||
       document.querySelector('.rp-home-hero__tagline');
-    if (tagline && tagline.textContent?.includes('Lynx')) {
+    if (tagline?.textContent?.includes('Lynx')) {
       tagline.innerHTML = tagline.innerHTML
         .replace(
           'Lynx',
