@@ -240,24 +240,65 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
 
       lynxViewRef.current.url = src;
 
-      // Detect when lynx-view has rendered content via MutationObserver
-      // on its shadow root
       const el = lynxViewRef.current as unknown as HTMLElement;
-      const shadow = el.shadowRoot;
-      if (shadow) {
-        const mo = new MutationObserver(() => {
+      let disposed = false;
+      let mo: MutationObserver | undefined;
+      let removeClickFix: (() => void) | undefined;
+
+      // Workaround: web-core reads MouseEvent.x/.y (viewport-relative) for
+      // tap event detail.x/.y. When the <lynx-view> is embedded at a non-zero
+      // offset, coordinates are wrong. Override the coordinate getters on the
+      // original event in a capture-phase listener (before web-core reads
+      // them on the element's bubbling handler).
+      const adjustClickCoords = (e: Event) => {
+        const me = e as MouseEvent;
+        const rect = el.getBoundingClientRect();
+        const adjustedX = me.clientX - rect.left;
+        const adjustedY = me.clientY - rect.top;
+        Object.defineProperties(me, {
+          clientX: { get: () => adjustedX },
+          clientY: { get: () => adjustedY },
+          x: { get: () => adjustedX },
+          y: { get: () => adjustedY },
+          pageX: { get: () => adjustedX },
+          pageY: { get: () => adjustedY },
+        });
+      };
+
+      // The shadow root is created asynchronously by web-core after url is
+      // set, so we poll until it becomes available before attaching observers.
+      const setupShadow = (shadow: ShadowRoot) => {
+        mo = new MutationObserver(() => {
           if (shadow.childElementCount > 0) {
             setRendered(true);
-            mo.disconnect();
+            mo!.disconnect();
           }
         });
         mo.observe(shadow, { childList: true, subtree: true });
-      }
+
+        shadow.addEventListener('click', adjustClickCoords, true);
+        removeClickFix = () =>
+          shadow.removeEventListener('click', adjustClickCoords, true);
+      };
+
+      const pollShadow = () => {
+        if (disposed) return;
+        const shadow = el.shadowRoot;
+        if (shadow) {
+          setupShadow(shadow);
+        } else {
+          requestAnimationFrame(pollShadow);
+        }
+      };
+      pollShadow();
 
       // Fallback: hide loading after timeout
       const timer = setTimeout(() => setRendered(true), 5000);
       return () => {
+        disposed = true;
         clearTimeout(timer);
+        mo?.disconnect();
+        removeClickFix?.();
       };
     }
   }, [ready, show, src]);
