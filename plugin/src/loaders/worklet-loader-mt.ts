@@ -30,7 +30,7 @@ import type { Rspack } from '@rsbuild/core';
 
 import { transformReactLynxSync } from '@lynx-js/react/transform';
 
-import { extractLocalImports, extractRegistrations } from './worklet-utils.js';
+import { extractLocalImports, extractRegistrations, extractSharedImports } from './worklet-utils.js';
 
 export default function workletLoaderMT(
   this: Rspack.LoaderContext,
@@ -84,24 +84,28 @@ export default function workletLoaderMT(
     }
 
     const registrations = extractRegistrations(lepusResult.code);
-    const parts = [localImports, registrations, 'export default {};'].filter(
+    const sharedImports = extractSharedImports(lepusResult.code);
+    const parts = [sharedImports, localImports, registrations, 'export default {};'].filter(
       Boolean,
     );
     return parts.join('\n');
   }
 
   // Regular .js/.ts files (not vue sub-modules):
-  // Strip everything except local imports and registrations.
+  // Strip everything except local imports, shared imports, and registrations.
 
   // Preserve local (relative-path) imports so webpack follows the dependency
   // graph to sub-modules that may contain worklet registrations.
   const localImports = extractLocalImports(source);
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
+  // (but still extract shared imports from source since they don't need LEPUS)
   if (
     !source.includes('\'main thread\'') && !source.includes('"main thread"')
   ) {
-    return localImports;
+    const sharedImports = extractSharedImports(source);
+    if (!sharedImports) return localImports;
+    return sharedImports + (localImports ? '\n' + localImports : '');
   }
 
   const resourcePath = this.resourcePath;
@@ -133,8 +137,11 @@ export default function workletLoaderMT(
     return localImports;
   }
 
-  // Return local imports (for dep graph) + extracted registrations
+  // Extract shared imports from the LEPUS output (SWC preserves them)
+  const sharedImports = extractSharedImports(lepusResult.code);
+
+  // Return shared imports + local imports (for dep graph) + extracted registrations
   const registrations = extractRegistrations(lepusResult.code);
-  if (!registrations) return localImports;
-  return localImports ? localImports + '\n' + registrations : registrations;
+  const parts = [sharedImports, localImports, registrations].filter(Boolean);
+  return parts.join('\n');
 }
