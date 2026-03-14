@@ -267,13 +267,22 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 
 ## Cross-Thread Shared Modules
 
-Sometimes you have utility functions — pure computation, color helpers, math — that need to run on **both** threads. Normally, modules imported in a main thread function are only available on the main thread, and regular imports are only available on the background thread.
+By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult.
+To address this limitation, Vue Lynx supports the `shared-module` mechanism, allowing you to explicitly declare certain modules as shareable between the main thread and the background thread.
 
-The `with { runtime: 'shared' }` import attribute tells Vue Lynx to include a module's code in both thread bundles:
+Add `with { runtime: 'shared' }` after the `import` statement, and the exported variables (including functions, classes, objects, etc.) in that module can be directly called in main thread functions:
 
 ```ts
-import { getNextColor } from './color-utils' with { runtime: 'shared' }
+import { func } from './utils' with { runtime: 'shared' }
+
+const onTap = () => {
+  'main thread'
+  func() // ✅ Allows calling plain functions in a main thread function
+}
 ```
+
+> [!NOTE]
+> Functions in modules imported with `with { runtime: 'shared' }` can be called by main thread functions, but they are not automatically treated as main thread functions. If they use main-thread-specific capabilities like `MainThreadRef`, they must still be manually marked with `'main thread'`.
 
 The shared module is a regular TypeScript/JavaScript file — it does **not** need a `'main thread'` directive. It must contain only plain functions and constants (no Vue reactivity, no DOM access, no side effects that depend on a specific thread).
 
@@ -290,7 +299,7 @@ Once imported with `{ runtime: 'shared' }`, the exported functions can be called
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useMainThreadRef } from 'vue-lynx'
 import { getNextColor } from './color-utils' with { runtime: 'shared' }
 
@@ -318,9 +327,69 @@ const onTap = () => {
   entry="src/shared-module"
 />
 
-### Rules for shared modules
+### Referencing Third-Party Libraries
 
-- The shared module must be a plain JS/TS file with no `'main thread'` directive.
-- Only pure functions and constants are safe — avoid Vue reactivity, DOM APIs, or thread-specific globals.
-- The `with { runtime: 'shared' }` attribute must be on the import statement in the consuming file. The shared module itself requires no special annotation.
+Usually, third-party libraries (e.g., `motion-dom`) contain plain JavaScript functions. If called directly in a main thread function, they will report an error due to the missing `'main thread'` directive.
+
+We can use `with { runtime: 'shared' }` to import them as shared modules:
+
+```ts
+// Import and use directly
+import { animate } from 'motion-dom' with { runtime: 'shared' }
+
+const onScroll = () => {
+  'main thread'
+  // Can be called directly in a main thread function
+  animate(element, { opacity: 0 })
+}
+```
+
+To facilitate reuse or avoid the [limitations](#limitations) below (e.g., losing the shared characteristic after assignment), we recommend **wrapping** the import in a main thread function:
+
+```ts
+// src/utils/motion.ts
+// 1. Import the original function as shared
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' }
+
+// 2. Export a new main thread function for encapsulation
+export function animate(...args) {
+  'main thread'
+  return _animate(...args)
+}
+```
+
+In this way, `animate` becomes a standard main thread function that can be freely used in any main thread function, no longer restricted by static analysis:
+
+```vue
+<script setup lang="ts">
+import { animate } from './utils/motion'
+
+const onTap = () => {
+  'main thread'
+  // Standard main thread function — can be assigned or passed freely
+  const myAnimate = animate
+  myAnimate(element, { x: 100 })
+}
+</script>
+```
+
+### Limitations
+
+Only identifiers directly imported via `import` are recognized as "shared". Assigning to a new variable will cause it to lose the shared characteristic:
+
+```ts
+import { func } from './utils' with { runtime: 'shared' }
+const anotherFunc = func // [!code error]
+
+const onTap = () => {
+  'main thread'
+  anotherFunc() // ❌ Cannot be analyzed at compile time, call fails
+}
+```
+
+### State Isolation
+
+**Variables and state in a shared module are completely isolated between the two threads, each possessing independent instances.**
+
+This means that if you modify a variable in a shared module on the main thread, the background thread cannot perceive it, and vice versa. Shared modules solve the "code sharing" problem, not the "state sharing" problem.
 
