@@ -295,7 +295,8 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
       style={{
         display: show ? 'flex' : 'none',
         width: '100%',
-        height: '100%',
+        flex: 1,
+        minHeight: 0,
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
