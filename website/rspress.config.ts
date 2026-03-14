@@ -68,9 +68,9 @@ export default defineConfig({
         {
           sectionHeaderText: 'Examples',
         },
-        { text: 'Pinia', link: '/guide/pinia' },
-        { text: 'Vue Router', link: '/guide/routing' },
         { text: '7 GUIs', link: '/guide/7guis' },
+        { text: 'Vue Router', link: '/guide/routing' },
+        { text: 'Pinia', link: '/guide/pinia' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'Vue Feature Coverage', link: '/guide/vue-feature-coverage' },
         {
