@@ -58,6 +58,10 @@ const featuresConfig = [
     ),
     title: 'Compatible with Vue Ecosystem',
     desc: 'Bring your favorite Vue libraries and enjoy the rich Vue ecosystem on Lynx.',
+    actions: [
+      { text: 'Vue Router', link: '/guide/routing' },
+      { text: 'Pinia', link: '/guide/pinia' },
+    ],
   },
 ];
 
