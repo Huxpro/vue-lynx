@@ -216,22 +216,6 @@ export const WebIframe = ({ show, src }: WebIframeProps) => {
         );
         const template = JSON.parse(rewritten);
 
-        // Workaround: when no template modules reference publicPath (no asset
-        // imports), rspack omits the local webpack runtime from lepusCode and
-        // emits a bare `__webpack_require__` reference. Inject a minimal shim
-        // so the entry-point executor (`__webpack_require__.x`) can run.
-        if (template.lepusCode?.root) {
-          const root = template.lepusCode.root;
-          if (
-            typeof root === 'string' &&
-            root.includes('__webpack_require__') &&
-            !root.includes('function __webpack_require__')
-          ) {
-            template.lepusCode.root =
-              'var __webpack_require__={p:"/"};' + root;
-          }
-        }
-
         // Rewrite vh/vw units in CSS to use container-relative custom properties
         rewriteViewportUnits(template);
 
