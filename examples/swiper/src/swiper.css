@@ -1,7 +1,7 @@
 /* Safe Area */
 .safe-area {
   width: 100%;
-  height: 100%;
+  height: 100vh;
   padding-bottom: 20px;
   display: flex;
   flex-direction: column;
