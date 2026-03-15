@@ -15,31 +15,56 @@ import {
 
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
 
-function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
-  // Badge → GitHub link
-  useEffect(() => {
-    const badge = document.querySelector('.rp-home-hero__badge');
-    if (badge) {
-      badge.innerHTML = `<a href="https://github.com/nicepkg/vue-lynx" target="_blank" rel="noreferrer">${badge.textContent}</a>`;
-    }
-  }, []);
+/** Poll with rAF until `selector` matches, then call `cb`. Gives up after 5 s. */
+function whenReady(selector: string, cb: (el: Element) => void): () => void {
+  let cancelled = false;
+  let rafId: number;
+  let attempts = 0;
+  const maxAttempts = 300; // ~5 s at 60 fps
 
-  // Tagline → add links on "Lynx" and "Vue 3"
-  useEffect(() => {
-    const tagline =
-      document.querySelector('.rspress-home-hero-tagline') ||
-      document.querySelector('.rp-home-hero__tagline');
-    if (tagline?.textContent?.includes('Lynx')) {
-      tagline.innerHTML = tagline.innerHTML
-        .replace(
-          'Lynx',
-          '<a href="https://lynxjs.org" target="_blank" rel="noreferrer">Lynx</a>',
-        )
-        .replace(
-          'Vue 3',
-          '<a href="https://vuejs.org" target="_blank" rel="noreferrer">Vue 3</a>',
-        );
+  const poll = () => {
+    if (cancelled || ++attempts > maxAttempts) return;
+    const el = document.querySelector(selector);
+    if (el) {
+      cb(el);
+    } else {
+      rafId = requestAnimationFrame(poll);
     }
+  };
+
+  rafId = requestAnimationFrame(poll);
+  return () => {
+    cancelled = true;
+    cancelAnimationFrame(rafId);
+  };
+}
+
+function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  // Badge → GitHub link, Tagline → add links on "Lynx" and "Vue 3"
+  useEffect(() => {
+    const cleanBadge = whenReady('.rp-home-hero__badge', (badge) => {
+      badge.innerHTML = `<a href="https://github.com/nicepkg/vue-lynx" target="_blank" rel="noreferrer">${badge.textContent}</a>`;
+    });
+    const cleanTagline = whenReady(
+      '.rspress-home-hero-tagline, .rp-home-hero__tagline',
+      (tagline) => {
+        if (tagline.textContent?.includes('Lynx')) {
+          tagline.innerHTML = tagline.innerHTML
+            .replace(
+              'Lynx',
+              '<a href="https://lynxjs.org" target="_blank" rel="noreferrer">Lynx</a>',
+            )
+            .replace(
+              'Vue 3',
+              '<a href="https://vuejs.org" target="_blank" rel="noreferrer">Vue 3</a>',
+            );
+        }
+      },
+    );
+    return () => {
+      cleanBadge();
+      cleanTagline();
+    };
   }, []);
 
   // Cycling typewriter animation — pure DOM, no React state to avoid
@@ -51,6 +76,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     let paused = false;
     let timerId: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
+    let cachedEl: Element | null = null;
 
     const schedule = (delay: number) => {
       if (!cancelled) {
@@ -59,16 +85,18 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     };
 
     const tick = () => {
-      // Re-query every tick — the element may be replaced during hydration.
-      const el = document.querySelector('.hero-title .dynamic-text');
-      if (!el) return schedule(200);
+      // Re-query only when the cached element is gone (e.g. hydration swap).
+      if (!cachedEl || !cachedEl.isConnected) {
+        cachedEl = document.querySelector('.hero-title .dynamic-text');
+      }
+      if (!cachedEl) return schedule(200);
 
       const word = cyclingWords[wordIndex];
 
       if (!deleting && text === word) {
         if (!paused) {
           paused = true;
-          schedule(2000);
+          schedule(1000);
         } else {
           paused = false;
           deleting = true;
@@ -76,7 +104,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
         }
       } else if (deleting) {
         text = word.substring(0, text.length - 1);
-        el.textContent = text;
+        cachedEl.textContent = text;
         if (text === '') {
           deleting = false;
           wordIndex = (wordIndex + 1) % cyclingWords.length;
@@ -86,13 +114,13 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
         }
       } else {
         text = cyclingWords[wordIndex].substring(0, text.length + 1);
-        el.textContent = text;
+        cachedEl.textContent = text;
         schedule(200);
       }
     };
 
     // Start with a pause on the initial word
-    schedule(2000);
+    schedule(1000);
 
     return () => {
       cancelled = true;

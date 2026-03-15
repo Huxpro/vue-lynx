@@ -81,25 +81,20 @@ $brand-emerald: #34d399;
   white-space: normal;
   max-width: 100%;
 
-  .dynamic-text {
-    background: linear-gradient(
-      270deg,
-      var(--major-brand-color),
-      var(--gradient-brand-color),
-      var(--second-brand-color),
-      var(--gradient-brand-color),
-      var(--major-brand-color)
-    );
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
+  .dynamic-text,
+  .normal {
     background-clip: text;
-    color: transparent;
+    -webkit-background-clip: text;
+    color: var(--hero-normal-text-color);
+    background-color: var(--hero-normal-text-color);
+  }
+
+  .dynamic-text {
     border-right: 4px solid transparent;
     margin-right: -4px;
     animation:
       blink-caret 1s cubic-bezier(1, 0, 0, 1) infinite,
-      fade-in 0.8s ease-out,
-      gradientMove 6s linear infinite;
+      fade-in 0.8s ease-out;
 
     @media (max-width: 640px) {
       border-right-width: 2px;
@@ -123,13 +118,6 @@ $brand-emerald: #34d399;
     animation:
       fade-in 0.8s ease-out,
       gradientMove 6s linear infinite;
-  }
-
-  .normal {
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: var(--hero-normal-text-color);
-    background-color: var(--hero-normal-text-color);
   }
 }
 
@@ -287,7 +275,8 @@ $brand-emerald: #34d399;
   }
 }
 
-.rspress-home-hero-tagline {
+.rspress-home-hero-tagline,
+.rp-home-hero__tagline {
   color: var(--home-features-item-desc-color);
 
   a {
