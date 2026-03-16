@@ -26,7 +26,7 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if [[ "$VERSION" == *-* ]]; then
-            TAG=$(echo "$VERSION" | sed 's/.*-\(.*\)\..*/\1/')
+            TAG=$(echo "$VERSION" | sed 's/[0-9]*\.[0-9]*\.[0-9]*-\(.*\)\.[0-9]*/\1/')
             npm publish --access public --tag "$TAG"
           else
             npm publish --access public
