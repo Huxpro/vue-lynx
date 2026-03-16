@@ -20,6 +20,7 @@ function onCanvasTap(e) {
   // Check if tapped on an existing circle
   const x = e.detail?.x ?? e.touches?.[0]?.pageX ?? 0
   const y = e.detail?.y ?? e.touches?.[0]?.pageY ?? 0
+  console.log('[circle-drawer] tap event:', { x, y, detail: e.detail, type: e.type, raw: { clientX: e.clientX, clientY: e.clientY } })
 
   const hit = [...circles.value].reverse().find((c) => {
     const dx = c.x - x
@@ -74,7 +75,7 @@ function redo() {
 <template>
   <!-- Canvas fills the entire view; controls overlay on top -->
   <view
-    :style="{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', position: 'relative' }"
+    :style="{ width: '100%', height: '100vh', minHeight: '400px', backgroundColor: '#f0f0f0', position: 'relative' }"
     @tap="onCanvasTap"
   >
     <!-- Hint text -->
