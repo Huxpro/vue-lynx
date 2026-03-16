@@ -1,5 +1,19 @@
-import { ExamplePreview, type ExamplePreviewProps } from './example-preview';
+import { Go as GoBase, GoConfigProvider } from '@lynx-js/go-web';
+import type { GoProps } from '@lynx-js/go-web';
+import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 
-export { ExamplePreview as Go };
-export type { ExamplePreviewProps as GoProps };
-export default ExamplePreview;
+const config = {
+  exampleBasePath: '/examples',
+  ...rspressAdapter,
+};
+
+export function Go(props: GoProps) {
+  return (
+    <GoConfigProvider config={config}>
+      <GoBase {...props} />
+    </GoConfigProvider>
+  );
+}
+
+export type { GoProps };
+export default Go;
