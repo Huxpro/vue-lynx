@@ -4,6 +4,7 @@ import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
 
 const config = {
   exampleBasePath: '/examples',
+  defaultTab: 'web' as const,
   ...rspressAdapter,
 };
 
