@@ -1,0 +1,32 @@
+name: Publish Examples
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump (patch/minor/major)'
+        default: 'patch'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm build:examples
+
+      - name: Version & publish each example
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for dir in examples/*/; do
+            if [ -f "$dir/package.json" ] && [ -d "$dir/dist" ]; then
+              (cd "$dir" && npm version ${{ inputs.version }} --no-git-tag-version && npm publish --access public)
+            fi
+          done

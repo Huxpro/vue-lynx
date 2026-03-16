@@ -1,10 +1,16 @@
 {
-  "name": "vue-lynx-example-swiper",
+  "name": "@vue-lynx-example/swiper",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Vue-Lynx swiper tutorial examples",
   "license": "Apache-2.0",
   "type": "module",
+  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/swiper"
+  },
   "scripts": {
     "build": "rspeedy build",
     "dev": "rspeedy dev"
