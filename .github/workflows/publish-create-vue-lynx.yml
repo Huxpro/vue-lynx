@@ -23,4 +23,11 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: packages/create-vue-lynx
-        run: npm publish --access public
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "$VERSION" == *-* ]]; then
+            TAG=$(echo "$VERSION" | sed 's/.*-\(.*\)\..*/\1/')
+            npm publish --access public --tag "$TAG"
+          else
+            npm publish --access public
+          fi
