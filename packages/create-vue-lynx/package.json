@@ -1,6 +1,6 @@
 {
   "name": "create-vue-lynx",
-  "version": "0.1.0-pre-alpha.0",
+  "version": "0.1.0-pre-alpha.1",
   "description": "Create a new Vue Lynx project",
   "license": "Apache-2.0",
   "type": "module",
@@ -23,6 +23,7 @@
     "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
     "@lynx-js/rspeedy": "^0.13.5",
     "@rsbuild/plugin-vue": "^1.2.6",
+    "vue": "^3.5.0",
     "vue-lynx": "workspace:*",
     "typescript": "^5.0.0"
   },

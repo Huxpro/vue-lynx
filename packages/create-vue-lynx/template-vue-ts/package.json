@@ -8,6 +8,7 @@
     "preview": "rspeedy preview"
   },
   "dependencies": {
+    "vue": "workspace:*",
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
