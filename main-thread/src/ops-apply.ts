@@ -14,8 +14,8 @@ import { OP } from 'vue-lynx/internal/ops';
 
 import {
   elements,
-  rootComponentUniqueId,
-  setRootComponentUniqueId,
+  pageUniqueId,
+  setPageUniqueId,
 } from './element-registry.js';
 import {
   createListElement,
@@ -39,9 +39,9 @@ import {
  * for View, hardware-accelerated decoding for Image) via the typed functions
  * that the generic __CreateElement does not.
  *
- * @param parentComponentUniqueId - The unique ID of the parent component.
- *   Points to the root ComponentElement created in renderPage, which owns
- *   the style_sheet_manager needed for DevTool CSS selector resolution.
+ * @param parentComponentUniqueId - The PAPI unique ID of the page root.
+ *   `__SetCSSId` sets `css_style_sheet_manager_` directly on each element,
+ *   so CSS rendering works without a ComponentElement ancestor.
  */
 function createTypedElement(
   type: string,
@@ -97,7 +97,7 @@ export function applyOps(ops: unknown[]): void {
           // Use typed PAPI creators for known element types.
           // Native Lynx sets up type-specific internals (e.g. overflow
           // clipping for __CreateView) that __CreateElement may skip.
-          el = createTypedElement(type, rootComponentUniqueId);
+          el = createTypedElement(type, pageUniqueId);
           // Associate element with CSS scope 0 (common/global CSS)
           // so the CSS selector engine can match class-based rules.
           __SetCSSId([el], 0);
@@ -113,7 +113,7 @@ export function applyOps(ops: unknown[]): void {
 
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
-        const el = __CreateText(rootComponentUniqueId);
+        const el = __CreateText(pageUniqueId);
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
@@ -270,7 +270,7 @@ export { elements };
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
   elements.clear();
-  setRootComponentUniqueId(1);
+  setPageUniqueId(1);
   resetListState();
   resetWorkletState();
 }

@@ -31,24 +31,6 @@ if (typeof (globalThis as any).registerWorkletInternal === 'undefined') {
   (globalThis as any).registerWorkletInternal = () => {};
 }
 
-// Stub __CreateComponent — the testing environment doesn't implement this PAPI.
-// In native Lynx it creates a ComponentElement with style_sheet_manager; for
-// tests we just need a regular element so the renderPage flow doesn't crash.
-if (typeof (globalThis as any).__CreateComponent === 'undefined') {
-  (globalThis as any).__CreateComponent = (
-    parentComponentUniqueId: number,
-    _componentID: string,
-    _cssID: number,
-    _entryName: string,
-    _name: string,
-    _path: string,
-    _config: unknown,
-    _info: unknown,
-  ) => {
-    return (globalThis as any).__CreateElement('component', parentComponentUniqueId);
-  };
-}
-
 // The main-thread entry-main.ts sets globalThis.renderPage, vuePatchUpdate, etc.
 await import('vue-lynx/main-thread');
 

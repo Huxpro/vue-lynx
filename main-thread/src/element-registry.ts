@@ -6,12 +6,13 @@
 export const elements = new Map<number, LynxElement>();
 
 /**
- * Unique ID of the root ComponentElement created in renderPage.
- * Used as `parentComponentUniqueId` for all element creation so that
- * DevTool can resolve CSS selectors via the component's style_sheet_manager.
+ * PAPI unique ID of the root PageElement.
+ * Passed as `parentComponentUniqueId` to element creation PAPI calls.
+ * `__SetCSSId` sets `css_style_sheet_manager_` directly on each element,
+ * so CSS rendering works without a ComponentElement ancestor.
  */
-export let rootComponentUniqueId = 1; // default fallback to page root
+export let pageUniqueId = 1;
 
-export function setRootComponentUniqueId(id: number): void {
-  rootComponentUniqueId = id;
+export function setPageUniqueId(id: number): void {
+  pageUniqueId = id;
 }

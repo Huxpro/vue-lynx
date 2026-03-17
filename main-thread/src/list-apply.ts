@@ -11,7 +11,7 @@
  * provide them via the callback.
  */
 
-import { elements, rootComponentUniqueId } from './element-registry.js';
+import { elements, pageUniqueId } from './element-registry.js';
 
 // ---------------------------------------------------------------------------
 // State
@@ -152,7 +152,7 @@ export function createListElement(id: number): LynxElement {
   listItemsReported.set(id, 0);
   const cbs = createListCallbacks(id);
   const el = __CreateList(
-    rootComponentUniqueId,
+    pageUniqueId,
     cbs.componentAtIndex,
     cbs.enqueueComponent,
     {},

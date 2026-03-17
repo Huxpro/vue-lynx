@@ -35,25 +35,6 @@ declare global {
     entryName?: string,
   ): void;
 
-  /**
-   * Create a ComponentElement in the native element tree.
-   *
-   * ComponentElements own a `css_style_sheet_manager_` which is required
-   * for DevTool CSS selector resolution. Without a ComponentElement ancestor,
-   * `FiberElement::GetRelatedCSSFragment()` fails and the DevTool panel
-   * cannot display matched CSS rules.
-   */
-  function __CreateComponent(
-    componentParentUniqueID: number,
-    componentID: string,
-    cssID: number,
-    entryName: string,
-    name: string,
-    path: string,
-    config: Record<string, unknown> | null | undefined,
-    info: Record<string, unknown> | null | undefined,
-  ): LynxElement;
-
   /** Lynx runtime — cross-thread communication */
   const lynx: {
     getJSContext(): {
