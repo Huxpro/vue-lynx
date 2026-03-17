@@ -195,8 +195,13 @@ export function applyOps(ops: unknown[]): void {
       }
 
       case OP.REMOVE_EVENT: {
-        // PAPI does not expose a remove-event API; skip both params
-        i += 3; // id, eventType, eventName
+        const id = ops[i++] as number;
+        const eventType = ops[i++] as string;
+        const eventName = ops[i++] as string;
+        const el = elements.get(id);
+        // __AddEvent with undefined handler removes the existing listener
+        // biome-ignore lint/suspicious/noExplicitAny: __AddEvent(el,type,name,undefined) is the documented way to remove a listener in PAPI
+        if (el) __AddEvent(el, eventType, eventName, undefined as any);
         break;
       }
 
