@@ -29,6 +29,6 @@ jobs:
         run: |
           for dir in examples/*/; do
             if [ -f "$dir/package.json" ] && [ -d "$dir/dist" ]; then
-              (cd "$dir" && npm version ${{ inputs.version }} --no-git-tag-version && npm publish --access public)
+              (cd "$dir" && npm version ${{ inputs.version }} --no-git-tag-version && pnpm publish --access public --no-git-checks)
             fi
           done
