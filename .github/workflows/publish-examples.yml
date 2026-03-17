@@ -29,6 +29,11 @@ jobs:
         run: |
           for dir in examples/*/; do
             if [ -f "$dir/package.json" ] && [ -d "$dir/dist" ]; then
+              private=$(node -p "require('./$dir/package.json').private || false")
+              if [ "$private" = "true" ]; then
+                echo "Skipping $dir (private)"
+                continue
+              fi
               (cd "$dir" && npm version ${{ inputs.version }} --no-git-tag-version && npm publish --access public)
             fi
           done
