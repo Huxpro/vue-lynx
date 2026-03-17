@@ -204,6 +204,40 @@ describe('SET_WORKLET_EVENT', () => {
     expect(container.querySelector('view')).not.toBeNull();
     expect(container.querySelector('text')!.textContent).toBe('worklet');
   });
+
+  it('removes worklet handler when main-thread-bindtap becomes null (repro)', async () => {
+    const enabled = ref(true);
+    const workletCtx = { _wkltId: 'wklt-repro', _closure: {} };
+
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h('view', {
+            'main-thread-bindtap': enabled.value ? workletCtx : null,
+          }, [
+            h('text', null, 'worklet-unbind'),
+          ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const env = (globalThis as any).lynxTestingEnv;
+
+    env.switchToMainThread();
+    const viewEl = container.querySelector('view') as any;
+    expect(viewEl).not.toBeNull();
+    expect(viewEl.eventMap?.['bindEvent:tap']).toBeTypeOf('function');
+
+    env.switchToBackgroundThread();
+    enabled.value = false;
+    await nextTick();
+    await nextTick();
+
+    env.switchToMainThread();
+    // Expected: listener should be removed after unbinding.
+    // Current behavior: listener is still present because no unbind op is sent.
+    expect(viewEl.eventMap?.['bindEvent:tap']).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------

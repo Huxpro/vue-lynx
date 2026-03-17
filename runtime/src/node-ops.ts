@@ -219,6 +219,9 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
             event.name,
             nextValue,
           );
+        } else if (event) {
+          // Worklet handler removed — send REMOVE_EVENT so MT clears eventMap
+          pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
         }
       }
       scheduleFlush();
