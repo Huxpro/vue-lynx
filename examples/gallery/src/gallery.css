@@ -9,7 +9,7 @@
 /* ─── Gallery Wrapper ─────────────────────────────────── */
 
 .gallery-wrapper {
-  height: 100%;
+  height: 100vh;
   background-color: black;
 }
 
@@ -63,7 +63,7 @@
 /* ─── List ────────────────────────────────────────────── */
 
 .list {
-  width: 100%;
+  width: 100vw;
   padding-bottom: 20px;
   padding-left: 20px;
   padding-right: 20px;
