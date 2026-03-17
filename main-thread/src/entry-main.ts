@@ -80,6 +80,9 @@ g['renderPage'] = function(_data: unknown): void {
   // 2. Hot reload: ensures stale element handles don't persist.
   resetMainThreadState();
   const page = __CreatePage('0', 0);
+  // Set global CSS scope on page so its style_sheet_manager_ is populated.
+  // This matches ReactLynx 3.0's root snapshot: __SetCSSId([__page], 0).
+  __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
   __FlushElementTree(page);
