@@ -1,9 +1,15 @@
 {
-  "name": "vue-lynx-example-main-thread",
+  "name": "@vue-lynx-example/main-thread",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Vue-Lynx main thread demo — draggable examples comparing Main Thread vs Background Thread updates",
   "type": "module",
+  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/main-thread"
+  },
   "scripts": {
     "build": "rspeedy build",
     "dev": "rspeedy dev"

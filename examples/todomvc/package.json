@@ -1,9 +1,15 @@
 {
-  "name": "vue-lynx-example-todomvc",
+  "name": "@vue-lynx-example/todomvc",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "TodoMVC built with Vue 3 × Lynx",
   "type": "module",
+  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/todomvc"
+  },
   "scripts": {
     "build": "rspeedy build",
     "dev": "rspeedy dev"
