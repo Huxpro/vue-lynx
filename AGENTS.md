@@ -38,6 +38,20 @@ When investigating runtime errors in Lynx bundles:
 | `main-thread/src/ops-apply.ts`                    | MT ops interpreter: switch loop over flat ops array               |
 | `runtime/src/index.ts`                            | BG custom renderer: createApp, ShadowElement tree, ops buffer     |
 
+### Upstream Tests (`upstream-tests/`)
+
+The `upstream-tests/` directory re-runs selected Vue core test suites against our custom renderer. It has **two** vitest configurations exercising different layers:
+
+| Command | Config | Adapter | What it exercises |
+|---------|--------|---------|-------------------|
+| `pnpm test` | `vitest.config.ts` | `lynx-runtime-test.ts` (in-memory) | runtime-core logic only — no ops pipeline, no PAPI |
+| `pnpm test:dom` | `vitest.dom.config.ts` | `lynx-runtime-dom-bridge.ts` (full pipeline) | BG→ops→MT→PAPI→jsdom dual-thread pipeline |
+
+**`lynx-runtime-dom-bridge.ts`** is the key bridge file for `test:dom`. It:
+- Creates a `ShadowElement` per jsdom element (lazy shadow mapping)
+- Routes `patchProp` calls through `nodeOps.patchProp` → ops buffer → `syncFlush()` → `applyOps` → PAPI → jsdom
+- Adds thin DOM event forwarders so `el.dispatchEvent(new Event('click'))` in tests invokes the PAPI-registered handler via `eventMap`
+
 ### Common Gotchas
 
 - `worklet-loader-mt` must emit `export default {};` for vue script sub-modules (`?vue&type=script`) to satisfy the `experimentalInlineMatchResource` proxy re-export.

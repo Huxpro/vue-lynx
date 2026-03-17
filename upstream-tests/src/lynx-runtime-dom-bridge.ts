@@ -31,7 +31,7 @@ let _resetMainThreadState: () => void;
 const jsdomToShadow = new WeakMap<Element, ShadowElement>();
 const idToShadow = new Map<number, ShadowElement>();
 
-// Track plain DOM event listeners added for forwarding
+// Track DOM event forwarders (click → bindEvent:click) per element per Vue key
 const domListeners = new WeakMap<
   Element,
   Map<string, EventListenerOrEventListenerObject>
@@ -127,6 +127,19 @@ function parseEventKey(key: string): {
   return null;
 }
 
+/**
+ * Map a Vue event key to the PAPI eventMap key.
+ * Mirrors parseEventProp in runtime/src/node-ops.ts — same slice logic so
+ * the key we look up in el.eventMap matches what __AddEvent stored.
+ */
+function vueKeyToPapiKey(key: string): string | null {
+  if (/^on[A-Z]/.test(key)) {
+    const name = key.slice(2, 3).toLowerCase() + key.slice(3);
+    return `bindEvent:${name}`;
+  }
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // patchProp — the main bridge function
 // ---------------------------------------------------------------------------
@@ -215,46 +228,59 @@ export function patchProp(
     return;
   }
 
+  // Pre-process: detect event props and wrap array handlers.
+  // register() in the event registry expects a single callable, so
+  // array handlers (e.g. [fn1, fn2]) must be wrapped before nodeOps.
+  const eventInfo = parseEventKey(key);
+  if (eventInfo && Array.isArray(nextValue)) {
+    const fns = nextValue as ((evt: unknown) => void)[];
+    nextValue = (evt: unknown) => {
+      for (const fn of fns) {
+        if ((evt as any)?.cancelBubble) break;
+        if (typeof fn === 'function') fn(evt);
+      }
+    };
+  }
+
   // Route through our real nodeOps.patchProp (pushes ops)
   nodeOps.patchProp(shadow, key, prevValue, nextValue);
 
   // Sync-flush to apply ops via PAPI on the MT thread
   syncFlush();
 
-  // For events: also add a plain DOM listener so tests can use
-  // el.dispatchEvent(new Event('click')) to trigger handlers.
-  const eventInfo = parseEventKey(key);
+  // For events: manage DOM forwarders based on what the ops pipeline
+  // produced in el.eventMap. This ensures event tests exercise the real
+  // SET_EVENT / REMOVE_EVENT ops path instead of being masked by
+  // independent listener management.
   if (eventInfo) {
-    const listeners = domListeners.get(el) ?? new Map();
-    domListeners.set(el, listeners);
+    const papiKey = vueKeyToPapiKey(key);
+    const forwarders = domListeners.get(el) ?? new Map();
+    domListeners.set(el, forwarders);
 
-    // Remove previous listener for this key
-    const prevListener = listeners.get(key);
-    if (prevListener) {
-      el.removeEventListener(eventInfo.name, prevListener, {
+    // Remove previous forwarder for this Vue key
+    const prevForwarder = forwarders.get(key);
+    if (prevForwarder) {
+      el.removeEventListener(eventInfo.name, prevForwarder, {
         capture: eventInfo.capture,
       });
-      listeners.delete(key);
+      forwarders.delete(key);
     }
 
-    if (nextValue != null) {
-      const handler = nextValue;
-      const listener = ((evt: Event) => {
-        if (typeof handler === 'function') {
-          handler(evt);
-        } else if (Array.isArray(handler)) {
-          for (const fn of handler) {
-            if (evt.cancelBubble) break;
-            if (typeof fn === 'function') fn(evt);
-          }
-        }
+    // If the ops pipeline registered a PAPI listener, add a thin DOM
+    // forwarder so tests can use el.dispatchEvent(new Event('click')).
+    // The forwarder dispatches the PAPI event name (e.g. 'bindEvent:click')
+    // which triggers the PAPI listener → publishEvent → user handler.
+    if (papiKey && (el as any).eventMap?.[papiKey]) {
+      const targetPapiKey = papiKey;
+      const forwarder = (() => {
+        el.dispatchEvent(new Event(targetPapiKey));
       }) as EventListener;
 
-      el.addEventListener(eventInfo.name, listener, {
+      el.addEventListener(eventInfo.name, forwarder, {
         once: eventInfo.once,
         capture: eventInfo.capture,
       });
-      listeners.set(key, listener);
+      forwarders.set(key, forwarder);
     }
   }
 }
