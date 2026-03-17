@@ -62,7 +62,12 @@ const _createApp = _renderer.createApp;
  * @public
  */
 export interface VueLynxApp {
-  /** Mount the root component onto the Lynx page root. No selector needed — the Lynx page root is always ready. */
+  /**
+   * Mount the root component onto the Lynx page root.
+   *
+   * Unlike Vue on the web, there is no container selector — Lynx has a single
+   * page root and all content is always mounted there.
+   */
   mount(): void;
   /** Unmount the application and clean up all components. */
   unmount(): void;
