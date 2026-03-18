@@ -3,64 +3,16 @@ import { ref, computed } from 'vue-lynx'
 
 import './App.css'
 
-// --- Theme tokens (runtime-swappable via CSS variables) ---
-const themes = {
-  dark: {
-    '--color-background': 'rgba(9, 9, 11, 1)',
-    '--color-card': 'rgba(24, 24, 27, 1)',
-    '--color-card-foreground': 'rgba(250, 250, 250, 1)',
-    '--color-primary': 'rgba(255, 100, 72, 1)',
-    '--color-primary-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-secondary': 'rgba(39, 39, 42, 1)',
-    '--color-secondary-foreground': 'rgba(250, 250, 250, 1)',
-    '--color-destructive': 'rgba(239, 68, 68, 1)',
-    '--color-destructive-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-success': 'rgba(34, 197, 94, 1)',
-    '--color-success-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-muted': 'rgba(39, 39, 42, 1)',
-    '--color-muted-foreground': 'rgba(161, 161, 170, 1)',
-    '--color-border': 'rgba(63, 63, 70, 1)',
-  },
-  light: {
-    '--color-background': 'rgba(255, 255, 255, 1)',
-    '--color-card': 'rgba(255, 255, 255, 1)',
-    '--color-card-foreground': 'rgba(9, 9, 11, 1)',
-    '--color-primary': 'rgba(234, 88, 12, 1)',
-    '--color-primary-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-secondary': 'rgba(244, 244, 245, 1)',
-    '--color-secondary-foreground': 'rgba(24, 24, 27, 1)',
-    '--color-destructive': 'rgba(220, 38, 38, 1)',
-    '--color-destructive-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-success': 'rgba(22, 163, 74, 1)',
-    '--color-success-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-muted': 'rgba(244, 244, 245, 1)',
-    '--color-muted-foreground': 'rgba(113, 113, 122, 1)',
-    '--color-border': 'rgba(228, 228, 231, 1)',
-  },
-  ocean: {
-    '--color-background': 'rgba(15, 23, 42, 1)',
-    '--color-card': 'rgba(30, 41, 59, 1)',
-    '--color-card-foreground': 'rgba(226, 232, 240, 1)',
-    '--color-primary': 'rgba(56, 189, 248, 1)',
-    '--color-primary-foreground': 'rgba(2, 6, 23, 1)',
-    '--color-secondary': 'rgba(51, 65, 85, 1)',
-    '--color-secondary-foreground': 'rgba(226, 232, 240, 1)',
-    '--color-destructive': 'rgba(244, 63, 94, 1)',
-    '--color-destructive-foreground': 'rgba(255, 255, 255, 1)',
-    '--color-success': 'rgba(52, 211, 153, 1)',
-    '--color-success-foreground': 'rgba(2, 6, 23, 1)',
-    '--color-muted': 'rgba(51, 65, 85, 1)',
-    '--color-muted-foreground': 'rgba(148, 163, 184, 1)',
-    '--color-border': 'rgba(71, 85, 105, 1)',
-  },
-} as const
-
-type ThemeName = keyof typeof themes
+// --- Theme switching via CSS class selectors ---
+type ThemeName = 'dark' | 'light' | 'ocean'
 const themeNames: ThemeName[] = ['dark', 'light', 'ocean']
 
 const currentTheme = ref<ThemeName>('dark')
 
-const themeStyle = computed(() => themes[currentTheme.value])
+// dark is the :root default, so no class needed; light/ocean use .theme-* class
+const themeClass = computed(() =>
+  currentTheme.value === 'dark' ? '' : `theme-${currentTheme.value}`,
+)
 
 function setTheme(name: ThemeName) {
   currentTheme.value = name
@@ -96,9 +48,8 @@ const planBadgeClass = computed(() =>
 
 <template>
   <scroll-view
-    class="w-full h-full bg-background"
+    :class="['w-full h-full bg-background', themeClass]"
     scroll-orientation="vertical"
-    :style="themeStyle"
   >
     <view class="p-6 flex flex-col gap-6">
       <!-- Header -->
