@@ -157,6 +157,7 @@ export default defineConfig({
     __FEATURE_PROD_DEVTOOLS__: 'false',
     __FEATURE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
     __COMPAT__: 'false',
+    __VUE_LYNX_AUTO_PIXEL_UNIT__: 'true',
     __VERSION__: '"3.5.12"',
   },
   test: {

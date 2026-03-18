@@ -56,51 +56,51 @@ function onEditInput(e) {
 </script>
 
 <template>
-  <view :style="{ padding: 10 }">
+  <view :style="{ padding: '10px' }">
     <!-- Header row -->
     <view :style="{ display: 'flex', flexDirection: 'row' }">
-      <view :style="{ width: 30, height: 28, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }">
-        <text :style="{ fontSize: 12 }"></text>
+      <view :style="{ width: '30px', height: '28px', justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' }">
+        <text :style="{ fontSize: '12px' }"></text>
       </view>
       <view
         v-for="col in cols"
         :key="col"
-        :style="{ width: 70, height: 28, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee', borderWidth: 0.5, borderColor: '#ccc' }"
+        :style="{ width: '70px', height: '28px', justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee', borderWidth: '0.5px', borderColor: '#ccc' }"
       >
-        <text :style="{ fontSize: 13, fontWeight: 'bold' }">{{ col }}</text>
+        <text :style="{ fontSize: '13px', fontWeight: 'bold' }">{{ col }}</text>
       </view>
     </view>
 
     <!-- Data rows -->
     <view v-for="r in rows" :key="r" :style="{ display: 'flex', flexDirection: 'row' }">
       <!-- Row header -->
-      <view :style="{ width: 30, height: 28, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee', borderWidth: 0.5, borderColor: '#ccc' }">
-        <text :style="{ fontSize: 12 }">{{ r }}</text>
+      <view :style="{ width: '30px', height: '28px', justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee', borderWidth: '0.5px', borderColor: '#ccc' }">
+        <text :style="{ fontSize: '12px' }">{{ r }}</text>
       </view>
       <!-- Cells -->
       <view
         v-for="(col, c) in cols"
         :key="col + r"
-        :style="{ width: 70, height: 28, borderWidth: 0.5, borderColor: '#ccc', justifyContent: 'center' }"
+        :style="{ width: '70px', height: '28px', borderWidth: '0.5px', borderColor: '#ccc', justifyContent: 'center' }"
         @tap="startEdit(c, r)"
       >
         <input
           v-if="editingCell && editingCell.c === c && editingCell.r === r"
           type="text"
           :value="editValue"
-          :style="{ height: 28, fontSize: 13, padding: '0 4px' }"
+          :style="{ height: '28px', fontSize: '13px', padding: '0 4px' }"
           @input="onEditInput"
           @confirm="finishEdit"
           @blur="finishEdit"
           autofocus
         />
-        <text v-else :style="{ fontSize: 13, padding: '0 4px' }">
+        <text v-else :style="{ fontSize: '13px', padding: '0 4px' }">
           {{ evalCell(cells[c][r]) }}
         </text>
       </view>
     </view>
 
-    <text :style="{ marginTop: 12, fontSize: 12, color: '#999' }">
+    <text :style="{ marginTop: '12px', fontSize: '12px', color: '#999' }">
       Tap a cell to edit. Use =A0+B1 for formulas.
     </text>
   </view>

@@ -92,6 +92,20 @@ export interface PluginVueLynxOptions {
    * @defaultValue true
    */
   debugInfoOutside?: boolean;
+
+  /**
+   * Whether to automatically append `'px'` to numeric style values
+   * (e.g. `fontSize: 24` → `'24px'`). Dimensionless properties like
+   * `flex`, `opacity`, and `zIndex` are never converted.
+   *
+   * This convenience behavior is **deprecated** and will default to
+   * `false` in the next major version. Prefer explicit string units
+   * (e.g. `fontSize: '24px'`).
+   *
+   * @defaultValue true
+   * @deprecated Will default to `false` in the next major version.
+   */
+  autoPixelUnit?: boolean;
 }
 
 /**
@@ -114,6 +128,7 @@ export function pluginVueLynx(
     customCSSInheritanceList,
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
+    autoPixelUnit = true,
   } = options;
 
   return [
@@ -167,6 +182,7 @@ export function pluginVueLynx(
                 __VUE_OPTIONS_API__: optionsApi ? 'true' : 'false',
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
+                __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
               },
             },
             tools: {

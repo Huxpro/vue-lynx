@@ -17,6 +17,6 @@ defineProps<{
       transform: 'translate(0px, 500px)',
     }"
   >
-    <text :style="{ fontSize: 12, color: '#333' }">MTDraggable</text>
+    <text :style="{ fontSize: '12px', color: '#333' }">MTDraggable</text>
   </view>
 </template>

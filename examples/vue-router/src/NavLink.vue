@@ -12,10 +12,10 @@ defineProps<{
     <text
       @tap="navigate"
       :style="{
-        fontSize: 14,
+        fontSize: '14px',
         padding: '8px 12px',
-        marginRight: 4,
-        borderRadius: 16,
+        marginRight: '4px',
+        borderRadius: '16px',
         color: isActive ? '#fff' : '#333',
         backgroundColor: isActive ? '#1a73e8' : '#e8e8e8',
       }"

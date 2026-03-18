@@ -49,21 +49,21 @@ function del() {
 </script>
 
 <template>
-  <view :style="{ padding: 20, gap: 12 }">
+  <view :style="{ padding: '20px', gap: '12px' }">
     <!-- Filter -->
-    <view :style="{ gap: 4 }">
-      <text :style="{ fontSize: 12, color: '#666' }">Filter prefix:</text>
+    <view :style="{ gap: '4px' }">
+      <text :style="{ fontSize: '12px', color: '#666' }">Filter prefix:</text>
       <input
         type="text"
         :value="prefix"
         placeholder="Filter prefix"
-        :style="{ height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
+        :style="{ height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
         @input="(e) => prefix = e.detail.value"
       />
     </view>
 
     <!-- Name list -->
-    <view :style="{ borderWidth: 1, borderColor: '#ccc', borderRadius: 4, minHeight: 120 }">
+    <view :style="{ borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', minHeight: '120px' }">
       <view
         v-for="item in filteredNames"
         :key="item.index"
@@ -73,53 +73,53 @@ function del() {
         }"
         @tap="selected = item.index"
       >
-        <text :style="{ fontSize: 16, color: selected === item.index ? '#fff' : '#222' }">
+        <text :style="{ fontSize: '16px', color: selected === item.index ? '#fff' : '#222' }">
           {{ item.name }}
         </text>
       </view>
     </view>
 
     <!-- Name / Surname inputs -->
-    <view :style="{ gap: 8 }">
-      <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }">
-        <text :style="{ fontSize: 14, width: 80 }">Name:</text>
+    <view :style="{ gap: '8px' }">
+      <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }">
+        <text :style="{ fontSize: '14px', width: '80px' }">Name:</text>
         <input
           type="text"
           :value="first"
-          :style="{ flex: 1, height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
+          :style="{ flex: 1, height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
           @input="(e) => first = e.detail.value"
         />
       </view>
-      <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }">
-        <text :style="{ fontSize: 14, width: 80 }">Surname:</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }">
+        <text :style="{ fontSize: '14px', width: '80px' }">Surname:</text>
         <input
           type="text"
           :value="last"
-          :style="{ flex: 1, height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
+          :style="{ flex: 1, height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
           @input="(e) => last = e.detail.value"
         />
       </view>
     </view>
 
     <!-- Action buttons -->
-    <view :style="{ display: 'flex', flexDirection: 'row', gap: 8 }">
+    <view :style="{ display: 'flex', flexDirection: 'row', gap: '8px' }">
       <view
-        :style="{ padding: '8px 16px', backgroundColor: '#0077ff', borderRadius: 6 }"
+        :style="{ padding: '8px 16px', backgroundColor: '#0077ff', borderRadius: '6px' }"
         @tap="create"
       >
-        <text :style="{ color: '#fff', fontSize: 14 }">Create</text>
+        <text :style="{ color: '#fff', fontSize: '14px' }">Create</text>
       </view>
       <view
-        :style="{ padding: '8px 16px', backgroundColor: selected >= 0 ? '#0077ff' : '#ccc', borderRadius: 6 }"
+        :style="{ padding: '8px 16px', backgroundColor: selected >= 0 ? '#0077ff' : '#ccc', borderRadius: '6px' }"
         @tap="update"
       >
-        <text :style="{ color: '#fff', fontSize: 14 }">Update</text>
+        <text :style="{ color: '#fff', fontSize: '14px' }">Update</text>
       </view>
       <view
-        :style="{ padding: '8px 16px', backgroundColor: selected >= 0 ? '#ff4444' : '#ccc', borderRadius: 6 }"
+        :style="{ padding: '8px 16px', backgroundColor: selected >= 0 ? '#ff4444' : '#ccc', borderRadius: '6px' }"
         @tap="del"
       >
-        <text :style="{ color: '#fff', fontSize: 14 }">Delete</text>
+        <text :style="{ color: '#fff', fontSize: '14px' }">Delete</text>
       </view>
     </view>
   </view>

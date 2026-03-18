@@ -66,10 +66,10 @@ function incrementCount() {
         borderRadius: '16px',
       }"
     >
-      <text :style="{ fontSize: 16, color: 'white', fontWeight: 'bold' }">
+      <text :style="{ fontSize: '16px', color: 'white', fontWeight: 'bold' }">
         Tap to cycle
       </text>
-      <text :style="{ fontSize: 14, color: 'white', marginTop: '8px' }">
+      <text :style="{ fontSize: '14px', color: 'white', marginTop: '8px' }">
         Color {{ (count % getColorCount()) + 1 }}/{{ getColorCount() }}
       </text>
     </view>
