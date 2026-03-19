@@ -8,13 +8,13 @@ export default defineConfig({
   },
   source: {
     entry: {
-      'gallery-image-card': './src/ImageCard/index.ts',
-      'gallery-like-card': './src/LikeCard/index.ts',
-      'gallery-list': './src/GalleryList/index.ts',
-      'gallery-autoscroll': './src/GalleryAutoScroll/index.ts',
-      'gallery-scrollbar': './src/GalleryScrollbar/index.ts',
-      'gallery-scrollbar-compare': './src/GalleryScrollbarCompare/index.ts',
-      'gallery-complete': './src/GalleryComplete/index.ts',
+      ImageCard: './src/ImageCard/index.ts',
+      LikeCard: './src/LikeCard/index.ts',
+      GalleryList: './src/GalleryList/index.ts',
+      GalleryAutoScroll: './src/GalleryAutoScroll/index.ts',
+      GalleryScrollbar: './src/GalleryScrollbar/index.ts',
+      GalleryScrollbarCompare: './src/GalleryScrollbarCompare/index.ts',
+      GalleryComplete: './src/GalleryComplete/index.ts',
     },
   },
   plugins: [

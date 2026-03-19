@@ -8,7 +8,7 @@ We will build a product gallery page together during this tutorial using Vue 3 a
 
 A furniture gallery with a beautiful waterfall layout, tap-to-like interactions, auto-scrolling, and a custom scrollbar — driven by Main Thread Script for buttery-smooth performance. Each section builds incrementally on the previous one.
 
-<Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="gallery-complete" />
+<Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="GalleryComplete" />
 
 ## Setup for the tutorial
 
@@ -26,7 +26,7 @@ export default defineConfig({
   source: {
     entry: {
       // We'll add entries here as we go
-      'gallery-image-card': './src/gallery/ImageCard/index.ts',
+      ImageCard: './src/gallery/ImageCard/index.ts',
     },
   },
   plugins: [
@@ -173,9 +173,9 @@ This makes sure your UI looks great when you are following this tutorial.
 
 Now, let's start by creating the first image card, which will be the main part of this page.
 
-<Go example="gallery" defaultFile="src/ImageCard/ImageCard.vue" entry="src/ImageCard" defaultEntryName="gallery-image-card" />
+<Go example="gallery" defaultFile="src/ImageCard/ImageCard.vue" entry="src/ImageCard" defaultEntryName="ImageCard" />
 
-**Entry: `gallery-image-card`**
+**Entry: `ImageCard`**
 
 ```vue title="ImageCard.vue" {4-5,10-12}
 <script setup lang="ts">
@@ -226,9 +226,9 @@ Great, you can now see the image card displayed. Here, we use the [`<image>`](ht
 
 We can add a small white heart in the upper right corner and make it the like button for the image card. Here, we implement a small component called `LikeIcon`:
 
-<Go example="gallery" defaultFile="src/Components/LikeIcon.vue" entry={["src/Components", "src/LikeCard"]} defaultEntryName="gallery-like-card" />
+<Go example="gallery" defaultFile="src/Components/LikeIcon.vue" entry={["src/Components", "src/LikeCard"]} defaultEntryName="LikeCard" />
 
-**Entry: `gallery-like-card`**
+**Entry: `LikeCard`**
 
 ```vue title="Components/LikeIcon.vue" {4,7-9,13-15}
 <script setup lang="ts">
@@ -322,9 +322,9 @@ To give the like a better visual interaction effect, we added CSS animations in 
 
 To show all your beautiful images, you may need help from `<list>`. This way, you will get a scrollable page that displays a large number of similar images:
 
-<Go example="gallery" defaultFile="src/GalleryList/Gallery.vue" entry="src/GalleryList" defaultEntryName="gallery-list" />
+<Go example="gallery" defaultFile="src/GalleryList/Gallery.vue" entry="src/GalleryList" defaultEntryName="GalleryList" />
 
-**Entry: `gallery-list`**
+**Entry: `GalleryList`**
 
 ```vue title="GalleryList/Gallery.vue" {9,10,18,22}
 <script setup lang="ts">
@@ -367,9 +367,9 @@ We use a waterfall layout as the child node layout option. `<list>` also accepts
 
 If you want to create a desktop photo wall, you need to add an auto-scroll feature to this page. Your images will be slowly and automatically scrolled, allowing you to easily see more images:
 
-<Go example="gallery" defaultFile="src/GalleryAutoScroll/Gallery.vue" entry="src/GalleryAutoScroll" defaultEntryName="gallery-autoscroll" />
+<Go example="gallery" defaultFile="src/GalleryAutoScroll/Gallery.vue" entry="src/GalleryAutoScroll" defaultEntryName="GalleryAutoScroll" />
 
-**Entry: `gallery-autoscroll`**
+**Entry: `GalleryAutoScroll`**
 
 ```vue title="GalleryAutoScroll/Gallery.vue" {1,12-22}
 <script setup lang="ts">
@@ -417,9 +417,9 @@ We use `onMounted` (Vue's equivalent of React's `useEffect(() => ..., [])`) comb
 
 Like most apps, we can add a scrollbar to this page to indicate how many images are left to be displayed. But we can do more! For example, we can replace the default progress bar of `<list>` with our preferred style:
 
-<Go example="gallery" defaultFile="src/GalleryScrollbar/NiceScrollbar.vue" entry="src/GalleryScrollbar" defaultEntryName="gallery-scrollbar" />
+<Go example="gallery" defaultFile="src/GalleryScrollbar/NiceScrollbar.vue" entry="src/GalleryScrollbar" defaultEntryName="GalleryScrollbar" />
 
-**Entry: `gallery-scrollbar`**
+**Entry: `GalleryScrollbar`**
 
 ```vue title="GalleryScrollbar/NiceScrollbar.vue" {7-11,13}
 <script setup lang="ts">
@@ -519,9 +519,9 @@ To optimize the performance of the scrollbar, we need to introduce [Main Thread 
 
 To let you see the comparison more clearly, we keep both scrollbars:
 
-<Go example="gallery" defaultFile="src/GalleryScrollbarCompare/Gallery.vue" entry="src/GalleryScrollbarCompare" defaultEntryName="gallery-scrollbar-compare" />
+<Go example="gallery" defaultFile="src/GalleryScrollbarCompare/Gallery.vue" entry="src/GalleryScrollbarCompare" defaultEntryName="GalleryScrollbarCompare" />
 
-**Entry: `gallery-scrollbar-compare`**
+**Entry: `GalleryScrollbarCompare`**
 
 ```vue title="ScrollbarCompare/NiceScrollbarMTS.vue" {5,10}
 <script setup lang="ts">
@@ -615,9 +615,9 @@ Key Vue concepts for MTS:
 
 We remove the redundant scrollbar used for comparison, and our Gallery is now complete! Let's take a look at the final result:
 
-<Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="gallery-complete" />
+<Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="GalleryComplete" />
 
-**Entry: `gallery-complete`**
+**Entry: `GalleryComplete`**
 
 ```vue title="GalleryComplete/NiceScrollbarMTS.vue"
 <script setup lang="ts">
@@ -733,10 +733,10 @@ Then open each bundle in LynxExplorer:
 
 | Entry                       | Bundle                                  | What it shows                    |
 | --------------------------- | --------------------------------------- | -------------------------------- |
-| `gallery-image-card`        | `gallery-image-card.lynx.bundle`        | Single image card                |
-| `gallery-like-card`         | `gallery-like-card.lynx.bundle`         | Card with tap-to-like            |
-| `gallery-list`              | `gallery-list.lynx.bundle`              | Waterfall grid                   |
-| `gallery-autoscroll`        | `gallery-autoscroll.lynx.bundle`        | Auto-scrolling gallery           |
-| `gallery-scrollbar`         | `gallery-scrollbar.lynx.bundle`         | Gallery + BG Thread scrollbar    |
-| `gallery-scrollbar-compare` | `gallery-scrollbar-compare.lynx.bundle` | BG vs MT scrollbar comparison    |
-| `gallery-complete`          | `gallery-complete.lynx.bundle`          | Final gallery with MTS scrollbar |
+| `ImageCard`        | `ImageCard.lynx.bundle`        | Single image card                |
+| `LikeCard`         | `LikeCard.lynx.bundle`         | Card with tap-to-like            |
+| `GalleryList`              | `GalleryList.lynx.bundle`              | Waterfall grid                   |
+| `GalleryAutoScroll`        | `GalleryAutoScroll.lynx.bundle`        | Auto-scrolling gallery           |
+| `GalleryScrollbar`         | `GalleryScrollbar.lynx.bundle`         | Gallery + BG Thread scrollbar    |
+| `GalleryScrollbarCompare` | `GalleryScrollbarCompare.lynx.bundle` | BG vs MT scrollbar comparison    |
+| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | Final gallery with MTS scrollbar |

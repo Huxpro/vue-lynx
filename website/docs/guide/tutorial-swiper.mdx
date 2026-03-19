@@ -21,7 +21,7 @@ The end result is a product detail page. At the top is a full-width image carous
 - A bottom **indicator** that highlights the current page in real time
 - **Tap an indicator dot** to jump to that page
 
-<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="swiper" />
+<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
 
 ## Setup for the Tutorial
 
@@ -41,7 +41,7 @@ TypeScript is recommended for better editor hints and type checking.
 
 Let's start with the simplest version — a non-interactive static image list.
 
-<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="swiper-empty" />
+<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
 
 ### Creating the SwiperItem Component
 
@@ -322,7 +322,7 @@ The effect is identical — it's just adapted to Vue template syntax.
 
 ### The Complete SwiperMTS Component
 
-<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="swiper-mts" />
+<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
 
 Combining the above changes, here is the complete main-thread touch handling version:
 
@@ -995,7 +995,7 @@ When a prop's value is a **main-thread function**, it needs the `main-thread-` p
 Without the prefix, the compiler treats it as an ordinary background-thread value and tries to serialize a function — which is not serializable, resulting in a runtime error.
 :::
 
-<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="swiper" />
+<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
 
 ## Summary
 

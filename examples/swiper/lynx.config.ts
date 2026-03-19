@@ -8,9 +8,9 @@ export default defineConfig({
   },
   source: {
     entry: {
-      'swiper-empty': './src/SwiperEmpty/index.ts',
-      'swiper-mts': './src/SwiperMTS/index.ts',
-      swiper: './src/Swiper/index.ts',
+      SwiperEmpty: './src/SwiperEmpty/index.ts',
+      SwiperMTS: './src/SwiperMTS/index.ts',
+      Swiper: './src/Swiper/index.ts',
     },
   },
   plugins: [

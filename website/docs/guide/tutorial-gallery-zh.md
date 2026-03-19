@@ -24,7 +24,7 @@ export default defineConfig({
   source: {
     entry: {
       // 我们会在进行过程中逐步添加入口
-      'gallery-image-card': './src/gallery/ImageCard/index.ts',
+      ImageCard: './src/gallery/ImageCard/index.ts',
     },
   },
   plugins: [
@@ -171,7 +171,7 @@ import '../gallery.css';
 
 现在，让我们从创建第一张图片卡片开始，它将是这个页面的核心组成部分。
 
-**入口：`gallery-image-card`**
+**入口：`ImageCard`**
 
 ```vue title="ImageCard.vue" {4-5,10-12}
 <script setup lang="ts">
@@ -222,7 +222,7 @@ app.mount();
 
 我们可以在右上角添加一个小白色心形图标，把它作为图片卡片的点赞按钮。在这里，我们实现一个名为 `LikeIcon` 的小组件：
 
-**入口：`gallery-like-card`**
+**入口：`LikeCard`**
 
 ```vue title="Components/LikeIcon.vue" {4,7-9,13-15}
 <script setup lang="ts">
@@ -316,7 +316,7 @@ defineProps<{
 
 要展示所有精美的图片，你需要 `<list>` 的帮助。这样你就能得到一个可滚动的页面，展示大量类似的图片：
 
-**入口：`gallery-list`**
+**入口：`GalleryList`**
 
 ```vue title="GalleryList/Gallery.vue" {9,10,18,22}
 <script setup lang="ts">
@@ -359,7 +359,7 @@ import LikeImageCard from '../Components/LikeImageCard.vue';
 
 如果你想创建一个桌面照片墙，你需要为这个页面添加自动滚动功能。你的图片会缓慢自动滚动，让你可以轻松地看到更多图片：
 
-**入口：`gallery-autoscroll`**
+**入口：`GalleryAutoScroll`**
 
 ```vue title="GalleryAutoScroll/Gallery.vue" {1,12-22}
 <script setup lang="ts">
@@ -407,7 +407,7 @@ onMounted(() => {
 
 和大多数应用一样，我们可以为这个页面添加一个滚动条来指示还有多少图片未显示。但我们可以做得更好！例如，我们可以用自己喜欢的样式替换 `<list>` 的默认进度条：
 
-**入口：`gallery-scrollbar`**
+**入口：`GalleryScrollbar`**
 
 ```vue title="GalleryScrollbar/NiceScrollbar.vue" {7-11,13}
 <script setup lang="ts">
@@ -507,7 +507,7 @@ function onScroll(
 
 为了让你更清楚地看到对比，我们保留两个滚动条：
 
-**入口：`gallery-scrollbar-compare`**
+**入口：`GalleryScrollbarCompare`**
 
 ```vue title="ScrollbarCompare/NiceScrollbarMTS.vue" {5,10}
 <script setup lang="ts">
@@ -601,7 +601,7 @@ Vue 中 MTS 的关键概念：
 
 我们移除用于对比的多余滚动条，我们的画廊就完成了！让我们看看最终效果：
 
-**入口：`gallery-complete`**
+**入口：`GalleryComplete`**
 
 ```vue title="GalleryComplete/NiceScrollbarMTS.vue"
 <script setup lang="ts">
@@ -717,10 +717,10 @@ cd packages/vue/e2e-lynx && pnpm dev
 
 | 入口                        | Bundle                                  | 展示内容                     |
 | --------------------------- | --------------------------------------- | ---------------------------- |
-| `gallery-image-card`        | `gallery-image-card.lynx.bundle`        | 单张图片卡片                 |
-| `gallery-like-card`         | `gallery-like-card.lynx.bundle`         | 带点赞的卡片                 |
-| `gallery-list`              | `gallery-list.lynx.bundle`              | 瀑布流网格                   |
-| `gallery-autoscroll`        | `gallery-autoscroll.lynx.bundle`        | 自动滚动画廊                 |
-| `gallery-scrollbar`         | `gallery-scrollbar.lynx.bundle`         | 画廊 + 背景线程滚动条        |
-| `gallery-scrollbar-compare` | `gallery-scrollbar-compare.lynx.bundle` | 背景线程 vs 主线程滚动条对比 |
-| `gallery-complete`          | `gallery-complete.lynx.bundle`          | 最终画廊（MTS 滚动条）       |
+| `ImageCard`        | `ImageCard.lynx.bundle`        | 单张图片卡片                 |
+| `LikeCard`         | `LikeCard.lynx.bundle`         | 带点赞的卡片                 |
+| `GalleryList`              | `GalleryList.lynx.bundle`              | 瀑布流网格                   |
+| `GalleryAutoScroll`        | `GalleryAutoScroll.lynx.bundle`        | 自动滚动画廊                 |
+| `GalleryScrollbar`         | `GalleryScrollbar.lynx.bundle`         | 画廊 + 背景线程滚动条        |
+| `GalleryScrollbarCompare` | `GalleryScrollbarCompare.lynx.bundle` | 背景线程 vs 主线程滚动条对比 |
+| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | 最终画廊（MTS 滚动条）       |
