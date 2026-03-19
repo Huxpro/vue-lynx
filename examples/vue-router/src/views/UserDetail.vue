@@ -20,31 +20,31 @@ function goBack() {
 </script>
 
 <template>
-  <view :style="{ padding: '16px' }">
+  <view :style="{ padding: 16 }">
     <text
       @tap="goBack"
-      :style="{ fontSize: '14px', color: '#1a73e8', marginBottom: '12px' }"
+      :style="{ fontSize: 14, color: '#1a73e8', marginBottom: 12 }"
     >
       ← Back to Users
     </text>
 
-    <view v-if="user" :style="{ backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
-      <text :style="{ fontSize: '22px', fontWeight: 'bold', color: '#111' }">
+    <view v-if="user" :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+      <text :style="{ fontSize: 22, fontWeight: 'bold', color: '#111' }">
         {{ user.name }}
       </text>
-      <text :style="{ fontSize: '13px', color: '#1a73e8', marginTop: '4px' }">
+      <text :style="{ fontSize: 13, color: '#1a73e8', marginTop: 4 }">
         {{ user.role }}
       </text>
-      <text :style="{ fontSize: '14px', color: '#555', marginTop: '12px', lineHeight: '20px' }">
+      <text :style="{ fontSize: 14, color: '#555', marginTop: 12, lineHeight: 20 }">
         {{ user.bio }}
       </text>
-      <text :style="{ fontSize: '11px', color: '#aaa', marginTop: '16px' }">
+      <text :style="{ fontSize: 11, color: '#aaa', marginTop: 16 }">
         Route param :id = {{ userId }}
       </text>
     </view>
 
-    <view v-else :style="{ padding: '16px' }">
-      <text :style="{ fontSize: '14px', color: '#e53935' }">
+    <view v-else :style="{ padding: 16 }">
+      <text :style="{ fontSize: 14, color: '#e53935' }">
         User not found (id: {{ userId }})
       </text>
     </view>

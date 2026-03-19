@@ -31,51 +31,51 @@ function adjustDuration(delta) {
 </script>
 
 <template>
-  <view :style="{ padding: '20px', gap: '14px' }">
+  <view :style="{ padding: 20, gap: 14 }">
     <!-- Progress bar -->
-    <view :style="{ gap: '4px' }">
-      <text :style="{ fontSize: '14px', color: '#666' }">Elapsed Time:</text>
-      <view :style="{ height: '20px', backgroundColor: '#eee', borderRadius: '4px', overflow: 'hidden' }">
+    <view :style="{ gap: 4 }">
+      <text :style="{ fontSize: 14, color: '#666' }">Elapsed Time:</text>
+      <view :style="{ height: 20, backgroundColor: '#eee', borderRadius: 4, overflow: 'hidden' }">
         <view
           :style="{
-            height: '20px',
+            height: 20,
             width: progressPct + '%',
             backgroundColor: '#0077ff',
-            borderRadius: '4px',
+            borderRadius: 4,
           }"
         />
       </view>
     </view>
 
-    <text :style="{ fontSize: '20px' }">{{ (elapsed / 1000).toFixed(1) }}s</text>
+    <text :style="{ fontSize: 20 }">{{ (elapsed / 1000).toFixed(1) }}s</text>
 
     <!-- Duration control -->
-    <view :style="{ gap: '4px' }">
-      <text :style="{ fontSize: '14px', color: '#666' }">
+    <view :style="{ gap: 4 }">
+      <text :style="{ fontSize: 14, color: '#666' }">
         Duration: {{ (duration / 1000).toFixed(1) }}s
       </text>
-      <view :style="{ display: 'flex', flexDirection: 'row', gap: '8px' }">
+      <view :style="{ display: 'flex', flexDirection: 'row', gap: 8 }">
         <view
-          :style="{ padding: '6px 16px', backgroundColor: '#eee', borderRadius: '4px' }"
+          :style="{ padding: '6px 16px', backgroundColor: '#eee', borderRadius: 4 }"
           @tap="adjustDuration(-1000)"
         >
-          <text :style="{ fontSize: '16px' }">-1s</text>
+          <text :style="{ fontSize: 16 }">-1s</text>
         </view>
         <view
-          :style="{ padding: '6px 16px', backgroundColor: '#eee', borderRadius: '4px' }"
+          :style="{ padding: '6px 16px', backgroundColor: '#eee', borderRadius: 4 }"
           @tap="adjustDuration(1000)"
         >
-          <text :style="{ fontSize: '16px' }">+1s</text>
+          <text :style="{ fontSize: 16 }">+1s</text>
         </view>
       </view>
     </view>
 
     <!-- Reset -->
     <view
-      :style="{ padding: '10px 20px', backgroundColor: '#0077ff', borderRadius: '6px', alignSelf: 'flex-start' }"
+      :style="{ padding: '10px 20px', backgroundColor: '#0077ff', borderRadius: 6, alignSelf: 'flex-start' }"
       @tap="reset"
     >
-      <text :style="{ color: '#fff', fontSize: '16px' }">Reset</text>
+      <text :style="{ color: '#fff', fontSize: 16 }">Reset</text>
     </view>
   </view>
 </template>

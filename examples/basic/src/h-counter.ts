@@ -21,19 +21,19 @@ const Counter = defineComponent({
     return () =>
       h(
         'view',
-        { style: { display: 'flex', flexDirection: 'column', padding: '16px' } },
+        { style: { display: 'flex', flexDirection: 'column', padding: 16 } },
         [
-          h('text', { style: { fontSize: '24px', color: '#333' } }, [
+          h('text', { style: { fontSize: 24, color: '#333' } }, [
             `Count: ${count.value}`,
           ]),
           h(
             'view',
             {
               style: {
-                marginTop: '12px',
+                marginTop: 12,
                 padding: '8px 16px',
                 backgroundColor: '#0077ff',
-                borderRadius: '8px',
+                borderRadius: 8,
               },
               bindtap: () => {
                 count.value++;
@@ -51,7 +51,7 @@ const App = defineComponent({
   setup() {
     return () =>
       h('view', { style: { flex: 1 } }, [
-        h('text', { style: { fontSize: '18px', margin: '16px' } }, [
+        h('text', { style: { fontSize: 18, margin: 16 } }, [
           'Vue 3 × Lynx – h() counter (no SFC)',
         ]),
         h(Counter),

@@ -15,8 +15,8 @@ function goToUser(id: number) {
 </script>
 
 <template>
-  <view :style="{ padding: '16px' }">
-    <text :style="{ fontSize: '20px', fontWeight: 'bold', color: '#111', marginBottom: '12px' }">
+  <view :style="{ padding: 16 }">
+    <text :style="{ fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 12 }">
       Users
     </text>
 
@@ -29,21 +29,21 @@ function goToUser(id: number) {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '12px',
-        marginBottom: '8px',
+        padding: 12,
+        marginBottom: 8,
         backgroundColor: '#fff',
-        borderRadius: '8px',
+        borderRadius: 8,
       }"
     >
       <view>
-        <text :style="{ fontSize: '15px', fontWeight: 'bold', color: '#111' }">
+        <text :style="{ fontSize: 15, fontWeight: 'bold', color: '#111' }">
           {{ user.name }}
         </text>
-        <text :style="{ fontSize: '12px', color: '#777', marginTop: '2px' }">
+        <text :style="{ fontSize: 12, color: '#777', marginTop: 2 }">
           {{ user.role }}
         </text>
       </view>
-      <text :style="{ fontSize: '14px', color: '#1a73e8' }">→</text>
+      <text :style="{ fontSize: 14, color: '#1a73e8' }">→</text>
     </view>
   </view>
 </template>

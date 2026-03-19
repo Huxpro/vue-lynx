@@ -15,7 +15,7 @@ function onCounterIncrement(value: number) {
 <template>
   <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }">
     <!-- interpolation + dynamic style -->
-    <text :style="{ fontSize: '18px', fontWeight: 'bold', margin: '16px', color: '#111' }">
+    <text :style="{ fontSize: 18, fontWeight: 'bold', margin: 16, color: '#111' }">
       {{ title }}
     </text>
 
@@ -24,18 +24,18 @@ function onCounterIncrement(value: number) {
 
     <!-- v-for list rendering -->
     <view v-if="history.length > 0" :style="{ margin: '0 16px' }">
-      <text :style="{ fontSize: '13px', color: '#555', marginBottom: '4px' }">History:</text>
+      <text :style="{ fontSize: 13, color: '#555', marginBottom: 4 }">History:</text>
       <view
         v-for="(val, idx) in history"
         :key="idx"
         :style="{
           padding: '2px 8px',
-          marginBottom: '2px',
+          marginBottom: 2,
           backgroundColor: '#fff',
-          borderRadius: '4px',
+          borderRadius: 4,
         }"
       >
-        <text :style="{ fontSize: '12px', color: '#333' }">#{{ idx + 1 }}: {{ val }}</text>
+        <text :style="{ fontSize: 12, color: '#333' }">#{{ idx + 1 }}: {{ val }}</text>
       </view>
     </view>
   </view>

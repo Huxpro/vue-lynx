@@ -30,33 +30,33 @@ function dateToString(date) {
 </script>
 
 <template>
-  <view :style="{ padding: '20px', gap: '12px' }">
+  <view :style="{ padding: 20, gap: 12 }">
     <!-- Flight type toggle (simulated select) -->
     <view
-      :style="{ padding: '8px 16px', backgroundColor: '#eee', borderRadius: '6px' }"
+      :style="{ padding: '8px 16px', backgroundColor: '#eee', borderRadius: 6 }"
       @tap="toggleFlightType"
     >
-      <text :style="{ fontSize: '16px' }">{{ isReturn ? 'Return Flight' : 'One-way Flight' }}</text>
+      <text :style="{ fontSize: 16 }">{{ isReturn ? 'Return Flight' : 'One-way Flight' }}</text>
     </view>
 
     <!-- Departure date -->
-    <view :style="{ gap: '4px' }">
-      <text :style="{ fontSize: '12px', color: '#666' }">Departure (YYYY-MM-DD)</text>
+    <view :style="{ gap: 4 }">
+      <text :style="{ fontSize: 12, color: '#666' }">Departure (YYYY-MM-DD)</text>
       <input
         type="text"
         :value="departureDate"
-        :style="{ height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
+        :style="{ height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
         @input="(e) => departureDate = e.detail.value"
       />
     </view>
 
     <!-- Return date -->
-    <view :style="{ gap: '4px', opacity: isReturn ? 1 : 0.4 }">
-      <text :style="{ fontSize: '12px', color: '#666' }">Return (YYYY-MM-DD)</text>
+    <view :style="{ gap: 4, opacity: isReturn ? 1 : 0.4 }">
+      <text :style="{ fontSize: 12, color: '#666' }">Return (YYYY-MM-DD)</text>
       <input
         type="text"
         :value="returnDate"
-        :style="{ height: '36px', borderWidth: '1px', borderColor: isReturn ? '#ccc' : '#eee', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
+        :style="{ height: 36, borderWidth: 1, borderColor: isReturn ? '#ccc' : '#eee', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
         @input="(e) => { if (isReturn) returnDate = e.detail.value }"
       />
     </view>
@@ -66,15 +66,15 @@ function dateToString(date) {
       :style="{
         padding: '10px 20px',
         backgroundColor: canBook ? '#0077ff' : '#ccc',
-        borderRadius: '6px',
+        borderRadius: 6,
         alignSelf: 'flex-start',
       }"
       @tap="canBook && book()"
     >
-      <text :style="{ color: '#fff', fontSize: '16px' }">Book</text>
+      <text :style="{ color: '#fff', fontSize: 16 }">Book</text>
     </view>
 
-    <text v-if="!canBook" :style="{ color: 'red', fontSize: '14px' }">
+    <text v-if="!canBook" :style="{ color: 'red', fontSize: 14 }">
       Return date must be after departure date.
     </text>
   </view>

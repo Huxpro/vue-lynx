@@ -72,7 +72,7 @@ const onTap = () => {
         borderRadius: '16px',
       }"
     >
-      <text :style="{ fontSize: '16px', color: 'white', fontWeight: 'bold' }">
+      <text :style="{ fontSize: 16, color: 'white', fontWeight: 'bold' }">
         Tap count: {{ count }}
       </text>
     </view>

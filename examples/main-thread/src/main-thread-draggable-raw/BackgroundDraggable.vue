@@ -15,6 +15,6 @@ defineProps<{
       transform: `translate(${posX}px, ${posY}px)`,
     }"
   >
-    <text :style="{ fontSize: '12px', color: '#333' }">BGDraggable</text>
+    <text :style="{ fontSize: 12, color: '#333' }">BGDraggable</text>
   </view>
 </template>

@@ -44,32 +44,32 @@ export default defineComponent({
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', padding: '12px' }">
+  <view :style="{ display: 'flex', flexDirection: 'column', padding: 12 }">
     <!-- v-if / v-else -->
-    <text v-if="count === 0" :style="{ color: '#999', fontSize: '14px' }">
+    <text v-if="count === 0" :style="{ color: '#999', fontSize: 14 }">
       No taps yet
     </text>
-    <text v-else :style="{ fontSize: '22px', color: '#222' }">
+    <text v-else :style="{ fontSize: 22, color: '#222' }">
       Count: {{ count }}
     </text>
 
     <!-- v-show -->
-    <text v-show="showDetail" :style="{ color: '#666', fontSize: '12px', marginTop: '4px' }">
+    <text v-show="showDetail" :style="{ color: '#666', fontSize: 12, marginTop: 4 }">
       (tap the button to increment)
     </text>
 
     <!-- watch result -->
-    <text v-if="tapMessage" :style="{ color: '#0077ff', fontSize: '11px', marginTop: '2px' }">
+    <text v-if="tapMessage" :style="{ color: '#0077ff', fontSize: 11, marginTop: 2 }">
       {{ tapMessage }}
     </text>
 
     <!-- @tap event, computed property for dynamic style -->
     <view
       :style="{
-        marginTop: '10px',
+        marginTop: 10,
         padding: '8px 16px',
         backgroundColor: buttonColor,
-        borderRadius: '8px',
+        borderRadius: 8,
       }"
       @tap="onTap"
     >
@@ -78,10 +78,10 @@ export default defineComponent({
 
     <!-- toggle detail visibility -->
     <view
-      :style="{ marginTop: '6px', padding: '4px 12px', backgroundColor: '#eee', borderRadius: '6px' }"
+      :style="{ marginTop: 6, padding: '4px 12px', backgroundColor: '#eee', borderRadius: 6 }"
       @tap="onToggle"
     >
-      <text :style="{ color: '#555', fontSize: '12px' }">
+      <text :style="{ color: '#555', fontSize: 12 }">
         {{ showDetail ? 'Hide' : 'Show' }} detail
       </text>
     </view>

@@ -48,119 +48,119 @@ function onLeave(_el: any, done: () => void) {
 </script>
 
 <template>
-  <scroll-view scroll-orientation="vertical" :style="{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', padding: '16px' }">
-    <text :style="{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }">Transition Demos</text>
+  <scroll-view scroll-orientation="vertical" :style="{ width: '100%', height: '100%', backgroundColor: '#f0f0f0', padding: 16 }">
+    <text :style="{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }">Transition Demos</text>
 
     <!-- 1. Basic Fade -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">1. Fade</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">1. Fade</text>
       <view @tap="showFade = !showFade"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Toggle Fade</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Toggle Fade</text>
       </view>
       <Transition name="fade" :duration="300">
-        <view v-if="showFade" :style="{ backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">Hello, I fade in and out!</text>
+        <view v-if="showFade" :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">Hello, I fade in and out!</text>
         </view>
       </Transition>
     </view>
 
     <!-- 2. Slide Fade -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">2. Slide Fade</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">2. Slide Fade</text>
       <view @tap="showSlide = !showSlide"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Toggle Slide</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Toggle Slide</text>
       </view>
       <Transition name="slide-fade" :duration="{ enter: 300, leave: 500 }">
-        <view v-if="showSlide" :style="{ backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">I slide and fade!</text>
+        <view v-if="showSlide" :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">I slide and fade!</text>
         </view>
       </Transition>
     </view>
 
     <!-- 3. Bounce (CSS animation) -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">3. Bounce</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">3. Bounce</text>
       <view @tap="showBounce = !showBounce"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Toggle Bounce</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Toggle Bounce</text>
       </view>
       <Transition name="bounce" type="animation" :duration="500">
-        <view v-if="showBounce" :style="{ backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">Bouncy!</text>
+        <view v-if="showBounce" :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">Bouncy!</text>
         </view>
       </Transition>
     </view>
 
     <!-- 4. Mode out-in -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">4. Mode: out-in</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">4. Mode: out-in</text>
       <view @tap="activeView = activeView === 'A' ? 'B' : 'A'"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Switch View</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Switch View</text>
       </view>
       <Transition name="fade" mode="out-in" :duration="200">
-        <view v-if="activeView === 'A'" key="a" :style="{ backgroundColor: '#e8f5e9', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">View A</text>
+        <view v-if="activeView === 'A'" key="a" :style="{ backgroundColor: '#e8f5e9', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">View A</text>
         </view>
-        <view v-else key="b" :style="{ backgroundColor: '#e3f2fd', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">View B</text>
+        <view v-else key="b" :style="{ backgroundColor: '#e3f2fd', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">View B</text>
         </view>
       </Transition>
     </view>
 
     <!-- 5. Appear -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">5. Appear on mount</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">5. Appear on mount</text>
       <Transition name="fade" appear :duration="500">
-        <view :style="{ backgroundColor: '#fff3e0', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">I faded in on initial mount!</text>
+        <view :style="{ backgroundColor: '#fff3e0', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">I faded in on initial mount!</text>
         </view>
       </Transition>
     </view>
 
     <!-- 6. Explicit Duration -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">6. Explicit Duration (1000ms)</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">6. Explicit Duration (1000ms)</text>
       <view @tap="showDuration = !showDuration"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Toggle</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Toggle</text>
       </view>
       <Transition name="fade" :duration="1000">
-        <view v-if="showDuration" :style="{ backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">Slow transition (1s)</text>
+        <view v-if="showDuration" :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">Slow transition (1s)</text>
         </view>
       </Transition>
     </view>
 
     <!-- 7. TransitionGroup -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">7. TransitionGroup (list)</text>
-      <view :style="{ flexDirection: 'row', marginBottom: '4px' }">
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">7. TransitionGroup (list)</text>
+      <view :style="{ flexDirection: 'row', marginBottom: 4 }">
         <view @tap="addItem"
-              :style="{ backgroundColor: '#4caf50', padding: '8px', borderRadius: '4px', marginRight: '8px' }">
-          <text :style="{ color: '#fff', fontSize: '13px' }">Add</text>
+              :style="{ backgroundColor: '#4caf50', padding: 8, borderRadius: 4, marginRight: 8 }">
+          <text :style="{ color: '#fff', fontSize: 13 }">Add</text>
         </view>
         <view @tap="removeItem"
-              :style="{ backgroundColor: '#f44336', padding: '8px', borderRadius: '4px' }">
-          <text :style="{ color: '#fff', fontSize: '13px' }">Remove</text>
+              :style="{ backgroundColor: '#f44336', padding: 8, borderRadius: 4 }">
+          <text :style="{ color: '#fff', fontSize: 13 }">Remove</text>
         </view>
       </view>
       <TransitionGroup name="list" tag="view" :duration="300">
         <view v-for="item in listItems" :key="item"
-              :style="{ backgroundColor: '#fff', padding: '8px', marginBottom: '4px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">Item {{ item }}</text>
+              :style="{ backgroundColor: '#fff', padding: 8, marginBottom: 4, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">Item {{ item }}</text>
         </view>
       </TransitionGroup>
     </view>
 
     <!-- 8. JS Hooks -->
-    <view :style="{ marginBottom: '16px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }">8. JS Hooks</text>
+    <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">8. JS Hooks</text>
       <view @tap="showHooks = !showHooks"
-            :style="{ backgroundColor: '#4a90d9', padding: '8px', borderRadius: '4px', marginBottom: '4px' }">
-        <text :style="{ color: '#fff', fontSize: '13px' }">Toggle (JS hooks)</text>
+            :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginBottom: 4 }">
+        <text :style="{ color: '#fff', fontSize: 13 }">Toggle (JS hooks)</text>
       </view>
       <Transition
         name="fade"
@@ -169,8 +169,8 @@ function onLeave(_el: any, done: () => void) {
         @enter="onEnter"
         @leave="onLeave"
       >
-        <view v-if="showHooks" :style="{ backgroundColor: '#f3e5f5', padding: '12px', borderRadius: '4px' }">
-          <text :style="{ fontSize: '13px' }">JS hooks control my lifecycle!</text>
+        <view v-if="showHooks" :style="{ backgroundColor: '#f3e5f5', padding: 12, borderRadius: 4 }">
+          <text :style="{ fontSize: 13 }">JS hooks control my lifecycle!</text>
         </view>
       </Transition>
     </view>

@@ -9,11 +9,11 @@ function goToUsers() {
 </script>
 
 <template>
-  <view :style="{ padding: '16px' }">
-    <text :style="{ fontSize: '20px', fontWeight: 'bold', color: '#111', marginBottom: '8px' }">
+  <view :style="{ padding: 16 }">
+    <text :style="{ fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 8 }">
       Home
     </text>
-    <text :style="{ fontSize: '14px', color: '#555', marginBottom: '16px', lineHeight: '20px' }">
+    <text :style="{ fontSize: 14, color: '#555', marginBottom: 16, lineHeight: 20 }">
       This example demonstrates Vue Router with createMemoryHistory in Lynx.
       Since Lynx has no browser navigation APIs, memory history keeps the
       routing state entirely in-process.
@@ -21,11 +21,11 @@ function goToUsers() {
     <text
       @tap="goToUsers"
       :style="{
-        fontSize: '14px',
+        fontSize: 14,
         color: '#1a73e8',
         padding: '8px 16px',
         backgroundColor: '#e8f0fe',
-        borderRadius: '8px',
+        borderRadius: 8,
         alignSelf: 'flex-start',
       }"
     >

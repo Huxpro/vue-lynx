@@ -24,20 +24,20 @@ function onFahrenheitInput(e) {
 </script>
 
 <template>
-  <view :style="{ display: 'flex', padding: '20px', flexDirection: 'row', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }">
+  <view :style="{ display: 'flex', padding: 20, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }">
     <input
       type="text"
       :value="celsius"
-      :style="{ width: '100px', height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
+      :style="{ width: 100, height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
       @input="onCelsiusInput"
     />
-    <text :style="{ fontSize: '16px' }">Celsius =</text>
+    <text :style="{ fontSize: 16 }">Celsius =</text>
     <input
       type="text"
       :value="fahrenheit"
-      :style="{ width: '100px', height: '36px', borderWidth: '1px', borderColor: '#ccc', borderRadius: '4px', padding: '0 8px', fontSize: '16px' }"
+      :style="{ width: 100, height: 36, borderWidth: 1, borderColor: '#ccc', borderRadius: 4, padding: '0 8px', fontSize: 16 }"
       @input="onFahrenheitInput"
     />
-    <text :style="{ fontSize: '16px' }">Fahrenheit</text>
+    <text :style="{ fontSize: 16 }">Fahrenheit</text>
   </view>
 </template>

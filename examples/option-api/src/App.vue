@@ -47,12 +47,12 @@ export default defineComponent({
 <template>
   <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }">
     <!-- interpolation -->
-    <text :style="{ fontSize: '18px', fontWeight: 'bold', margin: '16px', color: '#111' }">
+    <text :style="{ fontSize: 18, fontWeight: 'bold', margin: 16, color: '#111' }">
       {{ title }}
     </text>
 
     <!-- mounted lifecycle hook result -->
-    <text v-if="mountedAt" :style="{ fontSize: '12px', color: '#888', marginLeft: '16px', marginBottom: '8px' }">
+    <text v-if="mountedAt" :style="{ fontSize: 12, color: '#888', marginLeft: 16, marginBottom: 8 }">
       Mounted at: {{ mountedAt }}
     </text>
 
@@ -60,24 +60,24 @@ export default defineComponent({
     <Counter :initial-count="0" @increment="onCounterIncrement" />
 
     <!-- computed property -->
-    <text v-if="lastValue !== undefined" :style="{ fontSize: '13px', color: '#555', margin: '0 16px' }">
+    <text v-if="lastValue !== undefined" :style="{ fontSize: 13, color: '#555', margin: '0 16px' }">
       Last value: {{ lastValue }} ({{ historyCount }} entries)
     </text>
 
     <!-- v-for list rendering -->
     <view v-if="history.length > 0" :style="{ margin: '8px 16px' }">
-      <text :style="{ fontSize: '13px', color: '#555', marginBottom: '4px' }">History:</text>
+      <text :style="{ fontSize: 13, color: '#555', marginBottom: 4 }">History:</text>
       <view
         v-for="(val, idx) in history"
         :key="idx"
         :style="{
           padding: '2px 8px',
-          marginBottom: '2px',
+          marginBottom: 2,
           backgroundColor: '#fff',
-          borderRadius: '4px',
+          borderRadius: 4,
         }"
       >
-        <text :style="{ fontSize: '12px', color: '#333' }">#{{ idx + 1 }}: {{ val }}</text>
+        <text :style="{ fontSize: 12, color: '#333' }">#{{ idx + 1 }}: {{ val }}</text>
       </view>
     </view>
   </view>

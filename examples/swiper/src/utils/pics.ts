@@ -8,14 +8,14 @@ import pic7 from '../assets/7.png';
 import pic8 from '../assets/8.png';
 
 export const pics = [
-  { src: pic1, width: '511px', height: '437px' },
-  { src: pic2, width: '1024px', height: '1589px' },
-  { src: pic3, width: '510px', height: '418px' },
-  { src: pic4, width: '509px', height: '438px' },
-  { src: pic5, width: '1024px', height: '1557px' },
-  { src: pic6, width: '509px', height: '415px' },
-  { src: pic7, width: '509px', height: '426px' },
-  { src: pic8, width: '1024px', height: '1544px' },
+  { src: pic1, width: 511, height: 437 },
+  { src: pic2, width: 1024, height: 1589 },
+  { src: pic3, width: 510, height: 418 },
+  { src: pic4, width: 509, height: 438 },
+  { src: pic5, width: 1024, height: 1557 },
+  { src: pic6, width: 509, height: 415 },
+  { src: pic7, width: 509, height: 426 },
+  { src: pic8, width: 1024, height: 1544 },
 ];
 
 export const picsArr = pics.slice(0, 8).map((pic) => pic.src);

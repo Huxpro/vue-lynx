@@ -25,9 +25,9 @@ function onScroll(event: { detail?: { scrollTop?: number } }) {
         scroll-orientation="vertical"
         @scroll="onScroll"
       >
-        <view :style="{ backgroundColor: 'yellow', width: '100%', height: '500px' }" />
-        <view :style="{ backgroundColor: 'lightskyblue', width: '100%', height: '100px' }" />
-        <view :style="{ backgroundColor: 'yellow', width: '100%', height: '1000px' }" />
+        <view :style="{ backgroundColor: 'yellow', width: '100%', height: 500 }" />
+        <view :style="{ backgroundColor: 'lightskyblue', width: '100%', height: 100 }" />
+        <view :style="{ backgroundColor: 'yellow', width: '100%', height: 1000 }" />
       </scroll-view>
 
       <!-- Right half: Draggable box -->
