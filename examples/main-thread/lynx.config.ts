@@ -1,5 +1,9 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@lynx-js/rspeedy';
 import { pluginVueLynx } from 'vue-lynx/plugin';
+
+const exampleName = path.basename(path.dirname(fileURLToPath(import.meta.url)));
 
 export default defineConfig({
   environments: {
@@ -23,5 +27,6 @@ export default defineConfig({
   ],
   output: {
     filename: '[name].[platform].bundle',
+    assetPrefix: `https://vue.lynxjs.org/examples/${exampleName}/dist/`,
   },
 });
