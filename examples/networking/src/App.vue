@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
-// WORKAROUND: RuntimeWrapperWebpackPlugin passes `fetch` as a function
-// parameter which shadows the global. The web-platform background thread
-// doesn't provide it, so the parameter is `undefined` even though the
-// Web Worker has native `fetch` on `globalThis`.
-// See: https://github.com/anthropics/anthropic-cookbook/issues/XXX
-// TODO: Remove once lynx-stack web-platform shims `fetch` on `tt`/`lynx`.
+// WORKAROUND: lynx-stack web-platform's RuntimeWrapperWebpackPlugin shadows
+// `fetch` with an `undefined` parameter. Use `globalThis.fetch` to bypass.
+// TODO: Remove once lynx-stack shims `fetch` on the `lynx` global.
 const _fetch: typeof fetch = globalThis.fetch ?? fetch
 
 interface Post {
