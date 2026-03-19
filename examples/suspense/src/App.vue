@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, defineAsyncComponent, Suspense } from 'vue-lynx'
+import AsyncSetup from './AsyncSetup.vue'
 
 // Lazy-loaded component — triggers Suspense fallback during chunk loading
 const LazyCounter = defineAsyncComponent(() => import('./LazyCounter.vue'))
@@ -64,6 +65,23 @@ function toggleAsync() {
         <template #fallback>
           <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
             <text :style="{ color: '#856404', fontSize: 13 }">⏳ Loading chunk...</text>
+          </view>
+        </template>
+      </Suspense>
+    </view>
+
+    <!-- 3. Async setup() with top-level await -->
+    <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
+        3. Async setup() (top-level await, 1.5s)
+      </text>
+      <Suspense>
+        <template #default>
+          <AsyncSetup />
+        </template>
+        <template #fallback>
+          <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
+            <text :style="{ color: '#856404', fontSize: 13 }">⏳ Awaiting async setup...</text>
           </view>
         </template>
       </Suspense>

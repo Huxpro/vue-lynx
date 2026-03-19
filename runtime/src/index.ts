@@ -765,6 +765,8 @@ export { mergeProps } from '@vue/runtime-core';
 /** @hidden */ export { toHandlerKey } from '@vue/runtime-core';
 /** @hidden */ export { toHandlers } from '@vue/runtime-core';
 /** @hidden */ export { withMemo } from '@vue/runtime-core';
+// @ts-expect-error withAsyncContext is exported at runtime but missing from Vue's .d.ts
+/** @hidden */ export { withAsyncContext } from '@vue/runtime-core';
 /** @hidden */ export { Text } from '@vue/runtime-core';
 /** @hidden */ export { Comment } from '@vue/runtime-core';
 
