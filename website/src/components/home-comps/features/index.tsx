@@ -61,6 +61,7 @@ const featuresConfig = [
     actions: [
       { text: 'Vue Router', link: '/guide/routing' },
       { text: 'Pinia', link: '/guide/pinia' },
+      { text: 'Vue Query', link: '/guide/data-fetching' },
     ],
   },
 ];

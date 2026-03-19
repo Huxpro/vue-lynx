@@ -69,7 +69,7 @@ export default defineConfig({
           sectionHeaderText: 'Examples',
         },
         { text: '7 GUIs', link: '/guide/7guis' },
-        { text: 'Data Fetching', link: '/guide/data-fetching' },
+        { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Vue Router', link: '/guide/routing' },
         { text: 'Pinia', link: '/guide/pinia' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
