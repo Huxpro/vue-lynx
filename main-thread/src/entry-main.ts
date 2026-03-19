@@ -27,37 +27,10 @@ g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
 g['runOnBackground'] = runOnBackground;
 
-// Load the worklet-runtime Lepus chunk which provides:
+// The worklet-runtime (from @lynx-js/react) is bundled into this
+// main-thread entry by the vue-lynx plugin — it provides:
 //   globalThis.runWorklet, globalThis.registerWorkletInternal,
 //   globalThis.lynxWorkletImpl (with Element class, Animation, etc.)
-// Native Lynx requires this chunk to be loaded via __LoadLepusChunk so it
-// knows to call runWorklet() when a worklet event fires.
-declare function __LoadLepusChunk(
-  name: string,
-  options: Record<string, unknown>,
-): boolean;
-declare const globDynamicComponentEntry: string | undefined;
-
-if (typeof __LoadLepusChunk === 'undefined') {
-  console.warn(
-    '[vue-mt] __LoadLepusChunk not available, worklet events will not work',
-  );
-} else {
-  const chunkOpts: Record<string, unknown> = { chunkType: 0 };
-  if (typeof globDynamicComponentEntry !== 'undefined') {
-    chunkOpts['dynamicComponentEntry'] = globDynamicComponentEntry;
-  }
-  const loaded = __LoadLepusChunk('worklet-runtime', chunkOpts);
-  if (loaded) {
-    console.info('[vue-mt] worklet-runtime chunk loaded');
-  } else {
-    console.error(
-      '[vue-mt] __LoadLepusChunk("worklet-runtime") returned false — '
-        + 'registerWorkletInternal will not be available. '
-        + 'Check browser console for loadScriptSync errors.',
-    );
-  }
-}
 
 /** PAGE_ROOT_ID must match the value in runtime/src/shadow-element.ts */
 const PAGE_ROOT_ID = 1;

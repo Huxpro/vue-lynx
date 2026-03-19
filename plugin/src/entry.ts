@@ -2,7 +2,6 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +21,7 @@ const PLUGIN_TEMPLATE = 'lynx:vue-template';
 const PLUGIN_RUNTIME_WRAPPER = 'lynx:vue-runtime-wrapper';
 const PLUGIN_ENCODE = 'lynx:vue-encode';
 const PLUGIN_MARK_MAIN_THREAD = 'lynx:vue-mark-main-thread';
-const PLUGIN_WORKLET_RUNTIME = 'lynx:vue-worklet-runtime';
+// worklet-runtime is now bundled directly into main-thread.js (no separate chunk).
 const PLUGIN_WEB_ENCODE = 'lynx:vue-web-encode';
 
 /** Minimal typing for a webpack Chunk (avoids importing @rspack/core). */
@@ -146,60 +145,6 @@ class VueMarkMainThreadPlugin {
   }
 }
 
-/**
- * VueWorkletRuntimePlugin injects the React worklet-runtime as a Lepus chunk
- * named 'worklet-runtime' so that __LoadLepusChunk('worklet-runtime', ...)
- * can load it at runtime. Native Lynx requires this chunk to be present for
- * worklet event dispatch (main-thread:bindtap etc.) to work.
- */
-class VueWorkletRuntimePlugin {
-  constructor(private readonly workletRuntimePath: string) {}
-
-  apply(compiler: WebpackCompiler): void {
-    compiler.hooks.thisCompilation.tap(
-      PLUGIN_WORKLET_RUNTIME,
-      (compilation) => {
-        const hooks = LynxTemplatePlugin.getLynxTemplatePluginHooks(
-          // @ts-expect-error Rspack x Webpack compilation type mismatch
-          compilation,
-        ) as {
-          beforeEncode: {
-            tap(
-              name: string,
-              fn: (args: Record<string, unknown>) => Record<string, unknown>,
-            ): void;
-          };
-        };
-        const { RawSource } = compiler.webpack.sources;
-        hooks.beforeEncode.tap(PLUGIN_WORKLET_RUNTIME, (args) => {
-          const encodeData = args['encodeData'] as {
-            lepusCode: {
-              root?: { source: { source(): string } };
-              chunks: Array<{
-                name: string;
-                source: unknown;
-                info: Record<string, unknown>;
-              }>;
-            };
-          };
-          const lepusCode = encodeData.lepusCode;
-          // Always include worklet-runtime when we have main-thread code.
-          // (Phase 2 could gate this on registerWorkletInternal presence.)
-          if (lepusCode.root) {
-            lepusCode.chunks.push({
-              name: 'worklet-runtime',
-              source: new RawSource(
-                fs.readFileSync(this.workletRuntimePath, 'utf8'),
-              ),
-              info: { 'lynx:main-thread': true },
-            });
-          }
-          return args;
-        });
-      },
-    );
-  }
-}
 
 const PLUGIN_CSS_CONFIG = 'lynx:vue-css-config';
 
@@ -412,6 +357,12 @@ export function applyEntry(
     // Collect all main-thread filenames to mark with lynx:main-thread
     const mainThreadFilenames: string[] = [];
 
+    // Resolve worklet-runtime from @lynx-js/react (reuse existing impl).
+    // Bundled directly into main-thread.js as an entry import.
+    const workletRuntimePath = require.resolve(
+      '@lynx-js/react/worklet-runtime',
+    );
+
     for (const [entryName, entryPoint] of Object.entries(entries)) {
       // Collect user imports from the original entry
       const imports: string[] = [];
@@ -454,7 +405,7 @@ export function applyEntry(
         .entry(mainThreadEntry)
         .add({
           layer: LAYERS.MAIN_THREAD,
-          import: [path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'), ...imports],
+          import: [path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'), workletRuntimePath, ...imports],
           filename: mainThreadName,
         })
         .when(enabledHMR, entry => {
@@ -541,15 +492,6 @@ export function applyEntry(
       chain
         .plugin(PLUGIN_MARK_MAIN_THREAD)
         .use(VueMarkMainThreadPlugin, [mainThreadFilenames])
-        .end();
-
-      // Resolve worklet-runtime from @lynx-js/react (reuse existing impl)
-      const workletRuntimePath = require.resolve(
-        '@lynx-js/react/worklet-runtime',
-      );
-      chain
-        .plugin(PLUGIN_WORKLET_RUNTIME)
-        .use(VueWorkletRuntimePlugin, [workletRuntimePath])
         .end();
     }
 
