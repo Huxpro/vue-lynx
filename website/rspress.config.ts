@@ -50,30 +50,30 @@ export default defineConfig({
         {
           sectionHeaderText: 'Get Started',
         },
+        { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Quick Start', link: '/guide/quick-start' },
-        { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
-        { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
           dividerType: 'solid',
         },
         {
           sectionHeaderText: 'Learn VueLynx',
         },
-        { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
+        { text: '7GUIs Benchmark', link: '/guide/7guis' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
+        { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
           dividerType: 'solid',
         },
         {
-          sectionHeaderText: 'Examples',
+          sectionHeaderText: 'Ecosystem',
         },
-        { text: '7 GUIs', link: '/guide/7guis' },
-        { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Vue Router', link: '/guide/routing' },
         { text: 'Pinia', link: '/guide/pinia' },
+        { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
+        { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
         {
           dividerType: 'solid',
         },
