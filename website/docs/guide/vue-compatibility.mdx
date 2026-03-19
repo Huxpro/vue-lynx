@@ -4,6 +4,19 @@ Because Vue Lynx is built on the official Vue 3 runtime core, it aims to support
 
 That said, Vue's API surface is large and we haven't had time to fully verify every corner of it. Below are critical Vue features that we've confirmed work effortlessly on Lynx — most require zero adaptation from a standard Vue codebase. Where Lynx-specific caveats exist, they are called out inline.
 
+## Reactivity: `reactive()` + `toRefs()` + Composables
+
+The [basic example](/guide/quick-start) uses `ref()` for reactive state. Vue also provides [`reactive()`](https://vuejs.org/api/reactivity-core.html#reactive) to create a reactive object, and [`toRefs()`](https://vuejs.org/api/reactivity-utilities.html#torefs) to destructure it into individual refs without losing reactivity — a pattern commonly used in **composables** (reusable stateful logic extracted into functions).
+
+The example below demonstrates both APIs together:
+1. **`reactive()` + `toRefs()`** — a reactive user object destructured into individual refs, with a computed `fullName`
+2. **Composable** — `useStopwatch()` encapsulates `reactive` state, returns `toRefs` for flexible destructuring, and cleans up via `onUnmounted`
+
+<Go
+  example="reactivity"
+  defaultFile="src/App.vue"
+/>
+
 ## Component v-model
 
 Vue's `v-model` on components creates a two-way binding between parent and child. The child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`.
