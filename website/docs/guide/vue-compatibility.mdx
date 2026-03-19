@@ -4,73 +4,6 @@ Because Vue Lynx is built on the official Vue 3 runtime core, it aims to support
 
 That said, Vue's API surface is large and we haven't had time to fully verify every corner of it. Below are critical Vue features that we've confirmed work effortlessly on Lynx — most require zero adaptation from a standard Vue codebase. Where Lynx-specific caveats exist, they are called out inline.
 
-## Options API
-
-Vue 3 ships the Options API alongside the Composition API for backward compatibility.
-By default, Vue Lynx enables it (`optionsApi: true` in the plugin), but you can disable it to reduce bundle size:
-
-```ts title="lynx.config.ts"
-pluginVueLynx({
-  optionsApi: false, // tree-shakes the Options API runtime (~9 kB)
-})
-```
-
-The example below uses `defineComponent` with `data()`, `computed`, `watch`, `methods`, and the `mounted` lifecycle hook:
-
-<Go
-  example="option-api"
-  defaultFile="src/App.vue"
-/>
-
-## Transition
-
-Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
-
-:::warning
-`<Transition>` and `<TransitionGroup>` are **experimental**. Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable.
-:::
-
-<Go
-  example="transition"
-  defaultFile="src/App.vue"
-  defaultEntryFile="dist/transition.lynx.bundle"
-/>
-
-## Suspense
-
-Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
-
-<Go
-  example="suspense"
-  defaultFile="src/App.vue"
-  defaultEntryName="main"
-/>
-
-## Provide / Inject
-
-Vue's [`provide`](https://vuejs.org/guide/components/provide-inject.html) and `inject` APIs let an ancestor component serve as a dependency injector for all its descendants, regardless of how deep the component hierarchy is. This avoids prop drilling through intermediate components.
-
-The example below provides a reactive `theme` ref and a static `appName` string at the root. A grandchild component injects both — the middle layer passes nothing down.
-
-<Go
-  example="provide-inject"
-  defaultFile="src/App.vue"
-/>
-
-## Slots
-
-Vue [slots](https://vuejs.org/guide/components/slots.html) are the primary composition mechanism for passing template content into child components. Vue Lynx supports default slots, named slots, and scoped slots.
-
-The example below demonstrates all three patterns:
-1. **Default slot** — content projected into a `<Card>` component
-2. **Named slots** — `#header` and `#footer` with fallback content
-3. **Scoped slot** — a `<DataList>` exposes each item to the parent for custom rendering
-
-<Go
-  example="slots"
-  defaultFile="src/App.vue"
-/>
-
 ## Component v-model
 
 Vue's `v-model` on components creates a two-way binding between parent and child. The child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`.
@@ -89,6 +22,73 @@ The example demonstrates:
 
 <Go
   example="v-model"
+  defaultFile="src/App.vue"
+/>
+
+## Slots
+
+Vue [slots](https://vuejs.org/guide/components/slots.html) are the primary composition mechanism for passing template content into child components. Vue Lynx supports default slots, named slots, and scoped slots.
+
+The example below demonstrates all three patterns:
+1. **Default slot** — content projected into a `<Card>` component
+2. **Named slots** — `#header` and `#footer` with fallback content
+3. **Scoped slot** — a `<DataList>` exposes each item to the parent for custom rendering
+
+<Go
+  example="slots"
+  defaultFile="src/App.vue"
+/>
+
+## Provide / Inject
+
+Vue's [`provide`](https://vuejs.org/guide/components/provide-inject.html) and `inject` APIs let an ancestor component serve as a dependency injector for all its descendants, regardless of how deep the component hierarchy is. This avoids prop drilling through intermediate components.
+
+The example below provides a reactive `theme` ref and a static `appName` string at the root. A grandchild component injects both — the middle layer passes nothing down.
+
+<Go
+  example="provide-inject"
+  defaultFile="src/App.vue"
+/>
+
+## Suspense
+
+Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
+
+<Go
+  example="suspense"
+  defaultFile="src/App.vue"
+  defaultEntryName="main"
+/>
+
+## Transition
+
+Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
+
+:::warning
+`<Transition>` and `<TransitionGroup>` are **experimental**. Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable.
+:::
+
+<Go
+  example="transition"
+  defaultFile="src/App.vue"
+  defaultEntryFile="dist/transition.lynx.bundle"
+/>
+
+## Options API
+
+Vue 3 ships the Options API alongside the Composition API for backward compatibility.
+By default, Vue Lynx enables it (`optionsApi: true` in the plugin), but you can disable it to reduce bundle size:
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  optionsApi: false, // tree-shakes the Options API runtime (~9 kB)
+})
+```
+
+The example below uses `defineComponent` with `data()`, `computed`, `watch`, `methods`, and the `mounted` lifecycle hook:
+
+<Go
+  example="option-api"
   defaultFile="src/App.vue"
 />
 
