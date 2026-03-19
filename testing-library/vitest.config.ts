@@ -2,6 +2,10 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+  define: {
+    __DEV__: 'true',
+    __VUE_LYNX_AUTO_PIXEL_UNIT__: 'true',
+  },
   test: {
     environment: 'jsdom',
     globals: true,

@@ -29,13 +29,29 @@ const DIMENSIONLESS = new Set([
   'lineClamp',
 ]);
 
+/**
+ * Warned property names — each auto-converted property is warned only once
+ * per session to avoid log spam.
+ */
+const _warnedProps: Set<string> | undefined = __DEV__ ? new Set() : undefined;
+
 function normalizeStyle(
   style: Record<string, unknown>,
 ): Record<string, unknown> {
+  if (!__VUE_LYNX_AUTO_PIXEL_UNIT__) return style;
+
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(style)) {
     const val = style[key];
     if (typeof val === 'number' && !DIMENSIONLESS.has(key)) {
+      if (__DEV__ && val !== 0 && !_warnedProps!.has(key)) {
+        _warnedProps!.add(key);
+        console.warn(
+          `[vue-lynx] Numeric style value detected (${key}: ${val} → "${val}px"). `
+          + 'This auto-conversion is deprecated and will be removed in the next major version. '
+          + 'Use string values with explicit units instead.',
+        );
+      }
       out[key] = val === 0 ? 0 : `${val}px`;
     } else {
       out[key] = val;

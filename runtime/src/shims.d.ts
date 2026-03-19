@@ -17,6 +17,7 @@ declare global {
   const __VUE_OPTIONS_API__: boolean;
   const __VUE_PROD_DEVTOOLS__: boolean;
   const __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: boolean;
+  const __VUE_LYNX_AUTO_PIXEL_UNIT__: boolean;
 
   /** Injected by entry-background.ts; called by Lynx Native on event fire */
   function publishEvent(sign: string, data: unknown): void;
