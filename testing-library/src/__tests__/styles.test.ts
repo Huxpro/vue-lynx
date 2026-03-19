@@ -6,8 +6,26 @@
 import { describe, it, expect } from 'vitest';
 import { h, defineComponent, ref, nextTick } from 'vue-lynx';
 import { render } from '../index.js';
+import { OP } from '../../../internal/src/ops.js';
+import { nodeOps } from '../../../runtime/src/node-ops.js';
+import { takeOps } from '../../../runtime/src/ops.js';
+import { ShadowElement } from '../../../runtime/src/shadow-element.js';
 
 describe('styles', () => {
+  it('stringifies numeric flex in SET_STYLE payloads', () => {
+    const el = new ShadowElement('view', 42);
+
+    nodeOps.patchProp(el, 'style', null, { flex: 1, fontSize: 16 });
+
+    const ops = takeOps();
+    expect(ops[0]).toBe(OP.SET_STYLE);
+    expect(ops[1]).toBe(42);
+    expect(ops[2]).toMatchObject({
+      flex: '1',
+      fontSize: '16px',
+    });
+  });
+
   it('applies inline styles', () => {
     const Comp = defineComponent({
       render() {

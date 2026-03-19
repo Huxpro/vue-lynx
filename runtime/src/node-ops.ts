@@ -38,12 +38,22 @@ const _warnedProps: Set<string> | undefined = __DEV__ ? new Set() : undefined;
 function normalizeStyle(
   style: Record<string, unknown>,
 ): Record<string, unknown> {
-  if (!__VUE_LYNX_AUTO_PIXEL_UNIT__) return style;
-
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(style)) {
     const val = style[key];
-    if (typeof val === 'number' && !DIMENSIONLESS.has(key)) {
+    // TODO(huxpro): Remove this workaround once the Lynx engine fixes
+    // inline style object handling for `flex: 1`.
+    //
+    // Today the engine may read an int32 numeric `flex` value as 0 when
+    // it arrives through the object-style `__SetInlineStyles` path, so we
+    // stringify numeric `flex` here to force the engine onto its string parser.
+    if (key === 'flex' && typeof val === 'number') {
+      out[key] = `${val}`;
+    } else if (
+      __VUE_LYNX_AUTO_PIXEL_UNIT__
+      && typeof val === 'number'
+      && !DIMENSIONLESS.has(key)
+    ) {
       if (__DEV__ && val !== 0 && !_warnedProps!.has(key)) {
         _warnedProps!.add(key);
         console.warn(
