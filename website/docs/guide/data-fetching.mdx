@@ -1,0 +1,174 @@
+import { PackageManagerTabs } from '@theme';
+
+# Data Fetching
+
+Lynx provides the [Fetch API](https://lynxjs.org/api/engine/lynx-api/global-api.html#fetch) for making network requests. While you can use `fetch()` directly, we recommend [TanStack Query](https://tanstack.com/query/v5/docs/framework/vue/overview) (Vue Query) for managing server state — it handles caching, background refetching, stale data, and mutations out of the box.
+
+See also: [Lynx — Networking](https://lynxjs.org/next/react/data-fetching.html)
+
+<Go example="networking" defaultFile="src/App.vue" defaultEntryName="main" />
+
+## Using TanStack Query (Vue Query)
+
+### Installation
+
+<PackageManagerTabs command="install @tanstack/vue-query" />
+
+### Setup
+
+Register the Vue Query plugin with your vue-lynx app:
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx';
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(VueQueryPlugin);
+app.mount();
+```
+
+### Fetching Data with `useQuery`
+
+Use [`useQuery`](https://tanstack.com/query/v5/docs/framework/vue/reference/useQuery) to fetch and cache server data. It returns reactive refs for `data`, `isLoading`, `isError`, and `error`:
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query'
+
+interface User {
+  id: number
+  name: string
+  email: string
+  company: { name: string }
+}
+
+const { data: users, isLoading, isError } = useQuery({
+  queryKey: ['users'],
+  queryFn: async (): Promise<User[]> => {
+    const res = await fetch('https://jsonplaceholder.typicode.com/users')
+    if (!res.ok) throw new Error('Failed to fetch users')
+    return res.json()
+  },
+})
+</script>
+
+<template>
+  <view>
+    <text v-if="isLoading">Loading...</text>
+    <text v-else-if="isError">Something went wrong</text>
+    <scroll-view v-else scroll-orientation="vertical">
+      <view v-for="user in users" :key="user.id">
+        <text>{{ user.name }}</text>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+```
+
+### Reactive Query Keys
+
+A key advantage of Vue Query over its React counterpart is that query keys can be **reactive**. When a `ref` or `computed` value in the key changes, the query automatically refetches — no manual dependency tracking needed.
+
+The example app uses this for search filtering and dependent queries:
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useQuery } from '@tanstack/vue-query'
+
+const selectedUserId = ref<number | null>(null)
+
+// This query only runs when a user is selected.
+// When `selectedUserId` changes, it refetches automatically.
+const { data: posts, isLoading } = useQuery({
+  queryKey: computed(() => ['users', selectedUserId.value, 'posts']),
+  queryFn: async (): Promise<Post[]> => {
+    const res = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${selectedUserId.value}/posts`,
+    )
+    if (!res.ok) throw new Error('Failed to fetch posts')
+    return res.json()
+  },
+  enabled: computed(() => selectedUserId.value !== null),
+})
+</script>
+```
+
+Here `queryKey` and `enabled` are both `computed` refs. Vue Query watches them reactively — when the user taps a different user, `selectedUserId` changes, the key updates, and the posts for the new user are fetched automatically. No watchers or `onMounted` callbacks needed.
+
+### Mutations with Optimistic Updates
+
+Use [`useMutation`](https://tanstack.com/query/v5/docs/framework/vue/reference/useMutation) to modify server data. Optimistic updates let you immediately reflect changes in the UI, rolling back automatically if the request fails:
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+
+const queryClient = useQueryClient()
+
+const deleteMutation = useMutation({
+  mutationFn: async (postId: number) => {
+    const res = await fetch(
+      `https://jsonplaceholder.typicode.com/posts/${postId}`,
+      { method: 'DELETE' },
+    )
+    if (!res.ok) throw new Error('Failed to delete post')
+    return postId
+  },
+  onMutate: async (postId) => {
+    const key = ['users', selectedUserId.value, 'posts']
+    await queryClient.cancelQueries({ queryKey: key })
+
+    // Snapshot for rollback
+    const previous = queryClient.getQueryData<Post[]>(key)
+
+    // Optimistically remove the post
+    queryClient.setQueryData(key, (old: Post[] | undefined) =>
+      old ? old.filter((p) => p.id !== postId) : [],
+    )
+
+    return { previous, key }
+  },
+  onError: (_err, _postId, context) => {
+    // Rollback on failure
+    if (context?.previous) {
+      queryClient.setQueryData(context.key, context.previous)
+    }
+  },
+})
+</script>
+
+<template>
+  <view v-for="post in posts" :key="post.id">
+    <text>{{ post.title }}</text>
+    <text @tap="deleteMutation.mutate(post.id)">✕</text>
+  </view>
+</template>
+```
+
+## Using `fetch()` Directly
+
+For simple one-off requests, you can use the Fetch API directly with Vue's reactivity:
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const users = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const res = await fetch('https://jsonplaceholder.typicode.com/users')
+    users.value = await res.json()
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+```
+
+For anything beyond simple reads — caching, background refresh, pagination, mutations — use TanStack Query instead.
+
+See [TanStack Query — Vue Overview](https://tanstack.com/query/v5/docs/framework/vue/overview) for additional resources.
