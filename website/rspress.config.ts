@@ -51,6 +51,7 @@ export default defineConfig({
           sectionHeaderText: 'Get Started',
         },
         { text: 'Quick Start', link: '/guide/quick-start' },
+        { text: 'Using TypeScript', link: '/guide/typescript' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {

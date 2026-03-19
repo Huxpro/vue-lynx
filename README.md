@@ -32,6 +32,7 @@ See the [`examples/`](examples/) directory for complete working examples:
 - [`tailwindcss`](examples/tailwindcss) — Tailwind CSS styling
 - [`gallery`](examples/gallery) — Photo gallery
 - [`swiper`](examples/swiper) — Swiper component
+- [`typescript`](examples/typescript) — TypeScript patterns (generics, typed props, provide/inject)
 - [`7guis`](examples/7guis) — 7GUIs benchmark tasks
 
 ## Contributing
