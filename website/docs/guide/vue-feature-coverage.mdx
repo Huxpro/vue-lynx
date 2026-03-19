@@ -53,6 +53,31 @@ The example below shows two patterns:
   defaultFile="src/App.vue"
 />
 
+## Provide / Inject
+
+Vue's [`provide`](https://vuejs.org/guide/components/provide-inject.html) and `inject` APIs let an ancestor component serve as a dependency injector for all its descendants, regardless of how deep the component hierarchy is. This avoids prop drilling through intermediate components.
+
+The example below provides a reactive `theme` ref and a static `appName` string at the root. A grandchild component injects both — the middle layer passes nothing down.
+
+<Go
+  example="provide-inject"
+  defaultFile="src/App.vue"
+/>
+
+## Slots
+
+Vue [slots](https://vuejs.org/guide/components/slots.html) are the primary composition mechanism for passing template content into child components. Vue Lynx supports default slots, named slots, and scoped slots.
+
+The example below demonstrates all three patterns:
+1. **Default slot** — content projected into a `<Card>` component
+2. **Named slots** — `#header` and `#footer` with fallback content
+3. **Scoped slot** — a `<DataList>` exposes each item to the parent for custom rendering
+
+<Go
+  example="slots"
+  defaultFile="src/App.vue"
+/>
+
 {/* ## KeepAlive
 
 `<KeepAlive>` is **not supported** on Lynx. It requires an internal storage container created via `createElement('div')`, which produces an orphan native element with undefined behavior. Use manual state caching if you need component persistence.
