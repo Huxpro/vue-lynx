@@ -56,13 +56,19 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
-          sectionHeaderText: 'Learn VueLynx',
+          sectionHeaderText: 'VueLynx Essentials',
         },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
-        { text: '7GUIs Benchmark', link: '/guide/7guis' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
-        { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'Tutorials',
+        },
+        { text: '7GUIs Benchmark', link: '/guide/7guis' },
+        { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
+        { text: 'Product Swiper', link: '/guide/tutorial-swiper' },
         {
           dividerType: 'solid',
         },
