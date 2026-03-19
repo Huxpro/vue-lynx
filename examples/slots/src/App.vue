@@ -6,18 +6,22 @@ import DataList from './DataList.vue';
 const items = ref([
   { id: 1, name: 'Vue', description: 'Progressive JS framework' },
   { id: 2, name: 'Lynx', description: 'Cross-platform UI engine' },
-  { id: 3, name: 'Rspeedy', description: 'Rspack-based build tool' },
 ]);
 </script>
 
 <template>
-  <view
+  <scroll-view
     :style="{
       flex: 1,
+      backgroundColor: '#f5f5f5',
+    }"
+    scroll-orientation="vertical"
+  >
+  <view
+    :style="{
       display: 'flex',
       flexDirection: 'column',
       padding: 16,
-      backgroundColor: '#f5f5f5',
     }"
   >
     <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 12 }">
@@ -80,4 +84,5 @@ const items = ref([
       </template>
     </DataList>
   </view>
+  </scroll-view>
 </template>
