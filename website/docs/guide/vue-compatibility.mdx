@@ -6,6 +6,8 @@ That said, Vue's API surface is large and we haven't had time to fully verify ev
 
 ## Reactivity: `reactive()` + `toRefs()` + Composables
 
+Vue Lynx reuses 100% of Vue's reactivity core (`@vue/reactivity`) — it is pure JavaScript with zero renderer or platform dependency. Every reactivity API (`ref`, `reactive`, `computed`, `watch`, `watchEffect`, `toRefs`, `toRef`, `shallowRef`, `customRef`, `effectScope`, etc.) works identically to standard Vue, with no Lynx-specific caveats or adaptations.
+
 The [basic example](/guide/quick-start) uses `ref()` for reactive state. Vue also provides [`reactive()`](https://vuejs.org/api/reactivity-core.html#reactive) to create a reactive object, and [`toRefs()`](https://vuejs.org/api/reactivity-utilities.html#torefs) to destructure it into individual refs without losing reactivity — a pattern commonly used in **composables** (reusable stateful logic extracted into functions).
 
 The example below demonstrates both APIs together:
