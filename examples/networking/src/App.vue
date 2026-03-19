@@ -116,65 +116,70 @@ function deletePost(postId: number) {
 </script>
 
 <template>
-  <view :style="styles.container">
-    <text :style="styles.title">Vue Query × Lynx</text>
+  <scroll-view :style="styles.root" scroll-orientation="vertical">
+    <view :style="styles.container">
+      <text :style="styles.title">Vue Query × Lynx</text>
 
-    <!-- User List View -->
-    <template v-if="selectedUserId === null">
-      <input
-        :style="styles.searchInput"
-        :value="search"
-        placeholder="Search users..."
-        @input="(e: InputEvent) => (search = (e as any).detail.value ?? '')"
-      />
+      <!-- User List View -->
+      <template v-if="selectedUserId === null">
+        <input
+          :style="styles.searchInput"
+          :value="search"
+          placeholder="Search users..."
+          @input="(e: InputEvent) => (search = (e as any).detail.value ?? '')"
+        />
 
-      <text v-if="usersLoading" :style="styles.hint">Loading users...</text>
-      <text v-else-if="usersError" :style="styles.error">Failed to load users</text>
+        <text v-if="usersLoading" :style="styles.hint">Loading users...</text>
+        <text v-else-if="usersError" :style="styles.error">Failed to load users</text>
 
-      <scroll-view v-else :style="styles.list" scroll-orientation="vertical">
-        <view
-          v-for="user in filteredUsers"
-          :key="user.id"
-          :style="styles.userCard"
-          @tap="selectUser(user.id)"
-        >
-          <text :style="styles.userName">{{ user.name }}</text>
-          <text :style="styles.userMeta">{{ user.company.name }} · {{ user.email }}</text>
-        </view>
-        <text v-if="filteredUsers.length === 0" :style="styles.hint">No matches</text>
-      </scroll-view>
-    </template>
-
-    <!-- Posts Detail View -->
-    <template v-else>
-      <view :style="styles.backRow" @tap="goBack">
-        <text :style="styles.backText">← Back</text>
-      </view>
-
-      <text v-if="postsLoading" :style="styles.hint">Loading posts...</text>
-      <text v-else-if="postsError" :style="styles.error">Failed to load posts</text>
-
-      <scroll-view v-else :style="styles.list" scroll-orientation="vertical">
-        <view v-for="post in posts" :key="post.id" :style="styles.postCard">
-          <view :style="styles.postHeader">
-            <text :style="styles.postTitle">{{ post.title }}</text>
-            <text :style="styles.deleteBtn" @tap="deletePost(post.id)">✕</text>
+        <template v-else>
+          <view
+            v-for="user in filteredUsers"
+            :key="user.id"
+            :style="styles.userCard"
+            @tap="selectUser(user.id)"
+          >
+            <text :style="styles.userName">{{ user.name }}</text>
+            <text :style="styles.userMeta">{{ user.company.name }} · {{ user.email }}</text>
           </view>
-          <text :style="styles.postBody">{{ post.body }}</text>
+          <text v-if="filteredUsers.length === 0" :style="styles.hint">No matches</text>
+        </template>
+      </template>
+
+      <!-- Posts Detail View -->
+      <template v-else>
+        <view :style="styles.backRow" @tap="goBack">
+          <text :style="styles.backText">← Back</text>
         </view>
-      </scroll-view>
-    </template>
-  </view>
+
+        <text v-if="postsLoading" :style="styles.hint">Loading posts...</text>
+        <text v-else-if="postsError" :style="styles.error">Failed to load posts</text>
+
+        <template v-else>
+          <view v-for="post in posts" :key="post.id" :style="styles.postCard">
+            <view :style="styles.postHeader">
+              <text :style="styles.postTitle">{{ post.title }}</text>
+              <text :style="styles.deleteBtn" @tap="deletePost(post.id)">✕</text>
+            </view>
+            <text :style="styles.postBody">{{ post.body }}</text>
+          </view>
+        </template>
+      </template>
+    </view>
+  </scroll-view>
 </template>
 
 <script lang="ts">
 const styles = {
+  root: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f5f5f5',
+  },
   container: {
-    flex: 1,
     display: 'flex' as const,
     flexDirection: 'column' as const,
     padding: '16px',
-    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: '22px',
@@ -203,9 +208,6 @@ const styles = {
     color: '#e53e3e',
     marginTop: '20px',
     textAlign: 'center' as const,
-  },
-  list: {
-    flex: 1,
   },
   // User card
   userCard: {
