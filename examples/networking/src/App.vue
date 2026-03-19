@@ -1,10 +1,20 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
 // WORKAROUND: lynx-stack web-platform's RuntimeWrapperWebpackPlugin shadows
 // `fetch` with an `undefined` parameter. Use `globalThis.fetch` to bypass.
 // TODO: Remove once lynx-stack shims `fetch` on the `lynx` global.
 const _fetch: typeof fetch = globalThis.fetch ?? fetch
+
+// --- Types ---
+
+interface User {
+  id: number
+  name: string
+  email: string
+  company: { name: string }
+}
 
 interface Post {
   userId: number
@@ -13,55 +23,95 @@ interface Post {
   body: string
 }
 
+// --- State ---
+
+const search = ref('')
+const selectedUserId = ref<number | null>(null)
 const queryClient = useQueryClient()
 
-const fetchPosts = async (): Promise<Post[]> => {
-  const response = await _fetch('https://jsonplaceholder.typicode.com/posts')
-  if (!response.ok) {
-    throw new Error('Failed to fetch posts')
-  }
-  const data = await response.json()
-  return data.slice(0, 10)
-}
+// --- Queries ---
 
-const deletePost = async (postId: number) => {
-  const response = await _fetch(
-    `https://jsonplaceholder.typicode.com/posts/${postId}`,
-    { method: 'DELETE' },
-  )
-  if (!response.ok) {
-    throw new Error('Failed to delete post')
-  }
-  return postId
-}
-
-const { data: posts, isLoading, isError, error } = useQuery({
-  queryKey: ['posts'],
-  queryFn: fetchPosts,
+// 1. Fetch all users
+const {
+  data: users,
+  isLoading: usersLoading,
+  isError: usersError,
+} = useQuery({
+  queryKey: ['users'],
+  queryFn: async (): Promise<User[]> => {
+    const res = await _fetch('https://jsonplaceholder.typicode.com/users')
+    if (!res.ok) throw new Error('Failed to fetch users')
+    return res.json()
+  },
 })
 
-const mutation = useMutation({
-  mutationFn: () => deletePost(1),
-  onMutate: async () => {
-    await queryClient.cancelQueries({ queryKey: ['posts'] })
+// 2. Reactive filtered list — driven by `search` ref
+const filteredUsers = computed(() => {
+  if (!users.value) return []
+  const q = search.value.toLowerCase()
+  if (!q) return users.value
+  return users.value.filter(
+    (u) => u.name.toLowerCase().includes(q) || u.company.name.toLowerCase().includes(q),
+  )
+})
 
-    const previousPosts = queryClient.getQueryData<Post[]>(['posts'])
-
-    queryClient.setQueryData(['posts'], (oldPosts: Post[] | undefined) => {
-      return oldPosts ? oldPosts.filter((post) => post.id !== 1) : []
-    })
-
-    return { previousPosts }
+// 3. Dependent query — only runs when a user is selected.
+//    The queryKey is a reactive array: when `selectedUserId` changes,
+//    Vue Query automatically refetches.
+const {
+  data: posts,
+  isLoading: postsLoading,
+  isError: postsError,
+} = useQuery({
+  queryKey: computed(() => ['users', selectedUserId.value, 'posts']),
+  queryFn: async (): Promise<Post[]> => {
+    const res = await _fetch(
+      `https://jsonplaceholder.typicode.com/users/${selectedUserId.value}/posts`,
+    )
+    if (!res.ok) throw new Error('Failed to fetch posts')
+    return res.json()
   },
-  onError: (_err, _variables, context) => {
-    if (context?.previousPosts) {
-      queryClient.setQueryData(['posts'], context.previousPosts)
+  enabled: computed(() => selectedUserId.value !== null),
+})
+
+// 4. Mutation — optimistic delete with rollback
+const deleteMutation = useMutation({
+  mutationFn: async (postId: number) => {
+    const res = await _fetch(
+      `https://jsonplaceholder.typicode.com/posts/${postId}`,
+      { method: 'DELETE' },
+    )
+    if (!res.ok) throw new Error('Failed to delete post')
+    return postId
+  },
+  onMutate: async (postId) => {
+    const key = ['users', selectedUserId.value, 'posts']
+    await queryClient.cancelQueries({ queryKey: key })
+    const previous = queryClient.getQueryData<Post[]>(key)
+    queryClient.setQueryData(key, (old: Post[] | undefined) =>
+      old ? old.filter((p) => p.id !== postId) : [],
+    )
+    return { previous, key }
+  },
+  onError: (_err, _postId, context) => {
+    if (context?.previous) {
+      queryClient.setQueryData(context.key, context.previous)
     }
   },
 })
 
-function deleteFirstPost() {
-  mutation.mutate()
+// --- Actions ---
+
+function selectUser(id: number) {
+  selectedUserId.value = id
+}
+
+function goBack() {
+  selectedUserId.value = null
+}
+
+function deletePost(postId: number) {
+  deleteMutation.mutate(postId)
 }
 </script>
 
@@ -69,21 +119,51 @@ function deleteFirstPost() {
   <view :style="styles.container">
     <text :style="styles.title">Vue Query × Lynx</text>
 
-    <text v-if="isLoading" :style="styles.loading">Loading...</text>
+    <!-- User List View -->
+    <template v-if="selectedUserId === null">
+      <input
+        :style="styles.searchInput"
+        :value="search"
+        placeholder="Search users..."
+        @input="(e: InputEvent) => (search = (e as any).detail.value ?? '')"
+      />
 
-    <text v-else-if="isError" :style="styles.error">
-      {{ error?.message || 'Error fetching posts' }}
-    </text>
+      <text v-if="usersLoading" :style="styles.hint">Loading users...</text>
+      <text v-else-if="usersError" :style="styles.error">Failed to load users</text>
 
-    <scroll-view v-else :style="styles.list" scroll-orientation="vertical">
-      <view v-for="post in posts" :key="post.id" :style="styles.post">
-        <text :style="styles.postText">{{ post.id }} : {{ post.title }}</text>
+      <scroll-view v-else :style="styles.list" scroll-orientation="vertical">
+        <view
+          v-for="user in filteredUsers"
+          :key="user.id"
+          :style="styles.userCard"
+          @tap="selectUser(user.id)"
+        >
+          <text :style="styles.userName">{{ user.name }}</text>
+          <text :style="styles.userMeta">{{ user.company.name }} · {{ user.email }}</text>
+        </view>
+        <text v-if="filteredUsers.length === 0" :style="styles.hint">No matches</text>
+      </scroll-view>
+    </template>
+
+    <!-- Posts Detail View -->
+    <template v-else>
+      <view :style="styles.backRow" @tap="goBack">
+        <text :style="styles.backText">← Back</text>
       </view>
-    </scroll-view>
 
-    <view :style="styles.button" @tap="deleteFirstPost">
-      <text :style="styles.buttonText">Delete Post 1</text>
-    </view>
+      <text v-if="postsLoading" :style="styles.hint">Loading posts...</text>
+      <text v-else-if="postsError" :style="styles.error">Failed to load posts</text>
+
+      <scroll-view v-else :style="styles.list" scroll-orientation="vertical">
+        <view v-for="post in posts" :key="post.id" :style="styles.postCard">
+          <view :style="styles.postHeader">
+            <text :style="styles.postTitle">{{ post.title }}</text>
+            <text :style="styles.deleteBtn" @tap="deletePost(post.id)">✕</text>
+          </view>
+          <text :style="styles.postBody">{{ post.body }}</text>
+        </view>
+      </scroll-view>
+    </template>
   </view>
 </template>
 
@@ -91,50 +171,102 @@ function deleteFirstPost() {
 const styles = {
   container: {
     flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    margin: '30px',
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+    padding: '16px',
+    backgroundColor: '#f5f5f5',
   },
   title: {
-    fontSize: '24px',
+    fontSize: '22px',
     fontWeight: 'bold',
-    marginBottom: '16px',
+    marginBottom: '12px',
     color: '#111',
   },
-  loading: {
-    fontSize: '20px',
-    color: '#666',
+  searchInput: {
+    height: '36px',
+    fontSize: '14px',
+    padding: '0 12px',
+    marginBottom: '12px',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    borderWidth: '1px',
+    borderColor: '#ddd',
+  },
+  hint: {
+    fontSize: '14px',
+    color: '#999',
+    marginTop: '20px',
+    textAlign: 'center' as const,
   },
   error: {
-    fontSize: '16px',
-    color: 'red',
+    fontSize: '14px',
+    color: '#e53e3e',
+    marginTop: '20px',
+    textAlign: 'center' as const,
   },
   list: {
     flex: 1,
   },
-  post: {
-    marginBottom: '8px',
-    padding: '8px 12px',
-    backgroundColor: '#fff',
-    borderRadius: '6px',
-  },
-  postText: {
-    fontSize: '14px',
-    color: '#333',
-  },
-  button: {
-    marginTop: '16px',
+  // User card
+  userCard: {
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
     padding: '12px',
-    backgroundColor: '#4c8caf',
-    borderRadius: '12px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: '8px',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: '18px',
+  userName: {
+    fontSize: '16px',
     fontWeight: 'bold',
+    color: '#222',
+  },
+  userMeta: {
+    fontSize: '12px',
+    color: '#888',
+    marginTop: '4px',
+  },
+  // Back button
+  backRow: {
+    marginBottom: '12px',
+  },
+  backText: {
+    fontSize: '15px',
+    color: '#4c8caf',
+    fontWeight: 'bold',
+  },
+  // Post card
+  postCard: {
+    display: 'flex' as const,
+    flexDirection: 'column' as const,
+    padding: '12px',
+    marginBottom: '8px',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+  },
+  postHeader: {
+    display: 'flex' as const,
+    flexDirection: 'row' as const,
+    justifyContent: 'space-between' as const,
+    alignItems: 'flex-start' as const,
+  },
+  postTitle: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: '#222',
+    flex: 1,
+  },
+  deleteBtn: {
+    fontSize: '16px',
+    color: '#e53e3e',
+    marginLeft: '8px',
+    padding: '0 4px',
+  },
+  postBody: {
+    fontSize: '12px',
+    color: '#666',
+    marginTop: '6px',
+    lineHeight: '18px',
   },
 }
 </script>
