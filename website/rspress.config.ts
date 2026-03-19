@@ -60,6 +60,7 @@ export default defineConfig({
           sectionHeaderText: 'Learn VueLynx',
         },
         { text: 'What is VueLynx?', link: '/guide/introduction' },
+        { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
         {
@@ -73,7 +74,6 @@ export default defineConfig({
         { text: 'Vue Router', link: '/guide/routing' },
         { text: 'Pinia', link: '/guide/pinia' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
-        { text: 'Vue Feature Coverage', link: '/guide/vue-feature-coverage' },
         {
           dividerType: 'solid',
         },
