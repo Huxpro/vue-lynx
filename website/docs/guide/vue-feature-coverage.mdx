@@ -53,6 +53,27 @@ The example below shows two patterns:
   defaultFile="src/App.vue"
 />
 
+## Component v-model
+
+Vue's `v-model` on components creates a two-way binding between parent and child. The child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`.
+
+The example demonstrates:
+1. **Default model** — `defineModel<number>()` with `v-model="count"` for a counter
+2. **Named models** — `defineModel('title')` + `defineModel('body')` with `v-model:title` / `v-model:body`
+3. **Manual input binding** — the workaround for native `<input>` (see caveat below)
+
+:::warning Caveat
+`v-model` on **native `<input>` elements** is not yet supported. Lynx inputs use synchronous Main Thread APIs (`getValue()` / `setValue()`) that are inaccessible from the background thread where Vue runs. Use `:value` + `@input` manually instead:
+```vue
+<input :value="text" @input="(e) => text = e.detail.value" />
+```
+:::
+
+<Go
+  example="v-model"
+  defaultFile="src/App.vue"
+/>
+
 {/* ## KeepAlive
 
 `<KeepAlive>` is **not supported** on Lynx. It requires an internal storage container created via `createElement('div')`, which produces an orphan native element with undefined behavior. Use manual state caching if you need component persistence.

@@ -1,0 +1,25 @@
+{
+  "name": "@vue-lynx-example/v-model",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/v-model"
+  },
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "typescript": "~5.9.3"
+  },
+  "engines": { "node": ">=18" }
+}
