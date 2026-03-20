@@ -7,25 +7,12 @@ If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Ly
 ## Main Features
 
 - **Familiar Vue 3 API** — Use `ref()`, `computed()`, `v-for`, `v-if`, SFC `<script setup>`, and everything you love about Vue.
-- **Lynx Native Rendering** — Your UI renders through Lynx's high-performance native engine, not a WebView.
-- **Dual-Thread Architecture** — Vue runs on the background thread; the main thread handles native rendering. This separation keeps your app responsive.
-- **Main Thread Script (MTS)** — For latency-sensitive interactions (drag, scroll), mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
-- **Compatible with Lynx Ecosystem** — Works with [Rspeedy](https://lynxjs.org/next/guide/installation), LynxExplorer, Lynx DevTool, and the full Lynx toolchain.
+- **Cross-Platform Native Rendering** — Lynx provides a high-performance native rendering engine on mobile and desktop, as well as first-class [Web rendering](https://lynxjs.org/next/guide/web-rendering.html). Your UI is never a WebView.
+- **Dual-Thread Architecture** — Vue runs on the background thread; the main thread handles native rendering. This separation keeps your app responsive. For latency-sensitive interactions (drag, scroll), [Main Thread Script](/guide/main-thread-script) lets you mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
 
 ## For Vue Web Developers
 
 If you're coming from Vue on the web, most of what you know carries over. Here are the key differences.
-
-### How it works
-
-Vue Lynx replaces Vue's DOM renderer with a [custom renderer](https://vuejs.org/api/custom-renderer) that produces a **ShadowElement** tree on the background thread. Changes are serialized as **ops** (operations) and flushed to the main thread, where they are applied to native Lynx elements.
-
-```
-┌────────────────────┐            ┌────────────────────┐
-│  Background Thread │    ops     │    Main Thread     │
-│  Vue 3 + Renderer  │ ────────▶  │  Native Elements   │
-└────────────────────┘            └────────────────────┘
-```
 
 ### Change your `import`
 
@@ -66,73 +53,82 @@ See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-h
 
 ### No `document` or `window`
 
-Lynx does not provide browser globals. Libraries that depend on `document` or `window` will not work. Lynx provides its own APIs (e.g. `lynx.reload()`) and extensibility via [NativeModules](https://lynxjs.org/guide/use-native-modules.html) and [Custom Elements](https://lynxjs.org/guide/custom-native-component.html).
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Due to the dual-thread architecture, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) that account for which thread your code runs on:
 
-| Web API | Lynx Alternative |
-|---------|-----------------|
-| `document.querySelector()` | `lynx.createSelectorQuery()` |
-| `window.setTimeout()` | `setTimeout()` (available globally) |
-| `window.addEventListener('resize')` | Layout events on elements |
-| `getComputedStyle()` | `element.getComputedStyleProperty()` (MTS) |
-| `getBoundingClientRect()` | `NodesRef.invoke({ method: 'boundingClientRect' })` |
+**Global APIs** — available on both threads, same as the web:
+
+| Web API | Lynx |
+|---------|------|
+| `setTimeout()` / `setInterval()` | Available globally |
+| `console.log()` | Available globally |
+
+**DOM APIs** — split across threads since layout and rendering happen on the main thread:
+
+| Web API | Lynx Alternative | Thread |
+|---------|-----------------|--------|
+| `document.querySelector()` | [`lynx.createSelectorQuery()`](https://lynxjs.org/next/api/lynx-api/selector-query/create-selector-query.html) | Background (async) |
+| `getBoundingClientRect()` | `NodesRef.invoke({ method: 'boundingClientRect' })` | Background (async) |
+| `getComputedStyle()` | [`element.getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html) | Main thread (sync, MTS) |
+| `addEventListener('resize')` | `main-thread-bindlayoutchange` | Main thread (sync, MTS) |
+
+**Native extensions** — for capabilities beyond what the web provides:
+
+| Mechanism | Use case |
+|-----------|----------|
+| [NativeModules](https://lynxjs.org/guide/use-native-modules.html) | Call platform-native APIs (camera, storage, networking, etc.) |
+| [Custom Elements](https://lynxjs.org/guide/custom-native-component.html) | Embed platform-native UI components in your Lynx tree |
 
 ## Understanding the Dual-Thread Model
 
-On the web, Vue and the DOM live in the same thread — when Vue patches the DOM, the changes are immediate and synchronous. In Lynx, your Vue code runs on the **background thread** while native elements live on the **main thread**, connected by an asynchronous ops flush. This separation keeps your app responsive, but it also means **Vue lifecycle hooks and native element readiness are not synchronous**.
+If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue runs on a **background thread** while native rendering happens on the **main thread** — just like offloading work to a Web Worker so the UI thread stays responsive. The difference is that in Lynx, this is the _default_ — Vue reconciliation never blocks the main thread. (See [Why dual-threaded?](https://lynxjs.org/blog/lynx-open-source.html#engineering-for-every-platform) for the design rationale.)
 
-### What stays the same
+Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-renderer) that builds a **ShadowElement** tree on the background thread. Changes are batched as **ops** and flushed to the main thread. User interactions flow back as **events**. This forms a cycle analogous to the browser event loop:
 
-Most of your Vue knowledge carries over without modification:
+```
+        ┌─────────────────────────────────────────────────────┐
+        │                  Background Thread                   │
+        │  Vue 3 runtime · reactivity · lifecycle · your code  │
+        └──────────────┬──────────────────────▲────────────────┘
+                  ops  │                      │  events
+                       ▼                      │
+        ┌──────────────────────────────────────┴───────────────┐
+        │                    Main Thread                        │
+        │  Native elements · layout · rendering · MTS handlers  │
+        └──────────────────────────────────────────────────────┘
+```
 
-- **Reactivity** — `ref()`, `reactive()`, `computed()`, `watch()`, `watchEffect()` work identically. The reactivity system runs entirely on the background thread and is unaffected by the dual-thread model.
-- **Component model** — Props, emits, slots, provide/inject, SFC `<script setup>` — all standard.
-- **Template directives** — `v-if`, `v-for`, `v-show`, `v-bind`, `v-on` all work as expected.
-- **Lifecycle hook ordering** — `onBeforeMount` → `onMounted` → `onBeforeUpdate` → `onUpdated` → `onBeforeUnmount` → `onUnmounted` — the same sequence as Vue on the web.
+One full cycle — ops down, events back up — is one **tick**. Vue Lynx's `nextTick` resolves after a complete cycle, so by the time your callback fires, native elements are fully materialized. This is the same mental model as Vue's `nextTick` on the web (wait for DOM update), just extended across threads.
 
-If your component only reads and writes reactive state (no direct element access), it works exactly like Vue on the web.
+### Vue API: fully compatible
 
-### `onMounted` ≠ "painted on screen"
+Vue Lynx reuses `@vue/runtime-core` directly. Reactivity, component model, lifecycle hooks, template directives — everything works as documented in the [Vue 3 docs](https://vuejs.org/guide/introduction.html). See [Vue Compatibility](/guide/vue-compatibility) for a detailed feature-by-feature breakdown.
 
-On the web, by the time `onMounted` fires, the DOM elements exist and are (nearly) ready for measurement. In Vue Lynx, `onMounted` fires on the **background thread** when the component's ShadowElement tree is constructed — but the ops may not have been flushed to the main thread yet. The native elements may not exist at that point.
+### Caveats for the dual-thread environment
 
-**When it matters:** If you need to call a Lynx native API (e.g. `lynx.createSelectorQuery()`) that targets an element created by the component, use `nextTick` to wait for the main thread to finish applying the ops:
+A few behaviors are adjusted because your code and native elements live on different threads.
+
+#### Lifecycle runs on the background thread — use `nextTick` to wait for the main thread
+
+Just like on the web, `onMounted` means "the component tree is built." The difference is that native elements are created asynchronously on the main thread. If you need to interact with native elements after mount, wait one tick:
 
 ```vue
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue-lynx'
 
 onMounted(() => {
-  // ❌ Element may not exist on the main thread yet
-  lynx.createSelectorQuery().select('.my-list').invoke(...)
-
-  // ✅ Wait for ops to flush to main thread
   nextTick(() => {
+    // Native elements are now ready
     lynx.createSelectorQuery().select('.my-list').invoke(...)
   })
 })
 </script>
 ```
 
-**When it doesn't matter:** If your `onMounted` only sets up reactive state, starts a timer, or fetches data — you don't need `nextTick`. These operations happen on the background thread and don't depend on native elements being ready.
+If your `onMounted` only sets up reactive state, timers, or data fetching, no `nextTick` is needed — those don't depend on native elements.
 
-### `nextTick` waits for the main thread
+#### Background thread has only async access — use Main Thread Script for synchronous needs
 
-Vue Lynx enhances `nextTick` to wait for **both** the Vue scheduler flush **and** the main thread ops acknowledgement. This means when `nextTick` resolves, the native Lynx elements are fully materialized.
-
-```ts
-// Standard Vue (web):  nextTick waits for DOM patch
-// Vue Lynx:            nextTick waits for DOM patch + ops flush + main thread apply
-```
-
-This is the primary tool for bridging the async gap between the background thread and the main thread.
-
-### No synchronous layout queries from the background thread
-
-On the web, you can synchronously call `getComputedStyle()` or `getBoundingClientRect()` from the same thread that runs your components. In Vue Lynx, your components run on the **background thread** while layout happens on the **main thread**, so there is no synchronous access to layout information from component code.
-
-Lynx provides two alternatives depending on where you need the information:
-
-**From the background thread** — use `SelectorQuery` (asynchronous):
+From the background thread, native element access is always asynchronous. Template `ref` returns a `ShadowElement` (a background-thread reference to the native element), and layout queries like `getBoundingClientRect()` require an async API:
 
 ```vue
 <script setup lang="ts">
@@ -144,9 +140,7 @@ onMounted(() => {
       .select('.target')
       .invoke({
         method: 'boundingClientRect',
-        success: (res) => {
-          console.log(res) // { width, height, top, left, ... }
-        },
+        success: (res) => console.log(res),
       })
       .exec()
   })
@@ -154,45 +148,14 @@ onMounted(() => {
 </script>
 ```
 
-**From Main Thread Script** — use [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html) for synchronous style access:
-
-```ts
-function onLayout(e) {
-  'main thread'
-  const element = lynx.querySelector('.target')
-  const width = element.getComputedStyleProperty('width')
-  const bg = element.getComputedStyleProperty('background-color')
-}
-```
-
-Or listen to layout changes directly with the `main-thread-bindlayoutchange` event:
-
-```vue
-<template>
-  <view :main-thread-bindlayoutchange="onLayout">
-    <!-- ... -->
-  </view>
-</template>
-```
-
-See the [Main Thread Script guide](/guide/main-thread-script) for details.
-
-### Template `ref` gives you a ShadowElement, not a native element
-
-In Vue on the web, a template ref gives you the actual DOM element. In Vue Lynx, it gives you a `ShadowElement` — a background-thread proxy. You cannot call native element methods on it directly.
-
-To interact with a native element on the main thread, use `useMainThreadRef()`:
+When you need synchronous access — smooth animations, gesture handling, layout measurement — use [Main Thread Script](/guide/main-thread-script). Functions marked `'main thread'` run directly on the main thread and can call [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html), listen to `main-thread-bindlayoutchange`, and access native elements via `useMainThreadRef()`:
 
 ```vue
 <script setup lang="ts">
-import { ref } from 'vue-lynx'
-import { useMainThreadRef } from 'vue-lynx'
+import { ref, useMainThreadRef } from 'vue-lynx'
 
-// Background-thread ref (ShadowElement) — for reactive logic
-const divRef = ref(null)
-
-// Main-thread ref (native element) — for MTS interactions
-const mtRef = useMainThreadRef(null)
+const divRef = ref(null)               // ShadowElement (background thread)
+const mtRef = useMainThreadRef(null)    // Native element (main thread, MTS only)
 </script>
 
 <template>
@@ -200,38 +163,7 @@ const mtRef = useMainThreadRef(null)
 </template>
 ```
 
-### Unsupported Vue features
-
-Some Vue features are unavailable due to the dual-thread architecture:
-
-| Feature | Reason | Alternative |
-|---------|--------|-------------|
-| `<KeepAlive>` | Requires an internal storage container with no native equivalent | Manual state caching |
-| `<Teleport>` | Requires `querySelector` to resolve string targets | Conditional rendering at the target location |
-| `onActivated` / `onDeactivated` | Depend on `<KeepAlive>` | Use `onMounted` / `onUnmounted` |
-| `onServerPrefetch` | No SSR in Lynx | Use `onMounted` for data fetching |
-| `<Transition>` with auto-duration | `getComputedStyle()` unavailable on the background thread | Always pass an explicit `:duration` prop |
-
-### Mental model summary
-
-```
-                        Web Vue                     Vue Lynx
-                   ┌─────────────────┐       ┌────────────────────┐
-  Your code        │  Same thread    │       │  Background thread  │
-  Vue runtime      │  as the DOM     │       │  (no native access) │
-                   └────────┬────────┘       └─────────┬──────────┘
-                            │ sync                     │ async (ops)
-                   ┌────────▼────────┐       ┌─────────▼──────────┐
-  Rendering        │  Browser DOM    │       │  Main thread        │
-                   │                 │       │  (native elements)  │
-                   └─────────────────┘       └────────────────────┘
-
-  onMounted        │ Elements exist   │       │ Elements may not    │
-                   │ and are laid out │       │ exist yet           │
-                   └──────────────────┘       └─────────────────────┘
-```
-
-The key takeaway: **Vue Lynx gives you the full Vue 3 API, but there is an async boundary between your code and the screen.** Use `nextTick` when you need to cross that boundary, and use [Main Thread Script](/guide/main-thread-script) when you need synchronous access to native elements.
+See [Vue Features Compatibility](/guide/vue-compatibility) for feature-specific caveats and unsupported features.
 
 ## Next Steps
 
