@@ -53,30 +53,11 @@ See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-h
 
 ### No `document` or `window`
 
-Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Due to the dual-thread architecture, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object, accounting for which thread your code runs on:
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Instead, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object:
 
-**[Global APIs](https://lynxjs.org/next/api/lynx-api/global.html)** — available on both threads, same as the web:
-
-| Web API | Lynx |
-|---------|------|
-| `setTimeout()` / `setInterval()` | Available globally |
-| `console.log()` | Available globally |
-
-**DOM APIs** — split across threads since layout and rendering happen on the main thread:
-
-| Web API | Lynx Alternative | Thread |
-|---------|-----------------|--------|
-| `document.querySelector()` | [`lynx.createSelectorQuery()`](https://lynxjs.org/next/api/lynx-api/selector-query/create-selector-query.html) | Background (async) |
-| `getBoundingClientRect()` | [`NodesRef.invoke({ method: 'boundingClientRect' })`](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) | Background (async) |
-| `getComputedStyle()` | [`element.getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html) | [Main thread](https://lynxjs.org/next/api/lynx-api/main-thread.html) (sync, MTS) |
-| `addEventListener('resize')` | `main-thread-bindlayoutchange` | [Main thread](https://lynxjs.org/next/api/lynx-api/main-thread.html) (sync, MTS) |
-
-**Native extensions** — for capabilities beyond what the web provides:
-
-| Mechanism | Use case |
-|-----------|----------|
-| [NativeModules](https://lynxjs.org/guide/use-native-modules.html) | Call platform-native APIs (camera, storage, networking, etc.) |
-| [Custom Elements](https://lynxjs.org/guide/custom-native-component.html) | Embed platform-native UI components in your Lynx tree |
+- [Global APIs](https://lynxjs.org/next/api/lynx-api/global.html) like `setTimeout()` and `console.log()` are available on both threads, same as the web.
+- DOM-like queries (e.g. `querySelector`, `getBoundingClientRect`) are available as [async background-thread APIs](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) or [synchronous Main Thread APIs](https://lynxjs.org/next/api/lynx-api/main-thread.html) depending on which thread you need them on.
+- Platform-native capabilities are available via [NativeModules](https://lynxjs.org/guide/use-native-modules.html) and [Custom Elements](https://lynxjs.org/guide/custom-native-component.html).
 
 ## Understanding the Dual-Thread Model
 
