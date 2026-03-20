@@ -2,7 +2,11 @@
 
 在本教程中，我们将使用 Vue 3 和 Lynx 一起构建一个商品图片画廊页面。本教程不要求任何 Lynx 的前置知识。你在本教程中学到的技术是构建任何 Lynx 页面和应用程序的基础。
 
-> **注意：** 本教程适合喜欢"边做边学"、想快速做出实际成果的人。如果你更喜欢逐步学习每个概念，请从[描述 UI](https://lynxjs.org/next/guide/ui/elements-components) 开始。
+:::note
+
+本教程适合喜欢"边做边学"、想快速做出实际成果的人。如果你更喜欢逐步学习每个概念，请从[描述 UI](https://lynxjs.org/next/guide/ui/elements-components) 开始。
+
+:::
 
 ## 我们要构建什么？
 
@@ -40,8 +44,7 @@ export default defineConfig({
 
 由于本教程的重点不在于如何设置样式，你可以直接复制下面的 `gallery.css` 文件来节省时间：
 
-<details>
-<summary>gallery.css（点击展开）</summary>
+:::details gallery.css
 
 ```css title="gallery.css"
 .gallery-wrapper {
@@ -155,7 +158,7 @@ export default defineConfig({
 }
 ```
 
-</details>
+:::
 
 然后在你的入口文件中导入它：
 
@@ -165,7 +168,9 @@ import '../gallery.css';
 
 这样可以确保你在跟随本教程时，UI 看起来美观。
 
-> **Lynx 中的样式方案：** Lynx 支持多种样式特性，包括全局样式、CSS Modules、内联样式、Sass、CSS 变量等！请参考 [Rspeedy - 样式](https://lynxjs.org/next/rspeedy/styling) 来选择最适合你的样式配置。
+:::info Lynx 中的样式方案
+Lynx 支持多种样式特性，包括全局样式、CSS Modules、内联样式、Sass、CSS 变量等！请参考 [Rspeedy - 样式](https://lynxjs.org/next/rspeedy/styling) 来选择最适合你的样式配置。
+:::
 
 ## 你的第一个组件：图片卡片
 
@@ -214,9 +219,13 @@ app.mount();
 
 很好，现在你可以看到图片卡片已经显示出来了。这里我们使用 [`<image>`](https://lynxjs.org/next/api/elements/built-in/image) 元素来展示图片。你只需要给它一个宽度和高度（或者像这里一样指定 `aspectRatio` 属性），它就会自动调整大小以适应指定的尺寸。这个组件通过 `defineProps` 接收一个 `picture` 属性，允许你改变它显示的图片。
 
-> **图片的 `src` 属性：** Lynx 的 `<image>` 元素可以接受本地相对路径作为 `src` 属性来渲染图片。本页中所有图片都来源于本地，这些路径需要在使用前导入。不过，如果你的图片存储在线上，你可以轻松替换为网络图片地址。
+:::details 图片的 src 属性
+Lynx 的 `<image>` 元素可以接受本地相对路径作为 `src` 属性来渲染图片。本页中所有图片都来源于本地，这些路径需要在使用前导入。不过，如果你的图片存储在线上，你可以轻松替换为网络图片地址。
+:::
 
-> **Vue Lynx 入口：** 与 React Lynx 使用 `root.render(<App />)` 不同，Vue Lynx 使用 `createApp(Component).mount()`。这会创建 Vue 应用并将其挂载到 Lynx 页面根节点。
+:::info Vue Lynx 入口
+与 React Lynx 使用 `root.render(<App />)` 不同，Vue Lynx 使用 `createApp(Component).mount()`。这会创建 Vue 应用并将其挂载到 Lynx 页面根节点。
+:::
 
 ## 添加交互：给图片卡片点赞
 
@@ -273,7 +282,9 @@ function onTap() {
 </template>
 ```
 
-> **什么是 `@tap`？** 在 Vue Lynx 中，事件绑定使用 `@eventName` 语法（`v-on:eventName` 的缩写）。这等同于 React Lynx 的 `bindtap={handler}`。由于其架构的静态特性，Lynx 遵循 `bind*` 的事件命名约定。在[事件处理](https://lynxjs.org/next/guide/interaction/event-handling)页面了解更多。
+:::details 什么是 "@tap"？
+在 Vue Lynx 中，事件绑定使用 `@eventName` 语法（`v-on:eventName` 的缩写）。这等同于 React Lynx 的 `bindtap={handler}`。由于其架构的静态特性，Lynx 遵循 `bind*` 的事件命名约定。在[事件处理](https://lynxjs.org/next/guide/interaction/event-handling)页面了解更多。
+:::
 
 最后，我们使用 `isLiked` 来控制点赞效果。因为 `isLiked` 是响应式的，`LikeIcon` 会响应它的变化，变成红色心形图标。用于渲染涟漪动画的 `<view>` 元素通过 `v-if` 条件渲染：
 
@@ -347,13 +358,17 @@ import LikeImageCard from '../Components/LikeImageCard.vue';
 </template>
 ```
 
-> **`<list>` 的特殊子元素：** `<list>` 的每个子元素必须是 `<list-item>`，并且必须指定唯一且不重复的 `:key` 和 `:item-key` 属性，否则可能无法正确渲染。
+:::details list 的特殊子元素
+`<list>` 的每个子元素必须是 `<list-item>`，并且必须指定唯一且不重复的 `:key` 和 `:item-key` 属性，否则可能无法正确渲染。
+:::
 
 在 Vue 中，我们不使用 React 的 `{array.map(...)}`，而是用 `v-for` 来遍历数据，为每张图片渲染一个 `<list-item>`。
 
 我们使用瀑布流布局作为子节点的布局方式。`<list>` 也支持其他布局类型，你可以参考 [`<list>` 文档](https://lynxjs.org/next/api/elements/built-in/list)。
 
-> 你可以参考[滚动](https://lynxjs.org/next/guide/ui/scrolling)文档来了解更多关于滚动和滚动元素的信息。
+:::info
+你可以参考[滚动](https://lynxjs.org/next/guide/ui/scrolling)文档来了解更多关于滚动和滚动元素的信息。
+:::
 
 ## 通过元素方法实现自动滚动
 
@@ -399,9 +414,13 @@ onMounted(() => {
 
 我们使用 `onMounted`（Vue 中等同于 React 的 `useEffect(() => ..., [])`）结合 `nextTick`，在列表渲染后调用 [`autoScroll`](https://lynxjs.org/next/api/elements/built-in/list.html#autoscroll) 方法。在 Vue Lynx 中，我们使用 `lynx.createSelectorQuery()` 通过 `custom-list-name` 属性选择列表元素并调用原生方法。
 
-> **什么是 `invoke`？** 在 Lynx 中，所有原生元素都有一组可以调用的"方法"。与 Web 不同，这种调用是异步的，类似于消息传递。你需要使用 `invoke` 配合方法名和参数来调用它们。
+:::details 什么是 "invoke"？
+在 Lynx 中，所有原生元素都有一组可以调用的"方法"。与 Web 不同，这种调用是异步的，类似于消息传递。你需要使用 `invoke` 配合方法名和参数来调用它们。
+:::
 
-> **`onMounted` + `nextTick`：** Vue 的 `onMounted` 在组件挂载时运行一次（类似带空依赖数组的 `useEffect`）。我们在其中调用 `nextTick` 来等待主线程完成原生元素的创建。在 Vue Lynx 中，`nextTick` 被增强为不仅等待 Vue 内部调度器，还等待跨线程操作刷新完成 —— 因此回调触发时，元素保证已经存在。
+:::details onMounted + nextTick
+Vue 的 `onMounted` 在组件挂载时运行一次（类似带空依赖数组的 `useEffect`）。我们在其中调用 `nextTick` 来等待主线程完成原生元素的创建。在 Vue Lynx 中，`nextTick` 被增强为不仅等待 Vue 内部调度器，还等待跨线程操作刷新完成 —— 因此回调触发时，元素保证已经存在。
+:::
 
 ## 如何添加自定义滚动条？
 
@@ -478,28 +497,32 @@ function onScroll(
 
 在 Vue 中，我们使用 `ref<InstanceType<typeof NiceScrollbar>>()` 创建一个有类型的模板引用。当我们在 `<NiceScrollbar>` 元素上放置 `ref="scrollbarRef"` 时，Vue 会自动用组件实例填充它，让我们可以访问暴露的 `adjustScrollbar` 方法。
 
-> **`estimated-main-axis-size-px`：** 你可能已经注意到 `<list-item>` 上的这个属性。它在 `<list>` 中元素尚未渲染时估算元素在主轴上的尺寸。当我们添加滚动条时这非常有用，因为我们需要知道滚动条需要多长才能覆盖所有元素。
->
-> 我们提供了一个工具方法来根据当前布局和图片尺寸估算大小：
->
-> ```ts title="utils.ts"
-> export const calculateEstimatedSize = (
->   pictureWidth: number,
->   pictureHeight: number,
-> ): number => {
->   const galleryPadding = 20;
->   const galleryMainAxisGap = 10;
->   const gallerySpanCount = 2;
->   const galleryWidth = SystemInfo.pixelWidth / SystemInfo.pixelRatio;
->   const itemWidth = (galleryWidth - galleryPadding * 2 - galleryMainAxisGap)
->     / gallerySpanCount;
->   return (itemWidth / pictureWidth) * pictureHeight;
-> };
-> ```
+:::details list-item 的 estimated-main-axis-size-px
+你可能已经注意到 `<list-item>` 上的这个属性。它在 `<list>` 中元素尚未渲染时估算元素在主轴上的尺寸。当我们添加滚动条时这非常有用，因为我们需要知道滚动条需要多长才能覆盖所有元素。
+
+我们提供了一个工具方法来根据当前布局和图片尺寸估算大小：
+
+```ts title="utils.ts"
+export const calculateEstimatedSize = (
+  pictureWidth: number,
+  pictureHeight: number,
+): number => {
+  const galleryPadding = 20;
+  const galleryMainAxisGap = 10;
+  const gallerySpanCount = 2;
+  const galleryWidth = SystemInfo.pixelWidth / SystemInfo.pixelRatio;
+  const itemWidth = (galleryWidth - galleryPadding * 2 - galleryMainAxisGap)
+    / gallerySpanCount;
+  return (itemWidth / pictureWidth) * pictureHeight;
+};
+```
+:::
 
 到此为止，我们有了一个完整的页面！但你可能注意到，我们添加的滚动条在滚动时仍有一点延迟，不够灵敏。这是因为我们的调整仍然在背景线程上进行，而不是响应触摸滚动的主线程上。
 
-> **什么是背景线程和主线程？** Lynx 最大的特点是其双线程架构。你可以在 [JavaScript 运行时](https://lynxjs.org/next/guide/scripting-runtime/index.html#javascript)中找到更详细的介绍。
+:::details 什么是背景线程和主线程？
+Lynx 最大的特点是其双线程架构。你可以在 [JavaScript 运行时](https://lynxjs.org/next/guide/scripting-runtime/index.html#javascript)中找到更详细的介绍。
+:::
 
 ## 更灵敏的滚动条
 

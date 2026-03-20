@@ -2,7 +2,11 @@
 
 We will build a product gallery page together during this tutorial using Vue 3 and Lynx. This tutorial does not assume any existing Lynx knowledge. The techniques you'll learn in the tutorial are fundamental to building any Lynx pages and applications.
 
-> **Note:** This tutorial is designed for people who prefer to learn by doing and want to quickly try making something tangible. If you prefer learning each concept step by step, start with [Describing the UI](https://lynxjs.org/next/guide/ui/elements-components).
+:::note
+
+This tutorial is designed for people who prefer to learn by doing and want to quickly try making something tangible. If you prefer learning each concept step by step, start with [Describing the UI](https://lynxjs.org/next/guide/ui/elements-components).
+
+:::
 
 ## What are we building?
 
@@ -42,8 +46,7 @@ export default defineConfig({
 
 Since the focus of this tutorial is not on how to style your UI, you may just save some time and directly copy the below `gallery.css` file:
 
-<details>
-<summary>gallery.css (click to expand)</summary>
+:::details gallery.css
 
 ```css title="gallery.css"
 .gallery-wrapper {
@@ -157,7 +160,7 @@ Since the focus of this tutorial is not on how to style your UI, you may just sa
 }
 ```
 
-</details>
+:::
 
 and import it in your entry file:
 
@@ -167,7 +170,9 @@ import '../gallery.css';
 
 This makes sure your UI looks great when you are following this tutorial.
 
-> **Styling variations in Lynx:** Lynx supports a wide variety of styling features, including global styles, CSS Modules, inline styles, Sass, CSS variables, and more! Please refer to [Rspeedy - Styling](https://lynxjs.org/next/rspeedy/styling) for how to pick your best styling configurations.
+:::info Styling variations in Lynx
+Lynx supports a wide variety of styling features, including global styles, CSS Modules, inline styles, Sass, CSS variables, and more! Please refer to [Rspeedy - Styling](https://lynxjs.org/next/rspeedy/styling) for how to pick your best styling configurations.
+:::
 
 ## Your First Component: An Image Card
 
@@ -218,9 +223,13 @@ app.mount();
 
 Great, you can now see the image card displayed. Here, we use the [`<image>`](https://lynxjs.org/next/api/elements/built-in/image) element to display your image. You only need to give it a width and height (or specify the `aspectRatio` property as shown here), and it will automatically resize to fit the specified dimensions. This component can receive a `picture` property via `defineProps`, allowing you to change the image it displays.
 
-> **The `src` Attribute of Images:** The Lynx `<image>` element can accept a local relative path as the `src` attribute to render an image. All images in this page are sourced locally, and these paths need to be imported before use. However, if your images are stored online, you can easily replace them with web image addresses.
+:::details The src Attribute of Images
+The Lynx `<image>` element can accept a local relative path as the `src` attribute to render an image. All images in this page are sourced locally, and these paths need to be imported before use. However, if your images are stored online, you can easily replace them with web image addresses.
+:::
 
-> **Vue Lynx Entry Point:** Unlike React Lynx which uses `root.render(<App />)`, Vue Lynx uses `createApp(Component).mount()`. This creates the Vue application and mounts it to the Lynx page root.
+:::info Vue Lynx Entry Point
+Unlike React Lynx which uses `root.render(<App />)`, Vue Lynx uses `createApp(Component).mount()`. This creates the Vue application and mounts it to the Lynx page root.
+:::
 
 ## Adding interactivity: Like an Image Card
 
@@ -279,7 +288,9 @@ function onTap() {
 </template>
 ```
 
-> **What is `@tap`?** In Vue Lynx, event binding uses `@eventName` syntax (short for `v-on:eventName`). This is equivalent to React Lynx's `bindtap={handler}`. Lynx follows the `bind*` convention for events due to the static nature of its architecture. Learn more on the [Event Handling](https://lynxjs.org/next/guide/interaction/event-handling) page.
+:::details What is "@tap"?
+In Vue Lynx, event binding uses `@eventName` syntax (short for `v-on:eventName`). This is equivalent to React Lynx's `bindtap={handler}`. Lynx follows the `bind*` convention for events due to the static nature of its architecture. Learn more on the [Event Handling](https://lynxjs.org/next/guide/interaction/event-handling) page.
+:::
 
 Finally, we use `isLiked` to control the like effect. Because `isLiked` is reactive, `LikeIcon` will respond to its changes, turning into a red heart icon. The `<view>` elements used to render the ripple animation are conditionally rendered with `v-if`:
 
@@ -355,13 +366,17 @@ import LikeImageCard from '../Components/LikeImageCard.vue';
 </template>
 ```
 
-> **Special child elements of `<list>`:** Each child of `<list>` needs to be `<list-item>`, and you must specify a unique and non-repeating `:key` and `:item-key` attribute, otherwise it may not render correctly.
+:::details Special child elements of list
+Each child of `<list>` needs to be `<list-item>`, and you must specify a unique and non-repeating `:key` and `:item-key` attribute, otherwise it may not render correctly.
+:::
 
 In Vue, instead of React's `{array.map(...)}`, we use `v-for` to iterate over data and render a `<list-item>` for each picture.
 
 We use a waterfall layout as the child node layout option. `<list>` also accepts other layout types, which you can refer to in the [`<list>` documentation](https://lynxjs.org/next/api/elements/built-in/list).
 
-> You can refer to the [Scrolling](https://lynxjs.org/next/guide/ui/scrolling) documentation to learn more about scrolling and scrolling elements.
+:::info
+You can refer to the [Scrolling](https://lynxjs.org/next/guide/ui/scrolling) documentation to learn more about scrolling and scrolling elements.
+:::
 
 ## Auto-Scrolling via Element Methods
 
@@ -409,9 +424,13 @@ onMounted(() => {
 
 We use `onMounted` (Vue's equivalent of React's `useEffect(() => ..., [])`) combined with `nextTick` to call the [`autoScroll`](https://lynxjs.org/next/api/elements/built-in/list.html#autoscroll) method after the list is rendered. In Vue Lynx, we use `lynx.createSelectorQuery()` to select the list element by its `custom-list-name` attribute and invoke the native method.
 
-> **What is `invoke`?** In Lynx, all native elements have a set of "methods" that can be called. Unlike on the web, this call is asynchronous, similar to message passing. You need to use `invoke` with the method name and parameters to call them.
+:::details What is "invoke"?
+In Lynx, all native elements have a set of "methods" that can be called. Unlike on the web, this call is asynchronous, similar to message passing. You need to use `invoke` with the method name and parameters to call them.
+:::
 
-> **`onMounted` + `nextTick`:** Vue's `onMounted` runs once when the component is mounted (like `useEffect` with an empty dependency array). We call `nextTick` inside it to wait for the main thread to finish creating the native elements. In Vue Lynx, `nextTick` is enhanced to wait for the cross-thread ops flush — not just Vue's internal scheduler — so elements are guaranteed to exist when the callback fires.
+:::details onMounted + nextTick
+Vue's `onMounted` runs once when the component is mounted (like `useEffect` with an empty dependency array). We call `nextTick` inside it to wait for the main thread to finish creating the native elements. In Vue Lynx, `nextTick` is enhanced to wait for the cross-thread ops flush — not just Vue's internal scheduler — so elements are guaranteed to exist when the callback fires.
+:::
 
 ## How about a Custom Scrollbar?
 
@@ -490,28 +509,32 @@ function onScroll(
 
 In Vue, we use `ref<InstanceType<typeof NiceScrollbar>>()` to create a typed template ref. When we put `ref="scrollbarRef"` on the `<NiceScrollbar>` element, Vue automatically populates it with the component instance, giving us access to the exposed `adjustScrollbar` method.
 
-> **`estimated-main-axis-size-px`:** You may have noticed this attribute on `<list-item>`. It estimates the size of elements on the main axis when they are not yet rendered in `<list>`. This is very useful when we add a scrollbar, as we need to know how long the scrollbar needs to be to cover all elements.
->
-> We provide a utility method to estimate the size based on the current layout and image dimensions:
->
-> ```ts title="utils.ts"
-> export const calculateEstimatedSize = (
->   pictureWidth: number,
->   pictureHeight: number,
-> ): number => {
->   const galleryPadding = 20;
->   const galleryMainAxisGap = 10;
->   const gallerySpanCount = 2;
->   const galleryWidth = SystemInfo.pixelWidth / SystemInfo.pixelRatio;
->   const itemWidth = (galleryWidth - galleryPadding * 2 - galleryMainAxisGap)
->     / gallerySpanCount;
->   return (itemWidth / pictureWidth) * pictureHeight;
-> };
-> ```
+:::details list-item's estimated-main-axis-size-px
+You may have noticed this attribute on `<list-item>`. It estimates the size of elements on the main axis when they are not yet rendered in `<list>`. This is very useful when we add a scrollbar, as we need to know how long the scrollbar needs to be to cover all elements.
+
+We provide a utility method to estimate the size based on the current layout and image dimensions:
+
+```ts title="utils.ts"
+export const calculateEstimatedSize = (
+  pictureWidth: number,
+  pictureHeight: number,
+): number => {
+  const galleryPadding = 20;
+  const galleryMainAxisGap = 10;
+  const gallerySpanCount = 2;
+  const galleryWidth = SystemInfo.pixelWidth / SystemInfo.pixelRatio;
+  const itemWidth = (galleryWidth - galleryPadding * 2 - galleryMainAxisGap)
+    / gallerySpanCount;
+  return (itemWidth / pictureWidth) * pictureHeight;
+};
+```
+:::
 
 At this point, we have a complete page! But you may have noticed that the scrollbar we added still lags a bit during scrolling, not as responsive as it could be. This is because our adjustments are still happening on the background thread, not the main thread that responds to touch scrolling.
 
-> **What are the background thread and main thread?** The biggest feature of Lynx is its dual-thread architecture. You can find a more detailed introduction in [JavaScript Runtime](https://lynxjs.org/next/guide/scripting-runtime/index.html#javascript).
+:::details What are the background thread and main thread?
+The biggest feature of Lynx is its dual-thread architecture. You can find a more detailed introduction in [JavaScript Runtime](https://lynxjs.org/next/guide/scripting-runtime/index.html#javascript).
+:::
 
 ## A More Responsive Scrollbar
 
