@@ -79,46 +79,31 @@ cd <project-name>
 
 <PackageManagerTabs command="run dev" />
 
-You will see a QR code in the terminal. Scan it with your Lynx Explorer App, or copy the bundle URL and paste it on the "Enter Card URL" input in Lynx Explorer and hit "Go".
+You should see output like this:
+
+```
+Rspeedy v0.13.5
+
+➜  Web         http://localhost:3000/main.web.bundle
+➜  Web Preview http://localhost:3000/__web_preview?casename=main.web.bundle
+➜  Lynx        http://localhost:3000/main.lynx.bundle
+```
+
+Rspeedy produces three URLs:
+
+- **Web Preview** — Open this in your browser for a quick preview of your app.
+- **Lynx** — This is the bundle URL for Lynx Explorer. Scan the QR code in the terminal, or copy the URL and paste it into "Enter Card URL" in Lynx Explorer.
+- **Web** — The raw web bundle (useful for integration into web containers).
 
 #### Make your first change
 
-Open `src/App.vue` in your code editor and make a change. You should see the UI on Lynx Explorer update automatically.
+Open `src/App.vue` in your code editor and make a change. You should see the UI update automatically — both in Lynx Explorer and in the browser preview.
 
 ### Debugging
 
 Download the [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) desktop application. Connect your device via USB and start debugging. See the [Lynx debugging guide](https://lynxjs.org/guide/devtool/panels) to learn more.
 
 </Steps>
-
-## Project Structure
-
-A scaffolded Vue Lynx project looks like this:
-
-```
-my-app/
-├── src/
-│   ├── App.vue          # Root component
-│   └── main.ts          # Entry point
-├── lynx.config.ts       # Build configuration
-├── package.json
-└── tsconfig.json
-```
-
-The `lynx.config.ts` uses `pluginVueLynx` instead of `pluginReactLynx`:
-
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy';
-import { pluginVueLynx } from 'vue-lynx/plugin';
-
-export default defineConfig({
-  plugins: [
-    pluginVueLynx({
-      optionsApi: false,
-    }),
-  ],
-});
-```
 
 ## Going to Production
 
