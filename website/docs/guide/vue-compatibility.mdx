@@ -17,26 +17,19 @@ The example below demonstrates [`reactive()`](https://vuejs.org/api/reactivity-c
 
 ## SFC CSS Features
 
-Vue SFCs support several CSS features in `<style>` blocks. Not all of them work on Lynx today due to CSS engine constraints.
+Plain `<style>` blocks, imported `.css` files, and [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules) all work on Lynx. `<style scoped>` and `v-bind()` in CSS are not yet supported — vote on [#78](https://github.com/Huxpro/vue-lynx/issues/78) and [#79](https://github.com/Huxpro/vue-lynx/issues/79) if you need them.
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| `<style>` (plain) | **Works** | Class selectors applied via CSS extraction |
-| Imported `.css` files | **Works** | Same extraction pipeline |
-| `<style module>` | **Works** | Hashed class names are plain class selectors |
-| `<style scoped>` | Not yet supported | See [#78](https://github.com/user/vue-lynx/issues/78) |
-| `v-bind()` in `<style>` | Not yet supported | See [#79](https://github.com/user/vue-lynx/issues/79) |
+:::details Feature support details
 
-**Plain `<style>`** blocks and **imported `.css` files** work out of the box — CSS is extracted by `@lynx-js/css-extract-webpack-plugin` and applied via class selectors.
+| Feature | Status | Reason |
+|---------|--------|--------|
+| `<style>` (plain) | Works | Class selectors applied via CSS extraction |
+| Imported `.css` files | Works | Same extraction pipeline |
+| `<style module>` | Works | Hashed class names (e.g. `.card-k33EaR`) are plain class selectors |
+| `<style scoped>` | Not yet supported ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) | Compiles to `[data-v-xxx]` attribute selectors; Lynx CSS engine only supports class selectors |
+| `v-bind()` in `<style>` | Not yet supported ([#79](https://github.com/Huxpro/vue-lynx/issues/79)) | Requires `useCssVars` from `@vue/runtime-dom`, unavailable in vue-lynx |
 
-**`<style module>`** ([CSS Modules](https://vuejs.org/api/sfc-css-features.html#css-modules)) works because `css-loader` transforms class names to unique hashed names (e.g. `.card` → `.card-k33EaR`), which are still plain class selectors that Lynx supports. Use `:class="$style.card"` to apply them.
-
-:::warning Not yet supported
-**`<style scoped>`** does not work because Vue's scoped CSS compiles to `[data-v-xxx]` attribute selectors, which Lynx's CSS engine does not support. Tracked in [#78](https://github.com/Huxpro/vue-lynx/issues/78).
-
-**`v-bind()` in `<style>`** causes a build error because the compiled code requires `useCssVars` from `@vue/runtime-dom`, which is not available in vue-lynx's `@vue/runtime-core`-based runtime. Tracked in [#79](https://github.com/Huxpro/vue-lynx/issues/79).
-
-For **dynamic styling**, use computed `:style` bindings as a workaround:
+For dynamic styling, use computed `:style` bindings as a workaround for `v-bind()`:
 ```vue
 <script setup>
 const color = ref('#1565c0')
@@ -47,8 +40,6 @@ const style = computed(() => ({ color: color.value }))
 </template>
 ```
 :::
-
-The example below demonstrates each pattern and its current status:
 
 <Go
   example="css-features"
