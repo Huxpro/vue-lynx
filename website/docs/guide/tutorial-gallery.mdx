@@ -180,27 +180,6 @@ Now, let's start by creating the first image card, which will be the main part o
 
 <Go example="gallery" defaultFile="src/ImageCard/ImageCard.vue" entry="src/ImageCard" defaultEntryName="ImageCard" />
 
-**Entry: `ImageCard`**
-
-```vue title="ImageCard.vue" {4-5,10-12}
-<script setup lang="ts">
-import type { Picture } from '../Pictures/furnituresPictures';
-
-defineProps<{
-  picture: Picture;
-}>();
-</script>
-
-<template>
-  <view class="picture-wrapper">
-    <image
-      :style="{ width: '100%', aspectRatio: picture.width / picture.height }"
-      :src="picture.src"
-    />
-  </view>
-</template>
-```
-
 Great, you can now see the image card displayed. Here, we use the [`<image>`](https://lynxjs.org/next/api/elements/built-in/image) element to display your image. You only need to give it a width and height (or specify the `aspectRatio` property as shown here), and it will automatically resize to fit the specified dimensions. This component can receive a `picture` property via `defineProps`, allowing you to change the image it displays.
 
 :::details The src Attribute of Images
@@ -216,31 +195,6 @@ Like standard Vue, Vue Lynx uses `createApp(Component).mount()`. The difference 
 We can add a small white heart in the upper right corner and make it the like button for the image card. Here, we implement a small component called `LikeIcon`:
 
 <Go example="gallery" defaultFile="src/Components/LikeIcon.vue" entry={["src/Components", "src/LikeCard"]} defaultEntryName="LikeCard" />
-
-**Entry: `LikeCard`**
-
-```vue title="Components/LikeIcon.vue" {4,7-9,13-15}
-<script setup lang="ts">
-import { ref } from 'vue-lynx';
-
-import redHeart from '../Pictures/redHeart.png';
-import whiteHeart from '../Pictures/whiteHeart.png';
-
-const isLiked = ref(false);
-
-function onTap() {
-  isLiked.value = true;
-}
-</script>
-
-<template>
-  <view class="like-icon" @tap="onTap">
-    <view v-if="isLiked" class="circle" />
-    <view v-if="isLiked" class="circle circleAfter" />
-    <image :src="isLiked ? redHeart : whiteHeart" class="heart-love" />
-  </view>
-</template>
-```
 
 We want each card to know whether it has been liked, so we added `isLiked`, which is its internal data. It can use this internal data to save your changes.
 
@@ -294,37 +248,6 @@ To show all your beautiful images, you may need help from `<list>`. This way, yo
 
 <Go example="gallery" defaultFile="src/GalleryList/Gallery.vue" entry="src/GalleryList" defaultEntryName="GalleryList" />
 
-**Entry: `GalleryList`**
-
-```vue title="GalleryList/Gallery.vue" {9,10,18,22}
-<script setup lang="ts">
-import { furnituresPictures } from '../Pictures/furnituresPictures';
-import { calculateEstimatedSize } from '../utils';
-import LikeImageCard from '../Components/LikeImageCard.vue';
-</script>
-
-<template>
-  <view class="gallery-wrapper">
-    <list
-      class="list"
-      list-type="waterfall"
-      :column-count="2"
-      scroll-orientation="vertical"
-      custom-list-name="list-container"
-    >
-      <list-item
-        v-for="(pic, i) in furnituresPictures"
-        :key="i"
-        :item-key="String(i)"
-        :estimated-main-axis-size-px="calculateEstimatedSize(pic.width, pic.height)"
-      >
-        <LikeImageCard :picture="pic" />
-      </list-item>
-    </list>
-  </view>
-</template>
-```
-
 :::details Special child elements of list
 Each child of `<list>` needs to be `<list-item>`, and you must specify a unique and non-repeating `:key` and `:item-key` attribute, otherwise it may not render correctly.
 :::
@@ -340,8 +263,6 @@ You can refer to the [Scrolling](https://lynxjs.org/next/guide/ui/scrolling) doc
 If you want to create a desktop photo wall, you need to add an auto-scroll feature to this page. Your images will be slowly and automatically scrolled, allowing you to easily see more images:
 
 <Go example="gallery" defaultFile="src/GalleryAutoScroll/Gallery.vue" entry="src/GalleryAutoScroll" defaultEntryName="GalleryAutoScroll" />
-
-**Entry: `GalleryAutoScroll`**
 
 ```vue title="GalleryAutoScroll/Gallery.vue" {3-12}
 <script setup lang="ts">
@@ -378,76 +299,7 @@ Like most apps, we can add a scrollbar to this page to indicate how many images 
 
 <Go example="gallery" defaultFile="src/GalleryScrollbar/NiceScrollbar.vue" entry="src/GalleryScrollbar" defaultEntryName="GalleryScrollbar" />
 
-**Entry: `GalleryScrollbar`**
-
-```vue title="GalleryScrollbar/NiceScrollbar.vue" {7-11,13}
-<script setup lang="ts">
-import { ref } from 'vue-lynx';
-
-declare const SystemInfo: { pixelHeight: number; pixelRatio: number };
-
-const scrollbarHeight = ref(0);
-const scrollbarTop = ref(0);
-
-function adjustScrollbar(scrollTop: number, scrollHeight: number) {
-  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48;
-  scrollbarHeight.value = listHeight * (listHeight / scrollHeight);
-  scrollbarTop.value = listHeight * (scrollTop / scrollHeight);
-}
-
-defineExpose({ adjustScrollbar });
-</script>
-
-<template>
-  <view
-    class="scrollbar"
-    :style="{ height: scrollbarHeight + 'px', top: scrollbarTop + 'px' }"
-  >
-    <view class="scrollbar-effect glow" />
-  </view>
-</template>
-```
-
-The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`, which lets the parent component call methods on the child.
-
-Similar to the `@tap` event used to add the like functionality, we add the [`scroll`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll) event to `<list>`, which will be triggered when the `<list>` element scrolls. To make the scrollbar respond faster to scroll events, we need to set [`scroll-event-throttle`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll-event-throttle) to 0.
-
-```vue title="GalleryScrollbar/Gallery.vue" {12,19,21}
-<script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue-lynx';
-import LikeImageCard from '../Components/LikeImageCard.vue';
-import NiceScrollbar from './NiceScrollbar.vue';
-
-const scrollbarRef = ref<InstanceType<typeof NiceScrollbar> | null>(null);
-
-function onScroll(
-  event: { detail?: { scrollTop?: number; scrollHeight?: number } },
-) {
-  const scrollTop = event.detail?.scrollTop ?? 0;
-  const scrollHeight = event.detail?.scrollHeight ?? 0;
-  scrollbarRef.value?.adjustScrollbar(scrollTop, scrollHeight);
-}
-</script>
-
-<template>
-  <view class="gallery-wrapper">
-    <NiceScrollbar ref="scrollbarRef" />
-    <list
-      class="list"
-      list-type="waterfall"
-      :column-count="2"
-      scroll-orientation="vertical"
-      custom-list-name="list-container"
-      @scroll="onScroll"
-      :scroll-event-throttle="0"
-    >
-      <!-- list items -->
-    </list>
-  </view>
-</template>
-```
-
-In Vue, we use `ref<InstanceType<typeof NiceScrollbar>>()` to create a typed template ref. When we put `ref="scrollbarRef"` on the `<NiceScrollbar>` element, Vue automatically populates it with the component instance, giving us access to the exposed `adjustScrollbar` method.
+The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`, which lets the parent component call methods on the child. Similar to the `@tap` event used to add the like functionality, we add the [`@scroll`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll) event to `<list>`, which will be triggered when the `<list>` element scrolls. To make the scrollbar respond faster to scroll events, we set [`scroll-event-throttle`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll-event-throttle) to 0.
 
 :::details list-item's estimated-main-axis-size-px
 You may have noticed this attribute on `<list-item>`. It estimates the size of elements on the main axis when they are not yet rendered in `<list>`. This is very useful when we add a scrollbar, as we need to know how long the scrollbar needs to be to cover all elements.
@@ -484,87 +336,7 @@ To let you see the comparison more clearly, we keep both scrollbars:
 
 <Go example="gallery" defaultFile="src/GalleryScrollbarCompare/Gallery.vue" entry="src/GalleryScrollbarCompare" defaultEntryName="GalleryScrollbarCompare" />
 
-**Entry: `GalleryScrollbarCompare`**
-
-```vue title="ScrollbarCompare/NiceScrollbarMTS.vue" {5,10}
-<script setup lang="ts">
-import type { MainThreadRef } from 'vue-lynx';
-
-defineProps<{
-  thumbRef: MainThreadRef;
-}>();
-</script>
-
-<template>
-  <view
-    class="scrollbar"
-    :main-thread-ref="thumbRef"
-    :style="
-      {
-        right: '14px',
-        backgroundColor: 'darkkhaki',
-      }
-    "
-  >
-    <view class="scrollbar-effect glow" />
-  </view>
-</template>
-```
-
 The MTS scrollbar uses `:main-thread-ref` to bind a `MainThreadRef` to the element, allowing the Main Thread to directly manipulate it without any background thread round-trips.
-
-```vue title="ScrollbarCompare/Gallery.vue" {3,7,14-18,21}
-<script setup lang="ts">
-import {
-  ref,
-  onMounted,
-  nextTick,
-  useMainThreadRef,
-} from 'vue-lynx';
-import NiceScrollbar from './NiceScrollbar.vue';
-import NiceScrollbarMTS from './NiceScrollbarMTS.vue';
-
-const scrollbarRef = ref<InstanceType<typeof NiceScrollbar> | null>(null);
-const scrollbarThumbRef = useMainThreadRef(null);
-
-// BTS scroll handler
-function onScroll(
-  event: { detail?: { scrollTop?: number; scrollHeight?: number } },
-) {
-  scrollbarRef.value?.adjustScrollbar(
-    event.detail?.scrollTop ?? 0,
-    event.detail?.scrollHeight ?? 0,
-  );
-}
-
-// MTS scroll handler (worklet context)
-const onScrollMTSCtx = {
-  _wkltId: 'gallery:adjustScrollbarCompare',
-  _workletType: 'main-thread',
-  _c: {} as Record<string, unknown>,
-};
-onScrollMTSCtx._c = { _thumbRef: scrollbarThumbRef.toJSON() };
-</script>
-
-<template>
-  <view class="gallery-wrapper">
-    <NiceScrollbar ref="scrollbarRef" />
-    <NiceScrollbarMTS :thumb-ref="scrollbarThumbRef" />
-    <list
-      class="list"
-      list-type="waterfall"
-      :column-count="2"
-      scroll-orientation="vertical"
-      custom-list-name="list-container"
-      @scroll="onScroll"
-      :main-thread-bindscroll="onScrollMTSCtx"
-      :scroll-event-throttle="0"
-    >
-      <!-- list items -->
-    </list>
-  </view>
-</template>
-```
 
 Now you should be able to see that the scrollbar on the left (darkkhaki), controlled with main thread scripting, is smoother and more responsive compared to the scrollbar on the right that we implemented earlier. If you encounter issues in other UIs where updates need to happen immediately, try this method.
 
