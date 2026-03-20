@@ -20,7 +20,7 @@ Check out the detailed [quick start](/guide/quick-start) doc that will guide you
 
 You'll see lots of beautiful images throughout this guide. We've put together a package of sample images you can download [here](https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/download/Pictures.tar.gz) to use in your projects.
 
-When using Vue Lynx, your `lynx.config.ts` will use `pluginVueLynx` instead of `pluginReactLynx`:
+Your `lynx.config.ts` should look like this:
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy';
@@ -201,26 +201,6 @@ defineProps<{
 </template>
 ```
 
-```ts title="ImageCard/index.ts" {6}
-import '../gallery.css';
-import { createApp, defineComponent, h } from 'vue-lynx';
-import ImageCard from './ImageCard.vue';
-import { furnituresPicturesSubArray } from '../Pictures/furnituresPictures';
-
-const App = defineComponent({
-  setup() {
-    const picture = furnituresPicturesSubArray[0]!;
-    return () =>
-      h('view', { class: 'gallery-wrapper single-card' }, [
-        h(ImageCard, { picture }),
-      ]);
-  },
-});
-
-const app = createApp(App);
-app.mount();
-```
-
 Great, you can now see the image card displayed. Here, we use the [`<image>`](https://lynxjs.org/next/api/elements/built-in/image) element to display your image. You only need to give it a width and height (or specify the `aspectRatio` property as shown here), and it will automatically resize to fit the specified dimensions. This component can receive a `picture` property via `defineProps`, allowing you to change the image it displays.
 
 :::details The src Attribute of Images
@@ -228,7 +208,7 @@ The Lynx `<image>` element can accept a local relative path as the `src` attribu
 :::
 
 :::info Vue Lynx Entry Point
-Unlike React Lynx which uses `root.render(<App />)`, Vue Lynx uses `createApp(Component).mount()`. This creates the Vue application and mounts it to the Lynx page root.
+Like standard Vue, Vue Lynx uses `createApp(Component).mount()`. The difference is that there is no DOM element to mount to — `mount()` is called with no arguments and attaches to the Lynx page root automatically.
 :::
 
 ## Adding interactivity: Like an Image Card
@@ -270,7 +250,7 @@ const isLiked = ref(false);
 </script>
 ```
 
-In Vue, `ref(false)` creates a reactive variable (equivalent to React's `useState(false)`). When `isLiked.value` changes, Vue's reactivity system automatically re-renders the component — no `setState` call needed.
+`ref(false)` creates a reactive variable. When `isLiked.value` changes, Vue's reactivity system automatically re-renders the component.
 
 Then we add the `@tap` event to the wrapper `<view>`, so that when the user clicks the heart, it triggers this event and changes the state of `isLiked`:
 
@@ -289,7 +269,7 @@ function onTap() {
 ```
 
 :::details What is "@tap"?
-In Vue Lynx, event binding uses `@eventName` syntax (short for `v-on:eventName`). This is equivalent to React Lynx's `bindtap={handler}`. Lynx follows the `bind*` convention for events due to the static nature of its architecture. Learn more on the [Event Handling](https://lynxjs.org/next/guide/interaction/event-handling) page.
+Vue Lynx uses the same `@eventName` syntax you know from Vue on the web, but Lynx has its own set of events — `@tap` instead of `@click`, `@scroll` instead of native scroll, etc. Learn more on the [Event Handling](https://lynxjs.org/next/guide/interaction/event-handling) page.
 :::
 
 Finally, we use `isLiked` to control the like effect. Because `isLiked` is reactive, `LikeIcon` will respond to its changes, turning into a red heart icon. The `<view>` elements used to render the ripple animation are conditionally rendered with `v-if`:
@@ -304,28 +284,7 @@ Finally, we use `isLiked` to control the like effect. Because `isLiked` is react
 </template>
 ```
 
-Now we compose the image card with the like icon overlay:
-
-```vue title="Components/LikeImageCard.vue" {3,10}
-<script setup lang="ts">
-import type { Picture } from '../Pictures/furnituresPictures';
-import LikeIcon from './LikeIcon.vue';
-
-defineProps<{
-  picture: Picture;
-}>();
-</script>
-
-<template>
-  <view class="picture-wrapper">
-    <image
-      :style="{ width: '100%', aspectRatio: picture.width / picture.height }"
-      :src="picture.src"
-    />
-    <LikeIcon />
-  </view>
-</template>
-```
+We then compose `LikeIcon` with `ImageCard` into a `LikeImageCard` component (see the code in the viewer above).
 
 To give the like a better visual interaction effect, we added CSS animations in `gallery.css`. You can also learn more about animations in the [Animation](https://lynxjs.org/next/guide/styling/animation) section and replace them with your preferred style!
 
@@ -370,8 +329,6 @@ import LikeImageCard from '../Components/LikeImageCard.vue';
 Each child of `<list>` needs to be `<list-item>`, and you must specify a unique and non-repeating `:key` and `:item-key` attribute, otherwise it may not render correctly.
 :::
 
-In Vue, instead of React's `{array.map(...)}`, we use `v-for` to iterate over data and render a `<list-item>` for each picture.
-
 We use a waterfall layout as the child node layout option. `<list>` also accepts other layout types, which you can refer to in the [`<list>` documentation](https://lynxjs.org/next/api/elements/built-in/list).
 
 :::info
@@ -386,22 +343,9 @@ If you want to create a desktop photo wall, you need to add an auto-scroll featu
 
 **Entry: `GalleryAutoScroll`**
 
-```vue title="GalleryAutoScroll/Gallery.vue" {1,12-22}
+```vue title="GalleryAutoScroll/Gallery.vue" {3-12}
 <script setup lang="ts">
 import { onMounted, nextTick } from 'vue-lynx';
-import { furnituresPictures } from '../Pictures/furnituresPictures';
-import { calculateEstimatedSize } from '../utils';
-import LikeImageCard from '../Components/LikeImageCard.vue';
-
-declare const lynx: {
-  createSelectorQuery(): {
-    select(selector: string): {
-      invoke(options: { method: string; params: Record<string, string> }): {
-        exec(): void;
-      };
-    };
-  };
-};
 
 onMounted(() => {
   nextTick(() => {
@@ -416,20 +360,16 @@ onMounted(() => {
   });
 });
 </script>
-
-<template>
-  <!-- Same <list> template as before -->
-</template>
 ```
 
-We use `onMounted` (Vue's equivalent of React's `useEffect(() => ..., [])`) combined with `nextTick` to call the [`autoScroll`](https://lynxjs.org/next/api/elements/built-in/list.html#autoscroll) method after the list is rendered. In Vue Lynx, we use `lynx.createSelectorQuery()` to select the list element by its `custom-list-name` attribute and invoke the native method.
+We use `onMounted` combined with `nextTick` to call the [`autoScroll`](https://lynxjs.org/next/api/elements/built-in/list.html#autoscroll) method after the list is rendered. We use `lynx.createSelectorQuery()` to select the list element by its `custom-list-name` attribute and invoke the native method.
 
 :::details What is "invoke"?
 In Lynx, all native elements have a set of "methods" that can be called. Unlike on the web, this call is asynchronous, similar to message passing. You need to use `invoke` with the method name and parameters to call them.
 :::
 
 :::details onMounted + nextTick
-Vue's `onMounted` runs once when the component is mounted (like `useEffect` with an empty dependency array). We call `nextTick` inside it to wait for the main thread to finish creating the native elements. In Vue Lynx, `nextTick` is enhanced to wait for the cross-thread ops flush — not just Vue's internal scheduler — so elements are guaranteed to exist when the callback fires.
+`onMounted` runs once when the component is mounted. We call `nextTick` inside it to wait for the main thread to finish creating the native elements. In Vue Lynx, `nextTick` is enhanced to wait for the cross-thread ops flush — not just Vue's internal scheduler — so elements are guaranteed to exist when the callback fires.
 :::
 
 ## How about a Custom Scrollbar?
@@ -468,7 +408,7 @@ defineExpose({ adjustScrollbar });
 </template>
 ```
 
-The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`. In Vue, `defineExpose` is the equivalent of React's `forwardRef` + `useImperativeHandle` — it lets the parent component call methods on the child.
+The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`, which lets the parent component call methods on the child.
 
 Similar to the `@tap` event used to add the like functionality, we add the [`scroll`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll) event to `<list>`, which will be triggered when the `<list>` element scrolls. To make the scrollbar respond faster to scroll events, we need to set [`scroll-event-throttle`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll-event-throttle) to 0.
 
@@ -630,7 +570,7 @@ Now you should be able to see that the scrollbar on the left (darkkhaki), contro
 
 Key Vue concepts for MTS:
 
-- `useMainThreadRef(null)` — Creates a ref that can be resolved on the Main Thread (same API as React Lynx's `useMainThreadRef`)
+- `useMainThreadRef(null)` — Creates a ref that can be resolved on the Main Thread
 - `:main-thread-bindscroll="ctx"` — Binds a worklet handler to the scroll event (runs on Main Thread, zero thread crossings)
 - `.toJSON()` — Serializes the ref for cross-thread transfer (includes the internal `_wvid` identifier)
 
@@ -639,82 +579,6 @@ Key Vue concepts for MTS:
 We remove the redundant scrollbar used for comparison, and our Gallery is now complete! Let's take a look at the final result:
 
 <Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="GalleryComplete" />
-
-**Entry: `GalleryComplete`**
-
-```vue title="GalleryComplete/NiceScrollbarMTS.vue"
-<script setup lang="ts">
-import type { MainThreadRef } from 'vue-lynx';
-
-defineProps<{
-  thumbRef: MainThreadRef;
-}>();
-</script>
-
-<template>
-  <view
-    class="scrollbar"
-    :main-thread-ref="thumbRef"
-  >
-    <view class="scrollbar-effect glow" />
-  </view>
-</template>
-```
-
-```vue title="GalleryComplete/Gallery.vue" {9,15-19,22,28}
-<script setup lang="ts">
-import { onMounted, useMainThreadRef } from 'vue-lynx';
-import { furnituresPictures } from '../Pictures/furnituresPictures';
-import { calculateEstimatedSize } from '../utils';
-import LikeImageCard from '../Components/LikeImageCard.vue';
-import NiceScrollbarMTS from './NiceScrollbarMTS.vue';
-
-// MainThreadRef for the scrollbar thumb element
-const scrollbarThumbRef = useMainThreadRef(null);
-
-// Hand-crafted worklet context (simulates SWC transform output)
-const onScrollMTSCtx = {
-  _wkltId: 'gallery:adjustScrollbarMTS',
-  _workletType: 'main-thread',
-  _c: {} as Record<string, unknown>,
-};
-onScrollMTSCtx._c = { _thumbRef: scrollbarThumbRef.toJSON() };
-
-onMounted(() => {
-  nextTick(() => {
-    lynx
-      .createSelectorQuery()
-      .select('[custom-list-name="list-container"]')
-      .invoke({ method: 'autoScroll', params: { rate: '60', start: 'true' } })
-      .exec();
-  });
-});
-</script>
-
-<template>
-  <view class="gallery-wrapper">
-    <NiceScrollbarMTS :thumb-ref="scrollbarThumbRef" />
-    <list
-      class="list"
-      list-type="waterfall"
-      :column-count="2"
-      scroll-orientation="vertical"
-      custom-list-name="list-container"
-      :main-thread-bindscroll="onScrollMTSCtx"
-      :scroll-event-throttle="0"
-    >
-      <list-item
-        v-for="(pic, i) in furnituresPictures"
-        :key="i"
-        :item-key="String(i)"
-        :estimated-main-axis-size-px="calculateEstimatedSize(pic.width, pic.height)"
-      >
-        <LikeImageCard :picture="pic" />
-      </list-item>
-    </list>
-  </view>
-</template>
-```
 
 Congratulations! You have successfully created a product gallery page! Throughout this tutorial, you've covered the basics of writing interactive UIs on the Lynx platform with Vue 3.
 

@@ -119,27 +119,6 @@ The key CSS — `display: linear` is a Lynx-specific layout mode, similar to fle
 Lynx supports a `display: linear` layout mode where `linear-orientation: horizontal` arranges children horizontally. Compared to `display: flex`, `linear` layout has better performance in Lynx's native rendering engine.
 :::
 
-### Creating the Entry Point
-
-```ts title="SwiperEmpty/index.ts"
-import { createApp, defineComponent, h } from 'vue-lynx';
-import '../swiper.css';
-import Swiper from './Swiper.vue';
-import Page from '../Components/Page.vue';
-import { picsArr } from '../utils/pics.js';
-
-const App = defineComponent({
-  setup() {
-    return () =>
-      h(Page, null, {
-        default: () => h(Swiper, { data: picsArr }),
-      });
-  },
-});
-
-createApp(App).mount();
-```
-
 Open LynxExplorer and preview `SwiperEmpty` — you'll see a row of images laid out horizontally, but you can't swipe them. Let's add touch interaction next.
 
 ## Listening to Touch Events
@@ -242,7 +221,7 @@ const touchStartOffsetRef = useMainThreadRef<number>(0);
 ```
 
 ::: info How to access useMainThreadRef
-`useMainThreadRef` returns a reference accessed via the `.current` property on the main thread (not Vue's `.value`). This is because the main-thread runtime uses `.current` as its unified access protocol, consistent with React's `useRef`.
+`useMainThreadRef` returns a reference accessed via the `.current` property on the main thread — not Vue's `.value`. This is because `useMainThreadRef` lives in the main-thread runtime, which has its own access protocol separate from Vue's reactivity system.
 
 ```ts
 // Background thread: Vue ref
@@ -304,94 +283,21 @@ Vue Lynx uses the `main-thread-` prefix to route event bindings and refs to the 
 </template>
 ```
 
-::: details Attribute prefix differences between Vue and React
-React Lynx uses colon-separated attribute names (`main-thread:ref`, `main-thread:bindtouchstart`) because JSX supports this syntax.
-
-Vue templates don't support colons in attribute names, so they use the `main-thread-` hyphenated prefix with `v-bind` (`:`):
+::: details The main-thread- prefix in Vue templates
+Vue templates use the `main-thread-` hyphenated prefix with `v-bind` (`:`) to route event bindings and refs to the main thread:
 
 ```vue
-<!-- React Lynx -->
-<view main-thread:ref="{containerRef}" main-thread:bindtouchstart="{fn}" />
-
-<!-- Vue Lynx -->
 <view :main-thread-ref="containerRef" :main-thread-bindtouchstart="fn" />
 ```
 
-The effect is identical — it's just adapted to Vue template syntax.
+This is needed because Vue template attribute names don't support colons.
 :::
 
-### The Complete SwiperMTS Component
+### Putting It Together
 
 <Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
 
-Combining the above changes, here is the complete main-thread touch handling version:
-
-```vue title="SwiperMTS/Swiper.vue"
-<script setup lang="ts">
-import { useMainThreadRef } from 'vue-lynx';
-import SwiperItem from '../Components/SwiperItem.vue';
-
-declare const SystemInfo: { pixelWidth: number; pixelRatio: number };
-
-const props = withDefaults(
-  defineProps<{
-    data: string[];
-    itemWidth?: number;
-  }>(),
-  {
-    itemWidth: () => SystemInfo.pixelWidth / SystemInfo.pixelRatio,
-  },
-);
-
-const containerRef = useMainThreadRef<unknown>(null);
-const currentOffsetRef = useMainThreadRef<number>(0);
-const touchStartXRef = useMainThreadRef<number>(0);
-const touchStartOffsetRef = useMainThreadRef<number>(0);
-
-const handleTouchStart = (e: { touches: Array<{ clientX: number }> }) => {
-  'main thread';
-  touchStartXRef.current = e.touches[0].clientX;
-  touchStartOffsetRef.current = currentOffsetRef.current;
-};
-
-const handleTouchMove = (e: { touches: Array<{ clientX: number }> }) => {
-  'main thread';
-  const delta = e.touches[0].clientX - touchStartXRef.current;
-  const offset = touchStartOffsetRef.current + delta;
-  currentOffsetRef.current = offset;
-  (containerRef as any).current?.setStyleProperties?.({
-    transform: `translateX(${offset}px)`,
-  });
-};
-
-const handleTouchEnd = () => {
-  'main thread';
-  touchStartXRef.current = 0;
-  touchStartOffsetRef.current = 0;
-};
-</script>
-
-<template>
-  <view class="swiper-wrapper">
-    <view
-      class="swiper-container"
-      :main-thread-ref="containerRef"
-      :main-thread-bindtouchstart="handleTouchStart"
-      :main-thread-bindtouchmove="handleTouchMove"
-      :main-thread-bindtouchend="handleTouchEnd"
-    >
-      <SwiperItem
-        v-for="(pic, index) in data"
-        :key="index"
-        :pic="pic"
-        :item-width="props.itemWidth"
-      />
-    </view>
-  </view>
-</template>
-```
-
-Open LynxExplorer and preview `SwiperMTS` — drag the images and you'll find the swipe responds **instantly** with zero lag.
+Open LynxExplorer and preview `SwiperMTS` — drag the images and you'll find the swipe responds **instantly** with zero lag. See the complete code in the viewer above.
 
 ::: details Use Main Thread Script Sparingly
 Only use main thread script when you encounter **latency issues with high-frequency events**. Overuse increases the main thread's burden and can cause jank.
@@ -411,7 +317,7 @@ Not recommended for:
 
 ## Organizing Code with Composables
 
-Currently all logic lives in a single component. As we add features (animation, indicator), the code will become hard to maintain. Vue 3's [Composables](https://vuejs.org/guide/reusability/composables.html) help us organize code — equivalent to custom Hooks in React.
+Currently all logic lives in a single component. As we add features (animation, indicator), the code will become hard to maintain. Vue 3's [Composables](https://vuejs.org/guide/reusability/composables.html) help us organize code into reusable modules.
 
 ### useUpdateSwiperStyle — Container Ref and Style Updates
 
@@ -541,13 +447,8 @@ const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOffset({
 </template>
 ```
 
-::: info Composables vs React Hooks
-Vue composables and React Hooks share the same goal — logic reuse and separation of concerns. But the Vue version is more flexible:
-
-- **No call-order rules**: No need to follow "Rules of Hooks"; composables can be called anywhere
-- **Natural closure reuse**: Functions marked with `'main thread'` capture `useMainThreadRef` references via closures, just like ordinary functions
-
-The main-thread function bodies are **identical** between both frameworks — the `'main thread'` directive is framework-agnostic.
+::: info Composables with Main Thread Script
+Vue composables work naturally with main-thread functions — functions marked with `'main thread'` capture `useMainThreadRef` references via closures, just like ordinary functions. No special rules apply.
 :::
 
 Currently, releasing a drag leaves the image at an arbitrary position. Let's add snap-to-page animation next.
@@ -990,7 +891,7 @@ export function useOffset({
 ```
 
 ::: details Why use the main-thread-easing prefix?
-When a prop's value is a **main-thread function**, it needs the `main-thread-` prefix in the name (in React, it uses the `main-thread:` colon prefix). This tells the SWC compiler that this value needs to be resolved on the main-thread side.
+When a prop's value is a **main-thread function**, it needs the `main-thread-` prefix in the name. This tells the SWC compiler that this value needs to be resolved on the main-thread side.
 
 Without the prefix, the compiler treats it as an ordinary background-thread value and tries to serialize a function — which is not serializable, resulting in a runtime error.
 :::
@@ -1011,8 +912,6 @@ Congratulations! You've built a high-performance product detail page with an ima
 
 The complete source code is in `examples/swiper/src/`, with three progressive versions for reference.
 
-::: info MTS Function Bodies Are Reusable Across Frameworks
-An interesting discovery: all `'main thread'`-marked function bodies (`handleTouchStart`, `updateOffset`, `animate`, etc.) are **identical** between the Vue and React versions. The SWC compiler extracts these functions into a standalone main-thread bundle, independent of the framework.
-
-This means you can directly reuse main-thread function logic from React Lynx examples — only the outer component syntax (SFC templates vs. JSX) needs to be adapted.
+::: info MTS Function Bodies Are Framework-Agnostic
+All `'main thread'`-marked function bodies (`handleTouchStart`, `updateOffset`, `animate`, etc.) are compiled by the SWC compiler into a standalone main-thread bundle, independent of the component framework. The `'main thread'` directive works the same way regardless of whether the outer component uses Vue SFCs or JSX.
 :::
