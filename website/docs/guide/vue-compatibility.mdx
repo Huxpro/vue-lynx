@@ -8,7 +8,7 @@ Because Vue Lynx is built on the official Vue 3 runtime core, it aims to support
 
 That said, Vue's API surface is large and we haven't had time to fully verify every corner of it. Below are critical Vue features that we've confirmed work effortlessly on Lynx — most require zero adaptation from a standard Vue codebase. Where Lynx-specific caveats exist, they are called out inline.
 
-## Reactivity: `reactive()` + `toRefs()` + Composables
+## Reactivity + Composables
 
 Vue Lynx reuses 100% of Vue's reactivity core (`@vue/reactivity`). Every reactivity API works identically to standard Vue, with no Lynx-specific caveats or adaptations.
 
@@ -109,7 +109,7 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
 
 ## Unsupported Features
 
-Some Vue built-in features are unavailable due to the dual-thread native environment:
+Some Vue built-in features are not yet adapted to the dual-thread native environment:
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|

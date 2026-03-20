@@ -66,15 +66,15 @@ If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue r
 Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-renderer) that builds a **ShadowElement** tree on the background thread. Changes are batched as **ops** and flushed to the main thread. User interactions flow back as **events**. This forms a cycle analogous to the browser event loop:
 
 ```
-        ┌─────────────────────────────────────────────────────┐
+        ┌──────────────────────────────────────────────────────┐
         │                  Background Thread                   │
         │  Vue 3 runtime · reactivity · lifecycle · your code  │
         └──────────────┬──────────────────────▲────────────────┘
                   ops  │                      │  events
                        ▼                      │
         ┌──────────────────────────────────────┴───────────────┐
-        │                    Main Thread                        │
-        │  Native elements · layout · rendering · MTS handlers  │
+        │                    Main Thread                       │
+        │  Native elements · layout · rendering · MTS handlers │
         └──────────────────────────────────────────────────────┘
 ```
 
