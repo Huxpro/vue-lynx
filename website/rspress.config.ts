@@ -47,10 +47,6 @@ export default defineConfig({
     },
     sidebar: {
       '/guide/': [
-        {
-          sectionHeaderText: 'Get Started',
-        },
-        { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Quick Start', link: '/guide/quick-start' },
         {
           dividerType: 'solid',
@@ -58,6 +54,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'VueLynx Essentials',
         },
+        { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
         {
