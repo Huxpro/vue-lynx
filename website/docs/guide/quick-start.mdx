@@ -7,6 +7,7 @@ Welcome to Vue Lynx! Let's create a Vue Lynx project and start developing.
 ## System Requirements
 
 - [Node.js 18](https://nodejs.org/en) or later.
+  - Requires Node.js 18.19 when using TypeScript as configuration.
 
 ## Installation
 
@@ -20,9 +21,9 @@ We use [`create-vue-lynx`](https://npmjs.org/package/create-vue-lynx) to scaffol
 
 After completing the prompts, `create-vue-lynx` will create a folder with your project name containing a starter app.
 
-### Prepare Lynx Explorer
+### Prepare your development environment
 
-Lynx Explorer is a sandbox for trying out Lynx quickly.
+For **mobile** development, use **Lynx Explorer** — a sandbox app for previewing Lynx bundles on device or simulator. For **web** preview, Rspeedy's built-in dev server handles it automatically — no extra setup needed.
 
 #### iOS Simulator
 
@@ -30,16 +31,16 @@ Lynx Explorer is a sandbox for trying out Lynx quickly.
 
 2. **Download LynxExplorer**
 
-   For Apple Silicon (M1/M2/M3):
+   For Apple Silicon (M1/M2/M3), download [`LynxExplorer-arm64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-arm64.app.tar.gz), then extract:
+
    ```bash
-   curl -LO https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-arm64.app.tar.gz
    mkdir -p LynxExplorer-arm64.app/
    tar -zxf LynxExplorer-arm64.app.tar.gz -C LynxExplorer-arm64.app/
    ```
 
-   For Intel Mac:
+   For Intel Mac, download [`LynxExplorer-x86_64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-x86_64.app.tar.gz), then extract:
+
    ```bash
-   curl -LO https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-x86_64.app.tar.gz
    mkdir -p LynxExplorer-x86_64.app/
    tar -zxf LynxExplorer-x86_64.app.tar.gz -C LynxExplorer-x86_64.app/
    ```
@@ -49,6 +50,16 @@ Lynx Explorer is a sandbox for trying out Lynx quickly.
 #### Android
 
 Download the pre-built APK from [GitHub Releases](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-noasan-release.apk) and install on your device.
+
+:::info Community downloads
+Lynx Explorer is also available on the [App Store](https://apps.apple.com/us/app/lynx-go-dev-explorer/id6743227790) and [Play Store](https://play.google.com/store/apps/details?id=com.funcs.io.lynx.go), published by community contributors. These versions are not maintained by the Lynx team.
+:::
+
+:::details Build from source
+If the pre-built binaries don't work for your environment, you can build Lynx Explorer from source:
+- [Build for iOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios)
+- [Build for Android](https://github.com/lynx-family/lynx/tree/develop/explorer/android)
+:::
 
 ### Start developing
 
@@ -70,7 +81,7 @@ You will see a QR code in the terminal. Scan it with your Lynx Explorer App, or 
 
 ### Make your first change
 
-Open `src/App.vue` in your code editor. The starter app includes an interactive demo — try modifying the template and see the changes update live in Lynx Explorer.
+Open `src/App.vue` in your code editor and make a change. You should see the UI on Lynx Explorer update automatically.
 
 <Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.lynx.bundle" />
 
@@ -115,7 +126,7 @@ const count = ref(0);
 
 ### Debugging
 
-Visit [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) to download the desktop application. Connect your device via USB and start debugging.
+Download the [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) desktop application. Connect your device via USB and start debugging. See the [Lynx debugging guide](https://lynxjs.org/guide/devtool/panels) to learn more.
 
 </Steps>
 
@@ -148,8 +159,17 @@ export default defineConfig({
 });
 ```
 
+## Going to Production
+
+Lynx Explorer is great for development, but for production you'll want to integrate Lynx into a real native app.
+
+- **Integrate into an existing app** — Follow the [Lynx integration guide](https://lynxjs.org/guide/start/integrate-with-existing-apps) to embed Lynx views into your iOS, Android, or Web application.
+- **Create a new native app** — Use [Sparkling](https://tiktok.github.io/sparkling) (TikTok's cross-platform Lynx infrastructure) or [Lynx CLI](https://github.com/lynx-community/cli) (community) to scaffold a full native app with Lynx built in.
+
 ## Next Steps
 
-- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with interactivity and Main Thread Script
+- [Vue Compatibility](/guide/vue-compatibility) — Understand what works differently in Vue Lynx vs Vue for Web
+- [Main Thread Script](/guide/main-thread-script) — Run performance-critical logic on the main thread
+- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with interactivity
 - [Tutorial: Product Detail](/guide/tutorial-swiper) — Build a touch-swipeable image carousel
 - [API Reference](/guide/api/vue-lynx/) — Explore the vue-lynx API
