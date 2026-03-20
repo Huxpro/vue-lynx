@@ -81,50 +81,9 @@ cd <project-name>
 
 You will see a QR code in the terminal. Scan it with your Lynx Explorer App, or copy the bundle URL and paste it on the "Enter Card URL" input in Lynx Explorer and hit "Go".
 
-### Make your first change
+#### Make your first change
 
 Open `src/App.vue` in your code editor and make a change. You should see the UI on Lynx Explorer update automatically.
-
-<Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.lynx.bundle" />
-
-```vue title="src/App.vue"
-<script setup lang="ts">
-import { ref } from 'vue-lynx';
-
-const count = ref(0);
-</script>
-
-<template>
-  <view class="container">
-    <text class="title">Hello Vue Lynx!</text>
-    <view class="card" @tap="count++">
-      <text>Tapped {{ count }} times</text>
-    </view>
-  </view>
-</template>
-
-<style>
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
-}
-
-.card {
-  padding: 16px 32px;
-  background-color: #42b883;
-  border-radius: 8px;
-}
-</style>
-```
 
 ### Debugging
 
