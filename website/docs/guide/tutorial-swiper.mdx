@@ -43,65 +43,7 @@ Let's start with the simplest version — a non-interactive static image list.
 
 <Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
 
-### Creating the SwiperItem Component
-
-Each image is wrapped in a `SwiperItem` component:
-
-```vue title="Components/SwiperItem.vue"
-<script setup lang="ts">
-defineProps<{
-  pic: string;
-  itemWidth: number;
-}>();
-</script>
-
-<template>
-  <view :style="{ width: itemWidth + 'px', height: '100%' }">
-    <image
-      mode="aspectFill"
-      :src="pic"
-      :style="{ width: '100%', height: '100%' }"
-    />
-  </view>
-</template>
-```
-
-### Creating the Swiper Component
-
-Render the image list with `v-for`, using Lynx's `display: linear` for horizontal layout:
-
-```vue title="SwiperEmpty/Swiper.vue"
-<script setup lang="ts">
-import SwiperItem from '../Components/SwiperItem.vue';
-
-declare const SystemInfo: { pixelWidth: number; pixelRatio: number };
-
-const props = withDefaults(
-  defineProps<{
-    data: string[];
-    itemWidth?: number;
-  }>(),
-  {
-    itemWidth: () => SystemInfo.pixelWidth / SystemInfo.pixelRatio,
-  },
-);
-</script>
-
-<template>
-  <view class="swiper-wrapper">
-    <view class="swiper-container">
-      <SwiperItem
-        v-for="(pic, index) in data"
-        :key="index"
-        :pic="pic"
-        :item-width="props.itemWidth"
-      />
-    </view>
-  </view>
-</template>
-```
-
-The key CSS — `display: linear` is a Lynx-specific layout mode, similar to flexbox but more performant:
+Each image is wrapped in a `SwiperItem` component. The `Swiper` component renders them with `v-for`. The key CSS uses `display: linear` — a Lynx-specific layout mode, similar to flexbox but more performant:
 
 ```css title="swiper.css"
 .swiper-wrapper {
@@ -313,7 +255,7 @@ Not recommended for:
 - Simple `tap` click handlers
 - Infrequent UI updates
 - Logic requiring complex data processing
-  :::
+:::
 
 ## Organizing Code with Composables
 
@@ -321,39 +263,13 @@ Currently all logic lives in a single component. As we add features (animation, 
 
 ### useUpdateSwiperStyle — Container Ref and Style Updates
 
-Extract the `containerRef` and style update logic:
-
-```ts title="Swiper/useUpdateSwiperStyle.ts"
-import { useMainThreadRef } from 'vue-lynx';
-
-export function useUpdateSwiperStyle() {
-  const containerRef = useMainThreadRef<unknown>(null);
-
-  function updateSwiperStyle(offset: number) {
-    'main thread';
-    (
-      containerRef as unknown as {
-        current?: { setStyleProperties?(s: Record<string, string>): void };
-      }
-    ).current?.setStyleProperties?.({
-      transform: `translateX(${offset}px)`,
-    });
-  }
-
-  return {
-    containerRef,
-    updateSwiperStyle,
-  };
-}
-```
+`useUpdateSwiperStyle` wraps the `containerRef` and a `'main thread'` function that calls `setStyleProperties` — the same logic from the previous section, now reusable.
 
 ### useOffset — Touch Handling and Offset Tracking
 
-Extract the core touch event logic into `useOffset`, using callbacks for decoupling:
+`useOffset` extracts touch logic, accepting an `onOffsetUpdate` callback for decoupling:
 
-```ts title="Swiper/useOffset.ts"
-import { useMainThreadRef } from 'vue-lynx';
-
+```ts title="Swiper/useOffset.ts" {2,11-12}
 export function useOffset({
   onOffsetUpdate,
   itemWidth,
@@ -361,90 +277,29 @@ export function useOffset({
   onOffsetUpdate: (offset: number) => void;
   itemWidth: number;
 }) {
-  const touchStartXRef = useMainThreadRef<number>(0);
-  const touchStartCurrentOffsetRef = useMainThreadRef<number>(0);
-  const currentOffsetRef = useMainThreadRef<number>(0);
+  // Same touch state refs and handlers as before...
 
   function updateOffset(offset: number) {
     'main thread';
     currentOffsetRef.current = offset;
-    onOffsetUpdate(offset);
+    onOffsetUpdate(offset); // Callback replaces direct style update
   }
-
-  function handleTouchStart(e: { touches: Array<{ clientX: number }> }) {
-    'main thread';
-    touchStartXRef.current = e.touches[0].clientX;
-    touchStartCurrentOffsetRef.current = currentOffsetRef.current;
-  }
-
-  function handleTouchMove(e: { touches: Array<{ clientX: number }> }) {
-    'main thread';
-    const touchMoveX = e.touches[0].clientX;
-    const deltaX = touchMoveX - touchStartXRef.current;
-    updateOffset(touchStartCurrentOffsetRef.current + deltaX);
-  }
-
-  function handleTouchEnd() {
-    'main thread';
-    touchStartXRef.current = 0;
-    touchStartCurrentOffsetRef.current = 0;
-  }
-
-  return {
-    handleTouchStart,
-    handleTouchMove,
-    handleTouchEnd,
-  };
+  // ...
 }
 ```
 
 ### The Simplified Swiper.vue
 
-The component becomes a thin assembly layer:
+The component becomes a thin assembly layer that wires the composables together:
 
 ```vue title="Swiper/Swiper.vue"
 <script setup lang="ts">
-import SwiperItem from '../Components/SwiperItem.vue';
-import { useOffset } from './useOffset';
-import { useUpdateSwiperStyle } from './useUpdateSwiperStyle';
-
-declare const SystemInfo: { pixelWidth: number; pixelRatio: number };
-
-const props = withDefaults(
-  defineProps<{
-    data: string[];
-    itemWidth?: number;
-  }>(),
-  {
-    itemWidth: () => SystemInfo.pixelWidth / SystemInfo.pixelRatio,
-  },
-);
-
 const { containerRef, updateSwiperStyle } = useUpdateSwiperStyle();
 const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOffset({
   itemWidth: props.itemWidth,
   onOffsetUpdate: updateSwiperStyle,
 });
 </script>
-
-<template>
-  <view class="swiper-wrapper">
-    <view
-      class="swiper-container"
-      :main-thread-ref="containerRef"
-      :main-thread-bindtouchstart="handleTouchStart"
-      :main-thread-bindtouchmove="handleTouchMove"
-      :main-thread-bindtouchend="handleTouchEnd"
-    >
-      <SwiperItem
-        v-for="(pic, index) in data"
-        :key="index"
-        :pic="pic"
-        :item-width="itemWidth"
-      />
-    </view>
-  </view>
-</template>
 ```
 
 ::: info Composables with Main Thread Script
@@ -458,6 +313,13 @@ Currently, releasing a drag leaves the image at an arbitrary position. Let's add
 On release, the swiper should automatically slide to the nearest full page. This requires a `requestAnimationFrame`-based animation running on the main thread.
 
 ### useAnimate — RAF Animation Composable
+
+`useAnimate` provides an `animate(options)` function that runs a `requestAnimationFrame` loop on the main thread, interpolating from one value to another with easing. Key points:
+
+- Both `animateInner` and easing functions need the `'main thread'` directive since they run inside the RAF loop
+- `useAnimate` tracks the current animation via a `useMainThreadRef` so it can be cancelled (e.g., when the user touches during an animation)
+
+:::details Full useAnimate.ts source
 
 ```ts title="utils/useAnimate.ts"
 import { useMainThreadRef } from 'vue-lynx';
@@ -481,26 +343,15 @@ export const easings = {
 
 function animateInner(options: AnimationOptions) {
   'main thread';
-  const {
-    from,
-    to,
-    duration = 5000,
-    delay = 0,
-    easing = easings.easeInOutQuad,
-    onUpdate,
-    onComplete,
-  } = options;
-
+  const { from, to, duration = 5000, delay = 0,
+    easing = easings.easeInOutQuad, onUpdate, onComplete } = options;
   let startTs = 0;
   let rafId = 0;
 
   function tick(ts: number) {
-    const progress =
-      Math.max(Math.min(((ts - startTs - delay) * 100) / duration, 100), 0)
-      / 100;
-    const easedProgress = easing(progress);
-    const currentValue = from + (to - from) * easedProgress;
-    onUpdate?.(currentValue);
+    const progress = Math.max(Math.min(
+      ((ts - startTs - delay) * 100) / duration, 100), 0) / 100;
+    onUpdate?.(from + (to - from) * easing(progress));
   }
 
   function step(ts: number) {
@@ -514,7 +365,6 @@ function animateInner(options: AnimationOptions) {
   }
 
   rafId = requestAnimationFrame(step);
-
   return { cancel: () => cancelAnimationFrame(rafId) };
 }
 
@@ -537,73 +387,46 @@ export function useAnimate() {
 }
 ```
 
-Note: the `easing` function also needs the `'main thread'` directive because it will be called inside `animateInner` on the main thread.
+:::
 
 ### Updating useOffset — Adding Snap Logic
 
 In `handleTouchEnd`, calculate the nearest page position and start the animation:
 
-```ts title="Swiper/useOffset.ts" {5,14-15,18-21,33-43}
-import { useMainThreadRef } from 'vue-lynx';
-import { useAnimate } from '../utils/useAnimate';
+```ts title="Swiper/useOffset.ts (new parts highlighted)" {1,7-10,14-16,20-30}
+const { animate, cancel: cancelAnimate } = useAnimate();
 
-export function useOffset({
-  onOffsetUpdate,
-  itemWidth,
-  dataLength,
-}: {
-  onOffsetUpdate: (offset: number) => void;
-  itemWidth: number;
-  dataLength: number;
-}) {
-  const touchStartXRef = useMainThreadRef<number>(0);
-  const touchStartCurrentOffsetRef = useMainThreadRef<number>(0);
-  const currentOffsetRef = useMainThreadRef<number>(0);
-  // New: animation composable
-  const { animate, cancel: cancelAnimate } = useAnimate();
+function calcNearestPage(offset: number) {
+  'main thread';
+  return Math.round(offset / itemWidth) * itemWidth;
+}
 
-  // New: calculate nearest full-page offset
-  function calcNearestPage(offset: number) {
-    'main thread';
-    const nearestPage = Math.round(offset / itemWidth);
-    return nearestPage * itemWidth;
-  }
+function updateOffset(offset: number) {
+  'main thread';
+  // Clamp to bounds
+  const upperBound = -(dataLength - 1) * itemWidth;
+  const realOffset = Math.min(0, Math.max(upperBound, offset));
+  currentOffsetRef.current = realOffset;
+  onOffsetUpdate(realOffset);
+}
 
-  function updateOffset(offset: number) {
-    'main thread';
-    // New: clamp to bounds
-    const lowerBound = 0;
-    const upperBound = -(dataLength - 1) * itemWidth;
-    const realOffset = Math.min(lowerBound, Math.max(upperBound, offset));
-    currentOffsetRef.current = realOffset;
-    onOffsetUpdate(realOffset);
-  }
+function handleTouchStart(e: { touches: Array<{ clientX: number }> }) {
+  'main thread';
+  // ...
+  cancelAnimate(); // Cancel ongoing animation on touch
+}
 
-  function handleTouchStart(e: { touches: Array<{ clientX: number }> }) {
-    'main thread';
-    touchStartXRef.current = e.touches[0].clientX;
-    touchStartCurrentOffsetRef.current = currentOffsetRef.current;
-    cancelAnimate(); // New: cancel ongoing animation on touch
-  }
-
-  // handleTouchMove unchanged...
-
-  function handleTouchEnd() {
-    'main thread';
-    touchStartXRef.current = 0;
-    touchStartCurrentOffsetRef.current = 0;
-    // New: animate to nearest page on release
-    animate({
-      from: currentOffsetRef.current,
-      to: calcNearestPage(currentOffsetRef.current),
-      onUpdate: (offset: number) => {
-        'main thread';
-        updateOffset(offset);
-      },
-    });
-  }
-
-  return { handleTouchStart, handleTouchMove, handleTouchEnd };
+function handleTouchEnd() {
+  'main thread';
+  // ...
+  animate({
+    from: currentOffsetRef.current,
+    to: calcNearestPage(currentOffsetRef.current),
+    onUpdate: (offset: number) => {
+      'main thread';
+      updateOffset(offset);
+    },
+  });
 }
 ```
 
@@ -622,7 +445,7 @@ Main thread script and background thread script run in **completely separate run
 
 - `runOnBackground(fn)` — called from a main-thread function; asynchronously executes background-thread `fn`
 - `runOnMainThread(fn)` — called from the background thread; asynchronously executes main-thread function `fn`
-  :::
+:::
 
 ### Main Thread Calling Background Thread — `runOnBackground`
 
@@ -698,51 +521,22 @@ function updateIndex(index: number) {
 
 ### Adding the Indicator Component
 
-```vue title="Components/Indicator.vue"
-<script setup lang="ts">
-defineProps<{
-  total: number;
-  current: number;
-}>();
-
-const emit = defineEmits<{
-  'item-click': [index: number];
-}>();
-</script>
-
-<template>
-  <view class="indicator">
-    <view
-      v-for="(_, index) in total"
-      :key="index"
-      :class="['indicator-item', index === current ? 'active' : '']"
-      @tap="emit('item-click', index)"
-    />
-  </view>
-</template>
-```
+The `Indicator` component is straightforward — it renders a row of dots using `v-for`, highlights the active one via `:class`, and emits `item-click` on `@tap`. See `Components/Indicator.vue` in the viewer below.
 
 ### Assembling in Swiper
 
-```vue title="Swiper/Swiper.vue" {2,5,8,15-17,23-24,30-34}
-<script setup lang="ts">
-import { ref } from 'vue';
-import SwiperItem from '../Components/SwiperItem.vue';
-import Indicator from '../Components/Indicator.vue';
-import { useOffset } from './useOffset';
-import { useUpdateSwiperStyle } from './useUpdateSwiperStyle';
+The Swiper component wires everything together — `onIndexUpdate` bridges from the main thread to update the reactive `currentIndex`, and `handleItemClick` bridges the other direction:
 
+```vue title="Swiper/Swiper.vue" {1,4-6,10-11}
+<script setup lang="ts">
 const currentIndex = ref(0);
 
-const { containerRef, updateSwiperStyle } = useUpdateSwiperStyle();
 const { handleTouchStart, handleTouchMove, handleTouchEnd, updateIndex } =
   useOffset({
-    itemWidth: props.itemWidth,
-    dataLength: props.data.length,
+    // ...
     onIndexUpdate: (index: number) => {
       currentIndex.value = index; // Update reactive state on BG thread
     },
-    onOffsetUpdate: updateSwiperStyle,
   });
 
 function handleItemClick(index: number) {
@@ -750,19 +544,6 @@ function handleItemClick(index: number) {
   updateIndex(index); // BG -> MT jump animation
 }
 </script>
-
-<template>
-  <view class="swiper-wrapper">
-    <view class="swiper-container" ...>
-      <!-- SwiperItem v-for unchanged -->
-    </view>
-    <Indicator
-      :total="data.length"
-      :current="currentIndex"
-      @item-click="handleItemClick"
-    />
-  </view>
-</template>
 ```
 
 Now the indicator tracks swipe progress in real time, and tapping a dot jumps to that page. Here's the data flow:
@@ -836,57 +617,39 @@ const App = defineComponent({
 });
 ```
 
-Receive and forward in the Swiper component:
+In `Swiper.vue`, receive the prop and forward it to `useOffset`:
 
-```vue title="Swiper/Swiper.vue" {5,14}
+```vue title="Swiper/Swiper.vue" {4}
 <script setup lang="ts">
-const props = withDefaults(
-  defineProps<{
-    data: string[];
-    itemWidth?: number;
-    duration?: number;
-    'main-thread-easing'?: (t: number) => number;
-  }>(),
-  {
-    itemWidth: () => SystemInfo.pixelWidth / SystemInfo.pixelRatio,
-    duration: 300,
-  },
-);
+const props = defineProps<{
+  // ...
+  duration?: number;
+  'main-thread-easing'?: (t: number) => number;
+}>();
 
-const { handleTouchStart, handleTouchMove, handleTouchEnd, updateIndex } =
-  useOffset({
-    // ...
-    duration: props.duration,
-    MTEasing: props['main-thread-easing'],
-  });
+const { ... } = useOffset({
+  // ...
+  duration: props.duration,
+  MTEasing: props['main-thread-easing'],
+});
 </script>
 ```
 
-Use in `useOffset`:
+In `useOffset`, the main-thread `handleTouchEnd` simply references `duration` and `MTEasing` — the compiler handles the rest:
 
-```ts title="Swiper/useOffset.ts" {7,17}
-export function useOffset({
-  // ...
-  duration,
-  MTEasing,
-}: {
-  // ...
-  duration?: number;
-  MTEasing?: (t: number) => number;
-}) {
-  function handleTouchEnd() {
-    'main thread';
-    animate({
-      from: currentOffsetRef.current,
-      to: calcNearestPage(currentOffsetRef.current),
-      onUpdate: (offset: number) => {
-        'main thread';
-        updateOffset(offset);
-      },
-      duration, // BG value -> MT
-      easing: MTEasing, // MT function -> MT
-    });
-  }
+```ts title="Swiper/useOffset.ts" {6-7}
+function handleTouchEnd() {
+  'main thread';
+  animate({
+    from: currentOffsetRef.current,
+    to: calcNearestPage(currentOffsetRef.current),
+    duration, // BG value -> automatically passed to MT
+    easing: MTEasing, // MT function -> passed to MT
+    onUpdate: (offset: number) => {
+      'main thread';
+      updateOffset(offset);
+    },
+  });
 }
 ```
 
@@ -896,7 +659,18 @@ When a prop's value is a **main-thread function**, it needs the `main-thread-` p
 Without the prefix, the compiler treats it as an ordinary background-thread value and tries to serialize a function — which is not serializable, resulting in a runtime error.
 :::
 
-<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
+<Go
+  example="swiper"
+  defaultFile="src/Swiper/Swiper.vue"
+  entry="src/Swiper"
+  defaultEntryName="Swiper"
+  highlight={{
+    'src/Swiper/Swiper.vue': '{22-33,35-38,57-61}',
+    'src/Swiper/useOffset.ts': '{2,28,30-33,41-54,71-85}',
+    'src/Swiper/useUpdateSwiperStyle.ts': '{6-7}',
+    'src/Components/Indicator.vue': '{2-9,17}',
+  }}
+/>
 
 ## Summary
 

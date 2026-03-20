@@ -66,9 +66,9 @@ export default defineConfig({
         {
           sectionHeaderText: 'Tutorials',
         },
-        { text: '7GUIs Benchmark', link: '/guide/7guis' },
         { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Product Swiper', link: '/guide/tutorial-swiper' },
+        { text: '7GUIs Benchmark', link: '/guide/7guis' },
         {
           dividerType: 'solid',
         },
