@@ -53,9 +53,9 @@ See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-h
 
 ### No `document` or `window`
 
-Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Due to the dual-thread architecture, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) that account for which thread your code runs on:
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Due to the dual-thread architecture, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object, accounting for which thread your code runs on:
 
-**Global APIs** — available on both threads, same as the web:
+**[Global APIs](https://lynxjs.org/next/api/lynx-api/global.html)** — available on both threads, same as the web:
 
 | Web API | Lynx |
 |---------|------|
@@ -67,9 +67,9 @@ Lynx does not provide browser globals. Libraries that depend on `document` or `w
 | Web API | Lynx Alternative | Thread |
 |---------|-----------------|--------|
 | `document.querySelector()` | [`lynx.createSelectorQuery()`](https://lynxjs.org/next/api/lynx-api/selector-query/create-selector-query.html) | Background (async) |
-| `getBoundingClientRect()` | `NodesRef.invoke({ method: 'boundingClientRect' })` | Background (async) |
-| `getComputedStyle()` | [`element.getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html) | Main thread (sync, MTS) |
-| `addEventListener('resize')` | `main-thread-bindlayoutchange` | Main thread (sync, MTS) |
+| `getBoundingClientRect()` | [`NodesRef.invoke({ method: 'boundingClientRect' })`](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) | Background (async) |
+| `getComputedStyle()` | [`element.getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html) | [Main thread](https://lynxjs.org/next/api/lynx-api/main-thread.html) (sync, MTS) |
+| `addEventListener('resize')` | `main-thread-bindlayoutchange` | [Main thread](https://lynxjs.org/next/api/lynx-api/main-thread.html) (sync, MTS) |
 
 **Native extensions** — for capabilities beyond what the web provides:
 
@@ -80,7 +80,7 @@ Lynx does not provide browser globals. Libraries that depend on `document` or `w
 
 ## Understanding the Dual-Thread Model
 
-If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue runs on a **background thread** while native rendering happens on the **main thread** — just like offloading work to a Web Worker so the UI thread stays responsive. The difference is that in Lynx, this is the _default_ — Vue reconciliation never blocks the main thread. (See [Why dual-threaded?](https://lynxjs.org/blog/lynx-open-source.html#engineering-for-every-platform) for the design rationale.)
+If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue runs on a **background thread** while native rendering happens on the **main thread** — just like offloading work to a Web Worker so the UI thread stays responsive. The difference is that in Lynx, this is the _default_ — Vue reconciliation never blocks the main thread. (See [Use the Main Thread Responsibly for Interactivity](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity) for the design rationale.)
 
 Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-renderer) that builds a **ShadowElement** tree on the background thread. Changes are batched as **ops** and flushed to the main thread. User interactions flow back as **events**. This forms a cycle analogous to the browser event loop:
 
@@ -128,7 +128,7 @@ If your `onMounted` only sets up reactive state, timers, or data fetching, no `n
 
 #### Background thread has only async access — use Main Thread Script for synchronous needs
 
-From the background thread, native element access is always asynchronous. Template `ref` returns a `ShadowElement` (a background-thread reference to the native element), and layout queries like `getBoundingClientRect()` require an async API:
+From the background thread, native element access is always asynchronous. Template `ref` returns a `ShadowElement` (a background-thread reference to the native element), and layout queries like `getBoundingClientRect()` require an [async API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html):
 
 ```vue
 <script setup lang="ts">
@@ -148,7 +148,7 @@ onMounted(() => {
 </script>
 ```
 
-When you need synchronous access — smooth animations, gesture handling, layout measurement — use [Main Thread Script](/guide/main-thread-script). Functions marked `'main thread'` run directly on the main thread and can call [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html), listen to `main-thread-bindlayoutchange`, and access native elements via `useMainThreadRef()`:
+When you need synchronous access — smooth animations, gesture handling, layout measurement — use [Main Thread Script](/guide/main-thread-script). Functions marked `'main thread'` run directly on the main thread and can call [Main Thread APIs](https://lynxjs.org/next/api/lynx-api/main-thread.html) like [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html), listen to `main-thread-bindlayoutchange`, and access native elements via `useMainThreadRef()`:
 
 ```vue
 <script setup lang="ts">
