@@ -21,13 +21,13 @@ Plain `<style>` blocks, imported `.css` files, and [`<style module>`](https://vu
 
 :::details Feature support details
 
-| Feature | Status | Reason |
-|---------|--------|--------|
-| `<style>` (plain) | Works | Class selectors applied via CSS extraction |
-| Imported `.css` files | Works | Same extraction pipeline |
-| `<style module>` | Works | Hashed class names (e.g. `.card-k33EaR`) are plain class selectors |
-| `<style scoped>` | Not yet supported ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) | Compiles to `[data-v-xxx]` attribute selectors; Lynx CSS engine only supports class selectors |
-| `v-bind()` in `<style>` | Not yet supported ([#79](https://github.com/Huxpro/vue-lynx/issues/79)) | Requires `useCssVars` from `@vue/runtime-dom`, unavailable in vue-lynx |
+| Feature | Status |
+|---------|--------|
+| `<style>` (plain) | Works |
+| Imported `.css` files | Works |
+| `<style module>` | Works |
+| `<style scoped>` | Upcoming ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) |
+| `v-bind()` in `<style>` | Upcoming ([#79](https://github.com/Huxpro/vue-lynx/issues/79)) |
 
 For dynamic styling, use computed `:style` bindings as a workaround for `v-bind()`:
 ```vue
