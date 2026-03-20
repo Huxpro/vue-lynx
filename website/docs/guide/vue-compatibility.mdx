@@ -15,6 +15,46 @@ The example below demonstrates [`reactive()`](https://vuejs.org/api/reactivity-c
   defaultFile="src/App.vue"
 />
 
+## SFC CSS Features
+
+Vue SFCs support several CSS features in `<style>` blocks. Not all of them work on Lynx today due to CSS engine constraints.
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `<style>` (plain) | **Works** | Class selectors applied via CSS extraction |
+| Imported `.css` files | **Works** | Same extraction pipeline |
+| `<style module>` | **Works** | Hashed class names are plain class selectors |
+| `<style scoped>` | Not yet supported | See [#78](https://github.com/user/vue-lynx/issues/78) |
+| `v-bind()` in `<style>` | Not yet supported | See [#79](https://github.com/user/vue-lynx/issues/79) |
+
+**Plain `<style>`** blocks and **imported `.css` files** work out of the box — CSS is extracted by `@lynx-js/css-extract-webpack-plugin` and applied via class selectors.
+
+**`<style module>`** ([CSS Modules](https://vuejs.org/api/sfc-css-features.html#css-modules)) works because `css-loader` transforms class names to unique hashed names (e.g. `.card` → `.card-k33EaR`), which are still plain class selectors that Lynx supports. Use `:class="$style.card"` to apply them.
+
+:::warning Not yet supported
+**`<style scoped>`** does not work because Vue's scoped CSS compiles to `[data-v-xxx]` attribute selectors, which Lynx's CSS engine does not support. Tracked in [#78](https://github.com/Huxpro/vue-lynx/issues/78).
+
+**`v-bind()` in `<style>`** causes a build error because the compiled code requires `useCssVars` from `@vue/runtime-dom`, which is not available in vue-lynx's `@vue/runtime-core`-based runtime. Tracked in [#79](https://github.com/Huxpro/vue-lynx/issues/79).
+
+For **dynamic styling**, use computed `:style` bindings as a workaround:
+```vue
+<script setup>
+const color = ref('#1565c0')
+const style = computed(() => ({ color: color.value }))
+</script>
+<template>
+  <text :style="style">Dynamic color</text>
+</template>
+```
+:::
+
+The example below demonstrates each pattern and its current status:
+
+<Go
+  example="css-features"
+  defaultFile="src/App.vue"
+/>
+
 ## Component v-model
 
 Vue's `v-model` on components creates a two-way binding between parent and child. The child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`.
