@@ -21,9 +21,51 @@ We use [`create-vue-lynx`](https://npmjs.org/package/create-vue-lynx) to scaffol
 
 After completing the prompts, `create-vue-lynx` will create a folder with your project name containing a starter app.
 
-### Prepare your development environment
+### Run the dev server
 
-For **mobile** development, use **Lynx Explorer** — a sandbox app for previewing Lynx bundles on device or simulator. For **web** preview, Rspeedy's built-in dev server handles it automatically — no extra setup needed.
+1. Navigate to the created project:
+
+```bash
+cd <project-name>
+```
+
+2. Install dependencies:
+
+<PackageManagerTabs command="install" />
+
+3. Start the development server:
+
+<PackageManagerTabs command="run dev" />
+
+You should see output like this:
+
+```
+Rspeedy v0.13.5
+
+➜  Web         http://localhost:3000/main.web.bundle
+➜  Web Preview http://localhost:3000/__web_preview?casename=main.web.bundle
+➜  Lynx        http://localhost:3000/main.lynx.bundle
+```
+
+The dev server produces three URLs:
+
+- **Web Preview** — Open this in your browser for a quick preview of your app.
+- **Lynx** — The bundle URL for native rendering via Lynx Explorer (see next step).
+- **Web** — The raw web bundle (useful for integration into web containers).
+
+### Preview on the Web
+
+Open the **Web Preview** URL in your browser. You'll see a live preview of your app that updates automatically as you edit code.
+
+<Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.web.bundle" defaultTab="web" />
+
+#### Make your first change
+
+Open `src/App.vue` in your code editor and make a change. You should see the Web Preview update automatically.
+
+### Run on a native device
+
+To see your app rendered natively, use **Lynx Explorer** — a sandbox app for previewing Lynx bundles on device or simulator. Scan the QR code shown in the terminal, or copy the **Lynx** bundle URL and paste it into "Enter Card URL" in Lynx Explorer.
 
 #### iOS Simulator
 
@@ -52,52 +94,19 @@ For **mobile** development, use **Lynx Explorer** — a sandbox app for previewi
 Download the pre-built APK from [GitHub Releases](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-noasan-release.apk) and install on your device.
 
 :::info Community downloads
+
 Lynx Explorer is also available on the [App Store](https://apps.apple.com/us/app/lynx-go-dev-explorer/id6743227790) and [Play Store](https://play.google.com/store/apps/details?id=com.funcs.io.lynx.go), published by community contributors. These versions are not maintained by the Lynx team.
+
 :::
 
 :::details Build from source
 
 If the pre-built binaries don't work for your environment, you can build Lynx Explorer from source:
+
 - [Build for iOS](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios)
 - [Build for Android](https://github.com/lynx-family/lynx/tree/develop/explorer/android)
 
 :::
-
-### Start developing
-
-1. Navigate to the created project:
-
-```bash
-cd <project-name>
-```
-
-2. Install dependencies:
-
-<PackageManagerTabs command="install" />
-
-3. Start the development server:
-
-<PackageManagerTabs command="run dev" />
-
-You should see output like this:
-
-```
-Rspeedy v0.13.5
-
-➜  Web         http://localhost:3000/main.web.bundle
-➜  Web Preview http://localhost:3000/__web_preview?casename=main.web.bundle
-➜  Lynx        http://localhost:3000/main.lynx.bundle
-```
-
-Rspeedy produces three URLs:
-
-- **Web Preview** — Open this in your browser for a quick preview of your app.
-- **Lynx** — This is the bundle URL for Lynx Explorer. Scan the QR code in the terminal, or copy the URL and paste it into "Enter Card URL" in Lynx Explorer.
-- **Web** — The raw web bundle (useful for integration into web containers).
-
-#### Make your first change
-
-Open `src/App.vue` in your code editor and make a change. You should see the UI update automatically — both in Lynx Explorer and in the browser preview.
 
 ### Debugging
 
@@ -107,10 +116,10 @@ Download the [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases
 
 ## Going to Production
 
-Lynx Explorer is great for development, but for production you'll want to integrate Lynx into a real native app.
+The Vue Lynx project you created is a **frontend** project — it produces JavaScript bundles that a Lynx-enabled native app loads and renders. Lynx Explorer is a pre-built native app for development, but for production you'll need your own native app.
 
-- **Integrate into an existing app** — Follow the [Lynx integration guide](https://lynxjs.org/guide/start/integrate-with-existing-apps) to embed Lynx views into your iOS, Android, or Web application.
-- **Create a new native app** — Use [Sparkling](https://tiktok.github.io/sparkling) (TikTok's cross-platform Lynx infrastructure) or [Lynx CLI](https://github.com/lynx-community/cli) (community) to scaffold a full native app with Lynx built in.
+- **Create a new native app** (greenfield) — Use [Lynx CLI](https://github.com/lynx-community/cli) (community) or [Sparkling](https://tiktok.github.io/sparkling) to scaffold a native app project (Xcode / Android Studio) with Lynx built in. This is similar to creating a React Native app — the result is a native app that runs your Lynx bundles.
+- **Integrate into an existing app** (brownfield) — Follow the [Lynx integration guide](https://lynxjs.org/guide/start/integrate-with-existing-apps) to embed Lynx views into your existing iOS, Android, or Web application.
 
 ## Next Steps
 
