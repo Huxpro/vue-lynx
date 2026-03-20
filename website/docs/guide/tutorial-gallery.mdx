@@ -320,6 +320,7 @@ export const calculateEstimatedSize = (
   return (itemWidth / pictureWidth) * pictureHeight;
 };
 ```
+
 :::
 
 At this point, we have a complete page! But you may have noticed that the scrollbar we added still lags a bit during scrolling, not as responsive as it could be. This is because our adjustments are still happening on the background thread, not the main thread that responds to touch scrolling.
