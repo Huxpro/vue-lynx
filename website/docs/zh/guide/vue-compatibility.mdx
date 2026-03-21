@@ -1,0 +1,149 @@
+# Vue 特性兼容性
+
+:::tip
+本页逐一介绍 Vue 核心特性在 Lynx 上的支持情况。关于 Vue Lynx 双线程架构的心智模型，请阅读[理解双线程模型](/zh/guide/introduction#understanding-the-dual-thread-model)。
+:::
+
+由于 Vue Lynx 构建在官方 Vue 3 运行时核心之上，它的目标是开箱即用地支持完整的 Vue 3 API。核心渲染路径——组合式 API、单文件组件、响应式系统、模板指令——与标准 Vue 的使用方式完全一致。
+
+但 Vue 的 API 范围很广，我们还没有时间逐一验证每个细节。下面列出了我们已确认在 Lynx 上可以顺利运行的关键 Vue 特性——大多数无需对标准 Vue 代码做任何适配。如果存在 Lynx 特有的注意事项，会在对应位置标注。
+
+## 响应式系统 + 组合式函数
+
+Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个响应式 API 的行为与标准 Vue 完全一致，没有任何 Lynx 特有的注意事项或适配。
+
+下面的示例展示了 [`reactive()`](https://vuejs.org/api/reactivity-core.html#reactive) + [`toRefs()`](https://vuejs.org/api/reactivity-utilities.html#torefs)，以及一个封装了响应式状态的 `useStopwatch()` 组合式函数：
+
+<Go
+  example="reactivity"
+  defaultFile="src/App.vue"
+/>
+
+## SFC CSS 特性
+
+普通 `<style>` 块、导入的 `.css` 文件和 [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules) 都可以在 Lynx 上使用。`<style scoped>` 和 CSS 中的 `v-bind()` 尚未支持——如果你需要这些特性，请在 [#78](https://github.com/Huxpro/vue-lynx/issues/78) 和 [#79](https://github.com/Huxpro/vue-lynx/issues/79) 上投票。
+
+:::details 特性支持详情
+
+| 特性 | 状态 |
+|---------|--------|
+| `<style>`（普通） | 可用 |
+| 导入 `.css` 文件 | 可用 |
+| `<style module>` | 可用 |
+| `<style scoped>` | 即将支持（[#78](https://github.com/Huxpro/vue-lynx/issues/78)） |
+| `<style>` 中的 `v-bind()` | 即将支持（[#79](https://github.com/Huxpro/vue-lynx/issues/79)） |
+
+对于动态样式，可以使用计算属性 `:style` 绑定作为 `v-bind()` 的替代方案：
+```vue
+<script setup>
+const color = ref('#1565c0')
+const style = computed(() => ({ color: color.value }))
+</script>
+<template>
+  <text :style="style">Dynamic color</text>
+</template>
+```
+:::
+
+<Go
+  example="css-features"
+  defaultFile="src/App.vue"
+/>
+
+## 组件 v-model
+
+Vue 的 `v-model` 可以在父子组件之间创建双向绑定。子组件使用 [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel)（Vue 3.4+）声明模型 prop，父组件通过 `v-model` 进行绑定。
+
+该示例展示了：
+1. **默认模型** — `defineModel<number>()` 配合 `v-model="count"` 实现计数器
+2. **命名模型** — `defineModel('title')` + `defineModel('body')` 配合 `v-model:title` / `v-model:body`
+3. **手动输入绑定** — 原生 `<input>` 的替代方案（见下方注意事项）
+
+:::warning 注意事项
+**原生 `<input>` 元素**上的 `v-model` 尚未支持。Lynx 输入框使用同步的主线程 API（`getValue()` / `setValue()`），这些 API 在 Vue 运行的后台线程中无法访问。请改用 `:value` + `@input` 手动绑定：
+```vue
+<input :value="text" @input="(e) => text = e.detail.value" />
+```
+:::
+
+<Go
+  example="v-model"
+  defaultFile="src/App.vue"
+/>
+
+## 插槽
+
+Vue [插槽](https://vuejs.org/guide/components/slots.html)是将模板内容传递给子组件的主要组合机制。Vue Lynx 支持默认插槽、具名插槽和作用域插槽。
+
+下面的示例展示了这三种模式：
+1. **默认插槽** — 将内容投射到 `<Card>` 组件中
+2. **具名插槽** — `#header` 和 `#footer`，带有后备内容
+3. **作用域插槽** — `<DataList>` 将每个项暴露给父组件进行自定义渲染
+
+<Go
+  example="slots"
+  defaultFile="src/App.vue"
+/>
+
+## Provide / Inject
+
+Vue 的 [`provide`](https://vuejs.org/guide/components/provide-inject.html) 和 `inject` API 允许祖先组件作为其所有后代组件的依赖注入器，无论组件层级有多深。这避免了通过中间组件层层传递 props。
+
+下面的示例在根组件中提供了一个响应式的 `theme` ref 和一个静态的 `appName` 字符串。一个孙子组件注入了这两个值——中间层不需要向下传递任何内容。
+
+<Go
+  example="provide-inject"
+  defaultFile="src/App.vue"
+/>
+
+## Suspense
+
+Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于懒加载的 `defineAsyncComponent`。
+
+<Go
+  example="suspense"
+  defaultFile="src/App.vue"
+  defaultEntryName="main"
+/>
+
+## Transition
+
+Vue 的 `<Transition>` 和 `<TransitionGroup>` 组件在元素插入或移除时应用进入/离开动画。
+
+:::warning
+`<Transition>` 和 `<TransitionGroup>` 是**实验性的**。请始终传递显式的 `:duration` prop——因为后台线程无法使用 `getComputedStyle()`。`<TransitionGroup>` 中的移动（FLIP）动画不受支持，因为 `getBoundingClientRect()` 不可用。
+:::
+
+<Go
+  example="transition"
+  defaultFile="src/App.vue"
+  defaultEntryFile="dist/transition.lynx.bundle"
+/>
+
+## 选项式 API
+
+Vue 3 在组合式 API 之外还提供了选项式 API 以保持向后兼容。
+默认情况下，Vue Lynx 启用了选项式 API（插件中的 `optionsApi: true`），但你可以禁用它以减小包体积：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  optionsApi: false, // 移除选项式 API 运行时（约 9 kB）
+})
+```
+
+下面的示例使用 `defineComponent` 配合 `data()`、`computed`、`watch`、`methods` 和 `mounted` 生命周期钩子：
+
+<Go
+  example="option-api"
+  defaultFile="src/App.vue"
+/>
+
+## 不支持的特性
+
+部分 Vue 内置特性尚未适配双线程原生环境：
+
+| 特性 | 原因 | 替代方案 |
+|---------|--------|-------------|
+| `<KeepAlive>` | 需要一个内部存储容器（`createElement('div')`），在原生环境中没有对应实现 | 手动缓存状态 |
+| `<Teleport>` | 需要 `querySelector` 来解析字符串目标，在双线程架构中不可用 | 在目标位置使用条件渲染 |
+| `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
