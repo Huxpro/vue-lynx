@@ -105,17 +105,20 @@ export const Features: React.FC = () => {
             <div className={styles['desc']}>{item.desc[lang]}</div>
             {item.actions?.length > 0&& (
               <div className={styles['action-frame']}>
-                {item.actions.map((action, i) => (
-                  <a
-                    key={i}
-                    className={styles['action-btn']}
-                    href={action.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {action.text}
-                  </a>
-                ))}
+                {item.actions.map((action, i) => {
+                  const href = action.link.startsWith('/') ? `${lang === 'zh' ? '/zh' : ''}${action.link}` : action.link;
+                  return (
+                    <a
+                      key={i}
+                      className={styles['action-btn']}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {action.text}
+                    </a>
+                  );
+                })}
               </div>
             )}
             {item.illustration && <FeatureIllustration />}
