@@ -22,7 +22,7 @@
       provide screenWidth/screenHeight props to customize
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, onMounted, useMainThreadRef, runOnMainThread } from 'vue-lynx';
 
 export type FloatingBubbleAxis = 'x' | 'y' | 'xy' | 'lock';
 export type FloatingBubbleMagnetic = 'x' | 'y' | '';
@@ -92,7 +92,42 @@ const posY = ref(
 );
 
 const dragging = ref(false);
-const initialized = ref(false);
+
+// Main-thread animation for snap and appear
+const bubbleRef = useMainThreadRef(null);
+
+function _bounceIn(duration: number) {
+  'main thread';
+  if (typeof (bubbleRef as any).current?.animate === 'function') {
+    (bubbleRef as any).current.animate(
+      [
+        { transform: 'scale(0)', opacity: 0 },
+        { transform: 'scale(1.1)', opacity: 1, offset: 0.6 },
+        { transform: 'scale(0.95)', opacity: 1, offset: 0.8 },
+        { transform: 'scale(1)', opacity: 1 },
+      ],
+      { duration, fill: 'forwards', easing: 'ease-out' },
+    );
+  }
+}
+
+function _snapTo(fromLeft: number, fromTop: number, toLeft: number, toTop: number, duration: number) {
+  'main thread';
+  if (typeof (bubbleRef as any).current?.animate === 'function') {
+    (bubbleRef as any).current.animate(
+      [
+        { left: `${fromLeft}px`, top: `${fromTop}px` },
+        { left: `${toLeft}px`, top: `${toTop}px` },
+      ],
+      { duration, fill: 'forwards', easing: 'ease-out' },
+    );
+  }
+}
+
+// Bounce-in animation on first appear
+onMounted(() => {
+  runOnMainThread(_bounceIn)(200);
+});
 
 // Tap detection: if drag distance < TAP_OFFSET, it's a tap, not a drag
 const TAP_OFFSET = 5;
@@ -148,6 +183,9 @@ function onTouchMove(e: any) {
 function onTouchEnd() {
   dragging.value = false;
 
+  const fromX = posX.value;
+  const fromY = posY.value;
+
   // Apply magnetic snapping
   if (props.magnetic === 'x') {
     posX.value = closest(
@@ -162,6 +200,11 @@ function onTouchEnd() {
     );
   }
 
+  // Animate snap with element.animate()
+  if (posX.value !== fromX || posY.value !== fromY) {
+    runOnMainThread(_snapTo)(fromX, fromY, posX.value, posY.value, 300);
+  }
+
   if (isTap) {
     emit('click');
   } else {
@@ -172,9 +215,6 @@ function onTouchEnd() {
     }
   }
 
-  if (!initialized.value) {
-    initialized.value = true;
-  }
 }
 
 // Watch for external offset changes
@@ -201,9 +241,6 @@ const bubbleStyle = computed(() => ({
   alignItems: 'center' as const,
   justifyContent: 'center' as const,
   zIndex: 999,
-  transitionProperty: dragging.value ? 'none' : 'left, top',
-  transitionDuration: dragging.value ? '0s' : '0.3s',
-  transitionTimingFunction: 'ease-out',
 }));
 
 defineExpose({
@@ -214,6 +251,7 @@ defineExpose({
 
 <template>
   <view
+    :main-thread-ref="bubbleRef"
     :style="bubbleStyle"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"

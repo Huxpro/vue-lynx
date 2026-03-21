@@ -4,22 +4,22 @@
     confirmButtonText, cancelButtonText, overlay)
   - Events: 4/4 (update:show, confirm, cancel, open/close)
   - Slots: 3/4 (default [message], title, footer; missing: none critical)
-  - Sub-components: Overlay ✅
+  - Sub-components: Overlay
+  - Animation: Zoom in/out (scale 0.9→1 + opacity) using main-thread element.animate()
   - Gaps:
     - No width prop
     - No theme prop (round-button)
     - No messageAlign prop
-    - No closeOnClickOverlay prop
     - No closeOnPopstate prop
     - No allowHtml prop
     - No beforeClose interceptor
     - No confirmButtonColor/cancelButtonColor props
-    - No transition animation
     - No programmatic API (showDialog/showConfirmDialog)
 -->
 <script setup lang="ts">
-import { watch } from 'vue-lynx';
+import { ref, watch } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
+import { useAnimate } from '../../composables/useAnimate';
 
 export interface DialogProps {
   show?: boolean;
@@ -33,6 +33,7 @@ export interface DialogProps {
   cancelButtonColor?: string;
   overlay?: boolean;
   closeOnClickOverlay?: boolean;
+  duration?: number | string;
 }
 
 const props = withDefaults(defineProps<DialogProps>(), {
@@ -47,6 +48,7 @@ const props = withDefaults(defineProps<DialogProps>(), {
   cancelButtonColor: '#646566',
   overlay: true,
   closeOnClickOverlay: false,
+  duration: 0.3,
 });
 
 const emit = defineEmits<{
@@ -57,13 +59,24 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+// Animation
+const { elRef: dialogRef, zoomIn, zoomOut } = useAnimate();
+const isVisible = ref(false);
+
 watch(
   () => props.show,
   (val) => {
+    const ms = Number(props.duration) * 1000;
     if (val) {
+      isVisible.value = true;
       emit('open');
-    } else {
+      zoomIn(ms, true);
+    } else if (isVisible.value) {
       emit('close');
+      zoomOut(ms, true);
+      setTimeout(() => {
+        isVisible.value = false;
+      }, ms);
     }
   },
 );
@@ -86,11 +99,12 @@ function onClickOverlay() {
 </script>
 
 <template>
-  <template v-if="show">
-    <Overlay v-if="overlay" :show="true" :z-index="2000" @click="onClickOverlay" />
+  <template v-if="isVisible">
+    <Overlay v-if="overlay" :show="show" :z-index="2000" :duration="duration" @click="onClickOverlay" />
 
     <!-- Dialog box -->
     <view
+      :main-thread-ref="dialogRef"
       :style="{
         position: 'fixed',
         top: '50%',

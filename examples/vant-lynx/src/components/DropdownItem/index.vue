@@ -23,6 +23,7 @@ let _itemCounter = 0;
 <script setup lang="ts">
 import { computed, inject, ref, watch, onBeforeUnmount, useSlots, type Ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import { useAnimate } from '../../composables/useAnimate';
 
 // Inline type to avoid cross-SFC type import issues
 interface DropdownMenuProvide {
@@ -79,6 +80,10 @@ const menu = inject<DropdownMenuProvide>('dropdownMenu')!;
 // Each instance gets a stable unique index assigned at setup time
 const selfIndex = ref<number>(_itemCounter++);
 
+// Animation
+const ANIM_DURATION = 200;
+const { elRef: dropdownRef, slideIn, slideOut } = useAnimate();
+
 // Reactive state matching Vant's internal state
 const showPopup = ref(false);
 const showWrapper = ref(false);
@@ -91,16 +96,19 @@ watch(isOpen, (val) => {
     showPopup.value = true;
     showWrapper.value = true;
     emit('open');
-    // Emit opened after a tick to simulate transition end
-    setTimeout(() => emit('opened'), 50);
+    // Slide in based on direction
+    const dir = (menu.props.direction || 'down') === 'down' ? 'down' : 'up';
+    slideIn(dir, ANIM_DURATION);
+    setTimeout(() => emit('opened'), ANIM_DURATION);
   } else if (showPopup.value) {
     showPopup.value = false;
     emit('close');
-    // Emit closed after a tick to simulate transition end
+    const dir = (menu.props.direction || 'down') === 'down' ? 'down' : 'up';
+    slideOut(dir, ANIM_DURATION);
     setTimeout(() => {
       showWrapper.value = false;
       emit('closed');
-    }, 50);
+    }, ANIM_DURATION);
   }
 });
 
@@ -246,7 +254,7 @@ onBeforeUnmount(() => {
   <view :style="overlayStyle" @tap="onOverlayTap" />
 
   <!-- Dropdown list -->
-  <view :style="dropdownStyle">
+  <view :main-thread-ref="dropdownRef" :style="dropdownStyle">
     <view
       v-for="option in options"
       :key="String(option.value)"

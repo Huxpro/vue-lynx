@@ -21,7 +21,7 @@
       equivalent for synchronous measurement; leftWidth/rightWidth must be provided as props)
 -->
 <script setup lang="ts">
-import { ref, computed } from 'vue-lynx';
+import { ref, computed, useMainThreadRef, runOnMainThread } from 'vue-lynx';
 
 export interface SwipeCellProps {
   name?: string | number;
@@ -48,6 +48,26 @@ const emit = defineEmits<{
   close: [params: { name: string | number; position: 'left' | 'right' | 'cell' | 'outside' }];
   click: [position: 'left' | 'right' | 'cell' | 'outside'];
 }>();
+
+// Main-thread animation for snap
+const wrapperRef = useMainThreadRef(null);
+
+function _snapTranslate(fromX: number, toX: number, duration: number) {
+  'main thread';
+  if (typeof (wrapperRef as any).current?.animate === 'function') {
+    (wrapperRef as any).current.animate(
+      [
+        { transform: `translateX(${fromX}px)` },
+        { transform: `translateX(${toX}px)` },
+      ],
+      {
+        duration,
+        fill: 'forwards',
+        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      },
+    );
+  }
+}
 
 // State
 const offset = ref(0);
@@ -132,7 +152,13 @@ function toggle(side: 'left' | 'right') {
 }
 
 function open(side: 'left' | 'right') {
+  const fromOffset = offset.value;
   offset.value = side === 'left' ? props.leftWidth : -props.rightWidth;
+
+  // Animate snap to open position
+  if (fromOffset !== offset.value) {
+    runOnMainThread(_snapTranslate)(fromOffset, offset.value, 300);
+  }
 
   if (!opened.value) {
     opened.value = true;
@@ -141,7 +167,13 @@ function open(side: 'left' | 'right') {
 }
 
 function close(position: 'left' | 'right' | 'cell' | 'outside' = 'outside') {
+  const fromOffset = offset.value;
   offset.value = 0;
+
+  // Animate snap to closed position
+  if (fromOffset !== 0) {
+    runOnMainThread(_snapTranslate)(fromOffset, 0, 300);
+  }
 
   if (opened.value) {
     opened.value = false;
@@ -188,8 +220,6 @@ const wrapperStyle = computed(() => ({
   display: 'flex' as const,
   flexDirection: 'row' as const,
   transform: `translateX(${offset.value}px)`,
-  transitionDuration: dragging.value ? '0s' : '0.6s',
-  transitionProperty: 'transform',
 }));
 
 // Expose open/close methods
@@ -205,7 +235,7 @@ defineExpose({ open, close });
     @touchcancel="onTouchEnd"
     @tap="getClickHandler('cell')()"
   >
-    <view :style="wrapperStyle">
+    <view :main-thread-ref="wrapperRef" :style="wrapperStyle">
       <view
         v-if="leftWidth"
         :style="{

@@ -1,0 +1,242 @@
+{
+  "title": "Vant-Lynx API Polish",
+  "description": "Fill in missing props, events, and slots to achieve better Vant API parity. Focus on features that ARE implementable in Lynx (skip platform-impossible ones like teleport, lockScroll, etc.).",
+  "context": {
+    "skipList": ["teleport", "lockScroll", "closeOnPopstate", "lazyRender (already handled)", "CSS variables", "route/url props"],
+    "vantDocs": "https://vant-ui.github.io/vant/#/en-US/",
+    "implementationPattern": "Check Vant source for exact prop types and behaviors. Match API signatures exactly."
+  },
+  "userStories": [
+    {
+      "id": "pickergroup-toolbar",
+      "title": "PickerGroup toolbar and events",
+      "description": "Add toolbar with confirm/cancel buttons and missing props/events to PickerGroup.",
+      "requirements": [
+        "Add showToolbar prop (default true)",
+        "Add confirmButtonText, cancelButtonText props",
+        "Add nextStepText prop for multi-step flows",
+        "Add v-model:activeTab support",
+        "Add confirm, cancel events",
+        "Add toolbar, title, confirm, cancel slots"
+      ],
+      "files": ["examples/vant-lynx/src/components/PickerGroup/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 95,
+      "passes": false
+    },
+    {
+      "id": "timepicker-complete",
+      "title": "TimePicker filter/formatter and slots",
+      "description": "Add missing filter, formatter props and slots to TimePicker.",
+      "requirements": [
+        "Add filter prop: (type: string, values: string[]) => string[]",
+        "Add formatter prop: (type: string, value: string) => string",
+        "Add visibleOptionNum prop",
+        "Add toolbar, title, confirm, cancel, option slots",
+        "Add columns-top, columns-bottom slots"
+      ],
+      "files": ["examples/vant-lynx/src/components/TimePicker/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 90,
+      "passes": false
+    },
+    {
+      "id": "datepicker-complete",
+      "title": "DatePicker filter/formatter and slots",
+      "description": "Add missing filter, formatter props and slots to DatePicker (same pattern as TimePicker).",
+      "requirements": [
+        "Add filter prop",
+        "Add formatter prop",
+        "Add visibleOptionNum prop",
+        "Add toolbar, title, confirm, cancel, option slots"
+      ],
+      "files": ["examples/vant-lynx/src/components/DatePicker/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 89,
+      "passes": false
+    },
+    {
+      "id": "calendar-popup",
+      "title": "Calendar popup mode integration",
+      "description": "Add Popup integration for Calendar poppable mode.",
+      "requirements": [
+        "Add show prop with v-model support",
+        "Add round, position props",
+        "Wrap in Popup when poppable=true",
+        "Add update:show, clickOverlay, open, close, opened, closed events",
+        "Add title, subtitle, footer slots"
+      ],
+      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 88,
+      "passes": false
+    },
+    {
+      "id": "calendar-formatter",
+      "title": "Calendar day formatter",
+      "description": "Add formatter prop for custom day rendering in Calendar.",
+      "requirements": [
+        "Add formatter prop: (day: Day) => Day",
+        "Day type: { date, type, text, topInfo, bottomInfo, className }",
+        "Apply formatter to each day cell",
+        "Support custom topInfo/bottomInfo rendering"
+      ],
+      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 85,
+      "passes": false
+    },
+    {
+      "id": "actionsheet-close",
+      "title": "ActionSheet closeable and safeArea",
+      "description": "Add closeable icon and safe area props to ActionSheet.",
+      "requirements": [
+        "Add closeable prop",
+        "Add closeIcon prop (default 'cross')",
+        "Add safeAreaInsetBottom prop",
+        "Render close icon when closeable=true",
+        "Add bottom padding for safe area"
+      ],
+      "files": ["examples/vant-lynx/src/components/ActionSheet/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 82,
+      "passes": false
+    },
+    {
+      "id": "form-auto-required",
+      "title": "Form auto-required detection",
+      "description": "Add required='auto' mode that auto-detects from field rules.",
+      "requirements": [
+        "Add required prop with 'auto' | boolean values",
+        "When 'auto', check if field has 'required' rule",
+        "Show asterisk on label when required",
+        "Update scrollToError to use element refs"
+      ],
+      "files": ["examples/vant-lynx/src/components/Form/index.vue", "examples/vant-lynx/src/components/Field/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 80,
+      "passes": false
+    },
+    {
+      "id": "treeselect-badge",
+      "title": "TreeSelect nav item badges",
+      "description": "Add dot/badge rendering support for TreeSelect nav items.",
+      "requirements": [
+        "Support badge property on nav items",
+        "Support dot property on nav items",
+        "Render Badge component on nav items when badge/dot set",
+        "Match Vant's TreeSelectItem type"
+      ],
+      "files": ["examples/vant-lynx/src/components/TreeSelect/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 78,
+      "passes": false
+    },
+    {
+      "id": "couponlist-complete",
+      "title": "CouponList missing props",
+      "description": "Add code prop v-model and missing UI props to CouponList.",
+      "requirements": [
+        "Add code prop with v-model support (input value)",
+        "Add emptyImage prop",
+        "Add closeButtonText prop",
+        "Add inputPlaceholder prop",
+        "Add displayedCouponIndex prop",
+        "Add update:code event"
+      ],
+      "files": ["examples/vant-lynx/src/components/CouponList/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 75,
+      "passes": false
+    },
+    {
+      "id": "pagination-slot",
+      "title": "Pagination pageDesc slot",
+      "description": "Add pageDesc slot to Pagination.",
+      "requirements": [
+        "Add pageDesc slot",
+        "Slot receives { current, total } props",
+        "Default: '{current}/{total}' text"
+      ],
+      "files": ["examples/vant-lynx/src/components/Pagination/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 70,
+      "passes": false
+    },
+    {
+      "id": "rate-iconprefix",
+      "title": "Rate iconPrefix support",
+      "description": "Add iconPrefix support to Rate component.",
+      "requirements": [
+        "Add iconPrefix prop",
+        "Use Icon component with iconPrefix when provided",
+        "Fall back to Unicode stars when no iconPrefix"
+      ],
+      "files": ["examples/vant-lynx/src/components/Rate/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 68,
+      "passes": false
+    },
+    {
+      "id": "uploader-callbacks",
+      "title": "Uploader callback props",
+      "description": "Add afterRead, beforeRead, beforeDelete callback props.",
+      "requirements": [
+        "Add afterRead prop: (file, detail) => void",
+        "Add beforeRead prop: (file, detail) => boolean | Promise<boolean>",
+        "Add beforeDelete prop: (file, detail) => boolean | Promise<boolean>",
+        "Call beforeRead before adding file",
+        "Call afterRead after file added",
+        "Call beforeDelete before removing file"
+      ],
+      "files": ["examples/vant-lynx/src/components/Uploader/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 65,
+      "passes": false
+    },
+    {
+      "id": "tabs-animated",
+      "title": "Tabs animated transition",
+      "description": "Add animated prop for tab content transition (now possible with Transition).",
+      "requirements": [
+        "Add animated prop (default false)",
+        "When animated, use Transition for content swap",
+        "Slide content based on direction (left/right)",
+        "Add swipeThreshold prop for swipe gesture sensitivity"
+      ],
+      "files": ["examples/vant-lynx/src/components/Tabs/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 60,
+      "passes": false
+    },
+    {
+      "id": "picker-methods",
+      "title": "Picker expose methods",
+      "description": "Expose Picker instance methods via ref.",
+      "requirements": [
+        "Expose confirm() method",
+        "Expose getSelectedOptions() method",
+        "Use defineExpose to expose methods",
+        "Document method signatures"
+      ],
+      "files": ["examples/vant-lynx/src/components/Picker/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 55,
+      "passes": false
+    },
+    {
+      "id": "dialog-methods",
+      "title": "Dialog expose methods",
+      "description": "Expose Dialog instance methods via ref.",
+      "requirements": [
+        "Expose open() method",
+        "Expose close() method",
+        "Use defineExpose to expose methods"
+      ],
+      "files": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 54,
+      "passes": false
+    }
+  ]
+}

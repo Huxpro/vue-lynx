@@ -64,6 +64,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, useSlots } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import { useAnimate } from '../../composables/useAnimate';
 
 export interface ImagePreviewProps {
   show?: boolean;
@@ -105,6 +106,10 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 
+const ANIM_DURATION = 300;
+const { elRef: previewRef, fadeIn, fadeOut } = useAnimate();
+const isVisible = ref(false);
+
 const currentIndex = ref(props.startPosition);
 
 watch(
@@ -119,6 +124,13 @@ watch(
   (val) => {
     if (val) {
       currentIndex.value = props.startPosition;
+      isVisible.value = true;
+      fadeIn(ANIM_DURATION);
+    } else if (isVisible.value) {
+      fadeOut(ANIM_DURATION);
+      setTimeout(() => {
+        isVisible.value = false;
+      }, ANIM_DURATION);
     }
   },
 );
@@ -217,7 +229,8 @@ const indicatorStyle = computed(() => (index: number) => ({
 
 <template>
   <view
-    v-if="show"
+    v-if="isVisible"
+    :main-thread-ref="previewRef"
     :style="{
       position: 'fixed',
       top: 0,
