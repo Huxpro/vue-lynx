@@ -1,8 +1,7 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 8/11 supported (text, icon, iconPrefix, iconColor, dot, badge, badgeProps, clickable override via parent)
-    - Missing: to, url, replace (Vue Router / browser navigation not applicable in Lynx)
-  - Events: 1/1 supported (click — always emitted, not gated by clickable)
+  - Props: 11/11 supported (text, icon, iconPrefix, iconColor, dot, badge, badgeProps, url, to, replace)
+  - Events: 1/1 supported (click)
   - Slots: 3/3 supported (default, icon, text)
   - Badge integration: Uses shared Icon component with dot/badge/badgeProps (matches Vant)
   - Icon integration: Uses shared Icon component with iconColor, iconPrefix support (matches Vant)
@@ -39,6 +38,12 @@ export interface GridItemProps {
   badge?: string | number;
   /** Extra props for the Badge component on the icon */
   badgeProps?: Partial<BadgeProps>;
+  /** Navigation URL (API compat, not functional in Lynx) */
+  url?: string;
+  /** Vue Router target (API compat, not functional in Lynx) */
+  to?: string | Record<string, any>;
+  /** Replace history (API compat, not functional in Lynx) */
+  replace?: boolean;
 }
 
 const props = withDefaults(defineProps<GridItemProps>(), {
