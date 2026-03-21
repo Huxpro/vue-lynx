@@ -1,33 +1,35 @@
 <!--
   Vant Feature Parity Report -- Calendar
   ======================================
-  Props: 17/26 supported
+  Props: 22/26 supported
     Supported: type, switchMode, title, color, minDate, maxDate, defaultDate,
                rowHeight, poppable, showMark, showTitle, showSubtitle,
                showConfirm, readonly, firstDayOfWeek, confirmText,
-               confirmDisabledText, allowSameDay
-    Missing:   show, round, maxRange, position, teleport, formatter,
-               rangePrompt, lazyRender, showRangePrompt, closeOnPopstate,
-               closeOnClickOverlay, safeAreaInsetTop, safeAreaInsetBottom
+               confirmDisabledText, allowSameDay, show, round, position, formatter
+    Missing:   maxRange, teleport, rangePrompt, lazyRender, showRangePrompt,
+               closeOnPopstate, safeAreaInsetTop, safeAreaInsetBottom
 
-  Events: 6/11 supported
-    Supported: select, confirm, open, close, click-disabled-date, unselect
-    Missing:   monthShow, overRange, update:show, clickSubtitle,
-               clickOverlay, panelChange
+  Events: 9/11 supported
+    Supported: select, confirm, open, close, opened, closed, click-disabled-date,
+               unselect, update:show, clickOverlay
+    Missing:   monthShow, overRange, panelChange
 
-  Slots: 0/3 supported
-    Missing: title, subtitle, footer
-
-  Key Gaps:
-    - No Popup integration (poppable mode renders inline only)
-    - No formatter prop for custom day rendering
-    - No maxRange / rangePrompt enforcement
-    - No scrollToDate / reset exposed methods
-    - No subtitle slot or clickSubtitle event
+  Slots: 3/3 supported
+    Supported: title, subtitle, footer
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import Popup from '../Popup/index.vue';
+
+export interface CalendarDay {
+  date: Date;
+  type: 'selected' | 'start' | 'end' | 'start-end' | 'middle' | 'disabled' | 'normal' | 'today';
+  text: string | number;
+  topInfo?: string;
+  bottomInfo?: string;
+  className?: string;
+}
 
 export interface CalendarProps {
   type?: 'single' | 'range' | 'multiple';
@@ -48,6 +50,10 @@ export interface CalendarProps {
   confirmText?: string;
   confirmDisabledText?: string;
   allowSameDay?: boolean;
+  show?: boolean;
+  round?: boolean;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+  formatter?: (day: CalendarDay) => CalendarDay;
 }
 
 const props = withDefaults(defineProps<CalendarProps>(), {
@@ -66,6 +72,9 @@ const props = withDefaults(defineProps<CalendarProps>(), {
   confirmText: 'Confirm',
   confirmDisabledText: 'Confirm',
   allowSameDay: false,
+  show: false,
+  round: true,
+  position: 'bottom',
 });
 
 const emit = defineEmits<{
@@ -73,6 +82,10 @@ const emit = defineEmits<{
   confirm: [date: Date | Date[]];
   open: [];
   close: [];
+  opened: [];
+  closed: [];
+  'update:show': [value: boolean];
+  clickOverlay: [];
   'click-disabled-date': [date: Date];
   unselect: [date: Date];
 }>();
@@ -121,32 +134,6 @@ const monthTitle = computed(() => {
   return `${monthNames[currentMonth.value]} ${currentYear.value}`;
 });
 
-const calendarDays = computed(() => {
-  const year = currentYear.value;
-  const month = currentMonth.value;
-  const firstDayRaw = new Date(year, month, 1).getDay();
-  const firstDay = (firstDayRaw - props.firstDayOfWeek + 7) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const days: Array<{ day: number; date: Date | null; isCurrentMonth: boolean }> = [];
-
-  // Fill leading empty slots
-  for (let i = 0; i < firstDay; i++) {
-    days.push({ day: 0, date: null, isCurrentMonth: false });
-  }
-
-  // Fill actual days
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push({
-      day: d,
-      date: new Date(year, month, d),
-      isCurrentMonth: true,
-    });
-  }
-
-  return days;
-});
-
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -183,6 +170,68 @@ function isInRange(date: Date): boolean {
 function isToday(date: Date): boolean {
   return isSameDay(date, today);
 }
+
+// Get day type for formatter
+function getDayType(date: Date): CalendarDay['type'] {
+  if (isDateDisabled(date)) return 'disabled';
+  if (props.type === 'range') {
+    if (isRangeStart(date) && isRangeEnd(date)) return 'start-end';
+    if (isRangeStart(date)) return 'start';
+    if (isRangeEnd(date)) return 'end';
+    if (isInRange(date)) return 'middle';
+  }
+  if (isDateSelected(date)) return 'selected';
+  if (isToday(date)) return 'today';
+  return 'normal';
+}
+
+// Build CalendarDay objects with formatter support
+const calendarDays = computed(() => {
+  const year = currentYear.value;
+  const month = currentMonth.value;
+  const firstDayRaw = new Date(year, month, 1).getDay();
+  const firstDay = (firstDayRaw - props.firstDayOfWeek + 7) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const days: Array<{ day: number; date: Date | null; isCurrentMonth: boolean; calendarDay?: CalendarDay }> = [];
+
+  // Fill leading empty slots
+  for (let i = 0; i < firstDay; i++) {
+    days.push({ day: 0, date: null, isCurrentMonth: false });
+  }
+
+  // Fill actual days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    let calDay: CalendarDay = {
+      date,
+      type: getDayType(date),
+      text: d,
+      topInfo: '',
+      bottomInfo: '',
+    };
+
+    // Default bottomInfo for special types
+    if (calDay.type === 'start') calDay.bottomInfo = 'Start';
+    else if (calDay.type === 'end') calDay.bottomInfo = 'End';
+    else if (calDay.type === 'start-end') calDay.bottomInfo = 'Start/End';
+    else if (calDay.type === 'today' && !isDateSelected(date)) calDay.bottomInfo = 'Today';
+
+    // Apply formatter
+    if (props.formatter) {
+      calDay = props.formatter(calDay);
+    }
+
+    days.push({
+      day: d,
+      date,
+      isCurrentMonth: true,
+      calendarDay: calDay,
+    });
+  }
+
+  return days;
+});
 
 // Whether confirm button should be disabled
 const isConfirmDisabled = computed(() => {
@@ -241,6 +290,9 @@ function onConfirm() {
   } else {
     emit('confirm', [...selectedDates.value]);
   }
+  if (props.poppable) {
+    emit('update:show', false);
+  }
 }
 
 function prevMonth() {
@@ -261,7 +313,29 @@ function nextMonth() {
   }
 }
 
-function getDayStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean }) {
+// Popup events
+function onPopupOpen() {
+  emit('open');
+}
+
+function onPopupClose() {
+  emit('close');
+}
+
+function onPopupOpened() {
+  emit('opened');
+}
+
+function onPopupClosed() {
+  emit('closed');
+}
+
+function onClickOverlay() {
+  emit('clickOverlay');
+  // Note: Popup already emits update:show via doClose(), forwarded by @update:show binding
+}
+
+function getDayStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean; calendarDay?: CalendarDay }) {
   const base: Record<string, any> = {
     width: `${100 / 7}%`,
     height: props.rowHeight,
@@ -270,41 +344,40 @@ function getDayStyle(item: { day: number; date: Date | null; isCurrentMonth: boo
     justifyContent: 'center',
   };
 
-  if (!item.date || !item.isCurrentMonth) {
+  if (!item.date || !item.isCurrentMonth || !item.calendarDay) {
     return base;
   }
 
-  if (isDateSelected(item.date)) {
+  const type = item.calendarDay.type;
+  if (type === 'selected' || type === 'start' || type === 'end' || type === 'start-end') {
     base.backgroundColor = props.color;
     base.borderRadius = props.rowHeight / 2;
-  } else if (isInRange(item.date)) {
+  } else if (type === 'middle') {
     base.backgroundColor = `${props.color}33`;
   }
 
   return base;
 }
 
-function getDayTextStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean }) {
+function getDayTextStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean; calendarDay?: CalendarDay }) {
   const base: Record<string, any> = {
     fontSize: 16,
     color: '#323233',
     textAlign: 'center' as const,
   };
 
-  if (!item.date) {
+  if (!item.date || !item.calendarDay) {
     base.color = 'transparent';
     return base;
   }
 
-  if (isDateDisabled(item.date)) {
+  const type = item.calendarDay.type;
+  if (type === 'disabled') {
     base.color = '#c8c9cc';
-    return base;
-  }
-
-  if (isDateSelected(item.date)) {
+  } else if (type === 'selected' || type === 'start' || type === 'end' || type === 'start-end') {
     base.color = '#fff';
     base.fontWeight = 'bold';
-  } else if (isToday(item.date)) {
+  } else if (type === 'today') {
     base.color = props.color;
   }
 
@@ -372,10 +445,82 @@ const confirmTextStyle = computed(() => ({
 </script>
 
 <template>
-  <view :style="containerStyle">
+  <!-- Popup mode when poppable=true -->
+  <Popup
+    v-if="poppable"
+    :show="show"
+    :position="position"
+    :round="round"
+    @update:show="(val) => emit('update:show', val)"
+    @open="onPopupOpen"
+    @close="onPopupClose"
+    @opened="onPopupOpened"
+    @closed="onPopupClosed"
+    @click-overlay="onClickOverlay"
+  >
+    <view :style="containerStyle">
+      <!-- Title -->
+      <view v-if="showTitle" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 12 }">
+        <slot name="title">
+          <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
+        </slot>
+      </view>
+
+      <!-- Month Navigation / Subtitle -->
+      <view v-if="showSubtitle" :style="headerStyle">
+        <view :style="{ display: 'flex', padding: 4 }" @tap="prevMonth">
+          <Icon name="arrow-left" :size="16" :color="color" />
+        </view>
+        <slot name="subtitle" :date="new Date(currentYear, currentMonth)" :text="monthTitle">
+          <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ monthTitle }}</text>
+        </slot>
+        <view :style="{ display: 'flex', padding: 4 }" @tap="nextMonth">
+          <Icon name="arrow" :size="16" :color="color" />
+        </view>
+      </view>
+
+      <!-- Weekday Headers -->
+      <view :style="weekdayRowStyle">
+        <text v-for="day in weekdays" :key="day" :style="weekdayStyle">{{ day }}</text>
+      </view>
+
+      <!-- Days Grid -->
+      <view :style="daysGridStyle">
+        <view
+          v-for="(item, index) in calendarDays"
+          :key="index"
+          :style="getDayStyle(item)"
+          @tap="selectDate(item.date)"
+        >
+          <view v-if="item.day > 0 && item.calendarDay" :style="{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }">
+            <text v-if="item.calendarDay.topInfo" :style="{ fontSize: 10, color: item.calendarDay.type === 'disabled' ? '#c8c9cc' : color }">{{ item.calendarDay.topInfo }}</text>
+            <text :style="getDayTextStyle(item)">{{ item.calendarDay.text }}</text>
+            <text v-if="item.calendarDay.bottomInfo" :style="{ fontSize: 10, color: (item.calendarDay.type === 'start' || item.calendarDay.type === 'end' || item.calendarDay.type === 'start-end' || item.calendarDay.type === 'selected') ? '#fff' : (item.calendarDay.type === 'disabled' ? '#c8c9cc' : color) }">{{ item.calendarDay.bottomInfo }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Month Mark -->
+      <view v-if="showMark" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 4 }">
+        <text :style="{ fontSize: 10, color: '#c8c9cc' }">{{ monthTitle }}</text>
+      </view>
+
+      <!-- Footer slot / Confirm Button -->
+      <slot name="footer">
+        <view v-if="showConfirm" :style="confirmBtnStyle" @tap="onConfirm">
+          <text :style="confirmTextStyle">{{ isConfirmDisabled ? confirmDisabledText : confirmText }}</text>
+        </view>
+      </slot>
+    </view>
+  </Popup>
+
+  <!-- Inline mode when poppable=false -->
+  <view v-else :style="containerStyle">
     <!-- Title -->
     <view v-if="showTitle" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 12 }">
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
+      <slot name="title">
+        <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
+      </slot>
     </view>
 
     <!-- Month Navigation / Subtitle -->
@@ -383,7 +528,9 @@ const confirmTextStyle = computed(() => ({
       <view :style="{ display: 'flex', padding: 4 }" @tap="prevMonth">
         <Icon name="arrow-left" :size="16" :color="color" />
       </view>
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ monthTitle }}</text>
+      <slot name="subtitle" :date="new Date(currentYear, currentMonth)" :text="monthTitle">
+        <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ monthTitle }}</text>
+      </slot>
       <view :style="{ display: 'flex', padding: 4 }" @tap="nextMonth">
         <Icon name="arrow" :size="16" :color="color" />
       </view>
@@ -402,11 +549,10 @@ const confirmTextStyle = computed(() => ({
         :style="getDayStyle(item)"
         @tap="selectDate(item.date)"
       >
-        <view v-if="item.day > 0" :style="{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }">
-          <text :style="getDayTextStyle(item)">{{ item.day }}</text>
-          <text v-if="item.date && isToday(item.date) && !isDateSelected(item.date)" :style="{ fontSize: 10, color: color }">Today</text>
-          <text v-if="item.date && isRangeStart(item.date)" :style="{ fontSize: 10, color: '#fff' }">Start</text>
-          <text v-if="item.date && isRangeEnd(item.date)" :style="{ fontSize: 10, color: '#fff' }">End</text>
+        <view v-if="item.day > 0 && item.calendarDay" :style="{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }">
+          <text v-if="item.calendarDay.topInfo" :style="{ fontSize: 10, color: item.calendarDay.type === 'disabled' ? '#c8c9cc' : color }">{{ item.calendarDay.topInfo }}</text>
+          <text :style="getDayTextStyle(item)">{{ item.calendarDay.text }}</text>
+          <text v-if="item.calendarDay.bottomInfo" :style="{ fontSize: 10, color: (item.calendarDay.type === 'start' || item.calendarDay.type === 'end' || item.calendarDay.type === 'start-end' || item.calendarDay.type === 'selected') ? '#fff' : (item.calendarDay.type === 'disabled' ? '#c8c9cc' : color) }">{{ item.calendarDay.bottomInfo }}</text>
         </view>
       </view>
     </view>
@@ -416,9 +562,11 @@ const confirmTextStyle = computed(() => ({
       <text :style="{ fontSize: 10, color: '#c8c9cc' }">{{ monthTitle }}</text>
     </view>
 
-    <!-- Confirm Button -->
-    <view v-if="showConfirm" :style="confirmBtnStyle" @tap="onConfirm">
-      <text :style="confirmTextStyle">{{ isConfirmDisabled ? confirmDisabledText : confirmText }}</text>
-    </view>
+    <!-- Footer slot / Confirm Button -->
+    <slot name="footer">
+      <view v-if="showConfirm" :style="confirmBtnStyle" @tap="onConfirm">
+        <text :style="confirmTextStyle">{{ isConfirmDisabled ? confirmDisabledText : confirmText }}</text>
+      </view>
+    </slot>
   </view>
 </template>

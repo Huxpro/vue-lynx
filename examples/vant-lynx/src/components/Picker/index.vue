@@ -43,7 +43,7 @@
     - allowHtml prop accepted but ignored (Lynx limitation)
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, inject, onMounted, onUnmounted } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 
 export interface PickerOption {
@@ -414,6 +414,28 @@ function getItemTextStyle(colIndex: number, itemIndex: number) {
     fontWeight: isSelected ? ('bold' as const) : ('normal' as const),
   };
 }
+
+// Register with PickerGroup if inside one
+const pickerGroup = inject<{
+  registerPicker: (getter: () => any[]) => void;
+  unregisterPicker: (getter: () => any[]) => void;
+} | null>('pickerGroup', null);
+
+const getValues = () => selectedValues.value.slice(0);
+
+onMounted(() => {
+  pickerGroup?.registerPicker(getValues);
+});
+
+onUnmounted(() => {
+  pickerGroup?.unregisterPicker(getValues);
+});
+
+// Expose methods via ref
+defineExpose({
+  confirm: onConfirm,
+  getSelectedOptions: () => selectedOptions.value,
+});
 </script>
 
 <template>

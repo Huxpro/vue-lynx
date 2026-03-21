@@ -1,225 +1,241 @@
 {
-  "title": "Vant-Lynx Animation Polish",
-  "description": "Add main-thread event-driven animations to popup-style components using Lynx's native Web Animations API (element.animate).",
+  "title": "Vant-Lynx API Polish",
+  "description": "Fill in missing props, events, and slots to achieve better Vant API parity. Focus on features that ARE implementable in Lynx (skip platform-impossible ones like teleport, lockScroll, etc.).",
   "context": {
-    "mainThreadEvent": "Use :main-thread-bindXxx to bind worklet functions that run on the main thread. These can access element.animate() directly for smooth 60fps animations.",
-    "animateApi": "element.animate(keyframes, options) - Web Animations API style. keyframes is array of {property: value}, options has duration, easing, fill, etc.",
-    "pattern": "1) Use useMainThreadRef to get element ref. 2) Create worklet function with 'main-thread' directive. 3) Call ref.current.animate() in worklet. 4) Trigger animation on show state change.",
-    "transitionComponent": "vue-lynx also has <Transition> component for CSS class-based animations, but main-thread animate() is more powerful for complex animations.",
-    "example": "const elRef = useMainThreadRef<Element>(); function onShow() { 'main-thread'; elRef.current?.animate([{opacity: 0}, {opacity: 1}], {duration: 300}); }",
-    "testing": "IMPORTANT: element.animate() for web-core just landed in PR #2329. Web may not work yet. Test with: 1) Lynx Simulator (Android/iOS emulator), or 2) Link local ~/github/lynx-stack. Build verification (pnpm build) is sufficient for CI - animation behavior should be tested manually on simulator.",
-    "fallback": "If animate() is not available at runtime, animations should gracefully degrade to instant show/hide. Check if elRef.current?.animate is a function before calling."
+    "skipList": ["teleport", "lockScroll", "closeOnPopstate", "lazyRender (already handled)", "CSS variables", "route/url props"],
+    "vantDocs": "https://vant-ui.github.io/vant/#/en-US/",
+    "implementationPattern": "Check Vant source for exact prop types and behaviors. Match API signatures exactly."
   },
   "userStories": [
     {
-      "id": "animation-infra",
-      "title": "Create useAnimate composable",
-      "description": "Create a composable that wraps main-thread animate() calls with common animation presets for enter/leave transitions.",
+      "id": "pickergroup-toolbar",
+      "title": "PickerGroup toolbar and events",
+      "description": "Add toolbar with confirm/cancel buttons and missing props/events to PickerGroup.",
       "requirements": [
-        "Create composables/useAnimate.ts",
-        "Export useAnimate() that returns { elRef, animate, fadeIn, fadeOut, slideIn, slideOut, zoomIn, zoomOut }",
-        "elRef is useMainThreadRef<Element>() - bind to element with :main-thread-ref",
-        "animate(keyframes, options) is a main-thread worklet wrapper",
-        "fadeIn/fadeOut: opacity 0<->1 animation",
-        "slideIn/slideOut(direction): transform translateX/Y animation",
-        "zoomIn/zoomOut: scale 0.9->1 with opacity animation",
-        "All functions are 'main-thread' worklets that call elRef.current.animate()",
-        "Return Animation object for cancel/pause control"
+        "Add showToolbar prop (default true)",
+        "Add confirmButtonText, cancelButtonText props",
+        "Add nextStepText prop for multi-step flows",
+        "Add v-model:activeTab support",
+        "Add confirm, cancel events",
+        "Add toolbar, title, confirm, cancel slots"
       ],
-      "files": ["examples/vant-lynx/src/composables/useAnimate.ts"],
-      "testCommand": "pnpm build && echo 'NOTE: Test animations on Lynx Simulator, Web may not support animate() yet'",
-      "priority": 100,
-      "passes": true
-    },
-    {
-      "id": "overlay-fade",
-      "title": "Overlay fade animation",
-      "description": "Add fade in/out animation to Overlay component when show changes.",
-      "requirements": [
-        "Import useAnimate from composables",
-        "Bind elRef to overlay view with :main-thread-ref",
-        "Watch show prop - call fadeIn() on true, fadeOut() on false",
-        "Use onAfterLeave pattern: keep in DOM during fadeOut, remove after animation ends",
-        "Respect duration prop for animation timing",
-        "Start with opacity: 0 style, animate to 1"
-      ],
-      "files": ["examples/vant-lynx/src/components/Overlay/index.vue"],
+      "files": ["examples/vant-lynx/src/components/PickerGroup/index.vue"],
       "testCommand": "pnpm build",
       "priority": 95,
       "passes": true
     },
     {
-      "id": "popup-transitions",
-      "title": "Popup position-based transitions",
-      "description": "Add slide/fade transitions to Popup based on position prop using main-thread animate().",
+      "id": "timepicker-complete",
+      "title": "TimePicker filter/formatter and slots",
+      "description": "Add missing filter, formatter props and slots to TimePicker.",
       "requirements": [
-        "Import useAnimate from composables",
-        "Bind elRef to popup container with :main-thread-ref",
-        "center: zoomIn/zoomOut (scale 0.9->1 + opacity)",
-        "top: slideIn/Out('down') - translateY from -100%",
-        "bottom: slideIn/Out('up') - translateY from 100%",
-        "left: slideIn/Out('right') - translateX from -100%",
-        "right: slideIn/Out('left') - translateX from 100%",
-        "Respect duration prop, convert to ms",
-        "Use animation.finished promise to emit 'opened'/'closed' events",
-        "Keep popup in DOM during leave animation"
+        "Add filter prop: (type: string, values: string[]) => string[]",
+        "Add formatter prop: (type: string, value: string) => string",
+        "Add visibleOptionNum prop",
+        "Add toolbar, title, confirm, cancel, option slots",
+        "Add columns-top, columns-bottom slots"
       ],
-      "files": ["examples/vant-lynx/src/components/Popup/index.vue"],
+      "files": ["examples/vant-lynx/src/components/TimePicker/index.vue"],
       "testCommand": "pnpm build",
       "priority": 90,
       "passes": true
     },
     {
-      "id": "dialog-animation",
-      "title": "Dialog zoom animation",
-      "description": "Add zoom/fade animation to Dialog component.",
+      "id": "datepicker-complete",
+      "title": "DatePicker filter/formatter and slots",
+      "description": "Add missing filter, formatter props and slots to DatePicker (same pattern as TimePicker).",
       "requirements": [
-        "Dialog uses Popup internally - ensure Popup animations work",
-        "If Dialog has custom content wrapper, add zoom animation",
-        "Scale from 0.9 -> 1.0 with opacity fade"
+        "Add filter prop",
+        "Add formatter prop",
+        "Add visibleOptionNum prop",
+        "Add toolbar, title, confirm, cancel, option slots"
       ],
-      "files": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "files": ["examples/vant-lynx/src/components/DatePicker/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 89,
+      "passes": true
+    },
+    {
+      "id": "calendar-popup",
+      "title": "Calendar popup mode integration",
+      "description": "Add Popup integration for Calendar poppable mode.",
+      "requirements": [
+        "Add show prop with v-model support",
+        "Add round, position props",
+        "Wrap in Popup when poppable=true",
+        "Add update:show, clickOverlay, open, close, opened, closed events",
+        "Add title, subtitle, footer slots"
+      ],
+      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 88,
+      "passes": true
+    },
+    {
+      "id": "calendar-formatter",
+      "title": "Calendar day formatter",
+      "description": "Add formatter prop for custom day rendering in Calendar.",
+      "requirements": [
+        "Add formatter prop: (day: Day) => Day",
+        "Day type: { date, type, text, topInfo, bottomInfo, className }",
+        "Apply formatter to each day cell",
+        "Support custom topInfo/bottomInfo rendering"
+      ],
+      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
       "testCommand": "pnpm build",
       "priority": 85,
       "passes": true
     },
     {
-      "id": "actionsheet-slide",
-      "title": "ActionSheet slide-up animation",
-      "description": "Add slide-up animation to ActionSheet.",
+      "id": "actionsheet-close",
+      "title": "ActionSheet closeable and safeArea",
+      "description": "Add closeable icon and safe area props to ActionSheet.",
       "requirements": [
-        "ActionSheet uses Popup with position='bottom'",
-        "Verify slideUp animation from Popup works",
-        "If ActionSheet has wrapper, ensure it inherits animation"
+        "Add closeable prop",
+        "Add closeIcon prop (default 'cross')",
+        "Add safeAreaInsetBottom prop",
+        "Render close icon when closeable=true",
+        "Add bottom padding for safe area"
       ],
       "files": ["examples/vant-lynx/src/components/ActionSheet/index.vue"],
-      "testCommand": "pnpm build",
-      "priority": 84,
-      "passes": true
-    },
-    {
-      "id": "toast-fade",
-      "title": "Toast fade animation",
-      "description": "Add fade in/out animation to Toast.",
-      "requirements": [
-        "Toast appears with fade + slight scale",
-        "Position-aware: center toast zooms, top/bottom toasts slide",
-        "Short duration (200-250ms) for snappy feel"
-      ],
-      "files": ["examples/vant-lynx/src/components/Toast/index.vue"],
-      "testCommand": "pnpm build",
-      "priority": 83,
-      "passes": true
-    },
-    {
-      "id": "notify-slide",
-      "title": "Notify slide-down animation",
-      "description": "Add slide-down animation to Notify (top notification bar).",
-      "requirements": [
-        "Notify slides down from top",
-        "Use translateY: -100% -> 0",
-        "Smooth easing (ease-out for enter, ease-in for leave)"
-      ],
-      "files": ["examples/vant-lynx/src/components/Notify/index.vue"],
       "testCommand": "pnpm build",
       "priority": 82,
       "passes": true
     },
     {
-      "id": "dropdown-slide",
-      "title": "DropdownItem slide animation",
-      "description": "Add slide animation to dropdown menu items.",
+      "id": "form-auto-required",
+      "title": "Form auto-required detection",
+      "description": "Add required='auto' mode that auto-detects from field rules.",
       "requirements": [
-        "Dropdown content slides down when opened",
-        "Use scaleY or translateY animation",
-        "Transform origin should be top"
+        "Add required prop with 'auto' | boolean values",
+        "When 'auto', check if field has 'required' rule",
+        "Show asterisk on label when required",
+        "Update scrollToError to use element refs"
       ],
-      "files": ["examples/vant-lynx/src/components/DropdownItem/index.vue"],
+      "files": ["examples/vant-lynx/src/components/Form/index.vue", "examples/vant-lynx/src/components/Field/index.vue"],
       "testCommand": "pnpm build",
       "priority": 80,
       "passes": true
     },
     {
-      "id": "image-preview-zoom",
-      "title": "ImagePreview zoom animation",
-      "description": "Add zoom animation to image preview overlay.",
+      "id": "treeselect-badge",
+      "title": "TreeSelect nav item badges",
+      "description": "Add dot/badge rendering support for TreeSelect nav items.",
       "requirements": [
-        "Background fades in",
-        "Image zooms from thumbnail position (if available) or center",
-        "Smooth scale animation"
+        "Support badge property on nav items",
+        "Support dot property on nav items",
+        "Render Badge component on nav items when badge/dot set",
+        "Match Vant's TreeSelectItem type"
       ],
-      "files": ["examples/vant-lynx/src/components/ImagePreview/index.vue"],
+      "files": ["examples/vant-lynx/src/components/TreeSelect/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 78,
+      "passes": true
+    },
+    {
+      "id": "couponlist-complete",
+      "title": "CouponList missing props",
+      "description": "Add code prop v-model and missing UI props to CouponList.",
+      "requirements": [
+        "Add code prop with v-model support (input value)",
+        "Add emptyImage prop",
+        "Add closeButtonText prop",
+        "Add inputPlaceholder prop",
+        "Add displayedCouponIndex prop",
+        "Add update:code event"
+      ],
+      "files": ["examples/vant-lynx/src/components/CouponList/index.vue"],
       "testCommand": "pnpm build",
       "priority": 75,
       "passes": true
     },
     {
-      "id": "sharesheet-slide",
-      "title": "ShareSheet slide-up animation",
-      "description": "Add slide-up animation to ShareSheet.",
+      "id": "pagination-slot",
+      "title": "Pagination pageDesc slot",
+      "description": "Add pageDesc slot to Pagination.",
       "requirements": [
-        "ShareSheet uses Popup or ActionSheet pattern",
-        "Ensure consistent slide-up animation"
+        "Add pageDesc slot",
+        "Slot receives { current, total } props",
+        "Default: '{current}/{total}' text"
       ],
-      "files": ["examples/vant-lynx/src/components/ShareSheet/index.vue"],
-      "testCommand": "pnpm build",
-      "priority": 74,
-      "passes": true
-    },
-    {
-      "id": "floating-panel-slide",
-      "title": "FloatingPanel slide animation",
-      "description": "Add slide animation to FloatingPanel anchors.",
-      "requirements": [
-        "Panel slides between anchor positions smoothly",
-        "Use spring-like easing for natural feel",
-        "Dragging should interrupt animation smoothly"
-      ],
-      "files": ["examples/vant-lynx/src/components/FloatingPanel/index.vue"],
+      "files": ["examples/vant-lynx/src/components/Pagination/index.vue"],
       "testCommand": "pnpm build",
       "priority": 70,
       "passes": true
     },
     {
-      "id": "floating-bubble-bounce",
-      "title": "FloatingBubble appear animation",
-      "description": "Add bounce/scale animation when FloatingBubble appears.",
+      "id": "rate-iconprefix",
+      "title": "Rate iconPrefix support",
+      "description": "Add iconPrefix support to Rate component.",
       "requirements": [
-        "Bubble scales up with slight overshoot (bounce)",
-        "Use cubic-bezier for bounce effect",
-        "Subtle and quick (200ms)"
+        "Add iconPrefix prop",
+        "Use Icon component with iconPrefix when provided",
+        "Fall back to Unicode stars when no iconPrefix"
       ],
-      "files": ["examples/vant-lynx/src/components/FloatingBubble/index.vue"],
+      "files": ["examples/vant-lynx/src/components/Rate/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 68,
+      "passes": true
+    },
+    {
+      "id": "uploader-callbacks",
+      "title": "Uploader callback props",
+      "description": "Add afterRead, beforeRead, beforeDelete callback props.",
+      "requirements": [
+        "Add afterRead prop: (file, detail) => void",
+        "Add beforeRead prop: (file, detail) => boolean | Promise<boolean>",
+        "Add beforeDelete prop: (file, detail) => boolean | Promise<boolean>",
+        "Call beforeRead before adding file",
+        "Call afterRead after file added",
+        "Call beforeDelete before removing file"
+      ],
+      "files": ["examples/vant-lynx/src/components/Uploader/index.vue"],
       "testCommand": "pnpm build",
       "priority": 65,
       "passes": true
     },
     {
-      "id": "swipecell-spring",
-      "title": "SwipeCell spring animation",
-      "description": "Add spring animation when SwipeCell snaps back.",
+      "id": "tabs-animated",
+      "title": "Tabs animated transition",
+      "description": "Add animated prop for tab content transition (now possible with Transition).",
       "requirements": [
-        "When released, cell snaps to open/closed position with spring",
-        "Use damped spring easing",
-        "Velocity-aware: faster swipe = more overshoot"
+        "Add animated prop (default false)",
+        "When animated, use Transition for content swap",
+        "Slide content based on direction (left/right)",
+        "Add swipeThreshold prop for swipe gesture sensitivity"
       ],
-      "files": ["examples/vant-lynx/src/components/SwipeCell/index.vue"],
+      "files": ["examples/vant-lynx/src/components/Tabs/index.vue"],
       "testCommand": "pnpm build",
       "priority": 60,
       "passes": true
     },
     {
-      "id": "noticebar-scroll",
-      "title": "NoticeBar scroll animation",
-      "description": "Ensure NoticeBar text scrolls smoothly when content overflows.",
+      "id": "picker-methods",
+      "title": "Picker expose methods",
+      "description": "Expose Picker instance methods via ref.",
       "requirements": [
-        "Marquee-style scrolling for long text",
-        "Configurable scroll speed",
-        "Pause on interaction if supported"
+        "Expose confirm() method",
+        "Expose getSelectedOptions() method",
+        "Use defineExpose to expose methods",
+        "Document method signatures"
       ],
-      "files": ["examples/vant-lynx/src/components/NoticeBar/index.vue"],
+      "files": ["examples/vant-lynx/src/components/Picker/index.vue"],
       "testCommand": "pnpm build",
       "priority": 55,
+      "passes": true
+    },
+    {
+      "id": "dialog-methods",
+      "title": "Dialog expose methods",
+      "description": "Expose Dialog instance methods via ref.",
+      "requirements": [
+        "Expose open() method",
+        "Expose close() method",
+        "Use defineExpose to expose methods"
+      ],
+      "files": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 54,
       "passes": true
     }
   ]

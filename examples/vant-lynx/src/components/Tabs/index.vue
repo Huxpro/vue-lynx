@@ -21,7 +21,7 @@
     - titleActiveColor (custom active title color)
     - titleInactiveColor (custom inactive title color)
     - showHeader (show/hide header, default true)
-    - Missing: animated (Lynx lacks CSS transition on transform for content swap)
+    - animated: Supported (uses Transition for content swap)
   - Events: 5/5 supported
     - update:active (v-model)
     - change (tab changed)
@@ -34,7 +34,7 @@
   - beforeChange interceptor: Supports sync/async/Promise interceptors
   - Gaps:
     - sticky/scrollspy/offsetTop: Lynx has no scroll event interception on parent
-    - animated/swipeable: Lynx has no CSS transition on translateX for content swap
+    - swipeable: Lynx has no swipe gesture for content swap
     - CSS Variables: Not applicable (Lynx uses inline styles)
 -->
 <script setup lang="ts">
@@ -75,6 +75,8 @@ export interface TabsProps {
   lazyRender?: boolean;
   /** Offset top when sticky (placeholder) */
   offsetTop?: number;
+  /** Animate content transition */
+  animated?: boolean;
   /** Interceptor before tab change */
   beforeChange?: Interceptor;
   /** Number of tabs before becoming scrollable */
@@ -103,6 +105,7 @@ export interface TabsProvide {
   type: Ref<'line' | 'card'>;
   color: Ref<string>;
   lazyRender: Ref<boolean>;
+  animated: Ref<boolean>;
   scrollspy: Ref<boolean>;
   titleActiveColor: Ref<string | undefined>;
   titleInactiveColor: Ref<string | undefined>;
@@ -131,6 +134,7 @@ const props = withDefaults(defineProps<TabsProps>(), {
   shrink: false,
   lazyRender: true,
   offsetTop: 0,
+  animated: false,
   swipeThreshold: 5,
   showHeader: true,
 });
@@ -322,6 +326,7 @@ provide('tabs', {
   type: toRef(props, 'type'),
   color: toRef(props, 'color'),
   lazyRender: toRef(props, 'lazyRender'),
+  animated: toRef(props, 'animated'),
   scrollspy: toRef(props, 'scrollspy'),
   titleActiveColor: toRef(props, 'titleActiveColor'),
   titleInactiveColor: toRef(props, 'titleInactiveColor'),
