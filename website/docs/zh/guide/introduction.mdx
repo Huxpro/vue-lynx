@@ -1,0 +1,154 @@
+# 什么是 Vue Lynx？
+
+**Vue Lynx** 是一个用于 [Lynx](https://lynxjs.org) 的 Vue 3 自定义渲染器，让你能够使用 Vue 熟悉的组合式 API、单文件组件和响应式数据模型来构建原生 Lynx 应用。
+
+如果你了解 Vue 3 并且熟悉 Lynx，那你已经知道如何使用 Vue Lynx 了。
+
+## 主要特性
+
+- **熟悉的 Vue 3 API** — 使用 `ref()`、`computed()`、`v-for`、`v-if`、SFC `<script setup>` 以及 Vue 中你喜爱的一切功能。
+- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 [Web 渲染](https://lynxjs.org/next/guide/web-rendering.html)支持。你的 UI 绝非 WebView。
+- **双线程架构** — Vue 运行在后台线程；主线程负责原生渲染。这种分离使你的应用始终保持流畅响应。对于延迟敏感的交互（拖拽、滚动），[主线程脚本](/zh/guide/main-thread-script)允许你使用 `'main thread'` 标记函数，使其直接在主线程上运行，消除跨线程延迟。
+
+## 面向 Vue Web 开发者
+
+如果你从 Web 端的 Vue 转过来，你所知道的大部分内容都可以沿用。以下是一些关键差异。
+
+### 更改你的 `import`
+
+Vue Lynx 重新导出了 Vue API，因此你可以将 `vue` 替换为 `vue-lynx`：
+
+```diff
+- import { ref, computed, onMounted } from 'vue';
++ import { ref, computed, onMounted } from 'vue-lynx';
+```
+
+### 不同的元素
+
+Lynx 提供原生元素而非 HTML。使用 `<view>`、`<text>`、`<image>` 等来替代 `<div>`、`<span>`、`<img>`：
+
+```diff
+- <div class="card">
+-   <span>{{ message }}</span>
+- </div>
++ <view class="card">
++   <text>{{ message }}</text>
++ </view>
+```
+
+:::info
+文本内容必须包裹在 `<text>` 中 — Lynx 不支持 `<view>` 内的裸文本节点。
+:::
+
+### 不同的事件
+
+Lynx 使用自己的事件系统。使用 `:bindeventname` 处理会冒泡的事件，使用 `:catcheventname` 处理不会冒泡的事件：
+
+```diff
+- <div @click="handleClick" @touchstart="onTouch">
++ <view :bindtap="handleClick" :bindtouchstart="onTouch">
+```
+
+更多详情请参阅 [Lynx 事件处理指南](https://lynxjs.org/guide/interaction/event-handling.html)。
+
+### 没有 `document` 或 `window`
+
+Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html)：
+
+- [全局 API](https://lynxjs.org/next/api/lynx-api/global.html)，如 `setTimeout()` 和 `console.log()`，在两个线程上都可用，与 Web 相同。
+- 类 DOM 查询（例如 `querySelector`、`getBoundingClientRect`）可通过[异步后台线程 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) 或[同步主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html) 使用，具体取决于你需要在哪个线程上使用。
+- 平台原生能力通过 [NativeModules](https://lynxjs.org/guide/use-native-modules.html) 和[自定义元素](https://lynxjs.org/guide/custom-native-component.html)提供。
+
+## 理解双线程模型
+
+如果你使用过 Web Workers，Lynx 的架构会让你感到熟悉。Vue 运行在**后台线程**上，而原生渲染发生在**主线程**上 — 就像将工作交给 Web Worker 以保持 UI 线程的流畅响应。不同之处在于，在 Lynx 中，这是_默认_行为 — Vue 的协调过程永远不会阻塞主线程。（设计原理请参阅[负责任地使用主线程实现交互性](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity)。）
+
+在底层，Vue Lynx 使用[自定义渲染器](https://vuejs.org/api/custom-renderer)在后台线程上构建 **ShadowElement** 树。变更被批量收集为 **ops** 并刷新到主线程。用户交互以**事件**的形式回传。这形成了一个类似于浏览器事件循环的周期：
+
+```
+        ┌──────────────────────────────────────────────────────┐
+        │                  Background Thread                   │
+        │  Vue 3 runtime · reactivity · lifecycle · your code  │
+        └──────────────┬──────────────────────▲────────────────┘
+                  ops  │                      │  events
+                       ▼                      │
+        ┌──────────────────────────────────────┴───────────────┐
+        │                    Main Thread                       │
+        │  Native elements · layout · rendering · MTS handlers │
+        └──────────────────────────────────────────────────────┘
+```
+
+一个完整的周期 — ops 向下、事件向上 — 就是一个 **tick**。Vue Lynx 的 `nextTick` 在一个完整周期后 resolve，因此当你的回调触发时，原生元素已经完全创建完毕。这与 Vue 在 Web 上的 `nextTick`（等待 DOM 更新）是相同的心智模型，只是扩展到了跨线程场景。
+
+### Vue API：完全兼容
+
+Vue Lynx 直接复用 `@vue/runtime-core`。响应式系统、组件模型、生命周期钩子、模板指令 — 一切都按照 [Vue 3 文档](https://vuejs.org/guide/introduction.html)中的描述工作。详细的功能对照请参阅 [Vue 兼容性](/zh/guide/vue-compatibility)。
+
+### 双线程环境的注意事项
+
+由于你的代码和原生元素分别运行在不同的线程上，有一些行为需要注意。
+
+#### 生命周期运行在后台线程 — 使用 `nextTick` 等待主线程
+
+就像在 Web 上一样，`onMounted` 表示"组件树已构建完成"。不同之处在于原生元素是在主线程上异步创建的。如果你需要在挂载后与原生元素交互，请等待一个 tick：
+
+```vue
+<script setup lang="ts">
+import { onMounted, nextTick } from 'vue-lynx'
+
+onMounted(() => {
+  nextTick(() => {
+    // Native elements are now ready
+    lynx.createSelectorQuery().select('.my-list').invoke(...)
+  })
+})
+</script>
+```
+
+如果你的 `onMounted` 只是设置响应式状态、定时器或数据请求，则不需要 `nextTick` — 这些操作不依赖原生元素。
+
+#### 后台线程只有异步访问 — 对于同步需求使用主线程脚本
+
+从后台线程访问原生元素始终是异步的。模板 `ref` 返回一个 `ShadowElement`（原生元素在后台线程上的引用），而 `getBoundingClientRect()` 等布局查询需要使用[异步 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html)：
+
+```vue
+<script setup lang="ts">
+import { onMounted, nextTick } from 'vue-lynx'
+
+onMounted(() => {
+  nextTick(() => {
+    lynx.createSelectorQuery()
+      .select('.target')
+      .invoke({
+        method: 'boundingClientRect',
+        success: (res) => console.log(res),
+      })
+      .exec()
+  })
+})
+</script>
+```
+
+当你需要同步访问 — 流畅的动画、手势处理、布局测量 — 请使用[主线程脚本](/zh/guide/main-thread-script)。使用 `'main thread'` 标记的函数直接在主线程上运行，可以调用[主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html)（如 [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html)）、监听 `main-thread-bindlayoutchange`，以及通过 `useMainThreadRef()` 访问原生元素：
+
+```vue
+<script setup lang="ts">
+import { ref, useMainThreadRef } from 'vue-lynx'
+
+const divRef = ref(null)               // ShadowElement (background thread)
+const mtRef = useMainThreadRef(null)    // Native element (main thread, MTS only)
+</script>
+
+<template>
+  <view ref="divRef" :main-thread-ref="mtRef" />
+</template>
+```
+
+详细的功能特性说明和不支持的功能，请参阅 [Vue 功能兼容性](/zh/guide/vue-compatibility)。
+
+## 下一步
+
+- [快速开始](/zh/guide/quick-start) — 创建你的第一个 Vue Lynx 项目
+- [教程：商品画廊](/zh/guide/tutorial-gallery) — 构建一个支持点赞、自动滚动和 MTS 滚动条的瀑布流画廊
+- [教程：商品详情](/zh/guide/tutorial-swiper) — 构建一个支持触摸滑动和吸附动画的图片轮播
+- [路由](/zh/guide/routing) — 在 Lynx 中使用 Vue Router 的 `createMemoryHistory()`
