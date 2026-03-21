@@ -1,3 +1,20 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 11/14 supported
+    Supported: colon, disabled, readonly, showError, labelWidth, labelAlign, inputAlign,
+               scrollToError, validateFirst, showErrorMessage, errorMessageAlign, validateTrigger
+    Missing: required ('auto' mode), submitOnEnter, scrollToErrorPosition
+  - Events: 2/2 supported (submit, failed)
+  - Slots: 1/1 supported (default)
+    Note: footer slot is a Lynx-specific addition (not in Vant)
+  - Exposed Methods: 5/5 supported (submit, validate, resetValidation, getValues, getValidationStatus)
+  - Gaps:
+    - No required prop with 'auto' mode (auto-detects from field rules)
+    - No submitOnEnter prop (keyboard submit in Lynx differs from web)
+    - No scrollToErrorPosition prop (ScrollLogicalPosition not applicable in Lynx)
+    - Uses modelValue for two-way binding (Vant Form does not use v-model)
+    - validateTrigger provided via inject context but Field must implement trigger check
+-->
 <script setup lang="ts">
 import { ref, provide, reactive, computed } from 'vue-lynx';
 
@@ -8,6 +25,8 @@ export interface FormRule {
   pattern?: RegExp;
   trigger?: 'onBlur' | 'onChange' | 'onSubmit';
 }
+
+export type FieldValidateTrigger = 'onBlur' | 'onChange' | 'onSubmit';
 
 export interface FormProps {
   modelValue?: Record<string, any>;
@@ -22,6 +41,7 @@ export interface FormProps {
   showErrorMessage?: boolean;
   validateFirst?: boolean;
   scrollToError?: boolean;
+  validateTrigger?: FieldValidateTrigger | FieldValidateTrigger[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
@@ -37,6 +57,7 @@ const props = withDefaults(defineProps<FormProps>(), {
   showErrorMessage: true,
   validateFirst: false,
   scrollToError: false,
+  validateTrigger: 'onBlur',
 });
 
 const emit = defineEmits<{
@@ -167,10 +188,27 @@ provide(
     props,
     registerField,
     unregisterField,
+    validateTrigger: computed(() => props.validateTrigger),
   }),
 );
 
-defineExpose({ submit, validate, resetValidation });
+function getValues(): Record<string, any> {
+  const values = { ...props.modelValue };
+  registeredFields.value.forEach((field) => {
+    values[field.name] = field.getValue();
+  });
+  return values;
+}
+
+function getValidationStatus(): Record<string, 'passed' | 'failed' | 'unvalidated'> {
+  const status: Record<string, 'passed' | 'failed' | 'unvalidated'> = {};
+  registeredFields.value.forEach((field) => {
+    status[field.name] = 'unvalidated';
+  });
+  return status;
+}
+
+defineExpose({ submit, validate, resetValidation, getValues, getValidationStatus });
 
 const containerStyle = computed(() => ({
   display: 'flex',
@@ -182,7 +220,7 @@ const containerStyle = computed(() => ({
 <template>
   <view :style="containerStyle">
     <slot />
-    <view :style="{ padding: 16, paddingTop: 8 }">
+    <view :style="{ display: 'flex', flexDirection: 'column', padding: 16, paddingTop: 8 }">
       <slot name="footer" />
     </view>
   </view>

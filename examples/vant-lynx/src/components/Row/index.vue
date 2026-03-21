@@ -1,3 +1,13 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 4/5 supported (gutter, justify, align, wrap; missing: tag [N/A])
+  - Events: 0/0
+  - Slots: 1/1 (default)
+  - provide/inject: ✅ (rowGutter)
+  - Gaps:
+    - No array gutter support [horizontal, vertical]
+    - No tag prop (N/A in Lynx)
+-->
 <script setup lang="ts">
 import { computed, provide } from 'vue-lynx';
 

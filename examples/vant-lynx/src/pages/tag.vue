@@ -47,17 +47,30 @@ function onClose() { showTag.value = false; }
         </view>
       </view>
 
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
+        <view :style="{ marginRight: 8 }">
+          <Tag color="#7232dd"><text :style="{ fontSize: 12, color: '#fff' }">Custom</text></Tag>
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Tag color="#ffe1e1" textColor="#ad0000"><text :style="{ fontSize: 12, color: '#ad0000' }">Custom</text></Tag>
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Tag color="#7232dd" plain><text :style="{ fontSize: 12, color: '#7232dd' }">Custom</text></Tag>
+        </view>
+      </view>
+
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Closeable</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
         <Tag v-if="showTag" type="primary" closeable @close="onClose">
-          <text :style="{ fontSize: 10, color: '#fff' }">Closeable</text>
+          <text :style="{ fontSize: 12, color: '#fff' }">Closeable</text>
         </Tag>
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Size</text>
       <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }">
         <view :style="{ marginRight: 8 }">
-          <Tag type="primary" size="small"><text :style="{ fontSize: 10, color: '#fff' }">Small</text></Tag>
+          <Tag type="primary"><text :style="{ fontSize: 12, color: '#fff' }">Default</text></Tag>
         </view>
         <view :style="{ marginRight: 8 }">
           <Tag type="primary" size="medium"><text :style="{ fontSize: 12, color: '#fff' }">Medium</text></Tag>

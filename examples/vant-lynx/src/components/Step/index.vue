@@ -1,3 +1,13 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 1/1 (index)
+  - Events: via parent Steps click-step
+  - Slots: 1/3 (default; missing: active-icon, inactive-icon, finish-icon)
+  - inject: ✅ from Steps parent
+  - Gaps:
+    - No custom icon slots
+    - Uses text characters instead of Icon component for finish/active icons
+-->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
 

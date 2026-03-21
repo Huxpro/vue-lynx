@@ -1,3 +1,15 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 3/5 supported (themeVars, theme, zIndex; missing: tag, iconPrefix)
+  - Events: 0/0
+  - Slots: 1/1 (default)
+  - Dark mode: ✅ via dark override variables
+  - Theme vars: ✅ via provide/inject
+  - Gaps:
+    - CSS variables applied via style prop (Lynx CSS variable support varies)
+    - No tag prop (N/A in Lynx)
+    - No iconPrefix prop
+-->
 <script setup lang="ts">
 import { computed, provide } from 'vue-lynx';
 

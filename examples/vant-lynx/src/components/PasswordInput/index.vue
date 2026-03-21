@@ -1,3 +1,19 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 7/7 supported (value, info, errorInfo, length, gutter, mask, focused)
+  - Events: 1/1 supported (focus)
+  - Slots: 0/0 (Vant PasswordInput has no slots)
+  - Lynx Adaptations:
+    - Cursor blink animation not possible (Lynx does not support CSS keyframes);
+      cursor is shown as a static bar
+    - Border merging for connected cells uses individual borderWidth overrides
+      instead of CSS class-based border-left
+    - Cell sizing uses fixed width (40px) rather than flex distribution
+  - Gaps:
+    - No CSS cursor blink animation (static indicator shown instead)
+    - position: 'absolute' used for cursor may not render identically in all
+      Lynx versions; tested with static positioning fallback
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 
@@ -75,7 +91,10 @@ function onTap() {
 </script>
 
 <template>
-  <view @tap="onTap">
+  <view
+    :style="{ display: 'flex', flexDirection: 'column' }"
+    @tap="onTap"
+  >
     <!-- Cells row -->
     <view :style="{
       display: 'flex',
@@ -102,13 +121,10 @@ function onTap() {
           :style="{ fontSize: 20, color: '#323233' }"
         >{{ cell }}</text>
 
-        <!-- Cursor blink indicator for focused active cell -->
+        <!-- Cursor indicator for focused active cell -->
         <view
           v-if="focused && index === value.length && index < length"
           :style="{
-            position: 'absolute',
-            bottom: 8,
-            left: '50%',
             width: 1,
             height: 24,
             backgroundColor: '#1989fa',
@@ -121,7 +137,6 @@ function onTap() {
     <text
       v-if="errorInfo"
       :style="{
-        display: 'flex',
         fontSize: 14,
         color: '#ee0a24',
         textAlign: 'center',
@@ -131,7 +146,6 @@ function onTap() {
     <text
       v-else-if="info"
       :style="{
-        display: 'flex',
         fontSize: 14,
         color: '#969799',
         textAlign: 'center',

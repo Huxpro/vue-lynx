@@ -1,3 +1,13 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 2/3 supported (span, offset; missing: tag [N/A])
+  - Events: 0/0
+  - Slots: 1/1 (default)
+  - inject: ✅ (rowGutter from Row parent)
+  - Gaps:
+    - No tag prop (N/A in Lynx)
+    - Uses percentage width (Vant uses CSS classes)
+-->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
 

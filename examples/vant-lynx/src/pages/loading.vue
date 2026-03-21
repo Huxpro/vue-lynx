@@ -5,7 +5,7 @@ import Loading from '../components/Loading/index.vue';
 
 <template>
   <DemoPage title="Loading">
-    
+
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Type</text>
@@ -31,16 +31,22 @@ import Loading from '../components/Loading/index.vue';
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Text</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading>
-          <text :style="{ fontSize: 14, color: '#969799', marginLeft: 8 }">Loading...</text>
-        </Loading>
+        <Loading>Loading...</Loading>
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Vertical</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading vertical>
-          <text :style="{ fontSize: 14, color: '#969799', marginTop: 8 }">Loading...</text>
-        </Loading>
+        <Loading vertical>Loading...</Loading>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Text Color</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Loading color="#1989fa" text-color="#1989fa">Loading...</Loading>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Text Size</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Loading :text-size="20">Loading...</Loading>
       </view>
     </view>
   </DemoPage>

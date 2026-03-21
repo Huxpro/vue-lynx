@@ -1,5 +1,69 @@
+<!--
+  Vant Feature Parity Report:
+  - Component: ImagePreview
+  - Props: Reviewed - see implementation for details
+  - Events: Reviewed - see implementation for details
+  - Slots: Reviewed - see implementation for details
+  - Status: Reviewed in V2 optimization pass
+-->
+<!--
+  Vant ImagePreview - Feature Parity Report
+  ===========================================
+  Vant Source: packages/vant/src/image-preview/ImagePreview.tsx
+
+  Props:
+    - show: boolean                                     [YES]
+    - images: string[]                                  [YES]
+    - startPosition: number (default 0)                 [YES]
+    - swipeDuration: number (default 300)               [YES] (accepted, no swipe in Lynx)
+    - showIndex: boolean (default true)                 [YES]
+    - showIndicators: boolean                           [YES]
+    - closeable: boolean                                [YES]
+    - closeIcon: string (default 'clear')               [YES] uses Icon component
+    - closeIconPosition: PopupCloseIconPosition         [YES]
+    - loop: boolean (default true)                      [YES] added
+    - minZoom / maxZoom: number                         [NO] Lynx has no pinch-zoom
+    - overlay: boolean                                  [N/A] always has overlay
+    - vertical: boolean                                 [NO] Lynx has no Swipe
+    - className / overlayClass / overlayStyle           [NO] no CSS classes
+    - transition                                        [NO] no CSS transitions
+    - beforeClose: Interceptor                          [YES] added
+    - doubleScale: boolean                              [NO] no touch gestures
+    - closeOnPopstate: boolean                          [NO] no popstate in Lynx
+    - closeOnClickImage: boolean (default true)         [YES] added
+    - closeOnClickOverlay: boolean (default true)       [YES] added
+    - teleport                                          [NO] Lynx has no teleport
+
+  Events:
+    - update:show                                       [YES]
+    - change                                            [YES]
+    - close                                             [YES]
+    - closed                                            [YES] added
+    - scale                                             [NO] no zoom
+    - longPress                                         [NO] no long-press gesture
+
+  Slots:
+    - index                                             [YES] added
+    - cover                                             [YES] added
+    - image                                             [NO]
+
+  Lynx Adaptations:
+    - No Swipe component; uses manual prev/next buttons for navigation
+    - No pinch-zoom or double-tap zoom (no gesture system)
+    - closeIcon rendered via Icon component instead of plain text
+    - Uses `display: 'flex'` explicitly on all flex containers
+    - Uses Popup-like overlay pattern with fixed positioning
+
+  Gaps:
+    - No swipe gesture navigation (tap-based prev/next instead)
+    - No zoom (minZoom/maxZoom/doubleScale/scale event)
+    - No long-press support
+    - No CSS transition animations
+    - No teleport support
+-->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, useSlots } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface ImagePreviewProps {
   show?: boolean;
@@ -11,6 +75,10 @@ export interface ImagePreviewProps {
   closeable?: boolean;
   closeIcon?: string;
   closeIconPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  loop?: boolean;
+  closeOnClickImage?: boolean;
+  closeOnClickOverlay?: boolean;
+  beforeClose?: (active: number) => boolean | Promise<boolean>;
 }
 
 const props = withDefaults(defineProps<ImagePreviewProps>(), {
@@ -21,16 +89,21 @@ const props = withDefaults(defineProps<ImagePreviewProps>(), {
   showIndex: true,
   showIndicators: false,
   closeable: false,
-  closeIcon: 'X',
+  closeIcon: 'clear',
   closeIconPosition: 'top-right',
+  loop: true,
+  closeOnClickImage: true,
+  closeOnClickOverlay: true,
 });
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
   change: [index: number];
   close: [info: { index: number; url: string }];
-  scale: [info: { index: number; scale: number }];
+  closed: [];
 }>();
+
+const slots = useSlots();
 
 const currentIndex = ref(props.startPosition);
 
@@ -60,14 +133,26 @@ const indexText = computed(() => {
   return `${currentIndex.value + 1} / ${props.images.length}`;
 });
 
-function onClose() {
+async function emitClose() {
+  if (props.beforeClose) {
+    const result = await props.beforeClose(currentIndex.value);
+    if (result === false) return;
+  }
   emit('close', { index: currentIndex.value, url: currentImage.value });
   emit('update:show', false);
+  emit('closed');
+}
+
+function onClose() {
+  emitClose();
 }
 
 function onPrev() {
   if (currentIndex.value > 0) {
     currentIndex.value--;
+    emit('change', currentIndex.value);
+  } else if (props.loop && props.images.length > 1) {
+    currentIndex.value = props.images.length - 1;
     emit('change', currentIndex.value);
   }
 }
@@ -76,20 +161,41 @@ function onNext() {
   if (currentIndex.value < props.images.length - 1) {
     currentIndex.value++;
     emit('change', currentIndex.value);
+  } else if (props.loop && props.images.length > 1) {
+    currentIndex.value = 0;
+    emit('change', currentIndex.value);
   }
 }
 
 function onTapBackground() {
-  onClose();
+  if (props.closeOnClickOverlay) {
+    onClose();
+  }
 }
+
+function onTapImage() {
+  if (props.closeOnClickImage) {
+    onClose();
+  }
+}
+
+const canGoPrev = computed(() => {
+  return props.loop || currentIndex.value > 0;
+});
+
+const canGoNext = computed(() => {
+  return props.loop || currentIndex.value < props.images.length - 1;
+});
 
 const closeButtonStyle = computed(() => {
   const base: Record<string, any> = {
     position: 'absolute',
-    fontSize: 20,
-    color: '#fff',
-    padding: 12,
     zIndex: 2,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
   };
   const pos = props.closeIconPosition;
   if (pos.includes('top')) base.top = 0;
@@ -127,12 +233,14 @@ const indicatorStyle = computed(() => (index: number) => ({
     }"
     @tap="onTapBackground"
   >
-    <!-- Close button -->
-    <text
+    <!-- Close button using Icon component -->
+    <view
       v-if="closeable"
       :style="closeButtonStyle"
       @tap.stop="onClose"
-    >{{ closeIcon }}</text>
+    >
+      <Icon :name="closeIcon" :size="22" color="#fff" />
+    </view>
 
     <!-- Index indicator -->
     <view
@@ -148,7 +256,9 @@ const indicatorStyle = computed(() => (index: number) => ({
         zIndex: 2,
       }"
     >
-      <text :style="{ fontSize: 14, color: '#fff' }">{{ indexText }}</text>
+      <slot name="index">
+        <text :style="{ fontSize: 14, color: '#fff' }">{{ indexText }}</text>
+      </slot>
     </view>
 
     <!-- Image display area -->
@@ -163,15 +273,27 @@ const indicatorStyle = computed(() => (index: number) => ({
       }"
     >
       <!-- Prev button -->
-      <text
-        v-if="images.length > 1 && currentIndex > 0"
-        :style="{ fontSize: 28, color: '#fff', padding: 16, opacity: 0.8 }"
+      <view
+        v-if="images.length > 1 && canGoPrev"
+        :style="{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 16,
+          opacity: 0.8,
+        }"
         @tap.stop="onPrev"
-      >&lt;</text>
+      >
+        <Icon name="arrow-left" :size="28" color="#fff" />
+      </view>
       <view v-else :style="{ width: 60 }" />
 
       <!-- Current image -->
-      <view :style="{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
+      <view
+        :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }"
+        @tap.stop="onTapImage"
+      >
         <image
           v-if="currentImage"
           :src="currentImage"
@@ -180,13 +302,25 @@ const indicatorStyle = computed(() => (index: number) => ({
       </view>
 
       <!-- Next button -->
-      <text
-        v-if="images.length > 1 && currentIndex < images.length - 1"
-        :style="{ fontSize: 28, color: '#fff', padding: 16, opacity: 0.8 }"
+      <view
+        v-if="images.length > 1 && canGoNext"
+        :style="{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 16,
+          opacity: 0.8,
+        }"
         @tap.stop="onNext"
-      >&gt;</text>
+      >
+        <Icon name="arrow" :size="28" color="#fff" />
+      </view>
       <view v-else :style="{ width: 60 }" />
     </view>
+
+    <!-- Cover slot -->
+    <slot name="cover" />
 
     <!-- Dot indicators -->
     <view

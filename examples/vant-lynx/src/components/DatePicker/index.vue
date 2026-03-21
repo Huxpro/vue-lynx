@@ -1,3 +1,16 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 6/10 supported (modelValue, columnsType/type, title, minDate, maxDate,
+    confirmButtonText, cancelButtonText)
+    Missing: filter, formatter, loading, readonly, optionHeight, swipeDuration, visibleOptionNum,
+    showToolbar, columnsOrder (partially via type prop)
+  - Events: 4/4 supported (update:modelValue, confirm, cancel, change)
+  - Slots: 0/5 supported
+    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
+  - Gaps: no filter/formatter for custom option text; no scroll-wheel physics (tap-to-select);
+    type prop maps to columnsType internally but 'datehour' is non-standard Vant;
+    no loading/readonly inherited from Picker
+-->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
 

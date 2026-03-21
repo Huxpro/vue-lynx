@@ -1,3 +1,11 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 4/4 supported (time, format, autoStart, millisecond)
+  - Events: 2/2 (finish, change)
+  - Slots: 1/1 (default with timeData/formatted scoped slot)
+  - Exposed: start, pause, reset
+  - Gaps: None - full feature parity
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue-lynx';
 

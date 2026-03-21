@@ -1,5 +1,25 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 8/18 supported (show, title, message, showConfirmButton, showCancelButton,
+    confirmButtonText, cancelButtonText, overlay)
+  - Events: 4/4 (update:show, confirm, cancel, open/close)
+  - Slots: 3/4 (default [message], title, footer; missing: none critical)
+  - Sub-components: Overlay ✅
+  - Gaps:
+    - No width prop
+    - No theme prop (round-button)
+    - No messageAlign prop
+    - No closeOnClickOverlay prop
+    - No closeOnPopstate prop
+    - No allowHtml prop
+    - No beforeClose interceptor
+    - No confirmButtonColor/cancelButtonColor props
+    - No transition animation
+    - No programmatic API (showDialog/showConfirmDialog)
+-->
 <script setup lang="ts">
 import { watch } from 'vue-lynx';
+import Overlay from '../Overlay/index.vue';
 
 export interface DialogProps {
   show?: boolean;
@@ -9,7 +29,10 @@ export interface DialogProps {
   showCancelButton?: boolean;
   confirmButtonText?: string;
   cancelButtonText?: string;
+  confirmButtonColor?: string;
+  cancelButtonColor?: string;
   overlay?: boolean;
+  closeOnClickOverlay?: boolean;
 }
 
 const props = withDefaults(defineProps<DialogProps>(), {
@@ -20,7 +43,10 @@ const props = withDefaults(defineProps<DialogProps>(), {
   showCancelButton: false,
   confirmButtonText: 'Confirm',
   cancelButtonText: 'Cancel',
+  confirmButtonColor: '#1989fa',
+  cancelButtonColor: '#646566',
   overlay: true,
+  closeOnClickOverlay: false,
 });
 
 const emit = defineEmits<{
@@ -51,23 +77,17 @@ function onCancel() {
   emit('cancel');
   emit('update:show', false);
 }
+
+function onClickOverlay() {
+  if (props.closeOnClickOverlay) {
+    emit('update:show', false);
+  }
+}
 </script>
 
 <template>
   <template v-if="show">
-    <!-- Overlay -->
-    <view
-      v-if="overlay"
-      :style="{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        zIndex: 2000,
-      }"
-    />
+    <Overlay v-if="overlay" :show="true" :z-index="2000" @click="onClickOverlay" />
 
     <!-- Dialog box -->
     <view
@@ -86,103 +106,99 @@ function onCancel() {
       }"
     >
       <!-- Title -->
-      <view
-        v-if="title"
-        :style="{
-          paddingTop: 26,
-          paddingBottom: message ? 8 : 26,
-          paddingLeft: 24,
-          paddingRight: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-      >
-        <text
+      <slot name="title">
+        <view
+          v-if="title"
           :style="{
-            fontSize: 16,
-            fontWeight: 'bold',
-            color: '#323233',
-            textAlign: 'center',
-            lineHeight: 24,
+            paddingTop: 26,
+            paddingBottom: message ? 8 : 26,
+            paddingLeft: 24,
+            paddingRight: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }"
-        >{{ title }}</text>
-      </view>
+        >
+          <text
+            :style="{
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: '#323233',
+              textAlign: 'center',
+              lineHeight: 24,
+            }"
+          >{{ title }}</text>
+        </view>
+      </slot>
 
       <!-- Message -->
-      <view
-        v-if="message"
-        :style="{
-          paddingTop: title ? 8 : 26,
-          paddingBottom: 26,
-          paddingLeft: 24,
-          paddingRight: 24,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-      >
-        <text
+      <slot>
+        <view
+          v-if="message"
           :style="{
-            fontSize: 14,
-            color: title ? '#646566' : '#323233',
-            textAlign: 'center',
-            lineHeight: 20,
+            paddingTop: title ? 8 : 26,
+            paddingBottom: 26,
+            paddingLeft: 24,
+            paddingRight: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }"
-        >{{ message }}</text>
-      </view>
+        >
+          <text
+            :style="{
+              fontSize: 14,
+              color: title ? '#646566' : '#323233',
+              textAlign: 'center',
+              lineHeight: 20,
+            }"
+          >{{ message }}</text>
+        </view>
+      </slot>
 
       <!-- Buttons -->
-      <view
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          borderTopWidth: 1,
-          borderTopStyle: 'solid',
-          borderTopColor: '#ebedf0',
-        }"
-      >
+      <slot name="footer">
         <view
-          v-if="showCancelButton"
           :style="{
-            flex: 1,
-            height: 48,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRightWidth: showConfirmButton ? 1 : 0,
-            borderRightStyle: 'solid',
-            borderRightColor: '#ebedf0',
+            flexDirection: 'row',
+            borderTopWidth: 1,
+            borderTopStyle: 'solid',
+            borderTopColor: '#ebedf0',
           }"
-          @tap="onCancel"
         >
-          <text
+          <view
+            v-if="showCancelButton"
             :style="{
-              fontSize: 16,
-              color: '#646566',
+              flex: 1,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRightWidth: showConfirmButton ? 1 : 0,
+              borderRightStyle: 'solid',
+              borderRightColor: '#ebedf0',
             }"
-          >{{ cancelButtonText }}</text>
-        </view>
+            @tap="onCancel"
+          >
+            <text :style="{ fontSize: 16, color: cancelButtonColor }">{{ cancelButtonText }}</text>
+          </view>
 
-        <view
-          v-if="showConfirmButton"
-          :style="{
-            flex: 1,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }"
-          @tap="onConfirm"
-        >
-          <text
+          <view
+            v-if="showConfirmButton"
             :style="{
-              fontSize: 16,
-              color: '#1989fa',
+              flex: 1,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }"
-          >{{ confirmButtonText }}</text>
+            @tap="onConfirm"
+          >
+            <text :style="{ fontSize: 16, color: confirmButtonColor }">{{ confirmButtonText }}</text>
+          </view>
         </view>
-      </view>
+      </slot>
     </view>
   </template>
 </template>

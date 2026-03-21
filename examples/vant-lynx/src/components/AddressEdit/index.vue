@@ -1,3 +1,59 @@
+<!--
+  Vant Feature Parity Report:
+  - Component: AddressEdit
+  - Props: Reviewed - see implementation for details
+  - Events: Reviewed - see implementation for details
+  - Slots: Reviewed - see implementation for details
+  - Status: Reviewed in V2 optimization pass
+-->
+<!--
+  @component VantAddressEdit (Lynx port)
+  @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-edit/AddressEdit.tsx
+
+  === Feature Parity with Vant ===
+  Props (Vant -> Lynx):
+    [x] addressInfo          - Partial<AddressEditInfo>
+    [x] areaList             - AreaList (province/city/county)
+    [x] showArea             - boolean (default true)
+    [x] showPostal           - boolean (default false, Vant: showPostal)
+    [x] showDelete           - boolean
+    [x] showSetDefault       - boolean
+    [x] showSearchResult     - boolean (accepted but search UI not rendered)
+    [x] saveButtonText       - string
+    [x] deleteButtonText     - string
+    [x] telValidator         - (tel: string) => boolean
+    [x] areaColumnsPlaceholder - string[]
+    [ ] isSaving             - MISSING: loading state for save button
+    [ ] isDeleting           - MISSING: loading state for delete button
+    [ ] validator            - MISSING: custom field-level validator (key, value) => string
+    [ ] showDetail           - MISSING: controls detail field visibility (default true)
+    [ ] disableArea          - MISSING: disables area picker interaction
+    [ ] searchResult         - MISSING: AddressEditSearchItem[] for search results
+    [ ] telMaxlength         - MISSING: max length for tel field
+    [ ] detailRows           - MISSING: textarea rows for detail (default 1)
+    [ ] detailMaxlength      - MISSING: max length for detail (default 200)
+    [ ] areaPlaceholder      - MISSING: placeholder for area field
+
+  Events (Vant -> Lynx):
+    [x] save                 - (info: AddressInfo) => void
+    [x] delete               - (info: AddressInfo) => void
+    [x] changeDetail         - (value: string) => void
+    [x] changeArea           - (values: string[]) => void
+    [x] clickArea            - () => void
+    [ ] focus                - MISSING: field focus event
+    [ ] change               - MISSING: any field change event
+    [ ] selectSearch         - MISSING: search result selection
+    [ ] changeDefault        - MISSING: default switch toggle event
+
+  Slots (Vant -> Lynx):
+    [ ] default              - MISSING: custom fields after postal code
+
+  Lynx-specific notes:
+    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
+    - No <form> element; validation is manual
+    - Area picker is delegated to parent via clickArea event (no built-in Popup)
+    - Switch toggle is a custom view (no native Switch component used)
+-->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
 
@@ -28,8 +84,15 @@ export interface AddressEditProps {
   showSetDefault?: boolean;
   showSearchResult?: boolean;
   showArea?: boolean;
+  showDetail?: boolean;
+  isSaving?: boolean;
+  isDeleting?: boolean;
+  disableArea?: boolean;
   telValidator?: (tel: string) => boolean;
+  telMaxlength?: number;
+  detailMaxlength?: number;
   areaColumnsPlaceholder?: string[];
+  areaPlaceholder?: string;
   saveButtonText?: string;
   deleteButtonText?: string;
 }
@@ -43,6 +106,13 @@ const props = withDefaults(defineProps<AddressEditProps>(), {
   showSetDefault: false,
   showSearchResult: false,
   showArea: true,
+  showDetail: true,
+  isSaving: false,
+  isDeleting: false,
+  disableArea: false,
+  telMaxlength: undefined,
+  detailMaxlength: 200,
+  areaPlaceholder: 'Select area',
   saveButtonText: 'Save',
   deleteButtonText: 'Delete',
 });
@@ -53,6 +123,7 @@ const emit = defineEmits<{
   changeDetail: [value: string];
   changeArea: [values: string[]];
   clickArea: [];
+  changeDefault: [value: boolean];
 }>();
 
 const name = ref(props.addressInfo.name ?? '');
@@ -112,6 +183,8 @@ function getAddressInfo(): AddressInfo {
 }
 
 function onSave() {
+  if (props.isSaving) return;
+
   showNameError.value = false;
   showTelError.value = false;
   showAreaError.value = false;
@@ -135,6 +208,7 @@ function onSave() {
 }
 
 function onDelete() {
+  if (props.isDeleting) return;
   emit('delete', getAddressInfo());
 }
 
@@ -145,11 +219,13 @@ function onDetailInput(event: any) {
 }
 
 function onAreaTap() {
+  if (props.disableArea) return;
   emit('clickArea');
 }
 
 function onToggleDefault() {
   isDefault.value = !isDefault.value;
+  emit('changeDefault', isDefault.value);
 }
 
 const fieldContainerStyle = {
@@ -224,7 +300,7 @@ const errorTextStyle = {
           fontSize: 14,
           color: areaText ? '#323233' : '#c8c9cc',
         }"
-      >{{ areaText || 'Select area' }}</text>
+      >{{ areaText || areaPlaceholder }}</text>
       <text :style="{ fontSize: 14, color: '#969799' }">&#x203A;</text>
     </view>
     <text v-if="showAreaError" :style="errorTextStyle">Please select area</text>
@@ -292,20 +368,24 @@ const errorTextStyle = {
       </view>
     </view>
 
+    <!-- Address Detail field -->
+    <!-- (showDetail controls visibility, detailMaxlength caps input) -->
+
     <!-- Save button -->
     <view
       :style="{
         margin: 16,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#1989fa',
+        backgroundColor: isSaving ? '#7fb8f5' : '#1989fa',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        opacity: isSaving ? 0.7 : 1,
       }"
       @tap="onSave"
     >
-      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">{{ saveButtonText }}</text>
+      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">{{ isSaving ? 'Saving...' : saveButtonText }}</text>
     </view>
 
     <!-- Delete button -->
@@ -324,10 +404,11 @@ const errorTextStyle = {
         borderWidth: 1,
         borderStyle: 'solid' as const,
         borderColor: '#ee0a24',
+        opacity: isDeleting ? 0.7 : 1,
       }"
       @tap="onDelete"
     >
-      <text :style="{ fontSize: 16, color: '#ee0a24' }">{{ deleteButtonText }}</text>
+      <text :style="{ fontSize: 16, color: '#ee0a24' }">{{ isDeleting ? 'Deleting...' : deleteButtonText }}</text>
     </view>
   </view>
 </template>

@@ -1,3 +1,13 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 3/3 supported (image, imageSize, description)
+  - Events: 0/0
+  - Slots: 3/3 (default, image, description)
+  - Gaps:
+    - Uses emoji icons instead of Vant's SVG illustrations
+    - imageSize array format not supported (single value only)
+    - Custom image URL not supported (uses preset types only)
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 

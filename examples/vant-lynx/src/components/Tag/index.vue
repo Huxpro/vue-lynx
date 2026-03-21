@@ -1,21 +1,36 @@
+<!--
+  Vant Feature Parity Report (Tag):
+  Source: https://github.com/youzan/vant/blob/main/packages/vant/src/tag/Tag.tsx
+  - Props: 9/9 supported (type, size, color, plain, round, mark, textColor, closeable, show)
+  - Events: 2/2 supported (click, close)
+  - Slots: 1/1 supported (default)
+  - Sub-components: Icon (cross) for closeable
+  - Shapes: round, mark (right-side rounded), default (2px radius)
+  - Sizes: Vant has default (no size), medium, large. We map all three.
+  - Plain mode: white background with colored border and text
+  - Show/hide: v-if controlled (no CSS transition in Lynx)
+  - Gaps:
+    - No CSS transition for show/hide (Lynx does not support Vue Transition component)
+    - No CSS variable theming (inline styles only in Lynx)
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface TagProps {
   type?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
-  size?: 'large' | 'medium' | 'small';
+  size?: 'large' | 'medium';
+  color?: string;
   plain?: boolean;
   round?: boolean;
   mark?: boolean;
+  textColor?: string;
   closeable?: boolean;
   show?: boolean;
-  color?: string;
-  textColor?: string;
 }
 
 const props = withDefaults(defineProps<TagProps>(), {
   type: 'default',
-  size: 'small',
   plain: false,
   round: false,
   mark: false,
@@ -28,57 +43,100 @@ const emit = defineEmits<{
   close: [event: any];
 }>();
 
-const typeConfig = {
-  default: { bg: '#969799', color: '#fff' },
-  primary: { bg: '#1989fa', color: '#fff' },
-  success: { bg: '#07c160', color: '#fff' },
-  warning: { bg: '#ff976a', color: '#fff' },
-  danger: { bg: '#ee0a24', color: '#fff' },
+// Vant type -> background color mapping
+const typeColorMap: Record<string, string> = {
+  default: '#969799',
+  primary: '#1989fa',
+  success: '#07c160',
+  warning: '#ff976a',
+  danger: '#ee0a24',
 };
 
-const sizeConfig = {
-  large: { fontSize: 14, padding: 4, paddingH: 8 },
-  medium: { fontSize: 12, padding: 2, paddingH: 6 },
-  small: { fontSize: 10, padding: 0, paddingH: 4 },
+// Vant size configs
+// In Vant, default (no size prop) is the smallest; medium and large are explicit.
+const sizeConfig: Record<string, { fontSize: number; padding: number; paddingH: number; lineHeight: number; radius?: number }> = {
+  default: { fontSize: 12, padding: 0, paddingH: 4, lineHeight: 16 },
+  medium: { fontSize: 12, padding: 2, paddingH: 6, lineHeight: 16 },
+  large: { fontSize: 14, padding: 4, paddingH: 8, lineHeight: 20, radius: 4 },
 };
+
+const ROUND_RADIUS = 999;
+const DEFAULT_RADIUS = 2;
+
+const resolvedSize = computed(() => {
+  // Vant only defines medium and large; anything else (including undefined) maps to default
+  if (props.size === 'medium' || props.size === 'large') return props.size;
+  return 'default';
+});
 
 const tagStyle = computed(() => {
-  if (!props.show) return { display: 'none' };
+  const typeColor = typeColorMap[props.type] || typeColorMap.default;
+  const bgColor = props.color || typeColor;
+  const sc = sizeConfig[resolvedSize.value];
+  const baseRadius = sc.radius ?? DEFAULT_RADIUS;
 
-  const tc = typeConfig[props.type];
-  const sc = sizeConfig[props.size];
-  const bg = props.color || tc.bg;
+  // Determine border-radius based on shape props
+  // round and mark are independent in Vant; round takes full pill shape,
+  // mark zeros the left side and rounds the right side
+  let borderTopLeftRadius = baseRadius;
+  let borderTopRightRadius = baseRadius;
+  let borderBottomLeftRadius = baseRadius;
+  let borderBottomRightRadius = baseRadius;
+
+  if (props.round) {
+    borderTopLeftRadius = ROUND_RADIUS;
+    borderTopRightRadius = ROUND_RADIUS;
+    borderBottomLeftRadius = ROUND_RADIUS;
+    borderBottomRightRadius = ROUND_RADIUS;
+  } else if (props.mark) {
+    // Mark shape: left side square (0), right side fully rounded
+    borderTopLeftRadius = 0;
+    borderBottomLeftRadius = 0;
+    borderTopRightRadius = ROUND_RADIUS;
+    borderBottomRightRadius = ROUND_RADIUS;
+  }
 
   return {
-    display: 'inline-flex',
+    display: 'flex',
     flexDirection: 'row' as const,
     alignItems: 'center',
     paddingTop: sc.padding,
     paddingBottom: sc.padding,
     paddingLeft: sc.paddingH,
     paddingRight: sc.paddingH,
-    backgroundColor: props.plain ? '#fff' : bg,
-    borderWidth: 1,
+    backgroundColor: props.plain ? '#fff' : bgColor,
+    borderWidth: props.plain ? 1 : 0,
     borderStyle: 'solid' as const,
-    borderColor: bg,
-    borderRadius: props.round ? 999 : (props.mark ? 0 : 2),
-    borderTopLeftRadius: props.mark ? 0 : undefined,
-    borderBottomLeftRadius: props.mark ? 0 : undefined,
-    borderTopRightRadius: props.mark ? 999 : undefined,
-    borderBottomRightRadius: props.mark ? 999 : undefined,
+    borderColor: props.plain ? bgColor : 'transparent',
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
   };
 });
 
-const textStyle = computed(() => {
-  const tc = typeConfig[props.type];
-  const sc = sizeConfig[props.size];
-  const bg = props.color || tc.bg;
+const resolvedTextColor = computed(() => {
+  const typeColor = typeColorMap[props.type] || typeColorMap.default;
 
+  // textColor prop takes highest priority
+  // In plain mode: text color defaults to the type/custom color
+  // In filled mode: text color defaults to white
+  if (props.textColor) return props.textColor;
+  if (props.plain) return props.color || typeColor;
+  return '#fff';
+});
+
+const textStyle = computed(() => {
+  const sc = sizeConfig[resolvedSize.value];
   return {
     fontSize: sc.fontSize,
-    color: props.textColor || (props.plain ? bg : tc.color),
-    lineHeight: sc.fontSize * 1.4,
+    lineHeight: sc.lineHeight,
+    color: resolvedTextColor.value,
   };
+});
+
+const closeIconSize = computed(() => {
+  return sizeConfig[resolvedSize.value].fontSize;
 });
 
 function onTap(event: any) {
@@ -86,6 +144,7 @@ function onTap(event: any) {
 }
 
 function onClose(event: any) {
+  event.stopPropagation?.();
   emit('close', event);
 }
 </script>
@@ -93,10 +152,8 @@ function onClose(event: any) {
 <template>
   <view v-if="show" :style="tagStyle" @tap="onTap">
     <slot />
-    <text
-      v-if="closeable"
-      :style="{ ...textStyle, marginLeft: 2 }"
-      @tap="onClose"
-    >&times;</text>
+    <view v-if="closeable" :style="{ marginLeft: 2 }" @tap="onClose">
+      <Icon name="cross" :size="closeIconSize" :color="resolvedTextColor" />
+    </view>
   </view>
 </template>

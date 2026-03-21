@@ -1,5 +1,32 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 5/5 supported
+    - offsetTop: Numeric (default 0) - offset from top when position is 'top'
+    - offsetBottom: Numeric (default 0) - offset from bottom when position is 'bottom'
+    - zIndex: Numeric (default 99) - z-index when sticky
+    - container: Element (optional) - container element to limit sticky scope
+    - position: 'top' | 'bottom' (default 'top') - sticky direction
+  - Events: 2/2 supported
+    - scroll: { scrollTop: number; isFixed: boolean } - emitted on scroll
+    - change: boolean - emitted when fixed state changes
+  - Slots: 1/1 supported (default)
+  - Lynx Adaptations:
+    - No DOM measurement APIs (useRect, getScrollTop) available in Lynx
+    - Scroll detection requires external scroll event forwarding
+    - Container-scoped sticky boundary not fully supported (no element rect measurement)
+    - Uses position: 'fixed' when sticky is active
+    - Width/height preservation of placeholder requires manual height prop
+  - Gaps:
+    - Container-scoped boundary: Vant measures container rect to limit sticky scope;
+      Lynx lacks DOM measurement APIs, so container prop is accepted but boundary
+      calculation is simplified
+    - No automatic width/height measurement: Vant reads rootRect to set placeholder
+      size; Lynx requires explicit height
+    - No useScrollParent / useVisibilityChange composables
+    - No window resize re-measurement
+-->
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 
 export interface StickyProps {
   offsetTop?: number;
@@ -7,6 +34,8 @@ export interface StickyProps {
   zIndex?: number;
   container?: any;
   position?: 'top' | 'bottom';
+  /** Lynx-specific: explicit content height for proper placeholder sizing */
+  contentHeight?: number;
 }
 
 const props = withDefaults(defineProps<StickyProps>(), {
@@ -14,6 +43,7 @@ const props = withDefaults(defineProps<StickyProps>(), {
   offsetBottom: 0,
   zIndex: 99,
   position: 'top',
+  contentHeight: 0,
 });
 
 const emit = defineEmits<{
@@ -43,16 +73,28 @@ function handleScroll(event: any) {
   emit('scroll', { scrollTop: st, isFixed: fixed });
 }
 
+watch(() => isFixed.value, (val) => {
+  emit('change', val);
+});
+
+const offset = computed(() =>
+  props.position === 'top' ? props.offsetTop : props.offsetBottom,
+);
+
 const wrapperStyle = computed(() => {
   if (!isFixed.value) {
     return {
+      display: 'flex',
+      flexDirection: 'column' as const,
       position: 'relative' as const,
     };
   }
   return {
+    display: 'flex',
+    flexDirection: 'column' as const,
     position: 'fixed' as const,
-    top: props.position === 'top' ? props.offsetTop : undefined,
-    bottom: props.position === 'bottom' ? props.offsetBottom : undefined,
+    top: props.position === 'top' ? offset.value : undefined,
+    bottom: props.position === 'bottom' ? offset.value : undefined,
     left: 0,
     right: 0,
     zIndex: props.zIndex,
@@ -61,12 +103,20 @@ const wrapperStyle = computed(() => {
 
 const placeholderStyle = computed(() => {
   if (!isFixed.value) {
-    return { height: 0 };
+    return {
+      display: 'flex',
+      flexDirection: 'column' as const,
+    };
   }
+  // When fixed, placeholder reserves the space the element occupied
   return {
-    height: 0,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: props.contentHeight || 0,
   };
 });
+
+defineExpose({ handleScroll, isFixed });
 </script>
 
 <template>

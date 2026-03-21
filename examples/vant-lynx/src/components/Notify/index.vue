@@ -1,13 +1,35 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 9/11 supported (show, type, message, color, background, duration, position, className [accepted but N/A], zIndex)
+  - Missing: lockScroll (N/A in Lynx - no body scroll), teleport (N/A in Lynx)
+  - Events: 4/4 supported (update:show, click, opened, close)
+  - Slots: 1/1 (default)
+  - Auto-close: Timer-based auto-close using duration prop (0 = no auto-close)
+  - Position: top/bottom support
+  - Vant uses Popup internally; we use positioned view (simpler, avoids overlay)
+  - Gaps:
+    - No lockScroll (Lynx has no body scroll to lock)
+    - No teleport (N/A in Lynx)
+    - className accepted but class-based styling N/A in Lynx
+    - No fade transition animation
+-->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, watch, ref, onBeforeUnmount, useSlots } from 'vue-lynx';
+
+export type NotifyType = 'primary' | 'success' | 'warning' | 'danger';
+export type NotifyPosition = 'top' | 'bottom';
 
 export interface NotifyProps {
   show?: boolean;
-  type?: 'primary' | 'success' | 'warning' | 'danger';
-  message?: string;
+  type?: NotifyType;
+  message?: string | number;
   duration?: number;
   color?: string;
   background?: string;
+  position?: NotifyPosition;
+  className?: unknown;
+  lockScroll?: boolean;
+  zIndex?: number | string;
 }
 
 const props = withDefaults(defineProps<NotifyProps>(), {
@@ -15,11 +37,66 @@ const props = withDefaults(defineProps<NotifyProps>(), {
   type: 'danger',
   message: '',
   duration: 3000,
+  position: 'top',
+  lockScroll: false,
+  zIndex: 2000,
 });
 
-defineEmits<{
+const emit = defineEmits<{
   'update:show': [value: boolean];
+  click: [event: any];
+  opened: [];
+  close: [];
 }>();
+
+const slots = useSlots();
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+function clearTimer() {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+}
+
+function startTimer() {
+  clearTimer();
+  if (props.duration > 0) {
+    timer = setTimeout(() => {
+      emit('update:show', false);
+      emit('close');
+    }, props.duration);
+  }
+}
+
+// Watch show to start/stop auto-close timer
+watch(
+  () => props.show,
+  (val) => {
+    if (val) {
+      startTimer();
+      emit('opened');
+    } else {
+      clearTimer();
+    }
+  },
+  { immediate: true },
+);
+
+// Restart timer when duration changes while visible
+watch(
+  () => props.duration,
+  () => {
+    if (props.show) {
+      startTimer();
+    }
+  },
+);
+
+onBeforeUnmount(() => {
+  clearTimer();
+});
 
 const typeColorMap: Record<string, { color: string; background: string }> = {
   primary: { color: '#fff', background: '#1989fa' },
@@ -36,21 +113,24 @@ const resolvedBackground = computed(
   () => props.background ?? typeColorMap[props.type ?? 'danger'].background,
 );
 
-const barStyle = computed(() => ({
-  position: 'fixed' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  zIndex: 9999,
-  backgroundColor: resolvedBackground.value,
-  paddingTop: 12,
-  paddingBottom: 12,
-  paddingLeft: 16,
-  paddingRight: 16,
-  display: 'flex',
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-}));
+const barStyle = computed(() => {
+  const isTop = props.position === 'top';
+  return {
+    position: 'fixed' as const,
+    ...(isTop ? { top: 0 } : { bottom: 0 }),
+    left: 0,
+    right: 0,
+    zIndex: Number(props.zIndex) || 2000,
+    backgroundColor: resolvedBackground.value,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 16,
+    paddingRight: 16,
+    display: 'flex',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  };
+});
 
 const textStyle = computed(() => ({
   fontSize: 14,
@@ -58,10 +138,16 @@ const textStyle = computed(() => ({
   textAlign: 'center' as const,
   lineHeight: 20,
 }));
+
+function onTap(event: any) {
+  emit('click', event);
+}
 </script>
 
 <template>
-  <view v-if="show" :style="barStyle">
-    <text :style="textStyle">{{ message }}</text>
+  <view v-if="show" :style="barStyle" @tap="onTap">
+    <slot>
+      <text :style="textStyle">{{ message }}</text>
+    </slot>
   </view>
 </template>

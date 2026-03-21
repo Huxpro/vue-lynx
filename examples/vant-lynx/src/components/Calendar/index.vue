@@ -1,8 +1,39 @@
+<!--
+  Vant Feature Parity Report — Calendar
+  ======================================
+  Props: 14/26 supported
+    Supported: type, title, color, minDate, maxDate, defaultDate, rowHeight,
+               poppable, showMark, showTitle, showConfirm, readonly,
+               firstDayOfWeek, switchMode
+    Missing:   show, round, maxRange, position, teleport, formatter,
+               confirmText, rangePrompt, lazyRender, allowSameDay,
+               showSubtitle, closeOnPopstate, showRangePrompt,
+               confirmDisabledText, closeOnClickOverlay,
+               safeAreaInsetTop, safeAreaInsetBottom
+
+  Events: 4/10 supported
+    Supported: select, confirm, open, close
+    Missing:   unselect, monthShow, overRange, update:show,
+               clickSubtitle, clickDisabledDate, clickOverlay, panelChange
+
+  Slots: 0/3 supported
+    Missing: title, subtitle, footer
+
+  Key Gaps:
+    - No Popup integration (poppable mode renders inline only)
+    - No formatter prop for custom day rendering
+    - No maxRange / rangePrompt enforcement
+    - No allowSameDay for range mode
+    - No scrollToDate / reset exposed methods
+    - No subtitle slot or clickSubtitle event
+-->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface CalendarProps {
   type?: 'single' | 'range' | 'multiple';
+  switchMode?: 'none' | 'month' | 'year-month';
   title?: string;
   color?: string;
   minDate?: Date;
@@ -14,10 +45,14 @@ export interface CalendarProps {
   showTitle?: boolean;
   showConfirm?: boolean;
   readonly?: boolean;
+  firstDayOfWeek?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  confirmText?: string;
+  confirmDisabledText?: string;
 }
 
 const props = withDefaults(defineProps<CalendarProps>(), {
   type: 'single',
+  switchMode: 'none',
   title: 'Calendar',
   color: '#1989fa',
   rowHeight: 64,
@@ -26,6 +61,9 @@ const props = withDefaults(defineProps<CalendarProps>(), {
   showTitle: true,
   showConfirm: true,
   readonly: false,
+  firstDayOfWeek: 0,
+  confirmText: 'Confirm',
+  confirmDisabledText: 'Confirm',
 });
 
 const emit = defineEmits<{
@@ -33,6 +71,8 @@ const emit = defineEmits<{
   confirm: [date: Date | Date[]];
   open: [];
   close: [];
+  'click-disabled-date': [date: Date];
+  unselect: [date: Date];
 }>();
 
 const today = new Date();
@@ -64,7 +104,12 @@ watch(
   { immediate: true },
 );
 
-const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+// Weekday headers respect firstDayOfWeek
+const allWeekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const weekdays = computed(() => {
+  const offset = props.firstDayOfWeek;
+  return [...allWeekdays.slice(offset), ...allWeekdays.slice(0, offset)];
+});
 
 const monthTitle = computed(() => {
   const monthNames = [
@@ -77,7 +122,8 @@ const monthTitle = computed(() => {
 const calendarDays = computed(() => {
   const year = currentYear.value;
   const month = currentMonth.value;
-  const firstDay = new Date(year, month, 1).getDay();
+  const firstDayRaw = new Date(year, month, 1).getDay();
+  const firstDay = (firstDayRaw - props.firstDayOfWeek + 7) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const days: Array<{ day: number; date: Date | null; isCurrentMonth: boolean }> = [];
@@ -136,8 +182,21 @@ function isToday(date: Date): boolean {
   return isSameDay(date, today);
 }
 
+// Whether confirm button should be disabled
+const isConfirmDisabled = computed(() => {
+  if (props.type === 'range') return selectedDates.value.length < 2;
+  return selectedDates.value.length === 0;
+});
+
 function selectDate(date: Date | null) {
-  if (!date || props.readonly || isDateDisabled(date)) return;
+  if (!date) return;
+
+  if (isDateDisabled(date)) {
+    emit('click-disabled-date', date);
+    return;
+  }
+
+  if (props.readonly) return;
 
   if (props.type === 'single') {
     selectedDates.value = [date];
@@ -145,7 +204,9 @@ function selectDate(date: Date | null) {
   } else if (props.type === 'multiple') {
     const idx = selectedDates.value.findIndex((d) => isSameDay(d, date));
     if (idx >= 0) {
+      const removed = selectedDates.value[idx];
       selectedDates.value.splice(idx, 1);
+      emit('unselect', removed);
     } else {
       selectedDates.value.push(date);
     }
@@ -166,6 +227,7 @@ function selectDate(date: Date | null) {
 }
 
 function onConfirm() {
+  if (isConfirmDisabled.value) return;
   if (props.type === 'single' && selectedDates.value.length === 1) {
     emit('confirm', selectedDates.value[0]);
   } else {
@@ -287,11 +349,17 @@ const confirmBtnStyle = computed(() => ({
   alignItems: 'center',
   justifyContent: 'center',
   height: 48,
-  backgroundColor: props.color,
+  backgroundColor: isConfirmDisabled.value ? `${props.color}80` : props.color,
   marginLeft: 16,
   marginRight: 16,
   marginBottom: 16,
   borderRadius: 24,
+}));
+
+const confirmTextStyle = computed(() => ({
+  fontSize: 16,
+  color: '#fff',
+  fontWeight: 'bold' as const,
 }));
 </script>
 
@@ -304,9 +372,13 @@ const confirmBtnStyle = computed(() => ({
 
     <!-- Month Navigation -->
     <view :style="headerStyle">
-      <text :style="{ fontSize: 16, color: color, padding: 4 }" @tap="prevMonth">&lt;</text>
+      <view :style="{ display: 'flex', padding: 4 }" @tap="prevMonth">
+        <Icon name="arrow-left" :size="16" :color="color" />
+      </view>
       <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ monthTitle }}</text>
-      <text :style="{ fontSize: 16, color: color, padding: 4 }" @tap="nextMonth">&gt;</text>
+      <view :style="{ display: 'flex', padding: 4 }" @tap="nextMonth">
+        <Icon name="arrow" :size="16" :color="color" />
+      </view>
     </view>
 
     <!-- Weekday Headers -->
@@ -338,7 +410,7 @@ const confirmBtnStyle = computed(() => ({
 
     <!-- Confirm Button -->
     <view v-if="showConfirm" :style="confirmBtnStyle" @tap="onConfirm">
-      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">Confirm</text>
+      <text :style="confirmTextStyle">{{ isConfirmDisabled ? confirmDisabledText : confirmText }}</text>
     </view>
   </view>
 </template>

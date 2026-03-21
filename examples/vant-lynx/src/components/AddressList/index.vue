@@ -1,3 +1,47 @@
+<!--
+  Vant Feature Parity Report:
+  - Component: AddressList
+  - Props: Reviewed - see implementation for details
+  - Events: Reviewed - see implementation for details
+  - Slots: Reviewed - see implementation for details
+  - Status: Reviewed in V2 optimization pass
+-->
+<!--
+  @component VantAddressList (Lynx port)
+  @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-list/AddressList.tsx
+
+  === Feature Parity with Vant ===
+  Props (Vant -> Lynx):
+    [x] list                 - AddressListAddress[]
+    [x] modelValue           - string | number (selected id)
+    [x] switchable           - boolean (default true)
+    [x] disabledList         - AddressListAddress[]
+    [x] addButtonText        - string
+    [x] defaultTagText       - string
+    [ ] disabledText         - MISSING: text shown above disabled list section
+    [ ] showAddButton        - MISSING: controls add button visibility (default true)
+    [ ] rightIcon            - MISSING: icon name for edit button (default 'edit')
+
+  Events (Vant -> Lynx):
+    [x] update:modelValue    - (id: string | number) => void
+    [x] add                  - () => void
+    [x] edit                 - (item, index) => void
+    [x] select               - (item, index) => void
+    [x] clickItem            - (item, index) => void
+    [x] editDisabled         - (item, index) => void
+    [x] selectDisabled       - (item, index) => void
+
+  Slots (Vant -> Lynx):
+    [ ] item-bottom          - MISSING: content below each address item
+    [ ] tag                  - MISSING: custom default tag content
+    [ ] top                  - MISSING: content at top of list
+
+  Lynx-specific notes:
+    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
+    - Radio icons are custom-drawn views (no Icon component used)
+    - Edit button uses text "Edit" rather than Icon component
+    - Multi-select mode (Array modelValue) not supported; Vant supports both
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 
@@ -13,7 +57,9 @@ export interface AddressListProps {
   list?: AddressItem[];
   modelValue?: string | number;
   disabledList?: AddressItem[];
+  disabledText?: string;
   switchable?: boolean;
+  showAddButton?: boolean;
   addButtonText?: string;
   defaultTagText?: string;
 }
@@ -21,7 +67,9 @@ export interface AddressListProps {
 const props = withDefaults(defineProps<AddressListProps>(), {
   list: () => [],
   disabledList: () => [],
+  disabledText: '',
   switchable: true,
+  showAddButton: true,
   addButtonText: 'Add New Address',
   defaultTagText: 'Default',
 });
@@ -148,7 +196,7 @@ const contentStyle = {
     <!-- Disabled list -->
     <view v-if="disabledList.length > 0" :style="{ display: 'flex', flexDirection: 'column', marginTop: 12 }">
       <view :style="{ paddingLeft: 16, paddingRight: 16, paddingTop: 12, paddingBottom: 8 }">
-        <text :style="{ fontSize: 14, color: '#969799' }">Disabled Addresses</text>
+        <text :style="{ fontSize: 14, color: '#969799' }">{{ disabledText || 'Disabled Addresses' }}</text>
       </view>
       <view
         v-for="(item, index) in disabledList"

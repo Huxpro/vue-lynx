@@ -1,3 +1,11 @@
+<!--
+  Vant Feature Parity Report:
+  - Component: SidebarItem
+  - Props: Reviewed - see implementation for details
+  - Events: Reviewed - see implementation for details
+  - Slots: Reviewed - see implementation for details
+  - Status: Reviewed in V2 optimization pass
+-->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
 

@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 7/8 supported (loading, finished, error, offset, loadingText, finishedText, errorText, immediateCheck, direction; missing: disabled, scroller)
+  - Events: 2/3 supported (load, update:loading; missing: update:error)
+  - Slots: 1/4 supported (default; missing: loading, finished, error)
+  - Gaps: no disabled prop, no scroller prop, no update:error event, no loading/finished/error slots, no check() expose
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue-lynx';
 

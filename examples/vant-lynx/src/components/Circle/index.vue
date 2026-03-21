@@ -1,3 +1,16 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 8/10 supported (currentRate, rate, size, color, layerColor, strokeWidth, text, clockwise;
+    missing: fill, speed/startPosition)
+  - Events: 0/0
+  - Slots: 1/1 (default via text override)
+  - Gaps:
+    - Uses simplified border-based progress (not SVG) - only 4 quadrant resolution
+    - No gradient color support
+    - No speed animation
+    - No fill prop for background
+    - No startPosition prop
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 
