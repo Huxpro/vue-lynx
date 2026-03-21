@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "vue-lynx": "workspace:*",
+    "vue-lynx": "link:../..",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
