@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Pagination from '../components/Pagination/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const simplePage = ref(1);
 const multiPage = ref(1);
 const customPage = ref(3);
@@ -16,13 +10,7 @@ const largePage = ref(1);
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Pagination</text>
-    </view>
-
+  <DemoPage title="Pagination">
     <view :style="{ display: 'flex', flexDirection: 'column' }">
       <!-- Simple Mode -->
       <text :style="{ fontSize: 14, color: '#969799', padding: 12 }">Simple Mode</text>
@@ -89,5 +77,5 @@ const largePage = ref(1);
         </text>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

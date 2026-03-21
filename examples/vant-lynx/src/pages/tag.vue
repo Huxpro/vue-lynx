@@ -1,21 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Tag from '../components/Tag/index.vue';
-
-const router = useRouter();
-function goBack() { router.push('/'); }
-
 const showTag = ref(true);
 function onClose() { showTag.value = false; }
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Tag</text>
-    </view>
+  <DemoPage title="Tag">
+    
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Type</text>
@@ -74,5 +67,5 @@ function onClose() { showTag.value = false; }
         </view>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

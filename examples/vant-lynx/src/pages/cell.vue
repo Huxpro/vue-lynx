@@ -1,20 +1,12 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Cell from '../components/Cell/index.vue';
 import CellGroup from '../components/CellGroup/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Cell</text>
-    </view>
+  <DemoPage title="Cell">
+    
 
     <view :style="{ padding: 0, display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
@@ -51,5 +43,5 @@ function goBack() {
         <Cell title="Cell title" value="Content" required :border="false" />
       </CellGroup>
     </view>
-  </view>
+  </DemoPage>
 </template>

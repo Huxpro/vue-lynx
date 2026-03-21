@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import TreeSelect from '../components/TreeSelect/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const items = [
   {
     text: 'Zhejiang',
@@ -48,13 +42,7 @@ const multiMainActiveIndex = ref(0);
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">TreeSelect</text>
-    </view>
-
+  <DemoPage title="TreeSelect">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Single Select -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Single Select</text>
@@ -83,5 +71,5 @@ const multiMainActiveIndex = ref(0);
         <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ multiActiveIds.join(', ') }}</text>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

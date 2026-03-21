@@ -1,24 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Circle from '../components/Circle/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const rate1 = ref(70);
 const rate2 = ref(50);
 const rate3 = ref(80);
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Circle</text>
-    </view>
+  <DemoPage title="Circle">
+    
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
@@ -46,5 +37,5 @@ const rate3 = ref(80);
         <Circle :current-rate="rate2" :rate="100" text="Custom" color="#1989fa" />
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

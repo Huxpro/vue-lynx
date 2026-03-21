@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import TimePicker from '../components/TimePicker/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const timeValue = ref<string[]>([]);
 const rangeValue = ref<string[]>([]);
 const secondValue = ref<string[]>([]);
@@ -30,13 +24,7 @@ function onSecondConfirm(val: string[]) {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">TimePicker</text>
-    </view>
-
+  <DemoPage title="TimePicker">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Basic Time Picker -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Select Time (Hour / Minute)</text>
@@ -82,5 +70,5 @@ function onSecondConfirm(val: string[]) {
         <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ secondResult }}</text>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

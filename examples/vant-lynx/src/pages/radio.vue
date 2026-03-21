@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Radio from '../components/Radio/index.vue';
 import RadioGroup from '../components/RadioGroup/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const basicValue = ref('1');
 const horizontalValue = ref('1');
 const disabledValue = ref('1');
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Radio</text>
-    </view>
-
+  <DemoPage title="Radio">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
@@ -66,5 +54,5 @@ const disabledValue = ref('1');
         </RadioGroup>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

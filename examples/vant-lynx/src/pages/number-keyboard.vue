@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import NumberKeyboard from '../components/NumberKeyboard/index.vue';
 import PasswordInput from '../components/PasswordInput/index.vue';
-
-const router = useRouter();
-function goBack() { router.push('/'); }
-
 const showKeyboard = ref(true);
 const showKeyboardWithTitle = ref(false);
 const showKeyboardExtra = ref(false);
@@ -47,13 +43,7 @@ function onDeleteExtra() {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">NumberKeyboard</text>
-    </view>
-
+  <DemoPage title="NumberKeyboard">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Default keyboard -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Default Keyboard</text>
@@ -124,5 +114,5 @@ function onDeleteExtra() {
         @close="() => { showKeyboardExtra = false; }"
       />
     </view>
-  </view>
+  </DemoPage>
 </template>

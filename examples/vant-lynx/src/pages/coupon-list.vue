@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import CouponList from '../components/CouponList/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const chosenCoupon = ref(-1);
 
 const coupons = [
@@ -64,13 +58,7 @@ function onExchange(code: string) {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">CouponList</text>
-    </view>
-
+  <DemoPage title="CouponList">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <view :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
         <text :style="{ fontSize: 14, color: '#323233' }">
@@ -86,5 +74,5 @@ function onExchange(code: string) {
       @change="onChange"
       @exchange="onExchange"
     />
-  </view>
+  </DemoPage>
 </template>

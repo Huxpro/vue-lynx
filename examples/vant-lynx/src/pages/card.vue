@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Card from '../components/Card/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const clickResult = ref('');
 
 function onCardClick() {
@@ -20,13 +14,7 @@ function onThumbClick() {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Card</text>
-    </view>
-
+  <DemoPage title="Card">
     <view :style="{ display: 'flex', flexDirection: 'column', padding: 12 }">
       <!-- Basic Usage -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
@@ -91,5 +79,5 @@ function onThumbClick() {
         />
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

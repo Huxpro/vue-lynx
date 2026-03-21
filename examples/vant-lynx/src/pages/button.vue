@@ -1,21 +1,10 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Button from '../components/Button/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Button</text>
-    </view>
-
+  <DemoPage title="Button">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Button Type -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Button Type</text>
@@ -100,5 +89,5 @@ function goBack() {
         </view>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>
