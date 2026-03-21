@@ -1,0 +1,691 @@
+# 教程：商品详情页
+
+本教程将带你使用 **Vue 3** 和 **Lynx** 构建一个高性能的商品详情页，核心是一个支持触摸滑动的图片轮播组件。
+
+你将学到：
+
+- [**构建静态布局**](#构建静态布局)：使用 `v-for` 和 Lynx 的 `display: linear` 创建水平滚动结构
+- [**监听触摸事件**](#监听触摸事件)：在后台线程处理触摸事件并更新节点样式
+- [**使用主线程脚本降低延迟**](#使用主线程脚本降低延迟)：通过 `'main thread'` 指令消除跨线程往返延迟
+- [**使用组合式函数组织代码**](#使用组合式函数组织代码)：将触摸逻辑和样式更新提取为可复用的组合式函数
+- [**添加吸附翻页动画**](#添加吸附翻页动画)：基于主线程 `requestAnimationFrame` 的动画
+- [**主线程与后台线程之间的通信**](#主线程与后台线程之间的通信)：使用 `runOnBackground` 和 `runOnMainThread` 实现跨线程函数调用
+- [**跨主线程和后台线程的值传递**](#跨主线程和后台线程的值传递)：在线程之间传递数值和主线程函数
+
+## 我们要构建什么？
+
+最终效果是一个商品详情页。顶部是一个全宽图片轮播组件，支持：
+
+- **零延迟**的手指拖拽滑动浏览图片
+- 松手后自动**吸附到最近页面**，带有缓动动画
+- 底部**指示器**实时高亮当前页面
+- **点击指示器圆点**跳转到对应页面
+
+<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
+
+## 教程准备工作
+
+本教程假设你已完成[快速开始](/zh/guide/quick-start)指南中的环境设置，并已安装 LynxExplorer 应用。
+
+所有源代码位于 `examples/swiper/src/` 目录下，按三个递进式入口组织：
+
+| 入口            | 描述                                      | 教程章节                                                        |
+| ------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| `SwiperEmpty` | 静态布局，无交互                             | [构建静态布局](#构建静态布局)                                      |
+| `SwiperMTS`   | 主线程触摸处理，无动画/指示器                  | [使用主线程脚本](#使用主线程脚本降低延迟)                            |
+| `Swiper`      | 完整版本：动画 + 指示器 + 跨线程通信           | [添加动画](#添加吸附翻页动画)及后续章节                              |
+
+推荐使用 TypeScript 以获得更好的编辑器提示和类型检查。
+
+## 构建静态布局
+
+让我们从最简单的版本开始——一个不可交互的静态图片列表。
+
+<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
+
+每张图片被包裹在一个 `SwiperItem` 组件中。`Swiper` 组件通过 `v-for` 渲染它们。关键 CSS 使用了 `display: linear`——这是 Lynx 特有的布局模式，类似于 flexbox 但性能更好：
+
+```css title="swiper.css"
+.swiper-wrapper {
+  flex: 1;
+  width: 100%;
+}
+.swiper-container {
+  display: linear;
+  linear-orientation: horizontal;
+  height: 100%;
+}
+```
+
+::: info Lynx 的 display: linear
+Lynx 支持 `display: linear` 布局模式，其中 `linear-orientation: horizontal` 可以将子元素水平排列。与 `display: flex` 相比，`linear` 布局在 Lynx 的原生渲染引擎中具有更好的性能。
+:::
+
+打开 LynxExplorer 预览 `SwiperEmpty`——你会看到一排水平排列的图片，但无法滑动。接下来让我们添加触摸交互。
+
+## 监听触摸事件
+
+要让图片可以滑动，我们需要：
+
+1. 监听 `touchstart` / `touchmove` / `touchend` 事件
+2. 计算手指的位移量
+3. 将位移量应用到容器的 `transform` 样式
+
+### 后台线程方案
+
+在 Vue Lynx 中，事件处理器默认在**后台线程**上运行。我们可以使用普通的 Vue `ref` 来追踪触摸状态：
+
+```vue title="Swiper.vue (background thread approach)" {3,6-8,11-13,16-19,22-23}
+<script setup lang="ts">
+import { ref } from 'vue';
+import SwiperItem from '../Components/SwiperItem.vue';
+
+// Touch state
+const touchStartX = ref(0);
+const currentOffset = ref(0);
+const touchStartOffset = ref(0);
+
+function handleTouchStart(
+  e: { detail: { touches: Array<{ clientX: number }> } },
+) {
+  touchStartX.value = e.detail.touches[0].clientX;
+  touchStartOffset.value = currentOffset.value;
+}
+
+function handleTouchMove(
+  e: { detail: { touches: Array<{ clientX: number }> } },
+) {
+  const delta = e.detail.touches[0].clientX - touchStartX.value;
+  currentOffset.value = touchStartOffset.value + delta;
+  // Need to update the style... how?
+}
+</script>
+
+<template>
+  <view class="swiper-wrapper">
+    <view
+      class="swiper-container"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+    >
+      <!-- ... -->
+    </view>
+  </view>
+</template>
+```
+
+但这里有个问题——在后台线程上，我们**无法直接访问 DOM 节点**。要更新容器的 `transform` 样式，需要通过 `lynx.createSelectorQuery()` 等 API 进行异步的**跨线程往返调用**。
+
+::: details 为什么不用响应式状态来更新位置？
+你可能会想：直接绑定 `:style="{ transform: 'translateX(' + currentOffset + 'px)' }"` 让 Vue 来处理不就好了？
+
+这**可以工作**，但每次 `touchmove`（每秒触发 60-120 次）都会触发 Vue 的响应式更新 → diff → 生成操作 → 跨线程发送 → 主线程应用。这整个更新流水线会引入明显的延迟，尤其在低端设备上。
+
+对于高频触摸事件，我们需要一种更直接的样式更新方式。
+:::
+
+### 延迟问题
+
+在 Lynx 的双线程架构中，默认的触摸事件处理流程是：
+
+```
+┌──────────────┐    Touch event    ┌──────────────┐    Update style    ┌──────────────┐
+│   Native     │ ────────────────▶ │  Background   │ ────────────────▶ │  Main Thread │
+│ (touch fires)│                   │   Thread      │  cross-thread     │ (apply style)│
+│              │                   │ (handle event)│     call          │              │
+└──────────────┘                   └──────────────┘                    └──────────────┘
+```
+
+每次触摸移动都需要完整的**主线程 → 后台线程 → 主线程**往返，这在低端设备上会导致可感知的**滑动卡顿**。
+
+解决方案？**直接在主线程上运行事件处理器。**
+
+## 使用主线程脚本降低延迟
+
+[主线程脚本](https://lynxjs.org/next/guide/interaction/main-thread-script/quick-start.html)允许我们将函数标记为在主线程上运行，完全消除跨线程往返延迟。
+
+### 三个关键改动
+
+从后台线程方案转换到主线程只需三步：
+
+**1. 将 `ref` 替换为 `useMainThreadRef`**
+
+主线程函数无法访问后台线程的 `ref()`。使用 `useMainThreadRef` 代替——它创建的引用在主线程上可读可写：
+
+```ts {1,4-7}
+import { useMainThreadRef } from 'vue-lynx';
+
+// Before: const touchStartX = ref(0);
+const containerRef = useMainThreadRef<unknown>(null);
+const currentOffsetRef = useMainThreadRef<number>(0);
+const touchStartXRef = useMainThreadRef<number>(0);
+const touchStartOffsetRef = useMainThreadRef<number>(0);
+```
+
+::: info 如何访问 useMainThreadRef
+`useMainThreadRef` 返回的引用在主线程上通过 `.current` 属性访问——而不是 Vue 的 `.value`。这是因为 `useMainThreadRef` 存在于主线程运行时中，它有自己独立于 Vue 响应式系统的访问协议。
+
+```ts
+// Background thread: Vue ref
+const count = ref(0);
+count.value = 1;
+
+// Main thread: MainThreadRef
+const countRef = useMainThreadRef<number>(0);
+// Inside a 'main thread' function:
+countRef.current = 1;
+```
+
+:::
+
+**2. 为函数添加 `'main thread'` 指令**
+
+在函数体的第一行添加字符串字面量 `'main thread'`。SWC 编译器会自动将该函数提取到主线程包中：
+
+```ts {2,8,14}
+const handleTouchStart = (e: { touches: Array<{ clientX: number }> }) => {
+  'main thread';
+  touchStartXRef.current = e.touches[0].clientX;
+  touchStartOffsetRef.current = currentOffsetRef.current;
+};
+
+const handleTouchMove = (e: { touches: Array<{ clientX: number }> }) => {
+  'main thread';
+  const delta = e.touches[0].clientX - touchStartXRef.current;
+  const offset = touchStartOffsetRef.current + delta;
+  currentOffsetRef.current = offset;
+  // Directly manipulate the main-thread node's style
+  (containerRef as any).current?.setStyleProperties?.({
+    transform: `translateX(${offset}px)`,
+  });
+};
+
+const handleTouchEnd = () => {
+  'main thread';
+  touchStartXRef.current = 0;
+  touchStartOffsetRef.current = 0;
+};
+```
+
+**3. 在模板中使用 `main-thread-` 前缀**
+
+Vue Lynx 使用 `main-thread-` 前缀将事件绑定和 ref 路由到主线程：
+
+```vue {3-6}
+<template>
+  <view
+    class="swiper-container"
+    :main-thread-ref="containerRef"
+    :main-thread-bindtouchstart="handleTouchStart"
+    :main-thread-bindtouchmove="handleTouchMove"
+    :main-thread-bindtouchend="handleTouchEnd"
+  >
+    <!-- ... -->
+  </view>
+</template>
+```
+
+::: details 模板中的 main-thread- 前缀
+Vue 模板使用带有 `v-bind`（`:`）的 `main-thread-` 连字符前缀来将事件绑定和 ref 路由到主线程：
+
+```vue
+<view :main-thread-ref="containerRef" :main-thread-bindtouchstart="fn" />
+```
+
+这是必要的，因为 Vue 模板属性名不支持冒号。
+:::
+
+### 组合起来
+
+<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
+
+打开 LynxExplorer 预览 `SwiperMTS`——拖动图片你会发现滑动**立即响应**，零延迟。完整代码请查看上方的代码查看器。
+
+::: details 谨慎使用主线程脚本
+仅在遇到**高频事件的延迟问题**时使用主线程脚本。过度使用会增加主线程负担，可能导致卡顿。
+
+适合的使用场景：
+
+- `touchmove` 和 `scroll` 等高频事件
+- 需要即时响应的拖拽交互
+- 动画帧更新
+
+不推荐用于：
+
+- 简单的 `tap` 点击处理
+- 低频 UI 更新
+- 需要复杂数据处理的逻辑
+:::
+
+## 使用组合式函数组织代码
+
+目前所有逻辑都集中在一个组件中。随着我们添加更多功能（动画、指示器），代码会变得难以维护。Vue 3 的[组合式函数](https://vuejs.org/guide/reusability/composables.html)帮助我们将代码组织成可复用的模块。
+
+### useUpdateSwiperStyle — 容器 Ref 和样式更新
+
+`useUpdateSwiperStyle` 封装了 `containerRef` 和一个调用 `setStyleProperties` 的 `'main thread'` 函数——与上一节相同的逻辑，现在可以复用。
+
+### useOffset — 触摸处理和偏移量追踪
+
+`useOffset` 提取了触摸逻辑，接受一个 `onOffsetUpdate` 回调实现解耦：
+
+```ts title="Swiper/useOffset.ts" {2,11-12}
+export function useOffset({
+  onOffsetUpdate,
+  itemWidth,
+}: {
+  onOffsetUpdate: (offset: number) => void;
+  itemWidth: number;
+}) {
+  // Same touch state refs and handlers as before...
+
+  function updateOffset(offset: number) {
+    'main thread';
+    currentOffsetRef.current = offset;
+    onOffsetUpdate(offset); // Callback replaces direct style update
+  }
+  // ...
+}
+```
+
+### 精简后的 Swiper.vue
+
+组件变成了一个薄薄的组装层，将各个组合式函数连接在一起：
+
+```vue title="Swiper/Swiper.vue"
+<script setup lang="ts">
+const { containerRef, updateSwiperStyle } = useUpdateSwiperStyle();
+const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOffset({
+  itemWidth: props.itemWidth,
+  onOffsetUpdate: updateSwiperStyle,
+});
+</script>
+```
+
+::: info 组合式函数与主线程脚本
+Vue 组合式函数可以自然地与主线程函数配合使用——标记了 `'main thread'` 的函数通过闭包捕获 `useMainThreadRef` 引用，就像普通函数一样。无需特殊规则。
+:::
+
+目前，松开拖拽后图片会停在任意位置。接下来让我们添加吸附翻页动画。
+
+## 添加吸附翻页动画
+
+松手时，轮播组件应该自动滑动到最近的完整页面。这需要一个在主线程上运行的基于 `requestAnimationFrame` 的动画。
+
+### useAnimate — RAF 动画组合式函数
+
+`useAnimate` 提供一个 `animate(options)` 函数，在主线程上运行 `requestAnimationFrame` 循环，使用缓动函数在两个值之间进行插值。关键点：
+
+- `animateInner` 和缓动函数都需要 `'main thread'` 指令，因为它们在 RAF 循环内运行
+- `useAnimate` 通过 `useMainThreadRef` 追踪当前动画，以便可以取消（例如，用户在动画期间触摸屏幕时）
+
+:::details 完整的 useAnimate.ts 源码
+
+```ts title="utils/useAnimate.ts"
+import { useMainThreadRef } from 'vue-lynx';
+
+export interface AnimationOptions {
+  from: number;
+  to: number;
+  duration?: number;
+  delay?: number;
+  easing?: (t: number) => number;
+  onUpdate?: (value: number) => void;
+  onComplete?: () => void;
+}
+
+export const easings = {
+  easeInOutQuad: (t: number) => {
+    'main thread';
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  },
+};
+
+function animateInner(options: AnimationOptions) {
+  'main thread';
+  const { from, to, duration = 5000, delay = 0,
+    easing = easings.easeInOutQuad, onUpdate, onComplete } = options;
+  let startTs = 0;
+  let rafId = 0;
+
+  function tick(ts: number) {
+    const progress = Math.max(Math.min(
+      ((ts - startTs - delay) * 100) / duration, 100), 0) / 100;
+    onUpdate?.(from + (to - from) * easing(progress));
+  }
+
+  function step(ts: number) {
+    if (!startTs) startTs = Number(ts);
+    if (ts - startTs <= duration + 100) {
+      tick(ts);
+      rafId = requestAnimationFrame(step);
+    } else {
+      onComplete?.();
+    }
+  }
+
+  rafId = requestAnimationFrame(step);
+  return { cancel: () => cancelAnimationFrame(rafId) };
+}
+
+export function useAnimate() {
+  const lastCancelRef = useMainThreadRef<(() => void) | null>(null);
+
+  function cancel() {
+    'main thread';
+    lastCancelRef.current?.();
+  }
+
+  function animate(options: AnimationOptions) {
+    'main thread';
+    cancel();
+    const { cancel: innerCancel } = animateInner(options);
+    lastCancelRef.current = innerCancel;
+  }
+
+  return { cancel, animate };
+}
+```
+
+:::
+
+### 更新 useOffset — 添加吸附逻辑
+
+在 `handleTouchEnd` 中，计算最近的页面位置并启动动画：
+
+```ts title="Swiper/useOffset.ts (new parts highlighted)" {1,7-10,14-16,20-30}
+const { animate, cancel: cancelAnimate } = useAnimate();
+
+function calcNearestPage(offset: number) {
+  'main thread';
+  return Math.round(offset / itemWidth) * itemWidth;
+}
+
+function updateOffset(offset: number) {
+  'main thread';
+  // Clamp to bounds
+  const upperBound = -(dataLength - 1) * itemWidth;
+  const realOffset = Math.min(0, Math.max(upperBound, offset));
+  currentOffsetRef.current = realOffset;
+  onOffsetUpdate(realOffset);
+}
+
+function handleTouchStart(e: { touches: Array<{ clientX: number }> }) {
+  'main thread';
+  // ...
+  cancelAnimate(); // Cancel ongoing animation on touch
+}
+
+function handleTouchEnd() {
+  'main thread';
+  // ...
+  animate({
+    from: currentOffsetRef.current,
+    to: calcNearestPage(currentOffsetRef.current),
+    onUpdate: (offset: number) => {
+      'main thread';
+      updateOffset(offset);
+    },
+  });
+}
+```
+
+现在松开拖拽后会平滑地吸附到最近的页面，带有缓动效果。
+
+但我们还没有页面指示器——用户不知道当前在哪一页。添加指示器需要一个关键能力：**从主线程通知后台线程**。
+
+## 主线程与后台线程之间的通信
+
+Indicator 组件是一个运行在后台线程上的普通 Vue 组件，由响应式 `ref` 驱动。但当前页面索引是在主线程的 `handleTouchMove` 中变化的。
+
+我们需要一种方式来**从主线程函数调用后台线程函数**。
+
+::: info 主线程函数和后台线程函数不能直接互相调用
+主线程脚本和后台线程脚本运行在**完全独立的运行时环境**中。一个运行时中的函数无法直接调用另一个运行时中的函数——它们需要专门的桥接 API 来通信：
+
+- `runOnBackground(fn)` ——从主线程函数中调用；异步执行后台线程的 `fn`
+- `runOnMainThread(fn)` ——从后台线程调用；异步执行主线程函数 `fn`
+:::
+
+### 主线程调用后台线程 — `runOnBackground`
+
+当用户拖拽图片时，主线程的 `updateOffset` 计算当前页面索引。我们需要将此索引同步到后台线程的指示器状态：
+
+```ts title="Swiper/useOffset.ts" {1,8,10,23-27}
+import { runOnBackground, useMainThreadRef } from 'vue-lynx';
+
+export function useOffset({
+  onOffsetUpdate,
+  onIndexUpdate, // New: background-thread index update callback
+  itemWidth,
+  dataLength,
+}: {
+  onOffsetUpdate: (offset: number) => void;
+  onIndexUpdate: (index: number) => void;
+  itemWidth: number;
+  dataLength: number;
+}) {
+  // ...
+  const currentIndexRef = useMainThreadRef<number>(0);
+
+  function updateOffset(offset: number) {
+    'main thread';
+    // ...(bounds clamping and style update unchanged)
+    const index = Math.round(-realOffset / itemWidth);
+    if (currentIndexRef.current !== index) {
+      currentIndexRef.current = index;
+      runOnBackground(onIndexUpdate)(index); // MT -> BG
+    }
+  }
+  // ...
+}
+```
+
+`runOnBackground(onIndexUpdate)(index)` 的含义是：**在后台线程上**，异步调用 `onIndexUpdate` 并传入 `index` 作为参数。
+
+::: details 为什么不能直接调用 onIndexUpdate(index)？
+如果你尝试在 `'main thread'` 函数内直接调用 `onIndexUpdate(index)`，SWC 编译器会产生错误。`onIndexUpdate`（即更新 `currentIndex.value` 的回调）是一个后台线程函数——它**不存在**于主线程运行时中。
+
+```ts
+function updateOffset(offset: number) {
+  'main thread';
+  // Wrong: onIndexUpdate is a background-thread function
+  onIndexUpdate(index);
+
+  // Correct: bridge via runOnBackground
+  runOnBackground(onIndexUpdate)(index);
+}
+```
+
+:::
+
+### 后台线程调用主线程 — `runOnMainThread`
+
+点击指示器圆点应该跳转到对应页面。点击处理器运行在后台线程上，但滑动动画运行在主线程上。这需要**后台线程调用主线程**：
+
+```ts title="Swiper/useOffset.ts" {1-2,5-8}
+import {
+  runOnBackground,
+  runOnMainThread,
+  useMainThreadRef,
+} from 'vue-lynx';
+
+// New: background-thread function, called by Indicator's tap callback
+function updateIndex(index: number) {
+  const offset = -index * itemWidth;
+  runOnMainThread(updateOffset)(offset); // BG -> MT
+}
+```
+
+`runOnMainThread(updateOffset)(offset)` 的含义是：**在主线程上**，异步调用 `updateOffset` 并传入 `offset` 作为参数。这从后台线程触发了主线程的样式更新。
+
+### 添加 Indicator 组件
+
+`Indicator` 组件很简单——它使用 `v-for` 渲染一行圆点，通过 `:class` 高亮当前激活的圆点，并在 `@tap` 时触发 `item-click` 事件。请在下方代码查看器中查看 `Components/Indicator.vue`。
+
+### 在 Swiper 中组装
+
+Swiper 组件将所有部分连接在一起——`onIndexUpdate` 从主线程桥接到更新响应式的 `currentIndex`，而 `handleItemClick` 则反向桥接：
+
+```vue title="Swiper/Swiper.vue" {1,4-6,10-11}
+<script setup lang="ts">
+const currentIndex = ref(0);
+
+const { handleTouchStart, handleTouchMove, handleTouchEnd, updateIndex } =
+  useOffset({
+    // ...
+    onIndexUpdate: (index: number) => {
+      currentIndex.value = index; // Update reactive state on BG thread
+    },
+  });
+
+function handleItemClick(index: number) {
+  currentIndex.value = index;
+  updateIndex(index); // BG -> MT jump animation
+}
+</script>
+```
+
+现在指示器可以实时追踪滑动进度，点击圆点也能跳转到对应页面。以下是数据流向：
+
+```
+Drag swipe (MT):
+  handleTouchMove -> updateOffset -> runOnBackground(onIndexUpdate) -> currentIndex.value
+                                                                              |
+                                                                       Indicator updates
+
+Tap to jump (BG -> MT):
+  handleItemClick -> updateIndex -> runOnMainThread(updateOffset) -> animated slide
+```
+
+## 跨主线程和后台线程的值传递
+
+目前动画时长和缓动曲线是硬编码的。我们希望将它们作为组件 props 传入。但这涉及一个微妙的问题：**主线程函数如何使用后台线程的值？**
+
+### 主线程函数使用后台线程的值
+
+`duration`（动画时长）是在后台线程 props 中定义的普通数值。主线程的 `handleTouchEnd` 函数需要使用它。
+
+好消息是：**主线程函数可以自动捕获后台线程的值**。当 `useOffset` 接收 `duration` 参数且函数闭包引用了它时，SWC 编译器会在渲染时自动序列化并将这些值传递到主线程：
+
+```ts title="Swiper/useOffset.ts" {5,14}
+export function useOffset({
+  onOffsetUpdate,
+  onIndexUpdate,
+  itemWidth,
+  dataLength,
+  duration, // background-thread value
+}: {
+  // ...
+  duration?: number;
+}) {
+  // ...
+  function handleTouchEnd() {
+    'main thread';
+    animate({
+      // ...
+      duration, // Automatically passed from BG to MT
+    });
+  }
+}
+```
+
+::: info 自动值传递的限制
+被主线程函数捕获的后台线程值必须是**可序列化的**（number、string、boolean、普通对象、数组）。函数和 Promise 不能直接传递。
+
+此外，值传递发生在**渲染时**，后续的更新不会自动同步。对于像 `duration` 这样的不可变配置值，这完全没问题。
+:::
+
+### 后台线程传递主线程函数
+
+缓动曲线是一个**函数**，需要在主线程的 RAF 循环中被调用。普通函数无法跨越线程边界——但标记了 `'main thread'` 的函数可以。
+
+使用 `'main thread'` 指令定义缓动函数：
+
+```ts title="Swiper/index.ts" {2,9}
+import { easings } from '../utils/useAnimate.js';
+
+const App = defineComponent({
+  setup() {
+    return () =>
+      h(Swiper, {
+        data: picsArr,
+        duration: 300,
+        'main-thread-easing': easings.easeInOutQuad,
+      });
+  },
+});
+```
+
+在 `Swiper.vue` 中，接收该 prop 并转发给 `useOffset`：
+
+```vue title="Swiper/Swiper.vue" {4}
+<script setup lang="ts">
+const props = defineProps<{
+  // ...
+  duration?: number;
+  'main-thread-easing'?: (t: number) => number;
+}>();
+
+const { ... } = useOffset({
+  // ...
+  duration: props.duration,
+  MTEasing: props['main-thread-easing'],
+});
+</script>
+```
+
+在 `useOffset` 中，主线程的 `handleTouchEnd` 只需引用 `duration` 和 `MTEasing`——编译器会处理其余部分：
+
+```ts title="Swiper/useOffset.ts" {6-7}
+function handleTouchEnd() {
+  'main thread';
+  animate({
+    from: currentOffsetRef.current,
+    to: calcNearestPage(currentOffsetRef.current),
+    duration, // BG value -> automatically passed to MT
+    easing: MTEasing, // MT function -> passed to MT
+    onUpdate: (offset: number) => {
+      'main thread';
+      updateOffset(offset);
+    },
+  });
+}
+```
+
+::: details 为什么要使用 main-thread-easing 前缀？
+当一个 prop 的值是**主线程函数**时，它的名称需要使用 `main-thread-` 前缀。这告诉 SWC 编译器该值需要在主线程侧解析。
+
+如果没有该前缀，编译器会将其视为普通的后台线程值并尝试序列化一个函数——而函数不可序列化，会导致运行时错误。
+:::
+
+<Go
+  example="swiper"
+  defaultFile="src/Swiper/Swiper.vue"
+  entry="src/Swiper"
+  defaultEntryName="Swiper"
+  highlight={{
+    'src/Swiper/Swiper.vue': '{22-33,35-38,57-61}',
+    'src/Swiper/useOffset.ts': '{2,28,30-33,41-54,71-85}',
+    'src/Swiper/useUpdateSwiperStyle.ts': '{6-7}',
+    'src/Components/Indicator.vue': '{2-9,17}',
+  }}
+/>
+
+## 总结
+
+恭喜！你已经构建了一个带有图片轮播的高性能商品详情页。让我们回顾学到的核心概念：
+
+- **Lynx 布局**：`display: linear` + `linear-orientation: horizontal` 实现高性能水平布局
+- **主线程脚本**（`'main thread'`）：直接在主线程上运行触摸事件处理器，消除跨线程延迟
+- **`useMainThreadRef`**：创建主线程可读写的引用，替代后台线程的 `ref()`，通过 `.current` 访问
+- **Vue 组合式函数**：将主线程脚本逻辑提取为可复用的模块，如 `useOffset`、`useUpdateSwiperStyle`、`useAnimate`
+- **`runOnBackground`**：主线程 -> 后台线程的函数调用桥接（指示器状态同步）
+- **`runOnMainThread`**：后台线程 -> 主线程的函数调用桥接（点击跳转动画）
+- **跨线程值传递**：可序列化的后台线程值会自动传递到主线程函数；主线程函数通过 `main-thread-` 前缀的 props 传递
+
+完整源代码位于 `examples/swiper/src/`，包含三个递进版本供参考。
+
+::: info 主线程脚本函数体与框架无关
+所有标记了 `'main thread'` 的函数体（`handleTouchStart`、`updateOffset`、`animate` 等）都由 SWC 编译器编译为独立的主线程包，与组件框架无关。无论外层组件使用 Vue SFC 还是 JSX，`'main thread'` 指令的工作方式都是一样的。
+:::
