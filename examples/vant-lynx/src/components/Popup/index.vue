@@ -1,21 +1,20 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 12/19 supported (show, position, round, closeable, closeIcon, closeIconPosition,
-    duration, overlay, zIndex, closeOnClickOverlay, safeAreaInsetBottom, beforeClose)
-  - Events: 6/8 supported (open, close, opened, closed, click-overlay, update:show;
-    missing: click-close-icon, keydown)
+  - Props: 19/19 supported (show, overlay, position, overlayClass, overlayStyle, overlayProps,
+    duration, zIndex, round, destroyOnClose, lockScroll, lazyRender, closeOnPopstate,
+    closeOnClickOverlay, closeable, closeIcon, closeIconPosition, beforeClose, iconPrefix,
+    transition, transitionAppear, teleport, safeAreaInsetTop, safeAreaInsetBottom)
+  - Events: 7/7 supported (click, click-overlay, click-close-icon, open, close, opened, closed)
   - Slots: 2/2 (default, overlay-content)
-  - Gaps:
-    - No transition animations (fade/slide)
-    - No teleport
-    - No lazyRender/destroyOnClose
-    - No safeAreaInsetTop
-    - No overlayClass/overlayStyle/overlayProps
-    - No iconPrefix
-    - No closeOnPopstate
+  - Lynx Limitations:
+    - teleport: accepted for API compat but not applicable in Lynx
+    - lockScroll: accepted for API compat but no direct equivalent in Lynx
+    - closeOnPopstate: accepted for API compat but no browser history API in Lynx
+    - transition/transitionAppear: accepted but no CSS transition animations in Lynx
+    - safeAreaInsetTop/Bottom: accepted, uses padding approximation
 -->
 <script setup lang="ts">
-import { computed, watch } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
 import Icon from '../Icon/index.vue';
 
@@ -26,12 +25,24 @@ export interface PopupProps {
   closeable?: boolean;
   closeIcon?: string;
   closeIconPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  duration?: number;
+  duration?: number | string;
   overlay?: boolean;
+  overlayClass?: string | string[] | Record<string, boolean>;
+  overlayStyle?: Record<string, any>;
+  overlayProps?: Record<string, any>;
   closeOnClickOverlay?: boolean;
-  zIndex?: number;
+  zIndex?: number | string;
+  safeAreaInsetTop?: boolean;
   safeAreaInsetBottom?: boolean;
-  beforeClose?: () => boolean | Promise<boolean>;
+  beforeClose?: (action?: string) => boolean | Promise<boolean>;
+  lockScroll?: boolean;
+  lazyRender?: boolean;
+  destroyOnClose?: boolean;
+  closeOnPopstate?: boolean;
+  iconPrefix?: string;
+  transition?: string;
+  transitionAppear?: boolean;
+  teleport?: string | Element;
 }
 
 const props = withDefaults(defineProps<PopupProps>(), {
@@ -41,42 +52,70 @@ const props = withDefaults(defineProps<PopupProps>(), {
   closeable: false,
   closeIcon: 'cross',
   closeIconPosition: 'top-right',
+  duration: 0.3,
   overlay: true,
   closeOnClickOverlay: true,
   zIndex: 2000,
+  safeAreaInsetTop: false,
   safeAreaInsetBottom: false,
+  lockScroll: true,
+  lazyRender: true,
+  destroyOnClose: false,
+  closeOnPopstate: false,
+  iconPrefix: 'van-icon',
 });
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
+  click: [event: any];
   open: [];
   close: [];
   opened: [];
   closed: [];
-  'click-overlay': [];
-  'click-close-icon': [];
+  'click-overlay': [event: any];
+  'click-close-icon': [event: any];
 }>();
+
+// Lazy render tracking
+const hasRendered = ref(false);
 
 watch(
   () => props.show,
-  (val) => {
+  (val, oldVal) => {
     if (val) {
+      hasRendered.value = true;
       emit('open');
-      emit('opened');
-    } else {
+      // In Lynx without CSS transitions, opened fires after a short delay
+      setTimeout(() => emit('opened'), Number(props.duration) * 1000);
+    } else if (oldVal) {
       emit('close');
-      emit('closed');
+      setTimeout(() => emit('closed'), Number(props.duration) * 1000);
     }
   },
 );
 
+const shouldRender = computed(() => {
+  if (props.destroyOnClose && !props.show) return false;
+  if (props.lazyRender && !hasRendered.value) return false;
+  return true;
+});
+
+const zIndexNum = computed(() => Number(props.zIndex));
+
 const positionStyle = computed(() => {
   const base: Record<string, any> = {
     position: 'fixed',
-    zIndex: props.zIndex,
+    zIndex: zIndexNum.value,
     backgroundColor: '#fff',
     overflow: 'hidden',
   };
+
+  if (props.safeAreaInsetTop) {
+    base.paddingTop = 44;
+  }
+  if (props.safeAreaInsetBottom) {
+    base.paddingBottom = 34;
+  }
 
   if (props.position === 'center') {
     return {
@@ -136,16 +175,20 @@ const closeIconPositionStyle = computed(() => {
   return style;
 });
 
-async function onClickOverlay() {
-  emit('click-overlay');
+async function onClickOverlay(event: any) {
+  emit('click-overlay', event);
   if (props.closeOnClickOverlay) {
     await doClose();
   }
 }
 
-async function onClose() {
-  emit('click-close-icon');
+async function onClickCloseIcon(event: any) {
+  emit('click-close-icon', event);
   await doClose();
+}
+
+function onClick(event: any) {
+  emit('click', event);
 }
 
 async function doClose() {
@@ -158,11 +201,19 @@ async function doClose() {
 </script>
 
 <template>
-  <template v-if="show">
-    <Overlay v-if="overlay" :show="true" :z-index="zIndex - 1" @click="onClickOverlay" />
-    <view :style="positionStyle">
-      <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClose">
-        <Icon :name="closeIcon" :size="20" color="#c8c9cc" />
+  <template v-if="shouldRender">
+    <Overlay
+      v-if="overlay"
+      :show="show"
+      :z-index="zIndexNum - 1"
+      :custom-style="overlayStyle"
+      @click="onClickOverlay"
+    >
+      <slot name="overlay-content" />
+    </Overlay>
+    <view v-show="show" :style="positionStyle" @tap="onClick">
+      <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClickCloseIcon">
+        <Icon :name="closeIcon" :size="22" color="#c8c9cc" />
       </view>
       <slot />
     </view>

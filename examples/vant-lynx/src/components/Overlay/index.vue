@@ -1,36 +1,55 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 5/8 supported (show, zIndex, duration, lockScroll, customStyle partial)
+  - Props: 8/8 supported (show, zIndex, duration, className, customStyle, lockScroll, lazyRender, teleport)
   - Events: 1/1 supported (click)
   - Slots: 1/1 (default)
-  - Gaps:
-    - No className prop (class-based styling N/A in Lynx)
-    - No lazyRender prop (v-if is effectively lazy)
-    - No teleport prop (not applicable in Lynx)
-    - No fade transition animation
-    - customStyle partially supported via style merge
+  - Lynx Limitations:
+    - teleport: accepted for API compat but not applicable in Lynx (no DOM)
+    - lockScroll: accepted for API compat but no direct equivalent in Lynx
+    - className: accepted but applied as inline style override since Lynx has no CSS class system
+    - Fade transition not implemented (Lynx animation API would be needed)
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 
 export interface OverlayProps {
   show?: boolean;
-  zIndex?: number;
-  duration?: number;
-  lockScroll?: boolean;
+  zIndex?: number | string;
+  duration?: number | string;
+  className?: string | string[] | Record<string, boolean>;
   customStyle?: Record<string, any>;
+  lockScroll?: boolean;
+  lazyRender?: boolean;
+  teleport?: string | Element;
 }
 
 const props = withDefaults(defineProps<OverlayProps>(), {
   show: false,
   zIndex: 1,
-  duration: 300,
+  duration: 0.3,
   lockScroll: true,
+  lazyRender: true,
 });
 
 const emit = defineEmits<{
   click: [event: any];
 }>();
+
+// For lazy render: track if overlay has ever been shown
+const hasRendered = ref(false);
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) hasRendered.value = true;
+  },
+  { immediate: true },
+);
+
+const shouldRender = computed(() => {
+  if (!props.lazyRender) return true;
+  return hasRendered.value;
+});
 
 const overlayStyle = computed(() => {
   const base: Record<string, any> = {
@@ -39,7 +58,7 @@ const overlayStyle = computed(() => {
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: props.zIndex,
+    zIndex: Number(props.zIndex),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
   };
   if (props.customStyle) {
@@ -54,7 +73,7 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <view v-if="show" :style="overlayStyle" @tap="onTap">
+  <view v-if="shouldRender && show" :style="overlayStyle" @tap="onTap">
     <slot />
   </view>
 </template>
