@@ -46,6 +46,7 @@ interface TabsProvide {
   type: Ref<'line' | 'card'>;
   color: Ref<string>;
   lazyRender: Ref<boolean>;
+  animated: Ref<boolean>;
   scrollspy: Ref<boolean>;
   titleActiveColor: Ref<string | undefined>;
   titleInactiveColor: Ref<string | undefined>;
@@ -156,6 +157,18 @@ watch(
 // Panel visibility style
 const contentStyle = computed(() => {
   const show = tabsContext?.scrollspy.value || isActive.value;
+  const animated = tabsContext?.animated.value;
+  if (animated) {
+    return {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      opacity: show ? 1 : 0,
+      height: show ? undefined : 0,
+      overflow: show ? undefined : ('hidden' as const),
+      transitionProperty: 'opacity',
+      transitionDuration: '0.3s',
+    };
+  }
   return {
     display: show ? 'flex' : 'none',
     flexDirection: 'column' as const,

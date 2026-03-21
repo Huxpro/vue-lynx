@@ -1,12 +1,11 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 12/16 supported (coupons, chosenCoupon, disabledCoupons, enabledTitle,
+  - Props: 16/16 supported (coupons, chosenCoupon, disabledCoupons, enabledTitle,
     disabledTitle, exchangeButtonText, exchangeButtonLoading, exchangeButtonDisabled,
-    exchangeMinLength, showExchangeBar, showCloseButton, showCount, currency)
-  - Events: 2/3 supported (change, exchange)
+    exchangeMinLength, showExchangeBar, showCloseButton, showCount, currency,
+    code, emptyImage, closeButtonText, inputPlaceholder, displayedCouponIndex)
+  - Events: 3/3 supported (change, exchange, update:code)
   - Slots: 0/0 supported
-  - Gaps: code prop (v-model for input), emptyImage, closeButtonText,
-    inputPlaceholder, displayedCouponIndex props; update:code event
 -->
 <script setup lang="ts">
 /**
@@ -55,6 +54,8 @@ export interface CouponListProps {
   closeButtonText?: string;
   inputPlaceholder?: string;
   currency?: string;
+  emptyImage?: string;
+  displayedCouponIndex?: number;
 }
 
 const props = withDefaults(defineProps<CouponListProps>(), {
@@ -74,6 +75,8 @@ const props = withDefaults(defineProps<CouponListProps>(), {
   closeButtonText: '',
   inputPlaceholder: 'Enter coupon code',
   currency: '¥',
+  emptyImage: '',
+  displayedCouponIndex: -1,
 });
 
 const emit = defineEmits<{
@@ -263,7 +266,7 @@ const couponContentStyle = {
       <view
         v-for="(coupon, index) in coupons"
         :key="coupon.id"
-        :style="couponCardStyle(chosenCoupon === index)"
+        :style="couponCardStyle(chosenCoupon === index || displayedCouponIndex === index)"
         @tap="onCouponTap(index)"
       >
         <view :style="couponValueStyle">
@@ -283,10 +286,12 @@ const couponContentStyle = {
         :style="{
           padding: 48,
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
         }"
       >
+        <image v-if="emptyImage" :src="emptyImage" :style="{ width: 160, height: 160, marginBottom: 16 }" />
         <text :style="{ fontSize: 14, color: '#969799' }">No available coupons</text>
       </view>
     </view>
