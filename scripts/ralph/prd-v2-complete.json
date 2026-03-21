@@ -1,0 +1,1632 @@
+{
+  "productName": "Vant Lynx - Code Review & Optimization Pass",
+  "branchName": "feat/vant-lynx-v2",
+  "description": "Second pass: code review and optimize all 80 Vant Lynx components for production quality.",
+  "context": {
+    "vantRepo": "https://github.com/youzan/vant",
+    "vantDocs": "https://vant-ui.github.io/vant/#/en-US",
+    "lynxDocs": "https://lynxjs.org",
+    "lynxApiRef": "https://lynxjs.org/api/lynx-api/",
+    "examplesDir": "examples/vant-lynx",
+    "devServer": "cd examples/vant-lynx && pnpm dev:web",
+    "baseUrl": "http://localhost:3000",
+    "rules": [
+      "This is a CODE REVIEW and OPTIMIZATION pass, not initial implementation",
+      "Compare our implementation against original Vant source code line by line",
+      "Use lynxbase skill to query Lynx APIs",
+      "Use Lynx DevTool CLI to verify on iPhone Simulator",
+      "Browser verify on Lynx for Web as well",
+      "Focus on completeness: every Vant feature should be replicated"
+    ],
+    "reviewChecklist": [
+      "1. Fetch Vant source: curl the .tsx and .less files from GitHub",
+      "2. Line-by-line comparison: compare our implementation against Vant source",
+      "3. Props audit: list ALL Vant props, mark which we support (\u2705/\u274c/\u26a0\ufe0f)",
+      "4. Events audit: list ALL Vant events, mark which we support",
+      "5. Slots audit: list ALL Vant slots, mark which we support",
+      "6. Vue state audit: count refs/reactive in Vant vs ours",
+      "7. CSS audit: compare Vant Less file, check CSS variables, transitions, pseudo-elements",
+      "8. Interaction audit: click feedback, hover states, animations, gestures",
+      "9. Sub-components: does Vant use Loading/Icon/etc? Do we integrate them?",
+      "10. Static assets: icons, SVGs, images match Vant originals?",
+      "11. File structure: types.ts, index.less, demo page present?",
+      "12. Document gaps: add comment block at top listing all missing features",
+      "13. DevTool verify: test on iPhone Simulator",
+      "14. Browser verify: compare side-by-side with Vant demo"
+    ]
+  },
+  "userStories": [
+    {
+      "id": "scaffold-improvements",
+      "title": "Add dark/light mode toggle and scroll-view wrapper",
+      "priority": 1,
+      "acceptanceCriteria": [
+        "Wrap the entire demo app in a <scroll-view> for proper scrolling",
+        "Add dark/light mode toggle button in the header/nav",
+        "Implement theme switching using CSS variables or ConfigProvider",
+        "Persist theme preference (localStorage or equivalent)",
+        "Update all component demo pages to respect theme",
+        "Browser verify: toggle works and persists",
+        "DevTool verify: works on iPhone Simulator",
+        "Commit: 'feat(vant-lynx): add dark/light mode toggle and scroll-view wrapper'",
+        "Audit component count: Vant has 107 components, ensure we have all of them"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-button",
+      "title": "Code review and optimize Button component",
+      "priority": 2,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-cell",
+      "title": "Code review and optimize Cell component",
+      "priority": 3,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-icon",
+      "title": "Code review and optimize Icon component",
+      "priority": 4,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-image",
+      "title": "Code review and optimize Image component",
+      "priority": 5,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-loading",
+      "title": "Code review and optimize Loading component",
+      "priority": 6,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-tag",
+      "title": "Code review and optimize Tag component",
+      "priority": 7,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-badge",
+      "title": "Code review and optimize Badge component",
+      "priority": 8,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-divider",
+      "title": "Code review and optimize Divider component",
+      "priority": 9,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-space",
+      "title": "Code review and optimize Space component",
+      "priority": 10,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-col-row",
+      "title": "Code review and optimize Layout (Col/Row) components",
+      "priority": 11,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-popup",
+      "title": "Code review and optimize Popup component",
+      "priority": 12,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-overlay",
+      "title": "Code review and optimize Overlay component",
+      "priority": 13,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-switch",
+      "title": "Code review and optimize Switch component",
+      "priority": 14,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-checkbox",
+      "title": "Code review and optimize Checkbox component",
+      "priority": 15,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-radio",
+      "title": "Code review and optimize Radio component",
+      "priority": 16,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-field",
+      "title": "Code review and optimize Field component",
+      "priority": 17,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-rate",
+      "title": "Code review and optimize Rate component",
+      "priority": 18,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-stepper",
+      "title": "Code review and optimize Stepper component",
+      "priority": 19,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-progress",
+      "title": "Code review and optimize Progress component",
+      "priority": 20,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-circle",
+      "title": "Code review and optimize Circle component",
+      "priority": 21,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-count-down",
+      "title": "Code review and optimize CountDown component",
+      "priority": 22,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-empty",
+      "title": "Code review and optimize Empty component",
+      "priority": 23,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-notice-bar",
+      "title": "Code review and optimize NoticeBar component",
+      "priority": 24,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-nav-bar",
+      "title": "Code review and optimize NavBar component",
+      "priority": 25,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-tabbar",
+      "title": "Code review and optimize Tabbar component",
+      "priority": 26,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-tab",
+      "title": "Code review and optimize Tab component",
+      "priority": 27,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-grid",
+      "title": "Code review and optimize Grid component",
+      "priority": 28,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-collapse",
+      "title": "Code review and optimize Collapse component",
+      "priority": 29,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-steps",
+      "title": "Code review and optimize Steps component",
+      "priority": 30,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-toast",
+      "title": "Code review and optimize Toast component",
+      "priority": 31,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-config-provider",
+      "title": "Code review and optimize ConfigProvider component",
+      "priority": 32,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-action-sheet",
+      "title": "Code review and optimize ActionSheet component",
+      "priority": 33,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-dialog",
+      "title": "Code review and optimize Dialog component",
+      "priority": 34,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-dropdown-menu",
+      "title": "Code review and optimize DropdownMenu component",
+      "priority": 35,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-notify",
+      "title": "Code review and optimize Notify component",
+      "priority": 36,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-pull-refresh",
+      "title": "Code review and optimize PullRefresh component",
+      "priority": 37,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-share-sheet",
+      "title": "Code review and optimize ShareSheet component",
+      "priority": 38,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-swipe-cell",
+      "title": "Code review and optimize SwipeCell component",
+      "priority": 39,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-floating-panel",
+      "title": "Code review and optimize FloatingPanel component",
+      "priority": 40,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-floating-bubble",
+      "title": "Code review and optimize FloatingBubble component",
+      "priority": 41,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-calendar",
+      "title": "Code review and optimize Calendar component",
+      "priority": 42,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-cascader",
+      "title": "Code review and optimize Cascader component",
+      "priority": 43,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-date-picker",
+      "title": "Code review and optimize DatePicker component",
+      "priority": 44,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-time-picker",
+      "title": "Code review and optimize TimePicker component",
+      "priority": 45,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-picker",
+      "title": "Code review and optimize Picker component",
+      "priority": 46,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-search",
+      "title": "Code review and optimize Search component",
+      "priority": 47,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-slider",
+      "title": "Code review and optimize Slider component",
+      "priority": 48,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-uploader",
+      "title": "Code review and optimize Uploader component",
+      "priority": 49,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-number-keyboard",
+      "title": "Code review and optimize NumberKeyboard component",
+      "priority": 50,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-password-input",
+      "title": "Code review and optimize PasswordInput component",
+      "priority": 51,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-form",
+      "title": "Code review and optimize Form component",
+      "priority": 52,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-barrage",
+      "title": "Code review and optimize Barrage component",
+      "priority": 53,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-highlight",
+      "title": "Code review and optimize Highlight component",
+      "priority": 54,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-image-preview",
+      "title": "Code review and optimize ImagePreview component",
+      "priority": 55,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-list",
+      "title": "Code review and optimize List component",
+      "priority": 56,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-popover",
+      "title": "Code review and optimize Popover component",
+      "priority": 57,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-rolling-text",
+      "title": "Code review and optimize RollingText component",
+      "priority": 58,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-skeleton",
+      "title": "Code review and optimize Skeleton component",
+      "priority": 59,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-sticky",
+      "title": "Code review and optimize Sticky component",
+      "priority": 60,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-swipe",
+      "title": "Code review and optimize Swipe component",
+      "priority": 61,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-text-ellipsis",
+      "title": "Code review and optimize TextEllipsis component",
+      "priority": 62,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-watermark",
+      "title": "Code review and optimize Watermark component",
+      "priority": 63,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-action-bar",
+      "title": "Code review and optimize ActionBar component",
+      "priority": 64,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-back-top",
+      "title": "Code review and optimize BackTop component",
+      "priority": 65,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-index-bar",
+      "title": "Code review and optimize IndexBar component",
+      "priority": 66,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-pagination",
+      "title": "Code review and optimize Pagination component",
+      "priority": 67,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-sidebar",
+      "title": "Code review and optimize Sidebar component",
+      "priority": 68,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-tree-select",
+      "title": "Code review and optimize TreeSelect component",
+      "priority": 69,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-address-edit",
+      "title": "Code review and optimize AddressEdit component",
+      "priority": 70,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-address-list",
+      "title": "Code review and optimize AddressList component",
+      "priority": 71,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-area",
+      "title": "Code review and optimize Area component",
+      "priority": 72,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-card",
+      "title": "Code review and optimize Card component",
+      "priority": 73,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-contact-card",
+      "title": "Code review and optimize ContactCard component",
+      "priority": 74,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-contact-edit",
+      "title": "Code review and optimize ContactEdit component",
+      "priority": 75,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-contact-list",
+      "title": "Code review and optimize ContactList component",
+      "priority": 76,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-coupon-list",
+      "title": "Code review and optimize CouponList component",
+      "priority": 77,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-submit-bar",
+      "title": "Code review and optimize SubmitBar component",
+      "priority": 78,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "review-signature",
+      "title": "Code review and optimize Signature component",
+      "priority": 79,
+      "acceptanceCriteria": [
+        "Fetch Vant source files (tsx + less) from GitHub and read them",
+        "Create a detailed comparison table: Props (Vant vs Ours), Events, Slots, States",
+        "Check CSS: variables, transitions, ::before/::after pseudo-elements, dark mode",
+        "Check interactions: click feedback, loading states, animations",
+        "Check sub-component usage: Loading, Icon integration",
+        "Verify static assets: icons, SVGs match",
+        "Verify file structure: add types.ts, index.less if missing",
+        "Document ALL gaps in a comment block at top of component file",
+        "Fix critical gaps (props, events, basic styling)",
+        "Browser verify: compare with Vant demo page",
+        "DevTool verify: test on iPhone Simulator",
+        "Verify file structure matches Vant: types.ts, index.less/css, demo page, consider README.md"
+      ],
+      "passes": true
+    },
+    {
+      "id": "final-review",
+      "title": "Final optimization review and documentation",
+      "priority": 80,
+      "acceptanceCriteria": [
+        "Create OPTIMIZATION_REPORT.md documenting all gaps found",
+        "Create a summary table: component, events supported, props supported, interactions, gaps",
+        "Run full test suite: pnpm test",
+        "Run build: pnpm build",
+        "Browser verify: navigate all demo pages",
+        "DevTool verify: test critical components on iPhone Simulator",
+        "Commit: 'docs(vant-lynx): add optimization report and final verification'"
+      ],
+      "passes": true
+    }
+  ]
+}
