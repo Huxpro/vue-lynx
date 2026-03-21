@@ -10,7 +10,7 @@ const { theme, bgColor } = useTheme();
   <ConfigProvider :theme="theme">
     <scroll-view
       scroll-orientation="vertical"
-      :style="{ flex: 1, backgroundColor: bgColor }"
+      :style="{ width: '100%', height: '100%', backgroundColor: bgColor }"
     >
       <RouterView />
     </scroll-view>
