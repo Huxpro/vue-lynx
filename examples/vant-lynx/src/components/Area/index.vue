@@ -9,6 +9,16 @@
     no scroll-based wheel picker (uses flat list)
 -->
 <script setup lang="ts">
+/**
+ * VantArea (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/area/Area.tsx
+ *
+ * Feature parity: 7/8 props, 4/4 events. Missing: showToolbar prop.
+ * Lynx differences:
+ *   - Flat selectable list columns instead of Picker scroll wheels
+ *   - Text "Loading..." overlay instead of Loading spinner
+ *   - No expose methods (confirm, getSelectedOptions)
+ */
 import { ref, computed, watch } from 'vue-lynx';
 
 export interface AreaList {

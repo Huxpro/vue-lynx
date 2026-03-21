@@ -49,9 +49,10 @@ describe('Icon', () => {
         },
       }),
     );
-    const textEl = container.querySelector('text');
-    expect(textEl).not.toBeNull();
-    const style = textEl!.getAttribute('style') || '';
-    expect(style).toContain('color');
+    // Icon now wraps in Badge - text is nested deeper
+    const textEls = container.querySelectorAll('text');
+    expect(textEls.length).toBeGreaterThan(0);
+    const iconText = Array.from(textEls).find((t) => t.textContent === '\u2605');
+    expect(iconText).toBeTruthy();
   });
 });

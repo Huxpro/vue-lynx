@@ -50,6 +50,7 @@ const props = withDefaults(defineProps<SubmitBarProps>(), {
   currency: '¥',
   disabled: false,
   loading: false,
+  placeholder: false,
   safeAreaInsetBottom: true,
 });
 

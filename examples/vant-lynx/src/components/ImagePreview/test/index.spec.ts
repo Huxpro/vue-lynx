@@ -64,8 +64,12 @@ describe('ImagePreview', () => {
         },
       }),
     );
+    // Close button now uses Icon component (renders unicode close char)
     const textEls = Array.from(container.querySelectorAll('text'));
-    const closeBtn = textEls.find((t) => t.textContent === 'X');
+    const closeBtn = textEls.find((t) => {
+      const content = t.textContent || '';
+      return content === '\u2715' || content === '\u00D7' || content === 'X' || content === '✕';
+    });
     expect(closeBtn).toBeTruthy();
   });
 

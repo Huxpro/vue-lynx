@@ -8,9 +8,23 @@
     HTML Canvas; uses dot-based visual approximation)
 -->
 <script setup lang="ts">
+/**
+ * VantSignature (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/signature/Signature.tsx
+ *
+ * Feature parity: 7/7 props, 5/5 events.
+ * Added: tips prop (Vant shows tips text below canvas).
+ *
+ * Lynx differences:
+ *   - No HTML Canvas available; uses dot-based visual approximation
+ *   - submit event returns JSON path data instead of base64 image
+ *   - Touch position uses offsetX/pageX/clientX fallback chain
+ *   - Expose methods (resize) not supported
+ */
 import { ref, computed } from 'vue-lynx';
 
 export interface SignatureProps {
+  tips?: string;
   type?: string;
   penColor?: string;
   lineWidth?: number;
@@ -20,6 +34,7 @@ export interface SignatureProps {
 }
 
 const props = withDefaults(defineProps<SignatureProps>(), {
+  tips: '',
   type: 'png',
   penColor: '#000',
   lineWidth: 3,
@@ -175,6 +190,19 @@ const allPoints = computed(() => {
         }"
       />
     </view>
+
+    <!-- Tips -->
+    <text
+      v-if="tips"
+      :style="{
+        fontSize: 14,
+        color: '#969799',
+        textAlign: 'center',
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 8,
+      }"
+    >{{ tips }}</text>
 
     <!-- Footer buttons -->
     <view :style="footerStyle">

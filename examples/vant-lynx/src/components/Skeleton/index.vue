@@ -1,6 +1,6 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 8/9 supported (missing: round)
+  - Props: 9/9 supported
     - row: number (default 0) - number of paragraph rows
     - rowWidth: Numeric | Numeric[] (default '100%', last row '60%') - width of each row
     - title: boolean (default false) - show title placeholder
@@ -9,6 +9,7 @@
     - avatarSize: Numeric (default 32) - avatar size
     - avatarShape: 'round' | 'square' (default 'round') - avatar shape
     - loading: boolean (default true) - show skeleton when true, slot content when false
+    - round: boolean (default false) - use larger border-radius on placeholder elements
     - animate: boolean (default true) - enable animation shimmer effect
   - Slots: 2/2 supported (default, template)
     - default: content shown when loading is false
@@ -20,7 +21,6 @@
     - Uses opacity reduction as visual cue for animate prop
     - Uses view elements with inline styles only
   - Gaps:
-    - round prop not implemented (applies border-radius to all elements)
     - No shimmer/pulse animation (Lynx limitation - no CSS keyframes)
     - Sub-components (SkeletonTitle, SkeletonAvatar, SkeletonParagraph) not
       exposed separately; all logic is inlined
