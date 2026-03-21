@@ -19,7 +19,7 @@
     - scrollable=null auto-detection relies on estimated widths, not actual DOM measurement
 -->
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
+import { computed, ref, watch, onMounted, onUnmounted, useMainThreadRef, runOnMainThread } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 
 export interface NoticeBarProps {
@@ -53,17 +53,29 @@ const emit = defineEmits<{
 
 const visible = ref(true);
 
-// Marquee animation state
-const offset = ref(0);
-const animating = ref(false);
-let animationTimer: ReturnType<typeof setInterval> | null = null;
-let startTimer: ReturnType<typeof setTimeout> | null = null;
+// Main-thread marquee animation using element.animate()
+const marqueeRef = useMainThreadRef(null);
+let animationTimer: ReturnType<typeof setTimeout> | null = null;
+let startDelayTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Estimated character width for marquee distance calculation.
 // Lynx does not provide DOM measurement APIs (useRect), so we approximate
 // the content width from text length. Average CJK char ~14px at fontSize 14.
 const AVG_CHAR_WIDTH = 8;
 const WRAP_WIDTH = 300; // Estimated visible wrap width (bar minus padding/icons)
+
+function _marqueeAnimate(wrapW: number, contentW: number, duration: number) {
+  'main thread';
+  if (typeof (marqueeRef as any).current?.animate === 'function') {
+    return (marqueeRef as any).current.animate(
+      [
+        { transform: `translateX(${wrapW}px)` },
+        { transform: `translateX(${-contentW}px)` },
+      ],
+      { duration, fill: 'forwards', easing: 'linear', iterations: Infinity },
+    );
+  }
+}
 
 const estimatedContentWidth = computed(() => {
   return (props.text?.length || 0) * AVG_CHAR_WIDTH;
@@ -133,10 +145,9 @@ const contentStyle = computed(() => {
   };
 
   if (shouldScroll.value) {
-    // Marquee mode: absolute positioning, translate for animation
+    // Marquee mode: positioned for element.animate() translateX
     base.position = 'absolute';
     base.whiteSpace = 'nowrap';
-    base.left = offset.value;
   } else if (props.wrapable) {
     // Wrapable mode: allow text wrapping
     base.position = 'relative';
@@ -163,14 +174,13 @@ const rightIconStyle = computed(() => ({
 
 function stopAnimation() {
   if (animationTimer) {
-    clearInterval(animationTimer);
+    clearTimeout(animationTimer);
     animationTimer = null;
   }
-  if (startTimer) {
-    clearTimeout(startTimer);
-    startTimer = null;
+  if (startDelayTimer) {
+    clearTimeout(startDelayTimer);
+    startDelayTimer = null;
   }
-  animating.value = false;
 }
 
 function startAnimation() {
@@ -181,29 +191,15 @@ function startAnimation() {
   const contentW = estimatedContentWidth.value;
   const wrapW = WRAP_WIDTH;
   const speed = resolvedSpeed.value; // px per second
-  const FRAME_INTERVAL = 16; // ~60fps
-  const pxPerFrame = speed * (FRAME_INTERVAL / 1000);
+  const totalDistance = wrapW + contentW;
+  const duration = (totalDistance / speed) * 1000; // ms for one full scroll cycle
 
-  startTimer = setTimeout(() => {
-    // Start from right edge of wrap
-    offset.value = wrapW;
-    animating.value = true;
-
-    animationTimer = setInterval(() => {
-      offset.value -= pxPerFrame;
-
-      // When the entire content has scrolled past the left edge
-      if (offset.value < -contentW) {
-        // Reset to right edge and emit replay
-        offset.value = wrapW;
-        emit('replay');
-      }
-    }, FRAME_INTERVAL);
+  startDelayTimer = setTimeout(() => {
+    runOnMainThread(_marqueeAnimate)(wrapW, contentW, duration);
   }, resolvedDelay.value);
 }
 
 function reset() {
-  offset.value = 0;
   startAnimation();
 }
 
@@ -261,7 +257,7 @@ defineExpose({ reset });
     <!-- Scrollable content wrap (marquee container) -->
     <view :style="wrapStyle">
       <slot>
-        <text :style="contentStyle">{{ text }}</text>
+        <text :main-thread-ref="marqueeRef" :style="contentStyle">{{ text }}</text>
       </slot>
     </view>
 
