@@ -1,12 +1,12 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 10/12 supported (title, leftText, rightText, leftArrow, border, fixed,
-    placeholder, zIndex, leftDisabled, rightDisabled, clickable)
+  - Props: 12/12 supported (title, leftText, rightText, leftArrow, leftDisabled,
+    rightDisabled, border, fixed, placeholder, zIndex, safeAreaInsetTop, clickable)
   - Events: 2/2 (click-left, click-right)
   - Slots: 3/3 (left, title, right)
-  - Gaps:
-    - No safeAreaInsetTop support
-    - Uses text arrow instead of Icon component for leftArrow
+  - Lynx Limitations:
+    - safeAreaInsetTop: uses fixed 44px padding (no CSS env() in Lynx)
+    - fixed: uses Lynx position fixed
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -22,7 +22,8 @@ export interface NavBarProps {
   border?: boolean;
   fixed?: boolean;
   placeholder?: boolean;
-  zIndex?: number;
+  zIndex?: number | string;
+  safeAreaInsetTop?: boolean;
   clickable?: boolean;
 }
 
@@ -37,6 +38,7 @@ const props = withDefaults(defineProps<NavBarProps>(), {
   fixed: false,
   placeholder: false,
   zIndex: 1,
+  safeAreaInsetTop: false,
   clickable: true,
 });
 
@@ -53,6 +55,7 @@ const navBarStyle = computed(() => ({
   backgroundColor: '#fff',
   paddingLeft: 16,
   paddingRight: 16,
+  paddingTop: props.safeAreaInsetTop ? 44 : 0,
   position: props.fixed ? ('fixed' as const) : ('relative' as const),
   top: props.fixed ? 0 : undefined,
   left: props.fixed ? 0 : undefined,

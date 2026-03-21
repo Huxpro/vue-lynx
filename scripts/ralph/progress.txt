@@ -22,4 +22,11 @@
 - col (P15): PASS - 3/3 props, 1/1 events (click added), 1/1 slots, tag/vertical gutter, index.less created
 - row (P16): PASS - 5/5 props, 1/1 events (click added), 1/1 slots, array gutter support, index.less created
 
-Completed: 16/93
+[2026-03-21] Batch 4 - Grid, Navigation Components
+- grid (P17): PASS - 9/9 props, 0/0 events, 1/1 slots, index.less created
+- grid-item (P18): PASS - 11/11 props, 1/1 events, 3/3 slots, url/to/replace added, index.less created
+- nav-bar (P19): PASS - 12/12 props, 2/2 events, 3/3 slots, safeAreaInsetTop added, index.less created
+- tabbar (P20): PASS - 9/9 props, 2/2 events, 1/1 slots, index.less created
+- tabbar-item (P21): PASS - 9/9 props, 1/1 events, 2/2 slots, index.less created
+
+Completed: 21/93
