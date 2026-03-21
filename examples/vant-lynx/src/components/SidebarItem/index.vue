@@ -1,10 +1,10 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 4/6 supported (title, dot, badge, disabled)
+  Vant Feature Parity Report (SidebarItem):
+  - Props: 5/6 supported (title, dot, badge, disabled, badgeProps)
   - Events: 1/1 supported (click)
-  - Slots: 1/1 supported (default)
-  - Gaps: badgeProps prop, route props (to, url, replace);
-    index is manually passed instead of auto-detected via useParent
+  - Slots: 2/2 supported (default, title)
+  - Gaps: route props (to, url, replace) not supported in Lynx;
+    index must be manually passed (no auto-detection via useParent)
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
