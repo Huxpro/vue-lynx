@@ -1,17 +1,10 @@
 <!--
-  Vant Feature Parity Report (IndexAnchor):
+  Vant Feature Parity Report:
   - Props: 1/1 supported (index)
-    - index: string|number (required) - anchor identifier matching IndexBar indexList
-  - Events: none
-  - Slots: 1/1 supported (default - custom anchor content, falls back to index text)
-  - Lynx Adaptations:
-    - No sticky positioning (Lynx does not support position: sticky)
-    - Active state shown via background color and highlight color from IndexBar
-    - No getRect/getBoundingClientRect (Lynx limitation)
-  - Gaps:
-    - No sticky header behavior (Vant pins active anchor at top while scrolling)
-    - No dynamic width/left measurement for sticky positioning
-    - No scroll-spy integration (cannot report rect to parent)
+  - Events: 0/0 supported (Vant IndexAnchor has no events)
+  - Slots: 1/1 supported (default)
+  - Gaps: No sticky positioning (Lynx lacks position: sticky),
+    no scroll-spy integration with IndexBar
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';

@@ -6,6 +6,17 @@
   - Gaps: None - full prop and event parity achieved
 -->
 <script setup lang="ts">
+/**
+ * VantContactList (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/contact-list/ContactList.tsx
+ *
+ * Feature parity: 4/4 props, 4/4 events. Full parity.
+ * Lynx differences:
+ *   - Custom radio icons instead of Vant's Radio/RadioGroup
+ *   - Edit button is text "Edit" instead of Vant's Icon("edit")
+ *   - Custom empty state instead of Vant's built-in empty handling
+ *   - Uses Cell-like layout with inline styles
+ */
 import { computed } from 'vue-lynx';
 
 export interface ContactItem {
