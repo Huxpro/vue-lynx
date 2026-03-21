@@ -95,7 +95,8 @@ function getStarColor(status: StarStatus): string {
   if (props.disabled) {
     return props.disabledColor;
   }
-  return status === 'void' ? props.voidColor : props.color;
+  // Half stars show voidIcon as base; overlay handles active color
+  return status === 'full' ? props.color : props.voidColor;
 }
 
 function getHalfStarColor(isActive: boolean): string {
