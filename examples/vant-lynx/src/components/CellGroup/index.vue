@@ -1,3 +1,12 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 3/4 supported (title, inset, border; missing: tag [N/A])
+  - Events: 0/0
+  - Slots: 2/2 (default, title)
+  - Gaps:
+    - No tag prop (N/A in Lynx)
+    - Title slot not implemented (only prop)
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 

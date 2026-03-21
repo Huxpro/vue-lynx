@@ -1,5 +1,27 @@
+<!--
+  Vant Feature Parity Report (ActionBarButton):
+  - Props: 6/8 supported (type, text, icon, color, loading, disabled)
+    - type: 'default'|'primary'|'success'|'warning'|'danger' - button theme
+    - text: string - button label
+    - icon: string - icon name (uses Icon component)
+    - color: string - custom background color
+    - loading: boolean - show loading state (uses Loading component)
+    - disabled: boolean - disable interactions
+    - Missing: route-related props (to, url, replace) - no router in Lynx
+  - Events: 1/1 supported (click)
+  - Slots: 1/1 supported (default - replaces text)
+  - Lynx Adaptations:
+    - Uses Loading component for loading state instead of "..."
+    - Uses Icon component for icon rendering
+    - No border-radius logic based on sibling buttons (Vant uses isFirst/isLast)
+  - Gaps:
+    - No route navigation (to, url, replace props)
+    - No isFirst/isLast border-radius adjustment (requires useChildren/useParent)
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
+import Loading from '../Loading/index.vue';
 
 export interface ActionBarButtonProps {
   type?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
@@ -63,19 +85,29 @@ const textStyle = computed(() => {
   };
 });
 
-const iconStyle = computed(() => ({
-  fontSize: 16,
-  color: textStyle.value.color,
-  marginRight: props.text ? 4 : 0,
-}));
+const iconColor = computed(() => {
+  const colors = typeColors[props.type] || typeColors.default;
+  return props.color ? '#fff' : colors.text;
+});
 </script>
 
 <template>
   <view :style="buttonStyle" @tap="onTap">
-    <text v-if="loading" :style="{ fontSize: 14, color: textStyle.color }">...</text>
+    <Loading
+      v-if="loading"
+      :size="16"
+      :color="iconColor"
+    />
     <template v-else>
-      <text v-if="icon" :style="iconStyle">{{ icon }}</text>
-      <text :style="textStyle">{{ text }}</text>
+      <Icon
+        v-if="icon"
+        :name="icon"
+        :size="16"
+        :color="iconColor"
+      />
+      <text :style="textStyle">
+        <slot>{{ text }}</slot>
+      </text>
     </template>
   </view>
 </template>

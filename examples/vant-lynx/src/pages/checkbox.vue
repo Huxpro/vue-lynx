@@ -8,6 +8,10 @@ const groupValue = ref(['a', 'b']);
 const disabledGroupValue = ref(['a']);
 const maxGroupValue = ref(['a']);
 const horizontalGroupValue = ref(['a']);
+const shapeValue = ref(['a']);
+const customColorValue = ref(['a']);
+const labelLeftValue = ref(['a']);
+const labelDisabledValue = ref(['a']);
 </script>
 
 <template>
@@ -47,6 +51,58 @@ const horizontalGroupValue = ref(['a']);
           </Checkbox>
           <Checkbox name="b">
             <text :style="{ fontSize: 14, color: '#969799' }">Checkbox b</text>
+          </Checkbox>
+        </CheckboxGroup>
+      </view>
+
+      <!-- Custom Shape (square) -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Shape</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <CheckboxGroup v-model="shapeValue" shape="square">
+          <Checkbox name="a">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox a</text>
+          </Checkbox>
+          <Checkbox name="b">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox b</text>
+          </Checkbox>
+        </CheckboxGroup>
+      </view>
+
+      <!-- Custom Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <CheckboxGroup v-model="customColorValue" checkedColor="#ee0a24">
+          <Checkbox name="a">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox a</text>
+          </Checkbox>
+          <Checkbox name="b">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox b</text>
+          </Checkbox>
+        </CheckboxGroup>
+      </view>
+
+      <!-- Label Position -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Label Position (left)</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <CheckboxGroup v-model="labelLeftValue">
+          <Checkbox name="a" labelPosition="left">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox a</text>
+          </Checkbox>
+          <Checkbox name="b" labelPosition="left">
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox b</text>
+          </Checkbox>
+        </CheckboxGroup>
+      </view>
+
+      <!-- Label Disabled -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disable Label Click</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <CheckboxGroup v-model="labelDisabledValue">
+          <Checkbox name="a" labelDisabled>
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox a (label disabled)</text>
+          </Checkbox>
+          <Checkbox name="b" labelDisabled>
+            <text :style="{ fontSize: 14, color: '#323233' }">Checkbox b (label disabled)</text>
           </Checkbox>
         </CheckboxGroup>
       </view>

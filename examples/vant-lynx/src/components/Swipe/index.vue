@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 11/11 supported (loop, width, height, vertical, autoplay, duration, touchable, lazyRender, initialSwipe, indicatorColor, showIndicators, stopPropagation)
+  - Events: 3/3 supported (change, dragStart, dragEnd)
+  - Slots: 2/2 supported (default, indicator)
+  - Gaps: no swipeTo() expose (only prev/next), no resize() expose, no state expose, touch uses basic clientX/Y (no useTouch composable), no CSS transition animation
+-->
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
 

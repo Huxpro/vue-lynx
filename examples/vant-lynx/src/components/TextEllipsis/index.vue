@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 5/6 supported (content, rows, expandText, collapseText, dots; missing: position)
+  - Events: 1/1 supported (clickAction)
+  - Slots: 0/1 supported (missing: action)
+  - Gaps: no position prop (middle truncation), no action slot, no DOM-based text measurement (uses fixed char-per-row estimate), no toggle() expose
+-->
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
 

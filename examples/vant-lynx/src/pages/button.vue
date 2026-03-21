@@ -10,19 +10,19 @@ import Button from '../components/Button/index.vue';
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Button Type</text>
       <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
         <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Button type="primary"><text :style="{ fontSize: 16, color: '#fff' }">Primary</text></Button>
+          <Button type="primary" text="Primary" />
         </view>
         <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Button type="success"><text :style="{ fontSize: 16, color: '#fff' }">Success</text></Button>
+          <Button type="success" text="Success" />
         </view>
         <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Button type="default"><text :style="{ fontSize: 16, color: '#323233' }">Default</text></Button>
+          <Button type="default" text="Default" />
         </view>
         <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Button type="warning"><text :style="{ fontSize: 16, color: '#fff' }">Warning</text></Button>
+          <Button type="warning" text="Warning" />
         </view>
         <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Button type="danger"><text :style="{ fontSize: 16, color: '#fff' }">Danger</text></Button>
+          <Button type="danger" text="Danger" />
         </view>
       </view>
 
@@ -30,10 +30,21 @@ import Button from '../components/Button/index.vue';
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Plain</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
         <view :style="{ marginRight: 8 }">
-          <Button type="primary" plain><text :style="{ fontSize: 16, color: '#1989fa' }">Primary</text></Button>
+          <Button type="primary" plain text="Primary" />
         </view>
         <view :style="{ marginRight: 8 }">
-          <Button type="success" plain><text :style="{ fontSize: 16, color: '#07c160' }">Success</text></Button>
+          <Button type="success" plain text="Success" />
+        </view>
+      </view>
+
+      <!-- Hairline -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Hairline</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
+        <view :style="{ marginRight: 8 }">
+          <Button type="primary" plain hairline text="Hairline" />
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Button type="success" plain hairline text="Hairline" />
         </view>
       </view>
 
@@ -41,10 +52,10 @@ import Button from '../components/Button/index.vue';
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disabled</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
         <view :style="{ marginRight: 8 }">
-          <Button type="primary" disabled><text :style="{ fontSize: 16, color: '#fff' }">Disabled</text></Button>
+          <Button type="primary" disabled text="Disabled" />
         </view>
         <view :style="{ marginRight: 8 }">
-          <Button type="success" disabled><text :style="{ fontSize: 16, color: '#fff' }">Disabled</text></Button>
+          <Button type="success" disabled text="Disabled" />
         </view>
       </view>
 
@@ -57,16 +68,33 @@ import Button from '../components/Button/index.vue';
         <view :style="{ marginRight: 8 }">
           <Button type="primary" loading loading-text="Loading..." />
         </view>
+        <view :style="{ marginRight: 8 }">
+          <Button type="success" loading loading-type="spinner" />
+        </view>
+      </view>
+
+      <!-- Icon -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Icon</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
+        <view :style="{ marginRight: 8 }">
+          <Button type="primary" icon="plus" />
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Button type="primary" icon="plus" text="Button" />
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Button type="primary" icon="plus" text="Button" icon-position="right" />
+        </view>
       </view>
 
       <!-- Shape -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Shape</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
         <view :style="{ marginRight: 8 }">
-          <Button type="primary" round><text :style="{ fontSize: 16, color: '#fff' }">Round</text></Button>
+          <Button type="primary" round text="Round" />
         </view>
         <view :style="{ marginRight: 8 }">
-          <Button type="primary" square><text :style="{ fontSize: 16, color: '#fff' }">Square</text></Button>
+          <Button type="primary" square text="Square" />
         </view>
       </view>
 
@@ -74,18 +102,35 @@ import Button from '../components/Button/index.vue';
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Size</text>
       <view :style="{ display: 'flex', flexDirection: 'column' }">
         <view :style="{ marginBottom: 8 }">
-          <Button type="primary" size="large"><text :style="{ fontSize: 16, color: '#fff' }">Large</text></Button>
+          <Button type="primary" size="large" text="Large" />
         </view>
         <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 8 }">
           <view :style="{ marginRight: 8 }">
-            <Button type="primary" size="normal"><text :style="{ fontSize: 16, color: '#fff' }">Normal</text></Button>
+            <Button type="primary" size="normal" text="Normal" />
           </view>
           <view :style="{ marginRight: 8 }">
-            <Button type="primary" size="small"><text :style="{ fontSize: 14, color: '#fff' }">Small</text></Button>
+            <Button type="primary" size="small" text="Small" />
           </view>
           <view :style="{ marginRight: 8 }">
-            <Button type="primary" size="mini"><text :style="{ fontSize: 12, color: '#fff' }">Mini</text></Button>
+            <Button type="primary" size="mini" text="Mini" />
           </view>
+        </view>
+      </view>
+
+      <!-- Block -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Block</text>
+      <view :style="{ marginBottom: 8 }">
+        <Button type="primary" block text="Block Button" />
+      </view>
+
+      <!-- Custom Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Custom Color</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
+        <view :style="{ marginRight: 8 }">
+          <Button color="#7232dd" text="Custom" />
+        </view>
+        <view :style="{ marginRight: 8 }">
+          <Button color="#7232dd" plain text="Custom" />
         </view>
       </view>
     </view>

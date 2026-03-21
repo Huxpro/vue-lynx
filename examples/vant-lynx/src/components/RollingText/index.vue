@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 7/8 supported (startNum, targetNum, duration, autoStart, direction, stopOrder, height; missing: textList)
+  - Events: 0/0 supported (Vant has no emits; we add animationEnd as extension)
+  - Slots: 0/0 supported (Vant has no slots)
+  - Gaps: no textList prop (custom text array mode), duration unit differs (ms here vs seconds in Vant), no CSS transition-based rolling animation (uses JS setTimeout)
+-->
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue-lynx';
 

@@ -1,3 +1,16 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 6/11 supported (columns, title, confirmButtonText, cancelButtonText, loading, readonly, showToolbar)
+    Missing: modelValue (v-model), allowHtml, optionHeight, swipeDuration, visibleOptionNum,
+    toolbarPosition, columnsFieldNames
+  - Events: 3/6 supported (confirm, cancel, change)
+    Missing: scrollInto, clickOption, update:modelValue
+  - Slots: 0/5 supported
+    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
+  - Gaps: columns accept string[][] (simplified) instead of PickerOption[]/PickerColumn[];
+    no scroll-wheel/momentum physics (tap-to-select only); no cascade column support;
+    no columnsFieldNames for custom field mapping; no v-model binding
+-->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
 

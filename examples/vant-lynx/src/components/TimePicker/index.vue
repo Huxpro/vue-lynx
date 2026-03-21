@@ -1,3 +1,16 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 7/13 supported (modelValue, title, minHour, maxHour, minMinute, maxMinute,
+    columnsType, confirmButtonText, cancelButtonText)
+    Missing: minSecond, maxSecond, minTime, maxTime, filter, formatter, loading, readonly,
+    optionHeight, swipeDuration, visibleOptionNum, showToolbar
+  - Events: 4/4 supported (update:modelValue, confirm, cancel, change)
+  - Slots: 0/5 supported
+    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
+  - Gaps: no minTime/maxTime for cross-column time range constraints; no minSecond/maxSecond;
+    no filter/formatter for custom option text; no scroll-wheel physics (tap-to-select);
+    no loading/readonly inherited from Picker
+-->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
 

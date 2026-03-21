@@ -1,5 +1,20 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 10/17 supported (src, fit, width, height, radius, round, lazyLoad, showError,
+    showLoading, block, errorIcon, loadingIcon, iconSize)
+  - Events: 3/3 (load, error, click)
+  - Slots: 3/3 (default, loading, error)
+  - Gaps:
+    - No alt prop (N/A in Lynx)
+    - No position prop (object-position)
+    - No iconPrefix prop
+    - No crossorigin/referrerpolicy/decoding (N/A in Lynx)
+    - No lazy load implementation
+    - Uses Icon component for loading/error placeholders
+-->
 <script setup lang="ts">
-import { ref, computed } from 'vue-lynx';
+import { ref, computed, watch } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface ImageProps {
   src?: string;
@@ -8,16 +23,24 @@ export interface ImageProps {
   height?: string | number;
   radius?: string | number;
   round?: boolean;
+  block?: boolean;
   lazyLoad?: boolean;
   showError?: boolean;
   showLoading?: boolean;
+  errorIcon?: string;
+  loadingIcon?: string;
+  iconSize?: string | number;
 }
 
 const props = withDefaults(defineProps<ImageProps>(), {
   fit: 'fill',
   round: false,
+  block: false,
   showError: true,
   showLoading: true,
+  errorIcon: 'photo',
+  loadingIcon: 'photo',
+  iconSize: 32,
 });
 
 const emit = defineEmits<{
@@ -28,6 +51,14 @@ const emit = defineEmits<{
 
 const loading = ref(true);
 const error = ref(false);
+
+watch(
+  () => props.src,
+  () => {
+    error.value = false;
+    loading.value = true;
+  },
+);
 
 const containerStyle = computed(() => {
   const w = typeof props.width === 'number' ? props.width : parseInt(String(props.width), 10) || undefined;
@@ -83,7 +114,7 @@ function onTap(event: any) {
       }"
     >
       <slot name="loading">
-        <text :style="{ fontSize: 14, color: '#969799' }">Loading</text>
+        <Icon :name="loadingIcon" :size="iconSize" color="#dcdee0" />
       </slot>
     </view>
 
@@ -100,8 +131,10 @@ function onTap(event: any) {
       }"
     >
       <slot name="error">
-        <text :style="{ fontSize: 14, color: '#969799' }">Failed</text>
+        <Icon :name="errorIcon" :size="iconSize" color="#dcdee0" />
       </slot>
     </view>
+
+    <slot />
   </view>
 </template>

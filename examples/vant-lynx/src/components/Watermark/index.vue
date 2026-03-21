@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 8/11 supported (width, height, content, image, rotate, fullPage, gapX, gapY, zIndex, opacity; missing: textColor mapped to fontColor instead)
+  - Events: 0/0 supported (Vant has no emits)
+  - Slots: 0/1 supported (missing: content slot)
+  - Gaps: no content slot, no SVG-based watermark rendering (uses repeated view elements), textColor prop renamed to fontColor with extra font props (fontFamily, fontWeight, fontStyle, textAlign), no MutationObserver tamper protection
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 

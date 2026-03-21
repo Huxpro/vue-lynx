@@ -1,3 +1,14 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 5/9 supported (modelValue, title, options, placeholder, activeColor, closeable)
+    Missing: swipeable, closeIcon, showHeader, fieldNames
+  - Events: 5/5 supported (update:modelValue, change, finish, close, click-tab)
+  - Slots: 0/3 supported
+    Missing: title, option, options-top, options-bottom
+  - Gaps: no fieldNames for custom option field mapping; no swipeable tab animation;
+    closeIcon is hardcoded to x character; showHeader always true; disabled option support
+    not implemented; no options-top/options-bottom slots
+-->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
 

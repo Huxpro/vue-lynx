@@ -1,3 +1,15 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 2/6 supported (title, tabs)
+    Missing: activeTab (v-model), nextStepText, showToolbar, confirmButtonText, cancelButtonText
+  - Events: 0/3 supported
+    Missing: confirm, cancel, update:activeTab
+  - Slots: 1/4 supported (default)
+    Missing: toolbar, title, confirm, cancel
+  - Gaps: no toolbar with confirm/cancel buttons; no nextStepText for multi-step flow;
+    activeTab is internal only (not exposed as v-model); child picker confirm() orchestration
+    not implemented
+-->
 <script setup lang="ts">
 import { provide, ref } from 'vue-lynx';
 

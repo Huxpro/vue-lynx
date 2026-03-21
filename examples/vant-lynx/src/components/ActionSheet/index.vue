@@ -1,6 +1,20 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 6/12 supported (show, actions, title, description, cancelText, closeOnClickAction;
+    missing: closeable, closeIcon, round [default], safeAreaInsetBottom, closeOnClickOverlay, beforeClose)
+  - Events: 4/5 (update:show, select, cancel, close; missing: opened/closed)
+  - Slots: 3/5 (default [via actions], cancel, description; missing: action)
+  - Sub-components: Popup ✅, Loading ✅
+  - Gaps:
+    - No closeable/closeIcon
+    - No safeAreaInsetBottom
+    - No beforeClose interceptor
+    - No action subname support
+-->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 import Popup from '../Popup/index.vue';
+import Loading from '../Loading/index.vue';
 
 export interface ActionSheetAction {
   name: string;
@@ -125,13 +139,11 @@ const hasHeader = computed(() => !!props.title || !!props.description);
       }"
       @tap="() => onClickAction(action, index)"
     >
-      <text
+      <Loading
         v-if="action.loading"
-        :style="{
-          fontSize: 16,
-          color: '#969799',
-        }"
-      >...</text>
+        :size="20"
+        color="#969799"
+      />
       <text
         v-else
         :style="{

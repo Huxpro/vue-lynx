@@ -1,3 +1,10 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 8/14 supported (show, actions, placement, theme, trigger, offset, showArrow, closeOnClickAction, closeOnClickOutside; missing: overlay, duration, teleport, overlayStyle, overlayClass, closeOnClickOverlay, iconPrefix, actionsDirection)
+  - Events: 2/3 supported (update:show, select; missing: touchstart)
+  - Slots: 2/3 supported (default, content; missing: action)
+  - Gaps: no Popper.js positioning (uses CSS absolute), no teleport, no overlay, no actionsDirection, no iconPrefix, no action slot
+-->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
 

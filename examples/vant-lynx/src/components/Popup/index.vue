@@ -1,6 +1,23 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 12/19 supported (show, position, round, closeable, closeIcon, closeIconPosition,
+    duration, overlay, zIndex, closeOnClickOverlay, safeAreaInsetBottom, beforeClose)
+  - Events: 6/8 supported (open, close, opened, closed, click-overlay, update:show;
+    missing: click-close-icon, keydown)
+  - Slots: 2/2 (default, overlay-content)
+  - Gaps:
+    - No transition animations (fade/slide)
+    - No teleport
+    - No lazyRender/destroyOnClose
+    - No safeAreaInsetTop
+    - No overlayClass/overlayStyle/overlayProps
+    - No iconPrefix
+    - No closeOnPopstate
+-->
 <script setup lang="ts">
 import { computed, watch } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
+import Icon from '../Icon/index.vue';
 
 export interface PopupProps {
   show?: boolean;
@@ -8,9 +25,13 @@ export interface PopupProps {
   round?: boolean;
   closeable?: boolean;
   closeIcon?: string;
+  closeIconPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
   duration?: number;
   overlay?: boolean;
+  closeOnClickOverlay?: boolean;
   zIndex?: number;
+  safeAreaInsetBottom?: boolean;
+  beforeClose?: () => boolean | Promise<boolean>;
 }
 
 const props = withDefaults(defineProps<PopupProps>(), {
@@ -18,8 +39,12 @@ const props = withDefaults(defineProps<PopupProps>(), {
   position: 'center',
   round: false,
   closeable: false,
+  closeIcon: 'cross',
+  closeIconPosition: 'top-right',
   overlay: true,
+  closeOnClickOverlay: true,
   zIndex: 2000,
+  safeAreaInsetBottom: false,
 });
 
 const emit = defineEmits<{
@@ -29,6 +54,7 @@ const emit = defineEmits<{
   opened: [];
   closed: [];
   'click-overlay': [];
+  'click-close-icon': [];
 }>();
 
 watch(
@@ -96,12 +122,37 @@ const positionStyle = computed(() => {
   return base;
 });
 
-function onClickOverlay() {
+const closeIconPositionStyle = computed(() => {
+  const style: Record<string, any> = {
+    position: 'absolute',
+    zIndex: 1,
+    padding: 4,
+  };
+  const pos = props.closeIconPosition;
+  if (pos.includes('top')) style.top = 8;
+  if (pos.includes('bottom')) style.bottom = 8;
+  if (pos.includes('left')) style.left = 8;
+  if (pos.includes('right')) style.right = 8;
+  return style;
+});
+
+async function onClickOverlay() {
   emit('click-overlay');
-  emit('update:show', false);
+  if (props.closeOnClickOverlay) {
+    await doClose();
+  }
 }
 
-function onClose() {
+async function onClose() {
+  emit('click-close-icon');
+  await doClose();
+}
+
+async function doClose() {
+  if (props.beforeClose) {
+    const result = await props.beforeClose();
+    if (result === false) return;
+  }
   emit('update:show', false);
 }
 </script>
@@ -110,19 +161,9 @@ function onClose() {
   <template v-if="show">
     <Overlay v-if="overlay" :show="true" :z-index="zIndex - 1" @click="onClickOverlay" />
     <view :style="positionStyle">
-      <text
-        v-if="closeable"
-        :style="{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          fontSize: 20,
-          color: '#c8c9cc',
-          zIndex: 1,
-          padding: 4,
-        }"
-        @tap="onClose"
-      >&times;</text>
+      <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClose">
+        <Icon :name="closeIcon" :size="20" color="#c8c9cc" />
+      </view>
       <slot />
     </view>
   </template>

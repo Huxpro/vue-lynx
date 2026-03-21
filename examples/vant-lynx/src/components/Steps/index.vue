@@ -1,3 +1,12 @@
+<!--
+  Vant Feature Parity Report:
+  - Props: 6/7 supported (active, direction, activeColor, inactiveColor, activeIcon, finishIcon;
+    missing: iconPrefix)
+  - Events: 1/1 (click-step)
+  - Slots: 1/1 (default)
+  - provide/inject: ✅
+  - Gaps: No icon prefix support, no finish-icon/active-icon slot
+-->
 <script setup lang="ts">
 import { computed, provide, toRef } from 'vue-lynx';
 
