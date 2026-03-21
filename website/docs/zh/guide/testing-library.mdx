@@ -1,0 +1,459 @@
+import { PackageManagerTabs } from '@theme';
+
+# VueLynx 测试库
+
+`vue-lynx-testing-library` 包提供了 `render`、`fireEvent` 和 `getByText` 等 API，用于测试 Vue Lynx 组件，类似于 [Vue Test Utils](https://test-utils.vuejs.org/) 和 [React Testing Library](https://testing-library.com/)，通过 [`@lynx-js/testing-environment`](https://www.npmjs.com/package/@lynx-js/testing-environment) 抽象了双线程架构。
+
+## 设置
+
+### 通过 create-vue-lynx 创建
+
+使用 `create-vue-lynx` 会自动设置 VueLynx 测试库，提供预配置的测试支持。
+
+### 添加到已有项目
+
+安装所需依赖：
+
+<PackageManagerTabs command="add -D vitest jsdom @lynx-js/testing-environment @testing-library/dom @testing-library/jest-dom" />
+
+对于 Vitest 配置，创建一个 `vitest.config.ts` 文件来设置 `vue-lynx` 子路径别名并注册 setup 文件：
+
+```ts title="vitest.config.ts"
+import { defineConfig } from 'vitest/config';
+import path from 'node:path';
+
+export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: [path.resolve(__dirname, 'test/setup.ts')],
+    include: ['test/**/*.test.ts'],
+    alias: [
+      {
+        find: 'vue-lynx/entry-background',
+        replacement: path.resolve(
+          __dirname,
+          'node_modules/vue-lynx/runtime/dist/entry-background.js',
+        ),
+      },
+      {
+        find: 'vue-lynx/main-thread',
+        replacement: path.resolve(
+          __dirname,
+          'node_modules/vue-lynx/main-thread/dist/entry-main.js',
+        ),
+      },
+      {
+        find: 'vue-lynx/internal/ops',
+        replacement: path.resolve(
+          __dirname,
+          'node_modules/vue-lynx/internal/dist/ops.js',
+        ),
+      },
+      {
+        find: /^vue-lynx$/,
+        replacement: path.resolve(
+          __dirname,
+          'node_modules/vue-lynx/runtime/dist/index.js',
+        ),
+      },
+    ],
+  },
+});
+```
+
+创建一个 setup 文件来初始化双线程测试环境。该文件在任何测试模块导入之前运行，因此当 Vue 的运行时加载时，所有 Lynx 全局变量都已就绪：
+
+```ts title="test/setup.ts"
+import { JSDOM } from 'jsdom';
+import { LynxTestingEnv } from '@lynx-js/testing-environment';
+
+// Create the testing environment
+const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+const lynxTestingEnv = new LynxTestingEnv(jsdom);
+(globalThis as any).lynxTestingEnv = lynxTestingEnv;
+
+// Wire Main Thread globals
+lynxTestingEnv.switchToMainThread();
+if (typeof (globalThis as any).registerWorkletInternal === 'undefined') {
+  (globalThis as any).registerWorkletInternal = () => {};
+}
+await import('vue-lynx/main-thread');
+
+const mainThreadFns = {
+  renderPage: (globalThis as any).renderPage,
+  vuePatchUpdate: (globalThis as any).vuePatchUpdate,
+  processData: (globalThis as any).processData,
+  updatePage: (globalThis as any).updatePage,
+  updateGlobalProps: (globalThis as any).updateGlobalProps,
+};
+const mtGlobal = lynxTestingEnv.mainThread.globalThis as any;
+Object.assign(mtGlobal, mainThreadFns);
+
+// Wire Background Thread globals
+lynxTestingEnv.switchToBackgroundThread();
+await import('vue-lynx/entry-background');
+
+const publishEventFn = (globalThis as any).publishEvent;
+const bgGlobal = lynxTestingEnv.backgroundThread.globalThis as any;
+bgGlobal.publishEvent = publishEventFn;
+
+// Re-wire globals after env resets between tests
+(globalThis as any).onSwitchedToMainThread = () => {
+  Object.assign(globalThis, mainThreadFns);
+};
+(globalThis as any).onSwitchedToBackgroundThread = () => {
+  if ((globalThis as any).lynxCoreInject?.tt) {
+    (globalThis as any).lynxCoreInject.tt.publishEvent = publishEventFn;
+  }
+  (globalThis as any).publishEvent = publishEventFn;
+};
+```
+
+## 示例
+
+### 快速开始
+
+遵循 **Arrange-Act-Assert** 模式：准备测试数据，执行操作，然后断言结果：
+
+```ts
+import { expect, it, vi } from 'vitest';
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
+
+it('basic', async () => {
+  const onClick = vi.fn();
+
+  const Button = defineComponent({
+    props: { onClick: Function },
+    setup(props, { slots }) {
+      return () => h('view', { bindtap: props.onClick }, slots.default?.());
+    },
+  });
+
+  // ARRANGE
+  const { container } = render(
+    defineComponent({
+      setup() {
+        return () =>
+          h(Button, { onClick }, () => [
+            h('text', null, 'Click me'),
+          ]);
+      },
+    }),
+  );
+
+  expect(onClick).not.toHaveBeenCalled();
+
+  // ACT
+  fireEvent.tap(container.querySelector('view')!);
+
+  // ASSERT
+  expect(onClick).toBeCalledTimes(1);
+  expect(container.querySelector('text')!.textContent).toBe('Click me');
+});
+```
+
+VueLynx 测试库使用 JSDOM 来实现 [Element PAPI](https://lynxjs.org/guide/spec.html)，因此你可以使用 `container.querySelector()` 查询渲染的元素，并断言它们的 `textContent`。
+
+:::tip
+当使用 `h()` 向组件传递插槽内容时，请将子元素包裹在函数中：`h(Comp, props, () => [children])`。这遵循了 Vue 3 推荐的函数式插槽模式。
+:::
+
+### 基础渲染
+
+`render` 方法返回一个 `RenderResult` 对象，其 `container` 字段包含渲染结果：
+
+```ts
+import { expect, it } from 'vitest';
+import { h, defineComponent } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+
+it('basic render', () => {
+  const Comp = defineComponent({
+    render() {
+      return h('view', { id: 'inner', style: { backgroundColor: 'yellow' } });
+    },
+  });
+
+  const { container } = render(Comp);
+  expect(container.querySelector('#inner')).not.toBeNull();
+  expect(container.querySelector('view')).not.toBeNull();
+});
+```
+
+你也可以使用绑定到容器的 `@testing-library/dom` 查询方法：
+
+```ts
+const { getByText } = render(Comp);
+expect(getByText('Hello')).not.toBeNull();
+```
+
+### 触发事件
+
+使用 `fireEvent` 时，事件类型由元素上的处理器属性名称决定。格式遵循 `eventType:eventName`（例如，`catchEvent:tap` 触发一个 catch 类型的 tap 事件）。事件处理器属性决定事件类型：
+
+| 事件类型 | `eventType` | 绑定示例 | 触发示例 |
+|---|---|---|---|
+| `bind` | `bindEvent` | `bindtap` | `fireEvent.tap(el)` |
+| `catch` | `catchEvent` | `catchtap` | `fireEvent.tap(el, { eventType: 'catchEvent' })` |
+| `capture-bind` | `capture-bind` | `capture-bindtap` | `fireEvent.tap(el, { eventType: 'capture-bind' })` |
+| `capture-catch` | `capture-catch` | `capture-catchtap` | `fireEvent.tap(el, { eventType: 'capture-catch' })` |
+
+你可以直接构造 Event 对象，或使用命名辅助方法来自动构造：
+
+```ts
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
+import { vi, expect, it } from 'vitest';
+
+it('fireEvent', async () => {
+  const handler = vi.fn();
+
+  const Comp = defineComponent({
+    setup() {
+      return () => h('view', null, [h('text', { catchtap: handler })]);
+    },
+  });
+
+  const { container } = render(Comp);
+  const textEl = container.querySelector('text')!;
+
+  expect(handler).toHaveBeenCalledTimes(0);
+
+  // Method 1: Use the named helper
+  fireEvent.tap(textEl, {
+    eventType: 'catchEvent',
+    key: 'value',
+  });
+
+  expect(handler).toHaveBeenCalledTimes(1);
+
+  // Method 2: Construct the Event object yourself
+  const event = new Event('catchEvent:tap');
+  Object.assign(event, {
+    eventType: 'catchEvent',
+    eventName: 'tap',
+    key: 'value2',
+  });
+  fireEvent(textEl, event);
+
+  expect(handler).toHaveBeenCalledTimes(2);
+});
+```
+
+以下是可用的事件辅助方法：
+
+| 辅助方法 | 事件名称 |
+|---|---|
+| `fireEvent.tap(el)` | `tap` |
+| `fireEvent.longtap(el)` | `longtap` |
+| `fireEvent.longpress(el)` | `longpress` |
+| `fireEvent.touchstart(el)` | `touchstart` |
+| `fireEvent.touchmove(el)` | `touchmove` |
+| `fireEvent.touchend(el)` | `touchend` |
+| `fireEvent.touchcancel(el)` | `touchcancel` |
+| `fireEvent.scroll(el)` | `scroll` |
+| `fireEvent.scrollend(el)` | `scrollend` |
+| `fireEvent.focus(el)` | `focus` |
+| `fireEvent.blur(el)` | `blur` |
+| `fireEvent.layoutchange(el)` | `layoutchange` |
+| `fireEvent.transitionend(el)` | `transitionend` |
+| `fireEvent.animationend(el)` | `animationend` |
+
+### 测试响应式
+
+在更改响应式状态后，使用 `await nextTick(); await nextTick()` 来等待 Vue 的调度器刷新以及操作在主线程上的应用。便捷辅助方法 `waitForUpdate()` 封装了这两个调用：
+
+```ts
+import { h, defineComponent, ref } from 'vue-lynx';
+import { render, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('updates text when ref changes', async () => {
+  const count = ref(0);
+
+  const Comp = defineComponent({
+    setup() {
+      return () => h('text', null, `Count: ${count.value}`);
+    },
+  });
+
+  const { container } = render(Comp);
+  expect(container.querySelector('text')!.textContent).toBe('Count: 0');
+
+  count.value = 42;
+  await waitForUpdate();
+
+  expect(container.querySelector('text')!.textContent).toBe('Count: 42');
+});
+```
+
+### 测试模板 ref
+
+Vue Lynx 会在元素上设置 `vue-ref-{id}` 属性，可用于验证 ref 的分配。`ShadowElement`（后台线程表示）提供了 `NodesRef` 方法，如 `invoke`、`setNativeProps` 和 `animate`：
+
+```ts
+import { h, defineComponent, ShadowElement } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('element ref', () => {
+  const Comp = defineComponent({
+    render() {
+      return h('view', null, [h('text', null, 'hello')]);
+    },
+  });
+
+  const { container } = render(Comp);
+  const view = container.querySelector('view')!;
+
+  // Vue Lynx sets vue-ref-{id} attribute for elements
+  expect(view.hasAttribute('vue-ref-2')).toBe(true);
+});
+
+it('ShadowElement has NodesRef methods', () => {
+  const el = new ShadowElement('view');
+  expect(typeof el.invoke).toBe('function');
+  expect(typeof el.setNativeProps).toBe('function');
+  expect(typeof el.animate).toBe('function');
+});
+```
+
+### 查询页面元素
+
+`render` 方法返回绑定到容器的 `@testing-library/dom` 查询方法，如 `getByText`：
+
+```ts
+import { h, defineComponent, ref } from 'vue-lynx';
+import { render, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('queries rendered elements', async () => {
+  const loaded = ref(false);
+
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        loaded.value
+          ? h('text', { id: 'message' }, 'Hello World')
+          : h('text', null, 'Loading...');
+    },
+  });
+
+  const { container, getByText } = render(Comp);
+  expect(getByText('Loading...')).not.toBeNull();
+
+  loaded.value = true;
+  await waitForUpdate();
+
+  expect(container.querySelector('#message')!.textContent).toBe('Hello World');
+});
+```
+
+### 重新渲染
+
+`render` 方法返回的对象包含一个 `rerender` 方法，用于测试组件的不同状态：
+
+```ts
+import { h, defineComponent } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('rerender will re-render your component', () => {
+  const Greeting = defineComponent({
+    props: { message: String },
+    render() {
+      return h('text', null, this.message);
+    },
+  });
+
+  const { container, rerender } = render(Greeting, { message: 'hi' });
+  expect(container.querySelector('text')!.textContent).toBe('hi');
+
+  {
+    const { container } = rerender(Greeting, { message: 'hey' });
+    expect(container.querySelector('text')!.textContent).toBe('hey');
+  }
+});
+```
+
+### 测试列表
+
+`list` 元素渲染 `list-item` 子元素。列表项以声明方式描述，原生列表处理懒加载：
+
+```ts
+import { h, defineComponent, ref } from 'vue-lynx';
+import { render, waitForUpdate } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('list', async () => {
+  const items = ref([0, 1, 2]);
+
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        h(
+          'list',
+          null,
+          items.value.map((item) =>
+            h('list-item', { key: item, 'item-key': item }, [
+              h('text', null, `${item}`),
+            ]),
+          ),
+        );
+    },
+  });
+
+  const { container } = render(Comp);
+  const list = container.querySelector('list');
+  expect(list).not.toBeNull();
+
+  // Add items reactively
+  items.value = [0, 1, 2, 3];
+  await waitForUpdate();
+
+  expect(container.querySelector('list')).not.toBeNull();
+});
+```
+
+### 测试主线程脚本
+
+主线程脚本测试不需要特殊配置。请注意，后台线程方法不能直接从主线程脚本中调用；请将回调函数放在 `globalThis` 上以便进行断言：
+
+```ts
+import { h, defineComponent } from 'vue-lynx';
+import { render } from 'vue-lynx-testing-library';
+import { expect, it } from 'vitest';
+
+it('main thread script', () => {
+  const Comp = defineComponent({
+    setup() {
+      return () =>
+        h('view', {
+          'main-thread-bindtap': {
+            _wkltId: 1,
+            _closure: {},
+          },
+        }, [
+          h('text', null, 'Hello Main Thread Script'),
+        ]);
+    },
+  });
+
+  const { container } = render(Comp);
+  expect(container.querySelector('text')!.textContent).toBe('Hello Main Thread Script');
+});
+```
+
+:::info
+在生产环境中，`'main thread'` 指令函数会被构建插件转换为 worklet 上下文对象。在测试中，你可以像上面所示直接传递 worklet 上下文，或者如果你的 Vitest 配置包含了 worklet 加载器，也可以使用 SWC 转换。
+:::
+
+### 更多用法
+
+更多示例请参阅 [vue-lynx testing-library 源代码](https://github.com/huxpro/vue-lynx/tree/main/testing-library/src/__tests__)中的测试用例。
+
+## API 参考
+
+有关 `render`、`fireEvent`、`cleanup`、`waitForUpdate` 及其他导出的详细信息，请参阅完整的 [vue-lynx/testing-library API 参考](/zh/guide/api/testing-library/)。
