@@ -109,7 +109,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "image",
@@ -128,7 +128,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "loading",
@@ -146,7 +146,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "tag",
@@ -164,7 +164,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "badge",
@@ -181,7 +181,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "divider",
@@ -198,7 +198,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "space",
@@ -216,7 +216,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "col-row",
