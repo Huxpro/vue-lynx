@@ -1,0 +1,47 @@
+# 7GUIs 基准测试
+
+[7 GUIs](https://eugenkiss.github.io/7guis/) 基准测试定义了七个任务，涵盖了 GUI 编程中的典型挑战——从简单的计数器到完整的电子表格。这里我们使用 Vue Lynx 实现了全部七个任务，代码源自 [Vue.js 官方示例](https://vuejs.org/examples/#7-guis-counter)。
+
+## 示例
+
+### 1. 计数器
+
+一个简单的按钮，用于递增计数器。测试基本的状态管理和事件处理。
+
+<Go example="7guis" defaultFile="src/counter/App.vue" entry="src/counter" defaultEntryName="counter" />
+
+### 2. 温度转换器
+
+摄氏度与华氏度之间的双向转换。测试双向数据流和约束处理。
+
+<Go example="7guis" defaultFile="src/temperature-converter/App.vue" entry="src/temperature-converter" defaultEntryName="temperature-converter" />
+
+### 3. 航班预订
+
+一个带有条件验证的航班预订表单。测试约束条件、条件可见性和输入验证。
+
+<Go example="7guis" defaultFile="src/flight-booker/App.vue" entry="src/flight-booker" defaultEntryName="flight-booker" />
+
+### 4. 计时器
+
+一个带有可调时长的计时器。测试并发、用户/信号的竞争交互以及持续更新。
+
+<Go example="7guis" defaultFile="src/timer/App.vue" entry="src/timer" defaultEntryName="timer" />
+
+### 5. CRUD
+
+一个可过滤的列表，支持创建、读取、更新和删除操作。测试动态数据集合的管理。
+
+<Go example="7guis" defaultFile="src/crud/App.vue" entry="src/crud" defaultEntryName="crud" />
+
+### 6. 圆形绘制器
+
+在画布上绘制圆形，并支持撤销/重做。测试自定义绘图、非平凡的撤销模型和对话框控制流。
+
+<Go example="7guis" defaultFile="src/circle-drawer/App.vue" entry="src/circle-drawer" defaultEntryName="circle-drawer" />
+
+### 7. 单元格
+
+一个简单的电子表格，支持公式求值。测试变化传播、单元格引用和响应式计算。
+
+<Go example="7guis" defaultFile="src/cells/App.vue" entry="src/cells" defaultEntryName="cells" />
