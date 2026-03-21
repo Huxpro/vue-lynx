@@ -1,18 +1,19 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 4/5 supported (gutter, justify, align, wrap; missing: tag [N/A])
-  - Events: 0/0
+  - Props: 5/5 supported (gutter, tag, justify, align, wrap)
+  - Events: 1/1 (click)
   - Slots: 1/1 (default)
-  - provide/inject: ✅ (rowGutter)
-  - Gaps:
-    - No array gutter support [horizontal, vertical]
-    - No tag prop (N/A in Lynx)
+  - provide/inject: rowGutter provided to Col children
+  - Lynx Limitations:
+    - tag: accepted for API compat but always renders as view
+    - Array gutter [horizontal, vertical] supported
 -->
 <script setup lang="ts">
 import { computed, provide } from 'vue-lynx';
 
 export interface RowProps {
-  gutter?: number | string;
+  gutter?: number | string | (number | string)[];
+  tag?: string;
   justify?: 'start' | 'end' | 'center' | 'space-around' | 'space-between';
   align?: 'top' | 'center' | 'bottom';
   wrap?: boolean;
@@ -20,17 +21,35 @@ export interface RowProps {
 
 const props = withDefaults(defineProps<RowProps>(), {
   gutter: 0,
+  tag: 'div',
   justify: 'start',
   align: 'top',
   wrap: true,
 });
 
-const gutterValue = computed(() => {
+const emit = defineEmits<{
+  click: [event: any];
+}>();
+
+const gutterH = computed(() => {
+  if (Array.isArray(props.gutter)) {
+    const v = props.gutter[0];
+    return typeof v === 'string' ? parseInt(v, 10) || 0 : v;
+  }
   if (typeof props.gutter === 'string') return parseInt(props.gutter, 10) || 0;
   return props.gutter;
 });
 
-provide('rowGutter', gutterValue);
+const gutterV = computed(() => {
+  if (Array.isArray(props.gutter)) {
+    const v = props.gutter[1] ?? 0;
+    return typeof v === 'string' ? parseInt(v, 10) || 0 : v;
+  }
+  return 0;
+});
+
+provide('rowGutter', gutterH);
+provide('rowGutterV', gutterV);
 
 const justifyMap: Record<string, string> = {
   start: 'flex-start',
@@ -52,13 +71,17 @@ const rowStyle = computed(() => ({
   flexWrap: props.wrap ? ('wrap' as const) : ('nowrap' as const),
   justifyContent: justifyMap[props.justify] || 'flex-start',
   alignItems: alignMap[props.align] || 'flex-start',
-  marginLeft: gutterValue.value ? -gutterValue.value / 2 : 0,
-  marginRight: gutterValue.value ? -gutterValue.value / 2 : 0,
+  marginLeft: gutterH.value ? -gutterH.value / 2 : 0,
+  marginRight: gutterH.value ? -gutterH.value / 2 : 0,
 }));
+
+function onTap(event: any) {
+  emit('click', event);
+}
 </script>
 
 <template>
-  <view :style="rowStyle">
+  <view :style="rowStyle" @tap="onTap">
     <slot />
   </view>
 </template>

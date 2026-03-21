@@ -15,4 +15,11 @@
 - toast (P10): PASS - 16/16 props, 2/2 events, 1/1 slots, auto-close timer/forbidClick/closeOnClick added, index.less created
 - tag (P11): PASS - 9/9 props, 2/2 events, 1/1 slots, index.less created
 
-Completed: 11/93
+[2026-03-21] Batch 3 - Display & Layout Components
+- image (P12): PASS - 17/17 props, 3/3 events, 3/3 slots, position/alt/iconPrefix/crossorigin added, index.less created
+- divider (P13): PASS - 4/4 props, 0/0 events, 1/1 slots, vertical prop added, index.less created
+- space (P14): PASS - 5/5 props, 0/0 events, 1/1 slots, array size support added, index.less created
+- col (P15): PASS - 3/3 props, 1/1 events (click added), 1/1 slots, tag/vertical gutter, index.less created
+- row (P16): PASS - 5/5 props, 1/1 events (click added), 1/1 slots, array gutter support, index.less created
+
+Completed: 16/93

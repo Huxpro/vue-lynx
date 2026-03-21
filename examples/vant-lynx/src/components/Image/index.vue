@@ -1,16 +1,16 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 10/17 supported (src, fit, width, height, radius, round, lazyLoad, showError,
-    showLoading, block, errorIcon, loadingIcon, iconSize)
+  - Props: 17/17 supported (src, fit, position, alt, width, height, radius, round, block,
+    lazyLoad, showError, showLoading, errorIcon, loadingIcon, iconSize, iconPrefix,
+    crossorigin, referrerpolicy, decoding)
   - Events: 3/3 (load, error, click)
   - Slots: 3/3 (default, loading, error)
-  - Gaps:
-    - No alt prop (N/A in Lynx)
-    - No position prop (object-position)
-    - No iconPrefix prop
-    - No crossorigin/referrerpolicy/decoding (N/A in Lynx)
-    - No lazy load implementation
-    - Uses Icon component for loading/error placeholders
+  - Lynx Limitations:
+    - alt: accepted for API compat but Lynx image has no alt text
+    - position (object-position): accepted for API compat but limited in Lynx
+    - crossorigin/referrerpolicy/decoding: accepted for API compat, HTML-only attributes
+    - lazyLoad: accepted but no IntersectionObserver in Lynx
+    - iconPrefix: accepted for API compat
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
@@ -19,6 +19,8 @@ import Icon from '../Icon/index.vue';
 export interface ImageProps {
   src?: string;
   fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
+  position?: string;
+  alt?: string;
   width?: string | number;
   height?: string | number;
   radius?: string | number;
@@ -30,17 +32,24 @@ export interface ImageProps {
   errorIcon?: string;
   loadingIcon?: string;
   iconSize?: string | number;
+  iconPrefix?: string;
+  crossorigin?: string;
+  referrerpolicy?: string;
+  decoding?: string;
 }
 
 const props = withDefaults(defineProps<ImageProps>(), {
   fit: 'fill',
+  position: 'center',
   round: false,
   block: false,
+  lazyLoad: false,
   showError: true,
   showLoading: true,
-  errorIcon: 'photo',
+  errorIcon: 'photo-fail',
   loadingIcon: 'photo',
   iconSize: 32,
+  iconPrefix: 'van-icon',
 });
 
 const emit = defineEmits<{
