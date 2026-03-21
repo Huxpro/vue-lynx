@@ -1,0 +1,130 @@
+import { PackageManagerTabs, Steps } from '@theme';
+
+# 快速开始
+
+欢迎使用 Vue Lynx！让我们创建一个 Vue Lynx 项目并开始开发。
+
+## 系统要求
+
+- [Node.js 18](https://nodejs.org/en) 或更高版本。
+  - 使用 TypeScript 作为配置时需要 Node.js 18.19。
+
+## 安装
+
+<Steps>
+
+### 创建新的 Vue Lynx 项目
+
+我们使用 [`create-vue-lynx`](https://npmjs.org/package/create-vue-lynx) 来搭建新项目：
+
+<PackageManagerTabs command="create vue-lynx@latest" />
+
+完成提示后，`create-vue-lynx` 会创建一个以你的项目名称命名的文件夹，其中包含一个入门应用。
+
+### 运行开发服务器
+
+1. 进入创建的项目目录：
+
+```bash
+cd <project-name>
+```
+
+2. 安装依赖：
+
+<PackageManagerTabs command="install" />
+
+3. 启动开发服务器：
+
+<PackageManagerTabs command="run dev" />
+
+你应该会看到类似这样的输出：
+
+```
+Rspeedy v0.13.5
+
+➜  Web         http://localhost:3000/main.web.bundle
+➜  Web Preview http://localhost:3000/__web_preview?casename=main.web.bundle
+➜  Lynx        http://localhost:3000/main.lynx.bundle
+```
+
+开发服务器会生成三个 URL：
+
+- **Web Preview** — 在浏览器中打开此链接可快速预览你的应用。
+- **Lynx** — 用于通过 Lynx Explorer 进行原生渲染的 bundle URL（见下一步）。
+- **Web** — 原始 Web bundle（适用于集成到 Web 容器中）。
+
+### 在 Web 上预览
+
+在浏览器中打开 **Web Preview** URL。你将看到应用在 Web 上渲染的实时预览，编辑代码时会自动更新。
+
+<Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.lynx.bundle" />
+
+#### 进行你的第一次修改
+
+在代码编辑器中打开 `src/App.vue` 并进行修改。你应该会看到 Web Preview 自动更新。
+
+### 在原生设备上运行
+
+要查看应用的原生渲染效果，请使用 **Lynx Explorer** — 一个用于在设备或模拟器上预览 Lynx bundle 的沙盒应用。扫描终端中显示的二维码，或复制 **Lynx** bundle URL 并粘贴到 Lynx Explorer 的"Enter Card URL"中。
+
+#### iOS 模拟器
+
+1. 从 [Mac App Store](https://apps.apple.com/us/app/xcode/id497799835) **安装 Xcode**。
+
+2. **下载 LynxExplorer**
+
+   对于 Apple Silicon (M1/M2/M3)，下载 [`LynxExplorer-arm64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-arm64.app.tar.gz)，然后解压：
+
+   ```bash
+   mkdir -p LynxExplorer-arm64.app/
+   tar -zxf LynxExplorer-arm64.app.tar.gz -C LynxExplorer-arm64.app/
+   ```
+
+   对于 Intel Mac，下载 [`LynxExplorer-x86_64.app.tar.gz`](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-x86_64.app.tar.gz)，然后解压：
+
+   ```bash
+   mkdir -p LynxExplorer-x86_64.app/
+   tar -zxf LynxExplorer-x86_64.app.tar.gz -C LynxExplorer-x86_64.app/
+   ```
+
+3. **安装到模拟器** — 打开 Xcode，选择 **Open Developer Tool** > **Simulator**，然后将 `.app` 文件夹拖入其中。
+
+#### Android
+
+从 [GitHub Releases](https://github.com/lynx-family/lynx/releases/latest/download/LynxExplorer-noasan-release.apk) 下载预构建的 APK 并安装到你的设备上。
+
+:::info 社区下载
+
+Lynx Explorer 也可在 [App Store](https://apps.apple.com/us/app/lynx-go-dev-explorer/id6743227790) 和 [Play Store](https://play.google.com/store/apps/details?id=com.funcs.io.lynx.go) 上获取，由社区贡献者发布。这些版本不由 Lynx 团队维护。
+
+:::
+
+:::details 从源码构建
+
+如果预构建的二进制文件不适用于你的环境，你可以从源码构建 Lynx Explorer：
+
+- [构建 iOS 版本](https://github.com/lynx-family/lynx/tree/develop/explorer/darwin/ios)
+- [构建 Android 版本](https://github.com/lynx-family/lynx/tree/develop/explorer/android)
+
+:::
+
+### 调试
+
+下载 [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases) 桌面应用。通过 USB 连接你的设备并开始调试。查看 [Lynx 调试指南](https://lynxjs.org/guide/devtool/panels) 了解更多信息。
+
+</Steps>
+
+## 部署到生产环境
+
+你创建的 Vue Lynx 项目是一个**前端**项目 — 它生成 JavaScript bundle，由支持 Lynx 的原生应用加载和渲染。Lynx Explorer 是一个用于开发的预构建原生应用，但在生产环境中你需要自己的原生应用。
+
+- **创建新的原生应用**（全新项目） — 使用 [Lynx CLI](https://github.com/lynx-community/cli)（社区）或 [Sparkling](https://tiktok.github.io/sparkling) 来搭建内置 Lynx 的原生应用项目（Xcode / Android Studio）。
+- **集成到现有应用**（混合开发） — 按照 [Lynx 集成指南](https://lynxjs.org/guide/start/integrate-with-existing-apps) 将 Lynx 视图嵌入到你现有的 iOS、Android 或 Web 应用中。
+
+## 下一步
+
+- [Vue 兼容性](/zh/guide/vue-compatibility) — 了解 Vue Lynx 与 Vue for Web 的不同之处
+- [主线程脚本](/zh/guide/main-thread-script) — 在主线程上运行性能关键的逻辑
+- [教程：商品画廊](/zh/guide/tutorial-gallery) — 构建一个带有交互功能的瀑布流画廊
+- [教程：商品详情](/zh/guide/tutorial-swiper) — 构建一个支持触摸滑动的图片轮播
+- [API 参考](/zh/guide/api/vue-lynx/) — 探索 vue-lynx API
