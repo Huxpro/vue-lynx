@@ -203,6 +203,8 @@ const containerHeight = computed(() => props.rows * rowHeight.value);
     overflow: 'hidden',
     backgroundColor: 'transparent',
     marginTop: top,
+    display: 'flex',
+    flexDirection: 'column',
   }">
     <slot />
     <view

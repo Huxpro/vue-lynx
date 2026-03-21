@@ -8,6 +8,19 @@
   - Gaps: placeholder prop (renders placeholder element for fixed positioning)
 -->
 <script setup lang="ts">
+/**
+ * VantSubmitBar (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/submit-bar/SubmitBar.tsx
+ *
+ * Feature parity: 13/14 props, 1/1 events, 4/4 slots.
+ * Missing: placeholder prop (Vant renders a placeholder div for fixed-position bars).
+ *
+ * Lynx differences:
+ *   - Custom button view instead of Vant's Button component
+ *   - Tip icon shown as text (Vant uses Icon component)
+ *   - Price split into integer + decimal with different font sizes
+ *   - No fixed positioning (Lynx handles layout differently)
+ */
 import { computed } from 'vue-lynx';
 
 export interface SubmitBarProps {

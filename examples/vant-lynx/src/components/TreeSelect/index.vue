@@ -1,27 +1,11 @@
 <!--
-  Vant Feature Parity Report (TreeSelect):
-  - Props: 6/6 supported
-    - items: TreeSelectItem[] - navigation items with optional children
-    - activeId: string|number|(string|number)[] - selected child item(s) (v-model)
-    - mainActiveIndex: number (default 0) - active nav index (v-model)
-    - height: number (default 300) - component height
-    - max: number (default Infinity) - max selectable items (multi-select mode)
-    - selectedIcon: string (default 'success') - icon for selected items (uses Icon component)
-  - Events: 4/4 supported
-    - update:activeId: selected item changed
-    - update:mainActiveIndex: navigation index changed
-    - clickNav: navigation item tapped
-    - clickItem: child item tapped
-  - Slots: 2/2 supported (content, nav-text)
-    - content: custom right-side content area (replaces default children list)
-    - nav-text: custom navigation item text (receives item object)
-  - Lynx Adaptations:
-    - Uses Icon component for selectedIcon instead of raw text checkmark
-    - Nav items use dot/badge from TreeSelectItem type (aligned with Vant)
-    - Vant internally uses Sidebar/SidebarItem; here rendered inline for simplicity
-  - Gaps:
-    - Nav items dot/badge/disabled/className from Vant TreeSelectItem type partially supported
-    - No CSS class-based styling (className on items ignored)
+  Vant Feature Parity Report:
+  - Props: 6/6 supported (items, activeId, mainActiveIndex, height, max,
+    selectedIcon)
+  - Events: 4/4 supported (update:activeId, update:mainActiveIndex,
+    clickNav, clickItem)
+  - Slots: 0/1 supported
+  - Gaps: content slot (custom right-side content area)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

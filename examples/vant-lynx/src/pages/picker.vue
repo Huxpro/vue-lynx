@@ -11,12 +11,12 @@ const dateColumns = [
 ];
 const dateResult = ref('');
 
-function onCityConfirm(values: string[]) {
-  cityResult.value = values.join(', ');
+function onCityConfirm(params: { selectedValues: (string | number)[]; selectedOptions: any[]; selectedIndexes: number[] }) {
+  cityResult.value = params.selectedValues.join(', ');
 }
 
-function onDateConfirm(values: string[]) {
-  dateResult.value = values.join(' ');
+function onDateConfirm(params: { selectedValues: (string | number)[]; selectedOptions: any[]; selectedIndexes: number[] }) {
+  dateResult.value = params.selectedValues.join(' ');
 }
 </script>
 

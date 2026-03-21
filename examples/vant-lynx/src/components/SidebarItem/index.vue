@@ -1,25 +1,10 @@
 <!--
-  Vant Feature Parity Report (SidebarItem):
-  - Props: 5/6 supported (title, dot, badge, disabled, badgeProps, index)
-    - title: string - item title text
-    - dot: boolean - show red dot indicator
-    - badge: string|number - badge content
-    - disabled: boolean - disable interaction
-    - badgeProps: Partial<BadgeProps> - extra badge config
-    - index: number - item index (Vant auto-detects via useParent; here must be passed manually)
-    - Missing: route-related props (to, url, replace) - no router in Lynx
+  Vant Feature Parity Report:
+  - Props: 4/6 supported (title, dot, badge, disabled)
   - Events: 1/1 supported (click)
-  - Slots: 2/2 supported (default, title)
-    - default: extra content after title
-    - title: custom title content (replaces title prop text)
-  - Lynx Adaptations:
-    - Uses Badge component for dot/badge display (aligned with Vant source)
-    - Active bar indicator via absolute-positioned view
-    - No router navigation
-  - Gaps:
-    - No route navigation (to, url, replace props)
-    - index must be manually provided (no auto-indexing)
-    - No role/tabindex/aria attributes (Lynx limitation)
+  - Slots: 1/1 supported (default)
+  - Gaps: badgeProps prop, route props (to, url, replace);
+    index is manually passed instead of auto-detected via useParent
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';

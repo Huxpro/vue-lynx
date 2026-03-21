@@ -1,10 +1,12 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 9/11 supported (modelValue, mode, pageCount, totalItems,
-    itemsPerPage, showPageSize, forceEllipses, prevText, nextText)
+  Vant Feature Parity Report (Pagination):
+  - Props: 11/11 supported (modelValue, mode, pageCount, totalItems,
+    itemsPerPage, showPageSize, forceEllipses, prevText, nextText,
+    showPrevButton, showNextButton)
   - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 0/2 supported
-  - Gaps: showPrevButton, showNextButton props; page slot, pageDesc slot
+  - Slots: 3/4 supported (prev-text, next-text, page)
+  - Gaps: pageDesc slot (simple mode custom description) not implemented;
+    no i18n for default prev/next text
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
