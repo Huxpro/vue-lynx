@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "module": "node18",
+    "moduleResolution": "node16",
+
     "strict": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
@@ -7,9 +10,5 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "references": [
-    { "path": "./tsconfig.node.json" },
-    { "path": "./src" }
-  ],
-  "files": []
+  "exclude": ["dist/"]
 }
