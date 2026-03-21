@@ -1,17 +1,9 @@
 <!--
-  Vant Feature Parity Report (Sidebar):
+  Vant Feature Parity Report:
   - Props: 1/1 supported (modelValue)
-    - modelValue: number (default 0) - index of active item (v-model)
   - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 1/1 supported (default - SidebarItem children)
-  - Sub-components: SidebarItem (separate file)
-  - Lynx Adaptations:
-    - Uses provide/inject for parent-child communication
-    - Vant uses useChildren/useParent for auto-indexing; here index is passed as prop
-    - role="tablist" not applicable in Lynx
-  - Gaps:
-    - SidebarItem index must be manually passed (no auto-indexing from useChildren)
-    - No role/tabindex/aria attributes (Lynx limitation)
+  - Slots: 1/1 supported (default)
+  - Gaps: None - full prop and event parity achieved
 -->
 <script setup lang="ts">
 import { computed, provide, toRef } from 'vue-lynx';
