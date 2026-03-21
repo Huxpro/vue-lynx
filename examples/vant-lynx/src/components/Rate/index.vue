@@ -1,15 +1,14 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 13/14 supported (modelValue, count, size, gutter, color, voidColor, disabledColor,
-    icon, voidIcon, allowHalf, readonly, disabled, touchable, clearable)
-    Missing: iconPrefix
+  - Props: 14/14 supported (modelValue, count, size, gutter, color, voidColor, disabledColor,
+    icon, voidIcon, allowHalf, readonly, disabled, touchable, clearable, iconPrefix)
   - Events: 2/2 supported (update:modelValue, change)
   - Slots: 0/0 (Vant Rate has no slots)
-  - Gaps: iconPrefix not supported (uses Unicode star characters instead of Vant Icon font);
-    touch-drag scoring is approximate (no DOM rect measurement in Lynx)
+  - Notes: When iconPrefix is set, uses Icon component; otherwise uses Unicode characters
 -->
 <script setup lang="ts">
 import { ref, computed } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface RateProps {
   modelValue?: number;
@@ -26,6 +25,7 @@ export interface RateProps {
   disabled?: boolean;
   touchable?: boolean;
   clearable?: boolean;
+  iconPrefix?: string;
 }
 
 const props = withDefaults(defineProps<RateProps>(), {
@@ -253,7 +253,16 @@ function getHalfTextStyle(isActive: boolean) {
       @tap="onSelectFull(star.index)"
     >
       <!-- Base star (full icon for full/half, void icon for void) -->
+      <template v-if="iconPrefix">
+        <Icon
+          :name="star.status === 'void' ? voidIcon : (star.status === 'full' ? icon : voidIcon)"
+          :class-prefix="iconPrefix"
+          :size="size"
+          :color="getStarColor(star.status)"
+        />
+      </template>
       <text
+        v-else
         :style="getStarTextStyle(star.status)"
       >{{ star.status === 'void' ? voidIcon : (star.status === 'full' ? icon : voidIcon) }}</text>
 
@@ -262,7 +271,16 @@ function getHalfTextStyle(isActive: boolean) {
         v-if="allowHalf && star.status === 'half'"
         :style="getHalfOverlayStyle(star)"
       >
+        <template v-if="iconPrefix">
+          <Icon
+            :name="icon"
+            :class-prefix="iconPrefix"
+            :size="size"
+            :color="getHalfStarColor(true)"
+          />
+        </template>
         <text
+          v-else
           :style="getHalfTextStyle(true)"
         >{{ icon }}</text>
       </view>

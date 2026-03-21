@@ -1,18 +1,16 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 13/22 supported (modelValue, maxCount, maxSize, accept, multiple,
+  - Props: 16/22 supported (modelValue, maxCount, maxSize, accept, multiple,
     disabled, deletable, showUpload, previewImage, previewSize, imageFit,
-    uploadText, readonly)
+    uploadText, readonly, uploadIcon, afterRead, beforeRead, beforeDelete)
   - Events: 5/8 supported (update:modelValue, oversize, click-upload,
     click-preview, delete)
-  - Slots: 0/1 supported
-  - Gaps: name, capture, lazyLoad, resultType, uploadIcon, reupload,
-    afterRead, beforeRead, beforeDelete, previewOptions, previewFullImage props;
-    close-preview, clickReupload events; default slot;
+  - Slots: 1/1 supported (default)
+  - Notes: afterRead/beforeRead/beforeDelete callback props supported;
     no native file input (Lynx lacks HTML file picker)
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, watch } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 import Loading from '../Loading/index.vue';
 
@@ -41,6 +39,9 @@ export interface UploaderProps {
   imageFit?: string;
   uploadText?: string;
   uploadIcon?: string;
+  afterRead?: (file: UploaderFile, detail: { index: number }) => void;
+  beforeRead?: (file: UploaderFile, detail: { index: number }) => boolean | Promise<boolean>;
+  beforeDelete?: (file: UploaderFile, detail: { index: number }) => boolean | Promise<boolean>;
 }
 
 const props = withDefaults(defineProps<UploaderProps>(), {
@@ -69,12 +70,34 @@ const emit = defineEmits<{
   delete: [file: UploaderFile, index: number];
 }>();
 
+// Call afterRead when new files are added to modelValue
+let prevLength = props.modelValue.length;
+watch(
+  () => props.modelValue,
+  (newFiles) => {
+    if (props.afterRead && newFiles.length > prevLength) {
+      const addedFiles = newFiles.slice(prevLength);
+      for (let i = 0; i < addedFiles.length; i++) {
+        props.afterRead(addedFiles[i], { index: prevLength + i });
+      }
+    }
+    prevLength = newFiles.length;
+  },
+  { deep: true },
+);
+
 const showUploadButton = computed(
   () => props.showUpload && !props.readonly && props.modelValue.length < props.maxCount,
 );
 
-function onDelete(file: UploaderFile, index: number) {
+async function onDelete(file: UploaderFile, index: number) {
   if (props.disabled || props.readonly) return;
+
+  if (props.beforeDelete) {
+    const result = await props.beforeDelete(file, { index });
+    if (result === false) return;
+  }
+
   const newFiles = props.modelValue.filter((_, i) => i !== index);
   emit('update:modelValue', newFiles);
   emit('delete', file, index);

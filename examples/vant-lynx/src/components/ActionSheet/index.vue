@@ -1,20 +1,17 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 6/12 supported (show, actions, title, description, cancelText, closeOnClickAction;
-    missing: closeable, closeIcon, round [default], safeAreaInsetBottom, closeOnClickOverlay, beforeClose)
+  - Props: 9/12 supported (show, actions, title, description, cancelText, closeOnClickAction,
+    closeable, closeIcon, safeAreaInsetBottom;
+    missing: round [delegated to Popup], closeOnClickOverlay, beforeClose)
   - Events: 4/5 (update:show, select, cancel, close; missing: opened/closed)
   - Slots: 3/5 (default [via actions], cancel, description; missing: action)
-  - Sub-components: Popup ✅, Loading ✅
-  - Gaps:
-    - No closeable/closeIcon
-    - No safeAreaInsetBottom
-    - No beforeClose interceptor
-    - No action subname support
+  - Sub-components: Popup ✅, Loading ✅, Icon ✅
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 import Popup from '../Popup/index.vue';
 import Loading from '../Loading/index.vue';
+import Icon from '../Icon/index.vue';
 
 export interface ActionSheetAction {
   name: string;
@@ -31,6 +28,9 @@ export interface ActionSheetProps {
   description?: string;
   cancelText?: string;
   closeOnClickAction?: boolean;
+  closeable?: boolean;
+  closeIcon?: string;
+  safeAreaInsetBottom?: boolean;
 }
 
 const props = withDefaults(defineProps<ActionSheetProps>(), {
@@ -40,6 +40,9 @@ const props = withDefaults(defineProps<ActionSheetProps>(), {
   description: '',
   cancelText: '',
   closeOnClickAction: true,
+  closeable: false,
+  closeIcon: 'cross',
+  safeAreaInsetBottom: false,
 });
 
 const emit = defineEmits<{
@@ -100,6 +103,7 @@ const hasHeader = computed(() => !!props.title || !!props.description);
         borderBottomWidth: 1,
         borderBottomStyle: 'solid',
         borderBottomColor: '#ebedf0',
+        position: 'relative',
       }"
     >
       <text
@@ -119,6 +123,19 @@ const hasHeader = computed(() => !!props.title || !!props.description);
           textAlign: 'center',
         }"
       >{{ description }}</text>
+      <!-- Close icon -->
+      <view
+        v-if="closeable"
+        :style="{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          padding: 4,
+        }"
+        @tap="onClose"
+      >
+        <Icon :name="closeIcon" :size="18" color="#c8c9cc" />
+      </view>
     </view>
 
     <!-- Action items -->
@@ -177,5 +194,8 @@ const hasHeader = computed(() => !!props.title || !!props.description);
         <text :style="{ fontSize: 16, color: '#323233' }">{{ cancelText }}</text>
       </view>
     </view>
+
+    <!-- Safe area bottom padding -->
+    <view v-if="safeAreaInsetBottom" :style="{ height: 34, backgroundColor: '#fff' }" />
   </Popup>
 </template>

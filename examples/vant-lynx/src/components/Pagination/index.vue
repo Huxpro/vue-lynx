@@ -3,8 +3,7 @@
   - Props: 11/11 (modelValue, mode, pageCount, totalItems, itemsPerPage,
     showPageSize, forceEllipses, prevText, nextText, showPrevButton, showNextButton)
   - Events: 2/2 (update:modelValue, change)
-  - Slots: 3/4 (prev-text, next-text, page; missing: pageDesc)
-  - Gaps: pageDesc slot not implemented; no i18n for default text
+  - Slots: 4/4 (prev-text, next-text, page, pageDesc)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -196,7 +195,9 @@ const simpleTextStyle = {
 
     <!-- Simple mode: page indicator -->
     <template v-if="mode === 'simple'">
-      <text :style="simpleTextStyle">{{ modelValue }}/{{ totalPages }}</text>
+      <slot name="pageDesc" :current="modelValue" :total="totalPages">
+        <text :style="simpleTextStyle">{{ modelValue }}/{{ totalPages }}</text>
+      </slot>
     </template>
 
     <!-- Multi mode: page numbers -->
