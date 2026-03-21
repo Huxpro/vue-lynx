@@ -1,20 +1,13 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 8/18 supported (show, title, message, showConfirmButton, showCancelButton,
-    confirmButtonText, cancelButtonText, overlay)
+  - Props: 10/18 supported (show, title, message, showConfirmButton, showCancelButton,
+    confirmButtonText, cancelButtonText, confirmButtonColor, cancelButtonColor, overlay,
+    closeOnClickOverlay, duration)
   - Events: 4/4 (update:show, confirm, cancel, open/close)
   - Slots: 3/4 (default [message], title, footer; missing: none critical)
+  - Exposed methods: open(), close()
   - Sub-components: Overlay
   - Animation: Zoom in/out (scale 0.9→1 + opacity) using main-thread element.animate()
-  - Gaps:
-    - No width prop
-    - No theme prop (round-button)
-    - No messageAlign prop
-    - No closeOnPopstate prop
-    - No allowHtml prop
-    - No beforeClose interceptor
-    - No confirmButtonColor/cancelButtonColor props
-    - No programmatic API (showDialog/showConfirmDialog)
 -->
 <script setup lang="ts">
 import { ref, watch } from 'vue-lynx';
@@ -96,6 +89,16 @@ function onClickOverlay() {
     emit('update:show', false);
   }
 }
+
+function open() {
+  emit('update:show', true);
+}
+
+function close() {
+  emit('update:show', false);
+}
+
+defineExpose({ open, close });
 </script>
 
 <template>

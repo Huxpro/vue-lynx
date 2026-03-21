@@ -1,22 +1,29 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 18/35+ supported (modelValue, type, label, placeholder, disabled, readonly,
-    clearable, maxlength, error, required, border, leftIcon, rightIcon, errorMessage,
-    inputAlign, labelWidth, labelAlign, colon, showWordLimit, clearIcon)
+  - Props: 19/35+ supported (modelValue, type, label, placeholder, disabled, readonly,
+    clearable, maxlength, error, required (supports 'auto'), border, leftIcon, rightIcon,
+    errorMessage, inputAlign, labelWidth, labelAlign, colon, showWordLimit, clearIcon, rules)
   - Events: 7/10 (update:modelValue, input, change, focus, blur, clear, click-input;
     missing: clickLeftIcon, clickRightIcon, keypress)
   - Slots: 6/10 (label, input, left-icon, right-icon, button, extra;
     missing: error-message, word-limit)
   - Gaps:
-    - No form validation (rules, validate methods)
     - No autosize textarea
     - No formatter/formatTrigger
     - No clearTrigger (always shows when value present)
     - No autocomplete/inputmode/enterkeyhint
 -->
 <script setup lang="ts">
-import { computed, ref } from 'vue-lynx';
+import { computed, ref, inject } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+
+interface FormRule {
+  required?: boolean;
+  message?: string;
+  validator?: (value: any, rule: FormRule) => boolean | string | Promise<boolean | string>;
+  pattern?: RegExp;
+  trigger?: 'onBlur' | 'onChange' | 'onSubmit';
+}
 
 export interface FieldProps {
   modelValue?: string;
@@ -30,7 +37,8 @@ export interface FieldProps {
   maxlength?: number;
   error?: boolean;
   errorMessage?: string;
-  required?: boolean;
+  required?: boolean | 'auto';
+  rules?: FormRule[];
   border?: boolean;
   leftIcon?: string;
   rightIcon?: string;
@@ -67,6 +75,17 @@ const emit = defineEmits<{
 }>();
 
 const focused = ref(false);
+
+// Auto-detect required from rules
+const isRequired = computed(() => {
+  if (props.required === true) return true;
+  if (props.required === false) return false;
+  // 'auto' mode: check if any rule has required: true
+  if (props.required === 'auto' && props.rules) {
+    return props.rules.some((rule) => rule.required);
+  }
+  return false;
+});
 
 const isTopLabel = computed(() => props.labelAlign === 'top');
 
@@ -142,11 +161,11 @@ function onClickInput(event: any) {
 <template>
   <view :style="containerStyle">
     <!-- Label row -->
-    <view v-if="label || required || $slots.label || $slots['left-icon'] || leftIcon" :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: isTopLabel ? undefined : resolvedLabelWidth, marginRight: isTopLabel ? 0 : 12 }">
+    <view v-if="label || isRequired || $slots.label || $slots['left-icon'] || leftIcon" :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: isTopLabel ? undefined : resolvedLabelWidth, marginRight: isTopLabel ? 0 : 12 }">
       <slot name="left-icon">
         <Icon v-if="leftIcon" :name="leftIcon" :size="16" color="#323233" :style="{ marginRight: 4 }" />
       </slot>
-      <text v-if="required" :style="{ color: '#ee0a24', fontSize: 14, marginRight: 2 }">*</text>
+      <text v-if="isRequired" :style="{ color: '#ee0a24', fontSize: 14, marginRight: 2 }">*</text>
       <slot name="label">
         <text v-if="label" :style="labelStyle">{{ label }}{{ colon ? ':' : '' }}</text>
       </slot>

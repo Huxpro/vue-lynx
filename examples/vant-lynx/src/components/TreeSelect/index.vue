@@ -3,11 +3,12 @@
   - Props: 6/6 (items, activeId, mainActiveIndex, height, max, selectedIcon)
   - Events: 4/4 (update:activeId, update:mainActiveIndex, clickNav, clickItem)
   - Slots: 2/2 (content, nav-text)
-  - Gaps: nav item dot/badge rendering; className on items not supported
+  - Badge/dot rendering on nav items: Supported
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import Badge from '../Badge/index.vue';
 
 export interface TreeSelectChild {
   text: string;
@@ -176,7 +177,10 @@ const emptyStyle = {
         @tap="onNavTap(index)"
       >
         <slot name="nav-text" :item="item">
-          <text :style="getNavTextStyle(index)">{{ item.text }}</text>
+          <Badge v-if="item.dot || item.badge != null" :dot="item.dot" :content="item.badge">
+            <text :style="getNavTextStyle(index)">{{ item.text }}</text>
+          </Badge>
+          <text v-else :style="getNavTextStyle(index)">{{ item.text }}</text>
         </slot>
       </view>
     </view>

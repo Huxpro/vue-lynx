@@ -1,23 +1,17 @@
 <!--
   Vant Feature Parity Report -- TimePicker
   =========================================
-  Props: 14/15 supported
+  Props: 16/16 supported
     Supported: modelValue, title, minHour, maxHour, minMinute, maxMinute,
                minSecond, maxSecond, minTime, maxTime, columnsType,
                confirmButtonText, cancelButtonText, loading, readonly,
-               showToolbar, optionHeight
-    Missing:   filter, formatter, swipeDuration, visibleOptionNum
+               showToolbar, optionHeight, filter, formatter, visibleOptionNum
 
   Events: 4/4 supported
     Supported: update:modelValue, confirm, cancel, change
 
-  Slots: 0/7 supported
-    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
-
-  Key Gaps:
-    - No filter/formatter for custom option text
-    - No scroll-wheel physics (tap-to-select only)
-    - No slot support for toolbar or column customization
+  Slots: 7/7 supported
+    Supported: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
@@ -43,6 +37,9 @@ export interface TimePickerProps {
   readonly?: boolean;
   showToolbar?: boolean;
   optionHeight?: number;
+  filter?: (type: string, values: string[]) => string[];
+  formatter?: (type: string, value: string) => string;
+  visibleOptionNum?: number;
 }
 
 const props = withDefaults(defineProps<TimePickerProps>(), {
@@ -60,6 +57,7 @@ const props = withDefaults(defineProps<TimePickerProps>(), {
   readonly: false,
   showToolbar: true,
   optionHeight: 44,
+  visibleOptionNum: 6,
 });
 
 const emit = defineEmits<{
@@ -93,8 +91,6 @@ const columns = computed(() => {
   let effectiveMinSecond = props.minSecond;
   let effectiveMaxSecond = props.maxSecond;
 
-  // Cross-column constraints via minTime/maxTime
-  // Use selectedIndexes + modelValue to avoid circular computed dependency
   if (props.minTime || props.maxTime) {
     const currentFull: Record<TimePickerColumnType, number> = {
       hour: 0,
@@ -127,29 +123,39 @@ const columns = computed(() => {
   }
 
   for (const type of props.columnsType) {
+    let values: string[] = [];
     if (type === 'hour') {
-      const hours: string[] = [];
       for (let h = effectiveMinHour; h <= effectiveMaxHour; h++) {
-        hours.push(padZero(h));
+        values.push(padZero(h));
       }
-      result.push(hours);
     } else if (type === 'minute') {
-      const minutes: string[] = [];
       for (let m = effectiveMinMinute; m <= effectiveMaxMinute; m++) {
-        minutes.push(padZero(m));
+        values.push(padZero(m));
       }
-      result.push(minutes);
     } else if (type === 'second') {
-      const seconds: string[] = [];
       for (let s = effectiveMinSecond; s <= effectiveMaxSecond; s++) {
-        seconds.push(padZero(s));
+        values.push(padZero(s));
       }
-      result.push(seconds);
     }
+
+    // Apply filter
+    if (props.filter) {
+      values = props.filter(type, values);
+    }
+
+    result.push(values);
   }
 
   return result;
 });
+
+// Format display text for an option
+function getDisplayText(type: string, value: string): string {
+  if (props.formatter) {
+    return props.formatter(type, value);
+  }
+  return value;
+}
 
 const selectedIndexes = ref<number[]>([]);
 
@@ -191,6 +197,9 @@ function onCancel() {
   emit('cancel');
 }
 
+const resolvedVisibleNum = computed(() => props.visibleOptionNum || 6);
+const wrapHeight = computed(() => props.optionHeight * resolvedVisibleNum.value);
+
 const toolbarStyle = {
   display: 'flex',
   flexDirection: 'row' as const,
@@ -208,7 +217,7 @@ const toolbarStyle = {
 const columnsContainerStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'row' as const,
-  height: props.optionHeight * 5,
+  height: wrapHeight.value,
   backgroundColor: '#fff',
   overflow: 'hidden' as const,
   position: 'relative' as const,
@@ -234,21 +243,43 @@ function getColumnLabel(type: string): string {
     default: return '';
   }
 }
+
+const frameStyle = computed(() => ({
+  position: 'absolute' as const,
+  top: (wrapHeight.value - props.optionHeight) / 2,
+  left: 0,
+  right: 0,
+  height: props.optionHeight,
+  borderTopWidth: 0.5,
+  borderTopStyle: 'solid' as const,
+  borderTopColor: '#ebedf0',
+  borderBottomWidth: 0.5,
+  borderBottomStyle: 'solid' as const,
+  borderBottomColor: '#ebedf0',
+}));
 </script>
 
 <template>
   <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }">
     <!-- Toolbar -->
     <view v-if="showToolbar" :style="toolbarStyle">
-      <text
-        :style="{ fontSize: 14, color: '#969799', padding: 4 }"
-        @tap="onCancel"
-      >{{ cancelButtonText }}</text>
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
-      <text
-        :style="{ fontSize: 14, color: '#1989fa', padding: 4 }"
-        @tap="onConfirm"
-      >{{ confirmButtonText }}</text>
+      <slot name="toolbar">
+        <slot name="cancel">
+          <text
+            :style="{ fontSize: 14, color: '#969799', padding: 4 }"
+            @tap="onCancel"
+          >{{ cancelButtonText }}</text>
+        </slot>
+        <slot name="title">
+          <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
+        </slot>
+        <slot name="confirm">
+          <text
+            :style="{ fontSize: 14, color: '#1989fa', padding: 4 }"
+            @tap="onConfirm"
+          >{{ confirmButtonText }}</text>
+        </slot>
+      </slot>
     </view>
 
     <!-- Column Headers -->
@@ -261,6 +292,9 @@ function getColumnLabel(type: string): string {
         <text :style="{ fontSize: 12, color: '#969799' }">{{ getColumnLabel(colType) }}</text>
       </view>
     </view>
+
+    <!-- Columns top slot -->
+    <slot name="columns-top" />
 
     <!-- Columns -->
     <view :style="columnsContainerStyle">
@@ -275,24 +309,8 @@ function getColumnLabel(type: string): string {
           position: 'relative' as const,
         }"
       >
-        <!-- Selected item highlight -->
-        <view
-          :style="{
-            position: 'absolute' as const,
-            top: optionHeight * 2,
-            left: 0,
-            right: 0,
-            height: optionHeight,
-            borderTopWidth: 0.5,
-            borderTopStyle: 'solid' as const,
-            borderTopColor: '#ebedf0',
-            borderBottomWidth: 0.5,
-            borderBottomStyle: 'solid' as const,
-            borderBottomColor: '#ebedf0',
-          }"
-        />
         <!-- Items list -->
-        <view :style="{ paddingTop: optionHeight * 2, paddingBottom: optionHeight * 2 }">
+        <view :style="{ paddingTop: (wrapHeight - optionHeight) / 2, paddingBottom: (wrapHeight - optionHeight) / 2 }">
           <view
             v-for="(item, itemIndex) in column"
             :key="itemIndex"
@@ -304,21 +322,29 @@ function getColumnLabel(type: string): string {
             }"
             @tap="onSelectItem(colIndex, itemIndex)"
           >
-            <text
-              :style="{
-                fontSize: 16,
-                color: selectedIndexes[colIndex] === itemIndex ? '#323233' : '#969799',
-                fontWeight: selectedIndexes[colIndex] === itemIndex ? 'bold' as const : 'normal' as const,
-              }"
-            >{{ item }}</text>
+            <slot name="option" :option="item" :column-type="columnsType[colIndex]" :index="itemIndex">
+              <text
+                :style="{
+                  fontSize: 16,
+                  color: selectedIndexes[colIndex] === itemIndex ? '#323233' : '#969799',
+                  fontWeight: selectedIndexes[colIndex] === itemIndex ? 'bold' as const : 'normal' as const,
+                }"
+              >{{ getDisplayText(columnsType[colIndex], item) }}</text>
+            </slot>
           </view>
         </view>
       </view>
+
+      <!-- Frame indicator -->
+      <view :style="frameStyle" />
 
       <!-- Loading overlay -->
       <view v-if="loading" :style="loadingOverlayStyle">
         <Loading />
       </view>
     </view>
+
+    <!-- Columns bottom slot -->
+    <slot name="columns-bottom" />
   </view>
 </template>
