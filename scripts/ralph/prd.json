@@ -381,7 +381,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "progress",
@@ -398,7 +398,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "circle",
@@ -416,7 +416,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "count-down",
@@ -435,7 +435,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "empty",
@@ -453,7 +453,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "notice-bar",
@@ -472,7 +472,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nav-bar",
@@ -491,7 +491,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "tabbar",
@@ -510,7 +510,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "tab",
@@ -530,7 +530,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "grid",
@@ -549,7 +549,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "collapse",
@@ -569,7 +569,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "steps",
@@ -587,7 +587,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "toast",
