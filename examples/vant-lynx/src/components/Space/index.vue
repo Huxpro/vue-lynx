@@ -1,19 +1,19 @@
 <!--
   Vant Feature Parity Report:
   - Props: 5/5 supported (direction, size, align, wrap, fill)
-  - Events: 0/0
+  - Events: 0/0 (none defined)
   - Slots: 1/1 (default)
-  - Gaps:
-    - Array size [horizontal, vertical] not supported (single value only)
+  - Lynx Adaptations:
     - Uses margin-based spacing instead of CSS gap for Lynx compatibility
-    - fill prop sets items to stretch
+    - Size array [horizontal, vertical] supported via margin-right/margin-bottom
+    - fill maps to flex: 1 on items
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 
 export interface SpaceProps {
   direction?: 'horizontal' | 'vertical';
-  size?: string | number;
+  size?: string | number | (string | number)[];
   align?: 'start' | 'end' | 'center' | 'baseline';
   wrap?: boolean;
   fill?: boolean;
@@ -26,7 +26,20 @@ const props = withDefaults(defineProps<SpaceProps>(), {
   fill: false,
 });
 
-const gapValue = computed(() => {
+const gapH = computed(() => {
+  if (Array.isArray(props.size)) {
+    const v = props.size[0];
+    return typeof v === 'string' ? parseInt(v, 10) || 8 : v;
+  }
+  if (typeof props.size === 'string') return parseInt(props.size, 10) || 8;
+  return props.size;
+});
+
+const gapV = computed(() => {
+  if (Array.isArray(props.size)) {
+    const v = props.size[1] ?? props.size[0];
+    return typeof v === 'string' ? parseInt(v, 10) || 8 : v;
+  }
   if (typeof props.size === 'string') return parseInt(props.size, 10) || 8;
   return props.size;
 });
@@ -43,6 +56,7 @@ const containerStyle = computed(() => ({
   flexDirection: props.direction === 'vertical' ? ('column' as const) : ('row' as const),
   alignItems: props.align ? alignMap[props.align] : (props.direction === 'horizontal' ? 'center' : undefined),
   flexWrap: props.wrap ? ('wrap' as const) : ('nowrap' as const),
+  width: props.fill ? '100%' : undefined,
 }));
 
 const itemStyle = computed(() => {
@@ -51,12 +65,12 @@ const itemStyle = computed(() => {
     style.flex = 1;
   }
   if (props.direction === 'horizontal') {
-    style.marginRight = gapValue.value;
+    style.marginRight = gapH.value;
   } else {
-    style.marginBottom = gapValue.value;
+    style.marginBottom = gapV.value;
   }
   if (props.wrap) {
-    style.marginBottom = gapValue.value;
+    style.marginBottom = gapV.value;
   }
   return style;
 });
