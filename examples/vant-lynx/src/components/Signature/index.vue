@@ -1,10 +1,11 @@
 <!--
   Vant Feature Parity Report:
-  - Component: Signature
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 6/7 supported (type, penColor, lineWidth, backgroundColor,
+    clearButtonText, confirmButtonText)
+  - Events: 5/5 supported (submit, clear, start, end, signing)
+  - Slots: 0/1 supported
+  - Gaps: tips prop, tips slot; no real canvas drawing (Lynx lacks
+    HTML Canvas; uses dot-based visual approximation)
 -->
 <script setup lang="ts">
 import { ref, computed } from 'vue-lynx';

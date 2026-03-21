@@ -21,7 +21,7 @@
       equivalent for synchronous measurement; leftWidth/rightWidth must be provided as props)
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed } from 'vue-lynx';
 
 export interface SwipeCellProps {
   name?: string | number;

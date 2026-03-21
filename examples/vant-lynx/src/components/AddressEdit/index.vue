@@ -1,58 +1,13 @@
 <!--
   Vant Feature Parity Report:
-  - Component: AddressEdit
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
--->
-<!--
-  @component VantAddressEdit (Lynx port)
-  @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-edit/AddressEdit.tsx
-
-  === Feature Parity with Vant ===
-  Props (Vant -> Lynx):
-    [x] addressInfo          - Partial<AddressEditInfo>
-    [x] areaList             - AreaList (province/city/county)
-    [x] showArea             - boolean (default true)
-    [x] showPostal           - boolean (default false, Vant: showPostal)
-    [x] showDelete           - boolean
-    [x] showSetDefault       - boolean
-    [x] showSearchResult     - boolean (accepted but search UI not rendered)
-    [x] saveButtonText       - string
-    [x] deleteButtonText     - string
-    [x] telValidator         - (tel: string) => boolean
-    [x] areaColumnsPlaceholder - string[]
-    [ ] isSaving             - MISSING: loading state for save button
-    [ ] isDeleting           - MISSING: loading state for delete button
-    [ ] validator            - MISSING: custom field-level validator (key, value) => string
-    [ ] showDetail           - MISSING: controls detail field visibility (default true)
-    [ ] disableArea          - MISSING: disables area picker interaction
-    [ ] searchResult         - MISSING: AddressEditSearchItem[] for search results
-    [ ] telMaxlength         - MISSING: max length for tel field
-    [ ] detailRows           - MISSING: textarea rows for detail (default 1)
-    [ ] detailMaxlength      - MISSING: max length for detail (default 200)
-    [ ] areaPlaceholder      - MISSING: placeholder for area field
-
-  Events (Vant -> Lynx):
-    [x] save                 - (info: AddressInfo) => void
-    [x] delete               - (info: AddressInfo) => void
-    [x] changeDetail         - (value: string) => void
-    [x] changeArea           - (values: string[]) => void
-    [x] clickArea            - () => void
-    [ ] focus                - MISSING: field focus event
-    [ ] change               - MISSING: any field change event
-    [ ] selectSearch         - MISSING: search result selection
-    [ ] changeDefault        - MISSING: default switch toggle event
-
-  Slots (Vant -> Lynx):
-    [ ] default              - MISSING: custom fields after postal code
-
-  Lynx-specific notes:
-    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
-    - No <form> element; validation is manual
-    - Area picker is delegated to parent via clickArea event (no built-in Popup)
-    - Switch toggle is a custom view (no native Switch component used)
+  - Props: 17/20 supported (addressInfo, areaList, showArea, showPostal, showDelete,
+    showSetDefault, showSearchResult, saveButtonText, deleteButtonText, telValidator,
+    areaColumnsPlaceholder, isSaving, isDeleting, showDetail, disableArea, telMaxlength,
+    detailMaxlength)
+  - Events: 6/10 supported (save, delete, changeDetail, changeArea, clickArea, changeDefault)
+  - Slots: 0/1 supported
+  - Gaps: validator (custom field-level), searchResult array, detailRows,
+    areaPlaceholder, focus/change/selectSearch events, default slot
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';

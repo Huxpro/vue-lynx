@@ -1,10 +1,11 @@
 <!--
   Vant Feature Parity Report:
-  - Component: SubmitBar
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 13/14 supported (price, decimalLength, label, suffixLabel, textAlign,
+    buttonText, buttonType, buttonColor, tip, tipIcon, currency, disabled, loading,
+    safeAreaInsetBottom)
+  - Events: 1/1 supported (submit)
+  - Slots: 4/4 supported (default, top, tip, button)
+  - Gaps: placeholder prop (renders placeholder element for fixed positioning)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

@@ -1,10 +1,42 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: Card
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  @component VantCard (Lynx port)
+  @see https://github.com/youzan/vant/blob/main/packages/vant/src/card/Card.tsx
+
+  === Feature Parity with Vant ===
+  Props (Vant -> Lynx):
+    [x] tag                  - string (corner tag text)
+    [x] num                  - string | number
+    [x] desc                 - string
+    [x] thumb                - string (image URL)
+    [x] title                - string
+    [x] price                - string | number
+    [x] currency             - string (default '¥')
+    [x] originPrice          - string | number
+    [x] centered             - boolean (vertically center content)
+    [x] lazyLoad             - boolean (accepted, image lazy-load not implemented in Lynx)
+    [ ] thumbLink            - MISSING: link URL when clicking thumb
+
+  Events (Vant -> Lynx):
+    [x] click                - (event) => void
+    [x] clickThumb           - (event) => void
+
+  Slots (Vant -> Lynx):
+    [x] thumb                - custom thumb content
+    [x] tag                  - custom tag content
+    [x] title                - custom title
+    [x] desc                 - custom description
+    [x] price                - custom price
+    [x] num                  - custom num display
+    [x] footer               - footer content
+    [x] bottom               - bottom content
+    [ ] price-top            - MISSING: content above price
+    [ ] tags                 - MISSING: custom tags below desc
+
+  Lynx-specific notes:
+    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
+    - <image> element used instead of Vant's <Image> component
+    - Tag rendered as absolute-positioned view, not Vant's <Tag> component
+    - Price split into integer/decimal not done (single text display)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -16,6 +48,7 @@ export interface CardProps {
   price?: string | number;
   currency?: string;
   thumb?: string;
+  thumbLink?: string;
   tag?: string;
   originPrice?: string | number;
   centered?: boolean;

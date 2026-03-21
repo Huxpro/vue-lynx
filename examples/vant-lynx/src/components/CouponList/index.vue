@@ -1,10 +1,12 @@
 <!--
   Vant Feature Parity Report:
-  - Component: CouponList
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 12/16 supported (coupons, chosenCoupon, disabledCoupons, enabledTitle,
+    disabledTitle, exchangeButtonText, exchangeButtonLoading, exchangeButtonDisabled,
+    exchangeMinLength, showExchangeBar, showCloseButton, showCount, currency)
+  - Events: 2/3 supported (change, exchange)
+  - Slots: 0/0 supported
+  - Gaps: code prop (v-model for input), emptyImage, closeButtonText,
+    inputPlaceholder, displayedCouponIndex props; update:code event
 -->
 <script setup lang="ts">
 import { ref, computed } from 'vue-lynx';

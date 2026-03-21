@@ -14,4 +14,42 @@ describe('FloatingPanel', () => {
     );
     expect(container).not.toBeNull();
   });
+
+  it('should accept all Vant-compatible props', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(FloatingPanel, {
+            height: 200,
+            anchors: [100, 300, 600],
+            duration: 0.5,
+            contentDraggable: true,
+            draggable: true,
+            magnetic: true,
+            lockScroll: false,
+            safeAreaInsetBottom: true,
+          });
+        },
+      }),
+    );
+    expect(container).not.toBeNull();
+  });
+
+  it('should render header slot and default slot', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(
+            FloatingPanel,
+            { anchors: [100, 400] },
+            {
+              header: () => h('text', 'Custom Header'),
+              default: () => h('text', 'Panel Content'),
+            },
+          );
+        },
+      }),
+    );
+    expect(container).not.toBeNull();
+  });
 });
