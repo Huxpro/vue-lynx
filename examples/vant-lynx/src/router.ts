@@ -66,6 +66,7 @@ const router = createRouter({
     { path: '/collapse', name: 'collapse', component: CollapseDemo },
     { path: '/steps', name: 'steps', component: StepsDemo },
     { path: '/toast', name: 'toast', component: ToastDemo },
+    { path: '/action-sheet', name: 'action-sheet', component: ActionSheetDemo },
   ],
 });
 
