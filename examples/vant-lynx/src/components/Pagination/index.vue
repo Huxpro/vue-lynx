@@ -1,10 +1,10 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 9/11 supported (modelValue, mode, pageCount, totalItems,
-    itemsPerPage, showPageSize, forceEllipses, prevText, nextText)
-  - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 0/2 supported
-  - Gaps: showPrevButton, showNextButton props; page slot, pageDesc slot
+  - Props: 11/11 (modelValue, mode, pageCount, totalItems, itemsPerPage,
+    showPageSize, forceEllipses, prevText, nextText, showPrevButton, showNextButton)
+  - Events: 2/2 (update:modelValue, change)
+  - Slots: 3/4 (prev-text, next-text, page; missing: pageDesc)
+  - Gaps: pageDesc slot not implemented; no i18n for default text
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

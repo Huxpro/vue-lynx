@@ -67,7 +67,7 @@ function handleScroll(event: any) {
 
   if (fixed !== isFixed.value) {
     isFixed.value = fixed;
-    emit('change', fixed);
+    // change event is emitted by the watcher on isFixed
   }
 
   emit('scroll', { scrollTop: st, isFixed: fixed });

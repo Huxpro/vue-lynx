@@ -8,6 +8,18 @@
   - Gaps: rightIcon prop, item-bottom/tag/top slots, multi-select mode
 -->
 <script setup lang="ts">
+/**
+ * VantAddressList (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-list/AddressList.tsx
+ *
+ * Feature parity: 8/9 props, 7/7 events.
+ * Missing: rightIcon prop, item-bottom/tag/top slots, multi-select mode.
+ *
+ * Lynx differences:
+ *   - Custom radio icons (no Radio/RadioGroup components)
+ *   - Text "Edit" button instead of Vant's Icon edit
+ *   - Single-select only (Vant supports Array modelValue for multi-select)
+ */
 import { computed } from 'vue-lynx';
 
 export interface AddressItem {

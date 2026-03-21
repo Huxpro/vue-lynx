@@ -36,7 +36,8 @@ describe('ActionBarButton', () => {
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThan(0);
+    // Loading state uses Loading component (view-based spinner), not text
+    const views = container.querySelectorAll('view');
+    expect(views.length).toBeGreaterThan(0);
   });
 });

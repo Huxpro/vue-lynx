@@ -1,11 +1,9 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 6/6 supported (items, activeId, mainActiveIndex, height, max,
-    selectedIcon)
-  - Events: 4/4 supported (update:activeId, update:mainActiveIndex,
-    clickNav, clickItem)
-  - Slots: 0/1 supported
-  - Gaps: content slot (custom right-side content area)
+  - Props: 6/6 (items, activeId, mainActiveIndex, height, max, selectedIcon)
+  - Events: 4/4 (update:activeId, update:mainActiveIndex, clickNav, clickItem)
+  - Slots: 2/2 (content, nav-text)
+  - Gaps: nav item dot/badge rendering; className on items not supported
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

@@ -94,14 +94,18 @@ const columns = computed(() => {
   let effectiveMaxSecond = props.maxSecond;
 
   // Cross-column constraints via minTime/maxTime
+  // Use selectedIndexes + modelValue to avoid circular computed dependency
   if (props.minTime || props.maxTime) {
     const currentFull: Record<TimePickerColumnType, number> = {
       hour: 0,
       minute: 0,
       second: 0,
     };
+    const vals = props.modelValue && props.modelValue.length > 0
+      ? props.modelValue
+      : [];
     props.columnsType.forEach((col, i) => {
-      currentFull[col] = parseInt(selectedValues.value[i] ?? '0', 10);
+      currentFull[col] = parseInt(vals[i] ?? '0', 10);
     });
 
     if (props.minTime) {

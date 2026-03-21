@@ -421,20 +421,16 @@ function getItemTextStyle(colIndex: number, itemIndex: number) {
     <!-- Toolbar (top position) -->
     <view v-if="showToolbar && toolbarPosition === 'top'" :style="toolbarStyle">
       <slot name="toolbar">
-        <view @tap="onCancel">
-          <slot name="cancel">
-            <text :style="cancelBtnStyle">{{ cancelButtonText }}</text>
-          </slot>
-        </view>
+        <slot name="cancel">
+          <view @tap="onCancel"><text :style="cancelBtnStyle">{{ cancelButtonText }}</text></view>
+        </slot>
         <slot name="title">
           <text v-if="title" :style="titleStyle">{{ title }}</text>
           <view v-else :style="{ flex: 1 }" />
         </slot>
-        <view @tap="onConfirm">
-          <slot name="confirm">
-            <text :style="confirmBtnStyle">{{ confirmButtonText }}</text>
-          </slot>
-        </view>
+        <slot name="confirm">
+          <view @tap="onConfirm"><text :style="confirmBtnStyle">{{ confirmButtonText }}</text></view>
+        </slot>
       </slot>
     </view>
 
@@ -491,20 +487,16 @@ function getItemTextStyle(colIndex: number, itemIndex: number) {
     <!-- Toolbar (bottom position) -->
     <view v-if="showToolbar && toolbarPosition === 'bottom'" :style="toolbarStyle">
       <slot name="toolbar">
-        <view @tap="onCancel">
-          <slot name="cancel">
-            <text :style="cancelBtnStyle">{{ cancelButtonText }}</text>
-          </slot>
-        </view>
+        <slot name="cancel">
+          <view @tap="onCancel"><text :style="cancelBtnStyle">{{ cancelButtonText }}</text></view>
+        </slot>
         <slot name="title">
           <text v-if="title" :style="titleStyle">{{ title }}</text>
           <view v-else :style="{ flex: 1 }" />
         </slot>
-        <view @tap="onConfirm">
-          <slot name="confirm">
-            <text :style="confirmBtnStyle">{{ confirmButtonText }}</text>
-          </slot>
-        </view>
+        <slot name="confirm">
+          <view @tap="onConfirm"><text :style="confirmBtnStyle">{{ confirmButtonText }}</text></view>
+        </slot>
       </slot>
     </view>
   </view>

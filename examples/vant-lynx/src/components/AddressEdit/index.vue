@@ -10,6 +10,19 @@
     areaPlaceholder, focus/change/selectSearch events, default slot
 -->
 <script setup lang="ts">
+/**
+ * VantAddressEdit (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-edit/AddressEdit.tsx
+ *
+ * Feature parity: 17/20 props, 6/10 events.
+ * Missing props: validator, searchResult, detailRows
+ * Missing events: focus, change, selectSearch
+ *
+ * Lynx differences:
+ *   - Manual validation (no Form/Field components)
+ *   - Area picker delegated via clickArea (no built-in Popup)
+ *   - Custom toggle switch view instead of Vant's Switch component
+ */
 import { ref, computed, watch } from 'vue-lynx';
 
 export interface AddressInfo {

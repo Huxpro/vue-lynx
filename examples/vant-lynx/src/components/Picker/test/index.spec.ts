@@ -57,13 +57,13 @@ describe('Picker', () => {
   });
 
   it('should emit confirm with selected values', async () => {
-    const confirmed: string[][] = [];
+    const confirmed: any[] = [];
     const Comp = defineComponent({
       setup() {
         return () =>
           h(Picker, {
             columns: [['Red', 'Green', 'Blue']],
-            onConfirm: (values: string[]) => confirmed.push(values),
+            onConfirm: (params: any) => confirmed.push(params),
           });
       },
     });
@@ -72,22 +72,23 @@ describe('Picker', () => {
     const textEls = container.querySelectorAll('text');
     const confirmBtn = Array.from(textEls).find((t) => t.textContent === 'Confirm');
     expect(confirmBtn).toBeTruthy();
+    // Tap the confirm button text or its parent element
     if (confirmBtn) {
-      fireEvent.tap(confirmBtn);
+      fireEvent.tap(confirmBtn.parentElement || confirmBtn);
       await nextTick();
       expect(confirmed.length).toBe(1);
-      expect(confirmed[0]).toEqual(['Red']);
+      expect(confirmed[0].selectedValues).toEqual(['Red']);
     }
   });
 
   it('should emit cancel when cancel button tapped', async () => {
-    const cancelled: boolean[] = [];
+    const cancelled: any[] = [];
     const Comp = defineComponent({
       setup() {
         return () =>
           h(Picker, {
             columns: [['A', 'B']],
-            onCancel: () => cancelled.push(true),
+            onCancel: (params: any) => cancelled.push(params),
           });
       },
     });
@@ -97,21 +98,21 @@ describe('Picker', () => {
     const cancelBtn = Array.from(textEls).find((t) => t.textContent === 'Cancel');
     expect(cancelBtn).toBeTruthy();
     if (cancelBtn) {
-      fireEvent.tap(cancelBtn);
+      fireEvent.tap(cancelBtn.parentElement || cancelBtn);
       await nextTick();
       expect(cancelled.length).toBe(1);
     }
   });
 
   it('should emit change when item is selected', async () => {
-    const changes: Array<{ values: string[]; index: number }> = [];
+    const changes: any[] = [];
     const Comp = defineComponent({
       setup() {
         return () =>
           h(Picker, {
             columns: [['One', 'Two', 'Three']],
-            onChange: (values: string[], colIndex: number) =>
-              changes.push({ values, index: colIndex }),
+            onChange: (params: any) =>
+              changes.push(params),
           });
       },
     });
@@ -120,22 +121,23 @@ describe('Picker', () => {
     const textEls = container.querySelectorAll('text');
     const twoItem = Array.from(textEls).find((t) => t.textContent === 'Two');
     if (twoItem) {
-      fireEvent.tap(twoItem.parentElement!);
+      const tapTarget = twoItem.parentElement || twoItem;
+      fireEvent.tap(tapTarget);
       await nextTick();
       expect(changes.length).toBe(1);
-      expect(changes[0].values).toEqual(['Two']);
+      expect(changes[0].selectedValues).toEqual(['Two']);
     }
   });
 
   it('should not emit confirm when loading', async () => {
-    const confirmed: string[][] = [];
+    const confirmed: any[] = [];
     const Comp = defineComponent({
       setup() {
         return () =>
           h(Picker, {
             columns: [['A', 'B']],
             loading: true,
-            onConfirm: (values: string[]) => confirmed.push(values),
+            onConfirm: (params: any) => confirmed.push(params),
           });
       },
     });
