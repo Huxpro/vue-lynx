@@ -65,7 +65,8 @@ const containerStyle = computed(() => {
   Object.assign(vars, props.themeVars);
 
   return {
-    flex: 1,
+    width: '100%',
+    height: '100%',
     display: 'flex' as const,
     flexDirection: 'column' as const,
     ...vars,
