@@ -1,22 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Progress from '../components/Progress/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const percentage = ref(50);
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Progress</text>
-    </view>
+  <DemoPage title="Progress">
+    
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
@@ -48,5 +39,5 @@ const percentage = ref(50);
         <Progress :percentage="percentage" pivot-text="Orange" color="#f2826a" />
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

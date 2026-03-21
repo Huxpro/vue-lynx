@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import ContactEdit from '../components/ContactEdit/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const result = ref('');
 
 const editContactInfo = {
@@ -30,13 +24,7 @@ function onChangeDefault(value: boolean) {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">ContactEdit</text>
-    </view>
-
+  <DemoPage title="ContactEdit">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- New Contact -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">New Contact</text>
@@ -65,5 +53,5 @@ function onChangeDefault(value: boolean) {
         <text :style="{ fontSize: 14, color: '#323233' }">{{ result }}</text>
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

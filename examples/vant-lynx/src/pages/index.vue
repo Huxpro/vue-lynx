@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { useTheme } from '../composables/useTheme';
 
 const router = useRouter();
+const { isDark, toggleTheme, bgColor, cardColor, textColor, textColor2, headerBg } = useTheme();
 
 const components = [
   { name: 'Button', path: '/button' },
@@ -90,33 +92,51 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column' }">
-    <text :style="{
-      fontSize: 20,
-      fontWeight: 'bold',
-      padding: 16,
-      color: '#323233',
-      backgroundColor: '#fff',
-    }">
-      Vant Lynx
-    </text>
-    <text :style="{
-      fontSize: 14,
-      color: '#969799',
+  <view :style="{ display: 'flex', flexDirection: 'column' }">
+    <!-- Header -->
+    <view :style="{
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingTop: 16,
+      paddingBottom: 12,
       paddingLeft: 16,
       paddingRight: 16,
-      paddingBottom: 12,
-      backgroundColor: '#fff',
+      backgroundColor: headerBg,
     }">
-      Mobile UI Components for Lynx
-    </text>
+      <view :style="{ display: 'flex', flexDirection: 'column' }">
+        <text :style="{ fontSize: 20, fontWeight: 'bold', color: textColor }">
+          Vant Lynx
+        </text>
+        <text :style="{ fontSize: 14, color: textColor2, marginTop: 4 }">
+          Mobile UI Components for Lynx
+        </text>
+      </view>
+      <view
+        :style="{
+          backgroundColor: isDark ? '#3a3a3a' : '#f2f3f5',
+          borderRadius: 16,
+          paddingTop: 6,
+          paddingBottom: 6,
+          paddingLeft: 12,
+          paddingRight: 12,
+        }"
+        @tap="toggleTheme"
+      >
+        <text :style="{ fontSize: 14, color: textColor }">
+          {{ isDark ? 'Light' : 'Dark' }}
+        </text>
+      </view>
+    </view>
 
+    <!-- Component List -->
     <view :style="{ padding: 12, display: 'flex', flexDirection: 'column' }">
       <view
         v-for="comp in components"
         :key="comp.name"
         :style="{
-          backgroundColor: '#fff',
+          backgroundColor: cardColor,
           borderRadius: 8,
           padding: 16,
           marginBottom: 8,
@@ -127,8 +147,8 @@ function navigate(path: string) {
         }"
         @tap="navigate(comp.path)"
       >
-        <text :style="{ fontSize: 16, color: '#323233' }">{{ comp.name }}</text>
-        <text :style="{ fontSize: 14, color: '#969799' }">></text>
+        <text :style="{ fontSize: 16, color: textColor }">{{ comp.name }}</text>
+        <text :style="{ fontSize: 14, color: textColor2 }">></text>
       </view>
     </view>
   </view>

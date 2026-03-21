@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import Cascader from '../components/Cascader/index.vue';
-
-const router = useRouter();
-function goBack() { router.push('/'); }
-
 const selectedValue = ref<string | number>('');
 const selectedText = ref('');
 const showCascader = ref(true);
@@ -64,13 +60,7 @@ function onFinish(payload: { value: string | number; text: string; selectedOptio
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">Cascader</text>
-    </view>
-
+  <DemoPage title="Cascader">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Result display -->
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 16 }">
@@ -89,5 +79,5 @@ function onFinish(payload: { value: string | number; text: string; selectedOptio
         />
       </view>
     </view>
-  </view>
+  </DemoPage>
 </template>

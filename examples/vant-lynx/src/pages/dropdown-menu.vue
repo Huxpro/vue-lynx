@@ -1,14 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import DropdownMenu from '../components/DropdownMenu/index.vue';
 import DropdownItem from '../components/DropdownItem/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const sortValue = ref('price_asc');
 const categoryValue = ref(0);
 const brandValue = ref('all');
@@ -36,13 +30,7 @@ const brandOptions = [
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">DropdownMenu</text>
-    </view>
-
+  <DemoPage title="DropdownMenu">
     <!-- Basic Usage -->
     <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 8, paddingLeft: 16 }">Basic Usage</text>
     <DropdownMenu>
@@ -65,5 +53,5 @@ const brandOptions = [
         <DropdownItem v-model="brandValue" :options="brandOptions" />
       </DropdownMenu>
     </view>
-  </view>
+  </DemoPage>
 </template>

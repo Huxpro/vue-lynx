@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import DemoPage from '../components/DemoPage/index.vue';
 import ImagePreview from '../components/ImagePreview/index.vue';
-
-const router = useRouter();
-function goBack() {
-  router.push('/');
-}
-
 const showBasic = ref(false);
 const showCloseable = ref(false);
 const showIndicators = ref(false);
@@ -26,13 +20,7 @@ function onClose(info: { index: number; url: string }) {
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Header -->
-    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff' }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#323233' }">ImagePreview</text>
-    </view>
-
+  <DemoPage title="ImagePreview">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
@@ -146,5 +134,5 @@ function onClose(info: { index: number; url: string }) {
       @update:show="(v: boolean) => showStartPos = v"
       @close="onClose"
     />
-  </view>
+  </DemoPage>
 </template>

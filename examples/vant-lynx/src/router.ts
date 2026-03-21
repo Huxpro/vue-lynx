@@ -69,6 +69,15 @@ import CouponListDemo from './pages/coupon-list.vue';
 import SubmitBarDemo from './pages/submit-bar.vue';
 import SignatureDemo from './pages/signature.vue';
 import PullRefreshDemo from './pages/pull-refresh.vue';
+import ConfigProviderDemo from './pages/config-provider.vue';
+import DialogDemo from './pages/dialog.vue';
+import DropdownMenuDemo from './pages/dropdown-menu.vue';
+import FloatingBubbleDemo from './pages/floating-bubble.vue';
+import FloatingPanelDemo from './pages/floating-panel.vue';
+import NotifyDemo from './pages/notify.vue';
+import PickerDemo from './pages/picker.vue';
+import ShareSheetDemo from './pages/share-sheet.vue';
+import SwipeCellDemo from './pages/swipe-cell.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -143,6 +152,15 @@ const router = createRouter({
     { path: '/submit-bar', name: 'submit-bar', component: SubmitBarDemo },
     { path: '/signature', name: 'signature', component: SignatureDemo },
     { path: '/pull-refresh', name: 'pull-refresh', component: PullRefreshDemo },
+    { path: '/config-provider', name: 'config-provider', component: ConfigProviderDemo },
+    { path: '/dialog', name: 'dialog', component: DialogDemo },
+    { path: '/dropdown-menu', name: 'dropdown-menu', component: DropdownMenuDemo },
+    { path: '/floating-bubble', name: 'floating-bubble', component: FloatingBubbleDemo },
+    { path: '/floating-panel', name: 'floating-panel', component: FloatingPanelDemo },
+    { path: '/notify', name: 'notify', component: NotifyDemo },
+    { path: '/picker', name: 'picker', component: PickerDemo },
+    { path: '/share-sheet', name: 'share-sheet', component: ShareSheetDemo },
+    { path: '/swipe-cell', name: 'swipe-cell', component: SwipeCellDemo },
   ],
 });
 
