@@ -31,6 +31,43 @@ import CollapseDemo from './pages/collapse.vue';
 import StepsDemo from './pages/steps.vue';
 import ToastDemo from './pages/toast.vue';
 import ActionSheetDemo from './pages/action-sheet.vue';
+import SearchDemo from './pages/search.vue';
+import SliderDemo from './pages/slider.vue';
+import HighlightDemo from './pages/highlight.vue';
+import CascaderDemo from './pages/cascader.vue';
+import UploaderDemo from './pages/uploader.vue';
+import NumberKeyboardDemo from './pages/number-keyboard.vue';
+import PasswordInputDemo from './pages/password-input.vue';
+import BarrageDemo from './pages/barrage.vue';
+import CalendarDemo from './pages/calendar.vue';
+import FormDemo from './pages/form.vue';
+import DatePickerDemo from './pages/date-picker.vue';
+import TimePickerDemo from './pages/time-picker.vue';
+import SkeletonDemo from './pages/skeleton.vue';
+import CardDemo from './pages/card.vue';
+import PaginationDemo from './pages/pagination.vue';
+import StickyDemo from './pages/sticky.vue';
+import SwipeDemo from './pages/swipe.vue';
+import TextEllipsisDemo from './pages/text-ellipsis.vue';
+import WatermarkDemo from './pages/watermark.vue';
+import ActionBarDemo2 from './pages/action-bar.vue';
+import BackTopDemo from './pages/back-top.vue';
+import IndexBarDemo from './pages/index-bar.vue';
+import SidebarDemo from './pages/sidebar.vue';
+import ImagePreviewDemo from './pages/image-preview.vue';
+import ListDemo from './pages/list.vue';
+import PopoverDemo from './pages/popover.vue';
+import RollingTextDemo from './pages/rolling-text.vue';
+import TreeSelectDemo from './pages/tree-select.vue';
+import AddressEditDemo from './pages/address-edit.vue';
+import AddressListDemo from './pages/address-list.vue';
+import AreaDemo from './pages/area.vue';
+import ContactCardDemo from './pages/contact-card.vue';
+import ContactEditDemo from './pages/contact-edit.vue';
+import ContactListDemo from './pages/contact-list.vue';
+import CouponListDemo from './pages/coupon-list.vue';
+import SubmitBarDemo from './pages/submit-bar.vue';
+import SignatureDemo from './pages/signature.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -67,6 +104,43 @@ const router = createRouter({
     { path: '/steps', name: 'steps', component: StepsDemo },
     { path: '/toast', name: 'toast', component: ToastDemo },
     { path: '/action-sheet', name: 'action-sheet', component: ActionSheetDemo },
+    { path: '/search', name: 'search', component: SearchDemo },
+    { path: '/slider', name: 'slider', component: SliderDemo },
+    { path: '/highlight', name: 'highlight', component: HighlightDemo },
+    { path: '/cascader', name: 'cascader', component: CascaderDemo },
+    { path: '/uploader', name: 'uploader', component: UploaderDemo },
+    { path: '/number-keyboard', name: 'number-keyboard', component: NumberKeyboardDemo },
+    { path: '/password-input', name: 'password-input', component: PasswordInputDemo },
+    { path: '/barrage', name: 'barrage', component: BarrageDemo },
+    { path: '/calendar', name: 'calendar', component: CalendarDemo },
+    { path: '/form', name: 'form', component: FormDemo },
+    { path: '/date-picker', name: 'date-picker', component: DatePickerDemo },
+    { path: '/time-picker', name: 'time-picker', component: TimePickerDemo },
+    { path: '/skeleton', name: 'skeleton', component: SkeletonDemo },
+    { path: '/card', name: 'card', component: CardDemo },
+    { path: '/pagination', name: 'pagination', component: PaginationDemo },
+    { path: '/sticky', name: 'sticky', component: StickyDemo },
+    { path: '/swipe', name: 'swipe', component: SwipeDemo },
+    { path: '/text-ellipsis', name: 'text-ellipsis', component: TextEllipsisDemo },
+    { path: '/watermark', name: 'watermark', component: WatermarkDemo },
+    { path: '/action-bar', name: 'action-bar', component: ActionBarDemo2 },
+    { path: '/back-top', name: 'back-top', component: BackTopDemo },
+    { path: '/index-bar', name: 'index-bar', component: IndexBarDemo },
+    { path: '/sidebar', name: 'sidebar', component: SidebarDemo },
+    { path: '/image-preview', name: 'image-preview', component: ImagePreviewDemo },
+    { path: '/list', name: 'list', component: ListDemo },
+    { path: '/popover', name: 'popover', component: PopoverDemo },
+    { path: '/rolling-text', name: 'rolling-text', component: RollingTextDemo },
+    { path: '/tree-select', name: 'tree-select', component: TreeSelectDemo },
+    { path: '/address-edit', name: 'address-edit', component: AddressEditDemo },
+    { path: '/address-list', name: 'address-list', component: AddressListDemo },
+    { path: '/area', name: 'area', component: AreaDemo },
+    { path: '/contact-card', name: 'contact-card', component: ContactCardDemo },
+    { path: '/contact-edit', name: 'contact-edit', component: ContactEditDemo },
+    { path: '/contact-list', name: 'contact-list', component: ContactListDemo },
+    { path: '/coupon-list', name: 'coupon-list', component: CouponListDemo },
+    { path: '/submit-bar', name: 'submit-bar', component: SubmitBarDemo },
+    { path: '/signature', name: 'signature', component: SignatureDemo },
   ],
 });
 
