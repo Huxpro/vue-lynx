@@ -623,7 +623,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "action-sheet",
@@ -642,7 +642,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "dialog",
@@ -661,7 +661,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "dropdown-menu",
@@ -680,7 +680,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "notify",
@@ -698,7 +698,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "pull-refresh",
