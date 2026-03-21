@@ -58,7 +58,7 @@ export default defineConfig({
       },
     ],
     footer: {
-      message: `\u00a9 ${new Date().getFullYear()} Vue Lynx Authors. All Rights Reserved.`,
+      message: `\u00a9 ${new Date().getFullYear()} Xuan Huang (huxpro). All Rights Reserved.`,
     },
     sidebar: {
       '/guide/': [

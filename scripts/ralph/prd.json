@@ -273,6 +273,68 @@
         "Commit with message 'feat: add Chinese translation for home features component'"
       ],
       "passes": true
+    },
+    {
+      "id": "translate-home-showcase",
+      "title": "Translate home page showcase component",
+      "priority": 17,
+      "acceptanceCriteria": [
+        "Source: website/src/components/home-comps/showcase/index.tsx",
+        "Add import: import { useLang } from '@rspress/core/runtime'",
+        "Update showCaseList items to use { en, zh } for title and desc",
+        "Add const lang = useLang() as 'en' | 'zh' in component",
+        "Update section title 'Try it for yourself' to use i18n: { en: 'Try it for yourself', zh: '亲自体验' }",
+        "Update section desc 'Experience true native feel...' to { en: ..., zh: '体验真正的原生质感、瞬时启动和丝滑交互。' }",
+        "Update 'Learn by doing' link text to { en: 'Learn by doing', zh: '边做边学' }",
+        "Translations for showCaseList:",
+        "  - Two-Column Waterfall Gallery → 双列瀑布流画廊",
+        "  - Cover everything you need... → 覆盖使用 Vue Lynx 开发所需的一切知识。",
+        "  - Product Detail with Carousel → 带轮播的商品详情页",
+        "  - Deep dive into main thread... → 通过构建一个高响应性的轮播组件，深入学习主线程脚本。",
+        "Update link hrefs to be locale-aware: use useLang to prepend /zh when lang === 'zh'",
+        "Browser verify: open http://localhost:5173/ shows English",
+        "Browser verify: open http://localhost:5173/zh/ shows Chinese for showcase section",
+        "Commit with message 'feat: add Chinese translation for home showcase component'"
+      ],
+      "passes": true
+    },
+    {
+      "id": "fix-features-links-i18n",
+      "title": "Fix features component links to be locale-aware",
+      "priority": 18,
+      "acceptanceCriteria": [
+        "Source: website/src/components/home-comps/features/index.tsx",
+        "The actions array has internal links like /guide/routing, /guide/pinia, /guide/data-fetching",
+        "These need to prepend /zh/ when lang === 'zh'",
+        "Update link rendering: if link starts with '/', prepend locale prefix (lang === 'zh' ? '/zh' : '')",
+        "External links (https://) should remain unchanged",
+        "Browser verify: on /zh/, clicking Vue Router link goes to /zh/guide/routing",
+        "Browser verify: on /, clicking Vue Router link goes to /guide/routing",
+        "Commit with message 'fix: make features internal links locale-aware'"
+      ],
+      "passes": true
+    },
+    {
+      "id": "translate-home-banner",
+      "title": "Translate home page banner and fix footer credits",
+      "priority": 19,
+      "acceptanceCriteria": [
+        "Source: website/src/components/home-comps/banner/index.tsx",
+        "Add import: import { useLang } from '@rspress/core/runtime'",
+        "Update text to i18n:",
+        "  - Start building with → 开始使用",
+        "  - Quick Start → 快速开始",
+        "Make href locale-aware: /guide/quick-start → /zh/guide/quick-start when zh",
+        "Update website/rspress.config.ts footer.message:",
+        "  - Change from 'Vue Lynx Authors' to 'Xuan Huang (huxpro)'",
+        "  - Format: © 2026 Xuan Huang (huxpro). All Rights Reserved.",
+        "Browser verify: open http://localhost:5173/ and http://localhost:5173/zh/",
+        "Browser verify: banner shows English on / and Chinese on /zh/",
+        "Browser verify: Quick Start link goes to correct locale path",
+        "Browser verify: footer shows correct credits",
+        "Commit with message 'feat: translate banner and fix footer credits'"
+      ],
+      "passes": true
     }
   ]
 }
