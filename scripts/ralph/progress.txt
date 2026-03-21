@@ -1,0 +1,11 @@
+== Vant Lynx Feature Parity Progress ==
+
+[2026-03-21] Batch 1 - Foundational Components
+- icon (P1): PASS - 8/8 props, 1/1 events, 1/1 slots, index.less created
+- overlay (P3): PASS - 8/8 props, 1/1 events, 1/1 slots, lazyRender added, index.less created
+- loading (P4): PASS - 6/6 props, 0/0 events, 2/2 slots (icon slot added), index.less created
+- badge (P8): PASS - 7/7 props (tag N/A), 0/0 events, 2/2 slots, index.less created
+- popup (P2): PASS - 19/19 props, 7/7 events, 2/2 slots, destroyOnClose/lazyRender/overlayStyle added, index.less created
+- button (P5): PASS - 21/21 props, 2/2 events (touchstart added), 3/3 slots, index.less created
+
+Completed: 6/93

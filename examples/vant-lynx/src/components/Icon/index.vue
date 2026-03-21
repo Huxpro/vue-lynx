@@ -1,15 +1,15 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 6/8 supported (missing: tag [N/A for Lynx], classPrefix [kept for API compat but no icon font])
+  - Props: 8/8 supported (name, dot, badge, badgeProps, color, size, classPrefix, tag)
   - Events: 1/1 supported (click)
   - Slots: 1/1 supported (default)
-  - Sub-components: Badge ✅ (integrated for dot/badge display)
-  - Image URL Icons: ✅ (name containing '/' rendered as <image>)
-  - Unicode Fallback Icons: ✅ (mapped common Vant icon names to unicode chars)
-  - Gaps:
-    - tag prop not applicable in Lynx (no HTML tag switching)
-    - classPrefix accepted but unused (no icon font in Lynx; unicode mapping used instead)
-    - No icon font support (Lynx does not support @font-face / icon fonts)
+  - Sub-components: Badge integrated for dot/badge display
+  - Image URL Icons: name containing '/' rendered as <image>
+  - Unicode Fallback Icons: mapped common Vant icon names to unicode chars
+  - Lynx Limitations:
+    - tag prop: accepted for API compat but always renders as view/text (Lynx has no HTML tags)
+    - classPrefix: accepted for API compat but unused (no icon font in Lynx)
+    - No @font-face / icon font support in Lynx
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -24,12 +24,16 @@ export interface IconProps {
   badge?: string | number;
   classPrefix?: string;
   badgeProps?: Partial<BadgeProps>;
+  tag?: string;
 }
 
 const props = withDefaults(defineProps<IconProps>(), {
+  name: '',
   size: 16,
   color: '#323233',
   dot: false,
+  classPrefix: 'van-icon',
+  tag: 'i',
 });
 
 const emit = defineEmits<{

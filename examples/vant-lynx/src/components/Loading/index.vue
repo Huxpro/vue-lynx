@@ -1,17 +1,12 @@
 <!--
   Vant Feature Parity Report:
   - Props: 6/6 supported (type, color, size, textSize, textColor, vertical)
-  - Slots: 1/1 supported (default - text content)
-  - Types: circular (border-based spinner), spinner (dotted ring - SVG not available in Lynx)
-  - Lynx Adaptations:
-    - No SVG support, so circular uses a border-based rotating ring
-    - Spinner type uses a dotted border ring (distinct visual from circular)
-    - No CSS animations in Lynx, spinners are static visual indicators
-    - Uses view/text elements with inline styles only
-  - CSS Variables: Not supported (Lynx limitation)
-  - Gaps:
-    - No rotation animation (Lynx does not support CSS keyframes)
-    - Spinner type cannot render 12 individual bars (no SVG/CSS animation)
+  - Events: 0/0 (none defined in Vant API)
+  - Slots: 2/2 supported (default - text content, icon - custom spinner)
+  - Lynx Limitations:
+    - No CSS @keyframes animation; spinners are static visual indicators
+    - Spinner type: dotted border ring (no SVG for 12-bar spinner)
+    - Circular type: border-based ring with transparent segment
 -->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue-lynx';
@@ -29,6 +24,8 @@ const props = withDefaults(defineProps<LoadingProps>(), {
   type: 'circular',
   color: '#c9c9c9',
   size: 30,
+  textSize: 14,
+  textColor: '#c9c9c9',
   vertical: false,
 });
 
@@ -40,7 +37,6 @@ const spinnerSize = computed(() => {
 });
 
 const resolvedTextSize = computed(() => {
-  if (props.textSize == null) return 14;
   if (typeof props.textSize === 'string') return parseInt(props.textSize, 10) || 14;
   return props.textSize;
 });
@@ -55,7 +51,6 @@ const spinnerStyle = computed(() => {
   const sz = spinnerSize.value;
 
   if (props.type === 'spinner') {
-    // Spinner type: dotted border to visually distinguish from circular
     return {
       width: sz,
       height: sz,
@@ -66,7 +61,6 @@ const spinnerStyle = computed(() => {
     };
   }
 
-  // Circular type: solid ring with one transparent side (classic spinner look)
   return {
     width: sz,
     height: sz,
@@ -86,14 +80,16 @@ const textWrapperStyle = computed(() => ({
 
 const slotTextStyle = computed(() => ({
   fontSize: resolvedTextSize.value,
-  color: props.textColor || '#969799',
+  color: props.textColor,
   lineHeight: Math.round(resolvedTextSize.value * 1.4),
 }));
 </script>
 
 <template>
   <view :style="containerStyle">
-    <view :style="spinnerStyle" />
+    <slot name="icon">
+      <view :style="spinnerStyle" />
+    </slot>
     <view v-if="hasSlotContent" :style="textWrapperStyle">
       <text :style="slotTextStyle"><slot /></text>
     </view>
