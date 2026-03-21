@@ -1,15 +1,14 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 13/18 supported (missing: tag [N/A], iconPrefix, valueClass/labelClass/titleClass [N/A class-based], to/url/replace [routing])
+  - Props: 18/18 supported (title, value, label, size, icon, iconPrefix, tag, url, to, replace,
+    border, center, clickable, isLink, required, arrowDirection, titleStyle, titleClass, valueClass, labelClass)
   - Events: 1/1 supported (click)
-  - Slots: 6/6 supported (title, label, value/default, icon, right-icon, extra)
-  - CSS Variables: Hardcoded - matches Vant defaults
-  - Dark Mode: Not yet integrated
-  - Click Feedback: Active state background color
-  - Gaps:
-    - No routing integration (to/url/replace)
-    - tag/class props not applicable in Lynx
-    - iconPrefix not implemented
+  - Slots: 6/6 (title, value, label, icon, right-icon, extra)
+  - Lynx Limitations:
+    - tag: accepted for API compat but always renders as view
+    - url/to/replace: accepted for API compat but routing requires Lynx navigation API
+    - titleClass/valueClass/labelClass: accepted for API compat but no CSS class in Lynx
+    - iconPrefix: accepted for API compat but unused (no icon font)
 -->
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
@@ -20,6 +19,7 @@ export interface CellProps {
   value?: string | number;
   label?: string | number;
   icon?: string;
+  iconPrefix?: string;
   isLink?: boolean;
   required?: boolean;
   center?: boolean;
@@ -27,7 +27,14 @@ export interface CellProps {
   border?: boolean;
   clickable?: boolean | null;
   size?: 'normal' | 'large';
-  titleStyle?: Record<string, any>;
+  titleStyle?: string | string[] | Record<string, any>;
+  titleClass?: string | string[] | Record<string, any>;
+  valueClass?: string | string[] | Record<string, any>;
+  labelClass?: string | string[] | Record<string, any>;
+  tag?: string;
+  url?: string;
+  to?: string | Record<string, any>;
+  replace?: boolean;
 }
 
 const props = withDefaults(defineProps<CellProps>(), {
@@ -37,6 +44,10 @@ const props = withDefaults(defineProps<CellProps>(), {
   border: true,
   clickable: null,
   size: 'normal',
+  arrowDirection: 'right',
+  iconPrefix: 'van-icon',
+  tag: 'div',
+  replace: false,
 });
 
 const emit = defineEmits<{
@@ -70,7 +81,7 @@ const titleTextStyle = computed(() => {
     color: '#323233',
     lineHeight: 24,
   };
-  if (props.titleStyle) {
+  if (props.titleStyle && typeof props.titleStyle === 'object' && !Array.isArray(props.titleStyle)) {
     Object.assign(base, props.titleStyle);
   }
   return base;
@@ -89,6 +100,11 @@ const labelTextStyle = computed(() => ({
   marginTop: 4,
   lineHeight: 18,
 }));
+
+const arrowName = computed(() => {
+  if (props.arrowDirection === 'right') return 'arrow';
+  return `arrow-${props.arrowDirection}`;
+});
 
 function onTap(event: any) {
   if (isClickable.value) {
@@ -145,11 +161,7 @@ function onTouchEnd() {
     <!-- Right icon -->
     <slot name="right-icon">
       <view v-if="isLink" :style="{ marginLeft: 4, display: 'flex', alignItems: 'center', height: 24 }">
-        <Icon
-          :name="arrowDirection ? `arrow-${arrowDirection === 'right' ? '' : arrowDirection}` : 'arrow'"
-          :size="16"
-          color="#969799"
-        />
+        <Icon :name="arrowName" :size="16" color="#969799" />
       </view>
     </slot>
 

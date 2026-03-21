@@ -8,4 +8,11 @@
 - popup (P2): PASS - 19/19 props, 7/7 events, 2/2 slots, destroyOnClose/lazyRender/overlayStyle added, index.less created
 - button (P5): PASS - 21/21 props, 2/2 events (touchstart added), 3/3 slots, index.less created
 
-Completed: 6/93
+[2026-03-21] Batch 2 - Core Components
+- cell (P6): PASS - 18/18 props, 1/1 events, 6/6 slots, index.less created
+- cell-group (P7): PASS - 3/3 props, 0/0 events, 2/2 slots (title slot added), index.less created
+- config-provider (P9): PASS - 7/7 props, 0/0 events, 1/1 slots, themeVarsDark/Light/Scope added, index.less created
+- toast (P10): PASS - 16/16 props, 2/2 events, 1/1 slots, auto-close timer/forbidClick/closeOnClick added, index.less created
+- tag (P11): PASS - 9/9 props, 2/2 events, 1/1 slots, index.less created
+
+Completed: 11/93

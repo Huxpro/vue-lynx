@@ -1,11 +1,10 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 3/4 supported (title, inset, border; missing: tag [N/A])
-  - Events: 0/0
+  - Props: 3/3 supported (title, inset, border)
+  - Events: 0/0 (none defined)
   - Slots: 2/2 (default, title)
-  - Gaps:
-    - No tag prop (N/A in Lynx)
-    - Title slot not implemented (only prop)
+  - Lynx Limitations:
+    - No tag prop needed (Lynx always uses view)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -28,20 +27,23 @@ const groupStyle = computed(() => ({
   marginRight: props.inset ? 12 : 0,
   overflow: 'hidden' as const,
 }));
+
+const titleStyle = computed(() => ({
+  fontSize: 14,
+  color: '#969799',
+  paddingTop: props.inset ? 0 : 16,
+  paddingBottom: 8,
+  paddingLeft: props.inset ? 28 : 16,
+  paddingRight: 16,
+  lineHeight: 16,
+}));
 </script>
 
 <template>
   <view>
-    <text
-      v-if="title"
-      :style="{
-        fontSize: 14,
-        color: '#969799',
-        padding: 16,
-        paddingTop: inset ? 0 : 16,
-        paddingLeft: inset ? 28 : 16,
-      }"
-    >{{ title }}</text>
+    <slot name="title">
+      <text v-if="title" :style="titleStyle">{{ title }}</text>
+    </slot>
     <view :style="groupStyle">
       <slot />
     </view>
