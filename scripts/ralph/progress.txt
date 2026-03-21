@@ -46,3 +46,55 @@
 - Browser verified: ✓ language switcher works, can toggle to English and back
 - Challenges: Homepage also has custom React components (Features, ShowCase, Banner) with hardcoded English; these are outside the scope of index.mdx translation
 ---
+
+## 2026-03-21 - translate-introduction: Translate guide/introduction.mdx
+- Translated: website/docs/guide/introduction.mdx → website/docs/zh/guide/introduction.mdx
+- Sections: 12 (matched source)
+- MDX components: none (source uses only standard markdown, code blocks, :::info admonition)
+- Browser verified: ✓ zh page loads at /zh/guide/introduction with all Chinese headings
+- Browser verified: ✓ language switcher shows English/简体中文 options
+- Browser verified: ✓ English version loads correctly at /guide/introduction
+- Challenges: Internal links updated to include /zh/ prefix for Chinese version; kept all code blocks, API names, and technical terms in English per translation rules
+---
+
+## 2026-03-21 - translate-quick-start: Translate guide/quick-start.mdx
+- Translated: website/docs/guide/quick-start.mdx → website/docs/zh/guide/quick-start.mdx
+- Sections: 12 (matched source)
+- MDX components: Go, PackageManagerTabs, Steps
+- Browser verified: ✓ zh page loads at /zh/guide/quick-start with Chinese headings
+- Browser verified: ✓ sidebar shows Chinese labels (快速开始, 什么是 VueLynx?, etc.)
+- Browser verified: ✓ English version loads correctly at /guide/quick-start
+- Challenges: Translated "greenfield"→"全新项目", "brownfield"→"混合开发"; kept all CLI commands, code blocks, URLs, and download links unchanged; internal links use /zh/ prefix
+---
+
+## 2026-03-21 - translate-vue-compat: Translate guide/vue-compatibility.mdx
+- Translated: website/docs/guide/vue-compatibility.mdx → website/docs/zh/guide/vue-compatibility.mdx
+- Sections: 9 (matched source)
+- MDX components: Go, Card, DataList, KeepAlive, Suspense, Teleport, Transition, TransitionGroup
+- Browser verified: ✓ zh page loads at /zh/guide/vue-compatibility with Chinese headings
+- Browser verified: ✓ sidebar shows Chinese labels (Vue 兼容性, 快速开始, etc.)
+- Browser verified: ✓ tables render correctly with Chinese headers (特性, 原因, 替代方案)
+- Browser verified: ✓ English version loads correctly at /guide/vue-compatibility
+- Challenges: Translated table headers and cell content; kept all Vue API names (v-model, defineModel, reactive, etc.), component names (<KeepAlive>, <Teleport>, etc.), and code blocks in English; "Works"→"可用", "Upcoming"→"即将支持", "Unsupported"→"不支持的特性"
+---
+
+## 2026-03-21 - translate-mts: Translate guide/main-thread-script.mdx
+- Translated: website/docs/guide/main-thread-script.mdx → website/docs/zh/guide/main-thread-script.mdx
+- Sections: 13 (matched source)
+- MDX components: Go (4 instances)
+- Browser verified: ✓ zh page loads at /zh/guide/main-thread-script with Chinese headings
+- Browser verified: ✓ sidebar shows Chinese labels (主线程脚本, 快速开始, etc.)
+- Browser verified: ✓ language switcher shows English/简体中文 options
+- Browser verified: ✓ English version loads correctly at /guide/main-thread-script
+- Challenges: Translated all prose including thread architecture diagrams descriptions; kept all code blocks, API names (useMainThreadRef, runOnMainThread, runOnBackground, setStyleProperty), 'main thread' directive, and shared-module syntax unchanged; "background thread"→"后台线程", "main thread function"→"主线程函数", "composable"→"组合式函数"
+---
+
+## 2026-03-21 - translate-routing: Translate guide/routing.mdx
+- Translated: website/docs/guide/routing.mdx → website/docs/zh/guide/routing.mdx
+- Sections: 8 (matched source, including 2 ### subsections)
+- MDX components: Go, PackageManagerTabs, RouterLink, RouterView
+- Browser verified: ✓ zh page loads at /zh/guide/routing with Chinese headings (使用 Vue Router, 安装依赖, 创建路由, etc.)
+- Browser verified: ✓ sidebar shows Chinese labels (快速开始, 什么是 VueLynx？, 生态系统, etc.)
+- Browser verified: ✓ language switcher shows English/简体中文 options
+- Challenges: Translated all prose; kept all code blocks, Vue Router API names (createMemoryHistory, createRouter, useRouter, useRoute, RouterView, RouterLink), and table content for API names unchanged; "composable"→"组合式函数", "scoped slot"→"作用域插槽", "programmatic navigation"→"编程式导航"
+---

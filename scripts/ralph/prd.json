@@ -68,7 +68,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/introduction with dev-browser",
         "Browser verify: can switch between zh and en versions"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-quick-start",
@@ -84,7 +84,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/quick-start",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-vue-compat",
@@ -99,7 +99,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/vue-compatibility",
         "Browser verify: tables render correctly, can switch to en"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-mts",
@@ -114,7 +114,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/main-thread-script",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-routing",
@@ -128,7 +128,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/routing",
         "Browser verify: can toggle en/zh"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-data-fetching",
