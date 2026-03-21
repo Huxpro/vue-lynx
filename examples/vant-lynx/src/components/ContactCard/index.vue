@@ -1,12 +1,21 @@
 <!--
   Vant Feature Parity Report:
-  - Component: ContactCard
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 5/5 supported (type, name, tel, addText, editable)
+  - Events: 1/1 supported (click)
+  - Slots: 0/0 supported (Vant ContactCard has no slots)
+  - Gaps: None - full prop and event parity achieved
 -->
 <script setup lang="ts">
+/**
+ * VantContactCard (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/contact-card/ContactCard.tsx
+ *
+ * Feature parity: 5/5 props, 1/1 events. Full parity.
+ * Lynx differences:
+ *   - Custom layout instead of Vant's Cell component
+ *   - "+" text icon instead of Vant's 'add-square' Icon
+ *   - Unicode arrow instead of Cell isLink
+ */
 import { computed } from 'vue-lynx';
 
 export interface ContactCardProps {

@@ -1,20 +1,19 @@
 <!--
-  Vant Feature Parity Report — Calendar
+  Vant Feature Parity Report -- Calendar
   ======================================
-  Props: 14/26 supported
-    Supported: type, title, color, minDate, maxDate, defaultDate, rowHeight,
-               poppable, showMark, showTitle, showConfirm, readonly,
-               firstDayOfWeek, switchMode
+  Props: 17/26 supported
+    Supported: type, switchMode, title, color, minDate, maxDate, defaultDate,
+               rowHeight, poppable, showMark, showTitle, showSubtitle,
+               showConfirm, readonly, firstDayOfWeek, confirmText,
+               confirmDisabledText, allowSameDay
     Missing:   show, round, maxRange, position, teleport, formatter,
-               confirmText, rangePrompt, lazyRender, allowSameDay,
-               showSubtitle, closeOnPopstate, showRangePrompt,
-               confirmDisabledText, closeOnClickOverlay,
-               safeAreaInsetTop, safeAreaInsetBottom
+               rangePrompt, lazyRender, showRangePrompt, closeOnPopstate,
+               closeOnClickOverlay, safeAreaInsetTop, safeAreaInsetBottom
 
-  Events: 4/10 supported
-    Supported: select, confirm, open, close
-    Missing:   unselect, monthShow, overRange, update:show,
-               clickSubtitle, clickDisabledDate, clickOverlay, panelChange
+  Events: 6/11 supported
+    Supported: select, confirm, open, close, click-disabled-date, unselect
+    Missing:   monthShow, overRange, update:show, clickSubtitle,
+               clickOverlay, panelChange
 
   Slots: 0/3 supported
     Missing: title, subtitle, footer
@@ -23,7 +22,6 @@
     - No Popup integration (poppable mode renders inline only)
     - No formatter prop for custom day rendering
     - No maxRange / rangePrompt enforcement
-    - No allowSameDay for range mode
     - No scrollToDate / reset exposed methods
     - No subtitle slot or clickSubtitle event
 -->
@@ -43,11 +41,13 @@ export interface CalendarProps {
   poppable?: boolean;
   showMark?: boolean;
   showTitle?: boolean;
+  showSubtitle?: boolean;
   showConfirm?: boolean;
   readonly?: boolean;
   firstDayOfWeek?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   confirmText?: string;
   confirmDisabledText?: string;
+  allowSameDay?: boolean;
 }
 
 const props = withDefaults(defineProps<CalendarProps>(), {
@@ -59,11 +59,13 @@ const props = withDefaults(defineProps<CalendarProps>(), {
   poppable: false,
   showMark: true,
   showTitle: true,
+  showSubtitle: true,
   showConfirm: true,
   readonly: false,
   firstDayOfWeek: 0,
   confirmText: 'Confirm',
   confirmDisabledText: 'Confirm',
+  allowSameDay: false,
 });
 
 const emit = defineEmits<{
@@ -216,7 +218,13 @@ function selectDate(date: Date | null) {
       selectedDates.value = [date];
     } else {
       const start = selectedDates.value[0];
-      if (date < start) {
+      if (isSameDay(date, start)) {
+        if (props.allowSameDay) {
+          selectedDates.value = [start, date];
+        } else {
+          selectedDates.value = [date];
+        }
+      } else if (date < start) {
         selectedDates.value = [date];
       } else {
         selectedDates.value = [start, date];
@@ -370,8 +378,8 @@ const confirmTextStyle = computed(() => ({
       <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
     </view>
 
-    <!-- Month Navigation -->
-    <view :style="headerStyle">
+    <!-- Month Navigation / Subtitle -->
+    <view v-if="showSubtitle" :style="headerStyle">
       <view :style="{ display: 'flex', padding: 4 }" @tap="prevMonth">
         <Icon name="arrow-left" :size="16" :color="color" />
       </view>

@@ -1,10 +1,29 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: Pagination
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  Vant Feature Parity Report (Pagination):
+  - Props: 11/11 supported
+    - modelValue: number (default 1) - current page (v-model)
+    - mode: 'simple'|'multi' (default 'multi') - display mode
+    - pageCount: number (default 0) - total page count (overrides totalItems)
+    - totalItems: number (default 0) - total item count
+    - itemsPerPage: number (default 10) - items per page
+    - showPageSize: number (default 5) - visible page buttons
+    - forceEllipses: boolean (default false) - show ellipsis when pages are truncated
+    - prevText: string (default 'Prev') - previous button text
+    - nextText: string (default 'Next') - next button text
+    - showPrevButton: boolean (default true) - show/hide prev button
+    - showNextButton: boolean (default true) - show/hide next button
+  - Events: 2/2 supported (update:modelValue, change)
+  - Slots: 3/4 supported (prev-text, next-text, page)
+    - prev-text: custom prev button content
+    - next-text: custom next button content
+    - page: custom page item rendering (receives { number, text, active })
+    - pageDesc: simple mode page description (not yet implemented)
+  - Lynx Adaptations:
+    - Uses inline styles with explicit display: 'flex'
+    - No border-surround CSS class; uses borderWidth/borderStyle/borderColor
+  - Gaps:
+    - No i18n (Vant uses t('prev')/t('next') for default text)
+    - pageDesc slot not implemented
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -19,6 +38,8 @@ export interface PaginationProps {
   forceEllipses?: boolean;
   prevText?: string;
   nextText?: string;
+  showPrevButton?: boolean;
+  showNextButton?: boolean;
 }
 
 const props = withDefaults(defineProps<PaginationProps>(), {
@@ -31,6 +52,8 @@ const props = withDefaults(defineProps<PaginationProps>(), {
   forceEllipses: false,
   prevText: 'Prev',
   nextText: 'Next',
+  showPrevButton: true,
+  showNextButton: true,
 });
 
 const emit = defineEmits<{
@@ -184,8 +207,10 @@ const simpleTextStyle = {
 <template>
   <view :style="containerStyle">
     <!-- Prev button -->
-    <view :style="getNavBtnStyle(isPrevDisabled)" @tap="prevPage">
-      <text :style="getNavTextStyle(isPrevDisabled)">{{ prevText }}</text>
+    <view v-if="showPrevButton" :style="getNavBtnStyle(isPrevDisabled)" @tap="prevPage">
+      <slot name="prev-text">
+        <text :style="getNavTextStyle(isPrevDisabled)">{{ prevText }}</text>
+      </slot>
     </view>
 
     <!-- Simple mode: page indicator -->
@@ -201,13 +226,17 @@ const simpleTextStyle = {
         :style="getPageBtnStyle(page.active)"
         @tap="page.number > 0 ? goToPage(page.number) : undefined"
       >
-        <text :style="getPageTextStyle(page.active)">{{ page.text }}</text>
+        <slot name="page" :number="page.number" :text="page.text" :active="page.active">
+          <text :style="getPageTextStyle(page.active)">{{ page.text }}</text>
+        </slot>
       </view>
     </template>
 
     <!-- Next button -->
-    <view :style="getNavBtnStyle(isNextDisabled)" @tap="nextPage">
-      <text :style="getNavTextStyle(isNextDisabled)">{{ nextText }}</text>
+    <view v-if="showNextButton" :style="getNavBtnStyle(isNextDisabled)" @tap="nextPage">
+      <slot name="next-text">
+        <text :style="getNavTextStyle(isNextDisabled)">{{ nextText }}</text>
+      </slot>
     </view>
   </view>
 </template>

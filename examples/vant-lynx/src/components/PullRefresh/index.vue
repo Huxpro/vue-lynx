@@ -18,7 +18,7 @@
     - No useTouch composable; simplified inline touch tracking
 -->
 <script setup lang="ts">
-import { ref, watch, computed, useSlots } from 'vue-lynx';
+import { ref, watch, useSlots } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 
 export interface PullRefreshProps {
@@ -60,16 +60,6 @@ type PullStatus = 'normal' | 'pulling' | 'loosing' | 'loading' | 'success';
 const status = ref<PullStatus>('normal');
 const distance = ref(0);
 let startY = 0;
-
-const statusText = computed(() => {
-  switch (status.value) {
-    case 'pulling': return props.pullingText;
-    case 'loosing': return props.loosingText;
-    case 'loading': return props.loadingText;
-    case 'success': return props.successText;
-    default: return '';
-  }
-});
 
 // Damping function matching Vant's ease behavior
 function ease(dist: number): number {

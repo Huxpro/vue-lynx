@@ -1,10 +1,17 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: IndexAnchor
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  Vant Feature Parity Report (IndexAnchor):
+  - Props: 1/1 supported (index)
+    - index: string|number (required) - anchor identifier matching IndexBar indexList
+  - Events: none
+  - Slots: 1/1 supported (default - custom anchor content, falls back to index text)
+  - Lynx Adaptations:
+    - No sticky positioning (Lynx does not support position: sticky)
+    - Active state shown via background color and highlight color from IndexBar
+    - No getRect/getBoundingClientRect (Lynx limitation)
+  - Gaps:
+    - No sticky header behavior (Vant pins active anchor at top while scrolling)
+    - No dynamic width/left measurement for sticky positioning
+    - No scroll-spy integration (cannot report rect to parent)
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
@@ -19,6 +26,7 @@ const indexBar = inject<{
   activeAnchor: Ref<string | number>;
   highlightColor: Ref<string>;
   stickyOffsetTop: Ref<number>;
+  sticky: Ref<boolean>;
 }>('indexBar');
 
 const isActive = computed(() => {
@@ -44,7 +52,9 @@ const textStyle = computed(() => ({
 
 <template>
   <view :style="anchorStyle">
-    <text :style="textStyle">{{ index }}</text>
+    <slot>
+      <text :style="textStyle">{{ index }}</text>
+    </slot>
   </view>
-  <slot />
+  <slot name="content" />
 </template>
