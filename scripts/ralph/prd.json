@@ -717,7 +717,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "share-sheet",
@@ -735,7 +735,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "swipe-cell",
@@ -755,7 +755,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "floating-panel",
@@ -774,7 +774,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "floating-bubble",
@@ -793,7 +793,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "calendar",
@@ -886,7 +886,7 @@
         "Create test file in src/components/ for this component",
         "Verify: pnpm test passes for this component"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "search",
