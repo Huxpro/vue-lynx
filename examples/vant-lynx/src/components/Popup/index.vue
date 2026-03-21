@@ -10,13 +10,20 @@
     - teleport: accepted for API compat but not applicable in Lynx
     - lockScroll: accepted for API compat but no direct equivalent in Lynx
     - closeOnPopstate: accepted for API compat but no browser history API in Lynx
-    - transition/transitionAppear: accepted but no CSS transition animations in Lynx
+    - transition/transitionAppear: accepted but CSS transitions not used; main-thread animate() used instead
     - safeAreaInsetTop/Bottom: accepted, uses padding approximation
+  - Animation: Position-based enter/leave using main-thread element.animate()
+    - center: zoom in/out (scale 0.9→1 + opacity)
+    - top: slide from top (translateY -100%→0)
+    - bottom: slide from bottom (translateY 100%→0)
+    - left: slide from left (translateX -100%→0)
+    - right: slide from right (translateX 100%→0)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
 import Icon from '../Icon/index.vue';
+import { useAnimate } from '../../composables/useAnimate';
 
 export interface PopupProps {
   show?: boolean;
@@ -76,26 +83,70 @@ const emit = defineEmits<{
   'click-close-icon': [event: any];
 }>();
 
+// Animation
+const { elRef: popupRef, slideIn, slideOut, zoomIn, zoomOut } = useAnimate();
+
 // Lazy render tracking
 const hasRendered = ref(false);
+// Controls visibility during leave animation
+const isVisible = ref(false);
+
+function getDurationMs() {
+  return Number(props.duration) * 1000;
+}
 
 watch(
   () => props.show,
   (val, oldVal) => {
+    const ms = getDurationMs();
     if (val) {
       hasRendered.value = true;
+      isVisible.value = true;
       emit('open');
-      // In Lynx without CSS transitions, opened fires after a short delay
-      setTimeout(() => emit('opened'), Number(props.duration) * 1000);
+      // Trigger enter animation after element is in DOM
+      triggerEnterAnimation(ms);
+      setTimeout(() => emit('opened'), ms);
     } else if (oldVal) {
       emit('close');
-      setTimeout(() => emit('closed'), Number(props.duration) * 1000);
+      triggerLeaveAnimation(ms);
+      setTimeout(() => {
+        isVisible.value = false;
+        emit('closed');
+      }, ms);
     }
   },
 );
 
+function triggerEnterAnimation(ms: number) {
+  if (props.position === 'center') {
+    zoomIn(ms, true);
+  } else if (props.position === 'top') {
+    slideIn('down', ms);
+  } else if (props.position === 'bottom') {
+    slideIn('up', ms);
+  } else if (props.position === 'left') {
+    slideIn('left', ms);
+  } else if (props.position === 'right') {
+    slideIn('right', ms);
+  }
+}
+
+function triggerLeaveAnimation(ms: number) {
+  if (props.position === 'center') {
+    zoomOut(ms, true);
+  } else if (props.position === 'top') {
+    slideOut('down', ms);
+  } else if (props.position === 'bottom') {
+    slideOut('up', ms);
+  } else if (props.position === 'left') {
+    slideOut('left', ms);
+  } else if (props.position === 'right') {
+    slideOut('right', ms);
+  }
+}
+
 const shouldRender = computed(() => {
-  if (props.destroyOnClose && !props.show) return false;
+  if (props.destroyOnClose && !isVisible.value) return false;
   if (props.lazyRender && !hasRendered.value) return false;
   return true;
 });
@@ -206,12 +257,18 @@ async function doClose() {
       v-if="overlay"
       :show="show"
       :z-index="zIndexNum - 1"
+      :duration="duration"
       :custom-style="overlayStyle"
       @click="onClickOverlay"
     >
       <slot name="overlay-content" />
     </Overlay>
-    <view v-show="show" :style="positionStyle" @tap="onClick">
+    <view
+      v-show="isVisible"
+      :main-thread-ref="popupRef"
+      :style="positionStyle"
+      @tap="onClick"
+    >
       <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClickCloseIcon">
         <Icon :name="closeIcon" :size="22" color="#c8c9cc" />
       </view>

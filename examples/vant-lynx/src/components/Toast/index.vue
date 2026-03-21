@@ -13,11 +13,15 @@
     - html type: not applicable in Lynx (no innerHTML)
     - wordBreak: accepted but Lynx text wrapping may differ
     - forbidClick: overlay blocks touches when enabled
+  - Animation: Fade + scale using main-thread element.animate()
+    - middle: zoom in/out (scale 0.9→1 + opacity)
+    - top/bottom: slide in from respective edge
 -->
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 import Icon from '../Icon/index.vue';
+import { useAnimate } from '../../composables/useAnimate';
 
 export interface ToastProps {
   show?: boolean;
@@ -66,12 +70,18 @@ const emit = defineEmits<{
   opened: [];
 }>();
 
+const ANIM_DURATION = 200; // Short animation for snappy feel
+
 const hasIcon = computed(() => props.type !== 'text' || !!props.icon);
 
 const resolvedIconSize = computed(() => {
   if (typeof props.iconSize === 'string') return parseInt(props.iconSize, 10) || 36;
   return props.iconSize;
 });
+
+// Animation
+const { elRef: toastRef, zoomIn, zoomOut, slideIn, slideOut } = useAnimate();
+const isVisible = ref(false);
 
 // Auto-close timer
 const timer = ref<ReturnType<typeof setTimeout> | null>(null);
@@ -84,6 +94,15 @@ watch(
       timer.value = null;
     }
     if (val) {
+      isVisible.value = true;
+      // Trigger enter animation
+      if (props.position === 'top') {
+        slideIn('down', ANIM_DURATION);
+      } else if (props.position === 'bottom') {
+        slideIn('up', ANIM_DURATION);
+      } else {
+        zoomIn(ANIM_DURATION);
+      }
       emit('opened');
       if (props.duration > 0) {
         timer.value = setTimeout(() => {
@@ -91,6 +110,18 @@ watch(
           emit('close');
         }, props.duration);
       }
+    } else if (isVisible.value) {
+      // Trigger leave animation
+      if (props.position === 'top') {
+        slideOut('down', ANIM_DURATION);
+      } else if (props.position === 'bottom') {
+        slideOut('up', ANIM_DURATION);
+      } else {
+        zoomOut(ANIM_DURATION);
+      }
+      setTimeout(() => {
+        isVisible.value = false;
+      }, ANIM_DURATION);
     }
   },
 );
@@ -126,7 +157,7 @@ function onClickOverlay() {
 
 <template>
   <view
-    v-if="show"
+    v-if="isVisible"
     :style="{
       position: 'fixed',
       top: 0,
@@ -143,6 +174,7 @@ function onClickOverlay() {
   >
     <view :style="positionStyle">
       <view
+        :main-thread-ref="toastRef"
         :style="{
           backgroundColor: 'rgba(0,0,0,0.7)',
           borderRadius: 8,

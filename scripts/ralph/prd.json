@@ -1,0 +1,226 @@
+{
+  "title": "Vant-Lynx Animation Polish",
+  "description": "Add main-thread event-driven animations to popup-style components using Lynx's native Web Animations API (element.animate).",
+  "context": {
+    "mainThreadEvent": "Use :main-thread-bindXxx to bind worklet functions that run on the main thread. These can access element.animate() directly for smooth 60fps animations.",
+    "animateApi": "element.animate(keyframes, options) - Web Animations API style. keyframes is array of {property: value}, options has duration, easing, fill, etc.",
+    "pattern": "1) Use useMainThreadRef to get element ref. 2) Create worklet function with 'main-thread' directive. 3) Call ref.current.animate() in worklet. 4) Trigger animation on show state change.",
+    "transitionComponent": "vue-lynx also has <Transition> component for CSS class-based animations, but main-thread animate() is more powerful for complex animations.",
+    "example": "const elRef = useMainThreadRef<Element>(); function onShow() { 'main-thread'; elRef.current?.animate([{opacity: 0}, {opacity: 1}], {duration: 300}); }",
+    "testing": "IMPORTANT: element.animate() for web-core just landed in PR #2329. Web may not work yet. Test with: 1) Lynx Simulator (Android/iOS emulator), or 2) Link local ~/github/lynx-stack. Build verification (pnpm build) is sufficient for CI - animation behavior should be tested manually on simulator.",
+    "fallback": "If animate() is not available at runtime, animations should gracefully degrade to instant show/hide. Check if elRef.current?.animate is a function before calling."
+  },
+  "userStories": [
+    {
+      "id": "animation-infra",
+      "title": "Create useAnimate composable",
+      "description": "Create a composable that wraps main-thread animate() calls with common animation presets for enter/leave transitions.",
+      "requirements": [
+        "Create composables/useAnimate.ts",
+        "Export useAnimate() that returns { elRef, animate, fadeIn, fadeOut, slideIn, slideOut, zoomIn, zoomOut }",
+        "elRef is useMainThreadRef<Element>() - bind to element with :main-thread-ref",
+        "animate(keyframes, options) is a main-thread worklet wrapper",
+        "fadeIn/fadeOut: opacity 0<->1 animation",
+        "slideIn/slideOut(direction): transform translateX/Y animation",
+        "zoomIn/zoomOut: scale 0.9->1 with opacity animation",
+        "All functions are 'main-thread' worklets that call elRef.current.animate()",
+        "Return Animation object for cancel/pause control"
+      ],
+      "files": ["examples/vant-lynx/src/composables/useAnimate.ts"],
+      "testCommand": "pnpm build && echo 'NOTE: Test animations on Lynx Simulator, Web may not support animate() yet'",
+      "priority": 100,
+      "passes": true
+    },
+    {
+      "id": "overlay-fade",
+      "title": "Overlay fade animation",
+      "description": "Add fade in/out animation to Overlay component when show changes.",
+      "requirements": [
+        "Import useAnimate from composables",
+        "Bind elRef to overlay view with :main-thread-ref",
+        "Watch show prop - call fadeIn() on true, fadeOut() on false",
+        "Use onAfterLeave pattern: keep in DOM during fadeOut, remove after animation ends",
+        "Respect duration prop for animation timing",
+        "Start with opacity: 0 style, animate to 1"
+      ],
+      "files": ["examples/vant-lynx/src/components/Overlay/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 95,
+      "passes": true
+    },
+    {
+      "id": "popup-transitions",
+      "title": "Popup position-based transitions",
+      "description": "Add slide/fade transitions to Popup based on position prop using main-thread animate().",
+      "requirements": [
+        "Import useAnimate from composables",
+        "Bind elRef to popup container with :main-thread-ref",
+        "center: zoomIn/zoomOut (scale 0.9->1 + opacity)",
+        "top: slideIn/Out('down') - translateY from -100%",
+        "bottom: slideIn/Out('up') - translateY from 100%",
+        "left: slideIn/Out('right') - translateX from -100%",
+        "right: slideIn/Out('left') - translateX from 100%",
+        "Respect duration prop, convert to ms",
+        "Use animation.finished promise to emit 'opened'/'closed' events",
+        "Keep popup in DOM during leave animation"
+      ],
+      "files": ["examples/vant-lynx/src/components/Popup/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 90,
+      "passes": true
+    },
+    {
+      "id": "dialog-animation",
+      "title": "Dialog zoom animation",
+      "description": "Add zoom/fade animation to Dialog component.",
+      "requirements": [
+        "Dialog uses Popup internally - ensure Popup animations work",
+        "If Dialog has custom content wrapper, add zoom animation",
+        "Scale from 0.9 -> 1.0 with opacity fade"
+      ],
+      "files": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 85,
+      "passes": true
+    },
+    {
+      "id": "actionsheet-slide",
+      "title": "ActionSheet slide-up animation",
+      "description": "Add slide-up animation to ActionSheet.",
+      "requirements": [
+        "ActionSheet uses Popup with position='bottom'",
+        "Verify slideUp animation from Popup works",
+        "If ActionSheet has wrapper, ensure it inherits animation"
+      ],
+      "files": ["examples/vant-lynx/src/components/ActionSheet/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 84,
+      "passes": true
+    },
+    {
+      "id": "toast-fade",
+      "title": "Toast fade animation",
+      "description": "Add fade in/out animation to Toast.",
+      "requirements": [
+        "Toast appears with fade + slight scale",
+        "Position-aware: center toast zooms, top/bottom toasts slide",
+        "Short duration (200-250ms) for snappy feel"
+      ],
+      "files": ["examples/vant-lynx/src/components/Toast/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 83,
+      "passes": true
+    },
+    {
+      "id": "notify-slide",
+      "title": "Notify slide-down animation",
+      "description": "Add slide-down animation to Notify (top notification bar).",
+      "requirements": [
+        "Notify slides down from top",
+        "Use translateY: -100% -> 0",
+        "Smooth easing (ease-out for enter, ease-in for leave)"
+      ],
+      "files": ["examples/vant-lynx/src/components/Notify/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 82,
+      "passes": true
+    },
+    {
+      "id": "dropdown-slide",
+      "title": "DropdownItem slide animation",
+      "description": "Add slide animation to dropdown menu items.",
+      "requirements": [
+        "Dropdown content slides down when opened",
+        "Use scaleY or translateY animation",
+        "Transform origin should be top"
+      ],
+      "files": ["examples/vant-lynx/src/components/DropdownItem/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 80,
+      "passes": true
+    },
+    {
+      "id": "image-preview-zoom",
+      "title": "ImagePreview zoom animation",
+      "description": "Add zoom animation to image preview overlay.",
+      "requirements": [
+        "Background fades in",
+        "Image zooms from thumbnail position (if available) or center",
+        "Smooth scale animation"
+      ],
+      "files": ["examples/vant-lynx/src/components/ImagePreview/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 75,
+      "passes": true
+    },
+    {
+      "id": "sharesheet-slide",
+      "title": "ShareSheet slide-up animation",
+      "description": "Add slide-up animation to ShareSheet.",
+      "requirements": [
+        "ShareSheet uses Popup or ActionSheet pattern",
+        "Ensure consistent slide-up animation"
+      ],
+      "files": ["examples/vant-lynx/src/components/ShareSheet/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 74,
+      "passes": true
+    },
+    {
+      "id": "floating-panel-slide",
+      "title": "FloatingPanel slide animation",
+      "description": "Add slide animation to FloatingPanel anchors.",
+      "requirements": [
+        "Panel slides between anchor positions smoothly",
+        "Use spring-like easing for natural feel",
+        "Dragging should interrupt animation smoothly"
+      ],
+      "files": ["examples/vant-lynx/src/components/FloatingPanel/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 70,
+      "passes": true
+    },
+    {
+      "id": "floating-bubble-bounce",
+      "title": "FloatingBubble appear animation",
+      "description": "Add bounce/scale animation when FloatingBubble appears.",
+      "requirements": [
+        "Bubble scales up with slight overshoot (bounce)",
+        "Use cubic-bezier for bounce effect",
+        "Subtle and quick (200ms)"
+      ],
+      "files": ["examples/vant-lynx/src/components/FloatingBubble/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 65,
+      "passes": true
+    },
+    {
+      "id": "swipecell-spring",
+      "title": "SwipeCell spring animation",
+      "description": "Add spring animation when SwipeCell snaps back.",
+      "requirements": [
+        "When released, cell snaps to open/closed position with spring",
+        "Use damped spring easing",
+        "Velocity-aware: faster swipe = more overshoot"
+      ],
+      "files": ["examples/vant-lynx/src/components/SwipeCell/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 60,
+      "passes": true
+    },
+    {
+      "id": "noticebar-scroll",
+      "title": "NoticeBar scroll animation",
+      "description": "Ensure NoticeBar text scrolls smoothly when content overflows.",
+      "requirements": [
+        "Marquee-style scrolling for long text",
+        "Configurable scroll speed",
+        "Pause on interaction if supported"
+      ],
+      "files": ["examples/vant-lynx/src/components/NoticeBar/index.vue"],
+      "testCommand": "pnpm build",
+      "priority": 55,
+      "passes": true
+    }
+  ]
+}

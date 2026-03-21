@@ -6,15 +6,15 @@
   - Slots: 1/1 (default)
   - Auto-close: Timer-based auto-close using duration prop (0 = no auto-close)
   - Position: top/bottom support
-  - Vant uses Popup internally; we use positioned view (simpler, avoids overlay)
+  - Animation: Slide down from top (or up from bottom) using main-thread element.animate()
   - Gaps:
     - No lockScroll (Lynx has no body scroll to lock)
     - No teleport (N/A in Lynx)
     - className accepted but class-based styling N/A in Lynx
-    - No fade transition animation
 -->
 <script setup lang="ts">
 import { computed, watch, ref, onBeforeUnmount, useSlots } from 'vue-lynx';
+import { useAnimate } from '../../composables/useAnimate';
 
 export type NotifyType = 'primary' | 'success' | 'warning' | 'danger';
 export type NotifyPosition = 'top' | 'bottom';
@@ -51,6 +51,12 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 
+const ANIM_DURATION = 300;
+
+// Animation
+const { elRef: notifyRef, slideIn, slideOut } = useAnimate();
+const isVisible = ref(false);
+
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 function clearTimer() {
@@ -70,15 +76,24 @@ function startTimer() {
   }
 }
 
-// Watch show to start/stop auto-close timer
+// Watch show to start/stop auto-close timer and trigger animation
 watch(
   () => props.show,
   (val) => {
     if (val) {
+      isVisible.value = true;
+      // Slide in from top or bottom
+      const dir = props.position === 'top' ? 'down' : 'up';
+      slideIn(dir, ANIM_DURATION);
       startTimer();
       emit('opened');
-    } else {
+    } else if (isVisible.value) {
       clearTimer();
+      const dir = props.position === 'top' ? 'down' : 'up';
+      slideOut(dir, ANIM_DURATION);
+      setTimeout(() => {
+        isVisible.value = false;
+      }, ANIM_DURATION);
     }
   },
   { immediate: true },
@@ -145,7 +160,7 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <view v-if="show" :style="barStyle" @tap="onTap">
+  <view v-if="isVisible" :main-thread-ref="notifyRef" :style="barStyle" @tap="onTap">
     <slot>
       <text :style="textStyle">{{ message }}</text>
     </slot>

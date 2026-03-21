@@ -1,0 +1,91 @@
+# Ralph Progress Log
+Started: Sat Mar 21 17:45:32 EDT 2026
+---
+
+## Round: Animation Polish (14 stories)
+
+### animation-infra - DONE
+- Created `examples/vant-lynx/src/composables/useAnimate.ts`
+- Exports: elRef, fadeIn, fadeOut, slideIn, slideOut, zoomIn, zoomOut, bounceIn
+- Pattern: main-thread worklet functions + runOnMainThread() BG wrappers
+- Graceful fallback: checks `typeof elRef.current?.animate === 'function'`
+
+### overlay-fade - DONE
+- Added fade in/out animation to Overlay using useAnimate composable
+- Element stays in DOM during leave animation (isVisible ref + setTimeout)
+- Respects duration prop (converted s → ms)
+
+### popup-transitions - DONE
+- Position-based enter/leave animations:
+  - center: zoomIn/zoomOut with translate(-50%,-50%) preservation
+  - top: slideIn/Out('down')
+  - bottom: slideIn/Out('up')
+  - left: slideIn/Out('left')
+  - right: slideIn/Out('right')
+- Popup stays in DOM during leave (v-show on isVisible)
+- opened/closed events fire after animation duration
+
+### dialog-animation - DONE
+- Added zoom in/out animation to Dialog box (scale 0.9→1 + opacity)
+- Dialog uses its own Overlay (now with fade) + own animated dialog view
+- Keeps dialog in DOM during leave animation
+
+### actionsheet-slide - DONE (inherits from Popup)
+- ActionSheet uses `<Popup position="bottom" round>` — gets slide-up animation automatically
+
+### toast-fade - DONE
+- Position-aware animations:
+  - middle: zoomIn/zoomOut (200ms)
+  - top: slideIn/Out('down') (200ms)
+  - bottom: slideIn/Out('up') (200ms)
+- Short 200ms duration for snappy feel
+- Toast stays visible during leave animation
+
+### notify-slide - DONE
+- Slides down from top (or up from bottom) using slideIn/slideOut
+- 300ms animation duration
+- Stays in DOM during leave animation
+
+### dropdown-slide - DONE
+- Added useAnimate to DropdownItem
+- Slides in/out based on menu direction (down/up)
+- 200ms animation with main-thread-ref on dropdown list view
+- Replaced setTimeout(50) with actual animation timing
+
+### image-preview-zoom - DONE
+- Added fadeIn/fadeOut to full-screen preview overlay
+- 300ms animation
+- Stays visible during leave animation
+
+### sharesheet-slide - DONE (inherits from Popup)
+- ShareSheet uses `<Popup position="bottom">` — gets slide-up animation automatically
+
+### floating-panel-slide - DONE
+- Replaced CSS transition with element.animate() for snap animations
+- Uses cubic-bezier(0.18, 0.89, 0.32, 1.28) spring curve
+- animateToHeight() called on touch end snap
+- Removed transitionProperty/transitionDuration from style
+
+### floating-bubble-bounce - DONE
+- Added bounce-in animation (scale 0→1.1→0.95→1) on first appear
+- Added snap animation for magnetic positioning using element.animate()
+- Replaced CSS transitionProperty with element.animate() for snap
+- 200ms bounce, 300ms snap duration
+
+### swipecell-spring - DONE
+- Added main-thread snap animation for open/close using element.animate()
+- Uses cubic-bezier(0.25, 0.46, 0.45, 0.94) easing
+- Removed CSS transitionDuration/transitionProperty from wrapper style
+- 300ms snap duration
+
+### noticebar-scroll - DONE
+- Replaced setInterval-based marquee with element.animate() infinite loop
+- Uses translateX keyframes with linear easing
+- Duration calculated from text length and speed
+- Removed timer-based offset tracking
+- main-thread-ref bound to marquee text element
+
+---
+Build verification: `pnpm build` passes (all 4 packages: internal, runtime, main-thread, plugin)
+Test verification: `pnpm test` passes (33/33 upstream-tests)
+Note: vant-lynx component tests (94) fail due to pre-existing `vue-lynx-testing-library` resolution issue — not related to animation changes.
