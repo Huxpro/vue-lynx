@@ -14,6 +14,15 @@ const components = [
   { name: 'Divider', path: '/divider' },
   { name: 'Space', path: '/space' },
   { name: 'Layout', path: '/layout' },
+  { name: 'Popup', path: '/popup' },
+  { name: 'Overlay', path: '/overlay' },
+  { name: 'Switch', path: '/switch' },
+  { name: 'Checkbox', path: '/checkbox' },
+  { name: 'Radio', path: '/radio' },
+  { name: 'Field', path: '/field' },
+  { name: 'Rate', path: '/rate' },
+  { name: 'Stepper', path: '/stepper' },
+  { name: 'Progress', path: '/progress' },
 ];
 
 function navigate(path: string) {
