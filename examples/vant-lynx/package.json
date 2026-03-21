@@ -1,0 +1,33 @@
+{
+  "name": "@vue-lynx-example/vant-lynx",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vant components ported for Lynx native rendering",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev",
+    "dev:web": "rspeedy dev",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@rsbuild/plugin-less": "^1.6.2",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/testing-environment": "^0.1.11",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "jsdom": "^25.0.0",
+    "less": "^4.2.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": { "node": ">=18" }
+}

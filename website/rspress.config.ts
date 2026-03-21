@@ -77,6 +77,7 @@ export default defineConfig({
         { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        { text: 'Vant', link: '/guide/vant' },
         {
           dividerType: 'solid',
         },
