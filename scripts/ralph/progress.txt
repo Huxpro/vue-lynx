@@ -107,3 +107,55 @@ Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
 - Tab now injects animated ref and applies opacity transition when enabled
 
 Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+
+## Quality Review Round 2 (2026-03-21)
+
+### CouponList code v-model sync fix
+- exchangeCode ref was initialized from props.code but never watched for external updates
+- Added watch on props.code to sync exchangeCode when parent changes the prop
+- Added missing `watch` import
+
+Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+
+## Quality Review Round 3 (2026-03-21)
+
+### Rate half-star base color fix
+- getStarColor() returned props.color for 'half' status, but the base layer of a half star
+  shows voidIcon and should use voidColor; the overlay handles active color
+- Changed condition: status === 'full' → props.color, else → props.voidColor
+
+### Uploader beforeRead invocation fix
+- beforeRead prop was declared but never invoked
+- Integrated beforeRead validation into the modelValue watcher (same pattern as afterRead)
+- When new files are added, beforeRead is called for each; rejected files are filtered out
+- afterRead is only called for accepted files
+
+Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+
+## Quality Review Round 4 (2026-03-21)
+
+### DatePicker type prop shorthand
+- Demo used `type="year-month"` and `type="datehour"` but the component only accepted `columnsType` array
+- Added `type` prop with `DatePickerType` enum: 'date' | 'year-month' | 'month-day' | 'datehour'
+- Added `TYPE_TO_COLUMNS` mapping; computed `columnsType` resolves from `type` prop or falls back to explicit `columnsType`
+- Updated all `props.columnsType` references in script to use the computed
+
+### Field unused inject import
+- `inject` was imported but never used (added during form-auto-required story)
+- Removed dead import
+
+Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+
+## Quality Review Round 5 (2026-03-21)
+
+### Uploader beforeRead/afterRead race condition fix
+- `suppressWatch` flag was cleared synchronously after emit, but Vue watchers fire async
+- Changed to `skipNextWatch` flag: stays true until the next watcher invocation clears it
+- Fixed afterRead index calculation: saved `prevLength` as `baseLength` before mutation
+  so accepted files always get correct indices relative to original array position
+
+### DatePicker filter/formatter type safety
+- filter and formatter prop signatures used generic `string` for type parameter
+- Changed to `DatePickerColumnType` for proper type safety
+
+Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓

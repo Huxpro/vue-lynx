@@ -14,7 +14,7 @@
     - No autocomplete/inputmode/enterkeyhint
 -->
 <script setup lang="ts">
-import { computed, ref, inject } from 'vue-lynx';
+import { computed, ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 
 interface FormRule {
