@@ -7,10 +7,11 @@
     - teleport: accepted for API compat but not applicable in Lynx (no DOM)
     - lockScroll: accepted for API compat but no direct equivalent in Lynx
     - className: accepted but applied as inline style override since Lynx has no CSS class system
-    - Fade transition not implemented (Lynx animation API would be needed)
+  - Animation: Fade in/out using main-thread element.animate()
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
+import { useAnimate } from '../../composables/useAnimate';
 
 export interface OverlayProps {
   show?: boolean;
@@ -35,13 +36,28 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
+// Animation
+const { elRef: animRef, fadeIn, fadeOut } = useAnimate();
+
 // For lazy render: track if overlay has ever been shown
 const hasRendered = ref(false);
+// Controls DOM presence during leave animation
+const isVisible = ref(false);
 
 watch(
   () => props.show,
   (val) => {
-    if (val) hasRendered.value = true;
+    const ms = Number(props.duration) * 1000;
+    if (val) {
+      hasRendered.value = true;
+      isVisible.value = true;
+      fadeIn(ms);
+    } else if (isVisible.value) {
+      fadeOut(ms);
+      setTimeout(() => {
+        isVisible.value = false;
+      }, ms);
+    }
   },
   { immediate: true },
 );
@@ -73,7 +89,12 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <view v-if="shouldRender && show" :style="overlayStyle" @tap="onTap">
+  <view
+    v-if="shouldRender && isVisible"
+    :main-thread-ref="animRef"
+    :style="overlayStyle"
+    @tap="onTap"
+  >
     <slot />
   </view>
 </template>

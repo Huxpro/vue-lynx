@@ -22,7 +22,7 @@
     - Uses height-based positioning instead of translateY (Lynx compatibility)
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, runOnMainThread, useMainThreadRef } from 'vue-lynx';
 
 export interface FloatingPanelProps {
   height?: number;
@@ -79,6 +79,28 @@ const currentHeight = ref(
 );
 const dragging = ref(false);
 
+// Main-thread animate for snap transitions
+const panelRef = useMainThreadRef(null);
+
+function _animateHeight(fromH: number, toH: number, duration: number) {
+  'main thread';
+  if (typeof (panelRef as any).current?.animate === 'function') {
+    (panelRef as any).current.animate(
+      [{ height: `${fromH}px` }, { height: `${toH}px` }],
+      {
+        duration,
+        fill: 'forwards',
+        easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+      },
+    );
+  }
+}
+
+function animateToHeight(from: number, to: number) {
+  const ms = props.duration * 1000;
+  runOnMainThread(_animateHeight)(from, to, ms);
+}
+
 // Damping factor for elastic effect beyond bounds
 const DAMP = 0.2;
 
@@ -121,11 +143,17 @@ function onTouchEnd() {
 
   if (!props.draggable) return;
 
+  const fromHeight = currentHeight.value;
   if (props.magnetic) {
     currentHeight.value = closest(anchors.value, currentHeight.value);
   } else {
     const { min, max } = boundary.value;
     currentHeight.value = Math.max(min, Math.min(max, currentHeight.value));
+  }
+
+  // Use element.animate() for snap transition
+  if (currentHeight.value !== fromHeight) {
+    animateToHeight(fromHeight, currentHeight.value);
   }
 
   if (currentHeight.value !== startHeight) {
@@ -176,9 +204,6 @@ const panelStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'column' as const,
   zIndex: 999,
-  transitionProperty: dragging.value ? 'none' : 'height',
-  transitionDuration: dragging.value ? '0s' : `${props.duration}s`,
-  transitionTimingFunction: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
 }));
 
 const headerStyle = computed(() => ({
@@ -202,7 +227,7 @@ defineExpose({
 </script>
 
 <template>
-  <view :style="panelStyle">
+  <view :main-thread-ref="panelRef" :style="panelStyle">
     <!-- Header: custom slot or default drag bar -->
     <slot name="header">
       <view
