@@ -1,10 +1,10 @@
 <!--
   Vant Feature Parity Report:
-  - Component: SidebarItem
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 4/6 supported (title, dot, badge, disabled)
+  - Events: 1/1 supported (click)
+  - Slots: 1/1 supported (default)
+  - Gaps: badgeProps prop, route props (to, url, replace);
+    index is manually passed instead of auto-detected via useParent
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';

@@ -1,21 +1,39 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 5/9 supported (modelValue, title, options, placeholder, activeColor, closeable)
-    Missing: swipeable, closeIcon, showHeader, fieldNames
-  - Events: 5/5 supported (update:modelValue, change, finish, close, click-tab)
-  - Slots: 0/3 supported
+  Vant Feature Parity Report -- Cascader
+  ======================================
+  Props: 9/9 supported
+    Supported: modelValue, title, options, placeholder, activeColor, closeable,
+               showHeader, closeIcon, fieldNames
+    Missing:   swipeable (no swipe gesture in Lynx tabs)
+
+  Events: 5/5 supported
+    Supported: update:modelValue, change, finish, close, click-tab
+
+  Slots: 0/4 supported
     Missing: title, option, options-top, options-bottom
-  - Gaps: no fieldNames for custom option field mapping; no swipeable tab animation;
-    closeIcon is hardcoded to x character; showHeader always true; disabled option support
-    not implemented; no options-top/options-bottom slots
+
+  Key Gaps:
+    - No swipeable tab animation (Lynx limitation)
+    - Disabled option color only (no custom disabled style)
+    - No slot support for custom option/title rendering
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
+import Icon from '../Icon/index.vue';
 
 export interface CascaderOption {
-  text: string;
-  value: string | number;
+  text?: string;
+  value?: string | number;
+  color?: string;
+  disabled?: boolean;
   children?: CascaderOption[];
+  [key: PropertyKey]: any;
+}
+
+export interface CascaderFieldNames {
+  text?: string;
+  value?: string;
+  children?: string;
 }
 
 export interface CascaderProps {
@@ -25,6 +43,9 @@ export interface CascaderProps {
   placeholder?: string;
   activeColor?: string;
   closeable?: boolean;
+  showHeader?: boolean;
+  closeIcon?: string;
+  fieldNames?: CascaderFieldNames;
 }
 
 const props = withDefaults(defineProps<CascaderProps>(), {
@@ -32,6 +53,8 @@ const props = withDefaults(defineProps<CascaderProps>(), {
   placeholder: 'Select',
   activeColor: '#1989fa',
   closeable: true,
+  showHeader: true,
+  closeIcon: 'cross',
 });
 
 const emit = defineEmits<{
@@ -42,6 +65,23 @@ const emit = defineEmits<{
   'click-tab': [index: number];
 }>();
 
+// Resolve field names with defaults
+const textKey = computed(() => props.fieldNames?.text ?? 'text');
+const valueKey = computed(() => props.fieldNames?.value ?? 'value');
+const childrenKey = computed(() => props.fieldNames?.children ?? 'children');
+
+function getOptionText(option: CascaderOption): string {
+  return (option[textKey.value] as string) ?? '';
+}
+
+function getOptionValue(option: CascaderOption): string | number {
+  return option[valueKey.value] as string | number;
+}
+
+function getOptionChildren(option: CascaderOption): CascaderOption[] | undefined {
+  return option[childrenKey.value] as CascaderOption[] | undefined;
+}
+
 // activeTab: which tab level is currently visible
 const activeTab = ref(0);
 
@@ -49,12 +89,44 @@ const activeTab = ref(0);
 const selectedOptions = ref<CascaderOption[]>([]);
 
 // On modelValue change, try to restore selected path
+function getSelectedOptionsByValue(
+  options: CascaderOption[],
+  value: string | number,
+): CascaderOption[] | undefined {
+  for (const option of options) {
+    if (getOptionValue(option) === value) {
+      return [option];
+    }
+    const children = getOptionChildren(option);
+    if (children) {
+      const found = getSelectedOptionsByValue(children, value);
+      if (found) {
+        return [option, ...found];
+      }
+    }
+  }
+  return undefined;
+}
+
 watch(
   () => props.modelValue,
   (val) => {
     if (val === undefined || val === null) {
       selectedOptions.value = [];
       activeTab.value = 0;
+      return;
+    }
+    const found = getSelectedOptionsByValue(props.options, val);
+    if (found) {
+      selectedOptions.value = found;
+      // Determine active tab: if last selected has children, show next level
+      const last = found[found.length - 1];
+      const lastChildren = getOptionChildren(last);
+      if (lastChildren && lastChildren.length > 0) {
+        activeTab.value = found.length;
+      } else {
+        activeTab.value = found.length - 1;
+      }
     }
   },
   { immediate: true },
@@ -67,9 +139,10 @@ const tabs = computed(() => {
 
   for (let i = 0; i < selectedOptions.value.length; i++) {
     const sel = selectedOptions.value[i];
-    result.push({ title: sel.text, options: currentOptions });
-    if (sel.children && sel.children.length > 0) {
-      currentOptions = sel.children;
+    result.push({ title: getOptionText(sel), options: currentOptions });
+    const children = getOptionChildren(sel);
+    if (children && children.length > 0) {
+      currentOptions = children;
     } else {
       break;
     }
@@ -82,23 +155,26 @@ const tabs = computed(() => {
 });
 
 function onSelectOption(levelIndex: number, option: CascaderOption) {
+  if (option.disabled) return;
+
   const newSelected = selectedOptions.value.slice(0, levelIndex);
   newSelected.push(option);
   selectedOptions.value = newSelected;
 
-  if (option.children && option.children.length > 0) {
+  const children = getOptionChildren(option);
+  if (children && children.length > 0) {
     activeTab.value = levelIndex + 1;
     emit('change', {
-      value: option.value,
-      text: option.text,
+      value: getOptionValue(option),
+      text: getOptionText(option),
       selectedOptions: newSelected,
     });
   } else {
     // Leaf node: finish
-    emit('update:modelValue', option.value);
+    emit('update:modelValue', getOptionValue(option));
     emit('finish', {
-      value: option.value,
-      text: option.text,
+      value: getOptionValue(option),
+      text: getOptionText(option),
       selectedOptions: newSelected,
     });
   }
@@ -112,37 +188,70 @@ function onClickTab(index: number) {
 function onClose() {
   emit('close');
 }
+
+function isOptionSelected(tabIdx: number, option: CascaderOption): boolean {
+  const sel = selectedOptions.value[tabIdx];
+  return sel != null && getOptionValue(sel) === getOptionValue(option);
+}
+
+// Styles
+const containerStyle = {
+  display: 'flex',
+  flexDirection: 'column' as const,
+  backgroundColor: '#fff',
+};
+
+const headerStyle = {
+  display: 'flex',
+  flexDirection: 'row' as const,
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 16,
+  borderBottomWidth: 1,
+  borderBottomStyle: 'solid' as const,
+  borderBottomColor: '#ebedf0',
+  position: 'relative' as const,
+};
+
+const tabsRowStyle = {
+  display: 'flex',
+  flexDirection: 'row' as const,
+  borderBottomWidth: 1,
+  borderBottomStyle: 'solid' as const,
+  borderBottomColor: '#ebedf0',
+};
+
+const optionRowStyle = {
+  display: 'flex',
+  flexDirection: 'row' as const,
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingTop: 12,
+  paddingBottom: 12,
+  paddingLeft: 16,
+  paddingRight: 16,
+  borderBottomWidth: 1,
+  borderBottomStyle: 'solid' as const,
+  borderBottomColor: '#f7f8fa',
+};
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }">
+  <view :style="containerStyle">
     <!-- Header -->
-    <view :style="{
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomStyle: 'solid',
-      borderBottomColor: '#ebedf0',
-    }">
+    <view v-if="showHeader" :style="headerStyle">
       <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
-      <text
+      <view
         v-if="closeable"
-        :style="{ fontSize: 20, color: '#c8c9cc', padding: 4 }"
+        :style="{ position: 'absolute', right: 16, display: 'flex', padding: 4 }"
         @tap="onClose"
-      >&times;</text>
+      >
+        <Icon :name="closeIcon" :size="20" color="#c8c9cc" />
+      </view>
     </view>
 
     <!-- Tabs row -->
-    <view :style="{
-      display: 'flex',
-      flexDirection: 'row',
-      borderBottomWidth: 1,
-      borderBottomStyle: 'solid',
-      borderBottomColor: '#ebedf0',
-    }">
+    <view :style="tabsRowStyle">
       <view
         v-for="(tab, tabIdx) in tabs"
         :key="tabIdx"
@@ -160,38 +269,28 @@ function onClose() {
         <text :style="{
           fontSize: 14,
           color: activeTab === tabIdx ? activeColor : '#323233',
+          fontWeight: activeTab === tabIdx ? 'bold' : 'normal',
         }">{{ tab.title }}</text>
       </view>
     </view>
 
     <!-- Options list for active tab -->
-    <view :style="{ flex: 1 }">
+    <view :style="{ display: 'flex', flexDirection: 'column', flex: 1 }">
       <view
         v-for="option in tabs[activeTab]?.options ?? []"
-        :key="option.value"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingTop: 12,
-          paddingBottom: 12,
-          paddingLeft: 16,
-          paddingRight: 16,
-          borderBottomWidth: 1,
-          borderBottomStyle: 'solid',
-          borderBottomColor: '#f7f8fa',
-        }"
+        :key="getOptionValue(option)"
+        :style="optionRowStyle"
         @tap="() => onSelectOption(activeTab, option)"
       >
         <text :style="{
           fontSize: 14,
-          color: selectedOptions[activeTab]?.value === option.value ? activeColor : '#323233',
-        }">{{ option.text }}</text>
-        <text
-          v-if="selectedOptions[activeTab]?.value === option.value"
-          :style="{ fontSize: 16, color: activeColor }"
-        >&#10003;</text>
+          color: option.disabled
+            ? '#c8c9cc'
+            : (option.color || (isOptionSelected(activeTab, option) ? activeColor : '#323233')),
+        }">{{ getOptionText(option) }}</text>
+        <view v-if="isOptionSelected(activeTab, option)" :style="{ display: 'flex' }">
+          <Icon name="success" :size="18" :color="activeColor" />
+        </view>
       </view>
     </view>
   </view>

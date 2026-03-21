@@ -7,6 +7,16 @@
   - Gaps: None - full prop and event parity achieved
 -->
 <script setup lang="ts">
+/**
+ * VantContactEdit (Lynx port)
+ * @see https://github.com/youzan/vant/blob/main/packages/vant/src/contact-edit/ContactEdit.tsx
+ *
+ * Feature parity: 7/7 props, 3/3 events. Full parity.
+ * Lynx differences:
+ *   - Manual validation instead of Vant's Form/Field components
+ *   - Custom toggle view instead of Vant's Switch component
+ *   - Button loading states shown via text change + opacity
+ */
 import { ref, computed, watch } from 'vue-lynx';
 
 export interface ContactInfo {

@@ -1,27 +1,15 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 13/20 supported
-    Supported: modelValue, maxCount, maxSize, accept, multiple, disabled, deletable,
-               showUpload, previewImage, previewSize, imageFit, uploadText, readonly
-    Missing: name, capture, lazyLoad, resultType, uploadIcon, reupload,
-             previewFullImage, previewOptions, beforeRead, afterRead, beforeDelete
-  - Events: 5/7 supported (update:modelValue, oversize, click-upload, click-preview, delete)
-    Missing: close-preview, click-reupload
-  - Slots: 1/3 supported (default)
-    Missing: preview-cover, preview-delete
-  - Exposed Methods: 0/1 (missing chooseFile)
-  - Sub-components: Icon not imported (uses text fallback for + and x)
-  - Gaps:
-    - No file input element (Lynx has no <input type="file">); upload trigger
-      emits click-upload for host app to handle native file picking
-    - No beforeRead/afterRead callbacks (host app handles file reading)
-    - No beforeDelete interceptor
-    - No image preview (previewFullImage/previewOptions) - Lynx has no built-in
-      image preview overlay
-    - No uploadIcon prop (uses '+' text; Icon import would improve this)
-    - No reupload mode
-    - No lazyLoad support
-    - readonly prop now supported but only prevents delete, not upload
+  - Props: 13/22 supported (modelValue, maxCount, maxSize, accept, multiple,
+    disabled, deletable, showUpload, previewImage, previewSize, imageFit,
+    uploadText, readonly)
+  - Events: 5/8 supported (update:modelValue, oversize, click-upload,
+    click-preview, delete)
+  - Slots: 0/1 supported
+  - Gaps: name, capture, lazyLoad, resultType, uploadIcon, reupload,
+    afterRead, beforeRead, beforeDelete, previewOptions, previewFullImage props;
+    close-preview, clickReupload events; default slot;
+    no native file input (Lynx lacks HTML file picker)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

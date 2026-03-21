@@ -1,10 +1,11 @@
 <!--
   Vant Feature Parity Report:
-  - Component: TreeSelect
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Props: 6/6 supported (items, activeId, mainActiveIndex, height, max,
+    selectedIcon)
+  - Events: 4/4 supported (update:activeId, update:mainActiveIndex,
+    clickNav, clickItem)
+  - Slots: 0/1 supported
+  - Gaps: content slot (custom right-side content area)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
