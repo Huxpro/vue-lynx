@@ -1,0 +1,62 @@
+# Vant
+
+[Vant](https://vant-ui.github.io/vant/) is a popular mobile UI component library for Vue. **Vant Lynx** is a port of Vant to Vue Lynx, bringing Vant's familiar API and components to Lynx cross-platform apps.
+
+## Demo
+
+Try the Vant Lynx components in the interactive playground below:
+
+<Go example="vant-lynx" defaultFile="src/pages/index.vue" entry="src" />
+
+## Status
+
+Vant Lynx is under active development. We're working toward full feature parity with Vant Web.
+
+### Supported Components
+
+Currently, Vant Lynx includes 90+ components:
+
+| Category | Components |
+|----------|------------|
+| **Basic** | Button, Cell, Icon, Image, Layout, Popup, Toast |
+| **Form** | Checkbox, Field, Form, Picker, Radio, Rate, Search, Slider, Stepper, Switch, Uploader |
+| **Feedback** | ActionSheet, Dialog, DropdownMenu, Loading, Notify, Overlay, ShareSheet, SwipeCell |
+| **Display** | Badge, Card, Collapse, Divider, Empty, ImagePreview, NoticeBar, Popover, Progress, Skeleton, Steps, Swipe, Tag |
+| **Navigation** | Grid, IndexBar, NavBar, Pagination, Sidebar, Tab, Tabbar, TreeSelect |
+| **Business** | AddressEdit, AddressList, Area, Calendar, Card, ContactCard, ContactEdit, ContactList, CouponList, SubmitBar |
+
+### Lynx Adaptations
+
+Some Vant features require adaptations for the Lynx environment:
+
+- **Animations**: CSS transitions are limited in Lynx; some components use JavaScript-based animations
+- **Scroll locking**: `lockScroll` props are accepted for API compatibility but may behave differently
+- **Teleport**: Not applicable in Lynx's rendering model
+- **Safe area**: Uses Lynx safe area APIs instead of CSS `env(safe-area-inset-*)`
+
+## Installation
+
+```bash
+# Coming soon - currently in examples/vant-lynx
+pnpm add @anthropic/vant-lynx
+```
+
+## Usage
+
+```vue
+<script setup>
+import { Button, Cell, Dialog } from '@anthropic/vant-lynx';
+</script>
+
+<template>
+  <Cell title="Hello" value="World" />
+  <Button type="primary" @click="Dialog.alert({ message: 'Hello!' })">
+    Click me
+  </Button>
+</template>
+```
+
+## Links
+
+- [Vant Documentation](https://vant-ui.github.io/vant/)
+- [Vant Lynx Source](https://github.com/anthropics/vue-lynx/tree/main/examples/vant-lynx)
