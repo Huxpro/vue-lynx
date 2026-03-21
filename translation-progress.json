@@ -1,0 +1,19 @@
+{
+  "total": 13,
+  "completed": [],
+  "remaining": [
+    "website/docs/index.mdx",
+    "website/docs/guide/introduction.mdx",
+    "website/docs/guide/quick-start.mdx",
+    "website/docs/guide/vue-compatibility.mdx",
+    "website/docs/guide/main-thread-script.mdx",
+    "website/docs/guide/tutorial-gallery.mdx",
+    "website/docs/guide/tutorial-swiper.mdx",
+    "website/docs/guide/7guis.mdx",
+    "website/docs/guide/routing.mdx",
+    "website/docs/guide/pinia.mdx",
+    "website/docs/guide/data-fetching.mdx",
+    "website/docs/guide/tailwindcss.mdx",
+    "website/docs/guide/testing-library.mdx"
+  ]
+}

@@ -1,26 +1,34 @@
 {
   "go.preview": {
-    "en": "Preview"
+    "en": "Preview",
+    "zh": "预览"
   },
   "go.qrcode": {
-    "en": "QRCode"
+    "en": "QRCode",
+    "zh": "二维码"
   },
   "go.files": {
-    "en": "Files"
+    "en": "Files",
+    "zh": "文件"
   },
   "go.scan.message-1": {
-    "en": "Download "
+    "en": "Download ",
+    "zh": "下载 "
   },
   "go.scan.message-2": {
-    "en": "and scan the QR code to get started."
+    "en": "and scan the QR code to get started.",
+    "zh": "并扫描二维码以开始使用。"
   },
   "go.qrcode.copy-link": {
-    "en": "Copy Link"
+    "en": "Copy Link",
+    "zh": "复制链接"
   },
   "go.qrcode.copied": {
-    "en": "Copied"
+    "en": "Copied",
+    "zh": "已复制"
   },
   "go.qrcode.entry": {
-    "en": "Entry"
+    "en": "Entry",
+    "zh": "入口"
   }
 }

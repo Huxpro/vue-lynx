@@ -1,0 +1,394 @@
+# 主线程脚本
+
+主线程脚本是一种可以在主线程上执行的 JS 脚本。最常见的使用场景是流畅的动画和手势处理。它解决了 Lynx 多线程架构中固有的响应延迟问题，旨在实现接近原生的交互体验。
+
+## Lynx 中的事件响应延迟
+
+这是一个简单的动画：一个跟随 `scroll-view` 同步移动的小方块。在组件中，我们监听滚动事件，从事件参数中获取当前滚动位置，并立即更新方块的位置：
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/background-draggable.lynx.bundle"
+  defaultFile="src/background-draggable/App.vue"
+  entry="src/background-draggable"
+/>
+
+你可以尝试滚动示例左侧的 scroll-view。右侧的蓝色方块会跟随 scroll-view 的移动。但你可能会注意到，它的移动存在不可预测的延迟，尤其是在性能较低的设备上。这种延迟还会随着页面复杂度的增加而加大。
+
+这是因为在 Lynx 的架构中，事件在主线程上触发，而常规的 JS 事件处理器（Vue 的 `@scroll` 等）只能在后台线程上执行。因此，使用常规事件来触发动画会引入多次跨线程通信，导致响应不及时，动画滞后于手势。
+
+```
+  不使用主线程脚本：
+
+  ┌────────────────┐      ┌────────────────────┐      ┌────────────────┐
+  │    主线程       │      │     后台线程        │      │    主线程       │
+  │  （触发事件）   │ ──▶  │ （Vue 处理器执行）  │ ──▶  │  （渲染）       │
+  └────────────────┘      └────────────────────┘      └────────────────┘
+          ▲                                                    │
+          └─────────────── 2 次跨线程通信 ─────────────────────┘
+```
+
+主线程脚本提供了在主线程上同步处理事件的能力，确保事件响应的同步性。
+
+```
+  使用主线程脚本：
+
+  ┌────────────────────────────────────────────────────────────┐
+  │                         主线程                              │
+  │   触发事件  ──▶  处理器执行  ──▶  渲染                      │
+  └────────────────────────────────────────────────────────────┘
+                      0 次跨线程通信
+```
+
+## 使用主线程函数消除事件响应延迟
+
+### 使用主线程脚本实现动画
+
+使用主线程脚本同步事件非常简单。这里我们尝试修改前面的示例。
+
+首先，我们通过使用 `main-thread-bindscroll` 属性替代 `@scroll`，告知框架我们希望在主线程上处理这个事件：
+
+```vue
+<scroll-view :main-thread-bindscroll="onScroll" />
+```
+
+由于 `onScroll` 现在是一个主线程事件处理器，我们还需要将它声明为主线程函数。这可以通过在函数体的第一行添加 `'main thread'` 指令来实现：
+
+```ts
+const onScroll = (event) => {
+  'main thread'
+  // ...
+}
+```
+
+将函数声明为主线程函数后，就无法再从后台线程调用它了。
+
+最后，由于我们现在可以在主线程上直接操作元素属性，因此不再需要使用响应式 `ref` 来改变位置。当使用主线程函数作为事件处理器时，我们可以通过 `useMainThreadRef()` 获取目标元素的引用，并在主线程函数内通过 `.current` 访问它。该对象允许你同步获取和设置节点属性，例如在示例中使用 `setStyleProperty()`：
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const mtDraggableRef = useMainThreadRef(null)
+
+const onScroll = (event: { detail?: { scrollTop?: number } }) => {
+  'main thread'
+  const scrollTop = event.detail?.scrollTop ?? 0
+  const el = (mtDraggableRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  if (el?.setStyleProperty) {
+    el.setStyleProperty('transform', `translate(0px, ${500 - scrollTop}px)`)
+  }
+}
+</script>
+
+<template>
+  <scroll-view :main-thread-bindscroll="onScroll">
+    <!-- ... -->
+  </scroll-view>
+  <view :main-thread-ref="mtDraggableRef">
+    <!-- ... -->
+  </view>
+</template>
+```
+
+以上就是所需的全部修改。下面的示例将修改前后的组件并排放置以便对比。你会发现动画延迟已经消失了！
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/main-thread-draggable.lynx.bundle"
+  defaultFile="src/main-thread-draggable/App.vue"
+  entry="src/main-thread-draggable"
+/>
+
+## 从后台线程获取数据
+
+你可能已经注意到，将函数指定为主线程函数会使其与周围的上下文隔离，就像一座"孤岛"。它的运行环境与其他函数不同，这意味着它无法与后台线程自由通信。
+
+然而，在主线程函数中获取后台线程的数据非常简单：直接使用即可，就像在普通函数中一样。
+
+```vue
+<script setup lang="ts">
+const red = 'red'
+
+const addBackgroundColor = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  event.currentTarget.setStyleProperty('background-color', red)
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="addBackgroundColor">
+    <text>Hello World!</text>
+  </view>
+</template>
+```
+
+当主线程函数被定义时，它会自动捕获来自后台线程的外部变量，例如上例中的 `red` 变量。但你不能直接修改后台线程中的值。
+
+主线程函数捕获的值不会实时更新。它们仅在包含该主线程函数的组件重新渲染后，才会从后台线程同步到主线程。此外，同步要求被捕获的值可以通过 `JSON.stringify()` 序列化。
+
+总结注意事项：
+
+- 主线程函数只能且必须在主线程上运行。主线程函数之间可以互相调用。
+- 捕获的变量需要通过 `JSON.stringify()` 在线程间传递，因此它们必须是可序列化为 JSON 的。
+- 主线程函数不支持嵌套定义。
+- 不能在主线程函数中修改从外部作用域捕获的变量。
+
+## 使用 `main-thread-ref` 获取节点对象
+
+在上面的示例中，点击 view 会改变其背景颜色。如果我们只想改变某个特定子元素的颜色，仅靠 `event.target` 和 `event.currentTarget` 并不容易实现。这时可以使用 `main-thread-ref` 获取可在主线程上使用的节点对象。
+
+使用 `useMainThreadRef()` 组合式函数创建一个 `MainThreadRef`，然后将其赋值给目标节点的 `main-thread-ref` 属性：
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const red = 'red'
+const textRef = useMainThreadRef(null)
+
+const addBackgroundColor = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  const el = (textRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  el?.setStyleProperty?.('background-color', red)
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="addBackgroundColor">
+    <text :main-thread-ref="textRef">Hello World!</text>
+    <text>Hello World!</text>
+  </view>
+</template>
+```
+
+请注意，`MainThreadRef` 的 `current` 属性只能在主线程函数中访问。
+
+## 在主线程函数中维护状态
+
+主线程函数无法修改捕获的变量。因此，如果需要在主线程函数之间维护状态，应使用 `MainThreadRef`：
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const countRef = useMainThreadRef(0)
+
+const handleTap = (event: MainThread.ITouchEvent) => {
+  'main thread'
+  event.currentTarget.setStyleProperty(
+    'background-color',
+    ++countRef.current % 2 ? 'blue' : 'green'
+  )
+}
+</script>
+
+<template>
+  <view :main-thread-bindtap="handleTap">
+    <text>Tap me!</text>
+  </view>
+</template>
+```
+
+## 跨线程函数调用
+
+到目前为止的示例都将 `'main thread'` 函数用作事件处理器。但如果你需要从后台线程调用主线程函数，或者反过来呢？Vue Lynx 提供了 `runOnMainThread()` 和 `runOnBackground()` 来实现双向异步通信。
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/cross-thread-calls.lynx.bundle"
+  defaultFile="src/cross-thread-calls/App.vue"
+  entry="src/cross-thread-calls"
+/>
+
+在这个示例中，点击方块会触发一次往返调用：
+
+1. **主线程** `onTap` 触发，调用 `runOnBackground(incrementCount)()` 来更新响应式状态
+2. **后台线程** `watch(count)` 触发，调用 `runOnMainThread(applyColor)(nextColor)` 来改变方块颜色
+
+### 从后台线程异步调用主线程函数
+
+在后台线程中使用 `runOnMainThread()` 可以异步地在主线程上执行一个主线程函数：
+
+```vue
+<script setup lang="ts">
+import { useMainThreadRef, runOnMainThread } from 'vue-lynx'
+
+const countRef = useMainThreadRef(0)
+
+const addCount = (value: number) => {
+  'main thread'
+  countRef.current += value
+  return countRef.current
+}
+
+async function increaseMainThreadCount() {
+  const result = await runOnMainThread(addCount)(1)
+  console.log(result)
+}
+</script>
+```
+
+### 从主线程异步调用非主线程函数
+
+在主线程中使用 `runOnBackground()` 可以异步地在后台线程上执行一个普通函数：
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { runOnBackground } from 'vue-lynx'
+
+const current = ref(0)
+
+const syncIndexToBackground = runOnBackground((nextIndex: number) => {
+  current.value = nextIndex
+  return `Current index updated to ${nextIndex}`
+})
+
+const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
+  'main thread'
+  const index = Math.round(event.detail.scrollTop / 300)
+  const result = await syncIndexToBackground(index)
+  console.log(result)
+}
+</script>
+
+<template>
+  <view>
+    <scroll-view :main-thread-bindscroll="onScrollMainThread" />
+    <text>Current index: {{ current }}</text>
+  </view>
+</template>
+```
+
+## 跨线程共享模块
+
+默认情况下，主线程函数不能直接调用没有 `'main thread'` 指令的普通函数。这使得代码复用变得困难。
+为了解决这个限制，Vue Lynx 支持 `shared-module` 机制，允许你显式地声明某些模块可以在主线程和后台线程之间共享。
+
+在 `import` 语句后添加 `with { runtime: 'shared' }`，该模块导出的变量（包括函数、类、对象等）就可以在主线程函数中直接调用：
+
+```ts
+import { func } from './utils' with { runtime: 'shared' }
+
+const onTap = () => {
+  'main thread'
+  func() // ✅ 允许在主线程函数中调用普通函数
+}
+```
+
+> [!NOTE]
+> 通过 `with { runtime: 'shared' }` 导入的模块中的函数可以被主线程函数调用，但它们不会自动被视为主线程函数。如果这些函数使用了主线程特有的能力（如 `MainThreadRef`），仍然需要手动添加 `'main thread'` 标记。
+
+共享模块是一个普通的 TypeScript/JavaScript 文件——它**不需要** `'main thread'` 指令。它只能包含纯函数和常量（不能使用 Vue 响应性、不能访问 DOM、不能包含依赖于特定线程的副作用）。
+
+```ts
+// color-utils.ts — 在两个线程之间共享
+const COLORS = ['#4FC3F7', '#81C784', '#FFB74D', '#E57373', '#BA68C8']
+
+export function getNextColor(index: number): string {
+  return COLORS[index % COLORS.length]!
+}
+```
+
+通过 `{ runtime: 'shared' }` 导入后，导出的函数既可以在 `'main thread'` 函数中调用，也可以在普通的后台线程代码中调用：
+
+```vue
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useMainThreadRef } from 'vue-lynx'
+import { getNextColor } from './color-utils' with { runtime: 'shared' }
+
+// 后台线程：在 computed/watch 中使用共享函数
+const count = ref(0)
+const currentColor = computed(() => getNextColor(count.value))
+
+// 主线程：在点击处理器中使用同一个共享函数
+const boxRef = useMainThreadRef(null)
+const onTap = () => {
+  'main thread'
+  const color = getNextColor(1)
+  const el = (boxRef as unknown as {
+    current?: { setStyleProperty?(k: string, v: string): void }
+  }).current
+  el?.setStyleProperty?.('background-color', color)
+}
+</script>
+```
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.vue"
+  entry="src/shared-module"
+/>
+
+### 引用第三方库
+
+通常，第三方库（如 `motion-dom`）包含纯 JavaScript 函数。如果在主线程函数中直接调用它们，会因为缺少 `'main thread'` 指令而报错。
+
+我们可以使用 `with { runtime: 'shared' }` 将它们作为共享模块导入：
+
+```ts
+// 直接导入使用
+import { animate } from 'motion-dom' with { runtime: 'shared' }
+
+const onScroll = () => {
+  'main thread'
+  // 可以在主线程函数中直接调用
+  animate(element, { opacity: 0 })
+}
+```
+
+为了便于复用或避免下面的[限制](#limitations)（例如赋值后失去共享特性），我们建议将导入**包装**到主线程函数中：
+
+```ts
+// src/utils/motion.ts
+// 1. 将原始函数作为共享模块导入
+import { animate as _animate } from 'motion-dom' with { runtime: 'shared' }
+
+// 2. 导出一个新的主线程函数进行封装
+export function animate(...args) {
+  'main thread'
+  return _animate(...args)
+}
+```
+
+这样，`animate` 就成为了一个标准的主线程函数，可以在任何主线程函数中自由使用，不再受到静态分析的限制：
+
+```vue
+<script setup lang="ts">
+import { animate } from './utils/motion'
+
+const onTap = () => {
+  'main thread'
+  // 标准主线程函数——可以自由赋值或传递
+  const myAnimate = animate
+  myAnimate(element, { x: 100 })
+}
+</script>
+```
+
+### 限制
+
+只有通过 `import` 直接导入的标识符才会被识别为"共享"的。赋值给新变量会导致其失去共享特性：
+
+```ts
+import { func } from './utils' with { runtime: 'shared' }
+const anotherFunc = func // [!code error]
+
+const onTap = () => {
+  'main thread'
+  anotherFunc() // ❌ 编译时无法分析，调用失败
+}
+```
+
+### 状态隔离
+
+**共享模块中的变量和状态在两个线程之间是完全隔离的，各自拥有独立的实例。**
+
+这意味着如果你在主线程上修改了共享模块中的变量，后台线程无法感知到，反之亦然。共享模块解决的是"代码共享"问题，而非"状态共享"问题。

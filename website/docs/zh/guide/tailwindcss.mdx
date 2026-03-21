@@ -1,0 +1,211 @@
+# 使用 Tailwind CSS
+
+[Tailwind CSS](https://tailwindcss.com/) 是一个实用优先的 CSS 框架。结合 Vue Lynx，您可以使用与 Web 端相同的工具类来构建原生 Lynx 界面。
+
+本指南将介绍如何将 Tailwind CSS 与 Vue Lynx 集成，涵盖从基础配置到基于设计令牌的运行时主题切换系统——灵感来源于 [shadcn/ui](https://ui.shadcn.com/)。
+
+<Go example="tailwindcss" defaultFile="src/App.vue" />
+
+## 配置
+
+### 1. 安装依赖
+
+```bash
+pnpm add -D tailwindcss @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
+```
+
+- **`@lynx-js/tailwind-preset`** — 一个 Tailwind 预设，用于将核心插件替换为与 Lynx 兼容的等效实现。详见 [Rspeedy 官方文档](https://lynxjs.org/rspeedy/styling.html#using-tailwind-css)。
+- **`rsbuild-plugin-tailwindcss`** — Tailwind CSS 的 Rsbuild 集成插件。
+
+### 2. 配置 Tailwind
+
+```ts title="tailwind.config.ts"
+import type { Config } from 'tailwindcss';
+import preset from '@lynx-js/tailwind-preset';
+
+const config: Config = {
+  content: ['./src/**/*.{vue,js,ts}'],
+  presets: [preset],
+};
+
+export default config;
+```
+
+### 3. 配置 PostCSS
+
+```js title="postcss.config.js"
+export default {
+  plugins: {
+    tailwindcss: {},
+  },
+};
+```
+
+### 4. 添加 Rsbuild 插件
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginTailwindCSS } from 'rsbuild-plugin-tailwindcss';
+import { pluginVueLynx } from 'vue-lynx/plugin';
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx(),
+    pluginTailwindCSS({
+      config: 'tailwind.config.ts',
+      exclude: [/[\\/]node_modules[\\/]/],
+    }),
+  ],
+});
+```
+
+### 5. 在 CSS 中引入 Tailwind
+
+```css title="src/App.css"
+@tailwind base;
+@tailwind utilities;
+```
+
+配置完成！现在您可以在 Lynx 元素上使用 Tailwind 工具类了：
+
+```vue title="src/App.vue"
+<template>
+  <view class="p-4 flex flex-col gap-2">
+    <text class="text-blue-500 text-lg font-bold">Hello, Tailwind!</text>
+    <view class="bg-gray-800 rounded-lg p-3">
+      <text class="text-white text-sm">A card with utility classes.</text>
+    </view>
+  </view>
+</template>
+```
+
+## 使用 CSS 变量定义设计令牌
+
+在现代组件库（shadcn/ui、Radix Themes、Nuxt UI）中，一种常见的做法是将**设计语言**定义为 CSS 自定义属性，然后在 Tailwind 中引用它们。这样可以为颜色提供单一的真实来源，并且支持运行时动态切换。
+
+### 定义设计令牌
+
+```css title="src/App.css"
+@tailwind base;
+@tailwind utilities;
+
+:root {
+  --color-background: rgba(9, 9, 11, 1);
+  --color-card: rgba(24, 24, 27, 1);
+  --color-card-foreground: rgba(250, 250, 250, 1);
+  --color-primary: rgba(255, 100, 72, 1);
+  --color-primary-foreground: rgba(255, 255, 255, 1);
+  --color-border: rgba(63, 63, 70, 1);
+}
+```
+
+### 将设计令牌接入 Tailwind
+
+```ts title="tailwind.config.ts"
+const config: Config = {
+  // ...
+  theme: {
+    extend: {
+      colors: {
+        background: 'var(--color-background)',
+        card: {
+          DEFAULT: 'var(--color-card)',
+          foreground: 'var(--color-card-foreground)',
+        },
+        primary: {
+          DEFAULT: 'var(--color-primary)',
+          foreground: 'var(--color-primary-foreground)',
+        },
+        border: 'var(--color-border)',
+      },
+    },
+  },
+};
+```
+
+现在 `bg-primary`、`text-card-foreground`、`border-border` 都会通过 CSS 变量来解析。`:root` 中的值作为默认主题。
+
+### 必需的 Lynx 标志位
+
+要在 Lynx Native 上使用 CSS 变量，需要启用两个引擎标志位：
+
+- **`enableCSSInheritance`** — 启用从父元素到子元素的 CSS 层叠继承，使得定义在父元素（或 `:root`）上的变量对其后代元素可见。详见 [Lynx CSS 变量文档](https://lynxjs.org/api/css/properties/css-variable.html)。
+- **`enableCSSInlineVariables`** — 启用内联样式中的 `--*` 属性，使 `:style` 绑定可以在运行时设置 CSS 变量。
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableCSSInheritance: true,
+  enableCSSInlineVariables: true,
+})
+```
+
+> 这些标志位**仅在使用 CSS 变量时需要**。如果您的 Tailwind 配置使用的是静态颜色值（例如 `primary: '#3b82f6'`），则无需额外的标志位。
+
+## 运行时主题切换
+
+当设计令牌通过 CSS 变量连接后，切换主题只需覆盖对应的变量值即可。
+
+### 方式 A：内联样式（推荐）
+
+最贴近 Web 开发习惯的方式——通过 Vue 的 `:style` 绑定在根元素上设置 CSS 变量。这也是 shadcn/ui 和 Radix Themes 在 Web 端处理主题的方式。
+
+需要同时启用 `enableCSSInheritance` 和 `enableCSSInlineVariables`。
+
+```vue
+<script setup>
+import { ref, computed } from 'vue-lynx'
+
+const themes = {
+  dark: {
+    '--color-background': 'rgba(9, 9, 11, 1)',
+    '--color-primary': 'rgba(255, 100, 72, 1)',
+    // ...
+  },
+  light: {
+    '--color-background': 'rgba(255, 255, 255, 1)',
+    '--color-primary': 'rgba(234, 88, 12, 1)',
+    // ...
+  },
+}
+
+const currentTheme = ref('dark')
+const themeStyle = computed(() => themes[currentTheme.value])
+</script>
+
+<template>
+  <scroll-view :style="themeStyle" class="bg-background">
+    <text class="text-primary">Themed text</text>
+    <view @tap="currentTheme = 'light'">
+      <text>Switch to Light</text>
+    </view>
+  </scroll-view>
+</template>
+```
+
+### 方式 B：元素 `setProperty` API
+
+一种 Lynx 原生的替代方案，直接在元素上更新 CSS 变量。**不需要** `enableCSSInlineVariables`——只需启用 `enableCSSInheritance`。
+
+```vue
+<script setup>
+import { ref } from 'vue-lynx'
+
+const root = ref(null)
+
+function switchTheme(name) {
+  const vars = themes[name]
+  root.value?.setProperty(vars)
+}
+</script>
+
+<template>
+  <scroll-view ref="root" class="bg-background">
+    <text class="text-primary">Themed text</text>
+    <view @tap="switchTheme('light')">
+      <text>Switch to Light</text>
+    </view>
+  </scroll-view>
+</template>
+```
+
+关于 `setProperty` 的完整说明，请参阅 [Lynx CSS 变量 API](https://lynxjs.org/api/css/properties/css-variable.html)。

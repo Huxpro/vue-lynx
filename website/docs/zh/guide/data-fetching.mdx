@@ -1,0 +1,174 @@
+import { PackageManagerTabs } from '@theme';
+
+# Vue Query
+
+Lynx 提供了 [Fetch API](https://lynxjs.org/api/engine/lynx-api/global-api.html#fetch) 用于发起网络请求。虽然你可以直接使用 `fetch()`，但我们推荐使用 [TanStack Query (Vue Query)](https://tanstack.com/query/v5/docs/framework/vue/overview) 来管理服务端状态——它开箱即用地处理了缓存、后台重新获取、过期数据和变更等问题。
+
+另请参阅：[Lynx — 网络请求](https://lynxjs.org/next/react/data-fetching.html)
+
+<Go example="networking" defaultFile="src/App.vue" defaultEntryName="main" />
+
+## 使用 Vue Query
+
+### 安装
+
+<PackageManagerTabs command="install @tanstack/vue-query" />
+
+### 配置
+
+在你的 vue-lynx 应用中注册 Vue Query 插件：
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx';
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(VueQueryPlugin);
+app.mount();
+```
+
+### 使用 `useQuery` 获取数据
+
+使用 [`useQuery`](https://tanstack.com/query/v5/docs/framework/vue/reference/useQuery) 来获取和缓存服务端数据。它返回响应式的 ref，包括 `data`、`isLoading`、`isError` 和 `error`：
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query'
+
+interface User {
+  id: number
+  name: string
+  email: string
+  company: { name: string }
+}
+
+const { data: users, isLoading, isError } = useQuery({
+  queryKey: ['users'],
+  queryFn: async (): Promise<User[]> => {
+    const res = await fetch('https://jsonplaceholder.typicode.com/users')
+    if (!res.ok) throw new Error('Failed to fetch users')
+    return res.json()
+  },
+})
+</script>
+
+<template>
+  <view>
+    <text v-if="isLoading">Loading...</text>
+    <text v-else-if="isError">Something went wrong</text>
+    <scroll-view v-else scroll-orientation="vertical">
+      <view v-for="user in users" :key="user.id">
+        <text>{{ user.name }}</text>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+```
+
+### 响应式查询键
+
+Vue Query 相较于 React 版本的一个关键优势在于，查询键可以是**响应式**的。当键中的 `ref` 或 `computed` 值发生变化时，查询会自动重新获取数据——无需手动追踪依赖。
+
+示例应用利用了这一特性来实现搜索过滤和依赖查询：
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { useQuery } from '@tanstack/vue-query'
+
+const selectedUserId = ref<number | null>(null)
+
+// 此查询仅在选中用户时执行。
+// 当 `selectedUserId` 变化时，会自动重新获取数据。
+const { data: posts, isLoading } = useQuery({
+  queryKey: computed(() => ['users', selectedUserId.value, 'posts']),
+  queryFn: async (): Promise<Post[]> => {
+    const res = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${selectedUserId.value}/posts`,
+    )
+    if (!res.ok) throw new Error('Failed to fetch posts')
+    return res.json()
+  },
+  enabled: computed(() => selectedUserId.value !== null),
+})
+</script>
+```
+
+这里的 `queryKey` 和 `enabled` 都是 `computed` ref。Vue Query 会响应式地监听它们——当用户点击不同的用户时，`selectedUserId` 发生变化，键随之更新，新用户的文章会自动获取。无需使用 watcher 或 `onMounted` 回调。
+
+### 使用乐观更新进行变更
+
+使用 [`useMutation`](https://tanstack.com/query/v5/docs/framework/vue/reference/useMutation) 来修改服务端数据。乐观更新可以让你在 UI 中立即反映变更，如果请求失败则自动回滚：
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
+
+const queryClient = useQueryClient()
+
+const deleteMutation = useMutation({
+  mutationFn: async (postId: number) => {
+    const res = await fetch(
+      `https://jsonplaceholder.typicode.com/posts/${postId}`,
+      { method: 'DELETE' },
+    )
+    if (!res.ok) throw new Error('Failed to delete post')
+    return postId
+  },
+  onMutate: async (postId) => {
+    const key = ['users', selectedUserId.value, 'posts']
+    await queryClient.cancelQueries({ queryKey: key })
+
+    // 保存快照以便回滚
+    const previous = queryClient.getQueryData<Post[]>(key)
+
+    // 乐观地移除该文章
+    queryClient.setQueryData(key, (old: Post[] | undefined) =>
+      old ? old.filter((p) => p.id !== postId) : [],
+    )
+
+    return { previous, key }
+  },
+  onError: (_err, _postId, context) => {
+    // 失败时回滚
+    if (context?.previous) {
+      queryClient.setQueryData(context.key, context.previous)
+    }
+  },
+})
+</script>
+
+<template>
+  <view v-for="post in posts" :key="post.id">
+    <text>{{ post.title }}</text>
+    <text @tap="deleteMutation.mutate(post.id)">✕</text>
+  </view>
+</template>
+```
+
+## 直接使用 `fetch()`
+
+对于简单的一次性请求，你可以直接结合 Vue 的响应式系统使用 Fetch API：
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
+const users = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const res = await fetch('https://jsonplaceholder.typicode.com/users')
+    users.value = await res.json()
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+```
+
+对于简单读取之外的场景——如缓存、后台刷新、分页、变更——请使用 TanStack Query。
+
+更多资源请参阅 [TanStack Query — Vue 概览](https://tanstack.com/query/v5/docs/framework/vue/overview)。

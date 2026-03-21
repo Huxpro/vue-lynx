@@ -15,9 +15,24 @@ const apiSidebar = JSON.parse(
 
 export default defineConfig({
   root: 'docs',
+  lang: 'en',
   title: 'Vue Lynx',
   description: 'Vue 3 framework for building Lynx apps',
   icon: '/favicon.png',
+  locales: [
+    {
+      lang: 'en',
+      label: 'English',
+      title: 'Vue Lynx',
+      description: 'Vue 3 framework for building Lynx apps',
+    },
+    {
+      lang: 'zh',
+      label: '简体中文',
+      title: 'Vue Lynx',
+      description: '用于构建 Lynx 应用的 Vue 3 框架',
+    },
+  ],
   plugins: [pluginLlms()],
   markdown: {
     shiki: {
@@ -85,12 +100,69 @@ export default defineConfig({
         },
         ...apiSidebar,
       ],
+      '/zh/guide/': [
+        { text: '快速开始', link: '/zh/guide/quick-start' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'VueLynx 基础',
+        },
+        { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
+        { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
+        { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '教程',
+        },
+        { text: '商品画廊', link: '/zh/guide/tutorial-gallery' },
+        { text: '商品轮播', link: '/zh/guide/tutorial-swiper' },
+        { text: '7GUIs 基准测试', link: '/zh/guide/7guis' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '生态系统',
+        },
+        { text: 'Vue Router', link: '/zh/guide/routing' },
+        { text: 'Pinia', link: '/zh/guide/pinia' },
+        { text: 'Vue Query', link: '/zh/guide/data-fetching' },
+        { text: 'Tailwind CSS', link: '/zh/guide/tailwindcss' },
+        {
+          text: 'VueLynx 测试库',
+          link: '/zh/guide/testing-library',
+        },
+      ],
     },
     llmsUI: true,
     nav: [
       {
         text: 'Guide',
         link: '/guide/introduction',
+      },
+    ],
+    locales: [
+      {
+        lang: 'en',
+        label: 'English',
+        nav: [
+          {
+            text: 'Guide',
+            link: '/guide/introduction',
+          },
+        ],
+      },
+      {
+        lang: 'zh',
+        label: '简体中文',
+        nav: [
+          {
+            text: '指南',
+            link: '/zh/guide/introduction',
+          },
+        ],
       },
     ],
   },
