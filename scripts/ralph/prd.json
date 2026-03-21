@@ -143,7 +143,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/data-fetching",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-pinia",
@@ -158,7 +158,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/pinia",
         "Browser verify: can switch languages"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-tailwind",
@@ -173,7 +173,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/tailwindcss",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-testing",
@@ -188,7 +188,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/testing-library",
         "Browser verify: can toggle languages"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-tutorial-gallery",
@@ -203,7 +203,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/tutorial-gallery",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-tutorial-swiper",
@@ -218,7 +218,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/tutorial-swiper",
         "Browser verify: can switch en/zh"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "translate-7guis",
@@ -233,7 +233,7 @@
         "Browser verify: open http://localhost:5173/zh/guide/7guis",
         "Browser verify: language switcher works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "final-verify",
@@ -248,7 +248,31 @@
         "Browser verify: every page can switch between zh and en",
         "Commit all changes with message 'feat: add Chinese (zh-CN) documentation'"
       ],
-      "passes": false
+      "passes": true
+    },
+    {
+      "id": "translate-home-features",
+      "title": "Translate home page features component",
+      "priority": 16,
+      "acceptanceCriteria": [
+        "Source: website/src/components/home-comps/features/index.tsx",
+        "Reference: ~/github/lynx-website/src/components/home-comps/features/index.tsx for i18n pattern",
+        "Update featuresConfig to use { en: string, zh: string } structure for title and desc fields",
+        "Add import: import { useLang } from '@rspress/core/runtime'",
+        "Add in component: const lang = useLang() as 'en' | 'zh'",
+        "Update render to use item.title[lang] and item.desc[lang]",
+        "Translations:",
+        "  - Powered by Vue 3 → Vue 3 驱动",
+        "  - Full support for the Composition API... → 完整支持组合式 API、单文件组件和响应式系统——你已经熟悉并喜爱的 Vue 3 API。",
+        "  - Made for Lynx → 为 Lynx 量身定做",
+        "  - Dual-threaded Vue tailor-made for Lynx... → 基于 Lynx 量身定做的双线程 Vue，延续 Lynx 的原生 UI 响应性和主线程脚本能力。",
+        "  - Compatible with Vue Ecosystem → Vue 生态兼容",
+        "  - Bring your favorite Vue libraries... → 带上你喜爱的 Vue 库，在 Lynx 上享受丰富的 Vue 生态。",
+        "Browser verify: open http://localhost:5173/ and http://localhost:5173/zh/",
+        "Browser verify: features section shows English on /en/ or / and Chinese on /zh/",
+        "Commit with message 'feat: add Chinese translation for home features component'"
+      ],
+      "passes": true
     }
   ]
 }
