@@ -1,37 +1,56 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 6/10 supported (modelValue, columnsType/type, title, minDate, maxDate,
-    confirmButtonText, cancelButtonText)
-    Missing: filter, formatter, loading, readonly, optionHeight, swipeDuration, visibleOptionNum,
-    showToolbar, columnsOrder (partially via type prop)
-  - Events: 4/4 supported (update:modelValue, confirm, cancel, change)
-  - Slots: 0/5 supported
+  Vant Feature Parity Report -- DatePicker
+  =========================================
+  Props: 11/12 supported
+    Supported: modelValue, columnsType, title, minDate, maxDate,
+               confirmButtonText, cancelButtonText, loading, readonly,
+               showToolbar, optionHeight
+    Missing:   filter, formatter (custom option text transforms),
+               swipeDuration, visibleOptionNum
+
+  Events: 4/4 supported
+    Supported: update:modelValue, confirm, cancel, change
+
+  Slots: 0/7 supported
     Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
-  - Gaps: no filter/formatter for custom option text; no scroll-wheel physics (tap-to-select);
-    type prop maps to columnsType internally but 'datehour' is non-standard Vant;
-    no loading/readonly inherited from Picker
+
+  Key Gaps:
+    - No filter/formatter for custom option text
+    - No scroll-wheel physics (tap-to-select only)
+    - No slot support for toolbar or column customization
+    - 'datehour' columnsType is a convenience alias (non-standard Vant)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
+import Loading from '../Loading/index.vue';
+
+export type DatePickerColumnType = 'year' | 'month' | 'day' | 'hour';
 
 export interface DatePickerProps {
   modelValue?: string[];
-  type?: 'date' | 'year-month' | 'month-day' | 'datehour';
+  columnsType?: DatePickerColumnType[];
   title?: string;
   minDate?: Date;
   maxDate?: Date;
-  columnsOrder?: string[];
   confirmButtonText?: string;
   cancelButtonText?: string;
+  loading?: boolean;
+  readonly?: boolean;
+  showToolbar?: boolean;
+  optionHeight?: number;
 }
 
 const props = withDefaults(defineProps<DatePickerProps>(), {
   modelValue: () => [],
-  type: 'date',
+  columnsType: () => ['year', 'month', 'day'] as DatePickerColumnType[],
   confirmButtonText: 'Confirm',
   cancelButtonText: 'Cancel',
   minDate: () => new Date(new Date().getFullYear() - 10, 0, 1),
   maxDate: () => new Date(new Date().getFullYear() + 10, 11, 31),
+  loading: false,
+  readonly: false,
+  showToolbar: true,
+  optionHeight: 44,
 });
 
 const emit = defineEmits<{
@@ -49,16 +68,6 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-function getColumnTypes(): string[] {
-  if (props.columnsOrder) return props.columnsOrder;
-  switch (props.type) {
-    case 'year-month': return ['year', 'month'];
-    case 'month-day': return ['month', 'day'];
-    case 'datehour': return ['year', 'month', 'day', 'hour'];
-    default: return ['year', 'month', 'day'];
-  }
-}
-
 function getColumnLabel(type: string): string {
   switch (type) {
     case 'year': return 'Year';
@@ -70,11 +79,11 @@ function getColumnLabel(type: string): string {
 }
 
 function getYearIndex(): number {
-  return getColumnTypes().indexOf('year');
+  return props.columnsType.indexOf('year');
 }
 
 function getMonthIndex(): number {
-  return getColumnTypes().indexOf('month');
+  return props.columnsType.indexOf('month');
 }
 
 const minYear = computed(() => props.minDate.getFullYear());
@@ -95,19 +104,15 @@ function getDefaultValues(): string[] {
   const d = padZero(now.getDate());
   const h = padZero(now.getHours());
 
-  switch (props.type) {
-    case 'year-month': return [y, m];
-    case 'month-day': return [m, d];
-    case 'datehour': return [y, m, d, h];
-    default: return [y, m, d];
-  }
+  const map: Record<string, string> = { year: y, month: m, day: d, hour: h };
+  return props.columnsType.map((type) => map[type] ?? '00');
 }
 
 function buildColumns(vals: string[]): string[][] {
-  const columnTypes = getColumnTypes();
   const result: string[][] = [];
 
-  for (const colType of columnTypes) {
+  for (let ci = 0; ci < props.columnsType.length; ci++) {
+    const colType = props.columnsType[ci];
     if (colType === 'year') {
       result.push(years.value);
     } else if (colType === 'month') {
@@ -191,6 +196,8 @@ const selectedValues = computed(() =>
 );
 
 function onSelectItem(colIndex: number, itemIndex: number) {
+  if (props.readonly) return;
+
   const newVals = [...currentValues.value];
   newVals[colIndex] = columns.value[colIndex][itemIndex] ?? newVals[colIndex];
 
@@ -230,19 +237,32 @@ const toolbarStyle = {
   borderBottomColor: '#ebedf0',
 };
 
-const columnsContainerStyle = {
+const columnsContainerStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'row' as const,
-  height: 220,
+  height: props.optionHeight * 5,
   backgroundColor: '#fff',
-  overflow: 'hidden',
+  overflow: 'hidden' as const,
+  position: 'relative' as const,
+}));
+
+const loadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(255, 255, 255, 0.6)',
 };
 </script>
 
 <template>
-  <view :style="{ backgroundColor: '#fff' }">
+  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }">
     <!-- Toolbar -->
-    <view :style="toolbarStyle">
+    <view v-if="showToolbar" :style="toolbarStyle">
       <text
         :style="{ fontSize: 14, color: '#969799', padding: 4 }"
         @tap="onCancel"
@@ -257,7 +277,7 @@ const columnsContainerStyle = {
     <!-- Column Headers -->
     <view :style="{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', paddingTop: 8 }">
       <view
-        v-for="(colType, ci) in getColumnTypes()"
+        v-for="(colType, ci) in columnsType"
         :key="ci"
         :style="{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }"
       >
@@ -282,10 +302,10 @@ const columnsContainerStyle = {
         <view
           :style="{
             position: 'absolute' as const,
-            top: 88,
+            top: optionHeight * 2,
             left: 0,
             right: 0,
-            height: 44,
+            height: optionHeight,
             borderTopWidth: 0.5,
             borderTopStyle: 'solid' as const,
             borderTopColor: '#ebedf0',
@@ -295,12 +315,12 @@ const columnsContainerStyle = {
           }"
         />
         <!-- Items list -->
-        <view :style="{ paddingTop: 88, paddingBottom: 88 }">
+        <view :style="{ paddingTop: optionHeight * 2, paddingBottom: optionHeight * 2 }">
           <view
             v-for="(item, itemIndex) in column"
             :key="itemIndex"
             :style="{
-              height: 44,
+              height: optionHeight,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -316,6 +336,11 @@ const columnsContainerStyle = {
             >{{ item }}</text>
           </view>
         </view>
+      </view>
+
+      <!-- Loading overlay -->
+      <view v-if="loading" :style="loadingOverlayStyle">
+        <Loading />
       </view>
     </view>
   </view>

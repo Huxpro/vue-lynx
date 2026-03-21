@@ -1,29 +1,10 @@
 <!--
-  Vant Feature Parity Report (Pagination):
-  - Props: 11/11 supported
-    - modelValue: number (default 1) - current page (v-model)
-    - mode: 'simple'|'multi' (default 'multi') - display mode
-    - pageCount: number (default 0) - total page count (overrides totalItems)
-    - totalItems: number (default 0) - total item count
-    - itemsPerPage: number (default 10) - items per page
-    - showPageSize: number (default 5) - visible page buttons
-    - forceEllipses: boolean (default false) - show ellipsis when pages are truncated
-    - prevText: string (default 'Prev') - previous button text
-    - nextText: string (default 'Next') - next button text
-    - showPrevButton: boolean (default true) - show/hide prev button
-    - showNextButton: boolean (default true) - show/hide next button
+  Vant Feature Parity Report:
+  - Props: 9/11 supported (modelValue, mode, pageCount, totalItems,
+    itemsPerPage, showPageSize, forceEllipses, prevText, nextText)
   - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 3/4 supported (prev-text, next-text, page)
-    - prev-text: custom prev button content
-    - next-text: custom next button content
-    - page: custom page item rendering (receives { number, text, active })
-    - pageDesc: simple mode page description (not yet implemented)
-  - Lynx Adaptations:
-    - Uses inline styles with explicit display: 'flex'
-    - No border-surround CSS class; uses borderWidth/borderStyle/borderColor
-  - Gaps:
-    - No i18n (Vant uses t('prev')/t('next') for default text)
-    - pageDesc slot not implemented
+  - Slots: 0/2 supported
+  - Gaps: showPrevButton, showNextButton props; page slot, pageDesc slot
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

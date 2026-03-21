@@ -198,7 +198,7 @@ const couponContentStyle = {
     >
       <input
         :value="exchangeCode"
-        placeholder="Enter coupon code"
+        :placeholder="inputPlaceholder"
         :style="{
           flex: 1,
           fontSize: 14,
