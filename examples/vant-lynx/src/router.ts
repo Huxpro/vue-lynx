@@ -16,6 +16,19 @@ import SwitchDemo from './pages/switch.vue';
 import CheckboxDemo from './pages/checkbox.vue';
 import RadioDemo from './pages/radio.vue';
 import FieldDemo from './pages/field.vue';
+import RateDemo from './pages/rate.vue';
+import StepperDemo from './pages/stepper.vue';
+import ProgressDemo from './pages/progress.vue';
+import CircleDemo from './pages/circle.vue';
+import CountDownDemo from './pages/count-down.vue';
+import EmptyDemo from './pages/empty.vue';
+import NoticeBarDemo from './pages/notice-bar.vue';
+import NavBarDemo from './pages/nav-bar.vue';
+import TabbarDemo from './pages/tabbar.vue';
+import TabDemo from './pages/tab.vue';
+import GridDemo from './pages/grid.vue';
+import CollapseDemo from './pages/collapse.vue';
+import StepsDemo from './pages/steps.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -37,6 +50,19 @@ const router = createRouter({
     { path: '/checkbox', name: 'checkbox', component: CheckboxDemo },
     { path: '/radio', name: 'radio', component: RadioDemo },
     { path: '/field', name: 'field', component: FieldDemo },
+    { path: '/rate', name: 'rate', component: RateDemo },
+    { path: '/stepper', name: 'stepper', component: StepperDemo },
+    { path: '/progress', name: 'progress', component: ProgressDemo },
+    { path: '/circle', name: 'circle', component: CircleDemo },
+    { path: '/count-down', name: 'count-down', component: CountDownDemo },
+    { path: '/empty', name: 'empty', component: EmptyDemo },
+    { path: '/notice-bar', name: 'notice-bar', component: NoticeBarDemo },
+    { path: '/nav-bar', name: 'nav-bar', component: NavBarDemo },
+    { path: '/tabbar', name: 'tabbar', component: TabbarDemo },
+    { path: '/tab', name: 'tab', component: TabDemo },
+    { path: '/grid', name: 'grid', component: GridDemo },
+    { path: '/collapse', name: 'collapse', component: CollapseDemo },
+    { path: '/steps', name: 'steps', component: StepsDemo },
   ],
 });
 

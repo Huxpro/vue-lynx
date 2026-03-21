@@ -124,4 +124,79 @@ describe('Button', () => {
     const viewEl = container.querySelector('view')!;
     expect(viewEl.getAttribute('style')).toContain('opacity');
   });
+
+  it('should hide border when color is gradient', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { color: 'linear-gradient(#000, #fff)' });
+        },
+      }),
+    );
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.getAttribute('style')).toContain('border-width: 0');
+  });
+
+  it('should render loading slot correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { loading: true }, {
+            loading: () => h('text', null, 'Custom Loading'),
+          });
+        },
+      }),
+    );
+    const texts = container.querySelectorAll('text');
+    const hasCustomLoading = Array.from(texts).some(
+      (t) => t.textContent === 'Custom Loading',
+    );
+    expect(hasCustomLoading).toBe(true);
+  });
+
+  it('should render icon slot correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, null, {
+            default: () => h('text', null, 'Text'),
+            icon: () => h('text', null, 'Icon'),
+          });
+        },
+      }),
+    );
+    const texts = container.querySelectorAll('text');
+    const hasIcon = Array.from(texts).some(
+      (t) => t.textContent === 'Icon',
+    );
+    const hasText = Array.from(texts).some(
+      (t) => t.textContent === 'Text',
+    );
+    expect(hasIcon).toBe(true);
+    expect(hasText).toBe(true);
+  });
+
+  it('should apply round border radius', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { type: 'primary', round: true, text: 'Round' });
+        },
+      }),
+    );
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.getAttribute('style')).toContain('border-radius: 999px');
+  });
+
+  it('should apply square border radius', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { type: 'primary', square: true, text: 'Square' });
+        },
+      }),
+    );
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.getAttribute('style')).toContain('border-radius: 0');
+  });
 });
