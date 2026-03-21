@@ -13,6 +13,7 @@ const components = [
   { name: 'Badge', path: '/badge' },
   { name: 'Divider', path: '/divider' },
   { name: 'Space', path: '/space' },
+  { name: 'Layout', path: '/layout' },
 ];
 
 function navigate(path: string) {
