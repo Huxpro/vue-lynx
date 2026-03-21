@@ -68,6 +68,7 @@ import ContactListDemo from './pages/contact-list.vue';
 import CouponListDemo from './pages/coupon-list.vue';
 import SubmitBarDemo from './pages/submit-bar.vue';
 import SignatureDemo from './pages/signature.vue';
+import PullRefreshDemo from './pages/pull-refresh.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -141,6 +142,7 @@ const router = createRouter({
     { path: '/coupon-list', name: 'coupon-list', component: CouponListDemo },
     { path: '/submit-bar', name: 'submit-bar', component: SubmitBarDemo },
     { path: '/signature', name: 'signature', component: SignatureDemo },
+    { path: '/pull-refresh', name: 'pull-refresh', component: PullRefreshDemo },
   ],
 });
 
