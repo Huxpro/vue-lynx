@@ -342,9 +342,10 @@ const couponContentStyle = {
         alignItems: 'center',
         justifyContent: 'center',
       }"
+      @tap="onCloseButton"
     >
       <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">
-        {{ chosenCoupon >= 0 ? 'Use Coupon' : 'No Coupon' }}
+        {{ closeButtonText || (chosenCoupon >= 0 ? 'Use Coupon' : 'No Coupon') }}
       </text>
     </view>
   </view>
