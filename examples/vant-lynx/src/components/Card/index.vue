@@ -1,42 +1,10 @@
 <!--
-  @component VantCard (Lynx port)
-  @see https://github.com/youzan/vant/blob/main/packages/vant/src/card/Card.tsx
-
-  === Feature Parity with Vant ===
-  Props (Vant -> Lynx):
-    [x] tag                  - string (corner tag text)
-    [x] num                  - string | number
-    [x] desc                 - string
-    [x] thumb                - string (image URL)
-    [x] title                - string
-    [x] price                - string | number
-    [x] currency             - string (default '¥')
-    [x] originPrice          - string | number
-    [x] centered             - boolean (vertically center content)
-    [x] lazyLoad             - boolean (accepted, image lazy-load not implemented in Lynx)
-    [ ] thumbLink            - MISSING: link URL when clicking thumb
-
-  Events (Vant -> Lynx):
-    [x] click                - (event) => void
-    [x] clickThumb           - (event) => void
-
-  Slots (Vant -> Lynx):
-    [x] thumb                - custom thumb content
-    [x] tag                  - custom tag content
-    [x] title                - custom title
-    [x] desc                 - custom description
-    [x] price                - custom price
-    [x] num                  - custom num display
-    [x] footer               - footer content
-    [x] bottom               - bottom content
-    [ ] price-top            - MISSING: content above price
-    [ ] tags                 - MISSING: custom tags below desc
-
-  Lynx-specific notes:
-    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
-    - <image> element used instead of Vant's <Image> component
-    - Tag rendered as absolute-positioned view, not Vant's <Tag> component
-    - Price split into integer/decimal not done (single text display)
+  Vant Feature Parity Report:
+  - Props: 10/11 supported (tag, num, desc, thumb, title, price, centered,
+    lazyLoad, currency, originPrice)
+  - Events: 2/2 supported (click, clickThumb)
+  - Slots: 7/9 supported (thumb, tag, title, desc, price, num, footer, bottom)
+  - Gaps: thumbLink prop, tags slot
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';

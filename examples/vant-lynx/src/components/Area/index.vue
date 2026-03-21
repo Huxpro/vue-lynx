@@ -1,44 +1,12 @@
 <!--
-  @component VantArea (Lynx port)
-  @see https://github.com/youzan/vant/blob/main/packages/vant/src/area/Area.tsx
-
-  === Feature Parity with Vant ===
-  Props (Vant -> Lynx):
-    [x] modelValue           - string (area code)
-    [x] title                - string
-    [x] areaList             - AreaList (province_list/city_list/county_list)
-    [x] columnsNum           - number (default 3)
-    [x] columnsPlaceholder   - string[]
-    [x] loading              - boolean
-    [x] readonly             - boolean
-    [x] visibleOptionNum     - number (default 6)
-    [ ] optionHeight         - MISSING: height of each option (Vant Picker prop)
-    [ ] swipeDuration        - MISSING: swipe animation duration (Vant Picker prop)
-    [ ] showToolbar          - MISSING: controls toolbar visibility (default true)
-
-  Events (Vant -> Lynx):
-    [x] update:modelValue    - (value: string) => void
-    [x] confirm              - (values: {code,name}[]) => void
-    [x] cancel               - () => void
-    [x] change               - (values: {code,name}[], columnIndex: number) => void
-
-  Slots (Vant -> Lynx):
-    [ ] toolbar              - MISSING: custom toolbar content
-    [ ] title                - MISSING: custom title slot
-    [ ] columns-top          - MISSING: content above columns
-    [ ] columns-bottom       - MISSING: content below columns
-    [ ] confirm              - MISSING: custom confirm button
-    [ ] cancel               - MISSING: custom cancel button
-
-  Expose (Vant -> Lynx):
-    [ ] confirm()            - MISSING: programmatic confirm
-    [ ] getSelectedOptions() - MISSING: get current selections
-
-  Lynx-specific notes:
-    - Uses inline styles with explicit display: 'flex' (Lynx default is linear)
-    - No scroll-wheel picker; uses flat selectable list columns
-    - Loading overlay is text-based ("Loading...") rather than a spinner
-    - Columns are side-by-side lists, not cascading Picker wheels
+  Vant Feature Parity Report:
+  - Props: 5/7 supported (modelValue, areaList, columnsNum, columnsPlaceholder,
+    loading, readonly, visibleOptionNum)
+  - Events: 4/4 supported (update:modelValue, confirm, cancel, change)
+  - Slots: 0/6 supported
+  - Gaps: title/optionHeight/swipeDuration props (Picker-inherited),
+    title/cancel/confirm/toolbar/columns-top/columns-bottom slots,
+    no scroll-based wheel picker (uses flat list)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';

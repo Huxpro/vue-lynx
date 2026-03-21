@@ -39,6 +39,7 @@ export interface CouponItem {
 }
 
 export interface CouponListProps {
+  code?: string;
   coupons?: CouponItem[];
   chosenCoupon?: number;
   disabledCoupons?: CouponItem[];
@@ -51,10 +52,13 @@ export interface CouponListProps {
   showExchangeBar?: boolean;
   showCloseButton?: boolean;
   showCount?: boolean;
+  closeButtonText?: string;
+  inputPlaceholder?: string;
   currency?: string;
 }
 
 const props = withDefaults(defineProps<CouponListProps>(), {
+  code: '',
   coupons: () => [],
   chosenCoupon: -1,
   disabledCoupons: () => [],
@@ -67,16 +71,19 @@ const props = withDefaults(defineProps<CouponListProps>(), {
   showExchangeBar: true,
   showCloseButton: true,
   showCount: true,
+  closeButtonText: '',
+  inputPlaceholder: 'Enter coupon code',
   currency: '¥',
 });
 
 const emit = defineEmits<{
   change: [index: number];
   exchange: [code: string];
+  'update:code': [code: string];
 }>();
 
 const activeTab = ref<'enabled' | 'disabled'>('enabled');
-const exchangeCode = ref('');
+const exchangeCode = ref(props.code);
 
 const enabledTitle = computed(() => {
   if (props.showCount) {
@@ -109,6 +116,11 @@ function onExchange() {
 
 function onExchangeInput(event: any) {
   exchangeCode.value = event?.detail?.value ?? event?.target?.value ?? '';
+  emit('update:code', exchangeCode.value);
+}
+
+function onCloseButton() {
+  emit('change', -1);
 }
 
 function formatValue(coupon: CouponItem): string {

@@ -1,19 +1,37 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 4/6 supported (title, dot, badge, disabled)
+  Vant Feature Parity Report (SidebarItem):
+  - Props: 5/6 supported (title, dot, badge, disabled, badgeProps, index)
+    - title: string - item title text
+    - dot: boolean - show red dot indicator
+    - badge: string|number - badge content
+    - disabled: boolean - disable interaction
+    - badgeProps: Partial<BadgeProps> - extra badge config
+    - index: number - item index (Vant auto-detects via useParent; here must be passed manually)
+    - Missing: route-related props (to, url, replace) - no router in Lynx
   - Events: 1/1 supported (click)
-  - Slots: 1/1 supported (default)
-  - Gaps: badgeProps prop, route props (to, url, replace);
-    index is manually passed instead of auto-detected via useParent
+  - Slots: 2/2 supported (default, title)
+    - default: extra content after title
+    - title: custom title content (replaces title prop text)
+  - Lynx Adaptations:
+    - Uses Badge component for dot/badge display (aligned with Vant source)
+    - Active bar indicator via absolute-positioned view
+    - No router navigation
+  - Gaps:
+    - No route navigation (to, url, replace props)
+    - index must be manually provided (no auto-indexing)
+    - No role/tabindex/aria attributes (Lynx limitation)
 -->
 <script setup lang="ts">
 import { computed, inject, type Ref } from 'vue-lynx';
+import Badge from '../Badge/index.vue';
+import type { BadgeProps } from '../Badge/index.vue';
 
 export interface SidebarItemProps {
   title?: string;
   dot?: boolean;
   badge?: string | number;
   disabled?: boolean;
+  badgeProps?: Partial<BadgeProps>;
   index?: number;
 }
 
@@ -48,7 +66,10 @@ const itemStyle = computed(() => ({
   flexDirection: 'row' as const,
   alignItems: 'center' as const,
   position: 'relative' as const,
-  padding: 16,
+  paddingTop: 16,
+  paddingBottom: 16,
+  paddingLeft: 16,
+  paddingRight: 16,
   backgroundColor: isActive.value ? '#fff' : 'transparent',
   opacity: props.disabled ? 0.5 : 1,
 }));
@@ -66,43 +87,23 @@ const activeBarStyle = computed(() => ({
 
 const textStyle = computed(() => ({
   fontSize: 14,
-  color: isActive.value ? '#323233' : '#323233',
+  color: '#323233',
   fontWeight: isActive.value ? 'bold' : ('normal' as any),
-}));
-
-const dotStyle = computed(() => ({
-  width: 8,
-  height: 8,
-  borderRadius: 4,
-  backgroundColor: '#ee0a24',
-  position: 'absolute' as const,
-  top: 8,
-  right: 8,
-}));
-
-const badgeStyle = computed(() => ({
-  fontSize: 10,
-  color: '#fff',
-  backgroundColor: '#ee0a24',
-  borderRadius: 8,
-  paddingLeft: 3,
-  paddingRight: 3,
-  minWidth: 16,
-  height: 16,
-  lineHeight: 16,
-  textAlign: 'center' as const,
-  position: 'absolute' as const,
-  top: 4,
-  right: 4,
 }));
 </script>
 
 <template>
   <view :style="itemStyle" @tap="onTap">
     <view v-if="isActive" :style="activeBarStyle" />
-    <text :style="textStyle">{{ title }}</text>
+    <Badge
+      :dot="dot"
+      :content="badge"
+      v-bind="badgeProps"
+    >
+      <slot name="title">
+        <text :style="textStyle">{{ title }}</text>
+      </slot>
+    </Badge>
     <slot />
-    <view v-if="dot" :style="dotStyle" />
-    <text v-else-if="badge !== undefined && badge !== ''" :style="badgeStyle">{{ badge }}</text>
   </view>
 </template>
