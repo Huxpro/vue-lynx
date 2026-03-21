@@ -1,0 +1,150 @@
+import { PackageManagerTabs } from '@theme';
+
+# 使用 Vue Router
+
+Vue Lynx 应用可以使用 [Vue Router](https://router.vuejs.org/)（Vue 官方路由库）来管理视图之间的导航。但由于 Lynx 没有浏览器的 `window.location` 和 History API，你必须使用 [`createMemoryHistory()`](https://router.vuejs.org/api/index.html#creatememoryhistory) 代替 `createWebHistory()` —— 类似于 React Router 提供的 `MemoryRouter` 或 TanStack Router 为非浏览器环境提供的内存路由。
+
+<Go example="vue-router" defaultFile="src/App.vue" defaultEntryName="main" />
+
+## 安装依赖
+
+<PackageManagerTabs command="install vue-router" />
+
+## 创建路由
+
+使用 `createMemoryHistory()` 创建一个将路由状态完全保存在进程内存中的 history 实例，无需依赖浏览器 API：
+
+```ts title="src/router.ts"
+import { createRouter, createMemoryHistory } from 'vue-router';
+import Home from './views/Home.vue';
+import About from './views/About.vue';
+
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', name: 'home', component: Home },
+    { path: '/about', name: 'about', component: About },
+    { path: '/users', name: 'users', component: UserList },
+    { path: '/users/:id', name: 'user-detail', component: UserDetail },
+  ],
+});
+
+export default router;
+```
+
+然后安装路由插件并挂载应用：
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx';
+import router from './router';
+import App from './App.vue';
+
+const app = createApp(App);
+app.use(router);
+app.mount();
+```
+
+## 使用 `<RouterView>`
+
+[`<RouterView>`](https://router.vuejs.org/api/index.html#RouterView) 渲染当前路由匹配的组件。它在 Lynx 中无需任何修改即可正常使用：
+
+```vue title="src/App.vue"
+<script setup lang="ts">
+import { RouterView } from 'vue-router';
+</script>
+
+<template>
+  <view>
+    <RouterView />
+  </view>
+</template>
+```
+
+## 不使用 `<a>` 标签的导航方式
+
+在浏览器中，[`<RouterLink>`](https://router.vuejs.org/api/index.html#RouterLink) 默认渲染为 `<a>` 标签。由于 Lynx 没有 `<a>` 元素，你有两种选择：
+
+### 方式一：使用 RouterLink 的 `custom` 插槽
+
+使用 RouterLink 的 [`custom`](https://router.vuejs.org/api/index.html#RouterLink-Props) prop 配合作用域插槽 API，渲染 Lynx 原生元素并保留 `isActive` 状态：
+
+```vue title="src/NavLink.vue"
+<script setup lang="ts">
+import { RouterLink } from 'vue-router';
+
+defineProps<{
+  to: string;
+  label: string;
+}>();
+</script>
+
+<template>
+  <RouterLink :to="to" custom v-slot="{ navigate, isActive }">
+    <text
+      @tap="navigate"
+      :style="{
+        color: isActive ? '#fff' : '#333',
+        backgroundColor: isActive ? '#1a73e8' : '#e8e8e8',
+        padding: '8px 12px',
+        borderRadius: 16,
+      }"
+    >
+      {{ label }}
+    </text>
+  </RouterLink>
+</template>
+```
+
+### 方式二：编程式导航
+
+使用 [`useRouter()`](https://router.vuejs.org/api/index.html#useRouter) 组合式函数进行编程式导航：
+
+```vue title="src/views/UserList.vue"
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+function goToUser(id: number) {
+  router.push(`/users/${id}`);
+}
+</script>
+
+<template>
+  <view v-for="user in users" :key="user.id" @tap="goToUser(user.id)">
+    <text>{{ user.name }}</text>
+  </view>
+</template>
+```
+
+你也可以像平常一样使用 `router.back()` 和 `router.replace()`。
+
+## 动态路由参数
+
+通过 [`useRoute()`](https://router.vuejs.org/api/index.html#useRoute) 访问动态路由参数：
+
+```vue title="src/views/UserDetail.vue"
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const userId = computed(() => route.params.id as string);
+</script>
+
+<template>
+  <view>
+    <text>User ID: {{ userId }}</text>
+  </view>
+</template>
+```
+
+## 为什么使用 Memory History？
+
+| History 模式 | 需要浏览器 API | 在 Lynx 中可用 |
+| --- | --- | --- |
+| `createWebHistory()` | 是（`window.location`、History API） | 否 |
+| `createWebHashHistory()` | 是（`window.location`） | 否 |
+| `createMemoryHistory()` | 否 | **是** |
+
+`createMemoryHistory()` 专为没有浏览器的环境设计 —— SSR、测试以及 Lynx 等原生运行时。路由状态存储在一个简单的内存数组中，因此 `router.push()`、`router.back()` 和动态参数等功能都能正常工作。
