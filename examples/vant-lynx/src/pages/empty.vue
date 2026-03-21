@@ -30,8 +30,22 @@ import Empty from '../components/Empty/index.vue';
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Description</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <Empty image="default" description="Custom description text" />
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Bottom</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Empty description="No data available">
+          <view :style="{ paddingTop: 8, paddingBottom: 8, paddingLeft: 24, paddingRight: 24, backgroundColor: '#1989fa', borderRadius: 20 }">
+            <text :style="{ fontSize: 14, color: '#fff' }">Go to Homepage</text>
+          </view>
+        </Empty>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Image Size</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Empty image="search" :image-size="80" description="Small image" />
       </view>
     </view>
   </DemoPage>

@@ -78,6 +78,28 @@ function onThumbClick() {
           centered
         />
       </view>
+
+      <!-- Custom Content -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Content</text>
+      <view :style="{ marginBottom: 16 }">
+        <Card
+          title="Limited Offer"
+          desc="While supplies last"
+          price="15.00"
+          num="3"
+        >
+          <template #footer>
+            <view :style="{ display: 'flex', flexDirection: 'row', marginTop: 8 }">
+              <view :style="{ paddingTop: 4, paddingBottom: 4, paddingLeft: 12, paddingRight: 12, borderWidth: 1, borderStyle: 'solid', borderColor: '#1989fa', borderRadius: 4, marginRight: 8 }">
+                <text :style="{ fontSize: 12, color: '#1989fa' }">Add to Cart</text>
+              </view>
+              <view :style="{ paddingTop: 4, paddingBottom: 4, paddingLeft: 12, paddingRight: 12, borderWidth: 1, borderStyle: 'solid', borderColor: '#07c160', borderRadius: 4 }">
+                <text :style="{ fontSize: 12, color: '#07c160' }">Buy Now</text>
+              </view>
+            </view>
+          </template>
+        </Card>
+      </view>
     </view>
   </DemoPage>
 </template>

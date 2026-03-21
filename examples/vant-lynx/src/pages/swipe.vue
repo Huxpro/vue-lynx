@@ -2,16 +2,12 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Swipe from '../components/Swipe/index.vue';
-const swipeRef = ref<InstanceType<typeof Swipe> | null>(null);
 
 const colors = ['#39a9ed', '#66c6f2', '#3cb371', '#ff6347'];
+const changeLog = ref('');
 
 function onSwipeChange(index: number) {
-  // handle swipe change
-}
-
-function setupCount() {
-  swipeRef.value?.setCount(4);
+  changeLog.value = `Current: ${index + 1}`;
 }
 </script>
 
@@ -21,7 +17,7 @@ function setupCount() {
       <!-- Basic Usage -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Swipe ref="swipeRef" :height="150" @change="onSwipeChange">
+        <Swipe :height="150">
           <view v-for="(color, i) in colors" :key="i" :style="{ height: 150, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
             <text :style="{ fontSize: 20, color: '#fff', fontWeight: 'bold' }">{{ i + 1 }}</text>
           </view>
@@ -38,7 +34,20 @@ function setupCount() {
         </Swipe>
       </view>
 
-      <!-- Custom Indicator Color -->
+      <!-- Change Event -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Change Event</text>
+      <view :style="{ marginBottom: 8, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+        <Swipe :height="150" @change="onSwipeChange">
+          <view v-for="(color, i) in colors" :key="i" :style="{ height: 150, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
+            <text :style="{ fontSize: 20, color: '#fff', fontWeight: 'bold' }">{{ i + 1 }}</text>
+          </view>
+        </Swipe>
+      </view>
+      <view v-if="changeLog" :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
+        <text :style="{ fontSize: 14, color: '#323233' }">{{ changeLog }}</text>
+      </view>
+
+      <!-- Custom Indicator -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Indicator</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <Swipe :height="150" indicator-color="#ee0a24">
@@ -50,9 +59,19 @@ function setupCount() {
 
       <!-- Vertical -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Vertical</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <Swipe :height="150" vertical>
           <view v-for="(color, i) in colors" :key="i" :style="{ height: 150, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
+            <text :style="{ fontSize: 20, color: '#fff', fontWeight: 'bold' }">{{ i + 1 }}</text>
+          </view>
+        </Swipe>
+      </view>
+
+      <!-- Custom Size -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Size</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+        <Swipe :height="200" :width="250" :loop="false">
+          <view v-for="(color, i) in colors" :key="i" :style="{ height: 200, backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
             <text :style="{ fontSize: 20, color: '#fff', fontWeight: 'bold' }">{{ i + 1 }}</text>
           </view>
         </Swipe>

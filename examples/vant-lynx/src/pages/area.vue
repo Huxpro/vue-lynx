@@ -40,6 +40,7 @@ const areaList = {
 };
 
 const selectedCode = ref('');
+const initialCode = ref('330102');
 const confirmResult = ref('');
 
 function onConfirm(values: { code: string; name: string }[]) {
@@ -70,8 +71,18 @@ function onCancel() {
         <text :style="{ fontSize: 14, color: '#323233' }">Result: {{ confirmResult }}</text>
       </view>
 
-      <!-- Two Columns -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Two Columns</text>
+      <!-- Model Value -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Model Value</text>
+      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+        <Area
+          v-model="initialCode"
+          title="Select Area"
+          :area-list="areaList"
+        />
+      </view>
+
+      <!-- Columns Number -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Columns Number</text>
       <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
         <Area
           title="Province & City"
@@ -80,13 +91,13 @@ function onCancel() {
         />
       </view>
 
-      <!-- Loading State -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Loading State</text>
+      <!-- Columns Placeholder -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Columns Placeholder</text>
       <view :style="{ borderRadius: 8, overflow: 'hidden' }">
         <Area
-          title="Loading..."
+          title="Select Area"
           :area-list="areaList"
-          :loading="true"
+          :columns-placeholder="['Province', 'City', 'County']"
         />
       </view>
     </view>

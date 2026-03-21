@@ -1,241 +1,1608 @@
 {
-  "title": "Vant-Lynx API Polish",
-  "description": "Fill in missing props, events, and slots to achieve better Vant API parity. Focus on features that ARE implementable in Lynx (skip platform-impossible ones like teleport, lockScroll, etc.).",
+  "title": "Vant-Lynx Demo Coverage - All Components",
+  "description": "Ensure each component's demo page covers all demos shown on Vant's official documentation.",
   "context": {
-    "skipList": ["teleport", "lockScroll", "closeOnPopstate", "lazyRender (already handled)", "CSS variables", "route/url props"],
     "vantDocs": "https://vant-ui.github.io/vant/#/en-US/",
-    "implementationPattern": "Check Vant source for exact prop types and behaviors. Match API signatures exactly."
+    "demoPagePattern": "Each demo page is in examples/vant-lynx/src/pages/{component-kebab-case}.vue",
+    "reference": "Check Vant docs for each component, add all demo sections shown there"
   },
   "userStories": [
     {
-      "id": "pickergroup-toolbar",
-      "title": "PickerGroup toolbar and events",
-      "description": "Add toolbar with confirm/cancel buttons and missing props/events to PickerGroup.",
+      "id": "action-bar-demos",
+      "title": "ActionBar demo coverage",
+      "description": "Add all Vant ActionBar demos to match official documentation.",
       "requirements": [
-        "Add showToolbar prop (default true)",
-        "Add confirmButtonText, cancelButtonText props",
-        "Add nextStepText prop for multi-step flows",
-        "Add v-model:activeTab support",
-        "Add confirm, cancel events",
-        "Add toolbar, title, confirm, cancel slots"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/action-bar",
+        "Compare with existing pages/action-bar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/PickerGroup/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/action-bar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 100,
+      "passes": true
+    },
+    {
+      "id": "action-bar-button-demos",
+      "title": "ActionBarButton demo coverage",
+      "description": "Add all Vant ActionBarButton demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/action-bar-button",
+        "Compare with existing pages/action-bar-button.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/action-bar-button.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 99,
+      "passes": true
+    },
+    {
+      "id": "action-bar-icon-demos",
+      "title": "ActionBarIcon demo coverage",
+      "description": "Add all Vant ActionBarIcon demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/action-bar-icon",
+        "Compare with existing pages/action-bar-icon.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/action-bar-icon.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 98,
+      "passes": true
+    },
+    {
+      "id": "action-sheet-demos",
+      "title": "ActionSheet demo coverage",
+      "description": "Add all Vant ActionSheet demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/action-sheet",
+        "Compare with existing pages/action-sheet.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/action-sheet.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 97,
+      "passes": true
+    },
+    {
+      "id": "address-edit-demos",
+      "title": "AddressEdit demo coverage",
+      "description": "Add all Vant AddressEdit demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/address-edit",
+        "Compare with existing pages/address-edit.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/address-edit.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 96,
+      "passes": true
+    },
+    {
+      "id": "address-list-demos",
+      "title": "AddressList demo coverage",
+      "description": "Add all Vant AddressList demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/address-list",
+        "Compare with existing pages/address-list.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/address-list.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 95,
       "passes": true
     },
     {
-      "id": "timepicker-complete",
-      "title": "TimePicker filter/formatter and slots",
-      "description": "Add missing filter, formatter props and slots to TimePicker.",
+      "id": "area-demos",
+      "title": "Area demo coverage",
+      "description": "Add all Vant Area demos to match official documentation.",
       "requirements": [
-        "Add filter prop: (type: string, values: string[]) => string[]",
-        "Add formatter prop: (type: string, value: string) => string",
-        "Add visibleOptionNum prop",
-        "Add toolbar, title, confirm, cancel, option slots",
-        "Add columns-top, columns-bottom slots"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/area",
+        "Compare with existing pages/area.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/TimePicker/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/area.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 94,
+      "passes": true
+    },
+    {
+      "id": "back-top-demos",
+      "title": "BackTop demo coverage",
+      "description": "Add all Vant BackTop demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/back-top",
+        "Compare with existing pages/back-top.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/back-top.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 93,
+      "passes": true
+    },
+    {
+      "id": "badge-demos",
+      "title": "Badge demo coverage",
+      "description": "Add all Vant Badge demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/badge",
+        "Compare with existing pages/badge.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/badge.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 92,
+      "passes": true
+    },
+    {
+      "id": "barrage-demos",
+      "title": "Barrage demo coverage",
+      "description": "Add all Vant Barrage demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/barrage",
+        "Compare with existing pages/barrage.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/barrage.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 91,
+      "passes": true
+    },
+    {
+      "id": "button-demos",
+      "title": "Button demo coverage",
+      "description": "Add all Vant Button demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/button",
+        "Compare with existing pages/button.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/button.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 90,
       "passes": true
     },
     {
-      "id": "datepicker-complete",
-      "title": "DatePicker filter/formatter and slots",
-      "description": "Add missing filter, formatter props and slots to DatePicker (same pattern as TimePicker).",
+      "id": "calendar-demos",
+      "title": "Calendar demo coverage",
+      "description": "Add all Vant Calendar demos to match official documentation.",
       "requirements": [
-        "Add filter prop",
-        "Add formatter prop",
-        "Add visibleOptionNum prop",
-        "Add toolbar, title, confirm, cancel, option slots"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/calendar",
+        "Compare with existing pages/calendar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/DatePicker/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/calendar.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 89,
       "passes": true
     },
     {
-      "id": "calendar-popup",
-      "title": "Calendar popup mode integration",
-      "description": "Add Popup integration for Calendar poppable mode.",
+      "id": "card-demos",
+      "title": "Card demo coverage",
+      "description": "Add all Vant Card demos to match official documentation.",
       "requirements": [
-        "Add show prop with v-model support",
-        "Add round, position props",
-        "Wrap in Popup when poppable=true",
-        "Add update:show, clickOverlay, open, close, opened, closed events",
-        "Add title, subtitle, footer slots"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/card",
+        "Compare with existing pages/card.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/card.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 88,
       "passes": true
     },
     {
-      "id": "calendar-formatter",
-      "title": "Calendar day formatter",
-      "description": "Add formatter prop for custom day rendering in Calendar.",
+      "id": "cascader-demos",
+      "title": "Cascader demo coverage",
+      "description": "Add all Vant Cascader demos to match official documentation.",
       "requirements": [
-        "Add formatter prop: (day: Day) => Day",
-        "Day type: { date, type, text, topInfo, bottomInfo, className }",
-        "Apply formatter to each day cell",
-        "Support custom topInfo/bottomInfo rendering"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/cascader",
+        "Compare with existing pages/cascader.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Calendar/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/cascader.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 87,
+      "passes": true
+    },
+    {
+      "id": "cell-demos",
+      "title": "Cell demo coverage",
+      "description": "Add all Vant Cell demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/cell",
+        "Compare with existing pages/cell.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/cell.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 86,
+      "passes": true
+    },
+    {
+      "id": "cell-group-demos",
+      "title": "CellGroup demo coverage",
+      "description": "Add all Vant CellGroup demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/cell-group",
+        "Compare with existing pages/cell-group.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/cell-group.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 85,
       "passes": true
     },
     {
-      "id": "actionsheet-close",
-      "title": "ActionSheet closeable and safeArea",
-      "description": "Add closeable icon and safe area props to ActionSheet.",
+      "id": "checkbox-demos",
+      "title": "Checkbox demo coverage",
+      "description": "Add all Vant Checkbox demos to match official documentation.",
       "requirements": [
-        "Add closeable prop",
-        "Add closeIcon prop (default 'cross')",
-        "Add safeAreaInsetBottom prop",
-        "Render close icon when closeable=true",
-        "Add bottom padding for safe area"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/checkbox",
+        "Compare with existing pages/checkbox.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/ActionSheet/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/checkbox.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 84,
+      "passes": true
+    },
+    {
+      "id": "checkbox-group-demos",
+      "title": "CheckboxGroup demo coverage",
+      "description": "Add all Vant CheckboxGroup demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/checkbox-group",
+        "Compare with existing pages/checkbox-group.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/checkbox-group.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 83,
+      "passes": true
+    },
+    {
+      "id": "circle-demos",
+      "title": "Circle demo coverage",
+      "description": "Add all Vant Circle demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/circle",
+        "Compare with existing pages/circle.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/circle.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 82,
       "passes": true
     },
     {
-      "id": "form-auto-required",
-      "title": "Form auto-required detection",
-      "description": "Add required='auto' mode that auto-detects from field rules.",
+      "id": "col-demos",
+      "title": "Col demo coverage",
+      "description": "Add all Vant Col demos to match official documentation.",
       "requirements": [
-        "Add required prop with 'auto' | boolean values",
-        "When 'auto', check if field has 'required' rule",
-        "Show asterisk on label when required",
-        "Update scrollToError to use element refs"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/col",
+        "Compare with existing pages/col.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Form/index.vue", "examples/vant-lynx/src/components/Field/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/col.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 81,
+      "passes": true
+    },
+    {
+      "id": "collapse-demos",
+      "title": "Collapse demo coverage",
+      "description": "Add all Vant Collapse demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/collapse",
+        "Compare with existing pages/collapse.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/collapse.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 80,
       "passes": true
     },
     {
-      "id": "treeselect-badge",
-      "title": "TreeSelect nav item badges",
-      "description": "Add dot/badge rendering support for TreeSelect nav items.",
+      "id": "collapse-item-demos",
+      "title": "CollapseItem demo coverage",
+      "description": "Add all Vant CollapseItem demos to match official documentation.",
       "requirements": [
-        "Support badge property on nav items",
-        "Support dot property on nav items",
-        "Render Badge component on nav items when badge/dot set",
-        "Match Vant's TreeSelectItem type"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/collapse-item",
+        "Compare with existing pages/collapse-item.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/TreeSelect/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/collapse-item.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 79,
+      "passes": true
+    },
+    {
+      "id": "config-provider-demos",
+      "title": "ConfigProvider demo coverage",
+      "description": "Add all Vant ConfigProvider demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/config-provider",
+        "Compare with existing pages/config-provider.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/config-provider.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 78,
       "passes": true
     },
     {
-      "id": "couponlist-complete",
-      "title": "CouponList missing props",
-      "description": "Add code prop v-model and missing UI props to CouponList.",
+      "id": "contact-card-demos",
+      "title": "ContactCard demo coverage",
+      "description": "Add all Vant ContactCard demos to match official documentation.",
       "requirements": [
-        "Add code prop with v-model support (input value)",
-        "Add emptyImage prop",
-        "Add closeButtonText prop",
-        "Add inputPlaceholder prop",
-        "Add displayedCouponIndex prop",
-        "Add update:code event"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/contact-card",
+        "Compare with existing pages/contact-card.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/CouponList/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/contact-card.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 77,
+      "passes": true
+    },
+    {
+      "id": "contact-edit-demos",
+      "title": "ContactEdit demo coverage",
+      "description": "Add all Vant ContactEdit demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/contact-edit",
+        "Compare with existing pages/contact-edit.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/contact-edit.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 76,
+      "passes": true
+    },
+    {
+      "id": "contact-list-demos",
+      "title": "ContactList demo coverage",
+      "description": "Add all Vant ContactList demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/contact-list",
+        "Compare with existing pages/contact-list.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/contact-list.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 75,
       "passes": true
     },
     {
-      "id": "pagination-slot",
-      "title": "Pagination pageDesc slot",
-      "description": "Add pageDesc slot to Pagination.",
+      "id": "count-down-demos",
+      "title": "CountDown demo coverage",
+      "description": "Add all Vant CountDown demos to match official documentation.",
       "requirements": [
-        "Add pageDesc slot",
-        "Slot receives { current, total } props",
-        "Default: '{current}/{total}' text"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/count-down",
+        "Compare with existing pages/count-down.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Pagination/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/count-down.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 74,
+      "passes": true
+    },
+    {
+      "id": "coupon-list-demos",
+      "title": "CouponList demo coverage",
+      "description": "Add all Vant CouponList demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/coupon-list",
+        "Compare with existing pages/coupon-list.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/coupon-list.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 73,
+      "passes": true
+    },
+    {
+      "id": "date-picker-demos",
+      "title": "DatePicker demo coverage",
+      "description": "Add all Vant DatePicker demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/date-picker",
+        "Compare with existing pages/date-picker.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/date-picker.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 72,
+      "passes": true
+    },
+    {
+      "id": "demo-page-demos",
+      "title": "DemoPage demo coverage",
+      "description": "Add all Vant DemoPage demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/demo-page",
+        "Compare with existing pages/demo-page.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/demo-page.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 71,
+      "passes": true
+    },
+    {
+      "id": "dialog-demos",
+      "title": "Dialog demo coverage",
+      "description": "Add all Vant Dialog demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/dialog",
+        "Compare with existing pages/dialog.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/dialog.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 70,
       "passes": true
     },
     {
-      "id": "rate-iconprefix",
-      "title": "Rate iconPrefix support",
-      "description": "Add iconPrefix support to Rate component.",
+      "id": "divider-demos",
+      "title": "Divider demo coverage",
+      "description": "Add all Vant Divider demos to match official documentation.",
       "requirements": [
-        "Add iconPrefix prop",
-        "Use Icon component with iconPrefix when provided",
-        "Fall back to Unicode stars when no iconPrefix"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/divider",
+        "Compare with existing pages/divider.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Rate/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/divider.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 69,
+      "passes": true
+    },
+    {
+      "id": "dropdown-item-demos",
+      "title": "DropdownItem demo coverage",
+      "description": "Add all Vant DropdownItem demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/dropdown-item",
+        "Compare with existing pages/dropdown-item.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/dropdown-item.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 68,
       "passes": true
     },
     {
-      "id": "uploader-callbacks",
-      "title": "Uploader callback props",
-      "description": "Add afterRead, beforeRead, beforeDelete callback props.",
+      "id": "dropdown-menu-demos",
+      "title": "DropdownMenu demo coverage",
+      "description": "Add all Vant DropdownMenu demos to match official documentation.",
       "requirements": [
-        "Add afterRead prop: (file, detail) => void",
-        "Add beforeRead prop: (file, detail) => boolean | Promise<boolean>",
-        "Add beforeDelete prop: (file, detail) => boolean | Promise<boolean>",
-        "Call beforeRead before adding file",
-        "Call afterRead after file added",
-        "Call beforeDelete before removing file"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/dropdown-menu",
+        "Compare with existing pages/dropdown-menu.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Uploader/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/dropdown-menu.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 67,
+      "passes": true
+    },
+    {
+      "id": "empty-demos",
+      "title": "Empty demo coverage",
+      "description": "Add all Vant Empty demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/empty",
+        "Compare with existing pages/empty.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/empty.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 66,
+      "passes": true
+    },
+    {
+      "id": "field-demos",
+      "title": "Field demo coverage",
+      "description": "Add all Vant Field demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/field",
+        "Compare with existing pages/field.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/field.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 65,
       "passes": true
     },
     {
-      "id": "tabs-animated",
-      "title": "Tabs animated transition",
-      "description": "Add animated prop for tab content transition (now possible with Transition).",
+      "id": "floating-bubble-demos",
+      "title": "FloatingBubble demo coverage",
+      "description": "Add all Vant FloatingBubble demos to match official documentation.",
       "requirements": [
-        "Add animated prop (default false)",
-        "When animated, use Transition for content swap",
-        "Slide content based on direction (left/right)",
-        "Add swipeThreshold prop for swipe gesture sensitivity"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/floating-bubble",
+        "Compare with existing pages/floating-bubble.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Tabs/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/floating-bubble.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 64,
+      "passes": true
+    },
+    {
+      "id": "floating-panel-demos",
+      "title": "FloatingPanel demo coverage",
+      "description": "Add all Vant FloatingPanel demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/floating-panel",
+        "Compare with existing pages/floating-panel.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/floating-panel.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 63,
+      "passes": true
+    },
+    {
+      "id": "form-demos",
+      "title": "Form demo coverage",
+      "description": "Add all Vant Form demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/form",
+        "Compare with existing pages/form.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/form.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 62,
+      "passes": true
+    },
+    {
+      "id": "grid-demos",
+      "title": "Grid demo coverage",
+      "description": "Add all Vant Grid demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/grid",
+        "Compare with existing pages/grid.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/grid.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 61,
+      "passes": true
+    },
+    {
+      "id": "grid-item-demos",
+      "title": "GridItem demo coverage",
+      "description": "Add all Vant GridItem demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/grid-item",
+        "Compare with existing pages/grid-item.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/grid-item.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 60,
       "passes": true
     },
     {
-      "id": "picker-methods",
-      "title": "Picker expose methods",
-      "description": "Expose Picker instance methods via ref.",
+      "id": "highlight-demos",
+      "title": "Highlight demo coverage",
+      "description": "Add all Vant Highlight demos to match official documentation.",
       "requirements": [
-        "Expose confirm() method",
-        "Expose getSelectedOptions() method",
-        "Use defineExpose to expose methods",
-        "Document method signatures"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/highlight",
+        "Compare with existing pages/highlight.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Picker/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/highlight.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 59,
+      "passes": true
+    },
+    {
+      "id": "icon-demos",
+      "title": "Icon demo coverage",
+      "description": "Add all Vant Icon demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/icon",
+        "Compare with existing pages/icon.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/icon.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 58,
+      "passes": true
+    },
+    {
+      "id": "image-demos",
+      "title": "Image demo coverage",
+      "description": "Add all Vant Image demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/image",
+        "Compare with existing pages/image.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/image.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 57,
+      "passes": true
+    },
+    {
+      "id": "image-preview-demos",
+      "title": "ImagePreview demo coverage",
+      "description": "Add all Vant ImagePreview demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/image-preview",
+        "Compare with existing pages/image-preview.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/image-preview.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 56,
+      "passes": true
+    },
+    {
+      "id": "index-anchor-demos",
+      "title": "IndexAnchor demo coverage",
+      "description": "Add all Vant IndexAnchor demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/index-anchor",
+        "Compare with existing pages/index-anchor.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/index-anchor.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 55,
       "passes": true
     },
     {
-      "id": "dialog-methods",
-      "title": "Dialog expose methods",
-      "description": "Expose Dialog instance methods via ref.",
+      "id": "index-bar-demos",
+      "title": "IndexBar demo coverage",
+      "description": "Add all Vant IndexBar demos to match official documentation.",
       "requirements": [
-        "Expose open() method",
-        "Expose close() method",
-        "Use defineExpose to expose methods"
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/index-bar",
+        "Compare with existing pages/index-bar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
       ],
-      "files": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "files": [
+        "examples/vant-lynx/src/pages/index-bar.vue"
+      ],
       "testCommand": "pnpm build",
       "priority": 54,
+      "passes": true
+    },
+    {
+      "id": "list-demos",
+      "title": "List demo coverage",
+      "description": "Add all Vant List demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/list",
+        "Compare with existing pages/list.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/list.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 53,
+      "passes": true
+    },
+    {
+      "id": "loading-demos",
+      "title": "Loading demo coverage",
+      "description": "Add all Vant Loading demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/loading",
+        "Compare with existing pages/loading.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/loading.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 52,
+      "passes": true
+    },
+    {
+      "id": "nav-bar-demos",
+      "title": "NavBar demo coverage",
+      "description": "Add all Vant NavBar demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/nav-bar",
+        "Compare with existing pages/nav-bar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/nav-bar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 51,
+      "passes": true
+    },
+    {
+      "id": "notice-bar-demos",
+      "title": "NoticeBar demo coverage",
+      "description": "Add all Vant NoticeBar demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/notice-bar",
+        "Compare with existing pages/notice-bar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/notice-bar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 50,
+      "passes": true
+    },
+    {
+      "id": "notify-demos",
+      "title": "Notify demo coverage",
+      "description": "Add all Vant Notify demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/notify",
+        "Compare with existing pages/notify.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/notify.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 49,
+      "passes": true
+    },
+    {
+      "id": "number-keyboard-demos",
+      "title": "NumberKeyboard demo coverage",
+      "description": "Add all Vant NumberKeyboard demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/number-keyboard",
+        "Compare with existing pages/number-keyboard.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/number-keyboard.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 48,
+      "passes": true
+    },
+    {
+      "id": "overlay-demos",
+      "title": "Overlay demo coverage",
+      "description": "Add all Vant Overlay demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/overlay",
+        "Compare with existing pages/overlay.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/overlay.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 47,
+      "passes": true
+    },
+    {
+      "id": "pagination-demos",
+      "title": "Pagination demo coverage",
+      "description": "Add all Vant Pagination demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/pagination",
+        "Compare with existing pages/pagination.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/pagination.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 46,
+      "passes": true
+    },
+    {
+      "id": "password-input-demos",
+      "title": "PasswordInput demo coverage",
+      "description": "Add all Vant PasswordInput demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/password-input",
+        "Compare with existing pages/password-input.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/password-input.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 45,
+      "passes": true
+    },
+    {
+      "id": "picker-demos",
+      "title": "Picker demo coverage",
+      "description": "Add all Vant Picker demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/picker",
+        "Compare with existing pages/picker.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/picker.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 44,
+      "passes": true
+    },
+    {
+      "id": "picker-group-demos",
+      "title": "PickerGroup demo coverage",
+      "description": "Add all Vant PickerGroup demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/picker-group",
+        "Compare with existing pages/picker-group.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/picker-group.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 43,
+      "passes": true
+    },
+    {
+      "id": "popover-demos",
+      "title": "Popover demo coverage",
+      "description": "Add all Vant Popover demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/popover",
+        "Compare with existing pages/popover.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/popover.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 42,
+      "passes": true
+    },
+    {
+      "id": "popup-demos",
+      "title": "Popup demo coverage",
+      "description": "Add all Vant Popup demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/popup",
+        "Compare with existing pages/popup.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/popup.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 41,
+      "passes": true
+    },
+    {
+      "id": "progress-demos",
+      "title": "Progress demo coverage",
+      "description": "Add all Vant Progress demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/progress",
+        "Compare with existing pages/progress.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/progress.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 40,
+      "passes": true
+    },
+    {
+      "id": "pull-refresh-demos",
+      "title": "PullRefresh demo coverage",
+      "description": "Add all Vant PullRefresh demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/pull-refresh",
+        "Compare with existing pages/pull-refresh.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/pull-refresh.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 39,
+      "passes": true
+    },
+    {
+      "id": "radio-demos",
+      "title": "Radio demo coverage",
+      "description": "Add all Vant Radio demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/radio",
+        "Compare with existing pages/radio.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/radio.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 38,
+      "passes": true
+    },
+    {
+      "id": "radio-group-demos",
+      "title": "RadioGroup demo coverage",
+      "description": "Add all Vant RadioGroup demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/radio-group",
+        "Compare with existing pages/radio-group.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/radio-group.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 37,
+      "passes": true
+    },
+    {
+      "id": "rate-demos",
+      "title": "Rate demo coverage",
+      "description": "Add all Vant Rate demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/rate",
+        "Compare with existing pages/rate.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/rate.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 36,
+      "passes": true
+    },
+    {
+      "id": "rolling-text-demos",
+      "title": "RollingText demo coverage",
+      "description": "Add all Vant RollingText demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/rolling-text",
+        "Compare with existing pages/rolling-text.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/rolling-text.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 35,
+      "passes": true
+    },
+    {
+      "id": "row-demos",
+      "title": "Row demo coverage",
+      "description": "Add all Vant Row demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/row",
+        "Compare with existing pages/row.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/row.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 34,
+      "passes": true
+    },
+    {
+      "id": "search-demos",
+      "title": "Search demo coverage",
+      "description": "Add all Vant Search demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/search",
+        "Compare with existing pages/search.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/search.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 33,
+      "passes": true
+    },
+    {
+      "id": "share-sheet-demos",
+      "title": "ShareSheet demo coverage",
+      "description": "Add all Vant ShareSheet demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/share-sheet",
+        "Compare with existing pages/share-sheet.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/share-sheet.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 32,
+      "passes": true
+    },
+    {
+      "id": "sidebar-demos",
+      "title": "Sidebar demo coverage",
+      "description": "Add all Vant Sidebar demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/sidebar",
+        "Compare with existing pages/sidebar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/sidebar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 31,
+      "passes": true
+    },
+    {
+      "id": "sidebar-item-demos",
+      "title": "SidebarItem demo coverage",
+      "description": "Add all Vant SidebarItem demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/sidebar-item",
+        "Compare with existing pages/sidebar-item.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/sidebar-item.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 30,
+      "passes": true
+    },
+    {
+      "id": "signature-demos",
+      "title": "Signature demo coverage",
+      "description": "Add all Vant Signature demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/signature",
+        "Compare with existing pages/signature.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/signature.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 29,
+      "passes": true
+    },
+    {
+      "id": "skeleton-demos",
+      "title": "Skeleton demo coverage",
+      "description": "Add all Vant Skeleton demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/skeleton",
+        "Compare with existing pages/skeleton.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/skeleton.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 28,
+      "passes": true
+    },
+    {
+      "id": "slider-demos",
+      "title": "Slider demo coverage",
+      "description": "Add all Vant Slider demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/slider",
+        "Compare with existing pages/slider.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/slider.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 27,
+      "passes": true
+    },
+    {
+      "id": "space-demos",
+      "title": "Space demo coverage",
+      "description": "Add all Vant Space demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/space",
+        "Compare with existing pages/space.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/space.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 26,
+      "passes": true
+    },
+    {
+      "id": "step-demos",
+      "title": "Step demo coverage",
+      "description": "Add all Vant Step demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/step",
+        "Compare with existing pages/step.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/step.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 25,
+      "passes": true
+    },
+    {
+      "id": "stepper-demos",
+      "title": "Stepper demo coverage",
+      "description": "Add all Vant Stepper demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/stepper",
+        "Compare with existing pages/stepper.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/stepper.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 24,
+      "passes": true
+    },
+    {
+      "id": "steps-demos",
+      "title": "Steps demo coverage",
+      "description": "Add all Vant Steps demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/steps",
+        "Compare with existing pages/steps.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/steps.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 23,
+      "passes": true
+    },
+    {
+      "id": "sticky-demos",
+      "title": "Sticky demo coverage",
+      "description": "Add all Vant Sticky demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/sticky",
+        "Compare with existing pages/sticky.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/sticky.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 22,
+      "passes": true
+    },
+    {
+      "id": "submit-bar-demos",
+      "title": "SubmitBar demo coverage",
+      "description": "Add all Vant SubmitBar demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/submit-bar",
+        "Compare with existing pages/submit-bar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/submit-bar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 21,
+      "passes": true
+    },
+    {
+      "id": "swipe-demos",
+      "title": "Swipe demo coverage",
+      "description": "Add all Vant Swipe demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/swipe",
+        "Compare with existing pages/swipe.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/swipe.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 20,
+      "passes": true
+    },
+    {
+      "id": "swipe-cell-demos",
+      "title": "SwipeCell demo coverage",
+      "description": "Add all Vant SwipeCell demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/swipe-cell",
+        "Compare with existing pages/swipe-cell.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/swipe-cell.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 19,
+      "passes": true
+    },
+    {
+      "id": "switch-demos",
+      "title": "Switch demo coverage",
+      "description": "Add all Vant Switch demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/switch",
+        "Compare with existing pages/switch.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/switch.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 18,
+      "passes": true
+    },
+    {
+      "id": "tab-demos",
+      "title": "Tab demo coverage",
+      "description": "Add all Vant Tab demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tab",
+        "Compare with existing pages/tab.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tab.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 17,
+      "passes": true
+    },
+    {
+      "id": "tabbar-demos",
+      "title": "Tabbar demo coverage",
+      "description": "Add all Vant Tabbar demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tabbar",
+        "Compare with existing pages/tabbar.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tabbar.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 16,
+      "passes": true
+    },
+    {
+      "id": "tabbar-item-demos",
+      "title": "TabbarItem demo coverage",
+      "description": "Add all Vant TabbarItem demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tabbar-item",
+        "Compare with existing pages/tabbar-item.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tabbar-item.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 15,
+      "passes": true
+    },
+    {
+      "id": "tabs-demos",
+      "title": "Tabs demo coverage",
+      "description": "Add all Vant Tabs demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tabs",
+        "Compare with existing pages/tabs.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tabs.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 14,
+      "passes": true
+    },
+    {
+      "id": "tag-demos",
+      "title": "Tag demo coverage",
+      "description": "Add all Vant Tag demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tag",
+        "Compare with existing pages/tag.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tag.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 13,
+      "passes": true
+    },
+    {
+      "id": "text-ellipsis-demos",
+      "title": "TextEllipsis demo coverage",
+      "description": "Add all Vant TextEllipsis demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/text-ellipsis",
+        "Compare with existing pages/text-ellipsis.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/text-ellipsis.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 12,
+      "passes": true
+    },
+    {
+      "id": "time-picker-demos",
+      "title": "TimePicker demo coverage",
+      "description": "Add all Vant TimePicker demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/time-picker",
+        "Compare with existing pages/time-picker.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/time-picker.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 11,
+      "passes": true
+    },
+    {
+      "id": "toast-demos",
+      "title": "Toast demo coverage",
+      "description": "Add all Vant Toast demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/toast",
+        "Compare with existing pages/toast.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/toast.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 10,
+      "passes": true
+    },
+    {
+      "id": "tree-select-demos",
+      "title": "TreeSelect demo coverage",
+      "description": "Add all Vant TreeSelect demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/tree-select",
+        "Compare with existing pages/tree-select.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/tree-select.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 9,
+      "passes": true
+    },
+    {
+      "id": "uploader-demos",
+      "title": "Uploader demo coverage",
+      "description": "Add all Vant Uploader demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/uploader",
+        "Compare with existing pages/uploader.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/uploader.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 8,
+      "passes": true
+    },
+    {
+      "id": "watermark-demos",
+      "title": "Watermark demo coverage",
+      "description": "Add all Vant Watermark demos to match official documentation.",
+      "requirements": [
+        "Check Vant docs: https://vant-ui.github.io/vant/#/en-US/watermark",
+        "Compare with existing pages/watermark.vue",
+        "Add all missing demo sections",
+        "Each section needs a text header and demo component"
+      ],
+      "files": [
+        "examples/vant-lynx/src/pages/watermark.vue"
+      ],
+      "testCommand": "pnpm build",
+      "priority": 7,
       "passes": true
     }
   ]

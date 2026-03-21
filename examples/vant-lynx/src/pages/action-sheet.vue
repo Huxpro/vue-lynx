@@ -4,9 +4,10 @@ import DemoPage from '../components/DemoPage/index.vue';
 import ActionSheet from '../components/ActionSheet/index.vue';
 import Button from '../components/Button/index.vue';
 const showBasic = ref(false);
-const showWithTitle = ref(false);
 const showWithCancel = ref(false);
 const showWithDescription = ref(false);
+const showOptionStatus = ref(false);
+const showCustomPanel = ref(false);
 const lastSelected = ref('');
 
 const basicActions = [
@@ -15,7 +16,7 @@ const basicActions = [
   { name: 'Option 3' },
 ];
 
-const colorActions = [
+const statusActions = [
   { name: 'Colored Option', color: '#ee0a24' },
   { name: 'Disabled Option', disabled: true },
   { name: 'Loading Option', loading: true },
@@ -42,15 +43,7 @@ function onSelect(action: { name: string }, index: number) {
         </Button>
       </view>
 
-      <!-- With Title -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Title</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Button type="primary" block @tap="showWithTitle = true">
-          <text :style="{ fontSize: 16, color: '#fff' }">Show ActionSheet With Title</text>
-        </Button>
-      </view>
-
-      <!-- With Cancel Button -->
+      <!-- Show Cancel Button -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Cancel Button</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <Button type="primary" block @tap="showWithCancel = true">
@@ -66,6 +59,22 @@ function onSelect(action: { name: string }, index: number) {
         </Button>
       </view>
 
+      <!-- Option Status -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Option Status</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Button type="primary" block @tap="showOptionStatus = true">
+          <text :style="{ fontSize: 16, color: '#fff' }">Option Status</text>
+        </Button>
+      </view>
+
+      <!-- Custom Panel -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Panel</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Button type="primary" block @tap="showCustomPanel = true">
+          <text :style="{ fontSize: 16, color: '#fff' }">Custom Panel</text>
+        </Button>
+      </view>
+
       <!-- Last selected -->
       <view v-if="lastSelected" :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <text :style="{ fontSize: 14, color: '#323233' }">{{ lastSelected }}</text>
@@ -76,14 +85,6 @@ function onSelect(action: { name: string }, index: number) {
     <ActionSheet
       v-model:show="showBasic"
       :actions="basicActions"
-      @select="onSelect"
-    />
-
-    <!-- ActionSheet with title and colored/disabled/loading actions -->
-    <ActionSheet
-      v-model:show="showWithTitle"
-      title="Select an option"
-      :actions="colorActions"
       @select="onSelect"
     />
 
@@ -105,5 +106,27 @@ function onSelect(action: { name: string }, index: number) {
       cancel-text="Cancel"
       @select="onSelect"
     />
+
+    <!-- ActionSheet with option status -->
+    <ActionSheet
+      v-model:show="showOptionStatus"
+      title="Option Status"
+      :actions="statusActions"
+      cancel-text="Cancel"
+      @select="onSelect"
+    />
+
+    <!-- ActionSheet with custom panel -->
+    <ActionSheet
+      v-model:show="showCustomPanel"
+      title="Custom Panel"
+    >
+      <view :style="{ padding: 16 }">
+        <text :style="{ fontSize: 14, color: '#323233', marginBottom: 12 }">Custom content inside the ActionSheet.</text>
+        <view :style="{ height: 100, backgroundColor: '#f7f8fa', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }">
+          <text :style="{ fontSize: 16, color: '#969799' }">Custom Content Area</text>
+        </view>
+      </view>
+    </ActionSheet>
   </DemoPage>
 </template>

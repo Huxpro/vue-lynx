@@ -29,19 +29,28 @@ function onClear() {
         />
       </view>
 
-      <!-- Custom Style -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Pen Color</text>
+      <!-- Pen Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Pen Color</text>
       <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
         <Signature
           pen-color="#1989fa"
-          :line-width="4"
           @submit="onSubmit"
           @clear="onClear"
         />
       </view>
 
-      <!-- Custom Background -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Background</text>
+      <!-- Line Width -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Line Width</text>
+      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+        <Signature
+          :line-width="6"
+          @submit="onSubmit"
+          @clear="onClear"
+        />
+      </view>
+
+      <!-- Background Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Background Color</text>
       <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
         <Signature
           pen-color="#ee0a24"

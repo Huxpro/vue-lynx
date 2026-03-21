@@ -2,6 +2,7 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import CouponList from '../components/CouponList/index.vue';
+
 const chosenCoupon = ref(-1);
 
 const coupons = [
@@ -48,18 +49,22 @@ const disabledCoupons = [
   },
 ];
 
+const exchangeResult = ref('');
+
 function onChange(index: number) {
   chosenCoupon.value = index;
 }
 
 function onExchange(code: string) {
-  // handle exchange
+  exchangeResult.value = `Exchanged: ${code}`;
 }
 </script>
 
 <template>
   <DemoPage title="CouponList">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+      <!-- Selected Info -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
       <view :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
         <text :style="{ fontSize: 14, color: '#323233' }">
           Chosen Coupon: {{ chosenCoupon >= 0 ? coupons[chosenCoupon]?.name : 'None' }}
@@ -74,5 +79,18 @@ function onExchange(code: string) {
       @change="onChange"
       @exchange="onExchange"
     />
+
+    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+      <!-- Exchange Result -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Exchange Coupon</text>
+      <text :style="{ fontSize: 12, color: '#969799', marginBottom: 8 }">Enter a coupon code in the exchange bar above</text>
+      <view v-if="exchangeResult" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
+        <text :style="{ fontSize: 14, color: '#323233' }">{{ exchangeResult }}</text>
+      </view>
+
+      <!-- Disabled Coupons -->
+      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">Disabled Coupons</text>
+      <text :style="{ fontSize: 12, color: '#969799' }">Expired or unavailable coupons are shown in the "Unavailable" tab above</text>
+    </view>
   </DemoPage>
 </template>

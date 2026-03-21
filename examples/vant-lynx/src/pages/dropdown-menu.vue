@@ -6,6 +6,7 @@ import DropdownItem from '../components/DropdownItem/index.vue';
 const sortValue = ref('price_asc');
 const categoryValue = ref(0);
 const brandValue = ref('all');
+const switchValue = ref(false);
 
 const sortOptions = [
   { text: 'Default Sort', value: 'default' },
@@ -27,6 +28,12 @@ const brandOptions = [
   { text: 'Brand B', value: 'brand_b' },
   { text: 'Brand C', value: 'brand_c' },
 ];
+
+const disabledOptions = [
+  { text: 'Option A', value: 0 },
+  { text: 'Option B', value: 1, disabled: true },
+  { text: 'Option C', value: 2, disabled: true },
+];
 </script>
 
 <template>
@@ -43,6 +50,47 @@ const brandOptions = [
     <DropdownMenu active-color="#ee0a24">
       <DropdownItem v-model="brandValue" :options="brandOptions" />
       <DropdownItem v-model="categoryValue" :options="categoryOptions" />
+    </DropdownMenu>
+
+    <!-- Custom Content -->
+    <text :style="{ fontSize: 14, color: '#969799', marginTop: 24, marginBottom: 8, paddingLeft: 16 }">Custom Content</text>
+    <DropdownMenu>
+      <DropdownItem v-model="sortValue" :options="sortOptions" />
+      <DropdownItem title="Filter">
+        <view :style="{ padding: 16 }">
+          <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: 12 }">
+            <text :style="{ fontSize: 14, color: '#323233', flex: 1 }">Show Only Discounted</text>
+            <view
+              :style="{
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: switchValue ? '#1989fa' : '#ebedf0',
+                display: 'flex',
+                alignItems: 'center',
+                paddingLeft: switchValue ? 22 : 2,
+                paddingRight: switchValue ? 2 : 22,
+              }"
+              @tap="switchValue = !switchValue"
+            >
+              <view :style="{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }" />
+            </view>
+          </view>
+          <view
+            :style="{ backgroundColor: '#ee0a24', borderRadius: 4, paddingTop: 10, paddingBottom: 10, alignItems: 'center' }"
+            @tap="() => {}"
+          >
+            <text :style="{ fontSize: 14, color: '#fff' }">Confirm</text>
+          </view>
+        </view>
+      </DropdownItem>
+    </DropdownMenu>
+
+    <!-- Disabled -->
+    <text :style="{ fontSize: 14, color: '#969799', marginTop: 24, marginBottom: 8, paddingLeft: 16 }">Disabled</text>
+    <DropdownMenu>
+      <DropdownItem v-model="categoryValue" :options="disabledOptions" />
+      <DropdownItem v-model="sortValue" :options="sortOptions" disabled />
     </DropdownMenu>
 
     <!-- Direction Up -->

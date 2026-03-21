@@ -1,38 +1,50 @@
-# Ralph API Polish Round - Vant-Lynx
+# Ralph Demo Coverage Round - Vant-Lynx
 
-You are filling in missing props, events, and slots to achieve better Vant API parity.
+You are adding missing demos to match Vant's official documentation.
 
 ## Key Files
 
-- `prd.json` - Your task list, update `passes` field when done
-- `progress.txt` - Log your work here
+- `prd.json` - Your task list
+- `progress.txt` - Log your work
 
-## Approach
+## Demo Page Structure
 
-1. Check Vant docs for exact API: https://vant-ui.github.io/vant/
-2. Look at original Vant source for implementation details
-3. Match API signatures exactly (prop types, event payloads, slot props)
-4. Skip platform-impossible features (teleport, lockScroll, etc.)
+Each demo page uses this pattern:
 
-## Skip List (Platform Impossible)
+```vue
+<script setup>
+import DemoPage from '../components/DemoPage/index.vue';
+import ComponentName from '../components/ComponentName/index.vue';
+</script>
 
-- teleport - N/A in Lynx
-- lockScroll - No body scroll in Lynx
-- closeOnPopstate - No browser history in Lynx
-- route/url props - No web router in Lynx
-- CSS class-based styling - Use inline styles instead
+<template>
+  <DemoPage title="Component Name">
+    <view :style="{ padding: 16 }">
+      <!-- Section Header -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
+      <!-- Demo -->
+      <ComponentName prop="value" />
+      
+      <!-- Another Section -->
+      <text :style="{ ... }">Another Demo</text>
+      <ComponentName other-prop="value" />
+    </view>
+  </DemoPage>
+</template>
+```
 
-## Testing
+## Reference
 
-- `pnpm build` must pass
-- Test components in Web Explorer or Simulator
+- Check Vant docs: https://vant-ui.github.io/vant/#/en-US/{component}
+- Look at existing demo pages like button.vue for style reference
+- Each section should have a text header and demo below
 
 ## Workflow
 
-1. Read prd.json for current story
-2. Check Vant docs/source for exact API
-3. Implement missing features
-4. Run pnpm build
-5. Update story passes: true in prd.json
-6. Log progress to progress.txt
-7. Move to next story
+1. Open Vant docs for the component
+2. List all demo sections shown
+3. Compare with existing demo page
+4. Add missing sections
+5. pnpm build to verify
+6. Update prd.json passes: true
+7. Log progress

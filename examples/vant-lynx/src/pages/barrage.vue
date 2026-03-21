@@ -40,8 +40,8 @@ function addBarrage() {
 <template>
   <DemoPage title="Barrage">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Demo video-like area with barrage overlay -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Barrage Demo</text>
+      <!-- Basic Usage -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
       <view :style="{ backgroundColor: '#1a1a2e', borderRadius: 8, overflow: 'hidden', marginBottom: 16, height: 200, position: 'relative' }">
         <!-- Fake video background -->
         <view :style="{
@@ -84,8 +84,8 @@ function addBarrage() {
         </view>
       </view>
 
-      <!-- No autoplay example -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Static (autoPlay off)</text>
+      <!-- Imitate Video Barrage -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Imitate Video Barrage</text>
       <view :style="{ backgroundColor: '#16213e', borderRadius: 8, overflow: 'hidden', height: 100 }">
         <Barrage
           :model-value="[{ text: 'Static barrage 1' }, { text: 'Static barrage 2' }]"

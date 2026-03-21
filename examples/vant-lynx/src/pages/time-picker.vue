@@ -5,10 +5,12 @@ import TimePicker from '../components/TimePicker/index.vue';
 const timeValue = ref<string[]>([]);
 const rangeValue = ref<string[]>([]);
 const secondValue = ref<string[]>([]);
+const formatterValue = ref<string[]>([]);
 
 const timeResult = ref('');
 const rangeResult = ref('');
 const secondResult = ref('');
+const formatterResult = ref('');
 
 function onTimeConfirm(val: string[]) {
   timeResult.value = val.join(':');
@@ -20,6 +22,16 @@ function onRangeConfirm(val: string[]) {
 
 function onSecondConfirm(val: string[]) {
   secondResult.value = val.join(':');
+}
+
+function onFormatterConfirm(val: string[]) {
+  formatterResult.value = val.join(':');
+}
+
+function timeFormatter(type: string, value: string): string {
+  if (type === 'hour') return `${value} h`;
+  if (type === 'minute') return `${value} min`;
+  return value;
 }
 </script>
 
@@ -58,7 +70,7 @@ function onSecondConfirm(val: string[]) {
 
       <!-- Hour / Minute / Second -->
       <text :style="{ fontSize: 14, color: '#969799', marginTop: 8, marginBottom: 12 }">Hour / Minute / Second</text>
-      <view :style="{ borderRadius: 8, overflow: 'hidden' }">
+      <view :style="{ marginBottom: 8, borderRadius: 8, overflow: 'hidden' }">
         <TimePicker
           v-model="secondValue"
           :columns-type="['hour', 'minute', 'second']"
@@ -66,8 +78,22 @@ function onSecondConfirm(val: string[]) {
           @confirm="onSecondConfirm"
         />
       </view>
-      <view v-if="secondResult" :style="{ marginTop: 8, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
+      <view v-if="secondResult" :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
         <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ secondResult }}</text>
+      </view>
+
+      <!-- Options Formatter -->
+      <text :style="{ fontSize: 14, color: '#969799', marginTop: 8, marginBottom: 12 }">Options Formatter</text>
+      <view :style="{ marginBottom: 8, borderRadius: 8, overflow: 'hidden' }">
+        <TimePicker
+          v-model="formatterValue"
+          title="Select Time"
+          :formatter="timeFormatter"
+          @confirm="onFormatterConfirm"
+        />
+      </view>
+      <view v-if="formatterResult" :style="{ marginTop: 8, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
+        <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ formatterResult }}</text>
       </view>
     </view>
   </DemoPage>
