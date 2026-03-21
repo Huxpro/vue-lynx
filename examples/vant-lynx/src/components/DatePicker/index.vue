@@ -1,8 +1,8 @@
 <!--
   Vant Feature Parity Report -- DatePicker
   =========================================
-  Props: 14/14 supported
-    Supported: modelValue, columnsType, title, minDate, maxDate,
+  Props: 15/15 supported
+    Supported: modelValue, type, columnsType, title, minDate, maxDate,
                confirmButtonText, cancelButtonText, loading, readonly,
                showToolbar, optionHeight, filter, formatter, visibleOptionNum
 
@@ -17,9 +17,18 @@ import { ref, computed, watch } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 
 export type DatePickerColumnType = 'year' | 'month' | 'day' | 'hour';
+export type DatePickerType = 'date' | 'year-month' | 'month-day' | 'datehour';
+
+const TYPE_TO_COLUMNS: Record<DatePickerType, DatePickerColumnType[]> = {
+  'date': ['year', 'month', 'day'],
+  'year-month': ['year', 'month'],
+  'month-day': ['month', 'day'],
+  'datehour': ['year', 'month', 'day', 'hour'],
+};
 
 export interface DatePickerProps {
   modelValue?: string[];
+  type?: DatePickerType;
   columnsType?: DatePickerColumnType[];
   title?: string;
   minDate?: Date;
@@ -30,8 +39,8 @@ export interface DatePickerProps {
   readonly?: boolean;
   showToolbar?: boolean;
   optionHeight?: number;
-  filter?: (type: string, values: string[]) => string[];
-  formatter?: (type: string, value: string) => string;
+  filter?: (type: DatePickerColumnType, values: string[]) => string[];
+  formatter?: (type: DatePickerColumnType, value: string) => string;
   visibleOptionNum?: number;
 }
 
@@ -56,6 +65,14 @@ const emit = defineEmits<{
   change: [value: string[]];
 }>();
 
+// Resolve columnsType from type shorthand or explicit columnsType prop
+const columnsType = computed(() => {
+  if (props.type) {
+    return TYPE_TO_COLUMNS[props.type] ?? props.columnsType;
+  }
+  return props.columnsType;
+});
+
 function padZero(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
@@ -75,11 +92,11 @@ function getColumnLabel(type: string): string {
 }
 
 function getYearIndex(): number {
-  return props.columnsType.indexOf('year');
+  return columnsType.value.indexOf('year');
 }
 
 function getMonthIndex(): number {
-  return props.columnsType.indexOf('month');
+  return columnsType.value.indexOf('month');
 }
 
 // Format display text for an option
@@ -109,14 +126,14 @@ function getDefaultValues(): string[] {
   const h = padZero(now.getHours());
 
   const map: Record<string, string> = { year: y, month: m, day: d, hour: h };
-  return props.columnsType.map((type) => map[type] ?? '00');
+  return columnsType.value.map((type) => map[type] ?? '00');
 }
 
 function buildColumns(vals: string[]): string[][] {
   const result: string[][] = [];
 
-  for (let ci = 0; ci < props.columnsType.length; ci++) {
-    const colType = props.columnsType[ci];
+  for (let ci = 0; ci < columnsType.value.length; ci++) {
+    const colType = columnsType.value[ci];
     let values: string[] = [];
 
     if (colType === 'year') {

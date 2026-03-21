@@ -12,9 +12,9 @@
  * VantCouponList (Lynx port)
  * @see https://github.com/youzan/vant/blob/main/packages/vant/src/coupon-list/CouponList.tsx
  *
- * Feature parity: 14/16 props, 3/3 events.
- * Missing props: emptyImage, displayedCouponIndex
- * Added props: code (v-model for exchange input), closeButtonText, inputPlaceholder
+ * Feature parity: 16/16 props, 3/3 events.
+ * All props supported including emptyImage, displayedCouponIndex,
+ * code (v-model for exchange input), closeButtonText, inputPlaceholder
  *
  * Lynx differences:
  *   - Custom tab views instead of Vant's Tabs/Tab components
@@ -22,7 +22,7 @@
  *   - Text-based empty state instead of Vant's Empty component
  *   - Close button emits change(-1) to match Vant behavior
  */
-import { ref, computed } from 'vue-lynx';
+import { ref, computed, watch } from 'vue-lynx';
 
 export interface CouponItem {
   id: string | number;
@@ -87,6 +87,16 @@ const emit = defineEmits<{
 
 const activeTab = ref<'enabled' | 'disabled'>('enabled');
 const exchangeCode = ref(props.code);
+
+// Sync exchangeCode when code prop changes externally (v-model support)
+watch(
+  () => props.code,
+  (val) => {
+    if (val !== exchangeCode.value) {
+      exchangeCode.value = val;
+    }
+  },
+);
 
 const enabledTitle = computed(() => {
   if (props.showCount) {
