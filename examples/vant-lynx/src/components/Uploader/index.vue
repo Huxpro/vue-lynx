@@ -70,15 +70,50 @@ const emit = defineEmits<{
   delete: [file: UploaderFile, index: number];
 }>();
 
-// Call afterRead when new files are added to modelValue
+// Call beforeRead/afterRead when new files are added to modelValue
 let prevLength = props.modelValue.length;
+let skipNextWatch = false;
 watch(
   () => props.modelValue,
-  (newFiles) => {
-    if (props.afterRead && newFiles.length > prevLength) {
-      const addedFiles = newFiles.slice(prevLength);
-      for (let i = 0; i < addedFiles.length; i++) {
-        props.afterRead(addedFiles[i], { index: prevLength + i });
+  async (newFiles) => {
+    if (skipNextWatch) {
+      skipNextWatch = false;
+      prevLength = newFiles.length;
+      return;
+    }
+    if (newFiles.length > prevLength) {
+      const baseLength = prevLength;
+      const addedFiles = newFiles.slice(baseLength);
+
+      // Validate new files with beforeRead
+      if (props.beforeRead) {
+        const accepted: UploaderFile[] = [];
+        for (let i = 0; i < addedFiles.length; i++) {
+          const result = await props.beforeRead(addedFiles[i], { index: baseLength + i });
+          if (result !== false) {
+            accepted.push(addedFiles[i]);
+          }
+        }
+        if (accepted.length < addedFiles.length) {
+          // Some files rejected — emit filtered list
+          const kept = newFiles.slice(0, baseLength).concat(accepted);
+          skipNextWatch = true;
+          emit('update:modelValue', kept);
+          prevLength = kept.length;
+          // Call afterRead for accepted files only
+          if (props.afterRead) {
+            for (let i = 0; i < accepted.length; i++) {
+              props.afterRead(accepted[i], { index: baseLength + i });
+            }
+          }
+          return;
+        }
+      }
+
+      if (props.afterRead) {
+        for (let i = 0; i < addedFiles.length; i++) {
+          props.afterRead(addedFiles[i], { index: baseLength + i });
+        }
       }
     }
     prevLength = newFiles.length;
