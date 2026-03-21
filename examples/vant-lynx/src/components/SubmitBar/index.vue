@@ -37,6 +37,7 @@ export interface SubmitBarProps {
   currency?: string;
   disabled?: boolean;
   loading?: boolean;
+  placeholder?: boolean;
   safeAreaInsetBottom?: boolean;
 }
 
