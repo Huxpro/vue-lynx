@@ -1513,7 +1513,7 @@
         "Update src/pages/index.vue component gallery with links to all demos",
         "Commit: 'feat(vant-lynx): final verification and component index'"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }
