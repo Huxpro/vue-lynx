@@ -1,0 +1,117 @@
+# vue-lynx
+
+欢迎来到 `vue-lynx` 的 API 参考，该包提供了用于构建 Lynx 应用的 Vue 3 框架。入门介绍请参阅[快速开始](/zh/guide/introduction)指南。
+
+## Vue API
+
+Vue Lynx 直接使用 Vue 3 的 `@vue/runtime-core` — 响应式系统、组件模型、生命周期钩子和组合式 API 都是标准的 Vue。你可以参考 [Vue 3 官方文档](https://vuejs.org/api/)来了解这些 API 的用法。
+
+唯一的区别是你需要从 `vue-lynx` 而不是 `vue` 导入它们：
+
+```ts
+import { ref, computed, onMounted, defineComponent } from 'vue-lynx';
+```
+
+## Vue Lynx API
+
+以下 API 是 Vue Lynx 双线程架构（后台线程渲染器 + 主线程原生元素）特有的：
+
+| 名称 | 类型 |
+| ------ | ------ |
+| `MainThreadRef` | Class |
+| `createApp` | Function |
+| `nextTick` | Function |
+| `runOnBackground` | Function |
+| `runOnMainThread` | Function |
+| `transformToWorklet` | Function |
+| `useMainThreadRef` | Function |
+| `VueLynxApp` | Interface |
+
+## 内置组件
+
+| 组件 | 状态 | 备注 |
+| --------- | ------ | ----- |
+| `<Transition>` | 实验性 | 基于 CSS class 的进入/离开动画。需要显式的 `:duration` prop — 后台线程无法使用 `getComputedStyle()`。 |
+| `<TransitionGroup>` | 实验性 | 逐子元素进入/离开动画。不支持移动 (FLIP) 动画 — 后台线程无法使用 `getBoundingClientRect()`。 |
+| `<Suspense>` | 支持 | 从 Vue 重新导出。与 `defineAsyncComponent()` 配合使用。 |
+| `<KeepAlive>` | 不支持 | 需要 Lynx 渲染器中不可用的元素回收功能。 |
+| `<Teleport>` | 不支持 | 需要未实现的 `querySelector` 渲染器选项。 |
+
+:::warning
+`<Transition>` 和 `<TransitionGroup>` 是**实验性的**。请始终传递显式的 `:duration` prop — 后台线程无法使用 `getComputedStyle()`。`<TransitionGroup>` 不支持移动 (FLIP) 动画。
+:::
+
+<Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />
+
+## Vue 重新导出
+
+从 `vue-lynx` 重新导出的标准 Vue 3 API。完整文档请参阅 [Vue.js API 参考](https://vuejs.org/api/)。
+
+| 名称 | 类型 |
+| ------ | ------ |
+| `computed` | Function |
+| `customRef` | Function |
+| `defineAsyncComponent` | Function |
+| `defineComponent` | Function |
+| `defineEmits` | Function |
+| `defineExpose` | Function |
+| `defineModel` | Function |
+| `defineOptions` | Function |
+| `defineProps` | Function |
+| `defineSlots` | Function |
+| `effectScope` | Function |
+| `getCurrentInstance` | Function |
+| `getCurrentScope` | Function |
+| `h` | Function |
+| `hasInjectionContext` | Function |
+| `inject` | Function |
+| `isProxy` | Function |
+| `isReactive` | Function |
+| `isReadonly` | Function |
+| `isRef` | Function |
+| `isShallow` | Function |
+| `markRaw` | Function |
+| `mergeProps` | Function |
+| `onBeforeMount` | Function |
+| `onBeforeUnmount` | Function |
+| `onBeforeUpdate` | Function |
+| `onErrorCaptured` | Function |
+| `onMounted` | Function |
+| `onRenderTracked` | Function |
+| `onRenderTriggered` | Function |
+| `onScopeDispose` | Function |
+| `onUnmounted` | Function |
+| `onUpdated` | Function |
+| `onWatcherCleanup` | Function |
+| `provide` | Function |
+| `reactive` | Function |
+| `readonly` | Function |
+| `ref` | Function |
+| `shallowReactive` | Function |
+| `shallowReadonly` | Function |
+| `shallowRef` | Function |
+| `toRaw` | Function |
+| `toRef` | Function |
+| `toRefs` | Function |
+| `toValue` | Function |
+| `Transition` | Function |
+| `triggerRef` | Function |
+| `unref` | Function |
+| `useAttrs` | Function |
+| `useId` | Function |
+| `useModel` | Function |
+| `useSlots` | Function |
+| `useTemplateRef` | Function |
+| `watch` | Function |
+| `watchEffect` | Function |
+| `watchPostEffect` | Function |
+| `watchSyncEffect` | Function |
+| `withDefaults` | Function |
+| `App` | Interface |
+| `Component` | TypeAlias |
+| `ComponentPublicInstance` | TypeAlias |
+| `Fragment` | Variable |
+| `Suspense` | Variable |
+| `TransitionGroup` | Variable |
+| `version` | Variable |
+| `withAsyncContext` | Variable |

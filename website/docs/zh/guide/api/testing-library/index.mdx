@@ -1,0 +1,48 @@
+# vue-lynx/testing-library
+
+Vue Lynx 测试库提供了简单的工具函数，用于在 Node.js 环境中测试 Vue 3 Lynx 组件。它通过完整的双线程管道（后台线程渲染器 → 主线程原生元素 → JSDOM）渲染组件，因此你的测试执行的代码路径与生产环境相同。
+
+> 灵感来源于 [Vue Testing Library](https://testing-library.com/docs/vue-testing-library/intro/) 和 [@lynx-js/react/testing-library](https://lynxjs.org/api/reactlynx-testing-library/)
+
+设置说明和示例请参阅 [VueLynx 测试库指南](/zh/guide/testing-library)。
+
+## 快速示例
+
+```ts
+import { expect, it, vi } from 'vitest';
+import { h, defineComponent } from 'vue-lynx';
+import { render, fireEvent } from 'vue-lynx-testing-library';
+
+it('fires tap event', () => {
+  const onClick = vi.fn();
+  const Comp = defineComponent({
+    setup() {
+      return () => h('view', { bindtap: onClick }, [
+        h('text', null, 'Click me'),
+      ]);
+    },
+  });
+
+  const { container, getByText } = render(Comp);
+  fireEvent.tap(container.querySelector('view')!);
+
+  expect(onClick).toHaveBeenCalledTimes(1);
+  expect(getByText('Click me')).not.toBeNull();
+});
+```
+
+自动清理已内置 — 每次测试后，渲染的应用会自动卸载并重置 JSDOM。
+
+## API 参考
+
+| 名称 | 类型 |
+| ------ | ------ |
+| `cleanup` | Function |
+| `fireEvent` | Function |
+| `getQueriesForElement` | Function |
+| `render` | Function |
+| `waitForUpdate` | Function |
+| `within` | Function |
+| `RenderResult` | Interface |
+| `eventMap` | Variable |
+| `screen` | Variable |
