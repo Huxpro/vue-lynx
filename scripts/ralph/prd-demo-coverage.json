@@ -1,0 +1,198 @@
+{
+  "title": "Vant-Lynx Demo Coverage",
+  "description": "Ensure each component's demo page covers all demos shown on Vant's official documentation. Compare with https://vant-ui.github.io/vant/ and add missing demo sections.",
+  "context": {
+    "vantDocs": "https://vant-ui.github.io/vant/#/en-US/",
+    "demoPagePattern": "Each demo page is in examples/vant-lynx/src/pages/{component}.vue",
+    "demoStructure": "Use DemoPage wrapper, sections with <text> headers, demo components below",
+    "reference": "Look at button.vue for good example of section structure"
+  },
+  "userStories": [
+    {
+      "id": "popup-demos",
+      "title": "Popup demo coverage",
+      "description": "Add all Vant Popup demos: Basic, Position, Close Icon, Round Corner, etc.",
+      "requirements": [
+        "Check Vant docs for Popup demos",
+        "Add missing demos to pages/popup.vue",
+        "Include: Basic Usage, Position (top/bottom/left/right/center), Close Icon, Round Corner, Listen Events"
+      ],
+      "files": ["examples/vant-lynx/src/pages/popup.vue"],
+      "testCommand": "pnpm build",
+      "priority": 100,
+      "passes": false
+    },
+    {
+      "id": "dialog-demos",
+      "title": "Dialog demo coverage",
+      "description": "Add all Vant Dialog demos: Alert, Confirm, Async Close, Custom Content, etc.",
+      "requirements": [
+        "Check Vant docs for Dialog demos",
+        "Include: Alert Dialog, Confirm Dialog, Round Button Style, Async Close, Custom Content, Before Close"
+      ],
+      "files": ["examples/vant-lynx/src/pages/dialog.vue"],
+      "testCommand": "pnpm build",
+      "priority": 95,
+      "passes": false
+    },
+    {
+      "id": "toast-demos",
+      "title": "Toast demo coverage",
+      "description": "Add all Vant Toast demos: Text, Loading, Success, Fail, Custom Icon, Position, etc.",
+      "requirements": [
+        "Include: Text Toast, Loading Toast, Success/Fail Toast, Custom Icon, Custom Position, Word Break"
+      ],
+      "files": ["examples/vant-lynx/src/pages/toast.vue"],
+      "testCommand": "pnpm build",
+      "priority": 94,
+      "passes": false
+    },
+    {
+      "id": "notify-demos",
+      "title": "Notify demo coverage",
+      "description": "Add all Vant Notify demos: Basic, Type, Custom, Duration, etc.",
+      "requirements": [
+        "Include: Basic Usage, Notify Type (primary/success/warning/danger), Custom Notify, Custom Duration"
+      ],
+      "files": ["examples/vant-lynx/src/pages/notify.vue"],
+      "testCommand": "pnpm build",
+      "priority": 93,
+      "passes": false
+    },
+    {
+      "id": "picker-demos",
+      "title": "Picker demo coverage",
+      "description": "Add all Vant Picker demos: Basic, Default Value, Multiple Columns, Cascade, etc.",
+      "requirements": [
+        "Include: Basic Usage, Default Index, Multiple Columns, Cascade Selection, Disable Option, Loading State, With Popup"
+      ],
+      "files": ["examples/vant-lynx/src/pages/picker.vue"],
+      "testCommand": "pnpm build",
+      "priority": 90,
+      "passes": false
+    },
+    {
+      "id": "datepicker-demos",
+      "title": "DatePicker demo coverage",
+      "description": "Add all Vant DatePicker demos: Date, Year-Month, Month-Day, Time, etc.",
+      "requirements": [
+        "Include: Choose Date, Choose Year-Month, Choose Month-Day, Choose Time, Option Filter, Columns Order"
+      ],
+      "files": ["examples/vant-lynx/src/pages/date-picker.vue"],
+      "testCommand": "pnpm build",
+      "priority": 89,
+      "passes": false
+    },
+    {
+      "id": "calendar-demos",
+      "title": "Calendar demo coverage",
+      "description": "Add all Vant Calendar demos: Single, Multiple, Range, Quick Select, etc.",
+      "requirements": [
+        "Include: Select Single Date, Select Multiple Dates, Select Date Range, Quick Select, Show Confirm, Custom Day Text, Max Range"
+      ],
+      "files": ["examples/vant-lynx/src/pages/calendar.vue"],
+      "testCommand": "pnpm build",
+      "priority": 88,
+      "passes": false
+    },
+    {
+      "id": "form-demos",
+      "title": "Form demo coverage",
+      "description": "Add all Vant Form demos: Basic, Validation, Field Types, etc.",
+      "requirements": [
+        "Include: Basic Usage, Validate Rules, Field Type (switch, checkbox, radio, stepper, rate, slider, uploader), Async Validation"
+      ],
+      "files": ["examples/vant-lynx/src/pages/form.vue"],
+      "testCommand": "pnpm build",
+      "priority": 85,
+      "passes": false
+    },
+    {
+      "id": "field-demos",
+      "title": "Field demo coverage",
+      "description": "Add all Vant Field demos: Basic, Custom Types, Disabled, Error, etc.",
+      "requirements": [
+        "Include: Basic Usage, Custom Type (text/password/tel/number/textarea), Disabled/Readonly, Show Icon, Error Info, Insert Button, Auto Size"
+      ],
+      "files": ["examples/vant-lynx/src/pages/field.vue"],
+      "testCommand": "pnpm build",
+      "priority": 84,
+      "passes": false
+    },
+    {
+      "id": "tabs-demos",
+      "title": "Tabs demo coverage",
+      "description": "Add all Vant Tabs demos: Basic, Match by Name, Swipeable, Scrollable, etc.",
+      "requirements": [
+        "Include: Basic Usage, Match by Name, Tab Bar Scroll, Swipe Tabs, Disabled Tab, Card Style, Click Event"
+      ],
+      "files": ["examples/vant-lynx/src/pages/tabs.vue"],
+      "testCommand": "pnpm build",
+      "priority": 82,
+      "passes": false
+    },
+    {
+      "id": "list-demos",
+      "title": "List demo coverage",
+      "description": "Add all Vant List demos: Basic, Error, Finished, etc.",
+      "requirements": [
+        "Include: Basic Usage, Error Info, Finished Text, Pull to Refresh (if supported)"
+      ],
+      "files": ["examples/vant-lynx/src/pages/list.vue"],
+      "testCommand": "pnpm build",
+      "priority": 80,
+      "passes": false
+    },
+    {
+      "id": "swipe-demos",
+      "title": "Swipe demo coverage",
+      "description": "Add all Vant Swipe demos: Basic, Lazy Render, Indicator, Vertical, etc.",
+      "requirements": [
+        "Include: Basic Usage, Lazy Render, Change Event, Vertical, Custom Size, Custom Indicator"
+      ],
+      "files": ["examples/vant-lynx/src/pages/swipe.vue"],
+      "testCommand": "pnpm build",
+      "priority": 78,
+      "passes": false
+    },
+    {
+      "id": "image-preview-demos",
+      "title": "ImagePreview demo coverage",
+      "description": "Add all Vant ImagePreview demos: Basic, Start Position, Close Event, etc.",
+      "requirements": [
+        "Include: Basic Usage, Set Start Position, Show Close Button, Before Close, Double Click Zoom"
+      ],
+      "files": ["examples/vant-lynx/src/pages/image-preview.vue"],
+      "testCommand": "pnpm build",
+      "priority": 75,
+      "passes": false
+    },
+    {
+      "id": "floating-demos",
+      "title": "FloatingPanel/Bubble demo coverage",
+      "description": "Add demos for FloatingPanel and FloatingBubble.",
+      "requirements": [
+        "FloatingPanel: Basic Usage, Custom Anchors, Header Only Drag",
+        "FloatingBubble: Basic Usage, Magnetic Position, Custom Icon"
+      ],
+      "files": ["examples/vant-lynx/src/pages/floating-panel.vue", "examples/vant-lynx/src/pages/floating-bubble.vue"],
+      "testCommand": "pnpm build",
+      "priority": 70,
+      "passes": false
+    },
+    {
+      "id": "misc-demos",
+      "title": "Misc components demo coverage",
+      "description": "Fill in missing demos for Circle, CountDown, CouponList, Skeleton, etc.",
+      "requirements": [
+        "Audit pages with 0 or minimal demos",
+        "Add at least 3 demo sections per component",
+        "Focus on: circle, count-down, coupon-list, config-provider, contact-list, address-list"
+      ],
+      "files": ["examples/vant-lynx/src/pages/*.vue"],
+      "testCommand": "pnpm build",
+      "priority": 65,
+      "passes": false
+    }
+  ]
+}
