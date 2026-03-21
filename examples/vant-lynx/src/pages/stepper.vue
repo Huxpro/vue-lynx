@@ -11,6 +11,8 @@ const value6 = ref(1);
 const value7 = ref(1.0);
 const value8 = ref(1);
 const value9 = ref(1);
+const value10 = ref(1);
+const value11 = ref(1.5);
 
 const labelStyle = { fontSize: 14, color: '#969799', marginBottom: 12 };
 const cardStyle = { marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'column' as const };
@@ -63,6 +65,16 @@ function beforeChange(value: number) {
       <text :style="labelStyle">Disable Plus / Long Press</text>
       <view :style="cardStyle">
         <Stepper v-model="value8" disable-plus :long-press="true" />
+      </view>
+
+      <text :style="labelStyle">Integer</text>
+      <view :style="cardStyle">
+        <Stepper v-model="value10" integer />
+      </view>
+
+      <text :style="labelStyle">Disable Input</text>
+      <view :style="cardStyle">
+        <Stepper v-model="value11" :step="0.5" disable-input />
       </view>
 
       <text :style="labelStyle">Before Change (async, max 5)</text>

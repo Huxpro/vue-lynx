@@ -2,13 +2,12 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import List from '../components/List/index.vue';
+
 const loading = ref(false);
 const finished = ref(false);
 const items = ref<number[]>([]);
-const error = ref(false);
 
 function onLoad() {
-  // Simulate async data loading
   setTimeout(() => {
     const currentLen = items.value.length;
     for (let i = 0; i < 10; i++) {
@@ -34,6 +33,9 @@ function onErrorLoad() {
     showError.value = true;
   }, 1000);
 }
+
+// Finished demo
+const finItems = ref<number[]>([1, 2, 3, 4, 5]);
 </script>
 
 <template>
@@ -65,9 +67,9 @@ function onErrorLoad() {
         </List>
       </view>
 
-      <!-- Error State -->
+      <!-- Error Info -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Error Info</text>
-      <view :style="{ borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 250 }">
+      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 250 }">
         <List
           v-model:loading="errorLoading"
           :finished="errorFinished"
@@ -77,6 +79,31 @@ function onErrorLoad() {
         >
           <view
             v-for="item in errorItems"
+            :key="item"
+            :style="{
+              padding: 12,
+              paddingLeft: 16,
+              paddingRight: 16,
+              borderBottomWidth: 0.5,
+              borderBottomStyle: 'solid',
+              borderBottomColor: '#ebedf0',
+            }"
+          >
+            <text :style="{ fontSize: 14, color: '#323233' }">Item {{ item }}</text>
+          </view>
+        </List>
+      </view>
+
+      <!-- Finished Text -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Finished Text</text>
+      <view :style="{ borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 250 }">
+        <List
+          :loading="false"
+          :finished="true"
+          finished-text="-- End --"
+        >
+          <view
+            v-for="item in finItems"
             :key="item"
             :style="{
               padding: 12,

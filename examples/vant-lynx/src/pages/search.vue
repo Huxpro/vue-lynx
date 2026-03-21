@@ -6,6 +6,8 @@ const basicValue = ref('');
 const roundValue = ref('');
 const actionValue = ref('');
 const labelValue = ref('');
+const bgValue = ref('');
+const customActionValue = ref('');
 const searchResult = ref('');
 
 function onSearch(val: string) {
@@ -64,6 +66,39 @@ function onCancel() {
         disabled
         placeholder="Disabled"
       />
+
+      <!-- Custom Background Color -->
+      <text :style="{ fontSize: 14, color: '#969799', padding: 12 }">Custom Background Color</text>
+      <Search
+        v-model="bgValue"
+        shape="round"
+        background="#4fc08d"
+        placeholder="Search"
+        @search="onSearch"
+      />
+
+      <!-- Custom Action Button -->
+      <text :style="{ fontSize: 14, color: '#969799', padding: 12 }">Custom Action Button</text>
+      <Search
+        v-model="customActionValue"
+        :show-action="true"
+        placeholder="Search"
+        @search="onSearch"
+      >
+        <template #action>
+          <view
+            :style="{
+              paddingLeft: 12,
+              paddingRight: 12,
+              paddingTop: 4,
+              paddingBottom: 4,
+            }"
+            @tap="() => { searchResult = `Searched: ${customActionValue}`; }"
+          >
+            <text :style="{ fontSize: 14, color: '#1989fa' }">Search</text>
+          </view>
+        </template>
+      </Search>
 
       <!-- Result -->
       <view v-if="searchResult" :style="{ margin: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">

@@ -7,6 +7,8 @@ const customColorValue = ref(60);
 const disabledValue = ref(50);
 const stepValue = ref(20);
 const verticalValue = ref(40);
+const rangeValue = ref<[number, number]>([20, 60]);
+const verticalValue2 = ref(40);
 </script>
 
 <template>
@@ -51,11 +53,25 @@ const verticalValue = ref(40);
         <text :style="{ fontSize: 12, color: '#969799', marginTop: 8, textAlign: 'center' }">Value: {{ stepValue }}</text>
       </view>
 
+      <!-- Range -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Range</text>
+      <view :style="{ marginBottom: 24, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+        <Slider v-model="rangeValue" range />
+        <text :style="{ fontSize: 12, color: '#969799', marginTop: 8, textAlign: 'center' }">Range: {{ rangeValue[0] }} - {{ rangeValue[1] }}</text>
+      </view>
+
       <!-- Disabled -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disabled</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+      <view :style="{ marginBottom: 24, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
         <Slider v-model="disabledValue" disabled />
         <text :style="{ fontSize: 12, color: '#969799', marginTop: 8, textAlign: 'center' }">Disabled ({{ disabledValue }})</text>
+      </view>
+
+      <!-- Vertical -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Vertical</text>
+      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, height: 150, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }">
+        <Slider v-model="verticalValue2" vertical :style="{ height: 120 }" />
+        <text :style="{ fontSize: 12, color: '#969799', marginLeft: 16 }">Value: {{ verticalValue2 }}</text>
       </view>
     </view>
   </DemoPage>

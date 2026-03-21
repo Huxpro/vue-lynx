@@ -27,9 +27,14 @@ const rate3 = ref(80);
         <Circle :current-rate="rate3" :rate="100" :size="120" color="#7232dd" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Stroke Width</text>
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Width</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'row', alignItems: 'center' }">
-        <Circle :current-rate="rate1" :rate="100" :stroke-width="6" color="#ee0a24" />
+        <Circle :current-rate="rate1" :rate="100" :stroke-width="8" color="#ee0a24" />
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Counter Clockwise</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'row', alignItems: 'center' }">
+        <Circle :current-rate="rate2" :rate="100" :clockwise="false" color="#ee0a24" />
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Text</text>

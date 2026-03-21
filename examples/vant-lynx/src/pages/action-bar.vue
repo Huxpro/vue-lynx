@@ -31,8 +31,19 @@ import ActionBarButton from '../components/ActionBarButton/index.vue';
         </view>
       </view>
 
+      <!-- Custom Icon Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Icon Color</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+        <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', height: 50, borderWidth: 0.5, borderStyle: 'solid', borderColor: '#ebedf0' }">
+          <ActionBarIcon text="Like" color="#ee0a24" />
+          <ActionBarIcon text="Cart" color="#07c160" />
+          <ActionBarButton type="warning" text="Add to Cart" />
+          <ActionBarButton type="danger" text="Buy Now" />
+        </view>
+      </view>
+
       <!-- Custom Button Color -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Button Color</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', height: 50, borderWidth: 0.5, borderStyle: 'solid', borderColor: '#ebedf0' }">
           <ActionBarIcon text="Like" />

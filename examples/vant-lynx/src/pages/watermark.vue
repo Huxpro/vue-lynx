@@ -30,13 +30,39 @@ import Watermark from '../components/Watermark/index.vue';
 
       <!-- Custom Gap -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Gap</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, height: 200, position: 'relative', overflow: 'hidden' }">
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, height: 200, position: 'relative', overflow: 'hidden' }">
         <text :style="{ fontSize: 14, color: '#323233' }">Watermark with custom gap between items.</text>
         <Watermark
           content="Gap"
           :full-page="false"
           :gap-x="50"
           :gap-y="50"
+          :opacity="0.15"
+        />
+      </view>
+
+      <!-- Custom Rotate -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Rotate</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, height: 200, position: 'relative', overflow: 'hidden' }">
+        <text :style="{ fontSize: 14, color: '#323233' }">Watermark with a different rotation angle.</text>
+        <Watermark
+          content="Rotated"
+          :full-page="false"
+          :rotate="-45"
+          :opacity="0.12"
+          font-color="#07c160"
+        />
+      </view>
+
+      <!-- Image Watermark -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Image Watermark</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, height: 200, position: 'relative', overflow: 'hidden' }">
+        <text :style="{ fontSize: 14, color: '#323233' }">Watermark using an image instead of text.</text>
+        <Watermark
+          image="https://fastly.jsdelivr.net/npm/@vant/assets/vant-watermark.png"
+          :full-page="false"
+          :width="80"
+          :height="40"
           :opacity="0.15"
         />
       </view>

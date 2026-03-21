@@ -2,8 +2,6 @@
 import DemoPage from '../components/DemoPage/index.vue';
 import Icon from '../components/Icon/index.vue';
 const basicIcons = ['arrow', 'arrow-left', 'success', 'cross', 'plus', 'minus', 'close', 'search'];
-const outlinedIcons = ['star-o', 'like-o', 'warning-o', 'info-o', 'chat-o', 'setting-o', 'location-o', 'phone-o'];
-const filledIcons = ['star', 'like', 'warning', 'info', 'chat', 'setting', 'location', 'phone'];
 </script>
 
 <template>
@@ -32,16 +30,45 @@ const filledIcons = ['star', 'like', 'warning', 'info', 'chat', 'setting', 'loca
         </view>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Color & Size</text>
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Using URL</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <view :style="{ marginRight: 24 }">
+          <Icon name="https://fastly.jsdelivr.net/npm/@vant/assets/icon-demo.png" :size="32" />
+        </view>
+        <view :style="{ marginRight: 24 }">
+          <Icon name="https://fastly.jsdelivr.net/npm/@vant/assets/icon-demo.png" :size="48" />
+        </view>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Icon Color</text>
       <view :style="{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <view :style="{ marginRight: 16 }">
-          <Icon name="star" :size="32" color="#1989fa" />
+          <Icon name="star" :size="28" color="#1989fa" />
         </view>
         <view :style="{ marginRight: 16 }">
-          <Icon name="like" :size="32" color="#ee0a24" />
+          <Icon name="like" :size="28" color="#ee0a24" />
         </view>
         <view :style="{ marginRight: 16 }">
-          <Icon name="success" :size="32" color="#07c160" />
+          <Icon name="success" :size="28" color="#07c160" />
+        </view>
+        <view :style="{ marginRight: 16 }">
+          <Icon name="warning" :size="28" color="#ff976a" />
+        </view>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Icon Size</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <view :style="{ marginRight: 16 }">
+          <Icon name="chat" :size="16" />
+        </view>
+        <view :style="{ marginRight: 16 }">
+          <Icon name="chat" :size="24" />
+        </view>
+        <view :style="{ marginRight: 16 }">
+          <Icon name="chat" :size="32" />
+        </view>
+        <view :style="{ marginRight: 16 }">
+          <Icon name="chat" :size="40" />
         </view>
       </view>
     </view>

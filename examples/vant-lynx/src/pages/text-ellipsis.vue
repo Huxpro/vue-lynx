@@ -43,6 +43,29 @@ const shortText = 'This is a short text.';
         <TextEllipsis :content="longText" :rows="1" dots=" [...]" />
       </view>
 
+      <!-- Custom Collapse Position -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Collapse Position (start)</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <TextEllipsis
+          :content="longText"
+          :rows="1"
+          position="start"
+          expand-text="Expand"
+          collapse-text="Collapse"
+        />
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Collapse Position (middle)</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <TextEllipsis
+          :content="longText"
+          :rows="1"
+          position="middle"
+          expand-text="Expand"
+          collapse-text="Collapse"
+        />
+      </view>
+
       <!-- Short Text (no truncation) -->
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Short Text</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">

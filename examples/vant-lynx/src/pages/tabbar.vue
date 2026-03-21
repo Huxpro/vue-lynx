@@ -8,6 +8,7 @@ const active1 = ref(0);
 const active2 = ref(0);
 const active3 = ref('home');
 const active4 = ref(0);
+const active5 = ref(0);
 
 // beforeChange demo: simulate async check, reject tab index 2
 function beforeChange(name: number | string) {
@@ -69,6 +70,31 @@ function beforeChange(name: number | string) {
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Active: {{ active4 }} (tab index 2 is blocked by beforeChange)</text>
+
+      <!-- Custom Icon -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Custom Icon</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+        <Tabbar v-model="active5" :fixed="false">
+          <TabbarItem :name="0">
+            <template #icon="{ active }">
+              <view :style="{ width: 22, height: 22, borderRadius: 4, backgroundColor: active ? '#1989fa' : '#969799' }" />
+            </template>
+            Home
+          </TabbarItem>
+          <TabbarItem :name="1">
+            <template #icon="{ active }">
+              <view :style="{ width: 22, height: 22, borderRadius: 11, backgroundColor: active ? '#07c160' : '#969799' }" />
+            </template>
+            Work
+          </TabbarItem>
+          <TabbarItem :name="2">
+            <template #icon="{ active }">
+              <view :style="{ width: 22, height: 22, borderRadius: 2, backgroundColor: active ? '#ee0a24' : '#969799' }" />
+            </template>
+            Mine
+          </TabbarItem>
+        </Tabbar>
+      </view>
     </view>
   </DemoPage>
 </template>

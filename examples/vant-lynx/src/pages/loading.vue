@@ -45,8 +45,18 @@ import Loading from '../components/Loading/index.vue';
       </view>
 
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Text Size</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 16 }">
         <Loading :text-size="20">Loading...</Loading>
+      </view>
+
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Icon</text>
+      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Loading>
+          <template #icon>
+            <view :style="{ width: 30, height: 30, borderRadius: 15, borderWidth: 3, borderStyle: 'solid', borderColor: '#07c160', borderTopColor: 'transparent' }" />
+          </template>
+          Loading...
+        </Loading>
       </view>
     </view>
   </DemoPage>
