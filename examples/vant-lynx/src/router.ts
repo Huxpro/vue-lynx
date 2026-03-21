@@ -29,6 +29,8 @@ import TabDemo from './pages/tab.vue';
 import GridDemo from './pages/grid.vue';
 import CollapseDemo from './pages/collapse.vue';
 import StepsDemo from './pages/steps.vue';
+import ToastDemo from './pages/toast.vue';
+import ActionSheetDemo from './pages/action-sheet.vue';
 
 const router = createRouter({
   history: createMemoryHistory(),
@@ -63,6 +65,7 @@ const router = createRouter({
     { path: '/grid', name: 'grid', component: GridDemo },
     { path: '/collapse', name: 'collapse', component: CollapseDemo },
     { path: '/steps', name: 'steps', component: StepsDemo },
+    { path: '/toast', name: 'toast', component: ToastDemo },
   ],
 });
 
