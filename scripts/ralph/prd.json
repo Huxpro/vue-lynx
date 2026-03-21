@@ -1,0 +1,254 @@
+{
+  "productName": "vue-lynx Chinese Documentation",
+  "branchName": "feat/zh-cn-docs",
+  "description": "Translate the entire vue-lynx documentation site from English to Simplified Chinese (zh-CN)",
+  "context": {
+    "i18nGuide": "https://rspress.rs/guide/basic/i18n",
+    "sourceDir": "website/docs",
+    "targetDir": "website/docs/zh",
+    "devServer": "cd website && pnpm dev",
+    "baseUrl": "http://localhost:5173",
+    "rules": [
+      "Translate ALL prose to natural, idiomatic Chinese",
+      "Keep code blocks, URLs, file paths, and component names in English",
+      "Preserve all Markdown/MDX formatting and components",
+      "Translate frontmatter title and description; keep slug, sidebar_position unchanged",
+      "Technical terms: component→组件, props→props, state→状态, lifecycle→生命周期, template→模板, directive→指令, slot→插槽, main thread→主线程"
+    ]
+  },
+  "userStories": [
+    {
+      "id": "setup",
+      "title": "Setup i18n infrastructure with Rspress config",
+      "priority": 1,
+      "acceptanceCriteria": [
+        "Read Rspress i18n docs at https://rspress.rs/guide/basic/i18n to understand configuration",
+        "Create directories: mkdir -p website/docs/zh/guide",
+        "Update website/rspress.config.ts to add i18n config with locales: ['en', 'zh']",
+        "Update website/rspress.config.ts to set defaultLang: 'en'",
+        "Update website/rspress.config.ts themeConfig to add localized sidebar for zh (translate sidebar text: Quick Start→快速开始, What is VueLynx?→什么是 VueLynx?, Vue Compatibility→Vue 兼容性, Main Thread Script→主线程脚本, Tutorials→教程, Product Gallery→商品画廊, Product Swiper→商品轮播, 7GUIs Benchmark→7GUIs 基准测试, Ecosystem→生态系统, Vue Router→Vue Router, Pinia→Pinia, Vue Query→Vue Query, Tailwind CSS→Tailwind CSS, VueLynx Testing Library→VueLynx 测试库, API Reference→API 参考)",
+        "Update website/rspress.config.ts themeConfig to add localized nav for zh (Guide→指南)",
+        "Update website/i18n.json to add zh translations for all existing keys (Preview→预览, QRCode→二维码, Files→文件, etc.)",
+        "Add website/_meta.json or equivalent for locale labels (en: English, zh: 简体中文)",
+        "Run: cd website && pnpm install",
+        "Start dev server: cd website && pnpm dev (background)",
+        "Browser verify: open http://localhost:5173 with dev-browser",
+        "Browser verify: language switcher appears in header/navbar",
+        "Browser verify: click language switcher shows both English and 简体中文 options",
+        "Browser verify: sidebar items display correctly in both languages when switching"
+      ],
+      "passes": true
+    },
+    {
+      "id": "translate-index",
+      "title": "Translate index.mdx",
+      "priority": 2,
+      "acceptanceCriteria": [
+        "Source: website/docs/index.mdx → Target: website/docs/zh/index.mdx",
+        "Verify: file exists with [ -f website/docs/zh/index.mdx ]",
+        "Verify: contains Chinese with grep -P '[\\u4e00-\\u9fff]' website/docs/zh/index.mdx",
+        "Verify: paragraph count matches source (wc -l comparison, excluding code blocks)",
+        "Verify: all MDX components preserved (compare <Component patterns between files)",
+        "Browser verify: open http://localhost:5173/zh/ with dev-browser skill",
+        "Browser verify: language switcher works, can toggle to English version"
+      ],
+      "passes": true
+    },
+    {
+      "id": "translate-introduction",
+      "title": "Translate guide/introduction.mdx",
+      "priority": 3,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/introduction.mdx → Target: website/docs/zh/guide/introduction.mdx",
+        "Verify: file exists",
+        "Verify: contains Chinese characters",
+        "Verify: paragraph/section count matches source (no missing sections)",
+        "Verify: all MDX components (<Tabs>, <Tab>, <CodeBlock>, etc.) preserved",
+        "Verify: all code blocks unchanged from source",
+        "Browser verify: open http://localhost:5173/zh/guide/introduction with dev-browser",
+        "Browser verify: can switch between zh and en versions"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-quick-start",
+      "title": "Translate guide/quick-start.mdx",
+      "priority": 4,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/quick-start.mdx → Target: website/docs/zh/guide/quick-start.mdx",
+        "Verify: file exists",
+        "Verify: contains Chinese",
+        "Verify: section count matches (count ## headings)",
+        "Verify: all MDX components preserved",
+        "Verify: CLI commands in code blocks unchanged",
+        "Browser verify: open http://localhost:5173/zh/guide/quick-start",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-vue-compat",
+      "title": "Translate guide/vue-compatibility.mdx",
+      "priority": 5,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/vue-compatibility.mdx → Target: website/docs/zh/guide/vue-compatibility.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: all table rows preserved (compare | counts)",
+        "Verify: Vue API names (v-if, v-for, ref, reactive) kept in English",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/vue-compatibility",
+        "Browser verify: tables render correctly, can switch to en"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-mts",
+      "title": "Translate guide/main-thread-script.mdx",
+      "priority": 6,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/main-thread-script.mdx → Target: website/docs/zh/guide/main-thread-script.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches source",
+        "Verify: all code examples preserved unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/main-thread-script",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-routing",
+      "title": "Translate guide/routing.mdx",
+      "priority": 7,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/routing.mdx → Target: website/docs/zh/guide/routing.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/routing",
+        "Browser verify: can toggle en/zh"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-data-fetching",
+      "title": "Translate guide/data-fetching.mdx",
+      "priority": 8,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/data-fetching.mdx → Target: website/docs/zh/guide/data-fetching.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches",
+        "Verify: fetch/async code blocks unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/data-fetching",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-pinia",
+      "title": "Translate guide/pinia.mdx",
+      "priority": 9,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/pinia.mdx → Target: website/docs/zh/guide/pinia.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches",
+        "Verify: Pinia API names in English",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/pinia",
+        "Browser verify: can switch languages"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-tailwind",
+      "title": "Translate guide/tailwindcss.mdx",
+      "priority": 10,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/tailwindcss.mdx → Target: website/docs/zh/guide/tailwindcss.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches",
+        "Verify: Tailwind class names unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/tailwindcss",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-testing",
+      "title": "Translate guide/testing-library.mdx",
+      "priority": 11,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/testing-library.mdx → Target: website/docs/zh/guide/testing-library.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: section count matches",
+        "Verify: test code and matchers unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/testing-library",
+        "Browser verify: can toggle languages"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-tutorial-gallery",
+      "title": "Translate guide/tutorial-gallery.mdx",
+      "priority": 12,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/tutorial-gallery.mdx → Target: website/docs/zh/guide/tutorial-gallery.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: all steps/sections preserved (no missing steps)",
+        "Verify: code examples unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/tutorial-gallery",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-tutorial-swiper",
+      "title": "Translate guide/tutorial-swiper.mdx",
+      "priority": 13,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/tutorial-swiper.mdx → Target: website/docs/zh/guide/tutorial-swiper.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: all steps/sections preserved",
+        "Verify: code examples unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/tutorial-swiper",
+        "Browser verify: can switch en/zh"
+      ],
+      "passes": false
+    },
+    {
+      "id": "translate-7guis",
+      "title": "Translate guide/7guis.mdx",
+      "priority": 14,
+      "acceptanceCriteria": [
+        "Source: website/docs/guide/7guis.mdx → Target: website/docs/zh/guide/7guis.mdx",
+        "Verify: file exists and contains Chinese",
+        "Verify: all 7 GUI examples sections preserved",
+        "Verify: code examples unchanged",
+        "Verify: MDX components preserved",
+        "Browser verify: open http://localhost:5173/zh/guide/7guis",
+        "Browser verify: language switcher works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "final-verify",
+      "title": "Final build and full verification",
+      "priority": 15,
+      "acceptanceCriteria": [
+        "Run: cd website && pnpm build (must exit 0)",
+        "Verify: dist/ directory created",
+        "Verify: dist/ contains zh/ subdirectory",
+        "Verify: all 13 zh pages exist in dist",
+        "Browser verify: navigate through all zh pages via sidebar",
+        "Browser verify: every page can switch between zh and en",
+        "Commit all changes with message 'feat: add Chinese (zh-CN) documentation'"
+      ],
+      "passes": false
+    }
+  ]
+}

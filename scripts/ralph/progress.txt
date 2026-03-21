@@ -1,0 +1,48 @@
+# Vue-Lynx Chinese Translation Progress
+
+## Project Context
+- Rspress i18n: https://rspress.rs/guide/basic/i18n
+- Source: website/docs/
+- Target: website/docs/zh/
+
+## Translation Guidelines
+- Keep code blocks, URLs, file paths in English
+- component → 组件
+- props → props (keep English)
+- state → 状态
+- lifecycle → 生命周期
+- template → 模板
+- directive → 指令
+- slot → 插槽
+- main thread → 主线程
+
+## Learnings
+- Dev server runs on port 3000, not 5173
+- Rspress v2.0.5 language switcher is a hover dropdown in the navbar
+- Default language docs stay at root (docs/), translations go in subdirectory (docs/zh/)
+- locales config in top-level defineConfig activates language switcher automatically
+- themeConfig.locales allows per-locale nav overrides
+- Path-based sidebar keys (/zh/guide/) work for locale-specific sidebar
+
+---
+
+## 2026-03-21 - setup: Setup i18n infrastructure with Rspress config
+- Created: website/docs/zh/guide/ directory
+- Created: website/docs/zh/index.mdx (translated homepage)
+- Modified: website/rspress.config.ts (added locales, zh sidebar, zh nav)
+- Modified: website/i18n.json (added zh translations for all 8 keys)
+- Browser verified: ✓ language switcher appears in navbar
+- Browser verified: ✓ click shows English and 简体中文 options
+- Browser verified: ✓ switching to zh shows translated UI (搜索, 指南, 介绍, 快速开始)
+- Browser verified: ✓ switching back to English works
+- Challenges: Language switcher only visible at wider viewports (>1280px); Rspress uses hover dropdown, not click
+---
+
+## 2026-03-21 - translate-index: Translate index.mdx
+- Translated: website/docs/index.mdx → website/docs/zh/index.mdx (already created in setup)
+- Sections: frontmatter-only page (no ## headings), line count matches (15 = 15)
+- MDX components: none (both source and target are frontmatter-only)
+- Browser verified: ✓ zh page loads at /zh/ with Chinese hero (badge, tagline, buttons)
+- Browser verified: ✓ language switcher works, can toggle to English and back
+- Challenges: Homepage also has custom React components (Features, ShowCase, Banner) with hardcoded English; these are outside the scope of index.mdx translation
+---
