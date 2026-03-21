@@ -1,5 +1,20 @@
 # Vue Lynx — Agent Guidelines
 
+## Vant Component Porting
+
+**在移植任何 Vant 组件前，必须先阅读 `VANT_ACCEPTANCE.md`。**
+
+工作流程：
+1. **对比差距** — 对比 Vant 源码与当前实现，列出所有缺失项
+2. **Props/Events/动画/Composables/CSS 变量** — 全部检查
+3. **逐项补齐** — 直到无差距
+4. **验收检查** — 填写检查清单，确认所有项通过
+5. **提交** — 只有验收通过后才能提交
+
+不要跳过差距对比直接开始实现。
+
+---
+
 ## Debugging Checklist
 
 When investigating runtime errors in Lynx bundles:
