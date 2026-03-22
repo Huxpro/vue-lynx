@@ -17,6 +17,7 @@ Branch: feat/vant-lynx-v2
 - **Parent-child registration timing**: When child components register with parent during setup, computed values depending on the registration array need `await nextTick()` in tests before checking styles (children register sequentially during slot evaluation, so initial render may have stale computeds)
 - **Object prop watchers**: When watching object-type props (like `titleStyle`), use `JSON.stringify` comparison to avoid infinite reactive loops. Inline objects in `h()` render calls create new references each render, triggering watchers endlessly. Serialize the value in a computed, then watch the serialized string.
 - **fireEvent in tests**: Use `fireEvent.tap(element)` not `fireEvent(element, 'tap')`. Find tab/item elements by filtering views with style patterns (e.g., `cursor: pointer`, `justify-content: center`). Include `cursor: default` in filters to also match disabled elements.
+- **Component ref in tests**: Use callback ref pattern `ref: (el: any) => { myRef.value = el; }` instead of `ref: myRef` when you need to access `defineExpose`d methods. Direct ref assignment doesn't work in the `defineComponent` + `h()` test pattern.
 
 ---
 
@@ -288,4 +289,61 @@ Branch: feat/vant-lynx-v2
 - Limitations: titleClass no-op (Lynx has no CSS class system), titleStyle partially supported (merged into header style), url/to/replace no-op (no vue-router in Lynx), animated/swipeable/scrollspy Tabs props not functional, role/tabindex/aria-* not applicable
 - New files: types.ts (TabProps, TabThemeVars, Numeric), test/index.spec.ts
 - Key change: Added titleStyle prop with serialized watch to avoid infinite reactive loops from object reference changes; added nav-left/nav-right slots to Tabs; added animated prop to Tabs for API parity; fixed findTabHeaders in tests to also match disabled tabs (cursor: default)
+---
+
+## 2026-03-22 - parity-tabs: Tabs
+- Props: 21/21 (type, color, border, sticky, shrink, active, duration, animated, ellipsis, swipeable, scrollspy, offsetTop, background, lazyRender, showHeader, lineWidth, lineHeight, beforeChange, swipeThreshold, titleActiveColor, titleInactiveColor)
+- Events: 5/5 (update:active, change, click-tab, rendered, scroll)
+- Slots: 4/4 (default, nav-left, nav-right, nav-bottom)
+- CSS Variables: 7 defined in Tabs/index.less + 5 in Tab/index.less = 12 total (matching Vant)
+- Animations: line indicator transition with configurable duration
+- Tests: 31 cases (Vant has 20 in index.spec + 5 in insert.spec) — all pass
+- Demo sections: 11/12 (基础用法, 通过名称匹配, 标签栏滚动, 禁用标签, 样式风格, 点击事件, 自定义颜色, 标签提示, 自定义标签, 收缩布局, 异步切换) — Sticky/Swipeable/Scrollspy omitted (Lynx no-ops)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: sticky no-op (Lynx has no scroll event interception), scrollspy no-op, offsetTop no-op, animated/swipeable no-op (no CSS translateX transitions), scrollIntoView no-op (cannot measure DOM widths), resize no-op (uses percentage positioning), Sticky component wrapper not available, role/tabindex/aria-* not applicable
+- New files: Tabs/types.ts (TabsType, TabsClickTabEventParams, TabsProvide, TabsExpose, TabsInstance, TabsThemeVars, TABS_KEY)
+- defineExpose: resize(), scrollTo()
+- Key change: Extracted TABS_KEY Symbol to types.ts; added nav-bottom slot; added defineExpose with resize/scrollTo; updated click-tab event payload to include event param; added line transition animation; Tab now imports TABS_KEY from ../Tabs/types
+---
+
+## 2026-03-22 - parity-sidebar: Sidebar
+- Props: 1/1 (modelValue — Numeric, default 0)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 1/1 (default)
+- CSS Variables: 1 defined in index.less (--van-sidebar-width)
+- Animations: none (Sidebar has no transitions)
+- Tests: 6 cases (Vant has 6) — all pass
+- Demo sections: 4/4 (基础用法, 徽标提示, 禁用选项, 监听切换事件)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: role/tablist not applicable, overflow-y auto differs in Lynx, CSS variable theming uses inline styles
+- New files: types.ts (SIDEBAR_KEY, SidebarProvide, SidebarThemeVars)
+- Key change: Extracted SIDEBAR_KEY Symbol to types.ts; added getActive/setActive/getNextIndex provide pattern matching Tabbar; removed hardcoded width number in favor of string px value
+---
+
+## 2026-03-22 - parity-sidebar-item: SidebarItem
+- Props: 8/8 (title, dot, badge, disabled, badgeProps, to, url, replace)
+- Events: 1/1 (click — emits index)
+- Slots: 1/1 (title)
+- CSS Variables: 13 defined in index.less (--van-sidebar-font-size, --van-sidebar-line-height, --van-sidebar-text-color, --van-sidebar-disabled-text-color, --van-sidebar-padding, --van-sidebar-active-color, --van-sidebar-background, --van-sidebar-selected-font-weight, --van-sidebar-selected-text-color, --van-sidebar-selected-border-width, --van-sidebar-selected-border-height, --van-sidebar-selected-border-color, --van-sidebar-selected-background)
+- Animations: none (SidebarItem has no transitions)
+- Tests: 6 cases (Vant has 6 in parent test) — all pass
+- Demo sections: 4/4 (shared with Sidebar demo page)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: to/url/replace no-op (Lynx has no router), role/tabindex/aria-selected not applicable, :active pseudo-class uses touchstart/touchend, ::before pseudo-element uses explicit view for selected border, CSS variable theming uses inline styles
+- New files: types.ts (SidebarItemThemeVars)
+- Key change: Removed manual index prop — auto-indexes via parent getNextIndex(); fixed selected border color from #ee0a24 (danger) to #1989fa (primary) matching Vant; added route props for API parity
+---
+
+## 2026-03-22 - parity-back-top: BackTop
+- Props: 7/7 (right, bottom, zIndex, target, offset, immediate, teleport)
+- Events: 1/1 (click)
+- Slots: 1/1 (default)
+- CSS Variables: 7 defined in index.less (--van-back-top-size, --van-back-top-right, --van-back-top-bottom, --van-back-top-z-index, --van-back-top-icon-size, --van-back-top-text-color, --van-back-top-background)
+- Animations: none (Vant uses CSS transform: scale() transition; Lynx uses v-if show/hide)
+- Tests: 13 cases (Vant has 3 functional + SSR/demo snapshots) — all pass
+- Demo sections: 5/5 (基础用法, 自定义位置, 自定义内容, 设置滚动目标, 瞬间滚动)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: teleport no-op (Lynx has no Teleport/portal), target no-op (no auto scroll-parent detection; parent must call handleScroll manually), smooth scrolling not controllable (parent scroll-view handles behavior), CSS transform: scale() transition replaced with v-if, box-shadow replaced with border, :active uses touchstart/touchend, cursor: pointer not applicable, KeepAlive onActivated/onDeactivated not relevant
+- New files: types.ts (BackTopThemeVars)
+- Key change: Rewrote component for full Vant parity — added numericProp support (string|number) for right/bottom/zIndex/offset, addUnit helper, teleport/target/immediate props for API compatibility, blue background (#1989fa) matching Vant's --van-blue, callback ref pattern for test handleScroll access
 ---
