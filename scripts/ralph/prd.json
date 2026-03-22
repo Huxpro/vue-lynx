@@ -826,7 +826,7 @@
         "Docs: Lynx limitations in components/Highlight/README.md",
         "Commit: feat(highlight): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-text-ellipsis",

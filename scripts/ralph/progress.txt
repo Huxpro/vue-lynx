@@ -465,3 +465,15 @@ Branch: feat/vant-lynx-v2
 - New files: types.ts (NoticeBarMode, NoticeBarExpose, NoticeBarThemeVars)
 - Key changes: Removed spurious click event (Vant only emits close + replay), fixed content structure to wrap slot inside content view, matched Vant's scrollable default (null = auto-detect), removed hardcoded color/background defaults from props (use computed fallbacks matching CSS vars)
 ---
+## 2026-03-22 - parity-highlight: Highlight
+- Props: 9/9 (keywords, sourceString, autoEscape, caseSensitive, highlightClass, unhighlightClass, highlightTag, unhighlightTag, tag) + 2 Lynx extensions (highlightColor, unhighlightColor)
+- Events: 0/0 (matches Vant — pure rendering component)
+- Slots: 0/0 (matches Vant)
+- CSS Variables: 1 defined in index.less (--van-highlight-tag-color)
+- Animations: none (matches Vant)
+- Tests: 7 cases (Vant has 7) — all pass
+- Demo sections: 3/3 (Basic Usage, Multiple Keywords, Highlight Class Name)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: tag/highlightTag/unhighlightTag accepted for API compat but always render as view/text (Lynx has no HTML tag switching); highlightClass/unhighlightClass accepted for API compat but no CSS class system in Lynx; use highlightColor/unhighlightColor Lynx extensions instead
+- Key changes: Fixed default highlightColor from #ee0a24 to #1989fa (matching --van-primary-color), aligned chunk algorithm exactly with Vant's reduce-based approach, matched Vant's demo section structure, ported all 7 Vant test cases, used string units for fontSize to avoid deprecation warnings
+---

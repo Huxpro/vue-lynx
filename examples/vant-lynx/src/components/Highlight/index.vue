@@ -1,46 +1,10 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: Highlight
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
--->
-<!--
-  Vant Highlight - Feature Parity Report
-  ========================================
-  Vant Source: packages/vant/src/highlight/Highlight.tsx
-
-  Props (8/8 supported):
-    - keywords: string | string[]      [YES] (required in Vant, optional here with default [])
-    - sourceString: string             [YES]
-    - autoEscape: boolean (default true) [YES]
-    - caseSensitive: boolean           [YES]
-    - highlightTag: string             [YES] (always renders as <text> in Lynx)
-    - unhighlightTag: string           [YES] (always renders as <text> in Lynx)
-    - highlightClass: string           [PARTIAL] mapped to highlightColor
-    - unhighlightClass: string         [PARTIAL] mapped to unhighlightColor
-    - tag: string (container tag)      [N/A] Lynx always uses <view>
-
-  Events: none (matches Vant)
-
-  Slots: none (matches Vant -- pure rendering component)
-
-  Lynx Adaptations:
-    - Vant uses dynamic tag names (highlightTag/unhighlightTag/tag); Lynx always
-      uses <view> and <text> elements. Tag props accepted for API compat but
-      rendered as <text>.
-    - highlightClass/unhighlightClass mapped to color-based styling since Lynx
-      has no CSS class system.
-    - Chunk algorithm matches Vant's approach: regex-based splitting with overlap
-      merging.
-    - Uses `display: 'flex'` explicitly on container.
-
-  Gaps:
-    - tag prop ignored (Lynx has no HTML tag switching)
-    - highlightClass/unhighlightClass not supported (no CSS classes in Lynx);
-      use highlightColor/unhighlightColor instead
-    - CSS variables not supported (Lynx limitation)
+  Lynx Limitations:
+  - tag prop: accepted for API compat but always renders as <view> (Lynx has no HTML tag switching)
+  - highlightTag/unhighlightTag: accepted for API compat but always renders as <text>
+  - highlightClass/unhighlightClass: accepted for API compat but Lynx has no CSS class system;
+    use highlightColor/unhighlightColor (Lynx extension) for color customization instead
+  - CSS class-based styling: Lynx uses inline styles; CSS variables in index.less defined for theming reference only
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -48,124 +12,139 @@ import { computed } from 'vue-lynx';
 export interface HighlightProps {
   keywords?: string | string[];
   sourceString?: string;
-  highlightColor?: string;
-  highlightTag?: string;
-  unhighlightColor?: string;
-  unhighlightTag?: string;
-  caseSensitive?: boolean;
   autoEscape?: boolean;
+  caseSensitive?: boolean;
   highlightClass?: string;
+  highlightTag?: string;
   unhighlightClass?: string;
+  unhighlightTag?: string;
   tag?: string;
+  // Lynx extensions (Vant uses CSS classes for color)
+  highlightColor?: string;
+  unhighlightColor?: string;
 }
 
 const props = withDefaults(defineProps<HighlightProps>(), {
   keywords: () => [],
   sourceString: '',
-  highlightColor: '#ee0a24',
-  highlightTag: 'text',
-  unhighlightColor: '#323233',
-  unhighlightTag: 'text',
-  caseSensitive: false,
   autoEscape: true,
+  caseSensitive: false,
+  highlightTag: 'span',
+  unhighlightTag: 'span',
+  tag: 'div',
+  highlightColor: '#1989fa',
+  unhighlightColor: '',
 });
 
-interface Chunk {
-  text: string;
+interface HighlightChunk {
+  start: number;
+  end: number;
   highlight: boolean;
 }
 
-const chunks = computed<Chunk[]>(() => {
-  const source = props.sourceString;
-  if (!source) return [];
+const highlightChunks = computed<HighlightChunk[]>(() => {
+  const { autoEscape, caseSensitive, keywords, sourceString } = props;
+  const flags = caseSensitive ? 'g' : 'gi';
+  const _keywords = Array.isArray(keywords) ? keywords : [keywords];
 
-  const kws = Array.isArray(props.keywords)
-    ? props.keywords
-    : [props.keywords];
-
-  const filtered = kws.filter((k) => k && k.length > 0);
-  if (filtered.length === 0) {
-    return [{ text: source, highlight: false }];
-  }
-
-  const flags = props.caseSensitive ? 'g' : 'gi';
-
-  // Build indexed chunks with start/end positions (matching Vant algorithm)
-  type IndexedChunk = { start: number; end: number; highlight: boolean };
-  let indexedChunks: IndexedChunk[] = [];
-
-  for (const keyword of filtered) {
-    const escaped = props.autoEscape
-      ? keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      : keyword;
-    const regex = new RegExp(escaped, flags);
-    let match: RegExpExecArray | null;
-    while ((match = regex.exec(source))) {
-      const start = match.index;
-      const end = regex.lastIndex;
-      if (start >= end) {
-        regex.lastIndex++;
-        continue;
+  // generate chunks
+  let chunks = _keywords
+    .filter((keyword) => keyword)
+    .reduce<HighlightChunk[]>((chunks, keyword) => {
+      if (autoEscape) {
+        keyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       }
-      indexedChunks.push({ start, end, highlight: true });
-    }
-  }
 
-  if (indexedChunks.length === 0) {
-    return [{ text: source, highlight: false }];
-  }
+      const regex = new RegExp(keyword, flags);
 
-  // Sort and merge overlapping highlight chunks
-  indexedChunks.sort((a, b) => a.start - b.start);
-  const merged: IndexedChunk[] = [];
-  for (const chunk of indexedChunks) {
-    const prev = merged[merged.length - 1];
-    if (!prev || chunk.start > prev.end) {
-      // Add unhighlight gap
-      const gapStart = prev ? prev.end : 0;
-      if (gapStart < chunk.start) {
-        merged.push({ start: gapStart, end: chunk.start, highlight: false });
+      let match;
+      while ((match = regex.exec(sourceString))) {
+        const start = match.index;
+        const end = regex.lastIndex;
+
+        if (start >= end) {
+          regex.lastIndex++;
+          continue;
+        }
+
+        chunks.push({ start, end, highlight: true });
       }
-      merged.push(chunk);
-    } else {
-      prev.end = Math.max(prev.end, chunk.end);
-    }
+
+      return chunks;
+    }, []);
+
+  // merge chunks
+  chunks = chunks
+    .sort((a, b) => a.start - b.start)
+    .reduce<HighlightChunk[]>((merged, currentChunk) => {
+      const prevChunk = merged[merged.length - 1];
+
+      if (!prevChunk || currentChunk.start > prevChunk.end) {
+        const unhighlightStart = prevChunk ? prevChunk.end : 0;
+        const unhighlightEnd = currentChunk.start;
+
+        if (unhighlightStart !== unhighlightEnd) {
+          merged.push({
+            start: unhighlightStart,
+            end: unhighlightEnd,
+            highlight: false,
+          });
+        }
+
+        merged.push(currentChunk);
+      } else {
+        prevChunk.end = Math.max(prevChunk.end, currentChunk.end);
+      }
+
+      return merged;
+    }, []);
+
+  const lastChunk = chunks[chunks.length - 1];
+
+  if (!lastChunk) {
+    chunks.push({
+      start: 0,
+      end: sourceString.length,
+      highlight: false,
+    });
   }
 
-  // Add trailing unhighlight chunk
-  const last = merged[merged.length - 1];
-  if (last && last.end < source.length) {
-    merged.push({ start: last.end, end: source.length, highlight: false });
+  if (lastChunk && lastChunk.end < sourceString.length) {
+    chunks.push({
+      start: lastChunk.end,
+      end: sourceString.length,
+      highlight: false,
+    });
   }
 
-  // Handle case where first chunk doesn't start at 0
-  if (merged.length > 0 && merged[0].start > 0) {
-    merged.unshift({ start: 0, end: merged[0].start, highlight: false });
-  }
-
-  return merged.map((c) => ({
-    text: source.slice(c.start, c.end),
-    highlight: c.highlight,
-  }));
+  return chunks;
 });
 
-const normalStyle = computed(() => ({
-  fontSize: 14,
-  color: props.unhighlightColor,
-}));
-
 const highlightStyle = computed(() => ({
-  fontSize: 14,
+  fontSize: '14px',
   color: props.highlightColor,
 }));
+
+const unhighlightStyle = computed(() => {
+  const style: Record<string, any> = { fontSize: '14px' };
+  if (props.unhighlightColor) {
+    style.color = props.unhighlightColor;
+  }
+  return style;
+});
 </script>
 
 <template>
   <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }">
-    <text
-      v-for="(chunk, index) in chunks"
-      :key="index"
-      :style="chunk.highlight ? highlightStyle : normalStyle"
-    >{{ chunk.text }}</text>
+    <template v-for="(chunk, index) in highlightChunks" :key="index">
+      <text
+        v-if="chunk.highlight"
+        :style="highlightStyle"
+      >{{ sourceString.slice(chunk.start, chunk.end) }}</text>
+      <text
+        v-else
+        :style="unhighlightStyle"
+      >{{ sourceString.slice(chunk.start, chunk.end) }}</text>
+    </template>
   </view>
 </template>
