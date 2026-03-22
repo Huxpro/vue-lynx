@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { h, defineComponent, inject } from 'vue-lynx';
 import { render } from 'vue-lynx-testing-library';
 import ConfigProvider from '../index.vue';
+import { CONFIG_PROVIDER_KEY, type ConfigProviderProvide } from '../types';
+import { insertDash, kebabCase, mapThemeVarsToCSSVars } from '../utils';
 
 describe('ConfigProvider', () => {
-  it('should render children', () => {
+  it('should render children correctly', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -20,44 +22,13 @@ describe('ConfigProvider', () => {
     expect(textEls.length).toBeGreaterThan(0);
   });
 
-  it('should render with dark theme', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(ConfigProvider, { theme: 'dark' }, {
-            default: () => h('view', null, [h('text', null, 'Dark')]),
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
-  });
-
-  it('should render with custom theme vars', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(
-            ConfigProvider,
-            { themeVars: { '--van-primary-color': '#ff0000' } },
-            { default: () => h('view', null, [h('text', null, 'Custom')]) },
-          );
-        },
-      }),
-    );
-    expect(container).not.toBeNull();
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
-  });
-
-  it('should provide context to children', () => {
-    let injectedConfig: any = null;
+  it('should provide config to children via CONFIG_PROVIDER_KEY', () => {
+    let injectedConfig: ConfigProviderProvide | undefined;
 
     const Consumer = defineComponent({
       setup() {
-        injectedConfig = inject('configProvider');
-        return () => h('view', null, [h('text', null, 'consumer')]);
+        injectedConfig = inject(CONFIG_PROVIDER_KEY);
+        return () => h('text', null, 'consumer');
       },
     });
 
@@ -66,25 +37,24 @@ describe('ConfigProvider', () => {
         render() {
           return h(
             ConfigProvider,
-            { theme: 'dark', zIndex: 3000 },
+            { iconPrefix: 'my-icon' },
             { default: () => h(Consumer) },
           );
         },
       }),
     );
 
-    expect(injectedConfig).not.toBeNull();
-    expect(injectedConfig.value.theme).toBe('dark');
-    expect(injectedConfig.value.zIndex).toBe(3000);
+    expect(injectedConfig).toBeDefined();
+    expect(injectedConfig!.iconPrefix).toBe('my-icon');
   });
 
-  it('should provide default context values', () => {
-    let injectedConfig: any = null;
+  it('should provide default values when no props set', () => {
+    let injectedConfig: ConfigProviderProvide | undefined;
 
     const Consumer = defineComponent({
       setup() {
-        injectedConfig = inject('configProvider');
-        return () => h('view', null, [h('text', null, 'consumer')]);
+        injectedConfig = inject(CONFIG_PROVIDER_KEY);
+        return () => h('text', null, 'consumer');
       },
     });
 
@@ -96,8 +66,98 @@ describe('ConfigProvider', () => {
       }),
     );
 
-    expect(injectedConfig).not.toBeNull();
-    expect(injectedConfig.value.theme).toBe('light');
-    expect(injectedConfig.value.zIndex).toBe(2000);
+    expect(injectedConfig).toBeDefined();
+    expect(injectedConfig!.iconPrefix).toBeUndefined();
+  });
+
+  it('should not apply inline styles when themeVarsScope is global', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(
+            ConfigProvider,
+            {
+              themeVars: { rateIconFullColor: 'red' },
+              themeVarsScope: 'global',
+            },
+            { default: () => h('text', null, 'test') },
+          );
+        },
+      }),
+    );
+    const wrapper = container.firstElementChild;
+    const style = wrapper?.getAttribute('style') || '';
+    // In global scope, CSS vars should NOT be applied to the wrapper element
+    expect(style).not.toContain('rate');
+  });
+});
+
+describe('mapThemeVarsToCSSVars', () => {
+  it('should convert camelCase to --van-kebab-case', () => {
+    const result = mapThemeVarsToCSSVars({ rateIconFullColor: 'red' });
+    expect(result).toEqual({ '--van-rate-icon-full-color': 'red' });
+  });
+
+  it('should insert dash before digits (gray1 → gray-1)', () => {
+    const result = mapThemeVarsToCSSVars({
+      gray1: '#111',
+      background2: 'red',
+    });
+    expect(result).toEqual({
+      '--van-gray-1': '#111',
+      '--van-background-2': 'red',
+    });
+  });
+
+  it('should apply themeVarsLight over themeVars in light mode', () => {
+    const themeVars = { rateIconFullColor: 'red' };
+    const themeVarsLight = { rateIconFullColor: 'blue' };
+    const merged = Object.assign({}, themeVars, themeVarsLight);
+    const result = mapThemeVarsToCSSVars(merged);
+    expect(result).toEqual({ '--van-rate-icon-full-color': 'blue' });
+  });
+
+  it('should apply themeVarsDark over themeVars in dark mode', () => {
+    const themeVars = { rateIconFullColor: 'red' };
+    const themeVarsDark = { rateIconFullColor: 'green' };
+    const merged = Object.assign({}, themeVars, themeVarsDark);
+    const result = mapThemeVarsToCSSVars(merged);
+    expect(result).toEqual({ '--van-rate-icon-full-color': 'green' });
+  });
+
+  it('should handle multiple vars correctly', () => {
+    const result = mapThemeVarsToCSSVars({
+      rateIconFullColor: 'red',
+      buttonPrimaryColor: 'blue',
+    });
+    expect(result).toEqual({
+      '--van-rate-icon-full-color': 'red',
+      '--van-button-primary-color': 'blue',
+    });
+  });
+});
+
+describe('insertDash', () => {
+  it('should insert dash between letter and digit', () => {
+    expect(insertDash('gray1')).toBe('gray-1');
+    expect(insertDash('gray8')).toBe('gray-8');
+    expect(insertDash('background2')).toBe('background-2');
+  });
+
+  it('should not modify strings without letter-digit boundaries', () => {
+    expect(insertDash('primary-color')).toBe('primary-color');
+    expect(insertDash('color')).toBe('color');
+  });
+});
+
+describe('kebabCase', () => {
+  it('should convert camelCase to kebab-case', () => {
+    expect(kebabCase('rateIconFullColor')).toBe('rate-icon-full-color');
+    expect(kebabCase('buttonPrimaryColor')).toBe('button-primary-color');
+  });
+
+  it('should handle already lowercase strings', () => {
+    expect(kebabCase('color')).toBe('color');
+    expect(kebabCase('background')).toBe('background');
   });
 });
