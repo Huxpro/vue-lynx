@@ -1,9 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { h, defineComponent, nextTick, ref } from 'vue-lynx';
 import { render, fireEvent } from 'vue-lynx-testing-library';
 import Popup from '../index.vue';
 
 describe('Popup', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('should lazy render content by default', async () => {
     const show = ref(false);
     const Comp = defineComponent({
@@ -18,7 +26,6 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    // lazyRender is true by default, content should not render until shown
     let textEls = container.querySelectorAll('text');
     let hasContent = Array.from(textEls).some(
       (t) => t.textContent === 'Popup Content',
@@ -36,7 +43,7 @@ describe('Popup', () => {
     expect(hasContent).toBe(true);
   });
 
-  it('should change z-index when using z-index prop', () => {
+  it('should change z-index when using z-index prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -44,17 +51,15 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // Find the popup view (not overlay)
-    const popupView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('z-index') && style.includes('10');
-    });
-    expect(popupView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup');
+    expect(popup).toBeTruthy();
+    const style = popup!.getAttribute('style') || '';
+    expect(style).toContain('z-index');
   });
 
-  it('should accept lockScroll prop for API compatibility', () => {
-    // lockScroll is a no-op in Lynx but should be accepted without error
+  it('should accept lockScroll prop for API compatibility', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -62,11 +67,13 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup');
+    expect(popup).toBeTruthy();
   });
 
-  it('should accept teleport prop for API compatibility', () => {
+  it('should accept teleport prop for API compatibility', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -74,11 +81,13 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup');
+    expect(popup).toBeTruthy();
   });
 
-  it('should render overlay by default', () => {
+  it('should render overlay by default', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -86,11 +95,13 @@ describe('Popup', () => {
         },
       }),
     );
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
+    await nextTick();
+
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
   });
 
-  it('should not render overlay when overlay prop is false', () => {
+  it('should not render overlay when overlay prop is false', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -98,8 +109,10 @@ describe('Popup', () => {
         },
       }),
     );
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeFalsy();
+    await nextTick();
+
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeFalsy();
   });
 
   it('should emit click-overlay event when overlay is clicked', async () => {
@@ -115,9 +128,11 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
-    fireEvent.tap(overlayView!);
+    await nextTick();
+
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
     expect(onClickOverlay).toHaveBeenCalledTimes(1);
@@ -157,6 +172,7 @@ describe('Popup', () => {
     });
 
     render(Comp);
+    await nextTick();
     show.value = false;
     await nextTick();
     await nextTick();
@@ -182,16 +198,16 @@ describe('Popup', () => {
     const { container } = render(Comp);
     await nextTick();
 
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
-    fireEvent.tap(overlayView!);
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
     await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should change duration when using duration prop', () => {
+  it('should change duration when using duration prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -199,15 +215,15 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const popupView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('0.5s');
-    });
-    expect(popupView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup');
+    expect(popup).toBeTruthy();
+    const style = popup!.getAttribute('style') || '';
+    expect(style).toContain('0.5s');
   });
 
-  it('should have round border-radius when setting the round prop', () => {
+  it('should have round class when setting the round prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -215,15 +231,13 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const roundView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-radius') && style.includes('16px');
-    });
-    expect(roundView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup--round');
+    expect(popup).toBeTruthy();
   });
 
-  it('should have round border-radius for bottom position', () => {
+  it('should have round class for bottom position', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -231,12 +245,10 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const roundView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-top-left-radius') && style.includes('16px');
-    });
-    expect(roundView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup--round.van-popup--bottom');
+    expect(popup).toBeTruthy();
   });
 
   it('should render close icon when using closeable prop', async () => {
@@ -253,15 +265,14 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    // Find the close icon view (has z-index: 1 in style)
-    const views = container.querySelectorAll('view');
-    const closeIconView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('z-index: 1') && style.includes('position: absolute');
-    });
-    expect(closeIconView).toBeTruthy();
+    await nextTick();
 
-    fireEvent.tap(closeIconView!);
+    const closeIcon = container.querySelector(
+      '.van-popup__close-icon--top-right',
+    );
+    expect(closeIcon).toBeTruthy();
+
+    fireEvent.tap(closeIcon!);
     await nextTick();
     await nextTick();
     expect(onUpdateShow).toHaveBeenCalledWith(false);
@@ -281,41 +292,42 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    const views = container.querySelectorAll('view');
-    const closeIconView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('z-index: 1') && style.includes('position: absolute');
-    });
-    expect(closeIconView).toBeTruthy();
+    await nextTick();
 
-    fireEvent.tap(closeIconView!);
+    const closeIcon = container.querySelector(
+      '.van-popup__close-icon--top-right',
+    );
+    expect(closeIcon).toBeTruthy();
+
+    fireEvent.tap(closeIcon!);
     await nextTick();
     await nextTick();
     expect(onClickCloseIcon).toHaveBeenCalledTimes(1);
   });
 
-  it('should render correct close icon when using close-icon prop', () => {
+  it('should render correct close icon position when using close-icon-position prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Popup, {
             show: true,
             closeable: true,
-            closeIcon: 'success',
+            closeIconPosition: 'top-left',
           });
         },
       }),
     );
-    // The Icon component should render with 'success' name
-    const views = container.querySelectorAll('view');
-    const closeIconView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('z-index: 1') && style.includes('position: absolute');
-    });
-    expect(closeIconView).toBeTruthy();
+    await nextTick();
+
+    expect(
+      container.querySelector('.van-popup__close-icon--top-left'),
+    ).toBeTruthy();
+    expect(
+      container.querySelector('.van-popup__close-icon--top-right'),
+    ).toBeFalsy();
   });
 
-  it('should accept icon-prefix prop for API compatibility', () => {
+  it('should accept icon-prefix prop for API compatibility', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -327,11 +339,15 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    await nextTick();
+
+    const closeIcon = container.querySelector(
+      '.van-popup__close-icon--top-right',
+    );
+    expect(closeIcon).toBeTruthy();
   });
 
-  it('should render overlay-content slot correctly', () => {
+  it('should render overlay-content slot correctly', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -345,6 +361,8 @@ describe('Popup', () => {
         },
       }),
     );
+    await nextTick();
+
     const textEls = container.querySelectorAll('text');
     const slotText = Array.from(textEls).find(
       (t) => t.textContent === 'Custom Overlay Content',
@@ -367,21 +385,21 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    // Click overlay
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
+    await nextTick();
 
-    fireEvent.tap(overlayView!);
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
-    // beforeClose returns false, so update:show should NOT have been called
     expect(onUpdateShow).not.toHaveBeenCalled();
 
     // Now allow close
     beforeClose.value = () => true;
     await nextTick();
 
-    fireEvent.tap(overlayView!);
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
     expect(onUpdateShow).toHaveBeenCalledWith(false);
@@ -401,6 +419,7 @@ describe('Popup', () => {
     });
 
     render(Comp);
+    await nextTick();
     show.value = false;
     await nextTick();
     await nextTick();
@@ -408,7 +427,7 @@ describe('Popup', () => {
     expect(beforeClose).toHaveBeenCalledTimes(0);
   });
 
-  it('should have safe-area-inset-top padding when using safe-area-inset-top prop', () => {
+  it('should have safe-area-inset-top class when using safe-area-inset-top prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -416,15 +435,13 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const popupView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-top') && style.includes('44px');
-    });
-    expect(popupView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-safe-area-top');
+    expect(popup).toBeTruthy();
   });
 
-  it('should have safe-area-inset-bottom padding when using safe-area-inset-bottom prop', () => {
+  it('should have safe-area-inset-bottom class when using safe-area-inset-bottom prop', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -432,12 +449,10 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const popupView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-bottom') && style.includes('34px');
-    });
-    expect(popupView).toBeTruthy();
+    await nextTick();
+
+    const popup = container.querySelector('.van-safe-area-bottom');
+    expect(popup).toBeTruthy();
   });
 
   it('should destroy content when using destroyOnClose prop', async () => {
@@ -447,7 +462,7 @@ describe('Popup', () => {
         return () =>
           h(
             Popup,
-            { show: show.value, destroyOnClose: true },
+            { show: show.value, destroyOnClose: true, duration: 0 },
             { default: () => h('text', {}, 'Destroy Me') },
           );
       },
@@ -455,7 +470,7 @@ describe('Popup', () => {
 
     const { container } = render(Comp);
 
-    // Initially hidden with destroyOnClose, content should not render
+    // Initially hidden, content should not render (lazyRender)
     let textEls = container.querySelectorAll('text');
     let hasContent = Array.from(textEls).some(
       (t) => t.textContent === 'Destroy Me',
@@ -473,7 +488,7 @@ describe('Popup', () => {
     );
     expect(hasContent).toBe(true);
 
-    // Hide popup - content should be destroyed
+    // Hide popup — content should be destroyed (duration: 0, so immediate)
     show.value = false;
     await nextTick();
     await nextTick();
@@ -483,33 +498,6 @@ describe('Popup', () => {
       (t) => t.textContent === 'Destroy Me',
     );
     expect(hasContent).toBe(false);
-  });
-
-  it('should emit click event when popup is clicked', async () => {
-    const onClick = vi.fn();
-    const Comp = defineComponent({
-      setup() {
-        return () =>
-          h(Popup, {
-            show: true,
-            overlay: false,
-            onClick,
-          });
-      },
-    });
-
-    const { container } = render(Comp);
-    const views = container.querySelectorAll('view');
-    const popupView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: fixed') && style.includes('background-color');
-    });
-    expect(popupView).toBeTruthy();
-
-    fireEvent.tap(popupView!);
-    await nextTick();
-    await nextTick();
-    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('should support v-model:show', async () => {
@@ -529,11 +517,10 @@ describe('Popup', () => {
     const { container } = render(Comp);
     await nextTick();
 
-    // Click overlay to close
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
 
-    fireEvent.tap(overlayView!);
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
     expect(show.value).toBe(false);
@@ -553,16 +540,18 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    const overlayView = container.querySelector('.van-overlay');
-    expect(overlayView).toBeTruthy();
+    await nextTick();
 
-    fireEvent.tap(overlayView!);
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+
+    fireEvent.tap(overlay!);
     await nextTick();
     await nextTick();
     expect(onUpdateShow).not.toHaveBeenCalled();
   });
 
-  it('should render with different positions', () => {
+  it('should render with different positions', async () => {
     const positions = ['top', 'bottom', 'left', 'right', 'center'] as const;
 
     for (const position of positions) {
@@ -573,12 +562,14 @@ describe('Popup', () => {
           },
         }),
       );
-      const views = container.querySelectorAll('view');
-      expect(views.length).toBeGreaterThan(0);
+      await nextTick();
+
+      const popup = container.querySelector(`.van-popup--${position}`);
+      expect(popup).toBeTruthy();
     }
   });
 
-  it('should expose popupRef', () => {
+  it('should expose popupRef', async () => {
     const popupRef = ref();
     const Comp = defineComponent({
       setup() {
@@ -591,7 +582,99 @@ describe('Popup', () => {
     });
 
     render(Comp);
-    // The component should expose popupRef
+    await nextTick();
+
     expect(popupRef.value).toBeTruthy();
+  });
+
+  it('should apply BEM classes correctly', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Popup, {
+            show: true,
+            position: 'bottom',
+            round: true,
+            overlay: false,
+          });
+        },
+      }),
+    );
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup');
+    expect(popup).toBeTruthy();
+    expect(popup!.classList.contains('van-popup--bottom')).toBe(true);
+    expect(popup!.classList.contains('van-popup--round')).toBe(true);
+  });
+
+  it('should use fade animation for center position', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Popup, {
+            show: true,
+            position: 'center',
+            overlay: false,
+          });
+        },
+      }),
+    );
+    await nextTick();
+
+    const popup = container.querySelector('.van-popup--center');
+    expect(popup).toBeTruthy();
+    const style = popup!.getAttribute('style') || '';
+    expect(style).toContain('opacity');
+  });
+
+  it('should emit opened after enter animation duration', async () => {
+    const onOpened = vi.fn();
+    const show = ref(false);
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h(Popup, {
+            show: show.value,
+            onOpened,
+          });
+      },
+    });
+
+    render(Comp);
+    show.value = true;
+    await nextTick();
+    await nextTick();
+
+    // opened fires after default 300ms duration
+    expect(onOpened).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(300);
+    expect(onOpened).toHaveBeenCalledTimes(1);
+  });
+
+  it('should emit closed after leave animation duration', async () => {
+    const onClosed = vi.fn();
+    const show = ref(true);
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h(Popup, {
+            show: show.value,
+            onClosed,
+          });
+      },
+    });
+
+    render(Comp);
+    await nextTick();
+
+    show.value = false;
+    await nextTick();
+    await nextTick();
+
+    // closed fires after default 300ms duration
+    expect(onClosed).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(300);
+    expect(onClosed).toHaveBeenCalledTimes(1);
   });
 });

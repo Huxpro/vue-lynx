@@ -1,16 +1,17 @@
 <!--
   Lynx Limitations:
-  - teleport: accepted for API compat but not applicable in Lynx (no DOM mounting)
+  - teleport: accepted for API compat but Lynx has no Teleport support
   - lockScroll: accepted for API compat but no document.body scroll in Lynx
   - closeOnPopstate: accepted for API compat but no browser history API in Lynx
-  - transition/transitionAppear: accepted but Vue <Transition> not supported in Lynx;
-    uses inline CSS opacity/transform transitions instead
-  - safeAreaInsetTop/Bottom: accepted, uses fixed padding approximation
   - keydown: accepted for API compat but no keyboard events in Lynx
-  - iconPrefix: accepted for API compat but no icon font support in Lynx
+  - v-show: Lynx may not support v-show; uses v-if with CSS opacity/transform transitions
+  - safeAreaInsetTop/Bottom: uses env(safe-area-inset-*); support depends on Lynx host
+  - overflow-y: auto ignored in Lynx; use <scroll-view> for scrollable popup content
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { isDef } from '../../utils/format';
 import Overlay from '../Overlay/index.vue';
 import Icon from '../Icon/index.vue';
 import { useLazyRender } from '../../composables/useLazyRender';
@@ -20,8 +21,9 @@ import type {
   PopupCloseIconPosition,
   Interceptor,
 } from './types';
+import './index.less';
 
-export type { PopupProps, PopupExpose, PopupThemeVars } from './types';
+const [, bem] = createNamespace('popup');
 
 const props = withDefaults(
   defineProps<{
@@ -63,7 +65,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
-  click: [event: any];
   open: [];
   close: [];
   opened: [];
@@ -74,208 +75,187 @@ const emit = defineEmits<{
 }>();
 
 const popupRef = ref();
-const opened = ref(false);
+let opened = false;
+const zIndex = ref<number>();
+const internalVisible = ref(false);
 
-// Use global z-index if zIndex prop not explicitly provided
-const globalZIndex = useGlobalZIndex();
-const zIndexNum = computed(() => {
-  if (props.zIndex !== undefined) return Number(props.zIndex);
-  return globalZIndex.value;
-});
-
-// Lazy render
+// Lazy render: track if popup has ever been shown
 const lazyInited = useLazyRender(() => props.show);
 
 const shouldRender = computed(() => {
-  if (props.destroyOnClose && !props.show) return false;
   if (props.lazyRender && !lazyInited.value) return false;
   return true;
 });
 
-// Duration in seconds
+// --- Duration ---
+
 const durationSec = computed(() => {
-  if (props.duration === undefined || props.duration === null) return 0.3;
-  return Number(props.duration);
+  if (isDef(props.duration)) return Number(props.duration);
+  return 0.3;
 });
 
-// Watch show for open/close events
+const durationMs = computed(() => Math.round(durationSec.value * 1000));
+
+// --- Z-index ---
+
+const globalZIndex = useGlobalZIndex();
+
+// --- Open / Close ---
+
+const open = () => {
+  if (!opened) {
+    opened = true;
+    internalVisible.value = true;
+    zIndex.value =
+      props.zIndex !== undefined
+        ? Number(props.zIndex)
+        : globalZIndex.value;
+    emit('open');
+    // opened fires after enter animation
+    if (durationMs.value > 0) {
+      setTimeout(() => emit('opened'), durationMs.value);
+    } else {
+      emit('opened');
+    }
+  }
+};
+
+function callInterceptor(
+  interceptor: Interceptor | undefined,
+  done: () => void,
+) {
+  if (!interceptor) {
+    done();
+    return;
+  }
+  const result = interceptor();
+  if (result && typeof (result as any).then === 'function') {
+    (result as Promise<boolean | void>)
+      .then((val) => {
+        if (val !== false) done();
+      })
+      .catch(() => {});
+  } else if (result !== false) {
+    done();
+  }
+}
+
+function scheduleLeave() {
+  if (durationMs.value > 0) {
+    setTimeout(() => {
+      if (props.destroyOnClose) {
+        internalVisible.value = false;
+      }
+      emit('closed');
+    }, durationMs.value);
+  } else {
+    if (props.destroyOnClose) {
+      internalVisible.value = false;
+    }
+    emit('closed');
+  }
+}
+
+const close = () => {
+  if (opened) {
+    callInterceptor(props.beforeClose, () => {
+      opened = false;
+      emit('close');
+      emit('update:show', false);
+      scheduleLeave();
+    });
+  }
+};
+
+// --- Events ---
+
+const onClickOverlay = (event: any) => {
+  emit('click-overlay', event);
+  if (props.closeOnClickOverlay) {
+    close();
+  }
+};
+
+const onClickCloseIcon = (event: any) => {
+  emit('click-close-icon', event);
+  close();
+};
+
+// --- Computed styles & classes ---
+
+// Off-screen transforms for slide positions
+const slideTransforms: Record<string, string> = {
+  top: 'translate3d(0, -100%, 0)',
+  bottom: 'translate3d(0, 100%, 0)',
+  left: 'translate3d(-100%, -50%, 0)',
+  right: 'translate3d(100%, -50%, 0)',
+};
+
+const popupStyle = computed(() => {
+  const style: Record<string, any> = {};
+
+  if (isDef(zIndex.value)) {
+    style.zIndex = zIndex.value;
+  }
+
+  const dur = `${durationSec.value}s`;
+
+  if (!props.position || props.position === 'center') {
+    // Fade animation for center
+    style.transitionProperty = 'opacity';
+    style.transitionDuration = dur;
+    style.opacity = props.show ? 1 : 0;
+  } else {
+    // Slide animation for positions
+    style.transitionProperty = 'transform';
+    style.transitionDuration = dur;
+    if (!props.show) {
+      style.transform = slideTransforms[props.position];
+    }
+  }
+
+  if (!props.show) {
+    style.pointerEvents = 'none';
+  }
+
+  return style;
+});
+
+const popupClasses = computed(() => [
+  bem([props.position, { round: !!props.round }]),
+  {
+    'van-safe-area-top': !!props.safeAreaInsetTop,
+    'van-safe-area-bottom': !!props.safeAreaInsetBottom,
+  },
+]);
+
+const closeIconClass = computed(() =>
+  bem('close-icon', { [props.closeIconPosition]: true }),
+);
+
+const overlayDuration = computed(() =>
+  isDef(props.duration) ? Number(props.duration) : undefined,
+);
+
+// --- Watch ---
+
 watch(
   () => props.show,
-  (val, oldVal) => {
-    if (val) {
-      opened.value = true;
-      emit('open');
-      // In Lynx without Vue <Transition>, fire opened after duration
-      if (durationSec.value > 0) {
-        setTimeout(() => emit('opened'), durationSec.value * 1000);
-      } else {
-        emit('opened');
-      }
-    } else if (oldVal) {
+  (show) => {
+    if (show && !opened) {
+      open();
+    }
+    if (!show && opened) {
+      opened = false;
       emit('close');
-      if (durationSec.value > 0) {
-        setTimeout(() => {
-          opened.value = false;
-          emit('closed');
-        }, durationSec.value * 1000);
-      } else {
-        opened.value = false;
-        emit('closed');
-      }
+      scheduleLeave();
     }
   },
 );
 
-// Popup position styles
-const popupStyle = computed(() => {
-  const base: Record<string, any> = {
-    position: 'fixed',
-    zIndex: zIndexNum.value,
-    overflow: 'hidden',
-    // --van-popup-background defaults to #fff
-    backgroundColor: '#fff',
-  };
-
-  // Transition animation
-  const dur = `${durationSec.value}s`;
-
-  if (props.safeAreaInsetTop) {
-    base.paddingTop = '44px';
-  }
-  if (props.safeAreaInsetBottom) {
-    base.paddingBottom = '34px';
-  }
-
-  const roundRadius = '16px'; // --van-popup-round-radius
-
-  if (props.position === 'center') {
-    Object.assign(base, {
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      maxWidth: 'calc(100% - 32px)',
-    });
-    if (props.round) {
-      base.borderRadius = roundRadius;
-    }
-    // Fade transition for center
-    base.transitionProperty = 'opacity';
-    base.transitionDuration = dur;
-    base.opacity = props.show ? 1 : 0;
-    if (!props.show) {
-      base.pointerEvents = 'none';
-    }
-  } else if (props.position === 'bottom') {
-    Object.assign(base, {
-      bottom: 0,
-      left: 0,
-      right: 0,
-      width: '100%',
-    });
-    if (props.round) {
-      base.borderTopLeftRadius = roundRadius;
-      base.borderTopRightRadius = roundRadius;
-    }
-    // Slide transition
-    base.transitionProperty = 'transform';
-    base.transitionDuration = dur;
-    base.transform = props.show ? 'translateY(0)' : 'translateY(100%)';
-    if (!props.show) {
-      base.pointerEvents = 'none';
-    }
-  } else if (props.position === 'top') {
-    Object.assign(base, {
-      top: 0,
-      left: 0,
-      right: 0,
-      width: '100%',
-    });
-    if (props.round) {
-      base.borderBottomLeftRadius = roundRadius;
-      base.borderBottomRightRadius = roundRadius;
-    }
-    base.transitionProperty = 'transform';
-    base.transitionDuration = dur;
-    base.transform = props.show ? 'translateY(0)' : 'translateY(-100%)';
-    if (!props.show) {
-      base.pointerEvents = 'none';
-    }
-  } else if (props.position === 'left') {
-    Object.assign(base, {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      height: '100%',
-    });
-    base.transitionProperty = 'transform';
-    base.transitionDuration = dur;
-    base.transform = props.show ? 'translateX(0)' : 'translateX(-100%)';
-    if (!props.show) {
-      base.pointerEvents = 'none';
-    }
-  } else if (props.position === 'right') {
-    Object.assign(base, {
-      top: 0,
-      bottom: 0,
-      right: 0,
-      height: '100%',
-    });
-    base.transitionProperty = 'transform';
-    base.transitionDuration = dur;
-    base.transform = props.show ? 'translateX(0)' : 'translateX(100%)';
-    if (!props.show) {
-      base.pointerEvents = 'none';
-    }
-  }
-
-  return base;
-});
-
-// Close icon position styles
-const closeIconStyle = computed(() => {
-  const margin = '16px'; // --van-popup-close-icon-margin
-  const style: Record<string, any> = {
-    position: 'absolute',
-    zIndex: 1, // --van-popup-close-icon-z-index
-  };
-  const pos = props.closeIconPosition;
-  if (pos.includes('top')) style.top = margin;
-  if (pos.includes('bottom')) style.bottom = margin;
-  if (pos.includes('left')) style.left = margin;
-  if (pos.includes('right')) style.right = margin;
-  return style;
-});
-
-// Close icon size and color from CSS vars
-const closeIconSize = '22px'; // --van-popup-close-icon-size
-const closeIconColor = '#c8c9cc'; // --van-popup-close-icon-color
-
-async function doClose() {
-  if (props.beforeClose) {
-    const result = await props.beforeClose();
-    if (result === false) return;
-  }
-  emit('update:show', false);
-}
-
-async function onClickOverlay(event: any) {
-  emit('click-overlay', event);
-  if (props.closeOnClickOverlay) {
-    await doClose();
-  }
-}
-
-async function onClickCloseIcon(event: any) {
-  emit('click-close-icon', event);
-  await doClose();
-}
-
-function onClick(event: any) {
-  emit('click', event);
-}
-
-function onKeydown(event: any) {
-  emit('keydown', event);
+// Handle initially shown
+if (props.show) {
+  open();
 }
 
 defineExpose({ popupRef });
@@ -285,29 +265,30 @@ defineExpose({ popupRef });
   <template v-if="shouldRender">
     <Overlay
       v-if="overlay"
-      :show="show"
-      :z-index="zIndexNum - 1"
-      :duration="durationSec"
-      :custom-style="overlayStyle"
       v-bind="overlayProps"
+      :show="show"
+      :z-index="zIndex"
+      :duration="overlayDuration"
+      :custom-style="overlayStyle"
+      :class-name="overlayClass"
       @click="onClickOverlay"
     >
       <slot name="overlay-content" />
     </Overlay>
     <view
+      v-if="internalVisible"
       ref="popupRef"
+      :class="popupClasses"
       :style="popupStyle"
-      @tap="onClick"
-      @keydown="onKeydown"
     >
+      <slot />
       <view
         v-if="closeable"
-        :style="closeIconStyle"
+        :class="closeIconClass"
         @tap.stop="onClickCloseIcon"
       >
-        <Icon :name="closeIcon" :size="closeIconSize" :color="closeIconColor" />
+        <Icon :name="closeIcon" :class-prefix="iconPrefix" />
       </view>
-      <slot />
     </view>
   </template>
 </template>
