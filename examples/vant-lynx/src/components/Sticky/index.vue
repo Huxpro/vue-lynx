@@ -1,49 +1,41 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 5/5 supported
-    - offsetTop: Numeric (default 0) - offset from top when position is 'top'
-    - offsetBottom: Numeric (default 0) - offset from bottom when position is 'bottom'
-    - zIndex: Numeric (default 99) - z-index when sticky
-    - container: Element (optional) - container element to limit sticky scope
-    - position: 'top' | 'bottom' (default 'top') - sticky direction
-  - Events: 2/2 supported
-    - scroll: { scrollTop: number; isFixed: boolean } - emitted on scroll
-    - change: boolean - emitted when fixed state changes
-  - Slots: 1/1 supported (default)
-  - Lynx Adaptations:
-    - No DOM measurement APIs (useRect, getScrollTop) available in Lynx
-    - Scroll detection requires external scroll event forwarding
-    - Container-scoped sticky boundary not fully supported (no element rect measurement)
-    - Uses position: 'fixed' when sticky is active
-    - Width/height preservation of placeholder requires manual height prop
-  - Gaps:
-    - Container-scoped boundary: Vant measures container rect to limit sticky scope;
-      Lynx lacks DOM measurement APIs, so container prop is accepted but boundary
-      calculation is simplified
-    - No automatic width/height measurement: Vant reads rootRect to set placeholder
-      size; Lynx requires explicit height
-    - No useScrollParent / useVisibilityChange composables
-    - No window resize re-measurement
+  Lynx Limitations:
+  - useScrollParent: Lynx has no automatic scroll parent detection; parent must call
+    handleScroll() manually to forward scroll events.
+  - useRect/getBoundingClientRect: Not available in Lynx; element measurement not possible.
+    Sticky behavior uses simplified scrollTop comparison instead of rect-based calculation.
+  - useVisibilityChange: No IntersectionObserver for visibility-based re-calculation.
+  - Container boundary: Vant measures container rect to limit sticky scope; Lynx cannot
+    measure element rects, so container prop is accepted but boundary calculation is simplified.
+  - Window resize re-measurement: No window resize event in Lynx.
+  - Width/height placeholder: Vant reads rootRect to set placeholder size; Lynx cannot
+    measure element dimensions automatically.
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
+import './index.less';
+import type { Numeric, StickyPosition } from './types';
 
-export interface StickyProps {
-  offsetTop?: number;
-  offsetBottom?: number;
-  zIndex?: number;
-  container?: any;
-  position?: 'top' | 'bottom';
-  /** Lynx-specific: explicit content height for proper placeholder sizing */
-  contentHeight?: number;
+function addUnit(value: Numeric | undefined): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'number' || /^\d+(\.\d+)?$/.test(String(value))) {
+    return `${value}px`;
+  }
+  return String(value);
+}
+
+interface StickyProps {
+  zIndex?: Numeric;
+  position?: StickyPosition;
+  container?: object;
+  offsetTop?: Numeric;
+  offsetBottom?: Numeric;
 }
 
 const props = withDefaults(defineProps<StickyProps>(), {
+  position: 'top',
   offsetTop: 0,
   offsetBottom: 0,
-  zIndex: 99,
-  position: 'top',
-  contentHeight: 0,
 });
 
 const emit = defineEmits<{
@@ -52,24 +44,73 @@ const emit = defineEmits<{
 }>();
 
 const isFixed = ref(false);
-const scrollTop = ref(0);
+const transform = ref(0);
 
+const offset = computed(() => {
+  const val = props.position === 'top' ? props.offsetTop : props.offsetBottom;
+  if (typeof val === 'number') return val;
+  return parseFloat(String(val)) || 0;
+});
+
+const rootClass = computed(() => {
+  const classes = ['van-sticky'];
+  if (isFixed.value) {
+    classes.push('van-sticky--fixed');
+  }
+  return classes.join(' ');
+});
+
+const stickyStyle = computed(() => {
+  if (!isFixed.value) return undefined;
+
+  const style: Record<string, any> = {};
+
+  if (props.zIndex !== undefined) {
+    style.zIndex = Number(props.zIndex);
+  }
+
+  if (props.position === 'top') {
+    style.top = `${offset.value}px`;
+  } else {
+    style.bottom = `${offset.value}px`;
+  }
+
+  style.left = 0;
+  style.right = 0;
+
+  if (transform.value) {
+    style.transform = `translate3d(0, ${transform.value}px, 0)`;
+  }
+
+  return style;
+});
+
+/**
+ * Lynx-specific: Called by parent scroll container to update sticky state.
+ * In Vant web, this is done automatically via useScrollParent + useEventListener.
+ * In Lynx, parent must call this with scroll event data.
+ *
+ * @param event - scroll event or object with { detail: { scrollTop } }
+ */
 function handleScroll(event: any) {
-  const st = event?.detail?.scrollTop ?? 0;
-  scrollTop.value = st;
+  const st = typeof event === 'number'
+    ? event
+    : (event?.detail?.scrollTop ?? event?.scrollTop ?? 0);
 
   let fixed = false;
   if (props.position === 'top') {
-    fixed = st >= props.offsetTop;
+    // Vant uses: offset > rootRect.top (strict >)
+    // In Lynx simplified model: scrollTop > offsetTop
+    fixed = st > offset.value;
   } else {
-    fixed = st >= props.offsetBottom;
+    fixed = st > offset.value;
   }
 
   if (fixed !== isFixed.value) {
     isFixed.value = fixed;
-    // change event is emitted by the watcher on isFixed
   }
 
+  transform.value = 0;
   emit('scroll', { scrollTop: st, isFixed: fixed });
 }
 
@@ -77,51 +118,12 @@ watch(() => isFixed.value, (val) => {
   emit('change', val);
 });
 
-const offset = computed(() =>
-  props.position === 'top' ? props.offsetTop : props.offsetBottom,
-);
-
-const wrapperStyle = computed(() => {
-  if (!isFixed.value) {
-    return {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      position: 'relative' as const,
-    };
-  }
-  return {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    position: 'fixed' as const,
-    top: props.position === 'top' ? offset.value : undefined,
-    bottom: props.position === 'bottom' ? offset.value : undefined,
-    left: 0,
-    right: 0,
-    zIndex: props.zIndex,
-  };
-});
-
-const placeholderStyle = computed(() => {
-  if (!isFixed.value) {
-    return {
-      display: 'flex',
-      flexDirection: 'column' as const,
-    };
-  }
-  // When fixed, placeholder reserves the space the element occupied
-  return {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    height: props.contentHeight || 0,
-  };
-});
-
 defineExpose({ handleScroll, isFixed });
 </script>
 
 <template>
-  <view :style="placeholderStyle">
-    <view :style="wrapperStyle">
+  <view>
+    <view :class="rootClass" :style="stickyStyle">
       <slot />
     </view>
   </view>

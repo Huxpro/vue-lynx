@@ -936,7 +936,7 @@
         "Docs: Lynx limitations in components/List/README.md",
         "Commit: feat(list): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-sticky",
@@ -958,7 +958,7 @@
         "Docs: Lynx limitations in components/Sticky/README.md",
         "Commit: feat(sticky): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-swipe",

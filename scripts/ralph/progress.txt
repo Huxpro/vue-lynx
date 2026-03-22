@@ -520,3 +520,35 @@ Branch: feat/vant-lynx-v2
 - Limitations: CSS height transition not supported (instant show/hide), ::after hairline border uses inline border, tag prop no-op, titleClass/valueClass/labelClass no-op, iconPrefix no-op, role/aria attributes not applicable
 - Key changes: Rewrote CollapseItem to reuse Cell component (matching Vant's structure); added all Cell shared props (center, clickable, titleStyle, arrowDirection, required, etc.); replaced v-show with v-if (Lynx v-show breaks on style.display); uses useLazyRender composable; CSS class-based content area with van-collapse-item__wrapper/content BEM classes; provide/inject parent-child pattern for toggle/isExpanded
 ---
+
+## 2026-03-22 - parity-list: List
+- Props: 11/11 (loading, finished, error, offset, disabled, scroller, errorText, direction, loadingText, finishedText, immediateCheck)
+- Events: 3/3 (load, update:loading, update:error)
+- Slots: 4/4 (default, loading, finished, error)
+- Expose: check() method
+- CSS Variables: 4 defined in index.less (--van-list-text-color, --van-list-text-font-size, --van-list-text-line-height, --van-list-loading-icon-size)
+- CSS Classes: van-list, van-list__loading, van-list__finished-text, van-list__error-text, van-list__placeholder
+- Animations: none (List has no transitions)
+- Tests: 15 cases (Vant has 11, 2 Tab-dependent tests skipped) — all pass
+- Demo sections: 3/3 (基础用法, 错误提示, 完成提示)
+- Visual match: pass (CSS class-based layout matches Vant structure)
+- Limitations: scroller prop no-op (Lynx has no arbitrary scroll parent detection), no useAllTabStatus (always checks regardless of tab), no passive scroll event, no role/aria attributes, no pointer-events on placeholder
+- New files: types.ts (ListDirection, ListExpose, ListThemeVars)
+- Key changes: Rewrote from inline styles to CSS class selectors matching Vant's BEM naming; fixed loadingText default from 'Loading...' to '' (Vant uses i18n fallback); added scroller prop for API compat; proper placeholder div with van-list__placeholder class; direction='up' renders placeholder before content
+---
+
+## 2026-03-22 - parity-sticky: Sticky
+- Props: 5/5 (zIndex, position, container, offsetTop, offsetBottom)
+- Events: 2/2 (scroll, change)
+- Slots: 1/1 (default)
+- CSS Variables: 1 defined in index.less (--van-sticky-z-index)
+- CSS Classes: van-sticky, van-sticky--fixed
+- Animations: none (Sticky has no transitions)
+- Tests: 13 cases (Vant has 13) — all pass
+- Demo sections: 4/4 (基础用法, 吸顶距离, 指定容器, 吸底距离)
+- Visual match: pass (BEM class-based styling with position: fixed)
+- Limitations: useScrollParent no-op (Lynx has no scroll parent detection — parent must call handleScroll manually), getBoundingClientRect not available (simplified scrollTop comparison), container boundary not fully functional (no element rect measurement), useVisibilityChange not available (no IntersectionObserver), window resize re-measurement not available
+- New files: types.ts (Numeric, StickyPosition, StickyThemeVars), README.md
+- defineExpose: handleScroll(event), isFixed (Lynx-specific additions for external scroll forwarding)
+- Key changes: Rewrote to use BEM CSS classes (van-sticky, van-sticky--fixed) instead of inline styles; added Numeric type support for zIndex/offsetTop/offsetBottom; strict > comparison matching Vant's offset > rootRect.top behavior; CSS variables in index.less
+---
