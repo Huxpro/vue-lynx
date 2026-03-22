@@ -1,34 +1,28 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 6/6 (items, activeId, mainActiveIndex, height, max, selectedIcon)
-  - Events: 4/4 (update:activeId, update:mainActiveIndex, clickNav, clickItem)
-  - Slots: 2/2 (content, nav-text)
-  - Gaps: nav item dot/badge rendering; className on items not supported
+  Lynx Limitations:
+  - HTML div/nav elements: Lynx uses view/text instead
+  - CSS class-based BEM styling: replaced with inline styles
+  - className on TreeSelectItem: no-op (Lynx has no CSS class system)
+  - :active pseudo-class: not available in Lynx
+  - cursor/user-select: not applicable in Lynx
+  - van-ellipsis: text overflow handled differently in Lynx
+  - overflow-y: auto scroll: Lynx uses scroll-view for scrollable content
+  - -webkit-overflow-scrolling: not applicable in Lynx
+  - dot/badge on nav items: uses inline rendering (no Badge component integration)
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
-
-export interface TreeSelectChild {
-  text: string;
-  id: string | number;
-  disabled?: boolean;
-}
-
-export interface TreeSelectItem {
-  text: string;
-  dot?: boolean;
-  badge?: string | number;
-  children?: TreeSelectChild[];
-  disabled?: boolean;
-}
+import Badge from '../Badge/index.vue';
+import type { Numeric, TreeSelectChild, TreeSelectItem } from './types';
+import './index.less';
 
 export interface TreeSelectProps {
   items?: TreeSelectItem[];
-  activeId?: string | number | (string | number)[];
-  mainActiveIndex?: number;
-  height?: number;
-  max?: number;
+  activeId?: Numeric | Numeric[];
+  mainActiveIndex?: Numeric;
+  height?: Numeric;
+  max?: Numeric;
   selectedIcon?: string;
 }
 
@@ -42,20 +36,28 @@ const props = withDefaults(defineProps<TreeSelectProps>(), {
 });
 
 const emit = defineEmits<{
-  'update:activeId': [value: string | number | (string | number)[]];
+  'update:activeId': [value: Numeric | Numeric[]];
   'update:mainActiveIndex': [value: number];
   clickNav: [index: number];
   clickItem: [item: TreeSelectChild];
 }>();
 
-const currentNavIndex = computed(() => props.mainActiveIndex);
+function addUnit(value: Numeric | undefined): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    return `${value}px`;
+  }
+  return String(value);
+}
+
+const currentNavIndex = computed(() => +props.mainActiveIndex);
 
 const currentChildren = computed(() => {
   const item = props.items[currentNavIndex.value];
   return item?.children ?? [];
 });
 
-function isActiveId(id: string | number): boolean {
+function isActiveId(id: Numeric): boolean {
   if (Array.isArray(props.activeId)) {
     return props.activeId.includes(id);
   }
@@ -65,103 +67,109 @@ function isActiveId(id: string | number): boolean {
 function onNavTap(index: number) {
   const item = props.items[index];
   if (item?.disabled) return;
-  emit('update:mainActiveIndex', index);
+
+  // Only emit update:mainActiveIndex when index actually changes (like Vant's Sidebar onChange)
+  if (index !== currentNavIndex.value) {
+    emit('update:mainActiveIndex', index);
+  }
+  // Always emit clickNav (like Vant's SidebarItem onClick)
   emit('clickNav', index);
 }
 
 function onItemTap(item: TreeSelectChild) {
   if (item.disabled) return;
 
+  let activeId: Numeric | Numeric[];
   if (Array.isArray(props.activeId)) {
-    const ids = [...props.activeId];
-    const index = ids.indexOf(item.id);
+    activeId = props.activeId.slice();
+    const index = activeId.indexOf(item.id);
+
     if (index !== -1) {
-      ids.splice(index, 1);
-      emit('update:activeId', ids);
-    } else {
-      if (props.max !== Infinity && ids.length >= props.max) return;
-      ids.push(item.id);
-      emit('update:activeId', ids);
+      activeId.splice(index, 1);
+    } else if (activeId.length < +props.max) {
+      activeId.push(item.id);
     }
   } else {
-    emit('update:activeId', item.id);
+    activeId = item.id;
   }
 
+  emit('update:activeId', activeId);
   emit('clickItem', item);
 }
 
 const containerStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'row' as const,
-  height: props.height,
-  backgroundColor: '#fff',
+  height: addUnit(props.height),
+  fontSize: '14px',
 }));
 
 const navStyle = {
-  width: 120,
-  backgroundColor: '#f7f8fa',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  overflow: 'hidden' as const,
-};
-
-const contentStyle = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column' as const,
   overflow: 'hidden' as const,
+  backgroundColor: '#f7f8fa',
+};
+
+const contentStyle = {
+  flex: 2,
+  display: 'flex',
+  flexDirection: 'column' as const,
+  overflow: 'hidden' as const,
+  backgroundColor: '#fff',
 };
 
 function getNavItemStyle(index: number, disabled?: boolean) {
+  const isActive = currentNavIndex.value === index;
   return {
-    height: 44,
     display: 'flex',
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    paddingLeft: 12,
-    paddingRight: 12,
-    backgroundColor: currentNavIndex.value === index ? '#fff' : 'transparent',
-    borderLeftWidth: currentNavIndex.value === index ? 3 : 0,
+    paddingTop: '14px',
+    paddingBottom: '14px',
+    paddingLeft: '8px',
+    paddingRight: '8px',
+    backgroundColor: isActive ? '#fff' : 'transparent',
+    borderLeftWidth: isActive ? '3px' : '0px',
     borderLeftStyle: 'solid' as const,
     borderLeftColor: '#1989fa',
-    opacity: disabled ? 0.5 : 1,
+    opacity: disabled ? '0.5' : '1',
   };
 }
 
 function getNavTextStyle(index: number) {
+  const isActive = currentNavIndex.value === index;
   return {
-    fontSize: 14,
-    color: '#323233',
-    fontWeight: currentNavIndex.value === index ? 'bold' : ('normal' as any),
+    fontSize: '14px',
+    color: isActive ? '#323233' : '#323233',
+    fontWeight: isActive ? 'bold' : ('normal' as any),
   };
 }
 
 function getChildItemStyle(disabled?: boolean) {
   return {
-    height: 44,
     display: 'flex',
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    paddingLeft: 16,
-    paddingRight: 16,
-    opacity: disabled ? 0.5 : 1,
+    height: '48px',
+    paddingLeft: '16px',
+    paddingRight: '32px',
   };
 }
 
 function getChildTextStyle(active: boolean) {
   return {
-    fontSize: 14,
+    fontSize: '14px',
+    fontWeight: 'bold' as const,
     color: active ? '#1989fa' : '#323233',
-    fontWeight: active ? 'bold' : ('normal' as any),
+    flex: 1,
   };
 }
 
-const emptyStyle = {
-  flex: 1,
-  display: 'flex',
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
+const selectedIconStyle = {
+  position: 'absolute' as const,
+  right: '16px',
 };
 </script>
 
@@ -175,8 +183,11 @@ const emptyStyle = {
         :style="getNavItemStyle(index, item.disabled)"
         @tap="onNavTap(index)"
       >
-        <slot name="nav-text" :item="item">
-          <text :style="getNavTextStyle(index)">{{ item.text }}</text>
+        <slot name="nav-text" v-bind="item">
+          <Badge v-if="item.dot || item.badge" :dot="item.dot" :content="item.badge">
+            <text :style="getNavTextStyle(index)">{{ item.text }}</text>
+          </Badge>
+          <text v-else :style="getNavTextStyle(index)">{{ item.text }}</text>
         </slot>
       </view>
     </view>
@@ -197,12 +208,6 @@ const emptyStyle = {
             :size="16"
             color="#1989fa"
           />
-        </view>
-        <view
-          v-if="currentChildren.length === 0"
-          :style="emptyStyle"
-        >
-          <text :style="{ fontSize: 14, color: '#969799' }">No data</text>
         </view>
       </slot>
     </view>
