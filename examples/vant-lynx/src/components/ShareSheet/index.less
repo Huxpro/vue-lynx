@@ -1,5 +1,5 @@
 :root {
-  --van-share-sheet-header-padding: var(--van-padding-sm, 12px) var(--van-padding-md, 16px) var(--van-padding-base, 4px);
+  --van-share-sheet-header-padding: var(--van-padding-sm, 8px) var(--van-padding-md, 16px);
   --van-share-sheet-title-color: var(--van-text-color, #323233);
   --van-share-sheet-title-font-size: var(--van-font-size-md, 14px);
   --van-share-sheet-title-line-height: var(--van-line-height-md, 20px);
@@ -14,4 +14,128 @@
   --van-share-sheet-cancel-button-font-size: var(--van-font-size-lg, 16px);
   --van-share-sheet-cancel-button-height: 48px;
   --van-share-sheet-cancel-button-background: var(--van-background-2, #fff);
+}
+
+.van-share-sheet {
+  &__header {
+    padding: var(--van-share-sheet-header-padding);
+    text-align: center;
+  }
+
+  &__title {
+    margin-top: var(--van-padding-xs, 8px);
+    color: var(--van-share-sheet-title-color);
+    font-weight: normal;
+    font-size: var(--van-share-sheet-title-font-size);
+    line-height: var(--van-share-sheet-title-line-height);
+  }
+
+  &__description {
+    margin-top: var(--van-padding-xs, 8px);
+    color: var(--van-share-sheet-description-color);
+    font-size: var(--van-share-sheet-description-font-size);
+    line-height: var(--van-share-sheet-description-line-height);
+  }
+
+  &__options {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    padding: var(--van-padding-md, 16px) 0 var(--van-padding-md, 16px) var(--van-padding-xs, 8px);
+
+    &--border {
+      border-top-width: 0.5px;
+      border-top-style: solid;
+      border-top-color: var(--van-border-color, #ebedf0);
+    }
+  }
+
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__icon,
+  &__image-icon {
+    width: var(--van-share-sheet-icon-size);
+    height: var(--van-share-sheet-icon-size);
+    margin: 0 var(--van-padding-md, 16px);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--van-gray-7, #646566);
+    border-radius: 100%;
+    background-color: var(--van-gray-2, #f2f3f5);
+
+    &--link,
+    &--poster,
+    &--qrcode {
+      font-size: 26px;
+    }
+
+    &--weapp-qrcode {
+      font-size: 28px;
+    }
+
+    &--qq,
+    &--weibo,
+    &--wechat,
+    &--wechat-moments {
+      font-size: 30px;
+      color: var(--van-white, #fff);
+    }
+
+    &--qq {
+      background-color: #38b9fa;
+    }
+
+    &--wechat {
+      background-color: #0bc15f;
+    }
+
+    &--weibo {
+      background-color: #ee575e;
+    }
+
+    &--wechat-moments {
+      background-color: #7bc845;
+    }
+  }
+
+  &__image-icon {
+    border-radius: 100%;
+  }
+
+  &__name {
+    margin-top: var(--van-padding-xs, 8px);
+    padding: 0 var(--van-padding-base, 4px);
+    color: var(--van-share-sheet-option-name-color);
+    font-size: var(--van-share-sheet-option-name-font-size);
+  }
+
+  &__option-description {
+    padding: 0 var(--van-padding-base, 4px);
+    color: var(--van-share-sheet-option-description-color);
+    font-size: var(--van-share-sheet-option-description-font-size);
+  }
+
+  &__cancel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: var(--van-share-sheet-cancel-button-font-size);
+    line-height: var(--van-share-sheet-cancel-button-height);
+    background: var(--van-share-sheet-cancel-button-background);
+  }
+
+  &__cancel-gap {
+    height: var(--van-padding-xs, 8px);
+    background-color: var(--van-background, #f7f8fa);
+  }
 }
