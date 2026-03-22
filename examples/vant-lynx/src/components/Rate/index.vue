@@ -1,48 +1,45 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 13/14 supported (modelValue, count, size, gutter, color, voidColor, disabledColor,
-    icon, voidIcon, allowHalf, readonly, disabled, touchable, clearable)
-    Missing: iconPrefix
-  - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 0/0 (Vant Rate has no slots)
-  - Gaps: iconPrefix not supported (uses Unicode star characters instead of Vant Icon font);
-    touch-drag scoring is approximate (no DOM rect measurement in Lynx)
+  Lynx Limitations:
+  - role/aria-*: Lynx has no ARIA attributes
+  - tabindex: Lynx has no keyboard focus model
+  - cursor: Lynx is touch-only, no cursor styling
+  - useRect/getBoundingClientRect: Touch drag scoring uses estimation instead of DOM rect measurement
+  - useCustomFieldValue: No Vant Form integration yet
 -->
 <script setup lang="ts">
 import { ref, computed } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import Icon from '../Icon/index.vue';
+import './index.less';
+
+export type { RateThemeVars } from './types';
 
 export interface RateProps {
-  modelValue?: number;
-  count?: number;
-  size?: number;
-  gutter?: number;
-  color?: string;
-  voidColor?: string;
-  disabledColor?: string;
+  size?: string | number;
   icon?: string;
-  voidIcon?: string;
-  allowHalf?: boolean;
+  color?: string;
+  count?: number | string;
+  gutter?: string | number;
+  clearable?: boolean;
   readonly?: boolean;
   disabled?: boolean;
+  voidIcon?: string;
+  allowHalf?: boolean;
+  voidColor?: string;
   touchable?: boolean;
-  clearable?: boolean;
+  iconPrefix?: string;
+  modelValue?: number;
+  disabledColor?: string;
 }
 
+const [, bem] = createNamespace('rate');
+
 const props = withDefaults(defineProps<RateProps>(), {
-  modelValue: 0,
+  icon: 'star',
   count: 5,
-  size: 20,
-  gutter: 4,
-  color: '#ee0a24',
-  voidColor: '#c8c9cc',
-  disabledColor: '#c8c9cc',
-  icon: '\u2605',
-  voidIcon: '\u2606',
-  allowHalf: false,
-  readonly: false,
-  disabled: false,
+  voidIcon: 'star-o',
+  modelValue: 0,
   touchable: true,
-  clearable: false,
 });
 
 const emit = defineEmits<{
@@ -50,60 +47,58 @@ const emit = defineEmits<{
   change: [value: number];
 }>();
 
-type StarStatus = 'full' | 'half' | 'void';
+type RateStatus = 'full' | 'half' | 'void';
 
-interface StarItem {
-  status: StarStatus;
-  index: number;
-  /** For half stars in readonly mode, the fractional fill (0..1). For non-readonly: 0.5. */
-  halfFill: number;
+interface RateListItem {
+  value: number;
+  status: RateStatus;
+}
+
+function getRateStatus(
+  value: number,
+  index: number,
+  allowHalf: boolean,
+  readonly: boolean,
+): RateListItem {
+  if (value >= index) {
+    return { status: 'full', value: 1 };
+  }
+  if (value + 0.5 >= index && allowHalf && !readonly) {
+    return { status: 'half', value: 0.5 };
+  }
+  if (value + 1 >= index && allowHalf && readonly) {
+    const cardinal = 10 ** 10;
+    return {
+      status: 'half',
+      value: Math.round((value - index + 1) * cardinal) / cardinal,
+    };
+  }
+  return { status: 'void', value: 0 };
 }
 
 const unselectable = computed(() => props.readonly || props.disabled);
 const untouchable = computed(() => unselectable.value || !props.touchable);
 
-/**
- * Computes star list with status, matching Vant's getRateStatus logic.
- * In readonly mode, half stars render fractional widths (e.g., value 3.7 shows
- * 70% fill on the 4th star). In interactive mode, half stars are always 50%.
- */
-const stars = computed<StarItem[]>(() => {
-  const result: StarItem[] = [];
-  for (let i = 1; i <= props.count; i++) {
-    if (props.modelValue >= i) {
-      result.push({ status: 'full', index: i, halfFill: 1 });
-    } else if (props.allowHalf && !props.readonly && props.modelValue + 0.5 >= i) {
-      // Interactive half-star: always 50%
-      result.push({ status: 'half', index: i, halfFill: 0.5 });
-    } else if (props.allowHalf && props.readonly && props.modelValue + 1 >= i) {
-      // Readonly fractional half-star: use precise fraction
-      const cardinal = 10 ** 10;
-      const fraction = Math.round((props.modelValue - i + 1) * cardinal) / cardinal;
-      if (fraction > 0) {
-        result.push({ status: 'half', index: i, halfFill: fraction });
-      } else {
-        result.push({ status: 'void', index: i, halfFill: 0 });
-      }
-    } else {
-      result.push({ status: 'void', index: i, halfFill: 0 });
-    }
-  }
-  return result;
-});
+const list = computed<RateListItem[]>(() =>
+  Array(+props.count)
+    .fill('')
+    .map((_, i) =>
+      getRateStatus(
+        props.modelValue,
+        i + 1,
+        !!props.allowHalf,
+        !!props.readonly,
+      ),
+    ),
+);
 
-function getStarColor(status: StarStatus): string {
-  if (props.disabled) {
-    return props.disabledColor;
-  }
-  return status === 'void' ? props.voidColor : props.color;
-}
-
-function getHalfStarColor(isActive: boolean): string {
-  if (props.disabled) {
-    return props.disabledColor;
-  }
-  return isActive ? props.color : props.voidColor;
-}
+// Touch tracking (simplified useTouch for Rate)
+const startX = ref(0);
+const startY = ref(0);
+const deltaX = ref(0);
+const deltaY = ref(0);
+const isTap = ref(true);
+const TAP_OFFSET = 5;
 
 function select(value: number) {
   if (unselectable.value || value === props.modelValue) return;
@@ -111,173 +106,142 @@ function select(value: number) {
   emit('change', value);
 }
 
-function onSelectFull(index: number) {
-  if (unselectable.value) return;
-  let newValue = index;
-  if (props.clearable && newValue === props.modelValue) {
-    newValue = 0;
-  }
-  select(newValue);
-}
+function getScoreByPosition(x: number): number {
+  // Estimate star positions from props
+  const iconSize = typeof props.size === 'number' ? props.size :
+    props.size ? parseFloat(props.size) : 20;
+  const gutterSize = typeof props.gutter === 'number' ? props.gutter :
+    props.gutter ? parseFloat(props.gutter) : 4;
+  const starWidth = iconSize + gutterSize;
 
-function onSelectHalf(index: number) {
-  if (unselectable.value) return;
-  let newValue = index - 0.5;
-  if (props.clearable && newValue === props.modelValue) {
-    newValue = 0;
-  }
-  select(newValue);
-}
+  // Use offset from start position
+  const offsetX = x - startX.value;
+  // Estimate initial star center position
+  const initialStar = Math.max(1, Math.min(+props.count, Math.round(props.modelValue) || 1));
+  const pixelPos = (initialStar - 1) * starWidth + iconSize / 2 + offsetX;
 
-// --- Touch/drag support ---
-const touchStartX = ref(0);
-const dragging = ref(false);
+  let score: number;
+  if (props.allowHalf) {
+    const raw = pixelPos / starWidth + 0.5;
+    score = Math.round(raw * 2) / 2;
+  } else {
+    score = Math.round(pixelPos / starWidth + 0.5);
+  }
+
+  const minScore = props.allowHalf ? 0.5 : 1;
+  return Math.max(minScore, Math.min(+props.count, score));
+}
 
 function onTouchStart(event: any) {
   if (untouchable.value) return;
   const touch = event.touches?.[0] || event.changedTouches?.[0];
   if (!touch) return;
-  touchStartX.value = touch.clientX;
-  dragging.value = true;
+  startX.value = touch.clientX;
+  startY.value = touch.clientY;
+  deltaX.value = 0;
+  deltaY.value = 0;
+  isTap.value = true;
 }
 
 function onTouchMove(event: any) {
-  if (untouchable.value || !dragging.value) return;
+  if (untouchable.value) return;
   const touch = event.touches?.[0] || event.changedTouches?.[0];
   if (!touch) return;
-  // Calculate score based on horizontal position relative to the container
-  // In Lynx, we estimate star positions from props
-  const score = getScoreFromTouch(touch.clientX);
-  if (score !== props.modelValue) {
-    select(score);
+  deltaX.value = touch.clientX - startX.value;
+  deltaY.value = touch.clientY - startY.value;
+
+  const offsetX = Math.abs(deltaX.value);
+  const offsetY = Math.abs(deltaY.value);
+
+  // Determine if it's still a tap
+  if (offsetX > TAP_OFFSET || offsetY > TAP_OFFSET) {
+    isTap.value = false;
+  }
+
+  // Only respond to horizontal drag
+  if (offsetX > offsetY && !isTap.value) {
+    select(getScoreByPosition(touch.clientX));
   }
 }
 
 function onTouchEnd() {
-  dragging.value = false;
+  // noop - isTap state is used on click
 }
 
-/**
- * Estimates the score from the touch X position.
- * Since Lynx doesn't easily expose element rects during touch events,
- * we compute positions relative to the initial touch and known star dimensions.
- */
-function getScoreFromTouch(clientX: number): number {
-  // Each star takes size + gutter (except last which has no gutter)
-  const starWidth = props.size;
-  const totalStarWidth = starWidth + props.gutter;
-
-  // Use the initial tap position as reference for the starting star
-  // Compute offset from touch start
-  const offsetFromStart = clientX - touchStartX.value;
-
-  // Figure out which star the initial touch was on
-  // We approximate: initial star = current modelValue (clamped to 1..count)
-  const initialStar = Math.max(1, Math.min(props.count, Math.round(props.modelValue) || 1));
-
-  // Calculate position relative to that star
-  const pixelOffset = (initialStar - 1) * totalStarWidth + starWidth / 2 + offsetFromStart;
-
-  let score: number;
-  if (props.allowHalf) {
-    // For half-star mode, resolve to 0.5 increments
-    const rawScore = pixelOffset / totalStarWidth + 0.5;
-    score = Math.round(rawScore * 2) / 2;
-  } else {
-    score = Math.round(pixelOffset / totalStarWidth + 0.5);
+function onItemClick(index: number) {
+  if (unselectable.value) return;
+  let value = index + 1;
+  if (props.clearable && isTap.value && value === props.modelValue) {
+    value = 0;
   }
-
-  // Clamp to valid range
-  const minScore = props.allowHalf ? 0.5 : 1;
-  return Math.max(minScore, Math.min(props.count, score));
+  select(value);
 }
 
-// --- Computed styles ---
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  flexWrap: 'wrap' as const,
-  alignItems: 'center',
-  opacity: props.disabled ? 0.5 : 1,
-}));
-
-function getStarWrapStyle(star: StarItem) {
-  return {
-    position: 'relative' as const,
-    paddingRight: star.index < props.count ? props.gutter : 0,
-  };
+function onHalfClick(index: number, event: any) {
+  if (unselectable.value) return;
+  // Stop propagation so the full star click doesn't fire
+  event?.stopPropagation?.();
+  let value = index + 0.5;
+  if (props.clearable && isTap.value && value === props.modelValue) {
+    value = 0;
+  }
+  select(value);
 }
 
-function getStarTextStyle(status: StarStatus) {
-  return {
-    fontSize: props.size,
-    color: getStarColor(status),
-    lineHeight: props.size,
-  };
+function getItemStyle(index: number) {
+  if (props.gutter && index < +props.count - 1) {
+    return { paddingRight: addUnit(props.gutter) };
+  }
+  return undefined;
 }
 
-function getHalfOverlayStyle(star: StarItem) {
-  // In readonly mode, use fractional width; in interactive mode, use 50%
-  const widthFraction = star.halfFill;
-  return {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    width: props.size * widthFraction,
-    height: props.size,
-    overflow: 'hidden' as const,
-  };
-}
-
-function getHalfTextStyle(isActive: boolean) {
-  return {
-    fontSize: props.size,
-    color: getHalfStarColor(isActive),
-    lineHeight: props.size,
-  };
+function getHalfIconStyle(item: RateListItem) {
+  return { width: item.value + 'em' };
 }
 </script>
 
 <template>
   <view
-    :style="containerStyle"
+    :class="bem([{ readonly, disabled }])"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"
     @touchcancel="onTouchEnd"
   >
     <view
-      v-for="star in stars"
-      :key="star.index"
-      :style="getStarWrapStyle(star)"
-      @tap="onSelectFull(star.index)"
+      v-for="(item, index) in list"
+      :key="index"
+      :class="bem('item')"
+      :style="getItemStyle(index)"
+      @tap="onItemClick(index)"
     >
-      <!-- Base star (full icon for full/half, void icon for void) -->
-      <text
-        :style="getStarTextStyle(star.status)"
-      >{{ star.status === 'void' ? voidIcon : (star.status === 'full' ? icon : voidIcon) }}</text>
-
-      <!-- Half-star overlay: positioned absolutely on top, clipped to fractional width -->
-      <view
-        v-if="allowHalf && star.status === 'half'"
-        :style="getHalfOverlayStyle(star)"
-      >
-        <text
-          :style="getHalfTextStyle(true)"
-        >{{ icon }}</text>
-      </view>
-
-      <!-- Interactive half-star tap zone (only in non-readonly, non-disabled mode) -->
+      <Icon
+        :size="size"
+        :name="item.status === 'full' ? icon : voidIcon"
+        :class="bem('icon', { disabled, full: item.status === 'full' })"
+        :color="disabled ? disabledColor : (item.status === 'full' ? color : voidColor)"
+        :class-prefix="iconPrefix"
+      />
+      <Icon
+        v-if="allowHalf && item.value > 0 && item.value < 1"
+        :size="size"
+        :style="getHalfIconStyle(item)"
+        :name="item.status === 'void' ? voidIcon : icon"
+        :class="bem('icon', ['half', { disabled, full: item.status !== 'void' }])"
+        :color="disabled ? disabledColor : (item.status === 'void' ? voidColor : color)"
+        :class-prefix="iconPrefix"
+      />
+      <!-- Half-star tap zone for interactive mode -->
       <view
         v-if="allowHalf && !readonly && !disabled"
         :style="{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: size / 2,
-          height: size,
+          top: '0px',
+          left: '0px',
+          width: '50%',
+          height: '100%',
         }"
-        @tap.stop="onSelectHalf(star.index)"
+        @tap.stop="onHalfClick(index, $event)"
       />
     </view>
   </view>
