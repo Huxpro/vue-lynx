@@ -15,6 +15,8 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
+import type { Numeric } from './types';
+import './index.less';
 
 export interface ProgressProps {
   /** Current percentage (0-100), accepts number or numeric string */
@@ -41,12 +43,12 @@ const props = withDefaults(defineProps<ProgressProps>(), {
   percentage: 0,
   strokeWidth: 4,
   color: '#1989fa',
-  trackColor: '#e5e5e5',
+  trackColor: '#ebedf0',
   showPivot: true,
   inactive: false,
 });
 
-const INACTIVE_COLOR = '#cacaca';
+const INACTIVE_COLOR = '#c8c9cc';
 
 const clampedPercentage = computed(() => {
   const val = typeof props.percentage === 'string'
