@@ -826,7 +826,7 @@
         "Docs: Lynx limitations in components/Highlight/README.md",
         "Commit: feat(highlight): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-text-ellipsis",
@@ -848,7 +848,7 @@
         "Docs: Lynx limitations in components/TextEllipsis/README.md",
         "Commit: feat(text-ellipsis): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-card",
@@ -870,7 +870,7 @@
         "Docs: Lynx limitations in components/Card/README.md",
         "Commit: feat(card): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-collapse",
@@ -892,7 +892,7 @@
         "Docs: Lynx limitations in components/Collapse/README.md",
         "Commit: feat(collapse): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-collapse-item",
@@ -914,7 +914,7 @@
         "Docs: Lynx limitations in components/CollapseItem/README.md",
         "Commit: feat(collapse-item): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-list",
@@ -936,7 +936,7 @@
         "Docs: Lynx limitations in components/List/README.md",
         "Commit: feat(list): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-sticky",
@@ -1002,7 +1002,7 @@
         "Docs: Lynx limitations in components/CountDown/README.md",
         "Commit: feat(count-down): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-rolling-text",

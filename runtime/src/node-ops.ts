@@ -261,7 +261,16 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const oldSign = signs?.get(key);
 
       if (nextValue != null) {
-        const handler = nextValue as (data: unknown) => void;
+        // Vue merges fallthrough event listeners into arrays — normalise
+        // to a single callable function so the event registry always stores
+        // a plain function.
+        const handler: (data: unknown) => void = Array.isArray(nextValue)
+          ? (data: unknown) => {
+              for (const fn of nextValue) {
+                if (typeof fn === 'function') fn(data);
+              }
+            }
+          : (nextValue as (data: unknown) => void);
         if (oldSign) {
           // Re-render: update handler in-place so the sign on the Main Thread
           // stays valid.  No new SET_EVENT op needed.

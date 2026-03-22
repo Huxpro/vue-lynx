@@ -8,11 +8,6 @@ const { theme, bgColor } = useTheme();
 
 <template>
   <ConfigProvider :theme="theme">
-    <scroll-view
-      scroll-orientation="vertical"
-      :style="{ flex: 1, backgroundColor: bgColor }"
-    >
-      <RouterView />
-    </scroll-view>
+    <RouterView />
   </ConfigProvider>
 </template>

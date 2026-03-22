@@ -92,64 +92,69 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column' }">
-    <!-- Header -->
+  <view :style="{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: bgColor }">
+    <!-- Header (fixed) -->
     <view :style="{
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingTop: 16,
-      paddingBottom: 12,
-      paddingLeft: 16,
-      paddingRight: 16,
+      paddingTop: '16px',
+      paddingBottom: '12px',
+      paddingLeft: '16px',
+      paddingRight: '16px',
       backgroundColor: headerBg,
     }">
       <view :style="{ display: 'flex', flexDirection: 'column' }">
-        <text :style="{ fontSize: 20, fontWeight: 'bold', color: textColor }">
+        <text :style="{ fontSize: '20px', fontWeight: 'bold', color: textColor }">
           Vant Lynx
         </text>
-        <text :style="{ fontSize: 14, color: textColor2, marginTop: 4 }">
+        <text :style="{ fontSize: '14px', color: textColor2, marginTop: '4px' }">
           Mobile UI Components for Lynx
         </text>
       </view>
       <view
         :style="{
           backgroundColor: isDark ? '#3a3a3a' : '#f2f3f5',
-          borderRadius: 16,
-          paddingTop: 6,
-          paddingBottom: 6,
-          paddingLeft: 12,
-          paddingRight: 12,
+          borderRadius: '16px',
+          paddingTop: '6px',
+          paddingBottom: '6px',
+          paddingLeft: '12px',
+          paddingRight: '12px',
         }"
         @tap="toggleTheme"
       >
-        <text :style="{ fontSize: 14, color: textColor }">
+        <text :style="{ fontSize: '14px', color: textColor }">
           {{ isDark ? 'Light' : 'Dark' }}
         </text>
       </view>
     </view>
 
-    <!-- Component List -->
-    <view :style="{ padding: 12, display: 'flex', flexDirection: 'column' }">
-      <view
-        v-for="comp in components"
-        :key="comp.name"
-        :style="{
-          backgroundColor: cardColor,
-          borderRadius: 8,
-          padding: 16,
-          marginBottom: 8,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }"
-        @tap="navigate(comp.path)"
-      >
-        <text :style="{ fontSize: 16, color: textColor }">{{ comp.name }}</text>
-        <text :style="{ fontSize: 14, color: textColor2 }">></text>
+    <!-- Scrollable Component List -->
+    <scroll-view
+      scroll-orientation="vertical"
+      :style="{ flex: 1 }"
+    >
+      <view :style="{ padding: '12px', display: 'flex', flexDirection: 'column' }">
+        <view
+          v-for="comp in components"
+          :key="comp.name"
+          :style="{
+            backgroundColor: cardColor,
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '8px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }"
+          @tap="navigate(comp.path)"
+        >
+          <text :style="{ fontSize: '16px', color: textColor }">{{ comp.name }}</text>
+          <text :style="{ fontSize: '14px', color: textColor2 }">></text>
+        </view>
       </view>
-    </view>
+    </scroll-view>
   </view>
 </template>

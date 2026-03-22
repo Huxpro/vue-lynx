@@ -68,7 +68,14 @@ export function unregister(sign: string): void {
 
 /** Called by Lynx Native when an event fires on BG Thread. */
 export function publishEvent(sign: string, data: unknown): void {
-  getRegistryState().handlers.get(sign)?.(data);
+  const state = getRegistryState();
+  const handler = state.handlers.get(sign);
+  if (__DEV__ && typeof handler !== 'function' && handler != null) {
+    console.warn('[vue-lynx] publishEvent: non-function handler for sign', sign, handler);
+  }
+  if (typeof handler === 'function') {
+    handler(data);
+  }
 }
 
 /** Reset all state – for testing only. */

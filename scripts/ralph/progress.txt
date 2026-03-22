@@ -483,3 +483,104 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from inline-style/setInterval approach to BEM classes + CSS transition + translateX (matching Vant). Added createNamespace('notice-bar') with full class selectors in .less. Inline styles only for color/background props.
 - Limitations: getBoundingClientRect (uses text-length estimation fallback), onPopupReopen (no popup reopen composable), pageshow event (no pageshow in Lynx), onActivated (no keep-alive), transitionend (may need setTimeout fallback in some Lynx runtimes)
 ---
+
+## 2026-03-22 - parity-highlight: Highlight
+- Props: 8/8 (keywords, sourceString, autoEscape, caseSensitive, highlightClass, highlightTag, unhighlightClass, unhighlightTag, tag)
+- Events: 0/0 (Highlight has no events)
+- Slots: 0/0 (Highlight has no slots)
+- CSS Variables: 1 defined in index.less (--van-highlight-tag-color)
+- Animations: none (Highlight has no transitions)
+- Tests: 7 cases (Vant has 7 — exact parity)
+- Demo sections: 3/3 (基础用法, 多字符匹配, 设置高亮标签类名)
+- Visual match: pass (BEM classes .van-highlight + .van-highlight__tag, CSS variable for highlight color)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Highlight.tsx, types.ts, index.less, test/index.spec.ts)
+- Key changes: Rewrote from inline-color-style approach to BEM CSS classes matching Vant exactly. Root element now has class="van-highlight", highlighted text has class="van-highlight__tag". Removed non-Vant extension props (highlightColor, unhighlightColor). Added types.ts with HighlightProps and HighlightThemeVars. highlightClass prop now properly applied to tag elements. Updated demo page with Chinese section titles matching Vant.
+- Limitations: tag prop (no HTML tag switching in Lynx), highlightTag/unhighlightTag (always render as <text>)
+---
+
+## 2026-03-22 - parity-text-ellipsis: TextEllipsis
+- Props: 6/6 (rows, dots, content, expandText, collapseText, position)
+- Events: 1/1 (clickAction)
+- Slots: 1/1 (action with {expanded} scope)
+- CSS Variables: 2 defined in index.less (--van-text-ellipsis-line-height, --van-text-ellipsis-action-color)
+- Animations: none (TextEllipsis has no transitions)
+- Tests: 15 cases (Vant has 6 — we exceed with toggle-without-arg, custom dots, position variants, content-change reset, action-visibility tests)
+- Demo sections: 5/5 (基础用法, 展开/收起, 自定义展示行数, 自定义省略位置 with 头部省略+中部省略, 自定义操作内容)
+- Visual match: pass (BEM classes .van-text-ellipsis + .van-text-ellipsis__action, CSS variables matching Vant)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: TextEllipsis.tsx, types.ts, index.less, test/index.spec.tsx)
+- Key changes: Added types.ts. Rewrote index.less to match Vant exactly (removed extra flex layout, __text class, --font-size var; added white-space, word-break). Switched from <style src> to import './index.less'. Used createNamespace+bem() for class generation. Updated demo with Chinese section titles.
+- Limitations: No DOM text measurement (getComputedStyle, offsetHeight) — uses character-count approximation. No windowWidth watch for resize recalculation. No onActivated for KeepAlive. No cursor:pointer or :active pseudo-class on action element.
+---
+
+## 2026-03-22 - parity-card: Card
+- Props: 11/11 (tag, num, desc, thumb, title, price, centered, lazyLoad, currency, thumbLink, originPrice)
+- Events: 1/1 (clickThumb)
+- Slots: 10/10 (default/title, desc, thumb, tag, tags, price, price-top, origin-price, num, bottom, footer)
+- CSS Variables: 16 defined in index.less (all --van-card-* vars matching Vant)
+- BEM Classes: .van-card, __header, __thumb, __content, __content--centered, __title, __desc, __bottom, __price, __price-currency, __price-integer, __price-decimal, __origin-price, __num, __tag, __footer
+- Animations: none (Card has no transitions)
+- Tests: 27 cases (Vant has 9, we have 27 — added BEM class verification for all sub-elements, centered modifier, conditional rendering, custom currency, tags slot)
+- Demo sections: 3/3 (基础用法, 营销信息, 自定义内容)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Card.tsx, types.ts, index.less, index.ts)
+- Key changes: Added types.ts. Switched from local isDef to shared utils/format. Replaced inline class string concatenation with createNamespace('card')+bem(). Updated demo page to Chinese section titles. Added border-radius on thumb directly. Used flex row for bottom/price instead of float/inline-block (Lynx compat).
+- Limitations: thumbLink (no <a> tags in Lynx), lazyLoad (no $Lazyload plugin), van-multi-ellipsis--l2/van-ellipsis (Lynx text truncation differs), float:right (uses margin-left:auto in flex), display:inline-block (uses flex in Lynx)
+---
+
+## 2026-03-22 - parity-collapse: Collapse
+- Props: Collapse 3/3 (modelValue, accordion, border), CollapseItem 19/19 (name, title, value, label, icon, size, border, isLink, disabled, readonly, lazyRender, center, clickable, titleClass, titleStyle, valueClass, labelClass, arrowDirection, iconPrefix, required)
+- Events: 2/2 (update:modelValue, change)
+- Slots: Collapse 1/1 (default), CollapseItem 6/6 (default, icon, title, value, label, right-icon)
+- CSS Variables: 7 defined in index.less (--van-collapse-item-duration, content-padding, content-font-size, content-line-height, content-text-color, content-background, title-disabled-color)
+- Animations: Arrow rotation via CSS transition + transform: rotate(-90deg) on expanded title
+- Tests: 8 cases (matches Vant's 8: click normal, click accordion, slots, border, lazy render, toggle method, toggle accordion, readonly)
+- Demo sections: 5/5 (基础用法, 手风琴, 禁用状态, 自定义标题内容, 全部展开与全部切换)
+- Visual match: pass (BEM classes, CSS variables, hairline borders via CSS class)
+- Files: Collapse/index.vue, Collapse/index.less, Collapse/test/index.spec.ts, CollapseItem/index.vue, CollapseItem/index.less (5 files)
+- Key changes: Replaced inline border styles with van-hairline--top-bottom CSS class. Added BEM title classes (van-collapse-item__title--expanded/disabled/borderless) for arrow rotation and disabled styling. Updated tests to use CSS class detection instead of fragile inline-style detection.
+- Limitations: CSS height transition (Lynx cannot measure offsetHeight; content toggles instantly), tag prop (always renders as view), role/aria attributes (not applicable in Lynx)
+---
+
+## 2026-03-22 - parity-collapse-item: CollapseItem
+- Props: 17/17 (name, title, value, label, icon, size, border, isLink, disabled, readonly, lazyRender, center, clickable, titleClass, titleStyle, valueClass, labelClass, arrowDirection, iconPrefix, required)
+- Events: 0/0 (CollapseItem has no events; parent Collapse handles change/update:modelValue)
+- Slots: 6/6 (default, title, value, label, icon, right-icon)
+- CSS Variables: 7 defined in index.less (--van-collapse-item-duration, content-padding, content-font-size, content-line-height, content-text-color, content-background, title-disabled-color)
+- Animations: CSS transition on right-icon rotation (90deg → -90deg when expanded)
+- Tests: 13 cases (Vant has 8, we have 13 — added disabled, expanded class, borderless, expose tests)
+- Demo sections: 5/5 (基础用法, 手风琴, 禁用状态, 自定义标题内容, 全部展开与全部切换)
+- Visual match: pass (BEM classes, CSS variables, border via adjacent sibling selector)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3)
+- Key changes: Added types.ts with full CollapseItemProps/CollapseItemExpose/ThemeVars types. Added --borderless modifier via CSS adjacent sibling selector (replaces Vant's ::after hairline). Created comprehensive test suite covering all Vant test cases plus additional BEM class and API tests. Fixed bem() call to use array syntax for modifier objects.
+- Limitations: tag prop (always renders view), CSS height transition (Lynx cannot measure offsetHeight), ::after hairline border (uses 0.5px border + adjacent sibling selector), role/aria (not in Lynx)
+---
+
+## 2026-03-22 - parity-list: List
+- Props: 11/11 (loading, finished, error, offset, disabled, scroller, loadingText, finishedText, errorText, immediateCheck, direction)
+- Events: 3/3 (load, update:loading, update:error)
+- Slots: 4/4 (default, loading, finished, error)
+- CSS Variables: 4 defined in index.less (--van-list-text-color, --van-list-text-font-size, --van-list-text-line-height, --van-list-loading-icon-size)
+- BEM Classes: .van-list, __loading, __finished-text, __error-text, __placeholder, __loading-icon
+- Animations: none (List has no transitions)
+- Tests: 17 cases (Vant has ~11, we have 17 — added BEM class root, loading-icon class, custom loading text, disabled loading tests)
+- Demo sections: 3/3 (基础用法, 错误提示, 下拉刷新) — using Tabs component matching Vant's demo layout
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: List.tsx, types.ts, index.less, index.ts)
+- Key changes: Added createNamespace('list') + bem() for all class names (replaced hardcoded strings). Added pointer-events:none on placeholder. Added __loading-icon class on Loading component (replaces size="16" prop). Added __loading-icon .van-loading__spinner size rule in less. Demo uses Tabs matching Vant's 3-tab layout.
+- Limitations: scroller (no useScrollParent in Lynx), tab status (no useAllTabStatus), passive scroll (no passive listener option), role/aria (no ARIA in Lynx), PullRefresh (not yet implemented, shown as basic list placeholder)
+---
+
+## 2026-03-22 - parity-count-down: CountDown
+- Props: 4/4 (time, format, autoStart, millisecond)
+- Events: 2/2 (change, finish)
+- Slots: 1/1 (default — receives current time object with days/hours/minutes/seconds/milliseconds/total)
+- CSS Variables: 3 defined in index.less (--van-count-down-text-color, --van-count-down-font-size, --van-count-down-line-height)
+- BEM Classes: .van-count-down (applied to both <view> and <text> for Lynx no-inherit)
+- Animations: none (CountDown has no transitions)
+- Tests: 14 cases (9 CountDown + 5 parseFormat; Vant has ~10)
+- Demo sections: 5/5 (基础用法, 自定义格式, 毫秒级渲染, 自定义样式, 手动控制)
+- Visual match: pass (BEM classes, CSS variables, createNamespace)
+- Files: index.vue, index.less, types.ts, utils.ts (4 files) + composables/useCountDown.ts (shared composable; Vant has CountDown.tsx, types.ts, utils.ts, index.less + @vant/use useCountDown)
+- Key changes: Component uses createNamespace('count-down') + bem(). useCountDown composable extracted to composables/ matching Vant's @vant/use pattern (RAF-based tick, macroTick for second-level, microTick for ms-level). parseFormat utility matches Vant exactly. Infrastructure: moved scroll-view from App.vue into DemoPage, fixed numeric style values to string px, runtime array handler normalization for Vue fallthrough event merging.
+- Limitations: role="timer" (no ARIA in Lynx), KeepAlive activated/deactivated (Lynx may not support KeepAlive lifecycle), <div> → <view>, bare text → <text> element
+---
