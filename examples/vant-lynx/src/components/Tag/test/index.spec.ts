@@ -1,49 +1,140 @@
 import { describe, it, expect, vi } from 'vitest';
-import { h, defineComponent, nextTick } from 'vue-lynx';
+import { h, defineComponent, nextTick, ref } from 'vue-lynx';
 import { render, fireEvent } from 'vue-lynx-testing-library';
 import Tag from '../index.vue';
 
 describe('Tag', () => {
-  it('should render tag with default type', () => {
+  it('should render tag with default type and BEM classes', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Tag, null, {
-            default: () => 'Tag',
-          });
+          return h(Tag, null, { default: () => 'Tag' });
         },
       }),
     );
     const view = container.querySelector('view');
     expect(view).not.toBeNull();
-    // Default type renders gray background (rgb(150, 151, 153) = #969799)
-    const style = view!.getAttribute('style') || '';
-    expect(style).toContain('background-color');
-    expect(style).toContain('150, 151, 153');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag');
+    expect(cls).toContain('van-tag--default');
   });
 
-  it('should render tag with different types', () => {
-    const types = ['primary', 'success', 'danger', 'warning'] as const;
-    // Hex colors get converted to rgb by Lynx
-    const rgbColors = [
-      '25, 137, 250',   // #1989fa
-      '7, 193, 96',     // #07c160
-      '238, 10, 36',    // #ee0a24
-      '255, 151, 106',  // #ff976a
-    ];
+  it('should render tag with primary type', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--primary');
+  });
 
-    types.forEach((type, idx) => {
-      const { container } = render(
-        defineComponent({
-          render() {
-            return h(Tag, { type }, { default: () => 'Tag' });
-          },
-        }),
-      );
-      const view = container.querySelector('view');
-      const style = view!.getAttribute('style') || '';
-      expect(style).toContain(rgbColors[idx]);
-    });
+  it('should render tag with success type', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'success' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--success');
+  });
+
+  it('should render tag with danger type', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'danger' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--danger');
+  });
+
+  it('should render tag with warning type', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'warning' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--warning');
+  });
+
+  it('should render plain tag with BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { plain: true, type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--plain');
+    expect(cls).toContain('van-tag--primary');
+  });
+
+  it('should render round tag with BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { round: true, type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--round');
+  });
+
+  it('should render mark tag with BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { mark: true, type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--mark');
+  });
+
+  it('should render medium size with BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { size: 'medium', type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--medium');
+  });
+
+  it('should render large size with BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { size: 'large', type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('view');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--large');
   });
 
   it('should emit close event when clicking the close icon', async () => {
@@ -51,30 +142,17 @@ describe('Tag', () => {
     const Comp = defineComponent({
       setup() {
         return () =>
-          h(Tag, {
-            closeable: true,
-            onClose,
-          }, { default: () => 'Tag' });
+          h(Tag, { closeable: true, onClose }, { default: () => 'Tag' });
       },
     });
 
     const { container } = render(Comp);
-    // Structure: view(tag) > [text(content), view(closeWrapper) > view(icon) > text(×)]
-    // Find the close wrapper - it's the view with marginLeft style
-    const allViews = container.querySelectorAll('view');
-    let closeWrapper: Element | null = null;
-    for (const v of Array.from(allViews)) {
-      const s = v.getAttribute('style') || '';
-      if (s.includes('margin-left')) {
-        closeWrapper = v;
-        break;
-      }
-    }
-    if (closeWrapper) {
-      fireEvent.tap(closeWrapper);
-      await nextTick();
-      await nextTick();
-    }
+    // Find the close element by BEM class
+    const closeEl = container.querySelector('.van-tag__close');
+    expect(closeEl).not.toBeNull();
+    fireEvent.tap(closeEl!);
+    await nextTick();
+    await nextTick();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
@@ -86,102 +164,23 @@ describe('Tag', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBe(0);
+    const tag = container.querySelector('.van-tag');
+    expect(tag).toBeNull();
   });
 
-  it('should render plain tag with correct styles', () => {
+  it('should render closeable tag with close icon element', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Tag, {
-            plain: true,
-            color: 'red',
-            textColor: 'blue',
-          }, { default: () => 'Tag' });
+          return h(Tag, { closeable: true, type: 'primary' }, { default: () => 'Tag' });
         },
       }),
     );
-    const view = container.querySelector('view');
-    const style = view!.getAttribute('style') || '';
-    // Plain mode: background should be white (rgb(255, 255, 255)), border color should be red
-    expect(style).toContain('255, 255, 255');
-    expect(style).toContain('red');
-    // Text color should be blue
-    const texts = container.querySelectorAll('text');
-    const hasBlueText = Array.from(texts).some(t => {
-      const s = t.getAttribute('style') || '';
-      return s.includes('blue');
-    });
-    expect(hasBlueText).toBe(true);
+    const closeEl = container.querySelector('.van-tag__close');
+    expect(closeEl).not.toBeNull();
   });
 
-  it('should render round tag', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tag, { type: 'primary', round: true }, { default: () => 'Tag' });
-        },
-      }),
-    );
-    const view = container.querySelector('view');
-    const style = view!.getAttribute('style') || '';
-    expect(style).toContain('999px');
-  });
-
-  it('should render mark tag', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tag, { type: 'primary', mark: true }, { default: () => 'Tag' });
-        },
-      }),
-    );
-    const view = container.querySelector('view');
-    const style = view!.getAttribute('style') || '';
-    // Mark: left radius 0, right radius 999px
-    expect(style).toContain('999px');
-    expect(style).toContain('0px');
-  });
-
-  it('should render medium size', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tag, { type: 'primary', size: 'medium' }, { default: () => 'Tag' });
-        },
-      }),
-    );
-    const view = container.querySelector('view');
-    const style = view!.getAttribute('style') || '';
-    // Medium padding: 2px top/bottom, 6px left/right
-    expect(style).toContain('6px');
-  });
-
-  it('should render large size with larger font', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tag, { type: 'primary', size: 'large' }, { default: () => 'Tag' });
-        },
-      }),
-    );
-    const view = container.querySelector('view');
-    const style = view!.getAttribute('style') || '';
-    // Large padding: 4px top/bottom, 8px left/right
-    expect(style).toContain('8px');
-    // Large uses radius 4px
-    expect(style).toContain('border-top-left-radius: 4px');
-    // Text should have 14px font
-    const texts = container.querySelectorAll('text');
-    const hasLargeFont = Array.from(texts).some(t => {
-      const s = t.getAttribute('style') || '';
-      return s.includes('font-size: 14px');
-    });
-    expect(hasLargeFont).toBe(true);
-  });
-
-  it('should render with custom color', () => {
+  it('should apply inline color style when color prop is set', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -189,13 +188,28 @@ describe('Tag', () => {
         },
       }),
     );
-    const view = container.querySelector('view');
+    const view = container.querySelector('.van-tag');
     const style = view!.getAttribute('style') || '';
-    // #7232dd = rgb(114, 50, 221)
+    // #7232dd = rgb(114, 50, 221) — Lynx runtime converts hex to rgb
     expect(style).toContain('114, 50, 221');
   });
 
-  it('should render with custom textColor', () => {
+  it('should apply plain style with color and textColor', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { plain: true, color: 'red', textColor: 'blue' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('.van-tag');
+    const style = view!.getAttribute('style') || '';
+    // Plain mode: color should be textColor (blue), borderColor should be color (red)
+    expect(style).toContain('blue');
+    expect(style).toContain('red');
+  });
+
+  it('should apply textColor on non-plain tag', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -203,13 +217,11 @@ describe('Tag', () => {
         },
       }),
     );
-    const texts = container.querySelectorAll('text');
-    // #ad0000 = rgb(173, 0, 0)
-    const hasCustomText = Array.from(texts).some(t => {
-      const s = t.getAttribute('style') || '';
-      return s.includes('173, 0, 0');
-    });
-    expect(hasCustomText).toBe(true);
+    const view = container.querySelector('.van-tag');
+    const style = view!.getAttribute('style') || '';
+    // #ad0000 = rgb(173, 0, 0), #ffe1e1 = rgb(255, 225, 225) — Lynx converts hex to rgb
+    expect(style).toContain('173, 0, 0');
+    expect(style).toContain('255, 225, 225');
   });
 
   it('should show tag by default (show defaults to true)', () => {
@@ -220,20 +232,50 @@ describe('Tag', () => {
         },
       }),
     );
-    const view = container.querySelector('view');
-    expect(view).not.toBeNull();
+    const tag = container.querySelector('.van-tag');
+    expect(tag).not.toBeNull();
   });
 
-  it('should render closeable tag with close icon', () => {
+  it('should render slot content as text', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Tag, { closeable: true, type: 'primary' }, { default: () => 'Tag' });
+          return h(Tag, { type: 'primary' }, { default: () => 'Hello' });
         },
       }),
     );
-    // Should have more than one view (tag wrapper + close icon wrapper)
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(1);
+    const texts = container.querySelectorAll('text');
+    const found = Array.from(texts).find(t => t.textContent === 'Hello');
+    expect(found).toBeTruthy();
+  });
+
+  it('should not have inline style when no color/textColor props', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'primary' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('.van-tag');
+    const style = view!.getAttribute('style') || '';
+    // No inline style when no color props
+    expect(style).toBe('');
+  });
+
+  it('should combine multiple BEM modifiers', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tag, { type: 'danger', plain: true, round: true, size: 'large' }, { default: () => 'Tag' });
+        },
+      }),
+    );
+    const view = container.querySelector('.van-tag');
+    const cls = view!.getAttribute('class') || '';
+    expect(cls).toContain('van-tag--danger');
+    expect(cls).toContain('van-tag--plain');
+    expect(cls).toContain('van-tag--round');
+    expect(cls).toContain('van-tag--large');
   });
 });
