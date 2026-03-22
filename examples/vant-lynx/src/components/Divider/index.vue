@@ -1,93 +1,98 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 4/4 supported (dashed, hairline, contentPosition, vertical)
-  - Events: 0/0 (none defined)
-  - Slots: 1/1 (default - text content between lines)
-  - Lynx Limitations:
-    - Uses explicit view elements for lines (no CSS ::before/::after)
-    - Vertical mode renders as inline vertical bar
+  Lynx Limitations:
+  - ::before/::after pseudo-elements: Not supported in Lynx; uses explicit <view> elements for divider lines
+  - role="separator": HTML accessibility attributes not applicable in Lynx
+  - CSS class-based styling: Lynx uses inline styles; CSS variables in index.less are defined for theming reference only
+  - vertical mode: Renders as inline vertical bar using explicit view elements
+  - scaleY(0.5) hairline: Lynx does not support transform scale; uses 0.5px border width instead
 -->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue-lynx';
+import type { DividerContentPosition } from './types';
 
-export interface DividerProps {
-  contentPosition?: 'left' | 'center' | 'right';
+interface DividerProps {
   dashed?: boolean;
   hairline?: boolean;
   vertical?: boolean;
+  contentPosition?: DividerContentPosition;
 }
 
 const props = withDefaults(defineProps<DividerProps>(), {
-  contentPosition: 'center',
   dashed: false,
   hairline: true,
   vertical: false,
+  contentPosition: 'center',
 });
 
 const slots = useSlots();
 
-const hasContent = computed(() => !!slots.default);
+const hasContent = computed(() => !!slots.default && !props.vertical);
+
+const borderStyle = computed(() =>
+  props.dashed ? ('dashed' as const) : ('solid' as const),
+);
+
+const borderWidth = computed(() => (props.hairline ? '0.5px' : '1px'));
 
 const containerStyle = computed(() => {
   if (props.vertical) {
     return {
       display: 'inline-flex' as const,
       alignItems: 'center' as const,
-      marginLeft: 8,
-      marginRight: 8,
-      height: 14,
+      marginLeft: '8px',
+      marginRight: '8px',
+      height: '14px',
     };
   }
   return {
     display: 'flex' as const,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    marginTop: 16,
-    marginBottom: 16,
-    marginLeft: 0,
-    marginRight: 0,
-  };
-});
-
-const baseLineStyle = computed(() => {
-  if (props.vertical) {
-    return {
-      width: 0,
-      height: '100%',
-      borderLeftWidth: props.hairline ? 0.5 : 1,
-      borderLeftStyle: props.dashed ? ('dashed' as const) : ('solid' as const),
-      borderLeftColor: '#ebedf0',
-    };
-  }
-  return {
-    height: 0,
-    borderTopWidth: props.hairline ? 0.5 : 1,
-    borderTopStyle: props.dashed ? ('dashed' as const) : ('solid' as const),
-    borderTopColor: '#ebedf0',
+    marginTop: '16px',
+    marginBottom: '16px',
+    color: '#969799',
+    fontSize: '14px',
+    lineHeight: '24px',
   };
 });
 
 const leftLineStyle = computed(() => {
-  if (props.vertical) return baseLineStyle.value;
+  if (props.vertical) {
+    return {
+      width: '0px',
+      height: '100%',
+      borderLeftWidth: borderWidth.value,
+      borderLeftStyle: borderStyle.value,
+      borderLeftColor: '#ebedf0',
+    };
+  }
+  const base = {
+    height: '0px',
+    borderTopWidth: borderWidth.value,
+    borderTopStyle: borderStyle.value,
+    borderTopColor: '#ebedf0',
+  };
   if (!hasContent.value) {
-    return { ...baseLineStyle.value, flex: 1 };
+    return { ...base, flex: 1 };
   }
   return {
-    ...baseLineStyle.value,
+    ...base,
     flex: props.contentPosition === 'left' ? 1 : 10,
-    marginRight: 16,
+    marginRight: '16px',
   };
 });
 
 const rightLineStyle = computed(() => {
-  if (props.vertical) return { ...baseLineStyle.value, flex: 0, width: 0 };
   if (!hasContent.value) {
-    return { ...baseLineStyle.value, flex: 0, width: 0 };
+    return { display: 'none' as const };
   }
   return {
-    ...baseLineStyle.value,
+    height: '0px',
+    borderTopWidth: borderWidth.value,
+    borderTopStyle: borderStyle.value,
+    borderTopColor: '#ebedf0',
     flex: props.contentPosition === 'right' ? 1 : 10,
-    marginLeft: 16,
+    marginLeft: '16px',
   };
 });
 </script>
@@ -95,7 +100,9 @@ const rightLineStyle = computed(() => {
 <template>
   <view :style="containerStyle">
     <view :style="leftLineStyle" />
-    <slot />
+    <template v-if="hasContent">
+      <slot />
+    </template>
     <view v-if="hasContent" :style="rightLineStyle" />
   </view>
 </template>
