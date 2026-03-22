@@ -3,98 +3,149 @@ import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Form from '../components/Form/index.vue';
 import Field from '../components/Field/index.vue';
+import Button from '../components/Button/index.vue';
+import CellGroup from '../components/CellGroup/index.vue';
+import Switch from '../components/Switch/index.vue';
+
+// Basic Usage
 const username = ref('');
 const password = ref('');
-const phone = ref('');
-const submitResult = ref('');
 const formRef = ref<any>(null);
 
-function onSubmit(values: Record<string, any>) {
-  submitResult.value = `Submitted: username=${username.value}, phone=${phone.value}`;
-}
+const onSubmit = (values: Record<string, unknown>) => {
+  console.log('submit', values);
+};
 
-function onFailed(errorInfo: any) {
-  submitResult.value = 'Validation failed';
-}
+const onFailed = (errorInfo: any) => {
+  console.log('failed', errorInfo);
+};
 
-function handleSubmit() {
+const handleSubmit = () => {
   if (formRef.value) {
     formRef.value.submit();
   }
-}
+};
 
-function handleReset() {
-  username.value = '';
-  password.value = '';
-  phone.value = '';
-  submitResult.value = '';
-  if (formRef.value) {
-    formRef.value.resetValidation();
+// Validate Rules
+const value1 = ref('');
+const value2 = ref('');
+const value3 = ref('abc');
+const value4 = ref('');
+const formRef2 = ref<any>(null);
+
+const pattern = /\d{6}/;
+const validator = (val: string) => /1\d{10}/.test(val);
+const validatorMessage = (val: string) => `${val} 不合法，请重新输入`;
+const asyncValidator = (val: string) =>
+  new Promise<boolean>((resolve) => {
+    setTimeout(() => {
+      resolve(val === '1234');
+    }, 1000);
+  });
+
+const handleSubmit2 = () => {
+  if (formRef2.value) {
+    formRef2.value.submit();
   }
-}
+};
+
+// Field Type
+const switchVal = ref(false);
+const formRef3 = ref<any>(null);
+
+const handleSubmit3 = () => {
+  if (formRef3.value) {
+    formRef3.value.submit();
+  }
+};
 </script>
 
 <template>
-  <DemoPage title="Form">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Form -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Form</text>
-      <view :style="{ borderRadius: 8, overflow: 'hidden', marginBottom: 16 }">
-        <Form ref="formRef" label-width="80" colon @submit="onSubmit" @failed="onFailed">
+  <DemoPage title="Form 表单">
+    <view :style="{ display: 'flex', flexDirection: 'column' }">
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">基础用法</text>
+      <Form ref="formRef" @submit="onSubmit" @failed="onFailed">
+        <CellGroup inset>
           <Field
             v-model="username"
-            label="Username"
-            placeholder="Enter username"
-            required
+            name="username"
+            label="用户名"
+            placeholder="请输入用户名"
+            :rules="[{ required: true, message: '请填写用户名' }]"
           />
           <Field
             v-model="password"
-            label="Password"
             type="password"
-            placeholder="Enter password"
-            required
+            name="password"
+            label="密码"
+            placeholder="请输入密码"
+            :rules="[{ required: true, message: '请填写密码' }]"
+          />
+        </CellGroup>
+        <view :style="{ margin: '16px', marginTop: '16px' }">
+          <Button round block type="primary" @tap="handleSubmit">
+            <text>提交</text>
+          </Button>
+        </view>
+      </Form>
+
+      <!-- 校验规则 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">校验规则</text>
+      <Form ref="formRef2" @submit="onSubmit" @failed="onFailed">
+        <CellGroup inset>
+          <Field
+            v-model="value1"
+            name="pattern"
+            label="文本"
+            placeholder="正则校验"
+            :rules="[{ pattern, message: '请输入正确内容' }]"
           />
           <Field
-            v-model="phone"
-            label="Phone"
-            type="tel"
-            placeholder="Enter phone number"
+            v-model="value2"
+            name="validator"
+            label="文本"
+            placeholder="函数校验"
+            :rules="[{ validator, message: '请输入正确内容' }]"
           />
-          <template #footer>
-            <view :style="{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }">
-              <view
-                :style="{ backgroundColor: '#1989fa', borderRadius: 24, height: 44, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }"
-                @tap="handleSubmit"
-              >
-                <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">Submit</text>
-              </view>
-              <view
-                :style="{ backgroundColor: '#fff', borderRadius: 24, height: 44, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderStyle: 'solid', borderColor: '#ebedf0' }"
-                @tap="handleReset"
-              >
-                <text :style="{ fontSize: 16, color: '#323233', fontWeight: 'bold' }">Reset</text>
-              </view>
-            </view>
-          </template>
-        </Form>
-      </view>
-
-      <!-- Submit Result -->
-      <view v-if="submitResult" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ submitResult }}</text>
-      </view>
-
-      <!-- Disabled Form -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">Disabled Form</text>
-      <view :style="{ borderRadius: 8, overflow: 'hidden' }">
-        <Form disabled>
           <Field
-            model-value="disabled value"
-            label="Field"
-            disabled
+            v-model="value3"
+            name="validatorMessage"
+            label="文本"
+            placeholder="校验函数返回错误提示"
+            :rules="[{ validator: validatorMessage }]"
           />
-        </Form>
-      </view>
+          <Field
+            v-model="value4"
+            name="asyncValidator"
+            label="文本"
+            placeholder="异步函数校验"
+            :rules="[{ validator: asyncValidator, message: '请输入正确内容' }]"
+          />
+        </CellGroup>
+        <view :style="{ margin: '16px', marginTop: '16px' }">
+          <Button round block type="primary" @tap="handleSubmit2">
+            <text>提交</text>
+          </Button>
+        </view>
+      </Form>
+
+      <!-- 表单项类型 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">表单项类型</text>
+      <Form ref="formRef3" @submit="onSubmit">
+        <CellGroup inset>
+          <Field name="switch" label="开关">
+            <template #input>
+              <Switch v-model="switchVal" />
+            </template>
+          </Field>
+        </CellGroup>
+        <view :style="{ margin: '16px', marginTop: '16px' }">
+          <Button round block type="primary" @tap="handleSubmit3">
+            <text>提交</text>
+          </Button>
+        </view>
+      </Form>
     </view>
   </DemoPage>
 </template>

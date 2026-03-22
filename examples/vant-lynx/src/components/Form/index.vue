@@ -1,227 +1,212 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 11/14 supported
-    Supported: colon, disabled, readonly, showError, labelWidth, labelAlign, inputAlign,
-               scrollToError, validateFirst, showErrorMessage, errorMessageAlign, validateTrigger
-    Missing: required ('auto' mode), submitOnEnter, scrollToErrorPosition
-  - Events: 2/2 supported (submit, failed)
-  - Slots: 1/1 supported (default)
-    Note: footer slot is a Lynx-specific addition (not in Vant)
-  - Exposed Methods: 5/5 supported (submit, validate, resetValidation, getValues, getValidationStatus)
-  - Gaps:
-    - No required prop with 'auto' mode (auto-detects from field rules)
-    - No submitOnEnter prop (keyboard submit in Lynx differs from web)
-    - No scrollToErrorPosition prop (ScrollLogicalPosition not applicable in Lynx)
-    - Uses modelValue for two-way binding (Vant Form does not use v-model)
-    - validateTrigger provided via inject context but Field must implement trigger check
+  Lynx Limitations:
+  - <form> element: Lynx has no <form> element, uses <view> instead
+  - native-type="submit": No native form submission in Lynx
+  - scrollToField: No scrollIntoView in Lynx
+  - submitOnEnter: Keyboard behavior differs in Lynx native input
+  - scrollToErrorPosition: ScrollLogicalPosition not applicable in Lynx
 -->
 <script setup lang="ts">
-import { ref, provide, reactive, computed } from 'vue-lynx';
+import { provide, reactive } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { FORM_KEY } from './types';
+import type { FormFieldExpose, FormExpose } from './types';
+import type { FieldTextAlign, FieldValidateTrigger, FieldValidateError, FieldValidationStatus } from '../Field/types';
+import './index.less';
 
-export interface FormRule {
-  required?: boolean;
-  message?: string;
-  validator?: (value: any, rule: FormRule) => boolean | string | Promise<boolean | string>;
-  pattern?: RegExp;
-  trigger?: 'onBlur' | 'onChange' | 'onSubmit';
-}
-
-export type FieldValidateTrigger = 'onBlur' | 'onChange' | 'onSubmit';
+const [, bem] = createNamespace('form');
 
 export interface FormProps {
-  modelValue?: Record<string, any>;
-  labelWidth?: number | string;
-  labelAlign?: 'left' | 'center' | 'right';
-  inputAlign?: 'left' | 'center' | 'right';
-  errorMessageAlign?: 'left' | 'center' | 'right';
   colon?: boolean;
   disabled?: boolean;
   readonly?: boolean;
+  required?: boolean | 'auto';
   showError?: boolean;
-  showErrorMessage?: boolean;
-  validateFirst?: boolean;
+  labelWidth?: number | string;
+  labelAlign?: FieldTextAlign;
+  inputAlign?: FieldTextAlign;
   scrollToError?: boolean;
+  scrollToErrorPosition?: string;
+  validateFirst?: boolean;
+  submitOnEnter?: boolean;
+  showErrorMessage?: boolean;
+  errorMessageAlign?: FieldTextAlign;
   validateTrigger?: FieldValidateTrigger | FieldValidateTrigger[];
 }
 
 const props = withDefaults(defineProps<FormProps>(), {
-  modelValue: () => ({}),
-  labelWidth: 88,
-  labelAlign: 'left',
-  inputAlign: 'left',
-  errorMessageAlign: 'left',
   colon: false,
   disabled: false,
   readonly: false,
-  showError: true,
-  showErrorMessage: true,
-  validateFirst: false,
+  showError: false,
   scrollToError: false,
+  validateFirst: false,
+  submitOnEnter: true,
+  showErrorMessage: true,
   validateTrigger: 'onBlur',
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [values: Record<string, any>];
-  submit: [values: Record<string, any>];
-  failed: [errorInfo: { values: Record<string, any>; errors: Array<{ name: string; message: string }> }];
+  submit: [values: Record<string, unknown>];
+  failed: [errorInfo: { values: Record<string, unknown>; errors: FieldValidateError[] }];
 }>();
 
-interface FieldRegistration {
-  name: string;
-  rules: FormRule[];
-  getValue: () => any;
-  setError: (message: string) => void;
-  clearError: () => void;
-}
+// Field registration — children register themselves via provide/inject
+const fields: FormFieldExpose[] = [];
 
-const registeredFields = ref<FieldRegistration[]>([]);
-
-function registerField(field: FieldRegistration) {
-  registeredFields.value.push(field);
-}
-
-function unregisterField(name: string) {
-  const index = registeredFields.value.findIndex((f) => f.name === name);
-  if (index > -1) {
-    registeredFields.value.splice(index, 1);
+const registerField = (field: FormFieldExpose) => {
+  if (!fields.includes(field)) {
+    fields.push(field);
   }
-}
+};
 
-async function validateField(field: FieldRegistration): Promise<{ name: string; message: string } | null> {
-  if (!field.rules || field.rules.length === 0) return null;
-
-  const value = field.getValue();
-
-  for (const rule of field.rules) {
-    if (rule.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
-      const message = rule.message || `${field.name} is required`;
-      if (props.showError) field.setError(message);
-      return { name: field.name, message };
-    }
-
-    if (rule.pattern && !rule.pattern.test(String(value))) {
-      const message = rule.message || `${field.name} is invalid`;
-      if (props.showError) field.setError(message);
-      return { name: field.name, message };
-    }
-
-    if (rule.validator) {
-      try {
-        const result = await rule.validator(value, rule);
-        if (result === false) {
-          const message = rule.message || `${field.name} is invalid`;
-          if (props.showError) field.setError(message);
-          return { name: field.name, message };
-        }
-        if (typeof result === 'string') {
-          if (props.showError) field.setError(result);
-          return { name: field.name, message: result };
-        }
-      } catch (err: any) {
-        const message = err?.message || rule.message || `${field.name} validation failed`;
-        if (props.showError) field.setError(message);
-        return { name: field.name, message };
-      }
-    }
+const unregisterField = (field: FormFieldExpose) => {
+  const idx = fields.indexOf(field);
+  if (idx > -1) {
+    fields.splice(idx, 1);
   }
+};
 
-  field.clearError();
-  return null;
-}
+const getFieldsByNames = (names?: string[]) => {
+  if (names) {
+    return fields.filter((field) => field.name !== undefined && names.includes(field.name));
+  }
+  return fields;
+};
 
-async function validate(name?: string | string[]): Promise<void> {
-  const fieldsToValidate = name
-    ? registeredFields.value.filter((f) =>
-        Array.isArray(name) ? name.includes(f.name) : f.name === name,
+const validateSeq = (names?: string[]) =>
+  new Promise<void>((resolve, reject) => {
+    const errors: FieldValidateError[] = [];
+    const targetFields = getFieldsByNames(names);
+
+    targetFields
+      .reduce(
+        (promise, field) =>
+          promise.then(() => {
+            if (!errors.length) {
+              return field.validate().then((error?: FieldValidateError | void) => {
+                if (error) {
+                  errors.push(error);
+                }
+              });
+            }
+          }),
+        Promise.resolve(),
       )
-    : registeredFields.value;
+      .then(() => {
+        if (errors.length) {
+          reject(errors);
+        } else {
+          resolve();
+        }
+      });
+  });
 
-  const errors: Array<{ name: string; message: string }> = [];
+const validateAll = (names?: string[]) =>
+  new Promise<void>((resolve, reject) => {
+    const targetFields = getFieldsByNames(names);
+    Promise.all(targetFields.map((field) => field.validate())).then(
+      (errors: any[]) => {
+        errors = errors.filter(Boolean);
+        if (errors.length) {
+          reject(errors);
+        } else {
+          resolve();
+        }
+      },
+    );
+  });
 
-  if (props.validateFirst) {
-    for (const field of fieldsToValidate) {
-      const error = await validateField(field);
-      if (error) {
-        errors.push(error);
-        break;
+const validateField = (name: string) => {
+  const matched = fields.find((field) => field.name === name);
+
+  if (matched) {
+    return new Promise<void>((resolve, reject) => {
+      matched.validate().then((error?: FieldValidateError | void) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  return Promise.reject();
+};
+
+const validate = (name?: string | string[]) => {
+  if (typeof name === 'string') {
+    return validateField(name);
+  }
+  return props.validateFirst ? validateSeq(name) : validateAll(name);
+};
+
+const resetValidation = (name?: string | string[]) => {
+  if (typeof name === 'string') {
+    name = [name];
+  }
+  const targetFields = getFieldsByNames(name);
+  targetFields.forEach((field) => {
+    field.resetValidation();
+  });
+};
+
+const getValidationStatus = () =>
+  fields.reduce<Record<string, FieldValidationStatus>>((form, field) => {
+    if (field.name !== undefined) {
+      form[field.name] = field.getValidationStatus();
+    }
+    return form;
+  }, {});
+
+const scrollToField = (
+  _name: string,
+  _options?: boolean | Record<string, unknown>,
+) => {
+  // In Lynx, scrollIntoView is not available.
+  // No-op stub for API compatibility.
+};
+
+const getValues = () =>
+  fields.reduce<Record<string, unknown>>((form, field) => {
+    if (field.name !== undefined) {
+      form[field.name] = field.formValue.value;
+    }
+    return form;
+  }, {});
+
+const submit = () => {
+  const values = getValues();
+
+  validate()
+    .then(() => emit('submit', values))
+    .catch((errors: FieldValidateError[]) => {
+      emit('failed', { values, errors });
+      if (props.scrollToError && errors[0]?.name) {
+        scrollToField(errors[0].name);
       }
-    }
-  } else {
-    const results = await Promise.all(fieldsToValidate.map(validateField));
-    for (const result of results) {
-      if (result) errors.push(result);
-    }
-  }
+    });
+};
 
-  if (errors.length > 0) {
-    throw errors;
-  }
-}
+provide(FORM_KEY, {
+  props,
+  registerField,
+  unregisterField,
+});
 
-function resetValidation(name?: string | string[]) {
-  const fieldsToReset = name
-    ? registeredFields.value.filter((f) =>
-        Array.isArray(name) ? name.includes(f.name) : f.name === name,
-      )
-    : registeredFields.value;
-
-  fieldsToReset.forEach((field) => field.clearError());
-}
-
-async function submit() {
-  const values = { ...props.modelValue };
-  registeredFields.value.forEach((field) => {
-    values[field.name] = field.getValue();
-  });
-
-  try {
-    await validate();
-    emit('submit', values);
-  } catch (errors: any) {
-    emit('failed', { values, errors });
-  }
-}
-
-provide(
-  'vanForm',
-  reactive({
-    props,
-    registerField,
-    unregisterField,
-    validateTrigger: computed(() => props.validateTrigger),
-  }),
-);
-
-function getValues(): Record<string, any> {
-  const values = { ...props.modelValue };
-  registeredFields.value.forEach((field) => {
-    values[field.name] = field.getValue();
-  });
-  return values;
-}
-
-function getValidationStatus(): Record<string, 'passed' | 'failed' | 'unvalidated'> {
-  const status: Record<string, 'passed' | 'failed' | 'unvalidated'> = {};
-  registeredFields.value.forEach((field) => {
-    status[field.name] = 'unvalidated';
-  });
-  return status;
-}
-
-defineExpose({ submit, validate, resetValidation, getValues, getValidationStatus });
-
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  backgroundColor: '#fff',
-}));
+defineExpose<FormExpose>({
+  submit,
+  validate,
+  getValues,
+  scrollToField,
+  resetValidation,
+  getValidationStatus,
+});
 </script>
 
 <template>
-  <view :style="containerStyle">
+  <view :class="bem()">
     <slot />
-    <view :style="{ display: 'flex', flexDirection: 'column', padding: 16, paddingTop: 8 }">
-      <slot name="footer" />
-    </view>
   </view>
 </template>
