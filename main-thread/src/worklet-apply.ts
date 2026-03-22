@@ -48,18 +48,6 @@ export function applySetWorkletEvent(
   ctx: Record<string, unknown>,
 ): void {
   const el = elements.get(id);
-  console.info(
-    '[vue-mt] SET_WORKLET_EVENT id=',
-    id,
-    'type=',
-    eventType,
-    'name=',
-    eventName,
-    'ctx=',
-    ctx,
-    'el found=',
-    el != null,
-  );
   if (el) {
     // Native Lynx requires _workletType on the value to route the event
     // to runWorklet() instead of publishEvent(). React sets this in
@@ -75,14 +63,6 @@ export function applySetWorkletEvent(
 /** SET_MT_REF: bind a MainThreadRef to a native element via worklet-runtime */
 export function applySetMtRef(id: number, refImpl: unknown): void {
   const el = elements.get(id);
-  console.info(
-    '[vue-mt] SET_MT_REF id=',
-    id,
-    'refImpl=',
-    refImpl,
-    'el found=',
-    el != null,
-  );
   // Store in workletRefMap so worklet-runtime can resolve _wvid -> element.
   // The worklet-runtime's updateWorkletRef expects the ref to already exist
   // in _workletRefMap (populated during React's hydration step). For Vue,

@@ -178,18 +178,6 @@ export function applyOps(ops: unknown[]): void {
         const eventName = ops[i++] as string;
         const sign = ops[i++];
         const el = elements.get(id);
-        console.info(
-          '[vue-mt] SET_EVENT id=',
-          id,
-          'type=',
-          eventType,
-          'name=',
-          eventName,
-          'sign=',
-          sign,
-          'el found=',
-          el != null,
-        );
         if (el) __AddEvent(el, eventType, eventName, sign as string);
         break;
       }

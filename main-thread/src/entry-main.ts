@@ -46,7 +46,6 @@ g['processData'] = function(data: unknown, _processorName?: string): unknown {
 // We create the root page element and store it as id=1 so Background ops that
 // target the root can resolve it correctly.
 g['renderPage'] = function(_data: unknown): void {
-  console.info('[vue-mt] renderPage called');
   // Clear all element state from the previous page. This is essential for:
   // 1. Testing: prevents duplicate batch detection from skipping ops
   //    when ShadowElement IDs restart from 2 between test renders.
@@ -59,7 +58,6 @@ g['renderPage'] = function(_data: unknown): void {
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
   __FlushElementTree(page);
-  console.info('[vue-mt] renderPage done, page root id=1 stored');
 };
 
 // Lynx may call updatePage / updateGlobalProps after data changes.
