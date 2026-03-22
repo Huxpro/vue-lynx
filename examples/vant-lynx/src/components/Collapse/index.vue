@@ -1,16 +1,10 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 3/3 supported (modelValue, accordion, border)
-  - Events: 2/2 supported (update:modelValue, change)
-  - Exposed Methods: toggleAll (non-accordion mode)
-  - Validation: warns on modelValue/accordion mismatch (dev only)
-  - CSS Variables: Hardcoded - matches Vant defaults
-  - Gaps:
-    - No CSS class-based theming (Lynx inline styles only)
-    - BORDER_TOP_BOTTOM uses inline border instead of CSS hairline mixin
+  Lynx Limitations:
+  - No CSS ::after pseudo-element hairline border; uses inline border fallback
 -->
 <script setup lang="ts">
-import { provide, toRef, computed } from 'vue-lynx';
+import { provide, toRef, reactive } from 'vue-lynx';
+import './index.less';
 
 export interface CollapseProps {
   modelValue?: (string | number)[] | string | number;
@@ -79,13 +73,14 @@ function isExpanded(name: string | number): boolean {
     : (modelValue as (string | number)[]).includes(name);
 }
 
-// --- Exposed: toggleAll (matches Vant) ---
-// Tracks registered children for toggleAll support
-const children: Array<{
-  name: string | number;
-  disabled: boolean;
-  expanded: boolean;
-}> = [];
+// --- Tracks registered children for toggleAll support ---
+const children = reactive<
+  Array<{
+    name: string | number;
+    disabled: boolean;
+    expanded: boolean;
+  }>
+>([]);
 
 function registerChild(child: {
   name: string | number;
@@ -111,6 +106,7 @@ function updateChild(
   }
 }
 
+// --- Exposed: toggleAll (matches Vant) ---
 export type CollapseToggleAllOptions =
   | boolean
   | { expanded?: boolean; skipDisabled?: boolean };
@@ -145,23 +141,21 @@ provide('collapse', {
   updateChild,
 });
 
-// --- Styles ---
-const collapseStyle = computed(() => ({
-  display: 'flex' as const,
-  flexDirection: 'column' as const,
-  borderTopWidth: props.border ? 0.5 : 0,
-  borderTopStyle: 'solid' as const,
-  borderTopColor: '#ebedf0',
-  borderBottomWidth: props.border ? 0.5 : 0,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-}));
-
 defineExpose({ toggleAll });
 </script>
 
 <template>
-  <view :style="collapseStyle">
+  <view
+    class="van-collapse"
+    :style="border ? {
+      borderTopWidth: '0.5px',
+      borderTopStyle: 'solid',
+      borderTopColor: '#ebedf0',
+      borderBottomWidth: '0.5px',
+      borderBottomStyle: 'solid',
+      borderBottomColor: '#ebedf0',
+    } : undefined"
+  >
     <slot />
   </view>
 </template>
