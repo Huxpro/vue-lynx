@@ -1,43 +1,42 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 12/12 supported (title, leftText, rightText, leftArrow, leftDisabled,
-    rightDisabled, border, fixed, placeholder, zIndex, safeAreaInsetTop, clickable)
-  - Events: 2/2 (click-left, click-right)
-  - Slots: 3/3 (left, title, right)
-  - Lynx Limitations:
-    - safeAreaInsetTop: uses fixed 44px padding (no CSS env() in Lynx)
-    - fixed: uses Lynx position fixed
+  Lynx Limitations:
+  - safeAreaInsetTop: uses fixed 44px padding (no CSS env() in Lynx)
+  - fixed: uses Lynx position fixed (no usePlaceholder composable)
+  - placeholder: uses hardcoded 46px height (no DOM measurement in Lynx)
+  - HAPTICS_FEEDBACK: not available in Lynx (no haptic feedback on click)
+  - van-ellipsis: Lynx text overflow handled differently (no CSS class)
+  - CSS class-based BEM styling replaced with inline styles
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, useSlots } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import type { NavBarThemeVars } from './types';
 
 export interface NavBarProps {
   title?: string;
+  fixed?: boolean;
+  zIndex?: number | string;
+  border?: boolean;
   leftText?: string;
   rightText?: string;
-  leftArrow?: boolean;
   leftDisabled?: boolean;
   rightDisabled?: boolean;
-  border?: boolean;
-  fixed?: boolean;
+  leftArrow?: boolean;
   placeholder?: boolean;
-  zIndex?: number | string;
   safeAreaInsetTop?: boolean;
   clickable?: boolean;
 }
 
 const props = withDefaults(defineProps<NavBarProps>(), {
   title: '',
+  fixed: false,
+  border: true,
   leftText: '',
   rightText: '',
-  leftArrow: false,
   leftDisabled: false,
   rightDisabled: false,
-  border: true,
-  fixed: false,
+  leftArrow: false,
   placeholder: false,
-  zIndex: 1,
   safeAreaInsetTop: false,
   clickable: true,
 });
@@ -47,48 +46,86 @@ const emit = defineEmits<{
   'click-right': [event: any];
 }>();
 
-const navBarStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  height: 46,
-  backgroundColor: '#fff',
-  paddingLeft: 16,
-  paddingRight: 16,
-  paddingTop: props.safeAreaInsetTop ? 44 : 0,
-  position: props.fixed ? ('fixed' as const) : ('relative' as const),
-  top: props.fixed ? 0 : undefined,
-  left: props.fixed ? 0 : undefined,
-  right: props.fixed ? 0 : undefined,
-  zIndex: props.zIndex,
-  borderBottomWidth: props.border ? 0.5 : 0,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
+const slots = useSlots();
+
+const hasLeft = computed(
+  () => props.leftArrow || props.leftText || !!slots.left,
+);
+
+const hasRight = computed(() => props.rightText || !!slots.right);
+
+const navBarStyle = computed(() => {
+  const style: Record<string, any> = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    height: '46px',
+    backgroundColor: '#fff',
+    paddingTop: props.safeAreaInsetTop ? '44px' : '0px',
+  };
+
+  if (props.fixed) {
+    style.position = 'fixed';
+    style.top = '0px';
+    style.left = '0px';
+    style.right = '0px';
+  }
+
+  if (props.zIndex !== undefined) {
+    style.zIndex = props.zIndex;
+  }
+
+  if (props.border) {
+    style.borderBottomWidth = '0.5px';
+    style.borderBottomStyle = 'solid';
+    style.borderBottomColor = '#ebedf0';
+  }
+
+  return style;
+});
+
+const placeholderStyle = computed(() => ({
+  height: props.safeAreaInsetTop ? '90px' : '46px',
 }));
 
 const leftStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'row' as const,
   alignItems: 'center' as const,
-  minWidth: 60,
-}));
-
-const titleStyle = computed(() => ({
-  flex: 1,
-  fontSize: 16,
-  fontWeight: 'bold' as const,
-  color: '#323233',
-  textAlign: 'center' as const,
-  overflow: 'hidden' as const,
+  paddingLeft: '16px',
+  paddingRight: '16px',
+  height: '100%',
+  opacity: props.leftDisabled ? 0.6 : 1,
 }));
 
 const rightStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'row' as const,
   alignItems: 'center' as const,
-  minWidth: 60,
-  justifyContent: 'flex-end' as const,
+  paddingLeft: '16px',
+  paddingRight: '16px',
+  height: '100%',
+  opacity: props.rightDisabled ? 0.6 : 1,
 }));
+
+const titleStyle = computed(() => ({
+  flex: 1,
+  fontSize: '16px',
+  fontWeight: 'bold' as const,
+  color: '#323233',
+  textAlign: 'center' as const,
+  overflow: 'hidden' as const,
+}));
+
+const arrowStyle = {
+  marginRight: '4px',
+};
+
+const textStyle = {
+  fontSize: '14px',
+  color: '#1989fa',
+};
 
 function onClickLeft(event: any) {
   if (!props.leftDisabled) {
@@ -105,14 +142,51 @@ function onClickRight(event: any) {
 
 <template>
   <!-- Placeholder when fixed -->
-  <view v-if="fixed && placeholder" :style="{ height: 46 }" />
+  <view v-if="fixed && placeholder" :style="placeholderStyle">
+    <view :style="navBarStyle">
+      <!-- Left area -->
+      <view v-if="hasLeft" :style="leftStyle" @tap="onClickLeft">
+        <slot name="left">
+          <Icon
+            v-if="leftArrow"
+            name="arrow-left"
+            :size="16"
+            color="#1989fa"
+            :style="arrowStyle"
+          />
+          <text v-if="leftText" :style="textStyle">{{ leftText }}</text>
+        </slot>
+      </view>
 
-  <view :style="navBarStyle">
+      <!-- Title -->
+      <view :style="{ flex: 1 }">
+        <slot name="title">
+          <text :style="titleStyle">{{ title }}</text>
+        </slot>
+      </view>
+
+      <!-- Right area -->
+      <view v-if="hasRight" :style="rightStyle" @tap="onClickRight">
+        <slot name="right">
+          <text v-if="rightText" :style="textStyle">{{ rightText }}</text>
+        </slot>
+      </view>
+    </view>
+  </view>
+
+  <!-- Normal (non-placeholder) rendering -->
+  <view v-else :style="navBarStyle">
     <!-- Left area -->
-    <view :style="leftStyle" @tap="onClickLeft">
+    <view v-if="hasLeft" :style="leftStyle" @tap="onClickLeft">
       <slot name="left">
-        <Icon v-if="leftArrow" name="arrow-left" :size="16" color="#1989fa" :style="{ marginRight: 4 }" />
-        <text v-if="leftText" :style="{ fontSize: 14, color: '#1989fa' }">{{ leftText }}</text>
+        <Icon
+          v-if="leftArrow"
+          name="arrow-left"
+          :size="16"
+          color="#1989fa"
+          :style="arrowStyle"
+        />
+        <text v-if="leftText" :style="textStyle">{{ leftText }}</text>
       </slot>
     </view>
 
@@ -124,9 +198,9 @@ function onClickRight(event: any) {
     </view>
 
     <!-- Right area -->
-    <view :style="rightStyle" @tap="onClickRight">
+    <view v-if="hasRight" :style="rightStyle" @tap="onClickRight">
       <slot name="right">
-        <text v-if="rightText" :style="{ fontSize: 14, color: '#1989fa' }">{{ rightText }}</text>
+        <text v-if="rightText" :style="textStyle">{{ rightText }}</text>
       </slot>
     </view>
   </view>
