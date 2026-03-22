@@ -1,18 +1,16 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 6/6 supported (type, color, size, textSize, textColor, vertical)
-  - Events: 0/0 (none defined in Vant API)
-  - Slots: 2/2 supported (default - text content, icon - custom spinner)
-  - Lynx Limitations:
-    - No CSS @keyframes animation; spinners are static visual indicators
-    - Spinner type: dotted border ring (no SVG for 12-bar spinner)
-    - Circular type: border-based ring with transparent segment
+  Lynx Limitations:
+  - No SVG support: circular spinner uses CSS border ring instead of SVG stroke-dasharray
+  - No CSS @keyframes: spinners are static visual indicators (no rotation animation)
+  - No ::before pseudo-elements: spinner type uses dotted border instead of 12 rotated bars
 -->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue-lynx';
 
+export type LoadingType = 'circular' | 'spinner';
+
 export interface LoadingProps {
-  type?: 'circular' | 'spinner';
+  type?: LoadingType;
   color?: string;
   size?: string | number;
   textSize?: string | number;
@@ -22,24 +20,32 @@ export interface LoadingProps {
 
 const props = withDefaults(defineProps<LoadingProps>(), {
   type: 'circular',
-  color: '#c9c9c9',
-  size: 30,
-  textSize: 14,
-  textColor: '#c9c9c9',
-  vertical: false,
 });
 
 const slots = useSlots();
 
-const spinnerSize = computed(() => {
-  if (typeof props.size === 'string') return parseInt(props.size, 10) || 30;
-  return props.size;
+// Defaults matching Vant's CSS variables
+const DEFAULT_COLOR = '#c9c9c9'; // --van-loading-spinner-color → --van-gray-5
+const DEFAULT_SIZE = 30; // --van-loading-spinner-size
+const DEFAULT_TEXT_COLOR = '#969799'; // --van-loading-text-color → --van-text-color-2
+const DEFAULT_TEXT_SIZE = 14; // --van-loading-text-font-size → --van-font-size-md
+
+const addUnit = (value?: string | number): string | undefined => {
+  if (value === undefined || value === '') return undefined;
+  if (typeof value === 'number') return `${value}px`;
+  return value;
+};
+
+const resolvedSize = computed(() => {
+  if (props.size !== undefined) {
+    if (typeof props.size === 'number') return props.size;
+    const parsed = parseFloat(props.size);
+    return isNaN(parsed) ? DEFAULT_SIZE : parsed;
+  }
+  return DEFAULT_SIZE;
 });
 
-const resolvedTextSize = computed(() => {
-  if (typeof props.textSize === 'string') return parseInt(props.textSize, 10) || 14;
-  return props.textSize;
-});
+const resolvedColor = computed(() => props.color || DEFAULT_COLOR);
 
 const containerStyle = computed(() => ({
   display: 'flex',
@@ -48,41 +54,47 @@ const containerStyle = computed(() => ({
 }));
 
 const spinnerStyle = computed(() => {
-  const sz = spinnerSize.value;
-
-  if (props.type === 'spinner') {
-    return {
-      width: sz,
-      height: sz,
-      borderRadius: sz / 2,
-      borderWidth: Math.max(2, sz / 8),
-      borderStyle: 'dotted' as const,
-      borderColor: props.color,
-    };
-  }
+  const sz = resolvedSize.value;
+  const color = resolvedColor.value;
+  const borderWidth = Math.max(
+    2,
+    Math.round(props.type === 'spinner' ? sz / 8 : sz / 10),
+  );
 
   return {
-    width: sz,
-    height: sz,
-    borderRadius: sz / 2,
-    borderWidth: Math.max(2, sz / 10),
-    borderStyle: 'solid' as const,
-    borderColor: `${props.color} ${props.color} ${props.color} transparent`,
+    width: `${sz}px`,
+    height: `${sz}px`,
+    borderRadius: `${sz / 2}px`,
+    borderWidth: `${borderWidth}px`,
+    borderStyle: (props.type === 'spinner' ? 'dotted' : 'solid') as const,
+    borderColor:
+      props.type === 'spinner'
+        ? color
+        : `${color} ${color} ${color} transparent`,
   };
 });
 
-const hasSlotContent = computed(() => !!slots.default);
+const hasText = computed(() => !!slots.default);
 
 const textWrapperStyle = computed(() => ({
-  marginLeft: props.vertical ? 0 : 8,
-  marginTop: props.vertical ? 8 : 0,
+  marginLeft: props.vertical ? '0px' : '8px',
+  marginTop: props.vertical ? '8px' : '0px',
 }));
 
-const slotTextStyle = computed(() => ({
-  fontSize: resolvedTextSize.value,
-  color: props.textColor,
-  lineHeight: Math.round(resolvedTextSize.value * 1.4),
-}));
+const textStyle = computed(() => {
+  const fontSize =
+    props.textSize !== undefined
+      ? typeof props.textSize === 'number'
+        ? props.textSize
+        : parseFloat(props.textSize) || DEFAULT_TEXT_SIZE
+      : DEFAULT_TEXT_SIZE;
+
+  return {
+    fontSize: `${fontSize}px`,
+    color: props.textColor ?? props.color ?? DEFAULT_TEXT_COLOR,
+    lineHeight: `${Math.round(fontSize * 1.4)}px`,
+  };
+});
 </script>
 
 <template>
@@ -90,8 +102,8 @@ const slotTextStyle = computed(() => ({
     <slot name="icon">
       <view :style="spinnerStyle" />
     </slot>
-    <view v-if="hasSlotContent" :style="textWrapperStyle">
-      <text :style="slotTextStyle"><slot /></text>
+    <view v-if="hasText" :style="textWrapperStyle">
+      <text :style="textStyle"><slot /></text>
     </view>
   </view>
 </template>
