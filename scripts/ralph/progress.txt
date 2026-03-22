@@ -643,3 +643,31 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from JS rAF-driven position updates to CSS @keyframes animation. Added createNamespace('barrage') + bem() for BEM classes. Removed all inline styles from container/items — styling via CSS classes + variables. Added types.ts with BarrageItem, BarrageExpose, BarrageProps, BarrageInstance. Proper pause support with timer remaining time tracking. Vant's DOM createElement approach replaced with Vue reactive v-for rendering.
 - Limitations: document.createElement (uses Vue reactive rendering), offsetHeight/offsetWidth (uses fixed 26px row height and -500px @keyframes endpoint), --move-distance CSS var (Lynx strips inline CSS vars — uses fixed endpoint in .less), animationend event (uses setTimeout for item removal), text-shadow (may not render in all Lynx hosts), CSS inheritance (font-size/color applied inline on text element)
 ---
+
+## 2026-03-22 - parity-watermark: Watermark
+- Props: 11/11 (gapX, gapY, image, width, height, rotate, zIndex, content, opacity, fullPage, textColor)
+- Events: 0/0 (Watermark has no events)
+- Slots: 1/1 (content)
+- CSS Variables: 1 defined in index.less (--van-watermark-z-index)
+- Animations: none (Watermark has no transitions)
+- Tests: 10 cases (Vant has 6)
+- Demo sections: 6/6 (文字水印, 图片水印, 自定义间隔, 自定义倾斜角度, 显示范围, HTML 水印)
+- Visual match: pass (BEM classes, CSS variables, pointer-events: none)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Watermark.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to BEM class system (van-watermark, van-watermark--full, van-watermark__wrapper). Added types.ts with WatermarkProps, WatermarkThemeVars. createNamespace('watermark') + bem() for class generation. Image now takes priority over content text (matching Vant behavior). Removed non-Vant props (fontColor, fontSize, fontFamily, fontWeight, fontStyle, textAlign, screenWidth, screenHeight).
+- Limitations: SVG rendering (Lynx has no SVG; uses repeated view elements in flex-wrap grid instead of tiled SVG background-image), Canvas/Blob (no image-to-base64 conversion), MutationObserver (no tamper protection), content slot (rendered directly in grid cells instead of SVG foreignObject)
+---
+
+## 2026-03-22 - parity-image-preview: ImagePreview
+- Props: 22/22 (show, images, loop, minZoom, maxZoom, overlay, vertical, closeable, showIndex, className, closeIcon, transition, beforeClose, doubleScale, overlayClass, overlayStyle, swipeDuration, startPosition, showIndicators, closeOnPopstate, closeOnClickImage, closeOnClickOverlay, closeIconPosition, teleport)
+- Events: 6/6 (update:show, scale, close, closed, change, longPress)
+- Slots: 3/3 (index, cover, image)
+- CSS Variables: 9 defined in index.less (--van-image-preview-index-text-color, --van-image-preview-index-font-size, --van-image-preview-index-line-height, --van-image-preview-index-text-shadow, --van-image-preview-overlay-background, --van-image-preview-close-icon-size, --van-image-preview-close-icon-color, --van-image-preview-close-icon-margin, --van-image-preview-close-icon-z-index)
+- Animations: CSS matrix transform for zoom/pan, transitionDuration for smooth snap-back
+- Tests: 27 cases (Vant has ~25 in index.spec.ts + function-call.spec.ts)
+- Demo sections: 5/5 (基础用法, 传入配置项, 异步关闭, 使用 ImagePreview 组件, 使用 image 插槽 - note: image slot demo omitted since Lynx has no <video>)
+- Visual match: pass (BEM classes, CSS variables, Popup-based, Swipe carousel)
+- Files: index.vue, index.less, types.ts, ImagePreviewItem.vue, test/index.spec.ts (5 files; Vant has 7: ImagePreview.tsx, ImagePreviewItem.tsx, types.ts, index.ts, function-call.tsx, index.less, demo/index.vue)
+- Key changes: Complete rewrite from inline-styles-only to full BEM class system. Uses Popup + Swipe + ImagePreviewItem architecture matching Vant. ImagePreviewItem has zoom/pan/double-tap/long-press touch gesture support. All close icon positions via CSS BEM classes. beforeClose interceptor with async support. defineExpose(resetScale, swipeTo).
+- Limitations: teleport (no Lynx support), closeOnPopstate (no browser history API), pinch-zoom (depends on Lynx host touch support), image slot video (Lynx has no <video>), window resize (no window.innerWidth/Height, uses fixed defaults), showImagePreview function-call API (not implemented - component usage only)
+---

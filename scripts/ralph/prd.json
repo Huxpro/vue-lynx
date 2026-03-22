@@ -1068,7 +1068,7 @@
         "Docs: Lynx limitations in components/Watermark/README.md",
         "Commit: feat(watermark): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-image-preview",
@@ -1090,7 +1090,7 @@
         "Docs: Lynx limitations in components/ImagePreview/README.md",
         "Commit: feat(image-preview): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-steps",

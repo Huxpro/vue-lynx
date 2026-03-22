@@ -1,347 +1,270 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: ImagePreview
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
--->
-<!--
-  Vant ImagePreview - Feature Parity Report
-  ===========================================
-  Vant Source: packages/vant/src/image-preview/ImagePreview.tsx
-
-  Props:
-    - show: boolean                                     [YES]
-    - images: string[]                                  [YES]
-    - startPosition: number (default 0)                 [YES]
-    - swipeDuration: number (default 300)               [YES] (accepted, no swipe in Lynx)
-    - showIndex: boolean (default true)                 [YES]
-    - showIndicators: boolean                           [YES]
-    - closeable: boolean                                [YES]
-    - closeIcon: string (default 'clear')               [YES] uses Icon component
-    - closeIconPosition: PopupCloseIconPosition         [YES]
-    - loop: boolean (default true)                      [YES] added
-    - minZoom / maxZoom: number                         [NO] Lynx has no pinch-zoom
-    - overlay: boolean                                  [N/A] always has overlay
-    - vertical: boolean                                 [NO] Lynx has no Swipe
-    - className / overlayClass / overlayStyle           [NO] no CSS classes
-    - transition                                        [NO] no CSS transitions
-    - beforeClose: Interceptor                          [YES] added
-    - doubleScale: boolean                              [NO] no touch gestures
-    - closeOnPopstate: boolean                          [NO] no popstate in Lynx
-    - closeOnClickImage: boolean (default true)         [YES] added
-    - closeOnClickOverlay: boolean (default true)       [YES] added
-    - teleport                                          [NO] Lynx has no teleport
-
-  Events:
-    - update:show                                       [YES]
-    - change                                            [YES]
-    - close                                             [YES]
-    - closed                                            [YES] added
-    - scale                                             [NO] no zoom
-    - longPress                                         [NO] no long-press gesture
-
-  Slots:
-    - index                                             [YES] added
-    - cover                                             [YES] added
-    - image                                             [NO]
-
-  Lynx Adaptations:
-    - No Swipe component; uses manual prev/next buttons for navigation
-    - No pinch-zoom or double-tap zoom (no gesture system)
-    - closeIcon rendered via Icon component instead of plain text
-    - Uses `display: 'flex'` explicitly on all flex containers
-    - Uses Popup-like overlay pattern with fixed positioning
-
-  Gaps:
-    - No swipe gesture navigation (tap-based prev/next instead)
-    - No zoom (minZoom/maxZoom/doubleScale/scale event)
-    - No long-press support
-    - No CSS transition animations
-    - No teleport support
+  Lynx Limitations:
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - closeOnPopstate: accepted for API compat but no browser history API in Lynx
+  - className: applied as additional class on root, but complex selectors may not work
+  - overlayClass: passed to Popup's overlay, Lynx CSS selector limitations apply
+  - window resize: no window.innerWidth/Height; rootWidth/Height use fixed defaults
+  - pinch-zoom: Two-finger gestures may not work in all Lynx hosts
+  - image slot video: Lynx has no <video> element
 -->
 <script setup lang="ts">
-import { ref, computed, watch, useSlots } from 'vue-lynx';
+import { ref, reactive, computed, watch, nextTick, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Icon from '../Icon/index.vue';
+import Popup from '../Popup/index.vue';
+import Swipe from '../Swipe/index.vue';
+import ImagePreviewItem from './ImagePreviewItem.vue';
+import type {
+  Interceptor,
+  PopupCloseIconPosition,
+  ImagePreviewScaleEventParams,
+} from './types';
+import './index.less';
 
-export interface ImagePreviewProps {
-  show?: boolean;
-  images?: string[];
-  startPosition?: number;
-  swipeDuration?: number;
-  showIndex?: boolean;
-  showIndicators?: boolean;
-  closeable?: boolean;
-  closeIcon?: string;
-  closeIconPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  loop?: boolean;
-  closeOnClickImage?: boolean;
-  closeOnClickOverlay?: boolean;
-  beforeClose?: (active: number) => boolean | Promise<boolean>;
-}
+const [name, bem] = createNamespace('image-preview');
 
-const props = withDefaults(defineProps<ImagePreviewProps>(), {
-  show: false,
-  images: () => [],
-  startPosition: 0,
-  swipeDuration: 300,
-  showIndex: true,
-  showIndicators: false,
-  closeable: false,
-  closeIcon: 'clear',
-  closeIconPosition: 'top-right',
-  loop: true,
-  closeOnClickImage: true,
-  closeOnClickOverlay: true,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    images?: string[];
+    loop?: boolean;
+    minZoom?: number | string;
+    maxZoom?: number | string;
+    overlay?: boolean;
+    vertical?: boolean;
+    closeable?: boolean;
+    showIndex?: boolean;
+    className?: string | string[] | Record<string, boolean>;
+    closeIcon?: string;
+    transition?: string;
+    beforeClose?: Interceptor;
+    doubleScale?: boolean;
+    overlayClass?: string | string[] | Record<string, boolean>;
+    overlayStyle?: Record<string, any>;
+    swipeDuration?: number | string;
+    startPosition?: number | string;
+    showIndicators?: boolean;
+    closeOnPopstate?: boolean;
+    closeOnClickImage?: boolean;
+    closeOnClickOverlay?: boolean;
+    closeIconPosition?: PopupCloseIconPosition;
+    teleport?: string | object;
+  }>(),
+  {
+    show: false,
+    images: () => [],
+    loop: true,
+    minZoom: 1 / 3,
+    maxZoom: 3,
+    overlay: true,
+    vertical: false,
+    closeable: false,
+    showIndex: true,
+    closeIcon: 'clear',
+    doubleScale: true,
+    swipeDuration: 300,
+    startPosition: 0,
+    showIndicators: false,
+    closeOnPopstate: true,
+    closeOnClickImage: true,
+    closeOnClickOverlay: true,
+    closeIconPosition: 'top-right',
+  },
+);
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
-  change: [index: number];
+  scale: [params: ImagePreviewScaleEventParams];
   close: [info: { index: number; url: string }];
   closed: [];
+  change: [index: number];
+  longPress: [info: { index: number }];
 }>();
 
 const slots = useSlots();
 
-const currentIndex = ref(props.startPosition);
+const swipeRef = ref<InstanceType<typeof Swipe>>();
+const activeItemRef = ref<InstanceType<typeof ImagePreviewItem>>();
+
+const state = reactive({
+  active: +props.startPosition,
+  rootWidth: 375,
+  rootHeight: 667,
+  disableZoom: false,
+});
+
+function callInterceptor(
+  interceptor: Interceptor | undefined,
+  done: () => void,
+) {
+  if (!interceptor) {
+    done();
+    return;
+  }
+  const result = interceptor(state.active);
+  if (result && typeof (result as any).then === 'function') {
+    (result as Promise<boolean | void>)
+      .then((val) => {
+        if (val !== false) done();
+      })
+      .catch(() => {});
+  } else if (result !== false) {
+    done();
+  }
+}
+
+const updateShow = (show: boolean) => emit('update:show', show);
+
+const emitClose = () => {
+  callInterceptor(props.beforeClose, () => updateShow(false));
+};
+
+const emitScale = (args: ImagePreviewScaleEventParams) =>
+  emit('scale', args);
+
+const setActive = (active: number) => {
+  if (active !== state.active) {
+    state.active = active;
+    emit('change', active);
+  }
+};
+
+const onDragStart = () => {
+  state.disableZoom = true;
+};
+
+const onDragEnd = () => {
+  state.disableZoom = false;
+};
+
+const onClosed = () => emit('closed');
+
+const onPopupUpdateShow = (show: boolean) => {
+  // Popup controls show via its own internal close mechanism
+  updateShow(show);
+};
+
+// --- Exposed methods ---
+
+function swipeTo(index: number, options?: { immediate?: boolean }) {
+  (swipeRef.value as any)?.swipeTo?.(index, options);
+}
+
+function resetScale() {
+  (activeItemRef.value as any)?.resetScale?.();
+}
+
+defineExpose({ resetScale, swipeTo });
+
+// --- Watchers ---
 
 watch(
   () => props.startPosition,
-  (val) => {
-    currentIndex.value = val;
-  },
+  (value) => setActive(+value),
 );
 
 watch(
   () => props.show,
-  (val) => {
-    if (val) {
-      currentIndex.value = props.startPosition;
+  (value) => {
+    if (value) {
+      setActive(+props.startPosition);
+      nextTick(() => {
+        swipeTo(+props.startPosition, { immediate: true });
+      });
+    } else {
+      emit('close', {
+        index: state.active,
+        url: props.images[state.active],
+      });
     }
   },
 );
 
-const currentImage = computed(() => {
-  if (props.images.length === 0) return '';
-  return props.images[currentIndex.value] || props.images[0];
+const popupClass = computed(() => {
+  const classes: any[] = [bem()];
+  if (props.className) classes.push(props.className);
+  return classes;
 });
 
-const indexText = computed(() => {
-  if (props.images.length === 0) return '';
-  return `${currentIndex.value + 1} / ${props.images.length}`;
+const overlayClassList = computed(() => {
+  const classes: any[] = [bem('overlay')];
+  if (props.overlayClass) classes.push(props.overlayClass);
+  return classes;
 });
-
-async function emitClose() {
-  if (props.beforeClose) {
-    const result = await props.beforeClose(currentIndex.value);
-    if (result === false) return;
-  }
-  emit('close', { index: currentIndex.value, url: currentImage.value });
-  emit('update:show', false);
-  emit('closed');
-}
-
-function onClose() {
-  emitClose();
-}
-
-function onPrev() {
-  if (currentIndex.value > 0) {
-    currentIndex.value--;
-    emit('change', currentIndex.value);
-  } else if (props.loop && props.images.length > 1) {
-    currentIndex.value = props.images.length - 1;
-    emit('change', currentIndex.value);
-  }
-}
-
-function onNext() {
-  if (currentIndex.value < props.images.length - 1) {
-    currentIndex.value++;
-    emit('change', currentIndex.value);
-  } else if (props.loop && props.images.length > 1) {
-    currentIndex.value = 0;
-    emit('change', currentIndex.value);
-  }
-}
-
-function onTapBackground() {
-  if (props.closeOnClickOverlay) {
-    onClose();
-  }
-}
-
-function onTapImage() {
-  if (props.closeOnClickImage) {
-    onClose();
-  }
-}
-
-const canGoPrev = computed(() => {
-  return props.loop || currentIndex.value > 0;
-});
-
-const canGoNext = computed(() => {
-  return props.loop || currentIndex.value < props.images.length - 1;
-});
-
-const closeButtonStyle = computed(() => {
-  const base: Record<string, any> = {
-    position: 'absolute',
-    zIndex: 2,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-  };
-  const pos = props.closeIconPosition;
-  if (pos.includes('top')) base.top = 0;
-  if (pos.includes('bottom')) base.bottom = 0;
-  if (pos.includes('left')) base.left = 0;
-  if (pos.includes('right')) base.right = 0;
-  return base;
-});
-
-const indicatorStyle = computed(() => (index: number) => ({
-  width: 6,
-  height: 6,
-  borderRadius: 3,
-  backgroundColor: index === currentIndex.value ? '#fff' : 'rgba(255,255,255,0.5)',
-  marginLeft: 3,
-  marginRight: 3,
-}));
 </script>
 
 <template>
-  <view
-    v-if="show"
-    :style="{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.9)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-    }"
-    @tap="onTapBackground"
+  <Popup
+    :show="show"
+    :class="popupClass"
+    :overlay="overlay"
+    :overlay-class="overlayClassList"
+    :overlay-style="overlayStyle"
+    :close-on-click-overlay="false"
+    :close-on-popstate="closeOnPopstate"
+    :transition="transition"
+    @closed="onClosed"
+    @update:show="onPopupUpdateShow"
   >
-    <!-- Close button using Icon component -->
+    <!-- Close icon -->
     <view
       v-if="closeable"
-      :style="closeButtonStyle"
-      @tap.stop="onClose"
+      :class="bem('close-icon', { [closeIconPosition]: true })"
+      @tap.stop="emitClose"
     >
-      <Icon :name="closeIcon" :size="22" color="#fff" />
+      <Icon :name="closeIcon" />
     </view>
 
-    <!-- Index indicator -->
-    <view
-      v-if="showIndex && images.length > 0"
-      :style="{
-        position: 'absolute',
-        top: 16,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        zIndex: 2,
-      }"
+    <!-- Swipe container -->
+    <Swipe
+      ref="swipeRef"
+      lazy-render
+      :loop="loop"
+      :class="bem('swipe')"
+      :vertical="vertical"
+      :duration="swipeDuration"
+      :initial-swipe="startPosition"
+      :show-indicators="showIndicators"
+      indicator-color="white"
+      @change="setActive"
     >
-      <slot name="index">
-        <text :style="{ fontSize: 14, color: '#fff' }">{{ indexText }}</text>
+      <ImagePreviewItem
+        v-for="(image, index) in images"
+        :key="index"
+        :ref="(el: any) => { if (index === state.active) activeItemRef = el; }"
+        :src="image"
+        :show="show"
+        :active="state.active"
+        :max-zoom="maxZoom"
+        :min-zoom="minZoom"
+        :root-width="state.rootWidth"
+        :root-height="state.rootHeight"
+        :disable-zoom="state.disableZoom"
+        :double-scale="doubleScale"
+        :close-on-click-image="closeOnClickImage"
+        :close-on-click-overlay="closeOnClickOverlay"
+        :vertical="vertical"
+        @scale="emitScale"
+        @close="emitClose"
+        @long-press="emit('longPress', { index })"
+      >
+        <template v-if="$slots.image" #image="slotProps">
+          <slot name="image" v-bind="slotProps" />
+        </template>
+      </ImagePreviewItem>
+    </Swipe>
+
+    <!-- Index indicator -->
+    <view v-if="showIndex && images.length > 0" :class="bem('index')">
+      <slot name="index" :index="state.active">
+        <text>{{ state.active + 1 }} / {{ images.length }}</text>
       </slot>
     </view>
 
-    <!-- Image display area -->
-    <view
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flex: 1,
-        width: '100%',
-      }"
-    >
-      <!-- Prev button -->
-      <view
-        v-if="images.length > 1 && canGoPrev"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 16,
-          opacity: 0.8,
-        }"
-        @tap.stop="onPrev"
-      >
-        <Icon name="arrow-left" :size="28" color="#fff" />
-      </view>
-      <view v-else :style="{ width: 60 }" />
-
-      <!-- Current image -->
-      <view
-        :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }"
-        @tap.stop="onTapImage"
-      >
-        <image
-          v-if="currentImage"
-          :src="currentImage"
-          :style="{ width: 300, height: 300, objectFit: 'contain' }"
-        />
-      </view>
-
-      <!-- Next button -->
-      <view
-        v-if="images.length > 1 && canGoNext"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 16,
-          opacity: 0.8,
-        }"
-        @tap.stop="onNext"
-      >
-        <Icon name="arrow" :size="28" color="#fff" />
-      </view>
-      <view v-else :style="{ width: 60 }" />
-    </view>
-
     <!-- Cover slot -->
-    <slot name="cover" />
-
-    <!-- Dot indicators -->
-    <view
-      v-if="showIndicators && images.length > 1"
-      :style="{
-        position: 'absolute',
-        bottom: 24,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }"
-    >
-      <view
-        v-for="(_, index) in images"
-        :key="index"
-        :style="indicatorStyle(index)"
-        @tap.stop="() => { currentIndex = index; emit('change', index); }"
-      />
+    <view v-if="$slots.cover" :class="bem('cover')">
+      <slot name="cover" />
     </view>
-  </view>
+  </Popup>
 </template>
