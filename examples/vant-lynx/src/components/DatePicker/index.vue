@@ -1,347 +1,281 @@
 <!--
-  Vant Feature Parity Report -- DatePicker
-  =========================================
-  Props: 11/12 supported
-    Supported: modelValue, columnsType, title, minDate, maxDate,
-               confirmButtonText, cancelButtonText, loading, readonly,
-               showToolbar, optionHeight
-    Missing:   filter, formatter (custom option text transforms),
-               swipeDuration, visibleOptionNum
-
-  Events: 4/4 supported
-    Supported: update:modelValue, confirm, cancel, change
-
-  Slots: 0/7 supported
-    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
-
-  Key Gaps:
-    - No filter/formatter for custom option text
-    - No scroll-wheel physics (tap-to-select only)
-    - No slot support for toolbar or column customization
-    - 'datehour' columnsType is a convenience alias (non-standard Vant)
+  Lynx Limitations:
+  - tag prop: Lynx has no HTML tags, always renders <view>
+  - scroll-wheel physics: tap-to-select via Picker component (no native wheel)
 -->
+<script lang="ts">
+const currentYear = new Date().getFullYear();
+</script>
+
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
-import Loading from '../Loading/index.vue';
+import { padZero, clamp } from '../../utils/format';
+import Picker from '../Picker/index.vue';
+import type { PickerOption, PickerColumn as PickerColumnType } from '../Picker/types';
+import type { Numeric } from '../../utils/format';
+import type {
+  DatePickerColumnType,
+  DatePickerFilter,
+  DatePickerFormatter,
+  DatePickerExpose,
+} from './types';
+import { genOptions, getMonthEndDay } from './utils';
+import './index.less';
 
-export type DatePickerColumnType = 'year' | 'month' | 'day' | 'hour';
-
-export interface DatePickerProps {
-  modelValue?: string[];
-  columnsType?: DatePickerColumnType[];
-  title?: string;
-  minDate?: Date;
-  maxDate?: Date;
-  confirmButtonText?: string;
-  cancelButtonText?: string;
-  loading?: boolean;
-  readonly?: boolean;
-  showToolbar?: boolean;
-  optionHeight?: number;
-}
-
-const props = withDefaults(defineProps<DatePickerProps>(), {
-  modelValue: () => [],
-  columnsType: () => ['year', 'month', 'day'] as DatePickerColumnType[],
-  confirmButtonText: 'Confirm',
-  cancelButtonText: 'Cancel',
-  minDate: () => new Date(new Date().getFullYear() - 10, 0, 1),
-  maxDate: () => new Date(new Date().getFullYear() + 10, 11, 31),
-  loading: false,
-  readonly: false,
-  showToolbar: true,
-  optionHeight: 44,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string[];
+    columnsType?: DatePickerColumnType[];
+    minDate?: Date;
+    maxDate?: Date;
+    filter?: DatePickerFilter;
+    formatter?: DatePickerFormatter;
+    title?: string;
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+    loading?: boolean;
+    readonly?: boolean;
+    showToolbar?: boolean;
+    visibleOptionNum?: Numeric;
+    optionHeight?: Numeric;
+    swipeDuration?: Numeric;
+  }>(),
+  {
+    modelValue: () => [],
+    columnsType: () => ['year', 'month', 'day'] as DatePickerColumnType[],
+    minDate: () => new Date(currentYear - 10, 0, 1),
+    maxDate: () => new Date(currentYear + 10, 11, 31),
+    formatter: ((_type: string, option: PickerOption) => option) as DatePickerFormatter,
+    loading: false,
+    readonly: false,
+    showToolbar: true,
+    visibleOptionNum: 6,
+    optionHeight: 44,
+    swipeDuration: 1000,
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]];
-  confirm: [value: string[]];
-  cancel: [];
-  change: [value: string[]];
+  confirm: [params: {
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  cancel: [params: {
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  change: [params: {
+    columnIndex: number;
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
 }>();
 
-function padZero(n: number): string {
-  return n < 10 ? `0${n}` : `${n}`;
-}
+const pickerRef = ref<InstanceType<typeof Picker>>();
 
-function getDaysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
-}
+// Helpers
+const isMinYear = (year: number) => year === props.minDate.getFullYear();
+const isMaxYear = (year: number) => year === props.maxDate.getFullYear();
+const isMinMonth = (month: number) => month === props.minDate.getMonth() + 1;
+const isMaxMonth = (month: number) => month === props.maxDate.getMonth() + 1;
 
-function getColumnLabel(type: string): string {
+function getValFromArr(values: string[], type: DatePickerColumnType): number {
+  const index = props.columnsType.indexOf(type);
+  const value = values[index];
+  if (value !== undefined && value !== '') return +value;
   switch (type) {
-    case 'year': return 'Year';
-    case 'month': return 'Month';
-    case 'day': return 'Day';
-    case 'hour': return 'Hour';
-    default: return '';
+    case 'year': return props.minDate.getFullYear();
+    case 'month': return props.minDate.getMonth() + 1;
+    case 'day': return props.minDate.getDate();
   }
 }
 
-function getYearIndex(): number {
-  return props.columnsType.indexOf('year');
-}
-
-function getMonthIndex(): number {
-  return props.columnsType.indexOf('month');
-}
-
-const minYear = computed(() => props.minDate.getFullYear());
-const maxYear = computed(() => props.maxDate.getFullYear());
-
-const years = computed(() => {
-  const result: string[] = [];
-  for (let y = minYear.value; y <= maxYear.value; y++) {
-    result.push(`${y}`);
-  }
-  return result;
-});
-
-function getDefaultValues(): string[] {
-  const now = new Date();
-  const y = `${now.getFullYear()}`;
-  const m = padZero(now.getMonth() + 1);
-  const d = padZero(now.getDate());
-  const h = padZero(now.getHours());
-
-  const map: Record<string, string> = { year: y, month: m, day: d, hour: h };
-  return props.columnsType.map((type) => map[type] ?? '00');
-}
-
-function buildColumns(vals: string[]): string[][] {
-  const result: string[][] = [];
-
-  for (let ci = 0; ci < props.columnsType.length; ci++) {
-    const colType = props.columnsType[ci];
-    if (colType === 'year') {
-      result.push(years.value);
-    } else if (colType === 'month') {
-      const months: string[] = [];
-      const yIdx = getYearIndex();
-      let startMonth = 1;
-      let endMonth = 12;
-      if (yIdx >= 0 && parseInt(vals[yIdx] ?? '0', 10) === minYear.value) {
-        startMonth = props.minDate.getMonth() + 1;
+function buildColumnsFromValues(values: string[]): PickerColumnType[] {
+  return props.columnsType.map((type) => {
+    switch (type) {
+      case 'year': {
+        return genOptions(
+          props.minDate.getFullYear(),
+          props.maxDate.getFullYear(),
+          'year', props.formatter, props.filter, values,
+        );
       }
-      if (yIdx >= 0 && parseInt(vals[yIdx] ?? '9999', 10) === maxYear.value) {
-        endMonth = props.maxDate.getMonth() + 1;
+      case 'month': {
+        const year = getValFromArr(values, 'year');
+        const min = isMinYear(year) ? props.minDate.getMonth() + 1 : 1;
+        const max = isMaxYear(year) ? props.maxDate.getMonth() + 1 : 12;
+        return genOptions(min, max, 'month', props.formatter, props.filter, values);
       }
-      for (let m = startMonth; m <= endMonth; m++) {
-        months.push(padZero(m));
+      case 'day': {
+        const year = getValFromArr(values, 'year');
+        let month = getValFromArr(values, 'month');
+        const minMonth = isMinYear(year) ? props.minDate.getMonth() + 1 : 1;
+        const maxMonth = isMaxYear(year) ? props.maxDate.getMonth() + 1 : 12;
+        month = clamp(month, minMonth, maxMonth);
+        const minD = isMinYear(year) && isMinMonth(month) ? props.minDate.getDate() : 1;
+        const maxD = isMaxYear(year) && isMaxMonth(month)
+          ? props.maxDate.getDate()
+          : getMonthEndDay(year, month);
+        return genOptions(minD, Math.max(minD, maxD), 'day', props.formatter, props.filter, values);
       }
-      result.push(months);
-    } else if (colType === 'day') {
-      const days: string[] = [];
-      const yIdx = getYearIndex();
-      const mIdx = getMonthIndex();
-      const yr = parseInt(vals[yIdx >= 0 ? yIdx : 0] ?? `${new Date().getFullYear()}`, 10);
-      const mo = parseInt(vals[mIdx >= 0 ? mIdx : 1] ?? '01', 10);
-      const maxDay = getDaysInMonth(yr, mo);
-      let startDay = 1;
-      let endDay = maxDay;
-      if (
-        yIdx >= 0 && mIdx >= 0 &&
-        parseInt(vals[yIdx] ?? '0', 10) === minYear.value &&
-        parseInt(vals[mIdx] ?? '0', 10) === props.minDate.getMonth() + 1
-      ) {
-        startDay = props.minDate.getDate();
-      }
-      if (
-        yIdx >= 0 && mIdx >= 0 &&
-        parseInt(vals[yIdx] ?? '9999', 10) === maxYear.value &&
-        parseInt(vals[mIdx] ?? '99', 10) === props.maxDate.getMonth() + 1
-      ) {
-        endDay = Math.min(maxDay, props.maxDate.getDate());
-      }
-      for (let d = startDay; d <= endDay; d++) {
-        days.push(padZero(d));
-      }
-      result.push(days);
-    } else if (colType === 'hour') {
-      const hours: string[] = [];
-      for (let h = 0; h <= 23; h++) {
-        hours.push(padZero(h));
-      }
-      result.push(hours);
+      default: return [];
     }
-  }
-
-  return result;
+  });
 }
 
-// Track current values directly, avoiding circular computed deps
-const currentValues = ref<string[]>([]);
-
-function initValues() {
-  if (props.modelValue && props.modelValue.length > 0) {
-    currentValues.value = [...props.modelValue];
-  } else {
-    currentValues.value = getDefaultValues();
-  }
+function clampToColumns(values: string[], cols: PickerColumnType[]): string[] {
+  return cols.map((col, i) => {
+    if (col.length === 0) return '';
+    const val = values[i];
+    if (val !== undefined && val !== '') {
+      const minV = +col[0].value!;
+      const maxV = +col[col.length - 1].value!;
+      const n = +val;
+      if (!isNaN(n)) {
+        return padZero(clamp(n, minV, maxV));
+      }
+    }
+    return String(col[0].value ?? '');
+  });
 }
 
-watch(() => props.modelValue, () => initValues(), { immediate: true });
+// Resolve initial values: clamp modelValue to valid range, fill missing with defaults
+function resolveValues(rawValues: string[]): string[] {
+  const cols1 = buildColumnsFromValues(rawValues);
+  const clamped = clampToColumns(rawValues, cols1);
+  const cols2 = buildColumnsFromValues(clamped);
+  return clampToColumns(clamped, cols2);
+}
 
-const columns = computed(() => buildColumns(currentValues.value));
+// The selected values passed to Picker
+const selectedValues = ref<string[]>(resolveValues(props.modelValue));
 
-const selectedIndexes = computed(() =>
-  columns.value.map((col, i) => {
-    const idx = col.indexOf(currentValues.value[i] ?? '');
-    return idx >= 0 ? idx : 0;
-  }),
+// Columns computed from selectedValues
+const columns = computed<PickerColumnType[]>(() =>
+  buildColumnsFromValues(selectedValues.value),
 );
 
-const selectedValues = computed(() =>
-  columns.value.map((col, i) => col[selectedIndexes.value[i]] ?? col[0] ?? ''),
+// Sync from external modelValue changes
+watch(
+  () => props.modelValue,
+  (newValues) => {
+    const resolved = resolveValues(newValues);
+    if (JSON.stringify(resolved) !== JSON.stringify(selectedValues.value)) {
+      selectedValues.value = resolved;
+    }
+  },
 );
 
-function onSelectItem(colIndex: number, itemIndex: number) {
-  if (props.readonly) return;
-
-  const newVals = [...currentValues.value];
-  newVals[colIndex] = columns.value[colIndex][itemIndex] ?? newVals[colIndex];
-
-  // Rebuild columns with new values and clamp subsequent columns
-  const newCols = buildColumns(newVals);
-  for (let i = colIndex + 1; i < newCols.length; i++) {
-    const curIdx = newCols[i].indexOf(newVals[i] ?? '');
-    if (curIdx < 0) {
-      newVals[i] = newCols[i][0] ?? '';
+// Re-clamp when min/max date changes
+watch(
+  [() => props.minDate, () => props.maxDate],
+  () => {
+    const resolved = resolveValues(selectedValues.value);
+    if (JSON.stringify(resolved) !== JSON.stringify(selectedValues.value)) {
+      selectedValues.value = resolved;
     }
+  },
+);
+
+// Map Picker events
+function onChange(params: {
+  columnIndex: number;
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  const strValues = params.selectedValues.map(String);
+  // Re-clamp dependent columns (changing year may invalidate month/day)
+  const resolved = resolveValues(strValues);
+  selectedValues.value = resolved;
+  if (JSON.stringify(resolved) !== JSON.stringify(props.modelValue)) {
+    emit('update:modelValue', resolved);
   }
-
-  currentValues.value = newVals;
-  emit('change', newVals);
+  emit('change', {
+    columnIndex: params.columnIndex,
+    selectedValues: resolved,
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
 }
 
-function onConfirm() {
-  emit('update:modelValue', selectedValues.value);
-  emit('confirm', selectedValues.value);
+function onConfirm(params: {
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  emit('confirm', {
+    selectedValues: params.selectedValues.map(String),
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
 }
 
-function onCancel() {
-  emit('cancel');
+function onCancel(params: {
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  emit('cancel', {
+    selectedValues: params.selectedValues.map(String),
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
 }
 
-const toolbarStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  justifyContent: 'space-between' as const,
-  height: 44,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
+function confirm() {
+  pickerRef.value?.confirm();
+}
 
-const columnsContainerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  height: props.optionHeight * 5,
-  backgroundColor: '#fff',
-  overflow: 'hidden' as const,
-  position: 'relative' as const,
-}));
+function getSelectedDate(): string[] {
+  return selectedValues.value;
+}
 
-const loadingOverlayStyle = {
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: 'rgba(255, 255, 255, 0.6)',
-};
+defineExpose<DatePickerExpose>({ confirm, getSelectedDate });
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }">
-    <!-- Toolbar -->
-    <view v-if="showToolbar" :style="toolbarStyle">
-      <text
-        :style="{ fontSize: 14, color: '#969799', padding: 4 }"
-        @tap="onCancel"
-      >{{ cancelButtonText }}</text>
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
-      <text
-        :style="{ fontSize: 14, color: '#1989fa', padding: 4 }"
-        @tap="onConfirm"
-      >{{ confirmButtonText }}</text>
-    </view>
-
-    <!-- Column Headers -->
-    <view :style="{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', paddingTop: 8 }">
-      <view
-        v-for="(colType, ci) in columnsType"
-        :key="ci"
-        :style="{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }"
-      >
-        <text :style="{ fontSize: 12, color: '#969799' }">{{ getColumnLabel(colType) }}</text>
-      </view>
-    </view>
-
-    <!-- Columns -->
-    <view :style="columnsContainerStyle">
-      <view
-        v-for="(column, colIndex) in columns"
-        :key="colIndex"
-        :style="{
-          flex: 1,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          position: 'relative' as const,
-        }"
-      >
-        <!-- Selected item highlight -->
-        <view
-          :style="{
-            position: 'absolute' as const,
-            top: optionHeight * 2,
-            left: 0,
-            right: 0,
-            height: optionHeight,
-            borderTopWidth: 0.5,
-            borderTopStyle: 'solid' as const,
-            borderTopColor: '#ebedf0',
-            borderBottomWidth: 0.5,
-            borderBottomStyle: 'solid' as const,
-            borderBottomColor: '#ebedf0',
-          }"
-        />
-        <!-- Items list -->
-        <view :style="{ paddingTop: optionHeight * 2, paddingBottom: optionHeight * 2 }">
-          <view
-            v-for="(item, itemIndex) in column"
-            :key="itemIndex"
-            :style="{
-              height: optionHeight,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }"
-            @tap="onSelectItem(colIndex, itemIndex)"
-          >
-            <text
-              :style="{
-                fontSize: 16,
-                color: selectedIndexes[colIndex] === itemIndex ? '#323233' : '#969799',
-                fontWeight: selectedIndexes[colIndex] === itemIndex ? 'bold' as const : 'normal' as const,
-              }"
-            >{{ item }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- Loading overlay -->
-      <view v-if="loading" :style="loadingOverlayStyle">
-        <Loading />
-      </view>
-    </view>
-  </view>
+  <Picker
+    ref="pickerRef"
+    :model-value="(selectedValues as Numeric[])"
+    :columns="columns"
+    :title="title"
+    :confirm-button-text="confirmButtonText"
+    :cancel-button-text="cancelButtonText"
+    :loading="loading"
+    :readonly="readonly"
+    :show-toolbar="showToolbar"
+    :visible-option-num="visibleOptionNum"
+    :option-height="optionHeight"
+    :swipe-duration="swipeDuration"
+    @change="onChange"
+    @confirm="onConfirm"
+    @cancel="onCancel"
+  >
+    <template v-if="$slots.toolbar" #toolbar>
+      <slot name="toolbar" />
+    </template>
+    <template v-if="$slots.title" #title>
+      <slot name="title" />
+    </template>
+    <template v-if="$slots.confirm" #confirm>
+      <slot name="confirm" />
+    </template>
+    <template v-if="$slots.cancel" #cancel>
+      <slot name="cancel" />
+    </template>
+    <template v-if="$slots.option" #option="{ option, index }">
+      <slot name="option" :option="option" :index="index" />
+    </template>
+    <template v-if="$slots['columns-top']" #columns-top>
+      <slot name="columns-top" />
+    </template>
+    <template v-if="$slots['columns-bottom']" #columns-bottom>
+      <slot name="columns-bottom" />
+    </template>
+  </Picker>
 </template>

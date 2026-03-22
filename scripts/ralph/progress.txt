@@ -17,6 +17,7 @@ Branch: feat/vant-lynx-v2
 - **Style values**: Use string px units (`"20px"` not `20`) to avoid deprecation warnings.
 - **Unknown icon fallback**: Icon names not in @font-face map fall back to rendering the name itself as text (backward compat with `icon="★"` etc.)
 - **Lynx CSS no-inherit**: CSS properties don't inherit parent→child by default. Apply fontSize/color directly to `<text>` elements, not just the parent `<view>`.
+- **Function-type prop defaults**: In `withDefaults(defineProps<{...}>())`, function-type prop defaults (e.g., `formatter`, `filter`) must NOT be wrapped in a factory function. Use the function directly: `formatter: (type, option) => option`. Wrapping in `() => ((type, option) => option)` causes the formatter to return a function instead of the processed value.
 - **Utils module**: `src/utils/create.ts` (createNamespace+bem), `src/utils/format.ts` (addUnit, isDef, isNumeric), `src/utils/index.ts` (re-exports).
 - **Text query in tests**: Vue renders empty `<text>` elements as v-if/slot anchors. Use `querySelectorAll('text')` + `Array.from(...).find(t => t.textContent === '...')` to find the right text element, NOT `querySelector('text')` which may return an empty anchor.
 - **No Vue `<Transition>` in Lynx**: `@vue/runtime-dom`'s Transition uses `el.classList` which doesn't exist on Lynx elements. Use CSS transitions directly (inline transitionProperty/transitionDuration + toggled opacity/transform) instead of `<Transition>` component. Fire opened/closed events via `setTimeout(duration)`.
@@ -849,4 +850,32 @@ Branch: feat/vant-lynx-v2
 - Files: index.vue, index.less, types.ts, utils.ts, PickerColumn.vue, PickerToolbar.vue, test/index.spec.ts (7 files; Vant has 8: Picker.tsx, PickerColumn.tsx, PickerToolbar.tsx, types.ts, utils.ts, index.ts, index.less, demo/index.vue)
 - Key changes: Complete rewrite from single-file inline-styles to proper Vant architecture. Split into 3 sub-components (Picker, PickerColumn, PickerToolbar). PickerColumn uses transform: translateY() with momentum/inertia physics (speed/0.003 deceleration). Added cascade column support (formatCascadeColumns). Added columnsFieldNames prop. All CSS in BEM selectors. Masks/frame have pointer-events: none. Exposed confirm() and getSelectedOptions() via defineExpose.
 - Limitations: allowHtml (Lynx has no innerHTML/v-html), getElementTranslateY (no getComputedStyle in background thread; momentum mid-stop approximated)
+---
+
+## 2026-03-22 - parity-picker-group: PickerGroup
+- Props: 7/7 (tabs, activeTab, nextStepText, showToolbar, title, confirmButtonText, cancelButtonText)
+- Events: 3/3 (confirm, cancel, update:activeTab)
+- Slots: 5/5 (default, toolbar, title, confirm, cancel)
+- CSS Variables: 1 defined in index.less (--van-picker-group-background)
+- Animations: none (PickerGroup has no transitions — delegates to Tabs)
+- Tests: 9 cases (Vant has 4, we have 9 — added cancel event, showToolbar, BEM class, custom button text, v-for tests)
+- Demo sections: 5/5 (选择日期时间, 下一步按钮, 选择日期范围, 选择时间范围, 受控模式)
+- Visual match: pass (BEM classes, CSS variables, Tabs integration)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: PickerGroup.tsx, types.ts, index.ts, index.less)
+- Key changes: Complete rewrite from inline-styles to Vant architecture. Uses render function (JSX-like) to distribute slot children into Tabs by index. Uses provide/inject (PICKER_GROUP_KEY) for parent-child coordination with Picker. Modified Picker to register with PickerGroup context and return params from confirm(). nextStepText advances tabs before final confirm. PickerToolbar reused from Picker.
+- Limitations: teleport (not supported in Lynx)
+---
+
+## 2026-03-22 - parity-date-picker: DatePicker
+- Props: 15/15 (modelValue, columnsType, minDate, maxDate, filter, formatter, title, confirmButtonText, cancelButtonText, loading, readonly, showToolbar, visibleOptionNum, optionHeight, swipeDuration)
+- Events: 4/4 (update:modelValue, confirm, cancel, change)
+- Slots: 7/7 (toolbar, title, confirm, cancel, option, columns-top, columns-bottom)
+- CSS Variables: 0 (DatePicker is a thin wrapper around Picker — all CSS in Picker's index.less)
+- Animations: none (DatePicker has no transitions — inherits from Picker)
+- Tests: 11 cases (Vant has 10, we have 11 — added expose, columns type, default columns tests)
+- Demo sections: 4/4 (选择年月日, 选择年月, 格式化选项, 过滤选项)
+- Visual match: pass (uses Picker component, BEM classes inherited)
+- Files: index.vue, index.less, types.ts, utils.ts, test/index.spec.ts (5 files; Vant has 4: DatePicker.tsx, utils.ts, index.ts, types)
+- Key changes: Complete rewrite from standalone inline-style component to thin wrapper around Picker (matching Vant's architecture). Added shared utils (padZero, clamp, isSameValue) to src/utils/format.ts. Created types.ts and utils.ts (genOptions, getMonthEndDay, times, formatValueRange). Exposed confirm() and getSelectedDate(). Fixed critical bug: function-type prop default must NOT be wrapped in factory function.
+- Limitations: tag prop (always <view> in Lynx), scroll-wheel physics (tap-to-select via Picker)
 ---
