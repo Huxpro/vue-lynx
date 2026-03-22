@@ -7,3 +7,33 @@
   --van-back-top-text-color: #fff;
   --van-back-top-background: var(--van-blue, #1989fa);
 }
+
+.van-back-top {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--van-back-top-size);
+  height: var(--van-back-top-size);
+  right: var(--van-back-top-right);
+  bottom: var(--van-back-top-bottom);
+  z-index: var(--van-back-top-z-index);
+  color: var(--van-back-top-text-color);
+  border-radius: 999px;
+  background-color: var(--van-back-top-background);
+  transform: scale(0);
+  transition: transform var(--van-duration-base, 0.3s) cubic-bezier(0.25, 0.8, 0.5, 1);
+
+  &--active {
+    transform: scale(1);
+  }
+
+  &__placeholder {
+    display: none;
+  }
+
+  &__icon {
+    font-size: var(--van-back-top-icon-size);
+    font-weight: var(--van-font-bold, 600);
+  }
+}
