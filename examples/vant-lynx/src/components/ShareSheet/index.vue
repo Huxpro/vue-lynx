@@ -1,243 +1,210 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 8/11 supported (show, options, title, description, cancelText, closeable, round, closeOnClickOverlay)
-  - Missing: safeAreaInsetBottom (N/A in Lynx), closeOnPopstate (N/A in Lynx), teleport (N/A in Lynx)
-  - Events: 3/3 supported (select, cancel, update:show)
-  - Slots: 3/3 supported (title, description, cancel)
-  - Multi-row options: Supports nested arrays (ShareSheetOption[][]) for multi-row layout
-  - Icon integration: Uses Icon component for named icons with iconMap mapping, image URLs rendered as <image>
-  - Uses Popup component internally (matching Vant architecture)
-  - Option description support
-  - Gaps:
-    - No safeAreaInsetBottom (Lynx limitation)
-    - No closeOnPopstate (Lynx has no browser history)
-    - No teleport (N/A in Lynx)
-    - No CSS transition animations
+  Lynx Limitations:
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - closeOnPopstate: accepted for API compat but no browser history API in Lynx
+  - lockScroll: accepted for API compat but no document.body scroll in Lynx
+  - safeAreaInsetBottom: accepted for API compat
+  - <button> tag: uses <view> instead (Lynx has no HTML tags)
+  - ::before hairline: uses border-top 0.5px instead for row border
+  - ::before cancel gap: uses separate <view> element instead of pseudo-element
+  - :active pseudo-class: not supported in Lynx
+  - cursor: not applicable in Lynx
+  - overflow-x: auto: options row uses scroll-view for horizontal scrolling
+  - HAPTICS_FEEDBACK: not available in Lynx
+  - <h2> / <span>: uses <text> instead (Lynx has no HTML tags)
+  - <img>: uses <image> instead
 -->
 <script setup lang="ts">
-import { computed, useSlots } from 'vue-lynx';
+import { computed } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Popup from '../Popup/index.vue';
 import Icon from '../Icon/index.vue';
+import type { ShareSheetOption } from './types';
+import './index.less';
 
-export interface ShareOption {
-  name: string;
-  icon: string;
-  description?: string;
-  className?: string;
-}
+const [, bem] = createNamespace('share-sheet');
 
-export type ShareSheetOptions = ShareOption[] | ShareOption[][];
-
-export interface ShareSheetProps {
-  show?: boolean;
-  options?: ShareSheetOptions;
-  title?: string;
-  description?: string;
-  cancelText?: string;
-  closeable?: boolean;
-  round?: boolean;
-  closeOnClickOverlay?: boolean;
-}
-
-const props = withDefaults(defineProps<ShareSheetProps>(), {
-  show: false,
-  options: () => [],
-  title: '',
-  description: '',
-  cancelText: 'Cancel',
-  closeable: true,
-  round: true,
-  closeOnClickOverlay: true,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    title?: string;
+    round?: boolean;
+    options?: ShareSheetOption[] | ShareSheetOption[][];
+    cancelText?: string;
+    description?: string;
+    closeOnPopstate?: boolean;
+    safeAreaInsetBottom?: boolean;
+    // Popup shared props
+    zIndex?: number | string;
+    overlay?: boolean;
+    duration?: number | string;
+    lockScroll?: boolean;
+    lazyRender?: boolean;
+    beforeClose?: (...args: any[]) => boolean | Promise<boolean>;
+    overlayProps?: Record<string, any>;
+    overlayStyle?: Record<string, any>;
+    overlayClass?: string | string[] | Record<string, boolean>;
+    transitionAppear?: boolean;
+    closeOnClickOverlay?: boolean;
+    teleport?: string | object;
+  }>(),
+  {
+    show: false,
+    round: true,
+    options: () => [],
+    safeAreaInsetBottom: true,
+    overlay: true,
+    closeOnClickOverlay: true,
+    lockScroll: true,
+    lazyRender: true,
+  },
+);
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
-  select: [option: ShareOption, index: number];
+  select: [option: ShareSheetOption, index: number];
   cancel: [];
+  open: [];
+  close: [];
+  opened: [];
+  closed: [];
+  'click-overlay': [event: any];
 }>();
 
-const slots = useSlots();
+defineSlots<{
+  title?: () => any;
+  description?: () => any;
+  cancel?: () => any;
+}>();
 
 // Map known share icon names to Vant icon names
-const iconNameMap: Record<string, string> = {
+const iconMap: Record<string, string> = {
   qq: 'qq',
-  link: 'link',
+  link: 'link-o',
   weibo: 'weibo',
   qrcode: 'qr',
-  poster: 'photo',
-  wechat: 'chat',
-  'weapp-qrcode': 'qr',
-  'wechat-moments': 'chat',
+  poster: 'photo-o',
+  wechat: 'wechat',
+  'weapp-qrcode': 'miniprogram-o',
+  'wechat-moments': 'wechat-moments',
 };
 
-function isImageIcon(icon?: string): boolean {
-  return !!icon && icon.includes('/');
+function isImage(name?: string): boolean {
+  return !!name && name.includes('/');
 }
 
-function onUpdateShow(val: boolean) {
-  emit('update:show', val);
-}
+const updateShow = (value: boolean) => emit('update:show', value);
 
-function onSelect(option: ShareOption, index: number) {
-  emit('select', option, index);
-  emit('update:show', false);
-}
-
-function onCancel() {
-  emit('update:show', false);
+const onCancel = () => {
+  updateShow(false);
   emit('cancel');
-}
+};
 
-// Determine if options is multi-row (array of arrays)
+const onSelect = (option: ShareSheetOption, index: number) => {
+  emit('select', option, index);
+};
+
+// Normalize options: always return array of arrays for rendering
 const isMultiRow = computed(() => {
   return Array.isArray(props.options[0]);
 });
 
-const normalizedOptions = computed((): ShareOption[][] => {
+const normalizedOptions = computed((): ShareSheetOption[][] => {
   if (!props.options || props.options.length === 0) return [];
   if (isMultiRow.value) {
-    return props.options as ShareOption[][];
+    return props.options as ShareSheetOption[][];
   }
-  return [props.options as ShareOption[]];
+  return [props.options as ShareSheetOption[]];
 });
 
-const hasTitle = computed(() => !!slots.title || !!props.title);
-const hasDescription = computed(() => !!slots.description || !!props.description);
-const hasCancel = computed(() => !!slots.cancel || !!props.cancelText);
+const hasHeader = computed(() => {
+  return !!props.title || !!props.description;
+});
+
+const hasCancelText = computed(() => {
+  return props.cancelText !== '' && props.cancelText !== undefined;
+});
+
+const popupProps = computed(() => ({
+  show: props.show,
+  position: 'bottom' as const,
+  round: props.round,
+  closeable: false,
+  closeOnPopstate: props.closeOnPopstate,
+  safeAreaInsetBottom: props.safeAreaInsetBottom,
+  zIndex: props.zIndex,
+  overlay: props.overlay,
+  duration: props.duration,
+  lockScroll: props.lockScroll,
+  lazyRender: props.lazyRender,
+  beforeClose: props.beforeClose,
+  overlayProps: props.overlayProps,
+  overlayStyle: props.overlayStyle,
+  overlayClass: props.overlayClass,
+  transitionAppear: props.transitionAppear,
+  closeOnClickOverlay: props.closeOnClickOverlay,
+  teleport: props.teleport,
+}));
 </script>
 
 <template>
   <Popup
-    :show="show"
-    position="bottom"
-    :round="round"
-    :close-on-click-overlay="closeOnClickOverlay"
-    @update:show="onUpdateShow"
+    v-bind="popupProps"
+    @update:show="updateShow"
+    @open="emit('open')"
+    @close="emit('close')"
+    @opened="emit('opened')"
+    @closed="emit('closed')"
+    @click-overlay="(e: any) => emit('click-overlay', e)"
   >
-    <view :style="{ display: 'flex', flexDirection: 'column' }">
+    <view :class="bem()">
       <!-- Header -->
-      <view
-        v-if="hasTitle || hasDescription"
-        :style="{
-          paddingTop: 12,
-          paddingBottom: 12,
-          paddingLeft: 16,
-          paddingRight: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }"
-      >
+      <view v-if="hasHeader || $slots.title || $slots.description" :class="bem('header')">
         <slot name="title">
-          <text
-            v-if="title"
-            :style="{
-              fontSize: 14,
-              fontWeight: 'bold',
-              color: '#323233',
-              lineHeight: 20,
-              marginBottom: hasDescription ? 8 : 0,
-            }"
-          >{{ title }}</text>
+          <text v-if="title" :class="bem('title')">{{ title }}</text>
         </slot>
         <slot name="description">
-          <text
-            v-if="description"
-            :style="{
-              fontSize: 12,
-              color: '#969799',
-              lineHeight: 16,
-            }"
-          >{{ description }}</text>
+          <text v-if="description" :class="bem('description')">{{ description }}</text>
         </slot>
       </view>
 
       <!-- Options rows -->
-      <view
+      <scroll-view
         v-for="(row, rowIndex) in normalizedOptions"
         :key="rowIndex"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          paddingTop: 16,
-          paddingBottom: 16,
-          paddingLeft: 8,
-          paddingRight: 8,
-          borderTopWidth: rowIndex > 0 ? 8 : 0,
-          borderTopStyle: 'solid',
-          borderTopColor: '#f7f8fa',
-        }"
+        scroll-orientation="horizontal"
+        :class="[bem('options', { border: rowIndex !== 0 })]"
       >
         <view
-          v-for="(option, index) in row"
-          :key="index"
-          :style="{
-            width: '25%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            paddingTop: 8,
-            paddingBottom: 8,
-          }"
-          @tap="onSelect(option, index)"
+          v-for="(option, optIndex) in row"
+          :key="optIndex"
+          :class="[bem('option'), option.className]"
+          @tap="onSelect(option, optIndex)"
         >
-          <!-- Icon area -->
-          <view
-            :style="{
-              width: 48,
-              height: 48,
-              borderRadius: 24,
-              backgroundColor: '#f2f3f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 8,
-              overflow: 'hidden',
-            }"
-          >
-            <!-- Image icon (URL containing '/') -->
-            <image
-              v-if="isImageIcon(option.icon)"
-              :src="option.icon"
-              :style="{ width: 48, height: 48, borderRadius: 24 }"
-            />
-            <!-- Named icon via Icon component -->
-            <Icon
-              v-else
-              :name="iconNameMap[option.icon] || option.icon"
-              :size="24"
-              color="#646566"
-            />
+          <!-- Image icon (URL containing '/') -->
+          <image
+            v-if="isImage(option.icon)"
+            :src="option.icon"
+            :class="bem('image-icon')"
+          />
+          <!-- Named icon -->
+          <view v-else :class="bem('icon', [option.icon])">
+            <Icon :name="iconMap[option.icon] || option.icon" />
           </view>
-          <text :style="{ fontSize: 12, color: '#646566', lineHeight: 18 }">{{ option.name }}</text>
-          <text
-            v-if="option.description"
-            :style="{ fontSize: 10, color: '#c8c9cc', lineHeight: 14, marginTop: 2 }"
-          >{{ option.description }}</text>
+          <text v-if="option.name" :class="bem('name')">{{ option.name }}</text>
+          <text v-if="option.description" :class="bem('option-description')">{{ option.description }}</text>
         </view>
-      </view>
-
-      <!-- Gap between options and cancel -->
-      <view :style="{ height: 8, backgroundColor: '#f7f8fa' }" />
+      </scroll-view>
 
       <!-- Cancel button -->
-      <view
-        v-if="hasCancel"
-        :style="{
-          paddingTop: 16,
-          paddingBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#fff',
-        }"
-        @tap="onCancel"
-      >
-        <slot name="cancel">
-          <text :style="{ fontSize: 16, color: '#323233', lineHeight: 22 }">{{ cancelText }}</text>
-        </slot>
-      </view>
+      <template v-if="$slots.cancel || hasCancelText">
+        <view :class="bem('cancel-gap')" />
+        <view :class="bem('cancel')" @tap="onCancel">
+          <slot name="cancel">
+            <text>{{ cancelText }}</text>
+          </slot>
+        </view>
+      </template>
     </view>
   </Popup>
 </template>
