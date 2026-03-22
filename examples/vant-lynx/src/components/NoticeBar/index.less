@@ -1,11 +1,76 @@
 :root {
   --van-notice-bar-height: 40px;
-  --van-notice-bar-padding: 0 var(--van-padding-md, 16px);
-  --van-notice-bar-wrapable-padding: var(--van-padding-xs, 8px) var(--van-padding-md, 16px);
-  --van-notice-bar-text-color: var(--van-orange-dark, #ed6a0c);
-  --van-notice-bar-font-size: var(--van-font-size-md, 14px);
+  --van-notice-bar-padding: 0 16px;
+  --van-notice-bar-wrapable-padding: 4px 16px;
+  --van-notice-bar-text-color: #ed6a0c;
+  --van-notice-bar-font-size: 14px;
   --van-notice-bar-line-height: 24px;
-  --van-notice-bar-background: var(--van-orange-light, #fffbe8);
+  --van-notice-bar-background: #fffbe8;
   --van-notice-bar-icon-size: 16px;
   --van-notice-bar-icon-min-width: 24px;
+}
+
+.van-notice-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--van-notice-bar-height);
+  padding: var(--van-notice-bar-padding);
+  color: var(--van-notice-bar-text-color);
+  font-size: var(--van-notice-bar-font-size);
+  line-height: var(--van-notice-bar-line-height);
+  background: var(--van-notice-bar-background);
+
+  &__left-icon,
+  &__right-icon {
+    min-width: var(--van-notice-bar-icon-min-width);
+    font-size: var(--van-notice-bar-icon-size);
+  }
+
+  &__right-icon {
+    text-align: right;
+    cursor: pointer;
+  }
+
+  &__wrap {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  &__content {
+    position: absolute;
+    white-space: nowrap;
+    transition-timing-function: linear;
+
+    &.van-ellipsis {
+      max-width: 100%;
+    }
+  }
+
+  &--wrapable {
+    height: auto;
+    padding: var(--van-notice-bar-wrapable-padding);
+
+    .van-notice-bar {
+      &__wrap {
+        height: auto;
+      }
+
+      &__content {
+        position: relative;
+        white-space: normal;
+        word-wrap: break-word;
+      }
+    }
+  }
+}
+
+.van-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

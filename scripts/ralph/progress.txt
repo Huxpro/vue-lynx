@@ -469,3 +469,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from crude border-based 4-quadrant rendering to proper SVG path rendering using Lynx's <svg content="..."> attribute. Generates Vant's exact SVG markup (arc paths, stroke-dasharray progress, linearGradient for gradient colors, viewBox sizing, rotation for startPosition). Uses createNamespace('circle') + BEM classes. CSS variables in index.less. Gradient color support via SVG linearGradient.
 - Limitations: SVG rendered via content attribute string (not inline SVG children), raf/cancelRaf uses setTimeout approximation
 ---
+
+## 2026-03-22 - parity-notice-bar: NoticeBar
+- Props: 9/9 (text, mode, color, delay, speed, leftIcon, wrapable, background, scrollable)
+- Events: 2/2 (close, replay)
+- Slots: 3/3 (default, left-icon, right-icon)
+- CSS Variables: 9 defined in index.less (--van-notice-bar-height, padding, wrapable-padding, text-color, font-size, line-height, background, icon-size, icon-min-width)
+- Animations: CSS transition on transform:translateX() for marquee scrolling (matches Vant's approach), transitionend event for loop replay
+- Tests: 15 cases (Vant has 6, we have 15 — added BEM classes, wrapable, ellipsis, slot, left-icon, color tests)
+- Demo sections: 6/6 (基础用法, 滚动播放, 多行展示, 通知栏模式, 自定义样式, 垂直滚动)
+- Visual match: pass (BEM classes, CSS variables, marquee via translateX)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: NoticeBar.tsx, types.ts, index.less, test/index.spec.tsx)
+- Key changes: Rewrote from inline-style/setInterval approach to BEM classes + CSS transition + translateX (matching Vant). Added createNamespace('notice-bar') with full class selectors in .less. Inline styles only for color/background props.
+- Limitations: getBoundingClientRect (uses text-length estimation fallback), onPopupReopen (no popup reopen composable), pageshow event (no pageshow in Lynx), onActivated (no keep-alive), transitionend (may need setTimeout fallback in some Lynx runtimes)
+---
