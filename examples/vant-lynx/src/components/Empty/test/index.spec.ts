@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { h, defineComponent, nextTick } from 'vue-lynx';
+import { h, defineComponent } from 'vue-lynx';
 import { render } from 'vue-lynx-testing-library';
 import Empty from '../index.vue';
 
@@ -55,7 +55,7 @@ describe('Empty', () => {
     expect(texts).toContain('Custom bottom');
   });
 
-  // Vant test 4: should render preset image types
+  // Vant test 4: should render preset images for each type
   it('should render preset images for each type', () => {
     for (const type of ['default', 'error', 'network', 'search']) {
       const { container } = render(
@@ -65,7 +65,6 @@ describe('Empty', () => {
           },
         }),
       );
-      // Each preset type should render a text element with an emoji
       const texts = getTexts(container);
       expect(texts.length).toBeGreaterThan(0);
     }
@@ -80,9 +79,8 @@ describe('Empty', () => {
         },
       }),
     );
-    // Find the image container view (second view level)
-    const rootView = container.querySelector('view');
-    const imageView = rootView?.querySelector('view');
+    const imageView = container.querySelector('.van-empty__image');
+    expect(imageView).toBeTruthy();
     const style = imageView?.getAttribute('style') || '';
     expect(style).toContain('50px');
   });
@@ -96,8 +94,7 @@ describe('Empty', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const imageView = rootView?.querySelector('view');
+    const imageView = container.querySelector('.van-empty__image');
     const style = imageView?.getAttribute('style') || '';
     expect(style).toContain('1vw');
   });
@@ -111,8 +108,7 @@ describe('Empty', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const imageView = rootView?.querySelector('view');
+    const imageView = container.querySelector('.van-empty__image');
     const style = imageView?.getAttribute('style') || '';
     expect(style).toContain('20px');
     expect(style).toContain('10px');
@@ -131,17 +127,21 @@ describe('Empty', () => {
     expect(texts).toContain('Nothing here');
   });
 
-  // Additional: should render with default state
-  it('should render with default state', () => {
+  // Additional: should use BEM class names
+  it('should use BEM class names', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Empty);
+          return h(Empty, { description: 'test' }, {
+            default: () => h('text', null, 'bottom'),
+          });
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-empty')).toBeTruthy();
+    expect(container.querySelector('.van-empty__image')).toBeTruthy();
+    expect(container.querySelector('.van-empty__description')).toBeTruthy();
+    expect(container.querySelector('.van-empty__bottom')).toBeTruthy();
   });
 
   // Additional: should render custom image URL
@@ -168,15 +168,7 @@ describe('Empty', () => {
         },
       }),
     );
-    // Should only have image container view, no bottom view
-    const rootView = container.querySelector('view');
-    const childViews = rootView
-      ? Array.from(rootView.children).filter(
-          (el: any) => el.tagName?.toLowerCase() === 'view',
-        )
-      : [];
-    // Only the image container view should be present
-    expect(childViews.length).toBe(1);
+    expect(container.querySelector('.van-empty__bottom')).toBeFalsy();
   });
 
   // Additional: should not render description when neither prop nor slot provided
@@ -188,16 +180,6 @@ describe('Empty', () => {
         },
       }),
     );
-    // No text with typical description content should exist
-    const texts = getTexts(container);
-    const hasDescription = texts.some(
-      (t) =>
-        t.length > 5 &&
-        !t.includes('\u{1F4ED}') &&
-        !t.includes('\u{26A0}') &&
-        !t.includes('\u{1F310}') &&
-        !t.includes('\u{1F50D}'),
-    );
-    expect(hasDescription).toBe(false);
+    expect(container.querySelector('.van-empty__description')).toBeFalsy();
   });
 });
