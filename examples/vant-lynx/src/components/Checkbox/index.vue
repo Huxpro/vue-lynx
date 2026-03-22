@@ -8,8 +8,8 @@
 <script setup lang="ts">
 import { computed, inject, watch, onMounted, onBeforeUnmount } from 'vue-lynx';
 import { createNamespace, addUnit } from '../../utils';
-import Icon from '../Icon/index.vue';
 import type { CheckboxShape, CheckboxLabelPosition, CheckboxGroupProvide } from './types';
+import { iconCharMap } from '../Icon/icon-map';
 import './index.less';
 
 export type { CheckboxShape, CheckboxLabelPosition, CheckboxExpose, CheckboxThemeVars } from './types';
@@ -98,6 +98,9 @@ const iconColorStyle = computed(() => {
   }
   return undefined;
 });
+
+const iconName = computed(() => props.indeterminate ? 'minus' : 'success');
+const iconChar = computed(() => iconCharMap[iconName.value] || iconName.value);
 
 const iconSizeStyle = computed(() => {
   const size = resolvedIconSize.value;
@@ -219,11 +222,9 @@ defineExpose({ toggle, checked: isChecked });
     </view>
     <view :class="iconClass" :style="iconSizeStyle" @tap="onIconTap">
       <slot name="icon" :checked="isChecked" :disabled="isDisabled">
-        <Icon
-          :name="indeterminate ? 'minus' : 'success'"
-          :style="iconColorStyle"
-          class="van-icon"
-        />
+        <view :class="['van-icon', `van-icon-${iconName}`]" :style="iconColorStyle">
+          <text class="van-icon__font">{{ iconChar }}</text>
+        </view>
       </slot>
     </view>
     <view

@@ -4,14 +4,14 @@
   - useCustomFieldValue: not ported (Form integration requires @vant/use)
 -->
 <script setup lang="ts">
-import { computed, provide, watch, reactive, toRefs } from 'vue-lynx';
+import { computed, provide, watch, reactive, shallowReactive, toRefs } from 'vue-lynx';
 import { createNamespace } from '../../utils';
 import type {
   CheckboxShape,
   CheckboxGroupDirection,
   CheckboxGroupToggleAllOptions,
   CheckboxGroupProvide,
-} from '../Checkbox/types';
+} from './types';
 import './index.less';
 
 export interface CheckboxGroupProps {
@@ -28,9 +28,9 @@ const [, bem] = createNamespace('checkbox-group');
 
 const props = withDefaults(defineProps<CheckboxGroupProps>(), {
   modelValue: () => [],
-  max: 0,
+  max: undefined,
   disabled: false,
-  direction: 'vertical',
+  direction: undefined,
   shape: 'round',
 });
 
@@ -40,7 +40,8 @@ const emit = defineEmits<{
 }>();
 
 // Child registration (mirrors Vant's useChildren pattern)
-const children: Array<{ toggle: (val?: boolean) => void; props: any; checked: { value: boolean } }> = reactive([]);
+// Must use shallowReactive to avoid unwrapping computed refs inside child objects
+const children: Array<{ toggle: (val?: boolean) => void; props: any; checked: { value: boolean } }> = shallowReactive([]);
 
 function registerChild(child: { toggle: (val?: boolean) => void; props: any; checked: { value: boolean } }) {
   children.push(child);
