@@ -313,3 +313,56 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to BEM class system. Tab panel uses .van-tab__panel class. Tab title headers rendered by Tabs parent now use .van-tab BEM class with --active/--disabled/--card/--shrink/--grow modifiers. Inline styles ONLY for color prop (card mode border/bg) and titleActiveColor/titleInactiveColor. All CSS variables and classes defined in Tabs/index.less. Tests rewritten to use BEM class selectors (.van-tab, .van-tabs__line, etc.) instead of inline style matching.
 - Limitations: titleClass (applied via parent), url/to/replace (no vue-router in Lynx), animated/swipeable (no CSS translateX transition), scrollspy (no scroll position tracking), role/tabindex/aria-* (not applicable)
 ---
+
+## 2026-03-22 - parity-tabs: Tabs (enhancement)
+- Props: 20/20 (type, color, background, duration, lineWidth, lineHeight, border, ellipsis, sticky, swipeable, scrollspy, shrink, animated, lazyRender, offsetTop, beforeChange, swipeThreshold, titleActiveColor, titleInactiveColor, showHeader)
+- Events: 5/5 (update:active, change, click-tab, rendered, scroll)
+- Slots: 4/4 (default, nav-left, nav-right, nav-bottom)
+- CSS Variables: 12 defined in index.less
+- Animations: line indicator transition (transitionDuration, transitionProperty: left)
+- Tests: 43 cases (Vant has 25 — added titleClass, titleStyle, dynamic insertion, empty tab, border default, scrollable nav, line reactivity)
+- Demo sections: 13/13 (基础用法, 通过名称匹配, 标签栏滚动, 禁用标签, 样式风格, 点击事件, 粘性布局, 收缩布局, 自定义标签, 切换动画, 滑动切换, 滚动导航, 异步切换)
+- Visual match: pass (BEM classes, CSS variables, scroll-view for scrollable nav)
+- Fixes applied:
+  - border default changed from true to false (matching Vant upstream)
+  - Added titleClass prop support (Tab passes to Tabs, applied to title elements)
+  - Added complete modifier on nav when scrollable
+  - Added --complete CSS class for scrollable nav padding
+  - Nav uses <scroll-view> when scrollable (Lynx requirement)
+  - Demo page now has all 13 Vant sections (added Sticky, Switch Animation, Swipeable, Scrollspy with limitation notes)
+- Limitations: sticky/offsetTop (no Sticky component), scrollspy (no scroll tracking), animated/swipeable (no Swipe sub-component), scrollIntoView (no DOM measurement), title slot (text-only nav titles)
+---
+
+## 2026-03-22 - parity-sidebar: Sidebar
+- Props (Sidebar): 1/1 (modelValue)
+- Props (SidebarItem): 8/8 (title, dot, badge, disabled, badgeProps, to, url, replace)
+- Events (Sidebar): 2/2 (update:modelValue, change)
+- Events (SidebarItem): 1/1 (click)
+- Slots (Sidebar): 1/1 (default)
+- Slots (SidebarItem): 1/1 (title)
+- CSS Variables: 1 in Sidebar (--van-sidebar-width), 13 in SidebarItem (--van-sidebar-font-size, --van-sidebar-line-height, --van-sidebar-text-color, --van-sidebar-disabled-text-color, --van-sidebar-padding, --van-sidebar-active-color, --van-sidebar-background, --van-sidebar-selected-font-weight, --van-sidebar-selected-text-color, --van-sidebar-selected-border-width, --van-sidebar-selected-border-height, --van-sidebar-selected-border-color, --van-sidebar-selected-background)
+- BEM Classes: .van-sidebar; .van-sidebar-item, --select, --disabled, --active, __text, __selected-bar
+- Animations: none (Sidebar has no transitions; press feedback via --active class)
+- Tests: 25 cases (17 Sidebar + 8 SidebarItem; Vant has 6)
+- Demo sections: 4/4 (基础用法, 徽标提示, 禁用选项, 监听切换事件)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files (Sidebar): index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Files (SidebarItem): index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Sidebar uses createNamespace('sidebar') + .van-sidebar class. SidebarItem uses createNamespace('sidebar-item') + full BEM modifiers (--select, --disabled, --active) and sub-elements (__text, __selected-bar). Removed itemStyle/activeBarStyle/textStyle computed objects. Selected border uses __selected-bar view element (replaces ::before pseudo-element). Press feedback via --active BEM class (replaces inline background toggle). All tests rewritten to use BEM class queries instead of inline style detection.
+- Limitations: role/tablist/aria-selected (no ARIA in Lynx), to/url/replace (no navigation), ::before (uses __selected-bar view element), :active (uses --active BEM class), overflow-y:auto (Lynx scrolling differs)
+---
+
+## 2026-03-22 - parity-back-top: BackTop
+- Props: 7/7 (right, bottom, zIndex, target, offset, immediate, teleport)
+- Events: 1/1 (click)
+- Slots: 1/1 (default)
+- CSS Variables: 7 defined in index.less (--van-back-top-size, --van-back-top-right, --van-back-top-bottom, --van-back-top-z-index, --van-back-top-icon-size, --van-back-top-text-color, --van-back-top-background)
+- BEM Classes: .van-back-top, --active, __placeholder, __icon
+- Animations: CSS transform: scale(0/1) with cubic-bezier(0.25, 0.8, 0.5, 1) transition
+- Tests: 14 cases (Vant has 3)
+- Demo sections: 5/5 (基础用法, 自定义位置, 自定义内容, 设置滚动目标, 瞬间滚动)
+- Visual match: pass (BEM classes, CSS transition, CSS variables)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: BackTop.tsx, types.ts, index.ts, index.less)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. All positioning/sizing via CSS variables in .less. Scale show/hide via CSS transition + --active BEM modifier (replaces v-if). Inline styles ONLY for dynamic right/bottom/zIndex props. Icon uses .van-back-top__icon BEM class.
+- Limitations: teleport (no Teleport in Lynx), target CSS selector (no document.querySelector; parent must call handleScroll manually), smooth scrolling (parent scroll-view controls), box-shadow (omitted), cursor:pointer (Lynx is touch-only), :active pseudo-class (not supported), KeepAlive (onActivated/onDeactivated not relevant)
+---
