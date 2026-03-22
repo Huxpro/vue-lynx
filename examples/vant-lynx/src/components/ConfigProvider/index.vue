@@ -3,17 +3,17 @@
   - tag: accepted for API compat but always renders as <view> (Lynx has no HTML elements)
   - themeVarsScope 'global': cannot set styles on document.documentElement in Lynx; falls back to local scope
   - theme class on document.documentElement: not supported in Lynx (no DOM document)
-  - iconPrefix: provided via inject but no @font-face icon system in Lynx
-  - CSS custom properties via inline styles: Lynx strips --van-* from inline styles;
-    themeVars conversion is maintained for API parity but vars are only effective
-    when defined in .less files
 -->
 <script setup lang="ts">
 import { computed, provide, watchEffect } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import { CONFIG_PROVIDER_KEY } from './types';
 import type { ConfigProviderTheme, ConfigProviderThemeVarsScope } from './types';
 import { mapThemeVarsToCSSVars } from './utils';
 import { setGlobalZIndex } from '../../composables/useGlobalZIndex';
+import './index.less';
+
+const [name, bem] = createNamespace('config-provider');
 
 interface ConfigProviderProps {
   tag?: string;
@@ -51,24 +51,15 @@ watchEffect(() => {
 });
 
 const containerStyle = computed(() => {
-  if (props.themeVarsScope === 'global') {
-    return {
-      flex: 1,
-      display: 'flex' as const,
-      flexDirection: 'column' as const,
-    };
+  if (props.themeVarsScope === 'local') {
+    return style.value;
   }
-  return {
-    flex: 1,
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    ...style.value,
-  };
+  return undefined;
 });
 </script>
 
 <template>
-  <view :style="containerStyle">
+  <view :class="bem()" :style="containerStyle">
     <slot />
   </view>
 </template>
