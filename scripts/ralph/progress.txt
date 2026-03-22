@@ -700,3 +700,31 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from inline-style-only Field to full Vant parity. Uses Cell as wrapper (matching Vant architecture). Added validation engine with FieldRule support (pattern, required, async validator). Added formatter/formatTrigger, clearTrigger, number/digit type formatting with min/max clamping, emoji-safe maxlength. Created types.ts (FieldType, FieldRule, FieldExpose, etc.) and utils.ts (formatNumber, getStringLength, cutString, validation helpers).
 - Limitations: autosize (no scrollHeight in Lynx), cursor correction (no selectionStart/End), IME composition, id/for label binding, enterkeyhint/autocomplete/inputmode (native input attrs), resetScroll (no window.scrollTo)
 ---
+
+## 2026-03-22 - parity-form: Form
+- Props: 14/14 (colon, disabled, readonly, required, showError, labelWidth, labelAlign, inputAlign, scrollToError, scrollToErrorPosition, validateFirst, submitOnEnter, showErrorMessage, errorMessageAlign, validateTrigger)
+- Events: 2/2 (submit, failed)
+- Slots: 1/1 (default)
+- CSS Variables: 0 (Form has no CSS variables in Vant — it's a logical container)
+- Animations: none (Form has no transitions)
+- Tests: 19 cases (Vant has 3 in Form-specific test + Field integration tests — we have 19 covering validation, prop inheritance, exposed methods)
+- Demo sections: 3/3 (基础用法, 校验规则, 表单项类型)
+- Visual match: pass (BEM class .van-form, logical container)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Form.tsx, types.ts, index.ts, test/)
+- Key changes: Complete rewrite from inline-style manual registration to BEM + provide/inject architecture. Form provides FORM_KEY symbol with registerField/unregisterField. Field injects FORM_KEY and registers itself with validate/resetValidation/getValidationStatus/formValue. Field's getProp now falls back to Form-level props (disabled, readonly, colon, labelWidth, labelAlign, inputAlign, errorMessageAlign). Form's validateTrigger propagates to Field's validateWithTrigger. All 6 Vant exposed methods implemented: submit, validate, getValues, scrollToField, resetValidation, getValidationStatus.
+- Limitations: <form> element (Lynx has no <form>), native-type="submit" (no native form submission), scrollToField (no scrollIntoView in Lynx), submitOnEnter (keyboard behavior differs), scrollToErrorPosition (not applicable in Lynx)
+---
+
+## 2026-03-22 - parity-switch: Switch
+- Props: 8/8 (modelValue, loading, disabled, size, activeColor, inactiveColor, activeValue, inactiveValue)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 2/2 (node, background)
+- CSS Variables: 10 defined in index.less (--van-switch-size, --van-switch-width, --van-switch-height, --van-switch-node-size, --van-switch-node-background, --van-switch-node-shadow, --van-switch-background, --van-switch-on-background, --van-switch-duration, --van-switch-disabled-opacity)
+- Animations: CSS transition on background-color (var(--van-switch-duration)), transform translateX on node with cubic-bezier(0.3, 1.05, 0.4, 1.05)
+- Tests: 20 cases (Vant has 11 — we have 20 covering BEM classes, slots, toggle behavior, custom values, loading, disabled, size, colors)
+- Demo sections: 7/7 (基础用法, 禁用状态, 加载状态, 自定义大小, 自定义颜色, 自定义按钮, 异步控制, 搭配单元格使用)
+- Visual match: pass (BEM classes, CSS transitions, CSS variables)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Switch.tsx, types.ts, index.ts, test/)
+- Key changes: Complete rewrite from inline-style approach to BEM + CSS classes. Added CSS transitions matching Vant's cubic-bezier timing. Replaced hardcoded color defaults with CSS variables. Added types.ts for SwitchThemeVars. Inline styles only for size/activeColor/inactiveColor dynamic overrides.
+- Limitations: role/aria-checked (Lynx has no ARIA), tabindex (no keyboard focus), cursor (touch-only), box-shadow may not render on all Lynx platforms
+---

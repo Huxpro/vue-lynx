@@ -1,12 +1,70 @@
 :root {
   --van-switch-size: 26px;
-  --van-switch-width: 2em;
-  --van-switch-height: 1em;
+  --van-switch-width: calc(1.8em + 4px);
+  --van-switch-height: calc(1em + 4px);
   --van-switch-node-size: 1em;
   --van-switch-node-background: var(--van-white, #fff);
-  --van-switch-node-shadow: 0 3px 1px 0 rgba(0, 0, 0, 0.05), 0 2px 2px 0 rgba(0, 0, 0, 0.1), 0 3px 3px 0 rgba(0, 0, 0, 0.05);
+  --van-switch-node-shadow: 0 3px 1px 0 rgba(0, 0, 0, 0.05);
   --van-switch-background: rgba(120, 120, 128, 0.16);
   --van-switch-on-background: var(--van-primary-color, #1989fa);
   --van-switch-duration: var(--van-duration-base, 0.3s);
   --van-switch-disabled-opacity: var(--van-disabled-opacity, 0.5);
+}
+
+.van-switch {
+  position: relative;
+  box-sizing: content-box;
+  width: var(--van-switch-width);
+  height: var(--van-switch-height);
+  font-size: var(--van-switch-size);
+  background: var(--van-switch-background);
+  border-radius: var(--van-switch-node-size);
+  transition: background-color var(--van-switch-duration);
+
+  &__node {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--van-switch-node-size);
+    height: var(--van-switch-node-size);
+    font-size: inherit;
+    background: var(--van-switch-node-background);
+    border-radius: 100%;
+    box-shadow: var(--van-switch-node-shadow);
+    transition: transform var(--van-switch-duration)
+      cubic-bezier(0.3, 1.05, 0.4, 1.05);
+  }
+
+  &__loading {
+    top: 25%;
+    left: 25%;
+    width: 50%;
+    height: 50%;
+    line-height: 1;
+  }
+
+  &--on {
+    background: var(--van-switch-on-background);
+
+    .van-switch__node {
+      transform: translateX(
+        calc(var(--van-switch-width) - var(--van-switch-node-size) - 4px)
+      );
+    }
+
+    .van-switch__loading {
+      color: var(--van-switch-on-background);
+    }
+  }
+
+  &--disabled {
+    opacity: var(--van-switch-disabled-opacity);
+  }
+
+  &--loading {
+    cursor: default;
+  }
 }
