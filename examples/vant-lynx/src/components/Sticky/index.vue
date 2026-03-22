@@ -13,16 +13,14 @@
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils';
+import { addUnit } from '../../utils/format';
+import type { Numeric } from '../../utils/format';
 import './index.less';
-import type { Numeric, StickyPosition } from './types';
 
-function addUnit(value: Numeric | undefined): string | undefined {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'number' || /^\d+(\.\d+)?$/.test(String(value))) {
-    return `${value}px`;
-  }
-  return String(value);
-}
+export type StickyPosition = 'top' | 'bottom';
+
+const [name, bem] = createNamespace('sticky');
 
 interface StickyProps {
   zIndex?: Numeric;
@@ -52,13 +50,9 @@ const offset = computed(() => {
   return parseFloat(String(val)) || 0;
 });
 
-const rootClass = computed(() => {
-  const classes = ['van-sticky'];
-  if (isFixed.value) {
-    classes.push('van-sticky--fixed');
-  }
-  return classes.join(' ');
-});
+const rootClass = computed(() =>
+  bem([{ fixed: isFixed.value }]),
+);
 
 const stickyStyle = computed(() => {
   if (!isFixed.value) return undefined;
@@ -70,9 +64,9 @@ const stickyStyle = computed(() => {
   }
 
   if (props.position === 'top') {
-    style.top = `${offset.value}px`;
+    style.top = addUnit(offset.value);
   } else {
-    style.bottom = `${offset.value}px`;
+    style.bottom = addUnit(offset.value);
   }
 
   style.left = 0;
@@ -89,8 +83,6 @@ const stickyStyle = computed(() => {
  * Lynx-specific: Called by parent scroll container to update sticky state.
  * In Vant web, this is done automatically via useScrollParent + useEventListener.
  * In Lynx, parent must call this with scroll event data.
- *
- * @param event - scroll event or object with { detail: { scrollTop } }
  */
 function handleScroll(event: any) {
   const st = typeof event === 'number'
@@ -99,8 +91,6 @@ function handleScroll(event: any) {
 
   let fixed = false;
   if (props.position === 'top') {
-    // Vant uses: offset > rootRect.top (strict >)
-    // In Lynx simplified model: scrollTop > offsetTop
     fixed = st > offset.value;
   } else {
     fixed = st > offset.value;
