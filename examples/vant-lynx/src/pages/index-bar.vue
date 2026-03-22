@@ -14,60 +14,61 @@ for (let i = 0; i < 26; i++) {
 }
 
 const customIndexList = [1, 2, 3, 4, 5, 6, 8, 9, 10];
-
-const sectionTitleStyle = {
-  fontSize: '14px',
-  color: '#969799',
-  marginTop: '16px',
-  marginBottom: '12px',
-  paddingLeft: '16px',
-};
-
-const tabBarStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  backgroundColor: '#fff',
-  borderBottomWidth: '0.5px',
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
-
-function getTabStyle(isActive: boolean) {
-  return {
-    flex: 1,
-    display: 'flex',
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    height: '44px',
-    borderBottomWidth: isActive ? '2px' : '0px',
-    borderBottomStyle: 'solid' as const,
-    borderBottomColor: isActive ? '#1989fa' : 'transparent',
-  };
-}
-
-function getTabTextStyle(isActive: boolean) {
-  return {
-    fontSize: '14px',
-    color: isActive ? '#1989fa' : '#323233',
-    fontWeight: isActive ? 'bold' : 'normal',
-  };
-}
 </script>
 
 <template>
   <DemoPage title="IndexBar 索引栏">
     <!-- Tab bar -->
-    <view :style="tabBarStyle">
-      <view :style="getTabStyle(activeTab === 0)" @tap="activeTab = 0">
-        <text :style="getTabTextStyle(activeTab === 0)">基础用法</text>
+    <view :style="{
+      display: 'flex',
+      flexDirection: 'row',
+      backgroundColor: '#fff',
+      borderBottomWidth: '0.5px',
+      borderBottomStyle: 'solid',
+      borderBottomColor: '#ebedf0',
+    }">
+      <view
+        :style="{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '44px',
+          borderBottomWidth: activeTab === 0 ? '2px' : '0px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: activeTab === 0 ? '#1989fa' : 'transparent',
+        }"
+        @tap="activeTab = 0"
+      >
+        <text :style="{
+          fontSize: '14px',
+          color: activeTab === 0 ? '#1989fa' : '#323233',
+          fontWeight: activeTab === 0 ? 'bold' : 'normal',
+        }">基础用法</text>
       </view>
-      <view :style="getTabStyle(activeTab === 1)" @tap="activeTab = 1">
-        <text :style="getTabTextStyle(activeTab === 1)">自定义索引列表</text>
+      <view
+        :style="{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '44px',
+          borderBottomWidth: activeTab === 1 ? '2px' : '0px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: activeTab === 1 ? '#1989fa' : 'transparent',
+        }"
+        @tap="activeTab = 1"
+      >
+        <text :style="{
+          fontSize: '14px',
+          color: activeTab === 1 ? '#1989fa' : '#323233',
+          fontWeight: activeTab === 1 ? 'bold' : 'normal',
+        }">自定义索引列表</text>
       </view>
     </view>
 
     <!-- 基础用法 -->
-    <view v-if="activeTab === 0" :style="{ display: 'flex', flexDirection: 'column' }">
+    <view v-if="activeTab === 0">
       <IndexBar>
         <template v-for="index in indexList" :key="index">
           <IndexAnchor :index="index" />
@@ -79,7 +80,7 @@ function getTabTextStyle(isActive: boolean) {
     </view>
 
     <!-- 自定义索引列表 -->
-    <view v-if="activeTab === 1" :style="{ display: 'flex', flexDirection: 'column' }">
+    <view v-if="activeTab === 1">
       <IndexBar :index-list="customIndexList">
         <template v-for="index in customIndexList" :key="index">
           <IndexAnchor :index="index">

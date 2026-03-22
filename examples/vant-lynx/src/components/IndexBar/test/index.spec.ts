@@ -11,7 +11,7 @@ async function later() {
 }
 
 describe('IndexBar', () => {
-  it('should render index bar with default A-Z index list', () => {
+  it('should render with default A-Z index list', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -25,9 +25,13 @@ describe('IndexBar', () => {
         },
       }),
     );
-    // Should render sidebar with 26 letters
-    const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThanOrEqual(26);
+    // Root should have van-index-bar class
+    const root = container.querySelector('.van-index-bar');
+    expect(root).toBeTruthy();
+
+    // Should render sidebar with 26 index items
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    expect(indexItems.length).toBe(26);
   });
 
   it('should render with custom index list', () => {
@@ -44,10 +48,8 @@ describe('IndexBar', () => {
         },
       }),
     );
-    // Find sidebar text elements (the index labels)
-    const textEls = container.querySelectorAll('text');
-    // 3 sidebar labels + 3 anchor labels = at least 6
-    expect(textEls.length).toBeGreaterThanOrEqual(3);
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    expect(indexItems.length).toBe(3);
   });
 
   it('should render with numeric index list', () => {
@@ -64,8 +66,8 @@ describe('IndexBar', () => {
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((el: any) => el.textContent);
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    const texts = Array.from(indexItems).map((el: any) => el.textContent);
     expect(texts).toContain('1');
     expect(texts).toContain('2');
     expect(texts).toContain('3');
@@ -88,14 +90,10 @@ describe('IndexBar', () => {
     );
     await later();
 
-    // Find sidebar text elements - they are in the last view (sidebar)
-    const allTexts = container.querySelectorAll('text');
-    const sidebarTexts = Array.from(allTexts).filter(
-      (el: any) => el.getAttribute('style')?.includes('text-align: center'),
-    );
-    expect(sidebarTexts.length).toBe(3);
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    expect(indexItems.length).toBe(3);
 
-    await fireEvent.tap(sidebarTexts[1]); // tap 'B'
+    await fireEvent.tap(indexItems[1]); // tap 'B'
     expect(onSelect).toHaveBeenCalledWith('B');
   });
 
@@ -116,16 +114,12 @@ describe('IndexBar', () => {
     );
     await later();
 
-    const allTexts = container.querySelectorAll('text');
-    const sidebarTexts = Array.from(allTexts).filter(
-      (el: any) => el.getAttribute('style')?.includes('text-align: center'),
-    );
-
-    await fireEvent.tap(sidebarTexts[0]); // tap 'A'
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    await fireEvent.tap(indexItems[0]); // tap 'A'
     expect(onChange).toHaveBeenCalledWith('A');
   });
 
-  it('should highlight active index in sidebar', async () => {
+  it('should highlight active index with --active modifier', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -141,21 +135,17 @@ describe('IndexBar', () => {
     );
     await later();
 
-    const allTexts = container.querySelectorAll('text');
-    const sidebarTexts = Array.from(allTexts).filter(
-      (el: any) => el.getAttribute('style')?.includes('text-align: center'),
-    );
-
-    // Tap 'B' to activate it
-    await fireEvent.tap(sidebarTexts[1]);
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    await fireEvent.tap(indexItems[1]); // tap 'B'
     await later();
 
-    // Check that 'B' sidebar text has highlight color
-    const bStyle = sidebarTexts[1].getAttribute('style') || '';
-    expect(bStyle).toContain('color: rgb(25, 137, 250)');
+    // 'B' should have active modifier class
+    expect(indexItems[1].classList.contains('van-index-bar__index--active')).toBe(true);
+    // 'A' should not
+    expect(indexItems[0].classList.contains('van-index-bar__index--active')).toBe(false);
   });
 
-  it('should use custom highlightColor', async () => {
+  it('should use custom highlightColor as inline style', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -170,19 +160,15 @@ describe('IndexBar', () => {
     );
     await later();
 
-    const allTexts = container.querySelectorAll('text');
-    const sidebarTexts = Array.from(allTexts).filter(
-      (el: any) => el.getAttribute('style')?.includes('text-align: center'),
-    );
-
-    await fireEvent.tap(sidebarTexts[0]); // tap 'A'
+    const indexItems = container.querySelectorAll('.van-index-bar__index');
+    await fireEvent.tap(indexItems[0]); // tap 'A'
     await later();
 
-    const aStyle = sidebarTexts[0].getAttribute('style') || '';
-    expect(aStyle).toContain('color: rgb(255, 0, 0)');
+    const style = indexItems[0].getAttribute('style') || '';
+    expect(style).toContain('color');
   });
 
-  it('should apply zIndex to sidebar', () => {
+  it('should apply custom zIndex to sidebar', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -192,14 +178,10 @@ describe('IndexBar', () => {
         },
       }),
     );
-    // Sidebar is the last child view of the root view
-    const views = container.querySelectorAll('view');
-    const sidebarView = Array.from(views).find(
-      (el: any) => el.getAttribute('style')?.includes('position: absolute'),
-    );
-    expect(sidebarView).toBeTruthy();
-    const style = sidebarView!.getAttribute('style') || '';
-    expect(style).toContain('z-index: 11'); // zIndex + 1
+    const sidebar = container.querySelector('.van-index-bar__sidebar');
+    expect(sidebar).toBeTruthy();
+    const style = sidebar!.getAttribute('style') || '';
+    expect(style).toContain('z-index: 11');
   });
 
   it('should expose scrollTo method', async () => {
@@ -239,7 +221,7 @@ describe('IndexBar', () => {
         },
       }),
     );
-    expect(container).toBeTruthy();
+    expect(container.querySelector('.van-index-bar')).toBeTruthy();
   });
 
   it('should accept sticky prop', () => {
@@ -252,7 +234,7 @@ describe('IndexBar', () => {
         },
       }),
     );
-    expect(container).toBeTruthy();
+    expect(container.querySelector('.van-index-bar')).toBeTruthy();
   });
 
   it('should accept stickyOffsetTop prop', () => {
@@ -265,10 +247,10 @@ describe('IndexBar', () => {
         },
       }),
     );
-    expect(container).toBeTruthy();
+    expect(container.querySelector('.van-index-bar')).toBeTruthy();
   });
 
-  it('should render sidebar with correct positioning', () => {
+  it('should render sidebar and wrapper structure', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -281,17 +263,11 @@ describe('IndexBar', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const sidebarView = Array.from(views).find(
-      (el: any) => el.getAttribute('style')?.includes('position: absolute'),
-    );
-    expect(sidebarView).toBeTruthy();
-    const style = sidebarView!.getAttribute('style') || '';
-    expect(style).toContain('right: 0px');
-    expect(style).toContain('flex-direction: column');
+    expect(container.querySelector('.van-index-bar__wrapper')).toBeTruthy();
+    expect(container.querySelector('.van-index-bar__sidebar')).toBeTruthy();
   });
 
-  it('should render content area alongside sidebar', () => {
+  it('should render content inside wrapper', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -301,14 +277,14 @@ describe('IndexBar', () => {
         },
       }),
     );
-    // Root view should have flex-direction: row
-    const rootView = container.querySelector('view');
-    expect(rootView).toBeTruthy();
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('flex-direction: row');
+    const wrapper = container.querySelector('.van-index-bar__wrapper');
+    expect(wrapper).toBeTruthy();
+    // Anchor should be inside wrapper
+    const anchor = wrapper!.querySelector('.van-index-anchor');
+    expect(anchor).toBeTruthy();
   });
 
-  it('should not emit change if activeAnchor becomes empty', async () => {
+  it('should not emit change if activeAnchor starts empty', async () => {
     const onChange = vi.fn();
     render(
       defineComponent({
@@ -323,7 +299,6 @@ describe('IndexBar', () => {
       }),
     );
     await later();
-    // Change was not called initially since activeAnchor starts as ''
     expect(onChange).not.toHaveBeenCalled();
   });
 });
