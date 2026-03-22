@@ -10,7 +10,7 @@ async function later() {
 }
 
 describe('BackTop', () => {
-  it('should be hidden by default', () => {
+  it('should not have active class by default', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -18,11 +18,12 @@ describe('BackTop', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBe(0);
+    const el = container.querySelector('.van-back-top');
+    expect(el).toBeTruthy();
+    expect(el!.getAttribute('class')).not.toContain('van-back-top--active');
   });
 
-  it('should show when scroll offset is reached', async () => {
+  it('should add active class when scroll offset is reached', async () => {
     const backTopRef = ref<any>(null);
     const { container } = render(
       defineComponent({
@@ -36,15 +37,15 @@ describe('BackTop', () => {
     );
 
     await later();
-    expect(container.querySelectorAll('view').length).toBe(0);
+    expect(container.querySelector('.van-back-top--active')).toBeFalsy();
 
     backTopRef.value?.handleScroll({ detail: { scrollTop: 150 } });
     await later();
 
-    expect(container.querySelectorAll('view').length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-back-top--active')).toBeTruthy();
   });
 
-  it('should hide when scroll goes below offset', async () => {
+  it('should remove active class when scroll goes below offset', async () => {
     const backTopRef = ref<any>(null);
     const { container } = render(
       defineComponent({
@@ -62,12 +63,12 @@ describe('BackTop', () => {
     // Show
     backTopRef.value?.handleScroll({ detail: { scrollTop: 150 } });
     await later();
-    expect(container.querySelectorAll('view').length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-back-top--active')).toBeTruthy();
 
     // Hide
     backTopRef.value?.handleScroll({ detail: { scrollTop: 50 } });
     await later();
-    expect(container.querySelectorAll('view').length).toBe(0);
+    expect(container.querySelector('.van-back-top--active')).toBeFalsy();
   });
 
   it('should allow to custom position by position prop', async () => {
@@ -90,7 +91,7 @@ describe('BackTop', () => {
     backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
     await later();
 
-    const button = container.querySelector('view');
+    const button = container.querySelector('.van-back-top');
     expect(button).toBeTruthy();
     const style = button!.getAttribute('style') || '';
     expect(style).toContain('right: 30px');
@@ -99,7 +100,6 @@ describe('BackTop', () => {
   });
 
   it('should allow position prop to contain unit', async () => {
-    const backTopRef = ref<any>(null);
     const { container } = render(
       defineComponent({
         render() {
@@ -107,17 +107,14 @@ describe('BackTop', () => {
             right: '2rem',
             bottom: '4rem',
             offset: 0,
-            ref: (el: any) => { backTopRef.value = el; },
           });
         },
       }),
     );
 
     await later();
-    backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
-    await later();
 
-    const button = container.querySelector('view');
+    const button = container.querySelector('.van-back-top');
     expect(button).toBeTruthy();
     const style = button!.getAttribute('style') || '';
     expect(style).toContain('right: 2rem');
@@ -143,7 +140,7 @@ describe('BackTop', () => {
     backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
     await later();
 
-    const button = container.querySelector('view');
+    const button = container.querySelector('.van-back-top');
     expect(button).toBeTruthy();
     await fireEvent.tap(button!);
     expect(onClick).toHaveBeenCalledTimes(1);
@@ -163,57 +160,45 @@ describe('BackTop', () => {
 
     await later();
 
-    // Scroll to 199 - should not show
+    // Scroll to 199 - should not be active
     backTopRef.value?.handleScroll({ detail: { scrollTop: 199 } });
     await later();
-    expect(container.querySelectorAll('view').length).toBe(0);
+    expect(container.querySelector('.van-back-top--active')).toBeFalsy();
 
-    // Scroll to 200 - should show
+    // Scroll to 200 - should be active
     backTopRef.value?.handleScroll({ detail: { scrollTop: 200 } });
     await later();
-    expect(container.querySelectorAll('view').length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-back-top--active')).toBeTruthy();
   });
 
   it('should render default icon when no slot content', async () => {
-    const backTopRef = ref<any>(null);
     const { container } = render(
       defineComponent({
         render() {
-          return h(BackTop, {
-            offset: 0,
-            ref: (el: any) => { backTopRef.value = el; },
-          });
+          return h(BackTop, { offset: 0 });
         },
       }),
     );
 
     await later();
-    backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
-    await later();
 
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    const iconEl = container.querySelector('.van-back-top__icon');
+    expect(iconEl).toBeTruthy();
   });
 
   it('should render custom content via default slot', async () => {
-    const backTopRef = ref<any>(null);
     const { container } = render(
       defineComponent({
         render() {
           return h(
             BackTop,
-            {
-              offset: 0,
-              ref: (el: any) => { backTopRef.value = el; },
-            },
+            { offset: 0 },
             { default: () => h('text', {}, 'Back to Top') },
           );
         },
       }),
     );
 
-    await later();
-    backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
     await later();
 
     const textElements = container.querySelectorAll('text');
@@ -223,28 +208,23 @@ describe('BackTop', () => {
     expect(found).toBe(true);
   });
 
-  it('should use default position when right/bottom not specified', async () => {
-    const backTopRef = ref<any>(null);
+  it('should use CSS class defaults when right/bottom not specified', async () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(BackTop, {
-            offset: 0,
-            ref: (el: any) => { backTopRef.value = el; },
-          });
+          return h(BackTop, { offset: 0 });
         },
       }),
     );
 
     await later();
-    backTopRef.value?.handleScroll({ detail: { scrollTop: 0 } });
-    await later();
 
-    const button = container.querySelector('view');
+    const button = container.querySelector('.van-back-top');
     expect(button).toBeTruthy();
+    // Right and bottom should come from CSS variables, not inline styles
     const style = button!.getAttribute('style') || '';
-    expect(style).toContain('right: 30px');
-    expect(style).toContain('bottom: 40px');
+    expect(style).not.toContain('right:');
+    expect(style).not.toContain('bottom:');
   });
 
   it('should accept teleport prop for API parity', () => {
@@ -266,7 +246,7 @@ describe('BackTop', () => {
         },
       }),
     );
-    expect(container).toBeTruthy();
+    expect(container.querySelector('.van-back-top')).toBeTruthy();
   });
 
   it('should accept target prop', () => {
@@ -277,6 +257,22 @@ describe('BackTop', () => {
         },
       }),
     );
-    expect(container).toBeTruthy();
+    expect(container.querySelector('.van-back-top')).toBeTruthy();
+  });
+
+  it('should have proper BEM class names', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(BackTop, { offset: 0 });
+        },
+      }),
+    );
+
+    await later();
+
+    const el = container.querySelector('.van-back-top');
+    expect(el).toBeTruthy();
+    expect(el!.getAttribute('class')).toContain('van-back-top');
   });
 });
