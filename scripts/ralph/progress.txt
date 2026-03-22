@@ -584,3 +584,32 @@ Branch: feat/vant-lynx-v2
 - Key changes: Component uses createNamespace('count-down') + bem(). useCountDown composable extracted to composables/ matching Vant's @vant/use pattern (RAF-based tick, macroTick for second-level, microTick for ms-level). parseFormat utility matches Vant exactly. Infrastructure: moved scroll-view from App.vue into DemoPage, fixed numeric style values to string px, runtime array handler normalization for Vue fallthrough event merging.
 - Limitations: role="timer" (no ARIA in Lynx), KeepAlive activated/deactivated (Lynx may not support KeepAlive lifecycle), <div> → <view>, bare text → <text> element
 ---
+
+## 2026-03-22 - parity-sticky: Sticky
+- Props: 5/5 (zIndex, position, container, offsetTop, offsetBottom)
+- Events: 2/2 (scroll, change)
+- Slots: 1/1 (default)
+- CSS Variables: 1 defined in index.less (--van-sticky-z-index)
+- BEM Classes: .van-sticky, .van-sticky--fixed
+- Animations: none (Sticky uses position:fixed, no transitions)
+- Tests: 13 cases (Vant has 12)
+- Demo sections: 4/4 (基础用法, 吸顶距离, 指定容器, 吸底距离)
+- Visual match: pass (BEM classes, CSS variables, createNamespace)
+- Key changes: Refactored to use createNamespace('sticky') + bem(). Imported addUnit from shared utils instead of local definition. Removed local Numeric type in favor of shared import.
+- Limitations: useScrollParent (no auto scroll parent detection), useRect/getBoundingClientRect (no sync DOM measurement), useVisibilityChange (no IntersectionObserver), container boundary (simplified), window resize (not available), width/height placeholder (cannot measure)
+---
+
+## 2026-03-22 - parity-swipe: Swipe
+- Props: 12/12 (loop, width, height, vertical, autoplay, duration, touchable, lazyRender, initialSwipe, indicatorColor, showIndicators, stopPropagation)
+- Events: 3/3 (change, dragStart, dragEnd)
+- Slots: 2/2 (default, indicator)
+- Exposed: 5/5 (prev, next, state, resize, swipeTo)
+- CSS Variables: 6 defined in index.less (--van-swipe-indicator-size, --van-swipe-indicator-margin, --van-swipe-indicator-active-opacity, --van-swipe-indicator-inactive-opacity, --van-swipe-indicator-active-background, --van-swipe-indicator-inactive-background)
+- Animations: CSS transition on indicator opacity/background-color, transform-based slide transitions on track
+- Tests: 25 cases (Vant has ~16, we have 25 — added lazy-render, dynamic items, vertical indicators, indicator color, width/height on items, etc.)
+- Demo sections: 6/6 (基础用法, 懒加载, 监听 change 事件, 纵向滚动, 自定义滑块大小, 自定义指示器)
+- Visual match: pass (BEM classes, CSS variables, indicators, track transform)
+- Files: Swipe (index.vue, index.less, types.ts, test/index.spec.ts), SwipeItem (index.vue, index.less) — 6 files total
+- Key changes: Rewrote test suite from 14 to 25 tests with proper exposed method access (swipeTo, next, prev, loop cycling). Touch drag tests adapted for Lynx testing env limitations (use exposed methods instead of simulated drag).
+- Limitations: resize (no DOM offsetWidth/offsetHeight), isHidden (no DOM visibility check), usePageVisibility (no Page Visibility API), onPopupReopen (not implemented), onActivated/onDeactivated (keep-alive not used), touch event simulation in tests (PAPI bridge doesn't propagate touches property)
+---
