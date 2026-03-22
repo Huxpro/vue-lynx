@@ -10,23 +10,14 @@ async function later() {
 }
 
 /**
- * Find all CollapseItem title Cell views (the clickable wrappers).
- * Cell renders a view with touchstart/touchend event handlers.
- * We look for views that contain a title text and have the Cell layout structure.
+ * Find CollapseItem title cells by the BEM class van-collapse-item__title.
+ * Cell renders as a view with class="van-cell ...".
  */
 function findTitleCells(container: any): any[] {
-  // Cell renders as a view with flex-direction: row and padding.
-  // Each CollapseItem renders a Cell as its first child.
-  // The Cell view is the one with the tap handler.
   const views = Array.from(container.querySelectorAll('view'));
   return views.filter((v: any) => {
-    const style = v.getAttribute('style') || '';
-    // Cell has flex-direction: row, padding, and acts as a clickable header
-    return (
-      style.includes('flex-direction: row') &&
-      style.includes('padding') &&
-      style.includes('background-color')
-    );
+    const cls = v.getAttribute('class') || '';
+    return cls.includes('van-collapse-item__title');
   });
 }
 
@@ -208,10 +199,10 @@ describe('Collapse', () => {
 
     await later();
 
-    // The root view should not have border styles when border is false
-    const rootView = container.querySelector('view');
-    const style = rootView?.getAttribute('style') || '';
-    expect(style).not.toContain('border-top');
+    // The root collapse view should not have hairline class when border is false
+    const rootView = container.querySelector('.van-collapse');
+    const cls = rootView?.getAttribute('class') || '';
+    expect(cls).not.toContain('van-hairline--top-bottom');
   });
 
   it('should lazy render collapse content', async () => {

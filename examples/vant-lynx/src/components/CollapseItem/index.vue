@@ -1,10 +1,10 @@
 <!--
   Lynx Limitations:
   - tag: accepted for API compat but always renders as view
-  - titleClass/valueClass/labelClass: accepted for API compat but no CSS class support in Lynx
+  - titleClass/valueClass/labelClass: accepted for API compat
   - iconPrefix: accepted for API compat but unused (no icon font prefix)
-  - ::after hairline border: Lynx has no pseudo-elements, uses inline border
-  - CSS height transition: Lynx does not support CSS transitions on height; content toggles instantly
+  - ::after hairline border: Lynx has no pseudo-elements, uses 0.5px border
+  - CSS height transition: Lynx cannot measure offsetHeight; content toggles instantly
   - role/aria attributes: not applicable in Lynx
 -->
 <script lang="ts">
@@ -22,10 +22,13 @@ import {
   onUnmounted,
   type Ref,
 } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Cell from '../Cell/index.vue';
 import { useLazyRender } from '../../composables/useLazyRender';
 import './index.less';
 import type { CellArrowDirection } from '../Cell/types';
+
+const [, bem] = createNamespace('collapse-item');
 
 export interface CollapseItemProps {
   name?: string | number;
@@ -143,6 +146,15 @@ function onClickTitle() {
 // --- Expose (matches Vant) ---
 defineExpose({ toggle, expanded, itemName });
 
+// --- Title class (matches Vant: van-collapse-item__title + modifiers) ---
+const titleClass = computed(() => {
+  return bem('title', {
+    expanded: expanded.value,
+    disabled: props.disabled,
+    borderless: !props.border,
+  });
+});
+
 // --- Cell props for title ---
 const cellProps = computed(() => {
   const attrs: Record<string, any> = {
@@ -152,7 +164,7 @@ const cellProps = computed(() => {
     value: props.value,
     label: props.label,
     center: props.center,
-    border: false, // We handle border ourselves
+    border: false, // CollapseItem handles its own border
     isLink: props.readonly ? false : props.isLink,
     clickable:
       props.disabled || props.readonly
@@ -167,41 +179,14 @@ const cellProps = computed(() => {
   };
   return attrs;
 });
-
-// --- Inline styles for disabled title color ---
-const titleWrapperStyle = computed(() => {
-  if (props.disabled) {
-    return {
-      opacity: 1,
-    };
-  }
-  return undefined;
-});
-
-// --- Item wrapper border (hairline top for non-first items) ---
-const itemBorderStyle = computed(() => {
-  if (props.border) {
-    return {
-      borderTopWidth: '0.5px',
-      borderTopStyle: 'solid',
-      borderTopColor: '#ebedf0',
-    };
-  }
-  return undefined;
-});
-
-// --- Content styles ---
-const contentWrapperStyle = computed(() => ({
-  overflow: 'hidden',
-}));
 </script>
 
 <template>
-  <view class="van-collapse-item" :style="itemBorderStyle">
+  <view :class="bem()">
     <!-- Title / Header (Cell-based layout matching Vant) -->
     <Cell
       v-bind="cellProps"
-      :style="titleWrapperStyle"
+      :class="titleClass"
       @click="onClickTitle"
     >
       <template v-if="$slots.icon" #icon>
@@ -224,10 +209,9 @@ const contentWrapperStyle = computed(() => ({
     <!-- Content -->
     <view
       v-if="shouldRender && expanded"
-      class="van-collapse-item__wrapper"
-      :style="contentWrapperStyle"
+      :class="bem('wrapper')"
     >
-      <view class="van-collapse-item__content">
+      <view :class="bem('content')">
         <slot />
       </view>
     </view>

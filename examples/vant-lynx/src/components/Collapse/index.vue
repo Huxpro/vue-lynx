@@ -1,10 +1,13 @@
 <!--
   Lynx Limitations:
-  - No CSS ::after pseudo-element hairline border; uses inline border fallback
+  - No CSS ::after pseudo-element hairline border; uses border-width: 0.5px fallback
 -->
 <script setup lang="ts">
 import { provide, toRef, reactive } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import './index.less';
+
+const [, bem] = createNamespace('collapse');
 
 export interface CollapseProps {
   modelValue?: (string | number)[] | string | number;
@@ -145,17 +148,7 @@ defineExpose({ toggleAll });
 </script>
 
 <template>
-  <view
-    class="van-collapse"
-    :style="border ? {
-      borderTopWidth: '0.5px',
-      borderTopStyle: 'solid',
-      borderTopColor: '#ebedf0',
-      borderBottomWidth: '0.5px',
-      borderBottomStyle: 'solid',
-      borderBottomColor: '#ebedf0',
-    } : undefined"
-  >
+  <view :class="[bem(), { 'van-hairline--top-bottom': border }]">
     <slot />
   </view>
 </template>
