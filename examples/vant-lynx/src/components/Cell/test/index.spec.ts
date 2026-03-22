@@ -4,6 +4,18 @@ import { render, fireEvent } from 'vue-lynx-testing-library';
 import Cell from '../index.vue';
 
 describe('Cell', () => {
+  it('should render default classes', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Cell, { title: 'Title' });
+        },
+      }),
+    );
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell')).toBe(true);
+  });
+
   it('should render title and value', () => {
     const { container } = render(
       defineComponent({
@@ -29,6 +41,9 @@ describe('Cell', () => {
     const textEls = container.querySelectorAll('text');
     const texts = Array.from(textEls).map((el) => el.textContent);
     expect(texts).toContain('Description');
+    // Label should have BEM class
+    const labelEl = container.querySelector('.van-cell__label');
+    expect(labelEl).toBeTruthy();
   });
 
   it('should render value slot correctly', () => {
@@ -59,6 +74,9 @@ describe('Cell', () => {
     const textEls = container.querySelectorAll('text');
     const texts = Array.from(textEls).map((el) => el.textContent);
     expect(texts).toContain('Custom Title');
+    // Title wrapper should have BEM class
+    const titleEl = container.querySelector('.van-cell__title');
+    expect(titleEl).toBeTruthy();
   });
 
   it('should render label slot correctly', () => {
@@ -114,9 +132,11 @@ describe('Cell', () => {
         },
       }),
     );
-    // Arrow icon should render (an Icon component with name "arrow")
-    const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThanOrEqual(2);
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell--clickable')).toBe(true);
+    // Should render right-icon wrapper
+    const rightIcon = container.querySelector('.van-cell__right-icon');
+    expect(rightIcon).toBeTruthy();
   });
 
   it('should change arrow direction when using arrow-direction prop', () => {
@@ -127,9 +147,9 @@ describe('Cell', () => {
         },
       }),
     );
-    // Should render an arrow-down icon instead of arrow
-    const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThanOrEqual(1);
+    // Should render the right-icon container
+    const rightIcon = container.querySelector('.van-cell__right-icon');
+    expect(rightIcon).toBeTruthy();
   });
 
   it('should emit click event', async () => {
@@ -161,6 +181,8 @@ describe('Cell', () => {
         },
       }),
     );
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell--required')).toBe(true);
     const textEls = container.querySelectorAll('text');
     const hasAsterisk = Array.from(textEls).some(
       (el) => el.textContent === '*',
@@ -169,24 +191,22 @@ describe('Cell', () => {
   });
 
   it('should allow to disable clickable when using is-link prop', () => {
-    const clicks: any[] = [];
     const { container } = render(
       defineComponent({
         render() {
           return h(Cell, {
             isLink: true,
             clickable: false,
-            onClick: (e: any) => clicks.push(e),
           });
         },
       }),
     );
-    // Cell should still render arrow (isLink), but clickable is false
-    // The click event is still emitted (Vant behavior), but active state is not triggered
-    const viewEl = container.querySelector('view')!;
-    const style = viewEl.getAttribute('style') || '';
-    // Should not have active color since clickable is false
-    expect(style).not.toContain('#f2f3f5');
+    const cell = container.firstElementChild!;
+    // isLink still renders arrow, but clickable class should not be present
+    expect(cell.classList.contains('van-cell--clickable')).toBe(false);
+    // Arrow should still render
+    const rightIcon = container.querySelector('.van-cell__right-icon');
+    expect(rightIcon).toBeTruthy();
   });
 
   it('should change title style when using title-style prop', () => {
@@ -200,10 +220,7 @@ describe('Cell', () => {
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    const titleEl = Array.from(textEls).find(
-      (el) => el.textContent === 'Title',
-    );
+    const titleEl = container.querySelector('.van-cell__title');
     expect(titleEl).toBeTruthy();
     const style = titleEl!.getAttribute('style') || '';
     expect(style).toContain('red');
@@ -217,9 +234,55 @@ describe('Cell', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view')!;
-    const style = viewEl.getAttribute('style') || '';
-    // Large size uses 12px vertical padding
-    expect(style).toContain('12px');
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell--large')).toBe(true);
+  });
+
+  it('should render borderless correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Cell, { title: 'Title', border: false });
+        },
+      }),
+    );
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell--borderless')).toBe(true);
+  });
+
+  it('should render center correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Cell, { title: 'Title', center: true, label: 'Label' });
+        },
+      }),
+    );
+    const cell = container.firstElementChild!;
+    expect(cell.classList.contains('van-cell--center')).toBe(true);
+  });
+
+  it('should render left icon using icon prop', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Cell, { title: 'Title', icon: 'location-o' });
+        },
+      }),
+    );
+    const leftIcon = container.querySelector('.van-cell__left-icon');
+    expect(leftIcon).toBeTruthy();
+  });
+
+  it('should render value--alone class when no title', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Cell, { value: 'Content' });
+        },
+      }),
+    );
+    const valueEl = container.querySelector('.van-cell__value--alone');
+    expect(valueEl).toBeTruthy();
   });
 });
