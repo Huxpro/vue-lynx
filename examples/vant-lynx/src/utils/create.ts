@@ -14,10 +14,11 @@ export function createNamespace(name: string) {
   function bem(): string;
   function bem(el: string): string;
   function bem(el: string, mods: Record<string, boolean | undefined>): string;
+  function bem(el: string, mods: Array<string | undefined | Record<string, boolean | undefined>>): string;
   function bem(mods: Array<string | undefined | Record<string, boolean | undefined>>): string;
   function bem(
     el?: string | Array<string | undefined | Record<string, boolean | undefined>>,
-    mods?: Record<string, boolean | undefined>,
+    mods?: Record<string, boolean | undefined> | Array<string | undefined | Record<string, boolean | undefined>>,
   ): string {
     // No args: base class
     if (el === undefined && !mods) return prefixedName;
@@ -27,8 +28,15 @@ export function createNamespace(name: string) {
       const base = `${prefixedName}__${el}`;
       if (!mods) return base;
       const classes = [base];
-      for (const [key, val] of Object.entries(mods)) {
-        if (val) classes.push(`${base}--${key}`);
+      const items = Array.isArray(mods) ? mods : [mods];
+      for (const item of items) {
+        if (typeof item === 'string' && item) {
+          classes.push(`${base}--${item}`);
+        } else if (typeof item === 'object' && item) {
+          for (const [key, val] of Object.entries(item)) {
+            if (val) classes.push(`${base}--${key}`);
+          }
+        }
       }
       return classes.join(' ');
     }
