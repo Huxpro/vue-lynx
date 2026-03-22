@@ -1,82 +1,59 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Card from '../components/Card/index.vue';
-const clickResult = ref('');
-
-function onCardClick() {
-  clickResult.value = 'Card clicked!';
-}
-
-function onThumbClick() {
-  clickResult.value = 'Thumb clicked!';
-}
+import Tag from '../components/Tag/index.vue';
+import Button from '../components/Button/index.vue';
 </script>
 
 <template>
   <DemoPage title="Card">
-    <view :style="{ display: 'flex', flexDirection: 'column', padding: 12 }">
+    <view :style="{ display: 'flex', flexDirection: 'column', padding: '16px' }">
       <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Basic Usage</text>
+      <view :style="{ marginBottom: '16px' }">
         <Card
-          title="Product Name"
-          desc="Description of the product"
-          price="2.00"
           num="2"
+          price="2.00"
+          desc="Description"
+          title="Product Name"
+          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
         />
       </view>
 
-      <!-- With Origin Price -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Discount Info</text>
-      <view :style="{ marginBottom: 16 }">
+      <!-- Discount Info -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Discount Info</text>
+      <view :style="{ marginBottom: '16px' }">
         <Card
-          title="Product Name"
-          desc="Description of the product"
+          num="2"
           price="2.00"
           origin-price="10.00"
-          num="1"
-          tag="Sale"
+          tag="Tag"
+          desc="Description"
+          title="Product Name"
+          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
         />
       </view>
 
-      <!-- Custom Currency -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Currency</text>
-      <view :style="{ marginBottom: 16 }">
+      <!-- Custom Content -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Custom Content</text>
+      <view :style="{ marginBottom: '16px' }">
         <Card
-          title="International Product"
-          desc="Ships worldwide"
-          price="29.99"
-          currency="$"
-          num="1"
-        />
-      </view>
+          num="2"
+          price="2.00"
+          desc="Description"
+          title="Product Name"
+          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
+        >
+          <template #tags>
+            <Tag plain type="primary" :style="{ marginRight: '5px' }">Tag</Tag>
+            <Tag plain type="primary">Tag</Tag>
+          </template>
 
-      <!-- Click Events -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Click Events</text>
-      <view :style="{ marginBottom: 16 }">
-        <Card
-          title="Clickable Card"
-          desc="Tap the card or thumbnail"
-          price="5.00"
-          num="1"
-          @click="onCardClick"
-          @click-thumb="onThumbClick"
-        />
-      </view>
-      <view v-if="clickResult" :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ clickResult }}</text>
-      </view>
-
-      <!-- Centered Content -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Centered Content</text>
-      <view :style="{ marginBottom: 16 }">
-        <Card
-          title="Centered Card"
-          desc="Content is vertically centered"
-          price="8.00"
-          centered
-        />
+          <template #footer>
+            <Button round size="mini">Button</Button>
+            <Button round size="mini">Button</Button>
+          </template>
+        </Card>
       </view>
     </view>
   </DemoPage>
