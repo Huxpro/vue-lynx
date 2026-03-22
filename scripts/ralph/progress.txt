@@ -758,3 +758,52 @@ Branch: feat/vant-lynx-v2
 - Key changes: Created dedicated types.ts (re-exported from Checkbox/types.ts). Fixed `max` default from 0 to undefined, `direction` default from 'vertical' to undefined (matching Vant). Fixed `reactive([])` → `shallowReactive([])` for child registration (prevents ref unwrapping bug in toggleAll). Created dedicated test file with all Vant test cases ported. Fixed Checkbox icon rendering to avoid Icon/Badge fallthrough style issue.
 - Limitations: role/aria (Lynx has no ARIA), useChildren/useParent (uses manual provide/inject), useCustomFieldValue (not ported), `<div>` tag (renders `<view>` in Lynx)
 ---
+
+## 2026-03-22 - parity-radio + parity-radio-group: Radio & RadioGroup
+- Props (Radio): 8/8 (name, shape, disabled, labelDisabled, labelPosition, iconSize, modelValue, checkedColor)
+- Props (RadioGroup): 6/6 (modelValue, disabled, direction, iconSize, checkedColor, shape)
+- Events (Radio): 2/2 (update:modelValue, click)
+- Events (RadioGroup): 2/2 (update:modelValue, change)
+- Slots (Radio): 2/2 (default, icon)
+- Slots (RadioGroup): 1/1 (default)
+- CSS Variables: 10 defined in Radio/index.less (--van-radio-size, --van-radio-dot-size, --van-radio-border-color, --van-radio-duration, --van-radio-label-margin, --van-radio-label-color, --van-radio-checked-icon-color, --van-radio-disabled-icon-color, --van-radio-disabled-label-color, --van-radio-disabled-background)
+- BEM Classes (Radio): .van-radio, --disabled, --label-disabled, --horizontal, __icon (--round, --square, --dot, --checked, --disabled), __icon--dot__icon, __label (--left, --disabled)
+- BEM Classes (RadioGroup): .van-radio-group, --horizontal
+- Animations: transition-duration on icon border-color/background-color/color via CSS
+- Tests: 23 cases (Vant has 6; we have 23 — added BEM class verification for all modifiers, shapes, group integration, direction, disabled states)
+- Demo sections: 10/10 (基础用法, 水平排列, 禁用状态, 自定义形状, 自定义颜色, 自定义大小, 自定义图标, 左侧文本, 禁用文本点击, 搭配单元格组件使用)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files (Radio): index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Radio.tsx, types.ts, index.less, index.ts)
+- Files (RadioGroup): index.vue, index.less, types.ts (3 files; Vant has 3: RadioGroup.tsx, index.less, index.ts)
+- Key changes: Rewrote both from all-inline-styles to full BEM class system. Radio uses createNamespace('radio') + bem() for all classes. Icon uses Vant icon font character (success) instead of checkmark emoji. Dot shape uses .van-radio__icon--dot with inner __icon sub-element. Inline styles ONLY for checkedColor and iconSize props. RadioGroup uses createNamespace('radio-group') + bem() with --horizontal modifier. Provide/inject uses 'vanRadioGroup' key with reactive props. Added types.ts with RadioThemeVars, RadioGroupProvide. Demo page has Chinese titles, includes Cell component integration section.
+- Limitations: role/aria-checked/tabindex (Lynx has no ARIA), cursor (Lynx is touch-only), ::before pseudo-element (uses <text> + font-family), overflow:hidden (Lynx default visible), useParent/useChildren (uses manual provide/inject), useCustomFieldValue (not ported)
+---
+
+## 2026-03-22 - parity-stepper: Stepper
+- Props: 21/21 (modelValue, min, max, step, name, theme, integer, disabled, showPlus, showMinus, showInput, longPress, autoFixed, allowEmpty, inputWidth, buttonSize, placeholder, disablePlus, disableMinus, disableInput, beforeChange, defaultValue, decimalLength)
+- Events: 7/7 (update:modelValue, change, plus, minus, overlimit, focus, blur)
+- Slots: 0/0 (Stepper has no slots)
+- CSS Variables: 13 defined in index.less (--van-stepper-background, --van-stepper-button-icon-color, --van-stepper-button-disabled-color, --van-stepper-button-disabled-icon-color, --van-stepper-button-round-theme-color, --van-stepper-input-width, --van-stepper-input-height, --van-stepper-input-font-size, --van-stepper-input-line-height, --van-stepper-input-text-color, --van-stepper-input-disabled-text-color, --van-stepper-input-disabled-background, --van-stepper-radius)
+- Animations: none (Stepper has no transitions)
+- Tests: 38 cases (Vant has 30, we have 38 — added BEM class, icon line, round theme, step prop, defaultValue, Promise beforeChange tests)
+- Demo sections: 10/10 (基础用法, 步长设置, 限制输入范围, 限制输入整数, 禁用状态, 禁用输入框, 固定小数位数, 自定义大小, 异步变更, 圆角风格)
+- Visual match: pass (BEM classes, CSS variables, <input> element, icon lines replacing ::before/::after)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3)
+- Key changes: Complete rewrite from inline-style-only to BEM class system. Replaced static text display with real <input> element. Fixed formatNumber to match Vant's split-on-dot behavior for integer mode. Added icon line views to replace ::before/::after pseudo-elements for +/- buttons. Proper long-press with touchstart/touchend. beforeChange interceptor supports sync false, Promise resolve/reject.
+- Limitations: role/aria attributes (Lynx has no ARIA), ::before/::after (uses inner <view> elements for icon lines), input type/inputmode (Lynx input doesn't support these), cursor styling (Lynx is touch-only), v-show (uses v-if)
+---
+
+## 2026-03-22 - parity-rate: Rate
+- Props: 15/15 (size, icon, color, count, gutter, clearable, readonly, disabled, voidIcon, allowHalf, voidColor, touchable, iconPrefix, modelValue, disabledColor)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 0/0 (Rate has no slots)
+- CSS Variables: 5 defined in index.less (--van-rate-icon-size, --van-rate-icon-gutter, --van-rate-icon-void-color, --van-rate-icon-full-color, --van-rate-icon-disabled-color)
+- BEM Classes: .van-rate, .van-rate__item, .van-rate__icon (--half, --full, --disabled), .van-rate--disabled, .van-rate--readonly
+- Animations: none (Rate has no transitions)
+- Tests: 16 cases (Vant has 11, we have 16 — added BEM class, readonly, half icon class, color prop, disabled color tests)
+- Demo sections: 10/10 (基础用法, 自定义图标, 自定义样式, 半星, 自定义数量, 可清空, 禁用状态, 只读状态, 只读状态小数显示, 监听 change 事件)
+- Visual match: pass (BEM classes, CSS variables, Icon component with icon font)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Rate.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from inline-style-only to BEM class system. Replaced Unicode star characters with Vant Icon component using icon font. Added all BEM selectors in .less. Added iconPrefix prop. Touch drag uses estimation since Lynx lacks DOM rect measurement. Half-star overlay positioned via CSS class --half with overflow:hidden.
+- Limitations: role/aria attributes (Lynx has no ARIA), tabindex (Lynx has no keyboard focus), useRect/getBoundingClientRect (touch drag uses estimation), useCustomFieldValue (no Vant Form integration yet), cursor styling (Lynx is touch-only)
+---

@@ -1266,7 +1266,7 @@
         "Docs: Lynx limitations in components/Radio/README.md",
         "Commit: feat(radio): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-radio-group",
@@ -1288,7 +1288,7 @@
         "Docs: Lynx limitations in components/RadioGroup/README.md",
         "Commit: feat(radio-group): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-stepper",
@@ -1310,7 +1310,7 @@
         "Docs: Lynx limitations in components/Stepper/README.md",
         "Commit: feat(stepper): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-rate",
@@ -1332,7 +1332,7 @@
         "Docs: Lynx limitations in components/Rate/README.md",
         "Commit: feat(rate): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-slider",
