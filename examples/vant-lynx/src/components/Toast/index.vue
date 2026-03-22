@@ -1,19 +1,19 @@
 <!--
   Lynx Limitations:
-  - teleport: accepted for API compat but not applicable in Lynx (no DOM mounting)
-  - transition: accepted but no CSS transition animation in Lynx
-  - html type: accepted for API compat but no innerHTML in Lynx (renders as text)
-  - wordBreak: accepted but Lynx text wrapping may differ from web
-  - forbidClick: uses overlay to block touches (no document.body class toggle)
-  - className: accepted for API compat but no CSS class system in Lynx
-  - overlayClass: accepted for API compat but no CSS class system in Lynx
-  - iconPrefix: accepted for API compat but no icon font in Lynx
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - html type: accepted for API compat but no innerHTML in Lynx (renders as plain text)
+  - forbidClick: uses transparent overlay to block touches (no document.body class toggle)
+  - lockScroll: not applicable in Lynx (no document.body scroll)
 -->
 <script setup lang="ts">
 import { computed, watch, ref, onBeforeUnmount } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit, isDef } from '../../utils/format';
 import Loading from '../Loading/index.vue';
 import Icon from '../Icon/index.vue';
+import Overlay from '../Overlay/index.vue';
 import type { ToastType, ToastPosition, ToastWordBreak } from './types';
+import './index.less';
 
 export type {
   ToastType,
@@ -24,6 +24,8 @@ export type {
   ToastWrapperInstance,
   ToastThemeVars,
 } from './types';
+
+const [, bem] = createNamespace('toast');
 
 const props = withDefaults(
   defineProps<{
@@ -70,19 +72,36 @@ const emit = defineEmits<{
   opened: [];
 }>();
 
+// Lazy render
+const hasRendered = ref(false);
+
+watch(
+  () => props.show,
+  (val) => {
+    if (val) hasRendered.value = true;
+  },
+  { immediate: true },
+);
+
+const shouldRender = computed(() => hasRendered.value);
+
+// Icon logic
+const isTextType = computed(
+  () => props.type === 'text' || props.type === 'html',
+);
+
 const hasIcon = computed(
   () => props.type === 'loading' || props.type === 'success' || props.type === 'fail' || !!props.icon,
 );
 
-const iconSizePx = computed(() => {
-  if (props.iconSize == null) return '36px';
-  if (typeof props.iconSize === 'number') return `${props.iconSize}px`;
-  return props.iconSize;
+const iconName = computed(() => {
+  if (props.icon) return props.icon;
+  if (props.type === 'success') return 'success';
+  if (props.type === 'fail') return 'fail';
+  return '';
 });
 
-const iconSizeNum = computed(() => {
-  return parseInt(String(iconSizePx.value), 10) || 36;
-});
+const iconSizePx = computed(() => addUnit(props.iconSize) ?? '36px');
 
 // Auto-close timer
 const timer = ref<ReturnType<typeof setTimeout> | null>(null);
@@ -95,8 +114,8 @@ function clearTimer() {
 }
 
 watch(
-  () => [props.show, props.duration] as const,
-  ([show, duration]) => {
+  () => [props.show, props.type, props.message, props.duration] as const,
+  ([show, _type, _message, duration]) => {
     clearTimer();
     if (show) {
       emit('opened');
@@ -114,90 +133,70 @@ onBeforeUnmount(() => {
   clearTimer();
 });
 
-// Container style (full-screen overlay layer)
-const containerStyle = computed(() => {
-  const style: Record<string, any> = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: Number(props.zIndex),
-  };
+// Whether overlay/blocking layer is needed
+const needOverlay = computed(
+  () => props.overlay || props.forbidClick,
+);
 
-  // Overlay or forbidClick shows a blocking layer
+// Overlay custom style: transparent when forbidClick only, dark when overlay
+const overlayCustomStyle = computed(() => {
   if (props.overlay) {
-    style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-  } else if (props.forbidClick) {
-    style.backgroundColor = 'transparent';
-  } else {
-    // No overlay, no forbidClick: allow clicks to pass through
-    style.backgroundColor = 'transparent';
+    return props.overlayStyle;
+  }
+  // forbidClick without overlay: transparent blocker
+  return { backgroundColor: 'transparent', ...props.overlayStyle };
+});
+
+// BEM classes for toast
+const toastClasses = computed(() => {
+  const mods: Array<string | undefined | Record<string, boolean | undefined>> = [
+    props.position,
+  ];
+
+  // Text/html types get smaller padding
+  if (isTextType.value && !props.icon) {
+    mods.push(props.type);
+  }
+
+  // Word break modifier
+  if (props.wordBreak && props.wordBreak !== 'break-all') {
+    if (props.wordBreak === 'normal') {
+      mods.push('break-normal');
+    } else {
+      mods.push(props.wordBreak);
+    }
+  }
+
+  const classes: Array<string | string[] | Record<string, any>> = [bem(mods)];
+  if (props.className) {
+    if (typeof props.className === 'string') {
+      classes.push(props.className);
+    } else if (Array.isArray(props.className)) {
+      classes.push(...props.className);
+    } else {
+      classes.push(props.className);
+    }
+  }
+  return classes;
+});
+
+// Inline style: only z-index and opacity for fade transition
+const toastStyle = computed(() => {
+  const style: Record<string, any> = {};
+  if (isDef(props.zIndex)) {
+    style.zIndex = Number(props.zIndex);
+  }
+  style.opacity = props.show ? 1 : 0;
+  if (!props.show) {
     style.pointerEvents = 'none';
   }
-
   return style;
 });
 
-// Position wrapper style
-const positionStyle = computed(() => {
-  const base: Record<string, any> = {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-  if (props.position === 'top') {
-    return { ...base, top: '20%' };
-  }
-  if (props.position === 'bottom') {
-    return { ...base, bottom: '20%' };
-  }
-  // middle
-  return { ...base, top: '45%' };
-});
-
-// Toast box style
-const toastStyle = computed(() => {
-  const isTextType = props.type === 'text' || props.type === 'html';
-  const hasIconOrType = hasIcon.value;
-
-  const style: Record<string, any> = {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    pointerEvents: 'auto',
-  };
-
-  if (hasIconOrType && !isTextType) {
-    // Icon/loading/success/fail style: fixed width box
-    style.paddingTop = '16px';
-    style.paddingBottom = '16px';
-    style.paddingLeft = '16px';
-    style.paddingRight = '16px';
-    style.minWidth = '88px';
-    style.minHeight = '88px';
-    style.maxWidth = '70%';
-  } else {
-    // Text style: fit content
-    style.paddingTop = '8px';
-    style.paddingBottom = '8px';
-    style.paddingLeft = '12px';
-    style.paddingRight = '12px';
-    style.minWidth = '96px';
-    style.maxWidth = '70%';
-  }
-
-  return style;
-});
+// Text class: margin-top when there's an icon above
+const textClasses = computed(() =>
+  bem('text', { only: !hasIcon.value }),
+);
 
 function onClickToast() {
   if (props.closeOnClick) {
@@ -215,58 +214,48 @@ function onClickOverlay() {
 </script>
 
 <template>
-  <view v-if="show" :style="containerStyle" @tap="onClickOverlay">
-    <view :style="positionStyle">
-      <view :style="toastStyle" @tap.stop="onClickToast">
-        <!-- Loading type -->
-        <Loading
-          v-if="type === 'loading'"
-          :type="loadingType"
-          :size="iconSizeNum"
-          color="#fff"
-          :style="{ marginBottom: message ? '8px' : '0px' }"
-        />
+  <!-- Overlay: blocks touches when overlay=true or forbidClick=true -->
+  <Overlay
+    v-if="shouldRender && needOverlay"
+    :show="show"
+    :z-index="zIndex"
+    :custom-style="overlayCustomStyle"
+    :class-name="overlayClass"
+    @click="onClickOverlay"
+  />
 
-        <!-- Success icon -->
-        <Icon
-          v-else-if="type === 'success'"
-          name="success"
-          :size="iconSizeNum"
-          color="#fff"
-          :style="{ marginBottom: message ? '8px' : '0px' }"
-        />
+  <!-- Toast box -->
+  <view
+    v-if="shouldRender"
+    :class="toastClasses"
+    :style="toastStyle"
+    @tap.stop="onClickToast"
+  >
+    <!-- Loading type -->
+    <Loading
+      v-if="type === 'loading'"
+      :class="bem('loading')"
+      :type="loadingType"
+      :size="iconSizePx"
+      color="white"
+    />
 
-        <!-- Fail icon -->
-        <Icon
-          v-else-if="type === 'fail'"
-          name="fail"
-          :size="iconSizeNum"
-          color="#fff"
-          :style="{ marginBottom: message ? '8px' : '0px' }"
-        />
+    <!-- Icon (success/fail/custom) -->
+    <Icon
+      v-else-if="iconName"
+      :class="bem('icon')"
+      :name="iconName"
+      :size="iconSizePx"
+      color="white"
+      :class-prefix="iconPrefix"
+    />
 
-        <!-- Custom icon -->
-        <Icon
-          v-else-if="icon"
-          :name="icon"
-          :size="iconSizeNum"
-          color="#fff"
-          :style="{ marginBottom: message ? '8px' : '0px' }"
-        />
-
-        <!-- Message -->
-        <slot name="message">
-          <text
-            v-if="message"
-            :style="{
-              fontSize: '14px',
-              color: '#fff',
-              textAlign: 'center',
-              lineHeight: '20px',
-            }"
-          >{{ message }}</text>
-        </slot>
-      </view>
-    </view>
+    <!-- Message -->
+    <slot name="message">
+      <text
+        v-if="message"
+        :class="textClasses"
+      >{{ message }}</text>
+    </slot>
   </view>
 </template>

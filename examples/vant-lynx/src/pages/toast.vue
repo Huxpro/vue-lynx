@@ -18,42 +18,42 @@ const showComponentToast = ref(false);
 
 // Basic Usage
 function onShowText() {
-  showToast('Some messages');
+  showToast('提示内容');
 }
 
 function onShowLoading() {
   showLoadingToast({
-    message: 'Loading...',
+    message: '加载中...',
     forbidClick: true,
   });
 }
 
 function onShowSuccess() {
-  showSuccessToast('Success');
+  showSuccessToast('成功文案');
 }
 
 function onShowFail() {
-  showFailToast('Fail');
+  showFailToast('失败文案');
 }
 
 // Custom Icon
 function onShowCustomIcon() {
   showToast({
-    message: 'Custom Icon',
+    message: '自定义图标',
     icon: 'like-o',
   });
 }
 
 function onShowCustomImage() {
   showToast({
-    message: 'Custom Image',
+    message: '自定义图片',
     icon: 'star',
   });
 }
 
 function onShowLoadingSpinner() {
   showLoadingToast({
-    message: 'Loading...',
+    message: '加载中...',
     forbidClick: true,
     loadingType: 'spinner',
   });
@@ -62,14 +62,14 @@ function onShowLoadingSpinner() {
 // Custom Position
 function onShowTopToast() {
   showToast({
-    message: 'Top Position',
+    message: '顶部展示',
     position: 'top',
   });
 }
 
 function onShowBottomToast() {
   showToast({
-    message: 'Bottom Position',
+    message: '底部展示',
     position: 'bottom',
   });
 }
@@ -94,14 +94,14 @@ function onShowUpdateMessage() {
   const toast = showLoadingToast({
     duration: 0,
     forbidClick: true,
-    message: 'Countdown 3 seconds',
+    message: '倒计时 3 秒',
   });
 
   let second = 3;
   const timer = setInterval(() => {
     second--;
     if (second) {
-      toast.message = `Countdown ${second} seconds`;
+      toast.message = `倒计时 ${second} 秒`;
     } else {
       clearInterval(timer);
       closeToast();
@@ -111,49 +111,49 @@ function onShowUpdateMessage() {
 </script>
 
 <template>
-  <DemoPage title="Toast">
+  <DemoPage title="Toast 轻提示">
     <view :style="{ padding: 0, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Basic Usage</text>
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">基础用法</text>
       <CellGroup>
-        <Cell title="Text" is-link @click="onShowText" />
-        <Cell title="Loading" is-link @click="onShowLoading" />
-        <Cell title="Success" is-link @click="onShowSuccess" />
-        <Cell title="Fail" is-link @click="onShowFail" :border="false" />
+        <Cell title="文字提示" is-link @click="onShowText" />
+        <Cell title="加载提示" is-link @click="onShowLoading" />
+        <Cell title="成功提示" is-link @click="onShowSuccess" />
+        <Cell title="失败提示" is-link @click="onShowFail" :border="false" />
       </CellGroup>
 
-      <!-- Custom Icon -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Custom Icon</text>
+      <!-- 自定义图标 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">自定义图标</text>
       <CellGroup>
-        <Cell title="Custom Icon" is-link @click="onShowCustomIcon" />
-        <Cell title="Custom Image" is-link @click="onShowCustomImage" />
-        <Cell title="Loading Type" is-link @click="onShowLoadingSpinner" :border="false" />
+        <Cell title="自定义图标" is-link @click="onShowCustomIcon" />
+        <Cell title="自定义图片" is-link @click="onShowCustomImage" />
+        <Cell title="自定义加载图标" is-link @click="onShowLoadingSpinner" :border="false" />
       </CellGroup>
 
-      <!-- Custom Position -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Custom Position</text>
+      <!-- 自定义位置 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">自定义位置</text>
       <CellGroup>
-        <Cell title="Top" is-link @click="onShowTopToast" />
-        <Cell title="Bottom" is-link @click="onShowBottomToast" :border="false" />
+        <Cell title="顶部展示" is-link @click="onShowTopToast" />
+        <Cell title="底部展示" is-link @click="onShowBottomToast" :border="false" />
       </CellGroup>
 
-      <!-- Word Break -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Word Break</text>
+      <!-- 文字换行方式 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">文字换行方式</text>
       <CellGroup>
-        <Cell title="Break All" is-link @click="onShowBreakAll" />
-        <Cell title="Break Word" is-link @click="onShowBreakWord" :border="false" />
+        <Cell title="换行时截断单词" is-link @click="onShowBreakAll" />
+        <Cell title="换行时不截断单词" is-link @click="onShowBreakWord" :border="false" />
       </CellGroup>
 
-      <!-- Update Message -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Update Message</text>
+      <!-- 动态更新提示 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">动态更新提示</text>
       <CellGroup>
-        <Cell title="Update Message" is-link @click="onShowUpdateMessage" :border="false" />
+        <Cell title="动态更新提示" is-link @click="onShowUpdateMessage" :border="false" />
       </CellGroup>
 
-      <!-- Use Toast Component -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Use Toast Component</text>
+      <!-- 使用 Toast 组件 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">使用 Toast 组件</text>
       <CellGroup>
-        <Cell title="Use Toast Component" is-link @click="showComponentToast = true" :border="false" />
+        <Cell title="使用 Toast 组件" is-link @click="showComponentToast = true" :border="false" />
       </CellGroup>
     </view>
 
@@ -170,6 +170,7 @@ function onShowUpdateMessage() {
       :forbid-click="toastState.forbidClick"
       :loading-type="toastState.loadingType"
       :z-index="toastState.zIndex"
+      :word-break="toastState.wordBreak"
       @update:show="(v: boolean) => { if (!v) closeToast(); }"
     />
 
