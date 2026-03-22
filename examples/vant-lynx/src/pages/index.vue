@@ -50,6 +50,7 @@ const components = [
   { name: 'Highlight', path: '/highlight' },
   { name: 'Calendar', path: '/calendar' },
   { name: 'Picker', path: '/picker' },
+  { name: 'PickerGroup', path: '/picker-group' },
   { name: 'Cascader', path: '/cascader' },
   { name: 'DatePicker', path: '/date-picker' },
   { name: 'TimePicker', path: '/time-picker' },

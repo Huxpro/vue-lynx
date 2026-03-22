@@ -1,86 +1,174 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 2/6 supported (title, tabs)
-    Missing: activeTab (v-model), nextStepText, showToolbar, confirmButtonText, cancelButtonText
-  - Events: 0/3 supported
-    Missing: confirm, cancel, update:activeTab
-  - Slots: 1/4 supported (default)
-    Missing: toolbar, title, confirm, cancel
-  - Gaps: no toolbar with confirm/cancel buttons; no nextStepText for multi-step flow;
-    activeTab is internal only (not exposed as v-model); child picker confirm() orchestration
-    not implemented
+  Lynx Limitations:
+  - teleport: Not supported in Lynx
 -->
-<script setup lang="ts">
-import { provide, ref } from 'vue-lynx';
+<script lang="ts">
+import { defineComponent, computed, provide, ref, watch, h, Comment, Fragment, type VNode } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Tabs from '../Tabs/index.vue';
+import Tab from '../Tab/index.vue';
+import PickerToolbar from '../Picker/PickerToolbar.vue';
+import { PICKER_GROUP_KEY, type PickerGroupChild } from './types';
+import './index.less';
 
-export interface PickerGroupProps {
-  title?: string;
-  tabs?: string[];
-}
+const [, bem] = createNamespace('picker-group');
 
-const props = withDefaults(defineProps<PickerGroupProps>(), {
-  tabs: () => [],
+export default defineComponent({
+  name: 'van-picker-group',
+
+  props: {
+    tabs: {
+      type: Array as () => string[],
+      default: () => [],
+    },
+    activeTab: {
+      type: [Number, String],
+      default: 0,
+    },
+    nextStepText: String,
+    showToolbar: {
+      type: Boolean,
+      default: true,
+    },
+    title: String,
+    confirmButtonText: String,
+    cancelButtonText: String,
+  },
+
+  emits: ['confirm', 'cancel', 'update:activeTab'],
+
+  setup(props, { emit, slots }) {
+    // Track active tab internally, sync with prop
+    const internalActiveTab = ref<number | string>(props.activeTab);
+
+    watch(
+      () => props.activeTab,
+      (val) => {
+        if (val !== internalActiveTab.value) {
+          internalActiveTab.value = val;
+        }
+      },
+    );
+
+    function onUpdateActive(val: number | string) {
+      internalActiveTab.value = val;
+      emit('update:activeTab', val);
+    }
+
+    // Child picker registration
+    const children: PickerGroupChild[] = [];
+
+    provide(PICKER_GROUP_KEY, {
+      register(child: PickerGroupChild) {
+        children.push(child);
+      },
+      unregister(child: PickerGroupChild) {
+        const index = children.indexOf(child);
+        if (index > -1) {
+          children.splice(index, 1);
+        }
+      },
+    });
+
+    // Next step logic
+    function showNextButton() {
+      return +internalActiveTab.value < props.tabs.length - 1 && props.nextStepText;
+    }
+
+    function onConfirm() {
+      if (showNextButton()) {
+        const next = +internalActiveTab.value + 1;
+        internalActiveTab.value = next;
+        emit('update:activeTab', next);
+      } else {
+        emit(
+          'confirm',
+          children.map((item) => item.confirm()),
+        );
+      }
+    }
+
+    function onCancel() {
+      emit('cancel');
+    }
+
+    // Flatten slot children (remove Comment, flatten Fragment)
+    function getChildNodes(): VNode[] | undefined {
+      const defaultSlot = slots.default?.();
+      if (!defaultSlot) return undefined;
+
+      const result: VNode[] = [];
+      for (const node of defaultSlot) {
+        if (node.type === Comment) continue;
+        if (node.type === Fragment && Array.isArray(node.children)) {
+          for (const child of node.children as VNode[]) {
+            if ((child as VNode).type !== Comment) {
+              result.push(child as VNode);
+            }
+          }
+        } else {
+          result.push(node);
+        }
+      }
+      return result;
+    }
+
+    return () => {
+      const childNodes = getChildNodes();
+
+      const confirmButtonText = showNextButton()
+        ? props.nextStepText
+        : props.confirmButtonText;
+
+      const toolbarSlots: Record<string, () => VNode[]> = {};
+      if (slots.toolbar) toolbarSlots.toolbar = slots.toolbar;
+      if (slots.title) toolbarSlots.title = slots.title;
+      if (slots.confirm) toolbarSlots.confirm = slots.confirm;
+      if (slots.cancel) toolbarSlots.cancel = slots.cancel;
+
+      return h('view', { class: bem() }, [
+        // Toolbar
+        props.showToolbar
+          ? h(
+              PickerToolbar,
+              {
+                title: props.title,
+                cancelButtonText: props.cancelButtonText,
+                confirmButtonText: confirmButtonText,
+                onConfirm,
+                onCancel,
+              },
+              toolbarSlots,
+            )
+          : null,
+
+        // Tabs
+        h(
+          Tabs,
+          {
+            active: internalActiveTab.value,
+            class: bem('tabs'),
+            shrink: true,
+            animated: true,
+            lazyRender: false,
+            showHeader: true,
+            'onUpdate:active': onUpdateActive,
+          },
+          () =>
+            props.tabs.map((title, index) =>
+              h(
+                Tab,
+                {
+                  key: index,
+                  title,
+                  titleClass: bem('tab-title'),
+                },
+                () => (childNodes?.[index] ? [childNodes[index]] : []),
+              ),
+            ),
+        ),
+      ]);
+    };
+  },
 });
-
-const activeTab = ref(0);
-
-provide('pickerGroup', {
-  tabs: props.tabs,
-  activeTab,
-});
-
-const headerStyle = {
-  display: 'flex',
-  flexDirection: 'column' as const,
-  backgroundColor: '#fff',
-};
-
-const titleStyle = {
-  fontSize: 16,
-  fontWeight: 'bold' as const,
-  color: '#323233',
-  textAlign: 'center' as const,
-  paddingTop: 12,
-  paddingBottom: 8,
-};
-
-const tabsStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
 </script>
-
-<template>
-  <view :style="headerStyle">
-    <text v-if="title" :style="titleStyle">{{ title }}</text>
-    <view v-if="tabs && tabs.length" :style="tabsStyle">
-      <view
-        v-for="(tab, index) in tabs"
-        :key="index"
-        :style="{
-          flex: 1,
-          height: 40,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottomWidth: activeTab === index ? 2 : 0,
-          borderBottomStyle: 'solid' as const,
-          borderBottomColor: '#1989fa',
-        }"
-        @tap="activeTab = index"
-      >
-        <text
-          :style="{
-            fontSize: 14,
-            color: activeTab === index ? '#1989fa' : '#646566',
-            fontWeight: activeTab === index ? ('bold' as const) : ('normal' as const),
-          }"
-        >{{ tab }}</text>
-      </view>
-    </view>
-    <slot />
-  </view>
-</template>
