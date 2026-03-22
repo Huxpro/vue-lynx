@@ -6,10 +6,10 @@
   - Slots: 1/1 (default)
   - Auto-close: Timer-based auto-close using duration prop (0 = no auto-close)
   - Position: top/bottom support
-  - Animation: Slide from top/bottom using CSS transition + Vue <Transition>
+  - Animation: Slide from top/bottom using CSS transition on transform (no Transition + v-show)
 -->
 <script setup lang="ts">
-import { computed, watch, ref, onBeforeUnmount, useSlots, Transition } from 'vue-lynx';
+import { computed, watch, ref, onBeforeUnmount, useSlots } from 'vue-lynx';
 
 export type NotifyType = 'primary' | 'success' | 'warning' | 'danger';
 export type NotifyPosition = 'top' | 'bottom';
@@ -49,6 +49,8 @@ const slots = useSlots();
 const ANIM_DURATION = 300;
 
 const hasRendered = ref(false);
+const animVisible = ref(false);
+let animTimer: ReturnType<typeof setTimeout> | null = null;
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -69,26 +71,23 @@ function startTimer() {
   }
 }
 
-const transitionName = computed(() =>
-  props.position === 'top' ? 'van-popup-slide-top' : 'van-popup-slide-bottom',
-);
-
 watch(
   () => props.show,
   (val) => {
+    if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
     if (val) {
       hasRendered.value = true;
       startTimer();
+      setTimeout(() => { animVisible.value = true; }, 16);
+      animTimer = setTimeout(() => { emit('opened'); }, ANIM_DURATION + 50);
     } else {
       clearTimer();
+      animVisible.value = false;
     }
   },
   { immediate: true },
 );
-
-function onOpened() {
-  emit('opened');
-}
 
 // Restart timer when duration changes while visible
 watch(
@@ -102,6 +101,7 @@ watch(
 
 onBeforeUnmount(() => {
   clearTimer();
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
 });
 
 const typeColorMap: Record<string, { color: string; background: string }> = {
@@ -121,6 +121,7 @@ const resolvedBackground = computed(
 
 const barStyle = computed(() => {
   const isTop = props.position === 'top';
+  const hiddenTransform = isTop ? 'translateY(-100%)' : 'translateY(100%)';
   return {
     position: 'fixed' as const,
     ...(isTop ? { top: 0 } : { bottom: 0 }),
@@ -136,6 +137,8 @@ const barStyle = computed(() => {
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     transition: `transform ${ANIM_DURATION / 1000}s ease`,
+    transform: animVisible.value ? 'translateY(0)' : hiddenTransform,
+    pointerEvents: animVisible.value ? ('auto' as const) : ('none' as const),
   };
 });
 
@@ -152,11 +155,9 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <Transition v-if="hasRendered" :name="transitionName" :duration="ANIM_DURATION" @after-enter="onOpened">
-    <view v-show="show" :style="barStyle" @tap="onTap">
-      <slot>
-        <text :style="textStyle">{{ message }}</text>
-      </slot>
-    </view>
-  </Transition>
+  <view v-if="hasRendered" :style="barStyle" @tap="onTap">
+    <slot>
+      <text :style="textStyle">{{ message }}</text>
+    </slot>
+  </view>
 </template>

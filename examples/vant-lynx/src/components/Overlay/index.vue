@@ -7,10 +7,10 @@
     - teleport: accepted for API compat but not applicable in Lynx (no DOM)
     - lockScroll: accepted for API compat but no direct equivalent in Lynx
     - className: accepted but applied as inline style override since Lynx has no CSS class system
-  - Animation: Fade in/out using CSS transition + Vue <Transition>
+  - Animation: Fade in/out using CSS transition on opacity (no Transition + v-show)
 -->
 <script setup lang="ts">
-import { computed, ref, watch, Transition } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 
 export interface OverlayProps {
   show?: boolean;
@@ -35,14 +35,17 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
-// For lazy render: track if overlay has ever been shown
 const hasRendered = ref(false);
+const animVisible = ref(false);
 
 watch(
   () => props.show,
   (val) => {
     if (val) {
       hasRendered.value = true;
+      setTimeout(() => { animVisible.value = true; }, 16);
+    } else {
+      animVisible.value = false;
     }
   },
   { immediate: true },
@@ -52,8 +55,6 @@ const shouldRender = computed(() => {
   if (!props.lazyRender) return true;
   return hasRendered.value;
 });
-
-const durationMs = computed(() => Number(props.duration) * 1000);
 
 const overlayStyle = computed(() => {
   const base: Record<string, any> = {
@@ -65,6 +66,8 @@ const overlayStyle = computed(() => {
     zIndex: Number(props.zIndex),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     transition: `opacity ${props.duration}s ease`,
+    opacity: animVisible.value ? 1 : 0,
+    pointerEvents: animVisible.value ? 'auto' : 'none',
   };
   if (props.customStyle) {
     Object.assign(base, props.customStyle);
@@ -78,13 +81,11 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <Transition v-if="shouldRender" name="van-fade" :duration="durationMs">
-    <view
-      v-show="show"
-      :style="overlayStyle"
-      @tap="onTap"
-    >
-      <slot />
-    </view>
-  </Transition>
+  <view
+    v-if="shouldRender"
+    :style="overlayStyle"
+    @tap="onTap"
+  >
+    <slot />
+  </view>
 </template>

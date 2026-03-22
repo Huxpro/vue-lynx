@@ -7,10 +7,10 @@
   - Slots: 3/4 (default [message], title, footer; missing: none critical)
   - Exposed methods: open(), close()
   - Sub-components: Overlay
-  - Animation: Zoom in/out (scale 0.9→1 + opacity) using CSS transition + Vue <Transition>
+  - Animation: Zoom in/out (scale 0.9→1 + opacity) using CSS transition (no Transition + v-show)
 -->
 <script setup lang="ts">
-import { ref, computed, watch, Transition } from 'vue-lynx';
+import { ref, computed, watch, onBeforeUnmount } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
 
 export interface DialogProps {
@@ -52,20 +52,30 @@ const emit = defineEmits<{
 }>();
 
 const hasRendered = ref(false);
+const animVisible = ref(false);
+let animTimer: ReturnType<typeof setTimeout> | null = null;
 
 const durationMs = computed(() => Number(props.duration) * 1000);
 
 watch(
   () => props.show,
   (val) => {
+    if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
     if (val) {
       hasRendered.value = true;
       emit('open');
+      setTimeout(() => { animVisible.value = true; }, 16);
     } else if (hasRendered.value) {
       emit('close');
+      animVisible.value = false;
     }
   },
 );
+
+onBeforeUnmount(() => {
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+});
 
 function onConfirm() {
   emit('confirm');
@@ -101,6 +111,9 @@ const dialogStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'column' as const,
   transition: `opacity ${props.duration}s ease, transform ${props.duration}s ease`,
+  opacity: animVisible.value ? 1 : 0,
+  transform: animVisible.value ? 'scale(1)' : 'scale(0.9)',
+  pointerEvents: animVisible.value ? ('auto' as const) : ('none' as const),
 }));
 </script>
 
@@ -108,7 +121,7 @@ const dialogStyle = computed(() => ({
   <template v-if="hasRendered">
     <Overlay v-if="overlay" :show="show" :z-index="2000" :duration="duration" @click="onClickOverlay" />
 
-    <!-- Flex centering wrapper (avoids transform: translate(-50%, -50%) conflict with zoom) -->
+    <!-- Flex centering wrapper -->
     <view
       :style="{
         position: 'fixed',
@@ -123,104 +136,102 @@ const dialogStyle = computed(() => ({
         pointerEvents: 'none',
       }"
     >
-      <Transition name="van-popup-zoom" :duration="durationMs">
-        <view v-show="show" :style="dialogStyle">
-          <!-- Title -->
-          <slot name="title">
-            <view
-              v-if="title"
+      <view :style="dialogStyle">
+        <!-- Title -->
+        <slot name="title">
+          <view
+            v-if="title"
+            :style="{
+              paddingTop: 26,
+              paddingBottom: message ? 8 : 26,
+              paddingLeft: 24,
+              paddingRight: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }"
+          >
+            <text
               :style="{
-                paddingTop: 26,
-                paddingBottom: message ? 8 : 26,
-                paddingLeft: 24,
-                paddingRight: 24,
+                fontSize: 16,
+                fontWeight: 'bold',
+                color: '#323233',
+                textAlign: 'center',
+                lineHeight: 24,
+              }"
+            >{{ title }}</text>
+          </view>
+        </slot>
+
+        <!-- Message -->
+        <slot>
+          <view
+            v-if="message"
+            :style="{
+              paddingTop: title ? 8 : 26,
+              paddingBottom: 26,
+              paddingLeft: 24,
+              paddingRight: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }"
+          >
+            <text
+              :style="{
+                fontSize: 14,
+                color: title ? '#646566' : '#323233',
+                textAlign: 'center',
+                lineHeight: 20,
+              }"
+            >{{ message }}</text>
+          </view>
+        </slot>
+
+        <!-- Buttons -->
+        <slot name="footer">
+          <view
+            :style="{
+              display: 'flex',
+              flexDirection: 'row',
+              borderTopWidth: 1,
+              borderTopStyle: 'solid',
+              borderTopColor: '#ebedf0',
+            }"
+          >
+            <view
+              v-if="showCancelButton"
+              :style="{
+                flex: 1,
+                height: 48,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRightWidth: showConfirmButton ? 1 : 0,
+                borderRightStyle: 'solid',
+                borderRightColor: '#ebedf0',
+              }"
+              @tap="onCancel"
+            >
+              <text :style="{ fontSize: 16, color: cancelButtonColor }">{{ cancelButtonText }}</text>
+            </view>
+
+            <view
+              v-if="showConfirmButton"
+              :style="{
+                flex: 1,
+                height: 48,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }"
+              @tap="onConfirm"
             >
-              <text
-                :style="{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: '#323233',
-                  textAlign: 'center',
-                  lineHeight: 24,
-                }"
-              >{{ title }}</text>
+              <text :style="{ fontSize: 16, color: confirmButtonColor }">{{ confirmButtonText }}</text>
             </view>
-          </slot>
-
-          <!-- Message -->
-          <slot>
-            <view
-              v-if="message"
-              :style="{
-                paddingTop: title ? 8 : 26,
-                paddingBottom: 26,
-                paddingLeft: 24,
-                paddingRight: 24,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }"
-            >
-              <text
-                :style="{
-                  fontSize: 14,
-                  color: title ? '#646566' : '#323233',
-                  textAlign: 'center',
-                  lineHeight: 20,
-                }"
-              >{{ message }}</text>
-            </view>
-          </slot>
-
-          <!-- Buttons -->
-          <slot name="footer">
-            <view
-              :style="{
-                display: 'flex',
-                flexDirection: 'row',
-                borderTopWidth: 1,
-                borderTopStyle: 'solid',
-                borderTopColor: '#ebedf0',
-              }"
-            >
-              <view
-                v-if="showCancelButton"
-                :style="{
-                  flex: 1,
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRightWidth: showConfirmButton ? 1 : 0,
-                  borderRightStyle: 'solid',
-                  borderRightColor: '#ebedf0',
-                }"
-                @tap="onCancel"
-              >
-                <text :style="{ fontSize: 16, color: cancelButtonColor }">{{ cancelButtonText }}</text>
-              </view>
-
-              <view
-                v-if="showConfirmButton"
-                :style="{
-                  flex: 1,
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }"
-                @tap="onConfirm"
-              >
-                <text :style="{ fontSize: 16, color: confirmButtonColor }">{{ confirmButtonText }}</text>
-              </view>
-            </view>
-          </slot>
-        </view>
-      </Transition>
+          </view>
+        </slot>
+      </view>
     </view>
   </template>
 </template>

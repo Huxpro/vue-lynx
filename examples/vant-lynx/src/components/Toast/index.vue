@@ -12,12 +12,12 @@
     - html type: not applicable in Lynx (no innerHTML)
     - wordBreak: accepted but Lynx text wrapping may differ
     - forbidClick: overlay blocks touches when enabled
-  - Animation: CSS transitions + Vue <Transition>
-    - middle: zoom in/out (van-popup-zoom)
-    - top/bottom: slide (van-popup-slide-top/bottom)
+  - Animation: CSS transitions on opacity/transform (no Transition + v-show)
+    - middle: zoom in/out (scale 0.9→1 + opacity)
+    - top/bottom: slide via translateY + opacity
 -->
 <script setup lang="ts">
-import { computed, watch, ref, Transition } from 'vue-lynx';
+import { computed, watch, ref, onBeforeUnmount } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 import Icon from '../Icon/index.vue';
 
@@ -78,25 +78,11 @@ const resolvedIconSize = computed(() => {
 });
 
 const hasRendered = ref(false);
+const animVisible = ref(false);
 
 // Auto-close timer
 const timer = ref<ReturnType<typeof setTimeout> | null>(null);
-
-// Transition name based on position
-const transitionName = computed(() => {
-  if (props.position === 'top') return 'van-popup-slide-top';
-  if (props.position === 'bottom') return 'van-popup-slide-bottom';
-  return 'van-popup-zoom';
-});
-
-// Inline transition property
-const transitionCss = computed(() => {
-  const dur = `${ANIM_DURATION / 1000}s`;
-  if (props.position === 'middle') {
-    return `opacity ${dur} ease, transform ${dur} ease`;
-  }
-  return `transform ${dur} ease`;
-});
+let animTimer: ReturnType<typeof setTimeout> | null = null;
 
 watch(
   () => props.show,
@@ -105,21 +91,43 @@ watch(
       clearTimeout(timer.value);
       timer.value = null;
     }
+    if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
     if (val) {
       hasRendered.value = true;
+      setTimeout(() => { animVisible.value = true; }, 16);
+      animTimer = setTimeout(() => { emit('opened'); }, ANIM_DURATION + 50);
       if (props.duration > 0) {
         timer.value = setTimeout(() => {
           emit('update:show', false);
           emit('close');
         }, props.duration);
       }
+    } else {
+      animVisible.value = false;
     }
   },
 );
 
-function onOpened() {
-  emit('opened');
-}
+onBeforeUnmount(() => {
+  if (timer.value) { clearTimeout(timer.value); timer.value = null; }
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+});
+
+const wrapperStyle = computed(() => ({
+  position: 'fixed' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: Number(props.zIndex),
+  backgroundColor: animVisible.value && (props.overlay || props.forbidClick) ? 'rgba(0,0,0,0.7)' : 'transparent',
+  pointerEvents: animVisible.value ? 'auto' : 'none',
+  transition: `background-color ${ANIM_DURATION / 1000}s ease`,
+}));
 
 const positionStyle = computed(() => {
   const base: Record<string, any> = {
@@ -133,6 +141,39 @@ const positionStyle = computed(() => {
   if (props.position === 'top') return { ...base, top: '20%' };
   if (props.position === 'bottom') return { ...base, bottom: '20%' };
   return { ...base, top: '45%' };
+});
+
+const toastCardStyle = computed(() => {
+  const dur = `${ANIM_DURATION / 1000}s`;
+  const isMiddle = props.position === 'middle';
+  let transform: string;
+  if (animVisible.value) {
+    transform = 'scale(1) translateY(0)';
+  } else if (isMiddle) {
+    transform = 'scale(0.9)';
+  } else if (props.position === 'top') {
+    transform = 'translateY(-50px)';
+  } else {
+    transform = 'translateY(50px)';
+  }
+
+  return {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 8,
+    paddingTop: hasIcon.value ? 24 : 8,
+    paddingBottom: hasIcon.value ? 24 : 8,
+    paddingLeft: hasIcon.value ? 24 : 12,
+    paddingRight: hasIcon.value ? 24 : 12,
+    minWidth: hasIcon.value ? 88 : 0,
+    maxWidth: 200,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    opacity: animVisible.value ? 1 : 0,
+    transform,
+    transition: `opacity ${dur} ease, transform ${dur} ease`,
+    pointerEvents: animVisible.value ? ('auto' as const) : ('none' as const),
+  };
 });
 
 function onClickToast() {
@@ -153,89 +194,61 @@ function onClickOverlay() {
 <template>
   <view
     v-if="hasRendered"
-    v-show="show"
-    :style="{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: Number(zIndex),
-      backgroundColor: overlay || forbidClick ? 'rgba(0,0,0,0.7)' : 'transparent',
-    }"
+    :style="wrapperStyle"
     @tap="onClickOverlay"
   >
     <view :style="positionStyle">
-      <Transition :name="transitionName" :duration="ANIM_DURATION" @after-enter="onOpened">
-        <view
-          v-show="show"
-          :style="{
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            borderRadius: 8,
-            paddingTop: hasIcon ? 24 : 8,
-            paddingBottom: hasIcon ? 24 : 8,
-            paddingLeft: hasIcon ? 24 : 12,
-            paddingRight: hasIcon ? 24 : 12,
-            minWidth: hasIcon ? 88 : 0,
-            maxWidth: 200,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            transition: transitionCss,
-          }"
-          @tap="onClickToast"
-        >
-          <!-- Loading type -->
-          <Loading
-            v-if="type === 'loading'"
-            :type="loadingType"
-            :size="resolvedIconSize"
-            color="#fff"
-            :style="{ marginBottom: message ? 8 : 0 }"
-          />
+      <view
+        :style="toastCardStyle"
+        @tap="onClickToast"
+      >
+        <!-- Loading type -->
+        <Loading
+          v-if="type === 'loading'"
+          :type="loadingType"
+          :size="resolvedIconSize"
+          color="#fff"
+          :style="{ marginBottom: message ? 8 : 0 }"
+        />
 
-          <!-- Success/fail icon -->
-          <Icon
-            v-else-if="type === 'success'"
-            name="success"
-            :size="resolvedIconSize"
-            color="#fff"
-            :style="{ marginBottom: message ? 8 : 0 }"
-          />
-          <Icon
-            v-else-if="type === 'fail'"
-            name="fail"
-            :size="resolvedIconSize"
-            color="#fff"
-            :style="{ marginBottom: message ? 8 : 0 }"
-          />
+        <!-- Success/fail icon -->
+        <Icon
+          v-else-if="type === 'success'"
+          name="success"
+          :size="resolvedIconSize"
+          color="#fff"
+          :style="{ marginBottom: message ? 8 : 0 }"
+        />
+        <Icon
+          v-else-if="type === 'fail'"
+          name="fail"
+          :size="resolvedIconSize"
+          color="#fff"
+          :style="{ marginBottom: message ? 8 : 0 }"
+        />
 
-          <!-- Custom icon -->
-          <Icon
-            v-else-if="icon"
-            :name="icon"
-            :size="resolvedIconSize"
-            color="#fff"
-            :style="{ marginBottom: message ? 8 : 0 }"
-          />
+        <!-- Custom icon -->
+        <Icon
+          v-else-if="icon"
+          :name="icon"
+          :size="resolvedIconSize"
+          color="#fff"
+          :style="{ marginBottom: message ? 8 : 0 }"
+        />
 
-          <!-- Message -->
-          <slot name="message">
-            <text
-              v-if="message"
-              :style="{
-                fontSize: 14,
-                color: '#fff',
-                textAlign: 'center',
-                lineHeight: 20,
-              }"
-            >{{ message }}</text>
-          </slot>
-        </view>
-      </Transition>
+        <!-- Message -->
+        <slot name="message">
+          <text
+            v-if="message"
+            :style="{
+              fontSize: 14,
+              color: '#fff',
+              textAlign: 'center',
+              lineHeight: 20,
+            }"
+          >{{ message }}</text>
+        </slot>
+      </view>
     </view>
   </view>
 </template>

@@ -4,12 +4,12 @@
   - Events: 0/0 (none defined in Vant API)
   - Slots: 2/2 supported (default - text content, icon - custom spinner)
   - Lynx Limitations:
-    - No CSS @keyframes animation; spinners are static visual indicators
+    - No CSS @keyframes; uses JS-driven rotation via CSS transition + setTimeout
     - Spinner type: dotted border ring (no SVG for 12-bar spinner)
     - Circular type: border-based ring with transparent segment
 -->
 <script setup lang="ts">
-import { computed, useSlots } from 'vue-lynx';
+import { computed, ref, onMounted, onBeforeUnmount, useSlots } from 'vue-lynx';
 
 export interface LoadingProps {
   type?: 'circular' | 'spinner';
@@ -41,6 +41,31 @@ const resolvedTextSize = computed(() => {
   return props.textSize;
 });
 
+// JS-driven rotation: CSS transition smoothly rotates 360° every 800ms
+const rotation = ref(0);
+let rotationTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRotation() {
+  rotationTimer = setTimeout(() => {
+    rotation.value += 360;
+    scheduleRotation();
+  }, 800);
+}
+
+onMounted(() => {
+  setTimeout(() => {
+    rotation.value = 360;
+    scheduleRotation();
+  }, 16);
+});
+
+onBeforeUnmount(() => {
+  if (rotationTimer) {
+    clearTimeout(rotationTimer);
+    rotationTimer = null;
+  }
+});
+
 const containerStyle = computed(() => ({
   display: 'flex',
   flexDirection: props.vertical ? ('column' as const) : ('row' as const),
@@ -49,12 +74,17 @@ const containerStyle = computed(() => ({
 
 const spinnerStyle = computed(() => {
   const sz = spinnerSize.value;
+  const base: Record<string, any> = {
+    width: sz,
+    height: sz,
+    borderRadius: sz / 2,
+    transform: `rotate(${rotation.value}deg)`,
+    transition: 'transform 0.8s linear',
+  };
 
   if (props.type === 'spinner') {
     return {
-      width: sz,
-      height: sz,
-      borderRadius: sz / 2,
+      ...base,
       borderWidth: Math.max(2, sz / 8),
       borderStyle: 'dotted' as const,
       borderColor: props.color,
@@ -62,9 +92,7 @@ const spinnerStyle = computed(() => {
   }
 
   return {
-    width: sz,
-    height: sz,
-    borderRadius: sz / 2,
+    ...base,
     borderWidth: Math.max(2, sz / 10),
     borderStyle: 'solid' as const,
     borderColor: `${props.color} ${props.color} ${props.color} transparent`,

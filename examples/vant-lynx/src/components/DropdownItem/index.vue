@@ -9,7 +9,7 @@
   - Uses Cell component for option rows (matching Vant)
   - Uses Icon component for success checkmark and option icons
   - Provide/Inject pattern with DropdownMenu parent
-  - Animation: CSS slide transition + Vue <Transition>
+  - Animation: CSS scaleY transition (no Transition + v-show)
 -->
 <script lang="ts">
 // Module-level counter to assign a stable unique index to each DropdownItem instance
@@ -17,7 +17,7 @@ let _itemCounter = 0;
 </script>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch, onBeforeUnmount, useSlots, Transition, type Ref } from 'vue-lynx';
+import { computed, inject, ref, watch, onBeforeUnmount, useSlots, type Ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 
 // Inline type to avoid cross-SFC type import issues
@@ -77,37 +77,38 @@ const selfIndex = ref<number>(_itemCounter++);
 
 const ANIM_DURATION = 200;
 
-// Reactive state matching Vant's internal state
-const showPopup = ref(false);
+// Reactive state
 const showWrapper = ref(false);
+const animVisible = ref(false);
+let animTimer: ReturnType<typeof setTimeout> | null = null;
 
 const isOpen = computed(() => menu.openedIndex.value === selfIndex.value);
 
-const transitionName = computed(() => {
-  const dir = menu.props.direction || 'down';
-  return `van-dropdown-slide-${dir}`;
-});
-
 // Sync local state with parent openedIndex
 watch(isOpen, (val) => {
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
   if (val) {
-    showPopup.value = true;
     showWrapper.value = true;
     emit('open');
-  } else if (showPopup.value) {
-    showPopup.value = false;
+    setTimeout(() => { animVisible.value = true; }, 16);
+    animTimer = setTimeout(() => { emit('opened'); }, ANIM_DURATION + 50);
+  } else if (showWrapper.value) {
+    animVisible.value = false;
     emit('close');
+    animTimer = setTimeout(() => {
+      showWrapper.value = false;
+      emit('closed');
+    }, ANIM_DURATION);
   }
 });
 
-function onOpened() {
-  emit('opened');
-}
-
-function onClosed() {
-  showWrapper.value = false;
-  emit('closed');
-}
+onBeforeUnmount(() => {
+  if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+  if (menu.openedIndex.value === selfIndex.value) {
+    menu.closeAll();
+  }
+});
 
 const displayTitle = computed(() => {
   if (slots.title) return null; // slot will render title
@@ -128,7 +129,7 @@ function toggle(show?: boolean, options?: { immediate?: boolean }) {
 // Expose toggle and state for programmatic use
 defineExpose({
   toggle,
-  state: { showPopup, showWrapper },
+  state: { showPopup: animVisible, showWrapper },
   renderTitle: () => displayTitle.value,
 });
 
@@ -139,7 +140,6 @@ function onTitleTap() {
 
 function onSelect(option: DropdownOption) {
   if (option.disabled) return;
-  showPopup.value = false;
   menu.closeAll();
   if (option.value !== props.modelValue) {
     emit('update:modelValue', option.value);
@@ -202,6 +202,9 @@ const dropdownStyle = computed(() => {
     maxHeight: 320,
     overflow: 'hidden' as const,
     transition: `transform ${ANIM_DURATION / 1000}s ease`,
+    transform: animVisible.value ? 'scaleY(1)' : 'scaleY(0)',
+    transformOrigin: isDown ? 'top' : 'bottom',
+    pointerEvents: animVisible.value ? ('auto' as const) : ('none' as const),
   };
 });
 
@@ -227,12 +230,6 @@ const arrowChar = computed(() => {
   }
   return isOpen.value ? down : up;
 });
-
-onBeforeUnmount(() => {
-  if (menu.openedIndex.value === selfIndex.value) {
-    menu.closeAll();
-  }
-});
 </script>
 
 <template>
@@ -248,54 +245,52 @@ onBeforeUnmount(() => {
   <view :style="overlayStyle" @tap="onOverlayTap" />
 
   <!-- Dropdown list -->
-  <Transition :name="transitionName" :duration="ANIM_DURATION" @after-enter="onOpened" @after-leave="onClosed">
-    <view v-show="showPopup" :style="dropdownStyle">
-      <view
-        v-for="option in options"
-        :key="String(option.value)"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingTop: 12,
-          paddingBottom: 12,
-          paddingLeft: 16,
-          paddingRight: 16,
-          borderBottomWidth: 0.5,
-          borderBottomStyle: 'solid',
-          borderBottomColor: '#ebedf0',
-          backgroundColor: '#fff',
-          opacity: option.disabled ? 0.5 : 1,
-        }"
-        @tap="onSelect(option)"
-      >
-        <view v-if="option.icon" :style="{ marginRight: 8, display: 'flex', alignItems: 'center' }">
-          <Icon
-            :name="option.icon"
-            :size="16"
-            :color="option.value === modelValue ? activeColor : (option.disabled ? '#c8c9cc' : '#323233')"
-          />
-        </view>
-        <text
-          :style="{
-            flex: 1,
-            fontSize: 14,
-            color: option.disabled
-              ? '#c8c9cc'
-              : option.value === modelValue
-                ? activeColor
-                : '#323233',
-          }"
-        >{{ option.text }}</text>
+  <view v-if="showWrapper" :style="dropdownStyle">
+    <view
+      v-for="option in options"
+      :key="String(option.value)"
+      :style="{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 12,
+        paddingBottom: 12,
+        paddingLeft: 16,
+        paddingRight: 16,
+        borderBottomWidth: 0.5,
+        borderBottomStyle: 'solid',
+        borderBottomColor: '#ebedf0',
+        backgroundColor: '#fff',
+        opacity: option.disabled ? 0.5 : 1,
+      }"
+      @tap="onSelect(option)"
+    >
+      <view v-if="option.icon" :style="{ marginRight: 8, display: 'flex', alignItems: 'center' }">
         <Icon
-          v-if="option.value === modelValue"
-          name="success"
+          :name="option.icon"
           :size="16"
-          :color="option.disabled ? undefined : activeColor"
+          :color="option.value === modelValue ? activeColor : (option.disabled ? '#c8c9cc' : '#323233')"
         />
       </view>
-      <!-- Default slot for custom content -->
-      <slot />
+      <text
+        :style="{
+          flex: 1,
+          fontSize: 14,
+          color: option.disabled
+            ? '#c8c9cc'
+            : option.value === modelValue
+              ? activeColor
+              : '#323233',
+        }"
+      >{{ option.text }}</text>
+      <Icon
+        v-if="option.value === modelValue"
+        name="success"
+        :size="16"
+        :color="option.disabled ? undefined : activeColor"
+      />
     </view>
-  </Transition>
+    <!-- Default slot for custom content -->
+    <slot />
+  </view>
 </template>

@@ -1,0 +1,194 @@
+{
+  "projectName": "vant-lynx-animation-fixes",
+  "description": "Fix animation and interaction issues in vant-lynx components based on root cause analysis",
+  "rootCauseAnalysis": {
+    "issue1_loading_spinner": {
+      "symptom": "Loading spinner does not rotate",
+      "rootCause": "Lynx does not support CSS @keyframes animation. Current implementation is a static border ring.",
+      "solution": "Implement rotation using JS-driven animation (CSS transitions with setInterval, or worklet)"
+    },
+    "issue2_popup_interaction": {
+      "symptom": "Popup and ActionSheet overlay click does not close them",
+      "rootCause": "vue-lynx vShow directive does not integrate with <Transition>. When show becomes false, vShow immediately sets display:none without waiting for leave animation. This is a vue-lynx runtime bug, but we can work around it in components.",
+      "solution": "Use v-if instead of v-show for Transition children, or manage visibility manually with CSS opacity/pointer-events instead of display:none",
+      "workaround": "For now, avoid relying on v-show + Transition. Use conditional rendering (v-if) or manual visibility control."
+    }
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Loading component implements rotation animation",
+      "description": "Replace static border ring with rotating animation using JS-driven approach (CSS transition + setInterval or timer-based class toggling)",
+      "acceptanceCriteria": [
+        "Loading spinner visually rotates",
+        "Both 'circular' and 'spinner' types should animate",
+        "Animation should be smooth (at least 30fps equivalent)",
+        "No use of CSS @keyframes"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Loading/index.vue"],
+      "priority": "high",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Popup uses opacity-based visibility instead of v-show",
+      "description": "Replace v-show with manual visibility control using opacity and pointer-events. This avoids the vShow + Transition bug.",
+      "acceptanceCriteria": [
+        "Popup opens and closes smoothly with animation",
+        "Clicking overlay closes the popup",
+        "Transition classes still apply for enter/leave animations",
+        "No reliance on v-show for visibility"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Popup/index.vue"],
+      "priority": "critical",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Overlay uses opacity-based visibility",
+      "description": "Replace v-show with opacity-based visibility control to work around vShow + Transition bug",
+      "acceptanceCriteria": [
+        "Overlay fades in/out smoothly",
+        "Clicking overlay triggers click event",
+        "No display:none flash before animation"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Overlay/index.vue"],
+      "priority": "critical",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Dialog uses opacity-based visibility",
+      "description": "Apply same fix as Popup - use opacity/pointer-events instead of v-show",
+      "acceptanceCriteria": [
+        "Dialog opens/closes with animation",
+        "Clicking overlay closes dialog (if closeOnClickOverlay)",
+        "Confirm and cancel buttons work"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Dialog/index.vue"],
+      "priority": "high",
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Toast uses opacity-based visibility",
+      "description": "Apply same fix as Popup - use opacity/pointer-events instead of v-show",
+      "acceptanceCriteria": [
+        "Toast shows/hides with animation",
+        "Auto-close after duration works",
+        "Position variants (top/middle/bottom) work"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Toast/index.vue"],
+      "priority": "high",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Notify uses opacity-based visibility",
+      "description": "Apply same fix - replace v-show with opacity control",
+      "acceptanceCriteria": [
+        "Notify slides in/out smoothly",
+        "Auto-close after duration works",
+        "Tap callback fires"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Notify/index.vue"],
+      "priority": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "ActionSheet inherits Popup fix",
+      "description": "ActionSheet wraps Popup, so fixing Popup should fix ActionSheet. Verify it works.",
+      "acceptanceCriteria": [
+        "ActionSheet slides up smoothly",
+        "Tapping overlay closes it",
+        "Selecting an action works and closes sheet"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/ActionSheet/index.vue"],
+      "priority": "high",
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "ShareSheet inherits Popup fix",
+      "description": "ShareSheet wraps Popup, verify it works after Popup fix",
+      "acceptanceCriteria": [
+        "ShareSheet opens/closes with animation",
+        "Tapping overlay closes it",
+        "Selecting a share option works"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/ShareSheet/index.vue"],
+      "priority": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-009",
+      "title": "ImagePreview uses opacity-based visibility",
+      "description": "ImagePreview likely uses v-show + Transition, apply same fix",
+      "acceptanceCriteria": [
+        "ImagePreview opens/closes smoothly",
+        "Swipe between images works",
+        "Close on click works"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/ImagePreview/index.vue"],
+      "priority": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "DropdownMenu uses opacity-based visibility",
+      "description": "Dropdown items likely use v-show, apply fix",
+      "acceptanceCriteria": [
+        "Dropdown menu opens/closes with animation",
+        "Selecting an option works",
+        "Click outside closes menu"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/DropdownMenu/index.vue", "examples/vant-lynx/src/components/DropdownItem/index.vue"],
+      "priority": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Popover uses opacity-based visibility",
+      "description": "Apply same fix to Popover component",
+      "acceptanceCriteria": [
+        "Popover shows/hides with animation",
+        "Actions in popover work",
+        "Click outside closes popover"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Popover/index.vue"],
+      "priority": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "SwipeCell uses opacity-based visibility for actions",
+      "description": "SwipeCell reveal actions may use v-show, verify and fix if needed",
+      "acceptanceCriteria": [
+        "Swipe reveals action buttons",
+        "Tapping action buttons works",
+        "Swipe back hides actions"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/SwipeCell/index.vue"],
+      "priority": "low",
+      "passes": true
+    },
+    {
+      "id": "US-013",
+      "title": "Collapse uses opacity-based visibility",
+      "description": "Collapse items expand/collapse animation, check if v-show is used",
+      "acceptanceCriteria": [
+        "Collapse items expand/collapse smoothly",
+        "Toggle works on tap"
+      ],
+      "affectedFiles": ["examples/vant-lynx/src/components/Collapse/index.vue", "examples/vant-lynx/src/components/CollapseItem/index.vue"],
+      "priority": "low",
+      "passes": true
+    }
+  ],
+  "technicalNotes": {
+    "workaroundPattern": "Instead of <Transition><view v-show=\"show\">...</view></Transition>, use: <view :style=\"{ opacity: show ? 1 : 0, pointerEvents: show ? 'auto' : 'none', transition: 'opacity 0.3s ease' }\">...</view>. For enter/leave class-based animations, manually toggle classes using watch() and setTimeout().",
+    "loadingRotation": "Use setInterval to rotate by toggling transform: rotate(Ndeg) every frame. Or use CSS transition on transform with a timer updating the rotation value.",
+    "futureNote": "The proper fix is in vue-lynx runtime - integrating vShow with Transition. But that's a larger change. These component-level workarounds are sufficient for now."
+  }
+}

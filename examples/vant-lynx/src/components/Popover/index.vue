@@ -16,7 +16,7 @@
     - actionsDirection: 'vertical' | 'horizontal'  [YES] added
     - iconPrefix: string                 [NO] Lynx uses unicode icon mapping
     - overlay: boolean                   [NO] Lynx uses transparent overlay for outside clicks
-    - duration: number                   [NO] no CSS transition in Lynx
+    - duration: number                   [NO] uses 150ms fade
     - teleport: TeleportProps['to']      [NO] Lynx has no teleport
     - overlayStyle / overlayClass        [NO] no CSS classes
 
@@ -37,16 +37,16 @@
       useClickAway composable.
     - Uses `display: 'flex'` explicitly on all flex containers.
     - actionsDirection: 'horizontal' lays actions out in a row.
+    - Opacity-based fade animation for show/hide.
 
   Gaps:
     - No Popper.js smart positioning (no auto-flip or boundary detection)
     - No teleport support
     - No overlay background (transparent overlay only for click-away)
-    - No CSS transition animation for show/hide
     - No touchstart event (Lynx uses tap)
 -->
 <script setup lang="ts">
-import { computed, ref, watch, useSlots } from 'vue-lynx';
+import { computed, ref, watch, onBeforeUnmount, useSlots } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 
 export interface PopoverAction {
@@ -90,20 +90,42 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 
+const FADE_DURATION = 150;
+
 const isVisible = ref(props.show);
+const animVisible = ref(false);
+let hideTimer: ReturnType<typeof setTimeout> | null = null;
+
+function startShow() {
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  isVisible.value = true;
+  setTimeout(() => { animVisible.value = true; }, 16);
+}
+
+function startHide() {
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  animVisible.value = false;
+  hideTimer = setTimeout(() => { isVisible.value = false; }, FADE_DURATION);
+}
 
 watch(
   () => props.show,
   (val) => {
-    isVisible.value = val;
+    if (val) { startShow(); }
+    else { startHide(); }
   },
 );
+
+onBeforeUnmount(() => {
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+});
 
 function togglePopover() {
   if (props.trigger === 'click') {
     const next = !isVisible.value;
-    isVisible.value = next;
     emit('update:show', next);
+    if (next) { startShow(); }
+    else { startHide(); }
   }
 }
 
@@ -111,15 +133,15 @@ function onSelectAction(action: PopoverAction, index: number) {
   if (action.disabled) return;
   emit('select', action, index);
   if (props.closeOnClickAction) {
-    isVisible.value = false;
     emit('update:show', false);
+    startHide();
   }
 }
 
 function onTapOutside() {
   if (props.closeOnClickOutside && isVisible.value) {
-    isVisible.value = false;
     emit('update:show', false);
+    startHide();
   }
 }
 
@@ -178,6 +200,9 @@ const popoverStyle = computed(() => ({
   borderColor: '#ebedf0',
   display: 'flex',
   flexDirection: isHorizontal.value ? ('row' as const) : ('column' as const),
+  opacity: animVisible.value ? 1 : 0,
+  pointerEvents: animVisible.value ? ('auto' as const) : ('none' as const),
+  transition: `opacity ${FADE_DURATION / 1000}s ease`,
 }));
 
 const arrowStyle = computed(() => {
@@ -186,6 +211,8 @@ const arrowStyle = computed(() => {
     width: 0,
     height: 0,
     zIndex: 101,
+    opacity: animVisible.value ? 1 : 0,
+    transition: `opacity ${FADE_DURATION / 1000}s ease`,
   };
 
   const placement = props.placement;
