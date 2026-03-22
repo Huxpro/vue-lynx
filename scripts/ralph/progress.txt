@@ -122,3 +122,33 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Removed sizeConfig/typeConfig JS objects; all sizing/coloring now via CSS classes + variables. Added __content wrapper, __text/__icon/__loading sub-element classes. Inline styles ONLY for `color` prop (matching Vant's getStyle()). Active state via --active CSS class instead of ::before pseudo-element. Hairline via border-width: 0.5px instead of ::after pseudo-element.
 - Limitations: tag prop (always renders <view>), nativeType (no form submission), url/to/replace (needs Lynx navigation API), ::before active overlay (uses --active opacity class), ::after hairline (uses 0.5px border-width), cursor (not applicable)
 ---
+
+## 2026-03-22 - parity-cell: Cell
+- Props: 18/18 (tag, icon, size, title, value, label, center, isLink, border, iconPrefix, valueClass, labelClass, titleClass, titleStyle, arrowDirection, required, clickable, url, to, replace)
+- Events: 1/1 (click)
+- Slots: 6/6 (title, label, value, default, icon, right-icon, extra)
+- CSS Variables: 22 defined in index.less (all --van-cell-* vars matching Vant)
+- BEM Classes: .van-cell, --center, --required, --clickable, --borderless, --active, --large, __title, __value, __value--alone, __label, __left-icon, __right-icon, __required-asterisk
+- Animations: active state background via --active class (replaces :active pseudo-class)
+- Tests: 19 cases (Vant has ~10, we have 19 — added BEM class verification for all modifiers, value--alone, left-icon prop, borderless, center)
+- Demo sections: 9/9 (基础用法, 卡片风格, 单元格大小, 展示图标, 展示箭头, 页面导航, 分组标题, 使用插槽, 垂直居中)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Cell.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. All sizing/coloring via CSS classes + variables. Inline styles ONLY for titleStyle prop (matching Vant). Active state via --active CSS class. Hairline border via border-bottom 0.5px. Required asterisk via positioned <text> element (replaces ::before).
+- Limitations: tag prop (always renders <view>), url/to/replace (needs Lynx navigation API), ::before required asterisk (uses <text> element), ::after hairline (uses border-bottom 0.5px), :active (uses touchstart/touchend with --active class), role/tabindex (not applicable in Lynx), CSS inherit (font-size/color applied directly to <text> elements)
+---
+
+## 2026-03-22 - parity-cell-group: CellGroup
+- Props: 3/3 (title, inset, border)
+- Events: 0/0 (CellGroup has no events)
+- Slots: 2/2 (default, title)
+- CSS Variables: 8 defined in index.less (--van-cell-group-background, --van-cell-group-title-color, --van-cell-group-title-padding, --van-cell-group-title-font-size, --van-cell-group-title-line-height, --van-cell-group-inset-padding, --van-cell-group-inset-radius, --van-cell-group-inset-title-padding)
+- BEM Classes: .van-cell-group, --inset, __title, __title--inset, .van-hairline--top-bottom
+- Animations: none (CellGroup has no transitions)
+- Tests: 11 cases (Vant has 1, we have 11 — added BEM class verification for inset, title, border, hairline)
+- Demo sections: 3/3 (基础用法, 卡片风格, 分组标题)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: CellGroup.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. All background/margin/radius/padding via CSS classes + variables. No inline styles. Border via .van-hairline--top-bottom class (replacing inline border-top/bottom styles). Title uses BEM class with --inset modifier.
+- Limitations: BORDER_TOP_BOTTOM (uses border-top/bottom instead of ::after), useScopeId (not applicable), inheritAttrs (not applicable), tag (always renders view)
+---
