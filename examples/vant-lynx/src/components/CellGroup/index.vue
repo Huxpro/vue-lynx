@@ -1,10 +1,8 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 3/3 supported (title, inset, border)
-  - Events: 0/0 (none defined)
-  - Slots: 2/2 (default, title)
-  - Lynx Limitations:
-    - No tag prop needed (Lynx always uses view)
+  Lynx Limitations:
+  - BORDER_TOP_BOTTOM: Lynx has no ::after pseudo-elements, uses border-top/border-bottom instead
+  - useScopeId: not applicable in Lynx
+  - inheritAttrs: not applicable since Lynx uses view elements
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
@@ -20,22 +18,38 @@ const props = withDefaults(defineProps<CellGroupProps>(), {
   border: true,
 });
 
-const groupStyle = computed(() => ({
-  backgroundColor: '#fff',
-  borderRadius: props.inset ? 8 : 0,
-  marginLeft: props.inset ? 12 : 0,
-  marginRight: props.inset ? 12 : 0,
-  overflow: 'hidden' as const,
-}));
+const groupStyle = computed(() => {
+  const style: Record<string, string> = {
+    backgroundColor: '#fff',
+  };
+
+  if (props.inset) {
+    style.marginLeft = '16px';
+    style.marginRight = '16px';
+    style.borderRadius = '8px';
+    style.overflow = 'hidden';
+  }
+
+  if (props.border && !props.inset) {
+    style.borderTopWidth = '0.5px';
+    style.borderTopStyle = 'solid';
+    style.borderTopColor = '#ebedf0';
+    style.borderBottomWidth = '0.5px';
+    style.borderBottomStyle = 'solid';
+    style.borderBottomColor = '#ebedf0';
+  }
+
+  return style;
+});
 
 const titleStyle = computed(() => ({
-  fontSize: 14,
+  fontSize: '14px',
   color: '#969799',
-  paddingTop: props.inset ? 0 : 16,
-  paddingBottom: 8,
-  paddingLeft: props.inset ? 28 : 16,
-  paddingRight: 16,
-  lineHeight: 16,
+  lineHeight: '16px',
+  paddingTop: '16px',
+  paddingRight: '16px',
+  paddingBottom: '16px',
+  paddingLeft: '16px',
 }));
 </script>
 

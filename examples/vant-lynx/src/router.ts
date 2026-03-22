@@ -2,6 +2,7 @@ import { createRouter, createMemoryHistory } from 'vue-router';
 import Index from './pages/index.vue';
 import ButtonDemo from './pages/button.vue';
 import CellDemo from './pages/cell.vue';
+import CellGroupDemo from './pages/cell-group.vue';
 import IconDemo from './pages/icon.vue';
 import ImageDemo from './pages/image.vue';
 import LoadingDemo from './pages/loading.vue';
@@ -85,6 +86,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: Index },
     { path: '/button', name: 'button', component: ButtonDemo },
     { path: '/cell', name: 'cell', component: CellDemo },
+    { path: '/cell-group', name: 'cell-group', component: CellGroupDemo },
     { path: '/icon', name: 'icon', component: IconDemo },
     { path: '/image', name: 'image', component: ImageDemo },
     { path: '/loading', name: 'loading', component: LoadingDemo },
