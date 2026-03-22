@@ -3,15 +3,6 @@ import { h, defineComponent } from 'vue-lynx';
 import { render } from 'vue-lynx-testing-library';
 import Loading from '../index.vue';
 
-// Helper to find the styled text element (the one with font-size style)
-function findStyledText(container: any): Element | undefined {
-  const textEls = container.querySelectorAll('text');
-  return Array.from(textEls).find((el: any) => {
-    const style = el.getAttribute('style');
-    return style && style.includes('font-size');
-  }) as Element | undefined;
-}
-
 describe('Loading', () => {
   it('should render circular loading by default', () => {
     const { container } = render(
@@ -21,8 +12,10 @@ describe('Loading', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-loading')).toBeTruthy();
+    expect(container.querySelector('.van-loading--circular')).toBeTruthy();
+    expect(container.querySelector('.van-loading__spinner--circular')).toBeTruthy();
+    expect(container.querySelector('.van-loading__circular')).toBeTruthy();
   });
 
   it('should render spinner loading', () => {
@@ -33,8 +26,11 @@ describe('Loading', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-loading--spinner')).toBeTruthy();
+    expect(container.querySelector('.van-loading__spinner--spinner')).toBeTruthy();
+    // Should render 12 lines
+    const lines = container.querySelectorAll('.van-loading__line');
+    expect(lines.length).toBe(12);
   });
 
   it('should change loading size when using size prop', () => {
@@ -45,10 +41,10 @@ describe('Loading', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const spinnerView = views[1];
-    expect(spinnerView).toBeTruthy();
-    const style = spinnerView.getAttribute('style') || '';
+    const spinner = container.querySelector('.van-loading__spinner');
+    expect(spinner).toBeTruthy();
+    const style = spinner!.getAttribute('style') || '';
+    expect(style).toContain('width');
     expect(style).toContain('20px');
   });
 
@@ -60,9 +56,10 @@ describe('Loading', () => {
         },
       }),
     );
-    const styledText = findStyledText(container);
-    expect(styledText).toBeTruthy();
-    const style = styledText!.getAttribute('style')!;
+    const text = container.querySelector('.van-loading__text text');
+    expect(text).toBeTruthy();
+    const style = text!.getAttribute('style') || '';
+    expect(style).toContain('font-size');
     expect(style).toContain('20px');
   });
 
@@ -78,9 +75,9 @@ describe('Loading', () => {
         },
       }),
     );
-    const styledText = findStyledText(container);
-    expect(styledText).toBeTruthy();
-    const style = styledText!.getAttribute('style')!;
+    const text = container.querySelector('.van-loading__text text');
+    expect(text).toBeTruthy();
+    const style = text!.getAttribute('style') || '';
     expect(style).toContain('red');
   });
 
@@ -96,9 +93,9 @@ describe('Loading', () => {
         },
       }),
     );
-    const styledText = findStyledText(container);
-    expect(styledText).toBeTruthy();
-    const style = styledText!.getAttribute('style')!;
+    const text = container.querySelector('.van-loading__text text');
+    expect(text).toBeTruthy();
+    const style = text!.getAttribute('style') || '';
     expect(style).toContain('green');
   });
 
@@ -114,9 +111,9 @@ describe('Loading', () => {
         },
       }),
     );
-    const styledText = findStyledText(container);
-    expect(styledText).toBeTruthy();
-    const style = styledText!.getAttribute('style')!;
+    const text = container.querySelector('.van-loading__text text');
+    expect(text).toBeTruthy();
+    const style = text!.getAttribute('style') || '';
     expect(style).toContain('red');
     expect(style).not.toContain('green');
   });
@@ -133,10 +130,7 @@ describe('Loading', () => {
         },
       }),
     );
-    const containerView = container.querySelector('view');
-    expect(containerView).toBeTruthy();
-    const style = containerView!.getAttribute('style') || '';
-    expect(style).toContain('column');
+    expect(container.querySelector('.van-loading--vertical')).toBeTruthy();
   });
 
   it('should render icon slot', () => {
@@ -155,5 +149,48 @@ describe('Loading', () => {
       (t: any) => t.textContent === 'Custom Icon',
     );
     expect(iconText).toBeTruthy();
+    // Should NOT render default spinner lines or circular view
+    expect(container.querySelector('.van-loading__circular')).toBeFalsy();
+    expect(container.querySelector('.van-loading__line')).toBeFalsy();
+  });
+
+  it('should change spinner color when using color prop', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Loading, { color: 'red' });
+        },
+      }),
+    );
+    const spinner = container.querySelector('.van-loading__spinner');
+    expect(spinner).toBeTruthy();
+    const style = spinner!.getAttribute('style') || '';
+    expect(style).toContain('color');
+    expect(style).toContain('red');
+  });
+
+  it('should not render text when no default slot', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Loading);
+        },
+      }),
+    );
+    expect(container.querySelector('.van-loading__text')).toBeFalsy();
+  });
+
+  it('should accept string size with unit', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Loading, { size: '2rem' });
+        },
+      }),
+    );
+    const spinner = container.querySelector('.van-loading__spinner');
+    expect(spinner).toBeTruthy();
+    const style = spinner!.getAttribute('style') || '';
+    expect(style).toContain('2rem');
   });
 });

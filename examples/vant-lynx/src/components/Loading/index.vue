@@ -1,11 +1,13 @@
 <!--
   Lynx Limitations:
-  - No SVG support: circular spinner uses CSS border ring instead of SVG stroke-dasharray
-  - No CSS @keyframes: spinners are static visual indicators (no rotation animation)
-  - No ::before pseudo-elements: spinner type uses dotted border instead of 12 rotated bars
+  - ::before pseudo-elements: spinner type uses inner <view> elements instead of ::before for the 12 bar lines
+  - SVG circle: circular type uses CSS border-based spinner instead of SVG stroke-dasharray animation
+  - aria-live/aria-busy: Lynx has no ARIA attributes
 -->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import './index.less';
 
 export type LoadingType = 'circular' | 'spinner';
 
@@ -18,91 +20,66 @@ export interface LoadingProps {
   vertical?: boolean;
 }
 
+const [, bem] = createNamespace('loading');
+
 const props = withDefaults(defineProps<LoadingProps>(), {
   type: 'circular',
 });
 
 const slots = useSlots();
 
-// Defaults matching Vant's CSS variables
-const DEFAULT_COLOR = '#c9c9c9'; // --van-loading-spinner-color → --van-gray-5
-const DEFAULT_SIZE = 30; // --van-loading-spinner-size
-const DEFAULT_TEXT_COLOR = '#969799'; // --van-loading-text-color → --van-text-color-2
-const DEFAULT_TEXT_SIZE = 14; // --van-loading-text-font-size → --van-font-size-md
-
-const addUnit = (value?: string | number): string | undefined => {
-  if (value === undefined || value === '') return undefined;
-  if (typeof value === 'number') return `${value}px`;
-  return value;
-};
-
-const resolvedSize = computed(() => {
-  if (props.size !== undefined) {
-    if (typeof props.size === 'number') return props.size;
-    const parsed = parseFloat(props.size);
-    return isNaN(parsed) ? DEFAULT_SIZE : parsed;
+const spinnerStyle = computed(() => {
+  const style: Record<string, string> = {};
+  if (props.color) {
+    style.color = props.color;
   }
-  return DEFAULT_SIZE;
+  if (props.size !== undefined) {
+    const s = addUnit(props.size);
+    if (s) {
+      style.width = s;
+      style.height = s;
+    }
+  }
+  return Object.keys(style).length > 0 ? style : undefined;
 });
 
-const resolvedColor = computed(() => props.color || DEFAULT_COLOR);
-
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: props.vertical ? ('column' as const) : ('row' as const),
-  alignItems: 'center',
-}));
-
-const spinnerStyle = computed(() => {
-  const sz = resolvedSize.value;
-  const color = resolvedColor.value;
-  const borderWidth = Math.max(
-    2,
-    Math.round(props.type === 'spinner' ? sz / 8 : sz / 10),
-  );
-
-  return {
-    width: `${sz}px`,
-    height: `${sz}px`,
-    borderRadius: `${sz / 2}px`,
-    borderWidth: `${borderWidth}px`,
-    borderStyle: (props.type === 'spinner' ? 'dotted' : 'solid') as const,
-    borderColor:
-      props.type === 'spinner'
-        ? color
-        : `${color} ${color} ${color} transparent`,
-  };
+const textStyle = computed(() => {
+  const style: Record<string, string> = {};
+  if (props.textSize !== undefined) {
+    const s = addUnit(props.textSize);
+    if (s) {
+      style.fontSize = s;
+    }
+  }
+  const color = props.textColor ?? props.color;
+  if (color) {
+    style.color = color;
+  }
+  return Object.keys(style).length > 0 ? style : undefined;
 });
 
 const hasText = computed(() => !!slots.default);
 
-const textWrapperStyle = computed(() => ({
-  marginLeft: props.vertical ? '0px' : '8px',
-  marginTop: props.vertical ? '8px' : '0px',
-}));
-
-const textStyle = computed(() => {
-  const fontSize =
-    props.textSize !== undefined
-      ? typeof props.textSize === 'number'
-        ? props.textSize
-        : parseFloat(props.textSize) || DEFAULT_TEXT_SIZE
-      : DEFAULT_TEXT_SIZE;
-
-  return {
-    fontSize: `${fontSize}px`,
-    color: props.textColor ?? props.color ?? DEFAULT_TEXT_COLOR,
-    lineHeight: `${Math.round(fontSize * 1.4)}px`,
-  };
-});
+const spinLines = Array.from({ length: 12 }, (_, i) => i + 1);
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <slot name="icon">
-      <view :style="spinnerStyle" />
-    </slot>
-    <view v-if="hasText" :style="textWrapperStyle">
+  <view :class="bem([type, { vertical }])">
+    <view :class="bem('spinner', { [type]: true })" :style="spinnerStyle">
+      <slot name="icon">
+        <template v-if="type === 'spinner'">
+          <view
+            v-for="n in spinLines"
+            :key="n"
+            :class="`${bem('line')} van-loading__line--${n}`"
+          >
+            <view :class="bem('line-bar')" />
+          </view>
+        </template>
+        <view v-else :class="bem('circular')" />
+      </slot>
+    </view>
+    <view v-if="hasText" :class="bem('text')" :style="textStyle">
       <text :style="textStyle"><slot /></text>
     </view>
   </view>

@@ -5,3 +5,103 @@
   --van-loading-spinner-size: 30px;
   --van-loading-spinner-duration: 0.8s;
 }
+
+.van-loading {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: var(--van-loading-spinner-color);
+
+  &__spinner {
+    position: relative;
+    width: var(--van-loading-spinner-size);
+    height: var(--van-loading-spinner-size);
+    animation: van-rotate var(--van-loading-spinner-duration) linear infinite;
+
+    &--spinner {
+      animation-timing-function: steps(12);
+    }
+
+    &--circular {
+      animation-duration: 2s;
+    }
+  }
+
+  &__line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__line-bar {
+    display: flex;
+    width: 2px;
+    height: 25%;
+    margin: 0 auto;
+    background-color: currentColor;
+    border-radius: 40%;
+  }
+
+  &__circular {
+    width: 100%;
+    height: 100%;
+    border-width: 3px;
+    border-style: solid;
+    border-color: currentColor currentColor currentColor transparent;
+    border-radius: 50%;
+    animation: van-circular 1.5s ease-in-out infinite;
+  }
+
+  &__text {
+    margin-left: var(--van-padding-xs, 8px);
+    color: var(--van-loading-text-color);
+    font-size: var(--van-loading-text-font-size);
+  }
+
+  &--vertical {
+    flex-direction: column;
+    align-items: center;
+
+    .van-loading__text {
+      margin: var(--van-padding-xs, 8px) 0 0;
+      margin-left: 0;
+    }
+  }
+}
+
+@keyframes van-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes van-circular {
+  0% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// Generate spinner line rotations and opacity
+.van-loading__line--1 { transform: rotate(30deg); opacity: 1; }
+.van-loading__line--2 { transform: rotate(60deg); opacity: 0.9375; }
+.van-loading__line--3 { transform: rotate(90deg); opacity: 0.875; }
+.van-loading__line--4 { transform: rotate(120deg); opacity: 0.8125; }
+.van-loading__line--5 { transform: rotate(150deg); opacity: 0.75; }
+.van-loading__line--6 { transform: rotate(180deg); opacity: 0.6875; }
+.van-loading__line--7 { transform: rotate(210deg); opacity: 0.625; }
+.van-loading__line--8 { transform: rotate(240deg); opacity: 0.5625; }
+.van-loading__line--9 { transform: rotate(270deg); opacity: 0.5; }
+.van-loading__line--10 { transform: rotate(300deg); opacity: 0.4375; }
+.van-loading__line--11 { transform: rotate(330deg); opacity: 0.375; }
+.van-loading__line--12 { transform: rotate(360deg); opacity: 0.3125; }
