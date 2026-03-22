@@ -1,193 +1,143 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 10/11 supported (tag, num, desc, thumb, title, price, centered,
-    lazyLoad, currency, originPrice)
-  - Events: 2/2 supported (click, clickThumb)
-  - Slots: 7/9 supported (thumb, tag, title, desc, price, num, footer, bottom)
-  - Gaps: thumbLink prop, tags slot
+  Lynx Limitations:
+  - thumbLink: <a> tags not supported in Lynx, thumbLink prop accepted for API compat but no-op
+  - lazyLoad: No IntersectionObserver / $Lazyload plugin in Lynx
+  - van-multi-ellipsis--l2 / van-ellipsis: CSS text-overflow ellipsis classes not applied (Lynx text truncation differs)
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, useSlots } from 'vue-lynx';
+import Tag from '../Tag/index.vue';
+import Image from '../Image/index.vue';
+import './index.less';
 
-export interface CardProps {
-  title?: string;
-  desc?: string;
-  num?: string | number;
-  price?: string | number;
-  currency?: string;
-  thumb?: string;
-  thumbLink?: string;
+interface CardProps {
   tag?: string;
-  originPrice?: string | number;
+  num?: string | number;
+  desc?: string;
+  thumb?: string;
+  title?: string;
+  price?: string | number;
   centered?: boolean;
   lazyLoad?: boolean;
+  currency?: string;
+  thumbLink?: string;
+  originPrice?: string | number;
 }
 
 const props = withDefaults(defineProps<CardProps>(), {
   currency: '¥',
-  centered: false,
-  lazyLoad: false,
 });
 
 const emit = defineEmits<{
-  click: [event: any];
-  clickThumb: [event: any];
+  clickThumb: [event: Event];
 }>();
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  padding: 8,
-  backgroundColor: '#fafafa',
-  borderRadius: 8,
-}));
+const slots = useSlots();
 
-const thumbStyle = {
-  width: 88,
-  height: 88,
-  borderRadius: 8,
-  backgroundColor: '#f2f3f5',
-  overflow: 'hidden' as const,
-  flexShrink: 0,
-  position: 'relative' as const,
-};
-
-const thumbImageStyle = {
-  width: 88,
-  height: 88,
-};
-
-const contentStyle = computed(() => ({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column' as const,
-  justifyContent: props.centered ? 'center' as const : 'flex-start' as const,
-  marginLeft: 12,
-  minHeight: 88,
-}));
-
-const titleStyle = {
-  fontSize: 14,
-  fontWeight: 'bold' as const,
-  color: '#323233',
-  lineHeight: 20,
-};
-
-const descStyle = {
-  fontSize: 12,
-  color: '#969799',
-  lineHeight: 18,
-  marginTop: 4,
-};
-
-const priceStyle = {
-  fontSize: 14,
-  fontWeight: 'bold' as const,
-  color: '#ee0a24',
-  marginTop: 4,
-};
-
-const originPriceStyle = {
-  fontSize: 12,
-  color: '#969799',
-  textDecorationLine: 'line-through' as const,
-  marginLeft: 4,
-};
-
-const numStyle = {
-  fontSize: 12,
-  color: '#969799',
-};
-
-const tagStyle = {
-  position: 'absolute' as const,
-  top: 2,
-  left: 0,
-  backgroundColor: '#ee0a24',
-  paddingTop: 1,
-  paddingBottom: 1,
-  paddingLeft: 4,
-  paddingRight: 4,
-  borderTopRightRadius: 4,
-  borderBottomRightRadius: 4,
-};
-
-const tagTextStyle = {
-  fontSize: 10,
-  color: '#fff',
-};
-
-const bottomRowStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginTop: 'auto' as const,
-};
-
-const priceRowStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'baseline',
-};
-
-function onTap(event: any) {
-  emit('click', event);
+function isDef(val: unknown): boolean {
+  return val !== undefined && val !== null;
 }
 
-function onThumbTap(event: any) {
+const showNum = computed(() => !!slots.num || isDef(props.num));
+const showPrice = computed(() => !!slots.price || isDef(props.price));
+const showOriginPrice = computed(() => !!slots['origin-price'] || isDef(props.originPrice));
+const showBottom = computed(() => showNum.value || showPrice.value || showOriginPrice.value || !!slots.bottom);
+const showThumb = computed(() => !!slots.thumb || !!props.thumb);
+
+const priceArr = computed(() => {
+  if (!isDef(props.price)) return [];
+  return props.price!.toString().split('.');
+});
+
+const contentClass = computed(() => {
+  const classes = ['van-card__content'];
+  if (props.centered) {
+    classes.push('van-card__content--centered');
+  }
+  return classes.join(' ');
+});
+
+function onThumbClick(event: Event) {
   emit('clickThumb', event);
 }
 </script>
 
 <template>
-  <view :style="containerStyle" @tap="onTap">
-    <!-- Thumb -->
-    <view :style="thumbStyle" @tap.stop="onThumbTap">
-      <slot name="thumb">
-        <image v-if="thumb" :src="thumb" :style="thumbImageStyle" />
-      </slot>
-      <!-- Tag -->
-      <view v-if="tag" :style="tagStyle">
-        <slot name="tag">
-          <text :style="tagTextStyle">{{ tag }}</text>
+  <view class="van-card">
+    <view class="van-card__header">
+      <!-- Thumb -->
+      <view v-if="showThumb" class="van-card__thumb" @tap="onThumbClick">
+        <slot name="thumb">
+          <Image
+            v-if="thumb"
+            :src="thumb"
+            fit="cover"
+            width="100%"
+            height="100%"
+          />
         </slot>
+        <view v-if="$slots.tag || tag" class="van-card__tag">
+          <slot name="tag">
+            <Tag mark type="primary">{{ tag }}</Tag>
+          </slot>
+        </view>
+      </view>
+
+      <!-- Content -->
+      <view :class="contentClass">
+        <view>
+          <!-- Title -->
+          <slot name="title">
+            <view v-if="title" class="van-card__title">
+              <text>{{ title }}</text>
+            </view>
+          </slot>
+
+          <!-- Desc -->
+          <slot name="desc">
+            <view v-if="desc" class="van-card__desc">
+              <text>{{ desc }}</text>
+            </view>
+          </slot>
+
+          <!-- Tags slot -->
+          <slot name="tags" />
+        </view>
+
+        <!-- Bottom -->
+        <view v-if="showBottom" class="van-card__bottom">
+          <slot name="price-top" />
+          <!-- Price -->
+          <view v-if="showPrice" class="van-card__price">
+            <slot name="price">
+              <text class="van-card__price-currency">{{ currency }}</text>
+              <text class="van-card__price-integer">{{ priceArr[0] }}</text>
+              <template v-if="priceArr.length > 1">
+                <text>.</text>
+                <text class="van-card__price-decimal">{{ priceArr[1] }}</text>
+              </template>
+            </slot>
+          </view>
+          <!-- Origin Price -->
+          <view v-if="showOriginPrice" class="van-card__origin-price">
+            <slot name="origin-price">
+              <text>{{ currency }} {{ originPrice }}</text>
+            </slot>
+          </view>
+          <!-- Num -->
+          <view v-if="showNum" class="van-card__num">
+            <slot name="num">
+              <text>x{{ num }}</text>
+            </slot>
+          </view>
+          <slot name="bottom" />
+        </view>
       </view>
     </view>
 
-    <!-- Content -->
-    <view :style="contentStyle">
-      <!-- Title -->
-      <slot name="title">
-        <text v-if="title" :style="titleStyle">{{ title }}</text>
-      </slot>
-
-      <!-- Description -->
-      <slot name="desc">
-        <text v-if="desc" :style="descStyle">{{ desc }}</text>
-      </slot>
-
-      <!-- Bottom Section -->
-      <view :style="bottomRowStyle">
-        <!-- Price -->
-        <view :style="priceRowStyle">
-          <slot name="price">
-            <text v-if="price !== undefined" :style="priceStyle">{{ currency }}{{ price }}</text>
-          </slot>
-          <text v-if="originPrice !== undefined" :style="originPriceStyle">{{ currency }}{{ originPrice }}</text>
-        </view>
-
-        <!-- Num -->
-        <slot name="num">
-          <text v-if="num !== undefined" :style="numStyle">x{{ num }}</text>
-        </slot>
-      </view>
-
-      <!-- Footer slot -->
+    <!-- Footer -->
+    <view v-if="$slots.footer" class="van-card__footer">
       <slot name="footer" />
-
-      <!-- Bottom slot -->
-      <slot name="bottom" />
     </view>
   </view>
 </template>
