@@ -1,52 +1,69 @@
 <script setup lang="ts">
 import DemoPage from '../components/DemoPage/index.vue';
 import Loading from '../components/Loading/index.vue';
+import Icon from '../components/Icon/index.vue';
 </script>
 
 <template>
   <DemoPage title="Loading">
-
-
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Type</text>
+      <!-- Type -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">加载类型</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <view :style="{ marginRight: 32 }">
-          <Loading type="circular" />
+          <Loading />
         </view>
         <Loading type="spinner" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Color</text>
+      <!-- Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义颜色</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
         <view :style="{ marginRight: 32 }">
           <Loading color="#1989fa" />
         </view>
-        <Loading color="#ee0a24" />
+        <Loading type="spinner" color="#1989fa" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Size</text>
+      <!-- Size -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义大小</text>
       <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading :size="24" />
+        <view :style="{ marginRight: 32 }">
+          <Loading size="24" />
+        </view>
+        <Loading type="spinner" size="24" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Text</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading>Loading...</Loading>
+      <!-- Text -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">加载文案</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Loading size="24">加载中...</Loading>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Vertical</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading vertical>Loading...</Loading>
+      <!-- Vertical -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">垂直排列</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <Loading size="24" vertical>加载中...</Loading>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Text Color</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading color="#1989fa" text-color="#1989fa">Loading...</Loading>
+      <!-- Text Color -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义文本颜色</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+        <view :style="{ marginRight: 32 }">
+          <Loading size="24" vertical color="#0094ff">加载中...</Loading>
+        </view>
+        <Loading size="24" vertical text-color="#0094ff">加载中...</Loading>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 16 }">Text Size</text>
+      <!-- Custom Icon -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义图标</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <Loading :text-size="20">Loading...</Loading>
+        <Loading vertical>
+          <template #icon>
+            <Icon name="star-o" :size="30" />
+          </template>
+          加载中...
+        </Loading>
       </view>
     </view>
   </DemoPage>
