@@ -1,13 +1,76 @@
 :root {
-  --van-search-padding: 10px var(--van-padding-sm, 12px);
-  --van-search-background: var(--van-background-2, #fff);
-  --van-search-content-background: var(--van-gray-1, #f7f8fa);
+  --van-search-padding: 10px 12px;
+  --van-search-background: var(--van-background-2, #f7f8fa);
+  --van-search-content-background: var(--van-background, #fff);
   --van-search-input-height: 34px;
   --van-search-label-padding: 0 5px;
   --van-search-label-color: var(--van-text-color, #323233);
   --van-search-label-font-size: var(--van-font-size-md, 14px);
   --van-search-left-icon-color: var(--van-gray-6, #969799);
-  --van-search-action-padding: 0 var(--van-padding-xs, 8px);
+  --van-search-action-padding: 0 8px;
   --van-search-action-text-color: var(--van-text-color, #323233);
   --van-search-action-font-size: var(--van-font-size-md, 14px);
+}
+
+.van-search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--van-search-padding);
+  background: var(--van-search-background);
+
+  &__content {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    padding-left: 12px;
+    background: var(--van-search-content-background);
+    border-radius: 2px;
+
+    &--round {
+      border-radius: 999px;
+    }
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    padding: var(--van-search-label-padding);
+    color: var(--van-search-label-color);
+    font-size: var(--van-search-label-font-size);
+    line-height: var(--van-search-input-height);
+  }
+
+  &__field {
+    flex: 1;
+    align-items: center;
+    padding: 0 8px 0 0;
+    height: var(--van-search-input-height);
+    background-color: transparent;
+
+    .van-field__left-icon {
+      color: var(--van-search-left-icon-color);
+    }
+
+    &--with-message {
+      height: auto;
+      align-items: flex-start;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+  }
+
+  &--show-action {
+    padding-right: 0;
+  }
+
+  &__action {
+    display: flex;
+    align-items: center;
+    padding: var(--van-search-action-padding);
+    color: var(--van-search-action-text-color);
+    font-size: var(--van-search-action-font-size);
+    line-height: var(--van-search-input-height);
+  }
 }
