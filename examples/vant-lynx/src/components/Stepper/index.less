@@ -13,3 +13,110 @@
   --van-stepper-input-disabled-background: var(--van-active-color, #f2f3f5);
   --van-stepper-radius: var(--van-radius-md, 4px);
 }
+
+.van-stepper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  &__minus,
+  &__plus {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--van-stepper-input-height);
+    height: var(--van-stepper-input-height);
+    background: var(--van-stepper-background);
+
+    &--disabled {
+      background-color: var(--van-stepper-button-disabled-color);
+    }
+  }
+
+  // Icon lines replacing ::before/::after pseudo-elements
+  &__icon-line {
+    position: absolute;
+    background-color: var(--van-stepper-button-icon-color);
+  }
+
+  &__icon-line--h {
+    width: 50%;
+    height: 1px;
+  }
+
+  &__icon-line--v {
+    width: 1px;
+    height: 50%;
+  }
+
+  &__minus {
+    border-radius: var(--van-stepper-radius) 0 0 var(--van-stepper-radius);
+
+    &--disabled .van-stepper__icon-line {
+      background-color: var(--van-stepper-button-disabled-icon-color);
+    }
+  }
+
+  &__plus {
+    border-radius: 0 var(--van-stepper-radius) var(--van-stepper-radius) 0;
+
+    &--disabled .van-stepper__icon-line {
+      background-color: var(--van-stepper-button-disabled-icon-color);
+    }
+  }
+
+  &__input {
+    width: var(--van-stepper-input-width);
+    height: var(--van-stepper-input-height);
+    margin: 0 2px;
+    padding: 0;
+    color: var(--van-stepper-input-text-color);
+    font-size: var(--van-stepper-input-font-size);
+    line-height: var(--van-stepper-input-line-height);
+    text-align: center;
+    background: var(--van-stepper-background);
+    border: 0;
+    border-width: 1px 0;
+    border-radius: 0;
+
+    &--disabled {
+      color: var(--van-stepper-input-disabled-text-color);
+      background-color: var(--van-stepper-input-disabled-background);
+    }
+  }
+
+  &--round {
+    .van-stepper__input {
+      background-color: transparent;
+    }
+
+    .van-stepper__plus,
+    .van-stepper__minus {
+      border-radius: 100%;
+
+      &--disabled {
+        opacity: 0.3;
+      }
+    }
+
+    .van-stepper__plus {
+      background: var(--van-stepper-button-round-theme-color);
+
+      .van-stepper__icon-line {
+        background-color: var(--van-white, #fff);
+      }
+    }
+
+    .van-stepper__minus {
+      background-color: var(--van-background-2, #fff);
+      border-width: 1px;
+      border-style: solid;
+      border-color: var(--van-stepper-button-round-theme-color);
+
+      .van-stepper__icon-line {
+        background-color: var(--van-stepper-button-round-theme-color);
+      }
+    }
+  }
+}
