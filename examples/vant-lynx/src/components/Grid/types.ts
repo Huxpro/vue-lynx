@@ -4,14 +4,14 @@ export type GridDirection = 'horizontal' | 'vertical';
 
 export interface GridProvide {
   props: {
-    square: boolean;
-    center: boolean;
-    border: boolean;
+    square?: boolean;
+    center?: boolean;
+    border?: boolean;
     gutter?: number | string;
-    reverse: boolean;
+    reverse?: boolean;
     iconSize?: number | string;
     direction?: GridDirection;
-    clickable: boolean;
+    clickable?: boolean;
     columnNum: number | string;
   };
   registerChild: () => number;

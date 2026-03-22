@@ -1,3 +1,5 @@
+// GridItem component styles matching Vant
+
 :root {
   --van-grid-item-content-padding: var(--van-padding-md, 16px) var(--van-padding-xs, 8px);
   --van-grid-item-content-background: var(--van-background-2, #fff);
@@ -5,4 +7,99 @@
   --van-grid-item-icon-size: 28px;
   --van-grid-item-text-color: var(--van-text-color, #323233);
   --van-grid-item-text-font-size: var(--van-font-size-sm, 12px);
+}
+
+.van-grid-item {
+  position: relative;
+  box-sizing: border-box;
+
+  &--square {
+    height: 0;
+  }
+
+  &__icon {
+    font-size: var(--van-grid-item-icon-size);
+  }
+
+  &__text {
+    color: var(--van-grid-item-text-color);
+    font-size: var(--van-grid-item-text-font-size);
+    line-height: 1.5;
+    word-break: break-all;
+  }
+
+  // Spacing between icon and text (default vertical layout)
+  &__icon + &__text {
+    margin-top: var(--van-padding-xs, 8px);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 100%;
+    padding: var(--van-grid-item-content-padding);
+    background: var(--van-grid-item-content-background);
+
+    // Border: right + bottom (replaces Vant's ::after pseudo-element)
+    &--border {
+      border-right: 0.5px solid var(--van-border-color, #ebedf0);
+      border-bottom: 0.5px solid var(--van-border-color, #ebedf0);
+    }
+
+    // Square mode: absolute position to fill parent
+    &--square {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+    }
+
+    // Centered content (default)
+    &--center {
+      align-items: center;
+      justify-content: center;
+    }
+
+    // Horizontal layout
+    &--horizontal {
+      flex-direction: row;
+
+      .van-grid-item__text {
+        margin-top: 0;
+        margin-left: var(--van-padding-xs, 8px);
+      }
+    }
+
+    // Reverse layout
+    &--reverse {
+      flex-direction: column-reverse;
+
+      .van-grid-item__text {
+        margin-top: 0;
+        margin-bottom: var(--van-padding-xs, 8px);
+      }
+    }
+
+    // Horizontal + reverse
+    &--horizontal&--reverse {
+      flex-direction: row-reverse;
+
+      .van-grid-item__text {
+        margin-top: 0;
+        margin-left: 0;
+        margin-right: var(--van-padding-xs, 8px);
+      }
+    }
+
+    // Surround border: all four sides (when border + gutter)
+    &--surround {
+      border: 0.5px solid var(--van-border-color, #ebedf0);
+    }
+
+    // Clickable active state (replaces :active pseudo-class)
+    &--clickable&--active {
+      background-color: var(--van-grid-item-content-active-color);
+    }
+  }
 }
