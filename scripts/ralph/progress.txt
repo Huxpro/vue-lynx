@@ -14,6 +14,7 @@ Branch: feat/vant-lynx-v2
 - **Text element queries**: `querySelector('text')` returns first `<text>` including template whitespace nodes — use `querySelectorAll('text')` and filter by style/content
 - **CSS custom properties as inline styles**: Lynx strips `--van-*` from inline styles. CSS variables only work through .less files. Test theme var conversion logic via unit tests on utility functions, not by checking `getAttribute('style')`
 - **Exports from `<script setup>`**: Vue SFC `<script setup>` cannot contain ES exports. Extract types, constants, and utilities to separate `.ts` files (types.ts, utils.ts)
+- **Parent-child registration timing**: When child components register with parent during setup, computed values depending on the registration array need `await nextTick()` in tests before checking styles (children register sequentially during slot evaluation, so initial render may have stale computeds)
 
 ---
 
@@ -207,7 +208,37 @@ Branch: feat/vant-lynx-v2
 - Tests: 16 cases (Vant has 1) — all pass
 - Demo sections: 4/4 (基础用法, 设置列元素间距, 设置垂直间距, 对齐方式)
 - Visual match: pass (flex layout with inline styles)
-- Limitations: tag prop no-op (Lynx always uses view), CSS class-based BEM styling replaced with inline styles, gutter distribution uses uniform padding + negative margins (visually identical to Vant's per-child algorithm)
-- New files: types.ts (RowAlign, RowJustify, RowProvide, RowThemeVars, ROW_KEY)
-- Col also updated: uses ROW_KEY symbol injection, removed click event, offset default removed
+- Limitations: tag prop no-op (Lynx always uses view), CSS class-based BEM styling replaced with inline styles
+- New files: types.ts (RowAlign, RowJustify, RowProvide, RowSpaces, VerticalSpaces, RowThemeVars, ROW_KEY)
+- Row now implements Vant's per-child space computation algorithm (groups, spaces, verticalSpaces)
+---
+
+## 2026-03-22 - parity-col: Col
+- Props: 3/3 (tag, span, offset)
+- Events: 0/0 (Vant Col has no events)
+- Slots: 1/1 (default)
+- CSS Variables: 0 defined in index.less (Col has no CSS variables in Vant)
+- Animations: none (Col has no transitions)
+- Tests: 8 cases (Vant has 6) — all pass
+- Demo sections: 4/4 (基础用法, 设置列元素间距, 设置垂直间距, 对齐方式) — shared layout.vue with Row
+- Visual match: pass (percentage-based widths and Vant's per-child gutter algorithm)
+- Limitations: tag prop no-op (Lynx always uses view), CSS class-based BEM styling replaced with inline styles, 24-column grid uses percentage-based width/margin-left via inline styles
+- New files: types.ts (ColThemeVars)
+- Key change: Col registers with parent Row during setup using getCurrentInstance().uid, Row computes per-child spaces/verticalSpaces (matching Vant's algorithm — vertical gutter only on non-last rows, negative/invalid values produce no margin)
+---
+
+## 2026-03-22 - parity-grid: Grid + GridItem
+- Props (Grid): 9/9 (square, center, border, gutter, reverse, iconSize, direction, clickable, columnNum)
+- Props (GridItem): 10/10 (dot, text, icon, badge, iconColor, iconPrefix, badgeProps, url, to, replace)
+- Events: 1/1 (click on GridItem)
+- Slots (Grid): 1/1 (default)
+- Slots (GridItem): 3/3 (default, icon, text)
+- CSS Variables: 6 defined in index.less (--van-grid-item-content-padding, --van-grid-item-content-background, --van-grid-item-content-active-color, --van-grid-item-icon-size, --van-grid-item-text-color, --van-grid-item-text-font-size)
+- Animations: none (Grid has no transitions)
+- Tests: 18 cases (Vant has 6) — all pass
+- Demo sections: 8/8 (基础用法, 自定义列数, 自定义内容, 正方形格子, 格子间距, 内容横排, 页面导航, 徽标提示)
+- Visual match: pass (inline styles match Vant flex layout)
+- Limitations: url/to/replace no-op (no navigation in Lynx), iconPrefix no-op, tag no-op, CSS class-based BEM replaced with inline styles, ::after borders replaced with inline border styles, role/tabindex not applicable
+- New files: Grid/types.ts (GRID_KEY, GridProvide, GridDirection, GridItemThemeVars)
+- Key change: Grid provides props + registerChild via GRID_KEY Symbol; GridItem injects and computes column layout, square aspect ratio, gutter spacing, and border styles matching Vant's algorithm
 ---

@@ -1,131 +1,77 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 11/11 supported (text, icon, iconPrefix, iconColor, dot, badge, badgeProps, url, to, replace)
-  - Events: 1/1 supported (click)
-  - Slots: 3/3 supported (default, icon, text)
-  - Badge integration: Uses shared Icon component with dot/badge/badgeProps (matches Vant)
-  - Icon integration: Uses shared Icon component with iconColor, iconPrefix support (matches Vant)
-  - Direction: Supports 'horizontal' (row) and 'vertical' (column) layout from parent Grid
-  - Reverse: Supports reversed content order (column-reverse / row-reverse) from parent Grid
-  - Square mode: Uses paddingTop percentage for 1:1 aspect ratio with absolute content (matches Vant)
-  - Gutter mode: Uses paddingRight + index-based marginTop for rows after first (matches Vant)
-  - Border mode: Hairline right+bottom when border=true & no gutter; full surround when both
-  - Clickable: Active state feedback via overlay on touch (matches Vant active-color behavior)
-  - Gaps:
-    - No to/url/replace (Lynx has no browser navigation / Vue Router)
-    - No CSS variable theming (Lynx uses inline styles)
-    - No cursor:pointer for clickable (Lynx is touch-only)
+  Lynx Limitations:
+  - url/to/replace: no browser navigation or Vue Router in Lynx
+  - iconPrefix: accepted for API compat but Icon uses unicode fallback
+  - cursor:pointer: not applicable (Lynx is touch-only)
+  - ::after pseudo-element borders: replaced with inline border styles
+  - CSS class-based BEM styling: replaced with inline styles
+  - role/tabindex: not applicable in Lynx
 -->
 <script setup lang="ts">
-import { computed, inject, ref, type Ref } from 'vue-lynx';
+import { computed, inject, ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import { GRID_KEY } from '../Grid/types';
 import type { BadgeProps } from '../Badge/index.vue';
 
-export type GridDirection = 'horizontal' | 'vertical';
+const addUnit = (value?: string | number): string | undefined => {
+  if (value === undefined || value === null) return undefined;
+  return typeof value === 'number' ? `${value}px` : String(value);
+};
 
 export interface GridItemProps {
-  /** Display text below (or beside) the icon */
-  text?: string;
-  /** Icon name (Vant icon name, unicode char, or image URL containing '/') */
-  icon?: string;
-  /** Icon class prefix (passed to Icon component) */
-  iconPrefix?: string;
-  /** Icon color */
-  iconColor?: string;
-  /** Whether to show a red dot on the icon */
   dot?: boolean;
-  /** Badge content (number or string) on the icon */
+  text?: string;
+  icon?: string;
   badge?: string | number;
-  /** Extra props for the Badge component on the icon */
+  iconColor?: string;
+  iconPrefix?: string;
   badgeProps?: Partial<BadgeProps>;
-  /** Navigation URL (API compat, not functional in Lynx) */
   url?: string;
-  /** Vue Router target (API compat, not functional in Lynx) */
   to?: string | Record<string, any>;
-  /** Replace history (API compat, not functional in Lynx) */
   replace?: boolean;
 }
 
 const props = withDefaults(defineProps<GridItemProps>(), {
   dot: false,
+  replace: false,
 });
 
 const emit = defineEmits<{
   click: [event: any];
 }>();
 
-const grid = inject<{
-  columnNum: Ref<number>;
-  iconSize: Ref<number | string>;
-  gutter: Ref<number | string>;
-  border: Ref<boolean>;
-  center: Ref<boolean>;
-  square: Ref<boolean>;
-  clickable: Ref<boolean>;
-  direction: Ref<GridDirection>;
-  reverse: Ref<boolean>;
-  registerChild: () => number;
-}>('grid')!;
+const parent = inject(GRID_KEY)!;
+const index = parent.registerChild();
 
-// Register this item and get its index (used for gutter marginTop logic)
-const index = grid.registerChild();
-
-/** Parse a numeric or string value to a number (px) */
-function parseNumeric(val: number | string): number {
-  if (typeof val === 'number') return val;
-  return parseFloat(val) || 0;
-}
-
-/** Percentage width for each column */
-const percent = computed(() => `${100 / grid.columnNum.value}%`);
-
-/**
- * Root item style — the outer wrapper.
- * Matches Vant's .van-grid-item: flexBasis sets column width.
- * - Square mode: height=0, paddingTop=percent for 1:1 aspect ratio
- * - Gutter mode: paddingRight=gutter, marginTop=gutter for rows after first
- */
 const rootStyle = computed(() => {
-  const gutterNum = parseNumeric(grid.gutter.value);
-  const colNum = grid.columnNum.value;
-
+  const { square, gutter, columnNum } = parent.props;
+  const percent = `${100 / +columnNum}%`;
   const style: Record<string, any> = {
     position: 'relative',
-    flexBasis: percent.value,
+    flexBasis: percent,
     boxSizing: 'border-box',
   };
 
-  if (grid.square.value) {
-    // Square: zero height, paddingTop creates the 1:1 aspect ratio
+  if (square) {
     style.height = 0;
-    style.paddingTop = percent.value;
-  } else if (gutterNum) {
-    // Gutter: horizontal spacing via paddingRight on each item
-    style.paddingRight = gutterNum;
+    style.paddingTop = percent;
+  } else if (gutter) {
+    const gutterValue = addUnit(gutter);
+    style.paddingRight = gutterValue;
 
-    // Vertical spacing: only items past the first row get marginTop
-    // Matches Vant: index >= columnNum
-    if (index >= colNum) {
-      style.marginTop = gutterNum;
+    if (index >= +columnNum) {
+      style.marginTop = gutterValue;
     }
   }
 
   return style;
 });
 
-/**
- * Content wrapper style — the inner content area.
- * Matches Vant's .van-grid-item__content.
- * Contains the icon + text with proper flex direction.
- */
 const contentStyle = computed(() => {
-  const gutterNum = parseNumeric(grid.gutter.value);
-  const hasBorder = grid.border.value && !gutterNum;
-  const hasSurround = grid.border.value && !!gutterNum;
-  const isHorizontal = grid.direction.value === 'horizontal';
-  const isReverse = grid.reverse.value;
+  const { square, gutter, border, center, clickable, direction, reverse } = parent.props;
+  const isHorizontal = direction === 'horizontal';
+  const isReverse = reverse;
 
-  // Determine flexDirection based on direction + reverse
   let flexDir: string;
   if (isHorizontal && isReverse) {
     flexDir = 'row-reverse';
@@ -140,45 +86,42 @@ const contentStyle = computed(() => {
   const style: Record<string, any> = {
     display: 'flex',
     flexDirection: flexDir,
-    alignItems: grid.center.value ? 'center' : 'flex-start',
-    justifyContent: grid.center.value ? 'center' : 'flex-start',
+    alignItems: center ? 'center' : 'flex-start',
+    justifyContent: center ? 'center' : 'flex-start',
     height: '100%',
-    // Vant uses padding: 16px 8px (--van-padding-md --van-padding-xs)
-    paddingTop: 16,
-    paddingBottom: 16,
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingTop: '16px',
+    paddingBottom: '16px',
+    paddingLeft: '8px',
+    paddingRight: '8px',
     backgroundColor: '#fff',
     boxSizing: 'border-box',
   };
 
-  // Square mode: absolute positioning to fill the paddingTop-based parent
-  if (grid.square.value) {
+  if (square) {
     style.position = 'absolute';
     style.top = 0;
     style.right = 0;
     style.bottom = 0;
     style.left = 0;
 
-    if (gutterNum) {
-      // When both square and gutter, inset right/bottom by gutter amount
-      style.right = gutterNum;
-      style.bottom = gutterNum;
+    if (gutter) {
+      const gutterValue = addUnit(gutter);
+      style.right = gutterValue;
+      style.bottom = gutterValue;
       style.height = 'auto';
     }
   }
 
   // Border styles
-  if (hasBorder) {
-    // Hairline right + bottom border (Grid wrapper provides top + left)
+  const hasGutter = !!gutter;
+  if (border && !hasGutter) {
     style.borderRightWidth = 0.5;
     style.borderRightStyle = 'solid';
     style.borderRightColor = '#ebedf0';
     style.borderBottomWidth = 0.5;
     style.borderBottomStyle = 'solid';
     style.borderBottomColor = '#ebedf0';
-  } else if (hasSurround) {
-    // Full surround border when both border and gutter are set
+  } else if (border && hasGutter) {
     style.borderWidth = 0.5;
     style.borderStyle = 'solid';
     style.borderColor = '#ebedf0';
@@ -187,52 +130,46 @@ const contentStyle = computed(() => {
   return style;
 });
 
-/**
- * Spacing style applied to the text element.
- * Creates the gap between icon and text, respecting direction and reverse.
- */
 const textSpacingStyle = computed(() => {
-  const isHorizontal = grid.direction.value === 'horizontal';
-  const isReverse = grid.reverse.value;
+  const isHorizontal = parent.props.direction === 'horizontal';
+  const isReverse = parent.props.reverse;
 
   if (isHorizontal && isReverse) {
-    // row-reverse: text appears before icon visually, so margin-right pushes away from icon
-    return { marginRight: 8 };
+    return { marginRight: '8px' };
   } else if (isHorizontal) {
-    // row: icon then text, margin-left on text
-    return { marginLeft: 8 };
+    return { marginLeft: '8px' };
   } else if (isReverse) {
-    // column-reverse: text appears above icon visually, so margin-bottom pushes away from icon
-    return { marginBottom: 8 };
-  } else {
-    // column (default): icon above text, margin-top on text
-    return { marginTop: 8 };
+    return { marginBottom: '8px' };
   }
+  return { marginTop: '8px' };
 });
 
-const iconSizeNum = computed(() => parseNumeric(grid.iconSize.value));
+const iconSize = computed(() => {
+  const size = parent.props.iconSize;
+  if (size !== undefined) return typeof size === 'number' ? size : parseFloat(size) || 28;
+  return 28;
+});
 
-const textStyle = computed(() => ({
-  fontSize: 12,
-  color: '#646566',
-  lineHeight: 18,
-  textAlign: 'center' as const,
-}));
+const textStyle: Record<string, any> = {
+  fontSize: '12px',
+  color: '#323233',
+  lineHeight: '18px',
+};
 
-// Active state for clickable items (visual press feedback)
+// Active state for clickable items
 const isActive = ref(false);
 
-const activeOverlayStyle = computed(() => ({
-  position: 'absolute' as const,
+const activeOverlayStyle: Record<string, any> = {
+  position: 'absolute',
   top: 0,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.1)',
-}));
+  backgroundColor: 'rgba(242,243,245,1)',
+};
 
 function onTouchStart() {
-  if (grid.clickable.value) {
+  if (parent.props.clickable) {
     isActive.value = true;
   }
 }
@@ -241,19 +178,14 @@ function onTouchEnd() {
   isActive.value = false;
 }
 
-/** Click always emits (Vant behavior). Clickable prop only controls visual feedback. */
 function onTap(event: any) {
   emit('click', event);
 }
 
-/** Whether icon content exists (for text spacing logic) */
-const hasIcon = computed(() => !!props.icon);
 </script>
 
 <template>
-  <!-- Root wrapper: sets column width, square aspect ratio, gutter spacing -->
   <view :style="rootStyle">
-    <!-- Content wrapper: flex layout, border, background, padding -->
     <view
       :style="contentStyle"
       @tap="onTap"
@@ -261,20 +193,17 @@ const hasIcon = computed(() => !!props.icon);
       @touchend="onTouchEnd"
       @touchcancel="onTouchEnd"
     >
-      <!-- Default slot replaces the entire content (icon + text) -->
       <template v-if="$slots.default">
         <slot />
       </template>
 
       <template v-else>
-        <!-- Icon area: uses shared Icon component with Badge integration -->
-        <!-- In reverse mode, flex-direction handles visual ordering -->
         <slot name="icon">
           <Icon
             v-if="icon"
             :name="icon"
-            :size="iconSizeNum"
-            :color="iconColor || '#323233'"
+            :size="iconSize"
+            :color="iconColor"
             :dot="dot"
             :badge="badge"
             :class-prefix="iconPrefix"
@@ -282,18 +211,16 @@ const hasIcon = computed(() => !!props.icon);
           />
         </slot>
 
-        <!-- Text area with directional spacing relative to icon -->
         <slot name="text">
           <text
             v-if="text"
-            :style="{ ...textStyle, ...(hasIcon || $slots.icon ? textSpacingStyle : {}) }"
+            :style="{ ...textStyle, ...(icon || $slots.icon ? textSpacingStyle : {}) }"
           >{{ text }}</text>
         </slot>
       </template>
 
-      <!-- Active overlay for clickable items (press feedback) -->
       <view
-        v-if="isActive && grid.clickable.value"
+        v-if="isActive && parent.props.clickable"
         :style="activeOverlayStyle"
       />
     </view>
