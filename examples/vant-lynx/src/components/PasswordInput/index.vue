@@ -1,156 +1,109 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/7 supported (value, info, errorInfo, length, gutter, mask, focused)
-  - Events: 1/1 supported (focus)
-  - Slots: 0/0 (Vant PasswordInput has no slots)
-  - Lynx Adaptations:
-    - Cursor blink animation not possible (Lynx does not support CSS keyframes);
-      cursor is shown as a static bar
-    - Border merging for connected cells uses individual borderWidth overrides
-      instead of CSS class-based border-left
-    - Cell sizing uses fixed width (40px) rather than flex distribution
-  - Gaps:
-    - No CSS cursor blink animation (static indicator shown instead)
-    - position: 'absolute' used for cursor may not render identically in all
-      Lynx versions; tested with static positioning fallback
+  Lynx Limitations:
+  - ::after border-radius on security container: Vant uses ::after pseudo-element
+    for rounded border; we use direct border styles on the container
+  - <li> elements: Lynx has no HTML tags; uses <view> instead
+  - user-select: none: Lynx has no text selection, so this is a no-op
+  - touchstart passive: Lynx uses @tap event instead
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit } from '../../utils/format';
+import './index.less';
+
+const [name, bem] = createNamespace('password-input');
 
 export interface PasswordInputProps {
-  value?: string;
   info?: string;
-  errorInfo?: string;
-  length?: number;
-  gutter?: number;
   mask?: boolean;
+  value?: string;
+  gutter?: string | number;
+  length?: number | string;
   focused?: boolean;
+  errorInfo?: string;
 }
 
 const props = withDefaults(defineProps<PasswordInputProps>(), {
   value: '',
   length: 6,
-  gutter: 0,
   mask: true,
-  focused: false,
 });
 
 const emit = defineEmits<{
-  focus: [];
+  focus: [event?: Event];
 }>();
 
-const cells = computed(() => {
-  const arr: string[] = [];
-  for (let i = 0; i < props.length; i++) {
-    arr.push(props.value[i] ?? '');
+const onTap = (event?: Event) => {
+  emit('focus', event);
+};
+
+const points = computed(() => {
+  const result: Array<{
+    char: string;
+    showCursor: boolean;
+  }> = [];
+  const length = +props.length;
+
+  for (let i = 0; i < length; i++) {
+    const char = props.value[i] || '';
+    const showCursor = !!props.focused && i === props.value.length;
+    result.push({ char, showCursor });
   }
-  return arr;
+
+  return result;
 });
 
-const isConnected = computed(() => props.gutter === 0);
+const hasGutter = computed(() => props.gutter !== undefined && props.gutter !== 0 && props.gutter !== '0');
 
-function getCellStyle(index: number, total: number) {
-  const base: Record<string, any> = {
-    width: 40,
-    height: 48,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderColor: '#ebedf0',
-    borderStyle: 'solid',
-    borderWidth: 1,
-    position: 'relative',
-  };
-
-  if (isConnected.value) {
-    // Connected: merge borders
-    if (index === 0) {
-      base.borderTopLeftRadius = 6;
-      base.borderBottomLeftRadius = 6;
-      base.borderRightWidth = 0;
-    } else if (index === total - 1) {
-      base.borderTopRightRadius = 6;
-      base.borderBottomRightRadius = 6;
-      base.borderLeftWidth = 0;
-    } else {
-      base.borderLeftWidth = 0;
-      base.borderRightWidth = 0;
-    }
+const securityClass = computed(() => {
+  const classes = [bem('security')];
+  if (hasGutter.value) {
+    classes.push(bem('security', { gutter: true }));
   } else {
-    base.borderRadius = 6;
-    base.marginRight = index < total - 1 ? props.gutter : 0;
+    classes.push(bem('security', { bordered: true }));
   }
+  return classes.join(' ');
+});
 
-  return base;
-}
+const infoText = computed(() => props.errorInfo || props.info);
+const infoClass = computed(() => bem(props.errorInfo ? 'error-info' : 'info'));
 
-function onTap() {
-  emit('focus');
+function getItemStyle(index: number) {
+  if (hasGutter.value && index !== 0) {
+    return { marginLeft: addUnit(props.gutter) };
+  }
+  return undefined;
 }
 </script>
 
 <template>
-  <view
-    :style="{ display: 'flex', flexDirection: 'column' }"
-    @tap="onTap"
-  >
-    <!-- Cells row -->
-    <view :style="{
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-    }">
+  <view :class="bem()" @tap="onTap">
+    <view :class="securityClass">
       <view
-        v-for="(cell, index) in cells"
+        v-for="(point, index) in points"
         :key="index"
-        :style="getCellStyle(index, length)"
+        :class="bem('item', { focus: point.showCursor })"
+        :style="getItemStyle(index)"
       >
-        <!-- Dot or digit -->
+        <!-- Masked dot -->
         <view
-          v-if="mask && cell"
-          :style="{
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: '#323233',
-          }"
+          v-if="mask && point.char"
+          :class="bem('dot')"
         />
-        <text
-          v-else-if="!mask && cell"
-          :style="{ fontSize: 20, color: '#323233' }"
-        >{{ cell }}</text>
-
-        <!-- Cursor indicator for focused active cell -->
+        <!-- Plain text -->
+        <text v-else-if="!mask && point.char">{{ point.char }}</text>
+        <!-- Cursor -->
         <view
-          v-if="focused && index === value.length && index < length"
-          :style="{
-            width: 1,
-            height: 24,
-            backgroundColor: '#1989fa',
-          }"
+          v-if="point.showCursor"
+          :class="bem('cursor')"
         />
       </view>
     </view>
-
     <!-- Info / Error text -->
     <text
-      v-if="errorInfo"
-      :style="{
-        fontSize: 14,
-        color: '#ee0a24',
-        textAlign: 'center',
-        marginTop: 8,
-      }"
-    >{{ errorInfo }}</text>
-    <text
-      v-else-if="info"
-      :style="{
-        fontSize: 14,
-        color: '#969799',
-        textAlign: 'center',
-        marginTop: 8,
-      }"
-    >{{ info }}</text>
+      v-if="infoText"
+      :class="infoClass"
+    >{{ infoText }}</text>
   </view>
 </template>
