@@ -9,8 +9,104 @@
   --van-password-input-error-info-color: var(--van-danger-color, #ee0a24);
   --van-password-input-dot-size: 10px;
   --van-password-input-dot-color: var(--van-text-color, #323233);
+  --van-password-input-text-color: var(--van-text-color, #323233);
   --van-password-input-cursor-color: var(--van-text-color, #323233);
   --van-password-input-cursor-width: 1px;
   --van-password-input-cursor-height: 40%;
   --van-password-input-cursor-duration: 1s;
+}
+
+.van-password-input {
+  position: relative;
+  margin: var(--van-password-input-margin);
+
+  &__info,
+  &__error-info {
+    margin-top: var(--van-padding-md, 16px);
+    font-size: var(--van-password-input-info-font-size);
+    text-align: center;
+  }
+
+  &__info {
+    color: var(--van-password-input-info-color);
+  }
+
+  &__error-info {
+    color: var(--van-password-input-error-info-color);
+  }
+
+  &__security {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: var(--van-password-input-height);
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--van-password-input-text-color);
+    font-size: var(--van-password-input-font-size);
+    background: var(--van-password-input-background);
+
+    &--focus {
+      // focused item can have additional styling if needed
+    }
+  }
+
+  &__security--bordered {
+    border: 1px solid var(--van-border-color, #ebedf0);
+    border-radius: var(--van-password-input-radius);
+
+    .van-password-input__item {
+      border-left: 1px solid var(--van-border-color, #ebedf0);
+
+      &:first-child {
+        border-left: none;
+      }
+    }
+  }
+
+  &__security--gutter {
+    .van-password-input__item {
+      border: 1px solid var(--van-border-color, #ebedf0);
+      border-radius: var(--van-password-input-radius);
+    }
+  }
+
+  &__dot {
+    width: var(--van-password-input-dot-size);
+    height: var(--van-password-input-dot-size);
+    background: var(--van-password-input-dot-color);
+    border-radius: 100%;
+  }
+
+  &__cursor {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--van-password-input-cursor-width);
+    height: var(--van-password-input-cursor-height);
+    background: var(--van-password-input-cursor-color);
+    transform: translate(-50%, -50%);
+    animation: var(--van-password-input-cursor-duration) van-cursor-flicker infinite;
+  }
+}
+
+@keyframes van-cursor-flicker {
+  from {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }

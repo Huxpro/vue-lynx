@@ -937,3 +937,18 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from inline-style to BEM class architecture. All 15 props matching Vant. Both default and custom themes with sidebar. Touch events for active state visual feedback. @tap for key press actions (test compatibility). Proper key generation matching Vant's genBasicKeys/genDefaultKeys/genCustomKeys logic. shuffle() for random key order. v-model (modelValue + update:modelValue) with maxlength enforcement. Loading component integration for closeButtonLoading.
 - Limitations: teleport (no Lynx Teleport), hideOnClickOutside (no document-level touchstart in Lynx), SVG delete/collapse icons (uses text fallback ⌫), position:fixed (renders inline in Lynx)
 ---
+
+## 2026-03-22 - parity-password-input: PasswordInput
+- Props: 7/7 (info, mask, value, gutter, length, focused, errorInfo)
+- Events: 1/1 (focus)
+- Slots: 0/0 (PasswordInput has no slots)
+- CSS Variables: 15 defined in index.less (--van-password-input-height, -margin, -font-size, -radius, -background, -info-color, -info-font-size, -error-info-color, -dot-size, -dot-color, -text-color, -cursor-color, -cursor-width, -cursor-height, -cursor-duration)
+- BEM Classes: .van-password-input, __info, __error-info, __security (--bordered, --gutter), __item (--focus), __dot, __cursor
+- Animations: @keyframes van-cursor-flicker (cursor blink animation matching Vant)
+- Tests: 16 cases (Vant has 2, we have 16 — comprehensive BEM, props, events, cursor, gutter, mask, bordered tests)
+- Demo sections: 5/5 (基础用法, 自定义长度, 格子间距, 明文展示, 提示信息)
+- Visual match: pass (BEM classes, CSS variables, @keyframes cursor blink)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts, README.md (5 files; Vant has 4: PasswordInput.tsx, types.ts, index.ts, index.less)
+- Key changes: Complete rewrite from all-inline-styles to BEM class architecture. Removed false claim that "Lynx does not support CSS keyframes" — Lynx fully supports @keyframes. Added cursor blink animation via @keyframes van-cursor-flicker. Proper bordered vs gutter security layouts via CSS classes. createNamespace('password-input') with full BEM. All 15 CSS variables matching Vant.
+- Limitations: ::after pseudo-element (uses direct border on container), <li> elements (uses <view>), user-select: none (no-op in Lynx), touchstart passive (uses @tap)
+---

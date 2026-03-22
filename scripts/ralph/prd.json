@@ -1552,7 +1552,7 @@
         "Docs: Lynx limitations in components/PasswordInput/README.md",
         "Commit: feat(password-input): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-uploader",
