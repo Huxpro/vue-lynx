@@ -13,9 +13,9 @@ function onClose() {
 
 <template>
   <DemoPage title="Tag 标签">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
       <!-- 基础用法 -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">基础用法</text>
+      <text class="demo-section-title">基础用法</text>
       <CellGroup>
         <Cell title="primary 类型">
           <template #value>
@@ -40,7 +40,7 @@ function onClose() {
       </CellGroup>
 
       <!-- 样式风格 -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">样式风格</text>
+      <text class="demo-section-title">样式风格</text>
       <CellGroup>
         <Cell title="空心样式">
           <template #value>
@@ -60,9 +60,9 @@ function onClose() {
         <Cell title="可关闭标签">
           <template #value>
             <Tag
-              v-if="show"
               type="primary"
               closeable
+              :show="show"
               size="medium"
               @close="onClose"
             >标签</Tag>
@@ -71,7 +71,7 @@ function onClose() {
       </CellGroup>
 
       <!-- 标签大小 -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">标签大小</text>
+      <text class="demo-section-title">标签大小</text>
       <CellGroup>
         <Cell title="小号标签">
           <template #value>
@@ -91,7 +91,7 @@ function onClose() {
       </CellGroup>
 
       <!-- 自定义颜色 -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">自定义颜色</text>
+      <text class="demo-section-title">自定义颜色</text>
       <CellGroup>
         <Cell title="背景颜色">
           <template #value>
