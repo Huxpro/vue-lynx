@@ -144,3 +144,29 @@ Branch: feat/vant-lynx-v2
 - New files: types.ts (ToastType, ToastPosition, ToastWordBreak, ToastProps, ToastOptions, ToastWrapperInstance, ToastThemeVars)
 - Imperative API: showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, allowMultipleToast, setToastDefaultOptions, resetToastDefaultOptions
 ---
+
+## 2026-03-22 - parity-tag: Tag
+- Props: 9/9 (type, size, color, plain, round, mark, textColor, closeable, show)
+- Events: 1/1 (close) — removed extra click emit to match Vant (Vant only emits close)
+- Slots: 1/1 (default)
+- CSS Variables: 16 defined in index.less (fixed --van-tag-font-size from --van-font-size-xs to --van-font-size-sm)
+- Animations: none (Lynx has no Vue Transition; show/hide uses v-if)
+- Tests: 13 cases (Vant has 4) — all pass
+- Demo sections: 4/4 (基础用法, 样式风格, 标签大小, 自定义颜色) — matches Vant demo structure with Cell components
+- Visual match: pass (inline style rendering with string px units)
+- Limitations: Vue <Transition> replaced with v-if, ::before pseudo-element for plain border replaced with inline borderWidth/borderColor, ::after mark spacer omitted, HAPTICS_FEEDBACK not available, CSS class-based theming replaced with inline styles
+- New files: types.ts (TagType, TagSize, TagThemeVars)
+---
+
+## 2026-03-22 - parity-image: Image
+- Props: 19/19 (src, fit, position, alt, width, height, radius, round, block, lazyLoad, showError, showLoading, errorIcon, loadingIcon, iconSize, iconPrefix, crossorigin, referrerpolicy, decoding)
+- Events: 2/2 (load, error) — Vant source emits only load and error; click bubbles from DOM
+- Slots: 3/3 (default, loading, error)
+- CSS Variables: 7 defined in index.less (--van-image-placeholder-text-color, --van-image-placeholder-font-size, --van-image-placeholder-background, --van-image-loading-icon-size, --van-image-loading-icon-color, --van-image-error-icon-size, --van-image-error-icon-color)
+- Animations: none (Image has no transitions)
+- Tests: 17 cases (Vant has 15) — all pass; event dispatch tests adapted for Lynx test env limitations
+- Demo sections: 6/6 (基础用法, 填充模式, 位置, 圆形图片, 加载中提示, 加载失败提示)
+- Visual match: pass (placeholder overlays with absolute positioning match Vant)
+- Limitations: alt no-op, position (object-position) not supported in Lynx, crossorigin/referrerpolicy/decoding HTML-only, lazyLoad no IntersectionObserver, iconPrefix no-op, block no-op (Lynx views are block)
+- New files: types.ts (ImageFit, ImagePosition, ImageThemeVars)
+---

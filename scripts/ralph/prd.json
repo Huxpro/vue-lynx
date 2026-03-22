@@ -276,7 +276,7 @@
         "Docs: Lynx limitations in components/Tag/README.md",
         "Commit: feat(tag): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-image",
@@ -298,7 +298,7 @@
         "Docs: Lynx limitations in components/Image/README.md",
         "Commit: feat(image): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-divider",
