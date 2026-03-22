@@ -399,3 +399,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. All styling via CSS classes in .less. Border collapse handled via CSS (border-right-width: 0 on items, restored on --next and --border). Active/disabled states via BEM modifiers. Simple mode uses --border modifier matching Vant.
 - Limitations: HTML <nav>/<ul>/<li>/<button> (Lynx uses <view>/<text>), :active pseudo-class (no tap feedback), ::after hairline border (direct border instead), cursor/user-select (not applicable), role/aria-current (no ARIA), i18n (static default strings)
 ---
+
+## 2026-03-22 - parity-tree-select: TreeSelect
+- Props: 6/6 (items, activeId, mainActiveIndex, height, max, selectedIcon)
+- Events: 4/4 (update:activeId, update:mainActiveIndex, clickNav, clickItem)
+- Slots: 2/2 (content, nav-text)
+- CSS Variables: 8 defined in index.less (--van-tree-select-font-size, nav-background, content-background, nav-item-padding, item-height, item-active-color, item-disabled-color, item-selected-size)
+- Animations: none (TreeSelect has no transitions)
+- Tests: 16 cases (Vant has 14, we have 16 — added active children rendering and numeric height tests)
+- Demo sections: 4/4 (单选模式, 多选模式, 自定义内容, 徽标提示)
+- Visual match: pass (BEM classes, CSS variables, uses Sidebar/SidebarItem internally like Vant)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; matches Vant's 4)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Uses Sidebar/SidebarItem components internally (matching Vant's architecture). All styling via CSS classes in .less. className prop on TreeSelectItem now works (applied to nav-item class). Fixed limitations comment to remove incorrect claims about CSS class system not working.
+- Limitations: overflow-y: auto (Lynx uses scroll-view), -webkit-overflow-scrolling (N/A), :active pseudo-class (N/A), cursor/user-select (N/A), van-ellipsis (Lynx handles text truncation differently)
+---
