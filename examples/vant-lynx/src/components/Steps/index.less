@@ -1,13 +1,22 @@
 :root {
-  --van-step-text-color: var(--van-text-color-2, #969799);
-  --van-step-active-color: var(--van-primary-color, #1989fa);
-  --van-step-process-text-color: var(--van-text-color, #323233);
-  --van-step-font-size: var(--van-font-size-md, 14px);
-  --van-step-line-color: var(--van-border-color, #ebedf0);
-  --van-step-finish-line-color: var(--van-primary-color, #1989fa);
-  --van-step-finish-text-color: var(--van-text-color, #323233);
-  --van-step-icon-size: 12px;
-  --van-step-circle-size: 5px;
-  --van-step-circle-color: var(--van-gray-6, #969799);
-  --van-step-horizontal-title-font-size: var(--van-font-size-sm, 12px);
+  --van-steps-background: var(--van-background-2, #fff);
+}
+
+.van-steps {
+  background-color: var(--van-steps-background);
+
+  &--horizontal {
+    padding: 10px 10px 0;
+
+    .van-steps__items {
+      position: relative;
+      display: flex;
+      margin: 0 0 10px;
+      padding-bottom: 22px;
+    }
+  }
+
+  &--vertical {
+    padding: 0 0 0 var(--van-padding-xl, 32px);
+  }
 }

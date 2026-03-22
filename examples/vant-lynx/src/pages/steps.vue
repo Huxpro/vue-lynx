@@ -3,45 +3,64 @@ import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Steps from '../components/Steps/index.vue';
 import Step from '../components/Step/index.vue';
+
 const active = ref(1);
+
+const nextStep = () => {
+  active.value = ++active.value % 4;
+};
 </script>
 
 <template>
-  <DemoPage title="Steps">
-    
+  <DemoPage title="Steps 步骤条">
 
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ marginBottom: '16px' }">
         <Steps :active="active">
-          <Step :index="0">Placed</Step>
-          <Step :index="1">Processing</Step>
-          <Step :index="2">Shipped</Step>
-          <Step :index="3">Delivered</Step>
+          <Step>买家下单</Step>
+          <Step>商家接单</Step>
+          <Step>买家提货</Step>
+          <Step>交易完成</Step>
+        </Steps>
+        <view :style="{ padding: '16px 16px 0' }">
+          <text
+            :style="{ fontSize: '14px', color: '#1989fa' }"
+            @tap="nextStep"
+          >下一步</text>
+        </view>
+      </view>
+
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义样式</text>
+      <view :style="{ marginBottom: '16px' }">
+        <Steps
+          :active="active"
+          active-icon="success"
+          inactive-icon="arrow"
+          active-color="#07c160"
+        >
+          <Step>买家下单</Step>
+          <Step>商家接单</Step>
+          <Step>买家提货</Step>
+          <Step>交易完成</Step>
         </Steps>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Switch Step</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16, display: 'flex', flexDirection: 'row' }">
-        <text :style="{ fontSize: 14, color: '#1989fa', marginRight: 16 }" @tap="active = Math.max(0, active - 1)">Prev</text>
-        <text :style="{ fontSize: 14, color: '#1989fa' }" @tap="active = Math.min(3, active + 1)">Next</text>
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Steps :active="1" active-color="#ee0a24">
-          <Step :index="0">Step 1</Step>
-          <Step :index="1">Step 2</Step>
-          <Step :index="2">Step 3</Step>
-        </Steps>
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Vertical Steps</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Steps :active="1" direction="vertical">
-          <Step :index="0">Step 1: Order placed</Step>
-          <Step :index="1">Step 2: Processing</Step>
-          <Step :index="2">Step 3: Completed</Step>
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">竖向步骤条</text>
+      <view>
+        <Steps :active="0" direction="vertical">
+          <Step>
+            <text :style="{ fontSize: '14px', fontWeight: 'bold' }">【城市】物流状态1</text>
+            <text :style="{ fontSize: '12px', color: '#969799' }">2016-07-12 12:40</text>
+          </Step>
+          <Step>
+            <text :style="{ fontSize: '14px', fontWeight: 'bold' }">【城市】物流状态</text>
+            <text :style="{ fontSize: '12px', color: '#969799' }">2016-07-11 10:00</text>
+          </Step>
+          <Step>
+            <text :style="{ fontSize: '14px', fontWeight: 'bold' }">快件已发货</text>
+            <text :style="{ fontSize: '12px', color: '#969799' }">2016-07-10 09:30</text>
+          </Step>
         </Steps>
       </view>
     </view>
