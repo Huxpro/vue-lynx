@@ -1,25 +1,25 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 21/21 supported (type, size, text, color, icon, iconPrefix, iconPosition, tag,
-    nativeType, plain, block, round, square, disabled, loading, loadingText, loadingType,
-    loadingSize, url, to, replace, hairline)
-  - Events: 2/2 supported (click, touchstart)
-  - Slots: 3/3 supported (default, icon, loading)
-  - Sub-components: Loading, Icon integrated
-  - Click Feedback: active state opacity overlay
-  - Lynx Limitations:
-    - tag: accepted for API compat but always renders as view (Lynx has no HTML tags)
-    - nativeType: accepted for API compat but not applicable in Lynx (no form submission)
-    - url/to/replace: accepted for API compat but routing requires Lynx navigation API
+  Lynx Limitations:
+  - tag: accepted for API compat but always renders as view (Lynx has no HTML tags)
+  - nativeType: accepted for API compat but not applicable in Lynx (no form submission)
+  - url/to/replace: accepted for API compat but routing requires Lynx navigation API
+  - ::before active overlay: Lynx has no pseudo-elements, uses opacity for active feedback
+  - hairline ::after border: Lynx has no pseudo-elements, uses 0.5px border-width instead
 -->
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
 import Icon from '../Icon/index.vue';
+import type {
+  ButtonType,
+  ButtonSize,
+  ButtonNativeType,
+  ButtonIconPosition,
+} from './types';
 
 export interface ButtonProps {
-  type?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
-  size?: 'large' | 'normal' | 'small' | 'mini';
+  type?: ButtonType;
+  size?: ButtonSize;
   text?: string;
   plain?: boolean;
   round?: boolean;
@@ -29,14 +29,14 @@ export interface ButtonProps {
   block?: boolean;
   icon?: string;
   iconPrefix?: string;
-  iconPosition?: 'left' | 'right';
+  iconPosition?: ButtonIconPosition;
   loadingText?: string;
   loadingSize?: string | number;
   loadingType?: 'circular' | 'spinner';
   color?: string;
   hairline?: boolean;
   tag?: string;
-  nativeType?: string;
+  nativeType?: ButtonNativeType;
   url?: string;
   to?: string | Record<string, any>;
   replace?: boolean;
@@ -58,16 +58,15 @@ const props = withDefaults(defineProps<ButtonProps>(), {
 
 const emit = defineEmits<{
   click: [event: any];
-  touchstart: [event: any];
 }>();
 
 const isActive = ref(false);
 
 const sizeConfig = {
-  large: { height: 50, fontSize: 16, padding: 0 },
-  normal: { height: 44, fontSize: 16, padding: 15 },
-  small: { height: 32, fontSize: 14, padding: 8 },
-  mini: { height: 24, fontSize: 12, padding: 4 },
+  large: { height: '50px', fontSize: '16px', padding: '0px' },
+  normal: { height: '44px', fontSize: '16px', padding: '15px' },
+  small: { height: '32px', fontSize: '14px', padding: '8px' },
+  mini: { height: '24px', fontSize: '12px', padding: '4px' },
 };
 
 const typeConfig = {
@@ -97,11 +96,12 @@ const loadingColor = computed(() => {
 
 const resolvedLoadingSize = computed(() => {
   if (props.loadingSize) {
-    return typeof props.loadingSize === 'string'
-      ? parseInt(props.loadingSize, 10) || 20
-      : props.loadingSize;
+    if (typeof props.loadingSize === 'string') {
+      return /^\d+$/.test(props.loadingSize) ? `${props.loadingSize}px` : props.loadingSize;
+    }
+    return `${props.loadingSize}px`;
   }
-  return 20;
+  return '20px';
 });
 
 const buttonStyle = computed(() => {
@@ -122,19 +122,22 @@ const buttonStyle = computed(() => {
 
   const isGradient = props.color?.includes('gradient');
 
+  const borderWidth = isGradient ? '0px' : (props.hairline ? '0.5px' : '1px');
+  const borderRadius = props.round ? '999px' : (props.square ? '0px' : '4px');
+
   return {
     display: 'flex' as const,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     height: sz.height,
-    paddingLeft: props.size === 'large' || props.block ? 0 : sz.padding,
-    paddingRight: props.size === 'large' || props.block ? 0 : sz.padding,
+    paddingLeft: props.size === 'large' || props.block ? '0px' : sz.padding,
+    paddingRight: props.size === 'large' || props.block ? '0px' : sz.padding,
     backgroundColor: bg,
-    borderWidth: isGradient ? 0 : (props.hairline ? 0.5 : 1),
+    borderWidth,
     borderStyle: 'solid' as const,
     borderColor: borderColor,
-    borderRadius: props.round ? 999 : (props.square ? 0 : 4),
+    borderRadius,
     opacity: props.disabled ? 0.5 : (isActive.value && !props.loading ? 0.9 : 1),
     width: props.block ? '100%' : undefined,
   };
@@ -142,15 +145,20 @@ const buttonStyle = computed(() => {
 
 const textStyle = computed(() => {
   const sz = sizeConfig[props.size];
+  const fontSizeNum = parseInt(sz.fontSize, 10);
   return {
     fontSize: sz.fontSize,
     color: textColor.value,
-    lineHeight: Math.round(sz.fontSize * 1.2),
+    lineHeight: `${Math.round(fontSizeNum * 1.2)}px`,
   };
 });
 
+const iconSize = computed(() => {
+  return sizeConfig[props.size].fontSize;
+});
+
 const iconTextSpacingStyle = computed(() => ({
-  width: 4,
+  width: '4px',
 }));
 
 function onTap(event: any) {
@@ -158,11 +166,10 @@ function onTap(event: any) {
   emit('click', event);
 }
 
-function onTouchStart(event: any) {
+function onTouchStart() {
   if (!props.loading && !props.disabled) {
     isActive.value = true;
   }
-  emit('touchstart', event);
 }
 
 function onTouchEnd() {
@@ -199,7 +206,7 @@ function onTouchEnd() {
           <Icon
             v-if="icon"
             :name="icon"
-            :size="textStyle.fontSize"
+            :size="iconSize"
             :color="textColor"
           />
         </slot>
@@ -218,7 +225,7 @@ function onTouchEnd() {
           <Icon
             v-if="icon"
             :name="icon"
-            :size="textStyle.fontSize"
+            :size="iconSize"
             :color="textColor"
           />
         </slot>
