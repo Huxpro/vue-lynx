@@ -12,8 +12,8 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
   });
 
   it('should not render when show is false (lazy render)', () => {
@@ -25,8 +25,8 @@ describe('Overlay', () => {
       }),
     );
     // With lazyRender=true (default), overlay should not render until first shown
-    const viewEl = container.querySelector('view');
-    expect(viewEl).toBeNull();
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeNull();
   });
 
   it('should change z-index when using z-index prop', () => {
@@ -37,10 +37,23 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
-    const style = viewEl!.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('99');
+  });
+
+  it('should allow to custom class name with class-name prop', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Overlay, { show: true, className: 'foo' });
+        },
+      }),
+    );
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    expect(overlay!.classList.contains('foo')).toBe(true);
   });
 
   it('should allow to custom style with custom-style prop', () => {
@@ -54,9 +67,9 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
-    const style = viewEl!.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('red');
   });
 
@@ -68,9 +81,9 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
-    const style = viewEl!.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('1s');
   });
 
@@ -104,8 +117,8 @@ describe('Overlay', () => {
     });
 
     const { container } = render(Comp);
-    const viewEl = container.querySelector('view')!;
-    fireEvent.tap(viewEl);
+    const overlay = container.querySelector('.van-overlay')!;
+    fireEvent.tap(overlay);
     await nextTick();
     await nextTick();
     expect(clicks.length).toBe(1);
@@ -120,9 +133,9 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
+    const overlay = container.querySelector('.van-overlay');
     // Should render the view even though show is false
-    expect(viewEl).not.toBeNull();
+    expect(overlay).toBeTruthy();
   });
 
   it('should remain rendered after being shown once (lazy render keeps element)', async () => {
@@ -135,7 +148,7 @@ describe('Overlay', () => {
 
     const { container } = render(Comp);
     // Initially shown
-    expect(container.querySelector('view')).not.toBeNull();
+    expect(container.querySelector('.van-overlay')).toBeTruthy();
 
     // Hide it
     show.value = false;
@@ -143,30 +156,27 @@ describe('Overlay', () => {
     await nextTick();
 
     // Should still be in DOM (lazy render keeps it, just hidden via opacity)
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
-    const style = viewEl!.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('opacity');
   });
 
-  it('should apply opacity 0 when show is false', async () => {
+  it('should apply opacity 0 when show is false', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Overlay, { show: true, lazyRender: false });
+          return h(Overlay, { show: false, lazyRender: false });
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
-    // When lazyRender is false and show is true, the view should exist
-    // The opacity check verifies our fade mechanism is set up
-    const style = viewEl!.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('opacity');
   });
 
   it('should accept teleport prop for API compatibility', () => {
-    // In Lynx, teleport doesn't work but should be accepted without error
     const { container } = render(
       defineComponent({
         render() {
@@ -174,7 +184,32 @@ describe('Overlay', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view');
-    expect(viewEl).not.toBeNull();
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+  });
+
+  it('should accept lockScroll prop for API compatibility', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Overlay, { show: true, lockScroll: false });
+        },
+      }),
+    );
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+  });
+
+  it('should apply van-overlay class from BEM', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Overlay, { show: true });
+        },
+      }),
+    );
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    expect(overlay!.classList.contains('van-overlay')).toBe(true);
   });
 });
