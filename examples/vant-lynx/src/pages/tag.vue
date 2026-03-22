@@ -1,84 +1,114 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
+import Cell from '../components/Cell/index.vue';
+import CellGroup from '../components/CellGroup/index.vue';
 import Tag from '../components/Tag/index.vue';
-const showTag = ref(true);
-function onClose() { showTag.value = false; }
+
+const show = ref(true);
+function onClose() {
+  show.value = false;
+}
 </script>
 
 <template>
-  <DemoPage title="Tag">
-    
-
+  <DemoPage title="Tag 标签">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Type</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
-        <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Tag type="primary"><text :style="{ fontSize: 10, color: '#fff' }">Primary</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Tag type="success"><text :style="{ fontSize: 10, color: '#fff' }">Success</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Tag type="danger"><text :style="{ fontSize: 10, color: '#fff' }">Danger</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8, marginBottom: 8 }">
-          <Tag type="warning"><text :style="{ fontSize: 10, color: '#fff' }">Warning</text></Tag>
-        </view>
-      </view>
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">基础用法</text>
+      <CellGroup>
+        <Cell title="primary 类型">
+          <template #value>
+            <Tag type="primary">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="success 类型">
+          <template #value>
+            <Tag type="success">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="danger 类型">
+          <template #value>
+            <Tag type="danger">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="warning 类型">
+          <template #value>
+            <Tag type="warning">标签</Tag>
+          </template>
+        </Cell>
+      </CellGroup>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Plain</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary" plain><text :style="{ fontSize: 10, color: '#1989fa' }">Primary</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag type="success" plain><text :style="{ fontSize: 10, color: '#07c160' }">Success</text></Tag>
-        </view>
-      </view>
+      <!-- 样式风格 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">样式风格</text>
+      <CellGroup>
+        <Cell title="空心样式">
+          <template #value>
+            <Tag type="primary" plain>标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="圆角样式">
+          <template #value>
+            <Tag type="primary" round>标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="标记样式">
+          <template #value>
+            <Tag type="primary" mark>标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="可关闭标签">
+          <template #value>
+            <Tag
+              v-if="show"
+              type="primary"
+              closeable
+              size="medium"
+              @close="onClose"
+            >标签</Tag>
+          </template>
+        </Cell>
+      </CellGroup>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Round & Mark</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary" round><text :style="{ fontSize: 10, color: '#fff' }">Round</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary" mark><text :style="{ fontSize: 10, color: '#fff' }">Mark</text></Tag>
-        </view>
-      </view>
+      <!-- 标签大小 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">标签大小</text>
+      <CellGroup>
+        <Cell title="小号标签">
+          <template #value>
+            <Tag type="primary">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="中号标签">
+          <template #value>
+            <Tag type="primary" size="medium">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="大号标签">
+          <template #value>
+            <Tag type="primary" size="large">标签</Tag>
+          </template>
+        </Cell>
+      </CellGroup>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 }">
-        <view :style="{ marginRight: 8 }">
-          <Tag color="#7232dd"><text :style="{ fontSize: 12, color: '#fff' }">Custom</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag color="#ffe1e1" textColor="#ad0000"><text :style="{ fontSize: 12, color: '#ad0000' }">Custom</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag color="#7232dd" plain><text :style="{ fontSize: 12, color: '#7232dd' }">Custom</text></Tag>
-        </view>
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Closeable</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 16 }">
-        <Tag v-if="showTag" type="primary" closeable @close="onClose">
-          <text :style="{ fontSize: 12, color: '#fff' }">Closeable</text>
-        </Tag>
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Size</text>
-      <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }">
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary"><text :style="{ fontSize: 12, color: '#fff' }">Default</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary" size="medium"><text :style="{ fontSize: 12, color: '#fff' }">Medium</text></Tag>
-        </view>
-        <view :style="{ marginRight: 8 }">
-          <Tag type="primary" size="large"><text :style="{ fontSize: 14, color: '#fff' }">Large</text></Tag>
-        </view>
-      </view>
+      <!-- 自定义颜色 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">自定义颜色</text>
+      <CellGroup>
+        <Cell title="背景颜色">
+          <template #value>
+            <Tag color="#7232dd">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="文字颜色">
+          <template #value>
+            <Tag color="#ffe1e1" text-color="#ad0000">标签</Tag>
+          </template>
+        </Cell>
+        <Cell title="空心颜色">
+          <template #value>
+            <Tag color="#7232dd" plain>标签</Tag>
+          </template>
+        </Cell>
+      </CellGroup>
     </view>
   </DemoPage>
 </template>
