@@ -1,118 +1,134 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
+import Cell from '../components/Cell/index.vue';
+import Field from '../components/Field/index.vue';
 import NumberKeyboard from '../components/NumberKeyboard/index.vue';
-import PasswordInput from '../components/PasswordInput/index.vue';
-const showKeyboard = ref(true);
-const showKeyboardWithTitle = ref(false);
-const showKeyboardExtra = ref(false);
 
-const inputValue = ref('');
-const inputValueTitle = ref('');
-const inputValueExtra = ref('');
+const keyboard = ref('');
+const bindValue = ref('');
 
-function onInput(key: string) {
-  if (inputValue.value.length < 6) {
-    inputValue.value += key;
-  }
+function onInput(value: string) {
+  // In real app, would use showToast
 }
 
 function onDelete() {
-  inputValue.value = inputValue.value.slice(0, -1);
-}
-
-function onInputTitle(key: string) {
-  if (inputValueTitle.value.length < 6) {
-    inputValueTitle.value += key;
-  }
-}
-
-function onDeleteTitle() {
-  inputValueTitle.value = inputValueTitle.value.slice(0, -1);
-}
-
-function onInputExtra(key: string) {
-  if (inputValueExtra.value.length < 10) {
-    inputValueExtra.value += key;
-  }
-}
-
-function onDeleteExtra() {
-  inputValueExtra.value = inputValueExtra.value.slice(0, -1);
+  // In real app, would use showToast
 }
 </script>
 
 <template>
   <DemoPage title="NumberKeyboard">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Default keyboard -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Default Keyboard</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 8 }">
-        <PasswordInput
-          :value="inputValue"
-          :focused="showKeyboard"
-          @focus="() => { showKeyboard = true; }"
-        />
-      </view>
-      <NumberKeyboard
-        :show="showKeyboard"
-        close-button-text="Done"
-        @input="onInput"
-        @delete="onDelete"
-        @close="() => { showKeyboard = false; }"
+    <view :style="{ paddingBottom: '300px' }">
+      <!-- Trigger cells -->
+      <Cell
+        is-link
+        title="Show Default Keyboard"
+        @tap="keyboard = 'default'"
+      />
+      <Cell
+        is-link
+        title="Show Keyboard With Sidebar"
+        @tap="keyboard = 'custom'"
+      />
+      <Cell
+        is-link
+        title="Show IdNumber Keyboard"
+        @tap="keyboard = 'extraKey'"
+      />
+      <Cell
+        is-link
+        title="Show Keyboard With Title"
+        @tap="keyboard = 'title'"
+      />
+      <Cell
+        is-link
+        title="Show Keyboard With Multiple ExtraKey"
+        @tap="keyboard = 'multiExtraKey'"
+      />
+      <Cell
+        is-link
+        title="Show Keyboard With Random Key Order"
+        @tap="keyboard = 'randomKeyOrder'"
       />
 
-      <!-- Keyboard with title -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">With Title</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 8 }">
-        <view
-          :style="{
-            borderBottomWidth: 1,
-            borderBottomStyle: 'solid',
-            borderBottomColor: showKeyboardWithTitle ? '#1989fa' : '#ebedf0',
-            paddingBottom: 8,
-          }"
-          @tap="() => { showKeyboardWithTitle = true; }"
-        >
-          <text :style="{ fontSize: 16, color: inputValueTitle ? '#323233' : '#c8c9cc' }">
-            {{ inputValueTitle || 'Tap to enter' }}
-          </text>
-        </view>
-      </view>
-      <NumberKeyboard
-        :show="showKeyboardWithTitle"
-        title="Enter Amount"
-        close-button-text="Done"
-        @input="onInputTitle"
-        @delete="onDeleteTitle"
-        @close="() => { showKeyboardWithTitle = false; }"
-      />
-
-      <!-- Keyboard with extra key -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 16, marginBottom: 12 }">With Extra Key</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16, marginBottom: 8 }">
-        <view
-          :style="{
-            borderBottomWidth: 1,
-            borderBottomStyle: 'solid',
-            borderBottomColor: showKeyboardExtra ? '#1989fa' : '#ebedf0',
-            paddingBottom: 8,
-          }"
-          @tap="() => { showKeyboardExtra = true; }"
-        >
-          <text :style="{ fontSize: 16, color: inputValueExtra ? '#323233' : '#c8c9cc' }">
-            {{ inputValueExtra || 'Tap to enter decimal' }}
-          </text>
-        </view>
-      </view>
-      <NumberKeyboard
-        :show="showKeyboardExtra"
-        extra-key="."
-        close-button-text="Done"
-        @input="onInputExtra"
-        @delete="onDeleteExtra"
-        @close="() => { showKeyboardExtra = false; }"
+      <!-- Bind Value -->
+      <Field
+        v-model="bindValue"
+        readonly
+        clickable
+        label="Bind Value"
+        placeholder="Click To Input"
+        @tap="keyboard = 'bindValue'"
       />
     </view>
+
+    <!-- Default Keyboard -->
+    <NumberKeyboard
+      :show="keyboard === 'default'"
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- Keyboard With Sidebar (custom theme) -->
+    <NumberKeyboard
+      :show="keyboard === 'custom'"
+      close-button-text="Close"
+      theme="custom"
+      extra-key="."
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- IdNumber Keyboard -->
+    <NumberKeyboard
+      :show="keyboard === 'extraKey'"
+      close-button-text="Close"
+      extra-key="X"
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- Keyboard With Title -->
+    <NumberKeyboard
+      :show="keyboard === 'title'"
+      close-button-text="Close"
+      title="Keyboard Title"
+      extra-key="."
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- Multiple ExtraKey -->
+    <NumberKeyboard
+      :show="keyboard === 'multiExtraKey'"
+      close-button-text="Close"
+      theme="custom"
+      :extra-key="['00', '.']"
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- Random Key Order -->
+    <NumberKeyboard
+      :show="keyboard === 'randomKeyOrder'"
+      random-key-order
+      @blur="keyboard = ''"
+      @input="onInput"
+      @delete="onDelete"
+    />
+
+    <!-- Bind Value -->
+    <NumberKeyboard
+      v-model="bindValue"
+      :show="keyboard === 'bindValue'"
+      :maxlength="6"
+      @blur="keyboard = ''"
+    />
   </DemoPage>
 </template>

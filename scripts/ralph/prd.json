@@ -1,5 +1,5 @@
 {
-  "productName": "Vant Lynx \u2014 100% Feature Parity",
+  "productName": "Vant Lynx — 100% Feature Parity",
   "branchName": "feat/vant-lynx-v2",
   "description": "Achieve 100% feature parity between vue-lynx Vant components and the upstream Vant Web library across all 93 components. Each component must match Vant in CSS variables, transitions, events, props, file structure, demo pages, visual appearance, and unit tests.",
   "context": {
@@ -13,11 +13,11 @@
     "testCommand": "cd examples/vant-lynx && pnpm test -- --reporter=verbose",
     "rules": [
       "Read AGENTS.md and VANT_ACCEPTANCE.md before starting",
-      "ONE component per iteration \u2014 do not batch",
-      "Fetch and READ Vant source code before implementing \u2014 do not guess",
+      "ONE component per iteration — do not batch",
+      "Fetch and READ Vant source code before implementing — do not guess",
       "ALL Vant props must exist (or be documented as N/A with reason)",
       "ALL Vant events with correct timing (opened/closed AFTER animation)",
-      "ALL CSS variables via --van-* in index.less \u2014 no hardcoded values",
+      "ALL CSS variables via --van-* in index.less — no hardcoded values",
       "ALL slots must be supported",
       "Vue <Transition> and CSS animations matching Vant exactly",
       "Composables (useLockScroll, useLazyRender, useGlobalZIndex) extracted where Vant has them",
@@ -26,13 +26,13 @@
     ],
     "universalAcceptanceCriteria": [
       "1. CSS & Animations: ALL --van-{component}-* CSS variables defined in index.less; <Transition> wrappers with same name/duration/easing as Vant; no hardcoded colors or sizes",
-      "2. Events: ALL events Vant emits \u2014 same name, same payload shape, same timing; opened/closed fire AFTER animation via Transition hooks; verify event count matches Vant source emits definition",
-      "3. Props & API: ALL props from Vant source \u2014 same name, type, default; defineExpose matches Vant useExpose; v-model support (update:modelValue / update:show) matches exactly",
+      "2. Events: ALL events Vant emits — same name, same payload shape, same timing; opened/closed fire AFTER animation via Transition hooks; verify event count matches Vant source emits definition",
+      "3. Props & API: ALL props from Vant source — same name, type, default; defineExpose matches Vant useExpose; v-model support (update:modelValue / update:show) matches exactly",
       "4. File Structure: Source file count (composables, utils, sub-components) matches Vant {component}/ directory; shared composables extracted to match Vant organization",
       "5. Demo Page: Section count in pages/{component}.vue matches Vant docs demo; each demo section title matches Vant (Chinese where Vant uses Chinese); interactive demos functional",
       "6. Visual Verification: Use Web Preview (dev-browser) to screenshot our demo page; compare with Vant web demo at vant-ui.github.io/vant/#/en-US/{component}; layout, spacing, colors, typography must match",
       "7. Unit Tests: Port ALL test cases from vant/src/{component}/test/; rewrite using vue-lynx-testing-library (not @vue/test-utils); test count must match or exceed Vant; run and verify all pass",
-      "8. Limitation Docs: Features that absolutely cannot work in Lynx documented in components/{Component}/README.md under \u4e0e Vant \u7684\u5dee\u5f02 section"
+      "8. Limitation Docs: Features that absolutely cannot work in Lynx documented in components/{Component}/README.md under 与 Vant 的差异 section"
     ]
   },
   "userStories": [
@@ -1530,7 +1530,7 @@
         "Docs: Lynx limitations in components/NumberKeyboard/README.md",
         "Commit: feat(number-keyboard): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-password-input",

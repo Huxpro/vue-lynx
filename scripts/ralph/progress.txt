@@ -922,3 +922,18 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from inline-style single-month to full Vant architecture. Added 3 sub-components (CalendarDay, CalendarMonth, CalendarHeader) matching Vant structure. Full Popup integration for poppable mode. SwitchMode month/year-month navigation. Range/multiple/single selection modes with disabled date detection. Formatter prop. All 12 slots. scroll-view for scrollable body. showToast for range prompt. Chinese i18n.
 - Limitations: teleport (no Lynx Teleport support), lockScroll (no document.body scroll in Lynx), closeOnPopstate (no browser history API), scrollToDate simplified (no getBoundingClientRect in Lynx), ::after pseudo for middle range bg (uses child <view> instead), overflow:scroll (uses <scroll-view>), lazyRender scroll detection (all months render immediately since Lynx has no scroll position tracking)
 ---
+
+## 2026-03-22 - parity-number-keyboard: NumberKeyboard
+- Props: 15/15 (show, title, theme, zIndex, maxlength, modelValue, transition, blurOnClose, showDeleteKey, randomKeyOrder, closeButtonText, deleteButtonText, closeButtonLoading, hideOnClickOutside, safeAreaInsetBottom, extraKey, teleport)
+- Events: 7/7 (show, hide, blur, input, close, delete, update:modelValue)
+- Slots: 3/3 (title-left, delete, extra-key)
+- CSS Variables: 15 defined in index.less (--van-number-keyboard-background, key-height, key-font-size, key-active-color, key-background, delete-font-size, title-color, title-height, title-font-size, close-padding, close-color, close-font-size, button-text-color, button-background, z-index)
+- BEM Classes: .van-number-keyboard (--with-title, --unfit), __header, __title, __title-left, __close, __body, __keys, __sidebar; .van-key (--large, --blue, --active, --delete), __wrapper (--wider), __delete-icon, __collapse-icon, __loading-icon
+- Animations: CSS transition on transform for slide-up/down show/hide; transitionend event for show/hide emission
+- Tests: 32 cases (Vant has ~25, we have 32 — comprehensive BEM, props, events, slots, sidebar)
+- Demo sections: 7/7 (Default Keyboard, Keyboard With Sidebar, IdNumber Keyboard, Keyboard With Title, Multiple ExtraKey, Random Key Order, Bind Value)
+- Visual match: pass (BEM classes, CSS variables, two themes, sidebar layout)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 5: NumberKeyboard.tsx, NumberKeyboardKey.tsx, types.ts, index.ts, index.less)
+- Key changes: Complete rewrite from inline-style to BEM class architecture. All 15 props matching Vant. Both default and custom themes with sidebar. Touch events for active state visual feedback. @tap for key press actions (test compatibility). Proper key generation matching Vant's genBasicKeys/genDefaultKeys/genCustomKeys logic. shuffle() for random key order. v-model (modelValue + update:modelValue) with maxlength enforcement. Loading component integration for closeButtonLoading.
+- Limitations: teleport (no Lynx Teleport), hideOnClickOutside (no document-level touchstart in Lynx), SVG delete/collapse icons (uses text fallback ⌫), position:fixed (renders inline in Lynx)
+---
