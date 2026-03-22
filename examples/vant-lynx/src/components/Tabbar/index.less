@@ -3,3 +3,33 @@
   --van-tabbar-z-index: 1;
   --van-tabbar-background: var(--van-background-2, #fff);
 }
+
+.van-tabbar {
+  z-index: var(--van-tabbar-z-index);
+  display: flex;
+  flex-direction: row;
+  box-sizing: content-box;
+  width: 100%;
+  height: var(--van-tabbar-height);
+  background: var(--van-tabbar-background);
+
+  &--fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+  }
+
+  &__placeholder {
+    box-sizing: content-box;
+    height: var(--van-tabbar-height);
+  }
+}
+
+.van-hairline--top-bottom {
+  border-top: 0.5px solid #ebedf0;
+  border-bottom: 0.5px solid #ebedf0;
+}
+
+.van-safe-area-bottom {
+  padding-bottom: 34px;
+}
