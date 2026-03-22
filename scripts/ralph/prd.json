@@ -1222,7 +1222,7 @@
         "Docs: Lynx limitations in components/Checkbox/README.md",
         "Commit: feat(checkbox): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-checkbox-group",
@@ -1244,7 +1244,7 @@
         "Docs: Lynx limitations in components/CheckboxGroup/README.md",
         "Commit: feat(checkbox-group): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-radio",

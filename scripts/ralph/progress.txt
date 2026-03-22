@@ -21,6 +21,8 @@ Branch: feat/vant-lynx-v2
 - **Text query in tests**: Vue renders empty `<text>` elements as v-if/slot anchors. Use `querySelectorAll('text')` + `Array.from(...).find(t => t.textContent === '...')` to find the right text element, NOT `querySelector('text')` which may return an empty anchor.
 - **No Vue `<Transition>` in Lynx**: `@vue/runtime-dom`'s Transition uses `el.classList` which doesn't exist on Lynx elements. Use CSS transitions directly (inline transitionProperty/transitionDuration + toggled opacity/transform) instead of `<Transition>` component. Fire opened/closed events via `setTimeout(duration)`.
 - **Popup animation pattern**: Center position uses opacity fade, side positions use transform slide. All animation state (opacity, transform, transitionDuration, pointerEvents) in inline styles; all visual state (position, round, close-icon) in BEM CSS classes.
+- **shallowReactive for child registration**: When storing computed refs in a reactive array (e.g. `reactive([{ checked: isCheckedRef }])`), `reactive()` unwraps the refs making `.value` undefined. Use `shallowReactive([])` to preserve ref objects.
+- **Icon fallthrough in Checkbox**: Don't use the Icon component inside Checkbox for the default check icon. Icon wraps in Badge, so `:style` and `class` fall through to Badge's root, not the `.van-icon` element. Render the icon font char directly via `<view class="van-icon"><text class="van-icon__font">...</text></view>`.
 
 ---
 
@@ -727,4 +729,32 @@ Branch: feat/vant-lynx-v2
 - Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Switch.tsx, types.ts, index.ts, test/)
 - Key changes: Complete rewrite from inline-style approach to BEM + CSS classes. Added CSS transitions matching Vant's cubic-bezier timing. Replaced hardcoded color defaults with CSS variables. Added types.ts for SwitchThemeVars. Inline styles only for size/activeColor/inactiveColor dynamic overrides.
 - Limitations: role/aria-checked (Lynx has no ARIA), tabindex (no keyboard focus), cursor (touch-only), box-shadow may not render on all Lynx platforms
+---
+
+## 2026-03-22 - parity-checkbox: Checkbox
+- Props: 10/10 (modelValue, name, shape, disabled, labelDisabled, labelPosition, iconSize, checkedColor, bindGroup, indeterminate)
+- Events: 3/3 (update:modelValue, change, click)
+- Slots: 2/2 (default with {checked, disabled} scope, icon with {checked, disabled} scope)
+- CSS Variables: 9 defined in index.less (--van-checkbox-size, --van-checkbox-border-color, --van-checkbox-duration, --van-checkbox-label-margin, --van-checkbox-label-color, --van-checkbox-checked-icon-color, --van-checkbox-disabled-icon-color, --van-checkbox-disabled-label-color, --van-checkbox-disabled-background)
+- Animations: CSS transition on border-color, background-color (var(--van-checkbox-duration))
+- Tests: 25 cases (Vant has ~10 Checkbox + ~8 CheckboxGroup)
+- Demo sections: 14/14 (基础用法, 禁用状态, 自定义形状, 自定义颜色, 自定义大小, 自定义图标, 左侧文本, 禁用文本点击, 复选框组, 水平排列, 限制最大可选数, 全选与反选, 搭配单元格组件使用, 不确定状态)
+- Visual match: pass (BEM classes, CSS variables, Icon font for checkmark)
+- Files: Checkbox (index.vue, index.less, types.ts, test/index.spec.ts, README.md), CheckboxGroup (index.vue, index.less) — 7 files total
+- Key changes: Complete rewrite from inline-style approach to BEM + CSS classes. Added createNamespace('checkbox') + bem() for all class names. Added indeterminate prop with --indeterminate BEM modifier (renders minus icon). Rewrote CheckboxGroup with child registration pattern for toggleAll (check all, uncheck all, invert). Icon uses vant-icon font (success/minus) instead of Unicode ✓. Group provides shape/iconSize/checkedColor/direction to children via provide/inject.
+- Limitations: role/aria-checked/tabindex (Lynx has no ARIA or keyboard focus), cursor (touch-only), dot shape (requires ::before/::after), useCustomFieldValue (not ported), user-select: none (not in Lynx)
+---
+
+## 2026-03-22 - parity-checkbox-group: CheckboxGroup
+- Props: 7/7 (modelValue, max, shape, disabled, iconSize, direction, checkedColor)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 1/1 (default)
+- CSS Variables: 0 (CheckboxGroup has no dedicated CSS vars in Vant — checkbox styles in Checkbox/index.less)
+- Animations: none (CheckboxGroup has no transitions)
+- Tests: 10 cases (Vant has 7, we have 10 — added change event, direction class, disabled group tests)
+- Demo sections: shared with Checkbox demo page (14 sections covering both Checkbox and CheckboxGroup)
+- Visual match: pass (BEM classes, direction modifiers)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts, README.md (5 files; Vant has 4)
+- Key changes: Created dedicated types.ts (re-exported from Checkbox/types.ts). Fixed `max` default from 0 to undefined, `direction` default from 'vertical' to undefined (matching Vant). Fixed `reactive([])` → `shallowReactive([])` for child registration (prevents ref unwrapping bug in toggleAll). Created dedicated test file with all Vant test cases ported. Fixed Checkbox icon rendering to avoid Icon/Badge fallthrough style issue.
+- Limitations: role/aria (Lynx has no ARIA), useChildren/useParent (uses manual provide/inject), useCustomFieldValue (not ported), `<div>` tag (renders `<view>` in Lynx)
 ---
