@@ -19,6 +19,18 @@ describe('NavBar', () => {
     expect(hasTitle).toBe(true);
   });
 
+  it('should render van-nav-bar class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title' });
+        },
+      }),
+    );
+    const el = container.querySelector('.van-nav-bar');
+    expect(el).not.toBeNull();
+  });
+
   it('should render left text', () => {
     const { container } = render(
       defineComponent({
@@ -57,12 +69,60 @@ describe('NavBar', () => {
         },
       }),
     );
-    // Icon component renders vant-icon font char '\ue668' for arrow-left
+    // Icon renders vant-icon font char '\ue668' for arrow-left
     const textEls = container.querySelectorAll('text');
     const hasArrow = Array.from(textEls).some(
       (t) => t.textContent === '\ue668',
     );
     expect(hasArrow).toBe(true);
+  });
+
+  it('should render left area with van-nav-bar__left class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title', leftArrow: true });
+        },
+      }),
+    );
+    const leftEl = container.querySelector('.van-nav-bar__left');
+    expect(leftEl).not.toBeNull();
+  });
+
+  it('should render right area with van-nav-bar__right class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title', rightText: 'Button' });
+        },
+      }),
+    );
+    const rightEl = container.querySelector('.van-nav-bar__right');
+    expect(rightEl).not.toBeNull();
+  });
+
+  it('should render content area with van-nav-bar__content class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title' });
+        },
+      }),
+    );
+    const contentEl = container.querySelector('.van-nav-bar__content');
+    expect(contentEl).not.toBeNull();
+  });
+
+  it('should render text elements with van-nav-bar__text class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title', leftText: 'Back', rightText: 'Btn' });
+        },
+      }),
+    );
+    const textEls = container.querySelectorAll('.van-nav-bar__text');
+    expect(textEls.length).toBe(2);
   });
 
   it('should emit click-left event', async () => {
@@ -73,22 +133,12 @@ describe('NavBar', () => {
           return h(NavBar, {
             title: 'Title',
             leftArrow: true,
-            'onClickLeft': (e: any) => clicks.push(e),
+            onClickLeft: (e: any) => clicks.push(e),
           });
         },
       }),
     );
-    // Left area is the first nested view with tap handler
-    const views = container.querySelectorAll('view');
-    // Find the left area view (first child of navbar with left content)
-    let leftView: Element | null = null;
-    for (const v of Array.from(views)) {
-      const style = v.getAttribute('style') || '';
-      if (style.includes('padding-left: 16px') && style.includes('flex-direction: row')) {
-        leftView = v;
-        break;
-      }
-    }
+    const leftView = container.querySelector('.van-nav-bar__left');
     expect(leftView).not.toBeNull();
     fireEvent.tap(leftView!);
     await nextTick();
@@ -103,20 +153,12 @@ describe('NavBar', () => {
           return h(NavBar, {
             title: 'Title',
             rightText: 'Button',
-            'onClickRight': (e: any) => clicks.push(e),
+            onClickRight: (e: any) => clicks.push(e),
           });
         },
       }),
     );
-    // Right area is the last child view with justify-content: flex-end
-    const views = container.querySelectorAll('view');
-    let rightView: Element | null = null;
-    for (const v of Array.from(views)) {
-      const style = v.getAttribute('style') || '';
-      if (style.includes('padding-left: 16px') && style.includes('flex-direction: row')) {
-        rightView = v;
-      }
-    }
+    const rightView = container.querySelector('.van-nav-bar__right');
     expect(rightView).not.toBeNull();
     fireEvent.tap(rightView!);
     await nextTick();
@@ -132,21 +174,14 @@ describe('NavBar', () => {
             title: 'Title',
             leftArrow: true,
             leftDisabled: true,
-            'onClickLeft': (e: any) => clicks.push(e),
+            onClickLeft: (e: any) => clicks.push(e),
           });
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    let leftView: Element | null = null;
-    for (const v of Array.from(views)) {
-      const style = v.getAttribute('style') || '';
-      if (style.includes('opacity: 0.6')) {
-        leftView = v;
-        break;
-      }
-    }
+    const leftView = container.querySelector('.van-nav-bar__left');
     expect(leftView).not.toBeNull();
+    expect(leftView!.className).toContain('van-nav-bar__left--disabled');
     fireEvent.tap(leftView!);
     await nextTick();
     expect(clicks.length).toBe(0);
@@ -161,21 +196,14 @@ describe('NavBar', () => {
             title: 'Title',
             rightText: 'Button',
             rightDisabled: true,
-            'onClickRight': (e: any) => clicks.push(e),
+            onClickRight: (e: any) => clicks.push(e),
           });
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    let rightView: Element | null = null;
-    for (const v of Array.from(views)) {
-      const style = v.getAttribute('style') || '';
-      if (style.includes('opacity: 0.6')) {
-        rightView = v;
-        break;
-      }
-    }
+    const rightView = container.querySelector('.van-nav-bar__right');
     expect(rightView).not.toBeNull();
+    expect(rightView!.className).toContain('van-nav-bar__right--disabled');
     fireEvent.tap(rightView!);
     await nextTick();
     expect(clicks.length).toBe(0);
@@ -189,9 +217,8 @@ describe('NavBar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('border-bottom-width: 0.5px');
+    const rootEl = container.querySelector('.van-nav-bar');
+    expect(rootEl!.className).toContain('van-hairline--bottom');
   });
 
   it('should hide border when border is false', () => {
@@ -202,12 +229,11 @@ describe('NavBar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).not.toContain('border-bottom-width');
+    const rootEl = container.querySelector('.van-nav-bar');
+    expect(rootEl!.className).not.toContain('van-hairline--bottom');
   });
 
-  it('should render fixed style', () => {
+  it('should render fixed class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -215,9 +241,8 @@ describe('NavBar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('position: fixed');
+    const rootEl = container.querySelector('.van-nav-bar');
+    expect(rootEl!.className).toContain('van-nav-bar--fixed');
   });
 
   it('should render placeholder when fixed and placeholder', () => {
@@ -228,11 +253,10 @@ describe('NavBar', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // First view is the placeholder wrapper
-    const placeholderView = views[0];
-    const style = placeholderView!.getAttribute('style') || '';
-    expect(style).toContain('height: 46px');
+    const placeholder = container.querySelector('.van-nav-bar__placeholder');
+    expect(placeholder).not.toBeNull();
+    const navbar = container.querySelector('.van-nav-bar--fixed');
+    expect(navbar).not.toBeNull();
   });
 
   it('should render custom zIndex', () => {
@@ -243,8 +267,8 @@ describe('NavBar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
+    const rootEl = container.querySelector('.van-nav-bar');
+    const style = rootEl!.getAttribute('style') || '';
     expect(style).toContain('z-index: 100');
   });
 
@@ -307,14 +331,8 @@ describe('NavBar', () => {
         },
       }),
     );
-    // Only the root view and the title wrapper view should exist
-    const views = container.querySelectorAll('view');
-    // Should not have any view with left padding style that contains arrow/text
-    const leftViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-left: 16px') && style.includes('flex-direction: row');
-    });
-    expect(leftViews.length).toBe(0);
+    const leftEl = container.querySelector('.van-nav-bar__left');
+    expect(leftEl).toBeNull();
   });
 
   it('should not render right area when no right content', () => {
@@ -325,17 +343,13 @@ describe('NavBar', () => {
         },
       }),
     );
-    // Left area should exist but not right area
-    const views = container.querySelectorAll('view');
-    const sideViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-left: 16px') && style.includes('flex-direction: row');
-    });
-    // Only left area
-    expect(sideViews.length).toBe(1);
+    const leftEl = container.querySelector('.van-nav-bar__left');
+    expect(leftEl).not.toBeNull();
+    const rightEl = container.querySelector('.van-nav-bar__right');
+    expect(rightEl).toBeNull();
   });
 
-  it('should apply safe area inset top padding', () => {
+  it('should apply safe-area-top class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -343,28 +357,31 @@ describe('NavBar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('padding-top: 44px');
+    const rootEl = container.querySelector('.van-nav-bar');
+    expect(rootEl!.className).toContain('van-safe-area-top');
   });
 
-  it('should render disabled left with reduced opacity', () => {
+  it('should render arrow with van-nav-bar__arrow class', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(NavBar, {
-            title: 'Title',
-            leftArrow: true,
-            leftDisabled: true,
-          });
+          return h(NavBar, { title: 'Title', leftArrow: true });
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const disabledViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('opacity: 0.6');
-    });
-    expect(disabledViews.length).toBeGreaterThan(0);
+    const arrowEl = container.querySelector('.van-nav-bar__arrow');
+    expect(arrowEl).not.toBeNull();
+  });
+
+  it('should render title with van-nav-bar__title class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(NavBar, { title: 'Title' });
+        },
+      }),
+    );
+    const titleEl = container.querySelector('.van-nav-bar__title');
+    expect(titleEl).not.toBeNull();
   });
 });
