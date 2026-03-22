@@ -1,52 +1,27 @@
 <!--
-  Vant Feature Parity Report:
-  Source: https://github.com/youzan/vant/blob/main/packages/vant/src/slider/Slider.tsx
-
-  Props (12/13 supported):
-    - modelValue: number | [number, number]  [YES] current value (supports range)
-    - min: number                            [YES] minimum value (default 0)
-    - max: number                            [YES] maximum value (default 100)
-    - step: number                           [YES] step size (default 1)
-    - barHeight: number | string             [YES] track height
-    - buttonSize: number | string            [YES] thumb button size
-    - activeColor: string                    [YES] active track color
-    - inactiveColor: string                  [YES] inactive track color
-    - disabled: boolean                      [YES] disable slider
-    - readonly: boolean                      [YES] readonly (no interaction)
-    - vertical: boolean                      [YES] vertical layout
-    - range: boolean                         [YES] dual-thumb range mode
-    - reverse: boolean                       [YES] reverse direction
-
-  Events (4/4 supported):
-    - update:modelValue                      [YES] v-model update
-    - change                                 [YES] value changed after drag end
-    - drag-start                             [YES] drag started
-    - drag-end                               [YES] drag ended
-
-  Slots (3/3 supported):
-    - button                                 [YES] custom thumb button (single mode)
-    - left-button                            [YES] custom left thumb (range mode)
-    - right-button                           [YES] custom right thumb (range mode)
-
-  Lynx Adaptations:
-    - Uses view elements with inline styles
-    - display: 'flex' set explicitly
-    - Touch-based interaction (touchstart/touchmove/touchend)
-    - No CSS transition on drag (drag is immediate)
-    - No CSS class-based styling
-    - percentage-based positioning via left/top style properties
+  Lynx Limitations:
+  - ::before touch area expansion: Lynx has no ::before pseudo-element; touch area uses padding on container
+  - cursor styles: Lynx has no cursor support (grab, not-allowed)
+  - aria attributes: Lynx has no ARIA accessibility support
+  - click event for track tap: uses @tap instead of onClick
+  - passive touchmove: uses @touchmove directly
 -->
 <script setup lang="ts">
-import { ref, computed } from 'vue-lynx';
+import { ref, computed, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit } from '../../utils/format';
+import type { SliderValue } from './types';
+import './index.less';
+
+const [name, bem] = createNamespace('slider');
 
 type NumberRange = [number, number];
-type SliderValue = number | NumberRange;
 
 export interface SliderProps {
   modelValue?: SliderValue;
-  max?: number;
-  min?: number;
-  step?: number;
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
   barHeight?: number | string;
   buttonSize?: number | string;
   activeColor?: string;
@@ -60,13 +35,9 @@ export interface SliderProps {
 
 const props = withDefaults(defineProps<SliderProps>(), {
   modelValue: 0,
-  max: 100,
   min: 0,
+  max: 100,
   step: 1,
-  barHeight: 2,
-  buttonSize: 24,
-  activeColor: '#1989fa',
-  inactiveColor: '#e5e5e5',
   disabled: false,
   readonly: false,
   vertical: false,
@@ -77,42 +48,96 @@ const props = withDefaults(defineProps<SliderProps>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: SliderValue];
   change: [value: SliderValue];
-  'drag-start': [event: any];
-  'drag-end': [event: any];
+  dragStart: [event: any];
+  dragEnd: [event: any];
 }>();
 
-const dragging = ref(false);
+let buttonIndex: 0 | 1 = 0;
+let current: SliderValue = 0;
+let startValue: SliderValue = 0;
+let startPos = 0;
+let trackSizeVal = 0;
+
 const dragStatus = ref<'start' | 'dragging' | ''>('');
-const trackSize = ref(0);
-const startPos = ref(0);
-const startValue = ref<SliderValue>(0);
-const currentValue = ref<SliderValue>(0);
-const buttonIndex = ref<0 | 1>(0);
 
 const scope = computed(() => Number(props.max) - Number(props.min));
-
-const resolvedBarHeight = computed(() => {
-  if (typeof props.barHeight === 'string') return parseInt(props.barHeight, 10) || 2;
-  return props.barHeight;
-});
-
-const resolvedButtonSize = computed(() => {
-  if (typeof props.buttonSize === 'string') return parseInt(props.buttonSize, 10) || 24;
-  return props.buttonSize;
-});
 
 const isRange = (val: unknown): val is NumberRange =>
   props.range && Array.isArray(val);
 
-function format(value: number): number {
-  const min = Number(props.min);
-  const max = Number(props.max);
-  const step = Number(props.step);
+// Wrapper style: only dynamic props (inactiveColor, barHeight)
+const wrapperStyle = computed(() => {
+  const crossAxis = props.vertical ? 'width' : 'height';
+  const style: Record<string, any> = {};
+  if (props.inactiveColor) {
+    style.background = props.inactiveColor;
+  }
+  if (props.barHeight) {
+    style[crossAxis] = addUnit(props.barHeight);
+  }
+  return Object.keys(style).length ? style : undefined;
+});
+
+const calcMainAxis = () => {
+  const { modelValue, min } = props;
+  if (isRange(modelValue)) {
+    return `${((modelValue[1] - modelValue[0]) * 100) / scope.value}%`;
+  }
+  return `${(((modelValue as number) - Number(min)) * 100) / scope.value}%`;
+};
+
+const calcOffset = () => {
+  const { modelValue, min } = props;
+  if (isRange(modelValue)) {
+    return `${((modelValue[0] - Number(min)) * 100) / scope.value}%`;
+  }
+  return '0%';
+};
+
+const barStyle = computed(() => {
+  const mainAxis = props.vertical ? 'height' : 'width';
+  const style: Record<string, any> = {
+    [mainAxis]: calcMainAxis(),
+  };
+
+  if (props.activeColor) {
+    style.background = props.activeColor;
+  }
+
+  if (dragStatus.value) {
+    style.transition = 'none';
+  }
+
+  const getPositionKey = () => {
+    if (props.vertical) {
+      return props.reverse ? 'bottom' : 'top';
+    }
+    return props.reverse ? 'right' : 'left';
+  };
+
+  style[getPositionKey()] = calcOffset();
+  return style;
+});
+
+const buttonSizeStyle = computed(() => {
+  if (!props.buttonSize) return undefined;
+  const size = addUnit(props.buttonSize);
+  return { width: size, height: size };
+});
+
+function addNumber(num1: number, num2: number) {
+  const cardinal = 10 ** 10;
+  return Math.round((num1 + num2) * cardinal) / cardinal;
+}
+
+const format = (value: number) => {
+  const min = +props.min;
+  const max = +props.max;
+  const step = +props.step;
   value = Math.min(max, Math.max(min, value));
   const diff = Math.round((value - min) / step) * step;
-  // Avoid floating-point issues
-  return parseFloat((min + diff).toFixed(10));
-}
+  return addNumber(min, diff);
+};
 
 function isSameValue(a: SliderValue, b: SliderValue): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
@@ -121,13 +146,22 @@ function isSameValue(a: SliderValue, b: SliderValue): boolean {
   return a === b;
 }
 
-function handleRangeValue(value: NumberRange): NumberRange {
+const handleRangeValue = (value: NumberRange): NumberRange => {
   const left = value[0] ?? Number(props.min);
   const right = value[1] ?? Number(props.max);
   return left > right ? [right, left] : [left, right];
-}
+};
 
-function updateValue(value: SliderValue, end?: boolean) {
+const updateStartValue = () => {
+  const cur = props.modelValue;
+  if (isRange(cur)) {
+    startValue = cur.map(format) as NumberRange;
+  } else {
+    startValue = format(cur as number);
+  }
+};
+
+const updateValue = (value: SliderValue, end?: boolean) => {
   if (isRange(value)) {
     value = handleRangeValue(value).map(format) as NumberRange;
   } else {
@@ -138,317 +172,51 @@ function updateValue(value: SliderValue, end?: boolean) {
     emit('update:modelValue', value);
   }
 
-  if (end && !isSameValue(value, startValue.value)) {
+  if (end && !isSameValue(value, startValue)) {
     emit('change', value);
   }
-}
+};
 
-// Calculate the main-axis percentage of the active bar
-const calcMainAxis = computed(() => {
-  const { modelValue, min } = props;
-  if (isRange(modelValue)) {
-    return ((modelValue[1] - modelValue[0]) * 100) / scope.value;
-  }
-  return (((modelValue as number) - Number(min)) * 100) / scope.value;
-});
-
-// Calculate the offset of the active bar
-const calcOffset = computed(() => {
-  const { modelValue, min } = props;
-  if (isRange(modelValue)) {
-    return ((modelValue[0] - Number(min)) * 100) / scope.value;
-  }
-  return 0;
-});
-
-// Position of the left (or single) button
-const buttonLeftPercent = computed(() => {
-  if (isRange(props.modelValue)) {
-    return ((props.modelValue[0] - Number(props.min)) * 100) / scope.value;
-  }
-  return (((props.modelValue as number) - Number(props.min)) * 100) / scope.value;
-});
-
-// Position of the right button (range mode)
-const buttonRightPercent = computed(() => {
-  if (isRange(props.modelValue)) {
-    return ((props.modelValue[1] - Number(props.min)) * 100) / scope.value;
-  }
-  return 0;
-});
-
-const containerStyle = computed(() => {
-  const btnSz = resolvedButtonSize.value;
-  if (props.vertical) {
-    return {
-      display: 'flex',
-      flexDirection: 'column' as const,
-      alignItems: 'center',
-      paddingTop: btnSz / 2,
-      paddingBottom: btnSz / 2,
-      paddingLeft: btnSz / 2,
-      paddingRight: btnSz / 2,
-      opacity: props.disabled ? 0.5 : 1,
-    };
-  }
-  return {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    alignItems: 'center',
-    paddingTop: btnSz / 2,
-    paddingBottom: btnSz / 2,
-    paddingLeft: btnSz / 2,
-    paddingRight: btnSz / 2,
-    opacity: props.disabled ? 0.5 : 1,
-  };
-});
-
-const trackWrapStyle = computed(() => {
-  if (props.vertical) {
-    return {
-      height: '100%',
-      width: resolvedBarHeight.value,
-      position: 'relative' as const,
-    };
-  }
-  return {
-    flex: 1,
-    position: 'relative' as const,
-  };
-});
-
-const trackStyle = computed(() => {
-  const h = resolvedBarHeight.value;
-  if (props.vertical) {
-    return {
-      width: h,
-      height: '100%',
-      backgroundColor: props.inactiveColor,
-      borderRadius: h / 2,
-      position: 'relative' as const,
-    };
-  }
-  return {
-    width: '100%',
-    height: h,
-    backgroundColor: props.inactiveColor,
-    borderRadius: h / 2,
-    position: 'relative' as const,
-  };
-});
-
-const fillStyle = computed(() => {
-  const h = resolvedBarHeight.value;
-  const mainSize = `${calcMainAxis.value}%`;
-  const offsetVal = `${calcOffset.value}%`;
-
-  if (props.vertical) {
-    const posKey = props.reverse ? 'bottom' : 'top';
-    return {
-      width: h,
-      height: mainSize,
-      backgroundColor: props.activeColor,
-      borderRadius: h / 2,
-      position: 'absolute' as const,
-      left: 0,
-      [posKey]: offsetVal,
-    };
-  }
-
-  const posKey = props.reverse ? 'right' : 'left';
-  return {
-    height: h,
-    width: mainSize,
-    backgroundColor: props.activeColor,
-    borderRadius: h / 2,
-    position: 'absolute' as const,
-    top: 0,
-    [posKey]: offsetVal,
-  };
-});
-
-function getButtonWrapStyle(percent: number) {
-  const btnSz = resolvedButtonSize.value;
-  const barH = resolvedBarHeight.value;
-
-  if (props.vertical) {
-    const posKey = props.reverse ? 'bottom' : 'top';
-    return {
-      position: 'absolute' as const,
-      left: -(btnSz - barH) / 2,
-      [posKey]: `${percent}%`,
-      marginTop: -(btnSz / 2),
-      width: btnSz,
-      height: btnSz,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    };
-  }
-
-  const posKey = props.reverse ? 'right' : 'left';
-  return {
-    position: 'absolute' as const,
-    top: -(btnSz - barH) / 2,
-    [posKey]: `${percent}%`,
-    marginLeft: -(btnSz / 2),
-    width: btnSz,
-    height: btnSz,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-}
-
-const singleButtonWrapStyle = computed(() => {
-  if (isRange(props.modelValue)) return {};
-  return getButtonWrapStyle(buttonLeftPercent.value);
-});
-
-const leftButtonWrapStyle = computed(() => {
-  if (!isRange(props.modelValue)) return {};
-  return getButtonWrapStyle(buttonLeftPercent.value);
-});
-
-const rightButtonWrapStyle = computed(() => {
-  if (!isRange(props.modelValue)) return {};
-  return getButtonWrapStyle(buttonRightPercent.value);
-});
-
-const defaultButtonStyle = computed(() => {
-  const btnSz = resolvedButtonSize.value;
-  return {
-    width: btnSz,
-    height: btnSz,
-    borderRadius: btnSz / 2,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderStyle: 'solid' as const,
-    borderColor: (props.disabled || props.readonly) ? '#c8c9cc' : props.activeColor,
-  };
-});
-
-function onTrackLayout(event: any) {
+const onTrackLayout = (event: any) => {
   const size = props.vertical
-    ? (event?.detail?.height ?? event?.currentTarget?.offsetHeight ?? 0)
-    : (event?.detail?.width ?? event?.currentTarget?.offsetWidth ?? 0);
+    ? (event?.detail?.height ?? 0)
+    : (event?.detail?.width ?? 0);
   if (size) {
-    trackSize.value = size;
+    trackSizeVal = size;
   }
-}
+};
 
-function updateStartValue() {
-  const current = props.modelValue;
-  if (isRange(current)) {
-    startValue.value = current.map(format) as NumberRange;
-  } else {
-    startValue.value = format(current as number);
-  }
-}
-
-function onTouchStart(event: any, index?: 0 | 1) {
-  if (props.disabled || props.readonly) return;
-
-  if (typeof index === 'number') {
-    buttonIndex.value = index;
-  }
-
-  const touch = event.touches?.[0] || event;
-  startPos.value = props.vertical
-    ? (touch.clientY || touch.pageY || 0)
-    : (touch.clientX || touch.pageX || 0);
-
-  currentValue.value = props.modelValue;
-  updateStartValue();
-  dragStatus.value = 'start';
-  dragging.value = true;
-
-  // Try to get track size
-  const target = event.currentTarget || event.target;
-  if (target) {
-    const size = props.vertical ? target.offsetHeight : target.offsetWidth;
-    if (size) trackSize.value = size;
-  }
-}
-
-function onTouchMove(event: any) {
-  if (props.disabled || props.readonly || !dragging.value) return;
-
-  if (dragStatus.value === 'start') {
-    emit('drag-start', event);
-  }
-
-  const touch = event.touches?.[0] || event;
-  const currentPos = props.vertical
-    ? (touch.clientY || touch.pageY || 0)
-    : (touch.clientX || touch.pageX || 0);
-  const delta = currentPos - startPos.value;
-
-  dragStatus.value = 'dragging';
-
-  const total = trackSize.value || 200;
-  let diff = (delta / total) * scope.value;
-  if (props.reverse) {
-    diff = -diff;
-  }
-
-  if (isRange(startValue.value)) {
-    const idx = props.reverse ? (1 - buttonIndex.value) as 0 | 1 : buttonIndex.value;
-    const newRange = [...startValue.value] as NumberRange;
-    newRange[idx] = (startValue.value as NumberRange)[idx] + diff;
-    currentValue.value = newRange;
-  } else {
-    currentValue.value = (startValue.value as number) + diff;
-  }
-
-  updateValue(currentValue.value);
-}
-
-function onTouchEnd(event: any) {
-  if (props.disabled || props.readonly) return;
-
-  if (dragStatus.value === 'dragging') {
-    updateValue(currentValue.value, true);
-    emit('drag-end', event);
-  }
-
-  dragging.value = false;
-  dragStatus.value = '';
-}
-
-function onTrackTap(event: any) {
+const onTrackTap = (event: any) => {
   if (props.disabled || props.readonly) return;
 
   updateStartValue();
 
-  const touch = event.touches?.[0] || event;
+  const touch = event.touches?.[0] || event.changedTouches?.[0] || event;
   const target = event.currentTarget || event.target;
   const rect = target?.getBoundingClientRect?.() || {
-    left: 0, top: 0,
-    width: trackSize.value || 200,
-    height: trackSize.value || 200,
+    left: 0,
+    top: 0,
+    right: trackSizeVal,
+    bottom: trackSizeVal,
+    width: trackSizeVal || 200,
+    height: trackSizeVal || 200,
   };
 
-  let delta: number;
-  let total: number;
-
-  if (props.vertical) {
-    if (props.reverse) {
-      delta = (rect.bottom || (rect.top + rect.height)) - (touch.clientY || touch.pageY || 0);
-    } else {
-      delta = (touch.clientY || touch.pageY || 0) - (rect.top || 0);
+  const getDelta = () => {
+    if (props.vertical) {
+      if (props.reverse) {
+        return (rect.bottom || (rect.top + rect.height)) - (touch.clientY || touch.pageY || 0);
+      }
+      return (touch.clientY || touch.pageY || 0) - (rect.top || 0);
     }
-    total = rect.height || trackSize.value || 200;
-  } else {
     if (props.reverse) {
-      delta = (rect.right || (rect.left + rect.width)) - (touch.clientX || touch.pageX || 0);
-    } else {
-      delta = (touch.clientX || touch.pageX || 0) - (rect.left || 0);
+      return (rect.right || (rect.left + rect.width)) - (touch.clientX || touch.pageX || 0);
     }
-    total = rect.width || trackSize.value || 200;
-  }
+    return (touch.clientX || touch.pageX || 0) - (rect.left || 0);
+  };
 
-  const value = Number(props.min) + (delta / total) * scope.value;
+  const total = props.vertical ? (rect.height || trackSizeVal || 200) : (rect.width || trackSizeVal || 200);
+  const value = Number(props.min) + (getDelta() / total) * scope.value;
 
   if (isRange(props.modelValue)) {
     const [left, right] = props.modelValue;
@@ -461,67 +229,151 @@ function onTrackTap(event: any) {
   } else {
     updateValue(value, true);
   }
-}
+};
+
+const onTouchStart = (event: any, index?: 0 | 1) => {
+  if (props.disabled || props.readonly) return;
+
+  if (typeof index === 'number') {
+    buttonIndex = index;
+  }
+
+  const touch = event.touches?.[0] || event;
+  startPos = props.vertical
+    ? (touch.clientY || touch.pageY || 0)
+    : (touch.clientX || touch.pageX || 0);
+
+  current = props.modelValue;
+  updateStartValue();
+  dragStatus.value = 'start';
+};
+
+const onTouchMove = (event: any) => {
+  if (props.disabled || props.readonly) return;
+  if (!dragStatus.value) return;
+
+  if (dragStatus.value === 'start') {
+    emit('dragStart', event);
+  }
+
+  const touch = event.touches?.[0] || event;
+  const currentPos = props.vertical
+    ? (touch.clientY || touch.pageY || 0)
+    : (touch.clientX || touch.pageX || 0);
+  const delta = currentPos - startPos;
+
+  dragStatus.value = 'dragging';
+
+  const total = trackSizeVal || 200;
+  let diff = (delta / total) * scope.value;
+  if (props.reverse) {
+    diff = -diff;
+  }
+
+  if (isRange(startValue)) {
+    const idx = props.reverse ? (1 - buttonIndex) as 0 | 1 : buttonIndex;
+    const newRange = [...startValue] as NumberRange;
+    newRange[idx] = (startValue as NumberRange)[idx] + diff;
+    current = newRange;
+  } else {
+    current = (startValue as number) + diff;
+  }
+
+  updateValue(current);
+};
+
+const onTouchEnd = (event: any) => {
+  if (props.disabled || props.readonly) return;
+
+  if (dragStatus.value === 'dragging') {
+    updateValue(current, true);
+    emit('dragEnd', event);
+  }
+
+  dragStatus.value = '';
+};
+
+const getButtonClassName = (index?: 0 | 1) => {
+  if (typeof index === 'number') {
+    const position = ['left', 'right'];
+    return bem('button-wrapper', position[index]);
+  }
+  return bem('button-wrapper', props.reverse ? 'left' : 'right');
+};
+
+// Format initial value
+watch(
+  () => props.modelValue,
+  (val) => {
+    // Only format on initial mount if value is out of step
+    if (val !== undefined) {
+      const formatted = isRange(val)
+        ? handleRangeValue(val).map(format) as NumberRange
+        : format(val as number);
+      if (!isSameValue(formatted, val)) {
+        emit('update:modelValue', formatted);
+      }
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <view
-      :style="trackWrapStyle"
-      @layout="onTrackLayout"
-      @tap="onTrackTap"
-    >
-      <!-- Track background -->
-      <view :style="trackStyle">
-        <!-- Active fill -->
-        <view :style="fillStyle" />
+  <view
+    :class="bem([{ vertical, disabled }])"
+    :style="wrapperStyle"
+    @tap="onTrackTap"
+    @layout="onTrackLayout"
+  >
+    <view class="van-slider__bar" :style="barStyle">
+      <!-- Single mode button -->
+      <view
+        v-if="!range"
+        :class="getButtonClassName()"
+        @touchstart="(e: any) => onTouchStart(e)"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <slot name="button" :value="modelValue" :dragging="dragStatus === 'dragging'">
+          <view class="van-slider__button" :style="buttonSizeStyle" />
+        </slot>
+      </view>
 
-        <!-- Single thumb button (non-range mode) -->
-        <view
-          v-if="!range"
-          :style="singleButtonWrapStyle"
-          @touchstart="(e: any) => onTouchStart(e)"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
+      <!-- Range mode: left button -->
+      <view
+        v-if="range"
+        :class="getButtonClassName(0)"
+        @touchstart="(e: any) => onTouchStart(e, 0)"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <slot
+          name="left-button"
+          :value="Array.isArray(modelValue) ? modelValue[0] : modelValue"
+          :dragging="dragStatus === 'dragging'"
+          :drag-index="dragStatus === 'dragging' && Array.isArray(current) ? (current[0] > current[1] ? (buttonIndex === 0 ? 1 : 0) : buttonIndex) : undefined"
         >
-          <slot name="button" :value="modelValue" :dragging="dragStatus === 'dragging'">
-            <view :style="defaultButtonStyle" />
-          </slot>
-        </view>
+          <view class="van-slider__button" :style="buttonSizeStyle" />
+        </slot>
+      </view>
 
-        <!-- Left thumb (range mode) -->
-        <view
-          v-if="range"
-          :style="leftButtonWrapStyle"
-          @touchstart="(e: any) => onTouchStart(e, 0)"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
+      <!-- Range mode: right button -->
+      <view
+        v-if="range"
+        :class="getButtonClassName(1)"
+        @touchstart="(e: any) => onTouchStart(e, 1)"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <slot
+          name="right-button"
+          :value="Array.isArray(modelValue) ? modelValue[1] : modelValue"
+          :dragging="dragStatus === 'dragging'"
+          :drag-index="dragStatus === 'dragging' && Array.isArray(current) ? (current[0] > current[1] ? (buttonIndex === 0 ? 1 : 0) : buttonIndex) : undefined"
         >
-          <slot
-            name="left-button"
-            :value="Array.isArray(modelValue) ? modelValue[0] : modelValue"
-            :dragging="dragStatus === 'dragging'"
-          >
-            <view :style="defaultButtonStyle" />
-          </slot>
-        </view>
-
-        <!-- Right thumb (range mode) -->
-        <view
-          v-if="range"
-          :style="rightButtonWrapStyle"
-          @touchstart="(e: any) => onTouchStart(e, 1)"
-          @touchmove="onTouchMove"
-          @touchend="onTouchEnd"
-        >
-          <slot
-            name="right-button"
-            :value="Array.isArray(modelValue) ? modelValue[1] : modelValue"
-            :dragging="dragStatus === 'dragging'"
-          >
-            <view :style="defaultButtonStyle" />
-          </slot>
-        </view>
+          <view class="van-slider__button" :style="buttonSizeStyle" />
+        </slot>
       </view>
     </view>
   </view>
