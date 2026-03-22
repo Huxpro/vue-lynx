@@ -1,17 +1,20 @@
 <!--
   Lynx Limitations:
-  - getBoundingClientRect: Lynx lacks DOM measurement APIs; marquee uses character-count estimation for content width
-  - CSS transition marquee: Uses timer-based (setInterval) animation instead of CSS transition + transitionend event
+  - getBoundingClientRect: Lynx lacks synchronous DOM measurement; uses ref-based measurement with fallback
   - onPopupReopen: No popup reopen composable in Lynx
-  - pageshow event: No pageshow/visibilitychange event listener in Lynx
+  - pageshow event: No pageshow/visibilitychange event in Lynx
   - onActivated: No keep-alive activation hook in Lynx
-  - v-show: Uses v-if for show/hide since Lynx v-show support is limited
+  - v-show: Uses v-if since Lynx display:none behavior differs
+  - transitionend: May not fire reliably in Lynx; uses setTimeout fallback for animation loop
 -->
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Icon from '../Icon/index.vue';
 import type { NoticeBarMode } from './types';
 import './index.less';
+
+const [, bem] = createNamespace('notice-bar');
 
 interface NoticeBarProps {
   text?: string;
@@ -40,121 +43,45 @@ const emit = defineEmits<{
 // --- State ---
 const show = ref(true);
 const offset = ref(0);
+const duration = ref(0);
 
-// Marquee timers
-let animationTimer: ReturnType<typeof setInterval> | null = null;
-let startTimer: ReturnType<typeof setTimeout> | null = null;
+let wrapWidth = 0;
+let contentWidth = 0;
+let startTimer: ReturnType<typeof setTimeout> | undefined;
 
-// Lynx lacks DOM measurement; estimate content width from text length
-const AVG_CHAR_WIDTH = 8;
-const WRAP_WIDTH = 300;
+const wrapRef = ref<any>(null);
+const contentRef = ref<any>(null);
 
-const estimatedContentWidth = computed(
-  () => (props.text?.length || 0) * AVG_CHAR_WIDTH,
-);
+// --- Computed ---
+const ellipsis = computed(() => props.scrollable === false && !props.wrapable);
 
-const shouldScroll = computed(() => {
-  if (props.scrollable === false) return false;
-  if (props.scrollable === true) return true;
-  // null = auto: scroll only if content overflows
-  return estimatedContentWidth.value > WRAP_WIDTH;
+const barClasses = computed(() => bem([{ wrapable: props.wrapable }]));
+
+const contentClasses = computed(() => {
+  const cls = bem('content');
+  return ellipsis.value ? `${cls} van-ellipsis` : cls;
 });
 
-const ellipsis = computed(
-  () => props.scrollable === false && !props.wrapable,
-);
-
-// --- Default colors (from CSS vars --van-notice-bar-text-color / --van-notice-bar-background) ---
-const DEFAULT_TEXT_COLOR = '#ed6a0c';
-const DEFAULT_BACKGROUND = '#fffbe8';
-
-const resolvedColor = computed(() => props.color || DEFAULT_TEXT_COLOR);
-const resolvedBackground = computed(
-  () => props.background || DEFAULT_BACKGROUND,
-);
-
-// --- Styles ---
+// Inline styles ONLY for dynamic color/background props
 const barStyle = computed(() => {
-  const s: Record<string, any> = {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-    color: resolvedColor.value,
-    backgroundColor: resolvedBackground.value,
-    fontSize: '14px',
-    lineHeight: '24px',
-  };
-
-  if (props.wrapable) {
-    s.paddingTop = '8px';
-    s.paddingBottom = '8px';
-    s.paddingLeft = '16px';
-    s.paddingRight = '16px';
-  } else {
-    s.height = '40px';
-    s.paddingLeft = '16px';
-    s.paddingRight = '16px';
-  }
-
-  return s;
+  const style: Record<string, string> = {};
+  if (props.color) style.color = props.color;
+  if (props.background) style.background = props.background;
+  return Object.keys(style).length ? style : undefined;
 });
-
-const leftIconStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  minWidth: '24px',
-  fontSize: '16px',
-  marginRight: '4px',
-}));
-
-const wrapStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  flex: 1,
-  position: 'relative' as const,
-  overflow: 'hidden' as const,
-  height: props.wrapable ? undefined : '100%',
-}));
 
 const contentStyle = computed(() => {
-  const s: Record<string, any> = {
-    color: resolvedColor.value,
-    fontSize: '14px',
-    lineHeight: '24px',
-  };
-
-  if (shouldScroll.value) {
-    s.position = 'absolute';
-    s.whiteSpace = 'nowrap';
-    s.left = `${offset.value}px`;
-  } else if (props.wrapable) {
-    s.position = 'relative';
-  } else {
-    // Ellipsis mode
-    s.position = 'relative';
-    s.overflow = 'hidden';
-    s.whiteSpace = 'nowrap';
-    s.textOverflow = 'ellipsis';
-    s.maxWidth = '100%';
+  const style: Record<string, string> = {};
+  if (offset.value) {
+    style.transform = `translateX(${offset.value}px)`;
   }
-
-  return s;
+  if (duration.value) {
+    style.transitionDuration = `${duration.value}s`;
+  }
+  return Object.keys(style).length ? style : undefined;
 });
 
-const rightIconStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  minWidth: '24px',
-  fontSize: '16px',
-  textAlign: 'right' as const,
-  cursor: 'pointer',
-}));
-
-// --- Right icon name (derived from mode) ---
+// --- Right icon ---
 const rightIconName = computed(() => {
   if (props.mode === 'closeable') return 'cross';
   if (props.mode === 'link') return 'arrow';
@@ -162,51 +89,71 @@ const rightIconName = computed(() => {
 });
 
 // --- Marquee Animation ---
-function stopAnimation() {
-  if (animationTimer) {
-    clearInterval(animationTimer);
-    animationTimer = null;
-  }
-  if (startTimer) {
-    clearTimeout(startTimer);
-    startTimer = null;
-  }
+function onTransitionEnd() {
+  offset.value = wrapWidth;
+  duration.value = 0;
+
+  // Use double raf equivalent (two setTimeout(0)) to ensure animation restarts
+  setTimeout(() => {
+    setTimeout(() => {
+      offset.value = -contentWidth;
+      duration.value = (contentWidth + wrapWidth) / +props.speed;
+      emit('replay');
+    }, 0);
+  }, 0);
 }
 
-function startAnimation() {
-  stopAnimation();
+function measureAndStart() {
+  const { delay, speed, scrollable } = props;
+  const ms = +(delay) * 1000;
 
-  if (!shouldScroll.value || !show.value) return;
-
-  const cw = estimatedContentWidth.value;
-  const ww = WRAP_WIDTH;
-  const speed = +(props.speed) || 60;
-  const delay = (+(props.delay) ?? 1) * 1000;
-  const FRAME_MS = 16;
-  const pxPerFrame = speed * (FRAME_MS / 1000);
-
-  // Match Vant: first scroll starts from 0, scrolls to -contentWidth
+  wrapWidth = 0;
+  contentWidth = 0;
   offset.value = 0;
+  duration.value = 0;
 
+  clearTimeout(startTimer);
   startTimer = setTimeout(() => {
-    animationTimer = setInterval(() => {
-      offset.value -= pxPerFrame;
+    if (scrollable === false) return;
 
-      if (offset.value <= -cw) {
-        // Content fully scrolled past: jump to right edge (like Vant's onTransitionEnd)
-        offset.value = ww;
-        emit('replay');
-      }
-    }, FRAME_MS);
-  }, delay);
+    // Try to measure via DOM refs (works in web/test env)
+    const wrapEl = wrapRef.value?.$el || wrapRef.value;
+    const contentEl = contentRef.value?.$el || contentRef.value;
+
+    let ww = 0;
+    let cw = 0;
+
+    if (wrapEl?.getBoundingClientRect) {
+      ww = wrapEl.getBoundingClientRect().width || 0;
+    }
+    if (contentEl?.getBoundingClientRect) {
+      cw = contentEl.getBoundingClientRect().width || 0;
+    }
+
+    // Fallback: estimate from text length if measurement returns 0
+    if (cw === 0 && props.text) {
+      cw = props.text.length * 8;
+      ww = ww || 300;
+    }
+
+    if (scrollable || cw > ww) {
+      // Double raf equivalent
+      setTimeout(() => {
+        setTimeout(() => {
+          wrapWidth = ww;
+          contentWidth = cw;
+          offset.value = -cw;
+          duration.value = cw / +speed;
+        }, 0);
+      }, 0);
+    }
+  }, ms);
 }
 
 function reset() {
-  offset.value = 0;
-  startAnimation();
+  measureAndStart();
 }
 
-// --- Event Handlers ---
 function onClickRightIcon(event: any) {
   if (props.mode === 'closeable') {
     show.value = false;
@@ -216,37 +163,37 @@ function onClickRightIcon(event: any) {
 
 // --- Lifecycle ---
 onMounted(() => {
-  startAnimation();
+  measureAndStart();
 });
 
 onUnmounted(() => {
-  stopAnimation();
+  clearTimeout(startTimer);
 });
 
 watch(() => [props.text, props.scrollable], () => {
   reset();
 });
 
-watch(show, (val) => {
-  if (val) startAnimation();
-  else stopAnimation();
-});
-
 defineExpose({ reset });
 </script>
 
 <template>
-  <view v-if="show" :style="barStyle">
+  <view v-if="show" :class="barClasses" :style="barStyle">
     <!-- Left icon -->
-    <view v-if="leftIcon || $slots['left-icon']" :style="leftIconStyle">
+    <view v-if="leftIcon || $slots['left-icon']" :class="bem('left-icon')">
       <slot name="left-icon">
-        <Icon :name="leftIcon" :size="16" :color="resolvedColor" />
+        <Icon :name="leftIcon" size="16px" />
       </slot>
     </view>
 
     <!-- Content wrap (marquee container) -->
-    <view :style="wrapStyle">
-      <view :style="contentStyle">
+    <view ref="wrapRef" :class="bem('wrap')">
+      <view
+        ref="contentRef"
+        :class="contentClasses"
+        :style="contentStyle"
+        @transitionend="onTransitionEnd"
+      >
         <slot>
           <text>{{ text }}</text>
         </slot>
@@ -256,11 +203,11 @@ defineExpose({ reset });
     <!-- Right icon -->
     <view
       v-if="rightIconName || $slots['right-icon']"
-      :style="rightIconStyle"
+      :class="bem('right-icon')"
       @tap="onClickRightIcon"
     >
       <slot name="right-icon">
-        <Icon :name="rightIconName" :size="16" :color="resolvedColor" />
+        <Icon :name="rightIconName" size="16px" />
       </slot>
     </view>
   </view>
