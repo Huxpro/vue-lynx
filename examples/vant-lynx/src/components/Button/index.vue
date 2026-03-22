@@ -1,13 +1,15 @@
 <!--
   Lynx Limitations:
-  - tag: accepted for API compat but always renders as view (Lynx has no HTML tags)
+  - tag: accepted for API compat but always renders as <view> (Lynx has no HTML tags)
   - nativeType: accepted for API compat but not applicable in Lynx (no form submission)
   - url/to/replace: accepted for API compat but routing requires Lynx navigation API
-  - ::before active overlay: Lynx has no pseudo-elements, uses opacity for active feedback
-  - hairline ::after border: Lynx has no pseudo-elements, uses 0.5px border-width instead
+  - ::before active overlay: Lynx has no pseudo-elements; uses opacity class for active feedback
+  - ::after hairline border: Lynx has no pseudo-elements; uses border-width: 0.5px instead
+  - cursor: not applicable in Lynx (no mouse cursor)
 -->
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Loading from '../Loading/index.vue';
 import Icon from '../Icon/index.vue';
 import type {
@@ -16,6 +18,7 @@ import type {
   ButtonNativeType,
   ButtonIconPosition,
 } from './types';
+import './index.less';
 
 export interface ButtonProps {
   type?: ButtonType;
@@ -60,108 +63,52 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
+const [, bem] = createNamespace('button');
+
 const isActive = ref(false);
 
-const sizeConfig = {
-  large: { height: '50px', fontSize: '16px', padding: '0px' },
-  normal: { height: '44px', fontSize: '16px', padding: '15px' },
-  small: { height: '32px', fontSize: '14px', padding: '8px' },
-  mini: { height: '24px', fontSize: '12px', padding: '4px' },
-};
-
-const typeConfig = {
-  default: { bg: '#fff', color: '#323233', border: '#ebedf0' },
-  primary: { bg: '#1989fa', color: '#fff', border: '#1989fa' },
-  success: { bg: '#07c160', color: '#fff', border: '#07c160' },
-  warning: { bg: '#ff976a', color: '#fff', border: '#ff976a' },
-  danger: { bg: '#ee0a24', color: '#fff', border: '#ee0a24' },
-};
-
-const textColor = computed(() => {
-  const tc = typeConfig[props.type];
-  if (props.color) return props.plain ? props.color : '#fff';
-  if (props.plain) return tc.bg === '#fff' ? '#323233' : tc.bg;
-  return tc.color;
+const classes = computed(() => {
+  return bem([
+    props.type,
+    props.size,
+    {
+      plain: props.plain,
+      block: props.block,
+      round: props.round,
+      square: props.square,
+      loading: props.loading,
+      disabled: props.disabled,
+      hairline: props.hairline,
+      active: isActive.value && !props.loading && !props.disabled,
+    },
+  ]);
 });
 
-const loadingColor = computed(() => {
-  if (props.plain) {
-    const tc = typeConfig[props.type];
-    return props.color || (tc.bg === '#fff' ? '#c9c9c9' : tc.bg);
-  }
-  if (props.color) return '#fff';
-  const tc = typeConfig[props.type];
-  return tc.color === '#fff' ? '#fff' : '#c9c9c9';
-});
+// Inline styles ONLY for the `color` prop — matching Vant's getStyle()
+const colorStyle = computed(() => {
+  const { color, plain } = props;
+  if (!color) return undefined;
 
-const resolvedLoadingSize = computed(() => {
-  if (props.loadingSize) {
-    if (typeof props.loadingSize === 'string') {
-      return /^\d+$/.test(props.loadingSize) ? `${props.loadingSize}px` : props.loadingSize;
-    }
-    return `${props.loadingSize}px`;
-  }
-  return '20px';
-});
+  const style: Record<string, string> = {};
 
-const buttonStyle = computed(() => {
-  const sz = sizeConfig[props.size];
-  const tc = typeConfig[props.type];
-
-  let bg = tc.bg;
-  let borderColor = tc.border;
-
-  if (props.plain) {
-    bg = '#fff';
+  if (plain) {
+    style.color = color;
+  } else {
+    style.color = 'white';
+    // Use background instead of backgroundColor to make linear-gradient work
+    style.background = color;
   }
 
-  if (props.color) {
-    bg = props.plain ? '#fff' : props.color;
-    borderColor = props.color;
+  if (color.includes('gradient')) {
+    style.borderWidth = '0px';
+  } else {
+    style.borderColor = color;
   }
 
-  const isGradient = props.color?.includes('gradient');
-
-  const borderWidth = isGradient ? '0px' : (props.hairline ? '0.5px' : '1px');
-  const borderRadius = props.round ? '999px' : (props.square ? '0px' : '4px');
-
-  return {
-    display: 'flex' as const,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    height: sz.height,
-    paddingLeft: props.size === 'large' || props.block ? '0px' : sz.padding,
-    paddingRight: props.size === 'large' || props.block ? '0px' : sz.padding,
-    backgroundColor: bg,
-    borderWidth,
-    borderStyle: 'solid' as const,
-    borderColor: borderColor,
-    borderRadius,
-    opacity: props.disabled ? 0.5 : (isActive.value && !props.loading ? 0.9 : 1),
-    width: props.block ? '100%' : undefined,
-  };
+  return style;
 });
 
-const textStyle = computed(() => {
-  const sz = sizeConfig[props.size];
-  const fontSizeNum = parseInt(sz.fontSize, 10);
-  return {
-    fontSize: sz.fontSize,
-    color: textColor.value,
-    lineHeight: `${Math.round(fontSizeNum * 1.2)}px`,
-  };
-});
-
-const iconSize = computed(() => {
-  return sizeConfig[props.size].fontSize;
-});
-
-const iconTextSpacingStyle = computed(() => ({
-  width: '4px',
-}));
-
-function onTap(event: any) {
+function onClick(event: any) {
   if (props.loading || props.disabled) return;
   emit('click', event);
 }
@@ -179,57 +126,73 @@ function onTouchEnd() {
 
 <template>
   <view
-    :style="buttonStyle"
-    @tap="onTap"
+    :class="classes"
+    :style="colorStyle"
+    @tap="onClick"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
     @touchcancel="onTouchEnd"
   >
-    <!-- Loading state -->
-    <template v-if="loading">
-      <slot name="loading">
-        <Loading
-          :type="loadingType"
-          :size="resolvedLoadingSize"
-          :color="loadingColor"
-        />
-      </slot>
-      <view v-if="loadingText" :style="iconTextSpacingStyle" />
-      <text v-if="loadingText" :style="textStyle">{{ loadingText }}</text>
-    </template>
-
-    <!-- Normal state -->
-    <template v-else>
-      <!-- Left icon -->
+    <view :class="bem('content')">
+      <!-- Left icon / loading -->
       <template v-if="iconPosition === 'left'">
-        <slot name="icon">
-          <Icon
-            v-if="icon"
-            :name="icon"
-            :size="iconSize"
-            :color="textColor"
-          />
-        </slot>
-        <view v-if="icon || $slots.icon" :style="iconTextSpacingStyle" />
+        <template v-if="loading">
+          <view :class="bem('loading')">
+            <slot name="loading">
+              <Loading
+                :type="loadingType"
+                :size="loadingSize"
+              />
+            </slot>
+          </view>
+        </template>
+        <template v-else>
+          <view v-if="icon || $slots.icon" :class="bem('icon')">
+            <slot name="icon">
+              <Icon
+                v-if="icon"
+                :name="icon"
+                :class-prefix="iconPrefix"
+              />
+            </slot>
+          </view>
+        </template>
       </template>
 
-      <!-- Button text -->
-      <slot>
-        <text v-if="text" :style="textStyle">{{ text }}</text>
-      </slot>
+      <!-- Text -->
+      <template v-if="loading && loadingText">
+        <text :class="bem('text')">{{ loadingText }}</text>
+      </template>
+      <template v-else-if="!loading">
+        <slot>
+          <text v-if="text" :class="bem('text')">{{ text }}</text>
+        </slot>
+      </template>
 
-      <!-- Right icon -->
+      <!-- Right icon / loading -->
       <template v-if="iconPosition === 'right'">
-        <view v-if="icon || $slots.icon" :style="iconTextSpacingStyle" />
-        <slot name="icon">
-          <Icon
-            v-if="icon"
-            :name="icon"
-            :size="iconSize"
-            :color="textColor"
-          />
-        </slot>
+        <template v-if="loading">
+          <view :class="bem('loading')">
+            <slot name="loading">
+              <Loading
+                :type="loadingType"
+                :size="loadingSize"
+              />
+            </slot>
+          </view>
+        </template>
+        <template v-else>
+          <view v-if="icon || $slots.icon" :class="bem('icon')">
+            <slot name="icon">
+              <Icon
+                v-if="icon"
+                :name="icon"
+                :class-prefix="iconPrefix"
+              />
+            </slot>
+          </view>
+        </template>
       </template>
-    </template>
+    </view>
   </view>
 </template>

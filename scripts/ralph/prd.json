@@ -78,7 +78,7 @@
         "Docs: Lynx limitations in components/Loading/README.md",
         "Commit: feat(loading): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-badge",
@@ -100,7 +100,7 @@
         "Docs: Lynx limitations in components/Badge/README.md",
         "Commit: feat(badge): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-overlay",
@@ -122,7 +122,7 @@
         "Docs: Lynx limitations in components/Overlay/README.md",
         "Commit: feat(overlay): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-config-provider",
@@ -144,7 +144,7 @@
         "Docs: Lynx limitations in components/ConfigProvider/README.md",
         "Commit: feat(config-provider): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-popup",
@@ -166,7 +166,7 @@
         "Docs: Lynx limitations in components/Popup/README.md",
         "Commit: feat(popup): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-button",
@@ -188,7 +188,7 @@
         "Docs: Lynx limitations in components/Button/README.md",
         "Commit: feat(button): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-cell",

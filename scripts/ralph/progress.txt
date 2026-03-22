@@ -18,6 +18,9 @@ Branch: feat/vant-lynx-v2
 - **Unknown icon fallback**: Icon names not in @font-face map fall back to rendering the name itself as text (backward compat with `icon="★"` etc.)
 - **Lynx CSS no-inherit**: CSS properties don't inherit parent→child by default. Apply fontSize/color directly to `<text>` elements, not just the parent `<view>`.
 - **Utils module**: `src/utils/create.ts` (createNamespace+bem), `src/utils/format.ts` (addUnit, isDef, isNumeric), `src/utils/index.ts` (re-exports).
+- **Text query in tests**: Vue renders empty `<text>` elements as v-if/slot anchors. Use `querySelectorAll('text')` + `Array.from(...).find(t => t.textContent === '...')` to find the right text element, NOT `querySelector('text')` which may return an empty anchor.
+- **No Vue `<Transition>` in Lynx**: `@vue/runtime-dom`'s Transition uses `el.classList` which doesn't exist on Lynx elements. Use CSS transitions directly (inline transitionProperty/transitionDuration + toggled opacity/transform) instead of `<Transition>` component. Fire opened/closed events via `setTimeout(duration)`.
+- **Popup animation pattern**: Center position uses opacity fade, side positions use transform slide. All animation state (opacity, transform, transitionDuration, pointerEvents) in inline styles; all visual state (position, round, close-icon) in BEM CSS classes.
 
 ---
 
@@ -33,4 +36,89 @@ Branch: feat/vant-lynx-v2
 - Files: index.vue, index.less, icon-map.ts, test/index.spec.ts, README.md (5 files)
 - Key changes: Replaced emoji/unicode fallbacks with real @font-face vant-icon font. Created utils/ module (createNamespace, addUnit). Updated 3 dependent test files (Image, NavBar, ImagePreview) to use new font characters.
 - Limitations: tag prop (no HTML tags in Lynx), ::before (uses <text> + font-family instead), ConfigProvider iconPrefix (not yet supported), font loading requires CDN/host support
+---
+
+## 2026-03-22 - parity-loading: Loading
+- Props: 6/6 (type, color, size, textSize, textColor, vertical)
+- Events: 0/0 (Loading has no events)
+- Slots: 2/2 (default, icon)
+- CSS Variables: 5 defined in index.less (--van-loading-text-color, --van-loading-text-font-size, --van-loading-spinner-color, --van-loading-spinner-size, --van-loading-spinner-duration)
+- Animations: @keyframes van-rotate (continuous rotation), @keyframes van-circular (border spinner), spinner uses steps(12) timing
+- Tests: 12 cases (Vant has 5, we have 12 — added circular/spinner rendering, icon slot, vertical, color, no-text, string size tests)
+- Demo sections: 7/7 (加载类型, 自定义颜色, 自定义大小, 加载文案, 垂直排列, 自定义文本颜色, 自定义图标)
+- Visual match: pass (BEM classes, @keyframes animations, CSS variables)
+- Files: index.vue, index.less, test/index.spec.ts (3 files)
+- Key changes: Rewrote from inline-style-only to full BEM class system. Spinner type now uses 12 rotated line views (not dotted border). Circular type uses CSS border animation (not static ring). All animations via @keyframes in .less.
+- Limitations: ::before (spinner uses inner <view> elements), SVG circle (circular uses CSS border-based spinner), aria attributes (Lynx has no ARIA)
+---
+
+## 2026-03-22 - parity-badge: Badge
+- Props: 8/8 (dot, max, tag, color, offset, content, showZero, position)
+- Events: 0/0 (Badge has no events)
+- Slots: 2/2 (default, content)
+- CSS Variables: 10 defined in index.less (--van-badge-size, --van-badge-color, --van-badge-padding, --van-badge-font-size, --van-badge-font-weight, --van-badge-border-width, --van-badge-background, --van-badge-dot-color, --van-badge-dot-size, --van-badge-font)
+- Animations: none (Badge has no transitions)
+- Tests: 19 cases (Vant has ~11, we have 19 — added CSS class verification, string content, default position tests)
+- Demo sections: 6/6 (基础用法, 最大值, 自定义颜色, 自定义徽标内容, 自定义徽标位置, 独立展示)
+- Visual match: pass (BEM classes, CSS variables, position via transform: translate())
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Key changes: Rewrote from all-inline-styles to CSS class system. Added full BEM selectors in .less (--fixed, --dot, position variants, __wrapper). Extracted types.ts. Fixed Tabbar tests that depended on old Badge inline styles.
+- Limitations: tag prop (no HTML tags in Lynx), display: inline-block (Lynx uses flex instead)
+---
+
+## 2026-03-22 - parity-overlay: Overlay
+- Props: 8/8 (show, zIndex, duration, className, customStyle, lockScroll, lazyRender, teleport)
+- Events: 1/1 (click)
+- Slots: 1/1 (default)
+- CSS Variables: 2 defined in index.less (--van-overlay-z-index, --van-overlay-background)
+- Animations: CSS opacity transition for fade effect (Lynx-compatible alternative to Vue <Transition>)
+- Tests: 14 cases (Vant has 10, we have 14 — added lazy render, opacity, lockScroll, BEM class tests)
+- Demo sections: 3/3 (基础用法, 嵌入内容, 设置 z-index)
+- Visual match: pass (BEM classes, CSS variables, opacity fade transition)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts, README.md (5 files)
+- Key changes: Rewrote from all-inline-styles to BEM class system. className prop now works as actual CSS class. CSS opacity transition replaces inline opacity toggle. Updated Popup tests to find overlay by .van-overlay class selector instead of inline style detection.
+- Limitations: teleport (no Lynx support), lockScroll (no Lynx equivalent), Vue <Transition> (experimental in Lynx, uses CSS opacity transition instead), v-show (uses v-if + opacity)
+---
+
+## 2026-03-22 - parity-config-provider: ConfigProvider
+- Props: 8/8 (tag, theme, zIndex, themeVars, themeVarsDark, themeVarsLight, themeVarsScope, iconPrefix)
+- Events: 0/0 (ConfigProvider has no events)
+- Slots: 1/1 (default)
+- CSS Variables: 50+ global vars defined in index.less (:root), .van-config-provider class added
+- Animations: none (ConfigProvider has no transitions)
+- Tests: 20 cases (Vant has 8, we have 20 — added BEM class, provide/inject, utility function tests)
+- Demo sections: 3/3 (深色模式, 默认主题, 定制主题)
+- Visual match: pass (BEM class, global CSS variables, theme var injection)
+- Files: index.vue, index.less, types.ts, utils.ts, test/index.spec.ts (5 files; Vant has 4)
+- Key changes: Added BEM class via createNamespace. Removed unnecessary inline flex layout styles. Added import for .less file. Cleaned up containerStyle to only apply theme vars in local scope. Updated demo with Rate, Slider, Button to match Vant's demo. Ported Vant's test patterns adapted for Lynx (CSS var inline styles stripped by Lynx runtime).
+- Limitations: tag prop (always renders <view> in Lynx), themeVarsScope 'global' (no document.documentElement in Lynx), theme class on <html> (no DOM document), CSS custom properties in inline styles (stripped by Lynx runtime — vars only effective when defined in .less files)
+---
+
+## 2026-03-22 - parity-popup: Popup
+- Props: 22/22 (show, position, round, closeable, closeIcon, closeIconPosition, duration, overlay, overlayClass, overlayStyle, overlayProps, closeOnClickOverlay, zIndex, safeAreaInsetTop, safeAreaInsetBottom, beforeClose, lockScroll, lazyRender, destroyOnClose, closeOnPopstate, iconPrefix, transition, transitionAppear, teleport)
+- Events: 8/8 (update:show, open, close, opened, closed, click-overlay, click-close-icon, keydown)
+- Slots: 2/2 (default, overlay-content)
+- CSS Variables: 7 defined in index.less (--van-popup-background, --van-popup-transition, --van-popup-round-radius, --van-popup-close-icon-size, --van-popup-close-icon-color, --van-popup-close-icon-margin, --van-popup-close-icon-z-index)
+- Animations: CSS opacity transition for center (fade), CSS transform transition for sides (slide); transition classes defined in .less (van-popup-slide-*, van-fade-*)
+- Tests: 31 cases (Vant has ~20, we have 31 — added BEM class verification, position classes, animation timing, safe-area classes)
+- Demo sections: 6/6 (基础用法, 弹出位置, 关闭图标, 圆角弹窗, 监听事件, 指定挂载节点)
+- Visual match: pass (BEM classes, CSS variables, position/round via class selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Popup.tsx, shared.ts, types.ts, index.less)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Position, round, close-icon position all via CSS classes. Animation uses CSS transitions on inline style (opacity for center, transform for sides) since Vue <Transition> component doesn't work in vue-lynx test environment (el.classList undefined). opened/closed events fire after setTimeout(duration). beforeClose interceptor with Promise support. Safe area via utility classes.
+- Limitations: teleport (no Lynx support), lockScroll (no document.body scroll), closeOnPopstate (no browser history), keydown (no keyboard events), v-show (uses v-if + CSS opacity/transform), safeAreaInsetTop/Bottom (depends on Lynx host env(safe-area-inset-*) support), Vue <Transition> (el.classList not available in Lynx elements — uses CSS transitions directly)
+---
+
+## 2026-03-22 - parity-button: Button
+- Props: 18/18 (type, size, text, plain, round, square, disabled, loading, block, icon, iconPrefix, iconPosition, loadingText, loadingSize, loadingType, color, hairline, tag, nativeType, url, to, replace)
+- Events: 1/1 (click)
+- Slots: 3/3 (default, icon, loading)
+- CSS Variables: 36 defined in index.less (all --van-button-* vars matching Vant)
+- BEM Classes: .van-button, --default/primary/success/danger/warning, --plain, --large/normal/small/mini, --block, --disabled, --loading, --round, --square, --hairline, --active, __content, __icon, __text, __loading
+- Animations: opacity transition via CSS (var(--van-duration-fast)), active state via --active class
+- Tests: 26 cases (Vant has 9; we have 26 — added BEM class verification for all modifiers, __content/__text/__icon elements, color/plain inline style, slot rendering)
+- Demo sections: 12/12 (按钮类型, 朴素按钮, 细边框, 禁用状态, 加载状态, 按钮形状, 图标按钮, 按钮尺寸, 块级元素, 页面导航, 自定义颜色, 动画按钮)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Button.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Removed sizeConfig/typeConfig JS objects; all sizing/coloring now via CSS classes + variables. Added __content wrapper, __text/__icon/__loading sub-element classes. Inline styles ONLY for `color` prop (matching Vant's getStyle()). Active state via --active CSS class instead of ::before pseudo-element. Hairline via border-width: 0.5px instead of ::after pseudo-element.
+- Limitations: tag prop (always renders <view>), nativeType (no form submission), url/to/replace (needs Lynx navigation API), ::before active overlay (uses --active opacity class), ::after hairline (uses 0.5px border-width), cursor (not applicable)
 ---
