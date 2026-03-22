@@ -1,13 +1,20 @@
 <!--
   Lynx Limitations:
-  - No DOM text measurement APIs (getComputedStyle, offsetHeight, cloneNode)
-  - Uses character-count approximation instead of Vant's pixel-based binary search
+  - No DOM text measurement APIs (getComputedStyle, offsetHeight, cloneNode):
+    Uses character-count approximation instead of Vant's pixel-based binary search
   - No window resize recalculation (Vant watches windowWidth)
-  - No onActivated recalculation for keep-alive scenarios
-  - action slot: supported but scoped slot renders inline (no custom HTML element wrapping)
+  - No onActivated recalculation for KeepAlive scenarios (KeepAlive not supported in Lynx)
+  - cursor: pointer on action (Lynx has no cursor)
+  - :active pseudo-class on action (Lynx has no :active)
 -->
 <script setup lang="ts">
 import { computed, ref, watch, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import './index.less';
+
+import type { TextEllipsisExpose } from './types';
+
+const [name, bem] = createNamespace('text-ellipsis');
 
 const slots = useSlots();
 
@@ -18,10 +25,6 @@ export interface TextEllipsisProps {
   expandText?: string;
   collapseText?: string;
   position?: 'start' | 'middle' | 'end';
-}
-
-export interface TextEllipsisExpose {
-  toggle: (expanded?: boolean) => void;
 }
 
 const props = withDefaults(defineProps<TextEllipsisProps>(), {
@@ -100,23 +103,21 @@ watch(
   },
 );
 
-defineExpose({ toggle });
+defineExpose<TextEllipsisExpose>({ toggle });
 </script>
 
 <template>
-  <view class="van-text-ellipsis">
-    <text class="van-text-ellipsis__text">{{ displayText }}</text>
+  <view :class="bem()">
+    <text>{{ displayText }}</text>
     <text
       v-if="hasAction && !$slots.action"
-      class="van-text-ellipsis__action"
+      :class="bem('action')"
       @tap="onClickAction"
     >{{ actionText }}</text>
     <text
       v-if="hasAction && $slots.action"
-      class="van-text-ellipsis__action"
+      :class="bem('action')"
       @tap="onClickAction"
     ><slot name="action" :expanded="expanded" /></text>
   </view>
 </template>
-
-<style src="./index.less" />

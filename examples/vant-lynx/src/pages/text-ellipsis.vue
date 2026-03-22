@@ -11,68 +11,68 @@ const text3 =
 </script>
 
 <template>
-  <DemoPage title="TextEllipsis">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Basic Usage</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+  <DemoPage title="TextEllipsis 文本省略">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <TextEllipsis :content="text1" />
       </view>
 
-      <!-- Expand & Collapse -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Expand & Collapse</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <!-- 展开/收起 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">展开/收起</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <TextEllipsis
           :content="text2"
-          expand-text="expand"
-          collapse-text="collapse"
+          expand-text="展开"
+          collapse-text="收起"
         />
       </view>
 
-      <!-- Custom Rows -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Custom Rows</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <!-- 自定义展示行数 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义展示行数</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <TextEllipsis
           rows="3"
           :content="text3"
-          expand-text="expand"
-          collapse-text="collapse"
+          expand-text="展开"
+          collapse-text="收起"
         />
       </view>
 
-      <!-- Custom Collapse Position -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Custom Collapse Position</text>
+      <!-- 自定义省略位置 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义省略位置</text>
 
-      <!-- Head Area Collapse -->
-      <text :style="{ fontSize: 12, color: '#969799', marginBottom: 8, marginLeft: 4 }">Head Area Collapse Position</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <!-- 头部省略 -->
+      <text :style="{ fontSize: '12px', color: '#969799', marginBottom: '8px', marginLeft: '4px' }">头部省略</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <TextEllipsis
           rows="1"
           :content="text3"
-          expand-text="expand"
-          collapse-text="collapse"
+          expand-text="展开"
+          collapse-text="收起"
           position="start"
         />
       </view>
 
-      <!-- Middle Area Collapse -->
-      <text :style="{ fontSize: 12, color: '#969799', marginBottom: 8, marginLeft: 4 }">Middle Area Collapse Position</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <!-- 中部省略 -->
+      <text :style="{ fontSize: '12px', color: '#969799', marginBottom: '8px', marginLeft: '4px' }">中部省略</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <TextEllipsis
           rows="2"
           :content="text3"
-          expand-text="expand"
-          collapse-text="collapse"
+          expand-text="展开"
+          collapse-text="收起"
           position="middle"
         />
       </view>
 
-      <!-- Custom Action -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Custom Action</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+      <!-- 自定义操作内容 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义操作内容</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px' }">
         <TextEllipsis :content="text1">
           <template #action="{ expanded }">
-            {{ expanded ? 'collapse' : 'expand' }}
+            {{ expanded ? '收起' : '展开' }}
           </template>
         </TextEllipsis>
       </view>
