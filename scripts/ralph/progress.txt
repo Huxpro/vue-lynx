@@ -18,6 +18,7 @@ Branch: feat/vant-lynx-v2
 - **Object prop watchers**: When watching object-type props (like `titleStyle`), use `JSON.stringify` comparison to avoid infinite reactive loops. Inline objects in `h()` render calls create new references each render, triggering watchers endlessly. Serialize the value in a computed, then watch the serialized string.
 - **fireEvent in tests**: Use `fireEvent.tap(element)` not `fireEvent(element, 'tap')`. Find tab/item elements by filtering views with style patterns (e.g., `cursor: pointer`, `justify-content: center`). Include `cursor: default` in filters to also match disabled elements.
 - **Component ref in tests**: Use callback ref pattern `ref: (el: any) => { myRef.value = el; }` instead of `ref: myRef` when you need to access `defineExpose`d methods. Direct ref assignment doesn't work in the `defineComponent` + `h()` test pattern.
+- **Color format in tests**: Lynx converts hex colors (e.g. `#1989fa`) to `rgb()` format (e.g. `rgb(25, 137, 250)`) in `getAttribute('style')`. Use `rgb()` format when asserting color values in test expectations.
 
 ---
 
@@ -346,4 +347,121 @@ Branch: feat/vant-lynx-v2
 - Limitations: teleport no-op (Lynx has no Teleport/portal), target no-op (no auto scroll-parent detection; parent must call handleScroll manually), smooth scrolling not controllable (parent scroll-view handles behavior), CSS transform: scale() transition replaced with v-if, box-shadow replaced with border, :active uses touchstart/touchend, cursor: pointer not applicable, KeepAlive onActivated/onDeactivated not relevant
 - New files: types.ts (BackTopThemeVars)
 - Key change: Rewrote component for full Vant parity — added numericProp support (string|number) for right/bottom/zIndex/offset, addUnit helper, teleport/target/immediate props for API compatibility, blue background (#1989fa) matching Vant's --van-blue, callback ref pattern for test handleScroll access
+---
+
+## 2026-03-22 - parity-index-bar: IndexBar + IndexAnchor
+- Props (IndexBar): 6/6 (indexList, sticky, zIndex, teleport, highlightColor, stickyOffsetTop)
+- Props (IndexAnchor): 1/1 (index)
+- Events (IndexBar): 2/2 (select, change)
+- Events (IndexAnchor): 0/0 (none in Vant)
+- Slots (IndexBar): 1/1 (default)
+- Slots (IndexAnchor): 1/1 (default — customizes anchor title text, falls back to index prop)
+- CSS Variables: 4 defined in IndexBar/index.less (--van-index-bar-sidebar-z-index, --van-index-bar-index-font-size, --van-index-bar-index-line-height, --van-index-bar-index-active-color)
+- CSS Variables: 9 defined in IndexAnchor/index.less (--van-index-anchor-z-index, --van-index-anchor-padding, --van-index-anchor-text-color, --van-index-anchor-font-weight, --van-index-anchor-font-size, --van-index-anchor-line-height, --van-index-anchor-background, --van-index-anchor-sticky-text-color, --van-index-anchor-sticky-background)
+- Animations: none (sticky positioning not supported in Lynx)
+- Tests: 15 IndexBar + 8 IndexAnchor = 23 cases (Vant has no dedicated test file) — all pass
+- Demo sections: 2/2 (基础用法, 自定义索引列表) — matches Vant demo tabs
+- Visual match: pass (sidebar layout with tappable index labels, anchor headers with highlight)
+- Limitations: teleport no-op, sticky no-op (no scroll-based DOM measurement), scroll-spy no-op (no IntersectionObserver/scroll event on parent), touch-move gesture sidebar tap only (no document.elementFromPoint for drag-across), stickyOffsetTop no-op, position: fixed sidebar replaced with absolute positioning
+- New files: IndexBar/types.ts (INDEX_BAR_KEY, IndexBarProvide, IndexBarExpose, IndexBarThemeVars, Numeric), IndexAnchor/types.ts (IndexAnchorThemeVars)
+- defineExpose: scrollTo(index)
+- Key change: Rewrote both components for full Vant API parity — Symbol-based provide/inject (INDEX_BAR_KEY), Numeric type support (string|number) for indexList, zIndex prop applied to sidebar (zIndex + 1), highlightColor cascades to IndexAnchor text, active anchor background color (#f2f3f5), all style values use string units
+---
+
+## 2026-03-22 - parity-pagination: Pagination
+- Props: 11/11 (modelValue, mode, prevText, nextText, pageCount, totalItems, showPageSize, itemsPerPage, forceEllipses, showPrevButton, showNextButton)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 4/4 (prev-text, next-text, page, pageDesc)
+- CSS Variables: 9 defined in index.less (--van-pagination-height, --van-pagination-font-size, --van-pagination-item-width, --van-pagination-item-default-color, --van-pagination-item-disabled-color, --van-pagination-item-disabled-background, --van-pagination-background, --van-pagination-desc-color, --van-pagination-disabled-opacity)
+- Animations: none (Pagination has no transitions)
+- Tests: 16 cases (Vant has 4) — all pass
+- Demo sections: 4/4 (基础用法, 简单模式, 显示省略号, 自定义按钮)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: HTML nav/ul/li/button replaced with view/text, CSS class-based BEM replaced with inline styles, :active pseudo-class not available, cursor/user-select not applicable, role/aria-current not applicable, i18n not available (static default text), BORDER_SURROUND replaced with inline border styles
+- New files: types.ts (PaginationMode, PageItem, Numeric, PaginationThemeVars)
+- Key changes: modelValue default changed from 1 to 0 (matching Vant), added watchEffect to clamp modelValue to valid range, Numeric type support (string|number) for pageCount/totalItems/showPageSize/itemsPerPage, fixed ellipsis algorithm to match Vant (navigable startPage-1/endPage+1 instead of first/last page), added pageDesc slot for simple mode
+---
+
+## 2026-03-22 - parity-tree-select: TreeSelect
+- Props: 6/6 (items, activeId, mainActiveIndex, height, max, selectedIcon)
+- Events: 4/4 (update:activeId, update:mainActiveIndex, clickNav, clickItem)
+- Slots: 3/3 (content, nav-text, default children rendering)
+- CSS Variables: 8 defined in index.less (--van-tree-select-font-size, --van-tree-select-nav-background, --van-tree-select-content-background, --van-tree-select-nav-item-padding, --van-tree-select-item-height, --van-tree-select-item-active-color, --van-tree-select-item-disabled-color, --van-tree-select-item-selected-size)
+- Animations: none (TreeSelect has no transitions)
+- Tests: 15 cases (Vant has 14) — all pass
+- Demo sections: 4/4 (单选模式, 多选模式, 自定义内容, 徽标提示)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: className on TreeSelectItem no-op (Lynx has no CSS class system), :active pseudo-class not available, van-ellipsis not applicable, cursor/user-select not applicable, overflow-y auto handled by Lynx layout, -webkit-overflow-scrolling not applicable
+- New files: types.ts (Numeric, TreeSelectChild, TreeSelectItem, TreeSelectThemeVars)
+- Key changes: Separated update:mainActiveIndex (only on index change) from clickNav (always emits) matching Vant's Sidebar behavior; added Numeric type support for height/max/mainActiveIndex; added dot/badge rendering on nav items using Badge component; added addUnit helper for string/number height; fixed item-disabled-color from --van-text-color-3 to --van-gray-5 (matching Vant)
+---
+
+## 2026-03-22 - parity-empty: Empty
+- Props: 3/3 (image, imageSize, description)
+- Events: 0/0 (none in Vant)
+- Slots: 3/3 (image, description, default/bottom)
+- CSS Variables: 8 defined in index.less (--van-empty-padding, --van-empty-image-size, --van-empty-description-margin-top, --van-empty-description-padding, --van-empty-description-color, --van-empty-description-font-size, --van-empty-description-line-height, --van-empty-bottom-margin-top)
+- Animations: none (Empty has no transitions)
+- Tests: 12 cases (Vant has 6) — all pass
+- Demo sections: 5/5 (基础用法, 图片类型, 自定义大小, 自定义图片, 底部内容)
+- Visual match: pass (emoji placeholder rendering for preset types, image element for custom URLs)
+- Limitations: SVG illustrations not supported (Lynx has no SVG), uses emoji text placeholders (📭⚠️🌐🔍) instead; <img> replaced with <image>; <p> replaced with <text>; dark theme opacity not applicable; CSS class-based BEM replaced with inline styles
+- New files: types.ts (Numeric, EmptyThemeVars)
+- Key changes: Added image slot, description slot; supports custom image URLs via <image> element; imageSize supports Numeric and [Numeric, Numeric] array for separate width/height; getSizeStyle/addUnit helpers; removed built-in default descriptions per type (matching Vant behavior)
+---
+
+## 2026-03-22 - parity-skeleton: Skeleton
+- Props: 10/10 (row, rowWidth, round, title, titleWidth, avatar, avatarSize, avatarShape, loading, animate)
+- Events: 0/0 (none in Vant)
+- Slots: 2/2 (default, template)
+- CSS Variables: 10 defined in index.less (--van-skeleton-paragraph-height, --van-skeleton-paragraph-background, --van-skeleton-paragraph-margin-top, --van-skeleton-title-width, --van-skeleton-avatar-size, --van-skeleton-avatar-background, --van-skeleton-duration, --van-skeleton-image-size, --van-skeleton-image-radius)
+- Animations: opacity reduction for animate prop (Lynx has no CSS @keyframes)
+- Tests: 12 cases (Vant has 7) — all pass
+- Demo sections: 4/4 (基础用法, 显示头像, 显示子组件, 自定义展示内容)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: CSS @keyframes shimmer animation not supported (Lynx limitation), uses static opacity as visual cue; sub-components (SkeletonTitle, SkeletonAvatar, SkeletonParagraph, SkeletonImage) not exposed separately; <h3>/<div> replaced with <view>; inheritAttrs not relevant
+- New files: types.ts (Numeric, SkeletonAvatarShape, SkeletonThemeVars)
+- Key changes: Fixed template slot to replace entire content (avatar+title+rows) matching Vant; added Numeric type support for avatarSize/row; round radius uses 999px (--van-radius-max) not 8px; added default rowWidth of '100%' with last row defaulting to '60%'; styles use string px units; added --van-skeleton-image-radius CSS variable
+---
+
+## 2026-03-22 - parity-progress: Progress
+- Props: 9/9 (percentage, strokeWidth, color, trackColor, pivotText, pivotColor, textColor, inactive, showPivot)
+- Events: 0/0 (none in Vant)
+- Slots: 1/1 (pivot with { percentage } param)
+- CSS Variables: 9 defined in index.less (--van-progress-height, --van-progress-color, --van-progress-inactive-color, --van-progress-background, --van-progress-pivot-padding, --van-progress-pivot-text-color, --van-progress-pivot-font-size, --van-progress-pivot-line-height, --van-progress-pivot-background)
+- Animations: none (Lynx has no CSS transitions for width changes)
+- Tests: 12 cases (Vant has 5) — all pass
+- Demo sections: 6/6 (基础用法, 线条粗细, 置灰, 样式定制, 进度插槽内容, 过渡效果)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: No CSS transition on width change, CSS class-based BEM replaced with inline styles, transform: translate() for pivot centering approximated with marginLeft, <span>/<div> replaced with <view>/<text>
+- New files: types.ts (Numeric, ProgressThemeVars)
+- Key changes: Fixed INACTIVE_COLOR from #cacaca to #c8c9cc (matching --van-gray-5); fixed trackColor default from #e5e5e5 to #ebedf0 (matching --van-gray-3); fixed --van-progress-inactive-color fallback from #cacece to #c8c9cc
+---
+
+## 2026-03-22 - parity-circle: Circle
+- Props: 12/12 (text, size, fill, rate, speed, color, clockwise, layerColor, currentRate, strokeWidth, strokeLinecap, startPosition)
+- Events: 1/1 (update:currentRate)
+- Slots: 1/1 (default)
+- CSS Variables: 7 defined in index.less (--van-circle-size, --van-circle-color, --van-circle-layer-color, --van-circle-text-color, --van-circle-text-font-weight, --van-circle-text-font-size, --van-circle-text-line-height)
+- Animations: setInterval-based rate animation with speed prop (Lynx has no raf)
+- Tests: 10 cases (Vant has 5) — all pass
+- Demo sections: 3/3 (基础用法, 样式定制, 起始位置) — matches Vant demo structure
+- Visual match: pass (border-based circular progress approximation)
+- Limitations: SVG not supported (Lynx), uses border-based rendering with 4 quadrant resolution; gradient color (Record<string, string>) not supported (uses last color as solid); strokeLinecap no-op; fill no-op; startPosition simplified; raf/cancelRaf replaced with setInterval; percentage-based transforms not available
+- New files: types.ts (Numeric, CircleStartPosition, CircleThemeVars)
+- Key changes: Added all 12 Vant props; added update:currentRate event with speed animation; added default slot; fixed rate/currentRate relationship (currentRate is display value, rate is target); stroke width scaled from Vant's 1000-viewbox to actual pixel size; resolveColor handles gradient objects as solid fallback
+---
+
+## 2026-03-22 - parity-notice-bar: NoticeBar
+- Props: 8/8 (text, mode, color, delay, speed, leftIcon, wrapable, background, scrollable)
+- Events: 2/2 (close, replay)
+- Slots: 3/3 (default, left-icon, right-icon)
+- CSS Variables: 9 defined in index.less (--van-notice-bar-height, --van-notice-bar-padding, --van-notice-bar-wrapable-padding, --van-notice-bar-text-color, --van-notice-bar-font-size, --van-notice-bar-line-height, --van-notice-bar-background, --van-notice-bar-icon-size, --van-notice-bar-icon-min-width)
+- Animations: timer-based marquee scrolling (setInterval at ~60fps)
+- Tests: 13 cases (Vant has 6) — all pass
+- Demo sections: 6/6 (基础用法, 滚动播放, 多行展示, 通知栏模式, 自定义样式, 垂直滚动)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: getBoundingClientRect not available (uses character-count width estimation), CSS transition marquee replaced with setInterval animation, onPopupReopen/pageshow/onActivated not available, vertical scroll demo simplified (Swipe component not yet available)
+- New files: types.ts (NoticeBarMode, NoticeBarExpose, NoticeBarThemeVars)
+- Key changes: Removed spurious click event (Vant only emits close + replay), fixed content structure to wrap slot inside content view, matched Vant's scrollable default (null = auto-detect), removed hardcoded color/background defaults from props (use computed fallbacks matching CSS vars)
 ---

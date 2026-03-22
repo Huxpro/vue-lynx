@@ -628,7 +628,7 @@
         "Docs: Lynx limitations in components/IndexBar/README.md",
         "Commit: feat(index-bar): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-index-anchor",
@@ -650,7 +650,7 @@
         "Docs: Lynx limitations in components/IndexAnchor/README.md",
         "Commit: feat(index-anchor): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-pagination",
@@ -672,7 +672,7 @@
         "Docs: Lynx limitations in components/Pagination/README.md",
         "Commit: feat(pagination): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tree-select",
@@ -694,7 +694,7 @@
         "Docs: Lynx limitations in components/TreeSelect/README.md",
         "Commit: feat(tree-select): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-empty",
@@ -716,7 +716,7 @@
         "Docs: Lynx limitations in components/Empty/README.md",
         "Commit: feat(empty): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-skeleton",
@@ -738,7 +738,7 @@
         "Docs: Lynx limitations in components/Skeleton/README.md",
         "Commit: feat(skeleton): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-progress",
@@ -760,7 +760,7 @@
         "Docs: Lynx limitations in components/Progress/README.md",
         "Commit: feat(progress): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-circle",
@@ -782,7 +782,7 @@
         "Docs: Lynx limitations in components/Circle/README.md",
         "Commit: feat(circle): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-notice-bar",
@@ -804,7 +804,7 @@
         "Docs: Lynx limitations in components/NoticeBar/README.md",
         "Commit: feat(notice-bar): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-highlight",
