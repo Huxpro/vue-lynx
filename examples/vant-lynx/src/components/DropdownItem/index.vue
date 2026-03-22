@@ -9,11 +9,7 @@
   - Uses Cell component for option rows (matching Vant)
   - Uses Icon component for success checkmark and option icons
   - Provide/Inject pattern with DropdownMenu parent
-  - Gaps:
-    - No teleport (N/A in Lynx)
-    - No lazyRender (v-if used instead)
-    - titleClass accepted but class-based styling N/A in Lynx
-    - No Popup sub-component (inline positioned dropdown instead)
+  - Animation: CSS slide transition + Vue <Transition>
 -->
 <script lang="ts">
 // Module-level counter to assign a stable unique index to each DropdownItem instance
@@ -21,9 +17,8 @@ let _itemCounter = 0;
 </script>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch, onBeforeUnmount, useSlots, type Ref } from 'vue-lynx';
+import { computed, inject, ref, watch, onBeforeUnmount, useSlots, Transition, type Ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
-import { useAnimate } from '../../composables/useAnimate';
 
 // Inline type to avoid cross-SFC type import issues
 interface DropdownMenuProvide {
@@ -80,9 +75,7 @@ const menu = inject<DropdownMenuProvide>('dropdownMenu')!;
 // Each instance gets a stable unique index assigned at setup time
 const selfIndex = ref<number>(_itemCounter++);
 
-// Animation
 const ANIM_DURATION = 200;
-const { elRef: dropdownRef, slideIn, slideOut } = useAnimate();
 
 // Reactive state matching Vant's internal state
 const showPopup = ref(false);
@@ -90,27 +83,31 @@ const showWrapper = ref(false);
 
 const isOpen = computed(() => menu.openedIndex.value === selfIndex.value);
 
+const transitionName = computed(() => {
+  const dir = menu.props.direction || 'down';
+  return `van-dropdown-slide-${dir}`;
+});
+
 // Sync local state with parent openedIndex
 watch(isOpen, (val) => {
   if (val) {
     showPopup.value = true;
     showWrapper.value = true;
     emit('open');
-    // Slide in based on direction
-    const dir = (menu.props.direction || 'down') === 'down' ? 'down' : 'up';
-    slideIn(dir, ANIM_DURATION);
-    setTimeout(() => emit('opened'), ANIM_DURATION);
   } else if (showPopup.value) {
     showPopup.value = false;
     emit('close');
-    const dir = (menu.props.direction || 'down') === 'down' ? 'down' : 'up';
-    slideOut(dir, ANIM_DURATION);
-    setTimeout(() => {
-      showWrapper.value = false;
-      emit('closed');
-    }, ANIM_DURATION);
   }
 });
+
+function onOpened() {
+  emit('opened');
+}
+
+function onClosed() {
+  showWrapper.value = false;
+  emit('closed');
+}
 
 const displayTitle = computed(() => {
   if (slots.title) return null; // slot will render title
@@ -195,7 +192,6 @@ const dropdownStyle = computed(() => {
   const isDown = direction.value === 'down';
   const zIndex = Number(menu.props.zIndex) || 10;
   return {
-    display: showWrapper.value ? 'flex' : 'none',
     position: 'absolute' as const,
     left: 0,
     right: 0,
@@ -205,6 +201,7 @@ const dropdownStyle = computed(() => {
     flexDirection: 'column' as const,
     maxHeight: 320,
     overflow: 'hidden' as const,
+    transition: `transform ${ANIM_DURATION / 1000}s ease`,
   };
 });
 
@@ -231,10 +228,7 @@ const arrowChar = computed(() => {
   return isOpen.value ? down : up;
 });
 
-// Reset counter on unmount is not needed since _itemCounter is global
-// but reset on mount for HMR scenarios
 onBeforeUnmount(() => {
-  // If this item was the open one, close it
   if (menu.openedIndex.value === selfIndex.value) {
     menu.closeAll();
   }
@@ -254,52 +248,54 @@ onBeforeUnmount(() => {
   <view :style="overlayStyle" @tap="onOverlayTap" />
 
   <!-- Dropdown list -->
-  <view :main-thread-ref="dropdownRef" :style="dropdownStyle">
-    <view
-      v-for="option in options"
-      :key="String(option.value)"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingTop: 12,
-        paddingBottom: 12,
-        paddingLeft: 16,
-        paddingRight: 16,
-        borderBottomWidth: 0.5,
-        borderBottomStyle: 'solid',
-        borderBottomColor: '#ebedf0',
-        backgroundColor: '#fff',
-        opacity: option.disabled ? 0.5 : 1,
-      }"
-      @tap="onSelect(option)"
-    >
-      <view v-if="option.icon" :style="{ marginRight: 8, display: 'flex', alignItems: 'center' }">
+  <Transition :name="transitionName" :duration="ANIM_DURATION" @after-enter="onOpened" @after-leave="onClosed">
+    <view v-show="showPopup" :style="dropdownStyle">
+      <view
+        v-for="option in options"
+        :key="String(option.value)"
+        :style="{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingTop: 12,
+          paddingBottom: 12,
+          paddingLeft: 16,
+          paddingRight: 16,
+          borderBottomWidth: 0.5,
+          borderBottomStyle: 'solid',
+          borderBottomColor: '#ebedf0',
+          backgroundColor: '#fff',
+          opacity: option.disabled ? 0.5 : 1,
+        }"
+        @tap="onSelect(option)"
+      >
+        <view v-if="option.icon" :style="{ marginRight: 8, display: 'flex', alignItems: 'center' }">
+          <Icon
+            :name="option.icon"
+            :size="16"
+            :color="option.value === modelValue ? activeColor : (option.disabled ? '#c8c9cc' : '#323233')"
+          />
+        </view>
+        <text
+          :style="{
+            flex: 1,
+            fontSize: 14,
+            color: option.disabled
+              ? '#c8c9cc'
+              : option.value === modelValue
+                ? activeColor
+                : '#323233',
+          }"
+        >{{ option.text }}</text>
         <Icon
-          :name="option.icon"
+          v-if="option.value === modelValue"
+          name="success"
           :size="16"
-          :color="option.value === modelValue ? activeColor : (option.disabled ? '#c8c9cc' : '#323233')"
+          :color="option.disabled ? undefined : activeColor"
         />
       </view>
-      <text
-        :style="{
-          flex: 1,
-          fontSize: 14,
-          color: option.disabled
-            ? '#c8c9cc'
-            : option.value === modelValue
-              ? activeColor
-              : '#323233',
-        }"
-      >{{ option.text }}</text>
-      <Icon
-        v-if="option.value === modelValue"
-        name="success"
-        :size="16"
-        :color="option.disabled ? undefined : activeColor"
-      />
+      <!-- Default slot for custom content -->
+      <slot />
     </view>
-    <!-- Default slot for custom content -->
-    <slot />
-  </view>
+  </Transition>
 </template>

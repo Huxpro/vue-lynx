@@ -5,21 +5,15 @@
   - Events: 3/3 supported (click, close, replay)
   - Slots: 3/3 supported (default, left-icon, right-icon)
   - Sub-components: Icon (for left-icon, close/arrow right icons)
-  - Scrolling marquee: Timer-based offset animation (Lynx lacks DOM measurement APIs;
-    uses estimated width from text length * avgCharWidth for marquee distance)
+  - Scrolling marquee: CSS transition-based translateX animation with timer-based looping
   - Close mode: Hides bar on close, emits close event
   - Link mode: Shows arrow icon, entire bar is tappable
   - Ellipsis: When scrollable=false and wrapable=false, text is single-line with overflow hidden
   - Wrapable: When wrapable=true, text wraps to multiple lines with adjusted padding
   - Exposed methods: reset() to restart marquee animation
-  - Gaps:
-    - No CSS transition timing function (Lynx inline style animation is timer-based, not CSS transition)
-    - No CSS variable theming (inline styles only in Lynx)
-    - No DOM measurement for exact content/wrap width (uses character count estimate)
-    - scrollable=null auto-detection relies on estimated widths, not actual DOM measurement
 -->
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, useMainThreadRef, runOnMainThread } from 'vue-lynx';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
 
 export interface NoticeBarProps {
@@ -53,45 +47,28 @@ const emit = defineEmits<{
 
 const visible = ref(true);
 
-// Main-thread marquee animation using element.animate()
-const marqueeRef = useMainThreadRef(null);
-let animationTimer: ReturnType<typeof setTimeout> | null = null;
-let startDelayTimer: ReturnType<typeof setTimeout> | null = null;
-
-// Estimated character width for marquee distance calculation.
-// Lynx does not provide DOM measurement APIs (useRect), so we approximate
-// the content width from text length. Average CJK char ~14px at fontSize 14.
+// Estimated character width for marquee distance calculation
 const AVG_CHAR_WIDTH = 8;
-const WRAP_WIDTH = 300; // Estimated visible wrap width (bar minus padding/icons)
-
-function _marqueeAnimate(wrapW: number, contentW: number, duration: number) {
-  'main thread';
-  if (typeof (marqueeRef as any).current?.animate === 'function') {
-    return (marqueeRef as any).current.animate(
-      [
-        { transform: `translateX(${wrapW}px)` },
-        { transform: `translateX(${-contentW}px)` },
-      ],
-      { duration, fill: 'forwards', easing: 'linear', iterations: Infinity },
-    );
-  }
-}
+const WRAP_WIDTH = 300;
 
 const estimatedContentWidth = computed(() => {
   return (props.text?.length || 0) * AVG_CHAR_WIDTH;
 });
 
 const shouldScroll = computed(() => {
-  // scrollable=false explicitly disables scrolling
   if (props.scrollable === false) return false;
-  // scrollable=true forces scrolling
   if (props.scrollable === true) return true;
-  // scrollable=null (default): auto-detect -- scroll if content overflows
   return estimatedContentWidth.value > WRAP_WIDTH;
 });
 
 const resolvedSpeed = computed(() => +(props.speed) || 60);
 const resolvedDelay = computed(() => (+(props.delay) || 1) * 1000);
+
+// Marquee state
+const marqueeOffset = ref(0);
+const marqueeTransitioning = ref(false);
+let animationTimer: ReturnType<typeof setTimeout> | null = null;
+let startDelayTimer: ReturnType<typeof setTimeout> | null = null;
 
 // --- Styles ---
 
@@ -109,7 +86,6 @@ const barStyle = computed(() => {
   };
 
   if (props.wrapable) {
-    // Wrapable mode: auto height, extra vertical padding
     base.paddingTop = 8;
     base.paddingBottom = 8;
   } else {
@@ -145,14 +121,15 @@ const contentStyle = computed(() => {
   };
 
   if (shouldScroll.value) {
-    // Marquee mode: positioned for element.animate() translateX
     base.position = 'absolute';
     base.whiteSpace = 'nowrap';
+    base.transform = `translateX(${marqueeOffset.value}px)`;
+    base.transition = marqueeTransitioning.value
+      ? `transform ${marqueeDuration.value}ms linear`
+      : 'none';
   } else if (props.wrapable) {
-    // Wrapable mode: allow text wrapping
     base.position = 'relative';
   } else {
-    // Ellipsis mode (single line, no scroll)
     base.position = 'relative';
     base.overflow = 'hidden';
     base.whiteSpace = 'nowrap';
@@ -172,6 +149,13 @@ const rightIconStyle = computed(() => ({
 
 // --- Marquee Animation ---
 
+const marqueeDuration = computed(() => {
+  const contentW = estimatedContentWidth.value;
+  const totalDistance = WRAP_WIDTH + contentW;
+  const speed = resolvedSpeed.value;
+  return (totalDistance / speed) * 1000;
+});
+
 function stopAnimation() {
   if (animationTimer) {
     clearTimeout(animationTimer);
@@ -181,6 +165,7 @@ function stopAnimation() {
     clearTimeout(startDelayTimer);
     startDelayTimer = null;
   }
+  marqueeTransitioning.value = false;
 }
 
 function startAnimation() {
@@ -189,14 +174,28 @@ function startAnimation() {
   if (!shouldScroll.value || !visible.value) return;
 
   const contentW = estimatedContentWidth.value;
-  const wrapW = WRAP_WIDTH;
-  const speed = resolvedSpeed.value; // px per second
-  const totalDistance = wrapW + contentW;
-  const duration = (totalDistance / speed) * 1000; // ms for one full scroll cycle
 
   startDelayTimer = setTimeout(() => {
-    runOnMainThread(_marqueeAnimate)(wrapW, contentW, duration);
+    runMarqueeCycle(contentW);
   }, resolvedDelay.value);
+}
+
+function runMarqueeCycle(contentW: number) {
+  // Jump to start position (right edge) without transition
+  marqueeTransitioning.value = false;
+  marqueeOffset.value = WRAP_WIDTH;
+
+  // Start transition to end position on next frame
+  setTimeout(() => {
+    marqueeTransitioning.value = true;
+    marqueeOffset.value = -contentW;
+
+    // After animation completes, restart
+    animationTimer = setTimeout(() => {
+      emit('replay');
+      runMarqueeCycle(contentW);
+    }, marqueeDuration.value);
+  }, 16);
 }
 
 function reset() {
@@ -224,7 +223,6 @@ onUnmounted(() => {
   stopAnimation();
 });
 
-// Restart animation when text or scrollable changes
 watch(
   () => [props.text, props.scrollable],
   () => {
@@ -232,7 +230,6 @@ watch(
   },
 );
 
-// Stop animation when hidden
 watch(visible, (val) => {
   if (val) {
     startAnimation();
@@ -241,7 +238,6 @@ watch(visible, (val) => {
   }
 });
 
-// Expose reset method (Vant parity)
 defineExpose({ reset });
 </script>
 
@@ -257,7 +253,7 @@ defineExpose({ reset });
     <!-- Scrollable content wrap (marquee container) -->
     <view :style="wrapStyle">
       <slot>
-        <text :main-thread-ref="marqueeRef" :style="contentStyle">{{ text }}</text>
+        <text :style="contentStyle">{{ text }}</text>
       </slot>
     </view>
 

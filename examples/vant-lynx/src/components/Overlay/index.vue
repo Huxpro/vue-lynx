@@ -7,11 +7,10 @@
     - teleport: accepted for API compat but not applicable in Lynx (no DOM)
     - lockScroll: accepted for API compat but no direct equivalent in Lynx
     - className: accepted but applied as inline style override since Lynx has no CSS class system
-  - Animation: Fade in/out using main-thread element.animate()
+  - Animation: Fade in/out using CSS transition + Vue <Transition>
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue-lynx';
-import { useAnimate } from '../../composables/useAnimate';
+import { computed, ref, watch, Transition } from 'vue-lynx';
 
 export interface OverlayProps {
   show?: boolean;
@@ -36,27 +35,14 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
-// Animation
-const { elRef: animRef, fadeIn, fadeOut } = useAnimate();
-
 // For lazy render: track if overlay has ever been shown
 const hasRendered = ref(false);
-// Controls DOM presence during leave animation
-const isVisible = ref(false);
 
 watch(
   () => props.show,
   (val) => {
-    const ms = Number(props.duration) * 1000;
     if (val) {
       hasRendered.value = true;
-      isVisible.value = true;
-      fadeIn(ms);
-    } else if (isVisible.value) {
-      fadeOut(ms);
-      setTimeout(() => {
-        isVisible.value = false;
-      }, ms);
     }
   },
   { immediate: true },
@@ -67,6 +53,8 @@ const shouldRender = computed(() => {
   return hasRendered.value;
 });
 
+const durationMs = computed(() => Number(props.duration) * 1000);
+
 const overlayStyle = computed(() => {
   const base: Record<string, any> = {
     position: 'fixed' as const,
@@ -76,6 +64,7 @@ const overlayStyle = computed(() => {
     bottom: 0,
     zIndex: Number(props.zIndex),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    transition: `opacity ${props.duration}s ease`,
   };
   if (props.customStyle) {
     Object.assign(base, props.customStyle);
@@ -89,12 +78,13 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <view
-    v-if="shouldRender && isVisible"
-    :main-thread-ref="animRef"
-    :style="overlayStyle"
-    @tap="onTap"
-  >
-    <slot />
-  </view>
+  <Transition v-if="shouldRender" name="van-fade" :duration="durationMs">
+    <view
+      v-show="show"
+      :style="overlayStyle"
+      @tap="onTap"
+    >
+      <slot />
+    </view>
+  </Transition>
 </template>

@@ -1,28 +1,18 @@
 <!--
   Vant Feature Parity Report: FloatingPanel
   - Props: 7/8 supported
-    - height ✅ (v-model), anchors ✅, duration ✅, contentDraggable ✅
-    - draggable ✅ (can disable drag entirely)
-    - magnetic ✅ (snap to nearest anchor, default true)
-    - safeAreaInsetBottom ✅ (prop accepted, visual padding added)
-    - lockScroll ❌ (Lynx scroll model differs from browser, no equivalent API)
+    - height (v-model), anchors, duration, contentDraggable
+    - draggable (can disable drag entirely)
+    - magnetic (snap to nearest anchor, default true)
+    - safeAreaInsetBottom (prop accepted, visual padding added)
+    - lockScroll: N/A (Lynx scroll model differs from browser)
   - Events: 2/2 supported (update:height, heightChange)
   - Slots: 2/2 supported (default, header)
-  - Gestures Supported:
-    - Drag header bar up/down to resize panel ✅
-    - Drag content area (when contentDraggable=true) ✅
-    - Content scroll interaction: drags panel when at scroll top, scrolls content otherwise ✅
-    - Elastic damping when dragging beyond min/max bounds ✅
-    - Snap to nearest anchor on release (magnetic) ✅
-    - Clamp to [min, max] when magnetic=false ✅
-    - touchcancel treated as touchend ✅
-  - Transition: cubic-bezier(0.18, 0.89, 0.32, 1.28) spring animation ✅
-  - Gaps:
-    - lockScroll not supported (Lynx has different scroll mechanism)
-    - Uses height-based positioning instead of translateY (Lynx compatibility)
+  - Gestures: drag header/content, elastic damping, magnetic snap, touchcancel
+  - Transition: CSS transition with cubic-bezier spring easing (only during snap, not drag)
 -->
 <script setup lang="ts">
-import { ref, computed, watch, runOnMainThread, useMainThreadRef } from 'vue-lynx';
+import { ref, computed, watch } from 'vue-lynx';
 
 export interface FloatingPanelProps {
   height?: number;
@@ -51,7 +41,6 @@ const emit = defineEmits<{
   'height-change': [params: { height: number }];
 }>();
 
-// Default screen height fallback (Lynx doesn't have window.innerHeight)
 const DEFAULT_SCREEN_HEIGHT = 800;
 
 const boundary = computed(() => ({
@@ -65,7 +54,6 @@ const anchors = computed(() =>
     : [boundary.value.min, boundary.value.max],
 );
 
-// Find the closest anchor to a given height
 function closest(arr: number[], target: number): number {
   return arr.reduce((prev, curr) =>
     Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev,
@@ -78,28 +66,6 @@ const currentHeight = ref(
     : boundary.value.min,
 );
 const dragging = ref(false);
-
-// Main-thread animate for snap transitions
-const panelRef = useMainThreadRef(null);
-
-function _animateHeight(fromH: number, toH: number, duration: number) {
-  'main thread';
-  if (typeof (panelRef as any).current?.animate === 'function') {
-    (panelRef as any).current.animate(
-      [{ height: `${fromH}px` }, { height: `${toH}px` }],
-      {
-        duration,
-        fill: 'forwards',
-        easing: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
-      },
-    );
-  }
-}
-
-function animateToHeight(from: number, to: number) {
-  const ms = props.duration * 1000;
-  runOnMainThread(_animateHeight)(from, to, ms);
-}
 
 // Damping factor for elastic effect beyond bounds
 const DAMP = 0.2;
@@ -132,7 +98,7 @@ function onTouchStart(e: any) {
 function onTouchMove(e: any) {
   if (!props.draggable || !dragging.value) return;
   const touch = e.touches?.[0] || e;
-  const deltaY = startY - (touch.clientY || 0); // positive = dragging up = increase height
+  const deltaY = startY - (touch.clientY || 0);
   const moveY = -(startHeight + deltaY);
   currentHeight.value = -ease(moveY);
 }
@@ -143,17 +109,11 @@ function onTouchEnd() {
 
   if (!props.draggable) return;
 
-  const fromHeight = currentHeight.value;
   if (props.magnetic) {
     currentHeight.value = closest(anchors.value, currentHeight.value);
   } else {
     const { min, max } = boundary.value;
     currentHeight.value = Math.max(min, Math.min(max, currentHeight.value));
-  }
-
-  // Use element.animate() for snap transition
-  if (currentHeight.value !== fromHeight) {
-    animateToHeight(fromHeight, currentHeight.value);
   }
 
   if (currentHeight.value !== startHeight) {
@@ -162,7 +122,6 @@ function onTouchEnd() {
   }
 }
 
-// Content area touch handling (only drags panel when contentDraggable is true)
 function onContentTouchStart(e: any) {
   if (!props.contentDraggable) return;
   onTouchStart(e);
@@ -173,7 +132,6 @@ function onContentTouchMove(e: any) {
   onTouchMove(e);
 }
 
-// Watch for external height changes
 watch(
   () => props.height,
   (val) => {
@@ -183,7 +141,6 @@ watch(
   },
 );
 
-// Initialize to nearest anchor
 watch(
   boundary,
   () => {
@@ -204,6 +161,10 @@ const panelStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'column' as const,
   zIndex: 999,
+  // CSS transition only when not dragging (snap animation)
+  transition: dragging.value
+    ? 'none'
+    : `height ${props.duration}s cubic-bezier(0.18, 0.89, 0.32, 1.28)`,
 }));
 
 const headerStyle = computed(() => ({
@@ -221,13 +182,12 @@ const barStyle = {
 };
 
 defineExpose({
-  /** Current panel height */
   height: currentHeight,
 });
 </script>
 
 <template>
-  <view :main-thread-ref="panelRef" :style="panelStyle">
+  <view :style="panelStyle">
     <!-- Header: custom slot or default drag bar -->
     <slot name="header">
       <view

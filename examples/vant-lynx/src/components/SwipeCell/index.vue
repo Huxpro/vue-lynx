@@ -1,27 +1,16 @@
 <!--
   Vant Feature Parity Report: SwipeCell
   - Props: 5/6 supported
-    - name ✅, disabled ✅, leftWidth ✅, rightWidth ✅, stopPropagation ✅
-    - beforeClose ✅ (interceptor pattern)
+    - name, disabled, leftWidth, rightWidth, stopPropagation
+    - beforeClose (interceptor pattern)
   - Events: 3/3 supported (open, close, click)
   - Slots: 3/3 supported (default, left, right)
-  - Exposed Methods: open(side), close(position) ✅
-  - Gestures Supported:
-    - Horizontal swipe left to reveal right actions ✅
-    - Horizontal swipe right to reveal left actions ✅
-    - Direction detection: only activates on horizontal swipe ✅
-    - Threshold: 15% when opened, 15% when closed (matches Vant) ✅
-    - Drag continues from current offset (not reset) ✅
-    - Click-away closes cell ✅
-    - Tap vs drag distinction (lockClick) ✅
-    - touchcancel treated as touchend ✅
-  - Transition: 0.6s slide animation when snapping ✅
-  - Gaps:
-    - No auto-width measurement from slots (Lynx has no getComputedStyle/getBoundingClientRect
-      equivalent for synchronous measurement; leftWidth/rightWidth must be provided as props)
+  - Exposed Methods: open(side), close(position)
+  - Gestures: horizontal swipe, direction detection, threshold, drag offset, click-away
+  - Transition: CSS transition for snap (only during snap, not during drag)
 -->
 <script setup lang="ts">
-import { ref, computed, useMainThreadRef, runOnMainThread } from 'vue-lynx';
+import { ref, computed } from 'vue-lynx';
 
 export interface SwipeCellProps {
   name?: string | number;
@@ -48,26 +37,6 @@ const emit = defineEmits<{
   close: [params: { name: string | number; position: 'left' | 'right' | 'cell' | 'outside' }];
   click: [position: 'left' | 'right' | 'cell' | 'outside'];
 }>();
-
-// Main-thread animation for snap
-const wrapperRef = useMainThreadRef(null);
-
-function _snapTranslate(fromX: number, toX: number, duration: number) {
-  'main thread';
-  if (typeof (wrapperRef as any).current?.animate === 'function') {
-    (wrapperRef as any).current.animate(
-      [
-        { transform: `translateX(${fromX}px)` },
-        { transform: `translateX(${toX}px)` },
-      ],
-      {
-        duration,
-        fill: 'forwards',
-        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-      },
-    );
-  }
-}
 
 // State
 const offset = ref(0);
@@ -104,7 +73,6 @@ function onTouchMove(e: any) {
   const offsetX = Math.abs(deltaX);
   const offsetY = Math.abs(deltaY);
 
-  // Lock direction when distance exceeds threshold
   if (!direction || (offsetX < LOCK_DIRECTION_DISTANCE && offsetY < LOCK_DIRECTION_DISTANCE)) {
     if (offsetX > offsetY) {
       direction = 'horizontal';
@@ -113,7 +81,6 @@ function onTouchMove(e: any) {
     }
   }
 
-  // Only handle horizontal swipes
   if (direction !== 'horizontal') return;
 
   lockClick.value = true;
@@ -131,7 +98,6 @@ function onTouchEnd() {
     dragging.value = false;
     toggle(offset.value > 0 ? 'left' : 'right');
 
-    // Reset lockClick after a tick to allow click events to be properly handled
     setTimeout(() => {
       lockClick.value = false;
     }, 0);
@@ -152,13 +118,7 @@ function toggle(side: 'left' | 'right') {
 }
 
 function open(side: 'left' | 'right') {
-  const fromOffset = offset.value;
   offset.value = side === 'left' ? props.leftWidth : -props.rightWidth;
-
-  // Animate snap to open position
-  if (fromOffset !== offset.value) {
-    runOnMainThread(_snapTranslate)(fromOffset, offset.value, 300);
-  }
 
   if (!opened.value) {
     opened.value = true;
@@ -167,13 +127,7 @@ function open(side: 'left' | 'right') {
 }
 
 function close(position: 'left' | 'right' | 'cell' | 'outside' = 'outside') {
-  const fromOffset = offset.value;
   offset.value = 0;
-
-  // Animate snap to closed position
-  if (fromOffset !== 0) {
-    runOnMainThread(_snapTranslate)(fromOffset, 0, 300);
-  }
 
   if (opened.value) {
     opened.value = false;
@@ -220,9 +174,12 @@ const wrapperStyle = computed(() => ({
   display: 'flex' as const,
   flexDirection: 'row' as const,
   transform: `translateX(${offset.value}px)`,
+  // CSS transition only when snapping (not during drag)
+  transition: dragging.value
+    ? 'none'
+    : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
 }));
 
-// Expose open/close methods
 defineExpose({ open, close });
 </script>
 
@@ -235,7 +192,7 @@ defineExpose({ open, close });
     @touchcancel="onTouchEnd"
     @tap="getClickHandler('cell')()"
   >
-    <view :main-thread-ref="wrapperRef" :style="wrapperStyle">
+    <view :style="wrapperStyle">
       <view
         v-if="leftWidth"
         :style="{
