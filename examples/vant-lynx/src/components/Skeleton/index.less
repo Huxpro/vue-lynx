@@ -1,11 +1,110 @@
 :root {
+  --van-skeleton-duration: 1.2s;
   --van-skeleton-paragraph-height: 16px;
   --van-skeleton-paragraph-background: var(--van-active-color, #f2f3f5);
   --van-skeleton-paragraph-margin-top: var(--van-padding-sm, 12px);
   --van-skeleton-title-width: 40%;
   --van-skeleton-avatar-size: 32px;
   --van-skeleton-avatar-background: var(--van-active-color, #f2f3f5);
-  --van-skeleton-duration: 1.2s;
   --van-skeleton-image-size: 96px;
   --van-skeleton-image-radius: 24px;
+}
+
+.van-skeleton {
+  display: flex;
+  padding: 0 var(--van-padding-md, 16px);
+
+  &__content {
+    width: 100%;
+  }
+
+  &--animate {
+    animation: van-skeleton-blink var(--van-skeleton-duration) ease-in-out infinite;
+  }
+
+  &--round {
+    .van-skeleton-title {
+      border-radius: var(--van-radius-max, 999px);
+    }
+    .van-skeleton-paragraph {
+      border-radius: var(--van-radius-max, 999px);
+    }
+    .van-skeleton-avatar {
+      border-radius: var(--van-radius-max, 999px);
+    }
+  }
+}
+
+// SkeletonAvatar
+.van-skeleton-avatar {
+  flex-shrink: 0;
+  width: var(--van-skeleton-avatar-size);
+  height: var(--van-skeleton-avatar-size);
+  margin-right: var(--van-padding-md, 16px);
+  background: var(--van-skeleton-avatar-background);
+
+  &--round {
+    border-radius: var(--van-radius-max, 999px);
+  }
+}
+
+.van-skeleton-avatar + .van-skeleton__content {
+  padding-top: var(--van-padding-xs, 8px);
+}
+
+// SkeletonTitle
+.van-skeleton-title {
+  width: var(--van-skeleton-title-width);
+  height: var(--van-skeleton-paragraph-height);
+  margin: 0;
+  background: var(--van-skeleton-paragraph-background);
+
+  &--round {
+    border-radius: var(--van-radius-max, 999px);
+  }
+}
+
+.van-skeleton-title + .van-skeleton-paragraph {
+  margin-top: 20px;
+}
+
+// SkeletonParagraph
+.van-skeleton-paragraph {
+  height: var(--van-skeleton-paragraph-height);
+  background: var(--van-skeleton-paragraph-background);
+
+  &--round {
+    border-radius: var(--van-radius-max, 999px);
+  }
+
+  &:not(:first-child) {
+    margin-top: var(--van-skeleton-paragraph-margin-top);
+  }
+}
+
+// SkeletonImage
+.van-skeleton-image {
+  display: flex;
+  width: var(--van-skeleton-image-size);
+  height: var(--van-skeleton-image-size);
+  align-items: center;
+  justify-content: center;
+  background: var(--van-active-color, #f2f3f5);
+
+  &--round {
+    border-radius: var(--van-skeleton-image-radius);
+  }
+
+  &__icon {
+    width: calc(var(--van-skeleton-image-size) / 2);
+    height: calc(var(--van-skeleton-image-size) / 2);
+    font-size: calc(var(--van-skeleton-image-size) / 2);
+    color: var(--van-gray-5, #969799);
+  }
+}
+
+@keyframes van-skeleton-blink {
+  50% {
+    opacity: 0.6;
+  }
 }

@@ -413,3 +413,31 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Uses Sidebar/SidebarItem components internally (matching Vant's architecture). All styling via CSS classes in .less. className prop on TreeSelectItem now works (applied to nav-item class). Fixed limitations comment to remove incorrect claims about CSS class system not working.
 - Limitations: overflow-y: auto (Lynx uses scroll-view), -webkit-overflow-scrolling (N/A), :active pseudo-class (N/A), cursor/user-select (N/A), van-ellipsis (Lynx handles text truncation differently)
 ---
+
+## 2026-03-22 - parity-empty: Empty
+- Props: 3/3 (image, imageSize, description)
+- Events: 0/0 (Empty has no events)
+- Slots: 3/3 (image, description, default)
+- CSS Variables: 8 defined in index.less (--van-empty-padding, --van-empty-image-size, --van-empty-description-margin-top, --van-empty-description-padding, --van-empty-description-color, --van-empty-description-font-size, --van-empty-description-line-height, --van-empty-bottom-margin-top)
+- Animations: none (Empty has no transitions)
+- Tests: 12 cases (Vant has 6 — added BEM class verification, custom image URL, no-bottom, no-description tests)
+- Demo sections: 5/5 (基础用法, 图片类型, 自定义大小, 自定义图片, 底部内容)
+- Visual match: pass (BEM classes, CSS variables, all static styles via .less)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; matches Vant's 4)
+- Key changes: Replaced inline styles with BEM CSS classes via createNamespace. Imported shared addUnit from utils/format instead of local duplicate. All visual styling now via CSS class selectors in .less file.
+- Limitations: Inline SVG (Lynx uses content/src attributes, not inline SVG children — preset images use text placeholders), <p>/<div>/<img> elements (replaced with <text>/<view>/<image>), Dark theme (.van-theme-dark not supported)
+---
+
+## 2026-03-22 - parity-skeleton: Skeleton
+- Props: 10/10 (row, rowWidth, round, title, titleWidth, avatar, avatarSize, avatarShape, loading, animate)
+- Events: 0/0 (Skeleton has no events)
+- Slots: 2/2 (default, template)
+- CSS Variables: 10 defined in index.less (--van-skeleton-duration, --van-skeleton-paragraph-height, --van-skeleton-paragraph-background, --van-skeleton-paragraph-margin-top, --van-skeleton-title-width, --van-skeleton-avatar-size, --van-skeleton-avatar-background, --van-skeleton-image-size, --van-skeleton-image-radius)
+- Animations: @keyframes van-skeleton-blink (opacity pulse), --animate class for animation toggle
+- Tests: 32 cases (Vant has 7; we have 32 — added sub-component tests for SkeletonTitle, SkeletonAvatar, SkeletonParagraph, SkeletonImage + BEM class verification)
+- Demo sections: 4/4 (基础用法, 显示头像, 显示子组件, 自定义展示内容)
+- Visual match: pass (BEM classes, CSS variables, @keyframes animation, sub-components)
+- Files: index.vue, index.less, types.ts, SkeletonTitle.vue, SkeletonAvatar.vue, SkeletonParagraph.vue, SkeletonImage.vue, test/index.spec.ts (8 files; Vant has Skeleton + 4 separate sub-component packages)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Split into sub-components matching Vant's architecture (SkeletonTitle, SkeletonAvatar, SkeletonParagraph, SkeletonImage). Added @keyframes van-skeleton-blink animation. All styling via CSS classes and variables in .less file. Demo now uses actual Switch component and sub-components.
+- Limitations: <h3>/<div> HTML elements (replaced with <view>), inheritAttrs (not relevant in Lynx), :not(:first-child) CSS selector (may not work in Lynx)
+---
