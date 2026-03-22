@@ -34,6 +34,8 @@ const sectionStyle = {
           v-model="currentPage1"
           :total-items="24"
           :items-per-page="5"
+          prev-text="上一页"
+          next-text="下一页"
         />
       </view>
 
@@ -44,6 +46,8 @@ const sectionStyle = {
           v-model="currentPage2"
           :page-count="12"
           mode="simple"
+          prev-text="上一页"
+          next-text="下一页"
         />
       </view>
 
@@ -55,6 +59,8 @@ const sectionStyle = {
           force-ellipses
           :total-items="125"
           :show-page-size="3"
+          prev-text="上一页"
+          next-text="下一页"
         />
       </view>
 
@@ -67,13 +73,13 @@ const sectionStyle = {
           :show-page-size="5"
         >
           <template #prev-text>
-            <text :style="{ fontSize: '14px', color: '#1989fa' }">←</text>
+            <text :style="{ fontSize: '14px', color: '#1989fa' }">&#x2190;</text>
           </template>
           <template #next-text>
-            <text :style="{ fontSize: '14px', color: '#1989fa' }">→</text>
+            <text :style="{ fontSize: '14px', color: '#1989fa' }">&#x2192;</text>
           </template>
           <template #page="{ text }">
-            <text :style="{ fontSize: '14px' }">{{ text }}</text>
+            <text>{{ text }}</text>
           </template>
         </Pagination>
       </view>

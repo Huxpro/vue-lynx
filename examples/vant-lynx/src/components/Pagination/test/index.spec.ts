@@ -3,28 +3,10 @@ import { h, defineComponent, nextTick, ref } from 'vue-lynx';
 import { render, fireEvent } from 'vue-lynx-testing-library';
 import Pagination from '../index.vue';
 
-// Helper to find all text elements and their content
 function getTexts(container: any): string[] {
   return Array.from(container.querySelectorAll('text')).map(
     (t: any) => t.textContent || '',
   );
-}
-
-// Helper to find view containing text
-function findButtonByText(container: any, text: string): any {
-  const textEls = Array.from(container.querySelectorAll('text')) as any[];
-  const el = textEls.find((t) => t.textContent === text);
-  return el?.parentElement;
-}
-
-// Helper to find page buttons (items between prev and next)
-function findPageButtons(container: any): any[] {
-  const allViews = Array.from(container.querySelectorAll('view')) as any[];
-  // Page buttons have minWidth style
-  return allViews.filter((v: any) => {
-    const style = v.getAttribute('style') || '';
-    return style.includes('min-width');
-  });
 }
 
 describe('Pagination', () => {
@@ -74,7 +56,6 @@ describe('Pagination', () => {
   // Vant test: should emit change event after the page is changed
   it('should emit change event after the page is changed', async () => {
     const changes: number[] = [];
-    const updates: number[] = [];
     const currentValue = ref(1);
     const Comp = defineComponent({
       setup() {
@@ -85,7 +66,6 @@ describe('Pagination', () => {
             onChange: (val: number) => changes.push(val),
             'onUpdate:modelValue': (val: number) => {
               currentValue.value = val;
-              updates.push(val);
             },
           });
       },
@@ -94,22 +74,19 @@ describe('Pagination', () => {
     const { container } = render(Comp);
 
     // Click page 3
-    const page3Btn = findButtonByText(container, '3');
-    expect(page3Btn).toBeTruthy();
-    fireEvent.tap(page3Btn);
+    const pageItems = container.querySelectorAll('.van-pagination__item--page');
+    fireEvent.tap(pageItems[2]);
     await nextTick();
     expect(changes).toEqual([3]);
 
     // Click prev (now on page 3, should go to 2)
-    const prevBtn = findButtonByText(container, 'Prev');
-    expect(prevBtn).toBeTruthy();
+    const prevBtn = container.querySelector('.van-pagination__item--prev');
     fireEvent.tap(prevBtn);
     await nextTick();
     expect(changes).toEqual([3, 2]);
 
     // Click next (now on page 2, should go to 3)
-    const nextBtn = findButtonByText(container, 'Next');
-    expect(nextBtn).toBeTruthy();
+    const nextBtn = container.querySelector('.van-pagination__item--next');
     fireEvent.tap(nextBtn);
     await nextTick();
     expect(changes).toEqual([3, 2, 3]);
@@ -129,12 +106,26 @@ describe('Pagination', () => {
         },
       }),
     );
-    const texts = getTexts(container);
-    expect(texts).not.toContain('Prev');
-    expect(texts).not.toContain('Next');
+    expect(container.querySelector('.van-pagination__item--prev')).toBeFalsy();
+    expect(container.querySelector('.van-pagination__item--next')).toBeFalsy();
   });
 
   // Additional tests for full coverage
+
+  it('should render BEM classes correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Pagination, { modelValue: 1, pageCount: 5 });
+        },
+      }),
+    );
+    expect(container.querySelector('.van-pagination')).toBeTruthy();
+    expect(container.querySelector('.van-pagination__items')).toBeTruthy();
+    expect(container.querySelector('.van-pagination__item--prev')).toBeTruthy();
+    expect(container.querySelector('.van-pagination__item--next')).toBeTruthy();
+    expect(container.querySelectorAll('.van-pagination__item--page').length).toBe(5);
+  });
 
   it('should render pagination in multi mode by default', () => {
     const { container } = render(
@@ -163,6 +154,9 @@ describe('Pagination', () => {
         },
       }),
     );
+    expect(container.querySelector('.van-pagination__page-desc')).toBeTruthy();
+    expect(container.querySelector('.van-pagination__item--page')).toBeFalsy();
+    expect(container.querySelector('.van-pagination__item--border')).toBeTruthy();
     const texts = getTexts(container);
     const hasIndicator = texts.some((t) => t.includes('1/5'));
     expect(hasIndicator).toBe(true);
@@ -200,11 +194,34 @@ describe('Pagination', () => {
     });
 
     const { container } = render(Comp);
-    const prevBtn = findButtonByText(container, 'Prev');
-    expect(prevBtn).toBeTruthy();
+    const prevBtn = container.querySelector('.van-pagination__item--prev');
     fireEvent.tap(prevBtn);
     await nextTick();
     expect(changes.length).toBe(0);
+  });
+
+  it('should mark prev as disabled on page 1', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Pagination, { modelValue: 1, pageCount: 5 });
+        },
+      }),
+    );
+    const prev = container.querySelector('.van-pagination__item--prev');
+    expect(prev.className).toContain('van-pagination__item--disabled');
+  });
+
+  it('should mark next as disabled on last page', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Pagination, { modelValue: 5, pageCount: 5 });
+        },
+      }),
+    );
+    const next = container.querySelector('.van-pagination__item--next');
+    expect(next.className).toContain('van-pagination__item--disabled');
   });
 
   it('should not emit when next is tapped on last page', async () => {
@@ -221,8 +238,7 @@ describe('Pagination', () => {
     });
 
     const { container } = render(Comp);
-    const nextBtn = findButtonByText(container, 'Next');
-    expect(nextBtn).toBeTruthy();
+    const nextBtn = container.querySelector('.van-pagination__item--next');
     fireEvent.tap(nextBtn);
     await nextTick();
     expect(changes.length).toBe(0);
@@ -246,30 +262,25 @@ describe('Pagination', () => {
     expect(hasIndicator).toBe(true);
   });
 
-  it('should emit change when page number is tapped', async () => {
-    const updates: number[] = [];
-    const Comp = defineComponent({
-      setup() {
-        return () =>
-          h(Pagination, {
-            modelValue: 1,
-            pageCount: 5,
-            'onUpdate:modelValue': (val: number) => updates.push(val),
-          });
-      },
-    });
-
-    const { container } = render(Comp);
-    const page3Btn = findButtonByText(container, '3');
-    expect(page3Btn).toBeTruthy();
-    fireEvent.tap(page3Btn);
-    await nextTick();
-    expect(updates).toContain(3);
+  it('should mark active page with active class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Pagination, { modelValue: 3, pageCount: 5 });
+        },
+      }),
+    );
+    const activeItem = container.querySelector('.van-pagination__item--active');
+    expect(activeItem).toBeTruthy();
+    const texts = Array.from(activeItem.querySelectorAll('text')).map(
+      (t: any) => t.textContent,
+    );
+    expect(texts).toContain('3');
   });
 
   it('should clamp modelValue to valid range', async () => {
     const updates: number[] = [];
-    const { container } = render(
+    render(
       defineComponent({
         setup() {
           return () =>
@@ -282,11 +293,10 @@ describe('Pagination', () => {
       }),
     );
     await nextTick();
-    // watchEffect should clamp 100 -> 5
     expect(updates).toContain(5);
   });
 
-  it('should support forceEllipses with navigable ellipsis items', () => {
+  it('should support forceEllipses', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -300,10 +310,8 @@ describe('Pagination', () => {
       }),
     );
     const texts = getTexts(container);
-    // Should have ellipsis indicators
     const ellipsisCount = texts.filter((t) => t === '...').length;
-    expect(ellipsisCount).toBe(2); // before and after
-    // Should have page numbers around current
+    expect(ellipsisCount).toBe(2);
     expect(texts).toContain('4');
     expect(texts).toContain('5');
     expect(texts).toContain('6');
@@ -356,5 +364,25 @@ describe('Pagination', () => {
     const texts = getTexts(container);
     const hasIndicator = texts.some((t) => t.includes('1/1'));
     expect(hasIndicator).toBe(true);
+  });
+
+  it('should emit update:modelValue when page is tapped', async () => {
+    const updates: number[] = [];
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h(Pagination, {
+            modelValue: 1,
+            pageCount: 5,
+            'onUpdate:modelValue': (val: number) => updates.push(val),
+          });
+      },
+    });
+
+    const { container } = render(Comp);
+    const page3 = container.querySelectorAll('.van-pagination__item--page')[2];
+    fireEvent.tap(page3);
+    await nextTick();
+    expect(updates).toContain(3);
   });
 });
