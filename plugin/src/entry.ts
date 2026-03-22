@@ -257,6 +257,32 @@ export function applyEntry(
     return config;
   });
 
+  // Exclude main-thread chunks from chunk splitting so each remains
+  // self-contained (matching @lynx-js/react-rsbuild-plugin behavior).
+  // When rsbuild's all-in-one strategy sets splitChunks to false, convert
+  // to an equivalent object form so the chunks filter can be applied.
+  api.modifyRspackConfig((rspackConfig) => {
+    if (!rspackConfig.optimization) return rspackConfig;
+
+    if (rspackConfig.optimization.splitChunks === false) {
+      rspackConfig.optimization.splitChunks = {};
+    }
+
+    if (rspackConfig.optimization.splitChunks) {
+      const prev = rspackConfig.optimization.splitChunks.chunks;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rspackConfig.optimization.splitChunks.chunks = (chunk: any) => {
+        if (chunk.name?.includes('__main-thread')) return false;
+        if (typeof prev === 'function') return prev(chunk);
+        if (prev === 'all') return true;
+        if (prev === 'initial') return true;
+        return false;
+      };
+    }
+
+    return rspackConfig;
+  });
+
   // Worklet loader (BG layer): runs SWC JS-target transform on BG-layer
   // .js/.ts/.vue files to replace 'main thread' functions with context objects.
   api.modifyBundlerChain((chain, { environment }) => {
