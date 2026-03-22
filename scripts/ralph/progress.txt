@@ -170,3 +170,44 @@ Branch: feat/vant-lynx-v2
 - Limitations: alt no-op, position (object-position) not supported in Lynx, crossorigin/referrerpolicy/decoding HTML-only, lazyLoad no IntersectionObserver, iconPrefix no-op, block no-op (Lynx views are block)
 - New files: types.ts (ImageFit, ImagePosition, ImageThemeVars)
 ---
+
+## 2026-03-22 - parity-divider: Divider
+- Props: 4/4 (dashed, hairline, vertical, contentPosition)
+- Events: 0/0 (none in Vant)
+- Slots: 1/1 (default — text content between lines, not rendered in vertical mode)
+- CSS Variables: 9 defined in index.less (--van-divider-margin, --van-divider-vertical-margin, --van-divider-text-color, --van-divider-font-size, --van-divider-line-height, --van-divider-border-color, --van-divider-content-padding, --van-divider-content-left-width, --van-divider-content-right-width)
+- Animations: none (Divider has no transitions)
+- Tests: 12 cases (Vant has 1 snapshot test) — all pass
+- Demo sections: 6/6 (基础用法, 展示文本, 内容位置, 虚线, 自定义样式, 垂直)
+- Visual match: pass (explicit view elements replicate ::before/::after line pattern)
+- Limitations: ::before/::after not supported in Lynx (uses explicit view elements), role="separator" not applicable, scaleY(0.5) hairline uses 0.5px border width, CSS class-based styling replaced with inline styles
+- New files: types.ts (DividerContentPosition, DividerThemeVars)
+---
+
+## 2026-03-22 - parity-space: Space
+- Props: 5/5 (direction, size, align, wrap, fill)
+- Events: 0/0 (none in Vant)
+- Slots: 1/1 (default)
+- CSS Variables: 1 defined in index.less (--van-space-gap)
+- Animations: none (Space has no transitions)
+- Tests: 12 cases (Vant has 5) — all pass
+- Demo sections: 5/5 (基础用法, 垂直排列, 自定义间距, 对齐方式, 自动换行)
+- Visual match: pass (per-item margin-based spacing matches Vant behavior)
+- Limitations: baseline alignment falls back to flex-start (Lynx doesn't support baseline), inline-flex replaced with flex (Lynx default is linear), CSS class-based styling replaced with inline styles
+- New files: types.ts (SpaceSize, SpaceAlign, SpaceThemeVars)
+- Key change: rewrote to use render function with h() to wrap each slot child in item wrapper views with per-item margin styles (matching Vant's van-space-item pattern)
+---
+
+## 2026-03-22 - parity-row: Row
+- Props: 5/5 (tag, wrap, align, gutter, justify) — fixed: align and justify no longer have defaults (matching Vant optional pattern)
+- Events: 0/0 (Vant Row has no events — removed incorrect click emit)
+- Slots: 1/1 (default)
+- CSS Variables: 0 defined in index.less (Row has no CSS variables in Vant)
+- Animations: none (Row has no transitions)
+- Tests: 16 cases (Vant has 1) — all pass
+- Demo sections: 4/4 (基础用法, 设置列元素间距, 设置垂直间距, 对齐方式)
+- Visual match: pass (flex layout with inline styles)
+- Limitations: tag prop no-op (Lynx always uses view), CSS class-based BEM styling replaced with inline styles, gutter distribution uses uniform padding + negative margins (visually identical to Vant's per-child algorithm)
+- New files: types.ts (RowAlign, RowJustify, RowProvide, RowThemeVars, ROW_KEY)
+- Col also updated: uses ROW_KEY symbol injection, removed click event, offset default removed
+---
