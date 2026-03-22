@@ -216,8 +216,8 @@ describe('Image', () => {
     );
     // Loading placeholder should be shown with a different icon
     const textEls = container.querySelectorAll('text');
-    // 'success' icon maps to checkmark unicode
-    const iconText = Array.from(textEls).find((t) => t.textContent === '\u2713');
+    // 'success' icon maps to vant-icon font character \ue728
+    const iconText = Array.from(textEls).find((t) => t.textContent === '\ue728');
     expect(iconText).toBeTruthy();
   });
 
