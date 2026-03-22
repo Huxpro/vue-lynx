@@ -182,7 +182,7 @@ const cellProps = computed(() => {
 </script>
 
 <template>
-  <view :class="bem()">
+  <view :class="bem([{ borderless: !border }])">
     <!-- Title / Header (Cell-based layout matching Vant) -->
     <Cell
       v-bind="cellProps"
