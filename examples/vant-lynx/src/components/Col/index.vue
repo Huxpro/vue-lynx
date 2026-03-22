@@ -5,7 +5,7 @@
   - 24-column grid uses percentage-based width/margin-left via inline styles
 -->
 <script setup lang="ts">
-import { computed, inject } from 'vue-lynx';
+import { computed, inject, getCurrentInstance, onUnmounted, watch } from 'vue-lynx';
 import { ROW_KEY } from '../Row/types';
 
 export interface ColProps {
@@ -19,34 +19,50 @@ const props = withDefaults(defineProps<ColProps>(), {
   span: 0,
 });
 
-const parent = inject(ROW_KEY, undefined);
+const parent = inject(ROW_KEY, null);
+const instance = getCurrentInstance()!;
+const uid = instance.uid;
 
-const spanValue = computed(() => Number(props.span) || 0);
-const offsetValue = computed(() => Number(props.offset) || 0);
+if (parent) {
+  parent.register(uid, Number(props.span) || 0);
+  onUnmounted(() => parent.unregister(uid));
+  watch(() => props.span, (newSpan) => {
+    parent.updateSpan(uid, Number(newSpan) || 0);
+  });
+}
 
 const colStyle = computed(() => {
-  const gutter = parent?.gutterH.value || 0;
-  const gutterV = parent?.gutterV.value || 0;
-  const widthPercent = (spanValue.value / 24) * 100;
-  const offsetPercent = (offsetValue.value / 24) * 100;
+  const span = Number(props.span) || 0;
+  const offset = Number(props.offset) || 0;
 
-  const style: Record<string, string | number | undefined> = {};
+  const style: Record<string, string | undefined> = {};
 
-  if (spanValue.value) {
-    style.width = `${widthPercent}%`;
+  if (span) {
+    style.width = `${(span / 24) * 100}%`;
   }
 
-  if (offsetValue.value) {
-    style.marginLeft = `${offsetPercent}%`;
+  if (offset) {
+    style.marginLeft = `${(offset / 24) * 100}%`;
   }
 
-  if (gutter) {
-    style.paddingLeft = `${gutter / 2}px`;
-    style.paddingRight = `${gutter / 2}px`;
-  }
+  if (parent) {
+    const index = parent.getIndex(uid);
+    const { spaces, verticalSpaces } = parent;
 
-  if (gutterV) {
-    style.marginBottom = `${gutterV}px`;
+    if (spaces.value && spaces.value[index]) {
+      const { left, right } = spaces.value[index];
+      if (left) {
+        style.paddingLeft = `${left}px`;
+      }
+      if (right) {
+        style.paddingRight = `${right}px`;
+      }
+    }
+
+    const verticalSpace = verticalSpaces.value[index];
+    if (verticalSpace?.bottom) {
+      style.marginBottom = `${verticalSpace.bottom}px`;
+    }
   }
 
   return style;

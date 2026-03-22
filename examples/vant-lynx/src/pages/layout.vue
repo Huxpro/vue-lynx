@@ -30,6 +30,25 @@ const darkBlue = '#66c6f2';
             </view>
           </Col>
         </Row>
+        <Row :style="{ marginTop: '10px' }">
+          <Col :span="4">
+            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 4</text>
+            </view>
+          </Col>
+          <Col :span="10" :offset="4">
+            <view :style="{ backgroundColor: darkBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">offset: 4, span: 10</text>
+            </view>
+          </Col>
+        </Row>
+        <Row :style="{ marginTop: '10px' }">
+          <Col :span="12" :offset="12">
+            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">offset: 12, span: 12</text>
+            </view>
+          </Col>
+        </Row>
       </view>
 
       <!-- 设置列元素间距 -->
@@ -58,34 +77,24 @@ const darkBlue = '#66c6f2';
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">设置垂直间距</text>
       <view :style="{ marginBottom: '16px' }">
         <Row :gutter="[20, 20]">
-          <Col :span="8">
+          <Col :span="12">
             <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 12</text>
             </view>
           </Col>
-          <Col :span="8">
-            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
+          <Col :span="12">
+            <view :style="{ backgroundColor: darkBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 12</text>
             </view>
           </Col>
-          <Col :span="8">
+          <Col :span="12">
             <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 12</text>
             </view>
           </Col>
-          <Col :span="8">
-            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
-            </view>
-          </Col>
-          <Col :span="8">
-            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
-            </view>
-          </Col>
-          <Col :span="8">
-            <view :style="{ backgroundColor: lightBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
-              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 8</text>
+          <Col :span="12">
+            <view :style="{ backgroundColor: darkBlue, borderRadius: '4px', height: '30px', justifyContent: 'center', alignItems: 'center', display: 'flex' }">
+              <text :style="{ fontSize: '13px', color: '#fff', textAlign: 'center' }">span: 12</text>
             </view>
           </Col>
         </Row>
