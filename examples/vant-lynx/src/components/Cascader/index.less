@@ -1,15 +1,84 @@
 :root {
   --van-cascader-header-height: 48px;
-  --van-cascader-header-padding: 0 var(--van-padding-md, 16px);
-  --van-cascader-title-font-size: var(--van-font-size-lg, 16px);
+  --van-cascader-header-padding: 0 16px;
+  --van-cascader-title-font-size: 16px;
   --van-cascader-title-line-height: 20px;
   --van-cascader-close-icon-size: 22px;
   --van-cascader-close-icon-color: var(--van-gray-5, #c8c9cc);
   --van-cascader-selected-icon-size: 18px;
   --van-cascader-tabs-height: 48px;
-  --van-cascader-active-color: var(--van-danger-color, #ee0a24);
+  --van-cascader-active-color: var(--van-primary-color, #1989fa);
   --van-cascader-options-height: 384px;
   --van-cascader-option-disabled-color: var(--van-text-color-3, #c8c9cc);
   --van-cascader-tab-color: var(--van-text-color, #323233);
   --van-cascader-unselected-tab-color: var(--van-text-color-2, #969799);
+}
+
+.van-cascader {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--van-cascader-header-height);
+    padding: var(--van-cascader-header-padding);
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: var(--van-cascader-title-font-size);
+    line-height: var(--van-cascader-title-line-height);
+  }
+
+  &__close-icon {
+    color: var(--van-cascader-close-icon-color);
+    font-size: var(--van-cascader-close-icon-size);
+  }
+
+  &__tabs {
+    &.van-tabs--line .van-tabs__wrap {
+      height: var(--van-cascader-tabs-height);
+    }
+  }
+
+  &__tab {
+    color: var(--van-cascader-tab-color);
+    font-weight: 600;
+
+    &--unselected {
+      color: var(--van-cascader-unselected-tab-color);
+      font-weight: normal;
+    }
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    font-size: 14px;
+    line-height: 22px;
+
+    &--selected {
+      color: var(--van-cascader-active-color);
+      font-weight: 600;
+    }
+
+    &--disabled {
+      color: var(--van-cascader-option-disabled-color);
+    }
+  }
+
+  &__option-text {
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  &__selected-icon {
+    font-size: var(--van-cascader-selected-icon-size);
+  }
+
+  &__options {
+    height: var(--van-cascader-options-height);
+    padding-top: 6px;
+  }
 }
