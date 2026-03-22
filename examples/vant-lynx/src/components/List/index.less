@@ -4,3 +4,28 @@
   --van-list-text-line-height: 50px;
   --van-list-loading-icon-size: 16px;
 }
+
+.van-list {
+  display: flex;
+  flex-direction: column;
+
+  &__loading,
+  &__finished-text,
+  &__error-text {
+    color: var(--van-list-text-color);
+    font-size: var(--van-list-text-font-size);
+    line-height: var(--van-list-text-line-height);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &__error-text {
+    cursor: pointer;
+  }
+
+  &__placeholder {
+    height: 0;
+  }
+}
