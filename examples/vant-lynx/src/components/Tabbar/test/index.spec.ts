@@ -4,49 +4,56 @@ import { render, fireEvent } from 'vue-lynx-testing-library';
 import Tabbar from '../index.vue';
 import TabbarItem from '../../TabbarItem/index.vue';
 
-// Colors are converted to rgb() in the test environment
-const ACTIVE_COLOR_RGB = 'rgb(25, 137, 250)'; // #1989fa
-const INACTIVE_COLOR_RGB = 'rgb(50, 50, 51)'; // #323233
+const activeClass = 'van-tabbar-item--active';
 
 describe('Tabbar', () => {
-  it('should render tabbar with items', () => {
+  it('should render with van-tabbar class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, { modelValue: 0 }, {
+            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
+          });
+        },
+      }),
+    );
+    expect(container.querySelector('.van-tabbar')).not.toBeNull();
+  });
+
+  it('should render tabbar items with van-tabbar-item class', () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Tabbar, { modelValue: 0 }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((t) => t.textContent);
-    expect(texts).toContain('Tab 1');
-    expect(texts).toContain('Tab 2');
+    const items = container.querySelectorAll('.van-tabbar-item');
+    expect(items.length).toBe(2);
   });
 
-  it('should render active item with active color', async () => {
+  it('should render active item with active class', async () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Tabbar, { modelValue: 0 }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Active' }),
-              h(TabbarItem, null, { default: () => 'Inactive' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Active' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Inactive' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const textEls = container.querySelectorAll('text');
-    const activeText = Array.from(textEls).find((t) => t.textContent === 'Active');
-    const inactiveText = Array.from(textEls).find((t) => t.textContent === 'Inactive');
-    expect(activeText?.getAttribute('style')).toContain(ACTIVE_COLOR_RGB);
-    expect(inactiveText?.getAttribute('style')).toContain(INACTIVE_COLOR_RGB);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    expect(items[0].getAttribute('class')).toContain(activeClass);
+    expect(items[1].getAttribute('class')).not.toContain(activeClass);
   });
 
   it('should watch model-value and update active tab', async () => {
@@ -59,23 +66,21 @@ describe('Tabbar', () => {
         render() {
           return h(Tabbar, { modelValue: this.active }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    let textEls = container.querySelectorAll('text');
-    let tab1 = Array.from(textEls).find((t) => t.textContent === 'Tab 1');
-    expect(tab1?.getAttribute('style')).toContain(ACTIVE_COLOR_RGB);
+    let items = container.querySelectorAll('.van-tabbar-item');
+    expect(items[0].getAttribute('class')).toContain(activeClass);
 
     active.value = 1;
     await nextTick();
-    textEls = container.querySelectorAll('text');
-    const tab2 = Array.from(textEls).find((t) => t.textContent === 'Tab 2');
-    expect(tab2?.getAttribute('style')).toContain(ACTIVE_COLOR_RGB);
+    items = container.querySelectorAll('.van-tabbar-item');
+    expect(items[1].getAttribute('class')).toContain(activeClass);
   });
 
   it('should match active tab by name when using name prop', async () => {
@@ -85,21 +90,18 @@ describe('Tabbar', () => {
         render() {
           return h(Tabbar, { modelValue: 'a', onChange }, {
             default: () => [
-              h(TabbarItem, { name: 'a' }, { default: () => 'A' }),
-              h(TabbarItem, { name: 'b' }, { default: () => 'B' }),
+              h(TabbarItem, { name: 'a', key: 'a' }, { default: () => 'A' }),
+              h(TabbarItem, { name: 'b', key: 'b' }, { default: () => 'B' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    expect(itemViews.length).toBe(2);
-    await fireEvent.tap(itemViews[1]);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    expect(items[0].getAttribute('class')).toContain(activeClass);
+
+    await fireEvent.tap(items[1]);
     await nextTick();
     expect(onChange).toHaveBeenCalledWith('b');
   });
@@ -116,23 +118,46 @@ describe('Tabbar', () => {
             onChange,
           }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    await fireEvent.tap(itemViews[1]);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[1]);
     await nextTick();
     expect(onUpdate).toHaveBeenCalledWith(1);
     expect(onChange).toHaveBeenCalledWith(1);
+  });
+
+  it('should not emit events when clicking active tab', async () => {
+    const onUpdate = vi.fn();
+    const onChange = vi.fn();
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, {
+            modelValue: 0,
+            'onUpdate:modelValue': onUpdate,
+            onChange,
+          }, {
+            default: () => [
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
+            ],
+          });
+        },
+      }),
+    );
+    await nextTick();
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[0]);
+    await nextTick();
+    expect(onUpdate).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('should emit click event on TabbarItem', async () => {
@@ -142,20 +167,16 @@ describe('Tabbar', () => {
         render() {
           return h(Tabbar, { modelValue: 0 }, {
             default: () => [
-              h(TabbarItem, { onClick }, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { onClick, key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    await fireEvent.tap(itemViews[0]);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[0]);
     await nextTick();
     expect(onClick).toHaveBeenCalled();
   });
@@ -170,9 +191,8 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('border-top-width: 0px');
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).not.toContain('van-hairline--top-bottom');
   });
 
   it('should render border by default', () => {
@@ -185,9 +205,8 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('border-top-width: 0.5px');
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).toContain('van-hairline--top-bottom');
   });
 
   it('should render placeholder element when using placeholder prop', () => {
@@ -204,13 +223,11 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const placeholderView = views[0];
-    const style = placeholderView!.getAttribute('style') || '';
-    expect(style).toContain('height:');
+    expect(container.querySelector('.van-tabbar__placeholder')).not.toBeNull();
+    expect(container.querySelector('.van-tabbar')).not.toBeNull();
   });
 
-  it('should render fixed position when fixed prop is true', () => {
+  it('should render fixed class when fixed prop is true', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -220,15 +237,11 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const hasFixed = Array.from(views).some((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: fixed');
-    });
-    expect(hasFixed).toBe(true);
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).toContain('van-tabbar--fixed');
   });
 
-  it('should render relative position when fixed prop is false', () => {
+  it('should not render fixed class when fixed prop is false', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -238,9 +251,8 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('position: relative');
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).not.toContain('van-tabbar--fixed');
   });
 
   it('should render custom zIndex', () => {
@@ -253,12 +265,58 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
+    const tabbar = container.querySelector('.van-tabbar');
+    const style = tabbar!.getAttribute('style') || '';
     expect(style).toContain('z-index: 100');
   });
 
-  it('should render custom active and inactive colors', async () => {
+  it('should render safe area class when fixed', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, { modelValue: 0, fixed: true }, {
+            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
+          });
+        },
+      }),
+    );
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).toContain('van-safe-area-bottom');
+  });
+
+  it('should not render safe area class when safeAreaInsetBottom is false', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, {
+            modelValue: 0,
+            fixed: true,
+            safeAreaInsetBottom: false,
+          }, {
+            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
+          });
+        },
+      }),
+    );
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).not.toContain('van-safe-area-bottom');
+  });
+
+  it('should not render safe area class when not fixed', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, { modelValue: 0, fixed: false }, {
+            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
+          });
+        },
+      }),
+    );
+    const tabbar = container.querySelector('.van-tabbar');
+    expect(tabbar!.getAttribute('class')).not.toContain('van-safe-area-bottom');
+  });
+
+  it('should render custom active and inactive colors via inline style', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -268,20 +326,21 @@ describe('Tabbar', () => {
             inactiveColor: '#999',
           }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Active' }),
-              h(TabbarItem, null, { default: () => 'Inactive' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Active' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Inactive' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const textEls = container.querySelectorAll('text');
-    const activeText = Array.from(textEls).find((t) => t.textContent === 'Active');
-    const inactiveText = Array.from(textEls).find((t) => t.textContent === 'Inactive');
-    // #ee0a24 = rgb(238, 10, 36), #999 = rgb(153, 153, 153)
-    expect(activeText?.getAttribute('style')).toContain('rgb(238, 10, 36)');
-    expect(inactiveText?.getAttribute('style')).toContain('rgb(153, 153, 153)');
+    const items = container.querySelectorAll('.van-tabbar-item');
+    // Active item should have activeColor in inline style
+    const activeStyle = items[0].getAttribute('style') || '';
+    expect(activeStyle).toContain('rgb(238, 10, 36)');
+    // Inactive item should have inactiveColor in inline style
+    const inactiveStyle = items[1].getAttribute('style') || '';
+    expect(inactiveStyle).toContain('rgb(153, 153, 153)');
   });
 
   it('should support beforeChange interceptor that blocks change', async () => {
@@ -295,20 +354,16 @@ describe('Tabbar', () => {
             'onUpdate:modelValue': onUpdate,
           }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    await fireEvent.tap(itemViews[1]);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[1]);
     await nextTick();
     expect(onUpdate).not.toHaveBeenCalled();
   });
@@ -324,24 +379,42 @@ describe('Tabbar', () => {
             'onUpdate:modelValue': onUpdate,
           }, {
             default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    await fireEvent.tap(itemViews[1]);
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[1]);
     await nextTick();
     // Wait for promise resolution
     await new Promise((r) => setTimeout(r, 10));
     expect(onUpdate).toHaveBeenCalledWith(1);
+  });
+
+  it('should auto-index items when name is not provided', async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, { modelValue: 0, onChange }, {
+            default: () => [
+              h(TabbarItem, { key: 1 }, { default: () => 'Tab 1' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 3 }, { default: () => 'Tab 3' }),
+            ],
+          });
+        },
+      }),
+    );
+    await nextTick();
+    const items = container.querySelectorAll('.van-tabbar-item');
+    await fireEvent.tap(items[2]);
+    await nextTick();
+    expect(onChange).toHaveBeenCalledWith(2);
   });
 
   it('should render icon in TabbarItem', async () => {
@@ -357,9 +430,8 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
-    const textEls = container.querySelectorAll('text');
-    // Should have at least icon text + label text
-    expect(textEls.length).toBeGreaterThanOrEqual(2);
+    // Icon component renders inside van-tabbar-item__icon
+    expect(container.querySelector('.van-tabbar-item__icon')).not.toBeNull();
   });
 
   it('should render badge on TabbarItem', async () => {
@@ -375,10 +447,10 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
+    const badge = container.querySelector('.van-badge');
+    expect(badge).toBeTruthy();
     const textEls = container.querySelectorAll('text');
-    const hasBadge = Array.from(textEls).some(
-      (t) => t.textContent === '5',
-    );
+    const hasBadge = Array.from(textEls).some((t) => t.textContent === '5');
     expect(hasBadge).toBe(true);
   });
 
@@ -395,7 +467,6 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
-    // Badge now uses CSS classes instead of inline styles
     const dotBadge = container.querySelector('.van-badge--dot');
     expect(dotBadge).toBeTruthy();
   });
@@ -416,77 +487,10 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
-    // Badge applies custom color via inline style on .van-badge element
     const badge = container.querySelector('.van-badge');
     expect(badge).toBeTruthy();
     const style = badge!.getAttribute('style') || '';
     expect(style).toContain('background');
-  });
-
-  it('should render safe area padding when fixed', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tabbar, { modelValue: 0, fixed: true }, {
-            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    const hasBottomPadding = Array.from(views).some((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-bottom: 34px');
-    });
-    expect(hasBottomPadding).toBe(true);
-  });
-
-  it('should not render safe area padding when safeAreaInsetBottom is false', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tabbar, {
-            modelValue: 0,
-            fixed: true,
-            safeAreaInsetBottom: false,
-          }, {
-            default: () => h(TabbarItem, null, { default: () => 'Tab' }),
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    const hasNoPadding = Array.from(views).some((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('padding-bottom: 0px');
-    });
-    expect(hasNoPadding).toBe(true);
-  });
-
-  it('should auto-index items when name is not provided', async () => {
-    const onChange = vi.fn();
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Tabbar, { modelValue: 0, onChange }, {
-            default: () => [
-              h(TabbarItem, null, { default: () => 'Tab 1' }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
-              h(TabbarItem, null, { default: () => 'Tab 3' }),
-            ],
-          });
-        },
-      }),
-    );
-    await nextTick();
-    const views = container.querySelectorAll('view');
-    const itemViews = Array.from(views).filter((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('flex: 1') && style.includes('cursor: pointer');
-    });
-    await fireEvent.tap(itemViews[2]);
-    await nextTick();
-    expect(onChange).toHaveBeenCalledWith(2);
   });
 
   it('should render icon slot with active state', async () => {
@@ -495,12 +499,12 @@ describe('Tabbar', () => {
         render() {
           return h(Tabbar, { modelValue: 0 }, {
             default: () => [
-              h(TabbarItem, null, {
+              h(TabbarItem, { key: 1 }, {
                 default: () => 'Custom',
                 icon: (props: { active: boolean }) =>
                   h('text', {}, props.active ? 'Active Icon' : 'Inactive Icon'),
               }),
-              h(TabbarItem, null, { default: () => 'Tab 2' }),
+              h(TabbarItem, { key: 2 }, { default: () => 'Tab 2' }),
             ],
           });
         },
@@ -514,7 +518,7 @@ describe('Tabbar', () => {
     expect(hasActiveIcon).toBe(true);
   });
 
-  it('should render flex-row layout', () => {
+  it('should render van-tabbar-item__text wrapper', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -524,8 +528,19 @@ describe('Tabbar', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('flex-direction: row');
+    expect(container.querySelector('.van-tabbar-item__text')).not.toBeNull();
+  });
+
+  it('should render van-tabbar-item__icon wrapper', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabbar, { modelValue: 0 }, {
+            default: () => h(TabbarItem, { icon: 'home-o' }, { default: () => 'Tab' }),
+          });
+        },
+      }),
+    );
+    expect(container.querySelector('.van-tabbar-item__icon')).not.toBeNull();
   });
 });

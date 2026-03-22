@@ -1,14 +1,15 @@
 <!--
   Lynx Limitations:
   - route: Lynx has no vue-router; prop accepted for API compatibility but ignored
-  - safeAreaInsetBottom: Uses fixed 34px instead of env(safe-area-inset-bottom) (Lynx limitation)
-  - BORDER_TOP_BOTTOM: Inline border style used instead of CSS class
-  - placeholder: Uses fixed 50px height instead of getBoundingClientRect (Lynx limitation)
-  - CSS variable theming: Lynx uses inline styles instead of CSS custom properties
+  - safeAreaInsetBottom: Uses fixed 34px padding via CSS class instead of env(safe-area-inset-bottom)
+  - placeholder: Uses fixed height via CSS class instead of getBoundingClientRect
+  - role/tablist: Not applicable in Lynx
 -->
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import { TABBAR_KEY, type Numeric, type Interceptor } from './types';
+import './index.less';
 
 export interface TabbarProps {
   modelValue?: Numeric;
@@ -27,7 +28,6 @@ const props = withDefaults(defineProps<TabbarProps>(), {
   modelValue: 0,
   fixed: true,
   border: true,
-  zIndex: 1,
   placeholder: false,
   safeAreaInsetBottom: null,
   route: false,
@@ -37,6 +37,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: Numeric];
   change: [value: Numeric];
 }>();
+
+const [, bem] = createNamespace('tabbar');
 
 // Matches Vant's callInterceptor pattern
 function callInterceptor(
@@ -79,9 +81,6 @@ const enableSafeArea = computed(() => {
   return props.safeAreaInsetBottom ?? props.fixed;
 });
 
-// Lynx does not support env(safe-area-inset-bottom), so we use a fixed value.
-const SAFE_AREA_BOTTOM = 34;
-
 // Child index counter for auto-naming items without explicit name prop
 const childCount = ref(0);
 function getNextIndex(): number {
@@ -94,42 +93,29 @@ provide(TABBAR_KEY, {
   getNextIndex,
 });
 
-const tabbarHeight = 50;
+const tabbarClass = computed(() => [
+  bem([{ fixed: props.fixed }]),
+  {
+    'van-hairline--top-bottom': props.border,
+    'van-safe-area-bottom': enableSafeArea.value,
+  },
+]);
 
 const tabbarStyle = computed(() => {
-  const zIndex = typeof props.zIndex === 'string' ? parseInt(props.zIndex, 10) : props.zIndex;
-  return {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    boxSizing: 'content-box' as const,
-    width: '100%',
-    height: `${tabbarHeight}px`,
-    backgroundColor: '#fff',
-    position: props.fixed ? ('fixed' as const) : ('relative' as const),
-    bottom: props.fixed ? '0px' : undefined,
-    left: props.fixed ? '0px' : undefined,
-    right: props.fixed ? '0px' : undefined,
-    zIndex,
-    borderTopWidth: props.border ? '0.5px' : '0px',
-    borderTopStyle: 'solid' as const,
-    borderTopColor: '#ebedf0',
-    paddingBottom: enableSafeArea.value ? `${SAFE_AREA_BOTTOM}px` : '0px',
-  };
+  if (props.zIndex !== undefined) {
+    return { zIndex: typeof props.zIndex === 'string' ? parseInt(props.zIndex, 10) : props.zIndex };
+  }
+  return undefined;
 });
-
-const placeholderStyle = computed(() => ({
-  height: `${tabbarHeight + (enableSafeArea.value ? SAFE_AREA_BOTTOM : 0)}px`,
-}));
 </script>
 
 <template>
-  <view v-if="fixed && placeholder" :style="placeholderStyle">
-    <view :style="tabbarStyle">
+  <view v-if="fixed && placeholder" :class="bem('placeholder')">
+    <view :class="tabbarClass" :style="tabbarStyle">
       <slot />
     </view>
   </view>
-  <view v-else :style="tabbarStyle">
+  <view v-else :class="tabbarClass" :style="tabbarStyle">
     <slot />
   </view>
 </template>
