@@ -366,3 +366,36 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. All positioning/sizing via CSS variables in .less. Scale show/hide via CSS transition + --active BEM modifier (replaces v-if). Inline styles ONLY for dynamic right/bottom/zIndex props. Icon uses .van-back-top__icon BEM class.
 - Limitations: teleport (no Teleport in Lynx), target CSS selector (no document.querySelector; parent must call handleScroll manually), smooth scrolling (parent scroll-view controls), box-shadow (omitted), cursor:pointer (Lynx is touch-only), :active pseudo-class (not supported), KeepAlive (onActivated/onDeactivated not relevant)
 ---
+
+## 2026-03-22 - parity-index-bar: IndexBar + parity-index-anchor: IndexAnchor
+- Props (IndexBar): 6/6 (indexList, sticky, zIndex, teleport, highlightColor, stickyOffsetTop)
+- Props (IndexAnchor): 1/1 (index)
+- Events: 2/2 (select, change)
+- Slots: 1/1 (default) per component
+- Exposed Methods: scrollTo
+- CSS Variables (IndexBar): 5 in index.less (--van-index-bar-sidebar-z-index, --van-index-bar-index-font-size, --van-index-bar-index-line-height, --van-index-bar-index-active-color, --van-index-bar-index-font-weight)
+- CSS Variables (IndexAnchor): 9 in index.less (--van-index-anchor-z-index, -padding, -text-color, -font-weight, -font-size, -line-height, -background, -sticky-text-color, -sticky-background)
+- BEM Classes (IndexBar): .van-index-bar, __wrapper, __sidebar, __index, __index--active
+- BEM Classes (IndexAnchor): .van-index-anchor, --sticky
+- Animations: none (IndexBar has no animations)
+- Tests: IndexBar 15 cases, IndexAnchor 8 cases (23 total; Vant has ~10 in combined test file)
+- Demo sections: 2/2 (基础用法, 自定义索引列表)
+- Visual match: pass (BEM classes, CSS variables)
+- Files: IndexBar: index.vue, index.less, types.ts, test/index.spec.ts (4 files); IndexAnchor: index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. All layout via CSS classes in .less. Only highlightColor uses inline style (matching Vant pattern for dynamic color prop). Sidebar uses BEM --active modifier for highlight state. Provide/inject pattern for parent-child communication.
+- Limitations: teleport (no Teleport in Lynx), sticky (no scroll-based DOM measurement), scroll-spy (no IntersectionObserver), touch-move gesture on sidebar (no elementFromPoint), stickyOffsetTop (no effect without sticky), position:fixed anchor (no scroll tracking)
+---
+
+## 2026-03-22 - parity-pagination: Pagination
+- Props: 11/11 (modelValue, mode, prevText, nextText, pageCount, totalItems, showPageSize, itemsPerPage, forceEllipses, showPrevButton, showNextButton)
+- Events: 2/2 (update:modelValue, change)
+- Slots: 4/4 (prev-text, next-text, page, pageDesc)
+- CSS Variables: 9 defined in index.less (--van-pagination-height, --van-pagination-font-size, --van-pagination-item-width, --van-pagination-item-default-color, --van-pagination-item-disabled-color, --van-pagination-item-disabled-background, --van-pagination-background, --van-pagination-desc-color, --van-pagination-disabled-opacity)
+- Animations: none (Pagination has no transitions)
+- Tests: 20 cases (Vant has 4, we have 20 — added BEM class, disabled states, active class, clamp, ellipsis, Numeric props, slots tests)
+- Demo sections: 4/4 (基础用法, 简单模式, 显示省略号, 自定义按钮)
+- Visual match: pass (BEM classes, CSS variables, border collapse via border-right-width: 0)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; matches Vant's 4)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. All styling via CSS classes in .less. Border collapse handled via CSS (border-right-width: 0 on items, restored on --next and --border). Active/disabled states via BEM modifiers. Simple mode uses --border modifier matching Vant.
+- Limitations: HTML <nav>/<ul>/<li>/<button> (Lynx uses <view>/<text>), :active pseudo-class (no tap feedback), ::after hairline border (direct border instead), cursor/user-select (not applicable), role/aria-current (no ARIA), i18n (static default strings)
+---
