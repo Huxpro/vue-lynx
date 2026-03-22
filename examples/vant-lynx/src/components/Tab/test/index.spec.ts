@@ -13,18 +13,9 @@ async function later(ms = 0) {
   await nextTick();
 }
 
-// Helper: find tab header views (including disabled ones)
+// Helper: find tab header views by BEM class .van-tab
 function findTabHeaders(container: Element): Element[] {
-  const views = Array.from(container.querySelectorAll('view'));
-  return views.filter((v) => {
-    const style = v.getAttribute('style') || '';
-    return (
-      (style.includes('cursor: pointer') || style.includes('cursor: default')) &&
-      style.includes('justify-content: center') &&
-      style.includes('align-items: center') &&
-      style.includes('height:')
-    );
-  });
+  return Array.from(container.querySelectorAll('.van-tab'));
 }
 
 // Helper: find text by content
@@ -34,6 +25,24 @@ function findText(container: Element, content: string): Element | undefined {
 }
 
 describe('Tab', () => {
+  it('should render tab panel with BEM class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'title1' }, { default: () => 'Content1' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+
+    const panel = container.querySelector('.van-tab__panel');
+    expect(panel).toBeTruthy();
+  });
+
   it('should emit click-tab event when tab is clicked', async () => {
     const onClickTab = vi.fn();
     const { container } = render(
@@ -79,7 +88,7 @@ describe('Tab', () => {
     );
     await later();
 
-    // Only Tab1 should show "0" badge, Tab2 should not
+    // Only Tab1 should show "0" badge
     const texts = Array.from(container.querySelectorAll('text'));
     const badgeTexts = texts.filter((t) => t.textContent?.trim() === '0');
     expect(badgeTexts.length).toBe(1);
@@ -189,13 +198,8 @@ describe('Tab', () => {
     );
     await later();
 
-    // Should have a small red dot view element
-    const views = Array.from(container.querySelectorAll('view'));
-    const dotView = views.find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-radius') && style.includes('8px') &&
-        style.includes('width: 8px') && style.includes('height: 8px');
-    });
+    // Should have a dot element
+    const dotView = container.querySelector('.van-badge--dot');
     expect(dotView).toBeTruthy();
   });
 
@@ -233,7 +237,6 @@ describe('Tab', () => {
     );
     await later();
 
-    // The tab header views should have the custom title style merged
     const headers = findTabHeaders(container);
     const header1Style = headers[0]?.getAttribute('style') || '';
     const header2Style = headers[1]?.getAttribute('style') || '';
@@ -255,15 +258,10 @@ describe('Tab', () => {
     );
     await later();
 
-    // The wrap view (with overflow:hidden) should NOT have border-bottom styling
-    const views = Array.from(container.querySelectorAll('view'));
-    const wrapView = views.find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('overflow: hidden');
-    });
-    expect(wrapView).toBeTruthy();
-    const style = wrapView!.getAttribute('style') || '';
-    expect(style).not.toContain('border-bottom');
+    // Wrap should NOT have hairline class
+    const wrap = container.querySelector('.van-tabs__wrap');
+    expect(wrap).toBeTruthy();
+    expect(wrap!.getAttribute('class')).not.toContain('van-hairline');
   });
 
   it('should emit rendered event after tab is rendered', async () => {
@@ -456,12 +454,7 @@ describe('Tab', () => {
     );
     await later();
 
-    // Should have a line indicator view with specific dimensions
-    const views = Array.from(container.querySelectorAll('view'));
-    const lineView = views.find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: absolute') && style.includes('bottom: 0');
-    });
+    const lineView = container.querySelector('.van-tabs__line');
     expect(lineView).toBeTruthy();
     const style = lineView!.getAttribute('style') || '';
     expect(style).toContain('width: 20px');
@@ -498,7 +491,7 @@ describe('Tab', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Tabs, { active: 0, type: 'card', color: '#ee0a24' }, {
+          return h(Tabs, { active: 0, type: 'card' }, {
             default: () => [
               h(Tab, { title: 'Tab1' }, { default: () => '1' }),
               h(Tab, { title: 'Tab2' }, { default: () => '2' }),
@@ -509,13 +502,17 @@ describe('Tab', () => {
     );
     await later();
 
-    // Nav should have card border styling
-    const views = Array.from(container.querySelectorAll('view'));
-    const navView = views.find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-radius: 2px') && style.includes('border');
-    });
-    expect(navView).toBeTruthy();
+    // Root should have card modifier
+    const root = container.querySelector('.van-tabs--card');
+    expect(root).toBeTruthy();
+
+    // Nav should have card modifier
+    const nav = container.querySelector('.van-tabs__nav--card');
+    expect(nav).toBeTruthy();
+
+    // Tab headers should have card modifier
+    const headers = container.querySelectorAll('.van-tab--card');
+    expect(headers.length).toBe(2);
   });
 
   it('should update active tab when active prop changes', async () => {
@@ -547,7 +544,7 @@ describe('Tab', () => {
     expect(findText(container, 'Content2')).toBeTruthy();
   });
 
-  it('should apply custom colors to tabs', async () => {
+  it('should apply custom title colors', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -566,13 +563,14 @@ describe('Tab', () => {
     );
     await later();
 
-    const activeText = findText(container, 'Active');
-    const inactiveText = findText(container, 'Inactive');
-    expect(activeText?.getAttribute('style')).toContain('color');
-    expect(inactiveText?.getAttribute('style')).toContain('color');
+    const headers = findTabHeaders(container);
+    const activeStyle = headers[0]?.getAttribute('style') || '';
+    const inactiveStyle = headers[1]?.getAttribute('style') || '';
+    expect(activeStyle).toContain('color');
+    expect(inactiveStyle).toContain('color');
   });
 
-  it('should render disabled tab with reduced opacity', async () => {
+  it('should render disabled tab with disabled BEM class', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -588,17 +586,32 @@ describe('Tab', () => {
     await later();
 
     const headers = findTabHeaders(container);
-    // Normal tab should NOT have opacity: 0.5
-    const normalStyle = headers[0]?.getAttribute('style') || '';
-    expect(normalStyle).not.toContain('opacity: 0.5');
 
-    // Disabled tab should have opacity: 0.5
-    // Note: disabled tabs use cursor: default not cursor: pointer
-    const views = Array.from(container.querySelectorAll('view'));
-    const disabledHeader = views.find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('opacity: 0.5') && style.includes('cursor: default');
-    });
-    expect(disabledHeader).toBeTruthy();
+    // Normal tab should have --active class
+    expect(headers[0].getAttribute('class')).toContain('van-tab--active');
+    expect(headers[0].getAttribute('class')).not.toContain('van-tab--disabled');
+
+    // Disabled tab should have --disabled class
+    expect(headers[1].getAttribute('class')).toContain('van-tab--disabled');
+  });
+
+  it('should render active tab with active BEM class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 1 }, {
+            default: () => [
+              h(Tab, { title: 'Tab1' }, { default: () => '1' }),
+              h(Tab, { title: 'Tab2' }, { default: () => '2' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+
+    const headers = findTabHeaders(container);
+    expect(headers[0].getAttribute('class')).not.toContain('van-tab--active');
+    expect(headers[1].getAttribute('class')).toContain('van-tab--active');
   });
 });

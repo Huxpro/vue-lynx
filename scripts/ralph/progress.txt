@@ -227,3 +227,89 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('space') + bem(). All layout (display, flex-direction, flex-wrap, align-items) via CSS classes in index.less matching Vant. Only dynamic margin styles remain inline (same as Vant). Fill uses CSS class with .van-space-item { flex: 1 } instead of inline flex:1.
 - Limitations: inline-flex (Lynx has no inline layout; uses display:flex), baseline alignment (Lynx may not support align-items:baseline)
 ---
+
+## 2026-03-22 - parity-row + parity-col: Row & Col (Layout)
+- Props (Row): 5/5 (tag, wrap, align, gutter, justify)
+- Props (Col): 3/3 (tag, span, offset)
+- Events: 0/0 (Row and Col have no events)
+- Slots: 1/1 each (default)
+- CSS Variables: 0 (Row and Col have no CSS variables in Vant)
+- BEM Classes (Row): .van-row, --nowrap, --justify-center, --justify-end, --justify-space-between, --justify-space-around, --align-center, --align-bottom
+- BEM Classes (Col): .van-col, --{1-24} (span), --offset-{1-24} (offset) — generated via Less .generate-col(24) mixin
+- Animations: none (Row/Col have no transitions)
+- Tests: 14 Row + 11 Col = 25 cases (Vant has 1 Row + 7 Col = 8)
+- Demo sections: 5/5 (基础用法, 列间距, 行间距, 列偏移, 对齐方式)
+- Visual match: pass (BEM classes, CSS-based flex layout, gutter via Col inline padding)
+- Files (Row): index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3: Row.tsx, index.less, index.ts)
+- Files (Col): index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3: Col.tsx, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Row uses createNamespace('row') + bem() for flex/wrap/justify/align via CSS classes; no inline styles. Col uses createNamespace('col') + bem() for span/offset via CSS generated classes (.generate-col(24) Less mixin); inline styles ONLY for dynamic gutter padding/margin from parent Row. Removed Row negative margins (not in Vant upstream). Demo page uses CSS classes instead of inline styles.
+- Limitations: tag prop (always renders <view>), CSS display:block on .van-col (Lynx defaults to linear)
+---
+
+## 2026-03-22 - parity-grid: Grid
+- Props (Grid): 9/9 (square, center, border, gutter, reverse, iconSize, direction, clickable, columnNum)
+- Props (GridItem): 10/10 (dot, text, icon, badge, iconColor, iconPrefix, badgeProps, url, to, replace)
+- Events: 1/1 (click on GridItem)
+- Slots (GridItem): 3/3 (default, icon, text)
+- CSS Variables: 6 defined in GridItem/index.less (--van-grid-item-content-padding, --van-grid-item-content-background, --van-grid-item-content-active-color, --van-grid-item-icon-size, --van-grid-item-text-color, --van-grid-item-text-font-size)
+- BEM Classes (Grid): .van-grid (flex wrap), .van-hairline--top (border)
+- BEM Classes (GridItem): .van-grid-item, --square, __content (with --center, --square, --border, --surround, --horizontal, --reverse, --clickable, --active), __icon, __text
+- Animations: none (Grid has no transitions)
+- Tests: 24 cases (Vant has 6)
+- Demo sections: 8/8 (基础用法, 自定义列数, 自定义内容, 正方形格子, 格子间距, 内容横排, 页面导航, 徽标提示)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files (Grid): index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Files (GridItem): index.vue, index.less (2 files)
+- Key changes: Rewrote Grid from all-inline-styles to BEM class system. Grid uses createNamespace('grid') + bem() for .van-grid class; paddingLeft inline only for gutter. GridItem uses createNamespace('grid-item') + bem() for content modifiers (direction, center, square, reverse, clickable, surround, border, active). Replaced ::after hairline borders with direct 0.5px CSS borders via BEM modifier classes (--border for right+bottom, --surround for all sides). Extended createNamespace bem() to support bem('element', arrayModifiers) form. Active state via --clickable + --active CSS class instead of overlay view. Demo uses icon font names (photo-o, home-o, search).
+- Limitations: tag prop (always renders <view>), url/to/replace (no browser navigation in Lynx), ::after hairline (uses 0.5px border via BEM classes), :active pseudo-class (uses touchstart/touchend + --active class), cursor:pointer (not applicable), role/tabindex (not applicable)
+---
+
+## 2026-03-22 - parity-nav-bar: NavBar
+- Props: 12/12 (title, fixed, zIndex, border, leftText, rightText, leftDisabled, rightDisabled, leftArrow, placeholder, safeAreaInsetTop, clickable)
+- Events: 2/2 (click-left, click-right)
+- Slots: 3/3 (left, right, title)
+- CSS Variables: 9 defined in index.less (--van-nav-bar-height, --van-nav-bar-background, --van-nav-bar-arrow-size, --van-nav-bar-icon-color, --van-nav-bar-text-color, --van-nav-bar-title-font-size, --van-nav-bar-title-text-color, --van-nav-bar-z-index, --van-nav-bar-disabled-opacity)
+- BEM Classes: .van-nav-bar, --fixed, __content, __left, __right, __title, __arrow, __text, __left--disabled, __right--disabled, .van-hairline--bottom, .van-safe-area-top, .van-nav-bar__placeholder
+- Animations: none (NavBar has no transitions)
+- Tests: 26 cases (Vant has 9, we have 26 — added BEM class verification for all elements/modifiers, content class, text class, arrow class, title class)
+- Demo sections: 5/5 (基础用法, 返回上级, 右侧按钮, 使用插槽, 禁用按钮)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: NavBar.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('nav-bar') + bem(). Removed navBarStyle/leftStyle/rightStyle/titleStyle/arrowStyle/textStyle computed objects; all positioning/sizing via CSS classes + variables. Inline styles ONLY for zIndex prop. Left/right use position:absolute like Vant. Title uses flex:1 + text-align:center. Border via .van-hairline--bottom class. Disabled state via --disabled BEM modifier.
+- Limitations: tag prop (always renders <view>), safeAreaInsetTop (uses fixed 44px padding, no CSS env()), placeholder (hardcoded height, no usePlaceholder composable), HAPTICS_FEEDBACK (not available in Lynx), van-ellipsis (text overflow handled differently)
+---
+
+## 2026-03-22 - parity-tabbar + parity-tabbar-item: Tabbar & TabbarItem
+- Props (Tabbar): 10/10 (modelValue, fixed, border, zIndex, activeColor, inactiveColor, placeholder, safeAreaInsetBottom, beforeChange, route)
+- Props (TabbarItem): 9/9 (name, icon, iconPrefix, dot, badge, badgeProps, to, url, replace)
+- Events (Tabbar): 2/2 (update:modelValue, change)
+- Events (TabbarItem): 1/1 (click)
+- Slots (TabbarItem): 2/2 (default, icon) — both receive { active } scope
+- CSS Variables (Tabbar): 3 defined in index.less (--van-tabbar-height, --van-tabbar-z-index, --van-tabbar-background)
+- CSS Variables (TabbarItem): 7 defined in index.less (--van-tabbar-item-font-size, --van-tabbar-item-text-color, --van-tabbar-item-active-color, --van-tabbar-item-active-background, --van-tabbar-item-line-height, --van-tabbar-item-icon-size, --van-tabbar-item-icon-margin-bottom)
+- BEM Classes (Tabbar): .van-tabbar, --fixed, __placeholder, .van-hairline--top-bottom, .van-safe-area-bottom
+- BEM Classes (TabbarItem): .van-tabbar-item, --active, __icon, __text
+- Animations: none (Tabbar has no transitions)
+- Tests: 28 cases (Vant has 8, we have 28 — added BEM class verification for all modifiers, safe-area, placeholder, custom colors, auto-index, icon slot, beforeChange async)
+- Demo sections: 6/6 (基础用法, 通过名称匹配, 徽标提示, 自定义图标, 自定义颜色, 监听切换事件)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files (Tabbar): index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Tabbar.tsx, types.ts, index.less, index.ts)
+- Files (TabbarItem): index.vue, index.less, types.ts (3 files; Vant has 4: TabbarItem.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote both from all-inline-styles to full BEM class system. Tabbar uses createNamespace('tabbar') + bem() for .van-tabbar class with --fixed modifier. Border via .van-hairline--top-bottom class. Safe area via .van-safe-area-bottom class. Inline styles ONLY for zIndex prop. TabbarItem uses createNamespace('tabbar-item') + bem() for .van-tabbar-item class with --active modifier. __icon class on Badge wrapper, __text class on text wrapper. Inline styles ONLY for activeColor/inactiveColor from parent Tabbar. Provide/inject pattern with TABBAR_KEY symbol for parent-child communication.
+- Limitations: route (no vue-router in Lynx), safeAreaInsetBottom (uses fixed 34px padding via CSS class, no env(safe-area-inset-bottom)), placeholder (fixed height via CSS class, no getBoundingClientRect), to/url/replace (no browser navigation), role/tabindex/aria-selected (not applicable), cursor:pointer (Lynx is touch-only)
+---
+
+## 2026-03-22 - parity-tab: Tab
+- Props: 11/11 (title, disabled, dot, badge, name, titleClass, titleStyle, showZeroBadge, url, to, replace)
+- Events: 0/0 (Tab has no direct events — events handled by parent Tabs)
+- Slots: 1/1 (default)
+- CSS Variables: 5 defined in Tab/index.less (via Tabs/index.less: --van-tab-text-color, --van-tab-active-text-color, --van-tab-disabled-text-color, --van-tab-font-size, --van-tab-line-height)
+- BEM Classes: .van-tab (title element via Tabs), --active, --disabled, --grow, --shrink, --card, .van-tab__text--ellipsis, .van-tab__panel (content panel)
+- Animations: line indicator transition via CSS transitionProperty:left + transitionDuration
+- Tests: 21 cases (Vant has 20; we have 21 — added BEM class verification for panel, active state, disabled state)
+- Demo sections: 11/11 (基础用法, 通过名称匹配, 标签栏滚动, 禁用标签, 样式风格, 点击事件, 自定义颜色, 标签提示, 自定义标签, 收缩布局, 异步切换)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 5: Tab.tsx, TabTitle.tsx, index.less, index.ts, demo/)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Tab panel uses .van-tab__panel class. Tab title headers rendered by Tabs parent now use .van-tab BEM class with --active/--disabled/--card/--shrink/--grow modifiers. Inline styles ONLY for color prop (card mode border/bg) and titleActiveColor/titleInactiveColor. All CSS variables and classes defined in Tabs/index.less. Tests rewritten to use BEM class selectors (.van-tab, .van-tabs__line, etc.) instead of inline style matching.
+- Limitations: titleClass (applied via parent), url/to/replace (no vue-router in Lynx), animated/swipeable (no CSS translateX transition), scrollspy (no scroll position tracking), role/tabindex/aria-* (not applicable)
+---

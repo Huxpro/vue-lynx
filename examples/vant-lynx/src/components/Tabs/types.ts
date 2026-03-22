@@ -28,7 +28,7 @@ export interface TabChild {
 export interface TabsProvide {
   active: Ref<Numeric>;
   type: Ref<TabsType>;
-  color: Ref<string>;
+  color: Ref<string | undefined>;
   lazyRender: Ref<boolean>;
   scrollspy: Ref<boolean>;
   titleActiveColor: Ref<string | undefined>;

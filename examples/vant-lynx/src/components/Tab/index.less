@@ -1,7 +1,15 @@
-:root {
-  --van-tab-text-color: var(--van-gray-7, #646566);
-  --van-tab-active-text-color: var(--van-text-color, #323233);
-  --van-tab-disabled-text-color: var(--van-text-color-3, #c8c9cc);
-  --van-tab-font-size: var(--van-font-size-md, 14px);
-  --van-tab-line-height: var(--van-line-height-md, 20px);
+.van-tab {
+  &__panel {
+    &,
+    &-wrapper {
+      flex-shrink: 0;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    &-wrapper--inactive {
+      height: 0;
+      overflow: visible;
+    }
+  }
 }

@@ -9,9 +9,12 @@
   - role/tabindex/aria-* attributes: Not applicable in Lynx
   - Sticky component wrapping: Not available in Lynx
   - nav scrollbar hiding: Lynx has no ::-webkit-scrollbar
+  - :last-child: Lynx may not support pseudo-selectors, card border uses inline style
 -->
 <script setup lang="ts">
 import { computed, provide, ref, toRef, watch, nextTick } from 'vue-lynx';
+import { createNamespace } from '../../utils';
+import './index.less';
 import {
   TABS_KEY,
   type Numeric,
@@ -20,6 +23,9 @@ import {
   type TabsProvide,
   type TabsClickTabEventParams,
 } from './types';
+
+const [, bem] = createNamespace('tabs');
+const [, tabBem] = createNamespace('tab');
 
 interface TabsProps {
   active?: Numeric;
@@ -48,8 +54,6 @@ interface TabsProps {
 const props = withDefaults(defineProps<TabsProps>(), {
   active: 0,
   type: 'line',
-  color: '#1989fa',
-  background: '#fff',
   duration: 0.3,
   border: true,
   ellipsis: true,
@@ -224,8 +228,6 @@ function onRendered(name: Numeric, title?: string) {
 
 // ---- Expose: resize & scrollTo ----
 function resize() {
-  // In Lynx we cannot measure DOM, but we keep API parity
-  // Re-sync current index
   nextTick(() => {
     setCurrentIndexByName(props.active);
   });
@@ -265,11 +267,11 @@ watch(
 provide(TABS_KEY, {
   active: computed(() => currentName.value ?? props.active),
   type: toRef(props, 'type'),
-  color: toRef(props, 'color'),
+  color: computed(() => props.color),
   lazyRender: toRef(props, 'lazyRender'),
   scrollspy: toRef(props, 'scrollspy'),
-  titleActiveColor: toRef(props, 'titleActiveColor'),
-  titleInactiveColor: toRef(props, 'titleInactiveColor'),
+  titleActiveColor: computed(() => props.titleActiveColor),
+  titleInactiveColor: computed(() => props.titleInactiveColor),
   shrink: toRef(props, 'shrink'),
   ellipsis: toRef(props, 'ellipsis'),
   scrollable,
@@ -281,123 +283,83 @@ provide(TABS_KEY, {
   getTabIndex,
 } as TabsProvide);
 
-// ---- Styles ----
+// ---- Computed classes ----
+const rootClass = computed(() =>
+  bem([props.type])
+);
 
-const rootStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-}));
-
-const wrapStyle = computed(() => {
-  const style: Record<string, any> = {
-    overflow: 'hidden',
-  };
+const wrapClass = computed(() => {
+  const classes = [bem('wrap')];
   if (props.type === 'line' && props.border) {
-    style.borderBottomWidth = '0.5px';
-    style.borderBottomStyle = 'solid';
-    style.borderBottomColor = '#ebedf0';
+    classes.push('van-hairline--top-bottom');
   }
-  return style;
+  return classes.join(' ');
 });
 
-const navStyle = computed(() => {
-  const style: Record<string, any> = {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    position: 'relative' as const,
-    backgroundColor: props.background,
-    userSelect: 'none',
-  };
+const navClass = computed(() =>
+  bem('nav', [props.type, { shrink: props.shrink }])
+);
 
-  if (props.type === 'card') {
-    style.borderWidth = '0.5px';
-    style.borderStyle = 'solid';
-    style.borderColor = props.color;
-    style.borderRadius = '2px';
-    style.marginLeft = '16px';
-    style.marginRight = '16px';
-    style.overflow = 'hidden';
-  }
-
-  return style;
-});
-
-function tabHeaderStyle(tab: TabChild, index: number) {
+function tabTitleClass(tab: TabChild, index: number) {
   const isActive = index === currentIndex.value;
   const isCard = props.type === 'card';
 
-  const style: Record<string, any> = {
-    display: 'flex',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    height: isCard ? '30px' : '44px',
-    paddingLeft: isCard ? '0px' : '12px',
-    paddingRight: isCard ? '0px' : '12px',
-    opacity: tab.disabled ? 0.5 : 1,
-    cursor: tab.disabled ? 'default' : 'pointer',
-  };
+  return tabBem([
+    { active: isActive },
+    { disabled: tab.disabled },
+    { shrink: props.shrink },
+    { grow: scrollable.value && !props.shrink },
+    { card: isCard },
+  ]);
+}
 
-  if (props.shrink) {
-    style.paddingLeft = '12px';
-    style.paddingRight = '12px';
-  } else if (scrollable.value) {
-    style.flex = 1;
-    style.minWidth = '0px';
-  } else {
-    style.flex = 1;
+function tabTextClass() {
+  if (props.ellipsis && !scrollable.value) {
+    return tabBem('text', ['ellipsis']);
+  }
+  return '';
+}
+
+// ---- Inline styles ONLY for dynamic color/background props ----
+function tabTitleStyle(tab: TabChild, index: number) {
+  const isActive = index === currentIndex.value;
+  const isCard = props.type === 'card';
+  const style: Record<string, string> = {};
+
+  if (props.color && isCard) {
+    style.borderColor = props.color;
+    if (!tab.disabled) {
+      if (isActive) {
+        style.backgroundColor = props.color;
+      } else {
+        style.color = props.color;
+      }
+    }
   }
 
-  if (isCard) {
-    if (isActive) {
-      style.backgroundColor = props.color;
-    } else {
-      style.backgroundColor = 'transparent';
-    }
-    if (index > 0) {
-      style.borderLeftWidth = '0.5px';
-      style.borderLeftStyle = 'solid';
-      style.borderLeftColor = props.color;
-    }
+  const titleColor = isActive ? props.titleActiveColor : props.titleInactiveColor;
+  if (titleColor) {
+    style.color = titleColor;
   }
 
+  // Merge user's titleStyle
   if (tab.titleStyle && typeof tab.titleStyle === 'object') {
     Object.assign(style, tab.titleStyle);
   }
 
-  return style;
+  return Object.keys(style).length > 0 ? style : undefined;
 }
 
-function tabTextStyle(tab: TabChild, index: number) {
-  const isActive = index === currentIndex.value;
-  const isCard = props.type === 'card';
-
-  let color: string;
-
-  if (isActive && props.titleActiveColor) {
-    color = props.titleActiveColor;
-  } else if (!isActive && props.titleInactiveColor) {
-    color = props.titleInactiveColor;
-  } else if (isCard) {
-    color = isActive ? '#fff' : props.color;
-  } else {
-    color = isActive ? props.color : '#646566';
+const navStyle = computed(() => {
+  const style: Record<string, string> = {};
+  if (props.background) {
+    style.backgroundColor = props.background;
   }
-
-  const style: Record<string, any> = {
-    fontSize: '14px',
-    fontWeight: isActive ? 'bold' : 'normal',
-    color,
-    lineHeight: '20px',
-  };
-
-  if (props.ellipsis && !scrollable.value) {
-    style.overflow = 'hidden';
-    style.whiteSpace = 'nowrap';
-    style.textOverflow = 'ellipsis';
+  if (props.color && props.type === 'card') {
+    style.borderColor = props.color;
   }
-
-  return style;
-}
+  return Object.keys(style).length > 0 ? style : undefined;
+});
 
 const lineStyle = computed(() => {
   if (props.type !== 'line' || tabs.value.length === 0 || currentIndex.value < 0) {
@@ -408,14 +370,15 @@ const lineStyle = computed(() => {
   const lineW = props.lineWidth ?? 40;
   const lineH = props.lineHeight ?? 3;
 
-  const style: Record<string, any> = {
-    position: 'absolute' as const,
-    bottom: '0px',
+  const style: Record<string, string> = {
+    width: `${lineW}px`,
     height: `${lineH}px`,
     borderRadius: `${lineH / 2}px`,
-    backgroundColor: props.color,
-    width: `${lineW}px`,
   };
+
+  if (props.color) {
+    style.backgroundColor = props.color;
+  }
 
   if (inited.value) {
     style.transitionDuration = `${props.duration}s`;
@@ -445,34 +408,29 @@ function onTabTap(tab: TabChild, event: Event) {
   }
   setActive(tab.name, tab.title, event);
 }
-
-const contentStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  flex: 1,
-}));
 </script>
 
 <template>
-  <view :style="rootStyle">
+  <view :class="rootClass">
     <!-- Tab Header -->
-    <view v-if="showHeader" :style="wrapStyle">
+    <view v-if="showHeader" :class="wrapClass">
       <slot name="nav-left" />
-      <view :style="navStyle">
+      <view :class="navClass" :style="navStyle">
         <!-- Tab headers -->
         <view
           v-for="(tab, index) in tabs"
           :key="tab.name"
-          :style="tabHeaderStyle(tab, index)"
+          :class="tabTitleClass(tab, index)"
+          :style="tabTitleStyle(tab, index)"
           @tap="onTabTap(tab, $event)"
         >
           <view :style="{ display: 'flex', flexDirection: 'column', alignItems: 'center' }">
             <!-- Badge support for dot/badge -->
             <view v-if="tab.dot || shouldShowBadge(tab)"
               :style="{ position: 'relative', display: 'flex' }">
-              <text :style="tabTextStyle(tab, index)">{{ tab.title }}</text>
+              <text :class="tabTextClass()">{{ tab.title }}</text>
               <!-- Dot indicator -->
-              <view v-if="tab.dot" :style="{
+              <view v-if="tab.dot" class="van-badge--dot" :style="{
                 position: 'absolute',
                 top: '-4px',
                 right: '-8px',
@@ -482,7 +440,7 @@ const contentStyle = computed(() => ({
                 backgroundColor: '#ee0a24',
               }" />
               <!-- Badge number -->
-              <view v-else-if="shouldShowBadge(tab)" :style="{
+              <view v-else-if="shouldShowBadge(tab)" class="van-badge--fixed" :style="{
                 position: 'absolute',
                 top: '-8px',
                 right: '-16px',
@@ -502,19 +460,19 @@ const contentStyle = computed(() => ({
               </view>
             </view>
             <!-- No badge -->
-            <text v-else :style="tabTextStyle(tab, index)">{{ tab.title }}</text>
+            <text v-else :class="tabTextClass()">{{ tab.title }}</text>
           </view>
         </view>
 
         <!-- Line indicator (line type only) -->
-        <view v-if="type === 'line'" :style="lineStyle" />
+        <view v-if="type === 'line'" class="van-tabs__line" :style="lineStyle" />
       </view>
       <slot name="nav-right" />
       <slot name="nav-bottom" />
     </view>
 
     <!-- Tab content panels -->
-    <view :style="contentStyle">
+    <view class="van-tabs__content">
       <slot />
     </view>
   </view>
