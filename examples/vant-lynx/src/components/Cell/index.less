@@ -13,11 +13,121 @@
   --van-cell-label-line-height: var(--van-line-height-sm, 18px);
   --van-cell-label-margin-top: var(--van-padding-base, 4px);
   --van-cell-value-color: var(--van-text-color-2, #969799);
-  --van-cell-value-font-size: inherit;
+  --van-cell-value-font-size: var(--van-font-size-md, 14px);
   --van-cell-icon-size: 16px;
   --van-cell-right-icon-color: var(--van-gray-6, #969799);
   --van-cell-large-vertical-padding: var(--van-padding-sm, 12px);
   --van-cell-large-title-font-size: var(--van-font-size-lg, 16px);
   --van-cell-large-label-font-size: var(--van-font-size-md, 14px);
-  --van-cell-large-value-font-size: inherit;
+  --van-cell-large-value-font-size: var(--van-font-size-md, 14px);
+}
+
+.van-cell {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+  padding: var(--van-cell-vertical-padding) var(--van-cell-horizontal-padding);
+  overflow: hidden;
+  font-size: var(--van-cell-font-size);
+  line-height: var(--van-cell-line-height);
+  background: var(--van-cell-background);
+
+  // Lynx has no ::after — use border-bottom instead of hairline mixin
+  border-bottom: 0.5px solid var(--van-cell-border-color);
+
+  &--borderless {
+    border-bottom: none;
+  }
+
+  &__label {
+    margin-top: var(--van-cell-label-margin-top);
+    color: var(--van-cell-label-color);
+    font-size: var(--van-cell-label-font-size);
+    line-height: var(--van-cell-label-line-height);
+  }
+
+  &__title,
+  &__value {
+    flex: 1;
+  }
+
+  &__title {
+    color: var(--van-cell-text-color);
+    font-size: var(--van-cell-font-size);
+    line-height: var(--van-cell-line-height);
+  }
+
+  &__value {
+    position: relative;
+    overflow: hidden;
+    color: var(--van-cell-value-color);
+    font-size: var(--van-cell-value-font-size);
+    text-align: right;
+    line-height: var(--van-cell-line-height);
+  }
+
+  // When title exists, value should not flex
+  &__value--alone {
+    text-align: left;
+  }
+
+  &__left-icon,
+  &__right-icon {
+    display: flex;
+    align-items: center;
+    height: var(--van-cell-line-height);
+    font-size: var(--van-cell-icon-size);
+    line-height: var(--van-cell-line-height);
+  }
+
+  &__left-icon {
+    margin-right: var(--van-padding-base, 4px);
+  }
+
+  &__right-icon {
+    margin-left: var(--van-padding-base, 4px);
+    color: var(--van-cell-right-icon-color);
+  }
+
+  &--clickable {
+    cursor: pointer;
+  }
+
+  &--active {
+    background-color: var(--van-cell-active-color);
+  }
+
+  &--required {
+    overflow: visible;
+  }
+
+  &__required-asterisk {
+    position: absolute;
+    left: var(--van-padding-xs, 4px);
+    color: var(--van-cell-required-color);
+    font-size: var(--van-cell-font-size);
+  }
+
+  &--center {
+    align-items: center;
+  }
+
+  &--large {
+    padding-top: var(--van-cell-large-vertical-padding);
+    padding-bottom: var(--van-cell-large-vertical-padding);
+
+    .van-cell__title {
+      font-size: var(--van-cell-large-title-font-size);
+    }
+
+    .van-cell__label {
+      font-size: var(--van-cell-large-label-font-size);
+    }
+
+    .van-cell__value {
+      font-size: var(--van-cell-large-value-font-size);
+    }
+  }
 }
