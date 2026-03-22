@@ -9,6 +9,19 @@ async function later() {
 }
 
 describe('List', () => {
+  it('should render root with van-list class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(List, { immediateCheck: false });
+        },
+      }),
+    );
+
+    const root = container.querySelector('.van-list');
+    expect(root).toBeTruthy();
+  });
+
   it('should emit load event when immediateCheck is true (default)', async () => {
     const onLoad = vi.fn();
     const onUpdateLoading = vi.fn();
@@ -76,11 +89,7 @@ describe('List', () => {
     expect(onUpdateLoading).not.toHaveBeenCalled();
 
     // Find error text element and click it
-    const errorViews = Array.from(container.querySelectorAll('view'));
-    const errorView = errorViews.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__error-text');
-    });
+    const errorView = container.querySelector('.van-list__error-text');
     expect(errorView).toBeTruthy();
 
     if (errorView) {
@@ -103,11 +112,7 @@ describe('List', () => {
 
     await later();
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const finishedView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__finished-text');
-    });
+    const finishedView = container.querySelector('.van-list__finished-text');
     expect(finishedView).toBeTruthy();
 
     const textEls = Array.from(container.querySelectorAll('text'));
@@ -128,11 +133,7 @@ describe('List', () => {
 
     await later();
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const finishedView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__finished-text');
-    });
+    const finishedView = container.querySelector('.van-list__finished-text');
     expect(finishedView).toBeFalsy();
   });
 
@@ -151,11 +152,7 @@ describe('List', () => {
 
     await later();
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const finishedView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__finished-text');
-    });
+    const finishedView = container.querySelector('.van-list__finished-text');
     expect(finishedView).toBeTruthy();
 
     const textEls = Array.from(container.querySelectorAll('text'));
@@ -178,11 +175,7 @@ describe('List', () => {
 
     await later();
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const errorView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__error-text');
-    });
+    const errorView = container.querySelector('.van-list__error-text');
     expect(errorView).toBeTruthy();
 
     const textEls = Array.from(container.querySelectorAll('text'));
@@ -211,7 +204,7 @@ describe('List', () => {
     expect(onUpdateLoading).not.toHaveBeenCalled();
   });
 
-  it('should render loading state correctly', async () => {
+  it('should render loading state with van-list__loading class', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -228,12 +221,25 @@ describe('List', () => {
       }),
     );
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const loadingView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__loading');
-    });
+    const loadingView = container.querySelector('.van-list__loading');
     expect(loadingView).toBeTruthy();
+  });
+
+  it('should render loading-icon with van-list__loading-icon class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(List, {
+            loading: true,
+            finished: false,
+            immediateCheck: false,
+          });
+        },
+      }),
+    );
+
+    const loadingIcon = container.querySelector('.van-list__loading-icon');
+    expect(loadingIcon).toBeTruthy();
   });
 
   it('should not show loading when finished', async () => {
@@ -249,11 +255,7 @@ describe('List', () => {
       }),
     );
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const loadingView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__loading');
-    });
+    const loadingView = container.querySelector('.van-list__loading');
     expect(loadingView).toBeFalsy();
   });
 
@@ -268,11 +270,7 @@ describe('List', () => {
       }),
     );
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const placeholder = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__placeholder');
-    });
+    const placeholder = container.querySelector('.van-list__placeholder');
     expect(placeholder).toBeTruthy();
   });
 
@@ -360,11 +358,7 @@ describe('List', () => {
       }),
     );
 
-    const views = Array.from(container.querySelectorAll('view'));
-    const loadingView = views.find((v: any) => {
-      const cls = v.getAttribute('class') || '';
-      return cls.includes('van-list__loading');
-    });
+    const loadingView = container.querySelector('.van-list__loading');
     expect(loadingView).toBeFalsy();
   });
 });

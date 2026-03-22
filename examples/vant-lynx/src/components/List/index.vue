@@ -5,10 +5,10 @@
   - Tab status: No useAllTabStatus composable — List always checks regardless of tab state.
   - Passive scroll: No passive event listener option in Lynx.
   - role/aria: No ARIA attributes (role="feed", aria-busy) in Lynx.
-  - pointer-events: Placeholder uses height: 0 only (no pointer-events: none).
 -->
 <script setup lang="ts">
 import { ref, watch, onMounted, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import Loading from '../Loading/index.vue';
 import './index.less';
 import type { ListDirection, ListExpose } from './types';
@@ -44,6 +44,7 @@ const emit = defineEmits<{
   'update:error': [value: boolean];
 }>();
 
+const [, bem] = createNamespace('list');
 const slots = useSlots();
 
 // Use sync innerLoading state to avoid repeated loading in some edge cases (matching Vant)
@@ -118,21 +119,21 @@ const showLoading = () =>
 </script>
 
 <template>
-  <view class="van-list" @scroll="onScroll">
-    <!-- direction=up: placeholder first, then loading/finished/error, then content -->
-    <view v-if="direction === 'up'" class="van-list__placeholder" />
+  <view :class="bem()" @scroll="onScroll">
+    <!-- direction=up: placeholder first, then content last -->
+    <view v-if="direction === 'up'" :class="bem('placeholder')" />
 
-    <view v-if="direction === 'up' && showLoading()" class="van-list__loading">
+    <view v-if="direction === 'up' && showLoading()" :class="bem('loading')">
       <slot name="loading">
-        <Loading v-if="loadingText != null" size="16">{{ loadingText || '加载中...' }}</Loading>
+        <Loading v-if="loadingText != null" :class="bem('loading-icon')">{{ loadingText || '加载中...' }}</Loading>
       </slot>
     </view>
-    <view v-if="direction === 'up' && finished && (slots.finished || finishedText)" class="van-list__finished-text">
+    <view v-if="direction === 'up' && finished && (slots.finished || finishedText)" :class="bem('finished-text')">
       <slot name="finished">
         <text>{{ finishedText }}</text>
       </slot>
     </view>
-    <view v-if="direction === 'up' && error && (slots.error || errorText)" class="van-list__error-text" @tap="onErrorTap">
+    <view v-if="direction === 'up' && error && (slots.error || errorText)" :class="bem('error-text')" @tap="onErrorTap">
       <slot name="error">
         <text>{{ errorText }}</text>
       </slot>
@@ -140,23 +141,23 @@ const showLoading = () =>
 
     <slot />
 
-    <!-- direction=down: content first, then loading/finished/error, then placeholder -->
-    <view v-if="direction === 'down' && showLoading()" class="van-list__loading">
+    <!-- direction=down: content first, then placeholder last -->
+    <view v-if="direction === 'down' && showLoading()" :class="bem('loading')">
       <slot name="loading">
-        <Loading v-if="loadingText != null" size="16">{{ loadingText || '加载中...' }}</Loading>
+        <Loading v-if="loadingText != null" :class="bem('loading-icon')">{{ loadingText || '加载中...' }}</Loading>
       </slot>
     </view>
-    <view v-if="direction === 'down' && finished && (slots.finished || finishedText)" class="van-list__finished-text">
+    <view v-if="direction === 'down' && finished && (slots.finished || finishedText)" :class="bem('finished-text')">
       <slot name="finished">
         <text>{{ finishedText }}</text>
       </slot>
     </view>
-    <view v-if="direction === 'down' && error && (slots.error || errorText)" class="van-list__error-text" @tap="onErrorTap">
+    <view v-if="direction === 'down' && error && (slots.error || errorText)" :class="bem('error-text')" @tap="onErrorTap">
       <slot name="error">
         <text>{{ errorText }}</text>
       </slot>
     </view>
 
-    <view v-if="direction === 'down'" class="van-list__placeholder" />
+    <view v-if="direction === 'down'" :class="bem('placeholder')" />
   </view>
 </template>
