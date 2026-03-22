@@ -3,58 +3,58 @@ import DemoPage from '../components/DemoPage/index.vue';
 import Card from '../components/Card/index.vue';
 import Tag from '../components/Tag/index.vue';
 import Button from '../components/Button/index.vue';
+
+const imageURL = 'https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg';
 </script>
 
 <template>
-  <DemoPage title="Card">
-    <view :style="{ display: 'flex', flexDirection: 'column', padding: '16px' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Basic Usage</text>
-      <view :style="{ marginBottom: '16px' }">
-        <Card
-          num="2"
-          price="2.00"
-          desc="Description"
-          title="Product Name"
-          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
-        />
-      </view>
+  <DemoPage title="Card 商品卡片">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+      <!-- 基础用法 -->
+      <text class="demo-section-title">基础用法</text>
+      <Card
+        num="2"
+        price="2.00"
+        desc="描述信息"
+        title="商品名称"
+        :thumb="imageURL"
+      />
 
-      <!-- Discount Info -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Discount Info</text>
-      <view :style="{ marginBottom: '16px' }">
-        <Card
-          num="2"
-          price="2.00"
-          origin-price="10.00"
-          tag="Tag"
-          desc="Description"
-          title="Product Name"
-          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
-        />
-      </view>
+      <!-- 营销信息 -->
+      <text class="demo-section-title" :style="{ marginTop: '16px' }">营销信息</text>
+      <Card
+        num="2"
+        price="2.00"
+        origin-price="10.00"
+        tag="标签"
+        desc="描述信息"
+        title="商品名称"
+        :thumb="imageURL"
+      />
 
-      <!-- Custom Content -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">Custom Content</text>
-      <view :style="{ marginBottom: '16px' }">
-        <Card
-          num="2"
-          price="2.00"
-          desc="Description"
-          title="Product Name"
-          thumb="https://fastly.jsdelivr.net/npm/@vant/assets/ipad.jpeg"
-        >
-          <template #tags>
-            <Tag plain type="primary" :style="{ marginRight: '5px' }">Tag</Tag>
-            <Tag plain type="primary">Tag</Tag>
-          </template>
+      <!-- 自定义内容 -->
+      <text class="demo-section-title" :style="{ marginTop: '16px' }">自定义内容</text>
+      <Card
+        num="2"
+        price="2.00"
+        desc="描述信息"
+        title="商品名称"
+        :thumb="imageURL"
+      >
+        <template #tags>
+          <view :style="{ display: 'flex', flexDirection: 'row' }">
+            <Tag plain type="primary" :style="{ marginRight: '5px' }">标签</Tag>
+            <Tag plain type="primary">标签</Tag>
+          </view>
+        </template>
 
-          <template #footer>
-            <Button round size="mini">Button</Button>
-            <Button round size="mini">Button</Button>
-          </template>
-        </Card>
-      </view>
+        <template #footer>
+          <view :style="{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }">
+            <Button round size="mini">按钮</Button>
+            <Button round size="mini" :style="{ marginLeft: '5px' }">按钮</Button>
+          </view>
+        </template>
+      </Card>
     </view>
   </DemoPage>
 </template>
