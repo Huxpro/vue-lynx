@@ -1,22 +1,14 @@
 :root {
-  --van-text-ellipsis-action-color: var(--van-primary-color, #1989fa);
-  --van-text-ellipsis-font-size: var(--van-font-size-md, 14px);
   --van-text-ellipsis-line-height: 1.6;
+  --van-text-ellipsis-action-color: var(--van-blue, #1989fa);
 }
 
 .van-text-ellipsis {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-
-  &__text {
-    font-size: var(--van-text-ellipsis-font-size);
-    line-height: var(--van-text-ellipsis-line-height);
-  }
+  line-height: var(--van-text-ellipsis-line-height);
+  white-space: pre-wrap;
+  word-break: break-word;
 
   &__action {
-    font-size: var(--van-text-ellipsis-font-size);
-    line-height: var(--van-text-ellipsis-line-height);
     color: var(--van-text-ellipsis-action-color);
   }
 }

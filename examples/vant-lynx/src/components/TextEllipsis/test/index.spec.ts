@@ -169,6 +169,43 @@ describe('TextEllipsis', () => {
     expect(allText).toContain('...');
   });
 
+  it('should support toggle without argument', async () => {
+    const compRef = ref<any>(null);
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(TextEllipsis, {
+            content,
+            expandText: 'expand',
+            collapseText: 'collapse',
+            ref: (el: any) => { compRef.value = el; },
+          });
+        },
+      }),
+    );
+
+    // Initially truncated
+    let textEls = getTextEls(container);
+    let allText = textEls.map((t) => t.textContent).join('');
+    expect(allText).toContain('...');
+
+    // Toggle without arg - should expand
+    compRef.value?.toggle();
+    await nextTick();
+
+    textEls = getTextEls(container);
+    allText = textEls.map((t) => t.textContent).join('');
+    expect(allText).toContain(content);
+
+    // Toggle again - should collapse
+    compRef.value?.toggle();
+    await nextTick();
+
+    textEls = getTextEls(container);
+    allText = textEls.map((t) => t.textContent).join('');
+    expect(allText).toContain('...');
+  });
+
   it('should support custom dots', () => {
     const { container } = render(
       defineComponent({
@@ -280,5 +317,69 @@ describe('TextEllipsis', () => {
     );
     const root = container.querySelector('.van-text-ellipsis');
     expect(root).toBeTruthy();
+  });
+
+  it('should reset expanded state when content changes', async () => {
+    const currentContent = ref(content);
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(TextEllipsis, {
+            content: currentContent.value,
+            expandText: 'expand',
+            collapseText: 'collapse',
+          });
+        },
+      }),
+    );
+
+    // Expand
+    let textEls = getTextEls(container);
+    const actionEl = textEls.find(isAction);
+    fireEvent.tap(actionEl!);
+    await nextTick();
+
+    // Verify expanded
+    textEls = getTextEls(container);
+    let allText = textEls.map((t) => t.textContent).join('');
+    expect(allText).toContain(content);
+
+    // Change content - should reset to collapsed
+    currentContent.value = content + ' Extra text added.';
+    await nextTick();
+
+    textEls = getTextEls(container);
+    allText = textEls.map((t) => t.textContent).join('');
+    expect(allText).toContain('...');
+  });
+
+  it('should show action only when text exceeds', () => {
+    // Short content - no action
+    const { container: c1 } = render(
+      defineComponent({
+        render() {
+          return h(TextEllipsis, {
+            content: shortContent,
+            expandText: 'expand',
+          });
+        },
+      }),
+    );
+    const actions1 = getTextEls(c1).filter(isAction);
+    expect(actions1.length).toBe(0);
+
+    // Long content - has action
+    const { container: c2 } = render(
+      defineComponent({
+        render() {
+          return h(TextEllipsis, {
+            content,
+            expandText: 'expand',
+          });
+        },
+      }),
+    );
+    const actions2 = getTextEls(c2).filter(isAction);
+    expect(actions2.length).toBe(1);
   });
 });
