@@ -12,9 +12,11 @@
   - label for click-to-focus: No label element in Lynx
 -->
 <script setup lang="ts">
-import { computed, ref, reactive, watch, onMounted, nextTick, provide } from 'vue-lynx';
+import { computed, ref, reactive, watch, onMounted, onUnmounted, inject, nextTick } from 'vue-lynx';
 import { createNamespace } from '../../utils/create';
 import { addUnit, isDef } from '../../utils/format';
+import { FORM_KEY } from '../Form/types';
+import type { FormProvide } from '../Form/types';
 import Icon from '../Icon/index.vue';
 import Cell from '../Cell/index.vue';
 import type {
@@ -138,6 +140,8 @@ const slots = defineSlots<{
 
 const [, bem] = createNamespace('field');
 
+const form = inject<FormProvide | null>(FORM_KEY, null);
+
 const state = reactive({
   status: 'unvalidated' as FieldValidationStatus,
   focused: false,
@@ -148,11 +152,14 @@ const inputRef = ref<any>(null);
 
 const getModelValue = () => String(props.modelValue ?? '');
 
-// Get prop value, with form-level fallback in the future
+// Get prop value, with form-level fallback via provide/inject
 const getProp = (key: string) => {
   const val = (props as any)[key];
   if (isDef(val)) {
     return val;
+  }
+  if (form) {
+    return (form.props as any)[key];
   }
   return undefined;
 };
@@ -274,8 +281,33 @@ const validate = (rules = props.rules) =>
     }
   });
 
+const getFormValidateTrigger = (): FieldValidateTrigger[] => {
+  if (form) {
+    const trigger = form.props.validateTrigger;
+    if (trigger) {
+      return toArray(trigger) as FieldValidateTrigger[];
+    }
+  }
+  return [];
+};
+
 const validateWithTrigger = (trigger: FieldValidateTrigger) => {
-  if (props.rules) {
+  if (form && props.rules) {
+    const defaultTrigger = getFormValidateTrigger();
+    const rules = props.rules.filter((rule) => {
+      if (rule.trigger) {
+        return toArray(rule.trigger).includes(trigger);
+      }
+      if (defaultTrigger.length) {
+        return defaultTrigger.includes(trigger);
+      }
+      return true;
+    });
+
+    if (rules.length) {
+      validate(rules);
+    }
+  } else if (props.rules) {
     const rules = props.rules.filter((rule) => {
       if (rule.trigger) {
         return toArray(rule.trigger).includes(trigger);
@@ -392,23 +424,41 @@ watch(
   },
 );
 
+// Register with parent Form
+const fieldExpose = {
+  get name() {
+    return props.name;
+  },
+  validate,
+  resetValidation,
+  getValidationStatus,
+  formValue,
+};
+
+if (form) {
+  form.registerField(fieldExpose);
+}
+
 onMounted(() => {
   updateValue(getModelValue(), props.formatTrigger);
 });
 
-defineExpose<FieldExpose>({
+onUnmounted(() => {
+  if (form) {
+    form.unregisterField(fieldExpose);
+  }
+});
+
+defineExpose({
   blur,
   focus,
   validate,
   formValue,
   resetValidation,
   getValidationStatus,
-});
-
-// Provide for custom field injection (Form integration)
-provide('CUSTOM_FIELD_INJECTION_KEY', {
-  resetValidation,
-  validateWithTrigger,
+  get name() {
+    return props.name;
+  },
 });
 
 const controlClass = computed(() => {
