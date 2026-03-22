@@ -1,80 +1,91 @@
 <!--
-  Vant Feature Parity Report -- TimePicker
-  =========================================
-  Props: 14/15 supported
-    Supported: modelValue, title, minHour, maxHour, minMinute, maxMinute,
-               minSecond, maxSecond, minTime, maxTime, columnsType,
-               confirmButtonText, cancelButtonText, loading, readonly,
-               showToolbar, optionHeight
-    Missing:   filter, formatter, swipeDuration, visibleOptionNum
-
-  Events: 4/4 supported
-    Supported: update:modelValue, confirm, cancel, change
-
-  Slots: 0/7 supported
-    Missing: toolbar, title, confirm, cancel, option, columns-top, columns-bottom
-
-  Key Gaps:
-    - No filter/formatter for custom option text
-    - No scroll-wheel physics (tap-to-select only)
-    - No slot support for toolbar or column customization
+  Lynx Limitations:
+  - tag prop: Lynx has no HTML tags, always renders <view>
+  - scroll-wheel physics: tap-to-select via Picker component (no native wheel)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
-import Loading from '../Loading/index.vue';
+import { padZero, clamp } from '../../utils/format';
+import Picker from '../Picker/index.vue';
+import type { PickerOption, PickerColumn as PickerColumnType } from '../Picker/types';
+import type { Numeric } from '../../utils/format';
+import type {
+  TimePickerColumnType,
+  TimePickerFilter,
+  TimePickerFormatter,
+  TimePickerExpose,
+} from './types';
+import { genOptions } from '../DatePicker/utils';
+import './index.less';
 
-export type TimePickerColumnType = 'hour' | 'minute' | 'second';
+const fullColumns: TimePickerColumnType[] = ['hour', 'minute', 'second'];
 
-export interface TimePickerProps {
-  modelValue?: string[];
-  title?: string;
-  minHour?: number;
-  maxHour?: number;
-  minMinute?: number;
-  maxMinute?: number;
-  minSecond?: number;
-  maxSecond?: number;
-  minTime?: string;
-  maxTime?: string;
-  columnsType?: TimePickerColumnType[];
-  confirmButtonText?: string;
-  cancelButtonText?: string;
-  loading?: boolean;
-  readonly?: boolean;
-  showToolbar?: boolean;
-  optionHeight?: number;
-}
-
-const props = withDefaults(defineProps<TimePickerProps>(), {
-  modelValue: () => [],
-  minHour: 0,
-  maxHour: 23,
-  minMinute: 0,
-  maxMinute: 59,
-  minSecond: 0,
-  maxSecond: 59,
-  columnsType: () => ['hour', 'minute'] as TimePickerColumnType[],
-  confirmButtonText: 'Confirm',
-  cancelButtonText: 'Cancel',
-  loading: false,
-  readonly: false,
-  showToolbar: true,
-  optionHeight: 44,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string[];
+    columnsType?: TimePickerColumnType[];
+    minHour?: Numeric;
+    maxHour?: Numeric;
+    minMinute?: Numeric;
+    maxMinute?: Numeric;
+    minSecond?: Numeric;
+    maxSecond?: Numeric;
+    minTime?: string;
+    maxTime?: string;
+    filter?: TimePickerFilter;
+    formatter?: TimePickerFormatter;
+    title?: string;
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+    loading?: boolean;
+    readonly?: boolean;
+    showToolbar?: boolean;
+    visibleOptionNum?: Numeric;
+    optionHeight?: Numeric;
+    swipeDuration?: Numeric;
+  }>(),
+  {
+    modelValue: () => [],
+    columnsType: () => ['hour', 'minute'] as TimePickerColumnType[],
+    minHour: 0,
+    maxHour: 23,
+    minMinute: 0,
+    maxMinute: 59,
+    minSecond: 0,
+    maxSecond: 59,
+    formatter: ((_type: string, option: PickerOption) => option) as TimePickerFormatter,
+    loading: false,
+    readonly: false,
+    showToolbar: true,
+    visibleOptionNum: 6,
+    optionHeight: 44,
+    swipeDuration: 1000,
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]];
-  confirm: [value: string[]];
-  cancel: [];
-  change: [value: string[]];
+  confirm: [params: {
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  cancel: [params: {
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  change: [params: {
+    columnIndex: number;
+    selectedValues: string[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
 }>();
 
-function padZero(n: number): string {
-  return n < 10 ? `0${n}` : `${n}`;
-}
+const pickerRef = ref<InstanceType<typeof Picker>>();
 
-// Parse "HH:MM:SS" time string into per-column values
-const fullColumns: TimePickerColumnType[] = ['hour', 'minute', 'second'];
+const selectedValues = ref<string[]>([]);
 
 function getValidTime(time: string): string[] {
   const parts = time.split(':');
@@ -83,242 +94,202 @@ function getValidTime(time: string): string[] {
   );
 }
 
-const columns = computed(() => {
-  const result: string[][] = [];
+function buildColumns(currentValues: string[]): PickerColumnType[] {
+  let { minHour, maxHour, minMinute, maxMinute, minSecond, maxSecond } = props;
 
-  let effectiveMinHour = props.minHour;
-  let effectiveMaxHour = props.maxHour;
-  let effectiveMinMinute = props.minMinute;
-  let effectiveMaxMinute = props.maxMinute;
-  let effectiveMinSecond = props.minSecond;
-  let effectiveMaxSecond = props.maxSecond;
-
-  // Cross-column constraints via minTime/maxTime
-  // Use selectedIndexes + modelValue to avoid circular computed dependency
   if (props.minTime || props.maxTime) {
-    const currentFull: Record<TimePickerColumnType, number> = {
+    const fullTime: Record<TimePickerColumnType, string | number> = {
       hour: 0,
       minute: 0,
       second: 0,
     };
-    const vals = props.modelValue && props.modelValue.length > 0
-      ? props.modelValue
-      : [];
     props.columnsType.forEach((col, i) => {
-      currentFull[col] = parseInt(vals[i] ?? '0', 10);
+      fullTime[col] = currentValues[i] ?? 0;
     });
+    const { hour, minute } = fullTime;
 
     if (props.minTime) {
       const [minH, minM, minS] = getValidTime(props.minTime);
-      effectiveMinHour = parseInt(minH, 10);
-      effectiveMinMinute = currentFull.hour <= effectiveMinHour ? parseInt(minM, 10) : 0;
-      effectiveMinSecond = currentFull.hour <= effectiveMinHour && currentFull.minute <= parseInt(minM, 10)
-        ? parseInt(minS, 10)
-        : 0;
+      minHour = minH;
+      minMinute = +hour <= +minHour ? minM : '00';
+      minSecond = +hour <= +minHour && +minute <= +minMinute ? minS : '00';
     }
     if (props.maxTime) {
       const [maxH, maxM, maxS] = getValidTime(props.maxTime);
-      effectiveMaxHour = parseInt(maxH, 10);
-      effectiveMaxMinute = currentFull.hour >= effectiveMaxHour ? parseInt(maxM, 10) : 59;
-      effectiveMaxSecond = currentFull.hour >= effectiveMaxHour && currentFull.minute >= parseInt(maxM, 10)
-        ? parseInt(maxS, 10)
-        : 59;
+      maxHour = maxH;
+      maxMinute = +hour >= +maxHour ? maxM : '59';
+      maxSecond = +hour >= +maxHour && +minute >= +maxMinute ? maxS : '59';
     }
   }
 
-  for (const type of props.columnsType) {
-    if (type === 'hour') {
-      const hours: string[] = [];
-      for (let h = effectiveMinHour; h <= effectiveMaxHour; h++) {
-        hours.push(padZero(h));
-      }
-      result.push(hours);
-    } else if (type === 'minute') {
-      const minutes: string[] = [];
-      for (let m = effectiveMinMinute; m <= effectiveMaxMinute; m++) {
-        minutes.push(padZero(m));
-      }
-      result.push(minutes);
-    } else if (type === 'second') {
-      const seconds: string[] = [];
-      for (let s = effectiveMinSecond; s <= effectiveMaxSecond; s++) {
-        seconds.push(padZero(s));
-      }
-      result.push(seconds);
+  return props.columnsType.map((type) => {
+    const { filter, formatter } = props;
+    switch (type) {
+      case 'hour':
+        return genOptions(+minHour, +maxHour, type, formatter, filter, currentValues);
+      case 'minute':
+        return genOptions(+minMinute, +maxMinute, type, formatter, filter, currentValues);
+      case 'second':
+        return genOptions(+minSecond, +maxSecond, type, formatter, filter, currentValues);
+      default:
+        return [];
     }
-  }
-
-  return result;
-});
-
-const selectedIndexes = ref<number[]>([]);
-
-function initIndexes() {
-  const vals = props.modelValue && props.modelValue.length > 0
-    ? props.modelValue
-    : columns.value.map((col) => col[0] ?? '');
-
-  selectedIndexes.value = columns.value.map((col, i) => {
-    const idx = col.indexOf(vals[i] ?? '');
-    return idx >= 0 ? idx : 0;
   });
 }
 
-watch(() => props.modelValue, () => initIndexes(), { immediate: true });
-watch(() => columns.value, () => initIndexes());
+// Clamp values to column boundaries, filling empty slots with first column option
+function resolveValues(rawValues: string[]): string[] {
+  const cols1 = buildColumns(rawValues);
+  const filled = cols1.map((col, i) => {
+    if (col.length === 0) return '';
+    const val = rawValues[i];
+    if (val !== undefined && val !== '') {
+      const n = +val;
+      if (!isNaN(n)) {
+        const minV = +col[0].value!;
+        const maxV = +col[col.length - 1].value!;
+        return padZero(clamp(n, minV, maxV));
+      }
+    }
+    return String(col[0].value ?? '');
+  });
+  // Second pass for cross-column dependencies (e.g., minTime/maxTime)
+  const cols2 = buildColumns(filled);
+  return cols2.map((col, i) => {
+    if (col.length === 0) return '';
+    const val = filled[i];
+    const n = +val;
+    if (!isNaN(n)) {
+      const minV = +col[0].value!;
+      const maxV = +col[col.length - 1].value!;
+      return padZero(clamp(n, minV, maxV));
+    }
+    return String(col[0].value ?? '');
+  });
+}
 
-const selectedValues = computed(() =>
-  columns.value.map((col, i) => col[selectedIndexes.value[i]] ?? col[0] ?? ''),
+const columns = computed<PickerColumnType[]>(() =>
+  buildColumns(selectedValues.value),
 );
 
-function onSelectItem(colIndex: number, itemIndex: number) {
-  if (props.readonly) return;
+// IMPORTANT: Register selectedValues watcher BEFORE the immediate modelValue watcher
+// so that when the immediate callback sets selectedValues, this watcher can fire.
+watch(selectedValues, (newValues) => {
+  if (JSON.stringify(newValues) !== JSON.stringify(props.modelValue)) {
+    emit('update:modelValue', newValues);
+  }
+});
 
-  const newIndexes = [...selectedIndexes.value];
-  newIndexes[colIndex] = itemIndex;
-  selectedIndexes.value = newIndexes;
+// Sync from external modelValue changes (with clamping)
+watch(
+  () => props.modelValue,
+  (newValues) => {
+    const resolved = resolveValues(newValues);
+    if (JSON.stringify(resolved) !== JSON.stringify(selectedValues.value)) {
+      selectedValues.value = resolved;
+    }
+  },
+  { immediate: true },
+);
 
-  const vals = columns.value.map((col, i) => col[newIndexes[i]] ?? col[0] ?? '');
-  emit('change', vals);
-}
-
-function onConfirm() {
-  emit('update:modelValue', selectedValues.value);
-  emit('confirm', selectedValues.value);
-}
-
-function onCancel() {
-  emit('cancel');
-}
-
-const toolbarStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  justifyContent: 'space-between' as const,
-  height: 44,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
-
-const columnsContainerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  height: props.optionHeight * 5,
-  backgroundColor: '#fff',
-  overflow: 'hidden' as const,
-  position: 'relative' as const,
-}));
-
-const loadingOverlayStyle = {
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: 'rgba(255, 255, 255, 0.6)',
-};
-
-function getColumnLabel(type: string): string {
-  switch (type) {
-    case 'hour': return 'Hour';
-    case 'minute': return 'Minute';
-    case 'second': return 'Second';
-    default: return '';
+// Sync from Picker's auto-adjustments (e.g., when columns change and
+// Picker's fillCascadeValues resets out-of-range values to first option)
+function onPickerUpdateModelValue(values: Numeric[]) {
+  const strValues = values.map(String);
+  if (JSON.stringify(strValues) !== JSON.stringify(selectedValues.value)) {
+    selectedValues.value = strValues;
   }
 }
+
+// Pass through Picker events with string-typed values
+function onChange(params: {
+  columnIndex: number;
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  emit('change', {
+    columnIndex: params.columnIndex,
+    selectedValues: params.selectedValues.map(String),
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
+}
+
+function onConfirm(params: {
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  emit('confirm', {
+    selectedValues: params.selectedValues.map(String),
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
+}
+
+function onCancel(params: {
+  selectedValues: Numeric[];
+  selectedOptions: (PickerOption | undefined)[];
+  selectedIndexes: number[];
+}) {
+  emit('cancel', {
+    selectedValues: params.selectedValues.map(String),
+    selectedOptions: params.selectedOptions,
+    selectedIndexes: params.selectedIndexes,
+  });
+}
+
+function confirm() {
+  pickerRef.value?.confirm();
+}
+
+function getSelectedTime(): string[] {
+  return selectedValues.value;
+}
+
+defineExpose<TimePickerExpose>({ confirm, getSelectedTime });
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#fff' }">
-    <!-- Toolbar -->
-    <view v-if="showToolbar" :style="toolbarStyle">
-      <text
-        :style="{ fontSize: 14, color: '#969799', padding: 4 }"
-        @tap="onCancel"
-      >{{ cancelButtonText }}</text>
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
-      <text
-        :style="{ fontSize: 14, color: '#1989fa', padding: 4 }"
-        @tap="onConfirm"
-      >{{ confirmButtonText }}</text>
-    </view>
-
-    <!-- Column Headers -->
-    <view :style="{ display: 'flex', flexDirection: 'row', backgroundColor: '#fff', paddingTop: 8 }">
-      <view
-        v-for="(colType, ci) in columnsType"
-        :key="ci"
-        :style="{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }"
-      >
-        <text :style="{ fontSize: 12, color: '#969799' }">{{ getColumnLabel(colType) }}</text>
-      </view>
-    </view>
-
-    <!-- Columns -->
-    <view :style="columnsContainerStyle">
-      <view
-        v-for="(column, colIndex) in columns"
-        :key="colIndex"
-        :style="{
-          flex: 1,
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column' as const,
-          position: 'relative' as const,
-        }"
-      >
-        <!-- Selected item highlight -->
-        <view
-          :style="{
-            position: 'absolute' as const,
-            top: optionHeight * 2,
-            left: 0,
-            right: 0,
-            height: optionHeight,
-            borderTopWidth: 0.5,
-            borderTopStyle: 'solid' as const,
-            borderTopColor: '#ebedf0',
-            borderBottomWidth: 0.5,
-            borderBottomStyle: 'solid' as const,
-            borderBottomColor: '#ebedf0',
-          }"
-        />
-        <!-- Items list -->
-        <view :style="{ paddingTop: optionHeight * 2, paddingBottom: optionHeight * 2 }">
-          <view
-            v-for="(item, itemIndex) in column"
-            :key="itemIndex"
-            :style="{
-              height: optionHeight,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }"
-            @tap="onSelectItem(colIndex, itemIndex)"
-          >
-            <text
-              :style="{
-                fontSize: 16,
-                color: selectedIndexes[colIndex] === itemIndex ? '#323233' : '#969799',
-                fontWeight: selectedIndexes[colIndex] === itemIndex ? 'bold' as const : 'normal' as const,
-              }"
-            >{{ item }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- Loading overlay -->
-      <view v-if="loading" :style="loadingOverlayStyle">
-        <Loading />
-      </view>
-    </view>
-  </view>
+  <Picker
+    ref="pickerRef"
+    :model-value="(selectedValues as Numeric[])"
+    :columns="columns"
+    :title="title"
+    :confirm-button-text="confirmButtonText"
+    :cancel-button-text="cancelButtonText"
+    :loading="loading"
+    :readonly="readonly"
+    :show-toolbar="showToolbar"
+    :visible-option-num="visibleOptionNum"
+    :option-height="optionHeight"
+    :swipe-duration="swipeDuration"
+    @update:model-value="onPickerUpdateModelValue"
+    @change="onChange"
+    @confirm="onConfirm"
+    @cancel="onCancel"
+  >
+    <template v-if="$slots.toolbar" #toolbar>
+      <slot name="toolbar" />
+    </template>
+    <template v-if="$slots.title" #title>
+      <slot name="title" />
+    </template>
+    <template v-if="$slots.confirm" #confirm>
+      <slot name="confirm" />
+    </template>
+    <template v-if="$slots.cancel" #cancel>
+      <slot name="cancel" />
+    </template>
+    <template v-if="$slots.option" #option="{ option, index }">
+      <slot name="option" :option="option" :index="index" />
+    </template>
+    <template v-if="$slots['columns-top']" #columns-top>
+      <slot name="columns-top" />
+    </template>
+    <template v-if="$slots['columns-bottom']" #columns-bottom>
+      <slot name="columns-bottom" />
+    </template>
+  </Picker>
 </template>
