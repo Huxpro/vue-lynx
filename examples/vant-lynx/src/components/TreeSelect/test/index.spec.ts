@@ -17,31 +17,6 @@ function getTexts(container: any): string[] {
   );
 }
 
-function findNavItems(container: any): any[] {
-  // Nav items are in the first child view (flex:1 sidebar)
-  const rootView = container.querySelector('view');
-  if (!rootView) return [];
-  const sidebarView = rootView.querySelector('view');
-  if (!sidebarView) return [];
-  return Array.from(sidebarView.children).filter(
-    (el: any) => el.tagName?.toLowerCase() === 'view',
-  );
-}
-
-function findContentItems(container: any): any[] {
-  // Content items are in the second child view (flex:2 content)
-  const rootView = container.querySelector('view');
-  if (!rootView) return [];
-  const children = Array.from(rootView.children).filter(
-    (el: any) => el.tagName?.toLowerCase() === 'view',
-  ) as any[];
-  if (children.length < 2) return [];
-  const contentView = children[1];
-  return Array.from(contentView.children).filter(
-    (el: any) => el.tagName?.toLowerCase() === 'view',
-  );
-}
-
 describe('TreeSelect', () => {
   // Vant test 1: should render empty TreeSelect correctly
   it('should render empty TreeSelect correctly', () => {
@@ -52,8 +27,8 @@ describe('TreeSelect', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-tree-select')).toBeTruthy();
+    expect(container.querySelector('.van-tree-select__content')).toBeTruthy();
   });
 
   // Vant test 2: should emit update:mainActiveIndex event when mainActiveIndex is changed
@@ -72,7 +47,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const navItems = findNavItems(container);
+    const navItems = container.querySelectorAll('.van-tree-select__nav-item');
     expect(navItems.length).toBe(2);
 
     // Click already active nav (index 0) — should NOT emit update:mainActiveIndex
@@ -100,7 +75,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const navItems = findNavItems(container);
+    const navItems = container.querySelectorAll('.van-tree-select__nav-item');
 
     // Click nav item 0 twice — should emit both times
     fireEvent.tap(navItems[0]);
@@ -129,7 +104,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const contentItems = findContentItems(container);
+    const contentItems = container.querySelectorAll('.van-tree-select__item');
     expect(contentItems.length).toBe(1);
 
     fireEvent.tap(contentItems[0]);
@@ -154,7 +129,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const navItems = findNavItems(container);
+    const navItems = container.querySelectorAll('.van-tree-select__nav-item');
     fireEvent.tap(navItems[0]);
     await nextTick();
     expect(clickNavEvents.length).toBe(0);
@@ -180,7 +155,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const contentItems = findContentItems(container);
+    const contentItems = container.querySelectorAll('.van-tree-select__item');
     fireEvent.tap(contentItems[0]);
     await nextTick();
     expect(clickItemEvents.length).toBe(0);
@@ -212,8 +187,8 @@ describe('TreeSelect', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView?.getAttribute('style') || '';
+    const root = container.querySelector('.van-tree-select');
+    const style = root?.getAttribute('style') || '';
     expect(style).toContain('100vh');
   });
 
@@ -229,7 +204,6 @@ describe('TreeSelect', () => {
       }),
     );
     const texts = getTexts(container);
-    // Badge text should be rendered
     expect(texts).toContain('3');
     expect(texts).toContain('group1');
   });
@@ -252,7 +226,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const contentItems = findContentItems(container);
+    const contentItems = container.querySelectorAll('.van-tree-select__item');
     expect(contentItems.length).toBe(2);
 
     // Select both items
@@ -289,7 +263,7 @@ describe('TreeSelect', () => {
     });
 
     const { container } = render(Comp);
-    const contentItems = findContentItems(container);
+    const contentItems = container.querySelectorAll('.van-tree-select__item');
 
     fireEvent.tap(contentItems[0]);
     await nextTick();
@@ -298,7 +272,29 @@ describe('TreeSelect', () => {
     expect(activeId.value).toEqual([mockItem.id]);
   });
 
-  // Vant test 12: should change selected icon when using selected-icon prop
+  // Vant test 12: should allow to custom nav item className
+  it('should allow to custom nav item className', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(TreeSelect, {
+            mainActiveIndex: 0,
+            items: [
+              {
+                text: 'group1',
+                className: 'my-class',
+                children: [],
+              },
+            ],
+          });
+        },
+      }),
+    );
+    const navItem = container.querySelector('.van-tree-select__nav-item');
+    expect(navItem?.classList.contains('my-class')).toBe(true);
+  });
+
+  // Vant test 13: should change selected icon when using selected-icon prop
   it('should change selected icon when using selected-icon prop', () => {
     const { container } = render(
       defineComponent({
@@ -316,7 +312,7 @@ describe('TreeSelect', () => {
     expect(texts).toContain('★');
   });
 
-  // Vant test 13: should render nav-text slot correctly
+  // Vant test 14: should render nav-text slot correctly
   it('should render nav-text slot correctly', () => {
     const { container } = render(
       defineComponent({
@@ -359,7 +355,7 @@ describe('TreeSelect', () => {
     expect(texts).toContain('Child 2');
   });
 
-  // Additional: should support Numeric height prop
+  // Additional: should support Numeric height prop (number)
   it('should support Numeric height prop (number)', () => {
     const { container } = render(
       defineComponent({
@@ -368,8 +364,8 @@ describe('TreeSelect', () => {
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView?.getAttribute('style') || '';
+    const root = container.querySelector('.van-tree-select');
+    const style = root?.getAttribute('style') || '';
     expect(style).toContain('500px');
   });
 });
