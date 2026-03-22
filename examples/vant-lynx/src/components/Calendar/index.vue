@@ -1,424 +1,712 @@
 <!--
-  Vant Feature Parity Report -- Calendar
-  ======================================
-  Props: 17/26 supported
-    Supported: type, switchMode, title, color, minDate, maxDate, defaultDate,
-               rowHeight, poppable, showMark, showTitle, showSubtitle,
-               showConfirm, readonly, firstDayOfWeek, confirmText,
-               confirmDisabledText, allowSameDay
-    Missing:   show, round, maxRange, position, teleport, formatter,
-               rangePrompt, lazyRender, showRangePrompt, closeOnPopstate,
-               closeOnClickOverlay, safeAreaInsetTop, safeAreaInsetBottom
-
-  Events: 6/11 supported
-    Supported: select, confirm, open, close, click-disabled-date, unselect
-    Missing:   monthShow, overRange, update:show, clickSubtitle,
-               clickOverlay, panelChange
-
-  Slots: 0/3 supported
-    Missing: title, subtitle, footer
-
-  Key Gaps:
-    - No Popup integration (poppable mode renders inline only)
-    - No formatter prop for custom day rendering
-    - No maxRange / rangePrompt enforcement
-    - No scrollToDate / reset exposed methods
-    - No subtitle slot or clickSubtitle event
+  Lynx Limitations:
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - lockScroll: Lynx has no document.body scroll to lock
+  - closeOnPopstate: Lynx has no browser history API
+  - safeAreaInsetTop/Bottom: depends on Lynx host support for env(safe-area-inset-*)
+  - overflow: scroll: uses <scroll-view> instead (Lynx does not support overflow: scroll)
+  - scrollToDate: simplified implementation without DOM measurement (no getBoundingClientRect)
+  - ::after pseudo-element for middle range bg: uses a child <view> instead
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
-import Icon from '../Icon/index.vue';
+import { ref, computed, watch, onMounted } from 'vue-lynx';
+import { addUnit } from '../../utils/format';
+import {
+  bem,
+  t,
+  getToday,
+  cloneDate,
+  cloneDates,
+  getPrevDay,
+  getNextDay,
+  compareDay,
+  calcDateNum,
+  compareMonth,
+  getDayByOffset,
+  getMonthByOffset,
+  formatMonthTitle,
+} from './utils';
+import CalendarMonth from './CalendarMonth.vue';
+import CalendarHeader from './CalendarHeader.vue';
+import Popup from '../Popup/index.vue';
+import Button from '../Button/index.vue';
+import { showToast } from '../Toast/toast';
+import type {
+  CalendarType,
+  CalendarSwitchMode,
+  CalendarDayItem,
+  CalendarExpose,
+} from './types';
+import './index.less';
 
-export interface CalendarProps {
-  type?: 'single' | 'range' | 'multiple';
-  switchMode?: 'none' | 'month' | 'year-month';
-  title?: string;
-  color?: string;
-  minDate?: Date;
-  maxDate?: Date;
-  defaultDate?: Date | Date[];
-  rowHeight?: number;
-  poppable?: boolean;
-  showMark?: boolean;
-  showTitle?: boolean;
-  showSubtitle?: boolean;
-  showConfirm?: boolean;
-  readonly?: boolean;
-  firstDayOfWeek?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  confirmText?: string;
-  confirmDisabledText?: string;
-  allowSameDay?: boolean;
-}
-
-const props = withDefaults(defineProps<CalendarProps>(), {
-  type: 'single',
-  switchMode: 'none',
-  title: 'Calendar',
-  color: '#1989fa',
-  rowHeight: 64,
-  poppable: false,
-  showMark: true,
-  showTitle: true,
-  showSubtitle: true,
-  showConfirm: true,
-  readonly: false,
-  firstDayOfWeek: 0,
-  confirmText: 'Confirm',
-  confirmDisabledText: 'Confirm',
-  allowSameDay: false,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    type?: CalendarType;
+    switchMode?: CalendarSwitchMode;
+    title?: string;
+    color?: string;
+    round?: boolean;
+    readonly?: boolean;
+    poppable?: boolean;
+    maxRange?: number | string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    teleport?: string | object;
+    showMark?: boolean;
+    showTitle?: boolean;
+    formatter?: (item: CalendarDayItem) => CalendarDayItem;
+    rowHeight?: number | string;
+    confirmText?: string;
+    rangePrompt?: string;
+    lazyRender?: boolean;
+    showConfirm?: boolean;
+    defaultDate?: Date | Date[] | null;
+    allowSameDay?: boolean;
+    showSubtitle?: boolean;
+    showRangePrompt?: boolean;
+    confirmDisabledText?: string;
+    closeOnClickOverlay?: boolean;
+    closeOnPopstate?: boolean;
+    safeAreaInsetTop?: boolean;
+    safeAreaInsetBottom?: boolean;
+    minDate?: Date;
+    maxDate?: Date;
+    firstDayOfWeek?: number;
+  }>(),
+  {
+    type: 'single',
+    switchMode: 'none',
+    round: true,
+    poppable: true,
+    showMark: true,
+    showTitle: true,
+    showConfirm: true,
+    lazyRender: true,
+    allowSameDay: false,
+    showSubtitle: true,
+    showRangePrompt: true,
+    closeOnClickOverlay: true,
+    closeOnPopstate: true,
+    safeAreaInsetBottom: true,
+    firstDayOfWeek: 0,
+  },
+);
 
 const emit = defineEmits<{
   select: [date: Date | Date[]];
   confirm: [date: Date | Date[]];
-  open: [];
-  close: [];
-  'click-disabled-date': [date: Date];
   unselect: [date: Date];
+  monthShow: [info: { date: Date; title: string }];
+  overRange: [];
+  'update:show': [value: boolean];
+  clickSubtitle: [event: any];
+  clickDisabledDate: [item: CalendarDayItem];
+  clickOverlay: [event: any];
+  panelChange: [info: { date: Date }];
 }>();
 
-const today = new Date();
-const defaultMinDate = new Date(today.getFullYear(), today.getMonth(), 1);
-const defaultMaxDate = new Date(today.getFullYear(), today.getMonth() + 6, 0);
+defineSlots<{
+  footer?: () => any;
+  'confirm-text'?: (props: { disabled: boolean }) => any;
+  title?: () => any;
+  subtitle?: (props: { date?: Date; text?: string }) => any;
+  'prev-month'?: (props: { disabled: boolean }) => any;
+  'next-month'?: (props: { disabled: boolean }) => any;
+  'prev-year'?: (props: { disabled: boolean }) => any;
+  'next-year'?: (props: { disabled: boolean }) => any;
+  'top-info'?: (props: CalendarDayItem) => any;
+  'bottom-info'?: (props: CalendarDayItem) => any;
+  'month-title'?: (props: { date: Date; text: string }) => any;
+  text?: (props: CalendarDayItem) => any;
+}>();
 
-const effectiveMinDate = computed(() => props.minDate || defaultMinDate);
-const effectiveMaxDate = computed(() => props.maxDate || defaultMaxDate);
+const canSwitch = computed(() => props.switchMode !== 'none');
 
-// Current month being viewed
-const currentYear = ref(today.getFullYear());
-const currentMonth = ref(today.getMonth());
+const effectiveMinDate = computed(() => {
+  if (props.minDate) return props.minDate;
+  if (!canSwitch.value) return getToday();
+  return undefined;
+});
 
-// Selection state
-const selectedDates = ref<Date[]>([]);
+const effectiveMaxDate = computed(() => {
+  if (props.maxDate) return props.maxDate;
+  if (!canSwitch.value) return getMonthByOffset(getToday(), 6);
+  return undefined;
+});
 
-// Initialize from defaultDate
-watch(
-  () => props.defaultDate,
-  (val) => {
-    if (val) {
-      selectedDates.value = Array.isArray(val) ? [...val] : [val];
-      if (selectedDates.value.length > 0) {
-        currentYear.value = selectedDates.value[0].getFullYear();
-        currentMonth.value = selectedDates.value[0].getMonth();
-      }
-    }
-  },
-  { immediate: true },
+const dayOffset = computed(() =>
+  props.firstDayOfWeek ? +props.firstDayOfWeek % 7 : 0,
 );
 
-// Weekday headers respect firstDayOfWeek
-const allWeekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const weekdays = computed(() => {
-  const offset = props.firstDayOfWeek;
-  return [...allWeekdays.slice(offset), ...allWeekdays.slice(0, offset)];
-});
+// --- Current date state ---
 
-const monthTitle = computed(() => {
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-  ];
-  return `${monthNames[currentMonth.value]} ${currentYear.value}`;
-});
-
-const calendarDays = computed(() => {
-  const year = currentYear.value;
-  const month = currentMonth.value;
-  const firstDayRaw = new Date(year, month, 1).getDay();
-  const firstDay = (firstDayRaw - props.firstDayOfWeek + 7) % 7;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const days: Array<{ day: number; date: Date | null; isCurrentMonth: boolean }> = [];
-
-  // Fill leading empty slots
-  for (let i = 0; i < firstDay; i++) {
-    days.push({ day: 0, date: null, isCurrentMonth: false });
-  }
-
-  // Fill actual days
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push({
-      day: d,
-      date: new Date(year, month, d),
-      isCurrentMonth: true,
-    });
-  }
-
-  return days;
-});
-
-function isSameDay(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
-  );
+function limitDateRange(
+  date: Date,
+  min = effectiveMinDate.value,
+  max = effectiveMaxDate.value,
+) {
+  if (min && compareDay(date, min) === -1) return min;
+  if (max && compareDay(date, max) === 1) return max;
+  return date;
 }
 
-function isDateDisabled(date: Date): boolean {
-  return date < effectiveMinDate.value || date > effectiveMaxDate.value;
-}
+function getInitialDate(defaultDate = props.defaultDate): Date | Date[] | null {
+  const { type, allowSameDay } = props;
 
-function isDateSelected(date: Date): boolean {
-  return selectedDates.value.some((d) => isSameDay(d, date));
-}
+  if (defaultDate === null) return defaultDate;
 
-function isRangeStart(date: Date): boolean {
-  if (props.type !== 'range' || selectedDates.value.length < 1) return false;
-  return isSameDay(selectedDates.value[0], date);
-}
+  const now = getToday();
 
-function isRangeEnd(date: Date): boolean {
-  if (props.type !== 'range' || selectedDates.value.length < 2) return false;
-  return isSameDay(selectedDates.value[1], date);
-}
-
-function isInRange(date: Date): boolean {
-  if (props.type !== 'range' || selectedDates.value.length < 2) return false;
-  const start = selectedDates.value[0];
-  const end = selectedDates.value[1];
-  return date > start && date < end;
-}
-
-function isToday(date: Date): boolean {
-  return isSameDay(date, today);
-}
-
-// Whether confirm button should be disabled
-const isConfirmDisabled = computed(() => {
-  if (props.type === 'range') return selectedDates.value.length < 2;
-  return selectedDates.value.length === 0;
-});
-
-function selectDate(date: Date | null) {
-  if (!date) return;
-
-  if (isDateDisabled(date)) {
-    emit('click-disabled-date', date);
-    return;
-  }
-
-  if (props.readonly) return;
-
-  if (props.type === 'single') {
-    selectedDates.value = [date];
-    emit('select', date);
-  } else if (props.type === 'multiple') {
-    const idx = selectedDates.value.findIndex((d) => isSameDay(d, date));
-    if (idx >= 0) {
-      const removed = selectedDates.value[idx];
-      selectedDates.value.splice(idx, 1);
-      emit('unselect', removed);
-    } else {
-      selectedDates.value.push(date);
+  if (type === 'range') {
+    if (!Array.isArray(defaultDate)) {
+      defaultDate = [];
     }
-    emit('select', [...selectedDates.value]);
-  } else if (props.type === 'range') {
-    if (selectedDates.value.length === 0 || selectedDates.value.length === 2) {
-      selectedDates.value = [date];
-    } else {
-      const start = selectedDates.value[0];
-      if (isSameDay(date, start)) {
-        if (props.allowSameDay) {
-          selectedDates.value = [start, date];
-        } else {
-          selectedDates.value = [date];
-        }
-      } else if (date < start) {
-        selectedDates.value = [date];
-      } else {
-        selectedDates.value = [start, date];
-      }
+    if (defaultDate.length === 1 && compareDay(defaultDate[0], now) === 1) {
+      defaultDate = [];
     }
-    emit('select', [...selectedDates.value]);
+
+    const min = effectiveMinDate.value;
+    const max = effectiveMaxDate.value;
+
+    const start = limitDateRange(
+      defaultDate[0] || now,
+      min,
+      max ? (allowSameDay ? max : getPrevDay(max)) : undefined,
+    );
+    const end = limitDateRange(
+      defaultDate[1] || (allowSameDay ? now : getNextDay(now)),
+      min ? (allowSameDay ? min : getNextDay(min)) : undefined,
+    );
+
+    return [start, end];
   }
+
+  if (type === 'multiple') {
+    if (Array.isArray(defaultDate)) {
+      return defaultDate.map((date) => limitDateRange(date));
+    }
+    return [limitDateRange(now)];
+  }
+
+  if (!defaultDate || Array.isArray(defaultDate)) {
+    defaultDate = now;
+  }
+  return limitDateRange(defaultDate);
 }
 
+const currentDate = ref<Date | Date[] | null>(getInitialDate());
+
+const currentPanelDate = ref<Date>(getInitialPanelDate());
+
+function getInitialPanelDate(): Date {
+  const date = Array.isArray(currentDate.value)
+    ? currentDate.value[0]
+    : currentDate.value;
+  return date ? date : limitDateRange(getToday());
+}
+
+// --- Month refs for tracking ---
+const monthRefs = ref<any[]>([]);
+
+function setMonthRef(index: number) {
+  return (el: any) => {
+    if (el) {
+      monthRefs.value[index] = el;
+    }
+  };
+}
+
+const currentMonthRef = ref<any>(null);
+
+// --- Months list (for non-switch mode) ---
+const months = computed(() => {
+  const result: Date[] = [];
+  const min = effectiveMinDate.value;
+  const max = effectiveMaxDate.value;
+
+  if (!min || !max) return result;
+
+  const cursor = new Date(min);
+  cursor.setDate(1);
+
+  do {
+    result.push(new Date(cursor));
+    cursor.setMonth(cursor.getMonth() + 1);
+  } while (compareMonth(cursor, max) !== 1);
+
+  return result;
+});
+
+// --- Button disabled state ---
+const buttonDisabled = computed(() => {
+  if (currentDate.value) {
+    if (props.type === 'range') {
+      return (
+        !(currentDate.value as Date[])[0] ||
+        !(currentDate.value as Date[])[1]
+      );
+    }
+    if (props.type === 'multiple') {
+      return !(currentDate.value as Date[]).length;
+    }
+  }
+  return !currentDate.value;
+});
+
+// --- Subtitle ---
+const subtitle = computed(() => {
+  if (canSwitch.value) {
+    return formatMonthTitle(currentPanelDate.value);
+  }
+  // For scroll mode, show current visible month
+  if (currentMonthRef.value) {
+    return typeof currentMonthRef.value.getTitle === 'function'
+      ? currentMonthRef.value.getTitle()
+      : formatMonthTitle(currentMonthRef.value.date || months.value[0]);
+  }
+  return months.value.length > 0
+    ? formatMonthTitle(months.value[0])
+    : '';
+});
+
+// --- Range check ---
+function checkRange(date: [Date, Date]): boolean {
+  const { maxRange, rangePrompt, showRangePrompt } = props;
+
+  if (maxRange && calcDateNum(date) > +maxRange) {
+    if (showRangePrompt) {
+      showToast({ message: rangePrompt || t('rangePrompt', maxRange) });
+    }
+    emit('overRange');
+    return false;
+  }
+  return true;
+}
+
+// --- Selection ---
 function onConfirm() {
-  if (isConfirmDisabled.value) return;
-  if (props.type === 'single' && selectedDates.value.length === 1) {
-    emit('confirm', selectedDates.value[0]);
+  if (currentDate.value) {
+    emit('confirm', cloneDates(currentDate.value));
+  }
+}
+
+function select(date: Date | Date[], complete?: boolean) {
+  function setCurrentDate(d: Date | Date[]) {
+    currentDate.value = d;
+    emit('select', cloneDates(d));
+  }
+
+  if (complete && props.type === 'range') {
+    const valid = checkRange(date as [Date, Date]);
+    if (!valid) {
+      setCurrentDate([
+        (date as Date[])[0],
+        getDayByOffset((date as Date[])[0], +props.maxRange! - 1),
+      ]);
+      return;
+    }
+  }
+
+  setCurrentDate(date);
+
+  if (complete && !props.showConfirm) {
+    onConfirm();
+  }
+}
+
+// --- Disabled days ---
+const disabledDays = computed(() =>
+  monthRefs.value.reduce((arr: CalendarDayItem[], monthRef: any) => {
+    if (monthRef?.disabledDays?.value) {
+      arr.push(...monthRef.disabledDays.value);
+    }
+    return arr;
+  }, []),
+);
+
+function getDisabledDate(
+  disabledDaysList: CalendarDayItem[],
+  startDay: Date,
+  date: Date,
+): Date | undefined {
+  return disabledDaysList.find(
+    (day) =>
+      day.date &&
+      compareDay(startDay, day.date) === -1 &&
+      compareDay(day.date, date) === -1,
+  )?.date;
+}
+
+// --- Click handlers ---
+function onClickDay(item: CalendarDayItem) {
+  if (props.readonly || !item.date) return;
+
+  const { date } = item;
+  const { type } = props;
+
+  if (type === 'range') {
+    if (!currentDate.value) {
+      select([date]);
+      return;
+    }
+
+    const [startDay, endDay] = currentDate.value as [Date, Date];
+
+    if (startDay && !endDay) {
+      const compareToStart = compareDay(date, startDay);
+
+      if (compareToStart === 1) {
+        const disabledDay = getDisabledDate(
+          disabledDays.value,
+          startDay,
+          date,
+        );
+        if (disabledDay) {
+          const end = getPrevDay(disabledDay);
+          if (compareDay(startDay, end) === -1) {
+            select([startDay, end]);
+          } else {
+            select([date]);
+          }
+        } else {
+          select([startDay, date], true);
+        }
+      } else if (compareToStart === -1) {
+        select([date]);
+      } else if (props.allowSameDay) {
+        select([date, date], true);
+      }
+    } else {
+      select([date]);
+    }
+  } else if (type === 'multiple') {
+    if (!currentDate.value) {
+      select([date]);
+      return;
+    }
+    const dates = currentDate.value as Date[];
+
+    const selectedIndex = dates.findIndex(
+      (dateItem: Date) => compareDay(dateItem, date) === 0,
+    );
+
+    if (selectedIndex !== -1) {
+      const [unselectedDate] = dates.splice(selectedIndex, 1);
+      emit('unselect', cloneDate(unselectedDate));
+    } else if (props.maxRange && dates.length >= +props.maxRange) {
+      showToast({
+        message: props.rangePrompt || t('rangePrompt', props.maxRange),
+      });
+    } else {
+      select([...dates, date]);
+    }
   } else {
-    emit('confirm', [...selectedDates.value]);
+    select(date, true);
   }
 }
 
-function prevMonth() {
-  if (currentMonth.value === 0) {
-    currentMonth.value = 11;
-    currentYear.value--;
-  } else {
-    currentMonth.value--;
+function onClickDisabledDate(item: CalendarDayItem) {
+  emit('clickDisabledDate', item);
+}
+
+// --- Panel change (for switch mode) ---
+function onPanelChange(date: Date) {
+  currentPanelDate.value = date;
+  emit('panelChange', { date });
+}
+
+// --- Popup events ---
+function onClickOverlay(event: any) {
+  emit('clickOverlay', event);
+}
+
+function updateShow(value: boolean) {
+  emit('update:show', value);
+}
+
+// --- Scroll to date ---
+function scrollToDate(targetDate: Date) {
+  if (canSwitch.value) {
+    currentPanelDate.value = targetDate;
+  }
+  // In scroll mode, we rely on the user scrolling (no DOM access in Lynx for programmatic scroll)
+}
+
+function scrollToCurrentDate() {
+  if (props.poppable && !props.show) return;
+
+  if (currentDate.value) {
+    const targetDate =
+      props.type === 'single'
+        ? (currentDate.value as Date)
+        : (currentDate.value as Date[])[0];
+    if (targetDate instanceof Date) {
+      scrollToDate(targetDate);
+    }
   }
 }
 
-function nextMonth() {
-  if (currentMonth.value === 11) {
-    currentMonth.value = 0;
-    currentYear.value++;
-  } else {
-    currentMonth.value++;
-  }
+// --- Reset ---
+function reset(date?: Date | Date[] | null) {
+  currentDate.value = date !== undefined ? date : getInitialDate();
+  scrollToCurrentDate();
 }
 
-function getDayStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean }) {
-  const base: Record<string, any> = {
-    width: `${100 / 7}%`,
-    height: props.rowHeight,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+// --- Expose ---
+const getSelectedDate = () => currentDate.value;
 
-  if (!item.date || !item.isCurrentMonth) {
-    return base;
+defineExpose<CalendarExpose>({
+  reset,
+  scrollToDate,
+  getSelectedDate,
+});
+
+// --- Watchers ---
+watch(() => props.show, () => {
+  if (props.show) {
+    scrollToCurrentDate();
   }
+});
 
-  if (isDateSelected(item.date)) {
-    base.backgroundColor = props.color;
-    base.borderRadius = props.rowHeight / 2;
-  } else if (isInRange(item.date)) {
-    base.backgroundColor = `${props.color}33`;
-  }
+watch(
+  () => [props.type, props.minDate, props.maxDate, props.switchMode],
+  () => reset(getInitialDate(currentDate.value as any)),
+);
 
-  return base;
-}
+watch(
+  () => props.defaultDate,
+  (value) => {
+    reset(value ?? undefined);
+  },
+);
 
-function getDayTextStyle(item: { day: number; date: Date | null; isCurrentMonth: boolean }) {
-  const base: Record<string, any> = {
-    fontSize: 16,
-    color: '#323233',
-    textAlign: 'center' as const,
-  };
-
-  if (!item.date) {
-    base.color = 'transparent';
-    return base;
-  }
-
-  if (isDateDisabled(item.date)) {
-    base.color = '#c8c9cc';
-    return base;
-  }
-
-  if (isDateSelected(item.date)) {
-    base.color = '#fff';
-    base.fontWeight = 'bold';
-  } else if (isToday(item.date)) {
-    base.color = props.color;
-  }
-
-  return base;
-}
-
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  backgroundColor: '#fff',
-  borderRadius: 8,
-  overflow: 'hidden' as const,
-}));
-
-const headerStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: 16,
-  backgroundColor: '#fff',
-};
-
-const weekdayRowStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  paddingLeft: 4,
-  paddingRight: 4,
-};
-
-const weekdayStyle = {
-  flex: 1,
-  textAlign: 'center' as const,
-  fontSize: 12,
-  color: '#969799',
-  paddingTop: 8,
-  paddingBottom: 8,
-};
-
-const daysGridStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  flexWrap: 'wrap' as const,
-  paddingLeft: 4,
-  paddingRight: 4,
-};
-
-const confirmBtnStyle = computed(() => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  height: 48,
-  backgroundColor: isConfirmDisabled.value ? `${props.color}80` : props.color,
-  marginLeft: 16,
-  marginRight: 16,
-  marginBottom: 16,
-  borderRadius: 24,
-}));
-
-const confirmTextStyle = computed(() => ({
-  fontSize: 16,
-  color: '#fff',
-  fontWeight: 'bold' as const,
-}));
+// Init
+onMounted(() => {
+  scrollToCurrentDate();
+});
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Title -->
-    <view v-if="showTitle" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 12 }">
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ title }}</text>
-    </view>
-
-    <!-- Month Navigation / Subtitle -->
-    <view v-if="showSubtitle" :style="headerStyle">
-      <view :style="{ display: 'flex', padding: 4 }" @tap="prevMonth">
-        <Icon name="arrow-left" :size="16" :color="color" />
-      </view>
-      <text :style="{ fontSize: 16, fontWeight: 'bold', color: '#323233' }">{{ monthTitle }}</text>
-      <view :style="{ display: 'flex', padding: 4 }" @tap="nextMonth">
-        <Icon name="arrow" :size="16" :color="color" />
-      </view>
-    </view>
-
-    <!-- Weekday Headers -->
-    <view :style="weekdayRowStyle">
-      <text v-for="day in weekdays" :key="day" :style="weekdayStyle">{{ day }}</text>
-    </view>
-
-    <!-- Days Grid -->
-    <view :style="daysGridStyle">
-      <view
-        v-for="(item, index) in calendarDays"
-        :key="index"
-        :style="getDayStyle(item)"
-        @tap="selectDate(item.date)"
+  <!-- Poppable mode: wrap in Popup -->
+  <Popup
+    v-if="poppable"
+    :show="show"
+    :class="bem('popup')"
+    :round="round"
+    :position="position || 'bottom'"
+    :closeable="showTitle || showSubtitle"
+    :close-on-click-overlay="closeOnClickOverlay"
+    :safe-area-inset-bottom="safeAreaInsetBottom"
+    @click-overlay="onClickOverlay"
+    @update:show="updateShow"
+  >
+    <view :class="bem()">
+      <CalendarHeader
+        :date="canSwitch ? currentPanelDate : (months.length > 0 ? months[0] : undefined)"
+        :min-date="effectiveMinDate"
+        :max-date="effectiveMaxDate"
+        :title="title"
+        :subtitle="subtitle"
+        :show-title="showTitle"
+        :show-subtitle="showSubtitle"
+        :switch-mode="switchMode"
+        :first-day-of-week="dayOffset"
+        @click-subtitle="(e: any) => emit('clickSubtitle', e)"
+        @panel-change="onPanelChange"
       >
-        <view v-if="item.day > 0" :style="{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }">
-          <text :style="getDayTextStyle(item)">{{ item.day }}</text>
-          <text v-if="item.date && isToday(item.date) && !isDateSelected(item.date)" :style="{ fontSize: 10, color: color }">Today</text>
-          <text v-if="item.date && isRangeStart(item.date)" :style="{ fontSize: 10, color: '#fff' }">Start</text>
-          <text v-if="item.date && isRangeEnd(item.date)" :style="{ fontSize: 10, color: '#fff' }">End</text>
-        </view>
+        <template v-if="$slots.title" #title><slot name="title" /></template>
+        <template v-if="$slots.subtitle" #subtitle="sp"><slot name="subtitle" v-bind="sp" /></template>
+        <template v-if="$slots['prev-month']" #prev-month="sp"><slot name="prev-month" v-bind="sp" /></template>
+        <template v-if="$slots['next-month']" #next-month="sp"><slot name="next-month" v-bind="sp" /></template>
+        <template v-if="$slots['prev-year']" #prev-year="sp"><slot name="prev-year" v-bind="sp" /></template>
+        <template v-if="$slots['next-year']" #next-year="sp"><slot name="next-year" v-bind="sp" /></template>
+      </CalendarHeader>
+
+      <!-- Body: scroll mode or switch mode -->
+      <scroll-view
+        v-if="!canSwitch"
+        :class="bem('body')"
+        scroll-orientation="vertical"
+      >
+        <CalendarMonth
+          v-for="(month, index) in months"
+          :key="month.getTime()"
+          :ref="setMonthRef(index)"
+          :date="month"
+          :type="type"
+          :color="color"
+          :min-date="effectiveMinDate"
+          :max-date="effectiveMaxDate"
+          :show-mark="showMark"
+          :row-height="rowHeight"
+          :formatter="formatter"
+          :lazy-render="false"
+          :current-date="currentDate"
+          :allow-same-day="allowSameDay"
+          :show-subtitle="showSubtitle"
+          :show-month-title="index !== 0 || !showSubtitle"
+          :first-day-of-week="dayOffset"
+          @click="onClickDay"
+          @click-disabled-date="onClickDisabledDate"
+        >
+          <template v-if="$slots['top-info']" #top-info="sp"><slot name="top-info" v-bind="sp" /></template>
+          <template v-if="$slots['bottom-info']" #bottom-info="sp"><slot name="bottom-info" v-bind="sp" /></template>
+          <template v-if="$slots['month-title']" #month-title="sp"><slot name="month-title" v-bind="sp" /></template>
+          <template v-if="$slots.text" #text="sp"><slot name="text" v-bind="sp" /></template>
+        </CalendarMonth>
+      </scroll-view>
+
+      <view v-else :class="bem('body')">
+        <CalendarMonth
+          :ref="(el: any) => { currentMonthRef = el }"
+          :date="currentPanelDate"
+          :type="type"
+          :color="color"
+          :min-date="effectiveMinDate"
+          :max-date="effectiveMaxDate"
+          :show-mark="showMark"
+          :row-height="rowHeight"
+          :formatter="formatter"
+          :lazy-render="false"
+          :current-date="currentDate"
+          :allow-same-day="allowSameDay"
+          :show-subtitle="showSubtitle"
+          :show-month-title="false"
+          :first-day-of-week="dayOffset"
+          @click="onClickDay"
+          @click-disabled-date="onClickDisabledDate"
+        >
+          <template v-if="$slots['top-info']" #top-info="sp"><slot name="top-info" v-bind="sp" /></template>
+          <template v-if="$slots['bottom-info']" #bottom-info="sp"><slot name="bottom-info" v-bind="sp" /></template>
+          <template v-if="$slots['month-title']" #month-title="sp"><slot name="month-title" v-bind="sp" /></template>
+          <template v-if="$slots.text" #text="sp"><slot name="text" v-bind="sp" /></template>
+        </CalendarMonth>
+      </view>
+
+      <!-- Footer -->
+      <view :class="bem('footer')">
+        <slot name="footer">
+          <Button
+            v-if="showConfirm"
+            round
+            block
+            type="primary"
+            :color="color"
+            :class="bem('confirm')"
+            :disabled="buttonDisabled"
+            @click="onConfirm"
+          >
+            <slot name="confirm-text" :disabled="buttonDisabled">
+              <text>{{ buttonDisabled ? (confirmDisabledText || t('confirm')) : (confirmText || t('confirm')) }}</text>
+            </slot>
+          </Button>
+        </slot>
       </view>
     </view>
+  </Popup>
 
-    <!-- Month Mark -->
-    <view v-if="showMark" :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 4, paddingBottom: 4 }">
-      <text :style="{ fontSize: 10, color: '#c8c9cc' }">{{ monthTitle }}</text>
+  <!-- Non-poppable mode: render inline -->
+  <view v-else :class="bem()">
+    <CalendarHeader
+      :date="canSwitch ? currentPanelDate : (months.length > 0 ? months[0] : undefined)"
+      :min-date="effectiveMinDate"
+      :max-date="effectiveMaxDate"
+      :title="title"
+      :subtitle="subtitle"
+      :show-title="showTitle"
+      :show-subtitle="showSubtitle"
+      :switch-mode="switchMode"
+      :first-day-of-week="dayOffset"
+      @click-subtitle="(e: any) => emit('clickSubtitle', e)"
+      @panel-change="onPanelChange"
+    >
+      <template v-if="$slots.title" #title><slot name="title" /></template>
+      <template v-if="$slots.subtitle" #subtitle="sp"><slot name="subtitle" v-bind="sp" /></template>
+      <template v-if="$slots['prev-month']" #prev-month="sp"><slot name="prev-month" v-bind="sp" /></template>
+      <template v-if="$slots['next-month']" #next-month="sp"><slot name="next-month" v-bind="sp" /></template>
+      <template v-if="$slots['prev-year']" #prev-year="sp"><slot name="prev-year" v-bind="sp" /></template>
+      <template v-if="$slots['next-year']" #next-year="sp"><slot name="next-year" v-bind="sp" /></template>
+    </CalendarHeader>
+
+    <!-- Body: scroll mode or switch mode -->
+    <scroll-view
+      v-if="!canSwitch"
+      :class="bem('body')"
+      scroll-orientation="vertical"
+    >
+      <CalendarMonth
+        v-for="(month, index) in months"
+        :key="month.getTime()"
+        :ref="setMonthRef(index)"
+        :date="month"
+        :type="type"
+        :color="color"
+        :min-date="effectiveMinDate"
+        :max-date="effectiveMaxDate"
+        :show-mark="showMark"
+        :row-height="rowHeight"
+        :formatter="formatter"
+        :lazy-render="false"
+        :current-date="currentDate"
+        :allow-same-day="allowSameDay"
+        :show-subtitle="showSubtitle"
+        :show-month-title="index !== 0 || !showSubtitle"
+        :first-day-of-week="dayOffset"
+        @click="onClickDay"
+        @click-disabled-date="onClickDisabledDate"
+      >
+        <template v-if="$slots['top-info']" #top-info="sp"><slot name="top-info" v-bind="sp" /></template>
+        <template v-if="$slots['bottom-info']" #bottom-info="sp"><slot name="bottom-info" v-bind="sp" /></template>
+        <template v-if="$slots['month-title']" #month-title="sp"><slot name="month-title" v-bind="sp" /></template>
+        <template v-if="$slots.text" #text="sp"><slot name="text" v-bind="sp" /></template>
+      </CalendarMonth>
+    </scroll-view>
+
+    <view v-else :class="bem('body')">
+      <CalendarMonth
+        :ref="(el: any) => { currentMonthRef = el }"
+        :date="currentPanelDate"
+        :type="type"
+        :color="color"
+        :min-date="effectiveMinDate"
+        :max-date="effectiveMaxDate"
+        :show-mark="showMark"
+        :row-height="rowHeight"
+        :formatter="formatter"
+        :lazy-render="false"
+        :current-date="currentDate"
+        :allow-same-day="allowSameDay"
+        :show-subtitle="showSubtitle"
+        :show-month-title="false"
+        :first-day-of-week="dayOffset"
+        @click="onClickDay"
+        @click-disabled-date="onClickDisabledDate"
+      >
+        <template v-if="$slots['top-info']" #top-info="sp"><slot name="top-info" v-bind="sp" /></template>
+        <template v-if="$slots['bottom-info']" #bottom-info="sp"><slot name="bottom-info" v-bind="sp" /></template>
+        <template v-if="$slots['month-title']" #month-title="sp"><slot name="month-title" v-bind="sp" /></template>
+        <template v-if="$slots.text" #text="sp"><slot name="text" v-bind="sp" /></template>
+      </CalendarMonth>
     </view>
 
-    <!-- Confirm Button -->
-    <view v-if="showConfirm" :style="confirmBtnStyle" @tap="onConfirm">
-      <text :style="confirmTextStyle">{{ isConfirmDisabled ? confirmDisabledText : confirmText }}</text>
+    <!-- Footer -->
+    <view :class="bem('footer')">
+      <slot name="footer">
+        <Button
+          v-if="showConfirm"
+          round
+          block
+          type="primary"
+          :color="color"
+          :class="bem('confirm')"
+          :disabled="buttonDisabled"
+          @click="onConfirm"
+        >
+          <slot name="confirm-text" :disabled="buttonDisabled">
+            <text>{{ buttonDisabled ? (confirmDisabledText || t('confirm')) : (confirmText || t('confirm')) }}</text>
+          </slot>
+        </Button>
+      </slot>
     </view>
   </view>
 </template>

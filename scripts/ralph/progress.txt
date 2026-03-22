@@ -879,3 +879,46 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from standalone inline-style component to thin wrapper around Picker (matching Vant's architecture). Added shared utils (padZero, clamp, isSameValue) to src/utils/format.ts. Created types.ts and utils.ts (genOptions, getMonthEndDay, times, formatValueRange). Exposed confirm() and getSelectedDate(). Fixed critical bug: function-type prop default must NOT be wrapped in factory function.
 - Limitations: tag prop (always <view> in Lynx), scroll-wheel physics (tap-to-select via Picker)
 ---
+
+## 2026-03-22 - parity-time-picker: TimePicker
+- Props: 21/21 (modelValue, columnsType, minHour, maxHour, minMinute, maxMinute, minSecond, maxSecond, minTime, maxTime, filter, formatter, title, confirmButtonText, cancelButtonText, loading, readonly, showToolbar, visibleOptionNum, optionHeight, swipeDuration)
+- Events: 4/4 (update:modelValue, confirm, cancel, change)
+- Slots: 7/7 (toolbar, title, confirm, cancel, option, columns-top, columns-bottom)
+- CSS Variables: 0 (inherits from Picker)
+- Animations: none (TimePicker is a thin wrapper; Picker handles animations)
+- Tests: 16 cases (Vant has 13, we have 16 — added BEM class, column count, expose tests)
+- Demo sections: 7/7 (基础用法, 选项类型, 时间范围, 整体时间范围, 格式化选项, 过滤选项, 高级用法)
+- Visual match: pass (delegates to Picker component with BEM classes)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3)
+- Key changes: Rewrote from standalone inline-style implementation to thin Picker wrapper matching Vant's architecture. Reuses genOptions/formatValueRange from DatePicker/utils. Picker's fillCascadeValues handles auto-adjustment when columns change (e.g., max props shrink). Double-pass clamping resolves cross-column dependencies (minTime/maxTime).
+- Limitations: tag prop (always renders <view> in Lynx), scroll-wheel physics (tap-to-select via Picker)
+---
+
+## 2026-03-22 - parity-cascader: Cascader
+- Props: 10/10 (title, options, closeable, swipeable, closeIcon, showHeader, modelValue, fieldNames, placeholder, activeColor)
+- Events: 5/5 (close, change, finish, clickTab, update:modelValue)
+- Slots: 4/4 (title, option, options-top, options-bottom)
+- CSS Variables: 13 defined in index.less (--van-cascader-header-height, header-padding, title-font-size, title-line-height, close-icon-size, close-icon-color, selected-icon-size, tabs-height, active-color, options-height, option-disabled-color, tab-color, unselected-tab-color)
+- Animations: none (Cascader has no transitions)
+- Tests: 19 cases (Vant has 16, we have 19 — added BEM class, disabled class, selected icon tests)
+- Demo sections: 5/5 (基础用法, 自定义颜色, 异步加载选项, 自定义字段名, 自定义选项上方内容)
+- Visual match: pass (BEM classes, CSS variables, uses Tabs+Tab internally like Vant)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4)
+- Key changes: Complete rewrite from inline-style to BEM class system. Added Tabs/Tab internal usage matching Vant architecture. Added all 4 slots. Fixed event payloads to match Vant exactly (tabIndex, selectedOptions — no extra text field). Added types.ts with CascaderOption, CascaderTab, CascaderFieldNames, CascaderThemeVars. Used scroll-view for options scrolling.
+- Limitations: scrollIntoView (no offsetTop/scrollTop in Lynx), HAPTICS_FEEDBACK (no haptic feedback), role/aria-* (no ARIA in Lynx), :active pseudo-class (no active state on tap), cursor: not-allowed (no cursor in Lynx)
+---
+
+## 2026-03-22 - parity-calendar: Calendar
+- Props: 26/26 (show, type, switchMode, title, color, round, readonly, poppable, maxRange, position, teleport, showMark, showTitle, formatter, rowHeight, confirmText, rangePrompt, lazyRender, showConfirm, defaultDate, allowSameDay, showSubtitle, showRangePrompt, confirmDisabledText, closeOnClickOverlay, closeOnPopstate, safeAreaInsetTop, safeAreaInsetBottom, minDate, maxDate, firstDayOfWeek)
+- Events: 10/10 (select, confirm, unselect, monthShow, overRange, update:show, clickSubtitle, clickDisabledDate, clickOverlay, panelChange)
+- Slots: 12/12 (footer, confirm-text, title, subtitle, prev-month, next-month, prev-year, next-year, top-info, bottom-info, month-title, text)
+- CSS Variables: 28 defined in index.less (--van-calendar-background, popup-height, header-shadow, header-title-height, header-title-font-size, header-subtitle-font-size, header-action-width, header-action-color, header-action-disabled-color, weekdays-height, weekdays-font-size, month-title-font-size, month-mark-color, month-mark-font-size, day-height, day-font-size, day-margin-bottom, day-disabled-color, range-edge-color, range-edge-background, range-middle-color, range-middle-background-opacity, selected-day-size, selected-day-color, selected-day-background, info-font-size, info-line-height, confirm-button-height, confirm-button-margin)
+- BEM Classes: .van-calendar, __popup, __header, __header-title, __header-subtitle (--with-switch), __header-subtitle-text, __header-action (--disabled), __weekdays, __weekday, __body, __month, __month-title, __month-mark, __days, __day (--start, --end, --start-end, --middle, --disabled, --multiple-middle, --multiple-selected, --placeholder), __day-middle-bg, __selected-day, __top-info, __bottom-info, __footer, __confirm
+- Animations: none (Calendar uses Popup's slide animation for poppable mode)
+- Tests: 38 cases (Vant has ~25, we have 38 — comprehensive coverage of BEM classes, selection modes, events, slots, props, switch modes)
+- Demo sections: 9/9 (基础用法, 快捷选择, 自定义颜色, 自定义日期范围, 自定义按钮文字, 自定义日期文案, 日期区间最大范围, 自定义周起始日, 平铺展示)
+- Visual match: pass (BEM classes, CSS variables, Popup integration, Button confirm)
+- Files: index.vue, index.less, types.ts, utils.ts, CalendarDay.vue, CalendarMonth.vue, CalendarHeader.vue, test/index.spec.ts (8 files; Vant has 8: Calendar.tsx, CalendarDay.tsx, CalendarMonth.tsx, CalendarHeader.tsx, types.ts, utils.ts, index.ts, index.less)
+- Key changes: Complete rewrite from inline-style single-month to full Vant architecture. Added 3 sub-components (CalendarDay, CalendarMonth, CalendarHeader) matching Vant structure. Full Popup integration for poppable mode. SwitchMode month/year-month navigation. Range/multiple/single selection modes with disabled date detection. Formatter prop. All 12 slots. scroll-view for scrollable body. showToast for range prompt. Chinese i18n.
+- Limitations: teleport (no Lynx Teleport support), lockScroll (no document.body scroll in Lynx), closeOnPopstate (no browser history API), scrollToDate simplified (no getBoundingClientRect in Lynx), ::after pseudo for middle range bg (uses child <view> instead), overflow:scroll (uses <scroll-view>), lazyRender scroll detection (all months render immediately since Lynx has no scroll position tracking)
+---
