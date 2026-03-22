@@ -1,68 +1,52 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
+import Tabs from '../components/Tabs/index.vue';
+import Tab from '../components/Tab/index.vue';
 import List from '../components/List/index.vue';
 import Cell from '../components/Cell/index.vue';
 
-// Basic Usage
-const loading1 = ref(false);
-const finished1 = ref(false);
-const items1 = ref<string[]>([]);
+const list = ref([
+  {
+    items: [] as string[],
+    loading: false,
+    error: false,
+    finished: false,
+  },
+  {
+    items: [] as string[],
+    loading: false,
+    error: false,
+    finished: false,
+  },
+  {
+    items: [] as string[],
+    loading: false,
+    error: false,
+    finished: false,
+  },
+]);
 
-function onLoad1() {
+function onLoad(index: number) {
+  const currentList = list.value[index];
+  currentList.loading = true;
+
   setTimeout(() => {
     for (let i = 0; i < 10; i++) {
-      const text = items1.value.length + 1;
-      items1.value.push(text < 10 ? '0' + text : String(text));
+      const text = currentList.items.length + 1;
+      currentList.items.push(text < 10 ? '0' + text : String(text));
     }
-    loading1.value = false;
-    if (items1.value.length >= 40) {
-      finished1.value = true;
-    }
-  }, 1000);
-}
 
-// Error Info
-const loading2 = ref(false);
-const finished2 = ref(false);
-const error2 = ref(false);
-const items2 = ref<string[]>([]);
+    currentList.loading = false;
 
-function onLoad2() {
-  setTimeout(() => {
-    for (let i = 0; i < 10; i++) {
-      const text = items2.value.length + 1;
-      items2.value.push(text < 10 ? '0' + text : String(text));
-    }
-    loading2.value = false;
-
-    // Show error after first batch
-    if (items2.value.length === 10 && !error2.value) {
-      error2.value = true;
+    if (index === 1 && currentList.items.length === 10 && !currentList.error) {
+      currentList.error = true;
     } else {
-      error2.value = false;
+      currentList.error = false;
     }
 
-    if (items2.value.length >= 40) {
-      finished2.value = true;
-    }
-  }, 1000);
-}
-
-// Finished Text
-const loading3 = ref(false);
-const finished3 = ref(false);
-const items3 = ref<string[]>([]);
-
-function onLoad3() {
-  setTimeout(() => {
-    for (let i = 0; i < 10; i++) {
-      const text = items3.value.length + 1;
-      items3.value.push(text < 10 ? '0' + text : String(text));
-    }
-    loading3.value = false;
-    if (items3.value.length >= 20) {
-      finished3.value = true;
+    if (currentList.items.length >= 40) {
+      currentList.finished = true;
     }
   }, 1000);
 }
@@ -70,46 +54,44 @@ function onLoad3() {
 
 <template>
   <DemoPage title="List 列表">
-    <view :style="{ display: 'flex', flexDirection: 'column' }">
-      <!-- 基础用法 -->
-      <text :style="{ fontSize: '14px', color: '#969799', paddingLeft: '16px', paddingTop: '16px', paddingBottom: '8px' }">基础用法</text>
-      <view :style="{ maxHeight: '300px', overflow: 'hidden' }">
+    <Tabs>
+      <Tab title="基础用法">
         <List
-          v-model:loading="loading1"
-          :finished="finished1"
+          v-model:loading="list[0].loading"
+          :finished="list[0].finished"
           finished-text="没有更多了"
-          @load="onLoad1"
+          @load="onLoad(0)"
         >
-          <Cell v-for="item in items1" :key="item" :title="item" />
+          <Cell v-for="item in list[0].items" :key="item" :title="item" />
         </List>
-      </view>
+      </Tab>
 
-      <!-- 错误提示 -->
-      <text :style="{ fontSize: '14px', color: '#969799', paddingLeft: '16px', paddingTop: '16px', paddingBottom: '8px' }">错误提示</text>
-      <view :style="{ maxHeight: '300px', overflow: 'hidden' }">
+      <Tab title="错误提示">
         <List
-          v-model:loading="loading2"
-          v-model:error="error2"
-          :finished="finished2"
+          v-model:loading="list[1].loading"
+          v-model:error="list[1].error"
+          :finished="list[1].finished"
           error-text="请求失败，点击重新加载"
-          @load="onLoad2"
+          @load="onLoad(1)"
         >
-          <Cell v-for="item in items2" :key="item" :title="item" />
+          <Cell v-for="item in list[1].items" :key="item" :title="item" />
         </List>
-      </view>
+      </Tab>
 
-      <!-- 完成提示 -->
-      <text :style="{ fontSize: '14px', color: '#969799', paddingLeft: '16px', paddingTop: '16px', paddingBottom: '8px' }">完成提示</text>
-      <view :style="{ maxHeight: '300px', overflow: 'hidden' }">
+      <Tab title="下拉刷新">
+        <!--
+          Lynx Limitation: PullRefresh component not yet implemented.
+          Showing basic list as placeholder.
+        -->
         <List
-          v-model:loading="loading3"
-          :finished="finished3"
+          v-model:loading="list[2].loading"
+          :finished="list[2].finished"
           finished-text="没有更多了"
-          @load="onLoad3"
+          @load="onLoad(2)"
         >
-          <Cell v-for="item in items3" :key="item" :title="item" />
+          <Cell v-for="item in list[2].items" :key="item" :title="item" />
         </List>
-      </view>
-    </view>
+      </Tab>
+    </Tabs>
   </DemoPage>
 </template>

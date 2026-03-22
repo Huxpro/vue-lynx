@@ -21,11 +21,15 @@
     align-items: center;
   }
 
-  &__error-text {
-    cursor: pointer;
-  }
-
   &__placeholder {
     height: 0;
+    pointer-events: none;
+  }
+
+  &__loading-icon {
+    .van-loading__spinner {
+      width: var(--van-list-loading-icon-size);
+      height: var(--van-list-loading-icon-size);
+    }
   }
 }
