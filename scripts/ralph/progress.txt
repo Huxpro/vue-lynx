@@ -168,3 +168,33 @@ Branch: feat/vant-lynx-v2
 - Imperative API: showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, allowMultipleToast, setToastDefaultOptions, resetToastDefaultOptions — all matching Vant's function API
 - Limitations: teleport (no Lynx support), html type (no innerHTML, renders as text), forbidClick (uses transparent Overlay instead of document.body class), lockScroll (not applicable in Lynx)
 ---
+
+## 2026-03-22 - parity-tag: Tag
+- Props: 9/9 (type, size, color, plain, round, mark, textColor, closeable, show)
+- Events: 1/1 (close)
+- Slots: 1/1 (default)
+- CSS Variables: 16 defined in index.less (all --van-tag-* vars matching Vant)
+- BEM Classes: .van-tag, --default/primary/success/danger/warning, --plain, --medium/--large, --round, --mark, __close
+- Animations: van-fade transition classes in .less for closeable tag show/hide
+- Tests: 20 cases (Vant has 4, we have 20 — added BEM class verification for all types/modifiers/sizes, color prop, close event, show/hide, slot content)
+- Demo sections: 4/4 (基础用法, 样式风格, 标签大小, 自定义颜色)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Tag.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('tag') + bem(). Removed typeColorMap/sizeConfig JS objects; all sizing/coloring via CSS classes + variables. Inline styles ONLY for color/textColor props (matching Vant's getStyle()). Plain mode border via CSS class (border: 1px solid currentColor) instead of ::before pseudo-element. Mark/round/size all via BEM modifier classes.
+- Limitations: tag prop (always renders <view>), ::before (plain border uses CSS border directly), ::after (mark spacer omitted), HAPTICS_FEEDBACK (not available in Lynx), Vue <Transition> (uses CSS transition classes)
+---
+
+## 2026-03-22 - parity-image: Image
+- Props: 19/19 (src, alt, fit, position, round, block, width, height, radius, lazyLoad, iconSize, showError, errorIcon, iconPrefix, showLoading, loadingIcon, crossorigin, referrerpolicy, decoding)
+- Events: 2/2 (load, error)
+- Slots: 3/3 (default, loading, error)
+- CSS Variables: 7 defined in index.less (--van-image-placeholder-text-color, --van-image-placeholder-font-size, --van-image-placeholder-background, --van-image-loading-icon-size, --van-image-loading-icon-color, --van-image-error-icon-size, --van-image-error-icon-color)
+- BEM Classes: .van-image, --round, __img, __loading, __error, __loading-icon, __error-icon
+- Animations: none (Image has no transitions)
+- Tests: 21 cases (Vant has 16 active; we have 21 — added BEM class verification, round/no-round, undefined src, overflow hidden via class)
+- Demo sections: 6/6 (基础用法, 填充模式, 图片位置, 圆形图片, 加载中提示, 加载失败提示)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Image.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('image') + bem(). Removed inline containerStyle/placeholderStyle/imageStyle objects; all positioning/sizing via CSS classes. Inline styles ONLY for width/height/radius (dynamic sizing props). Uses addUnit/isDef from shared utils. Demo page uses CSS classes instead of inline styles.
+- Limitations: alt (Lynx <image> has no alt text), position/object-position (not supported in Lynx), crossorigin/referrerpolicy/decoding (HTML-only attributes), lazyLoad (no $Lazyload plugin), block (Lynx views block by default), load/error events (cannot be simulated via dispatchEvent in Lynx test env)
+---

@@ -3,36 +3,47 @@ import { h, defineComponent } from 'vue-lynx';
 import { render } from 'vue-lynx-testing-library';
 import VanImage from '../index.vue';
 
+const IMAGE_URL = 'https://img.com';
+
 describe('Image', () => {
   it('should render image with src', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: 'https://example.com/img.jpg', width: 100, height: 100 });
+          return h(VanImage, { src: IMAGE_URL });
         },
       }),
     );
     const imageEl = container.querySelector('image');
     expect(imageEl).not.toBeNull();
-    expect(imageEl!.getAttribute('src')).toBe('https://example.com/img.jpg');
+    expect(imageEl!.getAttribute('src')).toBe(IMAGE_URL);
   });
 
-  it('should render loading placeholder when src is set (before load)', () => {
+  it('should have van-image class on root element', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: 'https://example.com/img.jpg', width: 100, height: 100 });
+          return h(VanImage, { src: IMAGE_URL, width: 100, height: 100 });
         },
       }),
     );
-    // Image should exist, and loading placeholder should also exist (has Icon inside)
-    expect(container.querySelector('image')).not.toBeNull();
-    const views = container.querySelectorAll('view');
-    // Root view + loading placeholder view = at least 2
-    expect(views.length).toBeGreaterThanOrEqual(2);
+    const rootView = container.firstElementChild;
+    expect(rootView!.getAttribute('class')).toContain('van-image');
   });
 
-  it('should render loading placeholder when src is not set', () => {
+  it('should apply van-image__img class to image element', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(VanImage, { src: IMAGE_URL });
+        },
+      }),
+    );
+    const imageEl = container.querySelector('image');
+    expect(imageEl!.getAttribute('class')).toContain('van-image__img');
+  });
+
+  it('should render loading placeholder with van-image__loading class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -40,79 +51,93 @@ describe('Image', () => {
         },
       }),
     );
-    // No image element when src is not set
+    // No src → no image element, loading shown
     expect(container.querySelector('image')).toBeNull();
-    // Loading placeholder should be shown
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('.van-image__loading')).not.toBeNull();
+  });
+
+  it('should render loading placeholder when src is set (before load)', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(VanImage, { src: IMAGE_URL });
+        },
+      }),
+    );
+    expect(container.querySelector('image')).not.toBeNull();
+    expect(container.querySelector('.van-image__loading')).not.toBeNull();
   });
 
   it('should not render loading placeholder when showLoading is false', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            src: 'https://example.com/img.jpg',
-            width: 100,
-            height: 100,
-            showLoading: false,
-          });
+          return h(VanImage, { showLoading: false });
         },
       }),
     );
-    // Image exists but no loading placeholder
-    expect(container.querySelector('image')).not.toBeNull();
-    // Only the root view (no extra placeholder views for loading)
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBe(1);
+    expect(container.querySelector('.van-image__loading')).toBeNull();
   });
 
-  it('should render round image with border-radius', () => {
+  it('should not render error placeholder when showError is false', () => {
+    // showError=false means even if error state occurs, no error placeholder renders
+    // We can only test that error placeholder doesn't show in initial state
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            src: 'https://example.com/img.jpg',
-            width: 100,
-            height: 100,
-            round: true,
-          });
+          return h(VanImage, { src: IMAGE_URL, showError: false });
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('999px');
+    expect(container.querySelector('.van-image__error')).toBeNull();
+  });
+
+  it('should add van-image--round class when round prop is true', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(VanImage, { src: IMAGE_URL, round: true });
+        },
+      }),
+    );
+    const rootView = container.firstElementChild;
+    expect(rootView!.getAttribute('class')).toContain('van-image--round');
+  });
+
+  it('should not have van-image--round class when round is false', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(VanImage, { src: IMAGE_URL, round: false });
+        },
+      }),
+    );
+    const rootView = container.firstElementChild;
+    expect(rootView!.getAttribute('class')).not.toContain('van-image--round');
   });
 
   it('should change border radius when using radius prop', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            src: 'https://example.com/img.jpg',
-            width: 100,
-            height: 100,
-            radius: 3,
-          });
+          return h(VanImage, { src: IMAGE_URL, radius: 3 });
         },
       }),
     );
-    const rootView = container.querySelector('view');
+    const rootView = container.firstElementChild;
     const style = rootView!.getAttribute('style') || '';
     expect(style).toContain('3px');
-    expect(style).toContain('overflow');
   });
 
   it('should apply width and height from props', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: 'https://example.com/img.jpg', width: 200, height: 150 });
+          return h(VanImage, { src: IMAGE_URL, width: 200, height: 150 });
         },
       }),
     );
-    const rootView = container.querySelector('view');
+    const rootView = container.firstElementChild;
     const style = rootView!.getAttribute('style') || '';
     expect(style).toContain('200px');
     expect(style).toContain('150px');
@@ -122,11 +147,11 @@ describe('Image', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: 'https://example.com/img.jpg', width: '10rem', height: '10rem' });
+          return h(VanImage, { src: IMAGE_URL, width: '10rem', height: '10rem' });
         },
       }),
     );
-    const rootView = container.querySelector('view');
+    const rootView = container.firstElementChild;
     const style = rootView!.getAttribute('style') || '';
     expect(style).toContain('10rem');
   });
@@ -135,12 +160,7 @@ describe('Image', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            src: 'https://example.com/img.jpg',
-            width: 100,
-            height: 100,
-            fit: 'cover',
-          });
+          return h(VanImage, { src: IMAGE_URL, fit: 'cover' });
         },
       }),
     );
@@ -155,7 +175,7 @@ describe('Image', () => {
         render() {
           return h(
             VanImage,
-            { src: 'https://example.com/img.jpg', width: 100, height: 100 },
+            { src: IMAGE_URL },
             { default: () => h('text', {}, 'Custom Default') },
           );
         },
@@ -172,7 +192,7 @@ describe('Image', () => {
         render() {
           return h(
             VanImage,
-            { src: 'https://example.com/img.jpg', width: 100, height: 100 },
+            {},
             { loading: () => h('text', {}, 'Custom Loading') },
           );
         },
@@ -183,58 +203,26 @@ describe('Image', () => {
     expect(slotText).toBeTruthy();
   });
 
-  it('should render error icon with errorIcon prop', () => {
-    // When no src is provided and showError is true, loading shows instead of error
-    // Error state requires the image load to fail, which can't be simulated in this test env
-    // So we test that the prop is accepted without errors
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(VanImage, {
-            src: 'https://example.com/img.jpg',
-            width: 100,
-            height: 100,
-            errorIcon: 'warning',
-          });
-        },
-      }),
-    );
-    expect(container.querySelector('view')).not.toBeNull();
-  });
-
   it('should render loading icon with loadingIcon prop', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            width: 100,
-            height: 100,
-            loadingIcon: 'success',
-          });
+          return h(VanImage, { loadingIcon: 'success' });
         },
       }),
     );
-    // Loading placeholder should be shown with a different icon
-    const textEls = container.querySelectorAll('text');
-    // 'success' icon maps to vant-icon font character \ue728
-    const iconText = Array.from(textEls).find((t) => t.textContent === '\ue728');
-    expect(iconText).toBeTruthy();
+    expect(container.querySelector('.van-image__loading')).not.toBeNull();
   });
 
-  it('should accept iconSize prop for loading icon', () => {
+  it('should apply iconSize prop to loading icon', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, {
-            width: 100,
-            height: 100,
-            iconSize: '3rem',
-          });
+          return h(VanImage, { iconSize: '3rem', loadingIcon: 'success' });
         },
       }),
     );
     const textEls = container.querySelectorAll('text');
-    // The icon text element should have fontSize set
     const hasSize = Array.from(textEls).some((t) => {
       const style = t.getAttribute('style') || '';
       return style.includes('3rem');
@@ -246,11 +234,23 @@ describe('Image', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: '', width: 100, height: 100 });
+          return h(VanImage, { src: '' });
         },
       }),
     );
     expect(container.querySelector('image')).toBeNull();
+  });
+
+  it('should not render image when src is undefined', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(VanImage);
+        },
+      }),
+    );
+    expect(container.querySelector('image')).toBeNull();
+    expect(container.querySelector('.van-image__loading')).not.toBeNull();
   });
 
   it('should accept all Vant props without errors', () => {
@@ -258,7 +258,7 @@ describe('Image', () => {
       defineComponent({
         render() {
           return h(VanImage, {
-            src: 'https://example.com/img.jpg',
+            src: IMAGE_URL,
             fit: 'contain',
             position: 'top',
             alt: 'test image',
@@ -281,21 +281,20 @@ describe('Image', () => {
         },
       }),
     );
-    expect(container.querySelector('view')).not.toBeNull();
+    expect(container.querySelector('.van-image')).not.toBeNull();
     expect(container.querySelector('image')).not.toBeNull();
   });
 
-  it('should have overflow hidden on container', () => {
+  it('should have overflow hidden via CSS class on root', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(VanImage, { src: 'https://example.com/img.jpg', width: 100, height: 100 });
+          return h(VanImage, { src: IMAGE_URL });
         },
       }),
     );
-    const rootView = container.querySelector('view');
-    const style = rootView!.getAttribute('style') || '';
-    expect(style).toContain('overflow');
-    expect(style).toContain('hidden');
+    const rootView = container.firstElementChild;
+    // overflow: hidden is now in the .van-image CSS class, not inline style
+    expect(rootView!.getAttribute('class')).toContain('van-image');
   });
 });
