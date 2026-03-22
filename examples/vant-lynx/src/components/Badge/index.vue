@@ -1,68 +1,75 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/8 supported (content, color, dot, max, showZero, offset, position)
-    - Missing: tag (always 'view' in Lynx, HTML tag prop not applicable)
-  - Slots: 2/2 supported (default, content)
-  - Standalone mode: Supported (badge renders inline when no default slot)
-  - Positioned mode: Supported (badge overlays on slotted content)
-  - Max number cap: Supported (e.g., max=99 shows "99+")
-  - Show zero: Supported (defaults to true, matching Vant)
-  - Offset: Supported (fine-tune [x, y] positioning for all 4 positions)
-  - Position: 4 positions supported (top-left, top-right, bottom-left, bottom-right)
-  - CSS Variables: Not applicable (Lynx uses inline styles)
-  - Gaps:
-    - No tag prop (Lynx always uses view elements)
-    - No CSS variable theming (Lynx limitation)
+  Lynx Limitations:
+  - tag prop: accepted for API compat but always renders as view (Lynx has no HTML tags)
+  - CSS class-based styling: Lynx uses inline styles, not CSS class selectors
+  - transform: translate(): not reliably supported in Lynx, using offset positioning instead
+  - font-family: --van-badge-font not applied (Lynx has limited font-family support)
 -->
 <script setup lang="ts">
 import { computed, useSlots } from 'vue-lynx';
 
+export type BadgePosition =
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right';
+
 export interface BadgeProps {
-  content?: string | number;
-  color?: string;
   dot?: boolean;
   max?: number | string;
-  showZero?: boolean;
+  tag?: string;
+  color?: string;
   offset?: [number | string, number | string];
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  content?: string | number;
+  showZero?: boolean;
+  position?: BadgePosition;
 }
 
 const props = withDefaults(defineProps<BadgeProps>(), {
-  color: '#ee0a24',
   dot: false,
+  tag: 'div',
   showZero: true,
   position: 'top-right',
 });
 
 const slots = useSlots();
 
+const addUnit = (value?: string | number): string | undefined => {
+  if (value === undefined || value === '') return undefined;
+  if (typeof value === 'number') return `${value}px`;
+  return value;
+};
+
+const isNumeric = (val: string | number): boolean => {
+  return typeof val === 'number' || /^\d+(\.\d+)?$/.test(val);
+};
+
+const isDef = <T>(val: T): val is NonNullable<T> => {
+  return val !== undefined && val !== null;
+};
+
 const hasContent = computed(() => {
   if (slots.content) {
     return true;
   }
   const { content, showZero } = props;
-  if (content === undefined || content === '') return false;
-  if (!showZero && (content === 0 || content === '0')) return false;
-  return true;
+  return (
+    isDef(content) &&
+    content !== '' &&
+    (showZero || (content !== 0 && content !== '0'))
+  );
+});
+
+const showContent = computed(() => {
+  return !props.dot && hasContent.value && !slots.content;
 });
 
 const displayContent = computed(() => {
-  const { dot, max, content } = props;
+  const { max, content } = props;
 
-  if (dot) return '';
+  if (!showContent.value) return '';
 
-  if (!hasContent.value) return '';
-
-  // content slot is handled in template
-  if (slots.content) return '';
-
-  if (
-    max !== undefined &&
-    content !== undefined &&
-    content !== '' &&
-    !isNaN(Number(content)) &&
-    Number(content) > Number(max)
-  ) {
+  if (isDef(max) && isNumeric(content!) && +content! > +max) {
     return `${max}+`;
   }
 
@@ -77,62 +84,69 @@ const isFixed = computed(() => {
   return !!slots.default;
 });
 
+const getOffsetWithMinusString = (val: string) =>
+  val.startsWith('-') ? val.replace('-', '') : `-${val}`;
+
 const badgeStyle = computed(() => {
   const style: Record<string, any> = {
-    backgroundColor: props.color,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: props.dot ? 4 : 8,
-    minWidth: props.dot ? 8 : 16,
-    height: props.dot ? 8 : 16,
-    paddingLeft: props.dot ? 0 : 3,
-    paddingRight: props.dot ? 0 : 3,
+    minWidth: props.dot ? '0px' : '16px',
+    height: props.dot ? '8px' : '16px',
+    paddingLeft: props.dot ? '0px' : '3px',
+    paddingRight: props.dot ? '0px' : '3px',
+    fontSize: '10px',
+    fontWeight: 'bold',
+    lineHeight: '14px',
+    textAlign: 'center',
+    backgroundColor: props.color || '#ee0a24',
+    borderRadius: props.dot ? '4px' : '9999px',
   };
 
+  if (props.dot) {
+    style.width = '8px';
+  }
+
   if (!props.dot) {
-    // White border around content badge
-    style.borderWidth = 1;
+    style.borderWidth = '1px';
     style.borderStyle = 'solid';
     style.borderColor = '#fff';
   }
 
   if (isFixed.value) {
-    // Positioned mode: absolute overlay on the wrapper
     style.position = 'absolute';
 
-    const [offsetY, offsetX] = props.position.split('-') as [
+    const { position } = props;
+    const [offsetY, offsetX] = position.split('-') as [
       'top' | 'bottom',
       'left' | 'right',
     ];
 
-    const offset = props.offset;
-    const offsetXVal = offset ? offset[0] : 0;
-    const offsetYVal = offset ? offset[1] : 0;
+    if (props.offset) {
+      const [x, y] = props.offset;
 
-    // Parse offset values (support both number and string like "5px")
-    const parseOffset = (val: number | string): number => {
-      if (typeof val === 'number') return val;
-      return parseFloat(val) || 0;
-    };
+      if (typeof y === 'number') {
+        style[offsetY] = addUnit(offsetY === 'top' ? y : -y);
+      } else {
+        style[offsetY] =
+          offsetY === 'top' ? addUnit(y) : getOffsetWithMinusString(y);
+      }
 
-    const xNum = parseOffset(offsetXVal);
-    const yNum = parseOffset(offsetYVal);
-
-    // Vant positions the badge at the corner and uses transform to center it.
-    // In Lynx, transform translate isn't well supported, so we use negative
-    // offsets to simulate the overlap effect.
-    if (offsetY === 'top') {
-      style.top = -8 + yNum;
+      if (typeof x === 'number') {
+        style[offsetX] = addUnit(offsetX === 'left' ? x : -x);
+      } else {
+        style[offsetX] =
+          offsetX === 'left' ? addUnit(x) : getOffsetWithMinusString(x);
+      }
     } else {
-      style.bottom = -8 - yNum;
+      style[offsetY] = '0px';
+      style[offsetX] = '0px';
     }
-
-    if (offsetX === 'right') {
-      style.right = -8 - xNum;
-    } else {
-      style.left = -8 + xNum;
-    }
+  } else if (props.offset) {
+    const [x, y] = props.offset;
+    style.marginTop = addUnit(y);
+    style.marginLeft = addUnit(x);
   }
 
   return style;
@@ -144,9 +158,9 @@ const wrapperStyle = computed(() => ({
 }));
 
 const textStyle = computed(() => ({
-  fontSize: 10,
+  fontSize: '10px',
   color: '#fff',
-  lineHeight: 14,
+  lineHeight: '14px',
   fontWeight: 'bold' as const,
 }));
 </script>
@@ -157,7 +171,7 @@ const textStyle = computed(() => ({
     <slot />
     <view v-if="shouldShowBadge" :style="badgeStyle">
       <slot name="content">
-        <text v-if="!dot && hasContent && displayContent" :style="textStyle">{{ displayContent }}</text>
+        <text v-if="showContent" :style="textStyle">{{ displayContent }}</text>
       </slot>
     </view>
   </view>
@@ -165,7 +179,7 @@ const textStyle = computed(() => ({
   <!-- Standalone mode: badge rendered inline without wrapper -->
   <view v-else-if="shouldShowBadge" :style="badgeStyle">
     <slot name="content">
-      <text v-if="!dot && hasContent && displayContent" :style="textStyle">{{ displayContent }}</text>
+      <text v-if="showContent" :style="textStyle">{{ displayContent }}</text>
     </slot>
   </view>
 </template>

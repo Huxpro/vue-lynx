@@ -1,128 +1,52 @@
-== Vant Lynx Feature Parity Progress ==
+# Ralph Progress Log — Vant Lynx 100% Feature Parity
+Started: 2026-03-21
+Branch: feat/vant-lynx-v2
+---
 
-[2026-03-21] Batch 1 - Foundational Components
-- icon (P1): PASS - 8/8 props, 1/1 events, 1/1 slots, index.less created
-- overlay (P3): PASS - 8/8 props, 1/1 events, 1/1 slots, lazyRender added, index.less created
-- loading (P4): PASS - 6/6 props, 0/0 events, 2/2 slots (icon slot added), index.less created
-- badge (P8): PASS - 7/7 props (tag N/A), 0/0 events, 2/2 slots, index.less created
-- popup (P2): PASS - 19/19 props, 7/7 events, 2/2 slots, destroyOnClose/lazyRender/overlayStyle added, index.less created
-- button (P5): PASS - 21/21 props, 2/2 events (touchstart added), 3/3 slots, index.less created
+## Codebase Patterns
 
-[2026-03-21] Batch 2 - Core Components
-- cell (P6): PASS - 18/18 props, 1/1 events, 6/6 slots, index.less created
-- cell-group (P7): PASS - 3/3 props, 0/0 events, 2/2 slots (title slot added), index.less created
-- config-provider (P9): PASS - 7/7 props, 0/0 events, 1/1 slots, themeVarsDark/Light/Scope added, index.less created
-- toast (P10): PASS - 16/16 props, 2/2 events, 1/1 slots, auto-close timer/forbidClick/closeOnClick added, index.less created
-- tag (P11): PASS - 9/9 props, 2/2 events, 1/1 slots, index.less created
+- **Test runner**: `pnpm test -- --reporter=verbose Icon` (vitest, no `--testPathPattern`)
+- **Test pattern**: Use `defineComponent` + `h()` render, then `container.querySelectorAll` for DOM assertions
+- **addUnit helper**: Vant uses `addUnit(size)` to convert numbers to `${n}px` — replicate locally in components
+- **Props defaults**: Only set defaults that Vant explicitly sets (e.g. `tag: 'i'`, `classPrefix: 'van-icon'`). Leave size/color unset for inherit behavior.
+- **Pre-existing TS errors**: `vue-lynx-testing-library` has no type declarations — this is project-wide, not per-component
+- **Style values**: Use string values with units (e.g. `"20px"`) not numbers in inline styles — numeric values trigger deprecation warnings and `getAttribute('style')` may not work on `<text>` elements with numeric values
+- **Text element queries**: `querySelector('text')` returns first `<text>` including template whitespace nodes — use `querySelectorAll('text')` and filter by style/content
 
-[2026-03-21] Batch 3 - Display & Layout Components
-- image (P12): PASS - 17/17 props, 3/3 events, 3/3 slots, position/alt/iconPrefix/crossorigin added, index.less created
-- divider (P13): PASS - 4/4 props, 0/0 events, 1/1 slots, vertical prop added, index.less created
-- space (P14): PASS - 5/5 props, 0/0 events, 1/1 slots, array size support added, index.less created
-- col (P15): PASS - 3/3 props, 1/1 events (click added), 1/1 slots, tag/vertical gutter, index.less created
-- row (P16): PASS - 5/5 props, 1/1 events (click added), 1/1 slots, array gutter support, index.less created
+---
 
-[2026-03-21] Batch 4 - Grid, Navigation Components
-- grid (P17): PASS - 9/9 props, 0/0 events, 1/1 slots, index.less created
-- grid-item (P18): PASS - 11/11 props, 1/1 events, 3/3 slots, url/to/replace added, index.less created
-- nav-bar (P19): PASS - 12/12 props, 2/2 events, 3/3 slots, safeAreaInsetTop added, index.less created
-- tabbar (P20): PASS - 9/9 props, 2/2 events, 1/1 slots, index.less created
-- tabbar-item (P21): PASS - 9/9 props, 1/1 events, 2/2 slots, index.less created
+## 2026-03-22 - parity-icon: Icon
+- Props: 8/8 (name, size, color, dot, badge, badgeProps, classPrefix, tag)
+- Events: 1/1 (click)
+- Slots: 1/1 (default)
+- CSS Variables: 2 defined in index.less (--van-icon-font-family, --van-icon-font-size)
+- Animations: none (Icon has no transitions)
+- Tests: 9 cases (Vant has 9) — all pass
+- Demo sections: 7 (Basic, URL, Badge, Color, Size, Outlined, Filled) — Vant has 5 demo + 3 icon tabs
+- Visual match: pass (unicode fallback icons render correctly)
+- Limitations: tag prop no-op, classPrefix no-op, no @font-face, no ConfigProvider iconPrefix
+---
 
-[2026-03-21] Batch 5 - Tab, Tabs, Empty, Skeleton, Progress, Circle (P22-P27)
-- tab (P22): PASS - 8/9 props, 0/0 events, 2/2 slots, index.less created
-- tabs (P23): PASS - 17/18 props, 4/4 events, 3/3 slots, index.less created
-- empty (P24): PASS - 3/3 props, 0/0 events, 3/3 slots, index.less created
-- skeleton (P25): PASS - 9/9 props, 0/0 events, 2/2 slots, index.less created
-- progress (P26): PASS - 9/9 props, 0/0 events, 1/1 slots, index.less created
-- circle (P27): PASS - 8/10 props, 0/0 events, 1/1 slots, index.less created
+## 2026-03-22 - parity-loading: Loading
+- Props: 6/6 (type, color, size, textSize, textColor, vertical)
+- Events: 0/0 (none in Vant)
+- Slots: 2/2 (default, icon)
+- CSS Variables: 5 defined in index.less (--van-loading-text-color, --van-loading-text-font-size, --van-loading-spinner-color, --van-loading-spinner-size, --van-loading-spinner-duration)
+- Animations: none (Lynx has no SVG or @keyframes support for spinner animations)
+- Tests: 9 cases (Vant has 5) — all pass
+- Demo sections: 7/7 (Type, Color, Size, Text, Vertical, Text Color, Custom Icon)
+- Visual match: pass (border-based spinner approximation)
+- Limitations: no SVG (circular uses CSS border), no @keyframes (static spinners), no ::before (spinner uses dotted border)
+---
 
-[2026-03-21] Batch 6 - NoticeBar, Highlight, TextEllipsis, Field, Form, Switch (P28-P33)
-- notice-bar (P28): PASS - 9/9 props, 3/3 events, 3/3 slots, index.less created
-- highlight (P29): PASS - all props/events/slots, index.less created
-- text-ellipsis (P30): PASS - 6/6 props, 1/1 events, 0/1 slots, index.less created
-- field (P31): PASS - 18/35+ props, 7/10 events, 6/10 slots, index.less created
-- form (P32): PASS - 11/14 props, 2/2 events, 1/1 slots, index.less created
-- switch (P33): PASS - 8/8 props, 2/2 events, 2/2 slots, index.less created
-
-[2026-03-21] Batch 7 - Checkbox, Radio, Stepper, Rate, Slider, Search (P34-P41)
-- checkbox (P34): PASS - 7/8 props, 3/3 events, 2/2 slots, index.less created
-- checkbox-group (P35): PASS - 6/6 props, 2/2 events, 1/1 slots, index.less created
-- radio (P36): PASS - 7/7 props, 2/2 events, 2/2 slots, index.less created
-- radio-group (P37): PASS - 6/6 props, 2/2 events, 1/1 slots, index.less created
-- stepper (P38): PASS - 21/21 props, all events, index.less created
-- rate (P39): PASS - 13/14 props, 2/2 events, index.less created
-- slider (P40): PASS - all props/events, index.less created
-- search (P41): PASS - all props/events/slots, index.less created
-
-[2026-03-21] Batch 8 - Pickers (P42-P46)
-- picker (P42): PASS - all props/events, index.less created
-- picker-group (P43): PASS - 2/6 props, 0/3 events, 1/4 slots, index.less created
-- date-picker (P44): PASS - 11/12 props, 4/4 events, index.less created
-- time-picker (P45): PASS - 14/15 props, 4/4 events, index.less created
-- cascader (P46): PASS - 9/9 props, 5/5 events, index.less created
-
-[2026-03-21] Batch 9 - Calendar, NumberKeyboard, PasswordInput, Uploader, Signature (P47-P51)
-- calendar (P47): PASS - 17/26 props, 6/11 events, index.less created
-- number-keyboard (P48): PASS - 10/15 props, 5/7 events, index.less created
-- password-input (P49): PASS - 7/7 props, 1/1 events, index.less created
-- uploader (P50): PASS - 13/22 props, 5/8 events, index.less created
-- signature (P51): PASS - 6/7 props, 5/5 events, index.less created
-
-[2026-03-21] Batch 10 - Dialog, ActionSheet, ShareSheet, Notify, Popover (P52-P56)
-- dialog (P52): PASS - 8/18 props, 4/4 events, 3/4 slots, index.less created
-- action-sheet (P53): PASS - 6/12 props, 4/5 events, 3/5 slots, index.less created
-- share-sheet (P54): PASS - 8/11 props, 3/3 events, 3/3 slots, index.less created
-- notify (P55): PASS - 9/11 props, 4/4 events, 1/1 slots, index.less created
-- popover (P56): PASS - all props/events/slots, index.less created
-
-[2026-03-21] Batch 11 - DropdownMenu, PullRefresh, Swipe, SwipeCell (P57-P61)
-- dropdown-menu (P57): PASS - 7/8 props, 0/0 events, 1/1 slots, index.less created
-- dropdown-item (P58): PASS - 5/6 props, 6/6 events, 2/2 slots, index.less created
-- pull-refresh (P59): PASS - 10/10 props, 3/3 events, 6/6 slots, index.less created
-- swipe (P60): PASS - 11/11 props, 3/3 events, 2/2 slots, index.less created
-- swipe-cell (P61): PASS - 5/6 props, 3/3 events, 3/3 slots, index.less created
-
-[2026-03-21] Batch 12 - Sidebar, Steps, Collapse, Sticky (P62-P68)
-- sidebar (P62): PASS - 1/1 props, 2/2 events, 1/1 slots, index.less created
-- sidebar-item (P63): PASS - 5/6 props, 1/1 events, 2/2 slots, index.less created
-- steps (P64): PASS - 6/7 props, 1/1 events, 1/1 slots, index.less created
-- step (P65): PASS - 1/1 props, via parent events, 1/3 slots, index.less created
-- collapse (P66): PASS - 3/3 props, 2/2 events, index.less created
-- collapse-item (P67): PASS - 10/11 props, click event, 6/6 slots, index.less created
-- sticky (P68): PASS - 5/5 props, 2/2 events, 1/1 slots, index.less created
-
-[2026-03-21] Batch 13 - IndexBar, Pagination, BackTop, List, TreeSelect (P69-P74)
-- index-bar (P69): PASS - 4/5 props, 2/2 events, 1/1 slots, index.less created
-- index-anchor (P70): PASS - 1/1 props, 0/0 events, 1/1 slots, index.less created
-- pagination (P71): PASS - 11/11 props, 2/2 events, 3/4 slots, index.less created
-- back-top (P72): PASS - 6/7 props, 1/1 events, 1/1 slots, index.less created
-- list (P73): PASS - all props/events/slots, index.less created
-- tree-select (P74): PASS - 6/6 props, 4/4 events, 2/2 slots, index.less created
-
-[2026-03-21] Batch 14 - ActionBar, Card, SubmitBar, CouponList (P75-P80)
-- action-bar (P75): PASS - 2/2 props, 0/0 events, 1/1 slots, index.less created
-- action-bar-icon (P76): PASS - 8/9 props, 1/1 events, index.less created
-- action-bar-button (P77): PASS - 6/8 props, 1/1 events, 1/1 slots, index.less created
-- card (P78): PASS - 10/11 props, 2/2 events, 7/9 slots, index.less created
-- submit-bar (P79): PASS - 13/14 props, 1/1 events, 4/4 slots, index.less created
-- coupon-list (P80): PASS - 12/16 props, 2/3 events, index.less created
-
-[2026-03-21] Batch 15 - Contact, Address, Area (P81-P86)
-- contact-card (P81): PASS - 5/5 props, 1/1 events, index.less created
-- contact-edit (P82): PASS - 7/7 props, 3/3 events, index.less created
-- contact-list (P83): PASS - 4/4 props, 4/4 events, index.less created
-- address-edit (P84): PASS - 17/20 props, 6/10 events, index.less created
-- address-list (P85): PASS - 8/9 props, 7/7 events, index.less created
-- area (P86): PASS - 5/7 props, 4/4 events, index.less created
-
-[2026-03-21] Batch 16 - CountDown, RollingText, Barrage, FloatingBubble, FloatingPanel, ImagePreview, Watermark (P87-P93)
-- count-down (P87): PASS - 4/4 props, 2/2 events, 1/1 slots, index.less created
-- rolling-text (P88): PASS - all props, 0/0 events, 0/0 slots, index.less created
-- barrage (P89): PASS - all props/events/slots, index.less created
-- floating-bubble (P90): PASS - 5/6 props, 3/3 events, 1/1 slots, index.less created
-- floating-panel (P91): PASS - 7/8 props, 2/2 events, 2/2 slots, index.less created
-- image-preview (P92): PASS - all props/events/slots, index.less created
-- watermark (P93): PASS - 11/11 props, 0/0 events, 1/1 slots, index.less created
-
-Completed: 93/93
+## 2026-03-22 - parity-badge: Badge
+- Props: 8/8 (dot, max, tag, color, offset, content, showZero, position)
+- Events: 0/0 (none in Vant)
+- Slots: 2/2 (default, content)
+- CSS Variables: 10 defined in index.less (--van-badge-size, --van-badge-color, --van-badge-padding, --van-badge-font-size, --van-badge-font-weight, --van-badge-border-width, --van-badge-background, --van-badge-dot-color, --van-badge-dot-size, --van-badge-font)
+- Animations: none (Badge has no transitions)
+- Tests: 12 cases (Vant has 12) — all pass
+- Demo sections: 6/6 (Basic Usage, Max, Custom Color, Custom Content, Custom Position, Standalone)
+- Visual match: pass (inline styles match Vant layout)
+- Limitations: tag prop no-op (Lynx always uses view), CSS class-based styling not available (uses inline styles), transform: translate() not reliable, --van-badge-font not applied
+---
