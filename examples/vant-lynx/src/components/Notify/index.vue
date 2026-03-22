@@ -1,153 +1,152 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 9/11 supported (show, type, message, color, background, duration, position, className [accepted but N/A], zIndex)
-  - Missing: lockScroll (N/A in Lynx - no body scroll), teleport (N/A in Lynx)
-  - Events: 4/4 supported (update:show, click, opened, close)
-  - Slots: 1/1 (default)
-  - Auto-close: Timer-based auto-close using duration prop (0 = no auto-close)
-  - Position: top/bottom support
-  - Vant uses Popup internally; we use positioned view (simpler, avoids overlay)
-  - Gaps:
-    - No lockScroll (Lynx has no body scroll to lock)
-    - No teleport (N/A in Lynx)
-    - className accepted but class-based styling N/A in Lynx
-    - No fade transition animation
+  Lynx Limitations:
+  - lockScroll: accepted for API compat but no document.body scroll lock in Lynx
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - white-space: pre-wrap not supported in Lynx (text wrapping handled by <text>)
+  - word-wrap: break-word not supported in Lynx
 -->
 <script setup lang="ts">
-import { computed, watch, ref, onBeforeUnmount, useSlots } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { isDef } from '../../utils/format';
+import { useGlobalZIndex } from '../../composables/useGlobalZIndex';
+import type { NotifyType, NotifyPosition } from './types';
+import './index.less';
 
-export type NotifyType = 'primary' | 'success' | 'warning' | 'danger';
-export type NotifyPosition = 'top' | 'bottom';
+const [, bem] = createNamespace('notify');
 
-export interface NotifyProps {
-  show?: boolean;
-  type?: NotifyType;
-  message?: string | number;
-  duration?: number;
-  color?: string;
-  background?: string;
-  position?: NotifyPosition;
-  className?: unknown;
-  lockScroll?: boolean;
-  zIndex?: number | string;
-}
-
-const props = withDefaults(defineProps<NotifyProps>(), {
-  show: false,
-  type: 'danger',
-  message: '',
-  duration: 3000,
-  position: 'top',
-  lockScroll: false,
-  zIndex: 2000,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    type?: NotifyType;
+    color?: string;
+    message?: string | number;
+    position?: NotifyPosition;
+    className?: unknown;
+    background?: string;
+    lockScroll?: boolean;
+    zIndex?: number | string;
+    duration?: number | string;
+    teleport?: string | object;
+  }>(),
+  {
+    show: false,
+    type: 'danger',
+    message: '',
+    position: 'top',
+    lockScroll: false,
+    duration: 0.2,
+  },
+);
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
-  click: [event: any];
-  opened: [];
-  close: [];
 }>();
 
-const slots = useSlots();
+const globalZIndex = useGlobalZIndex();
+const internalVisible = ref(false);
+const zIndex = ref<number>();
 
-let timer: ReturnType<typeof setTimeout> | null = null;
-
-function clearTimer() {
-  if (timer) {
-    clearTimeout(timer);
-    timer = null;
-  }
-}
-
-function startTimer() {
-  clearTimer();
-  if (props.duration > 0) {
-    timer = setTimeout(() => {
-      emit('update:show', false);
-      emit('close');
-    }, props.duration);
-  }
-}
-
-// Watch show to start/stop auto-close timer
-watch(
-  () => props.show,
-  (val) => {
-    if (val) {
-      startTimer();
-      emit('opened');
-    } else {
-      clearTimer();
-    }
-  },
-  { immediate: true },
-);
-
-// Restart timer when duration changes while visible
-watch(
-  () => props.duration,
-  () => {
-    if (props.show) {
-      startTimer();
-    }
-  },
-);
-
-onBeforeUnmount(() => {
-  clearTimer();
+const durationSec = computed(() => {
+  if (isDef(props.duration)) return Number(props.duration);
+  return 0.2;
 });
 
-const typeColorMap: Record<string, { color: string; background: string }> = {
-  primary: { color: '#fff', background: '#1989fa' },
-  success: { color: '#fff', background: '#07c160' },
-  warning: { color: '#fff', background: '#ff976a' },
-  danger: { color: '#fff', background: '#ee0a24' },
+// Slide transforms for top/bottom
+const slideTransforms: Record<string, string> = {
+  top: 'translate3d(0, -100%, 0)',
+  bottom: 'translate3d(0, 100%, 0)',
 };
 
-const resolvedColor = computed(
-  () => props.color ?? typeColorMap[props.type ?? 'danger'].color,
-);
+const rootStyle = computed(() => {
+  const style: Record<string, any> = {};
 
-const resolvedBackground = computed(
-  () => props.background ?? typeColorMap[props.type ?? 'danger'].background,
-);
+  if (isDef(zIndex.value)) {
+    style.zIndex = zIndex.value;
+  }
 
-const barStyle = computed(() => {
-  const isTop = props.position === 'top';
-  return {
-    position: 'fixed' as const,
-    ...(isTop ? { top: 0 } : { bottom: 0 }),
-    left: 0,
-    right: 0,
-    zIndex: Number(props.zIndex) || 2000,
-    backgroundColor: resolvedBackground.value,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 16,
-    paddingRight: 16,
-    display: 'flex',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  };
+  const dur = `${durationSec.value}s`;
+  style.transitionProperty = 'transform';
+  style.transitionDuration = dur;
+
+  if (!props.show) {
+    style.transform = slideTransforms[props.position] || slideTransforms.top;
+    style.pointerEvents = 'none';
+  }
+
+  // Custom color/background inline styles (like Vant's color prop pattern)
+  if (props.color) {
+    style.color = props.color;
+  }
+  if (props.background) {
+    style.background = props.background;
+  }
+
+  return style;
 });
 
-const textStyle = computed(() => ({
-  fontSize: 14,
-  color: resolvedColor.value,
-  textAlign: 'center' as const,
-  lineHeight: 20,
-}));
+const rootClasses = computed(() => {
+  const classes = [bem([props.type, props.position])];
+  if (props.className) {
+    if (typeof props.className === 'string') {
+      classes.push(props.className);
+    } else if (Array.isArray(props.className)) {
+      classes.push(...(props.className as string[]));
+    }
+  }
+  return classes.join(' ');
+});
 
-function onTap(event: any) {
-  emit('click', event);
+let opened = false;
+
+function open() {
+  if (!opened) {
+    opened = true;
+    internalVisible.value = true;
+    zIndex.value =
+      props.zIndex !== undefined
+        ? Number(props.zIndex)
+        : globalZIndex.value;
+  }
+}
+
+function scheduleLeave() {
+  const ms = Math.round(durationSec.value * 1000);
+  if (ms > 0) {
+    setTimeout(() => {
+      internalVisible.value = false;
+    }, ms);
+  } else {
+    internalVisible.value = false;
+  }
+}
+
+watch(
+  () => props.show,
+  (show) => {
+    if (show && !opened) {
+      open();
+    }
+    if (!show && opened) {
+      opened = false;
+      scheduleLeave();
+    }
+  },
+);
+
+if (props.show) {
+  open();
 }
 </script>
 
 <template>
-  <view v-if="show" :style="barStyle" @tap="onTap">
+  <view
+    v-if="internalVisible"
+    :class="rootClasses"
+    :style="rootStyle"
+  >
     <slot>
-      <text :style="textStyle">{{ message }}</text>
+      <text>{{ message }}</text>
     </slot>
   </view>
 </template>

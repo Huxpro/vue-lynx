@@ -8,3 +8,42 @@
   --van-notify-danger-background: var(--van-danger-color, #ee0a24);
   --van-notify-warning-background: var(--van-warning-color, #ff976a);
 }
+
+.van-notify {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--van-notify-padding);
+  color: var(--van-notify-text-color);
+  font-size: var(--van-notify-font-size);
+  line-height: var(--van-notify-line-height);
+  text-align: center;
+
+  &--top {
+    top: 0;
+  }
+
+  &--bottom {
+    bottom: 0;
+  }
+
+  &--primary {
+    background: var(--van-notify-primary-background);
+  }
+
+  &--success {
+    background: var(--van-notify-success-background);
+  }
+
+  &--danger {
+    background: var(--van-notify-danger-background);
+  }
+
+  &--warning {
+    background: var(--van-notify-warning-background);
+  }
+}
