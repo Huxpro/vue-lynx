@@ -37,12 +37,7 @@
     height: var(--van-card-thumb-size);
     margin-right: var(--van-padding-xs, 8px);
     overflow: hidden;
-
-    image {
-      border-radius: var(--van-card-thumb-radius);
-      width: 100%;
-      height: 100%;
-    }
+    border-radius: var(--van-card-thumb-radius);
   }
 
   &__content {
@@ -65,7 +60,7 @@
 
   &__title {
     max-height: 32px;
-    font-weight: bold;
+    font-weight: var(--van-font-bold, bold);
     line-height: var(--van-card-title-line-height);
   }
 
@@ -76,18 +71,18 @@
   }
 
   &__bottom {
-    line-height: var(--van-line-height-md, 20px);
     display: flex;
     flex-direction: row;
     align-items: center;
+    line-height: var(--van-line-height-md, 20px);
   }
 
   &__price {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
     align-items: baseline;
     color: var(--van-card-price-color);
-    font-weight: bold;
+    font-weight: var(--van-font-bold, bold);
     font-size: var(--van-card-price-font-size);
   }
 
@@ -105,7 +100,8 @@
   }
 
   &__origin-price {
-    display: inline-flex;
+    display: flex;
+    flex-direction: row;
     margin-left: 5px;
     color: var(--van-card-origin-price-color);
     font-size: var(--van-card-origin-price-font-size);
