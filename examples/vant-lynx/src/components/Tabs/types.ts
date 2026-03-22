@@ -22,6 +22,7 @@ export interface TabChild {
   showZeroBadge: boolean;
   titleSlot: boolean;
   titleStyle?: string | Record<string, any>;
+  titleClass?: unknown;
   index: number;
 }
 

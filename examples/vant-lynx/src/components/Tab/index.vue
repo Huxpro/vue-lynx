@@ -85,6 +85,7 @@ onMounted(() => {
       showZeroBadge: props.showZeroBadge,
       titleSlot: !!slots.title,
       titleStyle: props.titleStyle,
+      titleClass: props.titleClass,
       index: autoIndex,
     });
   }
@@ -97,7 +98,7 @@ onUnmounted(() => {
 });
 
 watch(
-  () => [props.title, props.disabled, props.dot, props.badge, props.showZeroBadge],
+  () => [props.title, props.disabled, props.dot, props.badge, props.showZeroBadge, props.titleClass],
   () => {
     if (tabsContext) {
       tabsContext.updateTab(tabName.value, {
@@ -107,6 +108,7 @@ watch(
         badge: props.badge,
         showZeroBadge: props.showZeroBadge,
         titleStyle: props.titleStyle,
+        titleClass: props.titleClass,
       });
     }
   },
