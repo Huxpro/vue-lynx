@@ -1,112 +1,80 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 21/21 supported
-    - modelValue: number | string (current value)
-    - min: number | string (minimum value, default 1)
-    - max: number | string (maximum value, default Infinity)
-    - step: number | string (step value, default 1)
-    - defaultValue: number | string (default value when modelValue is not set, default 1)
-    - name: number | string (identifier for the stepper, emitted with change event)
-    - inputWidth: number | string (width of the input field, default 32)
-    - buttonSize: number | string (size of plus/minus buttons, default 28)
-    - decimalLength: number | string (fixed decimal length)
-    - theme: 'default' | 'round' (visual theme)
-    - placeholder: string (placeholder text when allowEmpty and value is empty)
-    - integer: boolean (restrict to integer values)
-    - disabled: boolean (disable the entire stepper)
-    - disablePlus: boolean (disable plus button only)
-    - disableMinus: boolean (disable minus button only)
-    - disableInput: boolean (disable input editing)
-    - showPlus: boolean (show plus button, default true)
-    - showMinus: boolean (show minus button, default true)
-    - showInput: boolean (show input display, default true)
-    - longPress: boolean (enable long press for continuous change, default true)
-    - allowEmpty: boolean (allow empty value)
-    - autoFixed: boolean (auto-fix value on blur, default true)
-    - beforeChange: Function (interceptor before value changes)
-  - Events: 7/7 supported
-    - update:modelValue: emits new value
-    - change: emits (value, { name }) after value changes
-    - plus: emits when plus button is clicked
-    - minus: emits when minus button is clicked
-    - overlimit: emits actionType ('plus' | 'minus') when limit is reached
-    - focus: emits when input gains focus (no-op in Lynx, kept for API compat)
-    - blur: emits when input loses focus (no-op in Lynx, kept for API compat)
-  - Long press: supported with 600ms start delay and 200ms repeat interval
-  - beforeChange interceptor: supports sync, Promise, and callback patterns
-  - Value formatting: scientific notation, decimal length, integer restriction
-  - Round theme: plus has solid primary background, minus has border + transparent bg
-  - Lynx Adaptations:
-    - Uses view/text elements with inline styles only (no CSS classes)
-    - display: 'flex' set explicitly where needed (Lynx requires explicit flex display)
-    - No actual <input> element (Lynx limitation); value displayed as text
-    - focus/blur events defined for API compat but not triggered (no native input in Lynx)
-    - No CSS transitions (Lynx limitation)
-    - No cursor styling (Lynx is touch-only)
-    - No role/aria attributes (Lynx does not support ARIA)
-  - CSS Variables: Not supported (Lynx limitation)
-  - Gaps:
-    - No editable text input (Lynx has no equivalent to HTML <input>)
-    - No CSS transitions on button press states (Lynx limitation)
-    - No box-shadow (Lynx limitation)
-    - placeholder prop is accepted but has no visual effect (no text input)
-    - disableInput prop is accepted but has limited effect (no text input to disable)
+  Lynx Limitations:
+  - role/aria-*: Lynx has no ARIA attributes (role="group", role="spinbutton", aria-valuemin/max/now)
+  - ::before/::after pseudo-elements: Uses inner <view> elements for +/- icon lines
+  - input type/inputmode: Lynx input doesn't support type="tel" or inputmode
+  - cursor styling: Lynx is touch-only, no cursor: not-allowed/default
+  - user-select: none: Not applicable in Lynx
+  - -webkit-appearance: Not applicable in Lynx
+  - -webkit-text-fill-color: Not applicable in Lynx
+  - resetScroll: No browser scroll reset needed in Lynx
+  - onMousedown: No mouse events in Lynx
+  - v-show: Uses v-if (Lynx display:none behavior differs)
 -->
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue-lynx';
+import { createNamespace, addUnit, isDef } from '../../utils';
+import type { Numeric } from '../../utils';
+import type { StepperTheme, StepperThemeVars } from './types';
+import './index.less';
 
-type Numeric = number | string;
+export type { StepperThemeVars };
 
 export interface StepperProps {
   modelValue?: Numeric;
   min?: Numeric;
   max?: Numeric;
   step?: Numeric;
-  defaultValue?: Numeric;
   name?: Numeric;
-  inputWidth?: Numeric;
-  buttonSize?: Numeric;
-  decimalLength?: Numeric;
-  theme?: 'default' | 'round';
-  placeholder?: string;
+  theme?: StepperTheme;
   integer?: boolean;
   disabled?: boolean;
-  disablePlus?: boolean;
-  disableMinus?: boolean;
-  disableInput?: boolean;
   showPlus?: boolean;
   showMinus?: boolean;
   showInput?: boolean;
   longPress?: boolean;
-  allowEmpty?: boolean;
   autoFixed?: boolean;
-  beforeChange?: (...args: any[]) => any;
+  allowEmpty?: boolean;
+  inputWidth?: Numeric;
+  buttonSize?: Numeric;
+  placeholder?: string;
+  disablePlus?: boolean;
+  disableMinus?: boolean;
+  disableInput?: boolean;
+  beforeChange?: (...args: unknown[]) => unknown;
+  defaultValue?: Numeric;
+  decimalLength?: Numeric;
 }
+
+const [, bem] = createNamespace('stepper');
+
+const LONG_PRESS_START_TIME = 600;
+const LONG_PRESS_INTERVAL = 200;
 
 const props = withDefaults(defineProps<StepperProps>(), {
   modelValue: undefined,
   min: 1,
   max: Infinity,
   step: 1,
-  defaultValue: 1,
   name: '',
-  inputWidth: 32,
-  buttonSize: 28,
-  decimalLength: undefined,
-  theme: 'default',
-  placeholder: '',
+  theme: undefined,
   integer: false,
   disabled: false,
-  disablePlus: false,
-  disableMinus: false,
-  disableInput: false,
   showPlus: true,
   showMinus: true,
   showInput: true,
   longPress: true,
-  allowEmpty: false,
   autoFixed: true,
+  allowEmpty: false,
+  inputWidth: undefined,
+  buttonSize: undefined,
+  placeholder: undefined,
+  disablePlus: false,
+  disableMinus: false,
+  disableInput: false,
   beforeChange: undefined,
+  defaultValue: 1,
+  decimalLength: undefined,
 });
 
 const emit = defineEmits<{
@@ -115,39 +83,35 @@ const emit = defineEmits<{
   plus: [];
   minus: [];
   overlimit: [actionType: 'plus' | 'minus'];
-  focus: [event: any];
-  blur: [event: any];
+  focus: [event: Event];
+  blur: [event: Event];
 }>();
 
 // --- Helpers ---
 
-function isDef(val: unknown): val is NonNullable<typeof val> {
-  return val !== undefined && val !== null;
+function trimExtraChar(value: string, char: string, regExp: RegExp): string {
+  const index = value.indexOf(char);
+  if (index === -1) return value;
+  if (char === '-' && index !== 0) {
+    return value.slice(0, index) + value.slice(index).replace(regExp, '');
+  }
+  return (
+    value.slice(0, index + 1) + value.slice(index + 1).replace(regExp, '')
+  );
 }
 
-/** Strip non-numeric characters; keep decimal point if allowDecimal is true. */
-function formatNumber(value: string, allowDecimal: boolean): string {
-  const regExp = allowDecimal ? /[^-0-9.]/g : /[^-0-9]/g;
-  let formatted = value.replace(regExp, '');
-  // Remove extra leading minus signs
-  const firstMinus = formatted.indexOf('-');
-  if (firstMinus > 0) {
-    formatted = formatted.slice(0, firstMinus) + formatted.slice(firstMinus).replace(/-/g, '');
+function formatNumber(value: string, allowDot = true): string {
+  if (allowDot) {
+    value = trimExtraChar(value, '.', /\./g);
+  } else {
+    value = value.split('.')[0];
   }
-  // Remove extra decimal points
-  if (allowDecimal) {
-    const firstDot = formatted.indexOf('.');
-    if (firstDot !== -1) {
-      formatted =
-        formatted.slice(0, firstDot + 1) +
-        formatted.slice(firstDot + 1).replace(/\./g, '');
-    }
-  }
-  return formatted;
+  value = trimExtraChar(value, '-', /-/g);
+  const regExp = allowDot ? /[^-0-9.]/g : /[^-0-9]/g;
+  return value.replace(regExp, '');
 }
 
 function addNumber(num1: number, num2: number): number {
-  // Handle floating point precision issues
   const cardinal = 10 ** 10;
   return Math.round((num1 + num2) * cardinal) / cardinal;
 }
@@ -155,16 +119,42 @@ function addNumber(num1: number, num2: number): number {
 const isEqual = (value1?: Numeric, value2?: Numeric) =>
   String(value1) === String(value2);
 
+function callInterceptor(
+  interceptor: ((...args: unknown[]) => unknown) | undefined,
+  args: unknown[],
+  done: () => void,
+) {
+  if (!interceptor) {
+    done();
+    return;
+  }
+  const result = interceptor(...args);
+  if (result === false) return;
+  if (
+    result &&
+    typeof result === 'object' &&
+    typeof (result as Promise<unknown>).then === 'function'
+  ) {
+    (result as Promise<unknown>)
+      .then((val: unknown) => {
+        if (val !== false) done();
+      })
+      .catch(() => {
+        // rejected = cancelled
+      });
+  } else {
+    done();
+  }
+}
+
 // --- Value formatting ---
 
 function format(value: Numeric, autoFixed = true): Numeric {
   const { min, max, allowEmpty, decimalLength } = props;
 
-  if (allowEmpty && value === '') {
-    return value;
-  }
+  if (allowEmpty && value === '') return value;
 
-  // Format scientific notation
+  // format scientific number
   if (typeof value === 'number' && String(value).includes('e')) {
     value = value.toFixed(isDef(decimalLength) ? +decimalLength : 17);
   }
@@ -173,10 +163,10 @@ function format(value: Numeric, autoFixed = true): Numeric {
   value = value === '' ? 0 : +value;
   value = Number.isNaN(value) ? +min : value;
 
-  // Clamp to min/max if autoFixed
+  // clamp to min/max
   value = autoFixed ? Math.max(Math.min(+max, value as number), +min) : value;
 
-  // Format decimal length
+  // format decimal
   if (isDef(decimalLength)) {
     value = (value as number).toFixed(+decimalLength);
   }
@@ -208,180 +198,23 @@ const plusDisabled = computed(
   () => props.disabled || props.disablePlus || +current.value >= +props.max,
 );
 
-const parsedInputWidth = computed(() => {
-  const v = props.inputWidth;
-  return typeof v === 'string' ? parseInt(v, 10) || 32 : v;
-});
-
-const parsedButtonSize = computed(() => {
-  const v = props.buttonSize;
-  return typeof v === 'string' ? parseInt(v, 10) || 28 : v;
-});
-
-const isRound = computed(() => props.theme === 'round');
-
-// --- Styles ---
-
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
+const inputStyle = computed(() => ({
+  width: addUnit(props.inputWidth),
+  height: addUnit(props.buttonSize),
 }));
 
-const minusButtonStyle = computed(() => {
-  const size = parsedButtonSize.value;
-  if (isRound.value) {
-    return {
-      width: size,
-      height: size,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'transparent',
-      borderRadius: size / 2,
-      borderWidth: 1,
-      borderStyle: 'solid' as const,
-      borderColor: '#1989fa',
-      opacity: minusDisabled.value ? 0.3 : 1,
-    };
-  }
-  return {
-    width: size,
-    height: size,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: minusDisabled.value ? '#f7f8fa' : '#f2f3f5',
-    borderRadius: 4,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    opacity: 1,
-  };
+const buttonStyle = computed(() => {
+  if (!props.buttonSize) return undefined;
+  const size = addUnit(props.buttonSize);
+  return { width: size, height: size };
 });
 
-const plusButtonStyle = computed(() => {
-  const size = parsedButtonSize.value;
-  if (isRound.value) {
-    return {
-      width: size,
-      height: size,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#1989fa',
-      borderRadius: size / 2,
-      opacity: plusDisabled.value ? 0.3 : 1,
-    };
-  }
-  return {
-    width: size,
-    height: size,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: plusDisabled.value ? '#f7f8fa' : '#f2f3f5',
-    borderRadius: 4,
-    borderTopLeftRadius: 0,
-    borderBottomLeftRadius: 0,
-    opacity: 1,
-  };
-});
+// --- Actions ---
 
-const minusTextStyle = computed(() => {
-  const size = parsedButtonSize.value;
-  if (isRound.value) {
-    return {
-      fontSize: size * 0.6,
-      color: minusDisabled.value ? 'rgba(25, 137, 250, 0.3)' : '#1989fa',
-      textAlign: 'center' as const,
-      lineHeight: size,
-      fontWeight: 'bold' as const,
-    };
-  }
-  return {
-    fontSize: size * 0.6,
-    color: minusDisabled.value ? '#c8c9cc' : '#323233',
-    textAlign: 'center' as const,
-    lineHeight: size,
-    fontWeight: 'bold' as const,
-  };
-});
-
-const plusTextStyle = computed(() => {
-  const size = parsedButtonSize.value;
-  if (isRound.value) {
-    return {
-      fontSize: size * 0.6,
-      color: plusDisabled.value ? 'rgba(255, 255, 255, 0.3)' : '#fff',
-      textAlign: 'center' as const,
-      lineHeight: size,
-      fontWeight: 'bold' as const,
-    };
-  }
-  return {
-    fontSize: size * 0.6,
-    color: plusDisabled.value ? '#c8c9cc' : '#323233',
-    textAlign: 'center' as const,
-    lineHeight: size,
-    fontWeight: 'bold' as const,
-  };
-});
-
-const inputContainerStyle = computed(() => ({
-  width: parsedInputWidth.value,
-  height: parsedButtonSize.value,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: isRound.value ? 'transparent' : '#f2f3f5',
-  marginLeft: 2,
-  marginRight: 2,
-}));
-
-const inputTextStyle = computed(() => ({
-  fontSize: 14,
-  color: props.disabled ? '#c8c9cc' : '#323233',
-  textAlign: 'center' as const,
-  lineHeight: parsedButtonSize.value,
-}));
-
-const displayValue = computed(() => {
-  if (props.allowEmpty && current.value === '') {
-    return props.placeholder || '';
-  }
-  return String(current.value);
-});
-
-// --- beforeChange interceptor ---
-
-function callInterceptor(
-  interceptor: ((...args: any[]) => any) | undefined,
-  args: any[],
-  done: () => void,
-) {
-  if (!interceptor) {
-    done();
-    return;
-  }
-
-  const result = interceptor(...args);
-
-  if (result === false) {
-    // Sync rejection
-    return;
-  }
-
-  if (result && typeof result === 'object' && typeof result.then === 'function') {
-    // Promise
-    result.then((val: unknown) => {
-      if (val !== false) {
-        done();
-      }
-    }).catch(() => {
-      // rejected = cancelled
-    });
-  } else {
-    done();
+function check() {
+  const value = format(current.value);
+  if (!isEqual(value, current.value)) {
+    current.value = value;
   }
 }
 
@@ -391,15 +224,6 @@ function setValue(value: Numeric) {
       current.value = value;
     });
   } else {
-    current.value = value;
-  }
-}
-
-// --- Actions ---
-
-function check() {
-  const value = format(current.value);
-  if (!isEqual(value, current.value)) {
     current.value = value;
   }
 }
@@ -420,20 +244,49 @@ function onChange() {
   emit(actionType);
 }
 
-function onMinus() {
-  actionType = 'minus';
-  onChange();
+function onInput(event: any) {
+  // Lynx provides value via event.detail.value; web via event.target.value
+  const value = event?.detail?.value ?? event?.target?.value ?? '';
+  const { decimalLength } = props;
+
+  let formatted = formatNumber(String(value), !props.integer);
+
+  // limit max decimal length
+  if (isDef(decimalLength) && formatted.includes('.')) {
+    const pair = formatted.split('.');
+    formatted = `${pair[0]}.${pair[1].slice(0, +decimalLength)}`;
+  }
+
+  if (props.beforeChange) {
+    // Don't update displayed value, keep current
+  } else if (!isEqual(value, formatted) && event?.target) {
+    event.target.value = formatted;
+  }
+
+  // prefer number type
+  const isNumericVal = formatted === String(+formatted);
+  setValue(isNumericVal ? +formatted : formatted);
 }
 
-function onPlus() {
-  actionType = 'plus';
-  onChange();
+function onFocus(event: any) {
+  if (props.disableInput) {
+    // Skip focus emit when input is disabled
+  } else {
+    emit('focus', event);
+  }
+}
+
+function onBlur(event: any) {
+  const inputValue = event?.detail?.value ?? event?.target?.value ?? String(current.value);
+  const value = format(inputValue, props.autoFixed);
+  if (event?.target) {
+    event.target.value = String(value);
+  }
+  current.value = value;
+  emit('blur', event);
 }
 
 // --- Long press ---
-
-const LONG_PRESS_START_TIME = 600;
-const LONG_PRESS_INTERVAL = 200;
 
 let isLongPress = false;
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -446,8 +299,8 @@ function longPressStep() {
 }
 
 function onTouchStart(type: 'plus' | 'minus') {
-  if (!props.longPress) return;
   actionType = type;
+  if (!props.longPress) return;
   isLongPress = false;
   clearLongPressTimer();
   longPressTimer = setTimeout(() => {
@@ -470,15 +323,15 @@ function clearLongPressTimer() {
 }
 
 function onMinusTap() {
-  // For long press, tap is handled by touchstart/touchend sequence.
-  // Only handle direct tap if not a long press event.
   if (props.longPress && isLongPress) return;
-  onMinus();
+  actionType = 'minus';
+  onChange();
 }
 
 function onPlusTap() {
   if (props.longPress && isLongPress) return;
-  onPlus();
+  actionType = 'plus';
+  onChange();
 }
 
 // --- Watchers ---
@@ -502,42 +355,55 @@ watch(current, (value) => {
   emit('change', value, { name: props.name });
 });
 
-// --- Cleanup ---
-
 onBeforeUnmount(() => {
   clearLongPressTimer();
 });
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Minus button -->
+  <!-- Minus button -->
+  <view :class="bem([theme])">
     <view
       v-if="showMinus"
-      :style="minusButtonStyle"
+      :style="buttonStyle"
+      :class="bem('minus', { disabled: minusDisabled })"
       @tap="onMinusTap"
       @touchstart="() => onTouchStart('minus')"
       @touchend="onTouchEnd"
       @touchcancel="onTouchEnd"
     >
-      <text :style="minusTextStyle">-</text>
+      <!-- Horizontal line (minus icon) -->
+      <view :class="`${bem('icon-line')} ${bem('icon-line', ['h'])}`" />
     </view>
 
-    <!-- Input display -->
-    <view v-if="showInput" :style="inputContainerStyle">
-      <text :style="inputTextStyle">{{ displayValue }}</text>
-    </view>
+    <!-- Input -->
+    <input
+      v-if="showInput"
+      :class="bem('input', { disabled })"
+      :value="String(current)"
+      :style="inputStyle"
+      :disabled="disabled"
+      :readonly="disableInput"
+      :placeholder="placeholder"
+      @input="onInput"
+      @focus="onFocus"
+      @blur="onBlur"
+    />
 
     <!-- Plus button -->
     <view
       v-if="showPlus"
-      :style="plusButtonStyle"
+      :style="buttonStyle"
+      :class="bem('plus', { disabled: plusDisabled })"
       @tap="onPlusTap"
       @touchstart="() => onTouchStart('plus')"
       @touchend="onTouchEnd"
       @touchcancel="onTouchEnd"
     >
-      <text :style="plusTextStyle">+</text>
+      <!-- Horizontal line -->
+      <view :class="`${bem('icon-line')} ${bem('icon-line', ['h'])}`" />
+      <!-- Vertical line (plus icon) -->
+      <view :class="`${bem('icon-line')} ${bem('icon-line', ['v'])}`" />
     </view>
   </view>
 </template>
