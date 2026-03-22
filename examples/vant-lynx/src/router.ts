@@ -77,6 +77,7 @@ import FloatingBubbleDemo from './pages/floating-bubble.vue';
 import FloatingPanelDemo from './pages/floating-panel.vue';
 import NotifyDemo from './pages/notify.vue';
 import PickerDemo from './pages/picker.vue';
+import PickerGroupDemo from './pages/picker-group.vue';
 import ShareSheetDemo from './pages/share-sheet.vue';
 import SwipeCellDemo from './pages/swipe-cell.vue';
 
@@ -161,6 +162,7 @@ const router = createRouter({
     { path: '/floating-panel', name: 'floating-panel', component: FloatingPanelDemo },
     { path: '/notify', name: 'notify', component: NotifyDemo },
     { path: '/picker', name: 'picker', component: PickerDemo },
+    { path: '/picker-group', name: 'picker-group', component: PickerGroupDemo },
     { path: '/share-sheet', name: 'share-sheet', component: ShareSheetDemo },
     { path: '/swipe-cell', name: 'swipe-cell', component: SwipeCellDemo },
   ],

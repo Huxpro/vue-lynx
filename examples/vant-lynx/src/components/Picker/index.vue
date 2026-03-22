@@ -4,10 +4,11 @@
   - getElementTranslateY: No getComputedStyle in background thread; momentum mid-stop approximated
 -->
 <script setup lang="ts">
-import { ref, computed, watch, watchEffect } from 'vue-lynx';
+import { ref, computed, watch, watchEffect, inject, onMounted, onUnmounted } from 'vue-lynx';
 import { createNamespace } from '../../utils/create';
 import { addUnit } from '../../utils/format';
 import type { Numeric } from '../../utils/format';
+import { PICKER_GROUP_KEY } from '../PickerGroup/types';
 import Loading from '../Loading/index.vue';
 import PickerColumn from './PickerColumn.vue';
 import PickerToolbar from './PickerToolbar.vue';
@@ -291,11 +292,28 @@ const hasOptions = computed(() =>
 // Exposed methods
 function confirm() {
   onConfirm();
+  return getEventParams();
 }
 
 function getSelectedOptions() {
   return selectedOptions.value.slice();
 }
+
+// PickerGroup integration
+const pickerGroupContext = inject(PICKER_GROUP_KEY, null);
+const childInstance = { confirm, getSelectedOptions };
+
+onMounted(() => {
+  if (pickerGroupContext) {
+    pickerGroupContext.register(childInstance);
+  }
+});
+
+onUnmounted(() => {
+  if (pickerGroupContext) {
+    pickerGroupContext.unregister(childInstance);
+  }
+});
 
 defineExpose({ confirm, getSelectedOptions });
 </script>
