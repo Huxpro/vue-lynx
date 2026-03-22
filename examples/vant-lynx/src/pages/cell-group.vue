@@ -5,29 +5,29 @@ import CellGroup from '../components/CellGroup/index.vue';
 </script>
 
 <template>
-  <DemoPage title="CellGroup">
-    <view :style="{ padding: 0, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Basic Usage</text>
+  <DemoPage title="CellGroup 单元格组">
+    <view :style="{ display: 'flex', flexDirection: 'column' }">
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">基础用法</text>
       <CellGroup>
-        <Cell title="Cell title" value="Content" />
-        <Cell title="Cell title" value="Content" label="Description" :border="false" />
+        <Cell title="单元格" value="内容" />
+        <Cell title="单元格" value="内容" label="描述信息" :border="false" />
       </CellGroup>
 
-      <!-- Inset Grouped -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Inset Grouped</text>
+      <!-- 卡片风格 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">卡片风格</text>
       <CellGroup inset>
-        <Cell title="Cell title" value="Content" />
-        <Cell title="Cell title" value="Content" label="Description" :border="false" />
+        <Cell title="单元格" value="内容" />
+        <Cell title="单元格" value="内容" label="描述信息" :border="false" />
       </CellGroup>
 
-      <!-- Group Title -->
-      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">Group Title</text>
-      <CellGroup title="Group 1">
-        <Cell title="Cell title" value="Content" :border="false" />
+      <!-- 分组标题 -->
+      <text :style="{ fontSize: '14px', color: '#969799', padding: '16px' }">分组标题</text>
+      <CellGroup title="分组 1">
+        <Cell title="单元格" value="内容" :border="false" />
       </CellGroup>
-      <CellGroup title="Group 2">
-        <Cell title="Cell title" value="Content" :border="false" />
+      <CellGroup title="分组 2">
+        <Cell title="单元格" value="内容" :border="false" />
       </CellGroup>
     </view>
   </DemoPage>

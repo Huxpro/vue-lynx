@@ -4,49 +4,6 @@ import { render } from 'vue-lynx-testing-library';
 import CellGroup from '../index.vue';
 
 describe('CellGroup', () => {
-  it('should render title slot correctly', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(CellGroup, null, {
-            title: () => h('text', {}, 'Custom Title'),
-          });
-        },
-      }),
-    );
-    const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((el) => el.textContent);
-    expect(texts).toContain('Custom Title');
-  });
-
-  it('should render title prop correctly', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(CellGroup, { title: 'Group Title' });
-        },
-      }),
-    );
-    const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((el) => el.textContent);
-    expect(texts).toContain('Group Title');
-  });
-
-  it('should not render title when title is not set', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(CellGroup);
-        },
-      }),
-    );
-    const textEls = container.querySelectorAll('text');
-    const meaningfulTexts = Array.from(textEls).filter(
-      (el) => el.textContent && el.textContent.trim().length > 0,
-    );
-    expect(meaningfulTexts.length).toBe(0);
-  });
-
   it('should render default slot content', () => {
     const { container } = render(
       defineComponent({
@@ -62,26 +19,7 @@ describe('CellGroup', () => {
     expect(texts).toContain('Cell Content');
   });
 
-  it('should render inset style', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(CellGroup, { inset: true }, {
-            default: () => h('text', {}, 'Content'),
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    // views[0] = wrapper, views[1] = group container
-    const groupView = views[1];
-    const style = groupView.getAttribute('style') || '';
-    expect(style).toContain('border-radius');
-    expect(style).toContain('8px');
-    expect(style).toContain('16px');
-  });
-
-  it('should render border by default', () => {
+  it('should render with van-cell-group class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -91,13 +29,95 @@ describe('CellGroup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const groupView = views[1];
-    const style = groupView.getAttribute('style') || '';
-    expect(style).toContain('border-top');
+    const group = container.querySelector('.van-cell-group');
+    expect(group).toBeTruthy();
   });
 
-  it('should not render border when border is false', () => {
+  it('should render title prop correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, { title: 'Group Title' });
+        },
+      }),
+    );
+    const titleEl = container.querySelector('.van-cell-group__title');
+    expect(titleEl).toBeTruthy();
+    const textEls = titleEl!.querySelectorAll('text');
+    const texts = Array.from(textEls).map((el) => el.textContent);
+    expect(texts).toContain('Group Title');
+  });
+
+  it('should render title slot correctly', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, null, {
+            title: () => h('text', {}, 'Custom Title'),
+          });
+        },
+      }),
+    );
+    const titleEl = container.querySelector('.van-cell-group__title');
+    expect(titleEl).toBeTruthy();
+    const textEls = container.querySelectorAll('text');
+    const texts = Array.from(textEls).map((el) => el.textContent);
+    expect(texts).toContain('Custom Title');
+  });
+
+  it('should not render title when title is not set', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup);
+        },
+      }),
+    );
+    const titleEl = container.querySelector('.van-cell-group__title');
+    expect(titleEl).toBeNull();
+  });
+
+  it('should render inset class when inset prop is true', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, { inset: true }, {
+            default: () => h('text', {}, 'Content'),
+          });
+        },
+      }),
+    );
+    const group = container.querySelector('.van-cell-group--inset');
+    expect(group).toBeTruthy();
+  });
+
+  it('should render inset title class when inset and title are set', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, { inset: true, title: 'Inset Title' });
+        },
+      }),
+    );
+    const titleEl = container.querySelector('.van-cell-group__title--inset');
+    expect(titleEl).toBeTruthy();
+  });
+
+  it('should render hairline border by default', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, null, {
+            default: () => h('text', {}, 'Content'),
+          });
+        },
+      }),
+    );
+    const group = container.querySelector('.van-hairline--top-bottom');
+    expect(group).toBeTruthy();
+  });
+
+  it('should not render hairline border when border is false', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -107,13 +127,11 @@ describe('CellGroup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const groupView = views[1];
-    const style = groupView.getAttribute('style') || '';
-    expect(style).not.toContain('border-top');
+    const group = container.querySelector('.van-hairline--top-bottom');
+    expect(group).toBeNull();
   });
 
-  it('should not render border when inset is true even if border is true', () => {
+  it('should not render hairline border when inset is true', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -123,9 +141,21 @@ describe('CellGroup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const groupView = views[1];
-    const style = groupView.getAttribute('style') || '';
-    expect(style).not.toContain('border-top');
+    const group = container.querySelector('.van-hairline--top-bottom');
+    expect(group).toBeNull();
+  });
+
+  it('should not have inset class by default', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(CellGroup, null, {
+            default: () => h('text', {}, 'Content'),
+          });
+        },
+      }),
+    );
+    const group = container.querySelector('.van-cell-group--inset');
+    expect(group).toBeNull();
   });
 });
