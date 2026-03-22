@@ -1,38 +1,41 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 11/11 (modelValue, mode, pageCount, totalItems, itemsPerPage,
-    showPageSize, forceEllipses, prevText, nextText, showPrevButton, showNextButton)
-  - Events: 2/2 (update:modelValue, change)
-  - Slots: 3/4 (prev-text, next-text, page; missing: pageDesc)
-  - Gaps: pageDesc slot not implemented; no i18n for default text
+  Lynx Limitations:
+  - HTML <nav>/<ul>/<li>/<button> elements: Lynx uses <view>/<text> instead
+  - CSS class-based BEM styling: replaced with inline styles using CSS variable values
+  - :active pseudo-class: Lynx has no :active, active feedback uses touchstart/touchend
+  - cursor: not applicable in Lynx
+  - user-select: not applicable in Lynx
+  - role/aria-current: accessibility attributes not applicable in Lynx
+  - BORDER_SURROUND: replaced with inline border styles
+  - i18n (t('prev')/t('next')): no i18n system, defaults to static strings
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, watchEffect } from 'vue-lynx';
+import type { PaginationMode, PageItem, Numeric } from './types';
+import './index.less';
 
 export interface PaginationProps {
   modelValue?: number;
-  mode?: 'simple' | 'multi';
-  pageCount?: number;
-  totalItems?: number;
-  itemsPerPage?: number;
-  showPageSize?: number;
-  forceEllipses?: boolean;
+  mode?: PaginationMode;
   prevText?: string;
   nextText?: string;
+  pageCount?: Numeric;
+  totalItems?: Numeric;
+  showPageSize?: Numeric;
+  itemsPerPage?: Numeric;
+  forceEllipses?: boolean;
   showPrevButton?: boolean;
   showNextButton?: boolean;
 }
 
 const props = withDefaults(defineProps<PaginationProps>(), {
-  modelValue: 1,
+  modelValue: 0,
   mode: 'multi',
   pageCount: 0,
   totalItems: 0,
-  itemsPerPage: 10,
   showPageSize: 5,
+  itemsPerPage: 10,
   forceEllipses: false,
-  prevText: 'Prev',
-  nextText: 'Next',
   showPrevButton: true,
   showNextButton: true,
 });
@@ -42,113 +45,104 @@ const emit = defineEmits<{
   change: [value: number];
 }>();
 
-const totalPages = computed(() => {
-  if (props.pageCount > 0) return props.pageCount;
-  return Math.ceil(props.totalItems / props.itemsPerPage) || 1;
+function clamp(num: number, min: number, max: number): number {
+  return Math.min(Math.max(num, min), max);
+}
+
+const count = computed(() => {
+  const { pageCount, totalItems, itemsPerPage } = props;
+  const c = +pageCount || Math.ceil(+totalItems / +itemsPerPage);
+  return Math.max(1, c);
 });
 
 const pages = computed(() => {
-  const total = totalPages.value;
-  const current = props.modelValue;
-  const showSize = props.showPageSize;
+  const items: PageItem[] = [];
+  const pageCount = count.value;
+  const showPageSize = +props.showPageSize;
+  const { modelValue, forceEllipses } = props;
 
-  if (props.mode === 'simple') {
-    return [];
-  }
-
-  const items: Array<{ number: number; text: string; active: boolean }> = [];
-
-  // Calculate start and end
+  // Default page limits
   let startPage = 1;
-  let endPage = total;
+  let endPage = pageCount;
+  const isMaxSized = showPageSize < pageCount;
 
-  if (total > showSize) {
-    const half = Math.floor(showSize / 2);
-    startPage = Math.max(1, current - half);
-    endPage = startPage + showSize - 1;
+  // Recompute if showPageSize
+  if (isMaxSized) {
+    startPage = Math.max(modelValue - Math.floor(showPageSize / 2), 1);
+    endPage = startPage + showPageSize - 1;
 
-    if (endPage > total) {
-      endPage = total;
-      startPage = Math.max(1, endPage - showSize + 1);
+    if (endPage > pageCount) {
+      endPage = pageCount;
+      startPage = endPage - showPageSize + 1;
     }
   }
 
-  // Add ellipsis at start
-  if (props.forceEllipses && startPage > 1) {
-    items.push({ number: 1, text: '1', active: current === 1 });
-    if (startPage > 2) {
-      items.push({ number: -1, text: '...', active: false });
-    }
+  // Add page number links
+  for (let number = startPage; number <= endPage; number++) {
+    items.push({ number, text: number, active: number === modelValue });
   }
 
-  // Add page numbers
-  for (let i = startPage; i <= endPage; i++) {
-    items.push({
-      number: i,
-      text: String(i),
-      active: i === current,
-    });
-  }
-
-  // Add ellipsis at end
-  if (props.forceEllipses && endPage < total) {
-    if (endPage < total - 1) {
-      items.push({ number: -2, text: '...', active: false });
+  // Add links to move between page sets (ellipses)
+  if (isMaxSized && showPageSize > 0 && forceEllipses) {
+    if (startPage > 1) {
+      items.unshift({ number: startPage - 1, text: '...', active: false });
     }
-    items.push({ number: total, text: String(total), active: current === total });
+    if (endPage < pageCount) {
+      items.push({ number: endPage + 1, text: '...', active: false });
+    }
   }
 
   return items;
 });
 
-const isPrevDisabled = computed(() => props.modelValue <= 1);
-const isNextDisabled = computed(() => props.modelValue >= totalPages.value);
+function updateModelValue(value: number, emitChange?: boolean) {
+  value = clamp(value, 1, count.value);
 
-function goToPage(page: number) {
-  if (page < 1 || page > totalPages.value || page === props.modelValue) return;
-  emit('update:modelValue', page);
-  emit('change', page);
-}
-
-function prevPage() {
-  if (!isPrevDisabled.value) {
-    goToPage(props.modelValue - 1);
+  if (props.modelValue !== value) {
+    emit('update:modelValue', value);
+    if (emitChange) {
+      emit('change', value);
+    }
   }
 }
 
-function nextPage() {
-  if (!isNextDisabled.value) {
-    goToPage(props.modelValue + 1);
-  }
-}
+// Format modelValue (clamp to valid range)
+watchEffect(() => updateModelValue(props.modelValue));
 
+const isPrevDisabled = computed(() => props.modelValue === 1);
+const isNextDisabled = computed(() => props.modelValue === count.value);
+
+// Styles using CSS variable fallback values
 const containerStyle = {
   display: 'flex',
   flexDirection: 'row' as const,
   alignItems: 'center',
-  justifyContent: 'center',
 };
 
-function getNavBtnStyle(disabled: boolean) {
+function getNavBtnStyle(disabled: boolean, isSimpleBorder: boolean) {
   return {
     display: 'flex',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 40,
-    paddingLeft: 12,
-    paddingRight: 12,
+    height: '40px',
+    paddingLeft: '4px',
+    paddingRight: '4px',
     backgroundColor: disabled ? '#f7f8fa' : '#fff',
-    borderWidth: 1,
+    opacity: disabled ? '0.5' : '1',
+    borderWidth: '1px',
     borderStyle: 'solid' as const,
     borderColor: '#ebedf0',
-    borderRadius: 4,
+    ...(isSimpleBorder
+      ? {}
+      : { borderRightWidth: '0px' }),
   };
 }
 
 function getNavTextStyle(disabled: boolean) {
   return {
-    fontSize: 14,
-    color: disabled ? '#c8c9cc' : '#323233',
+    fontSize: '14px',
+    color: disabled ? '#646566' : '#1989fa',
   };
 }
 
@@ -157,46 +151,54 @@ function getPageBtnStyle(active: boolean) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 40,
-    height: 40,
+    minWidth: '36px',
+    height: '40px',
     backgroundColor: active ? '#1989fa' : '#fff',
-    borderWidth: 1,
+    borderWidth: '1px',
     borderStyle: 'solid' as const,
-    borderColor: active ? '#1989fa' : '#ebedf0',
-    borderRadius: 4,
-    marginLeft: 4,
-    marginRight: 4,
+    borderColor: '#ebedf0',
+    borderRightWidth: '0px',
   };
 }
 
 function getPageTextStyle(active: boolean) {
   return {
-    fontSize: 14,
-    color: active ? '#fff' : '#323233',
-    fontWeight: active ? ('bold' as const) : ('normal' as const),
+    fontSize: '14px',
+    color: active ? '#fff' : '#1989fa',
   };
 }
 
-const simpleTextStyle = {
-  fontSize: 14,
-  color: '#323233',
-  marginLeft: 12,
-  marginRight: 12,
+const descStyle = {
+  display: 'flex',
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: '40px',
+  fontSize: '14px',
+  color: '#646566',
 };
 </script>
 
 <template>
   <view :style="containerStyle">
     <!-- Prev button -->
-    <view v-if="showPrevButton" :style="getNavBtnStyle(isPrevDisabled)" @tap="prevPage">
+    <view
+      v-if="showPrevButton"
+      :style="getNavBtnStyle(isPrevDisabled, mode === 'simple')"
+      @tap="updateModelValue(modelValue - 1, true)"
+    >
       <slot name="prev-text">
-        <text :style="getNavTextStyle(isPrevDisabled)">{{ prevText }}</text>
+        <text :style="getNavTextStyle(isPrevDisabled)">{{ prevText || 'Prev' }}</text>
       </slot>
     </view>
 
-    <!-- Simple mode: page indicator -->
+    <!-- Simple mode: page description -->
     <template v-if="mode === 'simple'">
-      <text :style="simpleTextStyle">{{ modelValue }}/{{ totalPages }}</text>
+      <view :style="descStyle">
+        <slot name="pageDesc">
+          <text :style="{ fontSize: '14px', color: '#646566' }">{{ modelValue }}/{{ count }}</text>
+        </slot>
+      </view>
     </template>
 
     <!-- Multi mode: page numbers -->
@@ -204,19 +206,23 @@ const simpleTextStyle = {
       <view
         v-for="page in pages"
         :key="page.number"
-        :style="getPageBtnStyle(page.active)"
-        @tap="page.number > 0 ? goToPage(page.number) : undefined"
+        :style="getPageBtnStyle(!!page.active)"
+        @tap="updateModelValue(page.number, true)"
       >
         <slot name="page" :number="page.number" :text="page.text" :active="page.active">
-          <text :style="getPageTextStyle(page.active)">{{ page.text }}</text>
+          <text :style="getPageTextStyle(!!page.active)">{{ page.text }}</text>
         </slot>
       </view>
     </template>
 
     <!-- Next button -->
-    <view v-if="showNextButton" :style="getNavBtnStyle(isNextDisabled)" @tap="nextPage">
+    <view
+      v-if="showNextButton"
+      :style="getNavBtnStyle(isNextDisabled, mode === 'simple')"
+      @tap="updateModelValue(modelValue + 1, true)"
+    >
       <slot name="next-text">
-        <text :style="getNavTextStyle(isNextDisabled)">{{ nextText }}</text>
+        <text :style="getNavTextStyle(isNextDisabled)">{{ nextText || 'Next' }}</text>
       </slot>
     </view>
   </view>
