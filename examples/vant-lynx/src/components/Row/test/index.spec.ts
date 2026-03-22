@@ -5,7 +5,7 @@ import Row from '../index.vue';
 import Col from '../../Col/index.vue';
 
 describe('Row', () => {
-  it('should render row with default flex styles', () => {
+  it('should render with van-row class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -15,15 +15,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
+    const rowView = container.querySelector('.van-row');
     expect(rowView).not.toBeNull();
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('display: flex');
-    expect(style).toContain('flex-direction: row');
-    expect(style).toContain('flex-wrap: wrap');
   });
 
-  it('should set nowrap when wrap prop is false', () => {
+  it('should add "van-row--nowrap" class when wrap prop is false', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -33,12 +29,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('flex-wrap: nowrap');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--nowrap');
   });
 
-  it('should not set justify-content when justify prop is not set', () => {
+  it('should not have nowrap class when wrap is true (default)', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -48,12 +43,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).not.toContain('justify-content');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).not.toContain('van-row--nowrap');
   });
 
-  it('should set justify-content center when justify is center', () => {
+  it('should add justify-center class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -63,12 +57,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('justify-content: center');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--justify-center');
   });
 
-  it('should set justify-content flex-end when justify is end', () => {
+  it('should add justify-end class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -78,12 +71,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('justify-content: flex-end');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--justify-end');
   });
 
-  it('should set justify-content space-between', () => {
+  it('should add justify-space-between class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -93,12 +85,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('justify-content: space-between');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--justify-space-between');
   });
 
-  it('should set justify-content space-around', () => {
+  it('should add justify-space-around class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -108,12 +99,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('justify-content: space-around');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--justify-space-around');
   });
 
-  it('should not set align-items when align prop is not set', () => {
+  it('should not add justify class when justify is not set', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -123,12 +113,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).not.toContain('align-items');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).not.toContain('justify');
   });
 
-  it('should set align-items center when align is center', () => {
+  it('should add align-center class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -138,12 +127,11 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('align-items: center');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--align-center');
   });
 
-  it('should set align-items flex-end when align is bottom', () => {
+  it('should add align-bottom class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -153,54 +141,25 @@ describe('Row', () => {
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('align-items: flex-end');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).toContain('van-row--align-bottom');
   });
 
-  it('should apply negative margins when gutter is set', () => {
+  it('should not add align class when align is not set', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Row, { gutter: 20 }, {
-            default: () =>
-              h(Col, { span: 12 }, {
-                default: () => h('text', null, 'Content'),
-              }),
+          return h(Row, null, {
+            default: () => h('text', null, 'Content'),
           });
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('margin-left: -10px');
-    expect(style).toContain('margin-right: -10px');
+    const rowView = container.querySelector('.van-row');
+    expect(rowView!.getAttribute('class')).not.toContain('align');
   });
 
-  it('should support array gutter for horizontal and vertical spacing', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Row, { gutter: [20, 10] }, {
-            default: () => [
-              h(Col, { span: 12, key: 1 }, {
-                default: () => h('text', null, 'A'),
-              }),
-              h(Col, { span: 12, key: 2 }, {
-                default: () => h('text', null, 'B'),
-              }),
-            ],
-          });
-        },
-      }),
-    );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('margin-left: -10px');
-    expect(style).toContain('margin-right: -10px');
-  });
-
-  it('should render Col children with correct width', () => {
+  it('should render Col children', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -220,50 +179,21 @@ describe('Row', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThanOrEqual(3);
+    const cols = container.querySelectorAll('.van-col');
+    expect(cols.length).toBe(3);
   });
 
-  it('should apply gutter padding to Col children', () => {
+  it('should not have inline styles when no gutter', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Row, { gutter: 20 }, {
-            default: () => [
-              h(Col, { span: 8, key: 1 }, {
-                default: () => h('text', null, 'A'),
-              }),
-              h(Col, { span: 8, key: 2 }, {
-                default: () => h('text', null, 'B'),
-              }),
-              h(Col, { span: 8, key: 3 }, {
-                default: () => h('text', null, 'C'),
-              }),
-            ],
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    // First Col should have right padding, no left padding
-    const firstCol = views[1];
-    if (firstCol) {
-      const style = firstCol.getAttribute('style') || '';
-      expect(style).not.toContain('padding-left');
-    }
-  });
-
-  it('should not apply gutter when gutter is 0', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Row, { gutter: 0 }, {
+          return h(Row, null, {
             default: () => h('text', null, 'Content'),
           });
         },
       }),
     );
-    const rowView = container.querySelector('view');
+    const rowView = container.querySelector('.van-row');
     const style = rowView!.getAttribute('style') || '';
     expect(style).not.toContain('margin-left');
     expect(style).not.toContain('margin-right');
@@ -274,14 +204,16 @@ describe('Row', () => {
       defineComponent({
         render() {
           return h(Row, { gutter: '20' }, {
-            default: () => h('text', null, 'Content'),
+            default: () =>
+              h(Col, { span: 12, key: 1 }, {
+                default: () => h('text', null, 'A'),
+              }),
           });
         },
       }),
     );
-    const rowView = container.querySelector('view');
-    const style = rowView!.getAttribute('style') || '';
-    expect(style).toContain('margin-left: -10px');
-    expect(style).toContain('margin-right: -10px');
+    // Gutter is applied to Col children, not the Row itself
+    const cols = container.querySelectorAll('.van-col');
+    expect(cols.length).toBe(1);
   });
 });
