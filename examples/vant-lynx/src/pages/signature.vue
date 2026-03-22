@@ -2,60 +2,68 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Signature from '../components/Signature/index.vue';
-const result = ref('');
 
-function onSubmit(data: { image: string; canvas: any }) {
-  if (data.image) {
-    result.value = 'Signature captured successfully';
-  } else {
-    result.value = 'Please sign first';
-  }
+const imageData = ref('');
+
+function onSubmit(data: { image: string; canvas: null }) {
+  imageData.value = data.image;
 }
 
 function onClear() {
-  result.value = 'Signature cleared';
+  imageData.value = '';
 }
 </script>
 
 <template>
-  <DemoPage title="Signature">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <Signature
-          @submit="onSubmit"
-          @clear="onClear"
-        />
-      </view>
+  <DemoPage title="Signature 签名">
+    <!-- 基础用法 -->
+    <view class="demo-signature-block">
+      <text class="demo-signature-title">基础用法</text>
+      <Signature @submit="onSubmit" @clear="onClear" />
+    </view>
 
-      <!-- Custom Style -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Pen Color</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <Signature
-          pen-color="#1989fa"
-          :line-width="4"
-          @submit="onSubmit"
-          @clear="onClear"
-        />
-      </view>
+    <!-- Preview -->
+    <view v-if="imageData" class="demo-signature-block">
+      <text class="demo-signature-title">签名结果</text>
+      <text class="demo-signature-result">{{ imageData.slice(0, 80) }}...</text>
+    </view>
 
-      <!-- Custom Background -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Background</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <Signature
-          pen-color="#ee0a24"
-          background-color="#f7f8fa"
-          clear-button-text="Reset"
-          confirm-button-text="Done"
-          @submit="onSubmit"
-          @clear="onClear"
-        />
-      </view>
+    <!-- 自定义颜色 -->
+    <view class="demo-signature-block">
+      <text class="demo-signature-title">自定义颜色</text>
+      <Signature pen-color="#ff0000" @submit="onSubmit" @clear="onClear" />
+    </view>
 
-      <view v-if="result" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ result }}</text>
-      </view>
+    <!-- 自定义线宽 -->
+    <view class="demo-signature-block">
+      <text class="demo-signature-title">自定义线宽</text>
+      <Signature :line-width="6" @submit="onSubmit" @clear="onClear" />
+    </view>
+
+    <!-- 自定义背景颜色 -->
+    <view class="demo-signature-block">
+      <text class="demo-signature-title">自定义背景颜色</text>
+      <Signature background-color="#eee" @submit="onSubmit" @clear="onClear" />
     </view>
   </DemoPage>
 </template>
+
+<style>
+.demo-signature-block {
+  margin-bottom: 16px;
+}
+
+.demo-signature-title {
+  font-size: 14px;
+  color: #969799;
+  padding-left: 16px;
+  margin-bottom: 12px;
+}
+
+.demo-signature-result {
+  font-size: 12px;
+  color: #969799;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+</style>
