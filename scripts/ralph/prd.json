@@ -1706,7 +1706,7 @@
         "Docs: Lynx limitations in components/Popover/README.md",
         "Commit: feat(popover): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-dropdown-menu",

@@ -1045,3 +1045,18 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from all-inline-styles to BEM class system. Created types.ts with NotifyType/NotifyPosition/NotifyOptions. Component no longer wraps Popup (fragment root prevents class/style passthrough); instead implements its own fixed positioning + slide transition. Notify uses createNamespace('notify') + bem() for type and position modifiers. Custom color/background only through inline styles. Imperative API rewritten to match Vant's function-call pattern with onClose/onOpened/onClick callbacks, setNotifyDefaultOptions/resetNotifyDefaultOptions.
 - Limitations: lockScroll (no document.body scroll lock in Lynx), teleport (no Lynx support), white-space/word-wrap (Lynx text handles wrapping differently), onClick callback (not wired to tap since Popup not used), Popup wrapper (not used due to fragment root — self-contained positioning)
 ---
+
+## 2026-03-22 - parity-popover: Popover
+- Props: 18/18 (show, theme, overlay, actions, actionsDirection, trigger, duration, showArrow, placement, iconPrefix, overlayClass, overlayStyle, closeOnClickAction, closeOnClickOverlay, closeOnClickOutside, offset, teleport)
+- Events: 2/2 (update:show, select) — Vant also has touchstart but it's a DOM-level event, not a component emit
+- Slots: 3/3 (reference, default, action)
+- CSS Variables: 16 defined in index.less (--van-popover-arrow-size, --van-popover-radius, --van-popover-action-width, --van-popover-action-height, --van-popover-action-font-size, --van-popover-action-line-height, --van-popover-action-icon-size, --van-popover-horizontal-action-height, --van-popover-horizontal-action-icon-size, --van-popover-light-text-color, --van-popover-light-background, --van-popover-light-action-disabled-text-color, --van-popover-dark-text-color, --van-popover-dark-background, --van-popover-dark-action-disabled-text-color)
+- BEM Classes: .van-popover, --light, --dark, --placement-{12 placements}, __wrapper, __arrow, __content, __content--horizontal, __action, __action--disabled, __action--with-icon, __action--active, __action-text, __action-icon
+- Animations: CSS zoom transition (scale 0.8→1, opacity 0→1) with 0.15s duration, ease-out enter / ease-in leave
+- Tests: 27 cases (Vant has 16, we have 27 — added BEM class verification for all modifiers, placements, slots, action states)
+- Demo sections: 6/6 (基础用法, 弹出位置, 排列方向, 选项配置, 自定义内容, 非受控模式)
+- Visual match: pass (BEM classes, CSS variables, CSS zoom transition)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Popover.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from all-inline-styles to BEM class system. Created types.ts with PopoverTheme/PopoverPlacement/PopoverAction/PopoverTrigger/PopoverActionsDirection. Slot names now match Vant: reference (trigger), default (custom content), action (custom action). 12 placement variants via BEM modifier classes (replaces Vant's data-popper-placement attribute selectors). Arrow positioning via CSS classes per placement. Zoom animation via inline CSS transition (opacity + transform). Active state on actions via --active BEM class with touchstart/touchend. Transparent fixed overlay for click-away detection (replaces Vant's useClickAway composable).
+- Limitations: teleport (no Teleport in Lynx), Popper.js (no smart positioning/auto-flip — uses CSS absolute positioning), data-popper-placement attributes (uses BEM modifier classes), box-shadow (omitted), :active pseudo-class (uses --active BEM class), cursor/role/tabindex/aria (not applicable in Lynx), touchstart event emission (Lynx uses tap), closeOnPopstate (no browser history), Vue <Transition> (uses CSS transitions directly)
+---

@@ -2,148 +2,192 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Popover from '../components/Popover/index.vue';
+import Button from '../components/Button/index.vue';
+import Grid from '../components/Grid/index.vue';
+import GridItem from '../components/GridItem/index.vue';
+import Toast from '../components/Toast/index.vue';
+import { showToast } from '../components/Toast/toast';
+
 const showLight = ref(false);
 const showDark = ref(false);
-const showPlacement = ref(false);
+const showHorizontal = ref(false);
+const showVertical = ref(false);
+const showIcon = ref(false);
 const showDisabled = ref(false);
-const selectedAction = ref('');
+const showCustom = ref(false);
+const showPlacement = ref(false);
+const showUncontrolled = ref(false);
 
-const lightActions = [
-  { text: 'Option 1' },
-  { text: 'Option 2' },
-  { text: 'Option 3' },
+const actions = [
+  { text: '选项一' },
+  { text: '选项二' },
+  { text: '选项三' },
 ];
 
-const darkActions = [
-  { text: 'Option A' },
-  { text: 'Option B' },
-  { text: 'Option C' },
+const shortActions = [
+  { text: '选项一' },
+  { text: '选项二' },
 ];
 
-const placementActions = [
-  { text: 'Top Action 1' },
-  { text: 'Top Action 2' },
+const actionsWithIcon = [
+  { text: '选项一', icon: 'add-o' },
+  { text: '选项二', icon: 'music-o' },
+  { text: '选项三', icon: 'more-o' },
 ];
 
-const disabledActions = [
-  { text: 'Option 1' },
-  { text: 'Option 2', disabled: true },
-  { text: 'Option 3' },
+const actionsDisabled = [
+  { text: '选项一', disabled: true },
+  { text: '选项二', disabled: true },
+  { text: '选项三' },
 ];
 
-function onSelect(action: any, index: number) {
-  selectedAction.value = `Selected: ${action.text} (index: ${index})`;
-}
+const onSelect = (action: { text: string }) => showToast(action.text);
 </script>
 
 <template>
-  <DemoPage title="Popover">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Light Theme -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Light Theme</text>
-      <view :style="{ marginBottom: 24, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+  <DemoPage title="Popover 气泡弹出框">
+    <view :style="{ padding: '16px' }">
+      <!-- 基础用法 -->
+      <text class="demo-section-title">基础用法</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '16px' }">
         <Popover
-          :show="showLight"
-          :actions="lightActions"
+          v-model:show="showLight"
+          :actions="actions"
           placement="bottom-start"
-          @update:show="(v: boolean) => showLight = v"
           @select="onSelect"
         >
-          <view
-            :style="{
-              backgroundColor: '#1989fa',
-              borderRadius: 4,
-              paddingTop: 8,
-              paddingBottom: 8,
-              paddingLeft: 16,
-              paddingRight: 16,
-            }"
-          >
-            <text :style="{ fontSize: 14, color: '#fff' }">Light Popover</text>
-          </view>
+          <template #reference>
+            <Button type="primary" text="浅色风格" />
+          </template>
         </Popover>
+
+        <view :style="{ marginLeft: '16px' }">
+          <Popover
+            v-model:show="showDark"
+            theme="dark"
+            :actions="actions"
+            @select="onSelect"
+          >
+            <template #reference>
+              <Button type="primary" text="深色风格" />
+            </template>
+          </Popover>
+        </view>
       </view>
 
-      <!-- Dark Theme -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Dark Theme</text>
-      <view :style="{ marginBottom: 24, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+      <!-- 弹出位置 -->
+      <text class="demo-section-title">弹出位置</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', justifyContent: 'center', paddingTop: '60px', paddingBottom: '60px', marginBottom: '16px' }">
         <Popover
-          :show="showDark"
-          :actions="darkActions"
+          v-model:show="showPlacement"
           theme="dark"
-          placement="bottom-start"
-          @update:show="(v: boolean) => showDark = v"
-          @select="onSelect"
-        >
-          <view
-            :style="{
-              backgroundColor: '#1989fa',
-              borderRadius: 4,
-              paddingTop: 8,
-              paddingBottom: 8,
-              paddingLeft: 16,
-              paddingRight: 16,
-            }"
-          >
-            <text :style="{ fontSize: 14, color: '#fff' }">Dark Popover</text>
-          </view>
-        </Popover>
-      </view>
-
-      <!-- Placement -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Placement</text>
-      <view :style="{ marginBottom: 24, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
-        <Popover
-          :show="showPlacement"
-          :actions="placementActions"
+          :actions="shortActions"
           placement="top"
-          @update:show="(v: boolean) => showPlacement = v"
           @select="onSelect"
         >
-          <view
-            :style="{
-              backgroundColor: '#1989fa',
-              borderRadius: 4,
-              paddingTop: 8,
-              paddingBottom: 8,
-              paddingLeft: 16,
-              paddingRight: 16,
-            }"
-          >
-            <text :style="{ fontSize: 14, color: '#fff' }">Top Placement</text>
-          </view>
+          <template #reference>
+            <view :style="{ width: '60px', height: '60px', backgroundColor: '#1989fa', borderRadius: '8px' }" />
+          </template>
         </Popover>
       </view>
 
-      <!-- Disabled Action -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disabled Action</text>
-      <view :style="{ marginBottom: 16, padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+      <!-- 排列方向 -->
+      <text class="demo-section-title">排列方向</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '16px' }">
         <Popover
-          :show="showDisabled"
-          :actions="disabledActions"
+          v-model:show="showHorizontal"
+          :actions="actions"
+          actions-direction="horizontal"
           placement="bottom-start"
-          @update:show="(v: boolean) => showDisabled = v"
           @select="onSelect"
         >
-          <view
-            :style="{
-              backgroundColor: '#1989fa',
-              borderRadius: 4,
-              paddingTop: 8,
-              paddingBottom: 8,
-              paddingLeft: 16,
-              paddingRight: 16,
-            }"
+          <template #reference>
+            <Button type="primary" text="水平排列" />
+          </template>
+        </Popover>
+
+        <view :style="{ marginLeft: '16px' }">
+          <Popover
+            v-model:show="showVertical"
+            :actions="actions"
+            @select="onSelect"
           >
-            <text :style="{ fontSize: 14, color: '#fff' }">Show Popover</text>
-          </view>
+            <template #reference>
+              <Button type="primary" text="垂直排列" />
+            </template>
+          </Popover>
+        </view>
+      </view>
+
+      <!-- 选项配置 -->
+      <text class="demo-section-title">选项配置</text>
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '16px' }">
+        <Popover
+          v-model:show="showIcon"
+          :actions="actionsWithIcon"
+          placement="bottom-start"
+          @select="onSelect"
+        >
+          <template #reference>
+            <Button type="primary" text="展示图标" />
+          </template>
+        </Popover>
+
+        <view :style="{ marginLeft: '16px' }">
+          <Popover
+            v-model:show="showDisabled"
+            :actions="actionsDisabled"
+            @select="onSelect"
+          >
+            <template #reference>
+              <Button type="primary" text="禁用选项" />
+            </template>
+          </Popover>
+        </view>
+      </view>
+
+      <!-- 自定义内容 -->
+      <text class="demo-section-title">自定义内容</text>
+      <view :style="{ marginBottom: '16px' }">
+        <Popover
+          v-model:show="showCustom"
+          placement="bottom-start"
+        >
+          <Grid
+            square
+            clickable
+            :border="false"
+            :column-num="3"
+            :style="{ width: '240px' }"
+          >
+            <GridItem
+              v-for="i in 6"
+              :key="i"
+              icon="photo-o"
+              text="选项"
+              @click="showCustom = false"
+            />
+          </Grid>
+          <template #reference>
+            <Button type="primary" text="自定义内容" />
+          </template>
         </Popover>
       </view>
 
-      <!-- Result -->
-      <view v-if="selectedAction" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ selectedAction }}</text>
+      <!-- 非受控模式 -->
+      <text class="demo-section-title">非受控模式</text>
+      <view :style="{ marginBottom: '16px' }">
+        <Popover
+          :actions="actions"
+          placement="top-start"
+          @select="onSelect"
+        >
+          <template #reference>
+            <Button type="primary" text="非受控模式" />
+          </template>
+        </Popover>
       </view>
     </view>
   </DemoPage>
+  <Toast />
 </template>

@@ -1,87 +1,72 @@
 <!--
-  Vant Popover - Feature Parity Report
-  ======================================
-  Vant Source: packages/vant/src/popover/Popover.tsx
-
-  Props (12/14 supported):
-    - show: boolean                      [YES]
-    - actions: PopoverAction[]           [YES]
-    - placement: PopoverPlacement        [YES] (8 placements)
-    - theme: 'light' | 'dark'           [YES]
-    - trigger: 'click' | 'manual'       [YES] added 'click' support
-    - offset: [number, number]           [YES]
-    - showArrow: boolean                 [YES]
-    - closeOnClickAction: boolean        [YES]
-    - closeOnClickOutside: boolean       [YES]
-    - actionsDirection: 'vertical' | 'horizontal'  [YES] added
-    - iconPrefix: string                 [NO] Lynx uses unicode icon mapping
-    - overlay: boolean                   [NO] Lynx uses transparent overlay for outside clicks
-    - duration: number                   [NO] no CSS transition in Lynx
-    - teleport: TeleportProps['to']      [NO] Lynx has no teleport
-    - overlayStyle / overlayClass        [NO] no CSS classes
-
-  Events (2/3 supported):
-    - update:show                        [YES]
-    - select                             [YES]
-    - touchstart                         [NO] Lynx uses tap events
-
-  Slots (3/3 supported):
-    - default (reference/trigger)        [YES]
-    - content                            [YES]
-    - action                             [YES] added
-
-  Lynx Adaptations:
-    - No Popper.js; uses CSS absolute positioning relative to trigger element.
-    - Action icons rendered via Icon component (unicode mapping) instead of icon fonts.
-    - Uses transparent fixed overlay for outside-click detection instead of
-      useClickAway composable.
-    - Uses `display: 'flex'` explicitly on all flex containers.
-    - actionsDirection: 'horizontal' lays actions out in a row.
-
-  Gaps:
-    - No Popper.js smart positioning (no auto-flip or boundary detection)
-    - No teleport support
-    - No overlay background (transparent overlay only for click-away)
-    - No CSS transition animation for show/hide
-    - No touchstart event (Lynx uses tap)
+  Lynx Limitations:
+  - teleport: No Teleport support in Lynx
+  - overlay: Transparent overlay used for click-away detection (no Popup overlay)
+  - Popper.js: No smart positioning / auto-flip; uses CSS absolute positioning
+  - touchstart event: Lynx uses tap events; click-away uses transparent overlay tap
+  - data-popper-placement: Lynx has no attribute selectors; uses BEM placement modifier classes
+  - :active pseudo-class: Uses --active BEM class via touchstart/touchend
+  - cursor: Not applicable in Lynx (touch-only)
+  - role/tabindex/aria: Not applicable in Lynx
+  - box-shadow: Omitted (Lynx may not support)
+  - closeOnPopstate: No browser history in Lynx
+  - Vue <Transition>: Uses CSS transitions directly (inline style toggle)
 -->
 <script setup lang="ts">
 import { computed, ref, watch, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit } from '../../utils/format';
 import Icon from '../Icon/index.vue';
+import './index.less';
 
-export interface PopoverAction {
-  text: string;
-  icon?: string;
-  color?: string;
-  disabled?: boolean;
-  className?: string;
-}
+import type {
+  PopoverTheme,
+  PopoverActionsDirection,
+  PopoverTrigger,
+  PopoverPlacement,
+  PopoverAction,
+} from './types';
 
-export interface PopoverProps {
-  show?: boolean;
-  actions?: PopoverAction[];
-  placement?: 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end' | 'left' | 'right';
-  theme?: 'light' | 'dark';
-  trigger?: 'click' | 'manual';
-  offset?: number[];
-  showArrow?: boolean;
-  closeOnClickAction?: boolean;
-  closeOnClickOutside?: boolean;
-  actionsDirection?: 'vertical' | 'horizontal';
-}
+export type { PopoverAction, PopoverPlacement, PopoverTheme };
 
-const props = withDefaults(defineProps<PopoverProps>(), {
-  show: false,
-  actions: () => [],
-  placement: 'bottom',
-  theme: 'light',
-  trigger: 'click',
-  offset: () => [0, 8],
-  showArrow: true,
-  closeOnClickAction: true,
-  closeOnClickOutside: true,
-  actionsDirection: 'vertical',
-});
+const [name, bem] = createNamespace('popover');
+
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    theme?: PopoverTheme;
+    overlay?: boolean;
+    actions?: PopoverAction[];
+    actionsDirection?: PopoverActionsDirection;
+    trigger?: PopoverTrigger;
+    duration?: number | string;
+    showArrow?: boolean;
+    placement?: PopoverPlacement;
+    iconPrefix?: string;
+    overlayClass?: string;
+    overlayStyle?: Record<string, any>;
+    closeOnClickAction?: boolean;
+    closeOnClickOverlay?: boolean;
+    closeOnClickOutside?: boolean;
+    offset?: [number, number];
+    teleport?: string;
+  }>(),
+  {
+    show: false,
+    theme: 'light',
+    overlay: false,
+    actions: () => [],
+    actionsDirection: 'vertical',
+    trigger: 'click',
+    showArrow: true,
+    placement: 'bottom',
+    closeOnClickAction: true,
+    closeOnClickOverlay: true,
+    closeOnClickOutside: true,
+    offset: () => [0, 8] as [number, number],
+    teleport: 'body',
+  },
+);
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
@@ -90,8 +75,8 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 
+// Internal show state synced with prop
 const isVisible = ref(props.show);
-
 watch(
   () => props.show,
   (val) => {
@@ -99,204 +84,233 @@ watch(
   },
 );
 
-function togglePopover() {
-  if (props.trigger === 'click') {
-    const next = !isVisible.value;
-    isVisible.value = next;
-    emit('update:show', next);
+// Zoom animation state
+const animating = ref(false);
+const displayed = ref(props.show);
+
+watch(isVisible, (val) => {
+  if (val) {
+    displayed.value = true;
+    // Start enter animation on next tick
+    requestAnimationFrame(() => {
+      animating.value = true;
+    });
+  } else {
+    animating.value = false;
+    // Wait for leave animation to complete
+    const dur = typeof props.duration === 'number' ? props.duration * 1000 : 150;
+    setTimeout(() => {
+      if (!isVisible.value) {
+        displayed.value = false;
+      }
+    }, dur);
   }
+});
+
+// Initialize displayed state
+if (props.show) {
+  displayed.value = true;
+  animating.value = true;
 }
 
-function onSelectAction(action: PopoverAction, index: number) {
+const updateShow = (value: boolean) => {
+  isVisible.value = value;
+  emit('update:show', value);
+};
+
+const onClickWrapper = () => {
+  if (props.trigger === 'click') {
+    updateShow(!isVisible.value);
+  }
+};
+
+const onClickAction = (action: PopoverAction, index: number) => {
   if (action.disabled) return;
   emit('select', action, index);
   if (props.closeOnClickAction) {
-    isVisible.value = false;
-    emit('update:show', false);
+    updateShow(false);
   }
-}
+};
 
-function onTapOutside() {
-  if (props.closeOnClickOutside && isVisible.value) {
-    isVisible.value = false;
-    emit('update:show', false);
+const onClickAway = () => {
+  if (isVisible.value && props.closeOnClickOutside) {
+    updateShow(false);
   }
-}
+};
 
-const isDark = computed(() => props.theme === 'dark');
-const isHorizontal = computed(() => props.actionsDirection === 'horizontal');
+// Active state tracking for action press feedback
+const activeIndex = ref(-1);
+const onActionTouchStart = (index: number, action: PopoverAction) => {
+  if (!action.disabled) activeIndex.value = index;
+};
+const onActionTouchEnd = () => {
+  activeIndex.value = -1;
+};
 
-const popoverBgColor = computed(() => (isDark.value ? '#4a4a4a' : '#fff'));
-const popoverTextColor = computed(() => (isDark.value ? '#fff' : '#323233'));
-
-const popoverPosition = computed(() => {
+// Popover position styles (CSS absolute positioning, no Popper.js)
+const popoverPositionStyle = computed(() => {
   const pos: Record<string, any> = {
     position: 'absolute',
-    zIndex: 100,
+    zIndex: 2000,
   };
 
-  const offsetX = props.offset[0] || 0;
-  const offsetY = props.offset[1] || 8;
+  const [offsetX, offsetY] = props.offset;
 
   const placement = props.placement;
 
   if (placement.startsWith('bottom')) {
     pos.top = '100%';
-    pos.marginTop = offsetY;
+    pos.marginTop = addUnit(offsetY);
   } else if (placement.startsWith('top')) {
     pos.bottom = '100%';
-    pos.marginBottom = offsetY;
-  } else if (placement === 'left') {
+    pos.marginBottom = addUnit(offsetY);
+  } else if (placement.startsWith('left')) {
     pos.right = '100%';
-    pos.marginRight = offsetX || 8;
-    pos.top = 0;
-  } else if (placement === 'right') {
+    pos.marginRight = addUnit(offsetX || offsetY);
+  } else if (placement.startsWith('right')) {
     pos.left = '100%';
-    pos.marginLeft = offsetX || 8;
-    pos.top = 0;
+    pos.marginLeft = addUnit(offsetX || offsetY);
   }
 
+  // Horizontal alignment within placement
   if (placement.endsWith('-start')) {
-    pos.left = offsetX;
+    pos.left = addUnit(offsetX);
   } else if (placement.endsWith('-end')) {
-    pos.right = offsetX;
+    pos.right = addUnit(offsetX);
   } else if (placement === 'top' || placement === 'bottom') {
-    pos.left = offsetX;
+    // Center: no horizontal offset by default
+    pos.left = addUnit(offsetX);
+  } else if (placement === 'left' || placement === 'right') {
+    pos.top = '0px';
   }
 
   return pos;
 });
 
-const popoverStyle = computed(() => ({
-  ...popoverPosition.value,
-  backgroundColor: popoverBgColor.value,
-  borderRadius: 8,
-  minWidth: 130,
-  overflow: 'hidden',
-  borderWidth: isDark.value ? 0 : 0.5,
-  borderStyle: 'solid' as const,
-  borderColor: '#ebedf0',
-  display: 'flex',
-  flexDirection: isHorizontal.value ? ('row' as const) : ('column' as const),
-}));
-
-const arrowStyle = computed(() => {
-  const base: Record<string, any> = {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    zIndex: 101,
-  };
-
-  const placement = props.placement;
-
-  if (placement.startsWith('bottom')) {
-    base.top = '100%';
-    base.marginTop = (props.offset[1] || 8) - 6;
-    base.borderLeftWidth = 6;
-    base.borderRightWidth = 6;
-    base.borderBottomWidth = 6;
-    base.borderTopWidth = 0;
-    base.borderLeftColor = 'transparent';
-    base.borderRightColor = 'transparent';
-    base.borderBottomColor = popoverBgColor.value;
-    base.borderStyle = 'solid';
-    if (placement === 'bottom') base.left = 20;
-    else if (placement === 'bottom-end') base.right = 20;
-    else base.left = 20;
-  } else if (placement.startsWith('top')) {
-    base.bottom = '100%';
-    base.marginBottom = (props.offset[1] || 8) - 6;
-    base.borderLeftWidth = 6;
-    base.borderRightWidth = 6;
-    base.borderTopWidth = 6;
-    base.borderBottomWidth = 0;
-    base.borderLeftColor = 'transparent';
-    base.borderRightColor = 'transparent';
-    base.borderTopColor = popoverBgColor.value;
-    base.borderStyle = 'solid';
-    if (placement === 'top') base.left = 20;
-    else if (placement === 'top-end') base.right = 20;
-    else base.left = 20;
+// Zoom animation style
+const zoomStyle = computed(() => {
+  if (!displayed.value) return { opacity: 0, transform: 'scale(0.8)' };
+  if (animating.value) {
+    return {
+      opacity: 1,
+      transform: 'scale(1)',
+      transitionProperty: 'opacity, transform',
+      transitionDuration: '0.15s',
+      transitionTimingFunction: 'ease-out',
+    };
   }
-
-  return base;
+  return {
+    opacity: 0,
+    transform: 'scale(0.8)',
+    transitionProperty: 'opacity, transform',
+    transitionDuration: '0.15s',
+    transitionTimingFunction: 'ease-in',
+  };
 });
 
-function getActionStyle(action: PopoverAction, index: number) {
-  const style: Record<string, any> = {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    alignItems: 'center',
-    padding: 10,
-    paddingLeft: 16,
-    paddingRight: 16,
-    backgroundColor: 'transparent',
-    opacity: action.disabled ? 0.5 : 1,
-  };
+// Root class: van-popover van-popover--{theme} van-popover--placement-{placement}
+const rootClass = computed(() =>
+  bem([props.theme, `placement-${props.placement}`]),
+);
 
-  if (isHorizontal.value) {
-    // Horizontal: right border between items
-    style.borderRightWidth = index < props.actions.length - 1 ? 0.5 : 0;
-    style.borderRightStyle = 'solid';
-    style.borderRightColor = isDark.value ? 'rgba(255,255,255,0.1)' : '#ebedf0';
-  } else {
-    // Vertical: bottom border between items
-    style.borderBottomWidth = index < props.actions.length - 1 ? 0.5 : 0;
-    style.borderBottomStyle = 'solid';
-    style.borderBottomColor = isDark.value ? 'rgba(255,255,255,0.1)' : '#ebedf0';
+// Action border: vertical uses bottom border, horizontal uses right border
+const getActionBorderStyle = (index: number): Record<string, any> | undefined => {
+  if (index >= props.actions.length - 1) return undefined;
+  if (props.actionsDirection === 'horizontal') {
+    return {
+      borderRightWidth: '0.5px',
+      borderRightStyle: 'solid',
+      borderRightColor: props.theme === 'dark' ? 'var(--van-gray-7, #646566)' : 'var(--van-border-color, #ebedf0)',
+    };
   }
+  return undefined;
+};
 
-  return style;
-}
+// Action text border (vertical: bottom border on action-text, matching Vant's ::after)
+const getActionTextBorderStyle = (index: number): Record<string, any> | undefined => {
+  if (props.actionsDirection !== 'vertical') return undefined;
+  if (index >= props.actions.length - 1) return undefined;
+  return {
+    borderBottomWidth: '0.5px',
+    borderBottomStyle: 'solid',
+    borderBottomColor: props.theme === 'dark' ? 'var(--van-gray-7, #646566)' : 'var(--van-border-color, #ebedf0)',
+  };
+};
+
+const hasCustomContent = computed(() => !!slots.default);
 </script>
 
 <template>
-  <!-- Overlay for outside clicks -->
+  <!-- Transparent overlay for click-away detection -->
   <view
-    v-if="isVisible && closeOnClickOutside"
+    v-if="displayed && closeOnClickOutside"
     :style="{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 98,
+      top: '0px',
+      left: '0px',
+      right: '0px',
+      bottom: '0px',
+      zIndex: 1999,
       backgroundColor: 'transparent',
     }"
-    @tap="onTapOutside"
+    @tap="onClickAway"
   />
 
-  <view :style="{ position: 'relative', display: 'flex', flexDirection: 'column' }">
-    <!-- Reference element (trigger) -->
-    <view @tap="togglePopover">
-      <slot />
+  <view :style="{ position: 'relative' }">
+    <!-- Wrapper / reference trigger -->
+    <view :class="bem('wrapper')" @tap="onClickWrapper">
+      <slot name="reference" />
     </view>
 
-    <!-- Arrow -->
-    <view v-if="isVisible && showArrow" :style="arrowStyle" />
+    <!-- Popover body -->
+    <view
+      v-if="displayed"
+      :class="rootClass"
+      :style="{ ...popoverPositionStyle, ...zoomStyle }"
+    >
+      <!-- Arrow -->
+      <view v-if="showArrow" :class="bem('arrow')" />
 
-    <!-- Popover content -->
-    <view v-if="isVisible" :style="popoverStyle">
-      <slot name="content">
-        <view
-          v-for="(action, index) in actions"
-          :key="index"
-          :style="getActionStyle(action, index)"
-          @tap.stop="onSelectAction(action, index)"
-        >
-          <slot name="action" :action="action" :index="index">
-            <Icon
-              v-if="action.icon"
-              :name="action.icon"
-              :size="20"
-              :color="action.color || popoverTextColor"
-              :style="{ marginRight: 8 }"
-            />
-            <text :style="{ fontSize: 14, color: action.color || popoverTextColor }">{{ action.text }}</text>
-          </slot>
-        </view>
-      </slot>
+      <!-- Content -->
+      <view :class="bem('content', actionsDirection === 'horizontal' ? 'horizontal' : '')">
+        <template v-if="hasCustomContent">
+          <slot />
+        </template>
+        <template v-else>
+          <view
+            v-for="(action, index) in actions"
+            :key="index"
+            :class="[
+              bem('action', {
+                disabled: !!action.disabled,
+                'with-icon': !!action.icon,
+                active: activeIndex === index && !action.disabled,
+              }),
+              action.className,
+            ]"
+            :style="{ color: action.color, ...getActionBorderStyle(index) }"
+            @tap="onClickAction(action, index)"
+            @touchstart="onActionTouchStart(index, action)"
+            @touchend="onActionTouchEnd"
+            @touchcancel="onActionTouchEnd"
+          >
+            <slot name="action" :action="action" :index="index">
+              <Icon
+                v-if="action.icon"
+                :name="action.icon"
+                :class-prefix="iconPrefix"
+                :class="bem('action-icon')"
+              />
+              <view
+                :class="bem('action-text')"
+                :style="getActionTextBorderStyle(index)"
+              >
+                <text>{{ action.text }}</text>
+              </view>
+            </slot>
+          </view>
+        </template>
+      </view>
     </view>
   </view>
 </template>
