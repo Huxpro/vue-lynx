@@ -1,61 +1,79 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import NoticeBar from '../components/NoticeBar/index.vue';
+
+const sectionTitleStyle = {
+  fontSize: '14px',
+  color: '#969799',
+  paddingTop: '16px',
+  paddingBottom: '8px',
+  paddingLeft: '16px',
+};
+
+const demoWrap = {
+  backgroundColor: '#fff',
+};
 </script>
 
 <template>
   <DemoPage title="NoticeBar">
-
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <NoticeBar text="Notice: This is a notification message that may be long enough to scroll." />
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Scrollable (marquee)</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+    <view :style="{ display: 'flex', flexDirection: 'column' }">
+      <!-- Basic Usage -->
+      <text :style="sectionTitleStyle">基础用法</text>
+      <view :style="demoWrap">
         <NoticeBar
-          :scrollable="true"
-          text="This is a long scrolling message that will continuously scroll from right to left like a marquee."
+          scrollable
+          left-icon="volume-o"
+          text="无论我们能活多久，我们能够享受的只有无法分割的此刻，此外别无其他。"
         />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Non-scrollable (ellipsis)</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+      <!-- Scrollable -->
+      <text :style="sectionTitleStyle">滚动播放</text>
+      <view :style="demoWrap">
+        <NoticeBar :scrollable="true" text="米袋虽空——樱花开哉！" />
+        <view :style="{ height: '4px' }" />
         <NoticeBar
           :scrollable="false"
-          text="This notice bar will not scroll. Long text will be truncated with overflow hidden."
+          text="不会回头的东西有四件：说出口的话、离弦的箭、逝去的生活和失去的机会。"
         />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Wrapable</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
+      <!-- Wrapable -->
+      <text :style="sectionTitleStyle">多行展示</text>
+      <view :style="demoWrap">
         <NoticeBar
-          :wrapable="true"
+          wrapable
           :scrollable="false"
-          text="This is a wrapable notice bar. The text content will wrap to multiple lines instead of being truncated or scrolling horizontally."
+          text="不会回头的东西有四件：说出口的话、离弦的箭、逝去的生活和失去的机会。"
         />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Closeable Mode</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <NoticeBar mode="closeable" text="This is a closeable notice bar. Tap the close icon to dismiss." />
+      <!-- Mode -->
+      <text :style="sectionTitleStyle">通知栏模式</text>
+      <view :style="demoWrap">
+        <NoticeBar mode="closeable" text="米袋虽空——樱花开哉！" />
+        <view :style="{ height: '4px' }" />
+        <NoticeBar mode="link" text="米袋虽空——樱花开哉！" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Link Mode</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <NoticeBar mode="link" text="This is a link notice bar. Tap to navigate." />
+      <!-- Custom Style -->
+      <text :style="sectionTitleStyle">自定义样式</text>
+      <view :style="demoWrap">
+        <NoticeBar
+          text="米袋虽空——樱花开哉！"
+          color="#1989fa"
+          background="#ecf9ff"
+          left-icon="info-o"
+        />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Left Icon</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <NoticeBar left-icon="info-o" text="Notice bar with a left icon." />
-      </view>
-
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <NoticeBar text="Custom color notice bar." color="#1989fa" background="#ecf9ff" left-icon="info-o" />
+      <!-- Vertical Scroll (simplified - Swipe not yet available) -->
+      <text :style="sectionTitleStyle">垂直滚动</text>
+      <view :style="demoWrap">
+        <NoticeBar left-icon="volume-o" :scrollable="false">
+          <text>明月直入，无心可猜。</text>
+        </NoticeBar>
       </view>
     </view>
   </DemoPage>
