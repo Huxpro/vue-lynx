@@ -1,42 +1,45 @@
 <!--
   Lynx Limitations:
-  - alt: accepted for API compat but Lynx <image> has no alt text
+  - alt: accepted for API compat but Lynx <image> has no alt text rendering
   - position (object-position): accepted for API compat but not supported in Lynx
   - crossorigin/referrerpolicy/decoding: accepted for API compat, HTML-only attributes
   - lazyLoad: accepted but no IntersectionObserver / $Lazyload plugin in Lynx
-  - iconPrefix: accepted for API compat but icons use unicode fallback
-  - block: accepted but Lynx views are block by default
+  - block: accepted but Lynx views are block by default (display: inline-block N/A)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit, isDef } from '../../utils/format';
 import Icon from '../Icon/index.vue';
 import type { ImageFit, ImagePosition } from './types';
 
+import './index.less';
+
+const [name, bem] = createNamespace('image');
+
 interface ImageProps {
   src?: string;
+  alt?: string;
   fit?: ImageFit;
   position?: ImagePosition;
-  alt?: string;
+  round?: boolean;
+  block?: boolean;
   width?: string | number;
   height?: string | number;
   radius?: string | number;
-  round?: boolean;
-  block?: boolean;
   lazyLoad?: boolean;
-  showError?: boolean;
-  showLoading?: boolean;
-  errorIcon?: string;
-  loadingIcon?: string;
   iconSize?: string | number;
+  showError?: boolean;
+  errorIcon?: string;
   iconPrefix?: string;
+  showLoading?: boolean;
+  loadingIcon?: string;
   crossorigin?: string;
   referrerpolicy?: string;
   decoding?: string;
 }
 
 const props = withDefaults(defineProps<ImageProps>(), {
-  fit: 'fill',
-  position: 'center',
   round: false,
   block: false,
   lazyLoad: false,
@@ -44,19 +47,12 @@ const props = withDefaults(defineProps<ImageProps>(), {
   showLoading: true,
   errorIcon: 'photo-fail',
   loadingIcon: 'photo',
-  iconPrefix: 'van-icon',
 });
 
 const emit = defineEmits<{
   load: [event: any];
   error: [event: any];
 }>();
-
-const addUnit = (value?: string | number): string | undefined => {
-  if (value === undefined || value === null) return undefined;
-  if (typeof value === 'number' || /^\d+$/.test(String(value))) return `${value}px`;
-  return String(value);
-};
 
 const loading = ref(true);
 const error = ref(false);
@@ -69,75 +65,83 @@ watch(
   },
 );
 
-const containerStyle = computed(() => {
-  const style: Record<string, any> = {
-    overflow: 'hidden',
-  };
+const rootClass = computed(() => {
+  return bem([{ round: props.round }]);
+});
 
-  if (props.width !== undefined) style.width = addUnit(props.width);
-  if (props.height !== undefined) style.height = addUnit(props.height);
+const rootStyle = computed(() => {
+  const style: Record<string, string> = {};
 
-  if (props.round) {
-    style.borderRadius = '999px';
-  } else if (props.radius !== undefined && props.radius !== 0 && props.radius !== '0') {
-    style.borderRadius = addUnit(props.radius);
+  if (props.width !== undefined) {
+    const w = addUnit(props.width);
+    if (w) style.width = w;
+  }
+  if (props.height !== undefined) {
+    const h = addUnit(props.height);
+    if (h) style.height = h;
+  }
+
+  if (isDef(props.radius)) {
+    style.borderRadius = addUnit(props.radius)!;
   }
 
   return style;
 });
 
-const imageStyle = computed(() => ({
-  width: '100%',
-  height: '100%',
-  objectFit: props.fit,
-}));
-
-const placeholderStyle = computed(() => ({
-  position: 'absolute' as const,
-  top: '0px',
-  left: '0px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  height: '100%',
-  backgroundColor: '#f7f8fa',
-}));
+const imageStyle = computed(() => {
+  const style: Record<string, string> = {};
+  if (props.fit) {
+    style.objectFit = props.fit;
+  }
+  return style;
+});
 
 function onLoad(event: any) {
-  loading.value = false;
-  error.value = false;
-  emit('load', event);
+  if (loading.value) {
+    loading.value = false;
+    emit('load', event);
+  }
 }
 
 function onError(event: any) {
-  loading.value = false;
   error.value = true;
+  loading.value = false;
   emit('error', event);
 }
 </script>
 
 <template>
-  <view :style="containerStyle">
+  <view :class="rootClass" :style="rootStyle">
     <image
       v-if="src && !error"
       :src="src"
+      :class="bem('img')"
       :style="imageStyle"
       @load="onLoad"
       @error="onError"
     />
 
     <!-- Loading placeholder -->
-    <view v-if="loading && showLoading && !error" :style="placeholderStyle">
+    <view v-if="loading && showLoading" :class="bem('loading')">
       <slot name="loading">
-        <Icon :name="loadingIcon" :size="iconSize || '32px'" color="#dcdee0" />
+        <Icon
+          :name="loadingIcon"
+          :size="iconSize"
+          :class="bem('loading-icon')"
+          :classPrefix="iconPrefix"
+        />
       </slot>
     </view>
 
     <!-- Error placeholder -->
-    <view v-if="error && showError" :style="placeholderStyle">
+    <view v-if="error && showError" :class="bem('error')">
       <slot name="error">
-        <Icon :name="errorIcon" :size="iconSize || '32px'" color="#dcdee0" />
+        <Icon
+          :name="errorIcon"
+          :size="iconSize"
+          :class="bem('error-icon')"
+          :classPrefix="iconPrefix"
+        />
       </slot>
     </view>
 
