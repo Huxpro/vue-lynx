@@ -455,3 +455,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Added .van-progress, .van-progress__portion, .van-progress__pivot CSS class selectors with --inactive modifiers. CSS transition animations on portion and pivot. Uses createNamespace('progress') + bem(). Inline styles only for dynamic values (percentage width, custom colors, strokeWidth).
 - Limitations: transform: translate(-X%, -50%) (Lynx doesn't support percentage-based translate, uses marginLeft approximation), word-break: keep-all (not available in Lynx)
 ---
+
+## 2026-03-22 - parity-circle: Circle
+- Props: 12/12 (text, size, fill, rate, speed, color, clockwise, layerColor, currentRate, strokeWidth, strokeLinecap, startPosition)
+- Events: 1/1 (update:currentRate)
+- Slots: 1/1 (default)
+- CSS Variables: 7 defined in index.less (--van-circle-size, --van-circle-color, --van-circle-layer-color, --van-circle-text-color, --van-circle-text-font-weight, --van-circle-text-font-size, --van-circle-text-line-height)
+- Animations: rate animation via setTimeout-based requestAnimationFrame approximation (matching Vant's raf/cancelRaf pattern)
+- Tests: 13 cases (Vant has 5, we have 13 — added BEM class, text prop, slot, custom color, gradient color, layer color, counter-clockwise, string size tests)
+- Demo sections: 3/3 (基础用法, 样式定制, 起始位置)
+- Visual match: pass (SVG-based rendering via Lynx <svg content="..."> attribute, matching Vant's exact SVG path approach)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has Circle.tsx, types.ts, index.ts, index.less = 4 files)
+- Key changes: Rewrote from crude border-based 4-quadrant rendering to proper SVG path rendering using Lynx's <svg content="..."> attribute. Generates Vant's exact SVG markup (arc paths, stroke-dasharray progress, linearGradient for gradient colors, viewBox sizing, rotation for startPosition). Uses createNamespace('circle') + BEM classes. CSS variables in index.less. Gradient color support via SVG linearGradient.
+- Limitations: SVG rendered via content attribute string (not inline SVG children), raf/cancelRaf uses setTimeout approximation
+---
