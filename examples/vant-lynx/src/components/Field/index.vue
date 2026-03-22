@@ -1,195 +1,566 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 18/35+ supported (modelValue, type, label, placeholder, disabled, readonly,
-    clearable, maxlength, error, required, border, leftIcon, rightIcon, errorMessage,
-    inputAlign, labelWidth, labelAlign, colon, showWordLimit, clearIcon)
-  - Events: 7/10 (update:modelValue, input, change, focus, blur, clear, click-input;
-    missing: clickLeftIcon, clickRightIcon, keypress)
-  - Slots: 6/10 (label, input, left-icon, right-icon, button, extra;
-    missing: error-message, word-limit)
-  - Gaps:
-    - No form validation (rules, validate methods)
-    - No autosize textarea
-    - No formatter/formatTrigger
-    - No clearTrigger (always shows when value present)
-    - No autocomplete/inputmode/enterkeyhint
+  Lynx Limitations:
+  - autosize: Lynx has no scrollHeight API, so textarea auto-resize is not supported
+  - id/for: Lynx has no HTML label-for binding; id prop accepted for API compat
+  - autocomplete/autocapitalize/autocorrect/spellcheck: Not applicable in Lynx native input
+  - enterkeyhint: Not applicable in Lynx native input
+  - inputmode: Not applicable in Lynx native input
+  - IME composition: No compositionstart/compositionend in Lynx
+  - cursor position correction: No selectionStart/selectionEnd APIs in Lynx
+  - ::before required mark: Uses <text> element instead of CSS pseudo-element
+  - resetScroll: No window.scrollTo in Lynx
+  - label for click-to-focus: No label element in Lynx
 -->
 <script setup lang="ts">
-import { computed, ref } from 'vue-lynx';
+import { computed, ref, reactive, watch, onMounted, nextTick, provide } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit, isDef } from '../../utils/format';
 import Icon from '../Icon/index.vue';
+import Cell from '../Cell/index.vue';
+import type {
+  FieldType,
+  FieldTextAlign,
+  FieldClearTrigger,
+  FieldFormatTrigger,
+  FieldValidateTrigger,
+  FieldRule,
+  FieldAutosizeConfig,
+  FieldValidationStatus,
+  FieldValidateError,
+  FieldExpose,
+  FieldEnterKeyHint,
+} from './types';
+import {
+  isEmptyValue,
+  runSyncRule,
+  runRuleValidator,
+  getRuleMessage,
+  getStringLength,
+  cutString,
+  formatNumber,
+  clamp,
+  toArray,
+} from './utils';
+import './index.less';
 
 export interface FieldProps {
-  modelValue?: string;
-  type?: string;
-  label?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  readonly?: boolean;
-  clearable?: boolean;
-  clearIcon?: string;
-  maxlength?: number;
-  error?: boolean;
-  errorMessage?: string;
-  required?: boolean;
+  // Cell shared props
+  size?: 'normal' | 'large';
+  center?: boolean;
   border?: boolean;
+  isLink?: boolean;
+  clickable?: boolean | null;
+  arrowDirection?: 'up' | 'down' | 'left' | 'right';
+  iconPrefix?: string;
+  // Cell label prop reused as field label
+  label?: string | number;
+  // Field shared props
+  id?: string;
+  name?: string;
   leftIcon?: string;
   rightIcon?: string;
-  inputAlign?: 'left' | 'center' | 'right';
-  labelWidth?: string | number;
-  labelAlign?: 'left' | 'center' | 'right' | 'top';
-  colon?: boolean;
+  autofocus?: boolean;
+  clearable?: boolean;
+  maxlength?: number | string;
+  max?: number;
+  min?: number;
+  formatter?: (value: string) => string;
+  clearIcon?: string;
+  modelValue?: string | number;
+  inputAlign?: FieldTextAlign;
+  placeholder?: string;
+  autocomplete?: string;
+  autocapitalize?: string;
+  autocorrect?: string;
+  errorMessage?: string;
+  enterkeyhint?: FieldEnterKeyHint;
+  clearTrigger?: FieldClearTrigger;
+  formatTrigger?: FieldFormatTrigger;
+  spellcheck?: boolean | null;
+  error?: boolean | null;
+  disabled?: boolean | null;
+  readonly?: boolean | null;
+  inputmode?: string;
+  // Field-only props
+  rows?: number | string;
+  type?: FieldType;
+  rules?: FieldRule[];
+  autosize?: boolean | FieldAutosizeConfig;
+  labelWidth?: number | string;
+  labelClass?: unknown;
+  labelAlign?: FieldTextAlign;
   showWordLimit?: boolean;
+  errorMessageAlign?: FieldTextAlign;
+  colon?: boolean | null;
+  required?: boolean | 'auto' | null;
 }
 
 const props = withDefaults(defineProps<FieldProps>(), {
-  modelValue: '',
   type: 'text',
-  disabled: false,
-  readonly: false,
-  clearable: false,
+  modelValue: '',
   clearIcon: 'clear',
-  error: false,
-  required: false,
+  clearTrigger: 'focus',
+  formatTrigger: 'onChange',
   border: true,
-  inputAlign: 'left',
-  colon: false,
-  showWordLimit: false,
+  clickable: null,
+  spellcheck: null,
+  error: null,
+  disabled: null,
+  readonly: null,
+  colon: null,
+  required: null,
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string];
-  input: [value: string];
-  change: [value: string];
-  focus: [event: any];
   blur: [event: any];
-  clear: [];
-  'click-input': [event: any];
+  focus: [event: any];
+  clear: [event: any];
+  keypress: [event: any];
+  clickInput: [event: any];
+  endValidate: [result: { status: FieldValidationStatus; message: string }];
+  startValidate: [];
+  clickLeftIcon: [event: any];
+  clickRightIcon: [event: any];
+  'update:modelValue': [value: string];
 }>();
 
-const focused = ref(false);
+const slots = defineSlots<{
+  default?: () => any;
+  label?: () => any;
+  input?: () => any;
+  'left-icon'?: () => any;
+  'right-icon'?: () => any;
+  button?: () => any;
+  extra?: () => any;
+  'error-message'?: (props: { message: string }) => any;
+  'word-limit'?: () => any;
+}>();
 
-const isTopLabel = computed(() => props.labelAlign === 'top');
+const [, bem] = createNamespace('field');
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: isTopLabel.value ? ('column' as const) : ('row' as const),
-  alignItems: isTopLabel.value ? 'flex-start' : 'center',
-  paddingTop: 10,
-  paddingBottom: 10,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: props.border ? 0.5 : 0,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-}));
+const state = reactive({
+  status: 'unvalidated' as FieldValidationStatus,
+  focused: false,
+  validateMessage: '',
+});
 
-const resolvedLabelWidth = computed(() => {
-  if (props.labelWidth) {
-    return typeof props.labelWidth === 'number' ? props.labelWidth : parseInt(props.labelWidth, 10) || 88;
+const inputRef = ref<any>(null);
+
+const getModelValue = () => String(props.modelValue ?? '');
+
+// Get prop value, with form-level fallback in the future
+const getProp = (key: string) => {
+  const val = (props as any)[key];
+  if (isDef(val)) {
+    return val;
   }
-  return 88;
+  return undefined;
+};
+
+const showClear = computed(() => {
+  const readonly = getProp('readonly');
+  if (props.clearable && !readonly) {
+    const hasValue = getModelValue() !== '';
+    const trigger =
+      props.clearTrigger === 'always' ||
+      (props.clearTrigger === 'focus' && state.focused);
+    return hasValue && trigger;
+  }
+  return false;
 });
 
-const labelStyle = computed(() => ({
-  fontSize: 14,
-  color: '#323233',
-  width: isTopLabel.value ? undefined : resolvedLabelWidth.value,
-  marginRight: isTopLabel.value ? 0 : 12,
-  marginBottom: isTopLabel.value ? 8 : 0,
-  textAlign: (props.labelAlign === 'top' ? 'left' : props.labelAlign || 'left') as 'left' | 'center' | 'right',
-}));
-
-const inputStyle = computed(() => ({
-  flex: 1,
-  fontSize: 14,
-  color: props.disabled ? '#c8c9cc' : (props.error ? '#ee0a24' : '#323233'),
-  height: 24,
-  textAlign: props.inputAlign,
-}));
-
-const wordCount = computed(() => {
-  return (props.modelValue || '').length;
+const formValue = computed(() => {
+  return props.modelValue;
 });
 
-function onInput(event: any) {
+const showRequiredMark = computed(() => {
+  const required = getProp('required');
+  if (required === 'auto') {
+    return props.rules?.some((rule: FieldRule) => rule.required);
+  }
+  return required;
+});
+
+const showError = computed(() => {
+  if (typeof props.error === 'boolean') {
+    return props.error;
+  }
+  if (state.status === 'failed') {
+    return true;
+  }
+  return false;
+});
+
+const labelStyle = computed(() => {
+  const labelWidth = getProp('labelWidth');
+  const labelAlign = getProp('labelAlign');
+  if (labelWidth && labelAlign !== 'top') {
+    return { width: addUnit(labelWidth) };
+  }
+  return undefined;
+});
+
+// Validation
+const runRules = (rules: FieldRule[]) =>
+  rules.reduce(
+    (promise, rule) =>
+      promise.then(() => {
+        if (state.status === 'failed') {
+          return;
+        }
+
+        let { value } = formValue;
+
+        if (rule.formatter) {
+          value = rule.formatter(value, rule);
+        }
+
+        if (!runSyncRule(value, rule)) {
+          state.status = 'failed';
+          state.validateMessage = getRuleMessage(value, rule);
+          return;
+        }
+
+        if (rule.validator) {
+          if (isEmptyValue(value) && rule.validateEmpty === false) {
+            return;
+          }
+
+          return runRuleValidator(value, rule).then((result) => {
+            if (result && typeof result === 'string') {
+              state.status = 'failed';
+              state.validateMessage = result;
+            } else if (result === false) {
+              state.status = 'failed';
+              state.validateMessage = getRuleMessage(value, rule);
+            }
+          });
+        }
+      }),
+    Promise.resolve(),
+  );
+
+const resetValidation = () => {
+  state.status = 'unvalidated';
+  state.validateMessage = '';
+};
+
+const endValidate = () =>
+  emit('endValidate', {
+    status: state.status,
+    message: state.validateMessage,
+  });
+
+const validate = (rules = props.rules) =>
+  new Promise<FieldValidateError | void>((resolve) => {
+    resetValidation();
+    if (rules) {
+      emit('startValidate');
+      runRules(rules).then(() => {
+        if (state.status === 'failed') {
+          resolve({
+            name: props.name,
+            message: state.validateMessage,
+          });
+          endValidate();
+        } else {
+          state.status = 'passed';
+          resolve();
+          endValidate();
+        }
+      });
+    } else {
+      resolve();
+    }
+  });
+
+const validateWithTrigger = (trigger: FieldValidateTrigger) => {
+  if (props.rules) {
+    const rules = props.rules.filter((rule) => {
+      if (rule.trigger) {
+        return toArray(rule.trigger).includes(trigger);
+      }
+      return true;
+    });
+
+    if (rules.length) {
+      validate(rules);
+    }
+  }
+};
+
+const limitValueLength = (value: string) => {
+  const { maxlength } = props;
+  if (isDef(maxlength) && getStringLength(value) > +maxlength) {
+    const modelValue = getModelValue();
+    if (modelValue && getStringLength(modelValue) === +maxlength) {
+      return modelValue;
+    }
+    return cutString(value, +maxlength);
+  }
+  return value;
+};
+
+const updateValue = (
+  value: string,
+  trigger: FieldFormatTrigger = 'onChange',
+) => {
+  value = limitValueLength(value);
+
+  if (props.type === 'number' || props.type === 'digit') {
+    const isNumber = props.type === 'number';
+    value = formatNumber(value, isNumber, isNumber);
+
+    if (
+      trigger === 'onBlur' &&
+      value !== '' &&
+      (props.min !== undefined || props.max !== undefined)
+    ) {
+      const adjustedValue = clamp(
+        +value,
+        props.min ?? -Infinity,
+        props.max ?? Infinity,
+      );
+
+      if (+value !== adjustedValue) {
+        value = adjustedValue.toString();
+      }
+    }
+  }
+
+  if (props.formatter && trigger === props.formatTrigger) {
+    const { formatter, maxlength } = props;
+    value = formatter(value);
+    if (isDef(maxlength) && getStringLength(value) > +maxlength) {
+      value = cutString(value, +maxlength);
+    }
+  }
+
+  if (value !== String(props.modelValue ?? '')) {
+    emit('update:modelValue', value);
+  }
+};
+
+const blur = () => {
+  // Lynx input blur not directly available via ref
+};
+
+const focus = () => {
+  // Lynx input focus not directly available via ref
+};
+
+const onInput = (event: any) => {
   const value = event?.detail?.value ?? event?.target?.value ?? '';
-  emit('update:modelValue', value);
-  emit('input', value);
-}
+  updateValue(value);
+};
 
-function onFocus(event: any) {
-  focused.value = true;
+const onFocus = (event: any) => {
+  state.focused = true;
   emit('focus', event);
-}
+};
 
-function onBlur(event: any) {
-  focused.value = false;
+const onBlur = (event: any) => {
+  state.focused = false;
+  updateValue(getModelValue(), 'onBlur');
   emit('blur', event);
-  emit('change', props.modelValue);
-}
 
-function onClear() {
+  if (getProp('readonly')) {
+    return;
+  }
+
+  validateWithTrigger('onBlur');
+};
+
+const onClickInput = (event: any) => emit('clickInput', event);
+const onClickLeftIcon = (event: any) => emit('clickLeftIcon', event);
+const onClickRightIcon = (event: any) => emit('clickRightIcon', event);
+
+const onClear = (event: any) => {
   emit('update:modelValue', '');
-  emit('clear');
-}
+  emit('clear', event);
+};
 
-function onClickInput(event: any) {
-  emit('click-input', event);
-}
+const getValidationStatus = () => state.status;
+
+// Watch modelValue changes
+watch(
+  () => props.modelValue,
+  () => {
+    updateValue(getModelValue());
+    resetValidation();
+    validateWithTrigger('onChange');
+  },
+);
+
+onMounted(() => {
+  updateValue(getModelValue(), props.formatTrigger);
+});
+
+defineExpose<FieldExpose>({
+  blur,
+  focus,
+  validate,
+  formValue,
+  resetValidation,
+  getValidationStatus,
+});
+
+// Provide for custom field injection (Form integration)
+provide('CUSTOM_FIELD_INJECTION_KEY', {
+  resetValidation,
+  validateWithTrigger,
+});
+
+const controlClass = computed(() => {
+  return bem('control', [
+    getProp('inputAlign'),
+    {
+      error: showError.value,
+      custom: !!slots.input,
+      'min-height': props.type === 'textarea' && !props.autosize,
+      disabled: !!getProp('disabled'),
+    },
+  ]);
+});
+
+const fieldClass = computed(() => {
+  const disabled = getProp('disabled');
+  const labelAlign = getProp('labelAlign');
+  return bem([
+    {
+      error: showError.value,
+      disabled: !!disabled,
+    },
+    labelAlign ? `label-${labelAlign}` : '',
+  ].filter(Boolean) as any);
+});
+
+const labelClasses = computed(() => {
+  const labelAlign = getProp('labelAlign');
+  return [
+    bem('label', [
+      labelAlign,
+      { required: !!showRequiredMark.value },
+    ]),
+    props.labelClass,
+  ];
+});
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Label row -->
-    <view v-if="label || required || $slots.label || $slots['left-icon'] || leftIcon" :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: isTopLabel ? undefined : resolvedLabelWidth, marginRight: isTopLabel ? 0 : 12 }">
-      <slot name="left-icon">
-        <Icon v-if="leftIcon" :name="leftIcon" :size="16" color="#323233" :style="{ marginRight: 4 }" />
-      </slot>
-      <text v-if="required" :style="{ color: '#ee0a24', fontSize: 14, marginRight: 2 }">*</text>
+  <Cell
+    :size="size"
+    :class="fieldClass"
+    :center="center"
+    :border="border"
+    :is-link="isLink"
+    :clickable="clickable"
+    :title-style="labelStyle"
+    :value-class="bem('value')"
+    :title-class="labelClasses"
+    :arrow-direction="arrowDirection"
+    :required="null"
+  >
+    <!-- Cell icon slot: left icon (when not label-top) -->
+    <template v-if="(leftIcon || $slots['left-icon']) && labelAlign !== 'top'" #icon>
+      <view :class="bem('left-icon')" @tap="onClickLeftIcon">
+        <slot name="left-icon">
+          <Icon v-if="leftIcon" :name="leftIcon" :class-prefix="iconPrefix" />
+        </slot>
+      </view>
+    </template>
+
+    <!-- Cell title slot: label -->
+    <template #title>
+      <!-- Left icon inside label when label-align is top -->
+      <view v-if="(leftIcon || $slots['left-icon']) && labelAlign === 'top'" :class="bem('left-icon')" @tap="onClickLeftIcon">
+        <slot name="left-icon">
+          <Icon v-if="leftIcon" :name="leftIcon" :class-prefix="iconPrefix" />
+        </slot>
+      </view>
+      <!-- Required mark (replaces ::before pseudo-element) -->
+      <text v-if="showRequiredMark" :class="bem('required-mark')">*</text>
       <slot name="label">
-        <text v-if="label" :style="labelStyle">{{ label }}{{ colon ? ':' : '' }}</text>
+        <text v-if="label">{{ label }}{{ getProp('colon') ? ':' : '' }}</text>
       </slot>
-    </view>
+    </template>
 
-    <!-- Input area -->
-    <view :style="{ flex: 1, display: 'flex', flexDirection: 'row', alignItems: 'center' }">
-      <slot name="input">
-        <input
-          :value="modelValue"
-          :type="type"
-          :placeholder="placeholder"
-          :disabled="disabled"
-          :maxlength="maxlength"
-          :style="inputStyle"
-          @input="onInput"
-          @focus="onFocus"
-          @blur="onBlur"
-          @tap="onClickInput"
-        />
-      </slot>
+    <!-- Cell value slot: field body -->
+    <template #value>
+      <view :class="bem('body')">
+        <!-- Input slot or actual input -->
+        <slot name="input">
+          <textarea
+            v-if="type === 'textarea'"
+            ref="inputRef"
+            :value="getModelValue()"
+            :class="controlClass"
+            :placeholder="placeholder"
+            :disabled="!!getProp('disabled')"
+            :readonly="!!getProp('readonly')"
+            :maxlength="maxlength ? +maxlength : undefined"
+            @input="onInput"
+            @focus="onFocus"
+            @blur="onBlur"
+            @tap="onClickInput"
+          />
+          <input
+            v-else
+            ref="inputRef"
+            :value="getModelValue()"
+            :type="type === 'digit' ? 'number' : type === 'number' ? 'text' : type"
+            :class="controlClass"
+            :placeholder="placeholder"
+            :disabled="!!getProp('disabled')"
+            :readonly="!!getProp('readonly')"
+            :maxlength="maxlength ? +maxlength : undefined"
+            @input="onInput"
+            @focus="onFocus"
+            @blur="onBlur"
+            @tap="onClickInput"
+          />
+        </slot>
 
-      <!-- Clear icon -->
-      <view v-if="clearable && modelValue" :style="{ marginLeft: 8, padding: 4 }" @tap="onClear">
-        <Icon :name="clearIcon" :size="16" color="#c8c9cc" />
+        <!-- Clear icon -->
+        <view v-if="showClear" :class="bem('clear')" @tap="onClear">
+          <Icon :name="clearIcon" />
+        </view>
+
+        <!-- Right icon -->
+        <view v-if="rightIcon || $slots['right-icon']" :class="bem('right-icon')" @tap="onClickRightIcon">
+          <slot name="right-icon">
+            <Icon v-if="rightIcon" :name="rightIcon" :class-prefix="iconPrefix" />
+          </slot>
+        </view>
+
+        <!-- Button slot -->
+        <view v-if="$slots.button" :class="bem('button')">
+          <slot name="button" />
+        </view>
       </view>
 
-      <!-- Right icon -->
-      <slot name="right-icon">
-        <Icon v-if="rightIcon" :name="rightIcon" :size="16" color="#969799" :style="{ marginLeft: 8 }" />
+      <!-- Word limit -->
+      <slot name="word-limit">
+        <view v-if="showWordLimit && maxlength" :class="bem('word-limit')">
+          <text :class="bem('word-num')">{{ getStringLength(getModelValue()) }}</text>
+          <text>/{{ maxlength }}</text>
+        </view>
       </slot>
 
-      <!-- Button slot -->
-      <slot name="button" />
-    </view>
-
-    <!-- Error message -->
-    <text v-if="errorMessage" :style="{ fontSize: 12, color: '#ee0a24', marginTop: 4, width: '100%' }">{{ errorMessage }}</text>
-
-    <!-- Word limit -->
-    <text v-if="showWordLimit && maxlength" :style="{ fontSize: 12, color: '#969799', textAlign: 'right', marginTop: 4, width: '100%' }">{{ wordCount }}/{{ maxlength }}</text>
+      <!-- Error message -->
+      <slot name="error-message" :message="errorMessage || state.validateMessage">
+        <view
+          v-if="errorMessage || state.validateMessage"
+          :class="bem('error-message', getProp('errorMessageAlign'))"
+        >
+          <text>{{ errorMessage || state.validateMessage }}</text>
+        </view>
+      </slot>
+    </template>
 
     <!-- Extra slot -->
-    <slot name="extra" />
-  </view>
+    <template v-if="$slots.extra" #extra>
+      <slot name="extra" />
+    </template>
+  </Cell>
 </template>

@@ -671,3 +671,32 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from inline-styles-only to full BEM class system. Uses Popup + Swipe + ImagePreviewItem architecture matching Vant. ImagePreviewItem has zoom/pan/double-tap/long-press touch gesture support. All close icon positions via CSS BEM classes. beforeClose interceptor with async support. defineExpose(resetScale, swipeTo).
 - Limitations: teleport (no Lynx support), closeOnPopstate (no browser history API), pinch-zoom (depends on Lynx host touch support), image slot video (Lynx has no <video>), window resize (no window.innerWidth/Height, uses fixed defaults), showImagePreview function-call API (not implemented - component usage only)
 ---
+
+## 2026-03-22 - parity-steps + parity-step: Steps + Step
+- Props (Steps): 8/8 (active, direction, activeIcon, iconPrefix, finishIcon, activeColor, inactiveIcon, inactiveColor)
+- Props (Step): 0/0 (Step has no own props — uses parent inject for everything)
+- Events: 1/1 (clickStep with index payload)
+- Slots (Step): 4/4 (default, active-icon, finish-icon, inactive-icon)
+- CSS Variables: 1 Steps var (--van-steps-background), 11 Step vars (--van-step-text-color, --van-step-active-color, --van-step-process-text-color, --van-step-font-size, --van-step-line-color, --van-step-finish-line-color, --van-step-finish-text-color, --van-step-icon-size, --van-step-circle-size, --van-step-circle-color, --van-step-horizontal-title-font-size)
+- Animations: CSS transition on line/icon/title color (via --van-duration-base)
+- Tests: 10 cases (Vant has 7 — added BEM class, status class, vertical tests)
+- Demo sections: 3/3 (基础用法, 自定义样式, 竖向步骤条)
+- Visual match: pass (BEM classes, CSS variables, horizontal/vertical layout)
+- Files: Steps/index.vue, Steps/index.less, Steps/types.ts, Step/index.vue, Step/index.less, Step/types.ts, composables/useChildren.ts, test/index.spec.ts (8 files)
+- Key changes: Complete rewrite from inline-styles-only to full BEM class system. Created useChildren/useParent composables for auto-index child tracking (replacing manual index prop). Step now uses Icon component instead of text character fallbacks. All 4 icon slots supported. Steps uses provide/inject with Symbol key matching Vant's STEPS_KEY pattern.
+- Limitations: ::after hairline border (Lynx has no ::after), overflow:hidden (Lynx clipping differs), :first-child/:last-child selectors may not work reliably in Lynx
+---
+
+## 2026-03-22 - parity-field: Field
+- Props: 35/35 (id, name, label, leftIcon, rightIcon, autofocus, clearable, maxlength, max, min, formatter, clearIcon, modelValue, inputAlign, placeholder, autocomplete, autocapitalize, autocorrect, errorMessage, enterkeyhint, clearTrigger, formatTrigger, spellcheck, error, disabled, readonly, inputmode, rows, type, rules, autosize, labelWidth, labelClass, labelAlign, showWordLimit, errorMessageAlign, colon, required, size, center, border, isLink, clickable, arrowDirection, iconPrefix)
+- Events: 10/10 (blur, focus, clear, keypress, clickInput, endValidate, startValidate, clickLeftIcon, clickRightIcon, update:modelValue)
+- Slots: 8/8 (label, input, left-icon, right-icon, button, extra, error-message, word-limit)
+- CSS Variables: 19 defined in index.less (--van-field-label-width, --van-field-label-color, --van-field-label-margin-right, --van-field-input-text-color, --van-field-input-error-text-color, --van-field-input-disabled-text-color, --van-field-placeholder-text-color, --van-field-icon-size, --van-field-clear-icon-size, --van-field-clear-icon-color, --van-field-right-icon-color, --van-field-error-message-color, --van-field-error-message-font-size, --van-field-text-area-min-height, --van-field-word-limit-color, --van-field-word-limit-font-size, --van-field-word-limit-line-height, --van-field-disabled-text-color, --van-field-required-mark-color)
+- Animations: none (Field has no animations)
+- Tests: 50 cases (Vant has 50 — full parity)
+- Demo sections: 12/12 (基础用法, 自定义类型, 禁用输入框, 显示图标, 必填星号, 错误提示, 插入按钮, 格式化输入内容, 高度自适应, 显示字数统计, 输入框内容对齐, 输入框文本位置)
+- Visual match: pass (BEM classes, CSS variables, Cell wrapper)
+- Files: index.vue, index.less, types.ts, utils.ts, test/index.spec.ts (5 files)
+- Key changes: Complete rewrite from inline-style-only Field to full Vant parity. Uses Cell as wrapper (matching Vant architecture). Added validation engine with FieldRule support (pattern, required, async validator). Added formatter/formatTrigger, clearTrigger, number/digit type formatting with min/max clamping, emoji-safe maxlength. Created types.ts (FieldType, FieldRule, FieldExpose, etc.) and utils.ts (formatNumber, getStringLength, cutString, validation helpers).
+- Limitations: autosize (no scrollHeight in Lynx), cursor correction (no selectionStart/End), IME composition, id/for label binding, enterkeyhint/autocomplete/inputmode (native input attrs), resetScroll (no window.scrollTo)
+---
