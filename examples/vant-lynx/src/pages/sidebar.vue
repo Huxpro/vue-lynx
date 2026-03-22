@@ -16,7 +16,7 @@ function onChange(index: number) {
 </script>
 
 <template>
-  <DemoPage title="Sidebar">
+  <DemoPage title="Sidebar 侧边导航">
     <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
       <!-- 基础用法 -->
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
