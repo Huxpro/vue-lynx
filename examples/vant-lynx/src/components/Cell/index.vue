@@ -1,52 +1,47 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 18/18 supported (title, value, label, size, icon, iconPrefix, tag, url, to, replace,
-    border, center, clickable, isLink, required, arrowDirection, titleStyle, titleClass, valueClass, labelClass)
-  - Events: 1/1 supported (click)
-  - Slots: 6/6 (title, value, label, icon, right-icon, extra)
-  - Lynx Limitations:
-    - tag: accepted for API compat but always renders as view
-    - url/to/replace: accepted for API compat but routing requires Lynx navigation API
-    - titleClass/valueClass/labelClass: accepted for API compat but no CSS class in Lynx
-    - iconPrefix: accepted for API compat but unused (no icon font)
+  Lynx Limitations:
+  - tag: accepted for API compat but always renders as view (Lynx has no HTML tags)
+  - url/to/replace: accepted for API compat but routing requires Lynx navigation API
+  - titleClass/valueClass/labelClass: accepted for API compat but no CSS class in Lynx
+  - iconPrefix: accepted for API compat but unused (no icon font)
+  - ::before required asterisk: Lynx has no pseudo-elements, uses inline text element
+  - ::after hairline border: Lynx has no pseudo-elements, uses border-bottom instead
+  - :active background: Lynx has no :active pseudo-class, uses touchstart/touchend
+  - role/tabindex: not applicable in Lynx
 -->
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
+import type { CellSize, CellArrowDirection } from './types';
 
 export interface CellProps {
+  tag?: string;
+  icon?: string;
+  size?: CellSize;
   title?: string | number;
   value?: string | number;
   label?: string | number;
-  icon?: string;
-  iconPrefix?: string;
-  isLink?: boolean;
-  required?: boolean;
   center?: boolean;
-  arrowDirection?: 'up' | 'down' | 'left' | 'right';
+  isLink?: boolean;
   border?: boolean;
+  iconPrefix?: string;
+  valueClass?: unknown;
+  labelClass?: unknown;
+  titleClass?: unknown;
+  titleStyle?: string | Record<string, any>;
+  arrowDirection?: CellArrowDirection;
+  required?: boolean | 'auto' | null;
   clickable?: boolean | null;
-  size?: 'normal' | 'large';
-  titleStyle?: string | string[] | Record<string, any>;
-  titleClass?: string | string[] | Record<string, any>;
-  valueClass?: string | string[] | Record<string, any>;
-  labelClass?: string | string[] | Record<string, any>;
-  tag?: string;
   url?: string;
   to?: string | Record<string, any>;
   replace?: boolean;
 }
 
 const props = withDefaults(defineProps<CellProps>(), {
-  isLink: false,
-  required: false,
-  center: false,
+  tag: 'div',
   border: true,
   clickable: null,
-  size: 'normal',
-  arrowDirection: 'right',
-  iconPrefix: 'van-icon',
-  tag: 'div',
+  required: null,
   replace: false,
 });
 
@@ -61,55 +56,62 @@ const isClickable = computed(() => {
   return props.isLink;
 });
 
-const cellStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: props.center ? 'center' : 'flex-start',
-  paddingTop: props.size === 'large' ? 12 : 10,
-  paddingBottom: props.size === 'large' ? 12 : 10,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: isActive.value && isClickable.value ? '#f2f3f5' : '#fff',
-  borderBottomWidth: props.border ? 0.5 : 0,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-}));
+const cellStyle = computed(() => {
+  const style: Record<string, any> = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: props.center ? 'center' : 'flex-start',
+    paddingTop: props.size === 'large' ? '12px' : '10px',
+    paddingBottom: props.size === 'large' ? '12px' : '10px',
+    paddingLeft: '16px',
+    paddingRight: '16px',
+    backgroundColor: isActive.value && isClickable.value ? '#f2f3f5' : '#fff',
+    fontSize: '14px',
+    lineHeight: '24px',
+  };
+
+  if (props.border) {
+    style.borderBottomWidth = '0.5px';
+    style.borderBottomStyle = 'solid';
+    style.borderBottomColor = '#ebedf0';
+  }
+
+  return style;
+});
 
 const titleTextStyle = computed(() => {
   const base: Record<string, any> = {
-    fontSize: props.size === 'large' ? 16 : 14,
+    fontSize: props.size === 'large' ? '16px' : '14px',
     color: '#323233',
-    lineHeight: 24,
+    lineHeight: '24px',
   };
-  if (props.titleStyle && typeof props.titleStyle === 'object' && !Array.isArray(props.titleStyle)) {
+  if (props.titleStyle && typeof props.titleStyle === 'object') {
     Object.assign(base, props.titleStyle);
   }
   return base;
 });
 
 const valueTextStyle = computed(() => ({
-  fontSize: props.size === 'large' ? 16 : 14,
+  fontSize: props.size === 'large' ? 'inherit' : 'inherit',
   color: '#969799',
-  lineHeight: 24,
+  lineHeight: '24px',
   textAlign: 'right' as const,
 }));
 
 const labelTextStyle = computed(() => ({
-  fontSize: props.size === 'large' ? 14 : 12,
+  fontSize: props.size === 'large' ? '14px' : '12px',
   color: '#969799',
-  marginTop: 4,
-  lineHeight: 18,
+  marginTop: '4px',
+  lineHeight: '18px',
 }));
 
 const arrowName = computed(() => {
-  if (props.arrowDirection === 'right') return 'arrow';
+  if (!props.arrowDirection || props.arrowDirection === 'right') return 'arrow';
   return `arrow-${props.arrowDirection}`;
 });
 
 function onTap(event: any) {
-  if (isClickable.value) {
-    emit('click', event);
-  }
+  emit('click', event);
 }
 
 function onTouchStart() {
@@ -133,17 +135,16 @@ function onTouchEnd() {
   >
     <!-- Left icon -->
     <slot name="icon">
-      <view v-if="icon" :style="{ marginRight: 4, display: 'flex', alignItems: 'center', height: 24 }">
+      <view v-if="icon" :style="{ marginRight: '4px', display: 'flex', alignItems: 'center', height: '24px' }">
         <Icon :name="icon" :size="16" color="#323233" />
       </view>
     </slot>
 
     <!-- Title section -->
-    <view :style="{ flex: 1 }">
+    <view v-if="$slots.title || title !== undefined" :style="{ flex: 1 }">
       <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'center' }">
-        <text v-if="required" :style="{ color: '#ee0a24', fontSize: 14, marginRight: 2 }">*</text>
         <slot name="title">
-          <text v-if="title !== undefined" :style="titleTextStyle">{{ title }}</text>
+          <text :style="titleTextStyle">{{ title }}</text>
         </slot>
       </view>
       <slot name="label">
@@ -151,16 +152,29 @@ function onTouchEnd() {
       </slot>
     </view>
 
+    <!-- Required asterisk (positioned before title) -->
+    <text
+      v-if="required"
+      :style="{
+        color: '#ee0a24',
+        fontSize: '14px',
+        position: 'absolute',
+        left: '4px',
+      }"
+    >*</text>
+
     <!-- Value section (default slot is alias of value) -->
-    <slot name="value">
-      <slot>
-        <text v-if="value !== undefined" :style="valueTextStyle">{{ value }}</text>
+    <view :style="{ flex: ($slots.title || title !== undefined) ? undefined : 1, overflow: 'hidden' }">
+      <slot name="value">
+        <slot>
+          <text v-if="value !== undefined" :style="valueTextStyle">{{ value }}</text>
+        </slot>
       </slot>
-    </slot>
+    </view>
 
     <!-- Right icon -->
     <slot name="right-icon">
-      <view v-if="isLink" :style="{ marginLeft: 4, display: 'flex', alignItems: 'center', height: 24 }">
+      <view v-if="isLink" :style="{ marginLeft: '4px', display: 'flex', alignItems: 'center', height: '24px' }">
         <Icon :name="arrowName" :size="16" color="#969799" />
       </view>
     </slot>
