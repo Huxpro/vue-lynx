@@ -1,3 +1,9 @@
+export interface CellGroupProps {
+  title?: string;
+  inset?: boolean;
+  border?: boolean;
+}
+
 export type CellGroupThemeVars = {
   cellGroupBackground?: string;
   cellGroupTitleColor?: string;

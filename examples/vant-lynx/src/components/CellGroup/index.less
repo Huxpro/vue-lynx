@@ -8,3 +8,30 @@
   --van-cell-group-inset-radius: var(--van-radius-lg, 8px);
   --van-cell-group-inset-title-padding: var(--van-padding-md, 16px) var(--van-padding-md, 16px);
 }
+
+.van-cell-group {
+  background: var(--van-cell-group-background);
+
+  &--inset {
+    margin: var(--van-cell-group-inset-padding);
+    border-radius: var(--van-cell-group-inset-radius);
+    overflow: hidden;
+  }
+
+  &__title {
+    padding: var(--van-cell-group-title-padding);
+    color: var(--van-cell-group-title-color);
+    font-size: var(--van-cell-group-title-font-size);
+    line-height: var(--van-cell-group-title-line-height);
+
+    &--inset {
+      padding: var(--van-cell-group-inset-title-padding);
+    }
+  }
+}
+
+// Lynx hairline border (replaces Vant's ::after hairline mixin)
+.van-hairline--top-bottom {
+  border-top: 0.5px solid var(--van-border-color, #ebedf0);
+  border-bottom: 0.5px solid var(--van-border-color, #ebedf0);
+}
