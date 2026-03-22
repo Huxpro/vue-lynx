@@ -77,3 +77,30 @@ Branch: feat/vant-lynx-v2
 - Limitations: tag prop no-op (always renders view), themeVarsScope 'global' no-op (no document.documentElement in Lynx), theme class on html no-op, CSS custom properties via inline styles stripped by Lynx (--van-* vars only work through .less files)
 - New files: types.ts (CONFIG_PROVIDER_KEY, types), utils.ts (mapThemeVarsToCSSVars, insertDash, kebabCase), composables/useGlobalZIndex.ts
 ---
+
+## 2026-03-22 - parity-popup: Popup
+- Props: 24/24 (show, overlay, position, round, closeable, closeIcon, closeIconPosition, duration, zIndex, overlayClass, overlayStyle, overlayProps, closeOnClickOverlay, beforeClose, lockScroll, lazyRender, destroyOnClose, closeOnPopstate, iconPrefix, transition, transitionAppear, teleport, safeAreaInsetTop, safeAreaInsetBottom)
+- Events: 8/8 (click, click-overlay, click-close-icon, open, close, opened, closed, keydown)
+- Slots: 2/2 (default, overlay-content)
+- CSS Variables: 7 defined in index.less (--van-popup-background, --van-popup-transition, --van-popup-round-radius, --van-popup-close-icon-size, --van-popup-close-icon-color, --van-popup-close-icon-margin, --van-popup-close-icon-z-index)
+- Animations: inline CSS opacity transition (center), transform slide transitions (top/bottom/left/right)
+- Tests: 28 cases (Vant has 23) — all pass
+- Demo sections: 6/6 (Basic Usage, Position, Close Icon, Round Corner, Listen To Events, Get Container)
+- Visual match: pass (position-based transitions match Vant behavior)
+- Limitations: teleport no-op, lockScroll no-op, closeOnPopstate no-op, keydown no-op, iconPrefix no-op, Vue <Transition> replaced with inline CSS transitions
+- New files: types.ts (PopupPosition, PopupCloseIconPosition, PopupExpose, PopupThemeVars), composables/useLazyRender.ts
+- defineExpose: popupRef exposed
+---
+
+## 2026-03-22 - parity-button: Button
+- Props: 21/21 (type, size, text, color, icon, iconPrefix, iconPosition, tag, nativeType, plain, block, round, square, disabled, loading, loadingText, loadingType, loadingSize, url, to, replace, hairline)
+- Events: 1/1 (click) — removed extra touchstart emit
+- Slots: 3/3 (default, icon, loading)
+- CSS Variables: 34 defined in index.less (fixed --van-button-radius from --van-radius-sm to --van-radius-md)
+- Animations: none (active opacity feedback via touchstart/touchend)
+- Tests: 14 cases (Vant has 9) — all pass
+- Demo sections: 11/12 (Type, Plain, Hairline, Disabled, Loading, Shape, Icon, Size, Block, Route, Custom Color incl. gradient) — Animated Button omitted (requires Swipe component)
+- Visual match: pass (inline style rendering with string px units)
+- Limitations: tag no-op, nativeType no-op, url/to/replace no-op, ::before active overlay uses opacity, ::after hairline uses 0.5px border
+- New files: types.ts (ButtonType, ButtonSize, ButtonNativeType, ButtonIconPosition, ButtonThemeVars)
+---

@@ -166,7 +166,7 @@
         "Docs: Lynx limitations in components/Popup/README.md",
         "Commit: feat(popup): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-button",
@@ -188,7 +188,7 @@
         "Docs: Lynx limitations in components/Button/README.md",
         "Commit: feat(button): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-cell",

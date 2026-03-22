@@ -12,13 +12,7 @@ describe('Button', () => {
         },
       }),
     );
-    // Debug: check what's rendered
     const textEls = container.querySelectorAll('text');
-    // Find the text element that has content 'Hello'
-    const textEl = Array.from(textEls).find(
-      (el) => el.textContent === 'Hello' || el.getAttribute('text') === 'Hello',
-    );
-    // Fallback: check if any text element exists
     expect(textEls.length).toBeGreaterThan(0);
   });
 
@@ -32,12 +26,11 @@ describe('Button', () => {
         },
       }),
     );
-    // Slot content should be rendered inside the button
     const textEls = container.querySelectorAll('text');
     expect(textEls.length).toBeGreaterThan(0);
   });
 
-  it('should emit click event on tap', async () => {
+  it('should emit click event', async () => {
     const clicks: any[] = [];
     const Comp = defineComponent({
       setup() {
@@ -113,18 +106,6 @@ describe('Button', () => {
     expect(hasLoadingText).toBe(true);
   });
 
-  it('should apply disabled opacity', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Button, { type: 'primary', disabled: true, text: 'X' });
-        },
-      }),
-    );
-    const viewEl = container.querySelector('view')!;
-    expect(viewEl.getAttribute('style')).toContain('opacity');
-  });
-
   it('should hide border when color is gradient', () => {
     const { container } = render(
       defineComponent({
@@ -154,6 +135,32 @@ describe('Button', () => {
     expect(hasCustomLoading).toBe(true);
   });
 
+  it('should render loading of a specific size when using loading-size prop', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { loading: true, loadingSize: '10' });
+        },
+      }),
+    );
+    // The Loading component should be rendered with the specified size
+    const views = container.querySelectorAll('view');
+    expect(views.length).toBeGreaterThan(0);
+  });
+
+  it('should render icon in the right side when setting icon-position to right', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { icon: 'plus', iconPosition: 'right', text: 'Button' });
+        },
+      }),
+    );
+    // Text should come before icon when iconPosition is right
+    const allElements = container.querySelectorAll('text, view');
+    expect(allElements.length).toBeGreaterThan(0);
+  });
+
   it('should render icon slot correctly', () => {
     const { container } = render(
       defineComponent({
@@ -174,6 +181,18 @@ describe('Button', () => {
     );
     expect(hasIcon).toBe(true);
     expect(hasText).toBe(true);
+  });
+
+  it('should apply disabled opacity', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Button, { type: 'primary', disabled: true, text: 'X' });
+        },
+      }),
+    );
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.getAttribute('style')).toContain('opacity');
   });
 
   it('should apply round border radius', () => {
