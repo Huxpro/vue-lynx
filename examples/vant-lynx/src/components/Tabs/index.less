@@ -1,4 +1,9 @@
 :root {
+  --van-tab-text-color: var(--van-gray-7, #646566);
+  --van-tab-active-text-color: var(--van-text-color, #323233);
+  --van-tab-disabled-text-color: var(--van-text-color-3, #c8c9cc);
+  --van-tab-font-size: var(--van-font-size-md, 14px);
+  --van-tab-line-height: var(--van-line-height-md, 20px);
   --van-tabs-default-color: var(--van-primary-color, #1989fa);
   --van-tabs-line-height: 44px;
   --van-tabs-card-height: 30px;
@@ -6,4 +11,122 @@
   --van-tabs-bottom-bar-width: 40px;
   --van-tabs-bottom-bar-height: 3px;
   --van-tabs-bottom-bar-color: var(--van-primary-color, #1989fa);
+}
+
+.van-tab {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 var(--van-padding-base, 4px);
+  color: var(--van-tab-text-color);
+  font-size: var(--van-tab-font-size);
+  line-height: var(--van-tab-line-height);
+  cursor: pointer;
+
+  &--active {
+    color: var(--van-tab-active-text-color);
+    font-weight: var(--van-font-bold, bold);
+  }
+
+  &--disabled {
+    color: var(--van-tab-disabled-text-color);
+    cursor: not-allowed;
+  }
+
+  &--grow {
+    flex: 1 0 auto;
+    padding: 0 var(--van-padding-sm, 8px);
+  }
+
+  &--shrink {
+    flex: none;
+    padding: 0 var(--van-padding-xs, 8px);
+  }
+
+  &--card {
+    color: var(--van-tabs-default-color);
+
+    &.van-tab--active {
+      color: var(--van-white, #fff);
+      background-color: var(--van-tabs-default-color);
+    }
+
+    &.van-tab--disabled {
+      color: var(--van-tab-disabled-text-color);
+    }
+  }
+
+  &__text {
+    &--ellipsis {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+.van-tabs {
+  position: relative;
+
+  &__wrap {
+    overflow: hidden;
+  }
+
+  &__nav {
+    position: relative;
+    display: flex;
+    background: var(--van-tabs-nav-background);
+    user-select: none;
+
+    &--line {
+      box-sizing: content-box;
+      height: 100%;
+    }
+
+    &--card {
+      box-sizing: border-box;
+      height: var(--van-tabs-card-height);
+      margin: 0 var(--van-padding-md, 16px);
+      border-width: 0.5px;
+      border-style: solid;
+      border-color: var(--van-tabs-default-color);
+      border-radius: var(--van-radius-sm, 2px);
+    }
+
+    &--card&--shrink {
+      display: inline-flex;
+    }
+  }
+
+  &__line {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    z-index: 1;
+    width: var(--van-tabs-bottom-bar-width);
+    height: var(--van-tabs-bottom-bar-height);
+    background: var(--van-tabs-bottom-bar-color);
+    border-radius: var(--van-tabs-bottom-bar-height);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  &--line {
+    .van-tabs__wrap {
+      height: var(--van-tabs-line-height);
+    }
+  }
+
+  &--card {
+    > .van-tabs__wrap {
+      height: var(--van-tabs-card-height);
+    }
+  }
 }

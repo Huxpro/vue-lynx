@@ -1,15 +1,18 @@
 <!--
   Lynx Limitations:
-  - titleClass: Lynx has no CSS class system, uses inline styles only
-  - titleStyle: Partially supported (passed to parent, but Lynx cannot apply CSS class-level styling)
+  - titleClass: Applied via parent Tabs component, CSS class support depends on Lynx
   - url/to/replace: Lynx has no vue-router, navigation props are no-op
-  - SwipeItem animated mode: Lynx lacks CSS transition on translateX for content swap
-  - scrollspy mode: Lynx has no scroll event interception on parent
+  - animated/swipeable: Lynx lacks CSS transition on translateX for content swap
+  - scrollspy: Lynx has no scroll position tracking for content panels
   - role/tabindex/aria-* attributes: Not applicable in Lynx
 -->
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, watch, ref, useSlots, nextTick, type CSSProperties } from 'vue-lynx';
+import { createNamespace } from '../../utils';
+import './index.less';
 import { TABS_KEY, type Numeric, type TabsProvide } from '../Tabs/types';
+
+const [, bem] = createNamespace('tab');
 
 const props = withDefaults(defineProps<{
   title?: string;
@@ -121,12 +124,11 @@ watch(titleStyleKey, () => {
   }
 });
 
-const contentStyle = computed(() => {
+const panelClass = computed(() => bem('panel'));
+
+const panelStyle = computed(() => {
   const show = tabsContext?.scrollspy.value || isActive.value;
-  return {
-    display: show ? 'flex' : 'none',
-    flexDirection: 'column' as const,
-  };
+  return show ? undefined : { display: 'none' };
 });
 
 defineExpose({
@@ -136,7 +138,7 @@ defineExpose({
 </script>
 
 <template>
-  <view :style="contentStyle">
+  <view :class="panelClass" :style="panelStyle">
     <template v-if="shouldRender">
       <slot />
     </template>

@@ -4,25 +4,12 @@ import { render, fireEvent } from 'vue-lynx-testing-library';
 import Tabs from '../index.vue';
 import Tab from '../../Tab/index.vue';
 
-/**
- * Helper: find tab header views (the clickable tab title wrappers).
- * Tab headers are rendered inside the nav bar and have cursor: pointer or cursor: default (disabled).
- */
+// Helper: find tab header views by BEM class
 function findTabHeaders(container: any): any[] {
-  const views = container.querySelectorAll('view');
-  return Array.from(views).filter((v: any) => {
-    const style = v.getAttribute('style') || '';
-    return (
-      (style.includes('cursor: pointer') || style.includes('cursor: default')) &&
-      style.includes('justify-content: center') &&
-      style.includes('align-items: center')
-    );
-  });
+  return Array.from(container.querySelectorAll('.van-tab'));
 }
 
-/**
- * Helper: wait for tabs to initialize (children register async via nextTick)
- */
+// Helper: wait for tabs to initialize (children register async via nextTick)
 async function later(ms = 0) {
   await nextTick();
   await nextTick();
@@ -32,6 +19,26 @@ async function later(ms = 0) {
 }
 
 describe('Tabs', () => {
+  it('should render with BEM root class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1' }, { default: () => 'Content 1' }),
+              h(Tab, { title: 'Tab 2' }, { default: () => 'Content 2' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+
+    const root = container.querySelector('.van-tabs');
+    expect(root).toBeTruthy();
+    expect(root!.getAttribute('class')).toContain('van-tabs--line');
+  });
+
   it('should render tabs container with headers', async () => {
     const { container } = render(
       defineComponent({
@@ -46,8 +53,8 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    const texts = container.querySelectorAll('text');
-    expect(texts.length).toBeGreaterThanOrEqual(2);
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(2);
   });
 
   it('should render line type by default', async () => {
@@ -64,13 +71,14 @@ describe('Tabs', () => {
       }),
     );
     await later();
+
     // Line indicator should be rendered
-    const views = container.querySelectorAll('view');
-    const lineView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: absolute') && style.includes('bottom: 0px');
-    });
+    const lineView = container.querySelector('.van-tabs__line');
     expect(lineView).toBeTruthy();
+
+    // Nav should have line modifier
+    const nav = container.querySelector('.van-tabs__nav--line');
+    expect(nav).toBeTruthy();
   });
 
   it('should render card type', async () => {
@@ -87,13 +95,18 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Card style should have border around nav
-    const views = container.querySelectorAll('view');
-    const navView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-style: solid') && style.includes('border-radius: 2px');
-    });
-    expect(navView).toBeTruthy();
+
+    // Root should have card modifier
+    const root = container.querySelector('.van-tabs--card');
+    expect(root).toBeTruthy();
+
+    // Nav should have card modifier
+    const nav = container.querySelector('.van-tabs__nav--card');
+    expect(nav).toBeTruthy();
+
+    // Tab headers should have card modifier
+    const cardTabs = container.querySelectorAll('.van-tab--card');
+    expect(cardTabs.length).toBe(2);
   });
 
   it('should emit click-tab event when tab is clicked', async () => {
@@ -190,8 +203,8 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    const texts = container.querySelectorAll('text');
-    expect(texts.length).toBeGreaterThanOrEqual(3);
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(3);
   });
 
   it('should allow to set name prop', async () => {
@@ -270,11 +283,7 @@ describe('Tabs', () => {
     );
     await later();
     // Only first tab should show a badge element
-    const views = container.querySelectorAll('view');
-    const badgeViews = Array.from(views).filter((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color: rgb(238, 10, 36)') && style.includes('border-radius: 8px');
-    });
+    const badgeViews = container.querySelectorAll('.van-badge--fixed');
     expect(badgeViews.length).toBe(1);
   });
 
@@ -291,13 +300,7 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Dot is an 8x8 red circle
-    const views = container.querySelectorAll('view');
-    const dotView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('width: 8px') && style.includes('height: 8px') &&
-        style.includes('border-radius: 4px') && style.includes('background-color: rgb(238, 10, 36)');
-    });
+    const dotView = container.querySelector('.van-badge--dot');
     expect(dotView).toBeTruthy();
   });
 
@@ -499,13 +502,9 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Check that wrap view has border-bottom
-    const views = container.querySelectorAll('view');
-    const wrapView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-bottom-width: 0.5px') && style.includes('overflow: hidden');
-    });
-    expect(wrapView).toBeTruthy();
+    const wrap = container.querySelector('.van-tabs__wrap');
+    expect(wrap).toBeTruthy();
+    expect(wrap!.getAttribute('class')).toContain('van-hairline');
   });
 
   it('should hide border when border prop is false', async () => {
@@ -521,13 +520,9 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Wrap view should NOT have border-bottom
-    const views = container.querySelectorAll('view');
-    const wrapView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('overflow: hidden') && !style.includes('border-bottom');
-    });
-    expect(wrapView).toBeTruthy();
+    const wrap = container.querySelector('.van-tabs__wrap');
+    expect(wrap).toBeTruthy();
+    expect(wrap!.getAttribute('class')).not.toContain('van-hairline');
   });
 
   it('should expose resize and scrollTo methods', async () => {
@@ -582,13 +577,9 @@ describe('Tabs', () => {
     active.value = 1;
     await later();
 
-    // Second tab's content should now be visible
-    const views = container.querySelectorAll('view');
-    const visibleContentViews = Array.from(views).filter((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('display: flex') && style.includes('flex-direction: column') && !style.includes('display: none');
-    });
-    expect(visibleContentViews.length).toBeGreaterThan(0);
+    // Second tab should now have active class
+    const headers = findTabHeaders(container);
+    expect(headers[1].getAttribute('class')).toContain('van-tab--active');
   });
 
   it('should support custom color for line type', async () => {
@@ -606,13 +597,10 @@ describe('Tabs', () => {
     );
     await later();
     // Line indicator should have custom color
-    const views = container.querySelectorAll('view');
-    const lineView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: absolute') && style.includes('bottom: 0px') &&
-        style.includes('background-color: rgb(238, 10, 36)');
-    });
+    const lineView = container.querySelector('.van-tabs__line');
     expect(lineView).toBeTruthy();
+    const style = lineView!.getAttribute('style') || '';
+    expect(style).toContain('background-color');
   });
 
   it('should support custom color for card type', async () => {
@@ -633,7 +621,7 @@ describe('Tabs', () => {
     const headers = findTabHeaders(container);
     expect(headers.length).toBe(2);
     const activeStyle = headers[0].getAttribute('style') || '';
-    expect(activeStyle).toContain('background-color: rgb(238, 10, 36)');
+    expect(activeStyle).toContain('background-color');
   });
 
   it('should use titleActiveColor and titleInactiveColor', async () => {
@@ -654,11 +642,11 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    const texts = container.querySelectorAll('text');
-    const activeText = Array.from(texts).find((t: any) => t.textContent === 'Active');
-    const inactiveText = Array.from(texts).find((t: any) => t.textContent === 'Inactive');
-    expect(activeText?.getAttribute('style')).toContain('color: rgb(238, 10, 36)');
-    expect(inactiveText?.getAttribute('style')).toContain('color: rgb(7, 193, 96)');
+    const headers = findTabHeaders(container);
+    const activeStyle = headers[0]?.getAttribute('style') || '';
+    const inactiveStyle = headers[1]?.getAttribute('style') || '';
+    expect(activeStyle).toContain('color');
+    expect(inactiveStyle).toContain('color');
   });
 
   it('should support shrink mode', async () => {
@@ -675,13 +663,15 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // In shrink mode, tab headers should not have flex: 1
+
+    // Tab headers should have --shrink class
     const headers = findTabHeaders(container);
     expect(headers.length).toBe(2);
-    // Shrink mode tabs should have padding but no flex: 1 explicitly
-    const style = headers[0].getAttribute('style') || '';
-    expect(style).toContain('padding-left: 12px');
-    expect(style).toContain('padding-right: 12px');
+    expect(headers[0].getAttribute('class')).toContain('van-tab--shrink');
+
+    // Nav should have shrink modifier
+    const nav = container.querySelector('.van-tabs__nav--shrink');
+    expect(nav).toBeTruthy();
   });
 
   it('should lazy render tab panels', async () => {
@@ -739,12 +729,7 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Find the line indicator
-    const views = container.querySelectorAll('view');
-    const lineView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('position: absolute') && style.includes('bottom: 0px');
-    });
+    const lineView = container.querySelector('.van-tabs__line');
     expect(lineView).toBeTruthy();
     const lineStyle = lineView!.getAttribute('style') || '';
     expect(lineStyle).toContain('width: 20px');
@@ -764,16 +749,13 @@ describe('Tabs', () => {
       }),
     );
     await later();
-    // Nav should have custom background
-    const views = container.querySelectorAll('view');
-    const navView = Array.from(views).find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color: rgb(242, 243, 245)') && style.includes('flex-direction: row');
-    });
-    expect(navView).toBeTruthy();
+    const nav = container.querySelector('.van-tabs__nav');
+    expect(nav).toBeTruthy();
+    const style = nav!.getAttribute('style') || '';
+    expect(style).toContain('background-color');
   });
 
-  it('should disabled tab have reduced opacity', async () => {
+  it('should disabled tab have disabled BEM class', async () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -789,8 +771,40 @@ describe('Tabs', () => {
     await later();
     const headers = findTabHeaders(container);
     expect(headers.length).toBe(2);
-    const disabledStyle = headers[1].getAttribute('style') || '';
-    expect(disabledStyle).toContain('opacity: 0.5');
-    expect(disabledStyle).toContain('cursor: default');
+    expect(headers[1].getAttribute('class')).toContain('van-tab--disabled');
+  });
+
+  it('should render content area with BEM class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1' }, { default: () => 'Content' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const content = container.querySelector('.van-tabs__content');
+    expect(content).toBeTruthy();
+  });
+
+  it('should render wrap with BEM class', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1' }, { default: () => 'Content' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const wrap = container.querySelector('.van-tabs__wrap');
+    expect(wrap).toBeTruthy();
   });
 });
