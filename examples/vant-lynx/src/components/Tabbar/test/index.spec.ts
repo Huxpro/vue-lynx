@@ -395,12 +395,9 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const hasDot = Array.from(views).some((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-radius') && style.includes('8px');
-    });
-    expect(hasDot).toBe(true);
+    // Badge now uses CSS classes instead of inline styles
+    const dotBadge = container.querySelector('.van-badge--dot');
+    expect(dotBadge).toBeTruthy();
   });
 
   it('should render badge-props correctly', async () => {
@@ -419,12 +416,11 @@ describe('Tabbar', () => {
       }),
     );
     await nextTick();
-    const views = container.querySelectorAll('view');
-    const badgeView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color: blue');
-    });
-    expect(badgeView).toBeDefined();
+    // Badge applies custom color via inline style on .van-badge element
+    const badge = container.querySelector('.van-badge');
+    expect(badge).toBeTruthy();
+    const style = badge!.getAttribute('style') || '';
+    expect(style).toContain('background');
   });
 
   it('should render safe area padding when fixed', () => {

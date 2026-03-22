@@ -10,3 +10,64 @@
   --van-badge-dot-size: 8px;
   --van-badge-font: -apple-system-font, helvetica neue, arial, sans-serif;
 }
+
+.van-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--van-badge-size);
+  padding: var(--van-badge-padding);
+  color: var(--van-badge-color);
+  font-weight: var(--van-badge-font-weight);
+  font-size: var(--van-badge-font-size);
+  font-family: var(--van-badge-font);
+  line-height: 1.2;
+  text-align: center;
+  background: var(--van-badge-background);
+  border: var(--van-badge-border-width) solid var(--van-background-2, #fff);
+  border-radius: var(--van-radius-max, 9999px);
+
+  &--fixed {
+    position: absolute;
+    transform-origin: 100%;
+  }
+
+  &--top-left {
+    top: 0;
+    left: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  &--top-right {
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+  }
+
+  &--bottom-left {
+    bottom: 0;
+    left: 0;
+    transform: translate(-50%, 50%);
+  }
+
+  &--bottom-right {
+    bottom: 0;
+    right: 0;
+    transform: translate(50%, 50%);
+  }
+
+  &--dot {
+    width: var(--van-badge-dot-size);
+    min-width: 0;
+    height: var(--van-badge-dot-size);
+    background: var(--van-badge-dot-color);
+    border-radius: 100%;
+    border: none;
+    padding: 0;
+  }
+
+  &__wrapper {
+    position: relative;
+  }
+}
