@@ -1618,7 +1618,7 @@
         "Docs: Lynx limitations in components/Dialog/README.md",
         "Commit: feat(dialog): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-action-sheet",
@@ -1640,7 +1640,7 @@
         "Docs: Lynx limitations in components/ActionSheet/README.md",
         "Commit: feat(action-sheet): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-share-sheet",
@@ -1662,7 +1662,7 @@
         "Docs: Lynx limitations in components/ShareSheet/README.md",
         "Commit: feat(share-sheet): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-notify",
@@ -1684,7 +1684,7 @@
         "Docs: Lynx limitations in components/Notify/README.md",
         "Commit: feat(notify): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-popover",

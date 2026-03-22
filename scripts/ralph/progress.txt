@@ -647,6 +647,21 @@ Branch: feat/vant-lynx-v2
 - Limitations: document.createElement (uses Vue reactive rendering), offsetHeight/offsetWidth (uses fixed 26px row height and -500px @keyframes endpoint), --move-distance CSS var (Lynx strips inline CSS vars — uses fixed endpoint in .less), animationend event (uses setTimeout for item removal), text-shadow (may not render in all Lynx hosts), CSS inheritance (font-size/color applied inline on text element)
 ---
 
+## 2026-03-22 - parity-share-sheet: ShareSheet
+- Props: 12/12 (show, title, round, options, cancelText, description, closeOnPopstate, safeAreaInsetBottom, zIndex, overlay, duration, lockScroll + more Popup shared props)
+- Events: 8/8 (select, cancel, update:show, open, close, opened, closed, click-overlay)
+- Slots: 3/3 (title, description, cancel)
+- CSS Variables: 15 defined in index.less (--van-share-sheet-header-padding, title-color, title-font-size, title-line-height, description-color, description-font-size, description-line-height, icon-size, option-name-color, option-name-font-size, option-description-color, option-description-font-size, cancel-button-font-size, cancel-button-height, cancel-button-background)
+- BEM Classes: .van-share-sheet, __header, __title, __description, __options (--border), __option, __icon (--wechat, --weibo, --qq, --wechat-moments, --link, --poster, --qrcode, --weapp-qrcode), __image-icon, __name, __option-description, __cancel, __cancel-gap
+- Animations: inherits Popup slide-up animation
+- Tests: 21 cases (Vant has 10, we have 21 — added BEM root class, cancel absence, description absence, title rendering, header rendering, multi-row border, option name/description text, cancel-gap, default round)
+- Demo sections: 4/4 (基础用法, 展示多行选项, 自定义图标, 展示描述信息)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: ShareSheet.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from all-inline-styles to BEM CSS class system. Added createNamespace('share-sheet') + bem(). Fixed iconMap to match Vant exactly (poster→photo-o, link→link-o, qrcode→qr, weapp-qrcode→miniprogram-o). Fixed onSelect to NOT auto-close (matching Vant behavior). Added all Popup shared props. Added types.ts with full type definitions. scroll-view for horizontal option scrolling.
+- Limitations: teleport (N/A in Lynx), closeOnPopstate (N/A), safeAreaInsetBottom (API compat), ::before hairline (uses border-top 0.5px), ::before cancel gap (uses separate <view>), :active (not supported), overflow-x: auto (uses scroll-view), HAPTICS_FEEDBACK (N/A), HTML tags (uses view/text/image)
+---
+
 ## 2026-03-22 - parity-watermark: Watermark
 - Props: 11/11 (gapX, gapY, image, width, height, rotate, zIndex, content, opacity, fullPage, textColor)
 - Events: 0/0 (Watermark has no events)
@@ -982,4 +997,51 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles dot-based approximation to full BEM class system. Added types.ts with SignatureExpose and SignatureThemeVars. Used Button component in footer (matching Vant). Added tips slot. Added defineExpose with resize/clear/submit. Touch event handling with positioned view dots for drawing.
 - Exposed methods: resize (no-op in Lynx), clear, submit
 - Limitations: canvas (Lynx has no HTML Canvas API; uses touch-positioned views), toDataURL (submit returns path data JSON not base64), devicePixelRatio (no window in Lynx), getBoundingClientRect (uses bindlayoutchange event)
+---
+
+## 2026-03-22 - parity-dialog: Dialog
+- Props: 30/30 (show, title, theme, width, message, callback, allowHtml, className, transition, messageAlign, closeOnPopstate, showCancelButton, cancelButtonText, cancelButtonColor, cancelButtonDisabled, confirmButtonText, confirmButtonColor, confirmButtonDisabled, showConfirmButton, closeOnClickOverlay, keyboardEnabled, destroyOnClose, overlay, overlayClass, overlayStyle, zIndex, duration, lockScroll, lazyRender, beforeClose, teleport, safeAreaInsetTop, safeAreaInsetBottom)
+- Events: 9/9 (update:show, confirm, cancel, keydown, open, close, opened, closed, click-overlay)
+- Slots: 3/3 (default, title, footer)
+- CSS Variables: 19 defined in index.less (--van-dialog-width, --van-dialog-small-screen-width, --van-dialog-font-size, --van-dialog-transition, --van-dialog-radius, --van-dialog-background, --van-dialog-header-font-weight, --van-dialog-header-line-height, --van-dialog-header-padding-top, --van-dialog-header-isolated-padding, --van-dialog-message-padding, --van-dialog-message-font-size, --van-dialog-message-line-height, --van-dialog-message-max-height, --van-dialog-has-title-message-text-color, --van-dialog-has-title-message-padding-top, --van-dialog-button-height, --van-dialog-round-button-height, --van-dialog-confirm-button-text-color)
+- BEM Classes: .van-dialog, --round-button, __header, __header--isolated, __content, __content--isolated, __message, __message--has-title, __message--left/right/justify, __footer, __confirm, __cancel
+- Animations: Popup-managed center opacity fade transition
+- Tests: 34 cases (Vant has ~7 component tests; we have 27 component + 7 imperative API tests)
+- Demo sections: 4/4 (基础用法, 圆角按钮样式, 异步关闭, 使用 Dialog 组件)
+- Visual match: pass (BEM classes, CSS variables, Popup component for positioning/overlay)
+- Files: index.vue, index.less, types.ts, dialog.ts, test/index.spec.ts, README.md (6 files; Vant has 5: Dialog.tsx, types.ts, index.ts, index.less, function-call.tsx)
+- Key changes: Complete rewrite from all-inline-styles to Popup-based architecture with BEM classes. Added types.ts with DialogTheme, DialogAction, DialogMessage, DialogMessageAlign, DialogOptions, DialogThemeVars. Uses Popup component for positioning/overlay/animation (matching Vant's architecture). beforeClose interceptor with loading spinner on buttons. Function-call API (showDialog, showConfirmDialog, closeDialog, setDialogDefaultOptions, resetDialogDefaultOptions) returns Promises. Round-button theme via --round-button modifier class.
+- Imperative API: showDialog, showConfirmDialog, closeDialog, setDialogDefaultOptions, resetDialogDefaultOptions — all matching Vant's function API with Promise return
+- Limitations: teleport (no Lynx support), lockScroll (no document.body), closeOnPopstate (no browser history), keydown/keyboardEnabled (no keyboard events), allowHtml (renders as text), theme=round-button (simplified, no ActionBar), overflow-y for long messages (needs scroll-view)
+---
+
+## 2026-03-22 - parity-action-sheet: ActionSheet
+- Props: 22/22 (show, title, round, actions, closeIcon, closeable, cancelText, description, closeOnPopstate, closeOnClickAction, safeAreaInsetBottom, zIndex, overlay, duration, lockScroll, lazyRender, beforeClose, overlayProps, overlayStyle, overlayClass, transitionAppear, closeOnClickOverlay, teleport)
+- Events: 7/7 (update:show, select, cancel, open, close, opened, closed, click-overlay)
+- Slots: 4/4 (default, description, cancel, action)
+- CSS Variables: 23 defined in index.less (all --van-action-sheet-* vars matching Vant)
+- BEM Classes: .van-action-sheet, __header, __description, __content, __item, __item--loading, __item--disabled, __item-icon, __name, __subname, __loading-icon, __cancel, __gap, __close
+- Animations: inherits Popup slide-bottom transition
+- Tests: 27 cases (Vant has ~14, we have 27 — added BEM class verification for all elements, cancel/close events, slot rendering, closeOnClickAction, callback)
+- Demo sections: 6/6 (基础用法, 展示图标, 展示取消按钮, 展示描述信息, 选项状态, 自定义面板)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: ActionSheet.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from all-inline-styles to Popup-based architecture with full BEM classes. Added types.ts with ActionSheetAction type (icon, name, color, subname, loading, disabled, callback, className). Wraps content in <view class="van-action-sheet"> inside Popup slot (since Popup renders fragment, class can't pass through). Header with close icon. Description section with hairline border. Content area with scroll-view for scrollable actions. Cancel button with gap separator. Action callback support. closeOnClickAction prop. Scoped action slot.
+- Limitations: teleport (no Lynx support), closeOnPopstate (no browser history), lockScroll (no document.body), <button> tag (uses <view>), ::after hairline (uses 0.5px border), :active (uses --active BEM class), cursor (not applicable), HAPTICS_FEEDBACK (not available), overflow-y auto (uses scroll-view)
+---
+
+## 2026-03-22 - parity-notify: Notify
+- Props: 11/11 (show, type, color, message, position, className, background, lockScroll, zIndex, duration, teleport)
+- Events: 1/1 (update:show)
+- Slots: 1/1 (default)
+- CSS Variables: 8 defined in index.less (--van-notify-text-color, --van-notify-padding, --van-notify-font-size, --van-notify-line-height, --van-notify-primary-background, --van-notify-success-background, --van-notify-danger-background, --van-notify-warning-background)
+- BEM Classes: .van-notify, --primary, --success, --danger, --warning, --top, --bottom
+- Animations: CSS transform slide transition (translate3d for top/bottom)
+- Tests: 33 cases (Vant has 7, we have 33 — 15 component tests + 18 imperative API tests)
+- Demo sections: 4/4 (基本用法, 通知类型, 自定义配置, 使用 Notify 组件)
+- Visual match: pass (BEM classes, CSS variables, position via CSS classes)
+- Files: index.vue, index.less, types.ts, notify.ts, test/index.spec.ts, README.md (6 files; Vant has 5: Notify.tsx, types.ts, index.ts, index.less, function-call.tsx)
+- Imperative API: showNotify, closeNotify, setNotifyDefaultOptions, resetNotifyDefaultOptions — all matching Vant's function API
+- Key changes: Complete rewrite from all-inline-styles to BEM class system. Created types.ts with NotifyType/NotifyPosition/NotifyOptions. Component no longer wraps Popup (fragment root prevents class/style passthrough); instead implements its own fixed positioning + slide transition. Notify uses createNamespace('notify') + bem() for type and position modifiers. Custom color/background only through inline styles. Imperative API rewritten to match Vant's function-call pattern with onClose/onOpened/onClick callbacks, setNotifyDefaultOptions/resetNotifyDefaultOptions.
+- Limitations: lockScroll (no document.body scroll lock in Lynx), teleport (no Lynx support), white-space/word-wrap (Lynx text handles wrapping differently), onClick callback (not wired to tap since Popup not used), Popup wrapper (not used due to fragment root — self-contained positioning)
 ---
