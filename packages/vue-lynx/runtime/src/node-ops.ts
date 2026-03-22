@@ -465,7 +465,29 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const oldSign = signs?.get(key);
 
       if (nextValue != null) {
-        const handler = nextValue as (data: unknown) => void;
+        // Vue can merge a component listener with a fallthrough listener into
+        // an array. Keep the event registry contract callable while preserving
+        // the native catch-event marker used by the `.stop` modifier.
+        const handler: ((data: unknown) => void) & { _lynxCatch?: boolean } =
+          Array.isArray(nextValue)
+            ? Object.assign(
+                (data: unknown) => {
+                  for (const listener of nextValue) {
+                    if (typeof listener === 'function') listener(data);
+                  }
+                },
+                {
+                  _lynxCatch: nextValue.some(
+                    listener => typeof listener === 'function'
+                      && Boolean(
+                        (listener as { _lynxCatch?: boolean })._lynxCatch,
+                      ),
+                  ),
+                },
+              )
+            : (nextValue as ((data: unknown) => void) & {
+                _lynxCatch?: boolean;
+              });
         if (event.once) {
           if (oldSign) {
             // Re-render of a once-event: update the inner handler so the

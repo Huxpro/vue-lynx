@@ -15,20 +15,25 @@ function goBack() {
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: bgColor }">
-    <!-- Header -->
+  <view :style="{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: bgColor }">
+    <!-- Header (fixed) -->
     <view :style="{
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
+      padding: '16px',
       backgroundColor: headerBg,
     }">
-      <text :style="{ fontSize: 16, color: '#1989fa', marginRight: 8 }" @tap="goBack">&lt; Back</text>
-      <text :style="{ fontSize: 18, fontWeight: 'bold', color: textColor }">{{ title }}</text>
+      <text :style="{ fontSize: '16px', color: '#1989fa', marginRight: '8px' }" @tap="goBack">&lt; Back</text>
+      <text :style="{ fontSize: '18px', fontWeight: 'bold', color: textColor }">{{ title }}</text>
     </view>
 
-    <!-- Content -->
-    <slot />
+    <!-- Scrollable Content -->
+    <scroll-view
+      scroll-orientation="vertical"
+      :style="{ flex: 1 }"
+    >
+      <slot />
+    </scroll-view>
   </view>
 </template>
