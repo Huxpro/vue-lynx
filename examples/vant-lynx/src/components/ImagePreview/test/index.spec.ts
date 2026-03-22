@@ -64,11 +64,12 @@ describe('ImagePreview', () => {
         },
       }),
     );
-    // Close button now uses Icon component (renders unicode close char)
+    // Close button uses Icon with name="clear", font char '\ue68b'
     const textEls = Array.from(container.querySelectorAll('text'));
     const closeBtn = textEls.find((t) => {
       const content = t.textContent || '';
-      return content === '\u2715' || content === '\u00D7' || content === 'X' || content === '✕';
+      // Check for vant-icon font character or legacy unicode fallbacks
+      return content === '\ue68b' || content === '\ue690' || content === '\u2715' || content === '\u00D7';
     });
     expect(closeBtn).toBeTruthy();
   });

@@ -1,11 +1,37 @@
+// Icon styles matching Vant's icon/index.less
+// @font-face for the Vant icon font
+// Since Lynx supports @font-face, we load the font via CDN URL.
+
+@font-face {
+  font-family: 'vant-icon';
+  src: url('https://fastly.jsdelivr.net/npm/@vant/icons@3.0.2/src/vant-icon.woff2')
+    format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
   --van-icon-font-family: 'vant-icon';
   --van-icon-font-size: inherit;
 }
 
 .van-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--van-icon-font-size);
+
   &__image {
     width: 1em;
     height: 1em;
+  }
+
+  &__font {
+    font-family: var(--van-icon-font-family, 'vant-icon');
+    font-style: normal;
+    font-weight: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
   }
 }

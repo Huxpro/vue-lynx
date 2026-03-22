@@ -57,10 +57,10 @@ describe('NavBar', () => {
         },
       }),
     );
-    // Icon component renders unicode '\u2039' (‹) for arrow-left
+    // Icon component renders vant-icon font char '\ue668' for arrow-left
     const textEls = container.querySelectorAll('text');
     const hasArrow = Array.from(textEls).some(
-      (t) => t.textContent === '\u2039',
+      (t) => t.textContent === '\ue668',
     );
     expect(hasArrow).toBe(true);
   });
