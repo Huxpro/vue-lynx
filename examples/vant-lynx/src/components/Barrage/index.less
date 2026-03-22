@@ -1,6 +1,40 @@
 :root {
   --van-barrage-font-size: 16px;
   --van-barrage-space: 10px;
-  --van-barrage-color: var(--van-white, #fff);
   --van-barrage-font: inherit;
+  --van-barrage-color: var(--van-white, #fff);
+}
+
+.van-barrage {
+  position: relative;
+  overflow: hidden;
+
+  &__item {
+    position: absolute;
+    right: 0;
+    z-index: 99;
+    padding-bottom: var(--van-barrage-space);
+    opacity: 0.75;
+    line-height: 1;
+    font-size: var(--van-barrage-font-size);
+    font-weight: bold;
+    color: var(--van-barrage-color);
+    text-shadow:
+      1px 0 1px #000000,
+      0 1px 1px #000000,
+      0 -1px 1px #000000,
+      -1px 0 1px #000000;
+    will-change: transform;
+    transform: translateX(110%);
+    animation: van-barrage 4000ms linear forwards;
+  }
+}
+
+@keyframes van-barrage {
+  from {
+    transform: translateX(110%);
+  }
+  to {
+    transform: translateX(-500px);
+  }
 }

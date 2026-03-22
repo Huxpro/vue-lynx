@@ -1024,7 +1024,7 @@
         "Docs: Lynx limitations in components/RollingText/README.md",
         "Commit: feat(rolling-text): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-barrage",
@@ -1046,7 +1046,7 @@
         "Docs: Lynx limitations in components/Barrage/README.md",
         "Commit: feat(barrage): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-watermark",

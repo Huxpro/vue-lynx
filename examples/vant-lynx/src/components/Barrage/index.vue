@@ -1,67 +1,28 @@
 <!--
-  Vant Feature Parity Report:
-  - Component: Barrage
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
--->
-<!--
-  Vant Barrage - Feature Parity Report
-  =====================================
-  Vant Source: packages/vant/src/barrage/Barrage.tsx
-
-  Props (6/6 supported):
-    - modelValue: BarrageItem[]        [YES]
-    - autoPlay: boolean (default true) [YES]
-    - rows: number (default 4)         [YES]
-    - top: number (default 10)         [YES]
-    - duration: number (default 4000)  [YES]
-    - delay: number (default 300)      [YES]
-
-  Events (1/1 supported):
-    - update:modelValue                [YES]
-
-  Slots (1/1 supported):
-    - default                          [YES]
-
-  Expose (2/2 supported):
-    - play()                           [YES]
-    - pause()                          [YES]
-
-  Lynx Adaptations:
-    - Vant uses DOM createElement + CSS @keyframes animation; Lynx has no CSS
-      keyframes, so we use requestAnimationFrame-driven position updates.
-    - Vant removes items via `animationend` event on DOM spans; we use elapsed
-      time filtering in rAF tick.
-    - Vant calculates row height from offsetHeight; we use a fixed 32px row
-      height since Lynx lacks offsetHeight.
-    - Uses `display: 'flex'` explicitly on barrage item wrappers.
-
-  Gaps:
-    - No CSS animation (Lynx limitation) -- uses JS-based position tracking
-    - No real DOM measurement -- fixed row height (32px)
-    - Items removed from modelValue differ from Vant (Vant emits update:modelValue
-      on animationend to remove items; we do time-based cleanup)
+  Lynx Limitations:
+  - document.createElement: Vant creates DOM elements imperatively; uses Vue reactive rendering instead
+  - offsetHeight: Cannot measure element height; uses fixed row height (26px based on font-size + space)
+  - offsetWidth: Cannot measure container width; uses fixed animation endpoint (-500px in @keyframes)
+  - --move-distance CSS var: Lynx strips CSS custom properties from inline styles; uses fixed @keyframes endpoint
+  - animationend event: Uses setTimeout for item removal instead of animationend event listener
+  - text-shadow: May not render in all Lynx hosts
+  - user-select: Not applicable in Lynx touch environment
+  - CSS inheritance: font-size/color on parent view may not inherit to child text element
 -->
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue-lynx';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue-lynx';
+import { createNamespace } from '../../utils';
+import type { BarrageItem, BarrageExpose } from './types';
+import './index.less';
 
-export interface BarrageItem {
-  id?: number | string;
-  text: string | number;
-}
-
-export interface BarrageProps {
+const props = withDefaults(defineProps<{
   modelValue?: BarrageItem[];
   autoPlay?: boolean;
-  rows?: number;
-  top?: number;
-  duration?: number;
+  rows?: number | string;
+  top?: number | string;
+  duration?: number | string;
   delay?: number;
-}
-
-const props = withDefaults(defineProps<BarrageProps>(), {
+}>(), {
   modelValue: () => [],
   autoPlay: true,
   rows: 4,
@@ -74,158 +35,179 @@ const emit = defineEmits<{
   'update:modelValue': [value: BarrageItem[]];
 }>();
 
-interface ActiveBarrageItem {
-  id: number;
-  text: string;
-  row: number;
-  startTime: number;
-  originalId?: number | string;
+const [, bem] = createNamespace('barrage');
+
+// Fixed item height: font-size(16px) * line-height(1) + padding-bottom(10px) = 26px
+// Matches Vant's item.offsetHeight measurement
+const ITEM_HEIGHT = 26;
+
+interface InternalItem {
+  key: string;
+  originalId: string | number;
+  text: string | number;
+  top: number;
+  delay: number;
 }
 
-const activeItems = ref<ActiveBarrageItem[]>([]);
-const idCounter = ref(0);
-const containerWidth = ref(320);
-const playing = ref(props.autoPlay);
-let intervalId: ReturnType<typeof setInterval> | null = null;
-const pendingQueue = ref<{ text: string; id?: number | string }[]>([]);
+const activeItems = ref<InternalItem[]>([]);
+let totalCount = 0;
+let isInitBarrage = true;
+const isPlay = ref(false);
 
-const now = ref(Date.now());
-let rafId: number | null = null;
+interface TimerEntry {
+  timer: ReturnType<typeof setTimeout>;
+  startedAt: number;
+  remainingTime: number;
+  key: string;
+  originalId: string | number;
+}
 
-function tick() {
-  now.value = Date.now();
-  const expiredItems: ActiveBarrageItem[] = [];
-  activeItems.value = activeItems.value.filter((item) => {
-    const elapsed = now.value - item.startTime;
-    if (elapsed >= props.duration + 1000) {
-      expiredItems.push(item);
-      return false;
+const timerMap = new Map<string, TimerEntry>();
+
+function removeItem(key: string, originalId: string | number) {
+  activeItems.value = activeItems.value.filter(i => i.key !== key);
+  timerMap.delete(key);
+  emit(
+    'update:modelValue',
+    [...props.modelValue].filter(v => String(v.id) !== String(originalId)),
+  );
+}
+
+function scheduleRemoval(key: string, originalId: string | number, totalTime: number) {
+  if (!isPlay.value) {
+    // When paused, store entry but don't start timer
+    timerMap.set(key, {
+      timer: 0 as unknown as ReturnType<typeof setTimeout>,
+      startedAt: Date.now(),
+      remainingTime: totalTime,
+      key,
+      originalId,
+    });
+    return;
+  }
+
+  const timer = setTimeout(() => {
+    removeItem(key, originalId);
+  }, totalTime);
+
+  timerMap.set(key, {
+    timer,
+    startedAt: Date.now(),
+    remainingTime: totalTime,
+    key,
+    originalId,
+  });
+}
+
+function appendItem(item: BarrageItem, index: number) {
+  const delay = isInitBarrage ? index * Number(props.delay) : Number(props.delay);
+  totalCount++;
+  const row = (totalCount - 1) % Number(props.rows);
+  const top = row * ITEM_HEIGHT + Number(props.top);
+  const key = `barrage-${totalCount}`;
+
+  activeItems.value = [...activeItems.value, {
+    key,
+    originalId: item.id,
+    text: item.text,
+    top,
+    delay,
+  }];
+
+  scheduleRemoval(key, item.id, Number(props.duration) + delay);
+}
+
+function updateBarrages(newValue: BarrageItem[], oldValue: BarrageItem[]) {
+  const map = new Map(oldValue.map(item => [item.id, item]));
+
+  newValue.forEach((item, i) => {
+    if (map.has(item.id)) {
+      map.delete(item.id);
+    } else {
+      appendItem(item, i);
     }
-    return true;
   });
 
-  // Emit update:modelValue to remove expired items (matching Vant behavior)
-  if (expiredItems.length > 0 && props.modelValue.length > 0) {
-    const expiredIds = new Set(
-      expiredItems.map((item) => String(item.originalId)),
+  map.forEach(item => {
+    activeItems.value = activeItems.value.filter(
+      i => String(i.originalId) !== String(item.id),
     );
-    const updated = props.modelValue.filter(
-      (item) => !expiredIds.has(String(item.id)),
+    const entry = [...timerMap.entries()].find(
+      ([, e]) => String(e.originalId) === String(item.id),
     );
-    if (updated.length !== props.modelValue.length) {
-      emit('update:modelValue', updated);
+    if (entry) {
+      clearTimeout(entry[1].timer);
+      timerMap.delete(entry[0]);
     }
-  }
+  });
 
-  rafId = requestAnimationFrame(tick);
-}
-
-function getItemLeft(item: ActiveBarrageItem): number {
-  const elapsed = now.value - item.startTime;
-  const progress = Math.min(elapsed / props.duration, 1);
-  return containerWidth.value * (1 - progress) - progress * 200;
-}
-
-function addBarrage(text: string, originalId?: number | string) {
-  const row = idCounter.value % props.rows;
-  const item: ActiveBarrageItem = {
-    id: ++idCounter.value,
-    text,
-    row,
-    startTime: Date.now(),
-    originalId,
-  };
-  activeItems.value = [...activeItems.value, item];
-}
-
-function play() {
-  playing.value = true;
-  if (!intervalId) {
-    intervalId = setInterval(processQueue, props.delay);
-  }
-}
-
-function pause() {
-  playing.value = false;
+  isInitBarrage = false;
 }
 
 watch(
-  () => props.modelValue,
-  (newVal, oldVal) => {
-    const oldLen = oldVal ? oldVal.length : 0;
-    const added = newVal.slice(oldLen);
-    added.forEach((item) =>
-      pendingQueue.value.push({ text: String(item.text), id: item.id }),
-    );
-  },
+  () => props.modelValue.slice(),
+  (newValue, oldValue) => updateBarrages(newValue ?? [], oldValue ?? []),
   { deep: true },
 );
 
-function processQueue() {
-  if (!playing.value) return;
-  const item = pendingQueue.value.shift();
-  if (item) {
-    addBarrage(item.text, item.id);
-  }
-}
-
-onMounted(() => {
-  rafId = requestAnimationFrame(tick);
-
-  // Initialize from existing model value
-  if (props.modelValue.length > 0) {
-    props.modelValue.forEach((item) =>
-      pendingQueue.value.push({ text: String(item.text), id: item.id }),
-    );
-  }
-
-  if (props.autoPlay) {
-    intervalId = setInterval(processQueue, props.delay);
-  }
+onMounted(async () => {
+  isPlay.value = props.autoPlay;
+  await nextTick();
+  updateBarrages(props.modelValue, []);
 });
 
 onUnmounted(() => {
-  if (rafId) cancelAnimationFrame(rafId);
-  if (intervalId) clearInterval(intervalId);
+  timerMap.forEach(entry => clearTimeout(entry.timer));
+  timerMap.clear();
 });
 
-defineExpose({ play, pause });
+function play() {
+  isPlay.value = true;
+  const now = Date.now();
+  timerMap.forEach((entry) => {
+    const elapsed = now - entry.startedAt;
+    const remaining = Math.max(0, entry.remainingTime - elapsed);
+    entry.startedAt = now;
+    entry.remainingTime = remaining;
+    entry.timer = setTimeout(() => {
+      removeItem(entry.key, entry.originalId);
+    }, remaining);
+  });
+}
 
-const rowHeight = computed(() => 32);
-const containerHeight = computed(() => props.rows * rowHeight.value);
+function pause() {
+  isPlay.value = false;
+  const now = Date.now();
+  timerMap.forEach((entry) => {
+    clearTimeout(entry.timer);
+    const elapsed = now - entry.startedAt;
+    entry.remainingTime = Math.max(0, entry.remainingTime - elapsed);
+    entry.startedAt = now;
+  });
+}
+
+defineExpose<BarrageExpose>({ play, pause });
+
+function getItemStyle(item: InternalItem) {
+  return {
+    top: `${item.top}px`,
+    animationDuration: `${Number(props.duration)}ms`,
+    animationDelay: `${item.delay}ms`,
+    animationPlayState: isPlay.value ? 'running' : 'paused',
+  };
+}
 </script>
 
 <template>
-  <view :style="{
-    position: 'relative',
-    width: '100%',
-    height: containerHeight,
-    overflow: 'hidden',
-    backgroundColor: 'transparent',
-    marginTop: top,
-    display: 'flex',
-    flexDirection: 'column',
-  }">
+  <view :class="bem()">
     <slot />
     <view
       v-for="item in activeItems"
-      :key="item.id"
-      :style="{
-        position: 'absolute',
-        top: item.row * rowHeight,
-        left: getItemLeft(item),
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingLeft: 8,
-        paddingRight: 8,
-        paddingTop: 4,
-        paddingBottom: 4,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 12,
-      }"
+      :key="item.key"
+      :class="bem('item')"
+      :style="getItemStyle(item)"
     >
-      <text :style="{ fontSize: 14, color: '#fff', whiteSpace: 'nowrap' }">{{ item.text }}</text>
+      <text :style="{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }">{{ String(item.text) }}</text>
     </view>
   </view>
 </template>

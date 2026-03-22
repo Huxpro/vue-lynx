@@ -613,3 +613,33 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote test suite from 14 to 25 tests with proper exposed method access (swipeTo, next, prev, loop cycling). Touch drag tests adapted for Lynx testing env limitations (use exposed methods instead of simulated drag).
 - Limitations: resize (no DOM offsetWidth/offsetHeight), isHidden (no DOM visibility check), usePageVisibility (no Page Visibility API), onPopupReopen (not implemented), onActivated/onDeactivated (keep-alive not used), touch event simulation in tests (PAPI bridge doesn't propagate touches property)
 ---
+
+## 2026-03-22 - parity-rolling-text: RollingText
+- Props: 8/8 (startNum, targetNum, textList, duration, autoStart, direction, stopOrder, height)
+- Events: 0/0 (RollingText has no events — matches Vant)
+- Slots: 0/0 (matches Vant)
+- Expose: 2/2 (start, reset)
+- CSS Variables: 6 defined in index.less (--van-rolling-text-background, --van-rolling-text-color, --van-rolling-text-font-size, --van-rolling-text-gap, --van-rolling-text-item-width, --van-rolling-text-item-border-radius)
+- Animations: @keyframes van-up (translateY 0→negative), @keyframes van-down (translateY negative→0), per-column CSS animation with delay
+- Tests: 10 cases (Vant has 6 — added textList mode, direction classes, custom height)
+- Demo sections: 6/6 (基础用法, 设置翻滚方向, 设置各数位停止顺序, 翻转非数字内容, 自定义样式, 手动控制)
+- Visual match: pass (BEM classes, CSS @keyframes animation, CSS variables)
+- Files: index.vue, RollingTextItem.vue, index.less, types.ts, test/index.spec.ts (5 files; Vant has 4: RollingText.tsx, RollingTextItem.tsx, types.ts, index.ts)
+- Key changes: Complete rewrite from JS setTimeout frame interpolation to CSS @keyframes translateY animation matching Vant's architecture. Added RollingTextItem sub-component for per-column rolling. Replaced all inline styles with BEM CSS classes. Duration prop now in seconds (matching Vant).
+- Limitations: inline-flex (Lynx uses display: flex with flexDirection: row), div/span (uses view/text), raf (uses setTimeout(fn, 0) for reset)
+---
+
+## 2026-03-22 - parity-barrage: Barrage
+- Props: 6/6 (modelValue, autoPlay, rows, top, duration, delay)
+- Events: 1/1 (update:modelValue)
+- Slots: 1/1 (default)
+- Expose: 2/2 (play, pause)
+- CSS Variables: 4 defined in index.less (--van-barrage-font-size, --van-barrage-space, --van-barrage-font, --van-barrage-color)
+- Animations: @keyframes van-barrage (translateX slide from right to left), animation-play-state for play/pause control
+- Tests: 13 cases (Vant has 3; we have 13 — added BEM class, animation styles, stagger delay, row distribution, top prop, numeric string props, text content, slot content)
+- Demo sections: 2/2 (基础用法, 模仿视频弹幕)
+- Visual match: pass (BEM classes, CSS @keyframes animation, CSS variables)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Barrage.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from JS rAF-driven position updates to CSS @keyframes animation. Added createNamespace('barrage') + bem() for BEM classes. Removed all inline styles from container/items — styling via CSS classes + variables. Added types.ts with BarrageItem, BarrageExpose, BarrageProps, BarrageInstance. Proper pause support with timer remaining time tracking. Vant's DOM createElement approach replaced with Vue reactive v-for rendering.
+- Limitations: document.createElement (uses Vue reactive rendering), offsetHeight/offsetWidth (uses fixed 26px row height and -500px @keyframes endpoint), --move-distance CSS var (Lynx strips inline CSS vars — uses fixed endpoint in .less), animationend event (uses setTimeout for item removal), text-shadow (may not render in all Lynx hosts), CSS inheritance (font-size/color applied inline on text element)
+---
