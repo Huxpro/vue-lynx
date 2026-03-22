@@ -14,6 +14,22 @@ export function isNumeric(val: Numeric): boolean {
   return typeof val === 'number' || /^\d+(\.\d+)?$/.test(String(val));
 }
 
+export function padZero(num: Numeric, targetLength = 2): string {
+  let str = String(num);
+  while (str.length < targetLength) {
+    str = '0' + str;
+  }
+  return str;
+}
+
+export function clamp(num: number, min: number, max: number): number {
+  return Math.min(Math.max(num, min), max);
+}
+
+export function isSameValue(newValue: unknown, oldValue: unknown): boolean {
+  return JSON.stringify(newValue) === JSON.stringify(oldValue);
+}
+
 export const numericProp = [Number, String];
 
 export function makeStringProp<T extends string>(defaultVal: T) {

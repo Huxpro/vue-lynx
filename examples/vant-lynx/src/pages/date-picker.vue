@@ -2,70 +2,100 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import DatePicker from '../components/DatePicker/index.vue';
-const dateValue = ref<string[]>([]);
-const yearMonthValue = ref<string[]>([]);
-const datehourValue = ref<string[]>([]);
+import type { PickerOption } from '../components/Picker/types';
 
-const dateResult = ref('');
-const yearMonthResult = ref('');
-const datehourResult = ref('');
+const minDate = new Date(2020, 0, 1);
+const maxDate = new Date(2025, 5, 1);
 
-function onDateConfirm(val: string[]) {
-  dateResult.value = val.join('-');
-}
+// 选择年月日
+const basicDate = ref(['2021', '01', '01']);
 
-function onYearMonthConfirm(val: string[]) {
-  yearMonthResult.value = val.join('-');
-}
+// 选择年月
+const yearMonthDate = ref<string[]>([]);
 
-function onDatehourConfirm(val: string[]) {
-  datehourResult.value = `${val[0]}-${val[1]}-${val[2]} ${val[3]}:00`;
-}
+// 格式化选项
+const formatterDate = ref<string[]>([]);
+const formatter = (type: string, option: PickerOption): PickerOption => {
+  if (type === 'year') {
+    option.text = `${option.text}年`;
+  } else if (type === 'month') {
+    option.text = `${option.text}月`;
+  } else if (type === 'day') {
+    option.text = `${option.text}日`;
+  }
+  return option;
+};
+
+// 过滤选项
+const filterDate = ref<string[]>([]);
+const filter = (type: string, options: PickerOption[]): PickerOption[] => {
+  if (type === 'month') {
+    return options.filter((option) => Number(option.value) % 6 === 0);
+  }
+  return options;
+};
 </script>
 
 <template>
-  <DemoPage title="DatePicker">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Default Date Picker -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Select Date (Year / Month / Day)</text>
-      <view :style="{ marginBottom: 8, borderRadius: 8, overflow: 'hidden' }">
-        <DatePicker
-          v-model="dateValue"
-          title="Select Date"
-          @confirm="onDateConfirm"
-        />
-      </view>
-      <view v-if="dateResult" :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ dateResult }}</text>
-      </view>
+  <DemoPage title="DatePicker 日期选择">
+    <!-- 选择年月日 -->
+    <view class="demo-date-picker-block">
+      <text class="demo-date-picker-title">选择年月日</text>
+      <DatePicker
+        v-model="basicDate"
+        title="选择日期"
+        :min-date="minDate"
+        :max-date="maxDate"
+      />
+    </view>
 
-      <!-- Year Month Only -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 8, marginBottom: 12 }">Year / Month Only</text>
-      <view :style="{ marginBottom: 8, borderRadius: 8, overflow: 'hidden' }">
-        <DatePicker
-          v-model="yearMonthValue"
-          type="year-month"
-          title="Select Year & Month"
-          @confirm="onYearMonthConfirm"
-        />
-      </view>
-      <view v-if="yearMonthResult" :style="{ marginBottom: 16, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ yearMonthResult }}</text>
-      </view>
+    <!-- 选择年月 -->
+    <view class="demo-date-picker-block">
+      <text class="demo-date-picker-title">选择年月</text>
+      <DatePicker
+        v-model="yearMonthDate"
+        title="选择年月"
+        :min-date="minDate"
+        :max-date="maxDate"
+        :columns-type="['year', 'month']"
+      />
+    </view>
 
-      <!-- Date + Hour -->
-      <text :style="{ fontSize: 14, color: '#969799', marginTop: 8, marginBottom: 12 }">Date + Hour</text>
-      <view :style="{ borderRadius: 8, overflow: 'hidden' }">
-        <DatePicker
-          v-model="datehourValue"
-          type="datehour"
-          title="Select Date & Hour"
-          @confirm="onDatehourConfirm"
-        />
-      </view>
-      <view v-if="datehourResult" :style="{ marginTop: 8, padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">Selected: {{ datehourResult }}</text>
-      </view>
+    <!-- 格式化选项 -->
+    <view class="demo-date-picker-block">
+      <text class="demo-date-picker-title">格式化选项</text>
+      <DatePicker
+        v-model="formatterDate"
+        title="选择日期"
+        :min-date="minDate"
+        :max-date="maxDate"
+        :formatter="formatter"
+      />
+    </view>
+
+    <!-- 过滤选项 -->
+    <view class="demo-date-picker-block">
+      <text class="demo-date-picker-title">过滤选项</text>
+      <DatePicker
+        v-model="filterDate"
+        title="选择日期"
+        :min-date="minDate"
+        :max-date="maxDate"
+        :filter="filter"
+      />
     </view>
   </DemoPage>
 </template>
+
+<style>
+.demo-date-picker-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-date-picker-title {
+  font-size: 14px;
+  color: #969799;
+  padding: 12px 16px 8px;
+}
+</style>
