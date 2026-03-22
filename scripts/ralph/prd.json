@@ -210,7 +210,7 @@
         "Docs: Lynx limitations in components/Cell/README.md",
         "Commit: feat(cell): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-cell-group",
@@ -232,7 +232,7 @@
         "Docs: Lynx limitations in components/CellGroup/README.md",
         "Commit: feat(cell-group): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-toast",
@@ -254,7 +254,7 @@
         "Docs: Lynx limitations in components/Toast/README.md",
         "Commit: feat(toast): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tag",

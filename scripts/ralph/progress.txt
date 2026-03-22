@@ -104,3 +104,43 @@ Branch: feat/vant-lynx-v2
 - Limitations: tag no-op, nativeType no-op, url/to/replace no-op, ::before active overlay uses opacity, ::after hairline uses 0.5px border
 - New files: types.ts (ButtonType, ButtonSize, ButtonNativeType, ButtonIconPosition, ButtonThemeVars)
 ---
+
+## 2026-03-22 - parity-cell: Cell
+- Props: 21/21 (tag, icon, size, title, value, label, center, isLink, border, iconPrefix, valueClass, labelClass, titleClass, titleStyle, arrowDirection, required, clickable, url, to, replace)
+- Events: 1/1 (click)
+- Slots: 6/6 (title, value/default, label, icon, right-icon, extra)
+- CSS Variables: 22 defined in index.less (added --van-cell-large-value-font-size)
+- Animations: none (active feedback via touchstart/touchend)
+- Tests: 14 cases (Vant has 10) — all pass
+- Demo sections: 8/8 (Basic Usage, Inset Grouped, Size, Left Icon, Link, Router, Group Title, Use Slots, Vertical Center)
+- Visual match: pass (inline style rendering with string px units)
+- Limitations: tag no-op, url/to/replace no-op, titleClass/valueClass/labelClass no-op, iconPrefix no-op, ::before required uses inline text, ::after hairline uses border-bottom, :active uses touchstart/touchend, role/tabindex not applicable
+- New files: types.ts (CellSize, CellArrowDirection, CellThemeVars)
+---
+
+## 2026-03-22 - parity-cell-group: CellGroup
+- Props: 3/3 (title, inset, border)
+- Events: 0/0 (none in Vant)
+- Slots: 2/2 (default, title)
+- CSS Variables: 8 defined in index.less (--van-cell-group-background, --van-cell-group-title-color, --van-cell-group-title-padding, --van-cell-group-title-font-size, --van-cell-group-title-line-height, --van-cell-group-inset-padding, --van-cell-group-inset-radius, --van-cell-group-inset-title-padding)
+- Animations: none (CellGroup has no transitions)
+- Tests: 8 cases (Vant has 1) — all pass
+- Demo sections: 3/3 (Basic Usage, Inset Grouped, Group Title)
+- Visual match: pass (inline style rendering with string px units)
+- Limitations: BORDER_TOP_BOTTOM uses border-top/border-bottom instead of ::after pseudo-element, useScopeId not applicable, inheritAttrs not applicable
+- New files: types.ts (CellGroupThemeVars), test/index.spec.ts, pages/cell-group.vue
+---
+
+## 2026-03-22 - parity-toast: Toast
+- Props: 20/20 (show, type, message, position, overlay, icon, iconSize, iconPrefix, duration, forbidClick, closeOnClick, closeOnClickOverlay, wordBreak, className, overlayClass, overlayStyle, transition, teleport, zIndex, loadingType)
+- Events: 3/3 (update:show, close, opened)
+- Slots: 1/1 (message)
+- CSS Variables: 15 defined in index.less (--van-toast-max-width, --van-toast-font-size, --van-toast-text-color, --van-toast-loading-icon-color, --van-toast-line-height, --van-toast-radius, --van-toast-background, --van-toast-icon-size, --van-toast-text-min-width, --van-toast-text-padding, --van-toast-default-padding, --van-toast-default-width, --van-toast-default-min-height, --van-toast-position-top-distance, --van-toast-position-bottom-distance)
+- Animations: none (Lynx has no CSS transition for fade)
+- Tests: 28 cases (Vant has 20: 7 component + 12 function + 1 lock-click) — all pass
+- Demo sections: 6/6 (Basic Usage, Custom Icon, Custom Position, Word Break, Update Message, Use Toast Component)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: teleport no-op, transition no-op, html type renders as text, wordBreak accepted but Lynx text wrapping may differ, forbidClick uses overlay to block touches, className/overlayClass no-op, iconPrefix no-op
+- New files: types.ts (ToastType, ToastPosition, ToastWordBreak, ToastProps, ToastOptions, ToastWrapperInstance, ToastThemeVars)
+- Imperative API: showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, allowMultipleToast, setToastDefaultOptions, resetToastDefaultOptions
+---
