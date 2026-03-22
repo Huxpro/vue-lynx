@@ -5,11 +5,12 @@
   - scroll-spy: no auto-detection of active anchor from scroll position (no IntersectionObserver/scroll event on parent)
   - touch-move gesture: sidebar supports tap only, not drag-across-indices (no document.elementFromPoint)
   - stickyOffsetTop: accepted for API compat but has no effect without sticky anchor support
-  - position: fixed sidebar replaced with absolute positioning within flex container
 -->
 <script setup lang="ts">
 import { computed, provide, ref, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import { INDEX_BAR_KEY, type Numeric } from './types';
+import './index.less';
 
 export interface IndexBarProps {
   indexList?: Numeric[];
@@ -36,6 +37,8 @@ const emit = defineEmits<{
   change: [index: Numeric];
 }>();
 
+const [, bem] = createNamespace('index-bar');
+
 const activeAnchor = ref<Numeric>('');
 
 watch(activeAnchor, (value) => {
@@ -56,66 +59,25 @@ provide(INDEX_BAR_KEY, {
 
 defineExpose({ scrollTo });
 
-function addUnit(value: Numeric | undefined): string | undefined {
-  if (value === undefined || value === null) return undefined;
-  return typeof value === 'number' ? `${value}px` : value;
-}
-
-const containerStyle = computed(() => ({
-  position: 'relative' as const,
-  display: 'flex',
-  flexDirection: 'row' as const,
-  flex: 1,
-}));
-
-const contentStyle = computed(() => ({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column' as const,
-}));
-
 const sidebarStyle = computed(() => {
-  const zIndex = props.zIndex !== undefined ? +props.zIndex + 1 : 2;
-  return {
-    position: 'absolute' as const,
-    right: '0px',
-    top: '0px',
-    bottom: '0px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    width: '20px',
-    zIndex,
-  };
+  if (props.zIndex !== undefined) {
+    return { zIndex: +props.zIndex + 1 };
+  }
+  return undefined;
 });
-
-const indexItemBaseStyle = {
-  fontSize: '10px',
-  lineHeight: '14px',
-  textAlign: 'center' as const,
-  fontWeight: 'bold' as const,
-  width: '20px',
-  height: '14px',
-  paddingLeft: '16px',
-  paddingRight: '4px',
-};
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <view :style="contentStyle">
+  <view :class="bem()">
+    <view :class="bem('wrapper')">
       <slot />
     </view>
-    <view :style="sidebarStyle">
+    <view :class="bem('sidebar')" :style="sidebarStyle">
       <text
         v-for="index in indexList"
         :key="String(index)"
-        :style="{
-          ...indexItemBaseStyle,
-          color: activeAnchor === index ? (highlightColor || '#1989fa') : '#323233',
-          fontWeight: activeAnchor === index ? 'bold' : 'normal',
-        }"
+        :class="bem('index', { active: activeAnchor === index })"
+        :style="activeAnchor === index && highlightColor ? { color: highlightColor } : undefined"
         @tap="scrollTo(index)"
       >{{ index }}</text>
     </view>

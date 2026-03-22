@@ -1,13 +1,15 @@
 <!--
   Lynx Limitations:
-  - sticky positioning: no-op (Lynx lacks position: sticky and scroll-based DOM measurement)
-  - BORDER_BOTTOM class: replaced with inline border style
+  - sticky positioning: no-op (Lynx lacks scroll-based DOM measurement for sticky behavior)
   - getBoundingClientRect/useRect: not available for scroll tracking
   - position: fixed anchor: not supported (no scroll-spy to trigger sticky state)
+  - BORDER_BOTTOM: Vant adds bottom border when sticky, not applicable here
 -->
 <script setup lang="ts">
-import { computed, inject, type Ref } from 'vue-lynx';
+import { inject, type Ref } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import { INDEX_BAR_KEY, type Numeric } from '../IndexBar/types';
+import './index.less';
 
 export interface IndexAnchorProps {
   index?: Numeric;
@@ -15,7 +17,10 @@ export interface IndexAnchorProps {
 
 const props = defineProps<IndexAnchorProps>();
 
-const indexBar = inject<{
+const [, bem] = createNamespace('index-anchor');
+
+// Inject parent context for future sticky support
+const _indexBar = inject<{
   props: {
     sticky: boolean;
     zIndex: Numeric | undefined;
@@ -25,33 +30,12 @@ const indexBar = inject<{
   };
   activeAnchor: Ref<Numeric>;
 }>(INDEX_BAR_KEY);
-
-const isActive = computed(() => {
-  return indexBar?.activeAnchor.value === props.index;
-});
-
-const anchorStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  height: '32px',
-  paddingLeft: '16px',
-  paddingRight: '16px',
-  backgroundColor: isActive.value ? '#f2f3f5' : 'transparent',
-}));
-
-const textStyle = computed(() => ({
-  fontSize: '14px',
-  fontWeight: 'bold' as const,
-  lineHeight: '32px',
-  color: isActive.value ? (indexBar?.props.highlightColor || '#1989fa') : '#323233',
-}));
 </script>
 
 <template>
-  <view :style="anchorStyle">
+  <view :class="bem()">
     <slot>
-      <text :style="textStyle">{{ index }}</text>
+      <text>{{ index }}</text>
     </slot>
   </view>
 </template>

@@ -3,4 +3,44 @@
   --van-index-bar-index-font-size: var(--van-font-size-xs, 10px);
   --van-index-bar-index-line-height: var(--van-line-height-xs, 14px);
   --van-index-bar-index-active-color: var(--van-primary-color, #1989fa);
+  --van-index-bar-index-font-weight: var(--van-font-bold, bold);
+}
+
+.van-index-bar {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+
+  &__wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--van-index-bar-sidebar-z-index);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__index {
+    font-size: var(--van-index-bar-index-font-size);
+    line-height: var(--van-index-bar-index-line-height);
+    text-align: center;
+    font-weight: normal;
+    padding: 0 4px 0 16px;
+
+    &--active {
+      color: var(--van-index-bar-index-active-color);
+      font-weight: var(--van-index-bar-index-font-weight);
+    }
+  }
 }
