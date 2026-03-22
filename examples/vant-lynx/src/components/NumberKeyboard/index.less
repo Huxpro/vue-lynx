@@ -15,3 +15,138 @@
   --van-number-keyboard-button-background: var(--van-primary-color, #1989fa);
   --van-number-keyboard-z-index: 100;
 }
+
+.van-number-keyboard {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: var(--van-number-keyboard-z-index);
+  width: 100%;
+  padding-bottom: 22px;
+  background: var(--van-number-keyboard-background);
+
+  &--with-title {
+    border-radius: 20px 20px 0 0;
+  }
+
+  &--unfit {
+    padding-bottom: 0;
+  }
+
+  &__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--van-number-keyboard-title-height);
+    padding-top: 6px;
+    color: var(--van-number-keyboard-title-color);
+    font-size: var(--van-number-keyboard-title-font-size);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    font-size: var(--van-number-keyboard-title-font-size);
+    color: var(--van-number-keyboard-title-color);
+  }
+
+  &__title-left {
+    position: absolute;
+    left: 0;
+  }
+
+  &__close {
+    position: absolute;
+    right: 0;
+    height: 100%;
+    padding: var(--van-number-keyboard-close-padding);
+    color: var(--van-number-keyboard-close-color);
+    font-size: var(--van-number-keyboard-close-font-size);
+    background-color: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: row;
+    padding: 6px 0 0 6px;
+  }
+
+  &__keys {
+    display: flex;
+    flex-direction: row;
+    flex: 3;
+    flex-wrap: wrap;
+  }
+
+  &__sidebar {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+}
+
+.van-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--van-number-keyboard-key-height);
+  font-size: var(--van-number-keyboard-key-font-size);
+  background: var(--van-number-keyboard-key-background);
+  border-radius: var(--van-radius-lg, 8px);
+
+  &--large {
+    position: absolute;
+    top: 0;
+    right: 6px;
+    bottom: 6px;
+    left: 0;
+    height: auto;
+  }
+
+  &--blue,
+  &--delete {
+    font-size: var(--van-number-keyboard-delete-font-size);
+  }
+
+  &--active {
+    background-color: var(--van-number-keyboard-key-active-color);
+  }
+
+  &--blue {
+    color: var(--van-number-keyboard-button-text-color);
+    background: var(--van-number-keyboard-button-background);
+
+    &.van-key--active {
+      opacity: var(--van-active-opacity, 0.7);
+    }
+  }
+
+  &__wrapper {
+    position: relative;
+    flex-basis: 33%;
+    padding: 0 6px 6px 0;
+
+    &--wider {
+      flex-basis: 66%;
+    }
+  }
+
+  &__delete-icon {
+    width: 32px;
+    height: 22px;
+  }
+
+  &__collapse-icon {
+    width: 30px;
+    height: 24px;
+  }
+
+  &__loading-icon {
+    color: var(--van-number-keyboard-button-text-color);
+  }
+}

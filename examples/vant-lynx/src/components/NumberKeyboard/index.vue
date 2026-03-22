@@ -1,40 +1,40 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 10/15 supported
-    Supported: show, title, theme, maxlength, randomKeyOrder, extraKey,
-               closeButtonText, deleteButtonText, showDeleteKey, hideOnClickOutside
-    Missing: modelValue (v-model binding), zIndex, teleport, transition,
-             blurOnClose, closeButtonLoading, safeAreaInsetBottom
-  - Events: 5/7 supported (input, delete, close, blur, update:modelValue)
-    Missing: show, hide (visibility transition events)
-  - Slots: 0/3 supported
-    Missing: title-left, delete, extra-key
-  - Gaps:
-    - No v-model support for building input string (modelValue + update:modelValue)
-    - No Teleport support (Lynx has different rendering model)
-    - No transition/animation on show/hide
-    - No safeAreaInsetBottom (Lynx safe area handled differently)
-    - No title-left slot for custom content beside title
-    - No delete/extra-key slots for custom key rendering
-    - Custom theme sidebar close button not implemented
-    - hideOnClickOutside prop accepted but not enforced (no click-away detection)
+  Lynx Limitations:
+  - teleport: Lynx has no Teleport support; prop accepted for API compat
+  - hideOnClickOutside: No document-level touchstart listener in Lynx; prop accepted but not enforced
+  - safeAreaInsetBottom: Lynx safe area handled differently by host; prop controls padding only
+  - v-show: Lynx does not support v-show; uses v-if with CSS transition instead
+  - SVG icons (collapse/delete): Lynx has limited SVG support; uses text fallback
+  - position:fixed: May behave differently in Lynx; keyboard renders inline
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { ref, computed, watch, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { useTouch } from '../../composables/useTouch';
+import Loading from '../Loading/index.vue';
+import type { NumberKeyboardTheme, KeyType, KeyConfig } from './types';
+import './index.less';
+
+export type { NumberKeyboardThemeVars } from './types';
 
 export interface NumberKeyboardProps {
   show?: boolean;
   title?: string;
-  theme?: 'default' | 'custom';
-  maxlength?: number;
+  theme?: NumberKeyboardTheme;
+  zIndex?: number | string;
+  maxlength?: number | string;
   modelValue?: string;
+  transition?: boolean;
+  blurOnClose?: boolean;
+  showDeleteKey?: boolean;
   randomKeyOrder?: boolean;
-  extraKey?: string | string[];
   closeButtonText?: string;
   deleteButtonText?: string;
-  showDeleteKey?: boolean;
+  closeButtonLoading?: boolean;
   hideOnClickOutside?: boolean;
-  blurOnClose?: boolean;
+  safeAreaInsetBottom?: boolean;
+  extraKey?: string | string[];
+  teleport?: string | object;
 }
 
 const props = withDefaults(defineProps<NumberKeyboardProps>(), {
@@ -42,224 +42,323 @@ const props = withDefaults(defineProps<NumberKeyboardProps>(), {
   theme: 'default',
   maxlength: Infinity,
   modelValue: '',
-  randomKeyOrder: false,
-  closeButtonText: 'Done',
-  deleteButtonText: '',
-  showDeleteKey: true,
-  hideOnClickOutside: true,
+  transition: true,
   blurOnClose: true,
+  showDeleteKey: true,
+  randomKeyOrder: false,
+  closeButtonLoading: false,
+  hideOnClickOutside: true,
+  safeAreaInsetBottom: true,
+  extraKey: '',
 });
 
 const emit = defineEmits<{
-  input: [key: string];
-  delete: [];
-  close: [];
+  show: [];
+  hide: [];
   blur: [];
+  input: [key: string];
+  close: [];
+  delete: [];
   'update:modelValue': [value: string];
 }>();
 
-// Build the key grid: 3 columns, 4 rows
-// Row 1: 1 2 3
-// Row 2: 4 5 6
-// Row 3: 7 8 9
-// Row 4: extraKey / 0 / delete (default theme)
-const extraKeys = computed(() => {
-  if (!props.extraKey) return [];
-  if (Array.isArray(props.extraKey)) return props.extraKey;
-  return [props.extraKey];
-});
+const slots = useSlots();
+const [, bem] = createNamespace('number-keyboard');
+const [, keyBem] = createNamespace('key');
 
-const numberRows = computed(() => {
-  const base = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  if (props.randomKeyOrder) {
-    for (let i = base.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [base[i], base[j]] = [base[j], base[i]];
-    }
+// --- Key generation ---
+
+function shuffle(array: unknown[]) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
   }
-  return [
-    base.slice(0, 3),
-    base.slice(3, 6),
-    base.slice(6, 9),
-  ];
-});
-
-function onPressKey(key: string) {
-  emit('input', key);
-
-  // v-model support: append key if under maxlength
-  if (props.modelValue.length < props.maxlength) {
-    emit('update:modelValue', props.modelValue + key);
-  }
+  return array;
 }
 
-function onDelete() {
-  emit('delete');
+function genBasicKeys(): KeyConfig[] {
+  const keys: KeyConfig[] = Array(9)
+    .fill('')
+    .map((_, i) => ({ text: i + 1 }));
+  if (props.randomKeyOrder) {
+    shuffle(keys);
+  }
+  return keys;
+}
 
-  // v-model support: remove last character
-  if (props.modelValue.length > 0) {
-    emit('update:modelValue', props.modelValue.slice(0, -1));
+function genDefaultKeys(): KeyConfig[] {
+  return [
+    ...genBasicKeys(),
+    { text: props.extraKey as string, type: 'extra' as KeyType },
+    { text: 0 },
+    {
+      text: props.showDeleteKey ? props.deleteButtonText : '',
+      type: props.showDeleteKey ? 'delete' as KeyType : '' as KeyType,
+    },
+  ];
+}
+
+function genCustomKeys(): KeyConfig[] {
+  const keys = genBasicKeys();
+  const { extraKey } = props;
+  const extraKeys = Array.isArray(extraKey) ? extraKey : [extraKey];
+
+  if (extraKeys.length === 0) {
+    keys.push({ text: 0, wider: true });
+  } else if (extraKeys.length === 1) {
+    keys.push(
+      { text: 0, wider: true },
+      { text: extraKeys[0], type: 'extra' },
+    );
+  } else if (extraKeys.length === 2) {
+    keys.push(
+      { text: extraKeys[0], type: 'extra' },
+      { text: 0 },
+      { text: extraKeys[1], type: 'extra' },
+    );
+  }
+
+  return keys;
+}
+
+const keys = computed(() =>
+  props.theme === 'custom' ? genCustomKeys() : genDefaultKeys(),
+);
+
+// --- Event handlers ---
+
+function onBlur() {
+  if (props.show) {
+    emit('blur');
   }
 }
 
 function onClose() {
   emit('close');
   if (props.blurOnClose) {
-    emit('blur');
+    onBlur();
   }
+}
+
+function onPress(text: string | number | undefined, type: KeyType) {
+  if (text === '') {
+    if (type === 'extra') {
+      onBlur();
+    }
+    return;
+  }
+
+  const value = props.modelValue;
+
+  if (type === 'delete') {
+    emit('delete');
+    emit('update:modelValue', value.slice(0, value.length - 1));
+  } else if (type === 'close') {
+    onClose();
+  } else if (value.length < +props.maxlength) {
+    emit('input', String(text));
+    emit('update:modelValue', value + text);
+  }
+}
+
+// --- Transition ---
+
+const hasRendered = ref(props.show);
+let isFirstWatch = true;
+
+watch(
+  () => props.show,
+  (value) => {
+    if (value) {
+      hasRendered.value = true;
+    }
+    if (!props.transition && !isFirstWatch) {
+      emit(value ? 'show' : 'hide');
+    }
+    isFirstWatch = false;
+  },
+  { immediate: true },
+);
+
+function onTransitionEnd() {
+  emit(props.show ? 'show' : 'hide');
+}
+
+// --- Touch handling for keys ---
+
+const activeKeyIndex = ref(-1);
+const touch = useTouch();
+
+function onKeyTouchStart(event: TouchEvent, index: number) {
+  touch.start(event);
+  activeKeyIndex.value = index;
+}
+
+function onKeyTouchMove(event: TouchEvent) {
+  touch.move(event);
+  if (touch.direction.value) {
+    activeKeyIndex.value = -1;
+  }
+}
+
+function onKeyTouchEnd(key: KeyConfig, index: number) {
+  if (activeKeyIndex.value === index) {
+    activeKeyIndex.value = -1;
+    onPress(key.text, key.type || '');
+  }
+}
+
+function onKeyTap(key: KeyConfig) {
+  onPress(key.text, key.type || '');
+}
+
+function onKeyTouchCancel() {
+  activeKeyIndex.value = -1;
+}
+
+// --- Computed classes/styles ---
+
+const hasTitle = computed(() => {
+  const { title, theme, closeButtonText } = props;
+  return !!(title || (closeButtonText && theme === 'default') || slots['title-left']);
+});
+
+const rootClass = computed(() =>
+  bem([{
+    unfit: !props.safeAreaInsetBottom,
+    'with-title': hasTitle.value,
+  }]),
+);
+
+const rootStyle = computed(() => {
+  const style: Record<string, any> = {};
+  if (props.zIndex !== undefined) {
+    style.zIndex = Number(props.zIndex);
+  }
+  if (props.transition) {
+    style.transition = 'transform 0.3s';
+  }
+  if (!props.show) {
+    style.transform = 'translateY(100%)';
+  }
+  return style;
+});
+
+function getKeyClass(key: KeyConfig, index: number) {
+  return keyBem([
+    key.color,
+    {
+      large: false,
+      active: activeKeyIndex.value === index,
+      delete: key.type === 'delete',
+    },
+  ]);
+}
+
+function getWrapperClass(key: KeyConfig) {
+  return keyBem('wrapper', { wider: !!key.wider });
 }
 </script>
 
 <template>
   <view
-    v-if="show"
-    :style="{
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: '#f2f3f5',
-      paddingTop: 6,
-      paddingBottom: 6,
-    }"
+    v-if="hasRendered"
+    :class="rootClass"
+    :style="rootStyle"
+    @transitionend="onTransitionEnd"
   >
-    <!-- Title row (if title provided) -->
-    <view
-      v-if="title"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: 16,
-        paddingRight: 16,
-        paddingBottom: 8,
-      }"
-    >
-      <view :style="{ flex: 1, display: 'flex' }">
+    <!-- Header -->
+    <view v-if="hasTitle" :class="bem('header')">
+      <view v-if="$slots['title-left']" :class="bem('title-left')">
         <slot name="title-left" />
       </view>
-      <text :style="{ fontSize: 15, color: '#323233', fontWeight: 'bold' }">{{ title }}</text>
-      <view :style="{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }">
-        <text
-          :style="{ fontSize: 14, color: '#1989fa' }"
-          @tap="onClose"
-        >{{ closeButtonText }}</text>
-      </view>
-    </view>
-
-    <!-- Number rows 1-9 -->
-    <view
-      v-for="(row, rowIdx) in numberRows"
-      :key="rowIdx"
-      :style="{ display: 'flex', flexDirection: 'row', marginBottom: 6 }"
-    >
+      <text v-if="title" :class="bem('title')">{{ title }}</text>
       <view
-        v-for="key in row"
-        :key="key"
-        :style="{
-          flex: 1,
-          marginLeft: 6,
-          marginRight: 6,
-          height: 54,
-          backgroundColor: '#fff',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="() => onPressKey(key)"
-      >
-        <text :style="{ fontSize: 20, color: '#323233' }">{{ key }}</text>
-      </view>
-    </view>
-
-    <!-- Bottom row: extraKey / 0 / delete -->
-    <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: 6 }">
-      <!-- Extra key or blank -->
-      <view
-        :style="{
-          flex: 1,
-          marginLeft: 6,
-          marginRight: 6,
-          height: 54,
-          backgroundColor: extraKeys[0] ? '#fff' : '#f2f3f5',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="() => extraKeys[0] && onPressKey(extraKeys[0])"
-      >
-        <slot name="extra-key">
-          <text v-if="extraKeys[0]" :style="{ fontSize: 20, color: '#323233' }">{{ extraKeys[0] }}</text>
-        </slot>
-      </view>
-
-      <!-- 0 key -->
-      <view
-        :style="{
-          flex: 1,
-          marginLeft: 6,
-          marginRight: 6,
-          height: 54,
-          backgroundColor: '#fff',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="() => onPressKey('0')"
-      >
-        <text :style="{ fontSize: 20, color: '#323233' }">0</text>
-      </view>
-
-      <!-- Delete key -->
-      <view
-        v-if="showDeleteKey"
-        :style="{
-          flex: 1,
-          marginLeft: 6,
-          marginRight: 6,
-          height: 54,
-          backgroundColor: '#fff',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="onDelete"
-      >
-        <slot name="delete">
-          <text v-if="deleteButtonText" :style="{ fontSize: 16, color: '#323233' }">{{ deleteButtonText }}</text>
-          <text v-else :style="{ fontSize: 16, color: '#323233' }">&#9003;</text>
-        </slot>
-      </view>
-    </view>
-
-    <!-- Close button row (no title mode) -->
-    <view
-      v-if="!title"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
-        marginBottom: 6,
-      }"
-    >
-      <view :style="{ flex: 3, marginLeft: 6, marginRight: 6 }" />
-      <view
-        :style="{
-          flex: 1,
-          marginLeft: 6,
-          marginRight: 6,
-          height: 54,
-          backgroundColor: '#1989fa',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
+        v-if="closeButtonText && theme === 'default'"
+        :class="bem('close')"
         @tap="onClose"
       >
-        <text :style="{ fontSize: 14, color: '#fff' }">{{ closeButtonText }}</text>
+        <text :class="bem('close')">{{ closeButtonText }}</text>
+      </view>
+    </view>
+
+    <!-- Body -->
+    <view :class="bem('body')">
+      <!-- Keys grid -->
+      <view :class="bem('keys')">
+        <view
+          v-for="(key, index) in keys"
+          :key="`${key.text}-${index}`"
+          :class="getWrapperClass(key)"
+          @tap="() => onKeyTap(key)"
+          @touchstart="(e: TouchEvent) => onKeyTouchStart(e, index)"
+          @touchmove="(e: TouchEvent) => onKeyTouchMove(e)"
+          @touchend="() => onKeyTouchEnd(key, index)"
+          @touchcancel="onKeyTouchCancel"
+        >
+          <view :class="getKeyClass(key, index)">
+            <!-- Delete key content -->
+            <template v-if="key.type === 'delete'">
+              <slot name="delete">
+                <text v-if="key.text">{{ key.text }}</text>
+                <text v-else :style="{ fontSize: 20 }">&#9003;</text>
+              </slot>
+            </template>
+            <!-- Extra key content -->
+            <template v-else-if="key.type === 'extra'">
+              <slot name="extra-key">
+                <text v-if="key.text !== ''">{{ key.text }}</text>
+              </slot>
+            </template>
+            <!-- Number key content -->
+            <template v-else>
+              <text>{{ key.text }}</text>
+            </template>
+          </view>
+        </view>
+      </view>
+
+      <!-- Sidebar (custom theme only) -->
+      <view v-if="theme === 'custom'" :class="bem('sidebar')">
+        <!-- Sidebar delete key -->
+        <view
+          v-if="showDeleteKey"
+          :class="keyBem('wrapper')"
+          :style="{ flex: 1 }"
+          @tap="() => onPress('', 'delete')"
+          @touchstart="(e: TouchEvent) => onKeyTouchStart(e, 100)"
+          @touchmove="(e: TouchEvent) => onKeyTouchMove(e)"
+          @touchend="() => { if (activeKeyIndex === 100) { activeKeyIndex = -1; onPress('', 'delete'); } }"
+          @touchcancel="onKeyTouchCancel"
+        >
+          <view
+            :class="keyBem([{ large: true, active: activeKeyIndex === 100, delete: true }])"
+          >
+            <slot name="delete">
+              <text v-if="deleteButtonText">{{ deleteButtonText }}</text>
+              <text v-else :style="{ fontSize: 20 }">&#9003;</text>
+            </slot>
+          </view>
+        </view>
+        <!-- Sidebar close key -->
+        <view
+          :class="keyBem('wrapper')"
+          :style="{ flex: 1 }"
+          @tap="onClose"
+          @touchstart="(e: TouchEvent) => onKeyTouchStart(e, 101)"
+          @touchmove="(e: TouchEvent) => onKeyTouchMove(e)"
+          @touchend="() => { if (activeKeyIndex === 101) { activeKeyIndex = -1; onPress('', 'close'); } }"
+          @touchcancel="onKeyTouchCancel"
+        >
+          <view
+            :class="keyBem(['blue', { large: true, active: activeKeyIndex === 101 }])"
+          >
+            <Loading v-if="closeButtonLoading" :class="keyBem('loading-icon')" />
+            <text v-else>{{ closeButtonText }}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
