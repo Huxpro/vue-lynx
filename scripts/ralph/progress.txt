@@ -15,6 +15,8 @@ Branch: feat/vant-lynx-v2
 - **CSS custom properties as inline styles**: Lynx strips `--van-*` from inline styles. CSS variables only work through .less files. Test theme var conversion logic via unit tests on utility functions, not by checking `getAttribute('style')`
 - **Exports from `<script setup>`**: Vue SFC `<script setup>` cannot contain ES exports. Extract types, constants, and utilities to separate `.ts` files (types.ts, utils.ts)
 - **Parent-child registration timing**: When child components register with parent during setup, computed values depending on the registration array need `await nextTick()` in tests before checking styles (children register sequentially during slot evaluation, so initial render may have stale computeds)
+- **Object prop watchers**: When watching object-type props (like `titleStyle`), use `JSON.stringify` comparison to avoid infinite reactive loops. Inline objects in `h()` render calls create new references each render, triggering watchers endlessly. Serialize the value in a computed, then watch the serialized string.
+- **fireEvent in tests**: Use `fireEvent.tap(element)` not `fireEvent(element, 'tap')`. Find tab/item elements by filtering views with style patterns (e.g., `cursor: pointer`, `justify-content: center`). Include `cursor: default` in filters to also match disabled elements.
 
 ---
 
@@ -255,4 +257,35 @@ Branch: feat/vant-lynx-v2
 - Limitations: safeAreaInsetTop uses fixed 44px padding (no CSS env()), placeholder uses hardcoded 46px height, HAPTICS_FEEDBACK not available, van-ellipsis class not applicable, CSS class-based BEM replaced with inline styles
 - New files: types.ts (NavBarThemeVars)
 - Key change: Conditional left/right area rendering matching Vant's hasLeft/hasRight pattern; disabled state uses opacity: 0.6
+---
+
+## 2026-03-22 - parity-tabbar: Tabbar + TabbarItem
+- Props (Tabbar): 10/10 (modelValue, fixed, border, zIndex, activeColor, inactiveColor, placeholder, safeAreaInsetBottom, beforeChange, route)
+- Props (TabbarItem): 9/9 (name, icon, iconPrefix, dot, badge, badgeProps, to, url, replace)
+- Events (Tabbar): 2/2 (update:modelValue, change)
+- Events (TabbarItem): 1/1 (click)
+- Slots (TabbarItem): 2/2 (default {active}, icon {active})
+- CSS Variables: 3 defined in Tabbar/index.less (--van-tabbar-height, --van-tabbar-z-index, --van-tabbar-background)
+- CSS Variables: 7 defined in TabbarItem/index.less (--van-tabbar-item-font-size, --van-tabbar-item-text-color, --van-tabbar-item-active-color, --van-tabbar-item-active-background, --van-tabbar-item-line-height, --van-tabbar-item-icon-size, --van-tabbar-item-icon-margin-bottom)
+- Animations: none (Tabbar has no transitions)
+- Tests: 24 cases (Vant has 8 — 3 route-mode tests skipped, replaced with Lynx-specific tests) — all pass
+- Demo sections: 6/6 (基础用法, 通过名称匹配, 徽标提示, 自定义图标, 自定义颜色, 监听切换事件)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: route prop no-op (Lynx has no vue-router), to/url/replace props no-op, safeAreaInsetBottom uses fixed 34px (no CSS env()), placeholder uses fixed 50px height (no getBoundingClientRect), BORDER_TOP_BOTTOM uses inline border, role/tabindex/aria-selected not applicable, CSS class-based BEM replaced with inline styles
+- New files: Tabbar/types.ts (TABBAR_KEY, TabbarProvide, TabbarThemeVars, Numeric, Interceptor), TabbarItem/types.ts (TabbarItemThemeVars)
+- Key change: Extracted TABBAR_KEY Symbol to types.ts; fixed inactive color default from #7d7e80 to #323233; fixed setActive to match Vant's signature (no equality guard); fixed bindtap→@tap in TabbarItem; provide/inject pattern for parent-child communication
+---
+
+## 2026-03-22 - parity-tab: Tab
+- Props: 11/11 (title, disabled, dot, badge, name, titleClass, titleStyle, showZeroBadge, url, to, replace)
+- Events: 0/0 (Tab has no own events — click-tab/change/rendered emitted by parent Tabs)
+- Slots: 2/2 (default, title)
+- CSS Variables: 5 defined in index.less (--van-tab-text-color, --van-tab-active-text-color, --van-tab-disabled-text-color, --van-tab-font-size, --van-tab-line-height)
+- Animations: none (Tab has no transitions)
+- Tests: 20 cases (Vant has 20) — all pass
+- Demo sections: 9/12 (基础用法, 通过名称匹配, 标签栏滚动, 禁用标签, 样式风格, 自定义颜色, 标签提示, 自定义标签, 异步切换) — Sticky/Swipeable/Scrollspy omitted (Lynx no-ops)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: titleClass no-op (Lynx has no CSS class system), titleStyle partially supported (merged into header style), url/to/replace no-op (no vue-router in Lynx), animated/swipeable/scrollspy Tabs props not functional, role/tabindex/aria-* not applicable
+- New files: types.ts (TabProps, TabThemeVars, Numeric), test/index.spec.ts
+- Key change: Added titleStyle prop with serialized watch to avoid infinite reactive loops from object reference changes; added nav-left/nav-right slots to Tabs; added animated prop to Tabs for API parity; fixed findTabHeaders in tests to also match disabled tabs (cursor: default)
 ---

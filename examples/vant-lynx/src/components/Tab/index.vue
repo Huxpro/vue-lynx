@@ -1,45 +1,16 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 8/9 supported
-    - title (tab header text)
-    - disabled (disable tab interaction)
-    - dot (show red dot on tab header)
-    - badge (show badge number on tab header)
-    - name (custom tab identifier, auto-indexes if not set)
-    - titleClass (NOT applicable - Lynx uses inline styles, no class support)
-    - titleStyle (NOT applicable - styles are computed in parent Tabs)
-    - showZeroBadge (show badge when value is 0, default true)
-    - Missing: titleClass/titleStyle (Lynx does not support CSS classes)
-  - Slots: 2/2 supported
-    - default (tab panel content)
-    - title (custom tab title - communicated to parent via flag)
-  - Lazy rendering: Supported (panel not rendered until first activated)
-  - Auto-indexing: Tab name defaults to registration order index
-  - Reactive updates: Title/disabled/dot/badge changes propagate to parent
-  - Gaps:
-    - titleClass/titleStyle: Lynx has no CSS class system
-    - title slot: Flag is set but custom rendering in parent header requires
-      additional coordination (parent renders headers from registered data)
+  Lynx Limitations:
+  - titleClass: Lynx has no CSS class system, uses inline styles only
+  - titleStyle: Partially supported (passed to parent, but Lynx cannot apply CSS class-level styling)
+  - url/to/replace: Lynx has no vue-router, navigation props are no-op
+  - SwipeItem animated mode: Lynx lacks CSS transition on translateX for content swap
+  - scrollspy mode: Lynx has no scroll event interception on parent
+  - role/tabindex/aria-* attributes: Not applicable in Lynx
 -->
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, watch, ref, useSlots, nextTick, type Ref } from 'vue-lynx';
+import { computed, inject, onMounted, onUnmounted, watch, ref, useSlots, nextTick, type Ref, type CSSProperties } from 'vue-lynx';
 
 type Numeric = string | number;
-
-export interface TabProps {
-  /** Tab header title text */
-  title?: string;
-  /** Disable this tab */
-  disabled?: boolean;
-  /** Show red dot indicator on header */
-  dot?: boolean;
-  /** Show badge number/text on header */
-  badge?: Numeric;
-  /** Custom tab identifier (defaults to index) */
-  name?: Numeric;
-  /** Show badge when value is zero */
-  showZeroBadge?: boolean;
-}
 
 interface TabsProvide {
   active: Ref<Numeric>;
@@ -60,11 +31,35 @@ interface TabsProvide {
   getTabIndex: () => number;
 }
 
-const props = withDefaults(defineProps<TabProps>(), {
+const props = withDefaults(defineProps<{
+  /** Tab header title text */
+  title?: string;
+  /** Disable this tab */
+  disabled?: boolean;
+  /** Show red dot indicator on header */
+  dot?: boolean;
+  /** Show badge number/text on header */
+  badge?: Numeric;
+  /** Custom tab identifier (defaults to index) */
+  name?: Numeric;
+  /** Custom title class (no-op in Lynx) */
+  titleClass?: unknown;
+  /** Custom title style */
+  titleStyle?: string | CSSProperties;
+  /** Show badge when value is zero */
+  showZeroBadge?: boolean;
+  /** URL to redirect to (no-op in Lynx) */
+  url?: string;
+  /** Vue Router target (no-op in Lynx) */
+  to?: string | Record<string, unknown>;
+  /** Replace current navigation (no-op in Lynx) */
+  replace?: boolean;
+}>(), {
   title: '',
   disabled: false,
   dot: false,
   showZeroBadge: true,
+  replace: false,
 });
 
 const slots = useSlots();
@@ -72,7 +67,9 @@ const slots = useSlots();
 const tabsContext = inject<TabsProvide>('tabs');
 
 if (!tabsContext) {
-  console.error('[Vant] <Tab> must be a child component of <Tabs>.');
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('[Vant] <Tab> must be a child component of <Tabs>.');
+  }
 }
 
 // Auto-index: get a stable index from parent on creation
@@ -92,13 +89,9 @@ const isActive = computed(() => {
 const inited = ref(false);
 
 const shouldRender = computed(() => {
-  // If already inited, always render
   if (inited.value) return true;
-  // If scrollspy mode, always render
   if (tabsContext?.scrollspy.value) return true;
-  // If lazy render is off, always render
   if (tabsContext && !tabsContext.lazyRender.value) return true;
-  // Only render if active
   return isActive.value;
 });
 
@@ -125,6 +118,7 @@ onMounted(() => {
       badge: props.badge,
       showZeroBadge: props.showZeroBadge,
       titleSlot: !!slots.title,
+      titleStyle: props.titleStyle,
       index: autoIndex,
     });
   }
@@ -138,6 +132,8 @@ onUnmounted(() => {
 });
 
 // Watch for prop changes and propagate to parent
+// Note: titleStyle is excluded from the array to avoid infinite loops when it's a
+// new object reference each render. It's watched separately with deep: true.
 watch(
   () => [props.title, props.disabled, props.dot, props.badge, props.showZeroBadge],
   () => {
@@ -148,10 +144,24 @@ watch(
         dot: props.dot,
         badge: props.badge,
         showZeroBadge: props.showZeroBadge,
+        titleStyle: props.titleStyle,
       });
     }
   },
 );
+
+// Watch titleStyle by serialized value to avoid infinite loops from new object references
+const titleStyleKey = computed(() =>
+  props.titleStyle ? JSON.stringify(props.titleStyle) : '',
+);
+
+watch(titleStyleKey, () => {
+  if (tabsContext) {
+    tabsContext.updateTab(tabName.value, {
+      titleStyle: props.titleStyle,
+    });
+  }
+});
 
 // Panel visibility style
 const contentStyle = computed(() => {
@@ -160,6 +170,12 @@ const contentStyle = computed(() => {
     display: show ? 'flex' : 'none',
     flexDirection: 'column' as const,
   };
+});
+
+// Expose for parent to access
+defineExpose({
+  tabName,
+  isActive,
 });
 </script>
 

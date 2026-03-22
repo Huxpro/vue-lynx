@@ -474,7 +474,7 @@
         "Docs: Lynx limitations in components/Tabbar/README.md",
         "Commit: feat(tabbar): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tabbar-item",
@@ -496,7 +496,7 @@
         "Docs: Lynx limitations in components/TabbarItem/README.md",
         "Commit: feat(tabbar-item): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tab",
@@ -518,7 +518,7 @@
         "Docs: Lynx limitations in components/Tab/README.md",
         "Commit: feat(tab): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tabs",
