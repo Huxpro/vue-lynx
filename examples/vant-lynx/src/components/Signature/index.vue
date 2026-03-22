@@ -1,27 +1,17 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 6/7 supported (type, penColor, lineWidth, backgroundColor,
-    clearButtonText, confirmButtonText)
-  - Events: 5/5 supported (submit, clear, start, end, signing)
-  - Slots: 0/1 supported
-  - Gaps: tips prop, tips slot; no real canvas drawing (Lynx lacks
-    HTML Canvas; uses dot-based visual approximation)
+  Lynx Limitations:
+  - canvas: Lynx has no HTML Canvas API; uses touch-positioned views for visual drawing
+  - toDataURL: Cannot export signature as base64 image; submit returns path data JSON
+  - devicePixelRatio: No window.devicePixelRatio in Lynx; drawing at 1x scale
+  - getBoundingClientRect: Uses Lynx SelectorQuery API instead (for touch offset)
+  - tips slot: Implemented but tips-when-canvas-unsupported scenario N/A (no canvas detection)
 -->
 <script setup lang="ts">
-/**
- * VantSignature (Lynx port)
- * @see https://github.com/youzan/vant/blob/main/packages/vant/src/signature/Signature.tsx
- *
- * Feature parity: 7/7 props, 5/5 events.
- * Added: tips prop (Vant shows tips text below canvas).
- *
- * Lynx differences:
- *   - No HTML Canvas available; uses dot-based visual approximation
- *   - submit event returns JSON path data instead of base64 image
- *   - Touch position uses offsetX/pageX/clientX fallback chain
- *   - Expose methods (resize) not supported
- */
-import { ref, computed } from 'vue-lynx';
+import { ref, computed, defineExpose } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Button from '../Button/index.vue';
+import type { SignatureExpose } from './types';
+import './index.less';
 
 export interface SignatureProps {
   tips?: string;
@@ -38,20 +28,21 @@ const props = withDefaults(defineProps<SignatureProps>(), {
   type: 'png',
   penColor: '#000',
   lineWidth: 3,
-  backgroundColor: '#fff',
-  clearButtonText: 'Clear',
-  confirmButtonText: 'Confirm',
+  backgroundColor: '',
+  clearButtonText: '',
+  confirmButtonText: '',
 });
 
 const emit = defineEmits<{
-  submit: [data: { image: string; canvas: any }];
+  submit: [data: { image: string; canvas: null }];
   clear: [];
   start: [];
   end: [];
-  signing: [event: any];
+  signing: [event: TouchEvent];
 }>();
 
-// Track drawing points for visual feedback
+const [, bem] = createNamespace('signature');
+
 interface Point {
   x: number;
   y: number;
@@ -62,14 +53,20 @@ const currentLine = ref<Point[]>([]);
 const isDrawing = ref(false);
 const hasContent = ref(false);
 
-function getPosition(event: any): Point {
-  const touch = event?.changedTouches?.[0] ?? event?.touches?.[0] ?? event;
-  const x = touch?.offsetX ?? touch?.pageX ?? touch?.clientX ?? 0;
-  const y = touch?.offsetY ?? touch?.pageY ?? touch?.clientY ?? 0;
+// Track content area layout for touch offset calculation
+let contentLeft = 0;
+let contentTop = 0;
+
+function getPosition(event: TouchEvent): Point {
+  const touch = event.touches?.[0] ?? event.changedTouches?.[0];
+  if (!touch) return { x: 0, y: 0 };
+  // Use clientX/Y minus content area offset
+  const x = (touch as any).offsetX ?? (touch.clientX - contentLeft);
+  const y = (touch as any).offsetY ?? (touch.clientY - contentTop);
   return { x, y };
 }
 
-function onTouchStart(event: any) {
+function onTouchStart(event: TouchEvent) {
   isDrawing.value = true;
   const point = getPosition(event);
   currentLine.value = [point];
@@ -77,169 +74,115 @@ function onTouchStart(event: any) {
   emit('start');
 }
 
-function onTouchMove(event: any) {
+function onTouchMove(event: TouchEvent) {
   if (!isDrawing.value) return;
   const point = getPosition(event);
-  currentLine.value.push(point);
+  currentLine.value = [...currentLine.value, point];
   emit('signing', event);
 }
 
-function onTouchEnd(event: any) {
+function onTouchEnd(event: TouchEvent) {
   if (!isDrawing.value) return;
   isDrawing.value = false;
   if (currentLine.value.length > 0) {
-    lines.value.push([...currentLine.value]);
+    lines.value = [...lines.value, [...currentLine.value]];
   }
   currentLine.value = [];
   emit('end');
 }
 
-function onClear() {
+function onContentLayout(event: any) {
+  const layout = event?.detail ?? event;
+  if (layout) {
+    contentLeft = layout.x ?? layout.left ?? 0;
+    contentTop = layout.y ?? layout.top ?? 0;
+  }
+}
+
+function submit() {
+  const isEmpty = lines.value.length === 0 && currentLine.value.length === 0;
+  const image = isEmpty ? '' : JSON.stringify(lines.value);
+  emit('submit', { image, canvas: null });
+}
+
+function clear() {
   lines.value = [];
   currentLine.value = [];
   hasContent.value = false;
   emit('clear');
 }
 
-function onConfirm() {
-  // In Lynx environment, we emit the drawn data representation
-  // Since we can't use HTML canvas, we emit the path data
-  const imageData = hasContent.value ? JSON.stringify(lines.value) : '';
-  emit('submit', { image: imageData, canvas: null });
+function resize() {
+  // No-op in Lynx (no canvas to resize), but exposed for API compatibility
 }
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  backgroundColor: '#fff',
-}));
+defineExpose<SignatureExpose>({ resize, clear, submit });
 
-const canvasStyle = computed(() => ({
-  height: 200,
-  backgroundColor: props.backgroundColor,
-  borderWidth: 1,
-  borderStyle: 'solid' as const,
-  borderColor: '#ebedf0',
-  borderRadius: 8,
-  margin: 16,
-  marginBottom: 0,
-  position: 'relative' as const,
-  overflow: 'hidden' as const,
-}));
-
-const footerStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  justifyContent: 'flex-end' as const,
-  padding: 16,
-};
-
-// Generate visual lines using small view dots
 const allPoints = computed(() => {
-  const points: Point[] = [];
-  for (const line of lines.value) {
-    for (const point of line) {
-      points.push(point);
+  const points: Array<Point & { key: string }> = [];
+  for (let i = 0; i < lines.value.length; i++) {
+    for (let j = 0; j < lines.value[i].length; j++) {
+      points.push({ ...lines.value[i][j], key: `l${i}-${j}` });
     }
   }
-  for (const point of currentLine.value) {
-    points.push(point);
+  for (let j = 0; j < currentLine.value.length; j++) {
+    points.push({ ...currentLine.value[j], key: `c-${j}` });
   }
   return points;
+});
+
+const contentStyle = computed(() => {
+  const style: Record<string, string> = {};
+  if (props.backgroundColor) {
+    style.backgroundColor = props.backgroundColor;
+  }
+  return Object.keys(style).length > 0 ? style : undefined;
 });
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Drawing area -->
+  <view :class="bem()">
     <view
-      :style="canvasStyle"
-      @touchstart="onTouchStart"
-      @touchmove="onTouchMove"
-      @touchend="onTouchEnd"
+      :class="bem('content')"
+      :style="contentStyle"
+      @bindlayoutchange="onContentLayout"
     >
-      <!-- Placeholder text when empty -->
+      <!-- Drawing area (replaces canvas) -->
       <view
-        v-if="!hasContent"
-        :style="{
-          position: 'absolute' as const,
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
+        :class="bem('canvas-area')"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
       >
-        <text :style="{ fontSize: 14, color: '#c8c9cc' }">Sign here</text>
+        <!-- Drawn dots -->
+        <view
+          v-for="point in allPoints"
+          :key="point.key"
+          :style="{
+            position: 'absolute',
+            left: `${point.x - lineWidth / 2}px`,
+            top: `${point.y - lineWidth / 2}px`,
+            width: `${lineWidth}px`,
+            height: `${lineWidth}px`,
+            borderRadius: `${lineWidth / 2}px`,
+            backgroundColor: penColor,
+          }"
+        />
       </view>
-
-      <!-- Drawn dots (visual representation of strokes) -->
-      <view
-        v-for="(point, index) in allPoints"
-        :key="index"
-        :style="{
-          position: 'absolute' as const,
-          left: point.x - lineWidth / 2,
-          top: point.y - lineWidth / 2,
-          width: lineWidth,
-          height: lineWidth,
-          borderRadius: lineWidth / 2,
-          backgroundColor: penColor,
-        }"
-      />
+      <!-- Tips shown when no content (replaces canvas-not-supported tips in Vant) -->
+      <template v-if="!hasContent">
+        <slot name="tips">
+          <text v-if="tips" :class="bem('tips')">{{ tips }}</text>
+        </slot>
+      </template>
     </view>
-
-    <!-- Tips -->
-    <text
-      v-if="tips"
-      :style="{
-        fontSize: 14,
-        color: '#969799',
-        textAlign: 'center',
-        paddingLeft: 16,
-        paddingRight: 16,
-        paddingTop: 8,
-      }"
-    >{{ tips }}</text>
-
-    <!-- Footer buttons -->
-    <view :style="footerStyle">
-      <view
-        :style="{
-          height: 36,
-          paddingLeft: 16,
-          paddingRight: 16,
-          borderRadius: 18,
-          borderWidth: 1,
-          borderStyle: 'solid' as const,
-          borderColor: '#ebedf0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: 8,
-          backgroundColor: '#fff',
-        }"
-        @tap="onClear"
-      >
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ clearButtonText }}</text>
-      </view>
-      <view
-        :style="{
-          height: 36,
-          paddingLeft: 16,
-          paddingRight: 16,
-          borderRadius: 18,
-          backgroundColor: '#1989fa',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="onConfirm"
-      >
-        <text :style="{ fontSize: 14, color: '#fff' }">{{ confirmButtonText }}</text>
-      </view>
+    <view :class="bem('footer')">
+      <Button size="small" @click="clear">
+        <text>{{ clearButtonText || '清空' }}</text>
+      </Button>
+      <Button type="primary" size="small" @click="submit">
+        <text>{{ confirmButtonText || '确认' }}</text>
+      </Button>
     </view>
   </view>
 </template>

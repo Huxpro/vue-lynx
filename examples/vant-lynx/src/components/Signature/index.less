@@ -4,3 +4,44 @@
   --van-signature-content-background: var(--van-background-2, #fff);
   --van-signature-content-border: 1px dotted #dadada;
 }
+
+.van-signature {
+  padding: var(--van-signature-padding);
+
+  &__content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--van-signature-content-height);
+    background-color: var(--van-signature-content-background);
+    border: var(--van-signature-content-border);
+    border-radius: var(--van-radius-lg, 8px);
+    overflow: hidden;
+    position: relative;
+  }
+
+  &__tips {
+    font-size: var(--van-font-size-md, 14px);
+    color: var(--van-text-color-3, #c8c9cc);
+  }
+
+  &__canvas-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+
+    .van-button {
+      padding-left: var(--van-padding-md, 12px);
+      padding-right: var(--van-padding-md, 12px);
+      margin-top: var(--van-padding-xs, 8px);
+      margin-left: var(--van-padding-xs, 8px);
+    }
+  }
+}

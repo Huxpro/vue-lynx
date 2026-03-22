@@ -952,3 +952,34 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from all-inline-styles to BEM class architecture. Removed false claim that "Lynx does not support CSS keyframes" — Lynx fully supports @keyframes. Added cursor blink animation via @keyframes van-cursor-flicker. Proper bordered vs gutter security layouts via CSS classes. createNamespace('password-input') with full BEM. All 15 CSS variables matching Vant.
 - Limitations: ::after pseudo-element (uses direct border on container), <li> elements (uses <view>), user-select: none (no-op in Lynx), touchstart passive (uses @tap)
 ---
+
+## 2026-03-22 - parity-uploader: Uploader
+- Props: 22/22 (name, accept, capture, multiple, disabled, readonly, lazyLoad, maxCount, imageFit, resultType, uploadIcon, uploadText, deletable, reupload, afterRead, showUpload, modelValue, beforeRead, beforeDelete, previewSize, previewImage, previewOptions, previewFullImage, maxSize)
+- Events: 7/7 (update:modelValue, delete, oversize, click-upload, close-preview, click-preview, click-reupload)
+- Slots: 3/3 (default, preview-cover, preview-delete)
+- CSS Variables: 25 defined in index.less (all --van-uploader-* vars matching Vant)
+- BEM Classes: .van-uploader, __wrapper (--disabled), __upload (--readonly, --active), __upload-icon, __upload-text, __input-wrapper, __preview, __preview-image, __preview-delete (--shadow), __preview-delete-icon, __preview-cover, __mask, __mask-icon, __mask-message, __loading, __file, __file-icon, __file-name
+- Animations: active state background via --active class (replaces :active pseudo-class)
+- Tests: 55 cases (Vant has ~35 but many test file input which doesn't exist in Lynx; we have 55 — 43 component tests + 12 utils tests)
+- Demo sections: 10/10 (基础用法, 文件预览, 上传状态, 限制上传数量, 限制上传大小, 自定义上传样式, 自定义预览大小, 禁用文件上传, 自定义单个图片预览, 开启覆盖上传)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, UploaderPreviewItem.vue, types.ts, utils.ts, test/index.spec.ts (6 files; Vant has 5: Uploader.tsx, UploaderPreviewItem.tsx, types.ts, utils.ts, index.less)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Split into main component + UploaderPreviewItem sub-component matching Vant's architecture. Created types.ts with UploaderFileListItem, UploaderMaxSize, UploaderBeforeRead, UploaderAfterRead, UploaderExpose, UploaderResultType. Created utils.ts with isImageFile, isImageUrl, isOversize, filterFiles, getSizeStyle. All sizing/coloring via CSS classes + variables. Inline styles ONLY for previewSize (dynamic sizing). Image/non-image file detection via URL/content/type checking. beforeDelete interceptor with Promise support. Per-item overrides for deletable, imageFit, reupload, previewSize, beforeDelete.
+- Exposed methods: chooseFile (emits click-upload), closeImagePreview (emits close-preview), reuploadFile (emits click-reupload)
+- Limitations: input[type=file] (Lynx has no HTML file input; host app handles file picking via click-upload event), FileReader/URL.createObjectURL (not available in Lynx), capture (HTML-only), lazyLoad (no IntersectionObserver), previewFullImage/previewOptions (showImagePreview N/A; use click-preview), resultType/beforeRead/afterRead (file reading on host side), display: inline-block (Lynx uses flex), ::after pseudo-class (not supported)
+---
+
+## 2026-03-22 - parity-signature: Signature
+- Props: 7/7 (tips, type, penColor, lineWidth, backgroundColor, clearButtonText, confirmButtonText)
+- Events: 5/5 (submit, clear, start, end, signing)
+- Slots: 1/1 (tips)
+- CSS Variables: 4 defined in index.less (--van-signature-padding, --van-signature-content-height, --van-signature-content-background, --van-signature-content-border)
+- Animations: none (Signature has no transitions)
+- Tests: 15 cases (Vant has 9, we have 15 — added BEM class, content area, footer, tips, expose methods, canvas area tests)
+- Demo sections: 4/4 (基础用法, 自定义颜色, 自定义线宽, 自定义背景颜色)
+- Visual match: pass (BEM classes, CSS variables, Button component in footer)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: index.ts, Signature.tsx, types.ts, index.less)
+- Key changes: Rewrote from all-inline-styles dot-based approximation to full BEM class system. Added types.ts with SignatureExpose and SignatureThemeVars. Used Button component in footer (matching Vant). Added tips slot. Added defineExpose with resize/clear/submit. Touch event handling with positioned view dots for drawing.
+- Exposed methods: resize (no-op in Lynx), clear, submit
+- Limitations: canvas (Lynx has no HTML Canvas API; uses touch-positioned views), toDataURL (submit returns path data JSON not base64), devicePixelRatio (no window in Lynx), getBoundingClientRect (uses bindlayoutchange event)
+---

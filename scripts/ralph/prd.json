@@ -1574,7 +1574,7 @@
         "Docs: Lynx limitations in components/Uploader/README.md",
         "Commit: feat(uploader): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-signature",
@@ -1596,7 +1596,7 @@
         "Docs: Lynx limitations in components/Signature/README.md",
         "Commit: feat(signature): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-dialog",
