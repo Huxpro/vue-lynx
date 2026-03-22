@@ -2,27 +2,14 @@
   Lynx Limitations:
   - tag prop: accepted for API compat but always renders as <view> (Lynx has no HTML tag switching)
   - highlightTag/unhighlightTag: accepted for API compat but always renders as <text>
-  - highlightClass/unhighlightClass: accepted for API compat but Lynx has no CSS class system;
-    use highlightColor/unhighlightColor (Lynx extension) for color customization instead
-  - CSS class-based styling: Lynx uses inline styles; CSS variables in index.less defined for theming reference only
 -->
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import type { HighlightProps } from './types';
+import './index.less';
 
-export interface HighlightProps {
-  keywords?: string | string[];
-  sourceString?: string;
-  autoEscape?: boolean;
-  caseSensitive?: boolean;
-  highlightClass?: string;
-  highlightTag?: string;
-  unhighlightClass?: string;
-  unhighlightTag?: string;
-  tag?: string;
-  // Lynx extensions (Vant uses CSS classes for color)
-  highlightColor?: string;
-  unhighlightColor?: string;
-}
+const [, bem] = createNamespace('highlight');
 
 const props = withDefaults(defineProps<HighlightProps>(), {
   keywords: () => [],
@@ -32,8 +19,6 @@ const props = withDefaults(defineProps<HighlightProps>(), {
   highlightTag: 'span',
   unhighlightTag: 'span',
   tag: 'div',
-  highlightColor: '#1989fa',
-  unhighlightColor: '',
 });
 
 interface HighlightChunk {
@@ -119,31 +104,18 @@ const highlightChunks = computed<HighlightChunk[]>(() => {
 
   return chunks;
 });
-
-const highlightStyle = computed(() => ({
-  fontSize: '14px',
-  color: props.highlightColor,
-}));
-
-const unhighlightStyle = computed(() => {
-  const style: Record<string, any> = { fontSize: '14px' };
-  if (props.unhighlightColor) {
-    style.color = props.unhighlightColor;
-  }
-  return style;
-});
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }">
+  <view :class="bem()">
     <template v-for="(chunk, index) in highlightChunks" :key="index">
       <text
         v-if="chunk.highlight"
-        :style="highlightStyle"
+        :class="[bem('tag'), highlightClass]"
       >{{ sourceString.slice(chunk.start, chunk.end) }}</text>
       <text
         v-else
-        :style="unhighlightStyle"
+        :class="unhighlightClass"
       >{{ sourceString.slice(chunk.start, chunk.end) }}</text>
     </template>
   </view>

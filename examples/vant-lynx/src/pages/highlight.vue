@@ -7,11 +7,11 @@ const text =
 </script>
 
 <template>
-  <DemoPage title="Highlight">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+  <DemoPage title="Highlight 高亮文本">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Basic Usage</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <Highlight
           :source-string="text"
           keywords="questions"
@@ -19,8 +19,8 @@ const text =
       </view>
 
       <!-- Multiple Keywords -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Multiple Keywords</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8, marginBottom: 16 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">多字符匹配</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px', marginBottom: '16px' }">
         <Highlight
           :source-string="text"
           :keywords="['time', 'life', 'answer']"
@@ -28,13 +28,12 @@ const text =
       </view>
 
       <!-- Highlight Class Name -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 8 }">Highlight Class Name</text>
-      <view :style="{ padding: 16, backgroundColor: '#fff', borderRadius: 8 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">设置高亮标签类名</text>
+      <view :style="{ padding: '16px', backgroundColor: '#fff', borderRadius: '8px' }">
         <Highlight
           :source-string="text"
           keywords="life"
-          highlight-class="custom-class"
-          highlight-color="red"
+          highlight-class="custom-highlight"
         />
       </view>
     </view>
