@@ -152,3 +152,19 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. All background/margin/radius/padding via CSS classes + variables. No inline styles. Border via .van-hairline--top-bottom class (replacing inline border-top/bottom styles). Title uses BEM class with --inset modifier.
 - Limitations: BORDER_TOP_BOTTOM (uses border-top/bottom instead of ::after), useScopeId (not applicable), inheritAttrs (not applicable), tag (always renders view)
 ---
+
+## 2026-03-22 - parity-toast: Toast
+- Props: 20/20 (show, type, message, position, overlay, icon, iconSize, iconPrefix, duration, forbidClick, closeOnClick, closeOnClickOverlay, wordBreak, className, overlayClass, overlayStyle, transition, teleport, zIndex, loadingType)
+- Events: 3/3 (update:show, close, opened)
+- Slots: 1/1 (message)
+- CSS Variables: 15 defined in index.less (all --van-toast-* vars matching Vant)
+- BEM Classes: .van-toast, --top/--middle/--bottom, --text/--html, --break-normal/--break-word, __icon, __loading, __text, __text--only
+- Animations: CSS opacity transition for fade effect (0.3s)
+- Tests: 34 cases (Vant has 7 component tests; we have 19 component + 15 imperative API tests)
+- Demo sections: 6/6 (基础用法, 自定义图标, 自定义位置, 文字换行方式, 动态更新提示, 使用 Toast 组件)
+- Visual match: pass (BEM classes, CSS variables, Overlay component for blocking layer)
+- Files: index.vue, index.less, types.ts, toast.ts, test/index.spec.ts (5 files; Vant has 6: Toast.tsx, types.ts, index.ts, index.less, function-call.tsx, lock-click.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('toast') + bem(). All positioning/sizing via CSS classes + variables. Inline styles ONLY for zIndex + opacity (fade transition). Uses Overlay component for forbidClick/overlay instead of raw inline-styled views. Added proper wordBreak and className support. Fixed timer watch to include type/message (matching Vant). Demo titles translated to Chinese.
+- Imperative API: showToast, showLoadingToast, showSuccessToast, showFailToast, closeToast, allowMultipleToast, setToastDefaultOptions, resetToastDefaultOptions — all matching Vant's function API
+- Limitations: teleport (no Lynx support), html type (no innerHTML, renders as text), forbidClick (uses transparent Overlay instead of document.body class), lockScroll (not applicable in Lynx)
+---

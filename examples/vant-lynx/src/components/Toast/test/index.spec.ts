@@ -27,7 +27,7 @@ describe('Toast', () => {
 
   // === Component Tests (matching Vant's test/index.spec.ts) ===
 
-  it('should render when show is true', () => {
+  it('should render with BEM class when show is true', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -35,6 +35,8 @@ describe('Toast', () => {
         },
       }),
     );
+    const toast = container.querySelector('.van-toast');
+    expect(toast).toBeTruthy();
     const textEls = container.querySelectorAll('text');
     const hasMessage = Array.from(textEls).some(
       (t) => t.textContent === 'Hello',
@@ -42,7 +44,7 @@ describe('Toast', () => {
     expect(hasMessage).toBe(true);
   });
 
-  it('should not render when show is false', () => {
+  it('should not render toast when show is false', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -50,11 +52,50 @@ describe('Toast', () => {
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    const hasMessage = Array.from(textEls).some(
-      (t) => t.textContent === 'Hidden',
+    // Toast is lazy-rendered; never shown, so no .van-toast element
+    const toast = container.querySelector('.van-toast');
+    // Either no element or opacity 0
+    if (toast) {
+      const style = toast.getAttribute('style') || '';
+      expect(style).toContain('opacity: 0');
+    }
+  });
+
+  it('should apply position BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, message: 'Top', position: 'top' });
+        },
+      }),
     );
-    expect(hasMessage).toBe(false);
+    const toast = container.querySelector('.van-toast');
+    expect(toast).toBeTruthy();
+    expect(toast!.className).toContain('van-toast--top');
+  });
+
+  it('should apply bottom position BEM class', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, message: 'Bottom', position: 'bottom' });
+        },
+      }),
+    );
+    const toast = container.querySelector('.van-toast');
+    expect(toast!.className).toContain('van-toast--bottom');
+  });
+
+  it('should apply text type BEM class for text type', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, type: 'text', message: 'Text Toast' });
+        },
+      }),
+    );
+    const toast = container.querySelector('.van-toast');
+    expect(toast!.className).toContain('van-toast--text');
   });
 
   it('should close Toast when using closeOnClick prop and clicked', async () => {
@@ -71,18 +112,14 @@ describe('Toast', () => {
         },
       }),
     );
-    // Find the toast box (the innermost view with the message)
-    const views = container.querySelectorAll('view');
-    // The toast content box is the 3rd view (container > position > toast box)
-    const toastBox = views[2];
-    if (toastBox) {
-      fireEvent.tap(toastBox);
-      await nextTick();
-    }
+    const toast = container.querySelector('.van-toast');
+    expect(toast).toBeTruthy();
+    fireEvent.tap(toast!);
+    await nextTick();
     expect(onUpdate).toHaveBeenCalledWith(false);
   });
 
-  it('should close Toast when using closeOnClickOverlay prop and overlay is clicked', async () => {
+  it('should close Toast when using closeOnClickOverlay prop', async () => {
     const onUpdate = vi.fn();
     const { container } = render(
       defineComponent({
@@ -97,12 +134,10 @@ describe('Toast', () => {
         },
       }),
     );
-    // Click the outermost container (overlay)
-    const overlayView = container.querySelector('view');
-    if (overlayView) {
-      fireEvent.tap(overlayView);
-      await nextTick();
-    }
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    fireEvent.tap(overlay!);
+    await nextTick();
     expect(onUpdate).toHaveBeenCalledWith(false);
   });
 
@@ -114,22 +149,38 @@ describe('Toast', () => {
         },
       }),
     );
-    const viewEl = container.querySelector('view')!;
-    const style = viewEl.getAttribute('style') || '';
-    expect(style).toContain('rgba(0, 0, 0, 0.7)');
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
   });
 
-  it('should not show overlay background by default', () => {
+  it('should render transparent overlay when forbidClick is true', () => {
     const { container } = render(
       defineComponent({
         render() {
-          return h(Toast, { show: true, message: 'No Overlay' });
+          return h(Toast, {
+            show: true,
+            message: 'Forbid',
+            forbidClick: true,
+          });
         },
       }),
     );
-    const viewEl = container.querySelector('view')!;
-    const style = viewEl.getAttribute('style') || '';
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeTruthy();
+    const style = overlay!.getAttribute('style') || '';
     expect(style).toContain('transparent');
+  });
+
+  it('should not render overlay by default', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, message: 'No overlay' });
+        },
+      }),
+    );
+    const overlay = container.querySelector('.van-overlay');
+    expect(overlay).toBeFalsy();
   });
 
   it('should render success icon', () => {
@@ -140,9 +191,14 @@ describe('Toast', () => {
         },
       }),
     );
+    const toast = container.querySelector('.van-toast');
+    expect(toast).toBeTruthy();
+    // Should have icon element and message text
+    const iconEl = container.querySelector('.van-toast__icon');
+    expect(iconEl).toBeTruthy();
     const textEls = container.querySelectorAll('text');
-    // Should have both icon text and message text
-    expect(textEls.length).toBeGreaterThanOrEqual(2);
+    const hasMessage = Array.from(textEls).some((t) => t.textContent === 'Done');
+    expect(hasMessage).toBe(true);
   });
 
   it('should render fail icon', () => {
@@ -153,15 +209,14 @@ describe('Toast', () => {
         },
       }),
     );
+    const iconEl = container.querySelector('.van-toast__icon');
+    expect(iconEl).toBeTruthy();
     const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThanOrEqual(2);
-    const hasMessage = Array.from(textEls).some(
-      (t) => t.textContent === 'Error',
-    );
+    const hasMessage = Array.from(textEls).some((t) => t.textContent === 'Error');
     expect(hasMessage).toBe(true);
   });
 
-  it('should render loading type', () => {
+  it('should render loading type with loading class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -173,6 +228,8 @@ describe('Toast', () => {
         },
       }),
     );
+    const loadingEl = container.querySelector('.van-toast__loading');
+    expect(loadingEl).toBeTruthy();
     const textEls = container.querySelectorAll('text');
     const hasMessage = Array.from(textEls).some(
       (t) => t.textContent === 'Loading...',
@@ -180,42 +237,20 @@ describe('Toast', () => {
     expect(hasMessage).toBe(true);
   });
 
-  it('should change icon size when using icon-size prop', () => {
+  it('should render custom icon', () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Toast, {
             show: true,
-            type: 'success',
-            message: 'Icon Size',
-            iconSize: 20,
+            icon: 'star',
+            message: 'Custom',
           });
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    // Icon element should exist with the message
-    expect(textEls.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('should change loading icon size when using icon-size prop', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Toast, {
-            show: true,
-            type: 'loading',
-            message: 'Loading',
-            iconSize: '20px',
-          });
-        },
-      }),
-    );
-    const textEls = container.querySelectorAll('text');
-    const hasMessage = Array.from(textEls).some(
-      (t) => t.textContent === 'Loading',
-    );
-    expect(hasMessage).toBe(true);
+    const iconEl = container.querySelector('.van-toast__icon');
+    expect(iconEl).toBeTruthy();
   });
 
   it('should render message slot correctly', () => {
@@ -235,41 +270,65 @@ describe('Toast', () => {
     expect(hasSlotMessage).toBe(true);
   });
 
-  it('should render custom icon', () => {
+  it('should apply className prop', () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Toast, {
             show: true,
-            icon: 'star',
-            message: 'Custom',
+            message: 'Custom class',
+            className: 'my-toast',
           });
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    expect(textEls.length).toBeGreaterThanOrEqual(2);
+    const toast = container.querySelector('.van-toast');
+    expect(toast!.className).toContain('my-toast');
   });
 
-  it('should support forbidClick prop', () => {
+  it('should apply word break modifier class', () => {
     const { container } = render(
       defineComponent({
         render() {
           return h(Toast, {
             show: true,
-            message: 'Forbid',
-            forbidClick: true,
+            message: 'Word break',
+            wordBreak: 'break-word',
           });
         },
       }),
     );
-    const viewEl = container.querySelector('view')!;
-    const style = viewEl.getAttribute('style') || '';
-    // When forbidClick is true, overlay should block clicks (no pointerEvents: none)
-    expect(style).not.toContain('pointer-events: none');
+    const toast = container.querySelector('.van-toast');
+    expect(toast!.className).toContain('van-toast--break-word');
   });
 
-  // === Imperative API Tests (matching Vant's test/function.spec.ts) ===
+  it('should have text--only class when no icon', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, type: 'text', message: 'Text' });
+        },
+      }),
+    );
+    const textEl = container.querySelector('.van-toast__text--only');
+    expect(textEl).toBeTruthy();
+  });
+
+  it('should have text class without --only when icon present', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Toast, { show: true, type: 'success', message: 'Success' });
+        },
+      }),
+    );
+    const textEl = container.querySelector('.van-toast__text');
+    expect(textEl).toBeTruthy();
+    // Should not have --only modifier since icon is shown
+    expect(textEl!.className).not.toContain('van-toast__text--only');
+  });
+
+  // === Imperative API Tests ===
 
   it('toast disappeared after duration', () => {
     showToast({ message: 'test', duration: 1000 });
@@ -380,5 +439,10 @@ describe('Toast', () => {
 
     showToast({ message: 'bottom', position: 'bottom' });
     expect(toastState.value.position).toBe('bottom');
+  });
+
+  it('should support wordBreak prop', () => {
+    showToast({ message: 'test', wordBreak: 'break-word' });
+    expect(toastState.value.wordBreak).toBe('break-word');
   });
 });

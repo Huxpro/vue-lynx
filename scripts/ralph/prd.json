@@ -254,7 +254,7 @@
         "Docs: Lynx limitations in components/Toast/README.md",
         "Commit: feat(toast): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-tag",
