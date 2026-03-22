@@ -12,9 +12,35 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // container > wrapper view > left line view
-    expect(views.length).toBeGreaterThanOrEqual(2);
+    const root = container.querySelector('.van-divider');
+    expect(root).toBeTruthy();
+    expect(root?.classList.contains('van-divider--hairline')).toBe(true);
+  });
+
+  it('should render left line element', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider);
+        },
+      }),
+    );
+    const leftLine = container.querySelector('.van-divider__line--left');
+    expect(leftLine).toBeTruthy();
+  });
+
+  it('should not render right line without content', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider);
+        },
+      }),
+    );
+    const rightLine = container.querySelector('.van-divider__line--right:not(.van-divider__line--left)');
+    // When no content, right line is not rendered (only left line via v-if="hasContent")
+    const lines = container.querySelectorAll('.van-divider__line');
+    expect(lines.length).toBe(1);
   });
 
   it('should render divider with text slot', () => {
@@ -32,9 +58,23 @@ describe('Divider', () => {
       (el) => el.textContent === 'Text',
     );
     expect(found).toBe(true);
-    // When slot has content: left line + right line = at least 3 views
-    const views = container.querySelectorAll('view');
-    expect(views.length).toBeGreaterThanOrEqual(3);
+    // With content: both left and right lines rendered
+    const lines = container.querySelectorAll('.van-divider__line');
+    expect(lines.length).toBe(2);
+  });
+
+  it('should apply content-center class when has content', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider, null, {
+            default: () => h('text', null, 'Text'),
+          });
+        },
+      }),
+    );
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--content-center')).toBe(true);
   });
 
   it('should render dashed divider', () => {
@@ -45,11 +85,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // The line view should have dashed border style
-    const lineView = views[1];
-    const style = lineView?.getAttribute('style') || '';
-    expect(style).toContain('dashed');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--dashed')).toBe(true);
   });
 
   it('should render hairline divider by default', () => {
@@ -60,10 +97,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const lineView = views[1];
-    const style = lineView?.getAttribute('style') || '';
-    expect(style).toContain('0.5px');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--hairline')).toBe(true);
   });
 
   it('should render non-hairline divider', () => {
@@ -74,11 +109,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const lineView = views[1];
-    const style = lineView?.getAttribute('style') || '';
-    expect(style).toContain('1px');
-    expect(style).not.toContain('0.5px');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--hairline')).toBe(false);
   });
 
   it('should render vertical divider', () => {
@@ -89,9 +121,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const wrapper = container.querySelectorAll('view')[0];
-    const style = wrapper?.getAttribute('style') || '';
-    expect(style).toContain('inline-flex');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--vertical')).toBe(true);
   });
 
   it('should not render slot content in vertical mode', () => {
@@ -111,6 +142,20 @@ describe('Divider', () => {
     expect(found).toBe(false);
   });
 
+  it('should not apply content class in vertical mode', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider, { vertical: true }, {
+            default: () => h('text', null, 'Text'),
+          });
+        },
+      }),
+    );
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--content-center')).toBe(false);
+  });
+
   it('should render content-position left', () => {
     const { container } = render(
       defineComponent({
@@ -123,11 +168,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // Left line should have flex: 1 (smaller)
-    const leftLine = views[1];
-    const leftStyle = leftLine?.getAttribute('style') || '';
-    expect(leftStyle).toContain('flex: 1');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--content-left')).toBe(true);
   });
 
   it('should render content-position right', () => {
@@ -142,11 +184,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // Right line should have flex: 1 (smaller)
-    const rightLine = views[2];
-    const rightStyle = rightLine?.getAttribute('style') || '';
-    expect(rightStyle).toContain('flex: 1');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--content-right')).toBe(true);
   });
 
   it('should render content-position center by default', () => {
@@ -161,14 +200,8 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const leftLine = views[1];
-    const rightLine = views[2];
-    const leftStyle = leftLine?.getAttribute('style') || '';
-    const rightStyle = rightLine?.getAttribute('style') || '';
-    // Both should have flex: 10 (equal)
-    expect(leftStyle).toContain('flex: 10');
-    expect(rightStyle).toContain('flex: 10');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--content-center')).toBe(true);
   });
 
   it('should render vertical dashed divider', () => {
@@ -179,11 +212,22 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const lineView = views[1];
-    const style = lineView?.getAttribute('style') || '';
-    expect(style).toContain('dashed');
-    expect(style).toContain('border-left');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--vertical')).toBe(true);
+    expect(root?.classList.contains('van-divider--dashed')).toBe(true);
+  });
+
+  it('should render vertical hairline divider', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider, { vertical: true });
+        },
+      }),
+    );
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--vertical')).toBe(true);
+    expect(root?.classList.contains('van-divider--hairline')).toBe(true);
   });
 
   it('should render vertical non-hairline divider', () => {
@@ -194,9 +238,20 @@ describe('Divider', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const lineView = views[1];
-    const style = lineView?.getAttribute('style') || '';
-    expect(style).toContain('1px');
+    const root = container.querySelector('.van-divider');
+    expect(root?.classList.contains('van-divider--vertical')).toBe(true);
+    expect(root?.classList.contains('van-divider--hairline')).toBe(false);
+  });
+
+  it('should only render one line in vertical mode', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Divider, { vertical: true });
+        },
+      }),
+    );
+    const lines = container.querySelectorAll('.van-divider__line');
+    expect(lines.length).toBe(1);
   });
 });

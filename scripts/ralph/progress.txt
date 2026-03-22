@@ -198,3 +198,18 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('image') + bem(). Removed inline containerStyle/placeholderStyle/imageStyle objects; all positioning/sizing via CSS classes. Inline styles ONLY for width/height/radius (dynamic sizing props). Uses addUnit/isDef from shared utils. Demo page uses CSS classes instead of inline styles.
 - Limitations: alt (Lynx <image> has no alt text), position/object-position (not supported in Lynx), crossorigin/referrerpolicy/decoding (HTML-only attributes), lazyLoad (no $Lazyload plugin), block (Lynx views block by default), load/error events (cannot be simulated via dispatchEvent in Lynx test env)
 ---
+
+## 2026-03-22 - parity-divider: Divider
+- Props: 4/4 (dashed, hairline, vertical, contentPosition)
+- Events: 0/0 (Divider has no events)
+- Slots: 1/1 (default)
+- CSS Variables: 9 defined in index.less (--van-divider-margin, --van-divider-vertical-margin, --van-divider-text-color, --van-divider-font-size, --van-divider-line-height, --van-divider-border-color, --van-divider-content-padding, --van-divider-content-left-width, --van-divider-content-right-width)
+- BEM Classes: .van-divider, --hairline, --dashed, --vertical, --content-center, --content-left, --content-right, __line, __line--left, __line--right
+- Animations: none (Divider has no transitions)
+- Tests: 18 cases (Vant has no test file; we have 18 — BEM class verification for all modifiers, slot content, vertical mode, content positions, line count)
+- Demo sections: 6/6 (基础用法, 展示文本, 内容位置, 虚线, 自定义样式, 垂直)
+- Visual match: pass (BEM classes, CSS variables, all styling via .less selectors)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Divider.tsx, types.ts, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('divider') + bem(). Removed containerStyle/leftLineStyle/rightLineStyle computed objects; all styling via CSS classes + variables. Uses <view> sub-elements with __line BEM classes to replace Vant's ::before/::after pseudo-elements. Hairline via 0.5px border-width instead of scaleY(0.5). No inline styles needed.
+- Limitations: ::before/::after (uses <view> sub-elements), role="separator" (no ARIA in Lynx), scaleY(0.5) (uses 0.5px border-width), display: inline-block (vertical mode works inside flex-row containers)
+---
