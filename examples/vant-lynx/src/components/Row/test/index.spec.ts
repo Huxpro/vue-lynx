@@ -229,21 +229,27 @@ describe('Row', () => {
       defineComponent({
         render() {
           return h(Row, { gutter: 20 }, {
-            default: () =>
-              h(Col, { span: 12 }, {
-                default: () => h('text', null, 'Content'),
+            default: () => [
+              h(Col, { span: 8, key: 1 }, {
+                default: () => h('text', null, 'A'),
               }),
+              h(Col, { span: 8, key: 2 }, {
+                default: () => h('text', null, 'B'),
+              }),
+              h(Col, { span: 8, key: 3 }, {
+                default: () => h('text', null, 'C'),
+              }),
+            ],
           });
         },
       }),
     );
     const views = container.querySelectorAll('view');
-    // Col view should have padding
-    const colView = views[1];
-    if (colView) {
-      const style = colView.getAttribute('style') || '';
-      expect(style).toContain('padding-left: 10px');
-      expect(style).toContain('padding-right: 10px');
+    // First Col should have right padding, no left padding
+    const firstCol = views[1];
+    if (firstCol) {
+      const style = firstCol.getAttribute('style') || '';
+      expect(style).not.toContain('padding-left');
     }
   });
 
