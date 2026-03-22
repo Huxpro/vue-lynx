@@ -213,3 +213,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('divider') + bem(). Removed containerStyle/leftLineStyle/rightLineStyle computed objects; all styling via CSS classes + variables. Uses <view> sub-elements with __line BEM classes to replace Vant's ::before/::after pseudo-elements. Hairline via 0.5px border-width instead of scaleY(0.5). No inline styles needed.
 - Limitations: ::before/::after (uses <view> sub-elements), role="separator" (no ARIA in Lynx), scaleY(0.5) (uses 0.5px border-width), display: inline-block (vertical mode works inside flex-row containers)
 ---
+
+## 2026-03-22 - parity-space: Space
+- Props: 5/5 (align, direction, size, wrap, fill)
+- Events: 0/0 (Space has no events)
+- Slots: 1/1 (default)
+- CSS Variables: 0 (Space uses no CSS variables, only BEM class selectors)
+- Animations: none (Space has no transitions)
+- Tests: 14 cases (Vant has 5, we have 14 — added align-end, align-center, fill, numeric size, array size, single-item, default-align, direction-class, wrap-margin tests)
+- Demo sections: 5/5 (基础用法, 垂直排列, 自定义间距, 对齐方式, 自动换行)
+- Visual match: pass (BEM classes, CSS class-based layout, margins via inline style matching Vant)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3: Space.tsx, index.less, index.ts)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added createNamespace('space') + bem(). All layout (display, flex-direction, flex-wrap, align-items) via CSS classes in index.less matching Vant. Only dynamic margin styles remain inline (same as Vant). Fill uses CSS class with .van-space-item { flex: 1 } instead of inline flex:1.
+- Limitations: inline-flex (Lynx has no inline layout; uses display:flex), baseline alignment (Lynx may not support align-items:baseline)
+---

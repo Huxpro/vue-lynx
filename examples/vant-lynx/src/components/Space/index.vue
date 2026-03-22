@@ -1,13 +1,16 @@
 <!--
   Lynx Limitations:
-  - baseline alignment: Lynx does not support align-items: baseline, falls back to flex-start
-  - inline-flex: Lynx default display is linear, we use display: flex explicitly
-  - CSS class-based styling: replaced with inline styles for Lynx compatibility
+  - inline-flex: Lynx has no inline layout; uses display: flex instead of inline-flex
+  - baseline alignment: Lynx may not support align-items: baseline; falls back to flex-start
 -->
 <script lang="ts">
 import { computed, defineComponent, Comment, Fragment, Text, h } from 'vue-lynx';
 import type { PropType, VNode, CSSProperties } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import type { SpaceSize, SpaceAlign } from './types';
+import './index.less';
+
+const [name, bem] = createNamespace('space');
 
 function filterEmpty(children: VNode[] = []): VNode[] {
   const nodes: VNode[] = [];
@@ -32,7 +35,7 @@ function filterEmpty(children: VNode[] = []): VNode[] {
 }
 
 export default defineComponent({
-  name: 'VanSpace',
+  name,
   props: {
     align: String as PropType<SpaceAlign>,
     direction: {
@@ -40,7 +43,9 @@ export default defineComponent({
       default: 'horizontal',
     },
     size: {
-      type: [Number, String, Array] as PropType<SpaceSize | [SpaceSize, SpaceSize]>,
+      type: [Number, String, Array] as PropType<
+        number | string | [SpaceSize, SpaceSize]
+      >,
       default: 8,
     },
     wrap: Boolean,
@@ -82,44 +87,29 @@ export default defineComponent({
       return style;
     };
 
-    const alignMap: Record<string, string> = {
-      start: 'flex-start',
-      end: 'flex-end',
-      center: 'center',
-      baseline: 'flex-start', // Lynx doesn't support baseline
-    };
-
     return () => {
       const children = filterEmpty(slots.default?.());
-
-      const containerStyle: CSSProperties = {
-        display: 'flex',
-        flexDirection: props.direction === 'vertical' ? 'column' : 'row',
-        flexWrap: props.wrap ? 'wrap' : 'nowrap',
-      };
-
-      if (mergedAlign.value) {
-        containerStyle.alignItems = alignMap[mergedAlign.value] || mergedAlign.value;
-      }
-
-      if (props.fill) {
-        containerStyle.width = '100%';
-      }
-
       return h(
         'view',
-        { style: containerStyle },
-        children.map((child, index) =>
+        {
+          class: bem([
+            props.direction,
+            {
+              [`align-${mergedAlign.value}`]: !!mergedAlign.value,
+              wrap: props.wrap,
+              fill: props.fill,
+            },
+          ]),
+        },
+        children.map((c, i) =>
           h(
             'view',
             {
-              key: `item-${index}`,
-              style: {
-                ...getMarginStyle(index === children.length - 1),
-                ...(props.fill ? { flex: 1 } : {}),
-              },
+              key: `item-${i}`,
+              class: `${name}-item`,
+              style: getMarginStyle(i === children.length - 1),
             },
-            [child],
+            [c],
           ),
         ),
       );

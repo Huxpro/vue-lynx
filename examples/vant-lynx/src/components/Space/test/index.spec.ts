@@ -4,7 +4,7 @@ import { render } from 'vue-lynx-testing-library';
 import Space from '../index.vue';
 
 describe('Space', () => {
-  it('should render horizontal space with default 8px margin', () => {
+  it('should render space with default 8px margin', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -18,16 +18,11 @@ describe('Space', () => {
         },
       }),
     );
-    // Container > 3 item wrappers, each wrapping a view
-    const views = container.querySelectorAll('view');
-    // views[0] = container, views[1] = item-0, views[2] = child-A, views[3] = item-1, etc.
-    const item0Style = views[1]?.getAttribute('style') || '';
-    const item1Style = views[3]?.getAttribute('style') || '';
-    const item2Style = views[5]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-right: 8px');
-    expect(item1Style).toContain('margin-right: 8px');
-    // Last item should NOT have margin-right
-    expect(item2Style).not.toContain('margin-right');
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items.length).toBe(3);
+    expect(items[0]?.getAttribute('style')).toContain('margin-right: 8px');
+    expect(items[1]?.getAttribute('style')).toContain('margin-right: 8px');
+    expect(items[2]?.getAttribute('style') || '').not.toContain('margin-right');
   });
 
   it('should render vertical space', () => {
@@ -44,20 +39,16 @@ describe('Space', () => {
         },
       }),
     );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('column');
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--vertical');
 
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    const item1Style = views[3]?.getAttribute('style') || '';
-    const item2Style = views[5]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-bottom: 8px');
-    expect(item1Style).toContain('margin-bottom: 8px');
-    expect(item2Style).not.toContain('margin-bottom');
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style')).toContain('margin-bottom: 8px');
+    expect(items[1]?.getAttribute('style')).toContain('margin-bottom: 8px');
+    expect(items[2]?.getAttribute('style') || '').not.toContain('margin-bottom');
   });
 
-  it('should render with custom size 20px', () => {
+  it('should render size 20px', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -71,31 +62,10 @@ describe('Space', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    const item1Style = views[3]?.getAttribute('style') || '';
-    const item2Style = views[5]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-right: 20px');
-    expect(item1Style).toContain('margin-right: 20px');
-    expect(item2Style).not.toContain('margin-right');
-  });
-
-  it('should render with numeric size', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Space, { size: 20 }, {
-            default: () => [
-              h('view', { key: 1 }, [h('text', null, 'A')]),
-              h('view', { key: 2 }, [h('text', null, 'B')]),
-            ],
-          });
-        },
-      }),
-    );
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-right: 20px');
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style')).toContain('margin-right: 20px');
+    expect(items[1]?.getAttribute('style')).toContain('margin-right: 20px');
+    expect(items[2]?.getAttribute('style') || '').not.toContain('margin-right');
   });
 
   it('should render align start', () => {
@@ -111,45 +81,8 @@ describe('Space', () => {
         },
       }),
     );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('flex-start');
-  });
-
-  it('should render align end', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Space, { align: 'end' }, {
-            default: () => [
-              h('view', { key: 1 }, [h('text', null, 'A')]),
-              h('view', { key: 2 }, [h('text', null, 'B')]),
-            ],
-          });
-        },
-      }),
-    );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('flex-end');
-  });
-
-  it('should render align center', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Space, { align: 'center' }, {
-            default: () => [
-              h('view', { key: 1 }, [h('text', null, 'A')]),
-              h('view', { key: 2 }, [h('text', null, 'B')]),
-            ],
-          });
-        },
-      }),
-    );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('center');
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--align-start');
   });
 
   it('should render wrap', () => {
@@ -166,15 +99,44 @@ describe('Space', () => {
         },
       }),
     );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('wrap');
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--wrap');
+  });
 
-    // Items should have both margin-right and margin-bottom when wrapping
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-right: 8px');
-    expect(item0Style).toContain('margin-bottom: 8px');
+  // Additional tests beyond Vant's 5 core tests:
+
+  it('should render align end', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Space, { align: 'end' }, {
+            default: () => [
+              h('view', { key: 1 }, [h('text', null, 'A')]),
+              h('view', { key: 2 }, [h('text', null, 'B')]),
+            ],
+          });
+        },
+      }),
+    );
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--align-end');
+  });
+
+  it('should render align center', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Space, { align: 'center' }, {
+            default: () => [
+              h('view', { key: 1 }, [h('text', null, 'A')]),
+              h('view', { key: 2 }, [h('text', null, 'B')]),
+            ],
+          });
+        },
+      }),
+    );
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--align-center');
   });
 
   it('should render fill', () => {
@@ -190,14 +152,25 @@ describe('Space', () => {
         },
       }),
     );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('100%');
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--fill');
+  });
 
-    // Items should have flex: 1
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    expect(item0Style).toContain('flex: 1');
+  it('should render with numeric size', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Space, { size: 20 }, {
+            default: () => [
+              h('view', { key: 1 }, [h('text', null, 'A')]),
+              h('view', { key: 2 }, [h('text', null, 'B')]),
+            ],
+          });
+        },
+      }),
+    );
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style')).toContain('margin-right: 20px');
   });
 
   it('should render with array size', () => {
@@ -213,9 +186,8 @@ describe('Space', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    expect(item0Style).toContain('margin-right: 16px');
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style')).toContain('margin-right: 16px');
   });
 
   it('should not add margin to last item in horizontal mode', () => {
@@ -230,9 +202,8 @@ describe('Space', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    const item0Style = views[1]?.getAttribute('style') || '';
-    expect(item0Style).not.toContain('margin-right');
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style') || '').not.toContain('margin-right');
   });
 
   it('should default align to center for horizontal', () => {
@@ -247,8 +218,41 @@ describe('Space', () => {
         },
       }),
     );
-    const containerView = container.querySelectorAll('view')[0];
-    const containerStyle = containerView?.getAttribute('style') || '';
-    expect(containerStyle).toContain('center');
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--align-center');
+  });
+
+  it('should have horizontal direction class by default', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Space, null, {
+            default: () => [
+              h('view', { key: 1 }, [h('text', null, 'A')]),
+            ],
+          });
+        },
+      }),
+    );
+    const space = container.querySelector('.van-space');
+    expect(space?.getAttribute('class')).toContain('van-space--horizontal');
+  });
+
+  it('should add margin-bottom to wrap items', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Space, { wrap: true }, {
+            default: () => [
+              h('view', { key: 1 }, [h('text', null, 'A')]),
+              h('view', { key: 2 }, [h('text', null, 'B')]),
+            ],
+          });
+        },
+      }),
+    );
+    const items = container.querySelectorAll('.van-space-item');
+    expect(items[0]?.getAttribute('style')).toContain('margin-right: 8px');
+    expect(items[0]?.getAttribute('style')).toContain('margin-bottom: 8px');
   });
 });

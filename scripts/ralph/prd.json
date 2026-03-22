@@ -342,7 +342,7 @@
         "Docs: Lynx limitations in components/Space/README.md",
         "Commit: feat(space): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-row",
