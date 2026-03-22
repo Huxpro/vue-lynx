@@ -1,75 +1,59 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 11/11 supported
-    - autoplay: Numeric (default 0) - autoplay interval in ms, 0 to disable
-    - duration: Numeric (default 500) - animation duration in ms
-    - initialSwipe: Numeric (default 0) - initial slide index
-    - width: Numeric - slide width (auto-detected in Vant; explicit in Lynx)
-    - height: Numeric (default 150) - slide height
-    - loop: boolean (default true) - enable infinite loop
-    - showIndicators: boolean (default true) - show pagination indicators
-    - vertical: boolean (default false) - vertical swipe mode
-    - touchable: boolean (default true) - enable touch gestures
-    - stopPropagation: boolean (default true) - stop touch event propagation
-    - lazyRender: boolean (default false) - lazy render off-screen slides
-    - indicatorColor: string (default '#1989fa') - active indicator color
-  - Events: 3/3 supported
-    - change: (index: number) - emitted when active slide changes
-    - dragStart: ({ index }) - emitted when drag begins
-    - dragEnd: ({ index }) - emitted when drag ends
-  - Slots: 2/2 supported
-    - default: slide content (SwipeItem children)
-    - indicator: custom indicator content
-  - Exposed Methods: 4/5 supported
-    - prev(): go to previous slide
-    - next(): go to next slide
-    - swipeTo(index): jump to specific slide
-    - setCount(n): set total slide count (Lynx-specific, replaces children counting)
-    - resize(): NOT implemented (no DOM measurement in Lynx)
-  - Lynx Adaptations:
-    - No DOM measurement, so width must be provided explicitly
-    - No CSS transitions (transitionDuration not supported); uses transform only
-    - Touch events use Lynx touch model (event?.touches?.[0])
-    - Child count must be set manually via setCount() (no useChildren injection)
-    - stopPropagation prop accepted but not actionable (Lynx event model)
-  - Gaps:
-    - resize() method not implemented (no DOM measurement in Lynx)
-    - lazyRender prop accepted but not implemented (no dynamic child visibility)
-    - No CSS transition animation between slides (instant snapping)
-    - No automatic child count detection (requires manual setCount call)
-    - No page visibility / deactivate handling for autoplay pause
+  Lynx Limitations:
+  - resize: No DOM offsetWidth/offsetHeight; width/height must be provided as props or defaults to 100%
+  - isHidden: No DOM visibility check; assumes element is always visible
+  - usePageVisibility: No Page Visibility API in Lynx; autoplay does not pause on page hide
+  - onPopupReopen: Not implemented; autoplay does not restart on popup reopen
+  - onActivated/onDeactivated: keep-alive not used in Lynx context
+  - useEventListener passive: touchmove uses standard binding
+  - stopPropagation: prop accepted but Lynx touch event model may differ
 -->
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue-lynx';
+import {
+  ref,
+  reactive,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+  provide,
+  nextTick,
+  useSlots,
+} from 'vue-lynx';
+import { useTouch } from '../../composables/useTouch';
+import {
+  SWIPE_KEY,
+  type SwipeState,
+  type SwipeToOptions,
+  type SwipeItemExpose,
+} from './types';
+import './index.less';
 
 export interface SwipeProps {
-  autoplay?: number;
-  duration?: number;
-  initialSwipe?: number;
-  width?: number;
-  height?: number;
   loop?: boolean;
-  showIndicators?: boolean;
+  width?: number | string;
+  height?: number | string;
   vertical?: boolean;
+  autoplay?: number | string;
+  duration?: number | string;
   touchable?: boolean;
-  stopPropagation?: boolean;
   lazyRender?: boolean;
+  initialSwipe?: number | string;
   indicatorColor?: string;
+  showIndicators?: boolean;
+  stopPropagation?: boolean;
 }
 
 const props = withDefaults(defineProps<SwipeProps>(), {
+  loop: true,
+  vertical: false,
   autoplay: 0,
   duration: 500,
-  initialSwipe: 0,
-  width: 0,
-  height: 150,
-  loop: true,
-  showIndicators: true,
-  vertical: false,
   touchable: true,
-  stopPropagation: true,
   lazyRender: false,
-  indicatorColor: '#1989fa',
+  initialSwipe: 0,
+  showIndicators: true,
+  stopPropagation: true,
 });
 
 const emit = defineEmits<{
@@ -78,196 +62,404 @@ const emit = defineEmits<{
   dragEnd: [params: { index: number }];
 }>();
 
-const activeIndex = ref(props.initialSwipe);
-const totalCount = ref(0);
-const touchStartX = ref(0);
-const touchStartY = ref(0);
-const touchDeltaX = ref(0);
-const touchDeltaY = ref(0);
-const isDragging = ref(false);
-let autoplayTimer: ReturnType<typeof setInterval> | null = null;
+const slots = useSlots();
 
-watch(() => props.initialSwipe, (val) => {
-  activeIndex.value = val;
+const state = reactive<SwipeState>({
+  rect: null,
+  width: 0,
+  height: 0,
+  offset: 0,
+  active: 0,
+  swiping: false,
 });
 
-const slideSize = computed(() =>
-  props.vertical ? props.height : (props.width || 300),
+let dragging = false;
+const touch = useTouch();
+
+// Child management via provide/inject (replaces @vant/use useChildren)
+const children = ref<SwipeItemExpose[]>([]);
+
+const registerChild = (child: SwipeItemExpose): number => {
+  children.value.push(child);
+  return children.value.length - 1;
+};
+
+const unregisterChild = (child: SwipeItemExpose) => {
+  const idx = children.value.indexOf(child);
+  if (idx > -1) {
+    children.value.splice(idx, 1);
+  }
+};
+
+const count = computed(() => children.value.length);
+
+const size = computed(() => {
+  if (props.vertical) {
+    return state.height || 150;
+  }
+  return state.width || 300;
+});
+
+const delta = computed(() =>
+  props.vertical ? touch.deltaY.value : touch.deltaX.value,
 );
 
-const trackStyle = computed(() => {
-  const offset = -activeIndex.value * slideSize.value;
-
-  const dragOffset = isDragging.value
-    ? (props.vertical ? touchDeltaY.value : touchDeltaX.value)
-    : 0;
-
-  return {
-    display: 'flex',
-    flexDirection: (props.vertical ? 'column' : 'row') as 'row' | 'column',
-    height: props.vertical ? undefined : props.height,
-    transform: props.vertical
-      ? `translateY(${offset + dragOffset}px)`
-      : `translateX(${offset + dragOffset}px)`,
-  };
+const minOffset = computed(() => {
+  if (state.rect) {
+    const base = props.vertical ? state.rect.height : state.rect.width;
+    return base - size.value * count.value;
+  }
+  return 0;
 });
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  overflow: 'hidden',
-  position: 'relative' as const,
-  height: props.height,
-  width: props.width || undefined,
-}));
+const maxCount = computed(() =>
+  size.value
+    ? Math.ceil(Math.abs(minOffset.value) / size.value)
+    : count.value,
+);
 
-function startAutoplay() {
-  stopAutoplay();
-  if (props.autoplay > 0 && totalCount.value > 1) {
-    autoplayTimer = setInterval(() => {
-      next();
-    }, props.autoplay);
-  }
-}
+const trackSize = computed(() => count.value * size.value);
 
-function stopAutoplay() {
-  if (autoplayTimer) {
-    clearInterval(autoplayTimer);
-    autoplayTimer = null;
-  }
-}
+const activeIndicator = computed(
+  () => (state.active + count.value) % count.value,
+);
 
-function next() {
-  const count = totalCount.value;
-  if (count <= 0) return;
-  let nextIndex = activeIndex.value + 1;
-  if (nextIndex >= count) {
-    nextIndex = props.loop ? 0 : count - 1;
-  }
-  if (nextIndex !== activeIndex.value) {
-    activeIndex.value = nextIndex;
-    emit('change', nextIndex);
-  }
-}
+const isCorrectDirection = computed(() => {
+  const expect = props.vertical ? 'vertical' : 'horizontal';
+  return touch.direction.value === expect;
+});
 
-function prev() {
-  const count = totalCount.value;
-  if (count <= 0) return;
-  let prevIndex = activeIndex.value - 1;
-  if (prevIndex < 0) {
-    prevIndex = props.loop ? count - 1 : 0;
-  }
-  if (prevIndex !== activeIndex.value) {
-    activeIndex.value = prevIndex;
-    emit('change', prevIndex);
-  }
-}
+const trackStyle = computed(() => {
+  const style: Record<string, string> = {
+    transitionDuration: `${state.swiping ? 0 : props.duration}ms`,
+    transform: `translate${props.vertical ? 'Y' : 'X'}(${+state.offset.toFixed(2)}px)`,
+  };
 
-function swipeTo(index: number) {
-  const count = totalCount.value;
-  if (count <= 0) return;
-  const target = Math.max(0, Math.min(index, count - 1));
-  if (target !== activeIndex.value) {
-    activeIndex.value = target;
-    emit('change', target);
-  }
-}
-
-function onTouchStart(event: any) {
-  if (!props.touchable) return;
-  stopAutoplay();
-  const touch = event?.touches?.[0] || event;
-  touchStartX.value = touch.clientX || touch.pageX || 0;
-  touchStartY.value = touch.clientY || touch.pageY || 0;
-  touchDeltaX.value = 0;
-  touchDeltaY.value = 0;
-  isDragging.value = true;
-  emit('dragStart', { index: activeIndex.value });
-}
-
-function onTouchMove(event: any) {
-  if (!props.touchable || !isDragging.value) return;
-  const touch = event?.touches?.[0] || event;
-  const x = touch.clientX || touch.pageX || 0;
-  const y = touch.clientY || touch.pageY || 0;
-  touchDeltaX.value = x - touchStartX.value;
-  touchDeltaY.value = y - touchStartY.value;
-}
-
-function onTouchEnd() {
-  if (!props.touchable || !isDragging.value) return;
-  isDragging.value = false;
-
-  const delta = props.vertical ? touchDeltaY.value : touchDeltaX.value;
-  const threshold = slideSize.value / 3;
-
-  if (Math.abs(delta) > threshold) {
-    if (delta < 0) {
-      next();
-    } else {
-      prev();
+  if (size.value) {
+    const mainAxis = props.vertical ? 'height' : 'width';
+    const crossAxis = props.vertical ? 'width' : 'height';
+    style[mainAxis] = `${trackSize.value}px`;
+    if (props[crossAxis]) {
+      style[crossAxis] = `${props[crossAxis]}px`;
     }
   }
 
-  touchDeltaX.value = 0;
-  touchDeltaY.value = 0;
-  emit('dragEnd', { index: activeIndex.value });
-  startAutoplay();
-}
-
-function setCount(count: number) {
-  totalCount.value = count;
-}
-
-watch(() => props.autoplay, () => {
-  startAutoplay();
+  return style;
 });
+
+function clamp(num: number, min: number, max: number): number {
+  return Math.min(Math.max(num, min), max);
+}
+
+const getTargetActive = (pace: number) => {
+  const { active } = state;
+  if (pace) {
+    if (props.loop) {
+      return clamp(active + pace, -1, count.value);
+    }
+    return clamp(active + pace, 0, maxCount.value);
+  }
+  return active;
+};
+
+const getTargetOffset = (targetActive: number, offset = 0) => {
+  let currentPosition = targetActive * size.value;
+  if (!props.loop) {
+    currentPosition = Math.min(currentPosition, -minOffset.value);
+  }
+
+  let targetOffset = offset - currentPosition;
+  if (!props.loop) {
+    targetOffset = clamp(targetOffset, minOffset.value, 0);
+  }
+
+  return targetOffset;
+};
+
+const move = ({
+  pace = 0,
+  offset = 0,
+  emitChange,
+}: {
+  pace?: number;
+  offset?: number;
+  emitChange?: boolean;
+}) => {
+  if (count.value <= 1) {
+    return;
+  }
+
+  const { active } = state;
+  const targetActive = getTargetActive(pace);
+  const targetOffset = getTargetOffset(targetActive, offset);
+
+  // auto move first and last swipe in loop mode
+  if (props.loop) {
+    if (children.value[0] && targetOffset !== minOffset.value) {
+      const outRightBound = targetOffset < minOffset.value;
+      children.value[0].setOffset(outRightBound ? trackSize.value : 0);
+    }
+
+    if (children.value[count.value - 1] && targetOffset !== 0) {
+      const outLeftBound = targetOffset > 0;
+      children.value[count.value - 1].setOffset(
+        outLeftBound ? -trackSize.value : 0,
+      );
+    }
+  }
+
+  state.active = targetActive;
+  state.offset = targetOffset;
+
+  if (emitChange && targetActive !== active) {
+    emit('change', activeIndicator.value);
+  }
+};
+
+const correctPosition = () => {
+  state.swiping = true;
+
+  if (state.active <= -1) {
+    move({ pace: count.value });
+  } else if (state.active >= count.value) {
+    move({ pace: -count.value });
+  }
+};
+
+// doubleRaf replacement using setTimeout (requestAnimationFrame not available in Lynx BG thread)
+function doubleRaf(fn: () => void) {
+  setTimeout(() => {
+    setTimeout(fn, 16);
+  }, 16);
+}
+
+const prev = () => {
+  correctPosition();
+  touch.reset();
+
+  doubleRaf(() => {
+    state.swiping = false;
+    move({ pace: -1, emitChange: true });
+  });
+};
+
+const next = () => {
+  correctPosition();
+  touch.reset();
+
+  doubleRaf(() => {
+    state.swiping = false;
+    move({ pace: 1, emitChange: true });
+  });
+};
+
+let autoplayTimer: ReturnType<typeof setTimeout>;
+
+const stopAutoplay = () => clearTimeout(autoplayTimer);
+
+const startAutoplay = () => {
+  stopAutoplay();
+  if (+props.autoplay > 0 && count.value > 1) {
+    autoplayTimer = setTimeout(() => {
+      next();
+      startAutoplay();
+    }, +props.autoplay);
+  }
+};
+
+const initialize = (active = +props.initialSwipe) => {
+  // Set dimensions from props (no DOM measurement in Lynx)
+  const w = +(props.width || 300);
+  const h = +(props.height || 150);
+  state.rect = { width: w, height: h };
+  state.width = w;
+  state.height = h;
+
+  if (count.value) {
+    active = Math.min(count.value - 1, active);
+    if (active === -1) {
+      active = count.value - 1;
+    }
+  }
+
+  state.active = active;
+  state.swiping = true;
+  state.offset = getTargetOffset(active);
+  children.value.forEach((swipe) => {
+    swipe.setOffset(0);
+  });
+
+  startAutoplay();
+};
+
+const resize = () => initialize(state.active);
+
+let touchStartTime: number;
+
+function onTouchStart(event: any) {
+  if (!props.touchable || (event.touches && event.touches.length > 1)) return;
+
+  touch.start(event);
+  dragging = false;
+  touchStartTime = Date.now();
+
+  stopAutoplay();
+  correctPosition();
+}
+
+function onTouchMove(event: any) {
+  if (props.touchable && state.swiping) {
+    touch.move(event);
+
+    if (isCorrectDirection.value) {
+      const isEdgeTouch =
+        !props.loop &&
+        ((state.active === 0 && delta.value > 0) ||
+          (state.active === count.value - 1 && delta.value < 0));
+
+      if (!isEdgeTouch) {
+        if (props.stopPropagation && event.stopPropagation) {
+          event.stopPropagation();
+        }
+        if (event.preventDefault) {
+          event.preventDefault();
+        }
+        move({ offset: delta.value });
+
+        if (!dragging) {
+          emit('dragStart', { index: activeIndicator.value });
+          dragging = true;
+        }
+      }
+    }
+  }
+}
+
+function onTouchEnd() {
+  if (!props.touchable || !state.swiping) {
+    return;
+  }
+
+  const duration = Date.now() - touchStartTime;
+  const speed = delta.value / duration;
+  const shouldSwipe =
+    Math.abs(speed) > 0.25 || Math.abs(delta.value) > size.value / 2;
+
+  if (shouldSwipe && isCorrectDirection.value) {
+    const offset = props.vertical
+      ? touch.offsetY.value
+      : touch.offsetX.value;
+
+    let pace = 0;
+
+    if (props.loop) {
+      pace = offset > 0 ? (delta.value > 0 ? -1 : 1) : 0;
+    } else {
+      pace = -Math[delta.value > 0 ? 'ceil' : 'floor'](
+        delta.value / size.value,
+      );
+    }
+
+    move({ pace, emitChange: true });
+  } else if (delta.value) {
+    move({ pace: 0 });
+  }
+
+  dragging = false;
+  state.swiping = false;
+
+  emit('dragEnd', { index: activeIndicator.value });
+  startAutoplay();
+}
+
+const swipeTo = (index: number, options: SwipeToOptions = {}) => {
+  correctPosition();
+  touch.reset();
+
+  doubleRaf(() => {
+    let targetIndex: number;
+    if (props.loop && index === count.value) {
+      targetIndex = state.active === 0 ? 0 : index;
+    } else {
+      targetIndex = index % count.value;
+    }
+
+    if (options.immediate) {
+      doubleRaf(() => {
+        state.swiping = false;
+      });
+    } else {
+      state.swiping = false;
+    }
+
+    move({ pace: targetIndex - state.active, emitChange: true });
+  });
+};
+
+provide(SWIPE_KEY, {
+  props,
+  size,
+  count,
+  activeIndicator,
+  registerChild,
+  unregisterChild,
+});
+
+watch(
+  () => props.initialSwipe,
+  (value) => initialize(+value),
+);
+
+watch(count, () => initialize(state.active));
+watch(() => props.autoplay, startAutoplay);
 
 onMounted(() => {
-  startAutoplay();
+  // Wait for children to register before initializing
+  nextTick(() => {
+    initialize();
+  });
 });
 
-onUnmounted(() => {
-  stopAutoplay();
+onUnmounted(stopAutoplay);
+
+defineExpose({
+  prev,
+  next,
+  state,
+  resize,
+  swipeTo,
 });
 
-defineExpose({ next, prev, swipeTo, setCount, activeIndex });
-
-const indicatorContainerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: (props.vertical ? 'column' : 'row') as 'row' | 'column',
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-  position: 'absolute' as const,
-  bottom: props.vertical ? undefined : 8,
-  right: props.vertical ? 8 : undefined,
-  left: props.vertical ? undefined : 0,
-  top: props.vertical ? 0 : undefined,
-  width: props.vertical ? undefined : '100%',
-  height: props.vertical ? '100%' : undefined,
-}));
+const indicatorDots = computed(() =>
+  Array(count.value).fill('').map((_, i) => i),
+);
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <view :style="trackStyle">
+  <view class="van-swipe">
+    <view
+      class="van-swipe__track"
+      :class="{ 'van-swipe__track--vertical': vertical }"
+      :style="trackStyle"
+      @touchstart="onTouchStart"
+      @touchmove="onTouchMove"
+      @touchend="onTouchEnd"
+      @touchcancel="onTouchEnd"
+    >
       <slot />
     </view>
-    <slot name="indicator">
-      <view v-if="showIndicators && totalCount > 1" :style="indicatorContainerStyle">
+    <slot name="indicator" :active="activeIndicator" :total="count">
+      <view
+        v-if="showIndicators && count > 1"
+        class="van-swipe__indicators"
+        :class="{ 'van-swipe__indicators--vertical': vertical }"
+      >
         <view
-          v-for="i in totalCount"
+          v-for="i in indicatorDots"
           :key="i"
-          :style="{
-            width: 6,
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: (i - 1) === activeIndex ? indicatorColor : 'rgba(255,255,255,0.5)',
-            marginLeft: vertical ? 0 : 3,
-            marginRight: vertical ? 0 : 3,
-            marginTop: vertical ? 3 : 0,
-            marginBottom: vertical ? 3 : 0,
-          }"
+          class="van-swipe__indicator"
+          :class="{ 'van-swipe__indicator--active': i === activeIndicator }"
+          :style="i === activeIndicator && indicatorColor ? { backgroundColor: indicatorColor } : undefined"
         />
       </view>
     </slot>
