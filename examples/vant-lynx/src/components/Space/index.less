@@ -1,3 +1,42 @@
-:root {
-  --van-space-gap: var(--van-padding-xs, 8px);
+.van-space {
+  display: flex;
+
+  &--horizontal {
+    .van-space-item {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &--vertical {
+    flex-direction: column;
+  }
+
+  &--align-baseline {
+    align-items: baseline;
+  }
+
+  &--align-start {
+    align-items: flex-start;
+  }
+
+  &--align-end {
+    align-items: flex-end;
+  }
+
+  &--align-center {
+    align-items: center;
+  }
+
+  &--wrap {
+    flex-wrap: wrap;
+  }
+
+  &--fill {
+    display: flex;
+
+    .van-space-item {
+      flex: 1;
+    }
+  }
 }
