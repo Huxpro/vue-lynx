@@ -9,10 +9,6 @@ function getTexts(container: any): string[] {
   );
 }
 
-function getAllViews(container: any): any[] {
-  return Array.from(container.querySelectorAll('view'));
-}
-
 describe('Progress', () => {
   // Vant test 1: should re-calc width if showing pivot dynamically
   it('should re-calc width if showing pivot dynamically', async () => {
@@ -49,9 +45,10 @@ describe('Progress', () => {
         },
       }),
     );
-    const views = getAllViews(container);
-    const trackStyles = views.map((v: any) => v.getAttribute('style') || '');
-    expect(trackStyles.some((s: string) => s.includes('green'))).toBe(true);
+    const root = container.querySelector('.van-progress');
+    expect(root).toBeTruthy();
+    const style = root!.getAttribute('style') || '';
+    expect(style).toContain('green');
   });
 
   // Vant test 3: should render pivot slot with correct percentage
@@ -89,7 +86,7 @@ describe('Progress', () => {
   });
 
   // Vant test 5: should not render pivot slot when showPivot is false
-  it('should not render pivot slot when showPivot is false', () => {
+  it('should not render pivot when showPivot is false', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -101,12 +98,12 @@ describe('Progress', () => {
         },
       }),
     );
-    const texts = getTexts(container);
-    expect(texts).not.toContain('slot content');
+    const pivot = container.querySelector('.van-progress__pivot');
+    expect(pivot).toBeNull();
   });
 
-  // Additional: should render progress bar
-  it('should render progress bar', () => {
+  // Additional: should render with BEM classes
+  it('should render with BEM classes', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -114,8 +111,9 @@ describe('Progress', () => {
         },
       }),
     );
-    const views = getAllViews(container);
-    expect(views.length).toBeGreaterThan(0);
+    expect(container.querySelector('.van-progress')).toBeTruthy();
+    expect(container.querySelector('.van-progress__portion')).toBeTruthy();
+    expect(container.querySelector('.van-progress__pivot')).toBeTruthy();
   });
 
   // Additional: should render percentage text
@@ -157,8 +155,8 @@ describe('Progress', () => {
     expect(texts).toContain('100%');
   });
 
-  // Additional: should apply inactive color
-  it('should apply inactive color', () => {
+  // Additional: should apply inactive class
+  it('should apply inactive class', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -166,12 +164,8 @@ describe('Progress', () => {
         },
       }),
     );
-    const views = getAllViews(container);
-    const styles = views.map((v: any) => v.getAttribute('style') || '');
-    // Inactive uses #c8c9cc
-    expect(
-      styles.some((s: string) => s.includes('rgb(200, 201, 204)') || s.includes('#c8c9cc')),
-    ).toBe(true);
+    expect(container.querySelector('.van-progress__portion--inactive')).toBeTruthy();
+    expect(container.querySelector('.van-progress__pivot--inactive')).toBeTruthy();
   });
 
   // Additional: should apply custom stroke width
@@ -183,13 +177,13 @@ describe('Progress', () => {
         },
       }),
     );
-    const views = getAllViews(container);
-    const styles = views.map((v: any) => v.getAttribute('style') || '');
-    expect(styles.some((s: string) => s.includes('8'))).toBe(true);
+    const root = container.querySelector('.van-progress');
+    const style = root!.getAttribute('style') || '';
+    expect(style).toContain('8px');
   });
 
   // Additional: should apply custom color
-  it('should apply custom color', () => {
+  it('should apply custom color via inline style', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -197,13 +191,22 @@ describe('Progress', () => {
         },
       }),
     );
-    const views = getAllViews(container);
-    const styles = views.map((v: any) => v.getAttribute('style') || '');
-    expect(
-      styles.some(
-        (s: string) =>
-          s.includes('#ee0a24') || s.includes('rgb(238, 10, 36)'),
-      ),
-    ).toBe(true);
+    const portion = container.querySelector('.van-progress__portion');
+    const style = portion!.getAttribute('style') || '';
+    expect(style.includes('#ee0a24') || style.includes('rgb(238, 10, 36)')).toBe(true);
+  });
+
+  // Additional: should set portion width to percentage
+  it('should set portion width to percentage', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Progress, { percentage: 60 });
+        },
+      }),
+    );
+    const portion = container.querySelector('.van-progress__portion');
+    const style = portion!.getAttribute('style') || '';
+    expect(style).toContain('60%');
   });
 });

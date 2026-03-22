@@ -441,3 +441,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to full BEM class system. Split into sub-components matching Vant's architecture (SkeletonTitle, SkeletonAvatar, SkeletonParagraph, SkeletonImage). Added @keyframes van-skeleton-blink animation. All styling via CSS classes and variables in .less file. Demo now uses actual Switch component and sub-components.
 - Limitations: <h3>/<div> HTML elements (replaced with <view>), inheritAttrs (not relevant in Lynx), :not(:first-child) CSS selector (may not work in Lynx)
 ---
+
+## 2026-03-22 - parity-progress: Progress
+- Props: 9/9 (percentage, strokeWidth, color, trackColor, pivotText, pivotColor, textColor, inactive, showPivot)
+- Events: 0/0 (none in Vant)
+- Slots: 1/1 (pivot — receives { percentage })
+- CSS Variables: 9 defined in index.less (--van-progress-height, --van-progress-color, --van-progress-inactive-color, --van-progress-background, --van-progress-pivot-padding, --van-progress-pivot-text-color, --van-progress-pivot-font-size, --van-progress-pivot-line-height, --van-progress-pivot-background)
+- Animations: CSS transition on portion and pivot (transition: all var(--van-duration-base) var(--van-ease-out))
+- Tests: 13 cases (Vant has 5, we have 13 — added BEM class, inactive class, strokeWidth, color, width tests)
+- Demo sections: 6/6 (基础用法, 线条粗细, 置灰, 样式定制, 进度插槽内容, 过渡效果)
+- Visual match: pass (BEM classes, CSS variables, CSS transitions)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has Progress.tsx, types.ts, index.ts, index.less = 4 files)
+- Key changes: Rewrote from all-inline-styles to full BEM class system. Added .van-progress, .van-progress__portion, .van-progress__pivot CSS class selectors with --inactive modifiers. CSS transition animations on portion and pivot. Uses createNamespace('progress') + bem(). Inline styles only for dynamic values (percentage width, custom colors, strokeWidth).
+- Limitations: transform: translate(-X%, -50%) (Lynx doesn't support percentage-based translate, uses marginLeft approximation), word-break: keep-all (not available in Lynx)
+---

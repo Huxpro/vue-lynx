@@ -760,7 +760,7 @@
         "Docs: Lynx limitations in components/Progress/README.md",
         "Commit: feat(progress): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-circle",
