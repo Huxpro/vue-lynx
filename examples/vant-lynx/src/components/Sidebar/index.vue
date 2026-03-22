@@ -1,15 +1,16 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 1/1 supported (modelValue)
-  - Events: 2/2 supported (update:modelValue, change)
-  - Slots: 1/1 supported (default)
-  - Gaps: None - full prop and event parity achieved
+  Lynx Limitations:
+  - role/tablist: Not applicable in Lynx
+  - overflow-y: auto: Lynx scrolling differs from web
+  - -webkit-overflow-scrolling: Not applicable in Lynx
+  - CSS variable theming: Lynx uses inline styles instead of CSS custom properties
 -->
 <script setup lang="ts">
-import { computed, provide, toRef } from 'vue-lynx';
+import { computed, provide, ref } from 'vue-lynx';
+import { SIDEBAR_KEY } from './types';
 
 export interface SidebarProps {
-  modelValue?: number;
+  modelValue?: number | string;
 }
 
 const props = withDefaults(defineProps<SidebarProps>(), {
@@ -21,22 +22,30 @@ const emit = defineEmits<{
   change: [value: number];
 }>();
 
-function setActive(index: number) {
-  if (index !== props.modelValue) {
-    emit('update:modelValue', index);
-    emit('change', index);
+const getActive = () => +props.modelValue;
+
+const setActive = (value: number) => {
+  if (value !== getActive()) {
+    emit('update:modelValue', value);
+    emit('change', value);
   }
+};
+
+const childCount = ref(0);
+function getNextIndex(): number {
+  return childCount.value++;
 }
 
-provide('sidebar', {
-  modelValue: toRef(props, 'modelValue'),
+provide(SIDEBAR_KEY, {
+  getActive,
   setActive,
+  getNextIndex,
 });
 
 const sidebarStyle = computed(() => ({
   display: 'flex',
   flexDirection: 'column' as const,
-  width: 80,
+  width: '80px',
   backgroundColor: '#f7f8fa',
   overflow: 'hidden',
 }));

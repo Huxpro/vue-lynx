@@ -1,14 +1,19 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 5/6 (title, dot, badge, disabled, badgeProps; missing: route props)
-  - Events: 1/1 (click)
-  - Slots: 2/2 (default, title)
-  - Gaps: route props (to, url, replace) not in Lynx; index manually passed
+  Lynx Limitations:
+  - to: Lynx has no vue-router; prop accepted for API compatibility but ignored
+  - url: Lynx has no browser navigation; prop accepted for API compatibility but ignored
+  - replace: Lynx has no navigation; prop accepted for API compatibility but ignored
+  - role/tabindex/aria-selected: Not applicable in Lynx
+  - :active pseudo-class: Uses touchstart/touchend opacity feedback
+  - ::before pseudo-element: Uses explicit view element for selected border
+  - ::after pseudo-element border-bottom: Not applicable in Lynx
+  - CSS variable theming: Lynx uses inline styles instead of CSS custom properties
 -->
 <script setup lang="ts">
-import { computed, inject, type Ref } from 'vue-lynx';
+import { computed, inject, ref } from 'vue-lynx';
 import Badge from '../Badge/index.vue';
 import type { BadgeProps } from '../Badge/index.vue';
+import { SIDEBAR_KEY } from '../Sidebar/types';
 
 export interface SidebarItemProps {
   title?: string;
@@ -16,68 +21,104 @@ export interface SidebarItemProps {
   badge?: string | number;
   disabled?: boolean;
   badgeProps?: Partial<BadgeProps>;
-  index?: number;
+  to?: string | Record<string, any>;
+  url?: string;
+  replace?: boolean;
 }
 
 const props = withDefaults(defineProps<SidebarItemProps>(), {
   title: '',
   dot: false,
   disabled: false,
-  index: 0,
+  replace: false,
 });
 
 const emit = defineEmits<{
   click: [index: number];
 }>();
 
-const sidebar = inject<{
-  modelValue: Ref<number>;
-  setActive: (index: number) => void;
-}>('sidebar')!;
+const parent = inject(SIDEBAR_KEY);
+
+if (!parent) {
+  console.error('[Vant] <SidebarItem> must be a child of <Sidebar>');
+}
+
+const index = ref(parent?.getNextIndex() ?? 0);
 
 const isActive = computed(() => {
-  return sidebar.modelValue.value === props.index;
+  return parent ? parent.getActive() === index.value : false;
 });
+
+const pressed = ref(false);
+
+function onTouchStart() {
+  if (!props.disabled) {
+    pressed.value = true;
+  }
+}
+
+function onTouchEnd() {
+  pressed.value = false;
+}
 
 function onTap() {
   if (props.disabled) return;
-  sidebar.setActive(props.index);
-  emit('click', props.index);
+  emit('click', index.value);
+  parent?.setActive(index.value);
 }
 
-const itemStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-  position: 'relative' as const,
-  paddingTop: 16,
-  paddingBottom: 16,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: isActive.value ? '#fff' : 'transparent',
-  opacity: props.disabled ? 0.5 : 1,
-}));
+const itemStyle = computed(() => {
+  let backgroundColor: string;
+  if (isActive.value) {
+    backgroundColor = '#fff';
+  } else if (pressed.value && !props.disabled) {
+    backgroundColor = '#f2f3f5';
+  } else {
+    backgroundColor = '#f7f8fa';
+  }
+
+  return {
+    display: 'flex',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    position: 'relative' as const,
+    paddingTop: '20px',
+    paddingBottom: '20px',
+    paddingLeft: '12px',
+    paddingRight: '12px',
+    backgroundColor,
+    cursor: props.disabled ? 'not-allowed' : 'pointer',
+    overflow: 'hidden',
+  };
+});
 
 const activeBarStyle = computed(() => ({
   position: 'absolute' as const,
-  left: 0,
+  left: '0px',
   top: '50%',
-  width: 3,
-  height: 16,
-  marginTop: -8,
-  backgroundColor: '#ee0a24',
-  borderRadius: 2,
+  width: '4px',
+  height: '16px',
+  marginTop: '-8px',
+  backgroundColor: '#1989fa',
+  borderRadius: '0px',
 }));
 
 const textStyle = computed(() => ({
-  fontSize: 14,
-  color: '#323233',
-  fontWeight: isActive.value ? 'bold' : ('normal' as any),
+  fontSize: '14px',
+  lineHeight: '20px',
+  color: props.disabled ? '#c8c9cc' : '#323233',
+  fontWeight: isActive.value ? 'bold' : ('normal' as const),
+  wordBreak: 'break-all' as const,
 }));
 </script>
 
 <template>
-  <view :style="itemStyle" @tap="onTap">
+  <view
+    :style="itemStyle"
+    @tap="onTap"
+    @touchstart="onTouchStart"
+    @touchend="onTouchEnd"
+  >
     <view v-if="isActive" :style="activeBarStyle" />
     <Badge
       :dot="dot"
@@ -88,6 +129,5 @@ const textStyle = computed(() => ({
         <text :style="textStyle">{{ title }}</text>
       </slot>
     </Badge>
-    <slot />
   </view>
 </template>
