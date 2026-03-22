@@ -7,3 +7,27 @@
   --van-circle-text-font-size: var(--van-font-size-md, 14px);
   --van-circle-text-line-height: var(--van-line-height-md, 20px);
 }
+
+.van-circle {
+  position: relative;
+  width: var(--van-circle-size);
+  height: var(--van-circle-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__text {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--van-circle-text-color);
+    font-weight: var(--van-circle-text-font-weight);
+    font-size: var(--van-circle-text-font-size);
+    line-height: var(--van-circle-text-line-height);
+    transform: translateY(-50%);
+  }
+}
