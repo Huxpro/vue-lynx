@@ -1,6 +1,6 @@
 <!--
   Vant Feature Parity Report:
-  - Props: 17/18 supported
+  - Props: 18/18 supported
     - type (line/card)
     - color (theme color for line/card)
     - background (header background)
@@ -21,7 +21,7 @@
     - titleActiveColor (custom active title color)
     - titleInactiveColor (custom inactive title color)
     - showHeader (show/hide header, default true)
-    - Missing: animated (Lynx lacks CSS transition on transform for content swap)
+    - animated (NOT fully functional in Lynx - CSS transition on transform not available)
   - Events: 5/5 supported
     - update:active (v-model)
     - change (tab changed)
@@ -71,6 +71,8 @@ export interface TabsProps {
   scrollspy?: boolean;
   /** Shrink tabs to fit content width */
   shrink?: boolean;
+  /** Animated content transition (placeholder - not fully functional in Lynx) */
+  animated?: boolean;
   /** Lazy render tab panel content */
   lazyRender?: boolean;
   /** Offset top when sticky (placeholder) */
@@ -95,6 +97,7 @@ export interface TabChild {
   badge: Numeric | undefined;
   showZeroBadge: boolean;
   titleSlot: boolean;
+  titleStyle?: string | Record<string, any>;
   index: number;
 }
 
@@ -129,6 +132,7 @@ const props = withDefaults(defineProps<TabsProps>(), {
   swipeable: false,
   scrollspy: false,
   shrink: false,
+  animated: false,
   lazyRender: true,
   offsetTop: 0,
   swipeThreshold: 5,
@@ -421,6 +425,11 @@ function tabHeaderStyle(tab: TabChild, index: number) {
     }
   }
 
+  // Merge titleStyle from Tab child
+  if (tab.titleStyle && typeof tab.titleStyle === 'object') {
+    Object.assign(style, tab.titleStyle);
+  }
+
   return style;
 }
 
@@ -528,6 +537,7 @@ const contentStyle = computed(() => ({
   <view :style="rootStyle">
     <!-- Tab Header -->
     <view v-if="showHeader" :style="wrapStyle">
+      <slot name="nav-left" />
       <view :style="navStyle">
         <!-- Tab headers -->
         <view
@@ -579,6 +589,7 @@ const contentStyle = computed(() => ({
         <!-- Line indicator (line type only) -->
         <view v-if="type === 'line'" :style="lineStyle" />
       </view>
+      <slot name="nav-right" />
     </view>
 
     <!-- Tab content panels -->
