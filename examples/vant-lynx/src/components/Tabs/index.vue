@@ -1,123 +1,48 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 18/18 supported
-    - type (line/card)
-    - color (theme color for line/card)
-    - background (header background)
-    - duration (animation duration)
-    - lineWidth (custom line indicator width)
-    - lineHeight (custom line indicator height)
-    - active (v-model:active, current active tab)
-    - border (show bottom border for line type)
-    - ellipsis (truncate long titles, default true)
-    - sticky (NOT functional in Lynx - placeholder prop only)
-    - swipeable (NOT functional in Lynx - no swipe gestures)
-    - scrollspy (NOT functional in Lynx - no scroll spy)
-    - shrink (tabs shrink to fit content)
-    - lazyRender (lazy render tab panels, default true)
-    - offsetTop (NOT functional - related to sticky)
-    - beforeChange (interceptor before tab change)
-    - swipeThreshold (number of tabs before scrollable, default 5)
-    - titleActiveColor (custom active title color)
-    - titleInactiveColor (custom inactive title color)
-    - showHeader (show/hide header, default true)
-    - animated (NOT fully functional in Lynx - CSS transition on transform not available)
-  - Events: 5/5 supported
-    - update:active (v-model)
-    - change (tab changed)
-    - click-tab (tab header clicked, includes name/title/event/disabled)
-    - rendered (tab panel first rendered, for lazy-render)
-    - scroll (NOT functional - related to sticky)
-  - Provide/Inject: Full parent-child coordination with auto-indexing
-  - Line indicator: Single animated indicator under active tab
-  - Scrollable header: Horizontal scroll-view when tabs exceed swipeThreshold
-  - beforeChange interceptor: Supports sync/async/Promise interceptors
-  - Gaps:
-    - sticky/scrollspy/offsetTop: Lynx has no scroll event interception on parent
-    - animated/swipeable: Lynx has no CSS transition on translateX for content swap
-    - CSS Variables: Not applicable (Lynx uses inline styles)
+  Lynx Limitations:
+  - sticky: Lynx has no scroll event interception on parent containers
+  - scrollspy: Lynx has no scroll position tracking for content panels
+  - offsetTop: Related to sticky, not functional in Lynx
+  - animated/swipeable: Lynx lacks CSS transition on translateX for content swipe
+  - scrollIntoView: Cannot measure DOM widths for scroll-to-center behavior
+  - resize: Cannot measure DOM for line repositioning (line uses percentage positioning)
+  - role/tabindex/aria-* attributes: Not applicable in Lynx
+  - Sticky component wrapping: Not available in Lynx
+  - nav scrollbar hiding: Lynx has no ::-webkit-scrollbar
 -->
 <script setup lang="ts">
-import { computed, provide, ref, toRef, watch, nextTick, type Ref } from 'vue-lynx';
+import { computed, provide, ref, toRef, watch, nextTick } from 'vue-lynx';
+import {
+  TABS_KEY,
+  type Numeric,
+  type Interceptor,
+  type TabChild,
+  type TabsProvide,
+  type TabsClickTabEventParams,
+} from './types';
 
-// ---- Types ----
-type Numeric = string | number;
-type Interceptor = (...args: any[]) => Promise<boolean> | boolean | undefined | void;
-
-export interface TabsProps {
-  /** v-model - current active tab name/index */
+interface TabsProps {
   active?: Numeric;
-  /** Tab style type */
   type?: 'line' | 'card';
-  /** Theme color */
   color?: string;
-  /** Header background color */
   background?: string;
-  /** Animation duration in seconds */
   duration?: number;
-  /** Custom line indicator width (px) */
   lineWidth?: number;
-  /** Custom line indicator height (px) */
   lineHeight?: number;
-  /** Show bottom border (line type only) */
   border?: boolean;
-  /** Truncate long tab titles */
   ellipsis?: boolean;
-  /** Sticky header (placeholder - not functional in Lynx) */
   sticky?: boolean;
-  /** Swipeable content (placeholder - not functional in Lynx) */
   swipeable?: boolean;
-  /** Scroll spy mode (placeholder - not functional in Lynx) */
   scrollspy?: boolean;
-  /** Shrink tabs to fit content width */
   shrink?: boolean;
-  /** Animated content transition (placeholder - not fully functional in Lynx) */
   animated?: boolean;
-  /** Lazy render tab panel content */
   lazyRender?: boolean;
-  /** Offset top when sticky (placeholder) */
   offsetTop?: number;
-  /** Interceptor before tab change */
   beforeChange?: Interceptor;
-  /** Number of tabs before becoming scrollable */
   swipeThreshold?: number;
-  /** Active tab title color override */
   titleActiveColor?: string;
-  /** Inactive tab title color override */
   titleInactiveColor?: string;
-  /** Show/hide header */
   showHeader?: boolean;
-}
-
-export interface TabChild {
-  name: Numeric;
-  title: string;
-  disabled: boolean;
-  dot: boolean;
-  badge: Numeric | undefined;
-  showZeroBadge: boolean;
-  titleSlot: boolean;
-  titleStyle?: string | Record<string, any>;
-  index: number;
-}
-
-export interface TabsProvide {
-  active: Ref<Numeric>;
-  type: Ref<'line' | 'card'>;
-  color: Ref<string>;
-  lazyRender: Ref<boolean>;
-  scrollspy: Ref<boolean>;
-  titleActiveColor: Ref<string | undefined>;
-  titleInactiveColor: Ref<string | undefined>;
-  shrink: Ref<boolean>;
-  ellipsis: Ref<boolean>;
-  scrollable: Ref<boolean>;
-  registerTab: (tab: TabChild) => void;
-  unregisterTab: (name: Numeric) => void;
-  updateTab: (name: Numeric, updates: Partial<TabChild>) => void;
-  setActive: (name: Numeric, title: string) => void;
-  onRendered: (name: Numeric, title?: string) => void;
-  getTabIndex: () => number;
 }
 
 const props = withDefaults(defineProps<TabsProps>(), {
@@ -142,7 +67,7 @@ const props = withDefaults(defineProps<TabsProps>(), {
 const emit = defineEmits<{
   'update:active': [value: Numeric];
   'change': [name: Numeric, title: string];
-  'click-tab': [params: { name: Numeric; title: string; disabled: boolean }];
+  'click-tab': [params: TabsClickTabEventParams];
   'rendered': [name: Numeric, title?: string];
   'scroll': [params: { scrollTop: number; isFixed: boolean }];
 }>();
@@ -153,7 +78,6 @@ let tabIndexCounter = 0;
 const currentIndex = ref(-1);
 const inited = ref(false);
 
-// Whether the nav header is scrollable
 const scrollable = computed(() => {
   return (
     tabs.value.length > props.swipeThreshold ||
@@ -170,14 +94,12 @@ function getTabIndex(): number {
 function registerTab(tab: TabChild) {
   const exists = tabs.value.find((t) => t.name === tab.name);
   if (!exists) {
-    // Insert in order based on index
     const insertIndex = tabs.value.findIndex((t) => t.index > tab.index);
     if (insertIndex === -1) {
       tabs.value.push(tab);
     } else {
       tabs.value.splice(insertIndex, 0, tab);
     }
-    // After first registration, initialize
     if (!inited.value) {
       nextTick(() => {
         if (!inited.value) {
@@ -186,7 +108,6 @@ function registerTab(tab: TabChild) {
         }
       });
     } else {
-      // Re-sync if tabs change after init
       nextTick(() => {
         setCurrentIndexByName(props.active);
       });
@@ -287,8 +208,8 @@ function callInterceptor(interceptor: Interceptor | undefined, name: Numeric, do
   }
 }
 
-function setActive(name: Numeric, title: string) {
-  emit('click-tab', { name, title, disabled: false });
+function setActive(name: Numeric, title: string, event: Event) {
+  emit('click-tab', { name, title, event, disabled: false });
 
   if (name === currentName.value) return;
 
@@ -300,6 +221,26 @@ function setActive(name: Numeric, title: string) {
 function onRendered(name: Numeric, title?: string) {
   emit('rendered', name, title);
 }
+
+// ---- Expose: resize & scrollTo ----
+function resize() {
+  // In Lynx we cannot measure DOM, but we keep API parity
+  // Re-sync current index
+  nextTick(() => {
+    setCurrentIndexByName(props.active);
+  });
+}
+
+function scrollTo(name: Numeric) {
+  nextTick(() => {
+    setCurrentIndexByName(name);
+  });
+}
+
+defineExpose({
+  resize,
+  scrollTo,
+});
 
 // ---- Watch active prop ----
 watch(
@@ -321,7 +262,7 @@ watch(
 );
 
 // ---- Provide to children ----
-provide('tabs', {
+provide(TABS_KEY, {
   active: computed(() => currentName.value ?? props.active),
   type: toRef(props, 'type'),
   color: toRef(props, 'color'),
@@ -352,7 +293,7 @@ const wrapStyle = computed(() => {
     overflow: 'hidden',
   };
   if (props.type === 'line' && props.border) {
-    style.borderBottomWidth = 0.5;
+    style.borderBottomWidth = '0.5px';
     style.borderBottomStyle = 'solid';
     style.borderBottomColor = '#ebedf0';
   }
@@ -369,12 +310,12 @@ const navStyle = computed(() => {
   };
 
   if (props.type === 'card') {
-    style.borderWidth = 0.5;
+    style.borderWidth = '0.5px';
     style.borderStyle = 'solid';
     style.borderColor = props.color;
-    style.borderRadius = 2;
-    style.marginLeft = 16;
-    style.marginRight = 16;
+    style.borderRadius = '2px';
+    style.marginLeft = '16px';
+    style.marginRight = '16px';
     style.overflow = 'hidden';
   }
 
@@ -389,43 +330,36 @@ function tabHeaderStyle(tab: TabChild, index: number) {
     display: 'flex',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    height: isCard ? 30 : 44,
-    paddingLeft: isCard ? 0 : 12,
-    paddingRight: isCard ? 0 : 12,
+    height: isCard ? '30px' : '44px',
+    paddingLeft: isCard ? '0px' : '12px',
+    paddingRight: isCard ? '0px' : '12px',
     opacity: tab.disabled ? 0.5 : 1,
     cursor: tab.disabled ? 'default' : 'pointer',
   };
 
-  // Flex grow behavior
   if (props.shrink) {
-    // Shrink mode: tabs take natural width + small padding
-    style.paddingLeft = 12;
-    style.paddingRight = 12;
+    style.paddingLeft = '12px';
+    style.paddingRight = '12px';
   } else if (scrollable.value) {
-    // Scrollable mode: tabs have flex grow
     style.flex = 1;
-    style.minWidth = 0;
+    style.minWidth = '0px';
   } else {
-    // Normal mode: equal width tabs
     style.flex = 1;
   }
 
-  // Card type colors
   if (isCard) {
     if (isActive) {
       style.backgroundColor = props.color;
     } else {
       style.backgroundColor = 'transparent';
     }
-    // Card tab borders (separators between tabs)
     if (index > 0) {
-      style.borderLeftWidth = 0.5;
+      style.borderLeftWidth = '0.5px';
       style.borderLeftStyle = 'solid';
       style.borderLeftColor = props.color;
     }
   }
 
-  // Merge titleStyle from Tab child
   if (tab.titleStyle && typeof tab.titleStyle === 'object') {
     Object.assign(style, tab.titleStyle);
   }
@@ -450,13 +384,12 @@ function tabTextStyle(tab: TabChild, index: number) {
   }
 
   const style: Record<string, any> = {
-    fontSize: 14,
+    fontSize: '14px',
     fontWeight: isActive ? 'bold' : 'normal',
     color,
-    lineHeight: 20,
+    lineHeight: '20px',
   };
 
-  // Ellipsis for non-scrollable mode
   if (props.ellipsis && !scrollable.value) {
     style.overflow = 'hidden';
     style.whiteSpace = 'nowrap';
@@ -466,47 +399,34 @@ function tabTextStyle(tab: TabChild, index: number) {
   return style;
 }
 
-// Line indicator style - single indicator positioned under active tab
 const lineStyle = computed(() => {
   if (props.type !== 'line' || tabs.value.length === 0 || currentIndex.value < 0) {
     return { display: 'none' };
   }
 
   const tabCount = tabs.value.length;
-  // In non-scrollable mode, all tabs are equal width
-  // Width of the line indicator
   const lineW = props.lineWidth ?? 40;
   const lineH = props.lineHeight ?? 3;
 
   const style: Record<string, any> = {
     position: 'absolute' as const,
-    bottom: 0,
-    height: lineH,
-    borderRadius: lineH / 2,
+    bottom: '0px',
+    height: `${lineH}px`,
+    borderRadius: `${lineH / 2}px`,
     backgroundColor: props.color,
-    width: lineW,
+    width: `${lineW}px`,
   };
 
-  // We position the line by computing the left offset based on equal-width tabs.
-  // Since we can't measure actual DOM widths in Lynx, we estimate.
-  // For equal-width tabs: each tab is 1/tabCount of total nav width.
-  // The line should be centered within the active tab.
-  // We use percentages: center of tab[i] = (i + 0.5) / tabCount * 100%
-  // But Lynx doesn't support calc(), so we use a left percentage approach:
-  // left = (i / tabCount * 100)%, then marginLeft to center the line.
+  if (inited.value) {
+    style.transitionDuration = `${props.duration}s`;
+    style.transitionProperty = 'left';
+  }
 
-  // Use a simpler approach: left as percentage of tab width
   if (!props.shrink && tabCount > 0) {
-    // Each tab is `100/tabCount`% wide
     const tabWidthPercent = 100 / tabCount;
-    // Left edge of active tab
     const leftPercent = currentIndex.value * tabWidthPercent;
-    // Center the line within the tab
-    // left = leftPercent% + (tabWidthPercent/2)% - lineW/2
-    // Since we can't do calc, we approximate by setting left and using alignSelf
-    // Actually, we'll just use marginLeft calculated as a fraction
     style.left = `${leftPercent + tabWidthPercent / 2}%`;
-    style.marginLeft = -(lineW / 2);
+    style.marginLeft = `${-(lineW / 2)}px`;
   }
 
   return style;
@@ -518,12 +438,12 @@ function shouldShowBadge(tab: TabChild): boolean {
   return true;
 }
 
-function onTabTap(tab: TabChild) {
+function onTabTap(tab: TabChild, event: Event) {
   if (tab.disabled) {
-    emit('click-tab', { name: tab.name, title: tab.title, disabled: true });
+    emit('click-tab', { name: tab.name, title: tab.title, event, disabled: true });
     return;
   }
-  setActive(tab.name, tab.title);
+  setActive(tab.name, tab.title, event);
 }
 
 const contentStyle = computed(() => ({
@@ -544,7 +464,7 @@ const contentStyle = computed(() => ({
           v-for="(tab, index) in tabs"
           :key="tab.name"
           :style="tabHeaderStyle(tab, index)"
-          @tap="onTabTap(tab)"
+          @tap="onTabTap(tab, $event)"
         >
           <view :style="{ display: 'flex', flexDirection: 'column', alignItems: 'center' }">
             <!-- Badge support for dot/badge -->
@@ -554,29 +474,29 @@ const contentStyle = computed(() => ({
               <!-- Dot indicator -->
               <view v-if="tab.dot" :style="{
                 position: 'absolute',
-                top: -4,
-                right: -8,
-                width: 8,
-                height: 8,
-                borderRadius: 4,
+                top: '-4px',
+                right: '-8px',
+                width: '8px',
+                height: '8px',
+                borderRadius: '4px',
                 backgroundColor: '#ee0a24',
               }" />
               <!-- Badge number -->
               <view v-else-if="shouldShowBadge(tab)" :style="{
                 position: 'absolute',
-                top: -8,
-                right: -16,
+                top: '-8px',
+                right: '-16px',
                 backgroundColor: '#ee0a24',
-                borderRadius: 8,
-                minWidth: 16,
-                height: 16,
-                paddingLeft: 3,
-                paddingRight: 3,
+                borderRadius: '8px',
+                minWidth: '16px',
+                height: '16px',
+                paddingLeft: '3px',
+                paddingRight: '3px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }">
-                <text :style="{ fontSize: 10, color: '#fff', fontWeight: 'bold', lineHeight: 14 }">
+                <text :style="{ fontSize: '10px', color: '#fff', fontWeight: 'bold', lineHeight: '14px' }">
                   {{ tab.badge }}
                 </text>
               </view>
@@ -590,6 +510,7 @@ const contentStyle = computed(() => ({
         <view v-if="type === 'line'" :style="lineStyle" />
       </view>
       <slot name="nav-right" />
+      <slot name="nav-bottom" />
     </view>
 
     <!-- Tab content panels -->

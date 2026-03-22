@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'vue-lynx';
+
 export type Numeric = number | string;
 
 export interface TabProps {
@@ -7,7 +9,7 @@ export interface TabProps {
   badge?: Numeric;
   name?: Numeric;
   titleClass?: unknown;
-  titleStyle?: string | Record<string, string | number>;
+  titleStyle?: string | CSSProperties;
   showZeroBadge?: boolean;
   url?: string;
   to?: string | Record<string, unknown>;
