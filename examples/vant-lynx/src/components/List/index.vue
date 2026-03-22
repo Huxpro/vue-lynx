@@ -1,64 +1,30 @@
 <!--
-  Vant List - Feature Parity Report
-  ===================================
-  Vant Source: packages/vant/src/list/List.tsx
-
-  Props (10/10 supported):
-    - loading: boolean                 [YES]
-    - finished: boolean                [YES]
-    - error: boolean                   [YES]
-    - offset: number (default 300)     [YES]
-    - disabled: boolean                [YES] added
-    - loadingText: string              [YES]
-    - finishedText: string             [YES]
-    - errorText: string                [YES]
-    - immediateCheck: boolean          [YES]
-    - direction: 'up' | 'down'        [YES]
-    - scroller: Element               [NO] Lynx has no arbitrary scroll parent detection
-
-  Events (3/3 supported):
-    - load                             [YES]
-    - update:loading                   [YES]
-    - update:error                     [YES] added
-
-  Slots (4/4 supported):
-    - default                          [YES]
-    - loading                          [YES] added
-    - finished                         [YES] added
-    - error                            [YES] added
-
-  Expose (1/1 supported):
-    - check()                          [YES] added
-
-  Lynx Adaptations:
-    - Vant uses useScrollParent + useRect for scroll detection; Lynx uses
-      @scroll event on the container view with event.detail measurements.
-    - Vant uses <Loading> component in loading slot; we import and use the
-      local Loading component.
-    - Uses `display: 'flex'` explicitly on all flex containers.
-    - Vant uses useEventListener for passive scroll; Lynx uses @scroll directly.
-
-  Gaps:
-    - No scroller prop (Lynx cannot query arbitrary scroll parents)
-    - No tab status detection (useAllTabStatus not available)
-    - No passive scroll event option (Lynx limitation)
-    - No role/aria attributes (Lynx does not support ARIA)
+  Lynx Limitations:
+  - scroller: Lynx has no arbitrary scroll parent detection (useScrollParent); scroll
+    detection uses @scroll on the container view with event.detail measurements instead.
+  - Tab status: No useAllTabStatus composable — List always checks regardless of tab state.
+  - Passive scroll: No passive event listener option in Lynx.
+  - role/aria: No ARIA attributes (role="feed", aria-busy) in Lynx.
+  - pointer-events: Placeholder uses height: 0 only (no pointer-events: none).
 -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, useSlots } from 'vue-lynx';
+import { ref, watch, onMounted, useSlots } from 'vue-lynx';
 import Loading from '../Loading/index.vue';
+import './index.less';
+import type { ListDirection, ListExpose } from './types';
 
-export interface ListProps {
+interface ListProps {
   loading?: boolean;
   finished?: boolean;
   error?: boolean;
-  offset?: number;
+  offset?: number | string;
   disabled?: boolean;
-  loadingText?: string;
+  scroller?: object;
+  loadingText?: string | null;
   finishedText?: string;
   errorText?: string;
   immediateCheck?: boolean;
-  direction?: 'up' | 'down';
+  direction?: ListDirection;
 }
 
 const props = withDefaults(defineProps<ListProps>(), {
@@ -67,9 +33,7 @@ const props = withDefaults(defineProps<ListProps>(), {
   error: false,
   offset: 300,
   disabled: false,
-  loadingText: 'Loading...',
-  finishedText: '',
-  errorText: 'Request failed. Click to reload',
+  loadingText: '',
   immediateCheck: true,
   direction: 'down',
 });
@@ -82,11 +46,16 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 
-// Use sync innerLoading to avoid repeated loading (matching Vant)
+// Use sync innerLoading state to avoid repeated loading in some edge cases (matching Vant)
 const innerLoading = ref(props.loading);
 
 function check() {
-  if (innerLoading.value || props.finished || props.disabled || props.error) {
+  if (
+    innerLoading.value ||
+    props.finished ||
+    props.disabled ||
+    props.error
+  ) {
     return;
   }
   triggerLoad();
@@ -100,10 +69,8 @@ function triggerLoad() {
 }
 
 function onErrorTap() {
-  if (props.error) {
-    emit('update:error', false);
-    check();
-  }
+  emit('update:error', false);
+  check();
 }
 
 function onScroll(event: any) {
@@ -115,23 +82,18 @@ function onScroll(event: any) {
   const scrollTop = detail.scrollTop || 0;
   const scrollHeight = detail.scrollHeight || 0;
   const offsetHeight = detail.offsetHeight || 0;
+  const offset = +props.offset;
 
   if (props.direction === 'down') {
-    if (scrollHeight - scrollTop - offsetHeight <= props.offset) {
+    if (scrollHeight - scrollTop - offsetHeight <= offset) {
       triggerLoad();
     }
   } else {
-    if (scrollTop <= props.offset) {
+    if (scrollTop <= offset) {
       triggerLoad();
     }
   }
 }
-
-onMounted(() => {
-  if (props.immediateCheck) {
-    check();
-  }
-});
 
 watch(
   () => [props.loading, props.finished, props.error],
@@ -143,82 +105,58 @@ watch(
   },
 );
 
-defineExpose({ check });
+onMounted(() => {
+  if (props.immediateCheck) {
+    check();
+  }
+});
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  flex: 1,
-}));
+defineExpose<ListExpose>({ check });
 
-const tipStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: 16,
-}));
-
-const tipTextStyle = {
-  fontSize: 14,
-  color: '#969799',
-};
-
-const hasLoadingSlot = computed(() => !!slots.loading);
-const hasFinishedSlot = computed(() => !!slots.finished);
-const hasErrorSlot = computed(() => !!slots.error);
-
-const showLoading = computed(
-  () => innerLoading.value && !props.finished && !props.disabled,
-);
+const showLoading = () =>
+  innerLoading.value && !props.finished && !props.disabled;
 </script>
 
 <template>
-  <view :style="containerStyle" @scroll="onScroll">
-    <!-- Placeholder / tip at top if direction is up -->
-    <view v-if="direction === 'up'" :style="tipStyle">
-      <template v-if="showLoading">
-        <slot name="loading">
-          <Loading size="16" :textSize="14">{{ loadingText }}</Loading>
-        </slot>
-      </template>
-      <template v-else-if="finished">
-        <slot name="finished">
-          <text v-if="finishedText" :style="tipTextStyle">{{ finishedText }}</text>
-        </slot>
-      </template>
-      <template v-else-if="error">
-        <slot name="error">
-          <text
-            :style="{ ...tipTextStyle, color: '#ee0a24' }"
-            @tap="onErrorTap"
-          >{{ errorText }}</text>
-        </slot>
-      </template>
+  <view class="van-list" @scroll="onScroll">
+    <!-- direction=up: placeholder first, then loading/finished/error, then content -->
+    <view v-if="direction === 'up'" class="van-list__placeholder" />
+
+    <view v-if="direction === 'up' && showLoading()" class="van-list__loading">
+      <slot name="loading">
+        <Loading v-if="loadingText != null" size="16">{{ loadingText || '加载中...' }}</Loading>
+      </slot>
+    </view>
+    <view v-if="direction === 'up' && finished && (slots.finished || finishedText)" class="van-list__finished-text">
+      <slot name="finished">
+        <text>{{ finishedText }}</text>
+      </slot>
+    </view>
+    <view v-if="direction === 'up' && error && (slots.error || errorText)" class="van-list__error-text" @tap="onErrorTap">
+      <slot name="error">
+        <text>{{ errorText }}</text>
+      </slot>
     </view>
 
     <slot />
 
-    <!-- Placeholder / tip at bottom if direction is down -->
-    <view v-if="direction === 'down'" :style="tipStyle">
-      <template v-if="showLoading">
-        <slot name="loading">
-          <Loading size="16" :textSize="14">{{ loadingText }}</Loading>
-        </slot>
-      </template>
-      <template v-else-if="finished">
-        <slot name="finished">
-          <text v-if="finishedText" :style="tipTextStyle">{{ finishedText }}</text>
-        </slot>
-      </template>
-      <template v-else-if="error">
-        <slot name="error">
-          <text
-            :style="{ ...tipTextStyle, color: '#ee0a24' }"
-            @tap="onErrorTap"
-          >{{ errorText }}</text>
-        </slot>
-      </template>
+    <!-- direction=down: content first, then loading/finished/error, then placeholder -->
+    <view v-if="direction === 'down' && showLoading()" class="van-list__loading">
+      <slot name="loading">
+        <Loading v-if="loadingText != null" size="16">{{ loadingText || '加载中...' }}</Loading>
+      </slot>
     </view>
+    <view v-if="direction === 'down' && finished && (slots.finished || finishedText)" class="van-list__finished-text">
+      <slot name="finished">
+        <text>{{ finishedText }}</text>
+      </slot>
+    </view>
+    <view v-if="direction === 'down' && error && (slots.error || errorText)" class="van-list__error-text" @tap="onErrorTap">
+      <slot name="error">
+        <text>{{ errorText }}</text>
+      </slot>
+    </view>
+
+    <view v-if="direction === 'down'" class="van-list__placeholder" />
   </view>
 </template>
