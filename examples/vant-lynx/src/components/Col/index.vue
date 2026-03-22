@@ -1,12 +1,12 @@
 <!--
   Lynx Limitations:
   - tag: accepted for API compat but always renders as view (Lynx has no HTML elements)
-  - CSS class-based BEM styling replaced with inline styles
-  - 24-column grid uses percentage-based width/margin-left via inline styles
 -->
 <script setup lang="ts">
 import { computed, inject, getCurrentInstance, onUnmounted, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import { ROW_KEY } from '../Row/types';
+import './index.less';
 
 export interface ColProps {
   tag?: string;
@@ -18,6 +18,8 @@ const props = withDefaults(defineProps<ColProps>(), {
   tag: 'div',
   span: 0,
 });
+
+const [, bem] = createNamespace('col');
 
 const parent = inject(ROW_KEY, null);
 const instance = getCurrentInstance()!;
@@ -31,46 +33,44 @@ if (parent) {
   });
 }
 
-const colStyle = computed(() => {
+const colClass = computed(() => {
   const span = Number(props.span) || 0;
   const offset = Number(props.offset) || 0;
+  return bem([{
+    [String(span)]: !!span,
+    [`offset-${offset}`]: !!offset,
+  }]);
+});
 
-  const style: Record<string, string | undefined> = {};
+// Inline styles ONLY for dynamic gutter padding/margin (from parent Row)
+const colStyle = computed(() => {
+  if (!parent) return undefined;
 
-  if (span) {
-    style.width = `${(span / 24) * 100}%`;
-  }
+  const index = parent.getIndex(uid);
+  const { spaces, verticalSpaces } = parent;
+  const style: Record<string, string> = {};
 
-  if (offset) {
-    style.marginLeft = `${(offset / 24) * 100}%`;
-  }
-
-  if (parent) {
-    const index = parent.getIndex(uid);
-    const { spaces, verticalSpaces } = parent;
-
-    if (spaces.value && spaces.value[index]) {
-      const { left, right } = spaces.value[index];
-      if (left) {
-        style.paddingLeft = `${left}px`;
-      }
-      if (right) {
-        style.paddingRight = `${right}px`;
-      }
+  if (spaces.value && spaces.value[index]) {
+    const { left, right } = spaces.value[index];
+    if (left) {
+      style.paddingLeft = `${left}px`;
     }
-
-    const verticalSpace = verticalSpaces.value[index];
-    if (verticalSpace?.bottom) {
-      style.marginBottom = `${verticalSpace.bottom}px`;
+    if (right) {
+      style.paddingRight = `${right}px`;
     }
   }
 
-  return style;
+  const verticalSpace = verticalSpaces.value[index];
+  if (verticalSpace?.bottom) {
+    style.marginBottom = `${verticalSpace.bottom}px`;
+  }
+
+  return Object.keys(style).length ? style : undefined;
 });
 </script>
 
 <template>
-  <view :style="colStyle">
+  <view :class="colClass" :style="colStyle">
     <slot />
   </view>
 </template>

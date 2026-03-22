@@ -1,12 +1,12 @@
 <!--
   Lynx Limitations:
   - tag: accepted for API compat but always renders as view (Lynx has no HTML elements)
-  - CSS class-based BEM styling replaced with inline styles
-  - Gutter distribution uses Vant's per-child padding algorithm
 -->
 <script setup lang="ts">
 import { computed, provide, shallowRef } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import { ROW_KEY, type RowAlign, type RowJustify, type RowSpaces, type VerticalSpaces } from './types';
+import './index.less';
 
 export interface RowProps {
   tag?: string;
@@ -21,6 +21,8 @@ const props = withDefaults(defineProps<RowProps>(), {
   wrap: true,
   gutter: 0,
 });
+
+const [, bem] = createNamespace('row');
 
 // Child registration
 interface ChildInfo {
@@ -122,46 +124,18 @@ const verticalSpaces = computed(() => {
 
 provide(ROW_KEY, { spaces, verticalSpaces, register, unregister, updateSpan, getIndex });
 
-const justifyMap: Record<string, string> = {
-  start: 'flex-start',
-  end: 'flex-end',
-  center: 'center',
-  'space-around': 'space-around',
-  'space-between': 'space-between',
-};
-
-const alignMap: Record<string, string> = {
-  top: 'flex-start',
-  center: 'center',
-  bottom: 'flex-end',
-};
-
-const rowStyle = computed(() => {
-  const style: Record<string, string | number> = {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: props.wrap ? 'wrap' : 'nowrap',
-  };
-
-  if (props.justify) {
-    style.justifyContent = justifyMap[props.justify] || 'flex-start';
-  }
-
-  if (props.align) {
-    style.alignItems = alignMap[props.align] || 'flex-start';
-  }
-
-  if (gutterH.value) {
-    style.marginLeft = `${-gutterH.value / 2}px`;
-    style.marginRight = `${-gutterH.value / 2}px`;
-  }
-
-  return style;
+const rowClass = computed(() => {
+  const { wrap, align, justify } = props;
+  return bem([{
+    [`align-${align}`]: !!align,
+    [`justify-${justify}`]: !!justify,
+    nowrap: !wrap,
+  }]);
 });
 </script>
 
 <template>
-  <view :style="rowStyle">
+  <view :class="rowClass">
     <slot />
   </view>
 </template>
