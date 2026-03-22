@@ -1,50 +1,71 @@
-# Ralph Demo Coverage Round - Vant-Lynx
+# Ralph Animation Fix Round - Vant-Lynx
 
-You are adding missing demos to match Vant's official documentation.
+## IMPORTANT CORRECTION
 
-## Key Files
+We made a mistake! Lynx DOES support:
+- CSS `transition` property
+- CSS `@keyframes` animation  
+- CSS `transform`, `opacity`, etc.
+- Vue `<Transition>` component
 
-- `prd.json` - Your task list
-- `progress.txt` - Log your work
+We should NOT have used `element.animate()`. This round fixes all components to use CSS transitions like the original Vant implementation.
 
-## Demo Page Structure
+## The Pattern to Follow
 
-Each demo page uses this pattern:
-
+### Vant's Original Approach:
 ```vue
-<script setup>
-import DemoPage from '../components/DemoPage/index.vue';
-import ComponentName from '../components/ComponentName/index.vue';
-</script>
-
-<template>
-  <DemoPage title="Component Name">
-    <view :style="{ padding: 16 }">
-      <!-- Section Header -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <!-- Demo -->
-      <ComponentName prop="value" />
-      
-      <!-- Another Section -->
-      <text :style="{ ... }">Another Demo</text>
-      <ComponentName other-prop="value" />
-    </view>
-  </DemoPage>
-</template>
+<Transition name="van-fade">
+  <div v-show="show" class="van-overlay" />
+</Transition>
 ```
 
-## Reference
+With CSS (via inline styles in Lynx):
+```typescript
+// Transition enter/leave classes applied automatically by <Transition>
+// We provide the styles via :style binding
 
-- Check Vant docs: https://vant-ui.github.io/vant/#/en-US/{component}
-- Look at existing demo pages like button.vue for style reference
-- Each section should have a text header and demo below
+const transitionStyle = computed(() => ({
+  transition: `opacity ${props.duration}s ease`,
+  // or for transforms:
+  transition: `transform ${props.duration}s ease`,
+}));
+```
+
+### Position-based Popup Transitions:
+- `center`: scale(0.9) -> scale(1) + opacity (bounce effect)
+- `top`: translateY(-100%) -> translateY(0)
+- `bottom`: translateY(100%) -> translateY(0)  
+- `left`: translateX(-100%) -> translateX(0)
+- `right`: translateX(100%) -> translateX(0)
+
+### Using Vue <Transition> events:
+```vue
+<Transition
+  :name="transitionName"
+  @after-enter="onOpened"
+  @after-leave="onClosed"
+>
+  <div v-show="show" :style="transitionStyle">...</div>
+</Transition>
+```
+
+## Key Changes
+
+1. **Remove** all `useAnimate` imports
+2. **Remove** all `runOnMainThread`, `main-thread-ref` usage
+3. **Add** `<Transition>` wrapper with appropriate name
+4. **Add** CSS transition styles via :style binding
+5. **Use** `@after-enter`/`@after-leave` for opened/closed events
+
+## Files to Delete
+
+- `composables/useAnimate.ts` - no longer needed
 
 ## Workflow
 
-1. Open Vant docs for the component
-2. List all demo sections shown
-3. Compare with existing demo page
-4. Add missing sections
-5. pnpm build to verify
-6. Update prd.json passes: true
-7. Log progress
+1. Read prd.json for current story
+2. Remove element.animate() code
+3. Add <Transition> with CSS transitions
+4. Test with pnpm build
+5. Update prd.json passes: true
+6. Log progress

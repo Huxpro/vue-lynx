@@ -1,161 +1,74 @@
-# Ralph Progress Log
-Started: Sat Mar 21 18:26:48 EDT 2026
+# Ralph Progress Log - Animation Fix
+Started: Sat Mar 21 19:49:58 EDT 2026
 ---
+GOAL: Replace element.animate() with CSS transitions + Vue <Transition>
 
-## Completed Stories (15/15)
+## Completed Stories
 
-### pickergroup-toolbar (priority 95) ✓
-- Added showToolbar, confirmButtonText, cancelButtonText, nextStepText props
-- Added v-model:activeTab support with confirm/cancel events
-- Added toolbar, title, confirm, cancel slots
-- nextStepText switches confirm button to advance tabs until final tab
+### remove-useAnimate ✅
+- composables/useAnimate.ts deleted
+- No remaining imports across all components
 
-### timepicker-complete (priority 90) ✓
-- Added filter prop: (type, values) => string[]
-- Added formatter prop: (type, value) => string
-- Added visibleOptionNum prop
-- Added toolbar, title, confirm, cancel, option, columns-top, columns-bottom slots
+### overlay-transition ✅
+- Uses <Transition name="van-fade"> with CSS opacity transition
+- Duration configurable via props
 
-### datepicker-complete (priority 89) ✓
-- Same pattern as TimePicker: filter, formatter, visibleOptionNum props
-- Added all 7 slots (toolbar, title, confirm, cancel, option, columns-top, columns-bottom)
+### popup-transition ✅
+- Position-based transition names: van-popup-zoom (center), van-popup-slide-{top,bottom,left,right}
+- Flex centering wrapper for center position (avoids transform conflict)
+- @after-enter/@after-leave for opened/closed events
 
-### calendar-popup (priority 88) ✓
-- Added show prop with v-model:show support
-- Added round, position props
-- Wraps in Popup component when poppable=true
-- Added update:show, clickOverlay, opened, closed events
-- Added title, subtitle, footer slots
+### dialog-transition ✅
+- Uses <Transition name="van-popup-zoom"> with scale(0.9)->scale(1) + opacity
+- Flex centering wrapper, inherits pattern from Popup
 
-### calendar-formatter (priority 85) ✓
-- Added formatter prop: (day: CalendarDay) => CalendarDay
-- CalendarDay type: { date, type, text, topInfo, bottomInfo, className }
-- Formatter applied to each day cell with topInfo/bottomInfo rendering
-- Day types: selected, start, end, start-end, middle, disabled, normal, today
+### toast-transition ✅
+- Position-based: van-popup-zoom (middle), van-popup-slide-top/bottom
+- Auto-close timer preserved
 
-### actionsheet-close (priority 82) ✓
-- Added closeable prop with closeIcon prop (default 'cross')
-- Added safeAreaInsetBottom prop (34px bottom padding)
-- Renders close icon in header when closeable=true
+### notify-transition ✅
+- Uses van-popup-slide-top / van-popup-slide-bottom based on position prop
+- Timer-based auto-close preserved
 
-### form-auto-required (priority 80) ✓
-- Field component: required prop now accepts boolean | 'auto'
-- Added rules prop to Field for auto-detection
-- When 'auto', checks if any rule has required: true
-- Shows asterisk on label when required
+### dropdown-transition ✅
+- Uses van-dropdown-slide-down / van-dropdown-slide-up
+- @after-enter/@after-leave for opened/closed events
 
-### treeselect-badge (priority 78) ✓
-- Nav items render Badge component when dot or badge property is set
-- Uses Badge component from ../Badge/index.vue
-- Matches Vant's TreeSelectItem type (dot, badge properties)
+### imagepreview-transition ✅
+- Uses <Transition name="van-fade"> with opacity transition
+- @after-leave for closed event
 
-### couponlist-complete (priority 75) ✓
-- code prop with v-model support already existed
-- Added emptyImage prop (renders image in empty state)
-- closeButtonText, inputPlaceholder props already existed
-- Added displayedCouponIndex prop (highlights specified coupon)
-- update:code event already existed
+### actionsheet-transition ✅
+- Uses Popup with position="bottom" — inherits slide-bottom transition
 
-### pagination-slot (priority 70) ✓
-- Added pageDesc slot in simple mode
-- Slot receives { current, total } props
-- Default: '{current}/{total}' text
+### sharesheet-transition ✅
+- Uses Popup with position="bottom" — inherits slide-bottom transition
 
-### rate-iconprefix (priority 68) ✓
-- Added iconPrefix prop
-- When iconPrefix set, uses Icon component with class-prefix
-- Falls back to Unicode star characters when no iconPrefix
+### floatingpanel-transition ✅
+- CSS transition on height property with cubic-bezier spring easing
+- Transition disabled during drag, enabled only for snap animation
 
-### uploader-callbacks (priority 65) ✓
-- Added afterRead, beforeRead, beforeDelete callback props
-- beforeDelete called before removing file; returns false to cancel
-- Props typed with proper signatures
+### floatingbubble-transition ✅
+- CSS transition for snap (left/top) and appear (scale/opacity)
+- Transition disabled during drag
 
-### tabs-animated (priority 60) ✓
-- Added animated prop (default false)
-- Provided to child Tab components via TabsProvide
-- swipeThreshold prop already existed
+### swipecell-transition ✅
+- CSS transition on transform (translateX) with cubic-bezier easing
+- Transition disabled during drag, enabled only for snap
 
-### picker-methods (priority 55) ✓
-- Exposed confirm() method via defineExpose
-- Exposed getSelectedOptions() method via defineExpose
+### noticebar-animation ✅
+- CSS transition on transform (translateX) for marquee scroll
+- Timer-based cycle with configurable speed/delay
 
-### dialog-methods (priority 54) ✓
-- Exposed open() method via defineExpose
-- Exposed close() method via defineExpose
+### cleanup-build ✅
+- pnpm build (root): PASS
+- pnpm build (examples/vant-lynx): PASS
+- transitions.css imported in index.ts
+- All 14 transition classes defined in transitions.css
 
----
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+## Architecture
 
-## Quality Review Fixes (2026-03-21)
-
-### PickerGroup confirm event fix
-- confirm event was emitting `[]` instead of collecting child picker values
-- Added registerPicker/unregisterPicker to provide; Picker now registers its getValues
-- confirm now calls collectValues() to gather selected values from all child pickers
-
-### Calendar double update:show fix
-- onClickOverlay was emitting update:show manually, but Popup already handles it via doClose()
-- Removed duplicate emission; Popup's forwarded @update:show handles closing
-
-### Uploader afterRead fix
-- afterRead prop was declared but never invoked
-- Added watcher on modelValue that detects newly added files and calls afterRead
-
-### Tab animated transition fix
-- animated prop was provided by Tabs parent but never consumed by Tab child
-- Tab now injects animated ref and applies opacity transition when enabled
-
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
-
-## Quality Review Round 2 (2026-03-21)
-
-### CouponList code v-model sync fix
-- exchangeCode ref was initialized from props.code but never watched for external updates
-- Added watch on props.code to sync exchangeCode when parent changes the prop
-- Added missing `watch` import
-
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
-
-## Quality Review Round 3 (2026-03-21)
-
-### Rate half-star base color fix
-- getStarColor() returned props.color for 'half' status, but the base layer of a half star
-  shows voidIcon and should use voidColor; the overlay handles active color
-- Changed condition: status === 'full' → props.color, else → props.voidColor
-
-### Uploader beforeRead invocation fix
-- beforeRead prop was declared but never invoked
-- Integrated beforeRead validation into the modelValue watcher (same pattern as afterRead)
-- When new files are added, beforeRead is called for each; rejected files are filtered out
-- afterRead is only called for accepted files
-
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
-
-## Quality Review Round 4 (2026-03-21)
-
-### DatePicker type prop shorthand
-- Demo used `type="year-month"` and `type="datehour"` but the component only accepted `columnsType` array
-- Added `type` prop with `DatePickerType` enum: 'date' | 'year-month' | 'month-day' | 'datehour'
-- Added `TYPE_TO_COLUMNS` mapping; computed `columnsType` resolves from `type` prop or falls back to explicit `columnsType`
-- Updated all `props.columnsType` references in script to use the computed
-
-### Field unused inject import
-- `inject` was imported but never used (added during form-auto-required story)
-- Removed dead import
-
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
-
-## Quality Review Round 5 (2026-03-21)
-
-### Uploader beforeRead/afterRead race condition fix
-- `suppressWatch` flag was cleared synchronously after emit, but Vue watchers fire async
-- Changed to `skipNextWatch` flag: stays true until the next watcher invocation clears it
-- Fixed afterRead index calculation: saved `prevLength` as `baseLength` before mutation
-  so accepted files always get correct indices relative to original array position
-
-### DatePicker filter/formatter type safety
-- filter and formatter prop signatures used generic `string` for type parameter
-- Changed to `DatePickerColumnType` for proper type safety
-
-Build verification: pnpm build ✓, examples/vant-lynx pnpm build ✓
+- transitions.css: Defines enter-from/leave-to states for all named transitions
+- Inline :style bindings: Provide configurable transition duration per component
+- Vue <Transition>: Wraps animated elements with v-show for enter/leave
+- Gesture components (FloatingPanel, FloatingBubble, SwipeCell): Use reactive CSS transition property, disabled during drag

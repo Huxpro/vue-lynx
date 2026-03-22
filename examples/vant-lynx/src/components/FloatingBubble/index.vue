@@ -1,28 +1,16 @@
 <!--
   Vant Feature Parity Report: FloatingBubble
   - Props: 5/6 supported
-    - icon ✅, axis ✅ (x/y/xy/lock), magnetic ✅ (x/y snap to nearest edge)
-    - offset ✅ (v-model with {x, y}), gap ✅ (number or {x, y} object)
-    - teleport ❌ (Lynx has no DOM, Vue Teleport not applicable)
+    - icon, axis (x/y/xy/lock), magnetic (x/y snap to nearest edge)
+    - offset (v-model with {x, y}), gap (number or {x, y} object)
+    - teleport: N/A (Lynx has no DOM)
   - Events: 3/3 supported (click, update:offset, offsetChange)
   - Slots: 1/1 supported (default - custom bubble content)
-  - Gestures Supported:
-    - Drag freely along configured axis (x, y, xy) ✅
-    - Lock mode prevents all dragging ✅
-    - Boundary constraints based on gap ✅
-    - Magnetic snap to nearest edge on release (x or y axis) ✅
-    - Tap vs drag detection (only emits click on tap, not drag) ✅
-    - Transition animation when snapping (not during drag) ✅
-    - touchcancel treated as touchend ✅
-  - Default Position: bottom-right corner with gap offset ✅
-  - Gaps:
-    - teleport not supported (Lynx has no DOM tree to teleport to)
-    - No Icon component integration (uses text fallback for icon prop)
-    - Window dimensions use fixed defaults (Lynx has no window.innerWidth/Height);
-      provide screenWidth/screenHeight props to customize
+  - Gestures: drag along axis, lock mode, boundary constraints, magnetic snap
+  - Transition: CSS transition for snap animation, scale appear animation
 -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, useMainThreadRef, runOnMainThread } from 'vue-lynx';
+import { ref, computed, watch, onMounted } from 'vue-lynx';
 
 export type FloatingBubbleAxis = 'x' | 'y' | 'xy' | 'lock';
 export type FloatingBubbleMagnetic = 'x' | 'y' | '';
@@ -35,13 +23,10 @@ export interface FloatingBubbleProps {
   magnetic?: FloatingBubbleMagnetic;
   icon?: string;
   gap?: FloatingBubbleGap;
-  /** Screen width for boundary calculation (Lynx has no window.innerWidth) */
   screenWidth?: number;
-  /** Screen height for boundary calculation (Lynx has no window.innerHeight) */
   screenHeight?: number;
-  /** Bubble size in px */
   size?: number;
-  teleport?: string; // accepted but ignored in Lynx
+  teleport?: string;
 }
 
 const props = withDefaults(defineProps<FloatingBubbleProps>(), {
@@ -60,7 +45,6 @@ const emit = defineEmits<{
   'offset-change': [value: FloatingBubbleOffset];
 }>();
 
-// Computed gap values (support number or {x, y} object)
 const gapX = computed(() =>
   typeof props.gap === 'object' ? props.gap.x : props.gap,
 );
@@ -68,7 +52,6 @@ const gapY = computed(() =>
   typeof props.gap === 'object' ? props.gap.y : props.gap,
 );
 
-// Boundary constraints
 const boundary = computed(() => ({
   top: gapY.value,
   right: props.screenWidth - props.size - gapX.value,
@@ -76,14 +59,12 @@ const boundary = computed(() => ({
   left: gapX.value,
 }));
 
-// Find closest value in array
 function closest(arr: number[], target: number): number {
   return arr.reduce((prev, curr) =>
     Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev,
   );
 }
 
-// Position state - default to bottom-right corner
 const posX = ref(
   props.offset ? props.offset.x : props.screenWidth - props.size - gapX.value,
 );
@@ -92,44 +73,20 @@ const posY = ref(
 );
 
 const dragging = ref(false);
-
-// Main-thread animation for snap and appear
-const bubbleRef = useMainThreadRef(null);
-
-function _bounceIn(duration: number) {
-  'main thread';
-  if (typeof (bubbleRef as any).current?.animate === 'function') {
-    (bubbleRef as any).current.animate(
-      [
-        { transform: 'scale(0)', opacity: 0 },
-        { transform: 'scale(1.1)', opacity: 1, offset: 0.6 },
-        { transform: 'scale(0.95)', opacity: 1, offset: 0.8 },
-        { transform: 'scale(1)', opacity: 1 },
-      ],
-      { duration, fill: 'forwards', easing: 'ease-out' },
-    );
-  }
-}
-
-function _snapTo(fromLeft: number, fromTop: number, toLeft: number, toTop: number, duration: number) {
-  'main thread';
-  if (typeof (bubbleRef as any).current?.animate === 'function') {
-    (bubbleRef as any).current.animate(
-      [
-        { left: `${fromLeft}px`, top: `${fromTop}px` },
-        { left: `${toLeft}px`, top: `${toTop}px` },
-      ],
-      { duration, fill: 'forwards', easing: 'ease-out' },
-    );
-  }
-}
+// Track whether snap animation is active (enables CSS transition)
+const snapping = ref(false);
+// Appear animation state
+const appeared = ref(false);
 
 // Bounce-in animation on first appear
 onMounted(() => {
-  runOnMainThread(_bounceIn)(200);
+  // Start scaled down, then animate to full size
+  setTimeout(() => {
+    appeared.value = true;
+  }, 16);
 });
 
-// Tap detection: if drag distance < TAP_OFFSET, it's a tap, not a drag
+// Tap detection
 const TAP_OFFSET = 5;
 let isTap = true;
 
@@ -146,6 +103,7 @@ function onTouchStart(e: any) {
   prevX = posX.value;
   prevY = posY.value;
   dragging.value = true;
+  snapping.value = false;
   isTap = true;
 }
 
@@ -155,7 +113,6 @@ function onTouchMove(e: any) {
   const deltaX = (touch.clientX || 0) - startTouchX;
   const deltaY = (touch.clientY || 0) - startTouchY;
 
-  // Detect if this is still a tap
   if (isTap && (Math.abs(deltaX) > TAP_OFFSET || Math.abs(deltaY) > TAP_OFFSET)) {
     isTap = false;
   }
@@ -183,9 +140,6 @@ function onTouchMove(e: any) {
 function onTouchEnd() {
   dragging.value = false;
 
-  const fromX = posX.value;
-  const fromY = posY.value;
-
   // Apply magnetic snapping
   if (props.magnetic === 'x') {
     posX.value = closest(
@@ -200,9 +154,10 @@ function onTouchEnd() {
     );
   }
 
-  // Animate snap with element.animate()
-  if (posX.value !== fromX || posY.value !== fromY) {
-    runOnMainThread(_snapTo)(fromX, fromY, posX.value, posY.value, 300);
+  // Enable snap transition if position changed
+  if (posX.value !== prevX || posY.value !== prevY) {
+    snapping.value = true;
+    setTimeout(() => { snapping.value = false; }, 300);
   }
 
   if (isTap) {
@@ -214,10 +169,8 @@ function onTouchEnd() {
       emit('offset-change', offset);
     }
   }
-
 }
 
-// Watch for external offset changes
 watch(
   () => props.offset,
   (val) => {
@@ -229,29 +182,40 @@ watch(
   { deep: true },
 );
 
-const bubbleStyle = computed(() => ({
-  position: 'fixed' as const,
-  left: posX.value,
-  top: posY.value,
-  width: props.size,
-  height: props.size,
-  borderRadius: props.size / 2,
-  backgroundColor: '#1989fa',
-  display: 'flex' as const,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-  zIndex: 999,
-}));
+const bubbleStyle = computed(() => {
+  const transitions: string[] = [];
+  if (snapping.value) {
+    transitions.push('left 0.3s ease-out', 'top 0.3s ease-out');
+  }
+  if (!appeared.value) {
+    transitions.push('transform 0.3s ease-out', 'opacity 0.3s ease-out');
+  }
+
+  return {
+    position: 'fixed' as const,
+    left: posX.value,
+    top: posY.value,
+    width: props.size,
+    height: props.size,
+    borderRadius: props.size / 2,
+    backgroundColor: '#1989fa',
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    zIndex: 999,
+    transform: appeared.value ? 'scale(1)' : 'scale(0)',
+    opacity: appeared.value ? 1 : 0,
+    transition: transitions.length > 0 ? transitions.join(', ') : 'none',
+  };
+});
 
 defineExpose({
-  /** Current position */
   offset: computed(() => ({ x: posX.value, y: posY.value })),
 });
 </script>
 
 <template>
   <view
-    :main-thread-ref="bubbleRef"
     :style="bubbleStyle"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"

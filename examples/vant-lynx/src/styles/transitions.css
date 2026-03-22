@@ -1,0 +1,54 @@
+/* Vant transition classes for vue-lynx <Transition> component.
+ *
+ * The `transition` CSS property is set via inline :style (so duration can be
+ * controlled per-component via props).  These classes only define the
+ * enter-from / leave-to states that trigger the transition.
+ */
+
+/* === Fade (Overlay, Toast-middle, ImagePreview) === */
+.van-fade-enter-from,
+.van-fade-leave-to {
+  opacity: 0;
+}
+
+/* === Popup slide from top === */
+.van-popup-slide-top-enter-from,
+.van-popup-slide-top-leave-to {
+  transform: translateY(-100%);
+}
+
+/* === Popup slide from bottom === */
+.van-popup-slide-bottom-enter-from,
+.van-popup-slide-bottom-leave-to {
+  transform: translateY(100%);
+}
+
+/* === Popup slide from left === */
+.van-popup-slide-left-enter-from,
+.van-popup-slide-left-leave-to {
+  transform: translateX(-100%);
+}
+
+/* === Popup slide from right === */
+.van-popup-slide-right-enter-from,
+.van-popup-slide-right-leave-to {
+  transform: translateX(100%);
+}
+
+/* === Popup zoom (center position — uses flex centering, no translate) === */
+.van-popup-zoom-enter-from,
+.van-popup-zoom-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* === Dropdown slide (direction-dependent) === */
+.van-dropdown-slide-down-enter-from,
+.van-dropdown-slide-down-leave-to {
+  transform: translateY(-100%);
+}
+
+.van-dropdown-slide-up-enter-from,
+.van-dropdown-slide-up-leave-to {
+  transform: translateY(100%);
+}

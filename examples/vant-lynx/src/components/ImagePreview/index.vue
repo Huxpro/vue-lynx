@@ -1,10 +1,7 @@
 <!--
   Vant Feature Parity Report:
   - Component: ImagePreview
-  - Props: Reviewed - see implementation for details
-  - Events: Reviewed - see implementation for details
-  - Slots: Reviewed - see implementation for details
-  - Status: Reviewed in V2 optimization pass
+  - Animation: Fade in/out using CSS transition + Vue <Transition>
 -->
 <!--
   Vant ImagePreview - Feature Parity Report
@@ -58,13 +55,11 @@
     - No swipe gesture navigation (tap-based prev/next instead)
     - No zoom (minZoom/maxZoom/doubleScale/scale event)
     - No long-press support
-    - No CSS transition animations
     - No teleport support
 -->
 <script setup lang="ts">
-import { ref, computed, watch, useSlots } from 'vue-lynx';
+import { ref, computed, watch, useSlots, Transition } from 'vue-lynx';
 import Icon from '../Icon/index.vue';
-import { useAnimate } from '../../composables/useAnimate';
 
 export interface ImagePreviewProps {
   show?: boolean;
@@ -107,8 +102,7 @@ const emit = defineEmits<{
 const slots = useSlots();
 
 const ANIM_DURATION = 300;
-const { elRef: previewRef, fadeIn, fadeOut } = useAnimate();
-const isVisible = ref(false);
+const hasRendered = ref(false);
 
 const currentIndex = ref(props.startPosition);
 
@@ -124,16 +118,14 @@ watch(
   (val) => {
     if (val) {
       currentIndex.value = props.startPosition;
-      isVisible.value = true;
-      fadeIn(ANIM_DURATION);
-    } else if (isVisible.value) {
-      fadeOut(ANIM_DURATION);
-      setTimeout(() => {
-        isVisible.value = false;
-      }, ANIM_DURATION);
+      hasRendered.value = true;
     }
   },
 );
+
+function onClosed() {
+  emit('closed');
+}
 
 const currentImage = computed(() => {
   if (props.images.length === 0) return '';
@@ -152,7 +144,6 @@ async function emitClose() {
   }
   emit('close', { index: currentIndex.value, url: currentImage.value });
   emit('update:show', false);
-  emit('closed');
 }
 
 function onClose() {
@@ -228,133 +219,135 @@ const indicatorStyle = computed(() => (index: number) => ({
 </script>
 
 <template>
-  <view
-    v-if="isVisible"
-    :main-thread-ref="previewRef"
-    :style="{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.9)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-    }"
-    @tap="onTapBackground"
-  >
-    <!-- Close button using Icon component -->
+  <Transition v-if="hasRendered" name="van-fade" :duration="ANIM_DURATION" @after-leave="onClosed">
     <view
-      v-if="closeable"
-      :style="closeButtonStyle"
-      @tap.stop="onClose"
-    >
-      <Icon :name="closeIcon" :size="22" color="#fff" />
-    </view>
-
-    <!-- Index indicator -->
-    <view
-      v-if="showIndex && images.length > 0"
+      v-show="show"
       :style="{
-        position: 'absolute',
-        top: 16,
+        position: 'fixed',
+        top: 0,
         left: 0,
         right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.9)',
         display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        zIndex: 2,
-      }"
-    >
-      <slot name="index">
-        <text :style="{ fontSize: 14, color: '#fff' }">{{ indexText }}</text>
-      </slot>
-    </view>
-
-    <!-- Image display area -->
-    <view
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        flex: 1,
-        width: '100%',
+        zIndex: 9999,
+        transition: `opacity ${ANIM_DURATION / 1000}s ease`,
       }"
+      @tap="onTapBackground"
     >
-      <!-- Prev button -->
+      <!-- Close button using Icon component -->
       <view
-        v-if="images.length > 1 && canGoPrev"
+        v-if="closeable"
+        :style="closeButtonStyle"
+        @tap.stop="onClose"
+      >
+        <Icon :name="closeIcon" :size="22" color="#fff" />
+      </view>
+
+      <!-- Index indicator -->
+      <view
+        v-if="showIndex && images.length > 0"
+        :style="{
+          position: 'absolute',
+          top: 16,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          zIndex: 2,
+        }"
+      >
+        <slot name="index">
+          <text :style="{ fontSize: 14, color: '#fff' }">{{ indexText }}</text>
+        </slot>
+      </view>
+
+      <!-- Image display area -->
+      <view
         :style="{
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 16,
-          opacity: 0.8,
+          flex: 1,
+          width: '100%',
         }"
-        @tap.stop="onPrev"
       >
-        <Icon name="arrow-left" :size="28" color="#fff" />
-      </view>
-      <view v-else :style="{ width: 60 }" />
+        <!-- Prev button -->
+        <view
+          v-if="images.length > 1 && canGoPrev"
+          :style="{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            opacity: 0.8,
+          }"
+          @tap.stop="onPrev"
+        >
+          <Icon name="arrow-left" :size="28" color="#fff" />
+        </view>
+        <view v-else :style="{ width: 60 }" />
 
-      <!-- Current image -->
+        <!-- Current image -->
+        <view
+          :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }"
+          @tap.stop="onTapImage"
+        >
+          <image
+            v-if="currentImage"
+            :src="currentImage"
+            :style="{ width: 300, height: 300, objectFit: 'contain' }"
+          />
+        </view>
+
+        <!-- Next button -->
+        <view
+          v-if="images.length > 1 && canGoNext"
+          :style="{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+            opacity: 0.8,
+          }"
+          @tap.stop="onNext"
+        >
+          <Icon name="arrow" :size="28" color="#fff" />
+        </view>
+        <view v-else :style="{ width: 60 }" />
+      </view>
+
+      <!-- Cover slot -->
+      <slot name="cover" />
+
+      <!-- Dot indicators -->
       <view
-        :style="{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }"
-        @tap.stop="onTapImage"
+        v-if="showIndicators && images.length > 1"
+        :style="{
+          position: 'absolute',
+          bottom: 24,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }"
       >
-        <image
-          v-if="currentImage"
-          :src="currentImage"
-          :style="{ width: 300, height: 300, objectFit: 'contain' }"
+        <view
+          v-for="(_, index) in images"
+          :key="index"
+          :style="indicatorStyle(index)"
+          @tap.stop="() => { currentIndex = index; emit('change', index); }"
         />
       </view>
-
-      <!-- Next button -->
-      <view
-        v-if="images.length > 1 && canGoNext"
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 16,
-          opacity: 0.8,
-        }"
-        @tap.stop="onNext"
-      >
-        <Icon name="arrow" :size="28" color="#fff" />
-      </view>
-      <view v-else :style="{ width: 60 }" />
     </view>
-
-    <!-- Cover slot -->
-    <slot name="cover" />
-
-    <!-- Dot indicators -->
-    <view
-      v-if="showIndicators && images.length > 1"
-      :style="{
-        position: 'absolute',
-        bottom: 24,
-        left: 0,
-        right: 0,
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }"
-    >
-      <view
-        v-for="(_, index) in images"
-        :key="index"
-        :style="indicatorStyle(index)"
-        @tap.stop="() => { currentIndex = index; emit('change', index); }"
-      />
-    </view>
-  </view>
+  </Transition>
 </template>

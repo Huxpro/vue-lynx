@@ -10,20 +10,18 @@
     - teleport: accepted for API compat but not applicable in Lynx
     - lockScroll: accepted for API compat but no direct equivalent in Lynx
     - closeOnPopstate: accepted for API compat but no browser history API in Lynx
-    - transition/transitionAppear: accepted but CSS transitions not used; main-thread animate() used instead
     - safeAreaInsetTop/Bottom: accepted, uses padding approximation
-  - Animation: Position-based enter/leave using main-thread element.animate()
-    - center: zoom in/out (scale 0.9→1 + opacity)
-    - top: slide from top (translateY -100%→0)
-    - bottom: slide from bottom (translateY 100%→0)
-    - left: slide from left (translateX -100%→0)
-    - right: slide from right (translateX 100%→0)
+  - Animation: Position-based enter/leave using CSS transitions + Vue <Transition>
+    - center: zoom in/out (scale 0.9→1 + opacity) via van-popup-zoom
+    - top: slide from top via van-popup-slide-top
+    - bottom: slide from bottom via van-popup-slide-bottom
+    - left: slide from left via van-popup-slide-left
+    - right: slide from right via van-popup-slide-right
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue-lynx';
+import { computed, ref, watch, Transition } from 'vue-lynx';
 import Overlay from '../Overlay/index.vue';
 import Icon from '../Icon/index.vue';
-import { useAnimate } from '../../composables/useAnimate';
 
 export interface PopupProps {
   show?: boolean;
@@ -83,70 +81,48 @@ const emit = defineEmits<{
   'click-close-icon': [event: any];
 }>();
 
-// Animation
-const { elRef: popupRef, slideIn, slideOut, zoomIn, zoomOut } = useAnimate();
-
 // Lazy render tracking
 const hasRendered = ref(false);
-// Controls visibility during leave animation
-const isVisible = ref(false);
 
-function getDurationMs() {
-  return Number(props.duration) * 1000;
-}
+const durationMs = computed(() => Number(props.duration) * 1000);
+
+// Transition name based on position
+const transitionName = computed(() => {
+  if (props.transition) return props.transition;
+  if (props.position === 'center') return 'van-popup-zoom';
+  return `van-popup-slide-${props.position}`;
+});
+
+// Transition style: inline transition property so duration is configurable
+const transitionProperty = computed(() => {
+  if (props.position === 'center') {
+    return `opacity ${props.duration}s ease, transform ${props.duration}s ease`;
+  }
+  return `transform ${props.duration}s ease`;
+});
 
 watch(
   () => props.show,
   (val, oldVal) => {
-    const ms = getDurationMs();
     if (val) {
       hasRendered.value = true;
-      isVisible.value = true;
       emit('open');
-      // Trigger enter animation after element is in DOM
-      triggerEnterAnimation(ms);
-      setTimeout(() => emit('opened'), ms);
     } else if (oldVal) {
       emit('close');
-      triggerLeaveAnimation(ms);
-      setTimeout(() => {
-        isVisible.value = false;
-        emit('closed');
-      }, ms);
     }
   },
 );
 
-function triggerEnterAnimation(ms: number) {
-  if (props.position === 'center') {
-    zoomIn(ms, true);
-  } else if (props.position === 'top') {
-    slideIn('down', ms);
-  } else if (props.position === 'bottom') {
-    slideIn('up', ms);
-  } else if (props.position === 'left') {
-    slideIn('left', ms);
-  } else if (props.position === 'right') {
-    slideIn('right', ms);
-  }
+function onOpened() {
+  emit('opened');
 }
 
-function triggerLeaveAnimation(ms: number) {
-  if (props.position === 'center') {
-    zoomOut(ms, true);
-  } else if (props.position === 'top') {
-    slideOut('down', ms);
-  } else if (props.position === 'bottom') {
-    slideOut('up', ms);
-  } else if (props.position === 'left') {
-    slideOut('left', ms);
-  } else if (props.position === 'right') {
-    slideOut('right', ms);
-  }
+function onClosed() {
+  emit('closed');
 }
 
 const shouldRender = computed(() => {
-  if (props.destroyOnClose && !isVisible.value) return false;
+  if (props.destroyOnClose && !props.show) return false;
   if (props.lazyRender && !hasRendered.value) return false;
   return true;
 });
@@ -159,6 +135,7 @@ const positionStyle = computed(() => {
     zIndex: zIndexNum.value,
     backgroundColor: '#fff',
     overflow: 'hidden',
+    transition: transitionProperty.value,
   };
 
   if (props.safeAreaInsetTop) {
@@ -169,11 +146,10 @@ const positionStyle = computed(() => {
   }
 
   if (props.position === 'center') {
+    // Use flex centering wrapper approach — no transform on popup element
+    // so CSS transition classes (scale) can apply without conflict
     return {
       ...base,
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
       borderRadius: props.round ? 16 : 0,
       minWidth: 200,
     };
@@ -211,6 +187,20 @@ const positionStyle = computed(() => {
 
   return base;
 });
+
+// Center position uses a flex centering wrapper
+const centerWrapperStyle = computed(() => ({
+  position: 'fixed' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  zIndex: zIndexNum.value,
+  pointerEvents: 'none' as const,
+}));
 
 const closeIconPositionStyle = computed(() => {
   const style: Record<string, any> = {
@@ -263,16 +253,29 @@ async function doClose() {
     >
       <slot name="overlay-content" />
     </Overlay>
-    <view
-      v-show="isVisible"
-      :main-thread-ref="popupRef"
-      :style="positionStyle"
-      @tap="onClick"
-    >
-      <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClickCloseIcon">
-        <Icon :name="closeIcon" :size="22" color="#c8c9cc" />
+
+    <!-- Center position: flex centering wrapper (avoids transform conflict with zoom) -->
+    <template v-if="position === 'center'">
+      <view :style="centerWrapperStyle">
+        <Transition :name="transitionName" :duration="durationMs" @after-enter="onOpened" @after-leave="onClosed">
+          <view v-show="show" :style="positionStyle" @tap="onClick">
+            <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClickCloseIcon">
+              <Icon :name="closeIcon" :size="22" color="#c8c9cc" />
+            </view>
+            <slot />
+          </view>
+        </Transition>
       </view>
-      <slot />
-    </view>
+    </template>
+
+    <!-- Non-center positions: direct transition (no transform conflict) -->
+    <Transition v-else :name="transitionName" :duration="durationMs" @after-enter="onOpened" @after-leave="onClosed">
+      <view v-show="show" :style="positionStyle" @tap="onClick">
+        <view v-if="closeable" :style="closeIconPositionStyle" @tap="onClickCloseIcon">
+          <Icon :name="closeIcon" :size="22" color="#c8c9cc" />
+        </view>
+        <slot />
+      </view>
+    </Transition>
   </template>
 </template>
