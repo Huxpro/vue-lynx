@@ -5,6 +5,9 @@
   --van-calendar-header-title-height: 44px;
   --van-calendar-header-title-font-size: var(--van-font-size-lg, 16px);
   --van-calendar-header-subtitle-font-size: var(--van-font-size-md, 14px);
+  --van-calendar-header-action-width: 28px;
+  --van-calendar-header-action-color: var(--van-text-color, #323233);
+  --van-calendar-header-action-disabled-color: var(--van-text-color-3, #c8c9cc);
   --van-calendar-weekdays-height: 30px;
   --van-calendar-weekdays-font-size: var(--van-font-size-sm, 12px);
   --van-calendar-month-title-font-size: var(--van-font-size-md, 14px);
@@ -13,16 +16,247 @@
   --van-calendar-day-height: 64px;
   --van-calendar-day-font-size: var(--van-font-size-lg, 16px);
   --van-calendar-day-margin-bottom: 4px;
+  --van-calendar-day-disabled-color: var(--van-text-color-3, #c8c9cc);
   --van-calendar-range-edge-color: var(--van-white, #fff);
   --van-calendar-range-edge-background: var(--van-primary-color, #1989fa);
   --van-calendar-range-middle-color: var(--van-primary-color, #1989fa);
   --van-calendar-range-middle-background-opacity: 0.1;
   --van-calendar-selected-day-size: 54px;
   --van-calendar-selected-day-color: var(--van-white, #fff);
+  --van-calendar-selected-day-background: var(--van-primary-color, #1989fa);
   --van-calendar-info-font-size: var(--van-font-size-xs, 10px);
   --van-calendar-info-line-height: var(--van-line-height-xs, 14px);
-  --van-calendar-selected-day-background: var(--van-primary-color, #1989fa);
-  --van-calendar-day-disabled-color: var(--van-text-color-3, #c8c9cc);
   --van-calendar-confirm-button-height: 36px;
   --van-calendar-confirm-button-margin: 7px 0;
+}
+
+.van-calendar {
+  display: flex;
+  flex-direction: column;
+  background: var(--van-calendar-background);
+}
+
+// Popup variants
+.van-calendar__popup {
+  &.van-popup--top,
+  &.van-popup--bottom {
+    height: var(--van-calendar-popup-height);
+  }
+
+  &.van-popup--left,
+  &.van-popup--right {
+    height: 100%;
+  }
+}
+
+// Header
+.van-calendar__header {
+  flex-shrink: 0;
+  box-shadow: var(--van-calendar-header-shadow);
+}
+
+.van-calendar__header-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--van-calendar-header-title-height);
+  font-size: var(--van-calendar-header-title-font-size);
+  font-weight: var(--van-font-bold, 600);
+  color: var(--van-text-color, #323233);
+}
+
+.van-calendar__header-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--van-calendar-header-title-height);
+  font-size: var(--van-calendar-header-subtitle-font-size);
+  font-weight: var(--van-font-bold, 600);
+  color: var(--van-text-color, #323233);
+}
+
+.van-calendar__header-subtitle--with-switch {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 var(--van-padding-base, 4px);
+}
+
+.van-calendar__header-subtitle-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.van-calendar__header-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--van-calendar-header-action-width);
+  height: 100%;
+  color: var(--van-calendar-header-action-color);
+}
+
+.van-calendar__header-action--disabled {
+  color: var(--van-calendar-header-action-disabled-color);
+}
+
+// Weekdays
+.van-calendar__weekdays {
+  display: flex;
+  flex-direction: row;
+}
+
+.van-calendar__weekday {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--van-calendar-weekdays-font-size);
+  height: var(--van-calendar-weekdays-height);
+  color: var(--van-text-color, #323233);
+}
+
+// Body
+.van-calendar__body {
+  flex: 1;
+}
+
+// Month
+.van-calendar__month {
+  // each month block
+}
+
+.van-calendar__month-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--van-calendar-header-title-height);
+  font-size: var(--van-calendar-month-title-font-size);
+  font-weight: var(--van-font-bold, 600);
+  color: var(--van-text-color, #323233);
+}
+
+.van-calendar__month-mark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 0;
+  color: var(--van-calendar-month-mark-color);
+  font-size: var(--van-calendar-month-mark-font-size);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+// Days grid
+.van-calendar__days {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+// Day cell
+.van-calendar__day {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14.285%;
+  height: var(--van-calendar-day-height);
+  font-size: var(--van-calendar-day-font-size);
+  margin-bottom: var(--van-calendar-day-margin-bottom);
+  color: var(--van-text-color, #323233);
+}
+
+// Range edge styles
+.van-calendar__day--end,
+.van-calendar__day--start,
+.van-calendar__day--start-end,
+.van-calendar__day--multiple-middle,
+.van-calendar__day--multiple-selected {
+  color: var(--van-calendar-range-edge-color);
+  background: var(--van-calendar-range-edge-background);
+}
+
+.van-calendar__day--start {
+  border-radius: var(--van-radius-md, 8px) 0 0 var(--van-radius-md, 8px);
+}
+
+.van-calendar__day--end {
+  border-radius: 0 var(--van-radius-md, 8px) var(--van-radius-md, 8px) 0;
+}
+
+.van-calendar__day--start-end,
+.van-calendar__day--multiple-selected {
+  border-radius: var(--van-radius-md, 8px);
+}
+
+// Middle range
+.van-calendar__day--middle {
+  color: var(--van-calendar-range-middle-color);
+}
+
+// Middle range background (replaces ::after pseudo-element)
+.van-calendar__day-middle-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: currentColor;
+  opacity: var(--van-calendar-range-middle-background-opacity);
+  pointer-events: none;
+}
+
+// Disabled
+.van-calendar__day--disabled {
+  color: var(--van-calendar-day-disabled-color);
+}
+
+// Info (top/bottom)
+.van-calendar__top-info,
+.van-calendar__bottom-info {
+  position: absolute;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--van-calendar-info-font-size);
+  line-height: var(--van-calendar-info-line-height);
+}
+
+.van-calendar__top-info {
+  top: 6px;
+}
+
+.van-calendar__bottom-info {
+  bottom: 6px;
+}
+
+// Selected day (single mode)
+.van-calendar__selected-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--van-calendar-selected-day-size);
+  height: var(--van-calendar-selected-day-size);
+  color: var(--van-calendar-selected-day-color);
+  background: var(--van-calendar-selected-day-background);
+  border-radius: var(--van-radius-md, 8px);
+}
+
+// Footer
+.van-calendar__footer {
+  flex-shrink: 0;
+  padding-left: var(--van-padding-md, 16px);
+  padding-right: var(--van-padding-md, 16px);
+}
+
+.van-calendar__confirm {
+  height: var(--van-calendar-confirm-button-height);
+  margin: var(--van-calendar-confirm-button-margin);
 }
