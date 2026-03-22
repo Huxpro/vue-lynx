@@ -5,70 +5,91 @@ import Tabbar from '../components/Tabbar/index.vue';
 import TabbarItem from '../components/TabbarItem/index.vue';
 
 const active1 = ref(0);
+const activeName = ref('home');
 const active2 = ref(0);
-const active3 = ref('home');
+const active3 = ref(0);
 const active4 = ref(0);
+const active5 = ref(0);
 
-// beforeChange demo: simulate async check, reject tab index 2
-function beforeChange(name: number | string) {
-  if (name === 2) {
-    return false;
-  }
-  return true;
-}
+const onChange = (index: number | string) => {
+  // Show which tab was switched to
+};
 </script>
 
 <template>
   <DemoPage title="Tabbar">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
 
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
         <Tabbar v-model="active1" :fixed="false">
-          <TabbarItem :name="0" icon="home-o">Home</TabbarItem>
-          <TabbarItem :name="1" icon="search">Search</TabbarItem>
-          <TabbarItem :name="2" icon="chat-o">Notify</TabbarItem>
-          <TabbarItem :name="3" icon="setting-o">Me</TabbarItem>
+          <TabbarItem icon="home-o">标签</TabbarItem>
+          <TabbarItem icon="search">标签</TabbarItem>
+          <TabbarItem icon="friends-o">标签</TabbarItem>
+          <TabbarItem icon="setting-o">标签</TabbarItem>
         </Tabbar>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Active: {{ active1 }}</text>
+      <!-- 通过名称匹配 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px', marginTop: '8px' }">通过名称匹配</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabbar v-model="activeName" :fixed="false">
+          <TabbarItem name="home" icon="home-o">标签</TabbarItem>
+          <TabbarItem name="search" icon="search">标签</TabbarItem>
+          <TabbarItem name="friends" icon="friends-o">标签</TabbarItem>
+          <TabbarItem name="setting" icon="setting-o">标签</TabbarItem>
+        </Tabbar>
+      </view>
 
-      <!-- Badge / Dot -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Match by Name (with Badge)</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+      <!-- 徽标提示 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px', marginTop: '8px' }">徽标提示</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabbar v-model="active2" :fixed="false">
+          <TabbarItem icon="home-o">标签</TabbarItem>
+          <TabbarItem icon="search" dot>标签</TabbarItem>
+          <TabbarItem icon="friends-o" badge="5">标签</TabbarItem>
+          <TabbarItem icon="setting-o" badge="20">标签</TabbarItem>
+        </Tabbar>
+      </view>
+
+      <!-- 自定义图标 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px', marginTop: '8px' }">自定义图标</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
         <Tabbar v-model="active3" :fixed="false">
-          <TabbarItem name="home" icon="home-o">Home</TabbarItem>
-          <TabbarItem name="search" icon="search" dot>Search</TabbarItem>
-          <TabbarItem name="notify" icon="chat-o" badge="5">Notify</TabbarItem>
-          <TabbarItem name="me" icon="setting-o" :badge="99">Me</TabbarItem>
+          <TabbarItem badge="3">
+            <text>自定义</text>
+            <template #icon="slotProps">
+              <text :style="{ fontSize: '22px', color: slotProps.active ? '#1989fa' : '#323233' }">★</text>
+            </template>
+          </TabbarItem>
+          <TabbarItem icon="search">标签</TabbarItem>
+          <TabbarItem icon="setting-o">标签</TabbarItem>
         </Tabbar>
       </view>
 
-      <!-- Custom Color -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Custom Color</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Tabbar v-model="active2" :fixed="false" active-color="#07c160" inactive-color="#000">
-          <TabbarItem :name="0" icon="home-o">Home</TabbarItem>
-          <TabbarItem :name="1" icon="search">Search</TabbarItem>
-          <TabbarItem :name="2" icon="chat-o">Notify</TabbarItem>
-          <TabbarItem :name="3" icon="setting-o">Me</TabbarItem>
+      <!-- 自定义颜色 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px', marginTop: '8px' }">自定义颜色</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabbar v-model="active4" :fixed="false" active-color="#ee0a24">
+          <TabbarItem icon="home-o">标签</TabbarItem>
+          <TabbarItem icon="search">标签</TabbarItem>
+          <TabbarItem icon="friends-o">标签</TabbarItem>
+          <TabbarItem icon="setting-o">标签</TabbarItem>
         </Tabbar>
       </view>
 
-      <!-- beforeChange Interceptor -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12, marginTop: 8 }">Before Change (tab 3 blocked)</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Tabbar v-model="active4" :fixed="false" :before-change="beforeChange">
-          <TabbarItem :name="0">Allow</TabbarItem>
-          <TabbarItem :name="1">Allow</TabbarItem>
-          <TabbarItem :name="2">Blocked</TabbarItem>
-          <TabbarItem :name="3">Allow</TabbarItem>
+      <!-- 监听切换事件 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px', marginTop: '8px' }">监听切换事件</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabbar v-model="active5" :fixed="false" @change="onChange">
+          <TabbarItem icon="home-o">标签 1</TabbarItem>
+          <TabbarItem icon="search">标签 2</TabbarItem>
+          <TabbarItem icon="friends-o">标签 3</TabbarItem>
+          <TabbarItem icon="setting-o">标签 4</TabbarItem>
         </Tabbar>
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Active: {{ active4 }} (tab index 2 is blocked by beforeChange)</text>
     </view>
   </DemoPage>
 </template>
