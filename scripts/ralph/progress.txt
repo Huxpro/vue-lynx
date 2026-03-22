@@ -242,3 +242,17 @@ Branch: feat/vant-lynx-v2
 - New files: Grid/types.ts (GRID_KEY, GridProvide, GridDirection, GridItemThemeVars)
 - Key change: Grid provides props + registerChild via GRID_KEY Symbol; GridItem injects and computes column layout, square aspect ratio, gutter spacing, and border styles matching Vant's algorithm
 ---
+
+## 2026-03-22 - parity-nav-bar: NavBar
+- Props: 12/12 (title, fixed, zIndex, border, leftText, rightText, leftDisabled, rightDisabled, leftArrow, placeholder, safeAreaInsetTop, clickable)
+- Events: 2/2 (click-left, click-right)
+- Slots: 3/3 (left, title, right)
+- CSS Variables: 8 defined in index.less (--van-nav-bar-height, --van-nav-bar-background, --van-nav-bar-arrow-size, --van-nav-bar-icon-color, --van-nav-bar-text-color, --van-nav-bar-title-font-size, --van-nav-bar-title-text-color, --van-nav-bar-z-index)
+- Animations: none (NavBar has no transitions)
+- Tests: 20 cases (Vant has no dedicated test file) — all pass
+- Demo sections: 5/5 (基础用法, 返回上级, 右侧按钮, 使用插槽, 禁用按钮)
+- Visual match: pass (inline style rendering matches Vant layout)
+- Limitations: safeAreaInsetTop uses fixed 44px padding (no CSS env()), placeholder uses hardcoded 46px height, HAPTICS_FEEDBACK not available, van-ellipsis class not applicable, CSS class-based BEM replaced with inline styles
+- New files: types.ts (NavBarThemeVars)
+- Key change: Conditional left/right area rendering matching Vant's hasLeft/hasRight pattern; disabled state uses opacity: 0.6
+---

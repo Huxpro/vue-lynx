@@ -1,32 +1,60 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import NavBar from '../components/NavBar/index.vue';
+import Icon from '../components/Icon/index.vue';
 </script>
 
 <template>
-  <DemoPage title="NavBar">
-    
-
+  <DemoPage title="NavBar 导航栏">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">基础用法</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <NavBar title="Title" />
+        <NavBar title="标题" />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Left Arrow</text>
+      <!-- 返回上级 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">返回上级</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <NavBar title="Title" left-arrow />
+        <NavBar
+          title="标题"
+          left-text="返回"
+          left-arrow
+        />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Left and Right Text</text>
+      <!-- 右侧按钮 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">右侧按钮</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <NavBar title="Title" left-text="Back" right-text="Button" left-arrow />
+        <NavBar
+          title="标题"
+          left-text="返回"
+          right-text="按钮"
+          left-arrow
+        />
       </view>
 
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">No Border</text>
+      <!-- 使用插槽 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">使用插槽</text>
+      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
+        <NavBar title="标题" left-text="返回" left-arrow>
+          <template #right>
+            <Icon name="search" :size="18" />
+          </template>
+        </NavBar>
+      </view>
+
+      <!-- 禁用按钮 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">禁用按钮</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <NavBar title="Title" left-arrow :border="false" />
+        <NavBar
+          title="标题"
+          left-text="返回"
+          right-text="按钮"
+          left-arrow
+          left-disabled
+          right-disabled
+        />
       </view>
     </view>
   </DemoPage>
