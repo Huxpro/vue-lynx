@@ -122,7 +122,7 @@
         "Docs: Lynx limitations in components/Overlay/README.md",
         "Commit: feat(overlay): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-config-provider",
@@ -144,7 +144,7 @@
         "Docs: Lynx limitations in components/ConfigProvider/README.md",
         "Commit: feat(config-provider): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-popup",

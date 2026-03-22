@@ -12,6 +12,8 @@ Branch: feat/vant-lynx-v2
 - **Pre-existing TS errors**: `vue-lynx-testing-library` has no type declarations — this is project-wide, not per-component
 - **Style values**: Use string values with units (e.g. `"20px"`) not numbers in inline styles — numeric values trigger deprecation warnings and `getAttribute('style')` may not work on `<text>` elements with numeric values
 - **Text element queries**: `querySelector('text')` returns first `<text>` including template whitespace nodes — use `querySelectorAll('text')` and filter by style/content
+- **CSS custom properties as inline styles**: Lynx strips `--van-*` from inline styles. CSS variables only work through .less files. Test theme var conversion logic via unit tests on utility functions, not by checking `getAttribute('style')`
+- **Exports from `<script setup>`**: Vue SFC `<script setup>` cannot contain ES exports. Extract types, constants, and utilities to separate `.ts` files (types.ts, utils.ts)
 
 ---
 
@@ -49,4 +51,29 @@ Branch: feat/vant-lynx-v2
 - Demo sections: 6/6 (Basic Usage, Max, Custom Color, Custom Content, Custom Position, Standalone)
 - Visual match: pass (inline styles match Vant layout)
 - Limitations: tag prop no-op (Lynx always uses view), CSS class-based styling not available (uses inline styles), transform: translate() not reliable, --van-badge-font not applied
+---
+
+## 2026-03-22 - parity-overlay: Overlay
+- Props: 8/8 (show, zIndex, duration, className, customStyle, lockScroll, lazyRender, teleport)
+- Events: 1/1 (click)
+- Slots: 1/1 (default)
+- CSS Variables: 2 defined in index.less (--van-overlay-z-index, --van-overlay-background)
+- Animations: inline CSS opacity transition (Vue <Transition> not supported in Lynx)
+- Tests: 11 cases (Vant has 10) — all pass
+- Demo sections: 3/3 (Basic Usage, Embedded Content, Custom Z-Index)
+- Visual match: pass (opacity-based fade matches Vant behavior)
+- Limitations: teleport no-op, lockScroll no-op, className no-op, Vue <Transition> replaced with inline CSS opacity transition, v-show replaced with opacity + pointerEvents
+---
+
+## 2026-03-22 - parity-config-provider: ConfigProvider
+- Props: 8/8 (tag, theme, zIndex, themeVars, themeVarsDark, themeVarsLight, themeVarsScope, iconPrefix)
+- Events: 0/0 (none in Vant)
+- Slots: 1/1 (default)
+- CSS Variables: 50+ global base variables defined in index.less (color palette, padding, font, animation, border)
+- Animations: none (ConfigProvider has no transitions)
+- Tests: 13 cases (Vant has 8) — all pass
+- Demo sections: 3/3 (Dark Mode, Default Theme, Custom Theme)
+- Visual match: pass (wrapper renders correctly with slot content)
+- Limitations: tag prop no-op (always renders view), themeVarsScope 'global' no-op (no document.documentElement in Lynx), theme class on html no-op, CSS custom properties via inline styles stripped by Lynx (--van-* vars only work through .less files)
+- New files: types.ts (CONFIG_PROVIDER_KEY, types), utils.ts (mapThemeVarsToCSSVars, insertDash, kebabCase), composables/useGlobalZIndex.ts
 ---
