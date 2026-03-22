@@ -270,7 +270,7 @@ export function applyEntry(
 
     if (rspackConfig.optimization.splitChunks) {
       const prev = rspackConfig.optimization.splitChunks.chunks;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: rspack Chunk type not importable
       rspackConfig.optimization.splitChunks.chunks = (chunk: any) => {
         if (chunk.name?.includes('__main-thread')) return false;
         if (typeof prev === 'function') return prev(chunk);
