@@ -12,16 +12,166 @@
   --van-uploader-file-background: var(--van-background, #f7f8fa);
   --van-uploader-file-icon-size: 20px;
   --van-uploader-file-icon-color: var(--van-gray-7, #646566);
-  --van-uploader-file-name-padding: 0 var(--van-padding-base, 4px);
-  --van-uploader-file-name-margin-top: var(--van-padding-xs, 8px);
+  --van-uploader-file-name-padding: 0 4px;
+  --van-uploader-file-name-margin-top: 8px;
   --van-uploader-file-name-font-size: var(--van-font-size-sm, 12px);
   --van-uploader-file-name-text-color: var(--van-gray-7, #646566);
   --van-uploader-mask-text-color: var(--van-white, #fff);
   --van-uploader-mask-background: rgba(50, 50, 51, 0.88);
   --van-uploader-mask-icon-size: 22px;
   --van-uploader-mask-message-font-size: var(--van-font-size-sm, 12px);
-  --van-uploader-mask-message-line-height: var(--van-line-height-xs, 14px);
+  --van-uploader-mask-message-line-height: 14px;
   --van-uploader-loading-icon-size: 22px;
   --van-uploader-loading-icon-color: var(--van-white, #fff);
   --van-uploader-disabled-opacity: var(--van-disabled-opacity, 0.5);
+  --van-uploader-border-radius: 0px;
+}
+
+.van-uploader {
+  position: relative;
+
+  &__wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    &--disabled {
+      opacity: var(--van-uploader-disabled-opacity);
+    }
+  }
+
+  &__upload {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: var(--van-uploader-size);
+    height: var(--van-uploader-size);
+    margin: 0 8px 8px 0;
+    background: var(--van-uploader-upload-background);
+    border-radius: var(--van-uploader-border-radius);
+
+    &--readonly {
+      // no active state for readonly
+    }
+
+    &--active {
+      background-color: var(--van-uploader-upload-active-color);
+    }
+
+    &-icon {
+      color: var(--van-uploader-icon-color);
+      font-size: var(--van-uploader-icon-size);
+    }
+
+    &-text {
+      margin-top: 8px;
+      color: var(--van-uploader-text-color);
+      font-size: var(--van-uploader-text-font-size);
+    }
+  }
+
+  &__input-wrapper {
+    position: relative;
+  }
+
+  &__preview {
+    position: relative;
+    margin: 0 8px 8px 0;
+
+    &-image {
+      display: flex;
+      width: var(--van-uploader-size);
+      height: var(--van-uploader-size);
+      overflow: hidden;
+      border-radius: var(--van-uploader-border-radius);
+    }
+
+    &-delete {
+      position: absolute;
+      top: 0;
+      right: 0;
+
+      &--shadow {
+        width: var(--van-uploader-delete-icon-size);
+        height: var(--van-uploader-delete-icon-size);
+        background: var(--van-uploader-delete-background);
+        border-radius: 0 0 0 12px;
+      }
+
+      &-icon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: var(--van-uploader-delete-color);
+        font-size: var(--van-uploader-delete-icon-size);
+        transform: scale(0.7) translate(10%, -10%);
+      }
+    }
+
+    &-cover {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+    }
+  }
+
+  &__mask {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--van-uploader-mask-text-color);
+    background: var(--van-uploader-mask-background);
+    border-radius: var(--van-uploader-border-radius);
+
+    &-icon {
+      font-size: var(--van-uploader-mask-icon-size);
+    }
+
+    &-message {
+      margin-top: 6px;
+      padding: 0 4px;
+      font-size: var(--van-uploader-mask-message-font-size);
+      line-height: var(--van-uploader-mask-message-line-height);
+    }
+  }
+
+  &__loading {
+    width: var(--van-uploader-loading-icon-size);
+    height: var(--van-uploader-loading-icon-size);
+    color: var(--van-uploader-loading-icon-color);
+  }
+
+  &__file {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: var(--van-uploader-size);
+    height: var(--van-uploader-size);
+    background: var(--van-uploader-file-background);
+
+    &-icon {
+      color: var(--van-uploader-file-icon-color);
+      font-size: var(--van-uploader-file-icon-size);
+    }
+
+    &-name {
+      width: 100%;
+      margin-top: var(--van-uploader-file-name-margin-top);
+      padding: var(--van-uploader-file-name-padding);
+      color: var(--van-uploader-file-name-text-color);
+      font-size: var(--van-uploader-file-name-font-size);
+      text-align: center;
+    }
+  }
 }
