@@ -1,220 +1,252 @@
 <!--
-  Vant Feature Parity Report:
-  Source: https://github.com/youzan/vant/blob/main/packages/vant/src/picker/Picker.tsx
-
-  Props (11/12 supported):
-    - columns: PickerOption[] | PickerColumn[]  [YES] column data
-    - modelValue: (string|number)[]             [YES] selected values (v-model)
-    - title: string                             [YES] toolbar title
-    - confirmButtonText: string                 [YES] confirm button text (default 'Confirm')
-    - cancelButtonText: string                  [YES] cancel button text (default 'Cancel')
-    - loading: boolean                          [YES] show loading overlay (uses Loading component)
-    - readonly: boolean                         [YES] readonly mode
-    - allowHtml: boolean                        [N/A] Lynx does not support innerHTML
-    - showToolbar: boolean                      [YES] show toolbar (default true)
-    - visibleOptionNum: number                  [YES] visible option count (default 6)
-    - optionHeight: number                      [YES] option height in px (default 44)
-    - swipeDuration: number                     [YES] momentum scroll duration (default 1000)
-    - toolbarPosition: 'top' | 'bottom'        [YES] toolbar position
-
-  Events (5/6 supported):
-    - update:modelValue                         [YES] v-model update
-    - confirm                                   [YES] confirm button tapped
-    - cancel                                    [YES] cancel button tapped
-    - change                                    [YES] value changed
-    - click-option                              [YES] option tapped
-    - scrollInto                                [PARTIAL] not applicable without scroll physics
-
-  Slots (7/7 supported):
-    - toolbar                                   [YES] custom toolbar
-    - title                                     [YES] custom title
-    - confirm                                   [YES] custom confirm button
-    - cancel                                    [YES] custom cancel button
-    - option                                    [YES] custom option rendering
-    - columns-top                               [YES] content above columns
-    - columns-bottom                            [YES] content below columns
-
-  Loading Integration: Uses Loading component from ../Loading/index.vue
-  Lynx Adaptations:
-    - Uses view/text elements with inline styles
-    - display: 'flex' set explicitly
-    - No scroll physics / momentum (tap-to-select + touch drag)
-    - Option highlight using absolute-positioned indicator with gradient masks
-    - allowHtml prop accepted but ignored (Lynx limitation)
+  Lynx Limitations:
+  - allowHtml: Lynx does not support innerHTML/v-html; prop accepted but ignored
+  - getElementTranslateY: No getComputedStyle in background thread; momentum mid-stop approximated
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, watchEffect } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { addUnit } from '../../utils/format';
+import type { Numeric } from '../../utils/format';
 import Loading from '../Loading/index.vue';
+import PickerColumn from './PickerColumn.vue';
+import PickerToolbar from './PickerToolbar.vue';
+import type {
+  PickerOption,
+  PickerColumn as PickerColumnType,
+  PickerFieldNames,
+  PickerToolbarPosition,
+} from './types';
+import {
+  assignDefaultFields,
+  getColumnsType,
+  formatCascadeColumns,
+  getFirstEnabledOption,
+  isOptionExist,
+  findOptionByValue,
+} from './utils';
+import './index.less';
 
-export interface PickerOption {
-  text?: string;
-  value?: string | number;
-  disabled?: boolean;
-  children?: PickerOption[];
-  [key: string]: any;
-}
+const [name, bem] = createNamespace('picker');
 
-export type PickerColumn = PickerOption[];
-
-export interface PickerProps {
-  columns?: (PickerOption | PickerColumn)[];
-  modelValue?: (string | number)[];
-  title?: string;
-  confirmButtonText?: string;
-  cancelButtonText?: string;
-  loading?: boolean;
-  readonly?: boolean;
-  allowHtml?: boolean;
-  showToolbar?: boolean;
-  visibleOptionNum?: number | string;
-  optionHeight?: number | string;
-  swipeDuration?: number | string;
-  toolbarPosition?: 'top' | 'bottom';
-}
-
-const props = withDefaults(defineProps<PickerProps>(), {
-  columns: () => [],
-  modelValue: () => [],
-  confirmButtonText: 'Confirm',
-  cancelButtonText: 'Cancel',
-  loading: false,
-  readonly: false,
-  allowHtml: false,
-  showToolbar: true,
-  visibleOptionNum: 6,
-  optionHeight: 44,
-  swipeDuration: 1000,
-  toolbarPosition: 'top',
-});
+const props = withDefaults(
+  defineProps<{
+    columns?: (PickerOption | PickerColumnType)[];
+    modelValue?: Numeric[];
+    title?: string;
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+    loading?: boolean;
+    readonly?: boolean;
+    allowHtml?: boolean;
+    showToolbar?: boolean;
+    visibleOptionNum?: Numeric;
+    optionHeight?: Numeric;
+    swipeDuration?: Numeric;
+    toolbarPosition?: PickerToolbarPosition;
+    columnsFieldNames?: PickerFieldNames;
+  }>(),
+  {
+    columns: () => [],
+    modelValue: () => [],
+    loading: false,
+    readonly: false,
+    allowHtml: false,
+    showToolbar: true,
+    visibleOptionNum: 6,
+    optionHeight: 44,
+    swipeDuration: 1000,
+    toolbarPosition: 'top',
+  },
+);
 
 const emit = defineEmits<{
-  'update:modelValue': [values: (string | number)[]];
-  confirm: [params: { selectedValues: (string | number)[]; selectedOptions: (PickerOption | undefined)[]; selectedIndexes: number[] }];
-  cancel: [params: { selectedValues: (string | number)[]; selectedOptions: (PickerOption | undefined)[]; selectedIndexes: number[] }];
-  change: [params: { columnIndex: number; selectedValues: (string | number)[]; selectedOptions: (PickerOption | undefined)[]; selectedIndexes: number[] }];
-  'click-option': [params: { columnIndex: number; currentOption: PickerOption }];
+  'update:modelValue': [values: Numeric[]];
+  confirm: [params: {
+    selectedValues: Numeric[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  cancel: [params: {
+    selectedValues: Numeric[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  change: [params: {
+    columnIndex: number;
+    selectedValues: Numeric[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  'click-option': [params: {
+    columnIndex: number;
+    currentOption: PickerOption;
+    selectedValues: Numeric[];
+    selectedOptions: (PickerOption | undefined)[];
+    selectedIndexes: number[];
+  }];
+  'scroll-into': [params: {
+    columnIndex: number;
+    currentOption: PickerOption;
+  }];
 }>();
 
+const fields = computed(() => assignDefaultFields(props.columnsFieldNames));
+
 const resolvedOptHeight = computed(() => {
-  const h = typeof props.optionHeight === 'string' ? parseInt(props.optionHeight, 10) : props.optionHeight;
-  return h || 44;
+  const h = +props.optionHeight;
+  return h > 0 ? h : 44;
 });
 
 const resolvedVisibleNum = computed(() => {
-  const n = typeof props.visibleOptionNum === 'string' ? parseInt(props.visibleOptionNum, 10) : props.visibleOptionNum;
-  return n || 6;
+  const n = +props.visibleOptionNum;
+  return n > 0 ? n : 6;
 });
 
-// Normalize columns: detect format and convert to PickerColumn[]
-const currentColumns = computed<PickerColumn[]>(() => {
+// Selected values tracked internally
+const selectedValues = ref<Numeric[]>(props.modelValue.slice());
+
+// Detect column type and compute effective columns
+const columnsType = computed(() =>
+  getColumnsType(props.columns, fields.value),
+);
+
+const currentColumns = computed<PickerColumnType[]>(() => {
   const { columns } = props;
   if (!columns || columns.length === 0) return [];
 
-  const first = columns[0] as any;
+  const f = fields.value;
 
-  // Multi-column: array of arrays
-  if (Array.isArray(first)) {
-    // Could be string[][] (legacy) or PickerOption[][]
-    return (columns as any[][]).map((col: any[]) =>
-      col.map((item: any) => {
-        if (typeof item === 'string' || typeof item === 'number') {
-          return { text: String(item), value: item } as PickerOption;
-        }
-        return item as PickerOption;
-      }),
-    );
+  switch (columnsType.value) {
+    case 'multiple':
+      return columns as PickerColumnType[];
+    case 'cascade':
+      return formatCascadeColumns(
+        columns as PickerOption[],
+        f,
+        selectedValues.value,
+      );
+    default:
+      return [columns as PickerColumnType];
   }
-
-  // Single column of PickerOption objects
-  if (first && typeof first === 'object' && ('text' in first || 'value' in first)) {
-    return [columns as PickerColumn];
-  }
-
-  // Single column of primitives (string[] or number[])
-  if (typeof first === 'string' || typeof first === 'number') {
-    return [(columns as any[]).map((item: any) => ({
-      text: String(item),
-      value: item,
-    } as PickerOption))];
-  }
-
-  return [columns as PickerColumn];
 });
 
-// Track selected values
-const selectedValues = ref<(string | number)[]>(props.modelValue.slice(0));
+const selectedIndexes = computed(() =>
+  currentColumns.value.map((options, colIndex) => {
+    const val = selectedValues.value[colIndex];
+    const f = fields.value;
+    const idx = options.findIndex(
+      (opt) => opt[f.value] === val && !opt.disabled,
+    );
+    return idx >= 0 ? idx : 0;
+  }),
+);
+
+const selectedOptions = computed(() =>
+  currentColumns.value.map((options, colIndex) => {
+    const val = selectedValues.value[colIndex];
+    return findOptionByValue(options, val, fields.value);
+  }),
+);
+
+function getEventParams() {
+  return {
+    selectedValues: selectedValues.value.slice(),
+    selectedOptions: selectedOptions.value.slice(),
+    selectedIndexes: selectedIndexes.value.slice(),
+  };
+}
 
 // Sync selected values when modelValue changes externally
 watch(
   () => props.modelValue,
   (newValues) => {
     if (JSON.stringify(newValues) !== JSON.stringify(selectedValues.value)) {
-      selectedValues.value = newValues.slice(0);
+      selectedValues.value = newValues.slice();
+      // Re-fill missing values (handles both cascade and cleared modelValue)
+      fillCascadeValues();
     }
   },
   { deep: true },
 );
 
-// Ensure selected values stay valid when columns change
-watch(
-  currentColumns,
-  (cols) => {
-    const newValues = selectedValues.value.slice(0);
-    let changed = false;
-    cols.forEach((options, index) => {
-      if (options.length && !options.some(opt => getOptionValue(opt) === newValues[index])) {
-        const firstEnabled = options.find(opt => !opt.disabled);
-        if (firstEnabled) {
-          newValues[index] = getOptionValue(firstEnabled);
-          changed = true;
-        }
-      }
-    });
-    if (changed) {
-      selectedValues.value = newValues;
-    }
-  },
-  { immediate: true },
-);
-
-// Emit model value when internal selection changes
+// Emit modelValue when internal selection changes
 watch(
   selectedValues,
   (newValues) => {
     if (JSON.stringify(newValues) !== JSON.stringify(props.modelValue)) {
-      emit('update:modelValue', newValues.slice(0));
+      emit('update:modelValue', newValues.slice());
     }
   },
   { deep: true },
 );
 
-function getOptionText(option: PickerOption): string {
-  return option.text ?? String(option.value ?? '');
+// Fill cascade values for columns that don't have a selected value
+function fillCascadeValues() {
+  const cols = currentColumns.value;
+  const values = selectedValues.value.slice();
+  let changed = false;
+
+  cols.forEach((options, colIndex) => {
+    if (values[colIndex] === undefined || !isOptionExist(options, values[colIndex], fields.value)) {
+      const first = getFirstEnabledOption(options);
+      if (first) {
+        values[colIndex] = first[fields.value.value] ?? '';
+        changed = true;
+      }
+    }
+  });
+
+  // Trim excess values
+  if (values.length > cols.length) {
+    values.length = cols.length;
+    changed = true;
+  }
+
+  if (changed) {
+    selectedValues.value = values;
+  }
 }
 
-function getOptionValue(option: PickerOption): string | number {
-  return option.value ?? option.text ?? '';
+// Ensure selected values stay valid when columns change
+watch(
+  currentColumns,
+  () => {
+    fillCascadeValues();
+  },
+  { immediate: true },
+);
+
+function onColumnChange(columnIndex: number, value: Numeric) {
+  const newValues = selectedValues.value.slice();
+  newValues[columnIndex] = value;
+  selectedValues.value = newValues;
+
+  // For cascade, subsequent columns may change
+  if (columnsType.value === 'cascade') {
+    // Values after the changed column will be auto-filled by fillCascadeValues
+    // triggered by the watch on currentColumns
+  }
+
+  emit('change', {
+    columnIndex,
+    ...getEventParams(),
+  });
 }
 
-const selectedIndexes = computed(() =>
-  currentColumns.value.map((options, colIndex) => {
-    const idx = options.findIndex(opt => getOptionValue(opt) === selectedValues.value[colIndex]);
-    return idx >= 0 ? idx : 0;
-  }),
-);
+function onColumnClickOption(columnIndex: number, option: PickerOption) {
+  emit('click-option', {
+    columnIndex,
+    currentOption: option,
+    ...getEventParams(),
+  });
+}
 
-const selectedOptions = computed(() =>
-  currentColumns.value.map((options, colIndex) =>
-    options.find(opt => getOptionValue(opt) === selectedValues.value[colIndex]),
-  ),
-);
-
-function getEventParams() {
-  return {
-    selectedValues: selectedValues.value.slice(0),
-    selectedOptions: selectedOptions.value,
-    selectedIndexes: selectedIndexes.value,
-  };
+function onColumnScrollInto(columnIndex: number, option: PickerOption) {
+  emit('scroll-into', {
+    columnIndex,
+    currentOption: option,
+  });
 }
 
 function onConfirm() {
@@ -226,278 +258,144 @@ function onCancel() {
   emit('cancel', getEventParams());
 }
 
-function onSelectItem(colIndex: number, itemIndex: number, option: PickerOption) {
-  if (props.readonly || props.loading || option.disabled) return;
+// Computed styles
+const wrapHeight = computed(
+  () => resolvedOptHeight.value * resolvedVisibleNum.value,
+);
 
-  const newValues = selectedValues.value.slice(0);
-  newValues[colIndex] = getOptionValue(option);
-  selectedValues.value = newValues;
-
-  emit('click-option', { columnIndex: colIndex, currentOption: option });
-  emit('change', { columnIndex: colIndex, ...getEventParams() });
-}
-
-// -- Touch-based column scrolling --
-const columnOffsets = ref<number[]>([]);
-const touchStartY = ref(0);
-const touchStartOffset = ref(0);
-const touchColIndex = ref(-1);
-
-function getColumnOffset(colIndex: number): number {
-  return columnOffsets.value[colIndex] ?? -(selectedIndexes.value[colIndex] || 0) * resolvedOptHeight.value;
-}
-
-// Initialize offsets from selected indexes
-watch(selectedIndexes, (indexes) => {
-  columnOffsets.value = indexes.map(idx => -idx * resolvedOptHeight.value);
-}, { immediate: true });
-
-function onColumnTouchStart(event: any, colIndex: number) {
-  if (props.readonly || props.loading) return;
-  const touch = event.touches?.[0] || event;
-  touchStartY.value = touch.clientY || touch.pageY || 0;
-  touchStartOffset.value = getColumnOffset(colIndex);
-  touchColIndex.value = colIndex;
-}
-
-function onColumnTouchMove(event: any) {
-  if (touchColIndex.value < 0) return;
-  const touch = event.touches?.[0] || event;
-  const currentY = touch.clientY || touch.pageY || 0;
-  const delta = currentY - touchStartY.value;
-  const newOffsets = [...columnOffsets.value];
-  newOffsets[touchColIndex.value] = touchStartOffset.value + delta;
-  columnOffsets.value = newOffsets;
-}
-
-function onColumnTouchEnd() {
-  if (touchColIndex.value < 0) return;
-  const colIndex = touchColIndex.value;
-  const offset = columnOffsets.value[colIndex] || 0;
-  const optHeight = resolvedOptHeight.value;
-  const colOptions = currentColumns.value[colIndex] || [];
-
-  // Snap to nearest option
-  let index = Math.round(-offset / optHeight);
-  index = Math.max(0, Math.min(index, colOptions.length - 1));
-
-  // Skip disabled options
-  const option = colOptions[index];
-  if (option && !option.disabled) {
-    onSelectItem(colIndex, index, option);
-  }
-
-  // Update offset to snapped position
-  const newOffsets = [...columnOffsets.value];
-  newOffsets[colIndex] = -index * optHeight;
-  columnOffsets.value = newOffsets;
-  touchColIndex.value = -1;
-}
-
-// -- Styles --
-const toolbarStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  justifyContent: 'space-between' as const,
-  height: 44,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
-
-const titleStyle = {
-  flex: 1,
-  textAlign: 'center' as const,
-  fontSize: 16,
-  fontWeight: 'bold' as const,
-  color: '#323233',
-};
-
-const cancelBtnStyle = {
-  fontSize: 14,
-  color: '#969799',
-  padding: 4,
-};
-
-const confirmBtnStyle = {
-  fontSize: 14,
-  color: '#1989fa',
-  padding: 4,
-};
-
-const wrapHeight = computed(() => resolvedOptHeight.value * resolvedVisibleNum.value);
-
-const columnsContainerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  height: wrapHeight.value,
-  backgroundColor: '#fff',
-  overflow: 'hidden',
-  position: 'relative' as const,
+const columnsStyle = computed(() => ({
+  height: `${wrapHeight.value}px`,
 }));
 
+const maskHeight = computed(
+  () => (wrapHeight.value - resolvedOptHeight.value) / 2,
+);
+
 const maskTopStyle = computed(() => ({
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  height: (wrapHeight.value - resolvedOptHeight.value) / 2,
-  backgroundColor: 'rgba(255,255,255,0.7)',
-  zIndex: 1,
+  height: `${maskHeight.value}px`,
 }));
 
 const maskBottomStyle = computed(() => ({
-  position: 'absolute' as const,
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: (wrapHeight.value - resolvedOptHeight.value) / 2,
-  backgroundColor: 'rgba(255,255,255,0.7)',
-  zIndex: 1,
+  height: `${maskHeight.value}px`,
 }));
 
 const frameStyle = computed(() => ({
-  position: 'absolute' as const,
-  top: (wrapHeight.value - resolvedOptHeight.value) / 2,
-  left: 0,
-  right: 0,
-  height: resolvedOptHeight.value,
-  borderTopWidth: 0.5,
-  borderTopStyle: 'solid' as const,
-  borderTopColor: '#ebedf0',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-  zIndex: 1,
+  top: `${maskHeight.value}px`,
+  height: `${resolvedOptHeight.value}px`,
 }));
 
-const loadingOverlayStyle = computed(() => ({
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255,255,255,0.7)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 2,
-}));
+const hasOptions = computed(() =>
+  currentColumns.value.some((col) => col.length > 0),
+);
 
-function getColumnStyle() {
-  return {
-    flex: 1,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    position: 'relative' as const,
-  };
+// Exposed methods
+function confirm() {
+  onConfirm();
 }
 
-function getItemsWrapStyle(colIndex: number) {
-  const baseOffset = (wrapHeight.value - resolvedOptHeight.value) / 2;
-  const offset = getColumnOffset(colIndex);
-  return {
-    paddingTop: baseOffset + offset,
-  };
+function getSelectedOptions() {
+  return selectedOptions.value.slice();
 }
 
-function getItemTextStyle(colIndex: number, itemIndex: number) {
-  const isSelected = selectedIndexes.value[colIndex] === itemIndex;
-  return {
-    fontSize: 16,
-    color: isSelected ? '#323233' : '#969799',
-    fontWeight: isSelected ? ('bold' as const) : ('normal' as const),
-  };
-}
+defineExpose({ confirm, getSelectedOptions });
 </script>
 
 <template>
-  <view :style="{ backgroundColor: '#fff', position: 'relative' as const }">
-    <!-- Toolbar (top position) -->
-    <view v-if="showToolbar && toolbarPosition === 'top'" :style="toolbarStyle">
-      <slot name="toolbar">
-        <slot name="cancel">
-          <view @tap="onCancel"><text :style="cancelBtnStyle">{{ cancelButtonText }}</text></view>
-        </slot>
-        <slot name="title">
-          <text v-if="title" :style="titleStyle">{{ title }}</text>
-          <view v-else :style="{ flex: 1 }" />
-        </slot>
-        <slot name="confirm">
-          <view @tap="onConfirm"><text :style="confirmBtnStyle">{{ confirmButtonText }}</text></view>
-        </slot>
-      </slot>
-    </view>
+  <view :class="bem()">
+    <!-- Toolbar (top) -->
+    <PickerToolbar
+      v-if="showToolbar && toolbarPosition === 'top'"
+      :title="title"
+      :cancel-button-text="cancelButtonText"
+      :confirm-button-text="confirmButtonText"
+      @confirm="onConfirm"
+      @cancel="onCancel"
+    >
+      <template v-if="$slots.toolbar" #toolbar>
+        <slot name="toolbar" />
+      </template>
+      <template v-if="$slots.title" #title>
+        <slot name="title" />
+      </template>
+      <template v-if="$slots.confirm" #confirm>
+        <slot name="confirm" />
+      </template>
+      <template v-if="$slots.cancel" #cancel>
+        <slot name="cancel" />
+      </template>
+    </PickerToolbar>
 
     <!-- Columns top slot -->
     <slot name="columns-top" />
 
     <!-- Columns -->
-    <view :style="columnsContainerStyle">
-      <view
-        v-for="(column, colIndex) in currentColumns"
-        :key="colIndex"
-        :style="getColumnStyle()"
-        @touchstart="(e: any) => onColumnTouchStart(e, colIndex)"
-        @touchmove="onColumnTouchMove"
-        @touchend="onColumnTouchEnd"
-      >
-        <!-- Items list -->
-        <view :style="getItemsWrapStyle(colIndex)">
-          <view
-            v-for="(option, itemIndex) in column"
-            :key="itemIndex"
-            :style="{
-              height: resolvedOptHeight,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: option.disabled ? 0.3 : 1,
-            }"
-            @tap="onSelectItem(colIndex, itemIndex, option)"
-          >
-            <slot name="option" :option="option" :index="itemIndex">
-              <text :style="getItemTextStyle(colIndex, itemIndex)">{{ getOptionText(option) }}</text>
-            </slot>
-          </view>
-        </view>
-      </view>
+    <view :class="bem('columns')" :style="columnsStyle">
+      <template v-if="hasOptions">
+        <PickerColumn
+          v-for="(column, columnIndex) in currentColumns"
+          :key="columnIndex"
+          :value="selectedValues[columnIndex]"
+          :fields="fields"
+          :options="column"
+          :readonly="readonly"
+          :allow-html="allowHtml"
+          :option-height="resolvedOptHeight"
+          :swipe-duration="swipeDuration"
+          :visible-option-num="visibleOptionNum"
+          @change="(val: Numeric) => onColumnChange(columnIndex, val)"
+          @click-option="(opt: PickerOption) => onColumnClickOption(columnIndex, opt)"
+          @scroll-into="(opt: PickerOption) => onColumnScrollInto(columnIndex, opt)"
+        >
+          <template v-if="$slots.option" #option="{ option, index }">
+            <slot name="option" :option="option" :index="index" />
+          </template>
+        </PickerColumn>
 
-      <!-- Frame indicator (selected option highlight border) -->
-      <view :style="frameStyle" />
+        <!-- Mask (top gradient) -->
+        <view :class="bem('mask') + ' ' + bem('mask', { top: true })" :style="maskTopStyle" />
 
-      <!-- Gradient masks -->
-      <view :style="maskTopStyle" />
-      <view :style="maskBottomStyle" />
+        <!-- Mask (bottom gradient) -->
+        <view :class="bem('mask') + ' ' + bem('mask', { bottom: true })" :style="maskBottomStyle" />
+
+        <!-- Frame (selection indicator) -->
+        <view :class="bem('frame')" :style="frameStyle" />
+      </template>
+
+      <!-- Empty state -->
+      <template v-if="!hasOptions && !loading">
+        <slot name="empty" />
+      </template>
 
       <!-- Loading overlay -->
-      <view v-if="loading" :style="loadingOverlayStyle">
-        <Loading color="#1989fa" />
+      <view v-if="loading" :class="bem('loading')">
+        <Loading color="var(--van-picker-loading-icon-color)" />
       </view>
     </view>
 
     <!-- Columns bottom slot -->
     <slot name="columns-bottom" />
 
-    <!-- Toolbar (bottom position) -->
-    <view v-if="showToolbar && toolbarPosition === 'bottom'" :style="toolbarStyle">
-      <slot name="toolbar">
-        <slot name="cancel">
-          <view @tap="onCancel"><text :style="cancelBtnStyle">{{ cancelButtonText }}</text></view>
-        </slot>
-        <slot name="title">
-          <text v-if="title" :style="titleStyle">{{ title }}</text>
-          <view v-else :style="{ flex: 1 }" />
-        </slot>
-        <slot name="confirm">
-          <view @tap="onConfirm"><text :style="confirmBtnStyle">{{ confirmButtonText }}</text></view>
-        </slot>
-      </slot>
-    </view>
+    <!-- Toolbar (bottom) -->
+    <PickerToolbar
+      v-if="showToolbar && toolbarPosition === 'bottom'"
+      :title="title"
+      :cancel-button-text="cancelButtonText"
+      :confirm-button-text="confirmButtonText"
+      @confirm="onConfirm"
+      @cancel="onCancel"
+    >
+      <template v-if="$slots.toolbar" #toolbar>
+        <slot name="toolbar" />
+      </template>
+      <template v-if="$slots.title" #title>
+        <slot name="title" />
+      </template>
+      <template v-if="$slots.confirm" #confirm>
+        <slot name="confirm" />
+      </template>
+      <template v-if="$slots.cancel" #cancel>
+        <slot name="cancel" />
+      </template>
+    </PickerToolbar>
   </view>
 </template>

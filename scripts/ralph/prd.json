@@ -1354,7 +1354,7 @@
         "Docs: Lynx limitations in components/Slider/README.md",
         "Commit: feat(slider): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-search",
@@ -1376,7 +1376,7 @@
         "Docs: Lynx limitations in components/Search/README.md",
         "Commit: feat(search): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-picker",
@@ -1398,7 +1398,7 @@
         "Docs: Lynx limitations in components/Picker/README.md",
         "Commit: feat(picker): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-picker-group",

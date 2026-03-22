@@ -807,3 +807,46 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from inline-style-only to BEM class system. Replaced Unicode star characters with Vant Icon component using icon font. Added all BEM selectors in .less. Added iconPrefix prop. Touch drag uses estimation since Lynx lacks DOM rect measurement. Half-star overlay positioned via CSS class --half with overflow:hidden.
 - Limitations: role/aria attributes (Lynx has no ARIA), tabindex (Lynx has no keyboard focus), useRect/getBoundingClientRect (touch drag uses estimation), useCustomFieldValue (no Vant Form integration yet), cursor styling (Lynx is touch-only)
 ---
+
+## 2026-03-22 - parity-slider: Slider
+- Props: 13/13 (modelValue, min, max, step, barHeight, buttonSize, activeColor, inactiveColor, disabled, readonly, vertical, range, reverse)
+- Events: 4/4 (update:modelValue, change, dragStart, dragEnd)
+- Slots: 3/3 (button, left-button, right-button)
+- CSS Variables: 9 defined in index.less (--van-slider-active-background, --van-slider-inactive-background, --van-slider-disabled-opacity, --van-slider-bar-height, --van-slider-button-width, --van-slider-button-height, --van-slider-button-radius, --van-slider-button-background, --van-slider-button-shadow)
+- BEM Classes: .van-slider, .van-slider__bar, .van-slider__button, .van-slider__button-wrapper (--left, --right), .van-slider--disabled, .van-slider--vertical
+- Animations: CSS transition on .van-slider__bar (all 0.2s), disabled during drag
+- Tests: 29 cases (Vant has 22, we have 29 — added BEM class, bar percentage, reverse, range bar offset, string prop tests)
+- Demo sections: 8/8 (基础用法, 双滑块, 指定选择范围, 禁用, 指定步长, 自定义样式, 自定义按钮, 垂直方向)
+- Visual match: pass (BEM classes, CSS variables, box-shadow button)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: Slider.tsx, types.ts, index.less, index.ts)
+- Key changes: Complete rewrite from all-inline-styles to BEM class system. Replaced hardcoded colors/borders with CSS variables and box-shadow. Fixed event names from kebab-case (drag-start) to camelCase (dragStart) matching Vant. Added proper step formatting with addNumber for floating-point precision. Range mode properly handles two buttons with left/right slots.
+- Limitations: ::before touch area expansion (Lynx has no ::before), cursor styles (no cursor in Lynx), aria/role attributes (Lynx has no ARIA), useRect/getBoundingClientRect (track tap uses fallback rect), passive touchmove listener (uses @touchmove directly), useCustomFieldValue (no Vant Form integration yet)
+---
+
+## 2026-03-22 - parity-search: Search
+- Props: 20/20 (modelValue, label, shape, leftIcon, clearable, actionText, background, showAction, id, name, disabled, readonly, placeholder, inputAlign, errorMessage, maxlength, autofocus, clearIcon, rightIcon, autocomplete)
+- Events: 9/9 (update:modelValue, search, cancel, blur, focus, clear, clickInput, clickLeftIcon, clickRightIcon)
+- Slots: 5/5 (left, label, action, left-icon, right-icon)
+- CSS Variables: 11 defined in index.less (--van-search-padding, --van-search-background, --van-search-content-background, --van-search-input-height, --van-search-label-padding, --van-search-label-color, --van-search-label-font-size, --van-search-left-icon-color, --van-search-action-padding, --van-search-action-text-color, --van-search-action-font-size)
+- Animations: none (Search has no transitions)
+- Tests: 19 cases (Vant has 17)
+- Demo sections: 6/6 (基础用法, 事件监听, 搜索框内容对齐, 禁用搜索框, 自定义背景色, 自定义按钮)
+- Visual match: pass (BEM classes, CSS variables, wraps Field component)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 6: Search.tsx, types.ts, index.ts, index.less, demo/index.vue, README.md)
+- Key changes: Complete rewrite from inline-styles-only standalone component to proper BEM class system wrapping Field internally (matching Vant's architecture). Added types.ts. All CSS selectors in index.less (.van-search, __content, __label, __field, __action, --show-action, --round). Exposed focus/blur methods via defineExpose.
+- Limitations: id/for (no HTML label-for in Lynx), autocomplete (not applicable in Lynx), type="search" (Lynx input has no search type), :active (no :active pseudo-class in Lynx), form submission (no <form> element in Lynx), ::-webkit-search-* pseudo-elements (not applicable)
+---
+
+## 2026-03-22 - parity-picker: Picker
+- Props: 14/14 (columns, modelValue, title, confirmButtonText, cancelButtonText, loading, readonly, allowHtml, showToolbar, visibleOptionNum, optionHeight, swipeDuration, toolbarPosition, columnsFieldNames)
+- Events: 6/6 (update:modelValue, confirm, cancel, change, click-option, scroll-into)
+- Slots: 8/8 (toolbar, title, confirm, cancel, option, columns-top, columns-bottom, empty)
+- CSS Variables: 16 defined in index.less (--van-picker-background, --van-picker-toolbar-height, --van-picker-title-font-size, --van-picker-title-line-height, --van-picker-action-padding, --van-picker-action-font-size, --van-picker-confirm-action-color, --van-picker-cancel-action-color, --van-picker-option-font-size, --van-picker-option-padding, --van-picker-option-text-color, --van-picker-option-disabled-opacity, --van-picker-loading-icon-color, --van-picker-loading-mask-color, --van-picker-mask-color)
+- Animations: momentum/inertia scrolling via transform: translateY() + CSS transition
+- Tests: 26 cases (Vant has 24)
+- Demo sections: 8/8 (基础用法, 搭配弹出层使用, 双向绑定, 多列选择, 级联选择, 禁用选项, 加载状态, 自定义列字段名)
+- Visual match: pass (BEM classes, CSS variables, pointer-events: none on masks/frame)
+- Files: index.vue, index.less, types.ts, utils.ts, PickerColumn.vue, PickerToolbar.vue, test/index.spec.ts (7 files; Vant has 8: Picker.tsx, PickerColumn.tsx, PickerToolbar.tsx, types.ts, utils.ts, index.ts, index.less, demo/index.vue)
+- Key changes: Complete rewrite from single-file inline-styles to proper Vant architecture. Split into 3 sub-components (Picker, PickerColumn, PickerToolbar). PickerColumn uses transform: translateY() with momentum/inertia physics (speed/0.003 deceleration). Added cascade column support (formatCascadeColumns). Added columnsFieldNames prop. All CSS in BEM selectors. Masks/frame have pointer-events: none. Exposed confirm() and getSelectedOptions() via defineExpose.
+- Limitations: allowHtml (Lynx has no innerHTML/v-html), getElementTranslateY (no getComputedStyle in background thread; momentum mid-stop approximated)
+---
