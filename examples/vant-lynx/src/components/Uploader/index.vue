@@ -1,230 +1,253 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 13/22 supported (modelValue, maxCount, maxSize, accept, multiple,
-    disabled, deletable, showUpload, previewImage, previewSize, imageFit,
-    uploadText, readonly)
-  - Events: 5/8 supported (update:modelValue, oversize, click-upload,
-    click-preview, delete)
-  - Slots: 0/1 supported
-  - Gaps: name, capture, lazyLoad, resultType, uploadIcon, reupload,
-    afterRead, beforeRead, beforeDelete, previewOptions, previewFullImage props;
-    close-preview, clickReupload events; default slot;
-    no native file input (Lynx lacks HTML file picker)
+  Lynx Limitations:
+  - input[type=file]: Lynx has no HTML file input; host app should listen to click-upload
+    event and provide files via modelValue
+  - FileReader/URL.createObjectURL: not available in Lynx; content/objectUrl must be set
+    by the host app
+  - capture: HTML-only attribute for camera access
+  - lazyLoad: no IntersectionObserver/$Lazyload in Lynx
+  - previewFullImage/previewOptions/closePreview: showImagePreview not available in Lynx;
+    use click-preview event to handle preview in host app
+  - resultType/beforeRead/afterRead: file reading happens on host side, not in component
+  - reupload: defined for API compat but chooseFile is a no-op (emits click-upload)
+  - display: inline-block: Lynx uses flex layout
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { ref, computed } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Icon from '../Icon/index.vue';
-import Loading from '../Loading/index.vue';
+import UploaderPreviewItem from './UploaderPreviewItem.vue';
+import { isOversize, filterFiles, getSizeStyle } from './utils';
+import type { Numeric } from '../../utils/format';
+import type {
+  UploaderFileListItem,
+  UploaderMaxSize,
+  UploaderResultType,
+  UploaderBeforeRead,
+  UploaderAfterRead,
+} from './types';
 
-export interface UploaderFile {
-  url?: string;
-  status?: 'uploading' | 'failed' | 'done';
-  message?: string;
-  content?: string;
-  file?: any;
-  isImage?: boolean;
-  imageFit?: string;
-}
+import './index.less';
 
-export interface UploaderProps {
-  modelValue?: UploaderFile[];
-  maxCount?: number;
-  maxSize?: number;
+const [, bem] = createNamespace('uploader');
+
+interface UploaderProps {
+  name?: Numeric;
   accept?: string;
+  capture?: string;
   multiple?: boolean;
   disabled?: boolean;
   readonly?: boolean;
-  deletable?: boolean;
-  showUpload?: boolean;
-  previewImage?: boolean;
-  previewSize?: number;
+  lazyLoad?: boolean;
+  maxCount?: Numeric;
   imageFit?: string;
-  uploadText?: string;
+  resultType?: UploaderResultType;
   uploadIcon?: string;
+  uploadText?: string;
+  deletable?: boolean;
+  reupload?: boolean;
+  afterRead?: UploaderAfterRead;
+  showUpload?: boolean;
+  modelValue?: UploaderFileListItem[];
+  beforeRead?: UploaderBeforeRead;
+  beforeDelete?: (...args: unknown[]) => boolean | Promise<boolean>;
+  previewSize?: Numeric | [Numeric, Numeric];
+  previewImage?: boolean;
+  previewOptions?: Record<string, unknown>;
+  previewFullImage?: boolean;
+  maxSize?: UploaderMaxSize;
 }
 
 const props = withDefaults(defineProps<UploaderProps>(), {
-  modelValue: () => [],
-  maxCount: Infinity,
-  maxSize: Infinity,
+  name: '',
   accept: 'image/*',
   multiple: false,
   disabled: false,
   readonly: false,
-  deletable: true,
-  showUpload: true,
-  previewImage: true,
-  previewSize: 80,
+  lazyLoad: false,
+  maxCount: Infinity,
   imageFit: 'cover',
-  uploadText: '',
+  resultType: 'dataUrl',
   uploadIcon: 'photograph',
+  deletable: true,
+  reupload: false,
+  showUpload: true,
+  modelValue: () => [],
+  previewImage: true,
+  previewFullImage: true,
+  maxSize: Infinity,
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [files: UploaderFile[]];
-  oversize: [file: UploaderFile];
-  'click-upload': [];
-  'click-preview': [file: UploaderFile, index: number];
+  'update:modelValue': [files: UploaderFileListItem[]];
+  delete: [item: UploaderFileListItem, detail: { name: Numeric; index: number }];
+  oversize: [
+    items: UploaderFileListItem | UploaderFileListItem[],
+    detail: { name: Numeric; index: number },
+  ];
+  'click-upload': [event?: Event];
   'close-preview': [];
-  delete: [file: UploaderFile, index: number];
+  'click-preview': [item: UploaderFileListItem, detail: { name: Numeric; index: number }];
+  'click-reupload': [item: UploaderFileListItem, detail: { name: Numeric; index: number }];
 }>();
 
-const showUploadButton = computed(
-  () => props.showUpload && !props.readonly && props.modelValue.length < props.maxCount,
+const slots = defineSlots<{
+  default?: () => void;
+  'preview-cover'?: (props: { index: number } & UploaderFileListItem) => void;
+  'preview-delete'?: () => void;
+}>();
+
+const uploadActive = ref(false);
+
+const getDetail = (index = props.modelValue.length) => ({
+  name: props.name,
+  index,
+});
+
+const lessThanMax = computed(
+  () => props.modelValue.length < +props.maxCount,
 );
 
-function onDelete(file: UploaderFile, index: number) {
-  if (props.disabled || props.readonly) return;
-  const newFiles = props.modelValue.filter((_, i) => i !== index);
-  emit('update:modelValue', newFiles);
-  emit('delete', file, index);
+const showUploadArea = computed(
+  () => props.showUpload && lessThanMax.value,
+);
+
+function deleteFile(item: UploaderFileListItem, index: number) {
+  const fileList = props.modelValue.slice(0);
+  fileList.splice(index, 1);
+  emit('update:modelValue', fileList);
+  emit('delete', item, getDetail(index));
 }
 
-function onClickUpload() {
+function onClickUpload(event?: Event) {
   if (props.disabled || props.readonly) return;
-  if (props.modelValue.length >= props.maxCount) {
-    return;
+  emit('click-upload', event);
+}
+
+function onPreviewItem(item: UploaderFileListItem, index: number) {
+  if (props.reupload) {
+    emit('click-reupload', item, getDetail(index));
+  } else {
+    emit('click-preview', item, getDetail(index));
   }
-  emit('click-upload');
 }
 
-function onClickPreview(file: UploaderFile, index: number) {
-  emit('click-preview', file, index);
+function onDeleteItem(index: number) {
+  const item = props.modelValue[index];
+  deleteFile(item, index);
 }
 
-function getStatusColor(status?: string) {
-  if (status === 'failed') return '#ee0a24';
-  if (status === 'uploading') return '#1989fa';
-  return '#07c160';
+function onReuploadItem(index: number) {
+  const item = props.modelValue[index];
+  emit('click-reupload', item, getDetail(index));
+}
+
+function getItemDeletable(item: UploaderFileListItem): boolean {
+  return item.deletable ?? props.deletable;
+}
+
+function getItemBeforeDelete(item: UploaderFileListItem) {
+  return item.beforeDelete ?? props.beforeDelete;
+}
+
+function getItemPreviewSize(item: UploaderFileListItem) {
+  return item.previewSize ?? props.previewSize;
+}
+
+function getItemImageFit(item: UploaderFileListItem) {
+  return item.imageFit ?? props.imageFit;
+}
+
+function getItemReupload(item: UploaderFileListItem) {
+  return item.reupload ?? props.reupload;
+}
+
+// Exposed methods matching Vant's useExpose
+function chooseFile() {
+  // Lynx has no file input; emit click-upload for host app to handle
+  if (!props.disabled) {
+    onClickUpload();
+  }
+}
+
+function closeImagePreview() {
+  // No-op in Lynx; emit close-preview for host app
+  emit('close-preview');
+}
+
+function reuploadFile(index: number) {
+  // Emit click-reupload for host app to handle
+  const item = props.modelValue[index];
+  if (item) {
+    emit('click-reupload', item, getDetail(index));
+  }
 }
 
 defineExpose({
-  // chooseFile is a no-op in Lynx (no native file input);
-  // host app should listen to click-upload event instead
-  chooseFile: () => {
-    onClickUpload();
-  },
+  chooseFile,
+  closeImagePreview,
+  reuploadFile,
 });
 </script>
 
 <template>
-  <view :style="{
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  }">
-    <!-- Preview items -->
-    <view
-      v-for="(file, index) in modelValue"
-      :key="index"
-      :style="{
-        width: previewSize,
-        height: previewSize,
-        marginRight: 8,
-        marginBottom: 8,
-        position: 'relative',
-        display: 'flex',
-      }"
-    >
-      <!-- Image preview area -->
-      <view
-        :style="{
-          width: previewSize,
-          height: previewSize,
-          backgroundColor: '#f7f8fa',
-          borderRadius: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }"
-        @tap="() => onClickPreview(file, index)"
-      >
-        <!-- Show image if url is available -->
-        <image
-          v-if="previewImage && file.url"
-          :src="file.url"
-          :style="{
-            width: previewSize,
-            height: previewSize,
-          }"
-        />
-        <text v-else-if="previewImage" :style="{ fontSize: 12, color: '#969799' }">
-          {{ file.status === 'uploading' ? 'Uploading...' : (file.status === 'failed' ? 'Failed' : 'Done') }}
-        </text>
-      </view>
+  <view :class="bem()">
+    <view :class="bem('wrapper', { disabled })">
+      <!-- Preview list -->
+      <template v-if="previewImage">
+        <UploaderPreviewItem
+          v-for="(item, index) in modelValue"
+          :key="index"
+          :item="item"
+          :index="index"
+          :name="name"
+          :image-fit="getItemImageFit(item)"
+          :lazy-load="lazyLoad"
+          :deletable="getItemDeletable(item)"
+          :reupload="getItemReupload(item)"
+          :preview-size="getItemPreviewSize(item)"
+          :before-delete="getItemBeforeDelete(item)"
+          @preview="onPreviewItem(item, index)"
+          @delete="onDeleteItem(index)"
+          @reupload="onReuploadItem(index)"
+        >
+          <template v-if="slots['preview-cover']" #preview-cover="coverProps">
+            <slot name="preview-cover" v-bind="{ ...coverProps }" />
+          </template>
+          <template v-if="slots['preview-delete']" #preview-delete>
+            <slot name="preview-delete" />
+          </template>
+        </UploaderPreviewItem>
+      </template>
 
-      <!-- Status overlay -->
-      <view
-        v-if="file.status && file.status !== 'done'"
-        :style="{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: 'rgba(50,50,51,0.8)',
-          padding: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-      >
-        <Loading v-if="file.status === 'uploading'" :size="16" color="#fff" />
-        <Icon v-else-if="file.status === 'failed'" name="close" :size="16" color="#fff" />
-        <text :style="{ fontSize: 10, color: '#fff', marginTop: 2 }">
-          {{ file.message || file.status }}
-        </text>
-      </view>
+      <!-- Custom upload area (default slot) -->
+      <template v-if="slots.default">
+        <view
+          v-if="lessThanMax"
+          :class="bem('input-wrapper')"
+          @tap="onClickUpload"
+        >
+          <slot />
+        </view>
+      </template>
 
-      <!-- Delete button -->
-      <view
-        v-if="deletable && !disabled && !readonly"
-        :style="{
-          position: 'absolute',
-          top: -6,
-          right: -6,
-          width: 18,
-          height: 18,
-          borderRadius: 9,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }"
-        @tap="() => onDelete(file, index)"
-      >
-        <Icon name="cross" :size="10" color="#fff" />
-      </view>
-    </view>
-
-    <!-- Upload button -->
-    <view
-      v-if="showUploadButton"
-      :style="{
-        width: previewSize,
-        height: previewSize,
-        marginRight: 8,
-        marginBottom: 8,
-        backgroundColor: '#f7f8fa',
-        borderRadius: 4,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: '#dcdee0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: disabled ? 0.5 : 1,
-      }"
-      @tap="onClickUpload"
-    >
-      <slot>
-        <Icon :name="uploadIcon" :size="24" color="#dcdee0" />
-        <text v-if="uploadText" :style="{ fontSize: 12, color: '#969799', marginTop: 4 }">
-          {{ uploadText }}
-        </text>
-      </slot>
+      <!-- Default upload button -->
+      <template v-else>
+        <view
+          v-if="showUploadArea"
+          :class="bem('upload', { readonly, active: uploadActive })"
+          :style="getSizeStyle(previewSize)"
+          @tap="onClickUpload"
+          @touchstart="uploadActive = true"
+          @touchend="uploadActive = false"
+          @touchcancel="uploadActive = false"
+        >
+          <Icon :name="uploadIcon" :class="bem('upload-icon')" />
+          <text v-if="uploadText" :class="bem('upload-text')">
+            {{ uploadText }}
+          </text>
+        </view>
+      </template>
     </view>
   </view>
 </template>
