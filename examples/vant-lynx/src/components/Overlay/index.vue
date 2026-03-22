@@ -1,29 +1,30 @@
 <!--
   Lynx Limitations:
-  - teleport: accepted for API compat but not applicable in Lynx (no DOM)
+  - teleport: accepted for API compat but Lynx has no Teleport support
   - lockScroll: accepted for API compat but no direct equivalent in Lynx
-  - className: accepted but not applied as CSS class (Lynx has no CSS class system)
-  - Vue <Transition>: not supported in Lynx; fade effect uses inline CSS opacity transition
-  - lazyRender: uses v-if for initial render gating (no v-show in Lynx, uses opacity instead)
+  - lazyRender: accepted for API compat; v-if already provides lazy rendering
+  - v-show: Lynx does not support v-show; uses v-if with opacity transition instead
+  - Vue <Transition>: experimental in Lynx; uses CSS opacity transition instead
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue-lynx';
+import { ref, computed, watch, type CSSProperties } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { isDef } from '../../utils/format';
+import './index.less';
 
 export interface OverlayProps {
   show?: boolean;
   zIndex?: number | string;
   duration?: number | string;
   className?: string | string[] | Record<string, boolean>;
-  customStyle?: Record<string, any>;
+  customStyle?: CSSProperties;
   lockScroll?: boolean;
   lazyRender?: boolean;
-  teleport?: string | Element;
+  teleport?: string | object;
 }
 
 const props = withDefaults(defineProps<OverlayProps>(), {
   show: false,
-  zIndex: 1,
-  duration: 0.3,
   lockScroll: true,
   lazyRender: true,
 });
@@ -31,6 +32,8 @@ const props = withDefaults(defineProps<OverlayProps>(), {
 const emit = defineEmits<{
   click: [event: any];
 }>();
+
+const [, bem] = createNamespace('overlay');
 
 // Lazy render: track if overlay has ever been shown
 const hasRendered = ref(false);
@@ -49,26 +52,24 @@ const shouldRender = computed(() => {
 });
 
 const overlayStyle = computed(() => {
+  const style: Record<string, any> = {};
+
+  if (isDef(props.zIndex)) {
+    style.zIndex = Number(props.zIndex);
+  }
+
+  // Duration for fade animation
   const duration =
     typeof props.duration === 'number'
       ? `${props.duration}s`
-      : props.duration;
+      : props.duration ?? '0.3s';
+  style.transitionProperty = 'opacity';
+  style.transitionDuration = duration;
 
-  const style: Record<string, any> = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: Number(props.zIndex),
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    opacity: props.show ? 1 : 0,
-    transitionProperty: 'opacity',
-    transitionDuration: duration,
-  };
+  // Fade: opacity 0 when hidden, 1 when shown
+  style.opacity = props.show ? 1 : 0;
 
   if (!props.show) {
-    // When hidden, make it non-interactive
     style.pointerEvents = 'none';
   }
 
@@ -79,13 +80,32 @@ const overlayStyle = computed(() => {
   return style;
 });
 
+const overlayClass = computed(() => {
+  const classes: Array<string | Record<string, boolean>> = [bem()];
+  if (props.className) {
+    if (typeof props.className === 'string') {
+      classes.push(props.className);
+    } else if (Array.isArray(props.className)) {
+      classes.push(...props.className);
+    } else {
+      classes.push(props.className);
+    }
+  }
+  return classes;
+});
+
 function onTap(event: any) {
   emit('click', event);
 }
 </script>
 
 <template>
-  <view v-if="shouldRender" :style="overlayStyle" @tap="onTap">
+  <view
+    v-if="shouldRender"
+    :class="overlayClass"
+    :style="overlayStyle"
+    @tap="onTap"
+  >
     <slot />
   </view>
 </template>

@@ -11,28 +11,28 @@ const showZIndex = ref(false);
 
 <template>
   <DemoPage title="Overlay">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ marginBottom: '16px' }">
         <Button type="primary" @tap="showBasic = true">
-          <text :style="{ fontSize: 16, color: '#fff' }">Show Overlay</text>
+          <text :style="{ fontSize: '16px', color: '#fff' }">显示遮罩层</text>
         </Button>
       </view>
 
       <!-- Embedded Content -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Embedded Content</text>
-      <view :style="{ marginBottom: 16 }">
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">嵌入内容</text>
+      <view :style="{ marginBottom: '16px' }">
         <Button type="primary" @tap="showEmbedded = true">
-          <text :style="{ fontSize: 16, color: '#fff' }">Embedded Content</text>
+          <text :style="{ fontSize: '16px', color: '#fff' }">嵌入内容</text>
         </Button>
       </view>
 
-      <!-- Custom Z-Index -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Z-Index</text>
-      <view :style="{ marginBottom: 16 }">
+      <!-- Custom z-index -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">设置 z-index</text>
+      <view :style="{ marginBottom: '16px' }">
         <Button type="primary" @tap="showZIndex = true">
-          <text :style="{ fontSize: 16, color: '#fff' }">Custom Z-Index</text>
+          <text :style="{ fontSize: '16px', color: '#fff' }">设置 z-index</text>
         </Button>
       </view>
     </view>
@@ -53,16 +53,16 @@ const showZIndex = ref(false);
       >
         <view
           :style="{
-            width: 120,
-            height: 120,
+            width: '120px',
+            height: '120px',
             backgroundColor: '#fff',
-            borderRadius: 8,
+            borderRadius: '4px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }"
         >
-          <text :style="{ fontSize: 14, color: '#323233' }">Content</text>
+          <text :style="{ fontSize: '14px', color: '#323233' }">内容</text>
         </view>
       </view>
     </Overlay>

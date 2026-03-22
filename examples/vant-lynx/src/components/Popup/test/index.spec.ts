@@ -86,14 +86,7 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // At least 2 views: overlay + popup
-    expect(views.length).toBeGreaterThanOrEqual(2);
-    // Overlay should have opacity style
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
   });
 
@@ -105,12 +98,7 @@ describe('Popup', () => {
         },
       }),
     );
-    const views = container.querySelectorAll('view');
-    // No overlay, only the popup view
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeFalsy();
   });
 
@@ -127,11 +115,7 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    const views = container.querySelectorAll('view');
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
     fireEvent.tap(overlayView!);
     await nextTick();
@@ -198,11 +182,7 @@ describe('Popup', () => {
     const { container } = render(Comp);
     await nextTick();
 
-    const views = container.querySelectorAll('view');
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
     fireEvent.tap(overlayView!);
     await nextTick();
@@ -388,11 +368,7 @@ describe('Popup', () => {
 
     const { container } = render(Comp);
     // Click overlay
-    const views = container.querySelectorAll('view');
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
 
     fireEvent.tap(overlayView!);
@@ -554,11 +530,7 @@ describe('Popup', () => {
     await nextTick();
 
     // Click overlay to close
-    const views = container.querySelectorAll('view');
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
 
     fireEvent.tap(overlayView!);
@@ -581,11 +553,7 @@ describe('Popup', () => {
     });
 
     const { container } = render(Comp);
-    const views = container.querySelectorAll('view');
-    const overlayView = Array.from(views).find((v) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('background-color') && style.includes('rgba');
-    });
+    const overlayView = container.querySelector('.van-overlay');
     expect(overlayView).toBeTruthy();
 
     fireEvent.tap(overlayView!);
