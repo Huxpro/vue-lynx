@@ -14,6 +14,30 @@
   display: flex;
   flex-direction: column;
 
+  &__title {
+    .van-cell__right-icon {
+      transition: transform var(--van-collapse-item-duration);
+    }
+
+    &--expanded {
+      .van-cell__right-icon {
+        transform: rotate(-90deg);
+      }
+    }
+
+    &--disabled {
+      color: var(--van-collapse-item-title-disabled-color);
+
+      .van-cell__right-icon {
+        color: var(--van-collapse-item-title-disabled-color);
+      }
+    }
+
+    &--borderless {
+      border-bottom: none;
+    }
+  }
+
   &__wrapper {
     overflow: hidden;
     transition: height var(--van-collapse-item-duration) ease-in-out;
