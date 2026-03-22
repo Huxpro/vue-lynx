@@ -1,264 +1,171 @@
 <!--
-  Vant Feature Parity Report:
-  Source: https://github.com/youzan/vant/blob/main/packages/vant/src/search/Search.tsx
-
-  Props (14/14 supported):
-    - modelValue: string               [YES] v-model for input value
-    - label: string                     [YES] left label text
-    - shape: 'square' | 'round'        [YES] search box shape
-    - background: string               [YES] outer background color
-    - maxlength: number | string        [YES] input maxlength
-    - placeholder: string              [YES] input placeholder
-    - clearable: boolean               [YES] show clear button (default true)
-    - autofocus: boolean               [YES] auto focus input
-    - showAction: boolean              [YES] show right action button
-    - actionText: string               [YES] action button text
-    - leftIcon: string                 [YES] left icon inside search box (default 'search')
-    - rightIcon: string                [YES] right icon inside search box
-    - disabled: boolean                [YES] disable input
-    - readonly: boolean                [YES] readonly input
-
-  Events (11/11 supported):
-    - update:modelValue                [YES] v-model update
-    - search                           [YES] enter/confirm pressed
-    - focus                            [YES] input focused
-    - blur                             [YES] input blurred
-    - clear                            [YES] clear button tapped
-    - cancel                           [YES] action button tapped (default behavior)
-    - click-input                      [YES] input area tapped
-    - click-left-icon                  [YES] left icon tapped
-    - click-right-icon                 [YES] right icon tapped
-
-  Slots (5/5 supported):
-    - left                             [YES] content before search box
-    - action                           [YES] custom action button content
-    - label                            [YES] custom label content
-    - left-icon                        [YES] custom left icon
-    - right-icon                       [YES] custom right icon
-
-  Icon Integration: Uses Icon component from ../Icon/index.vue
-  Lynx Adaptations:
-    - Uses view/text/input elements with inline styles
-    - display: 'flex' set explicitly
-    - No CSS class-based styling
-    - clearIcon uses Icon component
-    - id/name props not applicable in Lynx
+  Lynx Limitations:
+  - id/for: Lynx has no HTML label-for binding; id prop accepted for API compat
+  - autocomplete: Not applicable in Lynx native input
+  - type="search": Lynx input has no search type; uses text type
+  - ::-webkit-search-* pseudo-elements: Not applicable in Lynx
+  - cursor/user-select: Not applicable in Lynx
+  - :active pseudo-class: Lynx has no :active; action tap feedback not available
+  - form submission: Lynx has no <form> element; enter key emits search event
 -->
 <script setup lang="ts">
-import { computed, useSlots } from 'vue-lynx';
-import Icon from '../Icon/index.vue';
+import { computed, ref, useSlots } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Field from '../Field/index.vue';
+import type { SearchShape } from './types';
+import type { FieldTextAlign } from '../Field/types';
+import './index.less';
 
 export interface SearchProps {
   modelValue?: string;
   label?: string;
-  shape?: 'square' | 'round';
-  background?: string;
-  maxlength?: number | string;
-  placeholder?: string;
-  clearable?: boolean;
-  autofocus?: boolean;
-  showAction?: boolean;
-  actionText?: string;
+  shape?: SearchShape;
   leftIcon?: string;
+  clearable?: boolean;
+  actionText?: string;
+  background?: string;
+  showAction?: boolean;
+  // Field shared props passed through
+  id?: string;
+  name?: string;
+  disabled?: boolean | null;
+  readonly?: boolean | null;
+  placeholder?: string;
+  inputAlign?: FieldTextAlign;
+  errorMessage?: string;
+  maxlength?: number | string;
+  autofocus?: boolean;
+  clearIcon?: string;
   rightIcon?: string;
-  disabled?: boolean;
-  readonly?: boolean;
+  autocomplete?: string;
 }
 
 const props = withDefaults(defineProps<SearchProps>(), {
   modelValue: '',
   shape: 'square',
-  background: '#f2f3f5',
-  clearable: true,
-  autofocus: false,
-  showAction: false,
-  actionText: 'Cancel',
   leftIcon: 'search',
-  disabled: false,
-  readonly: false,
+  clearable: true,
+  showAction: false,
+  disabled: null,
+  readonly: null,
 });
 
 const emit = defineEmits<{
   'update:modelValue': [value: string];
   search: [value: string];
-  focus: [event: any];
-  blur: [event: any];
-  clear: [];
   cancel: [];
-  'click-input': [event: any];
-  'click-left-icon': [event: any];
-  'click-right-icon': [event: any];
+  blur: [event: any];
+  focus: [event: any];
+  clear: [event: any];
+  clickInput: [event: any];
+  clickLeftIcon: [event: any];
+  clickRightIcon: [event: any];
 }>();
 
 const slots = useSlots();
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  backgroundColor: props.background,
-  paddingTop: 8,
-  paddingBottom: 8,
-  paddingLeft: 12,
-  paddingRight: 12,
-}));
+const [, bem] = createNamespace('search');
 
-const contentStyle = computed(() => ({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-}));
+const fieldRef = ref<InstanceType<typeof Field> | null>(null);
 
-const searchBoxStyle = computed(() => ({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  backgroundColor: '#fff',
-  borderRadius: props.shape === 'round' ? 18 : 4,
-  paddingLeft: 10,
-  paddingRight: 10,
-  height: 36,
-}));
-
-const inputStyle = computed(() => ({
-  flex: 1,
-  fontSize: 14,
-  color: props.disabled ? '#c8c9cc' : '#323233',
-  height: 36,
-  backgroundColor: 'transparent',
-}));
-
-const leftIconStyle = {
-  marginRight: 6,
-};
-
-const rightIconStyle = {
-  marginLeft: 6,
-};
-
-const clearIconWrapStyle = {
-  marginLeft: 4,
-  padding: 2,
-};
-
-const actionStyle = {
-  fontSize: 14,
-  color: '#323233',
-  marginLeft: 12,
-  paddingTop: 4,
-  paddingBottom: 4,
-};
-
-const labelStyle = {
-  fontSize: 14,
-  color: '#323233',
-  marginRight: 8,
-  paddingLeft: 4,
-};
-
-function onInput(event: any) {
-  const value = event?.detail?.value ?? event?.target?.value ?? '';
-  emit('update:modelValue', value);
-}
-
-function onFocus(event: any) {
-  emit('focus', event);
-}
-
-function onBlur(event: any) {
-  emit('blur', event);
-}
-
-function onClear() {
-  emit('update:modelValue', '');
-  emit('clear');
-}
-
-function onSearch() {
-  emit('search', props.modelValue);
-}
-
-function onCancel() {
+const onCancel = () => {
   if (!slots.action) {
     emit('update:modelValue', '');
     emit('cancel');
   }
-}
+};
 
-function onClickInput(event: any) {
-  emit('click-input', event);
-}
+const onSearch = () => {
+  emit('search', props.modelValue);
+};
 
-function onClickLeftIcon(event: any) {
-  emit('click-left-icon', event);
-}
+const onInput = (value: string) => {
+  emit('update:modelValue', value);
+};
 
-function onClickRightIcon(event: any) {
-  emit('click-right-icon', event);
-}
+const onBlur = (event: any) => emit('blur', event);
+const onFocus = (event: any) => emit('focus', event);
+const onClear = (event: any) => emit('clear', event);
+const onClickInput = (event: any) => emit('clickInput', event);
+const onClickLeftIcon = (event: any) => emit('clickLeftIcon', event);
+const onClickRightIcon = (event: any) => emit('clickRightIcon', event);
+
+const blur = () => fieldRef.value?.blur();
+const focus = () => fieldRef.value?.focus();
+
+defineExpose({ focus, blur });
+
+const rootClass = computed(() => {
+  return bem([{ 'show-action': props.showAction }]);
+});
+
+const contentClass = computed(() => {
+  return bem('content', [props.shape]);
+});
+
+const fieldClass = computed(() => {
+  return bem('field', [{ 'with-message': !!props.errorMessage }]);
+});
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Left slot (before search box) -->
+  <view
+    :class="rootClass"
+    :style="background ? { background } : undefined"
+  >
+    <!-- Left slot -->
     <slot name="left" />
 
-    <!-- Content area: label + search box -->
-    <view :style="contentStyle">
+    <!-- Content area -->
+    <view :class="contentClass">
       <!-- Label -->
-      <view v-if="$slots.label || label" :style="labelStyle" @tap="onClickInput">
+      <view v-if="$slots.label || label" :class="bem('label')">
         <slot name="label">
-          <text :style="{ fontSize: 14, color: '#323233' }">{{ label }}</text>
+          <text>{{ label }}</text>
         </slot>
       </view>
 
-      <!-- Search box -->
-      <view :style="searchBoxStyle" @tap="onClickInput">
-        <!-- Left icon -->
-        <view :style="leftIconStyle" @tap.stop="onClickLeftIcon">
-          <slot name="left-icon">
-            <Icon v-if="leftIcon" :name="leftIcon" size="16" color="#969799" />
-          </slot>
-        </view>
-
-        <!-- Input -->
-        <input
-          :value="modelValue"
-          :placeholder="placeholder"
-          :disabled="disabled || readonly"
-          :maxlength="maxlength ? Number(maxlength) : undefined"
-          :focus="autofocus"
-          :style="inputStyle"
-          @input="onInput"
-          @focus="onFocus"
-          @blur="onBlur"
-          @confirm="onSearch"
-        />
-
-        <!-- Clear button -->
-        <view
-          v-if="clearable && modelValue"
-          :style="clearIconWrapStyle"
-          @tap.stop="onClear"
-        >
-          <Icon name="clear" size="16" color="#c8c9cc" />
-        </view>
-
-        <!-- Right icon -->
-        <view v-if="$slots['right-icon'] || rightIcon" :style="rightIconStyle" @tap.stop="onClickRightIcon">
-          <slot name="right-icon">
-            <Icon v-if="rightIcon" :name="rightIcon" size="16" color="#969799" />
-          </slot>
-        </view>
-      </view>
+      <!-- Field -->
+      <Field
+        ref="fieldRef"
+        type="search"
+        :class="fieldClass"
+        :border="false"
+        :model-value="modelValue"
+        :left-icon="leftIcon"
+        :right-icon="rightIcon"
+        :clearable="clearable"
+        :clear-icon="clearIcon"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        :readonly="readonly"
+        :maxlength="maxlength"
+        :autofocus="autofocus"
+        :input-align="inputAlign"
+        :error-message="errorMessage"
+        label-align="left"
+        @update:model-value="onInput"
+        @blur="onBlur"
+        @focus="onFocus"
+        @clear="onClear"
+        @click-input="onClickInput"
+        @click-left-icon="onClickLeftIcon"
+        @click-right-icon="onClickRightIcon"
+        @confirm="onSearch"
+      >
+        <template v-if="$slots['left-icon']" #left-icon>
+          <slot name="left-icon" />
+        </template>
+        <template v-if="$slots['right-icon']" #right-icon>
+          <slot name="right-icon" />
+        </template>
+      </Field>
     </view>
 
     <!-- Action button -->
-    <view v-if="showAction" @tap="onCancel">
+    <view v-if="showAction" :class="bem('action')" @tap="onCancel">
       <slot name="action">
-        <text :style="actionStyle">{{ actionText }}</text>
+        <text>{{ actionText || '取消' }}</text>
       </slot>
     </view>
   </view>
