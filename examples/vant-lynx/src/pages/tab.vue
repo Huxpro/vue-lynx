@@ -15,6 +15,8 @@ const active8 = ref(0);
 const active9 = ref(0);
 const active10 = ref(0);
 const active11 = ref(0);
+const active12 = ref(0);
+const active13 = ref(0);
 
 const clickedTab = ref('');
 
@@ -73,7 +75,7 @@ const beforeChange = (name: number) => {
         </Tabs>
       </view>
 
-      <!-- 3. Scrollable Tabs -->
+      <!-- 3. Swipe Tabs (Scrollable) -->
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">标签栏滚动</text>
       <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
         <Tabs v-model:active="active3">
@@ -149,10 +151,23 @@ const beforeChange = (name: number) => {
         </view>
       </view>
 
-      <!-- 7. Custom Color -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义颜色</text>
+      <!-- 7. Sticky (Lynx limitation: not functional) -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">粘性布局</text>
       <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
-        <Tabs v-model:active="active7" color="#ee0a24" titleActiveColor="#ee0a24">
+        <Tabs v-model:active="active7" sticky>
+          <Tab v-for="index in 4" :key="index" :name="index - 1" :title="'标签 ' + index">
+            <view :style="{ padding: '16px' }">
+              <text :style="{ fontSize: '14px', color: '#323233' }">内容 {{ index }}</text>
+              <text :style="{ fontSize: '12px', color: '#969799' }">(sticky 在 Lynx 中暂不生效)</text>
+            </view>
+          </Tab>
+        </Tabs>
+      </view>
+
+      <!-- 8. Shrink -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">收缩布局</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabs v-model:active="active8" shrink>
           <Tab :name="0" title="标签 1">
             <view :style="{ padding: '16px' }">
               <text :style="{ fontSize: '14px', color: '#323233' }">内容 1</text>
@@ -171,29 +186,7 @@ const beforeChange = (name: number) => {
         </Tabs>
       </view>
 
-      <!-- 8. Dot & Badge -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">标签提示</text>
-      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
-        <Tabs v-model:active="active8">
-          <Tab :name="0" title="标签 1" dot>
-            <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 1 (带红点)</text>
-            </view>
-          </Tab>
-          <Tab :name="1" title="标签 2" :badge="5">
-            <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 2 (徽标: 5)</text>
-            </view>
-          </Tab>
-          <Tab :name="2" title="标签 3" badge="99+">
-            <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 3 (徽标: 99+)</text>
-            </view>
-          </Tab>
-        </Tabs>
-      </view>
-
-      <!-- 9. Custom Tab Title -->
+      <!-- 9. Custom Tab (title slot — Lynx limitation: not functional) -->
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义标签</text>
       <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
         <Tabs v-model:active="active9">
@@ -210,32 +203,49 @@ const beforeChange = (name: number) => {
         </Tabs>
       </view>
 
-      <!-- 10. Shrink -->
-      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">收缩布局</text>
+      <!-- 10. Switch Animation (Lynx limitation: not functional) -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">切换动画</text>
       <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
-        <Tabs v-model:active="active10" shrink>
-          <Tab :name="0" title="标签 1">
+        <Tabs v-model:active="active10" animated>
+          <Tab v-for="index in 4" :key="index" :name="index - 1" :title="'标签 ' + index">
             <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 1</text>
-            </view>
-          </Tab>
-          <Tab :name="1" title="标签 2">
-            <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 2</text>
-            </view>
-          </Tab>
-          <Tab :name="2" title="标签 3">
-            <view :style="{ padding: '16px' }">
-              <text :style="{ fontSize: '14px', color: '#323233' }">内容 3</text>
+              <text :style="{ fontSize: '14px', color: '#323233' }">内容 {{ index }}</text>
+              <text :style="{ fontSize: '12px', color: '#969799' }">(animated 在 Lynx 中暂不生效)</text>
             </view>
           </Tab>
         </Tabs>
       </view>
 
-      <!-- 11. Before Change (async switching) -->
+      <!-- 11. Swipeable (Lynx limitation: not functional) -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">滑动切换</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabs v-model:active="active11" swipeable>
+          <Tab v-for="index in 4" :key="index" :name="index - 1" :title="'标签 ' + index">
+            <view :style="{ padding: '16px' }">
+              <text :style="{ fontSize: '14px', color: '#323233' }">内容 {{ index }}</text>
+              <text :style="{ fontSize: '12px', color: '#969799' }">(swipeable 在 Lynx 中暂不生效)</text>
+            </view>
+          </Tab>
+        </Tabs>
+      </view>
+
+      <!-- 12. Scrollspy (Lynx limitation: not functional) -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">滚动导航</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
+        <Tabs v-model:active="active12" scrollspy>
+          <Tab v-for="index in 4" :key="index" :name="index - 1" :title="'标签 ' + index">
+            <view :style="{ padding: '16px' }">
+              <text :style="{ fontSize: '14px', color: '#323233' }">内容 {{ index }}</text>
+              <text :style="{ fontSize: '12px', color: '#969799' }">(scrollspy 在 Lynx 中暂不生效)</text>
+            </view>
+          </Tab>
+        </Tabs>
+      </view>
+
+      <!-- 13. Before Change (async switching) -->
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">异步切换</text>
       <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', overflow: 'hidden' }">
-        <Tabs v-model:active="active11" :before-change="beforeChange">
+        <Tabs v-model:active="active13" :before-change="beforeChange">
           <Tab :name="0" title="标签 1">
             <view :style="{ padding: '16px' }">
               <text :style="{ fontSize: '14px', color: '#323233' }">内容 1</text>

@@ -807,4 +807,210 @@ describe('Tabs', () => {
     const wrap = container.querySelector('.van-tabs__wrap');
     expect(wrap).toBeTruthy();
   });
+
+  it('should not render empty tab', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1', name: 0 }),
+              h(Tab, { title: 'Tab 2', name: 1 }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(2);
+    // Panels should still be rendered even with no content
+    const panels = container.querySelectorAll('.van-tab__panel');
+    expect(panels.length).toBe(2);
+  });
+
+  it('should change title style when using title-style prop', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1', name: 0, titleStyle: { fontWeight: 'bold' } }, { default: () => 'Text' }),
+              h(Tab, { title: 'Tab 2', name: 1, titleStyle: 'color: red;' }, { default: () => 'Text' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(2);
+    const style0 = headers[0].getAttribute('style') || '';
+    expect(style0).toContain('font-weight');
+  });
+
+  it('should render correctly after inserting a tab', async () => {
+    const showTab = ref(false);
+    const { container } = render(
+      defineComponent({
+        setup() {
+          return { showTab };
+        },
+        render() {
+          const tabs = [
+            h(Tab, { title: 'Tab 1', name: 0 }, { default: () => 'Content 1' }),
+          ];
+          if (this.showTab) {
+            tabs.push(h(Tab, { title: 'Tab 2', name: 1 }, { default: () => 'Content 2' }));
+          }
+          return h(Tabs, { active: 0 }, { default: () => tabs });
+        },
+      }),
+    );
+    await later();
+    let headers = findTabHeaders(container);
+    expect(headers.length).toBe(1);
+
+    showTab.value = true;
+    await later();
+    headers = findTabHeaders(container);
+    expect(headers.length).toBe(2);
+  });
+
+  it('should render correctly after inserting a tab with name', async () => {
+    const onChange = vi.fn();
+    const showTab = ref(false);
+    const { container } = render(
+      defineComponent({
+        setup() {
+          return { showTab };
+        },
+        render() {
+          const tabs = [
+            h(Tab, { title: 'Tab A', name: 'a' }, { default: () => 'A' }),
+          ];
+          if (this.showTab) {
+            tabs.push(h(Tab, { title: 'Tab B', name: 'b' }, { default: () => 'B' }));
+          }
+          return h(Tabs, { active: 'a', onChange }, { default: () => tabs });
+        },
+      }),
+    );
+    await later();
+
+    // Inserting a tab should not trigger change event
+    showTab.value = true;
+    await later();
+    expect(onChange).not.toHaveBeenCalled();
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(2);
+  });
+
+  it('should render Tab inside a component correctly', async () => {
+    const Wrapper = defineComponent({
+      render() {
+        return h(Tab, { title: 'Wrapped', name: 0 }, { default: () => 'Wrapped Content' });
+      },
+    });
+
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [h(Wrapper)],
+          });
+        },
+      }),
+    );
+    await later();
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(1);
+  });
+
+  it('should apply titleClass to tab title', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1', name: 0, titleClass: 'custom-title' }, { default: () => 'Text' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const headers = findTabHeaders(container);
+    expect(headers.length).toBe(1);
+    expect(headers[0].getAttribute('class')).toContain('custom-title');
+  });
+
+  it('should use scroll-view for scrollable tabs', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0, swipeThreshold: 3 }, {
+            default: () => Array.from({ length: 6 }, (_, i) =>
+              h(Tab, { title: `Tab ${i}`, name: i }, { default: () => `Content ${i}` }),
+            ),
+          });
+        },
+      }),
+    );
+    await later();
+    // When scrollable, nav should be a scroll-view
+    const nav = container.querySelector('.van-tabs__nav--complete');
+    expect(nav).toBeTruthy();
+  });
+
+  it('should default border to false', async () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Tabs, { active: 0 }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1', name: 0 }, { default: () => 'Text' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const wrap = container.querySelector('.van-tabs__wrap');
+    expect(wrap).toBeTruthy();
+    // border defaults to false — no hairline class
+    expect(wrap!.getAttribute('class')).not.toContain('van-hairline');
+  });
+
+  it('should re-render when line-width or line-height changed', async () => {
+    const lineWidth = ref(40);
+    const lineHeight = ref(3);
+    const { container } = render(
+      defineComponent({
+        setup() {
+          return { lineWidth, lineHeight };
+        },
+        render() {
+          return h(Tabs, { active: 0, lineWidth: this.lineWidth, lineHeight: this.lineHeight }, {
+            default: () => [
+              h(Tab, { title: 'Tab 1', name: 0 }, { default: () => '1' }),
+            ],
+          });
+        },
+      }),
+    );
+    await later();
+    const lineView = container.querySelector('.van-tabs__line');
+    expect(lineView).toBeTruthy();
+    let style = lineView!.getAttribute('style') || '';
+    expect(style).toContain('width: 40px');
+    expect(style).toContain('height: 3px');
+
+    lineWidth.value = 20;
+    lineHeight.value = 5;
+    await later();
+    style = lineView!.getAttribute('style') || '';
+    expect(style).toContain('width: 20px');
+    expect(style).toContain('height: 5px');
+  });
 });

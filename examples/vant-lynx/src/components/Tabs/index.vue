@@ -1,15 +1,12 @@
 <!--
   Lynx Limitations:
-  - sticky: Lynx has no scroll event interception on parent containers
-  - scrollspy: Lynx has no scroll position tracking for content panels
-  - offsetTop: Related to sticky, not functional in Lynx
-  - animated/swipeable: Lynx lacks CSS transition on translateX for content swipe
-  - scrollIntoView: Cannot measure DOM widths for scroll-to-center behavior
-  - resize: Cannot measure DOM for line repositioning (line uses percentage positioning)
+  - sticky/offsetTop: Lynx has no Sticky component; scroll event interception not available
+  - scrollspy: No scroll position tracking for content panels
+  - animated/swipeable: No Swipe sub-component for content slide transitions
+  - scrollIntoView: Cannot measure DOM widths for scroll-to-center on tab change
+  - resize: Line uses percentage positioning (no DOM measurement)
   - role/tabindex/aria-* attributes: Not applicable in Lynx
-  - Sticky component wrapping: Not available in Lynx
-  - nav scrollbar hiding: Lynx has no ::-webkit-scrollbar
-  - :last-child: Lynx may not support pseudo-selectors, card border uses inline style
+  - title slot: Tab title slot content cannot be rendered in nav (titles are text-only)
 -->
 <script setup lang="ts">
 import { computed, provide, ref, toRef, watch, nextTick } from 'vue-lynx';
@@ -55,7 +52,7 @@ const props = withDefaults(defineProps<TabsProps>(), {
   active: 0,
   type: 'line',
   duration: 0.3,
-  border: true,
+  border: false,
   ellipsis: true,
   sticky: false,
   swipeable: false,
@@ -297,20 +294,28 @@ const wrapClass = computed(() => {
 });
 
 const navClass = computed(() =>
-  bem('nav', [props.type, { shrink: props.shrink }])
+  bem('nav', [props.type, { shrink: props.shrink, complete: scrollable.value }])
 );
 
 function tabTitleClass(tab: TabChild, index: number) {
   const isActive = index === currentIndex.value;
   const isCard = props.type === 'card';
 
-  return tabBem([
-    { active: isActive },
-    { disabled: tab.disabled },
-    { shrink: props.shrink },
-    { grow: scrollable.value && !props.shrink },
-    { card: isCard },
-  ]);
+  const classes = [
+    tabBem([
+      { active: isActive },
+      { disabled: tab.disabled },
+      { shrink: props.shrink },
+      { grow: scrollable.value && !props.shrink },
+      { card: isCard },
+    ]),
+  ];
+
+  if (tab.titleClass) {
+    classes.push(String(tab.titleClass));
+  }
+
+  return classes.join(' ');
 }
 
 function tabTextClass() {
@@ -415,8 +420,58 @@ function onTabTap(tab: TabChild, event: Event) {
     <!-- Tab Header -->
     <view v-if="showHeader" :class="wrapClass">
       <slot name="nav-left" />
-      <view :class="navClass" :style="navStyle">
-        <!-- Tab headers -->
+      <!-- Scrollable nav uses scroll-view (Lynx doesn't support overflow:scroll) -->
+      <scroll-view v-if="scrollable" scroll-orientation="horizontal" :class="navClass" :style="navStyle">
+        <view :style="{ display: 'flex', flexDirection: 'row' }">
+          <!-- Tab headers -->
+          <view
+            v-for="(tab, index) in tabs"
+            :key="tab.name"
+            :class="tabTitleClass(tab, index)"
+            :style="tabTitleStyle(tab, index)"
+            @tap="onTabTap(tab, $event)"
+          >
+            <view :style="{ display: 'flex', flexDirection: 'column', alignItems: 'center' }">
+              <view v-if="tab.dot || shouldShowBadge(tab)"
+                :style="{ position: 'relative', display: 'flex' }">
+                <text :class="tabTextClass()">{{ tab.title }}</text>
+                <view v-if="tab.dot" class="van-badge--dot" :style="{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-8px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  backgroundColor: '#ee0a24',
+                }" />
+                <view v-else-if="shouldShowBadge(tab)" class="van-badge--fixed" :style="{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-16px',
+                  backgroundColor: '#ee0a24',
+                  borderRadius: '8px',
+                  minWidth: '16px',
+                  height: '16px',
+                  paddingLeft: '3px',
+                  paddingRight: '3px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }">
+                  <text :style="{ fontSize: '10px', color: '#fff', fontWeight: 'bold', lineHeight: '14px' }">
+                    {{ tab.badge }}
+                  </text>
+                </view>
+              </view>
+              <text v-else :class="tabTextClass()">{{ tab.title }}</text>
+            </view>
+          </view>
+        </view>
+        <!-- Line indicator (line type only) — inside scroll container so it scrolls with tabs -->
+        <view v-if="type === 'line'" class="van-tabs__line" :style="lineStyle" />
+      </scroll-view>
+      <!-- Non-scrollable nav uses plain view -->
+      <view v-else :class="navClass" :style="navStyle">
         <view
           v-for="(tab, index) in tabs"
           :key="tab.name"
@@ -425,11 +480,9 @@ function onTabTap(tab: TabChild, event: Event) {
           @tap="onTabTap(tab, $event)"
         >
           <view :style="{ display: 'flex', flexDirection: 'column', alignItems: 'center' }">
-            <!-- Badge support for dot/badge -->
             <view v-if="tab.dot || shouldShowBadge(tab)"
               :style="{ position: 'relative', display: 'flex' }">
               <text :class="tabTextClass()">{{ tab.title }}</text>
-              <!-- Dot indicator -->
               <view v-if="tab.dot" class="van-badge--dot" :style="{
                 position: 'absolute',
                 top: '-4px',
@@ -439,7 +492,6 @@ function onTabTap(tab: TabChild, event: Event) {
                 borderRadius: '4px',
                 backgroundColor: '#ee0a24',
               }" />
-              <!-- Badge number -->
               <view v-else-if="shouldShowBadge(tab)" class="van-badge--fixed" :style="{
                 position: 'absolute',
                 top: '-8px',
@@ -459,11 +511,9 @@ function onTabTap(tab: TabChild, event: Event) {
                 </text>
               </view>
             </view>
-            <!-- No badge -->
             <text v-else :class="tabTextClass()">{{ tab.title }}</text>
           </view>
         </view>
-
         <!-- Line indicator (line type only) -->
         <view v-if="type === 'line'" class="van-tabs__line" :style="lineStyle" />
       </view>
