@@ -3,175 +3,182 @@ import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Radio from '../components/Radio/index.vue';
 import RadioGroup from '../components/RadioGroup/index.vue';
-const basicValue = ref('1');
-const horizontalValue = ref('1');
-const disabledValue = ref('1');
-const shapeSquareValue = ref('1');
-const shapeDotValue = ref('1');
-const labelLeftValue = ref('1');
-const labelDisabledValue = ref('1');
-const customColorValue = ref('1');
-const customSizeValue = ref('1');
-const customIconValue = ref('1');
-const groupOverrideValue = ref('1');
+import Cell from '../components/Cell/index.vue';
+import CellGroup from '../components/CellGroup/index.vue';
+
+const radio1 = ref('1');
+const radio2 = ref('2');
+const radioHorizontal = ref('1');
+const radioSquare = ref('1');
+const radioDot = ref('1');
+const radio3 = ref('1');
+const radioIconSize = ref('1');
+const radio4 = ref('1');
+const radioLeftLabel = ref('1');
+const radioLabel = ref('1');
+const radio5 = ref('1');
 </script>
 
 <template>
-  <DemoPage title="Radio">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="basicValue">
+  <DemoPage title="Radio 单选框">
+    <view :style="{ padding: '16px' }">
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">基础用法</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radio1">
           <Radio name="1">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
+          </Radio>
+          <view :style="{ height: '8px' }" />
+          <Radio name="2">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
+          </Radio>
+        </RadioGroup>
+      </view>
+
+      <!-- 水平排列 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">水平排列</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radioHorizontal" direction="horizontal">
+          <Radio name="1">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
           <Radio name="2">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
-        <text :style="{ fontSize: 12, color: '#969799', marginTop: 8 }">Selected: {{ basicValue }}</text>
       </view>
 
-      <!-- Horizontal Direction -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Horizontal Direction</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="horizontalValue" direction="horizontal">
+      <!-- 禁用状态 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">禁用状态</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radio2" disabled>
           <Radio name="1">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
+          <view :style="{ height: '8px' }" />
           <Radio name="2">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
-          </Radio>
-          <Radio name="3">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 3</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
       </view>
 
-      <!-- Disabled -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disabled</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="disabledValue" disabled>
+      <!-- 自定义形状 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义形状</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radioSquare" shape="square">
           <Radio name="1">
-            <text :style="{ fontSize: 14, color: '#969799' }">Radio 1</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
+          <view :style="{ height: '8px' }" />
           <Radio name="2">
-            <text :style="{ fontSize: 14, color: '#969799' }">Radio 2</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
+          </Radio>
+        </RadioGroup>
+        <view :style="{ height: '20px' }" />
+        <RadioGroup v-model="radioDot" shape="dot">
+          <Radio name="1">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
+          </Radio>
+          <view :style="{ height: '8px' }" />
+          <Radio name="2">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
       </view>
 
-      <!-- Square Shape -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Square Shape</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="shapeSquareValue">
-          <Radio name="1" shape="square">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
-          </Radio>
-          <Radio name="2" shape="square">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
-          </Radio>
-        </RadioGroup>
-      </view>
-
-      <!-- Dot Shape -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Dot Shape</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="shapeDotValue">
-          <Radio name="1" shape="dot">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
-          </Radio>
-          <Radio name="2" shape="dot">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
-          </Radio>
-        </RadioGroup>
-      </view>
-
-      <!-- Label Position Left -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Label Position Left</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="labelLeftValue">
-          <Radio name="1" label-position="left">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
-          </Radio>
-          <Radio name="2" label-position="left">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
-          </Radio>
-        </RadioGroup>
-      </view>
-
-      <!-- Label Disabled -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Label Disabled (only icon is clickable)</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="labelDisabledValue">
-          <Radio name="1" label-disabled>
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
-          </Radio>
-          <Radio name="2" label-disabled>
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
-          </Radio>
-        </RadioGroup>
-      </view>
-
-      <!-- Custom Color -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Color</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="customColorValue">
+      <!-- 自定义颜色 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义颜色</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radio3">
           <Radio name="1" checked-color="#ee0a24">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
+          <view :style="{ height: '8px' }" />
           <Radio name="2" checked-color="#ee0a24">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
       </view>
 
-      <!-- Custom Icon Size -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Icon Size</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="customSizeValue">
-          <Radio name="1" :icon-size="28">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+      <!-- 自定义大小 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义大小</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radioIconSize">
+          <Radio name="1" icon-size="24px">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
-          <Radio name="2" :icon-size="28">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
+          <view :style="{ height: '8px' }" />
+          <Radio name="2" icon-size="24px">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
       </view>
 
-      <!-- Custom Icon Slot -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Icon Slot</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="customIconValue">
+      <!-- 自定义图标 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义图标</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radio4">
           <Radio name="1">
             <template #icon="{ checked }">
-              <text :style="{ fontSize: 20, color: checked ? '#1989fa' : '#c8c9cc' }">{{ checked ? '◉' : '○' }}</text>
+              <text :style="{ fontSize: '20px', color: checked ? '#1989fa' : '#c8c9cc' }">{{ checked ? '◉' : '○' }}</text>
             </template>
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
+          <view :style="{ height: '8px' }" />
           <Radio name="2">
             <template #icon="{ checked }">
-              <text :style="{ fontSize: 20, color: checked ? '#1989fa' : '#c8c9cc' }">{{ checked ? '◉' : '○' }}</text>
+              <text :style="{ fontSize: '20px', color: checked ? '#1989fa' : '#c8c9cc' }">{{ checked ? '◉' : '○' }}</text>
             </template>
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
         </RadioGroup>
       </view>
 
-      <!-- Group-Level Overrides -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Group-Level Shape, Size, Color</text>
-      <view :style="{ backgroundColor: '#fff', borderRadius: 8, padding: 16 }">
-        <RadioGroup v-model="groupOverrideValue" shape="dot" :icon-size="24" checked-color="#07c160">
-          <Radio name="1">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 1</text>
+      <!-- 左侧文本 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">左侧文本</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radioLeftLabel">
+          <Radio name="1" label-position="left">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
-          <Radio name="2">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 2</text>
+          <view :style="{ height: '8px' }" />
+          <Radio name="2" label-position="left">
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
           </Radio>
-          <Radio name="3">
-            <text :style="{ fontSize: 14, color: '#323233' }">Radio 3</text>
+        </RadioGroup>
+      </view>
+
+      <!-- 禁用文本点击 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">禁用文本点击</text>
+      <view :style="{ marginBottom: '16px', backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
+        <RadioGroup v-model="radioLabel">
+          <Radio name="1" label-disabled>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 1</text>
           </Radio>
+          <view :style="{ height: '8px' }" />
+          <Radio name="2" label-disabled>
+            <text :style="{ fontSize: '14px', color: '#323233' }">单选框 2</text>
+          </Radio>
+        </RadioGroup>
+      </view>
+
+      <!-- 搭配单元格组件使用 -->
+      <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">搭配单元格组件使用</text>
+      <view :style="{ marginBottom: '16px' }">
+        <RadioGroup v-model="radio5">
+          <CellGroup inset>
+            <Cell clickable title="单选框 1" @click="radio5 = '1'">
+              <template #right-icon>
+                <Radio name="1" />
+              </template>
+            </Cell>
+            <Cell clickable title="单选框 2" @click="radio5 = '2'">
+              <template #right-icon>
+                <Radio name="2" />
+              </template>
+            </Cell>
+          </CellGroup>
         </RadioGroup>
       </view>
     </view>

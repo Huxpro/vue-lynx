@@ -1,190 +1,198 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/7 supported (name, shape, disabled, labelDisabled, labelPosition, iconSize, checkedColor)
-  - Events: 2/2 supported (update:modelValue, click)
-  - Slots: 2/2 supported (default, icon)
-  - Gaps: shape 'dot' is implemented via custom rendering (colored inner dot) rather than Vant Icon;
-    no standalone modelValue support (Radio always requires RadioGroup or manual v-model binding)
+  Lynx Limitations:
+  - role/aria-checked/tabindex: Lynx has no ARIA or keyboard focus
+  - cursor: Lynx is touch-only, no cursor styling
+  - ::before pseudo-element: icon uses <text> with font-family instead
+  - overflow: hidden: Lynx default is visible, not critical for radio
 -->
 <script setup lang="ts">
-import { computed, inject, type Ref } from 'vue-lynx';
+import { computed, inject } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import { iconCharMap } from '../Icon/icon-map';
+import type { RadioShape, RadioLabelPosition, RadioGroupProvide } from './types';
+import './index.less';
 
-export type RadioShape = 'dot' | 'square' | 'round';
+export type { RadioShape, RadioLabelPosition, RadioThemeVars } from './types';
 
 export interface RadioProps {
-  name?: string | number;
+  name?: unknown;
   shape?: RadioShape;
   disabled?: boolean;
   labelDisabled?: boolean;
-  labelPosition?: 'left' | 'right';
+  labelPosition?: RadioLabelPosition;
   iconSize?: number | string;
+  modelValue?: unknown;
   checkedColor?: string;
 }
 
+const [, bem] = createNamespace('radio');
+
 const props = withDefaults(defineProps<RadioProps>(), {
+  shape: undefined,
   disabled: false,
   labelDisabled: false,
-  labelPosition: 'right',
+  labelPosition: undefined,
+  iconSize: undefined,
+  modelValue: undefined,
+  checkedColor: undefined,
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | number | undefined];
+  'update:modelValue': [value: unknown];
   click: [event: any];
 }>();
 
 // Inject from RadioGroup (if present)
-const groupProps = inject<{
-  modelValue: Ref<any>;
-  disabled: Ref<boolean>;
-  direction: Ref<string>;
-  iconSize: Ref<number | string | undefined>;
-  checkedColor: Ref<string | undefined>;
-  shape: Ref<RadioShape | undefined>;
-  updateValue: (name: any) => void;
-} | null>('radioGroup', null);
+const group = inject<RadioGroupProvide | null>('vanRadioGroup', null);
 
-// Resolved props: local prop wins, then group prop, then default
-const resolvedShape = computed<RadioShape>(() => {
-  return props.shape || groupProps?.shape.value || 'round';
-});
-
-const resolvedIconSize = computed(() => {
-  const raw = props.iconSize ?? groupProps?.iconSize.value ?? 20;
-  if (typeof raw === 'string') return parseInt(raw, 10) || 20;
-  return raw;
-});
-
-const resolvedCheckedColor = computed(() => {
-  return props.checkedColor || groupProps?.checkedColor.value || '#1989fa';
-});
+const getParentProp = <T extends keyof RadioGroupProvide['props']>(name: T) => {
+  if (group) return group.props[name];
+};
 
 const isChecked = computed(() => {
-  if (groupProps) {
-    return groupProps.modelValue.value === props.name;
-  }
-  return false;
+  const value = group ? group.props.modelValue : props.modelValue;
+  return value === props.name;
 });
 
 const isDisabled = computed(() => {
-  if (groupProps?.disabled.value) return true;
-  return props.disabled;
+  return getParentProp('disabled') || props.disabled;
 });
 
-// --- Styles ---
+const direction = computed(() => getParentProp('direction'));
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: props.labelPosition === 'left' ? 'row-reverse' as const : 'row' as const,
-  alignItems: 'center',
-  opacity: isDisabled.value ? 0.5 : 1,
-}));
+const resolvedShape = computed<RadioShape>(() => {
+  return props.shape || (getParentProp('shape') as RadioShape | undefined) || 'round';
+});
 
-const iconWrapperStyle = computed(() => {
-  const size = resolvedIconSize.value;
-  const shape = resolvedShape.value;
-  const checked = isChecked.value;
-  const color = resolvedCheckedColor.value;
-
-  if (shape === 'dot') {
-    // Dot shape: a circle border, with a colored inner dot when checked
+// Inline style only for dynamic checkedColor prop (matching Vant's Checker)
+const iconColorStyle = computed(() => {
+  const checkedColor = props.checkedColor || getParentProp('checkedColor');
+  if (checkedColor && isChecked.value && !isDisabled.value) {
     return {
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-      borderWidth: 1,
-      borderStyle: 'solid' as const,
-      borderColor: checked && !isDisabled.value ? color : '#c8c9cc',
-      backgroundColor: '#fff',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderColor: checkedColor,
+      backgroundColor: checkedColor,
     };
   }
-
-  // Round or square shape: filled background when checked
-  return {
-    width: size,
-    height: size,
-    borderRadius: shape === 'round' ? size / 2 : 3,
-    borderWidth: 1,
-    borderStyle: 'solid' as const,
-    borderColor: checked ? color : '#c8c9cc',
-    backgroundColor: checked ? color : '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+  return undefined;
 });
 
-const checkmarkStyle = computed(() => {
-  const size = resolvedIconSize.value;
-  return {
-    fontSize: size * 0.7,
-    color: '#fff',
-    lineHeight: size,
-  };
+const iconSizeStyle = computed(() => {
+  const iconSize = props.iconSize || getParentProp('iconSize');
+  if (iconSize) {
+    if (resolvedShape.value === 'dot') {
+      return { width: addUnit(iconSize), height: addUnit(iconSize) };
+    }
+    return { fontSize: addUnit(iconSize) };
+  }
+  return undefined;
 });
 
-const dotInnerStyle = computed(() => {
-  const size = resolvedIconSize.value;
-  const color = resolvedCheckedColor.value;
-  return {
-    width: size * 0.5,
-    height: size * 0.5,
-    borderRadius: size * 0.25,
-    backgroundColor: color,
-  };
+// Dot shape border color style (for dot, checkedColor affects the outer border)
+const dotBorderStyle = computed(() => {
+  const checkedColor = props.checkedColor || getParentProp('checkedColor');
+  if (resolvedShape.value === 'dot' && checkedColor && isChecked.value && !isDisabled.value) {
+    return { borderColor: checkedColor };
+  }
+  return undefined;
 });
 
-const labelStyle = computed(() => ({
-  marginLeft: props.labelPosition === 'right' ? 8 : 0,
-  marginRight: props.labelPosition === 'left' ? 8 : 0,
-}));
+// Dot inner icon background style
+const dotIconStyle = computed(() => {
+  const checkedColor = props.checkedColor || getParentProp('checkedColor');
+  if (checkedColor && isChecked.value && !isDisabled.value) {
+    return { backgroundColor: checkedColor };
+  }
+  return undefined;
+});
 
-// --- Events ---
+const iconClass = computed(() =>
+  bem('icon', [
+    resolvedShape.value,
+    {
+      disabled: isDisabled.value,
+      checked: isChecked.value,
+    },
+  ]),
+);
+
+const labelClass = computed(() =>
+  bem('label', [
+    props.labelPosition,
+    { disabled: isDisabled.value },
+  ]),
+);
+
+const rootClass = computed(() =>
+  bem([
+    {
+      disabled: isDisabled.value,
+      'label-disabled': props.labelDisabled,
+    },
+    direction.value,
+  ]),
+);
 
 function toggle() {
-  if (groupProps) {
-    groupProps.updateValue(props.name);
+  if (group) {
+    group.updateValue(props.name);
   } else {
     emit('update:modelValue', props.name);
   }
 }
 
 function onIconTap(event: any) {
-  if (isDisabled.value) return;
-  toggle();
+  if (!isDisabled.value) {
+    toggle();
+  }
   emit('click', event);
 }
 
 function onLabelTap(event: any) {
-  if (isDisabled.value) return;
-  if (props.labelDisabled) {
-    // Only emit click, do not toggle
-    emit('click', event);
-    return;
+  if (!isDisabled.value && !props.labelDisabled) {
+    toggle();
   }
-  toggle();
   emit('click', event);
 }
+
+const iconChar = computed(() => iconCharMap['success'] || '\ue728');
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <!-- Icon area -->
-    <view :style="iconWrapperStyle" @tap="onIconTap">
+  <view :class="rootClass">
+    <view
+      v-if="labelPosition === 'left'"
+      :class="labelClass"
+      @tap="onLabelTap"
+    >
+      <slot :checked="isChecked" :disabled="isDisabled" />
+    </view>
+    <view
+      v-if="resolvedShape !== 'dot'"
+      :class="iconClass"
+      :style="iconSizeStyle"
+      @tap="onIconTap"
+    >
       <slot name="icon" :checked="isChecked" :disabled="isDisabled">
-        <!-- Default icon rendering based on shape -->
-        <template v-if="resolvedShape === 'dot'">
-          <view v-if="isChecked" :style="dotInnerStyle" />
-        </template>
-        <template v-else>
-          <text v-if="isChecked" :style="checkmarkStyle">&#10003;</text>
-        </template>
+        <view :class="['van-icon', 'van-icon-success']" :style="iconColorStyle">
+          <text class="van-icon__font">{{ iconChar }}</text>
+        </view>
       </slot>
     </view>
-    <!-- Label area -->
-    <view :style="labelStyle" @tap="onLabelTap">
+    <view
+      v-else
+      :class="iconClass"
+      :style="[iconSizeStyle, dotBorderStyle]"
+      @tap="onIconTap"
+    >
+      <slot name="icon" :checked="isChecked" :disabled="isDisabled">
+        <view :class="bem('icon', ['dot__icon'])" :style="dotIconStyle" />
+      </slot>
+    </view>
+    <view
+      v-if="labelPosition !== 'left'"
+      :class="labelClass"
+      @tap="onLabelTap"
+    >
       <slot :checked="isChecked" :disabled="isDisabled" />
     </view>
   </view>
