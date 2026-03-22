@@ -1,46 +1,67 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 6/12 supported (show, actions, title, description, cancelText, closeOnClickAction;
-    missing: closeable, closeIcon, round [default], safeAreaInsetBottom, closeOnClickOverlay, beforeClose)
-  - Events: 4/5 (update:show, select, cancel, close; missing: opened/closed)
-  - Slots: 3/5 (default [via actions], cancel, description; missing: action)
-  - Sub-components: Popup ✅, Loading ✅
-  - Gaps:
-    - No closeable/closeIcon
-    - No safeAreaInsetBottom
-    - No beforeClose interceptor
-    - No action subname support
+  Lynx Limitations:
+  - teleport: accepted for API compat but Lynx has no Teleport support
+  - closeOnPopstate: accepted for API compat but no browser history API in Lynx
+  - lockScroll: accepted for API compat but no document.body scroll in Lynx
+  - <button> tag: uses <view> instead (Lynx has no HTML tags)
+  - ::after hairline: uses border-bottom 0.5px instead
+  - :active pseudo-class: uses touchstart/touchend + --active BEM class
+  - cursor: not applicable in Lynx
+  - overflow-y: auto: uses scroll-view for scrollable content
+  - HAPTICS_FEEDBACK: not available in Lynx
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, nextTick } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
 import Popup from '../Popup/index.vue';
+import Icon from '../Icon/index.vue';
 import Loading from '../Loading/index.vue';
+import type { ActionSheetAction } from './types';
+import './index.less';
 
-export interface ActionSheetAction {
-  name: string;
-  color?: string;
-  disabled?: boolean;
-  loading?: boolean;
-  className?: string;
-}
+const [, bem] = createNamespace('action-sheet');
 
-export interface ActionSheetProps {
-  show?: boolean;
-  actions?: ActionSheetAction[];
-  title?: string;
-  description?: string;
-  cancelText?: string;
-  closeOnClickAction?: boolean;
-}
-
-const props = withDefaults(defineProps<ActionSheetProps>(), {
-  show: false,
-  actions: () => [],
-  title: '',
-  description: '',
-  cancelText: '',
-  closeOnClickAction: true,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    title?: string;
+    round?: boolean;
+    actions?: ActionSheetAction[];
+    closeIcon?: string;
+    closeable?: boolean;
+    cancelText?: string;
+    description?: string;
+    closeOnPopstate?: boolean;
+    closeOnClickAction?: boolean;
+    safeAreaInsetBottom?: boolean;
+    // Popup shared props
+    zIndex?: number | string;
+    overlay?: boolean;
+    duration?: number | string;
+    lockScroll?: boolean;
+    lazyRender?: boolean;
+    beforeClose?: (...args: any[]) => boolean | Promise<boolean>;
+    overlayProps?: Record<string, any>;
+    overlayStyle?: Record<string, any>;
+    overlayClass?: string | string[] | Record<string, boolean>;
+    transitionAppear?: boolean;
+    closeOnClickOverlay?: boolean;
+    teleport?: string | object;
+  }>(),
+  {
+    show: false,
+    round: true,
+    actions: () => [],
+    closeIcon: 'cross',
+    closeable: true,
+    closeOnClickAction: false,
+    safeAreaInsetBottom: true,
+    overlay: true,
+    closeOnClickOverlay: true,
+    lockScroll: true,
+    lazyRender: true,
+  },
+);
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
@@ -48,134 +69,135 @@ const emit = defineEmits<{
   cancel: [];
   open: [];
   close: [];
+  opened: [];
+  closed: [];
+  'click-overlay': [event: any];
 }>();
 
-function onClose() {
-  emit('update:show', false);
-  emit('close');
-}
+const slots = defineSlots<{
+  default?: () => any;
+  description?: () => any;
+  cancel?: () => any;
+  action?: (props: { action: ActionSheetAction; index: number }) => any;
+}>();
 
-function onOpen() {
-  emit('open');
-}
+const updateShow = (show: boolean) => emit('update:show', show);
 
-function onClickAction(action: ActionSheetAction, index: number) {
-  if (action.disabled || action.loading) return;
-  emit('select', action, index);
-  if (props.closeOnClickAction) {
-    emit('update:show', false);
-    emit('close');
-  }
-}
-
-function onCancel() {
+const onCancel = () => {
+  updateShow(false);
   emit('cancel');
-  emit('update:show', false);
-  emit('close');
-}
+};
 
-const hasHeader = computed(() => !!props.title || !!props.description);
+const onClickAction = (action: ActionSheetAction, index: number) => {
+  if (action.disabled || action.loading) return;
+
+  if (action.callback) {
+    action.callback(action);
+  }
+
+  if (props.closeOnClickAction) {
+    updateShow(false);
+  }
+
+  nextTick(() => emit('select', action, index));
+};
+
+const popupProps = computed(() => ({
+  show: props.show,
+  position: 'bottom' as const,
+  round: props.round,
+  closeable: false, // ActionSheet handles its own close icon
+  closeOnPopstate: props.closeOnPopstate,
+  safeAreaInsetBottom: props.safeAreaInsetBottom,
+  zIndex: props.zIndex,
+  overlay: props.overlay,
+  duration: props.duration,
+  lockScroll: props.lockScroll,
+  lazyRender: props.lazyRender,
+  beforeClose: props.beforeClose,
+  overlayProps: props.overlayProps,
+  overlayStyle: props.overlayStyle,
+  overlayClass: props.overlayClass,
+  transitionAppear: props.transitionAppear,
+  closeOnClickOverlay: props.closeOnClickOverlay,
+  teleport: props.teleport,
+}));
 </script>
 
 <template>
   <Popup
-    :show="show"
-    position="bottom"
-    round
-    @update:show="(val) => emit('update:show', val)"
-    @open="onOpen"
-    @close="onClose"
+    v-bind="popupProps"
+    @update:show="updateShow"
+    @open="emit('open')"
+    @close="emit('close')"
+    @opened="emit('opened')"
+    @closed="emit('closed')"
+    @click-overlay="(e: any) => emit('click-overlay', e)"
   >
-    <!-- Header: title and description -->
-    <view
-      v-if="hasHeader"
-      :style="{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        paddingTop: 16,
-        paddingBottom: 16,
-        paddingLeft: 16,
-        paddingRight: 16,
-        borderBottomWidth: 1,
-        borderBottomStyle: 'solid',
-        borderBottomColor: '#ebedf0',
-      }"
-    >
-      <text
-        v-if="title"
-        :style="{
-          fontSize: 16,
-          fontWeight: 'bold',
-          color: '#323233',
-          marginBottom: description ? 8 : 0,
-        }"
-      >{{ title }}</text>
-      <text
-        v-if="description"
-        :style="{
-          fontSize: 14,
-          color: '#969799',
-          textAlign: 'center',
-        }"
-      >{{ description }}</text>
-    </view>
-
-    <!-- Action items -->
-    <view
-      v-for="(action, index) in actions"
-      :key="index"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 56,
-        borderBottomWidth: 1,
-        borderBottomStyle: 'solid',
-        borderBottomColor: '#ebedf0',
-        backgroundColor: '#fff',
-        opacity: action.disabled ? 0.5 : 1,
-      }"
-      @tap="() => onClickAction(action, index)"
-    >
-      <Loading
-        v-if="action.loading"
-        :size="20"
-        color="#969799"
-      />
-      <text
-        v-else
-        :style="{
-          fontSize: 16,
-          color: action.disabled ? '#c8c9cc' : (action.color || '#323233'),
-        }"
-      >{{ action.name }}</text>
-    </view>
-
-    <!-- Cancel button -->
-    <view
-      v-if="cancelText"
-      :style="{
-        display: 'flex',
-        flexDirection: 'column',
-      }"
-    >
-      <!-- Gap above cancel -->
-      <view :style="{ height: 8, backgroundColor: '#f7f8fa' }" />
-      <view
-        :style="{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: 56,
-          backgroundColor: '#fff',
-        }"
-        @tap="onCancel"
-      >
-        <text :style="{ fontSize: 16, color: '#323233' }">{{ cancelText }}</text>
+    <view :class="bem()">
+      <!-- Header -->
+      <view v-if="title" :class="bem('header')">
+        <text>{{ title }}</text>
+        <view
+          v-if="closeable"
+          :class="bem('close')"
+          @tap="onCancel"
+        >
+          <Icon :name="closeIcon" />
+        </view>
       </view>
+
+      <!-- Description -->
+      <view v-if="description || $slots.description" :class="bem('description')">
+        <template v-if="$slots.description">
+          <slot name="description" />
+        </template>
+        <text v-else>{{ description }}</text>
+      </view>
+
+      <!-- Content (actions + default slot) -->
+      <scroll-view scroll-orientation="vertical" :class="bem('content')">
+        <view
+          v-for="(action, index) in actions"
+          :key="index"
+          :class="[
+            bem('item', { loading: !!action.loading, disabled: !!action.disabled }),
+            action.className,
+          ]"
+          :style="action.color ? { color: action.color } : undefined"
+          @tap="() => onClickAction(action, index)"
+        >
+          <!-- Action icon -->
+          <Icon
+            v-if="action.icon"
+            :name="action.icon"
+            :class="bem('item-icon')"
+          />
+          <!-- Loading state -->
+          <Loading v-if="action.loading" :class="bem('loading-icon')" />
+          <!-- Scoped action slot -->
+          <template v-else-if="$slots.action">
+            <slot name="action" :action="action" :index="index" />
+          </template>
+          <!-- Default action content -->
+          <template v-else>
+            <text :class="bem('name')">{{ action.name }}</text>
+            <text v-if="action.subname" :class="bem('subname')">{{ action.subname }}</text>
+          </template>
+        </view>
+        <slot />
+      </scroll-view>
+
+      <!-- Cancel button -->
+      <template v-if="cancelText || $slots.cancel">
+        <view :class="bem('gap')" />
+        <view :class="bem('cancel')" @tap="onCancel">
+          <template v-if="$slots.cancel">
+            <slot name="cancel" />
+          </template>
+          <text v-else>{{ cancelText }}</text>
+        </view>
+      </template>
     </view>
   </Popup>
 </template>
