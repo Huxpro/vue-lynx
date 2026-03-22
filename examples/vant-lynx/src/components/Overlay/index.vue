@@ -1,13 +1,10 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 8/8 supported (show, zIndex, duration, className, customStyle, lockScroll, lazyRender, teleport)
-  - Events: 1/1 supported (click)
-  - Slots: 1/1 (default)
-  - Lynx Limitations:
-    - teleport: accepted for API compat but not applicable in Lynx (no DOM)
-    - lockScroll: accepted for API compat but no direct equivalent in Lynx
-    - className: accepted but applied as inline style override since Lynx has no CSS class system
-    - Fade transition not implemented (Lynx animation API would be needed)
+  Lynx Limitations:
+  - teleport: accepted for API compat but not applicable in Lynx (no DOM)
+  - lockScroll: accepted for API compat but no direct equivalent in Lynx
+  - className: accepted but not applied as CSS class (Lynx has no CSS class system)
+  - Vue <Transition>: not supported in Lynx; fade effect uses inline CSS opacity transition
+  - lazyRender: uses v-if for initial render gating (no v-show in Lynx, uses opacity instead)
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue-lynx';
@@ -35,7 +32,7 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
-// For lazy render: track if overlay has ever been shown
+// Lazy render: track if overlay has ever been shown
 const hasRendered = ref(false);
 
 watch(
@@ -52,19 +49,34 @@ const shouldRender = computed(() => {
 });
 
 const overlayStyle = computed(() => {
-  const base: Record<string, any> = {
-    position: 'fixed' as const,
+  const duration =
+    typeof props.duration === 'number'
+      ? `${props.duration}s`
+      : props.duration;
+
+  const style: Record<string, any> = {
+    position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
+    height: '100%',
     zIndex: Number(props.zIndex),
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    opacity: props.show ? 1 : 0,
+    transitionProperty: 'opacity',
+    transitionDuration: duration,
   };
-  if (props.customStyle) {
-    Object.assign(base, props.customStyle);
+
+  if (!props.show) {
+    // When hidden, make it non-interactive
+    style.pointerEvents = 'none';
   }
-  return base;
+
+  if (props.customStyle) {
+    Object.assign(style, props.customStyle);
+  }
+
+  return style;
 });
 
 function onTap(event: any) {
@@ -73,7 +85,7 @@ function onTap(event: any) {
 </script>
 
 <template>
-  <view v-if="shouldRender && show" :style="overlayStyle" @tap="onTap">
+  <view v-if="shouldRender" :style="overlayStyle" @tap="onTap">
     <slot />
   </view>
 </template>
