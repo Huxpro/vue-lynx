@@ -1,130 +1,86 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import Grid from '../components/Grid/index.vue';
 import GridItem from '../components/GridItem/index.vue';
-
-function onClickItem(name: string) {
-  console.log(`GridItem clicked: ${name}`);
-}
+import VanImage from '../components/Image/index.vue';
 </script>
 
 <template>
-  <DemoPage title="Grid">
-
+  <DemoPage title="Grid 宫格">
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
+      <!-- 基础用法 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">基础用法</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <Grid>
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+          <GridItem v-for="i in 4" :key="i" icon="★" text="文字" />
         </Grid>
       </view>
 
-      <!-- Column Number -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Column Number</text>
+      <!-- 自定义列数 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义列数</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <Grid :column-num="3">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+          <GridItem v-for="i in 6" :key="i" icon="★" text="文字" />
         </Grid>
       </view>
 
-      <!-- Icon with Badge -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Show Badge</text>
+      <!-- 自定义内容 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">自定义内容</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid :column-num="2">
-          <GridItem icon="photo" text="Text" dot />
-          <GridItem icon="photo" text="Text" :badge="3" />
-          <GridItem icon="photo" text="Text" badge="99+" />
+        <Grid :border="false" :column-num="3">
+          <GridItem>
+            <VanImage fit="contain" src="https://fastly.jsdelivr.net/npm/@vant/assets/apple-1.jpeg" :width="80" :height="80" />
+          </GridItem>
+          <GridItem>
+            <VanImage fit="contain" src="https://fastly.jsdelivr.net/npm/@vant/assets/apple-2.jpeg" :width="80" :height="80" />
+          </GridItem>
+          <GridItem>
+            <VanImage fit="contain" src="https://fastly.jsdelivr.net/npm/@vant/assets/apple-3.jpeg" :width="80" :height="80" />
+          </GridItem>
         </Grid>
       </view>
 
-      <!-- Square Grid -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Square</text>
+      <!-- 正方形格子 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">正方形格子</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid square :column-num="4">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+        <Grid square>
+          <GridItem v-for="i in 8" :key="i" icon="★" text="文字" />
         </Grid>
       </view>
 
-      <!-- Gutter -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Gutter</text>
+      <!-- 格子间距 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">格子间距</text>
       <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <Grid :gutter="10" :column-num="4">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+        <Grid :gutter="10">
+          <GridItem v-for="i in 8" :key="i" icon="★" text="文字" />
         </Grid>
       </view>
 
-      <!-- Horizontal Direction -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Horizontal</text>
+      <!-- 内容横排 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">内容横排</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
         <Grid direction="horizontal" :column-num="3">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+          <GridItem icon="★" text="文字" />
+          <GridItem icon="★" text="文字" />
+          <GridItem icon="★" text="文字" />
         </Grid>
       </view>
 
-      <!-- Reverse -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Reverse</text>
+      <!-- 页面导航 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">页面导航</text>
       <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid reverse :column-num="3">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
+        <Grid clickable :column-num="2">
+          <GridItem icon="★" text="路由跳转" to="/" />
+          <GridItem icon="★" text="URL 跳转" url="https://github.com" />
         </Grid>
       </view>
 
-      <!-- Clickable -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Clickable</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid clickable :column-num="3">
-          <GridItem icon="photo" text="Item 1" @click="onClickItem('1')" />
-          <GridItem icon="photo" text="Item 2" @click="onClickItem('2')" />
-          <GridItem icon="photo" text="Item 3" @click="onClickItem('3')" />
-        </Grid>
-      </view>
-
-      <!-- No Border -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">No Border</text>
-      <view :style="{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid :border="false" :column-num="4">
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-          <GridItem icon="photo" text="Text" />
-        </Grid>
-      </view>
-
-      <!-- Custom Icon Color -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Icon Color</text>
+      <!-- 徽标提示 -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">徽标提示</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }">
-        <Grid :column-num="3">
-          <GridItem icon="star" text="Red" icon-color="#ee0a24" />
-          <GridItem icon="star" text="Blue" icon-color="#1989fa" />
-          <GridItem icon="star" text="Green" icon-color="#07c160" />
+        <Grid :column-num="2">
+          <GridItem icon="★" text="文字" dot />
+          <GridItem icon="★" text="文字" badge="99+" />
         </Grid>
       </view>
     </view>

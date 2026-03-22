@@ -1,98 +1,68 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 9/9 supported (columnNum, iconSize, gutter, border, center, square, clickable, direction, reverse)
-  - Slots: 1/1 supported (default)
-  - provide/inject: Provides grid config + child index registration to GridItem children
-  - Gutter handling: paddingLeft on Grid, paddingRight + conditional marginTop on items (matches Vant)
-  - Border: Top+Left hairline borders on Grid when border=true and no gutter (items add Right+Bottom)
-  - Gaps:
-    - No CSS variable theming (Lynx uses inline styles)
-    - No HTML tag switching (Lynx always uses view elements)
+  Lynx Limitations:
+  - tag prop: not supported (Lynx always uses view elements)
+  - CSS class-based BEM styling: replaced with inline styles
+  - ::after pseudo-element borders: replaced with inline border styles
 -->
 <script setup lang="ts">
-import { computed, provide, ref, toRef } from 'vue-lynx';
+import { computed, provide, ref } from 'vue-lynx';
+import { GRID_KEY, type GridDirection } from './types';
 
-export type GridDirection = 'horizontal' | 'vertical';
+const addUnit = (value?: string | number): string | undefined => {
+  if (value === undefined || value === null) return undefined;
+  return typeof value === 'number' ? `${value}px` : String(value);
+};
 
 export interface GridProps {
-  /** Number of columns per row */
-  columnNum?: number;
-  /** Icon size for grid items (px) */
-  iconSize?: number | string;
-  /** Gutter spacing between items (px) */
-  gutter?: number | string;
-  /** Whether to show border */
-  border?: boolean;
-  /** Whether to center content in items */
-  center?: boolean;
-  /** Whether items are square (1:1 aspect ratio) */
   square?: boolean;
-  /** Whether items are clickable (adds active feedback) */
-  clickable?: boolean;
-  /** Layout direction for item content: 'vertical' (icon above text) or 'horizontal' (icon beside text) */
-  direction?: GridDirection;
-  /** Whether to reverse item content order (text before icon) */
+  center?: boolean;
+  border?: boolean;
+  gutter?: number | string;
   reverse?: boolean;
+  iconSize?: number | string;
+  direction?: GridDirection;
+  clickable?: boolean;
+  columnNum?: number | string;
 }
 
 const props = withDefaults(defineProps<GridProps>(), {
-  columnNum: 4,
-  iconSize: 28,
-  gutter: 0,
-  border: true,
-  center: true,
   square: false,
-  clickable: false,
-  direction: 'vertical',
+  center: true,
+  border: true,
   reverse: false,
+  clickable: false,
+  columnNum: 4,
 });
 
-// Child index counter: each GridItem calls registerChild() on setup to get its index.
-// This mirrors Vant's useChildren/useParent pattern for index-based gutter logic.
+// Child index registration (mirrors Vant's useChildren/useParent index)
 const childCount = ref(0);
-
 function registerChild(): number {
   return childCount.value++;
 }
 
-provide('grid', {
-  columnNum: toRef(props, 'columnNum'),
-  iconSize: toRef(props, 'iconSize'),
-  gutter: toRef(props, 'gutter'),
-  border: toRef(props, 'border'),
-  center: toRef(props, 'center'),
-  square: toRef(props, 'square'),
-  clickable: toRef(props, 'clickable'),
-  direction: toRef(props, 'direction'),
-  reverse: toRef(props, 'reverse'),
-  registerChild,
-});
-
-/** Parse a numeric or string gutter value to a number (px) */
-function parseGutter(val: number | string): number {
-  if (typeof val === 'number') return val;
-  return parseFloat(val) || 0;
-}
+provide(GRID_KEY, { props, registerChild });
 
 const gridStyle = computed(() => {
-  const gutterNum = parseGutter(props.gutter);
-  const hasBorder = props.border && !gutterNum;
-
-  return {
+  const style: Record<string, any> = {
     display: 'flex',
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    // Vant applies paddingLeft equal to gutter on the Grid wrapper.
-    // Each item then has paddingRight = gutter, creating even spacing.
-    paddingLeft: gutterNum || 0,
-    // Hairline border on top and left edges (items provide right and bottom)
-    borderTopWidth: hasBorder ? 0.5 : 0,
-    borderTopStyle: 'solid' as const,
-    borderTopColor: '#ebedf0',
-    borderLeftWidth: hasBorder ? 0.5 : 0,
-    borderLeftStyle: 'solid' as const,
-    borderLeftColor: '#ebedf0',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   };
+
+  if (props.gutter) {
+    style.paddingLeft = addUnit(props.gutter);
+  }
+
+  if (props.border && !props.gutter) {
+    style.borderTopWidth = 0.5;
+    style.borderTopStyle = 'solid';
+    style.borderTopColor = '#ebedf0';
+    style.borderLeftWidth = 0.5;
+    style.borderLeftStyle = 'solid';
+    style.borderLeftColor = '#ebedf0';
+  }
+
+  return style;
 });
 </script>
 
