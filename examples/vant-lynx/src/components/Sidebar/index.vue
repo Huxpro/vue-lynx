@@ -1,13 +1,16 @@
 <!--
   Lynx Limitations:
-  - role/tablist: Not applicable in Lynx
-  - overflow-y: auto: Lynx scrolling differs from web
+  - role/tablist: Not applicable in Lynx (no ARIA)
+  - overflow-y: auto: Lynx does not support overflow scroll natively
   - -webkit-overflow-scrolling: Not applicable in Lynx
-  - CSS variable theming: Lynx uses inline styles instead of CSS custom properties
 -->
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue-lynx';
+import { provide, ref } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import { SIDEBAR_KEY } from './types';
+import './index.less';
+
+const [, bem] = createNamespace('sidebar');
 
 export interface SidebarProps {
   modelValue?: number | string;
@@ -41,18 +44,10 @@ provide(SIDEBAR_KEY, {
   setActive,
   getNextIndex,
 });
-
-const sidebarStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'column' as const,
-  width: '80px',
-  backgroundColor: '#f7f8fa',
-  overflow: 'hidden',
-}));
 </script>
 
 <template>
-  <view :style="sidebarStyle">
+  <view :class="bem()">
     <slot />
   </view>
 </template>

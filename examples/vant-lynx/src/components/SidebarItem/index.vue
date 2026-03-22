@@ -1,19 +1,20 @@
 <!--
   Lynx Limitations:
-  - to: Lynx has no vue-router; prop accepted for API compatibility but ignored
-  - url: Lynx has no browser navigation; prop accepted for API compatibility but ignored
-  - replace: Lynx has no navigation; prop accepted for API compatibility but ignored
-  - role/tabindex/aria-selected: Not applicable in Lynx
-  - :active pseudo-class: Uses touchstart/touchend opacity feedback
-  - ::before pseudo-element: Uses explicit view element for selected border
-  - ::after pseudo-element border-bottom: Not applicable in Lynx
-  - CSS variable theming: Lynx uses inline styles instead of CSS custom properties
+  - to/url/replace: Lynx has no vue-router or browser navigation; props accepted for API compat
+  - role/tabindex/aria-selected: Not applicable in Lynx (no ARIA)
+  - :active pseudo-class: Uses touchstart/touchend with --active BEM class
+  - ::before pseudo-element: Uses explicit <view> element for selected border
+  - ::after hairline border: Uses border-bottom 0.5px in CSS
 -->
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue-lynx';
+import { createNamespace } from '../../utils';
 import Badge from '../Badge/index.vue';
 import type { BadgeProps } from '../Badge/index.vue';
 import { SIDEBAR_KEY } from '../Sidebar/types';
+import './index.less';
+
+const [, bem] = createNamespace('sidebar-item');
 
 export interface SidebarItemProps {
   title?: string;
@@ -67,67 +68,31 @@ function onTap() {
   parent?.setActive(index.value);
 }
 
-const itemStyle = computed(() => {
-  let backgroundColor: string;
-  if (isActive.value) {
-    backgroundColor = '#fff';
-  } else if (pressed.value && !props.disabled) {
-    backgroundColor = '#f2f3f5';
-  } else {
-    backgroundColor = '#f7f8fa';
-  }
-
-  return {
-    display: 'flex',
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    position: 'relative' as const,
-    paddingTop: '20px',
-    paddingBottom: '20px',
-    paddingLeft: '12px',
-    paddingRight: '12px',
-    backgroundColor,
-    cursor: props.disabled ? 'not-allowed' : 'pointer',
-    overflow: 'hidden',
-  };
-});
-
-const activeBarStyle = computed(() => ({
-  position: 'absolute' as const,
-  left: '0px',
-  top: '50%',
-  width: '4px',
-  height: '16px',
-  marginTop: '-8px',
-  backgroundColor: '#1989fa',
-  borderRadius: '0px',
-}));
-
-const textStyle = computed(() => ({
-  fontSize: '14px',
-  lineHeight: '20px',
-  color: props.disabled ? '#c8c9cc' : '#323233',
-  fontWeight: isActive.value ? 'bold' : ('normal' as const),
-  wordBreak: 'break-all' as const,
-}));
+const itemClass = computed(() =>
+  bem([
+    { select: isActive.value, disabled: props.disabled, active: pressed.value },
+  ]),
+);
 </script>
 
 <template>
   <view
-    :style="itemStyle"
+    :class="itemClass"
     @tap="onTap"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
   >
-    <view v-if="isActive" :style="activeBarStyle" />
+    <view v-if="isActive" :class="bem('selected-bar')" />
     <Badge
       :dot="dot"
       :content="badge"
       v-bind="badgeProps"
     >
-      <slot name="title">
-        <text :style="textStyle">{{ title }}</text>
-      </slot>
+      <view :class="bem('text')">
+        <slot name="title">
+          <text>{{ title }}</text>
+        </slot>
+      </view>
     </Badge>
   </view>
 </template>

@@ -22,7 +22,7 @@ describe('SidebarItem', () => {
     expect(hasTitle).toBe(true);
   });
 
-  it('should render disabled item with not-allowed cursor', () => {
+  it('should apply --disabled BEM class when disabled', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -32,37 +32,11 @@ describe('SidebarItem', () => {
         },
       }),
     );
-    const allViews = Array.from(container.querySelectorAll('view'));
-    const disabledItem = allViews.find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('cursor: not-allowed');
-    });
-    expect(disabledItem).toBeTruthy();
+    const item = container.querySelector('.van-sidebar-item');
+    expect(item?.classList.contains('van-sidebar-item--disabled')).toBe(true);
   });
 
-  it('should render disabled item with dimmed text color', () => {
-    const { container } = render(
-      defineComponent({
-        render() {
-          return h(Sidebar, { modelValue: 0 }, {
-            default: () => [
-              h(SidebarItem, { title: 'Normal' }),
-              h(SidebarItem, { title: 'Disabled', disabled: true }),
-            ],
-          });
-        },
-      }),
-    );
-    // Disabled item should have not-allowed cursor
-    const allViews = Array.from(container.querySelectorAll('view'));
-    const disabledItem = allViews.find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('not-allowed');
-    });
-    expect(disabledItem).toBeTruthy();
-  });
-
-  it('should render active item with bold text', () => {
+  it('should apply --select BEM class when active', () => {
     const { container } = render(
       defineComponent({
         render() {
@@ -75,13 +49,9 @@ describe('SidebarItem', () => {
         },
       }),
     );
-    // The active item should exist and be clickable
-    const allViews = Array.from(container.querySelectorAll('view'));
-    const clickableItems = allViews.filter((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('cursor: pointer');
-    });
-    expect(clickableItems.length).toBe(2);
+    const items = container.querySelectorAll('.van-sidebar-item');
+    expect(items[0].classList.contains('van-sidebar-item--select')).toBe(true);
+    expect(items[1].classList.contains('van-sidebar-item--select')).toBe(false);
   });
 
   it('should render item with badge', () => {
@@ -94,6 +64,8 @@ describe('SidebarItem', () => {
         },
       }),
     );
+    const badge = container.querySelector('.van-badge');
+    expect(badge).toBeTruthy();
     const textEls = Array.from(container.querySelectorAll('text'));
     const hasBadge = textEls.some(
       (el: any) => el.textContent === '5',
@@ -111,11 +83,53 @@ describe('SidebarItem', () => {
         },
       }),
     );
-    const allViews = Array.from(container.querySelectorAll('view'));
-    const dotView = allViews.find((v: any) => {
-      const style = v.getAttribute('style') || '';
-      return style.includes('border-radius') && style.includes('8px') && style.includes('background');
-    });
-    expect(dotView).toBeTruthy();
+    const dot = container.querySelector('.van-badge--dot');
+    expect(dot).toBeTruthy();
+  });
+
+  it('should render __text sub-element', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Sidebar, { modelValue: 0 }, {
+            default: () => h(SidebarItem, { title: 'Hello' }),
+          });
+        },
+      }),
+    );
+    const textEl = container.querySelector('.van-sidebar-item__text');
+    expect(textEl).toBeTruthy();
+  });
+
+  it('should render selected bar for active item', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Sidebar, { modelValue: 0 }, {
+            default: () => h(SidebarItem, { title: 'Active' }),
+          });
+        },
+      }),
+    );
+    const bar = container.querySelector('.van-sidebar-item__selected-bar');
+    expect(bar).toBeTruthy();
+  });
+
+  it('should not render selected bar for non-active item', () => {
+    const { container } = render(
+      defineComponent({
+        render() {
+          return h(Sidebar, { modelValue: 1 }, {
+            default: () => [
+              h(SidebarItem, { title: 'A' }),
+              h(SidebarItem, { title: 'B' }),
+            ],
+          });
+        },
+      }),
+    );
+    const items = container.querySelectorAll('.van-sidebar-item');
+    expect(items[0].querySelector('.van-sidebar-item__selected-bar')).toBeFalsy();
+    expect(items[1].querySelector('.van-sidebar-item__selected-bar')).toBeTruthy();
   });
 });
