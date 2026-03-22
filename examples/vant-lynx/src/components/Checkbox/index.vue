@@ -1,35 +1,44 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/8 supported (name, shape, disabled, labelDisabled, labelPosition, iconSize, checkedColor, bindGroup)
-    Missing: indeterminate
-  - Events: 3/3 supported (update:modelValue, change, click)
-  - Slots: 2/2 supported (default, icon)
-  - Gaps: indeterminate prop not implemented
+  Lynx Limitations:
+  - role/aria-checked/tabindex: Lynx has no ARIA or keyboard focus
+  - cursor: Lynx is touch-only, no cursor styling
+  - ::before pseudo-element: icon uses <text> with font-family instead
+  - dot shape: not supported (requires complex CSS pseudo-element)
 -->
 <script setup lang="ts">
-import { computed, inject, watch, type Ref } from 'vue-lynx';
+import { computed, inject, watch, onMounted, onBeforeUnmount } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import Icon from '../Icon/index.vue';
+import type { CheckboxShape, CheckboxLabelPosition, CheckboxGroupProvide } from './types';
+import './index.less';
+
+export type { CheckboxShape, CheckboxLabelPosition, CheckboxExpose, CheckboxThemeVars } from './types';
 
 export interface CheckboxProps {
   modelValue?: boolean;
-  name?: string;
-  shape?: 'square' | 'round';
+  name?: unknown;
+  shape?: CheckboxShape;
   disabled?: boolean;
   labelDisabled?: boolean;
-  labelPosition?: 'left' | 'right';
+  labelPosition?: CheckboxLabelPosition;
   iconSize?: number | string;
   checkedColor?: string;
   bindGroup?: boolean;
+  indeterminate?: boolean | null;
 }
+
+const [, bem] = createNamespace('checkbox');
 
 const props = withDefaults(defineProps<CheckboxProps>(), {
   modelValue: false,
   shape: undefined,
   disabled: false,
   labelDisabled: false,
-  labelPosition: 'right',
+  labelPosition: undefined,
   iconSize: undefined,
   checkedColor: undefined,
   bindGroup: true,
+  indeterminate: null,
 });
 
 const emit = defineEmits<{
@@ -38,169 +47,190 @@ const emit = defineEmits<{
   click: [event: any];
 }>();
 
-// Inject group context (provided by CheckboxGroup)
-const groupProps = inject<{
-  modelValue: Ref<any[]>;
-  disabled: Ref<boolean>;
-  max: Ref<number>;
-  iconSize: Ref<number | string | undefined>;
-  checkedColor: Ref<string | undefined>;
-  shape: Ref<'square' | 'round' | undefined>;
-  toggleItem: (name: string) => void;
-  updateValue: (value: any[]) => void;
-} | null>('checkboxGroup', null);
+// Inject group context
+const group = inject<CheckboxGroupProvide | null>('checkboxGroup', null);
+const registerChild = inject<((child: any) => () => void) | null>('checkboxGroupRegister', null);
 
-// Whether this checkbox participates in group
-const inGroup = computed(() => props.bindGroup && groupProps !== null);
+const inGroup = computed(() => props.bindGroup && group !== null);
 
 const isChecked = computed(() => {
   if (inGroup.value && props.name !== undefined) {
-    return groupProps!.modelValue.value.includes(props.name);
+    return (group!.props.modelValue as unknown[]).indexOf(props.name) !== -1;
   }
-  return props.modelValue;
+  return !!props.modelValue;
 });
 
 const isDisabled = computed(() => {
   if (inGroup.value) {
-    // If group is disabled, this checkbox is disabled
-    if (groupProps!.disabled.value) return true;
-
-    // Vant behavior: when max is reached, unchecked items become disabled
-    const max = groupProps!.max.value;
-    if (max > 0 && !isChecked.value) {
-      const checkedCount = groupProps!.modelValue.value.length;
-      if (checkedCount >= max) return true;
+    if (group!.props.disabled) return true;
+    if (!isChecked.value) {
+      const max = group!.props.max;
+      if (max && (group!.props.modelValue as unknown[]).length >= +max) {
+        return true;
+      }
     }
   }
   return props.disabled;
 });
 
-// Resolve iconSize: props > group > default
-const resolvedIconSize = computed(() => {
-  if (props.iconSize !== undefined) return props.iconSize;
-  if (inGroup.value && groupProps!.iconSize.value !== undefined) {
-    return groupProps!.iconSize.value;
-  }
-  return 20;
+const direction = computed(() => {
+  if (inGroup.value) return group!.props.direction;
+  return undefined;
 });
 
-// Resolve checkedColor: props > group > default
-const resolvedCheckedColor = computed(() => {
-  if (props.checkedColor !== undefined) return props.checkedColor;
-  if (inGroup.value && groupProps!.checkedColor.value !== undefined) {
-    return groupProps!.checkedColor.value;
-  }
-  return '#1989fa';
-});
-
-// Resolve shape: props > group > default
 const resolvedShape = computed(() => {
-  if (props.shape !== undefined) return props.shape;
-  if (inGroup.value && groupProps!.shape.value !== undefined) {
-    return groupProps!.shape.value;
+  return props.shape || (inGroup.value ? group!.props.shape : undefined) || 'round';
+});
+
+const resolvedIconSize = computed(() => {
+  return props.iconSize || (inGroup.value ? group!.props.iconSize : undefined);
+});
+
+const resolvedCheckedColor = computed(() => {
+  return props.checkedColor || (inGroup.value ? group!.props.checkedColor : undefined);
+});
+
+// Inline style only for dynamic checkedColor prop
+const iconColorStyle = computed(() => {
+  const color = resolvedCheckedColor.value;
+  if (color && (isChecked.value || props.indeterminate) && !isDisabled.value) {
+    return { borderColor: color, backgroundColor: color };
   }
-  return 'round';
+  return undefined;
 });
 
-const iconSizeNum = computed(() => {
+const iconSizeStyle = computed(() => {
   const size = resolvedIconSize.value;
-  if (typeof size === 'string') return parseInt(size, 10) || 20;
-  return size;
+  if (size) return { fontSize: addUnit(size) };
+  return undefined;
 });
 
-const iconStyle = computed(() => ({
-  width: iconSizeNum.value,
-  height: iconSizeNum.value,
-  borderRadius: resolvedShape.value === 'round' ? iconSizeNum.value / 2 : 3,
-  borderWidth: 1,
-  borderStyle: 'solid' as const,
-  borderColor: isChecked.value && !isDisabled.value ? resolvedCheckedColor.value : '#c8c9cc',
-  backgroundColor: isChecked.value
-    ? isDisabled.value
-      ? '#c8c9cc'
-      : resolvedCheckedColor.value
-    : isDisabled.value
-      ? '#ebedf0'
-      : '#fff',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  opacity: isDisabled.value ? 0.5 : 1,
-}));
+const iconClass = computed(() =>
+  bem('icon', [
+    resolvedShape.value,
+    {
+      disabled: isDisabled.value,
+      checked: isChecked.value,
+      indeterminate: !!props.indeterminate,
+    },
+  ]),
+);
 
-const labelStyle = computed(() => ({
-  marginLeft: props.labelPosition === 'right' ? 8 : 0,
-  marginRight: props.labelPosition === 'left' ? 8 : 0,
-  opacity: isDisabled.value ? 0.5 : 1,
-}));
+const labelClass = computed(() =>
+  bem('label', [
+    props.labelPosition,
+    { disabled: isDisabled.value },
+  ]),
+);
 
-const containerStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: props.labelPosition === 'left' ? ('row-reverse' as const) : ('row' as const),
-  alignItems: 'center',
-}));
+const rootClass = computed(() =>
+  bem([
+    {
+      disabled: isDisabled.value,
+      'label-disabled': props.labelDisabled,
+    },
+    direction.value,
+  ]),
+);
 
-function toggle(newValue?: boolean) {
-  const val = newValue !== undefined ? newValue : !isChecked.value;
-  if (inGroup.value && props.name !== undefined) {
-    // In group mode, toggle via group
-    const current = [...groupProps!.modelValue.value];
-    const index = current.indexOf(props.name);
-    if (val && index === -1) {
-      const max = groupProps!.max.value;
-      if (max > 0 && current.length >= max) return;
-      current.push(props.name);
-      groupProps!.updateValue(current);
-    } else if (!val && index > -1) {
-      current.splice(index, 1);
-      groupProps!.updateValue(current);
+function setParentValue(checked: boolean) {
+  const { name } = props;
+  const value = [...(group!.props.modelValue as unknown[])];
+
+  if (checked) {
+    const max = group!.props.max;
+    const overlimit = max && value.length >= +max;
+    if (!overlimit && !value.includes(name)) {
+      value.push(name);
+      group!.updateValue(value);
     }
   } else {
-    emit('update:modelValue', val);
+    const index = value.indexOf(name);
+    if (index !== -1) {
+      value.splice(index, 1);
+      group!.updateValue(value);
+    }
   }
 }
 
+function toggle(newValue?: boolean) {
+  const val = newValue !== undefined ? newValue : !isChecked.value;
+  if (inGroup.value) {
+    setParentValue(val);
+  } else {
+    emit('update:modelValue', val);
+  }
+  if (props.indeterminate !== null) emit('change', val);
+}
+
+function onClick(event: any) {
+  if (isDisabled.value) {
+    emit('click', event);
+    return;
+  }
+  // Determine if icon was tapped or label was tapped
+  // We always emit click; toggle only when allowed
+  emit('click', event);
+}
+
 function onIconTap(event: any) {
-  if (isDisabled.value) return;
-  toggle();
+  if (!isDisabled.value) {
+    toggle();
+  }
   emit('click', event);
 }
 
 function onLabelTap(event: any) {
-  if (isDisabled.value) return;
-  if (props.labelDisabled) return;
-  toggle();
+  if (!isDisabled.value && !props.labelDisabled) {
+    toggle();
+  }
   emit('click', event);
 }
 
-// Watch standalone modelValue to emit change
 watch(
   () => props.modelValue,
   (value) => {
-    if (!inGroup.value) {
-      emit('change', value);
-    }
+    if (props.indeterminate === null) emit('change', value);
   },
 );
+
+// Register with parent CheckboxGroup for toggleAll support
+let unregister: (() => void) | null = null;
+onMounted(() => {
+  if (inGroup.value && registerChild) {
+    unregister = registerChild({ toggle, props, checked: isChecked });
+  }
+});
+onBeforeUnmount(() => {
+  unregister?.();
+});
 
 defineExpose({ toggle, checked: isChecked });
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <view :style="iconStyle" @tap="onIconTap">
+  <view :class="rootClass">
+    <view
+      v-if="labelPosition === 'left'"
+      :class="labelClass"
+      @tap="onLabelTap"
+    >
+      <slot :checked="isChecked" :disabled="isDisabled" />
+    </view>
+    <view :class="iconClass" :style="iconSizeStyle" @tap="onIconTap">
       <slot name="icon" :checked="isChecked" :disabled="isDisabled">
-        <text
-          v-if="isChecked"
-          :style="{
-            fontSize: iconSizeNum * 0.7,
-            color: '#fff',
-            lineHeight: iconSizeNum,
-          }"
-        >&#10003;</text>
+        <Icon
+          :name="indeterminate ? 'minus' : 'success'"
+          :style="iconColorStyle"
+          class="van-icon"
+        />
       </slot>
     </view>
-    <view :style="labelStyle" @tap="onLabelTap">
+    <view
+      v-if="labelPosition !== 'left'"
+      :class="labelClass"
+      @tap="onLabelTap"
+    >
       <slot :checked="isChecked" :disabled="isDisabled" />
     </view>
   </view>
