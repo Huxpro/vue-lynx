@@ -1,18 +1,12 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 8/8 supported (name, dot, badge, badgeProps, color, size, classPrefix, tag)
-  - Events: 1/1 supported (click)
-  - Slots: 1/1 supported (default)
-  - Sub-components: Badge integrated for dot/badge display
-  - Image URL Icons: name containing '/' rendered as <image>
-  - Unicode Fallback Icons: mapped common Vant icon names to unicode chars
-  - Lynx Limitations:
-    - tag prop: accepted for API compat but always renders as view/text (Lynx has no HTML tags)
-    - classPrefix: accepted for API compat but unused (no icon font in Lynx)
-    - No @font-face / icon font support in Lynx
+  Lynx Limitations:
+  - tag prop: accepted for API compat but always renders as view/text (Lynx has no HTML tags)
+  - classPrefix: accepted for API compat but unused (no @font-face / icon font support in Lynx)
+  - No @font-face / icon font rendering — icons are mapped to unicode/emoji fallbacks
+  - ConfigProvider iconPrefix injection: not yet supported
 -->
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, useSlots } from 'vue-lynx';
 import Badge from '../Badge/index.vue';
 import type { BadgeProps } from '../Badge/index.vue';
 
@@ -29,9 +23,6 @@ export interface IconProps {
 
 const props = withDefaults(defineProps<IconProps>(), {
   name: '',
-  size: 16,
-  color: '#323233',
-  dot: false,
   classPrefix: 'van-icon',
   tag: 'i',
 });
@@ -39,6 +30,8 @@ const props = withDefaults(defineProps<IconProps>(), {
 const emit = defineEmits<{
   click: [event: any];
 }>();
+
+const slots = useSlots();
 
 // Detect image URL icons (same heuristic as Vant: name contains '/')
 const isImageIcon = computed(() => props.name?.includes('/') ?? false);
@@ -80,6 +73,8 @@ const iconMap: Record<string, string> = {
   'phone-o': '\uD83D\uDCDE',
   'photo': '\uD83D\uDCF7',
   'photo-o': '\uD83D\uDCF7',
+  'cart-o': '\uD83D\uDED2',
+  'cart': '\uD83D\uDED2',
 };
 
 const iconChar = computed(() => {
@@ -87,23 +82,28 @@ const iconChar = computed(() => {
   return iconMap[props.name || ''] || props.name || '';
 });
 
-const iconSize = computed(() => {
-  if (typeof props.size === 'string') {
-    return parseInt(props.size, 10) || 16;
-  }
-  return props.size;
+const addUnit = (value?: string | number): string | undefined => {
+  if (value === undefined || value === '') return undefined;
+  if (typeof value === 'number') return `${value}px`;
+  return value;
+};
+
+const iconStyle = computed(() => {
+  const style: Record<string, any> = {};
+  if (props.color) style.color = props.color;
+  if (props.size !== undefined) style.fontSize = addUnit(props.size);
+  return style;
 });
 
-const iconStyle = computed(() => ({
-  fontSize: iconSize.value,
-  color: props.color,
-  lineHeight: iconSize.value,
-}));
-
-const imageStyle = computed(() => ({
-  width: iconSize.value,
-  height: iconSize.value,
-}));
+const imageStyle = computed(() => {
+  const style: Record<string, any> = {};
+  if (props.size !== undefined) {
+    const s = addUnit(props.size);
+    style.width = s;
+    style.height = s;
+  }
+  return style;
+});
 
 // Merge badgeProps with dot/badge from icon props
 const mergedBadgeProps = computed(() => ({
@@ -119,17 +119,11 @@ function onTap(event: any) {
 
 <template>
   <Badge
-    :dot="mergedBadgeProps.dot"
-    :content="mergedBadgeProps.content"
-    :color="mergedBadgeProps.color"
-    :max="mergedBadgeProps.max"
-    :show-zero="mergedBadgeProps.showZero"
-    :offset="mergedBadgeProps.offset"
-    :position="mergedBadgeProps.position"
+    v-bind="mergedBadgeProps"
     @tap="onTap"
   >
     <!-- Image icon (name contains '/') -->
-    <image v-if="isImageIcon" :src="name" :style="imageStyle" />
+    <image v-if="isImageIcon" :src="name" :style="imageStyle" class="van-icon__image" />
     <!-- Unicode/text icon -->
     <text v-else :style="iconStyle">{{ iconChar }}</text>
     <slot />
