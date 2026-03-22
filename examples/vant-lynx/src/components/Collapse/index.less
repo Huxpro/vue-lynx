@@ -1,9 +1,15 @@
 :root {
   --van-collapse-item-duration: var(--van-duration-base, 0.3s);
-  --van-collapse-item-content-padding: var(--van-padding-sm, 12px) var(--van-padding-md, 16px);
+  --van-collapse-item-content-padding: var(--van-padding-sm, 12px)
+    var(--van-padding-md, 16px);
   --van-collapse-item-content-font-size: var(--van-font-size-md, 14px);
   --van-collapse-item-content-line-height: 1.5;
   --van-collapse-item-content-text-color: var(--van-text-color-2, #969799);
   --van-collapse-item-content-background: var(--van-background-2, #fff);
   --van-collapse-item-title-disabled-color: var(--van-text-color-3, #c8c9cc);
+}
+
+.van-collapse {
+  display: flex;
+  flex-direction: column;
 }

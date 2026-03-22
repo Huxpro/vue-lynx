@@ -477,3 +477,46 @@ Branch: feat/vant-lynx-v2
 - Limitations: tag/highlightTag/unhighlightTag accepted for API compat but always render as view/text (Lynx has no HTML tag switching); highlightClass/unhighlightClass accepted for API compat but no CSS class system in Lynx; use highlightColor/unhighlightColor Lynx extensions instead
 - Key changes: Fixed default highlightColor from #ee0a24 to #1989fa (matching --van-primary-color), aligned chunk algorithm exactly with Vant's reduce-based approach, matched Vant's demo section structure, ported all 7 Vant test cases, used string units for fontSize to avoid deprecation warnings
 ---
+
+## 2026-03-22 - parity-text-ellipsis: TextEllipsis
+- Props: 6/6 (rows, dots, content, expandText, collapseText, position)
+- Events: 1/1 (clickAction)
+- Slots: 1/1 (action with { expanded } scope)
+- CSS Variables: 3 defined in index.less (--van-text-ellipsis-action-color, --van-text-ellipsis-font-size, --van-text-ellipsis-line-height)
+- Animations: none (TextEllipsis has no transitions)
+- Tests: 12 cases (Vant has 6) — all pass
+- Demo sections: 5/5 (Basic Usage, Expand & Collapse, Custom Rows, Custom Collapse Position [Start, Middle], Custom Action)
+- Visual match: pass (character-count heuristic approximation)
+- Limitations: No DOM text measurement APIs (getComputedStyle, offsetHeight) — uses character-count heuristic instead of Vant's pixel-based binary search; no window resize recalculation; no onActivated recalculation for keep-alive scenarios
+- defineExpose: toggle(expanded?: boolean)
+- Key changes: Added action slot support with useSlots(), fixed clickAction event payload to emit Event (not boolean), separated toggle() from event emission, added watch on content/rows/position to reset expanded state, CSS variables used in .less instead of inline styles
+---
+
+## 2026-03-22 - parity-card: Card
+- Props: 11/11 (tag, num, desc, thumb, title, price, centered, lazyLoad, currency, thumbLink, originPrice)
+- Events: 1/1 (clickThumb)
+- Slots: 10/10 (title, desc, thumb, tag, num, price, origin-price, bottom, footer, tags, price-top)
+- CSS Variables: 16 defined in index.less
+- Animations: none (Card has no transitions)
+- Tests: 16 cases (Vant has 9) — all pass
+- Demo sections: 3/3 (Basic Usage, Discount Info, Custom Content)
+- Visual match: pass (CSS class-based layout with proper BEM structure)
+- Limitations: thumbLink (no <a> in Lynx), lazyLoad (no IntersectionObserver), text-overflow ellipsis classes
+- Key changes: Rewrote from inline-style-only to CSS class-based component; added all missing slots (tags, origin-price, price-top); separated price into currency/integer/decimal parts matching Vant; uses Tag and Image sub-components; imported index.less
+---
+
+## 2026-03-22 - parity-collapse + parity-collapse-item: Collapse + CollapseItem
+- Props (Collapse): 3/3 (modelValue, accordion, border)
+- Props (CollapseItem): 19/19 (name, title, value, label, icon, size, border, isLink, disabled, readonly, lazyRender, center, clickable, titleClass, titleStyle, valueClass, labelClass, arrowDirection, iconPrefix, required)
+- Events (Collapse): 2/2 (update:modelValue, change)
+- Events (CollapseItem): 0/0 (click handled internally by Cell)
+- Slots (CollapseItem): 6/6 (default, title, value, label, icon, right-icon)
+- Exposed Methods: Collapse.toggleAll(options), CollapseItem.toggle(newValue), CollapseItem.expanded, CollapseItem.itemName
+- CSS Variables: 7 defined in both Collapse/index.less and CollapseItem/index.less (--van-collapse-item-duration, --van-collapse-item-content-padding, --van-collapse-item-content-font-size, --van-collapse-item-content-line-height, --van-collapse-item-content-text-color, --van-collapse-item-content-background, --van-collapse-item-title-disabled-color)
+- Animations: none (Lynx cannot animate CSS height transitions)
+- Tests: 8 cases (Vant has 8) — all pass
+- Demo sections: 5/5 (基础用法, 手风琴, 禁用状态, 自定义标题内容, 全部展开与全部切换)
+- Visual match: pass (CSS class-based layout with Cell component reuse)
+- Limitations: CSS height transition not supported (instant show/hide), ::after hairline border uses inline border, tag prop no-op, titleClass/valueClass/labelClass no-op, iconPrefix no-op, role/aria attributes not applicable
+- Key changes: Rewrote CollapseItem to reuse Cell component (matching Vant's structure); added all Cell shared props (center, clickable, titleStyle, arrowDirection, required, etc.); replaced v-show with v-if (Lynx v-show breaks on style.display); uses useLazyRender composable; CSS class-based content area with van-collapse-item__wrapper/content BEM classes; provide/inject parent-child pattern for toggle/isExpanded
+---

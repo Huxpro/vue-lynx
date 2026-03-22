@@ -1,19 +1,11 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 10/11 supported (name, title, value, label, icon, size, border, isLink, disabled, readonly)
-    - Missing: lazyRender (Lynx has no v-show with height animation; we use conditional render)
-    - titleClass: N/A in Lynx (no CSS class support, inline styles only)
-  - Events: click on title header
-  - Slots: 6/6 supported (default, title, value, label, icon, right-icon)
-  - Arrow rotation: Icon component with arrow/arrow-up based on expanded state
-  - Cell-based layout: Reuses Cell-like structure (icon, title, label, value, right-icon)
-  - Click feedback: Active background color on touchstart/touchend
-  - Auto name: Falls back to a provided index when name prop is omitted
-  - Exposed: toggle method
-  - Gaps:
-    - No CSS height transition animation (Lynx does not support CSS transitions on height)
-    - lazyRender prop accepted for API compat but content uses v-if (no v-show + height anim)
-    - titleClass prop not applicable (Lynx inline styles only)
+  Lynx Limitations:
+  - tag: accepted for API compat but always renders as view
+  - titleClass/valueClass/labelClass: accepted for API compat but no CSS class support in Lynx
+  - iconPrefix: accepted for API compat but unused (no icon font prefix)
+  - ::after hairline border: Lynx has no pseudo-elements, uses inline border
+  - CSS height transition: Lynx does not support CSS transitions on height; content toggles instantly
+  - role/aria attributes: not applicable in Lynx
 -->
 <script lang="ts">
 // Module-level counter for auto-generated names (shared across all instances)
@@ -21,8 +13,19 @@ let globalUid = 0;
 </script>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch, onMounted, onUnmounted, type Ref } from 'vue-lynx';
-import Icon from '../Icon/index.vue';
+import {
+  computed,
+  inject,
+  ref,
+  watch,
+  onMounted,
+  onUnmounted,
+  type Ref,
+} from 'vue-lynx';
+import Cell from '../Cell/index.vue';
+import { useLazyRender } from '../../composables/useLazyRender';
+import './index.less';
+import type { CellArrowDirection } from '../Cell/types';
 
 export interface CollapseItemProps {
   name?: string | number;
@@ -36,6 +39,15 @@ export interface CollapseItemProps {
   disabled?: boolean;
   readonly?: boolean;
   lazyRender?: boolean;
+  center?: boolean;
+  clickable?: boolean | null;
+  titleClass?: unknown;
+  titleStyle?: string | Record<string, any>;
+  valueClass?: unknown;
+  labelClass?: unknown;
+  arrowDirection?: CellArrowDirection;
+  iconPrefix?: string;
+  required?: boolean | 'auto' | null;
 }
 
 const props = withDefaults(defineProps<CollapseItemProps>(), {
@@ -44,7 +56,10 @@ const props = withDefaults(defineProps<CollapseItemProps>(), {
   disabled: false,
   readonly: false,
   lazyRender: true,
-  size: 'normal',
+  size: undefined,
+  center: false,
+  clickable: null,
+  required: null,
 });
 
 const collapse = inject<{
@@ -71,22 +86,17 @@ if (!collapse) {
 }
 
 // --- Auto name: use prop or fall back to a stable unique id ---
-// In Vant, useParent provides a stable index. Here we generate a unique id once per instance.
 const instanceId = globalUid++;
 const itemName = computed(() => props.name ?? instanceId);
 
 // --- Expanded state ---
-const isExpanded = computed(() => {
+const expanded = computed(() => {
   if (!collapse) return false;
   return collapse.isExpanded(itemName.value);
 });
 
-// Track whether content has ever been shown (for lazyRender)
-const hasBeenExpanded = ref(isExpanded.value);
-
-watch(isExpanded, (val) => {
-  if (val) hasBeenExpanded.value = true;
-});
+// --- Lazy render ---
+const shouldRender = useLazyRender(() => expanded.value || !props.lazyRender);
 
 // --- Register with parent for toggleAll support ---
 onMounted(() => {
@@ -94,7 +104,7 @@ onMounted(() => {
     collapse.registerChild({
       name: itemName.value,
       disabled: props.disabled,
-      expanded: isExpanded.value,
+      expanded: expanded.value,
     });
   }
 });
@@ -107,34 +117,21 @@ onUnmounted(() => {
 
 // Keep parent child registry in sync
 watch(
-  [isExpanded, () => props.disabled],
-  ([expanded, disabled]) => {
+  [expanded, () => props.disabled],
+  ([exp, disabled]) => {
     if (collapse) {
       collapse.updateChild(itemName.value, {
         disabled: disabled,
-        expanded: expanded,
+        expanded: exp,
       });
     }
   },
 );
 
-// --- Click feedback ---
-const isActive = ref(false);
-
-function onTouchStart() {
-  if (!props.disabled && !props.readonly) {
-    isActive.value = true;
-  }
-}
-
-function onTouchEnd() {
-  isActive.value = false;
-}
-
 // --- Toggle ---
 function toggle(newValue?: boolean) {
   if (!collapse) return;
-  const value = newValue ?? !isExpanded.value;
+  const value = newValue ?? !expanded.value;
   collapse.toggle(itemName.value, value);
 }
 
@@ -143,158 +140,96 @@ function onClickTitle() {
   toggle();
 }
 
-// --- Expose toggle for programmatic control (matches Vant) ---
-defineExpose({ toggle, expanded: isExpanded, itemName });
+// --- Expose (matches Vant) ---
+defineExpose({ toggle, expanded, itemName });
 
-// --- Styles ---
-const isLarge = computed(() => props.size === 'large');
-
-const wrapperStyle = computed(() => ({
-  display: 'flex' as const,
-  flexDirection: 'column' as const,
-  borderTopWidth: props.border ? 0.5 : 0,
-  borderTopStyle: 'solid' as const,
-  borderTopColor: '#ebedf0',
-}));
-
-const headerStyle = computed(() => {
-  const clickable = !props.disabled && !props.readonly;
-  return {
-    display: 'flex' as const,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    paddingTop: isLarge.value ? 12 : 10,
-    paddingBottom: isLarge.value ? 12 : 10,
-    paddingLeft: 16,
-    paddingRight: 16,
-    backgroundColor:
-      isActive.value && clickable ? '#f2f3f5' : '#fff',
-    // Bottom border under header when expanded (matches Vant hairline)
-    borderBottomWidth: isExpanded.value && props.border ? 0.5 : 0,
-    borderBottomStyle: 'solid' as const,
-    borderBottomColor: '#ebedf0',
+// --- Cell props for title ---
+const cellProps = computed(() => {
+  const attrs: Record<string, any> = {
+    icon: props.icon,
+    size: props.size,
+    title: props.title,
+    value: props.value,
+    label: props.label,
+    center: props.center,
+    border: false, // We handle border ourselves
+    isLink: props.readonly ? false : props.isLink,
+    clickable:
+      props.disabled || props.readonly
+        ? false
+        : props.clickable !== null
+          ? props.clickable
+          : undefined,
+    titleStyle: props.titleStyle,
+    arrowDirection: props.arrowDirection,
+    iconPrefix: props.iconPrefix,
+    required: props.required,
   };
+  return attrs;
 });
 
-const titleContainerStyle = computed(() => ({
-  flex: 1,
-  display: 'flex' as const,
-  flexDirection: 'column' as const,
-}));
-
-const titleRowStyle = computed(() => ({
-  display: 'flex' as const,
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-}));
-
-const titleTextStyle = computed(() => ({
-  fontSize: isLarge.value ? 16 : 14,
-  color: props.disabled ? '#c8c9cc' : '#323233',
-  lineHeight: 24,
-}));
-
-const valueTextStyle = computed(() => ({
-  fontSize: isLarge.value ? 16 : 14,
-  color: props.disabled ? '#c8c9cc' : '#969799',
-  lineHeight: 24,
-  textAlign: 'right' as const,
-}));
-
-const labelTextStyle = computed(() => ({
-  fontSize: isLarge.value ? 14 : 12,
-  color: props.disabled ? '#c8c9cc' : '#969799',
-  marginTop: 4,
-  lineHeight: 18,
-}));
-
-const iconContainerStyle = {
-  marginRight: 4,
-  display: 'flex' as const,
-  alignItems: 'center' as const,
-  height: 24,
-};
-
-const rightIconContainerStyle = {
-  marginLeft: 4,
-  display: 'flex' as const,
-  alignItems: 'center' as const,
-  height: 24,
-};
-
-const contentStyle = computed(() => ({
-  display: 'flex' as const,
-  flexDirection: 'column' as const,
-  padding: 16,
-  backgroundColor: '#fff',
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: '#969799',
-}));
-
-// Should render content? (lazyRender support)
-const shouldRender = computed(() => {
-  if (!props.lazyRender) return true;
-  return hasBeenExpanded.value;
+// --- Inline styles for disabled title color ---
+const titleWrapperStyle = computed(() => {
+  if (props.disabled) {
+    return {
+      opacity: 1,
+    };
+  }
+  return undefined;
 });
+
+// --- Item wrapper border (hairline top for non-first items) ---
+const itemBorderStyle = computed(() => {
+  if (props.border) {
+    return {
+      borderTopWidth: '0.5px',
+      borderTopStyle: 'solid',
+      borderTopColor: '#ebedf0',
+    };
+  }
+  return undefined;
+});
+
+// --- Content styles ---
+const contentWrapperStyle = computed(() => ({
+  overflow: 'hidden',
+}));
 </script>
 
 <template>
-  <view :style="wrapperStyle">
-    <!-- Title / Header (Cell-like layout) -->
-    <view
-      :style="headerStyle"
-      @tap="onClickTitle"
-      @touchstart="onTouchStart"
-      @touchend="onTouchEnd"
-      @touchcancel="onTouchEnd"
+  <view class="van-collapse-item" :style="itemBorderStyle">
+    <!-- Title / Header (Cell-based layout matching Vant) -->
+    <Cell
+      v-bind="cellProps"
+      :style="titleWrapperStyle"
+      @click="onClickTitle"
     >
-      <!-- Left icon -->
-      <slot name="icon">
-        <view v-if="icon" :style="iconContainerStyle">
-          <Icon
-            :name="icon"
-            :size="16"
-            :color="disabled ? '#c8c9cc' : '#323233'"
-          />
-        </view>
-      </slot>
-
-      <!-- Title + Label section -->
-      <view :style="titleContainerStyle">
-        <view :style="titleRowStyle">
-          <slot name="title">
-            <text v-if="title !== undefined" :style="titleTextStyle">{{ title }}</text>
-          </slot>
-        </view>
-        <slot name="label">
-          <text v-if="label !== undefined" :style="labelTextStyle">{{ label }}</text>
-        </slot>
-      </view>
-
-      <!-- Value section -->
-      <slot name="value">
-        <text v-if="value !== undefined" :style="valueTextStyle">{{ value }}</text>
-      </slot>
-
-      <!-- Right icon (arrow) -->
-      <slot name="right-icon">
-        <view
-          v-if="isLink && !readonly"
-          :style="rightIconContainerStyle"
-        >
-          <Icon
-            :name="isExpanded ? 'arrow-up' : 'arrow-down'"
-            :size="16"
-            :color="disabled ? '#c8c9cc' : '#969799'"
-          />
-        </view>
-      </slot>
-    </view>
+      <template v-if="$slots.icon" #icon>
+        <slot name="icon" />
+      </template>
+      <template v-if="$slots.title" #title>
+        <slot name="title" />
+      </template>
+      <template v-if="$slots.value" #value>
+        <slot name="value" />
+      </template>
+      <template v-if="$slots.label" #label>
+        <slot name="label" />
+      </template>
+      <template v-if="$slots['right-icon']" #right-icon>
+        <slot name="right-icon" />
+      </template>
+    </Cell>
 
     <!-- Content -->
-    <view v-if="shouldRender && isExpanded" :style="contentStyle">
-      <slot />
+    <view
+      v-if="shouldRender && expanded"
+      class="van-collapse-item__wrapper"
+      :style="contentWrapperStyle"
+    >
+      <view class="van-collapse-item__content">
+        <slot />
+      </view>
     </view>
   </view>
 </template>
