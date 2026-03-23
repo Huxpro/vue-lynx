@@ -1060,3 +1060,35 @@ Branch: feat/vant-lynx-v2
 - Key changes: Complete rewrite from all-inline-styles to BEM class system. Created types.ts with PopoverTheme/PopoverPlacement/PopoverAction/PopoverTrigger/PopoverActionsDirection. Slot names now match Vant: reference (trigger), default (custom content), action (custom action). 12 placement variants via BEM modifier classes (replaces Vant's data-popper-placement attribute selectors). Arrow positioning via CSS classes per placement. Zoom animation via inline CSS transition (opacity + transform). Active state on actions via --active BEM class with touchstart/touchend. Transparent fixed overlay for click-away detection (replaces Vant's useClickAway composable).
 - Limitations: teleport (no Teleport in Lynx), Popper.js (no smart positioning/auto-flip — uses CSS absolute positioning), data-popper-placement attributes (uses BEM modifier classes), box-shadow (omitted), :active pseudo-class (uses --active BEM class), cursor/role/tabindex/aria (not applicable in Lynx), touchstart event emission (Lynx uses tap), closeOnPopstate (no browser history), Vue <Transition> (uses CSS transitions directly)
 ---
+
+## 2026-03-22 - parity-dropdown-menu + parity-dropdown-item: DropdownMenu + DropdownItem
+- Props (DropdownMenu): 9/9 (overlay, zIndex, duration, direction, activeColor, autoLocate, closeOnClickOutside, closeOnClickOverlay, swipeThreshold)
+- Props (DropdownItem): 7/7 (title, options, disabled, teleport, lazyRender, modelValue, titleClass)
+- Events (DropdownItem): 6/6 (open, opened, close, closed, change, update:modelValue)
+- Slots (DropdownItem): 2/2 (default, title)
+- Expose (DropdownMenu): close(), opened
+- Expose (DropdownItem): toggle(show?, options?), state, renderTitle()
+- CSS Variables: 12 defined in DropdownMenu/index.less + 1 in DropdownItem/index.less
+- Animations: CSS slide transition via transform: translateY with configurable duration; overlay opacity fade transition
+- Tests: 29 cases (Vant has 16, we have 29 — 20 for DropdownMenu + 9 for DropdownItem)
+- Demo sections: 6/6 (基础用法, 自定义菜单内容, 自定义选中态颜色, 横向滚动, 向上展开, 禁用菜单)
+- Visual match: pass (BEM classes, CSS variables, slide animations)
+- Files (DropdownMenu): index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Files (DropdownItem): index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Key changes: Complete rewrite from inline-styles-only to BEM class system. Added types.ts with DropdownMenuProvide, DropdownChildExpose, DROPDOWN_KEY Symbol for type-safe provide/inject. Parent-child registration pattern using shallowReactive children array. Title arrow uses CSS border chevron (replaces ::after pseudo-element). DropdownItem uses Cell for option rows and Icon for success checkmark (matching Vant). Slide animation via CSS transform translateY with overflow hidden clipping. Overlay uses position fixed with opacity transition. swipeThreshold uses <scroll-view> for Lynx horizontal scrolling.
+- Limitations: autoLocate (no getBoundingClientRect in Lynx), closeOnClickOutside (via overlay tap only, no document-level events), teleport (N/A in Lynx), ::after arrow (uses <view> with border chevron), v-show (uses v-if), scroll tracking (no scrollParent in Lynx), van-ellipsis (text-overflow limited in Lynx)
+---
+
+## 2026-03-22 - parity-pull-refresh: PullRefresh
+- Props: 10/10 (modelValue, disabled, headHeight, successText, pullingText, loosingText, loadingText, pullDistance, successDuration, animationDuration)
+- Events: 3/3 (update:modelValue, refresh, change)
+- Slots: 6/6 (default, normal, pulling, loosing, loading, success — all status slots receive { distance })
+- CSS Variables: 4 defined in index.less (--van-pull-refresh-head-height, --van-pull-refresh-head-font-size, --van-pull-refresh-head-text-color, --van-pull-refresh-loading-icon-size)
+- Animations: CSS transition on transform via transitionDuration inline style; translate3d for GPU-accelerated pull movement
+- Tests: 12 cases (Vant has 9, we have 12 — added BEM class, disabled, loading-state-blocks-touch tests)
+- Demo sections: 3/3 (基础用法, 成功提示, 自定义提示)
+- Visual match: pass (BEM classes, CSS variables, translate3d transform, Loading spinner)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Uses useTouch composable for gesture tracking. CSS transition on transform for snap-back animation. Proper setStatus function matching Vant's state machine (normal → pulling → loosing → loading → success). nextTick before emitting refresh. Ease function with progressive resistance matching Vant exactly.
+- Limitations: scroll parent detection (Lynx uses <scroll-view> model), passive event listeners (Lynx touch model), teleport (N/A in Lynx)
+---
