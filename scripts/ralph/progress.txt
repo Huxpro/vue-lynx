@@ -1162,3 +1162,31 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to BEM class system. Now uses Button and Icon components (matching Vant's component composition). Price calculation uses (price/100).toFixed(decimalLength) matching Vant exactly. Default label is '合计：' matching Vant's i18n.
 - Limitations: placeholder prop (no getBoundingClientRect for placeholder height), position:fixed (Lynx handles layout differently), usePlaceholder composable (DOM measurement unavailable)
 ---
+
+## 2026-03-22 - parity-coupon-list: CouponList
+- Props: 18/18 (code, coupons, currency, showCount, emptyImage, enabledTitle, disabledTitle, disabledCoupons, showExchangeBar, showCloseButton, closeButtonText, inputPlaceholder, exchangeMinLength, exchangeButtonText, displayedCouponIndex, exchangeButtonLoading, exchangeButtonDisabled, chosenCoupon)
+- Events: 3/3 (change, exchange, update:code)
+- Slots: 3/3 (list-footer, disabled-list-footer, list-button)
+- CSS Variables: 7 in CouponList index.less (--van-coupon-list-*), 17 in Coupon index.less (--van-coupon-*)
+- Animations: none (CouponList has no transitions)
+- Tests: 20 cases (Vant has 6, we have 20 — added multi-select, close button, BEM class, slot, disabled coupon tests)
+- Demo sections: 2/2 (基础用法, 多选用法)
+- Visual match: pass (BEM classes, CSS variables, uses Tabs/Tab/Field/Button/Empty/Checkbox sub-components)
+- Files: CouponList: index.vue, index.less, types.ts, test/index.spec.ts (4 files); Coupon: index.vue, index.less, types.ts, utils.ts (4 files)
+- Key changes: Created Coupon sub-component matching Vant's coupon/ directory. Rewrote CouponList from all-inline-styles to full BEM class system. Uses Tabs/Tab for tab switching, Field for exchange input, Button for exchange/close, Checkbox for selection, Empty for empty state. Multi-select via array chosenCoupon. Removed old __tests__/ directory.
+- Limitations: displayedCouponIndex (no scrollIntoView API in Lynx), window resize height calc (no window in Lynx), overflow-y:auto (uses <scroll-view>)
+---
+
+## 2026-03-22 - parity-contact-card: ContactCard
+- Props: 5/5 (tel, name, type, addText, editable)
+- Events: 1/1 (click — only emitted when editable is true)
+- Slots: 0/0 (ContactCard has no slots)
+- CSS Variables: 4 defined in index.less (--van-contact-card-padding, --van-contact-card-add-icon-size, --van-contact-card-add-icon-color, --van-contact-card-title-line-height)
+- Animations: none (ContactCard has no transitions)
+- Tests: 9 cases (Vant has 2, we have 9 — added BEM class, stripe decoration, Cell integration, link arrow tests)
+- Demo sections: 3/3 (添加联系人, 编辑联系人, 不可编辑)
+- Visual match: pass (uses Cell component with Icon, BEM classes, stripe decoration)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files)
+- Key changes: Rewrote from all-inline-styles to Cell+Icon+BEM class system. Added stripe decoration view (replaces Vant's ::before pseudo-element). Removed duplicate __tests__ directory. Added types.ts. Chinese labels matching Vant's i18n defaults.
+- Limitations: ::before stripe pattern (uses <view> substitute), tag prop (always renders as view)
+---
