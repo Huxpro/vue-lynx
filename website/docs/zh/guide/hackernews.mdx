@@ -1,122 +1,47 @@
 # HackerNews Slopfork
 
-我们想 Fork Evan You 的经典 [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) —— 那个 Vue 最经典的「真实世界」示例 —— 作为 Vue Lynx 的能力验证基准。但由于 Vue Lynx 基于 Vue 3，我们最终使用了社区的 [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) 移植版作为 Slopfork 的实际参考。
+我们 Fork 了 Evan You 的经典 [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) —— 那个 Vue 最经典的「真实世界」示例 —— 作为 Vue Lynx 的能力验证基准。由于 Vue Lynx 基于 Vue 3，我们使用了社区的 [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) 移植版作为参考。
+
+**复用信心：高。** 大部分代码可以直接迁移 —— 组件逻辑、Vue Router、Composition API，甚至 `<Transition>`/`<TransitionGroup>` 都完全一致。唯一需要修改的是平台相关部分：HTML 元素 → Lynx 元素、`@click` → `@tap`、`createWebHistory()` → `createMemoryHistory()`。
 
 ### Tailwind CSS 版本
 
-使用 Tailwind CSS (`@lynx-js/tailwind-preset`) 重写了样式，同时集成了 TanStack Vue Query 替代参考实现中的 Vuex 4。
+在第一轮迭代中，我们让 AI 用 Tailwind CSS (`@lynx-js/tailwind-preset`) 重写了样式。同时集成了 TanStack Vue Query 作为 Vuex 4 的现代替代方案。
 
 <Go example="hackernews-tailwind" defaultFile="src/App.vue" />
 
 ### CSS 版本
 
-保留了参考实现的 SCSS 类名和配色方案，但 CSS 规则本身针对 Lynx 的布局模型做了适配（例如 flexbox 替代行内布局、去掉 `<ul>`/`<li>` 的列表样式等）。
+在这一版中，我们让 AI 尽可能复用参考实现原有的 SCSS 文件。类名、配色方案和布局结构都保留了下来 —— 只有 CSS 规则本身针对 Lynx 的布局模型做了适配（如 flexbox 调整、去掉 `<ul>`/`<li>` 列表样式等）。
 
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
-## 改了什么，为什么
+## 改动概览
 
-Vue HackerNews 3.0 是一个基于 Webpack 的 SSR 应用，使用 Vue 3 + Vuex 4 + axios + `vue-server-renderer`。移植到 Lynx 不只是把 HTML 标签替换一下 —— 有好几层都需要重新思考。
+Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 Vue 3 + Vuex 4 + axios。移植到 Lynx 时的改动如下：
 
-### Lynx 没有 HTML 元素
+| 方面 | Vue 3 参考 | Vue Lynx |
+|------|-----------|----------|
+| **模板元素** | `<div>`、`<span>`、`<img>`、`<a>` | `<view>`、`<text>`、`<image>`、tap 事件 |
+| **事件处理** | `@click` | `@tap` |
+| **路由历史** | `createWebHistory()` | `createMemoryHistory()` |
+| **滚动** | 浏览器原生滚动 | `<scroll-view>` 组件 |
+| **状态管理** | Vuex 4 | TanStack Query (Tailwind) / 相同模式 (CSS) |
+| **HTTP 客户端** | axios | `globalThis.fetch` |
+| **构建工具** | Webpack 5 + Express | Rspeedy |
+| **SSR** | 完整 SSR + 注水 | 无（Lynx 不使用 SSR）|
 
-这是最显眼的变化。Lynx 渲染到原生 UI 层，不是浏览器 DOM，所以每个 HTML 元素都需要对应的 Lynx 替代：
+### 值得注意的适配：
 
-| Vue 3 参考 | Vue Lynx | 原因 |
-|---|---|---|
-| `<div>`, `<li>`, `<ul>`, `<nav>`, `<header>` | `<view>` | Lynx 的通用容器 |
-| `<span>`, `<p>`, `<h1>` | `<text>` | Lynx 的文本节点 |
-| `<img>` | `<image>` | Lynx 的图片元素 |
-| 浏览器原生滚动 | `<scroll-view scroll-orientation="vertical">` | Lynx 需要显式的滚动容器 |
-| `<a href="...">` | `<text @tap="openExternalUrl(...)">` | Lynx 没有 `<a>` 标签 |
-| SVG `<circle>` 旋转动画 spinner | CSS `border` + `animation: spin` spinner | Lynx 不支持 SVG |
+- **没有 `v-html`**：Lynx 没有 HTML 解析器，所以我们用 `stripHtml()` 工具函数将 HTML 评论转换为纯文本
+- **`<router-link>`**：用 Vue Router 的 `custom` slot API 包装，因为 Lynx 没有 `<a>` 标签
+- **SVG spinner**：替换为 CSS `border` + `animation` spinner（Lynx 不支持 SVG）
 
-### `<router-link>` 不能直接用
+## 完全一致的部分
 
-在浏览器里，`<router-link to="/news">` 渲染成 `<a>` 标签。Lynx 没有 `<a>`，所以我们用 Vue Router 的 `custom` slot API 封装了一个 `NavLink` 组件：
-
-```vue
-<!-- NavLink.vue -->
-<RouterLink :to="to" custom v-slot="{ navigate }">
-  <text class="nav-link" @tap="navigate">{{ label }}</text>
-</RouterLink>
-```
-
-页面内的链接（用户主页、文章详情、评论数）则直接用 `<text @tap="router.push(...)">` 替代了 `<router-link>`。
-
-### 没有 `v-html`
-
-Vue 3 参考实现用 `v-html` 渲染评论内容：
-```vue
-<div class="text" v-html="comment.content" />
-```
-
-Lynx 不支持 `v-html`（原生渲染器里没有 HTML 解析器）。我们写了一个 `stripHtml()` 工具函数，把 HTML 转换成纯文本 —— 保留换行、把 `<li>` 转成 bullet、解码 HTML 实体：
-
-```vue
-<text class="text">{{ stripHtml(comment.content) }}</text>
-```
-
-这会丢失格式（粗体、斜体、代码块、评论内的链接），但这是原生渲染器下务实的取舍。
-
-### `@click` → `@tap`
-
-Lynx 用 tap 手势，不是 click 事件。参考实现里所有的 `@click` 都变成了 `@tap`。
-
-### `createWebHistory()` → `createMemoryHistory()`
-
-Lynx 没有浏览器 history API。Vue Router 的 `createMemoryHistory()` 可以直接替换 —— 路由 API（`useRoute()`、`useRouter()`、`router.push()`、`router.back()`）保持完全一致。
-
-### SSR 整体移除
-
-Vue 3 参考实现有完整的 SSR 架构：`server-entry.js`、`client-entry.js`、`createSSRApp()`、`serverPrefetch()`、`window.__INITIAL_STATE__` 注水。这些在 Lynx 架构中完全不适用 —— Lynx 没有服务端渲染。我们的入口就是：
-
-```ts
-const app = createApp(App);
-app.use(createPinia());
-app.use(VueQueryPlugin);
-app.use(router);
-router.push('/');
-app.mount();
-```
-
-### Vuex → TanStack Query（+ Pinia）
-
-Vue 3 参考实现用 **Vuex 4** 配合 mutations、actions、getters 和 `vuex-router-sync` 来管理所有状态和数据请求。我们用 **TanStack Vue Query** 替代了所有服务端状态管理：
-
-```ts
-// Vue 3 参考：Vuex action + axios
-store.dispatch('FETCH_FEED', { feed, page })
-// → 调用 axios.get(`/${feed}?page=${page}`)
-// → commit SET_FEED mutation
-// → commit SET_ITEMS mutation
-
-// Vue Lynx：TanStack Query
-const { data: items, isLoading } = useQuery({
-  queryKey: computed(() => ['feed', props.feed, props.page]),
-  queryFn: () => fetchFeed(props.feed, props.page),
-  staleTime: 5 * 60 * 1000,
-  placeholderData: keepPreviousData,
-});
-```
-
-这让我们免费获得了缓存、loading/error 状态和预取，不需要写任何 mutation 或 action。Pinia 装了但基本没用 —— TanStack Query 承担了重活。
-
-### axios → `globalThis.fetch`
-
-参考实现用 axios。我们直接用 `globalThis.fetch` —— 少一个依赖，而且 `fetch` 在 Lynx 的 JS 运行时中可用。
-
-### Webpack → Rspeedy (Rsbuild)
-
-参考实现用自定义 Webpack 5 配置，搭配 babel-loader、vue-loader、sass-loader、SSR 插件和 Express 服务器。我们用 Rspeedy（Lynx 基于 Rsbuild 的构建工具），一个简洁的 `lynx.config.ts` 就搞定了。
-
-## 什么是完全一致的
-
-尽管上面改了不少，但令人惊讶的是，大量代码可以直接迁移：
-
-- **Vue Composition API**：`ref()`、`computed()`、`watch()`、`<script setup>`、`defineProps()` —— 全部一致，只是从 `vue-lynx` 而不是 `vue` 导入
-- **Vue Router API**：`useRoute()`、`useRouter()`、`router.push()`、`router.back()`、`<RouterView>`、路由参数 —— 全部一致
-- **`<Transition>` 和 `<TransitionGroup>`**：CSS transition class 完全一致。我们甚至加了参考实现没有的方向感知滑动过渡（`slide-left` / `slide-right`）
-- **递归组件**：`<Comment>` 组件递归引用自己来渲染嵌套评论 —— 完全一致
-- **`v-if`/`v-else`/`v-for`/`v-bind`/`{{ }}`**：模板指令全部一致
-- **CSS**：SCSS 可用，`@keyframes` 可用，`:class` 绑定可用，media queries 可用。样式结构（类名、配色、布局）从参考实现保留了下来
+- **Vue Composition API**：`ref()`、`computed()`、`watch()`、`<script setup>` —— 完全一致
+- **Vue Router API**：`useRoute()`、`useRouter()`、`router.push()`、`<RouterView>` —— 完全一致
+- **`<Transition>` / `<TransitionGroup>`**：CSS transition 类名完全一致
+- **递归组件**：`<Comment>` 自引用渲染嵌套评论 —— 完全一致
+- **模板指令**：`v-if`/`v-for`/`v-bind`/`{{ }}` —— 全部一致
+- **CSS**：SCSS、`@keyframes`、`:class` 绑定、media queries —— 全部可用
