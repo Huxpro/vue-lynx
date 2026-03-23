@@ -1,166 +1,104 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 4/4 supported (list, modelValue, addText, defaultTagText)
-  - Events: 4/4 supported (update:modelValue, select, add, edit)
-  - Slots: 0/0 supported (Vant ContactList has no slots)
-  - Gaps: None - full prop and event parity achieved
+  Lynx Limitations:
+  - overflow-y: scroll on group: Lynx has no overflow scroll, group renders without scroll
+  - -webkit-overflow-scrolling: touch: not applicable in Lynx
+  - van-safe-area-bottom class: safe area insets not available in Lynx
 -->
 <script setup lang="ts">
-/**
- * VantContactList (Lynx port)
- * @see https://github.com/youzan/vant/blob/main/packages/vant/src/contact-list/ContactList.tsx
- *
- * Feature parity: 4/4 props, 4/4 events. Full parity.
- * Lynx differences:
- *   - Custom radio icons instead of Vant's Radio/RadioGroup
- *   - Edit button is text "Edit" instead of Vant's Icon("edit")
- *   - Custom empty state instead of Vant's built-in empty handling
- *   - Uses Cell-like layout with inline styles
- */
-import { computed } from 'vue-lynx';
-
-export interface ContactItem {
-  id: string | number;
-  name: string;
-  tel: string;
-  isDefault?: boolean;
-}
+import { nextTick } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Cell from '../Cell/index.vue';
+import Radio from '../Radio/index.vue';
+import RadioGroup from '../RadioGroup/index.vue';
+import Tag from '../Tag/index.vue';
+import Icon from '../Icon/index.vue';
+import Button from '../Button/index.vue';
+import type { ContactListItem } from './types';
+import './index.less';
 
 export interface ContactListProps {
-  list?: ContactItem[];
-  modelValue?: string | number;
+  list?: ContactListItem[];
+  modelValue?: unknown;
   addText?: string;
   defaultTagText?: string;
 }
 
 const props = withDefaults(defineProps<ContactListProps>(), {
   list: () => [],
-  addText: 'Add New Contact',
-  defaultTagText: 'Default',
+  addText: '',
+  defaultTagText: '',
 });
 
 const emit = defineEmits<{
-  'update:modelValue': [id: string | number];
-  select: [item: ContactItem, index: number];
+  'update:modelValue': [id: unknown];
+  select: [item: ContactListItem, index: number];
   add: [];
-  edit: [item: ContactItem, index: number];
+  edit: [item: ContactListItem, index: number];
 }>();
 
-function isSelected(item: ContactItem): boolean {
-  return props.modelValue === item.id;
-}
+const [, bem] = createNamespace('contact-list');
 
-function onSelectItem(item: ContactItem, index: number) {
+// Flag to prevent Cell click from firing select when edit icon is tapped.
+// In Vant web, this is handled by event.stopPropagation() on the edit icon.
+let editClicked = false;
+
+function onItemClick(item: ContactListItem, index: number) {
+  if (editClicked) return;
   emit('update:modelValue', item.id);
   emit('select', item, index);
 }
 
-function onEditTap(item: ContactItem, index: number) {
+function onEdit(item: ContactListItem, index: number) {
+  editClicked = true;
   emit('edit', item, index);
+  nextTick(() => { editClicked = false; });
 }
 
-function onAddTap() {
+function onAdd() {
   emit('add');
 }
-
-const radioIconStyle = (selected: boolean) => ({
-  width: 20,
-  height: 20,
-  borderRadius: 10,
-  borderWidth: 1,
-  borderStyle: 'solid' as const,
-  borderColor: selected ? '#1989fa' : '#c8c9cc',
-  backgroundColor: selected ? '#1989fa' : '#fff',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginRight: 12,
-});
-
-const itemStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  padding: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column' }">
-    <!-- Contact list -->
-    <view
-      v-for="(item, index) in list"
-      :key="item.id"
-      :style="itemStyle"
-      @tap="onSelectItem(item, index)"
-    >
-      <!-- Radio icon -->
-      <view :style="radioIconStyle(isSelected(item))">
-        <text
-          v-if="isSelected(item)"
-          :style="{ fontSize: 12, color: '#fff' }"
-        >&#10003;</text>
-      </view>
-
-      <!-- Content -->
-      <view :style="{ flex: 1, display: 'flex', flexDirection: 'column' }">
-        <view :style="{ display: 'flex', flexDirection: 'row' as const, alignItems: 'center' }">
-          <text :style="{ fontSize: 16, color: '#323233', fontWeight: 'bold', marginRight: 8 }">{{ item.name }}</text>
-          <view
-            v-if="item.isDefault"
-            :style="{
-              paddingLeft: 4,
-              paddingRight: 4,
-              paddingTop: 1,
-              paddingBottom: 1,
-              backgroundColor: '#e8f4ff',
-              borderRadius: 2,
-            }"
-          >
-            <text :style="{ fontSize: 10, color: '#1989fa' }">{{ defaultTagText }}</text>
+  <view :class="bem()">
+    <RadioGroup :model-value="modelValue" :class="bem('group')">
+      <Cell
+        v-for="(item, index) in list"
+        :key="item.id"
+        is-link
+        center
+        :class="bem('item')"
+        :title-class="bem('item-title')"
+        @click="onItemClick(item, index)"
+      >
+        <template #icon>
+          <view @tap="onEdit(item, index)">
+            <Icon name="edit" :class="bem('edit')" />
           </view>
-        </view>
-        <text :style="{ fontSize: 14, color: '#969799', marginTop: 4 }">{{ item.tel }}</text>
-      </view>
-
-      <!-- Edit button -->
-      <text
-        :style="{ fontSize: 14, color: '#969799', paddingLeft: 12 }"
-        @tap="onEditTap(item, index)"
-      >Edit</text>
-    </view>
-
-    <!-- Empty state -->
-    <view
-      v-if="list.length === 0"
-      :style="{
-        padding: 32,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }"
-    >
-      <text :style="{ fontSize: 14, color: '#969799' }">No contacts</text>
-    </view>
-
-    <!-- Add button -->
-    <view
-      :style="{
-        margin: 16,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#ee0a24',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }"
-      @tap="onAddTap"
-    >
-      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">{{ addText }}</text>
+        </template>
+        <template #title>
+          <text>{{ item.name }}，{{ item.tel }}</text>
+          <Tag
+            v-if="item.isDefault && defaultTagText"
+            type="primary"
+            round
+            :class="bem('item-tag')"
+          >{{ defaultTagText }}</Tag>
+        </template>
+        <template #right-icon>
+          <Radio :class="bem('radio')" :name="item.id" :icon-size="18" />
+        </template>
+      </Cell>
+    </RadioGroup>
+    <view :class="bem('bottom')">
+      <Button
+        round
+        block
+        type="primary"
+        :class="bem('add')"
+        :text="addText || '添加联系人'"
+        @click="onAdd"
+      />
     </view>
   </view>
 </template>
