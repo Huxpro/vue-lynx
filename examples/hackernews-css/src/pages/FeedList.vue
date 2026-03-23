@@ -110,12 +110,6 @@ function goNext() {
 </template>
 
 <style lang="scss">
-.news-list-nav,
-.news-list {
-  background-color: #fff;
-  border-radius: 2px;
-}
-
 .feed-view {
   height: 100%;
 }
@@ -129,10 +123,14 @@ function goNext() {
   position: fixed;
   top: 55px;
   z-index: 998;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px;
   padding: 15px 30px;
   text-align: center;
+  background-color: #fff;
+  border-radius: 2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: row;
@@ -154,7 +152,10 @@ function goNext() {
 }
 
 .news-list {
-  margin: 30px 0;
+  background-color: #fff;
+  border-radius: 2px;
+  max-width: 800px;
+  margin: 30px auto;
   width: 100%;
   transition: all 0.3s cubic-bezier(0.55, 0, 0.1, 1);
 }
@@ -162,7 +163,8 @@ function goNext() {
 .status-card {
   background-color: #fff;
   border-radius: 2px;
-  margin: 30px 0;
+  max-width: 800px;
+  margin: 30px auto;
   padding: 40px;
   display: flex;
   align-items: center;
@@ -215,13 +217,24 @@ function goNext() {
   transform: translate(30px, 0);
 }
 
+@media (max-width: 860px) {
+  .news-list-nav {
+    max-width: calc(100% - 60px);
+  }
+}
+
 @media (max-width: 600px) {
   .news-list {
-    margin: 10px 0;
+    margin: 10px auto;
   }
 
   .news-list-nav {
+    max-width: calc(100% - 30px);
     padding: 15px;
+  }
+
+  .status-card {
+    margin: 10px auto;
   }
 
   .feed-content {
