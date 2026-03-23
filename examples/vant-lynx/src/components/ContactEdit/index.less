@@ -1,3 +1,32 @@
 :root {
-  /* ContactEdit has no specific CSS variables in Vant */
+  --van-contact-edit-padding: var(--van-padding-md);
+  --van-contact-edit-fields-radius: var(--van-radius-md);
+  --van-contact-edit-buttons-padding: var(--van-padding-xl) 0;
+  --van-contact-edit-button-margin-bottom: var(--van-padding-sm);
+  --van-contact-edit-button-font-size: var(--van-font-size-lg);
+  --van-contact-edit-field-label-width: 65px;
+}
+
+.van-contact-edit {
+  padding: var(--van-contact-edit-padding);
+
+  &__fields {
+    border-radius: var(--van-contact-edit-fields-radius);
+  }
+
+  &__switch-cell {
+    margin-top: 10px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    border-radius: var(--van-contact-edit-fields-radius);
+  }
+
+  &__buttons {
+    padding: var(--van-contact-edit-buttons-padding);
+  }
+
+  &__button {
+    margin-bottom: var(--van-contact-edit-button-margin-bottom);
+    font-size: var(--van-contact-edit-button-font-size);
+  }
 }
