@@ -123,10 +123,9 @@ function goNext() {
   position: fixed;
   top: 55px;
   z-index: 998;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 800px;
   padding: 15px 30px;
   text-align: center;
   background-color: #fff;
