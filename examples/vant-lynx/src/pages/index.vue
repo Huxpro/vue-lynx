@@ -1,90 +1,118 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useTheme } from '../composables/useTheme';
 
 const router = useRouter();
-const { isDark, toggleTheme, bgColor, cardColor, textColor, textColor2, headerBg } = useTheme();
 
-const components = [
-  { name: 'Button', path: '/button' },
-  { name: 'Cell', path: '/cell' },
-  { name: 'Icon', path: '/icon' },
-  { name: 'Image', path: '/image' },
-  { name: 'Loading', path: '/loading' },
-  { name: 'Tag', path: '/tag' },
-  { name: 'Badge', path: '/badge' },
-  { name: 'Divider', path: '/divider' },
-  { name: 'Space', path: '/space' },
-  { name: 'Layout', path: '/layout' },
-  { name: 'Popup', path: '/popup' },
-  { name: 'Overlay', path: '/overlay' },
-  { name: 'Switch', path: '/switch' },
-  { name: 'Checkbox', path: '/checkbox' },
-  { name: 'Radio', path: '/radio' },
-  { name: 'Field', path: '/field' },
-  { name: 'Rate', path: '/rate' },
-  { name: 'Stepper', path: '/stepper' },
-  { name: 'Progress', path: '/progress' },
-  { name: 'Circle', path: '/circle' },
-  { name: 'CountDown', path: '/count-down' },
-  { name: 'Empty', path: '/empty' },
-  { name: 'NoticeBar', path: '/notice-bar' },
-  { name: 'NavBar', path: '/nav-bar' },
-  { name: 'Tabbar', path: '/tabbar' },
-  { name: 'Tab', path: '/tab' },
-  { name: 'Grid', path: '/grid' },
-  { name: 'Collapse', path: '/collapse' },
-  { name: 'Steps', path: '/steps' },
-  { name: 'Toast', path: '/toast' },
-  { name: 'ConfigProvider', path: '/config-provider' },
-  { name: 'ActionSheet', path: '/action-sheet' },
-  { name: 'Dialog', path: '/dialog' },
-  { name: 'DropdownMenu', path: '/dropdown-menu' },
-  { name: 'Notify', path: '/notify' },
-  { name: 'ShareSheet', path: '/share-sheet' },
-  { name: 'SwipeCell', path: '/swipe-cell' },
-  { name: 'FloatingPanel', path: '/floating-panel' },
-  { name: 'FloatingBubble', path: '/floating-bubble' },
-  { name: 'Search', path: '/search' },
-  { name: 'Slider', path: '/slider' },
-  { name: 'Highlight', path: '/highlight' },
-  { name: 'Calendar', path: '/calendar' },
-  { name: 'Picker', path: '/picker' },
-  { name: 'PickerGroup', path: '/picker-group' },
-  { name: 'Cascader', path: '/cascader' },
-  { name: 'DatePicker', path: '/date-picker' },
-  { name: 'TimePicker', path: '/time-picker' },
-  { name: 'NumberKeyboard', path: '/number-keyboard' },
-  { name: 'PasswordInput', path: '/password-input' },
-  { name: 'Uploader', path: '/uploader' },
-  { name: 'Form', path: '/form' },
-  { name: 'Skeleton', path: '/skeleton' },
-  { name: 'Card', path: '/card' },
-  { name: 'Pagination', path: '/pagination' },
-  { name: 'Sticky', path: '/sticky' },
-  { name: 'Swipe', path: '/swipe' },
-  { name: 'TextEllipsis', path: '/text-ellipsis' },
-  { name: 'Watermark', path: '/watermark' },
-  { name: 'ActionBar', path: '/action-bar' },
-  { name: 'BackTop', path: '/back-top' },
-  { name: 'IndexBar', path: '/index-bar' },
-  { name: 'Sidebar', path: '/sidebar' },
-  { name: 'Barrage', path: '/barrage' },
-  { name: 'ImagePreview', path: '/image-preview' },
-  { name: 'List', path: '/list' },
-  { name: 'Popover', path: '/popover' },
-  { name: 'RollingText', path: '/rolling-text' },
-  { name: 'TreeSelect', path: '/tree-select' },
-  { name: 'AddressEdit', path: '/address-edit' },
-  { name: 'AddressList', path: '/address-list' },
-  { name: 'Area', path: '/area' },
-  { name: 'ContactCard', path: '/contact-card' },
-  { name: 'ContactEdit', path: '/contact-edit' },
-  { name: 'ContactList', path: '/contact-list' },
-  { name: 'CouponList', path: '/coupon-list' },
-  { name: 'SubmitBar', path: '/submit-bar' },
-  { name: 'Signature', path: '/signature' },
-  { name: 'PullRefresh', path: '/pull-refresh' },
+const nav = [
+  {
+    title: '基础组件',
+    items: [
+      { title: 'Button 按钮', path: '/button' },
+      { title: 'Cell 单元格', path: '/cell' },
+      { title: 'ConfigProvider 全局配置', path: '/config-provider' },
+      { title: 'Icon 图标', path: '/icon' },
+      { title: 'Image 图片', path: '/image' },
+      { title: 'Layout 布局', path: '/layout' },
+      { title: 'Popup 弹出层', path: '/popup' },
+      { title: 'Space 间距', path: '/space' },
+      { title: 'Toast 轻提示', path: '/toast' },
+    ],
+  },
+  {
+    title: '表单组件',
+    items: [
+      { title: 'Calendar 日历', path: '/calendar' },
+      { title: 'Cascader 级联选择', path: '/cascader' },
+      { title: 'Checkbox 复选框', path: '/checkbox' },
+      { title: 'DatePicker 日期选择', path: '/date-picker' },
+      { title: 'Field 输入框', path: '/field' },
+      { title: 'Form 表单', path: '/form' },
+      { title: 'NumberKeyboard 数字键盘', path: '/number-keyboard' },
+      { title: 'PasswordInput 密码输入框', path: '/password-input' },
+      { title: 'Picker 选择器', path: '/picker' },
+      { title: 'PickerGroup 选择器组', path: '/picker-group' },
+      { title: 'Radio 单选框', path: '/radio' },
+      { title: 'Rate 评分', path: '/rate' },
+      { title: 'Search 搜索', path: '/search' },
+      { title: 'Slider 滑块', path: '/slider' },
+      { title: 'Signature 签名', path: '/signature' },
+      { title: 'Stepper 步进器', path: '/stepper' },
+      { title: 'Switch 开关', path: '/switch' },
+      { title: 'TimePicker 时间选择', path: '/time-picker' },
+      { title: 'Uploader 文件上传', path: '/uploader' },
+    ],
+  },
+  {
+    title: '反馈组件',
+    items: [
+      { title: 'ActionSheet 动作面板', path: '/action-sheet' },
+      { title: 'Barrage 弹幕', path: '/barrage' },
+      { title: 'Dialog 弹出框', path: '/dialog' },
+      { title: 'DropdownMenu 下拉菜单', path: '/dropdown-menu' },
+      { title: 'FloatingPanel 浮动面板', path: '/floating-panel' },
+      { title: 'FloatingBubble 浮动气泡', path: '/floating-bubble' },
+      { title: 'Loading 加载', path: '/loading' },
+      { title: 'Notify 消息通知', path: '/notify' },
+      { title: 'Overlay 遮罩层', path: '/overlay' },
+      { title: 'PullRefresh 下拉刷新', path: '/pull-refresh' },
+      { title: 'ShareSheet 分享面板', path: '/share-sheet' },
+      { title: 'SwipeCell 滑动单元格', path: '/swipe-cell' },
+    ],
+  },
+  {
+    title: '展示组件',
+    items: [
+      { title: 'Badge 徽标', path: '/badge' },
+      { title: 'Circle 环形进度条', path: '/circle' },
+      { title: 'Collapse 折叠面板', path: '/collapse' },
+      { title: 'CountDown 倒计时', path: '/count-down' },
+      { title: 'Divider 分割线', path: '/divider' },
+      { title: 'Empty 空状态', path: '/empty' },
+      { title: 'Highlight 高亮文本', path: '/highlight' },
+      { title: 'ImagePreview 图片预览', path: '/image-preview' },
+      { title: 'List 列表', path: '/list' },
+      { title: 'NoticeBar 通知栏', path: '/notice-bar' },
+      { title: 'Popover 气泡弹出框', path: '/popover' },
+      { title: 'Progress 进度条', path: '/progress' },
+      { title: 'RollingText 翻滚文本', path: '/rolling-text' },
+      { title: 'Skeleton 骨架屏', path: '/skeleton' },
+      { title: 'Steps 步骤条', path: '/steps' },
+      { title: 'Sticky 粘性布局', path: '/sticky' },
+      { title: 'Swipe 轮播', path: '/swipe' },
+      { title: 'Tag 标签', path: '/tag' },
+      { title: 'TextEllipsis 文本省略', path: '/text-ellipsis' },
+      { title: 'Watermark 水印', path: '/watermark' },
+    ],
+  },
+  {
+    title: '导航组件',
+    items: [
+      { title: 'ActionBar 动作栏', path: '/action-bar' },
+      { title: 'BackTop 回到顶部', path: '/back-top' },
+      { title: 'Grid 宫格', path: '/grid' },
+      { title: 'IndexBar 索引栏', path: '/index-bar' },
+      { title: 'NavBar 导航栏', path: '/nav-bar' },
+      { title: 'Pagination 分页', path: '/pagination' },
+      { title: 'Sidebar 侧边导航', path: '/sidebar' },
+      { title: 'Tab 标签页', path: '/tab' },
+      { title: 'Tabbar 标签栏', path: '/tabbar' },
+      { title: 'TreeSelect 分类选择', path: '/tree-select' },
+    ],
+  },
+  {
+    title: '业务组件',
+    items: [
+      { title: 'AddressEdit 地址编辑', path: '/address-edit' },
+      { title: 'AddressList 地址列表', path: '/address-list' },
+      { title: 'Area 省市区选择', path: '/area' },
+      { title: 'Card 商品卡片', path: '/card' },
+      { title: 'ContactCard 联系人卡片', path: '/contact-card' },
+      { title: 'ContactEdit 联系人编辑', path: '/contact-edit' },
+      { title: 'ContactList 联系人列表', path: '/contact-list' },
+      { title: 'Coupon 优惠券', path: '/coupon-list' },
+      { title: 'SubmitBar 提交订单栏', path: '/submit-bar' },
+    ],
+  },
 ];
 
 function navigate(path: string) {
@@ -93,69 +121,91 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: bgColor }">
-    <!-- Header (fixed) -->
-    <view :style="{
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingTop: '16px',
-      paddingBottom: '12px',
-      paddingLeft: '16px',
-      paddingRight: '16px',
-      backgroundColor: headerBg,
-    }">
-      <view :style="{ display: 'flex', flexDirection: 'column' }">
-        <text :style="{ fontSize: '20px', fontWeight: 'bold', color: textColor }">
-          Vant Lynx
-        </text>
-        <text :style="{ fontSize: '14px', color: textColor2, marginTop: '4px' }">
-          Mobile UI Components for Lynx
-        </text>
-      </view>
-      <view
-        :style="{
-          backgroundColor: isDark ? '#3a3a3a' : '#f2f3f5',
-          borderRadius: '16px',
-          paddingTop: '6px',
-          paddingBottom: '6px',
-          paddingLeft: '12px',
-          paddingRight: '12px',
-        }"
-        @tap="toggleTheme"
-      >
-        <text :style="{ fontSize: '14px', color: textColor }">
-          {{ isDark ? 'Light' : 'Dark' }}
-        </text>
-      </view>
+  <view class="demo-home">
+    <!-- Title -->
+    <view class="demo-home__title">
+      <text class="demo-home__title-text">Vant Lynx</text>
     </view>
+    <text class="demo-home__desc">轻量、可定制的移动端组件库</text>
 
-    <!-- Scrollable Component List -->
-    <scroll-view
-      scroll-orientation="vertical"
-      :style="{ flex: 1 }"
-    >
-      <view :style="{ padding: '12px', display: 'flex', flexDirection: 'column' }">
+    <!-- Nav groups -->
+    <view v-for="(group, gi) in nav" :key="gi" class="demo-home-nav">
+      <text class="demo-home-nav__title">{{ group.title }}</text>
+      <view class="demo-home-nav__group">
         <view
-          v-for="comp in components"
-          :key="comp.name"
-          :style="{
-            backgroundColor: cardColor,
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '8px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }"
-          @tap="navigate(comp.path)"
+          v-for="item in group.items"
+          :key="item.path"
+          class="demo-home-nav__block"
+          @tap="navigate(item.path)"
         >
-          <text :style="{ fontSize: '16px', color: textColor }">{{ comp.name }}</text>
-          <text :style="{ fontSize: '14px', color: textColor2 }">></text>
+          <text class="demo-home-nav__block-text">{{ item.title }}</text>
+          <text class="demo-home-nav__icon">›</text>
         </view>
       </view>
-    </scroll-view>
+    </view>
   </view>
 </template>
+
+<style lang="less">
+.demo-home {
+  width: 100%;
+  padding: 46px 20px 20px;
+
+  &__title {
+    padding-left: 16px;
+    margin-bottom: 16px;
+  }
+
+  &__title-text {
+    font-size: 32px;
+    font-weight: bold;
+    color: #323233;
+  }
+
+  &__desc {
+    padding-left: 16px;
+    margin-bottom: 40px;
+    color: #969799;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+.demo-home-nav {
+  &__title {
+    margin: 24px 0 8px 16px;
+    color: #969799;
+    font-size: 14px;
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__block {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-left: 20px;
+    padding-right: 16px;
+    height: 40px;
+    background-color: #f7f8fa;
+    border-radius: 99px;
+  }
+
+  &__block-text {
+    flex: 1;
+    color: #323233;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &__icon {
+    color: #b6b7b9;
+    font-size: 16px;
+  }
+}
+</style>

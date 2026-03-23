@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
-import DemoBlock from '../components/DemoBlock/index.vue';
+// DemoBlock is just a titled section wrapper — inline it
+const DemoBlock = { props: ['title'], template: '<view :style="{ marginBottom: \'16px\' }"><text :style="{ fontSize: \'14px\', color: \'#969799\', marginBottom: \'12px\', paddingLeft: \'16px\' }">{{ title }}</text><slot /></view>' };
 import Cell from '../components/Cell/index.vue';
 import Calendar from '../components/Calendar/index.vue';
 import type { CalendarDayItem } from '../components/Calendar/types';
