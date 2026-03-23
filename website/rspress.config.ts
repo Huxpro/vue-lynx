@@ -66,6 +66,7 @@ export default defineConfig({
         { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Product Swiper', link: '/guide/tutorial-swiper' },
         { text: '7GUIs Benchmark', link: '/guide/7guis' },
+        { text: 'HackerNews Slopfork', link: '/guide/hackernews' },
         {
           dividerType: 'solid',
         },
