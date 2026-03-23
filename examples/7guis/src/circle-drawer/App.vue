@@ -23,18 +23,6 @@ const selectedCircle = computed(() => {
   return circles.value.find(c => c.id === selectedId.value)
 })
 
-function getTouchPos(e) {
-  // Get coordinates relative to the viewport/screen
-  // e.detail.x/y in Lynx are relative to the element, but we need absolute for circles
-  const x = e.detail?.x ?? e.touches?.[0]?.pageX ?? 0
-  const y = e.detail?.y ?? e.touches?.[0]?.pageY ?? 0
-  
-  // Add offset because canvas is positioned at top: 60
-  // In Lynx, e.detail.x/y are relative to the tapped element
-  // The canvas view has top: 60, so we need to add that offset
-  return { x, y: y + 60 }
-}
-
 function onCanvasTap(e) {
   // If modal is open, close it without creating new circle
   if (showModal.value) {
@@ -42,9 +30,9 @@ function onCanvasTap(e) {
     return
   }
 
-  const pos = getTouchPos(e)
-  const x = pos.x
-  const y = pos.y
+  // Get touch coordinates - relative to the full view
+  const x = e.detail?.x ?? e.touches?.[0]?.pageX ?? 0
+  const y = e.detail?.y ?? e.touches?.[0]?.pageY ?? 0
 
   // Check if tapped on an existing circle
   const hit = [...circles.value].reverse().find((c) => {
@@ -56,7 +44,7 @@ function onCanvasTap(e) {
   if (hit) {
     handleCircleTap(hit.id)
   } else {
-    circles.value.push({ id: nextId++, x,    y, r: 30 })
+    circles.value.push({ id: nextId++, x, y, r: 30 })
     selectedId.value = -1
     push()
   }
@@ -80,7 +68,7 @@ function handleCircleTap(circleId) {
 }
 
 function onCircleTap(e, circle) {
-  // Stop propagation to prevent canvas tap
+  // Use catchtap to stop event bubbling to parent
   e?.stopPropagation?.()
   handleCircleTap(circle.id)
 }
@@ -148,6 +136,7 @@ function push() {
 }
 
 function undo(e) {
+  // Use catchtap to prevent event from reaching canvas
   e?.stopPropagation?.()
   if (historyIndex.value > 0) {
     circles.value = history[--historyIndex.value].map((c) => ({ ...c }))
@@ -157,6 +146,7 @@ function undo(e) {
 }
 
 function redo(e) {
+  // Use catchtap to prevent event from reaching canvas
   e?.stopPropagation?.()
   if (historyIndex.value < history.length - 1) {
     circles.value = history[++historyIndex.value].map((c) => ({ ...c }))
@@ -167,55 +157,39 @@ function redo(e) {
 </script>
 
 <template>
-  <!-- Main container -->
+  <!-- Canvas fills the entire view; controls overlay on top -->
   <view
     :style="{ width: '100%', height: '100vh', minHeight: '400px', backgroundColor: '#f0f0f0', position: 'relative' }"
+    @tap="onCanvasTap"
   >
-    <!-- Hint text for empty state - centered -->
-    <view
+    <!-- Hint text for empty state -->
+    <text
       v-if="circles.length === 0"
-      :style="{ 
-        position: 'absolute', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        bottom: 0, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }"
+      :style="{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#bbb', fontSize: 14, textAlign: 'center' }"
     >
-      <text :style="{ color: '#bbb', fontSize: 14, textAlign: 'center' }">
-        Tap to draw circles
-      </text>
-    </view>
+      Tap to draw circles
+    </text>
 
-    <!-- Canvas area for drawing (below controls) -->
+    <!-- Circles -->
     <view
-      :style="{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 50 }"
-      @tap="onCanvasTap"
-    >
-      <!-- Circles -->
-      <view
-        v-for="circle in circles"
-        :key="circle.id"
-        :style="{
-          position: 'absolute',
-          left: circle.x - circle.r + 'px',
-          top: circle.y - circle.r + 'px',
-          width: circle.r * 2 + 'px',
-          height: circle.r * 2 + 'px',
-          borderRadius: circle.r + 'px',
-          backgroundColor: circle.id === selectedId ? '#0077ff' : '#fff',
-          borderWidth: circle.id === selectedId ? 3 : 1,
-          borderColor: circle.id === selectedId ? '#0055cc' : '#333',
-        }"
-        @tap="(e) => onCircleTap(e, circle)"
-      />
-    </view>
+      v-for="circle in circles"
+      :key="circle.id"
+      :style="{
+        position: 'absolute',
+        left: circle.x - circle.r + 'px',
+        top: circle.y - circle.r + 'px',
+        width: circle.r * 2 + 'px',
+        height: circle.r * 2 + 'px',
+        borderRadius: circle.r + 'px',
+        backgroundColor: circle.id === selectedId ? '#0077ff' : '#fff',
+        borderWidth: circle.id === selectedId ? 3 : 1,
+        borderColor: circle.id === selectedId ? '#0055cc' : '#333',
+      }"
+      @tap="(e) => onCircleTap(e, circle)"
+    />
 
     <!-- Undo / Redo overlaid at the top -->
-    <view :style="{ position: 'absolute', top: 10, left: 0, right: 0, display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'center', zIndex: 10 }">
+    <view :style="{ position: 'absolute', top: 10, left: 0, right: 0, display: 'flex', flexDirection: 'row', gap: 8, justifyContent: 'center' }">
       <view
         :style="{ padding: '6px 16px', backgroundColor: historyIndex > 0 ? '#0077ff' : '#ccc', borderRadius: 6 }"
         @tap="undo"
@@ -230,25 +204,13 @@ function redo(e) {
       </view>
     </view>
 
-    <!-- Hint for interaction - at bottom -->
-    <view
+    <!-- Hint for interaction -->
+    <text
       v-if="circles.length > 0 && !showModal"
-      :style="{ 
-        position: 'absolute', 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        height: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10 
-      }"
+      :style="{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', color: '#666', fontSize: 12 }"
     >
-      <text :style="{ color: '#666', fontSize: 12, textAlign: 'center' }">
-        Double-tap a circle to adjust radius
-      </text>
-    </view>
+      Double-tap a circle to adjust radius
+    </text>
 
     <!-- Modal Overlay -->
     <view
