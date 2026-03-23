@@ -2,3 +2,19 @@
   --van-action-bar-background: var(--van-background-2, #fff);
   --van-action-bar-height: 50px;
 }
+
+.van-action-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  height: var(--van-action-bar-height);
+  background: var(--van-action-bar-background);
+
+  &__placeholder {
+    height: var(--van-action-bar-height);
+  }
+}

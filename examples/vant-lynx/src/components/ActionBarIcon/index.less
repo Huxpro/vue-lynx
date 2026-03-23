@@ -8,3 +8,34 @@
   --van-action-bar-icon-text-color: var(--van-text-color, #323233);
   --van-action-bar-icon-background: var(--van-background-2, #fff);
 }
+
+.van-action-bar-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: var(--van-action-bar-icon-width);
+  height: var(--van-action-bar-icon-height);
+  color: var(--van-action-bar-icon-text-color);
+  font-size: var(--van-action-bar-icon-font-size);
+  background: var(--van-action-bar-icon-background);
+
+  &--disabled {
+    opacity: 0.5;
+
+    .van-action-bar-icon__icon {
+      color: var(--van-text-color-3, #c8c9cc);
+    }
+  }
+
+  &__icon {
+    margin-bottom: var(--van-padding-base, 4px);
+    color: var(--van-action-bar-icon-color);
+    font-size: var(--van-action-bar-icon-size);
+  }
+
+  &__text {
+    color: var(--van-action-bar-icon-text-color);
+    font-size: var(--van-action-bar-icon-font-size);
+  }
+}
