@@ -81,7 +81,8 @@ function openComments() {
   background-color: #fff;
   box-sizing: border-box;
   padding: 2em 3em;
-  margin-top: 30px;
+  margin: 30px auto 0;
+  max-width: 800px;
 }
 
 .user-title {
@@ -131,7 +132,8 @@ function openComments() {
 
 .status-card {
   background-color: #fff;
-  margin-top: 30px;
+  margin: 30px auto 0;
+  max-width: 800px;
   padding: 2em 3em;
   display: flex;
   flex-direction: column;

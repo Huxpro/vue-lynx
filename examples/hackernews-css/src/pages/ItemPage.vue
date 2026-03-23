@@ -96,6 +96,8 @@ function openItemLink() {
   background-color: #fff;
   padding: 1.8em 2em 1em;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .back-link {
@@ -140,6 +142,9 @@ function openItemLink() {
   background-color: #fff;
   margin-top: 10px;
   padding: 0 2em 0.5em;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .item-view-comments-header {
@@ -158,6 +163,9 @@ function openItemLink() {
   background-color: #fff;
   margin-top: 30px;
   padding: 40px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   align-items: center;
   justify-content: center;
