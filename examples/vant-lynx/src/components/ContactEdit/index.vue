@@ -1,255 +1,164 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/7 supported (contactInfo, isEdit, isSaving, isDeleting,
-    telValidator, showSetDefault, setDefaultLabel)
-  - Events: 3/3 supported (save, delete, changeDefault)
-  - Slots: 0/0 supported (Vant ContactEdit has no slots)
-  - Gaps: None - full prop and event parity achieved
+  Lynx Limitations:
+  - <form> element: Lynx has no <form> element, Form uses <view> instead
+  - nativeType="submit": No native form submission in Lynx, calls form.submit() manually
+  - isMobile validator: Uses simplified regex, not Vant's locale-specific validator
 -->
+<script lang="ts">
+import type { ContactEditInfo } from './types';
+
+const DEFAULT_CONTACT: ContactEditInfo = {
+  tel: '',
+  name: '',
+};
+
+function isMobile(value: string): boolean {
+  value = value.replace(/[^-|\d]/g, '');
+  return /^(\+?\d{3,4}[- ]?)?\d{5,}$/.test(value);
+}
+</script>
+
 <script setup lang="ts">
-/**
- * VantContactEdit (Lynx port)
- * @see https://github.com/youzan/vant/blob/main/packages/vant/src/contact-edit/ContactEdit.tsx
- *
- * Feature parity: 7/7 props, 3/3 events. Full parity.
- * Lynx differences:
- *   - Manual validation instead of Vant's Form/Field components
- *   - Custom toggle view instead of Vant's Switch component
- *   - Button loading states shown via text change + opacity
- */
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, reactive, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Form from '../Form/index.vue';
+import Field from '../Field/index.vue';
+import Button from '../Button/index.vue';
+import Switch from '../Switch/index.vue';
+import Cell from '../Cell/index.vue';
+import type { FormExpose } from '../Form/types';
+import './index.less';
 
-export interface ContactInfo {
-  name?: string;
-  tel?: string;
-  isDefault?: boolean;
-}
+const [, bem] = createNamespace('contact-edit');
 
-export interface ContactEditProps {
-  contactInfo?: ContactInfo;
-  isEdit?: boolean;
-  isSaving?: boolean;
-  isDeleting?: boolean;
-  telValidator?: (tel: string) => boolean;
-  showSetDefault?: boolean;
-  setDefaultLabel?: string;
-}
-
-const props = withDefaults(defineProps<ContactEditProps>(), {
-  contactInfo: () => ({}),
-  isEdit: false,
-  isSaving: false,
-  isDeleting: false,
-  showSetDefault: false,
-  setDefaultLabel: 'Set as default contact',
-});
+const props = withDefaults(
+  defineProps<{
+    isEdit?: boolean;
+    isSaving?: boolean;
+    isDeleting?: boolean;
+    showSetDefault?: boolean;
+    setDefaultLabel?: string;
+    contactInfo?: ContactEditInfo;
+    telValidator?: (val: string) => boolean;
+  }>(),
+  {
+    isEdit: false,
+    isSaving: false,
+    isDeleting: false,
+    showSetDefault: false,
+    setDefaultLabel: '',
+    contactInfo: () => ({ ...DEFAULT_CONTACT }),
+    telValidator: isMobile,
+  },
+);
 
 const emit = defineEmits<{
-  save: [info: ContactInfo];
-  delete: [info: ContactInfo];
-  changeDefault: [value: boolean];
+  save: [contact: ContactEditInfo];
+  delete: [contact: ContactEditInfo];
+  changeDefault: [checked: boolean];
 }>();
 
-const name = ref(props.contactInfo.name ?? '');
-const tel = ref(props.contactInfo.tel ?? '');
-const isDefault = ref(props.contactInfo.isDefault ?? false);
+const contact = reactive<ContactEditInfo>({
+  ...DEFAULT_CONTACT,
+  ...props.contactInfo,
+});
+
+const formRef = ref<FormExpose>();
+
+const onSave = () => {
+  if (!props.isSaving) {
+    emit('save', { ...contact });
+  }
+};
+
+const onDelete = () => emit('delete', { ...contact });
+
+const onChangeDefault = (checked: unknown) => {
+  contact.isDefault = checked as boolean;
+  emit('changeDefault', checked as boolean);
+};
+
+const onFormSubmit = () => {
+  onSave();
+};
+
+const onFormFailed = () => {
+  // validation failed, do nothing
+};
+
+const handleSave = () => {
+  formRef.value?.submit();
+};
 
 watch(
   () => props.contactInfo,
-  (info) => {
-    name.value = info.name ?? '';
-    tel.value = info.tel ?? '';
-    isDefault.value = info.isDefault ?? false;
+  (value) => {
+    Object.assign(contact, DEFAULT_CONTACT, value);
   },
-  { deep: true },
 );
-
-const showNameError = ref(false);
-const showTelError = ref(false);
-
-function validateTel(telValue: string): boolean {
-  if (props.telValidator) {
-    return props.telValidator(telValue);
-  }
-  return telValue.length >= 5;
-}
-
-function getContactInfo(): ContactInfo {
-  return {
-    name: name.value,
-    tel: tel.value,
-    isDefault: isDefault.value,
-  };
-}
-
-function onSave() {
-  showNameError.value = false;
-  showTelError.value = false;
-
-  if (!name.value.trim()) {
-    showNameError.value = true;
-    return;
-  }
-
-  if (!tel.value.trim() || !validateTel(tel.value)) {
-    showTelError.value = true;
-    return;
-  }
-
-  emit('save', getContactInfo());
-}
-
-function onDelete() {
-  emit('delete', getContactInfo());
-}
-
-function onToggleDefault() {
-  isDefault.value = !isDefault.value;
-  emit('changeDefault', isDefault.value);
-}
-
-const fieldContainerStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  padding: 10,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-};
-
-const labelStyle = {
-  fontSize: 14,
-  color: '#323233',
-  width: 88,
-  marginRight: 12,
-};
-
-const inputStyle = {
-  flex: 1,
-  fontSize: 14,
-  color: '#323233',
-  height: 24,
-};
-
-const errorTextStyle = {
-  fontSize: 12,
-  color: '#ee0a24',
-  paddingLeft: 116,
-  paddingBottom: 8,
-  backgroundColor: '#fff',
-};
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Name field -->
-    <view :style="fieldContainerStyle">
-      <text :style="{ ...labelStyle, color: showNameError ? '#ee0a24' : '#323233' }">Name</text>
-      <input
-        :value="name"
-        placeholder="Enter name"
-        :style="inputStyle"
-        @input="(e: any) => { name = e?.detail?.value ?? e?.target?.value ?? '' }"
+  <Form
+    ref="formRef"
+    :class="bem()"
+    @submit="onFormSubmit"
+    @failed="onFormFailed"
+  >
+    <view :class="bem('fields')">
+      <Field
+        v-model="contact.name"
+        clearable
+        label="姓名"
+        :rules="[{ required: true, message: '请填写姓名' }]"
+        maxlength="30"
+        placeholder="姓名"
+        :label-width="'4.1em'"
       />
-    </view>
-    <text v-if="showNameError" :style="errorTextStyle">Please enter name</text>
-
-    <!-- Tel field -->
-    <view :style="fieldContainerStyle">
-      <text :style="{ ...labelStyle, color: showTelError ? '#ee0a24' : '#323233' }">Tel</text>
-      <input
-        :value="tel"
-        placeholder="Enter phone number"
+      <Field
+        v-model="contact.tel"
+        clearable
         type="tel"
-        :style="inputStyle"
-        @input="(e: any) => { tel = e?.detail?.value ?? e?.target?.value ?? '' }"
+        label="电话"
+        :rules="[{ validator: telValidator, message: '请填写正确的电话号码' }]"
+        placeholder="电话"
+        :label-width="'4.1em'"
       />
     </view>
-    <text v-if="showTelError" :style="errorTextStyle">Please enter valid phone number</text>
-
-    <!-- Set Default -->
-    <view
+    <Cell
       v-if="showSetDefault"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row' as const,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 10,
-        paddingLeft: 16,
-        paddingRight: 16,
-        backgroundColor: '#fff',
-        marginTop: 12,
-      }"
-      @tap="onToggleDefault"
+      :title="setDefaultLabel"
+      :class="bem('switch-cell')"
+      :border="false"
     >
-      <text :style="{ fontSize: 14, color: '#323233' }">{{ setDefaultLabel }}</text>
-      <view
-        :style="{
-          width: 44,
-          height: 24,
-          borderRadius: 12,
-          backgroundColor: isDefault ? '#1989fa' : '#e5e5e5',
-          display: 'flex',
-          flexDirection: 'row' as const,
-          alignItems: 'center',
-          padding: 2,
-        }"
-      >
-        <view
-          :style="{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: '#fff',
-            marginLeft: isDefault ? 18 : 0,
-          }"
+      <template #right-icon>
+        <Switch
+          :model-value="contact.isDefault"
+          @update:model-value="onChangeDefault"
         />
-      </view>
+      </template>
+    </Cell>
+    <view :class="bem('buttons')">
+      <Button
+        block
+        round
+        type="primary"
+        :class="bem('button')"
+        :loading="isSaving"
+        @click="handleSave"
+      >
+        <text>保存</text>
+      </Button>
+      <Button
+        v-if="isEdit"
+        block
+        round
+        :class="bem('button')"
+        :loading="isDeleting"
+        @click="onDelete"
+      >
+        <text>删除</text>
+      </Button>
     </view>
-
-    <!-- Save button -->
-    <view
-      :style="{
-        margin: 16,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: isSaving ? '#7fb8f5' : '#1989fa',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: isSaving ? 0.7 : 1,
-      }"
-      @tap="onSave"
-    >
-      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">{{ isSaving ? 'Saving...' : 'Save' }}</text>
-    </view>
-
-    <!-- Delete button -->
-    <view
-      v-if="isEdit"
-      :style="{
-        marginLeft: 16,
-        marginRight: 16,
-        marginBottom: 16,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderStyle: 'solid' as const,
-        borderColor: '#ee0a24',
-        opacity: isDeleting ? 0.7 : 1,
-      }"
-      @tap="onDelete"
-    >
-      <text :style="{ fontSize: 16, color: '#ee0a24' }">{{ isDeleting ? 'Deleting...' : 'Delete' }}</text>
-    </view>
-  </view>
+  </Form>
 </template>

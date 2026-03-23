@@ -1,57 +1,35 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
+import DemoBlock from '../components/DemoBlock/index.vue';
 import ContactEdit from '../components/ContactEdit/index.vue';
-const result = ref('');
+import type { ContactEditInfo } from '../components/ContactEdit/types';
 
-const editContactInfo = {
-  name: 'John Doe',
-  tel: '13000000000',
-  isDefault: true,
+const editingContact = ref<ContactEditInfo>({
+  tel: '',
+  name: '',
+});
+
+const onSave = (info: ContactEditInfo) => {
+  console.log('save', info);
 };
 
-function onSave(info: any) {
-  result.value = 'Saved: ' + info.name + ' - ' + info.tel;
-}
-
-function onDelete(info: any) {
-  result.value = 'Deleted: ' + info.name;
-}
-
-function onChangeDefault(value: boolean) {
-  result.value = 'Default changed to: ' + value;
-}
+const onDelete = (info: ContactEditInfo) => {
+  console.log('delete', info);
+};
 </script>
 
 <template>
-  <DemoPage title="ContactEdit">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- New Contact -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">New Contact</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <ContactEdit
-          :show-set-default="true"
-          @save="onSave"
-          @change-default="onChangeDefault"
-        />
-      </view>
-
-      <!-- Edit Contact -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Edit Contact</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <ContactEdit
-          :contact-info="editContactInfo"
-          :is-edit="true"
-          :show-set-default="true"
-          @save="onSave"
-          @delete="onDelete"
-          @change-default="onChangeDefault"
-        />
-      </view>
-
-      <view v-if="result" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ result }}</text>
-      </view>
-    </view>
+  <DemoPage title="ContactEdit 联系人编辑">
+    <DemoBlock title="基础用法">
+      <ContactEdit
+        is-edit
+        show-set-default
+        :contact-info="editingContact"
+        set-default-label="设为默认联系人"
+        @save="onSave"
+        @delete="onDelete"
+      />
+    </DemoBlock>
   </DemoPage>
 </template>
