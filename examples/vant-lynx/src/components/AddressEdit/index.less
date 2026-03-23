@@ -1,3 +1,36 @@
 :root {
-  /* AddressEdit has no specific CSS variables in Vant */
+  --van-address-edit-padding: var(--van-padding-sm);
+  --van-address-edit-buttons-padding: var(--van-padding-xl) var(--van-padding-base);
+  --van-address-edit-button-margin-bottom: var(--van-padding-sm);
+  --van-address-edit-button-font-size: var(--van-font-size-lg);
+}
+
+.van-address-edit {
+  padding: var(--van-address-edit-padding);
+
+  &__fields {
+    overflow: hidden;
+    border-radius: var(--van-padding-xs);
+  }
+
+  &__default {
+    margin-top: var(--van-padding-sm);
+    overflow: hidden;
+    border-radius: var(--van-padding-xs);
+  }
+
+  &__buttons {
+    padding: var(--van-address-edit-buttons-padding);
+  }
+
+  &__button {
+    margin-bottom: var(--van-address-edit-button-margin-bottom);
+    font-size: var(--van-address-edit-button-font-size);
+  }
+}
+
+.van-address-edit-detail {
+  &__search-item {
+    background: var(--van-gray-2);
+  }
 }
