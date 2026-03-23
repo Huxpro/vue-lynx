@@ -7,7 +7,6 @@
   --van-submit-bar-price-font-size: var(--van-font-size-sm, 12px);
   --van-submit-bar-price-integer-font-size: 20px;
   --van-submit-bar-price-font: var(--van-price-font, -apple-system-body);
-  --van-submit-bar-currency-font-size: var(--van-font-size-md, 14px);
   --van-submit-bar-text-color: var(--van-text-color, #323233);
   --van-submit-bar-text-font-size: var(--van-font-size-md, 14px);
   --van-submit-bar-tip-padding: var(--van-padding-xs, 8px) var(--van-padding-sm, 12px);
@@ -18,4 +17,99 @@
   --van-submit-bar-tip-icon-size: 12px;
   --van-submit-bar-button-height: 40px;
   --van-submit-bar-padding: 0 var(--van-padding-md, 16px);
+}
+
+.van-submit-bar {
+  background: var(--van-submit-bar-background);
+
+  &__tip {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: var(--van-submit-bar-tip-padding);
+    color: var(--van-submit-bar-tip-color);
+    font-size: var(--van-submit-bar-tip-font-size);
+    line-height: var(--van-submit-bar-tip-line-height);
+    background: var(--van-submit-bar-tip-background);
+  }
+
+  &__tip-icon {
+    margin-right: var(--van-padding-base, 4px);
+    font-size: var(--van-submit-bar-tip-icon-size);
+  }
+
+  &__tip-text {
+    font-size: var(--van-submit-bar-tip-font-size);
+    color: var(--van-submit-bar-tip-color);
+  }
+
+  &__bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    height: var(--van-submit-bar-height);
+    padding: var(--van-submit-bar-padding);
+    font-size: var(--van-submit-bar-text-font-size);
+    background: var(--van-submit-bar-background);
+  }
+
+  &__text {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-end;
+    padding-right: var(--van-padding-sm, 12px);
+    color: var(--van-submit-bar-text-color);
+    font-size: var(--van-submit-bar-text-font-size);
+
+    &--left {
+      justify-content: flex-start;
+    }
+  }
+
+  &__label {
+    font-size: var(--van-submit-bar-text-font-size);
+    color: var(--van-submit-bar-text-color);
+  }
+
+  &__price {
+    color: var(--van-submit-bar-price-color);
+    font-weight: 500;
+    font-size: var(--van-submit-bar-price-font-size);
+    margin-left: var(--van-padding-base, 4px);
+  }
+
+  &__price-integer {
+    font-size: var(--van-submit-bar-price-integer-font-size);
+    font-family: var(--van-submit-bar-price-font);
+  }
+
+  &__currency {
+    font-size: var(--van-submit-bar-price-font-size);
+    color: var(--van-submit-bar-price-color);
+  }
+
+  &__decimal {
+    font-size: var(--van-submit-bar-price-font-size);
+    color: var(--van-submit-bar-price-color);
+  }
+
+  &__suffix-label {
+    margin-left: var(--van-padding-base, 4px);
+    font-size: var(--van-submit-bar-text-font-size);
+    color: var(--van-submit-bar-text-color);
+  }
+
+  &__button {
+    width: var(--van-submit-bar-button-width);
+    height: var(--van-submit-bar-button-height);
+    font-weight: 500;
+    border: none;
+  }
+}
+
+.van-safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

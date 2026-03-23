@@ -2,74 +2,66 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import SubmitBar from '../components/SubmitBar/index.vue';
+
 const submitted = ref('');
 
 function onSubmit() {
-  submitted.value = 'Order submitted at ' + new Date().toLocaleTimeString();
+  submitted.value = 'Submitted';
 }
 </script>
 
 <template>
-  <DemoPage title="SubmitBar">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Basic Usage -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+  <DemoPage title="SubmitBar 提交订单栏">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+      <!-- 基础用法 -->
+      <text class="demo-section-title">基础用法</text>
+      <view :style="{ marginBottom: '16px' }">
         <SubmitBar
           :price="3050"
-          button-text="Submit Order"
+          button-text="提交订单"
           @submit="onSubmit"
         />
       </view>
 
-      <!-- Disabled -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Disabled</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+      <!-- 禁用状态 -->
+      <text class="demo-section-title">禁用状态</text>
+      <view :style="{ marginBottom: '16px' }">
         <SubmitBar
           :price="3050"
-          button-text="Submit Order"
+          button-text="提交订单"
           :disabled="true"
-          tip="Your address is not in the delivery area"
+          tip="你的收货地址不支持配送，请修改地址后重试"
+          tip-icon="info-o"
         />
       </view>
 
-      <!-- Loading -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Loading</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+      <!-- 加载状态 -->
+      <text class="demo-section-title">加载状态</text>
+      <view :style="{ marginBottom: '16px' }">
         <SubmitBar
           :price="3050"
-          button-text="Submit Order"
+          button-text="提交订单"
           :loading="true"
         />
       </view>
 
-      <!-- Custom Price -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Custom Price</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
+      <!-- 高级用法 -->
+      <text class="demo-section-title">高级用法</text>
+      <view :style="{ marginBottom: '16px' }">
         <SubmitBar
-          :price="10050"
-          label="Subtotal:"
-          suffix-label="(tax included)"
-          button-text="Pay Now"
-          button-type="primary"
-          :decimal-length="2"
+          :price="3050"
+          button-text="提交订单"
           @submit="onSubmit"
-        />
-      </view>
-
-      <!-- With Tip -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">With Tip</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <SubmitBar
-          :price="8888"
-          button-text="Submit"
-          tip="Free shipping for orders over ¥100"
-          @submit="onSubmit"
-        />
-      </view>
-
-      <view v-if="submitted" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 14, color: '#323233' }">{{ submitted }}</text>
+        >
+          <template #tip>
+            <text :style="{ fontSize: '12px', color: '#f56723' }">
+              你的收货地址不支持配送，
+            </text>
+            <text :style="{ fontSize: '12px', color: '#1989fa' }" @tap="onSubmit">
+              修改地址
+            </text>
+          </template>
+        </SubmitBar>
       </view>
     </view>
   </DemoPage>
