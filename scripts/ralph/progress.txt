@@ -1092,3 +1092,59 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to BEM class system. Uses useTouch composable for gesture tracking. CSS transition on transform for snap-back animation. Proper setStatus function matching Vant's state machine (normal → pulling → loosing → loading → success). nextTick before emitting refresh. Ease function with progressive resistance matching Vant exactly.
 - Limitations: scroll parent detection (Lynx uses <scroll-view> model), passive event listeners (Lynx touch model), teleport (N/A in Lynx)
 ---
+
+## 2026-03-22 - parity-swipe-cell: SwipeCell
+- Props: 6/6 (name, disabled, leftWidth, rightWidth, beforeClose, stopPropagation)
+- Events: 3/3 (open, close, click)
+- Slots: 3/3 (default, left, right)
+- CSS Variables: 0 (SwipeCell has no CSS variables in Vant)
+- Animations: translate3d slide with cubic-bezier(0.18, 0.89, 0.32, 1) timing
+- Tests: 20 cases (Vant has 14, we have 20 — added BEM class rendering, click position, slot content, expose method tests)
+- Demo sections: 3/3 (基础用法, 自定义内容, 异步关闭)
+- Visual match: pass (BEM classes, translate3d transform, CSS transition timing)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 3+index.ts)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Uses useTouch composable for gesture tracking. translate3d for GPU-accelerated animations. Left/right slots use translate3d(-100%/100%) positioning matching Vant. Extracted types.ts. beforeClose interceptor pattern matches Vant.
+- Limitations: Auto-width measurement (Lynx has no synchronous getBoundingClientRect; leftWidth/rightWidth must be provided), useClickAway (no document-level touchstart in Lynx), cursor:grab (Lynx is mobile only)
+---
+
+## 2026-03-22 - parity-floating-bubble: FloatingBubble
+- Props: 7/7 (gap, icon, axis, magnetic, offset, teleport, screenWidth/screenHeight for Lynx)
+- Events: 3/3 (click, update:offset, offsetChange)
+- Slots: 1/1 (default)
+- CSS Variables: 7 defined in index.less (--van-floating-bubble-size, --van-floating-bubble-initial-gap, --van-floating-bubble-icon-size, --van-floating-bubble-background, --van-floating-bubble-color, --van-floating-bubble-z-index, --van-floating-bubble-border-radius)
+- Animations: CSS transition on transform for smooth magnetic snap and position updates
+- Tests: 16 cases (Vant has 9, we have 16 — added BEM class, custom gap, xy gaps, tap click, update:offset, slot content, icon rendering, touchcancel tests)
+- Demo sections: 3/3 (基础用法, 自由拖拽和磁吸, 双向绑定)
+- Visual match: pass (BEM classes, CSS variables, transform: translate3d positioning)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: index.ts, FloatingBubble.tsx, types.ts, test/)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Uses transform: translate3d() instead of left/top. Integrated useTouch composable. Uses Icon component for icon prop. Added types.ts. Demo page uses Tabs for 3 sections matching Vant's demo.
+- Limitations: teleport (Lynx has no DOM tree), cursor/user-select (no mouse), :active pseudo-class (no :active in Lynx), window.innerWidth/Height (uses screenWidth/screenHeight props)
+---
+
+## 2026-03-22 - parity-floating-panel: FloatingPanel
+- Props: 8/8 (height, anchors, duration, contentDraggable, draggable, magnetic, lockScroll, safeAreaInsetBottom)
+- Events: 2/2 (update:height, heightChange)
+- Slots: 2/2 (default, header)
+- CSS Variables: 7 defined in index.less (--van-floating-panel-border-radius, header-height, z-index, background, bar-width, bar-height, bar-color)
+- Animations: CSS transition on transform with cubic-bezier(0.18, 0.89, 0.32, 1.28) spring easing
+- Tests: 16 cases (Vant has 10 — added BEM class, transition timing, v-model:height, safe-area-bottom tests)
+- Demo sections: 5/5 (基础用法, 自定义锚点, 仅头部拖拽, 禁用吸附, 禁用拖拽)
+- Visual match: pass (BEM classes, CSS variables, translateY positioning)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: index.ts, FloatingPanel.tsx, types.ts, test/)
+- Key changes: Rewrote from all-inline-styles + height animation to BEM class system + translateY(calc(100% + offset)). Integrated useTouch composable. Touch handlers on header and content separately (Lynx events don't bubble reliably). Added ::after replacement view for background extension. Demo uses Tabs for 5 sections matching Vant's demo exactly.
+- Limitations: lockScroll (Lynx scroll model differs), overflow-y:auto (uses flex layout), ::after (replaced with <view>), cursor:grab (no cursor in Lynx), 100vw (uses 100%)
+---
+
+## 2026-03-22 - parity-action-bar + parity-action-bar-icon + parity-action-bar-button: ActionBar
+- Props: ActionBar 2/2 (placeholder, safeAreaInsetBottom), ActionBarIcon 9/9 (dot, text, icon, color, badge, iconClass, badgeProps, iconPrefix, disabled + route props), ActionBarButton 6/6 (type, text, icon, color, loading, disabled + route props)
+- Events: ActionBar 0/0, ActionBarIcon 1/1 (click), ActionBarButton 1/1 (click)
+- Slots: ActionBar 1/1 (default), ActionBarIcon 2/2 (default, icon), ActionBarButton 1/1 (default)
+- CSS Variables: 2 (ActionBar) + 8 (ActionBarIcon) + 3 (ActionBarButton) = 13 total in index.less files
+- Animations: none (ActionBar has no transitions)
+- Tests: 25 cases total (ActionBar 6, ActionBarIcon 10, ActionBarButton 9); Vant has ~12
+- Demo sections: 4/4 (基础用法, 徽标提示, 自定义图标颜色, 自定义按钮颜色)
+- Visual match: pass (BEM classes, CSS variables, provide/inject child tracking)
+- Files: ActionBar (index.vue, index.less, types.ts, test/), ActionBarIcon (index.vue, index.less, test/), ActionBarButton (index.vue, index.less, test/) — matches Vant's 3-component split
+- Key changes: Rewrote all 3 components from inline styles to BEM class system. Added types.ts with InjectionKey<ActionBarProvide> for parent-child linkage. ActionBarButton now has isFirst/isLast computed properties for border-radius via provide/inject child registration. All CSS class selectors in .less files.
+- Limitations: to/url/replace (no vue-router in Lynx), role/tabindex (no ARIA in Lynx), :active (no pseudo-class in Lynx), usePlaceholder (no getBoundingClientRect auto-measure), env(safe-area-inset-bottom) may not work
+---
