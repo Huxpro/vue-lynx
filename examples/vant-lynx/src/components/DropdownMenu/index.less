@@ -4,10 +4,112 @@
   --van-dropdown-menu-shadow: 0 2px 12px rgba(100, 101, 102, 0.12);
   --van-dropdown-menu-title-font-size: 15px;
   --van-dropdown-menu-title-text-color: var(--van-text-color, #323233);
-  --van-dropdown-menu-title-active-text-color: var(--van-primary-color, #1989fa);
-  --van-dropdown-menu-title-disabled-text-color: var(--van-text-color-2, #969799);
-  --van-dropdown-menu-title-padding: 0 var(--van-padding-xs, 8px);
+  --van-dropdown-menu-title-active-text-color: var(
+    --van-primary-color,
+    #1989fa
+  );
+  --van-dropdown-menu-title-disabled-text-color: var(
+    --van-text-color-2,
+    #969799
+  );
+  --van-dropdown-menu-title-padding: 0 8px;
   --van-dropdown-menu-title-line-height: var(--van-line-height-lg, 22px);
   --van-dropdown-menu-option-active-color: var(--van-primary-color, #1989fa);
+  --van-dropdown-menu-option-disabled-color: var(--van-text-color-3, #c8c9cc);
   --van-dropdown-menu-content-max-height: 80%;
+}
+
+.van-dropdown-menu {
+  position: relative;
+
+  &__bar {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    height: var(--van-dropdown-menu-height);
+    background: var(--van-dropdown-menu-background);
+    box-shadow: var(--van-dropdown-menu-shadow);
+
+    &--opened {
+      z-index: 11;
+    }
+
+    &--scrollable {
+      // In Lynx, horizontal scrolling uses <scroll-view>
+      // This class is a marker for the scrollable state
+    }
+  }
+
+  &__item {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+
+    &--disabled {
+      .van-dropdown-menu__title {
+        color: var(--van-dropdown-menu-title-disabled-text-color);
+      }
+
+      .van-dropdown-menu__title-arrow {
+        border-bottom-color: var(--van-dropdown-menu-title-disabled-text-color);
+        border-left-color: var(--van-dropdown-menu-title-disabled-text-color);
+      }
+    }
+
+    &--grow {
+      flex: 1 0 auto;
+      padding-left: var(--van-padding-base, 8px);
+      padding-right: var(--van-padding-sm, 12px);
+    }
+  }
+
+  &__title {
+    position: relative;
+    box-sizing: border-box;
+    max-width: 100%;
+    padding: var(--van-dropdown-menu-title-padding);
+    color: var(--van-dropdown-menu-title-text-color);
+    font-size: var(--van-dropdown-menu-title-font-size);
+    line-height: var(--van-dropdown-menu-title-line-height);
+
+    &--active {
+      color: var(--van-dropdown-menu-title-active-text-color);
+    }
+  }
+
+  // Arrow chevron (replaces ::after pseudo-element from Vant)
+  &__title-arrow {
+    margin-left: 4px;
+    width: 6px;
+    height: 6px;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-style: solid;
+    border-color: var(--van-gray-4, #969799);
+    transform: rotate(-45deg);
+    opacity: 0.8;
+
+    // Expanded state: arrow points up
+    &--expand {
+      margin-top: 4px;
+      transform: rotate(135deg);
+    }
+
+    // Active state: use active color
+    &--active {
+      border-color: var(--van-dropdown-menu-title-active-text-color);
+    }
+  }
+}
+
+// Text ellipsis utility class
+.van-ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
