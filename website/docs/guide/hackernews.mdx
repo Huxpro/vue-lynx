@@ -1,0 +1,42 @@
+# HackerNews Slopfork
+
+A comprehensive slopfork of the classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) example, ported to Vue Lynx as a real-world validation benchmark.
+
+The HackerNews clone is a canonical benchmark for frontend frameworks — it exercises routing, data fetching, component composition, transitions, and state management in a realistic setting. We wanted to fork the classic Vue HackerNews 2.0, but since Vue Lynx is based on Vue 3, we ended up using the [Vue 3 community port](https://github.com/raukaute/vue-hackernews-3.0) as our reference for the slopfork.
+
+### Tailwind CSS Version
+We completely rewrote the styles using Tailwind CSS (`@lynx-js/tailwind-preset`). We also integrated Pinia and `@tanstack/vue-query` as modern alternatives to the Vuex 4.0 used in the reference implementation.
+
+<Go example="hackernews-tailwind" defaultFile="src/App.vue" />
+
+### Original CSS Version
+A faithful port that uses the original SCSS files from the Vue 3 reference implementation. This demonstrates Vue Lynx's robust support for traditional CSS paradigms (like `.class` selectors, nested selectors, and CSS variables), proving that you don't *have* to rewrite your styles when migrating to Lynx.
+
+<Go example="hackernews-css" defaultFile="src/App.vue" />
+
+## What Works Identically
+
+Because Vue Lynx is built on the official Vue 3 runtime core, the vast majority of the original Vue 3 codebase works completely unmodified.
+
+| Layer | Vue 3 Reference | Vue Lynx | Notes |
+|-------|-----------------|----------|-------|
+| **State Management** | Vuex 4.0 | Identical | We also tested Pinia as a modern alternative |
+| **Data Fetching** | `fetch()` wrapper | Identical | API client unchanged; we also added `@tanstack/vue-query` |
+| **Component Logic** | `<script setup>`, `computed()`, etc. | Identical | Zero changes required |
+| **Templates** | Recursive components, dynamic loading | Identical | Works as expected |
+| **Routing** | `useRouter()`, `beforeEach` | Identical | Same reactive behavior |
+
+## What Needs Adaptation
+
+The only changes required when porting from Web to Lynx are UI and platform specific.
+
+| Aspect | Web | Vue Lynx |
+|--------|-----|----------|
+| **Template Elements** | `<div>`, `<span>`, `<a>` | `<view>`, `<text>`, `<image>` |
+| **Event Handling** | `@click` | `@tap` |
+| **Routing History** | `createWebHistory()` | `createMemoryHistory()` |
+| **Scrolling** | Window scroll | `<scroll-view>` component |
+
+---
+
+This benchmark serves as proof that Vue Lynx can confidently handle complex, real-world application architectures while maintaining the developer experience of standard Vue.

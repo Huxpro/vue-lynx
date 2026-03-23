@@ -116,6 +116,77 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  examples/hackernews-css:
+    dependencies:
+      '@tanstack/vue-query':
+        specifier: ^5.90.0
+        version: 5.92.9(vue@3.5.30(typescript@5.9.3))
+      pinia:
+        specifier: ^3.0.2
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.30(typescript@5.9.3))
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../..
+      vue-router:
+        specifier: ^4.5.0
+        version: 4.6.4(vue@3.5.30(typescript@5.9.3))
+    devDependencies:
+      '@lynx-js/qrcode-rsbuild-plugin':
+        specifier: ^0.4.6
+        version: 0.4.6
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-sass':
+        specifier: ^1.5.1
+        version: 1.5.1(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
+      sass:
+        specifier: ^1.86.0
+        version: 1.98.0
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
+  examples/hackernews-tailwind:
+    dependencies:
+      '@tanstack/vue-query':
+        specifier: ^5.90.0
+        version: 5.92.9(vue@3.5.30(typescript@5.9.3))
+      pinia:
+        specifier: ^3.0.2
+        version: 3.0.4(typescript@5.9.3)(vue@3.5.30(typescript@5.9.3))
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../..
+      vue-router:
+        specifier: ^4.5.0
+        version: 4.6.4(vue@3.5.30(typescript@5.9.3))
+    devDependencies:
+      '@lynx-js/qrcode-rsbuild-plugin':
+        specifier: ^0.4.6
+        version: 0.4.6
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@lynx-js/tailwind-preset':
+        specifier: ^0.4.0
+        version: 0.4.0(tailwindcss@3.4.19(tsx@4.21.0)(yaml@2.8.2))
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))(vue@3.5.30(typescript@5.9.3))
+      rsbuild-plugin-tailwindcss:
+        specifier: ^0.2.3
+        version: 0.2.4(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(tailwindcss@3.4.19(tsx@4.21.0)(yaml@2.8.2))
+      tailwindcss:
+        specifier: ^3.4.17
+        version: 3.4.19(tsx@4.21.0)(yaml@2.8.2)
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
   examples/hello-world:
     dependencies:
       vue-lynx:
