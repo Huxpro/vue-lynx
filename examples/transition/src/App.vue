@@ -189,14 +189,10 @@ function onLeave(_el: any, done: () => void) {
 
 /* 2. Slide Fade */
 .slide-fade-enter-active {
-  transition-property: opacity, transform;
-  transition-duration: 300ms;
-  transition-timing-function: ease-out;
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
 }
 .slide-fade-leave-active {
-  transition-property: opacity, transform;
-  transition-duration: 500ms;
-  transition-timing-function: cubic-bezier(1, 0.5, 0.8, 1);
+  transition: opacity 500ms cubic-bezier(1, 0.5, 0.8, 1), transform 500ms cubic-bezier(1, 0.5, 0.8, 1);
 }
 .slide-fade-enter-from, .slide-fade-leave-to {
   transform: translateX(20px);
@@ -221,8 +217,7 @@ function onLeave(_el: any, done: () => void) {
 
 /* 7. TransitionGroup list */
 .list-enter-active, .list-leave-active {
-  transition-property: opacity, transform;
-  transition-duration: 300ms;
+  transition: opacity 300ms, transform 300ms;
 }
 .list-enter-from {
   opacity: 0;
