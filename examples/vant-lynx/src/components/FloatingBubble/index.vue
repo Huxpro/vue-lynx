@@ -1,64 +1,64 @@
 <!--
-  Vant Feature Parity Report: FloatingBubble
-  - Props: 5/6 supported
-    - icon ✅, axis ✅ (x/y/xy/lock), magnetic ✅ (x/y snap to nearest edge)
-    - offset ✅ (v-model with {x, y}), gap ✅ (number or {x, y} object)
-    - teleport ❌ (Lynx has no DOM, Vue Teleport not applicable)
-  - Events: 3/3 supported (click, update:offset, offsetChange)
-  - Slots: 1/1 supported (default - custom bubble content)
-  - Gestures Supported:
-    - Drag freely along configured axis (x, y, xy) ✅
-    - Lock mode prevents all dragging ✅
-    - Boundary constraints based on gap ✅
-    - Magnetic snap to nearest edge on release (x or y axis) ✅
-    - Tap vs drag detection (only emits click on tap, not drag) ✅
-    - Transition animation when snapping (not during drag) ✅
-    - touchcancel treated as touchend ✅
-  - Default Position: bottom-right corner with gap offset ✅
-  - Gaps:
-    - teleport not supported (Lynx has no DOM tree to teleport to)
-    - No Icon component integration (uses text fallback for icon prop)
-    - Window dimensions use fixed defaults (Lynx has no window.innerWidth/Height);
-      provide screenWidth/screenHeight props to customize
+  Lynx Limitations:
+  - teleport: Lynx has no DOM tree to teleport to; prop accepted for API compat but ignored
+  - cursor/user-select: no mouse interaction in Lynx; touch-action handled via touch events
+  - :active pseudo-class: Lynx has no :active; could add touchstart opacity if needed
+  - window.innerWidth/innerHeight: Lynx has no window; uses screenWidth/screenHeight props
+  - getBoundingClientRect: Lynx uses SelectorQuery; bubble size from CSS var default (48px)
 -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, watch, nextTick, onMounted } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import { useTouch } from '../../composables/useTouch';
+import Icon from '../Icon/index.vue';
+import './index.less';
 
-export type FloatingBubbleAxis = 'x' | 'y' | 'xy' | 'lock';
-export type FloatingBubbleMagnetic = 'x' | 'y' | '';
-export type FloatingBubbleOffset = { x: number; y: number };
-export type FloatingBubbleGap = number | { x: number; y: number };
+import type {
+  FloatingBubbleAxis,
+  FloatingBubbleMagnetic,
+  FloatingBubbleOffset,
+  FloatingBubbleGap,
+  FloatingBubbleBoundary,
+} from './types';
+
+export type {
+  FloatingBubbleAxis,
+  FloatingBubbleMagnetic,
+  FloatingBubbleOffset,
+  FloatingBubbleGap,
+} from './types';
 
 export interface FloatingBubbleProps {
-  offset?: FloatingBubbleOffset;
+  gap?: FloatingBubbleGap;
+  icon?: string;
   axis?: FloatingBubbleAxis;
   magnetic?: FloatingBubbleMagnetic;
-  icon?: string;
-  gap?: FloatingBubbleGap;
-  /** Screen width for boundary calculation (Lynx has no window.innerWidth) */
+  offset?: FloatingBubbleOffset;
+  teleport?: string;
+  /** Lynx-specific: screen width for boundary calculation */
   screenWidth?: number;
-  /** Screen height for boundary calculation (Lynx has no window.innerHeight) */
+  /** Lynx-specific: screen height for boundary calculation */
   screenHeight?: number;
-  /** Bubble size in px */
-  size?: number;
-  teleport?: string; // accepted but ignored in Lynx
 }
 
+const [, bem] = createNamespace('floating-bubble');
+
 const props = withDefaults(defineProps<FloatingBubbleProps>(), {
-  axis: 'y',
-  magnetic: '',
-  icon: '',
   gap: 24,
+  icon: '',
+  axis: 'y',
+  teleport: 'body',
   screenWidth: 375,
   screenHeight: 812,
-  size: 48,
 });
 
 const emit = defineEmits<{
   click: [e?: any];
   'update:offset': [value: FloatingBubbleOffset];
-  'offset-change': [value: FloatingBubbleOffset];
+  offsetChange: [value: FloatingBubbleOffset];
 }>();
+
+const BUBBLE_SIZE = 48;
 
 // Computed gap values (support number or {x, y} object)
 const gapX = computed(() =>
@@ -68,79 +68,74 @@ const gapY = computed(() =>
   typeof props.gap === 'object' ? props.gap.y : props.gap,
 );
 
-// Boundary constraints
-const boundary = computed(() => ({
+const boundary = computed<FloatingBubbleBoundary>(() => ({
   top: gapY.value,
-  right: props.screenWidth - props.size - gapX.value,
-  bottom: props.screenHeight - props.size - gapY.value,
+  right: props.screenWidth - BUBBLE_SIZE - gapX.value,
+  bottom: props.screenHeight - BUBBLE_SIZE - gapY.value,
   left: gapX.value,
 }));
 
-// Find closest value in array
 function closest(arr: number[], target: number): number {
   return arr.reduce((prev, curr) =>
     Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev,
   );
 }
 
-// Position state - default to bottom-right corner
-const posX = ref(
-  props.offset ? props.offset.x : props.screenWidth - props.size - gapX.value,
-);
-const posY = ref(
-  props.offset ? props.offset.y : props.screenHeight - props.size - gapY.value,
-);
+const state = ref({
+  x: props.offset ? props.offset.x : props.screenWidth - BUBBLE_SIZE - gapX.value,
+  y: props.offset ? props.offset.y : props.screenHeight - BUBBLE_SIZE - gapY.value,
+  width: BUBBLE_SIZE,
+  height: BUBBLE_SIZE,
+});
 
 const dragging = ref(false);
-const initialized = ref(false);
+let initialized = false;
 
-// Tap detection: if drag distance < TAP_OFFSET, it's a tap, not a drag
-const TAP_OFFSET = 5;
-let isTap = true;
+const rootStyle = computed(() => {
+  const style: Record<string, any> = {};
+  const x = addUnit(state.value.x);
+  const y = addUnit(state.value.y);
+  style.transform = `translate3d(${x}, ${y}, 0)`;
 
-// Touch tracking
-let startTouchX = 0;
-let startTouchY = 0;
+  if (dragging.value || !initialized) {
+    style.transitionProperty = 'none';
+  }
+
+  return style;
+});
+
+const touch = useTouch();
 let prevX = 0;
 let prevY = 0;
 
 function onTouchStart(e: any) {
-  const touch = e.touches?.[0] || e;
-  startTouchX = touch.clientX || 0;
-  startTouchY = touch.clientY || 0;
-  prevX = posX.value;
-  prevY = posY.value;
+  touch.start(e);
   dragging.value = true;
-  isTap = true;
+  prevX = state.value.x;
+  prevY = state.value.y;
 }
 
 function onTouchMove(e: any) {
-  if (!dragging.value) return;
-  const touch = e.touches?.[0] || e;
-  const deltaX = (touch.clientX || 0) - startTouchX;
-  const deltaY = (touch.clientY || 0) - startTouchY;
-
-  // Detect if this is still a tap
-  if (isTap && (Math.abs(deltaX) > TAP_OFFSET || Math.abs(deltaY) > TAP_OFFSET)) {
-    isTap = false;
-  }
+  touch.move(e);
 
   if (props.axis === 'lock') return;
 
-  if (!isTap) {
+  if (!touch.isTap.value) {
     if (props.axis === 'x' || props.axis === 'xy') {
-      let nextX = prevX + deltaX;
-      nextX = Math.max(boundary.value.left, Math.min(boundary.value.right, nextX));
-      posX.value = nextX;
+      let nextX = prevX + touch.deltaX.value;
+      if (nextX < boundary.value.left) nextX = boundary.value.left;
+      if (nextX > boundary.value.right) nextX = boundary.value.right;
+      state.value.x = nextX;
     }
 
     if (props.axis === 'y' || props.axis === 'xy') {
-      let nextY = prevY + deltaY;
-      nextY = Math.max(boundary.value.top, Math.min(boundary.value.bottom, nextY));
-      posY.value = nextY;
+      let nextY = prevY + touch.deltaY.value;
+      if (nextY < boundary.value.top) nextY = boundary.value.top;
+      if (nextY > boundary.value.bottom) nextY = boundary.value.bottom;
+      state.value.y = nextY;
     }
 
-    const offset = { x: posX.value, y: posY.value };
+    const offset: FloatingBubbleOffset = { x: state.value.x, y: state.value.y };
     emit('update:offset', offset);
   }
 }
@@ -148,80 +143,79 @@ function onTouchMove(e: any) {
 function onTouchEnd() {
   dragging.value = false;
 
-  // Apply magnetic snapping
-  if (props.magnetic === 'x') {
-    posX.value = closest(
-      [boundary.value.left, boundary.value.right],
-      posX.value,
-    );
-  }
-  if (props.magnetic === 'y') {
-    posY.value = closest(
-      [boundary.value.top, boundary.value.bottom],
-      posY.value,
-    );
-  }
-
-  if (isTap) {
-    emit('click');
-  } else {
-    const offset = { x: posX.value, y: posY.value };
-    emit('update:offset', offset);
-    if (prevX !== offset.x || prevY !== offset.y) {
-      emit('offset-change', offset);
+  nextTick(() => {
+    if (props.magnetic === 'x') {
+      const nextX = closest(
+        [boundary.value.left, boundary.value.right],
+        state.value.x,
+      );
+      state.value.x = nextX;
     }
-  }
+    if (props.magnetic === 'y') {
+      const nextY = closest(
+        [boundary.value.top, boundary.value.bottom],
+        state.value.y,
+      );
+      state.value.y = nextY;
+    }
 
-  if (!initialized.value) {
-    initialized.value = true;
+    if (!touch.isTap.value) {
+      const offset: FloatingBubbleOffset = { x: state.value.x, y: state.value.y };
+      emit('update:offset', offset);
+      if (prevX !== offset.x || prevY !== offset.y) {
+        emit('offsetChange', offset);
+      }
+    }
+  });
+}
+
+function onClick() {
+  if (touch.isTap.value) {
+    emit('click');
   }
 }
 
-// Watch for external offset changes
+const updateState = () => {
+  const { offset } = props;
+  state.value = {
+    x: offset ? offset.x : props.screenWidth - BUBBLE_SIZE - gapX.value,
+    y: offset ? offset.y : props.screenHeight - BUBBLE_SIZE - gapY.value,
+    width: BUBBLE_SIZE,
+    height: BUBBLE_SIZE,
+  };
+};
+
+onMounted(() => {
+  updateState();
+  nextTick(() => {
+    initialized = true;
+  });
+});
+
+// Watch for external offset/gap/screen changes
 watch(
-  () => props.offset,
-  (val) => {
-    if (val) {
-      posX.value = val.x;
-      posY.value = val.y;
-    }
-  },
+  [gapX, gapY, () => props.offset, () => props.screenWidth, () => props.screenHeight],
+  updateState,
   { deep: true },
 );
 
-const bubbleStyle = computed(() => ({
-  position: 'fixed' as const,
-  left: posX.value,
-  top: posY.value,
-  width: props.size,
-  height: props.size,
-  borderRadius: props.size / 2,
-  backgroundColor: '#1989fa',
-  display: 'flex' as const,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-  zIndex: 999,
-  transitionProperty: dragging.value ? 'none' : 'left, top',
-  transitionDuration: dragging.value ? '0s' : '0.3s',
-  transitionTimingFunction: 'ease-out',
-}));
-
 defineExpose({
-  /** Current position */
-  offset: computed(() => ({ x: posX.value, y: posY.value })),
+  offset: computed(() => ({ x: state.value.x, y: state.value.y })),
 });
 </script>
 
 <template>
   <view
-    :style="bubbleStyle"
+    :class="bem()"
+    :style="rootStyle"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"
     @touchcancel="onTouchEnd"
+    @tap="onClick"
   >
     <slot>
-      <text :style="{ fontSize: 20, color: '#fff' }">{{ icon || '\u2605' }}</text>
+      <Icon v-if="icon" :name="icon" :class="bem('icon')" />
     </slot>
   </view>
 </template>
