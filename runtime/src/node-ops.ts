@@ -292,7 +292,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     } else if (key === 'class') {
       el._baseClass = (nextValue as string) ?? '';
       const finalClass = resolveClass(el);
-      pushOp(OP.SET_PROP, el.id, 'class', finalClass);
+      pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
