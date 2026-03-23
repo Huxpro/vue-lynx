@@ -1,42 +1,122 @@
 # HackerNews Slopfork
 
-A comprehensive slopfork of the classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) example, ported to Vue Lynx as a real-world validation benchmark.
-
-The HackerNews clone is a canonical benchmark for frontend frameworks — it exercises routing, data fetching, component composition, transitions, and state management in a realistic setting. We wanted to fork the classic Vue HackerNews 2.0, but since Vue Lynx is based on Vue 3, we ended up using the [Vue 3 community port](https://github.com/raukaute/vue-hackernews-3.0) as our reference for the slopfork.
+We wanted to fork Evan You's classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) — the canonical "real-world" Vue example — as a validation benchmark for Vue Lynx. But since Vue Lynx is built on Vue 3, we ended up using the [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) community port as the actual reference for our slopfork.
 
 ### Tailwind CSS Version
-We completely rewrote the styles using Tailwind CSS (`@lynx-js/tailwind-preset`). We also integrated Pinia and `@tanstack/vue-query` as modern alternatives to the Vuex 4.0 used in the reference implementation.
+
+Rewrote the styles using Tailwind CSS (`@lynx-js/tailwind-preset`), and integrated TanStack Vue Query to replace the Vuex 4 used in the reference implementation.
 
 <Go example="hackernews-tailwind" defaultFile="src/App.vue" />
 
-### Original CSS Version
-A faithful port that uses the original SCSS files from the Vue 3 reference implementation. This demonstrates Vue Lynx's robust support for traditional CSS paradigms (like `.class` selectors, nested selectors, and CSS variables), proving that you don't *have* to rewrite your styles when migrating to Lynx.
+### CSS Version
+
+Preserves the reference implementation's SCSS class names and color palette, but the CSS rules themselves are adapted for Lynx's layout model (e.g. flexbox instead of inline layout, no `<ul>`/`<li>` list styles).
 
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
-## What Works Identically
+## What Changed and Why
 
-Because Vue Lynx is built on the official Vue 3 runtime core, the vast majority of the original Vue 3 codebase works completely unmodified.
+The Vue HackerNews 3.0 port is a Webpack-based SSR app using Vue 3, Vuex 4, axios, and `vue-server-renderer`. Porting it to Lynx required rethinking several layers — not just find-and-replacing HTML tags.
 
-| Layer | Vue 3 Reference | Vue Lynx | Notes |
-|-------|-----------------|----------|-------|
-| **State Management** | Vuex 4.0 | Identical | We also tested Pinia as a modern alternative |
-| **Data Fetching** | `fetch()` wrapper | Identical | API client unchanged; we also added `@tanstack/vue-query` |
-| **Component Logic** | `<script setup>`, `computed()`, etc. | Identical | Zero changes required |
-| **Templates** | Recursive components, dynamic loading | Identical | Works as expected |
-| **Routing** | `useRouter()`, `beforeEach` | Identical | Same reactive behavior |
+### Lynx Has No HTML Elements
 
-## What Needs Adaptation
+This is the most visible change. Lynx renders to a native UI layer, not a browser DOM, so every HTML element needed a Lynx equivalent:
 
-The only changes required when porting from Web to Lynx are UI and platform specific.
+| Vue 3 Reference | Vue Lynx | Why |
+|---|---|---|
+| `<div>`, `<li>`, `<ul>`, `<nav>`, `<header>` | `<view>` | Lynx's generic container |
+| `<span>`, `<p>`, `<h1>` | `<text>` | Lynx's text node |
+| `<img>` | `<image>` | Lynx's image element |
+| Native browser scroll | `<scroll-view scroll-orientation="vertical">` | Lynx requires explicit scroll containers |
+| `<a href="...">` | `<text @tap="openExternalUrl(...)">` | No `<a>` tag in Lynx |
+| SVG `<circle>` spinner with keyframes | CSS `border` + `animation: spin` spinner | No SVG support in Lynx |
 
-| Aspect | Web | Vue Lynx |
-|--------|-----|----------|
-| **Template Elements** | `<div>`, `<span>`, `<a>` | `<view>`, `<text>`, `<image>` |
-| **Event Handling** | `@click` | `@tap` |
-| **Routing History** | `createWebHistory()` | `createMemoryHistory()` |
-| **Scrolling** | Window scroll | `<scroll-view>` component |
+### `<router-link>` Doesn't Just Work
 
----
+In a browser, `<router-link to="/news">` renders an `<a>` tag. Since Lynx has no `<a>`, we created a `NavLink` wrapper using Vue Router's `custom` slot API:
 
-This benchmark serves as proof that Vue Lynx can confidently handle complex, real-world application architectures while maintaining the developer experience of standard Vue.
+```vue
+<!-- NavLink.vue -->
+<RouterLink :to="to" custom v-slot="{ navigate }">
+  <text class="nav-link" @tap="navigate">{{ label }}</text>
+</RouterLink>
+```
+
+For in-page links (user profiles, item details, comments count), we replaced `<router-link>` entirely with `<text @tap="router.push(...)">`.
+
+### No `v-html`
+
+The Vue 3 reference renders comment content with `v-html`:
+```vue
+<div class="text" v-html="comment.content" />
+```
+
+Lynx doesn't support `v-html` (there's no HTML parser in the native renderer). We wrote a `stripHtml()` utility that converts HTML to plain text — preserving line breaks, converting `<li>` to bullet points, and decoding entities:
+
+```vue
+<text class="text">{{ stripHtml(comment.content) }}</text>
+```
+
+This loses formatting (bold, italic, code blocks, links inside comments), but it's the pragmatic tradeoff for a native renderer.
+
+### `@click` → `@tap`
+
+Lynx uses tap gestures, not click events. Every `@click` in the reference becomes `@tap`.
+
+### `createWebHistory()` → `createMemoryHistory()`
+
+Lynx has no browser history API. Vue Router's `createMemoryHistory()` works as a drop-in replacement — the router API (`useRoute()`, `useRouter()`, `router.push()`, `router.back()`) stays identical.
+
+### SSR Removed Entirely
+
+The Vue 3 reference has a full SSR setup: `server-entry.js`, `client-entry.js`, `createSSRApp()`, `serverPrefetch()`, and `window.__INITIAL_STATE__` hydration. None of this applies to Lynx — there's no server-side rendering in the Lynx architecture. Our entry point is just:
+
+```ts
+const app = createApp(App);
+app.use(createPinia());
+app.use(VueQueryPlugin);
+app.use(router);
+router.push('/');
+app.mount();
+```
+
+### Vuex → TanStack Query (+ Pinia)
+
+The Vue 3 reference uses **Vuex 4** with mutations, actions, getters, and `vuex-router-sync` for all state management and data fetching. We replaced all of this with **TanStack Vue Query** for server state:
+
+```ts
+// Vue 3 Reference: Vuex action + axios
+store.dispatch('FETCH_FEED', { feed, page })
+// → calls axios.get(`/${feed}?page=${page}`)
+// → commits SET_FEED mutation
+// → commits SET_ITEMS mutation
+
+// Vue Lynx: TanStack Query
+const { data: items, isLoading } = useQuery({
+  queryKey: computed(() => ['feed', props.feed, props.page]),
+  queryFn: () => fetchFeed(props.feed, props.page),
+  staleTime: 5 * 60 * 1000,
+  placeholderData: keepPreviousData,
+});
+```
+
+This gave us caching, loading/error states, and prefetching for free, without writing any mutations or actions. Pinia is installed but barely used — TanStack Query handles the heavy lifting.
+
+### axios → `globalThis.fetch`
+
+The reference uses axios. We use `globalThis.fetch` directly — one fewer dependency, and `fetch` is available in Lynx's JS runtime.
+
+### Webpack → Rspeedy (Rsbuild)
+
+The reference uses a custom Webpack 5 config with babel-loader, vue-loader, sass-loader, SSR plugins, and Express server. We use Rspeedy (Lynx's Rsbuild-based build tool), which handles all of this with a minimal `lynx.config.ts`.
+
+## What Stayed the Same
+
+Despite the above, a surprising amount transferred directly:
+
+- **Vue Composition API**: `ref()`, `computed()`, `watch()`, `<script setup>`, `defineProps()` — all identical, just imported from `vue-lynx` instead of `vue`
+- **Vue Router API**: `useRoute()`, `useRouter()`, `router.push()`, `router.back()`, `<RouterView>`, route params — all identical
+- **`<Transition>` and `<TransitionGroup>`**: CSS transition classes work identically. We even added direction-aware slide transitions (`slide-left` / `slide-right`) that the reference didn't have
+- **Recursive components**: The `<Comment>` component references itself for nested threads — works identically
+- **`v-if`/`v-else`/`v-for`/`v-bind`/`{{ }}`**: All template directives work identically
+- **CSS**: SCSS works, `@keyframes` works, `:class` bindings work, media queries work. The styling structure (class names, color palette, layout) is preserved from the reference
