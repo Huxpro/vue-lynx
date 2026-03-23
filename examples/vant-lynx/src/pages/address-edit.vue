@@ -2,63 +2,61 @@
 import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import AddressEdit from '../components/AddressEdit/index.vue';
-const saveResult = ref('');
 
-const editAddressInfo = {
-  name: 'John Doe',
-  tel: '13000000000',
-  province: 'Zhejiang',
-  city: 'Hangzhou',
-  county: 'Xihu',
-  addressDetail: 'No. 123 West Lake Rd',
-  postalCode: '310000',
-  isDefault: true,
+const areaList = {
+  province_list: {
+    '110000': '北京市',
+    '330000': '浙江省',
+  },
+  city_list: {
+    '110100': '北京市',
+    '330100': '杭州市',
+  },
+  county_list: {
+    '110101': '东城区',
+    '110102': '西城区',
+    '330102': '上城区',
+    '330103': '下城区',
+  },
 };
 
-function onSave(info: any) {
-  saveResult.value = JSON.stringify(info, null, 2);
-}
+const searchResult = ref<{ name?: string; address?: string }[]>([]);
 
-function onDelete(info: any) {
-  saveResult.value = 'Deleted: ' + info.name;
-}
+const onSave = () => {
+  // showToast('save');
+};
 
-function onChangeDetail(value: string) {
-  // handle detail change
-}
+const onDelete = () => {
+  // showToast('delete');
+};
+
+const onChangeDetail = (val: string) => {
+  if (val) {
+    searchResult.value = [
+      { name: '黄龙万科中心', address: '杭州市西湖区' },
+      { name: '黄龙万科中心G座' },
+      { name: '黄龙万科中心H座', address: '杭州市西湖区' },
+    ];
+  } else {
+    searchResult.value = [];
+  }
+};
 </script>
 
 <template>
-  <DemoPage title="AddressEdit">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- New Address -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">New Address</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <AddressEdit
-          :show-postal="true"
-          :show-set-default="true"
-          save-button-text="Save Address"
-          @save="onSave"
-          @change-detail="onChangeDetail"
-        />
-      </view>
-
-      <!-- Edit Address -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Edit Address</text>
-      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden' }">
-        <AddressEdit
-          :address-info="editAddressInfo"
-          :show-delete="true"
-          :show-postal="true"
-          :show-set-default="true"
-          @save="onSave"
-          @delete="onDelete"
-        />
-      </view>
-
-      <view v-if="saveResult" :style="{ padding: 12, backgroundColor: '#fff', borderRadius: 8 }">
-        <text :style="{ fontSize: 12, color: '#323233' }">{{ saveResult }}</text>
-      </view>
+  <DemoPage title="AddressEdit 地址编辑">
+    <view :style="{ paddingBottom: '20px' }">
+      <AddressEdit
+        :area-list="areaList"
+        show-delete
+        show-set-default
+        show-search-result
+        :search-result="searchResult"
+        :area-columns-placeholder="['请选择', '请选择', '请选择']"
+        @save="onSave"
+        @delete="onDelete"
+        @change-detail="onChangeDetail"
+      />
     </view>
   </DemoPage>
 </template>

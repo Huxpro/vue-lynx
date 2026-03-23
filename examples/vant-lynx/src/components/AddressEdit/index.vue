@@ -1,382 +1,349 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 17/20 supported (addressInfo, areaList, showArea, showPostal, showDelete,
-    showSetDefault, showSearchResult, saveButtonText, deleteButtonText, telValidator,
-    areaColumnsPlaceholder, isSaving, isDeleting, showDetail, disableArea, telMaxlength,
-    detailMaxlength)
-  - Events: 6/10 supported (save, delete, changeDetail, changeArea, clickArea, changeDefault)
-  - Slots: 0/1 supported
-  - Gaps: validator (custom field-level), searchResult array, detailRows,
-    areaPlaceholder, focus/change/selectSearch events, default slot
+  Lynx Limitations:
+  - <form> element: Lynx has no <form> element, Form uses <view> instead
+  - nativeType="submit": No native form submission in Lynx, calls form.submit() manually
+  - isMobile validator: Uses simplified regex, not Vant's locale-specific validator
+  - v-show: Uses v-if instead (Lynx display:none behavior differs)
+  - teleport: Popup teleport not supported in Lynx
+  - showToast on area empty: Not called (toast import would add complexity for edge case)
 -->
+<script lang="ts">
+import type { AddressEditInfo, AddressEditSearchItem } from './types';
+
+const DEFAULT_DATA: AddressEditInfo = {
+  name: '',
+  tel: '',
+  city: '',
+  county: '',
+  province: '',
+  areaCode: '',
+  isDefault: false,
+  addressDetail: '',
+};
+
+function isMobile(value: string): boolean {
+  value = value.replace(/[^-|\d]/g, '');
+  return /^(\+?\d{3,4}[- ]?)?\d{5,}$/.test(value);
+}
+</script>
+
 <script setup lang="ts">
-/**
- * VantAddressEdit (Lynx port)
- * @see https://github.com/youzan/vant/blob/main/packages/vant/src/address-edit/AddressEdit.tsx
- *
- * Feature parity: 17/20 props, 6/10 events.
- * Missing props: validator, searchResult, detailRows
- * Missing events: focus, change, selectSearch
- *
- * Lynx differences:
- *   - Manual validation (no Form/Field components)
- *   - Area picker delegated via clickArea (no built-in Popup)
- *   - Custom toggle switch view instead of Vant's Switch component
- */
-import { ref, computed, watch } from 'vue-lynx';
+import { ref, computed, reactive, watch } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import Form from '../Form/index.vue';
+import Field from '../Field/index.vue';
+import Cell from '../Cell/index.vue';
+import Button from '../Button/index.vue';
+import Switch from '../Switch/index.vue';
+import Popup from '../Popup/index.vue';
+import Area from '../Area/index.vue';
+import AddressEditDetail from './AddressEditDetail.vue';
+import type { FormExpose } from '../Form/types';
+import type { FieldRule } from '../Field/types';
+import './index.less';
 
-export interface AddressInfo {
-  name?: string;
-  tel?: string;
-  province?: string;
-  city?: string;
-  county?: string;
-  areaCode?: string;
-  addressDetail?: string;
-  postalCode?: string;
-  isDefault?: boolean;
-}
+const [, bem] = createNamespace('address-edit');
 
-export interface AreaList {
-  province_list?: Record<string, string>;
-  city_list?: Record<string, string>;
-  county_list?: Record<string, string>;
-}
-
-export interface AddressEditProps {
-  addressInfo?: AddressInfo;
-  addressText?: string;
-  areaList?: AreaList;
-  showPostal?: boolean;
-  showDelete?: boolean;
-  showSetDefault?: boolean;
-  showSearchResult?: boolean;
-  showArea?: boolean;
-  showDetail?: boolean;
-  isSaving?: boolean;
-  isDeleting?: boolean;
-  disableArea?: boolean;
-  telValidator?: (tel: string) => boolean;
-  telMaxlength?: number;
-  detailMaxlength?: number;
-  areaColumnsPlaceholder?: string[];
-  areaPlaceholder?: string;
-  saveButtonText?: string;
-  deleteButtonText?: string;
-}
-
-const props = withDefaults(defineProps<AddressEditProps>(), {
-  addressInfo: () => ({}),
-  addressText: '',
-  areaList: () => ({}),
-  showPostal: false,
-  showDelete: false,
-  showSetDefault: false,
-  showSearchResult: false,
-  showArea: true,
-  showDetail: true,
-  isSaving: false,
-  isDeleting: false,
-  disableArea: false,
-  telMaxlength: undefined,
-  detailMaxlength: 200,
-  areaPlaceholder: 'Select area',
-  saveButtonText: 'Save',
-  deleteButtonText: 'Delete',
-});
+const props = withDefaults(
+  defineProps<{
+    areaList?: Record<string, Record<string, string>>;
+    isSaving?: boolean;
+    isDeleting?: boolean;
+    validator?: (key: string, value: string) => string | undefined;
+    showArea?: boolean;
+    showDetail?: boolean;
+    showDelete?: boolean;
+    disableArea?: boolean;
+    searchResult?: AddressEditSearchItem[];
+    telMaxlength?: number | string;
+    showSetDefault?: boolean;
+    saveButtonText?: string;
+    areaPlaceholder?: string;
+    deleteButtonText?: string;
+    showSearchResult?: boolean;
+    detailRows?: number | string;
+    detailMaxlength?: number | string;
+    areaColumnsPlaceholder?: string[];
+    addressInfo?: Partial<AddressEditInfo>;
+    telValidator?: (val: string) => boolean;
+  }>(),
+  {
+    areaList: undefined,
+    isSaving: false,
+    isDeleting: false,
+    validator: undefined,
+    showArea: true,
+    showDetail: true,
+    showDelete: false,
+    disableArea: false,
+    searchResult: undefined,
+    telMaxlength: undefined,
+    showSetDefault: false,
+    saveButtonText: '',
+    areaPlaceholder: '',
+    deleteButtonText: '',
+    showSearchResult: false,
+    detailRows: 1,
+    detailMaxlength: 200,
+    areaColumnsPlaceholder: () => [],
+    addressInfo: () => ({ ...DEFAULT_DATA }),
+    telValidator: isMobile,
+  },
+);
 
 const emit = defineEmits<{
-  save: [info: AddressInfo];
-  delete: [info: AddressInfo];
-  changeDetail: [value: string];
-  changeArea: [values: string[]];
+  save: [info: AddressEditInfo];
+  focus: [key: string];
+  change: [data: { key: string; value: string }];
+  delete: [info: AddressEditInfo];
   clickArea: [];
-  changeDefault: [value: boolean];
+  changeArea: [options: { code: string; name: string }[]];
+  changeDetail: [value: string];
+  selectSearch: [item: AddressEditSearchItem];
+  changeDefault: [checked: boolean];
 }>();
 
-const name = ref(props.addressInfo.name ?? '');
-const tel = ref(props.addressInfo.tel ?? '');
-const province = ref(props.addressInfo.province ?? '');
-const city = ref(props.addressInfo.city ?? '');
-const county = ref(props.addressInfo.county ?? '');
-const areaCode = ref(props.addressInfo.areaCode ?? '');
-const addressDetail = ref(props.addressInfo.addressDetail ?? '');
-const postalCode = ref(props.addressInfo.postalCode ?? '');
-const isDefault = ref(props.addressInfo.isDefault ?? false);
+const data = reactive<AddressEditInfo>({ ...DEFAULT_DATA });
+const showAreaPopup = ref(false);
+const detailFocused = ref(false);
+const formRef = ref<FormExpose>();
 
-watch(
-  () => props.addressInfo,
-  (info) => {
-    name.value = info.name ?? '';
-    tel.value = info.tel ?? '';
-    province.value = info.province ?? '';
-    city.value = info.city ?? '';
-    county.value = info.county ?? '';
-    areaCode.value = info.areaCode ?? '';
-    addressDetail.value = info.addressDetail ?? '';
-    postalCode.value = info.postalCode ?? '';
-    isDefault.value = info.isDefault ?? false;
-  },
-  { deep: true },
+const areaListLoaded = computed(
+  () => props.areaList && typeof props.areaList === 'object' && Object.keys(props.areaList).length > 0,
 );
 
 const areaText = computed(() => {
-  const parts = [province.value, city.value, county.value].filter(Boolean);
-  return parts.length > 0 ? parts.join(' / ') : '';
+  const { province, city, county, areaCode } = data;
+  if (areaCode) {
+    const arr = [province, city, county];
+    if (province && province === city) {
+      arr.splice(1, 1);
+    }
+    return arr.filter(Boolean).join('/');
+  }
+  return '';
 });
 
-const showAreaError = ref(false);
-const showNameError = ref(false);
-const showTelError = ref(false);
+const hideBottomFields = computed(
+  () => props.searchResult?.length && detailFocused.value,
+);
 
-function validateTel(telValue: string): boolean {
-  if (props.telValidator) {
-    return props.telValidator(telValue);
-  }
-  return /^1[3-9]\d{9}$/.test(telValue) || telValue.length >= 5;
-}
+const onFocus = (key: string) => {
+  detailFocused.value = key === 'addressDetail';
+  emit('focus', key);
+};
 
-function getAddressInfo(): AddressInfo {
+const onChange = (key: string, value: string) => {
+  emit('change', { key, value });
+};
+
+const rules = computed<Record<string, FieldRule[]>>(() => {
+  const { validator, telValidator } = props;
+
+  const makeRule = (name: string, emptyMessage: string): FieldRule => ({
+    validator: (value: string) => {
+      if (validator) {
+        const message = validator(name, value);
+        if (message) {
+          return message;
+        }
+      }
+      if (!value) {
+        return emptyMessage;
+      }
+      return true;
+    },
+  });
+
   return {
-    name: name.value,
-    tel: tel.value,
-    province: province.value,
-    city: city.value,
-    county: county.value,
-    areaCode: areaCode.value,
-    addressDetail: addressDetail.value,
-    postalCode: postalCode.value,
-    isDefault: isDefault.value,
+    name: [makeRule('name', '请填写姓名')],
+    tel: [
+      makeRule('tel', '请填写正确的电话号码'),
+      { validator: telValidator, message: '请填写正确的电话号码' },
+    ],
+    areaCode: [makeRule('areaCode', '请选择所在地区')],
+    addressDetail: [makeRule('addressDetail', '请填写详细地址')],
   };
-}
+});
 
-function onSave() {
-  if (props.isSaving) return;
+const onSave = () => emit('save', { ...data });
 
-  showNameError.value = false;
-  showTelError.value = false;
-  showAreaError.value = false;
+const onFormSubmit = () => {
+  onSave();
+};
 
-  if (!name.value.trim()) {
-    showNameError.value = true;
-    return;
+const handleSave = () => {
+  formRef.value?.submit();
+};
+
+const onChangeDetail = (val: string) => {
+  data.addressDetail = val;
+  emit('changeDetail', val);
+};
+
+const onAreaConfirm = (values: { code: string; name: string }[]) => {
+  showAreaPopup.value = false;
+  if (values.length >= 3) {
+    data.province = values[0].name;
+    data.city = values[1].name;
+    data.county = values[2].name;
+    data.areaCode = values[2].code;
   }
-
-  if (!tel.value.trim() || !validateTel(tel.value)) {
-    showTelError.value = true;
-    return;
-  }
-
-  if (props.showArea && !areaText.value) {
-    showAreaError.value = true;
-    return;
-  }
-
-  emit('save', getAddressInfo());
-}
-
-function onDelete() {
-  if (props.isDeleting) return;
-  emit('delete', getAddressInfo());
-}
-
-function onDetailInput(event: any) {
-  const value = event?.detail?.value ?? event?.target?.value ?? '';
-  addressDetail.value = value;
-  emit('changeDetail', value);
-}
-
-function onAreaTap() {
-  if (props.disableArea) return;
-  emit('clickArea');
-}
-
-function onToggleDefault() {
-  isDefault.value = !isDefault.value;
-  emit('changeDefault', isDefault.value);
-}
-
-const fieldContainerStyle = {
-  display: 'flex',
-  flexDirection: 'row' as const,
-  alignItems: 'center',
-  padding: 10,
-  paddingLeft: 16,
-  paddingRight: 16,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
+  emit('changeArea', values);
 };
 
-const labelStyle = {
-  fontSize: 14,
-  color: '#323233',
-  width: 88,
-  marginRight: 12,
+const onAreaCancel = () => {
+  showAreaPopup.value = false;
 };
 
-const inputStyle = {
-  flex: 1,
-  fontSize: 14,
-  color: '#323233',
-  height: 24,
+const onDelete = () => emit('delete', { ...data });
+
+const setAreaCode = (code?: string) => {
+  data.areaCode = code || '';
 };
 
-const errorTextStyle = {
-  fontSize: 12,
-  color: '#ee0a24',
-  paddingLeft: 116,
-  paddingBottom: 8,
-  backgroundColor: '#fff',
+const onDetailBlur = () => {
+  setTimeout(() => {
+    detailFocused.value = false;
+  });
 };
+
+const setAddressDetail = (value: string) => {
+  data.addressDetail = value;
+};
+
+const onSelectSearch = (item: AddressEditSearchItem) => {
+  emit('selectSearch', item);
+};
+
+const onChangeDefault = (checked: unknown) => {
+  data.isDefault = checked as boolean;
+  emit('changeDefault', checked as boolean);
+};
+
+defineExpose({
+  setAreaCode,
+  setAddressDetail,
+});
+
+watch(
+  () => props.addressInfo,
+  (value) => {
+    Object.assign(data, DEFAULT_DATA, value);
+  },
+  {
+    deep: true,
+    immediate: true,
+  },
+);
 </script>
 
 <template>
-  <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#f7f8fa' }">
-    <!-- Name field -->
-    <view :style="fieldContainerStyle">
-      <text :style="{ ...labelStyle, color: showNameError ? '#ee0a24' : '#323233' }">Name</text>
-      <input
-        :value="name"
-        placeholder="Enter name"
-        :style="inputStyle"
-        @input="(e: any) => { name = e?.detail?.value ?? e?.target?.value ?? '' }"
+  <Form
+    ref="formRef"
+    :class="bem()"
+    @submit="onFormSubmit"
+  >
+    <view :class="bem('fields')">
+      <Field
+        v-model="data.name"
+        clearable
+        label="姓名"
+        :rules="rules.name"
+        placeholder="姓名"
+        :label-width="'4.1em'"
+        @focus="() => onFocus('name')"
+        @update:model-value="(val: string) => onChange('name', val)"
       />
-    </view>
-    <text v-if="showNameError" :style="errorTextStyle">Please enter name</text>
-
-    <!-- Tel field -->
-    <view :style="fieldContainerStyle">
-      <text :style="{ ...labelStyle, color: showTelError ? '#ee0a24' : '#323233' }">Tel</text>
-      <input
-        :value="tel"
-        placeholder="Enter phone number"
+      <Field
+        v-model="data.tel"
+        clearable
         type="tel"
-        :style="inputStyle"
-        @input="(e: any) => { tel = e?.detail?.value ?? e?.target?.value ?? '' }"
+        label="电话"
+        :rules="rules.tel"
+        :maxlength="telMaxlength"
+        placeholder="电话"
+        :label-width="'4.1em'"
+        @focus="() => onFocus('tel')"
+        @update:model-value="(val: string) => onChange('tel', val)"
       />
-    </view>
-    <text v-if="showTelError" :style="errorTextStyle">Please enter valid phone number</text>
-
-    <!-- Area field -->
-    <view v-if="showArea" :style="fieldContainerStyle" @tap="onAreaTap">
-      <text :style="{ ...labelStyle, color: showAreaError ? '#ee0a24' : '#323233' }">Area</text>
-      <text
-        :style="{
-          flex: 1,
-          fontSize: 14,
-          color: areaText ? '#323233' : '#c8c9cc',
-        }"
-      >{{ areaText || areaPlaceholder }}</text>
-      <text :style="{ fontSize: 14, color: '#969799' }">&#x203A;</text>
-    </view>
-    <text v-if="showAreaError" :style="errorTextStyle">Please select area</text>
-
-    <!-- Address Detail field -->
-    <view :style="fieldContainerStyle">
-      <text :style="labelStyle">Detail</text>
-      <input
-        :value="addressDetail"
-        placeholder="Enter detailed address"
-        :style="inputStyle"
-        @input="onDetailInput"
+      <Field
+        v-if="showArea"
+        readonly
+        label="地区"
+        :is-link="!disableArea"
+        :model-value="areaText"
+        :rules="rules.areaCode"
+        :placeholder="areaPlaceholder || '选择省 / 市 / 区'"
+        :label-width="'4.1em'"
+        @focus="() => onFocus('areaCode')"
+        @click="() => { emit('clickArea'); if (!disableArea) showAreaPopup = true; }"
       />
-    </view>
-
-    <!-- Postal Code field -->
-    <view v-if="showPostal" :style="fieldContainerStyle">
-      <text :style="labelStyle">Postal</text>
-      <input
-        :value="postalCode"
-        placeholder="Enter postal code"
-        :style="inputStyle"
-        @input="(e: any) => { postalCode = e?.detail?.value ?? e?.target?.value ?? '' }"
+      <AddressEditDetail
+        :show="showDetail"
+        :rows="detailRows"
+        :rules="rules.addressDetail"
+        :value="data.addressDetail"
+        :focused="detailFocused"
+        :maxlength="detailMaxlength"
+        :search-result="searchResult"
+        :show-search-result="showSearchResult"
+        @blur="onDetailBlur"
+        @focus="() => onFocus('addressDetail')"
+        @input="onChangeDetail"
+        @select-search="onSelectSearch"
       />
+      <slot />
     </view>
-
-    <!-- Set Default -->
-    <view
-      v-if="showSetDefault"
-      :style="{
-        display: 'flex',
-        flexDirection: 'row' as const,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 10,
-        paddingLeft: 16,
-        paddingRight: 16,
-        backgroundColor: '#fff',
-        marginTop: 12,
-      }"
-      @tap="onToggleDefault"
+    <Cell
+      v-if="showSetDefault && !hideBottomFields"
+      center
+      :border="false"
+      title="设为默认收货地址"
+      :class="bem('default')"
     >
-      <text :style="{ fontSize: 14, color: '#323233' }">Set as default address</text>
-      <view
-        :style="{
-          width: 44,
-          height: 24,
-          borderRadius: 12,
-          backgroundColor: isDefault ? '#1989fa' : '#e5e5e5',
-          display: 'flex',
-          flexDirection: 'row' as const,
-          alignItems: 'center',
-          padding: 2,
-        }"
-      >
-        <view
-          :style="{
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: '#fff',
-            marginLeft: isDefault ? 18 : 0,
-          }"
+      <template #right-icon>
+        <Switch
+          :model-value="data.isDefault"
+          @update:model-value="onChangeDefault"
         />
-      </view>
+      </template>
+    </Cell>
+    <view v-if="!hideBottomFields" :class="bem('buttons')">
+      <Button
+        block
+        round
+        type="primary"
+        :class="bem('button')"
+        :loading="isSaving"
+        @click="handleSave"
+      >
+        <text>{{ saveButtonText || '保存' }}</text>
+      </Button>
+      <Button
+        v-if="showDelete"
+        block
+        round
+        :class="bem('button')"
+        :loading="isDeleting"
+        @click="onDelete"
+      >
+        <text>{{ deleteButtonText || '删除' }}</text>
+      </Button>
     </view>
-
-    <!-- Address Detail field -->
-    <!-- (showDetail controls visibility, detailMaxlength caps input) -->
-
-    <!-- Save button -->
-    <view
-      :style="{
-        margin: 16,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: isSaving ? '#7fb8f5' : '#1989fa',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: isSaving ? 0.7 : 1,
-      }"
-      @tap="onSave"
+    <Popup
+      v-model:show="showAreaPopup"
+      round
+      position="bottom"
     >
-      <text :style="{ fontSize: 16, color: '#fff', fontWeight: 'bold' }">{{ isSaving ? 'Saving...' : saveButtonText }}</text>
-    </view>
-
-    <!-- Delete button -->
-    <view
-      v-if="showDelete"
-      :style="{
-        marginLeft: 16,
-        marginRight: 16,
-        marginBottom: 16,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderStyle: 'solid' as const,
-        borderColor: '#ee0a24',
-        opacity: isDeleting ? 0.7 : 1,
-      }"
-      @tap="onDelete"
-    >
-      <text :style="{ fontSize: 16, color: '#ee0a24' }">{{ isDeleting ? 'Deleting...' : deleteButtonText }}</text>
-    </view>
-  </view>
+      <Area
+        v-model="data.areaCode"
+        :loading="!areaListLoaded"
+        :area-list="areaList"
+        :columns-placeholder="areaColumnsPlaceholder"
+        @confirm="onAreaConfirm"
+        @cancel="onAreaCancel"
+      />
+    </Popup>
+  </Form>
 </template>
