@@ -122,7 +122,11 @@ Each component must achieve ALL of the following:
 ## CSS & Styling Architecture (CRITICAL — READ BEFORE WRITING ANY COMPONENT)
 
 Lynx has full CSS support: selectors, @keyframes, transitions, variables, animations, @font-face.
-The vue-lynx plugin has `enableCSSSelector: true` — CSS class selectors work in both Lynx and web preview.
+
+The `lynx.config.ts` has these critical plugin options enabled:
+- `enableCSSSelector: true` — CSS class selectors work
+- `enableCSSInheritance: true` — CSS properties (including variables) inherit from parent to child
+- `enableCSSInlineVariables: true` — CSS variables in inline styles work (needed for ConfigProvider themeVars)
 
 ### The Golden Rule: Match Vant's styling approach
 
@@ -721,6 +725,7 @@ does not work. Always pass an explicit duration:
 
 **Events syntax**: Vue `@tap` compiles to `onTap` prop, which vue-lynx's runtime maps to
 `bindtap`. Both work. For main-thread events, use `:main-thread-bindtap`.
+
 
 **Main Thread Script** — for smooth gesture animations:
 ```vue

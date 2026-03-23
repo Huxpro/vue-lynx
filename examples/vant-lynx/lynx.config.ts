@@ -24,6 +24,8 @@ export default defineConfig({
     pluginVueLynx({
       optionsApi: false,
       enableCSSSelector: true,
+      enableCSSInheritance: true,
+      enableCSSInlineVariables: true,
     }),
   ],
 });

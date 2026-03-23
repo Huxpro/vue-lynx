@@ -1190,3 +1190,46 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote from all-inline-styles to Cell+Icon+BEM class system. Added stripe decoration view (replaces Vant's ::before pseudo-element). Removed duplicate __tests__ directory. Added types.ts. Chinese labels matching Vant's i18n defaults.
 - Limitations: ::before stripe pattern (uses <view> substitute), tag prop (always renders as view)
 ---
+
+## 2026-03-22 - parity-contact-edit: ContactEdit
+- Props: 7/7 (isEdit, isSaving, isDeleting, showSetDefault, setDefaultLabel, contactInfo, telValidator)
+- Events: 3/3 (save, delete, changeDefault)
+- Slots: 0/0 (ContactEdit has no slots)
+- CSS Variables: 6 defined in index.less (--van-contact-edit-padding, --van-contact-edit-fields-radius, --van-contact-edit-buttons-padding, --van-contact-edit-button-margin-bottom, --van-contact-edit-button-font-size, --van-contact-edit-field-label-width)
+- Animations: none (ContactEdit has no transitions)
+- Tests: 14 cases (Vant has 5, we have 14 — added BEM class, Form/Field integration, Switch cell, loading state, button type/style tests)
+- Demo sections: 1/1 (基础用法 — matches Vant demo which has a single section)
+- Visual match: pass (BEM classes, CSS variables, uses Form/Field/Button/Switch/Cell sub-components)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: index.ts, ContactEdit.tsx, types.ts, index.less)
+- Key changes: Rewrote from all-inline-styles to BEM class system using createNamespace. Now uses Form, Field, Button, Switch, Cell sub-components instead of manual input/validation. Moved DEFAULT_CONTACT and isMobile to separate <script> block (Vue SFC hoisting constraint). Added proper types.ts with ContactEditInfo and ContactEditThemeVars.
+- Limitations: <form> element (Lynx has no <form>, uses <view>), nativeType="submit" (calls form.submit() manually), isMobile validator (simplified regex)
+---
+
+## 2026-03-22 - parity-contact-list: ContactList
+- Props: 4/4 (list, modelValue, addText, defaultTagText)
+- Events: 4/4 (update:modelValue, select, add, edit)
+- Slots: 0/0 (ContactList has no slots)
+- CSS Variables: 5 defined in index.less (--van-contact-list-padding, --van-contact-list-edit-icon-size, --van-contact-list-add-button-z-index, --van-contact-list-radio-color, --van-contact-list-item-padding)
+- Animations: none (ContactList has no transitions)
+- Tests: 13 cases (Vant has 4)
+- Demo sections: 1/1 (基础用法)
+- Visual match: pass (BEM classes, CSS variables, full component composition with Cell/RadioGroup/Radio/Tag/Icon/Button)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files; Vant has 4: index.ts, types.ts, ContactList.tsx, index.less)
+- Key changes: Rewrote from all-inline-styles to full Vant architecture. Uses Cell for items, RadioGroup+Radio for selection, Tag for default tag, Icon for edit, Button for add. Extracted types.ts. Edit icon uses flag-based propagation prevention (Lynx has no event.stopPropagation). Removed old __tests__ directory.
+- Limitations: overflow-y scroll on group (Lynx has no overflow scroll), van-safe-area-bottom (no safe area insets in Lynx), event.stopPropagation (uses flag-based approach instead)
+---
+
+## 2026-03-22 - parity-address-edit: AddressEdit
+- Props: 20/20 (addressInfo, areaList, showArea, showDetail, showDelete, disableArea, searchResult, telMaxlength, showSetDefault, saveButtonText, areaPlaceholder, deleteButtonText, showSearchResult, detailRows, detailMaxlength, areaColumnsPlaceholder, isSaving, isDeleting, validator, telValidator)
+- Events: 9/9 (save, focus, change, delete, clickArea, changeArea, changeDetail, selectSearch, changeDefault)
+- Slots: 1/1 (default)
+- Exposed: setAreaCode, setAddressDetail
+- CSS Variables: 4 defined in index.less (--van-address-edit-padding, --van-address-edit-buttons-padding, --van-address-edit-button-margin-bottom, --van-address-edit-button-font-size)
+- Animations: none (AddressEdit has no standalone transitions; Popup handles area picker animation)
+- Tests: 26 cases (Vant has ~15)
+- Demo sections: 1/1 (基础用法 with area-list, delete, set-default, search results)
+- Visual match: pass (BEM classes, Form+Field integration, Switch for default toggle, Button for save/delete)
+- Files: index.vue, index.less, types.ts, AddressEditDetail.vue, test/index.spec.ts (5 files; Vant has 5 source files)
+- Key changes: Rewrote from all-inline-styles to full BEM/Form/Field architecture. Added AddressEditDetail sub-component for detail textarea + search results. Integrated Popup+Area for built-in area picker. Uses Form validation rules matching Vant's pattern. Switch for default toggle. All 9 events ported.
+- Limitations: <form> element (Lynx has no <form>, uses <view>), nativeType="submit" (calls form.submit() manually), teleport (Popup teleport not supported), v-show (uses v-if instead), showToast on area empty (not called)
+---

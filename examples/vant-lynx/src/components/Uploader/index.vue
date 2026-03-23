@@ -212,7 +212,7 @@ defineExpose({
           @reupload="onReuploadItem(index)"
         >
           <template v-if="slots['preview-cover']" #preview-cover="coverProps">
-            <slot name="preview-cover" v-bind="{ ...coverProps }" />
+            <slot name="preview-cover" v-bind="coverProps" />
           </template>
           <template v-if="slots['preview-delete']" #preview-delete>
             <slot name="preview-delete" />
