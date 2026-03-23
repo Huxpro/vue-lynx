@@ -14,6 +14,8 @@ In the first iteration, we had AI rewrite the styles using Tailwind CSS (`@lynx-
 
 For this version, we had AI reuse the original SCSS files from the reference implementation as much as possible. The class names, color palette, and layout structure are preserved — only the CSS rules themselves were adapted for Lynx's layout model (e.g., flexbox adjustments, no `<ul>`/`<li>` list styles).
 
+Interestingly, the CSS version maintains the `max-width` centered layout from the reference on desktop. Try clicking the "fullscreen" button below to see this in action.
+
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
 ## Overview of Changes
@@ -35,7 +37,6 @@ The Vue HackerNews 3.0 reference is a Webpack-based SSR app using Vue 3 + Vuex 4
 
 - **No `v-html`**: Lynx has no HTML parser, so we use a `stripHtml()` utility to convert HTML comments to plain text
 - **`<router-link>`**: Wrapped with Vue Router's `custom` slot API since Lynx has no `<a>` tags
-- **SVG spinner**: Replaced with a CSS `border` + `animation` spinner (Lynx doesn't support SVG)
 
 ## What Stayed the Same
 

@@ -14,6 +14,8 @@
 
 在这一版中，我们让 AI 尽可能复用参考实现原有的 SCSS 文件。类名、配色方案和布局结构都保留了下来 —— 只有 CSS 规则本身针对 Lynx 的布局模型做了适配（如 flexbox 调整、去掉 `<ul>`/`<li>` 列表样式等）。
 
+有趣的是，CSS 版本保留了桌面端的 `max-width` 居中布局。你可以点击下方的「全屏」按钮来体验这个效果。
+
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
 ## 改动概览
@@ -35,7 +37,6 @@ Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 V
 
 - **没有 `v-html`**：Lynx 没有 HTML 解析器，所以我们用 `stripHtml()` 工具函数将 HTML 评论转换为纯文本
 - **`<router-link>`**：用 Vue Router 的 `custom` slot API 包装，因为 Lynx 没有 `<a>` 标签
-- **SVG spinner**：替换为 CSS `border` + `animation` spinner（Lynx 不支持 SVG）
 
 ## 完全一致的部分
 
