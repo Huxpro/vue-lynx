@@ -14,9 +14,26 @@ const sliderWidth = 200 // Width of slider track in px
 const minRadius = 5
 const maxRadius = 150
 
+// Double tap detection
+const lastTapTime = ref(0)
+const lastTapId = ref(-1)
+const DOUBLE_TAP_DELAY = 300 // ms
+
 const selectedCircle = computed(() => {
   return circles.value.find(c => c.id === selectedId.value)
 })
+
+function getTouchPos(e) {
+  // Get coordinates relative to the viewport/screen
+  // e.detail.x/y in Lynx are relative to the element, but we need absolute for circles
+  const x = e.detail?.x ?? e.touches?.[0]?.pageX ?? 0
+  const y = e.detail?.y ?? e.touches?.[0]?.pageY ?? 0
+  
+  // Add offset because canvas is positioned at top: 60
+  // In Lynx, e.detail.x/y are relative to the tapped element
+  // The canvas view has top: 60, so we need to add that offset
+  return { x, y: y + 60 }
+}
 
 function onCanvasTap(e) {
   // If modal is open, close it without creating new circle
@@ -25,10 +42,11 @@ function onCanvasTap(e) {
     return
   }
 
-  // Check if tapped on an existing circle
-  const x = e.detail?.x ?? e.touches?.[0]?.pageX ?? 0
-  const y = e.detail?.y ?? e.touches?.[0]?.pageY ?? 0
+  const pos = getTouchPos(e)
+  const x = pos.x
+  const y = pos.y
 
+  // Check if tapped on an existing circle
   const hit = [...circles.value].reverse().find((c) => {
     const dx = c.x - x
     const dy = c.y - y
@@ -36,28 +54,35 @@ function onCanvasTap(e) {
   })
 
   if (hit) {
-    // If already selected, open modal; otherwise just select
-    if (selectedId.value === hit.id) {
-      showModal.value = true
-    } else {
-      selectedId.value = hit.id
-    }
+    handleCircleTap(hit.id)
   } else {
-    circles.value.push({ id: nextId++, x, y, r: 30 })
+    circles.value.push({ id: nextId++, x,    y, r: 30 })
     selectedId.value = -1
     push()
+  }
+}
+
+function handleCircleTap(circleId) {
+  const now = Date.now()
+  const timeSinceLastTap = now - lastTapTime.value
+  
+  if (lastTapId.value === circleId && timeSinceLastTap < DOUBLE_TAP_DELAY) {
+    // Double tap detected - open modal
+    showModal.value = true
+    lastTapId.value = -1
+    lastTapTime.value = 0
+  } else {
+    // Single tap - just select
+    selectedId.value = circleId
+    lastTapId.value = circleId
+    lastTapTime.value = now
   }
 }
 
 function onCircleTap(e, circle) {
   // Stop propagation to prevent canvas tap
   e?.stopPropagation?.()
-  // If already selected, open modal; otherwise just select
-  if (selectedId.value === circle.id) {
-    showModal.value = true
-  } else {
-    selectedId.value = circle.id
-  }
+  handleCircleTap(circle.id)
 }
 
 function closeModal() {
@@ -111,8 +136,6 @@ function updateSliderFromTouch(e) {
   if (!touch) return
   
   // Calculate position relative to slider track
-  // The slider is centered, so we need to compute based on the touch position
-  // For simplicity, we'll use the touch X position and map it to radius
   const trackLeft = (globalThis.window?.innerWidth ?? 375) / 2 - sliderWidth / 2
   const relativeX = touch.pageX - trackLeft
   const percentage = Math.max(0, Math.min(1, relativeX / sliderWidth))
@@ -144,21 +167,32 @@ function redo(e) {
 </script>
 
 <template>
-  <!-- Canvas fills the entire view; controls overlay on top -->
+  <!-- Main container -->
   <view
     :style="{ width: '100%', height: '100vh', minHeight: '400px', backgroundColor: '#f0f0f0', position: 'relative' }"
   >
-    <!-- Hint text -->
-    <text
+    <!-- Hint text for empty state - centered -->
+    <view
       v-if="circles.length === 0"
-      :style="{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: '#bbb', fontSize: 14, textAlign: 'center' }"
+      :style="{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+      }"
     >
-      Tap to draw circles
-    </text>
+      <text :style="{ color: '#bbb', fontSize: 14, textAlign: 'center' }">
+        Tap to draw circles
+      </text>
+    </view>
 
     <!-- Canvas area for drawing (below controls) -->
     <view
-      :style="{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 0 }"
+      :style="{ position: 'absolute', top: 60, left: 0, right: 0, bottom: 50 }"
       @tap="onCanvasTap"
     >
       <!-- Circles -->
@@ -196,13 +230,25 @@ function redo(e) {
       </view>
     </view>
 
-    <!-- Hint for interaction -->
-    <text
+    <!-- Hint for interaction - at bottom -->
+    <view
       v-if="circles.length > 0 && !showModal"
-      :style="{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', color: '#666', fontSize: 12, zIndex: 10 }"
+      :style="{ 
+        position: 'absolute', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        height: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10 
+      }"
     >
-      Tap circle twice to adjust radius
-    </text>
+      <text :style="{ color: '#666', fontSize: 12, textAlign: 'center' }">
+        Double-tap a circle to adjust radius
+      </text>
+    </view>
 
     <!-- Modal Overlay -->
     <view
