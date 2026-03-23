@@ -14,7 +14,7 @@ const feedKeys = Object.keys(validFeeds);
     <!-- Header: 55px, matching reference -->
     <view
       class="bg-hn-green flex flex-col"
-      :style="{ height: '55px', paddingLeft: '15px', paddingRight: '15px' }"
+      :style="{ height: '55px' }"
     >
       <scroll-view
         scroll-x
@@ -24,7 +24,7 @@ const feedKeys = Object.keys(validFeeds);
       >
         <!-- Logo: Lynx logo with thin white border (YC-style) -->
         <view
-          :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px' }"
+          :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '15px', marginRight: '12px' }"
         >
           <view
             class="flex-shrink-0"
@@ -53,6 +53,7 @@ const feedKeys = Object.keys(validFeeds);
             alignItems: 'center',
             justifyContent: 'center',
             marginLeft: 'auto',
+            marginRight: '15px',
           }"
         >
           <text
