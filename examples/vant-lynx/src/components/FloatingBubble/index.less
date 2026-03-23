@@ -7,3 +7,25 @@
   --van-floating-bubble-z-index: 999;
   --van-floating-bubble-border-radius: var(--van-radius-max, 999px);
 }
+
+.van-floating-bubble {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--van-floating-bubble-size);
+  height: var(--van-floating-bubble-size);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  touch-action: none;
+  background: var(--van-floating-bubble-background);
+  color: var(--van-floating-bubble-color);
+  border-radius: var(--van-floating-bubble-border-radius);
+  z-index: var(--van-floating-bubble-z-index);
+  transition: transform var(--van-duration-base, 0.3s);
+
+  &__icon {
+    font-size: var(--van-floating-bubble-icon-size);
+  }
+}
