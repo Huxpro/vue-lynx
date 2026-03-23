@@ -1,0 +1,42 @@
+# HackerNews Slopfork
+
+经典 [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) 示例的全面 Slopfork，将其移植到 Vue Lynx 作为验证框架能力的基准测试。
+
+HackerNews 克隆版是前端框架测试的经典用例 —— 它在一个相对真实的场景中检验了路由、数据请求、组件组合、动画过渡以及状态管理等各个方面。我们本想 Fork 经典的 Vue HackerNews 2.0，但由于 Vue Lynx 基于 Vue 3，我们最终使用了 [Vue 3 社区移植版](https://github.com/raukaute/vue-hackernews-3.0) 作为 Slopfork 的参考实现。
+
+### Tailwind CSS 版本
+我们使用 Tailwind CSS (`@lynx-js/tailwind-preset`) 完全重写了样式。我们还集成了 Pinia 和 `@tanstack/vue-query` 作为参考实现中 Vuex 4.0 的现代化替代方案。
+
+<Go example="hackernews-tailwind" defaultFile="src/App.vue" />
+
+### 原版 CSS 版本
+这是一个忠实的移植版本，完全复用了 Vue 3 参考实现中的原生 SCSS 文件。这证明了 Vue Lynx 对传统 CSS 范式（如 `.class` 选择器、嵌套选择器和 CSS 变量）有着强大的支持，这也意味着：当你要迁移到 Lynx 时，你不一定需要重写你的样式。
+
+<Go example="hackernews-css" defaultFile="src/App.vue" />
+
+## 什么是完全一致的？
+
+因为 Vue Lynx 构建于官方 Vue 3 runtime core 之上，所以原始 Vue 3 代码库中的绝大部分都可以完全不加修改地运行。
+
+| 层级 | Vue 3 参考 | Vue Lynx | 说明 |
+|------|-----------|----------|------|
+| **状态管理** | Vuex 4.0 | 完全一致 | 我们还测试了 Pinia 作为现代化替代方案 |
+| **数据请求** | `fetch()` 包装器 | 完全一致 | API 客户端无需修改；我们还额外添加了 `@tanstack/vue-query` |
+| **组件逻辑** | `<script setup>`、`computed()` 等 | 完全一致 | 无需任何修改 |
+| **模板** | 递归组件、动态加载 | 完全一致 | 如期工作 |
+| **路由** | `useRouter()`、`beforeEach` | 完全一致 | 相同响应式行为 |
+
+## 什么是需要适配的？
+
+从 Web 移植到 Lynx 时，唯一需要修改的是与 UI 和平台强相关的部分。
+
+| 方面 | Web | Vue Lynx |
+|------|-----|----------|
+| **模板元素** | `<div>`、`<span>`、`<a>` | `<view>`、`<text>`、`<image>` |
+| **事件处理** | `@click` | `@tap` |
+| **路由历史** | `createWebHistory()` | `createMemoryHistory()` |
+| **滚动** | Window 滚动 | `<scroll-view>` 组件 |
+
+---
+
+这个基准测试证明了：Vue Lynx 完全有能力处理复杂且真实的应用架构，同时还能保持与标准 Vue 一致的开发体验。

@@ -81,6 +81,7 @@ export default defineConfig({
         { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Product Swiper', link: '/guide/tutorial-swiper' },
         { text: '7GUIs Benchmark', link: '/guide/7guis' },
+        { text: 'HackerNews Slopfork', link: '/guide/hackernews' },
         {
           dividerType: 'solid',
         },
@@ -120,6 +121,7 @@ export default defineConfig({
         { text: '商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '商品轮播', link: '/zh/guide/tutorial-swiper' },
         { text: '7GUIs 基准测试', link: '/zh/guide/7guis' },
+        { text: 'HackerNews Slopfork', link: '/zh/guide/hackernews' },
         {
           dividerType: 'solid',
         },

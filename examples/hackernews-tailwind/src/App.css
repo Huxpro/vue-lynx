@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind utilities;
+
+:root {
+  --color-hn-green: rgba(62, 175, 124, 1);
+  --color-hn-bg: rgba(242, 243, 245, 1);
+  --color-hn-text: rgba(46, 73, 94, 1);
+  --color-hn-meta: rgba(89, 89, 89, 1);
+  --color-hn-card: rgba(255, 255, 255, 1);
+  --color-hn-border: rgba(238, 238, 238, 1);
+  --color-hn-comment-bg: rgba(255, 251, 242, 1);
+  --color-hn-link-hover: rgba(0, 196, 141, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  font-size: 15px;
+}
