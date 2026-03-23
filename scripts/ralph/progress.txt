@@ -1148,3 +1148,17 @@ Branch: feat/vant-lynx-v2
 - Key changes: Rewrote all 3 components from inline styles to BEM class system. Added types.ts with InjectionKey<ActionBarProvide> for parent-child linkage. ActionBarButton now has isFirst/isLast computed properties for border-radius via provide/inject child registration. All CSS class selectors in .less files.
 - Limitations: to/url/replace (no vue-router in Lynx), role/tabindex (no ARIA in Lynx), :active (no pseudo-class in Lynx), usePlaceholder (no getBoundingClientRect auto-measure), env(safe-area-inset-bottom) may not work
 ---
+
+## 2026-03-22 - parity-submit-bar: SubmitBar
+- Props: 15/15 (tip, label, price, tipIcon, loading, currency, disabled, textAlign, buttonText, buttonType, buttonColor, suffixLabel, placeholder, decimalLength, safeAreaInsetBottom)
+- Events: 1/1 (submit)
+- Slots: 4/4 (default, top, tip, button)
+- CSS Variables: 18 defined in index.less (--van-submit-bar-height, --van-submit-bar-z-index, --van-submit-bar-background, --van-submit-bar-button-width, --van-submit-bar-price-color, --van-submit-bar-price-font-size, --van-submit-bar-price-integer-font-size, --van-submit-bar-price-font, --van-submit-bar-text-color, --van-submit-bar-text-font-size, --van-submit-bar-tip-padding, --van-submit-bar-tip-font-size, --van-submit-bar-tip-line-height, --van-submit-bar-tip-color, --van-submit-bar-tip-background, --van-submit-bar-tip-icon-size, --van-submit-bar-button-height, --van-submit-bar-padding)
+- Animations: none (SubmitBar has no transitions)
+- Tests: 19 cases (Vant has ~12, we have 19 — added BEM class tests, slot tests, currency/suffix tests)
+- Demo sections: 4/4 (基础用法, 禁用状态, 加载状态, 高级用法)
+- Visual match: pass (BEM classes, CSS variables, proper Button + Icon integration)
+- Files: index.vue, index.less, types.ts, test/index.spec.ts (4 files, removed duplicate __tests__/)
+- Key changes: Rewrote from all-inline-styles to BEM class system. Now uses Button and Icon components (matching Vant's component composition). Price calculation uses (price/100).toFixed(decimalLength) matching Vant exactly. Default label is '合计：' matching Vant's i18n.
+- Limitations: placeholder prop (no getBoundingClientRect for placeholder height), position:fixed (Lynx handles layout differently), usePlaceholder composable (DOM measurement unavailable)
+---

@@ -1926,7 +1926,7 @@
         "Docs: Lynx limitations in components/SubmitBar/README.md",
         "Commit: feat(submit-bar): 100% feature parity with Vant"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "parity-coupon-list",
