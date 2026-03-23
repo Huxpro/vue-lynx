@@ -1,3 +1,64 @@
 :root {
-  /* ContactList has no specific CSS variables in Vant */
+  --van-contact-list-padding: var(--van-padding-sm) var(--van-padding-sm) 80px;
+  --van-contact-list-edit-icon-size: 16px;
+  --van-contact-list-add-button-z-index: 999;
+  --van-contact-list-radio-color: var(--van-primary-color);
+  --van-contact-list-item-padding: var(--van-padding-md);
+}
+
+.van-contact-list {
+  height: 100%;
+  padding: var(--van-contact-list-padding);
+
+  &__item {
+    padding: var(--van-contact-list-item-padding);
+  }
+
+  &__item-title {
+    display: flex;
+    align-items: center;
+    padding-right: var(--van-padding-xl);
+    padding-left: var(--van-padding-xs);
+  }
+
+  &__item-tag {
+    flex: none;
+    margin-left: var(--van-padding-xs);
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1.4em;
+  }
+
+  &__group {
+    height: 100%;
+    border-radius: var(--van-radius-lg);
+  }
+
+  &__edit {
+    font-size: var(--van-contact-list-edit-icon-size);
+  }
+
+  &__radio {
+    .van-radio__icon--checked .van-icon {
+      background-color: var(--van-contact-list-radio-color);
+      border-color: var(--van-contact-list-radio-color);
+    }
+  }
+
+  &__bottom {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--van-contact-list-add-button-z-index);
+    padding-left: var(--van-padding-md);
+    padding-right: var(--van-padding-md);
+    background-color: var(--van-background-2);
+  }
+
+  &__add {
+    height: 40px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
 }
