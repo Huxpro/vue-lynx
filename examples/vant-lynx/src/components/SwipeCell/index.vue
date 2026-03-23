@@ -1,242 +1,195 @@
 <!--
-  Vant Feature Parity Report: SwipeCell
-  - Props: 5/6 supported
-    - name ✅, disabled ✅, leftWidth ✅, rightWidth ✅, stopPropagation ✅
-    - beforeClose ✅ (interceptor pattern)
-  - Events: 3/3 supported (open, close, click)
-  - Slots: 3/3 supported (default, left, right)
-  - Exposed Methods: open(side), close(position) ✅
-  - Gestures Supported:
-    - Horizontal swipe left to reveal right actions ✅
-    - Horizontal swipe right to reveal left actions ✅
-    - Direction detection: only activates on horizontal swipe ✅
-    - Threshold: 15% when opened, 15% when closed (matches Vant) ✅
-    - Drag continues from current offset (not reset) ✅
-    - Click-away closes cell ✅
-    - Tap vs drag distinction (lockClick) ✅
-    - touchcancel treated as touchend ✅
-  - Transition: 0.6s slide animation when snapping ✅
-  - Gaps:
-    - No auto-width measurement from slots (Lynx has no getComputedStyle/getBoundingClientRect
-      equivalent for synchronous measurement; leftWidth/rightWidth must be provided as props)
+  Lynx Limitations:
+  - Auto-width measurement: Lynx has no synchronous getBoundingClientRect;
+    leftWidth/rightWidth must be provided as props (no auto-calc from slot content)
+  - useClickAway: No document-level touchstart listener in Lynx;
+    outside clicks are not auto-detected (user must call close() manually)
+  - stopPropagation: Limited to Lynx event model (bindtap vs DOM events)
+  - cursor: grab: No cursor in Lynx (mobile only)
 -->
 <script setup lang="ts">
-import { ref, computed } from 'vue-lynx';
+import { ref, reactive, computed } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { isDef, clamp } from '../../utils/format';
+import { useTouch } from '../../composables/useTouch';
+import './index.less';
 
-export interface SwipeCellProps {
-  name?: string | number;
-  leftWidth?: number;
-  rightWidth?: number;
-  disabled?: boolean;
-  beforeClose?: (params: {
-    name: string | number;
-    position: 'left' | 'right' | 'cell' | 'outside';
-  }) => boolean | Promise<boolean> | undefined;
-  stopPropagation?: boolean;
-}
+import type { SwipeCellSide, SwipeCellPosition, SwipeCellProps } from './types';
+
+const [, bem] = createNamespace('swipe-cell');
 
 const props = withDefaults(defineProps<SwipeCellProps>(), {
   name: '',
-  leftWidth: 0,
-  rightWidth: 0,
   disabled: false,
   stopPropagation: false,
 });
 
 const emit = defineEmits<{
-  open: [params: { name: string | number; position: 'left' | 'right' }];
-  close: [params: { name: string | number; position: 'left' | 'right' | 'cell' | 'outside' }];
-  click: [position: 'left' | 'right' | 'cell' | 'outside'];
+  open: [params: { name: string | number; position: SwipeCellSide }];
+  close: [params: { name: string | number; position: SwipeCellPosition }];
+  click: [position: SwipeCellPosition];
 }>();
 
-// State
-const offset = ref(0);
-const dragging = ref(false);
-const opened = ref(false);
-const lockClick = ref(false);
-const isInBeforeClosing = ref(false);
-
-// Touch tracking
-let startX = 0;
-let startY = 0;
+let opened = false;
+let lockClick = false;
 let startOffset = 0;
-let direction: '' | 'horizontal' | 'vertical' = '';
-const LOCK_DIRECTION_DISTANCE = 10;
+let isInBeforeClosing = false;
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
+const state = reactive({
+  offset: 0,
+  dragging: false,
+});
 
-function onTouchStart(e: any) {
-  if (props.disabled) return;
-  const touch = e.touches?.[0] || e;
-  startX = touch.clientX || 0;
-  startY = touch.clientY || 0;
-  startOffset = offset.value;
-  direction = '';
-}
+const touch = useTouch();
 
-function onTouchMove(e: any) {
-  if (props.disabled) return;
-  const touch = e.touches?.[0] || e;
-  const deltaX = (touch.clientX || 0) - startX;
-  const deltaY = (touch.clientY || 0) - startY;
-  const offsetX = Math.abs(deltaX);
-  const offsetY = Math.abs(deltaY);
+const leftWidth = computed(() =>
+  isDef(props.leftWidth) ? +props.leftWidth : 0,
+);
 
-  // Lock direction when distance exceeds threshold
-  if (!direction || (offsetX < LOCK_DIRECTION_DISTANCE && offsetY < LOCK_DIRECTION_DISTANCE)) {
-    if (offsetX > offsetY) {
-      direction = 'horizontal';
-    } else if (offsetY > offsetX) {
-      direction = 'vertical';
-    }
+const rightWidth = computed(() =>
+  isDef(props.rightWidth) ? +props.rightWidth : 0,
+);
+
+const open = (side: SwipeCellSide) => {
+  state.offset = side === 'left' ? leftWidth.value : -rightWidth.value;
+
+  if (!opened) {
+    opened = true;
+    emit('open', {
+      name: props.name,
+      position: side,
+    });
   }
+};
 
-  // Only handle horizontal swipes
-  if (direction !== 'horizontal') return;
+const close = (position?: SwipeCellPosition) => {
+  state.offset = 0;
 
-  lockClick.value = true;
-  dragging.value = true;
-
-  offset.value = clamp(
-    deltaX + startOffset,
-    -props.rightWidth,
-    props.leftWidth,
-  );
-}
-
-function onTouchEnd() {
-  if (dragging.value) {
-    dragging.value = false;
-    toggle(offset.value > 0 ? 'left' : 'right');
-
-    // Reset lockClick after a tick to allow click events to be properly handled
-    setTimeout(() => {
-      lockClick.value = false;
-    }, 0);
+  if (opened) {
+    opened = false;
+    emit('close', {
+      name: props.name,
+      position: position!,
+    });
   }
-}
+};
 
-function toggle(side: 'left' | 'right') {
-  const currentOffset = Math.abs(offset.value);
+const toggle = (side: SwipeCellSide) => {
+  const offset = Math.abs(state.offset);
   const THRESHOLD = 0.15;
-  const threshold = opened.value ? 1 - THRESHOLD : THRESHOLD;
-  const width = side === 'left' ? props.leftWidth : props.rightWidth;
+  const threshold = opened ? 1 - THRESHOLD : THRESHOLD;
+  const width = side === 'left' ? leftWidth.value : rightWidth.value;
 
-  if (width && currentOffset > width * threshold) {
+  if (width && offset > width * threshold) {
     open(side);
   } else {
     close(side);
   }
-}
+};
 
-function open(side: 'left' | 'right') {
-  offset.value = side === 'left' ? props.leftWidth : -props.rightWidth;
-
-  if (!opened.value) {
-    opened.value = true;
-    emit('open', { name: props.name, position: side });
+const onTouchStart = (event: TouchEvent) => {
+  if (!props.disabled) {
+    startOffset = state.offset;
+    touch.start(event);
   }
-}
+};
 
-function close(position: 'left' | 'right' | 'cell' | 'outside' = 'outside') {
-  offset.value = 0;
+const onTouchMove = (event: TouchEvent) => {
+  if (props.disabled) return;
 
-  if (opened.value) {
-    opened.value = false;
-    emit('close', { name: props.name, position });
+  const { deltaX } = touch;
+  touch.move(event);
+
+  if (touch.isHorizontal()) {
+    lockClick = true;
+    state.dragging = true;
+
+    state.offset = clamp(
+      deltaX.value + startOffset,
+      -rightWidth.value,
+      leftWidth.value,
+    );
   }
-}
+};
 
-function handleClick(position: 'left' | 'right' | 'cell' | 'outside') {
-  if (isInBeforeClosing.value) return;
+const onTouchEnd = () => {
+  if (state.dragging) {
+    state.dragging = false;
+    toggle(state.offset > 0 ? 'left' : 'right');
+
+    // compatible with desktop scenario
+    setTimeout(() => {
+      lockClick = false;
+    }, 0);
+  }
+};
+
+const onClick = (position: SwipeCellPosition = 'outside') => {
+  if (isInBeforeClosing) return;
 
   emit('click', position);
 
-  if (opened.value && !lockClick.value) {
+  if (opened && !lockClick) {
     if (props.beforeClose) {
-      isInBeforeClosing.value = true;
-      const result = props.beforeClose({ name: props.name, position });
+      isInBeforeClosing = true;
+      const result = props.beforeClose({
+        name: props.name,
+        position,
+      });
+
       if (result && typeof (result as Promise<boolean>).then === 'function') {
         (result as Promise<boolean>)
           .then((allow) => {
-            isInBeforeClosing.value = false;
+            isInBeforeClosing = false;
             if (allow !== false) close(position);
           })
           .catch(() => {
-            isInBeforeClosing.value = false;
+            isInBeforeClosing = false;
           });
       } else {
-        isInBeforeClosing.value = false;
+        isInBeforeClosing = false;
         if (result !== false) close(position);
       }
     } else {
       close(position);
     }
   }
-}
+};
 
-function getClickHandler(position: 'left' | 'right' | 'cell' | 'outside') {
-  return () => {
-    if (lockClick.value) return;
-    handleClick(position);
-  };
-}
+const getClickHandler = (position: SwipeCellPosition) => () => {
+  if (lockClick) return;
+  onClick(position);
+};
 
 const wrapperStyle = computed(() => ({
-  display: 'flex' as const,
-  flexDirection: 'row' as const,
-  transform: `translateX(${offset.value}px)`,
-  transitionDuration: dragging.value ? '0s' : '0.6s',
-  transitionProperty: 'transform',
+  transform: `translate3d(${state.offset}px, 0, 0)`,
+  transitionDuration: state.dragging ? '0s' : '.6s',
 }));
 
-// Expose open/close methods
 defineExpose({ open, close });
 </script>
 
 <template>
   <view
-    :style="{ position: 'relative', overflow: 'hidden' }"
+    :class="bem()"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"
     @touchcancel="onTouchEnd"
     @tap="getClickHandler('cell')()"
   >
-    <view :style="wrapperStyle">
+    <view :class="bem('wrapper')" :style="wrapperStyle">
       <view
         v-if="leftWidth"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          left: -leftWidth,
-          width: leftWidth,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-        }"
+        :class="bem('left')"
         @tap.stop="getClickHandler('left')()"
       >
         <slot name="left" />
       </view>
-      <view :style="{ flex: 1 }">
-        <slot />
-      </view>
+      <slot />
       <view
         v-if="rightWidth"
-        :style="{
-          position: 'absolute',
-          top: 0,
-          right: -rightWidth,
-          width: rightWidth,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-        }"
+        :class="bem('right')"
         @tap.stop="getClickHandler('right')()"
       >
         <slot name="right" />
