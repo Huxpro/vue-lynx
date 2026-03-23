@@ -4,3 +4,41 @@
   --van-contact-card-add-icon-color: var(--van-primary-color, #1989fa);
   --van-contact-card-title-line-height: var(--van-line-height-md, 20px);
 }
+
+.van-contact-card {
+  padding: var(--van-contact-card-padding);
+  position: relative;
+
+  &__title {
+    margin-left: 5px;
+    line-height: var(--van-contact-card-title-line-height);
+  }
+
+  &--add {
+    .van-cell__left-icon {
+      color: var(--van-contact-card-add-icon-color);
+      font-size: var(--van-contact-card-add-icon-size);
+    }
+  }
+
+  // Stripe decoration at bottom (replaces ::before in Vant)
+  &__stripe {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--van-warning-color, #ff976a) 0,
+      var(--van-warning-color, #ff976a) 20%,
+      transparent 0,
+      transparent 25%,
+      var(--van-primary-color, #1989fa) 0,
+      var(--van-primary-color, #1989fa) 45%,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 80px;
+  }
+}

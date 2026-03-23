@@ -1,52 +1,31 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
 import DemoPage from '../components/DemoPage/index.vue';
 import ContactCard from '../components/ContactCard/index.vue';
-const cardType = ref<'add' | 'edit'>('add');
-const name = ref('John Doe');
-const tel = ref('130-0000-0000');
-
-function onCardClick() {
-  if (cardType.value === 'add') {
-    cardType.value = 'edit';
-  }
-}
 </script>
 
 <template>
-  <DemoPage title="ContactCard">
-    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
-      <!-- Add Type -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Add Type</text>
-      <view :style="{ marginBottom: 16 }">
-        <ContactCard
-          type="add"
-          add-text="Add Contact Info"
-          @click="onCardClick"
-        />
-      </view>
+  <DemoPage title="ContactCard 联系人卡片">
+    <view :style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+      <!-- 添加联系人 -->
+      <text class="demo-section-title">添加联系人</text>
+      <ContactCard type="add" />
 
-      <!-- Edit Type -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Edit Type</text>
-      <view :style="{ marginBottom: 16 }">
-        <ContactCard
-          type="edit"
-          :name="name"
-          :tel="tel"
-          @click="onCardClick"
-        />
-      </view>
+      <!-- 编辑联系人 -->
+      <text class="demo-section-title" :style="{ marginTop: '16px' }">编辑联系人</text>
+      <ContactCard
+        type="edit"
+        name="张三"
+        tel="13000000000"
+      />
 
-      <!-- Not Editable -->
-      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Not Editable</text>
-      <view>
-        <ContactCard
-          type="edit"
-          name="Jane Smith"
-          tel="131-0000-0000"
-          :editable="false"
-        />
-      </view>
+      <!-- 不可编辑 -->
+      <text class="demo-section-title" :style="{ marginTop: '16px' }">不可编辑</text>
+      <ContactCard
+        type="edit"
+        name="张三"
+        tel="13000000000"
+        :editable="false"
+      />
     </view>
   </DemoPage>
 </template>
