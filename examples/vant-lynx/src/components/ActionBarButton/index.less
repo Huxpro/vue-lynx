@@ -3,3 +3,32 @@
   --van-action-bar-button-warning-color: var(--van-gradient-orange, linear-gradient(to right, #ffd01e, #ff8917));
   --van-action-bar-button-danger-color: var(--van-gradient-red, linear-gradient(to right, #ff6034, #ee0a24));
 }
+
+.van-action-bar-button {
+  flex: 1;
+  height: var(--van-action-bar-button-height);
+  font-weight: var(--van-font-bold, 500);
+  font-size: var(--van-font-size-md, 14px);
+  border: none;
+  border-radius: 0;
+
+  &--first {
+    margin-left: 5px;
+    border-top-left-radius: var(--van-radius-max, 999px);
+    border-bottom-left-radius: var(--van-radius-max, 999px);
+  }
+
+  &--last {
+    margin-right: 5px;
+    border-top-right-radius: var(--van-radius-max, 999px);
+    border-bottom-right-radius: var(--van-radius-max, 999px);
+  }
+
+  &--warning {
+    background: var(--van-action-bar-button-warning-color);
+  }
+
+  &--danger {
+    background: var(--van-action-bar-button-danger-color);
+  }
+}
