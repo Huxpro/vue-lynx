@@ -1,28 +1,18 @@
 <!--
-  Vant Feature Parity Report: FloatingPanel
-  - Props: 7/8 supported
-    - height ✅ (v-model), anchors ✅, duration ✅, contentDraggable ✅
-    - draggable ✅ (can disable drag entirely)
-    - magnetic ✅ (snap to nearest anchor, default true)
-    - safeAreaInsetBottom ✅ (prop accepted, visual padding added)
-    - lockScroll ❌ (Lynx scroll model differs from browser, no equivalent API)
-  - Events: 2/2 supported (update:height, heightChange)
-  - Slots: 2/2 supported (default, header)
-  - Gestures Supported:
-    - Drag header bar up/down to resize panel ✅
-    - Drag content area (when contentDraggable=true) ✅
-    - Content scroll interaction: drags panel when at scroll top, scrolls content otherwise ✅
-    - Elastic damping when dragging beyond min/max bounds ✅
-    - Snap to nearest anchor on release (magnetic) ✅
-    - Clamp to [min, max] when magnetic=false ✅
-    - touchcancel treated as touchend ✅
-  - Transition: cubic-bezier(0.18, 0.89, 0.32, 1.28) spring animation ✅
-  - Gaps:
-    - lockScroll not supported (Lynx has different scroll mechanism)
-    - Uses height-based positioning instead of translateY (Lynx compatibility)
+  Lynx Limitations:
+  - lockScroll: Lynx scroll model differs from browser, no equivalent API
+  - overflow-y: auto on content: Lynx doesn't support overflow:scroll, content uses flex layout
+  - ::after pseudo-element: replaced with <view> for background extension below fold
+  - cursor: grab: no cursor support in Lynx
+  - user-select: none: no text selection in Lynx
+  - -webkit-overflow-scrolling: touch: not applicable in Lynx
+  - 100vw width: uses 100% instead (Lynx viewport units may differ)
 -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue-lynx';
+import { createNamespace, addUnit } from '../../utils';
+import { useTouch } from '../../composables/useTouch';
+import './index.less';
 
 export interface FloatingPanelProps {
   height?: number;
@@ -48,15 +38,18 @@ const props = withDefaults(defineProps<FloatingPanelProps>(), {
 
 const emit = defineEmits<{
   'update:height': [value: number];
-  'height-change': [params: { height: number }];
+  heightChange: [params: { height: number }];
 }>();
 
-// Default screen height fallback (Lynx doesn't have window.innerHeight)
-const DEFAULT_SCREEN_HEIGHT = 800;
+const [, bem] = createNamespace('floating-panel');
+
+// Default screen height fallback (Lynx doesn't have window.innerHeight reliably)
+const SCREEN_HEIGHT = 800;
+const DAMP = 0.2;
 
 const boundary = computed(() => ({
   min: props.anchors[0] ?? 100,
-  max: props.anchors[props.anchors.length - 1] ?? Math.round(DEFAULT_SCREEN_HEIGHT * 0.6),
+  max: props.anchors[props.anchors.length - 1] ?? Math.round(SCREEN_HEIGHT * 0.6),
 }));
 
 const anchors = computed(() =>
@@ -65,24 +58,40 @@ const anchors = computed(() =>
     : [boundary.value.min, boundary.value.max],
 );
 
-// Find the closest anchor to a given height
 function closest(arr: number[], target: number): number {
   return arr.reduce((prev, curr) =>
     Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev,
   );
 }
 
-const currentHeight = ref(
-  props.height > 0
-    ? props.height
-    : boundary.value.min,
+// Height state — syncs with v-model:height
+const height = ref(+props.height || boundary.value.min);
+
+watch(
+  () => props.height,
+  (val) => {
+    if (val !== undefined && +val !== height.value) {
+      height.value = +val;
+    }
+  },
 );
+
 const dragging = ref(false);
 
-// Damping factor for elastic effect beyond bounds
-const DAMP = 0.2;
+// Use translateY for GPU-composited animation (matches Vant exactly)
+const rootStyle = computed(() => ({
+  height: addUnit(boundary.value.max),
+  transform: `translateY(calc(100% + ${addUnit(-height.value)}))`,
+  transition: !dragging.value
+    ? `transform ${props.duration}s cubic-bezier(0.18, 0.89, 0.32, 1.28)`
+    : 'none',
+}));
 
-function ease(moveY: number): number {
+const contentStyle = computed(() => ({
+  paddingBottom: addUnit(boundary.value.max - height.value),
+}));
+
+const ease = (moveY: number): number => {
   const absDistance = Math.abs(moveY);
   const { min, max } = boundary.value;
 
@@ -93,140 +102,113 @@ function ease(moveY: number): number {
     return -(min - (min - absDistance) * DAMP);
   }
   return moveY;
-}
+};
 
-// Touch tracking
-let startY = 0;
-let startHeight = 0;
+let startY: number;
+const touch = useTouch();
 
-function onTouchStart(e: any) {
+function handleTouchStart(e: TouchEvent) {
   if (!props.draggable) return;
-  const touch = e.touches?.[0] || e;
-  startY = touch.clientY || 0;
-  startHeight = currentHeight.value;
+  touch.start(e);
   dragging.value = true;
+  startY = -height.value;
 }
 
-function onTouchMove(e: any) {
+function handleTouchMove(e: TouchEvent) {
   if (!props.draggable || !dragging.value) return;
-  const touch = e.touches?.[0] || e;
-  const deltaY = startY - (touch.clientY || 0); // positive = dragging up = increase height
-  const moveY = -(startHeight + deltaY);
-  currentHeight.value = -ease(moveY);
+  touch.move(e);
+
+  const moveY = touch.deltaY.value + startY;
+  height.value = -ease(moveY);
 }
 
-function onTouchEnd() {
+function handleTouchEnd() {
   if (!dragging.value) return;
   dragging.value = false;
 
   if (!props.draggable) return;
 
   if (props.magnetic) {
-    currentHeight.value = closest(anchors.value, currentHeight.value);
+    height.value = closest(anchors.value, height.value);
   } else {
     const { min, max } = boundary.value;
-    currentHeight.value = Math.max(min, Math.min(max, currentHeight.value));
+    height.value = Math.max(min, Math.min(max, height.value));
   }
 
-  if (currentHeight.value !== startHeight) {
-    emit('update:height', currentHeight.value);
-    emit('height-change', { height: currentHeight.value });
+  if (height.value !== -startY) {
+    emit('update:height', height.value);
+    emit('heightChange', { height: height.value });
   }
 }
 
-// Content area touch handling (only drags panel when contentDraggable is true)
-function onContentTouchStart(e: any) {
+// Content touch handlers: only active when contentDraggable is true
+function onContentTouchStart(e: TouchEvent) {
   if (!props.contentDraggable) return;
-  onTouchStart(e);
+  handleTouchStart(e);
 }
 
-function onContentTouchMove(e: any) {
+function onContentTouchMove(e: TouchEvent) {
   if (!props.contentDraggable) return;
-  onTouchMove(e);
+  handleTouchMove(e);
 }
 
-// Watch for external height changes
-watch(
-  () => props.height,
-  (val) => {
-    if (val > 0) {
-      currentHeight.value = val;
-    }
-  },
-);
+function onContentTouchEnd() {
+  if (!props.contentDraggable) return;
+  handleTouchEnd();
+}
 
 // Initialize to nearest anchor
 watch(
   boundary,
   () => {
-    currentHeight.value = closest(anchors.value, currentHeight.value);
+    height.value = closest(anchors.value, height.value);
   },
   { immediate: true },
 );
 
-const panelStyle = computed(() => ({
-  position: 'fixed' as const,
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: currentHeight.value,
-  backgroundColor: '#fff',
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  display: 'flex',
-  flexDirection: 'column' as const,
-  zIndex: 999,
-  transitionProperty: dragging.value ? 'none' : 'height',
-  transitionDuration: dragging.value ? '0s' : `${props.duration}s`,
-  transitionTimingFunction: 'cubic-bezier(0.18, 0.89, 0.32, 1.28)',
-}));
-
-const headerStyle = computed(() => ({
-  height: 28,
-  display: 'flex' as const,
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-}));
-
-const barStyle = {
-  width: 20,
-  height: 3,
-  backgroundColor: '#c8c9cc',
-  borderRadius: 2,
-};
-
 defineExpose({
-  /** Current panel height */
-  height: currentHeight,
+  height,
 });
 </script>
 
 <template>
-  <view :style="panelStyle">
+  <view
+    :class="[bem(), { 'van-safe-area-bottom': safeAreaInsetBottom }]"
+    :style="rootStyle"
+  >
     <!-- Header: custom slot or default drag bar -->
     <slot name="header">
       <view
         v-if="draggable"
-        :style="headerStyle"
-        @touchstart="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-        @touchcancel="onTouchEnd"
+        :class="bem('header')"
+        @touchstart="handleTouchStart"
+        @touchmove="handleTouchMove"
+        @touchend="handleTouchEnd"
+        @touchcancel="handleTouchEnd"
       >
-        <view :style="barStyle" />
+        <view :class="bem('header-bar')" />
       </view>
     </slot>
+
     <!-- Content area -->
     <view
-      :style="{ flex: 1, overflow: 'hidden' }"
+      :class="bem('content')"
+      :style="contentStyle"
       @touchstart="onContentTouchStart"
       @touchmove="onContentTouchMove"
-      @touchend="onTouchEnd"
-      @touchcancel="onTouchEnd"
+      @touchend="onContentTouchEnd"
+      @touchcancel="onContentTouchEnd"
     >
       <slot />
     </view>
-    <!-- Safe area bottom padding -->
-    <view v-if="safeAreaInsetBottom" :style="{ height: 34 }" />
+
+    <!-- Background extension (replaces ::after in Vant) -->
+    <view :style="{
+      position: 'absolute',
+      bottom: '-100vh',
+      height: '100vh',
+      width: '100%',
+      backgroundColor: 'inherit',
+    }" />
   </view>
 </template>
