@@ -1,3 +1,62 @@
 :root {
-  /* DropdownItem shares CSS variables with DropdownMenu */
+  --van-dropdown-item-z-index: 10;
+}
+
+.van-dropdown-item {
+  position: absolute;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  z-index: var(--van-dropdown-item-z-index);
+
+  &__icon {
+    display: flex;
+    line-height: inherit;
+  }
+
+  &__option {
+    text-align: left;
+
+    &--active {
+      color: var(--van-dropdown-menu-option-active-color, #1989fa);
+
+      .van-dropdown-item__icon {
+        color: var(--van-dropdown-menu-option-active-color, #1989fa);
+      }
+    }
+
+    &--disabled {
+      color: var(--van-dropdown-menu-option-disabled-color, #c8c9cc);
+
+      .van-dropdown-item__icon {
+        color: var(--van-dropdown-menu-option-disabled-color, #c8c9cc);
+      }
+    }
+  }
+
+  &--up {
+    bottom: 100%;
+    height: 100vh;
+  }
+
+  &--down {
+    top: 100%;
+    height: 100vh;
+  }
+
+  &__content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    max-height: var(--van-dropdown-menu-content-max-height, 80%);
+    background: var(--van-background-2, #fff);
+
+    .van-dropdown-item--down & {
+      top: 0;
+    }
+
+    .van-dropdown-item--up & {
+      bottom: 0;
+    }
+  }
 }

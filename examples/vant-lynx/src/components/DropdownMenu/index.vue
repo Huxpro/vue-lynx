@@ -1,93 +1,121 @@
 <!--
-  Vant Feature Parity Report:
-  - Props: 7/8 supported (overlay, zIndex, duration, direction, activeColor, closeOnClickOutside, closeOnClickOverlay)
-  - Missing: swipeThreshold (horizontal scroll N/A in Lynx), autoLocate (no getContainingBlock in Lynx)
-  - Expose: close(), opened (ref)
-  - Provide/Inject: Provides props object, offset, openedIndex, toggleItem, closeAll to DropdownItem children
-  - Slots: 1/1 (default)
-  - Gaps:
-    - No swipeThreshold (scroll behavior N/A in Lynx)
-    - No autoLocate (no DOM rect measurement in Lynx)
-    - No useClickAway (no document-level event delegation in Lynx)
-    - No scroll tracking (no scrollParent in Lynx)
+  Lynx Limitations:
+  - autoLocate: no getContainingBlock/getBoundingClientRect in Lynx
+  - closeOnClickOutside: no document-level event delegation in Lynx; uses overlay tap instead
+  - scroll tracking: no scrollParent/addEventListener('scroll') in Lynx
+  - swipeThreshold: prop accepted, uses <scroll-view> for horizontal scroll in Lynx
 -->
 <script setup lang="ts">
-import { provide, toRef, ref, computed, type Ref } from 'vue-lynx';
+import { provide, ref, computed, shallowReactive } from 'vue-lynx';
+import { createNamespace } from '../../utils/create';
+import { isDef } from '../../utils/format';
+import type {
+  DropdownMenuDirection,
+  DropdownChildExpose,
+  DropdownMenuProvide,
+} from './types';
+import { DROPDOWN_KEY } from './types';
+import './index.less';
 
-export interface DropdownMenuProps {
-  activeColor?: string;
-  direction?: 'up' | 'down';
-  overlay?: boolean;
-  zIndex?: number | string;
-  duration?: number | string;
-  closeOnClickOutside?: boolean;
-  closeOnClickOverlay?: boolean;
-}
+const [, bem] = createNamespace('dropdown-menu');
 
-export interface DropdownMenuProvide {
-  props: DropdownMenuProps;
-  offset: Ref<number>;
-  openedIndex: Ref<number | null>;
-  toggleItem: (index: number) => void;
-  closeAll: () => void;
-}
+const props = withDefaults(
+  defineProps<{
+    overlay?: boolean;
+    zIndex?: number | string;
+    duration?: number | string;
+    direction?: DropdownMenuDirection;
+    activeColor?: string;
+    autoLocate?: boolean;
+    closeOnClickOutside?: boolean;
+    closeOnClickOverlay?: boolean;
+    swipeThreshold?: number | string;
+  }>(),
+  {
+    overlay: true,
+    duration: 0.2,
+    direction: 'down',
+    closeOnClickOutside: true,
+    closeOnClickOverlay: true,
+  },
+);
 
-const props = withDefaults(defineProps<DropdownMenuProps>(), {
-  activeColor: '#1989fa',
-  direction: 'down',
-  overlay: true,
-  zIndex: 10,
-  duration: 0.2,
-  closeOnClickOutside: true,
-  closeOnClickOverlay: true,
+const children = shallowReactive<DropdownChildExpose[]>([]);
+
+const opened = computed(() => children.some((child) => child.state.showWrapper));
+
+const scrollable = computed(
+  () =>
+    props.swipeThreshold && children.length > Number(props.swipeThreshold),
+);
+
+const barClass = computed(() =>
+  bem('bar', {
+    opened: opened.value,
+    scrollable: !!scrollable.value,
+  }),
+);
+
+const barStyle = computed(() => {
+  const style: Record<string, any> = {};
+  if (opened.value && isDef(props.zIndex)) {
+    style.zIndex = Number(props.zIndex) + 1;
+  }
+  return style;
 });
 
-const openedIndex = ref<number | null>(null);
-
-const opened = computed(() => openedIndex.value !== null);
-
-function toggleItem(index: number) {
-  openedIndex.value = openedIndex.value === index ? null : index;
+function registerChild(child: DropdownChildExpose) {
+  children.push(child);
 }
 
-function closeAll() {
-  openedIndex.value = null;
+function unregisterChild(child: DropdownChildExpose) {
+  const idx = children.indexOf(child);
+  if (idx !== -1) children.splice(idx, 1);
 }
 
-// Expose close and opened for parent usage
+function toggleItem(child: DropdownChildExpose) {
+  children.forEach((c) => {
+    if (c === child) {
+      c.toggle();
+    } else if (c.state.showPopup) {
+      c.toggle(false, { immediate: true });
+    }
+  });
+}
+
+function close() {
+  children.forEach((c) => c.toggle(false));
+}
+
 defineExpose({
-  close: closeAll,
+  close,
   opened,
 });
 
-provide<DropdownMenuProvide>('dropdownMenu', {
-  props,
+provide<DropdownMenuProvide>(DROPDOWN_KEY, {
+  props: props as any,
   offset: ref(0),
-  openedIndex,
+  opened,
+  close,
+  registerChild,
+  unregisterChild,
   toggleItem,
-  closeAll,
 });
-
-const containerStyle = computed(() => ({
-  position: 'relative' as const,
-  zIndex: Number(props.zIndex) || 10,
-}));
-
-const barStyle = computed(() => ({
-  display: 'flex',
-  flexDirection: 'row' as const,
-  backgroundColor: '#fff',
-  borderBottomWidth: 0.5,
-  borderBottomStyle: 'solid' as const,
-  borderBottomColor: '#ebedf0',
-  zIndex: opened.value ? (Number(props.zIndex) || 10) + 1 : undefined,
-}));
 </script>
 
 <template>
-  <view :style="containerStyle">
-    <view :style="barStyle">
-      <slot />
+  <view :class="bem()">
+    <view :class="barClass" :style="barStyle">
+      <scroll-view
+        v-if="scrollable"
+        scroll-orientation="horizontal"
+        :style="{ flexDirection: 'row', display: 'flex' }"
+      >
+        <slot />
+      </scroll-view>
+      <template v-else>
+        <slot />
+      </template>
     </view>
   </view>
 </template>
