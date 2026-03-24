@@ -1,0 +1,44 @@
+# TodoMVC
+
+We ported the classic [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) Vue implementation to validate Vue Lynx's compatibility with standard Vue patterns. TodoMVC is the canonical benchmark for comparing JavaScript frameworks — same app, same functionality, different implementations.
+
+**Reuse confidence: Very High.** The entire business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, DOM events → Lynx events, and CSS adaptations for Lynx's layout model.
+
+<Go example="todomvc" defaultFile="src/TodoApp.vue" />
+
+## Overview of Changes
+
+| Aspect | Original (Web) | Vue Lynx |
+|--------|----------------|----------|
+| **Components** | 4 SFCs + 1 entry | 4 SFCs + 1 entry | Same |
+| **Vue Router** | Required (3 routes) | Not needed | Replaced with `ref('all')` |
+| **Business logic** | Composition API | Composition API | Zero changes |
+| **Template syntax** | `v-if`/`v-for`/`v-show`/`{{ }}` | Same | Zero changes |
+| **HTML tags** | `div`/`li`/`button`/`label` | `view`/`text`/`input` | Mechanical swap |
+| **Events** | `@click`/`@keyup.enter` | `@tap`/`@confirm` | Name swap |
+| **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` | Rewrite (no checkbox in Lynx) |
+| **CSS** | `todomvc-app-css` | Custom `todomvc.css` | Adapted for Lynx |
+
+### What Stayed the Same
+
+- **Vue Composition API**: `ref()`, `computed()`, `watch()`, `<script setup>` — identical
+- **Component patterns**: Props, emits, slots — all work identically
+- **Template directives**: `v-if`/`v-for`/`v-bind`/`{{ }}`/`v-show` — all identical
+- **Reactivity**: The entire `@vue/reactivity` system works unchanged
+
+### CSS Adaptations
+
+Lynx supports CSS class selectors, flexbox, borders, `text-decoration: line-through`, `box-shadow`, and CSS variables. Key differences from the web version:
+
+- **No pseudo-elements** (`::before`, `::after`) — The original TodoMVC uses these heavily for checkbox circles and the destroy "×" button. We replaced them with real `<view>` and `<text>` elements.
+- **No `:hover` or `:focus`** — We use `@tap` and `:active` states instead.
+- **No `!important`** — Not supported in Lynx CSS.
+- **No attribute selectors** — Vue's `<style scoped>` won't work; we use plain CSS classes.
+
+The result is a Lynx-compatible `todomvc.css` (~180 lines) that achieves a similar visual look using real elements instead of pseudo-elements.
+
+## Key Insight
+
+**Business logic and Vue patterns are untouched. Only tag names, event names, and CSS need adaptation.**
+
+This demonstrates that real-world Vue applications can run on Lynx with minimal source changes. The adaptation surface is limited to platform-specific rendering concerns, while your application logic remains identical.
