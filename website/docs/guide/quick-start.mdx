@@ -9,7 +9,9 @@ Welcome to Vue Lynx! Let's create a Vue Lynx project and start developing.
 - [Node.js 18](https://nodejs.org/en) or later.
   - Requires Node.js 18.19 when using TypeScript as configuration.
 
-## Installation
+## Start with Lynx Explorer
+
+The quickest way to get started with Vue Lynx is using **Lynx Explorer** — a playground app that lets you preview Lynx bundles on your device or simulator without setting up a native development environment. It's perfect for learners to test out Lynx quickly and understand the basics.
 
 <Steps>
 
@@ -63,9 +65,9 @@ Open the **Web Preview** URL in your browser. You'll see a live preview of your 
 
 Open `src/App.vue` in your code editor and make a change. You should see the Web Preview update automatically.
 
-### Run on a native device
+### Preview on a native device
 
-To see your app rendered natively, use **Lynx Explorer** — a sandbox app for previewing Lynx bundles on device or simulator. Scan the QR code shown in the terminal, or copy the **Lynx** bundle URL and paste it into "Enter Card URL" in Lynx Explorer.
+To see your app rendered natively, use **Lynx Explorer** — the playground app for previewing Lynx bundles on device or simulator. Scan the QR code shown in the terminal, or copy the **Lynx** bundle URL and paste it into "Enter Card URL" in Lynx Explorer.
 
 #### iOS Simulator
 
@@ -118,8 +120,17 @@ Download the [Lynx DevTool](https://github.com/lynx-family/lynx-devtool/releases
 
 The Vue Lynx project you created is a **frontend** project — it produces JavaScript bundles that a Lynx-enabled native app loads and renders. Lynx Explorer is a pre-built native app for development, but for production you'll need your own native app.
 
-- **Create a new native app** (greenfield) — Use [Lynx CLI](https://github.com/lynx-community/cli) (community) or [Sparkling](https://tiktok.github.io/sparkling) to scaffold a native app project (Xcode / Android Studio) with Lynx built in.
-- **Integrate into an existing app** (brownfield) — Follow the [Lynx integration guide](https://lynxjs.org/guide/start/integrate-with-existing-apps) to embed Lynx views into your existing iOS, Android, or Web application.
+### Start with Sparkling
+
+[Sparkling](https://tiktok.github.io/sparkling) is the cross-platform infrastructure for building large-scale apps with Lynx, open sourced by TikTok. It can be used to scaffold a new native app as well as being integrated into an existing app. Sparkling provides **scheme-driven native navigation** between Lynx pages and native screens, plus CLI tools to scaffold a complete native app project in minutes.
+
+Sparkling is currently in public beta, and we are working on adding a Sparkling Vue Lynx template.
+
+### Integrate into an existing app
+
+For the most flexibility and cross-platform reach, you can integrate Lynx into your existing app. This approach supports **iOS, Android, Web, and Desktop**, giving you full control over how Lynx is embedded within your application.
+
+Follow the [Lynx integration guide](https://lynxjs.org/guide/start/integrate-with-existing-apps) to embed Lynx views into your existing application.
 
 ## Next Steps
 
