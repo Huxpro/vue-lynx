@@ -1,6 +1,6 @@
 {
   "name": "create-vue-lynx",
-  "version": "0.1.0-pre-alpha.1",
+  "version": "0.1.0-pre-alpha.2",
   "description": "Create a new Vue Lynx project",
   "license": "Apache-2.0",
   "type": "module",

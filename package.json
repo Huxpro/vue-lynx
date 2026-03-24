@@ -1,6 +1,6 @@
 {
   "name": "vue-lynx",
-  "version": "0.1.0-pre-alpha.0",
+  "version": "0.1.0-pre-alpha.2",
   "private": false,
   "description": "Vue 3 framework for building Lynx apps",
   "keywords": [
