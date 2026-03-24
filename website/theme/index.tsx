@@ -30,10 +30,29 @@ function ForAgentButton() {
   return (
     <button
       type="button"
-      className="for-agent-btn"
+      className={`for-agent-btn${copied ? ' is-copied' : ''}`}
       onClick={handleClick}
     >
-      {copied ? 'copied!' : 'for Agent'}
+      <span className="for-agent-btn__icon" aria-hidden="true">
+        {copied ? (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1L8.2 4.8L12 5.2L9.2 7.8L10 12L7 9.8L4 12L4.8 7.8L2 5.2L5.8 4.8L7 1Z" fill="url(#agent-sparkle)" />
+            <defs>
+              <linearGradient id="agent-sparkle" x1="2" y1="1" x2="12" y2="12">
+                <stop stopColor="var(--major-brand-color)" />
+                <stop offset="1" stopColor="var(--second-brand-color)" />
+              </linearGradient>
+            </defs>
+          </svg>
+        )}
+      </span>
+      <span className="for-agent-btn__label">
+        {copied ? 'copied!' : 'for Agent'}
+      </span>
     </button>
   );
 }
@@ -158,13 +177,10 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       </>
     ),
     afterHeroActions = (
-      <div
-        className="home-hero-actions-row"
-        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'center' }}
-      >
+      <div className="home-hero-actions-row">
         <div
           className="rp-doc home-hero-codeblock"
-          style={{ minHeight: 'auto', width: '100%', maxWidth: 360 }}
+          style={{ minHeight: 'auto' }}
         >
           <PreWithCodeButtonGroup
             containerElementClassName="language-bash"
@@ -177,6 +193,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
             </Code>
           </PreWithCodeButtonGroup>
         </div>
+        <span className="home-hero-actions-row__divider">or</span>
         <ForAgentButton />
       </div>
     ),
