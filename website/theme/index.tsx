@@ -82,7 +82,7 @@ function HeroCommandBox() {
         onClick={copyAgent}
       >
         <div className="content-wrapper">
-          <span className="icon" aria-hidden="true">
+          <span className="icon-mobile-only" aria-hidden="true">
             {agentCopied ? <CheckIcon /> : <SparkleIcon />}
           </span>
           <span className="text">

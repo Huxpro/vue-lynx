@@ -431,26 +431,18 @@ $brand-emerald: #34d399;
       justify-content: center;
     }
 
-    .icon {
-      position: absolute;
-      left: -20px;
-      display: flex;
+    .icon-mobile-only {
+      display: none; // hidden on desktop completely
       align-items: center;
       color: var(--major-brand-color);
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      transform: scale(0.8);
-    }
-
-    &:hover .icon, &.copied .icon {
-      opacity: 1;
-      transform: scale(1);
+      margin-right: 6px;
     }
 
     .text {
       display: inline-block;
       min-width: 9ch;
       text-align: center;
+      // text is perfectly centered on desktop since icon is display: none
     }
 
     &.copied .text {
@@ -466,9 +458,8 @@ $brand-emerald: #34d399;
         background: rgba(255, 255, 255, 0.03);
       }
 
-      .icon {
-        opacity: 1; // always show icon on mobile
-        transform: scale(1);
+      .icon-mobile-only {
+        display: flex; // show icon only on mobile
       }
       
       &::before {
