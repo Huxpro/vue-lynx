@@ -1,6 +1,6 @@
 # TodoMVC
 
-We ported the classic [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) Vue implementation to validate Vue Lynx's compatibility with standard Vue patterns. TodoMVC is the canonical benchmark for comparing JavaScript frameworks — same app, same functionality, different implementations.
+We ported the classic [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) Vue implementation on **day 1** of the Vue Lynx project to validate our core hypothesis: that Vue 3's Custom Renderer API could target Lynx's native rendering engine with minimal adapter code.
 
 **Reuse confidence: Very High.** The entire business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, DOM events → Lynx events, and CSS adaptations for Lynx's layout model.
 
