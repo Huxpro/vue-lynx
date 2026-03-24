@@ -116,7 +116,7 @@ function setFilter(f) {
 
     <!-- Info -->
     <view class="info">
-      <text class="info-text">Tap a todo circle to toggle</text>
+      <text class="info-text">Tap the todo text to edit</text>
       <text class="info-text">Built with Vue 3 × Lynx</text>
     </view>
   </view>

@@ -42,7 +42,7 @@ function cancelEdit() {
       <view class="todo-toggle" @tap="onToggle">
         <text v-if="todo.completed" class="todo-toggle-icon">✓</text>
       </view>
-      <view class="todo-label-hitbox" @longpress="startEdit">
+      <view class="todo-label-hitbox" @tap="startEdit">
         <text class="todo-label">{{ todo.title }}</text>
       </view>
       <text class="destroy" @tap="onDelete">✕</text>
