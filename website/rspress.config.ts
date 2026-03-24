@@ -157,6 +157,16 @@ export default defineConfig({
     ],
     locales: [
       {
+        lang: 'en',
+        label: 'English',
+        nav: [
+          {
+            text: 'Guide',
+            link: '/guide/introduction',
+          },
+        ],
+      },
+      {
         lang: 'zh',
         label: '简体中文',
         nav: [
