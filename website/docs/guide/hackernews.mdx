@@ -1,10 +1,16 @@
 # HackerNews
 
-We forked Evan You's classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) — the canonical "real-world" Vue example — as a validation benchmark for Vue Lynx. Since Vue Lynx is built on Vue 3, we used the [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) community port as our reference.
+## The Quest
 
-Our primary goal was to test **ecosystem compatibility** — validating that Vue Router, data fetching libraries, and styling solutions work seamlessly in the Vue Lynx environment. We chose **Tailwind CSS** for our initial demo because we wanted a demonstrative app that exercises the full stack: Vue Router for navigation, TanStack Vue Query for data fetching, and Tailwind for styling.
+After validating the core renderer with TodoMVC, we needed to test **ecosystem compatibility** — validating that Vue Router, data fetching libraries, and styling solutions work seamlessly in the Vue Lynx environment.
 
-**Reuse confidence: High.** Most of the code transferred directly — component logic, Vue Router, Composition API, and even `<Transition>`/`<TransitionGroup>` work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, `@click` → `@tap`, and `createWebHistory()` → `createMemoryHistory()`.
+We chose Evan You's classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) — the canonical "real-world" Vue example. Since Vue Lynx is built on Vue 3, we used the [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) community port as our reference.
+
+We chose **Tailwind CSS** for our initial demo because we wanted a demonstrative app that exercises the full stack: Vue Router for navigation, TanStack Vue Query for data fetching, and Tailwind for styling.
+
+## The Result
+
+Most of the code transferred directly — component logic, Vue Router, Composition API, and even `<Transition>`/`<TransitionGroup>` work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, `@click` → `@tap`, and `createWebHistory()` → `createMemoryHistory()`.
 
 ### Tailwind CSS Version
 
@@ -24,16 +30,16 @@ Interestingly, the CSS version maintains the `max-width` centered layout from th
 
 The Vue HackerNews 3.0 reference is a Webpack-based SSR app using Vue 3 + Vuex 4 + axios. Here's what we changed when porting to Lynx:
 
-| Aspect | Vue 3 Reference | Vue Lynx |
-|--------|-----------------|----------|
-| **Template elements** | `<div>`, `<span>`, `<img>`, `<a>` | `<view>`, `<text>`, `<image>`, tap handlers |
-| **Event handling** | `@click` | `@tap` |
-| **Routing history** | `createWebHistory()` | `createMemoryHistory()` |
-| **Scrolling** | Window scroll | `<scroll-view>` component |
-| **State management** | Vuex 4 | TanStack Query (Tailwind) / Same patterns (CSS) |
-| **HTTP client** | axios | `globalThis.fetch` |
-| **Build tool** | Webpack 5 + Express | Rspeedy |
-| **SSR** | Full SSR with hydration | None (Lynx doesn't use SSR) |
+| Aspect | Vue 3 Reference | Vue Lynx | Delta |
+|--------|-----------------|----------|-------|
+| **Template elements** | `<div>`, `<span>`, `<img>`, `<a>` | `<view>`, `<text>`, `<image>`, tap handlers | Mechanical swap |
+| **Event handling** | `@click` | `@tap` | Name swap |
+| **Routing history** | `createWebHistory()` | `createMemoryHistory()` | API change |
+| **Scrolling** | Window scroll | `<scroll-view>` component | Component-based |
+| **State management** | Vuex 4 | TanStack Query (Tailwind) / Same patterns (CSS) | Modernized |
+| **HTTP client** | axios | `globalThis.fetch` | Native API |
+| **Build tool** | Webpack 5 + Express | Rspeedy | Simplified |
+| **SSR** | Full SSR with hydration | None (Lynx doesn't use SSR) | Removed |
 
 ### Notable adaptations:
 
