@@ -1,15 +1,21 @@
 # TodoMVC
 
-We ported the classic [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) Vue implementation on **day 1** of the Vue Lynx project to validate our core hypothesis: that Vue 3's Custom Renderer API could target Lynx's native rendering engine with minimal adapter code.
+## The Quest
 
-**Reuse confidence: Very High.** The entire business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, DOM events → Lynx events, and CSS adaptations for Lynx's layout model.
+On **day 1** of the Vue Lynx project, we needed to answer a critical question: can Vue 3's Custom Renderer API actually target Lynx's native rendering engine with minimal adapter code?
 
-<Go example="todomvc" defaultFile="src/TodoApp.vue" />
+We chose [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) as our first validation target — the canonical benchmark for comparing JavaScript frameworks. Same app, same functionality, different implementations. If we couldn't make this work, the entire project would be in jeopardy.
+
+## The Result
+
+The entire business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, DOM events → Lynx events, and CSS adaptations for Lynx's layout model.
+
+<Go example="todomvc" defaultFile="src/TodoApp.vue" defaultEntryFile="dist/main.lynx.bundle" />
 
 ## Overview of Changes
 
-| Aspect | Original (Web) | Vue Lynx |
-|--------|----------------|----------|
+| Aspect | Original (Web) | Vue Lynx | Delta |
+|--------|----------------|----------|-------|
 | **Components** | 4 SFCs + 1 entry | 4 SFCs + 1 entry | Same |
 | **Vue Router** | Required (3 routes) | Not needed | Replaced with `ref('all')` |
 | **Business logic** | Composition API | Composition API | Zero changes |
