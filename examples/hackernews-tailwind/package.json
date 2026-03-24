@@ -1,11 +1,16 @@
 {
   "name": "@vue-lynx-example/hackernews",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "HackerNews clone built with Vue-Lynx + Vue Router + Pinia + TanStack Query + Tailwind CSS",
   "license": "Apache-2.0",
   "type": "module",
-  "files": ["dist", "src", "lynx.config.ts", "tsconfig.json"],
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/user/vue-lynx",
@@ -30,5 +35,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.9.3"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
