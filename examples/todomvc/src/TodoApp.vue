@@ -67,45 +67,47 @@ function setFilter(f) {
   <view class="todoapp">
     <TodoHeader @add-todo="addTodo" />
 
-    <view class="main" v-if="todos.length > 0">
-      <!-- Toggle all -->
-      <view class="toggle-all-container">
-        <view
-          class="toggle-all-btn"
-          :class="{ 'all-completed': allCompleted }"
-          @tap="toggleAll"
-        >
-          <text class="toggle-all-icon">✓</text>
+    <scroll-view scroll-orientation="vertical" style="flex: 1;">
+      <view class="main" v-if="todos.length > 0">
+        <!-- Toggle all -->
+        <view class="toggle-all-container">
+          <view
+            class="toggle-all-btn"
+            :class="{ 'all-completed': allCompleted }"
+            @tap="toggleAll"
+          >
+            <text class="toggle-all-icon">✓</text>
+          </view>
+          <text class="toggle-all-label">Mark all as complete</text>
         </view>
-        <text class="toggle-all-label">Mark all as complete</text>
+
+        <!-- Todo list -->
+        <view class="todo-list">
+          <TodoItem
+            v-for="todo in filteredTodos"
+            :key="todo.id"
+            :todo="todo"
+            @toggle="toggleTodo"
+            @delete="deleteTodo"
+            @edit="editTodo"
+          />
+        </view>
       </view>
 
-      <!-- Todo list -->
-      <view class="todo-list">
-        <TodoItem
-          v-for="todo in filteredTodos"
-          :key="todo.id"
-          :todo="todo"
-          @toggle="toggleTodo"
-          @delete="deleteTodo"
-          @edit="editTodo"
-        />
+      <TodoFooter
+        v-if="todos.length > 0"
+        :active-count="activeTodos.length"
+        :completed-count="completedTodos.length"
+        :current-filter="filter"
+        @set-filter="setFilter"
+        @clear-completed="clearCompleted"
+      />
+
+      <!-- Info -->
+      <view class="info">
+        <text class="info-text">Tap a todo circle to toggle</text>
+        <text class="info-text">Built with Vue 3 × Lynx</text>
       </view>
-    </view>
-
-    <TodoFooter
-      v-if="todos.length > 0"
-      :active-count="activeTodos.length"
-      :completed-count="completedTodos.length"
-      :current-filter="filter"
-      @set-filter="setFilter"
-      @clear-completed="clearCompleted"
-    />
-
-    <!-- Info -->
-    <view class="info">
-      <text class="info-text">Tap a todo circle to toggle</text>
-      <text class="info-text">Built with Vue 3 × Lynx</text>
-    </view>
+    </scroll-view>
   </view>
 </template>
