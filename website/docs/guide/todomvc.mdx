@@ -18,6 +18,8 @@ Most business logic transferred directly — Composition API (`ref`, `computed`,
 
 ## How Much of Vue Do We Reuse?
 
+The table below reflects our initial prototype — the minimum custom code needed to get TodoMVC running on Lynx. The actual codebase has grown since then, but the reuse ratio remains similar: the vast majority of Vue's runtime is used as-is.
+
 | Layer | Source | Reuse |
 |-------|--------|-------|
 | **Reactivity** | `@vue/reactivity` | 100% official |
@@ -27,5 +29,3 @@ Most business logic transferred directly — Composition API (`ref`, `computed`,
 | **v-show** | Custom (ops-based display:none) | Custom (~15 LOC) |
 | **v-model** | Stubbed | Not yet implemented |
 | **Cross-thread comm** | ops buffer + callLepusMethod | Custom (~250 LOC) |
-
-Total custom code: ~500 lines of runtime + ~300 lines of build plugin. Over 95% of the Vue runtime is reused as-is.

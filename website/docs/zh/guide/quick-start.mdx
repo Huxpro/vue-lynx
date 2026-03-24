@@ -9,9 +9,9 @@ import { PackageManagerTabs, Steps } from '@theme';
 - [Node.js 18](https://nodejs.org/en) 或更高版本。
   - 使用 TypeScript 作为配置时需要 Node.js 18.19。
 
-## 从 Lynx Explorer 开始
+## 开始开发
 
-开始使用 Vue Lynx 最快的方式是使用 **Lynx Explorer** —— 一个 Playground 应用，让你无需搭建原生开发环境就能在设备或模拟器上预览 Lynx bundle。非常适合学习者快速体验 Lynx 并了解其基本概念。
+开始使用 Vue Lynx 最快的方式是只搭建前端项目，然后用 **Lynx Explorer**（原生预览）或 **Lynx for Web**（浏览器预览）来查看效果。
 
 <Steps>
 
@@ -61,13 +61,9 @@ Rspeedy v0.13.5
 
 <Go example="hello-world" defaultFile="src/App.vue" defaultEntryFile="dist/main.lynx.bundle" />
 
-#### 进行你的第一次修改
+### 在原生设备上预览
 
-在代码编辑器中打开 `src/App.vue` 并进行修改。你应该会看到 Web Preview 自动更新。
-
-### 在原生设备上运行
-
-要查看应用的原生渲染效果，请使用 **Lynx Explorer** — 一个用于在设备或模拟器上预览 Lynx bundle 的沙盒应用。扫描终端中显示的二维码，或复制 **Lynx** bundle URL 并粘贴到 Lynx Explorer 的"Enter Card URL"中。
+要查看应用的原生渲染效果，请使用 **Lynx Explorer**。扫描终端中显示的二维码，或复制 **Lynx** bundle URL 并粘贴到 Lynx Explorer 的"Enter Card URL"中。
 
 #### iOS 模拟器
 
@@ -120,8 +116,15 @@ Lynx Explorer 也可在 [App Store](https://apps.apple.com/us/app/lynx-go-dev-ex
 
 你创建的 Vue Lynx 项目是一个**前端**项目 — 它生成 JavaScript bundle，由支持 Lynx 的原生应用加载和渲染。Lynx Explorer 是一个用于开发的预构建原生应用，但在生产环境中你需要自己的原生应用。
 
-- **创建新的原生应用**（全新项目） — 使用 [Lynx CLI](https://github.com/lynx-community/cli)（社区）或 [Sparkling](https://tiktok.github.io/sparkling) 来搭建内置 Lynx 的原生应用项目（Xcode / Android Studio）。
-- **集成到现有应用**（混合开发） — 按照 [Lynx 集成指南](https://lynxjs.org/guide/start/integrate-with-existing-apps) 将 Lynx 视图嵌入到你现有的 iOS、Android 或 Web 应用中。
+### 使用 Sparkling（实验性）
+
+[Sparkling](https://tiktok.github.io/sparkling) 是 TikTok 开源的 Lynx 应用构建基础设施。提供 CLI 工具，可在数分钟内搭建带有 scheme 驱动导航的原生应用项目。目前为**实验性**，仅支持 **iOS 和 Android**。
+
+### 集成到现有应用
+
+如果需要最大的灵活性，可以将 Lynx 直接集成到你的现有应用中。支持 **iOS、Android、Harmony、桌面端和 Web**，让你完全控制 Lynx 在应用中的嵌入方式。
+
+按照 [Lynx 集成指南](https://lynxjs.org/guide/start/integrate-with-existing-apps) 开始集成。
 
 ## 下一步
 
