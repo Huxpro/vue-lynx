@@ -58,11 +58,10 @@ import Icon from '../components/Icon/index.vue';
       <!-- Custom Icon -->
       <text :style="{ fontSize: '14px', color: '#969799', marginBottom: '12px' }">自定义图标</text>
       <view :style="{ backgroundColor: '#fff', borderRadius: '8px', padding: '16px' }">
-        <Loading vertical>
+        <Loading>
           <template #icon>
             <Icon name="star-o" :size="30" />
           </template>
-          加载中...
         </Loading>
       </view>
     </view>

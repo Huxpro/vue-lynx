@@ -10,7 +10,7 @@
 import { computed, inject } from 'vue-lynx';
 import { createNamespace, addUnit, isImage } from '../../utils';
 import Badge from '../Badge/index.vue';
-import { CONFIG_PROVIDER_KEY } from '../ConfigProvider/index.vue';
+import { CONFIG_PROVIDER_KEY } from '../ConfigProvider/types';
 import { iconProps } from './types';
 import './index.less';
 
