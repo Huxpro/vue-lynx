@@ -17,6 +17,16 @@ const filteredTodos = computed(() => {
   if (filter.value === 'completed') return completedTodos.value
   return todos.value
 })
+
+const TOGGLE_ALL_ROW_HEIGHT = 42;
+const TODO_ROW_HEIGHT = 58;
+const VIEWPORT_RESERVED_HEIGHT = 320;
+
+const mainScrollHeight = computed(
+  () => `${TOGGLE_ALL_ROW_HEIGHT + filteredTodos.value.length * TODO_ROW_HEIGHT}px`,
+)
+const mainScrollMaxHeight = `calc(100vh - ${VIEWPORT_RESERVED_HEIGHT}px)`
+
 const allCompleted = computed(() =>
   todos.value.length > 0 && activeTodos.value.length === 0,
 )
@@ -67,8 +77,12 @@ function setFilter(f) {
   <view class="todoapp">
     <TodoHeader @add-todo="addTodo" />
 
-    <scroll-view scroll-orientation="vertical" style="flex: 1;">
-      <view class="main" v-if="todos.length > 0">
+    <scroll-view
+      v-if="todos.length > 0"
+      scroll-orientation="vertical"
+      :style="{ height: mainScrollHeight, maxHeight: mainScrollMaxHeight }"
+    >
+      <view class="main">
         <!-- Toggle all -->
         <view class="toggle-all-container">
           <view
@@ -93,21 +107,21 @@ function setFilter(f) {
           />
         </view>
       </view>
-
-      <TodoFooter
-        v-if="todos.length > 0"
-        :active-count="activeTodos.length"
-        :completed-count="completedTodos.length"
-        :current-filter="filter"
-        @set-filter="setFilter"
-        @clear-completed="clearCompleted"
-      />
-
-      <!-- Info -->
-      <view class="info">
-        <text class="info-text">Tap a todo circle to toggle</text>
-        <text class="info-text">Built with Vue 3 × Lynx</text>
-      </view>
     </scroll-view>
+
+    <TodoFooter
+      v-if="todos.length > 0"
+      :active-count="activeTodos.length"
+      :completed-count="completedTodos.length"
+      :current-filter="filter"
+      @set-filter="setFilter"
+      @clear-completed="clearCompleted"
+    />
+
+    <!-- Info -->
+    <view class="info">
+      <text class="info-text">Tap a todo circle to toggle</text>
+      <text class="info-text">Built with Vue 3 × Lynx</text>
+    </view>
   </view>
 </template>

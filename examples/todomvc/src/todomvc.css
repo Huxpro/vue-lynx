@@ -30,10 +30,12 @@
 }
 
 .header .title {
-  font-size: 60px;
+  font-size: 72px;
+  line-height: 1;
   font-weight: 200;
   color: rgba(175, 47, 47, 0.15);
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .new-todo {
