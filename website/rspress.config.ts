@@ -78,15 +78,6 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
-          sectionHeaderText: 'Benchmark',
-        },
-        { text: 'TodoMVC', link: '/guide/todomvc' },
-        { text: '7GUIs', link: '/guide/7guis' },
-        { text: 'HackerNews', link: '/guide/hackernews' },
-        {
-          dividerType: 'solid',
-        },
-        {
           sectionHeaderText: 'Ecosystem',
         },
         { text: 'Vue Router', link: '/guide/routing' },
@@ -94,6 +85,15 @@ export default defineConfig({
         { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'Benchmark',
+        },
+        { text: 'TodoMVC', link: '/guide/todomvc' },
+        { text: '7GUIs', link: '/guide/7guis' },
+        { text: 'HackerNews', link: '/guide/hackernews' },
         {
           dividerType: 'solid',
         },
@@ -119,15 +119,6 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
-          sectionHeaderText: '基准测试',
-        },
-        { text: 'TodoMVC', link: '/zh/guide/todomvc' },
-        { text: '7GUIs', link: '/zh/guide/7guis' },
-        { text: 'HackerNews', link: '/zh/guide/hackernews' },
-        {
-          dividerType: 'solid',
-        },
-        {
           sectionHeaderText: '生态系统',
         },
         { text: 'Vue Router', link: '/zh/guide/routing' },
@@ -135,6 +126,15 @@ export default defineConfig({
         { text: 'Vue Query', link: '/zh/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/zh/guide/tailwindcss' },
         { text: 'VueLynx 测试库', link: '/zh/guide/testing-library' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '基准测试',
+        },
+        { text: 'TodoMVC', link: '/zh/guide/todomvc' },
+        { text: '7GUIs', link: '/zh/guide/7guis' },
+        { text: 'HackerNews', link: '/zh/guide/hackernews' },
         {
           dividerType: 'solid',
         },
@@ -148,7 +148,11 @@ export default defineConfig({
     nav: [
       {
         text: 'Guide',
-        link: '/guide/introduction',
+        link: '/guide/quick-start',
+      },
+      {
+        text: 'API',
+        link: '/guide/api/vue-lynx/',
       },
     ],
     locales: [
@@ -158,7 +162,11 @@ export default defineConfig({
         nav: [
           {
             text: '指南',
-            link: '/zh/guide/introduction',
+            link: '/zh/guide/quick-start',
+          },
+          {
+            text: 'API',
+            link: '/zh/guide/api/vue-lynx/',
           },
         ],
       },

@@ -1,38 +1,22 @@
 # TodoMVC
 
-## The Quest
+[TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) is the canonical benchmark for comparing JavaScript frameworks. We ported it as our first validation target to verify that Vue 3's Custom Renderer API can target Lynx's native rendering engine with minimal adapter code.
 
-On **day 1** of the Vue Lynx project, we needed to answer a critical question: can Vue 3's Custom Renderer API actually target Lynx's native rendering engine with minimal adapter code?
-
-We chose [TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) as our first validation target — the canonical benchmark for comparing JavaScript frameworks. Same app, same functionality, different implementations. If we couldn't make this work, the entire project would be in jeopardy.
-
-## The Result
-
-The entire business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, DOM events → Lynx events, and CSS adaptations for Lynx's layout model.
-
-<Go example="todomvc" defaultFile="src/TodoApp.vue" defaultEntryFile="dist/main.lynx.bundle" />
+<Go example="todomvc" defaultFile="src/TodoApp.vue" />
 
 ## Overview of Changes
 
-| Aspect | Original (Web) | Vue Lynx | Delta |
-|--------|----------------|----------|-------|
-| **Components** | 4 SFCs + 1 entry | 4 SFCs + 1 entry | Same |
-| **Vue Router** | Required (3 routes) | Not needed | Replaced with `ref('all')` |
-| **Business logic** | Composition API | Composition API | Zero changes |
-| **Template syntax** | `v-if`/`v-for`/`v-show`/`{{ }}` | Same | Zero changes |
-| **HTML tags** | `div`/`li`/`button`/`label` | `view`/`text`/`input` | Mechanical swap |
-| **Events** | `@click`/`@keyup.enter` | `@tap`/`@confirm` | Name swap |
-| **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` | Rewrite (no checkbox in Lynx) |
-| **CSS** | `todomvc-app-css` | Custom `todomvc.css` | Adapted (no pseudo-elements) |
+Most business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. Here's what we changed:
 
-### What Stayed the Same
+| Aspect | Original (Web) | Vue Lynx |
+|--------|----------------|----------|
+| **Template elements** | `<div>`, `<li>`, `<button>`, `<label>` | `<view>`, `<text>`, `<input>` |
+| **Events** | `@click`, `@keyup.enter` | `@tap`, `@confirm` |
+| **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` (no native checkbox in Lynx) |
+| **Vue Router** | 3 filter routes | `ref('all')` (not needed) |
+| **CSS** | `todomvc-app-css` package | Custom `todomvc.css` (no pseudo-elements in Lynx) |
 
-- **Vue Composition API**: `ref()`, `computed()`, `watch()`, `<script setup>` — identical
-- **Component patterns**: Props, emits, slots — all work identically
-- **Template directives**: `v-if`/`v-for`/`v-bind`/`{{ }}`/`v-show` — all identical
-- **Reactivity**: The entire `@vue/reactivity` system works unchanged
-
-## How much of Vue do we reuse?
+## How Much of Vue Do We Reuse?
 
 | Layer | Source | Reuse |
 |-------|--------|-------|
@@ -44,6 +28,4 @@ The entire business logic transferred directly — Composition API (`ref`, `comp
 | **v-model** | Stubbed | Not yet implemented |
 | **Cross-thread comm** | ops buffer + callLepusMethod | Custom (~250 LOC) |
 
-**Reuse rate: > 95%.** Total custom code: ~500 lines of runtime + ~300 lines of build plugin.
-
-This gave us the confidence to continue building Vue Lynx.
+Total custom code: ~500 lines of runtime + ~300 lines of build plugin. Over 95% of the Vue runtime is reused as-is.

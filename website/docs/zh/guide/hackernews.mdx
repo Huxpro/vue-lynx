@@ -1,26 +1,22 @@
-# HackerNews Slopfork
+# HackerNews
 
-我们 Fork 了 Evan You 的经典 [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) —— 那个 Vue 最经典的「真实世界」示例 —— 作为 Vue Lynx 的能力验证基准。由于 Vue Lynx 基于 Vue 3，我们使用了社区的 [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) 移植版作为参考。
-
-**复用信心：高。** 大部分代码可以直接迁移 —— 组件逻辑、Vue Router、Composition API，甚至 `<Transition>`/`<TransitionGroup>` 都完全一致。唯一需要修改的是平台相关部分：HTML 元素 → Lynx 元素、`@click` → `@tap`、`createWebHistory()` → `createMemoryHistory()`。
+为了更好地测试所有生态系统组件能否协同工作，我们 Fork 了 Evan You 的经典 [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) 作为 Vue Lynx 的「真实世界」验证基准。由于 Vue Lynx 基于 Vue 3，我们同时使用了社区的 [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) 移植版作为参考。这个移植验证了四个主流生态库的协同工作：Vue Router、Pinia、TanStack Vue Query 和 Tailwind CSS。
 
 ### Tailwind CSS 版本
 
-在第一轮迭代中，我们让 AI 用 Tailwind CSS (`@lynx-js/tailwind-preset`) 重写了样式。同时集成了 TanStack Vue Query 作为 Vuex 4 的现代替代方案。
+在第一轮迭代中，我们让 AI 用 Tailwind CSS (`@lynx-js/tailwind-preset`) 重写了样式。
 
 <Go example="hackernews-tailwind" defaultFile="src/App.vue" />
 
 ### CSS 版本
 
-在这一版中，我们让 AI 尽可能复用参考实现原有的 SCSS 文件。类名、配色方案和布局结构都保留了下来 —— 只有 CSS 规则本身针对 Lynx 的布局模型做了适配（如 flexbox 调整、去掉 `<ul>`/`<li>` 列表样式等）。
-
-有趣的是，CSS 版本保留了桌面端的 `max-width` 居中布局。你可以点击下方的「全屏」按钮来体验这个效果。
+在这一版中，我们让 AI 尽可能复用参考实现原有的 SCSS 文件。有趣的是，CSS 版本保留了桌面端的 `max-width` 居中布局。你可以点击下方的「全屏」按钮来体验这个效果。
 
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
 ## 改动概览
 
-Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 Vue 3 + Vuex 4 + axios。移植到 Lynx 时的改动如下：
+大部分代码可以直接迁移 —— 组件逻辑、Vue Router、Composition API，甚至 `<Transition>`/`<TransitionGroup>` 都完全一致。Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 Vue 3 + Vuex 4 + axios。移植到 Lynx 时的改动如下：
 
 | 方面 | Vue 3 参考 | Vue Lynx |
 |------|-----------|----------|
@@ -28,8 +24,8 @@ Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 V
 | **事件处理** | `@click` | `@tap` |
 | **路由历史** | `createWebHistory()` | `createMemoryHistory()` |
 | **滚动** | 浏览器原生滚动 | `<scroll-view>` 组件 |
-| **状态管理** | Vuex 4 | TanStack Query (Tailwind) / 相同模式 (CSS) |
-| **HTTP 客户端** | axios | `globalThis.fetch` |
+| **状态管理** | Vuex 4 | Pinia |
+| **数据获取** | axios | TanStack Vue Query |
 | **构建工具** | Webpack 5 + Express | Rspeedy |
 | **SSR** | 完整 SSR + 注水 | 无（Lynx 不使用 SSR）|
 
@@ -37,12 +33,3 @@ Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 V
 
 - **没有 `v-html`**：Lynx 没有 HTML 解析器，所以我们用 `stripHtml()` 工具函数将 HTML 评论转换为纯文本
 - **`<router-link>`**：用 Vue Router 的 `custom` slot API 包装，因为 Lynx 没有 `<a>` 标签
-
-## 完全一致的部分
-
-- **Vue Composition API**：`ref()`、`computed()`、`watch()`、`<script setup>` —— 完全一致
-- **Vue Router API**：`useRoute()`、`useRouter()`、`router.push()`、`<RouterView>` —— 完全一致
-- **`<Transition>` / `<TransitionGroup>`**：CSS transition 类名完全一致
-- **递归组件**：`<Comment>` 自引用渲染嵌套评论 —— 完全一致
-- **模板指令**：`v-if`/`v-for`/`v-bind`/`{{ }}` —— 全部一致
-- **CSS**：SCSS、`@keyframes`、`:class` 绑定、media queries —— 全部可用

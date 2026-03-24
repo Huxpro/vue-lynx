@@ -1,0 +1,31 @@
+# TodoMVC
+
+[TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) 是比较 JavaScript 框架的经典基准。我们将其作为第一个验证目标进行移植，以验证 Vue 3 的 Custom Renderer API 能否以最少的适配代码对接 Lynx 的原生渲染引擎。
+
+<Go example="todomvc" defaultFile="src/TodoApp.vue" />
+
+## 改动概览
+
+大部分业务逻辑可以直接迁移 —— Composition API（`ref`、`computed`、`watch`）、组件模式和模板指令都完全一致。以下是我们做的改动：
+
+| 方面 | 原版（Web） | Vue Lynx |
+|------|------------|----------|
+| **模板元素** | `<div>`、`<li>`、`<button>`、`<label>` | `<view>`、`<text>`、`<input>` |
+| **事件** | `@click`、`@keyup.enter` | `@tap`、`@confirm` |
+| **复选框** | `<input type="checkbox">` | `<view>` + `@tap`（Lynx 没有原生复选框） |
+| **Vue Router** | 3 个过滤路由 | `ref('all')`（不需要） |
+| **CSS** | `todomvc-app-css` 包 | 自定义 `todomvc.css`（Lynx 不支持伪元素） |
+
+## 我们复用了多少 Vue？
+
+| 层级 | 来源 | 复用情况 |
+|------|------|----------|
+| **响应式系统** | `@vue/reactivity` | 100% 官方 |
+| **组件系统** | `@vue/runtime-core` | 100% 官方 |
+| **模板编译器** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% 官方 |
+| **渲染器** | 自定义 `createRenderer(nodeOps)` | 自定义（约 200 行） |
+| **v-show** | 自定义（基于 ops 的 display:none） | 自定义（约 15 行） |
+| **v-model** | 桩实现 | 尚未实现 |
+| **跨线程通信** | ops buffer + callLepusMethod | 自定义（约 250 行） |
+
+总自定义代码：约 500 行运行时 + 约 300 行构建插件。超过 95% 的 Vue 运行时被原样复用。
