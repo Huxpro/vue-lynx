@@ -17,6 +17,7 @@ function onConfirm(e) {
       type="text"
       placeholder="What needs to be done?"
       confirm-type="done"
+      autofocus
       @confirm="onConfirm"
     />
   </view>

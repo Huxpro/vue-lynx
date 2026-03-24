@@ -26,6 +26,7 @@ See the [`examples/`](examples/) directory for complete working examples:
 - [`basic`](examples/basic) — Core features (events, refs, reactivity)
 - [`reactivity`](examples/reactivity) — `reactive()`, `toRefs()`, and composables
 - [`todomvc`](examples/todomvc) — TodoMVC with CSS Selectors
+- [`todomvc-afterall`](examples/todomvc-afterall) — Closer TodoMVC reference clone with routing and persistence
 - [`option-api`](examples/option-api) — Options API style
 - [`vue-router`](examples/vue-router) — Vue Router integration
 - [`pinia`](examples/pinia) — Pinia state management
