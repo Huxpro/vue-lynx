@@ -17,6 +17,19 @@ import { AGENT_PROMPT } from './agent-prompt';
 
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
 
+const CopyIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2" />
+    <path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M4 12.5L9.5 18L20 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 function ForAgentButton() {
   const [copied, setCopied] = useState(false);
 
@@ -34,21 +47,7 @@ function ForAgentButton() {
       onClick={handleClick}
     >
       <span className="for-agent-btn__icon" aria-hidden="true">
-        {copied ? (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        ) : (
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1L8.2 4.8L12 5.2L9.2 7.8L10 12L7 9.8L4 12L4.8 7.8L2 5.2L5.8 4.8L7 1Z" fill="url(#agent-sparkle)" />
-            <defs>
-              <linearGradient id="agent-sparkle" x1="2" y1="1" x2="12" y2="12">
-                <stop stopColor="var(--major-brand-color)" />
-                <stop offset="1" stopColor="var(--second-brand-color)" />
-              </linearGradient>
-            </defs>
-          </svg>
-        )}
+        {copied ? <CheckIcon /> : <CopyIcon />}
       </span>
       <span className="for-agent-btn__label">
         {copied ? 'copied!' : 'for Agent'}

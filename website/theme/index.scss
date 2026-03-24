@@ -267,9 +267,9 @@ $brand-emerald: #34d399;
 // ======== Code block in hero =========
 .home-hero-codeblock .rp-codeblock {
   background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+  margin: 0 !important; // strip default margin — row controls spacing
 
   @media (max-width: 640px) {
-    margin: 6px 0 !important;
     background-color: transparent !important;
     font-size: 0.75rem !important;
   }
@@ -278,7 +278,7 @@ $brand-emerald: #34d399;
 // ======== Hero actions row layout =========
 .home-hero-actions-row {
   display: flex;
-  align-items: stretch;
+  align-items: stretch; // both children share the same height
   gap: 12px;
   width: 100%;
   max-width: 520px;
@@ -312,6 +312,11 @@ $brand-emerald: #34d399;
 }
 
 // ======== "for Agent" button =========
+// Design tokens aligned with rspress codeblock:
+//   border-radius  → var(--rp-radius)          = 1rem
+//   font-size      → var(--rp-code-font-size)   = 0.875rem
+//   font-family    → var(--rp-font-family-mono)
+//   background     → same semi-transparent code-block-bg
 .for-agent-btn {
   position: relative;
   flex-shrink: 0;
@@ -321,20 +326,19 @@ $brand-emerald: #34d399;
   gap: 6px;
   padding: 0 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--rp-radius, 1rem);
   background: rgb(from var(--rp-code-block-bg) r g b / 50%);
   color: var(--home-blog-btn-color);
   font-family: var(--rp-font-family-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
-  font-size: 14px;
+  font-size: var(--rp-code-font-size, 0.875rem);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   transition: color 0.3s ease, box-shadow 0.3s ease;
-  // Gradient border via box-shadow (matches code block border-radius)
   box-shadow: inset 0 0 0 1px rgba(17, 17, 19, 0.08);
 
-  // Subtle animated glow on idle
+  // Animated gradient border — hidden at rest, revealed on hover / copied
   &::before {
     content: '';
     position: absolute;
@@ -369,13 +373,27 @@ $brand-emerald: #34d399;
     display: flex;
     align-items: center;
     flex-shrink: 0;
+    width: 16px;
+    height: 16px;
     position: relative;
     z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  // Show copy icon on hover (like rspress code block)
+  &:hover &__icon,
+  &.is-copied &__icon {
+    opacity: 1;
   }
 
   &__label {
     position: relative;
     z-index: 1;
+    // "for Agent" (9ch) vs "copied!" (7ch) — lock to the wider one
+    display: inline-block;
+    min-width: 9ch;
+    text-align: center;
   }
 
   // "copied!" state
@@ -389,7 +407,7 @@ $brand-emerald: #34d399;
 
   @media (max-width: 640px) {
     padding: 10px 16px;
-    font-size: 13px;
+    font-size: 0.75rem; // matches codeblock mobile font-size override
   }
 }
 
