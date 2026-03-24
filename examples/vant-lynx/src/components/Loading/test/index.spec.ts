@@ -56,7 +56,7 @@ describe('Loading', () => {
         },
       }),
     );
-    const text = container.querySelector('.van-loading__text text');
+    const text = container.querySelector('.van-loading__text');
     expect(text).toBeTruthy();
     const style = text!.getAttribute('style') || '';
     expect(style).toContain('font-size');
@@ -75,7 +75,7 @@ describe('Loading', () => {
         },
       }),
     );
-    const text = container.querySelector('.van-loading__text text');
+    const text = container.querySelector('.van-loading__text');
     expect(text).toBeTruthy();
     const style = text!.getAttribute('style') || '';
     expect(style).toContain('red');
@@ -93,7 +93,7 @@ describe('Loading', () => {
         },
       }),
     );
-    const text = container.querySelector('.van-loading__text text');
+    const text = container.querySelector('.van-loading__text');
     expect(text).toBeTruthy();
     const style = text!.getAttribute('style') || '';
     expect(style).toContain('green');
@@ -111,7 +111,7 @@ describe('Loading', () => {
         },
       }),
     );
-    const text = container.querySelector('.van-loading__text text');
+    const text = container.querySelector('.van-loading__text');
     expect(text).toBeTruthy();
     const style = text!.getAttribute('style') || '';
     expect(style).toContain('red');
@@ -138,17 +138,13 @@ describe('Loading', () => {
       defineComponent({
         render() {
           return h(Loading, null, {
-            icon: () => h('text', {}, 'Custom Icon'),
+            icon: () => h('view', { class: 'custom-icon' }),
             default: () => 'Loading...',
           });
         },
       }),
     );
-    const textEls = container.querySelectorAll('text');
-    const iconText = Array.from(textEls).find(
-      (t: any) => t.textContent === 'Custom Icon',
-    );
-    expect(iconText).toBeTruthy();
+    expect(container.querySelector('.custom-icon')).toBeTruthy();
     // Should NOT render default spinner lines or circular view
     expect(container.querySelector('.van-loading__circular')).toBeFalsy();
     expect(container.querySelector('.van-loading__line')).toBeFalsy();
