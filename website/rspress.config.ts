@@ -157,6 +157,20 @@ export default defineConfig({
     ],
     locales: [
       {
+        lang: 'en',
+        label: 'English',
+        nav: [
+          {
+            text: 'Guide',
+            link: '/guide/quick-start',
+          },
+          {
+            text: 'API',
+            link: '/guide/api/vue-lynx/',
+          },
+        ],
+      },
+      {
         lang: 'zh',
         label: '简体中文',
         nav: [
