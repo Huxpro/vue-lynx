@@ -40,11 +40,8 @@ function whenReady(selector: string, cb: (el: Element) => void): () => void {
 }
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
-  // Badge → GitHub link, Tagline → add links on "Lynx" and "Vue 3"
+  // Tagline → add links on "Lynx" and "Vue 3"
   useEffect(() => {
-    const cleanBadge = whenReady('.rp-home-hero__badge', (badge) => {
-      badge.innerHTML = `<a href="https://github.com/nicepkg/vue-lynx" target="_blank" rel="noreferrer">${badge.textContent}</a>`;
-    });
     const cleanTagline = whenReady(
       '.rspress-home-hero-tagline, .rp-home-hero__tagline',
       (tagline) => {
@@ -62,7 +59,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       },
     );
     return () => {
-      cleanBadge();
       cleanTagline();
     };
   }, []);
