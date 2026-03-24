@@ -106,6 +106,18 @@ const demoImage = 'https://fastly.jsdelivr.net/npm/@vant/assets/icon-demo.png';
         </view>
       </view>
 
+
+      <!-- Icon Spin -->
+      <text class="demo-icon__title">旋转动画</text>
+      <view class="demo-icon__card demo-icon__row">
+        <view class="demo-icon__badge-item">
+          <Icon name="loading" spin />
+        </view>
+        <view class="demo-icon__badge-item">
+          <Icon name="success" spin />
+        </view>
+      </view>
+
       <!-- Basic Icons -->
       <text class="demo-icon__title">基础图标</text>
       <view class="demo-icon__grid">

@@ -56,7 +56,7 @@
         "Docs: Lynx limitations in components/Icon/README.md",
         "Commit: feat(icon): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-loading",
@@ -78,7 +78,7 @@
         "Docs: Lynx limitations in components/Loading/README.md",
         "Commit: feat(loading): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-badge",
@@ -100,7 +100,7 @@
         "Docs: Lynx limitations in components/Badge/README.md",
         "Commit: feat(badge): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-overlay",
@@ -122,7 +122,7 @@
         "Docs: Lynx limitations in components/Overlay/README.md",
         "Commit: feat(overlay): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-config-provider",
@@ -144,7 +144,7 @@
         "Docs: Lynx limitations in components/ConfigProvider/README.md",
         "Commit: feat(config-provider): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-popup",
@@ -166,7 +166,7 @@
         "Docs: Lynx limitations in components/Popup/README.md",
         "Commit: feat(popup): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-button",
@@ -188,7 +188,7 @@
         "Docs: Lynx limitations in components/Button/README.md",
         "Commit: feat(button): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-cell",
@@ -210,7 +210,7 @@
         "Docs: Lynx limitations in components/Cell/README.md",
         "Commit: feat(cell): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-cell-group",
@@ -232,7 +232,7 @@
         "Docs: Lynx limitations in components/CellGroup/README.md",
         "Commit: feat(cell-group): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-toast",
@@ -254,7 +254,7 @@
         "Docs: Lynx limitations in components/Toast/README.md",
         "Commit: feat(toast): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tag",
@@ -276,7 +276,7 @@
         "Docs: Lynx limitations in components/Tag/README.md",
         "Commit: feat(tag): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-image",
@@ -298,7 +298,7 @@
         "Docs: Lynx limitations in components/Image/README.md",
         "Commit: feat(image): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-divider",
@@ -320,7 +320,7 @@
         "Docs: Lynx limitations in components/Divider/README.md",
         "Commit: feat(divider): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-space",
@@ -342,7 +342,7 @@
         "Docs: Lynx limitations in components/Space/README.md",
         "Commit: feat(space): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-row",
@@ -364,7 +364,7 @@
         "Docs: Lynx limitations in components/Row/README.md",
         "Commit: feat(row): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-col",
@@ -386,7 +386,7 @@
         "Docs: Lynx limitations in components/Col/README.md",
         "Commit: feat(col): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-grid",
@@ -408,7 +408,7 @@
         "Docs: Lynx limitations in components/Grid/README.md",
         "Commit: feat(grid): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-grid-item",
@@ -430,7 +430,7 @@
         "Docs: Lynx limitations in components/GridItem/README.md",
         "Commit: feat(grid-item): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-nav-bar",
@@ -452,7 +452,7 @@
         "Docs: Lynx limitations in components/NavBar/README.md",
         "Commit: feat(nav-bar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tabbar",
@@ -474,7 +474,7 @@
         "Docs: Lynx limitations in components/Tabbar/README.md",
         "Commit: feat(tabbar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tabbar-item",
@@ -496,7 +496,7 @@
         "Docs: Lynx limitations in components/TabbarItem/README.md",
         "Commit: feat(tabbar-item): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tab",
@@ -518,7 +518,7 @@
         "Docs: Lynx limitations in components/Tab/README.md",
         "Commit: feat(tab): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tabs",
@@ -540,7 +540,7 @@
         "Docs: Lynx limitations in components/Tabs/README.md",
         "Commit: feat(tabs): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-sidebar",
@@ -562,7 +562,7 @@
         "Docs: Lynx limitations in components/Sidebar/README.md",
         "Commit: feat(sidebar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-sidebar-item",
@@ -584,7 +584,7 @@
         "Docs: Lynx limitations in components/SidebarItem/README.md",
         "Commit: feat(sidebar-item): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-back-top",
@@ -606,7 +606,7 @@
         "Docs: Lynx limitations in components/BackTop/README.md",
         "Commit: feat(back-top): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-index-bar",
@@ -628,7 +628,7 @@
         "Docs: Lynx limitations in components/IndexBar/README.md",
         "Commit: feat(index-bar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-index-anchor",
@@ -650,7 +650,7 @@
         "Docs: Lynx limitations in components/IndexAnchor/README.md",
         "Commit: feat(index-anchor): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-pagination",
@@ -672,7 +672,7 @@
         "Docs: Lynx limitations in components/Pagination/README.md",
         "Commit: feat(pagination): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-tree-select",
@@ -694,7 +694,7 @@
         "Docs: Lynx limitations in components/TreeSelect/README.md",
         "Commit: feat(tree-select): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-empty",
@@ -716,7 +716,7 @@
         "Docs: Lynx limitations in components/Empty/README.md",
         "Commit: feat(empty): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-skeleton",
@@ -738,7 +738,7 @@
         "Docs: Lynx limitations in components/Skeleton/README.md",
         "Commit: feat(skeleton): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-progress",
@@ -760,7 +760,7 @@
         "Docs: Lynx limitations in components/Progress/README.md",
         "Commit: feat(progress): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-circle",
@@ -782,7 +782,7 @@
         "Docs: Lynx limitations in components/Circle/README.md",
         "Commit: feat(circle): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-notice-bar",
@@ -804,7 +804,7 @@
         "Docs: Lynx limitations in components/NoticeBar/README.md",
         "Commit: feat(notice-bar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-highlight",
@@ -826,7 +826,7 @@
         "Docs: Lynx limitations in components/Highlight/README.md",
         "Commit: feat(highlight): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-text-ellipsis",
@@ -848,7 +848,7 @@
         "Docs: Lynx limitations in components/TextEllipsis/README.md",
         "Commit: feat(text-ellipsis): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-card",
@@ -870,7 +870,7 @@
         "Docs: Lynx limitations in components/Card/README.md",
         "Commit: feat(card): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-collapse",
@@ -892,7 +892,7 @@
         "Docs: Lynx limitations in components/Collapse/README.md",
         "Commit: feat(collapse): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-collapse-item",
@@ -914,7 +914,7 @@
         "Docs: Lynx limitations in components/CollapseItem/README.md",
         "Commit: feat(collapse-item): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-list",
@@ -936,7 +936,7 @@
         "Docs: Lynx limitations in components/List/README.md",
         "Commit: feat(list): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-sticky",
@@ -958,7 +958,7 @@
         "Docs: Lynx limitations in components/Sticky/README.md",
         "Commit: feat(sticky): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-swipe",
@@ -980,7 +980,7 @@
         "Docs: Lynx limitations in components/Swipe/README.md",
         "Commit: feat(swipe): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-count-down",
@@ -1002,7 +1002,7 @@
         "Docs: Lynx limitations in components/CountDown/README.md",
         "Commit: feat(count-down): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-rolling-text",
@@ -1024,7 +1024,7 @@
         "Docs: Lynx limitations in components/RollingText/README.md",
         "Commit: feat(rolling-text): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-barrage",
@@ -1046,7 +1046,7 @@
         "Docs: Lynx limitations in components/Barrage/README.md",
         "Commit: feat(barrage): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-watermark",
@@ -1068,7 +1068,7 @@
         "Docs: Lynx limitations in components/Watermark/README.md",
         "Commit: feat(watermark): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-image-preview",
@@ -1090,7 +1090,7 @@
         "Docs: Lynx limitations in components/ImagePreview/README.md",
         "Commit: feat(image-preview): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-steps",
@@ -1112,7 +1112,7 @@
         "Docs: Lynx limitations in components/Steps/README.md",
         "Commit: feat(steps): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-step",
@@ -1134,7 +1134,7 @@
         "Docs: Lynx limitations in components/Step/README.md",
         "Commit: feat(step): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-field",
@@ -1156,7 +1156,7 @@
         "Docs: Lynx limitations in components/Field/README.md",
         "Commit: feat(field): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-form",
@@ -1178,7 +1178,7 @@
         "Docs: Lynx limitations in components/Form/README.md",
         "Commit: feat(form): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-switch",
@@ -1200,7 +1200,7 @@
         "Docs: Lynx limitations in components/Switch/README.md",
         "Commit: feat(switch): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-checkbox",
@@ -1222,7 +1222,7 @@
         "Docs: Lynx limitations in components/Checkbox/README.md",
         "Commit: feat(checkbox): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-checkbox-group",
@@ -1244,7 +1244,7 @@
         "Docs: Lynx limitations in components/CheckboxGroup/README.md",
         "Commit: feat(checkbox-group): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-radio",
@@ -1266,7 +1266,7 @@
         "Docs: Lynx limitations in components/Radio/README.md",
         "Commit: feat(radio): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-radio-group",
@@ -1288,7 +1288,7 @@
         "Docs: Lynx limitations in components/RadioGroup/README.md",
         "Commit: feat(radio-group): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-stepper",
@@ -1310,7 +1310,7 @@
         "Docs: Lynx limitations in components/Stepper/README.md",
         "Commit: feat(stepper): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-rate",
@@ -1332,7 +1332,7 @@
         "Docs: Lynx limitations in components/Rate/README.md",
         "Commit: feat(rate): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-slider",
@@ -1354,7 +1354,7 @@
         "Docs: Lynx limitations in components/Slider/README.md",
         "Commit: feat(slider): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-search",
@@ -1376,7 +1376,7 @@
         "Docs: Lynx limitations in components/Search/README.md",
         "Commit: feat(search): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-picker",
@@ -1398,7 +1398,7 @@
         "Docs: Lynx limitations in components/Picker/README.md",
         "Commit: feat(picker): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-picker-group",
@@ -1420,7 +1420,7 @@
         "Docs: Lynx limitations in components/PickerGroup/README.md",
         "Commit: feat(picker-group): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-date-picker",
@@ -1442,7 +1442,7 @@
         "Docs: Lynx limitations in components/DatePicker/README.md",
         "Commit: feat(date-picker): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-time-picker",
@@ -1464,7 +1464,7 @@
         "Docs: Lynx limitations in components/TimePicker/README.md",
         "Commit: feat(time-picker): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-cascader",
@@ -1486,7 +1486,7 @@
         "Docs: Lynx limitations in components/Cascader/README.md",
         "Commit: feat(cascader): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-calendar",
@@ -1508,7 +1508,7 @@
         "Docs: Lynx limitations in components/Calendar/README.md",
         "Commit: feat(calendar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-number-keyboard",
@@ -1530,7 +1530,7 @@
         "Docs: Lynx limitations in components/NumberKeyboard/README.md",
         "Commit: feat(number-keyboard): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-password-input",
@@ -1552,7 +1552,7 @@
         "Docs: Lynx limitations in components/PasswordInput/README.md",
         "Commit: feat(password-input): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-uploader",
@@ -1574,7 +1574,7 @@
         "Docs: Lynx limitations in components/Uploader/README.md",
         "Commit: feat(uploader): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-signature",
@@ -1596,7 +1596,7 @@
         "Docs: Lynx limitations in components/Signature/README.md",
         "Commit: feat(signature): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-dialog",
@@ -1618,7 +1618,7 @@
         "Docs: Lynx limitations in components/Dialog/README.md",
         "Commit: feat(dialog): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-action-sheet",
@@ -1640,7 +1640,7 @@
         "Docs: Lynx limitations in components/ActionSheet/README.md",
         "Commit: feat(action-sheet): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-share-sheet",
@@ -1662,7 +1662,7 @@
         "Docs: Lynx limitations in components/ShareSheet/README.md",
         "Commit: feat(share-sheet): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-notify",
@@ -1684,7 +1684,7 @@
         "Docs: Lynx limitations in components/Notify/README.md",
         "Commit: feat(notify): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-popover",
@@ -1706,7 +1706,7 @@
         "Docs: Lynx limitations in components/Popover/README.md",
         "Commit: feat(popover): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-dropdown-menu",
@@ -1728,7 +1728,7 @@
         "Docs: Lynx limitations in components/DropdownMenu/README.md",
         "Commit: feat(dropdown-menu): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-dropdown-item",
@@ -1750,7 +1750,7 @@
         "Docs: Lynx limitations in components/DropdownItem/README.md",
         "Commit: feat(dropdown-item): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-pull-refresh",
@@ -1772,7 +1772,7 @@
         "Docs: Lynx limitations in components/PullRefresh/README.md",
         "Commit: feat(pull-refresh): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-swipe-cell",
@@ -1794,7 +1794,7 @@
         "Docs: Lynx limitations in components/SwipeCell/README.md",
         "Commit: feat(swipe-cell): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-floating-bubble",
@@ -1816,7 +1816,7 @@
         "Docs: Lynx limitations in components/FloatingBubble/README.md",
         "Commit: feat(floating-bubble): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-floating-panel",
@@ -1838,7 +1838,7 @@
         "Docs: Lynx limitations in components/FloatingPanel/README.md",
         "Commit: feat(floating-panel): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-action-bar",
@@ -1860,7 +1860,7 @@
         "Docs: Lynx limitations in components/ActionBar/README.md",
         "Commit: feat(action-bar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-action-bar-button",
@@ -1882,7 +1882,7 @@
         "Docs: Lynx limitations in components/ActionBarButton/README.md",
         "Commit: feat(action-bar-button): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-action-bar-icon",
@@ -1904,7 +1904,7 @@
         "Docs: Lynx limitations in components/ActionBarIcon/README.md",
         "Commit: feat(action-bar-icon): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-submit-bar",
@@ -1926,7 +1926,7 @@
         "Docs: Lynx limitations in components/SubmitBar/README.md",
         "Commit: feat(submit-bar): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-coupon-list",
@@ -1948,7 +1948,7 @@
         "Docs: Lynx limitations in components/CouponList/README.md",
         "Commit: feat(coupon-list): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-contact-card",
@@ -1970,7 +1970,7 @@
         "Docs: Lynx limitations in components/ContactCard/README.md",
         "Commit: feat(contact-card): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-contact-edit",
@@ -1992,7 +1992,7 @@
         "Docs: Lynx limitations in components/ContactEdit/README.md",
         "Commit: feat(contact-edit): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-contact-list",
@@ -2014,7 +2014,7 @@
         "Docs: Lynx limitations in components/ContactList/README.md",
         "Commit: feat(contact-list): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-address-edit",
@@ -2036,7 +2036,7 @@
         "Docs: Lynx limitations in components/AddressEdit/README.md",
         "Commit: feat(address-edit): 100% feature parity with Vant"
       ],
-      "passes": true
+      "passes": false
     },
     {
       "id": "parity-address-list",

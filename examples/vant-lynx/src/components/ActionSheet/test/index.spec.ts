@@ -30,7 +30,7 @@ describe('ActionSheet', () => {
     await nextTick();
 
     const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((t) => t.textContent);
+    const texts = Array.from(textEls).map((t: any) => t.textContent);
     expect(texts).toContain('Option 1');
     expect(texts).toContain('Option 2');
     expect(texts).toContain('Option 3');
@@ -47,7 +47,7 @@ describe('ActionSheet', () => {
     );
     const textEls = container.querySelectorAll('text');
     const actionTexts = Array.from(textEls).filter(
-      (el) => el.textContent === 'Option 1',
+      (el: any) => el.textContent === 'Option 1',
     );
     expect(actionTexts.length).toBe(0);
   });
@@ -178,7 +178,7 @@ describe('ActionSheet', () => {
     expect(cancelEl).not.toBeNull();
     const textEls = container.querySelectorAll('text');
     const cancelText = Array.from(textEls).find(
-      (el) => el.textContent === 'Cancel',
+      (el: any) => el.textContent === 'Cancel',
     );
     expect(cancelText).not.toBeUndefined();
   });
@@ -231,7 +231,7 @@ describe('ActionSheet', () => {
     expect(header).not.toBeNull();
     const textEls = container.querySelectorAll('text');
     const titleText = Array.from(textEls).find(
-      (el) => el.textContent === 'Test Title',
+      (el: any) => el.textContent === 'Test Title',
     );
     expect(titleText).not.toBeUndefined();
   });
@@ -295,7 +295,7 @@ describe('ActionSheet', () => {
     expect(desc).not.toBeNull();
     const textEls = container.querySelectorAll('text');
     const descText = Array.from(textEls).find(
-      (el) => el.textContent === 'Some description',
+      (el: any) => el.textContent === 'Some description',
     );
     expect(descText).not.toBeUndefined();
   });
@@ -318,7 +318,7 @@ describe('ActionSheet', () => {
     expect(subname).not.toBeNull();
     const textEls = container.querySelectorAll('text');
     const subnameText = Array.from(textEls).find(
-      (el) => el.textContent === 'Sub text',
+      (el: any) => el.textContent === 'Sub text',
     );
     expect(subnameText).not.toBeUndefined();
   });
@@ -509,7 +509,7 @@ describe('ActionSheet', () => {
 
     const textEls = container.querySelectorAll('text');
     const customText = Array.from(textEls).find(
-      (el) => el.textContent === 'Custom Content',
+      (el: any) => el.textContent === 'Custom Content',
     );
     expect(customText).not.toBeUndefined();
   });
@@ -535,7 +535,7 @@ describe('ActionSheet', () => {
     expect(desc).not.toBeNull();
     const textEls = container.querySelectorAll('text');
     const descText = Array.from(textEls).find(
-      (el) => el.textContent === 'Custom Description',
+      (el: any) => el.textContent === 'Custom Description',
     );
     expect(descText).not.toBeUndefined();
   });
@@ -559,7 +559,7 @@ describe('ActionSheet', () => {
 
     const textEls = container.querySelectorAll('text');
     const cancelText = Array.from(textEls).find(
-      (el) => el.textContent === 'Custom Cancel',
+      (el: any) => el.textContent === 'Custom Cancel',
     );
     expect(cancelText).not.toBeUndefined();
   });

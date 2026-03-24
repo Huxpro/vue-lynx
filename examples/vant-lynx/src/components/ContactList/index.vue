@@ -25,8 +25,6 @@ export interface ContactListProps {
 
 const props = withDefaults(defineProps<ContactListProps>(), {
   list: () => [],
-  addText: '',
-  defaultTagText: '',
 });
 
 const emit = defineEmits<{
@@ -36,7 +34,7 @@ const emit = defineEmits<{
   edit: [item: ContactListItem, index: number];
 }>();
 
-const [, bem] = createNamespace('contact-list');
+const [name, bem] = createNamespace('contact-list');
 
 // Flag to prevent Cell click from firing select when edit icon is tapped.
 // In Vant web, this is handled by event.stopPropagation() on the edit icon.
@@ -51,7 +49,9 @@ function onItemClick(item: ContactListItem, index: number) {
 function onEdit(item: ContactListItem, index: number) {
   editClicked = true;
   emit('edit', item, index);
-  nextTick(() => { editClicked = false; });
+  nextTick(() => {
+    editClicked = false;
+  });
 }
 
 function onAdd() {
@@ -62,6 +62,7 @@ function onAdd() {
 <template>
   <view :class="bem()">
     <RadioGroup :model-value="modelValue" :class="bem('group')">
+      <slot />
       <Cell
         v-for="(item, index) in list"
         :key="item.id"
@@ -72,31 +73,25 @@ function onAdd() {
         @click="onItemClick(item, index)"
       >
         <template #icon>
-          <view @tap="onEdit(item, index)">
-            <Icon name="edit" :class="bem('edit')" />
-          </view>
+          <Radio :class="bem('radio')" :name="item.id" />
         </template>
-        <template #title>
-          <text>{{ item.name }}，{{ item.tel }}</text>
-          <Tag
-            v-if="item.isDefault && defaultTagText"
-            type="primary"
-            round
-            :class="bem('item-tag')"
-          >{{ defaultTagText }}</Tag>
+        <template #default>
+          <view :class="bem('name')">{{ item.name }}，{{ item.tel }}</view>
         </template>
         <template #right-icon>
-          <Radio :class="bem('radio')" :name="item.id" :icon-size="18" />
+          <Icon name="edit" :class="bem('edit')" @click.stop="onEdit(item, index)" />
         </template>
       </Cell>
     </RadioGroup>
     <view :class="bem('bottom')">
+      <slot name="bottom" />
       <Button
+        v-if="addText"
         round
         block
         type="primary"
         :class="bem('add')"
-        :text="addText || '添加联系人'"
+        :text="addText"
         @click="onAdd"
       />
     </view>

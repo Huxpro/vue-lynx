@@ -1,0 +1,7 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Icon > should render icon with builtin icon name correctly 1`] = `"<view vue-ref-2="1" is="i" class="van-icon van-icon-undefined van-icon" props="{&quot;name&quot;:&quot;success&quot;}"><text vue-ref-3="1"></text><text vue-ref-4="1"></text></view>"`;
+
+exports[`Icon > should render icon with local image correctly 1`] = `"<view vue-ref-2="1" is="i" class="van-icon van-icon-undefined van-icon" props="{&quot;name&quot;:&quot;/assets/icon.jpg&quot;}"><text vue-ref-3="1"></text><text vue-ref-4="1"></text></view>"`;
+
+exports[`Icon > should render icon with url name correctly 1`] = `"<view vue-ref-2="1" is="i" class="van-icon van-icon-undefined van-icon" props="{&quot;name&quot;:&quot;https://example.com/icon.png&quot;}"><text vue-ref-3="1"></text><text vue-ref-4="1"></text></view>"`;

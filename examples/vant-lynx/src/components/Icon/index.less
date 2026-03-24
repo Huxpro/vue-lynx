@@ -1,37 +1,48 @@
-// Icon styles matching Vant's icon/index.less
-// @font-face for the Vant icon font
-// Since Lynx supports @font-face, we load the font via CDN URL.
+@import '@vant/icons/src/index.less';
 
-@font-face {
-  font-family: 'vant-icon';
-  src: url('https://fastly.jsdelivr.net/npm/@vant/icons@3.0.2/src/vant-icon.woff2')
-    format('woff2');
-  font-weight: normal;
-  font-style: normal;
+@keyframes van-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 :root {
-  --van-icon-font-family: 'vant-icon';
-  --van-icon-font-size: inherit;
+  --van-icon-size: inherit;
+  --van-icon-color: inherit;
+  --van-icon-dot-size: 8px;
+  --van-icon-dot-color: var(--van-danger-color);
+  --van-icon-dot-top: 0;
+  --van-icon-dot-right: 0;
 }
 
 .van-icon {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--van-icon-font-size);
+  font-size: var(--van-icon-size);
+  color: var(--van-icon-color);
+  line-height: 1;
 
-  &__image {
-    width: 1em;
-    height: 1em;
+  &--spin {
+    animation: van-rotate var(--van-animation-duration-slow) linear infinite;
   }
 
-  &__font {
-    font-family: var(--van-icon-font-family, 'vant-icon');
-    font-style: normal;
-    font-weight: normal;
-    text-rendering: auto;
-    -webkit-font-smoothing: antialiased;
+  &__image {
+    display: block;
+    width: 1em;
+    height: 1em;
+    object-fit: contain;
+  }
+
+  .van-badge {
+    position: absolute;
+    top: var(--van-icon-dot-top);
+    right: var(--van-icon-dot-right);
+    transform: translate(50%, -50%);
+    transform-origin: 100%;
   }
 }

@@ -121,29 +121,31 @@ function navigate(path: string) {
 </script>
 
 <template>
-  <view class="demo-home">
-    <!-- Title -->
-    <view class="demo-home__title">
-      <text class="demo-home__title-text">Vant Lynx</text>
-    </view>
-    <text class="demo-home__desc">轻量、可定制的移动端组件库</text>
+  <scroll-view scroll-orientation="vertical">
+    <view class="demo-home">
+      <!-- Title -->
+      <view class="demo-home__title">
+        <text class="demo-home__title-text">Vant Lynx</text>
+      </view>
+      <text class="demo-home__desc">轻量、可定制的移动端组件库</text>
 
-    <!-- Nav groups -->
-    <view v-for="(group, gi) in nav" :key="gi" class="demo-home-nav">
-      <text class="demo-home-nav__title">{{ group.title }}</text>
-      <view class="demo-home-nav__group">
-        <view
-          v-for="item in group.items"
-          :key="item.path"
-          class="demo-home-nav__block"
-          @tap="navigate(item.path)"
-        >
-          <text class="demo-home-nav__block-text">{{ item.title }}</text>
-          <text class="demo-home-nav__icon">›</text>
+      <!-- Nav groups -->
+      <view v-for="(group, gi) in nav" :key="gi" class="demo-home-nav">
+        <text class="demo-home-nav__title">{{ group.title }}</text>
+        <view class="demo-home-nav__group">
+          <view
+            v-for="item in group.items"
+            :key="item.path"
+            class="demo-home-nav__block"
+            @tap="navigate(item.path)"
+          >
+            <text class="demo-home-nav__block-text">{{ item.title }}</text>
+            <text class="demo-home-nav__icon">›</text>
+          </view>
         </view>
       </view>
     </view>
-  </view>
+  </scroll-view>
 </template>
 
 <style lang="less">
