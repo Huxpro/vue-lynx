@@ -1,6 +1,8 @@
-# HackerNews Slopfork
+# HackerNews
 
 We forked Evan You's classic [Vue HackerNews 2.0](https://github.com/vuejs/vue-hackernews-2.0) — the canonical "real-world" Vue example — as a validation benchmark for Vue Lynx. Since Vue Lynx is built on Vue 3, we used the [Vue HackerNews 3.0](https://github.com/raukaute/vue-hackernews-3.0) community port as our reference.
+
+Our primary goal was to test **ecosystem compatibility** — validating that Vue Router, data fetching libraries, and styling solutions work seamlessly in the Vue Lynx environment. We chose **Tailwind CSS** for our initial demo because we wanted a demonstrative app that exercises the full stack: Vue Router for navigation, TanStack Vue Query for data fetching, and Tailwind for styling.
 
 **Reuse confidence: High.** Most of the code transferred directly — component logic, Vue Router, Composition API, and even `<Transition>`/`<TransitionGroup>` work identically. The only changes needed were platform-specific: HTML elements → Lynx elements, `@click` → `@tap`, and `createWebHistory()` → `createMemoryHistory()`.
 
