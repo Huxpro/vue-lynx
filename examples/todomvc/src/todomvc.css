@@ -184,12 +184,21 @@
 /* ─── Edit mode ─────────────────────────────────────────── */
 
 .edit-container {
+  display: flex;
+  flex-direction: row;
   padding: 0 0 0 52px;
   border-bottom: 1px solid #ededed;
+  overflow: hidden;
+}
+
+.todo-item.editing .edit-container {
+  border-bottom-width: 0;
 }
 
 .edit-input {
-  width: 100%;
+  width: auto;
+  flex: 1;
+  box-sizing: border-box;
   min-height: 58px;
   padding: 12px 16px;
   border: 1px solid #999999;
