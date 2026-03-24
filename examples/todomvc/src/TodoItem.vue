@@ -1,10 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-
-const props = defineProps(['todo'])
-const emit = defineEmits(['toggle', 'delete', 'edit'])
-
-const editing = ref(false)
+const props = defineProps(['todo', 'editing', 'editText'])
+const emit = defineEmits(['toggle', 'delete', 'start-edit', 'update-edit', 'done-edit'])
 
 function onToggle() {
   emit('toggle', props.todo)
@@ -15,17 +11,20 @@ function onDelete() {
 }
 
 function startEdit() {
-  editing.value = true
+  emit('start-edit', props.todo)
 }
 
-function onEditConfirm(e) {
+function onEditInput(e) {
   const value = e?.detail?.value ?? ''
-  editing.value = false
-  emit('edit', props.todo, value)
+  emit('update-edit', value)
 }
 
-function cancelEdit() {
-  editing.value = false
+function onDoneEdit(e) {
+  if (e) {
+    const value = e?.detail?.value ?? ''
+    emit('update-edit', value)
+  }
+  emit('done-edit', props.todo)
 }
 </script>
 
@@ -53,10 +52,11 @@ function cancelEdit() {
       <input
         class="edit-input"
         type="text"
-        :value="todo.title"
+        :value="editText"
         autofocus
-        @confirm="onEditConfirm"
-        @blur="cancelEdit"
+        @input="onEditInput"
+        @confirm="onDoneEdit"
+        @blur="onDoneEdit"
       />
     </view>
   </view>

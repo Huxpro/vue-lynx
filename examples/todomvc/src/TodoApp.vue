@@ -8,6 +8,8 @@ import TodoFooter from './TodoFooter.vue'
 // ── State ──────────────────────────────────────────────────
 const todos = ref([])
 const filter = ref('all')
+const editedTodoId = ref(null)
+const editText = ref('')
 
 // ── Derived ────────────────────────────────────────────────
 const activeTodos = computed(() => todos.value.filter(t => !t.completed))
@@ -48,14 +50,36 @@ function toggleTodo(todo) {
 
 function deleteTodo(todo) {
   todos.value = todos.value.filter(t => t.id !== todo.id)
+  if (editedTodoId.value === todo.id) {
+    editedTodoId.value = null
+    editText.value = ''
+  }
 }
 
-function editTodo(todo, newTitle) {
-  if (!newTitle.trim()) {
+function startEdit(todo) {
+  editedTodoId.value = todo.id
+  editText.value = todo.title
+}
+
+function updateEdit(value) {
+  editText.value = value
+}
+
+function doneEdit(todo) {
+  if (editedTodoId.value !== todo.id) {
+    return
+  }
+
+  const title = editText.value.trim()
+  editedTodoId.value = null
+  editText.value = ''
+
+  if (!title) {
     deleteTodo(todo)
     return
   }
-  todo.title = newTitle.trim()
+
+  todo.title = title
 }
 
 function toggleAll() {
@@ -95,9 +119,13 @@ function setFilter(f) {
                 v-for="todo in filteredTodos"
                 :key="todo.id"
                 :todo="todo"
+                :editing="editedTodoId === todo.id"
+                :edit-text="editedTodoId === todo.id ? editText : todo.title"
                 @toggle="toggleTodo"
                 @delete="deleteTodo"
-                @edit="editTodo"
+                @start-edit="startEdit"
+                @update-edit="updateEdit"
+                @done-edit="doneEdit"
               />
             </view>
           </view>
