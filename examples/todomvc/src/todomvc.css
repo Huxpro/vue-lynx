@@ -70,6 +70,10 @@
   flex-shrink: 0;
 }
 
+.header-toggle-all-placeholder {
+  opacity: 0;
+}
+
 .header-toggle-all-icon {
   text-align: center;
   font-size: 24px;

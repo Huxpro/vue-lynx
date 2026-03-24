@@ -28,10 +28,13 @@ function onToggleAll() {
           :class="{ checked: allCompleted }"
         >✓</text>
       </view>
+      <view
+        v-else
+        class="header-toggle-all header-toggle-all-placeholder"
+      />
 
       <input
-        class="new-todo"
-        :class="{ 'with-toggle': hasTodos }"
+        class="new-todo with-toggle"
         type="text"
         placeholder="What needs to be done?"
         confirm-type="done"
