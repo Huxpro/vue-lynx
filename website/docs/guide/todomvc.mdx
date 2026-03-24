@@ -23,7 +23,7 @@ The entire business logic transferred directly — Composition API (`ref`, `comp
 | **HTML tags** | `div`/`li`/`button`/`label` | `view`/`text`/`input` | Mechanical swap |
 | **Events** | `@click`/`@keyup.enter` | `@tap`/`@confirm` | Name swap |
 | **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` | Rewrite (no checkbox in Lynx) |
-| **CSS** | `todomvc-app-css` | Custom `todomvc.css` | Adapted for Lynx |
+| **CSS** | `todomvc-app-css` | Custom `todomvc.css` | Adapted (no pseudo-elements) |
 
 ### What Stayed the Same
 
@@ -32,19 +32,18 @@ The entire business logic transferred directly — Composition API (`ref`, `comp
 - **Template directives**: `v-if`/`v-for`/`v-bind`/`{{ }}`/`v-show` — all identical
 - **Reactivity**: The entire `@vue/reactivity` system works unchanged
 
-### CSS Adaptations
+## How much of Vue do we reuse?
 
-Lynx supports CSS class selectors, flexbox, borders, `text-decoration: line-through`, `box-shadow`, and CSS variables. Key differences from the web version:
+| Layer | Source | Reuse |
+|-------|--------|-------|
+| **Reactivity** | `@vue/reactivity` | 100% official |
+| **Component system** | `@vue/runtime-core` | 100% official |
+| **Template compiler** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% official |
+| **Renderer** | Custom `createRenderer(nodeOps)` | Custom (~200 LOC) |
+| **v-show** | Custom (ops-based display:none) | Custom (~15 LOC) |
+| **v-model** | Stubbed | Not yet implemented |
+| **Cross-thread comm** | ops buffer + callLepusMethod | Custom (~250 LOC) |
 
-- **No pseudo-elements** (`::before`, `::after`) — The original TodoMVC uses these heavily for checkbox circles and the destroy "×" button. We replaced them with real `<view>` and `<text>` elements.
-- **No `:hover` or `:focus`** — We use `@tap` and `:active` states instead.
-- **No `!important`** — Not supported in Lynx CSS.
-- **No attribute selectors** — Vue's `<style scoped>` won't work; we use plain CSS classes.
+**Reuse rate: > 95%.** Total custom code: ~500 lines of runtime + ~300 lines of build plugin.
 
-The result is a Lynx-compatible `todomvc.css` (~180 lines) that achieves a similar visual look using real elements instead of pseudo-elements.
-
-## Key Insight
-
-**Business logic and Vue patterns are untouched. Only tag names, event names, and CSS need adaptation.**
-
-This demonstrates that real-world Vue applications can run on Lynx with minimal source changes. The adaptation surface is limited to platform-specific rendering concerns, while your application logic remains identical.
+This gave us the confidence to continue building Vue Lynx.
