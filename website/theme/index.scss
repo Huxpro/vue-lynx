@@ -275,6 +275,52 @@ $brand-emerald: #34d399;
   }
 }
 
+// ======== "for Agent" button =========
+.for-agent-btn {
+  flex-shrink: 0;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(17, 17, 19, 0.08);
+  background: rgb(from var(--rp-code-block-bg) r g b / 50%);
+  color: var(--home-blog-btn-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+
+  &:hover {
+    background: linear-gradient(
+      to right,
+      var(--major-brand-color),
+      var(--gradient-brand-color),
+      var(--second-brand-color)
+    );
+    background-size: 200% 100%;
+    animation: gradientMoveBtn 3s ease infinite;
+    color: #fff;
+    border-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+}
+
+:root.dark .for-agent-btn {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-hero-actions-row {
+  @media (max-width: 640px) {
+    gap: 4px !important;
+  }
+}
+
 .rspress-home-hero-tagline,
 .rp-home-hero__tagline {
   color: var(--home-features-item-desc-color);

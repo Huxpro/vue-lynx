@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
   getCustomMDXComponent as basicGetCustomMDXComponent,
@@ -13,7 +13,30 @@ import {
   ShowCase,
 } from '../src/components/home-comps';
 
+import { AGENT_PROMPT } from './agent-prompt';
+
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
+
+function ForAgentButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleClick = useCallback(() => {
+    navigator.clipboard.writeText(AGENT_PROMPT).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, []);
+
+  return (
+    <button
+      type="button"
+      className="for-agent-btn"
+      onClick={handleClick}
+    >
+      {copied ? 'copied!' : 'for Agent'}
+    </button>
+  );
+}
 
 /** Poll with rAF until `selector` matches, then call `cb`. Gives up after 5 s. */
 function whenReady(selector: string, cb: (el: Element) => void): () => void {
@@ -136,19 +159,25 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
     ),
     afterHeroActions = (
       <div
-        className="rp-doc home-hero-codeblock"
-        style={{ minHeight: 'auto', width: '100%', maxWidth: 360 }}
+        className="home-hero-actions-row"
+        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', justifyContent: 'center' }}
       >
-        <PreWithCodeButtonGroup
-          containerElementClassName="language-bash"
-          codeButtonGroupProps={{
-            showCodeWrapButton: false,
-          }}
+        <div
+          className="rp-doc home-hero-codeblock"
+          style={{ minHeight: 'auto', width: '100%', maxWidth: 360 }}
         >
-          <Code className="language-bash" style={{ textAlign: 'center' }}>
-            npm create vue-lynx@latest
-          </Code>
-        </PreWithCodeButtonGroup>
+          <PreWithCodeButtonGroup
+            containerElementClassName="language-bash"
+            codeButtonGroupProps={{
+              showCodeWrapButton: false,
+            }}
+          >
+            <Code className="language-bash" style={{ textAlign: 'center' }}>
+              npm create vue-lynx@latest
+            </Code>
+          </PreWithCodeButtonGroup>
+        </div>
+        <ForAgentButton />
       </div>
     ),
   } = props;
