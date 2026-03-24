@@ -74,49 +74,53 @@ function setFilter(f) {
 </script>
 
 <template>
-  <view class="todoapp">
-    <TodoHeader @add-todo="addTodo" />
+  <view class="page">
+    <view class="todoapp-shell">
+      <view class="todoapp">
+        <TodoHeader @add-todo="addTodo" />
 
-    <scroll-view
-      v-if="todos.length > 0"
-      scroll-orientation="vertical"
-      :style="{ height: mainScrollHeight, maxHeight: mainScrollMaxHeight }"
-    >
-      <view class="main">
-        <!-- Toggle all -->
-        <view class="toggle-all-container">
-          <view
-            class="toggle-all-btn"
-            :class="{ 'all-completed': allCompleted }"
-            @tap="toggleAll"
-          >
-            <text class="toggle-all-icon">✓</text>
+        <scroll-view
+          v-if="todos.length > 0"
+          scroll-orientation="vertical"
+          :style="{ height: mainScrollHeight, maxHeight: mainScrollMaxHeight }"
+        >
+          <view class="main">
+            <!-- Toggle all -->
+            <view class="toggle-all-container">
+              <view
+                class="toggle-all-btn"
+                :class="{ 'all-completed': allCompleted }"
+                @tap="toggleAll"
+              >
+                <text class="toggle-all-icon">✓</text>
+              </view>
+              <text class="toggle-all-label">Mark all as complete</text>
+            </view>
+
+            <!-- Todo list -->
+            <view class="todo-list">
+              <TodoItem
+                v-for="todo in filteredTodos"
+                :key="todo.id"
+                :todo="todo"
+                @toggle="toggleTodo"
+                @delete="deleteTodo"
+                @edit="editTodo"
+              />
+            </view>
           </view>
-          <text class="toggle-all-label">Mark all as complete</text>
-        </view>
+        </scroll-view>
 
-        <!-- Todo list -->
-        <view class="todo-list">
-          <TodoItem
-            v-for="todo in filteredTodos"
-            :key="todo.id"
-            :todo="todo"
-            @toggle="toggleTodo"
-            @delete="deleteTodo"
-            @edit="editTodo"
-          />
-        </view>
+        <TodoFooter
+          v-if="todos.length > 0"
+          :active-count="activeTodos.length"
+          :completed-count="completedTodos.length"
+          :current-filter="filter"
+          @set-filter="setFilter"
+          @clear-completed="clearCompleted"
+        />
       </view>
-    </scroll-view>
-
-    <TodoFooter
-      v-if="todos.length > 0"
-      :active-count="activeTodos.length"
-      :completed-count="completedTodos.length"
-      :current-filter="filter"
-      @set-filter="setFilter"
-      @clear-completed="clearCompleted"
-    />
+    </view>
 
     <!-- Info -->
     <view class="info">

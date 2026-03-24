@@ -11,13 +11,28 @@
 
 /* ─── App Container ─────────────────────────────────────── */
 
-.todoapp {
-  display: flex;
-  flex-direction: column;
-  background-color: #fff;
-  position: relative;
-  width: 100%;
+.page {
   height: 100%;
+  background-color: #f5f5f5;
+}
+
+.todoapp-shell {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 28px 16px 12px;
+}
+
+.todoapp {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.16),
+    0 24px 50px rgba(0, 0, 0, 0.08);
 }
 
 /* ─── Header ────────────────────────────────────────────── */
