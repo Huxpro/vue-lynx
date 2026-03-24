@@ -128,10 +128,10 @@
 
 /* Checkbox circle */
 .todo-toggle {
-  width: 32px;
-  height: 32px;
-  border-radius: 16px;
-  border: 2px solid #bddad5;
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  border: 1px solid #d9e6e4;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,13 +140,11 @@
 
 .todo-item.completed .todo-toggle {
   border-color: #5dc2af;
-  background-color: #5dc2af;
 }
 
-.checkmark {
+.todo-toggle-icon {
   font-size: 18px;
-  color: #fff;
-  font-weight: 700;
+  color: #5dc2af;
 }
 
 /* Todo label */
