@@ -206,9 +206,15 @@ export function pluginVueLynx(
         });
 
         api.modifyBundlerChain((chain) => {
-          // "vue" → "vue-lynx" ensures template compiler output
-          // imports from the same module instance (singleton shared state)
-          chain.resolve.alias.set('vue', 'vue-lynx');
+          // "vue" → vue-lynx runtime ensures template compiler output
+          // imports from the same module instance (singleton shared state).
+          // Use an absolute path so the alias resolves even from contexts
+          // where "vue-lynx" is not in node_modules (e.g. inside pnpm's
+          // .pnpm store when vue-router imports "vue").
+          chain.resolve.alias.set(
+            'vue',
+            path.resolve(_vueLynxRoot, 'runtime/dist/index.js'),
+          );
 
           // Ensure vue-lynx/internal/ops resolves correctly.
           // main-thread/dist and runtime/dist import this path, but rspack's
