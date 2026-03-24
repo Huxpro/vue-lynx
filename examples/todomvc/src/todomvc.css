@@ -103,7 +103,6 @@
 .main {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid #e6e6e6;
 }
 
 /* Toggle All */

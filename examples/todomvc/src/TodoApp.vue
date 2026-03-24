@@ -18,12 +18,11 @@ const filteredTodos = computed(() => {
   return todos.value
 })
 
-const TOGGLE_ALL_ROW_HEIGHT = 42;
 const TODO_ROW_HEIGHT = 58;
 const VIEWPORT_RESERVED_HEIGHT = 320;
 
 const mainScrollHeight = computed(
-  () => `${TOGGLE_ALL_ROW_HEIGHT + filteredTodos.value.length * TODO_ROW_HEIGHT}px`,
+  () => `${filteredTodos.value.length * TODO_ROW_HEIGHT}px`,
 )
 const mainScrollMaxHeight = `calc(100vh - ${VIEWPORT_RESERVED_HEIGHT}px)`
 
