@@ -30,29 +30,34 @@ function cancelEdit() {
 </script>
 
 <template>
-  <!-- Normal view -->
   <view
-    v-if="!editing"
     class="todo-item"
-    :class="{ completed: todo.completed }"
+    :class="{ completed: todo.completed, editing }"
   >
-    <view class="todo-toggle" @tap="onToggle">
-      <text v-if="todo.completed" class="todo-toggle-icon">✓</text>
+    <!-- Normal view -->
+    <view
+      v-if="!editing"
+      class="todo-view"
+    >
+      <view class="todo-toggle" @tap="onToggle">
+        <text v-if="todo.completed" class="todo-toggle-icon">✓</text>
+      </view>
+      <view class="todo-label-hitbox" @longpress="startEdit">
+        <text class="todo-label">{{ todo.title }}</text>
+      </view>
+      <text class="destroy" @tap="onDelete">✕</text>
     </view>
-    <view class="todo-label-hitbox" @longpress="startEdit">
-      <text class="todo-label">{{ todo.title }}</text>
-    </view>
-    <text class="destroy" @tap="onDelete">✕</text>
-  </view>
 
-  <!-- Edit view -->
-  <view v-else class="edit-container">
-    <input
-      class="edit-input"
-      type="text"
-      :value="todo.title"
-      @confirm="onEditConfirm"
-      @blur="cancelEdit"
-    />
+    <!-- Edit view -->
+    <view v-else class="edit-container">
+      <input
+        class="edit-input"
+        type="text"
+        :value="todo.title"
+        autofocus
+        @confirm="onEditConfirm"
+        @blur="cancelEdit"
+      />
+    </view>
   </view>
 </template>
