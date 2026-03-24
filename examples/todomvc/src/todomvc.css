@@ -146,13 +146,16 @@
 }
 
 /* Todo label */
-.todo-label {
+.todo-label-hitbox {
   flex: 1;
-  font-size: 18px;
-  color: #4d4d4d;
-  margin-left: 12px;
+  margin-left: 14px;
   margin-right: 12px;
-  line-height: 1.4;
+}
+
+.todo-label {
+  font-size: 24px;
+  color: #4d4d4d;
+  line-height: 1.3;
 }
 
 .todo-item.completed .todo-label {
