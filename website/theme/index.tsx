@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
-  getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
 
 import './index.scss';
@@ -30,29 +29,68 @@ const CheckIcon = () => (
   </svg>
 );
 
-function ForAgentButton() {
-  const [copied, setCopied] = useState(false);
+const SparkleIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+    <path d="M7 1L8.2 4.8L12 5.2L9.2 7.8L10 12L7 9.8L4 12L4.8 7.8L2 5.2L5.8 4.8L7 1Z" fill="url(#agent-sparkle)" />
+    <defs>
+      <linearGradient id="agent-sparkle" x1="2" y1="1" x2="12" y2="12">
+        <stop stopColor="var(--major-brand-color)" />
+        <stop offset="1" stopColor="var(--second-brand-color)" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
-  const handleClick = useCallback(() => {
+function HeroCommandBox() {
+  const [cmdCopied, setCmdCopied] = useState(false);
+  const [agentCopied, setAgentCopied] = useState(false);
+
+  const copyCommand = useCallback(() => {
+    navigator.clipboard.writeText('npm create vue-lynx@latest').then(() => {
+      setCmdCopied(true);
+      setTimeout(() => setCmdCopied(false), 2000);
+    });
+  }, []);
+
+  const copyAgent = useCallback(() => {
     navigator.clipboard.writeText(AGENT_PROMPT).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setAgentCopied(true);
+      setTimeout(() => setAgentCopied(false), 2000);
     });
   }, []);
 
   return (
-    <button
-      type="button"
-      className={`for-agent-btn${copied ? ' is-copied' : ''}`}
-      onClick={handleClick}
-    >
-      <span className="for-agent-btn__icon" aria-hidden="true">
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </span>
-      <span className="for-agent-btn__label">
-        {copied ? 'copied!' : 'for Agent'}
-      </span>
-    </button>
+    <div className="hero-command-box">
+      <button 
+        type="button"
+        className={`hero-command-box__cmd ${cmdCopied ? 'copied' : ''}`} 
+        onClick={copyCommand}
+        aria-label="Copy command"
+      >
+        <span className="prompt">$</span>
+        <span className="text">npm create vue-lynx@latest</span>
+        <span className="icon" aria-hidden="true">
+          {cmdCopied ? <CheckIcon /> : <CopyIcon />}
+        </span>
+      </button>
+      
+      <div className="hero-command-box__divider" />
+
+      <button 
+        type="button"
+        className={`hero-command-box__agent ${agentCopied ? 'copied' : ''}`} 
+        onClick={copyAgent}
+      >
+        <div className="content-wrapper">
+          <span className="icon" aria-hidden="true">
+            {agentCopied ? <CheckIcon /> : <SparkleIcon />}
+          </span>
+          <span className="text">
+            {agentCopied ? 'copied!' : 'for Agent'}
+          </span>
+        </div>
+      </button>
+    </div>
   );
 }
 
@@ -164,9 +202,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       if (timerId !== null) clearTimeout(timerId);
     };
   }, []);
-  const { pre: PreWithCodeButtonGroup, code: Code } =
-    basicGetCustomMDXComponent();
-
   const {
     afterHero = (
       <>
@@ -176,25 +211,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       </>
     ),
     afterHeroActions = (
-      <div className="home-hero-actions-row">
-        <div
-          className="rp-doc home-hero-codeblock"
-          style={{ minHeight: 'auto' }}
-        >
-          <PreWithCodeButtonGroup
-            containerElementClassName="language-bash"
-            codeButtonGroupProps={{
-              showCodeWrapButton: false,
-            }}
-          >
-            <Code className="language-bash" style={{ textAlign: 'center' }}>
-              npm create vue-lynx@latest
-            </Code>
-          </PreWithCodeButtonGroup>
-        </div>
-        <span className="home-hero-actions-row__divider">or</span>
-        <ForAgentButton />
-      </div>
+      <HeroCommandBox />
     ),
   } = props;
 
