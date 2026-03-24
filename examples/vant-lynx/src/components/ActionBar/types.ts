@@ -1,4 +1,4 @@
-import type { InjectionKey } from 'vue-lynx';
+import type { InjectionKey } from 'vue';
 
 export interface ActionBarChild {
   isButton?: boolean;

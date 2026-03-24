@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { h, nextTick, defineComponent } from 'vue-lynx';
 import { render, fireEvent } from 'vue-lynx-testing-library';
 import AddressEdit from '../index.vue';
-import type { AddressEditInfo } from '../types';
+import type { AddressEditInfo } from '../types.js';
 
 const areaList = {
   province_list: {
@@ -110,7 +110,7 @@ describe('AddressEdit', () => {
     const buttons = container.querySelectorAll('.van-button');
     expect(buttons.length).toBe(2);
     const textEls = container.querySelectorAll('text');
-    const hasDelete = Array.from(textEls).some((t) => t.textContent === '删除');
+    const hasDelete = Array.from(textEls).some((t: any) => t.textContent === '删除');
     expect(hasDelete).toBe(true);
   });
 
@@ -135,7 +135,7 @@ describe('AddressEdit', () => {
       }),
     );
     const textEls = container.querySelectorAll('text');
-    const hasSave = Array.from(textEls).some((t) => t.textContent === '提交');
+    const hasSave = Array.from(textEls).some((t: any) => t.textContent === '提交');
     expect(hasSave).toBe(true);
   });
 
@@ -151,7 +151,7 @@ describe('AddressEdit', () => {
       }),
     );
     const textEls = container.querySelectorAll('text');
-    const hasDelete = Array.from(textEls).some((t) => t.textContent === '移除地址');
+    const hasDelete = Array.from(textEls).some((t: any) => t.textContent === '移除地址');
     expect(hasDelete).toBe(true);
   });
 
@@ -202,7 +202,7 @@ describe('AddressEdit', () => {
     const defaultCell = container.querySelector('.van-address-edit__default');
     expect(defaultCell).toBeTruthy();
     const textEls = container.querySelectorAll('text');
-    const hasLabel = Array.from(textEls).some((t) => t.textContent === '设为默认收货地址');
+    const hasLabel = Array.from(textEls).some((t: any) => t.textContent === '设为默认收货地址');
     expect(hasLabel).toBe(true);
   });
 
@@ -276,7 +276,7 @@ describe('AddressEdit', () => {
       }),
     );
     const buttons = container.querySelectorAll('.van-button');
-    buttons.forEach((btn) => {
+    buttons.forEach((btn: any) => {
       expect(btn.className).toContain('van-button--block');
       expect(btn.className).toContain('van-button--round');
     });
@@ -303,7 +303,7 @@ describe('AddressEdit', () => {
       }),
     );
     const textEls = container.querySelectorAll('text');
-    const hasArea = Array.from(textEls).some((t) => t.textContent === '地区');
+    const hasArea = Array.from(textEls).some((t: any) => t.textContent === '地区');
     expect(hasArea).toBe(false);
   });
 
@@ -316,7 +316,7 @@ describe('AddressEdit', () => {
       }),
     );
     const textEls = container.querySelectorAll('text');
-    const hasDetail = Array.from(textEls).some((t) => t.textContent === '详细地址');
+    const hasDetail = Array.from(textEls).some((t: any) => t.textContent === '详细地址');
     expect(hasDetail).toBe(false);
   });
 
@@ -324,13 +324,13 @@ describe('AddressEdit', () => {
     const { container } = createComponent();
     // Area field renders modelValue in an input element (readonly)
     const inputs = container.querySelectorAll('input');
-    const inputValues = Array.from(inputs).map((i) => (i as any).value || i.getAttribute('value') || '');
+    const inputValues = Array.from(inputs).map((i: any) => (i as any).value || i.getAttribute('value') || '');
     // Also check text elements for the area value
     const textEls = container.querySelectorAll('text');
-    const texts = Array.from(textEls).map((t) => t.textContent);
-    const allContent = [...inputValues, ...texts];
-    // province === city, so only one shows: '北京市/朝阳区'
-    const hasArea = allContent.some((t) => t?.includes('北京市'));
+const texts = Array.from(textEls).map((t: any) => t.textContent);
+     const allContent = [...inputValues, ...texts];
+     // province === city, so only one shows: '北京市/朝阳区'
+     const hasArea = allContent.some((t: any) => t?.includes('北京市'));
     expect(hasArea).toBe(true);
   });
 

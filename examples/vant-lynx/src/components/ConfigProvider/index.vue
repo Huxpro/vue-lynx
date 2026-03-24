@@ -7,24 +7,12 @@
 <script setup lang="ts">
 import { computed, provide, watchEffect } from 'vue-lynx';
 import { createNamespace } from '../../utils/create';
-import { CONFIG_PROVIDER_KEY } from './types';
-import type { ConfigProviderTheme, ConfigProviderThemeVarsScope } from './types';
+import { CONFIG_PROVIDER_KEY, type ConfigProviderProps } from './types';
 import { mapThemeVarsToCSSVars } from './utils';
 import { setGlobalZIndex } from '../../composables/useGlobalZIndex';
 import './index.less';
 
 const [name, bem] = createNamespace('config-provider');
-
-interface ConfigProviderProps {
-  tag?: string;
-  theme?: ConfigProviderTheme;
-  zIndex?: number;
-  themeVars?: Record<string, string | number>;
-  themeVarsDark?: Record<string, string | number>;
-  themeVarsLight?: Record<string, string | number>;
-  themeVarsScope?: ConfigProviderThemeVarsScope;
-  iconPrefix?: string;
-}
 
 const props = withDefaults(defineProps<ConfigProviderProps>(), {
   tag: 'div',

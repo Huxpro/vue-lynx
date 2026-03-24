@@ -9,7 +9,7 @@ MAX_ITERATIONS=10
 
 print_usage() {
   cat <<'EOF'
-Usage: ralph.sh [--tool amp|claude|codex] [max_iterations]
+Usage: ralph.sh [--tool amp|claude|codex|trae] [max_iterations]
 
 Examples:
   ./scripts/ralph/ralph.sh --tool codex 20
@@ -67,7 +67,7 @@ resolve_prompt_file() {
     amp)
       candidates=("prompt.md" "CLAUDE.md")
       ;;
-    claude|codex)
+    claude|codex|trae)
       candidates=("CLAUDE.md" "prompt.md")
       ;;
     *)
@@ -104,6 +104,10 @@ run_selected_tool() {
       ;;
     codex)
       codex exec --dangerously-bypass-approvals-and-sandbox -C "$REPO_DIR" - < "$PROMPT_FILE" 2>&1 | tee "$output_file"
+      exit_code=${PIPESTATUS[0]}
+      ;;
+    trae)
+      traecli -p -y "$(cat "$PROMPT_FILE")" 2>&1 | tee "$output_file"
       exit_code=${PIPESTATUS[0]}
       ;;
   esac
@@ -145,8 +149,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "codex" ]]; then
-  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude', or 'codex'." >&2
+if [[ "$TOOL" != "amp" && "$TOOL" != "claude" && "$TOOL" != "codex" && "$TOOL" != "trae" ]]; then
+  echo "Error: Invalid tool '$TOOL'. Must be 'amp', 'claude', 'codex', or 'trae'." >&2
   exit 1
 fi
 
