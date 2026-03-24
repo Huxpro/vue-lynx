@@ -77,7 +77,12 @@ function setFilter(f) {
   <view class="page">
     <view class="todoapp-shell">
       <view class="todoapp">
-        <TodoHeader @add-todo="addTodo" />
+        <TodoHeader
+          :all-completed="allCompleted"
+          :has-todos="todos.length > 0"
+          @add-todo="addTodo"
+          @toggle-all="toggleAll"
+        />
 
         <scroll-view
           v-if="todos.length > 0"
@@ -85,18 +90,6 @@ function setFilter(f) {
           :style="{ height: mainScrollHeight, maxHeight: mainScrollMaxHeight }"
         >
           <view class="main">
-            <!-- Toggle all -->
-            <view class="toggle-all-container">
-              <view
-                class="toggle-all-btn"
-                :class="{ 'all-completed': allCompleted }"
-                @tap="toggleAll"
-              >
-                <text class="toggle-all-icon">✓</text>
-              </view>
-              <text class="toggle-all-label">Mark all as complete</text>
-            </view>
-
             <!-- Todo list -->
             <view class="todo-list">
               <TodoItem

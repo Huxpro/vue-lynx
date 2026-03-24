@@ -52,16 +52,46 @@
   margin-bottom: 10px;
 }
 
+.new-todo-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #ededed;
+  background-color: rgba(0, 0, 0, 0.002);
+  box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
+}
+
+.header-toggle-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  min-height: 60px;
+  flex-shrink: 0;
+}
+
+.header-toggle-all-icon {
+  text-align: center;
+  font-size: 24px;
+  color: #e6e6e6;
+}
+
+.header-toggle-all-icon.checked {
+  color: #737373;
+}
+
 .new-todo {
-  width: 100%;
+  flex: 1;
+  width: auto;
   min-height: 60px;
   padding: 16px 18px;
   border-width: 0;
-  border-bottom: 1px solid #ededed;
-  background-color: rgba(0, 0, 0, 0.002);
   color: #4d4d4d;
   font-size: 24px;
-  box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
+}
+
+.new-todo.with-toggle {
+  padding-left: 6px;
 }
 
 /* ─── Main Section ──────────────────────────────────────── */
@@ -73,41 +103,6 @@
 }
 
 /* Toggle All */
-.toggle-all-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e6e6e6;
-}
-
-.toggle-all-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-}
-
-.toggle-all-btn.all-completed {
-  background-color: #737373;
-}
-
-.toggle-all-icon {
-  font-size: 20px;
-  color: #e6e6e6;
-}
-
-.toggle-all-btn.all-completed .toggle-all-icon {
-  color: #fff;
-}
-
-.toggle-all-label {
-  font-size: 14px;
-  color: #e6e6e6;
-  margin-left: 8px;
-}
 
 /* ─── Todo List ─────────────────────────────────────────── */
 
