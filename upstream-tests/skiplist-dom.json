@@ -1,12 +1,5 @@
 {
   "skip_list": [
-    "!important",
-    "camelCase with !important",
-    "should warn for trailing semicolons",
-    "should not warn for escaped trailing semicolons",
-    "shorthand properties",
-    "auto vendor prefixing",
-    "multiple values",
 
     "transition class",
     "svg",

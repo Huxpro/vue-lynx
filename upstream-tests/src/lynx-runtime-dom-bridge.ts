@@ -18,7 +18,9 @@ import {
   takeOps,
   resetForTesting,
 } from 'vue-lynx';
-import { isBooleanAttr, includeBooleanAttr, isKnownHtmlAttr, isKnownSvgAttr } from '@vue/shared';
+import { isBooleanAttr, includeBooleanAttr } from '@vue/shared';
+
+declare const __DEV__: boolean;
 
 // ---------------------------------------------------------------------------
 // Bridge internals – injected by the setup file
@@ -247,6 +249,56 @@ function patchDOMProp(
 }
 
 // ---------------------------------------------------------------------------
+// Style helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert camelCase to kebab-case for CSS property names.
+ */
+function toKebab(key: string): string {
+  return key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
+
+/**
+ * Set a single CSS property on a style object, handling:
+ * - CSS custom properties (--*)
+ * - !important suffix
+ * - camelCase → kebab-case conversion
+ * - vendor prefix fallback (e.g. transition → WebkitTransition)
+ */
+function setStyleProperty(
+  style: CSSStyleDeclaration,
+  rawKey: string,
+  val: string,
+): void {
+  // CSS custom properties
+  if (rawKey.startsWith('--')) {
+    style.setProperty(rawKey, val);
+    return;
+  }
+
+  // Check for !important
+  const importantRE = /\s*!important\s*$/;
+  const isImportant = importantRE.test(val);
+  const cleanVal = isImportant ? val.replace(importantRE, '') : val;
+  const kebabKey = toKebab(rawKey);
+
+  if (isImportant) {
+    style.setProperty(kebabKey, cleanVal, 'important');
+  } else {
+    style.setProperty(kebabKey, cleanVal);
+    // Also set via direct property assignment and try vendor prefix.
+    // Vue runtime-dom sets style[key] = val, checks if it took, and
+    // falls back to the Webkit-prefixed version if not.
+    const prefixed = `Webkit${rawKey.charAt(0).toUpperCase()}${rawKey.slice(1)}`;
+    if (prefixed in style) {
+      (style as any)[prefixed] = cleanVal;
+    }
+    (style as any)[rawKey] = cleanVal;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // patchProp — the main bridge function
 // ---------------------------------------------------------------------------
 
@@ -304,32 +356,52 @@ export function patchProp(
     return;
   }
 
-  // Pre-process: for style objects, filter out undefined/null values
-  // to prevent jsdom's CSS parser from throwing, and clear old styles
-  // since Object.assign is additive (won't remove stale properties).
+  // Pre-process: for style objects, use setProperty for each entry so that
+  // !important, CSS custom properties, shorthand expansion, and vendor
+  // prefixes all work correctly. The pipeline still processes the style
+  // object for ops tracking; the post-pipeline setProperty calls correct
+  // the final jsdom state.
   if (key === 'style' && nextValue != null && typeof nextValue === 'object') {
     // Clear all existing inline styles first so stale properties don't persist
     if (typeof (el as any).removeAttribute === 'function') {
       (el as HTMLElement).removeAttribute('style');
     }
 
+    // Route through pipeline for ops tracking (with cleaned values)
     const cleaned: Record<string, unknown> = {};
-    const customProps: [string, string][] = [];
     for (const [k, v] of Object.entries(nextValue as Record<string, unknown>)) {
-      if (v != null) {
-        if (k.startsWith('--')) {
-          // CSS custom properties must use setProperty, not Object.assign
-          customProps.push([k, String(v)]);
-        } else {
-          cleaned[k] = v;
-        }
+      if (v != null && !Array.isArray(v)) {
+        cleaned[k] = v;
       }
     }
     nodeOps.patchProp(shadow, key, prevValue, cleaned);
     syncFlush();
-    // Apply CSS custom properties via setProperty (Object.assign can't do this)
-    for (const [prop, val] of customProps) {
-      (el as HTMLElement).style.setProperty(prop, val);
+
+    // Post-pipeline: apply each style property via setProperty on jsdom
+    const style = (el as HTMLElement).style;
+    for (const [rawKey, rawVal] of Object.entries(
+      nextValue as Record<string, unknown>,
+    )) {
+      if (rawVal == null) continue;
+
+      // Handle array values: try each until one sticks (multi-value fallback)
+      if (Array.isArray(rawVal)) {
+        for (const v of rawVal as string[]) {
+          setStyleProperty(style, rawKey, v);
+        }
+        continue;
+      }
+
+      const val = String(rawVal);
+
+      // Warn for trailing semicolons (Vue runtime-dom does this)
+      if (__DEV__ && /;[\s]*$/.test(val) && !val.endsWith('\\;')) {
+        console.warn(
+          `[Vue warn]: Unexpected semicolon at the end of '${rawKey}' style value: '${val}'`,
+        );
+      }
+
+      setStyleProperty(style, rawKey, val);
     }
     return;
   }
