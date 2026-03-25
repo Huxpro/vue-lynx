@@ -1,0 +1,18 @@
+vue-lynx
+Copyright 2026-present Xuan Huang (huxpro)
+
+This product contains code derived from or inspired by the following projects:
+
+- React Lynx (Apache-2.0)
+  https://github.com/lynx-family/lynx-stack
+  Copyright Lynx Authors
+  Files: runtime/src/run-on-background.ts, main-thread/src/run-on-background-mt.ts
+
+- Rsbuild (MIT)
+  https://github.com/web-infra-dev/rsbuild
+  Copyright 2023-present Bytedance, Inc. and its affiliates
+  Files: plugin/src/css.ts (normalizeCssLoaderOptions)
+
+- Vue.js (MIT)
+  https://github.com/vuejs/core
+  Copyright 2018-present Yuxi (Evan) You

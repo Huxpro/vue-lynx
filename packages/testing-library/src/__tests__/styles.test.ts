@@ -6,10 +6,10 @@
 import { describe, it, expect } from 'vitest';
 import { h, defineComponent, ref, nextTick } from 'vue-lynx';
 import { render } from '../index.js';
-import { OP } from '../../../internal/src/ops.js';
-import { nodeOps } from '../../../runtime/src/node-ops.js';
-import { takeOps } from '../../../runtime/src/ops.js';
-import { ShadowElement } from '../../../runtime/src/shadow-element.js';
+import { OP } from '../../../vue-lynx/internal/src/ops.js';
+import { nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
+import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
+import { ShadowElement } from '../../../vue-lynx/runtime/src/shadow-element.js';
 
 describe('styles', () => {
   it('stringifies numeric flex in SET_STYLE payloads', () => {

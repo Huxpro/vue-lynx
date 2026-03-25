@@ -16,28 +16,28 @@ export default defineConfig({
         find: 'vue-lynx/entry-background',
         replacement: path.resolve(
           __dirname,
-          '../runtime/src/entry-background.ts',
+          '../vue-lynx/runtime/src/entry-background.ts',
         ),
       },
       {
         find: 'vue-lynx/main-thread',
         replacement: path.resolve(
           __dirname,
-          '../main-thread/src/entry-main.ts',
+          '../vue-lynx/main-thread/src/entry-main.ts',
         ),
       },
       {
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(
           __dirname,
-          '../internal/src/ops.ts',
+          '../vue-lynx/internal/src/ops.ts',
         ),
       },
       {
         find: /^vue-lynx$/,
         replacement: path.resolve(
           __dirname,
-          '../runtime/src/index.ts',
+          '../vue-lynx/runtime/src/index.ts',
         ),
       },
     ],

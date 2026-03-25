@@ -29,18 +29,18 @@ When investigating runtime errors in Lynx bundles:
 
 | File                                              | Purpose                                                           |
 | ------------------------------------------------- | ----------------------------------------------------------------- |
-| `rspeedy-plugin/src/entry.ts`                     | Dual-bundle entry splitting, loader rules, webpack plugins        |
-| `rspeedy-plugin/src/index.ts`                     | `pluginVueLynx()` — Vue SFC + Lynx adaptation                     |
-| `rspeedy-plugin/src/loaders/worklet-loader.ts`    | BG worklet transform (JS target)                                  |
-| `rspeedy-plugin/src/loaders/worklet-loader-mt.ts` | MT worklet transform (LEPUS target)                               |
-| `rspeedy-plugin/src/loaders/worklet-utils.ts`     | Shared: `extractLocalImports`, `extractRegistrations`             |
-| `main-thread/src/entry-main.ts`                   | MT bootstrap: renderPage, vuePatchUpdate, worklet-runtime loading |
-| `main-thread/src/ops-apply.ts`                    | MT ops interpreter: switch loop over flat ops array               |
-| `runtime/src/index.ts`                            | BG custom renderer: createApp, ShadowElement tree, ops buffer     |
+| `packages/vue-lynx/plugin/src/entry.ts`                     | Dual-bundle entry splitting, loader rules, webpack plugins        |
+| `packages/vue-lynx/plugin/src/index.ts`                     | `pluginVueLynx()` — Vue SFC + Lynx adaptation                     |
+| `packages/vue-lynx/plugin/src/loaders/worklet-loader.ts`    | BG worklet transform (JS target)                                  |
+| `packages/vue-lynx/plugin/src/loaders/worklet-loader-mt.ts` | MT worklet transform (LEPUS target)                               |
+| `packages/vue-lynx/plugin/src/loaders/worklet-utils.ts`     | Shared: `extractLocalImports`, `extractRegistrations`             |
+| `packages/vue-lynx/main-thread/src/entry-main.ts`           | MT bootstrap: renderPage, vuePatchUpdate, worklet-runtime loading |
+| `packages/vue-lynx/main-thread/src/ops-apply.ts`            | MT ops interpreter: switch loop over flat ops array               |
+| `packages/vue-lynx/runtime/src/index.ts`                    | BG custom renderer: createApp, ShadowElement tree, ops buffer     |
 
-### Upstream Tests (`upstream-tests/`)
+### Upstream Tests (`packages/upstream-tests/`)
 
-The `upstream-tests/` directory re-runs selected Vue core test suites against our custom renderer. It has **two** vitest configurations exercising different layers:
+The `packages/upstream-tests/` directory re-runs selected Vue core test suites against our custom renderer. It has **two** vitest configurations exercising different layers:
 
 | Command | Config | Adapter | What it exercises |
 |---------|--------|---------|-------------------|

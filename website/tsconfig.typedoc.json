@@ -1,5 +1,5 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../packages/vue-lynx/tsconfig.json",
   "compilerOptions": {
     "declaration": false,
     "incremental": false,
@@ -8,9 +8,9 @@
   },
   "include": [
     "./typedoc-globals.d.ts",
-    "../runtime/src/**/*.ts",
-    "../plugin/src/**/*.ts",
-    "../internal/src/**/*.ts",
-    "../testing-library/src/**/*.ts"
+    "../packages/vue-lynx/runtime/src/**/*.ts",
+    "../packages/vue-lynx/plugin/src/**/*.ts",
+    "../packages/vue-lynx/internal/src/**/*.ts",
+    "../packages/testing-library/src/**/*.ts"
   ]
 }

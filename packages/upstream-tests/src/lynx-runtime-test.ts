@@ -19,7 +19,7 @@ import {
 import { markRaw } from '@vue/reactivity';
 import { isArray } from '@vue/shared';
 
-import { ShadowElement } from '../../runtime/src/shadow-element.js';
+import { ShadowElement } from '../../vue-lynx/runtime/src/shadow-element.js';
 
 // ---------------------------------------------------------------------------
 // Test node types (mirrors @vue/runtime-test)

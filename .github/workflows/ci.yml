@@ -85,7 +85,7 @@ jobs:
       - run: pnpm build
 
       - name: Clone vuejs/core@v3.5.12
-        run: git clone --depth 1 --branch v3.5.12 https://github.com/vuejs/core.git upstream-tests/core
+        run: git clone --depth 1 --branch v3.5.12 https://github.com/vuejs/core.git packages/upstream-tests/core
 
       - name: Run upstream Vue tests (runtime-core, reactivity, runtime-dom)
         run: pnpm test:upstream

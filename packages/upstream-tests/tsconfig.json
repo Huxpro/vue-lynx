@@ -6,12 +6,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "jsx": "preserve",
     "types": ["vitest/globals"],
   },
-  "include": ["src", "setup.ts", "vitest.config.ts"],
+  "include": ["src"],
   "references": [
-    { "path": "../runtime" },
-    { "path": "../main-thread" },
+    { "path": "../vue-lynx/runtime" },
   ],
 }

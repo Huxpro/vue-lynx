@@ -17,10 +17,11 @@
     "ignore": [
       "dist/**",
       "coverage/**",
-      "testing-library/**",
-      "upstream-tests/**",
+      "packages/testing-library/**",
+      "packages/upstream-tests/**",
+      "packages/create-vue-lynx/**",
       "examples/**",
-      "packages/**",
+      "website/**",
       ".plans/**",
     ],
     "rules": {
