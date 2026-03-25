@@ -8,6 +8,7 @@ import TodoFooter from './TodoFooter.vue'
 // ── State ──────────────────────────────────────────────────
 const todos = ref([])
 const filter = ref('all')
+const newTodo = ref('')
 const editedTodoId = ref(null)
 const editText = ref('')
 
@@ -39,9 +40,14 @@ function uuid() {
 }
 
 // ── Actions ────────────────────────────────────────────────
+function updateNewTodo(value) {
+  newTodo.value = value
+}
+
 function addTodo(title) {
   if (!title.trim()) return
   todos.value.push({ id: uuid(), title: title.trim(), completed: false })
+  newTodo.value = ''
 }
 
 function toggleTodo(todo) {
@@ -103,6 +109,8 @@ function setFilter(f) {
         <TodoHeader
           :all-completed="allCompleted"
           :has-todos="todos.length > 0"
+          :new-todo="newTodo"
+          @update-new-todo="updateNewTodo"
           @add-todo="addTodo"
           @toggle-all="toggleAll"
         />
