@@ -29,11 +29,15 @@ const CheckIcon = () => (
   </svg>
 );
 
-const SparkleIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-    <path d="M7 1L8.2 4.8L12 5.2L9.2 7.8L10 12L7 9.8L4 12L4.8 7.8L2 5.2L5.8 4.8L7 1Z" fill="url(#agent-sparkle)" />
+const BotIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="url(#agent-sparkle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="10" rx="2" />
+    <circle cx="12" cy="5" r="2" />
+    <path d="M12 7v4" />
+    <line x1="8" y1="16" x2="8" y2="16" />
+    <line x1="16" y1="16" x2="16" y2="16" />
     <defs>
-      <linearGradient id="agent-sparkle" x1="2" y1="1" x2="12" y2="12">
+      <linearGradient id="agent-sparkle" x1="2" y1="1" x2="22" y2="24">
         <stop stopColor="var(--major-brand-color)" />
         <stop offset="1" stopColor="var(--second-brand-color)" />
       </linearGradient>
@@ -83,7 +87,7 @@ function HeroCommandBox() {
       >
         <div className="content-wrapper">
           <span className="icon-mobile-only" aria-hidden="true">
-            {agentCopied ? <CheckIcon /> : <SparkleIcon />}
+            {agentCopied ? <CheckIcon /> : <BotIcon />}
           </span>
           <span className="text">
             {agentCopied ? 'copied!' : 'for Agent'}
