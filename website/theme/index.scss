@@ -264,14 +264,218 @@ $brand-emerald: #34d399;
   }
 }
 
-// ======== Code block in hero =========
-.home-hero-codeblock .rp-codeblock {
-  background-color: rgb(from var(--rp-code-block-bg) r g b / 50%) !important;
+// ======== Hero Command Box =========
+.hero-command-box {
+  display: flex;
+  align-items: stretch;
+  background: rgb(from var(--rp-code-block-bg) r g b / 50%);
+  border-radius: var(--rp-radius, 1rem);
+  padding: 4px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  border: 1px solid rgba(17, 17, 19, 0.08);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.05);
+
+  :root.dark & {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
+  }
 
   @media (max-width: 640px) {
-    margin: 6px 0 !important;
-    background-color: transparent !important;
-    font-size: 0.75rem !important;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 16px;
+    gap: 4px;
+    max-width: 360px;
+  }
+
+  &__cmd {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--rp-font-family-mono);
+    font-size: var(--rp-code-font-size, 0.875rem);
+    color: var(--home-title-color);
+    transition: all 0.2s ease;
+    text-align: left;
+    min-width: 0;
+
+    &:hover {
+      background: rgba(17, 17, 19, 0.04);
+      
+      :root.dark & {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .icon {
+        opacity: 1;
+      }
+    }
+
+    .prompt {
+      color: var(--major-brand-color);
+      margin-right: 12px;
+      font-weight: 600;
+      user-select: none;
+      opacity: 0.8;
+    }
+
+    .text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      color: var(--home-features-item-desc-color);
+      margin-left: 8px;
+
+      :root.dark & {
+        color: rgba(255, 255, 255, 0.65);
+      }
+    }
+
+    &.copied .icon {
+      opacity: 1;
+      color: var(--major-brand-color);
+    }
+    
+    @media (max-width: 640px) {
+      font-size: 0.75rem;
+      .icon {
+        opacity: 1; // Always show copy icon on mobile so users know it's clickable
+      }
+    }
+  }
+
+  &__divider {
+    width: 1px;
+    background: rgba(17, 17, 19, 0.08);
+    margin: 8px 4px;
+
+    :root.dark & {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 640px) {
+      display: none; // hide divider on mobile, we stack them
+    }
+  }
+
+  &__agent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--rp-font-family-mono);
+    font-size: var(--rp-code-font-size, 0.875rem);
+    font-weight: 500;
+    color: var(--home-blog-btn-color);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      background: rgba(17, 17, 19, 0.04);
+      
+      :root.dark & {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    // Gradient glow border for AI button
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--major-brand-color), var(--second-brand-color), var(--major-brand-color));
+      background-size: 300% 300%;
+      animation: agent-glow 4s ease infinite;
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    &:hover::before, &.copied::before {
+      opacity: 1;
+    }
+
+    .content-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--major-brand-color);
+      margin-right: 6px;
+      // ensure it does not shrink text
+      flex-shrink: 0;
+    }
+
+    .text {
+      display: inline-block;
+      min-width: 9ch;
+      text-align: center;
+    }
+
+    &.copied .text {
+      color: var(--major-brand-color);
+    }
+
+    @media (max-width: 640px) {
+      height: 40px;
+      background: rgba(17, 17, 19, 0.03); // light visible bg on mobile
+      font-size: 0.75rem;
+      
+      :root.dark & {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      
+      &::before {
+        opacity: 0.3; // faint glow always on mobile
+      }
+    }
+  }
+}
+
+@keyframes agent-glow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 

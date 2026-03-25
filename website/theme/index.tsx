@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
-  getCustomMDXComponent as basicGetCustomMDXComponent,
 } from '@rspress/core/theme-original';
 
 import './index.scss';
@@ -13,7 +12,92 @@ import {
   ShowCase,
 } from '../src/components/home-comps';
 
+import { AGENT_PROMPT } from './agent-prompt';
+
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
+
+const CopyIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M20 8v12H8V8zm0-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2" />
+    <path fill="currentColor" d="M4 16H2V4a2 2 0 0 1 2-2h12v2H4Z" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <path d="M4 12.5L9.5 18L20 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const BotIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#agent-sparkle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2" />
+    <path d="M20 14h2" />
+    <path d="M15 13v2" />
+    <path d="M9 13v2" />
+    <defs>
+      <linearGradient id="agent-sparkle" x1="2" y1="4" x2="22" y2="20">
+        <stop stopColor="var(--major-brand-color)" />
+        <stop offset="1" stopColor="var(--second-brand-color)" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+function HeroCommandBox() {
+  const [cmdCopied, setCmdCopied] = useState(false);
+  const [agentCopied, setAgentCopied] = useState(false);
+
+  const copyCommand = useCallback(() => {
+    navigator.clipboard.writeText('npm create vue-lynx@latest').then(() => {
+      setCmdCopied(true);
+      setTimeout(() => setCmdCopied(false), 2000);
+    });
+  }, []);
+
+  const copyAgent = useCallback(() => {
+    navigator.clipboard.writeText(AGENT_PROMPT).then(() => {
+      setAgentCopied(true);
+      setTimeout(() => setAgentCopied(false), 2000);
+    });
+  }, []);
+
+  return (
+    <div className="hero-command-box">
+      <button 
+        type="button"
+        className={`hero-command-box__cmd ${cmdCopied ? 'copied' : ''}`} 
+        onClick={copyCommand}
+        aria-label="Copy command"
+      >
+        <span className="prompt">$</span>
+        <span className="text">npm create vue-lynx@latest</span>
+        <span className="icon" aria-hidden="true">
+          {cmdCopied ? <CheckIcon /> : <CopyIcon />}
+        </span>
+      </button>
+      
+      <div className="hero-command-box__divider" />
+
+      <button 
+        type="button"
+        className={`hero-command-box__agent ${agentCopied ? 'copied' : ''}`} 
+        onClick={copyAgent}
+      >
+        <div className="content-wrapper">
+          <span className="icon-wrapper" aria-hidden="true">
+            {agentCopied ? <CheckIcon /> : <BotIcon />}
+          </span>
+          <span className="text">
+            {agentCopied ? 'copied!' : 'for Agent'}
+          </span>
+        </div>
+      </button>
+    </div>
+  );
+}
 
 /** Poll with rAF until `selector` matches, then call `cb`. Gives up after 5 s. */
 function whenReady(selector: string, cb: (el: Element) => void): () => void {
@@ -123,9 +207,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       if (timerId !== null) clearTimeout(timerId);
     };
   }, []);
-  const { pre: PreWithCodeButtonGroup, code: Code } =
-    basicGetCustomMDXComponent();
-
   const {
     afterHero = (
       <>
@@ -135,21 +216,7 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
       </>
     ),
     afterHeroActions = (
-      <div
-        className="rp-doc home-hero-codeblock"
-        style={{ minHeight: 'auto', width: '100%', maxWidth: 360 }}
-      >
-        <PreWithCodeButtonGroup
-          containerElementClassName="language-bash"
-          codeButtonGroupProps={{
-            showCodeWrapButton: false,
-          }}
-        >
-          <Code className="language-bash" style={{ textAlign: 'center' }}>
-            npm create vue-lynx@latest
-          </Code>
-        </PreWithCodeButtonGroup>
-      </div>
+      <HeroCommandBox />
     ),
   } = props;
 
