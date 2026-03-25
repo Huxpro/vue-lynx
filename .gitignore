@@ -8,3 +8,5 @@ upstream-tests/core/
 website/docs/guide/api/
 website/api-sidebar.json
 .vercel
+.claude/
+.obsidian/
