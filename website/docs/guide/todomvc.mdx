@@ -25,7 +25,5 @@ The table below reflects our initial prototype — the minimum custom code neede
 | **Reactivity** | `@vue/reactivity` | 100% official |
 | **Component system** | `@vue/runtime-core` | 100% official |
 | **Template compiler** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% official |
-| **Renderer** | Custom `createRenderer(nodeOps)` | Custom (~200 LOC) |
-| **v-show** | Custom (ops-based display:none) | Custom (~15 LOC) |
-| **v-model** | Stubbed | Not yet implemented |
-| **Cross-thread comm** | ops buffer + callLepusMethod | Custom (~250 LOC) |
+| **Renderer & Dual-thread comm** | `vue-lynx/runtime`, `vue-lynx/main-thread` | Custom (673 + 232 LOC) |
+| **Bundler Plugin** | `vue-lynx/plugin` | Custom (363 LOC) |

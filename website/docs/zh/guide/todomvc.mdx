@@ -25,7 +25,5 @@
 | **响应式系统** | `@vue/reactivity` | 100% 官方 |
 | **组件系统** | `@vue/runtime-core` | 100% 官方 |
 | **模板编译器** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% 官方 |
-| **渲染器** | 自定义 `createRenderer(nodeOps)` | 自定义（约 200 行） |
-| **v-show** | 自定义（基于 ops 的 display:none） | 自定义（约 15 行） |
-| **v-model** | 桩实现 | 尚未实现 |
-| **跨线程通信** | ops buffer + callLepusMethod | 自定义（约 250 行） |
+| **渲染器及双线程通信** | `vue-lynx/runtime`、`vue-lynx/main-thread` | 自定义（673 + 232 行） |
+| **打包插件** | `vue-lynx/plugin` | 自定义（363 行） |
