@@ -30,14 +30,15 @@ const CheckIcon = () => (
 );
 
 const BotIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="url(#agent-sparkle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="10" rx="2" />
-    <circle cx="12" cy="5" r="2" />
-    <path d="M12 7v4" />
-    <line x1="8" y1="16" x2="8" y2="16" />
-    <line x1="16" y1="16" x2="16" y2="16" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#agent-sparkle)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 8V4H8" />
+    <rect width="16" height="12" x="4" y="8" rx="2" />
+    <path d="M2 14h2" />
+    <path d="M20 14h2" />
+    <path d="M15 13v2" />
+    <path d="M9 13v2" />
     <defs>
-      <linearGradient id="agent-sparkle" x1="2" y1="1" x2="22" y2="24">
+      <linearGradient id="agent-sparkle" x1="2" y1="4" x2="22" y2="20">
         <stop stopColor="var(--major-brand-color)" />
         <stop offset="1" stopColor="var(--second-brand-color)" />
       </linearGradient>
@@ -86,7 +87,7 @@ function HeroCommandBox() {
         onClick={copyAgent}
       >
         <div className="content-wrapper">
-          <span className="icon-mobile-only" aria-hidden="true">
+          <span className="icon-wrapper" aria-hidden="true">
             {agentCopied ? <CheckIcon /> : <BotIcon />}
           </span>
           <span className="text">
