@@ -92,6 +92,8 @@
   border-width: 0;
   color: #4d4d4d;
   font-size: 24px;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .new-todo.with-toggle {
