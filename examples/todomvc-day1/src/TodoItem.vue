@@ -1,6 +1,10 @@
 <script setup>
-const props = defineProps(['todo', 'editing', 'editText'])
-const emit = defineEmits(['toggle', 'delete', 'start-edit', 'update-edit', 'done-edit'])
+import { ref } from 'vue'
+
+const props = defineProps(['todo'])
+const emit = defineEmits(['toggle', 'delete', 'edit'])
+
+const editing = ref(false)
 
 function onToggle() {
   emit('toggle', props.todo)
@@ -11,53 +15,42 @@ function onDelete() {
 }
 
 function startEdit() {
-  emit('start-edit', props.todo)
+  editing.value = true
 }
 
-function onEditInput(e) {
+function onEditConfirm(e) {
   const value = e?.detail?.value ?? ''
-  emit('update-edit', value)
+  editing.value = false
+  emit('edit', props.todo, value)
 }
 
-function onDoneEdit(e) {
-  if (e) {
-    const value = e?.detail?.value ?? ''
-    emit('update-edit', value)
-  }
-  emit('done-edit', props.todo)
+function cancelEdit() {
+  editing.value = false
 }
 </script>
 
 <template>
+  <!-- Normal view -->
   <view
+    v-if="!editing"
     class="todo-item"
-    :class="{ completed: todo.completed, editing }"
+    :class="{ completed: todo.completed }"
   >
-    <!-- Normal view -->
-    <view
-      v-if="!editing"
-      class="todo-view"
-    >
-      <view class="todo-toggle" @tap="onToggle">
-        <text v-if="todo.completed" class="todo-toggle-icon">✓</text>
-      </view>
-      <view class="todo-label-hitbox" @tap="startEdit">
-        <text class="todo-label">{{ todo.title }}</text>
-      </view>
-      <text class="destroy" @tap="onDelete">✕</text>
+    <view class="todo-toggle" @tap="onToggle">
+      <text v-if="todo.completed" class="checkmark">✓</text>
     </view>
+    <text class="todo-label" @longpress="startEdit">{{ todo.title }}</text>
+    <text class="destroy" @tap="onDelete">✕</text>
+  </view>
 
-    <!-- Edit view -->
-    <view v-else class="edit-container">
-      <input
-        class="edit-input"
-        type="text"
-        :value="editText"
-        autofocus
-        @input="onEditInput"
-        @confirm="onDoneEdit"
-        @blur="onDoneEdit"
-      />
-    </view>
+  <!-- Edit view -->
+  <view v-else class="edit-container">
+    <input
+      class="edit-input"
+      type="text"
+      :value="todo.title"
+      @confirm="onEditConfirm"
+      @blur="cancelEdit"
+    />
   </view>
 </template>
