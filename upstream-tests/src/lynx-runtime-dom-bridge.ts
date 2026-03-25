@@ -189,6 +189,8 @@ export function patchProp(
 
   // Pre-process: handle string style (set cssText directly)
   if (key === 'style' && typeof nextValue === 'string') {
+    // Skip if prev === next (Vue runtime-dom optimization)
+    if (prevValue === nextValue) return;
     (el as HTMLElement).style.cssText = nextValue;
     // Also route through pipeline for tracking
     nodeOps.patchProp(shadow, key, prevValue, {});
@@ -206,13 +208,23 @@ export function patchProp(
     }
 
     const cleaned: Record<string, unknown> = {};
+    const customProps: [string, string][] = [];
     for (const [k, v] of Object.entries(nextValue as Record<string, unknown>)) {
       if (v != null) {
-        cleaned[k] = v;
+        if (k.startsWith('--')) {
+          // CSS custom properties must use setProperty, not Object.assign
+          customProps.push([k, String(v)]);
+        } else {
+          cleaned[k] = v;
+        }
       }
     }
     nodeOps.patchProp(shadow, key, prevValue, cleaned);
     syncFlush();
+    // Apply CSS custom properties via setProperty (Object.assign can't do this)
+    for (const [prop, val] of customProps) {
+      (el as HTMLElement).style.setProperty(prop, val);
+    }
     return;
   }
 

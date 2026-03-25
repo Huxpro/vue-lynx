@@ -1,10 +1,8 @@
 {
   "skip_list": [
-    "plain object child",
     "optimized props updates",
     "validator should be called with two arguments",
     "validator should not be able to mutate other props",
-    "replace camelize with hyphenate to handle props key",
     "events should not be props when component updating",
     "config.throwUnhandledErrorInProduction",
 
@@ -44,6 +42,7 @@
     "nextTick should return promise",
     "nested flushPostFlushCbs",
 
+
     "handle error in watch & watchEffect",
     "should pause tracking in error handler",
     "errors in scheduler job with owner instance should be caught",
@@ -55,35 +54,28 @@
     "updateSlots: instance.slots should be updated correctly (when slotType is null)",
     "updateSlots: instance.slots should be update correctly (when vnode.shapeFlag is not SLOTS_CHILDREN)",
 
+
+
     "should work",
     "should work with a function directive",
     "should work on component vnode",
-    "directive merging on component root",
-    "should receive exposeProxy for closed instances",
-    "should not throw with unknown directive",
 
     "normalizeVNode",
     "cloneVNode ref normalization",
     "cloneVNode ref merging",
     "error of slot function execution should not affect block tracking",
-    "receive component instance as 2nd arg",
 
-    "should be true within app.runWithContext()",
 
     "stopping the watcher (SSR)",
-    "flush timing: post",
-    "flush: pre watcher in child component should not fire before parent update",
-    "flush: pre watcher watching props should fire before child update",
-    "flush: pre triggered in component setup should be buffered and called before mounted",
-    "flush: post watcher should fire after template refs updated",
+
+
+
 
     "should release property Dep instance if it no longer has subscribers",
     "should remove the dep when the effect is stopped",
     "should only remove the dep when the last effect is stopped",
 
     "test with higher level APIs",
-    "once option should be ignored by simple watch",
-    "should trigger reactivity when Map key is undefined",
     "events: onTrack",
     "debug: the call sequence of onTrack",
     "debug: the call sequence of onTrigger",
@@ -92,20 +84,8 @@
     "should remove the dep when it is no longer used by the effect",
     "should get called correctly",
 
-    "via setup context",
-    "via options",
-    "options + context",
-    "options: empty",
-    "options: empty + setup context",
-    "expose should allow access to built-in instance properties",
-    "template ref forwarding",
-    "the forwarded template ref should always exist when doing multi patching",
-    "with KeepAlive + include",
-    "should work with direct reactive property",
-    "should attach scopeId to suspense content",
-
-    "should not track openBlock() when tracking is disabled",
     "$watch should always register its effects with its own instance",
+    "should not track openBlock() when tracking is disabled",
     "toRef",
     "attempting to write plain value to a readonly ref nested in a reactive object should fail",
     "can not run an inactive scope"
@@ -124,8 +104,6 @@
     "reactivity_version_mismatch": "Tests from v3.5.12 source, installed vue is v3.5.30 — internal class names changed (ObjectRefImpl vs RefImpl), readonly/effectScope behavior differs",
     "apiExpose_ref_owner": "Adapter createApp().render() doesn't set proper ref owner context for template refs on exposed instances",
     "apiAsyncComponent_ref_forwarding": "Template ref forwarding on async wrapper components not supported by adapter",
-    "keepalive_include": "KeepAlive include/exclude matching requires full component name resolution",
-    "rendererTemplateRef_reactive": "Direct reactive property ref test times out in adapter environment",
     "scopeId_suspense": "Suspense content scopeId attachment requires internal Suspense implementation detail"
   }
 }
