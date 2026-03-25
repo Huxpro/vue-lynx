@@ -1,82 +1,82 @@
-# ops-apply.ts 拆分重构
+# ops-apply.ts Split Refactoring
 
-> **Initiative type**: Better Engineering — manual code review findings
-> **Origin**: `todo.md` §ops-apply.ts + §Source code vise（已在 todo.md 标记 → 本 plan）
+> **Initiative type**: Better Engineering -- manual code review findings
+> **Origin**: `todo.md` section ops-apply.ts + section Source code vise (marked in todo.md -> this plan)
 
-## 背景
+## Background
 
-### 问题 1：`ops-apply.ts` 职责混杂
+### Problem 1: Mixed responsibilities in `ops-apply.ts`
 
-`packages/vue/main-thread/src/ops-apply.ts` 目前 494 行，混合了三类不相关的职责：
+`packages/vue/main-thread/src/ops-apply.ts` is currently 494 lines, mixing three unrelated categories of responsibilities:
 
-| 类型                          | 行数    | 特征                                                     |
-| ----------------------------- | ------- | -------------------------------------------------------- |
-| 核心 DOM ops（11 个 op code） | ~130 行 | 独立，每个 case 5–9 行                                   |
-| List 逻辑                     | ~180 行 | 侵入 CREATE / INSERT / SET_PROP 三个 case + 后置刷新循环 |
-| MTS/Worklet 逻辑              | ~110 行 | 独立的 SET_WORKLET_EVENT / SET_MT_REF / INIT_MT_REF      |
+| Category                          | Lines   | Characteristics                                                    |
+| --------------------------------- | ------- | ------------------------------------------------------------------ |
+| Core DOM ops (11 op codes)        | ~130    | Independent, each case 5-9 lines                                   |
+| List logic                        | ~180    | Invades CREATE / INSERT / SET_PROP three cases + post-flush loop   |
+| MTS/Worklet logic                 | ~110    | Independent SET_WORKLET_EVENT / SET_MT_REF / INIT_MT_REF           |
 
-### 问题 2：OP 协议定义重复（单源失真）
+### Problem 2: Duplicate OP protocol definitions (single source of truth violation)
 
-`runtime/src/ops.ts` 和 `main-thread/src/ops-apply.ts` 各自定义了 `const OP = { ... }`。
-后者第 15 行注释写明 **"mirrored from runtime/ops.ts – must stay in sync"**——这是明显的代码坏味道：
+`runtime/src/ops.ts` and `main-thread/src/ops-apply.ts` each define their own `const OP = { ... }`.
+The latter has a comment on line 15 stating **"mirrored from runtime/ops.ts -- must stay in sync"** -- this is an obvious code smell:
 
-- 新增 op code 要改两个文件
-- 改错或漏改会静默失败（wrong integer → wrong behavior，无编译报错）
+- Adding a new op code requires changing two files
+- A mistake or omission will silently fail (wrong integer -> wrong behavior, no compile error)
 
-`OP` 常量是 BG Thread 和 Main Thread 之间的**线协议（wire protocol）**，不属于任何一侧，
-应该有唯一的定义来源。
+The `OP` constants are the **wire protocol** between BG Thread and Main Thread, belonging to neither side.
+There should be a single source of truth for their definition.
 
 ---
 
-随着 list 和 worklet 功能继续迭代，继续堆在同一文件会导致：
+As list and worklet features continue to evolve, continuing to pile everything in the same file will lead to:
 
-- 维护难度线性增长
-- 单元测试无法针对各类逻辑独立 mock 状态
-- 代码审查时关注点混乱
+- Linearly increasing maintenance difficulty
+- Unit tests unable to independently mock state for each category of logic
+- Confused focus during code review
 
-## 性能前提：分拆不影响 Lepus 运行时性能
+## Performance Premise: Splitting Does Not Affect Lepus Runtime Performance
 
-**关键事实**：`main-thread-bundled.js` 由 rslib 打成不含模块包装的 flat ESM。
-Lepus 引擎在运行时看到的是单一编译单元，模块边界在打包后消失。JIT 完全可以跨原始文件内联函数，与函数写在同一文件无异。
+**Key fact**: `main-thread-bundled.js` is built by rslib into a flat ESM without module wrappers.
+The Lepus engine sees a single compilation unit at runtime; module boundaries disappear after bundling. JIT can freely inline functions across original file boundaries, identical to having functions in the same file.
 
-另外，主线程的真实 bottleneck 是 PAPI（FFI 调用约 50–500 μs），函数调用开销约 2–20 ns，比例 < 0.04%，可以忽略。
+Furthermore, the real bottleneck on the Main Thread is PAPI (FFI calls at approximately 50-500 us), while function call overhead is approximately 2-20 ns, a ratio of < 0.04%, negligible.
 
-**函数提取约束**：使用模块顶层的具名函数声明（`function foo()` 而非 `const foo = () =>`），这是 V8/JSC Turbofan/DFG 最容易内联的形式。
+**Function extraction constraint**: Use module-level named function declarations (`function foo()` rather than `const foo = () =>`), as this is the form most easily inlined by V8/JSC Turbofan/DFG.
 
-## 目标文件结构
+## Target File Structure
 
 ```
 packages/vue/
-├── shared/                        (NEW 包) vue-lynx/internal/ops
+├── shared/                        (NEW package) vue-lynx/internal/ops
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── src/
-│       └── ops.ts                 仅 OP const + 格式文档注释（无 pushOp/takeOps）
+│       └── ops.ts                 Only OP const + format doc comments (no pushOp/takeOps)
 │
 ├── runtime/src/
-│   └── ops.ts                     OP 改为 re-export from shared；保留 pushOp / takeOps
+│   └── ops.ts                     OP changed to re-export from shared; retains pushOp / takeOps
 │
 └── main-thread/src/
-    ├── entry-main.ts              (改动：import elements 来源变更)
-    ├── element-registry.ts        (NEW)  仅 elements Map
-    ├── ops-apply.ts               (精简) ~150 行，纯 switch 循环；OP 来自 shared
-    ├── list-apply.ts              (NEW)  ~200 行，list 全部状态和函数
-    └── worklet-apply.ts           (NEW)  ~120 行，worklet 全部状态和函数
+    ├── entry-main.ts              (modified: import elements source changed)
+    ├── element-registry.ts        (NEW)  only elements Map
+    ├── ops-apply.ts               (slimmed) ~150 lines, pure switch loop; OP from shared
+    ├── list-apply.ts              (NEW)  ~200 lines, all list state and functions
+    └── worklet-apply.ts           (NEW)  ~120 lines, all worklet state and functions
 ```
 
 ---
 
-## Step 0：新建 `packages/vue/shared/` —— OP 协议包
+## Step 0: Create `packages/vue/shared/` -- OP Protocol Package
 
-### 为什么不从 `runtime` 直接导出 `OP`
+### Why Not Export `OP` Directly from `runtime`
 
-`runtime/src/ops.ts` 包含三样东西：`OP`（协议）、`pushOp`（BG buffer 写）、`takeOps`（BG buffer 读）。
-让 `main-thread` import `vue-lynx` 意味着 executor 依赖 renderer——架构语义错误，
-两者应该是对等的协议实现方，不应有互相依赖。
+`runtime/src/ops.ts` contains three things: `OP` (protocol), `pushOp` (BG buffer write), `takeOps` (BG buffer read).
+Having `main-thread` import `vue-lynx` would mean the executor depends on the renderer -- an architecturally incorrect semantic.
+Both should be peer protocol implementers, with no interdependency.
 
-### 新包：`vue-lynx/internal/ops`
+### New Package: `vue-lynx/internal/ops`
 
-极简 workspace 包，仅放双方共享的线协议定义：
+Minimal workspace package, containing only the shared wire protocol definition:
 
 ```ts
 // packages/vue/shared/src/ops.ts
@@ -119,11 +119,11 @@ export const OP = {
 export type OpCode = typeof OP[keyof typeof OP];
 ```
 
-`package.json`：`"private": true`（仅 monorepo 内部使用，不发布）。
+`package.json`: `"private": true` (monorepo internal only, not published).
 
-### 各包调整
+### Adjustments in Each Package
 
-**`runtime/src/ops.ts`**：
+**`runtime/src/ops.ts`**:
 
 ```diff
 - export const OP = { CREATE: 0, ... } as const
@@ -133,7 +133,7 @@ export type OpCode = typeof OP[keyof typeof OP];
   export function takeOps(): unknown[] { ... }
 ```
 
-**`main-thread/src/ops-apply.ts`**：
+**`main-thread/src/ops-apply.ts`**:
 
 ```diff
 - // Op codes (mirrored from runtime/ops.ts – must stay in sync)
@@ -141,14 +141,13 @@ export type OpCode = typeof OP[keyof typeof OP];
 + import { OP } from 'vue-lynx/internal/ops'
 ```
 
-**`main-thread/rslib.config.ts`**：`vue-lynx/internal/ops` **不加入 externals**，让 rslib 把 14 个整数常量直接内联到 `main-thread-bundled.js`。运行时无跨包依赖，仅编译期 single source of truth。
+**`main-thread/rslib.config.ts`**: `vue-lynx/internal/ops` is **not added to externals**, letting rslib inline the 14 integer constants directly into `main-thread-bundled.js`. No runtime cross-package dependency, only compile-time single source of truth.
 
 ---
 
-## Step 1：新建 `element-registry.ts`
+## Step 1: Create `element-registry.ts`
 
-`elements` Map 目前在 `ops-apply.ts` 中定义，但被 `entry-main.ts`（seed page root）、
-list 逻辑、worklet 逻辑同时访问。独立后避免循环依赖。
+The `elements` Map is currently defined in `ops-apply.ts`, but is accessed by `entry-main.ts` (seed page root), list logic, and worklet logic simultaneously. Making it independent avoids circular dependencies.
 
 ```ts
 // element-registry.ts
@@ -158,11 +157,11 @@ export const elements = new Map<number, LynxElement>();
 
 ---
 
-## Step 2：新建 `list-apply.ts`
+## Step 2: Create `list-apply.ts`
 
-将以下内容从 `ops-apply.ts` 迁移：
+Migrate the following content from `ops-apply.ts`:
 
-**状态**（全部模块顶层）：
+**State** (all module-level):
 
 - `listElementIds: Set<number>`
 - `listItems: Map<number, ListItemEntry[]>`
@@ -171,51 +170,51 @@ export const elements = new Map<number, LynxElement>();
 - `listItemsReported: Map<number, number>`
 - `PLATFORM_INFO_ATTRS: Set<string>`
 - `enqueueComponentNoop()`
-- `createListCallbacks()` 内部函数
+- `createListCallbacks()` internal functions
 
-**对外导出**（供 `ops-apply.ts` 的 switch case 调用）：
+**Public exports** (called by `ops-apply.ts` switch cases):
 
 ```ts
-// 查询
+// Query
 export function isListParent(parentId: number): boolean;
 export function isPlatformInfoAttr(key: string): boolean;
 
-// CREATE case 调用
+// Called by CREATE case
 export function createListElement(id: number): LynxElement;
-// 内部：setup 6 个 state 结构 + __CreateList + __SetCSSId
+// Internally: set up 6 state structures + __CreateList + __SetCSSId
 
-// INSERT case 调用
+// Called by INSERT case
 export function insertListItem(
   parentId: number,
   child: LynxElement,
   childId: number,
 ): void;
-// 内部：listItems.get(parentId)?.push(...)
+// Internally: listItems.get(parentId)?.push(...)
 
-// SET_PROP case 调用
+// Called by SET_PROP case
 export function setPlatformInfoProp(
   id: number,
   key: string,
   value: unknown,
 ): void;
-// 内部：写 listItemPlatformInfo，itemKey 单独写 itemKeyMap
+// Internally: write listItemPlatformInfo, itemKey written to itemKeyMap separately
 
-// applyOps 末尾调用（原 lines 449–476）
+// Called at end of applyOps (original lines 449-476)
 export function flushListUpdates(): void;
-// 内部：遍历 listItems，构造 insertAction，__SetAttribute update-list-info
+// Internally: iterate listItems, construct insertAction, __SetAttribute update-list-info
 
-// 测试用
+// For testing
 export function resetListState(): void;
 ```
 
 ---
 
-## Step 3：新建 `worklet-apply.ts`
+## Step 3: Create `worklet-apply.ts`
 
-将 `SET_WORKLET_EVENT` / `SET_MT_REF` / `INIT_MT_REF` 三个 case 的全部逻辑迁移。
-这三段逻辑之间共享 `lynxWorkletImpl` 访问模式，可以提取为内部 helper。
+Migrate all logic from the `SET_WORKLET_EVENT` / `SET_MT_REF` / `INIT_MT_REF` three cases.
+These three sections share the `lynxWorkletImpl` access pattern, which can be extracted as an internal helper.
 
-**对外导出**：
+**Public exports**:
 
 ```ts
 export function applySetWorkletEvent(
@@ -229,22 +228,22 @@ export function applySetMtRef(id: number, refImpl: unknown): void;
 
 export function applyInitMtRef(wvid: number, initValue: unknown): void;
 
-// 测试用
+// For testing
 export function resetWorkletState(): void;
 ```
 
-内部 helper（不导出）：
+Internal helper (not exported):
 
 ```ts
-// 访问 globalThis.lynxWorkletImpl._refImpl，封装重复的 null check chain
+// Access globalThis.lynxWorkletImpl._refImpl, encapsulating repeated null check chains
 function getWorkletRefImpl(): WorkletRefImpl | undefined;
 ```
 
 ---
 
-## Step 4：精简 `ops-apply.ts`
+## Step 4: Slim down `ops-apply.ts`
 
-改造后结构：
+Post-refactoring structure:
 
 ```ts
 import { elements } from './element-registry.js';
@@ -263,7 +262,7 @@ import {
 } from './worklet-apply.js';
 
 export function applyOps(ops: unknown[]): void {
-  // duplicate-batch guard（不变）
+  // duplicate-batch guard (unchanged)
 
   while (i < len) {
     switch (code) {
@@ -275,7 +274,7 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
       case OP.CREATE_TEXT: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.INSERT: {
         // isListParent(parentId) → insertListItem(parentId, child, childId)
@@ -283,7 +282,7 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
       case OP.REMOVE: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.SET_PROP: {
         // isPlatformInfoAttr(key) → setPlatformInfoProp(id, key, value)
@@ -291,22 +290,22 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
       case OP.SET_TEXT: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.SET_EVENT: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.REMOVE_EVENT: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.SET_STYLE: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.SET_CLASS: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
       case OP.SET_ID: {
-        /* 不变 */ break;
+        /* unchanged */ break;
       }
 
       case OP.SET_WORKLET_EVENT: {
@@ -337,11 +336,11 @@ export function resetMainThreadState(): void {
 }
 ```
 
-预计精简后约 150 行，switch 循环清晰可读。
+Expected to be approximately 150 lines after slimming, with a clean and readable switch loop.
 
 ---
 
-## Step 5：更新 `entry-main.ts`
+## Step 5: Update `entry-main.ts`
 
 ```diff
 - import { applyOps, elements } from './ops-apply.js'
@@ -351,56 +350,53 @@ export function resetMainThreadState(): void {
 
 ---
 
-## Step 6：更新测试（`src/__test__/`）
+## Step 6: Update Tests (`src/__test__/`)
 
-- `resetMainThreadState()` 内部已 delegate 到各子模块，对外接口不变
-- 如有针对 list/worklet 的单元测试，可直接 import `list-apply.ts` / `worklet-apply.ts` 独立测试其状态管理
-
----
-
-## 关于 list 侵入 CREATE / INSERT / SET_PROP 的说明
-
-即使拆出 `list-apply.ts`，这三个 case 里仍有"是否 list"的条件判断，这是不可避免的：
-op stream 按操作类型编码，不按元素类型。
-
-未来可引入 `CREATE_LIST: 14` op code 彻底消除 CREATE case 里的 `type === 'list'` 分支，
-让 BG 侧显式选择不同 op code。但目前的好处是 BG 侧不需要感知 Lepus 使用 `__CreateList`，
-保持了 BG/MT 解耦。等有 profiling 数据显示这是热点时再考虑。
+- `resetMainThreadState()` internally delegates to each sub-module, external interface unchanged
+- If there are unit tests targeting list/worklet, they can directly import `list-apply.ts` / `worklet-apply.ts` to independently test their state management
 
 ---
 
-## 改动范围
+## Note on List Invading CREATE / INSERT / SET_PROP
+
+Even after extracting `list-apply.ts`, these three cases still have "is this a list" conditional checks. This is unavoidable: the op stream is encoded by operation type, not by element type.
+
+In the future, a `CREATE_LIST: 14` op code could be introduced to completely eliminate the `type === 'list'` branch in the CREATE case, letting the BG side explicitly choose different op codes. But the current benefit is that the BG side does not need to be aware that Lepus uses `__CreateList`, maintaining BG/MT decoupling. Consider this when profiling data shows it to be a hotspot.
+
+---
+
+## Scope of Changes
 
 ```
 packages/vue/
-├── shared/                    新建包（~30 行，private）
+├── shared/                    New package (~30 lines, private)
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── src/ops.ts
 │
 ├── runtime/
-│   ├── package.json           新增 dep: vue-lynx/internal/ops
-│   └── src/ops.ts             OP 改为 re-export；pushOp/takeOps 不变
+│   ├── package.json           New dep: vue-lynx/internal/ops
+│   └── src/ops.ts             OP changed to re-export; pushOp/takeOps unchanged
 │
 └── main-thread/
-    ├── package.json           新增 dep: vue-lynx/internal/ops
-    ├── rslib.config.ts        不 external vue-internal（inline 常量）
+    ├── package.json           New dep: vue-lynx/internal/ops
+    ├── rslib.config.ts        Do not external vue-internal (inline constants)
     └── src/
-        ├── entry-main.ts      修改 import（elements 来源）
-        ├── element-registry.ts 新建（~3 行）
-        ├── ops-apply.ts        精简（~150 行）；OP 来自 vue-internal
-        ├── list-apply.ts       新建（~200 行）
-        └── worklet-apply.ts    新建（~120 行）
+        ├── entry-main.ts      Modified import (elements source)
+        ├── element-registry.ts New (~3 lines)
+        ├── ops-apply.ts        Slimmed (~150 lines); OP from vue-internal
+        ├── list-apply.ts       New (~200 lines)
+        └── worklet-apply.ts    New (~120 lines)
 ```
 
-`rspeedy-plugin`、`e2e-lynx` 均无需改动。
+`rspeedy-plugin` and `e2e-lynx` require no changes.
 
-## 验收标准
+## Acceptance Criteria
 
-- [ ] `pnpm build` 在 `packages/vue/shared`、`packages/vue/runtime`、`packages/vue/main-thread` 全部通过
-- [ ] `main-thread-bundled.js` 体积无显著增大（OP 常量内联，不引入运行时模块）
-- [ ] `runtime/src/ops.ts` 中不再有 `const OP = { ... }` 本地定义
-- [ ] `main-thread/src/ops-apply.ts` 中不再有 `const OP = { ... }` 本地定义，也不再有 "must stay in sync" 注释
-- [ ] 现有 e2e-lynx demo（counter、gallery、swiper）在 LynxExplorer 行为不变
-- [ ] `resetMainThreadState()` 在测试中仍正常清理全部状态
-- [ ] 新文件中无 `console.log` 以外的调试遗留（SET_EVENT / SET_WORKLET_EVENT 的 `console.info` 保留）
+- [ ] `pnpm build` passes in `packages/vue/shared`, `packages/vue/runtime`, `packages/vue/main-thread`
+- [ ] `main-thread-bundled.js` has no significant size increase (OP constants inlined, no runtime module introduced)
+- [ ] `runtime/src/ops.ts` no longer has a local `const OP = { ... }` definition
+- [ ] `main-thread/src/ops-apply.ts` no longer has a local `const OP = { ... }` definition, nor the "must stay in sync" comment
+- [ ] Existing e2e-lynx demos (counter, gallery, swiper) behave unchanged on LynxExplorer
+- [ ] `resetMainThreadState()` still properly cleans up all state in tests
+- [ ] No debug leftovers other than `console.log` in new files (SET_EVENT / SET_WORKLET_EVENT `console.info` retained)

@@ -1,178 +1,178 @@
-# Vue Lynx — Transition / TransitionGroup 支持
+# Vue Lynx -- Transition / TransitionGroup Support
 
 ## Context
 
-Vue 的 `<Transition>` 和 `<TransitionGroup>` 是最常用的内置组件之一。架构上分两层：
+Vue's `<Transition>` and `<TransitionGroup>` are among the most commonly used built-in components. Architecturally they are split into two layers:
 
-1. **`BaseTransition`**（`@vue/runtime-core`）— 平台无关的状态机，管理 enter/leave 生命周期、`mode`（in-out / out-in）、`appear`、`persisted` 等。通过 `resolveTransitionHooks()` 产生 `TransitionHooks` 对象，挂到 VNode 上。**这层我们免费复用，无需任何修改。**
+1. **`BaseTransition`** (`@vue/runtime-core`) -- A platform-agnostic state machine that manages the enter/leave lifecycle, `mode` (in-out / out-in), `appear`, `persisted`, etc. It produces `TransitionHooks` objects via `resolveTransitionHooks()` and attaches them to VNodes. **We get this layer for free -- no modifications needed.**
 
-2. **`Transition` / `TransitionGroup`**（`@vue/runtime-dom`）— DOM 特定实现。在 hooks 里做 CSS class 切换（`-enter-from` → `-enter-active` → `-enter-to`）、监听 `transitionend` / `animationend` 事件、`forceReflow()`。**这层需要为 Lynx 重写。**
+2. **`Transition` / `TransitionGroup`** (`@vue/runtime-dom`) -- DOM-specific implementation. Inside hooks it toggles CSS classes (`-enter-from` -> `-enter-active` -> `-enter-to`), listens for `transitionend` / `animationend` events, and calls `forceReflow()`. **This layer needs to be rewritten for Lynx.**
 
-### Lynx 的 CSS 动画能力
+### Lynx's CSS Animation Capabilities
 
-Lynx 原生支持完整的 CSS animation/transition 属性：
+Lynx natively supports the full set of CSS animation/transition properties:
 
-| 类型                  | 支持的属性                                                                                                                                                                                |
+| Type                  | Supported Properties                                                                                                                                                                      |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **CSS Transition**    | `transition-property`, `transition-duration`, `transition-delay`, `transition-timing-function`                                                                                            |
 | **CSS Animation**     | `animation-name`, `animation-duration`, `animation-timing-function`, `animation-delay`, `animation-iteration-count`, `animation-direction`, `animation-fill-mode`, `animation-play-state` |
-| **@keyframes**        | 完整支持                                                                                                                                                                                  |
+| **@keyframes**        | Fully supported                                                                                                                                                                           |
 | **Animation Events**  | `animationstart`, `animationend`, `animationiteration`, `animationcancel`                                                                                                                 |
 | **Transition Events** | `transitionstart`, `transitionend`, `transitioncancel`                                                                                                                                    |
-| **可动画属性**        | `opacity`, `transform`, `background-color`, `color`, `width`, `height`, `border-*`, `padding`, `margin`, `top/right/bottom/left` 等                                                       |
-| **JS Animation API**  | `element.animate(keyframes, options)` — Main Thread 上的命令式动画                                                                                                                        |
+| **Animatable Properties** | `opacity`, `transform`, `background-color`, `color`, `width`, `height`, `border-*`, `padding`, `margin`, `top/right/bottom/left`, etc.                                                |
+| **JS Animation API**  | `element.animate(keyframes, options)` -- Imperative animation on the Main Thread                                                                                                          |
 
-**关键发现**：Lynx 的 CSS transition 和 animation 能力与浏览器基本一致，包括事件回调。这意味着我们可以沿用 Vue DOM 版本的 **CSS class 切换方案**，而不需要走 JS animation API。
+**Key Finding**: Lynx's CSS transition and animation capabilities are essentially identical to the browser's, including event callbacks. This means we can follow the Vue DOM version's **CSS class toggling approach** rather than using the JS animation API.
 
-### 核心挑战：双线程下的动画协调
+### Core Challenge: Animation Coordination Under Dual Threads
 
-Vue DOM 版 `<Transition>` 的工作流：
+The workflow of the Vue DOM version's `<Transition>`:
 
 ```
 beforeEnter: addClass('enter-from', 'enter-active')
-  → insert element into DOM
-  → nextFrame: removeClass('enter-from'), addClass('enter-to')
-  → transitionend event: removeClass('enter-active', 'enter-to'), call afterEnter
+  -> insert element into DOM
+  -> nextFrame: removeClass('enter-from'), addClass('enter-to')
+  -> transitionend event: removeClass('enter-active', 'enter-to'), call afterEnter
 ```
 
-在我们的双线程架构下：
+Under our dual-thread architecture:
 
-- **BG Thread**：`BaseTransition` 状态机触发 hooks → hooks 生成 SET_CLASS ops → ops flush 到 Main Thread
-- **Main Thread**：应用 class → Lynx 引擎执行 CSS transition → 产生 `transitionend` 事件 → 回调到 BG
+- **BG Thread**: `BaseTransition` state machine triggers hooks -> hooks generate SET_CLASS ops -> ops flush to Main Thread
+- **Main Thread**: Applies classes -> Lynx engine executes CSS transition -> produces `transitionend` event -> callback to BG
 
-**问题 1：`nextFrame` 语义**
-DOM 版用 `requestAnimationFrame` + `requestAnimationFrame`（双 rAF）来确保 enter-from class 已经被浏览器 layout 后再切换到 enter-to。在双线程模型下，ops flush 本身就引入了一个异步边界（跨线程通信），这实际上**天然满足了 nextFrame 的需求** — 当 BG 收到 flush 完成的 ack 时，Main Thread 已经应用了 enter-from class 并完成了至少一次 layout。
+**Problem 1: `nextFrame` Semantics**
+The DOM version uses `requestAnimationFrame` + `requestAnimationFrame` (double rAF) to ensure the browser has laid out the enter-from class before switching to enter-to. Under the dual-thread model, the ops flush itself introduces an asynchronous boundary (cross-thread communication), which **naturally satisfies the nextFrame requirement** -- when BG receives the flush completion ack, the Main Thread has already applied the enter-from class and completed at least one layout pass.
 
-**问题 2：`transitionend` 事件路由**
-`transitionend` 是一个 DOM 事件。在 Lynx 中，我们需要通过现有的事件系统（`bindtransitionend` / `bindanimationend`）将它路由回 BG Thread 的 handler。现有的 `SET_EVENT` ops 和 `publishEvent` 机制已经支持这个路径。
+**Problem 2: `transitionend` Event Routing**
+`transitionend` is a DOM event. In Lynx, we need to route it back to the BG Thread handler via the existing event system (`bindtransitionend` / `bindanimationend`). The existing `SET_EVENT` ops and `publishEvent` mechanism already support this path.
 
-**问题 3：`forceReflow()`**
-DOM 版在 `beforeEnter` 中设置 class 后，调用 `el.offsetHeight` 强制 reflow，确保 enter-from 的初始状态被应用。在双线程模型下，ops 跨线程执行后再回来，本身就有 reflow 效果。但如果我们在**同一个 ops batch** 里先 SET_CLASS('enter-from enter-active') 再 SET_CLASS('enter-to enter-active')，Lynx 可能合并掉中间状态。因此需要 **分两个 batch** 发送。
+**Problem 3: `forceReflow()`**
+In the DOM version, after setting classes in `beforeEnter`, it calls `el.offsetHeight` to force a reflow, ensuring the initial state of enter-from is applied. Under the dual-thread model, ops executing across threads and returning inherently have a reflow effect. However, if we SET_CLASS('enter-from enter-active') and then SET_CLASS('enter-to enter-active') within the **same ops batch**, Lynx may merge away the intermediate state. Therefore we need to **send them in two separate batches**.
 
 ---
 
 ## Goals
 
-1. 实现 `<Transition>` 组件，支持 CSS class-based 动画和 JS hooks
-2. 实现 `<TransitionGroup>` 组件，支持列表的 enter/leave/move 动画
-3. 复用 `@vue/runtime-core` 的 `BaseTransition` 状态机，零修改
-4. 适配 Lynx 的 CSS transition/animation 能力和事件系统
-5. 从 `vue-lynx` 导出，用户体验与 Vue DOM 版一致
+1. Implement the `<Transition>` component, supporting CSS class-based animations and JS hooks
+2. Implement the `<TransitionGroup>` component, supporting enter/leave/move animations for lists
+3. Reuse `@vue/runtime-core`'s `BaseTransition` state machine with zero modifications
+4. Adapt to Lynx's CSS transition/animation capabilities and event system
+5. Export from `vue-lynx`, with a user experience consistent with the Vue DOM version
 
 ## Non-Goals
 
-1. **JS animation API 集成**：不在 `<Transition>` 中直接调用 `element.animate()`。用户可以通过 JS hooks 自行调用
-2. **FLIP move 动画**：`<TransitionGroup>` 的 move 动画需要读取元素的 bounding rect（`getBoundingClientRect()`），这在双线程下需要跨线程同步查询。Phase 1 不做 move，Phase 2 再考虑
-3. **`<Transition>` 与 `<KeepAlive>` 联动**：组合使用暂不验证
-4. **Performance 优化**：先做正确，再做快
+1. **JS animation API integration**: Not directly calling `element.animate()` inside `<Transition>`. Users can call it themselves via JS hooks
+2. **FLIP move animation**: `<TransitionGroup>`'s move animation requires reading elements' bounding rects (`getBoundingClientRect()`), which requires synchronous cross-thread queries under dual threads. Not doing move in Phase 1; will consider in Phase 2
+3. **`<Transition>` with `<KeepAlive>` integration**: Combined usage will not be verified for now
+4. **Performance optimization**: Correctness first, speed later
 
 ---
 
 ## Architecture
 
-### 层次关系
+### Layer Relationships
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  User code:  <Transition name="fade">                    │
-│                <div v-if="show">Hello</div>              │
-│              </Transition>                               │
-├──────────────────────────────────────────────────────────┤
-│  LynxTransition (our code)                               │
-│  ├─ wraps BaseTransition (from runtime-core)             │
-│  ├─ resolveTransitionProps() → converts name/props       │
-│  │   into BaseTransitionProps with hooks                 │
-│  └─ hooks do: pushOp(SET_CLASS, ...) + event binding     │
-├──────────────────────────────────────────────────────────┤
-│  BaseTransition (runtime-core, unmodified)               │
-│  ├─ state machine: isMounted, isLeaving, leavingVNodes   │
-│  ├─ calls hooks.beforeEnter() / hooks.enter() /          │
-│  │   hooks.leave() at the right moments                  │
-│  └─ manages mode (in-out / out-in) and delayLeave        │
-├──────────────────────────────────────────────────────────┤
-│  nodeOps (existing) → pushOp → ops buffer → flush        │
-├──────────────────────────────────────────────────────────┤
-│  Main Thread: applyOps() → __SetClasses / __AddEvent     │
-│  Lynx Engine: CSS transition/animation → transitionend   │
-│  → publishEvent → BG handler → done() callback           │
-└──────────────────────────────────────────────────────────┘
++----------------------------------------------------------+
+|  User code:  <Transition name="fade">                    |
+|                <div v-if="show">Hello</div>              |
+|              </Transition>                               |
++----------------------------------------------------------+
+|  LynxTransition (our code)                               |
+|  +- wraps BaseTransition (from runtime-core)             |
+|  +- resolveTransitionProps() -> converts name/props      |
+|  |   into BaseTransitionProps with hooks                 |
+|  +- hooks do: pushOp(SET_CLASS, ...) + event binding     |
++----------------------------------------------------------+
+|  BaseTransition (runtime-core, unmodified)               |
+|  +- state machine: isMounted, isLeaving, leavingVNodes   |
+|  +- calls hooks.beforeEnter() / hooks.enter() /          |
+|  |   hooks.leave() at the right moments                  |
+|  +- manages mode (in-out / out-in) and delayLeave        |
++----------------------------------------------------------+
+|  nodeOps (existing) -> pushOp -> ops buffer -> flush     |
++----------------------------------------------------------+
+|  Main Thread: applyOps() -> __SetClasses / __AddEvent    |
+|  Lynx Engine: CSS transition/animation -> transitionend  |
+|  -> publishEvent -> BG handler -> done() callback        |
++----------------------------------------------------------+
 ```
 
-### Enter 动画时序（双线程）
+### Enter Animation Timing (Dual-Thread)
 
 ```
 BG Thread                          Main Thread
-─────────                          ────────────
+---------                          -----------
 BaseTransition.beforeEnter(el)
-  → SET_CLASS(id, 'fade-enter-from fade-enter-active')
-  → SET_EVENT(id, 'bind', 'transitionend', sign)
+  -> SET_CLASS(id, 'fade-enter-from fade-enter-active')
+  -> SET_EVENT(id, 'bind', 'transitionend', sign)
 
 BaseTransition calls insert(el)
-  → INSERT(parent, child, anchor)
+  -> INSERT(parent, child, anchor)
 
-── ops flush ──────────────────────→ applyOps():
+-- ops flush ----------------------> applyOps():
                                      __SetClasses(el, 'fade-enter-from fade-enter-active')
                                      __AddEvent(el, 'bind', 'transitionend', sign)
                                      __AppendElement(parent, child)
                                      __FlushElementTree()
                                      // Lynx layout & paint: el starts at enter-from state
 
-── ack callback ──────────────────→ (flush complete)
+-- ack callback ------------------> (flush complete)
 
 BG: onFlushAck()
-  → SET_CLASS(id, 'fade-enter-active fade-enter-to')
-  → scheduleFlush()
+  -> SET_CLASS(id, 'fade-enter-active fade-enter-to')
+  -> scheduleFlush()
 
-── ops flush ──────────────────────→ applyOps():
+-- ops flush ----------------------> applyOps():
                                      __SetClasses(el, 'fade-enter-active fade-enter-to')
-                                     // CSS transition kicks in: animates from enter-from → enter-to
+                                     // CSS transition kicks in: animates from enter-from -> enter-to
 
                                    ... animation plays ...
 
                                    transitionend event fires
-                                   → publishEvent(sign, eventData) ───→ BG
+                                   -> publishEvent(sign, eventData) ----> BG
 
 BG: transitionend handler
-  → SET_CLASS(id, '')  // remove all transition classes
-  → call afterEnter hook
+  -> SET_CLASS(id, '')  // remove all transition classes
+  -> call afterEnter hook
 ```
 
-### Leave 动画时序
+### Leave Animation Timing
 
 ```
 BG Thread                          Main Thread
-─────────                          ────────────
+---------                          -----------
 BaseTransition.leave(el, remove)
-  → SET_CLASS(id, 'fade-leave-from fade-leave-active')
-  → SET_EVENT(id, 'bind', 'transitionend', sign)
+  -> SET_CLASS(id, 'fade-leave-from fade-leave-active')
+  -> SET_EVENT(id, 'bind', 'transitionend', sign)
 
-── ops flush ──────────────────────→ applyOps():
+-- ops flush ----------------------> applyOps():
                                      __SetClasses(el, 'fade-leave-from fade-leave-active')
                                      // Lynx layout: captures leave-from state
 
-── ack ──────────────────────────→
+-- ack ------------------------------>
 
 BG: onFlushAck()
-  → SET_CLASS(id, 'fade-leave-active fade-leave-to')
+  -> SET_CLASS(id, 'fade-leave-active fade-leave-to')
 
-── ops flush ──────────────────────→ CSS transition: leave-from → leave-to
+-- ops flush ----------------------> CSS transition: leave-from -> leave-to
 
-                                   transitionend → publishEvent → BG
+                                   transitionend -> publishEvent -> BG
 
 BG: transitionend handler
-  → remove()    // BaseTransition 调用 remove，触发 nodeOps.remove()
-  → afterLeave hook
+  -> remove()    // BaseTransition calls remove, triggering nodeOps.remove()
+  -> afterLeave hook
 ```
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: `<Transition>` — CSS class-based 动画
+### Phase 1: `<Transition>` -- CSS Class-Based Animation
 
-#### Step 1.1: `LynxTransition` 组件骨架
+#### Step 1.1: `LynxTransition` Component Skeleton
 
-**文件**：`packages/vue/runtime/src/components/Transition.ts`
+**File**: `packages/vue/runtime/src/components/Transition.ts`
 
 ```typescript
 import { BaseTransition, type BaseTransitionProps, h } from '@vue/runtime-core';
@@ -198,53 +198,53 @@ export const Transition = /*#__PURE__*/ (props, { slots }) => {
 };
 ```
 
-**关键函数**：`resolveTransitionProps(rawProps)` — 将 `name="fade"` 转换为 `onBeforeEnter` / `onEnter` / `onLeave` 等 hooks。
+**Key function**: `resolveTransitionProps(rawProps)` -- Converts `name="fade"` into `onBeforeEnter` / `onEnter` / `onLeave` and other hooks.
 
-#### Step 1.2: Class 管理逻辑
+#### Step 1.2: Class Management Logic
 
-**核心难点**：在 BG Thread 操作 ShadowElement 的 class。
+**Core difficulty**: Operating on the ShadowElement's classes on the BG Thread.
 
-当前 `nodeOps.patchProp` 的 `class` 分支直接 `pushOp(OP.SET_CLASS, el.id, nextValue)`。但 Transition 需要在**已有 class 的基础上追加/移除** transition classes。
+Currently `nodeOps.patchProp`'s `class` branch directly calls `pushOp(OP.SET_CLASS, el.id, nextValue)`. But Transition needs to **append/remove** transition classes **on top of the existing classes**.
 
-**方案**：在 ShadowElement 上维护一个 `_classes: Set<string>` 字段：
+**Approach**: Maintain a `_classes: Set<string>` field on ShadowElement:
 
 ```typescript
-// shadow-element.ts 新增
+// shadow-element.ts additions
 _classes: Set<string> = new Set()
-_baseClass: string = ''  // 用户通过 :class 设置的
+_baseClass: string = ''  // set by the user via :class
 
-// transition 用的 helper
+// helpers for transition
 addTransitionClass(cls: string): void
 removeTransitionClass(cls: string): void
 ```
 
-当 `patchProp(el, 'class', ...)` 被调用时，更新 `_baseClass`。Transition hooks 用 `addTransitionClass` / `removeTransitionClass` 操作 `_classes`。最终 class = `_baseClass + ' ' + [..._classes].join(' ')`。
+When `patchProp(el, 'class', ...)` is called, update `_baseClass`. Transition hooks use `addTransitionClass` / `removeTransitionClass` to operate on `_classes`. The final class = `_baseClass + ' ' + [..._classes].join(' ')`.
 
-每次 class 变化都 `pushOp(OP.SET_CLASS, el.id, computedClassString)`。
+Each class change calls `pushOp(OP.SET_CLASS, el.id, computedClassString)`.
 
-#### Step 1.3: `nextFrame` — 利用 flush ack 实现跨帧
+#### Step 1.3: `nextFrame` -- Cross-Frame Timing via Flush Ack
 
-DOM 版用双 rAF 确保浏览器渲染了 enter-from 状态后再切换到 enter-to。我们利用 **flush ack 回调**：
+The DOM version uses double rAF to ensure the browser has rendered the enter-from state before switching to enter-to. We leverage the **flush ack callback**:
 
 ```typescript
 function nextFrame(cb: () => void): void {
-  // 方案 A: waitForFlush — 等待当前 ops batch 被 Main Thread 执行完毕
-  // 此时 enter-from class 已经被应用，Lynx 已完成至少一次 layout
+  // Approach A: waitForFlush -- wait until the current ops batch has been executed by Main Thread
+  // At this point the enter-from class has been applied and Lynx has completed at least one layout
   waitForFlush().then(cb);
 
-  // 方案 B: 如果 waitForFlush 粒度不够，可以引入新的 OP:
-  //   OP.REQUEST_FRAME — Main Thread 收到后 rAF → callback 到 BG
-  //   但这增加了协议复杂度，先用方案 A 验证
+  // Approach B: If waitForFlush granularity isn't sufficient, introduce a new OP:
+  //   OP.REQUEST_FRAME -- Main Thread receives it, does rAF -> callback to BG
+  //   But this increases protocol complexity, so validate with Approach A first
 }
 ```
 
-#### Step 1.4: `whenTransitionEnds` — 动画结束检测
+#### Step 1.4: `whenTransitionEnds` -- Animation End Detection
 
-两种策略，按优先级尝试：
+Two strategies, tried by priority:
 
-**策略 A：事件监听（首选）**
+**Strategy A: Event Listening (preferred)**
 
-通过现有事件系统绑定 `transitionend` / `animationend`：
+Bind `transitionend` / `animationend` via the existing event system:
 
 ```typescript
 function onTransitionEnd(
@@ -256,17 +256,17 @@ function onTransitionEnd(
     ? 'transitionend'
     : 'animationend';
   const sign = register((data) => {
-    // 可选：检查 data.propertyName 是否匹配
-    unregister(sign); // 一次性监听
+    // Optional: check if data.propertyName matches
+    unregister(sign); // one-time listener
     cb();
   });
   pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
 }
 ```
 
-**策略 B：超时 fallback**
+**Strategy B: Timeout Fallback**
 
-如果事件没有正确触发（例如没有实际 CSS transition 定义），用 `duration` prop 指定的时间做 `setTimeout` 兜底：
+If the event doesn't fire correctly (e.g., no actual CSS transition is defined), use the time specified by the `duration` prop as a `setTimeout` fallback:
 
 ```typescript
 if (props.duration) {
@@ -274,9 +274,9 @@ if (props.duration) {
 }
 ```
 
-DOM 版通过 `getComputedStyle()` 检测元素上有没有 transition/animation 定义。我们在双线程下无法同步调用 `getComputedStyle()`，所以**必须依赖事件或 duration prop**。
+The DOM version uses `getComputedStyle()` to detect whether an element has a transition/animation definition. Under dual threads we cannot synchronously call `getComputedStyle()`, so we **must rely on events or the duration prop**.
 
-#### Step 1.5: 完整的 `resolveTransitionProps` 实现
+#### Step 1.5: Complete `resolveTransitionProps` Implementation
 
 ```typescript
 function resolveTransitionProps(
@@ -302,13 +302,13 @@ function resolveTransitionProps(
     },
 
     onEnter(el, done) {
-      // 下一帧（flush ack 后）切换 class
+      // Next frame (after flush ack) toggle classes
       nextFrame(() => {
         removeTransitionClass(el, enterFromClass);
         addTransitionClass(el, enterToClass);
 
         if (!hasExplicitDuration(rawProps)) {
-          // 监听 transitionend / animationend
+          // Listen for transitionend / animationend
           whenTransitionEnds(el, rawProps.type, done);
         } else {
           setTimeout(done, normalizeDuration(rawProps.duration).enter);
@@ -366,27 +366,27 @@ function resolveTransitionProps(
 }
 ```
 
-#### Step 1.6: 导出与注册
+#### Step 1.6: Export and Registration
 
 ```typescript
 // packages/vue/runtime/src/index.ts
 export { Transition } from './components/Transition.js';
-// 不 export BaseTransition（用户直接用 Transition）
+// Do not export BaseTransition (users use Transition directly)
 ```
 
-Vue 的 SFC 模板编译器在遇到 `<Transition>` 时会 resolve 到 `_component_Transition`。我们需要确保 `Transition` 作为全局组件注册，或者在 module alias 中把 `vue` 指向我们的 runtime（已有此配置）。
+Vue's SFC template compiler resolves `<Transition>` to `_component_Transition`. We need to ensure `Transition` is registered as a global component, or that the module alias points `vue` to our runtime (this configuration already exists).
 
 ---
 
-### Phase 2: `<TransitionGroup>` — 列表动画
+### Phase 2: `<TransitionGroup>` -- List Animation
 
-#### Step 2.1: 基础 enter/leave 动画
+#### Step 2.1: Basic Enter/Leave Animation
 
-`TransitionGroup` 对**每个子元素**独立应用 enter/leave transition hooks。与 `Transition` 的主要区别：
+`TransitionGroup` independently applies enter/leave transition hooks to **each child element**. Main differences from `Transition`:
 
-- 渲染为一个真实容器元素（默认 `<view>`，可通过 `tag` prop 定制）
-- 所有子元素必须有唯一 `key`
-- 每个子元素独立挂 `TransitionHooks`
+- Renders as a real container element (default `<view>`, customizable via `tag` prop)
+- All child elements must have a unique `key`
+- Each child element gets its own `TransitionHooks`
 
 ```typescript
 // packages/vue/runtime/src/components/TransitionGroup.ts
@@ -399,41 +399,41 @@ export const TransitionGroup = defineComponent({
     // ... same props as Transition (name, duration, classes, etc.)
   },
   setup(props, { slots }) {
-    // 为每个子 VNode 应用 resolveTransitionHooks
-    // render 时包裹在 h(props.tag, ...) 中
+    // Apply resolveTransitionHooks to each child VNode
+    // Wrap in h(props.tag, ...) when rendering
   },
 });
 ```
 
-#### Step 2.2: Move 动画（Phase 2b — 待 DOM Query API 就绪）
+#### Step 2.2: Move Animation (Phase 2b -- Pending DOM Query API Readiness)
 
-Move 动画（列表项重排时的 FLIP 动画）需要：
+Move animation (FLIP animation when list items are reordered) requires:
 
-1. 在 patch 前读取每个元素的 bounding rect（`positionMap`）
-2. patch 后再读取新位置（`newPositionMap`）
-3. 计算 delta，用 `transform: translate(dx, dy)` 做动画
+1. Reading each element's bounding rect before the patch (`positionMap`)
+2. Reading the new positions after the patch (`newPositionMap`)
+3. Computing the delta and animating with `transform: translate(dx, dy)`
 
-**双线程挑战**：`getBoundingClientRect()` 在 Main Thread，BG 无法同步调用。
+**Dual-thread challenge**: `getBoundingClientRect()` is on the Main Thread; BG cannot call it synchronously.
 
-**可选方案**：
+**Possible approaches**:
 
-| 方案                      | 描述                                                       | 复杂度              |
-| ------------------------- | ---------------------------------------------------------- | ------------------- |
-| **A. 新 OP: QUERY_RECT**  | BG 发 QUERY_RECT ops 到 MT，MT 读取 rect 后 callback 回 BG | 中 — 需要 async ops |
-| **B. Main Thread Script** | move 计算整个放到 Main Thread，用 worklet 执行 FLIP        | 高 — 但性能最好     |
-| **C. 不做 move**          | 只支持 enter/leave，不支持 move                            | 低 — 但功能不完整   |
+| Approach                  | Description                                                    | Complexity          |
+| ------------------------- | -------------------------------------------------------------- | ------------------- |
+| **A. New OP: QUERY_RECT** | BG sends QUERY_RECT ops to MT, MT reads rect and callbacks BG  | Medium -- requires async ops |
+| **B. Main Thread Script** | Move the entire move computation to Main Thread, execute FLIP via worklet | High -- but best performance |
+| **C. Skip move**          | Only support enter/leave, not move                             | Low -- but incomplete functionality |
 
-**建议**：Phase 1 先走 **方案 C**（不做 move），Phase 2b 实现 **方案 A**（QUERY_RECT + async callback）。
+**Recommendation**: Phase 1 goes with **Approach C** (skip move), Phase 2b implements **Approach A** (QUERY_RECT + async callback).
 
 ---
 
-### Phase 3: 验证与测试
+### Phase 3: Verification and Testing
 
-#### Step 3.1: 单元测试
+#### Step 3.1: Unit Tests
 
-**文件**：`packages/vue/runtime/__tests__/transition.test.ts`
+**File**: `packages/vue/runtime/__tests__/transition.test.ts`
 
-可以在纯 BG Thread 环境下验证 ops 序列：
+Can verify the ops sequence in a pure BG Thread environment:
 
 ```typescript
 describe('Transition', () => {
@@ -478,7 +478,7 @@ describe('Transition', () => {
 
 #### Step 3.2: E2E Demo
 
-**文件**：`packages/vue/e2e-lynx/src/transition-demo/`
+**File**: `packages/vue/e2e-lynx/src/transition-demo/`
 
 ```vue
 <template>
@@ -543,36 +543,36 @@ const toggle = () => {
 
 ## Risk Assessment
 
-| 风险                                                                                                      | 影响                          | 缓解                                                  |
-| --------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
-| `waitForFlush` 作为 `nextFrame` 粒度不够 — enter-from 和 enter-to 可能在同一个 Lynx layout cycle 中被合并 | 动画不播放                    | 引入 `OP.REQUEST_FRAME`，让 MT 做一次 rAF 后 callback |
-| `transitionend` 事件不触发（如果元素没有 CSS transition 定义）                                            | leave 动画后元素不被移除      | 始终设置 `duration` prop 或实现超时 fallback          |
-| `__SetClasses` 的行为是 replace（不是 add/remove）                                                        | 需要在 BG 维护完整 class 状态 | ShadowElement 上维护 `_classes` + `_baseClass`        |
-| TransitionGroup 的 move 动画需要 bounding rect 查询                                                       | Phase 1 无法实现 move         | 分阶段，先 enter/leave                                |
+| Risk                                                                                                       | Impact                           | Mitigation                                                 |
+| ---------------------------------------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `waitForFlush` as `nextFrame` has insufficient granularity -- enter-from and enter-to may be merged in the same Lynx layout cycle | Animation does not play          | Introduce `OP.REQUEST_FRAME`, have MT do one rAF then callback |
+| `transitionend` event does not fire (if the element has no CSS transition definition)                       | Element is not removed after leave animation | Always set the `duration` prop or implement a timeout fallback |
+| `__SetClasses` behavior is replace (not add/remove)                                                        | Need to maintain full class state on BG | Maintain `_classes` + `_baseClass` on ShadowElement       |
+| TransitionGroup's move animation requires bounding rect queries                                             | Cannot implement move in Phase 1 | Phase it: enter/leave first                                |
 
 ## Dependencies
 
-- `@vue/runtime-core` 的 `BaseTransition`、`resolveTransitionHooks`（已有）
-- 现有 ops 协议（`SET_CLASS`, `SET_EVENT`）— 无需新 op code
-- `waitForFlush()` — 已有
-- `register()` / `unregister()` 事件注册 — 已有
-- Lynx CSS transition/animation 引擎 — 平台能力
+- `@vue/runtime-core`'s `BaseTransition`, `resolveTransitionHooks` (already available)
+- Existing ops protocol (`SET_CLASS`, `SET_EVENT`) -- no new op codes needed
+- `waitForFlush()` -- already available
+- `register()` / `unregister()` event registration -- already available
+- Lynx CSS transition/animation engine -- platform capability
 
 ## Deliverables
 
-| Phase        | 交付物                                                          | 估计改动量      |
-| ------------ | --------------------------------------------------------------- | --------------- |
-| **Phase 1**  | `Transition` 组件 + class 管理 + nextFrame + whenTransitionEnds | ~300 行新代码   |
-| **Phase 2a** | `TransitionGroup` (enter/leave only)                            | ~150 行新代码   |
-| **Phase 2b** | `TransitionGroup` move 动画 (QUERY_RECT)                        | ~200 行 + 新 OP |
-| **Phase 3**  | 单元测试 + E2E demo                                             | ~400 行测试     |
+| Phase        | Deliverables                                                            | Estimated Change Size |
+| ------------ | ----------------------------------------------------------------------- | --------------------- |
+| **Phase 1**  | `Transition` component + class management + nextFrame + whenTransitionEnds | ~300 lines new code   |
+| **Phase 2a** | `TransitionGroup` (enter/leave only)                                    | ~150 lines new code   |
+| **Phase 2b** | `TransitionGroup` move animation (QUERY_RECT)                          | ~200 lines + new OP   |
+| **Phase 3**  | Unit tests + E2E demo                                                   | ~400 lines of tests   |
 
 ## Open Questions
 
-1. **`__SetClasses` 语义**：当前 ops-apply.ts 调用 `__SetClasses(el, cls)` — 这是完全替换还是追加？如果是替换，BG 端必须管理完整 class 字符串。→ 从代码看是替换，需要 BG 管理。
+1. **`__SetClasses` semantics**: Currently ops-apply.ts calls `__SetClasses(el, cls)` -- is this a full replacement or an append? If it's a replacement, BG must manage the full class string. -> From the code it's a replacement; BG must manage it.
 
-2. **Lynx 的 `transitionend` 事件数据格式**：是否包含 `propertyName`？这影响我们能否精确判断哪个属性的 transition 完成了。如果不包含，需要做 counter-based 方案（计算有几个属性在过渡）。
+2. **Lynx's `transitionend` event data format**: Does it include `propertyName`? This affects whether we can precisely determine which property's transition has completed. If not, we need a counter-based approach (counting how many properties are transitioning).
 
-3. **CSS Scope 与 Transition Classes**：Lynx 的 `__SetCSSId` 设置了 CSS scope 0。transition 相关的 class（如 `.fade-enter-active`）的 CSS 规则需要定义在全局 scope 或 scope 0 中，否则选择器无法匹配。需要确认 SFC 的 `<style>` 在 Lynx 中的 scope 行为。
+3. **CSS Scope and Transition Classes**: Lynx's `__SetCSSId` sets CSS scope 0. CSS rules for transition-related classes (such as `.fade-enter-active`) need to be defined in the global scope or scope 0; otherwise selectors won't match. Need to confirm the scope behavior of `<style>` in SFCs under Lynx.
 
-4. **`appear` 的时机**：首次挂载时 BaseTransition 会检查 `isMounted`。在双线程下，首次 mount 的 ops flush 和后续的 enter 动画 class 切换是否需要特殊处理？
+4. **`appear` timing**: On first mount, BaseTransition checks `isMounted`. Under dual threads, does the ops flush for the initial mount and subsequent enter animation class toggling require special handling?

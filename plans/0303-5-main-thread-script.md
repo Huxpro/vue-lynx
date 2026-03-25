@@ -2,13 +2,13 @@
 
 ## Scope
 
-**This PR**: Design document + **Phase 1 runtime foundation** (new ops, patchProp detection, `MainThreadRef` composable, MT executor changes). No SWC build transform yet — Phase 1 tests with manually-constructed worklet context objects.
+**This PR**: Design document + **Phase 1 runtime foundation** (new ops, patchProp detection, `MainThreadRef` composable, MT executor changes). No SWC build transform yet -- Phase 1 tests with manually-constructed worklet context objects.
 
 **Template syntax**: `:main-thread-bindscroll="onScroll"` (v-bind prefix, zero Vue compiler changes needed).
 
 ## Context
 
-Vue Lynx currently routes ALL event handling through the Background Thread: native event → `publishEvent(sign, data)` on BG → Vue handler → reactive updates → ops buffer → `callLepusMethod` → Main Thread PAPI. This introduces 2 thread crossings per interaction, causing perceptible latency for gesture-driven animations and making `v-model` on `<input>` impossible (Lynx's `getValue()`/`setValue()` are synchronous, Main Thread-only APIs).
+Vue Lynx currently routes ALL event handling through the Background Thread: native event -> `publishEvent(sign, data)` on BG -> Vue handler -> reactive updates -> ops buffer -> `callLepusMethod` -> Main Thread PAPI. This introduces 2 thread crossings per interaction, causing perceptible latency for gesture-driven animations and making `v-model` on `<input>` impossible (Lynx's `getValue()`/`setValue()` are synchronous, Main Thread-only APIs).
 
 React Lynx solves this with **Main Thread Script**: functions marked with `'main thread'` directive execute synchronously on the Main Thread with zero thread crossings. We adapt this pattern for Vue, reusing Lynx's existing worklet infrastructure.
 
@@ -48,7 +48,7 @@ BUILD TIME                                          RUNTIME
 
 ### SFC Syntax: `<script main-thread>`
 
-Main-thread functions live in a **separate `<script>` block** — Vue-idiomatic, clean separation:
+Main-thread functions live in a **separate `<script>` block** -- Vue-idiomatic, clean separation:
 
 ```vue
 <script setup>
@@ -87,7 +87,7 @@ export function onTap(event) {
 
 - Vue already supports multiple `<script>` blocks (`<script>` + `<script setup>`)
 - Clean separation: BG logic in `<script setup>`, MT handlers in `<script main-thread>`
-- No SWC closure extraction needed — the block boundary IS the thread separation
+- No SWC closure extraction needed -- the block boundary IS the thread separation
 - vue-loader custom block handling can route the block to the MT bundle directly
 - `event.currentTarget` provides element access; `useMainThreadRef` bridges shared state
 
@@ -98,7 +98,7 @@ export function onTap(event) {
 <view :main-thread-bindtap="onTap" :main-thread-ref="elRef" />
 ```
 
-Vue's `:` (v-bind) evaluates the expression and passes the JS value to `patchProp`. The `main-thread-` prefix is detected at runtime — zero Vue compiler changes needed.
+Vue's `:` (v-bind) evaluates the expression and passes the JS value to `patchProp`. The `main-thread-` prefix is detected at runtime -- zero Vue compiler changes needed.
 
 ### Cross-Thread References
 
@@ -134,7 +134,7 @@ const elHandle = useMainThreadHandle(el); // auto-derives from template ref
 elHandle.value?.setStyleProperty('color', 'red');
 ```
 
-Option A is Phase 1 (general-purpose). Option B layers on top later by resolving the ShadowElement id → PAPI element mapping on MT.
+Option A is Phase 1 (general-purpose). Option B layers on top later by resolving the ShadowElement id -> PAPI element mapping on MT.
 
 ### Other Composable APIs (future)
 
@@ -148,7 +148,7 @@ await runOnBackground(() => {
 })();
 ```
 
-## Compile-Time Transform (Phase 2 — not this PR)
+## Compile-Time Transform (Phase 2 -- not this PR)
 
 ### Two approaches considered:
 
@@ -222,7 +222,7 @@ case OP.SET_MT_REF: {
 }
 ```
 
-### v-model Mechanism (Phase 3 — not this PR)
+### v-model Mechanism (Phase 3 -- not this PR)
 
 Pre-registered MT worklet handles synchronous input value sync:
 
@@ -307,13 +307,13 @@ User types → MT bindinput fires → MT worklet reads getValue()
 **File (new)**: `packages/vue/e2e-lynx/src/mts-demo/`
 
 - Hand-crafted worklet context object (simulates what compiler would produce)
-- Tests the full ops plumbing: BG → ops → MT → `__AddEvent` with worklet context
+- Tests the full ops plumbing: BG -> ops -> MT -> `__AddEvent` with worklet context
 
 ## Testing Strategy (Phase 1)
 
 Since Phase 1 has no SWC transform, we test the **runtime plumbing** only:
 
-1. **Build check**: `pnpm build` in all three packages — existing counter/todomvc demos still work
+1. **Build check**: `pnpm build` in all three packages -- existing counter/todomvc demos still work
 2. **Type check**: `pnpm tsc --noEmit` passes across runtime, main-thread, rspeedy-plugin
 3. **Ops flow test**: The mts-demo emits `SET_WORKLET_EVENT` ops. On MT, verify via `console.info` logs that `__AddEvent` is called with `{ type: 'worklet', value: { _wkltId: '...' } }`
 4. **No regression**: Existing BG-thread events (`@tap`, `@confirm`) continue to work normally via sign-based registry
@@ -323,109 +323,109 @@ Since Phase 1 has no SWC transform, we test the **runtime plumbing** only:
 
 ---
 
-## 实现后总结
+## Post-Implementation Summary
 
-### 实际实现 vs 计划偏差
+### Actual Implementation vs Plan Deviations
 
-#### 1. `<script main-thread>` 方案被放弃，改用 `'main thread'` directive
+#### 1. `<script main-thread>` approach was abandoned in favor of `'main thread'` directive
 
-计划中推荐的 `<script main-thread>` 方案（Vue-idiomatic，单独 SFC block）**未被采用**。实际使用了 React Lynx 的 `'main thread'` 字符串 directive 方案，原因：
+The recommended `<script main-thread>` approach from the plan (Vue-idiomatic, separate SFC block) **was not adopted**. The React Lynx `'main thread'` string directive approach was used instead, for the following reasons:
 
-- **复用 SWC 编译器**：`@lynx-js/react/transform` 的 worklet 编译器（SWC NAPI binding）开箱即用，支持 `target: 'JS'`（BG 侧替换为 worklet context object）和 `target: 'LEPUS'`（MT 侧生成 `registerWorkletInternal()` 调用）
-- **零 vue-loader 修改**：不需要为 custom block 增加新的 loader 配置
-- **闭包自动捕获**：SWC 编译器自动分析 `'main thread'` 函数体的外部引用，序列化到 `_c`（closure values）中，包括 `MainThreadRef` 的 `_wvid` 标记
-- **与 React Lynx 生态一致**：worklet-runtime、workletRefMap、runWorklet 等基础设施完全复用
+- **Reuse of the SWC compiler**: The `@lynx-js/react/transform` worklet compiler (SWC NAPI binding) works out of the box, supporting `target: 'JS'` (BG side replaces with worklet context object) and `target: 'LEPUS'` (MT side generates `registerWorkletInternal()` calls)
+- **Zero vue-loader modifications**: No need to add new loader configuration for custom blocks
+- **Automatic closure capture**: The SWC compiler automatically analyzes external references in `'main thread'` function bodies, serializing them into `_c` (closure values), including `MainThreadRef`'s `_wvid` marker
+- **Consistency with React Lynx ecosystem**: worklet-runtime, workletRefMap, runWorklet and other infrastructure fully reused
 
-**代价**：`'main thread'` 函数写在 `<script setup>` 中，不如独立 block 清晰。但实际使用发现这其实更灵活——可以在同一 scope 混合 BG 和 MT 代码，共享 props/computed/ref。
+**Trade-off**: `'main thread'` functions are written inside `<script setup>`, not as cleanly separated as an independent block. However, in practice this turned out to be more flexible -- BG and MT code can be mixed in the same scope, sharing props/computed/ref.
 
-#### 2. `.current` 和 `.value` 双协议
+#### 2. Dual protocol for `.current` and `.value`
 
-计划中说 "Uses `.value` (Vue convention) instead of `.current` (React convention)"。实际实现后发现 **必须同时支持 `.current`**：
+The plan stated "Uses `.value` (Vue convention) instead of `.current` (React convention)". After actual implementation, it was found that **`.current` must also be supported**:
 
-- worklet-runtime hydration 后的 ref 对象只有 `.current`（`{ current: value, _wvid: id }`）
-- SWC 编译器生成的 LEPUS 代码中，worklet 函数体内的 ref 访问编译为 `.current`
-- BG 侧 `MainThreadRef` class 上新增了 `.current` getter/setter（只读，dev 模式给警告）
+- The ref object after worklet-runtime hydration only has `.current` (`{ current: value, _wvid: id }`)
+- The LEPUS code generated by the SWC compiler compiles ref access in worklet function bodies to `.current`
+- A `.current` getter/setter was added to the BG-side `MainThreadRef` class (read-only, warns in dev mode)
 
-#### 3. 发现并修复 value-only ref 注册缺失 (INIT_MT_REF)
+#### 3. Discovered and fixed missing value-only ref registration (INIT_MT_REF)
 
-**这是最大的意外发现**。计划中只提到 `SET_MT_REF`（元素绑定 ref），完全没预见到 value-only ref 的问题。
+**This was the biggest unexpected discovery**. The plan only mentioned `SET_MT_REF` (element-bound ref), completely missing the value-only ref issue.
 
-**问题**：`useMainThreadRef<number>(0)` 创建的 ref 没有绑定到任何 DOM 元素，因此不会触发 `SET_MT_REF` op。当 worklet 函数在 MT 运行时，hydration 过程通过 `_wvid` 查找 `_workletRefMap`，找不到条目 → 返回 `undefined` → `undefined.current = value` 报 TypeError。
+**Problem**: A ref created with `useMainThreadRef<number>(0)` is not bound to any DOM element, so it never triggers a `SET_MT_REF` op. When the worklet function runs on MT, the hydration process looks up `_workletRefMap` via `_wvid`, finds no entry -> returns `undefined` -> `undefined.current = value` throws TypeError.
 
-**React Lynx 的做法**：
+**React Lynx's approach**:
 
-1. `useMainThreadRef(initValue)` 内部调用 `addWorkletRefInitValue(wvid, initValue)`，累积到 patch buffer
-2. commit 阶段调用 `sendMTRefInitValueToMainThread()`，通过 `callLepusMethod('rLynxChangeRefInitValue', { data })` 发送到 MT
-3. MT 侧 `updateWorkletRefInitValueChanges(patch)` 在 `_workletRefMap` 中创建 `{ current: initValue, _wvid }`
+1. `useMainThreadRef(initValue)` internally calls `addWorkletRefInitValue(wvid, initValue)`, accumulating into the patch buffer
+2. During the commit phase, `sendMTRefInitValueToMainThread()` is called, sending via `callLepusMethod('rLynxChangeRefInitValue', { data })` to MT
+3. On MT side, `updateWorkletRefInitValueChanges(patch)` creates `{ current: initValue, _wvid }` in `_workletRefMap`
 
-**Vue 的修复**（更简洁的方案）：
+**Vue's fix** (a simpler approach):
 
-- 新增 `INIT_MT_REF = 13` op code
-- `MainThreadRef` 构造函数中直接 `pushOp(OP.INIT_MT_REF, this._wvid, initValue)`
-- ops 随初始渲染 batch 一起通过 `vuePatchUpdate` 发到 MT
-- MT 侧 `applyOps` 中 `INIT_MT_REF` handler 在 `_workletRefMap` 创建条目
+- Added `INIT_MT_REF = 13` op code
+- In the `MainThreadRef` constructor, directly `pushOp(OP.INIT_MT_REF, this._wvid, initValue)`
+- Ops are sent along with the initial render batch to MT via `vuePatchUpdate`
+- On MT side, the `INIT_MT_REF` handler in `applyOps` creates the entry in `_workletRefMap`
 
-**优势**：利用已有 ops buffer 通道，无需新增 `callLepusMethod` 端点。INIT_MT_REF 在 CREATE/INSERT ops 之前入 buffer（因为 `useMainThreadRef` 在 setup 阶段调用），保证在任何 worklet 事件触发前就已注册。
+**Advantage**: Leverages the existing ops buffer channel, no need for a new `callLepusMethod` endpoint. INIT_MT_REF enters the buffer before CREATE/INSERT ops (since `useMainThreadRef` is called during the setup phase), ensuring registration before any worklet event fires.
 
-#### 4. Build Pipeline：worklet-loader + VueMainThreadPlugin
+#### 4. Build Pipeline: worklet-loader + VueMainThreadPlugin
 
-计划中 Phase 2 留了两个编译方案，实际选择了 **`'main thread'` directive + SWC dual-pass** 方案：
+The plan left two compilation approaches for Phase 2; the actual choice was the **`'main thread'` directive + SWC dual-pass** approach:
 
 ```
 webpack loader chain (BG bundle):
   vue-loader → worklet-loader → webpack
 
-worklet-loader 做两次 SWC transform:
-  Pass 1 (target: 'JS')    → 替换 'main thread' 函数为 worklet context objects
-  Pass 2 (target: 'LEPUS') → 生成 registerWorkletInternal() 调用
+worklet-loader performs two SWC transforms:
+  Pass 1 (target: 'JS')    → replaces 'main thread' functions with worklet context objects
+  Pass 2 (target: 'LEPUS') → generates registerWorkletInternal() calls
 
-extractRegistrations() 从 LEPUS 输出中提取 registerWorkletInternal(...) 调用
-→ 通过 worklet-registry (globalThis shared Map) 传给 VueMainThreadPlugin
-→ VueMainThreadPlugin 将注册代码注入到 main-thread-bundled.js 中
+extractRegistrations() extracts registerWorkletInternal(...) calls from LEPUS output
+→ passed to VueMainThreadPlugin via worklet-registry (globalThis shared Map)
+→ VueMainThreadPlugin injects registration code into main-thread-bundled.js
 ```
 
-**VueMainThreadPlugin 的 flat-bundle 策略**：
+**VueMainThreadPlugin's flat-bundle strategy**:
 
-- rslib 预编译 `entry-main.ts` → `dist/main-thread-bundled.js`（~17 kB，包含 ops-apply + worklet registrations）
-- plugin 用 `fs.readFileSync` 读取该文件，替换 webpack 的 main-thread asset
-- 标记 `'lynx:main-thread': true` asset info → `LynxTemplatePlugin` 路由到 Lepus 字节码
-- 这解决了 `chunkLoading: 'lynx'` 导致的 `StartupChunkDependenciesPlugin` 不执行 module factory 的问题
+- rslib pre-compiles `entry-main.ts` -> `dist/main-thread-bundled.js` (~17 kB, containing ops-apply + worklet registrations)
+- Plugin reads the file with `fs.readFileSync`, replacing the webpack asset
+- Marks with `'lynx:main-thread': true` asset info -> `LynxTemplatePlugin` routes to Lepus bytecode
+- This solves the issue of `chunkLoading: 'lynx'` causing `StartupChunkDependenciesPlugin` not to execute the module factory
 
-#### 5. `runOnMainThread` 已实现，`runOnBackground` 未实现
+#### 5. `runOnMainThread` implemented, `runOnBackground` not implemented
 
-- `runOnMainThread(fn)(args)` 通过 `lynx.getCoreContext().dispatchEvent({ type: 'Lynx.Worklet.runWorkletCtx', ... })` 实现
-- `runOnBackground` 需要 MT→BG 回调通道，基础设施复杂，暂用 **BG 重复 touch 追踪** 作为 workaround（swiper indicator 同步用）
+- `runOnMainThread(fn)(args)` implemented via `lynx.getCoreContext().dispatchEvent({ type: 'Lynx.Worklet.runWorkletCtx', ... })`
+- `runOnBackground` requires an MT->BG callback channel with complex infrastructure; a **BG duplicate touch tracking** workaround was used instead (for swiper indicator synchronization)
 
-#### 6. Swiper Demo 验证了完整 MTS 能力
+#### 6. Swiper Demo validated complete MTS capabilities
 
-Swiper demo（3 个渐进式 entry）是 MTS 的"终极测试"：
+The Swiper demo (3 progressive entries) is the "ultimate test" for MTS:
 
-| Entry          | MTS 功能覆盖                                                                                                                  |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `swiper-empty` | 无 MTS，纯静态布局                                                                                                            |
-| `swiper-mts`   | ✅ MT touch handlers、✅ element ref (`setStyleProperty`)、✅ value-only ref (offset state)、✅ `requestAnimationFrame` on MT |
-| `swiper`       | 上述全部 + ✅ `runOnMainThread`（indicator click → animate）、✅ BG+MT 双 touch handler 模式、✅ 嵌套 MT 函数调用             |
+| Entry          | MTS Feature Coverage                                                                                                              |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `swiper-empty` | No MTS, pure static layout                                                                                                        |
+| `swiper-mts`   | MT touch handlers, element ref (`setStyleProperty`), value-only ref (offset state), `requestAnimationFrame` on MT                 |
+| `swiper`       | All of the above + `runOnMainThread` (indicator click -> animate), BG+MT dual touch handler pattern, nested MT function calls     |
 
-**关键技术模式**：
+**Key technical pattern**:
 
 ```vue
-<!-- 同一元素同时绑定 MT 和 BG touch handlers -->
+<!-- Same element with both MT and BG touch handlers bound -->
 <view
-  :main-thread-bindtouchstart="handleTouchStart"   <!-- MT: 零延迟拖拽 -->
+  :main-thread-bindtouchstart="handleTouchStart"   <!-- MT: zero-latency dragging -->
   :main-thread-bindtouchmove="handleTouchMove"
   :main-thread-bindtouchend="handleTouchEnd"
-  @touchstart="onBGTouchStart"                      <!-- BG: indicator 状态同步 -->
+  @touchstart="onBGTouchStart"                      <!-- BG: indicator state sync -->
   @touchmove="onBGTouchMove"
   @touchend="onBGTouchEnd"
 />
 ```
 
-#### 7. E2E Demo 命名与演进：`mts-demo/` → `mts-draggable-raw/` + `mts-draggable/`
+#### 7. E2E Demo naming and evolution: `mts-demo/` -> `mts-draggable-raw/` + `mts-draggable/`
 
-计划 Step 7 中的 `mts-demo/` 在实际实现时命名为 **`mts-draggable-raw/`**——一个 scroll-view + draggable box 的对比 demo（MT smooth vs BG laggy），使用手工构建的 worklet context objects：
+The `mts-demo/` from plan Step 7 was actually named **`mts-draggable-raw/`** in implementation -- a scroll-view + draggable box comparison demo (MT smooth vs BG laggy), using hand-crafted worklet context objects:
 
 ```typescript
-// 手工 worklet context (Phase 1 — 无 SWC transform)
+// Hand-crafted worklet context (Phase 1 — no SWC transform)
 const onMTScrollCtx = {
   _wkltId: 'mts-draggable-raw:onScroll',
   _workletType: 'main-thread',
@@ -434,10 +434,10 @@ const onMTScrollCtx = {
 onMTScrollCtx._c = { _mtRef: mtDraggableRef.toJSON() };
 ```
 
-Phase 2 SWC transform 集成后，创建了 **`mts-draggable/`** 作为对照版本，使用 `'main thread'` directive：
+After Phase 2 SWC transform integration, **`mts-draggable/`** was created as a comparison version, using the `'main thread'` directive:
 
 ```typescript
-// Phase 2 — SWC 自动处理闭包捕获 + worklet 注册
+// Phase 2 — SWC automatically handles closure capture + worklet registration
 const onMTScroll = (event: { detail?: { scrollTop?: number } }) => {
   'main thread'
   const el = (mtDraggableRef as ...).current
@@ -445,13 +445,13 @@ const onMTScroll = (event: { detail?: { scrollTop?: number } }) => {
 }
 ```
 
-`mts-draggable-raw/` 保留作为 Phase 1 raw worklet 的参考实现，需配合 `dev-worklet-registrations.ts` 中手工的 `registerWorkletInternal()` 调用（现已清空，因所有 demo 迁移到 directive 方案）。
+`mts-draggable-raw/` is kept as a reference implementation for Phase 1 raw worklets, requiring the manual `registerWorkletInternal()` calls in `dev-worklet-registrations.ts` (now cleared, as all demos have migrated to the directive approach).
 
-**Gallery 中的 raw worklet 迁移**：`GalleryComplete` 和 `GalleryScrollbarCompare` 最初也使用了 Phase 1 raw worklet context（`_wkltId`, `_workletType`, `_c`），后来迁移到 `'main thread'` directive。其余 Gallery（GalleryList、GalleryAutoScroll、GalleryScrollbar）不涉及 MTS，无需迁移。
+**Raw worklet migration in Gallery**: `GalleryComplete` and `GalleryScrollbarCompare` initially used Phase 1 raw worklet context (`_wkltId`, `_workletType`, `_c`), later migrated to the `'main thread'` directive. Other Gallery demos (GalleryList, GalleryAutoScroll, GalleryScrollbar) do not involve MTS and required no migration.
 
-### 遗留问题 & 后续计划
+### Remaining Issues & Future Plans
 
-1. **`runOnBackground` 未实现**：需要 MT→BG 通信通道。React Lynx 通过 `Lynx.Worklet.runOnBackground` event 实现
-2. **`<script main-thread>` SFC block**：仍可作为未来的语法糖，编译到 `'main thread'` directive
-3. **首屏 MTS 优化**：当前 value-only ref 通过 ops buffer 在首次 flush 注册，首屏渲染前的 worklet 执行不受保护（实际上不会发生，因为首屏没有用户交互）
-4. **worklet-runtime 错误边界**：MT 侧 worklet 函数报错时，错误信息只出现在 LynxExplorer toast（DevTool 看不到 Lepus 日志），调试体验差
+1. **`runOnBackground` not implemented**: Requires MT->BG communication channel. React Lynx implements this via the `Lynx.Worklet.runOnBackground` event
+2. **`<script main-thread>` SFC block**: Can still serve as future syntactic sugar, compiling to the `'main thread'` directive
+3. **First-screen MTS optimization**: Currently value-only refs are registered via the ops buffer during the first flush; worklet execution before first-screen rendering is unprotected (in practice this does not occur, as there is no user interaction before first screen)
+4. **worklet-runtime error boundaries**: When worklet functions on MT throw errors, error messages only appear in the LynxExplorer toast (DevTool cannot see Lepus logs), making debugging difficult

@@ -21,10 +21,6 @@ drop as much "lepus" and "worklet" as possible.
 
 Patch the `community-cli` or `sparkling` to create native Apps with template from other places. (Shit we need to replicate the Vue Lynx template)
 
-Run the below prompt to an Agent to start a native app with Sparkling
-
-```sh
-```
 
 ---
 

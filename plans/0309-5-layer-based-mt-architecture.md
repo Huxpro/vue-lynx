@@ -12,7 +12,7 @@
 
 **React Lynx's approach**: Both BG and MT layers import the SAME user code. webpack `issuerLayer` routes files to different loaders per layer (BG: `worklet.target: 'JS'`, MT: `worklet.target: 'LEPUS'`). webpack's dependency graph naturally scopes each entry to its own registrations.
 
-**Target**: Adopt React's layer-based approach — both layers import user code, MT-specific loaders extract only worklet registrations, webpack handles per-entry isolation naturally.
+**Target**: Adopt React's layer-based approach -- both layers import user code, MT-specific loaders extract only worklet registrations, webpack handles per-entry isolation naturally.
 
 ## Architecture Overview
 
@@ -20,7 +20,7 @@
 Current:                                    Target:
 
 BG entry: [entry-bg, ...user-imports]       BG entry: [entry-bg, ...user-imports]  (unchanged)
-MT entry: [entry-main]  ← bootstrap only    MT entry: [entry-main, ...user-imports] ← includes user code
+MT entry: [entry-main]  <- bootstrap only    MT entry: [entry-main, ...user-imports] <- includes user code
 
 BG: vue-loader + worklet-loader(JS+LEPUS)   BG: vue-loader + worklet-loader(JS only)
 MT: VueMainThreadPlugin replaces asset      MT: sfc-script-extractor(.vue) + worklet-loader-mt(LEPUS)
@@ -32,125 +32,143 @@ Registrations: globalThis Map (shared)      Registrations: webpack modules (per-
 
 ### Old Vue Architecture (flat bundle replacement)
 
-"Flat bundle" 是指 `vue-lynx/main-thread` 通过 rslib 预编译成的一个自包含 JS 文件
-(`main-thread-bundled.js`)。它把 `entry-main.ts` + `ops-apply.ts` + `element-registry.ts`
-等所有主线程代码打包成一坨纯 JS——没有 webpack `__webpack_require__`，没有 module wrapper。
-`VueMainThreadPlugin` 在 webpack 编译阶段用 `fs.readFileSync()` 读这个文件，拼接 worklet
-注册代码后用 `new RawSource(combined)` 整体替换 webpack 生成的 `main-thread.js` 产物。
-Webpack 自己的 MT 编译结果被直接丢弃。
+"Flat bundle" refers to a self-contained JS file pre-compiled from `vue-lynx/main-thread` via rslib
+(`main-thread-bundled.js`). It bundles `entry-main.ts` + `ops-apply.ts` + `element-registry.ts`
+and all other main-thread code into a single piece of pure JS -- no webpack `__webpack_require__`, no module wrapper.
+`VueMainThreadPlugin` reads this file via `fs.readFileSync()` during the webpack compilation phase, concatenates worklet
+registration code, and replaces the webpack-generated `main-thread.js` asset with `new RawSource(combined)`.
+Webpack's own MT compilation result is discarded entirely.
 
 ```
-rslib 预构建 (独立于 webpack):
-  entry-main.ts ─── rslib bundle ──▶ main-thread-bundled.js
-  ops-apply.ts  ───┘                 (自包含, ~5kB flat JS)
-                                        │
-                                        │ fs.readFileSync()
-                                        ▼
-┌─────────────────── webpack / rspack ───────────────────────────┐
-│                                                                │
-│  BG entry: [entry-bg, App.vue, ...]                            │
-│    └─ worklet-loader (JS pass + LEPUS pass)                    │
-│         │                                                      │
-│         ├─ JS output ──▶ background.js (正常 BG bundle)         │
-│         │                                                      │
-│         └─ LEPUS output ──▶ globalThis.__vue_worklet_...       │
-│                              (所有 entry 的注册混在一起)   共享 Map│
-│                                                                │
-│  MT entry: [entry-main]   ← 只有 bootstrap，无用户代码           │
-│    └─ webpack 正常编译 ──▶ main-thread.js                       │
-│         │                                                      │
-│         └─ VueMainThreadPlugin:                                │
-│              1. 读 flat bundle                                  │
-│              2. 从 globalThis Map 取 ALL 注册                   │
-│              3. 拼接，用 RawSource 替换 webpack 产物   ← 丢弃    │
-│              4. 标记 'lynx:main-thread': true                   │
-│                                                                │
-│  问题:                                                          │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │ entry-A 的 MT bundle == entry-B 的 MT bundle     │          │
-│  │ (所有 entry 共享同一份 flat bundle + 全部注册)      │          │
-│  └──────────────────────────────────────────────────┘          │
-└────────────────────────────────────────────────────────────────┘
+rslib pre-build (independent of webpack):
+  entry-main.ts --- rslib bundle --> main-thread-bundled.js
+  ops-apply.ts  ---+                 (self-contained, ~5kB flat JS)
+                                        |
+                                        | fs.readFileSync()
+                                        v
++------------------ webpack / rspack ----------------------------+
+|                                                                |
+|  BG entry: [entry-bg, App.vue, ...]                            |
+|    +- worklet-loader (JS pass + LEPUS pass)                    |
+|         |                                                      |
+|         +- JS output --> background.js (normal BG bundle)      |
+|         |                                                      |
+|         +- LEPUS output --> globalThis.__vue_worklet_...        |
+|                              (registrations from all entries    |
+|                               mixed together)        shared Map|
+|                                                                |
+|  MT entry: [entry-main]   <- only bootstrap, no user code      |
+|    +- webpack normal compile --> main-thread.js                |
+|         |                                                      |
+|         +- VueMainThreadPlugin:                                |
+|              1. Read flat bundle                               |
+|              2. Get ALL registrations from globalThis Map      |
+|              3. Concatenate, replace webpack asset with        |
+|                 RawSource                           <- discard |
+|              4. Mark 'lynx:main-thread': true                  |
+|                                                                |
+|  Problem:                                                      |
+|  +----------------------------------------------+             |
+|  | entry-A's MT bundle == entry-B's MT bundle    |             |
+|  | (all entries share the same flat bundle +     |             |
+|  |  all registrations)                           |             |
+|  +----------------------------------------------+             |
++----------------------------------------------------------------+
 ```
 
 ### New Vue Architecture (layer-based)
 
 ```
-┌─────────────────── webpack / rspack ───────────────────────────┐
-│                                                                │
-│  BG entry: [entry-bg, App.vue, ...]  layer: vue:background     │
-│    │                                                           │
-│    ├─ vue-loader ──▶ template + style + script 正常编译          │
-│    └─ worklet-loader (JS pass only, 不再做 LEPUS)               │
-│         └─▶ background.js                                      │
-│                                                                │
-│  MT entry: [entry-main, App.vue, ...]  layer: vue:main-thread  │
-│    │         ↑ 同样的用户代码                                     │
-│    │                                                           │
-│    ├─ .vue 文件:                                                │
-│    │    vue-sfc-script-extractor (正则提取 <script>)             │
-│    │    └─ worklet-loader-mt (LEPUS pass)                       │
-│    │       └─ 有 'main thread' 指令? → registerWorkletInternal()│
-│    │       └─ 没有?                  → '' (空模块)               │
-│    │                                                           │
-│    ├─ .js/.ts 文件:                                             │
-│    │    worklet-loader-mt (同上逻辑)                             │
-│    │                                                           │
-│    ├─ bootstrap 包 (entry-main.ts, ops-apply.ts):               │
-│    │    排除 MT loader → 原样通过，正常执行                       │
-│    │                                                           │
-│    └─▶ main-thread.js (webpack 正常编译, 有 module wrappers)     │
-│                                                                │
-│  VueMarkMainThreadPlugin:                                      │
-│    1. 强制 RuntimeGlobals.startup (修复 chunkLoading: 'lynx')   │
-│    2. 标记 'lynx:main-thread': true                             │
-│                                                                │
-│  优势:                                                          │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │ entry-A 的 MT bundle 只含 entry-A 的 worklet 注册 │          │
-│  │ entry-B 的 MT bundle 只含 entry-B 的 worklet 注册 │          │
-│  │ webpack 依赖图自动隔离，无需 globalThis hack       │          │
-│  └──────────────────────────────────────────────────┘          │
-└────────────────────────────────────────────────────────────────┘
++------------------ webpack / rspack ----------------------------+
+|                                                                |
+|  BG entry: [entry-bg, App.vue, ...]  layer: vue:background    |
+|    |                                                           |
+|    +- vue-loader --> template + style + script normal compile  |
+|    +- worklet-loader (JS pass only, no longer does LEPUS)      |
+|         +--> background.js                                     |
+|                                                                |
+|  MT entry: [entry-main, App.vue, ...]  layer: vue:main-thread |
+|    |         ^ same user code                                  |
+|    |                                                           |
+|    +- .vue files:                                              |
+|    |    vue-sfc-script-extractor (regex extracts <script>)      |
+|    |    +- worklet-loader-mt (LEPUS pass)                       |
+|    |       +- Has 'main thread' directive? ->                  |
+|    |          registerWorkletInternal()                         |
+|    |       +- Doesn't have one?          -> '' (empty module)  |
+|    |                                                           |
+|    +- .js/.ts files:                                           |
+|    |    worklet-loader-mt (same logic)                          |
+|    |                                                           |
+|    +- bootstrap packages (entry-main.ts, ops-apply.ts):        |
+|    |    excluded from MT loader -> pass through as-is,         |
+|    |    executes normally                                      |
+|    |                                                           |
+|    +--> main-thread.js (webpack normal compile,                |
+|         has module wrappers)                                   |
+|                                                                |
+|  VueMarkMainThreadPlugin:                                      |
+|    1. Force RuntimeGlobals.startup                             |
+|       (fix chunkLoading: 'lynx')                               |
+|    2. Mark 'lynx:main-thread': true                            |
+|                                                                |
+|  Advantages:                                                   |
+|  +----------------------------------------------+             |
+|  | entry-A's MT bundle contains ONLY entry-A's   |             |
+|  |   worklet registrations                       |             |
+|  | entry-B's MT bundle contains ONLY entry-B's   |             |
+|  |   worklet registrations                       |             |
+|  | webpack dependency graph provides automatic   |             |
+|  |   isolation, no globalThis hack needed        |             |
+|  +----------------------------------------------+             |
++----------------------------------------------------------------+
 ```
 
-### React Lynx Architecture (参考)
+### React Lynx Architecture (reference)
 
 ```
-┌─────────────────── webpack / rspack ───────────────────────────┐
-│                                                                │
-│  BG entry: [entry-bg, App.tsx, ...]  layer: react:background   │
-│    │                                                           │
-│    └─ worklet-loader (JS pass)                                 │
-│       └─ 'main thread' 函数 → 替换为 context 对象               │
-│          (函数体发送到 MT, BG 只保留 sign/调用接口)               │
-│       └─▶ background.js (React runtime + vDOM diffing)         │
-│                                                                │
-│  MT entry: [snapshot-entry, App.tsx, ...]  layer: react:main-thread
-│    │         ↑ 同样的用户代码                                     │
-│    │                                                           │
-│    ├─ SWC snapshot 编译:                                        │
-│    │    JSX → 直接 PAPI 调用 (编译时生成)                         │
-│    │    <view style={{color:'red'}}>                            │
-│    │      → __CreateView(0,0); __SetInlineStyle(el,'color:red')│
-│    │    整个组件树编译为命令式 PAPI 代码                            │
-│    │                                                           │
-│    ├─ worklet-loader (LEPUS pass)                               │
-│    │    → registerWorkletInternal() 注册                         │
-│    │                                                           │
-│    └─▶ main-thread.js                                          │
-│         包含: snapshot 代码 + worklet 注册                       │
-│         MT 首屏由 snapshot 直接创建 (无需等 BG)                   │
-│                                                                │
-│  关键区别:                                                      │
-│  ┌──────────────────────────────────────────────────┐          │
-│  │ React MT = snapshot 编译 (JSX → PAPI) + worklets  │          │
-│  │ Vue   MT = 只有 worklets (无 snapshot 编译)        │          │
-│  │                                                   │          │
-│  │ React 首屏: MT snapshot 直接渲染 → BG hydrate      │          │
-│  │ Vue   首屏: MT 只建空 page → BG 渲染 → ops → MT 执行│          │
-│  └──────────────────────────────────────────────────┘          │
-└────────────────────────────────────────────────────────────────┘
++------------------ webpack / rspack ----------------------------+
+|                                                                |
+|  BG entry: [entry-bg, App.tsx, ...]  layer: react:background  |
+|    |                                                           |
+|    +- worklet-loader (JS pass)                                 |
+|       +- 'main thread' functions -> replaced with context     |
+|          objects                                               |
+|          (function body sent to MT, BG only keeps              |
+|           sign/call interface)                                 |
+|       +--> background.js (React runtime + vDOM diffing)        |
+|                                                                |
+|  MT entry: [snapshot-entry, App.tsx, ...]                      |
+|    |         ^ same user code       layer: react:main-thread   |
+|    |                                                           |
+|    +- SWC snapshot compilation:                                |
+|    |    JSX -> direct PAPI calls (generated at compile time)   |
+|    |    <view style={{color:'red'}}>                            |
+|    |      -> __CreateView(0,0); __SetInlineStyle(el,'color:red')|
+|    |    Entire component tree compiled into imperative          |
+|    |    PAPI code                                              |
+|    |                                                           |
+|    +- worklet-loader (LEPUS pass)                              |
+|    |    -> registerWorkletInternal() registrations              |
+|    |                                                           |
+|    +--> main-thread.js                                         |
+|         Contains: snapshot code + worklet registrations         |
+|         MT first-screen rendered directly by snapshot          |
+|         (no need to wait for BG)                               |
+|                                                                |
+|  Key Differences:                                              |
+|  +----------------------------------------------+             |
+|  | React MT = snapshot compilation               |             |
+|  |   (JSX -> PAPI) + worklets                    |             |
+|  | Vue   MT = worklets only (no snapshot          |             |
+|  |   compilation)                                |             |
+|  |                                               |             |
+|  | React first-screen: MT snapshot renders        |             |
+|  |   directly -> BG hydrates                     |             |
+|  | Vue   first-screen: MT only creates empty      |             |
+|  |   page -> BG renders -> ops -> MT executes     |             |
+|  +----------------------------------------------+             |
++----------------------------------------------------------------+
 ```
 
 ## Critical Files
@@ -180,7 +198,7 @@ export default function workletLoaderMT(
   if (
     !source.includes('\'main thread\'') && !source.includes('"main thread"')
   ) {
-    return ''; // No worklets → empty module (tree-shaken away)
+    return ''; // No worklets -> empty module (tree-shaken away)
   }
 
   const lepusResult = transformReactLynxSync(source, {
@@ -213,14 +231,14 @@ export default function vueSfcScriptExtractor(
 ): string {
   const { descriptor } = parse(source, { pad: false });
 
-  // Return script content — worklet-loader-mt processes it next
+  // Return script content -- worklet-loader-mt processes it next
   if (descriptor.scriptSetup) return descriptor.scriptSetup.content;
   if (descriptor.script) return descriptor.script.content;
-  return ''; // No script → empty module
+  return ''; // No script -> empty module
 }
 ```
 
-This replaces vue-loader on the MT layer. No template compilation, no style processing — just the raw `<script>` content where `'main thread'` directives live.
+This replaces vue-loader on the MT layer. No template compilation, no style processing -- just the raw `<script>` content where `'main thread'` directives live.
 
 `@vue/compiler-sfc` is already a transitive dependency via `@rsbuild/plugin-vue`.
 
@@ -235,7 +253,7 @@ Remove LEPUS pass and worklet-registry dependency:
     // Pass 1: JS target (unchanged)
     const jsResult = transformReactLynxSync(source, { worklet: { target: 'JS', ... } });
 
--   // Pass 2: LEPUS target — REMOVED
+-   // Pass 2: LEPUS target -- REMOVED
 -   const lepusResult = transformReactLynxSync(source, { worklet: { target: 'LEPUS', ... } });
 -   const registrations = extractRegistrations(lepusResult.code);
 -   if (registrations) addLepusRegistration(resourcePath, registrations);
@@ -246,7 +264,7 @@ Remove LEPUS pass and worklet-registry dependency:
 
 `extractRegistrations()` moves to `worklet-loader-mt.ts` (or shared util).
 
-### Step 4: Modify `entry.ts` — entry splitting
+### Step 4: Modify `entry.ts` -- entry splitting
 
 **MT entry now includes user imports:**
 
@@ -265,7 +283,7 @@ Remove LEPUS pass and worklet-registry dependency:
 
 **Remove `clearLepusRegistrations`/`getAllLepusRegistrations` imports.**
 
-**Keep `VueWorkletRuntimePlugin`** (unchanged — still needed to inject worklet-runtime Lepus chunk).
+**Keep `VueWorkletRuntimePlugin`** (unchanged -- still needed to inject worklet-runtime Lepus chunk).
 
 ### Step 5: Add loader rules for MT layer
 
@@ -309,9 +327,9 @@ Actually vue-loader stays BG-only. The new `vue:mt-sfc` rule handles `.vue` on M
 
 ### Step 6: Fix `chunkLoading: 'lynx'` startup issue
 
-**Problem**: rspeedy's `chunkLoading: 'lynx'` (via `StartupChunkDependenciesPlugin`) only generates startup code when `hasChunkEntryDependentChunks(chunk)` is true. For MT entries without async chunk dependencies, this is false — module factories never execute.
+**Problem**: rspeedy's `chunkLoading: 'lynx'` (via `StartupChunkDependenciesPlugin`) only generates startup code when `hasChunkEntryDependentChunks(chunk)` is true. For MT entries without async chunk dependencies, this is false -- module factories never execute.
 
-**Solution**: `VueMTStartupPlugin` — a webpack plugin that injects entry execution into MT bundles:
+**Solution**: `VueMTStartupPlugin` -- a webpack plugin that injects entry execution into MT bundles:
 
 ```typescript
 class VueMTStartupPlugin {
@@ -349,7 +367,7 @@ class VueMTStartupPlugin {
 }
 ```
 
-> **Investigation needed**: Verify that `__webpack_require__.s` (startup module ID) is available in the generated bundle. If not, use the `entrypoints` API to find the entry module ID for each MT chunk. This may require a different approach — e.g., tapping into `additionalTreeRuntimeRequirements` to force `RuntimeGlobals.startupEntrypoint`.
+> **Investigation needed**: Verify that `__webpack_require__.s` (startup module ID) is available in the generated bundle. If not, use the `entrypoints` API to find the entry module ID for each MT chunk. This may require a different approach -- e.g., tapping into `additionalTreeRuntimeRequirements` to force `RuntimeGlobals.startupEntrypoint`.
 
 **Fallback**: If the startup injection approach proves fragile, keep `VueMainThreadPlugin`'s flat-bundle replacement for `entry-main.ts` only, while letting webpack handle the user-code modules normally. This hybrid approach fixes per-entry isolation while preserving the proven startup mechanism.
 
@@ -365,12 +383,12 @@ Remove all references in `entry.ts` (`clearLepusRegistrations`, `getAllLepusRegi
 
 Currently rslib builds `entry-main.ts` twice:
 
-- Normal build → `dist/entry-main.js` (used by webpack as module)
-- Flat bundle build → `dist/main-thread-bundled.js` (used by `VueMainThreadPlugin`)
+- Normal build -> `dist/entry-main.js` (used by webpack as module)
+- Flat bundle build -> `dist/main-thread-bundled.js` (used by `VueMainThreadPlugin`)
 
 **Remove the flat-bundle build** from `rslib.config.ts`. Only the normal module build is needed now (webpack imports it as a regular dependency).
 
-Also remove `dist/dev-worklet-registrations.js` build — dev worklet registrations are no longer appended by the plugin. Gallery demos that still use hand-crafted registrations should be migrated to `'main thread'` directives (or import registrations as a dev-only module).
+Also remove `dist/dev-worklet-registrations.js` build -- dev worklet registrations are no longer appended by the plugin. Gallery demos that still use hand-crafted registrations should be migrated to `'main thread'` directives (or import registrations as a dev-only module).
 
 ### Step 9: Handle `dev-worklet-registrations.ts`
 
@@ -387,17 +405,17 @@ Options:
 | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | `chunkLoading: 'lynx'` startup: `__webpack_require__.s` may not exist                            | Investigate webpack internals; fallback to hybrid approach (Step 6 fallback)                         |
 | `vue-sfc-script-extractor` may miss edge cases (`<script>` with src attribute, multiple scripts) | Use `@vue/compiler-sfc` parse which handles all SFC variants; add tests                              |
-| webpack module wrapping overhead in MT bundle                                                    | Acceptable — a few KB of runtime; Lepus bytecode compilation handles it                              |
+| webpack module wrapping overhead in MT bundle                                                    | Acceptable -- a few KB of runtime; Lepus bytecode compilation handles it                              |
 | `@vue/compiler-sfc` version mismatch with vue-loader                                             | Use the same version already installed by `@rsbuild/plugin-vue`                                      |
 | Watch mode: MT loader must re-run when user files change                                         | webpack's dependency tracking handles this naturally since user files are now in MT dependency graph |
 
 ## Verification
 
-1. **Build**: `pnpm build` in `packages/vue/rspeedy-plugin`, `packages/vue/main-thread`, `packages/vue/runtime` — no errors
-2. **Testing-library**: `pnpm test` in `packages/vue/testing-library` — all tests pass
-3. **Vue upstream**: `pnpm test` in `packages/vue/vue-upstream-tests` — no regressions
+1. **Build**: `pnpm build` in `packages/vue/rspeedy-plugin`, `packages/vue/main-thread`, `packages/vue/runtime` -- no errors
+2. **Testing-library**: `pnpm test` in `packages/vue/testing-library` -- all tests pass
+3. **Vue upstream**: `pnpm test` in `packages/vue/vue-upstream-tests` -- no regressions
 4. **Multi-entry isolation**: Build gallery example, verify each entry's `main-thread.js` contains ONLY its own worklet registrations (not all entries')
-5. **LynxExplorer**: gallery-autoscroll, mts-draggable — worklet events fire correctly
+5. **LynxExplorer**: gallery-autoscroll, mts-draggable -- worklet events fire correctly
 6. **Watch mode**: modify a worklet function in dev mode, verify hot rebuild picks up the change
 
 ---
@@ -406,7 +424,7 @@ Options:
 
 ### Implementation commit
 
-`b7120bbb` — `refactor(vue): adopt layer-based main thread architecture`
+`b7120bbb` -- `refactor(vue): adopt layer-based main thread architecture`
 
 ### Bundle size impact (`examples/vue`, production build, single-entry counter app)
 
@@ -415,68 +433,69 @@ Options:
 | `main.lynx.bundle` | 73,167 B (73.2 kB) | 73,812 B (73.8 kB) | **+645 B (+0.88%)** |
 | `main.web.bundle`  | 71,189 B (71.2 kB) | 71,724 B (71.7 kB) | **+535 B (+0.75%)** |
 
-单 entry 无 worklet 场景下略增 ~0.6 kB，来自 webpack 给 MT 层空模块加的 module wrapper 开销。
+For a single-entry scenario without worklets, there is a slight increase of ~0.6 kB, coming from the webpack module wrapper overhead added to MT layer empty modules.
 
-#### 为什么 benchmark 没体现出优势
+#### Why the benchmark doesn't show the advantage
 
-`examples/vue` 是单 entry 的 counter app，没有任何 `'main thread'` 指令。
+`examples/vue` is a single-entry counter app with no `'main thread'` directives.
 
-在这个场景下：
+In this scenario:
 
-- **旧架构**: 1 个 flat bundle（entry-main.ts 预编译）+ 0 条 worklet 注册
-- **新架构**: webpack 编译 entry-main.ts + 用户代码（全部被 worklet-loader-mt 清空为 `''`）+ webpack module wrappers
+- **Old architecture**: 1 flat bundle (pre-compiled entry-main.ts) + 0 worklet registrations
+- **New architecture**: webpack compiles entry-main.ts + user code (all cleared to `''` by worklet-loader-mt) + webpack module wrappers
 
-多出的 645B 纯粹是 webpack 给这些空模块加的 wrapper 开销。没有任何 worklet 可以"拆开"，所以看不到收益。
+The extra 645B is purely the wrapper overhead webpack adds to these empty modules. There are no worklets to "split apart," so no benefit is visible.
 
-#### 真正的收益场景是多 entry
+#### The real benefit scenario is multi-entry
 
-假设 gallery 有 6 个 entry，其中 3 个有 worklet 事件：
+Suppose the gallery has 6 entries, 3 of which have worklet events:
 
 ```
-旧架构 (flat bundle + globalThis Map):
-┌─────────────────────────────────────────────┐
-│ entry-A 的 MT bundle = flat bundle          │
-│   + entry-A 的 worklet 注册                  │
-│   + entry-B 的 worklet 注册  ← 不需要的       │
-│   + entry-C 的 worklet 注册  ← 不需要的       │
-├─────────────────────────────────────────────┤
-│ entry-B 的 MT bundle = 完全一样的内容         │
-├─────────────────────────────────────────────┤
-│ entry-C 的 MT bundle = 完全一样的内容         │
-├─────────────────────────────────────────────┤
-│ entry-D/E/F 的 MT bundle = 还是一样的        │
-│   (不需要任何 worklet 注册，但也全部包含了)     │
-└─────────────────────────────────────────────┘
-6 个 entry × 同一份 (bootstrap + 全部注册)
+Old architecture (flat bundle + globalThis Map):
++---------------------------------------------+
+| entry-A's MT bundle = flat bundle            |
+|   + entry-A's worklet registrations          |
+|   + entry-B's worklet registrations  <- unnecessary |
+|   + entry-C's worklet registrations  <- unnecessary |
++---------------------------------------------+
+| entry-B's MT bundle = exactly the same content |
++---------------------------------------------+
+| entry-C's MT bundle = exactly the same content |
++---------------------------------------------+
+| entry-D/E/F's MT bundle = still the same     |
+|   (don't need any worklet registrations,      |
+|    but includes all of them anyway)           |
++---------------------------------------------+
+6 entries x the same (bootstrap + all registrations)
 
-新架构 (layer-based):
-┌───────────────────────────────┐
-│ entry-A 的 MT bundle:         │
-│   bootstrap + A 的注册 only    │
-├───────────────────────────────┤
-│ entry-B 的 MT bundle:         │
-│   bootstrap + B 的注册 only    │
-├───────────────────────────────┤
-│ entry-D 的 MT bundle:         │
-│   bootstrap + 空 (无注册)      │
-└───────────────────────────────┘
-每个 entry 只含自己的 worklet
+New architecture (layer-based):
++-------------------------------+
+| entry-A's MT bundle:          |
+|   bootstrap + A's registrations only |
++-------------------------------+
+| entry-B's MT bundle:          |
+|   bootstrap + B's registrations only |
++-------------------------------+
+| entry-D's MT bundle:          |
+|   bootstrap + empty (no registrations) |
++-------------------------------+
+Each entry contains only its own worklets
 ```
 
-所以：
+Therefore:
 
-- **单 entry 无 worklet**（当前 benchmark）：略增 ~0.6kB（webpack wrapper 开销）
-- **多 entry 有 worklet**（gallery 场景）：每个 entry 的 MT bundle 更小，因为不再包含其他 entry 的注册代码
+- **Single-entry without worklets** (current benchmark): slight increase of ~0.6kB (webpack wrapper overhead)
+- **Multi-entry with worklets** (gallery scenario): each entry's MT bundle is smaller, as it no longer includes other entries' registration code
 
-要准确验证收益，需要等 gallery 拆成多 entry 后再 benchmark。
+To accurately verify the benefit, we need to wait until the gallery is split into multiple entries and then benchmark.
 
 ### Deviations from plan
 
-1. **Step 2 — `vue-sfc-script-extractor`**: Plan specified `@vue/compiler-sfc` for SFC parsing. In practice, `@vue/compiler-sfc` is NOT directly installed (only a transitive dep inside `@rsbuild/plugin-vue`'s closure). Used regex `/<script[^>]*>([\s\S]*?)<\/script>/g` instead — sufficient for extracting `<script>` content for worklet directive detection.
+1. **Step 2 -- `vue-sfc-script-extractor`**: Plan specified `@vue/compiler-sfc` for SFC parsing. In practice, `@vue/compiler-sfc` is NOT directly installed (only a transitive dep inside `@rsbuild/plugin-vue`'s closure). Used regex `/<script[^>]*>([\s\S]*?)<\/script>/g` instead -- sufficient for extracting `<script>` content for worklet directive detection.
 
-2. **Step 3 — `worklet-utils.ts`**: `extractRegistrations()` was moved to a shared `worklet-utils.ts` rather than kept inside `worklet-loader-mt.ts`, since both the old BG loader and the new MT loader may need it.
+2. **Step 3 -- `worklet-utils.ts`**: `extractRegistrations()` was moved to a shared `worklet-utils.ts` rather than kept inside `worklet-loader-mt.ts`, since both the old BG loader and the new MT loader may need it.
 
-3. **Step 6 — Startup code fix**: Plan proposed injecting startup code via `processAssets` (appending `__webpack_require__(__webpack_require__.s)`). Actual solution was simpler — tapping `additionalTreeRuntimeRequirements` to add `RuntimeGlobals.startup` for MT entry chunks, which causes webpack to generate its own startup code naturally. No manual source manipulation needed.
+3. **Step 6 -- Startup code fix**: Plan proposed injecting startup code via `processAssets` (appending `__webpack_require__(__webpack_require__.s)`). Actual solution was simpler -- tapping `additionalTreeRuntimeRequirements` to add `RuntimeGlobals.startup` for MT entry chunks, which causes webpack to generate its own startup code naturally. No manual source manipulation needed.
 
 4. **CSS extraction**: CSS handling was extracted from `entry.ts` into a dedicated `css.ts` module (`applyCSS()`) in the same commit. This was not part of the original plan but was a natural refactoring during the entry.ts rewrite.
 
@@ -486,7 +505,7 @@ Options:
 
 **Symptom**: `processData is not a function`, `renderPage is not a function`, `vuePatchUpdate is not a function`.
 
-**Root cause**: rspeedy sets `chunkLoading: 'lynx'` globally. Lynx's `StartupChunkDependenciesPlugin` only adds `RuntimeGlobals.startup` when `hasChunkEntryDependentChunks(chunk)` is true. For MT entries without async chunk dependencies, this is false — webpack never generates the `__webpack_require__(entryModuleId)` startup call, so module factories (including `entry-main.ts` which sets `globalThis.renderPage` etc.) never execute.
+**Root cause**: rspeedy sets `chunkLoading: 'lynx'` globally. Lynx's `StartupChunkDependenciesPlugin` only adds `RuntimeGlobals.startup` when `hasChunkEntryDependentChunks(chunk)` is true. For MT entries without async chunk dependencies, this is false -- webpack never generates the `__webpack_require__(entryModuleId)` startup call, so module factories (including `entry-main.ts` which sets `globalThis.renderPage` etc.) never execute.
 
 **Fix**: `VueMarkMainThreadPlugin` taps `additionalTreeRuntimeRequirements` and adds `RuntimeGlobals.startup` for any chunk whose entry layer is `LAYERS.MAIN_THREAD`.
 
@@ -494,7 +513,7 @@ Options:
 
 **Symptom**: Same "processData is not a function" error persisted after Pitfall 1 fix.
 
-**Root cause**: Reading the built `main-thread.js` revealed that the `RuntimeGlobals.startup` fix worked (startup code was generated), but **module factories were EMPTY** — both `entry-main.js` and `ops-apply.ts` had empty function bodies `function() {}`.
+**Root cause**: Reading the built `main-thread.js` revealed that the `RuntimeGlobals.startup` fix worked (startup code was generated), but **module factories were EMPTY** -- both `entry-main.js` and `ops-apply.ts` had empty function bodies `function() {}`.
 
 The `vue:worklet-mt` loader rule had `.exclude.add(/node_modules/)` to skip bootstrap packages. But in a pnpm workspace, `vue-lynx/main-thread` resolves via symlink to `../../packages/vue/main-thread/dist/entry-main.js` (a real path under `packages/vue/`), NOT under `node_modules/`. So the exclude didn't catch it, and `worklet-loader-mt` returned `''` for these files (no `'main thread'` directive found).
 
@@ -525,7 +544,7 @@ if (vueInternalPkgDir) workletMtExclude.add(vueInternalPkgDir);
 - **Testing-library**: 63/63 tests pass (7 test files)
 - **Bundle verification**: `renderPage`, `processData`, `vuePatchUpdate` all present in encoded `.lynx.bundle`
 - **LynxExplorer**: mts-draggable verified (hash match: BG `9177:69c82:1` = MT `9177:69c82:1`, zero runtime errors)
-- **Multi-entry gallery**: gallery-scrollbar-compare and gallery-complete verified — all hashes match, worklet events fire correctly
+- **Multi-entry gallery**: gallery-scrollbar-compare and gallery-complete verified -- all hashes match, worklet events fire correctly
 
 ### Pitfall 3: Stale webpack cache after plugin rebuild (NOT predicted)
 
@@ -533,6 +552,6 @@ if (vueInternalPkgDir) workletMtExclude.add(vueInternalPkgDir);
 
 **Root cause**: The gallery example's webpack persistent cache (`node_modules/.cache`) was still serving MT bundles built BEFORE the rspeedy-plugin fix. The dev server was not restarted after the plugin rebuild.
 
-**Fix**: `rm -rf node_modules/.cache` + restart dev server. Error disappeared — hashes matched in both dev and prod builds.
+**Fix**: `rm -rf node_modules/.cache` + restart dev server. Error disappeared -- hashes matched in both dev and prod builds.
 
 **Lesson**: When debugging Lynx bundle errors, **always clear caches and restart the dev server first** before doing code analysis. rspeedy-plugin is built separately from example apps; after rebuilding the plugin, the downstream webpack cache is stale. This is documented in `packages/vue/AGENTS.md`.

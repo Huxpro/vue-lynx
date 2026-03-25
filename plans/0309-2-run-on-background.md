@@ -2,7 +2,7 @@
 
 ## Context
 
-Vue Lynx's Swiper demo currently duplicates all touch tracking on the BG thread (~60 lines of `onBGTouchStart/Move/End`) because there's no MT→BG function call mechanism. React Lynx solves this with `runOnBackground(fn)` — allowing `'main thread'` functions to asynchronously invoke BG functions. This also blocks code sharing between Vue and React swiper implementations.
+Vue Lynx's Swiper demo currently duplicates all touch tracking on the BG thread (~60 lines of `onBGTouchStart/Move/End`) because there's no MT->BG function call mechanism. React Lynx solves this with `runOnBackground(fn)` -- allowing `'main thread'` functions to asynchronously invoke BG functions. This also blocks code sharing between Vue and React swiper implementations.
 
 **Goal**: Implement `runOnBackground` for Vue Lynx, matching React Lynx's API.
 
@@ -10,14 +10,14 @@ Vue Lynx's Swiper demo currently duplicates all touch tracking on the BG thread 
 
 | Layer                                                                                                                                                                                                        | Status                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| **SWC transform** — detects `runOnBackground(fn)` by identifier name, extracts into `_jsFn` handles (JS pass) and generates `registerWorkletInternal` with bare `runOnBackground(_jsFnK)` calls (LEPUS pass) | Already works — same `@lynx-js/react/transform` SWC plugin |
-| **worklet-loader** — `extractRegistrations()` captures `registerWorkletInternal(...)` bodies including any `runOnBackground(...)` calls inside                                                               | Already works                                              |
-| **worklet-runtime on MT** — `transformWorkletInner` stamps `_execId` from parent ctx onto `_jsFnId` sub-objects; `_runOnBackgroundDelayImpl` is initialized                                                  | Already works — loaded via `__LoadLepusChunk`              |
-| **`FunctionCallRet` BG listener** — `function-call.ts` resolves return values from `runOnMainThread` calls                                                                                                   | Already works (reusable pattern)                           |
+| **SWC transform** -- detects `runOnBackground(fn)` by identifier name, extracts into `_jsFn` handles (JS pass) and generates `registerWorkletInternal` with bare `runOnBackground(_jsFnK)` calls (LEPUS pass) | Already works -- same `@lynx-js/react/transform` SWC plugin |
+| **worklet-loader** -- `extractRegistrations()` captures `registerWorkletInternal(...)` bodies including any `runOnBackground(...)` calls inside                                                               | Already works                                              |
+| **worklet-runtime on MT** -- `transformWorkletInner` stamps `_execId` from parent ctx onto `_jsFnId` sub-objects; `_runOnBackgroundDelayImpl` is initialized                                                  | Already works -- loaded via `__LoadLepusChunk`              |
+| **`FunctionCallRet` BG listener** -- `function-call.ts` resolves return values from `runOnMainThread` calls                                                                                                   | Already works (reusable pattern)                           |
 
 ## Implementation
 
-### Step 1: Types — extend `worklet-types.ts`
+### Step 1: Types -- extend `worklet-types.ts`
 
 **File**: `packages/vue/runtime/src/worklet-types.ts`
 
@@ -40,7 +40,7 @@ export interface Worklet {
 }
 ```
 
-### Step 2: `transformToWorklet` — BG function wrapper
+### Step 2: `transformToWorklet` -- BG function wrapper
 
 **New file**: `packages/vue/runtime/src/transform-to-worklet.ts` (~15 lines)
 
@@ -63,7 +63,7 @@ export function transformToWorklet(obj: (...args: any[]) => any): JsFnHandle {
 }
 ```
 
-The SWC JS pass generates `import { transformToWorklet } from "vue-lynx"` — so this must be exported from `index.ts`.
+The SWC JS pass generates `import { transformToWorklet } from "vue-lynx"` -- so this must be exported from `index.ts`.
 
 ### Step 3: BG-side worklet registration + event listener
 
@@ -72,7 +72,7 @@ The SWC JS pass generates `import { transformToWorklet } from "vue-lynx"` — so
 Port and simplify from React's `runOnBackground.ts` + `execMap.ts` + `indexMap.ts`:
 
 ```ts
-// IndexMap — auto-incrementing Map (port from React's indexMap.ts)
+// IndexMap -- auto-incrementing Map (port from React's indexMap.ts)
 class IndexMap<T> {
   private lastIndex = 0;
   private map = new Map<number, T>();
@@ -89,7 +89,7 @@ class IndexMap<T> {
   }
 }
 
-// WorkletExecIdMap — stamps _execId on worklets, finds JsFnHandle by (execId, fnId)
+// WorkletExecIdMap -- stamps _execId on worklets, finds JsFnHandle by (execId, fnId)
 class WorkletExecIdMap extends IndexMap<Worklet> {
   add(worklet: Worklet): number {
     const execId = super.add(worklet);
@@ -106,7 +106,7 @@ class WorkletExecIdMap extends IndexMap<Worklet> {
 
 let execIdMap: WorkletExecIdMap | undefined;
 
-// registerWorkletCtx — called before worklet ctx is sent to MT via ops
+// registerWorkletCtx -- called before worklet ctx is sent to MT via ops
 export function registerWorkletCtx(ctx: Worklet): void {
   if (!execIdMap) init();
   execIdMap!.add(ctx);
@@ -120,7 +120,7 @@ function init(): void {
   );
 }
 
-// runJSFunction — receives MT dispatch, finds _fn, calls it, sends return value
+// runJSFunction -- receives MT dispatch, finds _fn, calls it, sends return value
 function runJSFunction(event: { data?: unknown }): void {
   const data = JSON.parse(event.data as string);
   const handle = execIdMap!.findJsFnHandle(data.obj._execId, data.obj._jsFnId);
@@ -246,7 +246,7 @@ import { resetRunOnBackgroundState } from './run-on-background.js';
 //   resetRunOnBackgroundState();
 ```
 
-For `runOnBackground` export from BG package: provide a stub that throws with clear message ("can only be used in 'main thread' functions"). The SWC transform replaces all call sites, so this never runs — it exists only for TypeScript import resolution.
+For `runOnBackground` export from BG package: provide a stub that throws with clear message ("can only be used in 'main thread' functions"). The SWC transform replaces all call sites, so this never runs -- it exists only for TypeScript import resolution.
 
 ### Step 7: Update Swiper demo
 
@@ -269,7 +269,7 @@ Before (~196 lines):
 After (~130 lines):
 
 ```vue
-<!-- MT handlers only — runOnBackground syncs indicator -->
+<!-- MT handlers only -- runOnBackground syncs indicator -->
 <view
   :main-thread-bindtouchstart="handleTouchStart"
   :main-thread-bindtouchmove="handleTouchMove"
@@ -309,16 +309,16 @@ declare const lynx: {
 
 | Feature                                     | Reason                                                                                                        |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| GC lifecycle (`FinalizationRegistry`)       | Optimization — worklets are few and long-lived, minor leak is acceptable                                      |
+| GC lifecycle (`FinalizationRegistry`)       | Optimization -- worklets are few and long-lived, minor leak is acceptable                                      |
 | `releaseBackgroundWorkletCtx` event         | Requires GC lifecycle                                                                                         |
 | SDK version guard (`isSdkVersionGt(2, 15)`) | Vue targets modern Lynx SDK only                                                                              |
 | First-screen delay (`_isFirstScreen`)       | Vue mounts immediately, no hydration delay needed. Include the code path for safety but not critical to test. |
 
 ## Verification
 
-1. **Build**: `pnpm build` in runtime, main-thread, rspeedy-plugin — no errors
+1. **Build**: `pnpm build` in runtime, main-thread, rspeedy-plugin -- no errors
 2. **Type check**: `pnpm tsc --noEmit` passes
-3. **Existing tests**: `pnpm test` in `packages/vue/testing-library/` — all 20 tests pass (no regression)
+3. **Existing tests**: `pnpm test` in `packages/vue/testing-library/` -- all 20 tests pass (no regression)
 4. **Swiper demo on LynxExplorer**:
    - Touch drag still moves the swiper (MT handler, zero-latency)
    - Indicator dot updates during drag (via `runOnBackground`)
@@ -342,52 +342,52 @@ declare const lynx: {
 | `main-thread/src/shims.d.ts`              | modify  | +10                   |
 | **Total**                                 |         | ~200 new, -60 removed |
 
-## 实现后总结
+## Post-Implementation Summary
 
-### 构建 & 测试结果
+### Build & Test Results
 
-- 3 个包 (`runtime`, `main-thread`, `rspeedy-plugin`) 全部构建成功
-- Pipeline 测试 28/28 通过（无回归）
-- 上游测试 778/875 通过，97 跳过（与之前一致）
-- Swiper demo 在 LynxExplorer 上验证通过
+- All 3 packages (`runtime`, `main-thread`, `rspeedy-plugin`) build successfully
+- Pipeline tests 28/28 pass (no regressions)
+- Upstream tests 778/875 pass, 97 skipped (consistent with previous results)
+- Swiper demo verified on LynxExplorer
 
-### Vue Lynx ↔ React Lynx MTS 代码复用分析
+### Vue Lynx <-> React Lynx MTS Code Reuse Analysis
 
-#### MTS 函数体复用率：~95%
+#### MTS Function Body Reuse Rate: ~95%
 
-`'main thread'` 函数在 SWC transform 后变成 worklet context，函数体完全与框架无关：
+`'main thread'` functions become worklet contexts after SWC transform, and the function bodies are completely framework-agnostic:
 
-| MTS 函数                          | 差异                                           |
-| --------------------------------- | ---------------------------------------------- |
-| `handleTouchStart`                | 仅取消动画方式不同（React hook vs Vue ref）    |
-| `handleTouchMove`                 | **0 差异**                                     |
-| `handleTouchEnd`                  | 结构相同，Vue 内联了 animate                   |
-| `updateOffset` / `mtUpdateOffset` | **0 差异** — `Math.min/max` clamp 逻辑逐行一致 |
-| `easeInOutQuad`                   | **逐字一致**                                   |
-| `calcNearestPage`                 | Vue 内联在 `handleTouchEnd`，逻辑相同          |
+| MTS Function                      | Differences                                         |
+| --------------------------------- | --------------------------------------------------- |
+| `handleTouchStart`                | Only animation cancellation differs (React hook vs Vue ref) |
+| `handleTouchMove`                 | **0 differences**                                   |
+| `handleTouchEnd`                  | Same structure, Vue inlines animate                  |
+| `updateOffset` / `mtUpdateOffset` | **0 differences** -- `Math.min/max` clamp logic is line-by-line identical |
+| `easeInOutQuad`                   | **Character-by-character identical**                 |
+| `calcNearestPage`                 | Vue inlines it in `handleTouchEnd`, same logic       |
 
-#### Swiper demo 改变前后对比
+#### Swiper Demo Before/After Comparison
 
-| 指标                          | 改变前 (无 `runOnBackground`)                                   | 改变后               |
-| ----------------------------- | --------------------------------------------------------------- | -------------------- |
-| Vue Swiper 总行数             | ~196 行                                                         | ~167 行 (**-30 行**) |
-| BG 重复触摸逻辑               | 3 个 handler × ~10 行 = ~30 行                                  | **0 行** (已删除)    |
-| BG 状态变量                   | `bgOffset`, `bgTouchStartX`, `bgTouchStartOffset`               | **0 个**             |
-| MTS 函数体与 React 可直接复用 | ~70%（缺少 MT→BG 通道，indicator 逻辑不同）                     | **~95%**             |
-| 跨框架 API 一致性             | `useMainThreadRef` ✅ `runOnMainThread` ✅ `runOnBackground` ❌ | **全部 ✅**          |
+| Metric                              | Before (without `runOnBackground`)                                      | After                |
+| ----------------------------------- | ----------------------------------------------------------------------- | -------------------- |
+| Vue Swiper total lines              | ~196 lines                                                              | ~167 lines (**-30 lines**) |
+| BG duplicate touch logic            | 3 handlers x ~10 lines = ~30 lines                                      | **0 lines** (deleted) |
+| BG state variables                  | `bgOffset`, `bgTouchStartX`, `bgTouchStartOffset`                       | **0**                |
+| MTS function bodies directly reusable from React | ~70% (missing MT->BG channel, indicator logic differs)       | **~95%**             |
+| Cross-framework API consistency     | `useMainThreadRef` OK `runOnMainThread` OK `runOnBackground` missing     | **All OK**           |
 
-#### 运行时基础设施复用
+#### Runtime Infrastructure Reuse
 
-| 模块                 | 复用程度                                                           |
-| -------------------- | ------------------------------------------------------------------ |
-| `useMainThreadRef`   | API 一致，Vue 多了 `.value` alias                                  |
-| `runOnMainThread`    | dispatch 协议一致                                                  |
-| `runOnBackground`    | **新增后完全对齐**                                                 |
-| `transformToWorklet` | 逻辑一致                                                           |
-| worklet-runtime (MT) | **100% 复用** — 同一个 `__LoadLepusChunk('worklet-runtime')`       |
-| SWC transform        | **100% 复用** — 同一个 `@lynx-js/react/transform` 插件             |
-| 事件协议             | **100% 复用** — `Lynx.Worklet.runOnBackground` / `FunctionCallRet` |
+| Module                 | Reuse Level                                                                |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `useMainThreadRef`     | API consistent, Vue adds `.value` alias                                    |
+| `runOnMainThread`      | dispatch protocol consistent                                               |
+| `runOnBackground`      | **Fully aligned after implementation**                                     |
+| `transformToWorklet`   | Logic consistent                                                           |
+| worklet-runtime (MT)   | **100% reuse** -- same `__LoadLepusChunk('worklet-runtime')`               |
+| SWC transform          | **100% reuse** -- same `@lynx-js/react/transform` plugin                   |
+| Event protocol         | **100% reuse** -- `Lynx.Worklet.runOnBackground` / `FunctionCallRet`       |
 
-#### 结论
+#### Conclusion
 
-实现 `runOnBackground` 后，Vue Lynx 与 React Lynx 的 MTS API 完全对齐（`useMainThreadRef`、`runOnMainThread`、`runOnBackground`、`transformToWorklet`）。Swiper 的 MTS 函数体可以几乎逐行搬运，仅需调整框架包装（Vue SFC composable vs React hook）。剩余 ~5% 差异来自 Vue 将 `useAnimate` 内联而非提取为独立 hook — 属于代码组织风格差异，不影响功能。
+After implementing `runOnBackground`, Vue Lynx's MTS API is fully aligned with React Lynx (`useMainThreadRef`, `runOnMainThread`, `runOnBackground`, `transformToWorklet`). The Swiper's MTS function bodies can be ported nearly line-by-line, requiring only framework wrapper adjustments (Vue SFC composable vs React hook). The remaining ~5% difference comes from Vue inlining `useAnimate` rather than extracting it as a separate hook -- this is a code organization style difference that does not affect functionality.

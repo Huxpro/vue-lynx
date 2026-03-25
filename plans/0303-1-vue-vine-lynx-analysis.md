@@ -1,28 +1,28 @@
-# Vue Vine × Lynx 实现分析
+# Vue Vine x Lynx Implementation Analysis
 
-## 概览
+## Overview
 
-`vue-vine/exp/vue-vine-lynx` 分支通过 18 个 commit 实现了一个基于 Vue Vine 的 "Vue on Lynx" 方案。核心思路是：利用 Vue 3 的 Custom Renderer API，为 Lynx 的双线程架构（Main Thread + Background Thread）构建完整的渲染管线，同时复用 Vue Vine 的函数式组件语法。
+The `vue-vine/exp/vue-vine-lynx` branch implements a "Vue on Lynx" solution based on Vue Vine through 18 commits. The core approach is: leverage Vue 3's Custom Renderer API to build a complete rendering pipeline for Lynx's dual-thread architecture (Main Thread + Background Thread), while reusing Vue Vine's functional component syntax.
 
-### 新增 Packages
+### New Packages
 
-| Package                             | 用途                                                 |
-| ----------------------------------- | ---------------------------------------------------- |
-| `@vue-vine/runtime-lynx`            | Vue 3 自定义渲染器 + 双线程事件系统 + Worklet 运行时 |
-| `@vue-vine/rspeedy-plugin-vue-vine` | Rspeedy/Rsbuild 构建插件，处理双 Bundle 拆分         |
-| `packages/e2e-lynx`                 | 演示/测试应用（day-1 到 day-4 递进展示）             |
+| Package                             | Purpose                                                         |
+| ----------------------------------- | --------------------------------------------------------------- |
+| `@vue-vine/runtime-lynx`            | Vue 3 custom renderer + dual-thread event system + Worklet runtime |
+| `@vue-vine/rspeedy-plugin-vue-vine` | Rspeedy/Rsbuild build plugin, handles dual-bundle splitting     |
+| `packages/e2e-lynx`                 | Demo/test application (progressive showcase from day-1 to day-4) |
 
-### 修改的核心模块
+### Modified Core Modules
 
-| 模块                     | 变更内容                                                                                  |
-| ------------------------ | ----------------------------------------------------------------------------------------- |
-| `packages/compiler`      | 新增 Lynx transform（worklet 提取）、`'main thread'` / `'background only'` directive 分析 |
-| `packages/rspack-loader` | 注入 `LYNX_BUILTIN_COMPONENTS` 为 custom element                                          |
-| `packages/vue-vine`      | 新增 `lynx-shims.d.ts` 类型定义                                                           |
+| Module                   | Changes                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `packages/compiler`      | Added Lynx transform (worklet extraction), `'main thread'` / `'background only'` directive analysis |
+| `packages/rspack-loader` | Inject `LYNX_BUILTIN_COMPONENTS` as custom elements                                          |
+| `packages/vue-vine`      | Added `lynx-shims.d.ts` type definitions                                                     |
 
 ---
 
-## 一、整体架构
+## 1. Overall Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -30,42 +30,42 @@
 ├────────────────────────────┬────────────────────────────────┤
 │     Main Thread (Lepus)    │     Background Thread          │
 │  ┌──────────────────────┐  │  ┌──────────────────────────┐  │
-│  │ Vue 3 Custom Renderer│  │  │ 仅负责事件转发            │  │
-│  │ (PAPI 访问)          │  │  │ (无 PAPI 访问)           │  │
-│  │                      │  │  │                          │  │
-│  │ - createElement      │  │  │ publishEvent()           │  │
-│  │ - patchProp          │  │  │   → forwardToMainThread  │  │
-│  │ - insert/remove      │  │  │                          │  │
-│  │ - event handlers     │  │  │ re-export @vue/runtime-  │  │
-│  │ - worklet runtime    │  │  │   core (for types)       │  │
-│  └──────────────────────┘  │  └──────────────────────────┘  │
-│           ↑                │             │                   │
+│  │ Vue 3 Custom Renderer│  │  │ Only handles event       │  │
+│  │ (PAPI access)        │  │  │ forwarding               │  │
+│  │                      │  │  │ (no PAPI access)         │  │
+│  │ - createElement      │  │  │                          │  │
+│  │ - patchProp          │  │  │ publishEvent()           │  │
+│  │ - insert/remove      │  │  │   → forwardToMainThread  │  │
+│  │ - event handlers     │  │  │                          │  │
+│  │ - worklet runtime    │  │  │ re-export @vue/runtime-  │  │
+│  └──────────────────────┘  │  │   core (for types)       │  │
+│           ↑                │  └──────────────────────────┘  │
 │           └────── dispatchEvent('vue-vine-event') ──────────│
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**关键设计决策：Vue 渲染跑在 Main Thread。**
+**Key Design Decision: Vue rendering runs on the Main Thread.**
 
-与 ReactLynx（渲染逻辑在 Background Thread、通过 element tree diff 同步到 Main Thread）不同，Vue Vine 方案把整个 Vue Custom Renderer 放在 Main Thread (Lepus) 上运行——因为 Lepus 有 PAPI 访问权限，可以直接调用 `__CreateView()`、`__AppendElement()` 等原生 API。Background Thread 被简化为纯粹的事件中转层。
+Unlike ReactLynx (where rendering logic is on the Background Thread, syncing to the Main Thread via element tree diff), the Vue Vine approach runs the entire Vue Custom Renderer on the Main Thread (Lepus) -- because Lepus has PAPI access and can directly call native APIs like `__CreateView()`, `__AppendElement()`, etc. The Background Thread is simplified to a pure event relay layer.
 
 ---
 
-## 二、Runtime-Lynx 详解
+## 2. Runtime-Lynx Details
 
-### 2.1 自定义渲染器 (renderer/)
+### 2.1 Custom Renderer (renderer/)
 
-**`renderer/index.ts`** — 用 `createRenderer<LynxElement, LynxElement>()` 创建 Vue 自定义渲染器，暴露 `createLynxApp()` 工厂函数。
+**`renderer/index.ts`** -- Creates a Vue custom renderer using `createRenderer<LynxElement, LynxElement>()`, exposing a `createLynxApp()` factory function.
 
-核心设计：**延迟挂载**
+Core design: **Deferred mounting**
 
 ```typescript
-// app.mount() 不会立即执行，只标记 pending
+// app.mount() does not execute immediately, only marks as pending
 const mount = (): ComponentPublicInstance => {
   __mountPending = true;
   return __mountedInstance ?? {};
 };
 
-// 真正挂载在 Lynx Native 调用 renderPage() 时才执行
+// Actual mounting happens when Lynx Native calls renderPage()
 function executeMountToPage(page: LynxElement) {
   const vnode = createVNode(rootComponent, rootProps);
   render(vnode, page);
@@ -73,9 +73,9 @@ function executeMountToPage(page: LynxElement) {
 }
 ```
 
-**`renderer/node-ops.ts`** — 将 Vue DOM 操作映射到 Lynx PAPI：
+**`renderer/node-ops.ts`** -- Maps Vue DOM operations to Lynx PAPI:
 
-| Vue 操作                        | Lynx PAPI                                      |
+| Vue Operation                   | Lynx PAPI                                      |
 | ------------------------------- | ---------------------------------------------- |
 | `createElement('view')`         | `__CreateView(componentId)`                    |
 | `createElement('text')`         | `__CreateText(componentId)`                    |
@@ -87,27 +87,27 @@ function executeMountToPage(page: LynxElement) {
 | `remove(child)`                 | `__RemoveElement(parent, child)`               |
 | `setText(node, text)`           | `__SetAttribute(node, 'text', text)`           |
 
-每个操作后调用 `scheduleLynxFlush()` 批量提交。
+Each operation is followed by a call to `scheduleLynxFlush()` for batch submission.
 
-**`renderer/patch-prop.ts`** — 属性更新，支持 4 种事件绑定模式：
+**`renderer/patch-prop.ts`** -- Property updates, supporting 4 event binding modes:
 
-1. **Vue 风格事件** (`onTap`, `onClick` → `/^on[A-Z]/`)
-   - 转换为 Lynx 事件名：`onTap` → `tap`
-   - 注册 handler 到 registry，拿到 sign，调用 `__AddEvent(el, 'bindEvent', eventName, sign)`
+1. **Vue-style events** (`onTap`, `onClick` -> `/^on[A-Z]/`)
+   - Converted to Lynx event names: `onTap` -> `tap`
+   - Handler registered in registry, obtains a sign, calls `__AddEvent(el, 'bindEvent', eventName, sign)`
 
-2. **Lynx 原生事件** (`bindtap`, `catchtap`, `global-bindscroll`)
-   - 正则匹配：`/^(global-bind|bind|catch|...)(\w+)/i`
-   - 同样通过 sign 机制注册
+2. **Lynx native events** (`bindtap`, `catchtap`, `global-bindscroll`)
+   - Regex matching: `/^(global-bind|bind|catch|...)(\w+)/i`
+   - Also registered via the sign mechanism
 
-3. **主线程 Worklet 事件** (`main-thread:bindtap`)
-   - 正则匹配：`/^main-thread:(global-bind|bind|catch|...)(\w+)/i`
-   - 检测 `isWorklet(nextValue)` 后直接传递 worklet 对象给 `__AddEvent`
+3. **Main Thread Worklet events** (`main-thread:bindtap`)
+   - Regex matching: `/^main-thread:(global-bind|bind|catch|...)(\w+)/i`
+   - After detecting `isWorklet(nextValue)`, the worklet object is passed directly to `__AddEvent`
 
-4. **普通属性**：`class` → `__SetClasses()`，`style` → `__AddInlineStyle()`（驼峰转 kebab），`id` → `__SetID()`，其余 → `__SetAttribute()`
+4. **Regular properties**: `class` -> `__SetClasses()`, `style` -> `__AddInlineStyle()` (camelCase to kebab-case), `id` -> `__SetID()`, others -> `__SetAttribute()`
 
-### 2.2 事件系统
+### 2.2 Event System
 
-**三层架构：**
+**Three-layer architecture:**
 
 ```
 Background Thread                Main Thread
@@ -124,20 +124,20 @@ Background Thread                Main Thread
                                 └──────────────────────────┘
 ```
 
-- **Sign 机制**：每个事件 handler 注册时生成 6 位随机 sign（`Math.random().toString(36)`），通过 sign 跨线程引用 handler
-- **跨线程通信**：`lynx.getCoreContext().dispatchEvent({type: 'vue-vine-event', data: JSON.stringify({handlerSign, eventData})})`
-- **主线程接收**：`lynx.getJSContext().addEventListener('vue-vine-event', callback)`
+- **Sign mechanism**: Each event handler generates a 6-character random sign upon registration (`Math.random().toString(36)`), used to reference handlers across threads
+- **Cross-thread communication**: `lynx.getCoreContext().dispatchEvent({type: 'vue-vine-event', data: JSON.stringify({handlerSign, eventData})})`
+- **Main Thread reception**: `lynx.getJSContext().addEventListener('vue-vine-event', callback)`
 
-### 2.3 Worklet 运行时
+### 2.3 Worklet Runtime
 
-`worklet-runtime.ts` 实现主线程高性能事件处理（无跨线程开销）：
+`worklet-runtime.ts` implements high-performance event handling on the Main Thread (no cross-thread overhead):
 
-- **Worklet 对象结构**：`{ _wkltId: string, _c?: object }` (闭包上下文)
-- **注册**：`registerWorklet("main-thread", id, fn)` 存入全局 `_workletMap`
-- **执行**：`runWorklet(worklet, params)` 查找函数并执行，参数中的 `elementRefptr` 自动包装为 `MainThreadElement`
-- **`MainThreadElement`** 封装类：提供 `setAttribute()`, `setStyleProperty()`, `setStyleProperties()` 等方法，直接调用 PAPI 并批量 flush
+- **Worklet object structure**: `{ _wkltId: string, _c?: object }` (closure context)
+- **Registration**: `registerWorklet("main-thread", id, fn)` stores into global `_workletMap`
+- **Execution**: `runWorklet(worklet, params)` looks up and executes the function; `elementRefptr` in parameters is automatically wrapped as `MainThreadElement`
+- **`MainThreadElement`** wrapper class: provides `setAttribute()`, `setStyleProperty()`, `setStyleProperties()` methods, directly calling PAPI with batch flush
 
-### 2.4 调度器
+### 2.4 Scheduler
 
 ```typescript
 let flushScheduled = false;
@@ -151,45 +151,45 @@ function scheduleLynxFlush() {
 }
 ```
 
-利用 Vue 的 `queuePostFlushCb()` 确保所有响应式更新完成后，只调用一次 `__FlushElementTree()`。
+Uses Vue's `queuePostFlushCb()` to ensure that after all reactive updates complete, `__FlushElementTree()` is called only once.
 
-### 2.5 入口文件
+### 2.5 Entry Files
 
-**Main Thread (`entry-main.ts`)**：
+**Main Thread (`entry-main.ts`)**:
 
-1. `setupLynxEnv()` — 初始化 `lynx.__initData`、`lynx.reportError`、`processData`
-2. `injectCalledByNative()` — 注入 `renderPage()`、`updatePage()` 等 Lynx 生命周期回调
-3. `initWorkletRuntime()` — 初始化 worklet 映射和事件监听
-4. `setupEventsReceive()` — 监听跨线程事件
-5. 导出 `createLynxApp` 和 `render`
+1. `setupLynxEnv()` -- Initializes `lynx.__initData`, `lynx.reportError`, `processData`
+2. `injectCalledByNative()` -- Injects Lynx lifecycle callbacks like `renderPage()`, `updatePage()`
+3. `initWorkletRuntime()` -- Initializes worklet mapping and event listeners
+4. `setupEventsReceive()` -- Listens for cross-thread events
+5. Exports `createLynxApp` and `render`
 
-**Background Thread (`entry-background.ts`)**：
+**Background Thread (`entry-background.ts`)**:
 
-- 仅注入 `publishEvent` → `forwardEventToMainThread()`
-- Re-export `@vue/runtime-core` 的所有内容
+- Only injects `publishEvent` -> `forwardEventToMainThread()`
+- Re-exports all content from `@vue/runtime-core`
 
 ---
 
-## 三、Compiler 变更
+## 3. Compiler Changes
 
 ### 3.1 `'main thread'` / `'background only'` Directive
 
-**分析阶段** (`analyze.ts`)：遍历所有函数声明/箭头函数/函数表达式，检测函数体的 directive：
+**Analysis phase** (`analyze.ts`): Traverses all function declarations/arrow functions/function expressions, detecting directives in function bodies:
 
 ```typescript
 function handler() {
-  'main thread'; // ← 被识别为 VineLynxDirectiveType
+  'main thread'; // <- Recognized as VineLynxDirectiveType
   // ...
 }
 ```
 
-**转换阶段** (`transform/lynx.ts`)：
+**Transform phase** (`transform/lynx.ts`):
 
-对 `'main thread'` 函数：
+For `'main thread'` functions:
 
-1. 提取函数体为内部变量 `__vine_wklt_${fnName}_fn`
-2. 原变量替换为 worklet 对象 `{ _wkltId: "${md5Hash}:${index}" }`
-3. 注入条件注册代码：
+1. Extract function body as internal variable `__vine_wklt_${fnName}_fn`
+2. Replace original variable with worklet object `{ _wkltId: "${md5Hash}:${index}" }`
+3. Inject conditional registration code:
 
 ```javascript
 if (typeof __MAIN_THREAD__ !== 'undefined' && __MAIN_THREAD__) {
@@ -201,27 +201,27 @@ if (typeof __MAIN_THREAD__ !== 'undefined' && __MAIN_THREAD__) {
 }
 ```
 
-对 `'background only'` 函数：
+For `'background only'` functions:
 
-- 包裹在 `if (__BACKGROUND__) { ... }` 中，主线程 bundle 中被 tree-shake 掉
+- Wrapped in `if (__BACKGROUND__) { ... }`, tree-shaken out in the Main Thread bundle
 
-### 3.2 模板编译适配
+### 3.2 Template Compilation Adaptation
 
-`template/compose.ts` 中，当 `lynx.enabled` 时：
+In `template/compose.ts`, when `lynx.enabled`:
 
-- `runtimeModuleName` 从 `'vue'` 改为 `'@vue-vine/runtime-lynx'`
-- 避免引入 `@vue/runtime-dom`（含 DOM API，Lepus 中不可用）
+- `runtimeModuleName` changes from `'vue'` to `'@vue-vine/runtime-lynx'`
+- Avoids importing `@vue/runtime-dom` (contains DOM APIs, unavailable in Lepus)
 
-### 3.3 Import 管理
+### 3.3 Import Management
 
-`transform/steps.ts` 和 `transform.ts` 中：
+In `transform/steps.ts` and `transform.ts`:
 
-- 根据 `lynx.enabled` 动态选择 runtime module
-- `import { defineComponent, ... } from '@vue-vine/runtime-lynx'`（而非 `'vue'`）
+- Dynamically selects runtime module based on `lynx.enabled`
+- `import { defineComponent, ... } from '@vue-vine/runtime-lynx'` (instead of `'vue'`)
 
-### 3.4 Custom Element 注册
+### 3.4 Custom Element Registration
 
-`rspack-loader/context.ts` 中：
+In `rspack-loader/context.ts`:
 
 ```typescript
 if (compilerOptions.lynx?.enabled) {
@@ -230,91 +230,91 @@ if (compilerOptions.lynx?.enabled) {
 }
 ```
 
-防止 Vue 将 Lynx 原生组件当作自定义组件处理。
+Prevents Vue from treating Lynx native components as custom components.
 
 ---
 
-## 四、构建系统 (rspeedy-plugin-vue-vine)
+## 4. Build System (rspeedy-plugin-vue-vine)
 
-### 4.1 双 Bundle 拆分
+### 4.1 Dual-Bundle Splitting
 
-插件将每个 entry 拆分为两个 rspack entry：
+The plugin splits each entry into two rspack entries:
 
-| Entry                 | Layer                  | 入口文件                                             | 产物             |
-| --------------------- | ---------------------- | ---------------------------------------------------- | ---------------- |
-| `{name}__main-thread` | `vue-vine:main-thread` | `@vue-vine/runtime-lynx/entry-main` + 用户代码       | `main-thread.js` |
-| `{name}`              | `vue-vine:background`  | `@vue-vine/runtime-lynx/entry-background` + 用户代码 | `background.js`  |
+| Entry                 | Layer                  | Entry File                                                   | Output           |
+| --------------------- | ---------------------- | ------------------------------------------------------------ | ---------------- |
+| `{name}__main-thread` | `vue-vine:main-thread` | `@vue-vine/runtime-lynx/entry-main` + user code             | `main-thread.js` |
+| `{name}`              | `vue-vine:background`  | `@vue-vine/runtime-lynx/entry-background` + user code       | `background.js`  |
 
-### 4.2 编译时宏
+### 4.2 Compile-Time Macros
 
-通过 SWC optimizer 的 `globals` 进行编译时常量替换：
+Compile-time constant substitution via SWC optimizer's `globals`:
 
-| 宏                    | Main Thread | Background |
-| --------------------- | ----------- | ---------- |
-| `__MAIN_THREAD__`     | `true`      | `false`    |
-| `__BACKGROUND__`      | `false`     | `true`     |
-| `__DEV__`             | 根据环境    | 根据环境   |
-| `__VUE_OPTIONS_API__` | `true`      | `true`     |
+| Macro                 | Main Thread | Background      |
+| --------------------- | ----------- | --------------- |
+| `__MAIN_THREAD__`     | `true`      | `false`         |
+| `__BACKGROUND__`      | `false`     | `true`          |
+| `__DEV__`             | Per env     | Per env         |
+| `__VUE_OPTIONS_API__` | `true`      | `true`          |
 
-### 4.3 Loader 管线
+### 4.3 Loader Pipeline
 
-每个 layer 有独立的 loader 规则：
+Each layer has independent loader rules:
 
 ```
-.vine.ts 文件:  vine-loader → swc-loader（注入宏）
-普通 .ts 文件:  swc-loader（仅注入宏）
+.vine.ts files:  vine-loader → swc-loader (macro injection)
+Regular .ts files:  swc-loader (macro injection only)
 ```
 
-`vine-loader` 使用 `compilerOptions: { lynx: { enabled: true } }` 触发 Lynx 编译模式。
+`vine-loader` uses `compilerOptions: { lynx: { enabled: true } }` to trigger Lynx compilation mode.
 
-### 4.4 Webpack 插件链
+### 4.4 Webpack Plugin Chain
 
-1. **`MainThreadAssetMarkerPlugin`** — 标记主线程产物 `lynx:main-thread: true`
-2. **`RuntimeWrapperWebpackPlugin`** — 包裹 background JS 为 Lynx 可执行格式
-3. **`LynxEncodePlugin`** — 内联脚本编码
-4. **`LynxTemplatePlugin`** — 生成 `.lynx.bundle`（targetSdkVersion: '3.2'）
-5. **`DefinePlugin`** — 注入共享编译常量
-
----
-
-## 五、演示应用递进
-
-| 阶段  | 文件            | 能力                                                                                                                       |
-| ----- | --------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Day 1 | `day-1.ts`      | 纯 `h()` 渲染函数，静态 `<view>` + `<text>`，验证基本渲染管线                                                              |
-| Day 2 | `day-2.ts`      | `ref()` 响应式 + `setInterval` 定时更新 + `bindtap` 事件绑定                                                               |
-| Day 3 | `day-3.vine.ts` | Vue Vine 模板语法 `vine\`...\``，组件组合，模板插值                                                                        |
-| Day 4 | `day-4.vine.ts` | **核心突破**：Background vs Main Thread 事件对比，`scroll-view` + `global-bindscroll`，主线程直接操作 `setStyleProperty()` |
-
-Day 4 同时展示了两种事件处理模式的性能差异：
-
-- **Background 模式**：`global-bindscroll` → 更新 `ref()` → 触发 re-render → 跨线程同步
-- **Main Thread 模式**：`main-thread:global-bindscroll` → worklet 直接调用 PAPI → 零延迟
+1. **`MainThreadAssetMarkerPlugin`** -- Marks Main Thread output with `lynx:main-thread: true`
+2. **`RuntimeWrapperWebpackPlugin`** -- Wraps background JS into Lynx-executable format
+3. **`LynxEncodePlugin`** -- Inline script encoding
+4. **`LynxTemplatePlugin`** -- Generates `.lynx.bundle` (targetSdkVersion: '3.2')
+5. **`DefinePlugin`** -- Injects shared compile-time constants
 
 ---
 
-## 六、与 ReactLynx 的对比
+## 5. Demo Application Progression
 
-| 维度             | Vue Vine on Lynx                   | ReactLynx                      |
-| ---------------- | ---------------------------------- | ------------------------------ |
-| **渲染线程**     | Main Thread (Lepus)                | Background Thread              |
-| **跨线程同步**   | 事件从 BG → Main（单向）           | Element Tree diff 从 BG → Main |
-| **PAPI 访问**    | 直接在渲染器中调用                 | 通过 diff 间接操作             |
-| **Bundle 数**    | 2 (main-thread.js + background.js) | 2 (同)                         |
-| **背景线程职责** | 仅事件转发                         | 运行 React + 生成 element tree |
-| **主线程职责**   | Vue 渲染 + 事件处理 + Worklet      | 应用 diff + 事件转发           |
-| **Worklet**      | 编译器提取 `'main thread'` 函数    | `'main thread'` 指令 + 编译器  |
-| **模板语法**     | `vine\`<view>...\``                | JSX `<view>...`                |
+| Phase | File            | Capabilities                                                                                                                    |
+| ----- | --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Day 1 | `day-1.ts`      | Pure `h()` render function, static `<view>` + `<text>`, validates basic rendering pipeline                                      |
+| Day 2 | `day-2.ts`      | `ref()` reactivity + `setInterval` periodic updates + `bindtap` event binding                                                   |
+| Day 3 | `day-3.vine.ts` | Vue Vine template syntax `vine\`...\``, component composition, template interpolation                                           |
+| Day 4 | `day-4.vine.ts` | **Core breakthrough**: Background vs Main Thread event comparison, `scroll-view` + `global-bindscroll`, Main Thread direct `setStyleProperty()` manipulation |
 
-**核心差异**：Vue Vine 方案将所有 UI 逻辑集中在 Main Thread，利用 Lepus 的 PAPI 直接操控元素树，简化了跨线程通信。代价是 Main Thread 的 JS 负载更重，但避免了 ReactLynx 需要的 element tree diff 和同步机制。
+Day 4 simultaneously demonstrates the performance difference between two event handling modes:
+
+- **Background mode**: `global-bindscroll` -> update `ref()` -> trigger re-render -> cross-thread sync
+- **Main Thread mode**: `main-thread:global-bindscroll` -> worklet directly calls PAPI -> zero latency
 
 ---
 
-## 七、关键实现洞察
+## 6. Comparison with ReactLynx
 
-1. **Sign-based 事件注册**：用 6 位随机字符串作为跨线程事件引用，避免序列化函数
-2. **延迟挂载模式**：`app.mount()` 只标记 pending，等 `renderPage()` 回调时才真正创建 VNode 树
-3. **单次 Flush 策略**：所有 DOM 操作后调用 `scheduleLynxFlush()`，利用 `queuePostFlushCb` 确保每个 tick 只调 `__FlushElementTree()` 一次
-4. **编译器 Worklet 提取**：用 MD5(fileId:fnName:index) 生成确定性 worklet ID，确保跨 build 稳定
-5. **最小化 Background Bundle**：背景线程仅包含 `event-forward.ts`（~30 行），不包含 Vue 渲染器
-6. **`isCustomElement` 注入**：在 rspack-loader 层自动将 `view/text/image/...` 标记为 custom element，避免 Vue 编译警告
+| Dimension             | Vue Vine on Lynx                   | ReactLynx                      |
+| --------------------- | ---------------------------------- | ------------------------------ |
+| **Rendering Thread**  | Main Thread (Lepus)                | Background Thread              |
+| **Cross-Thread Sync** | Events from BG -> Main (one-way)   | Element Tree diff from BG -> Main |
+| **PAPI Access**       | Direct calls in renderer           | Indirect via diff              |
+| **Bundle Count**      | 2 (main-thread.js + background.js) | 2 (same)                       |
+| **BG Thread Role**    | Event forwarding only              | Runs React + generates element tree |
+| **MT Thread Role**    | Vue rendering + event handling + Worklet | Applies diff + event forwarding |
+| **Worklet**           | Compiler extracts `'main thread'` functions | `'main thread'` directive + compiler |
+| **Template Syntax**   | `vine\`<view>...\``               | JSX `<view>...`                |
+
+**Core Difference**: The Vue Vine approach centralizes all UI logic on the Main Thread, leveraging Lepus's PAPI to directly manipulate the element tree, simplifying cross-thread communication. The trade-off is heavier JS load on the Main Thread, but it avoids the element tree diff and synchronization mechanism required by ReactLynx.
+
+---
+
+## 7. Key Implementation Insights
+
+1. **Sign-based event registration**: Uses 6-character random strings as cross-thread event references, avoiding function serialization
+2. **Deferred mounting pattern**: `app.mount()` only marks as pending; the actual VNode tree creation happens when the `renderPage()` callback fires
+3. **Single-flush strategy**: All DOM operations call `scheduleLynxFlush()` afterward, using `queuePostFlushCb` to ensure `__FlushElementTree()` is called only once per tick
+4. **Compiler worklet extraction**: Uses MD5(fileId:fnName:index) to generate deterministic worklet IDs, ensuring stability across builds
+5. **Minimal Background Bundle**: The background thread only contains `event-forward.ts` (~30 lines), excluding the Vue renderer
+6. **`isCustomElement` injection**: Automatically marks `view/text/image/...` as custom elements at the rspack-loader layer, avoiding Vue compilation warnings
