@@ -1,7 +1,7 @@
 # Plan: Eliminate `__CreateComponent`, Use `__SetCSSId` Only (Align with ReactLynx 3.0)
 
 **Date**: 2025-03-17
-**Status**: Completed ✅
+**Status**: Completed
 
 ---
 
@@ -14,15 +14,13 @@
 - But DevTool **Panel did not show CSS selectors** for any element
 
 Feedback from DevTool team:
-> `parent_component_unique_id_` 传成了 1，应该传 10 的。这个错误会导致 devtool
-> 找 element 的 parent component 的时候找不到，而 parent component 与存样式表
-> 相关，找不到 parent component 会导致无法获取到样式
+> `parent_component_unique_id_` was passed as 1, but should have been 10. This error causes DevTool to be unable to find the element's parent component, and since the parent component is related to where stylesheets are stored, not finding the parent component prevents CSS data from being retrieved.
 
 ### Two separate CSS pipelines
 
 There are **two independent pipelines** that use `parent_component_unique_id_`:
 
-#### Pipeline 1: CSS Rendering (element → style application)
+#### Pipeline 1: CSS Rendering (element -> style application)
 
 ```
 FiberElement::GetRelatedCSSFragment()          // fiber_element.cc:326-350
@@ -39,14 +37,14 @@ FiberElement::GetRelatedCSSFragment()          // fiber_element.cc:326-350
 AND `css_id_` directly. The `GetParentComponentElement()` fallback is never reached.
 **CSS rendering works without `__CreateComponent`.**
 
-#### Pipeline 2: DevTool CSS Inspector (element → panel display)
+#### Pipeline 2: DevTool CSS Inspector (element -> panel display)
 
 ```
 CDP: getMatchedStylesForNode(nodeId)
-  → ElementHelper::GetMatchedCSSRulesOfNode()       // element_helper.cc:459
-    → ElementInspector::GetMatchedStyleSheet(el)     // element_inspector.cc:581
-      → inspector_attribute->style_root_             // ← MUST be non-null
-        → GetStyleSheetMap(style_root)               // retrieves CSS rules for display
+  -> ElementHelper::GetMatchedCSSRulesOfNode()       // element_helper.cc:459
+    -> ElementInspector::GetMatchedStyleSheet(el)     // element_inspector.cc:581
+      -> inspector_attribute->style_root_             // <- MUST be non-null
+        -> GetStyleSheetMap(style_root)               // retrieves CSS rules for display
 ```
 
 `style_root_` is populated in `InitStyleRoot()` (`element_inspector.cc:499-505`):
@@ -76,8 +74,8 @@ if (component->GetTag() == kElementPageTag) {
 }
 ```
 
-**Critically**: `PageElement IS-A ComponentElement** (inheritance chain:
-`PageElement → ComponentElement → WrapperElement → FiberElement → Element`).
+**Critically**: **PageElement IS-A ComponentElement** (inheritance chain:
+`PageElement -> ComponentElement -> WrapperElement -> FiberElement -> Element`).
 `GetInspectorTagElementTypeMap()` maps `"page"` to `InspectorElementType::COMPONENT`
 (not `DOCUMENT`). So `PrepareComponentNodeForInspector()` runs for PageElement just
 as it does for any ComponentElement, creating the stylevalue child and setting `style_root_`.
@@ -93,7 +91,7 @@ as it does for any ComponentElement, creating the stylevalue child and setting `
 
 Remove the `__CreateComponent` workaround and rely solely on `__SetCSSId` for CSS,
 matching ReactLynx 3.0's architecture. DevTool CSS panel continues to work because
-PageElement IS-A ComponentElement — no workaround needed.
+PageElement IS-A ComponentElement -- no workaround needed.
 
 ---
 
@@ -105,7 +103,7 @@ ReactLynx 3.0 **never calls `__CreateComponent`**. Its CSS setup is:
 
 1. Snapshot `create()` creates elements via `__CreateView(parentComponentUniqueId)` etc.
 2. After creation, calls `__SetCSSId(this.__elements, cssId, entryName)` (lines 310-325)
-3. That's it — no ComponentElement, no component hierarchy
+3. That's it -- no ComponentElement, no component hierarchy
 
 The `FiberSetCSSId` code has a comment confirming this architecture shift:
 > Since this API is currently only in RL3.0, and **RL3.0 does not depend on
@@ -133,7 +131,7 @@ Key: it sets **both** `css_style_sheet_manager_` and `css_id_` on the element di
 ```ts
 ['root', {
   create() { return [__page!]; },
-  cssId: 0,  // ← cssId=0, so __SetCSSId([__page], 0) is called
+  cssId: 0,  // <- cssId=0, so __SetCSSId([__page], 0) is called
 }]
 ```
 
@@ -148,7 +146,7 @@ ReactLynx explicitly sets CSS scope on the page element itself. vue-lynx now mir
 | File | Change |
 |------|--------|
 | `main-thread/src/entry-main.ts` | Removed `__CreateComponent`; added `__SetCSSId([page], 0)`; stores page (not component) as `elements[1]` |
-| `main-thread/src/element-registry.ts` | Renamed `rootComponentUniqueId` → `pageUniqueId` |
+| `main-thread/src/element-registry.ts` | Renamed `rootComponentUniqueId` -> `pageUniqueId` |
 | `main-thread/src/ops-apply.ts` | Uses `pageUniqueId` for element creation |
 | `main-thread/src/list-apply.ts` | Uses `pageUniqueId` for `__CreateList` |
 | `main-thread/src/shims.d.ts` | Removed `__CreateComponent` type declaration |
@@ -158,7 +156,7 @@ ReactLynx explicitly sets CSS scope on the page element itself. vue-lynx now mir
 
 ```
 page (with css_style_sheet_manager_ set by __SetCSSId)
-  └─ [vue elements] (each with css_style_sheet_manager_ set by __SetCSSId)
+  +- [vue elements] (each with css_style_sheet_manager_ set by __SetCSSId)
 ```
 
 ### Unexpected benefit: CSS `%` units now work in Lynx for Web
@@ -168,8 +166,8 @@ didn't work. Previously the intermediate `<x-view>` ComponentElement had `height
 breaking the `%` resolution chain:
 
 ```
-Before:  page (height:100%) → <x-view component> (height:auto) → content (height:100% → 0)
-After:   page (height:100%) → content (height:100% → works ✅)
+Before:  page (height:100%) -> <x-view component> (height:auto) -> content (height:100% -> 0)
+After:   page (height:100%) -> content (height:100% -> works)
 ```
 
 ---
@@ -185,7 +183,7 @@ None. The existing engine already handles PageElement correctly via the inherita
 No changes to `InitStyleRoot` or related code are needed.
 
 ### Task 3: Can PageElement satisfy the type check?
-Yes — it already does. `GetInspectorTagElementTypeMap()` maps `"page"` to
+Yes -- it already does. `GetInspectorTagElementTypeMap()` maps `"page"` to
 `InspectorElementType::COMPONENT`. The `InitStyleRoot` early return for `tag == "page"`
 is irrelevant because `PrepareComponentNodeForInspector` handles PageElement via a
 separate path (not `InitStyleRoot`).
@@ -204,8 +202,8 @@ This is correct for vue-lynx since CSS is loaded under the default entry.
 ## Verification
 
 - **Unit tests**: 32/32 pass (6 test files)
-- **Package build**: `pnpm build` — succeeds
-- **Example build**: `examples/basic` — succeeds, both web and lynx bundles
+- **Package build**: `pnpm build` -- succeeds
+- **Example build**: `examples/basic` -- succeeds, both web and lynx bundles
 - **Side effect**: CSS `%` units now work in Lynx for Web (see below)
 
 ---
@@ -224,11 +222,11 @@ This is correct for vue-lynx since CSS is loaded under the default entry.
 
 | File | Purpose |
 |------|---------|
-| `~/github/lynx/core/runtime/bindings/lepus/renderer_functions.cc:4172` | `FiberSetCSSId` — sets `css_style_sheet_manager_` + `css_id_` |
-| `~/github/lynx/core/renderer/dom/fiber/fiber_element.cc:326` | `GetRelatedCSSFragment()` — CSS rendering pipeline |
-| `~/github/lynx/devtool/lynx_devtool/element/element_inspector.cc:499` | `InitStyleRoot()` — **the DevTool break point** |
+| `~/github/lynx/core/runtime/bindings/lepus/renderer_functions.cc:4172` | `FiberSetCSSId` -- sets `css_style_sheet_manager_` + `css_id_` |
+| `~/github/lynx/core/renderer/dom/fiber/fiber_element.cc:326` | `GetRelatedCSSFragment()` -- CSS rendering pipeline |
+| `~/github/lynx/devtool/lynx_devtool/element/element_inspector.cc:499` | `InitStyleRoot()` -- **the DevTool break point** |
 | `~/github/lynx/devtool/lynx_devtool/element/element_inspector.cc:798` | `GetCSSStyleComponentElement()` |
-| `~/github/lynx/devtool/lynx_devtool/element/element_inspector.cc:581` | `GetMatchedStyleSheet()` — depends on `style_root_` |
+| `~/github/lynx/devtool/lynx_devtool/element/element_inspector.cc:581` | `GetMatchedStyleSheet()` -- depends on `style_root_` |
 | `~/github/lynx/core/inspector/style_sheet.h:83` | `InspectorElementType` enum |
 | `~/github/lynx-stack/packages/react/runtime/src/snapshot.ts:310` | ReactLynx `__SetCSSId` usage |
 | `~/github/lynx/core/renderer/dom/element_manager.cc:441` | `PrepareComponentNodeForInspector()` |
