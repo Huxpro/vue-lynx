@@ -20,6 +20,8 @@ import {
 } from 'vue-lynx';
 import { isBooleanAttr, includeBooleanAttr } from '@vue/shared';
 
+declare const __DEV__: boolean;
+
 // ---------------------------------------------------------------------------
 // Bridge internals – injected by the setup file
 // ---------------------------------------------------------------------------
@@ -141,6 +143,162 @@ function vueKeyToPapiKey(key: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Post-pipeline DOM property shim
+// ---------------------------------------------------------------------------
+
+// Tags where width/height must be set as attributes, not properties.
+const EMBEDDED_TAGS = new Set([
+  'img', 'video', 'canvas', 'source', 'embed', 'object',
+]);
+
+/**
+ * After the pipeline sets attributes via PAPI's __SetAttribute, this shim
+ * corrects jsdom element state for props that must be DOM properties.
+ * Mirrors Vue runtime-dom's shouldSetAsProp / patchDOMProp logic.
+ */
+function patchDOMProp(
+  el: Element,
+  key: string,
+  _prevValue: unknown,
+  nextValue: unknown,
+): void {
+  const tag = el.tagName.toLowerCase();
+
+  // .prop / ^attr modifiers are handled before the pipeline call,
+  // so they never reach here.
+
+  // width/height on embedded tags must be attributes (already done by pipeline)
+  if ((key === 'width' || key === 'height') && EMBEDDED_TAGS.has(tag)) {
+    // Ensure removal on null
+    if (nextValue == null) el.removeAttribute(key);
+    return;
+  }
+
+  // form is a readonly property on inputs; always use attribute
+  if (key === 'form') {
+    if (nextValue == null) el.removeAttribute(key);
+    return;
+  }
+
+  // translate is an enumerated attribute; keep as attribute
+  if (key === 'translate') {
+    return;
+  }
+
+  // type on textarea is readonly; skip silently (Vue does the same)
+  if (key === 'type' && tag === 'textarea') {
+    return;
+  }
+
+  // Check if this key is a settable DOM property
+  if (!(key in el)) {
+    // Not a DOM property -- the pipeline's setAttribute is sufficient.
+    // Handle removal: null/undefined should remove the attribute.
+    if (nextValue == null) {
+      el.removeAttribute(key);
+    }
+    return;
+  }
+
+  // At this point, key is a DOM property on the element.
+  // Determine the current type for proper null handling.
+  const currentValue = (el as any)[key];
+  const propType = typeof currentValue;
+
+  // For readonly properties, try setting and catch TypeError
+  let needsWarn = false;
+
+  if (nextValue != null) {
+    try {
+      (el as any)[key] = nextValue;
+    } catch {
+      needsWarn = true;
+    }
+  } else {
+    // null/undefined: reset to type-appropriate default and remove attribute.
+    // Vue runtime-dom resets string props to '', boolean to false, and
+    // leaves number/object props alone (just removes the attribute).
+    try {
+      if (propType === 'boolean') {
+        (el as any)[key] = false;
+      } else if (propType === 'string') {
+        (el as any)[key] = '';
+      } else if (propType !== 'number') {
+        // Non-string/boolean/number props (srcObject, etc.) reset to null
+        (el as any)[key] = null;
+      }
+      // Number props: just removeAttribute below, don't set to 0
+      // (e.g. input.size = 0 throws in jsdom)
+    } catch {
+      needsWarn = true;
+    }
+    el.removeAttribute(key);
+  }
+
+  // Store non-string values as _value (Vue's convention for input.value)
+  if (key === 'value' && typeof nextValue !== 'string' && nextValue != null) {
+    (el as any)._value = nextValue;
+  }
+
+  // Emit Vue-style warning for TypeError (test assertion expects this)
+  if (needsWarn) {
+    console.warn(
+      `[Vue warn]: Failed setting prop "${key}" on <${tag}>`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Style helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert camelCase to kebab-case for CSS property names.
+ */
+function toKebab(key: string): string {
+  return key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
+
+/**
+ * Set a single CSS property on a style object, handling:
+ * - CSS custom properties (--*)
+ * - !important suffix
+ * - camelCase → kebab-case conversion
+ * - vendor prefix fallback (e.g. transition → WebkitTransition)
+ */
+function setStyleProperty(
+  style: CSSStyleDeclaration,
+  rawKey: string,
+  val: string,
+): void {
+  // CSS custom properties
+  if (rawKey.startsWith('--')) {
+    style.setProperty(rawKey, val);
+    return;
+  }
+
+  // Check for !important
+  const importantRE = /\s*!important\s*$/;
+  const isImportant = importantRE.test(val);
+  const cleanVal = isImportant ? val.replace(importantRE, '') : val;
+  const kebabKey = toKebab(rawKey);
+
+  if (isImportant) {
+    style.setProperty(kebabKey, cleanVal, 'important');
+  } else {
+    style.setProperty(kebabKey, cleanVal);
+    // Also set via direct property assignment and try vendor prefix.
+    // Vue runtime-dom sets style[key] = val, checks if it took, and
+    // falls back to the Webkit-prefixed version if not.
+    const prefixed = `Webkit${rawKey.charAt(0).toUpperCase()}${rawKey.slice(1)}`;
+    if (prefixed in style) {
+      (style as any)[prefixed] = cleanVal;
+    }
+    (style as any)[rawKey] = cleanVal;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // patchProp — the main bridge function
 // ---------------------------------------------------------------------------
 
@@ -189,6 +347,8 @@ export function patchProp(
 
   // Pre-process: handle string style (set cssText directly)
   if (key === 'style' && typeof nextValue === 'string') {
+    // Skip if prev === next (Vue runtime-dom optimization)
+    if (prevValue === nextValue) return;
     (el as HTMLElement).style.cssText = nextValue;
     // Also route through pipeline for tracking
     nodeOps.patchProp(shadow, key, prevValue, {});
@@ -196,23 +356,53 @@ export function patchProp(
     return;
   }
 
-  // Pre-process: for style objects, filter out undefined/null values
-  // to prevent jsdom's CSS parser from throwing, and clear old styles
-  // since Object.assign is additive (won't remove stale properties).
+  // Pre-process: for style objects, use setProperty for each entry so that
+  // !important, CSS custom properties, shorthand expansion, and vendor
+  // prefixes all work correctly. The pipeline still processes the style
+  // object for ops tracking; the post-pipeline setProperty calls correct
+  // the final jsdom state.
   if (key === 'style' && nextValue != null && typeof nextValue === 'object') {
     // Clear all existing inline styles first so stale properties don't persist
     if (typeof (el as any).removeAttribute === 'function') {
       (el as HTMLElement).removeAttribute('style');
     }
 
+    // Route through pipeline for ops tracking (with cleaned values)
     const cleaned: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(nextValue as Record<string, unknown>)) {
-      if (v != null) {
+      if (v != null && !Array.isArray(v)) {
         cleaned[k] = v;
       }
     }
     nodeOps.patchProp(shadow, key, prevValue, cleaned);
     syncFlush();
+
+    // Post-pipeline: apply each style property via setProperty on jsdom
+    const style = (el as HTMLElement).style;
+    for (const [rawKey, rawVal] of Object.entries(
+      nextValue as Record<string, unknown>,
+    )) {
+      if (rawVal == null) continue;
+
+      // Handle array values: try each until one sticks (multi-value fallback)
+      if (Array.isArray(rawVal)) {
+        for (const v of rawVal as string[]) {
+          setStyleProperty(style, rawKey, v);
+        }
+        continue;
+      }
+
+      const val = String(rawVal);
+
+      // Warn for trailing semicolons (Vue runtime-dom does this)
+      if (__DEV__ && /;[\s]*$/.test(val) && !val.endsWith('\\;')) {
+        console.warn(
+          `[Vue warn]: Unexpected semicolon at the end of '${rawKey}' style value: '${val}'`,
+        );
+      }
+
+      setStyleProperty(style, rawKey, val);
+    }
     return;
   }
 
@@ -224,6 +414,30 @@ export function patchProp(
   ) {
     const val = includeBooleanAttr(nextValue) ? '' : null;
     nodeOps.patchProp(shadow, key, prevValue, val);
+    syncFlush();
+    return;
+  }
+
+  // Pre-process: .prop modifier — force set as DOM property, skip pipeline
+  // (setAttribute('.x') would throw InvalidCharacterError)
+  if (key.startsWith('.')) {
+    const propKey = key.slice(1);
+    (el as any)[propKey] = nextValue;
+    // Still route through pipeline with the real key for ops tracking
+    nodeOps.patchProp(shadow, propKey, prevValue, nextValue);
+    syncFlush();
+    return;
+  }
+
+  // Pre-process: ^attr modifier — force set as attribute, skip pipeline
+  if (key.startsWith('^')) {
+    const attrKey = key.slice(1);
+    if (nextValue != null) {
+      el.setAttribute(attrKey, String(nextValue));
+    } else {
+      el.removeAttribute(attrKey);
+    }
+    nodeOps.patchProp(shadow, attrKey, prevValue, nextValue);
     syncFlush();
     return;
   }
@@ -247,6 +461,15 @@ export function patchProp(
 
   // Sync-flush to apply ops via PAPI on the MT thread
   syncFlush();
+
+  // Post-pipeline DOM property shim: PAPI only has __SetAttribute (string
+  // setAttribute), but some HTML props must be set as DOM properties to
+  // produce correct behavior (input.value, select.multiple, etc.). This
+  // shim runs AFTER the full pipeline so ops serialization and cross-thread
+  // transfer are still exercised. It only corrects the final jsdom state.
+  if (!key.startsWith('on') && key !== 'class' && key !== 'style' && key !== 'id') {
+    patchDOMProp(el, key, prevValue, nextValue);
+  }
 
   // For events: manage DOM forwarders based on what the ops pipeline
   // produced in el.eventMap. This ensures event tests exercise the real

@@ -282,6 +282,32 @@ export default defineConfig({
         find: '@vue/server-renderer',
         replacement: path.resolve(__dirname, 'src/stubs/server-renderer.ts'),
       },
+      // Ensure @vue/* bare specifiers resolve to the same ESM bundle files
+      // that the import-rewrite plugins target, so module-level state
+      // (currentRenderingInstance, etc.) is shared across all consumers.
+      // Without this, Vite treats index.js and dist/xxx.esm-bundler.js as
+      // separate module instances with independent module-scoped variables.
+      {
+        find: '@vue/runtime-core',
+        replacement: path.join(
+          path.dirname(require.resolve('@vue/runtime-core/package.json')),
+          'dist/runtime-core.esm-bundler.js',
+        ),
+      },
+      {
+        find: '@vue/reactivity',
+        replacement: path.join(
+          path.dirname(require.resolve('@vue/reactivity/package.json')),
+          'dist/reactivity.esm-bundler.js',
+        ),
+      },
+      {
+        find: '@vue/shared',
+        replacement: path.join(
+          path.dirname(require.resolve('@vue/shared/package.json')),
+          'dist/shared.esm-bundler.js',
+        ),
+      },
     ],
     setupFiles: [
       path.resolve(__dirname, 'core/scripts/setup-vitest.ts'),
