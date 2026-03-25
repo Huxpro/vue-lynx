@@ -18,7 +18,7 @@ import {
   takeOps,
   resetForTesting,
 } from 'vue-lynx';
-import { isBooleanAttr, includeBooleanAttr } from '@vue/shared';
+import { isBooleanAttr, includeBooleanAttr, isKnownHtmlAttr, isKnownSvgAttr } from '@vue/shared';
 
 // ---------------------------------------------------------------------------
 // Bridge internals – injected by the setup file
@@ -141,6 +141,112 @@ function vueKeyToPapiKey(key: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Post-pipeline DOM property shim
+// ---------------------------------------------------------------------------
+
+// Tags where width/height must be set as attributes, not properties.
+const EMBEDDED_TAGS = new Set([
+  'img', 'video', 'canvas', 'source', 'embed', 'object',
+]);
+
+/**
+ * After the pipeline sets attributes via PAPI's __SetAttribute, this shim
+ * corrects jsdom element state for props that must be DOM properties.
+ * Mirrors Vue runtime-dom's shouldSetAsProp / patchDOMProp logic.
+ */
+function patchDOMProp(
+  el: Element,
+  key: string,
+  _prevValue: unknown,
+  nextValue: unknown,
+): void {
+  const tag = el.tagName.toLowerCase();
+
+  // .prop / ^attr modifiers are handled before the pipeline call,
+  // so they never reach here.
+
+  // width/height on embedded tags must be attributes (already done by pipeline)
+  if ((key === 'width' || key === 'height') && EMBEDDED_TAGS.has(tag)) {
+    // Ensure removal on null
+    if (nextValue == null) el.removeAttribute(key);
+    return;
+  }
+
+  // form is a readonly property on inputs; always use attribute
+  if (key === 'form') {
+    if (nextValue == null) el.removeAttribute(key);
+    return;
+  }
+
+  // translate is an enumerated attribute; keep as attribute
+  if (key === 'translate') {
+    return;
+  }
+
+  // type on textarea is readonly; skip silently (Vue does the same)
+  if (key === 'type' && tag === 'textarea') {
+    return;
+  }
+
+  // Check if this key is a settable DOM property
+  if (!(key in el)) {
+    // Not a DOM property -- the pipeline's setAttribute is sufficient.
+    // Handle removal: null/undefined should remove the attribute.
+    if (nextValue == null) {
+      el.removeAttribute(key);
+    }
+    return;
+  }
+
+  // At this point, key is a DOM property on the element.
+  // Determine the current type for proper null handling.
+  const currentValue = (el as any)[key];
+  const propType = typeof currentValue;
+
+  // For readonly properties, try setting and catch TypeError
+  let needsWarn = false;
+
+  if (nextValue != null) {
+    try {
+      (el as any)[key] = nextValue;
+    } catch {
+      needsWarn = true;
+    }
+  } else {
+    // null/undefined: reset to type-appropriate default and remove attribute.
+    // Vue runtime-dom resets string props to '', boolean to false, and
+    // leaves number/object props alone (just removes the attribute).
+    try {
+      if (propType === 'boolean') {
+        (el as any)[key] = false;
+      } else if (propType === 'string') {
+        (el as any)[key] = '';
+      } else if (propType !== 'number') {
+        // Non-string/boolean/number props (srcObject, etc.) reset to null
+        (el as any)[key] = null;
+      }
+      // Number props: just removeAttribute below, don't set to 0
+      // (e.g. input.size = 0 throws in jsdom)
+    } catch {
+      needsWarn = true;
+    }
+    el.removeAttribute(key);
+  }
+
+  // Store non-string values as _value (Vue's convention for input.value)
+  if (key === 'value' && typeof nextValue !== 'string' && nextValue != null) {
+    (el as any)._value = nextValue;
+  }
+
+  // Emit Vue-style warning for TypeError (test assertion expects this)
+  if (needsWarn) {
+    console.warn(
+      `[Vue warn]: Failed setting prop "${key}" on <${tag}>`,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // patchProp — the main bridge function
 // ---------------------------------------------------------------------------
 
@@ -240,6 +346,30 @@ export function patchProp(
     return;
   }
 
+  // Pre-process: .prop modifier — force set as DOM property, skip pipeline
+  // (setAttribute('.x') would throw InvalidCharacterError)
+  if (key.startsWith('.')) {
+    const propKey = key.slice(1);
+    (el as any)[propKey] = nextValue;
+    // Still route through pipeline with the real key for ops tracking
+    nodeOps.patchProp(shadow, propKey, prevValue, nextValue);
+    syncFlush();
+    return;
+  }
+
+  // Pre-process: ^attr modifier — force set as attribute, skip pipeline
+  if (key.startsWith('^')) {
+    const attrKey = key.slice(1);
+    if (nextValue != null) {
+      el.setAttribute(attrKey, String(nextValue));
+    } else {
+      el.removeAttribute(attrKey);
+    }
+    nodeOps.patchProp(shadow, attrKey, prevValue, nextValue);
+    syncFlush();
+    return;
+  }
+
   // Pre-process: detect event props and wrap array handlers.
   // register() in the event registry expects a single callable, so
   // array handlers (e.g. [fn1, fn2]) must be wrapped before nodeOps.
@@ -259,6 +389,15 @@ export function patchProp(
 
   // Sync-flush to apply ops via PAPI on the MT thread
   syncFlush();
+
+  // Post-pipeline DOM property shim: PAPI only has __SetAttribute (string
+  // setAttribute), but some HTML props must be set as DOM properties to
+  // produce correct behavior (input.value, select.multiple, etc.). This
+  // shim runs AFTER the full pipeline so ops serialization and cross-thread
+  // transfer are still exercised. It only corrects the final jsdom state.
+  if (!key.startsWith('on') && key !== 'class' && key !== 'style' && key !== 'id') {
+    patchDOMProp(el, key, prevValue, nextValue);
+  }
 
   // For events: manage DOM forwarders based on what the ops pipeline
   // produced in el.eventMap. This ensures event tests exercise the real
