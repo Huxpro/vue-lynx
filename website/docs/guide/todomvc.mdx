@@ -25,5 +25,7 @@ The table below reflects our initial prototype — the minimum custom code neede
 | **Reactivity** | `@vue/reactivity` | 100% official |
 | **Component system** | `@vue/runtime-core` | 100% official |
 | **Template compiler** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% official |
-| **Renderer & Dual-thread comm** | `vue-lynx/runtime`, `vue-lynx/main-thread` | Custom (673 + 232 LOC) |
-| **Bundler Plugin** | `vue-lynx/plugin` | Custom (363 LOC) |
+| **Dual-threaded renderer** | `vue-lynx/runtime`, `vue-lynx/main-thread` | Custom (~900 LOC) |
+| **Bundler Plugin** | `vue-lynx/plugin` | Custom (~360 LOC) |
+
+With just over **1,000 lines of code**, we were able to run TodoMVC flawlessly. This successfully validated that building a dual-thread rendering pipeline on top of the Vue 3 Custom Renderer API to connect with Lynx's native engine is a viable and highly efficient approach.
