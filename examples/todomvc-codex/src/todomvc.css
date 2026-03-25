@@ -1,0 +1,264 @@
+.page {
+  width: 100%;
+  height: 100%;
+  background-color: #f5f5f5;
+}
+
+.page-content {
+  width: 100%;
+}
+
+.todoapp-shell {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding: 28px 16px 12px;
+}
+
+.todoapp {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.16),
+    0 24px 50px rgba(0, 0, 0, 0.08);
+}
+
+.todo-scroll {
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  padding-top: 12px;
+  background-color: #ffffff;
+}
+
+.new-todo-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #ededed;
+  background-color: rgba(0, 0, 0, 0.002);
+  box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
+}
+
+.header-toggle-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  min-height: 60px;
+  flex-shrink: 0;
+}
+
+.header-toggle-all-placeholder {
+  opacity: 0;
+}
+
+.header-toggle-all-icon {
+  text-align: center;
+  font-size: 24px;
+  color: #e6e6e6;
+}
+
+.header-toggle-all-icon.checked {
+  color: #737373;
+}
+
+.title {
+  text-align: center;
+  font-size: 72px;
+  line-height: 1;
+  font-weight: 200;
+  color: rgba(175, 47, 47, 0.15);
+  margin-bottom: 10px;
+}
+
+.new-todo {
+  flex: 1;
+  width: auto;
+  min-height: 60px;
+  padding: 16px 18px;
+  border-width: 0;
+  color: #4d4d4d;
+  font-size: 24px;
+}
+
+.new-todo.with-toggle {
+  padding-left: 6px;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-item {
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ededed;
+}
+
+.todo-view {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 58px;
+  padding: 12px 18px;
+}
+
+.todo-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d9e6e4;
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.todo-item.completed .todo-toggle {
+  border-color: #5dc2af;
+}
+
+.todo-toggle-icon {
+  font-size: 18px;
+  color: #5dc2af;
+}
+
+.todo-label-hitbox {
+  flex: 1;
+  margin-left: 14px;
+  margin-right: 12px;
+}
+
+.todo-label {
+  color: #4d4d4d;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.todo-item.completed .todo-label {
+  color: #d9d9d9;
+  text-decoration: line-through;
+}
+
+.todo-destroy {
+  font-size: 28px;
+  line-height: 1;
+  color: #cc9a9a;
+  opacity: 0.68;
+  flex-shrink: 0;
+}
+
+.todo-edit-shell {
+  padding: 0 0 0 52px;
+  border-bottom: 1px solid #ededed;
+  overflow: hidden;
+}
+
+.todo-item.editing .todo-edit-shell {
+  border-bottom-width: 0;
+}
+
+.todo-edit {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 58px;
+  padding: 12px 16px;
+  border: 1px solid #999999;
+  background-color: #ffffff;
+  color: #4d4d4d;
+  font-size: 24px;
+  box-shadow:
+    inset 0 -1px 5px rgba(0, 0, 0, 0.2),
+    0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  color: #777777;
+  border-top: 1px solid #e6e6e6;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.08),
+    0 8px 0 -3px #f6f6f6,
+    0 9px 1px -3px rgba(0, 0, 0, 0.08),
+    0 16px 0 -6px #f6f6f6,
+    0 17px 2px -6px rgba(0, 0, 0, 0.08);
+}
+
+.todo-count {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 14px;
+  color: #777777;
+}
+
+.todo-count-strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #777777;
+}
+
+.todo-count-label {
+  font-size: 14px;
+  color: #777777;
+}
+
+.filters {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.filter-link {
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #777777;
+  font-size: 14px;
+}
+
+.filter-link.selected {
+  border-color: rgba(175, 47, 47, 0.2);
+}
+
+.clear-completed {
+  font-size: 14px;
+  color: #777777;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 44px;
+}
+
+.info-line {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #bfbfbf;
+  text-align: center;
+}

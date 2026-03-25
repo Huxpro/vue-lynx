@@ -1,0 +1,35 @@
+{
+  "name": "@vue-lynx-example/todomvc-codex",
+  "version": "0.2.1",
+  "private": false,
+  "description": "A closer TodoMVC reference clone built with Vue-Lynx and Vue Router",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/todomvc-codex"
+  },
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
