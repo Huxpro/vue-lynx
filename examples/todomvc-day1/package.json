@@ -1,0 +1,33 @@
+{
+  "name": "@vue-lynx-example/todomvc-day1",
+  "version": "0.2.1",
+  "private": true,
+  "description": "The Day 1 tribute version of TodoMVC built with Vue 3 × Lynx",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/todomvc"
+  },
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

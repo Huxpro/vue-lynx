@@ -1,6 +1,6 @@
 # TodoMVC
 
-[TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) is the canonical benchmark for comparing JavaScript frameworks. We ported it as our first validation target to verify that Vue 3's Custom Renderer API can target Lynx's native rendering engine with minimal adapter code.
+[TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) is the canonical benchmark for comparing JavaScript frameworks. We ported it as our first validation target to verify whether we can fully reuse the Vue 3 core and implement a dual-thread rendering pipeline on top of the Custom Renderer API to connect with Lynx's native engine.
 
 <Go example="todomvc" defaultFile="src/TodoApp.vue" />
 
@@ -10,7 +10,7 @@ Most business logic transferred directly — Composition API (`ref`, `computed`,
 
 | Aspect | Original (Web) | Vue Lynx |
 |--------|----------------|----------|
-| **Template elements** | `<div>`, `<li>`, `<button>`, `<label>` | `<view>`, `<text>`, `<input>` |
+| **Template elements** | `<div>`, `<li>`, `<button>`, `<label>` | `<view>`, `<text>`, `<input>`, `<scroll-view>` |
 | **Events** | `@click`, `@keyup.enter` | `@tap`, `@confirm` |
 | **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` (no native checkbox in Lynx) |
 | **Vue Router** | 3 filter routes | `ref('all')` (not needed) |
@@ -25,7 +25,7 @@ The table below reflects our initial prototype — the minimum custom code neede
 | **Reactivity** | `@vue/reactivity` | 100% official |
 | **Component system** | `@vue/runtime-core` | 100% official |
 | **Template compiler** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% official |
-| **Renderer** | Custom `createRenderer(nodeOps)` | Custom (~200 LOC) |
-| **v-show** | Custom (ops-based display:none) | Custom (~15 LOC) |
-| **v-model** | Stubbed | Not yet implemented |
-| **Cross-thread comm** | ops buffer + callLepusMethod | Custom (~250 LOC) |
+| **Dual-threaded renderer** | `vue-lynx/runtime`, `vue-lynx/main-thread` | Custom (~900 LOC) |
+| **Bundler Plugin** | `vue-lynx/plugin` | Custom (~360 LOC) |
+
+With just over **1,000 lines of code**, we were able to run TodoMVC. This validated that building a dual-thread rendering pipeline on top of the Vue 3 Custom Renderer API to connect with Lynx's native engine is a viable approach.

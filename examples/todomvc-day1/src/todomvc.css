@@ -11,28 +11,12 @@
 
 /* ─── App Container ─────────────────────────────────────── */
 
-.page {
-  height: 100%;
-  background-color: #f5f5f5;
-}
-
-.todoapp-shell {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: flex-start;
-  width: 100%;
-  padding: 28px 16px 12px;
-}
-
 .todoapp {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  position: relative;
   width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
-  background-color: #ffffff;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.16),
-    0 24px 50px rgba(0, 0, 0, 0.08);
 }
 
 /* ─── Header ────────────────────────────────────────────── */
@@ -40,67 +24,26 @@
 .header {
   display: flex;
   flex-direction: column;
+  align-items: center;
   padding-top: 12px;
-  width: 100%;
 }
 
 .header .title {
-  font-size: 72px;
-  line-height: 1;
+  font-size: 60px;
   font-weight: 200;
   color: rgba(175, 47, 47, 0.15);
   text-align: center;
-  margin-bottom: 10px;
-}
-
-.new-todo-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  border-bottom: 1px solid #ededed;
-  background-color: rgba(0, 0, 0, 0.002);
-  box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-  width: 100%;
-}
-
-.header-toggle-all {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 58px;
-  min-height: 60px;
-  flex-shrink: 0;
-}
-
-.header-toggle-all-placeholder {
-  opacity: 0;
-}
-
-.header-toggle-all-icon {
-  text-align: center;
-  font-size: 24px;
-  color: #e6e6e6;
-}
-
-.header-toggle-all-icon.checked {
-  color: #737373;
 }
 
 .new-todo {
-  flex: 1;
-  width: auto;
-  min-height: 60px;
-  padding: 16px 18px;
-  border-width: 0;
+  width: 90%;
+  padding: 16px 16px 16px 16px;
+  font-size: 18px;
+  border: 1px solid #999;
+  border-radius: 4px;
+  margin-top: 8px;
   color: #4d4d4d;
-  font-size: 24px;
-  overflow: hidden;
-  text-overflow: clip;
-}
-
-.new-todo.with-toggle {
-  padding-left: 6px;
+  background-color: #fff;
 }
 
 /* ─── Main Section ──────────────────────────────────────── */
@@ -108,9 +51,45 @@
 .main {
   display: flex;
   flex-direction: column;
+  border-top: 1px solid #e6e6e6;
 }
 
 /* Toggle All */
+.toggle-all-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.toggle-all-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+}
+
+.toggle-all-btn.all-completed {
+  background-color: #737373;
+}
+
+.toggle-all-icon {
+  font-size: 20px;
+  color: #e6e6e6;
+}
+
+.toggle-all-btn.all-completed .toggle-all-icon {
+  color: #fff;
+}
+
+.toggle-all-label {
+  font-size: 14px;
+  color: #e6e6e6;
+  margin-left: 8px;
+}
 
 /* ─── Todo List ─────────────────────────────────────────── */
 
@@ -123,25 +102,18 @@
 
 .todo-item {
   display: flex;
-  flex-direction: column;
-  background-color: #ffffff;
-  border-bottom: 1px solid #ededed;
-}
-
-.todo-view {
-  display: flex;
   flex-direction: row;
   align-items: center;
-  min-height: 58px;
-  padding: 12px 18px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #ededed;
 }
 
 /* Checkbox circle */
 .todo-toggle {
-  width: 34px;
-  height: 34px;
-  border-radius: 17px;
-  border: 1px solid #d9e6e4;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: 2px solid #bddad5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,24 +122,23 @@
 
 .todo-item.completed .todo-toggle {
   border-color: #5dc2af;
+  background-color: #5dc2af;
 }
 
-.todo-toggle-icon {
+.checkmark {
   font-size: 18px;
-  color: #5dc2af;
+  color: #fff;
+  font-weight: 700;
 }
 
 /* Todo label */
-.todo-label-hitbox {
-  flex: 1;
-  margin-left: 14px;
-  margin-right: 12px;
-}
-
 .todo-label {
-  font-size: 24px;
+  flex: 1;
+  font-size: 18px;
   color: #4d4d4d;
-  line-height: 1.3;
+  margin-left: 12px;
+  margin-right: 12px;
+  line-height: 1.4;
 }
 
 .todo-item.completed .todo-label {
@@ -191,28 +162,19 @@
 .edit-container {
   display: flex;
   flex-direction: row;
-  padding: 0 0 0 52px;
+  align-items: center;
+  padding: 4px 16px;
   border-bottom: 1px solid #ededed;
-  overflow: hidden;
-}
-
-.todo-item.editing .edit-container {
-  border-bottom-width: 0;
 }
 
 .edit-input {
-  width: auto;
   flex: 1;
-  box-sizing: border-box;
-  min-height: 58px;
-  padding: 12px 16px;
-  border: 1px solid #999999;
-  background-color: #ffffff;
+  font-size: 18px;
+  padding: 12px;
+  border: 1px solid #999;
+  border-radius: 4px;
   color: #4d4d4d;
-  font-size: 24px;
-  box-shadow:
-    inset 0 -1px 5px rgba(0, 0, 0, 0.2),
-    0 0 1px rgba(0, 0, 0, 0.12);
+  background-color: #fff;
 }
 
 /* ─── Footer ────────────────────────────────────────────── */
@@ -221,37 +183,20 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 12px 16px;
-  color: #777777;
+  padding: 10px 16px;
   border-top: 1px solid #e6e6e6;
-  box-shadow:
-    0 1px 1px rgba(0, 0, 0, 0.08),
-    0 8px 0 -3px #f6f6f6,
-    0 9px 1px -3px rgba(0, 0, 0, 0.08),
-    0 16px 0 -6px #f6f6f6,
-    0 17px 2px -6px rgba(0, 0, 0, 0.08);
 }
 
 .todo-count {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  font-size: 14px;
-  color: #777777;
+  font-size: 13px;
+  color: #777;
+  flex-shrink: 0;
 }
 
-.todo-count-strong {
-  font-size: 14px;
+.todo-count-number {
   font-weight: 700;
-  color: #777777;
-}
-
-.todo-count-label {
-  font-size: 14px;
-  color: #777777;
+  font-size: 13px;
+  color: #777;
 }
 
 /* Filter buttons */
@@ -260,17 +205,15 @@
   flex-direction: row;
   flex: 1;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 180px;
+  gap: 4px;
 }
 
 .filter-btn {
+  font-size: 13px;
+  color: #777;
   padding: 3px 8px;
   border: 1px solid transparent;
   border-radius: 3px;
-  color: #777777;
-  font-size: 14px;
 }
 
 .filter-btn.selected {
@@ -279,8 +222,9 @@
 
 /* Clear completed */
 .clear-completed {
-  font-size: 14px;
-  color: #777777;
+  font-size: 13px;
+  color: #777;
+  flex-shrink: 0;
 }
 
 /* ─── Info Footer ───────────────────────────────────────── */

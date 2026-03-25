@@ -1,27 +1,17 @@
-/*
- * TodoMVC CSS for Lynx
- *
- * Adapted from todomvc-app-css for Lynx constraints:
- *   - No pseudo-elements (::before, ::after)
- *   - No :hover, :focus, :checked pseudo-classes
- *   - All elements are <view>, <text>, <input>
- *   - Class selectors + descendant/child combinators only
- *   - Lynx defaults to border-box, linear layout
- */
-
-/* ─── App Container ─────────────────────────────────────── */
-
 .page {
+  width: 100%;
   height: 100%;
   background-color: #f5f5f5;
 }
 
+.page-content {
+  width: 100%;
+}
+
 .todoapp-shell {
   display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: flex-start;
   width: 100%;
+  justify-content: center;
   padding: 28px 16px 12px;
 }
 
@@ -35,22 +25,15 @@
     0 24px 50px rgba(0, 0, 0, 0.08);
 }
 
-/* ─── Header ────────────────────────────────────────────── */
+.todo-scroll {
+  width: 100%;
+}
 
 .header {
   display: flex;
   flex-direction: column;
   padding-top: 12px;
-  width: 100%;
-}
-
-.header .title {
-  font-size: 72px;
-  line-height: 1;
-  font-weight: 200;
-  color: rgba(175, 47, 47, 0.15);
-  text-align: center;
-  margin-bottom: 10px;
+  background-color: #ffffff;
 }
 
 .new-todo-row {
@@ -60,8 +43,6 @@
   border-bottom: 1px solid #ededed;
   background-color: rgba(0, 0, 0, 0.002);
   box-shadow: inset 0 -2px 1px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-  width: 100%;
 }
 
 .header-toggle-all {
@@ -87,6 +68,15 @@
   color: #737373;
 }
 
+.title {
+  text-align: center;
+  font-size: 72px;
+  line-height: 1;
+  font-weight: 200;
+  color: rgba(175, 47, 47, 0.15);
+  margin-bottom: 10px;
+}
+
 .new-todo {
   flex: 1;
   width: auto;
@@ -95,31 +85,21 @@
   border-width: 0;
   color: #4d4d4d;
   font-size: 24px;
-  overflow: hidden;
-  text-overflow: clip;
 }
 
 .new-todo.with-toggle {
   padding-left: 6px;
 }
 
-/* ─── Main Section ──────────────────────────────────────── */
-
 .main {
   display: flex;
   flex-direction: column;
 }
 
-/* Toggle All */
-
-/* ─── Todo List ─────────────────────────────────────────── */
-
 .todo-list {
   display: flex;
   flex-direction: column;
 }
-
-/* ─── Todo Item ─────────────────────────────────────────── */
 
 .todo-item {
   display: flex;
@@ -136,12 +116,11 @@
   padding: 12px 18px;
 }
 
-/* Checkbox circle */
 .todo-toggle {
   width: 34px;
   height: 34px;
-  border-radius: 17px;
   border: 1px solid #d9e6e4;
+  border-radius: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,7 +136,6 @@
   color: #5dc2af;
 }
 
-/* Todo label */
 .todo-label-hitbox {
   flex: 1;
   margin-left: 14px;
@@ -165,8 +143,8 @@
 }
 
 .todo-label {
-  font-size: 24px;
   color: #4d4d4d;
+  font-size: 24px;
   line-height: 1.3;
 }
 
@@ -175,34 +153,26 @@
   text-decoration: line-through;
 }
 
-/* Destroy button */
-.destroy {
-  width: 28px;
-  height: 28px;
-  font-size: 22px;
+.todo-destroy {
+  font-size: 28px;
+  line-height: 1;
   color: #cc9a9a;
-  text-align: center;
-  line-height: 28px;
+  opacity: 0.68;
   flex-shrink: 0;
 }
 
-/* ─── Edit mode ─────────────────────────────────────────── */
-
-.edit-container {
-  display: flex;
-  flex-direction: row;
+.todo-edit-shell {
   padding: 0 0 0 52px;
   border-bottom: 1px solid #ededed;
   overflow: hidden;
 }
 
-.todo-item.editing .edit-container {
+.todo-item.editing .todo-edit-shell {
   border-bottom-width: 0;
 }
 
-.edit-input {
-  width: auto;
-  flex: 1;
+.todo-edit {
+  width: 100%;
   box-sizing: border-box;
   min-height: 58px;
   padding: 12px 16px;
@@ -214,8 +184,6 @@
     inset 0 -1px 5px rgba(0, 0, 0, 0.2),
     0 0 1px rgba(0, 0, 0, 0.12);
 }
-
-/* ─── Footer ────────────────────────────────────────────── */
 
 .footer {
   display: flex;
@@ -254,18 +222,17 @@
   color: #777777;
 }
 
-/* Filter buttons */
 .filters {
   display: flex;
-  flex-direction: row;
   flex: 1;
+  flex-direction: row;
   justify-content: center;
   flex-wrap: wrap;
   gap: 8px;
   min-width: 180px;
 }
 
-.filter-btn {
+.filter-link {
   padding: 3px 8px;
   border: 1px solid transparent;
   border-radius: 3px;
@@ -273,29 +240,25 @@
   font-size: 14px;
 }
 
-.filter-btn.selected {
+.filter-link.selected {
   border-color: rgba(175, 47, 47, 0.2);
 }
 
-/* Clear completed */
 .clear-completed {
   font-size: 14px;
   color: #777777;
 }
 
-/* ─── Info Footer ───────────────────────────────────────── */
-
 .info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 24px;
-  padding: 0 16px;
+  padding: 24px 16px 44px;
 }
 
-.info-text {
-  font-size: 11px;
+.info-line {
+  margin-top: 4px;
+  font-size: 12px;
   color: #bfbfbf;
   text-align: center;
-  margin-top: 4px;
 }

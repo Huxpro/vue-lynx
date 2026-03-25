@@ -10,9 +10,9 @@ function onClear() { emit('clear-completed') }
 
 <template>
   <view class="footer">
-    <view class="todo-count">
-      <text class="todo-count-strong">{{ activeCount }}</text>
-      <text class="todo-count-label"> {{ activeCount === 1 ? 'item' : 'items' }} left</text>
+    <view :style="{ flexDirection: 'row' }">
+      <text class="todo-count-number">{{ activeCount }}</text>
+      <text class="todo-count"> {{ activeCount === 1 ? 'item' : 'items' }} left</text>
     </view>
 
     <view class="filters">
