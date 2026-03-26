@@ -186,6 +186,41 @@ export default defineConfig({
       },
     ],
   },
+  head: [
+    ['meta', { property: 'og:title', content: 'Vue Lynx' }],
+    [
+      'meta',
+      {
+        property: 'og:description',
+        content: 'Vue 3 framework for building Lynx apps',
+      },
+    ],
+    [
+      'meta',
+      {
+        property: 'og:image',
+        content: 'https://vue.lynxjs.org/og-image.png',
+      },
+    ],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:url', content: 'https://vue.lynxjs.org' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'Vue Lynx' }],
+    [
+      'meta',
+      {
+        name: 'twitter:description',
+        content: 'Vue 3 framework for building Lynx apps',
+      },
+    ],
+    [
+      'meta',
+      {
+        name: 'twitter:image',
+        content: 'https://vue.lynxjs.org/og-image.png',
+      },
+    ],
+  ],
   builderConfig: {
     plugins: [pluginSass()],
     source: {
