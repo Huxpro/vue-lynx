@@ -2,7 +2,7 @@ export const AGENT_PROMPT = `Create a new Vue Lynx project using create-vue-lynx
 
 1. If you have web fetch capabilities, first read https://vue.lynxjs.org/guide/quick-start for the most up-to-date instructions, and follow those instead of the steps below.
 
-2. Run \`npm create vue-lynx@latest\` and follow the prompts to scaffold a new project.
+2. Run \`npm create vue-lynx@pre-alpha\` and follow the prompts to scaffold a new project.
 
 3. \`cd\` into the created project directory, install dependencies, and run \`npm run dev\`.
 
