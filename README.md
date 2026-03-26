@@ -56,8 +56,7 @@ pnpm dev
 
 - [`todomvc`](examples/todomvc) — TodoMVC
 - [`7guis`](examples/7guis) — 7GUIs benchmark tasks
-- [`hackernews-css`](examples/hackernews-css) — HackerNews (CSS)
-- [`hackernews-tailwind`](examples/hackernews-tailwind) — HackerNews (Tailwind CSS)
+- [`hackernews-tailwind`](examples/hackernews-tailwind) — HackerNews
 
 ## Contributing
 
