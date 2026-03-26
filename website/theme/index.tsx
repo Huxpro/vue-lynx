@@ -51,7 +51,7 @@ function HeroCommandBox() {
   const [agentCopied, setAgentCopied] = useState(false);
 
   const copyCommand = useCallback(() => {
-    navigator.clipboard.writeText('npm create vue-lynx@pre-alpha').then(() => {
+    navigator.clipboard.writeText('npm create vue-lynx@latest').then(() => {
       setCmdCopied(true);
       setTimeout(() => setCmdCopied(false), 2000);
     });
@@ -73,7 +73,7 @@ function HeroCommandBox() {
         aria-label="Copy command"
       >
         <span className="prompt">$</span>
-        <span className="text">npm create vue-lynx@pre-alpha</span>
+        <span className="text">npm create vue-lynx@latest</span>
         <span className="icon" aria-hidden="true">
           {cmdCopied ? <CheckIcon /> : <CopyIcon />}
         </span>

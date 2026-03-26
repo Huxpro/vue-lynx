@@ -106,7 +106,7 @@
   <!-- $ prompt -->
   <text x="365" y="478" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="17" font-weight="600" fill="#5dd5a8" opacity="0.8">$</text>
   <!-- command text -->
-  <text x="388" y="478" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="17" font-weight="400" fill="rgba(255,255,255,0.85)">npm create vue-lynx@pre-alpha</text>
+  <text x="388" y="478" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="17" font-weight="400" fill="rgba(255,255,255,0.85)">npm create vue-lynx@latest</text>
 
   <!-- ===== URL at bottom ===== -->
   <text x="600" y="555" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif" font-size="18" font-weight="500" fill="rgba(255,255,255,0.4)">
