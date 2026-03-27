@@ -13,6 +13,26 @@ const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
 
+/** Prefix all `link` values in sidebar items with the given prefix (e.g. "/zh"). */
+function prefixSidebarLinks(
+  items: Array<Record<string, unknown>>,
+  prefix: string,
+): Array<Record<string, unknown>> {
+  return items.map((item) => {
+    const out = { ...item };
+    if (typeof out.link === 'string') {
+      out.link = `${prefix}${out.link}`;
+    }
+    if (Array.isArray(out.items)) {
+      out.items = prefixSidebarLinks(
+        out.items as Array<Record<string, unknown>>,
+        prefix,
+      );
+    }
+    return out;
+  });
+}
+
 export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
@@ -141,7 +161,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'API 参考',
         },
-        ...apiSidebar,
+        ...prefixSidebarLinks(apiSidebar, '/zh'),
       ],
     },
     llmsUI: true,

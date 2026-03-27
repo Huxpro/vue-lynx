@@ -328,3 +328,24 @@ await fs.writeFile(
   path.join(websiteRoot, 'api-sidebar.json'),
   `${JSON.stringify(sidebarGroups, null, 2)}\n`,
 );
+
+// Mirror API docs to zh locale (skip zh-translated index files)
+const zhApiOutputDir = path.join(websiteRoot, 'docs/zh/guide/api');
+await fs.mkdir(zhApiOutputDir, { recursive: true });
+
+for (const pkg of packages) {
+  const srcDir = path.join(apiOutputDir, pkg.dirName);
+  const destDir = path.join(zhApiOutputDir, pkg.dirName);
+  await fs.mkdir(destDir, { recursive: true });
+
+  // Copy all files except index.mdx (zh has translated versions)
+  const files = await fs.readdir(srcDir, { withFileTypes: true });
+  for (const file of files) {
+    if (file.isFile() && file.name !== 'index.mdx') {
+      await fs.copyFile(
+        path.join(srcDir, file.name),
+        path.join(destDir, file.name),
+      );
+    }
+  }
+}
