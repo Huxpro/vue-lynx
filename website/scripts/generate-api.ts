@@ -329,8 +329,11 @@ await fs.writeFile(
   `${JSON.stringify(sidebarGroups, null, 2)}\n`,
 );
 
-// Mirror API docs to zh locale (skip zh-translated index files)
+// Mirror API docs to zh locale. vue-lynx and testing-library keep hand-written
+// zh index.mdx; other packages copy the generated English index so relative
+// links like [pkg](index.mdx) in member pages resolve under /zh/guide/api/.
 const zhApiOutputDir = path.join(websiteRoot, 'docs/zh/guide/api');
+const zhTranslatedIndexDirs = new Set(['vue-lynx', 'testing-library']);
 await fs.mkdir(zhApiOutputDir, { recursive: true });
 
 for (const pkg of packages) {
@@ -338,14 +341,15 @@ for (const pkg of packages) {
   const destDir = path.join(zhApiOutputDir, pkg.dirName);
   await fs.mkdir(destDir, { recursive: true });
 
-  // Copy all files except index.mdx (zh has translated versions)
   const files = await fs.readdir(srcDir, { withFileTypes: true });
   for (const file of files) {
-    if (file.isFile() && file.name !== 'index.mdx') {
-      await fs.copyFile(
-        path.join(srcDir, file.name),
-        path.join(destDir, file.name),
-      );
+    if (!file.isFile()) continue;
+    if (file.name === 'index.mdx' && zhTranslatedIndexDirs.has(pkg.dirName)) {
+      continue;
     }
+    await fs.copyFile(
+      path.join(srcDir, file.name),
+      path.join(destDir, file.name),
+    );
   }
 }
