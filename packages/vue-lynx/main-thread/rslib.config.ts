@@ -7,7 +7,12 @@ export default defineConfig({
     // since VueMarkMainThreadPlugin no longer replaces webpack-generated content.
     {
       format: 'esm',
-      syntax: 'es2022',
+      // Must not exceed es2019: the LEPUS bytecode compiler (which compiles
+      // main-thread JS to bytecode) does not support ES2020+ syntax such as
+      // optional chaining (?.) and nullish coalescing (??). Pre-transpiling
+      // here ensures the dist files are LEPUS-compatible regardless of
+      // whether the downstream app build's SWC pass processes them.
+      syntax: 'es2019',
       bundle: false,
       dts: true,
     },
