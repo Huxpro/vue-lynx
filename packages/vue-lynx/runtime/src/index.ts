@@ -25,10 +25,11 @@ import type {
   Component,
   ComponentPublicInstance,
   ObjectDirective,
+  VNode,
 } from '@vue/runtime-core';
 
 import { runOnMainThread } from './cross-thread.js';
-import { resetRegistry } from './event-registry.js';
+import { register, unregister, updateHandler, resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush, waitForFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
 import {
@@ -905,22 +906,105 @@ export function Teleport(): void {
 // @internal — Directive stubs (v-model, event modifiers)
 // ===========================================================================
 
-/** @internal Lynx stub for vModelText. v-model on inputs is not yet supported. */
-export const vModelText: ObjectDirective = {
+// ---------------------------------------------------------------------------
+// v-model directive (Vue Lynx implementation for <input> / <textarea>)
+// ---------------------------------------------------------------------------
+
+interface InputEventData {
+  detail?: { value?: string; isComposing?: boolean };
+}
+
+function looseToNumber(val: string): number | string {
+  const n = Number.parseFloat(val);
+  return isNaN(n) ? val : n;
+}
+
+function getModelAssigner(vnode: VNode): (value: unknown) => void {
+  const fn = vnode.props?.['onUpdate:modelValue'];
+  if (Array.isArray(fn)) return (value: unknown) => { for (const f of fn) f(value); };
+  return fn ?? ((_: unknown) => undefined);
+}
+
+export const vModelText: ObjectDirective<ShadowElement> = {
+  created(el, { modifiers }, vnode) {
+    const isLazy = modifiers?.lazy;
+    const eventName = isLazy ? 'confirm' : 'input';
+    el._vModelEvent = eventName;
+
+    const assign = getModelAssigner(vnode);
+
+    const handler = (data: unknown) => {
+      const evt = data as InputEventData;
+      let value: string = evt?.detail?.value ?? '';
+      if (evt?.detail?.isComposing) return;
+      if (modifiers?.trim) value = value.trim();
+      el._vModelValue = value;
+      assign(modifiers?.number ? looseToNumber(value) : value);
+    };
+
+    const sign = register(handler);
+    el._vModelSign = sign;
+    pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
+    scheduleFlush();
+  },
+
+  mounted(el, { value }) {
+    const val = value == null ? '' : String(value);
+    el._vModelValue = val;
+    pushOp(OP.SET_PROP, el.id, 'value', val);
+    scheduleFlush();
+  },
+
+  beforeUpdate(el, { value, modifiers }, vnode) {
+    // Refresh handler closure with latest assigner
+    if (el._vModelSign) {
+      const assign = getModelAssigner(vnode);
+      const handler = (data: unknown) => {
+        const evt = data as InputEventData;
+        let val: string = evt?.detail?.value ?? '';
+        if (evt?.detail?.isComposing) return;
+        if (modifiers?.trim) val = val.trim();
+        el._vModelValue = val;
+        assign(modifiers?.number ? looseToNumber(val) : val);
+      };
+      updateHandler(el._vModelSign, handler);
+    }
+
+    // Push value to MT only if changed
+    const strVal = value == null ? '' : String(value);
+    if (strVal !== el._vModelValue) {
+      el._vModelValue = strVal;
+      pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      scheduleFlush();
+    }
+  },
+
+  beforeUnmount(el) {
+    if (el._vModelSign) {
+      unregister(el._vModelSign);
+      pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', el._vModelEvent!);
+      el._vModelSign = undefined;
+      el._vModelEvent = undefined;
+      scheduleFlush();
+    }
+  },
+};
+
+const vModelUnsupported: ObjectDirective = {
   beforeMount(): void {
-    console.warn('[vue-lynx] v-model is not supported yet');
+    if (__DEV__) {
+      console.warn(
+        '[vue-lynx] v-model on checkbox/radio/select is not supported. '
+        + 'Lynx only supports <input> and <textarea>.',
+      );
+    }
   },
   beforeUpdate(): void {/* no-op */},
 };
 
-/** @internal Lynx stub for vModelCheckbox. */
-export const vModelCheckbox: ObjectDirective = vModelText;
-
-/** @internal Lynx stub for vModelSelect. */
-export const vModelSelect: ObjectDirective = vModelText;
-
-/** @internal Lynx stub for vModelRadio. */
-export const vModelRadio: ObjectDirective = vModelText;
+export const vModelCheckbox: ObjectDirective = vModelUnsupported;
+export const vModelSelect: ObjectDirective = vModelUnsupported;
+export const vModelRadio: ObjectDirective = vModelUnsupported;
 
 /** @internal Lynx stub for withModifiers (event modifier helper). */
 export function withModifiers(

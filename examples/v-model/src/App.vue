@@ -19,7 +19,7 @@ function setValues() {
   docBody.value = 'Reset Body'
 }
 
-// ── Section 3: Manual two-way binding (workaround for native input) ──
+// ── Section 3: Native input v-model ──
 const inputText = ref('')
 </script>
 
@@ -70,26 +70,16 @@ const inputText = ref('')
     </view>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!-- SECTION 3: Native input (NOT SUPPORTED)    -->
+    <!-- SECTION 3: Native input v-model (SUPPORTED) -->
     <!-- ═══════════════════════════════════════════ -->
-    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#ff4400', marginBottom: 4 }">
-      3. Native input v-model (NOT supported)
-    </text>
-    <text :style="{ fontSize: 12, color: '#666', marginBottom: 4 }">
-      v-model on &lt;input&gt; is stubbed. Use manual :value + @input instead.
+    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#00aa44', marginBottom: 4 }">
+      3. Native input v-model
     </text>
     <text :style="{ fontSize: 12, color: '#666', marginBottom: 8 }">
       Text: "{{ inputText }}"
     </text>
-
-    <!-- Manual workaround — this is how you do two-way input binding today -->
-    <input
-      type="text"
-      placeholder="Type here (manual binding)"
-      :value="inputText"
-      :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }"
-      @input="(e: any) => inputText = e.detail.value"
-    />
+    <input v-model="inputText" type="text" placeholder="Type here"
+      :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
 
   </view>
 </template>

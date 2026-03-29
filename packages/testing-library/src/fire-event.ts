@@ -26,6 +26,8 @@ export const eventMap: Record<
   scrollend: { defaultInit: {} },
   focus: { defaultInit: {} },
   blur: { defaultInit: {} },
+  input: { defaultInit: {} },
+  confirm: { defaultInit: {} },
   layoutchange: { defaultInit: {} },
   transitionend: { defaultInit: {} },
   animationend: { defaultInit: {} },
