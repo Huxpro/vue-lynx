@@ -41,6 +41,15 @@
       "import": "./internal/dist/ops.js",
       "default": "./internal/dist/ops.js"
     },
+    "./types": {
+      "types": "./types/dist/index.d.ts",
+      "import": "./types/dist/index.js",
+      "default": "./types/dist/index.js"
+    },
+    "./types/volar-plugin": {
+      "import": "./types/dist/volar-plugin.cjs",
+      "default": "./types/dist/volar-plugin.cjs"
+    },
     "./package.json": "./package.json"
   },
   "main": "./runtime/dist/index.js",
@@ -50,6 +59,7 @@
     "main-thread/dist",
     "plugin/dist",
     "internal/dist",
+    "types/dist",
     "LICENSE",
     "NOTICE",
     "README.md"
