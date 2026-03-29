@@ -13,6 +13,8 @@
 
 import {
   type SetupContext,
+  type VNode,
+  type Component,
   defineComponent,
   getCurrentInstance,
   h,
@@ -47,7 +49,7 @@ export interface TransitionGroupProps extends TransitionProps {
 // <TransitionGroup>
 // ---------------------------------------------------------------------------
 
-export const TransitionGroup = defineComponent({
+export const TransitionGroup: Component = defineComponent({
   name: 'TransitionGroup',
 
   props: {
@@ -73,11 +75,11 @@ export const TransitionGroup = defineComponent({
     moveClass: String,
   },
 
-  setup(props: TransitionGroupProps, { slots }: SetupContext) {
+  setup(props: TransitionGroupProps, { slots }: SetupContext): () => VNode {
     const instance = getCurrentInstance()!;
     const state = useTransitionState();
 
-    return () => {
+    return (): VNode => {
       const rawChildren = slots.default ? slots.default() : [];
       const children = getTransitionRawChildren(rawChildren);
 
