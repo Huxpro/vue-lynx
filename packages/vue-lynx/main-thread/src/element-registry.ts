@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 /** Map from BG-thread ShadowElement id to Lynx Main Thread element handle */
-export const elements = new Map<number, LynxElement>();
+export const elements: Map<number, LynxElement> = new Map();
 
 /**
  * PAPI unique ID of the root PageElement.
