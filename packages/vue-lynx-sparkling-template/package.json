@@ -1,0 +1,14 @@
+{
+  "name": "vue-lynx-sparkling-template",
+  "version": "0.1.0",
+  "description": "Vue Lynx + Sparkling native app template for create-sparkling-app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/vue-lynx.git",
+    "directory": "packages/vue-lynx-sparkling-template"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "template"
+  ]
+}
