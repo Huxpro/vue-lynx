@@ -135,6 +135,7 @@ const includedTests = [
   'patchProps',
   'patchAttrs',
   'directives/vOn',
+  'directives/vModel',
 ].map((name) => `${testDir}/${name}.spec.ts`);
 
 // ---------------------------------------------------------------------------

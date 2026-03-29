@@ -581,6 +581,7 @@ export {
   vModelCheckbox,
   vModelSelect,
   vModelRadio,
+  vModelText as vModelDynamic,
 } from 'vue-lynx';
 
 // withModifiers/withKeys: use the real @vue/runtime-dom implementations
