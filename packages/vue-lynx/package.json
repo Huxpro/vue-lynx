@@ -71,6 +71,7 @@
     "@lynx-js/types": "3.7.0",
     "@rsbuild/plugin-vue": "^1.2.6",
     "@rslib/core": "^0.7.0",
+    "@types/node": "^25.5.0",
     "rsbuild-plugin-publint": "0.3.4",
     "typescript": "^5.0.0"
   },
