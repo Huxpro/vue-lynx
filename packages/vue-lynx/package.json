@@ -56,6 +56,7 @@
   ],
   "scripts": {
     "build": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build) && (cd main-thread && npx rslib build) && (cd plugin && npx rslib build)",
+    "predev": "(cd internal && npx tsc -p tsconfig.build.json)",
     "dev": "(cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch)"
   },
   "dependencies": {
