@@ -1,6 +1,6 @@
 import type { DefineComponent } from "vue";
 import type { FrameProps } from '@lynx-js/types'
-import type { VueLynxProps } from './../type-utils.js'
+import type { VueLynxProps } from '../type-utils.js'
 
 declare module "vue" {
   export interface GlobalComponents {
