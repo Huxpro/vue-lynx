@@ -5,7 +5,9 @@ import type { VueLynxProps } from "../type-utils.js";
 declare module "vue" {
   export interface GlobalComponents {
     /**
-     * Used to display different types of images, including web images, static resources, and locally stored images.
+     * Basic scrolling component supporting both horizontal and vertical scrolling.
+     * 
+     * When its content area is larger than its visible area, it allows users to scroll to reveal more content.
      *
      */
     'scroll-view': DefineComponent<VueLynxProps<ScrollViewProps>>
