@@ -1,6 +1,6 @@
 {
   "name": "vue-lynx-monorepo",
-  "private": false,
+  "private": true,
   "scripts": {
     "build": "pnpm --filter vue-lynx run build",
     "build:examples": "pnpm --filter './examples/*' --parallel run build",
