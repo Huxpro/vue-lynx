@@ -8,6 +8,8 @@
     "test": "vitest run",
     "test:dom": "vitest run --config vitest.dom.config.ts",
     "test:dom:watch": "vitest --config vitest.dom.config.ts",
+    "test:local": "vitest run --config vitest.local.config.ts",
+    "test:local:watch": "vitest --config vitest.local.config.ts",
     "test:watch": "vitest",
     "vuejs:init": "git submodule update --init --depth 1 core",
     "vuejs:status": "cd core && git log --oneline -1"
