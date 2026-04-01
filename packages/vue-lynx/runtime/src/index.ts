@@ -971,6 +971,13 @@ export { setBlockTracking } from '@vue/runtime-core';
 export { useCssVars } from './use-css-vars.js';
 
 // ===========================================================================
+// @internal — CSS v-bind() support
+// ===========================================================================
+
+/** @hidden */
+export { useCssVars } from './use-css-vars.js';
+
+// ===========================================================================
 // @internal — Template compiler runtime helpers
 // ===========================================================================
 // These are used by Vue's SFC compiler output and should not be called directly.
