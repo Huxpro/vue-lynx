@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import PlainStyle from './PlainStyle.vue'
 import ScopedStyle from './ScopedStyle.vue'
-import ScopedStyleWorking from './ScopedStyleWorking.vue'
 import CSSModules from './CSSModules.vue'
 import VBindCSS from './VBindCSS.vue'
+import VBindThreads from './VBindThreads.vue'
 import CSSVarsWorkaround from './CSSVarsWorkaround.vue'
 import ImportedCSS from './ImportedCSS.vue'
 </script>
@@ -23,14 +23,14 @@ import ImportedCSS from './ImportedCSS.vue'
     <!-- 2a. <style scoped> — DOES NOT WORK -->
     <ScopedStyle />
 
-    <!-- 2b. <style module> as scoped alternative — WORKS -->
-    <ScopedStyleWorking />
-
     <!-- 3. <style module> — SHOULD WORK -->
     <CSSModules />
 
     <!-- 4. v-bind() in CSS — WORKS (useCssVars implemented in vue-lynx) -->
     <VBindCSS />
+
+    <!-- 4b. v-bind() thread comparison — BG (useCssVars) vs MT (setStyleProperty) -->
+    <VBindThreads />
 
     <!-- 5. Workaround: Reactive inline :style -->
     <CSSVarsWorkaround />

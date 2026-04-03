@@ -309,20 +309,6 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   nextSibling(node: ShadowElement): ShadowElement | null {
     return node.next;
   },
-
-  // Vue calls setScopeId when mounting a component that uses <style scoped>.
-  // Lynx's CSS engine does not support the attribute selectors ([data-v-xxx])
-  // that scoped CSS generates, so scoped styles will never match any element.
-  // We emit a dev warning pointing to the supported alternative.
-  setScopeId(_el: ShadowElement, id: string): void {
-    if (__DEV__) {
-      console.warn(
-        `[vue-lynx] <style scoped> is not supported (scope id: ${id}). `
-        + `Lynx's CSS engine does not support attribute selectors ([data-v-xxx]). `
-        + `Use <style module> with :class="$style.className" for component-scoped styles instead.`,
-      );
-    }
-  },
 };
 
 /** Reset module state – for testing only. */
