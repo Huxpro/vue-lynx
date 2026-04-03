@@ -297,7 +297,46 @@ describe('useCssVars — vShow interaction', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Reactivity — watchPostEffect triggers automatically
+// 5. Style-binding-only change — CSS vars must persist
+// ---------------------------------------------------------------------------
+
+describe('useCssVars — style-binding change without CSS var change', () => {
+  it('preserves CSS vars when only inline style changes', async () => {
+    const color = ref('red');
+    const bg = ref('white');
+
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'x1': color.value }));
+        return () => h('view', { style: { backgroundColor: bg.value } });
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps(); // drain mount ops
+
+    // Change ONLY the style binding, not the CSS var
+    bg.value = 'black';
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    // The last SET_STYLE must include both the updated style AND the CSS var.
+    // Without onBeforeUpdate, patchProp's SET_STYLE would overwrite the CSS var
+    // and the watchPostEffect would not re-run (its deps didn't change).
+    const last = styleOps[styleOps.length - 1];
+    expect(last).toBeDefined();
+    expect(last.style).toMatchObject({
+      backgroundColor: 'black',
+      '--x1': 'red',
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. Reactivity — watchPostEffect triggers automatically
 // ---------------------------------------------------------------------------
 
 describe('useCssVars — reactivity', () => {

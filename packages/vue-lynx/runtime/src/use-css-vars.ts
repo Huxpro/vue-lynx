@@ -2,7 +2,14 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { getCurrentInstance, watchPostEffect } from '@vue/runtime-core';
+import {
+  Fragment,
+  getCurrentInstance,
+  onBeforeUpdate,
+  onMounted,
+  queuePostFlushCb,
+  watchPostEffect,
+} from '@vue/runtime-core';
 import type { VNode } from '@vue/runtime-core';
 
 import { OP, pushOp } from './ops.js';
@@ -44,10 +51,9 @@ function applyVarsToVNode(
     if (vnode.component) {
       applyVarsToVNode(vnode.component.subTree, vars);
     }
-  }
-
-  // Fragment / array children — walk every child
-  if (shapeFlag & SF_ARRAY_CHILDREN) {
+  } else if (vnode.type === Fragment && (shapeFlag & SF_ARRAY_CHILDREN)) {
+    // Fragment root — walk every sibling child (but NOT element children;
+    // those inherit CSS vars via enableCSSInheritance).
     const children = vnode.children as VNode[];
     for (const child of children) {
       applyVarsToVNode(child, vars);
@@ -79,8 +85,19 @@ export function useCssVars(
   const instance = getCurrentInstance();
   if (!instance) return;
 
-  watchPostEffect(() => {
+  const setVars = () => {
     const vars = getter(instance.proxy);
     applyVarsToVNode(instance.subTree, vars);
+  };
+
+  onMounted(() => {
+    watchPostEffect(setVars);
+  });
+
+  // Re-apply on every component update: patchProp's SET_STYLE overwrites
+  // the CSS vars that useCssVars previously merged in, and the VNode tree
+  // may have new elements that need vars applied.
+  onBeforeUpdate(() => {
+    queuePostFlushCb(setVars);
   });
 }
