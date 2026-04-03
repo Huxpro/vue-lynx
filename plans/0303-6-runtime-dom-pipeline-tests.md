@@ -178,6 +178,8 @@ From `core/packages/runtime-dom/__tests__/`:
 - `customElement.spec.ts` (Shadow DOM, 20+ tests)
 - `directives/vModel.spec.ts` (form inputs — Lynx has no `<input>`)
 
+> **Post-implementation note (PR [#121](https://github.com/Huxpro/vue-lynx/pull/121)):** `vModelText` now works on `<input>` and `<textarea>`. The upstream `vModel.spec.ts` is still skipped (it tests DOM-specific behavior like `compositionstart`/`compositionend` and `<select>`/`<checkbox>`/`<radio>`), but dedicated Lynx-specific v-model tests were added in `packages/testing-library/src/__tests__/v-model.test.ts`.
+
 ### Import rewriting strategy
 
 Vue runtime-dom tests import internal modules via relative paths:

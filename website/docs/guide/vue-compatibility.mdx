@@ -50,20 +50,17 @@ const style = computed(() => ({ color: color.value }))
   defaultFile="src/App.vue"
 />
 
-## Component v-model
+## v-model
 
-Vue's `v-model` on components creates a two-way binding between parent and child. The child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`.
+Vue's `v-model` creates two-way bindings. On **components**, the child uses [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel) (Vue 3.4+) to declare a model prop, and the parent binds it with `v-model`. On **native `<input>` and `<textarea>` elements**, `v-model` works just like standard Vue, including the `.lazy`, `.trim`, and `.number` modifiers.
 
 The example demonstrates:
 1. **Default model** — `defineModel<number>()` with `v-model="count"` for a counter
 2. **Named models** — `defineModel('title')` + `defineModel('body')` with `v-model:title` / `v-model:body`
-3. **Manual input binding** — the workaround for native `<input>` (see caveat below)
+3. **Native input v-model** — `v-model` directly on `<input>`
 
 :::warning Caveat
-`v-model` on **native `<input>` elements** is not yet supported. Lynx inputs use synchronous Main Thread APIs (`getValue()` / `setValue()`) that are inaccessible from the background thread where Vue runs. Use `:value` + `@input` manually instead:
-```vue
-<input :value="text" @input="(e) => text = e.detail.value" />
-```
+`v-model` on **`<select>`**, **`<input type="checkbox">`**, and **`<input type="radio">`** is not supported — Lynx has no native equivalents for these elements. Use component-level `v-model` with custom components instead.
 :::
 
 <Go

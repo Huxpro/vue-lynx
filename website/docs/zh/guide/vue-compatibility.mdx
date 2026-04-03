@@ -50,20 +50,17 @@ const style = computed(() => ({ color: color.value }))
   defaultFile="src/App.vue"
 />
 
-## 组件 v-model
+## v-model
 
-Vue 的 `v-model` 可以在父子组件之间创建双向绑定。子组件使用 [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel)（Vue 3.4+）声明模型 prop，父组件通过 `v-model` 进行绑定。
+Vue 的 `v-model` 可以创建双向绑定。在**组件**上，子组件使用 [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel)（Vue 3.4+）声明模型 prop，父组件通过 `v-model` 进行绑定。在**原生 `<input>` 和 `<textarea>` 元素**上，`v-model` 的使用方式与标准 Vue 一致，支持 `.lazy`、`.trim` 和 `.number` 修饰符。
 
 该示例展示了：
 1. **默认模型** — `defineModel<number>()` 配合 `v-model="count"` 实现计数器
 2. **命名模型** — `defineModel('title')` + `defineModel('body')` 配合 `v-model:title` / `v-model:body`
-3. **手动输入绑定** — 原生 `<input>` 的替代方案（见下方注意事项）
+3. **原生输入 v-model** — 在 `<input>` 上直接使用 `v-model`
 
 :::warning 注意事项
-**原生 `<input>` 元素**上的 `v-model` 尚未支持。Lynx 输入框使用同步的主线程 API（`getValue()` / `setValue()`），这些 API 在 Vue 运行的后台线程中无法访问。请改用 `:value` + `@input` 手动绑定：
-```vue
-<input :value="text" @input="(e) => text = e.detail.value" />
-```
+`v-model` 不支持 **`<select>`**、**`<input type="checkbox">`** 和 **`<input type="radio">`** — Lynx 没有这些元素的原生对应实现。请改用组件级 `v-model` 配合自定义组件。
 :::
 
 <Go
