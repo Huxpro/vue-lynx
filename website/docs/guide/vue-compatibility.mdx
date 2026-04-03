@@ -17,7 +17,7 @@ The example below demonstrates [`reactive()`](https://vuejs.org/api/reactivity-c
 
 ## SFC CSS Features
 
-Plain `<style>` blocks, imported `.css` files, and [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules) all work on Lynx. `<style scoped>` and `v-bind()` in CSS are not yet supported — vote on [#78](https://github.com/Huxpro/vue-lynx/issues/78) and [#79](https://github.com/Huxpro/vue-lynx/issues/79) if you need them.
+Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules), and [`v-bind()` in CSS](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) all work on Lynx. `<style scoped>` is not yet supported — vote on [#78](https://github.com/Huxpro/vue-lynx/issues/78) if you need it.
 
 :::details Feature support details
 
@@ -26,19 +26,22 @@ Plain `<style>` blocks, imported `.css` files, and [`<style module>`](https://vu
 | `<style>` (plain) | Works |
 | Imported `.css` files | Works |
 | `<style module>` | Works |
+| `v-bind()` in `<style>` | Works (requires config, see below) |
 | `<style scoped>` | Upcoming ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) |
-| `v-bind()` in `<style>` | Upcoming ([#79](https://github.com/Huxpro/vue-lynx/issues/79)) |
 
-For dynamic styling, use computed `:style` bindings as a workaround for `v-bind()`:
-```vue
-<script setup>
-const color = ref('#1565c0')
-const style = computed(() => ({ color: color.value }))
-</script>
-<template>
-  <text :style="style">Dynamic color</text>
-</template>
+`v-bind()` in `<style>` requires two config options so the Lynx engine recognizes CSS custom properties in inline styles and cascades them to descendants:
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableCSSInlineVariables: true,
+  enableCSSInheritance: true,
+})
 ```
+
+:::warning Known limitation
+Layout-affecting properties (e.g., `font-size`) driven by `v-bind()` apply correctly on initial render but may not update visually on reactive change. This is a Lynx engine limitation. Workaround: drive layout properties via `:style` binding directly on the element.
+:::
+
 :::
 
 <Go
