@@ -53,6 +53,12 @@ export type { App, Component, ComponentPublicInstance };
 const _renderer = createRenderer<ShadowElement, ShadowElement>(nodeOps);
 const _createApp = _renderer.createApp;
 
+/** @internal Raw renderer render function — only for upstream-tests bridge. */
+export const _render: (
+  vnode: import('@vue/runtime-core').VNode | null,
+  container: ShadowElement,
+) => void = _renderer.render;
+
 // ===========================================================================
 // Vue Lynx APIs
 // ===========================================================================
@@ -165,6 +171,9 @@ export {
   runOnBackground,
   transformToWorklet,
 };
+
+/** @internal Exposed for upstream-tests bridge render(). */
+export { createPageRoot } from './shadow-element.js';
 
 // ---------------------------------------------------------------------------
 // v-show directive (Vue Lynx implementation)
