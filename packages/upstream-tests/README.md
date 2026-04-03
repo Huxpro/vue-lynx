@@ -4,13 +4,13 @@
 
 This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.5.12, pinned via git submodule at `core/`.
 
-**Total: 949 tests across 49 suites -- 852 pass, 97 skip, 0 fail**
+**Total: 975 tests across 50 suites -- 856 pass, 119 skip, 0 fail**
 
 | Config                                         | Suites | Pass    | Skip   | Fail  |
 | ---------------------------------------------- | ------ | ------- | ------ | ----- |
 | `pnpm test` (runtime-core, reactivity, shared) | 43     | 798     | 77     | 0     |
-| `pnpm test:dom` (runtime-dom)                  | 6      | 54      | 20     | 0     |
-| **Total**                                      | **49** | **852** | **97** | **0** |
+| `pnpm test:dom` (runtime-dom)                  | 7      | 58      | 42     | 0     |
+| **Total**                                      | **50** | **856** | **119** | **0** |
 
 ### By package
 
@@ -19,7 +19,7 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 | runtime-core | 23     | 407  | 59   |
 | reactivity   | 15     | 345  | 18   |
 | shared       | 5      | 46   | 0    |
-| runtime-dom  | 6      | 54   | 20   |
+| runtime-dom  | 7      | 58   | 42   |
 
 > _Note: `computed.spec.ts` (48 tests) excluded due to module initialization conflict; 4 gc tests auto-skipped by `describe.skipIf(!global.gc)`. reactivity and shared test the upstream npm packages themselves (version compatibility smoke tests), not our pipeline._
 
@@ -34,8 +34,8 @@ The tests that actually validate our pipeline are runtime-core + runtime-dom:
 | Layer            | What it validates                             | Pass    | Skip   |
 | ---------------- | --------------------------------------------- | ------- | ------ |
 | **runtime-core** | ShadowElement linked-list + Vue VDOM diff      | 407     | 59     |
-| **runtime-dom**  | patchProp -> ops -> applyOps -> PAPI -> jsdom  | 54      | 20     |
-| **Total**        |                                               | **461** | **79** |
+| **runtime-dom**  | patchProp / render -> ops -> applyOps -> PAPI -> jsdom  | 58      | 42     |
+| **Total**        |                                               | **465** | **101** |
 
 ### Layer 1: Conformance tests (`pnpm test`)
 
@@ -70,14 +70,21 @@ Covers: runtime-core (23 suites), reactivity (15 suites), shared (5 suites).
 
 Runs Vue's `runtime-dom` test suites through the **full dual-thread pipeline**: BG `ShadowElement` -> ops buffer -> `syncFlush()` -> MT `applyOps` -> PAPI -> jsdom. Uses `@lynx-js/testing-environment` with jsdom to simulate the dual-thread environment in a single Node.js process.
 
-The bridge intercepts `patchProp` calls, routes them through our real `nodeOps.patchProp` (which pushes ops), sync-flushes the ops to the main thread, then applies post-pipeline corrections on the jsdom element:
+The bridge operates at two levels:
+
+**patchProp-level** (for prop/style/event suites): Intercepts `patchProp` calls, routes them through our real `nodeOps.patchProp` (which pushes ops), sync-flushes the ops to the main thread, then applies post-pipeline corrections on the jsdom element:
 
 - **DOM property shim**: PAPI only has `__SetAttribute` (string setAttribute), but some HTML props must be set as DOM properties (`input.value`, `select.multiple`, `el.srcObject`). After the pipeline runs, the shim sets these as properties on the jsdom element.
 - **Style shim**: Uses `setProperty()` instead of `Object.assign()` for each style entry, enabling `!important`, CSS custom properties, shorthand expansion, vendor prefix fallback, and multi-value arrays.
 
+**Full render** (for directive suites like vModel): Uses vue-lynx's raw renderer to mount components through the complete pipeline: `ShadowElement` tree -> ops -> `applyOps` -> PAPI -> jsdom. After render, the bridge:
+
+- **Event forwarders**: Converts DOM events (`input`, `change`) to PAPI events (`bindEvent:input`, `bindEvent:confirm`) with Lynx-style `{ detail: { value } }` payloads.
+- **Value sync shim**: Patches `setAttribute` on input/textarea elements to also set the `.value` DOM property, since jsdom's `setAttribute('value')` doesn't update `.value` after it's been programmatically set.
+
 These shims run after the full pipeline so ops serialization and cross-thread transfer are still exercised. They only correct the final jsdom state to compensate for PAPI limitations.
 
-Covers: runtime-dom (6 suites: patchStyle, patchClass, patchEvents, patchProps, patchAttrs, vOn).
+Covers: runtime-dom (7 suites: patchStyle, patchClass, patchEvents, patchProps, patchAttrs, vOn, vModel).
 
 ### Layer 3: E2E pipeline tests (`testing-library/`)
 
@@ -105,7 +112,7 @@ Since we run upstream test files from outside the `vuejs/core` monorepo, three m
 
 ## Skip Analysis
 
-97 skips break down into two categories: structurally impossible (cannot pass outside the Vue monorepo) and substantive (related to platform differences or our pipeline).
+119 skips break down into three categories: structurally impossible (cannot pass outside the Vue monorepo), substantive (related to platform differences or our pipeline), and vModel-specific (Lynx element/event model differences).
 
 ### Structurally impossible (77 skips)
 
@@ -142,3 +149,28 @@ Lynx doesn't support certain Web platform capabilities. If Lynx adds support for
 | Subcategory                 | Count | Root cause                                                |
 | --------------------------- | ----- | --------------------------------------------------------- |
 | `JSON.stringify` limitation | 3     | `Symbol` values lost in cross-thread serialization        |
+
+### vModel-specific skips (22 skips)
+
+The `directives/vModel.spec.ts` suite has 26 tests; 4 pass through the bridge, 22 remain skipped.
+
+#### Passing (4 tests)
+
+These tests exercise `vModelText` through the full dual-thread pipeline via the bridge's `render()` function. The bridge forwards DOM `input`/`change` events to PAPI `bindEvent:input`/`bindEvent:confirm` listeners with Lynx-style `detail.value` payloads, and patches `setAttribute('value')` to also sync the `.value` DOM property.
+
+- `should work with multiple listeners` -- array `onUpdate:modelValue` handlers
+- `should work with updated listeners` -- handler swap via reactivity
+- `should work with textarea` -- textarea two-way binding
+- `should support modifiers` -- `.number`, `.trim`, `.lazy` (bridge maps `change` -> `confirm`)
+
+#### Skipped: Lynx element/event model (22 tests)
+
+| Subcategory                        | Count | Root cause                                                 |
+| ---------------------------------- | ----- | ---------------------------------------------------------- |
+| Checkbox / radio / select          | 14    | Lynx has no native equivalents for these elements          |
+| PAPI single-listener limit         | 1     | Test has both `onInput` and `vModelText` on same element; PAPI `__AddEvent` allows only one handler per event key, so the second overwrites the first |
+| `input.type=number` DOM behavior   | 3     | DOM auto-parses numeric values; Lynx pipeline uses string attributes |
+| `input.type=range` DOM behavior    | 1     | DOM min/max clamping; no Lynx equivalent                   |
+| Composition events                 | 1     | Uses `compositionstart`/`compositionend` DOM events; Lynx uses `detail.isComposing` |
+| MutationObserver                   | 1     | Asserts no unnecessary DOM writes; bridge value sync interferes |
+| Numeric edge case                  | 1     | Leading-zero value comparison + `vModelDynamic` behavior    |
