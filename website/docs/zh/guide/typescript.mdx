@@ -1,0 +1,59 @@
+# TypeScript
+
+Vue Lynx 开箱即用地支持 TypeScript。由于 Vue Lynx 基于标准 Vue 3 运行时构建，Vue 的所有 TypeScript 功能都如 [Vue TypeScript 指南](https://vuejs.org/guide/typescript/overview)中所述正常工作 -- `<script lang="ts">`、`defineComponent()`、模板类型检查等。
+
+本页面介绍 Vue Lynx 特有的部分：Lynx 内置元素的类型声明和用于正确 IDE 解析的 Volar 插件。
+
+## Lynx 元素类型
+
+默认情况下，Volar 会将 `<view>` 和 `<text>` 等标签解析为 SVG 元素，因为它们存在于 SVG 规范中。Vue Lynx 提供了类型声明来覆盖这些定义为 Lynx 特有的类型，并提供了 Volar 插件来告知语言服务器将它们视为自定义组件。
+
+在源码级 `tsconfig.json`（通常是 `src/tsconfig.json`）中添加以下配置：
+
+```json title="src/tsconfig.json"
+{
+  "compilerOptions": {
+    "types": ["vue-lynx/types"]
+  },
+  "vueCompilerOptions": {
+    "plugins": ["vue-lynx/types/volar-plugin"]
+  }
+}
+```
+
+:::tip
+如果你使用 `create-vue-lynx`（TypeScript 模板）创建项目，则已默认配置好。
+:::
+
+**各选项的作用：**
+
+- `"types": ["vue-lynx/types"]` 为 Vue 的 `GlobalComponents` 接口添加所有 Lynx 内置元素（`view`、`text`、`image`、`scroll-view`、`list` 等）及其类型化的属性和事件。
+- `"plugins": ["vue-lynx/types/volar-plugin"]` 配置 Volar 的 `isNativeTag`，使 Lynx 元素通过 `GlobalComponents` 增强进行解析，而不是回退到 SVG 定义。
+
+配置完成后，你的 IDE 将为所有 Lynx 元素提供属性自动补全、事件自动补全和类型错误提示。
+
+## 事件类型
+
+Lynx 使用 `bind*` 约定来定义事件（如 `bindtap`、`bindtouchstart`）。Vue Lynx 的类型声明会自动将其映射为 Vue 的 `on*` 约定：
+
+| Lynx | Vue 模板 | Vue JSX |
+|------|---------|---------|
+| `bindtap` | `@tap` | `onTap` |
+| `bindtouchstart` | `@touchstart` | `onTouchstart` |
+| `bindlayoutchange` | `@layoutchange` | `onLayoutchange` |
+
+所有事件处理函数的类型在转换过程中都会被保留，因此你可以获得事件回调参数的完整类型检查。
+
+## 类型检查
+
+与标准 Vue 项目相同（参见 [Vue 文档中的类型检查部分](https://vuejs.org/guide/typescript/overview#project-setup)），使用 [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc) 进行命令行类型检查：
+
+```bash
+npx vue-tsc --noEmit
+```
+
+这会根据类型声明验证你的 Lynx 元素用法、属性和事件，包括 `.vue` 单文件组件中的内容。
+
+:::tip
+关于 Rspeedy 的通用 TypeScript 配置（路径别名、`rspeedy-env.d.ts`、扩展 `IntrinsicElements` 等 Lynx 类型），请参阅 [Rspeedy TypeScript 指南](https://lynxjs.org/rspeedy/typescript.html)。
+:::
