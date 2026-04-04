@@ -4,6 +4,10 @@ Vue Lynx supports TypeScript out of the box. Since Vue Lynx is built on the stan
 
 This page covers what's specific to Vue Lynx: type declarations for Lynx built-in elements and a Volar plugin for correct IDE resolution.
 
+:::tip Prerequisite: Rspeedy TypeScript setup
+Before configuring Vue Lynx types, make sure your project has the base Rspeedy TypeScript setup in place -- `rspeedy-env.d.ts`, path aliases, `isolatedModules`, etc. See the [Rspeedy TypeScript guide](https://lynxjs.org/rspeedy/typescript.html) for details.
+:::
+
 ## Lynx Element Types
 
 By default, Volar resolves tags like `<view>` and `<text>` as SVG elements, since they exist in the SVG spec. Vue Lynx provides type declarations that override this with Lynx-specific types, and a Volar plugin that tells the language server to treat them as custom components.
@@ -32,6 +36,28 @@ If you created your project with `create-vue-lynx` (TypeScript template), this i
 
 With this setup, your IDE will provide prop autocomplete, event autocomplete, and type errors for all Lynx elements.
 
+### Example
+
+Here's a typical component using typed props with Lynx elements:
+
+```vue title="src/Greeting.vue"
+<script setup lang="ts">
+defineProps<{
+  name: string
+  avatarUrl: string
+}>()
+</script>
+
+<template>
+  <view style="{ flexDirection: 'row', alignItems: 'center' }">
+    <image :src="avatarUrl" style="{ width: 40, height: 40 }" />
+    <text @tap="() => console.log('tapped')">Hello, {{ name }}</text>
+  </view>
+</template>
+```
+
+In this example, `<view>`, `<image>`, and `<text>` all have full IntelliSense -- `src` on `<image>` is typed as a string, `@tap` on `<text>` is recognized as a valid event, and misspelled props like `<view srcc="...">` would produce a type error.
+
 ## Event Types
 
 Lynx uses the `bind*` convention for events (e.g., `bindtap`, `bindtouchstart`). The Vue Lynx type declarations automatically map these to Vue's `on*` convention:
@@ -42,7 +68,7 @@ Lynx uses the `bind*` convention for events (e.g., `bindtap`, `bindtouchstart`).
 | `bindtouchstart` | `@touchstart` | `onTouchstart` |
 | `bindlayoutchange` | `@layoutchange` | `onLayoutchange` |
 
-All event handler types are preserved through the transformation, so you get full type checking on event callback parameters.
+The mapping uses TypeScript's `Capitalize` utility type on the suffix after `bind`, so `bindtouchstart` becomes `onTouchstart` (not `onTouchStart`). All event handler types are preserved through the transformation, so you get full type checking on event callback parameters.
 
 ## Type Checking
 
@@ -53,7 +79,3 @@ npx vue-tsc --noEmit
 ```
 
 This validates your Lynx element usage, props, and events against the type declarations, including inside `.vue` single-file components.
-
-:::tip
-For general Rspeedy TypeScript configuration -- path aliases, `rspeedy-env.d.ts`, and extending Lynx types like `IntrinsicElements` -- see the [Rspeedy TypeScript guide](https://lynxjs.org/rspeedy/typescript.html).
-:::
