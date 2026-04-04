@@ -7,6 +7,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["vitest/globals"],
+    "baseUrl": ".",
+    "paths": {
+      "vue-lynx": ["../vue-lynx/runtime/src/index.ts"],
+      "vue-lynx/internal/ops": ["../vue-lynx/internal/src/ops.ts"]
+    },
   },
   "include": ["src"],
   "references": [
