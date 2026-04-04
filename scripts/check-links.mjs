@@ -15,8 +15,8 @@ const LINK_RE = /\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g;
 const CONCURRENCY = 5;
 const TIMEOUT_MS = 10_000;
 
-// Hosts that block automated requests (403) — skip rather than false-positive
-const SKIP_HOSTS = ['npmjs.org', 'www.npmjs.com'];
+// Hosts that block automated requests or time out from CI runners — skip rather than false-positive
+const SKIP_HOSTS = ['npmjs.org', 'www.npmjs.com', 'lynxjs.org'];
 
 async function main() {
   const files = readdirSync(DOCS_DIR, { recursive: true })
