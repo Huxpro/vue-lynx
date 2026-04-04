@@ -35,7 +35,7 @@ async function main() {
     }
   }
 
-  console.log(`Found ${urlMap.size} unique external URLs across ${files.length} docs\n`);
+  console.info(`Found ${urlMap.size} unique external URLs across ${files.length} docs\n`);
 
   const urls = [...urlMap.keys()].filter(url => {
     const host = new URL(url).hostname;
@@ -50,20 +50,20 @@ async function main() {
     for (const result of results) {
       if (!result.ok) {
         failures.push(result);
-        console.log(`  FAIL ${result.status} ${result.url}`);
+        console.info(`  FAIL ${result.status} ${result.url}`);
         for (const file of urlMap.get(result.url)) {
-          console.log(`         in ${file}`);
+          console.info(`         in ${file}`);
         }
       }
     }
   }
 
-  console.log();
+  console.info();
   if (failures.length > 0) {
-    console.log(`${failures.length} broken link(s) found.`);
+    console.info(`${failures.length} broken link(s) found.`);
     process.exit(1);
   } else {
-    console.log('All links OK.');
+    console.info('All links OK.');
   }
 }
 
