@@ -7,7 +7,7 @@ If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Ly
 ## Main Features
 
 - **Familiar Vue 3 API** — Use `ref()`, `computed()`, `v-for`, `v-if`, SFC `<script setup>`, and everything you love about Vue.
-- **Cross-Platform Native Rendering** — Lynx provides a high-performance native rendering engine on mobile and desktop, as well as first-class [Web rendering](https://lynxjs.org/next/guide/web-rendering.html). Your UI is never a WebView.
+- **Cross-Platform Native Rendering** — Lynx provides a high-performance native rendering engine on mobile and desktop, as well as first-class Web rendering. Your UI is never a WebView.
 - **Dual-Thread Architecture** — Vue runs on the background thread; the main thread handles native rendering. This separation keeps your app responsive. For latency-sensitive interactions (drag, scroll), [Main Thread Script](/guide/main-thread-script) lets you mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
 
 ## For Vue Web Developers
@@ -53,7 +53,7 @@ See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-h
 
 ### No `document` or `window`
 
-Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Instead, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object:
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Instead, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object:
 
 - [Global APIs](https://lynxjs.org/next/api/lynx-api/global.html) like `setTimeout()` and `console.log()` are available on both threads, same as the web.
 - DOM-like queries (e.g. `querySelector`, `getBoundingClientRect`) are available as [async background-thread APIs](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) or [synchronous Main Thread APIs](https://lynxjs.org/next/api/lynx-api/main-thread.html) depending on which thread you need them on.
