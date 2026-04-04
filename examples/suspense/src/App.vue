@@ -21,72 +21,70 @@ function toggleAsync() {
 </script>
 
 <template>
-  <scroll-view :style="{ flex: 1 }" scroll-orientation="vertical">
-    <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5' }">
-      <text :style="{ fontSize: 18, fontWeight: 'bold', margin: 16, color: '#111' }">
-        Vue 3 × Lynx — Suspense Demo
+  <scroll-view scroll-orientation="vertical" :style="{ width: '100%', height: '100%', backgroundColor: '#f5f5f5' }">
+    <text :style="{ fontSize: 18, fontWeight: 'bold', margin: 16, color: '#111' }">
+      Vue 3 × Lynx — Suspense Demo
+    </text>
+
+    <!-- Toggle button -->
+    <view
+      :style="{ margin: '0 16px 12px', padding: '8px 16px', backgroundColor: '#0077ff', borderRadius: 8 }"
+      @tap="toggleAsync"
+    >
+      <text :style="{ color: '#fff', fontSize: 14 }">
+        {{ showAsync ? 'Unmount' : 'Remount' }} async components
       </text>
+    </view>
 
-      <!-- Toggle button -->
-      <view
-        :style="{ margin: '0 16px 12px', padding: '8px 16px', backgroundColor: '#0077ff', borderRadius: 8 }"
-        @tap="toggleAsync"
-      >
-        <text :style="{ color: '#fff', fontSize: 14 }">
-          {{ showAsync ? 'Unmount' : 'Remount' }} async components
-        </text>
-      </view>
+    <!-- 1. defineAsyncComponent with simulated delay -->
+    <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
+        1. Slow async component (1.5s delay)
+      </text>
+      <Suspense>
+        <template #default>
+          <SlowComponent />
+        </template>
+        <template #fallback>
+          <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
+            <text :style="{ color: '#856404', fontSize: 13 }">⏳ Loading slow component...</text>
+          </view>
+        </template>
+      </Suspense>
+    </view>
 
-      <!-- 1. defineAsyncComponent with simulated delay -->
-      <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
-        <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
-          1. Slow async component (1.5s delay)
-        </text>
-        <Suspense>
-          <template #default>
-            <SlowComponent />
-          </template>
-          <template #fallback>
-            <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
-              <text :style="{ color: '#856404', fontSize: 13 }">⏳ Loading slow component...</text>
-            </view>
-          </template>
-        </Suspense>
-      </view>
+    <!-- 2. defineAsyncComponent (dynamic import, instant after chunk load) -->
+    <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
+        2. Lazy-loaded counter (dynamic import)
+      </text>
+      <Suspense>
+        <template #default>
+          <LazyCounter />
+        </template>
+        <template #fallback>
+          <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
+            <text :style="{ color: '#856404', fontSize: 13 }">⏳ Loading chunk...</text>
+          </view>
+        </template>
+      </Suspense>
+    </view>
 
-      <!-- 2. defineAsyncComponent (dynamic import, instant after chunk load) -->
-      <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
-        <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
-          2. Lazy-loaded counter (dynamic import)
-        </text>
-        <Suspense>
-          <template #default>
-            <LazyCounter />
-          </template>
-          <template #fallback>
-            <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
-              <text :style="{ color: '#856404', fontSize: 13 }">⏳ Loading chunk...</text>
-            </view>
-          </template>
-        </Suspense>
-      </view>
-
-      <!-- 3. Async setup() with top-level await -->
-      <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
-        <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
-          3. Async setup() (top-level await, 1.5s)
-        </text>
-        <Suspense>
-          <template #default>
-            <AsyncSetup />
-          </template>
-          <template #fallback>
-            <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
-              <text :style="{ color: '#856404', fontSize: 13 }">⏳ Awaiting async setup...</text>
-            </view>
-          </template>
-        </Suspense>
-      </view>
+    <!-- 3. Async setup() with top-level await -->
+    <view v-if="showAsync" :style="{ margin: '0 16px 12px' }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 6 }">
+        3. Async setup() (top-level await, 1.5s)
+      </text>
+      <Suspense>
+        <template #default>
+          <AsyncSetup />
+        </template>
+        <template #fallback>
+          <view :style="{ padding: 12, backgroundColor: '#fff3cd', borderRadius: 6 }">
+            <text :style="{ color: '#856404', fontSize: 13 }">⏳ Awaiting async setup...</text>
+          </view>
+        </template>
+      </Suspense>
     </view>
   </scroll-view>
 </template>
