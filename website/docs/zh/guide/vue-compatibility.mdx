@@ -1,12 +1,8 @@
 # Vue 特性兼容性
 
-:::tip
-本页逐一介绍 Vue 核心特性在 Lynx 上的支持情况。关于 Vue Lynx 双线程架构的心智模型，请阅读[理解双线程模型](/zh/guide/introduction#understanding-the-dual-thread-model)。
-:::
+Vue Lynx 构建在官方 Vue 3 运行时核心（`@vue/runtime-core`）之上，因此你应该期望你的 Vue 代码可以直接运行。核心渲染路径 -- 组合式 API、单文件组件、响应式系统、模板指令 -- 与标准 Vue 的使用方式完全一致，无需任何 Lynx 特定的适配。
 
-由于 Vue Lynx 构建在官方 Vue 3 运行时核心之上，它的目标是开箱即用地支持完整的 Vue 3 API。核心渲染路径——组合式 API、单文件组件、响应式系统、模板指令——与标准 Vue 的使用方式完全一致。
-
-但 Vue 的 API 范围很广，我们还没有时间逐一验证每个细节。下面列出了我们已确认在 Lynx 上可以顺利运行的关键 Vue 特性——大多数无需对标准 Vue 代码做任何适配。如果存在 Lynx 特有的注意事项，会在对应位置标注。
+下面是我们已在 Lynx 上验证的 Vue 特性的逐项说明。如果存在 Lynx 特有的注意事项，会在对应位置标注。关于双线程架构底层工作原理的详细信息，请参阅[理解双线程模型](/zh/guide/introduction#understanding-the-dual-thread-model)。
 
 ## 响应式系统 + 组合式函数
 
