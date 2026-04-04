@@ -25,21 +25,6 @@ jobs:
       - run: pnpm install
       - run: pnpm build
 
-  check-links:
-    name: Check Links
-    runs-on: ubuntu-latest
-    # External sites may be down or block CI — advisory only
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Check for broken external links in docs
-        run: node scripts/check-links.mjs
-
   changeset-check:
     name: Changeset Check
     if: github.event_name == 'pull_request'
