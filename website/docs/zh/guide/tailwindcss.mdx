@@ -11,8 +11,12 @@
 ### 1. 安装依赖
 
 ```bash
-pnpm add -D tailwindcss @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
+pnpm add -D tailwindcss@3 @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
 ```
+
+:::tip 需要 Tailwind v3
+`@lynx-js/tailwind-preset` 和 `rsbuild-plugin-tailwindcss` 需要 **Tailwind CSS v3**。Tailwind v4 采用了完全不同的架构，目前尚不支持。请确保你**没有**安装 `@tailwindcss/postcss` 或 `@tailwindcss/vite`——这些是 v4 专用的包，与 v3 配置不兼容。
+:::
 
 - **`@lynx-js/tailwind-preset`** — 一个 Tailwind 预设，用 Lynx 兼容的替代方案替换核心插件。详见[官方 Rspeedy 文档](https://lynxjs.org/rspeedy/styling.html#using-tailwind-css)。
 - **`rsbuild-plugin-tailwindcss`** — Tailwind CSS 的 Rsbuild 集成插件。
@@ -209,3 +213,38 @@ function switchTheme(name) {
 ```
 
 详见 [Lynx CSS 变量 API](https://lynxjs.org/api/css/properties/css-variable.html) 了解 `setProperty` 的完整文档。
+
+## 常见问题
+
+### 新的 Tailwind 类在热更新时不生效
+
+**症状：** 你将 `bg-slate-800` 改为 `bg-red-500` 并保存，但模拟器没有更新。切换_回_之前用过的类可以生效，但新的类在重启开发服务器之前不会显示。
+
+**原因：** Tailwind v3 的 JIT 编译器只为源文件中找到的工具类生成 CSS。当文件变更时，JIT 需要重新扫描并生成新引用的类。如果 PostCSS 配置不正确，这个重新扫描不会在 HMR 时触发，因此只有初始构建包中已有的类才能生效。
+
+最常见的原因是**混用了 Tailwind v3 和 v4 的包**：
+
+| 包 | 版本 | 说明 |
+|---|------|------|
+| `tailwindcss` | 3.x | Tailwind v3 核心（同时也是 PostCSS 插件） |
+| `@tailwindcss/postcss` | 4.x | Tailwind **v4** PostCSS 插件——**与 v3 不兼容** |
+
+这两个不能共存。Lynx 生态（`@lynx-js/tailwind-preset`、`rsbuild-plugin-tailwindcss`）需要 **Tailwind v3**。
+
+**修复：** 移除 v4 包和多余的 PostCSS 依赖：
+
+```bash
+pnpm remove @tailwindcss/postcss autoprefixer
+```
+
+然后按照[上方的配置步骤](#1-安装依赖)操作。确保你的 `postcss.config.js` 使用的是 `tailwindcss`（v3 插件），**而不是** `@tailwindcss/postcss`。
+
+### `content` 路径未匹配到源文件
+
+如果 Tailwind 类在某些文件中生效但在其他文件中不生效，请检查 `tailwind.config.ts` 中的 `content` 数组是否包含了所有相关路径：
+
+```ts
+content: ['./src/**/*.{vue,js,ts}'],
+```
+
+如果你的源文件在其他位置（例如 `pages/`、`components/`），请相应调整 glob 模式。

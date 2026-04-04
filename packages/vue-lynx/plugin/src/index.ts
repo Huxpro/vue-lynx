@@ -20,6 +20,7 @@
  * ```
  */
 
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,6 +30,8 @@ import { pluginVue } from '@rsbuild/plugin-vue';
 import { applyCSS } from './css.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
+
+const require = createRequire(import.meta.url);
 
 const _pluginDirname = path.dirname(fileURLToPath(import.meta.url));
 const _vueLynxRoot = path.resolve(_pluginDirname, '../..');
@@ -159,6 +162,25 @@ export function pluginVueLynx(
       pre: ['lynx:rsbuild:plugin-api', 'lynx:config', 'rsbuild:vue'],
 
       setup(api) {
+        // Detect Tailwind v3 + v4 package mismatch early.
+        // @tailwindcss/postcss is the Tailwind v4 PostCSS plugin and is
+        // incompatible with @lynx-js/tailwind-preset and
+        // rsbuild-plugin-tailwindcss (both require Tailwind v3).
+        try {
+          require.resolve('@tailwindcss/postcss');
+          console.warn(
+            '\n\x1b[33m'
+            + '[vue-lynx] Warning: detected @tailwindcss/postcss (Tailwind v4 PostCSS plugin).\n'
+            + '  This is incompatible with @lynx-js/tailwind-preset and\n'
+            + '  rsbuild-plugin-tailwindcss, which require Tailwind v3.\n'
+            + '  Remove it and follow the setup guide:\n'
+            + '  https://vue.lynxjs.org/guide/tailwindcss.html'
+            + '\x1b[0m\n',
+          );
+        } catch {
+          // Not installed — no conflict.
+        }
+
         api.modifyRsbuildConfig((config, { mergeRsbuildConfig }) => {
           // By default, Rsbuild does not compile JavaScript files under
           // node_modules via SWC. Many npm packages ship ES2021+ syntax
