@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/pinia",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "description": "Vue-Lynx + Pinia state management demo",
   "license": "Apache-2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/7guis",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "description": "7 GUIs benchmark — Counter, Temperature Converter, Flight Booker, Timer, CRUD, Circle Drawer, Cells",
   "license": "Apache-2.0",
