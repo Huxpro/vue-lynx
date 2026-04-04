@@ -24,62 +24,64 @@ const inputText = ref('')
 </script>
 
 <template>
-  <view :style="{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5', padding: 16 }">
+  <scroll-view :style="{ flex: 1 }" scroll-orientation="vertical">
+    <view :style="{ display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5', padding: 16 }">
 
-    <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 12 }">
-      v-model Demo
-    </text>
+      <text :style="{ fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 12 }">
+        v-model Demo
+      </text>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- SECTION 1: Component v-model (WORKS)       -->
-    <!-- ═══════════════════════════════════════════ -->
-    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#0077ff', marginBottom: 4 }">
-      1. Component v-model (defineModel)
-    </text>
-    <text :style="{ fontSize: 12, color: '#666', marginBottom: 8 }">
-      Parent count: {{ parentCount }}
-    </text>
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 1: Component v-model (WORKS)       -->
+      <!-- ═══════════════════════════════════════════ -->
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#0077ff', marginBottom: 4 }">
+        1. Component v-model (defineModel)
+      </text>
+      <text :style="{ fontSize: 12, color: '#666', marginBottom: 8 }">
+        Parent count: {{ parentCount }}
+      </text>
 
-    <!-- v-model on component — compiles to :modelValue + @update:modelValue -->
-    <ModelCounter v-model="parentCount" />
+      <!-- v-model on component — compiles to :modelValue + @update:modelValue -->
+      <ModelCounter v-model="parentCount" />
 
-    <view
-      :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, marginBottom: 16, alignSelf: 'flex-start' }"
-      @tap="resetCount"
-    >
-      <text :style="{ color: '#fff', fontSize: 12 }">Reset from parent</text>
+      <view
+        :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, marginBottom: 16, alignSelf: 'flex-start' }"
+        @tap="resetCount"
+      >
+        <text :style="{ color: '#fff', fontSize: 12 }">Reset from parent</text>
+      </view>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 2: Named models (WORKS)            -->
+      <!-- ═══════════════════════════════════════════ -->
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#0077ff', marginBottom: 4 }">
+        2. Named v-model (v-model:title, v-model:body)
+      </text>
+      <text :style="{ fontSize: 12, color: '#666' }">
+        Parent title: "{{ docTitle }}" | body: "{{ docBody }}"
+      </text>
+
+      <NamedModels v-model:title="docTitle" v-model:body="docBody" />
+
+      <view
+        :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, marginBottom: 16, alignSelf: 'flex-start' }"
+        @tap="setValues"
+      >
+        <text :style="{ color: '#fff', fontSize: 12 }">Reset from parent</text>
+      </view>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 3: Native input v-model (SUPPORTED) -->
+      <!-- ═══════════════════════════════════════════ -->
+      <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#00aa44', marginBottom: 4 }">
+        3. Native input v-model
+      </text>
+      <text :style="{ fontSize: 12, color: '#666', marginBottom: 8 }">
+        Text: "{{ inputText }}"
+      </text>
+      <input v-model="inputText" type="text" placeholder="Type here"
+        :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
+
     </view>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- SECTION 2: Named models (WORKS)            -->
-    <!-- ═══════════════════════════════════════════ -->
-    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#0077ff', marginBottom: 4 }">
-      2. Named v-model (v-model:title, v-model:body)
-    </text>
-    <text :style="{ fontSize: 12, color: '#666' }">
-      Parent title: "{{ docTitle }}" | body: "{{ docBody }}"
-    </text>
-
-    <NamedModels v-model:title="docTitle" v-model:body="docBody" />
-
-    <view
-      :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, marginBottom: 16, alignSelf: 'flex-start' }"
-      @tap="setValues"
-    >
-      <text :style="{ color: '#fff', fontSize: 12 }">Reset from parent</text>
-    </view>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- SECTION 3: Native input v-model (SUPPORTED) -->
-    <!-- ═══════════════════════════════════════════ -->
-    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#00aa44', marginBottom: 4 }">
-      3. Native input v-model
-    </text>
-    <text :style="{ fontSize: 12, color: '#666', marginBottom: 8 }">
-      Text: "{{ inputText }}"
-    </text>
-    <input v-model="inputText" type="text" placeholder="Type here"
-      :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
-
-  </view>
+  </scroll-view>
 </template>
