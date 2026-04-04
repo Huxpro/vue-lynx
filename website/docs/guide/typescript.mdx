@@ -2,6 +2,10 @@
 
 Vue Lynx provides built-in TypeScript type declarations for all Lynx built-in elements and a [Volar](https://github.com/vuejs/language-tools) plugin for IDE IntelliSense. This gives you autocomplete and type checking for elements like `<view>`, `<text>`, `<image>`, and their props and events.
 
+:::tip Rspeedy TypeScript setup
+This page covers Vue-specific type support (Volar, element types, event types). For general Rspeedy TypeScript configuration -- path aliases, `rspeedy-env.d.ts`, and extending Lynx types -- see the [Rspeedy TypeScript guide](https://lynxjs.org/rspeedy/typescript.html).
+:::
+
 ## Setup
 
 If you created your project with `create-vue-lynx` (TypeScript template), this is already configured for you. For existing projects, add the following to your source-level `tsconfig.json` (typically `src/tsconfig.json`):
@@ -27,11 +31,33 @@ With the setup above, your IDE (VS Code, Cursor, or any editor with Volar suppor
 - **Element recognition** -- `<view>`, `<text>`, `<image>`, `<scroll-view>`, `<list>`, and all other Lynx elements are recognized as valid components instead of unknown or SVG elements.
 - **Prop autocomplete** -- Typing `<view ` triggers autocomplete for Lynx-specific props like `style`, `flatten`, etc.
 - **Event autocomplete** -- Lynx events use the `bind*` convention (e.g., `bindtap`), which is automatically transformed to Vue's `on*` convention (e.g., `onTap`). Both `@tap` in templates and `onTap` in JSX work with full type support.
-- **Type checking** -- `vue-tsc` will catch incorrect prop names or types at build time.
+- **Type checking** -- `vue-tsc` catches incorrect prop names or types at build time (see [Type Checking](#type-checking) below).
+
+## Type Checking
+
+Rspeedy does not perform type checking during build by default. For Vue projects, use [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc) to run type checking from the command line:
+
+```bash
+npx vue-tsc --noEmit
+```
+
+`vue-tsc` is a wrapper around `tsc` that understands `.vue` single-file components. It will validate your Lynx element usage, props, and events against the type declarations.
+
+:::tip
+You can add a `type-check` script to your `package.json` for convenience:
+
+```json
+{
+  "scripts": {
+    "type-check": "vue-tsc --noEmit"
+  }
+}
+```
+:::
 
 ## How it works
 
-The types are auto-generated from `@lynx-js/types`'s `IntrinsicElements` interface, so they stay in sync with the Lynx platform automatically. The `VueLynxProps` type utility handles two transformations:
+The types are auto-generated from [`@lynx-js/types`](https://lynxjs.org/rspeedy/typescript.html#extending-intrinsicelements)'s `IntrinsicElements` interface, so they stay in sync with the Lynx platform automatically. The `VueLynxProps` type utility handles two transformations:
 
 1. **Event convention** -- Lynx's `bindtap`, `bindtouchstart`, etc. are mapped to Vue's `onTap`, `onTouchstart` convention.
 2. **className removal** -- Lynx's `className` prop is omitted since Vue uses `class` instead.
