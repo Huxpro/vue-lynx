@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/option-api",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "Vue-Lynx Options API demo — validates that optionsApi: true works",
   "type": "module",

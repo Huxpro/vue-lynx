@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/css-features",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "Vue-Lynx CSS features demo — scoped, modules, v-bind()",
   "license": "Apache-2.0",
