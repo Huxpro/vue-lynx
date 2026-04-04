@@ -1,0 +1,41 @@
+# TypeScript
+
+Vue Lynx 为所有 Lynx 内置元素提供了 TypeScript 类型声明，并配备了 [Volar](https://github.com/vuejs/language-tools) 插件以支持 IDE 智能提示。这为 `<view>`、`<text>`、`<image>` 等元素及其属性和事件提供了自动补全和类型检查。
+
+## 配置
+
+如果你使用 `create-vue-lynx`（TypeScript 模板）创建项目，则已默认配置好。对于已有项目，请在源码级 `tsconfig.json`（通常是 `src/tsconfig.json`）中添加以下配置：
+
+```json title="src/tsconfig.json"
+{
+  "compilerOptions": {
+    "types": ["vue-lynx/types"]
+  },
+  "vueCompilerOptions": {
+    "plugins": ["vue-lynx/types/volar-plugin"]
+  }
+}
+```
+
+- **`types`** 加载类型声明，为 Vue 的 `GlobalComponents` 添加所有 Lynx 内置元素及其属性类型。
+- **`vueCompilerOptions.plugins`** 加载 Volar 插件，防止 `<view>`、`<text>` 等 Lynx 元素被 Vue 编译器错误地解析为 SVG 元素。
+
+## 功能
+
+配置完成后，你的 IDE（VS Code、Cursor 或任何支持 Volar 的编辑器）将提供：
+
+- **元素识别** -- `<view>`、`<text>`、`<image>`、`<scroll-view>`、`<list>` 等所有 Lynx 元素都会被正确识别为有效组件，而不是未知元素或 SVG 元素。
+- **属性自动补全** -- 输入 `<view ` 时会触发 Lynx 特有属性的自动补全，如 `style`、`flatten` 等。
+- **事件自动补全** -- Lynx 事件使用 `bind*` 约定（如 `bindtap`），会自动转换为 Vue 的 `on*` 约定（如 `onTap`）。模板中的 `@tap` 和 JSX 中的 `onTap` 都支持完整的类型提示。
+- **类型检查** -- `vue-tsc` 会在构建时捕获错误的属性名或类型。
+
+## 工作原理
+
+类型从 `@lynx-js/types` 的 `IntrinsicElements` 接口自动生成，因此会自动与 Lynx 平台保持同步。`VueLynxProps` 类型工具处理两个转换：
+
+1. **事件约定** -- Lynx 的 `bindtap`、`bindtouchstart` 等映射为 Vue 的 `onTap`、`onTouchstart` 约定。
+2. **className 移除** -- Lynx 的 `className` 属性被省略，因为 Vue 使用 `class` 代替。
+
+## 支持的元素
+
+所有 Lynx 内置元素均有类型支持：`view`、`text`、`image`、`scroll-view`、`list`、`list-item`、`list-row`、`page`、`component`、`input`、`textarea`、`frame`、`overlay`、`svg`、`filter-image`、`inline-image`、`inline-text`、`inline-truncation` 和 `raw-text`。

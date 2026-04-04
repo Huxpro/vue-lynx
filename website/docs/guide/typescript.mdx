@@ -1,0 +1,41 @@
+# TypeScript
+
+Vue Lynx provides built-in TypeScript type declarations for all Lynx built-in elements and a [Volar](https://github.com/vuejs/language-tools) plugin for IDE IntelliSense. This gives you autocomplete and type checking for elements like `<view>`, `<text>`, `<image>`, and their props and events.
+
+## Setup
+
+If you created your project with `create-vue-lynx` (TypeScript template), this is already configured for you. For existing projects, add the following to your source-level `tsconfig.json` (typically `src/tsconfig.json`):
+
+```json title="src/tsconfig.json"
+{
+  "compilerOptions": {
+    "types": ["vue-lynx/types"]
+  },
+  "vueCompilerOptions": {
+    "plugins": ["vue-lynx/types/volar-plugin"]
+  }
+}
+```
+
+- **`types`** loads the type declarations, augmenting Vue's `GlobalComponents` with all Lynx built-in elements and their props.
+- **`vueCompilerOptions.plugins`** loads the Volar plugin, which prevents `<view>`, `<text>`, and other Lynx elements from being incorrectly resolved as SVG elements by the Vue compiler.
+
+## What you get
+
+With the setup above, your IDE (VS Code, Cursor, or any editor with Volar support) will provide:
+
+- **Element recognition** -- `<view>`, `<text>`, `<image>`, `<scroll-view>`, `<list>`, and all other Lynx elements are recognized as valid components instead of unknown or SVG elements.
+- **Prop autocomplete** -- Typing `<view ` triggers autocomplete for Lynx-specific props like `style`, `flatten`, etc.
+- **Event autocomplete** -- Lynx events use the `bind*` convention (e.g., `bindtap`), which is automatically transformed to Vue's `on*` convention (e.g., `onTap`). Both `@tap` in templates and `onTap` in JSX work with full type support.
+- **Type checking** -- `vue-tsc` will catch incorrect prop names or types at build time.
+
+## How it works
+
+The types are auto-generated from `@lynx-js/types`'s `IntrinsicElements` interface, so they stay in sync with the Lynx platform automatically. The `VueLynxProps` type utility handles two transformations:
+
+1. **Event convention** -- Lynx's `bindtap`, `bindtouchstart`, etc. are mapped to Vue's `onTap`, `onTouchstart` convention.
+2. **className removal** -- Lynx's `className` prop is omitted since Vue uses `class` instead.
+
+## Supported elements
+
+All Lynx built-in elements are typed: `view`, `text`, `image`, `scroll-view`, `list`, `list-item`, `list-row`, `page`, `component`, `input`, `textarea`, `frame`, `overlay`, `svg`, `filter-image`, `inline-image`, `inline-text`, `inline-truncation`, and `raw-text`.
