@@ -1,12 +1,8 @@
 # Vue Features Compatibility
 
-:::tip
-This page gives a feature-by-feature overview of core Vue features on Lynx. For the mental model behind Vue Lynx's dual-thread architecture, read [Understanding the Dual-Thread Model](/guide/introduction#understanding-the-dual-thread-model).
-:::
+Vue Lynx is built on the official Vue 3 runtime core (`@vue/runtime-core`), so you should expect your Vue code to just work. The core rendering path — Composition API, SFCs, reactivity, template directives — works the same way you'd expect from standard Vue, with no Lynx-specific adaptation required.
 
-Because Vue Lynx is built on the official Vue 3 runtime core, it aims to support the full Vue 3 API surface out of the box. The core rendering path — Composition API, SFCs, reactivity, template directives — works the same way you'd expect from standard Vue.
-
-That said, Vue's API surface is large and we haven't had time to fully verify every corner of it. Below are critical Vue features that we've confirmed work effortlessly on Lynx — most require zero adaptation from a standard Vue codebase. Where Lynx-specific caveats exist, they are called out inline.
+Below is a feature-by-feature breakdown of the Vue features we've verified on Lynx. Where Lynx-specific caveats exist, they are called out inline. For details on how the dual-thread architecture works under the hood, see [Understanding the Dual-Thread Model](/guide/introduction#understanding-the-dual-thread-model).
 
 ## Reactivity + Composables
 
