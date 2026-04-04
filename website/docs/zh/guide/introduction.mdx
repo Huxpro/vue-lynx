@@ -7,7 +7,7 @@
 ## 主要特性
 
 - **熟悉的 Vue 3 API** — 使用 `ref()`、`computed()`、`v-for`、`v-if`、SFC `<script setup>` 以及 Vue 中你喜爱的一切功能。
-- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 [Web 渲染](https://lynxjs.org/next/guide/web-rendering.html)支持。你的 UI 绝非 WebView。
+- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 [Web 渲染](https://lynxjs.org/guide/web-rendering.html)支持。你的 UI 绝非 WebView。
 - **双线程架构** — Vue 运行在后台线程；主线程负责原生渲染。这种分离使你的应用始终保持流畅响应。对于延迟敏感的交互（拖拽、滚动），[主线程脚本](/zh/guide/main-thread-script)允许你使用 `'main thread'` 标记函数，使其直接在主线程上运行，消除跨线程延迟。
 
 ## 面向 Vue Web 开发者
@@ -53,15 +53,15 @@ Lynx 使用自己的事件系统。使用 `:bindeventname` 处理会冒泡的事
 
 ### 没有 `document` 或 `window`
 
-Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html)：
+Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/api/lynx-api/lynx-api-overview.html)：
 
-- [全局 API](https://lynxjs.org/next/api/lynx-api/global.html)，如 `setTimeout()` 和 `console.log()`，在两个线程上都可用，与 Web 相同。
-- 类 DOM 查询（例如 `querySelector`、`getBoundingClientRect`）可通过[异步后台线程 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) 或[同步主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html) 使用，具体取决于你需要在哪个线程上使用。
+- [全局 API](https://lynxjs.org/api/lynx-api/global.html)，如 `setTimeout()` 和 `console.log()`，在两个线程上都可用，与 Web 相同。
+- 类 DOM 查询（例如 `querySelector`、`getBoundingClientRect`）可通过[异步后台线程 API](https://lynxjs.org/api/lynx-api/nodes-ref.html) 或[同步主线程 API](https://lynxjs.org/api/lynx-api/main-thread.html) 使用，具体取决于你需要在哪个线程上使用。
 - 平台原生能力通过 [NativeModules](https://lynxjs.org/guide/use-native-modules.html) 和[自定义元素](https://lynxjs.org/guide/custom-native-component.html)提供。
 
 ## 理解双线程模型
 
-如果你使用过 Web Workers，Lynx 的架构会让你感到熟悉。Vue 运行在**后台线程**上，而原生渲染发生在**主线程**上 — 就像将工作交给 Web Worker 以保持 UI 线程的流畅响应。不同之处在于，在 Lynx 中，这是_默认_行为 — Vue 的协调过程永远不会阻塞主线程。（设计原理请参阅[负责任地使用主线程实现交互性](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity)。）
+如果你使用过 Web Workers，Lynx 的架构会让你感到熟悉。Vue 运行在**后台线程**上，而原生渲染发生在**主线程**上 — 就像将工作交给 Web Worker 以保持 UI 线程的流畅响应。不同之处在于，在 Lynx 中，这是_默认_行为 — Vue 的协调过程永远不会阻塞主线程。（设计原理请参阅[负责任地使用主线程实现交互性](https://lynxjs.org/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity)。）
 
 在底层，Vue Lynx 使用[自定义渲染器](https://vuejs.org/api/custom-renderer)在后台线程上构建 **ShadowElement** 树。变更被批量收集为 **ops** 并刷新到主线程。用户交互以**事件**的形式回传。这形成了一个类似于浏览器事件循环的周期：
 
@@ -109,7 +109,7 @@ onMounted(() => {
 
 #### 后台线程只有异步访问 — 对于同步需求使用主线程脚本
 
-从后台线程访问原生元素始终是异步的。模板 `ref` 返回一个 `ShadowElement`（原生元素在后台线程上的引用），而 `getBoundingClientRect()` 等布局查询需要使用[异步 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html)：
+从后台线程访问原生元素始终是异步的。模板 `ref` 返回一个 `ShadowElement`（原生元素在后台线程上的引用），而 `getBoundingClientRect()` 等布局查询需要使用[异步 API](https://lynxjs.org/api/lynx-api/nodes-ref.html)：
 
 ```vue
 <script setup lang="ts">
@@ -129,7 +129,7 @@ onMounted(() => {
 </script>
 ```
 
-当你需要同步访问 — 流畅的动画、手势处理、布局测量 — 请使用[主线程脚本](/zh/guide/main-thread-script)。使用 `'main thread'` 标记的函数直接在主线程上运行，可以调用[主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html)（如 [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html)）、监听 `main-thread-bindlayoutchange`，以及通过 `useMainThreadRef()` 访问原生元素：
+当你需要同步访问 — 流畅的动画、手势处理、布局测量 — 请使用[主线程脚本](/zh/guide/main-thread-script)。使用 `'main thread'` 标记的函数直接在主线程上运行，可以调用[主线程 API](https://lynxjs.org/api/lynx-api/main-thread.html)（如 [`getComputedStyleProperty()`](https://lynxjs.org/api/lynx-api/main-thread/element-get-computed-style.html)）、监听 `main-thread-bindlayoutchange`，以及通过 `useMainThreadRef()` 访问原生元素：
 
 ```vue
 <script setup lang="ts">

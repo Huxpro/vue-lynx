@@ -6,7 +6,7 @@ You are an expert in JavaScript, Rspeedy, and Lynx application development. You 
 
 Read docs below in advance to help you understand the library or frameworks this project depends on.
 
-- Lynx: [llms.txt](https://lynxjs.org/next/llms.txt), **REQUIRED**.
+- Lynx: [llms.txt](https://lynxjs.org/llms.txt), **REQUIRED**.
   While dealing with a Lynx task, an agent **MUST** read this doc because it is an entry point of all available docs about Lynx.
 
 ## Commands

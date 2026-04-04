@@ -4,7 +4,7 @@ We will build a product gallery page together during this tutorial using Vue 3 a
 
 :::note
 
-This tutorial is designed for people who prefer to learn by doing and want to quickly try making something tangible. If you prefer learning each concept step by step, start with [Describing the UI](https://lynxjs.org/next/guide/ui/elements-components).
+This tutorial is designed for people who prefer to learn by doing and want to quickly try making something tangible. If you prefer learning each concept step by step, start with [Describing the UI](https://lynxjs.org/guide/ui/elements-components).
 
 :::
 
@@ -171,7 +171,7 @@ import '../gallery.css';
 This makes sure your UI looks great when you are following this tutorial.
 
 :::info Styling variations in Lynx
-Lynx supports a wide variety of styling features, including global styles, CSS Modules, inline styles, Sass, CSS variables, and more! Please refer to [Rspeedy - Styling](https://lynxjs.org/next/rspeedy/styling) for how to pick your best styling configurations.
+Lynx supports a wide variety of styling features, including global styles, CSS Modules, inline styles, Sass, CSS variables, and more! Please refer to [Rspeedy - Styling](https://lynxjs.org/rspeedy/styling) for how to pick your best styling configurations.
 :::
 
 ## Your First Component: An Image Card
@@ -180,7 +180,7 @@ Now, let's start by creating the first image card, which will be the main part o
 
 <Go example="gallery" defaultFile="src/ImageCard/ImageCard.vue" entry="src/ImageCard" defaultEntryName="ImageCard" />
 
-Great, you can now see the image card displayed. Here, we use the [`<image>`](https://lynxjs.org/next/api/elements/built-in/image) element to display your image. You only need to give it a width and height (or specify the `aspectRatio` property as shown here), and it will automatically resize to fit the specified dimensions. This component can receive a `picture` property via `defineProps`, allowing you to change the image it displays.
+Great, you can now see the image card displayed. Here, we use the [`<image>`](https://lynxjs.org/api/elements/built-in/image) element to display your image. You only need to give it a width and height (or specify the `aspectRatio` property as shown here), and it will automatically resize to fit the specified dimensions. This component can receive a `picture` property via `defineProps`, allowing you to change the image it displays.
 
 :::details The src Attribute of Images
 The Lynx `<image>` element can accept a local relative path as the `src` attribute to render an image. All images in this page are sourced locally, and these paths need to be imported before use. However, if your images are stored online, you can easily replace them with web image addresses.
@@ -223,7 +223,7 @@ function onTap() {
 ```
 
 :::details What is "@tap"?
-Vue Lynx uses the same `@eventName` syntax you know from Vue on the web, but Lynx has its own set of events — `@tap` instead of `@click`, `@scroll` instead of native scroll, etc. Learn more on the [Event Handling](https://lynxjs.org/next/guide/interaction/event-handling) page.
+Vue Lynx uses the same `@eventName` syntax you know from Vue on the web, but Lynx has its own set of events — `@tap` instead of `@click`, `@scroll` instead of native scroll, etc. Learn more on the [Event Handling](https://lynxjs.org/guide/interaction/event-handling) page.
 :::
 
 Finally, we use `isLiked` to control the like effect. Because `isLiked` is reactive, `LikeIcon` will respond to its changes, turning into a red heart icon. The `<view>` elements used to render the ripple animation are conditionally rendered with `v-if`:
@@ -240,7 +240,7 @@ Finally, we use `isLiked` to control the like effect. Because `isLiked` is react
 
 We then compose `LikeIcon` with `ImageCard` into a `LikeImageCard` component (see the code in the viewer above).
 
-To give the like a better visual interaction effect, we added CSS animations in `gallery.css`. You can also learn more about animations in the [Animation](https://lynxjs.org/next/guide/styling/animation) section and replace them with your preferred style!
+To give the like a better visual interaction effect, we added CSS animations in `gallery.css`. You can also learn more about animations in the [Animation](https://lynxjs.org/guide/styling/animation) section and replace them with your preferred style!
 
 ## Displaying More Images with `<list>`
 
@@ -252,10 +252,10 @@ To show all your beautiful images, you may need help from `<list>`. This way, yo
 Each child of `<list>` needs to be `<list-item>`, and you must specify a unique and non-repeating `:key` and `:item-key` attribute, otherwise it may not render correctly.
 :::
 
-We use a waterfall layout as the child node layout option. `<list>` also accepts other layout types, which you can refer to in the [`<list>` documentation](https://lynxjs.org/next/api/elements/built-in/list).
+We use a waterfall layout as the child node layout option. `<list>` also accepts other layout types, which you can refer to in the [`<list>` documentation](https://lynxjs.org/api/elements/built-in/list).
 
 :::info
-You can refer to the [Scrolling](https://lynxjs.org/next/guide/ui/scrolling) documentation to learn more about scrolling and scrolling elements.
+You can refer to the [Scrolling](https://lynxjs.org/guide/ui/scrolling) documentation to learn more about scrolling and scrolling elements.
 :::
 
 ## Auto-Scrolling via Element Methods
@@ -283,7 +283,7 @@ onMounted(() => {
 </script>
 ```
 
-We use `onMounted` combined with `nextTick` to call the [`autoScroll`](https://lynxjs.org/next/api/elements/built-in/list.html#autoscroll) method after the list is rendered. We use `lynx.createSelectorQuery()` to select the list element by its `custom-list-name` attribute and invoke the native method.
+We use `onMounted` combined with `nextTick` to call the [`autoScroll`](https://lynxjs.org/api/elements/built-in/list.html#autoscroll) method after the list is rendered. We use `lynx.createSelectorQuery()` to select the list element by its `custom-list-name` attribute and invoke the native method.
 
 :::details What is "invoke"?
 In Lynx, all native elements have a set of "methods" that can be called. Unlike on the web, this call is asynchronous, similar to message passing. You need to use `invoke` with the method name and parameters to call them.
@@ -299,7 +299,7 @@ Like most apps, we can add a scrollbar to this page to indicate how many images 
 
 <Go example="gallery" defaultFile="src/GalleryScrollbar/NiceScrollbar.vue" entry="src/GalleryScrollbar" defaultEntryName="GalleryScrollbar" />
 
-The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`, which lets the parent component call methods on the child. Similar to the `@tap` event used to add the like functionality, we add the [`@scroll`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll) event to `<list>`, which will be triggered when the `<list>` element scrolls. To make the scrollbar respond faster to scroll events, we set [`scroll-event-throttle`](https://lynxjs.org/next/api/elements/built-in/list.html#scroll-event-throttle) to 0.
+The `NiceScrollbar` component exposes an `adjustScrollbar` method via `defineExpose`, which lets the parent component call methods on the child. Similar to the `@tap` event used to add the like functionality, we add the [`@scroll`](https://lynxjs.org/api/elements/built-in/list.html#scroll) event to `<list>`, which will be triggered when the `<list>` element scrolls. To make the scrollbar respond faster to scroll events, we set [`scroll-event-throttle`](https://lynxjs.org/api/elements/built-in/list.html#scroll-event-throttle) to 0.
 
 :::details list-item's estimated-main-axis-size-px
 You may have noticed this attribute on `<list-item>`. It estimates the size of elements on the main axis when they are not yet rendered in `<list>`. This is very useful when we add a scrollbar, as we need to know how long the scrollbar needs to be to cover all elements.
@@ -325,12 +325,12 @@ export const calculateEstimatedSize = (
 At this point, we have a complete page! But you may have noticed that the scrollbar we added still lags a bit during scrolling, not as responsive as it could be. This is because our adjustments are still happening on the background thread, not the main thread that responds to touch scrolling.
 
 :::details What are the background thread and main thread?
-The biggest feature of Lynx is its dual-thread architecture. You can find a more detailed introduction in [JavaScript Runtime](https://lynxjs.org/next/guide/scripting-runtime/index.html#javascript).
+The biggest feature of Lynx is its dual-thread architecture. You can find a more detailed introduction in [JavaScript Runtime](https://lynxjs.org/guide/scripting-runtime/index.html#javascript).
 :::
 
 ## A More Responsive Scrollbar
 
-To optimize the performance of the scrollbar, we need to introduce [Main Thread Script (MTS)](https://lynxjs.org/next/react/main-thread-script.html) to [handle events on the main thread](https://lynxjs.org/next/guide/interaction/event-handling.html#main-thread-event-processing), migrating the adjustments we made in the previous step for the scrollbar's height and position from the background thread to the main thread.
+To optimize the performance of the scrollbar, we need to introduce [Main Thread Script (MTS)](https://lynxjs.org/react/main-thread-script.html) to [handle events on the main thread](https://lynxjs.org/guide/interaction/event-handling.html#main-thread-event-processing), migrating the adjustments we made in the previous step for the scrollbar's height and position from the background thread to the main thread.
 
 To let you see the comparison more clearly, we keep both scrollbars:
 
