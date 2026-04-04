@@ -29,7 +29,7 @@ import type {
 } from '@vue/runtime-core';
 
 import { runOnMainThread } from './cross-thread.js';
-import { register, unregister, updateHandler, resetRegistry } from './event-registry.js';
+import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush, waitForFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
 import {
@@ -934,27 +934,76 @@ function getModelAssigner(vnode: VNode): (value: unknown) => void {
   return fn ?? ((_: unknown) => undefined);
 }
 
+/**
+ * Build a vModel event handler that extracts value from Lynx event data
+ * and calls the model assigner with modifier processing.
+ */
+function makeVModelHandler(
+  el: ShadowElement,
+  modifiers: Partial<Record<string, boolean>> | undefined,
+  vnode: VNode,
+): (data: unknown) => void {
+  const assign = getModelAssigner(vnode);
+  return (data: unknown) => {
+    const evt = data as InputEventData;
+    let value: string = evt?.detail?.value ?? '';
+    if (evt?.detail?.isComposing) return;
+    if (modifiers?.trim) value = value.trim();
+    el._vModelValue = value;
+    assign(modifiers?.number ? looseToNumber(value) : value);
+  };
+}
+
+/**
+ * Invoke a user-provided event handler (single function or array of functions).
+ */
+function invokeUserHandler(handler: unknown, data: unknown): void {
+  if (Array.isArray(handler)) {
+    for (const fn of handler) {
+      if (typeof fn === 'function') fn(data);
+    }
+  } else if (typeof handler === 'function') {
+    handler(data);
+  }
+}
+
+/**
+ * Inject the vModel handler into vnode.props so that patchProp registers a
+ * single unified PAPI listener. If the user also has @input (or @confirm for
+ * .lazy), the handlers are merged. This avoids the PAPI single-listener-per-
+ * event constraint where __AddEvent overwrites earlier listeners.
+ *
+ * The injected handler uses an indirection through el._vModelHandler so that
+ * beforeUpdate can refresh the closure without needing patchProp to re-register
+ * the PAPI listener.
+ */
+function injectVModelEvent(el: ShadowElement, vnode: VNode): void {
+  const eventProp = el._vModelEventProp!;
+  const userHandler = vnode.props?.[eventProp];
+  if (!vnode.props) vnode.props = {};
+
+  if (userHandler) {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+      invokeUserHandler(userHandler, data);
+    };
+  } else {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+    };
+  }
+}
+
 export const vModelText: ObjectDirective<ShadowElement> = {
   created(el, { modifiers }, vnode) {
     const isLazy = modifiers?.lazy;
     const eventName = isLazy ? 'confirm' : 'input';
-    el._vModelEvent = eventName;
+    el._vModelEventProp = `on${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`;
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
 
-    const assign = getModelAssigner(vnode);
-
-    const handler = (data: unknown) => {
-      const evt = data as InputEventData;
-      let value: string = evt?.detail?.value ?? '';
-      if (evt?.detail?.isComposing) return;
-      if (modifiers?.trim) value = value.trim();
-      el._vModelValue = value;
-      assign(modifiers?.number ? looseToNumber(value) : value);
-    };
-
-    const sign = register(handler);
-    el._vModelSign = sign;
-    pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
-    scheduleFlush();
+    // Inject into vnode.props — patchProp (which runs after created) will
+    // register the handler through the normal event pipeline.
+    injectVModelEvent(el, vnode);
   },
 
   mounted(el, { value }) {
@@ -965,19 +1014,14 @@ export const vModelText: ObjectDirective<ShadowElement> = {
   },
 
   beforeUpdate(el, { value, modifiers }, vnode) {
-    // Refresh handler closure with latest assigner
-    if (el._vModelSign) {
-      const assign = getModelAssigner(vnode);
-      const handler = (data: unknown) => {
-        const evt = data as InputEventData;
-        let val: string = evt?.detail?.value ?? '';
-        if (evt?.detail?.isComposing) return;
-        if (modifiers?.trim) val = val.trim();
-        el._vModelValue = val;
-        assign(modifiers?.number ? looseToNumber(val) : val);
-      };
-      updateHandler(el._vModelSign, handler);
-    }
+    // Refresh handler closure (the indirection through el._vModelHandler means
+    // the registered PAPI listener will pick up the new closure automatically).
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
+
+    // Re-inject into the new vnode's props.  Each render creates a fresh vnode,
+    // so we must inject again to prevent patchProp from seeing the event as
+    // "removed" and calling REMOVE_EVENT.
+    injectVModelEvent(el, vnode);
 
     // Push value to MT only if changed
     const strVal = value == null ? '' : String(value);
@@ -989,13 +1033,10 @@ export const vModelText: ObjectDirective<ShadowElement> = {
   },
 
   beforeUnmount(el) {
-    if (el._vModelSign) {
-      unregister(el._vModelSign);
-      pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', el._vModelEvent!);
-      el._vModelSign = undefined;
-      el._vModelEvent = undefined;
-      scheduleFlush();
-    }
+    // Event cleanup is handled by patchProp's unmount path.
+    el._vModelHandler = undefined;
+    el._vModelEventProp = undefined;
+    el._vModelValue = undefined;
   },
 };
 

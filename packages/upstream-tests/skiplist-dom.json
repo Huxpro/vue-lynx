@@ -25,7 +25,6 @@
     "should allow setting value to symbol",
     "should allow setting value to object, leaving stringification to the element/browser",
 
-    "should work with text input",
     "should work with number input",
     "should work with number input and be able to update rendering correctly",
     "should work with range",
@@ -98,7 +97,6 @@
     "should allow setting value to symbol": "同上，Symbol 值不兼容 PAPI __SetAttribute",
     "should allow setting value to object, leaving stringification to the element/browser": "自定义 setAttribute handler 测试，PAPI 会先 JSON.stringify",
 
-    "should work with text input": "PAPI 单监听器限制：测试同时注册 onInput 和 vModelText，两者都映射到 bindEvent:input，后者覆盖前者导致 manualListener 不触发",
     "should work with number input": "input.type='number' 的 DOM 值解析行为：DOM 自动将 input.value 转为数字，Lynx pipeline 仅设置字符串属性",
     "should work with number input and be able to update rendering correctly": "同上 + 多输入框数字精度比较",
     "should work with range": "input type=range 的 DOM min/max 值截断行为，Lynx 无对应实现",

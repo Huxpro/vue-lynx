@@ -43,8 +43,8 @@ export class ShadowElement {
 
   // v-model state (BG-thread bookkeeping)
   _vModelValue: string | undefined = undefined;
-  _vModelSign: string | undefined = undefined;
-  _vModelEvent: string | undefined = undefined;
+  _vModelHandler: ((data: unknown) => void) | undefined = undefined;
+  _vModelEventProp: string | undefined = undefined;
 
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {

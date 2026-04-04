@@ -3,7 +3,7 @@
  * and <textarea> elements through the dual-thread pipeline.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   h,
   defineComponent,
@@ -302,6 +302,35 @@ describe('v-model', () => {
     fireEvent.input(input, { detail: { value: 'hello' } });
     await nextTick();
     await nextTick();
+  });
+
+  it('coexists with user @input handler on the same element', async () => {
+    const text = ref('');
+    const inputSpy = vi.fn();
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          withDirectives(
+            h('input', {
+              'onUpdate:modelValue': (v: string) => {
+                text.value = v;
+              },
+              onInput: inputSpy,
+            }),
+            [[vModelText, text.value]],
+          );
+      },
+    });
+
+    const { container } = render(Comp);
+    const input = container.querySelector('input')!;
+    fireEvent.input(input, { detail: { value: 'hello' } });
+    await nextTick();
+    await nextTick();
+
+    // Both v-model AND user @input should fire
+    expect(text.value).toBe('hello');
+    expect(inputSpy).toHaveBeenCalledTimes(1);
   });
 
   it('propagates final value after rapid consecutive updates', async () => {
