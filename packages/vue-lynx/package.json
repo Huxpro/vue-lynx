@@ -66,7 +66,7 @@
   ],
   "scripts": {
     "build": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build) && (cd main-thread && npx rslib build) && (cd plugin && npx rslib build)",
-    "dev": "(cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch)"
+    "dev": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch)"
   },
   "dependencies": {
     "@lynx-js/css-extract-webpack-plugin": "^0.7.0",
