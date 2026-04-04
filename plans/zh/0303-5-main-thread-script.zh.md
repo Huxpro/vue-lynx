@@ -233,6 +233,9 @@ case OP.SET_MT_REF: {
   → BG: 更新 Vue ref(value) → 响应式系统 → next tick
 ```
 
+> **实现后注记（PR [#121](https://github.com/Huxpro/vue-lynx/pull/121))：**
+> 最终发布的 `vModelText` 指令采用了比上述 worklet 方案更简单的实现。它通过现有的事件注册表在 BG 线程注册 handler，并向 MT 发送 `SET_EVENT` / `SET_PROP` ops，而非使用 MT worklet。每次按键会产生一次跨线程往返，但避免了 worklet 生命周期管理的复杂性。支持 `<input>` 和 `<textarea>`，以及 `.lazy`、`.trim`、`.number` 修饰符。Checkbox/radio/select 仍不支持（Lynx 没有原生对应元素）。
+
 ## 需要创建/修改的文件（Phase 1）
 
 ### 新文件

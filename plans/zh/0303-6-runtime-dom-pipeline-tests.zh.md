@@ -178,6 +178,8 @@ runtime-dom 测试的独立跳过列表。
 - `customElement.spec.ts`（Shadow DOM，20+ 个测试）
 - `directives/vModel.spec.ts`（表单输入 -- Lynx 没有 `<input>`）
 
+> **实现后注记（PR [#121](https://github.com/Huxpro/vue-lynx/pull/121))：** `vModelText` 现已支持 `<input>` 和 `<textarea>`。上游 `vModel.spec.ts` 仍然跳过（它测试的是 DOM 特有行为，如 `compositionstart`/`compositionend` 以及 `<select>`/`<checkbox>`/`<radio>`），但已在 `packages/testing-library/src/__tests__/v-model.test.ts` 中添加了 Lynx 专用的 v-model 测试。
+
 ### 导入重写策略
 
 Vue runtime-dom 测试通过相对路径导入内部模块：

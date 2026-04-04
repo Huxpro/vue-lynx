@@ -328,3 +328,28 @@ await fs.writeFile(
   path.join(websiteRoot, 'api-sidebar.json'),
   `${JSON.stringify(sidebarGroups, null, 2)}\n`,
 );
+
+// Mirror API docs to zh locale. vue-lynx and testing-library keep hand-written
+// zh index.mdx; other packages copy the generated English index so relative
+// links like [pkg](index.mdx) in member pages resolve under /zh/guide/api/.
+const zhApiOutputDir = path.join(websiteRoot, 'docs/zh/guide/api');
+const zhTranslatedIndexDirs = new Set(['vue-lynx', 'testing-library']);
+await fs.mkdir(zhApiOutputDir, { recursive: true });
+
+for (const pkg of packages) {
+  const srcDir = path.join(apiOutputDir, pkg.dirName);
+  const destDir = path.join(zhApiOutputDir, pkg.dirName);
+  await fs.mkdir(destDir, { recursive: true });
+
+  const files = await fs.readdir(srcDir, { withFileTypes: true });
+  for (const file of files) {
+    if (!file.isFile()) continue;
+    if (file.name === 'index.mdx' && zhTranslatedIndexDirs.has(pkg.dirName)) {
+      continue;
+    }
+    await fs.copyFile(
+      path.join(srcDir, file.name),
+      path.join(destDir, file.name),
+    );
+  }
+}

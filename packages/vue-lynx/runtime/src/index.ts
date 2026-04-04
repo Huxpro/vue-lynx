@@ -25,6 +25,7 @@ import type {
   Component,
   ComponentPublicInstance,
   ObjectDirective,
+  VNode,
 } from '@vue/runtime-core';
 
 import { runOnMainThread } from './cross-thread.js';
@@ -51,6 +52,12 @@ export type { App, Component, ComponentPublicInstance };
 
 const _renderer = createRenderer<ShadowElement, ShadowElement>(nodeOps);
 const _createApp = _renderer.createApp;
+
+/** @internal Raw renderer render function — only for upstream-tests bridge. */
+export const _render: (
+  vnode: import('@vue/runtime-core').VNode | null,
+  container: ShadowElement,
+) => void = _renderer.render;
 
 // ===========================================================================
 // Vue Lynx APIs
@@ -164,6 +171,9 @@ export {
   runOnBackground,
   transformToWorklet,
 };
+
+/** @internal Exposed for upstream-tests bridge render(). */
+export { createPageRoot } from './shadow-element.js';
 
 // ---------------------------------------------------------------------------
 // v-show directive (Vue Lynx implementation)
@@ -905,22 +915,146 @@ export function Teleport(): void {
 // @internal — Directive stubs (v-model, event modifiers)
 // ===========================================================================
 
-/** @internal Lynx stub for vModelText. v-model on inputs is not yet supported. */
-export const vModelText: ObjectDirective = {
+// ---------------------------------------------------------------------------
+// v-model directive (Vue Lynx implementation for <input> / <textarea>)
+// ---------------------------------------------------------------------------
+
+interface InputEventData {
+  detail?: { value?: string; isComposing?: boolean };
+}
+
+function looseToNumber(val: string): number | string {
+  const n = Number.parseFloat(val);
+  return isNaN(n) ? val : n;
+}
+
+function getModelAssigner(vnode: VNode): (value: unknown) => void {
+  const fn = vnode.props?.['onUpdate:modelValue'];
+  if (Array.isArray(fn)) return (value: unknown) => { for (const f of fn) f(value); };
+  return fn ?? ((_: unknown) => undefined);
+}
+
+/**
+ * Build a vModel event handler that extracts value from Lynx event data
+ * and calls the model assigner with modifier processing.
+ */
+function makeVModelHandler(
+  el: ShadowElement,
+  modifiers: Partial<Record<string, boolean>> | undefined,
+  vnode: VNode,
+): (data: unknown) => void {
+  const assign = getModelAssigner(vnode);
+  return (data: unknown) => {
+    const evt = data as InputEventData;
+    let value: string = evt?.detail?.value ?? '';
+    if (evt?.detail?.isComposing) return;
+    if (modifiers?.trim) value = value.trim();
+    el._vModelValue = value;
+    assign(modifiers?.number ? looseToNumber(value) : value);
+  };
+}
+
+/**
+ * Invoke a user-provided event handler (single function or array of functions).
+ */
+function invokeUserHandler(handler: unknown, data: unknown): void {
+  if (Array.isArray(handler)) {
+    for (const fn of handler) {
+      if (typeof fn === 'function') fn(data);
+    }
+  } else if (typeof handler === 'function') {
+    handler(data);
+  }
+}
+
+/**
+ * Inject the vModel handler into vnode.props so that patchProp registers a
+ * single unified PAPI listener. If the user also has @input (or @confirm for
+ * .lazy), the handlers are merged. This avoids the PAPI single-listener-per-
+ * event constraint where __AddEvent overwrites earlier listeners.
+ *
+ * The injected handler uses an indirection through el._vModelHandler so that
+ * beforeUpdate can refresh the closure without needing patchProp to re-register
+ * the PAPI listener.
+ */
+function injectVModelEvent(el: ShadowElement, vnode: VNode): void {
+  const eventProp = el._vModelEventProp!;
+  const userHandler = vnode.props?.[eventProp];
+  if (!vnode.props) vnode.props = {};
+
+  if (userHandler) {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+      invokeUserHandler(userHandler, data);
+    };
+  } else {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+    };
+  }
+}
+
+export const vModelText: ObjectDirective<ShadowElement> = {
+  created(el, { modifiers }, vnode) {
+    const isLazy = modifiers?.lazy;
+    const eventName = isLazy ? 'confirm' : 'input';
+    el._vModelEventProp = `on${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`;
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
+
+    // Inject into vnode.props — patchProp (which runs after created) will
+    // register the handler through the normal event pipeline.
+    injectVModelEvent(el, vnode);
+  },
+
+  mounted(el, { value }) {
+    const val = value == null ? '' : String(value);
+    el._vModelValue = val;
+    pushOp(OP.SET_PROP, el.id, 'value', val);
+    scheduleFlush();
+  },
+
+  beforeUpdate(el, { value, modifiers }, vnode) {
+    // Refresh handler closure (the indirection through el._vModelHandler means
+    // the registered PAPI listener will pick up the new closure automatically).
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
+
+    // Re-inject into the new vnode's props.  Each render creates a fresh vnode,
+    // so we must inject again to prevent patchProp from seeing the event as
+    // "removed" and calling REMOVE_EVENT.
+    injectVModelEvent(el, vnode);
+
+    // Push value to MT only if changed
+    const strVal = value == null ? '' : String(value);
+    if (strVal !== el._vModelValue) {
+      el._vModelValue = strVal;
+      pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      scheduleFlush();
+    }
+  },
+
+  beforeUnmount(el) {
+    // Event cleanup is handled by patchProp's unmount path.
+    el._vModelHandler = undefined;
+    el._vModelEventProp = undefined;
+    el._vModelValue = undefined;
+  },
+};
+
+const vModelUnsupported: ObjectDirective = {
   beforeMount(): void {
-    console.warn('[vue-lynx] v-model is not supported yet');
+    if (__DEV__) {
+      console.warn(
+        '[vue-lynx] v-model on checkbox/radio/select is not supported. '
+        + 'Lynx only supports <input> and <textarea>.',
+      );
+    }
   },
   beforeUpdate(): void {/* no-op */},
 };
 
-/** @internal Lynx stub for vModelCheckbox. */
-export const vModelCheckbox: ObjectDirective = vModelText;
-
-/** @internal Lynx stub for vModelSelect. */
-export const vModelSelect: ObjectDirective = vModelText;
-
-/** @internal Lynx stub for vModelRadio. */
-export const vModelRadio: ObjectDirective = vModelText;
+export const vModelCheckbox: ObjectDirective = vModelUnsupported;
+export const vModelSelect: ObjectDirective = vModelUnsupported;
+export const vModelRadio: ObjectDirective = vModelUnsupported;
 
 /** @internal Lynx stub for withModifiers (event modifier helper). */
 export function withModifiers(

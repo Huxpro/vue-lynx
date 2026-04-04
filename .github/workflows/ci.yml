@@ -25,6 +25,28 @@ jobs:
       - run: pnpm install
       - run: pnpm build
 
+  changeset-check:
+    name: Changeset Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install
+      - name: Check for changesets
+        run: pnpm changeset status --since=origin/main
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

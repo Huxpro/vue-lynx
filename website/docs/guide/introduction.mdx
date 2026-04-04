@@ -7,7 +7,7 @@ If you know Vue 3 and are familiar with Lynx, you already know how to use Vue Ly
 ## Main Features
 
 - **Familiar Vue 3 API** — Use `ref()`, `computed()`, `v-for`, `v-if`, SFC `<script setup>`, and everything you love about Vue.
-- **Cross-Platform Native Rendering** — Lynx provides a high-performance native rendering engine on mobile and desktop, as well as first-class [Web rendering](https://lynxjs.org/next/guide/web-rendering.html). Your UI is never a WebView.
+- **Cross-Platform Native Rendering** — Lynx provides a high-performance native rendering engine on mobile and desktop, as well as first-class Web rendering.
 - **Dual-Thread Architecture** — Vue runs on the background thread; the main thread handles native rendering. This separation keeps your app responsive. For latency-sensitive interactions (drag, scroll), [Main Thread Script](/guide/main-thread-script) lets you mark functions with `'main thread'` to run directly on the main thread with zero cross-thread delay.
 
 ## For Vue Web Developers
@@ -53,7 +53,7 @@ See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-h
 
 ### No `document` or `window`
 
-Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Instead, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object:
+Lynx does not provide browser globals. Libraries that depend on `document` or `window` need adaptation to work. Instead, Lynx provides its own [APIs](https://lynxjs.org/next/api/lynx-api/lynx) via the [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) global object:
 
 - [Global APIs](https://lynxjs.org/next/api/lynx-api/global.html) like `setTimeout()` and `console.log()` are available on both threads, same as the web.
 - DOM-like queries (e.g. `querySelector`, `getBoundingClientRect`) are available as [async background-thread APIs](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) or [synchronous Main Thread APIs](https://lynxjs.org/next/api/lynx-api/main-thread.html) depending on which thread you need them on.
@@ -61,7 +61,9 @@ Lynx does not provide browser globals. Libraries that depend on `document` or `w
 
 ## Understanding the Dual-Thread Model
 
-If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue runs on a **background thread** while native rendering happens on the **main thread** — just like offloading work to a Web Worker so the UI thread stays responsive. The difference is that in Lynx, this is the _default_ — Vue reconciliation never blocks the main thread. (See [Use the Main Thread Responsibly for Interactivity](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity) for the design rationale.)
+You should expect your Vue code to just work on Lynx. Vue Lynx reuses `@vue/runtime-core` directly, so the Vue API behaves the same as on the web — see [Vue Compatibility](/guide/vue-compatibility) for the full feature-by-feature breakdown.
+
+The main thing that differs is the threading model. If you've worked with Web Workers, Lynx's architecture will feel familiar. Vue runs on a **background thread** while native rendering happens on the **main thread** — just like offloading work to a Web Worker so the UI thread stays responsive. The difference is that in Lynx, this is the _default_ — Vue reconciliation never blocks the main thread. (See [Use the Main Thread Responsibly for Interactivity](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity) for the design rationale.)
 
 Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-renderer) that builds a **ShadowElement** tree on the background thread. Changes are batched as **ops** and flushed to the main thread. User interactions flow back as **events**. This forms a cycle analogous to the browser event loop:
 
@@ -80,13 +82,9 @@ Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-r
 
 One full cycle — ops down, events back up — is one **tick**. Vue Lynx's `nextTick` resolves after a complete cycle, so by the time your callback fires, native elements are fully materialized. This is the same mental model as Vue's `nextTick` on the web (wait for DOM update), just extended across threads.
 
-### Vue API: fully compatible
+### What this means in practice
 
-Vue Lynx reuses `@vue/runtime-core` directly. Reactivity, component model, lifecycle hooks, template directives — everything works as documented in the [Vue 3 docs](https://vuejs.org/guide/introduction.html). See [Vue Compatibility](/guide/vue-compatibility) for a detailed feature-by-feature breakdown.
-
-### Caveats for the dual-thread environment
-
-A few behaviors are adjusted because your code and native elements live on different threads.
+In day-to-day development, the dual-thread model is largely transparent. There are only two things to keep in mind:
 
 #### Lifecycle runs on the background thread — use `nextTick` to wait for the main thread
 
@@ -107,9 +105,9 @@ onMounted(() => {
 
 If your `onMounted` only sets up reactive state, timers, or data fetching, no `nextTick` is needed — those don't depend on native elements.
 
-#### Background thread has only async access — use Main Thread Script for synchronous needs
+#### Main Thread Script for zero-latency interactions (advanced)
 
-From the background thread, native element access is always asynchronous. Template `ref` returns a `ShadowElement` (a background-thread reference to the native element), and layout queries like `getBoundingClientRect()` require an [async API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html):
+From the background thread, native element access is always asynchronous. For most use cases this is fine. Template `ref` returns a `ShadowElement` (a background-thread reference to the native element), and layout queries like `getBoundingClientRect()` are available via an [async API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html):
 
 ```vue
 <script setup lang="ts">

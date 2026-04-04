@@ -17,7 +17,10 @@ import {
   nodeOps,
   takeOps,
   resetForTesting,
+  _render as vueLynxRender,
+  createPageRoot,
 } from 'vue-lynx';
+import type { VNode } from '@vue/runtime-core';
 import { isBooleanAttr, includeBooleanAttr } from '@vue/shared';
 
 declare const __DEV__: boolean;
@@ -581,19 +584,132 @@ export {
   vModelCheckbox,
   vModelSelect,
   vModelRadio,
+  vModelText as vModelDynamic,
 } from 'vue-lynx';
 
 // withModifiers/withKeys: use the real @vue/runtime-dom implementations
 // (vue-lynx exports stubs that just return fn without applying modifiers)
 export { withModifiers, withKeys } from '@vue/runtime-dom';
 
+// ---------------------------------------------------------------------------
+// render() — full component rendering via vue-lynx's renderer
+// ---------------------------------------------------------------------------
+
 /**
- * Stub render() — Vue runtime-dom tests that call render(h(...), container)
- * need the full component rendering pipeline. Those tests are skipped.
+ * Render a VNode into a jsdom container through the full dual-thread pipeline.
+ *
+ * Uses vue-lynx's raw renderer (ShadowElement → ops → applyOps → PAPI → jsdom),
+ * then moves the rendered jsdom children into the test's container. The VNode's
+ * `.component` is populated after patching, so `container._vnode.component.data`
+ * works for upstream test assertions.
  */
-export function render(): void {
-  throw new Error(
-    '[bridge] render() is not supported in runtime-dom bridge tests. '
-      + 'Tests using render() should be added to the skiplist.',
-  );
+export function render(vnode: VNode, container: Element): void {
+  const env = (globalThis as Record<string, unknown>)['lynxTestingEnv'] as {
+    switchToMainThread(): void;
+    switchToBackgroundThread(): void;
+    jsdom: { window: { document: Document } };
+  };
+
+  // 1. Set up Main Thread — renderPage creates PAPI page root (id=1)
+  env.switchToMainThread();
+  const doc = env.jsdom.window.document;
+  doc.body.innerHTML = '';
+  const renderPageFn = (globalThis as Record<string, unknown>)['renderPage'] as
+    | ((opts: Record<string, unknown>) => void)
+    | undefined;
+  if (renderPageFn) renderPageFn({});
+
+  // 2. Switch to BG, reset state, create matching ShadowElement page root
+  env.switchToBackgroundThread();
+  resetForTesting();
+  const pageRoot = createPageRoot();
+
+  // 3. Render via vue-lynx's raw renderer.
+  //    Inside render():
+  //      patch() creates ShadowElements, pushes ops
+  //      flushPostFlushCbs() → doFlush → callLepusMethod → applyOps on MT
+  //    So after this call returns, JSDOM already has the rendered elements.
+  vueLynxRender(vnode, pageRoot);
+
+  // 4. Move rendered JSDOM children into the test's container
+  env.switchToMainThread();
+  const papiRoot = doc.body.firstElementChild;
+  if (papiRoot) {
+    while (papiRoot.firstChild) {
+      container.appendChild(papiRoot.firstChild);
+    }
+  }
+
+  // 5. Expose _vnode on the container (vnode.component is now populated)
+  (container as any)._vnode = vnode;
+
+  // 6. Sync value properties and add event forwarders for input/textarea
+  syncValueProperties(container);
+  addInputEventForwarders(container);
+
+  env.switchToBackgroundThread();
+}
+
+/**
+ * Sync the `value` attribute (set by PAPI __SetAttribute) to the `value`
+ * DOM property on input/textarea elements. In jsdom, setAttribute('value')
+ * only sets the default value — it does NOT update .value after the property
+ * has been programmatically set. This shim ensures they stay in sync.
+ */
+function syncValueProperties(container: Element): void {
+  for (const el of container.querySelectorAll('input, textarea')) {
+    const val = el.getAttribute('value');
+    if (val !== null) {
+      (el as HTMLInputElement).value = val;
+    }
+  }
+}
+
+/**
+ * Patch input/textarea elements after render:
+ * 1. Event forwarders — convert DOM events (input/change) to Lynx PAPI events
+ * 2. setAttribute shim — sync `value` attribute writes to `.value` DOM property
+ *
+ * These patches are necessary because:
+ * - Our vModelText registers PAPI listeners (bindEvent:input), not DOM listeners.
+ *   Upstream tests dispatch DOM events; forwarders bridge the gap.
+ * - Our pipeline uses __SetAttribute (string attribute), but upstream tests
+ *   assert on .value (DOM property). After .value is set programmatically,
+ *   setAttribute no longer updates it — the shim re-syncs them.
+ */
+function addInputEventForwarders(container: Element): void {
+  for (const el of container.querySelectorAll('input, textarea')) {
+    const inputEl = el as HTMLInputElement;
+
+    // Event forwarders: DOM event → PAPI listener with Lynx-style payload
+    addForwarder(inputEl, 'input', 'bindEvent:input');
+    // .lazy modifier: upstream tests trigger 'change', our impl uses 'confirm'
+    addForwarder(inputEl, 'change', 'bindEvent:confirm');
+
+    // setAttribute shim: sync value attribute → .value property
+    // This ensures reactive updates (SET_PROP → __SetAttribute) are reflected
+    // in the DOM property that upstream tests assert against.
+    const origSetAttribute = inputEl.setAttribute.bind(inputEl);
+    inputEl.setAttribute = (key: string, value: string) => {
+      origSetAttribute(key, value);
+      if (key === 'value') {
+        inputEl.value = value;
+      }
+    };
+  }
+}
+
+function addForwarder(
+  el: HTMLInputElement | HTMLTextAreaElement,
+  domEvent: string,
+  papiKey: string,
+): void {
+  el.addEventListener(domEvent, () => {
+    const papiListener = (el as any).eventMap?.[papiKey];
+    if (typeof papiListener === 'function') {
+      // Build Lynx-style event payload with detail.value
+      const lynxEvt = { detail: { value: el.value } };
+      papiListener(lynxEvt);
+    }
+  });
 }

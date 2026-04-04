@@ -11,8 +11,12 @@ This guide walks through integrating Tailwind CSS with Vue Lynx, from basic setu
 ### 1. Install dependencies
 
 ```bash
-pnpm add -D tailwindcss @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
+pnpm add -D tailwindcss@3 @lynx-js/tailwind-preset rsbuild-plugin-tailwindcss
 ```
+
+:::tip Tailwind v3 Required
+`@lynx-js/tailwind-preset` and `rsbuild-plugin-tailwindcss` require **Tailwind CSS v3**. Tailwind v4 uses a completely different architecture and is not yet supported. Make sure you do **not** have `@tailwindcss/postcss` or `@tailwindcss/vite` installed — those are v4-only packages that conflict with the v3 setup.
+:::
 
 - **`@lynx-js/tailwind-preset`** — A Tailwind preset that replaces core plugins with Lynx-compatible equivalents. See the [official Rspeedy docs](https://lynxjs.org/rspeedy/styling.html#using-tailwind-css) for details.
 - **`rsbuild-plugin-tailwindcss`** — Rsbuild integration for Tailwind CSS.
@@ -209,3 +213,38 @@ function switchTheme(name) {
 ```
 
 See the [Lynx CSS Variable API](https://lynxjs.org/api/css/properties/css-variable.html) for full details on `setProperty`.
+
+## Troubleshooting
+
+### New Tailwind classes don't appear on HMR
+
+**Symptom:** You change e.g. `bg-slate-800` to `bg-red-500`, save, but the emulator doesn't update. Switching _back_ to a previously-used class works, but new classes don't show up until you restart the dev server.
+
+**Cause:** Tailwind v3's JIT compiler generates CSS only for the utility classes it finds in your source files. When a file changes, JIT must re-scan it and generate any newly-referenced classes. If the PostCSS pipeline is misconfigured, this re-scan doesn't trigger on HMR, so only classes that were already in the initial bundle work.
+
+The most common cause is **mixing Tailwind v3 and v4 packages**:
+
+| Package | Version | What it is |
+|---------|---------|------------|
+| `tailwindcss` | 3.x | Tailwind v3 core (also the PostCSS plugin) |
+| `@tailwindcss/postcss` | 4.x | Tailwind **v4** PostCSS plugin -- **incompatible with v3** |
+
+These two cannot coexist. The Lynx ecosystem (`@lynx-js/tailwind-preset`, `rsbuild-plugin-tailwindcss`) requires **Tailwind v3**.
+
+**Fix:** Remove the v4 package and any extra PostCSS dependencies:
+
+```bash
+pnpm remove @tailwindcss/postcss autoprefixer
+```
+
+Then follow the [setup steps above](#1-install-dependencies). Make sure your `postcss.config.js` uses `tailwindcss` (the v3 plugin), **not** `@tailwindcss/postcss`.
+
+### `content` path doesn't match your source files
+
+If Tailwind classes work in some files but not others, check that the `content` array in `tailwind.config.ts` includes all relevant paths:
+
+```ts
+content: ['./src/**/*.{vue,js,ts}'],
+```
+
+Adjust the glob if your source files live elsewhere (e.g. `pages/`, `components/`).

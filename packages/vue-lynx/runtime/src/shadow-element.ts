@@ -41,6 +41,11 @@ export class ShadowElement {
   _baseClass = '';
   _transitionClasses: Set<string> = new Set();
 
+  // v-model state (BG-thread bookkeeping)
+  _vModelValue: string | undefined = undefined;
+  _vModelHandler: ((data: unknown) => void) | undefined = undefined;
+  _vModelEventProp: string | undefined = undefined;
+
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {
       this.id = ShadowElement.nextId++;

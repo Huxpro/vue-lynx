@@ -8,9 +8,14 @@
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
     "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom",
-    "lint": "biome check ."
+    "check-links": "node scripts/check-links.mjs",
+    "lint": "biome check .",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4"
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.30.0"
   }
 }

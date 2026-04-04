@@ -233,6 +233,9 @@ User types → MT bindinput fires → MT worklet reads getValue()
   → BG: updates Vue ref(value) → reactive system → next tick
 ```
 
+> **Post-implementation note (PR [#121](https://github.com/Huxpro/vue-lynx/pull/121)):**
+> The shipped `vModelText` directive took a simpler approach than the worklet-based design above. Instead of a MT worklet, it registers a BG-thread handler via the existing event registry and sends `SET_EVENT` / `SET_PROP` ops to MT. This incurs one cross-thread roundtrip per keystroke but avoids the complexity of worklet lifecycle management. Supports `<input>` and `<textarea>` with `.lazy`, `.trim`, and `.number` modifiers. Checkbox/radio/select remain unsupported (Lynx has no native equivalents).
+
 ## Files to Create/Modify (Phase 1)
 
 ### New Files

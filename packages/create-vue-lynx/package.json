@@ -4,8 +4,10 @@
   "description": "Create a new Vue Lynx project",
   "license": "Apache-2.0",
   "type": "module",
-  "bin": {
-    "create-vue-lynx": "./dist/index.js"
+  "publishConfig": {
+    "bin": {
+      "create-vue-lynx": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -27,5 +29,5 @@
     "vue-lynx": "workspace:*",
     "typescript": "^5.0.0"
   },
-  "engines": { "node": ">=18" }
+  "engines": { "node": ">=20" }
 }

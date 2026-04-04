@@ -13,6 +13,26 @@ const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
 
+/** Prefix all `link` values in sidebar items with the given prefix (e.g. "/zh"). */
+function prefixSidebarLinks(
+  items: Array<Record<string, unknown>>,
+  prefix: string,
+): Array<Record<string, unknown>> {
+  return items.map((item) => {
+    const out = { ...item };
+    if (typeof out.link === 'string') {
+      out.link = `${prefix}${out.link}`;
+    }
+    if (Array.isArray(out.items)) {
+      out.items = prefixSidebarLinks(
+        out.items as Array<Record<string, unknown>>,
+        prefix,
+      );
+    }
+    return out;
+  });
+}
+
 export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
@@ -141,7 +161,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'API 参考',
         },
-        ...apiSidebar,
+        ...prefixSidebarLinks(apiSidebar, '/zh'),
       ],
     },
     llmsUI: true,
@@ -186,41 +206,6 @@ export default defineConfig({
       },
     ],
   },
-  head: [
-    ['meta', { property: 'og:title', content: 'Vue Lynx' }],
-    [
-      'meta',
-      {
-        property: 'og:description',
-        content: 'Vue 3 framework for building Lynx apps',
-      },
-    ],
-    [
-      'meta',
-      {
-        property: 'og:image',
-        content: 'https://vue.lynxjs.org/og-image.png',
-      },
-    ],
-    ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:url', content: 'https://vue.lynxjs.org' }],
-    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'Vue Lynx' }],
-    [
-      'meta',
-      {
-        name: 'twitter:description',
-        content: 'Vue 3 framework for building Lynx apps',
-      },
-    ],
-    [
-      'meta',
-      {
-        name: 'twitter:image',
-        content: 'https://vue.lynxjs.org/og-image.png',
-      },
-    ],
-  ],
   builderConfig: {
     plugins: [pluginSass()],
     source: {
@@ -230,6 +215,18 @@ export default defineConfig({
     },
     server: {
       open: 'http://localhost:<port>/',
+    },
+    html: {
+      tags: [
+        // OG tags — RSPress head[] doesn't inject into static HTML, so use Rsbuild html.tags
+        { tag: 'meta', attrs: { property: 'og:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
+        { tag: 'meta', attrs: { property: 'og:url', content: 'https://vue.lynxjs.org' }, append: false },
+        // Twitter Card
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:title', content: 'Vue Lynx' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:description', content: 'Vue 3 framework for building Lynx apps' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
+      ],
     },
   },
 });

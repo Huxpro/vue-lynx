@@ -7,7 +7,7 @@
 ## 主要特性
 
 - **熟悉的 Vue 3 API** — 使用 `ref()`、`computed()`、`v-for`、`v-if`、SFC `<script setup>` 以及 Vue 中你喜爱的一切功能。
-- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 [Web 渲染](https://lynxjs.org/next/guide/web-rendering.html)支持。你的 UI 绝非 WebView。
+- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 Web 渲染支持。
 - **双线程架构** — Vue 运行在后台线程；主线程负责原生渲染。这种分离使你的应用始终保持流畅响应。对于延迟敏感的交互（拖拽、滚动），[主线程脚本](/zh/guide/main-thread-script)允许你使用 `'main thread'` 标记函数，使其直接在主线程上运行，消除跨线程延迟。
 
 ## 面向 Vue Web 开发者
@@ -53,7 +53,7 @@ Lynx 使用自己的事件系统。使用 `:bindeventname` 处理会冒泡的事
 
 ### 没有 `document` 或 `window`
 
-Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/next/api/lynx-api/lynx-api-overview.html)：
+Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/next/api/lynx-api/lynx)：
 
 - [全局 API](https://lynxjs.org/next/api/lynx-api/global.html)，如 `setTimeout()` 和 `console.log()`，在两个线程上都可用，与 Web 相同。
 - 类 DOM 查询（例如 `querySelector`、`getBoundingClientRect`）可通过[异步后台线程 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) 或[同步主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html) 使用，具体取决于你需要在哪个线程上使用。
