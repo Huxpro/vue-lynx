@@ -105,6 +105,7 @@ export default defineConfig({
         { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        { text: 'TypeScript', link: '/guide/typescript' },
         {
           dividerType: 'solid',
         },
@@ -146,6 +147,7 @@ export default defineConfig({
         { text: 'Vue Query', link: '/zh/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/zh/guide/tailwindcss' },
         { text: 'VueLynx 测试库', link: '/zh/guide/testing-library' },
+        { text: 'TypeScript', link: '/zh/guide/typescript' },
         {
           dividerType: 'solid',
         },
