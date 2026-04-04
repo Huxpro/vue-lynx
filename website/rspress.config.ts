@@ -91,7 +91,6 @@ export default defineConfig({
         },
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
-        { text: 'TypeScript', link: '/guide/typescript' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
@@ -106,6 +105,7 @@ export default defineConfig({
         { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        { text: 'TypeScript', link: '/guide/typescript' },
         {
           dividerType: 'solid',
         },
@@ -133,7 +133,6 @@ export default defineConfig({
         },
         { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
-        { text: 'TypeScript', link: '/zh/guide/typescript' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
@@ -148,6 +147,7 @@ export default defineConfig({
         { text: 'Vue Query', link: '/zh/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/zh/guide/tailwindcss' },
         { text: 'VueLynx 测试库', link: '/zh/guide/testing-library' },
+        { text: 'TypeScript', link: '/zh/guide/typescript' },
         {
           dividerType: 'solid',
         },
