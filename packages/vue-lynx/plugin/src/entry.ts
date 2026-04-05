@@ -175,9 +175,11 @@ class VueCSSConfigPlugin {
         };
         hooks.beforeEncode.tap(PLUGIN_CSS_CONFIG, (args) => {
           const encodeData = args['encodeData'] as {
-            compilerOptions: Record<string, unknown>;
+            sourceContent: {
+              config: Record<string, unknown>;
+            };
           };
-          Object.assign(encodeData.compilerOptions, this.compilerOptions);
+          Object.assign(encodeData.sourceContent.config, this.compilerOptions);
           return args;
         });
       },

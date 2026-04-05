@@ -26,11 +26,15 @@ import ImportedCSS from './ImportedCSS.vue'
       Other CSS patterns
     </text>
 
-    <!-- Workarounds and supporting patterns -->
+    <!-- Workarounds and supporting patterns — 2 per row -->
     <CSSVarsWorkaround />
-    <PlainStyle />
-    <ScopedStyle />
-    <CSSModules />
-    <ImportedCSS />
+    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '12px' }">
+      <view :style="{ flex: 1, paddingRight: '6px' }"><ScopedStyle /></view>
+      <view :style="{ flex: 1, paddingLeft: '6px' }"><CSSModules /></view>
+    </view>
+    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '12px' }">
+      <view :style="{ flex: 1, paddingRight: '6px' }"><PlainStyle /></view>
+      <view :style="{ flex: 1, paddingLeft: '6px' }"><ImportedCSS /></view>
+    </view>
   </scroll-view>
 </template>
