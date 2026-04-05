@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import VBindCSS from './VBindCSS.vue'
 import VBindThreads from './VBindThreads.vue'
+import CSSInheritanceTest from './CSSInheritanceTest.vue'
 import PlainStyle from './PlainStyle.vue'
 import ScopedStyle from './ScopedStyle.vue'
 import CSSModules from './CSSModules.vue'
@@ -20,6 +21,9 @@ import ImportedCSS from './ImportedCSS.vue'
     <!-- v-bind() in CSS — primary focus -->
     <VBindCSS />
     <VBindThreads />
+
+    <!-- enableCSSInheritance isolation test — no useCssVars, pure :style + var() inheritance -->
+    <CSSInheritanceTest />
 
     <!-- Divider -->
     <text :style="{ fontSize: '13px', fontWeight: 'bold', color: '#888', marginBottom: '12px', marginTop: '4px' }">

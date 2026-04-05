@@ -47,27 +47,41 @@ function applyVarsToVNode(
     if (el instanceof ShadowElement) {
       applyVarsToEl(el, vars);
     }
-    // Stamp CSS vars on every descendant element. Lynx's {{--varName}} class
-    // rule resolver reads from the element's own inline styles only — it does
-    // not resolve inherited CSS vars from ancestor inline styles, so each
-    // element that may consume a CSS var needs the var present on itself.
-    if (shapeFlag & SF_ARRAY_CHILDREN) {
-      for (const child of vnode.children as VNode[]) {
-        applyVarsToVNode(child, vars);
-      }
-    }
+    stampElementDescendants(vnode, vars); // lynx-family/lynx#5889
   } else if (shapeFlag & SF_COMPONENT) {
     // Recurse into the component's rendered subtree.
     if (vnode.component) {
       applyVarsToVNode(vnode.component.subTree, vars);
     }
   } else if (vnode.type === Fragment && (shapeFlag & SF_ARRAY_CHILDREN)) {
-    // Fragment root — walk every sibling child. Each recurses into its own
-    // element subtree via the SF_ELEMENT branch above.
-    const children = vnode.children as VNode[];
-    for (const child of children) {
+    // Fragment root — walk every sibling child.
+    for (const child of vnode.children as VNode[]) {
       applyVarsToVNode(child, vars);
     }
+  }
+}
+
+/**
+ * Workaround for lynx-family/lynx#5889.
+ *
+ * When `__SetInlineStyles` updates a CSS custom property on a parent element,
+ * the Lynx engine does not re-propagate the new value through the CSS
+ * inheritance chain to descendant class rules, despite `enableCSSInheritance`
+ * being set. Stamping every element directly means no inheritance is needed.
+ *
+ * TO REVERT when lynx-family/lynx#5889 is fixed:
+ *   1. Delete this function.
+ *   2. Remove the `stampElementDescendants(vnode, vars)` call in `applyVarsToVNode`.
+ *   Root-only stamping via `applyVarsToEl` will be sufficient once the engine
+ *   re-evaluates inheritance on `__SetInlineStyles` updates.
+ */
+function stampElementDescendants(
+  vnode: VNode,
+  vars: Record<string, string>,
+): void {
+  if (!(vnode.shapeFlag & SF_ARRAY_CHILDREN)) return;
+  for (const child of vnode.children as VNode[]) {
+    applyVarsToVNode(child, vars);
   }
 }
 
