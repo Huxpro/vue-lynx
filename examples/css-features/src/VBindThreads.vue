@@ -33,7 +33,7 @@ function cycleColor() {
     marginBottom: '12px',
   }">
     <text :style="{ fontSize: '15px', fontWeight: 'bold', marginBottom: '4px', color: '#333' }">
-      Inline :style + var() &nbsp;vs&nbsp; v-bind() in CSS
+      Inline :style + var() &nbsp;vs&nbsp; v-bind() in CSS (VBindThreads.vue)
     </text>
     <text :style="{ fontSize: '11px', color: '#888', marginBottom: '10px' }">
       Same reactive ref. Tap either box to cycle — compare how each approach updates.

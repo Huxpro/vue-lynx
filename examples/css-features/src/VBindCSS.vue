@@ -40,7 +40,7 @@ function cycleOpacity() {
     marginBottom: '12px',
   }">
     <text :style="{ fontSize: '15px', fontWeight: 'bold', marginBottom: '2px', color: '#333' }">
-      v-bind() in CSS &nbsp;vs&nbsp; inline :style
+      v-bind() in CSS &nbsp;vs&nbsp; inline :style (VBindCSS.vue)
     </text>
     <text :style="{ fontSize: '11px', color: '#888', marginBottom: '10px' }">
       Same values drive both panels. Tap a button to cycle and compare.
