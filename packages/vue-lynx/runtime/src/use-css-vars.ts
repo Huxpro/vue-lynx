@@ -21,6 +21,7 @@ import { ShadowElement } from './shadow-element.js';
 const SF_ELEMENT = 1;
 const SF_COMPONENT = 6; // STATEFUL_COMPONENT (4) | FUNCTIONAL_COMPONENT (2)
 const SF_ARRAY_CHILDREN = 16;
+// SF_TEXT_CHILDREN = 8 — text string children, no VNodes to recurse into.
 
 function applyVarsToEl(el: ShadowElement, vars: Record<string, string>): void {
   const style: Record<string, unknown> = { ...el._style };
@@ -46,14 +47,23 @@ function applyVarsToVNode(
     if (el instanceof ShadowElement) {
       applyVarsToEl(el, vars);
     }
+    // Stamp CSS vars on every descendant element. Lynx's {{--varName}} class
+    // rule resolver reads from the element's own inline styles only — it does
+    // not resolve inherited CSS vars from ancestor inline styles, so each
+    // element that may consume a CSS var needs the var present on itself.
+    if (shapeFlag & SF_ARRAY_CHILDREN) {
+      for (const child of vnode.children as VNode[]) {
+        applyVarsToVNode(child, vars);
+      }
+    }
   } else if (shapeFlag & SF_COMPONENT) {
-    // Recurse into the component's rendered subtree
+    // Recurse into the component's rendered subtree.
     if (vnode.component) {
       applyVarsToVNode(vnode.component.subTree, vars);
     }
   } else if (vnode.type === Fragment && (shapeFlag & SF_ARRAY_CHILDREN)) {
-    // Fragment root — walk every sibling child (but NOT element children;
-    // those inherit CSS vars via enableCSSInheritance).
+    // Fragment root — walk every sibling child. Each recurses into its own
+    // element subtree via the SF_ELEMENT branch above.
     const children = vnode.children as VNode[];
     for (const child of children) {
       applyVarsToVNode(child, vars);
@@ -70,12 +80,17 @@ function applyVarsToVNode(
  *
  * The standard `@vue/runtime-dom` version uses DOM APIs (`el.style.setProperty`)
  * which are unavailable in Lynx's Background Thread.  This implementation
- * instead merges the CSS variables into the element's inline style and sends
+ * instead merges the CSS variables into every element's inline style and sends
  * them to the Main Thread via the ops pipeline.
  *
- * Requires `enableCSSInlineVariables: true` and `enableCSSInheritance: true`
- * in `lynx.config.ts` so the Lynx engine propagates `--*` inline-style vars
- * to descendant elements.
+ * CSS vars are stamped on every element in the component subtree rather than
+ * only the root. Lynx's `{{--varName}}` class rule resolver reads from an
+ * element's own inline styles but does not resolve inherited CSS vars from
+ * ancestor inline styles, so each element needs the var present on itself.
+ *
+ * Requires `enableCSSInlineVariables: true` in `lynx.config.ts`.
+ * `enableCSSInheritance` is not required — CSS vars are stamped on every
+ * element directly rather than relying on the engine's CSS var inheritance.
  *
  * @hidden
  */
