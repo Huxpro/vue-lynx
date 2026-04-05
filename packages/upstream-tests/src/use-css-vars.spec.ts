@@ -402,3 +402,79 @@ describe('useCssVars — reactivity', () => {
     expect(cssVarOp).toBeUndefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7. Deep element stamping
+// ---------------------------------------------------------------------------
+
+describe('useCssVars — deep element stamping', () => {
+  it('stamps CSS vars on every descendant element, not just the root', async () => {
+    const color = ref('red');
+
+    // Structure: view (root) > view (mid) > text (leaf)
+    // The leaf is where a CSS class rule would consume the var.
+    // All three elements must receive the var so the Lynx class rule resolver
+    // can see it on the element itself (it does not resolve inherited inline vars).
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep1': color.value }));
+        return () =>
+          h('view', null, [
+            h('view', null, [
+              h('text'),
+            ]),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep1'] !== undefined,
+    );
+
+    // All three elements (root view, mid view, leaf text) must be stamped.
+    expect(cssVarOps.length).toBe(3);
+    for (const op of cssVarOps) {
+      expect((op.style as Record<string, unknown>)['--deep1']).toBe('red');
+    }
+  });
+
+  it('stamps updated CSS vars on deep elements when reactive source changes', async () => {
+    const color = ref('red');
+
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep2': color.value }));
+        return () =>
+          h('view', null, [
+            h('text'),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps(); // drain mount ops
+
+    color.value = 'blue';
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep2'] !== undefined,
+    );
+
+    // Both the root view and child text must receive the updated value.
+    expect(cssVarOps.length).toBe(2);
+    for (const op of cssVarOps) {
+      expect((op.style as Record<string, unknown>)['--deep2']).toBe('blue');
+    }
+  });
+});
