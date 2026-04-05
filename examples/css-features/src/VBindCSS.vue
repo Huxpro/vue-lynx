@@ -85,3 +85,6 @@ function cycleOpacity() {
     </view>
   </view>
 </template>
+
+<style>
+</style>

@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/vue-router",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "description": "Vue-Lynx + Vue Router demo using createMemoryHistory",
   "license": "Apache-2.0",
