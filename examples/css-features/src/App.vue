@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import VBindCSS from './VBindCSS.vue'
+import VBindThreads from './VBindThreads.vue'
 import PlainStyle from './PlainStyle.vue'
 import ScopedStyle from './ScopedStyle.vue'
 import CSSModules from './CSSModules.vue'
-import VBindCSS from './VBindCSS.vue'
-import VBindThreads from './VBindThreads.vue'
 import CSSVarsWorkaround from './CSSVarsWorkaround.vue'
 import ImportedCSS from './ImportedCSS.vue'
 </script>
@@ -17,25 +17,20 @@ import ImportedCSS from './ImportedCSS.vue'
       CSS Features Test
     </text>
 
-    <!-- 1. Plain <style> — WORKS -->
-    <PlainStyle />
-
-    <!-- 2a. <style scoped> — DOES NOT WORK -->
-    <ScopedStyle />
-
-    <!-- 3. <style module> — SHOULD WORK -->
-    <CSSModules />
-
-    <!-- 4. v-bind() in CSS — WORKS (useCssVars implemented in vue-lynx) -->
+    <!-- v-bind() in CSS — primary focus -->
     <VBindCSS />
-
-    <!-- 4b. v-bind() thread comparison — BG (useCssVars) vs MT (setStyleProperty) -->
     <VBindThreads />
 
-    <!-- 5. Workaround: Reactive inline :style -->
-    <CSSVarsWorkaround />
+    <!-- Divider -->
+    <text :style="{ fontSize: '13px', fontWeight: 'bold', color: '#888', marginBottom: '12px', marginTop: '4px' }">
+      Other CSS patterns
+    </text>
 
-    <!-- 6. Imported .css file — WORKS -->
+    <!-- Workarounds and supporting patterns -->
+    <CSSVarsWorkaround />
+    <PlainStyle />
+    <ScopedStyle />
+    <CSSModules />
     <ImportedCSS />
   </scroll-view>
 </template>
