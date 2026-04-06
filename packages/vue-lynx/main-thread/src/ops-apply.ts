@@ -14,7 +14,6 @@ import { OP } from 'vue-lynx/internal/ops';
 
 import {
   elements,
-  elementScopeClasses,
   pageUniqueId,
   setPageUniqueId,
 } from './element-registry.js';
@@ -207,12 +206,7 @@ export function applyOps(ops: unknown[]): void {
         const cls = ops[i++] as string;
         const el = elements.get(id);
         if (el) {
-          // Merge user classes with scope class (if any)
-          const scopeClass = elementScopeClasses.get(id);
-          const finalClass = scopeClass
-            ? scopeClass + (cls ? ' ' + cls : '')
-            : cls;
-          __SetClasses(el, finalClass);
+          __SetClasses(el, cls);
         }
         break;
       }
@@ -255,10 +249,6 @@ export function applyOps(ops: unknown[]): void {
         if (el) {
           // Set the CSS scope ID for Lynx's CSS engine
           __SetCSSId([el], cssId);
-          // Store the scope class for later merging with user classes
-          // The cssId is derived from the hex scope ID
-          const scopeClass = `v-${cssId.toString(16)}`;
-          elementScopeClasses.set(id, scopeClass);
         }
         break;
       }
@@ -281,7 +271,6 @@ export { elements };
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
   elements.clear();
-  elementScopeClasses.clear();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();

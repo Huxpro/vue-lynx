@@ -23,7 +23,6 @@ import type {
   CssExtractWebpackPluginOptions,
 } from '@lynx-js/css-extract-webpack-plugin';
 
-import { createVueScopeCSSPlugin } from './css-plugins/vue-scope-css-plugin.js';
 import { LAYERS } from './layers.js';
 
 export interface ApplyCSSOptions {
@@ -152,7 +151,6 @@ export function applyCSS(
               enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableCSSSelector,
               enableCSSInvalidation,
-              cssPlugins: [createVueScopeCSSPlugin()],
             } as
               | CssExtractWebpackPluginOptions
               | CssExtractRspackPluginOptions,

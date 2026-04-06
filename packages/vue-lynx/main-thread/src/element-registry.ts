@@ -6,13 +6,6 @@
 export const elements = new Map<number, LynxElement>();
 
 /**
- * Map from element id to its scope class (for Vue scoped CSS).
- * The scope class is derived from the component's scope ID and is used
- * to match transformed CSS selectors.
- */
-export const elementScopeClasses = new Map<number, string>();
-
-/**
  * PAPI unique ID of the root PageElement.
  * Passed as `parentComponentUniqueId` to element creation PAPI calls.
  * `__SetCSSId` sets `css_style_sheet_manager_` directly on each element,
