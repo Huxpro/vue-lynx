@@ -15,6 +15,7 @@ import {
   WebEncodePlugin,
 } from '@lynx-js/template-webpack-plugin';
 
+import { createVueScopeCSSPlugin } from './css-plugins/vue-scope-css-plugin.js';
 import { LAYERS } from './layers.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
@@ -500,10 +501,10 @@ export function applyEntry(
               enableCSSInvalidation: opts.enableCSSSelector ?? true,
               enableCSSInheritance: opts.enableCSSInheritance ?? false,
               customCSSInheritanceList: opts.customCSSInheritanceList,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
-              cssPlugins: [],
+              cssPlugins: [createVueScopeCSSPlugin()],
             },
           ])
           .end();

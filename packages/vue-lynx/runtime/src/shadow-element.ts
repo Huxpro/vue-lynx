@@ -41,6 +41,9 @@ export class ShadowElement {
   _baseClass = '';
   _transitionClasses: Set<string> = new Set();
 
+  // Vue scoped CSS support - stores the data-v-xxxxx scope ID
+  _scopeId?: string;
+
   // v-model state (BG-thread bookkeeping)
   _vModelValue: string | undefined = undefined;
   _vModelHandler: ((data: unknown) => void) | undefined = undefined;

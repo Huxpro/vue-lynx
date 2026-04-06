@@ -24,6 +24,7 @@ export default defineConfig({
       '@rsbuild/core',
       '@rsbuild/plugin-vue',
       '@lynx-js/css-extract-webpack-plugin',
+      '@lynx-js/css-serializer',
       '@lynx-js/react',
       '@lynx-js/react/transform',
       '@lynx-js/runtime-wrapper-webpack-plugin',
