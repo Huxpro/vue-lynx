@@ -16,7 +16,8 @@
     "template-vue-js"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "create-rstack": "^1.0.0"
