@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/hackernews",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "HackerNews clone built with Vue-Lynx + Vue Router + Pinia + TanStack Query + Tailwind CSS",
   "license": "Apache-2.0",
