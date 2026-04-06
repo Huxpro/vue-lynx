@@ -140,6 +140,5 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<KeepAlive>` | Requires an internal storage container (`createElement('div')`) with no native equivalent | Manual state caching |
 | `<Teleport>` | Requires `querySelector` to resolve string targets, unavailable in the dual-thread architecture | Conditional rendering at the target location |
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
