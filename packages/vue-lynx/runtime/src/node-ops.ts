@@ -8,6 +8,7 @@ import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
+import { getCurrentScopeId, scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import type { Worklet } from './worklet-types.js';
 
@@ -125,6 +126,15 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
     const el = new ShadowElement(type);
     pushOp(OP.CREATE, el.id, type);
+
+    // Capture Vue scope ID for scoped CSS support
+    const scopeId = getCurrentScopeId();
+    if (scopeId) {
+      el._scopeId = scopeId;
+      const cssId = scopeIdToCssId(scopeId);
+      pushOp(OP.SET_SCOPE_ID, el.id, cssId);
+    }
+
     scheduleFlush();
     return el;
   },

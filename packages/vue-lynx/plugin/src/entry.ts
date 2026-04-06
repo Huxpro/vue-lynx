@@ -500,10 +500,9 @@ export function applyEntry(
               enableCSSInvalidation: opts.enableCSSSelector ?? true,
               enableCSSInheritance: opts.enableCSSInheritance ?? false,
               customCSSInheritanceList: opts.customCSSInheritanceList,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
-              cssPlugins: [],
             },
           ])
           .end();

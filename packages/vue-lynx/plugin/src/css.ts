@@ -148,10 +148,9 @@ export function applyCSS(
           return [
             {
               ...pluginOptions,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableCSSSelector,
               enableCSSInvalidation,
-              cssPlugins: [],
             } as
               | CssExtractWebpackPluginOptions
               | CssExtractRspackPluginOptions,
