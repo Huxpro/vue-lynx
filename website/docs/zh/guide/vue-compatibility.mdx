@@ -140,6 +140,5 @@ pluginVueLynx({
 
 | 特性 | 原因 | 替代方案 |
 |---------|--------|-------------|
-| `<KeepAlive>` | 需要一个内部存储容器（`createElement('div')`），在原生环境中没有对应实现 | 手动缓存状态 |
 | `<Teleport>` | 需要 `querySelector` 来解析字符串目标，在双线程架构中不可用 | 在目标位置使用条件渲染 |
 | `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |

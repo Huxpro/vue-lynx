@@ -68,10 +68,10 @@ function rewriteRuntimeCoreImportsPlugin() {
     enforce: 'pre' as const,
     transform(code: string, id: string) {
       if (!id.includes('runtime-core/__tests__')) return;
-      if (!code.includes('from \'../src')) return;
+      if (!code.includes('../src')) return;
 
       const result = code.replace(
-        /from\s+['"]\.\.\/src(?:\/[^'"]*)?['"]/g,
+        /from\s+['"](\.\.\/)+src(?:\/[^'"]*)?['"]/g,
         `from '${runtimeCoreESM}'`,
       );
       return result !== code ? result : undefined;
@@ -198,6 +198,8 @@ const runtimeCoreTests = [
   'apiExpose',
   'apiAsyncComponent',
   'scopeId',
+  // Phase 4 — KeepAlive
+  'components/KeepAlive',
 ].map((name) => `${runtimeCoreDir}/${name}.spec.ts`);
 
 const reactivityTests = [

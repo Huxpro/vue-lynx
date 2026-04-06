@@ -455,6 +455,24 @@ export { onRenderTracked } from '@vue/runtime-core';
  */
 export { onRenderTriggered } from '@vue/runtime-core';
 
+/**
+ * Registers a hook to be called when the component is inserted into the DOM
+ * as part of a tree cached by `<KeepAlive>`.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onactivated | Vue docs}
+ * @public
+ */
+export { onActivated } from '@vue/runtime-core';
+
+/**
+ * Registers a hook to be called when the component is removed from the DOM
+ * as part of a tree cached by `<KeepAlive>`.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#ondeactivated | Vue docs}
+ * @public
+ */
+export { onDeactivated } from '@vue/runtime-core';
+
 // ===========================================================================
 // Vue Core Re-exports — Watchers
 // ===========================================================================
@@ -726,6 +744,14 @@ export { Fragment } from '@vue/runtime-core';
 export { Suspense } from '@vue/runtime-core';
 
 /**
+ * Caches dynamically toggled components, preserving their state when inactive.
+ *
+ * @see {@link https://vuejs.org/api/built-in-components.html#keepalive | Vue docs}
+ * @public
+ */
+export { KeepAlive } from '@vue/runtime-core';
+
+/**
  * Vue's version string.
  *
  * @public
@@ -839,46 +865,6 @@ export function createStaticVNode(
  */
 export const Static: symbol = Symbol.for('v-stc');
 
-/**
- * @deprecated KeepAlive requires an internal storage container created via
- * `createElement('div')`. In Vue Lynx this creates an orphan element on the
- * Main Thread with no visual tree parent, causing undefined native behaviour.
- * Component caching is not supported.
- * @internal
- */
-export function KeepAlive(): void {
-  if (__DEV__) {
-    console.warn(
-      '[vue-lynx] KeepAlive is not supported — Lynx renderer has no element recycling.',
-    );
-  }
-}
-
-/**
- * @deprecated onActivated depends on KeepAlive, which is not supported in Lynx.
- * This hook will never be called. Use onMounted() instead.
- * @internal
- */
-export function onActivated(_fn: () => void): void {
-  if (__DEV__) {
-    console.warn(
-      '[vue-lynx] onActivated is not supported — KeepAlive is not available.',
-    );
-  }
-}
-
-/**
- * @deprecated onDeactivated depends on KeepAlive, which is not supported in Lynx.
- * This hook will never be called. Use onUnmounted() instead.
- * @internal
- */
-export function onDeactivated(_fn: () => void): void {
-  if (__DEV__) {
-    console.warn(
-      '[vue-lynx] onDeactivated is not supported — KeepAlive is not available.',
-    );
-  }
-}
 
 /**
  * @deprecated Teleport requires `querySelector` renderer option to resolve
