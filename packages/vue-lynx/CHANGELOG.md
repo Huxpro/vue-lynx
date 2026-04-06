@@ -1,5 +1,11 @@
 # vue-lynx
 
+## 0.3.1
+
+### Patch Changes
+
+- 83f9212: Include the built `types` output in the published package by running the `types` build as part of the `vue-lynx` package build and watch scripts.
+
 ## 0.3.0
 
 ### Minor Changes
