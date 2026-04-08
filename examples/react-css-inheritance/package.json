@@ -1,0 +1,23 @@
+{
+  "name": "@vue-lynx-example/react-css-inheritance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "@lynx-js/react": "^0.116.0"
+  },
+  "devDependencies": {
+    "@lynx-js/react-rsbuild-plugin": "^0.13.0",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/types": "^3.7.0",
+    "@types/react": "^19.0.0",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

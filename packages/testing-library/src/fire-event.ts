@@ -79,7 +79,13 @@ for (const key of Object.keys(eventMap)) {
       elem,
       eventInit,
     );
-    Object.assign(event, eventInit);
+    // Standard EventInit keys are read-only on constructed events; only assign
+    // Lynx-specific custom properties (eventType, eventName, etc.).
+    const EVENT_INIT_KEYS = new Set(['bubbles', 'cancelable', 'composed']);
+    const customProps = Object.fromEntries(
+      Object.entries(eventInit).filter(([k]) => !EVENT_INIT_KEYS.has(k)),
+    );
+    Object.assign(event, customProps);
     const ans = domFireEvent(elem, event);
 
     if (isMainThread) {

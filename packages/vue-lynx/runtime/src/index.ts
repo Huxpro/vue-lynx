@@ -1063,12 +1063,108 @@ export const vModelCheckbox: ObjectDirective = vModelUnsupported;
 export const vModelSelect: ObjectDirective = vModelUnsupported;
 export const vModelRadio: ObjectDirective = vModelUnsupported;
 
-/** @internal Lynx stub for withModifiers (event modifier helper). */
+// ---------------------------------------------------------------------------
+// withModifiers — runtime event modifier support for Lynx
+// ---------------------------------------------------------------------------
+
+/**
+ * Modifiers that are side-effects on the event object (don't filter the event).
+ * Lynx events implement `stopPropagation` and `preventDefault` per the Lynx
+ * spec (BaseEventOrig), so these work identically to their DOM counterparts.
+ */
+const lynxModifierSideEffects: Record<
+  string,
+  (e: Record<string, unknown>) => void
+> = {
+  stop: (e) => (e.stopPropagation as (() => void) | undefined)?.(),
+  prevent: (e) => (e.preventDefault as (() => void) | undefined)?.(),
+};
+
+/**
+ * Modifiers that act as guards: if the guard returns true the handler is
+ * skipped entirely.
+ */
+const lynxModifierGuards: Record<
+  string,
+  (e: Record<string, unknown>) => boolean
+> = {
+  // Only invoke the handler if the event originated directly on this element.
+  //
+  // We can't use simple reference equality (e.target !== e.currentTarget) here
+  // because Lynx native always gives you two *distinct* plain objects for target
+  // and currentTarget — even when they represent the same element.  Instead we
+  // compare by the numeric `uid` that Lynx puts on both objects.  DOM events
+  // (used by the testing-library) do use real element references, so we fall
+  // back to reference equality when uid is absent on either side.
+  self: (e) => {
+    const t = e.target as { uid?: number } | null | undefined;
+    const ct = e.currentTarget as { uid?: number } | null | undefined;
+    if (t != null && typeof t.uid === 'number' && ct != null && typeof ct.uid === 'number') {
+      return t.uid !== ct.uid;
+    }
+    return e.target !== e.currentTarget;
+  },
+};
+
+/**
+ * Wraps an event handler with Lynx event modifiers.
+ *
+ * Supported modifiers:
+ * - `.once`    — handler is invoked at most once; subsequent events are ignored
+ * - `.stop`    — registers the event as `catchEvent` (native Lynx stop-propagation)
+ *               and also calls `event.stopPropagation()` for DOM environments
+ * - `.prevent` — calls `event.preventDefault()` before invoking the handler
+ * - `.self`    — skips the handler unless the event target is the listener element
+ *
+ * The wrapped function is cached on `fn._withMods` keyed by the modifier
+ * string so that stable function references survive re-renders.
+ *
+ * `.stop` sets `_lynxCatch = true` on the wrapper so that `patchProp` can
+ * register the event as `catchEvent` — the native Lynx mechanism for stopping
+ * event bubbling. Calling `stopPropagation()` at the JS level alone is not
+ * sufficient because native Lynx bubbling is decided before JS handlers run.
+ */
 export function withModifiers(
   fn: (...args: unknown[]) => unknown,
-  _modifiers: string[],
+  modifiers: string[],
 ): (...args: unknown[]) => unknown {
-  return fn;
+  if (!fn) return fn;
+
+  // Per-function cache keyed by modifier combination so stable fn references
+  // reuse the same wrapper (and the same `.once` `called` flag) across renders.
+  const fnAny = fn as { _withMods?: Record<string, (...args: unknown[]) => unknown> };
+  const cache = fnAny._withMods ?? (fnAny._withMods = {});
+  const cacheKey = modifiers.join('.');
+  if (cache[cacheKey]) return cache[cacheKey]!;
+
+  const hasOnce = modifiers.includes('once');
+  let called = false;
+
+  const wrapped = (event: unknown, ...args: unknown[]): unknown => {
+    if (hasOnce) {
+      if (called) return;
+      called = true;
+    }
+
+    const e = event as Record<string, unknown>;
+    for (const mod of modifiers) {
+      if (mod === 'once') continue;
+      const guard = lynxModifierGuards[mod];
+      if (guard?.(e)) return; // guard returned true → skip handler
+      lynxModifierSideEffects[mod]?.(e);
+    }
+
+    return fn(event, ...args);
+  };
+
+  // Signal to patchProp to use catchEvent instead of bindEvent so native Lynx
+  // stops bubbling at this element — the only reliable stop mechanism in Lynx.
+  if (modifiers.includes('stop')) {
+    (wrapped as { _lynxCatch?: boolean })._lynxCatch = true;
+  }
+
+  cache[cacheKey] = wrapped;
+  return wrapped;
 }
 
 /** @internal Lynx stub for withKeys (keyboard event modifier helper). */
