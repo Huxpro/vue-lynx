@@ -11,6 +11,10 @@
 
 import { createEvent, fireEvent as domFireEvent } from '@testing-library/dom';
 
+// Standard EventInit keys are read-only on constructed events; only assign
+// Lynx-specific custom properties (eventType, eventName, etc.).
+const EVENT_INIT_KEYS = new Set(['bubbles', 'cancelable', 'composed']);
+
 export const eventMap: Record<
   string,
   { defaultInit: Record<string, unknown> }
@@ -79,9 +83,6 @@ for (const key of Object.keys(eventMap)) {
       elem,
       eventInit,
     );
-    // Standard EventInit keys are read-only on constructed events; only assign
-    // Lynx-specific custom properties (eventType, eventName, etc.).
-    const EVENT_INIT_KEYS = new Set(['bubbles', 'cancelable', 'composed']);
     const customProps = Object.fromEntries(
       Object.entries(eventInit).filter(([k]) => !EVENT_INIT_KEYS.has(k)),
     );
