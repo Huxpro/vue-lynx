@@ -222,6 +222,27 @@ describe('withModifiers', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
+  it('.once.self — guard runs before called is set; child event does not consume the once slot', () => {
+    const fn = vi.fn();
+    const wrapped = withModifiers(fn, ['once', 'self']);
+
+    const parent = {};
+    const child = {};
+
+    // First call: event originated on a child — .self should block, and
+    // the once slot must NOT be consumed (called must stay false).
+    wrapped({ target: child, currentTarget: parent });
+    expect(fn).toHaveBeenCalledTimes(0);
+
+    // Second call: direct tap on parent — .self allows it, handler fires once.
+    wrapped({ target: parent, currentTarget: parent });
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    // Third call: once already consumed — no-op.
+    wrapped({ target: parent, currentTarget: parent });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
   it('.once.stop — fires once and stops propagation', () => {
     const fn = vi.fn();
     const wrapped = withModifiers(fn, ['once', 'stop']);

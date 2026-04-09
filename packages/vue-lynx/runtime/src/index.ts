@@ -1147,10 +1147,7 @@ export function withModifiers(
   let called = false;
 
   const wrapped = (event: unknown, ...args: unknown[]): unknown => {
-    if (hasOnce) {
-      if (called) return;
-      called = true;
-    }
+    if (hasOnce && called) return;
 
     const e = event as Record<string, unknown>;
     for (const mod of modifiers) {
@@ -1160,6 +1157,7 @@ export function withModifiers(
       lynxModifierSideEffects[mod]?.(e);
     }
 
+    if (hasOnce) called = true;
     return fn(event, ...args);
   };
 
