@@ -1091,16 +1091,22 @@ const lynxModifierGuards: Record<
   // Only invoke the handler if the event originated directly on this element.
   //
   // We can't use simple reference equality (e.target !== e.currentTarget) here
-  // because Lynx native always gives you two *distinct* plain objects for target
-  // and currentTarget — even when they represent the same element.  Instead we
-  // compare by the numeric `uid` that Lynx puts on both objects.  DOM events
-  // (used by the testing-library) do use real element references, so we fall
-  // back to reference equality when uid is absent on either side.
+  // because cross-thread event objects are always distinct plain objects —
+  // even when they represent the same element.  Instead we compare by numeric
+  // element identifier:
+  //   - Lynx native:      target.uid        (set by the native runtime)
+  //   - Lynx web preview: target.uniqueId   (set by createCrossThreadEvent in
+  //                       @lynx-js/web-mainthread-apis from the 'l-uid' attribute)
+  // DOM events (used by the testing-library) do use real element references,
+  // so we fall back to reference equality when neither identifier is present.
   self: (e) => {
-    const t = e.target as { uid?: number } | null | undefined;
-    const ct = e.currentTarget as { uid?: number } | null | undefined;
+    const t = e.target as { uid?: number; uniqueId?: number } | null | undefined;
+    const ct = e.currentTarget as { uid?: number; uniqueId?: number } | null | undefined;
     if (t != null && typeof t.uid === 'number' && ct != null && typeof ct.uid === 'number') {
       return t.uid !== ct.uid;
+    }
+    if (t != null && typeof t.uniqueId === 'number' && ct != null && typeof ct.uniqueId === 'number') {
+      return t.uniqueId !== ct.uniqueId;
     }
     return e.target !== e.currentTarget;
   },
