@@ -1,6 +1,6 @@
 {
   "name": "vue-lynx",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": false,
   "description": "Vue 3 framework for building Lynx apps",
   "keywords": [
@@ -65,8 +65,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build) && (cd main-thread && npx rslib build) && (cd plugin && npx rslib build)",
-    "dev": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch)"
+    "build": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build) && (cd main-thread && npx rslib build) && (cd plugin && npx rslib build) && (cd types && npx rslib build)",
+    "dev": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch) & (cd types && npx rslib build --watch)"
   },
   "dependencies": {
     "@lynx-js/css-extract-webpack-plugin": "^0.7.0",

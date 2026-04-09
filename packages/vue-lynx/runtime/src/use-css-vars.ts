@@ -47,7 +47,6 @@ function applyVarsToVNode(
     if (el instanceof ShadowElement) {
       applyVarsToEl(el, vars);
     }
-    stampElementDescendants(vnode, vars); // lynx-family/lynx#5889
   } else if (shapeFlag & SF_COMPONENT) {
     // Recurse into the component's rendered subtree.
     if (vnode.component) {
@@ -58,30 +57,6 @@ function applyVarsToVNode(
     for (const child of vnode.children as VNode[]) {
       applyVarsToVNode(child, vars);
     }
-  }
-}
-
-/**
- * Workaround for lynx-family/lynx#5889.
- *
- * When `__SetInlineStyles` updates a CSS custom property on a parent element,
- * the Lynx engine does not re-propagate the new value through the CSS
- * inheritance chain to descendant class rules, despite `enableCSSInheritance`
- * being set. Stamping every element directly means no inheritance is needed.
- *
- * TO REVERT when lynx-family/lynx#5889 is fixed:
- *   1. Delete this function.
- *   2. Remove the `stampElementDescendants(vnode, vars)` call in `applyVarsToVNode`.
- *   Root-only stamping via `applyVarsToEl` will be sufficient once the engine
- *   re-evaluates inheritance on `__SetInlineStyles` updates.
- */
-function stampElementDescendants(
-  vnode: VNode,
-  vars: Record<string, string>,
-): void {
-  if (!(vnode.shapeFlag & SF_ARRAY_CHILDREN)) return;
-  for (const child of vnode.children as VNode[]) {
-    applyVarsToVNode(child, vars);
   }
 }
 
@@ -97,14 +72,11 @@ function stampElementDescendants(
  * instead merges the CSS variables into every element's inline style and sends
  * them to the Main Thread via the ops pipeline.
  *
- * CSS vars are stamped on every element in the component subtree rather than
- * only the root. Lynx's `{{--varName}}` class rule resolver reads from an
- * element's own inline styles but does not resolve inherited CSS vars from
- * ancestor inline styles, so each element needs the var present on itself.
+ * CSS vars are stamped on the component's root element(s). The Lynx engine
+ * propagates custom property updates to descendants via the CSS inheritance
+ * chain (fixed in lynx-family/lynx#5889).
  *
  * Requires `enableCSSInlineVariables: true` in `lynx.config.ts`.
- * `enableCSSInheritance` is not required — CSS vars are stamped on every
- * element directly rather than relying on the engine's CSS var inheritance.
  *
  * @hidden
  */

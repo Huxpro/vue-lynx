@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/slots",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "Vue-Lynx slots (default, named, scoped) demo",
   "license": "Apache-2.0",

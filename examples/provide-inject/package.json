@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/provide-inject",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "Vue-Lynx provide/inject dependency injection demo",
   "license": "Apache-2.0",

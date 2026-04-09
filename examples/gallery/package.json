@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/gallery",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "Vue-Lynx gallery tutorial examples",
   "license": "Apache-2.0",
