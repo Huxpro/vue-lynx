@@ -15,7 +15,7 @@
 
 <template>
   <view class="scoped-card">
-    <text class="scoped-title">&lt;style scoped&gt;</text>
+    <text class="scoped-title">&lt;style scoped&gt; (ScopedStyle.vue)</text>
     <text class="scoped-desc">
       Uses [data-v-xxx] attribute selectors internally.
       Lynx CSS engine does not support attribute selectors,

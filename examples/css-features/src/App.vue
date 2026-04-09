@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import VBindCSS from './VBindCSS.vue'
+import VBindThreads from './VBindThreads.vue'
+import CSSInheritanceTest from './CSSInheritanceTest.vue'
 import PlainStyle from './PlainStyle.vue'
 import ScopedStyle from './ScopedStyle.vue'
 import CSSModules from './CSSModules.vue'
-import VBindCSS from './VBindCSS.vue'
-import VBindThreads from './VBindThreads.vue'
 import CSSVarsWorkaround from './CSSVarsWorkaround.vue'
 import ImportedCSS from './ImportedCSS.vue'
 </script>
@@ -17,25 +18,27 @@ import ImportedCSS from './ImportedCSS.vue'
       CSS Features Test
     </text>
 
-    <!-- 1. Plain <style> — WORKS -->
-    <PlainStyle />
-
-    <!-- 2a. <style scoped> — DOES NOT WORK -->
-    <ScopedStyle />
-
-    <!-- 3. <style module> — SHOULD WORK -->
-    <CSSModules />
-
-    <!-- 4. v-bind() in CSS — WORKS (useCssVars implemented in vue-lynx) -->
+    <!-- v-bind() in CSS — primary focus -->
     <VBindCSS />
-
-    <!-- 4b. v-bind() thread comparison — BG (useCssVars) vs MT (setStyleProperty) -->
     <VBindThreads />
 
-    <!-- 5. Workaround: Reactive inline :style -->
-    <CSSVarsWorkaround />
+    <!-- enableCSSInheritance isolation test — no useCssVars, pure :style + var() inheritance -->
+    <CSSInheritanceTest />
 
-    <!-- 6. Imported .css file — WORKS -->
-    <ImportedCSS />
+    <!-- Divider -->
+    <text :style="{ fontSize: '13px', fontWeight: 'bold', color: '#888', marginBottom: '12px', marginTop: '4px' }">
+      Other CSS patterns
+    </text>
+
+    <!-- Workarounds and supporting patterns — 2 per row -->
+    <CSSVarsWorkaround />
+    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '12px' }">
+      <view :style="{ flex: 1, paddingRight: '6px' }"><ScopedStyle /></view>
+      <view :style="{ flex: 1, paddingLeft: '6px' }"><CSSModules /></view>
+    </view>
+    <view :style="{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', marginBottom: '12px' }">
+      <view :style="{ flex: 1, paddingRight: '6px' }"><PlainStyle /></view>
+      <view :style="{ flex: 1, paddingLeft: '6px' }"><ImportedCSS /></view>
+    </view>
   </scroll-view>
 </template>
