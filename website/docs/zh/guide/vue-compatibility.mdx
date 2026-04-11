@@ -134,6 +134,40 @@ pluginVueLynx({
   defaultFile="src/App.vue"
 />
 
+## v-memo
+
+[`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 在依赖数组未发生变化时跳过子树的重新渲染。它在 Vue Lynx 中无需任何配置即可使用——SFC 模板编译器已经生成了正确的 `withMemo()` 调用，运行时会在 patcher 执行之前进行短路。
+
+在 Lynx 中，`v-memo` 比在浏览器中更有价值，因为缓存命中可以消除整个跨线程 op 批次，而不仅仅是 DOM diff。当依赖未变化时：
+
+- VNode patcher 立即短路（返回相同的 VNode 对象引用）。
+- 不会调用 `patchProp`，因此 ops 缓冲区保持为空。
+- `doFlush` 发现缓冲区为空，完全跳过 `callLepusMethod`——主线程对该子树不会有任何联系。
+
+主要使用场景是 `v-for` 列表，其中每次更新只有部分项目发生变化：
+
+```vue
+<list-item
+  v-for="item in list"
+  :key="item.id"
+  v-memo="[item.selected, item.label]"
+>
+  <!-- 仅在 selected 或 label 变化时重新渲染 -->
+</list-item>
+```
+
+对于用 JavaScript 编写的渲染函数，`withMemo` 可直接从 `vue-lynx` 导入：
+
+```ts
+import { withMemo } from 'vue-lynx'
+
+const cache: unknown[] = []
+
+setup() {
+  return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
+}
+```
+
 ## 不支持的特性
 
 部分 Vue 内置特性尚未适配双线程原生环境：

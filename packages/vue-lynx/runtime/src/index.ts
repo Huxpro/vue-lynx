@@ -782,6 +782,7 @@ export { useCssVars } from './use-css-vars.js';
 /** @hidden */ export { toHandlerKey } from '@vue/runtime-core';
 /** @hidden */ export { toHandlers } from '@vue/runtime-core';
 /** @hidden */ export { withMemo } from '@vue/runtime-core';
+/** @hidden */ export { isMemoSame } from '@vue/runtime-core';
 /** @hidden */ export { guardReactiveProps } from '@vue/runtime-core';
 // @ts-expect-error withAsyncContext is exported at runtime but missing from Vue's .d.ts
 /** @hidden */ export { withAsyncContext } from '@vue/runtime-core';
@@ -907,8 +908,7 @@ export function Teleport(): void {
 //                        handleError, ErrorCodes, ErrorTypeStrings
 // Dev/debug internals:   warn, devtools, setDevtoolsHook, initCustomFormatter,
 //                        registerRuntimeCompiler, DeprecationTypes, compatUtils
-// Rendering internals:   isMemoSame, isRuntimeOnly, guardReactiveProps,
-//                        transformVNodeArgs, assertNumber
+// Rendering internals:   isRuntimeOnly, transformVNodeArgs, assertNumber
 // Transition internals:  BaseTransition, BaseTransitionPropsValidators,
 //                        resolveTransitionHooks, setTransitionHooks,
 //                        getTransitionRawChildren, useTransitionState
