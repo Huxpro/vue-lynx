@@ -134,6 +134,40 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
+## v-memo
+
+[`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) skips a subtree re-render when its dependency array hasn't changed. It works in Vue Lynx without any configuration — the SFC template compiler already emits the correct `withMemo()` calls, and the runtime bails out before the patcher runs.
+
+In Lynx, `v-memo` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch, not just DOM diffing. When deps are unchanged:
+
+- The VNode patcher short-circuits (same VNode object reference).
+- No `patchProp` calls are made, so no ops enter the buffer.
+- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
+
+The primary use case is `v-for` lists where only some items change on each update:
+
+```vue
+<list-item
+  v-for="item in list"
+  :key="item.id"
+  v-memo="[item.selected, item.label]"
+>
+  <!-- Only re-renders when selected or label changes -->
+</list-item>
+```
+
+For render functions written in JavaScript, `withMemo` is exported directly from `vue-lynx`:
+
+```ts
+import { withMemo } from 'vue-lynx'
+
+const cache: unknown[] = []
+
+setup() {
+  return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
+}
+```
+
 ## Unsupported Features
 
 Some Vue built-in features are not yet adapted to the dual-thread native environment:
