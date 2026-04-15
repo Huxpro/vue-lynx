@@ -67,6 +67,28 @@ The example demonstrates:
   defaultFile="src/App.vue"
 />
 
+## Event Modifiers
+
+Vue's [event modifiers](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers) (`.once`, `.stop`, `.prevent`, `.self`) work on Lynx, with a few platform-specific differences to be aware of.
+
+:::details Feature support details
+
+| Modifier | Status | Notes |
+|----------|--------|-------|
+| `.once` | Works | Handler fires at most once. The Vue compiler emits `onTapOnce` prop keys; `withModifiers` also supports it. |
+| `.stop` | Works | Uses Lynx's native `catchEvent` mechanism to stop propagation at the element level. Also calls `stopPropagation()` in DOM/test environments. |
+| `.self` | Works | Compares by `uid` (Lynx native) or `uniqueId` (web preview) since cross-thread event objects are always distinct references. Falls back to reference equality in DOM/test environments. |
+| `.prevent` | No-op on Lynx | Calls `preventDefault()` correctly, but Lynx has no browser default actions to cancel (no `<a>` navigation, no `<form>` submission). Included for API completeness. |
+
+:::
+
+The example below demonstrates all four modifiers side by side:
+
+<Go
+  example="event-modifiers"
+  defaultFile="src/App.vue"
+/>
+
 ## Slots
 
 Vue [slots](https://vuejs.org/guide/components/slots.html) are the primary composition mechanism for passing template content into child components. Vue Lynx supports default slots, named slots, and scoped slots.
