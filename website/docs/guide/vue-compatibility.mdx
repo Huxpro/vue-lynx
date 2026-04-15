@@ -116,6 +116,15 @@ Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animat
   defaultEntryFile="dist/transition.lynx.bundle"
 />
 
+## KeepAlive
+
+Vue's [`<KeepAlive>`](https://vuejs.org/guide/built-ins/keep-alive.html) caches inactive component instances instead of destroying them. When a component is toggled back in, its state is preserved. The `include`, `exclude`, and `max` props are all supported. The `onActivated` and `onDeactivated` lifecycle hooks fire as expected.
+
+<Go
+  example="keep-alive"
+  defaultFile="src/App.vue"
+/>
+
 ## Options API
 
 Vue 3 ships the Options API alongside the Composition API for backward compatibility.
