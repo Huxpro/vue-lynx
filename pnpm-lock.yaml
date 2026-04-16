@@ -581,7 +581,7 @@ importers:
         version: 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@lynx-js/go-web':
         specifier: github:lynx-community/go-web
-        version: https://codeload.github.com/lynx-community/go-web/tar.gz/39e47ff7267d49b11dcb45325ebf1fee7530e437(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@lynx-js/web-elements@0.12.0(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
+        version: https://codeload.github.com/lynx-community/go-web/tar.gz/c912139befed77519e9564477cde7526832e6c38(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@lynx-js/web-elements@0.12.0(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
       '@lynx-js/web-core':
         specifier: ^0.19.8
         version: 0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1))
@@ -594,6 +594,9 @@ importers:
       '@rspress/plugin-llms':
         specifier: ^2.0.5
         version: 2.0.5(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))
+      '@vercel/analytics':
+        specifier: ^2.0.1
+        version: 2.0.1(react@19.2.4)(vue-router@4.6.4(vue@3.5.30(typescript@5.6.3)))(vue@3.5.30(typescript@5.6.3))
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.2.4)
@@ -1161,9 +1164,10 @@ packages:
   '@lynx-js/css-serializer@0.1.4':
     resolution: {integrity: sha512-yG3sC1fH+rBQhbdvPCweaGjmFmOBdi2rbt7xs9laMfu5Z5dOXL1OB7pZZN0vodptBO0/ctVfMCKH2EKhq0GtTA==}
 
-  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/39e47ff7267d49b11dcb45325ebf1fee7530e437':
-    resolution: {tarball: https://codeload.github.com/lynx-community/go-web/tar.gz/39e47ff7267d49b11dcb45325ebf1fee7530e437}
-    version: 0.1.0
+  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/c912139befed77519e9564477cde7526832e6c38':
+    resolution: {tarball: https://codeload.github.com/lynx-community/go-web/tar.gz/c912139befed77519e9564477cde7526832e6c38}
+    version: 0.1.1
+    engines: {node: ^22 || ^24}
     peerDependencies:
       '@douyinfe/semi-icons': '>=2.74.0'
       '@douyinfe/semi-ui': '>=2.75.0'
@@ -2366,6 +2370,35 @@ packages:
     resolution: {integrity: sha512-1xXFrxyw29f+kScXfEb0GxjlgtnHxoYau0qpW9k8sgWhQUNnE5gNaH3u+rNhd5IqhyvbdDRJpQ25zoz0HIyGaw==}
     peerDependencies:
       react: '>=18.3.1'
+
+  '@vercel/analytics@2.0.1':
+    resolution: {integrity: sha512-MTQG6V9qQrt1tsDeF+2Uoo5aPjqbVPys1xvnIftXSJYG2SrwXRHnqEvVoYID7BTruDz4lCd2Z7rM1BdkUehk2g==}
+    peerDependencies:
+      '@remix-run/react': ^2
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      nuxt: '>= 3'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      nuxt:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
 
   '@vitest/expect@3.2.4':
     resolution: {integrity: sha512-Io0yyORnB6sikFlt8QW5K7slY4OjqNX9jmJQ02QDda8lyM6B5oNgVWoSoKPac8/kgnCUzuHQKrSLtu/uOqqrig==}
@@ -6394,7 +6427,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/39e47ff7267d49b11dcb45325ebf1fee7530e437(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@lynx-js/web-elements@0.12.0(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
+  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/c912139befed77519e9564477cde7526832e6c38(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@lynx-js/web-elements@0.12.0(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
     dependencies:
       '@douyinfe/semi-icons': 2.92.2(react@19.2.4)
       '@douyinfe/semi-ui': 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -7834,6 +7867,12 @@ snapshots:
       react: 19.2.4
       unhead: 2.1.12
 
+  '@vercel/analytics@2.0.1(react@19.2.4)(vue-router@4.6.4(vue@3.5.30(typescript@5.6.3)))(vue@3.5.30(typescript@5.6.3))':
+    optionalDependencies:
+      react: 19.2.4
+      vue: 3.5.30(typescript@5.6.3)
+      vue-router: 4.6.4(vue@3.5.30(typescript@5.6.3))
+
   '@vitest/expect@3.2.4':
     dependencies:
       '@types/chai': 5.2.3
@@ -7941,6 +7980,13 @@ snapshots:
       '@vue/runtime-core': 3.5.30
       '@vue/shared': 3.5.30
       csstype: 3.2.3
+
+  '@vue/server-renderer@3.5.30(vue@3.5.30(typescript@5.6.3))':
+    dependencies:
+      '@vue/compiler-ssr': 3.5.30
+      '@vue/shared': 3.5.30
+      vue: 3.5.30(typescript@5.6.3)
+    optional: true
 
   '@vue/server-renderer@3.5.30(vue@3.5.30(typescript@5.9.3))':
     dependencies:
@@ -11749,10 +11795,27 @@ snapshots:
     dependencies:
       vue: 3.5.30(typescript@5.9.3)
 
+  vue-router@4.6.4(vue@3.5.30(typescript@5.6.3)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.30(typescript@5.6.3)
+    optional: true
+
   vue-router@4.6.4(vue@3.5.30(typescript@5.9.3)):
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.30(typescript@5.9.3)
+
+  vue@3.5.30(typescript@5.6.3):
+    dependencies:
+      '@vue/compiler-dom': 3.5.30
+      '@vue/compiler-sfc': 3.5.30
+      '@vue/runtime-dom': 3.5.30
+      '@vue/server-renderer': 3.5.30(vue@3.5.30(typescript@5.6.3))
+      '@vue/shared': 3.5.30
+    optionalDependencies:
+      typescript: 5.6.3
+    optional: true
 
   vue@3.5.30(typescript@5.9.3):
     dependencies:

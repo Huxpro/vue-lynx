@@ -19,6 +19,7 @@
     "@lynx-js/web-elements": "^0.12.0",
     "@rspress/core": "^2.0.3",
     "@rspress/plugin-llms": "^2.0.5",
+    "@vercel/analytics": "^2.0.1",
     "qrcode.react": "^4.2.0",
     "react-copy-to-clipboard": "^5.1.0",
     "swr": "^2.2.5",
