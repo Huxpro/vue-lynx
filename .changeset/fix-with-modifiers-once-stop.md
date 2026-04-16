@@ -1,8 +1,8 @@
 ---
-"vue-lynx": patch
+"vue-lynx": minor
 ---
 
-fix(events): implement `withModifiers` — `.once`, `.stop`, `.prevent`, `.self`
+feat(events): implement `withModifiers` — `.once`, `.stop`, `.prevent`, `.self`
 
 `withModifiers` was previously a no-op stub that returned the handler unchanged, so event modifiers had no effect at runtime.
 
