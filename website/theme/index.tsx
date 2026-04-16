@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   HomeLayout as BaseHomeLayout,
 } from '@rspress/core/theme-original';
+import { Analytics } from '@vercel/analytics/react';
 
 import './index.scss';
 
@@ -237,3 +238,13 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
 export { HomeLayout };
 
 export * from '@rspress/core/theme-original';
+
+// Add Vercel Analytics to all pages
+export const Layout = (props: React.PropsWithChildren) => {
+  return (
+    <>
+      {props.children}
+      <Analytics />
+    </>
+  );
+};
