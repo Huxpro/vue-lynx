@@ -159,13 +159,17 @@ The primary use case is `v-for` lists where only some items change on each updat
 For render functions written in JavaScript, `withMemo` is exported directly from `vue-lynx`:
 
 ```ts
+import { defineComponent, h, ref } from 'vue'
 import { withMemo } from 'vue-lynx'
 
 const cache: unknown[] = []
 
-setup() {
-  return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
-}
+export default defineComponent({
+  setup() {
+    const dep = ref('')
+    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
+  },
+})
 ```
 
 ## Unsupported Features

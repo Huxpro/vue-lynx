@@ -159,13 +159,17 @@ pluginVueLynx({
 对于用 JavaScript 编写的渲染函数，`withMemo` 可直接从 `vue-lynx` 导入：
 
 ```ts
+import { defineComponent, h, ref } from 'vue'
 import { withMemo } from 'vue-lynx'
 
 const cache: unknown[] = []
 
-setup() {
-  return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
-}
+export default defineComponent({
+  setup() {
+    const dep = ref('')
+    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
+  },
+})
 ```
 
 ## 不支持的特性
