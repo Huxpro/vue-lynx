@@ -56,6 +56,9 @@ function createTypedElement(
       return __CreateImage(parentComponentUniqueId);
     case 'scroll-view':
       return __CreateScrollView(parentComponentUniqueId);
+    case 'div':
+      // KeepAlive's internal storage container — map to view (Lynx equivalent).
+      return __CreateView(parentComponentUniqueId);
     default:
       return __CreateElement(type, parentComponentUniqueId);
   }

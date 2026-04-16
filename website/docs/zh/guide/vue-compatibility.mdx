@@ -116,6 +116,15 @@ Vue 的 `<Transition>` 和 `<TransitionGroup>` 组件在元素插入或移除时
   defaultEntryFile="dist/transition.lynx.bundle"
 />
 
+## KeepAlive
+
+Vue 的 [`<KeepAlive>`](https://vuejs.org/guide/built-ins/keep-alive.html) 会缓存不活跃的组件实例，而不是销毁它们。当组件重新切换回来时，其状态会被保留。支持 `include`、`exclude` 和 `max` props。`onActivated` 和 `onDeactivated` 生命周期钩子会正常触发。
+
+<Go
+  example="keep-alive"
+  defaultFile="src/App.vue"
+/>
+
 ## 选项式 API
 
 Vue 3 在组合式 API 之外还提供了选项式 API 以保持向后兼容。
@@ -140,6 +149,5 @@ pluginVueLynx({
 
 | 特性 | 原因 | 替代方案 |
 |---------|--------|-------------|
-| `<KeepAlive>` | 需要一个内部存储容器（`createElement('div')`），在原生环境中没有对应实现 | 手动缓存状态 |
 | `<Teleport>` | 需要 `querySelector` 来解析字符串目标，在双线程架构中不可用 | 在目标位置使用条件渲染 |
 | `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
