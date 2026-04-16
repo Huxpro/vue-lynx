@@ -1,17 +1,28 @@
 <script setup lang="ts">
-import { ref, onActivated, onDeactivated } from 'vue'
+import { ref, onMounted, onActivated, onDeactivated, onUnmounted } from 'vue'
 
-const props = defineProps<{ label: string }>()
+const props = defineProps<{
+  label: string
+  onLifecycle?: (event: string) => void
+}>()
 
 const count = ref(0)
 const status = ref('mounted')
 
+onMounted(() => {
+  status.value = 'mounted'
+  props.onLifecycle?.('mounted')
+})
 onActivated(() => {
   status.value = 'activated'
+  props.onLifecycle?.('activated')
 })
-
 onDeactivated(() => {
   status.value = 'deactivated'
+  props.onLifecycle?.('deactivated')
+})
+onUnmounted(() => {
+  props.onLifecycle?.('unmounted')
 })
 </script>
 

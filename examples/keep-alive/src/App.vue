@@ -1,24 +1,59 @@
 <script setup lang="ts">
-import { ref, shallowRef } from 'vue'
+import { ref, shallowRef, reactive } from 'vue'
 import Counter from './Counter.vue'
 
-// Tab switching
 const tabs = ['Tab A', 'Tab B', 'Tab C'] as const
-const activeTab = ref(0)
+const tabKeys = ['TabA', 'TabB', 'TabC'] as const
 
-// Include/exclude demo
-const includeList = ref('TabA,TabB')
-
-// Components for dynamic switching
 const TabA = { name: 'TabA', ...Counter }
 const TabB = { name: 'TabB', ...Counter }
 const TabC = { name: 'TabC', ...Counter }
-const components = [TabA, TabB, TabC]
-const activeComponent = shallowRef(components[0])
+const allComponents = [TabA, TabB, TabC]
 
-function switchTab(index: number) {
-  activeTab.value = index
-  activeComponent.value = components[index]
+// Demo 1 — basic state preservation
+const activeTab1 = ref(0)
+const activeComp1 = shallowRef(allComponents[0])
+function switchTab1(i: number) { activeTab1.value = i; activeComp1.value = allComponents[i] }
+
+// Demo 2 — include filter
+const activeTab2 = ref(0)
+const activeComp2 = shallowRef(allComponents[0])
+function switchTab2(i: number) { activeTab2.value = i; activeComp2.value = allComponents[i] }
+
+// Demo 3 — max=2 with cache status display
+const activeTab3 = ref(0)
+const activeComp3 = shallowRef(allComponents[0])
+function switchTab3(i: number) { activeTab3.value = i; activeComp3.value = allComponents[i] }
+
+type CacheStatus = 'never' | 'active' | 'cached' | 'evicted'
+const cacheStatus3 = reactive<Record<string, CacheStatus>>({
+  TabA: 'never', TabB: 'never', TabC: 'never',
+})
+
+function makeTrackFn(name: string) {
+  return (event: string) => {
+    if (event === 'mounted' || event === 'activated') cacheStatus3[name] = 'active'
+    else if (event === 'deactivated') cacheStatus3[name] = 'cached'
+    else if (event === 'unmounted') cacheStatus3[name] = 'evicted'
+  }
+}
+const trackFns: Record<string, (e: string) => void> = {
+  TabA: makeTrackFn('TabA'),
+  TabB: makeTrackFn('TabB'),
+  TabC: makeTrackFn('TabC'),
+}
+
+function statusLabel(s: CacheStatus) {
+  if (s === 'cached') return 'cached'
+  if (s === 'evicted') return 'evicted'
+  if (s === 'active') return 'active'
+  return '-'
+}
+function statusColor(s: CacheStatus) {
+  if (s === 'cached') return '#2980b9'
+  if (s === 'evicted') return '#e74c3c'
+  if (s === 'active') return '#27ae60'
+  return '#aaa'
 }
 </script>
 
@@ -33,23 +68,21 @@ function switchTab(index: number) {
         Increment the counter, switch tabs, then switch back — the count is preserved.
       </text>
 
-      <!-- Tab bar -->
-      <view :style="{ flexDirection: 'row', marginBottom: '8px' }">
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '8px' }">
         <view v-for="(tab, i) in tabs" :key="i"
-              @tap="switchTab(i)"
+              @tap="switchTab1(i)"
               :style="{
                 padding: '8px',
                 marginRight: '4px',
                 borderRadius: '4px',
-                backgroundColor: activeTab === i ? '#4a90d9' : '#ddd',
+                backgroundColor: activeTab1 === i ? '#4a90d9' : '#ddd',
               }">
-          <text :style="{ color: activeTab === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
+          <text :style="{ color: activeTab1 === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
         </view>
       </view>
 
-      <!-- Cached content -->
       <KeepAlive>
-        <component :is="activeComponent" :label="tabs[activeTab]" :key="activeTab" />
+        <component :is="activeComp1" :label="tabs[activeTab1]" :key="activeTab1" />
       </KeepAlive>
     </view>
 
@@ -60,46 +93,55 @@ function switchTab(index: number) {
         Only Tab A and Tab B are cached. Tab C re-mounts every time.
       </text>
 
-      <view :style="{ flexDirection: 'row', marginBottom: '8px' }">
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '8px' }">
         <view v-for="(tab, i) in tabs" :key="i"
-              @tap="switchTab(i)"
+              @tap="switchTab2(i)"
               :style="{
                 padding: '8px',
                 marginRight: '4px',
                 borderRadius: '4px',
-                backgroundColor: activeTab === i ? '#e67e22' : '#ddd',
+                backgroundColor: activeTab2 === i ? '#e67e22' : '#ddd',
               }">
-          <text :style="{ color: activeTab === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
+          <text :style="{ color: activeTab2 === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
         </view>
       </view>
 
-      <KeepAlive :include="includeList">
-        <component :is="activeComponent" :label="tabs[activeTab] + ' (filtered)'" :key="activeTab" />
+      <KeepAlive include="TabA,TabB">
+        <component :is="activeComp2" :label="tabs[activeTab2] + ' (filtered)'" :key="activeTab2" />
       </KeepAlive>
     </view>
 
-    <!-- 3. KeepAlive with max -->
+    <!-- 3. KeepAlive with max=2 -->
     <view :style="{ marginBottom: '24px' }">
-      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }">3. Max Cache Size (max=1)</text>
+      <text :style="{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px' }">3. Max Cache Size (max=2)</text>
       <text :style="{ fontSize: '12px', color: '#666', marginBottom: '8px' }">
-        Only the most recently visited tab is cached. Older tabs lose their state.
+        At most 2 tabs cached. Visit A then B then C — A gets evicted.
       </text>
 
-      <view :style="{ flexDirection: 'row', marginBottom: '8px' }">
+      <view :style="{ display: 'flex', flexDirection: 'row', marginBottom: '4px' }">
         <view v-for="(tab, i) in tabs" :key="i"
-              @tap="switchTab(i)"
+              @tap="switchTab3(i)"
               :style="{
                 padding: '8px',
                 marginRight: '4px',
                 borderRadius: '4px',
-                backgroundColor: activeTab === i ? '#27ae60' : '#ddd',
+                backgroundColor: activeTab3 === i ? '#27ae60' : '#ddd',
+                alignItems: 'center',
               }">
-          <text :style="{ color: activeTab === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
+          <text :style="{ color: activeTab3 === i ? '#fff' : '#333', fontSize: '13px' }">{{ tab }}</text>
+          <text :style="{ fontSize: '10px', color: activeTab3 === i ? 'rgba(255,255,255,0.85)' : statusColor(cacheStatus3[tabKeys[i]]) }">
+            {{ statusLabel(cacheStatus3[tabKeys[i]]) }}
+          </text>
         </view>
       </view>
 
-      <KeepAlive :max="1">
-        <component :is="activeComponent" :label="tabs[activeTab] + ' (max=1)'" :key="activeTab" />
+      <KeepAlive :max="2">
+        <component
+          :is="activeComp3"
+          :label="tabs[activeTab3]"
+          :on-lifecycle="trackFns[tabKeys[activeTab3]]"
+          :key="activeTab3"
+        />
       </KeepAlive>
     </view>
   </scroll-view>
