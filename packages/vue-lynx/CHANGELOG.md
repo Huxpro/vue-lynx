@@ -1,5 +1,16 @@
 # vue-lynx
 
+## 0.4.0
+
+### Minor Changes
+
+- feat(runtime): support `<KeepAlive>` component (#153) ([`a8ad5ba`](https://github.com/Huxpro/vue-lynx/commit/a8ad5bab11f397f14aa2471f553923fc18512405))
+
+  Caches inactive component instances instead of destroying them. When a component is toggled back in, its state is preserved.
+
+  - `include`, `exclude`, and `max` props are all supported
+  - `onActivated` and `onDeactivated` lifecycle hooks fire as expected
+
 ## 0.3.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/transition",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "description": "Vue-Lynx Transition & TransitionGroup demo",
   "license": "Apache-2.0",
