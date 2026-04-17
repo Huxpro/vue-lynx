@@ -866,21 +866,7 @@ export function createStaticVNode(
 export const Static: symbol = Symbol.for('v-stc');
 
 
-/**
- * @deprecated Teleport requires `querySelector` renderer option to resolve
- * string targets (e.g. `to="#modal"`). Vue Lynx does not implement
- * `querySelector`. In dev mode, Vue will warn and the content will not be
- * teleported. Direct element references are also unsupported because Lynx
- * native elements are not accessible from the Background Thread.
- * @internal
- */
-export function Teleport(): void {
-  if (__DEV__) {
-    console.warn(
-      '[vue-lynx] Teleport is not supported — Lynx renderer has no querySelector.',
-    );
-  }
-}
+export { Teleport } from '@vue/runtime-core';
 
 // ===========================================================================
 // Intentionally NOT re-exported — @vue/runtime-core internal APIs
