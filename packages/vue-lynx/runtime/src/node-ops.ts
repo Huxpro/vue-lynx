@@ -123,6 +123,9 @@ interface OnceWrapper {
 }
 const onceWrappers = new Map<string, OnceWrapper>();
 
+// Registry for Teleport target resolution: id string → ShadowElement.
+const idRegistry = new Map<string, ShadowElement>();
+
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
 // ---------------------------------------------------------------------------
@@ -355,6 +358,9 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const finalClass = resolveClass(el);
       pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
+      if (el._id) idRegistry.delete(el._id);
+      el._id = nextValue as string | undefined;
+      if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
       pushOp(OP.SET_PROP, el.id, key, nextValue);
@@ -377,10 +383,18 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   nextSibling(node: ShadowElement): ShadowElement | null {
     return node.next;
   },
+
+  querySelector(selector: string): ShadowElement | null {
+    if (selector.startsWith('#')) {
+      return idRegistry.get(selector.slice(1)) ?? null;
+    }
+    return null;
+  },
 };
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
   elementEventSigns.clear();
   onceWrappers.clear();
+  idRegistry.clear();
 }
