@@ -162,11 +162,10 @@ For render functions written in JavaScript, `withMemo` is exported directly from
 import { defineComponent, h, ref } from 'vue'
 import { withMemo } from 'vue-lynx'
 
-const cache: unknown[] = []
-
 export default defineComponent({
   setup() {
     const dep = ref('')
+    const cache: unknown[] = [] // per-instance, mirrors SFC _cache
     return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
   },
 })

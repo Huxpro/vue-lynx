@@ -162,11 +162,10 @@ pluginVueLynx({
 import { defineComponent, h, ref } from 'vue'
 import { withMemo } from 'vue-lynx'
 
-const cache: unknown[] = []
-
 export default defineComponent({
   setup() {
     const dep = ref('')
+    const cache: unknown[] = [] // 每实例独立，对应 SFC 编译产物中的 _cache
     return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
   },
 })
