@@ -229,9 +229,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   remove(child: ShadowElement): void {
-    if (child.parent) {
+    if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
+      if (child._id) idRegistry.delete(child._id);
       pushOp(OP.REMOVE, parentId, child.id);
       scheduleFlush();
     }
@@ -387,6 +388,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   querySelector(selector: string): ShadowElement | null {
     if (selector.startsWith('#')) {
       return idRegistry.get(selector.slice(1)) ?? null;
+    }
+    if (__DEV__) {
+      console.warn(
+        `[vue-lynx] querySelector only supports #id selectors, got "${selector}".`,
+      );
     }
     return null;
   },
