@@ -24,6 +24,7 @@ import type {
 } from '@lynx-js/css-extract-webpack-plugin';
 
 import { LAYERS } from './layers.js';
+import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
 
 export interface ApplyCSSOptions {
   enableCSSSelector: boolean;
@@ -77,6 +78,17 @@ export function applyCSS(
             .issuerLayer(LAYERS.BACKGROUND)
             .use(CHAIN_ID.USE.MINI_CSS_EXTRACT)
             .loader(CssExtractPlugin.loader)
+            .end();
+
+          // Inject ?cssId=<N> for Vue scoped styles.
+          // This pitch loader runs BEFORE CssExtract's pitch and patches
+          // this.resourceQuery so CssExtract wraps the CSS in @cssId.
+          rule
+            .use('vue-cssid-inject')
+            .before(CHAIN_ID.USE.MINI_CSS_EXTRACT)
+            .loader(
+              path.resolve(_dirname, './loaders/css-extract-wrapper-loader'),
+            )
             .end();
 
           // Clone the existing CSS rule chain for the Main-Thread layer.
@@ -148,10 +160,10 @@ export function applyCSS(
           return [
             {
               ...pluginOptions,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableCSSSelector,
               enableCSSInvalidation,
-              cssPlugins: [],
+              cssPlugins: [vueScopeStripCSSPlugin],
             } as
               | CssExtractWebpackPluginOptions
               | CssExtractRspackPluginOptions,

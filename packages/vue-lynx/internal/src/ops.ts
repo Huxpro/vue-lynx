@@ -20,6 +20,7 @@
  *   SET_WORKLET_EVENT: [11, id, eventType, eventName, workletCtx]
  *   SET_MT_REF:        [12, id, refImpl]
  *   INIT_MT_REF:       [13, wvid, initValue]
+ *   SET_SCOPE_ID:      [14, id, cssId]   // Vue scoped CSS support
  */
 export const OP = {
   CREATE: 0,
@@ -36,6 +37,7 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
+  SET_SCOPE_ID: 14,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];

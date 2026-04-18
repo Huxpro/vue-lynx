@@ -17,7 +17,7 @@ The example below demonstrates [`reactive()`](https://vuejs.org/api/reactivity-c
 
 ## SFC CSS Features
 
-Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules), and [`v-bind()` in CSS](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) all work on Lynx. `<style scoped>` is not yet supported — vote on [#78](https://github.com/Huxpro/vue-lynx/issues/78) if you need it.
+Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules), [`<style scoped>`](https://vuejs.org/api/sfc-css-features.html#scoped-css), and [`v-bind()` in CSS](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) all work on Lynx.
 
 :::details Feature support details
 
@@ -27,7 +27,7 @@ Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.
 | Imported `.css` files | Works |
 | `<style module>` | Works |
 | `v-bind()` in `<style>` | Works (requires config, see below) |
-| `<style scoped>` | Upcoming ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) |
+| `<style scoped>` | Works |
 
 `v-bind()` in `<style>` requires two config options so the Lynx engine recognizes CSS custom properties in inline styles and cascades them to descendants:
 
