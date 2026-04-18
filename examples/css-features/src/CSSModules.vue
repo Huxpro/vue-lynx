@@ -17,7 +17,7 @@
 
 <template>
   <view :class="$style.card">
-    <text :class="$style.title">&lt;style module&gt;</text>
+    <text :class="$style.title">&lt;style module&gt; (CSSModules.vue)</text>
     <text :class="$style.desc">
       Uses hashed class names (e.g. .card_abc123).
       These are plain class selectors — Lynx supports them.
