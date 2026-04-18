@@ -8,6 +8,7 @@ import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
+import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import type { Worklet } from './worklet-types.js';
 
@@ -305,6 +306,13 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       pushOp(OP.SET_PROP, el.id, key, nextValue);
     }
 
+    scheduleFlush();
+  },
+
+  // Called by Vue's renderer after createElement to apply scoped CSS.
+  // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
+  setScopeId(el: ShadowElement, id: string): void {
+    pushOp(OP.SET_SCOPE_ID, el.id, scopeIdToCssId(id));
     scheduleFlush();
   },
 
