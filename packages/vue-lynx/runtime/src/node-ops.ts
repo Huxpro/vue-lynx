@@ -108,6 +108,16 @@ const elementEventSigns = new Map<number, Map<string, string>>();
 // Registry for Teleport target resolution: id string → ShadowElement.
 const idRegistry = new Map<string, ShadowElement>();
 
+/** Recursively clean up idRegistry for a subtree being removed. */
+function cleanupIds(el: ShadowElement): void {
+  if (el._id) idRegistry.delete(el._id);
+  let child = el.firstChild;
+  while (child) {
+    cleanupIds(child);
+    child = child.next;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
 // ---------------------------------------------------------------------------
@@ -214,7 +224,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
-      if (child._id) idRegistry.delete(child._id);
+      cleanupIds(child);
       pushOp(OP.REMOVE, parentId, child.id);
       scheduleFlush();
     }
