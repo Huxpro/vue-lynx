@@ -1,7 +1,9 @@
 {
-  "name": "@vue-lynx-example/hello-world",
+  "name": "@vue-lynx-example/keep-alive",
   "version": "0.2.4",
   "private": false,
+  "description": "Vue-Lynx KeepAlive demo — component caching and state preservation",
+  "license": "Apache-2.0",
   "type": "module",
   "files": [
     "dist",
@@ -12,21 +14,19 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/Huxpro/vue-lynx",
-    "directory": "examples/hello-world"
+    "directory": "examples/keep-alive"
   },
   "scripts": {
     "build": "rspeedy build",
-    "dev": "rspeedy dev",
-    "preview": "rspeedy preview"
+    "dev": "rspeedy dev"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
     "@lynx-js/rspeedy": "^0.13.5",
     "@rsbuild/plugin-vue": "^1.2.6",
-    "typescript": "~5.9.3"
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18"

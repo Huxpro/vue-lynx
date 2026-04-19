@@ -17,9 +17,9 @@ renderer options that Vue Lynx does not implement.
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
 | `createStaticVNode`     | Needs `insertStaticContent` renderer option                                                                              | Implement `insertStaticContent` in node-ops (parse HTML string → multiple CREATE ops)       |
 | `Static` (VNode symbol) | Same                                                                                                                     | Same                                                                                        |
-| `KeepAlive`             | Creates `createElement('div')` storage container → orphan element on MT; `move` semantics untested                       | Implement hidden storage container (skip CREATE op for off-tree containers)                 |
-| `onActivated`           | Depends on KeepAlive                                                                                                     | Unblocked by KeepAlive                                                                      |
-| `onDeactivated`         | Depends on KeepAlive                                                                                                     | Unblocked by KeepAlive                                                                      |
+| ~~`KeepAlive`~~         | ~~Creates `createElement('div')` storage container~~ **IMPLEMENTED** — maps 'div' to `__CreateView`, defensive REMOVE-before-INSERT in nodeOps.insert | Done |
+| ~~`onActivated`~~       | ~~Depends on KeepAlive~~ **IMPLEMENTED**                                                                                 | Done |
+| ~~`onDeactivated`~~     | ~~Depends on KeepAlive~~ **IMPLEMENTED**                                                                                 | Done |
 | `Teleport`              | String targets need `querySelector` renderer option; direct element refs inapplicable (native elements not on BG thread) | Implement `querySelector` via SelectorQuery bridge, or support Lynx-native "portal" pattern |
 
 ### How to verify if we wanted to implement them

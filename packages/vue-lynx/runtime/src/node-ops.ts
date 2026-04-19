@@ -186,6 +186,12 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     parent: ShadowElement,
     anchor?: ShadowElement | null,
   ): void {
+    // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
+    // emit REMOVE from old parent so MT correctly detaches first.
+    if (child.parent && child.parent !== parent) {
+      pushOp(OP.REMOVE, child.parent.id, child.id);
+    }
+
     // Always update the shadow tree (Vue needs it for internal diffing).
     parent.insertBefore(child, anchor ?? null);
 

@@ -1,5 +1,12 @@
 # @vue-lynx-example/todomvc
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [83f9212]
+  - vue-lynx@0.3.1
+
 ## 0.2.3
 
 ### Patch Changes
