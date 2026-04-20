@@ -1055,15 +1055,15 @@ export const vModelRadio: ObjectDirective = vModelUnsupported;
 
 /**
  * Modifiers that are side-effects on the event object (don't filter the event).
- * Lynx events implement `stopPropagation` and `preventDefault` per the Lynx
- * spec (BaseEventOrig), so these work identically to their DOM counterparts.
  */
 const lynxModifierSideEffects: Record<
   string,
   (e: Record<string, unknown>) => void
 > = {
   stop: (e) => (e.stopPropagation as (() => void) | undefined)?.(),
-  prevent: (e) => (e.preventDefault as (() => void) | undefined)?.(),
+  // `.prevent` is intentionally absent: Lynx has no browser default actions to
+  // cancel. It is accepted as a compatibility no-op so web code can be shared
+  // without modification, but calling preventDefault() would be misleading.
 };
 
 /**
@@ -1105,7 +1105,7 @@ const lynxModifierGuards: Record<
  * - `.once`    — handler is invoked at most once; subsequent events are ignored
  * - `.stop`    — registers the event as `catchEvent` (native Lynx stop-propagation)
  *               and also calls `event.stopPropagation()` for DOM environments
- * - `.prevent` — calls `event.preventDefault()` before invoking the handler
+ * - `.prevent` — accepted for code portability; no-op on Lynx (no browser default actions exist)
  * - `.self`    — skips the handler unless the event target is the listener element
  *
  * The wrapped function is cached on `fn._withMods` keyed by the modifier

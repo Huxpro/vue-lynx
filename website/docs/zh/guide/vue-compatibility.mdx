@@ -69,7 +69,7 @@ Vue 的 `v-model` 可以创建双向绑定。在**组件**上，子组件使用 
 
 ## 事件修饰符
 
-Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers)（`.once`、`.stop`、`.prevent`、`.self`）在 Lynx 上可用，但有一些平台特有的差异需要注意。
+Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers)（`.once`、`.stop`、`.self`）在 Lynx 上可用。`.prevent` 作为兼容性空操作被接受——详情请见下表。
 
 :::details 特性支持详情
 
@@ -78,11 +78,11 @@ Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#
 | `.once` | 可用 | 事件处理函数最多触发一次。Vue 编译器会生成 `onTapOnce` prop key；`withModifiers` 同样支持。 |
 | `.stop` | 可用 | 使用 Lynx 原生的 `catchEvent` 机制在元素层面阻止冒泡。在 DOM/测试环境中也会调用 `stopPropagation()`。 |
 | `.self` | 可用 | 通过 `uid`（Lynx 原生）或 `uniqueId`（Web 预览）比较事件来源，因为跨线程的事件对象始终是不同的引用。在 DOM/测试环境中回退到引用相等比较。 |
-| `.prevent` | Lynx 上无效果 | 会正确调用 `preventDefault()`，但 Lynx 没有浏览器默认行为可取消（没有 `<a>` 导航、没有 `<form>` 提交）。为 API 完整性而保留。 |
+| `.prevent` | 兼容性空操作 | 静默接受，使 Web 代码无需修改即可在 Lynx 上运行。Lynx 没有浏览器默认行为可取消（没有 `<a>` 导航、没有 `<form>` 提交），因此该修饰符没有可观察的效果。 |
 
 :::
 
-下面的示例并排展示了四种修饰符的效果：
+下面的示例展示了 `.once`、`.stop` 和 `.self`。`.prevent` 卡片说明了为何该修饰符不提供交互式演示：
 
 <Go
   example="event-modifiers"

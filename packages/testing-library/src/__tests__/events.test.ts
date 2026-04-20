@@ -135,7 +135,7 @@ describe('withModifiers', () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it('.prevent — calls preventDefault on the event', () => {
+  it('.prevent — no-op: handler still fires, preventDefault not called', () => {
     const fn = vi.fn();
     const wrapped = withModifiers(fn, ['prevent']);
     const evt = new Event('tap', { cancelable: true });
@@ -143,7 +143,7 @@ describe('withModifiers', () => {
 
     wrapped(evt);
 
-    expect(preventSpy).toHaveBeenCalledTimes(1);
+    expect(preventSpy).not.toHaveBeenCalled();
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
@@ -208,7 +208,7 @@ describe('withModifiers', () => {
     expect(fn).toHaveBeenCalledTimes(1); // still 1
   });
 
-  it('.stop.prevent — both side effects applied, handler still fires', () => {
+  it('.stop.prevent — stop fires, prevent is no-op, handler still fires', () => {
     const fn = vi.fn();
     const wrapped = withModifiers(fn, ['stop', 'prevent']);
     const evt = new Event('tap', { bubbles: true, cancelable: true });
@@ -218,7 +218,7 @@ describe('withModifiers', () => {
     wrapped(evt);
 
     expect(stopSpy).toHaveBeenCalledTimes(1);
-    expect(preventSpy).toHaveBeenCalledTimes(1);
+    expect(preventSpy).not.toHaveBeenCalled();
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
