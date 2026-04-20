@@ -9,5 +9,5 @@
  */
 export function scopeIdToCssId(scopeId: string): number {
   const hex = scopeId.replace(/^data-v-/, '');
-  return parseInt(hex, 16) & 0x7fffffff;
+  return Number.parseInt(hex, 16) & 0x7fffffff;
 }
