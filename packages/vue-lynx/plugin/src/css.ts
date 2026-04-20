@@ -80,17 +80,6 @@ export function applyCSS(
             .loader(CssExtractPlugin.loader)
             .end();
 
-          // Inject ?cssId=<N> for Vue scoped styles.
-          // This pitch loader runs BEFORE CssExtract's pitch and patches
-          // this.resourceQuery so CssExtract wraps the CSS in @cssId.
-          rule
-            .use('vue-cssid-inject')
-            .before(CHAIN_ID.USE.MINI_CSS_EXTRACT)
-            .loader(
-              path.resolve(_dirname, './loaders/css-extract-wrapper-loader'),
-            )
-            .end();
-
           // Clone the existing CSS rule chain for the Main-Thread layer.
           // Main-Thread bundles never contain user CSS — only the PAPI
           // bootstrap code.  We replace all loaders with ignore-css + a
