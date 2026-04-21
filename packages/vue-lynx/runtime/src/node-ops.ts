@@ -106,6 +106,19 @@ function parseEventProp(key: string): EventSpec | null {
 // on prop removal / update.
 const elementEventSigns = new Map<number, Map<string, string>>();
 
+// Registry for Teleport target resolution: id string → ShadowElement.
+const idRegistry = new Map<string, ShadowElement>();
+
+/** Recursively clean up idRegistry for a subtree being removed. */
+function cleanupIds(el: ShadowElement): void {
+  if (el._id) idRegistry.delete(el._id);
+  let child = el.firstChild;
+  while (child) {
+    cleanupIds(child);
+    child = child.next;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
 // ---------------------------------------------------------------------------
@@ -209,9 +222,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   remove(child: ShadowElement): void {
-    if (child.parent) {
+    if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, parentId, child.id);
       scheduleFlush();
     }
@@ -301,6 +315,9 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const finalClass = resolveClass(el);
       pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
+      if (el._id) idRegistry.delete(el._id);
+      el._id = nextValue as string | undefined;
+      if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
       pushOp(OP.SET_PROP, el.id, key, nextValue);
@@ -323,9 +340,22 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   nextSibling(node: ShadowElement): ShadowElement | null {
     return node.next;
   },
+
+  querySelector(selector: string): ShadowElement | null {
+    if (selector.startsWith('#')) {
+      return idRegistry.get(selector.slice(1)) ?? null;
+    }
+    if (__DEV__) {
+      console.warn(
+        `[vue-lynx] querySelector only supports #id selectors, got "${selector}".`,
+      );
+    }
+    return null;
+  },
 };
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
   elementEventSigns.clear();
+  idRegistry.clear();
 }

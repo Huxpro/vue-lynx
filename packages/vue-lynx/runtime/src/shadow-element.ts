@@ -46,6 +46,9 @@ export class ShadowElement {
   _vModelHandler: ((data: unknown) => void) | undefined = undefined;
   _vModelEventProp: string | undefined = undefined;
 
+  // ID for Teleport target resolution (idRegistry lookup).
+  _id: string | undefined = undefined;
+
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {
       this.id = ShadowElement.nextId++;
