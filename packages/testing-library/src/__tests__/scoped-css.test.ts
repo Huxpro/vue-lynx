@@ -30,7 +30,7 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
   it('pushes SET_SCOPE_ID op with numeric cssId', () => {
     const el = new ShadowElement('view', 99);
 
-    nodeOps.setScopeId(el, 'data-v-8f634878');
+    nodeOps.setScopeId!(el,'data-v-8f634878');
 
     const ops = takeOps();
     expect(ops[0]).toBe(OP.SET_SCOPE_ID);
@@ -61,8 +61,8 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
 
     // Vue calls setScopeId once per scope on the element
     // (own scope, then parent scope for root elements)
-    nodeOps.setScopeId(el, 'data-v-aaa00001');
-    nodeOps.setScopeId(el, 'data-v-bbb00002');
+    nodeOps.setScopeId!(el,'data-v-aaa00001');
+    nodeOps.setScopeId!(el,'data-v-bbb00002');
 
     const ops = takeOps();
     // Two SET_SCOPE_ID ops, each with 3 values
