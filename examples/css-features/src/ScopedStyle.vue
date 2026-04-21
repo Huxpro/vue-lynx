@@ -1,25 +1,18 @@
 <script setup lang="ts">
 // Test: <style scoped>
 //
-// Vue's scoped CSS works by:
-//   1. Adding a unique `data-v-{hash}` attribute to each element in the template
-//   2. Appending `[data-v-{hash}]` attribute selectors to each CSS rule
-//
-// EXPECTED ISSUE: Lynx's CSS engine only supports class selectors and
-// descendant/child combinators. Attribute selectors like [data-v-xxx] are
-// NOT supported. Therefore, scoped CSS rules will be silently ignored.
-//
-// Additionally, vue-lynx's renderer does NOT implement `setScopeId()` in its
-// nodeOps, so `data-v-*` attributes are never set on elements in the first place.
+// Vue's scoped CSS is bridged to Lynx's native cssId system:
+//   1. Build-time: VueScopedCSSIdPlugin injects ?cssId=<N> so CSS is wrapped in @cssId
+//   2. Build-time: vueScopeStripCSSPlugin removes [data-v-xxx] attribute selectors
+//   3. Runtime: scope-bridge.ts converts __scopeId to numeric cssId via __SetCSSId
 </script>
 
 <template>
   <view class="scoped-card">
     <text class="scoped-title">&lt;style scoped&gt;</text>
     <text class="scoped-desc">
-      Uses [data-v-xxx] attribute selectors internally.
-      Lynx CSS engine does not support attribute selectors,
-      so these styles will NOT be applied.
+      Bridged to Lynx's native cssId scoping system.
+      Styles are scoped to this component only.
     </text>
     <view class="scoped-demo-box">
       <text class="scoped-demo-text">This text should be blue if scoped works</text>

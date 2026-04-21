@@ -20,7 +20,7 @@ import ImportedCSS from './ImportedCSS.vue'
     <!-- 1. Plain <style> — WORKS -->
     <PlainStyle />
 
-    <!-- 2a. <style scoped> — DOES NOT WORK -->
+    <!-- 2a. <style scoped> — WORKS (via Lynx cssId) -->
     <ScopedStyle />
 
     <!-- 3. <style module> — SHOULD WORK -->
