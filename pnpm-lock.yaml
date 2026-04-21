@@ -29,7 +29,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -45,7 +45,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -599,8 +599,8 @@ importers:
         specifier: ^2.75.0
         version: 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@lynx-js/go-web':
-        specifier: github:lynx-community/go-web
-        version: https://codeload.github.com/lynx-community/go-web/tar.gz/be471e21a9a16a514aba7b8d0ed67cda64c7ca21(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
+        specifier: ^0.2.1
+        version: 0.2.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
       '@lynx-js/web-core':
         specifier: ^0.19.8
         version: 0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1))
@@ -1183,9 +1183,8 @@ packages:
   '@lynx-js/css-serializer@0.1.4':
     resolution: {integrity: sha512-yG3sC1fH+rBQhbdvPCweaGjmFmOBdi2rbt7xs9laMfu5Z5dOXL1OB7pZZN0vodptBO0/ctVfMCKH2EKhq0GtTA==}
 
-  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/be471e21a9a16a514aba7b8d0ed67cda64c7ca21':
-    resolution: {tarball: https://codeload.github.com/lynx-community/go-web/tar.gz/be471e21a9a16a514aba7b8d0ed67cda64c7ca21}
-    version: 0.2.0
+  '@lynx-js/go-web@0.2.1':
+    resolution: {integrity: sha512-r/M0KfxVmS7aEjcxCDa1TGpEy6cA1S7OhS3k0lse95SSbhj9x/SFR06iquPvcQmS6tyxpJC6U/nR/5tWrY1dYw==}
     engines: {node: ^22 || ^24}
     peerDependencies:
       '@douyinfe/semi-icons': '>=2.74.0'
@@ -6452,7 +6451,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@lynx-js/go-web@https://codeload.github.com/lynx-community/go-web/tar.gz/be471e21a9a16a514aba7b8d0ed67cda64c7ca21(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
+  '@lynx-js/go-web@0.2.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.19.8(@lynx-js/lynx-core@0.1.3)(@lynx-js/web-elements@0.12.0(tslib@2.8.1)))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
     dependencies:
       '@douyinfe/semi-icons': 2.92.2(react@19.2.4)
       '@douyinfe/semi-ui': 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

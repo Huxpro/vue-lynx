@@ -3,5 +3,3 @@ packages:
   - examples/*
   - website
 
-onlyBuiltDependencies:
-  - "@lynx-js/go-web"
