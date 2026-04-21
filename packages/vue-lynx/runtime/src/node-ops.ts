@@ -188,6 +188,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     while (el.firstChild) {
       const child = el.firstChild;
       el.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, el.id, child.id);
     }
     // Set text content directly on the element
@@ -375,6 +376,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     } else if (key === 'id') {
       if (el._id) idRegistry.delete(el._id);
       el._id = nextValue != null ? String(nextValue) : undefined;
+      if (__DEV__ && el._id && idRegistry.has(el._id) && idRegistry.get(el._id) !== el) {
+        console.warn(
+          `[vue-lynx] Duplicate id "${el._id}" detected. Teleport target resolution may be unreliable.`,
+        );
+      }
       if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {

@@ -127,6 +127,72 @@ describe('Teleport', () => {
     expect(target!.textContent).toContain('Second');
   });
 
+  it('moves content when `to` target changes dynamically', async () => {
+    const target = ref('#a');
+
+    const Comp = defineComponent({
+      setup() {
+        return { target };
+      },
+      render() {
+        return h('view', null, [
+          h('view', { id: 'a' }),
+          h('view', { id: 'b' }),
+          h(Teleport, { to: this.target }, teleportSlot(() => [
+            h('text', null, 'Moving'),
+          ])),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const a = container.querySelector('[id="a"]');
+    const b = container.querySelector('[id="b"]');
+    expect(a!.textContent).toBe('Moving');
+    expect(b!.textContent).toBe('');
+
+    target.value = '#b';
+    await flush();
+    expect(a!.textContent).toBe('');
+    expect(b!.textContent).toBe('Moving');
+  });
+
+  it('toggles disabled — moves content between in-place and target', async () => {
+    const disabled = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        return { disabled };
+      },
+      render() {
+        return h('view', null, [
+          h('view', { id: 'target' }),
+          h(Teleport, { to: '#target', disabled: this.disabled }, teleportSlot(() => [
+            h('text', null, 'Toggle'),
+          ])),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const tgt = container.querySelector('[id="target"]');
+
+    // Initially disabled — content is in-place, not in target
+    expect(tgt!.textContent).toBe('');
+    expect(container.textContent).toContain('Toggle');
+
+    // Enable teleport — content moves to target
+    disabled.value = false;
+    await flush();
+    expect(tgt!.textContent).toBe('Toggle');
+
+    // Disable again — content moves back in-place
+    disabled.value = true;
+    await flush();
+    expect(tgt!.textContent).toBe('');
+    expect(container.textContent).toContain('Toggle');
+  });
+
   it('handles non-existent target gracefully', () => {
     // Vue emits its own warning for missing targets; content should not crash.
     const Comp = defineComponent({

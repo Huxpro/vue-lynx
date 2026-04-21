@@ -123,6 +123,7 @@ export function logNodeOp(op: NodeOp): void {
 
 export function resetOps(): void {
   recordedNodeOps = [];
+  testIdRegistry.clear();
 }
 
 export function dumpOps(): NodeOp[] {
@@ -301,8 +302,14 @@ function nextSibling(node: TestNode): TestNode | null {
   return nextSE ? getTestNode(nextSE) : null;
 }
 
-function querySelector(): never {
-  throw new Error('querySelector not supported in test renderer.');
+// Registry for Teleport target resolution in the test renderer.
+const testIdRegistry = new Map<string, TestElement>();
+
+function querySelector(selector: string): TestElement | null {
+  if (selector.startsWith('#')) {
+    return testIdRegistry.get(selector.slice(1)) ?? null;
+  }
+  return null;
 }
 
 function setScopeId(el: TestElement, id: string): void {
@@ -349,6 +356,11 @@ export function patchProp(
     propNextValue: nextValue,
   });
   el.props[key] = nextValue;
+  if (key === 'id') {
+    // Maintain testIdRegistry for querySelector / Teleport support
+    if (prevValue != null) testIdRegistry.delete(String(prevValue));
+    if (nextValue != null) testIdRegistry.set(String(nextValue), el);
+  }
   if (isOn(key)) {
     const event = key[2] === ':' ? key.slice(3) : key.slice(2).toLowerCase();
     if (!el.eventListeners) el.eventListeners = {};
