@@ -71,6 +71,32 @@ Vue 的 `v-model` 可以创建双向绑定。在**组件**上，子组件使用 
   defaultFile="src/App.vue"
 />
 
+## 事件修饰符
+
+Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers)（`.once`、`.stop`、`.self`）在 Lynx 上可用。`.prevent` 作为兼容性空操作被接受——详情请见下表。
+
+:::details 特性支持详情
+
+| 修饰符 | 状态 | 说明 |
+|--------|------|------|
+| `.once` | 可用 | 事件处理函数最多触发一次。Vue 编译器会生成 `onTapOnce` prop key；`withModifiers` 同样支持。 |
+| `.stop` | 可用 | 使用 Lynx 原生的 `catchEvent` 机制在元素层面阻止冒泡。在 DOM/测试环境中也会调用 `stopPropagation()`。 |
+| `.self` | 可用 | 通过 `uid`（Lynx 原生）或 `uniqueId`（Web 预览）比较事件来源，因为跨线程的事件对象始终是不同的引用。在 DOM/测试环境中回退到引用相等比较。 |
+| `.prevent` | 兼容性空操作 | 静默接受，使 Web 代码无需修改即可在 Lynx 上运行。Lynx 没有浏览器默认行为可取消（没有 `<a>` 导航、没有 `<form>` 提交），因此该修饰符没有可观察的效果。 |
+
+:::
+
+:::info 主线程（worklet）事件处理函数
+Vue 的修饰符系统不适用于 `:main-thread-bind*` 处理函数（如 `:main-thread-bindtap`）。这些处理函数使用 Lynx 原生的 v-bind 语法，完全绕过了 Vue 的 v-on 事件管道——编译器不会为它们生成 `onTapOnce` key 或 `withModifiers()` 包装。请使用原生等价方案：`:main-thread-catchtap` 用于阻止冒泡，在 worklet 内部实现 `.once`/`.self` 逻辑。
+:::
+
+下面的示例展示了 `.once`、`.stop` 和 `.self`。`.prevent` 卡片说明了为何该修饰符不提供交互式演示：
+
+<Go
+  example="event-modifiers"
+  defaultFile="src/App.vue"
+/>
+
 ## 插槽
 
 Vue [插槽](https://vuejs.org/guide/components/slots.html)是将模板内容传递给子组件的主要组合机制。Vue Lynx 支持默认插槽、具名插槽和作用域插槽。

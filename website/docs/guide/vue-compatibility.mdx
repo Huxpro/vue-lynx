@@ -71,6 +71,32 @@ The example demonstrates:
   defaultFile="src/App.vue"
 />
 
+## Event Modifiers
+
+Vue's [event modifiers](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers) (`.once`, `.stop`, `.self`) work on Lynx. `.prevent` is accepted as a compatibility no-op — see the table below for details.
+
+:::details Feature support details
+
+| Modifier | Status | Notes |
+|----------|--------|-------|
+| `.once` | Works | Handler fires at most once. The Vue compiler emits `onTapOnce` prop keys; `withModifiers` also supports it. |
+| `.stop` | Works | Uses Lynx's native `catchEvent` mechanism to stop propagation at the element level. Also calls `stopPropagation()` in DOM/test environments. |
+| `.self` | Works | Compares by `uid` (Lynx native) or `uniqueId` (web preview) since cross-thread event objects are always distinct references. Falls back to reference equality in DOM/test environments. |
+| `.prevent` | Compatibility no-op | Accepted silently so web code runs on Lynx without modification. Lynx has no browser default actions to cancel (no `<a>` navigation, no `<form>` submission), so this modifier has no observable effect. |
+
+:::
+
+:::info Main-thread (worklet) event handlers
+Vue's modifier system does not apply to `:main-thread-bind*` handlers (e.g. `:main-thread-bindtap`). These use Lynx-native v-bind syntax and bypass Vue's v-on event pipeline entirely — the compiler never generates `onTapOnce` keys or `withModifiers()` wrappers for them. Use the native equivalents instead: `:main-thread-catchtap` for propagation stopping, and inline worklet logic for `.once`/`.self` behaviour.
+:::
+
+The example below demonstrates `.once`, `.stop`, and `.self`. The `.prevent` card explains why no interactive demo is shown for that modifier:
+
+<Go
+  example="event-modifiers"
+  defaultFile="src/App.vue"
+/>
+
 ## Slots
 
 Vue [slots](https://vuejs.org/guide/components/slots.html) are the primary composition mechanism for passing template content into child components. Vue Lynx supports default slots, named slots, and scoped slots.
