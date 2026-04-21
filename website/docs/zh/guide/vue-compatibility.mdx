@@ -82,6 +82,10 @@ Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#
 
 :::
 
+:::info 主线程（worklet）事件处理函数
+Vue 的修饰符系统不适用于 `:main-thread-bind*` 处理函数（如 `:main-thread-bindtap`）。这些处理函数使用 Lynx 原生的 v-bind 语法，完全绕过了 Vue 的 v-on 事件管道——编译器不会为它们生成 `onTapOnce` key 或 `withModifiers()` 包装。请使用原生等价方案：`:main-thread-catchtap` 用于阻止冒泡，在 worklet 内部实现 `.once`/`.self` 逻辑。
+:::
+
 下面的示例展示了 `.once`、`.stop` 和 `.self`。`.prevent` 卡片说明了为何该修饰符不提供交互式演示：
 
 <Go

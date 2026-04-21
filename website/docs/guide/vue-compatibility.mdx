@@ -82,6 +82,10 @@ Vue's [event modifiers](https://vuejs.org/guide/essentials/event-handling.html#e
 
 :::
 
+:::info Main-thread (worklet) event handlers
+Vue's modifier system does not apply to `:main-thread-bind*` handlers (e.g. `:main-thread-bindtap`). These use Lynx-native v-bind syntax and bypass Vue's v-on event pipeline entirely — the compiler never generates `onTapOnce` keys or `withModifiers()` wrappers for them. Use the native equivalents instead: `:main-thread-catchtap` for propagation stopping, and inline worklet logic for `.once`/`.self` behaviour.
+:::
+
 The example below demonstrates `.once`, `.stop`, and `.self`. The `.prevent` card explains why no interactive demo is shown for that modifier:
 
 <Go
