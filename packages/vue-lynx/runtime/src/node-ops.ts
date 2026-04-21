@@ -239,6 +239,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   remove(child: ShadowElement): void {
+    // Vue's Teleport iterates its children on unmount even when target
+    // resolution failed at mount (see @vue/runtime-core TeleportImpl.remove).
+    // Those children were never mounted, so `vnode.el` is undefined — null
+    // guard is required here, not just for the `!parent` case.
     if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
@@ -370,7 +374,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
       if (el._id) idRegistry.delete(el._id);
-      el._id = nextValue as string | undefined;
+      el._id = nextValue != null ? String(nextValue) : undefined;
       if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
