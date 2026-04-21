@@ -27,7 +27,11 @@ Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.
 | Imported `.css` files | Works |
 | `<style module>` | Works |
 | `v-bind()` in `<style>` | Works (requires config, see below) |
-| `<style scoped>` | Works |
+| `<style scoped>` | Works (see caveats below) |
+
+:::warning `<style scoped>` caveats
+[`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors), [`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors), and [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) are not yet supported ([#164](https://github.com/Huxpro/vue-lynx/issues/164), [#165](https://github.com/Huxpro/vue-lynx/issues/165)).
+:::
 
 `v-bind()` in `<style>` requires two config options so the Lynx engine recognizes CSS custom properties in inline styles and cascades them to descendants:
 
