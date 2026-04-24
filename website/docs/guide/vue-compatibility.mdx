@@ -210,11 +210,14 @@ export default defineComponent({
 })
 ```
 
+## Teleport
+
+`<Teleport>` is supported for `to="#id"` string selectors. Direct element refs and non-ID selectors are not yet supported.
+
 ## Unsupported Features
 
 Some Vue built-in features are not yet adapted to the dual-thread native environment:
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<Teleport>` | Requires `querySelector` to resolve string targets, unavailable in the dual-thread architecture | Conditional rendering at the target location |
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |

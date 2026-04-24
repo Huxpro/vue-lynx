@@ -35,7 +35,7 @@ import { ref, computed, onMounted, defineComponent } from 'vue-lynx';
 | `<TransitionGroup>` | 实验性 | 逐子元素进入/离开动画。不支持移动 (FLIP) 动画 — 后台线程无法使用 `getBoundingClientRect()`。 |
 | `<Suspense>` | 支持 | 从 Vue 重新导出。与 `defineAsyncComponent()` 配合使用。 |
 | `<KeepAlive>` | 不支持 | 需要 Lynx 渲染器中不可用的元素回收功能。 |
-| `<Teleport>` | 不支持 | 需要未实现的 `querySelector` 渲染器选项。 |
+| `<Teleport>` | 支持 | 仅支持 `to="#id"` 字符串选择器。暂不支持直接传入元素 ref 或非 ID 选择器。 |
 
 :::warning
 `<Transition>` 和 `<TransitionGroup>` 是**实验性的**。请始终传递显式的 `:duration` prop — 后台线程无法使用 `getComputedStyle()`。`<TransitionGroup>` 不支持移动 (FLIP) 动画。
