@@ -263,6 +263,18 @@ function insert(
   parent._se.insertBefore(child._se, ref ? ref._se : null);
 }
 
+function cleanupTestIds(node: TestNode): void {
+  if (node.type === TestNodeTypes.ELEMENT && node.props.id != null) {
+    testIdRegistry.delete(String(node.props.id));
+  }
+
+  let child = node._se.firstChild;
+  while (child) {
+    cleanupTestIds(getTestNode(child));
+    child = child.next;
+  }
+}
+
 function remove(child: TestNode): void {
   const parentSE = child._se.parent;
   if (parentSE) {
@@ -272,6 +284,7 @@ function remove(child: TestNode): void {
       targetNode: child,
       parentNode: parent,
     });
+    cleanupTestIds(child);
     parentSE.removeChild(child._se);
   }
 }
@@ -284,7 +297,9 @@ function setElementText(el: TestElement, text: string): void {
   });
   // Remove all children from the ShadowElement linked list
   while (el._se.firstChild) {
-    el._se.removeChild(el._se.firstChild);
+    const child = getTestNode(el._se.firstChild);
+    cleanupTestIds(child);
+    el._se.removeChild(child._se);
   }
   if (text) {
     const textNode = makeTestText(text);
