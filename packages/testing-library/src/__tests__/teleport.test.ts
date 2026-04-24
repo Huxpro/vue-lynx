@@ -157,6 +157,67 @@ describe('Teleport', () => {
     expect(b!.textContent).toBe('Moving');
   });
 
+  it('updates target lookup when an element id changes', async () => {
+    const targetId = ref('a');
+
+    const Comp = defineComponent({
+      setup() {
+        return { targetId };
+      },
+      render() {
+        return h('view', null, [
+          h('view', { id: this.targetId }),
+          h(Teleport, { to: `#${this.targetId}` }, teleportSlot(() => [
+            h('text', null, 'Retargeted'),
+          ])),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const target = container.querySelector('[id="a"]');
+    expect(target!.textContent).toBe('Retargeted');
+
+    targetId.value = 'b';
+    await flush();
+
+    expect(container.querySelector('[id="a"]')).toBeNull();
+    expect(container.querySelector('[id="b"]')).toBe(target);
+    expect(target!.textContent).toBe('Retargeted');
+  });
+
+  it('removes target lookup when an element id is removed', async () => {
+    const targetId = ref<string | null>('target');
+    const showTeleport = ref(false);
+
+    const Comp = defineComponent({
+      setup() {
+        return { targetId, showTeleport };
+      },
+      render() {
+        return h('view', null, [
+          h('view', { id: this.targetId }),
+          this.showTeleport
+            ? h(Teleport, { to: '#target' }, teleportSlot(() => [
+                h('text', null, 'Detached'),
+              ]))
+            : null,
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const target = container.querySelector('[id="target"]');
+    expect(target!.textContent).toBe('');
+
+    targetId.value = null;
+    showTeleport.value = true;
+    await flush();
+
+    expect(container.querySelector('[id="target"]')).toBeNull();
+    expect(target!.textContent).toBe('');
+  });
+
   it('toggles disabled — moves content between in-place and target', async () => {
     const disabled = ref(true);
 
