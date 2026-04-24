@@ -123,6 +123,19 @@ interface OnceWrapper {
 }
 const onceWrappers = new Map<string, OnceWrapper>();
 
+// Registry for Teleport target resolution: id string → ShadowElement.
+const idRegistry = new Map<string, ShadowElement>();
+
+/** Recursively clean up idRegistry for a subtree being removed. */
+function cleanupIds(el: ShadowElement): void {
+  if (el._id) idRegistry.delete(el._id);
+  let child = el.firstChild;
+  while (child) {
+    cleanupIds(child);
+    child = child.next;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
 // ---------------------------------------------------------------------------
@@ -175,6 +188,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     while (el.firstChild) {
       const child = el.firstChild;
       el.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, el.id, child.id);
     }
     // Set text content directly on the element
@@ -226,9 +240,14 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   remove(child: ShadowElement): void {
-    if (child.parent) {
+    // Vue's Teleport iterates its children on unmount even when target
+    // resolution failed at mount (see @vue/runtime-core TeleportImpl.remove).
+    // Those children were never mounted, so `vnode.el` is undefined — null
+    // guard is required here, not just for the `!parent` case.
+    if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, parentId, child.id);
       scheduleFlush();
     }
@@ -355,6 +374,14 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const finalClass = resolveClass(el);
       pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
+      if (el._id) idRegistry.delete(el._id);
+      el._id = nextValue != null ? String(nextValue) : undefined;
+      if (__DEV__ && el._id && idRegistry.has(el._id) && idRegistry.get(el._id) !== el) {
+        console.warn(
+          `[vue-lynx] Duplicate id "${el._id}" detected. Teleport target resolution may be unreliable.`,
+        );
+      }
+      if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
       pushOp(OP.SET_PROP, el.id, key, nextValue);
@@ -377,10 +404,23 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   nextSibling(node: ShadowElement): ShadowElement | null {
     return node.next;
   },
+
+  querySelector(selector: string): ShadowElement | null {
+    if (selector.startsWith('#')) {
+      return idRegistry.get(selector.slice(1)) ?? null;
+    }
+    if (__DEV__) {
+      console.warn(
+        `[vue-lynx] querySelector only supports #id selectors, got "${selector}".`,
+      );
+    }
+    return null;
+  },
 };
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
   elementEventSigns.clear();
   onceWrappers.clear();
+  idRegistry.clear();
 }
