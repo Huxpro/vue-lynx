@@ -11,12 +11,12 @@ type LynxSpecialProps = {
   // kebab-case (source) and camelCase (Volar-normalised) forms are both needed
   'main-thread-ref'?: string;
   'mainThreadRef'?: string;
-  [key: `global-bind:${string}`]: ((event: any) => void) | undefined;
-  [key: `globalBind:${string}`]: ((event: any) => void) | undefined;
-  [key: `global-catch:${string}`]: ((event: any) => void) | undefined;
-  [key: `globalCatch:${string}`]: ((event: any) => void) | undefined;
-  [key: `main-thread:${string}`]: any;
-  [key: `mainThread:${string}`]: any;
+  [key: `global-bind:${string}`]: ((event: unknown) => void) | undefined;
+  [key: `globalBind:${string}`]: ((event: unknown) => void) | undefined;
+  [key: `global-catch:${string}`]: ((event: unknown) => void) | undefined;
+  [key: `globalCatch:${string}`]: ((event: unknown) => void) | undefined;
+  [key: `main-thread:${string}`]: unknown;
+  [key: `mainThread:${string}`]: unknown;
 }
 
 type VueLynxProps<T> = ExtractBindAsOn<T> & NonBindProps<T> & LynxSpecialProps

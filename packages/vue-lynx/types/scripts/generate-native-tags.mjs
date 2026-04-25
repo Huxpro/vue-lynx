@@ -33,4 +33,4 @@ const updated = src.replace(
 if (updated === src) throw new Error('Could not find lynxTags array in volar-plugin.cjs');
 
 writeFileSync(pluginPath, updated);
-console.log(`Updated lynxTags with ${lynxTags.length} tags from @lynx-js/types.`);
+console.info(`Updated lynxTags with ${lynxTags.length} tags from @lynx-js/types.`);
