@@ -1071,7 +1071,15 @@ export function withModifiers(
   return fn;
 }
 
-/** @internal Lynx stub for withKeys (keyboard event modifier helper). */
+/**
+ * No-op on Lynx. Lynx's native layer (`touch_event_handler.cc`) converts
+ * keyboard input to named custom events (e.g. `confirm`) before they reach
+ * the JS thread — `event.key` is never populated on any Lynx target, including
+ * hardware keyboards and the web preview. Use `@confirm` directly on `<input>`.
+ *
+ * @see {@link https://github.com/Huxpro/vue-lynx/issues/ | Tracking issue}
+ * @internal
+ */
 export function withKeys(
   fn: (...args: unknown[]) => unknown,
   _keys: string[],
