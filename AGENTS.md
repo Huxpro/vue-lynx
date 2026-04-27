@@ -1,5 +1,10 @@
 # Vue Lynx — Agent Guidelines
 
+## Read in Advance
+
+- Vue Lynx: [llms.txt](https://vue.lynxjs.org/llms.txt), **REQUIRED**.
+  Read this before working on any Vue Lynx task — it covers the Vue Lynx API, dual-thread architecture, and Lynx-specific caveats from a Vue perspective.
+
 ## Debugging Checklist
 
 When investigating runtime errors in Lynx bundles:
