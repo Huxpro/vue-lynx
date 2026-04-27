@@ -218,3 +218,4 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 |---------|--------|-------------|
 | `<Teleport>` | Requires `querySelector` to resolve string targets, unavailable in the dual-thread architecture | Conditional rendering at the target location |
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
+| `withKeys` key modifiers | Lynx's native layer converts keyboard input to named events (e.g. `confirm`) before reaching JS — `event.key` is never populated, including on hardware keyboards and web preview | Use `@confirm` directly on `<input>` |

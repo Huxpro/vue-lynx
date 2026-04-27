@@ -218,3 +218,4 @@ export default defineComponent({
 |---------|--------|-------------|
 | `<Teleport>` | 需要 `querySelector` 来解析字符串目标，在双线程架构中不可用 | 在目标位置使用条件渲染 |
 | `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
+| `withKeys` 按键修饰符 | Lynx 原生层（`touch_event_handler.cc`）在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`）—— 包括硬件键盘和 web 预览在内的任何 Lynx 平台均不会填充 `event.key` | 在 `<input>` 上直接使用 `@confirm` |
