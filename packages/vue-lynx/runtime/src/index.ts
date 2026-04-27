@@ -1077,7 +1077,6 @@ export function withModifiers(
  * the JS thread — `event.key` is never populated on any Lynx target, including
  * hardware keyboards and the web preview. Use `@confirm` directly on `<input>`.
  *
- * @see {@link https://github.com/Huxpro/vue-lynx/issues/ | Tracking issue}
  * @internal
  */
 export function withKeys(
