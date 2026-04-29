@@ -95,6 +95,21 @@ describe('class binding — object form', () => {
     expect(classes).toContain('visible')
     expect(classes).not.toContain('hidden')
   })
+
+  it('supports truthy non-boolean values in object form', () => {
+    const Comp = defineComponent({
+      setup() {
+        return () => h('view', { class: { active: 1, hidden: 0, visible: 'yes', empty: '' } })
+      },
+    })
+
+    const { container } = render(Comp)
+    const classes = container.querySelector('view')!.getAttribute('class')!.split(' ')
+    expect(classes).toContain('active')
+    expect(classes).toContain('visible')
+    expect(classes).not.toContain('hidden')
+    expect(classes).not.toContain('empty')
+  })
 })
 
 describe('class binding — array form', () => {
@@ -141,6 +156,19 @@ describe('class binding — array form', () => {
     expect(classes).toContain('base')
     expect(classes).toContain('active')
     expect(classes).not.toContain('disabled')
+  })
+
+  it('supports nested arrays', () => {
+    const Comp = defineComponent({
+      setup() {
+        return () => h('view', { class: [['base'], { active: true }] })
+      },
+    })
+
+    const { container } = render(Comp)
+    const classes = container.querySelector('view')!.getAttribute('class')!.split(' ')
+    expect(classes).toContain('base')
+    expect(classes).toContain('active')
   })
 })
 
