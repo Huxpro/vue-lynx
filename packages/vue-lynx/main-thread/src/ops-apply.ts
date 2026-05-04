@@ -56,6 +56,9 @@ function createTypedElement(
       return __CreateImage(parentComponentUniqueId);
     case 'scroll-view':
       return __CreateScrollView(parentComponentUniqueId);
+    case 'div':
+      // KeepAlive's internal storage container — map to view (Lynx equivalent).
+      return __CreateView(parentComponentUniqueId);
     default:
       return __CreateElement(type, parentComponentUniqueId);
   }
@@ -205,7 +208,9 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const cls = ops[i++] as string;
         const el = elements.get(id);
-        if (el) __SetClasses(el, cls);
+        if (el) {
+          __SetClasses(el, cls);
+        }
         break;
       }
 
@@ -237,6 +242,17 @@ export function applyOps(ops: unknown[]): void {
         const wvid = ops[i++] as number;
         const initValue = ops[i++];
         applyInitMtRef(wvid, initValue);
+        break;
+      }
+
+      case OP.SET_SCOPE_ID: {
+        const id = ops[i++] as number;
+        const cssId = ops[i++] as number;
+        const el = elements.get(id);
+        if (el) {
+          // Set the CSS scope ID for Lynx's CSS engine
+          __SetCSSId([el], cssId);
+        }
         break;
       }
 

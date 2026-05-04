@@ -16,6 +16,8 @@ import {
 } from '@lynx-js/template-webpack-plugin';
 
 import { LAYERS } from './layers.js';
+import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
+import { VueScopedCSSIdPlugin } from './plugins/vue-scoped-cssid-plugin.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
 const PLUGIN_RUNTIME_WRAPPER = 'lynx:vue-runtime-wrapper';
@@ -502,10 +504,10 @@ export function applyEntry(
               enableCSSInvalidation: opts.enableCSSSelector ?? true,
               enableCSSInheritance: opts.enableCSSInheritance ?? false,
               customCSSInheritanceList: opts.customCSSInheritanceList,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
-              cssPlugins: [],
+              cssPlugins: [vueScopeStripCSSPlugin],
             },
           ])
           .end();
@@ -520,6 +522,17 @@ export function applyEntry(
       chain
         .plugin(PLUGIN_MARK_MAIN_THREAD)
         .use(VueMarkMainThreadPlugin, [mainThreadFilenames])
+        .end();
+    }
+
+    // ------------------------------------------------------------------
+    // VueScopedCSSIdPlugin – inject ?cssId=<N> into vue scoped style
+    // module queries so css-extract-webpack-plugin wraps CSS in @cssId.
+    // ------------------------------------------------------------------
+    if (isLynx || isWeb) {
+      chain
+        .plugin('lynx:vue-scoped-cssid')
+        .use(VueScopedCSSIdPlugin, [])
         .end();
     }
 
