@@ -94,8 +94,8 @@ function stampElementDescendants(
  *
  * The standard `@vue/runtime-dom` version uses DOM APIs (`el.style.setProperty`)
  * which are unavailable in Lynx's Background Thread.  This implementation
- * instead merges the CSS variables into every element's inline style and sends
- * them to the Main Thread via the ops pipeline.
+ * instead merges the CSS variables into the component root element's inline
+ * style and sends them to the Main Thread via the ops pipeline.
  *
  * CSS vars are stamped on every element in the component subtree rather than
  * only the root. Lynx's `{{--varName}}` class rule resolver reads from an
