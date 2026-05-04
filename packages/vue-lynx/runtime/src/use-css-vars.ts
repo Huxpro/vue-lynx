@@ -69,8 +69,8 @@ function applyVarsToVNode(
  *
  * The standard `@vue/runtime-dom` version uses DOM APIs (`el.style.setProperty`)
  * which are unavailable in Lynx's Background Thread.  This implementation
- * instead merges the CSS variables into every element's inline style and sends
- * them to the Main Thread via the ops pipeline.
+ * instead merges the CSS variables into the component root element's inline
+ * style and sends them to the Main Thread via the ops pipeline.
  *
  * CSS vars are stamped on the component's root element(s). The Lynx engine
  * propagates custom property updates to descendants via the CSS inheritance

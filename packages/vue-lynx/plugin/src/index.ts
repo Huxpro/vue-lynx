@@ -69,11 +69,10 @@ export interface PluginVueLynxOptions {
    * When enabled, computed CSS property values cascade from parent elements
    * to children (e.g. `color`, `font-size`), matching standard CSS behavior.
    *
-   * Note: CSS custom property (variable) inheritance via this flag does not
-   * propagate `--*` values into `{{--varName}}` class rule resolution in the
-   * Lynx engine. `v-bind()` in `<style>` blocks works without this flag —
-   * `useCssVars` stamps CSS vars directly on every element instead of relying
-   * on inheritance.
+   * Note: `v-bind()` in `<style>` blocks works without this flag — `useCssVars`
+   * stamps CSS vars on the component root element(s) and the Lynx engine
+   * propagates them to descendants via the CSS inheritance chain
+   * (fixed in lynx-family/lynx#5912).
    * @defaultValue false
    */
   enableCSSInheritance?: boolean;
