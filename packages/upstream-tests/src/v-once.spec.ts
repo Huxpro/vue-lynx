@@ -20,6 +20,7 @@
  * the initial mount.
  */
 
+import type { VNode } from '@vue/runtime-core';
 import {
   createApp,
   createElementVNode,
@@ -59,8 +60,7 @@ it('setBlockTracking is exported from vue-lynx', () => {
 describe('v-once — ops pipeline', () => {
   it('initial render emits SET_PROP ops for v-once subtree', async () => {
     const msg = ref('hello');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache: any[] = [];
+    const cache: VNode[] = [];
 
     const App = defineComponent({
       setup() {
@@ -90,8 +90,7 @@ describe('v-once — ops pipeline', () => {
   it('re-render after reactive change emits no ops for v-once subtree', async () => {
     const msg = ref('hello');
     const outer = ref(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache: any[] = [];
+    const cache: VNode[] = [];
 
     const App = defineComponent({
       setup() {
@@ -131,8 +130,7 @@ describe('v-once — ops pipeline', () => {
   it('v-once subtree retains initial value across multiple re-renders', async () => {
     const msg = ref('initial');
     const tick = ref(0);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache: any[] = [];
+    const cache: VNode[] = [];
 
     const App = defineComponent({
       setup() {
@@ -167,12 +165,16 @@ describe('v-once — ops pipeline', () => {
 
   // v-once inside v-for: each iteration gets its own cache slot.
   // Compiler emits cache[index] per item, so each freezes independently.
+  //
+  // Note: the real compiler uses static _cache slots per component instance,
+  // not a shared array indexed by loop position. This simulation is accurate
+  // for fixed-length lists but does not cover list growth/shrinkage (stale
+  // cache slots would be reused for new items at the same index).
   it('v-once inside v-for: each item renders once, no ops on list change', async () => {
     const list = ref(['a', 'b', 'c']);
     const outer = ref(0);
     // Per-item caches, keyed by index — mirrors compiler output for v-for + v-once
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cache: any[] = [];
+    const cache: VNode[] = [];
 
     const App = defineComponent({
       setup() {
@@ -208,6 +210,52 @@ describe('v-once — ops pipeline', () => {
     // No content ops — all items are v-once frozen
     expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
     // Outer wrapper still updates
+    expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
+  });
+
+  // v-once on a component: compiler emits the same cache-slot pattern regardless
+  // of whether the cached VNode is an element or a component. The patcher's
+  // n1 === n2 same-reference check fires before any type-specific branching,
+  // so the component subtree is frozen identically to a plain element.
+  it('v-once on a component: no ops after mount even when prop changes', async () => {
+    const msg = ref('hello');
+    const outer = ref(0);
+    const cache: VNode[] = [];
+
+    const Child = defineComponent({
+      props: { label: String },
+      setup(props) {
+        return () => h('text', { content: props.label });
+      },
+    });
+
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('view', { 'data-outer': outer.value },
+            // Mirrors compiler output for: <Child v-once :label="msg" />
+            cache[0] ||
+            (setBlockTracking(-1),
+            (cache[0] = h(Child, { label: msg.value })),
+            setBlockTracking(1),
+            cache[0]),
+          );
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps(); // drain mount ops
+
+    msg.value = 'world'; // prop change — ignored because VNode ref is cached
+    outer.value++;
+    await nextTick();
+
+    const propOps = parseSetPropOps(collectFlushedOps());
+
+    // Component subtree frozen — Child never re-renders
+    expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
+    // Non-v-once wrapper still updates
     expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
   });
 });
