@@ -801,7 +801,15 @@ export { useCssVars } from './use-css-vars.js';
 /** @hidden */ export { withCtx } from '@vue/runtime-core';
 /** @hidden */ export { renderSlot } from '@vue/runtime-core';
 /** @hidden */ export { createSlots } from '@vue/runtime-core';
-/** @hidden */ export { setBlockTracking } from '@vue/runtime-core';
+/**
+ * Emitted by the template compiler for `v-once` subtrees. Disables block
+ * tracking during the initial render so the cached VNode is never added to a
+ * parent block's dynamic children array — ensuring the patcher skips it on
+ * every subsequent render and no ops reach the main thread.
+ *
+ * @public
+ */
+export { setBlockTracking } from '@vue/runtime-core';
 /** @hidden */ export { pushScopeId } from '@vue/runtime-core';
 /** @hidden */ export { popScopeId } from '@vue/runtime-core';
 /** @hidden */ export { withScopeId } from '@vue/runtime-core';
