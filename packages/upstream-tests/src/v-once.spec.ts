@@ -164,4 +164,50 @@ describe('v-once — ops pipeline', () => {
       expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
     }
   });
+
+  // v-once inside v-for: each iteration gets its own cache slot.
+  // Compiler emits cache[index] per item, so each freezes independently.
+  it('v-once inside v-for: each item renders once, no ops on list change', async () => {
+    const list = ref(['a', 'b', 'c']);
+    const outer = ref(0);
+    // Per-item caches, keyed by index — mirrors compiler output for v-for + v-once
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
+
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('view', { 'data-outer': outer.value },
+            list.value.map((item, idx) =>
+              cache[idx] ||
+              (setBlockTracking(-1),
+              (cache[idx] = createElementVNode(
+                'text',
+                { key: idx, content: toDisplayString(item) },
+                null,
+                -1,
+              )),
+              setBlockTracking(1),
+              cache[idx]),
+            ),
+          );
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps();
+
+    // Mutate list values and trigger re-render via outer
+    list.value = ['x', 'y', 'z'];
+    outer.value++;
+    await nextTick();
+
+    const propOps = parseSetPropOps(collectFlushedOps());
+
+    // No content ops — all items are v-once frozen
+    expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
+    // Outer wrapper still updates
+    expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
+  });
 });

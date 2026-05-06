@@ -115,6 +115,42 @@ describe('withMemo — ops pipeline', () => {
     expect(propOps.filter(op => op.key === 'content')[0].value).toBe('world');
   });
 
+  // v-memo="[]" — empty dep array, never changes, equivalent to v-once.
+  it('v-memo with empty dep array never emits ops after mount', async () => {
+    const msg = ref('hello');
+    const outer = ref(0);
+    const cache: unknown[] = [];
+
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('view', { 'data-outer': String(outer.value) },
+            withMemo(
+              [], // empty — deps never change
+              () => h('text', { content: msg.value }),
+              cache,
+              0,
+            ),
+          );
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps();
+
+    msg.value = 'world';
+    outer.value++;
+    await nextTick();
+
+    const propOps = parseSetPropOps(collectFlushedOps());
+
+    // Memoized subtree never updates — same as v-once
+    expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
+    // Outer still updates
+    expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
+  });
+
   // v-for + v-memo compiles to a direct isMemoSame call, not withMemo.
   // This test simulates that compiler output to confirm the export works
   // and the ops pipeline is correctly bypassed for unchanged list items.
