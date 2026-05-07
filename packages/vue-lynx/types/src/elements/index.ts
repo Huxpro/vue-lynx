@@ -1,5 +1,5 @@
 import type { DefineComponent } from 'vue';
-import type { IntrinsicElements } from '@lynx-js/types'
+import type { IntrinsicElements } from '@lynx-js/types';
 
 type ExtractBindAsOn<T> = {
   [P in keyof T as P extends `bind${infer Rest}` ? `on${Capitalize<Rest>}` : never]: T[P]
@@ -11,7 +11,7 @@ type NonBindProps<T> = Omit<T, `bind${string}` | 'className'>
  * Vue-compatible class binding type.
  * @see https://vuejs.org/guide/essentials/class-and-style
  */
-export type VueClassBinding =
+type VueClassBinding =
   | string
   | Record<string, unknown>
   | (VueClassBinding | false | null | undefined)[]
@@ -26,7 +26,7 @@ export type VueClassBinding =
  *   that array-syntax and object-syntax `:class` bindings pass TypeScript
  *   without errors.
  */
-export type VueLynxProps<T> =
+type VueLynxProps<T> =
   ExtractBindAsOn<T> &
   Omit<NonBindProps<T>, 'class'> &
   { class?: VueClassBinding }
