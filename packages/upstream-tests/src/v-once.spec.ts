@@ -5,9 +5,9 @@
  *   <tag v-once>{{ val }}</tag>
  * into
  *   _cache[0] || (
- *     setBlockTracking(-1),
- *     (_cache[0] = createElementVNode('tag', null, toDisplayString(val), -1)),
- *     setBlockTracking(1),
+ *     _setBlockTracking(-1, true),
+ *     (_cache[0] = createElementVNode('tag', null, toDisplayString(val), -1)).cacheIndex = 0,
+ *     _setBlockTracking(1),
  *     _cache[0]
  *   )
  *
@@ -20,7 +20,6 @@
  * the initial mount.
  */
 
-import type { VNode } from '@vue/runtime-core';
 import {
   createApp,
   createElementVNode,
@@ -28,6 +27,7 @@ import {
   h,
   nextTick,
   ref,
+  renderList,
   resetForTesting,
   setBlockTracking,
   toDisplayString,
@@ -60,20 +60,21 @@ it('setBlockTracking is exported from vue-lynx', () => {
 describe('v-once — ops pipeline', () => {
   it('initial render emits SET_PROP ops for v-once subtree', async () => {
     const msg = ref('hello');
-    const cache: VNode[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
 
     const App = defineComponent({
       setup() {
         return () =>
           // Mirrors compiler output for: <text :content="msg" v-once />
           cache[0] ||
-          (setBlockTracking(-1),
+          (setBlockTracking(-1, true),
           (cache[0] = createElementVNode(
             'text',
             { content: toDisplayString(msg.value) },
             null,
             -1,
-          )),
+          ) as any).cacheIndex = 0,
           setBlockTracking(1),
           cache[0]);
       },
@@ -90,7 +91,8 @@ describe('v-once — ops pipeline', () => {
   it('re-render after reactive change emits no ops for v-once subtree', async () => {
     const msg = ref('hello');
     const outer = ref(0);
-    const cache: VNode[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
 
     const App = defineComponent({
       setup() {
@@ -98,13 +100,13 @@ describe('v-once — ops pipeline', () => {
           h('view', { 'data-outer': String(outer.value) },
             // v-once subtree — compiled to cache lookup
             cache[0] ||
-            (setBlockTracking(-1),
+            (setBlockTracking(-1, true),
             (cache[0] = createElementVNode(
               'text',
               { content: toDisplayString(msg.value) },
               null,
               -1,
-            )),
+            ) as any).cacheIndex = 0,
             setBlockTracking(1),
             cache[0]),
           );
@@ -130,20 +132,21 @@ describe('v-once — ops pipeline', () => {
   it('v-once subtree retains initial value across multiple re-renders', async () => {
     const msg = ref('initial');
     const tick = ref(0);
-    const cache: VNode[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
 
     const App = defineComponent({
       setup() {
         return () =>
           h('view', { 'data-tick': tick.value },
             cache[0] ||
-            (setBlockTracking(-1),
+            (setBlockTracking(-1, true),
             (cache[0] = createElementVNode(
               'text',
               { content: toDisplayString(msg.value) },
               null,
               -1,
-            )),
+            ) as any).cacheIndex = 0,
             setBlockTracking(1),
             cache[0]),
           );
@@ -163,35 +166,32 @@ describe('v-once — ops pipeline', () => {
     }
   });
 
-  // v-once inside v-for: each iteration gets its own cache slot.
-  // Compiler emits cache[index] per item, so each freezes independently.
-  //
-  // Note: the real compiler uses static _cache slots per component instance,
-  // not a shared array indexed by loop position. This simulation is accurate
-  // for fixed-length lists but does not cover list growth/shrinkage (stale
-  // cache slots would be reused for new items at the same index).
-  it('v-once inside v-for: each item renders once, no ops on list change', async () => {
+  // v-once inside v-for: compiler wraps the entire _renderList(...) result in
+  // a single _cache[0] slot — it does NOT allocate one slot per item.
+  // This matches @vue/compiler-dom output for:
+  //   <text v-for="(item, idx) in list" :key="idx" v-once :content="item" />
+  it('v-once inside v-for: whole list is frozen in a single cache slot', async () => {
     const list = ref(['a', 'b', 'c']);
     const outer = ref(0);
-    // Per-item caches, keyed by index — mirrors compiler output for v-for + v-once
-    const cache: VNode[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
 
     const App = defineComponent({
       setup() {
         return () =>
           h('view', { 'data-outer': outer.value },
-            list.value.map((item, idx) =>
-              cache[idx] ||
-              (setBlockTracking(-1),
-              (cache[idx] = createElementVNode(
+            cache[0] ||
+            (setBlockTracking(-1, true),
+            (cache[0] = renderList(list.value, (item, idx) =>
+              createElementVNode(
                 'text',
                 { key: idx, content: toDisplayString(item) },
                 null,
                 -1,
-              )),
-              setBlockTracking(1),
-              cache[idx]),
-            ),
+              ),
+            ) as any).cacheIndex = 0,
+            setBlockTracking(1),
+            cache[0]),
           );
       },
     });
@@ -207,7 +207,7 @@ describe('v-once — ops pipeline', () => {
 
     const propOps = parseSetPropOps(collectFlushedOps());
 
-    // No content ops — all items are v-once frozen
+    // No content ops — entire list is v-once frozen in cache[0]
     expect(propOps.filter(op => op.key === 'content')).toHaveLength(0);
     // Outer wrapper still updates
     expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
@@ -220,7 +220,8 @@ describe('v-once — ops pipeline', () => {
   it('v-once on a component: no ops after mount even when prop changes', async () => {
     const msg = ref('hello');
     const outer = ref(0);
-    const cache: VNode[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cache: any[] = [];
 
     const Child = defineComponent({
       props: { label: String },
@@ -235,8 +236,8 @@ describe('v-once — ops pipeline', () => {
           h('view', { 'data-outer': outer.value },
             // Mirrors compiler output for: <Child v-once :label="msg" />
             cache[0] ||
-            (setBlockTracking(-1),
-            (cache[0] = h(Child, { label: msg.value })),
+            (setBlockTracking(-1, true),
+            (cache[0] = h(Child, { label: msg.value }) as any).cacheIndex = 0,
             setBlockTracking(1),
             cache[0]),
           );
