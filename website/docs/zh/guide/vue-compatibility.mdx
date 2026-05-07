@@ -210,11 +210,14 @@ export default defineComponent({
 })
 ```
 
+## Teleport
+
+`<Teleport>` 支持 `to="#id"` 字符串选择器。暂不支持直接传入元素 ref 或非 ID 选择器。
+
 ## 不支持的特性
 
 部分 Vue 内置特性尚未适配双线程原生环境：
 
 | 特性 | 原因 | 替代方案 |
 |---------|--------|-------------|
-| `<Teleport>` | 需要 `querySelector` 来解析字符串目标，在双线程架构中不可用 | 在目标位置使用条件渲染 |
 | `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |

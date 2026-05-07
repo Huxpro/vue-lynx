@@ -123,6 +123,7 @@ export function logNodeOp(op: NodeOp): void {
 
 export function resetOps(): void {
   recordedNodeOps = [];
+  testIdRegistry.clear();
 }
 
 export function dumpOps(): NodeOp[] {
@@ -262,6 +263,18 @@ function insert(
   parent._se.insertBefore(child._se, ref ? ref._se : null);
 }
 
+function cleanupTestIds(node: TestNode): void {
+  if (node.type === TestNodeTypes.ELEMENT && node.props.id != null) {
+    testIdRegistry.delete(String(node.props.id));
+  }
+
+  let child = node._se.firstChild;
+  while (child) {
+    cleanupTestIds(getTestNode(child));
+    child = child.next;
+  }
+}
+
 function remove(child: TestNode): void {
   const parentSE = child._se.parent;
   if (parentSE) {
@@ -271,6 +284,7 @@ function remove(child: TestNode): void {
       targetNode: child,
       parentNode: parent,
     });
+    cleanupTestIds(child);
     parentSE.removeChild(child._se);
   }
 }
@@ -283,7 +297,9 @@ function setElementText(el: TestElement, text: string): void {
   });
   // Remove all children from the ShadowElement linked list
   while (el._se.firstChild) {
-    el._se.removeChild(el._se.firstChild);
+    const child = getTestNode(el._se.firstChild);
+    cleanupTestIds(child);
+    el._se.removeChild(child._se);
   }
   if (text) {
     const textNode = makeTestText(text);
@@ -301,8 +317,14 @@ function nextSibling(node: TestNode): TestNode | null {
   return nextSE ? getTestNode(nextSE) : null;
 }
 
-function querySelector(): never {
-  throw new Error('querySelector not supported in test renderer.');
+// Registry for Teleport target resolution in the test renderer.
+const testIdRegistry = new Map<string, TestElement>();
+
+function querySelector(selector: string): TestElement | null {
+  if (selector.startsWith('#')) {
+    return testIdRegistry.get(selector.slice(1)) ?? null;
+  }
+  return null;
 }
 
 function setScopeId(el: TestElement, id: string): void {
@@ -349,6 +371,11 @@ export function patchProp(
     propNextValue: nextValue,
   });
   el.props[key] = nextValue;
+  if (key === 'id') {
+    // Maintain testIdRegistry for querySelector / Teleport support
+    if (prevValue != null) testIdRegistry.delete(String(prevValue));
+    if (nextValue != null) testIdRegistry.set(String(nextValue), el);
+  }
   if (isOn(key)) {
     const event = key[2] === ':' ? key.slice(3) : key.slice(2).toLowerCase();
     if (!el.eventListeners) el.eventListeners = {};
