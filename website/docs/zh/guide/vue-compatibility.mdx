@@ -173,6 +173,24 @@ pluginVueLynx({
   defaultFile="src/App.vue"
 />
 
+## v-once
+
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) 仅渲染元素或组件一次，并跳过所有后续更新。它在 Vue Lynx 中无需任何配置即可使用——SFC 模板编译器会生成使用 `setBlockTracking` 和组件 `_cache` 数组的缓存查找，运行时在后续渲染时短路。
+
+在 Lynx 中，`v-once` 比在浏览器中更有价值，因为缓存命中可以消除整个跨线程 op 批次。首次挂载后：
+
+- VNode patcher 接收到相同的缓存 VNode 对象引用。
+- 不会发生 `patchProp` 调用，因此没有 op 进入缓冲区。
+- `doFlush` 看到空缓冲区并完全跳过 `callLepusMethod`——该子树的主线程永远不会被联系。
+
+对于首次渲染后永远不需要更新的真正静态内容，使用 `v-once`：
+
+```vue
+<text v-once>{{ expensiveInitialValue }}</text>
+```
+
+> `v-once` 是比 `v-memo` 更强的保证——它无条件缓存，无需检查依赖数组。当内容真正静态时优先使用它。
+
 ## v-memo
 
 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 在依赖数组未发生变化时跳过子树的重新渲染。它在 Vue Lynx 中无需任何配置即可使用——SFC 模板编译器已经生成了正确的 `withMemo()` 调用，运行时会在 patcher 执行之前进行短路。

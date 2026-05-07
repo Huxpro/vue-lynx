@@ -7,7 +7,7 @@
     "dev": "pnpm --filter vue-lynx run dev",
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
-    "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom",
+    "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom && pnpm --filter vue-lynx-upstream-tests run test:local",
     "check-links": "node scripts/check-links.mjs",
     "lint": "biome check .",
     "changeset": "changeset",

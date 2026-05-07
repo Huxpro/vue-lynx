@@ -173,6 +173,24 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
+## v-once
+
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) renders an element or component exactly once and skips all future updates. It works in Vue Lynx without any configuration — the SFC template compiler emits a cache lookup using `setBlockTracking` and the component's `_cache` array, and the runtime short-circuits on subsequent renders.
+
+In Lynx, `v-once` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch. After the initial mount:
+
+- The VNode patcher receives the same cached VNode object reference.
+- No `patchProp` calls are made, so no ops enter the buffer.
+- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
+
+Use `v-once` for genuinely static content that should never update after first render:
+
+```vue
+<text v-once>{{ expensiveInitialValue }}</text>
+```
+
+> `v-once` is a stronger guarantee than `v-memo` — it caches unconditionally, with no dependency array to check. Prefer it when content is truly static.
+
 ## v-memo
 
 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) skips a subtree re-render when its dependency array hasn't changed. It works in Vue Lynx without any configuration — the SFC template compiler already emits the correct `withMemo()` calls, and the runtime bails out before the patcher runs.
