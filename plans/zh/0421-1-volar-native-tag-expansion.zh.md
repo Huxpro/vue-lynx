@@ -6,7 +6,7 @@
 
 1. 所有 Lynx 内置元素注册为原生标签——消除"Unknown component" IDE 错误
 2. 不支持的事件修饰符诊断：`.capture` / `.passive`
-3. `global-bind:*`、`global-catch:*`、`main-thread:*` 及 `main-thread-ref` 识别为合法 prop
+3. `global-bind*`、`global-catch*`、`main-thread-*` 及 `main-thread-ref` 识别为合法 prop
 
 ## 问题
 
@@ -101,14 +101,14 @@ NodeType 常量硬编码，避免在 IDE 时 `require('@vue/compiler-core')`。
 
 ```ts
 type LynxSpecialProps = {
-  'main-thread-ref'?: string;
-  [key: `global-bind:${string}`]: ((event: any) => void) | undefined;
-  [key: `global-catch:${string}`]: ((event: any) => void) | undefined;
-  [key: `main-thread:${string}`]: any;
+  'main-thread-ref'?: MainThreadRefLike | null;
+  [key: `global-bind${string}`]: Function | undefined;
+  [key: `global-catch${string}`]: Function | undefined;
+  [key: `main-thread-${string}`]: unknown;
 }
 ```
 
-模板字面量索引签名消除"unknown prop"错误，并在 TypeScript 补全中可见。
+模板字面量与映射 prop 消除 Vue Lynx 运行时支持的连字符语法的"unknown prop"错误，并在 TypeScript 补全中可见。
 
 ## 修改的文件
 
@@ -118,7 +118,7 @@ type LynxSpecialProps = {
 | `packages/vue-lynx/types/dist/volar-plugin.cjs` | 同上（dist 副本；由 `pnpm build` 重新生成） |
 | `packages/vue-lynx/types/src/elements/index.ts` | 在 `VueLynxProps<T>` 中新增 `LynxSpecialProps` |
 | `packages/vue-lynx/types/scripts/generate-native-tags.mjs` | 新增代码生成脚本 |
-| `packages/vue-lynx/types/package.json` | 新增 `generate:native-tags` 脚本 |
+| `packages/vue-lynx/types/package.json` | 新增 `generate:native-tags` 和 `test:types` 脚本 |
 
 ## IDE 测试方法
 
@@ -133,19 +133,19 @@ Volar 应在 `.capture` 处显示红色波浪线，提示：*"Lynx does not supp
 
 ### 3. global-bind / global-catch
 ```vue
-<view global-bind:tap="handler" />
-<view global-catch:tap="handler" />
+<view :global-bindtap="handler" />
+<view :global-catchtap="handler" />
 ```
-无"unknown prop"错误。值类型解析为 `((event: any) => void) | undefined`。
+无"unknown prop"错误。值类型解析为对应的事件处理函数类型。
 
 ### 4. main-thread-ref
 ```vue
-<view main-thread-ref="myEl" />
+<view :main-thread-ref="myEl" />
 ```
-无"unknown prop"错误。`main-thread-ref` 在补全中显示为 `string` 类型。
+无"unknown prop"错误。`main-thread-ref` 接受 `useMainThreadRef()` 返回的对象。
 
-### 5. main-thread: 命名空间
+### 5. main-thread worklet 事件
 ```vue
-<view main-thread:ref="myEl" />
+<view :main-thread-bindtap="handler" />
 ```
-无"unknown prop"错误（由 `[key: \`main-thread:${string}\`]: any` 覆盖）。
+无"unknown prop"错误（由 `main-thread-*` prop 映射覆盖）。

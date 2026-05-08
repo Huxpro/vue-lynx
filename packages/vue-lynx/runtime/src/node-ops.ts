@@ -8,6 +8,7 @@ import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
+import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import type { Worklet } from './worklet-types.js';
 
@@ -77,26 +78,34 @@ function normalizeStyle(
 interface EventSpec {
   type: string;
   name: string;
+  /** True when the Vue compiler emitted an `onXxxOnce` prop key. */
+  once: boolean;
 }
 
 function parseEventProp(key: string): EventSpec | null {
   if (key.startsWith('global-bind')) {
-    return { type: 'bindGlobalEvent', name: key.slice('global-bind'.length) };
+    return { type: 'bindGlobalEvent', name: key.slice('global-bind'.length), once: false };
   }
   if (key.startsWith('global-catch')) {
-    return { type: 'catchGlobalEvent', name: key.slice('global-catch'.length) };
+    return { type: 'catchGlobalEvent', name: key.slice('global-catch'.length), once: false };
   }
   if (key.startsWith('catch')) {
-    return { type: 'catchEvent', name: key.slice('catch'.length) };
+    return { type: 'catchEvent', name: key.slice('catch'.length), once: false };
   }
   if (/^bind(?!ingx)/.test(key)) {
-    return { type: 'bindEvent', name: key.slice('bind'.length) };
+    return { type: 'bindEvent', name: key.slice('bind'.length), once: false };
   }
   if (/^on[A-Z]/.test(key)) {
-    // onTap → { type: 'bindEvent', name: 'tap' }
-    // onTouchStart → { type: 'bindEvent', name: 'touchStart' }
-    const name = key.slice(2, 3).toLowerCase() + key.slice(3);
-    return { type: 'bindEvent', name };
+    // onTap        → { name: 'tap',       once: false }
+    // onTapOnce    → { name: 'tap',       once: true  }
+    // onTouchStart → { name: 'touchStart', once: false }
+    let name = key.slice(2, 3).toLowerCase() + key.slice(3);
+    let once = false;
+    if (name.endsWith('Once')) {
+      name = name.slice(0, -4);
+      once = true;
+    }
+    return { type: 'bindEvent', name, once };
   }
   return null;
 }
@@ -104,6 +113,28 @@ function parseEventProp(key: string): EventSpec | null {
 // Track the sign registered for each (element, propKey) so we can unregister
 // on prop removal / update.
 const elementEventSigns = new Map<number, Map<string, string>>();
+
+// For once-events (onXxxOnce prop keys): the once-wrapper closes over a
+// mutable `inner` reference so re-renders can update the underlying handler
+// without resetting the `called` state.
+interface OnceWrapper {
+  called: boolean;
+  inner: (data: unknown) => void;
+}
+const onceWrappers = new Map<string, OnceWrapper>();
+
+// Registry for Teleport target resolution: id string → ShadowElement.
+const idRegistry = new Map<string, ShadowElement>();
+
+/** Recursively clean up idRegistry for a subtree being removed. */
+function cleanupIds(el: ShadowElement): void {
+  if (el._id) idRegistry.delete(el._id);
+  let child = el.firstChild;
+  while (child) {
+    cleanupIds(child);
+    child = child.next;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
@@ -157,6 +188,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     while (el.firstChild) {
       const child = el.firstChild;
       el.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, el.id, child.id);
     }
     // Set text content directly on the element
@@ -169,6 +201,12 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     parent: ShadowElement,
     anchor?: ShadowElement | null,
   ): void {
+    // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
+    // emit REMOVE from old parent so MT correctly detaches first.
+    if (child.parent && child.parent !== parent) {
+      pushOp(OP.REMOVE, child.parent.id, child.id);
+    }
+
     // Always update the shadow tree (Vue needs it for internal diffing).
     parent.insertBefore(child, anchor ?? null);
 
@@ -202,9 +240,14 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   remove(child: ShadowElement): void {
-    if (child.parent) {
+    // Vue's Teleport iterates its children on unmount even when target
+    // resolution failed at mount (see @vue/runtime-core TeleportImpl.remove).
+    // Those children were never mounted, so `vnode.el` is undefined — null
+    // guard is required here, not just for the `!parent` case.
+    if (child?.parent) {
       const parentId = child.parent.id;
       child.parent.removeChild(child);
+      cleanupIds(child);
       pushOp(OP.REMOVE, parentId, child.id);
       scheduleFlush();
     }
@@ -262,22 +305,59 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
       if (nextValue != null) {
         const handler = nextValue as (data: unknown) => void;
-        if (oldSign) {
+        if (event.once) {
+          if (oldSign) {
+            // Re-render of a once-event: update the inner handler so the
+            // fresh closure is used when the event eventually fires.
+            // The `called` state is preserved — if it already fired, the
+            // wrapper will keep returning early.
+            const wrapper = onceWrappers.get(oldSign);
+            if (wrapper) wrapper.inner = handler;
+          } else {
+            // First registration of a once-event.
+            const wrapper: OnceWrapper = { called: false, inner: handler };
+            const onceHandler = (data: unknown): void => {
+              if (wrapper.called) return;
+              wrapper.called = true;
+              wrapper.inner(data);
+            };
+            const sign = register(onceHandler);
+            onceWrappers.set(sign, wrapper);
+            if (!signs) {
+              signs = new Map<string, string>();
+              elementEventSigns.set(el.id, signs);
+            }
+            signs.set(key, sign);
+            // Respect _lynxCatch even on once-events (e.g. @tap.once.stop).
+            // The Vue compiler emits onTapOnce: withModifiers(fn, ['stop']),
+            // so _lynxCatch lives on the handler, not on the onceHandler wrapper.
+            const onceEventType = (handler as { _lynxCatch?: boolean })._lynxCatch
+              ? 'catchEvent'
+              : event.type;
+            pushOp(OP.SET_EVENT, el.id, onceEventType, event.name, sign);
+          }
+        } else if (oldSign) {
           // Re-render: update handler in-place so the sign on the Main Thread
           // stays valid.  No new SET_EVENT op needed.
           updateHandler(oldSign, handler);
         } else {
           // First time this event is bound on this element.
+          // If the handler is tagged _lynxCatch (from withModifiers '.stop'),
+          // use catchEvent so native Lynx stops bubbling at this element.
+          const eventType = (handler as { _lynxCatch?: boolean })._lynxCatch
+            ? 'catchEvent'
+            : event.type;
           const sign = register(handler);
           if (!signs) {
             signs = new Map<string, string>();
             elementEventSigns.set(el.id, signs);
           }
           signs.set(key, sign);
-          pushOp(OP.SET_EVENT, el.id, event.type, event.name, sign);
+          pushOp(OP.SET_EVENT, el.id, eventType, event.name, sign);
         }
       } else if (oldSign) {
         // Handler removed entirely.
+        onceWrappers.delete(oldSign);
         unregister(oldSign);
         signs!.delete(key);
         pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
@@ -294,11 +374,26 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const finalClass = resolveClass(el);
       pushOp(OP.SET_CLASS, el.id, finalClass);
     } else if (key === 'id') {
+      if (el._id) idRegistry.delete(el._id);
+      el._id = nextValue != null ? String(nextValue) : undefined;
+      if (__DEV__ && el._id && idRegistry.has(el._id) && idRegistry.get(el._id) !== el) {
+        console.warn(
+          `[vue-lynx] Duplicate id "${el._id}" detected. Teleport target resolution may be unreliable.`,
+        );
+      }
+      if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
       pushOp(OP.SET_PROP, el.id, key, nextValue);
     }
 
+    scheduleFlush();
+  },
+
+  // Called by Vue's renderer after createElement to apply scoped CSS.
+  // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
+  setScopeId(el: ShadowElement, id: string): void {
+    pushOp(OP.SET_SCOPE_ID, el.id, scopeIdToCssId(id));
     scheduleFlush();
   },
 
@@ -309,9 +404,23 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   nextSibling(node: ShadowElement): ShadowElement | null {
     return node.next;
   },
+
+  querySelector(selector: string): ShadowElement | null {
+    if (selector.startsWith('#')) {
+      return idRegistry.get(selector.slice(1)) ?? null;
+    }
+    if (__DEV__) {
+      console.warn(
+        `[vue-lynx] querySelector only supports #id selectors, got "${selector}".`,
+      );
+    }
+    return null;
+  },
 };
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
   elementEventSigns.clear();
+  onceWrappers.clear();
+  idRegistry.clear();
 }

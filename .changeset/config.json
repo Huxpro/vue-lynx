@@ -1,6 +1,11 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.0/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": [
+    "@svitejs/changesets-changelog-github-compact",
+    {
+      "repo": "Huxpro/vue-lynx"
+    }
+  ],
   "commit": false,
   "fixed": [],
   "linked": [],

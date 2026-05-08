@@ -17,7 +17,7 @@ The example below demonstrates [`reactive()`](https://vuejs.org/api/reactivity-c
 
 ## SFC CSS Features
 
-Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules), and [`v-bind()` in CSS](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) all work on Lynx. `<style scoped>` is not yet supported — vote on [#78](https://github.com/Huxpro/vue-lynx/issues/78) if you need it.
+Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules), [`<style scoped>`](https://vuejs.org/api/sfc-css-features.html#scoped-css), and [`v-bind()` in CSS](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) all work on Lynx.
 
 :::details Feature support details
 
@@ -27,7 +27,11 @@ Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.
 | Imported `.css` files | Works |
 | `<style module>` | Works |
 | `v-bind()` in `<style>` | Works (requires config, see below) |
-| `<style scoped>` | Upcoming ([#78](https://github.com/Huxpro/vue-lynx/issues/78)) |
+| `<style scoped>` | Works (see caveats below) |
+
+:::warning `<style scoped>` caveats
+[`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors), [`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors), and [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) are not yet supported ([#164](https://github.com/Huxpro/vue-lynx/issues/164), [#165](https://github.com/Huxpro/vue-lynx/issues/165)).
+:::
 
 `v-bind()` in `<style>` requires two config options so the Lynx engine recognizes CSS custom properties in inline styles and cascades them to descendants:
 
@@ -64,6 +68,32 @@ The example demonstrates:
 
 <Go
   example="v-model"
+  defaultFile="src/App.vue"
+/>
+
+## Event Modifiers
+
+Vue's [event modifiers](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers) (`.once`, `.stop`, `.self`) work on Lynx. `.prevent` is accepted as a compatibility no-op — see the table below for details.
+
+:::details Feature support details
+
+| Modifier | Status | Notes |
+|----------|--------|-------|
+| `.once` | Works | Handler fires at most once. The Vue compiler emits `onTapOnce` prop keys; `withModifiers` also supports it. |
+| `.stop` | Works | Uses Lynx's native `catchEvent` mechanism to stop propagation at the element level. Also calls `stopPropagation()` in DOM/test environments. |
+| `.self` | Works | Compares by `uid` (Lynx native) or `uniqueId` (web preview) since cross-thread event objects are always distinct references. Falls back to reference equality in DOM/test environments. |
+| `.prevent` | Compatibility no-op | Accepted silently so web code runs on Lynx without modification. Lynx has no browser default actions to cancel (no `<a>` navigation, no `<form>` submission), so this modifier has no observable effect. |
+
+:::
+
+:::info Main-thread (worklet) event handlers
+Vue's modifier system does not apply to `:main-thread-bind*` handlers (e.g. `:main-thread-bindtap`). These use Lynx-native v-bind syntax and bypass Vue's v-on event pipeline entirely — the compiler never generates `onTapOnce` keys or `withModifiers()` wrappers for them. Use the native equivalents instead: `:main-thread-catchtap` for propagation stopping, and inline worklet logic for `.once`/`.self` behaviour.
+:::
+
+The example below demonstrates `.once`, `.stop`, and `.self`. The `.prevent` card explains why no interactive demo is shown for that modifier:
+
+<Go
+  example="event-modifiers"
   defaultFile="src/App.vue"
 />
 
@@ -116,6 +146,15 @@ Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animat
   defaultEntryFile="dist/transition.lynx.bundle"
 />
 
+## KeepAlive
+
+Vue's [`<KeepAlive>`](https://vuejs.org/guide/built-ins/keep-alive.html) caches inactive component instances instead of destroying them. When a component is toggled back in, its state is preserved. The `include`, `exclude`, and `max` props are all supported. The `onActivated` and `onDeactivated` lifecycle hooks fire as expected.
+
+<Go
+  example="keep-alive"
+  defaultFile="src/App.vue"
+/>
+
 ## Options API
 
 Vue 3 ships the Options API alongside the Composition API for backward compatibility.
@@ -134,12 +173,69 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
+## v-once
+
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) renders an element or component exactly once and skips all future updates. It works in Vue Lynx without any configuration — the SFC template compiler emits a cache lookup using `setBlockTracking` and the component's `_cache` array, and the runtime short-circuits on subsequent renders.
+
+In Lynx, `v-once` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch. After the initial mount:
+
+- The VNode patcher receives the same cached VNode object reference.
+- No `patchProp` calls are made, so no ops enter the buffer.
+- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
+
+Use `v-once` for genuinely static content that should never update after first render:
+
+```vue
+<text v-once>{{ expensiveInitialValue }}</text>
+```
+
+> `v-once` is a stronger guarantee than `v-memo` — it caches unconditionally, with no dependency array to check. Prefer it when content is truly static.
+
+## v-memo
+
+[`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) skips a subtree re-render when its dependency array hasn't changed. It works in Vue Lynx without any configuration — the SFC template compiler already emits the correct `withMemo()` calls, and the runtime bails out before the patcher runs.
+
+In Lynx, `v-memo` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch, not just DOM diffing. When deps are unchanged:
+
+- The VNode patcher short-circuits (same VNode object reference).
+- No `patchProp` calls are made, so no ops enter the buffer.
+- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
+
+The primary use case is `v-for` lists where only some items change on each update:
+
+```vue
+<list-item
+  v-for="item in list"
+  :key="item.id"
+  v-memo="[item.selected, item.label]"
+>
+  <!-- Only re-renders when selected or label changes -->
+</list-item>
+```
+
+For render functions written in JavaScript, `withMemo` is exported directly from `vue-lynx`:
+
+```ts
+import { defineComponent, h, ref } from 'vue'
+import { withMemo } from 'vue-lynx'
+
+export default defineComponent({
+  setup() {
+    const dep = ref('')
+    const cache: unknown[] = [] // per-instance, mirrors SFC _cache
+    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
+  },
+})
+```
+
+## Teleport
+
+`<Teleport>` is supported for `to="#id"` string selectors. Direct element refs and non-ID selectors are not yet supported.
+
 ## Unsupported Features
 
 Some Vue built-in features are not yet adapted to the dual-thread native environment:
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<KeepAlive>` | Requires an internal storage container (`createElement('div')`) with no native equivalent | Manual state caching |
-| `<Teleport>` | Requires `querySelector` to resolve string targets, unavailable in the dual-thread architecture | Conditional rendering at the target location |
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |

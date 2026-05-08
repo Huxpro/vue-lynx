@@ -209,8 +209,8 @@ ${lynxApis.map(fmtRow).join('\n')}
 | \`<Transition>\` | Experimental | CSS class-based enter/leave animations. Requires explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. |
 | \`<TransitionGroup>\` | Experimental | Per-child enter/leave animations. Move (FLIP) animations not supported — \`getBoundingClientRect()\` is unavailable from the background thread. |
 | \`<Suspense>\` | Supported | Re-exported from Vue. Works with \`defineAsyncComponent()\`. |
-| \`<KeepAlive>\` | Not Supported | Requires element recycling not available in Lynx renderer. |
-| \`<Teleport>\` | Not Supported | Requires \`querySelector\` renderer option not implemented. |
+| \`<KeepAlive>\` | Supported | Caches inactive component instances. Supports \`include\`, \`exclude\`, and \`max\` props. |
+| \`<Teleport>\` | Supported | Supports \`to="#id"\` string selectors only. Direct element refs and non-ID selectors are not yet supported. |
 
 :::warning
 \`<Transition>\` and \`<TransitionGroup>\` are **experimental**. Always pass an explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. Move (FLIP) animations in \`<TransitionGroup>\` are not supported.

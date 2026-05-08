@@ -1,6 +1,6 @@
 {
   "name": "create-vue-lynx",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Create a new Vue Lynx project",
   "license": "Apache-2.0",
   "type": "module",
@@ -16,7 +16,8 @@
     "template-vue-js"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "create-rstack": "^1.0.0"

@@ -38,7 +38,7 @@ Add the following to your `tsconfig.json` (or `jsconfig.json` for JS projects):
 This enables:
 - Correct prop types and completions for all Lynx elements (`<view>`, `<text>`, `<image>`, etc.)
 - IDE errors when using unsupported event modifiers (`.capture`, `.passive`)
-- Type-checked `global-bind:*`, `global-catch:*`, and `main-thread:*` props
+- Type-checked `global-bind*`, `global-catch*`, and `main-thread-*` props
 
 Projects created with `create-vue-lynx` have this pre-configured.
 

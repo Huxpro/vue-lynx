@@ -16,6 +16,8 @@ import {
 } from '@lynx-js/template-webpack-plugin';
 
 import { LAYERS } from './layers.js';
+import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
+import { VueScopedCSSIdPlugin } from './plugins/vue-scoped-cssid-plugin.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
 const PLUGIN_RUNTIME_WRAPPER = 'lynx:vue-runtime-wrapper';
@@ -175,9 +177,9 @@ class VueCSSConfigPlugin {
         };
         hooks.beforeEncode.tap(PLUGIN_CSS_CONFIG, (args) => {
           const encodeData = args['encodeData'] as {
-            compilerOptions: Record<string, unknown>;
+            sourceContent: { config: Record<string, unknown> };
           };
-          Object.assign(encodeData.compilerOptions, this.compilerOptions);
+          Object.assign(encodeData.sourceContent.config, this.compilerOptions);
           return args;
         });
       },
@@ -500,10 +502,10 @@ export function applyEntry(
               enableCSSInvalidation: opts.enableCSSSelector ?? true,
               enableCSSInheritance: opts.enableCSSInheritance ?? false,
               customCSSInheritanceList: opts.customCSSInheritanceList,
-              enableRemoveCSSScope: true,
+              enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
-              cssPlugins: [],
+              cssPlugins: [vueScopeStripCSSPlugin],
             },
           ])
           .end();
@@ -522,9 +524,20 @@ export function applyEntry(
     }
 
     // ------------------------------------------------------------------
+    // VueScopedCSSIdPlugin – inject ?cssId=<N> into vue scoped style
+    // module queries so css-extract-webpack-plugin wraps CSS in @cssId.
+    // ------------------------------------------------------------------
+    if (isLynx || isWeb) {
+      chain
+        .plugin('lynx:vue-scoped-cssid')
+        .use(VueScopedCSSIdPlugin, [])
+        .end();
+    }
+
+    // ------------------------------------------------------------------
     // VueCSSConfigPlugin – inject engine compiler options (e.g.
     // enableCSSInlineVariables) that are not LynxTemplatePlugin options
-    // but need to be set in the encoded template's compilerOptions.
+    // but need to be set in the encoded template's sourceContent.config.
     // ------------------------------------------------------------------
     if (isLynx) {
       const cssConfigOptions: Record<string, unknown> = {};

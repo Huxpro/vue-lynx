@@ -1,5 +1,11 @@
 # create-vue-lynx
 
+## 0.1.2
+
+### Patch Changes
+
+- 98303be: Ensure the published scaffold tarball always includes the built CLI entrypoint by running the package build during pack and publish.
+
 ## 0.1.1
 
 ### Patch Changes

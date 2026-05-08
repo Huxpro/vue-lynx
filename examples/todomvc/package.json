@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/todomvc",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": false,
   "description": "TodoMVC built with Vue 3 × Lynx",
   "type": "module",

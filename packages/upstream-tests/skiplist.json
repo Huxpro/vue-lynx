@@ -88,7 +88,16 @@
     "should not track openBlock() when tracking is disabled",
     "toRef",
     "attempting to write plain value to a readonly ref nested in a reactive object should fail",
-    "can not run an inactive scope"
+    "can not run an inactive scope",
+
+    "handle error in async onActivated",
+
+    "should work with SVG",
+    "should work with block tree",
+    "toggle sibling node inside target node",
+    "unmount previous sibling node inside target node",
+    "should be able to target content appearing later than the teleport with defer",
+    "defer mode should work inside suspense"
   ],
   "_categories": {
     "scheduler": "Tests internal scheduler API directly, not renderer contract",
@@ -104,6 +113,9 @@
     "reactivity_version_mismatch": "Tests from v3.5.12 source, installed vue is v3.5.30 — internal class names changed (ObjectRefImpl vs RefImpl), readonly/effectScope behavior differs",
     "apiExpose_ref_owner": "Adapter createApp().render() doesn't set proper ref owner context for template refs on exposed instances",
     "apiAsyncComponent_ref_forwarding": "Template ref forwarding on async wrapper components not supported by adapter",
-    "scopeId_suspense": "Suspense content scopeId attachment requires internal Suspense implementation detail"
+    "scopeId_suspense": "Suspense content scopeId attachment requires internal Suspense implementation detail",
+    "keepAlive_async_onActivated": "Adapter's TestElement wrapper triggers Vue warning about enumerating component instance keys; unrelated to KeepAlive logic",
+    "teleport_dom_renderer": "Tests use domRender/createDOMApp (DOM renderer), our adapter only provides the test renderer — parent._se is undefined on HTMLElement",
+    "teleport_compile": "Tests use compile() (runtime template compiler), not available in this build"
   }
 }
