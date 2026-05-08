@@ -22,10 +22,13 @@
 
 import {
   createApp,
+  createElementBlock,
   createElementVNode,
   defineComponent,
+  Fragment,
   h,
   nextTick,
+  openBlock,
   ref,
   renderList,
   resetForTesting,
@@ -167,10 +170,10 @@ describe('v-once — ops pipeline', () => {
   });
 
   // v-once inside v-for: compiler wraps the entire _renderList(...) result in
-  // a single _cache[0] slot — it does NOT allocate one slot per item.
+  // a single cached Fragment block — it does NOT allocate one slot per item.
   // This matches @vue/compiler-dom output for:
   //   <text v-for="(item, idx) in list" :key="idx" v-once :content="item" />
-  it('v-once inside v-for: whole list is frozen in a single cache slot', async () => {
+  it('v-once inside v-for: whole list is frozen in a single cached fragment', async () => {
     const list = ref(['a', 'b', 'c']);
     const outer = ref(0);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,12 +185,22 @@ describe('v-once — ops pipeline', () => {
           h('view', { 'data-outer': outer.value },
             cache[0] ||
             (setBlockTracking(-1, true),
-            (cache[0] = renderList(list.value, (item, idx) =>
-              createElementVNode(
-                'text',
-                { key: idx, content: toDisplayString(item) },
+            (cache[0] = (
+              openBlock(true),
+              createElementBlock(
+                Fragment,
                 null,
-                -1,
+                renderList(list.value, (item, idx) => (
+                  openBlock(),
+                  createElementBlock(
+                    'text',
+                    { key: idx, content: item },
+                    null,
+                    8,
+                    ['content'],
+                  )
+                )),
+                128,
               ),
             ) as any).cacheIndex = 0,
             setBlockTracking(1),
@@ -199,6 +212,10 @@ describe('v-once — ops pipeline', () => {
     createApp(App).mount();
     await nextTick();
     collectFlushedOps();
+
+    expect(Array.isArray(cache[0])).toBe(false);
+    expect(cache[0].type).toBe(Fragment);
+    expect(cache[0].patchFlag).toBe(128);
 
     // Mutate list values and trigger re-render via outer
     list.value = ['x', 'y', 'z'];
