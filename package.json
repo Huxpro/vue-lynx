@@ -4,6 +4,7 @@
   "scripts": {
     "build": "pnpm --filter vue-lynx run build",
     "build:examples": "pnpm --filter './examples/*' --parallel run build",
+    "build:examples:publishable": "node scripts/build-publishable-examples.mjs",
     "dev": "pnpm --filter vue-lynx run dev",
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
@@ -12,7 +13,7 @@
     "lint": "biome check .",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && pnpm --filter create-vue-lynx run build && changeset publish"
+    "release": "pnpm build && pnpm --filter create-vue-lynx run build && pnpm build:examples:publishable && changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
