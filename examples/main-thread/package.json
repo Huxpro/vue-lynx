@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/main-thread",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "description": "Vue-Lynx main thread demo — draggable examples comparing Main Thread vs Background Thread updates",
   "type": "module",
