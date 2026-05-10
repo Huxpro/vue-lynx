@@ -13,12 +13,16 @@
 
 import {
   createApp,
+  createElementBlock,
   defineComponent,
+  Fragment,
   h,
-  nextTick,
-  ref,
-  resetForTesting,
   isMemoSame,
+  nextTick,
+  openBlock,
+  ref,
+  renderList,
+  resetForTesting,
   withMemo,
 } from 'vue-lynx';
 import { OP } from 'vue-lynx/internal/ops';
@@ -151,30 +155,49 @@ describe('withMemo — ops pipeline', () => {
     expect(propOps.filter(op => op.key === 'data-outer')).toHaveLength(1);
   });
 
-  // v-for + v-memo compiles to a direct isMemoSame call, not withMemo.
-  // This test simulates that compiler output to confirm the export works
-  // and the ops pipeline is correctly bypassed for unchanged list items.
+  // v-for + v-memo compiles to a direct isMemoSame call inside a Fragment block,
+  // not withMemo. The compiler wraps renderList in openBlock(true) +
+  // createElementBlock(Fragment, ..., 128) — the same outer shape as v-for + v-once.
+  // This test mirrors that exact codegen so the render function shape matches
+  // @vue/compiler-dom output for:
+  //   <text v-for="(item, idx) in list" :key="idx" v-memo="[item.selected, item.label]" :content="item.label" />
   it('v-for + v-memo pattern: unchanged list items produce no ops', async () => {
     type Item = { label: string; selected: boolean };
     const list = ref<Item[]>([
       { label: 'a', selected: false },
       { label: 'b', selected: false },
     ]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cache: any[] = [];
 
     const App = defineComponent({
       setup() {
         return () =>
           h('view', null,
-            // Mirrors compiler output for: v-for="(item, idx) in list" v-memo="[item.selected, item.label]"
-            list.value.map((item, idx) => {
-              const _memo = [item.selected, item.label];
-              const _cached = cache[idx];
-              if (_cached && _cached.key === idx && isMemoSame(_cached, _memo)) return _cached;
-              const vnode = h('text', { key: idx, content: item.label });
-              (vnode as any).memo = _memo;
-              return (cache[idx] = vnode);
-            }),
+            (openBlock(true),
+            createElementBlock(
+              Fragment,
+              null,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (renderList as any)(list.value, (item: Item, idx: number, ___: number, _cached: any) => {
+                const _memo = [item.selected, item.label];
+                if (_cached && _cached.key === idx && isMemoSame(_cached, _memo))
+                  return _cached;
+                const _item = (
+                  openBlock(),
+                  createElementBlock(
+                    'text',
+                    { key: idx, content: item.label },
+                    null,
+                    8,
+                    ['content'],
+                  )
+                );
+                (_item as any).memo = _memo;
+                return _item;
+              }, cache, 0),
+              128,
+            )),
           );
       },
     });
@@ -183,9 +206,9 @@ describe('withMemo — ops pipeline', () => {
     await nextTick();
     collectFlushedOps(); // drain mount ops
 
-    // Change only item[1].label — item[0] memo deps are unchanged
+    // Change only item[1].label — item[0] memo deps unchanged
     list.value = [
-      { label: 'a', selected: false },   // unchanged — memo hit
+      { label: 'a', selected: false },    // unchanged — memo hit
       { label: 'b_new', selected: false }, // label changed — memo miss
     ];
     await nextTick();
