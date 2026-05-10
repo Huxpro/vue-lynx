@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/keep-alive",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "description": "Vue-Lynx KeepAlive demo — component caching and state preservation",
   "license": "Apache-2.0",
