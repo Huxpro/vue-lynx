@@ -18,6 +18,30 @@ Visit **[vue.lynxjs.org](https://vue.lynxjs.org)** for full documentation, inclu
 - [Gallery Tutorial](https://vue.lynxjs.org/tutorials/gallery.html)
 - [Swiper Tutorial](https://vue.lynxjs.org/tutorials/swiper.html)
 
+## IDE Setup
+
+Install the [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) extension for VS Code, or the equivalent for your editor (Zed has built-in Vue support via its Vue extension).
+
+Add the following to your `tsconfig.json` (or `jsconfig.json` for JS projects):
+
+```json
+{
+  "compilerOptions": {
+    "types": ["vue-lynx/types"]
+  },
+  "vueCompilerOptions": {
+    "plugins": ["vue-lynx/types/volar-plugin"]
+  }
+}
+```
+
+This enables:
+- Correct prop types and completions for all Lynx elements (`<view>`, `<text>`, `<image>`, etc.)
+- IDE errors when using unsupported event modifiers (`.capture`, `.passive`)
+- Type-checked `global-bind*`, `global-catch*`, and `main-thread-*` props
+
+Projects created with `create-vue-lynx` have this pre-configured.
+
 ## Examples
 
 See the [`examples/`](examples/) directory for complete working examples:
