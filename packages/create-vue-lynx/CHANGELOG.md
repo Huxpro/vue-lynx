@@ -1,5 +1,11 @@
 # create-vue-lynx
 
+## 0.1.3
+
+### Patch Changes
+
+- Add Vue Lynx agent guidance to scaffolded projects. ([#173](https://github.com/Huxpro/vue-lynx/pull/173))
+
 ## 0.1.2
 
 ### Patch Changes
