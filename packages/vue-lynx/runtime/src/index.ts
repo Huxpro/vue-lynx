@@ -1152,7 +1152,19 @@ export function withModifiers(
   return wrapped;
 }
 
-/** @internal Lynx stub for withKeys (keyboard event modifier helper). */
+/**
+ * No-op on native Lynx. The native runtime converts keyboard input to named
+ * custom events (e.g. `confirm`) before they reach the JS thread —
+ * `event.key` is never populated on iOS/Android regardless of whether the
+ * keyboard is virtual or hardware. Use `@confirm` directly on `<input>` for
+ * native targets.
+ *
+ * Works on web preview (lynx-stack#2594). Native support depends on an
+ * upstream runtime change to forward `UIKeyboardEvent`/`KeyEvent` into the
+ * Lynx JS event pipeline — not yet tracked upstream.
+ *
+ * @internal
+ */
 export function withKeys(
   fn: (...args: unknown[]) => unknown,
   _keys: string[],
