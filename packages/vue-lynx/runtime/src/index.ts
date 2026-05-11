@@ -1072,10 +1072,15 @@ export function withModifiers(
 }
 
 /**
- * No-op on Lynx. Lynx's native layer (`touch_event_handler.cc`) converts
- * keyboard input to named custom events (e.g. `confirm`) before they reach
- * the JS thread — `event.key` is never populated on any Lynx target, including
- * hardware keyboards and the web preview. Use `@confirm` directly on `<input>`.
+ * No-op on native Lynx. The native runtime converts keyboard input to named
+ * custom events (e.g. `confirm`) before they reach the JS thread —
+ * `event.key` is never populated on iOS/Android regardless of whether the
+ * keyboard is virtual or hardware. Use `@confirm` directly on `<input>` for
+ * native targets.
+ *
+ * Works on web preview (lynx-stack#2594). Native support depends on an
+ * upstream runtime change to forward `UIKeyboardEvent`/`KeyEvent` into the
+ * Lynx JS event pipeline — not yet tracked upstream.
  *
  * @internal
  */
