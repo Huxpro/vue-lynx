@@ -15,6 +15,26 @@ export function findPreviousReleaseTag(releases, packageName, currentTagName) {
   })?.tag_name;
 }
 
+export function escapeMarkdownHtmlTags(markdown) {
+  return markdown
+    .split('\n')
+    .map((line) =>
+      line
+        .split(/(`[^`]*`)/g)
+        .map((part) => {
+          if (part.startsWith('`') && part.endsWith('`')) {
+            return part;
+          }
+
+          return part.replace(/<\/?[A-Za-z][A-Za-z0-9.-]*(?:\s[^<>]*)?>/g, (tag) =>
+            tag.replaceAll('<', '&lt;').replaceAll('>', '&gt;'),
+          );
+        })
+        .join(''),
+    )
+    .join('\n');
+}
+
 export async function syncGeneratedReleaseNotes({
   apiBaseUrl = DEFAULT_API_BASE_URL,
   fetchImpl = globalThis.fetch,
@@ -63,7 +83,7 @@ export async function syncGeneratedReleaseNotes({
 
     await requestJson({
       apiBaseUrl,
-      body: { body: generatedNotes.body },
+      body: { body: escapeMarkdownHtmlTags(generatedNotes.body) },
       fetchImpl,
       method: 'PATCH',
       path: `/repos/${repository}/releases/${release.id}`,

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  escapeMarkdownHtmlTags,
   findPreviousReleaseTag,
   syncGeneratedReleaseNotes,
   tagNameForPackage,
@@ -37,6 +38,23 @@ test('findPreviousReleaseTag picks the previous release for the same package', (
   );
 });
 
+test('escapeMarkdownHtmlTags preserves component names in generated notes', () => {
+  assert.equal(
+    escapeMarkdownHtmlTags(
+      [
+        '* feat(runtime): support <Teleport> component by @sentomk',
+        '* feat(runtime): support `<KeepAlive>` component by @jynxbt',
+        '* feat: support <style scoped> in Vue SFCs by @Huxpro',
+      ].join('\n'),
+    ),
+    [
+      '* feat(runtime): support &lt;Teleport&gt; component by @sentomk',
+      '* feat(runtime): support `<KeepAlive>` component by @jynxbt',
+      '* feat: support &lt;style scoped&gt; in Vue SFCs by @Huxpro',
+    ].join('\n'),
+  );
+});
+
 test('syncGeneratedReleaseNotes replaces release body with GitHub generated notes', async () => {
   const calls = [];
   const fetchImpl = (url, options = {}) => {
@@ -64,14 +82,14 @@ test('syncGeneratedReleaseNotes replaces release body with GitHub generated note
       });
       return jsonResponse({
         name: 'vue-lynx@0.4.0',
-        body: '## Minor Changes\n\n- feat: demo (#1) — @Huxpro',
+        body: '## Minor Changes\n\n- feat: support <Teleport> component (#1) — @Huxpro',
       });
     }
 
     if (url.endsWith('/releases/123')) {
       assert.equal(options.method, 'PATCH');
       assert.deepEqual(JSON.parse(options.body), {
-        body: '## Minor Changes\n\n- feat: demo (#1) — @Huxpro',
+        body: '## Minor Changes\n\n- feat: support &lt;Teleport&gt; component (#1) — @Huxpro',
       });
       return jsonResponse({ id: 123 });
     }
