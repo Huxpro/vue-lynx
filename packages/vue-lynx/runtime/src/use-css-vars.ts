@@ -21,6 +21,7 @@ import { ShadowElement } from './shadow-element.js';
 const SF_ELEMENT = 1;
 const SF_COMPONENT = 6; // STATEFUL_COMPONENT (4) | FUNCTIONAL_COMPONENT (2)
 const SF_ARRAY_CHILDREN = 16;
+// SF_TEXT_CHILDREN = 8 — text string children, no VNodes to recurse into.
 
 function applyVarsToEl(el: ShadowElement, vars: Record<string, string>): void {
   const style: Record<string, unknown> = { ...el._style };
@@ -47,15 +48,13 @@ function applyVarsToVNode(
       applyVarsToEl(el, vars);
     }
   } else if (shapeFlag & SF_COMPONENT) {
-    // Recurse into the component's rendered subtree
+    // Recurse into the component's rendered subtree.
     if (vnode.component) {
       applyVarsToVNode(vnode.component.subTree, vars);
     }
   } else if (vnode.type === Fragment && (shapeFlag & SF_ARRAY_CHILDREN)) {
-    // Fragment root — walk every sibling child (but NOT element children;
-    // those inherit CSS vars via enableCSSInheritance).
-    const children = vnode.children as VNode[];
-    for (const child of children) {
+    // Fragment root — walk every sibling child.
+    for (const child of vnode.children as VNode[]) {
       applyVarsToVNode(child, vars);
     }
   }
@@ -70,12 +69,14 @@ function applyVarsToVNode(
  *
  * The standard `@vue/runtime-dom` version uses DOM APIs (`el.style.setProperty`)
  * which are unavailable in Lynx's Background Thread.  This implementation
- * instead merges the CSS variables into the element's inline style and sends
- * them to the Main Thread via the ops pipeline.
+ * instead merges the CSS variables into the component root element's inline
+ * style and sends them to the Main Thread via the ops pipeline.
  *
- * Requires `enableCSSInlineVariables: true` and `enableCSSInheritance: true`
- * in `lynx.config.ts` so the Lynx engine propagates `--*` inline-style vars
- * to descendant elements.
+ * CSS vars are stamped on the component's root element(s). The Lynx engine
+ * propagates custom property updates to descendants via the CSS inheritance
+ * chain (fixed in lynx-family/lynx#5889).
+ *
+ * Requires `enableCSSInlineVariables: true` in `lynx.config.ts`.
  *
  * @hidden
  */

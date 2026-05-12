@@ -402,3 +402,76 @@ describe('useCssVars — reactivity', () => {
     expect(cssVarOp).toBeUndefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7. Root-only stamping (engine propagates to descendants via lynx#5889 fix)
+// ---------------------------------------------------------------------------
+
+describe('useCssVars — root-only stamping', () => {
+  it('stamps CSS vars only on the root element, not on descendants', async () => {
+    const color = ref('red');
+
+    // Structure: view (root) > view (mid) > text (leaf)
+    // The Lynx engine propagates the CSS custom property to descendants via
+    // RecursivelyMarkChildrenCSSVariableDirty (fixed in lynx-family/lynx#5889).
+    // useCssVars must stamp only the root; descendants must not receive a
+    // redundant SET_STYLE.
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep1': color.value }));
+        return () =>
+          h('view', null, [
+            h('view', null, [
+              h('text'),
+            ]),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep1'] !== undefined,
+    );
+
+    // Only the root view should be stamped — not mid or leaf.
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep1']).toBe('red');
+  });
+
+  it('stamps updated CSS var only on the root when reactive source changes', async () => {
+    const color = ref('red');
+
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep2': color.value }));
+        return () =>
+          h('view', null, [
+            h('text'),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps(); // drain mount ops
+
+    color.value = 'blue';
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep2'] !== undefined,
+    );
+
+    // Only the root view is stamped; the child text is not.
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep2']).toBe('blue');
+  });
+});

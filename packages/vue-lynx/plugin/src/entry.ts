@@ -177,7 +177,9 @@ class VueCSSConfigPlugin {
         };
         hooks.beforeEncode.tap(PLUGIN_CSS_CONFIG, (args) => {
           const encodeData = args['encodeData'] as {
-            sourceContent: { config: Record<string, unknown> };
+            sourceContent: {
+              config: Record<string, unknown>;
+            };
           };
           Object.assign(encodeData.sourceContent.config, this.compilerOptions);
           return args;
@@ -537,7 +539,7 @@ export function applyEntry(
     // ------------------------------------------------------------------
     // VueCSSConfigPlugin – inject engine compiler options (e.g.
     // enableCSSInlineVariables) that are not LynxTemplatePlugin options
-    // but need to be set in the encoded template's sourceContent.config.
+    // but need to be set in the encoded template's compilerOptions.
     // ------------------------------------------------------------------
     if (isLynx) {
       const cssConfigOptions: Record<string, unknown> = {};
