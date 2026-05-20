@@ -819,6 +819,8 @@ export { useCssVars } from './use-css-vars.js';
 /** @hidden */ export { withMemo } from '@vue/runtime-core';
 /** @hidden */ export { isMemoSame } from '@vue/runtime-core';
 /** @hidden */ export { guardReactiveProps } from '@vue/runtime-core';
+// @ts-expect-error mergeModels is exported at runtime but missing from Vue's .d.ts
+/** @hidden */ export { mergeModels } from '@vue/runtime-core';
 // @ts-expect-error withAsyncContext is exported at runtime but missing from Vue's .d.ts
 /** @hidden */ export { withAsyncContext } from '@vue/runtime-core';
 /** @hidden */ export { Text } from '@vue/runtime-core';
