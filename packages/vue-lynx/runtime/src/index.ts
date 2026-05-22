@@ -23,9 +23,35 @@ import {
 import type {
   App,
   Component,
+  ComponentInternalInstance,
   ComponentPublicInstance,
+  ComputedRef,
+  DeepReadonly,
+  DefineComponent,
+  Directive,
+  EmitsOptions,
+  ExtractPropTypes,
+  FunctionalComponent,
+  InjectionKey,
+  MaybeRef,
+  MaybeRefOrGetter,
   ObjectDirective,
+  Plugin,
+  PropType,
+  Reactive,
+  Ref,
+  SetupContext,
+  ShallowRef,
+  SlotsType,
+  UnwrapNestedRefs,
+  UnwrapRef,
   VNode,
+  VNodeChild,
+  VNodeRef,
+  WatchHandle,
+  WatchOptions,
+  WatchStopHandle,
+  WritableComputedRef,
 } from '@vue/runtime-core';
 
 import { runOnMainThread } from './cross-thread.js';
@@ -48,7 +74,38 @@ import { transformToWorklet } from './transform-to-worklet.js';
 import { Transition } from './Transition.js';
 import { TransitionGroup } from './TransitionGroup.js';
 
-export type { App, Component, ComponentPublicInstance };
+export type {
+  App,
+  Component,
+  ComponentInternalInstance,
+  ComponentPublicInstance,
+  ComputedRef,
+  DeepReadonly,
+  DefineComponent,
+  Directive,
+  EmitsOptions,
+  ExtractPropTypes,
+  FunctionalComponent,
+  InjectionKey,
+  MaybeRef,
+  MaybeRefOrGetter,
+  Plugin,
+  PropType,
+  Reactive,
+  Ref,
+  SetupContext,
+  ShallowRef,
+  SlotsType,
+  UnwrapNestedRefs,
+  UnwrapRef,
+  VNode,
+  VNodeChild,
+  VNodeRef,
+  WatchHandle,
+  WatchOptions,
+  WatchStopHandle,
+  WritableComputedRef,
+};
 
 const _renderer = createRenderer<ShadowElement, ShadowElement>(nodeOps);
 const _createApp = _renderer.createApp;
