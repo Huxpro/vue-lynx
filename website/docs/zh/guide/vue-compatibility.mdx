@@ -239,3 +239,4 @@ export default defineComponent({
 | 特性 | 原因 | 替代方案 |
 |---------|--------|-------------|
 | `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
+| `withKeys` 按键修饰符 | 原生平台为 no-op —— Lynx 原生运行时在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`），iOS/Android 上的 `event.key` 始终为空。Web 预览在 [lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594) 后可正常使用。原生端支持有赖于上游运行时变更。 | 原生端在 `<input>` 上直接使用 `@confirm` |

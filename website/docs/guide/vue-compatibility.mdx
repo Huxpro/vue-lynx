@@ -239,3 +239,4 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
+| `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |
