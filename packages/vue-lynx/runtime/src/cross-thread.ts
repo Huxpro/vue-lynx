@@ -38,13 +38,15 @@ const RUN_WORKLET_CTX = 'Lynx.Worklet.runWorkletCtx';
  * await animate(0.5) // executes on Main Thread
  * ```
  */
-// The args constraint uses `any[]` (not `unknown[]`) because function-arg
+// The args constraint uses `never[]` (not `unknown[]`) because function-arg
 // positions are contravariant: a `(initial: T) => void` is NOT assignable to
-// `(...args: unknown[]) => void`, so the previous signature rejected every
-// typed worklet body. Using `any[]` keeps `Parameters<Fn>` precise at the call
-// site while accepting any concrete signature.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function runOnMainThread<Fn extends (...args: any[]) => any>(
+// `(...args: unknown[]) => void`, so a constraint of `unknown[]` would reject
+// every typed worklet body. `never` is the bottom type — any concrete arg
+// type is assignable from it — so `(...args: never[]) => unknown` matches any
+// concrete function signature, and `Parameters<Fn>` / `ReturnType<Fn>` stay
+// precise at the call site. This is the standard "any function" generic
+// constraint that doesn't trip `noExplicitAny`.
+export function runOnMainThread<Fn extends (...args: never[]) => unknown>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Promise<ReturnType<Fn>> {
   registerWorkletCtx(fn as unknown as Worklet);
