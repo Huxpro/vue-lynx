@@ -1,5 +1,12 @@
 # @vue-lynx-example/slots
 
+## 0.2.6
+
+### Patch Changes
+
+- Updated dependencies [[`e410dad`](https://github.com/Huxpro/vue-lynx/commit/e410dad997150dbf6ebb92d6e325fb8c93812115), [`1f66ffc`](https://github.com/Huxpro/vue-lynx/commit/1f66ffc3cbf4c0bd00af8d8d26adce7bf676b9bc)]:
+  - vue-lynx@0.4.1
+
 ## 0.2.5
 
 ### Patch Changes

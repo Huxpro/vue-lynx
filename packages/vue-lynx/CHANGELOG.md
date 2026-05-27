@@ -1,5 +1,18 @@
 # vue-lynx
 
+## 0.4.1
+
+### Patch Changes
+
+- fix: export `mergeModels` compiler runtime helper ([#187](https://github.com/Huxpro/vue-lynx/pull/187))
+
+  Vue 3.4+'s SFC compiler emits `import { mergeModels } from 'vue'` when `defineModel()` is used alongside an explicit `defineProps()` or `defineEmits()` call. `mergeModels` was missing from vue-lynx's re-exports, which caused an `ESModulesLinkingError` at build time. The helper is now re-exported so this `defineModel()` usage pattern works out of the box.
+
+- fix(types): re-export Vue core type aliases and drop stale Volar plugin entries ([#188](https://github.com/Huxpro/vue-lynx/pull/188))
+
+  - Re-export `Ref`, `ComputedRef`, `WritableComputedRef`, `ShallowRef`, `UnwrapRef`, `UnwrapNestedRefs`, `MaybeRef`, `MaybeRefOrGetter`, `Reactive`, `DeepReadonly`, `VNode`, `VNodeRef`, `VNodeChild`, `DefineComponent`, `FunctionalComponent`, `ComponentInternalInstance`, `SetupContext`, `Plugin`, `Directive`, `InjectionKey`, `PropType`, `ExtractPropTypes`, `EmitsOptions`, `SlotsType`, `WatchOptions`, `WatchHandle`, `WatchStopHandle` from `vue-lynx` so consumers that alias `vue → vue-lynx` for types pick them up.
+  - Drop the legacy Volar plugin handlers for Vue Language Tools ≤ 1.8.27 (EOL 2023) and ≤ 2.0.13 (Feb 2024). Only the modern `>= 2.0.14` handler remains; the legacy `version: 1` handler triggered a warning on every run, and the middle handler was strictly subsumed by the modern one.
+
 ## 0.4.0
 
 ### Minor Changes
