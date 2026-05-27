@@ -38,11 +38,17 @@ const RUN_WORKLET_CTX = 'Lynx.Worklet.runWorkletCtx';
  * await animate(0.5) // executes on Main Thread
  * ```
  */
-export function runOnMainThread<R, Fn extends (...args: unknown[]) => R>(
+// The args constraint uses `any[]` (not `unknown[]`) because function-arg
+// positions are contravariant: a `(initial: T) => void` is NOT assignable to
+// `(...args: unknown[]) => void`, so the previous signature rejected every
+// typed worklet body. Using `any[]` keeps `Parameters<Fn>` precise at the call
+// site while accepting any concrete signature.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function runOnMainThread<Fn extends (...args: any[]) => any>(
   fn: Fn,
-): (...args: Parameters<Fn>) => Promise<R> {
+): (...args: Parameters<Fn>) => Promise<ReturnType<Fn>> {
   registerWorkletCtx(fn as unknown as Worklet);
-  return async (...params: Parameters<Fn>): Promise<R> => {
+  return async (...params: Parameters<Fn>): Promise<ReturnType<Fn>> => {
     return new Promise((resolve) => {
       const resolveId = onFunctionCall(resolve as (value: unknown) => void);
       lynx.getCoreContext().dispatchEvent({
