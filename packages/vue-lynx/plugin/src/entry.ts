@@ -204,6 +204,7 @@ export interface ApplyEntryOptions {
   customCSSInheritanceList?: string[];
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
+  workletPackages?: ReadonlyArray<string | RegExp>;
 }
 
 export function applyEntry(
@@ -287,6 +288,29 @@ export function applyEntry(
 
   // Worklet loader (BG layer): runs SWC JS-target transform on BG-layer
   // .js/.ts/.vue files to replace 'main thread' functions with context objects.
+  const workletPackages = opts.workletPackages ?? [];
+
+  // `node_modules` exclude with a carve-out for allowlisted worklet packages.
+  // When a consumer installs e.g. `@vue-lynx/motion-mini` as a real dep, the
+  // resolved path lives under `node_modules`; without this carve-out the
+  // worklet transform would skip it and its `'main thread'` registrations
+  // would never reach the MT bundle. pnpm workspace symlinks resolve to
+  // realpaths under `packages/` and never hit this branch.
+  const nodeModulesExcludeWithAllowlist = (resource: string): boolean => {
+    if (!/node_modules/.test(resource)) return false;
+    if (workletPackages.length === 0) return true;
+    const norm = resource.replace(/\\/g, '/');
+    for (const p of workletPackages) {
+      if (p instanceof RegExp) {
+        if (p.test(norm)) return false;
+      } else {
+        // Match `/node_modules/<pkg>/` (with or without scope already in `p`).
+        if (norm.includes('/node_modules/' + p + '/')) return false;
+      }
+    }
+    return true;
+  };
+
   api.modifyBundlerChain((chain, { environment }) => {
     const isLynx = environment.name === 'lynx'
       || environment.name.startsWith('lynx-');
@@ -298,7 +322,7 @@ export function applyEntry(
       .rule('vue:worklet')
       .issuerLayer(LAYERS.BACKGROUND)
       .test(/\.(?:[cm]?[jt]sx?|vue)$/)
-      .exclude.add(/node_modules/).end()
+      .exclude.add(nodeModulesExcludeWithAllowlist).end()
       .use('worklet-loader')
       .loader(path.resolve(_dirname, './loaders/worklet-loader'))
       .end();
@@ -343,6 +367,7 @@ export function applyEntry(
       .test(/\.vue$/)
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
+      .options({ workletPackages })
       .end();
 
     // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls).
@@ -353,7 +378,7 @@ export function applyEntry(
       .issuerLayer(LAYERS.MAIN_THREAD)
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
-      .add(/node_modules/)
+      .add(nodeModulesExcludeWithAllowlist)
       .add(mainThreadPkgDir);
     if (vueInternalPkgDir) {
       workletMtExclude.add(vueInternalPkgDir);
@@ -361,6 +386,7 @@ export function applyEntry(
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
+      .options({ workletPackages })
       .end();
   });
 

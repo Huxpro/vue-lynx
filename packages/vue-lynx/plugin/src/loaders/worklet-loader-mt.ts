@@ -32,11 +32,17 @@ import { transformReactLynxSync } from '@lynx-js/react/transform';
 
 import { extractLocalImports, extractRegistrations, extractSharedImports } from './worklet-utils.js';
 
+interface WorkletLoaderMTOptions {
+  workletPackages?: ReadonlyArray<string | RegExp>;
+}
+
 export default function workletLoaderMT(
-  this: Rspack.LoaderContext,
+  this: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
 ): string {
   this.cacheable(true);
+
+  const workletPackages = this.getOptions().workletPackages ?? [];
 
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
@@ -48,7 +54,7 @@ export default function workletLoaderMT(
     this.resourceQuery?.includes('vue')
     && this.resourceQuery?.includes('type=script')
   ) {
-    const localImports = extractLocalImports(source);
+    const localImports = extractLocalImports(source, workletPackages);
 
     if (
       !source.includes('\'main thread\'') && !source.includes('"main thread"')
@@ -96,7 +102,7 @@ export default function workletLoaderMT(
 
   // Preserve local (relative-path) imports so webpack follows the dependency
   // graph to sub-modules that may contain worklet registrations.
-  const localImports = extractLocalImports(source);
+  const localImports = extractLocalImports(source, workletPackages);
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
   // (but still extract shared imports from source since they don't need LEPUS)

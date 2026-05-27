@@ -3,6 +3,36 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
+ * Match a bare-import specifier against a single allowlist pattern.
+ *
+ * Strings match exactly OR as a package-root prefix:
+ *   - `@vue-lynx/motion-mini` matches `@vue-lynx/motion-mini` and
+ *     `@vue-lynx/motion-mini/sub/path`, but NOT `@vue-lynx/motion-mini-x`.
+ * RegExp patterns are tested against the full specifier.
+ */
+function specifierMatchesPattern(
+  specifier: string,
+  pattern: string | RegExp,
+): boolean {
+  if (pattern instanceof RegExp) return pattern.test(specifier);
+  if (specifier === pattern) return true;
+  return specifier.startsWith(pattern + '/');
+}
+
+/**
+ * @internal Exported for tests.
+ */
+export function isWorkletPackage(
+  specifier: string,
+  allowlist: ReadonlyArray<string | RegExp>,
+): boolean {
+  for (const p of allowlist) {
+    if (specifierMatchesPattern(specifier, p)) return true;
+  }
+  return false;
+}
+
+/**
  * Extract import statements that reference relative (local) paths.
  *
  * Converts named/default/namespace imports to side-effect-only imports
@@ -14,6 +44,12 @@
  * or `.ts` files that do. Without preserving these edges, webpack never
  * reaches the files with worklet registrations.
  *
+ * Bare-specifier imports are followed only if they match a
+ * `workletPackages` entry — see {@link isWorkletPackage}. This lets
+ * library authors ship reusable worklets (e.g. animation primitives) as
+ * normal npm/workspace packages, while keeping unrelated dependencies
+ * out of the MT bundle.
+ *
  * Vue sub-module imports (`?vue&type=template`, `?vue&type=style`) are
  * filtered out — only `?vue&type=script` imports are preserved. Template
  * and style sub-modules would pull in Vue runtime/CSS processing on the
@@ -22,12 +58,15 @@
  * Imports with `with { runtime: 'shared' }` are also skipped — these are
  * handled separately by `extractSharedImports()`.
  */
-export function extractLocalImports(source: string): string {
+export function extractLocalImports(
+  source: string,
+  workletPackages: ReadonlyArray<string | RegExp> = [],
+): string {
   const specifiers = new Set<string>();
 
-  // Match 'from' clause with relative specifier: from './foo' or from "../bar"
-  // but skip lines that contain `with {` (shared runtime imports).
-  const fromRe = /from\s+['"](\.[^'"]+)['"]/g;
+  // Match 'from' clause with any specifier (relative OR bare).
+  // We filter bare specifiers against `workletPackages` below.
+  const fromRe = /from\s+['"]([^'"]+)['"]/g;
   let match;
   while ((match = fromRe.exec(source)) !== null) {
     // Check if this import has `with {` attribute (shared runtime import)
@@ -35,13 +74,23 @@ export function extractLocalImports(source: string): string {
     const lineEnd = source.indexOf('\n', match.index);
     const line = source.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
     if (/with\s*\{/.test(line)) continue;
-    specifiers.add(match[1]!);
+    const spec = match[1]!;
+    if (spec.startsWith('.')) {
+      specifiers.add(spec);
+    } else if (isWorkletPackage(spec, workletPackages)) {
+      specifiers.add(spec);
+    }
   }
 
-  // Match bare side-effect imports: import './foo' or import "../bar"
-  const bareRe = /import\s+['"](\.[^'"]+)['"]/g;
+  // Match bare side-effect imports: import './foo' or import 'pkg'
+  const bareRe = /import\s+['"]([^'"]+)['"]/g;
   while ((match = bareRe.exec(source)) !== null) {
-    specifiers.add(match[1]!);
+    const spec = match[1]!;
+    if (spec.startsWith('.')) {
+      specifiers.add(spec);
+    } else if (isWorkletPackage(spec, workletPackages)) {
+      specifiers.add(spec);
+    }
   }
 
   if (specifiers.size === 0) return '';
