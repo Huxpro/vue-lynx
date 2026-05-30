@@ -109,6 +109,33 @@ export interface PluginVueLynxOptions {
    * @deprecated Will default to `false` in the next major version.
    */
   autoPixelUnit?: boolean;
+
+  /**
+   * Allowlist of bare-import specifiers whose `'main thread'` worklets
+   * should be reached by the MT bundler.
+   *
+   * The worklet loader follows relative imports (`./foo`, `../bar`) and
+   * resolves non-relative imports: path aliases and tsconfig `paths` that
+   * point at project source (outside `node_modules`) are followed
+   * automatically. Imports resolving INTO `node_modules` are dropped by
+   * default — list the package names (or RegExps matching them) here to
+   * follow worklets shipped as a published/installed package.
+   *
+   * Strings match exactly OR as a package-root prefix:
+   *   - `'@vue-lynx/motion-mini'` matches itself and any subpath like
+   *     `'@vue-lynx/motion-mini/dist/foo'`, but NOT
+   *     `'@vue-lynx/motion-mini-x'`.
+   *
+   * @example
+   * ```ts
+   * pluginVueLynx({
+   *   includeWorkletPackages: ['@vue-lynx/motion-mini', /^@my-org\/lynx-/],
+   * })
+   * ```
+   *
+   * @defaultValue []
+   */
+  includeWorkletPackages?: ReadonlyArray<string | RegExp>;
 }
 
 /**
@@ -132,6 +159,7 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    includeWorkletPackages = [],
   } = options;
 
   return [
@@ -260,6 +288,7 @@ export function pluginVueLynx(
           customCSSInheritanceList,
           enableCSSInlineVariables,
           debugInfoOutside,
+          includeWorkletPackages,
         });
       },
     },

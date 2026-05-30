@@ -3,34 +3,72 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * Extract import statements that reference relative (local) paths.
- *
- * Converts named/default/namespace imports to side-effect-only imports
- * (`import './foo'`) to preserve webpack's dependency graph without
- * executing user code or pulling in external packages.
- *
- * This is critical for the MT layer: entry files like `index.ts` may not
- * contain `'main thread'` directives themselves, but they import `.vue`
- * or `.ts` files that do. Without preserving these edges, webpack never
- * reaches the files with worklet registrations.
- *
- * Vue sub-module imports (`?vue&type=template`, `?vue&type=style`) are
- * filtered out — only `?vue&type=script` imports are preserved. Template
- * and style sub-modules would pull in Vue runtime/CSS processing on the
- * MT layer, which is unnecessary and harmful.
- *
- * Imports with `with { runtime: 'shared' }` are also skipped — these are
- * handled separately by `extractSharedImports()`.
+ * Resolve a specifier to an absolute path. Returns `null` when the
+ * specifier cannot be resolved (the import is then skipped rather than
+ * failing the build).
  */
-export function extractLocalImports(source: string): string {
+export type ResolveImport = (specifier: string) => Promise<string | null>;
+
+/** Whether a resolved absolute path lives inside a `node_modules` tree. */
+export function isUnderNodeModules(resolvedPath: string): boolean {
+  return /[/\\]node_modules[/\\]/.test(resolvedPath);
+}
+
+/**
+ * Match a bare-import specifier against a single allowlist pattern.
+ *
+ * Strings match exactly OR as a package-root prefix:
+ *   - `@vue-lynx/motion-mini` matches `@vue-lynx/motion-mini` and
+ *     `@vue-lynx/motion-mini/sub/path`, but NOT `@vue-lynx/motion-mini-x`.
+ * RegExp patterns are tested against the full specifier.
+ */
+function specifierMatchesPattern(
+  specifier: string,
+  pattern: string | RegExp,
+): boolean {
+  if (pattern instanceof RegExp) return pattern.test(specifier);
+  if (specifier === pattern) return true;
+  return specifier.startsWith(pattern + '/');
+}
+
+/**
+ * Whether `specifier` is covered by the `includeWorkletPackages` allowlist.
+ *
+ * @internal Exported for tests.
+ */
+export function isWorkletPackage(
+  specifier: string,
+  allowlist: ReadonlyArray<string | RegExp>,
+): boolean {
+  for (const p of allowlist) {
+    if (specifierMatchesPattern(specifier, p)) return true;
+  }
+  return false;
+}
+
+/**
+ * Parse the import specifiers of a module that the MT graph may need to
+ * follow.
+ *
+ * Returns deduplicated specifiers (relative AND non-relative) after
+ * dropping:
+ *   - `with { runtime: 'shared' }` imports (handled by
+ *     {@link extractSharedImports}), and
+ *   - vue template/style sub-modules (`?vue&type=template|style`) — only
+ *     `?vue&type=script` sub-modules are kept, since template/style would
+ *     pull Vue runtime / CSS processing onto the MT layer.
+ *
+ * Classification of non-relative specifiers (alias vs package) is left to
+ * the caller, which resolves them — see {@link extractLocalImports}.
+ */
+export function extractImportSpecifiers(source: string): string[] {
   const specifiers = new Set<string>();
 
-  // Match 'from' clause with relative specifier: from './foo' or from "../bar"
-  // but skip lines that contain `with {` (shared runtime imports).
-  const fromRe = /from\s+['"](\.[^'"]+)['"]/g;
+  // Match the `from` clause of any import (relative OR non-relative), but
+  // skip lines carrying a `with {` attribute (shared-runtime imports).
+  const fromRe = /from\s+['"]([^'"]+)['"]/g;
   let match;
   while ((match = fromRe.exec(source)) !== null) {
-    // Check if this import has `with {` attribute (shared runtime import)
     const lineStart = source.lastIndexOf('\n', match.index) + 1;
     const lineEnd = source.indexOf('\n', match.index);
     const line = source.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
@@ -38,24 +76,70 @@ export function extractLocalImports(source: string): string {
     specifiers.add(match[1]!);
   }
 
-  // Match bare side-effect imports: import './foo' or import "../bar"
-  const bareRe = /import\s+['"](\.[^'"]+)['"]/g;
+  // Match bare side-effect imports: import './foo' or import 'pkg'.
+  const bareRe = /import\s+['"]([^'"]+)['"]/g;
   while ((match = bareRe.exec(source)) !== null) {
     specifiers.add(match[1]!);
   }
 
-  if (specifiers.size === 0) return '';
+  return [...specifiers].filter(s => {
+    if (!s.includes('?vue')) return true;
+    return s.includes('type=script');
+  });
+}
 
-  return [...specifiers]
-    // Filter out vue template/style sub-module imports — they pull in
-    // Vue runtime / CSS processing which is unnecessary on the MT layer.
-    // Only keep script sub-modules (and non-vue imports).
-    .filter(s => {
-      if (!s.includes('?vue')) return true;
-      return s.includes('type=script');
-    })
-    .map(s => `import '${s}';`)
-    .join('\n');
+/**
+ * Build the side-effect import block that preserves webpack's MT dependency
+ * graph for a processed module.
+ *
+ * Converts each followed import to a side-effect-only import
+ * (`import './foo'`) so webpack reaches sub-modules that contain worklet
+ * registrations without executing user code or pulling in unrelated
+ * packages. This is critical for the MT layer: entry files like `index.ts`
+ * may not contain `'main thread'` directives themselves, but they import
+ * `.vue`/`.ts` files that do.
+ *
+ * Which imports are followed:
+ *   - Relative imports (`./foo`, `../bar`) — always (original behaviour).
+ *   - Non-relative imports (path aliases, tsconfig `paths`, `@/…`, `~/…`,
+ *     bare packages) — resolved via `resolveImport`. Followed when they
+ *     resolve to project/aliased source OUTSIDE `node_modules`, so internal
+ *     aliases are no longer silently dropped.
+ *   - Imports resolving INTO `node_modules` — followed only when they match
+ *     the `includeWorkletPackages` allowlist, letting a published package
+ *     ship MT worklets to consumers.
+ *
+ * Unresolvable specifiers are skipped (never fail the build). The original
+ * specifier string is re-emitted verbatim so the downstream bundler resolves
+ * it again with its own alias/paths config.
+ */
+export async function extractLocalImports(
+  source: string,
+  resolveImport: ResolveImport,
+  includeWorkletPackages: ReadonlyArray<string | RegExp> = [],
+): Promise<string> {
+  const kept: string[] = [];
+
+  for (const spec of extractImportSpecifiers(source)) {
+    // Relative imports are always followed — no resolution needed.
+    if (spec.startsWith('.')) {
+      kept.push(spec);
+      continue;
+    }
+
+    // Non-relative: resolve to decide whether it's project/aliased source
+    // (follow) or an external package (follow only when allowlisted).
+    const resolved = await resolveImport(spec);
+    if (resolved === null) continue; // unresolvable → skip, don't fail build
+    if (!isUnderNodeModules(resolved)) {
+      kept.push(spec);
+      continue;
+    }
+    if (isWorkletPackage(spec, includeWorkletPackages)) kept.push(spec);
+  }
+
+  if (kept.length === 0) return '';
+  return kept.map(s => `import '${s}';`).join('\n');
 }
 
 /**
