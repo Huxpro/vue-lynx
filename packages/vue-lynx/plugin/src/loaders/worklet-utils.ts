@@ -61,13 +61,49 @@ export function stripComments(source: string): string {
 }
 
 /**
+ * Replace every string/template literal with an indexed placeholder
+ * (`\u0000N\u0000`) and drop comments, returning the rewritten code plus the
+ * captured literals.
+ *
+ * Unlike {@link stripComments} (which preserves literal *contents*), this
+ * masks them, so import-like text *inside* a string or template literal — a
+ * worklet that builds a code string containing `from 'x'`, a GraphQL/SQL
+ * template, etc. — is never mistaken for a real import edge. Nested literals
+ * collapse into the outermost placeholder, so `from 'x'` inside a template
+ * is hidden along with it.
+ *
+ * Known limitation: regex literals are not tokenized, so a regex whose raw
+ * text contains `//` can still confuse comment handling. This is rare in
+ * worklet entry modules and intentionally left to a real tokenizer.
+ *
+ * @internal Exported for tests.
+ */
+export function tokenizeLiterals(source: string): {
+  code: string;
+  literals: string[];
+} {
+  const literals: string[] = [];
+  const code = source.replace(
+    /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+    (_match, literal) => {
+      if (literal === undefined) return ''; // comment → drop
+      literals.push(literal);
+      return `\u0000${literals.length - 1}\u0000`;
+    },
+  );
+  return { code, literals };
+}
+
+/**
  * Parse the import specifiers of a module that the MT graph may need to
  * follow.
  *
  * Returns deduplicated specifiers (relative AND non-relative) after
  * dropping:
- *   - `with { runtime: 'shared' }` imports (handled by
- *     {@link extractSharedImports}), and
+ *   - attribute imports (`… with { … }`, e.g. `runtime: 'shared'`) — shared
+ *     imports are handled by {@link extractSharedImports}; other attributes
+ *     (`type: 'json'`, …) carry no worklet registrations, so neither is
+ *     followed, and
  *   - vue template/style sub-modules (`?vue&type=template|style`) — only
  *     `?vue&type=script` sub-modules are kept, since template/style would
  *     pull Vue runtime / CSS processing onto the MT layer.
@@ -78,29 +114,35 @@ export function stripComments(source: string): string {
 export function extractImportSpecifiers(source: string): string[] {
   const specifiers = new Set<string>();
 
-  // Strip comments first so JSDoc/example snippets like `* import App from
-  // './App.vue';` are not mistaken for real import edges (re-emitting them
-  // would inject unresolvable imports and fail the build). String and
-  // template literals are preserved so `//` or `/*` inside them is left
-  // intact.
-  source = stripComments(source);
+  // Mask string/template literals (and drop comments) before scanning, so
+  // neither JSDoc example imports nor import-like text inside a string or
+  // template literal is mistaken for a real import edge — re-emitting either
+  // would inject an unresolvable import and fail the build.
+  const { code, literals } = tokenizeLiterals(source);
+  const unquote = (lit: string) => lit.slice(1, -1);
 
-  // Match the `from` clause of any import (relative OR non-relative), but
-  // skip lines carrying a `with {` attribute (shared-runtime imports).
-  const fromRe = /from\s+['"]([^'"]+)['"]/g;
+  // An import attribute always follows the specifier with only whitespace
+  // between, so a lookahead from the end of the match catches it regardless
+  // of line breaks (SWC may reformat `with { runtime: 'shared' }` onto the
+  // next line). This keeps us in lockstep with extractSharedImports, which
+  // is multiline-aware — without it a reformatted shared import would leak
+  // through here and be followed as a plain local import.
+  const attribAhead = /^\s*with\s*\{/;
+
+  // Match the `from` clause of any import (relative OR non-relative), and any
+  // re-export (`export … from`), keying on `from` + a masked specifier.
+  const fromRe = /from\s+\u0000(\d+)\u0000/g;
   let match;
-  while ((match = fromRe.exec(source)) !== null) {
-    const lineStart = source.lastIndexOf('\n', match.index) + 1;
-    const lineEnd = source.indexOf('\n', match.index);
-    const line = source.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
-    if (/with\s*\{/.test(line)) continue;
-    specifiers.add(match[1]!);
+  while ((match = fromRe.exec(code)) !== null) {
+    if (attribAhead.test(code.slice(fromRe.lastIndex))) continue;
+    specifiers.add(unquote(literals[Number(match[1])]!));
   }
 
   // Match bare side-effect imports: import './foo' or import 'pkg'.
-  const bareRe = /import\s+['"]([^'"]+)['"]/g;
-  while ((match = bareRe.exec(source)) !== null) {
-    specifiers.add(match[1]!);
+  const bareRe = /import\s+\u0000(\d+)\u0000/g;
+  while ((match = bareRe.exec(code)) !== null) {
+    if (attribAhead.test(code.slice(bareRe.lastIndex))) continue;
+    specifiers.add(unquote(literals[Number(match[1])]!));
   }
 
   return [...specifiers].filter(s => {

@@ -72,49 +72,126 @@ describe('isWorkletPackage', () => {
 });
 
 describe('extractImportSpecifiers', () => {
-  it('keeps relative and non-relative, drops shared + vue template/style', () => {
-    const specs = extractImportSpecifiers(`
-      import { a } from './rel.js';
-      import { b } from '@/alias';
-      import { c } from 'pkg';
-      import { d } from './shared.js' with { runtime: 'shared' };
-      import s from './App.vue?vue&type=script&setup=true&lang.ts';
-      import t from './App.vue?vue&type=template&id=abc';
-      import y from './App.vue?vue&type=style&index=0&id=abc&lang.css';
-    `);
-    expect(specs).toContain('./rel.js');
-    expect(specs).toContain('@/alias');
-    expect(specs).toContain('pkg');
-    expect(specs).not.toContain('./shared.js');
-    expect(specs.some(s => s.includes('type=script'))).toBe(true);
-    expect(specs.some(s => s.includes('type=template'))).toBe(false);
-    expect(specs.some(s => s.includes('type=style'))).toBe(false);
-  });
+  // One parametrized table over input *shapes*. `include` = substrings that
+  // must appear in at least one returned specifier; `exclude` = substrings
+  // that must appear in none. This is the fragile surface (the regex parser),
+  // and both real incidents on this loader originated here — dropped edges,
+  // then the JSDoc-import bug — so variants live here rather than in the
+  // resolution policy tests below.
+  const cases: Array<{
+    name: string;
+    source: string;
+    include?: string[];
+    exclude?: string[];
+  }> = [
+    {
+      name: 'relative import',
+      source: `import { a } from './rel.js';`,
+      include: ['./rel.js'],
+    },
+    {
+      name: 'aliased / non-relative import',
+      source: `import { b } from '@/alias';`,
+      include: ['@/alias'],
+    },
+    {
+      name: 'bare package import',
+      source: `import { c } from 'pkg';`,
+      include: ['pkg'],
+    },
+    {
+      name: 'double-quoted specifier',
+      source: `import x from "./dq.js";`,
+      include: ['./dq.js'],
+    },
+    {
+      name: 'bare side-effect import',
+      source: `import './side-effect.js';`,
+      include: ['./side-effect.js'],
+    },
+    {
+      name: 're-export keyed on `from` (export … from)',
+      source: `export { x } from './reexport.js';`,
+      include: ['./reexport.js'],
+    },
+    {
+      name: 're-export star (export * from)',
+      source: `export * from './star.js';`,
+      include: ['./star.js'],
+    },
+    {
+      name: "single-line `with { runtime: 'shared' }` is dropped",
+      source: `import { d } from './shared.js' with { runtime: 'shared' };`,
+      exclude: ['./shared.js'],
+    },
+    {
+      // #1 — extractSharedImports is multiline-aware; SWC may reformat the
+      // attribute onto the next line. If this leaked through, the shared
+      // module would be followed as a plain local import and have its exports
+      // stripped, defeating `shared`.
+      name: "multiline `with { runtime: 'shared' }` is dropped",
+      source: `import { d } from './shared.js'\n  with { runtime: 'shared' };`,
+      exclude: ['./shared.js'],
+    },
+    {
+      // #4 — any attribute import is dropped, not only runtime:'shared'.
+      name: "other attribute imports (with { type: 'json' }) are dropped",
+      source: `import data from './data.json' with { type: 'json' };`,
+      exclude: ['./data.json'],
+    },
+    {
+      name: 'import inside a line comment is ignored',
+      source: `// import fake from './fake-line.vue';\nimport { real } from './real.js';`,
+      include: ['./real.js'],
+      exclude: ['./fake-line.vue'],
+    },
+    {
+      name: 'imports inside a JSDoc/block comment are ignored',
+      source: `/**\n * import App from './App.vue';\n * import { createApp } from 'vue-lynx';\n */\nimport { real } from './real.js';`,
+      include: ['./real.js'],
+      exclude: ['./App.vue', 'vue-lynx'],
+    },
+    {
+      name: 'comment delimiters inside a string literal are not comments',
+      source: `const url = "https://example.com/* not a comment */";\nimport { real } from './real.js';`,
+      include: ['./real.js'],
+    },
+    {
+      // #2 — import-like text inside a string literal must not be followed
+      // (a worklet building a code string, an embedded snippet, …). Same
+      // failure class as the JSDoc bug, different trigger.
+      name: 'import-like text inside a string literal is not followed',
+      source: `const code = "import App from './fake.vue'";\nimport { real } from './real.js';`,
+      include: ['./real.js'],
+      exclude: ['./fake.vue'],
+    },
+    {
+      // #2 — same, but inside a template literal (GraphQL/SQL/codegen).
+      name: 'import-like text inside a template literal is not followed',
+      source: 'const tpl = `import X from \'./tpl-fake.js\'`;\nimport { real } from \'./real.js\';',
+      include: ['./real.js'],
+      exclude: ['./tpl-fake.js'],
+    },
+    {
+      name: 'vue script sub-module kept, template/style dropped',
+      source: `
+        import s from './App.vue?vue&type=script&setup=true&lang.ts';
+        import t from './App.vue?vue&type=template&id=abc';
+        import y from './App.vue?vue&type=style&index=0&id=abc&lang.css';
+      `,
+      include: ['type=script'],
+      exclude: ['type=template', 'type=style'],
+    },
+  ];
 
-  it('ignores imports inside line and block comments', () => {
-    const specs = extractImportSpecifiers(`
-      import { real } from './real.js';
-      // import fake from './fake-line.vue';
-      /**
-       * Usage:
-       *   import App from './App.vue';
-       *   import { createApp } from 'vue-lynx';
-       */
-      import { other } from './other.js';
-    `);
-    expect(specs).toContain('./real.js');
-    expect(specs).toContain('./other.js');
-    expect(specs).not.toContain('./fake-line.vue');
-    expect(specs).not.toContain('./App.vue');
-    expect(specs).not.toContain('vue-lynx');
-  });
-
-  it('does not treat comment delimiters inside string literals as comments', () => {
-    const specs = extractImportSpecifiers(`
-      const url = "https://example.com/* not a comment */";
-      import { real } from './real.js';
-    `);
-    expect(specs).toContain('./real.js');
+  it.each(cases)('$name', ({ source, include = [], exclude = [] }) => {
+    const specs = extractImportSpecifiers(source);
+    for (const inc of include) {
+      expect(specs.some(s => s.includes(inc))).toBe(true);
+    }
+    for (const exc of exclude) {
+      expect(specs.some(s => s.includes(exc))).toBe(false);
+    }
   });
 });
 
@@ -241,6 +318,28 @@ describe('extractLocalImports', () => {
     const resolve = resolverFrom({ lodash: '/p/node_modules/lodash/i.js' });
     expect(await extractLocalImports(`import 'lodash';`, resolve)).toBe('');
   });
+
+  // The emitted side-effect block is what actually breaks the build when a
+  // spurious edge slips through, so pin the regressions at this level too.
+  it.each([
+    {
+      name: "multiline shared import is never re-emitted",
+      source: `import { x } from './shared.js'\n  with { runtime: 'shared' };`,
+      absent: './shared.js',
+    },
+    {
+      name: 'import-like text in a string literal is never re-emitted',
+      source: `const code = "import App from './fake.vue'";`,
+      absent: './fake.vue',
+    },
+    {
+      name: 'import-like text in a template literal is never re-emitted',
+      source: 'const tpl = `import X from \'./tpl-fake.js\'`;',
+      absent: './tpl-fake.js',
+    },
+  ])('does not emit a bogus edge: $name', async ({ source, absent }) => {
+    expect(await extractLocalImports(source, noResolve)).not.toContain(absent);
+  });
 });
 
 // --- End-to-end through the actual loader (default export) -----------------
@@ -333,5 +432,13 @@ describe('worklet-loader-mt (end-to-end)', () => {
       includeWorkletPackages: ['@org/motion'],
     });
     expect(followed).toContain(`import '@org/motion';`);
+  });
+
+  it('skips a non-relative import the resolver rejects (does not fail)', async () => {
+    // No `resolve` map → getResolve rejects for `@/missing`; the loader's
+    // try/catch maps that to null and drops the edge instead of throwing.
+    const src = `import { gone } from '@/missing';\nexport const x = gone;`;
+    const out = await runLoaderMT(src, { resourcePath: '/project/src/App.ts' });
+    expect(out).not.toContain('@/missing');
   });
 });
