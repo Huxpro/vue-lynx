@@ -90,6 +90,32 @@ describe('extractImportSpecifiers', () => {
     expect(specs.some(s => s.includes('type=template'))).toBe(false);
     expect(specs.some(s => s.includes('type=style'))).toBe(false);
   });
+
+  it('ignores imports inside line and block comments', () => {
+    const specs = extractImportSpecifiers(`
+      import { real } from './real.js';
+      // import fake from './fake-line.vue';
+      /**
+       * Usage:
+       *   import App from './App.vue';
+       *   import { createApp } from 'vue-lynx';
+       */
+      import { other } from './other.js';
+    `);
+    expect(specs).toContain('./real.js');
+    expect(specs).toContain('./other.js');
+    expect(specs).not.toContain('./fake-line.vue');
+    expect(specs).not.toContain('./App.vue');
+    expect(specs).not.toContain('vue-lynx');
+  });
+
+  it('does not treat comment delimiters inside string literals as comments', () => {
+    const specs = extractImportSpecifiers(`
+      const url = "https://example.com/* not a comment */";
+      import { real } from './real.js';
+    `);
+    expect(specs).toContain('./real.js');
+  });
 });
 
 describe('extractLocalImports', () => {

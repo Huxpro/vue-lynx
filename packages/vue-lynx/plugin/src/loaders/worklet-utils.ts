@@ -47,6 +47,20 @@ export function isWorkletPackage(
 }
 
 /**
+ * Remove line (`//…`) and block (`/* … *\/`) comments from JS/TS source,
+ * leaving string and template literals untouched so delimiters appearing
+ * inside them are not treated as comment starts.
+ *
+ * @internal Exported for tests.
+ */
+export function stripComments(source: string): string {
+  return source.replace(
+    /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+    (_match, literal) => (literal ? literal : ''),
+  );
+}
+
+/**
  * Parse the import specifiers of a module that the MT graph may need to
  * follow.
  *
@@ -63,6 +77,13 @@ export function isWorkletPackage(
  */
 export function extractImportSpecifiers(source: string): string[] {
   const specifiers = new Set<string>();
+
+  // Strip comments first so JSDoc/example snippets like `* import App from
+  // './App.vue';` are not mistaken for real import edges (re-emitting them
+  // would inject unresolvable imports and fail the build). String and
+  // template literals are preserved so `//` or `/*` inside them is left
+  // intact.
+  source = stripComments(source);
 
   // Match the `from` clause of any import (relative OR non-relative), but
   // skip lines carrying a `with {` attribute (shared-runtime imports).
@@ -160,6 +181,7 @@ export function extractSharedImports(source: string): string {
   const re = /import\s+(.+?)\s+from\s+(['"])([^'"]+)\2\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g;
   const imports: string[] = [];
   let match;
+  source = stripComments(source);
   while ((match = re.exec(source)) !== null) {
     const specifiers = match[1]!;
     const quote = match[2]!;
