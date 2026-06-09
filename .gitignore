@@ -6,6 +6,7 @@ packages/upstream-tests/core/
 *.log
 .DS_Store
 website/docs/guide/api/
+website/docs/zh/guide/api/
 website/api-sidebar.json
 .vercel
 .claude/
