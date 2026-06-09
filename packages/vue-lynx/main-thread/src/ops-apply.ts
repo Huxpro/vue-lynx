@@ -218,7 +218,7 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const idStr = ops[i++] as string | null | undefined;
         const el = elements.get(id);
-        if (el) __SetID(el, idStr ?? undefined);
+        if (el) __SetID(el, idStr ?? null);
         break;
       }
 

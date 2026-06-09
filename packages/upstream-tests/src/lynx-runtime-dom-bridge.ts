@@ -612,7 +612,7 @@ export function render(vnode: VNode, container: Element): void {
 
   // 1. Set up Main Thread — renderPage creates PAPI page root (id=1)
   env.switchToMainThread();
-  const doc = env.jsdom.window.document;
+  const doc = env.env.window.document;
   doc.body.innerHTML = '';
   const renderPageFn = (globalThis as Record<string, unknown>)['renderPage'] as
     | ((opts: Record<string, unknown>) => void)
