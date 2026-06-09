@@ -23,8 +23,8 @@
     "create-rstack": "^1.0.0"
   },
   "devDependencies": {
-    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
-    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.7",
+    "@lynx-js/rspeedy": "^0.14.5",
     "@rsbuild/plugin-vue": "^1.2.6",
     "vue": "^3.5.0",
     "vue-lynx": "workspace:*",
