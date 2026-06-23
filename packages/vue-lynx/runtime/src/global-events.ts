@@ -2,15 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-type GlobalEventEmitter = {
-  trigger?: (eventName: string, params: unknown) => void;
-};
+import type { LynxGlobal } from './lynx-global.js';
 
-declare const lynx:
-  | {
-    getJSModule?: (name: string) => GlobalEventEmitter | undefined;
-  }
-  | undefined;
+declare const lynx: LynxGlobal;
 
 /**
  * Handles Lynx lifecycle events delivered from the main thread / LEPUS.

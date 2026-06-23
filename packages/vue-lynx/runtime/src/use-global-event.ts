@@ -4,18 +4,9 @@
 
 import { onScopeDispose } from '@vue/runtime-core';
 
-type GlobalEventHandler = (...args: unknown[]) => void;
+import type { GlobalEventHandler, LynxGlobal } from './lynx-global.js';
 
-type GlobalEventEmitter = {
-  addListener?: (eventName: string, handler: GlobalEventHandler) => void;
-  removeListener?: (eventName: string, handler: GlobalEventHandler) => void;
-};
-
-declare const lynx:
-  | {
-    getJSModule?: (name: string) => GlobalEventEmitter | undefined;
-  }
-  | undefined;
+declare const lynx: LynxGlobal;
 
 /**
  * Registers a listener on Lynx's global event emitter for the current scope.
