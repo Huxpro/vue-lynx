@@ -106,35 +106,13 @@ async function transformModule(
       return (localImports ? localImports + '\n' : '') + 'export default {};';
     }
 
-    const resourcePath = ctx.resourcePath;
-    const lepusResult = transformReactLynxSync(source, {
-      pluginName: 'vue:worklet-mt',
-      filename: resourcePath,
-      sourcemap: false,
-      cssScope: false,
-      shake: false,
-      compat: false,
-      refresh: false,
-      defineDCE: false,
-      directiveDCE: false,
-      worklet: {
-        target: 'LEPUS',
-        filename: resourcePath,
-        runtimePkg: 'vue-lynx',
-      },
-    });
-
-    if (lepusResult.errors.length > 0) {
-      for (const err of lepusResult.errors) {
-        ctx.emitError(
-          new Error(`[worklet-loader-mt] LEPUS transform: ${err.text}`),
-        );
-      }
+    const lepusCode = runLepusTransform(ctx, source);
+    if (lepusCode === null) {
       return (localImports ? localImports + '\n' : '') + 'export default {};';
     }
 
-    const registrations = extractRegistrations(lepusResult.code);
-    const sharedImports = extractSharedImports(lepusResult.code);
+    const registrations = extractRegistrations(lepusCode);
+    const sharedImports = extractSharedImports(lepusCode);
     const parts = [sharedImports, localImports, registrations, 'export default {};'].filter(
       Boolean,
     );
@@ -162,12 +140,31 @@ async function transformModule(
     return sharedImports + (localImports ? '\n' + localImports : '');
   }
 
-  const resourcePath = ctx.resourcePath;
-  const filename = resourcePath;
+  const lepusCode = runLepusTransform(ctx, source);
+  if (lepusCode === null) return localImports;
 
-  const lepusResult = transformReactLynxSync(source, {
+  // Extract shared imports from the LEPUS output (SWC preserves them)
+  const sharedImports = extractSharedImports(lepusCode);
+
+  // Return shared imports + local imports (for dep graph) + extracted registrations
+  const registrations = extractRegistrations(lepusCode);
+  const parts = [sharedImports, localImports, registrations].filter(Boolean);
+  return parts.join('\n');
+}
+
+/**
+ * Run the LEPUS worklet transform on a module and surface any transform
+ * errors via `ctx.emitError`. Returns the transformed code, or `null` when
+ * the transform failed — callers fall back to their own minimal output.
+ */
+function runLepusTransform(
+  ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
+  source: string,
+): string | null {
+  const resourcePath = ctx.resourcePath;
+  const result = transformReactLynxSync(source, {
     pluginName: 'vue:worklet-mt',
-    filename,
+    filename: resourcePath,
     sourcemap: false,
     cssScope: false,
     shake: false,
@@ -177,25 +174,19 @@ async function transformModule(
     directiveDCE: false,
     worklet: {
       target: 'LEPUS',
-      filename,
+      filename: resourcePath,
       runtimePkg: 'vue-lynx',
     },
   });
 
-  if (lepusResult.errors.length > 0) {
-    for (const err of lepusResult.errors) {
+  if (result.errors.length > 0) {
+    for (const err of result.errors) {
       ctx.emitError(
         new Error(`[worklet-loader-mt] LEPUS transform: ${err.text}`),
       );
     }
-    return localImports;
+    return null;
   }
 
-  // Extract shared imports from the LEPUS output (SWC preserves them)
-  const sharedImports = extractSharedImports(lepusResult.code);
-
-  // Return shared imports + local imports (for dep graph) + extracted registrations
-  const registrations = extractRegistrations(lepusResult.code);
-  const parts = [sharedImports, localImports, registrations].filter(Boolean);
-  return parts.join('\n');
+  return result.code;
 }

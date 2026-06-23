@@ -47,6 +47,16 @@ export function isWorkletPackage(
 }
 
 /**
+ * Matches a string/template literal (capture group 1) OR a line/block comment
+ * (no capture group). Used only with {@link String.prototype.replace}, which
+ * resets a global regex's `lastIndex` after each call, so this single shared
+ * instance is safe to reuse across {@link stripComments} and
+ * {@link tokenizeLiterals}.
+ */
+const LITERAL_OR_COMMENT_RE =
+  /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g;
+
+/**
  * Remove line (`//…`) and block (`/* … *\/`) comments from JS/TS source,
  * leaving string and template literals untouched so delimiters appearing
  * inside them are not treated as comment starts.
@@ -55,7 +65,7 @@ export function isWorkletPackage(
  */
 export function stripComments(source: string): string {
   return source.replace(
-    /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+    LITERAL_OR_COMMENT_RE,
     (_match, literal) => (literal ? literal : ''),
   );
 }
@@ -84,7 +94,7 @@ export function tokenizeLiterals(source: string): {
 } {
   const literals: string[] = [];
   const code = source.replace(
-    /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|\/\/[^\n]*|\/\*[\s\S]*?\*\//g,
+    LITERAL_OR_COMMENT_RE,
     (_match, literal) => {
       if (literal === undefined) return ''; // comment → drop
       literals.push(literal);
