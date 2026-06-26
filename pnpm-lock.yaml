@@ -615,14 +615,14 @@ importers:
         specifier: ^2.75.0
         version: 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@lynx-js/go-web':
-        specifier: ^0.2.1
-        version: 0.2.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
+        specifier: ^0.5.1
+        version: 0.5.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.21.1(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
       '@lynx-js/web-core':
-        specifier: ^0.20.0
-        version: 0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
+        specifier: ^0.21.1
+        version: 0.21.1(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
       '@lynx-js/web-elements':
-        specifier: ^0.12.0
-        version: 0.12.0(tslib@2.8.1)
+        specifier: ^0.12.4
+        version: 0.12.4(tslib@2.8.1)
       '@rspress/core':
         specifier: ^2.0.3
         version: 2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2)
@@ -1199,8 +1199,8 @@ packages:
   '@lynx-js/css-serializer@0.1.4':
     resolution: {integrity: sha512-yG3sC1fH+rBQhbdvPCweaGjmFmOBdi2rbt7xs9laMfu5Z5dOXL1OB7pZZN0vodptBO0/ctVfMCKH2EKhq0GtTA==}
 
-  '@lynx-js/go-web@0.2.1':
-    resolution: {integrity: sha512-r/M0KfxVmS7aEjcxCDa1TGpEy6cA1S7OhS3k0lse95SSbhj9x/SFR06iquPvcQmS6tyxpJC6U/nR/5tWrY1dYw==}
+  '@lynx-js/go-web@0.5.1':
+    resolution: {integrity: sha512-HQO72C1ALInCzjDVEzCYJ7aGh/jQHTKc3fG8MNUs6TLy2lXl8ut/dKsztEw3OzD6NlCcQpoRdSsbmuI8ETDo7w==}
     engines: {node: ^22 || ^24}
     peerDependencies:
       '@douyinfe/semi-icons': '>=2.74.0'
@@ -1283,10 +1283,10 @@ packages:
       tslib:
         optional: true
 
-  '@lynx-js/web-core@0.20.2':
-    resolution: {integrity: sha512-9FlpQSnHOVnxS9yJe2SH2GkO33jf2wDZGGhXBQQRVDP8Hso52wpGE+ik4e4A0g+Pk6RCrXRp3UNA+bo5E96vOQ==}
+  '@lynx-js/web-core@0.21.1':
+    resolution: {integrity: sha512-PfbUnZltJOYkL2d/VA58zhBpvdD3yYKEa2B06aJ0BQidfXF/MOUUVZiYcRfxMdd2NPw7xdG8V1B3yVR/+LMRag==}
     peerDependencies:
-      '@lynx-js/css-serializer': 0.1.5
+      '@lynx-js/css-serializer': 0.1.6
       '@lynx-js/lynx-core': 0.1.3
       tslib: ^2.5.0
     peerDependenciesMeta:
@@ -1302,14 +1302,19 @@ packages:
     peerDependencies:
       tslib: ^2.5.0
 
+  '@lynx-js/web-elements@0.12.4':
+    resolution: {integrity: sha512-4xyJK3h8NDMYgeH488YgyLzAfxGN7TjtSaakKyVXdrbBiBEEGl2Pa8QDJl6cc8+p8fwDrj8ZsNCVgrJL+802oA==}
+    peerDependencies:
+      tslib: ^2.5.0
+
   '@lynx-js/web-rsbuild-server-middleware@0.19.8':
     resolution: {integrity: sha512-wVMa2wE20is4cK0j5y0ZY6Om5NwbPXPlGCNHJXGhnTWsqsDmZai++VZRdK+xAoRimDsBT+3YH1XOJJ9de/pDiA==}
 
   '@lynx-js/web-worker-rpc@0.19.8':
     resolution: {integrity: sha512-POkpPZQjU+a0V/LGWNkaqy+/E6B2WEDYnbh+0FtRNLXcNOBOcgvZNg0fo6VVbw3UInmTwO0v+2g/kMjotizwkg==}
 
-  '@lynx-js/web-worker-rpc@0.20.2':
-    resolution: {integrity: sha512-fbOIku3UsVOa2coXq0z8mJekYgz56614ebwba6q21D96ujgLjJjuowxRmAKQsDC2DFFcf3sAGJd0M0IHsbt9tQ==}
+  '@lynx-js/web-worker-rpc@0.21.1':
+    resolution: {integrity: sha512-FuNt8mU3FWS7Gf6MycNqJXOfeQqWRRuw5QrBUn7fCcKMWgHvJO1kGWdS9vqQB5LJS24O9Rh6fc+OgUFzxoKcNA==}
 
   '@lynx-js/webpack-dev-transport@0.2.0':
     resolution: {integrity: sha512-RSy02FSoMsavEn2wna4khSJwT2uGW4XeLduKH8UDT3aCsBNM/rXndUyG6PbwMcywXCeyb8UofkhaQDtJvNJklA==}
@@ -2070,6 +2075,7 @@ packages:
   '@svitejs/changesets-changelog-github-compact@1.2.0':
     resolution: {integrity: sha512-08eKiDAjj4zLug1taXSIJ0kGL5cawjVCyJkBb6EWSg5fEPX6L+Wtr0CH2If4j5KYylz85iaZiFlUItvgJvll5g==}
     engines: {node: ^14.13.1 || ^16.0.0 || >=18}
+    deprecated: unmaintained
 
   '@swc/helpers@0.5.19':
     resolution: {integrity: sha512-QamiFeIK3txNjgUTNppE6MiG3p7TdninpZu0E0PbqVh1a9FNLT2FRhisaa4NcaX52XVhA5l7Pk58Ft7Sqi/2sA==}
@@ -2379,6 +2385,9 @@ packages:
   '@types/tapable@2.2.7':
     resolution: {integrity: sha512-D6QzACV9vNX3r8HQQNTOnpG+Bv1rko+yEA82wKs3O9CQ5+XW7HI7TED17/UE7+5dIxyxZIWTxKbsBeF6uKFCwA==}
 
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
 
@@ -2399,6 +2408,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unhead/react@2.1.12':
     resolution: {integrity: sha512-1xXFrxyw29f+kScXfEb0GxjlgtnHxoYau0qpW9k8sgWhQUNnE5gNaH3u+rNhd5IqhyvbdDRJpQ25zoz0HIyGaw==}
@@ -3142,6 +3152,9 @@ packages:
   domhandler@5.0.3:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
+
+  dompurify@3.4.11:
+    resolution: {integrity: sha512-zhlUV12GsaRzMsf9q5M254YhA4+VuF0fG+QFqu6aYpoGlKtz+w8//jBcGVYBgQkR5GHjUomejY84AV+/uPbWdw==}
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
@@ -6461,11 +6474,11 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@lynx-js/go-web@0.2.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
+  '@lynx-js/go-web@0.5.1(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.21.1(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
     dependencies:
       '@douyinfe/semi-icons': 2.92.2(react@19.2.4)
       '@douyinfe/semi-ui': 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@lynx-js/web-core': 0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
+      '@lynx-js/web-core': 0.21.1(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
       '@shikijs/transformers': 3.23.0
       qrcode.react: 4.2.0(react@19.2.4)
       react: 19.2.4
@@ -6554,10 +6567,10 @@ snapshots:
       '@lynx-js/lynx-core': 0.1.3
       tslib: 2.8.1
 
-  '@lynx-js/web-core@0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)':
+  '@lynx-js/web-core@0.21.1(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)':
     dependencies:
-      '@lynx-js/web-elements': 0.12.0(tslib@2.8.1)
-      '@lynx-js/web-worker-rpc': 0.20.2
+      '@lynx-js/web-elements': 0.12.4(tslib@2.8.1)
+      '@lynx-js/web-worker-rpc': 0.21.1
       wasm-feature-detect: 1.8.0
     optionalDependencies:
       '@lynx-js/lynx-core': 0.1.3
@@ -6567,11 +6580,17 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@lynx-js/web-elements@0.12.4(tslib@2.8.1)':
+    dependencies:
+      dompurify: 3.4.11
+      markdown-it: 14.1.1
+      tslib: 2.8.1
+
   '@lynx-js/web-rsbuild-server-middleware@0.19.8': {}
 
   '@lynx-js/web-worker-rpc@0.19.8': {}
 
-  '@lynx-js/web-worker-rpc@0.20.2': {}
+  '@lynx-js/web-worker-rpc@0.21.1': {}
 
   '@lynx-js/webpack-dev-transport@0.2.0': {}
 
@@ -7866,6 +7885,9 @@ snapshots:
     dependencies:
       tapable: 2.3.0
 
+  '@types/trusted-types@2.0.7':
+    optional: true
+
   '@types/unist@2.0.11': {}
 
   '@types/unist@3.0.3': {}
@@ -8649,6 +8671,10 @@ snapshots:
   domhandler@5.0.3:
     dependencies:
       domelementtype: 2.3.0
+
+  dompurify@3.4.11:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
 
   domutils@3.2.2:
     dependencies:
