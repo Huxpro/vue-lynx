@@ -84,8 +84,7 @@
     "@rslib/core": "^0.7.0",
     "@types/node": "^25.5.0",
     "rsbuild-plugin-publint": "0.3.4",
-    "typescript": "^5.0.0",
-    "vue": "^3.5.0"
+    "typescript": "^5.0.0"
   },
   "peerDependencies": {
     "@rsbuild/core": "^1.0.0",
