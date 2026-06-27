@@ -404,7 +404,7 @@ describe('useCssVars — reactivity', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Root-only stamping (engine propagates to descendants via lynx#5889 fix)
+// 7. Root-only stamping (engine propagates to descendants via lynx#5912 fix)
 // ---------------------------------------------------------------------------
 
 describe('useCssVars — root-only stamping', () => {
@@ -413,7 +413,7 @@ describe('useCssVars — root-only stamping', () => {
 
     // Structure: view (root) > view (mid) > text (leaf)
     // The Lynx engine propagates the CSS custom property to descendants via
-    // RecursivelyMarkChildrenCSSVariableDirty (fixed in lynx-family/lynx#5889).
+    // RecursivelyMarkChildrenCSSVariableDirty (fixed in lynx-family/lynx#5912, closing #5889).
     // useCssVars must stamp only the root; descendants must not receive a
     // redundant SET_STYLE.
     const App = defineComponent({

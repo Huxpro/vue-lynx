@@ -41,6 +41,8 @@ pluginVueLynx({
 })
 ```
 
+Requires **Lynx engine ≥ 3.8.1**, which ships the fix that propagates CSS custom properties from the component root to its descendants ([lynx-family/lynx#5912](https://github.com/lynx-family/lynx/pull/5912)). On earlier engines the variables are stamped on the root but never reach descendants.
+
 :::
 
 <Go
