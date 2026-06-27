@@ -475,6 +475,29 @@ describe('worklet-loader-mt (end-to-end)', () => {
     expect(followed).toContain(`import '@org/motion';`);
   });
 
+  it('follows a bare npm import matched by a RegExp allowlist entry', async () => {
+    // Guards the prior bug end-to-end: a RegExp like /^@org\// must match the
+    // package even though the resolver returns an absolute node_modules path.
+    // String-allowlist tests above would pass even if RegExp handling broke,
+    // so this exercises the RegExp path through the real loader.
+    const src = `import { animate } from '@org/motion';\nexport const x = animate;`;
+    const resolve = { '@org/motion': '/project/node_modules/@org/motion/dist/index.js' };
+
+    const followed = await runLoaderMT(src, {
+      resourcePath: '/project/src/App.ts',
+      resolve,
+      includeWorkletPackages: [/^@org\//],
+    });
+    expect(followed).toContain(`import '@org/motion';`);
+
+    const dropped = await runLoaderMT(src, {
+      resourcePath: '/project/src/App.ts',
+      resolve,
+      includeWorkletPackages: [/^@other\//],
+    });
+    expect(dropped).not.toContain('@org/motion');
+  });
+
   it('skips a non-relative import the resolver rejects (does not fail)', async () => {
     // No `resolve` map → getResolve rejects for `@/missing`; the loader's
     // try/catch maps that to null and drops the edge instead of throwing.
