@@ -30,6 +30,7 @@ import {
   extractLocalImports,
   isUnderNodeModules,
   isWorkletPackage,
+  packageNameFromNodeModulesPath,
 } from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
 
 /** Resolve specifiers from a fixed map; anything unlisted is unresolvable. */
@@ -68,6 +69,46 @@ describe('isWorkletPackage', () => {
 
   it('empty allowlist matches nothing', () => {
     expect(isWorkletPackage('anything', [])).toBe(false);
+  });
+});
+
+describe('packageNameFromNodeModulesPath', () => {
+  it('extracts scoped and unscoped package names (posix + win32)', () => {
+    expect(packageNameFromNodeModulesPath('/proj/node_modules/lodash/index.js'))
+      .toBe('lodash');
+    expect(
+      packageNameFromNodeModulesPath('/proj/node_modules/@my-org/foo/dist/index.js'),
+    ).toBe('@my-org/foo');
+    expect(
+      packageNameFromNodeModulesPath('C:\\proj\\node_modules\\@my-org\\foo\\i.js'),
+    ).toBe('@my-org/foo');
+  });
+
+  it('uses the last node_modules segment (nested deps + pnpm layout)', () => {
+    expect(
+      packageNameFromNodeModulesPath('/proj/node_modules/a/node_modules/b/i.js'),
+    ).toBe('b');
+    expect(
+      packageNameFromNodeModulesPath(
+        '/proj/node_modules/.pnpm/@my-org+foo@1.0.0/node_modules/@my-org/foo/dist/i.js',
+      ),
+    ).toBe('@my-org/foo');
+  });
+
+  it('returns null when not under node_modules', () => {
+    expect(packageNameFromNodeModulesPath('/proj/src/gesture.ts')).toBe(null);
+  });
+
+  // The path-derived package name feeds the same allowlist matcher used for
+  // import specifiers, so a RegExp pattern matches at both checkpoints.
+  it('a path-derived name matches the same RegExp allowlist as a specifier', () => {
+    const allowlist = [/^@my-org\//];
+    const path = '/proj/node_modules/@my-org/foo/dist/index.js';
+    const pkgName = packageNameFromNodeModulesPath(path);
+    expect(pkgName).not.toBe(null);
+    expect(isWorkletPackage(pkgName!, allowlist)).toBe(true);
+    // and the original specifier matches too — one stable input at both ends
+    expect(isWorkletPackage('@my-org/foo', allowlist)).toBe(true);
   });
 });
 

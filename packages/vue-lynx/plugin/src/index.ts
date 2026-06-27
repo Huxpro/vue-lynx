@@ -126,6 +126,12 @@ export interface PluginVueLynxOptions {
    *     `'@vue-lynx/motion-mini/dist/foo'`, but NOT
    *     `'@vue-lynx/motion-mini-x'`.
    *
+   * Patterns are matched against the package specifier/name (e.g.
+   * `'@my-org/foo'`) at every checkpoint — never the resolved filesystem
+   * path — so a RegExp like `/^@my-org\//` matches consistently whether the
+   * package is followed as an import or carved out of the `node_modules`
+   * loader exclude.
+   *
    * @example
    * ```ts
    * pluginVueLynx({

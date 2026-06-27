@@ -16,6 +16,10 @@ import {
 } from '@lynx-js/template-webpack-plugin';
 
 import { LAYERS } from './layers.js';
+import {
+  isWorkletPackage,
+  packageNameFromNodeModulesPath,
+} from './loaders/worklet-utils.js';
 import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
 import { VueScopedCSSIdPlugin } from './plugins/vue-scoped-cssid-plugin.js';
 
@@ -296,18 +300,19 @@ export function applyEntry(
   // worklet transforms would skip it and its `'main thread'` registrations
   // would never reach the MT bundle. pnpm workspace symlinks resolve to
   // realpaths under `packages/` and never hit this branch.
+  //
+  // The allowlist is matched against the package NAME derived from the resolved
+  // path — never the raw path — so it shares the exact matching model used when
+  // following import specifiers (see `isWorkletPackage`). Without this, a
+  // RegExp like `/^@my-org\//` would match the specifier `@my-org/foo` but
+  // never the path `…/node_modules/@my-org/foo/dist/index.js`, silently
+  // dropping the package here.
   const nodeModulesExcludeWithAllowlist = (resource: string): boolean => {
     if (!/node_modules/.test(resource)) return false;
     if (includeWorkletPackages.length === 0) return true;
-    const norm = resource.replace(/\\/g, '/');
-    for (const p of includeWorkletPackages) {
-      if (p instanceof RegExp) {
-        if (p.test(norm)) return false;
-      } else if (norm.includes('/node_modules/' + p + '/')) {
-        return false;
-      }
-    }
-    return true;
+    const pkgName = packageNameFromNodeModulesPath(resource);
+    if (pkgName === null) return true;
+    return !isWorkletPackage(pkgName, includeWorkletPackages);
   };
 
   // Worklet loader (BG layer): runs SWC JS-target transform on BG-layer
