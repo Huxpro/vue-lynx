@@ -154,10 +154,8 @@ export function tokenizeLiterals(source: string): {
 export function extractImportSpecifiers(source: string): string[] {
   const specifiers = new Set<string>();
 
-  // Mask string/template literals (and drop comments) before scanning, so
-  // neither JSDoc example imports nor import-like text inside a string or
-  // template literal is mistaken for a real import edge — re-emitting either
-  // would inject an unresolvable import and fail the build.
+  // Mask literals / drop comments before scanning (see tokenizeLiterals) so
+  // import-like text inside them is never followed as a real edge.
   const { code, literals } = tokenizeLiterals(source);
   const unquote = (lit: string) => lit.slice(1, -1);
 
@@ -202,15 +200,8 @@ export function extractImportSpecifiers(source: string): string[] {
  * may not contain `'main thread'` directives themselves, but they import
  * `.vue`/`.ts` files that do.
  *
- * Which imports are followed:
- *   - Relative imports (`./foo`, `../bar`) — always (original behaviour).
- *   - Non-relative imports (path aliases, tsconfig `paths`, `@/…`, `~/…`,
- *     bare packages) — resolved via `resolveImport`. Followed when they
- *     resolve to project/aliased source OUTSIDE `node_modules`, so internal
- *     aliases are no longer silently dropped.
- *   - Imports resolving INTO `node_modules` — followed only when they match
- *     the `includeWorkletPackages` allowlist, letting a published package
- *     ship MT worklets to consumers.
+ * The follow policy (relative always, non-relative by resolved location,
+ * `node_modules` only when allowlisted) is applied inline below.
  *
  * Unresolvable specifiers are skipped (never fail the build). The original
  * specifier string is re-emitted verbatim so the downstream bundler resolves
