@@ -99,8 +99,6 @@ describe('packageNameFromNodeModulesPath', () => {
     expect(packageNameFromNodeModulesPath('/proj/src/gesture.ts')).toBe(null);
   });
 
-  // The path-derived package name feeds the same allowlist matcher used for
-  // import specifiers, so a RegExp pattern matches at both checkpoints.
   it('a path-derived name matches the same RegExp allowlist as a specifier', () => {
     const allowlist = [/^@my-org\//];
     const path = '/proj/node_modules/@my-org/foo/dist/index.js';
@@ -476,10 +474,8 @@ describe('worklet-loader-mt (end-to-end)', () => {
   });
 
   it('follows a bare npm import matched by a RegExp allowlist entry', async () => {
-    // Guards the prior bug end-to-end: a RegExp like /^@org\// must match the
-    // package even though the resolver returns an absolute node_modules path.
-    // String-allowlist tests above would pass even if RegExp handling broke,
-    // so this exercises the RegExp path through the real loader.
+    // The string-allowlist tests above pass even if RegExp handling breaks, so
+    // exercise a RegExp through the real loader (resolver returns an abs path).
     const src = `import { animate } from '@org/motion';\nexport const x = animate;`;
     const resolve = { '@org/motion': '/project/node_modules/@org/motion/dist/index.js' };
 

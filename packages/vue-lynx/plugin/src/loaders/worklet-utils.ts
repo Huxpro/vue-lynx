@@ -15,18 +15,13 @@ export function isUnderNodeModules(resolvedPath: string): boolean {
 }
 
 /**
- * Extract the package name (`name` or `@scope/name`) from a resolved path that
- * lives under `node_modules`, or `null` when the path is not under
- * `node_modules`.
+ * Extract the package name (`name` or `@scope/name`) from a resolved path under
+ * `node_modules`, or `null` when the path is not under `node_modules`. Lets a
+ * resolved path be matched against the allowlist as a package specifier (see
+ * {@link isWorkletPackage}).
  *
  * Uses the LAST `node_modules` segment so nested deps and pnpm's
- * `…/.pnpm/<pkg>@<v>/node_modules/<pkg>/…` layout both resolve to the real
- * package name.
- *
- * This is the bridge that lets a resolved filesystem path be matched against
- * the SAME `includeWorkletPackages` allowlist as an original import specifier
- * (see {@link isWorkletPackage}): both checkpoints match a package specifier
- * rather than mixing specifier and absolute-path inputs.
+ * `…/.pnpm/<pkg>@<v>/node_modules/<pkg>/…` layout both resolve correctly.
  */
 export function packageNameFromNodeModulesPath(
   resolvedPath: string,
@@ -65,11 +60,9 @@ function specifierMatchesPattern(
 /**
  * Whether `specifier` is covered by the `includeWorkletPackages` allowlist.
  *
- * This is the single matching model used at BOTH worklet checkpoints: when
- * following import specifiers ({@link extractLocalImports}) and when deciding
- * the `node_modules` loader carve-out in the plugin. The latter feeds the
- * package name derived via {@link packageNameFromNodeModulesPath}, so both
- * checkpoints match a package specifier — never a raw filesystem path.
+ * The single matcher used at both checkpoints — following import specifiers
+ * ({@link extractLocalImports}) and the plugin's `node_modules` loader carve-out
+ * — so both always match a package specifier, never a raw filesystem path.
  *
  * @internal Exported for tests.
  */

@@ -301,12 +301,9 @@ export function applyEntry(
   // would never reach the MT bundle. pnpm workspace symlinks resolve to
   // realpaths under `packages/` and never hit this branch.
   //
-  // The allowlist is matched against the package NAME derived from the resolved
-  // path — never the raw path — so it shares the exact matching model used when
-  // following import specifiers (see `isWorkletPackage`). Without this, a
-  // RegExp like `/^@my-org\//` would match the specifier `@my-org/foo` but
-  // never the path `…/node_modules/@my-org/foo/dist/index.js`, silently
-  // dropping the package here.
+  // Match the allowlist against the package NAME (not the raw path) so it shares
+  // the matching model used when following import specifiers — see
+  // `isWorkletPackage`.
   const nodeModulesExcludeWithAllowlist = (resource: string): boolean => {
     if (!/node_modules/.test(resource)) return false;
     if (includeWorkletPackages.length === 0) return true;
