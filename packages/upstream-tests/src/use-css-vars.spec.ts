@@ -404,17 +404,19 @@ describe('useCssVars — reactivity', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Deep element stamping
+// 7. Root-only stamping
 // ---------------------------------------------------------------------------
 
-describe('useCssVars — deep element stamping', () => {
-  it('stamps CSS vars on every descendant element, not just the root', async () => {
+describe('useCssVars — root-only stamping', () => {
+  it('stamps CSS vars only on the root element, not on descendants', async () => {
     const color = ref('red');
 
     // Structure: view (root) > view (mid) > text (leaf)
-    // The leaf is where a CSS class rule would consume the var.
-    // All three elements must receive the var so the Lynx class rule resolver
-    // can see it on the element itself (it does not resolve inherited inline vars).
+    // This test only verifies the BG-runtime contract: useCssVars stamps the
+    // root and emits no redundant SET_STYLE for descendants. Whether the
+    // native engine actually cascades the var to descendants is NOT covered
+    // here — that is engine behavior (lynx-family/lynx#5912, first in the
+    // 3.9.0 tag) and is verified manually via the css-features example.
     const App = defineComponent({
       setup() {
         useCssVars((_ctx: unknown) => ({ 'deep1': color.value }));
@@ -437,14 +439,13 @@ describe('useCssVars — deep element stamping', () => {
       (op) => (op.style as Record<string, unknown>)['--deep1'] !== undefined,
     );
 
-    // All three elements (root view, mid view, leaf text) must be stamped.
-    expect(cssVarOps.length).toBe(3);
-    for (const op of cssVarOps) {
-      expect((op.style as Record<string, unknown>)['--deep1']).toBe('red');
-    }
+    // Only the root view should be stamped — not mid or leaf. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep1']).toBe('red');
   });
 
-  it('stamps updated CSS vars on deep elements when reactive source changes', async () => {
+  it('stamps updated CSS var only on the root when reactive source changes', async () => {
     const color = ref('red');
 
     const App = defineComponent({
@@ -471,10 +472,9 @@ describe('useCssVars — deep element stamping', () => {
       (op) => (op.style as Record<string, unknown>)['--deep2'] !== undefined,
     );
 
-    // Both the root view and child text must receive the updated value.
-    expect(cssVarOps.length).toBe(2);
-    for (const op of cssVarOps) {
-      expect((op.style as Record<string, unknown>)['--deep2']).toBe('blue');
-    }
+    // Only the root view is stamped; the child text is not. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep2']).toBe('blue');
   });
 });
