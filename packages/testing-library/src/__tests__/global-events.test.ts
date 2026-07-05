@@ -1,5 +1,7 @@
+import { effectScope } from '@vue/runtime-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { onLifecycleEvent } from '../../../vue-lynx/runtime/src/global-events';
+import { useGlobalEvent } from '../../../vue-lynx/runtime/src/use-global-event';
 
 describe('global events', () => {
   it('routes globalEventFromLepus to GlobalEventEmitter', () => {
@@ -94,5 +96,52 @@ describe('entry-background lifecycle wrapper', () => {
     ]);
     // ...and the previously-registered handler is preserved.
     expect(prevOnLifecycleEvent).toHaveBeenCalledWith(event);
+  });
+});
+
+describe('useGlobalEvent', () => {
+  let prevLynx: unknown;
+
+  beforeEach(() => {
+    prevLynx = (globalThis as any).lynx;
+  });
+
+  afterEach(() => {
+    (globalThis as any).lynx = prevLynx;
+  });
+
+  it('subscribes on call and unsubscribes when the scope is disposed', () => {
+    const addListener = vi.fn();
+    const removeListener = vi.fn();
+    (globalThis as any).lynx = {
+      getJSModule: (name: string) =>
+        name === 'GlobalEventEmitter' ? { addListener, removeListener } : undefined,
+    };
+
+    const handler = vi.fn();
+    const scope = effectScope();
+    scope.run(() => {
+      useGlobalEvent('keyboardstatuschanged', handler);
+    });
+
+    // Subscribed immediately with the same handler reference.
+    expect(addListener).toHaveBeenCalledWith('keyboardstatuschanged', handler);
+    expect(removeListener).not.toHaveBeenCalled();
+
+    // Disposing the scope removes exactly that listener.
+    scope.stop();
+    expect(removeListener).toHaveBeenCalledWith('keyboardstatuschanged', handler);
+  });
+
+  it('does not throw when GlobalEventEmitter is unavailable', () => {
+    (globalThis as any).lynx = { getJSModule: () => undefined };
+
+    const scope = effectScope();
+    expect(() => {
+      scope.run(() => {
+        useGlobalEvent('keyboardstatuschanged', vi.fn());
+      });
+      scope.stop();
+    }).not.toThrow();
   });
 });
