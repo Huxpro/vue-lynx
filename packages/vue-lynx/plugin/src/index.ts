@@ -30,6 +30,7 @@ import { pluginVue } from '@rsbuild/plugin-vue';
 import { applyCSS } from './css.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
+import { VueLynxVaporTemplatePlugin } from './plugins/vapor-template-plugin.js';
 
 const require = createRequire(import.meta.url);
 
@@ -109,6 +110,27 @@ export interface PluginVueLynxOptions {
    * @deprecated Will default to `false` in the next major version.
    */
   autoPixelUnit?: boolean;
+
+  /**
+   * Enable Vue Vapor mode support (experimental).
+   *
+   * Vapor mode is Vue's compilation-based, Virtual-DOM-free rendering mode,
+   * available since Vue 3.6 (currently in beta). Components opt in with the
+   * `vapor` attribute: `<script setup vapor>`.
+   *
+   * When enabled:
+   * - `'vue'` is aliased to `vue-lynx/with-vapor`, which adds the Vapor
+   *   runtime helper surface next to the regular vue-lynx API, and routes
+   *   `createApp()` to the Vapor runtime for `__vapor` root components.
+   * - Vapor SFC templates compile through `@vue/compiler-vapor` in both
+   *   dev (separate template compilation) and prod (inlined) builds.
+   *
+   * Pure Vapor apps and pure vdom apps are both supported; mixing vapor and
+   * vdom components in one app (`vaporInteropPlugin`) is not supported yet.
+   *
+   * @defaultValue false
+   */
+  vapor?: boolean;
 }
 
 /**
@@ -132,6 +154,7 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    vapor = false,
   } = options;
 
   return [
@@ -150,6 +173,10 @@ export function pluginVueLynx(
           // Our ShadowElement custom renderer can't parse HTML strings, so we
           // disable hoisting entirely — the standard approach for non-DOM renderers.
           hoistStatic: false,
+          // Vapor only: compile events as per-element `on()` listeners
+          // instead of Solid-style document-level delegation — Lynx has no
+          // document to delegate to. Ignored by the vdom compiler.
+          eventDelegation: false,
         },
       },
     }),
@@ -229,8 +256,24 @@ export function pluginVueLynx(
 
         api.modifyBundlerChain((chain) => {
           // "vue" → "vue-lynx" ensures template compiler output
-          // imports from the same module instance (singleton shared state)
-          chain.resolve.alias.set('vue', 'vue-lynx');
+          // imports from the same module instance (singleton shared state).
+          // With vapor enabled, the composite entry additionally provides
+          // the Vapor helper surface that compiled vapor components import.
+          chain.resolve.alias.set(
+            'vue',
+            vapor ? 'vue-lynx/with-vapor' : 'vue-lynx',
+          );
+
+          if (vapor) {
+            // rspack-vue-loader's templateLoader predates Vapor: swap in the
+            // vapor-aware fork so dev-mode (non-inlined) template compilation
+            // of `<script setup vapor>` SFCs uses @vue/compiler-vapor.
+            chain
+              .plugin('vue-lynx:vapor-template-loader')
+              .use(VueLynxVaporTemplatePlugin, [
+                path.resolve(_pluginDirname, './loaders/vapor-template-loader.js'),
+              ]);
+          }
 
           // Ensure vue-lynx/internal/ops resolves correctly.
           // main-thread/dist and runtime/dist import this path, but rspack's
