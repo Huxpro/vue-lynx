@@ -16,6 +16,7 @@ export default defineConfig({
       'loaders/worklet-loader-mt': './src/loaders/worklet-loader-mt.ts',
       'loaders/vue-sfc-script-extractor':
         './src/loaders/vue-sfc-script-extractor.ts',
+      'loaders/vapor-template-loader': './src/loaders/vapor-template-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
