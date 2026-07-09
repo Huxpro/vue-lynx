@@ -440,3 +440,81 @@ describe('vapor: attributes and traversal', () => {
     ).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Template-clone text aliasing (creation-path ops optimization)
+// ---------------------------------------------------------------------------
+
+describe('vapor: only-child text aliasing', () => {
+  it('does not materialize only-child #text nodes on the Main Thread', async () => {
+    const t0 = template('<view class=a><text>hello </text><text> ', 1);
+    const count = ref(1);
+    const App = defineVaporComponent(() => {
+      const n2: El = t0();
+      const n0: El = child(n2);
+      const n1: El = next(n0, 1);
+      const x1: El = txt(n1);
+      renderEffect(() => setText(x1, String(count.value)));
+      return n2;
+    });
+    createVaporApp(App).mount();
+
+    const decoded = await flushedOps();
+    // No standalone text elements — text lives on the <text> hosts.
+    expect(opsOf(decoded, OP.CREATE_TEXT)).toHaveLength(0);
+    const textEls = opsOf(decoded, OP.CREATE)
+      .filter((c) => c.args[1] === 'text')
+      .map((c) => c.args[0]);
+    expect(textEls).toHaveLength(2);
+    const setTexts = opsOf(decoded, OP.SET_TEXT);
+    // static text emitted on the host; dynamic placeholder skipped, then the
+    // renderEffect writes the interpolated value onto the host uid
+    expect(
+      setTexts.some((t) => t.args[1] === 'hello ' && textEls.includes(t.args[0])),
+    ).toBe(true);
+    expect(
+      setTexts.some((t) => t.args[1] === '1' && textEls.includes(t.args[0])),
+    ).toBe(true);
+
+    // updates keep routing to the host element
+    count.value = 2;
+    const updates = await flushedOps();
+    expect(
+      opsOf(updates, OP.SET_TEXT).some(
+        (t) => t.args[1] === '2' && textEls.includes(t.args[0]),
+      ),
+    ).toBe(true);
+  });
+
+  it('lazily materializes the aliased text node on structural change', async () => {
+    const t0 = template('<view><text>abc', 1);
+    let host: El;
+    const App = defineVaporComponent(() => {
+      const n1: El = t0();
+      host = child(n1);
+      return n1;
+    });
+    createVaporApp(App).mount();
+    const mountOps = await flushedOps();
+    expect(opsOf(mountOps, OP.CREATE_TEXT)).toHaveLength(0);
+    const hostUid = host!.uid;
+
+    // Appending a sibling into the host forces materialization: the aliased
+    // #text becomes a real MT text node and the host text is cleared.
+    const extra: El = (globalThis as El).document.createTextNode('!');
+    host!.appendChild(extra);
+    const decoded = await flushedOps();
+    const createTexts = opsOf(decoded, OP.CREATE_TEXT).map((c) => c.args[0]);
+    expect(createTexts).toHaveLength(2); // materialized 'abc' + new '!'
+    expect(
+      opsOf(decoded, OP.SET_TEXT).some(
+        (t) => t.args[0] === hostUid && t.args[1] === '',
+      ),
+    ).toBe(true);
+    expect(
+      opsOf(decoded, OP.SET_TEXT).some((t) => t.args[1] === 'abc'),
+    ).toBe(true);
+    const inserts = opsOf(decoded, OP.INSERT);
+    expect(inserts.filter((i) => i.args[0] === hostUid)).toHaveLength(2);
+  });
+});
