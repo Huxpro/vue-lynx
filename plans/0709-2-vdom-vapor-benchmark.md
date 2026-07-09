@@ -68,4 +68,4 @@ Vapor primarily targets.
 - [x] B2: vapor app generation + both apps build (dev smoke: prod bundles contain expected codegen)
 - [x] B3: harness — static server + Playwright + lynx-view page, console/DOM collection, startup timing, memory, bundle sizes
 - [x] B4: statistics (median/mean/std/CI), JSON + markdown report emission
-- [ ] B5: run full suite, sanity-check variance, write findings into `plans/0709-3-vdom-vapor-benchmark-results.md`
+- [x] B5: run full suite, sanity-check variance, write findings into `plans/0709-3-vdom-vapor-benchmark-results.md`
