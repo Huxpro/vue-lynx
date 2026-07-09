@@ -138,6 +138,9 @@ const includedTests = [
   'directives/vModel',
 ].map((name) => `${testDir}/${name}.spec.ts`);
 
+// Local (non-upstream) tests that need the full MT pipeline.
+includedTests.push(path.resolve(__dirname, 'src/mt/*.spec.ts'));
+
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
