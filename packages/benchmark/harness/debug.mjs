@@ -48,7 +48,7 @@ page.on('console', (m) => console.log('[console]', m.type(), m.text().slice(0, 5
 page.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 1000)));
 page.on('worker', (w) => console.log('[worker created]', w.url()));
 await page.goto('http://127.0.0.1:8321/');
-await page.waitForTimeout(8000);
+await page.waitForTimeout(Number(process.argv[3] ?? 8000));
 const text = await page.evaluate(() => document.body.innerText.slice(0, 300));
 console.log('[body text]', JSON.stringify(text));
 await browser.close();
