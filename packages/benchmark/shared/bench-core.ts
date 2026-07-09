@@ -47,6 +47,8 @@ const OP_ARITY: Record<number, number> = {
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
   [OP.SET_SCOPE_ID]: 2,
+  [OP.REGISTER_TEMPLATE]: 2,
+  [OP.CLONE_TEMPLATE]: 2,
 };
 
 function countOps(flat: unknown[]): number {

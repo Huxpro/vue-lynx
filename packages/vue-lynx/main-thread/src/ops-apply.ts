@@ -69,15 +69,74 @@ function createTypedElement(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Template instantiation (Vapor fast path)
+// ---------------------------------------------------------------------------
+
+interface TemplateNodeProps {
+  c?: string;
+  s?: Record<string, unknown>;
+  a?: [string, string][];
+  i?: string;
+  sc?: number[];
+  t?: string;
+}
+
+/** [tag, props|0, children] — see internal/ops.ts for the wire format. */
+type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
+
+const templates = new Map<number, TemplateNode>();
+
 /**
- * Apply a flat ops batch through PAPI.
- *
- * @param flush - Present the result with `__FlushElementTree` afterwards.
- *   The IFR render passes `false` for batches applied synchronously inside
- *   `renderPage`, which presents the whole frame with a single flush at the
- *   end instead of one per batch.
+ * Instantiate a registered template. Element ids are assigned by pre-order
+ * traversal starting at baseUid — the exact allocation order the BG thread
+ * used for its shadow clone, so both sides agree without a transmitted map.
  */
-export function applyOps(ops: unknown[], flush = true): void {
+function instantiateTemplate(
+  node: TemplateNode,
+  base: number,
+  counter: { value: number },
+): { el: LynxElement; uid: number } {
+  const uid = base + counter.value++;
+  const [tag, props, children] = node;
+
+  let el: LynxElement;
+  if (tag === '#comment') {
+    el = __CreateRawText('');
+    elements.set(uid, el);
+    return { el, uid };
+  }
+  if (tag === '#text') {
+    el = __CreateText(pageUniqueId);
+  } else {
+    el = createTypedElement(tag, pageUniqueId);
+  }
+  __SetCSSId([el], 0);
+  elements.set(uid, el);
+  __SetAttribute(el, `vue-ref-${uid}`, 1);
+
+  if (props) {
+    if (props.c !== undefined) __SetClasses(el, props.c);
+    if (props.s !== undefined) __SetInlineStyles(el, props.s);
+    if (props.a) {
+      for (const [key, value] of props.a) __SetAttribute(el, key, value);
+    }
+    if (props.i !== undefined) __SetID(el, props.i);
+    if (props.sc) {
+      for (const cssId of props.sc) __SetCSSId([el], cssId);
+    }
+    if (props.t !== undefined) __SetAttribute(el, 'text', props.t);
+  }
+
+  for (const childNode of children) {
+    const child = instantiateTemplate(childNode, base, counter);
+    __AppendElement(el, child.el);
+    trackInsert(uid, child.uid);
+  }
+  return { el, uid };
+}
+
+export function applyOps(ops: unknown[]): void {
   const len = ops.length;
   if (len === 0) return;
 
@@ -99,6 +158,14 @@ export function applyOps(ops: unknown[], flush = true): void {
     if (elements.has(firstId)) {
       return;
     }
+  }
+  // Same guard for Vapor batches, which start with template registration or
+  // instantiation instead of CREATE.
+  if (len >= 3 && ops[0] === OP.REGISTER_TEMPLATE && templates.has(ops[1] as number)) {
+    return;
+  }
+  if (len >= 3 && ops[0] === OP.CLONE_TEMPLATE && elements.has(ops[2] as number)) {
+    return;
   }
 
   let i = 0;
@@ -179,6 +246,23 @@ export function applyOps(ops: unknown[], flush = true): void {
           }
           __RemoveElement(parent, child);
           removedRoots.add(childId);
+        }
+        break;
+      }
+
+      case OP.REGISTER_TEMPLATE: {
+        const tplId = ops[i++] as number;
+        const structure = ops[i++] as TemplateNode;
+        templates.set(tplId, structure);
+        break;
+      }
+
+      case OP.CLONE_TEMPLATE: {
+        const tplId = ops[i++] as number;
+        const baseUid = ops[i++] as number;
+        const structure = templates.get(tplId);
+        if (structure) {
+          instantiateTemplate(structure, baseUid, { value: 0 });
         }
         break;
       }
@@ -342,6 +426,7 @@ export { elements };
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
   resetElementRegistry();
+  templates.clear();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
