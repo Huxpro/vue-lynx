@@ -58,7 +58,31 @@ than in desktop V8. On update-heavy, long-lived screens Vapor's advantage is
 decisive and its lower retained heap (−26% at 10k rows: no vnode tree kept
 alive) compounds it.
 
-### 2. Creation — currently 28–47% slower on BG, entirely explainable and fixable
+### 2. Creation — was 28–47% slower; largely FIXED by only-child text aliasing
+
+**Update (same day):** the highest-leverage fix below — routing an element's
+only-child #text to the host element instead of materializing a separate
+Main-Thread text node (with lazy materialization if the host ever gains
+siblings) — is now implemented in `ShadowElement.cloneNode`. Results
+(`results/run2-text-aliasing.*`, 2 loads, same methodology):
+
+| metric | before | after |
+|---|---|---|
+| create1k ops (vapor vs vdom) | 25,000 vs 17,000 (+47%) | **17,000 vs 17,000 (parity)** |
+| create1k payload | 428 KB vs 327 KB | **329 KB vs 327 KB** |
+| create1k e2e gap | 1.9× slower | **1.10× slower** |
+| append1k e2e gap | 2.3× slower | **1.00× (parity)** |
+| create10k e2e gap | 1.76× slower | **1.11× slower** |
+| clear10k e2e gap | 2.4× slower | **0.95× (parity)** |
+| create1k bg gap | 1.39× slower | 1.24× slower |
+
+The residual ~20% bg gap is runtime-vapor's clone+per-binding-renderEffect
+mount cost through our DOM-compat shim; the remaining candidate is the
+composite `CLONE_TEMPLATE` op described below (deferred deliberately — it
+changes the cross-thread protocol that native Lynx also consumes, which we
+have so far kept untouched by design).
+
+The original analysis (pre-fix) follows for the record.
 
 Vapor loses the creation benchmarks in this port today. The ops-stream
 telemetry pinpoints why: creating the same 1k rows sends **25,000 ops
@@ -122,9 +146,10 @@ iterations (create10k CI95 ±3% of median).
 
 > On Lynx today, **Vapor is unambiguously faster where Vapor was designed
 > to be faster** — steady-state updates (4–8× lower BG-thread cost, ~2–4×
-> lower end-to-end latency) with ~26% lower retained memory. **VDOM still
-> wins initial rendering and bundle size** in this implementation (~1.4×
-> faster create on the BG thread, ~1.9× e2e, 48% smaller gzip), driven by
-> a measured +47% ops-stream volume from Vapor's clone-based mount path and
-> a composite entry that ships both runtimes — both identified as
-> addressable implementation artifacts, not intrinsic Vapor costs.
+> lower end-to-end latency) with ~26% lower retained memory. After the
+> only-child text-aliasing fix, **creation is at ops parity** (17,000 ops
+> for both modes) and end-to-end creation is within ~10% of VDOM
+> (append/clear at parity); the remaining ~20% BG-thread creation gap and
+> the +48% bundle size (composite entry ships both runtimes) are the two
+> known, bounded costs — both with identified fixes (composite
+> CLONE_TEMPLATE op; pure-Vapor entry).
