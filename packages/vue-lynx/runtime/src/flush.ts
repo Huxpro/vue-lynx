@@ -82,12 +82,27 @@ function doFlush(): void {
     pendingAckResolve = resolve;
   });
 
+  const data = JSON.stringify(ops);
+
+  // Optional observability hook (benchmarks, debugging): called with every
+  // flushed batch before it is posted to the Main Thread.
+  const hook = (globalThis as {
+    __VUE_LYNX_FLUSH_HOOK__?: (ops: unknown[], serialized: string) => void;
+  }).__VUE_LYNX_FLUSH_HOOK__;
+  if (hook) {
+    try {
+      hook(ops, data);
+    } catch {
+      // Observability must never break the pipeline.
+    }
+  }
+
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
   // (vitest node env) referencing it directly would throw ReferenceError.
   const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
-    { data: JSON.stringify(ops) },
+    { data },
     () => {
       // Main thread has finished applying the ops — resolve the promise.
       pendingAckResolve?.();

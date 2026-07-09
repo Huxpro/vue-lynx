@@ -232,6 +232,18 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                // Lynx's runtime wrapper injects `document`/`window` as
+                // undefined function parameters that shadow globals inside
+                // the Background Thread bundle. @vue/runtime-vapor references
+                // them as free identifiers, so in vapor mode rewrite those
+                // references to the DOM-shim globals installed by
+                // vue-lynx/vapor (see runtime vapor/dom-shim.ts).
+                ...(vapor
+                  ? {
+                    document: 'globalThis.__VUE_LYNX_DOCUMENT__',
+                    window: 'globalThis.__VUE_LYNX_WINDOW__',
+                  }
+                  : {}),
               },
             },
             tools: {

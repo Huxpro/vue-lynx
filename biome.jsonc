@@ -20,6 +20,7 @@
       "coverage/**",
       "packages/testing-library/**",
       "packages/upstream-tests/**",
+      "packages/benchmark/**",
       "packages/create-vue-lynx/**",
       "examples/**",
       "website/**",

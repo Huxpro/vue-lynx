@@ -213,6 +213,16 @@ export function installVaporDomShim(): void {
     });
   };
 
+  const lynxDocument = createLynxDocument();
+
+  // Lynx's runtime wrapper injects `document`/`window` as function
+  // parameters (undefined) that shadow the true globals in bundled code. The
+  // vue-lynx plugin therefore rewrites free `document`/`window` references
+  // to these keys at build time (vapor mode only); install them
+  // unconditionally.
+  define('__VUE_LYNX_DOCUMENT__', lynxDocument);
+  define('__VUE_LYNX_WINDOW__', g);
+
   if (g.document !== undefined) {
     if (__DEV__) {
       console.warn(
@@ -222,7 +232,7 @@ export function installVaporDomShim(): void {
       );
     }
   } else {
-    define('document', createLynxDocument());
+    define('document', lynxDocument);
   }
 
   define('Node', makeCtorShim(classify(null)));
