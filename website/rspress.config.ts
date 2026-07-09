@@ -99,7 +99,7 @@ export default defineConfig({
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
+        { text: 'Vapor Mode', link: '/guide/vapor-mode' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         { text: 'scroll-view vs list', link: '/guide/scroll-view-vs-list' },

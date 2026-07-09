@@ -123,6 +123,7 @@ export default function vaporTemplateLoader(
   } = loadInternals();
 
   const src = String(source);
+  // biome-ignore lint/complexity/noUselessThisAlias: mirrors the upstream loader body so the fork stays diffable
   const loaderContext = this;
   const options = (getOptions(loaderContext) || {}) as Record<string, unknown> & {
     isServerBuild?: boolean;
@@ -175,13 +176,13 @@ export default function vaporTemplateLoader(
     transformAssetUrls: options.transformAssetUrls || true,
   });
 
-  if (compiled.tips.length) {
+  if (compiled.tips.length > 0) {
     for (const tip of compiled.tips) {
       loaderContext.emitWarning(new Error(tip));
     }
   }
 
-  if (compiled.errors && compiled.errors.length) {
+  if (compiled.errors && compiled.errors.length > 0) {
     for (const err of compiled.errors) {
       if (typeof err === 'string') {
         loaderContext.emitError(new Error(err));
