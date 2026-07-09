@@ -34,7 +34,6 @@ installVaporDomShim();
 import {
   createInvoker,
   createVaporApp as _createVaporApp,
-  on,
   renderEffect,
 } from '@vue/runtime-vapor';
 import type { App, Component } from '@vue/runtime-core';
@@ -58,25 +57,15 @@ type AnyFn = (...args: unknown[]) => unknown;
 
 /**
  * Vapor counterpart of vue-lynx's `withModifiers`: wraps the handler with
- * Lynx modifier semantics and tags `.stop` handlers so addEventListener
- * registers them as native `catchEvent`.
+ * Lynx modifier semantics. `.stop` handlers carry the `_lynxCatch` tag so
+ * the `on` override below registers them as native `catchEvent`.
  * @public
  */
 export function withVaporModifiers(
   fn: AnyFn | undefined,
   modifiers: string[],
-): AnyFn {
-  const wrapped = typeof fn === 'function' ? withModifiers(fn, modifiers) : fn;
-  const invoker = createInvoker(wrapped as AnyFn) as AnyFn & {
-    _lynxCatch?: boolean;
-  };
-  if (
-    (wrapped as { _lynxCatch?: boolean } | undefined)?._lynxCatch
-    || modifiers.includes('stop')
-  ) {
-    invoker._lynxCatch = true;
-  }
-  return invoker;
+): AnyFn | undefined {
+  return typeof fn === 'function' ? withModifiers(fn, modifiers) : fn;
 }
 
 /**
@@ -85,7 +74,42 @@ export function withVaporModifiers(
  * @public
  */
 export function withVaporKeys(fn: AnyFn, keys: string[]): AnyFn {
-  return createInvoker(withKeys(fn, keys)) as AnyFn;
+  return withKeys(fn, keys);
+}
+
+// ---------------------------------------------------------------------------
+// on — preserve the `.stop` → catchEvent tag through the invoker wrapper
+// ---------------------------------------------------------------------------
+
+interface OnOptions {
+  once?: boolean;
+  capture?: boolean;
+  passive?: boolean;
+}
+
+/**
+ * Attach an event listener. Same contract as `@vue/runtime-vapor`'s `on`,
+ * except the `_lynxCatch` tag set by `.stop` modifiers is propagated onto
+ * the invoker so ShadowElement.addEventListener registers a native
+ * `catchEvent` (Lynx's stop-propagation mechanism).
+ * @public
+ */
+export function on(
+  el: ShadowElement,
+  event: string,
+  handler: AnyFn | AnyFn[] | undefined,
+  options: OnOptions = {},
+): void {
+  if (Array.isArray(handler)) {
+    for (const fn of handler) on(el, event, fn, options);
+    return;
+  }
+  if (!handler) return;
+  const invoker = createInvoker(handler) as AnyFn & { _lynxCatch?: boolean };
+  if ((handler as { _lynxCatch?: boolean })._lynxCatch) {
+    invoker._lynxCatch = true;
+  }
+  el.addEventListener(event, invoker as (data: unknown) => void, options);
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +211,7 @@ export function delegate(
     return;
   }
   if (!handler) return;
-  on(el as unknown as Parameters<typeof on>[0], event, createInvoker(handler));
+  on(el, event, handler);
 }
 
 /** @internal No-op — there is no document to delegate to on Lynx. */
