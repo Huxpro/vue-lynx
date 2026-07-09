@@ -275,7 +275,7 @@ export { createPageRoot } from './shadow-element.js';
 function setVShowDisplay(el: ShadowElement, value: unknown): void {
   el._vShowHidden = !value;
   const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
-  pushOp(OP.SET_STYLE, el.id, style);
+  pushOp(OP.SET_STYLE, el.uid, style);
   scheduleFlush();
 }
 
@@ -1209,7 +1209,7 @@ export const vModelText: ObjectDirective<ShadowElement> = {
   mounted(el, { value }) {
     const val = value == null ? '' : String(value);
     el._vModelValue = val;
-    pushOp(OP.SET_PROP, el.id, 'value', val);
+    pushOp(OP.SET_PROP, el.uid, 'value', val);
     scheduleFlush();
   },
 
@@ -1229,10 +1229,7 @@ export const vModelText: ObjectDirective<ShadowElement> = {
     const strVal = value == null ? '' : String(value);
     if (strVal !== el._vModelValue) {
       el._vModelValue = strVal;
-      // SET_PROP drives web (live attribute reflection) and the initial value;
-      // setValue() drives native, where the post-mount value attribute is inert.
-      pushOp(OP.SET_PROP, el.id, 'value', strVal);
-      setNativeInputValue(el, strVal);
+      pushOp(OP.SET_PROP, el.uid, 'value', strVal);
       scheduleFlush();
     }
   },
@@ -1474,5 +1471,5 @@ export function resetForTesting(): void {
   // they are bundle-lifetime (hoisted per render module, id-keyed,
   // idempotent), like the main-thread template registry.
   takeOps(); // drain any leftover ops
-  ShadowElement.nextId = 2;
+  ShadowElement.nextUid = 2;
 }

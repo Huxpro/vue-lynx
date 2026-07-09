@@ -20,10 +20,10 @@ import type {
 import { PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
 
 export class ShadowElement {
-  static nextId = 2; // 1 is reserved for the page root
+  static nextUid = 2; // 1 is reserved for the page root
 
-  id: number;
-  type: string;
+  uid: number;
+  tag: string;
   parent: ShadowElement | null = null;
   firstChild: ShadowElement | null = null;
   lastChild: ShadowElement | null = null;
@@ -64,19 +64,13 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
-  // Element-template instance state (only set on lowered template roots —
-  // see element-template.ts). Hole shadows are allocated contiguously after
-  // the root id so both threads agree on ids without shipping them.
-  _tplHoleKeys: string[] | undefined = undefined;
-  _tplHoles: ShadowElement[] | undefined = undefined;
-
-  constructor(type: string, forceId?: number) {
-    if (forceId === undefined) {
-      this.id = ShadowElement.nextId++;
+  constructor(tag: string, forceUid?: number) {
+    if (forceUid === undefined) {
+      this.uid = ShadowElement.nextUid++;
     } else {
-      this.id = forceId;
+      this.uid = forceUid;
     }
-    this.type = type;
+    this.tag = tag;
   }
 
   // ---------------------------------------------------------------------------
@@ -88,7 +82,7 @@ export class ShadowElement {
 
   /** CSS attribute selector that uniquely identifies this element on MT. */
   get _selector(): string {
-    return `[vue-ref-${this.id}]`;
+    return `[vue-ref-${this.uid}]`;
   }
 
   private _select(): NodesRef {

@@ -231,20 +231,16 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       );
     }
     const el = new ShadowElement(type);
-    pushOp(OP.CREATE, el.id, type);
+    pushOp(OP.CREATE, el.uid, type);
     scheduleFlush();
     return el;
   },
 
   createText(text: string): ShadowElement {
     const el = new ShadowElement('#text');
-    el._textValue = text;
-    if (text) {
-      pushOp(OP.CREATE_TEXT, el.id);
-      pushOp(OP.SET_TEXT, el.id, text);
-      el._mtCreated = true;
-      scheduleFlush();
-    }
+    pushOp(OP.CREATE_TEXT, el.uid);
+    if (text) pushOp(OP.SET_TEXT, el.uid, text);
+    scheduleFlush();
     return el;
   },
 
@@ -253,39 +249,14 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   // empty raw-text node a default line box, so materialising comments on the
   // Main Thread adds visible height for every v-if branch and Fragment anchor.
   createComment(_text: string): ShadowElement {
-    return new ShadowElement('#comment');
+    const el = new ShadowElement('#comment');
+    pushOp(OP.CREATE, el.uid, '__comment');
+    scheduleFlush();
+    return el;
   },
 
   setText(node: ShadowElement, text: string): void {
-    if (node.type === '#text') {
-      node._textValue = text;
-
-      if (!text) {
-        if (node._mtInserted && node.parent) {
-          pushOp(OP.REMOVE, node.parent.id, node.id);
-          node._mtInserted = false;
-          scheduleFlush();
-        }
-        return;
-      }
-
-      if (!node._mtCreated) {
-        pushOp(OP.CREATE_TEXT, node.id);
-        node._mtCreated = true;
-      }
-      pushOp(OP.SET_TEXT, node.id, text);
-
-      const parent = node.parent;
-      if (!node._mtInserted && parent && parent.type !== 'list') {
-        const anchor = resolveMainThreadAnchor(node.next);
-        pushOp(OP.INSERT, parent.id, node.id, anchor?.id ?? -1);
-        node._mtInserted = true;
-      }
-      scheduleFlush();
-      return;
-    }
-
-    pushOp(OP.SET_TEXT, node.id, text);
+    pushOp(OP.SET_TEXT, node.uid, text);
     scheduleFlush();
   },
 
@@ -297,11 +268,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const materialized = isMaterializedChild(child);
       el.removeChild(child);
       cleanupIds(child);
-      if (materialized) pushOp(OP.REMOVE, el.id, child.id);
-      if (child.type === '#text') child._mtInserted = false;
+      pushOp(OP.REMOVE, el.uid, child.uid);
     }
     // Set text content directly on the element
-    pushOp(OP.SET_TEXT, el.id, text);
+    pushOp(OP.SET_TEXT, el.uid, text);
     scheduleFlush();
   },
 
@@ -312,13 +282,8 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   ): void {
     // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
     // emit REMOVE from old parent so MT correctly detaches first.
-    if (
-      child.parent
-      && child.parent !== parent
-      && isMaterializedChild(child)
-    ) {
-      pushOp(OP.REMOVE, child.parent.id, child.id);
-      if (child.type === '#text') child._mtInserted = false;
+    if (child.parent && child.parent !== parent) {
+      pushOp(OP.REMOVE, child.parent.uid, child.uid);
     }
 
     // Always update the shadow tree (Vue needs it for internal diffing).
@@ -328,21 +293,28 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // additionally accepts only <list-item> children, so text anchors there
     // also stay off the Main Thread.
     if (
-      child.type === '#comment'
-      || (child.type === '#text'
-        && (!child._textValue || parent.type === 'list'))
+      parent.tag === 'list'
+      && (child.tag === '#comment' || child.tag === '#text')
     ) {
       return;
     }
 
-    // Shadow comments have no Main Thread element. Walk forward to the next
-    // materialised sibling so __InsertElementBefore receives a valid anchor.
-    // Native <list> text anchors are skipped for the same reason.
-    const resolvedAnchor = resolveMainThreadAnchor(anchor);
+    // If the anchor is a comment node inside a <list>, it was never inserted
+    // on the Main Thread. Walk forward to find the next real (non-comment)
+    // sibling so __InsertElementBefore has a valid reference.
+    let resolvedAnchor: ShadowElement | null = anchor ?? null;
+    if (parent.tag === 'list') {
+      while (
+        resolvedAnchor
+        && (resolvedAnchor.tag === '#comment'
+          || resolvedAnchor.tag === '#text')
+      ) {
+        resolvedAnchor = resolvedAnchor.next;
+      }
+    }
 
-    const anchorId = resolvedAnchor ? resolvedAnchor.id : -1;
-    pushOp(OP.INSERT, parent.id, child.id, anchorId);
-    if (child.type === '#text') child._mtInserted = true;
+    const anchorId = resolvedAnchor ? resolvedAnchor.uid : -1;
+    pushOp(OP.INSERT, parent.uid, child.uid, anchorId);
     scheduleFlush();
   },
 
@@ -352,16 +324,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // Those children were never mounted, so `vnode.el` is undefined — null
     // guard is required here, not just for the `!parent` case.
     if (child?.parent) {
-      const parent = child.parent;
-      const materialized = isMaterializedChild(child);
-      const parentId = parent.id;
+      const parentId = child.parent.uid;
       child.parent.removeChild(child);
       cleanupIds(child);
-      if (materialized) {
-        pushOp(OP.REMOVE, parentId, child.id);
-        scheduleFlush();
-      }
-      if (child.type === '#text') child._mtInserted = false;
+      pushOp(OP.REMOVE, parentId, child.uid);
+      scheduleFlush();
     }
   },
 
@@ -408,7 +375,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         ) {
           pushOp(
             OP.SET_MT_REF,
-            el.id,
+            el.uid,
             (nextValue as { toJSON(): unknown }).toJSON(),
           );
         }
@@ -423,14 +390,14 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
           if (!isIfrMainThread()) registerWorkletCtx(nextValue as Worklet);
           pushOp(
             OP.SET_WORKLET_EVENT,
-            el.id,
+            el.uid,
             event.type,
             event.name,
             nextValue,
           );
         } else if (event) {
           // Worklet handler removed — send REMOVE_EVENT so MT clears eventMap
-          pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
+          pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
         }
       }
       scheduleFlush();
@@ -440,7 +407,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     const event = parseEventProp(key);
 
     if (event) {
-      let signs = elementEventSigns.get(el.id);
+      let signs = elementEventSigns.get(el.uid);
       const oldSign = signs?.get(key);
 
       if (nextValue != null) {
@@ -465,7 +432,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
             onceWrappers.set(sign, wrapper);
             if (!signs) {
               signs = new Map<string, string>();
-              elementEventSigns.set(el.id, signs);
+              elementEventSigns.set(el.uid, signs);
             }
             signs.set(key, sign);
             // Respect _lynxCatch even on once-events (e.g. @tap.once.stop).
@@ -474,7 +441,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
             const onceEventType = (handler as { _lynxCatch?: boolean })._lynxCatch
               ? 'catchEvent'
               : event.type;
-            pushOp(OP.SET_EVENT, el.id, onceEventType, event.name, sign);
+            pushOp(OP.SET_EVENT, el.uid, onceEventType, event.name, sign);
           }
         } else if (oldSign) {
           // Re-render: update handler in-place so the sign on the Main Thread
@@ -490,17 +457,17 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
           const sign = register(handler);
           if (!signs) {
             signs = new Map<string, string>();
-            elementEventSigns.set(el.id, signs);
+            elementEventSigns.set(el.uid, signs);
           }
           signs.set(key, sign);
-          pushOp(OP.SET_EVENT, el.id, eventType, event.name, sign);
+          pushOp(OP.SET_EVENT, el.uid, eventType, event.name, sign);
         }
       } else if (oldSign) {
         // Handler removed entirely.
         onceWrappers.delete(oldSign);
         unregister(oldSign);
         signs!.delete(key);
-        pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
+        pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
       }
     } else if (key === 'style') {
       const style = nextValue != null && typeof nextValue === 'object'
@@ -508,11 +475,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         : {};
       el._style = style;
       const effective = el._vShowHidden ? { ...style, display: 'none' } : style;
-      pushOp(OP.SET_STYLE, el.id, effective);
+      pushOp(OP.SET_STYLE, el.uid, effective);
     } else if (key === 'class') {
       el._baseClass = (nextValue as string) ?? '';
       const finalClass = resolveClass(el);
-      pushOp(OP.SET_CLASS, el.id, finalClass);
+      pushOp(OP.SET_CLASS, el.uid, finalClass);
     } else if (key === 'id') {
       if (el._id) idRegistry.delete(el._id);
       el._id = nextValue != null ? String(nextValue) : undefined;
@@ -522,9 +489,9 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         );
       }
       if (el._id) idRegistry.set(el._id, el);
-      pushOp(OP.SET_ID, el.id, nextValue);
+      pushOp(OP.SET_ID, el.uid, nextValue);
     } else {
-      pushOp(OP.SET_PROP, el.id, key, nextValue);
+      pushOp(OP.SET_PROP, el.uid, key, nextValue);
     }
 
     scheduleFlush();
@@ -533,7 +500,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   // Called by Vue's renderer after createElement to apply scoped CSS.
   // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
   setScopeId(el: ShadowElement, id: string): void {
-    pushOp(OP.SET_SCOPE_ID, el.id, scopeIdToCssId(id));
+    pushOp(OP.SET_SCOPE_ID, el.uid, scopeIdToCssId(id));
     scheduleFlush();
   },
 

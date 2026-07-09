@@ -139,7 +139,7 @@ export function dumpOps(): NodeOp[] {
 function makeTestElement(tag: string): TestElement {
   const se = new ShadowElement(tag);
   const node: TestElement = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.ELEMENT,
     tag,
     props: {},
@@ -167,7 +167,7 @@ function makeTestElement(tag: string): TestElement {
 function makeTestText(text: string): TestText {
   const se = new ShadowElement('#text');
   const node: TestText = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.TEXT,
     text,
     _se: se,
@@ -186,7 +186,7 @@ function makeTestText(text: string): TestText {
 function makeTestComment(text: string): TestComment {
   const se = new ShadowElement('#comment');
   const node: TestComment = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.COMMENT,
     text,
     _se: se,
