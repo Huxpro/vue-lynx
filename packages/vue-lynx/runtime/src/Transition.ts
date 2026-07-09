@@ -62,6 +62,125 @@ export interface TransitionProps extends BaseTransitionProps<ShadowElement> {
 }
 
 // ---------------------------------------------------------------------------
+// Transition class helpers
+// ---------------------------------------------------------------------------
+
+function addTransitionClass(el: ShadowElement, cls: string): void {
+  el._transitionClasses.add(cls);
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
+  scheduleFlush();
+}
+
+function removeTransitionClass(el: ShadowElement, cls: string): void {
+  el._transitionClasses.delete(cls);
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
+  scheduleFlush();
+}
+
+// ---------------------------------------------------------------------------
+// nextFrame — waits for MT to apply the current ops batch before proceeding.
+//
+// In DOM land, Vue uses double-rAF to ensure the browser has rendered the
+// enter-from state before switching to enter-to.  In our dual-thread model
+// we need two things:
+//
+// 1. Wait for doFlush() to run (it's a post-flush callback queued by
+//    scheduleFlush).  We use queuePostFlushCb so our callback runs AFTER
+//    doFlush in the same post-flush cycle.
+//
+// 2. Wait for the MT ack (waitForFlush) — ensures the first batch of ops
+//    (enter-from / leave-from classes) has been applied on the Main Thread.
+//
+// 3. On web/dev, requestAnimationFrame provides a real frame boundary so
+//    the browser has painted the initial state before we apply the next.
+//    On native BG thread, the cross-thread round-trip already provides this.
+// ---------------------------------------------------------------------------
+
+function nextFrame(cb: () => void): void {
+  // Step 1: run after doFlush has taken the current ops and sent them to MT
+  queuePostFlushCb(() => {
+    // Step 2: wait for MT to acknowledge it applied the ops
+    waitForFlush().then(() => {
+      // Step 3: ensure at least one frame so the initial state is rendered
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(cb);
+      } else {
+        cb();
+      }
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// whenTransitionEnds — listens for transitionend/animationend on the element.
+//
+// Because we can't call getComputedStyle() from the BG thread, we rely on
+// either the actual event or an explicit `duration` prop as a timeout fallback.
+// ---------------------------------------------------------------------------
+
+function whenTransitionEnds(
+  el: ShadowElement,
+  expectedType: 'transition' | 'animation' | undefined,
+  done: () => void,
+): void {
+  const eventName =
+    expectedType === 'animation' ? 'animationend' : 'transitionend';
+
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    unregister(sign);
+    pushOp(OP.REMOVE_EVENT, el.uid, 'bindEvent', eventName);
+    scheduleFlush();
+    done();
+  };
+
+  const sign = register((_data: unknown) => {
+    finish();
+  });
+
+  pushOp(OP.SET_EVENT, el.uid, 'bindEvent', eventName, sign);
+  scheduleFlush();
+}
+
+// ---------------------------------------------------------------------------
+// Duration normalization
+// ---------------------------------------------------------------------------
+
+interface NormalizedDuration {
+  enter: number;
+  leave: number;
+}
+
+function normalizeDuration(
+  duration: TransitionProps['duration'],
+): NormalizedDuration {
+  if (typeof duration === 'number') {
+    return { enter: duration, leave: duration };
+  }
+  if (duration && typeof duration === 'object') {
+    return { enter: duration.enter, leave: duration.leave };
+  }
+  return { enter: 0, leave: 0 };
+}
+
+function hasExplicitDuration(props: TransitionProps): boolean {
+  return props.duration != null;
+}
+
+// ---------------------------------------------------------------------------
+// Hook helpers
+// ---------------------------------------------------------------------------
+
+// biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
+function callHook(hook: ((...args: any[]) => void) | undefined, args: unknown[]): void {
+  if (hook) {
+    hook(...args);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // resolveTransitionProps — converts user-facing TransitionProps into
 // BaseTransitionProps with concrete lifecycle hooks.
 // ---------------------------------------------------------------------------
