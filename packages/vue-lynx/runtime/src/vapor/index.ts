@@ -38,7 +38,7 @@ import {
 } from '@vue/runtime-vapor';
 import type { App, Component } from '@vue/runtime-core';
 
-import { withKeys, withModifiers } from '../index.js';
+import { withKeys, withModifiers } from '../event-modifiers.js';
 import { createPageRoot } from '../shadow-element.js';
 import type { ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';

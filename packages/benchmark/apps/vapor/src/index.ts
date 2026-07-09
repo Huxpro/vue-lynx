@@ -1,5 +1,5 @@
 import { setupBenchInstrumentation } from '../../../shared/bench-core';
-import { createApp } from 'vue-lynx/with-vapor';
+import { createApp } from 'vue-lynx/vapor-app';
 
 // @ts-expect-error .vue resolution is handled by the bundler
 import App from './App.vue';

@@ -119,9 +119,8 @@ export interface PluginVueLynxOptions {
    * `vapor` attribute: `<script setup vapor>`.
    *
    * When enabled:
-   * - `'vue'` is aliased to `vue-lynx/with-vapor`, which adds the Vapor
-   *   runtime helper surface next to the regular vue-lynx API, and routes
-   *   `createApp()` to the Vapor runtime for `__vapor` root components.
+   * - `'vue'` is aliased to `vue-lynx/vapor-app` — the pure Vapor entry
+   *   (shared runtime-core surface + Vapor helpers, no vdom renderer).
    * - Vapor SFC templates compile through `@vue/compiler-vapor` in both
    *   dev (separate template compilation) and prod (inlined) builds.
    *
@@ -273,7 +272,7 @@ export function pluginVueLynx(
           // the Vapor helper surface that compiled vapor components import.
           chain.resolve.alias.set(
             'vue',
-            vapor ? 'vue-lynx/with-vapor' : 'vue-lynx',
+            vapor ? 'vue-lynx/vapor-app' : 'vue-lynx',
           );
 
           if (vapor) {

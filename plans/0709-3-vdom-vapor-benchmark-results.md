@@ -125,14 +125,37 @@ would cut per-row ops by ~3×; (b) skip SET_TEXT for placeholder text nodes
 that a renderEffect immediately overwrites; (c) batch INSERTs for detached
 subtree assembly into the parent CREATE.
 
-### 3. Startup & size — pay-for-both today
+### 3. Startup & size — was pay-for-both; FIXED by the pure Vapor entry
 
-The `with-vapor` entry currently ships **both** runtimes (the vdom custom
+**Third update:** the composite `with-vapor` entry shipped both runtimes for
+an interop scenario vue-lynx does not support. Upstream's model is a single
+'vue' entry disambiguated by tree-shaking (lazy `ensureRenderer`,
+`sideEffects: false`, 123 PURE annotations in runtime-vapor); ours couldn't
+tree-shake because the vdom renderer was created at module scope and the
+package declared no `sideEffects`. Since the mode is a per-app build-time
+decision, the fix is two pure entries: `vue-lynx` (vdom only) and
+`vue-lynx/vapor-app` (Vapor only — shared runtime-core surface + Lynx
+utilities + Vapor helpers, no `createRenderer`). `with-vapor` is now a
+deprecated alias of `vapor-app`; the vdom renderer is created lazily and the
+package declares its side-effectful modules. Results
+(`results/run4-pure-vapor-entry.*`):
+
+| metric | before (composite) | after (pure entry) |
+|---|---|---|
+| bundle gzip (lynx) | 56.0 KB (+48% vs vdom) | **49.3 KB (+26%)** |
+| first screen | +29% (111 vs 86 ms) | **+3% (125.8 vs 121.7 ms — CIs overlap)** |
+| interaction / ops metrics | — | unchanged (no regression) |
+
+The remaining +26% is `@vue/runtime-vapor` itself plus the
+`@vue/runtime-dom` shared infra it imports and our DOM-compat layer
+(shim + template parser) — the real cost of Vapor on Lynx, no longer an
+artifact of packaging. (Observed in passing: the vdom bundle moved
+37.8 → 39.2 KB gzip from the entry-split indirection — noise-level, noted
+for the record.) The original analysis follows.
+
+The `with-vapor` entry used to ship **both** runtimes (the vdom custom
 renderer plus `@vue/runtime-vapor` + the `@vue/runtime-dom` shared infra it
-imports), hence +48% gzip bundle and +29% first-screen. A pure-Vapor entry
-that drops `createRenderer`/vdom would reclaim most of this; upstream sizes
-suggest a Vapor-only runtime is *smaller* than a vdom one. Until then,
-Vapor on vue-lynx costs ~18 KB gzip extra.
+imports), hence +48% gzip bundle and +29% first-screen at the time.
 
 ## Caveats
 
