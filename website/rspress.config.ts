@@ -121,6 +121,7 @@ export default defineConfig({
         {
           sectionHeaderText: 'Benchmark',
         },
+        { text: 'VDOM vs Vapor', link: '/guide/benchmark-vapor' },
         { text: 'TodoMVC', link: '/guide/todomvc' },
         { text: '7GUIs', link: '/guide/7guis' },
         { text: 'HackerNews', link: '/guide/hackernews' },
@@ -145,7 +146,7 @@ export default defineConfig({
         { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
-        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
+        { text: 'Vapor Mode', link: '/zh/guide/vapor-mode' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         { text: 'scroll-view 与 list', link: '/zh/guide/scroll-view-vs-list' },
@@ -167,6 +168,7 @@ export default defineConfig({
         {
           sectionHeaderText: '基准测试',
         },
+        { text: 'VDOM vs Vapor', link: '/zh/guide/benchmark-vapor' },
         { text: 'TodoMVC', link: '/zh/guide/todomvc' },
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
