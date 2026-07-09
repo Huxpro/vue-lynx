@@ -19,5 +19,21 @@
     "@biomejs/biome": "^1.9.4",
     "@changesets/cli": "^2.30.0",
     "@svitejs/changesets-changelog-github-compact": "^1.2.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "vue": "3.6.0-beta.17",
+      "@vue/compiler-core": "3.6.0-beta.17",
+      "@vue/compiler-dom": "3.6.0-beta.17",
+      "@vue/compiler-sfc": "3.6.0-beta.17",
+      "@vue/compiler-ssr": "3.6.0-beta.17",
+      "@vue/compiler-vapor": "3.6.0-beta.17",
+      "@vue/reactivity": "3.6.0-beta.17",
+      "@vue/runtime-core": "3.6.0-beta.17",
+      "@vue/runtime-dom": "3.6.0-beta.17",
+      "@vue/runtime-vapor": "3.6.0-beta.17",
+      "@vue/shared": "3.6.0-beta.17",
+      "@vue/server-renderer": "3.6.0-beta.17"
+    }
   }
 }

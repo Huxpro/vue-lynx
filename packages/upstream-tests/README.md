@@ -2,7 +2,7 @@
 
 ## Overview
 
-This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.5.12, pinned via git submodule at `core/`.
+This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.6.0-beta.17, pinned at `core/`.
 
 **Total: 1013 tests across 51 suites -- 882 pass, 131 skip, 0 fail**
 

@@ -266,7 +266,7 @@ export default defineConfig({
     __FEATURE_PROD_DEVTOOLS__: 'false',
     __FEATURE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
     __COMPAT__: 'false',
-    __VERSION__: '"3.5.12"',
+    __VERSION__: '"3.6.0-beta.17"',
   },
   test: {
     globals: true,
