@@ -76,11 +76,30 @@ siblings) — is now implemented in `ShadowElement.cloneNode`. Results
 | clear10k e2e gap | 2.4× slower | **0.95× (parity)** |
 | create1k bg gap | 1.39× slower | 1.24× slower |
 
-The residual ~20% bg gap is runtime-vapor's clone+per-binding-renderEffect
-mount cost through our DOM-compat shim; the remaining candidate is the
-composite `CLONE_TEMPLATE` op described below (deferred deliberately — it
-changes the cross-thread protocol that native Lynx also consumes, which we
-have so far kept untouched by design).
+**Second update: `CLONE_TEMPLATE` is now implemented too.** The opcode set
+is vue-lynx's own protocol (the Main-Thread interpreter ships in the same
+bundle as the BG code — no engine dependency, no version skew), so there was
+no real blocker. `REGISTER_TEMPLATE` sends a template's static structure
+once; each instance is a single `CLONE_TEMPLATE [tplId, baseUid]`, with
+element ids assigned by a deterministic pre-order contract on both sides.
+Results (`results/run3-clone-template.*`):
+
+| metric | vdom | vapor (before) | vapor (now) |
+|---|---|---|---|
+| create1k ops | 17,000 | 17,000 | **7,000 (−59%, 2.4× fewer than vdom)** |
+| create1k payload | 327 KB | 329 KB | **160 KB (−51% vs vdom)** |
+| create10k payload | 3.50 MB | 3.52 MB | **1.69 MB** |
+| create1k e2e | — | 0.91× | 0.89× (≈unchanged) |
+| create1k bg | — | 0.81× | 0.81× (≈unchanged) |
+
+Honest read: on the **web harness**, e2e didn't move further because the
+Main-Thread cost is dominated by actual DOM element construction, which
+CLONE_TEMPLATE doesn't reduce — it eliminates op dispatch + JSON volume.
+The −51% cross-thread payload matters most where transfer and parsing are
+comparatively expensive (native serialization, PrimJS JSON) and unlocks a
+native mapping to `__CloneElement`/element templates later. The residual
+~20% bg gap is runtime-vapor's clone+per-binding-renderEffect mount cost
+itself.
 
 The original analysis (pre-fix) follows for the record.
 
