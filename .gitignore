@@ -10,3 +10,4 @@ website/api-sidebar.json
 .vercel
 .claude/
 .obsidian/
+packages/upstream-tests/src/vapor/.generated/

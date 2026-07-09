@@ -16,6 +16,7 @@
     "enabled": true,
     "ignore": [
       "dist/**",
+      "**/.rslib/**",
       "coverage/**",
       "packages/testing-library/**",
       "packages/upstream-tests/**",
