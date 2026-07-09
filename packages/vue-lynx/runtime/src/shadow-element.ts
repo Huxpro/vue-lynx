@@ -227,6 +227,14 @@ export class ShadowElement {
    * inert node produces a live node (with ops).
    */
   _inert = false;
+  /**
+   * Set on a #text node that is the only child of an element: its text is
+   * stored on the host element on the Main Thread (no separate text element
+   * exists there). See cloneNode / _materializeAliasedText.
+   */
+  _textHost: ShadowElement | undefined = undefined;
+  /** Back-reference from a host element to its aliased #text child. */
+  _aliasedTextChild: ShadowElement | undefined = undefined;
 
   constructor(tag: string, forceUid?: number) {
     if (forceUid === undefined) {
@@ -439,7 +447,9 @@ export class ShadowElement {
     const text = value ?? '';
     this._text = text;
     if (this.tag === '#text' && !this._inert) {
-      pushOp(OP.SET_TEXT, this.uid, text);
+      // Aliased only-child text lives on the host element on the MT side.
+      const target = this._textHost ?? this;
+      pushOp(OP.SET_TEXT, target.uid, text);
       scheduleFlush();
     }
   }
@@ -564,17 +574,63 @@ export class ShadowElement {
     }
 
     if (deep) {
-      let child = this.firstChild;
-      while (child) {
-        const childClone = child.cloneNode(true);
-        clone._link(childClone, null);
-        pushOp(OP.INSERT, clone.uid, childClone.uid, -1);
-        child = child.next;
+      // Fast path: an element whose only child is a #text node does not need
+      // a separate Main Thread text element — set the text on the element
+      // itself (exactly what the vdom renderer's setElementText does). This
+      // cuts per-instance template-clone traffic by ~30% (CREATE_TEXT +
+      // INSERT + placeholder SET_TEXT per text cell). The shadow #text node
+      // still exists on the BG thread (vapor's txt()/setText target it) but
+      // is aliased: its writes route to the host, and it is lazily
+      // materialized if the host ever gains additional children.
+      const only = this.firstChild;
+      if (
+        clone.nodeType === 1
+        && only !== null
+        && only.next === null
+        && only.tag === '#text'
+      ) {
+        const textClone = new ShadowElement('#text');
+        textClone._text = only._text;
+        textClone._textHost = clone;
+        clone._aliasedTextChild = textClone;
+        clone._link(textClone, null);
+        // The compiler's dynamic-interpolation placeholder is a single
+        // space; a renderEffect overwrites it immediately, so skip it.
+        if (only._text != null && only._text !== ' ') {
+          pushOp(OP.SET_TEXT, clone.uid, only._text);
+        }
+      } else {
+        let child = this.firstChild;
+        while (child) {
+          const childClone = child.cloneNode(true);
+          clone._link(childClone, null);
+          pushOp(OP.INSERT, clone.uid, childClone.uid, -1);
+          child = child.next;
+        }
       }
     }
 
     scheduleFlush();
     return clone;
+  }
+
+  /**
+   * Materialize an aliased only-child #text node as a real Main Thread text
+   * element. Called before any structural mutation of the host so that
+   * sibling inserts/removals see a fully materialized child list.
+   */
+  _materializeAliasedText(): void {
+    const aliased = this._aliasedTextChild;
+    if (!aliased) return;
+    this._aliasedTextChild = undefined;
+    aliased._textHost = undefined;
+    if (this._inert) return;
+    // Clear the host-level text; the text now lives in a real child node.
+    pushOp(OP.SET_TEXT, this.uid, '');
+    pushOp(OP.CREATE_TEXT, aliased.uid);
+    if (aliased._text) pushOp(OP.SET_TEXT, aliased.uid, aliased._text);
+    pushOp(OP.INSERT, this.uid, aliased.uid, -1);
+    scheduleFlush();
   }
 
   // --- attributes --------------------------------------------------------------

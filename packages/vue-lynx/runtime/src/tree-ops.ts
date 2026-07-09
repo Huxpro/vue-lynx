@@ -104,6 +104,11 @@ export function insertNode(
   parent: ShadowElement,
   anchor?: ShadowElement | null,
 ): void {
+  // The parent may carry an aliased only-child #text node (Vapor template
+  // clone fast path) that has no Main Thread counterpart yet — materialize
+  // it before the child list changes structurally.
+  parent._materializeAliasedText();
+
   // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
   // emit REMOVE from old parent so MT correctly detaches first.
   if (child.parent && child.parent !== parent) {
@@ -144,6 +149,18 @@ export function insertNode(
 
 /** Detach `child` from its parent, emitting a REMOVE op. */
 export function removeNode(child: ShadowElement): void {
+  // Aliased only-child #text: no Main Thread element exists — clear the
+  // host's text instead of emitting a REMOVE. (child may be null: Teleport
+  // unmount iterates children that never mounted.)
+  if (child?._textHost) {
+    const host = child._textHost;
+    host._aliasedTextChild = undefined;
+    child._textHost = undefined;
+    host._unlink(child);
+    pushOp(OP.SET_TEXT, host.uid, '');
+    scheduleFlush();
+    return;
+  }
   // Vue's Teleport iterates its children on unmount even when target
   // resolution failed at mount (see @vue/runtime-core TeleportImpl.remove).
   // Those children were never mounted, so `vnode.el` is undefined — null
@@ -161,6 +178,14 @@ export function removeNode(child: ShadowElement): void {
 
 /** Replace an element's children with a plain text content. */
 export function setElementTextContent(el: ShadowElement, text: string): void {
+  // An aliased #text child has no MT counterpart — drop it silently; the
+  // SET_TEXT below covers the host.
+  if (el._aliasedTextChild) {
+    const aliased = el._aliasedTextChild;
+    el._aliasedTextChild = undefined;
+    aliased._textHost = undefined;
+    el._unlink(aliased);
+  }
   // Remove all children from shadow tree
   while (el.firstChild) {
     const child = el.firstChild;
