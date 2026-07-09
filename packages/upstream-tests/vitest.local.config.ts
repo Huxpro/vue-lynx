@@ -44,6 +44,22 @@ export default defineConfig({
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
       },
+      // vue-lynx/vapor → vapor runtime source
+      {
+        find: /^vue-lynx\/vapor$/,
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/runtime/src/vapor/index.ts',
+        ),
+      },
+      // vue-lynx/with-vapor → composite entry source
+      {
+        find: /^vue-lynx\/with-vapor$/,
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/runtime/src/with-vapor.ts',
+        ),
+      },
       // vue-lynx → runtime source
       {
         find: /^vue-lynx$/,
@@ -64,6 +80,20 @@ export default defineConfig({
         replacement: path.join(
           path.dirname(require.resolve('@vue/reactivity/package.json')),
           'dist/reactivity.esm-bundler.js',
+        ),
+      },
+      {
+        find: '@vue/runtime-dom',
+        replacement: path.join(
+          path.dirname(require.resolve('@vue/runtime-dom/package.json')),
+          'dist/runtime-dom.esm-bundler.js',
+        ),
+      },
+      {
+        find: '@vue/runtime-vapor',
+        replacement: path.join(
+          path.dirname(require.resolve('@vue/runtime-vapor/package.json')),
+          'dist/runtime-vapor.esm-bundler.js',
         ),
       },
       {

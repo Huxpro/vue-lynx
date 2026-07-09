@@ -625,22 +625,26 @@ export class ShadowElement {
 
   removeAttribute(key: string): void {
     if (key === 'class') {
+      if (!this._baseClass) return;
       this._baseClass = '';
       if (!this._inert) {
         pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
         scheduleFlush();
       }
     } else if (key === 'style') {
+      if (Object.keys(this._style).length === 0) return;
       this._style = {};
       if (!this._inert) pushStyleOp(this);
     } else if (key === 'id') {
+      if (this._id === undefined) return;
       if (this._inert) {
         this._id = undefined;
       } else {
         setIdAttr(this, null);
       }
     } else {
-      this._attrs?.delete(key);
+      if (!this._attrs?.has(key)) return;
+      this._attrs.delete(key);
       if (!this._inert) {
         pushOp(OP.SET_PROP, this.uid, key, null);
         scheduleFlush();
