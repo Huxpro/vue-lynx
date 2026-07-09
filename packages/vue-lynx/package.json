@@ -21,6 +21,16 @@
       "import": "./runtime/dist/index.js",
       "default": "./runtime/dist/index.js"
     },
+    "./vapor": {
+      "types": "./runtime/dist/vapor/index.d.ts",
+      "import": "./runtime/dist/vapor/index.js",
+      "default": "./runtime/dist/vapor/index.js"
+    },
+    "./with-vapor": {
+      "types": "./runtime/dist/with-vapor.d.ts",
+      "import": "./runtime/dist/with-vapor.js",
+      "default": "./runtime/dist/with-vapor.js"
+    },
     "./entry-background": {
       "types": "./runtime/dist/entry-background.d.ts",
       "import": "./runtime/dist/entry-background.js",

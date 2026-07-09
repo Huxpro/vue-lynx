@@ -169,7 +169,9 @@ function doFlush(): void {
     }
   });
 
-  const app = lynx?.getNativeApp?.();
+  // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
+  // (vitest node env) referencing it directly would throw ReferenceError.
+  const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
     { data: JSON.stringify(ops) },
