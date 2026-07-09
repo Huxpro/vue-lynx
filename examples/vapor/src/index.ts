@@ -1,4 +1,4 @@
-import { createApp } from 'vue-lynx/with-vapor';
+import { createApp } from 'vue-lynx/vapor-app';
 
 import App from './App.vue';
 

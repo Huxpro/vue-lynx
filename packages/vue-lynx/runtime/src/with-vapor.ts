@@ -3,46 +3,19 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * vue-lynx entry with Vapor mode enabled.
+ * @deprecated Use `vue-lynx/vapor-app` instead.
  *
- * When `pluginVueLynx({ vapor: true })` is set, the build plugin aliases
- * 'vue' to this module instead of the default entry, so that compiled Vapor
- * component code (which imports helpers like `template`/`renderEffect`/
- * `createComponent` from 'vue') resolves alongside the regular vue-lynx API.
+ * This entry used to compose BOTH runtimes (vdom custom renderer + Vapor) so
+ * that `createApp` could route on `__vapor` at runtime — paying ~48% extra
+ * gzip for an interop scenario vue-lynx does not support. Since the mode is
+ * a per-app build-time decision (`pluginVueLynx({ vapor })` picks the 'vue'
+ * alias), this module is now a thin alias of the pure Vapor entry.
  *
- * Mirrors how `vue`'s own bundler entry composes `@vue/runtime-dom` +
- * `@vue/runtime-vapor`.
+ * If vdom↔vapor interop lands (tracked in plans/0709-1, phase 2), a true
+ * composite entry will return following upstream's model: unified surface,
+ * lazy renderers, `sideEffects` hygiene — with the dual-runtime cost paid
+ * explicitly by importing the interop plugin.
  */
 
-export * from './index.js';
-export * from './vapor/index.js';
-
-// Both ./index.js (runtime-core's) and ./vapor/index.js (runtime-vapor's)
-// export `withAsyncContext`, which would make the star re-exports above
-// silently drop the name. Pick the Vapor version explicitly — it delegates
-// to the core implementation for non-vapor components, exactly like the
-// upstream `vue` bundle does.
-export { withAsyncContext } from './vapor/index.js';
-
-import type { Component } from '@vue/runtime-core';
-
-import { createApp as createVdomApp } from './index.js';
-import type { VueLynxApp } from './index.js';
-import { createVaporApp } from './vapor/index.js';
-
-/**
- * Create a Vue Lynx application. Routes to the Vapor runtime when the root
- * component is a Vapor component (`<script setup vapor>`), and to the vdom
- * custom renderer otherwise.
- *
- * @public
- */
-export function createApp(
-  rootComponent: Component,
-  rootProps?: Record<string, unknown>,
-): VueLynxApp {
-  if ((rootComponent as { __vapor?: boolean }).__vapor) {
-    return createVaporApp(rootComponent, rootProps);
-  }
-  return createVdomApp(rootComponent, rootProps);
-}
+export * from './vapor-app.js';
+export { createApp } from './vapor-app.js';
