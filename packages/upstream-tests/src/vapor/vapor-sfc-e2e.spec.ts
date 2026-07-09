@@ -25,6 +25,13 @@ import { OP } from 'vue-lynx/internal/ops';
 import * as vaporSurface from 'vue-lynx/with-vapor';
 import { publishEvent } from '../../../vue-lynx/runtime/src/event-registry.js';
 import { collectFlushedOps, resetCapturedOps } from '../local-test-setup.js';
+import {
+  decodeOps,
+  expandOps,
+  opsOf,
+  resetTemplateExpander,
+} from './ops-test-utils.js';
+import type { DecodedOp } from './ops-test-utils.js';
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const generatedDir = path.join(_dirname, '.generated');
@@ -90,54 +97,15 @@ async function importCompiled(code: string): Promise<{ default: unknown }> {
 // Ops decoding (shared shape with vapor-runtime.spec.ts)
 // ---------------------------------------------------------------------------
 
-const OP_ARITY: Record<number, number> = {
-  [OP.CREATE]: 2,
-  [OP.CREATE_TEXT]: 1,
-  [OP.INSERT]: 3,
-  [OP.REMOVE]: 2,
-  [OP.SET_PROP]: 3,
-  [OP.SET_TEXT]: 2,
-  [OP.SET_EVENT]: 4,
-  [OP.REMOVE_EVENT]: 3,
-  [OP.SET_STYLE]: 2,
-  [OP.SET_CLASS]: 2,
-  [OP.SET_ID]: 2,
-  [OP.SET_WORKLET_EVENT]: 4,
-  [OP.SET_MT_REF]: 2,
-  [OP.INIT_MT_REF]: 2,
-  [OP.SET_SCOPE_ID]: 2,
-};
-
-interface DecodedOp {
-  op: number;
-  args: unknown[];
-}
-
-function decodeOps(ops: unknown[]): DecodedOp[] {
-  const out: DecodedOp[] = [];
-  let i = 0;
-  while (i < ops.length) {
-    const op = ops[i] as number;
-    const arity = OP_ARITY[op];
-    if (arity === undefined) throw new Error(`Unknown op ${String(ops[i])}`);
-    out.push({ op, args: ops.slice(i + 1, i + 1 + arity) });
-    i += 1 + arity;
-  }
-  return out;
-}
-
 async function flushedOps(): Promise<DecodedOp[]> {
   await nextTick();
-  return decodeOps(collectFlushedOps());
-}
-
-function opsOf(decoded: DecodedOp[], op: number): DecodedOp[] {
-  return decoded.filter((e) => e.op === op);
+  return expandOps(decodeOps(collectFlushedOps()));
 }
 
 beforeEach(() => {
   resetForTesting();
   resetCapturedOps();
+  resetTemplateExpander();
 });
 
 // ---------------------------------------------------------------------------

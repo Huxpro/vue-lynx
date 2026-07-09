@@ -69,7 +69,7 @@ import {
   resetRunOnBackgroundState,
   runOnBackground,
 } from './run-on-background.js';
-import { ShadowElement, createPageRoot } from './shadow-element.js';
+import { ShadowElement, createPageRoot, resetTemplateState } from './shadow-element.js';
 import { transformToWorklet } from './transform-to-worklet.js';
 import { Transition } from './Transition.js';
 import { TransitionGroup } from './TransitionGroup.js';
@@ -1261,5 +1261,6 @@ export function resetForTesting(): void {
   resetFunctionCallState();
   resetRunOnBackgroundState();
   takeOps(); // drain any leftover ops
+  resetTemplateState();
   ShadowElement.nextUid = 2;
 }

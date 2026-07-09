@@ -29,6 +29,7 @@ import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import { scopeIdToCssId } from './scope-bridge.js';
 import {
+  idRegistry,
   insertNode,
   parseInlineStyle,
   pushStyleOp,
@@ -528,11 +529,23 @@ export class ShadowElement {
   }
 
   /**
-   * Clone this node. Cloning a node (inert template prototypes included)
-   * produces a live node: CREATE/SET ops are emitted for the entire subtree
-   * so the Main Thread materialises it (detached until inserted).
+   * Clone this node. Cloning a node produces a live node: ops are emitted so
+   * the Main Thread materialises it (detached until inserted).
+   *
+   * Template prototypes (inert, deep) take the fast path: the static
+   * structure is REGISTER_TEMPLATE'd once, and each instance is a single
+   * CLONE_TEMPLATE op with a deterministic contiguous uid block — instead of
+   * re-serializing the identical CREATE/SET/INSERT sequence per instance.
    */
   cloneNode(deep?: boolean): ShadowElement {
+    if (deep && this._inert && this.nodeType === 1) {
+      return cloneTemplatePrototype(this);
+    }
+    return this._cloneNodeGranular(deep);
+  }
+
+  /** Per-node op emission clone — non-template clones (live nodes). */
+  _cloneNodeGranular(deep?: boolean): ShadowElement {
     const clone = new ShadowElement(this.tag);
 
     if (this.tag === '#text') {
@@ -853,4 +866,174 @@ export const PAGE_ROOT_ID = 1;
 /** Create the page root shadow element with the reserved uid=1. */
 export function createPageRoot(): ShadowElement {
   return new ShadowElement('page', PAGE_ROOT_ID);
+}
+
+// ===========================================================================
+// Template fast path (Vapor)
+//
+// Vapor mounts by cloning a static template prototype once per instance —
+// the static structure is identical for every clone. Instead of
+// re-serializing the same CREATE/SET/INSERT sequence per instance, the
+// structure is sent once (REGISTER_TEMPLATE) and each instance is a single
+// CLONE_TEMPLATE op. The uid contract: the Main Thread assigns element ids
+// by pre-order traversal of the structure starting at baseUid; the walk
+// below allocates the identical contiguous block, so both sides agree
+// without transmitting a mapping. Aliased only-child #text shadow nodes are
+// folded into their host (props.t) and take uids after the block — they
+// have no Main Thread counterpart.
+// ===========================================================================
+
+/** Static props of one template node (see internal/ops.ts for the format). */
+export interface TemplateNodeProps {
+  c?: string;
+  s?: Record<string, unknown>;
+  a?: [string, string][];
+  i?: string;
+  sc?: number[];
+  t?: string;
+}
+
+/** [tag, props|0, children] */
+export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
+
+interface TemplateCache {
+  id: number;
+  structure: TemplateNode;
+  count: number;
+}
+
+let nextTemplateId = 1;
+const registeredTemplateIds = new Set<number>();
+const templateCaches = new WeakMap<ShadowElement, TemplateCache>();
+
+function isOnlyChildText(proto: ShadowElement): boolean {
+  return (
+    proto.nodeType === 1
+    && proto.firstChild !== null
+    && proto.firstChild.next === null
+    && proto.firstChild.tag === '#text'
+  );
+}
+
+function buildStructure(
+  proto: ShadowElement,
+  counter: { value: number },
+): TemplateNode {
+  counter.value++;
+  if (proto.tag === '#comment') {
+    return ['#comment', 0, []];
+  }
+  if (proto.tag === '#text') {
+    return ['#text', proto._text ? { t: proto._text } : 0, []];
+  }
+
+  const props: TemplateNodeProps = {};
+  if (proto._baseClass) props.c = proto._baseClass;
+  if (Object.keys(proto._style).length > 0) props.s = { ...proto._style };
+  if (proto._attrs && proto._attrs.size > 0) props.a = [...proto._attrs];
+  if (proto._id !== undefined) props.i = proto._id;
+  if (proto._scopeIds && proto._scopeIds.length > 0) {
+    props.sc = [...proto._scopeIds];
+  }
+
+  const fold = isOnlyChildText(proto);
+  const children: TemplateNode[] = [];
+  if (fold) {
+    const text = proto.firstChild!._text;
+    // The compiler's dynamic-interpolation placeholder (single space) is
+    // overwritten by a renderEffect immediately — omit it.
+    if (text != null && text !== ' ') props.t = text;
+  } else {
+    if (proto._text != null) props.t = proto._text;
+    let child = proto.firstChild;
+    while (child) {
+      children.push(buildStructure(child, counter));
+      child = child.next;
+    }
+  }
+
+  const hasProps = Object.keys(props).length > 0;
+  return [proto.tag, hasProps ? props : 0, children];
+}
+
+/**
+ * Build the shadow clone of `proto`, assigning uids in the same pre-order
+ * the Main Thread uses when instantiating the registered structure.
+ */
+function buildShadowClone(
+  proto: ShadowElement,
+  base: number,
+  counter: { value: number },
+): ShadowElement {
+  const clone = new ShadowElement(proto.tag, base + counter.value++);
+
+  if (proto.tag === '#text' || proto.tag === '#comment') {
+    clone._text = proto._text;
+    return clone;
+  }
+
+  clone._baseClass = proto._baseClass;
+  if (Object.keys(proto._style).length > 0) clone._style = { ...proto._style };
+  if (proto._attrs) clone._attrs = new Map(proto._attrs);
+  if (proto._scopeIds) clone._scopeIds = [...proto._scopeIds];
+  if (proto._id !== undefined) {
+    clone._id = proto._id;
+    // BG-side Teleport target registry (MT applies the id via structure).
+    idRegistry.set(proto._id, clone);
+  }
+
+  if (isOnlyChildText(proto)) {
+    // Aliased only-child text: uid outside the block (no MT counterpart).
+    const textClone = new ShadowElement('#text');
+    textClone._text = proto.firstChild!._text;
+    textClone._textHost = clone;
+    clone._aliasedTextChild = textClone;
+    clone._link(textClone, null);
+  } else {
+    clone._text = proto._text;
+    let child = proto.firstChild;
+    while (child) {
+      clone._link(buildShadowClone(child, base, counter), null);
+      child = child.next;
+    }
+  }
+  return clone;
+}
+
+function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
+  let cache = templateCaches.get(proto);
+  if (!cache) {
+    const counter = { value: 0 };
+    const structure = buildStructure(proto, counter);
+    cache = { id: nextTemplateId++, structure, count: counter.value };
+    templateCaches.set(proto, cache);
+  }
+
+  if (!registeredTemplateIds.has(cache.id)) {
+    registeredTemplateIds.add(cache.id);
+    pushOp(OP.REGISTER_TEMPLATE, cache.id, cache.structure);
+  }
+
+  // Reserve the contiguous uid block for materialized nodes; aliased text
+  // shadow nodes allocate after it (plain constructor).
+  const base = ShadowElement.nextUid;
+  ShadowElement.nextUid += cache.count;
+
+  const counter = { value: 0 };
+  const root = buildShadowClone(proto, base, counter);
+  if (__DEV__ && counter.value !== cache.count) {
+    console.warn(
+      `[vue-lynx] template clone materialized ${counter.value} nodes but the registered structure has ${cache.count} — uid contract violated.`,
+    );
+  }
+
+  pushOp(OP.CLONE_TEMPLATE, cache.id, base);
+  scheduleFlush();
+  return root;
+}
+
+/** Reset template registration state — for testing only. */
+export function resetTemplateState(): void {
+  nextTemplateId = 1;
+  registeredTemplateIds.clear();
 }

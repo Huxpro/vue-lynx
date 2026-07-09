@@ -31,63 +31,27 @@ import {
 } from 'vue-lynx/vapor';
 import { publishEvent } from '../../../vue-lynx/runtime/src/event-registry.js';
 import { collectFlushedOps, resetCapturedOps } from '../local-test-setup.js';
+import {
+  decodeOps,
+  expandOps,
+  opsOf,
+  resetTemplateExpander,
+} from './ops-test-utils.js';
+import type { DecodedOp } from './ops-test-utils.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Arity (argument count) of each op code in the flat ops buffer. */
-const OP_ARITY: Record<number, number> = {
-  [OP.CREATE]: 2,
-  [OP.CREATE_TEXT]: 1,
-  [OP.INSERT]: 3,
-  [OP.REMOVE]: 2,
-  [OP.SET_PROP]: 3,
-  [OP.SET_TEXT]: 2,
-  [OP.SET_EVENT]: 4,
-  [OP.REMOVE_EVENT]: 3,
-  [OP.SET_STYLE]: 2,
-  [OP.SET_CLASS]: 2,
-  [OP.SET_ID]: 2,
-  [OP.SET_WORKLET_EVENT]: 4,
-  [OP.SET_MT_REF]: 2,
-  [OP.INIT_MT_REF]: 2,
-  [OP.SET_SCOPE_ID]: 2,
-};
-
-interface DecodedOp {
-  op: number;
-  args: unknown[];
-}
-
-/** Decode the flat ops buffer into { op, args } records. */
-function decodeOps(ops: unknown[]): DecodedOp[] {
-  const out: DecodedOp[] = [];
-  let i = 0;
-  while (i < ops.length) {
-    const op = ops[i] as number;
-    const arity = OP_ARITY[op];
-    if (arity === undefined) {
-      throw new Error(`Unknown op code ${String(ops[i])} at index ${i}`);
-    }
-    out.push({ op, args: ops.slice(i + 1, i + 1 + arity) });
-    i += 1 + arity;
-  }
-  return out;
-}
-
-function opsOf(decoded: DecodedOp[], op: number): DecodedOp[] {
-  return decoded.filter((entry) => entry.op === op);
-}
-
 async function flushedOps(): Promise<DecodedOp[]> {
   await nextTick();
-  return decodeOps(collectFlushedOps());
+  return expandOps(decodeOps(collectFlushedOps()));
 }
 
 beforeEach(() => {
   resetForTesting();
   resetCapturedOps();
+  resetTemplateExpander();
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
