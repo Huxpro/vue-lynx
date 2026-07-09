@@ -56,7 +56,15 @@ export default defineConfig({
           '../vue-lynx/runtime/src/vapor/index.ts',
         ),
       },
-      // vue-lynx/with-vapor → composite entry source
+      // vue-lynx/vapor-app → pure vapor entry source
+      {
+        find: /^vue-lynx\/vapor-app$/,
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/runtime/src/vapor-app.ts',
+        ),
+      },
+      // deprecated alias of vapor-app
       {
         find: /^vue-lynx\/with-vapor$/,
         replacement: path.resolve(
