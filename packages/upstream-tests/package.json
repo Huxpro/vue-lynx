@@ -17,9 +17,9 @@
   "devDependencies": {
     "@lynx-js/testing-environment": "^0.1.11",
     "vue-lynx": "workspace:*",
-    "@vue/reactivity": "^3.5.0",
-    "@vue/runtime-core": "^3.5.0",
-    "@vue/shared": "^3.5.0",
+    "@vue/reactivity": "3.6.0-beta.17",
+    "@vue/runtime-core": "3.6.0-beta.17",
+    "@vue/shared": "3.6.0-beta.17",
     "jsdom": "^25.0.0",
     "vitest": "^3.0.0"
   }

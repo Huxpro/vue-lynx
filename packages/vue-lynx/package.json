@@ -74,7 +74,9 @@
     "@lynx-js/runtime-wrapper-webpack-plugin": "^0.1.3",
     "@lynx-js/template-webpack-plugin": "^0.10.5",
     "@lynx-js/webpack-dev-transport": "^0.2.0",
-    "@vue/runtime-core": "^3.5.0"
+    "@vue/runtime-core": "3.6.0-beta.17",
+    "@vue/runtime-dom": "3.6.0-beta.17",
+    "@vue/runtime-vapor": "3.6.0-beta.17"
   },
   "devDependencies": {
     "@lynx-js/type-element-api": "0.0.3",
