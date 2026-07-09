@@ -1,0 +1,137 @@
+# Benchmark: VDOM vs Vapor
+
+How much faster is [Vapor mode](/guide/vapor-mode) on Lynx, quantitatively?
+To answer this, Vue Lynx ports Vue's official benchmark
+([`packages-private/benchmark`](https://github.com/vuejs/core/tree/main/packages-private/benchmark),
+derived from [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark))
+to Lynx and runs the **same app in both modes** through the full
+dual-thread pipeline.
+
+**TL;DR** — Vapor is 5.8–9.8× faster on the background thread for
+update-path operations, sends 2.4× fewer cross-thread ops during list
+creation, and matches vdom on creation end-to-end. Its costs: +26% bundle
+gzip and a first-screen difference within noise.
+
+## Methodology
+
+- **Apps**: the krausest table app (create/update/select/swap/remove/append/clear
+  on 1k–10k rows). The Vapor app is *generated from the vdom source* — the
+  only difference is the `vapor` attribute — so the workload is
+  byte-for-byte identical.
+- **Harness**: production builds rendered by
+  [Lynx for Web](https://lynxjs.org/guide/start/fragments/web/) (`<lynx-view>`)
+  in headless Chromium via Playwright. Both threads run real code: Vue on
+  the background worker, the ops interpreter + DOM on the main thread.
+- **Metrics** (per [Lynx's performance guide](https://lynxjs.org/guide/performance/),
+  adapted to what a web harness can observe):
+  - `bg` — background-thread cost: reactivity + render + ops serialization.
+  - `e2e` — `bg` + cross-thread transfer + Main-Thread apply (elements live).
+  - **Ops-stream telemetry** — number of ops and JSON bytes crossing the
+    thread boundary per operation.
+  - First screen, JS heap, bundle size.
+- **Stats**: n=20 per op (heavy ops n=10), medians with 95% CIs, modes
+  loaded alternately, plus an independent replication round.
+
+## Update-path operations
+
+Vapor's structural advantage — no vnode tree, no diffing, reactive effects
+write straight to elements — shows up unfiltered on the background thread:
+
+| Operation | vdom bg | vapor bg | bg speedup | vdom e2e | vapor e2e | e2e speedup |
+|---|---|---|---|---|---|---|
+| update every 10th row | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
+| select row | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
+| swap rows | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
+| remove row | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
+
+The e2e multiplier is smaller because both modes emit near-identical ops for
+these operations (the Main-Thread cost is shared); the entire delta is Vue
+work on the background thread. This is exactly the thread you share with
+your own application logic, so lower `bg` means more headroom before
+dropped frames.
+
+## Creation path
+
+| Operation | vdom e2e | vapor e2e | ratio |
+|---|---|---|---|
+| create 1,000 rows | 125.7 ms | 144.5 ms | 0.87× (vapor 15% slower) |
+| append 1,000 rows | 217.4 ms | 224.6 ms | 0.97× |
+| create 10,000 rows | 1500 ms | 1602 ms | 0.94× |
+| clear 10,000 rows | 1838 ms | 1621 ms | **1.13× (vapor faster)** |
+
+Creation is effectively parity. It didn't start that way — the naive
+DOM-compat port was 1.9× slower — and the ops telemetry is what located the
+fixes (see [iterations](#how-creation-reached-parity) below).
+
+## Cross-thread traffic (ops telemetry)
+
+Per create-1k operation, after the `CLONE_TEMPLATE` protocol work:
+
+| | vdom | vapor |
+|---|---|---|
+| ops per flush | 17,000 | **7,000 (−59%)** |
+| JSON bytes | 327 KB | **160 KB (−51%)** |
+
+On the web harness this doesn't move e2e further (the main thread is
+dominated by real DOM construction), but on native Lynx the payload crosses
+a serialization boundary into PrimJS — halving it is expected to matter
+more there, and the template protocol leaves a clean seam for mapping onto
+the engine's `__CloneElement` in the future.
+
+## Startup, memory, bundle
+
+| Metric | vdom | vapor | note |
+|---|---|---|---|
+| First screen (lynx-view attach → first content) | 121.7 ms | 125.8 ms | +3%, CIs overlap |
+| Bundle gzip (`main.lynx.bundle`) | 39.2 KB | 49.3 KB | +26% — Vapor runtime + DOM-compat shim |
+| JS heap after 10k rows | 76–136 MB | 76–105 MB | see note |
+
+Memory is *indicative only* (no forced GC): Vapor measured 22–26% lower in
+two of three runs and higher in one. Directionally Vapor allocates less
+(no retained vnode tree), but don't quote a single number.
+
+## How creation reached parity
+
+Three iterations, each driven by the ops telemetry — kept here because the
+"why" is as useful as the result:
+
+1. **Only-child text aliasing.** vdom sets text directly on the host
+   element; the naive Vapor clone materialized a separate Main-Thread text
+   node per cell. Aliasing only-child `#text` nodes onto their host aligned
+   Vapor's ops count with vdom's (25,000 → 17,000 for create-1k).
+2. **`REGISTER_TEMPLATE` / `CLONE_TEMPLATE`.** Vapor's clone-a-template
+   primitive lets the static structure cross the thread boundary **once**,
+   with instances expressed as a single op each (17,000 → 7,000 ops,
+   −51% bytes). These are Vue Lynx's own protocol ops — the Main-Thread
+   interpreter ships in the same bundle, so no engine change was needed.
+3. **Pure Vapor entry.** The original composite entry bundled both
+   runtimes: +48% gzip and +29% first screen. Splitting into pure
+   `vue-lynx` / `vue-lynx/vapor-app` entries cut that to +26% and +3%
+   with zero regression elsewhere.
+
+A side win: the create-10k stress loop exposed a Main-Thread element-registry
+leak that affected **both** modes (elements were never released on removal);
+fixing it is why the numbers above are stable across iterations.
+
+## Caveats
+
+- The harness is **Lynx for Web, not a native device**. The `bg` numbers
+  are structurally engine-independent (same Vue code, same serialization),
+  but e2e and startup will differ on native Lynx (PrimJS, native layout).
+  The benchmark apps mount and run automatically, so the same bundles can
+  be re-measured in LynxExplorer on a device.
+- Sub-millisecond e2e medians approach the timer's granularity; bg medians
+  have CI95 < 15%, e2e CIs on tiny ops are wider.
+- Vapor mode and Vue 3.6 are prerelease software; numbers will move.
+
+## Reproduce
+
+```bash
+pnpm --filter vue-lynx-benchmark bench        # full run
+pnpm --filter vue-lynx-benchmark bench:quick  # fewer samples
+```
+
+Raw data, per-run JSON, and the analysis write-up live in the repo under
+[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)
+(environment: headless Chromium via playwright-core, 4× Xeon 2.80 GHz,
+Node 22, `vue@3.6.0-beta.17`).

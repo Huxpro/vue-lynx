@@ -6,6 +6,8 @@ packages/upstream-tests/core/
 *.log
 .DS_Store
 website/docs/guide/api/
+# generated zh mirror of API docs (hand-written index.mdx files stay tracked)
+website/docs/zh/guide/api/
 website/api-sidebar.json
 .vercel
 .claude/

@@ -1,0 +1,120 @@
+# 基准测试：VDOM vs Vapor
+
+[Vapor mode](/zh/guide/vapor-mode) 在 Lynx 上到底快多少？为了定量回答，
+Vue Lynx 移植了 Vue 官方基准
+（[`packages-private/benchmark`](https://github.com/vuejs/core/tree/main/packages-private/benchmark)，
+派生自 [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)），
+让**同一个应用以两种模式**跑完整的双线程管线。
+
+**TL;DR** —— 更新路径操作 Vapor 在后台线程快 5.8–9.8×；列表创建时跨线程
+ops 少 2.4×，端到端与 vdom 持平。代价：包体 gzip +26%，首屏差异在噪声范围内。
+
+## 方法
+
+- **应用**：krausest 表格应用（对 1k–10k 行执行
+  create/update/select/swap/remove/append/clear）。Vapor 版由 vdom 源码
+  *生成*——唯一差异是 `vapor` 属性——负载逐字节一致。
+- **Harness**：生产构建，经
+  [Lynx for Web](https://lynxjs.org/guide/start/fragments/web/)（`<lynx-view>`）
+  在 headless Chromium（Playwright）中渲染。两条线程都跑真实代码：Vue 在
+  后台 worker，ops 解释器 + DOM 在主线程。
+- **指标**（参考 [Lynx 性能指南](https://lynxjs.org/guide/performance/)，
+  取 Web harness 可观测的部分）：
+  - `bg` —— 后台线程成本：响应式 + 渲染 + ops 序列化。
+  - `e2e` —— `bg` + 跨线程传输 + 主线程 apply（元素已就绪）。
+  - **ops 流遥测** —— 每次操作跨线程的指令数与 JSON 字节数。
+  - 首屏、JS 堆、包体。
+- **统计**：每操作 n=20（重操作 n=10），中位数 ± 95% CI，两种模式交替
+  加载，另跑独立复现轮。
+
+## 更新路径
+
+Vapor 的结构性优势——没有 vnode 树、没有 diff、响应式 effect 直写元素——在
+后台线程上完整呈现：
+
+| 操作 | vdom bg | vapor bg | bg 倍数 | vdom e2e | vapor e2e | e2e 倍数 |
+|---|---|---|---|---|---|---|
+| 每第 10 行更新 | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
+| 选中行 | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
+| 交换行 | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
+| 删除行 | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
+
+e2e 倍数小于 bg 倍数，因为这些操作两种模式发出的 ops 几乎相同（主线程成本
+共享），差距全部来自后台线程上的 Vue 工作量。后台线程正是与你的业务逻辑
+共享的线程——更低的 `bg` 意味着掉帧前有更多余量。
+
+## 创建路径
+
+| 操作 | vdom e2e | vapor e2e | 比值 |
+|---|---|---|---|
+| 创建 1,000 行 | 125.7 ms | 144.5 ms | 0.87×（vapor 慢 15%） |
+| 追加 1,000 行 | 217.4 ms | 224.6 ms | 0.97× |
+| 创建 10,000 行 | 1500 ms | 1602 ms | 0.94× |
+| 清空 10,000 行 | 1838 ms | 1621 ms | **1.13×（vapor 更快）** |
+
+创建路径已基本持平。最初并非如此——朴素的 DOM 兼容移植慢 1.9×——正是 ops
+遥测定位了修复点（见下文[迭代](#创建路径如何达到持平)）。
+
+## 跨线程流量（ops 遥测）
+
+`CLONE_TEMPLATE` 协议落地后，每次创建 1k 行：
+
+| | vdom | vapor |
+|---|---|---|
+| 每次 flush 的 ops | 17,000 | **7,000（−59%）** |
+| JSON 字节数 | 327 KB | **160 KB（−51%）** |
+
+在 Web harness 上这不再进一步压低 e2e（主线程被真实 DOM 构建成本主导），
+但在原生 Lynx 上载荷要跨序列化边界进入 PrimJS——传输量减半在真机上预期
+收益更大，且模板协议为将来映射引擎的 `__CloneElement` 留好了接口。
+
+## 首屏、内存、包体
+
+| 指标 | vdom | vapor | 备注 |
+|---|---|---|---|
+| 首屏（lynx-view attach → 首次内容） | 121.7 ms | 125.8 ms | +3%，置信区间重叠 |
+| 包体 gzip（`main.lynx.bundle`） | 39.2 KB | 49.3 KB | +26% —— Vapor 运行时 + DOM 兼容 shim |
+| 10k 行后 JS 堆 | 76–136 MB | 76–105 MB | 见下 |
+
+内存为*指示性数据*（未强制 GC）：三轮中两轮 Vapor 低 22–26%，一轮偏高。
+方向上 Vapor 分配更少（不保留 vnode 树），但不要引用单一数字。
+
+## 创建路径如何达到持平
+
+三轮迭代，每轮都由 ops 遥测驱动——记录在此，因为"为什么"和结果一样有用：
+
+1. **独生文本别名。** vdom 直接在宿主元素上设置文本；朴素的 Vapor 克隆
+   却为每个单元格物化独立的主线程文本节点。把独生 `#text` 节点别名到宿主后，
+   Vapor 的 ops 数与 vdom 对齐（create-1k 从 25,000 → 17,000）。
+2. **`REGISTER_TEMPLATE` / `CLONE_TEMPLATE`。** Vapor 的克隆模板原语让
+   静态结构只需跨线程**一次**，每个实例仅一条 op（17,000 → 7,000 ops，
+   字节数 −51%）。这是 Vue Lynx 自己的协议指令——主线程解释器与后台代码
+   同 bundle 发布，无需引擎变更。
+3. **纯 Vapor 入口。** 最初的复合入口同时打包两套运行时：gzip +48%、
+   首屏 +29%。拆成纯 `vue-lynx` / `vue-lynx/vapor-app` 两个入口后降至
+   +26% 与 +3%，其余指标零回归。
+
+一个附带收获：create-10k 压力循环暴露了一个影响**两种模式**的主线程元素
+注册表泄漏（删除元素从不释放）；修复它是上表数字能跨迭代保持稳定的原因。
+
+## 注意事项
+
+- Harness 是 **Lynx for Web，不是真机**。`bg` 数字在结构上与引擎无关
+  （同样的 Vue 代码、同样的序列化），但 e2e 与首屏在原生 Lynx（PrimJS、
+  原生排版）上会不同。基准应用挂载后自动运行，同一 bundle 可直接进
+  LynxExplorer 真机复测。
+- 亚毫秒级的 e2e 中位数接近计时粒度；bg 中位数 CI95 < 15%，小操作的 e2e
+  CI 较宽。
+- Vapor mode 与 Vue 3.6 均为 prerelease；数字会变化。
+
+## 复现
+
+```bash
+pnpm --filter vue-lynx-benchmark bench        # 完整运行
+pnpm --filter vue-lynx-benchmark bench:quick  # 少量采样
+```
+
+原始数据、逐轮 JSON 与分析报告见仓库
+[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)
+（环境：headless Chromium（playwright-core）、4× Xeon 2.80 GHz、Node 22、
+`vue@3.6.0-beta.17`）。

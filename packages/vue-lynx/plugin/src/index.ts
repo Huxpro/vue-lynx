@@ -268,8 +268,9 @@ export function pluginVueLynx(
         api.modifyBundlerChain((chain) => {
           // "vue" → "vue-lynx" ensures template compiler output
           // imports from the same module instance (singleton shared state).
-          // With vapor enabled, the composite entry additionally provides
-          // the Vapor helper surface that compiled vapor components import.
+          // With vapor enabled, "vue" resolves to the pure Vapor entry
+          // instead, which carries the helper surface compiled vapor
+          // components import (and none of the vdom renderer).
           chain.resolve.alias.set(
             'vue',
             vapor ? 'vue-lynx/vapor-app' : 'vue-lynx',

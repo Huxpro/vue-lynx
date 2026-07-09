@@ -1,0 +1,219 @@
+import { Tab, Tabs } from '@theme';
+
+# Vapor Mode（实验性）
+
+[Vapor mode](https://github.com/vuejs/core/releases) 是 Vue 3.6 引入的编译式
+渲染模式：组件模板直接编译为操作元素的代码，没有 Virtual DOM，也没有逐组件
+diff。Vue Lynx 支持在 Lynx 双线程架构上运行 Vapor 组件——更新路径有可量化的
+大幅性能优势（见[基准测试](/zh/guide/benchmark-vapor)）。
+
+:::warning 实验性
+Vapor mode 本身**尚未进入任何 Vue 稳定版本**——截至 2026 年年中，它只发布在
+Vue 3.6 beta / prerelease 线中，Vue 团队也标记其为不稳定。Vue Lynx 的 Vapor
+支持继承这一状态：欢迎尝试，但别把生产应用押在上面。Vue Lynx 固定使用
+`vue@3.6.0-beta.17`。
+:::
+
+## 开启 Vapor mode
+
+Vapor 是**以应用为粒度的构建期决策**。切换一个应用需要改三处：插件开关、
+入口 import、以及每个组件上的 `vapor` 属性：
+
+<Tabs>
+  <Tab label="Vapor">
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      vapor: true, // [!code highlight]
+    }),
+  ],
+})
+```
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx/vapor-app' // [!code highlight]
+import App from './App.vue'
+
+createApp(App).mount()
+```
+
+```vue title="src/Counter.vue"
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+
+const count = ref(0)
+</script>
+
+<template>
+  <view class="button" @tap="count++">
+    <text>Count: {{ count }}</text>
+  </view>
+</template>
+```
+
+  </Tab>
+  <Tab label="VDOM（默认）">
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [pluginVueLynx()],
+})
+```
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx'
+import App from './App.vue'
+
+createApp(App).mount()
+```
+
+```vue title="src/Counter.vue"
+<script setup lang="ts">
+import { ref } from 'vue'
+
+const count = ref(0)
+</script>
+
+<template>
+  <view class="button" @tap="count++">
+    <text>Count: {{ count }}</text>
+  </view>
+</template>
+```
+
+  </Tab>
+</Tabs>
+
+组件内部无需任何其他改动：`import { ref } from 'vue'` 照常工作——插件会把
+`'vue'` alias 到与当前模式匹配的入口（`vapor: true` 时为
+`vue-lynx/vapor-app`，否则为 `vue-lynx`）。
+
+完整示例见仓库
+[examples 目录](https://github.com/Huxpro/vue-lynx/tree/main/examples)中的
+`examples/vapor`，覆盖插值、`v-if`/`v-for`、`v-model`、组件 props/emits 和
+scoped CSS。
+
+:::info 从 `vue-lynx/with-vapor` 迁移
+早期预览版使用复合入口 `vue-lynx/with-vapor`，会**同时打包两套运行时**。
+它仍以 deprecated 别名的形式指向 `vue-lynx/vapor-app`，但纯入口的 gzip 体积
+小约 12%、启动更快——改一行 import 即可。
+:::
+
+## 一个应用，一种模式
+
+上游 Vue 只发布单一 `'vue'` 入口，靠 **tree-shaking** 决定你为哪些代码付费：
+vdom renderer 惰性创建、全量标注 side-effect-free，因此纯 Vapor 的 Web 应用
+不会打包 vdom 运行时，而混用应用（经 `vaporInteropPlugin`）会同时引入两者。
+
+Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成为应用级的严格
+二选一。所以 Vue Lynx 不做"单入口 + 摇树"，而是直接发布**两个纯入口**：
+
+| 入口 | 内容 | 用途 |
+|---|---|---|
+| `vue-lynx` | vdom renderer + Vue runtime-core | 常规（默认）应用 |
+| `vue-lynx/vapor-app` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
+
+这带来一个好处：vdom 专属 API（`h()`、`<Transition>`、`<Teleport>`、
+`<KeepAlive>`、`<Suspense>`、`vShow`、`vModelText`）在
+`vue-lynx/vapor-app` 上根本不存在——在 Vapor 应用里误用它们会**在构建期
+直接报错**，而不是在运行时出现难以排查的行为。
+
+## 在 Lynx 上的工作原理
+
+上游 `@vue/runtime-vapor` 直接驱动浏览器 DOM——它没有像 Virtual DOM 的
+`createRenderer()` 那样的 custom renderer 钩子。Vue Lynx 的做法是让后台线程
+的 ShadowElement 树*足够 DOM 兼容*：编译产物（以及**未改一行**的上游 Vapor
+运行时）调用标准 DOM API——`insertBefore`、`cloneNode`、`setAttribute`、
+`addEventListener`、`el.style`——这些调用最终发出与 vdom 模式完全相同的
+扁平 ops 流到主线程。
+
+```
+编译后的 vapor 组件
+  → import from 'vue'（alias 到 vue-lynx/vapor-app）
+    → @vue/runtime-vapor            （上游原样复用）
+      → document / Node / Element 全局 shim
+      → ShadowElement 的 DOM 兼容面
+        → ops 流 → 主线程 → 原生元素
+```
+
+过程中有几处 Lynx 特定的转译：
+
+| Web 概念 | Lynx 转译 |
+|---|---|
+| 模板 HTML 字符串（`template("<view class=…>")`） | 内置解析器解析为惰性原型，按实例克隆 |
+| 文档级事件委托 | 编译期关闭（`eventDelegation: false`），事件逐元素注册 |
+| `@tap.stop` | 原生 `catchEvent`（Lynx 的阻止冒泡机制） |
+| `<input>` 上的 `v-model` | Lynx `input` / `confirm`（`.lazy`）事件，取 `detail.value` |
+| Scoped CSS 的 `data-v-*` 属性 | Lynx `cssId`（与 vdom 模式同一桥接） |
+
+### 跨线程的模板克隆
+
+Vapor 的渲染原语是*克隆模板再绑定*。如果把每个克隆出的元素都拆成独立的
+create/append op 发送，Vapor 的跨线程流量会比 vdom 更差。因此 Vue Lynx 给
+自己的 ops 协议增加了两条模板指令：
+
+- `REGISTER_TEMPLATE(templateId, structure)` —— **每模板发送一次**，携带
+  静态结构树。
+- `CLONE_TEMPLATE(templateId, baseUid)` —— **每实例一条**；双端按同一
+  先序遍历从 `baseUid` 起连续分配元素 uid，无需传输任何 id 映射。
+
+这两条是 Vue Lynx 自己的 opcode（主线程解释器与后台线程代码同 bundle 发布），
+不是 Lynx 引擎变更。效果：创建 1,000 行列表时，Vapor 模式跨线程只需
+**7,000 ops / 160 KB**，而 vdom 模式为 **17,000 ops / 327 KB**。
+
+## 性能
+
+用移植的 Vue 官方基准（js-framework-benchmark 派生）在 Lynx for Web 上跑
+生产构建测得——完整方法学、注意事项与原始数据见
+[VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor)。简要结论：
+
+| 维度 | Vapor vs VDOM |
+|---|---|
+| 更新路径（update / select / swap / remove） | 后台线程 **快 5.8–9.8×**，端到端快 2.1–6.3× |
+| 列表创建（1k / 10k 行） | 持平（端到端 ±10% 以内） |
+| 跨线程流量（创建 1k 行） | **ops 少 2.4×，字节数 −51%** |
+| 包体（gzip） | +26%（49.3 vs 39.2 KB）—— Vapor 运行时 + DOM 兼容层的真实成本 |
+| 首屏 | +3%（置信区间重叠——基本持平） |
+
+更新路径的优势是结构性的——没有 vnode 分配、没有 diff、响应式 effect 直写
+元素——与渲染引擎无关，预期在真机上保持。
+
+## `vue-lynx/vapor-app` 的 API 面
+
+Vapor 入口导出 Vapor 应用需要的一切：
+
+| 类别 | API |
+|---|---|
+| 响应式与组合式（来自 Vue） | `ref`、`reactive`、`computed`、`watch`、`watchEffect`、`provide`/`inject`、生命周期钩子（`onMounted` 等）、`effectScope`、`defineComponent`、`defineAsyncComponent` 及其余标准 `@vue/runtime-core` API |
+| SFC 宏 | `defineProps`、`defineEmits`、`defineModel`、`defineExpose`、`useTemplateRef`（编译器处理，类型由入口提供） |
+| Vapor 运行时 helper | 编译后的 `<script setup vapor>` 代码所 import 的完整 `@vue/runtime-vapor` helper 面（`template`、`createComponent`、`createFor`、`createIf`、`renderEffect` 等）——一般不需要手动使用 |
+| Lynx 工具 | `nextTick`（在主线程应用完更新后 resolve——与 vdom 模式相同的 [tick 语义](/zh/guide/introduction)）、`withModifiers` / `withKeys`、`MainThreadRef` / `useMainThreadRef`、`runOnMainThread` / `runOnBackground`（[主线程脚本](/zh/guide/main-thread-script)在 Vapor 模式下用法完全一致） |
+
+刻意**缺席**的 API（import 它们会在构建期报错）：
+
+- `h()` / `render()` —— vdom 专属；Vapor 组件编译为直接操作元素的代码
+- `<Transition>`、`<TransitionGroup>`、`<Teleport>`、`<KeepAlive>`、
+  `<Suspense>` —— 上游 Vapor 尚未实现
+- `vShow` / `vModelText` 对象 —— Vapor 对 `v-show` / `v-model` 的编译方式
+  不同；模板里的指令照常工作，只是手动 import 的形式不存在
+- `vaporInteropPlugin` —— 不支持混用（调用会抛出带说明的错误）
+
+## 当前限制
+
+- **不支持 vdom ↔ vapor 混用。** 一个应用要么全 Vapor 要么全 vdom；
+  `vaporInteropPlugin` 尚未接入（上游将其硬编码到浏览器 DOM renderer）。
+- Vapor 应用中**暂无 `<Transition>` / `<Teleport>` / `<KeepAlive>` /
+  `<Suspense>`** —— 上游 Vapor 尚未发布这些能力。
+- **不支持 `v-html`** —— Lynx 元素无法解析 HTML 字符串（与 vdom 模式的
+  Vue Lynx 一致）。
+- **不支持 SSR / hydration** —— Lynx 没有 SSR。
+- Vapor 模式的常规 Vue 约束同样适用：仅 `<script setup>`、无 Options API、
+  `getCurrentInstance()` 返回 `null`。
