@@ -239,7 +239,7 @@ export { createPageRoot } from './shadow-element.js';
 function applyVShow(el: ShadowElement, value: unknown): void {
   el._vShowHidden = !value;
   const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
-  pushOp(OP.SET_STYLE, el.id, style);
+  pushOp(OP.SET_STYLE, el.uid, style);
   scheduleFlush();
 }
 
@@ -1056,7 +1056,7 @@ export const vModelText: ObjectDirective<ShadowElement> = {
   mounted(el, { value }) {
     const val = value == null ? '' : String(value);
     el._vModelValue = val;
-    pushOp(OP.SET_PROP, el.id, 'value', val);
+    pushOp(OP.SET_PROP, el.uid, 'value', val);
     scheduleFlush();
   },
 
@@ -1074,7 +1074,7 @@ export const vModelText: ObjectDirective<ShadowElement> = {
     const strVal = value == null ? '' : String(value);
     if (strVal !== el._vModelValue) {
       el._vModelValue = strVal;
-      pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      pushOp(OP.SET_PROP, el.uid, 'value', strVal);
       scheduleFlush();
     }
   },
@@ -1261,5 +1261,5 @@ export function resetForTesting(): void {
   resetFunctionCallState();
   resetRunOnBackgroundState();
   takeOps(); // drain any leftover ops
-  ShadowElement.nextId = 2;
+  ShadowElement.nextUid = 2;
 }

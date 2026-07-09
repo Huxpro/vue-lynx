@@ -18,10 +18,10 @@ import type {
 } from '@lynx-js/types';
 
 export class ShadowElement {
-  static nextId = 2; // 1 is reserved for the page root
+  static nextUid = 2; // 1 is reserved for the page root
 
-  id: number;
-  type: string;
+  uid: number;
+  tag: string;
   parent: ShadowElement | null = null;
   firstChild: ShadowElement | null = null;
   lastChild: ShadowElement | null = null;
@@ -49,13 +49,13 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
-  constructor(type: string, forceId?: number) {
-    if (forceId === undefined) {
-      this.id = ShadowElement.nextId++;
+  constructor(tag: string, forceUid?: number) {
+    if (forceUid === undefined) {
+      this.uid = ShadowElement.nextUid++;
     } else {
-      this.id = forceId;
+      this.uid = forceUid;
     }
-    this.type = type;
+    this.tag = tag;
   }
 
   // ---------------------------------------------------------------------------
@@ -67,7 +67,7 @@ export class ShadowElement {
 
   /** CSS attribute selector that uniquely identifies this element on MT. */
   get _selector(): string {
-    return `[vue-ref-${this.id}]`;
+    return `[vue-ref-${this.uid}]`;
   }
 
   private _select(): NodesRef {
