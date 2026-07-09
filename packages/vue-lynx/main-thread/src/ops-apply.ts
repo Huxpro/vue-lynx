@@ -15,7 +15,10 @@ import { OP } from 'vue-lynx/internal/ops';
 import {
   elements,
   pageUniqueId,
+  releaseSubtree,
+  resetElementRegistry,
   setPageUniqueId,
+  trackInsert,
 } from './element-registry.js';
 import { getTemplate } from './element-templates.js';
 import {
@@ -77,6 +80,11 @@ function createTypedElement(
 export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
+
+  // Subtree roots removed in this batch. Moves (KeepAlive storage, Teleport)
+  // emit REMOVE followed by INSERT within the same batch, so registry release
+  // is deferred until the end of the batch and cancelled by a re-insert.
+  const removedRoots = new Set<number>();
 
   // Detect duplicate batch from double BG bundle evaluation.
   // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
@@ -144,6 +152,8 @@ export function applyOps(ops: unknown[], flush = true): void {
         const parent = elements.get(parentId);
         const child = elements.get(childId);
         if (parent && child) {
+          removedRoots.delete(childId);
+          trackInsert(parentId, childId);
           if (isListParent(parentId)) {
             insertListItem(parentId, child, childId, anchorId);
           } else if (anchorId === -1) {
@@ -168,6 +178,7 @@ export function applyOps(ops: unknown[], flush = true): void {
             removeListItem(parentId, childId);
           }
           __RemoveElement(parent, child);
+          removedRoots.add(childId);
         }
         break;
       }
@@ -314,6 +325,13 @@ export function applyOps(ops: unknown[], flush = true): void {
 
   flushListUpdates();
 
+  // Elements removed and not re-inserted in this batch are gone for good —
+  // the BG thread never references them again. Release their subtrees so the
+  // registry does not retain unbounded detached trees.
+  for (const id of removedRoots) {
+    releaseSubtree(id);
+  }
+
   // Flush all pending PAPI changes to the native layer in one shot.
   if (flush) __FlushElementTree();
 }
@@ -323,7 +341,7 @@ export { elements };
 
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
-  elements.clear();
+  resetElementRegistry();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
