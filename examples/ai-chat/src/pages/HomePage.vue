@@ -9,6 +9,7 @@ import Icon from '../components/ui/Icon.vue';
 import { useAttachments } from '../composables/useAttachments';
 import { useChats } from '../composables/useChats';
 import { useSession } from '../composables/useSession';
+import { useViewport } from '../composables/useViewport';
 import { apiFetch } from '../lib/api';
 import { uid } from '../lib/uid';
 
@@ -16,6 +17,7 @@ import { uid } from '../lib/uid';
 const router = useRouter();
 const { user } = useSession();
 const { fetchChats } = useChats();
+const { isMobile } = useViewport();
 
 const input = ref('');
 const loading = ref(false);
@@ -79,8 +81,9 @@ const quickChats = [
   <view class="flex-1 flex flex-col min-w-0">
     <Navbar />
 
-    <view class="flex-1 flex flex-col justify-center px-6 py-8 gap-6 home-container">
-      <text class="text-4xl text-highlighted font-bold">{{ greeting }}</text>
+    <view class="flex-1 flex flex-col justify-center py-8 gap-6 home-container" :class="isMobile ? 'px-4' : 'px-6'">
+      <!-- original: text-3xl sm:text-4xl -->
+      <text class="text-highlighted font-bold" :class="isMobile ? 'text-3xl' : 'text-4xl'">{{ greeting }}</text>
 
       <PromptBox
         v-model="input"

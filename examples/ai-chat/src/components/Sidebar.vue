@@ -6,6 +6,7 @@ import { useChatActions } from '../composables/useChatActions';
 import { useChats } from '../composables/useChats';
 import { useOverlay } from '../composables/useOverlay';
 import { useSession } from '../composables/useSession';
+import { useSidebarDrawer } from '../composables/useViewport';
 import Logo from './Logo.vue';
 import UserMenu from './UserMenu.vue';
 import Icon from './ui/Icon.vue';
@@ -17,17 +18,25 @@ import UButton from './ui/UButton.vue';
  * per-chat actions, login/user footer. Drag-to-resize is skipped (PRD F1.2b)
  * and hover-revealed actions become an always-visible ellipsis (F1.6).
  */
+const props = defineProps<{ drawer?: boolean }>();
+
 const router = useRouter();
 const route = useRoute();
 const { groups } = useChats();
 const { renameChat, deleteChat } = useChatActions();
 const { loggedIn, login } = useSession();
 const overlay = useOverlay();
+const { close: closeDrawer } = useSidebarDrawer();
 
 const collapsed = ref(false);
 
+function afterNavigate() {
+  if (props.drawer) closeDrawer();
+}
+
 function newChat() {
   router.push('/');
+  afterNavigate();
 }
 
 async function openSearch() {
@@ -35,6 +44,7 @@ async function openSearch() {
   const result = await instance.result;
   if (result === '__new__') router.push('/');
   else if (result) router.push(`/chat/${result}`);
+  if (result !== false) afterNavigate();
 }
 
 async function chatActions(item: { id: string; label: string }) {
@@ -54,13 +64,14 @@ async function chatActions(item: { id: string; label: string }) {
 
 function openChat(id: string) {
   router.push(`/chat/${id}`);
+  afterNavigate();
 }
 </script>
 
 <template>
   <view
     class="flex flex-col py-4 bg-sidebar shrink-0 h-full"
-    :style="{ width: collapsed ? '56px' : '256px' }"
+    :style="{ width: drawer ? '100%' : collapsed ? '56px' : '256px' }"
   >
     <!-- header -->
     <view class="flex flex-row items-center px-4 pb-3" :class="collapsed ? 'justify-center px-2' : ''">
@@ -68,7 +79,10 @@ function openChat(id: string) {
         <Logo :size="32" />
         <text class="text-xl font-bold text-highlighted">Chat</text>
       </view>
-      <view class="p-1.5 rounded-md" @tap="collapsed = !collapsed">
+      <view v-if="drawer" class="p-1.5 rounded-md" @tap="closeDrawer()">
+        <Icon name="i-lucide-x" tone="muted" :size="20" />
+      </view>
+      <view v-else class="p-1.5 rounded-md" @tap="collapsed = !collapsed">
         <Icon name="i-lucide-panel-left" tone="muted" :size="20" />
       </view>
     </view>

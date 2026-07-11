@@ -17,6 +17,7 @@ import { useChats } from '../composables/useChats';
 import { useModels } from '../composables/useModels';
 import { useOverlay } from '../composables/useOverlay';
 import { useToast } from '../composables/useToast';
+import { useViewport } from '../composables/useViewport';
 import { apiFetch } from '../lib/api';
 import type { UIMessage } from '../types/ai';
 
@@ -26,6 +27,7 @@ const toast = useToast();
 const overlay = useOverlay();
 const { model } = useModels();
 const { chats, fetchChats } = useChats();
+const { isMobile } = useViewport();
 
 const chatId = String(route.params.id);
 
@@ -263,7 +265,7 @@ const showIndicator = computed(
     </Navbar>
 
     <scroll-view ref="scrollRef" scroll-orientation="vertical" class="flex-1 min-h-0">
-      <view class="flex flex-col gap-6 px-6 py-4 chat-container">
+      <view class="flex flex-col gap-6 py-4 chat-container" :class="isMobile ? 'px-4' : 'px-6'">
         <view
           v-for="message in messages"
           :key="message.id"
@@ -308,7 +310,7 @@ const showIndicator = computed(
       </view>
     </scroll-view>
 
-    <view v-if="isOwner" class="px-6 pb-4 pt-1 prompt-container">
+    <view v-if="isOwner" class="pb-4 pt-1 prompt-container" :class="isMobile ? 'px-4' : 'px-6'">
       <PromptBox
         v-model="input"
         :status="status"

@@ -70,5 +70,9 @@ Why a straight copy is impossible:
 8. **Element methods** (`scrollTo` on `scroll-view`) go through template refs:
    `ref.invoke({ method, params }).exec()`, after `await nextTick()` so the main thread has
    applied pending ops.
-9. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
+9. **No viewport media queries.** Responsive behavior (the original's `lg:` breakpoint) is
+   re-created by reading the `SystemInfo` global (`pixelWidth / pixelRatio` = logical width —
+   web-core populates it from `screen.availWidth * devicePixelRatio`) and branching the layout
+   in code (`useViewport`). Detection is startup-only in this example.
+10. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
    `fetch` binding with an undefined parameter (known repo convention, applies here too).

@@ -14,6 +14,10 @@ export interface IconGlyph {
 }
 
 export const ICONS: Record<string, IconGlyph> = {
+  "i-lucide-menu": {
+    "type": "stroke",
+    "body": "<line x1=\"4\" x2=\"20\" y1=\"12\" y2=\"12\"/><line x1=\"4\" x2=\"20\" y1=\"6\" y2=\"6\"/><line x1=\"4\" x2=\"20\" y1=\"18\" y2=\"18\"/>"
+  },
   "i-lucide-circle-plus": {
     "type": "stroke",
     "body": "<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"M8 12h8\" /><path d=\"M12 8v8\" />"

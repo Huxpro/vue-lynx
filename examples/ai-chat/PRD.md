@@ -36,6 +36,7 @@ Legend: **Port** = same behavior re-implemented • **Adapt** = same intent, Lyn
 | F1.7 | Sidebar footer: Login button / user menu | Adapt | ☑ | See F5 |
 | F1.8 | Keyboard shortcuts (⌘O new chat, ⌘K search, kbd hints) | **Skip** | — | No hardware-keyboard/`defineShortcuts` equivalent in Lynx; touch-first UI. Kbd hint chips also skipped |
 | F1.9 | Routing `/` ↔ `/chat/:id` | Adapt | ☑ | vue-router with `createMemoryHistory()` (Lynx has no History API) |
+| F1.10 | Responsive layout (`lg:` breakpoint): full-bleed panel + hamburger + slide-over sidebar on mobile | Adapt | ☑ | No CSS media queries on Lynx — branches on `SystemInfo.pixelWidth/pixelRatio` at startup (rotation/resize re-detection out of scope); verified at 390×844 with comparison pairs |
 
 ### F2 — Home page
 

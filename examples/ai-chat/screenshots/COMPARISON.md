@@ -17,6 +17,9 @@ Both columns captured at 1280×800.
 | Share modal | ![original share](original/share.png) | ![lynx share](lynx/share.png) |
 | Model select | ![original model select](original/model-select.png) | ![lynx model select](lynx/model-select.png) |
 | Collapsed sidebar | ![original collapsed](original/collapsed.png) | ![lynx collapsed](lynx/collapsed.png) |
+| Mobile home (390×844) | ![original mobile home](original/mobile-home.png) | ![lynx mobile home](lynx/mobile-home.png) |
+| Mobile sidebar drawer | ![original mobile drawer](original/mobile-drawer.png) | ![lynx mobile drawer](lynx/mobile-drawer.png) |
+| Mobile weather chat | ![original mobile weather](original/mobile-weather.png) | ![lynx mobile weather](lynx/mobile-weather.png) |
 
 ## Reading the pairs
 
@@ -62,3 +65,10 @@ selected checkmark; a sheet replaces the anchored popover (no anchored portals o
 
 **Collapsed sidebar** — both collapse to an icon rail (logo hidden, icon-only nav, avatar/login
 footer).
+
+**Mobile (390×844)** — the original goes responsive through Tailwind's `lg:` breakpoint
+(full-bleed panel, hamburger toggle, slide-over sidebar). Lynx has no viewport media queries, so
+the port branches on `SystemInfo.pixelWidth / pixelRatio` at startup: same full-bleed panel,
+hamburger in the navbar, slide-over drawer (with close button and content dim), stacked
+quick-chat pills, and tighter paddings. The drawer state in the original screenshot shows an
+empty history because the live demo session was fresh.
