@@ -101,6 +101,14 @@ watch(
   { deep: true, flush: 'post' },
 );
 
+// Re-pin after the stream settles: the last parts (e.g. source pills) can
+// land after the final in-stream scroll was applied.
+watch(status, (value) => {
+  if (value === 'ready') {
+    setTimeout(() => void scrollToBottom(), 180);
+  }
+});
+
 // The title is generated server-side before streaming starts on the first
 // message; refresh the sidebar/title as soon as the response streams.
 watch(status, async (value) => {

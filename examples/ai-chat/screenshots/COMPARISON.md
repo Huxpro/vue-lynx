@@ -13,6 +13,10 @@ Both columns captured at 1280×800.
 | Markdown + code | ![original code](original/code.png) | ![lynx code](lynx/code.png) |
 | Home (dark) | ![original dark](original/dark.png) | ![lynx dark](lynx/dark.png) |
 | Search palette | ![original search](original/search.png) | ![lynx search](lynx/search.png) |
+| Web-search tool | ![original websearch](original/websearch.png) | ![lynx websearch](lynx/websearch.png) |
+| Share modal | ![original share](original/share.png) | ![lynx share](lynx/share.png) |
+| Model select | ![original model select](original/model-select.png) | ![lynx model select](lynx/model-select.png) |
+| Collapsed sidebar | ![original collapsed](original/collapsed.png) | ![lynx collapsed](lynx/collapsed.png) |
 
 ## Reading the pairs
 
@@ -42,3 +46,19 @@ token-identical.
 results. The original dims the page behind the modal with a translucent backdrop; translucent
 overlay backgrounds don't composite on the Lynx web platform, so the port fades the underlying
 content instead (see PORTING.md "Platform learnings" #4).
+
+**Web-search tool** — collapsed "Searched the web" row with the query suffix, and source pills
+(domain + external-link arrow). The original inlines the pills into the markdown via MDC
+`:source-link` components; the port renders them as a row after the text (PRD F3.10 note).
+Favicons come from Google's favicon service, which the sandboxed verification browser can't
+reach — the pills degrade to text.
+
+**Share modal** — same two-option visibility control ("Keep private" selected, "Shared"),
+title/description and close affordance; the original dims with a translucent backdrop, the port
+fades the content behind (platform note above).
+
+**Model select** — USelectMenu dropdown vs action-sheet: same items, provider icons and
+selected checkmark; a sheet replaces the anchored popover (no anchored portals on Lynx).
+
+**Collapsed sidebar** — both collapse to an icon rail (logo hidden, icon-only nav, avatar/login
+footer).
