@@ -64,6 +64,46 @@ function createTypedElement(
   }
 }
 
+/**
+ * Text content is materialised as a `raw-text` child element — the canonical
+ * Lynx encoding (ReactLynx does the same). Setting a `text` attribute on the
+ * text element itself renders too, but loses newline handling on Lynx for
+ * Web (`raw-text` preserves `\n` as line breaks; a plain attribute/text node
+ * collapses whitespace).
+ */
+const rawTextChildren = new Map<number, LynxElement>();
+
+/** CREATE_TEXT elements currently hidden because their text is empty. */
+const emptyTextNodes = new Set<number>();
+
+function setElementRawText(el: LynxElement, id: number, text: string): void {
+  // Un-hide a text node once it has content (see CREATE_TEXT); re-hide it
+  // when the content goes back to empty so it stays layout-inert.
+  if (text !== '' && emptyTextNodes.has(id)) {
+    emptyTextNodes.delete(id);
+    __SetInlineStyles(el, '');
+  } else if (text === '' && !emptyTextNodes.has(id) && isTextNode(id)) {
+    emptyTextNodes.add(id);
+    __SetInlineStyles(el, 'display:none');
+  }
+
+  let raw = rawTextChildren.get(id);
+  if (!raw) {
+    raw = __CreateRawText(text);
+    __AppendElement(el, raw);
+    rawTextChildren.set(id, raw);
+    return;
+  }
+  __SetAttribute(raw, 'text', text);
+}
+
+/** Ids created via CREATE_TEXT (Vue text vnodes), ever. */
+const textNodeIds = new Set<number>();
+
+function isTextNode(id: number): boolean {
+  return textNodeIds.has(id);
+}
+
 export function applyOps(ops: unknown[]): void {
   const len = ops.length;
   if (len === 0) return;
@@ -92,8 +132,12 @@ export function applyOps(ops: unknown[]): void {
         let el: LynxElement;
         if (type === '__comment') {
           // Vue uses comment nodes as Fragment / v-if anchors.
-          // Create a zero-size text node as an invisible placeholder.
-          el = __CreateRawText('');
+          // Create a display:none view so the anchor is fully layout-inert:
+          // a zero-size element still counts as a flex item and consumes a
+          // `gap` slot, which skews containers using CSS gap (ReactLynx has
+          // no anchor elements at all — fragments are virtual there).
+          el = __CreateView(pageUniqueId);
+          __SetInlineStyles(el, 'display:none');
         } else if (type === 'list') {
           el = createListElement(id);
         } else {
@@ -121,6 +165,12 @@ export function applyOps(ops: unknown[]): void {
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
         __SetAttribute(el, `vue-ref-${id}`, 1);
+        // Text nodes start empty (SET_TEXT follows when there is content).
+        // Hide empty text nodes so anchors/empty runs are layout-inert —
+        // an empty flex item still consumes a CSS `gap` slot.
+        __SetInlineStyles(el, 'display:none');
+        emptyTextNodes.add(id);
+        textNodeIds.add(id);
         break;
       }
 
@@ -171,7 +221,7 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const text = ops[i++] as string;
         const el = elements.get(id);
-        if (el) __SetAttribute(el, 'text', text);
+        if (el) setElementRawText(el, id, text);
         break;
       }
 
@@ -274,6 +324,9 @@ export { elements };
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
   elements.clear();
+  rawTextChildren.clear();
+  emptyTextNodes.clear();
+  textNodeIds.clear();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
