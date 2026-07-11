@@ -36,6 +36,7 @@ const { values: args } = parseArgs({
     count: { type: 'string', default: '10' },
     'heavy-count': { type: 'string', default: '5' },
     'startup-count': { type: 'string', default: '3' },
+    'fresh-count': { type: 'string', default: '3' },
     'skip-build': { type: 'boolean', default: false },
     smoke: { type: 'boolean', default: false },
     headed: { type: 'boolean', default: false },
@@ -46,6 +47,7 @@ const LOADS = Number(args.loads);
 const COUNT = Number(args.count);
 const HEAVY_COUNT = Number(args['heavy-count']);
 const STARTUP_COUNT = Number(args['startup-count']);
+const FRESH_COUNT = Number(args['fresh-count']);
 const PORT = Number(args.port);
 
 const MODES = ['react', 'vdom', 'vapor'];
@@ -577,6 +579,31 @@ async function runStartupLoad(browser, mode) {
   return firstScreen;
 }
 
+/**
+ * Cold single-shot pass: a FRESH app per sample, one measured create1k and
+ * one measured create10k, no warmup, no prior operations. Separates the
+ * intrinsic cost of an operation from degradation accumulated over a long
+ * scenario (frameworks that leak or accumulate per-op state look much worse
+ * in the sustained scenario than here).
+ */
+async function runFreshLoad(browser, mode) {
+  const { page } = await loadApp(browser, mode);
+  const driver = new Driver(page);
+  try {
+    await driver.settle();
+    const create1k = await driver.create1k();
+    await driver.settle();
+    await driver.clearTo();
+    const create10k = await driver.measureButton('Create 10,000 rows', {
+      type: 'rowCount',
+      value: 10000,
+    });
+    return { create1k, create10k };
+  } finally {
+    await page.close();
+  }
+}
+
 // ---------------------------------------------------------------------------
 // smoke mode: load each app, click Create once, verify and screenshot
 // ---------------------------------------------------------------------------
@@ -628,10 +655,27 @@ function aggregate(loads) {
   );
 }
 
+/**
+ * Within-load drift: median(last 3 samples) / median(first 3 samples),
+ * averaged across loads. ~1.0 = stable per-op cost over the scenario;
+ * >1 = the framework slows down as operations accumulate.
+ */
+function drift(loads, op) {
+  const ratios = [];
+  for (const load of loads) {
+    const arr = load.samples.filter((s) => s.op === op).map((s) => s.ms);
+    if (arr.length < 6) continue;
+    const first = stats(arr.slice(0, 3)).median;
+    const last = stats(arr.slice(-3)).median;
+    if (first > 0) ratios.push(last / first);
+  }
+  return ratios.length ? stats(ratios).mean : null;
+}
+
 const fmt = (x, digits = 1) => (x == null ? 'n/a' : x.toFixed(digits));
 
 function markdownReport(result) {
-  const { meta, perOp, startup, memory, bundles } = result;
+  const { meta, perOp, startup, memory, bundles, fresh, driftByOp } = result;
   const ops = [
     'create1k', 'update10th', 'select', 'swap', 'remove',
     'append1k', 'create10k', 'clear10k',
@@ -656,6 +700,29 @@ function markdownReport(result) {
     md += `| ${op} | ${fmt(r?.median)} ±${fmt(r?.ci95)} | ${fmt(d?.median)} ±${
       fmt(d?.ci95)
     } | ${fmt(p?.median)} ±${fmt(p?.ci95)} | ${ratio(d, r)} | ${ratio(p, r)} | ${ratio(p, d)} |\n`;
+  }
+
+  if (fresh) {
+    md += `\n## Cold single-shot latency (FRESH app per sample — no prior operations, ms)\n\n`;
+    md += `Separates intrinsic op cost from degradation accumulated over the sustained scenario above.\n\n`;
+    md += `| op | react | vdom | vapor |\n|---|---|---|---|\n`;
+    for (const op of ['create1k', 'create10k']) {
+      const cell = (m) => {
+        const s = fresh[m]?.[op];
+        return s ? `${fmt(s.median)} ±${fmt(s.ci95)}` : 'n/a';
+      };
+      md += `| ${op} | ${cell('react')} | ${cell('vdom')} | ${cell('vapor')} |\n`;
+    }
+
+    md += `\n## Within-scenario drift (median of last 3 samples ÷ first 3; ~1.0 = stable)\n\n`;
+    md += `| op | react | vdom | vapor |\n|---|---|---|---|\n`;
+    for (const op of ops) {
+      const cell = (m) => {
+        const v = driftByOp?.[m]?.[op];
+        return v == null ? 'n/a' : `${v.toFixed(2)}×`;
+      };
+      md += `| ${op} | ${cell('react')} | ${cell('vdom')} | ${cell('vapor')} |\n`;
+    }
   }
 
   md += `\n## Startup (first screen: lynx-view attach → first content, ms)\n\n`;
@@ -752,6 +819,18 @@ async function main() {
       }
     }
 
+    const freshSamples = { react: [], vdom: [], vapor: [] };
+    for (let i = 0; i < FRESH_COUNT; i++) {
+      const order = MODES.map((_, k) => MODES[(k + i) % MODES.length]);
+      for (const mode of order) {
+        const f = await runFreshLoad(browser, mode);
+        freshSamples[mode].push(f);
+        console.log(
+          `[bench] fresh ${mode}: create1k ${f.create1k.toFixed(1)}ms, create10k ${f.create10k.toFixed(1)}ms`,
+        );
+      }
+    }
+
     let sha = 'unknown';
     try {
       sha = execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim();
@@ -772,8 +851,29 @@ async function main() {
         loads: LOADS,
         count: COUNT,
         heavyCount: HEAVY_COUNT,
+        freshCount: FRESH_COUNT,
       },
       perOp: Object.fromEntries(MODES.map((m) => [m, aggregate(loads[m])])),
+      fresh: Object.fromEntries(
+        MODES.map((m) => [
+          m,
+          {
+            create1k: stats(freshSamples[m].map((f) => f.create1k)),
+            create10k: stats(freshSamples[m].map((f) => f.create10k)),
+          },
+        ]),
+      ),
+      driftByOp: Object.fromEntries(
+        MODES.map((m) => [
+          m,
+          Object.fromEntries(
+            [
+              'create1k', 'update10th', 'select', 'swap', 'remove',
+              'append1k', 'create10k', 'clear10k',
+            ].map((op) => [op, drift(loads[m], op)]),
+          ),
+        ]),
+      ),
       startup: Object.fromEntries(MODES.map((m) => [m, stats(startupSamples[m])])),
       memory: Object.fromEntries(
         MODES.map((m) => [m, loads[m].flatMap((l) => l.memory)]),
