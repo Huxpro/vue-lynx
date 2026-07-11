@@ -59,6 +59,53 @@ function clear() {
   rows.value = []
   selected.value = undefined
 }
+
+// -- storms: N sequential state→render→DOM ticks from one click --------------
+// Each tick runs in its own macrotask (MessageChannel avoids the nested
+// setTimeout 4ms clamp) so every mutation goes through a full render cycle
+// instead of batching. Total wall time to the final DOM state is a
+// throughput measure that amplifies sub-frame update costs above the
+// harness's one-frame observation floor.
+const STORM_UPDATE_TICKS = 50
+const STORM_SELECT_TICKS = 100
+
+const _stormChannel = new MessageChannel()
+let _stormPending: (() => void) | null = null
+_stormChannel.port1.onmessage = () => {
+  const cb = _stormPending
+  _stormPending = null
+  if (cb) cb()
+}
+function nextMacrotask(cb: () => void) {
+  _stormPending = cb
+  _stormChannel.port2.postMessage(0)
+}
+
+function stormUpdate() {
+  let t = 0
+  const step = () => {
+    t++
+    const _rows = rows.value
+    for (let i = 0, len = _rows.length; i < len; i += 10) {
+      _rows[i].label.value = 'bench ' + t
+    }
+    if (t < STORM_UPDATE_TICKS) nextMacrotask(step)
+  }
+  nextMacrotask(step)
+}
+
+function stormSelect() {
+  let t = 0
+  const step = () => {
+    t++
+    const _rows = rows.value
+    selected.value = t < STORM_SELECT_TICKS
+      ? _rows[(t * 97) % _rows.length].id
+      : _rows[0].id
+    if (t < STORM_SELECT_TICKS) nextMacrotask(step)
+  }
+  nextMacrotask(step)
+}
 </script>
 
 <template>
@@ -71,6 +118,8 @@ function clear() {
       <view class="btn" @tap="update()"><text class="btn-text">Update every 10th row</text></view>
       <view class="btn" @tap="swapRows()"><text class="btn-text">Swap Rows</text></view>
       <view class="btn" @tap="clear()"><text class="btn-text">Clear</text></view>
+      <view class="btn" @tap="stormUpdate()"><text class="btn-text">Update storm x50</text></view>
+      <view class="btn" @tap="stormSelect()"><text class="btn-text">Select storm x100</text></view>
     </view>
     <view class="rows">
       <view

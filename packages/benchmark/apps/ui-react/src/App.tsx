@@ -2,12 +2,31 @@
 // Mirrors apps/ui-vdom/src/App.vue operation-for-operation, implemented as
 // the idiomatic keyed react-hooks version from js-framework-benchmark:
 // immutable state updates + memoized row component.
-import { memo, useCallback, useState } from '@lynx-js/react';
+import { memo, useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 
 import { buildData } from './data';
 import type { RowData } from './data';
 
 import './App.css';
+
+// -- storms: N sequential state→render→DOM ticks from one click --------------
+// Each tick runs in its own macrotask (MessageChannel avoids the nested
+// setTimeout 4ms clamp) so every mutation goes through a full render cycle
+// instead of batching. Mirrors apps/ui-vdom/src/App.vue.
+const STORM_UPDATE_TICKS = 50;
+const STORM_SELECT_TICKS = 100;
+
+const _stormChannel = new MessageChannel();
+let _stormPending: (() => void) | null = null;
+_stormChannel.port1.onmessage = () => {
+  const cb = _stormPending;
+  _stormPending = null;
+  if (cb) cb();
+};
+function nextMacrotask(cb: () => void) {
+  _stormPending = cb;
+  _stormChannel.port2.postMessage(0);
+}
 
 interface RowProps {
   row: RowData;
@@ -78,6 +97,34 @@ export function App() {
     setSelected(undefined);
   }, []);
 
+  const idsRef = useRef<number[]>([]);
+  useEffect(() => {
+    idsRef.current = rows.map((r) => r.id);
+  }, [rows]);
+
+  const stormUpdate = useCallback(() => {
+    let t = 0;
+    const step = () => {
+      t++;
+      setRows((prev) =>
+        prev.map((r, i) => (i % 10 === 0 ? { id: r.id, label: `bench ${t}` } : r)),
+      );
+      if (t < STORM_UPDATE_TICKS) nextMacrotask(step);
+    };
+    nextMacrotask(step);
+  }, []);
+
+  const stormSelect = useCallback(() => {
+    let t = 0;
+    const step = () => {
+      t++;
+      const ids = idsRef.current;
+      setSelected(t < STORM_SELECT_TICKS ? ids[(t * 97) % ids.length] : ids[0]);
+      if (t < STORM_SELECT_TICKS) nextMacrotask(step);
+    };
+    nextMacrotask(step);
+  }, []);
+
   return (
     <view className="page">
       <text className="title">React UI Benchmark on Lynx · ready</text>
@@ -99,6 +146,12 @@ export function App() {
         </view>
         <view className="btn" bindtap={clear}>
           <text className="btn-text">Clear</text>
+        </view>
+        <view className="btn" bindtap={stormUpdate}>
+          <text className="btn-text">Update storm x50</text>
+        </view>
+        <view className="btn" bindtap={stormSelect}>
+          <text className="btn-text">Select storm x100</text>
         </view>
       </view>
       <view className="rows">

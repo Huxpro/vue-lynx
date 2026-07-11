@@ -9,7 +9,8 @@
     "bench": "node harness/run.mjs",
     "bench:quick": "node harness/run.mjs --count 5 --startup-count 2",
     "bench:cross": "node harness/cross.mjs",
-    "bench:cross:quick": "node harness/cross.mjs --loads 1 --count 5"
+    "bench:cross:quick": "node harness/cross.mjs --loads 1 --count 5",
+    "bench:storms": "node harness/cross.mjs --storms"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
