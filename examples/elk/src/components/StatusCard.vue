@@ -85,7 +85,11 @@ function openAccount() {
              with the timestamp pinned top-right -->
         <view class="status-name-row" @tap="openAccount">
           <view class="status-names">
-            <AccountDisplayName :account="status.account" :font-size="main ? 16 : 15" />
+            <view class="status-name-line">
+              <AccountDisplayName :account="status.account" :font-size="main ? 16 : 15" />
+              <AppIcon v-if="status.account.bot" name="robot-2-line" :size="14" color="#919191" />
+              <AppIcon v-if="status.account.locked" name="lock-line" :size="13" color="#919191" />
+            </view>
             <text class="status-handle" :text-maxline="1">{{ fullHandle }}</text>
           </view>
           <AppIcon v-if="visibilityIcon" :name="visibilityIcon" :size="14" color="#919191" />
@@ -205,6 +209,13 @@ function openAccount() {
   display: flex;
   flex-direction: column;
   flex: 1;
+}
+
+.status-name-line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
 }
 
 .status-handle {

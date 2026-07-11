@@ -1,5 +1,6 @@
 // Screenshot the harness with headless Chromium.
 // Usage: node shot.mjs <out.png> [waitMs] [actionsJson]
+// Env: APP_PATH=/mas.to/tags/foo — deep-link the app to a route.
 // actions: [{"tap":{"x":195,"y":818}}, {"type":"hello"}, {"wait":2000}, {"scroll":300}]
 // The app renders inside <lynx-view> shadow DOM (closed to selectors), so
 // interactions are coordinate-based.
@@ -27,7 +28,8 @@ const page = await ctx.newPage();
 
 page.on('pageerror', err => console.log('[pageerror]', String(err).slice(0, 300)));
 
-await page.goto(`http://localhost:${process.env.PORT || 8975}/`, { waitUntil: 'load' });
+const appPath = process.env.APP_PATH ? `?path=${encodeURIComponent(process.env.APP_PATH)}` : '';
+await page.goto(`http://localhost:${process.env.PORT || 8975}/${appPath}`, { waitUntil: 'load' });
 await page.waitForTimeout(waitMs);
 
 for (const action of actions) {

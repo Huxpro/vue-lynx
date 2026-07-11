@@ -14,9 +14,10 @@ import { getTagRoute } from '../composables/routes';
 
 const router = useRouter();
 
-const tab = ref<'posts' | 'tags'>('posts');
+const tab = ref<'posts' | 'tags' | 'links'>('posts');
 const statuses = ref<mastodon.v1.Status[]>([]);
 const tags = ref<mastodon.v1.Tag[]>([]);
+const links = ref<mastodon.v1.TrendLink[]>([]);
 const loading = ref(true);
 
 async function load() {
@@ -30,6 +31,10 @@ async function load() {
     else if (tab.value === 'tags' && !tags.value.length) {
       const result = await client.v1.trends.tags.list({ limit: 20 }).values().next();
       tags.value = result.value ?? [];
+    }
+    else if (tab.value === 'links' && !links.value.length) {
+      const result = await client.v1.trends.links.list({ limit: 20 }).values().next();
+      links.value = result.value ?? [];
     }
   }
   catch (e) {
@@ -59,6 +64,10 @@ function tagUses(tag: mastodon.v1.Tag): number {
         <text class="explore-tab-text" :class="tab === 'tags' ? 'explore-tab-active' : ''">Hashtags</text>
         <view v-if="tab === 'tags'" class="explore-tab-underline" />
       </view>
+      <view class="explore-tab" @tap="tab = 'links'">
+        <text class="explore-tab-text" :class="tab === 'links' ? 'explore-tab-active' : ''">News</text>
+        <view v-if="tab === 'links'" class="explore-tab-underline" />
+      </view>
     </view>
 
     <view v-if="loading" class="explore-loading">
@@ -67,6 +76,18 @@ function tagUses(tag: mastodon.v1.Tag): number {
 
     <scroll-view v-else-if="tab === 'posts'" scroll-orientation="vertical" class="explore-scroll">
       <StatusCard v-for="s in statuses" :key="s.id" :status="s" />
+      <view class="explore-bottom-pad" />
+    </scroll-view>
+
+    <scroll-view v-else-if="tab === 'links'" scroll-orientation="vertical" class="explore-scroll">
+      <view v-for="link in links" :key="link.url" class="explore-link">
+        <image v-if="link.image" :src="link.image" class="explore-link-img" mode="aspectFill" />
+        <view class="explore-link-body">
+          <text class="explore-link-host">{{ link.providerName || link.url.replace(/^https?:\/\//, '').split('/')[0] }}</text>
+          <text class="explore-link-title" :text-maxline="2">{{ link.title }}</text>
+          <text v-if="link.description" class="explore-link-desc" :text-maxline="2">{{ link.description }}</text>
+        </view>
+      </view>
       <view class="explore-bottom-pad" />
     </scroll-view>
 
@@ -169,5 +190,45 @@ function tagUses(tag: mastodon.v1.Tag): number {
 
 .explore-bottom-pad {
   height: 40px;
+}
+
+.explore-link {
+  display: flex;
+  flex-direction: row;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  gap: 12px;
+}
+
+.explore-link-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background-color: var(--c-bg-active);
+  flex-shrink: 0;
+}
+
+.explore-link-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.explore-link-host {
+  font-size: 12px;
+  color: var(--c-text-secondary);
+}
+
+.explore-link-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-base);
+  margin-top: 2px;
+}
+
+.explore-link-desc {
+  font-size: 12px;
+  color: var(--c-text-secondary);
+  margin-top: 2px;
 }
 </style>

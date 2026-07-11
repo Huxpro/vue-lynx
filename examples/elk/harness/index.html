@@ -65,6 +65,7 @@
       console.error('[lynx-view error]', e.detail ?? e);
     });
     const params = new URLSearchParams(location.search);
+    view.globalProps = { initialPath: params.get('path') || '/' };
     view.url = params.get('bundle') || '/dist/main.web.bundle';
     document.getElementById('phone').appendChild(view);
   </script>

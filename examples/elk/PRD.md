@@ -52,7 +52,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Left/bottom navigation (Elk `NavSide`/`NavBottom` → Lynx bottom tab bar; native apps use bottom tabs)
 - ✅ Back navigation on subpages (Elk relies on browser back)
 - ✅ Page title header (Elk `NavTitle`/`MainContent` header)
-- ⬜ Nav footer (about/settings shortcuts)
+- ❌ Nav footer (about/settings shortcuts) — desktop-sidebar surface; Elk mobile doesn't show it either
 - ❌ Command palette (Cmd+K `command/`) & magic keys shortcuts overlay — keyboard-centric, no hardware keyboard assumption on touch devices
 - ❌ `useHead` document titles/meta/OG tags — no document in Lynx
 
@@ -64,7 +64,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Infinite scroll via masto `Paginator` (Elk `usePaginator` core reused; DOM `useElementBounding` trigger → Lynx `<list>` `scrolltolower` event)
 - ✅ Native virtualized scrolling (Elk uses `virtua` DOM virtual scroller → Lynx `<list>` native recycling)
 - ✅ Timeline filtering/reordering (Elk `timeline.ts`: hide replies/boosts prefs, thread reorder — reused verbatim)
-- ⬜ Pull-to-refresh (Lynx list refresh-view component; replaces Elk's streaming prepend)
+- 🚧 Refresh (header refresh button recreates the paginator; replaces Elk's streaming prepend. Native pull-to-refresh gesture not wired)
 - 🚧 Bookmarks timeline (page + route built on the shared paginator; requires token to exercise)
 - 🚧 Favourites timeline (page + route built on the shared paginator; requires token to exercise)
 - ❌ Conversations/DM timeline — requires auth + streaming for liveness; low value in demo scope (API supported, could be added)
@@ -80,7 +80,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - 🚧 Video/gifv/audio attachments — static preview image + type badge; no inline `<video>`/`<audio>` element in Lynx web-elements set used here
 - ✅ Content warning / spoiler fold (tap to expand)
 - ✅ Sensitive media blur/tap-to-reveal
-- ✅ Polls (options, percentages, votes count, expiry; read-only when anonymous)
+- 🚧 Polls (options, percentages, votes count, expiry; vote POST auth-gated) — logic ported from Elk, no live poll appeared in test timelines to exercise rendering
 - ✅ Action bar: reply, boost, favourite, bookmark counts
 - 🚧 Action mutations (fav/boost/bookmark POST) — implemented with optimistic updates (Elk `useStatusActions` logic), requires token; verified UI-only
 - ✅ Preview cards for links (card image, title, description)
@@ -107,7 +107,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Following / Followers lists (tappable stats on profile → paginated account list)
 - 🚧 Follow/unfollow button (needs token; UI + optimistic logic ported)
 - ❌ Account hover cards (`AccountHoverWrapper`, floating-vue) — hover doesn't exist on touch; tap navigates to profile instead
-- ⬜ Bot/locked/moved indicators
+- 🚧 Bot/locked indicators next to display name (moved-account banner not ported)
 - ❌ Profile editing (avatar crop via `vue-advanced-cropper`, `browser-fs-access` file pickers) — DOM file/canvas APIs unavailable
 
 ### Notifications (auth required)
@@ -122,9 +122,9 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Search page: accounts / hashtags / statuses (`v2.search`, debounced — Elk `useSearch` reused)
 - ✅ Explore: trending posts (`v1.trends.statuses`)
 - ✅ Explore: trending hashtags (`v1.trends.tags`) with usage sparkline numbers
-- ⬜ Explore: trending links
+- ✅ Explore: trending links (News tab: provider, title, description, thumbnail)
 - ✅ Hashtag timeline page (`v1.timelines.tag`; verified incl. CJK tags + remote instance content)
-- ⬜ Follow hashtag button (auth)
+- 🚧 Follow hashtag button (auth-gated; on tag page header)
 
 ### Publish / compose (auth required)
 
@@ -189,3 +189,4 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 - **Loop 2**: Shared layer + content renderer + full UI ported. Solved Lynx runtime landmines (hidden web globals → `source.define`, DOMParser-free entity decoding, no-URL sanitizer). Verified live on Lynx for Web against mas.to: timelines, explore, search, thread, account, settings.
 - **Loop 3**: Screenshot comparison pipeline against the ORIGINAL elk.zone (transparent HTTPS relay so both apps run in the same sandbox against the same instance). Parity fixes from comparison: heart favourite icon (was star), stacked name/handle rows, vertical preview cards with wide images, Elk-style icon+primary headers, `Xmin` timestamps, full `@user@server` handles. Side-by-sides in screenshots/README.md.
 - **Loop 4**: Dark mode (Elk palette, verified vs elk.zone dark), fullscreen media preview, quote-post nested cards, Following/Followers lists, Bookmarks/Favourites pages, hashtag timeline verified. PRD statuses trued up (pull-to-refresh ⬜, media modal 🚧).
+- **Loop 5**: Deep links via Lynx globalProps (`initialPath`), explore News tab (trending links), timeline refresh button, follow-hashtag button, bot/locked badges. Verified News tab + deep-linked #caturday hashtag page.
