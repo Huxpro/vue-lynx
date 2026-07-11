@@ -119,6 +119,13 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
+          sectionHeaderText: 'Showcase',
+        },
+        { text: 'Elk (Mastodon Client)', link: '/guide/elk' },
+        {
+          dividerType: 'solid',
+        },
+        {
           sectionHeaderText: 'API Reference',
         },
         ...apiSidebar,
@@ -157,6 +164,13 @@ export default defineConfig({
         { text: 'TodoMVC', link: '/zh/guide/todomvc' },
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '案例展示',
+        },
+        { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
         {
           dividerType: 'solid',
         },

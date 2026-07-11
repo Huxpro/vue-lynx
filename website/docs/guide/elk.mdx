@@ -1,0 +1,57 @@
+# Elk — a Mastodon Client
+
+To prove Vue Lynx can carry a real product-grade app, we ported
+[Elk](https://github.com/elk-zone/elk) — the beloved Mastodon web client
+by Anthony Fu and team — into a **native Mastodon client**. It browses any
+public Mastodon instance as a guest (default `mas.to`), with timelines,
+threads, profiles, search, trends, dark mode and more.
+
+Try it below: the **Web** tab runs the real app on Lynx for Web against a
+live Mastodon instance; switch to the **QR Code** tab and scan it with
+Lynx Go / Lynx Explorer (see [Quick Start](/guide/quick-start) for
+installing it) to run the same `main.lynx.bundle` natively on your phone.
+
+<Go example="elk" defaultFile="src/App.vue" />
+
+## Why Elk is a serious test
+
+Elk is a Nuxt 3 app with ~196 components, 55 pages and 50 composables.
+Vue Lynx has no Nuxt (no SSR, file routing, Nitro, auto-imports) and no
+DOM — so instead of forking, the port **reuses Elk's framework-agnostic
+layers and rebuilds the UI on Lynx elements**:
+
+| Layer | Verdict | Notes |
+|-------|---------|-------|
+| **masto.js API client** | ✅ reused unpatched | free-identifier web globals (`fetch`, `Request`, `AbortSignal`…) are rewritten to `globalThis.*` via `source.define` — the Lynx background-thread eval scope hides them |
+| **Content pipeline** (`content-parse.ts`) | ✅ ~95% verbatim | ultrahtml sanitize + custom-emoji / markdown / mention-collapse transforms |
+| **Content renderer** (`content-render.ts`) | ♻️ retargeted | same AST walk; emits `<text>`/`<image>` runs with tap navigation instead of `<p>`/`<a>`/`RouterLink` |
+| **Paginator, timeline filters, status actions, search, cache** | ✅ reused | DOM scroll trigger → native `<list>` `scrolltolower` |
+| **Virtual scrolling** | ♻️ replaced | Elk's DOM virtualizer (virtua) → Lynx's native recycling `<list>` — *less* code |
+| **Routing** | ♻️ rebuilt | Nuxt file routes → explicit vue-router table on `createMemoryHistory`, same route shapes so content-renderer mention/hashtag rewrites work unchanged |
+| **Every template** | ♻️ rebuilt | `<div>`→`<view>`, `<span>`→`<text>`, `@click`→`@tap`, Elk's exact theme palette as Lynx CSS vars |
+| **Icons** | ♻️ adapted | Elk's RemixIcon set (`i-ri:*`) inlined as tinted SVG data-URIs |
+
+The full feature-parity checklist (including what's deliberately not
+ported and why — OAuth redirects, TipTap, PWA, Shiki, blurhash…) lives in
+[PRD.md](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/PRD.md),
+the architecture map in
+[PORTING.md](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/PORTING.md),
+and side-by-side screenshot comparisons against the original elk.zone in
+[screenshots/](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/screenshots/README.md).
+
+## Highlights
+
+- **The content renderer is the crown jewel**: Mastodon statuses arrive as
+  sanitized HTML. Elk parses them into an AST and renders vnodes; the port
+  keeps the parse step byte-for-byte and only swaps the vnode targets —
+  custom emoji become inline `<image>`, mentions/hashtags become tappable
+  `<text>` runs that push vue-router routes.
+- **Native virtualized timeline**: the infinite timeline is a Lynx
+  `<list>` with `estimated-main-axis-size-px` hints; masto.js `Paginator`
+  iteration and Elk's reorder/buffer logic drive it unchanged.
+- **Deep links**: pass `globalProps: { initialPath: '/mas.to/tags/caturday' }`
+  to the LynxView and the app opens on that route — the same mechanism a
+  host app would use for notification taps.
+- **Guest + token sessions**: browse anonymously like Elk's guest mode, or
+  paste a personal access token in Settings to unlock home timeline,
+  notifications, posting, boosts and favourites.
