@@ -90,16 +90,7 @@ function buildNodeRecursive(
     });
   }
   const { unsupportedFields, displayProps } = splitUnsupportedProps(props);
-  return [
-    unsupportedFields.length > 0
-      ? renderUnsupportedNotice({
-        id: component.id ?? '',
-        tag,
-        kind: 'syntax',
-        fields: unsupportedFields,
-      })
-      : null,
-    h(Component, {
+  const componentNode = h(Component, {
       // Spread first so any data-binding key that collides with internal
       // plumbing (`surface`, `setValue`, `sendAction`, `id`,
       // `dataContextPath`) is overwritten by the explicit props below
@@ -115,7 +106,20 @@ function buildNodeRecursive(
           void sendAction?.(a);
         },
       dataContextPath: component.dataContextPath,
+    });
+  if (unsupportedFields.length === 0) {
+    // No fragment wrapper in the common case — fragment anchors would add
+    // stray elements into flex containers (rows/columns with gap).
+    return componentNode;
+  }
+  return [
+    renderUnsupportedNotice({
+      id: component.id ?? '',
+      tag,
+      kind: 'syntax',
+      fields: unsupportedFields,
     }),
+    componentNode,
   ];
 }
 
@@ -314,8 +318,15 @@ export const NodeRenderer: GenUIComponent = defineComponent({
     });
 
     const [resolvedProps, setValue] = useResolvedProps(
-      () =>
-        effectiveComponent.value as unknown as Record<string, unknown>,
+      () => {
+        // Track the raw resource snapshot, not just the component identity:
+        // the processor mutates component instances in place (template
+        // expansion rewrites `children` on the same object), so a
+        // same-reference update must still re-resolve. Upstream React gets
+        // this for free — useSyncExternalStore re-renders on every notify.
+        void latest.value;
+        return effectiveComponent.value as unknown as Record<string, unknown>;
+      },
       () => props.surface,
       () => effectiveComponent.value.dataContextPath,
       ctx.processor,

@@ -132,6 +132,11 @@ export const App = defineComponent({
 
     const theme = ref<Theme>(readTheme(globalProps['theme']) ?? 'light');
 
+    // `?chromeless=1` hides the demo toolbar — used by the screenshot
+    // comparison harness so only the rendered surface is captured.
+    const chromeless = globalProps['chromeless'] === true
+      || globalProps['chromeless'] === '1' || globalProps['chromeless'] === 1;
+
     const initialDemoId = typeof globalProps['demo'] === 'string'
       ? globalProps['demo']
       : STATIC_DEMOS[0]!.id;
@@ -217,7 +222,7 @@ export const App = defineComponent({
         : ' a2ui-light';
 
       return h('view', { class: `page ${themeClassName}` }, [
-        h('view', { class: 'demo-toolbar' }, [
+        chromeless ? null : h('view', { class: 'demo-toolbar' }, [
           h(
             'scroll-view',
             { 'scroll-x': true, class: 'demo-strip' },
