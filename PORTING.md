@@ -164,6 +164,26 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 | `ui-judge/` | Dev-only LLM screenshot-judging harness for upstream CI. Not part of the shipped library. |
 | `playground/src` (web playground React DOM app) | A full React **web** (non-Lynx) IDE-style playground. Porting a React DOM app to Vue DOM is unrelated to Vue Lynx; the Lynx demos it hosts (`lynx-src/`) are ported as examples instead. |
 
+## Host-framework fixes & limitations found during verification
+
+- **vue-lynx core fix — layout-inert anchors** (`0b53124`): Vue renders
+  fragment/v-if anchors and empty text vnodes as real elements; zero-size
+  flex items still consume CSS `gap` slots, inflating every gap-based
+  layout relative to ReactLynx (whose fragments are virtual). Anchors are
+  now `display:none` views and empty text nodes stay hidden until they
+  receive content.
+- **vue-lynx core fix — canonical raw-text encoding** (`0b53124`):
+  text content is now a `raw-text` child element (ReactLynx's encoding)
+  instead of a `text` attribute, preserving embedded `\n` line breaks on
+  Lynx for Web (`recs` demo went from 4.83% pixel diff to 0.00%).
+- **Known limitation — `@font-face` in web bundles**: vue-lynx's rspeedy
+  0.13 toolchain emits JSON-encoded `.web.bundle` styleInfo whose
+  `@font-face` rules land in the lynx-view shadow root, where browsers
+  ignore them (upstream's newer binary template encoding hoists fonts to
+  the document). Until vue-lynx upgrades its template toolchain, web
+  embedders should register icon fonts on the host page (the screenshot
+  harness does exactly this); native Lynx is unaffected.
+
 ## Open questions / decisions log
 
 - **2026-07-11** Signals: port keeps upstream code shape via a tiny
