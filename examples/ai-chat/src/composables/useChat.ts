@@ -32,12 +32,14 @@ export function useChat(options: UseChatOptions) {
   let abort: AbortController | null = null;
 
   function upsertAssistant(messageId: string): UIMessage {
-    let message = messages.value[messages.value.length - 1];
-    if (!message || message.role !== 'assistant' || message.id !== messageId) {
-      message = { id: messageId, role: 'assistant', parts: [] };
-      messages.value = [...messages.value, message];
+    const last = messages.value[messages.value.length - 1];
+    if (!last || last.role !== 'assistant' || last.id !== messageId) {
+      messages.value.push({ id: messageId, role: 'assistant', parts: [] });
     }
-    return message;
+    // Return the REACTIVE proxy (reading back through the ref), not the raw
+    // object — mutations through the raw object would bypass Vue's
+    // property-level dependency tracking and freeze child components.
+    return messages.value[messages.value.length - 1]!;
   }
 
   async function run() {
@@ -45,18 +47,17 @@ export function useChat(options: UseChatOptions) {
     status.value = 'submitted';
     abort = new AbortController();
 
-    // Maps stream part ids -> parts of the assistant message being built.
+    // Maps stream part ids -> REACTIVE part proxies of the assistant message
+    // being built (push then read back, so mutations trigger updates).
     let assistant: UIMessage | null = null;
     const textParts = new Map<string, TextUIPart>();
     const reasoningParts = new Map<string, ReasoningUIPart>();
     const toolParts = new Map<string, ToolUIPart>();
 
-    // Reassign message.parts on every mutation so Vue tracks the change
-    // through the dual-thread ops pipeline.
-    const touch = () => {
-      if (assistant) assistant.parts = [...assistant.parts];
-      messages.value = [...messages.value];
-    };
+    function pushPart<T>(part: T): T {
+      assistant!.parts.push(part as never);
+      return assistant!.parts[assistant!.parts.length - 1] as T;
+    }
 
     try {
       await streamUIMessages({
@@ -72,62 +73,44 @@ export function useChat(options: UseChatOptions) {
             }
             case 'text-start': {
               if (!assistant) break;
-              const part: TextUIPart = { type: 'text', text: '', state: 'streaming' };
+              const part = pushPart<TextUIPart>({ type: 'text', text: '', state: 'streaming' });
               textParts.set(String(chunk.id), part);
-              assistant.parts.push(part);
-              touch();
               break;
             }
             case 'text-delta': {
               const part = textParts.get(String(chunk.id));
-              if (part) {
-                part.text += String(chunk.delta ?? '');
-                touch();
-              }
+              if (part) part.text += String(chunk.delta ?? '');
               break;
             }
             case 'text-end': {
               const part = textParts.get(String(chunk.id));
-              if (part) {
-                part.state = 'done';
-                touch();
-              }
+              if (part) part.state = 'done';
               break;
             }
             case 'reasoning-start': {
               if (!assistant) break;
-              const part: ReasoningUIPart = { type: 'reasoning', text: '', state: 'streaming' };
+              const part = pushPart<ReasoningUIPart>({ type: 'reasoning', text: '', state: 'streaming' });
               reasoningParts.set(String(chunk.id), part);
-              assistant.parts.push(part);
-              touch();
               break;
             }
             case 'reasoning-delta': {
               const part = reasoningParts.get(String(chunk.id));
-              if (part) {
-                part.text += String(chunk.delta ?? '');
-                touch();
-              }
+              if (part) part.text += String(chunk.delta ?? '');
               break;
             }
             case 'reasoning-end': {
               const part = reasoningParts.get(String(chunk.id));
-              if (part) {
-                part.state = 'done';
-                touch();
-              }
+              if (part) part.state = 'done';
               break;
             }
             case 'tool-input-start': {
               if (!assistant) break;
-              const part: ToolUIPart = {
+              const part = pushPart<ToolUIPart>({
                 type: `tool-${String(chunk.toolName)}`,
                 toolCallId: String(chunk.toolCallId),
                 state: 'input-streaming',
-              };
+              });
               toolParts.set(String(chunk.toolCallId), part);
-              assistant.parts.push(part);
-              touch();
               break;
             }
             case 'tool-input-available': {
@@ -135,7 +118,6 @@ export function useChat(options: UseChatOptions) {
               if (part) {
                 part.state = 'input-available';
                 part.input = chunk.input as Record<string, unknown>;
-                touch();
               }
               break;
             }
@@ -144,19 +126,17 @@ export function useChat(options: UseChatOptions) {
               if (part) {
                 part.state = 'output-available';
                 part.output = chunk.output as Record<string, unknown>;
-                touch();
               }
               break;
             }
             case 'source-url': {
               if (!assistant) break;
-              assistant.parts.push({
+              pushPart({
                 type: 'source-url',
                 sourceId: String(chunk.sourceId),
                 url: String(chunk.url),
                 title: chunk.title ? String(chunk.title) : undefined,
               });
-              touch();
               break;
             }
             case 'error': {

@@ -2,6 +2,7 @@
 import { useOverlay } from '../../composables/useOverlay';
 import ModalConfirm from './ModalConfirm.vue';
 import ModalRename from './ModalRename.vue';
+import ModalShare from './ModalShare.vue';
 import SheetMenu from './SheetMenu.vue';
 
 /**
@@ -26,6 +27,11 @@ const { stack, close } = useOverlay();
     />
     <SheetMenu
       v-else-if="overlay.name === 'menu'"
+      v-bind="overlay.props"
+      @close="(r: unknown) => close(overlay.id, r)"
+    />
+    <ModalShare
+      v-else-if="overlay.name === 'share'"
       v-bind="overlay.props"
       @close="(r: unknown) => close(overlay.id, r)"
     />

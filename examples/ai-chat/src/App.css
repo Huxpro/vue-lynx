@@ -12,6 +12,14 @@
 
 :root,
 .theme-light {
+  /* code tokens (github-light-ish, replaces Shiki themes) */
+  --tok-kw: #cf222e;
+  --tok-str: #0a3069;
+  --tok-com: #6e7781;
+  --tok-num: #0550ae;
+  --tok-fn: #8250df;
+  --tok-plain: #24292f;
+
   --ui-primary: #2563eb; /* blue-600 */
   --ui-error: #ef4444; /* red-500 */
   --ui-success: #22c55e; /* green-500 */
@@ -39,6 +47,14 @@
 }
 
 .theme-dark {
+  /* code tokens (github-dark-ish) */
+  --tok-kw: #ff7b72;
+  --tok-str: #a5d6ff;
+  --tok-com: #8b949e;
+  --tok-num: #79c0ff;
+  --tok-fn: #d2a8ff;
+  --tok-plain: #e6edf3;
+
   --ui-primary: #60a5fa; /* blue-400 */
   --ui-error: #f87171; /* red-400 */
   --ui-success: #4ade80; /* green-400 */
@@ -87,4 +103,25 @@
 }
 .justify-between {
   justify-content: space-between;
+}
+
+/* --- code token colors ---------------------------------------------------- */
+
+.tok-kw {
+  color: var(--tok-kw);
+}
+.tok-str {
+  color: var(--tok-str);
+}
+.tok-com {
+  color: var(--tok-com);
+}
+.tok-num {
+  color: var(--tok-num);
+}
+.tok-fn {
+  color: var(--tok-fn);
+}
+.tok-plain {
+  color: var(--tok-plain);
 }

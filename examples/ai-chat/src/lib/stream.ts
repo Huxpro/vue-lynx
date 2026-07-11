@@ -96,17 +96,24 @@ async function readSse(
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
+  let reads = 0;
+  let emitted = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
+    reads++;
     buffer += decoder.decode(value, { stream: true });
     const events = buffer.split('\n\n');
     buffer = events.pop() ?? '';
     for (const event of events) {
       const chunk = parseSseEvent(event);
-      if (chunk) onChunk(chunk);
+      if (chunk) {
+        emitted++;
+        onChunk(chunk);
+      }
     }
   }
+  console.log(`[stream] done reads=${reads} emitted=${emitted} leftover=${buffer.length}`);
 }
 
 function parseSseEvent(event: string): StreamChunk | null {
