@@ -24,6 +24,14 @@ function runLots() {
   rows.value = buildData(10000)
   selected.value = undefined
 }
+function run3k() {
+  rows.value = buildData(3000)
+  selected.value = undefined
+}
+function run5k() {
+  rows.value = buildData(5000)
+  selected.value = undefined
+}
 function add() {
   rows.value.push(...buildData(1000))
   triggerRef(rows)
@@ -112,6 +120,8 @@ function stormSelect() {
     <text class="title">Vue ({{ MODE }}) UI Benchmark on Lynx · {{ ready }}</text>
     <view class="toolbar">
       <view class="btn" @tap="run()"><text class="btn-text">Create 1,000 rows</text></view>
+      <view class="btn" @tap="run3k()"><text class="btn-text">Create 3,000 rows</text></view>
+      <view class="btn" @tap="run5k()"><text class="btn-text">Create 5,000 rows</text></view>
       <view class="btn" @tap="runLots()"><text class="btn-text">Create 10,000 rows</text></view>
       <view class="btn" @tap="add()"><text class="btn-text">Append 1,000 rows</text></view>
       <view class="btn" @tap="update()"><text class="btn-text">Update every 10th row</text></view>

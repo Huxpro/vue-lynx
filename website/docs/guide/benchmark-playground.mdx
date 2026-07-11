@@ -12,9 +12,9 @@ after your tap, once mutations go quiet).
 **What to try** (the differences worth feeling):
 
 1. **Create 10,000 rows**, then tap **Select storm** (30 selection moves) —
-   Vue Vapor finishes in ~0.1 s, Vue VDOM ~0.6 s, React ~2.6 s.
+   Vue Vapor finishes in ~0.2 s, Vue VDOM ~1 s, React ~3 s.
 2. On 10,000 rows, tap **Update storm** (50 full update passes) —
-   Vapor ~0.6 s, VDOM ~1.2 s, React ~4.3 s.
+   Vapor ~1.2 s, VDOM ~2 s, React ~6 s.
 3. Single taps (Update / Select on a 1k table) feel identical across all
    five configurations — the frameworks only separate under sustained
    throughput, which is exactly what the storms amplify.
@@ -95,19 +95,34 @@ are within ~1.5× of each other.
 
 We also measured three React optimization levels: the default config is
 the hand-optimized keyed implementation (`memo`'d row + `useCallback`);
-the **naive** variant (no memo/useCallback) is ~1.5–1.9× slower under
+the **naive** variant (no memo/useCallback) is ~1.4–1.9× slower under
 storms; and the [React Compiler](https://react.dev/learn/react-compiler)
-variant (naive source auto-memoized by `babel-plugin-react-compiler`)
-measures ~1.9–2.7× slower than hand-optimized — on ReactLynx's
-preact-based reconciler its memo caches add bookkeeping without pruning
-child re-renders the way explicit `memo()` does. The playground above
-lets you feel all three.
+variant compiles the naive source with `babel-plugin-react-compiler`.
+Compiler triage note: our first compiler build was silently **bailing out
+of `App`** (the benchmark's storm driver used `t++` on a captured binding
+— an unsupported pattern that bails the whole component); after fixing
+the scaffolding the compiler runs cleanly and lands **between naive and
+manual memo** (~10–25% better than naive, still short of `memo(Row)`).
+The structural reason: the compiler memoizes *within* a component, so
+`rows.map(...)` still re-creates every row element whenever `rows` or
+`selected` changes — it cannot prune per-row re-renders of a keyed list
+the way a component-boundary `memo()` does. For krausest-shaped lists,
+manual `memo` remains necessary. The playground above lets you feel all
+three.
 
 Where Vue genuinely leads is sustained update throughput — and Vapor
-compounds it: **7× faster than VDOM** (and ~30× faster than React) on the
-10k select storm, because moving a selection costs Vapor two class effects
-while vdom re-diffs the list and React re-runs 10k memo comparisons per
-tick.
+compounds it: **~6× faster than VDOM** (and ~20× faster than React) on
+the 10k select storm, because moving a selection costs Vapor two class
+effects while vdom re-diffs the list and React re-runs 10k memo
+comparisons per tick. Conversely, **React holds a real creation edge**
+(~1.2× faster than both Vue modes at every scale) — a Lynx-specific
+inversion of the web pattern (on js-framework-benchmark, Vue creates
+faster), owed to ReactLynx's snapshot system bulk-instantiating static
+structure on the main thread. The scaling curves in the results page
+above plot exactly this trade-off across 1k→10k rows: all five variants
+scale linearly (no cliffs); Vapor sits lowest on both charts with
+creation parity inside the Vue family, while React-vs-Vue is a genuine
+creation-vs-update trade-off.
 
 ## Reproduce
 
