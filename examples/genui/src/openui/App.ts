@@ -126,6 +126,11 @@ export const App = defineComponent({
 
     const theme = ref<Theme>(readTheme(globalProps['theme']) ?? 'light');
 
+    // `?chromeless=1` hides the scenario toolbar — used by the screenshot
+    // comparison harness so only the rendered surface is captured.
+    const chromeless = globalProps['chromeless'] === true
+      || globalProps['chromeless'] === '1' || globalProps['chromeless'] === 1;
+
     // Speed multiplier from globalProps (e.g. ?speed=2)
     const speedRaw = globalProps['speed'];
     const speed = typeof speedRaw === 'string'
@@ -208,7 +213,7 @@ export const App = defineComponent({
         : 'openui-page openui-light luna-light';
 
       return h('view', { class: themeClassName }, [
-        h('view', { class: 'demo-toolbar' }, [
+        chromeless ? null : h('view', { class: 'demo-toolbar' }, [
           h(
             'scroll-view',
             { 'scroll-x': true, class: 'demo-strip' },

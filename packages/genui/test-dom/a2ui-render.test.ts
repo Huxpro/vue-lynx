@@ -152,3 +152,64 @@ describe('<A2UI> end-to-end', () => {
     expect(actions.map((a) => a.name)).toEqual(['submit_order']);
   });
 });
+
+describe('template expansion after mount', () => {
+  test('expands templated children when updateDataModel streams in later', async () => {
+    // Regression: the processor mutates component instances in place when
+    // expanding `children: { componentId, path }` templates; the renderer
+    // must re-resolve even though the component reference is unchanged.
+    const store = createMessageStore({
+      initialMessages: [
+        { createSurface: { surfaceId: 's1' } },
+        {
+          updateComponents: {
+            surfaceId: 's1',
+            components: [
+              {
+                id: 'root',
+                component: 'Column',
+                children: ['list-row'],
+              },
+              {
+                id: 'list-row',
+                component: 'Row',
+                children: { componentId: 'item-template', path: '/items' },
+              },
+              {
+                id: 'item-template',
+                component: 'Text',
+                text: { path: 'label' },
+              },
+            ],
+          },
+        },
+      ] as unknown as ServerToClientMessage[],
+    });
+
+    const Host = defineComponent({
+      name: 'Host',
+      setup() {
+        return () => h(A2UI, { messageStore: store, catalogs: CATALOG });
+      },
+    });
+
+    const { container } = render(Host);
+    await nextTick();
+    expect(container.textContent ?? '').not.toContain('alpha');
+
+    store.push(
+      {
+        updateDataModel: {
+          surfaceId: 's1',
+          path: '/items',
+          value: [{ label: 'alpha' }, { label: 'beta' }],
+        },
+      } as unknown as ServerToClientMessage,
+    );
+    await nextTick();
+    await nextTick();
+
+    expect(container.textContent).toContain('alpha');
+    expect(container.textContent).toContain('beta');
+  });
+});
