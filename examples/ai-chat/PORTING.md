@@ -21,11 +21,11 @@ Why a straight copy is impossible:
 | Chat state | `@ai-sdk/vue` `useChat` + `DefaultChatTransport` | Custom `useChat` composable speaking the same UI-message-stream SSE protocol | **Rewritten (protocol reused)** — the AI SDK client assumes browser `fetch`/`ReadableStream`/`TextDecoderStream` |
 | Message model | AI SDK `UIMessage` with typed parts (text/reasoning/tool-*/source-url/file) | Same shapes, local TS types | **Reused (types re-declared)** |
 | Markdown | Comark + Shiki (HTML output, streaming highlight) | Custom markdown → Lynx-element renderer + tiny code tokenizer | **Rewritten** — HTML output can't be displayed; no `v-html` on Lynx |
-| Charts | nuxt-charts (Unovis, SVG) | Custom `view`-based line chart | **Rewritten** — no SVG/canvas elements |
-| Icons | Iconify (`i-lucide-*`, `i-simple-icons-*`, `i-logos-*`) CSS masks | Same glyphs exported to inline base64 data-URI images at build time | **Adapted** — no CSS mask/iconify runtime |
+| Charts | nuxt-charts (Unovis, SVG) | Line chart generated as an inline SVG string for Lynx's native `<svg>` element; hover tooltip becomes tap-a-column | **Rewritten** — no DOM/Unovis; SVG string generation instead |
+| Icons | Iconify (`i-lucide-*`, `i-simple-icons-*`, `i-logos-*`) CSS masks | Same glyphs vendored as inline SVG strings (lucide-static / simple-icons / iconify logos) rendered with `<svg content>`; colors baked per theme | **Adapted** — no CSS mask/iconify runtime, no `currentColor` |
 | Animations | motion-v (springs), CSS transitions, View Transitions API | Lynx CSS transitions/animations; View Transitions dropped | **Partially rewritten / dropped** |
 | Composables (`useChats` grouping, `useModels`, `useChatActions` flows, greeting logic, `getMergedParts`) | Plain Vue + date-fns | Same code, `useCookie`→storage shim, `$fetch`→`fetch` wrapper, modals via custom overlay | **Mostly reused** — this is framework-agnostic logic |
-| Server API (chats/messages/votes/title/visibility CRUD) | Nitro `defineEventHandler` + Drizzle/SQLite | Standalone Node (h3) server, same routes/payloads, JSON-file store | **Rewritten thin, shapes reused** |
+| Server API (chats/messages/votes/title/visibility CRUD) | Nitro `defineEventHandler` + Drizzle/SQLite | Standalone zero-dependency `node:http` server, same routes/payloads, JSON-file store | **Rewritten thin, shapes reused** |
 | AI endpoint | AI SDK `streamText` + gateway + provider tools, `smoothStream`, `stopWhen`, UI-message-stream response | Same in "real" mode; deterministic mock stream generator by default (offline + reproducible screenshots) | **Reused in real mode / mock added** |
 | Custom tools (weather, chart) | `tool()` + zod, simulated data | Same logic in mock server | **Reused (ported to plain TS)** |
 | Auth | GitHub OAuth via nuxt-auth-utils (popup + cookie session) | Mock session endpoint (demo user), header-token session | **Rewritten (mocked)** — OAuth popups/secrets unsuitable for a Lynx example |
