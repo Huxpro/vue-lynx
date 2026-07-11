@@ -3,7 +3,7 @@
 // components/notification/NotificationCard.vue. Requires a signed-in
 // session (guest mode shows the sign-in hint like Elk does).
 import type { mastodon } from 'masto';
-import { onMounted } from 'vue-lynx';
+import { onMounted, ref, watch } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 import AccountAvatar from '../components/AccountAvatar.vue';
 import AccountDisplayName from '../components/AccountDisplayName.vue';
@@ -28,11 +28,40 @@ const iconFor: Record<string, { icon: string; color: string; label: string }> = 
   update: { icon: 'quill-pen-line', color: '#686868', label: 'edited a post' },
 };
 
-const { items, state, loadNext } = signedIn
-  ? usePaginator<mastodon.v1.Notification, any>(
-      useMastoClient().v1.notifications.list({ limit: 30 }),
-    )
-  : { items: { value: [] as mastodon.v1.Notification[] } as any, state: { value: 'done' } as any, loadNext: () => {} };
+// Elk: pages/notifications/[filter].vue — All / Mentions filter tabs
+const filter = ref<'all' | 'mention'>('all');
+
+function makePaginator() {
+  return usePaginator<mastodon.v1.Notification, any>(
+    useMastoClient().v1.notifications.list({
+      limit: 30,
+      types: filter.value === 'mention' ? ['mention'] : undefined,
+    }),
+  );
+}
+
+const empty = {
+  items: { value: [] as mastodon.v1.Notification[] } as any,
+  state: { value: 'done' } as any,
+  loadNext: () => {},
+};
+let pager = signedIn ? makePaginator() : empty;
+const items = ref<mastodon.v1.Notification[]>([]);
+const state = ref('idle');
+
+async function loadNext() {
+  await pager.loadNext();
+  items.value = [...pager.items.value];
+  state.value = pager.state.value;
+}
+
+watch(filter, () => {
+  if (!signedIn)
+    return;
+  pager = makePaginator();
+  items.value = [];
+  loadNext();
+});
 
 onMounted(() => signedIn && loadNext());
 </script>
@@ -46,8 +75,17 @@ onMounted(() => signedIn && loadNext());
       <text class="notif-empty-text">Sign in (Settings → token) to see your notifications.</text>
     </view>
 
+    <view v-else class="notif-filters">
+      <view class="notif-filter" :class="filter === 'all' ? 'notif-filter-active' : ''" @tap="filter = 'all'">
+        <text class="notif-filter-text">All</text>
+      </view>
+      <view class="notif-filter" :class="filter === 'mention' ? 'notif-filter-active' : ''" @tap="filter = 'mention'">
+        <text class="notif-filter-text">Mentions</text>
+      </view>
+    </view>
+
     <list
-      v-else
+      v-if="signedIn"
       class="timeline-list"
       scroll-orientation="vertical"
       :lower-threshold-item-count="4"
@@ -84,6 +122,30 @@ onMounted(() => signedIn && loadNext());
 </template>
 
 <style>
+.notif-filters {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.notif-filter {
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 3px 12px;
+}
+
+.notif-filter-active {
+  border-color: var(--c-primary);
+  background-color: var(--c-primary-fade);
+}
+
+.notif-filter-text {
+  font-size: 13px;
+  color: var(--c-text-base);
+}
+
 .notif-empty {
   display: flex;
   flex-direction: column;

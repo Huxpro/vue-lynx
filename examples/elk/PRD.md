@@ -85,7 +85,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - 🚧 Action mutations (fav/boost/bookmark POST) — implemented with optimistic updates (Elk `useStatusActions` logic), requires token; verified UI-only
 - ✅ Preview cards for links (card image, title, description)
 - ✅ Quote posts (Mastodon 4.5 `status.quote.quotedStatus` → nested card like Elk's StatusQuote; verified live)
-- ⬜ Emoji reactions row
+- ❌ Emoji reactions row — glitch-soc/fedibird extension, not vanilla Mastodon API; no test instance to exercise
 - ❌ Embedded iframe media players (YouTube/video embeds via `sanitizeEmbeddedIframe`) — no iframe/webview element in Lynx
 - ❌ Status translation (browser `Translator` API / server LibreTranslate proxy) — browser/server-only APIs
 - ✅ Edit history viewer (edited badge on thread page → `history.list()` versions; verified live)
@@ -113,8 +113,8 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 ### Notifications (auth required)
 
 - 🚧 Notifications timeline with type icons (follow/favourite/reblog/mention/poll/update) — implemented against API shape; requires token to exercise live
-- ⬜ Grouped notifications (Elk's GroupedNotifications algorithm)
-- ⬜ Notification filters (all/mentions/favourites/…)
+- ⬜ Grouped notifications (Elk's GroupedNotifications algorithm) — auth-only surface, not exercisable in this environment; ungrouped list ships instead
+- 🚧 Notification filters (All / Mentions tabs via `types` param; auth-gated)
 - ❌ Web Push notifications — browser Push API, N/A
 
 ### Search & explore
@@ -131,7 +131,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - 🚧 Compose box: plain-text editor, character counter (500 limit via Elk logic), visibility picker, reply target — native `<textarea>`; posts via `v1.statuses.create`
 - ❌ TipTap rich-text editor (mention/hashtag/emoji autocomplete popups, code blocks) — TipTap is contenteditable/ProseMirror, hard DOM dependency
 - ❌ Media upload with crop/resize — Elk resizes via `<canvas>`/`Image` and `browser-fs-access`; no file picker / canvas in Lynx demo scope (native file modules exist but are host-app specific)
-- ⬜ Polls composer
+- ❌ Polls composer — compose sub-feature built on the TipTap editor stack (see rich-text editor); plain-text compose ships without it
 - ❌ Drafts persisted to localStorage — no localStorage; in-memory drafts only
 - ❌ Threads composer (multi-post publish), scheduled posts — built atop the editor stack, out of demo scope
 
@@ -191,3 +191,4 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 - **Loop 4**: Dark mode (Elk palette, verified vs elk.zone dark), fullscreen media preview, quote-post nested cards, Following/Followers lists, Bookmarks/Favourites pages, hashtag timeline verified. PRD statuses trued up (pull-to-refresh ⬜, media modal 🚧).
 - **Loop 5**: Deep links via Lynx globalProps (`initialPath`), explore News tab (trending links), timeline refresh button, follow-hashtag button, bot/locked badges. Verified News tab + deep-linked #caturday hashtag page.
 - **Loop 6**: Edit-history viewer (verified on a live edited status — same capture also proves quote-post nested cards). Example README + preview image, app sources now typecheck clean (bundler-resolution tsconfig).
+- **Loop 7**: Notification filter tabs (All/Mentions), final PRD true-up: every remaining ⬜/❌ now carries a reason. Confirmed the production build contains no verification-relay references.

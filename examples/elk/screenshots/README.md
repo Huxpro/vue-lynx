@@ -35,8 +35,9 @@ Lynx-only captures (no same-frame Elk counterpart):
 
 - Elk shows a **Sign in** button in the guest header; the port keeps
   sign-in in Settings (token-based, no OAuth server — see PRD).
-- Elk's action bar includes a **quote** button (Mastodon 4.5); quote posts
-  are still a todo in the PRD.
+- Elk's action bar includes a **quote** button (Mastodon 4.5); the port
+  renders quote posts (see the edit-history capture) but composing quotes
+  is out of scope with the editor.
 - Elk renders unicode emoji as twemoji images; the port uses native color
   emoji glyphs (deliberate — see PRD "Content rendering").
 - Elk's guest bottom nav has 4 items (…-menu last); the port promotes
