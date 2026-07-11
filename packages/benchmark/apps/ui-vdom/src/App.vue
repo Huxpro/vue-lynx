@@ -66,7 +66,7 @@ function clear() {
 // throughput measure that amplifies sub-frame update costs above the
 // harness's one-frame observation floor.
 const STORM_UPDATE_TICKS = 50
-const STORM_SELECT_TICKS = 100
+const STORM_SELECT_TICKS = 30
 
 const _stormChannel = new MessageChannel()
 let _stormPending: (() => void) | null = null
@@ -117,8 +117,8 @@ function stormSelect() {
       <view class="btn" @tap="update()"><text class="btn-text">Update every 10th row</text></view>
       <view class="btn" @tap="swapRows()"><text class="btn-text">Swap Rows</text></view>
       <view class="btn" @tap="clear()"><text class="btn-text">Clear</text></view>
-      <view class="btn" @tap="stormUpdate()"><text class="btn-text">Update storm x50</text></view>
-      <view class="btn" @tap="stormSelect()"><text class="btn-text">Select storm x100</text></view>
+      <view class="btn" @tap="stormUpdate()"><text class="btn-text">Update storm</text></view>
+      <view class="btn" @tap="stormSelect()"><text class="btn-text">Select storm</text></view>
     </view>
     <view class="rows">
       <view

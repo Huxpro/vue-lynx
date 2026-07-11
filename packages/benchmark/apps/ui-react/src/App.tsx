@@ -14,7 +14,7 @@ import './App.css';
 // setTimeout 4ms clamp) so every mutation goes through a full render cycle
 // instead of batching. Mirrors apps/ui-vdom/src/App.vue.
 const STORM_UPDATE_TICKS = 50;
-const STORM_SELECT_TICKS = 100;
+const STORM_SELECT_TICKS = 30;
 
 const _stormChannel = new MessageChannel();
 let _stormPending: (() => void) | null = null;
@@ -148,10 +148,10 @@ export function App() {
           <text className="btn-text">Clear</text>
         </view>
         <view className="btn" bindtap={stormUpdate}>
-          <text className="btn-text">Update storm x50</text>
+          <text className="btn-text">Update storm</text>
         </view>
         <view className="btn" bindtap={stormSelect}>
-          <text className="btn-text">Select storm x100</text>
+          <text className="btn-text">Select storm</text>
         </view>
       </view>
       <view className="rows">
