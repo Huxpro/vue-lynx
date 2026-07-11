@@ -76,7 +76,6 @@
   "files": [
     "dist",
     "styles",
-    "manifests",
     "README.md"
   ],
   "scripts": {
