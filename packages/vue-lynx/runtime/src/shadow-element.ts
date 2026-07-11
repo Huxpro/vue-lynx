@@ -49,6 +49,12 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
+  // Element-template instance state (only set on lowered template roots —
+  // see element-template.ts). Hole shadows are allocated contiguously after
+  // the root id so both threads agree on ids without shipping them.
+  _tplMeta: { holes: string[] } | undefined = undefined;
+  _tplHoles: ShadowElement[] | undefined = undefined;
+
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {
       this.id = ShadowElement.nextId++;

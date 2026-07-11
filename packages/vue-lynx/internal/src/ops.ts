@@ -21,6 +21,12 @@
  *   SET_MT_REF:        [12, id, refImpl]
  *   INIT_MT_REF:       [13, wvid, initValue]
  *   SET_SCOPE_ID:      [14, id, cssId]   // Vue scoped CSS support
+ *   INSTANTIATE_TEMPLATE: [15, rootId, tplId, holeCount]
+ *     Element-template instantiation (compile-time-lowered static subtree).
+ *     The main thread builds the whole subtree via the registered create()
+ *     function; the root maps to rootId and the template's holes (interior
+ *     nodes with dynamic parts) map to rootId+1 … rootId+holeCount, so all
+ *     later SET_* ops target them like ordinary elements.
  */
 export const OP = {
   CREATE: 0,
@@ -38,6 +44,7 @@ export const OP = {
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
   SET_SCOPE_ID: 14,
+  INSTANTIATE_TEMPLATE: 15,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];

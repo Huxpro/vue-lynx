@@ -4,6 +4,11 @@
 
 import type { RendererOptions } from '@vue/runtime-core';
 
+import {
+  TPL_HOLE_PREFIX,
+  TPL_TYPE_PREFIX,
+  getElementTemplateMeta,
+} from './element-template.js';
 import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
@@ -153,8 +158,50 @@ export function resolveClass(el: ShadowElement): string {
 // RendererOptions implementation
 // ---------------------------------------------------------------------------
 
+/**
+ * Mount a compile-time-lowered element template (`__vlx-tpl:<id>` vnode).
+ *
+ * One ShadowElement represents the whole subtree; hole shadows are allocated
+ * immediately after it (no CREATE ops — the main thread materializes the
+ * subtree inside the template's create() function and maps rootId+1+i to the
+ * i-th hole). Subsequent updates flow through patchProp's hole delegation
+ * below using ordinary SET_* ops.
+ */
+function createTemplateInstance(type: string): ShadowElement {
+  const tplId = type.slice(TPL_TYPE_PREFIX.length);
+  const meta = getElementTemplateMeta(tplId);
+  const el = new ShadowElement(type);
+  if (!meta) {
+    // Unregistered template (should not happen — registration is hoisted in
+    // the same module as the render fn). Degrade to an empty view so the
+    // surrounding tree still renders.
+    if (__DEV__) {
+      console.error(
+        `[vue-lynx] element template "${tplId}" is not registered — rendering an empty view.`,
+      );
+    }
+    pushOp(OP.CREATE, el.id, 'view');
+    scheduleFlush();
+    return el;
+  }
+  const holes: ShadowElement[] = [];
+  for (const _ of meta.holes) {
+    holes.push(new ShadowElement('#tpl-hole'));
+  }
+  el._tplMeta = meta;
+  el._tplHoles = holes;
+  pushOp(OP.INSTANTIATE_TEMPLATE, el.id, tplId, meta.holes.length);
+  scheduleFlush();
+  return el;
+}
+
 export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
+    if (
+      type.charCodeAt(0) === 95 /* '_' */ && type.startsWith(TPL_TYPE_PREFIX)
+    ) {
+      return createTemplateInstance(type);
+    }
     const el = new ShadowElement(type);
     pushOp(OP.CREATE, el.id, type);
     scheduleFlush();
@@ -257,9 +304,33 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   patchProp(
     el: ShadowElement,
     key: string,
-    _prevValue: unknown,
+    prevValue: unknown,
     nextValue: unknown,
   ): void {
+    // ------------------------------------------------------------------
+    // Element-template holes: a lowered template vnode carries its interior
+    // dynamic parts as __hN props. Delegate to the hole's ShadowElement with
+    // the original prop key so the full event/class/style logic is reused.
+    // ------------------------------------------------------------------
+    if (el._tplHoles !== undefined && key.startsWith(TPL_HOLE_PREFIX)) {
+      const idx = Number(key.slice(TPL_HOLE_PREFIX.length));
+      const holeKey = el._tplMeta!.holes[idx];
+      const holeEl = el._tplHoles[idx];
+      if (holeKey !== undefined && holeEl !== undefined) {
+        if (holeKey === '#text') {
+          pushOp(
+            OP.SET_TEXT,
+            holeEl.id,
+            nextValue == null ? '' : String(nextValue),
+          );
+          scheduleFlush();
+        } else {
+          nodeOps.patchProp(holeEl, holeKey, prevValue, nextValue);
+        }
+        return;
+      }
+    }
+
     // ------------------------------------------------------------------
     // Main-thread worklet props: :main-thread-bindtap, :main-thread-ref
     // ------------------------------------------------------------------

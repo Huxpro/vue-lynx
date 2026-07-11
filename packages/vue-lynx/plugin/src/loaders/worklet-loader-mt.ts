@@ -34,6 +34,7 @@ import {
   extractLocalImports,
   extractRegistrations,
   extractSharedImports,
+  extractTemplateRegistrations,
   stripSharedImportAttributes,
   stripStyleImports,
 } from './worklet-utils.js';
@@ -47,6 +48,14 @@ interface WorkletLoaderMtOptions {
    * registerWorkletInternal() calls, leaving the rest of the module intact.
    */
   ifr?: boolean;
+  /**
+   * Element templates: additionally preserve the compiler-hoisted
+   * `_registerElementTemplate(...)` statements (and the template sub-module
+   * dependency edges they live in) so the interpreter-only main thread can
+   * resolve template create() functions. No-op when the app was compiled
+   * without the element-template transform.
+   */
+  elementTemplates?: boolean;
 }
 
 export default function workletLoaderMT(
@@ -66,16 +75,25 @@ export default function workletLoaderMT(
   // + registrations + a dummy default export to satisfy the proxy. The
   // connector's side-effect import means the proxy's exports are unused
   // and will be tree-shaken.
+  const keepTpl = options.elementTemplates === true;
+
   if (
     this.resourceQuery?.includes('vue')
     && this.resourceQuery?.includes('type=script')
   ) {
-    const localImports = extractLocalImports(source);
+    const localImports = extractLocalImports(source, keepTpl);
+    // Script-setup SFCs inline the compiled template into the script module —
+    // the hoisted element-template registrations live here.
+    const tplRegistrations = keepTpl
+      ? extractTemplateRegistrations(source)
+      : '';
 
     if (
       !source.includes('\'main thread\'') && !source.includes('"main thread"')
     ) {
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return [localImports, tplRegistrations, 'export default {};']
+        .filter(Boolean)
+        .join('\n');
     }
 
     const resourcePath = this.resourcePath;
@@ -102,14 +120,20 @@ export default function workletLoaderMT(
           new Error(`[worklet-loader-mt] LEPUS transform: ${err.text}`),
         );
       }
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return [localImports, tplRegistrations, 'export default {};']
+        .filter(Boolean)
+        .join('\n');
     }
 
     const registrations = extractRegistrations(lepusResult.code);
     const sharedImports = extractSharedImports(lepusResult.code);
-    const parts = [sharedImports, localImports, registrations, 'export default {};'].filter(
-      Boolean,
-    );
+    const parts = [
+      sharedImports,
+      localImports,
+      registrations,
+      tplRegistrations,
+      'export default {};',
+    ].filter(Boolean);
     return parts.join('\n');
   }
 
@@ -118,7 +142,11 @@ export default function workletLoaderMT(
 
   // Preserve local (relative-path) imports so webpack follows the dependency
   // graph to sub-modules that may contain worklet registrations.
-  const localImports = extractLocalImports(source);
+  const localImports = extractLocalImports(source, keepTpl);
+
+  // Compiled template sub-modules (non-script-setup SFCs) carry the hoisted
+  // element-template registrations.
+  const tplRegistrations = keepTpl ? extractTemplateRegistrations(source) : '';
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
   // (but still extract shared imports from source since they don't need LEPUS)
@@ -126,8 +154,9 @@ export default function workletLoaderMT(
     !source.includes('\'main thread\'') && !source.includes('"main thread"')
   ) {
     const sharedImports = extractSharedImports(source);
-    if (!sharedImports) return localImports;
-    return sharedImports + (localImports ? '\n' + localImports : '');
+    return [sharedImports, localImports, tplRegistrations]
+      .filter(Boolean)
+      .join('\n');
   }
 
   const resourcePath = this.resourcePath;
@@ -156,7 +185,7 @@ export default function workletLoaderMT(
         new Error(`[worklet-loader-mt] LEPUS transform: ${err.text}`),
       );
     }
-    return localImports;
+    return [localImports, tplRegistrations].filter(Boolean).join('\n');
   }
 
   // Extract shared imports from the LEPUS output (SWC preserves them)
@@ -164,7 +193,8 @@ export default function workletLoaderMT(
 
   // Return shared imports + local imports (for dep graph) + extracted registrations
   const registrations = extractRegistrations(lepusResult.code);
-  const parts = [sharedImports, localImports, registrations].filter(Boolean);
+  const parts = [sharedImports, localImports, registrations, tplRegistrations]
+    .filter(Boolean);
   return parts.join('\n');
 }
 

@@ -28,6 +28,8 @@ export default defineConfig({
     pluginVueLynx({
       optionsApi: false,
       enableCSSSelector: true,
+      // Element templates: compile-time lowering of static-structure subtrees.
+      enableElementTemplates: true,
     }),
   ],
 });

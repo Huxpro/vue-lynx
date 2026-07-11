@@ -1,0 +1,78 @@
+# 元素模板（Element Templates）
+
+元素模板是 Vue Lynx 的编译期模板下沉（lowering）——对应 ReactLynx snapshot
+体系的 Vue 实现。符合条件的模板子树在编译期被降为原生元素模板：静态骨架变成
+一段直线式的元素创建函数、在主线程上用**一条操作**执行完毕；内部的动态部分
+（"洞"）继续走普通的 ops 协议更新。
+
+## 为什么
+
+在默认管线中，每个元素——无论多静态——都要付出一个 vnode、一个 shadow
+节点、跨线程约 5 帧 ops、以及主线程一次解释器分发的成本。典型首屏里静态
+脚手架占节点数的大头，这笔逐节点成本因此主导了首帧 JS 时间。下沉将其消除：
+
+```
+  没有元素模板（每个静态节点）：
+  vnode → ShadowElement → 5 帧 ops → JSON → 解释器 → PAPI
+
+  启用元素模板（每棵下沉子树）：
+  一个 vnode → 一条 INSTANTIATE_TEMPLATE → 一次直线 create()
+```
+
+在我们的[策略基准](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md)中，
+block 级下沉在解释器（最接近 Lynx 主线程引擎的代理环境）下把约 1000 节点的
+典型首屏渲染加速 **7–15×**，跨线程 ops 载荷缩小 **3–1000×**——这一收益同时
+作用于普通管线、更新路径与 [IFR](/zh/guide/ifr)（二者可组合：下沉后的 ops
+流走同样的 hydration 快路径）。
+
+## 启用方式
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      enableElementTemplates: true,
+    }),
+  ],
+})
+```
+
+不需要修改任何应用代码，也不影响任何模板语法。
+
+## 什么会被下沉
+
+当子树的**结构**在编译期已知时即可下沉：所有节点都是普通元素，只有 prop
+值/文本内容是动态的。
+
+```vue
+<view class="card">                    <!-- 下沉：一个模板                -->
+  <image class="icon" src="a.png" />   <!--   烘焙进骨架                  -->
+  <text class="title">{{ title }}</text><!--  '#text' 洞                  -->
+  <view :class="badgeCls">…</view>     <!--   'class' 洞                  -->
+</view>
+```
+
+结构性特性始终留在普通 vdom 路径上——正确性从不依赖下沉：
+
+- 组件、`<slot>`、`v-if` / `v-for` 宿主（它们的*内容体*仍可成为模板——
+  v-for 的每一项通常降为一次模板实例化）
+- 带运行时指令（`v-show`、`v-model`、自定义指令）、`ref`、`key`、`id` 或
+  vnode 钩子的元素——但子树**根节点**例外：根的全部 props 与指令保留在
+  vnode 上，行为与普通元素完全一致（Transition 包裹下沉根节点可用）
+- `<list>` / `<list-item>`（主线程有专门处理路径）
+- 注释与混合动态文本段
+
+Scoped CSS 完整支持——组件的 CSS scope id 在编译期烘焙进骨架。
+
+## 语义保证
+
+下沉与未下沉的渲染产出完全一致的文档（CI 中每个测试模板都会双向编译并比对
+渲染结果；真实示例 bundle 也在开关两种构建下做结构化比对）。唯一可观察的
+差别是混合"烘焙静态 + 动态洞"的节点上属性的设置顺序——对渲染没有任何意义。
+
+一个实践细节：模板内部节点在主线程上是匿名的（没有逐节点簿记），因此不携带
+`vue-ref-N` 选择器属性。模板根节点保留该属性，且任何可以 `ref` 的节点都
+不会是内部节点，所以基于 NodesRef 的代码不受影响。

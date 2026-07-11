@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import type { RsbuildPlugin } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 
+import { elementTemplateTransform } from './compiler/element-template-transform.js';
 import { applyCSS } from './css.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
@@ -111,6 +112,26 @@ export interface PluginVueLynxOptions {
   autoPixelUnit?: boolean;
 
   /**
+   * Whether to enable element templates (compile-time template lowering).
+   *
+   * Eligible template subtrees — plain elements with compile-time-known
+   * structure — are lowered into "element templates": the static skeleton
+   * becomes a straight-line element-creation function executed on the main
+   * thread via a single `INSTANTIATE_TEMPLATE` op, and interior dynamic
+   * parts ("holes") receive deterministic ids updated through the ordinary
+   * ops. This removes the per-static-node vdom/ops/interpreter cost on
+   * first render and shrinks the cross-thread payload — for both the
+   * normal pipeline and IFR (they compose).
+   *
+   * Structural features (components, v-if/v-for hosts, slots, refs,
+   * directives, `<list>`) always stay on the normal vdom path; lowering is
+   * purely an optimization and never changes rendering semantics.
+   *
+   * @defaultValue false
+   */
+  enableElementTemplates?: boolean;
+
+  /**
    * Whether to enable IFR (Instant First-Frame Rendering).
    *
    * When enabled, the main-thread bundle contains the full Vue runtime and
@@ -158,6 +179,7 @@ export function pluginVueLynx(
     debugInfoOutside = true,
     autoPixelUnit = true,
     enableIFR = false,
+    enableElementTemplates = false,
   } = options;
 
   return [
@@ -176,6 +198,11 @@ export function pluginVueLynx(
           // Our ShadowElement custom renderer can't parse HTML strings, so we
           // disable hoisting entirely — the standard approach for non-DOM renderers.
           hoistStatic: false,
+          // Element templates: lower eligible static-structure subtrees into
+          // main-thread element templates (single INSTANTIATE op + holes).
+          ...(enableElementTemplates
+            ? { nodeTransforms: [elementTemplateTransform] }
+            : {}),
         },
       },
     }),
@@ -287,6 +314,7 @@ export function pluginVueLynx(
           enableCSSInlineVariables,
           debugInfoOutside,
           enableIFR,
+          enableElementTemplates,
         });
       },
     },

@@ -93,6 +93,7 @@ export default defineConfig({
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
         { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr' },
+        { text: 'Element Templates', link: '/guide/element-templates' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
@@ -136,6 +137,7 @@ export default defineConfig({
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
         { text: '首屏直出（IFR）', link: '/zh/guide/ifr' },
+        { text: '元素模板', link: '/zh/guide/element-templates' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         {

@@ -25,6 +25,7 @@ import {
   ref,
   createApp,
   onMounted,
+  registerElementTemplate,
   resetForTesting,
 } from 'vue-lynx';
 import type { Component } from 'vue-lynx';
@@ -238,6 +239,55 @@ describe('IFR hydration (background thread)', () => {
     expect(doc.querySelectorAll('image').length).toBe(1);
     expect(doc.querySelectorAll('text').length).toBe(1);
     expect(doc.querySelector('text')?.textContent).toBe('background tree');
+  });
+});
+
+describe('IFR + element templates', () => {
+  it('hydrates INSTANTIATE_TEMPLATE batches without re-instantiating', async () => {
+    const tpl = registerElementTemplate('ifr-tpl', ['#text', 'onTap'], (P: number) => {
+      const e0 = __CreateView(P);
+      __SetCSSId([e0], 0);
+      __SetClasses(e0, 'card');
+      const e1 = __CreateText(P);
+      __SetCSSId([e1], 0);
+      __SetClasses(e1, 'label');
+      __AppendElement(e0, e1);
+      const e2 = __CreateView(P);
+      __SetCSSId([e2], 0);
+      __SetClasses(e2, 'btn');
+      __AppendElement(e0, e2);
+      return [e0, e1, e2];
+    });
+    const Comp = defineComponent({
+      setup() {
+        const n = ref(0);
+        return () =>
+          h('view', { class: 'wrap' }, [
+            h(`__vlx-tpl:${tpl}`, {
+              __h0: `n:${n.value}`,
+              __h1: () => n.value++,
+            }),
+          ]);
+      },
+    });
+
+    const doc = mtFirstScreenRender(Comp);
+    env().switchToMainThread();
+    expect(doc.querySelector('.label')?.textContent).toBe('n:0');
+
+    bgHydrate(Comp);
+    expect(getIfrPhase()).toBe('hydrated');
+
+    env().switchToMainThread();
+    // Skipped, not re-applied: exactly one template instance.
+    expect(doc.querySelectorAll('.card').length).toBe(1);
+    expect(doc.querySelectorAll('.label').length).toBe(1);
+
+    // Events bound through template holes route to the BG handler.
+    fireEvent.tap(doc.querySelector('.btn')!);
+    await waitForUpdate();
+    env().switchToMainThread();
+    expect(doc.querySelector('.label')?.textContent).toBe('n:1');
   });
 });
 

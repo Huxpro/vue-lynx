@@ -1281,6 +1281,16 @@ export { Transition, TransitionGroup };
 // ===========================================================================
 
 /**
+ * Register a compile-time-lowered element template.
+ *
+ * Called from compiler-generated code (a hoisted statement in the compiled
+ * render module) — never directly by applications.
+ *
+ * @hidden
+ */
+export { registerElementTemplate } from './element-template.js';
+
+/**
  * Gate for LEPUS-transformed worklet registrations.
  *
  * The SWC worklet transform (target: LEPUS) emits
@@ -1323,6 +1333,9 @@ export function resetForTesting(): void {
   resetFunctionCallState();
   resetRunOnBackgroundState();
   resetAppRegistry();
+  // NOTE: element-template registrations are intentionally NOT reset —
+  // they are bundle-lifetime (hoisted per render module, id-keyed,
+  // idempotent), like the main-thread template registry.
   takeOps(); // drain any leftover ops
   ShadowElement.nextId = 2;
 }

@@ -22,7 +22,17 @@
  * Imports with `with { runtime: 'shared' }` are also skipped — these are
  * handled separately by `extractSharedImports()`.
  */
-export function extractLocalImports(source: string): string {
+export function extractLocalImports(
+  source: string,
+  /**
+   * Keep `?vue&type=template` sub-module imports. Element templates hoist
+   * their registrations into the compiled template module (non-script-setup
+   * SFCs), so the dependency edge must survive on the MT layer for the
+   * loader to extract them. Off by default — identical to historical
+   * behavior when element templates are disabled.
+   */
+  keepTemplateSubModules = false,
+): string {
   const specifiers = new Set<string>();
 
   // Match 'from' clause with relative specifier: from './foo' or from "../bar"
@@ -52,7 +62,9 @@ export function extractLocalImports(source: string): string {
     // Only keep script sub-modules (and non-vue imports).
     .filter(s => {
       if (!s.includes('?vue')) return true;
-      return s.includes('type=script');
+      if (s.includes('type=script')) return true;
+      if (keepTemplateSubModules && s.includes('type=template')) return true;
+      return false;
     })
     .map(s => `import '${s}';`)
     .join('\n');
@@ -117,6 +129,61 @@ export function stripStyleImports(code: string): string {
       (line) => !(/^\s*import\b/.test(line) && line.includes('type=style')),
     )
     .join('\n');
+}
+
+/**
+ * Extract element-template registrations from a compiled render module.
+ *
+ * The element-template compiler transform hoists statements of the form
+ *   const _hoisted_N = (globalThis.__vueLynxRegisterElementTemplate ||
+ *     function () {})("<id>", [...], function(P){…})
+ * into the compiled script/template sub-module. On the interpreter-only
+ * (non-IFR) main thread the module is otherwise stripped, but these
+ * registrations must survive: the ops executor resolves create() functions
+ * through them. The calls are self-contained (they resolve the global at
+ * evaluation time; entry-main installs it before user code runs), so they
+ * are re-emitted verbatim.
+ */
+export function extractTemplateRegistrations(source: string): string {
+  const marker = 'globalThis.__vueLynxRegisterElementTemplate';
+  const out: string[] = [];
+  let searchFrom = 0;
+  while (true) {
+    const idx = source.indexOf(marker, searchFrom);
+    if (idx === -1) break;
+    // The marker sits inside `(globalThis.… || function () {})(args…)`.
+    const wrapperStart = source.lastIndexOf('(', idx);
+    if (wrapperStart === -1) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    const wrapperEnd = findBalancedEnd(source, wrapperStart);
+    if (wrapperEnd === -1 || source[wrapperEnd + 1] !== '(') {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    const argsEnd = findBalancedEnd(source, wrapperEnd + 1);
+    if (argsEnd === -1) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    out.push(`${source.slice(wrapperStart, argsEnd + 1)};`);
+    searchFrom = argsEnd + 1;
+  }
+  return out.join('\n');
+}
+
+/** Given the index of a '(' in `code`, return the index of its matching ')'. */
+function findBalancedEnd(code: string, openIndex: number): number {
+  let depth = 0;
+  for (let i = openIndex; i < code.length; i++) {
+    if (code[i] === '(') depth++;
+    else if (code[i] === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }
 
 /**

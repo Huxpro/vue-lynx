@@ -70,6 +70,7 @@ const OP_ARITY: Record<number, number> = {
   [OP.SET_MT_REF]: 2, // id, refImpl
   [OP.INIT_MT_REF]: 2, // wvid, initValue
   [OP.SET_SCOPE_ID]: 2, // id, cssId
+  [OP.INSTANTIATE_TEMPLATE]: 3, // rootId, tplId, holeCount
 };
 
 /**
@@ -316,6 +317,11 @@ function teardownIfrTree(): void {
       if (arity === undefined) break; // unknown op — stop scanning this batch
       if (code === OP.CREATE || code === OP.CREATE_TEXT) {
         createdIds.add(batch[i + 1] as number);
+      } else if (code === OP.INSTANTIATE_TEMPLATE) {
+        // Template instances occupy rootId..rootId+holeCount in the map.
+        const rootId = batch[i + 1] as number;
+        const holeCount = batch[i + 3] as number;
+        for (let k = 0; k <= holeCount; k++) createdIds.add(rootId + k);
       } else if (code === OP.INSERT) {
         const parentId = batch[i + 1] as number;
         const childId = batch[i + 2] as number;

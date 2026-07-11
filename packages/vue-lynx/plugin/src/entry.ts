@@ -206,6 +206,8 @@ export interface ApplyEntryOptions {
   debugInfoOutside?: boolean;
   /** IFR: main-thread bundle carries the full Vue runtime + app code. */
   enableIFR?: boolean;
+  /** Element templates: preserve template registrations on the MT layer. */
+  enableElementTemplates?: boolean;
 }
 
 export function applyEntry(
@@ -351,7 +353,10 @@ export function applyEntry(
       .test(/\.vue$/)
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
-      .options({ ifr: opts.enableIFR ?? false })
+      .options({
+        ifr: opts.enableIFR ?? false,
+        elementTemplates: opts.enableElementTemplates ?? false,
+      })
       .end();
 
     // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls).
@@ -371,7 +376,10 @@ export function applyEntry(
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
-      .options({ ifr: opts.enableIFR ?? false })
+      .options({
+        ifr: opts.enableIFR ?? false,
+        elementTemplates: opts.enableElementTemplates ?? false,
+      })
       .end();
   });
 

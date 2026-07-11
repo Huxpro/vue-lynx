@@ -1,0 +1,91 @@
+# Element Templates
+
+Element templates are Vue Lynx's compile-time template lowering — the Vue
+counterpart of ReactLynx's snapshot system. Eligible template subtrees are
+compiled into native element templates: the static skeleton becomes a
+straight-line element-creation function executed on the main thread in a
+single operation, and interior dynamic parts ("holes") are updated through
+the ordinary ops protocol.
+
+## Why
+
+In the default pipeline, every element — however static — costs a vnode, a
+shadow node, ~5 ops frames across the thread boundary, and an interpreter
+dispatch on the main thread. For typical first screens the static scaffolding
+dominates the node count, so this per-node cost dominates first-frame JS
+time. Lowering removes it:
+
+```
+  Without element templates (per static node):
+  vnode → ShadowElement → 5 ops frames → JSON → interpreter → PAPI
+
+  With element templates (per lowered subtree):
+  one vnode → one INSTANTIATE_TEMPLATE op → one straight-line create()
+```
+
+In our [strategy benchmark](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md),
+block-level lowering rendered typical ~1000-element first screens **7–15×
+faster** than the unlowered pipeline under an interpreter (the closest proxy
+for Lynx's main-thread engine) and shrank the cross-thread ops payload by
+**3–1000×** — a win that applies to the normal pipeline, to updates, and to
+[IFR](/guide/ifr) alike (they compose: lowered ops streams hydrate through
+the same fast path).
+
+## Enabling
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      enableElementTemplates: true,
+    }),
+  ],
+})
+```
+
+No app-code changes are required, and no template syntax is affected.
+
+## What gets lowered
+
+A subtree is lowered when its **structure** is compile-time-known: every
+node is a plain element, and only prop values / text content are dynamic.
+
+```vue
+<view class="card">                    <!-- lowered: one template          -->
+  <image class="icon" src="a.png" />   <!--   baked into the skeleton      -->
+  <text class="title">{{ title }}</text><!--  '#text' hole                 -->
+  <view :class="badgeCls">…</view>     <!--   'class' hole                 -->
+</view>
+```
+
+Structural features always stay on the normal vdom path — correctness never
+depends on lowering:
+
+- components, `<slot>`, `v-if` / `v-for` hosts (their *bodies* can still be
+  templates — v-for items typically lower to one instantiation per item)
+- elements with runtime directives (`v-show`, `v-model`, custom), `ref`,
+  `key`, `id`, or vnode hooks — except on the subtree **root**, which keeps
+  all of its props and directives on the vnode and behaves exactly like a
+  normal element (Transition on a lowered root works)
+- `<list>` / `<list-item>` (they have dedicated main-thread handling)
+- comments and mixed dynamic text runs
+
+Scoped CSS is fully supported — the component's CSS scope id is baked into
+the skeleton at compile time.
+
+## Semantics guarantee
+
+Lowered and unlowered renders produce identical documents (verified in CI by
+compiling every test template both ways and comparing the rendered output,
+and by structurally comparing real example bundles built with the flag on and
+off). The only observable difference is the order in which attributes were
+set on nodes that mix baked-static and dynamic props — meaningless to
+rendering.
+
+One practical note: because interior nodes of a template are anonymous on
+the main thread (no per-node bookkeeping), they don't carry `vue-ref-N`
+selector attributes. Template roots keep them, and anything you can `ref`
+is never an interior node, so NodesRef-based code is unaffected.

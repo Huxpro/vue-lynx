@@ -14,6 +14,7 @@
  */
 
 import { elements, setPageUniqueId } from './element-registry.js';
+import { registerTemplate } from './element-templates.js';
 import { interceptPatchUpdate, runIfrRender } from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
@@ -27,6 +28,25 @@ g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
 g['runOnBackground'] = runOnBackground;
+
+// Element-template registration hooks. Compiler-lowered template create()
+// functions land here from either side:
+//  - IFR bundles: vue-lynx's registerElementTemplate (which overwrites the
+//    adapter below at runtime-module evaluation) forwards create() to
+//    __vueLynxRegisterTemplate
+//  - interpreter-only bundles: worklet-loader-mt re-emits the generated
+//    registration statements, which resolve __vueLynxRegisterElementTemplate
+//    at evaluation time — entry-main runs first, so they land in the
+//    create-only adapter
+g['__vueLynxRegisterTemplate'] = registerTemplate;
+g['__vueLynxRegisterElementTemplate'] = (
+  id: string,
+  _holes: unknown,
+  create: Parameters<typeof registerTemplate>[1],
+): string => {
+  registerTemplate(id, create);
+  return id;
+};
 
 // The worklet-runtime (from @lynx-js/react) is bundled into this
 // main-thread entry by the vue-lynx plugin — it provides:
