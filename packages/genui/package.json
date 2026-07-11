@@ -81,8 +81,10 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run && vitest run --config vitest.dom.config.ts",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
+    "test:dom": "vitest run --config vitest.dom.config.ts"
   },
   "dependencies": {
     "@a2ui/web_core": "0.9.1",

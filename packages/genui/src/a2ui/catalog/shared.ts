@@ -16,6 +16,12 @@ export const GENERIC_COMPONENT_PROPS: string[] = [
   'setValue',
   'sendAction',
   'dataContextPath',
+  // Protocol bookkeeping fields spread through by the renderer. Declared so
+  // they are absorbed as props instead of leaking into attrs (fragment-rooted
+  // components would warn about non-inheritable attributes otherwise).
+  'component',
+  'weight',
+  '__template',
 ];
 
 /**
