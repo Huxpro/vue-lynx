@@ -32,6 +32,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { MODELS, mockResponseFor, mockTitleFor } from './mock-ai.mjs';
+import { realModeAvailable, runRealGeneration } from './real-ai.mjs';
 import { SAMPLE_IMAGES } from './samples.mjs';
 
 const PORT = Number(process.env.PORT || 3210);
@@ -213,12 +214,40 @@ async function runGeneration({ chat, messages, model, emit, signal }) {
         .join('\n')
     : '';
 
-  const script = mockResponseFor(prompt, model);
   const messageId = uid();
-  const parts = [];
+  let parts = [];
 
   emit({ type: 'start', messageId });
   emit({ type: 'start-step' });
+
+  const persist = () => {
+    if (parts.length && !signal.aborted) {
+      db.messages.push({
+        id: messageId,
+        chatId: chat.id,
+        role: 'assistant',
+        parts,
+        createdAt: new Date().toISOString(),
+      });
+      saveDb();
+    }
+  };
+
+  // Real-model mode (AI_GATEWAY_API_KEY set): stream from the Vercel AI
+  // Gateway like the original; falls back to the mock script on failure.
+  if (realModeAvailable()) {
+    try {
+      parts = await runRealGeneration({ messages, model, emit, signal });
+      emit({ type: 'finish-step' });
+      emit({ type: 'finish' });
+      persist();
+      return;
+    } catch (err) {
+      console.error('[real-ai] falling back to mock:', err.message);
+    }
+  }
+
+  const script = mockResponseFor(prompt, model);
 
   const sleep = (ms) =>
     new Promise((r) => setTimeout(r, process.env.FAST_MOCK ? 1 : ms));
@@ -279,16 +308,7 @@ async function runGeneration({ chat, messages, model, emit, signal }) {
   emit({ type: 'finish-step' });
   emit({ type: 'finish' });
 
-  if (parts.length && !signal.aborted) {
-    db.messages.push({
-      id: messageId,
-      chatId: chat.id,
-      role: 'assistant',
-      parts,
-      createdAt: new Date().toISOString(),
-    });
-    saveDb();
-  }
+  persist();
 }
 
 // ---------------------------------------------------------------------------

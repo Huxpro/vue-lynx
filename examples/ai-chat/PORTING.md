@@ -31,10 +31,44 @@ Why a straight copy is impossible:
 | Auth | GitHub OAuth via nuxt-auth-utils (popup + cookie session) | Mock session endpoint (demo user), header-token session | **Rewritten (mocked)** — OAuth popups/secrets unsuitable for a Lynx example |
 | File uploads | NuxtHub Blob + drag&drop + `<input type=file>` | Demo-image picker (bundled samples), same chip/preview/message UI | **Adapted** — no file picker/DnD in Lynx |
 | Persistence of prefs (model, theme) | Cookies | Storage abstraction (web localStorage / in-memory fallback) | **Rewritten** |
-| Styling | Tailwind v4 + Nuxt UI theme CSS vars | (decision pending first build: repo has a tailwind preset for Lynx — evaluate `examples/tailwindcss` conventions; otherwise plain CSS with copied token values) | TBD this loop |
+| Styling | Tailwind v4 + Nuxt UI theme CSS vars | Tailwind v3 + `@lynx-js/tailwind-preset`, with Nuxt UI's semantic tokens (`text-muted`, `bg-elevated`, `border-default`, …) recreated as `--ui-*` CSS variables + custom utilities, so ported markup keeps its class vocabulary | **Adapted** — original classes mostly survive |
 
 ## Decision log
 
 - **2026-07-11** Chose `nuxt-ui-templates/chat` (canonical Nuxt template) as the source of truth; `chat-vue` consulted for de-Nuxtified patterns (shared composables, Nitro-external server, session endpoint).
 - **2026-07-11** Server strategy: mock-first (deterministic, offline, screenshot-stable), real AI Gateway passthrough behind `AI_GATEWAY_API_KEY` — mirrors the original's "works on Vercel, key locally" spirit without shipping secrets.
 - **2026-07-11** Auth strategy: mock demo-user login to keep every auth-gated surface (user menu, uploads, owner-only actions, greeting) testable in screenshots.
+
+
+## Platform learnings (found while porting, verified on Lynx for Web)
+
+1. **`<textarea>` is unmapped on the web platform.** `LYNX_TAG_TO_HTML_TAG_MAP` in
+   `@lynx-js/web-core` has `input` → `x-input` but no `textarea` entry, so `<textarea>` falls
+   through as a raw, unwired HTML element. The prompt uses a single-line `<input>` instead
+   (PRD F2.2).
+2. **`justify-*` utilities are missing from `@lynx-js/tailwind-preset`** (`justifyContent`
+   isn't in its core-plugin list, though `alignItems`/`gap`/`grid*` are). Declared manually in
+   `App.css`.
+3. **SFC `<style>` blocks are scoped per component** through Lynx's `cssId` mechanism even
+   without the `scoped` attribute — a class defined in one component's style block does not
+   apply to elements of another component. Cross-component classes live in the globally
+   imported `App.css`.
+4. **Translucent backgrounds don't composite over sibling content** in the Lynx web preview
+   (opaque backgrounds paint; `rgba(...)`/alpha-gradient backgrounds on an overlay don't, in
+   both headless and headed Chromium, while the same markup outside `lynx-view` paints fine).
+   Modal backdrops are approximated by fading the app content (`opacity: 0.4`) behind the
+   overlay instead.
+5. **`<svg content="...">` renders through a blob-URL `<img>`** (web-elements `XSvg`), so
+   `currentColor` never inherits — icon/logo/chart colors are baked into the SVG strings from
+   the reactive theme (`useTheme().toneColor`).
+6. **Streaming state must mutate reactive proxies, not raw objects.** Pushing a raw object into
+   a `ref([])` and then mutating the raw reference bypasses Vue's property-level dependency
+   tracking (components freeze mid-stream). `useChat` pushes then reads back
+   `messages.value[i]` and mutates the returned proxy.
+7. **Cross-origin assets need `Cross-Origin-Resource-Policy: cross-origin`** — the web preview
+   page sets `COEP: require-corp`.
+8. **Element methods** (`scrollTo` on `scroll-view`) go through template refs:
+   `ref.invoke({ method, params }).exec()`, after `await nextTick()` so the main thread has
+   applied pending ops.
+9. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
+   `fetch` binding with an undefined parameter (known repo convention, applies here too).
