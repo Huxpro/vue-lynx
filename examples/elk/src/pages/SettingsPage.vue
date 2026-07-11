@@ -82,6 +82,19 @@ function signOut() {
         <text v-else class="settings-session">Browsing {{ currentServer }} as guest</text>
       </view>
 
+      <!-- Interface (Elk settings/interface color mode) -->
+      <text class="settings-section">Interface</text>
+      <view class="settings-card">
+        <view class="settings-toggle" @tap="settings.colorMode = settings.colorMode === 'dark' ? 'light' : 'dark'">
+          <text class="settings-toggle-label">Dark mode</text>
+          <AppIcon
+            :name="settings.colorMode === 'dark' ? 'checkbox-circle-line' : 'checkbox-blank-circle-line'"
+            :size="20"
+            :color="settings.colorMode === 'dark' ? '#cc7d24' : '#919191'"
+          />
+        </view>
+      </view>
+
       <!-- Preferences (Elk settings/preferences) -->
       <text class="settings-section">Timeline preferences</text>
       <view class="settings-card">

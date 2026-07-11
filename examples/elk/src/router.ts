@@ -4,7 +4,9 @@
 import { createMemoryHistory, createRouter } from 'vue-router';
 
 import AccountPage from './pages/AccountPage.vue';
+import CollectionPage from './pages/CollectionPage.vue';
 import ComposePage from './pages/ComposePage.vue';
+import FollowListPage from './pages/FollowListPage.vue';
 import ExplorePage from './pages/ExplorePage.vue';
 import NotificationsPage from './pages/NotificationsPage.vue';
 import SearchPage from './pages/SearchPage.vue';
@@ -25,6 +27,8 @@ const router = createRouter({
           : `/${currentServer.value}/public/local`,
     },
     { path: '/home', component: TimelinePage, props: { kind: 'home' as const } },
+    { path: '/bookmarks', component: CollectionPage, props: { kind: 'bookmarks' as const } },
+    { path: '/favourites', component: CollectionPage, props: { kind: 'favourites' as const } },
     { path: '/notifications', component: NotificationsPage },
     { path: '/search', component: SearchPage },
     { path: '/compose', component: ComposePage },
@@ -35,6 +39,8 @@ const router = createRouter({
     { path: '/:server/tags/:tag', name: 'tag', component: TagPage },
     { path: '/:server/status/:id', name: 'status', component: StatusPage },
     { path: '/:server/@:account', name: 'account', component: AccountPage },
+    { path: '/:server/@:account/followers', component: FollowListPage },
+    { path: '/:server/@:account/following', component: FollowListPage },
   ],
 });
 

@@ -32,3 +32,31 @@ page {
   background-color: var(--c-bg-base);
   color: var(--c-text-base);
 }
+
+/* Elk .dark palette (vars.css) — applied via a class on the app root;
+   CSS variables cascade to children (enableCSSInlineVariables). */
+.app-dark {
+  --c-primary: #cc7d24;
+  --c-primary-active: #b66b0d;
+  --c-primary-light: #d1822980;
+  --c-primary-fade: #cc7d241a;
+
+  --c-border: #222222;
+  --c-border-dark: #545251;
+  --c-danger: #ff2810;
+  --c-danger-active: #e02f00;
+
+  --c-bg-base: #111111;
+  --c-bg-active: #191919;
+  --c-bg-card: rgba(255, 255, 255, 0.023);
+  --c-bg-code: rgba(255, 255, 255, 0.023);
+  --c-bg-dm: #0a2f35;
+
+  --c-text-base: #f3f3f3;
+  --c-text-code: #ecd88e;
+  --c-text-secondary: #888888;
+  --c-text-secondary-light: #686868;
+
+  --c-bg-btn-disabled: #2a2a2a;
+  --c-text-btn-disabled: #919191;
+}

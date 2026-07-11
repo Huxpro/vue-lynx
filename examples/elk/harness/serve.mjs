@@ -26,6 +26,9 @@ const MIME = {
 // Rewritten to route through this relay (browser TLS is blocked by the
 // sandbox egress proxy; Node's env-proxy fetch is not).
 const MEDIA_KEY_RE = /"(avatar|avatar_static|header|header_static|preview_url|static_url|image)":"(https:\\?\/\\?\/)([^"]+)"/g;
+// "url" keys are rewritten only when they point at media file paths —
+// status/account "url" values must stay intact (mention matching etc).
+const MEDIA_URL_RE = /"url":"(https:\\?\/\\?\/)([^"]*(?:media_attachments|\/media\/|\/cache\/)[^"]*)"/g;
 
 async function relay(req, res, url) {
   // /api-proxy/<host>/<path...>
@@ -65,10 +68,15 @@ async function relay(req, res, url) {
 
     let out = buf;
     if (isJson) {
-      const text = buf.toString('utf8').replace(
-        MEDIA_KEY_RE,
-        (_m, key, _proto, tail) => `"${key}":"http://localhost:${PORT}/api-proxy/${tail}"`,
-      );
+      const text = buf.toString('utf8')
+        .replace(
+          MEDIA_KEY_RE,
+          (_m, key, _proto, tail) => `"${key}":"http://localhost:${PORT}/api-proxy/${tail}"`,
+        )
+        .replace(
+          MEDIA_URL_RE,
+          (_m, _proto, tail) => `"url":"http://localhost:${PORT}/api-proxy/${tail}"`,
+        );
       out = Buffer.from(text, 'utf8');
     }
 

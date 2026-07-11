@@ -41,6 +41,12 @@ const fullHandle = computed(() => {
   return acct.includes('@') ? `@${acct}` : `@${acct}@${getServerName(status.value.account)}`;
 });
 
+// Mastodon 4.5 quotes: status.quote.quotedStatus when accepted
+const quotedStatus = computed(() => {
+  const quote = (status.value as any).quote;
+  return quote?.state === 'accepted' ? quote.quotedStatus as mastodon.v1.Status : null;
+});
+
 const visibilityIcon = computed(() => {
   switch (status.value.visibility) {
     case 'unlisted': return 'lock-line';
@@ -118,6 +124,25 @@ function openAccount() {
           :attachments="status.mediaAttachments"
           :sensitive="status.sensitive"
         />
+
+        <!-- quote post (Mastodon 4.5; Elk StatusQuote nested card) -->
+        <view
+          v-if="quotedStatus"
+          class="status-quote"
+          @tap="router.push(getStatusRoute(quotedStatus))"
+        >
+          <view class="status-quote-head">
+            <AccountAvatar :account="quotedStatus.account" :size="20" />
+            <AccountDisplayName :account="quotedStatus.account" :font-size="13" />
+            <text class="status-handle" :text-maxline="1">@{{ quotedStatus.account.acct }}</text>
+          </view>
+          <ContentRich
+            v-if="quotedStatus.content"
+            :content="quotedStatus.content"
+            :emojis="quotedStatus.emojis"
+            :mentions="quotedStatus.mentions"
+          />
+        </view>
         <StatusPoll v-if="status.poll" :poll="status.poll" />
         <StatusPreviewCard
           v-else-if="status.card && !status.mediaAttachments?.length"
@@ -209,5 +234,22 @@ function openAccount() {
 
 .status-content {
   margin-top: 4px;
+}
+
+.status-quote {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  gap: 4px;
+}
+
+.status-quote-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
 }
 </style>

@@ -5,6 +5,7 @@
 // see PRD "Status card"). Blurhash placeholders are solid colors (no canvas).
 import type { mastodon } from 'masto';
 import { computed, ref } from 'vue-lynx';
+import { openMediaPreview } from '../composables/media-preview';
 
 const props = defineProps<{
   attachments: mastodon.v1.MediaAttachment[];
@@ -13,6 +14,15 @@ const props = defineProps<{
 
 const revealed = ref(false);
 const hidden = computed(() => props.sensitive && !revealed.value);
+
+function onTapAttachment(att: mastodon.v1.MediaAttachment) {
+  if (hidden.value) {
+    revealed.value = true;
+    return;
+  }
+  if (att.type === 'image' || att.type === 'gifv' || att.type === 'video')
+    openMediaPreview(att.type === 'image' ? att : { ...att, url: att.previewUrl ?? att.url });
+}
 
 function typeBadge(att: mastodon.v1.MediaAttachment): string | null {
   if (att.type === 'video') return '▶ video';
@@ -33,7 +43,7 @@ function attachmentSrc(att: mastodon.v1.MediaAttachment): string {
       :key="att.id"
       class="status-media-item"
       :class="attachments.length > 1 ? 'status-media-item-half' : ''"
-      @tap="revealed = hidden ? true : revealed"
+      @tap="onTapAttachment(att)"
     >
       <image
         :src="attachmentSrc(att)"

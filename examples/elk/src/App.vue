@@ -1,17 +1,22 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router';
+import MediaPreview from './components/MediaPreview.vue';
 import NavBottom from './components/NavBottom.vue';
+import { useUserSettings } from './composables/settings';
 
 import './styles/theme.css';
 import './styles/content.css';
+
+const settings = useUserSettings();
 </script>
 
 <template>
-  <view class="app-root">
+  <view class="app-root" :class="settings.colorMode === 'dark' ? 'app-dark' : ''">
     <view class="app-content">
       <RouterView />
     </view>
     <NavBottom />
+    <MediaPreview />
   </view>
 </template>
 

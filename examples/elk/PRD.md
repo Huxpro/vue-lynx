@@ -64,9 +64,9 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Infinite scroll via masto `Paginator` (Elk `usePaginator` core reused; DOM `useElementBounding` trigger → Lynx `<list>` `scrolltolower` event)
 - ✅ Native virtualized scrolling (Elk uses `virtua` DOM virtual scroller → Lynx `<list>` native recycling)
 - ✅ Timeline filtering/reordering (Elk `timeline.ts`: hide replies/boosts prefs, thread reorder — reused verbatim)
-- ✅ Pull-to-refresh (native list feature; replaces Elk's streaming prepend)
-- ⬜ Bookmarks timeline (auth)
-- ⬜ Favourites timeline (auth)
+- ⬜ Pull-to-refresh (Lynx list refresh-view component; replaces Elk's streaming prepend)
+- 🚧 Bookmarks timeline (page + route built on the shared paginator; requires token to exercise)
+- 🚧 Favourites timeline (page + route built on the shared paginator; requires token to exercise)
 - ❌ Conversations/DM timeline — requires auth + streaming for liveness; low value in demo scope (API supported, could be added)
 - ❌ Scheduled posts management — auth-only editor flow built on TipTap; out of scope with the editor
 
@@ -84,7 +84,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Action bar: reply, boost, favourite, bookmark counts
 - 🚧 Action mutations (fav/boost/bookmark POST) — implemented with optimistic updates (Elk `useStatusActions` logic), requires token; verified UI-only
 - ✅ Preview cards for links (card image, title, description)
-- ⬜ Quote posts (Mastodon 4.5 quotes; Elk renders nested quote card)
+- ✅ Quote posts (Mastodon 4.5 `status.quote.quotedStatus` → nested card like Elk's StatusQuote)
 - ⬜ Emoji reactions row
 - ❌ Embedded iframe media players (YouTube/video embeds via `sanitizeEmbeddedIframe`) — no iframe/webview element in Lynx
 - ❌ Status translation (browser `Translator` API / server LibreTranslate proxy) — browser/server-only APIs
@@ -104,7 +104,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Fields/metadata table (with verified-link highlight)
 - ✅ Account posts tab (`v1.accounts.$select(id).statuses`)
 - ✅ Posts / Posts+Replies / Media tabs
-- ⬜ Following / Followers lists
+- ✅ Following / Followers lists (tappable stats on profile → paginated account list)
 - 🚧 Follow/unfollow button (needs token; UI + optimistic logic ported)
 - ❌ Account hover cards (`AccountHoverWrapper`, floating-vue) — hover doesn't exist on touch; tap navigates to profile instead
 - ⬜ Bot/locked/moved indicators
@@ -123,7 +123,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Explore: trending posts (`v1.trends.statuses`)
 - ✅ Explore: trending hashtags (`v1.trends.tags`) with usage sparkline numbers
 - ⬜ Explore: trending links
-- ✅ Hashtag timeline page (`v1.timelines.tag`)
+- ✅ Hashtag timeline page (`v1.timelines.tag`; verified incl. CJK tags + remote instance content)
 - ⬜ Follow hashtag button (auth)
 
 ### Publish / compose (auth required)
@@ -155,14 +155,14 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 
 - ✅ Avatar images (rounded, `<image>` with placeholder bg)
 - ✅ Attachment grid with aspect ratios
-- ⬜ Fullscreen media preview modal (Elk `ModalMediaPreview` carousel)
+- 🚧 Fullscreen media preview modal (single image + alt text; Elk adds carousel/zoom)
 - ❌ Blurhash progressive placeholders — Elk decodes blurhash to `<canvas>`; no canvas in Lynx. Solid placeholder color instead.
 
 ### Settings & preferences
 
 - ✅ Settings page shell (interface prefs)
 - ✅ Font size setting (Elk: CSS var `--font-size`)
-- ✅ Dark/light theme toggle (Elk `vars.css` palettes as Lynx CSS vars)
+- ✅ Dark/light theme toggle (Elk `vars.css` palettes as cascading Lynx CSS vars; verified vs Elk dark)
 - ⬜ Theme color picker (Elk's 8 accent themes)
 - ✅ Hide boosts / hide replies / hide alt indicator style prefs (drive `timeline.ts` filters)
 - ❌ Language switcher UI + 42-locale i18n — deferred: vue-i18n works on Lynx but doubles demo scope; message catalog structure kept compatible (en-US strings inline)
@@ -188,3 +188,4 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 - **Loop 1**: Repo research, Elk inventory (196 components / 55 pages / 50 composables mapped), PRD drafted, app scaffold builds for lynx+web targets.
 - **Loop 2**: Shared layer + content renderer + full UI ported. Solved Lynx runtime landmines (hidden web globals → `source.define`, DOMParser-free entity decoding, no-URL sanitizer). Verified live on Lynx for Web against mas.to: timelines, explore, search, thread, account, settings.
 - **Loop 3**: Screenshot comparison pipeline against the ORIGINAL elk.zone (transparent HTTPS relay so both apps run in the same sandbox against the same instance). Parity fixes from comparison: heart favourite icon (was star), stacked name/handle rows, vertical preview cards with wide images, Elk-style icon+primary headers, `Xmin` timestamps, full `@user@server` handles. Side-by-sides in screenshots/README.md.
+- **Loop 4**: Dark mode (Elk palette, verified vs elk.zone dark), fullscreen media preview, quote-post nested cards, Following/Followers lists, Bookmarks/Favourites pages, hashtag timeline verified. PRD statuses trued up (pull-to-refresh ⬜, media modal 🚧).

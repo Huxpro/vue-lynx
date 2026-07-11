@@ -20,6 +20,14 @@ Captured with the scripts in [`../harness/`](../harness/). See
 | Settings | ![lynx settings](./lynx/05-settings.png) | ![elk settings](./elk/05-settings.png) |
 | Thread / status detail | ![lynx thread](./lynx/06-thread.png) | ![elk thread](./elk/06-thread.png) |
 | Account profile | ![lynx account](./lynx/07-account.png) | ![elk account](./elk/07-account.png) |
+| Dark mode | ![lynx dark](./lynx/08-dark-local.png) | ![elk dark](./elk/08-dark-local.png) |
+
+Lynx-only captures (no same-frame Elk counterpart):
+
+| Surface | Elk on Lynx |
+| --- | --- |
+| Fullscreen media preview | ![lynx media preview](./lynx/09-media-preview.png) |
+| Hashtag timeline | ![lynx tag](./lynx/10-tag.png) |
 
 ## Known visual deltas (intentional or tracked)
 

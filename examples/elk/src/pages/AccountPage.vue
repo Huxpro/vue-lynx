@@ -4,7 +4,7 @@
 // fields, stats, posts/replies/media tabs.
 import type { mastodon } from 'masto';
 import { computed, onMounted, ref, watch } from 'vue-lynx';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AccountAvatar from '../components/AccountAvatar.vue';
 import AccountDisplayName from '../components/AccountDisplayName.vue';
 import ContentRich from '../components/ContentRich';
@@ -16,6 +16,7 @@ import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
 
 const route = useRoute();
+const router = useRouter();
 
 const account = ref<mastodon.v1.Account | null>(null);
 const statuses = ref<mastodon.v1.Status[]>([]);
@@ -130,11 +131,11 @@ const joinDate = computed(() => {
             <text class="account-stat-num">{{ formatCompactNumber(account.statusesCount) }}</text>
             <text class="account-stat-label">Posts</text>
           </view>
-          <view class="account-stat">
+          <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/following`)">
             <text class="account-stat-num">{{ formatCompactNumber(account.followingCount) }}</text>
             <text class="account-stat-label">Following</text>
           </view>
-          <view class="account-stat">
+          <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/followers`)">
             <text class="account-stat-num">{{ formatCompactNumber(account.followersCount) }}</text>
             <text class="account-stat-label">Followers</text>
           </view>
