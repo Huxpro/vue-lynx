@@ -39,7 +39,7 @@ onMounted(() => signedIn && loadNext());
 
 <template>
   <view class="page">
-    <PageHeader title="Notifications" />
+    <PageHeader title="Notifications" icon="notification-4-line" />
 
     <view v-if="!signedIn" class="notif-empty">
       <AppIcon name="notification-4-line" :size="40" color="#919191" />

@@ -6,6 +6,7 @@
 import type { mastodon } from 'masto';
 import { computed } from 'vue-lynx';
 import { useRouter } from 'vue-router';
+import { getServerName } from '../composables/account';
 import { formatTimeAgo } from '../composables/format';
 import { getAccountRoute, getStatusRoute } from '../composables/routes';
 import AccountAvatar from './AccountAvatar.vue';
@@ -33,6 +34,12 @@ const router = useRouter();
 // Handle boosts: the card shows the boosted status with attribution.
 const isReblog = computed(() => !!props.status.reblog);
 const status = computed(() => props.status.reblog ?? props.status);
+
+// Elk shows the full @user@server handle in the timeline (getFullHandle)
+const fullHandle = computed(() => {
+  const acct = status.value.account.acct;
+  return acct.includes('@') ? `@${acct}` : `@${acct}@${getServerName(status.value.account)}`;
+});
 
 const visibilityIcon = computed(() => {
   switch (status.value.visibility) {
@@ -68,11 +75,13 @@ function openAccount() {
       </view>
 
       <view class="status-body">
-        <!-- name row -->
+        <!-- name block: Elk mobile stacks display name over the handle,
+             with the timestamp pinned top-right -->
         <view class="status-name-row" @tap="openAccount">
-          <AccountDisplayName :account="status.account" :font-size="main ? 16 : 15" />
-          <text class="status-handle" :text-maxline="1">@{{ status.account.acct }}</text>
-          <view class="status-name-spacer" />
+          <view class="status-names">
+            <AccountDisplayName :account="status.account" :font-size="main ? 16 : 15" />
+            <text class="status-handle" :text-maxline="1">{{ fullHandle }}</text>
+          </view>
           <AppIcon v-if="visibilityIcon" :name="visibilityIcon" :size="14" color="#919191" />
           <text v-if="!main" class="status-time">{{ formatTimeAgo(status.createdAt) }}</text>
         </view>
@@ -163,23 +172,26 @@ function openAccount() {
 .status-name-row {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
+}
+
+.status-names {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .status-handle {
   font-size: 13px;
   color: var(--c-text-secondary);
-  flex-shrink: 1;
-}
-
-.status-name-spacer {
-  flex: 1;
 }
 
 .status-time {
   font-size: 13px;
   color: var(--c-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .status-replying {

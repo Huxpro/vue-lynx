@@ -27,7 +27,7 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
 
 <template>
   <view class="page">
-    <PageHeader title="Search" />
+    <PageHeader title="Search" icon="search-line" />
     <view class="search-box">
       <AppIcon name="search-line" :size="18" color="#919191" />
       <input

@@ -11,7 +11,6 @@ import StatusCard from '../components/StatusCard.vue';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
 import { getTagRoute } from '../composables/routes';
-import { currentServer } from '../composables/users';
 
 const router = useRouter();
 
@@ -49,7 +48,7 @@ function tagUses(tag: mastodon.v1.Tag): number {
 
 <template>
   <view class="page">
-    <PageHeader title="Explore" :subtitle="currentServer" />
+    <PageHeader title="Explore" icon="compass-3-line" />
 
     <view class="explore-tabs">
       <view class="explore-tab" @tap="tab = 'posts'">

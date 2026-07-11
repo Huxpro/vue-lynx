@@ -39,11 +39,11 @@ function reply() {
       >{{ formatCompactNumber(status.reblogsCount) }}</text>
     </view>
     <view class="status-action" @tap="toggleFavourite">
-      <AppIcon :name="status.favourited ? 'star-fill' : 'star-line'" :size="18" :color="status.favourited ? '#eab308' : '#686868'" />
+      <AppIcon :name="status.favourited ? 'heart-3-fill' : 'heart-3-line'" :size="18" :color="status.favourited ? '#f43f5e' : '#686868'" />
       <text
         v-if="status.favouritesCount"
         class="status-action-count"
-        :style="status.favourited ? { color: '#eab308' } : undefined"
+        :style="status.favourited ? { color: '#f43f5e' } : undefined"
       >{{ formatCompactNumber(status.favouritesCount) }}</text>
     </view>
     <view class="status-action" @tap="toggleBookmark">

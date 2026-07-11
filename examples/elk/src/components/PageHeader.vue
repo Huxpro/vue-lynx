@@ -1,12 +1,13 @@
 <script setup lang="ts">
-// Ported from elk: app/components/main/MainContent.vue header — sticky
-// title bar with optional back button.
+// Ported from elk: app/components/main/MainContent.vue + NavTitle — sticky
+// title bar. Elk's timeline headers show a primary-colored icon + title
+// pair; subpages show a back arrow + plain title.
 import { useRouter } from 'vue-router';
 import AppIcon from './AppIcon.vue';
 
 withDefaults(defineProps<{
   title: string;
-  subtitle?: string;
+  icon?: string;
   back?: boolean;
 }>(), {
   back: false,
@@ -20,10 +21,9 @@ const router = useRouter();
     <view v-if="back" class="page-header-back" @tap="router.back()">
       <AppIcon name="arrow-left-line" :size="20" color="#232323" />
     </view>
-    <view class="page-header-titles">
-      <text class="page-header-title">{{ title }}</text>
-      <text v-if="subtitle" class="page-header-subtitle">{{ subtitle }}</text>
-    </view>
+    <AppIcon v-if="icon" :name="icon" :size="22" color="#cc7d24" />
+    <text class="page-header-title" :class="icon ? 'page-header-title-primary' : ''">{{ title }}</text>
+    <view class="page-header-spacer" />
     <slot />
   </view>
 </template>
@@ -38,27 +38,24 @@ const router = useRouter();
   border-bottom: 1px solid var(--c-border);
   background-color: var(--c-bg-base);
   flex-shrink: 0;
+  gap: 10px;
 }
 
 .page-header-back {
-  margin-right: 12px;
   padding: 4px;
 }
 
-.page-header-titles {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
 .page-header-title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--c-text-base);
 }
 
-.page-header-subtitle {
-  font-size: 11px;
-  color: var(--c-text-secondary);
+.page-header-title-primary {
+  color: var(--c-primary);
+}
+
+.page-header-spacer {
+  flex: 1;
 }
 </style>

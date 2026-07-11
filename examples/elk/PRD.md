@@ -186,3 +186,5 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 ## Loop log
 
 - **Loop 1**: Repo research, Elk inventory (196 components / 55 pages / 50 composables mapped), PRD drafted, app scaffold builds for lynx+web targets.
+- **Loop 2**: Shared layer + content renderer + full UI ported. Solved Lynx runtime landmines (hidden web globals → `source.define`, DOMParser-free entity decoding, no-URL sanitizer). Verified live on Lynx for Web against mas.to: timelines, explore, search, thread, account, settings.
+- **Loop 3**: Screenshot comparison pipeline against the ORIGINAL elk.zone (transparent HTTPS relay so both apps run in the same sandbox against the same instance). Parity fixes from comparison: heart favourite icon (was star), stacked name/handle rows, vertical preview cards with wide images, Elk-style icon+primary headers, `Xmin` timestamps, full `@user@server` handles. Side-by-sides in screenshots/README.md.

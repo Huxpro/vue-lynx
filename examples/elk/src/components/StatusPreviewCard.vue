@@ -1,11 +1,18 @@
 <script setup lang="ts">
-// Ported from elk: app/components/status/StatusPreviewCard.vue (compact
-// horizontal layout; the GitHub/StackBlitz special cards are out of scope).
+// Ported from elk: app/components/status/StatusPreviewCard.vue.
+// Like Elk: vertical layout (image on top) when the card has a large
+// image, compact horizontal row otherwise. GitHub/StackBlitz special
+// cards are out of scope.
 import type { mastodon } from 'masto';
+import { computed } from 'vue-lynx';
 
-defineProps<{
+const props = defineProps<{
   card: mastodon.v1.PreviewCard;
 }>();
+
+const vertical = computed(() =>
+  !!props.card.image && (props.card.width ?? 0) >= (props.card.height ?? 1),
+);
 
 function hostOf(url: string): string {
   const m = url.match(/^https?:\/\/([^/]+)/);
@@ -14,11 +21,13 @@ function hostOf(url: string): string {
 </script>
 
 <template>
-  <view class="preview-card">
+  <view class="preview-card" :class="vertical ? 'preview-card-vertical' : ''">
     <image
       v-if="card.image"
       :src="card.image"
       class="preview-card-img"
+      :class="vertical ? 'preview-card-img-wide' : ''"
+      :style="vertical ? { aspectRatio: String((card.width && card.height) ? card.width / card.height : 1.91) } : undefined"
       mode="aspectFill"
     />
     <view class="preview-card-body">
@@ -37,6 +46,11 @@ function hostOf(url: string): string {
   border: 1px solid var(--c-border);
   border-radius: 12px;
   overflow: hidden;
+  background-color: var(--c-bg-card);
+}
+
+.preview-card-vertical {
+  flex-direction: column;
 }
 
 .preview-card-img {
@@ -44,6 +58,11 @@ function hostOf(url: string): string {
   height: 90px;
   background-color: var(--c-bg-active);
   flex-shrink: 0;
+}
+
+.preview-card-img-wide {
+  width: 100%;
+  height: auto;
 }
 
 .preview-card-body {

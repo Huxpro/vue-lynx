@@ -5,16 +5,15 @@ import { computed } from 'vue-lynx';
 import PageHeader from '../components/PageHeader.vue';
 import TimelinePaginator from '../components/TimelinePaginator.vue';
 import { useMastoClient } from '../composables/masto';
-import { currentServer } from '../composables/users';
 
 const props = defineProps<{
   kind: 'home' | 'public' | 'local';
 }>();
 
 const titles = {
-  home: 'Home',
-  public: 'Federated',
-  local: 'Local',
+  home: { title: 'Home', icon: 'home-5-line' },
+  public: { title: 'Federated Timeline', icon: 'earth-line' },
+  local: { title: 'Local Timeline', icon: 'group-2-line' },
 } as const;
 
 const paginator = computed(() => {
@@ -32,7 +31,7 @@ const paginator = computed(() => {
 
 <template>
   <view class="page">
-    <PageHeader :title="titles[kind]" :subtitle="currentServer" />
+    <PageHeader :title="titles[kind].title" :icon="titles[kind].icon" />
     <TimelinePaginator
       :key="kind"
       :paginator="paginator"

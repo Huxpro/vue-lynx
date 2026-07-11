@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Elk on Lynx — Web Preview</title>
+  <link rel="stylesheet" href="/static/css/client.css" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #e5e5e5; }
+    #phone {
+      width: 390px;
+      height: 844px;
+      margin: 0 auto;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    lynx-view {
+      width: 100%;
+      height: 100%;
+      display: block;
+      container-type: size;
+      --rpx-unit: calc(100cqw / 750);
+      --vh-unit: 1cqh;
+      --vw-unit: 1cqw;
+    }
+  </style>
+</head>
+<body>
+  <div id="phone"></div>
+  <script type="module" src="/static/js/client.js"></script>
+  <script type="module">
+    // Same wiring as @lynx-js/go-web's WebIframe (web-iframe.tsx):
+    // rewrite webpack publicPath inside the bundle and shim
+    // __webpack_require__ when the lepus root lacks a local runtime.
+    const WEBPACK_PUBLIC_PATH_RE = /\.p=\\"[^"]*\\"/g;
+
+    const view = document.createElement('lynx-view');
+    view.browserConfig = {
+      pixelWidth: 390 * devicePixelRatio,
+      pixelHeight: 844 * devicePixelRatio,
+    };
+    view.customTemplateLoader = async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status} loading ${url}`);
+      const text = await res.text();
+      const baseUrl = new URL(url, location.href);
+      const base = baseUrl.href.substring(0, baseUrl.href.lastIndexOf('/') + 1);
+      const rewritten = text.replace(WEBPACK_PUBLIC_PATH_RE, `.p=\\"${base}\\"`);
+      const template = JSON.parse(rewritten);
+      if (template.lepusCode?.root) {
+        const root = template.lepusCode.root;
+        if (
+          typeof root === 'string' &&
+          root.includes('__webpack_require__') &&
+          !root.includes('function __webpack_require__')
+        ) {
+          template.lepusCode.root =
+            `var __webpack_require__={p:"${base}"};` + root;
+        }
+      }
+      return template;
+    };
+    view.addEventListener('error', (e) => {
+      console.error('[lynx-view error]', e.detail ?? e);
+    });
+    const params = new URLSearchParams(location.search);
+    view.url = params.get('bundle') || '/dist/main.web.bundle';
+    document.getElementById('phone').appendChild(view);
+  </script>
+</body>
+</html>

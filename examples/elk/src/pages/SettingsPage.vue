@@ -45,7 +45,7 @@ function signOut() {
 
 <template>
   <view class="page">
-    <PageHeader title="Settings" />
+    <PageHeader title="Settings" icon="settings-3-line" />
     <scroll-view scroll-orientation="vertical" class="settings-scroll">
       <!-- Instance / session -->
       <text class="settings-section">Instance</text>
