@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind utilities;
+
+/*
+ * Nuxt UI v4 design tokens (neutral = zinc, primary = blue), ported from the
+ * original template's compiled theme. Light is the :root default; themes are
+ * switched by applying .theme-light / .theme-dark on the root element.
+ *
+ * Note: an explicit .theme-light class mirrors :root to work around
+ * __SetClasses not handling empty class strings (lynx issue #5685).
+ */
+
+:root,
+.theme-light {
+  --ui-primary: #2563eb; /* blue-600 */
+  --ui-error: #ef4444; /* red-500 */
+  --ui-success: #22c55e; /* green-500 */
+
+  --ui-text-dimmed: #a1a1aa; /* zinc-400 */
+  --ui-text-muted: #71717a; /* zinc-500 */
+  --ui-text-toned: #52525b; /* zinc-600 */
+  --ui-text: #3f3f46; /* zinc-700 */
+  --ui-text-highlighted: #18181b; /* zinc-900 */
+  --ui-text-inverted: #ffffff;
+
+  --ui-bg-page: #fafafa; /* body: bg-neutral-50 */
+  --ui-bg: #ffffff;
+  --ui-bg-muted: #fafafa; /* zinc-50 */
+  --ui-bg-elevated: #f4f4f5; /* zinc-100 */
+  --ui-bg-accented: #e4e4e7; /* zinc-200 */
+  --ui-bg-inverted: #18181b;
+
+  --ui-border: #e4e4e7; /* zinc-200 */
+  --ui-border-muted: #e4e4e7;
+  --ui-border-accented: #d4d4d8; /* zinc-300 */
+
+  /* sidebar uses bg-elevated in light, neutral-900 in dark (template override) */
+  --ui-bg-sidebar: #fafafa;
+}
+
+.theme-dark {
+  --ui-primary: #60a5fa; /* blue-400 */
+  --ui-error: #f87171; /* red-400 */
+  --ui-success: #4ade80; /* green-400 */
+
+  --ui-text-dimmed: #71717a; /* zinc-500 */
+  --ui-text-muted: #a1a1aa; /* zinc-400 */
+  --ui-text-toned: #d4d4d8; /* zinc-300 */
+  --ui-text: #e4e4e7; /* zinc-200 */
+  --ui-text-highlighted: #ffffff;
+  --ui-text-inverted: #18181b;
+
+  --ui-bg-page: #09090b; /* body: bg-neutral-950 */
+  --ui-bg: #18181b; /* zinc-900 */
+  --ui-bg-muted: #27272a; /* zinc-800 */
+  --ui-bg-elevated: #27272a; /* zinc-800 */
+  --ui-bg-accented: #3f3f46; /* zinc-700 */
+  --ui-bg-inverted: #ffffff;
+
+  --ui-border: #27272a; /* zinc-800 */
+  --ui-border-muted: #3f3f46;
+  --ui-border-accented: #3f3f46; /* zinc-700 */
+
+  --ui-bg-sidebar: #09090b;
+}
+
+/* --- semantic text/bg utilities not expressible via the tailwind config --- */
+
+.text-default {
+  color: var(--ui-text);
+}
+
+.bg-sidebar {
+  background-color: var(--ui-bg-sidebar);
+}
