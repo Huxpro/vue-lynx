@@ -235,7 +235,7 @@ const html = `<!doctype html>
 </div>
 
 <h2>Sustained krausest scenario (70 consecutive operations per load)</h2>
-<p class="sub">The classic js-framework-benchmark op set, run back-to-back in one session. Degradation counts — see notes.</p>
+<p class="sub">The classic js-framework-benchmark op set, run back-to-back in one session.</p>
 <div class="scroll">${renderTable(BASE_ROWS, BASE_COLUMNS)}</div>
 
 <h2>Other dimensions</h2>
@@ -247,11 +247,18 @@ const html = `<!doctype html>
       the target is Lynx's dual-thread runtime (framework in a background worker → ops → main-thread DOM), not the browser's single-threaded DOM;
       latency is measured from a real click to the composed-DOM end state (resolution ≈ one animation frame), not via devtools paint tracing;
       and beyond krausest's fresh-instance protocol it adds sustained-session dimensions — storms (throughput), within-session drift, and DNF.</li>
-    <li><b>Should React vs Vue differ this much? No — and on the web they don't.</b>
-      On js-framework-benchmark, keyed react-hooks and vue sit within ~1.5× of each other.
-      The gaps here are not React-the-library vs Vue-the-library: on fresh apps, creation is at parity across all three and cold update-path ops differ only ~1.5–2×.
-      The multi-second/DNF numbers come from ReactLynx 0.122's web-runtime per-operation degradation, which compounds in sustained sessions (Vue Lynx stays flat).
-      Manual memo/useCallback helps constants (naive is 1.5–2.4× slower); React Compiler ≈ naive on ReactLynx's preact-based reconciler.</li>
+    <li><b>Correction & runtime artifact (2026-07-11):</b> earlier revisions of this table showed ReactLynx at
+      minutes/DNF for storms. A credibility audit (triggered by real-device tests showing React ≈ Vue) traced that
+      entirely to <code>@lynx-js/web-core</code>'s <code>lynx.profile</code> shim: it treats "performance exists" as
+      an active tracing session and maps every framework profiling call onto <code>performance.mark/measure/clearMarks</code>
+      without ever clearing measures — unbounded timeline growth makes each call O(entries). ReactLynx profiles per
+      rendered snapshot, Vue never calls the API, hence a React-only, web-only artifact that does not exist on native
+      Lynx. The harness now neutralizes <code>lynx.profile:</code> entries identically for every framework; all numbers
+      above are measured with the fix.</li>
+    <li><b>Should React vs Vue differ this much? They don't.</b> With the artifact removed, one-shot ops are at
+      parity at 1k rows and within ~1.5–2× at 10k; storm throughput puts ReactLynx at ~3–5× Vue — the same order of
+      magnitude, consistent with js-framework-benchmark expectations and real-device behavior.
+      Manual memo/useCallback still helps; React Compiler ≈ naive on ReactLynx's preact-based reconciler.</li>
     <li>Harness: Lynx for Web (not a native device) in headless Chromium; identical byte-level protocol for every framework; each framework uses its idiomatic implementation (immutable + memo for React, the official benchmark's shallowRef style for Vue).</li>
     <li>Reproduce: <code>pnpm --filter vue-lynx-benchmark bench:storms</code> · raw data in <code>packages/benchmark/results/</code>.</li>
   </ul>
