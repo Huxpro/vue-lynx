@@ -1,0 +1,18 @@
+{
+  "name": "vue-lynx-benchmark-web-baseline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Plain-DOM baseline apps (preact-hooks, Vue vdom, Vue vapor) running the exact storm protocol WITHOUT Lynx — isolates framework-intrinsic traits (ReactLynx is preact-based) from the Lynx pipeline tax",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "preact": "^10.29.0",
+    "vue": "3.6.0-beta.17"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "3.6.0-beta.17",
+    "esbuild": "^0.25.0"
+  }
+}

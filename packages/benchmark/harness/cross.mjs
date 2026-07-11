@@ -678,6 +678,8 @@ const STORM_SIZES = {
   '3k': { button: 'Create 3,000 rows', rows: 3000 },
   '5k': { button: 'Create 5,000 rows', rows: 5000 },
   '10k': { button: 'Create 10,000 rows', rows: 10000 },
+  '20k': { button: 'Create 20,000 rows', rows: 20000 },
+  '30k': { button: 'Create 30,000 rows', rows: 30000 },
 };
 
 async function runStormRep(browser, mode, sizeKey) {

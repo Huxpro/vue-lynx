@@ -26,6 +26,10 @@ const variants = JSON.parse(
 const base = JSON.parse(
   fs.readFileSync(path.join(root, 'results/cross-run3-neutralized.json'), 'utf-8'),
 );
+const webBaselinePath = path.join(root, 'results/web-baseline-latest.json');
+const webBaseline = fs.existsSync(webBaselinePath)
+  ? JSON.parse(fs.readFileSync(webBaselinePath, 'utf-8'))
+  : null;
 
 // ---------------------------------------------------------------------------
 // data assembly
@@ -178,7 +182,8 @@ const otherTable = renderPlainTable(
 // One polyline per framework through sizes 1k -> 3k -> 5k -> 10k.
 // ---------------------------------------------------------------------------
 
-const SIZES = ['1k', '3k', '5k', '10k'];
+const SIZES = ['1k', '3k', '5k', '10k', '20k', '30k'];
+const SIZE_N = { '1k': 1000, '3k': 3000, '5k': 5000, '10k': 10000, '20k': 20000, '30k': 30000 };
 const TICKS_OF = { updateStorm: 50, selectStorm: 30 };
 
 function seriesPoints(col, stormOp) {
@@ -265,16 +270,105 @@ function scaleTableView() {
   return md + '</tbody></table>';
 }
 
+// log-log slope (scaling exponent alpha in cost ~ N^alpha) via least squares
+function slopeFit(pairs) {
+  // pairs: [n, ms]
+  const pts = pairs.filter(([n, v]) => n > 0 && v > 0)
+    .map(([n, v]) => [Math.log10(n), Math.log10(v)]);
+  if (pts.length < 3) return null;
+  const m = pts.length;
+  const sx = pts.reduce((a, p) => a + p[0], 0);
+  const sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  const sxy = pts.reduce((a, p) => a + p[0] * p[1], 0);
+  return (m * sxy - sx * sy) / (m * sxx - sx * sx);
+}
+
+function slopeOf(perOp, opPrefix) {
+  const pairs = SIZES.map((sz) => [SIZE_N[sz], perOp?.[`${opPrefix}@${sz}`]?.median])
+    .filter(([, v]) => v != null);
+  return slopeFit(pairs);
+}
+
+const WEB_COLUMNS = webBaseline
+  ? [
+    { key: 'vapor-web', label: 'Vue Vapor (DOM)', perOp: webBaseline.perOp['vapor-web'] },
+    { key: 'vue-web', label: 'Vue VDOM (DOM)', perOp: webBaseline.perOp['vue-web'] },
+    { key: 'preact-web', label: 'Preact hooks (DOM)', perOp: webBaseline.perOp['preact-web'] },
+  ]
+  : [];
+
+function slopeTable() {
+  const rows = [
+    ['create', 'create'],
+    ['update storm (per tick)', 'updateStorm'],
+    ['select storm (per tick)', 'selectStorm'],
+  ];
+  const cols = [...COLUMNS, ...WEB_COLUMNS];
+  let html = '<table><thead><tr><th>metric ~ N<sup>α</sup></th>';
+  for (const c of cols) html += `<th>${c.label}</th>`;
+  html += '</tr></thead><tbody>';
+  for (const [label, op] of rows) {
+    html += `<tr><td class="op">${label}</td>`;
+    for (const c of cols) {
+      const a = slopeOf(c.perOp, op);
+      html += `<td class="c plain">${a == null ? '—' : 'α=' + a.toFixed(2)}</td>`;
+    }
+    html += '</tr>';
+  }
+  return html + '</tbody></table>';
+}
+
+function lynxTaxSection() {
+  if (!webBaseline) return '';
+  const PAIRS = [
+    ['vapor', 'vapor-web', 'Vue Vapor'],
+    ['vdom', 'vue-web', 'Vue VDOM'],
+    ['react', 'preact-web', 'React ↔ Preact'],
+  ];
+  const opDefs = [
+    ['create @10k', 'create@10k', 1],
+    ['update storm per tick @10k', 'updateStorm@10k', 50],
+    ['select storm per tick @10k', 'selectStorm@10k', 30],
+  ];
+  let html = '<table><thead><tr><th>metric</th>';
+  for (const [, , label] of PAIRS) html += `<th>${label}<br>Lynx / DOM / ratio</th>`;
+  html += '</tr></thead><tbody>';
+  for (const [label, key, div] of opDefs) {
+    html += `<tr><td class="op">${label}</td>`;
+    for (const [lynxKey, webKey] of PAIRS) {
+      const l = storms.perOp[lynxKey]?.[key]?.median;
+      const w = webBaseline.perOp[webKey]?.[key]?.median;
+      if (l == null || w == null) {
+        html += '<td class="c na">—</td>';
+        continue;
+      }
+      html += `<td class="c plain">${(l / div).toFixed(1)} / ${(w / div).toFixed(1)} / ${(l / w).toFixed(1)}×</td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  return `<h2>Same protocol on plain DOM (no Lynx) — the pipeline tax</h2>
+<p class="sub">preact-hooks is ReactLynx's web reference (ReactLynx is preact-based). ms; per-tick values for storms. "ratio" = Lynx ÷ DOM for the same framework family — the cost of the dual-thread pipeline at that op.</p>
+<div class="scroll">${html}</div>`;
+}
+
+
 const scaleSection = (() => {
   const c1 = renderScaleChart('updateStorm', 'Creation vs update throughput',
     'Right = slower creation at that scale; up = slower update ticks. Lower-left dominates.');
   const c2 = renderScaleChart('selectStorm', 'Creation vs selection throughput',
     'Selection isolates fine-grained updates: two class changes per tick.');
   if (!c1 && !c2) return '';
-  return `<h2>Scaling curves (1k → 3k → 5k → 10k rows)</h2>
+  return `<h2>Scaling curves (1k → 30k rows)</h2>
 <div class="charts">${c1}${c2}</div>
-<details class="tv"><summary>table view</summary><div class="scroll">${scaleTableView()}</div></details>`;
+<details class="tv"><summary>table view</summary><div class="scroll">${scaleTableView()}</div></details>
+<h2>Scaling exponents (least-squares fit of cost ∝ N<sup>α</sup> across sizes)</h2>
+<p class="sub">α ≈ 1 is linear scaling; α &gt; 1 superlinear. Fitted over all sizes with data (up to 1k–30k).</p>
+<div class="scroll">${slopeTable()}</div>
+${lynxTaxSection()}`;
 })();
+
 
 const meta = storms.meta;
 const html = `<!doctype html>
