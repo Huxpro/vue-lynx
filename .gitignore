@@ -1,5 +1,7 @@
 node_modules/
 dist/
+dist-naive/
+dist-compiler/
 *.tsbuildinfo
 .rspeedy/
 packages/upstream-tests/core/
