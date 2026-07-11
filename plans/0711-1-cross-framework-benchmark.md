@@ -369,6 +369,61 @@ cliffs). Placement:
   (~1.2×) and pays for it in update throughput (~3–5× vs vdom). Pick by
   workload: creation-heavy feeds vs interaction-heavy tables.
 
+## Round 6: Preact web baseline, larger scales, and the pipeline tax
+
+Two challenges: (a) ReactLynx is preact-based, so the honest web reference
+is Preact, not React — maybe "creates faster" is just Preact; (b) parallel
+curves might be an artifact of too-small a range, with Lynx costs
+amortizing framework differences. Both answered by running **the exact
+same click-driven storm protocol on plain DOM** (new
+`apps/web-baseline`: preact-hooks / Vue vdom / Vue vapor — the vapor SFC
+compiled by `@vue/compiler-sfc` in an esbuild plugin; harness
+`harness/web-baseline.mjs`) and extending Lynx scales to **20k/30k** with
+least-squares scaling exponents (`results/cross-storms-scale6.*`,
+`results/web-baseline-latest.*`, all rendered in `cross-table.html`).
+
+### (a) Preact reference: the Lynx differences are ADAPTER traits, not framework traits
+
+Plain DOM @10k: create — preact 712 ms, vue 641 ms, vapor 498 ms
+(**preact is SLOWER than Vue at create on the web**); select storm —
+preact 651 ms, vue 1130 ms (**preact is ~1.7× FASTER than Vue vdom at
+sustained updates on the web**). Both orderings INVERT on Lynx (react
+creates 1.2× faster; vue sustains updates 2–7× faster). Conclusion: the
+underlying frameworks are close on DOM, and essentially all of the
+cross-framework structure we measure on Lynx comes from the respective
+adapters/runtimes — ReactLynx's snapshot bulk-instantiation wins creation,
+vue-lynx's leaner per-commit pipeline wins sustained updates. (Vapor on
+plain DOM dominates everything, consistent with upstream claims.)
+
+### (b) Larger scales: the parallel-curves picture breaks, as suspected
+
+- **Update storms converge on Lynx**: vapor/vdom per-tick ratio 1.8× @10k
+  → 1.10× @20k → 1.08× @30k — the shared main-thread apply dominates at
+  large N and amortizes the BG-side advantage. Scaling exponents:
+  react α=1.00 (linear!), vdom α=1.30, vapor α=1.37 — extrapolating,
+  ReactLynx would eventually catch Vue on update storms (@30k it's
+  already only 1.6×).
+- **Select storms stay structurally separated** (vapor α=0.88 vs vdom
+  1.20; @30k still 8.4×): per-tick work is O(1)-rows for vapor and
+  O(N) for diff-based renderers — no amortization possible.
+- Creation is ~linear (α≈0.9–1.0) for everyone, no cliffs anywhere.
+
+### The Lynx pipeline tax (same framework family, Lynx ÷ DOM, @10k)
+
+| metric | Vapor | VDOM | React↔Preact |
+|---|---|---|---|
+| create | 4.0× | 3.0× | 2.2× |
+| update storm /tick | **0.5×** | **0.4×** | 1.3× |
+| select storm /tick | 4.6× | 0.9× | 3.9× |
+
+Creation costs 2–4× more through the dual-thread pipeline (serialize +
+interpret + apply). But **sustained updates are FASTER on Lynx than the
+same framework on plain DOM for Vue** (0.4–0.5×): the BG thread renders
+tick N+1 while the MT applies tick N (pipelining), and the MT element
+tree avoids full-page style/layout per tick. React's per-commit overhead
+eats that pipelining win (1.3×). Vapor's select-storm tax (4.6×) is a
+floor effect — 1 ms/tick on DOM vs ~5 ms of cross-thread round-trip.
+
 ### Corrected React optimization variants (`results/cross-storms-react-variants.*`, v2)
 
 | scenario | react (hooks) | react-naive | react-compiler |

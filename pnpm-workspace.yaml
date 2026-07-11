@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - packages/benchmark/apps/ui-react
+  - packages/benchmark/apps/web-baseline
   - examples/*
   - website
 
