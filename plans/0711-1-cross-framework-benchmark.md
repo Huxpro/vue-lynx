@@ -136,3 +136,49 @@ So the honest cross-framework statement is:
   renders flat.
 - ReactLynx 0.122.1 built with its own rspeedy 0.15 toolchain; Vue apps on
   rspeedy 0.13; both served by web-core 0.22.1.
+
+## Round 2: update-heavy scenarios (storms)
+
+The base suite could not show the vdom-vs-vapor update difference — every
+update-path op at 1k rows is sub-frame, so both floor at ~one frame. Two
+constructed scenario families raise the work above the floor
+(`node harness/cross.mjs --storms`, results
+`results/cross-storms-run2.{json,md}` = `cross-storms-latest.*`):
+
+- **one-shot ops on a 10k-row table** — vdom's full-list diff spans
+  multiple frames there;
+- **storms** — one click triggers N sequential state→render→cross-thread→
+  DOM ticks in-app (update ×50 / select ×30, one macrotask per tick via
+  MessageChannel); wall time from pointerdown to the final DOM state is a
+  throughput outcome that amplifies per-tick cost N× above the frame floor.
+
+Fresh app per (mode, size, rep). Key numbers (median, run2):
+
+| scenario | react | vdom | vapor | vapor vs vdom |
+|---|---|---|---|---|
+| update storm ×50 @1k | 31.4 s | 103 ms | **68 ms** | 1.5× faster |
+| select storm ×30 @1k | 39.0 s | 47 ms | **20 ms** | 2.3× faster |
+| update10th one-shot @10k | 1.61 s | 107 ms | **90 ms** | 1.2× faster |
+| select one-shot @10k | 5.06 s | 73 ms | **57 ms** | 1.3× faster |
+| update storm ×50 @10k | DNF (>240 s ×2) | 1417 ms | **798 ms** | **1.8× faster** |
+| select storm ×30 @10k | not reached (rep aborted at update-storm DNF) | 687 ms | **97 ms** | **7.1× faster** |
+
+Readings:
+
+- **The select storm on a 10k table is the textbook Vapor case made
+  user-visible**: each tick, vdom re-renders/diffs the whole 10k-row list
+  to move one selection class (~23 ms/tick); vapor runs two class effects
+  (~3 ms/tick, mostly cross-thread/scheduling overhead). 687 ms vs 97 ms
+  for 30 selection moves is directly perceivable jank vs fluidity.
+- Update storm @10k (1000 label writes/tick): vapor 16 ms/tick vs vdom
+  28 ms/tick. The gap is smaller than select's because both must ship and
+  apply 1000 SET_TEXT ops per tick (shared MT cost); vdom additionally
+  pays the 10k-row diff.
+- ReactLynx: storms at 1k take 31–39 s (vs Vue's tens of ms) and at 10k
+  hit the 240 s timeout — its superlinear per-op degradation compounds
+  under rapid successive updates. Cold one-shots at 10k (1.6 s update,
+  5.1 s select) are already multi-second before degradation.
+- Sub-frame one-shot artifact, for honesty: select@1k medians (vdom 8 ms,
+  vapor 27 ms) are frame-phase alignment noise — completion lands in
+  either the same rAF or the next for ops this small; only the storm
+  totals rank sub-frame ops meaningfully.
