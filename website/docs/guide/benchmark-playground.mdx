@@ -12,18 +12,12 @@ after your tap, once mutations go quiet).
 **What to try** (the differences worth feeling):
 
 1. **Create 10,000 rows**, then tap **Select storm** (30 selection moves) —
-   Vue Vapor finishes in ~0.1 s, Vue VDOM takes ~0.7 s, React takes minutes.
+   Vue Vapor finishes in ~0.1 s, Vue VDOM ~0.6 s, React ~2.6 s.
 2. On 10,000 rows, tap **Update storm** (50 full update passes) —
-   Vapor ~0.8 s vs VDOM ~1.4 s.
-3. Switch to a React config and repeat a few operations back-to-back —
-   note how each repetition gets slower (sustained-session degradation);
-   Vue stays flat. Switching configs reloads a fresh app.
-
-:::warning
-React storms on 10,000 rows can take **minutes** (they hit our harness's
-240 s timeout). That's the measured result, not a bug in this page — feel
-free to switch configs mid-storm instead of waiting.
-:::
+   Vapor ~0.6 s, VDOM ~1.2 s, React ~4.3 s.
+3. Single taps (Update / Select on a 1k table) feel identical across all
+   five configurations — the frameworks only separate under sustained
+   throughput, which is exactly what the storms amplify.
 
 ## Results at a glance
 
@@ -37,6 +31,32 @@ table — median per-click latency, with the slowdown factor vs the row's best
   style={{ width: '100%', height: '920px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
   loading="lazy"
 />
+
+## A correction, and what it taught us
+
+Earlier revisions of this page reported ReactLynx storms taking **minutes**
+and timing out (DNF) — numbers that real-device testing contradicted. A
+full credibility audit (zero-observer control runs, timed screenshots,
+main-thread and worker CPU profiles) traced every bit of that slowness to
+a **Lynx-for-Web runtime artifact**, not to ReactLynx:
+
+- `@lynx-js/web-core`'s shim of Lynx's profiling API reports
+  `isProfileRecording()` as true whenever `performance` exists — on web it
+  is *always recording*, whereas on native Lynx these calls are no-ops
+  unless a tracing session is active.
+- Each `profileStart`/`profileEnd` pair is mapped onto
+  `performance.mark()` / `measure()` / `clearMarks()`, and the measure
+  entries are **never cleared** — the performance timeline grows without
+  bound and every later call scans it.
+- ReactLynx's production runtime profiles per rendered snapshot; Vue Lynx
+  never calls the API. The result was a React-only, web-only, superlinear
+  slowdown: in our worker CPU profile, **82.8% of the background thread
+  was inside `performance.clearMarks`**.
+
+The harness (and this playground) now neutralize `lynx.profile:` timeline
+entries identically for every framework, restoring native-parity behavior.
+The same react update storm went from >300 s (DNF) to ~15 s wall on our
+CI-class hardware, with the worker mostly idle.
 
 ## How this differs from js-framework-benchmark
 
@@ -53,38 +73,41 @@ different:
    Resolution is therefore one frame (~17 ms), which is why the table only
    ranks scenarios that cost multiple frames.
 2. **Sustained-session dimensions.** krausest measures each benchmark on a
-   fresh page with warmup discarded, so a framework that degrades over a
-   session never shows it. We measure both: cold single-shot (fresh app
-   per sample) *and* sustained scenarios — plus **storms** (one tap = 50
-   sequential update passes or 30 selection moves, a throughput measure
-   that amplifies sub-frame per-tick costs above the frame floor) and
-   **DNF** as a recorded outcome.
+   fresh page with warmup discarded. We measure both cold single-shot
+   (fresh app per sample) *and* sustained scenarios — plus **storms** (one
+   tap = 50 sequential update passes or 30 selection moves, a throughput
+   measure that amplifies sub-frame per-tick costs above the frame floor).
+   This is also what caught the runtime artifact above — and the audit
+   protocol (cross-validate surprising results on a second channel before
+   believing them) is now part of the methodology.
 3. **Framework scope.** krausest compares dozens of web frameworks on the
    DOM; we compare the three ways to build Lynx apps today — ReactLynx,
    Vue Lynx VDOM, and Vue Lynx Vapor — on the runtime they actually target.
 
 ## Should React and Vue differ this much?
 
-**No — and on the web they don't.** On js-framework-benchmark, keyed
-`react-hooks` and `vue` sit within roughly 1.5× of each other. Our numbers
-agree wherever degradation can't act: on **fresh apps**, list creation is
-at parity across all three configurations (create 10k ≈ 1.5 s each), and
-cold update-path ops differ by only ~1.5–2×.
+With the artifact removed, they don't differ much — and that's the honest
+result. Single operations are at **parity** at 1k rows (React 25 ms ≈ VDOM
+28 ms ≈ Vapor 23 ms) and within ~1.5–2× at 10k. Under storm throughput
+ReactLynx sits at ~3–5× Vue — the same order of magnitude, consistent with
+js-framework-benchmark expectations where keyed `react-hooks` and `vue`
+are within ~1.5× of each other.
 
-The multi-second gaps and DNFs come from one specific behavior: **ReactLynx
-0.122's web runtime slows down per operation as operations accumulate**
-(superlinear degradation), which compounds brutally under rapid successive
-updates. Vue Lynx (both modes) holds its intrinsic cost flat — in part
-because our first benchmark round caught and fixed exactly this class of
-bug (a main-thread element-registry leak) in vue-lynx itself.
+We also measured three React optimization levels: the default config is
+the hand-optimized keyed implementation (`memo`'d row + `useCallback`);
+the **naive** variant (no memo/useCallback) is ~1.5–1.9× slower under
+storms; and the [React Compiler](https://react.dev/learn/react-compiler)
+variant (naive source auto-memoized by `babel-plugin-react-compiler`)
+measures ~1.9–2.7× slower than hand-optimized — on ReactLynx's
+preact-based reconciler its memo caches add bookkeeping without pruning
+child re-renders the way explicit `memo()` does. The playground above
+lets you feel all three.
 
-We also checked that this isn't an under-optimized React app: the default
-config is already the hand-optimized keyed implementation (`memo`'d row +
-`useCallback`), and we measured a naive variant (1.5–2.4× slower) and a
-[React Compiler](https://react.dev/learn/react-compiler) variant
-(≈ naive on ReactLynx's preact-based reconciler — compiler-level
-memoization doesn't prune child re-renders the way explicit `memo()` does).
-The playground above lets you feel all three.
+Where Vue genuinely leads is sustained update throughput — and Vapor
+compounds it: **7× faster than VDOM** (and ~30× faster than React) on the
+10k select storm, because moving a selection costs Vapor two class effects
+while vdom re-diffs the list and React re-runs 10k memo comparisons per
+tick.
 
 ## Reproduce
 
@@ -94,5 +117,6 @@ pnpm --filter vue-lynx-benchmark bench:storms   # update-heavy scenarios
 ```
 
 Raw data and analysis: [`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark),
-`plans/0711-1-cross-framework-benchmark.md`. Caveats: Lynx for Web in
-Chromium, not a native device; prerelease Vue 3.6; ReactLynx 0.122.1.
+`plans/0711-1-cross-framework-benchmark.md` (including the full audit
+trail of the correction). Caveats: Lynx for Web in Chromium, not a native
+device; prerelease Vue 3.6; ReactLynx 0.122.1.

@@ -33,10 +33,73 @@ const CONFIGS = [
 
 type ConfigKey = (typeof CONFIGS)[number]['key'];
 
+// Neutralize web-core's always-on lynx.profile shim for NATIVE PARITY.
+// On native Lynx, framework profiling calls (lynx profileStart/profileEnd)
+// are no-ops unless a tracing session is active. web-core's shim maps every
+// call onto performance.mark()/measure()/clearMarks() and never clears the
+// measures, so the performance timeline grows without bound and frameworks
+// that profile per rendered snapshot (ReactLynx) degrade superlinearly —
+// an artifact that does not exist on native. Same patch as the benchmark
+// harness (packages/benchmark/harness/cross.mjs).
+const NEUTRALIZE_LYNX_PROFILE = `(() => {
+  const P = globalThis.Performance && globalThis.Performance.prototype;
+  if (!P || P.__lynxProfileNeutralized) return;
+  P.__lynxProfileNeutralized = true;
+  const isProf = (n) => typeof n === 'string' && n.startsWith('lynx.profile:');
+  for (const k of ['mark', 'clearMarks']) {
+    const orig = P[k];
+    P[k] = function (name, ...rest) {
+      if (isProf(name)) return undefined;
+      return orig.call(this, name, ...rest);
+    };
+  }
+  const origMeasure = P.measure;
+  P.measure = function (name, ...rest) {
+    if (isProf(name) || (typeof rest[0] === 'string' && isProf(rest[0]))
+      || (rest[0] && typeof rest[0] === 'object' && isProf(rest[0].start))) {
+      return undefined;
+    }
+    return origMeasure.call(this, name, ...rest);
+  };
+})()`;
+
+function installProfileNeutralization() {
+  try {
+    // page context (main-thread side of the runtime)
+    (0, eval)(NEUTRALIZE_LYNX_PROFILE);
+    // worker context: wrap Worker so the patch runs before the module chunk
+    const w = window as unknown as {
+      Worker: typeof Worker;
+      __benchWorkerPatched?: boolean;
+    };
+    if (!w.__benchWorkerPatched) {
+      w.__benchWorkerPatched = true;
+      const OrigWorker = w.Worker;
+      w.Worker = class extends OrigWorker {
+        constructor(url: string | URL, opts?: WorkerOptions) {
+          if (opts?.type === 'module') {
+            const abs = new URL(url, location.href).href;
+            const blob = new Blob(
+              [`${NEUTRALIZE_LYNX_PROFILE};\nawait import(${JSON.stringify(abs)});`],
+              { type: 'text/javascript' },
+            );
+            super(URL.createObjectURL(blob), opts);
+          } else {
+            super(url, opts);
+          }
+        }
+      } as typeof Worker;
+    }
+  } catch {
+    /* degrade gracefully — playground still works, numbers include the artifact */
+  }
+}
+
 // Shared dynamic import so multiple embeds don't race.
 let runtimeReady: Promise<void> | null = null;
 function ensureRuntime() {
   if (!runtimeReady) {
+    installProfileNeutralization();
     runtimeReady = import('@lynx-js/web-core/client').then(() => {});
   }
   return runtimeReady;
