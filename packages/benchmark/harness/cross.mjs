@@ -39,6 +39,8 @@ const { values: args } = parseArgs({
     'fresh-count': { type: 'string', default: '3' },
     'skip-build': { type: 'boolean', default: false },
     smoke: { type: 'boolean', default: false },
+    storms: { type: 'boolean', default: false },
+    'storm-reps': { type: 'string', default: '2' },
     headed: { type: 'boolean', default: false },
     port: { type: 'string', default: '8319' },
   },
@@ -48,6 +50,7 @@ const COUNT = Number(args.count);
 const HEAVY_COUNT = Number(args['heavy-count']);
 const STARTUP_COUNT = Number(args['startup-count']);
 const FRESH_COUNT = Number(args['fresh-count']);
+const STORM_REPS = Number(args['storm-reps']);
 const PORT = Number(args.port);
 
 const MODES = ['react', 'vdom', 'vapor'];
@@ -605,6 +608,180 @@ async function runFreshLoad(browser, mode) {
 }
 
 // ---------------------------------------------------------------------------
+// storms suite: update-heavy scenarios where sub-frame update costs become
+// user-observable. Fresh app per (mode, table size, rep):
+//   - one-shot update10th / select while 1k or 10k rows are mounted
+//     (a 10k-row table makes vdom's full-list diff span multiple frames)
+//   - update storm ×50 / select storm ×100: one click triggers N sequential
+//     state→render→cross-thread→DOM ticks in the app; total wall time to
+//     the final DOM state amplifies per-tick cost N× above the frame floor
+// ---------------------------------------------------------------------------
+
+const STORM_SIZES = {
+  '1k': { button: 'Create 1,000 rows', rows: 1000 },
+  '10k': { button: 'Create 10,000 rows', rows: 10000 },
+};
+
+async function runStormRep(browser, mode, sizeKey) {
+  const size = STORM_SIZES[sizeKey];
+  const { page, errors } = await loadApp(browser, mode);
+  const driver = new Driver(page);
+  const samples = [];
+  const record = (op, ms) => samples.push({ op: `${op}@${sizeKey}`, ms });
+
+  try {
+    await driver.settle();
+    await driver.clickButton(size.button);
+    await driver.until({ type: 'rowCount', value: size.rows });
+    await driver.settle();
+
+    // one-shot update10th ×3
+    for (let i = 0; i < 3; i++) {
+      const before = await driver.labelAt(0);
+      record(
+        'update10th',
+        await driver.measureButton('Update every 10th row', {
+          type: 'labelAt',
+          index: 0,
+          equals: `${before} !!!`,
+        }),
+      );
+      await driver.settle();
+    }
+
+    // one-shot select ×3 (cycle near-top rows)
+    for (let i = 0; i < 3; i++) {
+      const idx = i + 1;
+      record(
+        'select',
+        await driver.measureCell(idx, 'col-label', { type: 'dangerAt', index: idx }),
+      );
+      await driver.settle();
+    }
+
+    // update storm ×2 — ends with every 10th label = "bench 50"
+    for (let i = 0; i < 2; i++) {
+      record(
+        'updateStorm50',
+        await driver.measureButton('Update storm x50', {
+          type: 'labelAt',
+          index: 0,
+          equals: 'bench 50',
+        }),
+      );
+      await driver.settle();
+      // perturb labels so the next storm's end state differs from the start
+      const before = await driver.labelAt(0);
+      await driver.clickButton('Update every 10th row');
+      await driver.until({ type: 'labelAt', index: 0, equals: `${before} !!!` });
+      await driver.settle();
+    }
+
+    // select storm ×2 — ends selecting row 0
+    for (let i = 0; i < 2; i++) {
+      record(
+        'selectStorm100',
+        await driver.measureButton('Select storm x100', {
+          type: 'dangerAt',
+          index: 0,
+        }),
+      );
+      await driver.settle();
+      // move selection off row 0 so the next storm's end state is observable
+      await driver.clickCell(3, 'col-label');
+      await driver.until({ type: 'dangerAt', index: 3 });
+      await driver.settle();
+    }
+  } finally {
+    await page.close();
+  }
+  return { samples, errors };
+}
+
+function stormMarkdownReport(result) {
+  const { meta, perOp } = result;
+  let md = `# Update-heavy black-box scenarios — ReactLynx vs Vue VDOM vs Vue Vapor on Lynx\n\n`;
+  md += `- date: ${meta.date}\n- git: ${meta.sha}\n- node: ${meta.node}, chromium (playwright-core ${meta.playwright})\n`;
+  md += `- host: ${meta.cpus}× ${meta.cpuModel}\n`;
+  md += `- versions: @lynx-js/react ${meta.reactLynxVersion}, vue ${meta.vueVersion}, @lynx-js/web-core ${meta.webCoreVersion}\n`;
+  md += `- fresh app per (mode, size, rep); reps: ${meta.stormReps}; `;
+  md += `one-shot ops ×3 and storms ×2 per rep\n`;
+  md += `- storms: one click triggers N sequential state→render→DOM ticks `;
+  md += `(one macrotask each); latency = pointerdown → final DOM state\n\n`;
+
+  for (const sizeKey of Object.keys(STORM_SIZES)) {
+    md += `## Table size: ${sizeKey} rows (ms, median ±CI95, lower is better)\n\n`;
+    md += `| op | react | vdom | vapor | vdom/react | vapor/vdom |\n|---|---|---|---|---|---|\n`;
+    const ratio = (a, b) =>
+      a && b && b.median > 0 ? (a.median / b.median).toFixed(2) + '×' : 'n/a';
+    for (const op of ['update10th', 'select', 'updateStorm50', 'selectStorm100']) {
+      const key = `${op}@${sizeKey}`;
+      const r = perOp.react?.[key];
+      const d = perOp.vdom?.[key];
+      const p = perOp.vapor?.[key];
+      md += `| ${op} | ${fmt(r?.median)} ±${fmt(r?.ci95)} | ${fmt(d?.median)} ±${
+        fmt(d?.ci95)
+      } | ${fmt(p?.median)} ±${fmt(p?.ci95)} | ${ratio(d, r)} | ${ratio(p, d)} |\n`;
+    }
+    md += `\n`;
+  }
+  md += `Per-tick cost: divide storm medians by 50 (update) / 100 (select).\n`;
+  return md;
+}
+
+async function runStormsSuite(browser) {
+  const loads = { react: [], vdom: [], vapor: [] };
+  for (const sizeKey of Object.keys(STORM_SIZES)) {
+    for (let rep = 0; rep < STORM_REPS; rep++) {
+      const order = MODES.map((_, k) => MODES[(k + rep) % MODES.length]);
+      for (const mode of order) {
+        console.log(`[storms] ${sizeKey} rep ${rep + 1}/${STORM_REPS} — ${mode}`);
+        const { samples, errors } = await runStormRep(browser, mode, sizeKey);
+        if (errors.length) {
+          console.warn(`[storms] page errors (${mode}):`, errors.slice(0, 3));
+        }
+        for (const s of samples) console.log(`[storms]   ${s.op}: ${s.ms.toFixed(1)}ms`);
+        loads[mode].push({ samples });
+      }
+    }
+  }
+
+  let sha = 'unknown';
+  try {
+    sha = execSync('git rev-parse --short HEAD', { cwd: root }).toString().trim();
+  } catch {}
+
+  const result = {
+    meta: {
+      date: new Date().toISOString(),
+      sha,
+      node: process.version,
+      playwright: require('playwright-core/package.json').version,
+      reactLynxVersion:
+        require(path.join(root, 'apps/ui-react/node_modules/@lynx-js/react/package.json')).version,
+      vueVersion: require('vue/package.json').version,
+      webCoreVersion: require('@lynx-js/web-core/package.json').version,
+      cpus: os.cpus().length,
+      cpuModel: os.cpus()[0]?.model ?? 'unknown',
+      stormReps: STORM_REPS,
+    },
+    perOp: Object.fromEntries(MODES.map((m) => [m, aggregate(loads[m])])),
+    raw: loads,
+  };
+
+  const outDir = path.join(root, 'results');
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(outDir, 'cross-storms-latest.json'),
+    JSON.stringify(result, null, 2),
+  );
+  const md = stormMarkdownReport(result);
+  fs.writeFileSync(path.join(outDir, 'cross-storms-latest.md'), md);
+  console.log('\n' + md);
+  console.log('[storms] wrote results/cross-storms-latest.{json,md}');
+}
+
+// ---------------------------------------------------------------------------
 // smoke mode: load each app, click Create once, verify and screenshot
 // ---------------------------------------------------------------------------
 
@@ -788,6 +965,11 @@ async function main() {
     if (args.smoke) {
       fs.mkdirSync(path.join(root, 'results'), { recursive: true });
       await smoke(browser);
+      return;
+    }
+
+    if (args.storms) {
+      await runStormsSuite(browser);
       return;
     }
 
