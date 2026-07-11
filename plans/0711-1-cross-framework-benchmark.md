@@ -68,6 +68,71 @@ both real hit-tested clicks.
 
 ## Results
 
-See `results/cross-run1.md` (snapshot) / `results/cross-latest.md`.
+Raw data: `results/cross-run1.{json,md}` (first run), `results/cross-run2.{json,md}`
+(replication + cold single-shot + drift tables, = `cross-latest.*`). Both runs
+agree; numbers below are run2. Ad-hoc cold update-path probe:
+`harness/cold-select-probe.mjs`.
 
-<!-- RESULTS_SUMMARY -->
+### Headline (in-scenario, median ms)
+
+| op | react | vdom | vapor |
+|---|---|---|---|
+| create1k | 115 | 111 | 120 |
+| update10th | 49 | 16 | 18 |
+| select | 160 | 27 | 26 |
+| swap | 314 | 16 | 28 |
+| remove | 445 | 20 | 18 |
+| append1k | 3028 | 116 | 126 |
+| create10k | 28634 | 1274 | 1290 |
+| clear10k | 332 | 249 | 237 |
+
+### The single most important finding: degradation, not intrinsic cost
+
+ReactLynx's in-scenario numbers degrade progressively as operations
+accumulate; both Vue modes stay flat. Three independent confirmations:
+
+1. **Cold single-shot** (fresh app per sample): creation is at **parity** —
+   create1k 189 / 179 / 172 ms, create10k 1496 / 1460 / 1483 ms
+   (react / vdom / vapor). React's in-scenario create10k of ~28.6 s is
+   ~19× its own fresh-app cost.
+2. **Within-scenario drift** (last-3 ÷ first-3 samples): react update10th
+   1.94×, select 2.12× within a single load; Vue ops ≈ 0.9–1.1× (tiny ops
+   like swap bounce on frame granularity). Degradation compounds across
+   blocks, so late blocks (remove, append1k, create10k) start already slowed.
+3. **Cold update-path probe** (fresh app → create1k → one select / one
+   update10th, 3 rounds): react ≈ 38–40 / 36–55 ms; vdom ≈ 14–23 / 21–27 ms;
+   vapor ≈ 21–24 / 22–23 ms.
+
+So the honest cross-framework statement is:
+
+- **Intrinsic (fresh-app) costs**: creation parity across all three;
+  update-path ops ~1.5–2× faster on both Vue modes than ReactLynx.
+- **Sustained-session costs**: Vue (both modes) stays at its intrinsic
+  cost; ReactLynx 0.122.1 on the Lynx-for-Web runtime accumulates per-op
+  slowdown (mechanism not investigated here — this suite is outcome-only;
+  symptom resembles the MT element-registry leak we fixed in vue-lynx,
+  `72ac20b`).
+- **vdom vs vapor is a wash at frame granularity** — their real update-path
+  difference (5.8–9.8× on the background thread) is sub-frame and only
+  visible in the instrumented suite (`results/latest.md`).
+
+### Startup / memory / bundle
+
+- **First screen: react 68 ms < vdom 84 ms < vapor 96 ms.** ReactLynx's
+  MT-first initial render pays off — it paints before the background
+  thread finishes booting; Vue Lynx renders from the background thread.
+  This is a real architectural advantage of ReactLynx on Lynx.
+- Memory (indicative, no forced GC): after 10k rows react 61 / vdom 38 /
+  vapor 90 MB in run2; vapor's page-heap numbers swing widely between runs
+  (45→148 MB for the same phase in run1) — treat as noise-dominated.
+- Bundle gzip (lynx): react 39.5 KB ≈ vdom 38.2 KB < vapor 46.1 KB.
+
+### Caveats
+
+- One-frame (~17 ms) measurement floor; sub-frame differences invisible.
+- Lynx for Web + headless Chromium, not a native device / PrimJS.
+- ReactLynx apps in production would use `<list>` virtualization for
+  10k-row tables (so would Vue apps); the krausest protocol deliberately
+  renders flat.
+- ReactLynx 0.122.1 built with its own rspeedy 0.15 toolchain; Vue apps on
+  rspeedy 0.13; both served by web-core 0.22.1.
