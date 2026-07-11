@@ -204,6 +204,8 @@ export interface ApplyEntryOptions {
   customCSSInheritanceList?: string[];
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
+  /** IFR: main-thread bundle carries the full Vue runtime + app code. */
+  enableIFR?: boolean;
 }
 
 export function applyEntry(
@@ -326,6 +328,12 @@ export function applyEntry(
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
     const vueInternalPkgDir: string | undefined = path.resolve(pkgRoot, 'internal');
+    // The runtime dist enters the MT module graph in IFR builds (user code
+    // imports 'vue-lynx' and is no longer stripped). It is library code and
+    // must pass through untransformed. In pnpm workspaces it resolves via
+    // symlink to a real path outside node_modules, so the /node_modules/
+    // exclude alone is insufficient (same reason as main-thread above).
+    const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
     // constraint). This enforce:'post' rule runs worklet-loader-mt AFTER
@@ -343,6 +351,7 @@ export function applyEntry(
       .test(/\.vue$/)
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
+      .options({ ifr: opts.enableIFR ?? false })
       .end();
 
     // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls).
@@ -354,13 +363,15 @@ export function applyEntry(
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
       .add(/node_modules/)
-      .add(mainThreadPkgDir);
+      .add(mainThreadPkgDir)
+      .add(runtimePkgDir);
     if (vueInternalPkgDir) {
       workletMtExclude.add(vueInternalPkgDir);
     }
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
+      .options({ ifr: opts.enableIFR ?? false })
       .end();
   });
 
@@ -429,11 +440,25 @@ export function applyEntry(
       // vue-sfc-script-extractor + worklet-loader-mt strip everything except
       // registerWorkletInternal() calls. webpack's dependency graph provides
       // natural per-entry isolation (each entry sees only its own worklets).
+      //
+      // IFR builds additionally inject the entry-ifr bootstrap between
+      // entry-main and user code (so IFR globals exist before user code
+      // evaluates), and worklet-loader-mt keeps the full user code instead
+      // of stripping it — the Vue app runs on the main thread for the
+      // first frame.
+      const mtBootstrapImports = [
+        path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'),
+      ];
+      if (opts.enableIFR) {
+        mtBootstrapImports.push(
+          path.resolve(vueLynxRoot, 'main-thread/dist/entry-ifr.js'),
+        );
+      }
       chain
         .entry(mainThreadEntry)
         .add({
           layer: LAYERS.MAIN_THREAD,
-          import: [path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'), workletRuntimePath, ...imports],
+          import: [...mtBootstrapImports, workletRuntimePath, ...imports],
           filename: mainThreadName,
         })
         .when(enabledHMR, entry => {

@@ -18,6 +18,14 @@
 import {
   nextTick as _vueNextTick,
   createRenderer,
+  onActivated as _onActivated,
+  onBeforeMount as _onBeforeMount,
+  onBeforeUnmount as _onBeforeUnmount,
+  onBeforeUpdate as _onBeforeUpdate,
+  onDeactivated as _onDeactivated,
+  onMounted as _onMounted,
+  onUnmounted as _onUnmounted,
+  onUpdated as _onUpdated,
   // Re-export types need explicit imports for isolatedDeclarations
 } from '@vue/runtime-core';
 import type {
@@ -54,10 +62,12 @@ import type {
   WritableComputedRef,
 } from '@vue/runtime-core';
 
+import { registerMount, resetAppRegistry } from './app-registry.js';
 import { runOnMainThread } from './cross-thread.js';
 import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush, waitForFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
+import { isIfrMainThread } from './ifr-env.js';
 import {
   MainThreadRef,
   resetMainThreadRefState,
@@ -186,6 +196,16 @@ export function createApp(
     },
 
     mount(): void {
+      // IFR main-thread bundle: user code evaluates *before* Lynx calls
+      // renderPage, so the actual mount is deferred until the page root
+      // exists.  On the background thread (flag absent) mount immediately.
+      if (isIfrMainThread()) {
+        registerMount(() => {
+          const root = createPageRoot();
+          internalApp.mount(root);
+        });
+        return;
+      }
       const root = createPageRoot();
       internalApp.mount(root);
     },
@@ -436,14 +456,29 @@ export { markRaw } from '@vue/runtime-core';
 // ===========================================================================
 // Vue Core Re-exports — Lifecycle Hooks
 // ===========================================================================
+//
+// Lifecycle registration is a no-op during the IFR main-thread first-screen
+// render: user effects (data fetching, timers, subscriptions) must only run
+// on the background thread, mirroring ReactLynx where useEffect never fires
+// during the MTS render.  Everywhere else these behave exactly like Vue's.
+
+function ifrInert<T extends (...args: never[]) => unknown>(fn: T): T {
+  return ((...args: never[]) => {
+    if (isIfrMainThread()) return undefined;
+    return fn(...args);
+  }) as T;
+}
 
 /**
  * Registers a callback to be called after the component is mounted.
  *
+ * In Vue Lynx, the callback only runs on the background thread — during an
+ * IFR main-thread first-screen render, registration is a no-op.
+ *
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onmounted | Vue docs}
  * @public
  */
-export { onMounted } from '@vue/runtime-core';
+export const onMounted: typeof _onMounted = ifrInert(_onMounted);
 
 /**
  * Registers a hook to be called right before the component is to be mounted.
@@ -451,7 +486,7 @@ export { onMounted } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforemount | Vue docs}
  * @public
  */
-export { onBeforeMount } from '@vue/runtime-core';
+export const onBeforeMount: typeof _onBeforeMount = ifrInert(_onBeforeMount);
 
 /**
  * Registers a callback to be called after the component is unmounted.
@@ -459,7 +494,7 @@ export { onBeforeMount } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onunmounted | Vue docs}
  * @public
  */
-export { onUnmounted } from '@vue/runtime-core';
+export const onUnmounted: typeof _onUnmounted = ifrInert(_onUnmounted);
 
 /**
  * Registers a hook to be called right before the component is about to be unmounted.
@@ -467,7 +502,9 @@ export { onUnmounted } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeunmount | Vue docs}
  * @public
  */
-export { onBeforeUnmount } from '@vue/runtime-core';
+export const onBeforeUnmount: typeof _onBeforeUnmount = ifrInert(
+  _onBeforeUnmount,
+);
 
 /**
  * Registers a callback to be called after the component has updated its DOM tree.
@@ -475,7 +512,7 @@ export { onBeforeUnmount } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onupdated | Vue docs}
  * @public
  */
-export { onUpdated } from '@vue/runtime-core';
+export const onUpdated: typeof _onUpdated = ifrInert(_onUpdated);
 
 /**
  * Registers a hook to be called right before the component is about to update.
@@ -483,7 +520,9 @@ export { onUpdated } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeupdate | Vue docs}
  * @public
  */
-export { onBeforeUpdate } from '@vue/runtime-core';
+export const onBeforeUpdate: typeof _onBeforeUpdate = ifrInert(
+  _onBeforeUpdate,
+);
 
 /**
  * Registers a callback to be called when an error propagating from a descendant
@@ -519,7 +558,7 @@ export { onRenderTriggered } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onactivated | Vue docs}
  * @public
  */
-export { onActivated } from '@vue/runtime-core';
+export const onActivated: typeof _onActivated = ifrInert(_onActivated);
 
 /**
  * Registers a hook to be called when the component is removed from the DOM
@@ -528,7 +567,7 @@ export { onActivated } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#ondeactivated | Vue docs}
  * @public
  */
-export { onDeactivated } from '@vue/runtime-core';
+export const onDeactivated: typeof _onDeactivated = ifrInert(_onDeactivated);
 
 // ===========================================================================
 // Vue Core Re-exports — Watchers
@@ -1238,6 +1277,29 @@ export function withKeys(
 export { Transition, TransitionGroup };
 
 // ===========================================================================
+// @internal — IFR (Instant First-Frame Rendering) support
+// ===========================================================================
+
+/**
+ * Gate for LEPUS-transformed worklet registrations.
+ *
+ * The SWC worklet transform (target: LEPUS) emits
+ * `import { loadWorkletRuntime } from "vue-lynx"` followed by
+ * `loadWorkletRuntime(...) && registerWorkletInternal(...)` calls.  In IFR
+ * builds the full LEPUS output is kept on the main thread, so this import
+ * must resolve.  The worklet-runtime is bundled directly into main-thread.js
+ * (it defines `registerWorkletInternal` on globalThis), so "loading" reduces
+ * to checking that we are on a thread where it exists.
+ *
+ * @hidden
+ */
+export function loadWorkletRuntime(_entry?: unknown): boolean {
+  return typeof (globalThis as Record<string, unknown>)[
+    'registerWorkletInternal'
+  ] === 'function';
+}
+
+// ===========================================================================
 // @internal — Testing utilities
 // ===========================================================================
 
@@ -1260,6 +1322,7 @@ export function resetForTesting(): void {
   resetMainThreadRefState();
   resetFunctionCallState();
   resetRunOnBackgroundState();
+  resetAppRegistry();
   takeOps(); // drain any leftover ops
   ShadowElement.nextId = 2;
 }

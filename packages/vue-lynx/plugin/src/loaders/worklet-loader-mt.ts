@@ -30,13 +30,35 @@ import type { Rspack } from '@rsbuild/core';
 
 import { transformReactLynxSync } from '@lynx-js/react/transform';
 
-import { extractLocalImports, extractRegistrations, extractSharedImports } from './worklet-utils.js';
+import {
+  extractLocalImports,
+  extractRegistrations,
+  extractSharedImports,
+  stripSharedImportAttributes,
+  stripStyleImports,
+} from './worklet-utils.js';
+
+interface WorkletLoaderMtOptions {
+  /**
+   * IFR mode: keep the full module code on the MT layer (the Vue app runs
+   * on the main thread for the first frame) instead of stripping everything
+   * except worklet registrations. Worklet functions are still transformed
+   * by the LEPUS pass — it rewrites them in place and appends the
+   * registerWorkletInternal() calls, leaving the rest of the module intact.
+   */
+  ifr?: boolean;
+}
 
 export default function workletLoaderMT(
   this: Rspack.LoaderContext,
   source: string,
 ): string {
   this.cacheable(true);
+
+  const options = (this.getOptions?.() ?? {}) as WorkletLoaderMtOptions;
+  if (options.ifr === true) {
+    return ifrTransform(this, source);
+  }
 
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
@@ -144,4 +166,74 @@ export default function workletLoaderMT(
   const registrations = extractRegistrations(lepusResult.code);
   const parts = [sharedImports, localImports, registrations].filter(Boolean);
   return parts.join('\n');
+}
+
+/**
+ * IFR mode: the main-thread bundle carries the full app, so modules pass
+ * through (nearly) intact.
+ *
+ *  - `.vue` connector: kept, minus style sub-module imports (CSS is
+ *    extracted from the background layer; doing it again would duplicate it).
+ *  - Files with `'main thread'` directives (script sub-modules or plain
+ *    js/ts): full LEPUS transform output — worklet expressions become
+ *    `{ _wkltId }` contexts in place and `registerWorkletInternal()` calls
+ *    are appended, everything else is preserved.
+ *  - Everything else: passed through unchanged.
+ *
+ * `with { runtime: 'shared' }` import attributes are stripped in all cases —
+ * the shared-runtime escape hatch exists to bypass the *stripping* loaders,
+ * which IFR mode doesn't do; the plain import must not reach the parser
+ * with a non-standard attribute.
+ */
+function ifrTransform(
+  ctx: Rspack.LoaderContext,
+  source: string,
+): string {
+  const isVueSubModule = ctx.resourceQuery?.includes('vue')
+    && ctx.resourceQuery?.includes('type=');
+
+  // `.vue` connector (no sub-module query): script + template imports pass
+  // through so the MT bundle can render the component; style imports are
+  // dropped.
+  if (ctx.resourcePath.endsWith('.vue') && !isVueSubModule) {
+    return stripStyleImports(source);
+  }
+
+  if (
+    !source.includes('\'main thread\'') && !source.includes('"main thread"')
+  ) {
+    return stripSharedImportAttributes(source);
+  }
+
+  // Transform the ORIGINAL source (not a pre-processed copy) so the content
+  // hash in _wkltId matches the BG layer's JS-target transform of the same
+  // content.
+  const resourcePath = ctx.resourcePath;
+  const lepusResult = transformReactLynxSync(source, {
+    pluginName: 'vue:worklet-mt-ifr',
+    filename: resourcePath,
+    sourcemap: false,
+    cssScope: false,
+    shake: false,
+    compat: false,
+    refresh: false,
+    defineDCE: false,
+    directiveDCE: false,
+    worklet: {
+      target: 'LEPUS',
+      filename: resourcePath,
+      runtimePkg: 'vue-lynx',
+    },
+  });
+
+  if (lepusResult.errors.length > 0) {
+    for (const err of lepusResult.errors) {
+      ctx.emitError(
+        new Error(`[worklet-loader-mt] IFR LEPUS transform: ${err.text}`),
+      );
+    }
+    return stripSharedImportAttributes(source);
+  }
+
+  return stripSharedImportAttributes(lepusResult.code);
 }

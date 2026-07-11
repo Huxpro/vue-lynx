@@ -41,6 +41,7 @@ When investigating runtime errors in Lynx bundles:
 | `packages/vue-lynx/plugin/src/loaders/worklet-utils.ts`     | Shared: `extractLocalImports`, `extractRegistrations`             |
 | `packages/vue-lynx/main-thread/src/entry-main.ts`           | MT bootstrap: renderPage, vuePatchUpdate, worklet-runtime loading |
 | `packages/vue-lynx/main-thread/src/ops-apply.ts`            | MT ops interpreter: switch loop over flat ops array               |
+| `packages/vue-lynx/main-thread/src/ifr.ts`                  | IFR: MT first-screen render + hydration of BG's initial batches   |
 | `packages/vue-lynx/runtime/src/index.ts`                    | BG custom renderer: createApp, ShadowElement tree, ops buffer     |
 
 ### Upstream Tests (`packages/upstream-tests/`)

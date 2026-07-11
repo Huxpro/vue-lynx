@@ -1,0 +1,93 @@
+# Instant First-Frame Rendering (IFR)
+
+Instant First-Frame Rendering (IFR, 首屏直出) lets your page display real content the moment it loads — no blank frame, no loading state. It is the same optimization that Lynx's official React framework ships with, ported to Vue Lynx. See the [Lynx IFR guide](https://lynxjs.org/guide/interaction/ifr) for the platform-level background.
+
+## The Blank First Frame
+
+In Vue Lynx's default dual-thread pipeline, everything visible is produced by the background thread:
+
+```
+  Without IFR:
+
+  ┌───────────────┐   ┌─────────────────────┐   ┌───────────────┐
+  │  Main Thread  │   │  Background Thread  │   │  Main Thread  │
+  │ (empty page)  │──▶│ (Vue renders, sends │──▶│ (applies ops, │
+  │               │   │  ops batch)         │   │  first paint) │
+  └───────────────┘   └─────────────────────┘   └───────────────┘
+        ▲                                               │
+        └───── user stares at a blank frame ────────────┘
+```
+
+The main thread creates an empty page during `loadTemplate`, then waits: the background thread has to boot, evaluate the app bundle, run Vue's initial render, and ship the resulting ops across the thread boundary before anything appears on screen.
+
+## How IFR Works in Vue Lynx
+
+With IFR enabled, the main-thread bundle carries the full Vue runtime and your app code. The first screen renders *on the main thread*, synchronously inside `loadTemplate`:
+
+```
+  With IFR:
+
+  ┌────────────────────────────────────────────────┐
+  │                  Main Thread                   │
+  │  loadTemplate ──▶ Vue renders ──▶ first paint  │
+  └────────────────────────────────────────────────┘
+                          │ (in parallel)
+  ┌────────────────────────────────────────────────┐
+  │               Background Thread                │
+  │  boots ──▶ renders same app ──▶ hydrates       │
+  └────────────────────────────────────────────────┘
+```
+
+1. **First frame on the main thread.** When Lynx calls `renderPage`, Vue mounts your app on the main thread. The element operations it produces are applied directly through the Element PAPI — the first frame is on screen before any background JavaScript has run. Every applied ops batch is also recorded.
+2. **Background render.** The background thread boots and renders the same app with the same data. Because both threads run identical, deterministic code, the element ids and event handler signs it produces line up exactly with the main-thread render.
+3. **Hydration.** The background thread's initial ops batches are compared against the recorded stream instead of being applied again:
+   - an identical batch is **skipped** — it is already on screen;
+   - a value-level difference (text, style, attribute) is **patched in place**;
+   - a structural difference tears the first-screen tree down and re-renders from the background ops — correctness never depends on the two renders matching, only performance does.
+
+After hydration, the background thread owns the tree and every update flows through the normal ops pipeline. Event handlers bound during the first frame use the same deterministic signs the background thread registers, so taps route to your Vue handlers without any re-binding.
+
+## Enabling IFR
+
+Turn it on in the plugin options:
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      enableIFR: true,
+    }),
+  ],
+})
+```
+
+No app-code changes are required for a typical component tree.
+
+## Writing IFR-Friendly First Screens
+
+The first-screen render runs twice — once per thread — so it must behave like a pure function of its inputs:
+
+- **Keep render output deterministic.** Avoid `Math.random()`, `Date.now()`, or thread-dependent branching in anything that renders on the first screen. If the two renders diverge structurally, Vue Lynx detects it and falls back to a full background render — your page is still correct, but that screen loses the IFR benefit (a warning is logged in dev builds).
+- **Put side effects in lifecycle hooks.** `onMounted`, `onUnmounted`, and friends never run during the main-thread render (mirroring ReactLynx, where `useEffect` never fires on the main thread). Data fetching, timers, and subscriptions run once, on the background thread.
+- **Synchronous first-screen data only.** IFR paints what can be rendered from initial data. Content that arrives via network requests still appears after the background thread fetches it — consider a skeleton for those regions, and let IFR remove the blank frame around it.
+- **Events before the background thread is ready are dropped.** There is a brief window (typically a few milliseconds) between the first paint and the background thread finishing its boot; regular event handlers fire only after that. [Main thread script](/guide/main-thread-script) handlers are unaffected — they live on the main thread.
+
+## Trade-offs
+
+- The main-thread bundle grows by roughly the size of the Vue runtime plus your app code, which increases template size and `loadTemplate` parse time. For content-heavy first screens the perceived-latency win usually dominates; measure for your app.
+- IFR cannot help when the bundle itself loads asynchronously or when the entire first screen depends on async data — the same constraints as ReactLynx's IFR.
+
+## Try It
+
+The `hello-world` example ships with IFR enabled:
+
+```bash
+git clone https://github.com/Huxpro/vue-lynx
+cd vue-lynx && pnpm install && pnpm build
+cd examples/hello-world && pnpm build
+```
+
+Inspecting `dist/main.lynx.bundle`, the `lepusCode` section now contains your app — and loading it in LynxExplorer paints the full first screen before `background.js` executes a single line.

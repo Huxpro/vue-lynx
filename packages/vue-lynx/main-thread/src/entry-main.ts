@@ -14,6 +14,7 @@
  */
 
 import { elements, setPageUniqueId } from './element-registry.js';
+import { interceptPatchUpdate, runIfrRender } from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
@@ -45,7 +46,7 @@ g['processData'] = function(data: unknown, _processorName?: string): unknown {
 // Lynx calls renderPage on the Main Thread first (before Background JS runs).
 // We create the root page element and store it as id=1 so Background ops that
 // target the root can resolve it correctly.
-g['renderPage'] = function(_data: unknown): void {
+g['renderPage'] = function(data: unknown): void {
   // Clear all element state from the previous page. This is essential for:
   // 1. Testing: prevents duplicate batch detection from skipping ops
   //    when ShadowElement IDs restart from 2 between test renders.
@@ -57,6 +58,11 @@ g['renderPage'] = function(_data: unknown): void {
   __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
+  // IFR: mount any Vue app that user code registered on this thread and
+  // paint the first frame synchronously.  No-op in non-IFR bundles (user
+  // code on the MT layer is stripped to worklet registrations, so no app
+  // ever registers).
+  runIfrRender(data);
   __FlushElementTree(page);
 };
 
@@ -72,6 +78,9 @@ g['updateGlobalProps'] = function(_data: unknown): void {
 
 // Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
 g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+  // IFR hydration: the background thread's initial batches replay the
+  // main-thread first-screen render — skip/patch them instead of applying.
+  if (interceptPatchUpdate(data)) return;
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);
 };

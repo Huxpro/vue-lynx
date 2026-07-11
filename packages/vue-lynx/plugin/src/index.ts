@@ -109,6 +109,31 @@ export interface PluginVueLynxOptions {
    * @deprecated Will default to `false` in the next major version.
    */
   autoPixelUnit?: boolean;
+
+  /**
+   * Whether to enable IFR (Instant First-Frame Rendering).
+   *
+   * When enabled, the main-thread bundle contains the full Vue runtime and
+   * app code (instead of only worklet registrations). The first screen is
+   * rendered synchronously on the main thread during `loadTemplate` —
+   * before any background JavaScript runs — eliminating the blank-frame gap.
+   * When the background thread boots, its initial render is hydrated
+   * against the main-thread output instead of being re-applied.
+   *
+   * Constraints (matching ReactLynx IFR):
+   * - First-screen render output must be deterministic and thread-agnostic
+   *   (no `Math.random()` / `Date.now()` in render, no thread-dependent
+   *   branching). Divergence is detected and falls back to a full
+   *   background render, losing the IFR benefit for that screen.
+   * - Side effects belong in lifecycle hooks (`onMounted`, `watch`
+   *   callbacks) — these never run during the main-thread render.
+   * - Increases the main-thread bundle size (it now carries the Vue
+   *   runtime).
+   *
+   * @see https://lynxjs.org/guide/interaction/ifr
+   * @defaultValue false
+   */
+  enableIFR?: boolean;
 }
 
 /**
@@ -132,6 +157,7 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    enableIFR = false,
   } = options;
 
   return [
@@ -260,6 +286,7 @@ export function pluginVueLynx(
           customCSSInheritanceList,
           enableCSSInlineVariables,
           debugInfoOutside,
+          enableIFR,
         });
       },
     },

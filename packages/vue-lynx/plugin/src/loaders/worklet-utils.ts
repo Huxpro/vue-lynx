@@ -88,6 +88,38 @@ export function extractSharedImports(source: string): string {
 }
 
 /**
+ * Strip `with { runtime: 'shared' }` import attributes, keeping the import.
+ *
+ * Used in IFR mode where the full module code is kept on the MT layer: the
+ * shared-runtime escape hatch (which exists to bypass the stripping
+ * loaders) is unnecessary, but the non-standard import attribute must not
+ * reach the bundler's parser.
+ */
+export function stripSharedImportAttributes(code: string): string {
+  return code.replace(
+    /(import\s+.+?\s+from\s+(['"])[^'"]+\2)\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g,
+    '$1;',
+  );
+}
+
+/**
+ * Remove imports of Vue SFC style sub-modules (`?vue&type=style`).
+ *
+ * Used in IFR mode on the `.vue` connector for the MT layer: the connector
+ * passes through mostly untouched (script + template are needed to render
+ * the first frame), but CSS is already extracted from the background layer —
+ * processing style sub-modules again on the MT layer would duplicate it.
+ */
+export function stripStyleImports(code: string): string {
+  return code
+    .split('\n')
+    .filter(
+      (line) => !(/^\s*import\b/.test(line) && line.includes('type=style')),
+    )
+    .join('\n');
+}
+
+/**
  * Extract registerWorkletInternal(...) calls from LEPUS output.
  *
  * The LEPUS output contains:

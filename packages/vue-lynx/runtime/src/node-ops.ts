@@ -6,6 +6,7 @@ import type { RendererOptions } from '@vue/runtime-core';
 
 import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
 import { scopeIdToCssId } from './scope-bridge.js';
@@ -280,7 +281,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         // Worklet event — suffix is an event key like "bindtap", "bindscroll"
         const event = parseEventProp(suffix);
         if (event && nextValue != null) {
-          registerWorkletCtx(nextValue as Worklet);
+          // registerWorkletCtx wires up runOnBackground dispatch via
+          // lynx.getCoreContext() — a background-thread API.  During an IFR
+          // main-thread render the hydration pass re-applies the background
+          // thread's worklet ctx anyway, so skip the BG-side bookkeeping.
+          if (!isIfrMainThread()) registerWorkletCtx(nextValue as Worklet);
           pushOp(
             OP.SET_WORKLET_EVENT,
             el.id,
