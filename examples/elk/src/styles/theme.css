@@ -1,0 +1,34 @@
+/* Elk default theme, ported from elk-zone/elk app/styles/{vars,default-theme}.css */
+page {
+  --theme-color-name: #cc7d24;
+  --c-primary: #cc7d24;
+  --c-primary-active: #b16605;
+  --c-primary-light: #cc7d2480;
+  --c-primary-fade: #c7781f1a;
+
+  --c-border: #eeeeee;
+  --c-border-dark: #dccfcf;
+  --c-danger: #ff3c1b;
+  --c-danger-active: #b50900;
+
+  --c-bg-base: #fafafa;
+  --c-bg-active: #f2f2f2;
+  --c-bg-card: rgba(0, 0, 0, 0.023);
+  --c-bg-code: rgba(0, 0, 0, 0.023);
+  --c-bg-dm: #f1e8e6;
+
+  --c-text-base: #232323;
+  --c-text-code: #63470c;
+  --c-text-secondary: #686868;
+  --c-text-secondary-light: #919191;
+
+  --c-bg-btn-disabled: #a1a1a1;
+  --c-text-btn-disabled: #ffffff;
+
+  --c-success: #67c23a;
+  --c-warning: #e6a23c;
+  --c-error: #f56c6c;
+
+  background-color: var(--c-bg-base);
+  color: var(--c-text-base);
+}
