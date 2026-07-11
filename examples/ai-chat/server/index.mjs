@@ -155,23 +155,31 @@ const DEMO_USER = {
   avatar: '/samples/avatar.png',
 };
 
+/**
+ * Copies the seeded demo history to an owner (anonymous session or the demo
+ * user) exactly once, so a fresh client always sees a populated, grouped
+ * sidebar like the original template's screenshots. Clones are flagged
+ * `seeded` so login doesn't multiply them into the shared demo account.
+ */
+function cloneSeedsFor(ownerId) {
+  db.seededOwners ||= [];
+  if (db.seededOwners.includes(ownerId)) return;
+  db.seededOwners.push(ownerId);
+  const prefix = ownerId.replace(/[^a-z0-9]/gi, '').slice(0, 8);
+  for (const chat of db.chats.filter((c) => c.userId === DEMO_SEED_SESSION)) {
+    const cloneId = `${prefix}-${chat.id}`;
+    db.chats.push({ ...chat, id: cloneId, userId: ownerId, seeded: true });
+    for (const msg of db.messages.filter((m) => m.chatId === chat.id)) {
+      db.messages.push({ ...msg, id: `${prefix}-${msg.id}`, chatId: cloneId });
+    }
+  }
+  saveDb();
+}
+
 function getSession(req) {
   const sid = req.headers['x-session-id'] || 'anonymous';
   if (!db.sessions[sid]) db.sessions[sid] = { id: sid, user: null };
-  // Every new session gets its own copy of the seeded demo history, so a
-  // fresh client always sees a populated, grouped sidebar (like the
-  // original template's screenshots).
-  if (!db.sessions[sid].claimedSeed) {
-    db.sessions[sid].claimedSeed = true;
-    for (const chat of db.chats.filter((c) => c.userId === DEMO_SEED_SESSION)) {
-      const cloneId = `${sid.slice(0, 8)}-${chat.id}`;
-      db.chats.push({ ...chat, id: cloneId, userId: sid });
-      for (const msg of db.messages.filter((m) => m.chatId === chat.id)) {
-        db.messages.push({ ...msg, id: `${sid.slice(0, 8)}-${msg.id}`, chatId: cloneId });
-      }
-    }
-    saveDb();
-  }
+  if (!db.sessions[sid].user) cloneSeedsFor(sid);
   return { sid, user: db.sessions[sid].user };
 }
 
@@ -340,6 +348,8 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, {
         'content-type': sample.contentType,
         'access-control-allow-origin': '*',
+        // the Lynx web preview page sets COEP: require-corp
+        'cross-origin-resource-policy': 'cross-origin',
         'cache-control': 'public, max-age=3600',
       });
       return res.end(sample.body);
@@ -372,11 +382,14 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === 'POST' && path === '/api/session/login') {
       db.sessions[session.sid].user = DEMO_USER;
-      // Adopt anonymous chats into the logged-in identity, like the original
-      // links chats by userId once authenticated.
+      // Adopt the session's own (non-seeded) chats into the logged-in
+      // identity, like the original links chats by userId once
+      // authenticated; seed clones stay behind to avoid duplicates in the
+      // shared demo account, which gets its own single seed copy.
       for (const chat of db.chats) {
-        if (chat.userId === session.sid) chat.userId = DEMO_USER.id;
+        if (chat.userId === session.sid && !chat.seeded) chat.userId = DEMO_USER.id;
       }
+      cloneSeedsFor(DEMO_USER.id);
       saveDb();
       return json(res, 200, { user: DEMO_USER });
     }

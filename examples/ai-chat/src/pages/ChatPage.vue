@@ -4,12 +4,14 @@ import type { ShadowElement } from 'vue-lynx';
 import { useRoute } from 'vue-router';
 
 import ChatTitle from '../components/chat/ChatTitle.vue';
+import FilePreview from '../components/chat/FilePreview.vue';
 import Indicator from '../components/chat/Indicator.vue';
 import MessageActions from '../components/chat/message/MessageActions.vue';
 import MessageContent from '../components/chat/message/MessageContent.vue';
 import PromptBox from '../components/chat/PromptBox.vue';
 import Navbar from '../components/Navbar.vue';
 import Icon from '../components/ui/Icon.vue';
+import { useAttachments } from '../composables/useAttachments';
 import { useChat } from '../composables/useChat';
 import { useChats } from '../composables/useChats';
 import { useModels } from '../composables/useModels';
@@ -50,6 +52,8 @@ const votes = ref<Vote[]>([]);
 
 const input = ref('');
 const editingMessageId = ref<string | null>(null);
+
+const { files, open, removeFile, clearFiles, uploading, uploadedFiles } = useAttachments();
 
 const scrollRef = useTemplateRef<ShadowElement>('scrollRef');
 
@@ -138,9 +142,13 @@ onMounted(async () => {
 });
 
 async function handleSubmit() {
-  if (input.value.trim()) {
-    void sendMessage({ text: input.value });
+  if (input.value.trim() && !uploading.value) {
+    void sendMessage({
+      text: input.value,
+      files: uploadedFiles.value.length > 0 ? uploadedFiles.value : undefined,
+    });
     input.value = '';
+    clearFiles();
   }
 }
 
@@ -297,10 +305,27 @@ const showIndicator = computed(
         v-model="input"
         :status="status"
         :error="error?.message"
+        :disabled="uploading"
         @submit="handleSubmit"
         @stop="stop()"
         @reload="regenerate()"
-      />
+        @attach="open"
+      >
+        <template v-if="files.length > 0" #header>
+          <view class="flex flex-row flex-wrap gap-2 px-2 pt-2">
+            <FilePreview
+              v-for="file in files"
+              :key="file.id"
+              :name="file.name"
+              :type="file.mediaType"
+              :preview-url="file.url"
+              :status="file.status"
+              removable
+              @remove="removeFile(file.id)"
+            />
+          </view>
+        </template>
+      </PromptBox>
     </view>
   </view>
 
@@ -324,8 +349,5 @@ const showIndicator = computed(
   font-size: 56px;
   line-height: 60px;
   font-weight: 700;
-}
-.shimmer-pulse {
-  animation: shimmer-pulse 1.6s ease-in-out infinite;
 }
 </style>

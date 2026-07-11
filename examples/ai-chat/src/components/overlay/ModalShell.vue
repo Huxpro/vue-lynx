@@ -25,7 +25,7 @@ function onBackdrop() {
 
 <template>
   <view class="absolute inset-0 z-40 items-center justify-center flex">
-    <view class="absolute inset-0 modal-backdrop" @tap="dismissible ? onBackdrop() : undefined" />
+    <view class="absolute inset-0 z-40 modal-backdrop" @tap="dismissible ? onBackdrop() : undefined" />
     <view
       class="rounded-lg bg-default border border-default shadow-lg flex flex-col z-50 overflow-hidden"
       style="width: 440px; max-width: 92%"
@@ -49,8 +49,3 @@ function onBackdrop() {
   </view>
 </template>
 
-<style>
-.modal-backdrop {
-  background-color: rgba(0, 0, 0, 0.55);
-}
-</style>

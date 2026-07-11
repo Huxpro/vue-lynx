@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue-lynx';
 
-import { useColorMode } from '../../../composables/useColorMode';
-import { resolveTone } from '../../../lib/tokens';
+import { useTheme } from '../../../composables/useTheme';
 import type { ToolUIPart } from '../../../types/ai';
 import Icon from '../../ui/Icon.vue';
 
@@ -25,7 +24,7 @@ interface ChartOutput {
   yLabel?: string;
 }
 
-const { colorMode } = useColorMode();
+const { colorMode, toneColor } = useTheme();
 
 const output = computed(() => props.invocation.output as unknown as ChartOutput);
 
@@ -59,7 +58,7 @@ const svgContent = computed(() => {
   const g = geometry.value;
   if (!g) return '';
   const { out, x, y, yMin, yMax } = g;
-  const mutedColor = resolveTone('dimmed', colorMode.value);
+  const mutedColor = toneColor('dimmed');
   const gridColor = colorMode.value === 'dark' ? '#3f3f46' : '#e4e4e7';
 
   const parts: string[] = [];

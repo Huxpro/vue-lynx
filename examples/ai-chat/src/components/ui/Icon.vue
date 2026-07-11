@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue-lynx';
 
-import { useColorMode } from '../../composables/useColorMode';
+import { useTheme } from '../../composables/useTheme';
 import { svgFor } from '../../lib/icons';
-import { resolveTone } from '../../lib/tokens';
 
 const props = withDefaults(
   defineProps<{
@@ -16,11 +15,9 @@ const props = withDefaults(
   { tone: 'default', size: 20, strokeWidth: 2 },
 );
 
-const { colorMode } = useColorMode();
+const { toneColor } = useTheme();
 
-const content = computed(
-  () => svgFor(props.name, resolveTone(props.tone, colorMode.value), props.strokeWidth) ?? '',
-);
+const content = computed(() => svgFor(props.name, toneColor(props.tone), props.strokeWidth) ?? '');
 
 const sizeStyle = computed(() => ({
   width: `${props.size}px`,

@@ -55,18 +55,4 @@ watch(
 .reasoning-body {
   opacity: 0.75;
 }
-.shimmer-pulse {
-  animation: shimmer-pulse 1.6s ease-in-out infinite;
-}
-@keyframes shimmer-pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.45;
-  }
-  100% {
-    opacity: 1;
-  }
-}
 </style>

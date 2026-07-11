@@ -26,7 +26,7 @@ const emit = defineEmits<{ close: [result: string | false] }>();
 
 <template>
   <view class="absolute inset-0 z-40 items-center justify-center flex">
-    <view class="absolute inset-0 sheet-backdrop" @tap="emit('close', false)" />
+    <view class="absolute inset-0 z-40 sheet-backdrop" @tap="emit('close', false)" />
     <view
       class="rounded-lg bg-default border border-default shadow-lg flex flex-col z-50 overflow-hidden p-1"
       style="width: 300px; max-width: 88%"
@@ -63,8 +63,3 @@ const emit = defineEmits<{ close: [result: string | false] }>();
   </view>
 </template>
 
-<style>
-.sheet-backdrop {
-  background-color: rgba(0, 0, 0, 0.35);
-}
-</style>

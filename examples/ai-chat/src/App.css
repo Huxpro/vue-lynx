@@ -125,3 +125,48 @@
 .tok-plain {
   color: var(--tok-plain);
 }
+
+/* --- shared overlay/animation classes -------------------------------------
+   Component <style> blocks are scoped to their component's cssId on Lynx,
+   so classes used across components must be declared globally here. */
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+.sheet-backdrop {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shimmer-pulse {
+  animation: shimmer-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.text-white {
+  color: #ffffff;
+}

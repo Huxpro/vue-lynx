@@ -17,8 +17,6 @@ import UButton from './ui/UButton.vue';
  * per-chat actions, login/user footer. Drag-to-resize is skipped (PRD F1.2b)
  * and hover-revealed actions become an always-visible ellipsis (F1.6).
  */
-const emit = defineEmits<{ openSearch: [] }>();
-
 const router = useRouter();
 const { groups } = useChats();
 const { renameChat, deleteChat } = useChatActions();
@@ -29,6 +27,13 @@ const collapsed = ref(false);
 
 function newChat() {
   router.push('/');
+}
+
+async function openSearch() {
+  const instance = overlay.open<string | false>('search');
+  const result = await instance.result;
+  if (result === '__new__') router.push('/');
+  else if (result) router.push(`/chat/${result}`);
 }
 
 async function chatActions(item: { id: string; label: string }) {
@@ -80,7 +85,7 @@ function openChat(id: string) {
       <view
         class="flex flex-row items-center gap-2 rounded-md px-2.5 py-1.5"
         :class="collapsed ? 'justify-center' : ''"
-        @tap="emit('openSearch')"
+        @tap="openSearch"
       >
         <Icon name="i-lucide-search" tone="muted" :size="18" />
         <text v-if="!collapsed" class="text-sm text-default">Search</text>

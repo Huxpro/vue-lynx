@@ -5,11 +5,13 @@ import { collectSources, getMergedParts } from '../../../lib/ai-utils';
 import type { UIMessage } from '../../../types/ai';
 import {
   getToolName,
+  isFileUIPart,
   isPartStreaming,
   isReasoningUIPart,
   isTextUIPart,
   isToolUIPart,
 } from '../../../types/ai';
+import FilePreview from '../FilePreview.vue';
 import MarkdownView from '../MarkdownView.vue';
 import ReasoningPart from '../ReasoningPart.vue';
 import SourceLink from '../SourceLink.vue';
@@ -31,10 +33,22 @@ const emit = defineEmits<{
 
 const merged = computed(() => getMergedParts(props.message.parts));
 const sources = computed(() => collectSources(props.message.parts));
+const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
 </script>
 
 <template>
   <view class="flex flex-col gap-3">
+    <view v-if="fileParts.length" class="flex flex-row flex-wrap gap-2 justify-end">
+      <FilePreview
+        v-for="(file, fi) in fileParts"
+        :key="`${message.id}-file-${fi}`"
+        :name="file.url"
+        :type="file.mediaType"
+        :preview-url="file.url"
+        :size="96"
+      />
+    </view>
+
     <template v-for="(part, index) in merged" :key="`${message.id}-${part.type}-${index}`">
       <ReasoningPart
         v-if="isReasoningUIPart(part)"

@@ -157,7 +157,7 @@ export function mockResponseFor(prompt, model) {
       },
       {
         kind: 'text',
-        text: `A **composable** is a function that uses Vue's Composition API to encapsulate and reuse stateful logic. Here's a minimal counter:\n\n\`\`\`ts\nimport { ref, computed } from 'vue'\n\nexport function useCounter(initial = 0) {\n  const count = ref(initial)\n  const double = computed(() => count.value * 2)\n\n  function increment(by = 1) {\n    count.value += by\n  }\n\n  return { count, double, increment }\n}\n\`\`\`\n\nKey conventions:\n\n- Name it \`useXxx\` so tooling and humans recognize it\n- Return **refs**, not raw values, so reactivity survives destructuring\n- Keep side effects inside \`onMounted\`/\`onUnmounted\` hooks\n\nUse it in any component:\n\n\`\`\`vue\n<script setup>\nconst { count, increment } = useCounter()\n</script>\`\`\``,
+        text: `A **composable** is a function that uses Vue's Composition API to encapsulate and reuse stateful logic. Here's a minimal counter:\n\n\`\`\`ts\nimport { ref, computed } from 'vue'\n\nexport function useCounter(initial = 0) {\n  const count = ref(initial)\n  const double = computed(() => count.value * 2)\n\n  function increment(by = 1) {\n    count.value += by\n  }\n\n  return { count, double, increment }\n}\n\`\`\`\n\nKey conventions:\n\n- Name it \`useXxx\` so tooling and humans recognize it\n- Return **refs**, not raw values, so reactivity survives destructuring\n- Keep side effects inside \`onMounted\`/\`onUnmounted\` hooks\n\nUse it in any component:\n\n\`\`\`vue\n<script setup>\nconst { count, increment } = useCounter()\n</script>\n\`\`\``,
       },
     ];
   }

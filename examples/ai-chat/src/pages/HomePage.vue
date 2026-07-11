@@ -2,9 +2,11 @@
 import { computed, ref } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 
+import FilePreview from '../components/chat/FilePreview.vue';
 import PromptBox from '../components/chat/PromptBox.vue';
 import Navbar from '../components/Navbar.vue';
 import Icon from '../components/ui/Icon.vue';
+import { useAttachments } from '../composables/useAttachments';
 import { useChats } from '../composables/useChats';
 import { useSession } from '../composables/useSession';
 import { apiFetch } from '../lib/api';
@@ -18,6 +20,8 @@ const { fetchChats } = useChats();
 const input = ref('');
 const loading = ref(false);
 const chatId = uid();
+
+const { files, open, removeFile, clearFiles, uploading, uploadedFiles } = useAttachments();
 
 const greeting = computed(() => {
   const hour = new Date().getHours();
@@ -34,7 +38,11 @@ async function createChat(prompt: string) {
   input.value = prompt;
   loading.value = true;
 
-  const parts = [{ type: 'text', text: prompt }];
+  const parts: unknown[] = [{ type: 'text', text: prompt }];
+
+  if (uploadedFiles.value.length > 0) {
+    parts.push(...uploadedFiles.value);
+  }
 
   try {
     const chat = await apiFetch<{ id: string }>('/api/chats', {
@@ -53,6 +61,7 @@ async function createChat(prompt: string) {
 
 async function onSubmit() {
   await createChat(input.value);
+  clearFiles();
 }
 
 const quickChats = [
@@ -76,8 +85,25 @@ const quickChats = [
       <PromptBox
         v-model="input"
         :status="loading ? 'streaming' : 'ready'"
+        :disabled="uploading"
         @submit="onSubmit"
-      />
+        @attach="open"
+      >
+        <template v-if="files.length > 0" #header>
+          <view class="flex flex-row flex-wrap gap-2 px-2 pt-2">
+            <FilePreview
+              v-for="file in files"
+              :key="file.id"
+              :name="file.name"
+              :type="file.mediaType"
+              :preview-url="file.url"
+              :status="file.status"
+              removable
+              @remove="removeFile(file.id)"
+            />
+          </view>
+        </template>
+      </PromptBox>
 
       <view class="flex flex-row flex-wrap gap-2">
         <view

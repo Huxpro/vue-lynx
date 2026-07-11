@@ -2,8 +2,12 @@
 import { useOverlay } from '../../composables/useOverlay';
 import ModalConfirm from './ModalConfirm.vue';
 import ModalRename from './ModalRename.vue';
+import Lightbox from './Lightbox.vue';
 import ModalShare from './ModalShare.vue';
+import SamplePicker from './SamplePicker.vue';
+import SearchPalette from './SearchPalette.vue';
 import SheetMenu from './SheetMenu.vue';
+import UserMenuSheet from './UserMenuSheet.vue';
 
 /**
  * Renders the overlay stack at app root — the stand-in for Nuxt UI's
@@ -32,6 +36,23 @@ const { stack, close } = useOverlay();
     />
     <ModalShare
       v-else-if="overlay.name === 'share'"
+      v-bind="overlay.props"
+      @close="(r: unknown) => close(overlay.id, r)"
+    />
+    <SearchPalette
+      v-else-if="overlay.name === 'search'"
+      @close="(r: unknown) => close(overlay.id, r)"
+    />
+    <UserMenuSheet
+      v-else-if="overlay.name === 'user-menu'"
+      @close="(r: unknown) => close(overlay.id, r)"
+    />
+    <SamplePicker
+      v-else-if="overlay.name === 'sample-picker'"
+      @close="(r: unknown) => close(overlay.id, r)"
+    />
+    <Lightbox
+      v-else-if="overlay.name === 'lightbox'"
       v-bind="overlay.props"
       @close="(r: unknown) => close(overlay.id, r)"
     />
