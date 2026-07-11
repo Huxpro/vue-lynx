@@ -2,20 +2,22 @@
   "name": "vue-lynx-benchmark",
   "version": "0.0.0",
   "private": true,
-  "description": "VDOM vs Vapor benchmark on Lynx — port of vuejs/core packages-private/benchmark (js-framework-benchmark derived) running on Lynx for Web",
+  "description": "VDOM vs Vapor (and cross-framework ReactLynx vs Vue) benchmarks on Lynx \u2014 port of vuejs/core packages-private/benchmark (js-framework-benchmark derived) running on Lynx for Web",
   "type": "module",
   "scripts": {
     "build": "node harness/build.mjs",
     "bench": "node harness/run.mjs",
-    "bench:quick": "node harness/run.mjs --count 5 --startup-count 2"
+    "bench:quick": "node harness/run.mjs --count 5 --startup-count 2",
+    "bench:cross": "node harness/cross.mjs",
+    "bench:cross:quick": "node harness/cross.mjs --loads 1 --count 5"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
     "@lynx-js/rspeedy": "^0.13.5",
-    "@lynx-js/web-core": "^0.20.0",
-    "@lynx-js/web-elements": "^0.12.0",
+    "@lynx-js/web-core": "^0.22.1",
+    "@lynx-js/web-elements": "^0.12.5",
     "@rsbuild/plugin-vue": "^1.2.6",
     "playwright-core": "^1.49.0",
     "sirv": "^2.0.4",

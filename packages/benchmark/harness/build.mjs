@@ -8,24 +8,32 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-export function generateVaporApp() {
-  const src = fs.readFileSync(
-    path.join(root, 'apps/vdom/src/App.vue'),
-    'utf-8',
-  );
-  const marker = '<!-- BENCH_MODE_SCRIPT --><script setup lang="ts">';
-  if (!src.startsWith(marker)) {
-    throw new Error('apps/vdom/src/App.vue lost its BENCH_MODE_SCRIPT marker');
+const MARKER = '<!-- BENCH_MODE_SCRIPT --><script setup lang="ts">';
+
+function generateVaporVariant(vdomApp, vaporApp) {
+  const srcPath = path.join(root, 'apps', vdomApp, 'src/App.vue');
+  const src = fs.readFileSync(srcPath, 'utf-8');
+  if (!src.startsWith(MARKER)) {
+    throw new Error(`apps/${vdomApp}/src/App.vue lost its BENCH_MODE_SCRIPT marker`);
   }
-  const vapor = `<!-- GENERATED from apps/vdom/src/App.vue — do not edit -->\n${
-    src.replace(marker, '<script setup vapor lang="ts">')
+  const vapor = `<!-- GENERATED from apps/${vdomApp}/src/App.vue — do not edit -->\n${
+    src.replace(MARKER, '<script setup vapor lang="ts">')
   }`;
-  fs.writeFileSync(path.join(root, 'apps/vapor/src/App.vue'), vapor);
+  fs.writeFileSync(path.join(root, 'apps', vaporApp, 'src/App.vue'), vapor);
 }
 
-export function buildApps({ silent = false } = {}) {
-  generateVaporApp();
-  for (const app of ['vdom', 'vapor']) {
+export function generateVaporApp() {
+  generateVaporVariant('vdom', 'vapor');
+}
+
+export function generateVaporUiApp() {
+  generateVaporVariant('ui-vdom', 'ui-vapor');
+}
+
+export function buildApps({ silent = false, apps = ['vdom', 'vapor'] } = {}) {
+  if (apps.includes('vapor')) generateVaporApp();
+  if (apps.includes('ui-vapor')) generateVaporUiApp();
+  for (const app of apps) {
     const cwd = path.join(root, 'apps', app);
     fs.rmSync(path.join(cwd, 'dist'), { recursive: true, force: true });
     fs.rmSync(path.join(cwd, 'node_modules/.cache'), {
@@ -41,9 +49,9 @@ export function buildApps({ silent = false } = {}) {
   }
 }
 
-export function bundleSizes() {
+export function bundleSizes(apps = ['vdom', 'vapor']) {
   const out = {};
-  for (const app of ['vdom', 'vapor']) {
+  for (const app of apps) {
     const dist = path.join(root, 'apps', app, 'dist');
     out[app] = {};
     for (const file of ['main.web.bundle', 'main.lynx.bundle']) {
