@@ -107,13 +107,21 @@ access-token sign-in** in Settings. Multi-account storage
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for
    Mastodon's sanitized output.
-3. **No `URL` in the native Lynx runtime.** masto.js needs it
-   (`resolvePath`); it exists in the web-platform worker, so Lynx-for-Web
-   works today. A tiny URL polyfill would be needed for native PrimJS —
-   tracked in PRD.
-4. **Icons can't use `currentColor`.** SVG data-URIs are tinted by string
+3. **The native runtime is missing more than `URL`.** Per
+   `@lynx-js/types`, the native background thread guarantees only `fetch`,
+   `Request`, `Response` and timers. masto.js additionally calls
+   `AbortSignal.any` (unconditionally, on every request — this alone
+   turned every native request into "Failed to load timeline"),
+   `new Headers(...)` and `new URL(path, base)`. `src/polyfills.ts`
+   installs fill-if-missing implementations before anything else runs;
+   on Lynx for Web the real worker APIs win and the polyfills are inert.
+4. **The native image element has no SVG decoder.** Icons as
+   `data:image/svg+xml` `<image>` sources render blank on device; the
+   built-in `<svg content>` element (web: `x-svg`) renders them on both
+   targets — that's what `AppIcon` uses.
+5. **Icons can't use `currentColor`.** SVG XML is tinted by string
    replacement per color (`icons.ts`).
-5. **`new URL(path, base)` drops base paths** — relevant to the
+6. **`new URL(path, base)` drops base paths** — relevant to the
    verification relay (below), not the app itself.
 
 ## Verification setup

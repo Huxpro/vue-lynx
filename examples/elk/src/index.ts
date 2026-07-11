@@ -1,3 +1,7 @@
+// Must be first: fill-if-missing web API polyfills for the native Lynx
+// runtime (masto.js needs AbortSignal/Headers/URL on every request).
+import './polyfills';
+
 import { createApp } from 'vue-lynx';
 import { createPinia } from 'pinia';
 

@@ -51,10 +51,11 @@ const ICON_BODIES: Record<string, string> = {
 
 export type IconName = keyof typeof ICON_BODIES & string;
 
-/** Build a data-URI SVG for a Lynx <image>, tinted with an explicit color
- * (Lynx <image> cannot inherit currentColor). */
-export function iconSrc(name: string, color = '#686868'): string {
+/** Raw SVG XML for the Lynx <svg content> element, tinted with an explicit
+ * color (no currentColor inheritance across the native boundary). The
+ * native image element has no SVG decoder, so icons render through the
+ * built-in <svg> element instead (web: x-svg). */
+export function iconSvg(name: string, color = '#686868'): string {
   const body = (ICON_BODIES[name] ?? '').replace(/currentColor/g, color);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">${body}</svg>`;
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24">${body}</svg>`;
 }
