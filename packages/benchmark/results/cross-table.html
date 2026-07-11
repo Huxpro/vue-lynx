@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor</title>
+<style>
+  :root {
+    --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df;
+    --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --tint: 18%;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%; }
+  }
+  :root[data-theme="dark"] { --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%; }
+  :root[data-theme="light"] { --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df; --tint: 18%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 32px; background: var(--surface); color: var(--ink);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 19px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 26px 0 8px; }
+  .sub { color: var(--ink-2); font-size: 12.5px; margin: 0 0 14px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; min-width: 640px; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; white-space: nowrap; }
+  th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; }
+  th:first-child, td.op { text-align: left; }
+  td.op { color: var(--ink-2); font-size: 13px; }
+  td.c b { font-weight: 600; }
+  td.c .f { display: block; font-size: 11px; color: var(--ink-2); }
+  td.good     { background: color-mix(in srgb, var(--good) var(--tint), var(--surface)); }
+  td.warn     { background: color-mix(in srgb, var(--warn) var(--tint), var(--surface)); }
+  td.serious  { background: color-mix(in srgb, var(--serious) var(--tint), var(--surface)); }
+  td.critical { background: color-mix(in srgb, var(--critical) var(--tint), var(--surface)); }
+  td.dnf { background: var(--critical); color: #fff; font-weight: 600; }
+  td.dnf .f { color: #ffffffcc; }
+  td.na { color: var(--ink-2); }
+  tr.geo td { border-top: 2px solid var(--line); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .notes { margin-top: 22px; font-size: 12.5px; color: var(--ink-2); max-width: 860px; }
+  .notes li { margin: 4px 0; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<h1>Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor</h1>
+<p class="sub">
+  Black-box protocol on Lynx for Web: real clicks → composed-DOM end state.
+  Median per-click latency; <b>(n.nn)</b> = slowdown factor vs the row's best.
+  2026-07-11 · @lynx-js/react 0.122.1 · vue 3.6.0-beta.17 · web-core 0.22.1 · headless Chromium.
+</p>
+
+<h2>Update-heavy scenarios (above the one-frame observation floor)</h2>
+<p class="sub">Storms: one click triggers N sequential state→render→DOM ticks in the app (update ×50, select ×30). Fresh app per repetition.</p>
+<div class="scroll"><table><thead><tr><th>scenario</th><th>Vue Vapor</th><th>Vue VDOM</th><th>React (hooks)</th><th>React (naive)</th><th>React (compiler)</th></tr></thead><tbody><tr><td class="op">update storm ×50 · 1k rows</td><td class="c good"><b>68.4 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>103.1 ms</b><span class="f">(1.51)</span></td><td class="c critical"><b>31.4 s</b><span class="f">(459.27)</span></td><td class="c critical"><b>60.0 s</b><span class="f">(876.33)</span></td><td class="c critical"><b>63.9 s</b><span class="f">(932.94)</span></td></tr><tr><td class="op">select storm ×30 · 1k rows</td><td class="c good"><b>20.3 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>47.3 ms</b><span class="f">(2.32)</span></td><td class="c critical"><b>39.0 s</b><span class="f">(1915.40)</span></td><td class="c critical"><b>94.6 s</b><span class="f">(4649.38)</span></td><td class="c critical"><b>95.0 s</b><span class="f">(4667.32)</span></td></tr><tr><td class="op">update every 10th · 10k rows</td><td class="c good"><b>90.3 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>107.1 ms</b><span class="f">(1.19)</span></td><td class="c critical"><b>1.61 s</b><span class="f">(17.81)</span></td><td class="c critical"><b>3.73 s</b><span class="f">(41.29)</span></td><td class="c critical"><b>2.98 s</b><span class="f">(32.99)</span></td></tr><tr><td class="op">select row · 10k rows</td><td class="c good"><b>57.1 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>73.2 ms</b><span class="f">(1.28)</span></td><td class="c critical"><b>5.06 s</b><span class="f">(88.48)</span></td><td class="c critical"><b>11.3 s</b><span class="f">(198.41)</span></td><td class="c critical"><b>10.3 s</b><span class="f">(180.08)</span></td></tr><tr><td class="op">update storm ×50 · 10k rows</td><td class="c good"><b>797.8 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>1.42 s</b><span class="f">(1.78)</span></td><td class="c dnf">DNF <span class="f">&gt;240 s</span></td><td class="c dnf">DNF <span class="f">&gt;240 s</span></td><td class="c dnf">DNF <span class="f">&gt;240 s</span></td></tr><tr><td class="op">select storm ×30 · 10k rows</td><td class="c good"><b>97.4 ms</b><span class="f">(1.00)</span></td><td class="c serious"><b>687.0 ms</b><span class="f">(7.06)</span></td><td class="c na">—</td><td class="c na">—</td><td class="c na">—</td></tr><tr class="geo"><td class="op">slowdown geometric mean</td><td class="c good"><b>1.00</b></td><td class="c warn"><b>2.01</b></td><td class="c critical"><b>192.96</b><span class="f">4/6 rows</span></td><td class="c critical"><b>427.44</b><span class="f">4/6 rows</span></td><td class="c critical"><b>401.04</b><span class="f">4/6 rows</span></td></tr></tbody></table></div>
+<div class="legend">
+  <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
+  <span><i style="background:color-mix(in srgb, var(--warn) var(--tint), var(--surface))"></i>≤ 2.5×</span>
+  <span><i style="background:color-mix(in srgb, var(--serious) var(--tint), var(--surface))"></i>≤ 10×</span>
+  <span><i style="background:color-mix(in srgb, var(--critical) var(--tint), var(--surface))"></i>&gt; 10×</span>
+  <span><i style="background:var(--critical)"></i>DNF = did not finish</span>
+  <span>— = not reached (run aborted at an earlier DNF)</span>
+</div>
+
+<h2>Sustained krausest scenario (70 consecutive operations per load)</h2>
+<p class="sub">The classic js-framework-benchmark op set, run back-to-back in one session. Degradation counts — see notes.</p>
+<div class="scroll"><table><thead><tr><th>scenario</th><th>Vue Vapor</th><th>Vue VDOM</th><th>React (hooks)</th></tr></thead><tbody><tr><td class="op">create 1,000 rows</td><td class="c good"><b>120.1 ms</b><span class="f">(1.08)</span></td><td class="c good"><b>111.2 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>115.2 ms</b><span class="f">(1.04)</span></td></tr><tr><td class="op">update every 10th row</td><td class="c good"><b>17.6 ms</b><span class="f">(1.08)</span></td><td class="c good"><b>16.3 ms</b><span class="f">(1.00)</span></td><td class="c serious"><b>49.4 ms</b><span class="f">(3.02)</span></td></tr><tr><td class="op">select row</td><td class="c good"><b>26.1 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>26.6 ms</b><span class="f">(1.02)</span></td><td class="c serious"><b>160.3 ms</b><span class="f">(6.14)</span></td></tr><tr><td class="op">swap rows</td><td class="c warn"><b>28.2 ms</b><span class="f">(1.80)</span></td><td class="c good"><b>15.6 ms</b><span class="f">(1.00)</span></td><td class="c critical"><b>314.2 ms</b><span class="f">(20.08)</span></td></tr><tr><td class="op">remove row</td><td class="c good"><b>18.1 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>19.7 ms</b><span class="f">(1.09)</span></td><td class="c critical"><b>445.2 ms</b><span class="f">(24.59)</span></td></tr><tr><td class="op">append 1,000 rows</td><td class="c good"><b>126.3 ms</b><span class="f">(1.09)</span></td><td class="c good"><b>115.5 ms</b><span class="f">(1.00)</span></td><td class="c critical"><b>3.03 s</b><span class="f">(26.21)</span></td></tr><tr><td class="op">create 10,000 rows</td><td class="c good"><b>1.29 s</b><span class="f">(1.01)</span></td><td class="c good"><b>1.27 s</b><span class="f">(1.00)</span></td><td class="c critical"><b>28.6 s</b><span class="f">(22.48)</span></td></tr><tr><td class="op">clear 10,000 rows</td><td class="c good"><b>237.1 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>248.6 ms</b><span class="f">(1.05)</span></td><td class="c warn"><b>332.1 ms</b><span class="f">(1.40)</span></td></tr><tr class="geo"><td class="op">slowdown geometric mean</td><td class="c good"><b>1.11</b></td><td class="c good"><b>1.02</b></td><td class="c serious"><b>7.27</b></td></tr></tbody></table></div>
+
+<h2>Other dimensions</h2>
+<div class="scroll"><table><thead><tr><th>dimension</th><th>Vue Vapor</th><th>Vue VDOM</th><th>React (hooks)</th></tr></thead><tbody><tr><td class="op">first screen (median, ms)</td><td class="c plain">95.6</td><td class="c plain">84.3</td><td class="c plain">68.2</td></tr><tr><td class="op">cold create 1k (fresh app)</td><td class="c plain">171.6 ms</td><td class="c plain">179.3 ms</td><td class="c plain">188.9 ms</td></tr><tr><td class="op">cold create 10k (fresh app)</td><td class="c plain">1.48 s</td><td class="c plain">1.46 s</td><td class="c plain">1.50 s</td></tr><tr><td class="op">bundle gzip (main.lynx.bundle)</td><td class="c plain">45.0 KB</td><td class="c plain">37.3 KB</td><td class="c plain">38.5 KB</td></tr></tbody></table></div>
+
+<div class="notes">
+  <ul>
+    <li><b>How this differs from <a href="https://github.com/krausest/js-framework-benchmark">js-framework-benchmark</a>:</b>
+      the target is Lynx's dual-thread runtime (framework in a background worker → ops → main-thread DOM), not the browser's single-threaded DOM;
+      latency is measured from a real click to the composed-DOM end state (resolution ≈ one animation frame), not via devtools paint tracing;
+      and beyond krausest's fresh-instance protocol it adds sustained-session dimensions — storms (throughput), within-session drift, and DNF.</li>
+    <li><b>Should React vs Vue differ this much? No — and on the web they don't.</b>
+      On js-framework-benchmark, keyed react-hooks and vue sit within ~1.5× of each other.
+      The gaps here are not React-the-library vs Vue-the-library: on fresh apps, creation is at parity across all three and cold update-path ops differ only ~1.5–2×.
+      The multi-second/DNF numbers come from ReactLynx 0.122's web-runtime per-operation degradation, which compounds in sustained sessions (Vue Lynx stays flat).
+      Manual memo/useCallback helps constants (naive is 1.5–2.4× slower); React Compiler ≈ naive on ReactLynx's preact-based reconciler.</li>
+    <li>Harness: Lynx for Web (not a native device) in headless Chromium; identical byte-level protocol for every framework; each framework uses its idiomatic implementation (immutable + memo for React, the official benchmark's shallowRef style for Vue).</li>
+    <li>Reproduce: <code>pnpm --filter vue-lynx-benchmark bench:storms</code> · raw data in <code>packages/benchmark/results/</code>.</li>
+  </ul>
+</div>
+</body>
+</html>
