@@ -1,8 +1,6 @@
 // Copyright 2026 The Lynx Authors. All rights reserved.
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
-import type { CatalogManifest } from './defineCatalog.js';
-
 export {
   defineCatalog,
   defineFunction,
@@ -23,7 +21,7 @@ export type {
   SerializedCatalog,
 } from './defineCatalog.js';
 
-export const catalogManifests: Record<string, CatalogManifest> = {};
+export { catalogManifests } from './manifests.generated.js';
 
 // Per-component re-exports so consumers can pick exactly what they need.
 // Each is an independently tree-shakeable ESM re-export — pulling `Text`
