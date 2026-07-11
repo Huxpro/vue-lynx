@@ -193,7 +193,7 @@ const BENCH_HTML = `<!doctype html>
 
   // Arm a measurement: t0 = the pointerdown of the real click that follows;
   // resolve at the first animation frame where the predicate holds.
-  x.arm = (spec, timeoutMs = 120000) =>
+  x.arm = (spec, timeoutMs) =>
     new Promise((resolve, reject) => {
       let t0 = null;
       const onDown = () => {
@@ -203,7 +203,7 @@ const BENCH_HTML = `<!doctype html>
         capture: true,
         once: true,
       });
-      const deadline = performance.now() + timeoutMs;
+      const deadline = performance.now() + (timeoutMs ?? 120000);
       const tick = () => {
         if (t0 != null && checkPredicate(spec)) {
           resolve({ ms: performance.now() - t0 });
@@ -363,8 +363,11 @@ class Driver {
   }
 
   /** Arm the predicate, perform the click, return measured ms. */
-  async measureButton(label, spec) {
-    const armed = this.page.evaluate((s) => globalThis.__x.arm(s), spec);
+  async measureButton(label, spec, timeoutMs) {
+    const armed = this.page.evaluate(
+      ({ spec, timeoutMs }) => globalThis.__x.arm(spec, timeoutMs),
+      { spec, timeoutMs },
+    );
     await this.clickButton(label);
     const { ms } = await armed;
     return ms;
@@ -659,15 +662,15 @@ async function runStormRep(browser, mode, sizeKey) {
       await driver.settle();
     }
 
-    // update storm ×2 — ends with every 10th label = "bench 50"
+    // update storm ×2 (50 ticks) — ends with every 10th label = "bench 50"
     for (let i = 0; i < 2; i++) {
       record(
-        'updateStorm50',
-        await driver.measureButton('Update storm x50', {
+        'updateStorm',
+        await driver.measureButton('Update storm', {
           type: 'labelAt',
           index: 0,
           equals: 'bench 50',
-        }),
+        }, 240000),
       );
       await driver.settle();
       // perturb labels so the next storm's end state differs from the start
@@ -677,14 +680,14 @@ async function runStormRep(browser, mode, sizeKey) {
       await driver.settle();
     }
 
-    // select storm ×2 — ends selecting row 0
+    // select storm ×2 (30 ticks) — ends selecting row 0
     for (let i = 0; i < 2; i++) {
       record(
-        'selectStorm100',
-        await driver.measureButton('Select storm x100', {
+        'selectStorm',
+        await driver.measureButton('Select storm', {
           type: 'dangerAt',
           index: 0,
-        }),
+        }, 240000),
       );
       await driver.settle();
       // move selection off row 0 so the next storm's end state is observable
@@ -707,14 +710,14 @@ function stormMarkdownReport(result) {
   md += `- fresh app per (mode, size, rep); reps: ${meta.stormReps}; `;
   md += `one-shot ops ×3 and storms ×2 per rep\n`;
   md += `- storms: one click triggers N sequential state→render→DOM ticks `;
-  md += `(one macrotask each); latency = pointerdown → final DOM state\n\n`;
+  md += `(update ×50, select ×30; one macrotask each); latency = pointerdown → final DOM state\n\n`;
 
   for (const sizeKey of Object.keys(STORM_SIZES)) {
     md += `## Table size: ${sizeKey} rows (ms, median ±CI95, lower is better)\n\n`;
     md += `| op | react | vdom | vapor | vdom/react | vapor/vdom |\n|---|---|---|---|---|---|\n`;
     const ratio = (a, b) =>
       a && b && b.median > 0 ? (a.median / b.median).toFixed(2) + '×' : 'n/a';
-    for (const op of ['update10th', 'select', 'updateStorm50', 'selectStorm100']) {
+    for (const op of ['update10th', 'select', 'updateStorm', 'selectStorm']) {
       const key = `${op}@${sizeKey}`;
       const r = perOp.react?.[key];
       const d = perOp.vdom?.[key];
@@ -725,7 +728,7 @@ function stormMarkdownReport(result) {
     }
     md += `\n`;
   }
-  md += `Per-tick cost: divide storm medians by 50 (update) / 100 (select).\n`;
+  md += `Per-tick cost: divide storm medians by 50 (update) / 30 (select).\n`;
   return md;
 }
 
