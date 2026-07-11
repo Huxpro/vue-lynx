@@ -55,6 +55,8 @@ const server = http.createServer((req, res) => {
     file = path.join(ELEMENTS, url.pathname.slice('/elements/'.length));
   } else if (url.pathname === '/tslib.mjs') {
     file = TSLIB;
+  } else if (url.pathname.startsWith('/plain/')) {
+    file = path.join(_dirname, 'plain', url.pathname.slice('/plain/'.length));
   } else if (url.pathname.startsWith('/bundles/')) {
     file = path.join(bundlesDir, url.pathname.slice('/bundles/'.length));
   }

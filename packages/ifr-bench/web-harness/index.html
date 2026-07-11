@@ -19,8 +19,64 @@
     // Measurement: time from <lynx-view> insertion to first painted content.
     // Content probe counts rendered Lynx elements anywhere under the view
     // (piercing open shadow roots).
+    //
+    // Plain-web mode (?plain=<app.js>&pre=<framework.js>): the framework is
+    // preloaded BEFORE t0 (parity with web-core's client.js being preloaded
+    // for lynx-view runs), then t0 → app <script> fetch+eval+render → first
+    // content under #app.
     const params = new URLSearchParams(location.search);
     const bundle = params.get('bundle');
+    const plain = params.get('plain');
+
+    if (plain) {
+      const pre = params.get('pre');
+      if (pre) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = '/plain/' + pre;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      const mountEl = document.createElement('div');
+      mountEl.id = 'app';
+      document.body.appendChild(mountEl);
+
+      const t0p = performance.now();
+      const app = document.createElement('script');
+      app.src = '/plain/' + plain;
+      document.body.appendChild(app);
+
+      let settledCountP = -1;
+      let settleTimerP = null;
+      const tickP = () => {
+        const n = mountEl.querySelectorAll('*').length;
+        if (window.__fcp === undefined && n >= 5) {
+          window.__fcp = performance.now() - t0p;
+        }
+        if (n !== settledCountP) {
+          settledCountP = n;
+          clearTimeout(settleTimerP);
+          settleTimerP = setTimeout(() => {
+            if (window.__fcp === undefined) window.__fcp = -1;
+            window.__settled = performance.now() - t0p - 400;
+            window.__finalCount = settledCountP;
+          }, 400);
+        }
+        if (window.__settled === undefined) requestAnimationFrame(tickP);
+      };
+      requestAnimationFrame(tickP);
+      setTimeout(() => {
+        if (window.__fcp === undefined) window.__fcp = -1;
+        if (window.__settled === undefined) {
+          window.__settled = -1;
+          window.__finalCount = settledCountP;
+        }
+      }, 20000);
+      // Skip the lynx-view path entirely.
+      throw new Error('__plain_mode__');
+    }
 
     function countContent(root) {
       let n = 0;
@@ -60,6 +116,7 @@
         settledCount = n;
         clearTimeout(settleTimer);
         settleTimer = setTimeout(() => {
+          if (window.__fcp === undefined) window.__fcp = -1;
           window.__settled = performance.now() - t0 - 400;
           window.__finalCount = settledCount;
         }, 400);
