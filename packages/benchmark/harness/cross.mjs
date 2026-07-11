@@ -41,6 +41,7 @@ const { values: args } = parseArgs({
     smoke: { type: 'boolean', default: false },
     storms: { type: 'boolean', default: false },
     'storm-reps': { type: 'string', default: '2' },
+    modes: { type: 'string', default: 'react,vdom,vapor' },
     headed: { type: 'boolean', default: false },
     port: { type: 'string', default: '8319' },
   },
@@ -53,8 +54,20 @@ const FRESH_COUNT = Number(args['fresh-count']);
 const STORM_REPS = Number(args['storm-reps']);
 const PORT = Number(args.port);
 
-const MODES = ['react', 'vdom', 'vapor'];
-const APP_DIR = { react: 'ui-react', vdom: 'ui-vdom', vapor: 'ui-vapor' };
+// Mode → bundle dist dir (relative to apps/). react-naive drops the manual
+// memo/useCallback optimizations; react-compiler is the naive source
+// auto-memoized by babel-plugin-react-compiler.
+const APP_DIST = {
+  react: 'ui-react/dist',
+  'react-naive': 'ui-react/dist-naive',
+  'react-compiler': 'ui-react/dist-compiler',
+  vdom: 'ui-vdom/dist',
+  vapor: 'ui-vapor/dist',
+};
+const MODES = args.modes.split(',').map((m) => m.trim()).filter(Boolean);
+for (const m of MODES) {
+  if (!APP_DIST[m]) throw new Error(`unknown mode: ${m}`);
+}
 
 // ---------------------------------------------------------------------------
 // static server
@@ -267,8 +280,7 @@ function startServer() {
           filePath = path.join(
             root,
             'apps',
-            APP_DIR[mode],
-            'dist',
+            APP_DIST[mode],
             url.pathname.slice(prefix.length),
           );
           break;
@@ -734,9 +746,7 @@ function stormMarkdownReport(result) {
 
   for (const sizeKey of Object.keys(STORM_SIZES)) {
     md += `## Table size: ${sizeKey} rows (ms, median ±CI95, lower is better)\n\n`;
-    md += `| op | react | vdom | vapor | vdom/react | vapor/vdom |\n|---|---|---|---|---|---|\n`;
-    const ratio = (a, b) =>
-      a && b && b.median > 0 ? (a.median / b.median).toFixed(2) + '×' : 'n/a';
+    md += `| op | ${MODES.join(' | ')} |\n|---|${MODES.map(() => '---').join('|')}|\n`;
     const cell = (s) => {
       if (s?.median == null && s?.dnf) return `DNF ×${s.dnf} (>${STORM_TIMEOUT_MS / 1000}s)`;
       if (s?.median == null) return 'n/a';
@@ -745,10 +755,7 @@ function stormMarkdownReport(result) {
     };
     for (const op of ['update10th', 'select', 'updateStorm', 'selectStorm']) {
       const key = `${op}@${sizeKey}`;
-      const r = perOp.react?.[key];
-      const d = perOp.vdom?.[key];
-      const p = perOp.vapor?.[key];
-      md += `| ${op} | ${cell(r)} | ${cell(d)} | ${cell(p)} | ${ratio(d, r)} | ${ratio(p, d)} |\n`;
+      md += `| ${op} | ${MODES.map((m) => cell(perOp[m]?.[key])).join(' | ')} |\n`;
     }
     md += `\n`;
   }
@@ -757,7 +764,7 @@ function stormMarkdownReport(result) {
 }
 
 async function runStormsSuite(browser) {
-  const loads = { react: [], vdom: [], vapor: [] };
+  const loads = Object.fromEntries(MODES.map((m) => [m, []]));
   for (const sizeKey of Object.keys(STORM_SIZES)) {
     for (let rep = 0; rep < STORM_REPS; rep++) {
       const order = MODES.map((_, k) => MODES[(k + rep) % MODES.length]);
@@ -962,7 +969,7 @@ function markdownReport(result) {
   md += `| bundle | react raw | react gzip | vdom raw | vdom gzip | vapor raw | vapor gzip |\n|---|---|---|---|---|---|---|\n`;
   for (const file of ['main.lynx.bundle', 'main.web.bundle']) {
     const cell = (mode) => {
-      const b = bundles[APP_DIR[mode]]?.[file];
+      const b = bundles[APP_DIST[mode]]?.[file];
       return `${b?.raw ?? 'n/a'} | ${b?.gzip ?? 'n/a'}`;
     };
     md += `| ${file} | ${cell('react')} | ${cell('vdom')} | ${cell('vapor')} |\n`;
@@ -977,13 +984,16 @@ function markdownReport(result) {
 function buildAll() {
   buildApps({ apps: ['ui-vdom', 'ui-vapor'] });
   const cwd = path.join(root, 'apps/ui-react');
-  fs.rmSync(path.join(cwd, 'dist'), { recursive: true, force: true });
-  console.log('[bench] building apps/ui-react (production)…');
-  execSync('npx rspeedy build', {
-    cwd,
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'production' },
-  });
+  const variants = [
+    ['dist', 'npx rspeedy build'],
+    ['dist-naive', 'npx rspeedy build --config lynx.naive.config.ts'],
+    ['dist-compiler', 'npx rspeedy build --config lynx.compiler.config.ts'],
+  ];
+  for (const [dist, cmd] of variants) {
+    fs.rmSync(path.join(cwd, dist), { recursive: true, force: true });
+    console.log(`[bench] building apps/ui-react ${dist} (production)…`);
+    execSync(cmd, { cwd, stdio: 'inherit', env: { ...process.env, NODE_ENV: 'production' } });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1008,8 +1018,8 @@ async function main() {
       return;
     }
 
-    const loads = { react: [], vdom: [], vapor: [] };
-    const startupSamples = { react: [], vdom: [], vapor: [] };
+    const loads = Object.fromEntries(MODES.map((m) => [m, []]));
+    const startupSamples = Object.fromEntries(MODES.map((m) => [m, []]));
 
     // Rotate mode order across loads to spread thermal / JIT drift fairly.
     for (let i = 0; i < LOADS; i++) {
@@ -1036,7 +1046,7 @@ async function main() {
       }
     }
 
-    const freshSamples = { react: [], vdom: [], vapor: [] };
+    const freshSamples = Object.fromEntries(MODES.map((m) => [m, []]));
     for (let i = 0; i < FRESH_COUNT; i++) {
       const order = MODES.map((_, k) => MODES[(k + i) % MODES.length]);
       for (const mode of order) {
@@ -1095,7 +1105,7 @@ async function main() {
       memory: Object.fromEntries(
         MODES.map((m) => [m, loads[m].flatMap((l) => l.memory)]),
       ),
-      bundles: bundleSizes(Object.values(APP_DIR)),
+      bundles: bundleSizes(MODES.map((m) => APP_DIST[m])),
       raw: loads,
     };
 

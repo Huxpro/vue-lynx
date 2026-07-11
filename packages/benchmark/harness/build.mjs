@@ -52,7 +52,11 @@ export function buildApps({ silent = false, apps = ['vdom', 'vapor'] } = {}) {
 export function bundleSizes(apps = ['vdom', 'vapor']) {
   const out = {};
   for (const app of apps) {
-    const dist = path.join(root, 'apps', app, 'dist');
+    // entries may be an app name ('vdom' → apps/vdom/dist) or an explicit
+    // dist path relative to apps/ ('ui-react/dist-naive')
+    const dist = app.includes('/')
+      ? path.join(root, 'apps', app)
+      : path.join(root, 'apps', app, 'dist');
     out[app] = {};
     for (const file of ['main.web.bundle', 'main.lynx.bundle']) {
       const p = path.join(dist, file);
