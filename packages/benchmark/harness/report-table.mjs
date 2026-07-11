@@ -2,7 +2,7 @@
 // single self-contained HTML file, from the committed results JSON:
 //   - results/cross-storms-latest.json         (react / vdom / vapor)
 //   - results/cross-storms-react-variants.json (react-naive / react-compiler)
-//   - results/cross-run2.json                  (sustained scenario, cold, startup, bundles)
+//   - results/cross-run3-neutralized.json      (sustained scenario, cold, startup, bundles)
 //
 // Cells show median ms with the slowdown factor vs the row's best; the cell
 // tint encodes the factor bucket (numbers are always printed — color is
@@ -24,7 +24,7 @@ const variants = JSON.parse(
   fs.readFileSync(path.join(root, 'results/cross-storms-react-variants.json'), 'utf-8'),
 );
 const base = JSON.parse(
-  fs.readFileSync(path.join(root, 'results/cross-run2.json'), 'utf-8'),
+  fs.readFileSync(path.join(root, 'results/cross-run3-neutralized.json'), 'utf-8'),
 );
 
 // ---------------------------------------------------------------------------
