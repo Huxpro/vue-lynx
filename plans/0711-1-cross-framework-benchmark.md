@@ -3,6 +3,14 @@
 Date: 2026-07-11. Follow-up to `0709-2-vdom-vapor-benchmark.md` /
 `0709-3-vdom-vapor-benchmark-results.md`.
 
+> **⚠️ CORRECTION (Round 4, same day):** every ReactLynx number in Rounds
+> 1–3 is polluted by a Lynx-for-Web runtime artifact and is superseded by
+> the Round 4 results below. Real-device testing showed React ≈ Vue for
+> these scenarios; the audit traced our multi-second/DNF React numbers to
+> `@lynx-js/web-core`'s always-on `lynx.profile` shim (see Round 4). The
+> Vue-vs-Vue numbers were never affected. Rounds 1–3 are kept as history
+> of the investigation.
+
 ## Goal
 
 Compare **ReactLynx** (`@lynx-js/react`), **Vue Lynx VDOM**, and **Vue Lynx
@@ -227,3 +235,86 @@ Readings:
    variant, and the superlinear degradation + storm DNFs persist across
    all three optimization levels — it's runtime behavior, not app-code
    quality.
+
+## Round 4: credibility audit and CORRECTION — the degradation was a web-core artifact
+
+Trigger: real-device testing (create 10k → select/update storms) showed
+**React ≈ Vue, same order of magnitude** — contradicting our DNF results.
+Audit steps and findings (scripts preserved in the session; method below):
+
+1. **Replication with three independent channels** (badge-style
+   MutationObserver, timed screenshots, PerformanceObserver longtasks):
+   the container reproduced the harness results faithfully — react
+   update storm @10k really did exceed 300 s here, with per-tick time
+   *growing during the storm* (tick 4 ≈ 4 s → tick 20 ≈ 15 s) while DOM
+   mutations stayed constant (3,000 records/tick).
+2. **Zero-observer control** (no polling, no observers, coarse 5 s state
+   checks): still >300 s — ruled out observer effect from our harness.
+3. **Main-thread CDP profile**: 90% idle — ruled out main-thread
+   contention; the cost was inside the background worker.
+4. **Worker CPU profile** (raw CDP attach to the worker target):
+   **82.8% of worker CPU in `performance.clearMarks`**, plus `mark`,
+   `measure`, `profileEnd` — all called from web-core's worker chunk.
+5. **Source confirmation** (`@lynx-js/web-core` 0.22.1): the shim maps
+   Lynx's `profileStart`/`profileEnd` onto `performance.mark()` /
+   `measure()` / `clearMarks()`, **never clears the measure entries**
+   (unbounded timeline growth ⇒ every later call scans it), and reports
+   `isProfileRecording: () => performance !== undefined` — i.e. *always
+   recording* on web, whereas on native Lynx these calls are no-ops
+   unless a tracing session is active. ReactLynx's production runtime
+   profiles per rendered snapshot; Vue Lynx never calls the API. Hence:
+   React-only, web-only, superlinear-in-operation-count degradation.
+6. **Fix validation**: neutralizing `lynx.profile:`-prefixed entries
+   (surgical `mark`/`measure`/`clearMarks` no-op, applied identically to
+   every framework; now part of `harness/cross.mjs` and the docs
+   playground) took the same react update storm @10k from **>300 s (DNF)
+   to ~15–20 s wall / all 50 ticks**, worker 78% idle.
+
+### Corrected results (run3-neutralized, `results/cross-storms-run3-neutralized.*`)
+
+| scenario | react (hooks) | vdom | vapor | react/vdom |
+|---|---|---|---|---|
+| update10th one-shot @1k | 25.5 ms | 28.1 ms | 23.2 ms | ~parity |
+| select one-shot @1k | 27.8 ms | 29.0 ms | 28.3 ms | ~parity |
+| update storm ×50 @1k | 406 ms | 88 ms | 54 ms | 4.6× |
+| select storm ×30 @1k | 176 ms | 51 ms | 17 ms | 3.4× |
+| update10th one-shot @10k | 161 ms | 110 ms | 80 ms | 1.5× |
+| select one-shot @10k | 101 ms | 55 ms | 56 ms | 1.8× |
+| update storm ×50 @10k | 4.31 s | 1.21 s | 0.62 s | 3.6× |
+| select storm ×30 @10k | 2.58 s | 0.60 s | 0.086 s | 4.3× |
+
+Corrected conclusions:
+
+- **React vs Vue on Lynx: same order of magnitude everywhere** — parity
+  on one-shots at 1k, 1.5–1.8× at 10k one-shots, 3.4–4.6× under storm
+  throughput. Matches real-device experience and js-framework-benchmark
+  expectations. All "superlinear degradation" / DNF claims about
+  ReactLynx are **withdrawn** — they measured web-core's profiling shim,
+  not the framework.
+- **Vue-vs-Vue results stand** (Vue never triggered the shim): vapor
+  1.6× (update) / 3.0× (select) faster than vdom at 1k storms, 1.9× /
+  7.0× at 10k storms.
+- The artifact is worth reporting upstream: web-core could gate the shim
+  on an explicit tracing flag and/or clear measures; frameworks calling
+  `profileStart`/`profileEnd` in production hot paths pay O(timeline)
+  per call on web as it stands.
+- Meta-lesson recorded in the docs: cross-validate any surprising
+  benchmark result with an independent channel (real device, zero-observer
+  control, CPU profile) before publishing.
+
+### Corrected React optimization variants (`results/cross-storms-react-variants.*`, v2)
+
+| scenario | react (hooks) | react-naive | react-compiler |
+|---|---|---|---|
+| update storm ×50 @1k | 442 ms | 644 ms | 843 ms |
+| select storm ×30 @1k | 175 ms | 332 ms | 468 ms |
+| update storm ×50 @10k | 4.31 s | 6.16 s | 8.65 s |
+| select storm ×30 @10k | 1.88 s | 3.44 s | 4.95 s |
+
+Corrected readings: manual memo/useCallback is worth ~1.5–1.9× under
+storms; React Compiler measures ~1.9–2.7× slower than hand-optimized
+(and consistently slower than naive) on ReactLynx's preact-based
+reconciler — its memo-cache bookkeeping runs on every render without
+pruning child re-renders. The artifact had previously exaggerated the
+naive/compiler penalty (more re-renders ⇒ more profiling calls ⇒ more
+timeline scanning).
