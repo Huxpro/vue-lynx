@@ -28,6 +28,8 @@ Lynx-only captures (no same-frame Elk counterpart):
 | --- | --- |
 | Fullscreen media preview | ![lynx media preview](./lynx/09-media-preview.png) |
 | Hashtag timeline | ![lynx tag](./lynx/10-tag.png) |
+| Trending news (explore) | ![lynx news](./lynx/03c-explore-links.png) |
+| Edit history + quote post | ![lynx edit history](./lynx/12-edit-history.png) |
 
 ## Known visual deltas (intentional or tracked)
 

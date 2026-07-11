@@ -84,11 +84,11 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Action bar: reply, boost, favourite, bookmark counts
 - 🚧 Action mutations (fav/boost/bookmark POST) — implemented with optimistic updates (Elk `useStatusActions` logic), requires token; verified UI-only
 - ✅ Preview cards for links (card image, title, description)
-- ✅ Quote posts (Mastodon 4.5 `status.quote.quotedStatus` → nested card like Elk's StatusQuote)
+- ✅ Quote posts (Mastodon 4.5 `status.quote.quotedStatus` → nested card like Elk's StatusQuote; verified live)
 - ⬜ Emoji reactions row
 - ❌ Embedded iframe media players (YouTube/video embeds via `sanitizeEmbeddedIframe`) — no iframe/webview element in Lynx
 - ❌ Status translation (browser `Translator` API / server LibreTranslate proxy) — browser/server-only APIs
-- ⬜ Edit history viewer
+- ✅ Edit history viewer (edited badge on thread page → `history.list()` versions; verified live)
 - ✅ Tap status → thread page navigation
 
 ### Thread / status detail
@@ -190,3 +190,4 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 - **Loop 3**: Screenshot comparison pipeline against the ORIGINAL elk.zone (transparent HTTPS relay so both apps run in the same sandbox against the same instance). Parity fixes from comparison: heart favourite icon (was star), stacked name/handle rows, vertical preview cards with wide images, Elk-style icon+primary headers, `Xmin` timestamps, full `@user@server` handles. Side-by-sides in screenshots/README.md.
 - **Loop 4**: Dark mode (Elk palette, verified vs elk.zone dark), fullscreen media preview, quote-post nested cards, Following/Followers lists, Bookmarks/Favourites pages, hashtag timeline verified. PRD statuses trued up (pull-to-refresh ⬜, media modal 🚧).
 - **Loop 5**: Deep links via Lynx globalProps (`initialPath`), explore News tab (trending links), timeline refresh button, follow-hashtag button, bot/locked badges. Verified News tab + deep-linked #caturday hashtag page.
+- **Loop 6**: Edit-history viewer (verified on a live edited status — same capture also proves quote-post nested cards). Example README + preview image, app sources now typecheck clean (bundler-resolution tsconfig).
