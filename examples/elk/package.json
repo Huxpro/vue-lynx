@@ -16,10 +16,8 @@
     "dev": "rspeedy dev"
   },
   "dependencies": {
-    "@iconify/utils": "^3.0.2",
     "masto": "^7.2.0",
     "pinia": "^3.0.2",
-    "tiny-decode": "^0.1.3",
     "ultrahtml": "^1.5.3",
     "vue-lynx": "workspace:*",
     "vue-router": "^4.5.0"

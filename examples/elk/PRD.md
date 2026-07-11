@@ -37,7 +37,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 ### Core infrastructure
 
 - ✅ masto.js REST client (`createRestAPIClient`) — reused as-is
-- ✅ Anonymous/guest browsing of any public instance (Elk's `publicServer` mode; default server `mastodon.social`)
+- ✅ Anonymous/guest browsing of any public instance (Elk's `publicServer` mode; default server `m.webtoo.ls` like Elk — mastodon.social requires auth for public timelines since 4.5)
 - 🚧 Sign-in with access token (manual token entry; no OAuth redirect)
 - ❌ OAuth web-redirect sign-in — requires Elk's Nitro server broker (`server/api/[server]/login.ts`) + browser `location.href` redirects; a Lynx app has neither a bundled server nor a browser redirect flow. Token-paste covers authenticated use.
 - ❌ Multi-account switching with `window.location.reload()` — browser-only mechanism; single session per launch instead

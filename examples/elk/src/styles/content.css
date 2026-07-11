@@ -1,0 +1,127 @@
+/* Content renderer styles — Lynx retarget of Elk's .content-rich CSS
+   (app/styles/global.css). Inline runs are nested <text>, blocks are
+   <view>/<text>; classes mirror the HTML tags they replace. */
+
+.content-rich {
+  display: flex;
+  flex-direction: column;
+}
+
+.content-p {
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--c-text-base);
+}
+
+.content-p-gap {
+  height: 10px;
+}
+
+.content-bold {
+  font-weight: 600;
+}
+
+.content-italic {
+  font-style: italic;
+}
+
+.content-del {
+  text-decoration: line-through;
+}
+
+.content-underline {
+  text-decoration: underline;
+}
+
+.content-small {
+  font-size: 12px;
+}
+
+/* Elk: text-primary hover:underline on mentions/hashtags/links */
+.content-link,
+.content-mention {
+  color: var(--c-primary);
+  font-size: 15px;
+}
+
+.content-code-inline {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--c-text-code);
+  background-color: var(--c-bg-code);
+  border-radius: 3px;
+}
+
+.content-pre {
+  background-color: var(--c-bg-code);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.content-pre-text {
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--c-text-code);
+}
+
+.content-blockquote {
+  border-left: 3px solid var(--c-border-dark);
+  padding-left: 10px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.content-list {
+  display: flex;
+  flex-direction: column;
+  padding-left: 4px;
+}
+
+.content-li {
+  display: flex;
+  flex-direction: row;
+}
+
+.content-li-marker {
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--c-text-secondary);
+  margin-right: 6px;
+}
+
+.content-li-body {
+  flex: 1;
+}
+
+.content-heading {
+  font-weight: 700;
+  color: var(--c-text-base);
+}
+
+.content-h1 { font-size: 22px; line-height: 30px; }
+.content-h2 { font-size: 20px; line-height: 28px; }
+.content-h3 { font-size: 18px; line-height: 26px; }
+.content-h4 { font-size: 16px; line-height: 24px; }
+.content-h5 { font-size: 15px; line-height: 22px; }
+
+.content-emoji {
+  width: 18px;
+  height: 18px;
+  vertical-align: -3px;
+}
+
+.content-mention-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  background-color: var(--c-bg-card);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
