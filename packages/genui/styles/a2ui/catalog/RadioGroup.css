@@ -1,0 +1,123 @@
+@import "../theme.css";
+
+/* =========================
+ * Radio Group
+ * ========================= */
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.radio-group-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Usage Hints */
+
+/* Default: Standard vertical list */
+.radio-group-default .radio-group-container {
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Row: Horizontal layout */
+.radio-group-row .radio-group-container {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+}
+
+/* Card: Options look like cards */
+.radio-group-card .radio-option {
+  padding: 14px 16px;
+  border: 1px solid var(--a2ui-color-border);
+  border-radius: 14px;
+  background-color: var(--a2ui-color-surface);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+.radio-group-card .radio-option:active {
+  background-color: var(--a2ui-color-surface-muted);
+}
+
+.radio-group-invalid .radio-item {
+  border-color: var(--a2ui-color-error, #d92d20);
+}
+
+.radio-group-error {
+  margin-top: 2px;
+  color: var(--a2ui-color-error, #d92d20);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* =========================
+ * Radio Option
+ * ========================= */
+
+.radio-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--a2ui-color-on-surface);
+  line-height: 1.5;
+}
+
+/* =========================
+ * Radio Item
+ * ========================= */
+
+.radio-item {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--a2ui-color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+.radio-item.ui-disabled {
+  opacity: 0.5;
+}
+
+.radio-item.ui-checked {
+  border-color: var(--a2ui-color-primary);
+  background-color: var(--a2ui-color-primary);
+}
+
+.radio-item.ui-active {
+  border-color: var(--a2ui-color-primary-hover);
+}
+
+/* Indicator Dot */
+.radio-indicator {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radio-indicator-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--a2ui-color-on-primary);
+}

@@ -1,0 +1,36 @@
+/* ===== Renderer ===== */
+.OpenUIRenderer {
+  width: 100%;
+  position: relative;
+  color: var(--openui-color-text);
+}
+
+.OpenUIRendererContent {
+  width: 100%;
+  opacity: 1;
+}
+
+.OpenUIRendererContentLoading {
+  opacity: 0.72;
+}
+
+.OpenUIQueryLoader {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 999rpx;
+  background-color: var(--openui-color-primary-surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.OpenUIQueryLoaderDot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background-color: var(--openui-color-primary-muted);
+}
