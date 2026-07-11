@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue-lynx';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import { useChatActions } from '../composables/useChatActions';
 import { useChats } from '../composables/useChats';
@@ -18,6 +18,7 @@ import UButton from './ui/UButton.vue';
  * and hover-revealed actions become an always-visible ellipsis (F1.6).
  */
 const router = useRouter();
+const route = useRoute();
 const { groups } = useChats();
 const { renameChat, deleteChat } = useChatActions();
 const { loggedIn, login } = useSession();
@@ -76,11 +77,11 @@ function openChat(id: string) {
     <view class="flex flex-col gap-0.5 px-2">
       <view
         class="flex flex-row items-center gap-2 rounded-md px-2.5 py-1.5"
-        :class="collapsed ? 'justify-center' : ''"
+        :class="[collapsed ? 'justify-center' : '', route.path === '/' ? 'bg-elevated' : '']"
         @tap="newChat"
       >
-        <Icon name="i-lucide-circle-plus" tone="muted" :size="18" />
-        <text v-if="!collapsed" class="text-sm text-default">New chat</text>
+        <Icon name="i-lucide-circle-plus" :tone="route.path === '/' ? 'highlighted' : 'muted'" :size="18" />
+        <text v-if="!collapsed" class="text-sm" :class="route.path === '/' ? 'text-highlighted font-medium' : 'text-default'">New chat</text>
       </view>
       <view
         class="flex flex-row items-center gap-2 rounded-md px-2.5 py-1.5"
@@ -101,11 +102,18 @@ function openChat(id: string) {
             v-for="item in group.items"
             :key="item.id"
             class="flex flex-row items-center rounded-md px-2.5 py-1.5 gap-1"
+            :class="route.params.id === item.id ? 'bg-elevated' : ''"
           >
             <view class="flex-1 flex flex-row" @tap="openChat(item.id)">
               <text
                 class="text-sm flex-1"
-                :class="item.label === 'Untitled' ? 'text-muted' : 'text-default'"
+                :class="
+                  route.params.id === item.id
+                    ? 'text-highlighted font-medium'
+                    : item.label === 'Untitled'
+                      ? 'text-muted'
+                      : 'text-default'
+                "
                 text-maxline="1"
               >
                 {{ item.label }}

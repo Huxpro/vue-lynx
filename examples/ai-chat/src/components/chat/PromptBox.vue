@@ -19,7 +19,7 @@ const props = withDefaults(
     error?: string | null;
     placeholder?: string;
   }>(),
-  { status: 'ready', placeholder: 'Ask anything...' },
+  { status: 'ready', placeholder: 'Type your message here...' },
 );
 
 const emit = defineEmits<{
@@ -49,7 +49,7 @@ function onSubmitTap() {
 </script>
 
 <template>
-  <view class="flex flex-col rounded-lg bg-elevated border border-default px-1.5 pt-1.5 pb-1.5 shadow-sm">
+  <view class="flex flex-col rounded-lg prompt-surface border border-default px-1.5 pt-1.5 pb-1.5 shadow-sm">
     <view v-if="error" class="flex flex-row items-center gap-2 px-2.5 pt-1.5 pb-1">
       <Icon name="i-lucide-alert-circle" tone="error" :size="16" />
       <text class="text-sm text-error flex-1" text-maxline="2">{{ error }}</text>
@@ -78,7 +78,7 @@ function onSubmitTap() {
       </view>
 
       <view
-        class="rounded-md p-1.5 bg-inverted items-center justify-center"
+        class="rounded-full p-1.5 bg-inverted items-center justify-center"
         :class="disabled ? 'opacity-50' : ''"
         @tap="onSubmitTap"
       >
@@ -93,6 +93,11 @@ function onSubmitTap() {
 </template>
 
 <style>
+.prompt-surface {
+  /* the original uses bg-elevated/50; alpha doesn't composite on Lynx web,
+     so the halfway blend is precomputed per theme */
+  background-color: var(--ui-bg-elevated-half);
+}
 .prompt-input {
   height: 40px;
   width: 100%;

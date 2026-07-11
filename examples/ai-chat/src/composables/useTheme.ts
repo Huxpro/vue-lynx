@@ -1,5 +1,12 @@
 import { computed, ref, watch } from 'vue-lynx';
 
+function mix(a: string, b: string, t = 0.5): string {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  const c = pa.map((v, i) => Math.round(v + (pb[i]! - v) * t));
+  return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
 import { NEUTRAL_SCALES, PRIMARY_HUES } from '../lib/palette';
 import { getItem, setItem } from '../lib/storage';
 import { useColorMode } from './useColorMode';
@@ -94,6 +101,7 @@ export function useTheme() {
       '--ui-border-muted': t.borderMuted!,
       '--ui-border-accented': t.borderAccented!,
       '--ui-bg-sidebar': t.bgSidebar!,
+      '--ui-bg-elevated-half': mix(t.bg!, t.bgElevated!),
     };
   });
 

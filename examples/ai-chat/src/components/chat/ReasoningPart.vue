@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 
 import Icon from '../ui/Icon.vue';
 import MarkdownView from './MarkdownView.vue';
@@ -15,11 +15,25 @@ const props = defineProps<{
 
 const open = ref(props.streaming);
 
+const startedAt = ref(Date.now());
+const seconds = ref(0);
+
 watch(
   () => props.streaming,
   (streaming) => {
     open.value = streaming;
+    if (streaming) startedAt.value = Date.now();
+    else seconds.value = Math.max(1, Math.round((Date.now() - startedAt.value) / 1000));
   },
+);
+
+// matches UChatReasoning's collapsed label
+const label = computed(() =>
+  props.streaming
+    ? 'Thinking...'
+    : seconds.value
+      ? `Thought for ${seconds.value} second${seconds.value === 1 ? '' : 's'}`
+      : 'Reasoning',
 );
 </script>
 
@@ -33,7 +47,7 @@ watch(
         :style="{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }"
       />
       <text class="text-sm text-muted" :class="streaming ? 'shimmer-pulse' : ''">
-        {{ streaming ? 'Thinking...' : 'Reasoning' }}
+        {{ label }}
       </text>
     </view>
 

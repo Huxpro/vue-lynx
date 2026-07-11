@@ -44,6 +44,7 @@
 
   /* sidebar uses bg-elevated in light, neutral-900 in dark (template override) */
   --ui-bg-sidebar: #fafafa;
+  --ui-bg-elevated-half: #f9f9fa; /* 50% blend of bg and elevated */
 }
 
 .theme-dark {
@@ -78,6 +79,7 @@
   --ui-border-accented: #3f3f46; /* zinc-700 */
 
   --ui-bg-sidebar: #09090b;
+  --ui-bg-elevated-half: #202023;
 }
 
 /* --- semantic text/bg utilities not expressible via the tailwind config --- */
