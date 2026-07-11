@@ -215,6 +215,28 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  examples/genui:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../../packages/vue-lynx
+      vue-lynx-genui:
+        specifier: workspace:*
+        version: link:../../packages/genui
+    devDependencies:
+      '@lynx-js/luna-styles':
+        specifier: ^0.2.0
+        version: 0.2.0
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   examples/hackernews-css:
     dependencies:
       '@tanstack/vue-query':
@@ -1362,6 +1384,9 @@ packages:
     peerDependenciesMeta:
       '@rspress/core':
         optional: true
+
+  '@lynx-js/luna-styles@0.2.0':
+    resolution: {integrity: sha512-TMeXda7uZ9OAT/LsV/u+OA0j6IntVCxvA7/b59EopauIZb7sztFjNssHyKgSog0SdTifG5U5MDrWGTuI04AOzw==}
 
   '@lynx-js/lynx-core@0.1.3':
     resolution: {integrity: sha512-uWzKKYJUK4Q09ZRZxWSAFINnmZb9piWPbvWF9SkLn+3snBl9u/BJa4ekPRcKWAhBmpbtxWH1x27fxe3Q3p5l3Q==}
@@ -6750,6 +6775,8 @@ snapshots:
       vscode-icons-js: 11.6.1
     optionalDependencies:
       '@rspress/core': 2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2)
+
+  '@lynx-js/luna-styles@0.2.0': {}
 
   '@lynx-js/lynx-core@0.1.3':
     optional: true

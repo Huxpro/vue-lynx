@@ -1,0 +1,197 @@
+// Copyright 2026 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+import { A2UI_GALLERY_DEMOS } from './mock/a2ui-gallery/index.js';
+import castGrid from './mock/basic/cast-grid.json';
+import citywalkList from './mock/basic/citywalk-list.json';
+import fridgeSearch from './mock/basic/fridge-search.json';
+import hangzhouWeatherTrend from './mock/basic/hangzhou-weather-trend.json';
+import lazyComponent from './mock/basic/lazy-component.js';
+import pieChartChinaEvShare from './mock/basic/pie-chart-china-ev-share.json';
+import recs from './mock/basic/recs.json';
+import tripPlanner from './mock/basic/trip-planner.json';
+import workoutPlan from './mock/basic/workout-plan.json';
+
+function collectComponentNamesFromMessages(
+  value: unknown,
+  out: Set<string>,
+): void {
+  if (!value) return;
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectComponentNamesFromMessages(item, out);
+    }
+    return;
+  }
+
+  if (typeof value !== 'object') return;
+
+  const v = value as Record<string, unknown>;
+
+  // Standard v0.9 message: { updateComponents: { components: [...] } }
+  const updateComponents = v.updateComponents;
+  if (updateComponents && typeof updateComponents === 'object') {
+    const uc = updateComponents as Record<string, unknown>;
+    const components = uc.components;
+    if (Array.isArray(components)) {
+      for (const c of components) {
+        if (!c || typeof c !== 'object') continue;
+        const comp = (c as Record<string, unknown>).component;
+        if (typeof comp === 'string' && comp.trim() !== '') {
+          out.add(comp);
+        }
+      }
+    }
+  }
+
+  // Be resilient to wrapper shapes like { messages: [...] }.
+  if (Array.isArray(v.messages)) {
+    collectComponentNamesFromMessages(v.messages, out);
+  }
+}
+
+function tagsFromMessages(messages: unknown): string[] {
+  const out = new Set<string>();
+  collectComponentNamesFromMessages(messages, out);
+  return Array.from(out).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Extract new component names introduced by each message (in order).
+ * Returns an array parallel to the messages array: each entry is
+ * the list of component names that appear for the first time in that message.
+ */
+export function componentsByMessage(messages: unknown): string[][] {
+  if (!Array.isArray(messages)) return [];
+  const seen = new Set<string>();
+  return messages.map((msg) => {
+    const msgComponents = new Set<string>();
+    collectComponentNamesFromMessages(msg, msgComponents);
+    const newOnes: string[] = [];
+    for (const name of msgComponents) {
+      if (!seen.has(name)) {
+        seen.add(name);
+        newOnes.push(name);
+      }
+    }
+    return newOnes;
+  });
+}
+
+export interface StaticDemo {
+  id: string;
+  title: string;
+  description?: string;
+  hasStaticJson?: boolean;
+  tags: string[];
+  messages: unknown;
+}
+
+export interface DynamicPreset {
+  id: string;
+  title: string;
+  tags: string[];
+  messages: unknown;
+  actionMocks?: Record<string, unknown>;
+}
+
+export const OFFICIAL_STATIC_DEMOS: StaticDemo[] = A2UI_GALLERY_DEMOS.map(
+  (demo) => ({
+    id: demo.id,
+    title: demo.title,
+    description: demo.description,
+    tags: tagsFromMessages(demo.messages),
+    messages: demo.messages,
+  }),
+);
+
+export const EXTENDED_STATIC_DEMOS: StaticDemo[] = [
+  {
+    id: 'recs',
+    title: 'Date-Night Restaurant Picks',
+    description:
+      'Three restaurant cards with images. Content updates progressively.',
+    tags: tagsFromMessages(recs),
+    messages: recs,
+  },
+  {
+    id: 'lazy-component',
+    title: 'Lazy Bundle Component',
+    description:
+      'Loads a catalog component from a lazy bundle URL and passes sourceData into it.',
+    hasStaticJson: false,
+    tags: tagsFromMessages(lazyComponent),
+    messages: lazyComponent,
+  },
+  {
+    id: 'cast-grid',
+    title: 'Cast Grid Layout Demo',
+    tags: tagsFromMessages(castGrid),
+    messages: castGrid,
+  },
+  {
+    id: 'citywalk-list',
+    title: 'Weekend Citywalk Coffee Picks',
+    tags: tagsFromMessages(citywalkList),
+    messages: citywalkList,
+  },
+  {
+    id: 'hangzhou-weather-trend',
+    title: 'Hangzhou Weather Trend',
+    description:
+      'Use LineChart to show a week-long temperature trend in Hangzhou.',
+    tags: tagsFromMessages(hangzhouWeatherTrend),
+    messages: hangzhouWeatherTrend,
+  },
+  {
+    id: 'pie-chart-china-ev-share',
+    title: '2025 China EV Brand Share',
+    description:
+      'A CPCA-based donut chart shows the 2025 passenger NEV share for major Chinese EV brands.',
+    tags: tagsFromMessages(pieChartChinaEvShare),
+    messages: pieChartChinaEvShare,
+  },
+  {
+    id: 'fridge-search',
+    title: 'Fridge Search Results',
+    tags: tagsFromMessages(fridgeSearch),
+    messages: fridgeSearch,
+  },
+  {
+    id: 'trip-planner',
+    title: 'Trip Planner: Kyoto in 48 Hours',
+    description:
+      'A two-day itinerary streams in card by card, with each stop filled progressively.',
+    tags: tagsFromMessages(tripPlanner),
+    messages: tripPlanner,
+  },
+  {
+    id: 'workout-plan',
+    title: 'Weekly Workout Plan',
+    description:
+      'A five-day workout plan is assembled day by day through data-model updates with a shared list template.',
+    tags: tagsFromMessages(workoutPlan),
+    messages: workoutPlan,
+  },
+];
+
+export const STATIC_DEMOS: StaticDemo[] = [
+  ...OFFICIAL_STATIC_DEMOS,
+  ...EXTENDED_STATIC_DEMOS,
+];
+
+export const STATIC_DEMO_JSON_IDS = new Set(
+  STATIC_DEMOS.filter((demo) => demo.hasStaticJson !== false).map((demo) =>
+    demo.id
+  ),
+);
+
+export const DYNAMIC_PRESETS: DynamicPreset[] = [];
+
+export const SUPPORTED_COMPONENTS = tagsFromMessages([
+  ...STATIC_DEMOS.flatMap((d) => d.messages as unknown[]),
+  ...DYNAMIC_PRESETS.flatMap((d) => d.messages as unknown[]),
+]);
+
+export const PLAYBACK_SCENARIOS = [...EXTENDED_STATIC_DEMOS];

@@ -1,0 +1,36 @@
+{
+  "name": "@vue-lynx-example/genui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vue-Lynx GenUI demos: A2UI and OpenUI renderers with mock agent streams",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/genui"
+  },
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*",
+    "vue-lynx-genui": "workspace:*"
+  },
+  "devDependencies": {
+    "@lynx-js/luna-styles": "^0.2.0",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
