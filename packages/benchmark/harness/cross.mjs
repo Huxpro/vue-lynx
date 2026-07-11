@@ -620,6 +620,8 @@ async function runFreshLoad(browser, mode) {
 //     the final DOM state amplifies per-tick cost N× above the frame floor
 // ---------------------------------------------------------------------------
 
+const STORM_TIMEOUT_MS = 240000;
+
 const STORM_SIZES = {
   '1k': { button: 'Create 1,000 rows', rows: 1000 },
   '10k': { button: 'Create 10,000 rows', rows: 10000 },
@@ -662,16 +664,28 @@ async function runStormRep(browser, mode, sizeKey) {
       await driver.settle();
     }
 
+    // Storms can legitimately fail to finish within the timeout (a framework
+    // whose per-op cost degrades superlinearly never completes 50 ticks on a
+    // big table). Record that as a DNF sample and abort the rep — the app's
+    // state is undefined mid-storm, so later measures would be meaningless.
+    const dnf = (op) => samples.push({ op: `${op}@${sizeKey}`, ms: null, dnf: true });
+
     // update storm ×2 (50 ticks) — ends with every 10th label = "bench 50"
     for (let i = 0; i < 2; i++) {
-      record(
-        'updateStorm',
-        await driver.measureButton('Update storm', {
-          type: 'labelAt',
-          index: 0,
-          equals: 'bench 50',
-        }, 240000),
-      );
+      try {
+        record(
+          'updateStorm',
+          await driver.measureButton('Update storm', {
+            type: 'labelAt',
+            index: 0,
+            equals: 'bench 50',
+          }, STORM_TIMEOUT_MS),
+        );
+      } catch (err) {
+        if (!String(err).includes('predicate timeout')) throw err;
+        dnf('updateStorm');
+        return { samples, errors };
+      }
       await driver.settle();
       // perturb labels so the next storm's end state differs from the start
       const before = await driver.labelAt(0);
@@ -682,13 +696,19 @@ async function runStormRep(browser, mode, sizeKey) {
 
     // select storm ×2 (30 ticks) — ends selecting row 0
     for (let i = 0; i < 2; i++) {
-      record(
-        'selectStorm',
-        await driver.measureButton('Select storm', {
-          type: 'dangerAt',
-          index: 0,
-        }, 240000),
-      );
+      try {
+        record(
+          'selectStorm',
+          await driver.measureButton('Select storm', {
+            type: 'dangerAt',
+            index: 0,
+          }, STORM_TIMEOUT_MS),
+        );
+      } catch (err) {
+        if (!String(err).includes('predicate timeout')) throw err;
+        dnf('selectStorm');
+        return { samples, errors };
+      }
       await driver.settle();
       // move selection off row 0 so the next storm's end state is observable
       await driver.clickCell(3, 'col-label');
@@ -717,14 +737,18 @@ function stormMarkdownReport(result) {
     md += `| op | react | vdom | vapor | vdom/react | vapor/vdom |\n|---|---|---|---|---|---|\n`;
     const ratio = (a, b) =>
       a && b && b.median > 0 ? (a.median / b.median).toFixed(2) + '×' : 'n/a';
+    const cell = (s) => {
+      if (s?.median == null && s?.dnf) return `DNF ×${s.dnf} (>${STORM_TIMEOUT_MS / 1000}s)`;
+      if (s?.median == null) return 'n/a';
+      const base = `${fmt(s.median)} ±${fmt(s.ci95)}`;
+      return s.dnf ? `${base} (+${s.dnf} DNF)` : base;
+    };
     for (const op of ['update10th', 'select', 'updateStorm', 'selectStorm']) {
       const key = `${op}@${sizeKey}`;
       const r = perOp.react?.[key];
       const d = perOp.vdom?.[key];
       const p = perOp.vapor?.[key];
-      md += `| ${op} | ${fmt(r?.median)} ±${fmt(r?.ci95)} | ${fmt(d?.median)} ±${
-        fmt(d?.ci95)
-      } | ${fmt(p?.median)} ±${fmt(p?.ci95)} | ${ratio(d, r)} | ${ratio(p, d)} |\n`;
+      md += `| ${op} | ${cell(r)} | ${cell(d)} | ${cell(p)} | ${ratio(d, r)} | ${ratio(p, d)} |\n`;
     }
     md += `\n`;
   }
@@ -743,7 +767,7 @@ async function runStormsSuite(browser) {
         if (errors.length) {
           console.warn(`[storms] page errors (${mode}):`, errors.slice(0, 3));
         }
-        for (const s of samples) console.log(`[storms]   ${s.op}: ${s.ms.toFixed(1)}ms`);
+        for (const s of samples) console.log(`[storms]   ${s.op}: ${s.dnf ? 'DNF' : s.ms.toFixed(1) + 'ms'}`);
         loads[mode].push({ samples });
       }
     }
@@ -827,12 +851,20 @@ function stats(values) {
 
 function aggregate(loads) {
   const byOp = {};
+  const dnfByOp = {};
   for (const load of loads) {
-    for (const s of load.samples) (byOp[s.op] ??= []).push(s.ms);
+    for (const s of load.samples) {
+      if (s.dnf) dnfByOp[s.op] = (dnfByOp[s.op] ?? 0) + 1;
+      else (byOp[s.op] ??= []).push(s.ms);
+    }
   }
-  return Object.fromEntries(
+  const out = Object.fromEntries(
     Object.entries(byOp).map(([op, arr]) => [op, stats(arr)]),
   );
+  for (const [op, n] of Object.entries(dnfByOp)) {
+    out[op] = { ...(out[op] ?? {}), dnf: n };
+  }
+  return out;
 }
 
 /**
