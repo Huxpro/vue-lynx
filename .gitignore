@@ -1,6 +1,7 @@
 node_modules/
 dist/
-.rslib/
+dist-naive/
+dist-compiler/
 *.tsbuildinfo
 .rspeedy/
 packages/upstream-tests/core/
