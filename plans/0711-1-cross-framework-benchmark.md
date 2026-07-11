@@ -182,3 +182,48 @@ Readings:
   vapor 27 ms) are frame-phase alignment noise — completion lands in
   either the same rAF or the next for ops this small; only the storm
   totals rank sub-frame ops meaningfully.
+
+## Round 3: is the React app under-optimized? (naive / manual hooks / React Compiler)
+
+Fair challenge — answered by measuring all three optimization levels
+(`--modes react,react-naive,react-compiler`, results
+`results/cross-storms-react-variants.{json,md}`):
+
+- **react** (the variant used in every round above) was ALREADY the
+  hand-optimized one: `memo()`'d Row component + `useCallback` on every
+  handler — the keyed react-hooks reference implementation.
+- **react-naive**: same semantics, no memo / no useCallback.
+- **react-compiler**: the naive source auto-memoized by
+  `babel-plugin-react-compiler` 1.0 (`target: '18'`, using the
+  `react-compiler-runtime` polyfill with `react` aliased to
+  `@lynx-js/react`; `_c()` memo caches verified present in the bundle).
+  ReactLynx 0.122 itself has no `react/compiler-runtime` export.
+
+Storm results (median; hooks column reproduces Round 2's react within noise):
+
+| scenario | react (hooks) | react-naive | react-compiler |
+|---|---|---|---|
+| update storm ×50 @1k | 31.8 s | 60.0 s | 63.9 s |
+| select storm ×30 @1k | 39.5 s | 94.6 s | 95.0 s |
+| update10th one-shot @10k | 1.91 s | 3.73 s | 2.98 s |
+| select one-shot @10k | 5.20 s | 11.3 s | 10.3 s |
+| storms @10k | DNF (>240 s) | DNF | DNF |
+
+Readings:
+
+1. **Manual optimization matters on ReactLynx**: naive is 1.5–2.4× slower
+   than the hand-optimized app (select storm 94.6 s vs 39.5 s).
+2. **React Compiler does NOT substitute for manual memo on ReactLynx**:
+   compiler ≈ naive across the board (sometimes slightly worse — memo-cache
+   bookkeeping overhead without the payoff). Consistent explanation:
+   React Compiler's win comes from preserving JSX element identity so the
+   reconciler bails out of unchanged subtrees; it does not wrap child
+   components in `memo()`. ReactLynx's preact-based reconciler apparently
+   lacks (or doesn't benefit from) the element-reference bailout for this
+   shape, so compiler-level memoization inside `App` doesn't prune the
+   1k/10k `Row` re-renders the way explicit `memo(Row)` does.
+3. **The framework comparison above is therefore already React's best
+   case**: every headline number in Rounds 1–2 used the hand-optimized
+   variant, and the superlinear degradation + storm DNFs persist across
+   all three optimization levels — it's runtime behavior, not app-code
+   quality.
