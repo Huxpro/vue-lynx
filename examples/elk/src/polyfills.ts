@@ -65,6 +65,12 @@ if (typeof g.AbortSignal !== 'function' || typeof g.AbortSignal.any !== 'functio
     }
 
     static any(signals: LynxAbortSignal[]) {
+      // Spec deviation: masto calls AbortSignal.any(signals) on every
+      // request even when `signals` is empty. Returning undefined keeps
+      // polyfill signal objects out of the native fetch's RequestInit,
+      // whose signal handling is an unknown quantity.
+      if (!signals || signals.length === 0)
+        return undefined as unknown as LynxAbortSignal;
       const combined = new LynxAbortSignal();
       for (const signal of signals) {
         if (signal.aborted) {
@@ -243,6 +249,12 @@ if (typeof g.URL !== 'function') {
 
     get href() {
       return `${this.origin}${this.pathname}${this._search}${this.hash}`;
+    }
+
+    /** Non-standard: native Request implementations may duck-type
+     * non-string inputs as Request-like objects and read `.url`. */
+    get url() {
+      return this.href;
     }
 
     toString() {
