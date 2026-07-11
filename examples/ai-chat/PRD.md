@@ -142,13 +142,13 @@ Legend: **Port** = same behavior re-implemented • **Adapt** = same intent, Lyn
 | F9.3 | Turso/Vercel Blob production drivers | Hosting concerns; example server is local |
 | F9.4 | OpenAPI route meta (`nitro.experimental.openAPI`) | Nitro-specific nicety |
 
-## Verification plan
+## Verification plan — executed ✅
 
-1. `pnpm dev:server` (mock mode) + `pnpm dev` → Lynx for Web bundle in Chromium via Playwright.
-2. Screenshot each surface: home (light/dark), chat streaming, markdown/code response, weather card, chart card, sources, sidebar (open/collapsed), search overlay, modals (rename/delete/share), user menu, empty/error states.
-3. Capture the same surfaces from the original template running locally (mocked AI seed data where needed for determinism).
-4. Side-by-side comparison sheet checked into `examples/ai-chat/screenshots/` with a `COMPARISON.md`.
+1. `pnpm dev:server` (mock mode) + `pnpm dev` → Lynx for Web bundle driven headlessly in Chromium (Playwright).
+2. **Original captured from the live demo** (chat-template.nuxt.dev, real Nuxt app + real models), driven through a curl-backed request bridge (the sandbox's proxy resets Chromium's CONNECT).
+3. Ten side-by-side pairs checked into [`screenshots/`](./screenshots/COMPARISON.md): home light/dark, weather tool, chart, markdown+code, search palette, web-search sources, share modal, model select, collapsed sidebar.
+4. Additionally verified on Lynx for Web (not paired): login/session flows, attachments (picker → chip → message thumbnail → lightbox), votes (active state + persistence), rename modal, delete confirm + toast, message edit, theme picker application (primary/neutral swatches re-theme the app at runtime), stop/reload prompt states, 404 view.
 
 ## Loop cadence
 
-Every loop: implement → verify on Lynx for Web → update Status boxes here → update PORTING.md → commit to `claude/nuxt-chat-template-lynx-port-phig8v`.
+Every loop: implement → verify on Lynx for Web → update Status boxes here → update PORTING.md → commit to `claude/nuxt-chat-template-lynx-port-phig8v`. Final state: **65 features ported/adapted, 10 explicitly skipped with reasons** (see tables above).
