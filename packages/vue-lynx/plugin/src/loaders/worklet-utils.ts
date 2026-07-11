@@ -121,13 +121,25 @@ export function stripSharedImportAttributes(code: string): string {
  * passes through mostly untouched (script + template are needed to render
  * the first frame), but CSS is already extracted from the background layer —
  * processing style sub-modules again on the MT layer would duplicate it.
+ *
+ * CSS-Modules styles (`<style module>`) bind a default import that the
+ * connector references (`cssModules["$style"] = style0`); dropping the
+ * import must therefore leave a placeholder binding. The main-thread first
+ * frame renders CSS-Modules class names as undefined and hydration patches
+ * the real hashed names in — a known IFR limitation until the modules
+ * mapping is routed to the MT layer.
  */
 export function stripStyleImports(code: string): string {
   return code
     .split('\n')
-    .filter(
-      (line) => !(/^\s*import\b/.test(line) && line.includes('type=style')),
-    )
+    .map((line) => {
+      if (!(/^\s*import\b/.test(line) && line.includes('type=style'))) {
+        return line;
+      }
+      const bound = line.match(/^\s*import\s+(\w+)\s+from\b/);
+      return bound ? `const ${bound[1]} = {};` : null;
+    })
+    .filter((line) => line !== null)
     .join('\n');
 }
 

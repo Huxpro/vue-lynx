@@ -237,6 +237,26 @@ describe('element-template transform', () => {
     expect((inner as HTMLElement).style.color).toBe('green');
   });
 
+  it('keeps constant numeric :style objects on the normalizeStyle path', () => {
+    // `:style="{ fontSize: 12 }"` is constant-foldable, but baking it would
+    // bypass the runtime's numeric auto-px conversion — it must become a
+    // hole. Output parity with the normal pipeline is the regression check.
+    const template = `
+<view class="wrap">
+  <text :style="{ color: '#555', fontSize: 12 }">fixed</text>
+  <text style="color:red">attr-style stays baked</text>
+</view>`.trim();
+
+    const { lowered, code } = renderBoth(template, () => ({}));
+    expect(code).toContain('__vlx-tpl:');
+    // static string-valued attr style IS baked; the numeric object is not
+    expect(code).toContain('__SetInlineStyles(e2, {"color":"red"})');
+    const fixed = [...lowered.container.querySelectorAll('text')].find(
+      (n) => n.textContent === 'fixed',
+    ) as HTMLElement;
+    expect(fixed.style.fontSize).toBe('12px');
+  });
+
   it('bakes the scoped-CSS cssId into interior skeleton nodes', () => {
     const { code } = compileToComponent(CARD_TEMPLATE, {}, {
       lowered: true,

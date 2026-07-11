@@ -151,6 +151,30 @@ function isBakeableValue(
   );
 }
 
+/**
+ * Style values may only be baked when they are provably normalization-free.
+ *
+ * The runtime routes `style` through `normalizeStyle` (numeric auto-px
+ * conversion, the numeric-`flex` stringify workaround); a baked skeleton
+ * bypasses it. Static `style="…"` attributes compile (via transformStyle)
+ * to strict-JSON objects whose values are all strings — normalization is a
+ * no-op for those, so they bake safely. Anything else (`:style` object
+ * literals are constant-foldable but may carry numerics) becomes a hole and
+ * keeps the exact runtime semantics.
+ */
+function isBakeableStyle(content: string | undefined): boolean {
+  if (!content) return false;
+  try {
+    const parsed: unknown = JSON.parse(content);
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return false;
+    }
+    return Object.values(parsed).every((v) => typeof v === 'string');
+  } catch {
+    return false;
+  }
+}
+
 function printBakedValue(
   value: { isStatic?: boolean; content?: string },
 ): string {
@@ -228,7 +252,9 @@ function analyzeSubtree(
             constType?: number;
             content?: string;
           };
-          if (!key.startsWith('on') && isBakeableValue(value)) {
+          const bakeable = !key.startsWith('on') && isBakeableValue(value)
+            && (key !== 'style' || isBakeableStyle(value.content));
+          if (bakeable) {
             const printed = printBakedValue(value);
             if (key === 'class') {
               lines.push(`__SetClasses(${v}, ${printed});`);
