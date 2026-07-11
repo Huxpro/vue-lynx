@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "prepare-examples": "node scripts/prepare-examples.mjs",
-    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts",
+    "prepare:docs": "pnpm prepare-examples && pnpm prepare-benchmark && tsx scripts/generate-api.ts",
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
     "preview": "rspress preview",
-    "validate:ai-chat-media": "node scripts/validate-ai-chat-media.mjs"
+    "prepare-benchmark": "node scripts/prepare-benchmark.mjs"
   },
   "dependencies": {
     "@douyinfe/semi-icons": "^2.74.0",

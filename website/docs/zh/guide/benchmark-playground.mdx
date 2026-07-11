@@ -1,0 +1,86 @@
+# Playground：React vs Vue on Lynx
+
+我们[基准测试](/zh/guide/benchmark-vapor)里的每一个数字都来自跑在
+Lynx for Web 上的应用——这意味着同样的应用可以直接嵌在这个页面里,
+在你的手机上运行。选择一个配置,亲手点按 harness 所点击的同一批按钮,
+自己感受差异。右上角的徽标显示你最近一次点按的 **tap → DOM settled**
+耗时(点按后最后一次 DOM 变更的时刻,以变更静默为准)。
+
+<BenchPlayground />
+
+**建议试玩**(值得亲手感受的差异):
+
+1. 先 **Create 10,000 rows**,再点 **Select storm**(30 次选中移动)——
+   Vue Vapor 约 0.1 秒完成,Vue VDOM 约 0.7 秒,React 需要数分钟。
+2. 在 10,000 行上点 **Update storm**(50 轮全表更新)——
+   Vapor 约 0.8 秒 vs VDOM 约 1.4 秒。
+3. 切到任一 React 配置,连续重复几次操作——注意每次重复都在变慢
+   (持续会话退化);Vue 全程平稳。切换配置会重新加载全新应用。
+
+:::warning
+React 在 10,000 行上的风暴可能需要**数分钟**(在我们的 harness 里会触
+达 240 秒超时)。这是测得的结果,不是页面的 bug——风暴进行中可以直接
+切换配置,不必等待。
+:::
+
+## 结果速览
+
+同一份数据的 [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)
+风格表格——每次点按的中位延迟,以及相对行内最优的减速系数
+(<a href="/benchmark/table.html" target="_blank" rel="noreferrer">打开完整页面 ↗</a>):
+
+<iframe
+  src="/benchmark/table.html"
+  title="Lynx framework benchmark results"
+  style={{ width: '100%', height: '920px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
+  loading="lazy"
+/>
+
+## 与 js-framework-benchmark 有何不同
+
+我们刻意沿用了 krausest 的**操作集**(对 1k–10k 行执行 create/update/
+select/swap/remove/append/clear,keyed 实现,各框架使用惯用状态管理)——
+但有三点根本不同:
+
+1. **被测运行时是 Lynx 的双线程管线**,而不是浏览器的单线程 DOM。框架
+   跑在后台 worker 里;变更以 ops 形式跨序列化边界,由主线程应用。这里
+   的延迟是*点击 → composed DOM 终态*(逐动画帧轮询观测),不是 devtools
+   的 paint tracing。分辨率因此是一帧(~17ms)——所以表格只对跨多帧的
+   场景排名。
+2. **持续会话维度。** krausest 每项基准都在新页面上测、并丢弃 warmup,
+   因此随会话退化的框架永远不会暴露。我们两者都测:冷启动单发(每个样
+   本全新应用)*和*持续场景——外加**风暴**(一次点按 = 50 轮连续更新或
+   30 次选中移动,吞吐量度量,把亚帧级的每 tick 成本放大到帧地板之上)
+   与作为一等结果记录的 **DNF**。
+3. **框架范围。** krausest 在 DOM 上比较数十个 Web 框架;我们比较的是
+   今天构建 Lynx 应用的三种方式——ReactLynx、Vue Lynx VDOM、Vue Lynx
+   Vapor——在它们真正面向的运行时上。
+
+## React 和 Vue 应该差这么多吗?
+
+**不应该——在 Web 上它们也确实没差这么多。** 在 js-framework-benchmark
+上,keyed `react-hooks` 与 `vue` 的差距大致在 1.5× 以内。凡是退化无法
+起作用的地方,我们的数字与之一致:**全新应用**上,三种配置的列表创建
+完全持平(create 10k 各约 1.5 秒),冷更新路径操作也只差约 1.5–2×。
+
+数秒级的差距和 DNF 来自一个具体行为:**ReactLynx 0.122 的 web 运行时
+随操作累积而逐操作变慢**(超线性退化),在快速连续更新下复利式恶化。
+Vue Lynx(两种模式)全程保持本征成本——部分原因是第一轮基准就抓出并
+修掉了 vue-lynx 自己的同类 bug(主线程元素注册表泄漏)。
+
+我们也验证过这不是 React 应用写得差:默认配置本就是手工优化的 keyed
+实现(`memo` 行组件 + `useCallback`),另测了朴素变体(慢 1.5–2.4×)
+和 [React Compiler](https://react.dev/learn/react-compiler) 变体
+(在 ReactLynx 的 preact 系 reconciler 上 ≈ 朴素版——编译期 memo 无法
+像显式 `memo()` 那样剪掉子组件重渲染)。上面的 playground 三种都能玩。
+
+## 复现
+
+```bash
+pnpm --filter vue-lynx-benchmark bench:cross    # 基础套件(首屏、内存、持续操作)
+pnpm --filter vue-lynx-benchmark bench:storms   # 更新密集场景
+```
+
+原始数据与分析:[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)、
+`plans/0711-1-cross-framework-benchmark.md`。注意:harness 为 Chromium
+中的 Lynx for Web 而非真机;Vue 3.6 为 prerelease;ReactLynx 0.122.1。
