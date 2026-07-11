@@ -152,7 +152,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 | Reference build of upstream ReactLynx demos | ✅ | standalone rspeedy app building the **same lynx-stack checkout sources** that were ported (npm 0.0.6 is older than the checkout) |
 | Vue examples web build | ✅ | `examples/genui` `.web.bundle`s |
 | Playwright screenshot harness (`lynx-view` embedding) | ✅ | `@lynx-js/web-core` lynx-view page + pixelmatch diffing; same payload driven into both bundles via `globalProps` |
-| Side-by-side comparisons per demo | ⬜ | artifacts kept under `plans/genui-screenshots/` (not committed) or artifact page |
+| Side-by-side comparisons per demo | ✅ | full matrix run 2026-07-11: **47 static demos** (43 A2UI + 4 OpenUI) — 45 at 0.00% pixel diff, worst 0.17% (`advanced-form-validator`, text antialiasing on validation copy) and 0.08% (`login-form`); **15/15 extended OpenUI playground scenarios** at 0.00% (incl. `Query()`/`Mutation()` runtime hydrated from a mock tool provider); **4/4 tap-interaction cases** ≤ 0.17% after driving identical tap sequences into both bundles. Report with tables + side-by-side screenshots published as a session artifact (screenshots not committed to the repo). |
 
 ## ❌ Not ported (with reasons)
 

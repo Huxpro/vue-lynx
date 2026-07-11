@@ -13,7 +13,8 @@
     "lint": "biome check .",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm build && pnpm --filter create-vue-lynx run build && pnpm build:examples:publishable && changeset publish"
+    "release": "pnpm build && pnpm --filter create-vue-lynx run build && pnpm build:examples:publishable && changeset publish",
+    "test:genui": "pnpm --filter vue-lynx-genui run test"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
