@@ -1,10 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
     "noEmit": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    // The app is bundled by rspack — extensionless relative imports are
+    // resolved by the bundler, not node16 ESM rules.
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
   },
-  "include": ["src", "lynx.config.ts"]
+  "include": ["src"]
 }
