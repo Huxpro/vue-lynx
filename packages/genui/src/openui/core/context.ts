@@ -1,0 +1,214 @@
+// Copyright 2026 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+import type {
+  ActionPlan,
+  EvaluationContext,
+  Library,
+  OpenUIError,
+  Store,
+} from '@openuidev/lang-core';
+
+import { inject, provide, watchEffect } from '@vue/runtime-core';
+import type { InjectionKey, VNodeChild } from '@vue/runtime-core';
+
+/**
+ * Runtime context shared by OpenUI renderers, composables, actions, and
+ * form fields. Provided by `OpenUiRenderer` with live getters, so property
+ * reads inside render functions stay reactive.
+ */
+export interface OpenUIContextValue {
+  /** The active component library (schema + renderers). */
+  library: Library;
+
+  /**
+   * Render any value (element, array, primitive) into Vue nodes.
+   */
+  renderNode: (value: unknown) => VNodeChild;
+
+  /**
+   * Trigger an action. Accepts either:
+   * - ActionPlan (v0.5): runs steps sequentially (Run, Set, ToAssistant, OpenUrl)
+   * - Legacy action config (v0.1): object with optional type and params.
+   * - Nothing: fires ContinueConversation with the label
+   */
+  triggerAction: (
+    userMessage: string,
+    formName?: string,
+    // biome-ignore lint/suspicious/noExplicitAny: form values are dynamically typed
+    action?: ActionPlan | {
+      type?: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      params?: Record<string, any>;
+      url?: string;
+      context?: string;
+    },
+  ) => void | Promise<void>;
+
+  /** Whether the LLM is currently streaming content. */
+  isStreaming: boolean;
+
+  /** Whether any Query is currently fetching data. */
+  isQueryLoading: boolean;
+
+  /** Get a field value. Top-level for $bindings, nested under formName for form fields. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getFieldValue: (formName: string | undefined, name: string) => any;
+
+  /**
+   * Set a form field value.
+   *
+   * @param formName - The form's name prop.
+   * @param componentType - The component type (e.g. "Input", "Select").
+   * @param name - The field's name prop.
+   * @param value - The new value.
+   * @param shouldTriggerSaveCallback - When true, persists state via onStateUpdate.
+   *   Text inputs should pass `false` on change and `true` on blur.
+   *   Discrete inputs (Select, RadioGroup, etc.) should always pass `true`.
+   */
+  setFieldValue: (
+    formName: string | undefined,
+    componentType: string | undefined,
+    name: string,
+    value: unknown,
+    shouldTriggerSaveCallback?: boolean,
+  ) => void;
+
+  /** Reactive binding store for $variables and form data. */
+  store: Store;
+
+  /** AST evaluation context used by runtime expression evaluation. */
+  evaluationContext: EvaluationContext;
+
+  /** Report a structured error (used internally by error boundary). */
+  reportError?: (error: OpenUIError) => void;
+}
+
+export const OpenUIContextKey: InjectionKey<OpenUIContextValue> = Symbol(
+  'openui-context',
+);
+
+/**
+ * Provide the OpenUI context to a renderer subtree.
+ *
+ * @internal
+ */
+export function provideOpenUIContext(value: OpenUIContextValue): void {
+  provide(OpenUIContextKey, value);
+}
+
+/**
+ * Access the full OpenUI context. Throws if used outside an
+ * `OpenUiRenderer` tree.
+ */
+export function useOpenUI(): OpenUIContextValue {
+  const ctx = inject(OpenUIContextKey, null);
+  if (!ctx) {
+    throw new Error('useOpenUI must be used within a <Renderer /> component.');
+  }
+  return ctx;
+}
+
+/**
+ * Get the renderNode function for rendering nested component values.
+ */
+export function useRenderNode(): (value: unknown) => VNodeChild {
+  return useOpenUI().renderNode;
+}
+
+/**
+ * Get the triggerAction function for firing structured action events.
+ */
+export function useTriggerAction(): OpenUIContextValue['triggerAction'] {
+  return useOpenUI().triggerAction;
+}
+
+/**
+ * Whether the LLM is currently streaming content. Read at call time — for
+ * reactive reads inside render functions, access `useOpenUI().isStreaming`
+ * directly (the context exposes live getters).
+ */
+export function useIsStreaming(): boolean {
+  return useOpenUI().isStreaming;
+}
+
+/**
+ * Whether any Query is currently fetching data.
+ */
+export function useIsQueryLoading(): boolean {
+  return useOpenUI().isQueryLoading;
+}
+
+/**
+ * Get a form field value from the form state context.
+ */
+export function useGetFieldValue(): OpenUIContextValue['getFieldValue'] {
+  return useOpenUI().getFieldValue;
+}
+
+/**
+ * Get the setFieldValue function for updating form field values.
+ */
+export function useSetFieldValue(): OpenUIContextValue['setFieldValue'] {
+  return useOpenUI().setFieldValue;
+}
+
+// ─── FormName context ───
+
+export const FormNameKey: InjectionKey<string | undefined> = Symbol(
+  'openui-form-name',
+);
+
+/**
+ * Get the current form name (set by the nearest parent Form component).
+ * Returns undefined if not inside a Form.
+ */
+export function useFormName(): string | undefined {
+  return inject(FormNameKey, undefined);
+}
+
+// ─── Default value helper ───
+
+/**
+ * Persists a component's default/initial value into form state once
+ * streaming finishes — but only if the user hasn't already set a value.
+ *
+ * Call this inside any stateful form component's setup that has a
+ * `defaultValue` or `defaultChecked` prop. It is a no-op during streaming
+ * so that LLM prop changes don't fight with partial state.
+ *
+ * @param shouldTriggerSaveCallback - Defaults to `false` (only local state, no message persistence).
+ */
+export function useSetDefaultValue(options: {
+  formName?: () => string | undefined;
+  componentType?: string;
+  name: () => string;
+  existingValue: () => unknown;
+  defaultValue: () => unknown;
+  shouldTriggerSaveCallback?: boolean;
+}): void {
+  const {
+    formName,
+    componentType,
+    name,
+    existingValue,
+    defaultValue,
+    shouldTriggerSaveCallback = false,
+  } = options;
+  const ctx = useOpenUI();
+
+  watchEffect(() => {
+    const isStreaming = ctx.isStreaming;
+    const existing = existingValue();
+    const fallback = defaultValue();
+    if (!isStreaming && existing === undefined && fallback !== undefined) {
+      ctx.setFieldValue(
+        formName?.(),
+        componentType,
+        name(),
+        fallback,
+        shouldTriggerSaveCallback,
+      );
+    }
+  });
+}

@@ -90,7 +90,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 
 | Module | Status | Notes |
 | ------ | ------ | ----- |
-| `buildA2UISystemPrompt` etc. | ⬜ | framework-agnostic, copy |
+| `buildA2UISystemPrompt` etc. | ✅ | copied verbatim (incl. `server/agent/a2ui-*` prompt/catalog/example modules it depends on) as `src/a2ui-prompt` |
 
 ## OpenUI
 
@@ -98,35 +98,35 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 
 | Module                | Status | Notes |
 | --------------------- | ------ | ----- |
-| `library.tsx`         | ⬜     | `ComponentRenderer` = Vue component type |
-| `context.tsx`         | ⬜     | provide/inject + composables |
-| `renderer.tsx`        | ⬜     | `OpenUiRenderer` (runtime + parsed modes), `renderDeep` |
-| `hooks/useOpenUIState.ts` | ⬜ | central state composable |
-| `hooks/useFormValidation.ts` | ⬜ | |
-| `hooks/useStateField.ts` | ⬜  | |
-| `runtime/reactive.ts` | ⬜     | framework-agnostic (zod marking), verbatim |
-| `utils.ts`            | ⬜     | verbatim |
-| `openui-prompt/`      | ⬜     | framework-agnostic, verbatim |
-| `renderer.css` + `styles/**` | ⬜ | copy verbatim |
+| `library.tsx`         | ✅     | `ComponentRenderer` = Vue component type |
+| `context.tsx`         | ✅     | provide/inject + composables |
+| `renderer.tsx`        | ✅     | `OpenUiRenderer` (runtime + parsed modes), `renderDeep` |
+| `hooks/useOpenUIState.ts` | ✅ | central state composable |
+| `hooks/useFormValidation.ts` | ✅ | |
+| `hooks/useStateField.ts` | ✅  | |
+| `runtime/reactive.ts` | ✅     | framework-agnostic (zod marking), verbatim |
+| `utils.ts`            | ✅     | verbatim |
+| `openui-prompt/`      | ✅     | framework-agnostic, verbatim |
+| `renderer.css` + `styles/**` | ✅ | copied verbatim to `packages/genui/styles/openui` |
 
 ### Catalog components (`openui/src/catalog` → `src/openui/catalog`)
 
 | Component    | Status | Component    | Status |
 | ------------ | ------ | ------------ | ------ |
-| Action       | ⬜     | List         | ⬜     |
-| AudioPlayer  | ⬜     | Loading      | ⬜     |
-| Button       | ⬜     | Modal        | ⬜     |
-| Card         | ⬜     | RadioGroup   | ⬜     |
-| CardHeader   | ⬜     | Row          | ⬜     |
-| CheckBox     | ⬜     | Separator    | ⬜     |
-| ChoicePicker | ⬜     | Slider       | ⬜     |
-| Column       | ⬜     | Stack        | ⬜     |
-| DateTimeInput| ⬜     | Tabs         | ⬜     |
-| Divider      | ⬜     | Tag          | ⬜     |
-| Icon         | ⬜     | Text         | ⬜     |
-| Image        | ⬜     | TextContent  | ⬜     |
-|              |        | TextField    | ⬜     |
-|              |        | Video        | ⬜     |
+| Action       | ✅     | List         | ✅     |
+| AudioPlayer  | ✅     | Loading      | ✅     |
+| Button       | ✅     | Modal        | ✅     |
+| Card         | ✅     | RadioGroup   | ✅     |
+| CardHeader   | ✅     | Row          | ✅     |
+| CheckBox     | ✅     | Separator    | ✅     |
+| ChoicePicker | ✅     | Slider       | ✅     |
+| Column       | ✅     | Stack        | ✅     |
+| DateTimeInput| ✅     | Tabs         | ✅     |
+| Divider      | ✅     | Tag          | ✅     |
+| Icon         | ✅     | Text         | ✅     |
+| Image        | ✅     | TextContent  | ✅     |
+| (+ Buttons)  | ✅     | TextField    | ✅     |
+|              |        | Video        | ✅     |
 
 ## Examples (upstream `playground/lynx-src` → `examples/genui`)
 
@@ -141,9 +141,9 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 
 | Suite | Status |
 | ----- | ------ |
-| store: messageStore / processor / payloadNormalizer / resolveDynamic / functionRegistry / executeFunctionCall / createResource / basicFunctions / defineCatalogFunctions | ⬜ |
-| components: catalog / choicePicker / dateTimeInput / slider / textField / formContext / useDataBinding / snapshot | ⬜ |
-| openui: `playground/src/catalog/openui.test.ts` | ⬜ |
+| store: messageStore / processor / payloadNormalizer / resolveDynamic / functionRegistry / executeFunctionCall / createResource / basicFunctions / defineCatalogFunctions | ✅ 129 tests pass (`pnpm test:unit`) |
+| components: catalog / choicePicker / dateTimeInput / slider / textField / formContext / useDataBinding / snapshot | ✅ included in the 129 |
+| openui: library creation + parse + full dual-thread render tests (`pnpm test:dom`, 9 tests: A2UI surface render/update/actions, OpenUI static/streaming/$state/actions) | ✅ |
 
 ## Verification (Lynx for Web screenshot comparison)
 

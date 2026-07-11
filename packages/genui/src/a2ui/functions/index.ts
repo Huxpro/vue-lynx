@@ -25,6 +25,30 @@ import type {
 const BASIC_CATALOG_ID =
   'https://a2ui.org/specification/v0_9/basic_catalog.json';
 
+/**
+ * `@a2ui/web_core` duck-types signals as `{ value, peek }`. The Vue port's
+ * `resolveSignal` hands back Vue refs (no `peek`), so wrap them in a
+ * signal-shaped shim — reads still go through the live ref, keeping Vue
+ * dependency tracking intact when upstream impls read `.value`.
+ */
+function toSignalShim(ref: unknown): unknown {
+  if (
+    !ref || typeof ref !== 'object' || !('value' in ref)
+    || 'peek' in ref
+  ) {
+    return ref;
+  }
+  const source = ref as { value: unknown };
+  return {
+    get value() {
+      return source.value;
+    },
+    peek() {
+      return source.value;
+    },
+  };
+}
+
 function createUpstreamContext(
   context: FunctionCallContext | undefined,
 ): DataContext {
@@ -33,7 +57,7 @@ function createUpstreamContext(
       return context?.resolveDynamicValue(value);
     },
     resolveSignal(value: unknown) {
-      return context?.resolveSignal(value);
+      return toSignalShim(context?.resolveSignal(value));
     },
     set(path: string, value: unknown) {
       context?.set(path, value);
