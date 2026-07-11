@@ -81,6 +81,14 @@ export function App() {
     setRows(buildData(5000));
     setSelected(undefined);
   }, []);
+  const run20k = useCallback(() => {
+    setRows(buildData(20000));
+    setSelected(undefined);
+  }, []);
+  const run30k = useCallback(() => {
+    setRows(buildData(30000));
+    setSelected(undefined);
+  }, []);
   const add = useCallback(() => {
     setRows((prev) => prev.concat(buildData(1000)));
   }, []);
@@ -152,6 +160,12 @@ export function App() {
         </view>
         <view className="btn" bindtap={runLots}>
           <text className="btn-text">Create 10,000 rows</text>
+        </view>
+        <view className="btn" bindtap={run20k}>
+          <text className="btn-text">Create 20,000 rows</text>
+        </view>
+        <view className="btn" bindtap={run30k}>
+          <text className="btn-text">Create 30,000 rows</text>
         </view>
         <view className="btn" bindtap={add}>
           <text className="btn-text">Append 1,000 rows</text>

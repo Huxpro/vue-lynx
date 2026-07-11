@@ -111,18 +111,29 @@ manual `memo` remains necessary. The playground above lets you feel all
 three.
 
 Where Vue genuinely leads is sustained update throughput — and Vapor
-compounds it: **~6× faster than VDOM** (and ~20× faster than React) on
-the 10k select storm, because moving a selection costs Vapor two class
-effects while vdom re-diffs the list and React re-runs 10k memo
-comparisons per tick. Conversely, **React holds a real creation edge**
-(~1.2× faster than both Vue modes at every scale) — a Lynx-specific
-inversion of the web pattern (on js-framework-benchmark, Vue creates
-faster), owed to ReactLynx's snapshot system bulk-instantiating static
-structure on the main thread. The scaling curves in the results page
-above plot exactly this trade-off across 1k→10k rows: all five variants
-scale linearly (no cliffs); Vapor sits lowest on both charts with
-creation parity inside the Vue family, while React-vs-Vue is a genuine
-creation-vs-update trade-off.
+compounds it on selection (moving a selection costs Vapor two class
+effects; diff-based renderers pay O(rows) per tick). Conversely,
+**React holds a real creation edge** (~1.2× at every scale up to 30k).
+Since ReactLynx is preact-based, we verified both traits against the
+right web reference by running the **same protocol on plain DOM**
+(`preact-hooks` vs Vue, no Lynx): on the web, preact is *slower* than
+Vue at create and *faster* at sustained updates — both orderings invert
+on Lynx. So these are **adapter traits, not framework traits**:
+ReactLynx's snapshot system bulk-instantiates static structure on the
+main thread (creation win); vue-lynx's per-commit pipeline is leaner
+(sustained-update win).
+
+The scaling curves (now 1k→30k) refine the earlier picture: creation is
+linear for everyone (α≈0.9–1.0), **update storms converge at scale**
+(vapor/vdom per-tick ratio 1.8× @10k → 1.08× @30k — the shared
+main-thread apply dominates and amortizes background-thread advantages;
+react's per-tick is α=1.00 linear and would eventually catch up), while
+**select storms stay structurally separated** (vapor α≈0.9 vs vdom
+α≈1.2; still ~8× apart @30k — O(1)-rows work per tick can't be
+amortized). And the pipeline-tax table shows a dual-thread dividend:
+Vue's update storms run **~2× faster on Lynx than the same framework on
+plain DOM** (BG renders tick N+1 while MT applies tick N), at the price
+of 2–4× on creation.
 
 ## Reproduce
 

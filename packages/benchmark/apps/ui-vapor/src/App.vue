@@ -33,6 +33,14 @@ function run5k() {
   rows.value = buildData(5000)
   selected.value = undefined
 }
+function run20k() {
+  rows.value = buildData(20000)
+  selected.value = undefined
+}
+function run30k() {
+  rows.value = buildData(30000)
+  selected.value = undefined
+}
 function add() {
   rows.value.push(...buildData(1000))
   triggerRef(rows)
@@ -124,6 +132,8 @@ function stormSelect() {
       <view class="btn" @tap="run3k()"><text class="btn-text">Create 3,000 rows</text></view>
       <view class="btn" @tap="run5k()"><text class="btn-text">Create 5,000 rows</text></view>
       <view class="btn" @tap="runLots()"><text class="btn-text">Create 10,000 rows</text></view>
+      <view class="btn" @tap="run20k()"><text class="btn-text">Create 20,000 rows</text></view>
+      <view class="btn" @tap="run30k()"><text class="btn-text">Create 30,000 rows</text></view>
       <view class="btn" @tap="add()"><text class="btn-text">Append 1,000 rows</text></view>
       <view class="btn" @tap="update()"><text class="btn-text">Update every 10th row</text></view>
       <view class="btn" @tap="swapRows()"><text class="btn-text">Swap Rows</text></view>
