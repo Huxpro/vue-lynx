@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="/core/static/css/client.css" />
+  <link rel="stylesheet" href="/elements/index.css" />
+  <script type="importmap">
+    { "imports": { "tslib": "/tslib.mjs" } }
+  </script>
+  <style>
+    body { margin: 0; }
+    lynx-view { display: block; width: 390px; height: 844px; }
+  </style>
+</head>
+<body>
+  <!-- web-core's prod client bundles the Lynx custom elements itself -->
+  <script type="module" src="/core/static/js/client.js"></script>
+  <script type="module">
+    // Measurement: time from <lynx-view> insertion to first painted content.
+    // Content probe counts rendered Lynx elements anywhere under the view
+    // (piercing open shadow roots).
+    const params = new URLSearchParams(location.search);
+    const bundle = params.get('bundle');
+
+    function countContent(root) {
+      let n = 0;
+      const walk = (node) => {
+        if (!node) return;
+        if (node.shadowRoot) walk(node.shadowRoot);
+        const kids = node.children ?? [];
+        for (const c of kids) {
+          const tag = c.tagName?.toLowerCase() ?? '';
+          if (tag.startsWith('x-') || tag === 'image' || tag === 'view' || tag === 'text') n++;
+          walk(c);
+        }
+      };
+      walk(root);
+      return n;
+    }
+
+    await customElements.whenDefined('lynx-view');
+    const view = document.createElement('lynx-view');
+    view.setAttribute('url', '/bundles/' + bundle);
+    view.setAttribute('height', 'auto');
+
+    window.__samples = [];
+    const t0 = performance.now();
+    document.body.appendChild(view);
+
+    const CONTENT_THRESHOLD = 5;
+    let settledCount = -1;
+    let settleTimer = null;
+
+    const tick = () => {
+      const n = countContent(view);
+      if (window.__fcp === undefined && n >= CONTENT_THRESHOLD) {
+        window.__fcp = performance.now() - t0;
+      }
+      if (n !== settledCount) {
+        settledCount = n;
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+          window.__settled = performance.now() - t0 - 400;
+          window.__finalCount = settledCount;
+        }, 400);
+      }
+      if (window.__settled === undefined) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    setTimeout(() => {
+      if (window.__fcp === undefined) window.__fcp = -1;
+      if (window.__settled === undefined) {
+        window.__settled = -1;
+        window.__finalCount = settledCount;
+      }
+    }, 20000);
+  </script>
+</body>
+</html>

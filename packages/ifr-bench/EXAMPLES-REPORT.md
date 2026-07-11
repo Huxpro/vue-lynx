@@ -18,6 +18,14 @@ tailwindcss/todomvc-day1) — their protocol/mount win is partially masked here
 because these example first screens are small; see `REPORT.md` for the
 1000-node synthetic scaling where the gap is 7–15×.
 
+> **Update — hypothesis verified**: see [VERIFICATION.md](./VERIFICATION.md).
+> ReactLynx in the same single-process harness also shows a flat FCP
+> (±4%) and the same TTI regression; in a **real browser** (Lynx for Web,
+> genuine worker + IPC) the IFR win appears for both frameworks:
+> Vue −22%/−16% FCP (hello-world/gallery), ReactLynx −31% — and the
+> big-bundle/skeleton-first hackernews case inverts (+19%), confirming the
+> profile guidance below.
+
 ## Per-shape findings
 
 - **Content-first screens** (hello-world, hackernews skeleton, gallery,

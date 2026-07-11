@@ -14,5 +14,8 @@
     "@vue/runtime-core": "^3.5.0",
     "jsdom": "^26.0.0",
     "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.61.1"
   }
 }
