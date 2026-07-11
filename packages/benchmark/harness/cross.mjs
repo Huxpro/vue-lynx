@@ -675,6 +675,8 @@ const STORM_TIMEOUT_MS = 240000;
 
 const STORM_SIZES = {
   '1k': { button: 'Create 1,000 rows', rows: 1000 },
+  '3k': { button: 'Create 3,000 rows', rows: 3000 },
+  '5k': { button: 'Create 5,000 rows', rows: 5000 },
   '10k': { button: 'Create 10,000 rows', rows: 10000 },
 };
 
@@ -687,8 +689,10 @@ async function runStormRep(browser, mode, sizeKey) {
 
   try {
     await driver.settle();
-    await driver.clickButton(size.button);
-    await driver.until({ type: 'rowCount', value: size.rows });
+    record(
+      'create',
+      await driver.measureButton(size.button, { type: 'rowCount', value: size.rows }),
+    );
     await driver.settle();
 
     // one-shot update10th ×3
@@ -792,7 +796,7 @@ function stormMarkdownReport(result) {
       const base = `${fmt(s.median)} ±${fmt(s.ci95)}`;
       return s.dnf ? `${base} (+${s.dnf} DNF)` : base;
     };
-    for (const op of ['update10th', 'select', 'updateStorm', 'selectStorm']) {
+    for (const op of ['create', 'update10th', 'select', 'updateStorm', 'selectStorm']) {
       const key = `${op}@${sizeKey}`;
       md += `| ${op} | ${MODES.map((m) => cell(perOp[m]?.[key])).join(' | ')} |\n`;
     }
