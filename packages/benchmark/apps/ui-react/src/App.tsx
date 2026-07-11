@@ -28,6 +28,18 @@ function nextMacrotask(cb: () => void) {
   _stormChannel.port2.postMessage(0);
 }
 
+// Module-scope storm driver — mirrors AppNaive.tsx (the tick counter must not
+// be a mutated binding captured inside the component; see note there).
+function runStorm(ticks: number, step: (t: number) => void) {
+  let t = 0;
+  const tick = () => {
+    t += 1;
+    step(t);
+    if (t < ticks) nextMacrotask(tick);
+  };
+  nextMacrotask(tick);
+}
+
 interface RowProps {
   row: RowData;
   isSelected: boolean;
@@ -59,6 +71,14 @@ export function App() {
   }, []);
   const runLots = useCallback(() => {
     setRows(buildData(10000));
+    setSelected(undefined);
+  }, []);
+  const run3k = useCallback(() => {
+    setRows(buildData(3000));
+    setSelected(undefined);
+  }, []);
+  const run5k = useCallback(() => {
+    setRows(buildData(5000));
     setSelected(undefined);
   }, []);
   const add = useCallback(() => {
@@ -103,26 +123,18 @@ export function App() {
   }, [rows]);
 
   const stormUpdate = useCallback(() => {
-    let t = 0;
-    const step = () => {
-      t++;
+    runStorm(STORM_UPDATE_TICKS, (t) =>
       setRows((prev) =>
         prev.map((r, i) => (i % 10 === 0 ? { id: r.id, label: `bench ${t}` } : r)),
-      );
-      if (t < STORM_UPDATE_TICKS) nextMacrotask(step);
-    };
-    nextMacrotask(step);
+      ),
+    );
   }, []);
 
   const stormSelect = useCallback(() => {
-    let t = 0;
-    const step = () => {
-      t++;
+    runStorm(STORM_SELECT_TICKS, (t) => {
       const ids = idsRef.current;
       setSelected(t < STORM_SELECT_TICKS ? ids[(t * 97) % ids.length] : ids[0]);
-      if (t < STORM_SELECT_TICKS) nextMacrotask(step);
-    };
-    nextMacrotask(step);
+    });
   }, []);
 
   return (
@@ -131,6 +143,12 @@ export function App() {
       <view className="toolbar">
         <view className="btn" bindtap={run}>
           <text className="btn-text">Create 1,000 rows</text>
+        </view>
+        <view className="btn" bindtap={run3k}>
+          <text className="btn-text">Create 3,000 rows</text>
+        </view>
+        <view className="btn" bindtap={run5k}>
+          <text className="btn-text">Create 5,000 rows</text>
         </view>
         <view className="btn" bindtap={runLots}>
           <text className="btn-text">Create 10,000 rows</text>

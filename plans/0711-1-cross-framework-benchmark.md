@@ -302,6 +302,73 @@ Corrected conclusions:
   benchmark result with an independent channel (real device, zero-observer
   control, CPU profile) before publishing.
 
+## Round 5: React Compiler triage, scaling curves, and the create/update trade-off
+
+### React Compiler triage — our scaffolding broke compilation
+
+`babel-plugin-react-compiler` with a logger revealed that **`App` never
+compiled** in the earlier compiler variant: the storm drivers' `t++`
+mutating a binding captured by lambdas bails out the entire component
+("(BuildHIR::lowerExpression) Handle UpdateExpression to variables
+captured within lambdas"). Only `Row` compiled — and with an uncompiled
+parent passing fresh inline props, its memo cache was pure overhead.
+So "compiler ≈ naive or worse" was measuring a bailed-out build.
+
+Fix: storm drivers moved to module scope (`runStorm(ticks, step)` — the
+compiler only processes components/hooks; the per-tick callback takes `t`
+as a parameter). Verified post-fix: `App` compiles with a 93-slot memo
+cache, `Row` with 16.
+
+Post-fix results (scale run, `results/cross-storms-scale.*`): compiler is
+now **10–25% faster than naive** on storms and near-hooks on one-shot
+select — but still well short of manual `memo(Row)` (e.g. selectStorm@1k:
+hooks 227 ms, compiler 352 ms, naive 409 ms). Mechanism: the compiler's
+memoization is **intra-component** — `rows.map(row => <Row/>)` re-runs
+whenever `rows` or `selected` changes, recreating all row elements; it
+cannot prune per-row re-renders of a keyed list the way an explicit
+component-boundary `memo(Row)` does. For krausest-shaped workloads
+(large keyed lists), manual `memo` remains necessary on ReactLynx.
+Our sources otherwise pass the compiler cleanly (no Rules-of-React
+violations — the bailout was an unsupported syntax pattern, not a rule
+break).
+
+### Does "React creates faster, Vue updates faster" match the web?
+
+Half of it does not — and that half is the Lynx-specific finding:
+
+- **On js-framework-benchmark (web), keyed `vue` is consistently FASTER
+  than `react-hooks` at creation** (vue ≈1.1–1.2× of vanilla vs react
+  ≈1.3–1.5×, order-stable across years). On Lynx for Web, React creates
+  ~15–20% FASTER than both Vue modes at every scale (10k: 1.61 s vs
+  1.91 s). This inversion is a runtime-architecture trait: creation e2e
+  is dominated by main-thread DOM construction, and ReactLynx's snapshot
+  system ships static structure once and bulk-instantiates on the main
+  thread — a path web-core optimizes natively — while vue-lynx's ops
+  interpreter creates elements node-by-node (CLONE_TEMPLATE cut our
+  cross-thread payload but the MT loop remains per-node).
+- **Vue's update advantage exists on the web too, but small (~1.1–1.3×);
+  Lynx amplifies it to 3–5× (vdom) / 5–20× (vapor)** under sustained
+  ticks. Every tick pays serialize→transfer→apply; ReactLynx adds
+  per-commit snapshot-patch overhead plus 10k memo comparisons per tick
+  in the worker (post-fix profile: react worker 69% idle vs vdom 90%
+  idle during the same storm — residual cost is genuine reconciliation,
+  no pathology), plus ~4% residual profiling-call overhead.
+
+### Scaling curves (1k→3k→5k→10k, `results/cross-storms-scale.*`)
+
+Rendered as create-vs-per-tick log-log curves in `cross-table.html`. All
+five variants scale linearly with N on both axes (parallel curves — no
+cliffs). Placement:
+
+- **Vapor is not a trade-off within Vue**: creation matches vdom at every
+  scale while update/select throughput dominates (select ~6× vdom, ~20×
+  react at 10k) — bottom curve on both charts. Overall better, not
+  "各有千秋", within the Vue family (its costs live elsewhere: +26%
+  bundle, prerelease status).
+- **The real trade-off is React vs Vue**: React holds the creation edge
+  (~1.2×) and pays for it in update throughput (~3–5× vs vdom). Pick by
+  workload: creation-heavy feeds vs interaction-heavy tables.
+
 ### Corrected React optimization variants (`results/cross-storms-react-variants.*`, v2)
 
 | scenario | react (hooks) | react-naive | react-compiler |
