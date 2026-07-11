@@ -83,7 +83,7 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 | Tabs            | ✅     | |
 | TextField       | ✅     | uses lynx-ui `Input`/`TextArea` → Vue reimpl |
 | `defineCatalog` / `mergeCatalogs` / `serializeCatalog` | ✅ | |
-| catalog manifests (extractor JSON output) | ⬜ | reuse upstream-published manifests (extractor not ported, see below) |
+| catalog manifests (extractor JSON output) | ✅ | vendored from the published `@lynx-js/genui` dist into `src/a2ui/catalog/manifests.generated.ts`; `catalogManifests` is fully populated |
 | styles (`a2ui/styles/**`) | ✅ | copied verbatim to `packages/genui/styles/a2ui` |
 
 ### A2UI prompt (`a2ui-prompt`)
@@ -132,10 +132,10 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 
 | Demo                        | Status | Notes |
 | --------------------------- | ------ | ----- |
-| A2UI demo app (`lynx-src/a2ui`) | ⬜ | gallery of mock A2UI streams |
-| OpenUI demo app (`lynx-src/openui`) | ⬜ | mock OpenUI scenarios |
-| A2UI lazy component demo    | ⬜     | depends on LazyComponent port |
-| Mock data (`a2ui-gallery/*.json`, `basic/*.json`, `openui-scenarios.ts`, `io-mock/mockAgent.ts`) | ⬜ | copy verbatim |
+| A2UI demo app (`lynx-src/a2ui`) | ✅ | `examples/genui` entry `a2ui`; adds a standalone demo picker (upstream app is a headless preview driven by the React web playground); keeps `globalProps` contract (`messages`, `instant`, `speed`, `theme`, `demo`, `chromeless`) |
+| OpenUI demo app (`lynx-src/openui`) | ✅ | `examples/genui` entry `openui`; standalone scenario picker + upstream `rawText`/`instant`/`speed`/`theme` globalProps |
+| A2UI lazy component demo    | ⚠️     | demo listed; the upstream lazy bundle is a ReactLynx standalone bundle which cannot execute in a Vue tree — the Vue LazyComponent shows its fallback instead (see Not ported) |
+| Mock data (`a2ui-gallery/*.json`, `basic/*.json`, `openui-scenarios.ts`, `io-mock/mockAgent.ts`) | ✅ | copied verbatim (imports re-pointed at `vue-lynx-genui`) |
 
 ## Tests (upstream `a2ui/test`, `openui` tests → `packages/genui/test`)
 
@@ -149,9 +149,9 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 
 | Item | Status | Notes |
 | ---- | ------ | ----- |
-| Reference build of upstream ReactLynx demos (npm `@lynx-js/genui`) | ⬜ | standalone rspeedy app in scratchpad |
-| Vue examples web build | ⬜ | |
-| Playwright screenshot harness (`lynx-view` embedding) | ⬜ | |
+| Reference build of upstream ReactLynx demos | ✅ | standalone rspeedy app building the **same lynx-stack checkout sources** that were ported (npm 0.0.6 is older than the checkout) |
+| Vue examples web build | ✅ | `examples/genui` `.web.bundle`s |
+| Playwright screenshot harness (`lynx-view` embedding) | ✅ | `@lynx-js/web-core` lynx-view page + pixelmatch diffing; same payload driven into both bundles via `globalProps` |
 | Side-by-side comparisons per demo | ⬜ | artifacts kept under `plans/genui-screenshots/` (not committed) or artifact page |
 
 ## ❌ Not ported (with reasons)
