@@ -1,5 +1,7 @@
 import { API_BASE } from './config';
 import { getSessionId } from './api';
+import { backendMode } from './backend-mode';
+import { localStream } from './local-backend';
 
 const _fetch: typeof fetch = globalThis.fetch ?? fetch;
 
@@ -25,6 +27,17 @@ export interface StreamRequest {
  * ordering, slightly coarser latency.
  */
 export async function streamUIMessages(req: StreamRequest): Promise<void> {
+  if ((await backendMode()) === 'local') {
+    const chatId = req.path.match(/^\/api\/chats\/([^/?]+)/)?.[1] ?? '';
+    await localStream(
+      chatId,
+      req.body as { model?: string; messages?: never[] },
+      req.signal,
+      req.onChunk,
+    );
+    return;
+  }
+
   const headers = {
     'content-type': 'application/json',
     'x-session-id': getSessionId(),

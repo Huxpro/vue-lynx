@@ -1,0 +1,32 @@
+[vue-lynx](index.mdx) / isReadonly
+
+# Function: isReadonly()
+
+```ts
+function isReadonly(value): boolean
+```
+
+Checks whether the passed value is a readonly object. The properties of a
+readonly object can change, but they can't be assigned directly via the
+passed object.
+
+The proxies created by [readonly](Function.readonly.mdx) and [shallowReadonly](Function.shallowReadonly.mdx) are
+both considered readonly, as is a computed ref without a set function.
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `value` | `unknown` | The value to check. |
+
+## Returns
+
+`boolean`
+
+## See
+
+[https://vuejs.org/api/reactivity-utilities.html#isreadonly](https://vuejs.org/api/reactivity-utilities.html#isreadonly)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:176

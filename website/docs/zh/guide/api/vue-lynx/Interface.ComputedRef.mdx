@@ -1,0 +1,22 @@
+[vue-lynx](index.mdx) / ComputedRef
+
+# Interface: ComputedRef\<T\>
+
+## Extends
+
+- `BaseComputedRef`\<`T`\>
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | `any` |
+
+## Properties
+
+| Property | Modifier | Type | Description | Overrides | Inherited from | Defined in |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| `[ComputedRefSymbol]` | `public` | `true` | - | - | `BaseComputedRef.[ComputedRefSymbol]` | node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:346 |
+| ~~`effect`~~ | `public` | `ComputedRefImpl`\<`any`\> | **Deprecated** computed no longer uses effect | - | `BaseComputedRef.effect` | node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:350 |
+| `value` | `readonly` | `T` | - | `BaseComputedRef.value` | - | node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:353 |
+| `[RefSymbol]` | `public` | `true` | Type differentiator only. We need this to be in public d.ts but don't want it to show up in IDE autocomplete, so we use a private Symbol instead. | - | `BaseComputedRef.[RefSymbol]` | node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:424 |

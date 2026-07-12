@@ -1,0 +1,33 @@
+[vue-lynx](index.mdx) / ComponentInternalInstance
+
+# Interface: ComponentInternalInstance
+
+We expose a subset of properties on the internal instance as they are
+useful for advanced external libraries and tools.
+
+## Properties
+
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| `uid` | `number` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1434 |
+| `type` | `ConcreteComponent`\<`object`, `any`, `any`, `ComputedOptions`, `MethodOptions`, `object`, `any`\> | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1435 |
+| `parent` | `null` \| [`ComponentInternalInstance`](Interface.ComponentInternalInstance.mdx) | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1436 |
+| `root` | [`ComponentInternalInstance`](Interface.ComponentInternalInstance.mdx) | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1437 |
+| `appContext` | `AppContext` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1438 |
+| `vnode` | [`VNode`](Interface.VNode.mdx)\<`RendererNode`, `RendererElement`, `object`\> | Vnode representing this component in its parent's vdom tree | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1442 |
+| `subTree` | [`VNode`](Interface.VNode.mdx)\<`RendererNode`, `RendererElement`, `object`\> | Root vnode of this component's own vdom tree | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1446 |
+| `effect` | `ReactiveEffect`\<`any`\> | Render effect instance | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1450 |
+| `update` | () => `void` | Force update render effect | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1454 |
+| `job` | `SchedulerJob` | Render effect job to be passed to scheduler (checks if dirty) | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1458 |
+| `proxy` | `null` \| [`ComponentPublicInstance`](TypeAlias.ComponentPublicInstance.mdx)\<`object`, `object`, `object`, `object`, `object`, `object`, `object`, `object`, `false`, `ComponentOptionsBase`\<`any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\>, `object`, `object`, `""`, `object`, `any`\> | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1459 |
+| `exposed` | `null` \| `Record`\<`string`, `any`\> | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1460 |
+| `exposeProxy` | `null` \| `Record`\<`string`, `any`\> | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1461 |
+| `data` | `Data` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1462 |
+| `props` | `Data` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1463 |
+| `attrs` | `Data` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1464 |
+| `slots` | `InternalSlots` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1465 |
+| `refs` | `Data` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1466 |
+| `emit` | (`event`: `string`, ...`args`: `any`[]) => `void` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1467 |
+| `isMounted` | `boolean` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1468 |
+| `isUnmounted` | `boolean` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1469 |
+| `isDeactivated` | `boolean` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1470 |

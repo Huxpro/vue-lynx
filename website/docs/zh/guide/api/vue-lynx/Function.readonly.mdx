@@ -1,0 +1,57 @@
+[vue-lynx](index.mdx) / readonly
+
+# Function: readonly()
+
+```ts
+function readonly<T>(target): DeepReadonly<UnwrapNestedRefs<T>>
+```
+
+Takes an object (reactive or plain) or a ref and returns a readonly proxy to
+the original.
+
+A readonly proxy is deep: any nested property accessed will be readonly as
+well. It also has the same ref-unwrapping behavior as [reactive](Function.reactive.mdx),
+except the unwrapped values will also be made readonly.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` *extends* `object` |
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `target` | `T` | The source object. |
+
+## Returns
+
+[`DeepReadonly`](TypeAlias.DeepReadonly.mdx)\<[`UnwrapNestedRefs`](TypeAlias.UnwrapNestedRefs.mdx)\<`T`\>\>
+
+## Example
+
+```js
+const original = reactive({ count: 0 })
+
+const copy = readonly(original)
+
+watchEffect(() => {
+  // works for reactivity tracking
+  console.log(copy.count)
+})
+
+// mutating original will trigger watchers relying on the copy
+original.count++
+
+// mutating the copy will fail and result in a warning
+copy.count++ // warning!
+```
+
+## See
+
+[https://vuejs.org/api/reactivity-core.html#readonly](https://vuejs.org/api/reactivity-core.html#readonly)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:114

@@ -1,0 +1,32 @@
+[vue-lynx](index.mdx) / createVNode
+
+# Function: createVNode()
+
+```ts
+function createVNode(
+   type, 
+   props?, 
+   children?, 
+   patchFlag?, 
+   dynamicProps?, 
+   isBlockNode?): VNode
+```
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `type` | `VNodeTypes` \| *typeof* `NULL_DYNAMIC_COMPONENT` \| `ClassComponent` |
+| `props`? | `null` \| `Data` & `VNodeProps` |
+| `children`? | `unknown` |
+| `patchFlag`? | `number` |
+| `dynamicProps`? | `null` \| `string`[] |
+| `isBlockNode`? | `boolean` |
+
+## Returns
+
+[`VNode`](Interface.VNode.mdx)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1291

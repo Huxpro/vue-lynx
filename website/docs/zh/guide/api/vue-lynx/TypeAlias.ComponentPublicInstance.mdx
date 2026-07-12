@@ -1,0 +1,141 @@
+[vue-lynx](index.mdx) / ComponentPublicInstance
+
+# Type Alias: ComponentPublicInstance\<P, B, D, C, M, E, PublicProps, Defaults, MakeDefaultsOptional, Options, I, S, Exposed, TypeRefs, TypeEl\>
+
+```ts
+type ComponentPublicInstance<P, B, D, C, M, E, PublicProps, Defaults, MakeDefaultsOptional, Options, I, S, Exposed, TypeRefs, TypeEl>: object & ExposedKeys<IfAny<P, P, Readonly<Defaults> & Omit<P, keyof ShallowUnwrapRef<B> | keyof Defaults>> & ShallowUnwrapRef<B> & UnwrapNestedRefs<D> & ExtractComputedReturns<C> & M & ComponentCustomProperties & InjectToObject<I>, Exposed>;
+```
+
+## Type declaration
+
+### $
+
+```ts
+$: ComponentInternalInstance;
+```
+
+### $data
+
+```ts
+$data: D;
+```
+
+### $props
+
+```ts
+$props: MakeDefaultsOptional extends true ? Partial<Defaults> & Omit<Prettify<P> & PublicProps, keyof Defaults> : Prettify<P> & PublicProps;
+```
+
+### $attrs
+
+```ts
+$attrs: Attrs;
+```
+
+### $refs
+
+```ts
+$refs: Data & TypeRefs;
+```
+
+### $slots
+
+```ts
+$slots: UnwrapSlotsType<S>;
+```
+
+### $root
+
+```ts
+$root: ComponentPublicInstance | null;
+```
+
+### $parent
+
+```ts
+$parent: ComponentPublicInstance | null;
+```
+
+### $host
+
+```ts
+$host: Element | null;
+```
+
+### $emit
+
+```ts
+$emit: EmitFn<E>;
+```
+
+### $el
+
+```ts
+$el: TypeEl;
+```
+
+### $options
+
+```ts
+$options: Options & MergedComponentOptionsOverride;
+```
+
+### $forceUpdate()
+
+```ts
+$forceUpdate: () => void;
+```
+
+#### Returns
+
+`void`
+
+### $nextTick
+
+```ts
+$nextTick: typeof nextTick;
+```
+
+### $watch()
+
+#### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` *extends* `string` \| (...`args`) => `any` |
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `source` | `T` |
+| `cb` | `T` *extends* (...`args`) => `R` ? (...`args`) => `any` : (...`args`) => `any` |
+| `options`? | [`WatchOptions`](Interface.WatchOptions.mdx)\<`boolean`\> |
+
+#### Returns
+
+[`WatchStopHandle`](TypeAlias.WatchStopHandle.mdx)
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `P` | `object` |
+| `B` | `object` |
+| `D` | `object` |
+| `C` *extends* `ComputedOptions` | `object` |
+| `M` *extends* `MethodOptions` | `object` |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` |
+| `PublicProps` | `object` |
+| `Defaults` | `object` |
+| `MakeDefaultsOptional` *extends* `boolean` | `false` |
+| `Options` | `ComponentOptionsBase`\<`any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`\> |
+| `I` *extends* `ComponentInjectOptions` | `object` |
+| `S` *extends* [`SlotsType`](TypeAlias.SlotsType.mdx) | `object` |
+| `Exposed` *extends* `string` | `""` |
+| `TypeRefs` *extends* `Data` | `object` |
+| `TypeEl` *extends* `Element` | `any` |
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:485

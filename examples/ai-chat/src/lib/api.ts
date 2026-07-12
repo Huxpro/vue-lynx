@@ -1,4 +1,6 @@
 import { API_BASE } from './config';
+import { backendMode } from './backend-mode';
+import { localApi } from './local-backend';
 import { getItem, setItem } from './storage';
 import { uid } from './uid';
 
@@ -29,6 +31,9 @@ export async function apiFetch<T>(
   path: string,
   options: { method?: string; body?: unknown; signal?: AbortSignal } = {},
 ): Promise<T> {
+  if ((await backendMode()) === 'local') {
+    return localApi(path, options.method ?? 'GET', options.body) as T;
+  }
   const res = await _fetch(`${API_BASE}${path}`, {
     method: options.method ?? 'GET',
     headers: {

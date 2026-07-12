@@ -1,0 +1,289 @@
+[vue-lynx](index.mdx) / ShadowElement
+
+# Class: ShadowElement
+
+## Constructors
+
+### new ShadowElement()
+
+```ts
+new ShadowElement(type, forceId?): ShadowElement
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `type` | `string` |
+| `forceId`? | `number` |
+
+#### Returns
+
+[`ShadowElement`](Class.ShadowElement.mdx)
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:52](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L52)
+
+## Properties
+
+| Property | Modifier | Type | Default value | Defined in |
+| ------ | ------ | ------ | ------ | ------ |
+| `nextId` | `static` | `number` | `2` | [packages/vue-lynx/runtime/src/shadow-element.ts:21](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L21) |
+| `id` | `public` | `number` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:23](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L23) |
+| `type` | `public` | `string` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:24](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L24) |
+| `parent` | `public` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) | `null` | [packages/vue-lynx/runtime/src/shadow-element.ts:25](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L25) |
+| `firstChild` | `public` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) | `null` | [packages/vue-lynx/runtime/src/shadow-element.ts:26](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L26) |
+| `lastChild` | `public` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) | `null` | [packages/vue-lynx/runtime/src/shadow-element.ts:27](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L27) |
+| `prev` | `public` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) | `null` | [packages/vue-lynx/runtime/src/shadow-element.ts:28](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L28) |
+| `next` | `public` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) | `null` | [packages/vue-lynx/runtime/src/shadow-element.ts:29](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L29) |
+| `_style` | `public` | `Record`\<`string`, `unknown`\> | `{}` | [packages/vue-lynx/runtime/src/shadow-element.ts:33](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L33) |
+| `_vShowHidden` | `public` | `boolean` | `false` | [packages/vue-lynx/runtime/src/shadow-element.ts:35](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L35) |
+| `_baseClass` | `public` | `string` | `''` | [packages/vue-lynx/runtime/src/shadow-element.ts:41](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L41) |
+| `_transitionClasses` | `public` | `Set`\<`string`\> | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:42](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L42) |
+| `_vModelValue` | `public` | `undefined` \| `string` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:45](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L45) |
+| `_vModelHandler` | `public` | `undefined` \| (`data`) => `void` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:46](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L46) |
+| `_vModelEventProp` | `public` | `undefined` \| `string` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:47](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L47) |
+| `_id` | `public` | `undefined` \| `string` | `undefined` | [packages/vue-lynx/runtime/src/shadow-element.ts:50](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L50) |
+
+## Accessors
+
+### \_selector
+
+#### Get Signature
+
+```ts
+get _selector(): string
+```
+
+CSS attribute selector that uniquely identifies this element on MT.
+
+##### Returns
+
+`string`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:69](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L69)
+
+## Methods
+
+### invoke()
+
+```ts
+invoke(options): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options` | `uiMethodOptions` |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:77](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L77)
+
+***
+
+### setNativeProps()
+
+```ts
+setNativeProps(nativeProps): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `nativeProps` | `Record`\<`string`, `unknown`\> |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:81](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L81)
+
+***
+
+### fields()
+
+```ts
+fields(fieldsParam, callback): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `fieldsParam` | `Record`\<`string`, `boolean`\> |
+| `callback` | (`data`, `status`) => `void` |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:87](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L87)
+
+***
+
+### path()
+
+```ts
+path(callback): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `callback` | (`data`, `status`) => `void` |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:97](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L97)
+
+***
+
+### animate()
+
+```ts
+animate(animations): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `animations` | `AnimationV2` \| `AnimationV2`[] |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:106](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L106)
+
+***
+
+### playAnimation()
+
+```ts
+playAnimation(ids): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `ids` | `string` \| `string`[] |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:110](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L110)
+
+***
+
+### pauseAnimation()
+
+```ts
+pauseAnimation(ids): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `ids` | `string` \| `string`[] |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:114](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L114)
+
+***
+
+### cancelAnimation()
+
+```ts
+cancelAnimation(ids): SelectorQuery
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `ids` | `string` \| `string`[] |
+
+#### Returns
+
+`SelectorQuery`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:118](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L118)
+
+***
+
+### insertBefore()
+
+```ts
+insertBefore(child, anchor): void
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `child` | [`ShadowElement`](Class.ShadowElement.mdx) |
+| `anchor` | `null` \| [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:122](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L122)
+
+***
+
+### removeChild()
+
+```ts
+removeChild(child): void
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `child` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/shadow-element.ts:154](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/shadow-element.ts#L154)

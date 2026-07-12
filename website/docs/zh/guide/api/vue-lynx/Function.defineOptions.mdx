@@ -1,0 +1,40 @@
+[vue-lynx](index.mdx) / defineOptions
+
+# Function: defineOptions()
+
+```ts
+function defineOptions<RawBindings, D, C, M, Mixin, Extends>(options?): void
+```
+
+Vue `<script setup>` compiler macro for declaring a component's additional
+options. This should be used only for options that cannot be expressed via
+Composition API - e.g. `inheritAttrs`.
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `RawBindings` | `object` |
+| `D` | `object` |
+| `C` *extends* `ComputedOptions` | `object` |
+| `M` *extends* `MethodOptions` | `object` |
+| `Mixin` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+| `Extends` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options`? | `ComponentOptionsBase`\<`object`, `RawBindings`, `D`, `C`, `M`, `Mixin`, `Extends`, `object`, `string`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\> & `object` |
+
+## Returns
+
+`void`
+
+## See
+
+[https://vuejs.org/api/sfc-script-setup.html#defineoptions](https://vuejs.org/api/sfc-script-setup.html#defineoptions)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:256

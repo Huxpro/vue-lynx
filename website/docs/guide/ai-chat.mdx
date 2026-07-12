@@ -1,0 +1,25 @@
+# AI Chat
+
+A full-featured AI chatbot ported feature-by-feature from the official [Nuxt AI Chatbot template](https://github.com/nuxt-ui-templates/chat) (Nuxt UI + Vercel AI SDK) — probably the most demanding "real-world" validation of Vue Lynx so far: streaming responses with thinking/reasoning, markdown with highlighted code blocks, tool-call cards (weather, charts, web-search sources), chat history with date grouping, votes, message editing, share/rename/delete flows, a model picker, runtime theming with light/dark mode, attachments, a command-palette search, and a responsive mobile layout with a slide-over sidebar.
+
+Try the quick prompts below — *"What is the weather in Bordeaux?"* streams a reasoning section and a weather card; *"Show me a chart of sales data"* renders an SVG line chart; *"Help me create a Vue composable"* shows markdown with highlighted code. Scan the QR code in the native tab to run the same bundle in [LynxExplorer](https://lynxjs.org/guide/start/quick-start.html).
+
+<Go example="ai-chat" defaultFile="src/App.vue" />
+
+The playground above runs fully self-contained: the app probes for its API server and, when unreachable, falls back to an in-app demo backend with the same seeded history and deterministic mock AI streams. When you run the example locally with `pnpm dev:server`, the same UI talks to a standalone Node server that reimplements the Nuxt template's API routes — and streams **real models** through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) if you set `AI_GATEWAY_API_KEY`.
+
+## Porting notes
+
+The port keeps the original's data model (AI SDK v5 `UIMessage` parts over the UI-message-stream protocol) and nearly all of its composable/page logic, while re-implementing the DOM-coupled layers with Lynx elements:
+
+| Aspect | Nuxt original | Vue Lynx |
+|--------|---------------|----------|
+| **UI kit** | @nuxt/ui v4 (`UChat*`, `UDashboard*`, Reka UI portals) | Hand-built Lynx components (`view`/`text`/`image`/`scroll-view`/`input`) with Nuxt UI's semantic design tokens |
+| **Chat state** | `@ai-sdk/vue` `useChat` | Custom `useChat` speaking the same SSE protocol (polling fallback for native fetch) |
+| **Markdown** | Comark + Shiki (HTML) | Markdown → native-node renderer + lightweight code tokenizer |
+| **Charts** | nuxt-charts / Unovis (SVG DOM) | Chart generated as an inline SVG string for the native `<svg>` element |
+| **Dropdowns / modals** | Anchored popovers, portals | Action sheets + centered modals at app root |
+| **Theming** | Tailwind v4 + `app.config` | Runtime `--ui-*` CSS variables via inline vars (17 primary × 5 neutral picker included) |
+| **Responsive** | Tailwind `lg:` breakpoint | `SystemInfo.pixelWidth / pixelRatio` branch (no media queries on Lynx) |
+
+The example directory contains a complete [PRD with per-feature parity status](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/PRD.md) (65 features ported/adapted, 10 skipped with reasons), a [PORTING.md](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/PORTING.md) documenting what was reused vs rewritten plus the platform quirks discovered along the way, and [side-by-side screenshot comparisons](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/screenshots/COMPARISON.md) against the live original captured on Lynx for Web.

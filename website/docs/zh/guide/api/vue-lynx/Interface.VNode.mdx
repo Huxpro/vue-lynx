@@ -1,0 +1,35 @@
+[vue-lynx](index.mdx) / VNode
+
+# Interface: VNode\<HostNode, HostElement, ExtraProps\>
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `HostNode` | `RendererNode` |
+| `HostElement` | `RendererElement` |
+| `ExtraProps` | `object` |
+
+## Properties
+
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| `type` | `VNodeTypes` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1210 |
+| `props` | `null` \| `VNodeProps` & `ExtraProps` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1211 |
+| `key` | `null` \| `PropertyKey` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1212 |
+| `ref` | `null` \| `VNodeNormalizedRef` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1213 |
+| `scopeId` | `null` \| `string` | SFC only. This is assigned on vnode creation using currentScopeId which is set alongside currentRenderingInstance. | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1218 |
+| `children` | `VNodeNormalizedChildren` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1219 |
+| `component` | `null` \| [`ComponentInternalInstance`](Interface.ComponentInternalInstance.mdx) | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1220 |
+| `dirs` | `null` \| `DirectiveBinding`\<`any`, `string`, `any`\>[] | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1221 |
+| `transition` | `null` \| `TransitionHooks`\<`HostElement`\> | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1222 |
+| `el` | `null` \| `HostNode` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1223 |
+| `placeholder` | `null` \| `HostNode` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1224 |
+| `anchor` | `null` \| `HostNode` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1225 |
+| `target` | `null` \| `HostElement` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1226 |
+| `targetStart` | `null` \| `HostNode` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1227 |
+| `targetAnchor` | `null` \| `HostNode` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1228 |
+| `suspense` | `null` \| `SuspenseBoundary` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1229 |
+| `shapeFlag` | `number` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1230 |
+| `patchFlag` | `number` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1231 |
+| `appContext` | `null` \| `AppContext` | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1232 |

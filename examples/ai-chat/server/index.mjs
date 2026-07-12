@@ -31,7 +31,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MODELS, mockResponseFor, mockTitleFor } from './mock-ai.mjs';
+import { MODELS, mockResponseFor, mockTitleFor, SEED_CHATS } from '../shared/mock-ai.mjs';
 import { realModeAvailable, runRealGeneration } from './real-ai.mjs';
 import { SAMPLE_IMAGES } from './samples.mjs';
 
@@ -77,72 +77,35 @@ function uid() {
 const DEMO_SEED_SESSION = 'seed-demo-user';
 
 function seed() {
-  // A few chats spread over time so the sidebar's date grouping
-  // (Today/Yesterday/Last week/Last month/older) has content, mirroring the
-  // original template's populated-sidebar screenshots.
+  // Chats spread over time so the sidebar's date grouping has content
+  // (Today/Yesterday/Last week/Last month/older); data shared with the
+  // client-side fallback backend.
   const now = Date.now();
-  const day = 24 * 60 * 60 * 1000;
-  const mk = (id, title, ageMs, q, a) => {
+  for (const c of SEED_CHATS) {
     db.chats.push({
-      id,
+      id: c.id,
       userId: DEMO_SEED_SESSION,
-      title,
+      title: c.title,
       visibility: 'private',
-      createdAt: new Date(now - ageMs).toISOString(),
+      createdAt: new Date(now - c.ageMs).toISOString(),
     });
     db.messages.push(
       {
-        id: `${id}-u1`,
-        chatId: id,
+        id: `${c.id}-u1`,
+        chatId: c.id,
         role: 'user',
-        parts: [{ type: 'text', text: q }],
-        createdAt: new Date(now - ageMs).toISOString(),
+        parts: [{ type: 'text', text: c.q }],
+        createdAt: new Date(now - c.ageMs).toISOString(),
       },
       {
-        id: `${id}-a1`,
-        chatId: id,
+        id: `${c.id}-a1`,
+        chatId: c.id,
         role: 'assistant',
-        parts: [{ type: 'text', text: a }],
-        createdAt: new Date(now - ageMs + 30_000).toISOString(),
+        parts: [{ type: 'text', text: c.a }],
+        createdAt: new Date(now - c.ageMs + 30_000).toISOString(),
       },
     );
-  };
-
-  mk(
-    'seed-vue-composable',
-    'Creating a Vue composable',
-    2 * 60 * 60 * 1000,
-    'Help me create a Vue composable',
-    'A composable is a function that leverages the Composition API to encapsulate reusable stateful logic. Start the name with `use`, keep inputs reactive, and return plain refs.',
-  );
-  mk(
-    'seed-tailwind-tips',
-    'Tailwind CSS best practices',
-    day + 3 * 60 * 60 * 1000,
-    'Tailwind CSS best practices',
-    'Prefer semantic design tokens over raw palette values, extract repeated utility groups into components, and keep class lists ordered by box model.',
-  );
-  mk(
-    'seed-unjs-overview',
-    'What UnJS offers',
-    4 * day,
-    'Tell me more about UnJS',
-    'UnJS is a collection of framework-agnostic JavaScript libraries — h3, ofetch, nitro, unstorage and friends — designed to compose into full-stack tooling.',
-  );
-  mk(
-    'seed-vueuse-intro',
-    'Why consider VueUse',
-    20 * day,
-    'Why should I consider VueUse?',
-    'VueUse packs 200+ battle-tested composables: sensors, state, browser APIs, and animation helpers, all tree-shakeable and TypeScript-first.',
-  );
-  mk(
-    'seed-nuxt-ui-why',
-    'Why use Nuxt UI',
-    65 * day,
-    'Why use Nuxt UI?',
-    'Nuxt UI gives you accessible, themeable components built on Reka UI and Tailwind, with dark mode and keyboard navigation out of the box.',
-  );
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -5,6 +5,49 @@
  * screenshots are reproducible.
  */
 
+/**
+ * Seeded demo history (question/answer pairs + age) shared by the node
+ * server and the client-side fallback backend, so both populate the same
+ * date-grouped sidebar.
+ */
+export const SEED_CHATS = [
+  {
+    id: 'seed-vue-composable',
+    title: 'Creating a Vue composable',
+    ageMs: 2 * 60 * 60 * 1000,
+    q: 'Help me create a Vue composable',
+    a: 'A composable is a function that leverages the Composition API to encapsulate reusable stateful logic. Start the name with `use`, keep inputs reactive, and return plain refs.',
+  },
+  {
+    id: 'seed-tailwind-tips',
+    title: 'Tailwind CSS best practices',
+    ageMs: 27 * 60 * 60 * 1000,
+    q: 'Tailwind CSS best practices',
+    a: 'Prefer semantic design tokens over raw palette values, extract repeated utility groups into components, and keep class lists ordered by box model.',
+  },
+  {
+    id: 'seed-unjs-overview',
+    title: 'What UnJS offers',
+    ageMs: 4 * 24 * 60 * 60 * 1000,
+    q: 'Tell me more about UnJS',
+    a: 'UnJS is a collection of framework-agnostic JavaScript libraries — h3, ofetch, nitro, unstorage and friends — designed to compose into full-stack tooling.',
+  },
+  {
+    id: 'seed-vueuse-intro',
+    title: 'Why consider VueUse',
+    ageMs: 20 * 24 * 60 * 60 * 1000,
+    q: 'Why should I consider VueUse?',
+    a: 'VueUse packs 200+ battle-tested composables: sensors, state, browser APIs, and animation helpers, all tree-shakeable and TypeScript-first.',
+  },
+  {
+    id: 'seed-nuxt-ui-why',
+    title: 'Why use Nuxt UI',
+    ageMs: 65 * 24 * 60 * 60 * 1000,
+    q: 'Why use Nuxt UI?',
+    a: 'Nuxt UI gives you accessible, themeable components built on Reka UI and Tailwind, with dark mode and keyboard navigation out of the box.',
+  },
+];
+
 export const MODELS = [
   { label: 'Claude Haiku 4.5', value: 'anthropic/claude-haiku-4.5', icon: 'anthropic' },
   { label: 'Gemini 3 Flash', value: 'google/gemini-3-flash', icon: 'google' },

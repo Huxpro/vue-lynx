@@ -1,0 +1,56 @@
+[vue-lynx](index.mdx) / ref
+
+# Function: ref()
+
+## ref(value)
+
+```ts
+function ref<T>(value): [T] extends [Ref] ? IfAny<T, Ref<T>, T> : Ref<UnwrapRef<T>, UnwrapRef<T> | T>
+```
+
+Takes an inner value and returns a reactive and mutable ref object, which
+has a single property `.value` that points to the inner value.
+
+### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+
+### Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `value` | `T` | The object to wrap in the ref. |
+
+### Returns
+
+[`T`] *extends* [[`Ref`](Interface.Ref.mdx)] ? `IfAny`\<`T`, [`Ref`](Interface.Ref.mdx)\<`T`\>, `T`\> : [`Ref`](Interface.Ref.mdx)\<[`UnwrapRef`](TypeAlias.UnwrapRef.mdx)\<`T`\>, [`UnwrapRef`](TypeAlias.UnwrapRef.mdx)\<`T`\> \| `T`\>
+
+### See
+
+[https://vuejs.org/api/reactivity-core.html#ref](https://vuejs.org/api/reactivity-core.html#ref)
+
+### Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:440
+
+## ref()
+
+```ts
+function ref<T>(): Ref<T | undefined>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | `any` |
+
+### Returns
+
+[`Ref`](Interface.Ref.mdx)\<`T` \| `undefined`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:441

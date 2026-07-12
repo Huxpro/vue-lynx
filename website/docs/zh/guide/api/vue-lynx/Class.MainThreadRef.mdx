@@ -1,0 +1,164 @@
+[vue-lynx](index.mdx) / MainThreadRef
+
+# Class: MainThreadRef\<T\>
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | `unknown` |
+
+## Constructors
+
+### new MainThreadRef()
+
+```ts
+new MainThreadRef<T>(initValue): MainThreadRef<T>
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `initValue` | `T` |
+
+#### Returns
+
+[`MainThreadRef`](Class.MainThreadRef.mdx)\<`T`\>
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/main-thread-ref.ts:41](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L41)
+
+## Properties
+
+| Property | Modifier | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ | ------ |
+| `_wvid` | `readonly` | `number` | Worklet value id — used by the Main Thread worklet runtime to resolve. | [packages/vue-lynx/runtime/src/main-thread-ref.ts:36](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L36) |
+
+## Accessors
+
+### value
+
+#### Get Signature
+
+```ts
+get value(): T
+```
+
+`.value` — reactive read-only on the Background Thread.
+Reading triggers Vue dependency tracking (shallowRef).
+Writing is blocked — no BG→MT sync channel exists yet.
+
+##### Returns
+
+`T`
+
+#### Set Signature
+
+```ts
+set value(_v): void
+```
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `_v` | `T` |
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/main-thread-ref.ts:56](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L56)
+
+***
+
+### current
+
+#### Get Signature
+
+```ts
+get current(): T
+```
+
+`.current` — worklet convention alias, read-only on BG.
+On the Main Thread, worklet-runtime replaces this object entirely,
+so `.current` is read-write there. On BG it exists only for SWC
+worklet transform compatibility.
+
+##### Returns
+
+`T`
+
+#### Set Signature
+
+```ts
+set current(_v): void
+```
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `_v` | `T` |
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/main-thread-ref.ts:75](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L75)
+
+***
+
+### \_initValue
+
+#### Get Signature
+
+```ts
+get _initValue(): T
+```
+
+The initial value passed to useMainThreadRef().
+
+##### Returns
+
+`T`
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/main-thread-ref.ts:89](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L89)
+
+## Methods
+
+### toJSON()
+
+```ts
+toJSON(): object
+```
+
+Serialize for cross-thread transfer (ops buffer JSON).
+
+#### Returns
+
+`object`
+
+##### \_wvid
+
+```ts
+_wvid: number;
+```
+
+##### \_initValue
+
+```ts
+_initValue: T;
+```
+
+#### Defined in
+
+[packages/vue-lynx/runtime/src/main-thread-ref.ts:94](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/main-thread-ref.ts#L94)

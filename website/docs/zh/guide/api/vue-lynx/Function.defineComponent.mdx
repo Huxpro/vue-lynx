@@ -1,0 +1,111 @@
+[vue-lynx](index.mdx) / defineComponent
+
+# Function: defineComponent()
+
+## defineComponent(setup, options)
+
+```ts
+function defineComponent<Props, E, EE, S>(setup, options?): DefineSetupFnComponent<Props, E, S>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `Props` *extends* `Record`\<`string`, `any`\> | - |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` |
+| `EE` *extends* `string` | `string` |
+| `S` *extends* [`SlotsType`](TypeAlias.SlotsType.mdx)\<`Record`\<`string`, `any`\>\> | `object` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `setup` | (`props`, `ctx`) => `RenderFunction` \| `Promise`\<`RenderFunction`\> |
+| `options`? | `Pick`\<`ComponentOptions`\<`object`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `string`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\>, `"name"` \| `"inheritAttrs"`\> & `object` |
+
+### Returns
+
+`DefineSetupFnComponent`\<`Props`, `E`, `S`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:987
+
+## defineComponent(setup, options)
+
+```ts
+function defineComponent<Props, E, EE, S>(setup, options?): DefineSetupFnComponent<Props, E, S>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `Props` *extends* `Record`\<`string`, `any`\> | - |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` |
+| `EE` *extends* `string` | `string` |
+| `S` *extends* [`SlotsType`](TypeAlias.SlotsType.mdx)\<`Record`\<`string`, `any`\>\> | `object` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `setup` | (`props`, `ctx`) => `RenderFunction` \| `Promise`\<`RenderFunction`\> |
+| `options`? | `Pick`\<`ComponentOptions`\<`object`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `string`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\>, `"name"` \| `"inheritAttrs"`\> & `object` |
+
+### Returns
+
+`DefineSetupFnComponent`\<`Props`, `E`, `S`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:992
+
+## defineComponent(options)
+
+```ts
+function defineComponent<TypeProps, RuntimePropsOptions, RuntimePropsKeys, TypeEmits, RuntimeEmitsOptions, RuntimeEmitsKeys, Data, SetupBindings, Computed, Methods, Mixin, Extends, InjectOptions, InjectKeys, Slots, LocalComponents, Directives, Exposed, Provide, ResolvedEmits, InferredProps, TypeRefs, TypeEl>(options): DefineComponent<InferredProps, SetupBindings, Data, Computed, Methods, Mixin, Extends, ResolvedEmits, RuntimeEmitsKeys, PublicProps, ToResolvedProps<InferredProps, ResolvedEmits>, ExtractDefaultPropTypes<RuntimePropsOptions>, Slots, LocalComponents, Directives, Exposed, Provide, unknown extends TypeProps ? true : false, TypeRefs, TypeEl>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `TypeProps` | - |
+| `RuntimePropsOptions` *extends* `ComponentObjectPropsOptions`\<`Data`\> | `ComponentObjectPropsOptions`\<`Data`\> |
+| `RuntimePropsKeys` *extends* `string` | `string` |
+| `TypeEmits` *extends* `ComponentTypeEmits` | `object` |
+| `RuntimeEmitsOptions` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` |
+| `RuntimeEmitsKeys` *extends* `string` | `string` |
+| `Data` | `object` |
+| `SetupBindings` | `object` |
+| `Computed` *extends* `ComputedOptions` | `object` |
+| `Methods` *extends* `MethodOptions` | `object` |
+| `Mixin` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+| `Extends` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+| `InjectOptions` *extends* `ComponentInjectOptions` | `object` |
+| `InjectKeys` *extends* `string` | `string` |
+| `Slots` *extends* [`SlotsType`](TypeAlias.SlotsType.mdx)\<`Record`\<`string`, `any`\>\> | `object` |
+| `LocalComponents` *extends* `Record`\<`string`, [`Component`](TypeAlias.Component.mdx)\<`any`, `any`, `any`, `ComputedOptions`, `MethodOptions`, `object`, `any`\>\> | `object` |
+| `Directives` *extends* `Record`\<`string`, [`Directive`](TypeAlias.Directive.mdx)\<`any`, `any`, `string`, `any`\>\> | `object` |
+| `Exposed` *extends* `string` | `string` |
+| `Provide` *extends* `ComponentProvideOptions` | `ComponentProvideOptions` |
+| `ResolvedEmits` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` *extends* `RuntimeEmitsOptions` ? `TypeEmitsToOptions`\<`TypeEmits`\> : `RuntimeEmitsOptions` |
+| `InferredProps` | `IsKeyValues`\<`TypeProps`\> *extends* `true` ? `TypeProps` : `string` *extends* `RuntimePropsKeys` ? `ComponentObjectPropsOptions`\<`Data`\> *extends* `RuntimePropsOptions` ? `object` : [`ExtractPropTypes`](TypeAlias.ExtractPropTypes.mdx)\<`RuntimePropsOptions`\> : `{ [key in string]?: any }` |
+| `TypeRefs` *extends* `Record`\<`string`, `unknown`\> | `object` |
+| `TypeEl` *extends* `Element` | `any` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options` | `object` & `ComponentOptionsBase`\<`ToResolvedProps`\<`InferredProps`, `ResolvedEmits`\>, `SetupBindings`, `Data`, `Computed`, `Methods`, `Mixin`, `Extends`, `RuntimeEmitsOptions`, `RuntimeEmitsKeys`, `object`, `InjectOptions`, `InjectKeys`, `Slots`, `LocalComponents`, `Directives`, `Exposed`, `Provide`\> & `ThisType`\<`CreateComponentPublicInstanceWithMixins`\<`ToResolvedProps`\<`InferredProps`, `ResolvedEmits`\>, `SetupBindings`, `Data`, `Computed`, `Methods`, `Mixin`, `Extends`, `ResolvedEmits`, `object`, `object`, `false`, `InjectOptions`, `Slots`, `LocalComponents`, `Directives`, `string`, `object`, `any`, `ComponentProvideOptions`, `IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"P"`\> & `EnsureNonVoid`\<`ToResolvedProps`\<`InferredProps`, `ResolvedEmits`\>\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"B"`\> & `EnsureNonVoid`\<`SetupBindings`\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"D"`\> & `EnsureNonVoid`\<`Data`\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"C"`\> & `EnsureNonVoid`\<`Computed`\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"M"`\> & `EnsureNonVoid`\<`Methods`\>, `UnwrapMixinsType`\<`IntersectionMixin`\<`Mixin`\> & `IntersectionMixin`\<`Extends`\>, `"Defaults"`\> & `object`\>\> |
+
+### Returns
+
+[`DefineComponent`](TypeAlias.DefineComponent.mdx)\<`InferredProps`, `SetupBindings`, `Data`, `Computed`, `Methods`, `Mixin`, `Extends`, `ResolvedEmits`, `RuntimeEmitsKeys`, `PublicProps`, `ToResolvedProps`\<`InferredProps`, `ResolvedEmits`\>, `ExtractDefaultPropTypes`\<`RuntimePropsOptions`\>, `Slots`, `LocalComponents`, `Directives`, `Exposed`, `Provide`, `unknown` *extends* `TypeProps` ? `true` : `false`, `TypeRefs`, `TypeEl`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:997

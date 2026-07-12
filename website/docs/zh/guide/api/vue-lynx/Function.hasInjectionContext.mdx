@@ -1,0 +1,19 @@
+[vue-lynx](index.mdx) / hasInjectionContext
+
+# Function: hasInjectionContext()
+
+```ts
+function hasInjectionContext(): boolean
+```
+
+Returns true if `inject()` can be used without warning about being called in the wrong place (e.g. outside of
+setup()). This is used by libraries that want to use `inject()` internally without triggering a warning to the end
+user. One example is `useRoute()` in `vue-router`.
+
+## Returns
+
+`boolean`
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:980

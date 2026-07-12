@@ -1,0 +1,154 @@
+[vue-lynx](index.mdx) / defineModel
+
+# Function: defineModel()
+
+## defineModel(options)
+
+```ts
+function defineModel<T, M, G, S>(options): ModelRef<T, M, G, S>
+```
+
+Vue `<script setup>` compiler macro for declaring a
+two-way binding prop that can be consumed via `v-model` from the parent
+component. This will declare a prop with the same name and a corresponding
+`update:propName` event.
+
+If the first argument is a string, it will be used as the prop name;
+Otherwise the prop name will default to "modelValue". In both cases, you
+can also pass an additional object which will be used as the prop's options.
+
+The returned ref behaves differently depending on whether the parent
+provided the corresponding v-model props or not:
+- If yes, the returned ref's value will always be in sync with the parent
+  prop.
+- If not, the returned ref will behave like a normal local ref.
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `M` *extends* `PropertyKey` | `string` |
+| `G` | `T` |
+| `S` | `T` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options` | `object` \| `object` & `PropOptions`\<`T`, `T`\> & `DefineModelOptions`\<`T`, `G`, `S`\> |
+
+### Returns
+
+`ModelRef`\<`T`, `M`, `G`, `S`\>
+
+### Example
+
+```ts
+// default model (consumed via `v-model`)
+const modelValue = defineModel<string>()
+modelValue.value = "hello"
+
+// default model with options
+const modelValue = defineModel<string>({ required: true })
+
+// with specified name (consumed via `v-model:count`)
+const count = defineModel<number>('count')
+count.value++
+
+// with specified name and default value
+const count = defineModel<number>('count', { default: 0 })
+```
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:316
+
+## defineModel(options)
+
+```ts
+function defineModel<T, M, G, S>(options?): ModelRef<T | undefined, M, G | undefined, S | undefined>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `M` *extends* `PropertyKey` | `string` |
+| `G` | `T` |
+| `S` | `T` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options`? | `PropOptions`\<`T`, `T`\> & `DefineModelOptions`\<`T`, `G`, `S`\> |
+
+### Returns
+
+`ModelRef`\<`T` \| `undefined`, `M`, `G` \| `undefined`, `S` \| `undefined`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:321
+
+## defineModel(name, options)
+
+```ts
+function defineModel<T, M, G, S>(name, options): ModelRef<T, M, G, S>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `M` *extends* `PropertyKey` | `string` |
+| `G` | `T` |
+| `S` | `T` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+| `options` | `object` \| `object` & `PropOptions`\<`T`, `T`\> & `DefineModelOptions`\<`T`, `G`, `S`\> |
+
+### Returns
+
+`ModelRef`\<`T`, `M`, `G`, `S`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:322
+
+## defineModel(name, options)
+
+```ts
+function defineModel<T, M, G, S>(name, options?): ModelRef<T | undefined, M, G | undefined, S | undefined>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `M` *extends* `PropertyKey` | `string` |
+| `G` | `T` |
+| `S` | `T` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+| `options`? | `PropOptions`\<`T`, `T`\> & `DefineModelOptions`\<`T`, `G`, `S`\> |
+
+### Returns
+
+`ModelRef`\<`T` \| `undefined`, `M`, `G` \| `undefined`, `S` \| `undefined`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:327

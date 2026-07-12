@@ -1,0 +1,44 @@
+[vue-lynx](index.mdx) / toValue
+
+# Function: toValue()
+
+```ts
+function toValue<T>(source): T
+```
+
+Normalizes values / refs / getters to values.
+This is similar to [unref](Function.unref.mdx), except that it also normalizes getters.
+If the argument is a getter, it will be invoked and its return value will
+be returned.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `source` | [`MaybeRefOrGetter`](TypeAlias.MaybeRefOrGetter.mdx)\<`T`\> | A getter, an existing ref, or a non-function value. |
+
+## Returns
+
+`T`
+
+## Example
+
+```js
+toValue(1) // 1
+toValue(ref(1)) // 1
+toValue(() => 1) // 1
+```
+
+## See
+
+[https://vuejs.org/api/reactivity-utilities.html#tovalue](https://vuejs.org/api/reactivity-utilities.html#tovalue)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:526

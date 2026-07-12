@@ -1,0 +1,25 @@
+[vue-lynx/testing-library](index.mdx) / fireEvent
+
+# Function: fireEvent()
+
+```ts
+function fireEvent(elem, event): boolean
+```
+
+Fire a raw DOM event on a JSDOM element.
+Switches to BG thread before dispatching so event handlers run on BG.
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `elem` | `Element` |
+| `event` | `Event` |
+
+## Returns
+
+`boolean`
+
+## Defined in
+
+[packages/testing-library/src/fire-event.ts:46](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/testing-library/src/fire-event.ts#L46)

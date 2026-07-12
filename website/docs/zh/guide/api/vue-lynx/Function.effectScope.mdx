@@ -1,0 +1,30 @@
+[vue-lynx](index.mdx) / effectScope
+
+# Function: effectScope()
+
+```ts
+function effectScope(detached?): EffectScope
+```
+
+Creates an effect scope object which can capture the reactive effects (i.e.
+computed and watchers) created within it so that these effects can be
+disposed together. For detailed use cases of this API, please consult its
+corresponding [RFC](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md).
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `detached`? | `boolean` | Can be used to create a "detached" effect scope. |
+
+## Returns
+
+`EffectScope`
+
+## See
+
+[https://vuejs.org/api/reactivity-advanced.html#effectscope](https://vuejs.org/api/reactivity-advanced.html#effectscope)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:685

@@ -1,0 +1,384 @@
+[vue-lynx](index.mdx) / App
+
+# Interface: App\<HostElement\>
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `HostElement` | `any` |
+
+## Properties
+
+| Property | Type | Defined in |
+| ------ | ------ | ------ |
+| `version` | `string` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1021 |
+| `config` | `AppConfig` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1022 |
+| `_uid` | `number` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1053 |
+| `_component` | `ConcreteComponent`\<`object`, `any`, `any`, `ComputedOptions`, `MethodOptions`, `object`, `any`\> | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1054 |
+| `_props` | `null` \| `Data` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1055 |
+| `_container` | `null` \| `HostElement` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1056 |
+| `_context` | `AppContext` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1057 |
+| `_instance` | `null` \| [`ComponentInternalInstance`](Interface.ComponentInternalInstance.mdx) | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1058 |
+
+## Methods
+
+### use()
+
+#### use(plugin, options)
+
+```ts
+use<Options>(plugin, ...options): this
+```
+
+##### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `Options` *extends* `unknown`[] |
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `plugin` | [`Plugin`](TypeAlias.Plugin.mdx)\<`Options`, `Options` *extends* `unknown`[] ? `Options`\<`Options`\> : [`Options`]\> |
+| ...`options` | `NoInfer`\<`Options`\> |
+
+##### Returns
+
+`this`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1023
+
+#### use(plugin, options)
+
+```ts
+use<Options>(plugin, options): this
+```
+
+##### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `Options` |
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `plugin` | [`Plugin`](TypeAlias.Plugin.mdx)\<`Options`, `Options` *extends* `unknown`[] ? `Options`\<`Options`\> : [`Options`]\> |
+| `options` | `NoInfer`\<`Options`\> |
+
+##### Returns
+
+`this`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1024
+
+***
+
+### mixin()
+
+```ts
+mixin(mixin): this
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `mixin` | `ComponentOptions`\<`object`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `string`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\> |
+
+#### Returns
+
+`this`
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1025
+
+***
+
+### component()
+
+#### component(name)
+
+```ts
+component(name): undefined | Component<any, any, any, ComputedOptions, MethodOptions, object, any>
+```
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+
+##### Returns
+
+`undefined` \| [`Component`](TypeAlias.Component.mdx)\<`any`, `any`, `any`, `ComputedOptions`, `MethodOptions`, `object`, `any`\>
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1026
+
+#### component(name, component)
+
+```ts
+component<T>(name, component): this
+```
+
+##### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` *extends* [`Component`](TypeAlias.Component.mdx)\<`any`, `any`, `any`, `ComputedOptions`, `MethodOptions`, `object`, `any`\> \| [`DefineComponent`](TypeAlias.DefineComponent.mdx)\<`object`, `object`, `object`, `ComputedOptions`, `MethodOptions`, `ComponentOptionsMixin`, `ComponentOptionsMixin`, `object`, `string`, `PublicProps`, `Readonly`\<[`ExtractPropTypes`](TypeAlias.ExtractPropTypes.mdx)\<`object`\>\>, `object`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`, `true`, `object`, `any`\> |
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+| `component` | `T` |
+
+##### Returns
+
+`this`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1027
+
+***
+
+### directive()
+
+#### directive(name)
+
+```ts
+directive<HostElement, Value, Modifiers, Arg>(name): undefined | Directive<HostElement, Value, Modifiers, Arg>
+```
+
+##### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `HostElement` | `any` |
+| `Value` | `any` |
+| `Modifiers` *extends* `string` | `string` |
+| `Arg` | `any` |
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+
+##### Returns
+
+`undefined` \| [`Directive`](TypeAlias.Directive.mdx)\<`HostElement`, `Value`, `Modifiers`, `Arg`\>
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1028
+
+#### directive(name, directive)
+
+```ts
+directive<HostElement, Value, Modifiers, Arg>(name, directive): this
+```
+
+##### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `HostElement` | `any` |
+| `Value` | `any` |
+| `Modifiers` *extends* `string` | `string` |
+| `Arg` | `any` |
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+| `directive` | [`Directive`](TypeAlias.Directive.mdx)\<`HostElement`, `Value`, `Modifiers`, `Arg`\> |
+
+##### Returns
+
+`this`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1029
+
+***
+
+### mount()
+
+```ts
+mount(rootContainer): ComponentPublicInstance<object, object, object, object, object, object, object, object, false, ComponentOptionsBase<any, any, any, any, any, any, any, any, any, object, object, string, object, object, object, string, ComponentProvideOptions>, object, object, "", object, any>
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `rootContainer` | `string` \| `HostElement` |
+
+#### Returns
+
+[`ComponentPublicInstance`](TypeAlias.ComponentPublicInstance.mdx)\<`object`, `object`, `object`, `object`, `object`, `object`, `object`, `object`, `false`, `ComponentOptionsBase`\<`any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `any`, `object`, `object`, `string`, `object`, `object`, `object`, `string`, `ComponentProvideOptions`\>, `object`, `object`, `""`, `object`, `any`\>
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1030
+
+***
+
+### unmount()
+
+```ts
+unmount(): void
+```
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1043
+
+***
+
+### onUnmount()
+
+```ts
+onUnmount(cb): void
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `cb` | () => `void` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1044
+
+***
+
+### provide()
+
+```ts
+provide<T, K>(key, value): this
+```
+
+#### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `K` | `string` \| `number` \| [`InjectionKey`](TypeAlias.InjectionKey.mdx)\<`T`\> |
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `key` | `K` |
+| `value` | `K` *extends* [`InjectionKey`](TypeAlias.InjectionKey.mdx)\<`V`\> ? `V` : `T` |
+
+#### Returns
+
+`this`
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1045
+
+***
+
+### runWithContext()
+
+```ts
+runWithContext<T>(fn): T
+```
+
+Runs a function with the app as active instance. This allows using of `inject()` within the function to get access
+to variables provided via `app.provide()`.
+
+#### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+
+#### Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `fn` | () => `T` | function to run with the app as active instance |
+
+#### Returns
+
+`T`
+
+#### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1052
+
+***
+
+### filter()?
+
+#### filter(name)
+
+```ts
+optional filter(name): undefined | Function
+```
+
+v2 compat only
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+
+##### Returns
+
+`undefined` \| `Function`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1062
+
+#### filter(name, filter)
+
+```ts
+optional filter(name, filter): this
+```
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `name` | `string` |
+| `filter` | `Function` |
+
+##### Returns
+
+`this`
+
+##### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1063

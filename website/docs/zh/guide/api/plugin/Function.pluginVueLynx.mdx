@@ -1,0 +1,27 @@
+[vue-lynx/plugin](index.mdx) / pluginVueLynx
+
+# Function: pluginVueLynx()
+
+```ts
+function pluginVueLynx(options): RsbuildPlugin[]
+```
+
+Create rsbuild / rspeedy plugins for Vue-Lynx dual-thread rendering.
+
+Returns an array of two plugins:
+1. `@rsbuild/plugin-vue` — Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
+2. `lynx:vue` — Lynx dual-thread entry splitting, PAPI bootstrap, and CSS handling
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options` | [`PluginVueLynxOptions`](Interface.PluginVueLynxOptions.mdx) |
+
+## Returns
+
+`RsbuildPlugin`[]
+
+## Defined in
+
+[index.ts:123](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/plugin/src/index.ts#L123)

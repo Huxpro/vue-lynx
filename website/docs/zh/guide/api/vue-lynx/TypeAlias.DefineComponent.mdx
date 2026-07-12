@@ -1,0 +1,36 @@
+[vue-lynx](index.mdx) / DefineComponent
+
+# Type Alias: DefineComponent\<PropsOrPropOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, PP, Props, Defaults, S, LC, Directives, Exposed, Provide, MakeDefaultsOptional, TypeRefs, TypeEl\>
+
+```ts
+type DefineComponent<PropsOrPropOptions, RawBindings, D, C, M, Mixin, Extends, E, EE, PP, Props, Defaults, S, LC, Directives, Exposed, Provide, MakeDefaultsOptional, TypeRefs, TypeEl>: ComponentPublicInstanceConstructor<CreateComponentPublicInstanceWithMixins<Props, RawBindings, D, C, M, Mixin, Extends, E, PP, Defaults, MakeDefaultsOptional, object, S, LC & GlobalComponents, Directives & GlobalDirectives, Exposed, TypeRefs, TypeEl>> & ComponentOptionsBase<Props, RawBindings, D, C, M, Mixin, Extends, E, EE, Defaults, object, string, S, LC & GlobalComponents, Directives & GlobalDirectives, Exposed, Provide> & PP;
+```
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `PropsOrPropOptions` | `object` |
+| `RawBindings` | `object` |
+| `D` | `object` |
+| `C` *extends* `ComputedOptions` | `ComputedOptions` |
+| `M` *extends* `MethodOptions` | `MethodOptions` |
+| `Mixin` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+| `Extends` *extends* `ComponentOptionsMixin` | `ComponentOptionsMixin` |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `object` |
+| `EE` *extends* `string` | `string` |
+| `PP` | `PublicProps` |
+| `Props` | `ResolveProps`\<`PropsOrPropOptions`, `E`\> |
+| `Defaults` | `ExtractDefaultPropTypes`\<`PropsOrPropOptions`\> |
+| `S` *extends* [`SlotsType`](TypeAlias.SlotsType.mdx) | `object` |
+| `LC` *extends* `Record`\<`string`, [`Component`](TypeAlias.Component.mdx)\> | `object` |
+| `Directives` *extends* `Record`\<`string`, [`Directive`](TypeAlias.Directive.mdx)\> | `object` |
+| `Exposed` *extends* `string` | `string` |
+| `Provide` *extends* `ComponentProvideOptions` | `ComponentProvideOptions` |
+| `MakeDefaultsOptional` *extends* `boolean` | `true` |
+| `TypeRefs` *extends* `Record`\<`string`, `unknown`\> | `object` |
+| `TypeEl` *extends* `Element` | `any` |
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:984

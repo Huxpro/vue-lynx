@@ -1,0 +1,51 @@
+[vue-lynx](index.mdx) / withDefaults
+
+# Function: withDefaults()
+
+```ts
+function withDefaults<T, BKeys, Defaults>(props, defaults): PropsWithDefaults<T, Defaults, BKeys>
+```
+
+Vue `<script setup>` compiler macro for providing props default values when
+using type-based `defineProps` declaration.
+
+Example usage:
+```ts
+withDefaults(defineProps<{
+  size?: number
+  labels?: string[]
+}>(), {
+  size: 3,
+  labels: () => ['default label']
+})
+```
+
+This is only usable inside `<script setup>`, is compiled away in the output
+and should **not** be actually called at runtime.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+| `BKeys` *extends* `string` \| `number` \| `symbol` |
+| `Defaults` *extends* `InferDefaults`\<`T`\> |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `props` | `DefineProps`\<`T`, `BKeys`\> |
+| `defaults` | `Defaults` |
+
+## Returns
+
+`PropsWithDefaults`\<`T`, `Defaults`, `BKeys`\>
+
+## See
+
+[https://vuejs.org/guide/typescript/composition-api.html#typing-component-props](https://vuejs.org/guide/typescript/composition-api.html#typing-component-props)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:362

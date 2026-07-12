@@ -1,0 +1,102 @@
+[vue-lynx](index.mdx) / defineEmits
+
+# Function: defineEmits()
+
+## defineEmits(emitOptions)
+
+```ts
+function defineEmits<EE>(emitOptions): EmitFn<EE[]>
+```
+
+Vue `<script setup>` compiler macro for declaring a component's emitted
+events. The expected argument is the same as the component `emits` option.
+
+Example runtime declaration:
+```js
+const emit = defineEmits(['change', 'update'])
+```
+
+Example type-based declaration:
+```ts
+const emit = defineEmits<{
+  // <eventName>: <expected arguments>
+  change: []
+  update: [value: number] // named tuple syntax
+}>()
+
+emit('change')
+emit('update', 1)
+```
+
+This is only usable inside `<script setup>`, is compiled away in the
+output and should **not** be actually called at runtime.
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `EE` *extends* `string` | `string` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `emitOptions` | `EE`[] |
+
+### Returns
+
+`EmitFn`\<`EE`[]\>
+
+### See
+
+[https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits](https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits)
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:226
+
+## defineEmits(emitOptions)
+
+```ts
+function defineEmits<E>(emitOptions): EmitFn<E>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `emitOptions` | `E` |
+
+### Returns
+
+`EmitFn`\<`E`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:227
+
+## defineEmits()
+
+```ts
+function defineEmits<T>(): T extends (...args) => any ? T : ShortEmits<T>
+```
+
+### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` *extends* `ComponentTypeEmits` |
+
+### Returns
+
+`T` *extends* (...`args`) => `any` ? `T` : `ShortEmits`\<`T`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:228

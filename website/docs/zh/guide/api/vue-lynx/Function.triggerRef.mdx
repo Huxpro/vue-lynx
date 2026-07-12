@@ -1,0 +1,47 @@
+[vue-lynx](index.mdx) / triggerRef
+
+# Function: triggerRef()
+
+```ts
+function triggerRef(ref): void
+```
+
+Force trigger effects that depends on a shallow ref. This is typically used
+after making deep mutations to the inner value of a shallow ref.
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `ref` | [`Ref`](Interface.Ref.mdx)\<`any`, `any`\> | The ref whose tied effects shall be executed. |
+
+## Returns
+
+`void`
+
+## Example
+
+```js
+const shallow = shallowRef({
+  greet: 'Hello, world'
+})
+
+// Logs "Hello, world" once for the first run-through
+watchEffect(() => {
+  console.log(shallow.value.greet)
+})
+
+// This won't trigger the effect because the ref is shallow
+shallow.value.greet = 'Hello, universe'
+
+// Logs "Hello, universe"
+triggerRef(shallow)
+```
+
+## See
+
+[https://vuejs.org/api/reactivity-advanced.html#triggerref](https://vuejs.org/api/reactivity-advanced.html#triggerref)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:490

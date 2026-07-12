@@ -1,0 +1,25 @@
+# AI Chat
+
+一个功能完整的 AI 聊天应用，逐特性移植自官方 [Nuxt AI Chatbot 模板](https://github.com/nuxt-ui-templates/chat)（Nuxt UI + Vercel AI SDK）——这可能是迄今对 Vue Lynx 要求最高的「真实世界」验证：流式响应与思考/推理过程、带代码高亮的 Markdown、工具调用卡片（天气、图表、网络搜索来源）、按日期分组的聊天历史、点赞/点踩、消息编辑、分享/重命名/删除、模型选择器、带明暗模式的运行时主题、附件、命令面板搜索，以及带侧滑抽屉的响应式移动端布局。
+
+试试下面的快捷提示——*"What is the weather in Bordeaux?"* 会流式输出推理过程和天气卡片；*"Show me a chart of sales data"* 渲染 SVG 折线图；*"Help me create a Vue composable"* 展示带高亮代码的 Markdown。在 native 标签页扫描二维码即可在 [LynxExplorer](https://lynxjs.org/guide/start/quick-start.html) 中运行同一个 bundle。
+
+<Go example="ai-chat" defaultFile="src/App.vue" />
+
+上面的演练场完全自包含：应用会探测 API 服务器，不可达时自动回退到内置演示后端（相同的种子历史与确定性 mock AI 流）。在本地用 `pnpm dev:server` 运行示例时，同一套 UI 会连接一个复刻了 Nuxt 模板 API 路由的独立 Node 服务器——设置 `AI_GATEWAY_API_KEY` 后还可通过 [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) 流式调用**真实模型**。
+
+## 移植笔记
+
+移植保留了原版的数据模型（AI SDK v5 `UIMessage` parts + UI-message-stream 协议）和几乎全部 composable/页面逻辑，同时用 Lynx 元素重写了与 DOM 耦合的层：
+
+| 方面 | Nuxt 原版 | Vue Lynx |
+|------|-----------|----------|
+| **UI 组件库** | @nuxt/ui v4（`UChat*`、`UDashboard*`、Reka UI portal） | 手写 Lynx 组件（`view`/`text`/`image`/`scroll-view`/`input`），复用 Nuxt UI 的语义设计令牌 |
+| **聊天状态** | `@ai-sdk/vue` `useChat` | 自研 `useChat`，讲同一套 SSE 协议（native fetch 走轮询回退） |
+| **Markdown** | Comark + Shiki（HTML 输出） | Markdown → 原生节点渲染器 + 轻量代码分词器 |
+| **图表** | nuxt-charts / Unovis（SVG DOM） | 生成内联 SVG 字符串交给原生 `<svg>` 元素 |
+| **下拉/弹窗** | 锚定 popover、portal | 根节点的 action sheet + 居中弹窗 |
+| **主题** | Tailwind v4 + `app.config` | 运行时 `--ui-*` CSS 变量（含 17 主色 × 5 中性色选择器） |
+| **响应式** | Tailwind `lg:` 断点 | `SystemInfo.pixelWidth / pixelRatio` 分支（Lynx 无媒体查询） |
+
+示例目录包含完整的[逐特性对照 PRD](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/PRD.md)（65 项移植/适配，10 项注明原因跳过）、记录复用与重写决策及平台坑点的 [PORTING.md](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/PORTING.md)，以及在 Lynx for Web 上与原版实况对拍的[逐屏截图对比](https://github.com/huxpro/vue-lynx/blob/main/examples/ai-chat/screenshots/COMPARISON.md)。

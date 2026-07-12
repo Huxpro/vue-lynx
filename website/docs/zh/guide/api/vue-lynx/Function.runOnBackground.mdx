@@ -1,0 +1,44 @@
+[vue-lynx](index.mdx) / runOnBackground
+
+# Function: runOnBackground()
+
+```ts
+function runOnBackground<R, Fn>(_fn): (...args) => Promise<R>
+```
+
+Call a Background Thread function from a `'main thread'` worklet.
+
+At build time the SWC transform replaces all `runOnBackground(fn)` call
+sites. This export exists only for TypeScript import resolution — it is
+never called at runtime on the BG thread.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `R` |
+| `Fn` *extends* (...`args`) => `R` |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `_fn` | `Fn` |
+
+## Returns
+
+`Function`
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| ...`args` | `Parameters`\<`Fn`\> |
+
+### Returns
+
+`Promise`\<`R`\>
+
+## Defined in
+
+[packages/vue-lynx/runtime/src/run-on-background.ts:141](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/run-on-background.ts#L141)

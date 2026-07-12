@@ -1,0 +1,29 @@
+[vue-lynx](index.mdx) / provide
+
+# Function: provide()
+
+```ts
+function provide<T, K>(key, value): void
+```
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `K` | `string` \| `number` \| [`InjectionKey`](TypeAlias.InjectionKey.mdx)\<`T`\> |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `key` | `K` |
+| `value` | `K` *extends* [`InjectionKey`](TypeAlias.InjectionKey.mdx)\<`V`\> ? `V` : `T` |
+
+## Returns
+
+`void`
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:971

@@ -30,6 +30,11 @@ Then open the printed **Web Preview** URL (`/__web_preview?casename=main.web.bun
 browser, or scan the QR code with LynxExplorer (edit `src/lib/config.ts` to point `API_BASE`
 at your machine's LAN address for devices).
 
+No server? No problem — the app probes for the API server on startup and falls back to an
+**in-app demo backend** (same seeded history, same deterministic mock streams, in-memory only).
+That's what powers the [website playground](https://vue.lynxjs.org/guide/ai-chat) and bundles
+scanned straight off it.
+
 ### Real models
 
 The mock server answers offline with deterministic streams (including simulated weather/chart/

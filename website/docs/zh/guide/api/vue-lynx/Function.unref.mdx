@@ -1,0 +1,44 @@
+[vue-lynx](index.mdx) / unref
+
+# Function: unref()
+
+```ts
+function unref<T>(ref): T
+```
+
+Returns the inner value if the argument is a ref, otherwise return the
+argument itself. This is a sugar function for
+`val = isRef(val) ? val.value : val`.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `ref` | [`MaybeRef`](TypeAlias.MaybeRef.mdx)\<`T`\> \| [`ComputedRef`](Interface.ComputedRef.mdx)\<`T`\> | Ref or plain value to be converted into the plain value. |
+
+## Returns
+
+`T`
+
+## Example
+
+```js
+function useFoo(x: number | Ref<number>) {
+  const unwrapped = unref(x)
+  // unwrapped is guaranteed to be number now
+}
+```
+
+## See
+
+[https://vuejs.org/api/reactivity-utilities.html#unref](https://vuejs.org/api/reactivity-utilities.html#unref)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:509

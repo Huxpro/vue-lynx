@@ -1,0 +1,33 @@
+[vue-lynx](index.mdx) / nextTick
+
+# Function: nextTick()
+
+```ts
+function nextTick(fn?): Promise<void>
+```
+
+Wait for the next DOM update flush **and** the main-thread ops acknowledgement.
+
+Unlike standard Vue's `nextTick` which only waits for the scheduler flush,
+Vue Lynx's version also waits for the main thread to apply the ops, so
+native Lynx elements are fully materialised when the callback fires.
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `fn`? | () => `void` | Optional callback to execute after flush |
+
+## Returns
+
+`Promise`\<`void`\>
+
+A promise that resolves when the main thread has applied all pending ops
+
+## See
+
+[Vue nextTick](https://vuejs.org/api/general.html#nexttick) — Vue Lynx extends the standard behavior.
+
+## Defined in
+
+[packages/vue-lynx/runtime/src/index.ts:215](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/index.ts#L215)

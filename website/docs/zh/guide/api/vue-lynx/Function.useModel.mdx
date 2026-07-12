@@ -1,0 +1,36 @@
+[vue-lynx](index.mdx) / useModel
+
+# Function: useModel()
+
+```ts
+function useModel<M, T, K, G, S>(
+   props, 
+   name, 
+options?): ModelRef<T[K], M, G, S>
+```
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `M` *extends* `PropertyKey` | - |
+| `T` *extends* `Record`\<`string`, `any`\> | - |
+| `K` *extends* `string` \| `number` \| `symbol` | - |
+| `G` | `T`\[`K`\] |
+| `S` | `T`\[`K`\] |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `props` | `T` |
+| `name` | `K` |
+| `options`? | `DefineModelOptions`\<`T`\[`K`\], `G`, `S`\> |
+
+## Returns
+
+`ModelRef`\<`T`\[`K`\], `M`, `G`, `S`\>
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1537

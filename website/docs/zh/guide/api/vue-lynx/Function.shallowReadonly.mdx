@@ -1,0 +1,58 @@
+[vue-lynx](index.mdx) / shallowReadonly
+
+# Function: shallowReadonly()
+
+```ts
+function shallowReadonly<T>(target): Readonly<T>
+```
+
+Shallow version of [readonly](Function.readonly.mdx).
+
+Unlike [readonly](Function.readonly.mdx), there is no deep conversion: only root-level
+properties are made readonly. Property values are stored and exposed as-is -
+this also means properties with ref values will not be automatically
+unwrapped.
+
+## Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` *extends* `object` |
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `target` | `T` | The source object. |
+
+## Returns
+
+`Readonly`\<`T`\>
+
+## Example
+
+```js
+const state = shallowReadonly({
+  foo: 1,
+  nested: {
+    bar: 2
+  }
+})
+
+// mutating state's own properties will fail
+state.foo++
+
+// ...but works on nested objects
+isReadonly(state.nested) // false
+
+// works
+state.nested.bar++
+```
+
+## See
+
+[https://vuejs.org/api/reactivity-advanced.html#shallowreadonly](https://vuejs.org/api/reactivity-advanced.html#shallowreadonly)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:145

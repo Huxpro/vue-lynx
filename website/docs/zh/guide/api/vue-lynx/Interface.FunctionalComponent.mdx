@@ -1,0 +1,49 @@
+[vue-lynx](index.mdx) / FunctionalComponent
+
+# Interface: FunctionalComponent()\<P, E, S, EE\>
+
+## Extends
+
+- `ComponentInternalOptions`
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `P` | `object` |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) \| `Record`\<`string`, `any`[]\> | `object` |
+| `S` *extends* `Record`\<`string`, `any`\> | `any` |
+| `EE` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) | `ShortEmitsToObject`\<`E`\> |
+
+```ts
+interface FunctionalComponent(props, ctx): any
+```
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `props` | `P` & `EmitsToProps`\<`EE`\> |
+| `ctx` | `Omit`\<[`SetupContext`](TypeAlias.SetupContext.mdx)\<`EE`, `IfAny`\<`S`, `object`, [`SlotsType`](TypeAlias.SlotsType.mdx)\<`S`\>\>\>, `"expose"`\> |
+
+## Returns
+
+`any`
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1398
+
+## Properties
+
+| Property | Type | Description | Inherited from | Defined in |
+| ------ | ------ | ------ | ------ | ------ |
+| `__isBuiltIn?` | `boolean` | Compat build only, for bailing out of certain compatibility behavior | `ComponentInternalOptions.__isBuiltIn` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1387 |
+| `__file?` | `string` | This one should be exposed so that devtools can make use of it | `ComponentInternalOptions.__file` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1391 |
+| `__name?` | `string` | name inferred from filename | `ComponentInternalOptions.__name` | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1395 |
+| `props?` | `ComponentPropsOptions`\<`P`\> | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1399 |
+| `emits?` | `EE` \| keyof `EE`[] | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1400 |
+| `slots?` | `IfAny`\<`S`, `Readonly`\<`InternalSlots`\>, [`SlotsType`](TypeAlias.SlotsType.mdx)\<`S`\>\> | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1401 |
+| `inheritAttrs?` | `boolean` | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1402 |
+| `displayName?` | `string` | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1403 |
+| `compatConfig?` | `CompatConfig` | - | - | node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1404 |

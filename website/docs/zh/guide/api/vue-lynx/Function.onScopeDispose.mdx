@@ -1,0 +1,29 @@
+[vue-lynx](index.mdx) / onScopeDispose
+
+# Function: onScopeDispose()
+
+```ts
+function onScopeDispose(fn, failSilently?): void
+```
+
+Registers a dispose callback on the current active effect scope. The
+callback will be invoked when the associated effect scope is stopped.
+
+## Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `fn` | () => `void` | The callback function to attach to the scope's cleanup. |
+| `failSilently`? | `boolean` | - |
+
+## Returns
+
+`void`
+
+## See
+
+[https://vuejs.org/api/reactivity-advanced.html#onscopedispose](https://vuejs.org/api/reactivity-advanced.html#onscopedispose)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+reactivity@3.5.30/node\_modules/@vue/reactivity/dist/reactivity.d.ts:699

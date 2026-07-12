@@ -1,0 +1,91 @@
+[vue-lynx](index.mdx) / computed
+
+# Function: computed()
+
+## computed(getter, debugOptions)
+
+```ts
+function computed<T>(getter, debugOptions?): ComputedRef<T>
+```
+
+Takes a getter function and returns a readonly reactive ref object for the
+returned value from the getter. It can also take an object with get and set
+functions to create a writable ref object.
+
+### Type Parameters
+
+| Type Parameter |
+| ------ |
+| `T` |
+
+### Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `getter` | `ComputedGetter`\<`T`\> | Function that produces the next value. |
+| `debugOptions`? | `DebuggerOptions` | For debugging. See [https://vuejs.org/guide/extras/reactivity-in-depth.html#computed-debugging](https://vuejs.org/guide/extras/reactivity-in-depth.html#computed-debugging). |
+
+### Returns
+
+[`ComputedRef`](Interface.ComputedRef.mdx)\<`T`\>
+
+### Example
+
+```js
+// Creating a readonly computed ref:
+const count = ref(1)
+const plusOne = computed(() => count.value + 1)
+
+console.log(plusOne.value) // 2
+plusOne.value++ // error
+```
+
+```js
+// Creating a writable computed ref:
+const count = ref(1)
+const plusOne = computed({
+  get: () => count.value + 1,
+  set: (val) => {
+    count.value = val - 1
+  }
+})
+
+plusOne.value = 1
+console.log(count.value) // 0
+```
+
+### See
+
+[https://vuejs.org/api/reactivity-core.html#computed](https://vuejs.org/api/reactivity-core.html#computed)
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:6
+
+## computed(options, debugOptions)
+
+```ts
+function computed<T, S>(options, debugOptions?): WritableComputedRef<T, S>
+```
+
+### Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `T` | - |
+| `S` | `T` |
+
+### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `options` | `WritableComputedOptions`\<`T`, `S`\> |
+| `debugOptions`? | `DebuggerOptions` |
+
+### Returns
+
+[`WritableComputedRef`](Interface.WritableComputedRef.mdx)\<`T`, `S`\>
+
+### Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:6

@@ -1,0 +1,310 @@
+[vue-lynx](index.mdx) / TransitionGroup
+
+# Variable: TransitionGroup
+
+```ts
+const TransitionGroup: DefineComponent<object, () => VNode<RendererNode, RendererElement, object>, object, object, object, ComponentOptionsMixin, ComponentOptionsMixin, object, string, PublicProps, ToResolvedProps<object, object>, object, object, object, object, string, ComponentProvideOptions, true, object, any>;
+```
+
+## Type declaration
+
+### mode?
+
+```ts
+optional mode: "in-out" | "out-in" | "default";
+```
+
+### appear?
+
+```ts
+optional appear: boolean;
+```
+
+### persisted?
+
+```ts
+optional persisted: boolean;
+```
+
+### name?
+
+```ts
+optional name: string;
+```
+
+### type?
+
+```ts
+optional type: "transition" | "animation";
+```
+
+### duration?
+
+```ts
+optional duration: number | object;
+```
+
+### enterFromClass?
+
+```ts
+optional enterFromClass: string;
+```
+
+### enterActiveClass?
+
+```ts
+optional enterActiveClass: string;
+```
+
+### enterToClass?
+
+```ts
+optional enterToClass: string;
+```
+
+### leaveFromClass?
+
+```ts
+optional leaveFromClass: string;
+```
+
+### leaveActiveClass?
+
+```ts
+optional leaveActiveClass: string;
+```
+
+### leaveToClass?
+
+```ts
+optional leaveToClass: string;
+```
+
+### appearFromClass?
+
+```ts
+optional appearFromClass: string;
+```
+
+### appearActiveClass?
+
+```ts
+optional appearActiveClass: string;
+```
+
+### appearToClass?
+
+```ts
+optional appearToClass: string;
+```
+
+### onBeforeEnter()?
+
+```ts
+optional onBeforeEnter: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onEnter()?
+
+```ts
+optional onEnter: (el, done) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+| `done` | () => `void` |
+
+#### Returns
+
+`void`
+
+### onAfterEnter()?
+
+```ts
+optional onAfterEnter: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onEnterCancelled()?
+
+```ts
+optional onEnterCancelled: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onBeforeLeave()?
+
+```ts
+optional onBeforeLeave: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onLeave()?
+
+```ts
+optional onLeave: (el, done) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+| `done` | () => `void` |
+
+#### Returns
+
+`void`
+
+### onAfterLeave()?
+
+```ts
+optional onAfterLeave: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onLeaveCancelled()?
+
+```ts
+optional onLeaveCancelled: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onBeforeAppear()?
+
+```ts
+optional onBeforeAppear: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onAppear()?
+
+```ts
+optional onAppear: (el, done) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+| `done` | () => `void` |
+
+#### Returns
+
+`void`
+
+### onAfterAppear()?
+
+```ts
+optional onAfterAppear: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### onAppearCancelled()?
+
+```ts
+optional onAppearCancelled: (el) => void;
+```
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `el` | [`ShadowElement`](Class.ShadowElement.mdx) |
+
+#### Returns
+
+`void`
+
+### tag?
+
+```ts
+optional tag: string;
+```
+
+### moveClass?
+
+```ts
+optional moveClass: string;
+```
+
+## Defined in
+
+[packages/vue-lynx/runtime/src/TransitionGroup.ts:129](https://github.com/Huxpro/vue-lynx/blob/53e88f24b23431fe926acde8ef07684bd097b5c6/packages/vue-lynx/runtime/src/TransitionGroup.ts#L129)

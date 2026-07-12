@@ -1,0 +1,26 @@
+[vue-lynx](index.mdx) / Component
+
+# Type Alias: Component\<PropsOrInstance, RawBindings, D, C, M, E, S\>
+
+```ts
+type Component<PropsOrInstance, RawBindings, D, C, M, E, S>: ConcreteComponent<PropsOrInstance, RawBindings, D, C, M, E, S> | ComponentPublicInstanceConstructor<PropsOrInstance>;
+```
+
+A type used in public APIs where a component type is expected.
+The constructor type is an artificial type returned by defineComponent().
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `PropsOrInstance` | `any` |
+| `RawBindings` | `any` |
+| `D` | `any` |
+| `C` *extends* `ComputedOptions` | `ComputedOptions` |
+| `M` *extends* `MethodOptions` | `MethodOptions` |
+| `E` *extends* [`EmitsOptions`](TypeAlias.EmitsOptions.mdx) \| `Record`\<`string`, `any`[]\> | `object` |
+| `S` *extends* `Record`\<`string`, `any`\> | `any` |
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:1421

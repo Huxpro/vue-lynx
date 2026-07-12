@@ -1,0 +1,47 @@
+[vue-lynx](index.mdx) / Suspense
+
+# Variable: Suspense()
+
+```ts
+const Suspense: () => object;
+```
+
+## Returns
+
+`object`
+
+### $props
+
+```ts
+$props: VNodeProps & SuspenseProps;
+```
+
+### $slots
+
+```ts
+$slots: object;
+```
+
+### $slots.default()
+
+#### Returns
+
+[`VNode`](Interface.VNode.mdx)\<`RendererNode`, `RendererElement`, `object`\>[]
+
+### $slots.fallback()
+
+#### Returns
+
+[`VNode`](Interface.VNode.mdx)\<`RendererNode`, `RendererElement`, `object`\>[]
+
+## Type declaration
+
+### \_\_isSuspense
+
+```ts
+__isSuspense: true;
+```
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:542

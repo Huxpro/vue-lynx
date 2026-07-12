@@ -1,0 +1,42 @@
+[vue-lynx](index.mdx) / defineExpose
+
+# Function: defineExpose()
+
+```ts
+function defineExpose<Exposed>(exposed?): void
+```
+
+Vue `<script setup>` compiler macro for declaring a component's exposed
+instance properties when it is accessed by a parent component via template
+refs.
+
+`<script setup>` components are closed by default - i.e. variables inside
+the `<script setup>` scope is not exposed to parent unless explicitly exposed
+via `defineExpose`.
+
+This is only usable inside `<script setup>`, is compiled away in the
+output and should **not** be actually called at runtime.
+
+## Type Parameters
+
+| Type Parameter | Default type |
+| ------ | ------ |
+| `Exposed` *extends* `Record`\<`string`, `any`\> | `Record`\<`string`, `any`\> |
+
+## Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `exposed`? | `Exposed` |
+
+## Returns
+
+`void`
+
+## See
+
+[https://vuejs.org/api/sfc-script-setup.html#defineexpose](https://vuejs.org/api/sfc-script-setup.html#defineexpose)
+
+## Defined in
+
+node\_modules/.pnpm/@vue+runtime-core@3.5.30/node\_modules/@vue/runtime-core/dist/runtime-core.d.ts:248
