@@ -32,15 +32,14 @@
 
   <div class="progress"><div class="progress__bar"></div></div>
 
+  <!-- Fixed 1280x720 stage; scaled to fit by main.js (fitStage) -->
+  <div class="frame">
+
   <!-- ====================================================
        1 — Cover
        ==================================================== -->
   <section class="slide cover">
     <div class="cover__top">
-      <span class="badge">
-        <span class="badge__dot"></span>
-        Pre-Alpha · How I Vibed This in 2 Weeks
-      </span>
       <div class="cover__title">
         <div class="cover__title-line">
           <span class="verb brand-text" data-cover-verb>Unlock</span>
@@ -281,66 +280,7 @@
   </section>
 
   <!-- ====================================================
-       10 — Gallery strip
-       ==================================================== -->
-  <section class="slide gallery">
-    <div class="gallery__head">
-      <div class="stack-y gap-md">
-        <span class="eyebrow">The Gallery</span>
-        <h2 class="h-section">
-          One renderer, <span class="brand-text">an ecosystem</span>.
-        </h2>
-      </div>
-    </div>
-    <div class="gallery__strip">
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="hackernews-tailwind/dist/main.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>HackerNews</b>Vue + Router + Query
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="gallery/dist/GalleryAutoScroll.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>Auto-scroll Gallery</b>continuous native list
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="swiper/dist/SwiperMTS.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>MTS Swiper</b>UI-thread gestures
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="7guis/dist/circle-drawer.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>7GUIs · Circle Drawer</b>undo, redo, dialogs
-        </div>
-      </div>
-    </div>
-    <aside class="notes">
-      <p><strong>Twenty-plus apps in the repo today</strong>, each running natively <em>and</em> in the browser via Lynx for Web — which is how this deck embeds them. Let them look, then move on.</p>
-    </aside>
-  </section>
-
-  <!-- ====================================================
-       11 — Divider II · Story
+       Divider II · Story
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter II</span>
@@ -760,6 +700,8 @@
       <p>"Is this production?" — pre-alpha, architecture solid, tested surface. "Android?" — Lynx is cross-platform, same bundle runs on both.</p>
     </aside>
   </section>
+
+  </div><!-- /.frame -->
 
 </div>
 

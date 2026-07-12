@@ -168,9 +168,28 @@ customElements.define('vl-demo', VlDemo);
 // Deck navigation
 // =========================================================
 const deck = document.querySelector('.deck');
+const frame = document.querySelector('.frame');
 const slides = Array.from(document.querySelectorAll('.slide'));
 const progressBar = document.querySelector('.progress__bar');
 const counter = document.querySelector('[data-counter]');
+
+// =========================================================
+// Fixed-stage fit — slides are authored against a 1280x720
+// canvas (the .frame, a CSS size container). We scale the
+// frame to fit the viewport, preserving 16:9 on any screen.
+// stageScale is read by the magic-move engine so FLIP deltas
+// (measured in scaled viewport px) map back to local space.
+// =========================================================
+const STAGE_W = 1280;
+const STAGE_H = 720;
+let stageScale = 1;
+function fitStage() {
+  if (!frame) return;
+  stageScale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+  frame.style.transform = `translate(-50%, -50%) scale(${stageScale})`;
+}
+fitStage();
+window.addEventListener('resize', fitStage);
 
 let current = 0;
 let speakerWindow = null;
@@ -244,9 +263,12 @@ function magicMove(fromSlide, toSlide) {
   pairs.forEach((p) => { p.toRect = p.toEl.getBoundingClientRect(); });
 
   // 4. Invert — place each target element over its source, no transition.
+  //    Rects are in scaled viewport px; divide the translation by the stage
+  //    scale so it maps to the element's own (unscaled) coordinate space.
+  const s = stageScale || 1;
   pairs.forEach(({ fromRect, toRect, toEl }) => {
-    const dx = fromRect.left - toRect.left;
-    const dy = fromRect.top - toRect.top;
+    const dx = (fromRect.left - toRect.left) / s;
+    const dy = (fromRect.top - toRect.top) / s;
     const sx = toRect.width ? fromRect.width / toRect.width : 1;
     const sy = toRect.height ? fromRect.height / toRect.height : 1;
     toEl.classList.add('is-flipping');

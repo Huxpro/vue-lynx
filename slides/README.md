@@ -38,6 +38,18 @@ The deck ships **dark by default** (near-black Keynote-style stage) with the
 Vue Lynx green/teal accents intact. Press `.` to flip to the light theme
 (adds `.light` on `:root`).
 
+## Layout — fixed 16:9 stage
+
+Slides are authored against a fixed **1280×720** canvas (`.frame`, a CSS size
+container). `main.js` scales that frame to fit the viewport (`fitStage`), so the
+deck keeps a true 16:9 aspect on any screen — on a portrait phone it letterboxes
+and the whole slide scales down as one piece instead of reflowing. The corner
+`.chrome` and the meteors background live outside the frame and stay full-bleed.
+
+Because the frame is a size container, size everything **in `cqw` / `cqh`**
+(1cqw = 12.8px, 1cqh = 7.2px), not `vw` / `vh` — those resolve to the design
+canvas, not the raw viewport.
+
 ## Magic move (Keynote-style)
 
 Adjacent slides morph shared elements into place, FLIP-style. Give the same
