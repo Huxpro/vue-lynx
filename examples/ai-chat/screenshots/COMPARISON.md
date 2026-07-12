@@ -76,8 +76,8 @@ empty history because the live demo session was fresh.
 
 **Mobile markdown (composable)** — reasoning row, streamed prose, and a highlighted code block.
 The vertical rhythm matches the original's prose spacing (28px line-height, ~16px between
-blocks). Getting here required a Lynx-specific fix: Vue's `v-if`/`v-else-if` chains and
-`v-for` fragments leave zero-size placeholder nodes as siblings, and Lynx flex `gap` adds space
-around *every* child — placeholders included — which multiplied the spacing between markdown
-blocks. The renderer now wraps each block/part in a single `<view>` and spaces with
-`margin-top` instead of container `gap` (see PORTING.md "Platform learnings" #11).
+blocks). Vue's `v-if`/`v-else-if` chains and `v-for` fragments leave placeholder nodes as
+siblings. On web they participate in flex `gap`; on native, empty `<text>` nodes also receive a
+14px default line box. The block renderer avoids fragment gaps with one wrapper and per-block
+`margin-top`, while the Vue Lynx renderer keeps comment anchors off the Main Thread and
+materialises text anchors only while non-empty (see PORTING.md "Platform learnings" #10/#14).

@@ -93,3 +93,10 @@ Why a straight copy is impossible:
 13. **Vue Router reuses route components when only params change.** The root keys `RouterView`
     by `route.fullPath`, and `ChatPage` aborts its stream on unmount, so `/chat/a` → `/chat/b`
     cannot retain or mutate the first chat's state.
+14. **Empty Vue anchors have intrinsic height on native Lynx.** Native `<text>` assigns a 14px
+    default line box even when the text is empty. Materialising Vue comment anchors and empty
+    text VNodes therefore inflated a one-line user bubble from 24px to 136px and inserted the
+    same phantom height between Markdown blocks. The renderer now keeps comments in the
+    Background Thread shadow tree only and lazily inserts text VNodes on the Main Thread while
+    they contain visible text. Native SVG also does not render the menu glyph's `<line>`
+    primitives reliably, so the hamburger uses equivalent `<path>` segments.
