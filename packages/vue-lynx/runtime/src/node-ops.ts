@@ -14,7 +14,6 @@ import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
-import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import {
   idRegistry,
@@ -408,8 +407,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   // Called by Vue's renderer after createElement to apply scoped CSS.
   // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
   setScopeId(el: ShadowElement, id: string): void {
-    pushOp(OP.SET_SCOPE_ID, el.uid, scopeIdToCssId(id));
-    scheduleFlush();
+    el._addScopeClass(id);
   },
 
   parentNode(node: ShadowElement): ShadowElement | null {

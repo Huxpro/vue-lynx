@@ -1,13 +1,12 @@
 /**
  * Scoped CSS tests — verify the cssId pipeline:
  *
- * 1. nodeOps.setScopeId() → SET_SCOPE_ID op with correct numeric cssId
- * 2. Full component render with __scopeId → ops reach main thread
+ * 1. nodeOps.setScopeId() → composable scope classes
+ * 2. Full component render with __scopeId → class ops reach main thread
  *
  * These tests capture the integration points between:
- * - scope-bridge.ts (scopeIdToCssId conversion)
- * - node-ops.ts (setScopeId → pushOp)
- * - ops-apply.ts (SET_SCOPE_ID → __SetCSSId)
+ * - node-ops.ts (setScopeId → resolved class state)
+ * - tree-ops.ts (base + scope + transition class composition)
  *
  * Build-time CSS wrapping (@cssId in extracted CSS) is verified by the
  * examples/css-features pipeline build in CI, not here.
@@ -19,60 +18,43 @@ import { OP } from '../../../vue-lynx/internal/src/ops.js';
 import { nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
 import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
 import { ShadowElement } from '../../../vue-lynx/runtime/src/shadow-element.js';
-import { scopeIdToCssId } from '../../../vue-lynx/runtime/src/scope-bridge.js';
+import { resolveClass } from '../../../vue-lynx/runtime/src/tree-ops.js';
 import { render } from '../index.js';
 
 // ---------------------------------------------------------------------------
-// Low-level: nodeOps.setScopeId → ops buffer
+// Low-level: nodeOps.setScopeId → composable class state
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (nodeOps)', () => {
-  it('pushes SET_SCOPE_ID op with numeric cssId', () => {
+describe('scoped CSS classes (nodeOps)', () => {
+  it('adds a scope token to the resolved class', () => {
     const el = new ShadowElement('view', 99);
 
     nodeOps.setScopeId!(el,'data-v-8f634878');
 
     const ops = takeOps();
-    expect(ops[0]).toBe(OP.SET_SCOPE_ID);
+    expect(ops[0]).toBe(OP.SET_CLASS);
     expect(ops[1]).toBe(99); // element id
-    // 0x8f634878 & 0x7fffffff = 258164856
-    expect(ops[2]).toBe(258164856);
+    expect(ops[2]).toBe('data-v-8f634878');
+    expect(el._scopeClasses).toEqual(new Set(['data-v-8f634878']));
   });
 
-  it('cssId conversion matches between scope-bridge and plugin formula', () => {
-    // The build-time plugin uses the same formula:
-    //   Number.parseInt(hash, 16) & 0x7fffffff
-    // This test ensures the runtime conversion stays in sync.
-    const cases = [
-      ['data-v-8f634878', Number.parseInt('8f634878', 16) & 0x7fffffff],
-      ['data-v-00000001', 1],
-      ['data-v-7fffffff', 0x7fffffff],
-      // High bit set — mask must clamp to positive int32
-      ['data-v-ffffffff', Number.parseInt('ffffffff', 16) & 0x7fffffff],
-    ] as const;
-
-    for (const [scopeId, expected] of cases) {
-      expect(scopeIdToCssId(scopeId)).toBe(expected);
-    }
-  });
-
-  it('multiple setScopeId calls produce separate ops', () => {
+  it('composes and deduplicates multiple scope tokens', () => {
     const el = new ShadowElement('view', 10);
+    el._baseClass = 'box';
 
-    // Vue calls setScopeId once per scope on the element
-    // (own scope, then parent scope for root elements)
     nodeOps.setScopeId!(el,'data-v-aaa00001');
     nodeOps.setScopeId!(el,'data-v-bbb00002');
+    nodeOps.setScopeId!(el,'data-v-aaa00001');
 
     const ops = takeOps();
-    // Two SET_SCOPE_ID ops, each with 3 values
     expect(ops).toHaveLength(6);
-    expect(ops[0]).toBe(OP.SET_SCOPE_ID);
-    expect(ops[3]).toBe(OP.SET_SCOPE_ID);
-    // Same element, different cssIds
-    expect(ops[1]).toBe(10);
-    expect(ops[4]).toBe(10);
-    expect(ops[2]).not.toBe(ops[5]);
+    expect(el._scopeClasses).toEqual(
+      new Set(['data-v-aaa00001', 'data-v-bbb00002']),
+    );
+    expect(resolveClass(el)).toBe(
+      'box data-v-aaa00001 data-v-bbb00002',
+    );
+    expect(ops).not.toContain(OP.SET_SCOPE_ID);
   });
 });
 
@@ -96,8 +78,7 @@ describe('SET_SCOPE_ID (full pipeline)', () => {
     // Element should be rendered through the full pipeline
     const view = container.querySelector('.scoped-box');
     expect(view).not.toBeNull();
-    // The SET_SCOPE_ID op was flushed to main thread during render.
-    // If __SetCSSId threw, the render would have failed.
+    expect(view!.classList).toContain('data-v-8f634878');
   });
 
   it('child component inside scoped parent renders correctly', () => {
