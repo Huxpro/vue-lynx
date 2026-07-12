@@ -98,11 +98,11 @@ access-token sign-in** in Settings. Multi-account storage
 
 ## Lynx-specific landmines (worth knowing)
 
-1. **Web globals are hidden from the BG eval scope.** masto.js references
-   `fetch`, `Request`, `Headers`, `AbortSignal`… as free identifiers; the
-   Lynx background-thread eval scope defines a broken bare `fetch` and
-   lacks the rest, while `globalThis.*` has them. Fixed at compile time
-   with `source.define` rewrites in `lynx.config.ts` (no masto patches).
+1. **`fetch` lives in different scopes across targets.** Native Lynx injects
+   it into RuntimeWrapperWebpackPlugin's outer wrapper, while Lynx for Web
+   exposes `globalThis.fetch`. `src/polyfills.ts` selects the callable one
+   and mirrors it to both scopes before masto runs. Other free-identifier web
+   constructors use targeted `source.define` rewrites (no masto patches).
 2. **No DOMParser anywhere** (worker or native). Elk's `tiny-decode`
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for
@@ -112,16 +112,28 @@ access-token sign-in** in Settings. Multi-account storage
    `Request`, `Response` and timers. masto.js additionally calls
    `AbortSignal.any` (unconditionally, on every request — this alone
    turned every native request into "Failed to load timeline"),
-   `new Headers(...)` and `new URL(path, base)`. `src/polyfills.ts`
+   `new Headers(...)`, `new URL(path, base)`, and `DOMException` for its
+   error path. `src/polyfills.ts`
    installs fill-if-missing implementations before anything else runs;
-   on Lynx for Web the real worker APIs win and the polyfills are inert.
-4. **The native image element has no SVG decoder.** Icons as
+   on Lynx for Web the real worker APIs win and the native-only shims are
+   inert.
+4. **PrimJS cannot parse Unicode-property regexes.** `change-case@5`, pulled
+   by masto.js, contains `\p{L}`/`\p{Lu}`/`\p{Ll}` expressions that abort the
+   entire bundle before Vue mounts. The build aliases it to an ASCII adapter;
+   Mastodon action names and response keys are ASCII by definition.
+5. **The native image element has no SVG decoder.** Icons as
    `data:image/svg+xml` `<image>` sources render blank on device; the
    built-in `<svg content>` element (web: `x-svg`) renders them on both
    targets — that's what `AppIcon` uses.
-5. **Icons can't use `currentColor`.** SVG XML is tinted by string
+6. **Fullscreen native cards must consume the host safe area.** Sparkling
+   exposes iOS `topHeight` / `bottomHeight` through `lynx.__globalProps`;
+   the Sparkling-enabled Lynx Explorer currently exposes the same insets as
+   `safeAreaTop` / `safeAreaBottom`. `safe-area.ts` normalizes both contracts,
+   and `App.vue` places all page, navigation and media-preview UI between root
+   safe-area spacers. Missing, invalid and non-iOS values resolve to zero.
+7. **Icons can't use `currentColor`.** SVG XML is tinted by string
    replacement per color (`icons.ts`).
-6. **`new URL(path, base)` drops base paths** — relevant to the
+8. **`new URL(path, base)` drops base paths** — relevant to the
    verification relay (below), not the app itself.
 
 ## Verification setup

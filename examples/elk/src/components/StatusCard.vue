@@ -77,7 +77,7 @@ function openAccount() {
 
     <view class="status-row">
       <view @tap="openAccount">
-        <AccountAvatar :account="status.account" :size="main ? 50 : 44" />
+        <AccountAvatar :account="status.account" :size="main ? 56 : 48" />
       </view>
 
       <view class="status-body">
@@ -163,7 +163,7 @@ function openAccount() {
 .status-card {
   display: flex;
   flex-direction: column;
-  padding: 12px 16px 8px;
+  padding: 12px 14px 8px;
   border-bottom: 1px solid var(--c-border);
   background-color: var(--c-bg-base);
 }
@@ -189,7 +189,7 @@ function openAccount() {
 .status-row {
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 12px;
 }
 
 .status-body {

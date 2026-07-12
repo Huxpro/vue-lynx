@@ -33,8 +33,8 @@ Lynx-only captures (no same-frame Elk counterpart):
 
 ## Known visual deltas (intentional or tracked)
 
-- Elk shows a **Sign in** button in the guest header; the port keeps
-  sign-in in Settings (token-based, no OAuth server — see PRD).
+- The guest header now mirrors Elk's **Sign in** action, but routes to the
+  token-based Settings flow because this example has no OAuth server.
 - Elk's action bar includes a **quote** button (Mastodon 4.5); the port
   renders quote posts (see the edit-history capture) but composing quotes
   is out of scope with the editor.
@@ -42,4 +42,5 @@ Lynx-only captures (no same-frame Elk counterpart):
   emoji glyphs (deliberate — see PRD "Content rendering").
 - Elk's guest bottom nav has 4 items (…-menu last); the port promotes
   Search and Settings into the bar.
-- Fonts differ slightly (Elk ships webfonts; Lynx uses system fonts).
+- The port follows Elk's system sans stack; glyph rasterization still differs
+  slightly between Chromium and the native iOS text renderer.

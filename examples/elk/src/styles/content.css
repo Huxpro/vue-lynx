@@ -9,12 +9,12 @@
 
 .content-p {
   font-size: 15px;
-  line-height: 22px;
+  line-height: 20px;
   color: var(--c-text-base);
 }
 
 .content-p-gap {
-  height: 10px;
+  height: 8px;
 }
 
 .content-bold {

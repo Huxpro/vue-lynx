@@ -19,6 +19,7 @@ const statuses = ref<mastodon.v1.Status[]>([]);
 const tags = ref<mastodon.v1.Tag[]>([]);
 const links = ref<mastodon.v1.TrendLink[]>([]);
 const loading = ref(true);
+const showIntro = ref(true);
 
 async function load() {
   loading.value = true;
@@ -58,15 +59,23 @@ function tagUses(tag: mastodon.v1.Tag): number {
     <view class="explore-tabs">
       <view class="explore-tab" @tap="tab = 'posts'">
         <text class="explore-tab-text" :class="tab === 'posts' ? 'explore-tab-active' : ''">Posts</text>
-        <view v-if="tab === 'posts'" class="explore-tab-underline" />
+        <view class="explore-tab-underline" :class="tab === 'posts' ? 'explore-tab-underline-active' : ''" />
       </view>
       <view class="explore-tab" @tap="tab = 'tags'">
         <text class="explore-tab-text" :class="tab === 'tags' ? 'explore-tab-active' : ''">Hashtags</text>
-        <view v-if="tab === 'tags'" class="explore-tab-underline" />
+        <view class="explore-tab-underline" :class="tab === 'tags' ? 'explore-tab-underline-active' : ''" />
       </view>
       <view class="explore-tab" @tap="tab = 'links'">
         <text class="explore-tab-text" :class="tab === 'links' ? 'explore-tab-active' : ''">News</text>
-        <view v-if="tab === 'links'" class="explore-tab-underline" />
+        <view class="explore-tab-underline" :class="tab === 'links' ? 'explore-tab-underline-active' : ''" />
+      </view>
+    </view>
+
+    <view v-if="tab === 'posts' && showIntro" class="explore-intro">
+      <AppIcon name="information-line" :size="20" color="#cc7d24" />
+      <text class="explore-intro-text">These posts from this and other servers in the decentralized network are gaining traction on this server right now.</text>
+      <view class="explore-intro-close" @tap="showIntro = false">
+        <AppIcon name="close-line" :size="18" color="#686868" />
       </view>
     </view>
 
@@ -129,6 +138,7 @@ function tagUses(tag: mastodon.v1.Tag): number {
   font-size: 14px;
   color: var(--c-text-secondary);
   padding-bottom: 8px;
+  transition: color var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
 }
 
 .explore-tab-active {
@@ -141,6 +151,41 @@ function tagUses(tag: mastodon.v1.Tag): number {
   width: 50%;
   border-radius: 2px;
   background-color: var(--c-primary);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: transform var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
+}
+
+.explore-tab-underline-active {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.explore-intro {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 10px 12px 16px;
+  background-color: var(--c-primary-fade);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.explore-intro-text {
+  flex: 1;
+  color: var(--c-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.explore-intro-close {
+  width: 40px;
+  height: 40px;
+  margin-top: -10px;
+  margin-right: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .explore-loading {

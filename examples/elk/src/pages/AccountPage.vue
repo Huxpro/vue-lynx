@@ -151,7 +151,7 @@ const joinDate = computed(() => {
           @tap="tab = t.key"
         >
           <text class="account-tab-text" :class="tab === t.key ? 'account-tab-active' : ''">{{ t.label }}</text>
-          <view v-if="tab === t.key" class="account-tab-underline" />
+          <view class="account-tab-underline" :class="tab === t.key ? 'account-tab-underline-active' : ''" />
         </view>
       </view>
 
@@ -302,6 +302,7 @@ const joinDate = computed(() => {
   font-size: 14px;
   color: var(--c-text-secondary);
   padding-bottom: 8px;
+  transition: color var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
 }
 
 .account-tab-active {
@@ -314,6 +315,14 @@ const joinDate = computed(() => {
   width: 60%;
   border-radius: 2px;
   background-color: var(--c-primary);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: transform var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
+}
+
+.account-tab-underline-active {
+  opacity: 1;
+  transform: scaleX(1);
 }
 
 .account-bottom-pad {

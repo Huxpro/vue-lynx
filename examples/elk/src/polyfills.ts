@@ -8,11 +8,31 @@
 //   - new URL(path, base) + url.search setter (resolvePath)
 // plus Object.hasOwn / Array.prototype.at in the ported content parser.
 //
-// Everything below installs ONLY when missing — on Lynx for Web the
-// worker provides the real implementations and nothing here runs.
+// Polyfills install only when missing. Lynx for Web keeps its real worker
+// implementations; only the fetch scope synchronization runs on both targets.
 /* eslint-disable no-restricted-globals */
 
+import { installDOMException } from './dom-exception-compat';
+import { resolveFetch } from './fetch-compat';
+
 const g = globalThis as Record<string, any>;
+
+// RuntimeWrapperWebpackPlugin injects native fetch as an outer wrapper
+// parameter, while Lynx for Web exposes it on globalThis. Synchronize the
+// callable implementation before masto modules execute so their bare fetch
+// identifier works in both environments.
+const sharedFetch = resolveFetch(
+  g.fetch,
+  typeof fetch === 'function' ? fetch : undefined,
+);
+if (sharedFetch) {
+  g.fetch = sharedFetch;
+  // Assigns RuntimeWrapperWebpackPlugin's injected wrapper parameter.
+  // @ts-expect-error fetch is declared as a global function in DOM typings.
+  fetch = sharedFetch as typeof fetch;
+}
+
+installDOMException(g);
 
 // ---------------------------------------------------------------------------
 // AbortController / AbortSignal

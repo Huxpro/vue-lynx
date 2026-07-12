@@ -5,7 +5,7 @@
 // here the native Lynx <list> recycles items and its scrolltolower event
 // drives usePaginator.loadNext().
 import type { mastodon } from 'masto';
-import { computed, onMounted, ref, watch } from 'vue-lynx';
+import { onMounted } from 'vue-lynx';
 import { usePaginator } from '../composables/paginator';
 import { filterAndReorderTimeline } from '../composables/timeline';
 import Spinner from './Spinner.vue';
@@ -18,35 +18,12 @@ const props = withDefaults(defineProps<{
   context: 'public',
 });
 
-const { items, state, error, loadNext } = usePaginator<mastodon.v1.Status, any>(
+const { items, state, loadNext } = usePaginator<mastodon.v1.Status, any>(
   props.paginator,
   statuses => filterAndReorderTimeline([...statuses] as mastodon.v1.Status[], props.context),
 );
 
 onMounted(() => loadNext());
-
-// Remote-debuggability: surface the real failure + a bare-fetch probe so a
-// device screenshot pinpoints whether fetch itself or masto's request
-// construction is broken (native runtimes vary — see PORTING.md).
-const errorDetail = computed(() => {
-  const e = error.value as any;
-  if (!e)
-    return '';
-  return String(e?.message ?? e).slice(0, 300);
-});
-
-const probeResult = ref('');
-watch(state, async (s) => {
-  if (s !== 'error' || probeResult.value)
-    return;
-  try {
-    const res = await (globalThis as any).fetch('https://mas.to/api/v1/instance');
-    probeResult.value = `bare fetch: ${res?.status ?? 'no status'}`;
-  }
-  catch (probeError: any) {
-    probeResult.value = `bare fetch failed: ${String(probeError?.message ?? probeError).slice(0, 200)}`;
-  }
-});
 </script>
 
 <template>
@@ -55,8 +32,6 @@ watch(state, async (s) => {
   </view>
   <view v-else-if="state === 'error' && !items.length" class="timeline-loading">
     <text class="timeline-error-text">Failed to load timeline.</text>
-    <text v-if="errorDetail" class="timeline-error-detail">{{ errorDetail }}</text>
-    <text v-if="probeResult" class="timeline-error-detail">{{ probeResult }}</text>
     <view class="timeline-retry" @tap="state = 'idle'; loadNext()">
       <text class="timeline-retry-text">Retry</text>
     </view>
@@ -102,14 +77,6 @@ watch(state, async (s) => {
 .timeline-error-text {
   font-size: 14px;
   color: var(--c-danger);
-}
-
-.timeline-error-detail {
-  font-family: monospace;
-  font-size: 11px;
-  line-height: 16px;
-  color: var(--c-text-secondary);
-  padding: 0 24px;
 }
 
 .timeline-retry {

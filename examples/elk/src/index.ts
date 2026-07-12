@@ -1,5 +1,5 @@
 // Must be first: fill-if-missing web API polyfills for the native Lynx
-// runtime (masto.js needs AbortSignal/Headers/URL on every request).
+// runtime (masto.js needs fetch/AbortSignal/Headers/URL before any request).
 import './polyfills';
 
 import { createApp } from 'vue-lynx';

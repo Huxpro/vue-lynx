@@ -1,5 +1,10 @@
 /* Elk default theme, ported from elk-zone/elk app/styles/{vars,default-theme}.css */
 page {
+  --motion-fast: 120ms;
+  --motion-state: 180ms;
+  --motion-modal: 250ms;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
   --theme-color-name: #cc7d24;
   --c-primary: #cc7d24;
   --c-primary-active: #b16605;
@@ -29,6 +34,7 @@ page {
   --c-warning: #e6a23c;
   --c-error: #f56c6c;
 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   background-color: var(--c-bg-base);
   color: var(--c-text-base);
 }

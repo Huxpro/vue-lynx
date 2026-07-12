@@ -22,14 +22,15 @@ layers and rebuilds the UI on Lynx elements**:
 
 | Layer | Verdict | Notes |
 |-------|---------|-------|
-| **masto.js API client** | ✅ reused unpatched | free-identifier web globals (`fetch`, `Request`, `AbortSignal`…) are rewritten to `globalThis.*` via `source.define` — the Lynx background-thread eval scope hides them |
+| **masto.js API client** | ✅ reused unpatched | wrapper-injected native `fetch` is synchronized with web `globalThis.fetch`; remaining constructors are targeted through `source.define`, with fill-if-missing native shims |
 | **Content pipeline** (`content-parse.ts`) | ✅ ~95% verbatim | ultrahtml sanitize + custom-emoji / markdown / mention-collapse transforms |
 | **Content renderer** (`content-render.ts`) | ♻️ retargeted | same AST walk; emits `<text>`/`<image>` runs with tap navigation instead of `<p>`/`<a>`/`RouterLink` |
 | **Paginator, timeline filters, status actions, search, cache** | ✅ reused | DOM scroll trigger → native `<list>` `scrolltolower` |
 | **Virtual scrolling** | ♻️ replaced | Elk's DOM virtualizer (virtua) → Lynx's native recycling `<list>` — *less* code |
 | **Routing** | ♻️ rebuilt | Nuxt file routes → explicit vue-router table on `createMemoryHistory`, same route shapes so content-renderer mention/hashtag rewrites work unchanged |
 | **Every template** | ♻️ rebuilt | `<div>`→`<view>`, `<span>`→`<text>`, `@click`→`@tap`, Elk's exact theme palette as Lynx CSS vars |
-| **Icons** | ♻️ adapted | Elk's RemixIcon set (`i-ri:*`) inlined as tinted SVG data-URIs |
+| **Icons** | ♻️ adapted | Elk's RemixIcon set (`i-ri:*`) rendered as tinted XML through Lynx's built-in `<svg content>` element |
+| **Native safe area** | ✅ adapted | fullscreen iOS cards consume Sparkling `topHeight` / `bottomHeight` global props, with Lynx Explorer alias support |
 
 The full feature-parity checklist (including what's deliberately not
 ported and why — OAuth redirects, TipTap, PWA, Shiki, blurhash…) lives in

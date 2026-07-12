@@ -5,7 +5,8 @@ import { pluginQRCode } from '@lynx-js/qrcode-rsbuild-plugin';
 import { pluginTailwindCSS } from 'rsbuild-plugin-tailwindcss';
 import { pluginVueLynx } from 'vue-lynx/plugin';
 
-const exampleName = path.basename(path.dirname(fileURLToPath(import.meta.url)));
+const exampleDir = path.dirname(fileURLToPath(import.meta.url));
+const exampleName = path.basename(exampleDir);
 
 export default defineConfig({
   environments: {
@@ -15,16 +16,22 @@ export default defineConfig({
   output: {
     assetPrefix: `https://vue.lynxjs.org/examples/${exampleName}/dist/`,
   },
+  resolve: {
+    alias: {
+      // change-case@5 uses Unicode property escapes, which PrimJS cannot
+      // parse. Mastodon's action and JSON field names are ASCII, so route
+      // its camelCase/snakeCase imports through the equivalent adapter.
+      'change-case': path.resolve(exampleDir, 'src/change-case.ts'),
+    },
+  },
   source: {
     entry: {
       main: './src/index.ts',
     },
-    // The Lynx background-thread eval scope defines a broken bare `fetch`
-    // stub and hides other web globals that masto.js references as free
-    // identifiers; rewrite them to globalThis.* at compile time. (Same
-    // issue examples/networking works around with `globalThis.fetch`.)
+    // RuntimeWrapperWebpackPlugin injects native fetch separately; the
+    // first-import polyfills synchronize it with globalThis. Rewrite the
+    // remaining web constructors that masto references as free identifiers.
     define: {
-      fetch: 'globalThis.fetch',
       Request: 'globalThis.Request',
       Response: 'globalThis.Response',
       Headers: 'globalThis.Headers',
@@ -32,7 +39,6 @@ export default defineConfig({
       AbortController: 'globalThis.AbortController',
       URLSearchParams: 'globalThis.URLSearchParams',
       FormData: 'globalThis.FormData',
-      WebSocket: 'globalThis.WebSocket',
       // Optional local API relay for sandboxed verification environments
       // where browser TLS egress is blocked (see PORTING.md "Verification").
       // Empty in normal builds — the app talks to https://<server> directly.

@@ -13,7 +13,8 @@
   ],
   "scripts": {
     "build": "rspeedy build",
-    "dev": "rspeedy dev"
+    "dev": "rspeedy dev",
+    "test:native-compat": "node --test scripts/native-compat.test.mjs"
   },
   "dependencies": {
     "masto": "^7.2.0",

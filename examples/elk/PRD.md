@@ -179,9 +179,11 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 ## Verification
 
 Every ✅ UI feature is verified on **Lynx for Web** (`dist/main.web.bundle` in
-`@lynx-js/web-core` `<lynx-view>`), screenshotted with headless Chromium, and compared
+`@lynx-js/web-core` `<lynx-view>`), screenshotted in Chromium, and compared
 side-by-side against the original Elk web UI (same underlying data where possible).
-Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
+The native compatibility layer and shared UI are additionally verified in the
+Sparkling-enabled **Lynx Explorer on an iOS simulator**. Comparisons live in
+[`screenshots/`](./screenshots/) with notes in PORTING.md.
 
 ## Loop log
 
@@ -194,3 +196,6 @@ Comparisons live in [`screenshots/`](./screenshots/) with notes in PORTING.md.
 - **Loop 7**: Notification filter tabs (All/Mentions), final PRD true-up: every remaining ⬜/❌ now carries a reason. Confirmed the production build contains no verification-relay references.
 - **Loop 8**: Website integration — `/guide/elk` showcase page (en+zh) with the `<Go>` embed (live Web preview tab + QR-code tab serving `main.lynx.bundle` to Lynx Go), sidebar "Showcase" section, home-page showcase card. Verified in the site dev server with live data and in the production `rspress build`.
 - **Loop 9**: First real-device run (Lynx Go) surfaced two native-only gaps: masto's unconditional `AbortSignal.any` (plus `Headers`/`URL`) missing from the PrimJS runtime → fill-if-missing polyfills, and blank icons (native image has no SVG decoder) → switched AppIcon to the built-in `<svg content>` element. Web target regression-verified.
+- **Loop 10**: iOS Lynx Explorer validation found three earlier-bootstrap gaps: PrimJS rejects `change-case@5` Unicode-property regexes, the global `fetch` define bypassed RuntimeWrapperWebpackPlugin's native injection, and the same define broke Rspeedy's dev WebSocket transport. Added an ASCII case adapter, synchronized native/web fetch scopes at runtime, left WebSocket wrapper-scoped, filled missing `DOMException`, and removed the temporary on-screen fetch probe. Verified live native local/federated timelines and Explore Posts/Hashtags/News.
+- **Loop 11**: Sparkling-enabled iOS Lynx Explorer verification added fullscreen safe-area handling. The root layout consumes Sparkling `topHeight` / `bottomHeight` and Lynx Explorer `safeAreaTop` / `safeAreaBottom` global props, validates invalid/missing values to zero, and keeps page content, bottom navigation and media previews between the insets. DevTool confirmed 62px top and 34px bottom spacers on an iPhone 17 Pro simulator while live Local Timeline and Explore remained functional.
+- **Loop 12**: Final fidelity pass against upstream Elk. Matched its system typography and compact timeline rhythm, restored the guest Sign in action, enlarged avatars and redistributed status actions, added the Explore trending explanation, and kept tab indicators mounted so state changes animate cleanly. Added short transform/opacity-only feedback for taps, tabs, refresh and media preview. Verified Web Local/Explore captures and a live native Local Timeline in Sparkling Lynx Explorer; DevTool confirmed 62px/34px safe areas, native touch bindings, 48px avatars and a clean error/warning console.

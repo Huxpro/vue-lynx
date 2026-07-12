@@ -4,11 +4,17 @@
 //   /dist/*      → examples/elk/dist (the built bundles)
 import http from 'node:http';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HARNESS = path.dirname(fileURLToPath(import.meta.url));
-const DIST = process.env.ELK_DIST || '/home/user/vue-lynx/examples/elk/dist';
+const require = createRequire(import.meta.url);
+const WEB_CORE_STATIC = path.resolve(
+  path.dirname(require.resolve('@lynx-js/web-core/client.prod.js')),
+  '..',
+);
+const DIST = process.env.ELK_DIST || path.resolve(HARNESS, '../dist');
 const PORT = Number(process.env.PORT || 8975);
 
 const MIME = {
@@ -124,7 +130,7 @@ http.createServer((req, res) => {
   if (url.pathname === '/' || url.pathname === '/index.html') {
     filePath = path.join(HARNESS, 'index.html');
   } else if (url.pathname.startsWith('/static/')) {
-    filePath = path.join(HARNESS, url.pathname);
+    filePath = path.join(WEB_CORE_STATIC, url.pathname.slice('/static/'.length));
   } else if (url.pathname.startsWith('/dist/')) {
     filePath = path.join(DIST, url.pathname.slice('/dist/'.length));
   } else {

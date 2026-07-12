@@ -14,6 +14,17 @@ const props = defineProps<{
 // Elk prepends streamed statuses live; without WebSocket the equivalent
 // is an explicit refresh that recreates the paginator.
 const refreshTick = ref(0);
+const refreshing = ref(false);
+
+function refresh() {
+  if (refreshing.value)
+    return;
+  refreshing.value = true;
+  refreshTick.value++;
+  setTimeout(() => {
+    refreshing.value = false;
+  }, 450);
+}
 
 const titles = {
   home: { title: 'Home', icon: 'home-5-line' },
@@ -38,7 +49,7 @@ const paginator = computed(() => {
 <template>
   <view class="page">
     <PageHeader :title="titles[kind].title" :icon="titles[kind].icon">
-      <view class="timeline-refresh" @tap="refreshTick++">
+      <view class="timeline-refresh" :class="refreshing ? 'timeline-refreshing' : ''" @tap="refresh">
         <AppIcon name="refresh-line" :size="20" color="#686868" />
       </view>
     </PageHeader>
@@ -52,7 +63,27 @@ const paginator = computed(() => {
 
 <style>
 .timeline-refresh {
-  padding: 6px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--motion-fast) var(--ease-out-quart), opacity var(--motion-fast) var(--ease-out-quart);
+}
+
+.timeline-refreshing {
+  animation-name: timeline-refresh-spin;
+  animation-duration: 450ms;
+  animation-timing-function: var(--ease-out-quart);
+}
+
+@keyframes timeline-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
 

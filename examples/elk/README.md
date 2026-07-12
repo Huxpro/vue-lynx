@@ -48,13 +48,19 @@ blocked (see PORTING.md "Verification setup").
 
 ## Notable Lynx adaptations
 
-- Free-identifier web globals (`fetch`, `Request`, `AbortSignal`, …) are
-  rewritten to `globalThis.*` at build time (`source.define`) because the
-  Lynx background-thread eval scope hides them — this is what lets
-  masto.js run unpatched.
+- The first-import compatibility layer synchronizes wrapper-injected native
+  `fetch` with the web worker's `globalThis.fetch`; remaining masto.js web
+  constructors are rewritten to `globalThis.*` and filled only when missing.
+- masto.js's Unicode-aware `change-case` dependency is replaced at build time
+  with an ASCII-equivalent adapter because Mastodon API keys are ASCII and
+  PrimJS cannot parse Unicode-property regular expressions.
+- Fullscreen iOS cards read Sparkling's `topHeight` / `bottomHeight` global
+  props (plus Lynx Explorer's `safeAreaTop` / `safeAreaBottom` aliases), keeping
+  headers, bottom navigation and media previews inside the device safe area.
 - Elk's content renderer keeps its ultrahtml parse/sanitize/transform
   pipeline verbatim; only the vnode emission changed
   (`<p>/<a>/<img>` → `<text>/<image>` with tap navigation).
 - Elk's DOM virtual scroller (virtua) is replaced by Lynx's native
   recycling `<list>` — less code, native performance.
-- RemixIcon glyphs (Elk's `i-ri:*`) ship as tinted SVG data-URIs.
+- RemixIcon glyphs (Elk's `i-ri:*`) render as tinted XML through Lynx's
+  built-in `<svg content>` element.
