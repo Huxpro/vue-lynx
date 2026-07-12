@@ -37,9 +37,9 @@
   --serif: 'Instrument Serif', 'Cormorant Garamond', Georgia, serif;
   --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
 
-  /* Layout */
-  --slide-pad-x: clamp(56px, 6vw, 120px);
-  --slide-pad-y: clamp(40px, 5vh, 80px);
+  /* Layout — cqw/cqh resolve against the 1280x720 .frame */
+  --slide-pad-x: clamp(56px, 6cqw, 120px);
+  --slide-pad-y: clamp(40px, 5cqh, 80px);
   --radius: 18px;
   --radius-lg: 28px;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
@@ -89,6 +89,28 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+/* =========================================================
+   Fixed 16:9 stage — every slide is authored against a
+   1280x720 canvas and this frame is scaled to fit the
+   viewport by main.js (see fitStage). It is a size container,
+   so the cqw/cqh units throughout resolve to the 1280x720
+   design space regardless of the actual screen — content
+   scales as one piece and always keeps 16:9. Chrome and the
+   meteors background live OUTSIDE the frame and stay
+   full-bleed.
+   ========================================================= */
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1280px;
+  height: 720px;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  container-type: size;
+  z-index: 1;
 }
 
 .meteors {
@@ -203,7 +225,7 @@ html, body {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(72px, 11vw, 180px);
+  font-size: clamp(72px, 11cqw, 180px);
   line-height: 0.95;
   letter-spacing: -0.04em;
   color: var(--ink);
@@ -244,7 +266,7 @@ h1, h2, h3, p { margin: 0; }
 .h-cover {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(54px, 8vw, 128px);
+  font-size: clamp(54px, 8cqw, 128px);
   line-height: 0.94;
   letter-spacing: -0.035em;
   max-width: 18ch;
@@ -253,7 +275,7 @@ h1, h2, h3, p { margin: 0; }
 .h-section {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(40px, 5vw, 72px);
+  font-size: clamp(40px, 5cqw, 72px);
   line-height: 1.05;
   letter-spacing: -0.025em;
   max-width: 32ch;
@@ -262,13 +284,13 @@ h1, h2, h3, p { margin: 0; }
 .h-card {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(20px, 1.6vw, 26px);
+  font-size: clamp(20px, 1.6cqw, 26px);
   line-height: 1.2;
   letter-spacing: -0.015em;
 }
 
 .lead {
-  font-size: clamp(18px, 1.6vw, 24px);
+  font-size: clamp(18px, 1.6cqw, 24px);
   line-height: 1.5;
   color: var(--ink-soft);
   max-width: 56ch;
@@ -278,7 +300,7 @@ h1, h2, h3, p { margin: 0; }
 .kicker {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(28px, 3vw, 44px);
+  font-size: clamp(28px, 3cqw, 44px);
   line-height: 1.2;
   color: var(--ink-soft);
   font-weight: 400;
@@ -304,7 +326,7 @@ h1, h2, h3, p { margin: 0; }
    ========================================================= */
 .cover {
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .cover__top {
@@ -322,7 +344,7 @@ h1, h2, h3, p { margin: 0; }
 .cover__title-line {
   font-family: var(--display);
   font-weight: 500;
-  font-size: clamp(78px, 11vw, 188px);
+  font-size: clamp(78px, 11cqw, 188px);
   line-height: 0.92;
   letter-spacing: -0.045em;
 }
@@ -354,14 +376,17 @@ h1, h2, h3, p { margin: 0; }
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(28px, 3vw, 44px);
+  font-size: clamp(28px, 3cqw, 44px);
   color: var(--ink-soft);
   max-width: 32ch;
   margin-top: 12px;
 }
 
 .cover__bottom {
-  width: 100%;
+  position: absolute;
+  left: var(--slide-pad-x);
+  right: var(--slide-pad-x);
+  bottom: var(--slide-pad-y);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -406,7 +431,7 @@ h1, h2, h3, p { margin: 0; }
    Pitch slide — three pillars
    ========================================================= */
 .pitch {
-  gap: clamp(28px, 4vh, 56px);
+  gap: clamp(28px, 4cqh, 56px);
   justify-content: center;
 }
 
@@ -420,14 +445,14 @@ h1, h2, h3, p { margin: 0; }
 .pillars {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(16px, 2vw, 28px);
+  gap: clamp(16px, 2cqw, 28px);
 }
 
 .pillar {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: clamp(20px, 2vw, 32px);
+  padding: clamp(20px, 2cqw, 32px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper-elev);
@@ -466,7 +491,7 @@ h1, h2, h3, p { margin: 0; }
 }
 
 .pillar__title {
-  font-size: clamp(22px, 2.2vw, 34px);
+  font-size: clamp(22px, 2.2cqw, 34px);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.05;
@@ -474,7 +499,7 @@ h1, h2, h3, p { margin: 0; }
 
 .pillar__copy {
   color: var(--ink-soft);
-  font-size: clamp(14px, 1.05vw, 16px);
+  font-size: clamp(14px, 1.05cqw, 16px);
   line-height: 1.55;
 }
 
@@ -484,7 +509,7 @@ h1, h2, h3, p { margin: 0; }
 .demo {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: clamp(40px, 6vw, 96px);
+  gap: clamp(40px, 6cqw, 96px);
   align-items: center;
 }
 
@@ -501,14 +526,14 @@ h1, h2, h3, p { margin: 0; }
 .demo__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(36px, 4vw, 58px);
+  font-size: clamp(36px, 4cqw, 58px);
   line-height: 1.05;
   letter-spacing: -0.025em;
 }
 
 .demo__copy {
   color: var(--ink-soft);
-  font-size: clamp(16px, 1.2vw, 19px);
+  font-size: clamp(16px, 1.2cqw, 19px);
   line-height: 1.55;
   font-weight: 400;
 }
@@ -545,41 +570,30 @@ h1, h2, h3, p { margin: 0; }
   align-items: center;
 }
 
-/* Phone frame — matches the website's mobile-show-frame recipe */
+/* Phone frame — light bezel, no notch, fluid so it always fits the stage.
+   Height is driven by the 16:9 safe-area height; width follows the aspect
+   ratio, so the mockup resizes with the viewport instead of a fixed clamp. */
 .phone {
-  --phone-w: clamp(280px, 28vw, 360px);
-  --phone-h: calc(var(--phone-w) * (590 / 270));
-  width: var(--phone-w);
+  --phone-h: min(78cqh, 620px);
+  aspect-ratio: 270 / 590;
   height: var(--phone-h);
-  padding: 6px;
-  background: linear-gradient(160deg, #2a2a2a 0%, #1a1a1a 100%);
-  border-radius: 32px;
+  width: auto;
+  max-width: 100%;
+  padding: 4px;
+  background: #16181d;
+  border-radius: 26px;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.10),
-    0 30px 80px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 12px 40px -8px rgba(0, 0, 0, 0.45);
   box-sizing: border-box;
   position: relative;
-}
-
-.phone::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 86px;
-  height: 22px;
-  background: #1a1a1a;
-  border-radius: 0 0 14px 14px;
-  z-index: 3;
 }
 
 .phone__inner {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 26px;
+  border-radius: 22px;
   overflow: hidden;
   background: #0a0c10;
 }
@@ -687,7 +701,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .gallery__strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 2vw, 28px);
+  gap: clamp(16px, 2cqw, 28px);
   align-items: end;
 }
 
@@ -699,7 +713,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 }
 
 .gallery__item .phone {
-  --phone-w: clamp(180px, 16vw, 220px);
+  --phone-w: clamp(180px, 16cqw, 220px);
 }
 
 .gallery__caption {
@@ -734,14 +748,14 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .divider__row {
   display: flex;
   align-items: flex-end;
-  gap: clamp(24px, 4vw, 56px);
+  gap: clamp(24px, 4cqw, 56px);
   max-width: 100%;
 }
 
 .divider__num {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(160px, 22vw, 320px);
+  font-size: clamp(160px, 22cqw, 320px);
   line-height: 0.85;
   letter-spacing: -0.05em;
   color: var(--ink);
@@ -760,17 +774,17 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .divider__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(48px, 6vw, 96px);
+  font-size: clamp(48px, 6cqw, 96px);
   line-height: 0.95;
   letter-spacing: -0.035em;
   max-width: 16ch;
-  padding-bottom: clamp(20px, 2vw, 32px);
+  padding-bottom: clamp(20px, 2cqw, 32px);
 }
 
 .divider__tag {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(20px, 1.8vw, 28px);
+  font-size: clamp(20px, 1.8cqw, 28px);
   color: var(--ink-mute);
   max-width: 40ch;
   font-weight: 400;
@@ -780,7 +794,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
    Story timeline
    ========================================================= */
 .story {
-  gap: clamp(28px, 4vh, 48px);
+  gap: clamp(28px, 4cqh, 48px);
 }
 
 .story__head {
@@ -793,7 +807,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .timeline {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 2vw, 32px);
+  gap: clamp(16px, 2cqw, 32px);
   position: relative;
   padding-top: 28px;
 }
@@ -845,7 +859,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .tl-item__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(18px, 1.6vw, 22px);
+  font-size: clamp(18px, 1.6cqw, 22px);
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
@@ -885,7 +899,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 
 .bill__cell .value {
   font-family: var(--display);
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(22px, 2.5cqw, 32px);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -904,7 +918,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
    Architecture diagram (dual thread)
    ========================================================= */
 .arch {
-  gap: clamp(28px, 4vh, 48px);
+  gap: clamp(28px, 4cqh, 48px);
 }
 
 .arch__head {
@@ -917,7 +931,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .arch__diagram {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(20px, 3vw, 56px);
+  gap: clamp(20px, 3cqw, 56px);
   align-items: stretch;
   position: relative;
 }
@@ -950,7 +964,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .thread__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(22px, 2.2vw, 30px);
+  font-size: clamp(22px, 2.2cqw, 30px);
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -985,7 +999,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 }
 
 .arch__bridge svg {
-  width: clamp(40px, 6vw, 80px);
+  width: clamp(40px, 6cqw, 80px);
   height: auto;
   opacity: 0.5;
 }
@@ -1005,7 +1019,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .web {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
-  gap: clamp(40px, 5vw, 80px);
+  gap: clamp(40px, 5cqw, 80px);
   align-items: center;
 }
 
@@ -1029,7 +1043,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-  font-size: clamp(15px, 1.15vw, 18px);
+  font-size: clamp(15px, 1.15cqw, 18px);
   color: var(--ink-soft);
   line-height: 1.5;
 }
@@ -1103,7 +1117,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1.4fr;
   align-items: center;
-  gap: clamp(24px, 4vw, 56px);
+  gap: clamp(24px, 4cqw, 56px);
 }
 
 .combine__tile {
@@ -1122,14 +1136,14 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .combine__name {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(22px, 2vw, 32px);
+  font-size: clamp(22px, 2cqw, 32px);
   letter-spacing: -0.02em;
 }
 
 .combine__op {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(56px, 7vw, 96px);
+  font-size: clamp(56px, 7cqw, 96px);
   color: var(--ink-mute);
   line-height: 1;
 }
@@ -1151,7 +1165,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .combine__result .result-text {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(40px, 5.5vw, 80px);
+  font-size: clamp(40px, 5.5cqw, 80px);
   line-height: 0.98;
   letter-spacing: -0.03em;
 }
@@ -1168,7 +1182,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .cta__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(56px, 7vw, 116px);
+  font-size: clamp(56px, 7cqw, 116px);
   line-height: 0.94;
   letter-spacing: -0.035em;
   max-width: 18ch;
@@ -1177,7 +1191,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .cta__sub {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(24px, 2.4vw, 38px);
+  font-size: clamp(24px, 2.4cqw, 38px);
   color: var(--ink-soft);
   font-weight: 400;
   max-width: 36ch;
@@ -1295,7 +1309,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .thankyou h1 {
   font-family: var(--display);
   font-weight: 500;
-  font-size: clamp(96px, 14vw, 220px);
+  font-size: clamp(96px, 14cqw, 220px);
   line-height: 0.9;
   letter-spacing: -0.045em;
 }
@@ -1303,7 +1317,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .thankyou .sig {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(20px, 2vw, 32px);
+  font-size: clamp(20px, 2cqw, 32px);
   color: var(--ink-soft);
 }
 
@@ -1327,23 +1341,11 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 }
 
 /* =========================================================
-   Overview grid (press 'o')
+   Overview grid (press 'o'). The frame collapses to
+   display:contents so slides tile directly in the grid; each
+   thumbnail renders the slide at viewport scale and shrinks it
+   with a transform (cqw falls back to the viewport here).
    ========================================================= */
-.deck.overview .meteors { opacity: 0.2; }
-.deck.overview .chrome { opacity: 0.3; }
-
-.deck.overview .slide {
-  position: relative;
-  inset: auto;
-  opacity: 1 !important;
-  transform: scale(0.18) !important;
-  pointer-events: auto;
-  transition: transform 0.3s ease;
-  width: 100vw;
-  height: 100vh;
-  flex: 0 0 100vw;
-}
-
 .deck.overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1354,11 +1356,24 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   height: 100vh;
   position: static;
 }
+.deck.overview .meteors { opacity: 0.2; }
+.deck.overview .chrome { opacity: 0.3; }
+
+.deck.overview .frame {
+  display: contents;
+}
 
 .deck.overview .slide {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  opacity: 1 !important;
+  transform: none !important;
   transform-origin: top left;
-  width: 25vw !important;
-  height: 25vh !important;
+  pointer-events: auto;
+  transition: none;
+  width: 25vw;
+  height: 25vh;
   border: 1px solid var(--line);
   border-radius: 6px;
   overflow: hidden;
@@ -1477,14 +1492,14 @@ body.is-blackout::after {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: clamp(20px, 3vh, 40px);
+  gap: clamp(20px, 3cqh, 40px);
 }
 .stage .eyebrow { justify-content: center; }
 
 .mega {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(72px, 13vw, 220px);
+  font-size: clamp(72px, 13cqw, 220px);
   line-height: 0.9;
   letter-spacing: -0.045em;
 }
@@ -1496,7 +1511,7 @@ body.is-blackout::after {
 .pstack {
   display: flex;
   flex-direction: column;
-  gap: clamp(6px, 1.4vh, 18px);
+  gap: clamp(6px, 1.4cqh, 18px);
   align-items: flex-start;
   width: 100%;
   max-width: 24ch;
@@ -1509,7 +1524,7 @@ body.is-blackout::after {
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1;
-  font-size: clamp(30px, 4vw, 56px);
+  font-size: clamp(30px, 4cqw, 56px);
   color: var(--ink-faint);
   transition: color 0.5s ease;
 }
@@ -1522,15 +1537,15 @@ body.is-blackout::after {
 }
 .pstack__item.is-lead {
   color: var(--ink);
-  font-size: clamp(64px, 9.5vw, 148px);
+  font-size: clamp(64px, 9.5cqw, 148px);
 }
 .pstack__item.is-lead .pstack__num { color: var(--vue-green); }
 .pstack__desc {
-  margin-top: clamp(12px, 2vh, 28px);
+  margin-top: clamp(12px, 2cqh, 28px);
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(24px, 2.6vw, 40px);
+  font-size: clamp(24px, 2.6cqw, 40px);
   color: var(--ink-soft);
   max-width: 30ch;
   line-height: 1.25;
@@ -1543,7 +1558,7 @@ body.is-blackout::after {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: clamp(20px, 5vw, 80px);
+  gap: clamp(20px, 5cqw, 80px);
   width: 100%;
   position: relative;
 }
@@ -1553,13 +1568,13 @@ body.is-blackout::after {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: clamp(20px, 2.4vw, 34px);
+  padding: clamp(20px, 2.4cqw, 34px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper-elev);
   backdrop-filter: blur(20px);
-  min-width: clamp(240px, 30vw, 380px);
-  min-height: clamp(180px, 24vh, 240px);
+  min-width: clamp(240px, 30cqw, 380px);
+  min-height: clamp(180px, 24cqh, 240px);
   box-shadow: var(--shadow-sm);
 }
 .node__label {
@@ -1581,7 +1596,7 @@ body.is-blackout::after {
 .node__title {
   font-family: var(--display);
   font-weight: 600;
-  font-size: clamp(20px, 2vw, 28px);
+  font-size: clamp(20px, 2cqw, 28px);
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
@@ -1610,7 +1625,7 @@ body.is-blackout::after {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  min-width: clamp(60px, 8vw, 120px);
+  min-width: clamp(60px, 8cqw, 120px);
 }
 .archflow__bus .arrow { color: var(--vue-green); font-size: 18px; letter-spacing: 0; }
 .archflow__bus .arrow.rev { color: var(--brand-teal); }
