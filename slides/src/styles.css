@@ -1723,11 +1723,19 @@ body.is-blackout::after {
   margin-right: 8px;
 }
 .arch__refs {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.02em;
-  color: var(--ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
 }
+.arch__refs i {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  color: var(--ink-mute);
+  opacity: 0.9;
+}
+.arch__refs i svg,
+.arch__nlogo svg { width: 100%; height: 100%; display: block; }
 
 .arch__seam {
   position: absolute;
@@ -1790,6 +1798,14 @@ body.is-blackout::after {
   z-index: 2;
 }
 .arch__node.is-hero { box-shadow: 0 0 24px -2px var(--fwc); z-index: 3; }
+.arch__nlogo {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  color: var(--fwc);
+  margin-bottom: 3px;
+}
+.arch__node.is-hero .arch__nlogo { filter: drop-shadow(0 0 6px var(--fwc)); }
 .arch__nname {
   font-family: var(--display);
   font-weight: 600;
