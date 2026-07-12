@@ -97,8 +97,12 @@ export function localApi(path: string, method: string, body?: unknown): unknown 
       id?: string;
       message?: { id?: string; parts?: UIMessagePart[] };
     };
+    const chatId = id || uid();
+    if (chats.some((chat) => chat.id === chatId)) {
+      throw Object.assign(new Error('Chat id already exists'), { status: 409 });
+    }
     const chat: ChatRow = {
-      id: id || uid(),
+      id: chatId,
       title: null,
       visibility: 'private',
       createdAt: new Date().toISOString(),

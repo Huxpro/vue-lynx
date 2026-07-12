@@ -36,7 +36,9 @@ import { realModeAvailable, runRealGeneration } from './real-ai.mjs';
 import { SAMPLE_IMAGES } from './samples.mjs';
 
 const PORT = Number(process.env.PORT || 3210);
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '.data');
+const DATA_DIR = process.env.AI_CHAT_DATA_DIR
+  ? process.env.AI_CHAT_DATA_DIR
+  : join(dirname(fileURLToPath(import.meta.url)), '.data');
 const DB_FILE = join(DATA_DIR, 'db.json');
 
 // ---------------------------------------------------------------------------
@@ -394,6 +396,9 @@ const server = createServer(async (req, res) => {
     if (path === '/api/chats' && req.method === 'POST') {
       const body = await readBody(req);
       const id = body.id || uid();
+      if (db.chats.some((chat) => chat.id === id)) {
+        return json(res, 409, { message: 'Chat id already exists' });
+      }
       const chat = {
         id,
         userId: ownerKey(session),
