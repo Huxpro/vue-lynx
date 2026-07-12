@@ -11,6 +11,7 @@
  */
 
 import { OP } from 'vue-lynx/internal/ops';
+import type { TemplateNode } from 'vue-lynx/internal/ops';
 
 import {
   elements,
@@ -71,17 +72,7 @@ function createTypedElement(
 // Template instantiation (Vapor fast path)
 // ---------------------------------------------------------------------------
 
-interface TemplateNodeProps {
-  c?: string;
-  s?: Record<string, unknown>;
-  a?: [string, string][];
-  i?: string;
-  sc?: number[];
-  t?: string;
-}
 
-/** [tag, props|0, children] — see internal/ops.ts for the wire format. */
-type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 
 const templates = new Map<number, TemplateNode>();
 

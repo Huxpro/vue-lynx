@@ -27,6 +27,10 @@
  * jsdom test environment — where Vapor-on-Lynx is not supported anyway).
  */
 
+import {
+  VAPOR_DOCUMENT_GLOBAL,
+  VAPOR_WINDOW_GLOBAL,
+} from 'vue-lynx/internal/ops';
 import { nodeOps } from '../node-ops.js';
 import { ShadowElement } from '../shadow-element.js';
 import { parseTemplate } from './html-parser.js';
@@ -115,10 +119,6 @@ function makeCtorShim(match: (value: unknown) => boolean): unknown {
   }
   return DomCtorShim;
 }
-
-// ---------------------------------------------------------------------------
-// install
-// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Delegated-event fallback accessors
@@ -220,8 +220,8 @@ export function installVaporDomShim(): void {
   // vue-lynx plugin therefore rewrites free `document`/`window` references
   // to these keys at build time (vapor mode only); install them
   // unconditionally.
-  define('__VUE_LYNX_DOCUMENT__', lynxDocument);
-  define('__VUE_LYNX_WINDOW__', g);
+  define(VAPOR_DOCUMENT_GLOBAL, lynxDocument);
+  define(VAPOR_WINDOW_GLOBAL, g);
 
   if (g.document !== undefined) {
     if (__DEV__) {

@@ -20,6 +20,10 @@
  * ```
  */
 
+import {
+  VAPOR_DOCUMENT_GLOBAL,
+  VAPOR_WINDOW_GLOBAL,
+} from 'vue-lynx/internal/ops';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -239,8 +243,8 @@ export function pluginVueLynx(
                 // vue-lynx/vapor (see runtime vapor/dom-shim.ts).
                 ...(vapor
                   ? {
-                    document: 'globalThis.__VUE_LYNX_DOCUMENT__',
-                    window: 'globalThis.__VUE_LYNX_WINDOW__',
+                    document: `globalThis.${VAPOR_DOCUMENT_GLOBAL}`,
+                    window: `globalThis.${VAPOR_WINDOW_GLOBAL}`,
                   }
                   : {}),
               },

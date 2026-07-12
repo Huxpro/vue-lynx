@@ -25,6 +25,10 @@ import type {
 } from '@lynx-js/types';
 
 import { register, unregister } from './event-registry.js';
+import type {
+  TemplateNode,
+  TemplateNodeProps,
+} from 'vue-lynx/internal/ops';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import { scopeIdToCssId } from './scope-bridge.js';
@@ -32,6 +36,7 @@ import {
   idRegistry,
   insertNode,
   parseInlineStyle,
+  serializeInlineStyle,
   pushStyleOp,
   removeNode,
   resolveClass,
@@ -111,9 +116,7 @@ function createStyleFacade(el: ShadowElement): Record<string, unknown> {
       }
       if (key === 'length') return Object.keys(el._style).length;
       if (key === 'cssText') {
-        return Object.entries(el._style)
-          .map(([k, v]) => `${k}:${v};`)
-          .join('');
+        return serializeInlineStyle(el._style);
       }
       return el._style[key];
     },
@@ -725,9 +728,8 @@ export class ShadowElement {
     if (key === 'class') return this._baseClass || null;
     if (key === 'id') return this._id ?? null;
     if (key === 'style') {
-      const entries = Object.entries(this._style);
-      if (entries.length === 0) return null;
-      return entries.map(([k, v]) => `${k}:${v};`).join('');
+      const css = serializeInlineStyle(this._style);
+      return css === '' ? null : css;
     }
     return this._attrs?.get(key) ?? null;
   }
@@ -821,7 +823,13 @@ export class ShadowElement {
     const binding: EventBinding = { sign: '', type: eventType, handlers: [handler] };
     const dispatcher = (data: unknown): void => {
       // Snapshot so once-removal during dispatch is safe.
-      for (const fn of [...binding.handlers]) fn(data);
+      // snapshot only when >1 handler — a lone `.once` handler removing
+      // itself mid-call can't disturb an already-finished iteration
+      if (binding.handlers.length === 1) {
+        binding.handlers[0]!(data);
+      } else {
+        for (const fn of [...binding.handlers]) fn(data);
+      }
     };
     binding.sign = register(dispatcher);
     events.set(name, binding);
@@ -846,17 +854,14 @@ export class ShadowElement {
   }
 
   /** Release event-registry entries for this subtree (unmount cleanup). */
-  _releaseEvents(): void {
+  /** Release THIS node's addEventListener registrations (non-recursive —
+   * subtree recursion lives in tree-ops' releaseSubtree single walk). */
+  _releaseOwnEvents(): void {
     if (this._events) {
       for (const binding of this._events.values()) {
         unregister(binding.sign);
       }
       this._events.clear();
-    }
-    let child = this.firstChild;
-    while (child) {
-      child._releaseEvents();
-      child = child.next;
     }
   }
 }
@@ -883,18 +888,13 @@ export function createPageRoot(): ShadowElement {
 // have no Main Thread counterpart.
 // ===========================================================================
 
-/** Static props of one template node (see internal/ops.ts for the format). */
-export interface TemplateNodeProps {
-  c?: string;
-  s?: Record<string, unknown>;
-  a?: [string, string][];
-  i?: string;
-  sc?: number[];
-  t?: string;
-}
+export type { TemplateNode, TemplateNodeProps } from 'vue-lynx/internal/ops';
 
-/** [tag, props|0, children] */
-export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
+/** Non-allocating `Object.keys(o).length > 0` — runs per node per clone. */
+function hasAnyKey(o: Record<string, unknown>): boolean {
+  for (const _ in o) return true;
+  return false;
+}
 
 interface TemplateCache {
   id: number;
@@ -929,7 +929,7 @@ function buildStructure(
 
   const props: TemplateNodeProps = {};
   if (proto._baseClass) props.c = proto._baseClass;
-  if (Object.keys(proto._style).length > 0) props.s = { ...proto._style };
+  if (hasAnyKey(proto._style)) props.s = { ...proto._style };
   if (proto._attrs && proto._attrs.size > 0) props.a = [...proto._attrs];
   if (proto._id !== undefined) props.i = proto._id;
   if (proto._scopeIds && proto._scopeIds.length > 0) {
@@ -973,7 +973,7 @@ function buildShadowClone(
   }
 
   clone._baseClass = proto._baseClass;
-  if (Object.keys(proto._style).length > 0) clone._style = { ...proto._style };
+  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._scopeIds) clone._scopeIds = [...proto._scopeIds];
   if (proto._id !== undefined) {

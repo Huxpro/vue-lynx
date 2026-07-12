@@ -25,12 +25,18 @@ import type { ShadowElement } from './shadow-element.js';
 
 export const idRegistry: Map<string, ShadowElement> = new Map();
 
-/** Recursively clean up idRegistry for a subtree being removed. */
-export function cleanupIds(el: ShadowElement): void {
+/**
+ * Single-walk teardown for a subtree being removed: clean up the Teleport id
+ * registry AND release Vapor addEventListener registrations. One recursion
+ * instead of two — removal is a hot path (clearing a 10k-row list visits
+ * every node).
+ */
+export function releaseSubtree(el: ShadowElement): void {
   if (el._id) idRegistry.delete(el._id);
+  el._releaseOwnEvents();
   let child = el.firstChild;
   while (child) {
-    cleanupIds(child);
+    releaseSubtree(child);
     child = child.next;
   }
 }
@@ -61,6 +67,13 @@ export function pushStyleOp(el: ShadowElement): void {
 }
 
 /** Parse an inline CSS string ("color:red;height:40px") into an object. */
+/** Inverse of parseInlineStyle — one shared serializer for style readbacks. */
+export function serializeInlineStyle(style: Record<string, unknown>): string {
+  let out = '';
+  for (const k in style) out += `${k}:${style[k]};`;
+  return out;
+}
+
 export function parseInlineStyle(text: string): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const decl of text.split(';')) {
@@ -168,9 +181,7 @@ export function removeNode(child: ShadowElement): void {
   if (child?.parent) {
     const parentUid = child.parent.uid;
     child.parent._unlink(child);
-    cleanupIds(child);
-    // Release Vapor addEventListener registrations for the removed subtree.
-    child._releaseEvents();
+    releaseSubtree(child);
     pushOp(OP.REMOVE, parentUid, child.uid);
     scheduleFlush();
   }
@@ -190,7 +201,7 @@ export function setElementTextContent(el: ShadowElement, text: string): void {
   while (el.firstChild) {
     const child = el.firstChild;
     el._unlink(child);
-    cleanupIds(child);
+    releaseSubtree(child);
     pushOp(OP.REMOVE, el.uid, child.uid);
   }
   // Set text content directly on the element

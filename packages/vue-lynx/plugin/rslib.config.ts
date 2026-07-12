@@ -30,6 +30,7 @@ export default defineConfig({
       '@lynx-js/runtime-wrapper-webpack-plugin',
       '@lynx-js/template-webpack-plugin',
       'vue-lynx',
+      'vue-lynx/internal/ops',
       'vue-lynx/main-thread',
     ],
     distPath: { root: 'dist' },

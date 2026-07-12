@@ -18,4 +18,3 @@
  */
 
 export * from './vapor-app.js';
-export { createApp } from './vapor-app.js';

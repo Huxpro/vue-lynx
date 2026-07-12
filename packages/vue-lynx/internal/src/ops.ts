@@ -54,3 +54,38 @@ export const OP = {
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
+
+// ---------------------------------------------------------------------------
+// REGISTER_TEMPLATE structure — the ONE definition both threads must agree
+// on. The BG thread builds this shape (shadow-element.ts buildStructure) and
+// the MT interprets it (ops-apply.ts instantiateTemplate); uids are assigned
+// by identical pre-order walks on both sides, so any drift in this shape or
+// in traversal order silently desyncs element ids across the thread boundary.
+// ---------------------------------------------------------------------------
+
+/** Static props of one template node. */
+export interface TemplateNodeProps {
+  /** class */
+  c?: string;
+  /** inline style (parsed object form) */
+  s?: Record<string, unknown>;
+  /** plain attributes */
+  a?: [string, string][];
+  /** id attribute */
+  i?: string;
+  /** scope cssIds */
+  sc?: number[];
+  /** folded only-child text content */
+  t?: string;
+}
+
+/** [tag, props|0, children] */
+export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
+
+// Global names bridging the vapor build plugin and the runtime DOM shim:
+// the plugin's DefinePlugin rewrites free `document`/`window` identifiers to
+// `globalThis.<name>`, and vapor/dom-shim.ts installs the shims under the
+// same names. Import from here on both sides — a rename must not be able to
+// drift silently.
+export const VAPOR_DOCUMENT_GLOBAL = '__VUE_LYNX_DOCUMENT__';
+export const VAPOR_WINDOW_GLOBAL = '__VUE_LYNX_WINDOW__';
