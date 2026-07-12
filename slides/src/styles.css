@@ -46,6 +46,13 @@
   --shadow-lg: 0 30px 80px -40px rgba(0, 0, 0, 0.9), 0 8px 32px -16px rgba(0, 0, 0, 0.6);
 }
 
+/* ---- Chinese: add CJK-capable fallbacks (press "l" to toggle) ---- */
+:root[data-lang="zh"] {
+  --display: 'Geist', -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --serif: 'Instrument Serif', 'Songti SC', 'PingFang SC', Georgia, serif;
+  --mono: 'Geist Mono', 'PingFang SC', ui-monospace, monospace;
+}
+
 /* ---- Opt-in light theme (press "." to toggle) ---- */
 :root.light {
   --vue-green: #42b883;

@@ -1,6 +1,7 @@
 import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
+import { ZH, ZH_VERBS, normalizeKey } from './i18n.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -308,6 +309,9 @@ function magicMove(fromSlide, toSlide) {
 }
 
 function setSlide(index, opts = {}) {
+  // Finalize any in-flight magic move before changing slides, so a fast
+  // navigation can't leave a morphing slide pinned visible (is-morphing-in).
+  if (flipCleanup) flipCleanup();
   const prev = current;
   current = Math.max(0, Math.min(slides.length - 1, index));
   const adjacent = Math.abs(current - prev) === 1;
@@ -566,9 +570,6 @@ if (!embedMode) {
   channel.postMessage({ type: 'request-state' });
 }
 
-// Build the layers-&-seams diagrams (landscape chapter).
-initArch();
-
 const canvas = document.querySelector('.meteors');
 if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
 
@@ -627,33 +628,43 @@ function initPhoneResize() {
 initPhoneResize();
 
 // =========================================================
-// Cycling cover verb — "Unlock", "Vibe", "Render", "Ship"
+// Cycling cover verb — swaps word list with the language.
 // =========================================================
-const verbs = ['Unlock', 'Vibe', 'Render', 'Ship'];
+const EN_VERBS = ['Unlock', 'Vibe', 'Render', 'Ship'];
+let verbs = EN_VERBS;
 const verbEl = document.querySelector('[data-cover-verb]');
-if (verbEl) {
-  let i = 0;
-  let text = verbs[0];
-  let deleting = false;
-  let paused = false;
+let vi = 0;
+let vtext = verbs[0];
+let vdeleting = false;
+let vpaused = false;
 
+function setVerbLang(lang) {
+  verbs = lang === 'zh' ? ZH_VERBS : EN_VERBS;
+  vi = 0;
+  vtext = '';
+  vdeleting = false;
+  vpaused = false;
+  if (verbEl) verbEl.textContent = '';
+}
+
+if (verbEl) {
   const tick = () => {
-    const word = verbs[i];
-    if (!deleting && text === word) {
-      if (!paused) { paused = true; setTimeout(tick, 1500); return; }
-      paused = false; deleting = true;
+    const word = verbs[vi % verbs.length];
+    if (!vdeleting && vtext === word) {
+      if (!vpaused) { vpaused = true; setTimeout(tick, 1500); return; }
+      vpaused = false; vdeleting = true;
       setTimeout(tick, 120);
-    } else if (deleting) {
-      text = word.substring(0, text.length - 1);
-      verbEl.textContent = text;
-      if (text === '') {
-        deleting = false;
-        i = (i + 1) % verbs.length;
+    } else if (vdeleting) {
+      vtext = word.substring(0, vtext.length - 1);
+      verbEl.textContent = vtext;
+      if (vtext === '') {
+        vdeleting = false;
+        vi = (vi + 1) % verbs.length;
         setTimeout(tick, 180);
       } else setTimeout(tick, 80);
     } else {
-      text = verbs[i].substring(0, text.length + 1);
-      verbEl.textContent = text;
+      vtext = word.substring(0, vtext.length + 1);
+      verbEl.textContent = vtext;
       setTimeout(tick, 160);
     }
   };
@@ -669,6 +680,84 @@ document.querySelectorAll('[data-copy]').forEach((el) => {
     el.textContent = 'copied!';
     setTimeout(() => { el.textContent = old; }, 1200);
   });
+});
+
+// =========================================================
+// Language — English is inline; i18n.js supplies Chinese.
+// Text is swapped in place (data-flip identity preserved).
+// Toggle with `l` or the chrome button; ?lang=zh deep-links;
+// choice is mirrored to the speaker view over the channel.
+// =========================================================
+const I18N_SELECTOR = [
+  '.eyebrow', 'h1', 'h2', 'h3', 'p', 'li',
+  '.chip', '.pstack__item', '.cover__tagline', '.cover__title-line',
+  '.combine__name', '.result-label', '.tl-item__week', '.node__label',
+  '.arrow', '.cta__link', '.agent', '.mega', '.label',
+].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
+
+let i18nEls = [];
+function initI18n() {
+  i18nEls = [];
+  document.querySelectorAll(I18N_SELECTOR).forEach((el) => {
+    if (el.closest('.notes')) return;            // speaker notes stay source
+    if (el.querySelector('[data-cover-verb]')) return; // cycling verb line
+    i18nEls.push({ el, en: el.innerHTML, key: normalizeKey(el.textContent) });
+  });
+}
+
+let currentLang = 'en';
+function applyLang(lang, opts = {}) {
+  currentLang = lang === 'zh' ? 'zh' : 'en';
+  document.documentElement.setAttribute('data-lang', currentLang);
+  i18nEls.forEach(({ el, en, key }) => {
+    const zh = ZH[key];
+    el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
+  });
+  initArch(currentLang);
+  setVerbLang(currentLang);
+
+  const btn = document.querySelector('[data-lang-toggle]');
+  if (btn) btn.textContent = currentLang === 'zh' ? 'EN · l' : '中 · l';
+
+  try { localStorage.setItem('deck-lang', currentLang); } catch { /* ignore */ }
+  if (!embedMode) {
+    const url = new URL(location.href);
+    if (currentLang === 'zh') url.searchParams.set('lang', 'zh');
+    else url.searchParams.delete('lang');
+    history.replaceState(null, '', url);
+  }
+  if (!opts.fromChannel && !embedMode) {
+    channel.postMessage({ type: 'lang', lang: currentLang });
+  }
+}
+
+function toggleLang() {
+  applyLang(currentLang === 'zh' ? 'en' : 'zh');
+}
+
+initI18n();
+
+// Initial language: ?lang, then last choice, else English.
+const startLang = (() => {
+  if (params.get('lang') === 'zh') return 'zh';
+  if (params.get('lang') === 'en') return 'en';
+  try { return localStorage.getItem('deck-lang') === 'zh' ? 'zh' : 'en'; }
+  catch { return 'en'; }
+})();
+applyLang(startLang, { fromChannel: true });
+
+document.querySelector('[data-lang-toggle]')?.addEventListener('click', toggleLang);
+if (!embedMode) {
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches?.('input, textarea, [contenteditable]')) return;
+    if (e.key === 'l' || e.key === 'L') toggleLang();
+  });
+}
+channel.addEventListener('message', (ev) => {
+  const msg = ev.data;
+  if (msg && msg.type === 'lang' && msg.lang !== currentLang) {
+    applyLang(msg.lang, { fromChannel: true });
+  }
 });
 
 // Tell the world we're closing too (so the speaker can grey out if needed)

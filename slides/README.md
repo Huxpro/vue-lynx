@@ -27,6 +27,7 @@ Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 | `o`                       | Toggle overview grid    |
 | `1`..`9`                  | Jump to slide N         |
 | `.`                       | Toggle light mode       |
+| `l`                       | Toggle 中文 / English   |
 | **`s`**                   | **Open speaker view**   |
 | `b`                       | Blackout audience screen|
 
@@ -115,6 +116,11 @@ first reveal so the opening slides stay snappy.
 - `src/main.js` — slide navigation, magic move, `<vl-demo>` lazy loader
 - `src/arch.js` — data-driven "layers & seams" diagram for the cross-platform
   landscape chapter (rendered into each `.arch-mount`, one column per slide)
+- `src/i18n.js` — Chinese translations. English is the inline source; text is
+  matched by normalized English `textContent` and swapped in place (so
+  magic-move `data-flip` identity is preserved). Toggle with `l` or the chrome
+  button; `?lang=zh` deep-links and the choice mirrors to the speaker view.
+  Speaker notes stay in the source language.
 - `src/styles.css` — design tokens + slide chrome
 - `src/meteors.js` — canvas meteors background, same recipe as the site
 - `public/examples` — symlink to the website's prebuilt example bundles
