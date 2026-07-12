@@ -30,8 +30,20 @@ const HEADING_CLASSES: Record<number, string> = {
 </script>
 
 <template>
-  <view class="flex flex-col gap-3">
-    <template v-for="(block, bi) in blocks" :key="bi">
+  <!-- Each block gets a single <view> wrapper: Vue's v-if/v-else-if chains
+       leave zero-size placeholder nodes as siblings, and Lynx flex `gap`
+       adds space around EVERY child (placeholders included), which would
+       otherwise multiply the spacing between blocks. Keeping the chain
+       inside a per-block wrapper confines the placeholders. -->
+  <!-- Spacing via per-block margin-top (bi > 0), not container `gap`: Lynx
+       flex `gap` also spaces around the v-for fragment anchors (empty
+       zero-size text nodes), which would add a phantom gap at the top. -->
+  <view class="flex flex-col">
+    <view
+      v-for="(block, bi) in blocks"
+      :key="bi"
+      :style="bi > 0 ? { marginTop: '16px' } : undefined"
+    >
       <!-- paragraph / heading / quote share the inline renderer -->
       <text
         v-if="block.type === 'p' || block.type === 'heading'"
@@ -93,13 +105,13 @@ const HEADING_CLASSES: Record<number, string> = {
       </view>
 
       <view v-else-if="block.type === 'hr'" class="h-px bg-accented" />
-    </template>
+    </view>
   </view>
 </template>
 
 <style>
 .md-line {
-  line-height: 26px;
+  line-height: 28px;
 }
 .md-inline-code {
   background-color: var(--ui-bg-elevated);
@@ -115,7 +127,7 @@ const HEADING_CLASSES: Record<number, string> = {
   font-style: italic;
 }
 .md-marker {
-  line-height: 26px;
+  line-height: 28px;
 }
 .quote-bar {
   width: 3px;

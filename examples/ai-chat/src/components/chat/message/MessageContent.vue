@@ -37,7 +37,11 @@ const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
 </script>
 
 <template>
-  <view class="flex flex-col gap-3">
+  <!-- Spacing via margin-top, not container `gap`: Lynx flex `gap` also
+       spaces around v-for anchors and v-if placeholders (empty zero-size
+       nodes), inflating the gaps. Each part is wrapped in one <view> so its
+       internal v-if/v-else-if chain stays confined. -->
+  <view class="flex flex-col">
     <view v-if="fileParts.length" class="flex flex-row flex-wrap gap-2 justify-end">
       <FilePreview
         v-for="(file, fi) in fileParts"
@@ -49,7 +53,11 @@ const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
       />
     </view>
 
-    <template v-for="(part, index) in merged" :key="`${message.id}-${part.type}-${index}`">
+    <view
+      v-for="(part, index) in merged"
+      :key="`${message.id}-${part.type}-${index}`"
+      :style="index > 0 || fileParts.length ? { marginTop: '12px' } : undefined"
+    >
       <ReasoningPart
         v-if="isReasoningUIPart(part)"
         :text="part.text"
@@ -82,9 +90,9 @@ const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
           <text v-else class="text-base text-highlighted user-text">{{ part.text }}</text>
         </template>
       </template>
-    </template>
+    </view>
 
-    <view v-if="sources.length && message.role === 'assistant'" class="flex flex-row flex-wrap gap-1.5">
+    <view v-if="sources.length && message.role === 'assistant'" class="flex flex-row flex-wrap gap-1.5 mt-3">
       <SourceLink
         v-for="source in sources"
         :key="source.sourceId"

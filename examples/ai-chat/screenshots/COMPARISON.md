@@ -20,6 +20,7 @@ Both columns captured at 1280×800.
 | Mobile home (390×844) | ![original mobile home](original/mobile-home.png) | ![lynx mobile home](lynx/mobile-home.png) |
 | Mobile sidebar drawer | ![original mobile drawer](original/mobile-drawer.png) | ![lynx mobile drawer](lynx/mobile-drawer.png) |
 | Mobile weather chat | ![original mobile weather](original/mobile-weather.png) | ![lynx mobile weather](lynx/mobile-weather.png) |
+| Mobile markdown (composable) | ![original composable](original/composable-mobile.png) | ![lynx composable](lynx/composable-mobile.png) |
 
 ## Reading the pairs
 
@@ -72,3 +73,11 @@ the port branches on `SystemInfo.pixelWidth / pixelRatio` at startup: same full-
 hamburger in the navbar, slide-over drawer (with close button and content dim), stacked
 quick-chat pills, and tighter paddings. The drawer state in the original screenshot shows an
 empty history because the live demo session was fresh.
+
+**Mobile markdown (composable)** — reasoning row, streamed prose, and a highlighted code block.
+The vertical rhythm matches the original's prose spacing (28px line-height, ~16px between
+blocks). Getting here required a Lynx-specific fix: Vue's `v-if`/`v-else-if` chains and
+`v-for` fragments leave zero-size placeholder nodes as siblings, and Lynx flex `gap` adds space
+around *every* child — placeholders included — which multiplied the spacing between markdown
+blocks. The renderer now wraps each block/part in a single `<view>` and spaces with
+`margin-top` instead of container `gap` (see PORTING.md "Platform learnings" #11).

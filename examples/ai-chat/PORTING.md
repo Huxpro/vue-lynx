@@ -75,5 +75,13 @@ Why a straight copy is impossible:
    re-created by reading the `SystemInfo` global (`pixelWidth / pixelRatio` = logical width —
    web-core populates it from `screen.availWidth * devicePixelRatio`) and branching the layout
    in code (`useViewport`). Detection is startup-only in this example.
-10. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
+10. **Flex `gap` counts zero-size placeholder siblings.** Vue's `v-if`/`v-else-if` chains and
+    `v-for` fragments leave empty placeholder nodes (`<text>`/comment anchors) in the DOM. On
+    Lynx's web platform these are flex children, so a container's `gap` adds spacing around each
+    one — a markdown block list with 5-branch `v-if` chains between items ends up with 2-3× the
+    intended spacing. Fix: wrap each item in a single `<view>` (confining its internal chain)
+    and space with per-item `margin-top` keyed on the loop index (`bi > 0`), not container
+    `gap` (which would still space around the `v-for` anchors). See `MarkdownView.vue` /
+    `MessageContent.vue`.
+11. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
    `fetch` binding with an undefined parameter (known repo convention, applies here too).
