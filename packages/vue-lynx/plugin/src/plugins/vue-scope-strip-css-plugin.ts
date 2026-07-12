@@ -31,38 +31,54 @@ interface List {
 
 interface ASTNode {
   type: string;
-  name?: { name?: string };
+  name?: { name?: string } | string;
+  matcher?: unknown;
+  value?: unknown;
+  flags?: unknown;
   children?: List;
   prelude?: ASTNode;
   block?: ASTNode;
   [key: string]: unknown;
 }
 
-function stripVueScopeFromAST(node: ASTNode): void {
+export function rewriteVueScopeAttribute(
+  node: Record<string, unknown>,
+): boolean {
+  if (node.type !== 'AttributeSelector') return false;
+  const identifier = node.name;
+  const name = typeof identifier === 'object' && identifier !== null
+    ? (identifier as { name?: unknown }).name
+    : undefined;
+  if (typeof name !== 'string' || !name.startsWith('data-v-')) return false;
+
+  node.type = 'ClassSelector';
+  node.name = name;
+  delete node.matcher;
+  delete node.value;
+  delete node.flags;
+  return true;
+}
+
+function rewriteVueScopesInAST(node: ASTNode): void {
   // Walk children (css-tree uses linked lists)
   if (node.children) {
     let item = node.children.head;
     while (item) {
       const next = item.next;
-      if (
-        item.data.type === 'AttributeSelector'
-        && item.data.name?.name?.startsWith('data-v-')
-      ) {
-        node.children.remove(item);
-      } else {
-        stripVueScopeFromAST(item.data);
+      if (!rewriteVueScopeAttribute(item.data)) {
+        rewriteVueScopesInAST(item.data);
       }
       item = next;
     }
   }
   // Walk named sub-trees (Rule.prelude = SelectorList, Rule.block = Block)
-  if (node.prelude) stripVueScopeFromAST(node.prelude);
-  if (node.block) stripVueScopeFromAST(node.block);
+  if (node.prelude) rewriteVueScopesInAST(node.prelude);
+  if (node.block) rewriteVueScopesInAST(node.block);
 }
 
 export const vueScopeStripCSSPlugin = {
   name: 'vue-scope-strip',
   phaseStandard(ast: ASTNode): void {
-    stripVueScopeFromAST(ast);
+    rewriteVueScopesInAST(ast);
   },
 };
