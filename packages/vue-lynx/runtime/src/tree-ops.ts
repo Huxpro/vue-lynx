@@ -42,13 +42,13 @@ export function releaseSubtree(el: ShadowElement): void {
 }
 
 // ---------------------------------------------------------------------------
-// Class resolution — merges user :class with transition classes
+// Class resolution — merges user, Vue scope, and transition classes
 // ---------------------------------------------------------------------------
 
 export function resolveClass(el: ShadowElement): string {
-  if (el._transitionClasses.size === 0) return el._baseClass;
   const parts: string[] = [];
   if (el._baseClass) parts.push(el._baseClass);
+  for (const cls of el._scopeClasses) parts.push(cls);
   for (const cls of el._transitionClasses) parts.push(cls);
   return parts.join(' ');
 }

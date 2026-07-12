@@ -222,7 +222,8 @@ describe('vapor SFC e2e: kitchen sink', () => {
     const decoded = await flushedOps();
 
     // :class object binding → normalized class string
-    expect(opsOf(decoded, OP.SET_CLASS).some((c) => c.args[1] === 'active'))
+    const classes = opsOf(decoded, OP.SET_CLASS).map((c) => String(c.args[1]));
+    expect(classes.some((value) => value.split(' ').includes('active')))
       .toBe(true);
     // :style object binding through the style facade
     expect(
@@ -237,8 +238,11 @@ describe('vapor SFC e2e: kitchen sink', () => {
       ),
     ).toBe(true);
     expect(opsOf(decoded, OP.SET_ID).some((i) => i.args[1] === 'hi')).toBe(true);
-    // scoped CSS → SET_SCOPE_ID ops from the data-v attrs in the template
-    expect(opsOf(decoded, OP.SET_SCOPE_ID).length).toBeGreaterThan(0);
+    // Scoped CSS tokens compose as classes; new bundles do not depend on
+    // native Lynx's single-valued cssId slot.
+    expect(classes.some((value) => value.split(' ').some((c) => c.startsWith('data-v-'))))
+      .toBe(true);
+    expect(opsOf(decoded, OP.SET_SCOPE_ID)).toHaveLength(0);
     // v-if true branch only
     const texts = opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]);
     expect(texts).toContain('if');

@@ -31,7 +31,6 @@ import type {
 } from 'vue-lynx/internal/ops';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
-import { scopeIdToCssId } from './scope-bridge.js';
 import {
   idRegistry,
   insertNode,
@@ -196,9 +195,11 @@ export class ShadowElement {
 
   // Class management for Transition support.
   // _baseClass: the class string set by the user via :class / class prop.
+  // _scopeClasses: Vue's composable data-v-* scope tokens.
   // _transitionClasses: classes added/removed by <Transition> hooks.
-  // The effective class sent to MT = _baseClass + _transitionClasses joined.
+  // The effective class sent to MT = base + scopes + transitions.
   _baseClass = '';
+  _scopeClasses: Set<string> = new Set();
   _transitionClasses: Set<string> = new Set();
 
   // v-model state (BG-thread bookkeeping)
@@ -215,8 +216,6 @@ export class ShadowElement {
   _text: string | undefined = undefined;
   /** Generic attributes set via setAttribute (excluding class/style/id). */
   _attrs: Map<string, string> | undefined = undefined;
-  /** Lynx cssIds applied via scoped-CSS data-v-* attributes. */
-  _scopeIds: number[] | undefined = undefined;
   /** DOM-ish `value` property (input elements). */
   _valueProp: string | undefined = undefined;
   /** Lazily created CSSStyleDeclaration facade. */
@@ -560,19 +559,13 @@ export class ShadowElement {
       pushOp(OP.CREATE, clone.uid, '__comment');
     } else {
       pushOp(OP.CREATE, clone.uid, this.tag);
-      if (this._baseClass) {
-        clone._baseClass = this._baseClass;
-        pushOp(OP.SET_CLASS, clone.uid, this._baseClass);
-      }
+      clone._baseClass = this._baseClass;
+      clone._scopeClasses = new Set(this._scopeClasses);
+      const resolvedClass = resolveClass(clone);
+      if (resolvedClass) pushOp(OP.SET_CLASS, clone.uid, resolvedClass);
       if (Object.keys(this._style).length > 0) {
         clone._style = { ...this._style };
         pushOp(OP.SET_STYLE, clone.uid, clone._style);
-      }
-      if (this._scopeIds) {
-        clone._scopeIds = [...this._scopeIds];
-        for (const cssId of clone._scopeIds) {
-          pushOp(OP.SET_SCOPE_ID, clone.uid, cssId);
-        }
       }
       if (this._attrs) {
         clone._attrs = new Map(this._attrs);
@@ -668,11 +661,7 @@ export class ShadowElement {
     } else if (key === 'id') {
       setIdAttr(this, strValue);
     } else if (key.startsWith('data-v-')) {
-      // Vue scoped-CSS attribute → Lynx cssId.
-      const cssId = scopeIdToCssId(key);
-      (this._scopeIds ??= []).push(cssId);
-      pushOp(OP.SET_SCOPE_ID, this.uid, cssId);
-      scheduleFlush();
+      this._addScopeClass(key);
     } else {
       (this._attrs ??= new Map()).set(key, strValue);
       pushOp(OP.SET_PROP, this.uid, key, value);
@@ -689,7 +678,7 @@ export class ShadowElement {
     } else if (key === 'id') {
       this._id = value;
     } else if (key.startsWith('data-v-')) {
-      (this._scopeIds ??= []).push(scopeIdToCssId(key));
+      this._addScopeClass(key);
     } else {
       (this._attrs ??= new Map()).set(key, value);
     }
@@ -714,6 +703,12 @@ export class ShadowElement {
       } else {
         setIdAttr(this, null);
       }
+    } else if (key.startsWith('data-v-')) {
+      if (!this._scopeClasses.delete(key)) return;
+      if (!this._inert) {
+        pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
+        scheduleFlush();
+      }
     } else {
       if (!this._attrs?.has(key)) return;
       this._attrs.delete(key);
@@ -735,7 +730,18 @@ export class ShadowElement {
   }
 
   hasAttribute(key: string): boolean {
+    if (key.startsWith('data-v-')) return this._scopeClasses.has(key);
     return this.getAttribute(key) != null;
+  }
+
+  /** Add a Vue scope token without allowing duplicate class emission. */
+  _addScopeClass(scopeClass: string): void {
+    if (this._scopeClasses.has(scopeClass)) return;
+    this._scopeClasses.add(scopeClass);
+    if (!this._inert) {
+      pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
+      scheduleFlush();
+    }
   }
 
   // --- class / style -------------------------------------------------------------
@@ -928,13 +934,11 @@ function buildStructure(
   }
 
   const props: TemplateNodeProps = {};
-  if (proto._baseClass) props.c = proto._baseClass;
+  const resolvedClass = resolveClass(proto);
+  if (resolvedClass) props.c = resolvedClass;
   if (hasAnyKey(proto._style)) props.s = { ...proto._style };
   if (proto._attrs && proto._attrs.size > 0) props.a = [...proto._attrs];
   if (proto._id !== undefined) props.i = proto._id;
-  if (proto._scopeIds && proto._scopeIds.length > 0) {
-    props.sc = [...proto._scopeIds];
-  }
 
   const fold = isOnlyChildText(proto);
   const children: TemplateNode[] = [];
@@ -973,9 +977,9 @@ function buildShadowClone(
   }
 
   clone._baseClass = proto._baseClass;
+  clone._scopeClasses = new Set(proto._scopeClasses);
   if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
-  if (proto._scopeIds) clone._scopeIds = [...proto._scopeIds];
   if (proto._id !== undefined) {
     clone._id = proto._id;
     // BG-side Teleport target registry (MT applies the id via structure).

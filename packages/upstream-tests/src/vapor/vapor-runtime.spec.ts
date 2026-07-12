@@ -246,6 +246,30 @@ describe('vapor: v-for', () => {
 // ---------------------------------------------------------------------------
 
 describe('vapor: components', () => {
+  it('composes parent and child scope classes on a child root', async () => {
+    const tChild = template(
+      '<view data-v-child class=child><text data-v-child>child',
+      1,
+    );
+    const tRoot = template('<view data-v-parent>', 1);
+
+    const Child = defineVaporComponent(() => tChild() as El);
+    const App = defineVaporComponent(() => {
+      const n1: El = tRoot();
+      setInsertionState(n1, null, 0);
+      createComponent(Child as El, null, null, true);
+      return n1;
+    });
+    (App as El).__scopeId = 'data-v-parent';
+
+    createVaporApp(App).mount();
+
+    const decoded = await flushedOps();
+    const classes = opsOf(decoded, OP.SET_CLASS).map((op) => String(op.args[1]));
+    expect(classes).toContain('child data-v-child data-v-parent');
+    expect(opsOf(decoded, OP.SET_SCOPE_ID)).toHaveLength(0);
+  });
+
   it('mounts child components with reactive props', async () => {
     const msg = ref('hello');
     const tChild = template('<text> ', 1);
