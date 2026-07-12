@@ -1658,109 +1658,202 @@ body.is-blackout::after {
    ========================================================= */
 
 /* =========================================================
-   Cross-platform landscape — name field + quadrant chart.
-   Dots drop onto a Web-DX x Native-UX plane one slide at a
-   time (magic move keeps the chart, data-mm-fade adds each
-   new point).
+   Cross-platform landscape — "layers & seams".
+   Five stacked layers, four seams between them; each framework
+   is a vertical spine whose four gates are open / half / sealed.
+   Rendered by arch.js; one column drops in per slide via magic
+   move (the .arch container flips, new column is data-mm-fade).
    ========================================================= */
-.field {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  max-width: 42ch;
-}
-.field span {
-  padding: 9px 18px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  color: var(--ink-soft);
-  background: var(--paper-elev);
-}
-.field .is-lynx {
-  border-color: rgba(93, 213, 168, 0.5);
-  color: var(--vue-green);
-}
-
-.qchart {
+.arch-mount {
   position: relative;
-  width: clamp(320px, 54cqh, 460px);
-  aspect-ratio: 1 / 1;
-  margin: 30px auto 8px;
-  border-left: 1.5px solid var(--line);
-  border-bottom: 1.5px solid var(--line);
+  width: min(100%, 1000px);
+  margin: 8px auto 0;
 }
-.qchart::before,
-.qchart::after {
-  content: '';
-  position: absolute;
-  background: var(--line-soft);
-}
-.qchart::before { left: 50%; top: 0; bottom: 0; width: 1px; }
-.qchart::after { top: 50%; left: 0; right: 0; height: 1px; }
-
-/* Reserve two lines so the chart's vertical center doesn't shift between
-   slides — keeps the magic-move dot-drop from jumping. */
-.qchart + .lead {
-  min-height: 2.5em;
-  max-width: 46ch;
+.arch {
+  position: relative;
+  width: 100%;
+  height: clamp(340px, 62cqh, 460px);
 }
 
-.qchart__x,
-.qchart__y {
+/* caption below the diagram — reserve height so the diagram's
+   center stays put between slides */
+.arch-cap {
+  min-height: 2.4em;
+  max-width: 60ch;
+  margin-top: 22px;
+}
+
+.arch__layer {
   position: absolute;
+  left: 0;
+  right: 0;
+  height: 44px;
+  transform: translateY(-50%);
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.015);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.arch__lname {
+  font-family: var(--display);
+  font-size: 14px;
+  color: #c7cfe0;
+}
+.arch__lname b {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-weight: 400;
   color: var(--ink-mute);
+  margin-right: 8px;
+}
+.arch__refs {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+.arch__seam {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  height: 0;
+  border-top: 1px dashed var(--line);
+  pointer-events: none;
+}
+.arch__seamlab {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
   white-space: nowrap;
 }
-.qchart__x { bottom: -24px; right: 0; }
-.qchart__y { top: -24px; left: -2px; }
+.arch__ep {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--brand-teal);
+}
+.arch__q {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-mute);
+}
 
-.pt {
+.arch__spine {
+  position: absolute;
+  top: 5.6%;
+  height: 88.8%;
+  width: 2.4px;
+  transform: translateX(-50%);
+  background: var(--fwc);
+  opacity: 0.3;
+}
+.arch__spine.is-hero {
+  opacity: 0.85;
+  width: 3px;
+  box-shadow: 0 0 14px var(--fwc);
+}
+
+.arch__node {
   position: absolute;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  text-align: center;
+  gap: 2px;
+  padding: 7px 13px;
+  border-radius: 10px;
+  border: 1.6px solid var(--fwc);
+  background: color-mix(in srgb, var(--fwc) 14%, var(--paper));
   white-space: nowrap;
+  z-index: 2;
 }
-.pt__dot {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: var(--ink-mute);
-  box-shadow: 0 0 0 4px rgba(244, 245, 247, 0.04);
-}
-.pt__name {
+.arch__node.is-hero { box-shadow: 0 0 24px -2px var(--fwc); z-index: 3; }
+.arch__nname {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 17px;
+  font-size: 14px;
   letter-spacing: -0.01em;
-  color: var(--ink-soft);
+  color: var(--ink);
 }
-.pt__note {
+.arch__nscore {
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
+  font-size: 10.5px;
+  color: var(--fwc);
+}
+
+.gate {
+  position: absolute;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+.gate--open { background: var(--paper); border: 2.3px solid var(--fwc); }
+.gate--part { background: var(--paper); border: 2.3px dashed var(--fwc); }
+.gate--seal {
+  border-radius: 4px;
+  border: 1.7px solid var(--fwc);
+  background: color-mix(in srgb, var(--fwc) 28%, transparent);
+}
+.gate--seal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 2.6px;
+  border-radius: 2px;
+  background: var(--fwc);
+}
+.gate.is-hero { box-shadow: 0 0 14px 1px color-mix(in srgb, var(--fwc) 55%, transparent); }
+
+/* Legend chips for the gate glyphs */
+.gate-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+  font-family: var(--mono);
+  font-size: 11.5px;
   color: var(--ink-mute);
 }
-.pt--lynx { z-index: 3; }
-.pt--lynx .pt__dot {
-  width: 18px;
-  height: 18px;
-  background: var(--vue-green);
-  box-shadow: 0 0 22px 2px rgba(93, 213, 168, 0.7), 0 0 0 5px rgba(93, 213, 168, 0.12);
+.gate-legend span { display: inline-flex; align-items: center; gap: 9px; }
+.gate-legend i {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid var(--ink-mute);
+  background: var(--paper);
 }
-.pt--lynx .pt__name { color: var(--vue-green); font-size: 20px; }
-.pt--lynx .pt__note { color: var(--vue-green); }
+.gate-legend i.part { border-style: dashed; }
+.gate-legend i.seal {
+  border-radius: 4px;
+  background: rgba(139, 149, 173, 0.25);
+  position: relative;
+}
+.gate-legend i.seal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 9px;
+  height: 2px;
+  background: var(--ink-mute);
+}
 
 /* Subtle helpers */
 .spacer-sm { height: 12px; }
