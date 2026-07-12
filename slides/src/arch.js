@@ -10,12 +10,42 @@
 // =========================================================
 
 const LAYERS = [
-  { idx: '01', name: 'Frontend',      refs: 'React · Vue · Svelte · CSS' },
-  { idx: '02', name: 'Runtime',       refs: '' },
-  { idx: '03', name: 'Render backend', refs: 'DOM · UIKit · Skia' },
-  { idx: '04', name: 'Native capability', refs: 'camera · sensors · AI' },
-  { idx: '05', name: 'Platform',      refs: 'iOS · Android · TV · XR' },
+  { idx: '01', name: 'Frontend',          icons: ['react', 'vue', 'svelte', 'css'] },
+  { idx: '02', name: 'Runtime',           icons: [] },
+  { idx: '03', name: 'Render backend',    icons: ['dom', 'apple', 'skia'] },
+  { idx: '04', name: 'Native capability', icons: ['camera', 'sensor', 'ai'] },
+  { idx: '05', name: 'Platform',          icons: ['apple', 'android', 'tv', 'xr'] },
 ];
+
+// Logo mark for each framework node (rendered in the column's accent colour).
+const FW_LOGO = { web: 'globe', rn: 'react', flutter: 'flutter', ns: 'ns', lynx: 'lynx' };
+
+// Brand colours for the layer reference icons (others fall back to muted).
+const BRAND = {
+  react: '#61DAFB', vue: '#42B883', svelte: '#FF3E00', css: '#3C9CD7',
+  android: '#3DDC84',
+};
+
+// Inline SVG marks — brand logos where recognizable, clean glyphs otherwise.
+const ICON = {
+  globe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.7 2.6 2.7 15.4 0 18M12 3c-2.7 2.6-2.7 15.4 0 18"/></svg>`,
+  react: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.8" fill="currentColor"/><g fill="none" stroke="currentColor" stroke-width="1"><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></g></svg>`,
+  vue: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 3.5h4.1L12 13.3 17.9 3.5H22L12 20.6z"/><path d="M6.6 3.5h3L12 7.7l2.4-4.2h3L12 12.7z" opacity=".5"/></svg>`,
+  svelte: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.9c-.5 3-3 4.1-4.6 6.3-1.7 2.4-1 5 1.3 6 .9.4 1.9.7 1.5 1.7-.2.6-1 .8-1.6.4 1 2.1 3.7 2.8 5.7 1.5 2.4-1.5 2.9-4.7 1.1-6.6-.8-.9-2-1.2-1.6-2.3.2-.6 1-.8 1.6-.4C16.5 6.6 14.7 3.4 12 1.9z"/></svg>`,
+  css: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H7.5A2.5 2.5 0 0 0 5 5.5V8a2 2 0 0 1-2 2 2 2 0 0 1 2 2v2.5A2.5 2.5 0 0 0 7.5 19H9M15 3h1.5A2.5 2.5 0 0 1 19 5.5V8a2 2 0 0 0 2 2 2 2 0 0 0-2 2v2.5a2.5 2.5 0 0 1-2.5 2.5H15"/></svg>`,
+  dom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 8 4.5 12l4 4M15.5 8l4 4-4 4M13.2 5l-2.4 14"/></svg>`,
+  apple: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 12.5c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.55.02-2.98.9-3.77 2.29-1.61 2.8-.41 6.95 1.15 9.22.76 1.11 1.67 2.36 2.87 2.31 1.15-.05 1.58-.74 2.97-.74 1.39 0 1.78.74 3 .72 1.24-.02 2.02-1.13 2.78-2.25.88-1.29 1.24-2.54 1.26-2.6-.03-.01-2.42-.93-2.44-3.7zM14.77 5.9c.64-.77 1.07-1.85.95-2.9-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.78-.97 2.83 1.03.08 2.07-.52 2.71-1.31z"/></svg>`,
+  skia: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3c3.4 4 6 7 6 9.8A6 6 0 0 1 6 12.8C6 10 8.6 7 12 3z"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 8a1 1 0 0 1 1-1h2.5l1.3-1.8h6.4L15.5 7H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><circle cx="12" cy="12.5" r="3.2"/></svg>`,
+  sensor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="14.5" r="1.8"/><path d="M8.6 11.1a4.8 4.8 0 0 1 6.8 0M6 8.5a8.5 8.5 0 0 1 12 0"/></svg>`,
+  ai: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.7 4.6L18 8l-4.3 1.4L12 14l-1.7-4.6L6 8l4.3-1.4zM18.5 14l.9 2.4 2.6.9-2.6.9-.9 2.4-.9-2.4-2.6-.9 2.6-.9z"/></svg>`,
+  android: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 9.5v6.9c0 .5.4.9.9.9H8v2.6a1 1 0 0 0 2 0V17.3h4v2.6a1 1 0 0 0 2 0V17.3h1.1c.5 0 .9-.4.9-.9V9.5zM4.3 9.4a1 1 0 0 0-1 1v4.4a1 1 0 0 0 2 0v-4.4a1 1 0 0 0-1-1zm15.4 0a1 1 0 0 0-1 1v4.4a1 1 0 0 0 2 0v-4.4a1 1 0 0 0-1-1zM15.4 4.9l1-1.6a.4.4 0 1 0-.7-.4l-1 1.7a6 6 0 0 0-4.4 0l-1-1.7a.4.4 0 1 0-.7.4l1 1.6A5.3 5.3 0 0 0 6.4 8.5h11.2a5.3 5.3 0 0 0-2.2-3.6zM9.6 7a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4zm4.8 0a.7.7 0 1 1 0-1.4.7.7 0 0 1 0 1.4z"/></svg>`,
+  tv: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 3.5l4 3.5 4-3.5"/></svg>`,
+  xr: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 9h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-3.5l-1.8-2h-3.4L9.5 15H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z"/></svg>`,
+  flutter: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.3 0 2.3 12l3.7 3.7L21.7 0zM14.3 11.1l-6.4 6.4L14.3 24h7.4l-6.4-6.5 6.4-6.4z"/></svg>`,
+  ns: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="5" stroke-width="1.7"/><path d="M8.5 16V8l7 8V8" stroke-width="1.9" stroke-linejoin="round"/></svg>`,
+  lynx: `<svg viewBox="0 0 33 33" fill="currentColor"><path d="M 15.5,0.5 C 16.5,0.5 17.5,0.5 18.5,0.5C 18.5,4.83333 18.5,9.16667 18.5,13.5C 21.5,13.5 24.5,13.5 27.5,13.5C 24.516,20.1221 20.516,26.1221 15.5,31.5C 14.2801,31.1131 13.6135,30.2798 13.5,29C 14.3942,25.2238 14.7275,21.3905 14.5,17.5C 11.5,17.5 8.5,17.5 5.5,17.5C 5.35055,16.448 5.51722,15.448 6,14.5C 9.43419,9.94886 12.6009,5.28219 15.5,0.5 Z"/></svg>`,
+};
 
 // One seam sits between each pair of layers (EP1..EP4).
 const SEAMS = [
@@ -75,7 +105,19 @@ function scoreOf(gates) {
 const slot = (j) => ((j + 0.5) / 9) * 100;
 const layerY = (i) => slot(2 * i);
 const seamY = (s) => slot(2 * s + 1);
-const colX = (c) => 34 + c * 14.5;
+const colX = (c) => 32 + c * 12; // columns 32–80%, leaving a right gutter for icon rows
+
+function iconRow(keys) {
+  if (!keys || !keys.length) return '';
+  const items = keys
+    .map((k) => {
+      const svg = ICON[k] || '';
+      const color = BRAND[k] ? ` style="color:${BRAND[k]}"` : '';
+      return `<i${color} aria-label="${k}">${svg}</i>`;
+    })
+    .join('');
+  return `<span class="arch__refs">${items}</span>`;
+}
 
 function el(tag, cls, css) {
   const e = document.createElement(tag);
@@ -95,8 +137,7 @@ export function renderArch(mount, lang = 'en') {
     const name = zh ? ZH.layers[i] : L.name;
     const band = el('div', 'arch__layer', `top:${layerY(i)}%`);
     band.innerHTML =
-      `<span class="arch__lname"><b>${L.idx}</b>${name}</span>` +
-      (L.refs ? `<span class="arch__refs">${L.refs}</span>` : '');
+      `<span class="arch__lname"><b>${L.idx}</b>${name}</span>` + iconRow(L.icons);
     arch.append(band);
   });
 
@@ -123,6 +164,7 @@ export function renderArch(mount, lang = 'en') {
     const node = el('div', `arch__node${heroCls}`,
       `left:${colX(c)}%;top:${layerY(1)}%;--fwc:${f.color}`);
     node.innerHTML =
+      `<span class="arch__nlogo">${ICON[FW_LOGO[f.id]] || ''}</span>` +
       `<span class="arch__nname">${f.name}</span>` +
       `<span class="arch__nscore">${scoreOf(f.gates)}/4</span>`;
     if (isNew) node.setAttribute('data-mm-fade', '');
