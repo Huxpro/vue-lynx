@@ -1657,6 +1657,111 @@ body.is-blackout::after {
    Combine logos — Vue × Lynx tiles that draw together
    ========================================================= */
 
+/* =========================================================
+   Cross-platform landscape — name field + quadrant chart.
+   Dots drop onto a Web-DX x Native-UX plane one slide at a
+   time (magic move keeps the chart, data-mm-fade adds each
+   new point).
+   ========================================================= */
+.field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 42ch;
+}
+.field span {
+  padding: 9px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  background: var(--paper-elev);
+}
+.field .is-lynx {
+  border-color: rgba(93, 213, 168, 0.5);
+  color: var(--vue-green);
+}
+
+.qchart {
+  position: relative;
+  width: clamp(320px, 54cqh, 460px);
+  aspect-ratio: 1 / 1;
+  margin: 30px auto 8px;
+  border-left: 1.5px solid var(--line);
+  border-bottom: 1.5px solid var(--line);
+}
+.qchart::before,
+.qchart::after {
+  content: '';
+  position: absolute;
+  background: var(--line-soft);
+}
+.qchart::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+.qchart::after { top: 50%; left: 0; right: 0; height: 1px; }
+
+/* Reserve two lines so the chart's vertical center doesn't shift between
+   slides — keeps the magic-move dot-drop from jumping. */
+.qchart + .lead {
+  min-height: 2.5em;
+  max-width: 46ch;
+}
+
+.qchart__x,
+.qchart__y {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  white-space: nowrap;
+}
+.qchart__x { bottom: -24px; right: 0; }
+.qchart__y { top: -24px; left: -2px; }
+
+.pt {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  white-space: nowrap;
+}
+.pt__dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--ink-mute);
+  box-shadow: 0 0 0 4px rgba(244, 245, 247, 0.04);
+}
+.pt__name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+}
+.pt__note {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ink-mute);
+}
+.pt--lynx { z-index: 3; }
+.pt--lynx .pt__dot {
+  width: 18px;
+  height: 18px;
+  background: var(--vue-green);
+  box-shadow: 0 0 22px 2px rgba(93, 213, 168, 0.7), 0 0 0 5px rgba(93, 213, 168, 0.12);
+}
+.pt--lynx .pt__name { color: var(--vue-green); font-size: 20px; }
+.pt--lynx .pt__note { color: var(--vue-green); }
+
 /* Subtle helpers */
 .spacer-sm { height: 12px; }
 .spacer-md { height: 24px; }
