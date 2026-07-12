@@ -3,3 +3,5 @@ doc_build
 temp
 node_modules
 docs/public/examples/
+docs/public/genui-playground/
+docs/zh/guide/api/

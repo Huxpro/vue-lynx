@@ -177,6 +177,10 @@ export default defineConfig({
         link: '/guide/quick-start',
       },
       {
+        text: 'Playground',
+        link: '/playground',
+      },
+      {
         text: 'API',
         link: '/guide/api/vue-lynx/',
       },
@@ -191,6 +195,10 @@ export default defineConfig({
             link: '/guide/quick-start',
           },
           {
+            text: 'Playground',
+            link: '/playground',
+          },
+          {
             text: 'API',
             link: '/guide/api/vue-lynx/',
           },
@@ -203,6 +211,10 @@ export default defineConfig({
           {
             text: '指南',
             link: '/zh/guide/quick-start',
+          },
+          {
+            text: '演练场',
+            link: '/zh/playground',
           },
           {
             text: 'API',
