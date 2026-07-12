@@ -228,6 +228,12 @@ export async function localStream(
   onChunk({ type: 'start', messageId });
   onChunk({ type: 'start-step' });
 
+  // The real template has a visible submitted phase while the request reaches
+  // the model. Keep that feedback in the zero-network demo too; otherwise the
+  // synchronous fallback jumps straight to the first reasoning part and the
+  // waiting spinner never becomes perceptible.
+  await sleep(600);
+
   for (const step of script) {
     if (signal.aborted) break;
     if (step.kind === 'reasoning' || step.kind === 'text') {
