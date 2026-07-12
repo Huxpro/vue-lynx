@@ -64,6 +64,13 @@ interface VaporSfcDescriptor {
 
 let _internals: VueLoaderInternals | undefined;
 
+// VERSION COUPLING: this fork mirrors rspack-vue-loader's templateLoader body
+// and resolves its UNDOCUMENTED dist/ internals by path (loadInternals below).
+// It is written against rspack-vue-loader 17.5.x as shipped by
+// @rsbuild/plugin-vue ^1.2.6 — bumping @rsbuild/plugin-vue requires re-diffing
+// upstream's templateLoader and this file. A rename upstream fails fast here
+// (require.resolve throws); the real fix is an upstream `vapor` passthrough
+// option, tracked in plans/0709-1.
 function loadInternals(): VueLoaderInternals {
   if (_internals) return _internals;
 

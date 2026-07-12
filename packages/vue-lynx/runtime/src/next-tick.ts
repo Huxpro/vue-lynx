@@ -21,10 +21,6 @@ import { waitForFlush } from './flush.js';
  * @public
  */
 export function nextTick(fn?: () => void): Promise<void> {
-  if (fn) {
-    return _vueNextTick()
-      .then(() => waitForFlush())
-      .then(fn);
-  }
-  return _vueNextTick().then(() => waitForFlush());
+  const flushed = _vueNextTick().then(() => waitForFlush());
+  return fn ? flushed.then(fn) : flushed;
 }
