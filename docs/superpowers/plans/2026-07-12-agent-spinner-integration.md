@@ -368,4 +368,3 @@ Expected: remote branch advances to the verified local HEAD.
 - [ ] **Step 4: Update draft PR #200**
 
 Add the spinner integration, test/build results, native-renderer evidence, and upstream issue link to the PR description or a concise progress comment.
-
