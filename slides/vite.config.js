@@ -28,6 +28,9 @@ function ensureExamplesSymlink() {
 ensureExamplesSymlink();
 
 export default defineConfig({
+  // When built for the docs site it is served under /deck/ (see
+  // website/scripts/prepare-deck.mjs); standalone dev/build stays at root.
+  base: process.env.DECK_BASE || '/',
   // web-core ships top-level await — needs ES2022+
   esbuild: { target: 'es2022' },
   build: {

@@ -151,7 +151,7 @@ document.addEventListener('keydown', (e) => {
       toggleFullscreen();
       break;
     case '.':
-      document.documentElement.classList.toggle('dark');
+      document.documentElement.classList.toggle('light');
       channel.postMessage({ type: 'theme-toggle' });
       break;
     case 'r': case 'R':

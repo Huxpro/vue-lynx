@@ -6,6 +6,9 @@
   <title>Vue Lynx — Unlock Native for Vue</title>
   <meta name="theme-color" content="#08090c" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <script type="module" crossorigin src="/assets/main-Dr5SkgI9.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/i18n-DfVygDFL.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-DCrt-zhq.css">
 </head>
 <body>
 
@@ -19,8 +22,8 @@
     <span>Vue Lynx · pre-alpha</span>
   </div>
   <div class="chrome chrome--top-right">
-    <button class="dark-toggle" aria-label="Toggle theme" title="Press . to toggle">
-      theme · .
+    <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">
+      中
     </button>
   </div>
   <div class="chrome chrome--bottom">
@@ -30,17 +33,27 @@
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
   </div>
 
+  <!-- Command launcher — always available (esp. on touch, where there's no
+       keyboard). Opens the command palette in slash mode. -->
+  <button class="cmd-launch" data-palette type="button"
+          aria-label="Open command palette"
+          title="Commands · press / or ⌘K">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 20 16 4" />
+    </svg>
+  </button>
+
   <div class="progress"><div class="progress__bar"></div></div>
+
+  <!-- Fixed 1280x720 stage; scaled to fit by main.js (fitStage) -->
+  <div class="frame">
 
   <!-- ====================================================
        1 — Cover
        ==================================================== -->
-  <section class="slide cover">
+  <section class="slide cover" data-bg="beam" data-chrome="full">
     <div class="cover__top">
-      <span class="badge">
-        <span class="badge__dot"></span>
-        Pre-Alpha · How I Vibed This in 2 Weeks
-      </span>
       <div class="cover__title">
         <div class="cover__title-line">
           <span class="verb brand-text" data-cover-verb>Unlock</span>
@@ -173,7 +186,7 @@
       </div>
     </div>
     <div class="demo__stage">
-      <div class="phone">
+      <div class="phone" data-ar="300 / 560">
         <div class="phone__inner">
           <vl-demo bundle="todomvc/dist/main.web.bundle"></vl-demo>
         </div>
@@ -281,66 +294,7 @@
   </section>
 
   <!-- ====================================================
-       10 — Gallery strip
-       ==================================================== -->
-  <section class="slide gallery">
-    <div class="gallery__head">
-      <div class="stack-y gap-md">
-        <span class="eyebrow">The Gallery</span>
-        <h2 class="h-section">
-          One renderer, <span class="brand-text">an ecosystem</span>.
-        </h2>
-      </div>
-    </div>
-    <div class="gallery__strip">
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="hackernews-tailwind/dist/main.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>HackerNews</b>Vue + Router + Query
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="gallery/dist/GalleryAutoScroll.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>Auto-scroll Gallery</b>continuous native list
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="swiper/dist/SwiperMTS.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>MTS Swiper</b>UI-thread gestures
-        </div>
-      </div>
-      <div class="gallery__item">
-        <div class="phone">
-          <div class="phone__inner">
-            <vl-demo bundle="7guis/dist/circle-drawer.web.bundle"></vl-demo>
-          </div>
-        </div>
-        <div class="gallery__caption">
-          <b>7GUIs · Circle Drawer</b>undo, redo, dialogs
-        </div>
-      </div>
-    </div>
-    <aside class="notes">
-      <p><strong>Twenty-plus apps in the repo today</strong>, each running natively <em>and</em> in the browser via Lynx for Web — which is how this deck embeds them. Let them look, then move on.</p>
-    </aside>
-  </section>
-
-  <!-- ====================================================
-       11 — Divider II · Story
+       Divider II · Story
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter II</span>
@@ -458,6 +412,106 @@
     </p>
     <aside class="notes">
       <p><strong>Setup for the Lynx pitch.</strong> "Vue Lynx is only as good as the platform it sits on." Two-part argument: web-friendly surface, performant core.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       Landscape — layers & seams (magic-move build)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      Every stack is <span class="brand-text">layers</span> — and seams.
+    </h2>
+    <p class="lead">
+      Split a cross-platform stack into five layers. What decides openness
+      isn't any one layer — it's whether the <em>seam</em> between them stays
+      open (an extension point) or gets welded into a wall.
+    </p>
+    <aside class="notes">
+      <p><strong>The frame.</strong> Don't grade a framework layer by layer — grade the seams. An open seam is an extension point; a welded seam is a wall. We'll count who leaves the most seams open.</p>
+    </aside>
+  </section>
+
+  <!-- Scaffold: five layers, four seams -->
+  <section class="slide stage">
+    <span class="eyebrow">The landscape · the map</span>
+    <div class="arch-mount" data-arch-shown="0"></div>
+    <div class="gate-legend arch-cap" data-mm-fade>
+      <span><i></i>open — an extension point</span>
+      <span><i class="part"></i>half-open</span>
+      <span><i class="seal"></i>welded shut</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The map.</strong> Five layers, top to bottom. Four seams between them, each a yes/no question: EP1 plug in any frontend? EP2 swap the render model? EP3 add native capabilities? EP4 reach a new platform?</p>
+    </aside>
+  </section>
+
+  <!-- One framework column drops in per slide -->
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="arch-mount" data-arch-shown="1"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#4FB8F0">Web</b> — open on top, sealed below. Takes any
+      frontend, but the sandbox welds rendering and capabilities shut.
+    </p>
+    <aside class="notes"><p>Web: EP1 open (any framework), but EP2/EP3 sealed by the sandbox; EP4 only half — you get a browser, not the metal.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="arch-mount" data-arch-shown="2"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#9E86F0">React Native</b> — capabilities wide open, but the
+      frontend is bound to React and each new platform is ported by hand.
+    </p>
+    <aside class="notes"><p>RN: EP3 open (Native Modules), but Metro only speaks React (EP1 half), render swap needs a fork (EP2 half), new platforms are per-target (EP4 half).</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="arch-mount" data-arch-shown="3"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#F27A9E">Flutter</b> — the bottom half is wide open, at the
+      cost of a single Dart-only door on top.
+    </p>
+    <aside class="notes"><p>Flutter: EP3/EP4 open (self-render + embedder), but EP1 welded to Dart, EP2 half (fixed engine).</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="arch-mount" data-arch-shown="4"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#E8B44A">NativeScript</b> — the most direct native access,
+      but rendering and new platforms are both welded shut.
+    </p>
+    <aside class="notes"><p>NativeScript: EP3 open (direct native, no bridge), but EP2/EP4 sealed, EP1 half (not really the Web).</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape · the answer</span>
+    <div class="arch-mount" data-arch-shown="5"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b class="brand-text">Lynx</b> is the only column with all four seams open —
+      every layer leaves an extension point.
+    </p>
+    <aside class="notes">
+      <p><strong>The answer.</strong> EP1: Rspack is framework-agnostic → React/Vue/Svelte + real CSS. EP2: the engine adapts native primitives or self-renders. EP3: Native Modules. EP4: desktop shipped, TV/VR/wearable already run on the self-renderer. Four seams, none welded.</p>
+    </aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <h2 class="h-section" style="text-align:center;max-width:18ch">
+      Four seams. <span class="brand-text">Lynx</span> welds none.
+    </h2>
+    <p class="lead">
+      Framework-agnostic by design — the Web's developer experience, native's
+      user experience, and room to reach any platform. That's the opening for
+      Vue.
+    </p>
+    <aside class="notes">
+      <p><strong>The payoff.</strong> Because no seam is welded, Vue can slot into EP1 and drive the whole stack. Web DX + Native UX. This is why Vue Lynx is even possible.</p>
     </aside>
   </section>
 
@@ -617,8 +671,9 @@
     </div>
     <span class="combine__op">&times;</span>
     <div class="combine__tile">
-      <svg viewBox="0 0 33 33" aria-label="Lynx logo">
-        <path fill="#00ddff" d="M 15.5,0.5 C 16.5,0.5 17.5,0.5 18.5,0.5C 18.5,4.83333 18.5,9.16667 18.5,13.5C 21.5,13.5 24.5,13.5 27.5,13.5C 24.516,20.1221 20.516,26.1221 15.5,31.5C 14.2801,31.1131 13.6135,30.2798 13.5,29C 14.3942,25.2238 14.7275,21.3905 14.5,17.5C 11.5,17.5 8.5,17.5 5.5,17.5C 5.35055,16.448 5.51722,15.448 6,14.5C 9.43419,9.94886 12.6009,5.28219 15.5,0.5 Z" />
+      <svg viewBox="0 0 27 28" aria-label="Lynx logo" fill="#00ddff">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z" />
+        <path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z" />
       </svg>
       <span class="combine__name">Lynx</span>
     </div>
@@ -761,8 +816,9 @@
     </aside>
   </section>
 
+  </div><!-- /.frame -->
+
 </div>
 
-<script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -26,11 +26,36 @@ Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 | `f`                       | Toggle fullscreen       |
 | `o`                       | Toggle overview grid    |
 | `1`..`9`                  | Jump to slide N         |
-| `.`                       | Toggle dark mode        |
+| `.`                       | Toggle light mode       |
 | **`s`**                   | **Open speaker view**   |
 | `b`                       | Blackout audience screen|
 
 URL hash reflects the current slide (e.g. `#7`), so you can deep-link.
+
+## Theme
+
+The deck ships **dark by default** (near-black Keynote-style stage) with the
+Vue Lynx green/teal accents intact. Press `.` to flip to the light theme
+(adds `.light` on `:root`).
+
+## Magic move (Keynote-style)
+
+Adjacent slides morph shared elements into place, FLIP-style. Give the same
+`data-flip="some-id"` to an element on two consecutive slides and it animates
+between its two positions/sizes when you advance. Tag transient supporting
+content with `data-mm-fade` so it washes in behind the morph. The stack on the
+Pillars slides and the two-thread build on the Architecture slides are the
+worked examples. One `<section class="slide">` = one step (no in-slide
+fragments), which keeps speaker-view sync and deep-links simple.
+
+## Deploy
+
+`pnpm --filter vue-lynx run` build (the website build) runs
+`website/scripts/prepare-deck.mjs`, which builds this deck with `base=/deck/`
+and copies it into `website/docs/public/deck/`. On Vercel the deck is then
+served at `<preview-url>/deck` alongside the docs — the live embeds resolve
+their bundles from `/examples` at the site root. Nothing about the standalone
+`pnpm dev` / `pnpm build` flow changes (those stay at `base=/`).
 
 ## Speaker view (`s`)
 

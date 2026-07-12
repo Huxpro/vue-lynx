@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "prepare-examples": "node scripts/prepare-examples.mjs",
-    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts",
+    "prepare-deck": "node scripts/prepare-deck.mjs",
+    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts && pnpm prepare-deck",
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
