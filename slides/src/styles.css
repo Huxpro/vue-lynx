@@ -7,11 +7,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
+  /* ---- Dark is the default theme (Keynote-style near-black stage) ---- */
   /* Brand */
-  --vue-green: #42b883;
+  --vue-green: #5dd5a8;
   --vue-dark: #35495e;
   --brand-emerald: #34d399;
-  --brand-teal: #00ddff;
+  --brand-teal: #3deae7;
   --brand-gradient: linear-gradient(
     270deg,
     var(--vue-green),
@@ -22,14 +23,14 @@
   );
 
   /* Surfaces */
-  --ink: #0f1216;
-  --ink-soft: rgba(15, 18, 22, 0.72);
-  --ink-mute: rgba(15, 18, 22, 0.52);
-  --ink-faint: rgba(15, 18, 22, 0.18);
-  --paper: #f7f8fa;
-  --paper-elev: rgba(255, 255, 255, 0.62);
-  --line: rgba(15, 18, 22, 0.10);
-  --line-soft: rgba(15, 18, 22, 0.06);
+  --ink: #f4f5f7;
+  --ink-soft: rgba(244, 245, 247, 0.72);
+  --ink-mute: rgba(244, 245, 247, 0.52);
+  --ink-faint: rgba(244, 245, 247, 0.18);
+  --paper: #08090c;
+  --paper-elev: rgba(255, 255, 255, 0.04);
+  --line: rgba(244, 245, 247, 0.10);
+  --line-soft: rgba(244, 245, 247, 0.06);
 
   /* Type */
   --display: 'Geist', -apple-system, 'Segoe UI', sans-serif;
@@ -41,24 +42,25 @@
   --slide-pad-y: clamp(40px, 5vh, 80px);
   --radius: 18px;
   --radius-lg: 28px;
-  --shadow-sm: 0 1px 2px rgba(15, 18, 22, 0.04), 0 8px 24px -12px rgba(15, 18, 22, 0.10);
-  --shadow-lg: 0 30px 80px -40px rgba(15, 18, 22, 0.30), 0 8px 32px -16px rgba(15, 18, 22, 0.18);
-}
-
-:root.dark {
-  --ink: #f4f5f7;
-  --ink-soft: rgba(244, 245, 247, 0.72);
-  --ink-mute: rgba(244, 245, 247, 0.52);
-  --ink-faint: rgba(244, 245, 247, 0.18);
-  --paper: #0a0c10;
-  --paper-elev: rgba(255, 255, 255, 0.04);
-  --line: rgba(244, 245, 247, 0.10);
-  --line-soft: rgba(244, 245, 247, 0.06);
-  --vue-green: #5dd5a8;
-  --brand-emerald: #34d399;
-  --brand-teal: #3deae7;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
   --shadow-lg: 0 30px 80px -40px rgba(0, 0, 0, 0.9), 0 8px 32px -16px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Opt-in light theme (press "." to toggle) ---- */
+:root.light {
+  --vue-green: #42b883;
+  --brand-emerald: #34d399;
+  --brand-teal: #00ddff;
+  --ink: #0f1216;
+  --ink-soft: rgba(15, 18, 22, 0.72);
+  --ink-mute: rgba(15, 18, 22, 0.52);
+  --ink-faint: rgba(15, 18, 22, 0.18);
+  --paper: #f7f8fa;
+  --paper-elev: rgba(255, 255, 255, 0.62);
+  --line: rgba(15, 18, 22, 0.10);
+  --line-soft: rgba(15, 18, 22, 0.06);
+  --shadow-sm: 0 1px 2px rgba(15, 18, 22, 0.04), 0 8px 24px -12px rgba(15, 18, 22, 0.10);
+  --shadow-lg: 0 30px 80px -40px rgba(15, 18, 22, 0.30), 0 8px 32px -16px rgba(15, 18, 22, 0.18);
 }
 
 * {
@@ -1184,7 +1186,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .cta__commandbox {
   display: inline-flex;
   align-items: stretch;
-  background: rgba(15, 18, 22, 0.04);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 16px;
   padding: 6px;
   border: 1px solid var(--line);
@@ -1192,8 +1194,8 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   max-width: 560px;
 }
 
-:root.dark .cta__commandbox {
-  background: rgba(255, 255, 255, 0.04);
+:root.light .cta__commandbox {
+  background: rgba(15, 18, 22, 0.04);
 }
 
 .cta__commandbox .cmd {
@@ -1437,6 +1439,185 @@ body.is-blackout::after {
   transition: width 0.3s ease;
   animation: gradientMove 6s linear infinite;
 }
+
+/* =========================================================
+   Magic move (FLIP) — matched [data-flip] elements morph
+   between adjacent slides, Keynote-style. Driven by main.js.
+   ========================================================= */
+.slide.is-morphing-in {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  z-index: 3;
+}
+.slide.is-morphing-out {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: opacity 0.16s ease !important;
+  z-index: 1;
+}
+.slide .is-flipping {
+  will-change: transform;
+  position: relative;
+  z-index: 4;
+}
+/* Elements marked to wash in behind a morph */
+.slide.is-morphing-in [data-mm-fade] {
+  animation: mmFadeIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 0.12s both;
+}
+@keyframes mmFadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* =========================================================
+   Big single-idea stage — centered one-thing slides
+   ========================================================= */
+.stage {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(20px, 3vh, 40px);
+}
+.stage .eyebrow { justify-content: center; }
+
+.mega {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(72px, 13vw, 220px);
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+.stage .lead { text-align: center; margin-inline: auto; }
+
+/* =========================================================
+   Pillar stack — words that magic-move up as new ones land
+   ========================================================= */
+.pstack {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.4vh, 18px);
+  align-items: flex-start;
+  width: 100%;
+  max-width: 24ch;
+}
+.pstack__item {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-size: clamp(30px, 4vw, 56px);
+  color: var(--ink-faint);
+  transition: color 0.5s ease;
+}
+.pstack__item .pstack__num {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.5em;
+  color: var(--vue-green);
+}
+.pstack__item.is-lead {
+  color: var(--ink);
+  font-size: clamp(64px, 9.5vw, 148px);
+}
+.pstack__item.is-lead .pstack__num { color: var(--vue-green); }
+.pstack__desc {
+  margin-top: clamp(12px, 2vh, 28px);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(24px, 2.6vw, 40px);
+  color: var(--ink-soft);
+  max-width: 30ch;
+  line-height: 1.25;
+}
+
+/* =========================================================
+   Architecture build — thread boxes that slide into place
+   ========================================================= */
+.archflow {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 80px);
+  width: 100%;
+  position: relative;
+}
+.archflow.is-solo { justify-content: center; }
+
+.node {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(20px, 2.4vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-elev);
+  backdrop-filter: blur(20px);
+  min-width: clamp(240px, 30vw, 380px);
+  min-height: clamp(180px, 24vh, 240px);
+  box-shadow: var(--shadow-sm);
+}
+.node__label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vue-green);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.node--main .node__label { color: var(--brand-teal); }
+.node__label .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+.node__title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(20px, 2vw, 28px);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.node__list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-family: var(--mono);
+}
+.node__list li::before { content: '· '; color: var(--vue-green); }
+.node--main .node__list li::before { color: var(--brand-teal); }
+
+.archflow__bus {
+  align-self: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: clamp(60px, 8vw, 120px);
+}
+.archflow__bus .arrow { color: var(--vue-green); font-size: 18px; letter-spacing: 0; }
+.archflow__bus .arrow.rev { color: var(--brand-teal); }
+
+/* =========================================================
+   Combine logos — Vue × Lynx tiles that draw together
+   ========================================================= */
 
 /* Subtle helpers */
 .spacer-sm { height: 12px; }

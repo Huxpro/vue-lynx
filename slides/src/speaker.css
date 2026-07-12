@@ -1,9 +1,8 @@
 /* Speaker view — uses the same design tokens as the main deck */
 @import './styles.css';
 
-:root.dark {
-  color-scheme: dark;
-}
+:root { color-scheme: dark; }
+:root.light { color-scheme: light; }
 
 html, body {
   background: var(--paper);
@@ -198,11 +197,11 @@ html, body {
   font-size: 0.9em;
   padding: 1px 6px;
   border-radius: 5px;
-  background: rgba(15, 18, 22, 0.06);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--vue-green);
 }
-:root.dark .sv-notes__body code {
-  background: rgba(255, 255, 255, 0.06);
+:root.light .sv-notes__body code {
+  background: rgba(15, 18, 22, 0.06);
 }
 .sv-notes__body kbd {
   font-family: var(--mono);

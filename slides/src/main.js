@@ -198,12 +198,103 @@ const slideMeta = slides.map((slide) => {
   return { title, notes };
 });
 
+// =========================================================
+// Magic move (FLIP) — elements tagged with the same
+// data-flip id on two adjacent slides morph between their
+// positions/sizes, Keynote-style. Everything else uses the
+// normal slide transition.
+// =========================================================
+const REDUCED_MOTION =
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const FLIP_MS = 640;
+const FLIP_EASE = 'cubic-bezier(0.34, 0.9, 0.25, 1)';
+let flipCleanup = null;
+
+function collectFlips(slide) {
+  const map = new Map();
+  slide.querySelectorAll('[data-flip]').forEach((el) => {
+    map.set(el.getAttribute('data-flip'), el);
+  });
+  return map;
+}
+
+function magicMove(fromSlide, toSlide) {
+  if (REDUCED_MOTION || embedMode || !fromSlide || !toSlide) return false;
+  if (deck.classList.contains('overview')) return false;
+
+  const fromMap = collectFlips(fromSlide);
+  const pairs = [];
+  toSlide.querySelectorAll('[data-flip]').forEach((toEl) => {
+    const fromEl = fromMap.get(toEl.getAttribute('data-flip'));
+    if (fromEl) pairs.push({ fromEl, toEl });
+  });
+  if (!pairs.length) return false;
+
+  // Finish any in-flight morph before starting a new one.
+  if (flipCleanup) flipCleanup();
+
+  // 1. Source rects (fromSlide is still at rest this frame).
+  pairs.forEach((p) => { p.fromRect = p.fromEl.getBoundingClientRect(); });
+
+  // 2. Pin both slides so geometry is final (no enter/exit transform drift).
+  fromSlide.classList.add('is-morphing-out');
+  toSlide.classList.add('is-morphing-in');
+
+  // 3. Destination rects (toSlide now pinned to its final layout).
+  pairs.forEach((p) => { p.toRect = p.toEl.getBoundingClientRect(); });
+
+  // 4. Invert — place each target element over its source, no transition.
+  pairs.forEach(({ fromRect, toRect, toEl }) => {
+    const dx = fromRect.left - toRect.left;
+    const dy = fromRect.top - toRect.top;
+    const sx = toRect.width ? fromRect.width / toRect.width : 1;
+    const sy = toRect.height ? fromRect.height / toRect.height : 1;
+    toEl.classList.add('is-flipping');
+    toEl.style.transformOrigin = 'top left';
+    toEl.style.transition = 'none';
+    toEl.style.transform =
+      `translate(${dx}px, ${dy}px) scale(${sx || 1}, ${sy || 1})`;
+  });
+
+  // 5. Play — release to the identity transform on the next frame.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      pairs.forEach(({ toEl }) => {
+        toEl.style.transition = `transform ${FLIP_MS}ms ${FLIP_EASE}`;
+        toEl.style.transform = 'translate(0, 0) scale(1, 1)';
+      });
+    });
+  });
+
+  // 6. Cleanup.
+  const cleanup = () => {
+    clearTimeout(timer);
+    pairs.forEach(({ toEl }) => {
+      toEl.classList.remove('is-flipping');
+      toEl.style.transform = '';
+      toEl.style.transition = '';
+      toEl.style.transformOrigin = '';
+    });
+    fromSlide.classList.remove('is-morphing-out');
+    toSlide.classList.remove('is-morphing-in');
+    flipCleanup = null;
+  };
+  const timer = setTimeout(cleanup, FLIP_MS + 120);
+  flipCleanup = cleanup;
+  return true;
+}
+
 function setSlide(index, opts = {}) {
+  const prev = current;
   current = Math.max(0, Math.min(slides.length - 1, index));
+  const adjacent = Math.abs(current - prev) === 1;
   slides.forEach((s, i) => {
     s.classList.toggle('is-active', i === current);
     s.classList.toggle('is-prev', i < current);
   });
+  if (adjacent && !opts.jump) {
+    magicMove(slides[prev], slides[current]);
+  }
   if (progressBar) {
     progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
   }
@@ -273,7 +364,7 @@ if (!embedMode) {
         else if (msg.dir === 'goto' && typeof msg.index === 'number') setSlide(msg.index);
         break;
       case 'theme-toggle':
-        document.documentElement.classList.toggle('dark');
+        document.documentElement.classList.toggle('light');
         break;
       case 'blackout':
         applyBlackout(!!msg.on);
@@ -355,7 +446,7 @@ if (!embedMode) {
       case 'f': case 'F': toggleFullscreen(); break;
       case 'o': case 'O': deck.classList.toggle('overview'); break;
       case '.':
-        document.documentElement.classList.toggle('dark');
+        document.documentElement.classList.toggle('light');
         channel.postMessage({ type: 'theme-toggle-mirror' });
         break;
       case 's': case 'S':
@@ -430,7 +521,7 @@ if (!embedMode) {
 // Dark mode toggle button
 // =========================================================
 document.querySelector('.dark-toggle')?.addEventListener('click', () => {
-  document.documentElement.classList.toggle('dark');
+  document.documentElement.classList.toggle('light');
 });
 
 // =========================================================

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Vue Lynx — Unlock Native for Vue</title>
-  <meta name="theme-color" content="#42b883" />
+  <meta name="theme-color" content="#08090c" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
@@ -19,12 +19,12 @@
     <span>Vue Lynx · pre-alpha</span>
   </div>
   <div class="chrome chrome--top-right">
-    <button class="dark-toggle" aria-label="Toggle dark mode" title="Press . to toggle">
+    <button class="dark-toggle" aria-label="Toggle theme" title="Press . to toggle">
       theme · .
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 17</span>
+    <span data-counter>01 / 28</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -33,7 +33,7 @@
   <div class="progress"><div class="progress__bar"></div></div>
 
   <!-- ====================================================
-       Slide 1 — Cover
+       1 — Cover
        ==================================================== -->
   <section class="slide cover">
     <div class="cover__top">
@@ -68,79 +68,108 @@
   </section>
 
   <!-- ====================================================
-       Slide 2 — Pitch (three pillars)
+       2 — Pitch thesis (one idea)
        ==================================================== -->
-  <section class="slide pitch">
-    <div class="pitch__head">
-      <span class="eyebrow">I · The Pitch</span>
-      <h2 class="h-section">
-        Apps <em style="font-family:var(--serif);font-weight:400">upgrading</em>
-        from web to native.
-      </h2>
-      <p class="lead">
-        Same Vue codebase. Real native UI. Three things shift the moment you
-        cross the bridge.
-      </p>
-    </div>
-    <div class="pillars">
-      <div class="pillar">
-        <span class="pillar__num">i.</span>
-        <h3 class="pillar__title">Speed</h3>
-        <p class="pillar__copy">
-          Native rendering, native layout, native scrolling. No DOM, no
-          reflow tax. Cold start measured in milliseconds, not seconds.
-        </p>
-      </div>
-      <div class="pillar">
-        <span class="pillar__num">ii.</span>
-        <h3 class="pillar__title">Experience</h3>
-        <p class="pillar__copy">
-          Silky 60fps gestures via Main-Thread Script. Native list
-          virtualization. Inputs and keyboard that feel like the OS, because
-          they <em>are</em> the OS.
-        </p>
-      </div>
-      <div class="pillar">
-        <span class="pillar__num">iii.</span>
-        <h3 class="pillar__title">Capabilities</h3>
-        <p class="pillar__copy">
-          Camera, sensors, deep links, native modals. Anything the platform
-          exposes is one element away &mdash; without leaving your
-          <code>&lt;template&gt;</code>.
-        </p>
-      </div>
-    </div>
+  <section class="slide stage">
+    <span class="eyebrow">I · The Pitch</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Apps <em style="font-family:var(--serif);font-weight:400">upgrading</em>
+      from web to native.
+    </h2>
+    <p class="lead">
+      Same Vue codebase. Real native UI. Three things change the moment you
+      cross the bridge.
+    </p>
     <aside class="notes">
       <p><strong>Frame:</strong> Vue Lynx isn't a port — it's a category shift. Same codebase, three things change once you cross the bridge.</p>
-      <ul>
-        <li><strong>Speed</strong> — native rendering, no DOM tax</li>
-        <li><strong>Experience</strong> — gestures and scroll at 60fps via main-thread script</li>
-        <li><strong>Capabilities</strong> — every native API the platform exposes</li>
-      </ul>
-      <p>Don't dwell — these become the three demo slides next. Just plant the structure.</p>
+      <p>The next three slides name them one at a time: Speed, Experience, Capabilities. Don't dwell — just plant the structure.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 3 — Speed (TodoMVC live demo)
+       3 — Pillar i · Speed  (magic-move stack begins)
+       ==================================================== -->
+  <section class="slide">
+    <span class="eyebrow">i · Speed</span>
+    <div class="pstack">
+      <div class="pstack__item is-lead" data-flip="pill-speed">
+        <span class="pstack__num">i.</span> Speed
+      </div>
+    </div>
+    <p class="pstack__desc" data-mm-fade>
+      Native rendering, native layout, native scrolling. Cold start measured
+      in milliseconds — not seconds.
+    </p>
+    <aside class="notes">
+      <p><strong>Speed.</strong> No DOM, no reflow tax. Native rendering, native layout, native scrolling.</p>
+      <p>These three words stack up over the next two slides — keep it snappy.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       4 — Pillar ii · Experience
+       ==================================================== -->
+  <section class="slide">
+    <span class="eyebrow">ii · Experience</span>
+    <div class="pstack">
+      <div class="pstack__item" data-flip="pill-speed">
+        <span class="pstack__num">i.</span> Speed
+      </div>
+      <div class="pstack__item is-lead" data-flip="pill-exp">
+        <span class="pstack__num">ii.</span> Experience
+      </div>
+    </div>
+    <p class="pstack__desc" data-mm-fade>
+      Silky 60fps gestures via Main-Thread Script. Native list virtualization.
+      Inputs that feel like the OS — because they <em>are</em> the OS.
+    </p>
+    <aside class="notes">
+      <p><strong>Experience.</strong> Gestures and scroll at 60fps via main-thread script; native list virtualization.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       5 — Pillar iii · Capabilities
+       ==================================================== -->
+  <section class="slide">
+    <span class="eyebrow">iii · Capabilities</span>
+    <div class="pstack">
+      <div class="pstack__item" data-flip="pill-speed">
+        <span class="pstack__num">i.</span> Speed
+      </div>
+      <div class="pstack__item" data-flip="pill-exp">
+        <span class="pstack__num">ii.</span> Experience
+      </div>
+      <div class="pstack__item is-lead" data-flip="pill-cap">
+        <span class="pstack__num">iii.</span> Capabilities
+      </div>
+    </div>
+    <p class="pstack__desc" data-mm-fade>
+      Camera, sensors, deep links, native modals. Every platform API is one
+      element away — without leaving your <code>&lt;template&gt;</code>.
+    </p>
+    <aside class="notes">
+      <p><strong>Capabilities.</strong> Every native API the platform exposes.</p>
+      <p>These become the three demo slides next.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       6 — Demo · Speed · TodoMVC
        ==================================================== -->
   <section class="slide demo">
     <div class="demo__body">
       <span class="eyebrow">i · Speed</span>
       <h2 class="demo__title">
-        The classic <span class="brand-text">TodoMVC</span>, redrawn natively.
+        <span class="brand-text">TodoMVC</span>, redrawn natively.
       </h2>
       <p class="demo__copy">
-        Same Composition API you'd write for the web &mdash; reactive state,
-        <code>v-model</code>, computed totals. The runtime ships Vue's
-        reactivity to the background thread, and Lynx paints natively on
-        the main one. Tap latency stays under one frame.
+        Same Composition API you'd write for the web — reactive state,
+        <code>v-model</code>, computed totals. Tap latency stays under one frame.
       </p>
       <div class="demo__meta">
         <span class="chip chip--brand">Composition API</span>
-        <span class="chip">v-model</span>
         <span class="chip">native &lt;input&gt;</span>
-        <span class="chip">scroll-view</span>
       </div>
     </div>
     <div class="demo__stage">
@@ -151,14 +180,13 @@
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Speed.</strong> This is TodoMVC. Same Composition API, same <code>v-model</code>, same computed totals you'd write for the web.</p>
-      <p>What's different: the input is a <em>native</em> input. The scroll is a <em>native</em> scroll-view. There's no DOM, no reflow tax, no virtual-list polyfill. Cold start is measured in <em>milliseconds</em>.</p>
-      <p><strong>Do live:</strong> tap a few todos, mark them complete. Show the input field — single-frame latency.</p>
+      <p><strong>Speed.</strong> Same Composition API, same <code>v-model</code>, same computed totals. The input is <em>native</em>; the scroll is <em>native</em>. No DOM, no reflow tax.</p>
+      <p><strong>Do live:</strong> tap a few todos, mark them complete, show the input — single-frame latency.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 4 — Experience: Waterfall Gallery
+       7 — Demo · Experience · Waterfall
        ==================================================== -->
   <section class="slide demo demo--reverse">
     <div class="demo__stage">
@@ -171,31 +199,25 @@
     <div class="demo__body">
       <span class="eyebrow">ii · Experience</span>
       <h2 class="demo__title">
-        A two-column <span class="brand-text">waterfall</span> that scrolls
-        like the OS does.
+        A <span class="brand-text">waterfall</span> that scrolls like the OS.
       </h2>
       <p class="demo__copy">
-        Backed by the native <code>&lt;list&gt;</code> element &mdash; not a
-        virtual one. Cells recycle, images stream, the scroll thread never
-        waits on JavaScript. The custom scrollbar is driven by a Main-Thread
-        Script that bypasses BG entirely.
+        Backed by the native <code>&lt;list&gt;</code> — not a virtual one. Cells
+        recycle, images stream, the scroll thread never waits on JavaScript.
       </p>
       <div class="demo__meta">
         <span class="chip chip--brand">native &lt;list&gt;</span>
         <span class="chip">MTS scrollbar</span>
-        <span class="chip">image streaming</span>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Experience, part one.</strong> A two-column waterfall, scrolling like the OS does it — because it <em>is</em> the OS scrolling.</p>
-      <p>Backed by the real native <code>&lt;list&gt;</code> element. Cells recycle, images stream, the scroll thread <strong>never</strong> blocks on JavaScript.</p>
-      <p>The custom scrollbar on the side is a Main-Thread Script — runs synchronously with the scroll, bypassing the background thread.</p>
-      <p><strong>Do live:</strong> drag-scroll fast. Show the scrollbar following without lag.</p>
+      <p><strong>Experience, part one.</strong> A two-column waterfall scrolling like the OS — because it <em>is</em> the OS scrolling. The custom scrollbar is a Main-Thread Script, synchronous with the scroll.</p>
+      <p><strong>Do live:</strong> drag-scroll fast; the scrollbar follows without lag.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 5 — Experience: Swiper + MTS
+       8 — Demo · Experience · Swiper (MTS)
        ==================================================== -->
   <section class="slide demo">
     <div class="demo__body">
@@ -204,19 +226,13 @@
         Touch handlers on the <span class="brand-text">UI thread</span>.
       </h2>
       <p class="demo__copy">
-        A carousel that follows your finger pixel-for-pixel, indicator
-        snapping in real time. Drag events run synchronously on Lynx's
-        main thread via Main-Thread Script &mdash; never round-tripping
-        through Vue's reactivity tick.
+        A carousel that follows your finger pixel-for-pixel. Drag events run on
+        Lynx's main thread — never round-tripping through Vue's reactivity tick.
       </p>
       <div class="demo__meta">
         <span class="chip chip--brand">Main-Thread Script</span>
-        <span class="chip">runOnBackground</span>
         <span class="chip">no JS bridge</span>
       </div>
-      <p class="kicker" style="margin-top:8px">
-        Zero-latency gestures without leaving Vue.
-      </p>
     </div>
     <div class="demo__stage">
       <div class="phone">
@@ -226,15 +242,13 @@
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Experience, part two.</strong> A carousel where the swipe handler runs on the <strong>UI thread</strong>, not Vue's reactivity tick.</p>
-      <p>This is <em>Main-Thread Script</em> — handlers compiled out of Vue code and registered on the native side. Drag the card: it follows your finger pixel-for-pixel. Indicator updates synchronously.</p>
-      <p>Same API surface as ReactLynx's MTS. We borrowed the directive shape; a more Vue-idiomatic <code>&lt;script main-thread setup&gt;</code> is open work.</p>
-      <p><strong>Do live:</strong> drag slowly to show the indicator tracking. Then flick to show snap.</p>
+      <p><strong>Experience, part two.</strong> The swipe handler runs on the <strong>UI thread</strong>, not Vue's reactivity tick — handlers compiled out of Vue code and registered natively.</p>
+      <p><strong>Do live:</strong> drag slowly so the indicator tracks; then flick to snap.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 6 — Capabilities (Transition demo)
+       9 — Demo · Capabilities · Transition
        ==================================================== -->
   <section class="slide demo demo--reverse">
     <div class="demo__stage">
@@ -247,45 +261,36 @@
     <div class="demo__body">
       <span class="eyebrow">iii · Capabilities</span>
       <h2 class="demo__title">
-        Every Vue primitive you know &mdash;
-        <span class="brand-text">on native.</span>
+        Every Vue primitive — <span class="brand-text">on native.</span>
       </h2>
       <p class="demo__copy">
-        Composition API, SFCs, slots, provide/inject. Suspense for async
-        components. Transition and TransitionGroup powered by CSS animations
-        on the native compositor. Pinia, Vue Router, TanStack Query, Tailwind.
+        <code>&lt;Transition&gt;</code> and <code>&lt;Suspense&gt;</code>,
+        slots, provide/inject — powered by CSS animation on the native
+        compositor.
       </p>
       <div class="demo__meta">
         <span class="chip chip--brand">&lt;Transition&gt;</span>
-        <span class="chip">&lt;Suspense&gt;</span>
         <span class="chip">Pinia</span>
-        <span class="chip">Vue Router</span>
+        <span class="chip">Router</span>
         <span class="chip">Tailwind</span>
-        <span class="chip">Vue Query</span>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Capabilities.</strong> This is the part that makes Vue developers double-take.</p>
-      <p>The Vue you already know — <em>all of it</em> — runs here. Composition API. SFCs. Slots. provide/inject. Suspense for async components. <code>&lt;Transition&gt;</code> and <code>&lt;TransitionGroup&gt;</code>, powered by CSS animations on the native compositor.</p>
-      <p>And the ecosystem comes with: Pinia, Vue Router, TanStack Query, Tailwind. The demo on the phone is the Transition primitive, animating natively.</p>
+      <p><strong>Capabilities.</strong> The Vue you already know — all of it. Composition API, SFCs, slots, provide/inject, Suspense, Transition on the native compositor. Plus the ecosystem: Pinia, Router, TanStack Query, Tailwind.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 7 — Showcase strip
+       10 — Gallery strip
        ==================================================== -->
   <section class="slide gallery">
     <div class="gallery__head">
       <div class="stack-y gap-md">
         <span class="eyebrow">The Gallery</span>
         <h2 class="h-section">
-          One renderer, <span class="brand-text">an ecosystem</span> of apps.
+          One renderer, <span class="brand-text">an ecosystem</span>.
         </h2>
       </div>
-      <p class="lead" style="max-width:36ch;text-align:right">
-        Twenty-plus example apps in the repo today &mdash; each one running
-        natively, each one tappable on the web.
-      </p>
     </div>
     <div class="gallery__strip">
       <div class="gallery__item">
@@ -295,7 +300,7 @@
           </div>
         </div>
         <div class="gallery__caption">
-          <b>HackerNews</b>real-world Vue + Router + Query
+          <b>HackerNews</b>Vue + Router + Query
         </div>
       </div>
       <div class="gallery__item">
@@ -330,14 +335,12 @@
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Twenty-plus apps in the repo today.</strong> A real Vue HackerNews client (with Router and Query). Auto-scrolling native list. Main-thread-script swiper. 7GUIs benchmarks including the circle-drawer with undo/redo + dialogs.</p>
-      <p>Each one runs natively <em>and</em> in the browser via Lynx for Web — that's literally how this deck is embedding them right now. No iframe to localhost, no native sim — actual Vue Lynx, running.</p>
-      <p>This is a transition slide — move to the story once you've let them look.</p>
+      <p><strong>Twenty-plus apps in the repo today</strong>, each running natively <em>and</em> in the browser via Lynx for Web — which is how this deck embeds them. Let them look, then move on.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 8 — Divider: Story
+       11 — Divider II · Story
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter II</span>
@@ -348,68 +351,75 @@
       </h2>
     </div>
     <p class="divider__tag">
-      Two weeks of nights and weekends. One person, one Max plan, one
-      stubborn architectural bet. The kind of project that wasn't supposed
-      to be possible by yourself.
+      Two weeks of nights and weekends. One person, one Max plan, one stubborn
+      architectural bet.
     </p>
     <aside class="notes">
-      <p><strong>Pivot.</strong> Quick story slide — keep it tight, the deck spends most time on what's built, not how.</p>
-      <p>Setup line: "Briefly, how this got built — because the answer is short, and the technique generalizes."</p>
+      <p><strong>Pivot.</strong> Quick story chapter — keep it tight. "Briefly, how this got built — because the answer is short, and the technique generalizes."</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 9 — Story timeline + the bill
+       12 — Story · the scale (one idea)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">3/01 &rarr; 3/23</span>
+    <div class="mega"><span class="brand-text">160</span> commits</div>
+    <p class="lead">21 active days. One person. One repo.</p>
+    <aside class="notes">
+      <p><strong>The scale.</strong> 160 commits, 21 active days, solo. The next slides show the arc and the receipts.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       13 — Story · timeline
        ==================================================== -->
   <section class="slide story">
     <div class="story__head">
-      <span class="eyebrow">3/01 &rarr; 3/23</span>
-      <h2 class="h-section">
-        160 commits. 21 active days. One repo.
-      </h2>
-      <p class="lead">
-        Vue's mature Custom Renderer API was the foundation. The
-        Lynx team's dual-thread architecture was the constraint. Claude
-        was the harness. Together &mdash; a working Vue runtime on native.
-      </p>
+      <span class="eyebrow">The arc</span>
+      <h2 class="h-section">Zero to native runtime in four moves.</h2>
     </div>
-
     <div class="timeline">
       <div class="tl-item">
         <span class="tl-item__week">Weekend · 3/01&ndash;3/03</span>
         <h3 class="tl-item__title">Dual-thread MVP</h3>
         <p class="tl-item__copy">
-          Vue runtime on BG, ops buffer to Main, ShadowElement tree.
-          By Monday morning: TodoMVC working.
+          Vue runtime on BG, ops buffer to Main. By Monday: TodoMVC working.
         </p>
       </div>
       <div class="tl-item">
         <span class="tl-item__week">Week 1 · 3/04&ndash;3/09</span>
         <h3 class="tl-item__title">MTS &amp; demos</h3>
         <p class="tl-item__copy">
-          Main-Thread Script, Gallery, Swiper. Cross-thread APIs:
-          <code>runOnBackground</code>, NodesRef, template refs.
+          Main-Thread Script, Gallery, Swiper. Cross-thread APIs.
         </p>
       </div>
       <div class="tl-item">
         <span class="tl-item__week">Week 2 · 3/10&ndash;3/16</span>
-        <h3 class="tl-item__title">Toolchain &amp; website</h3>
+        <h3 class="tl-item__title">Toolchain &amp; site</h3>
         <p class="tl-item__copy">
-          Layer-based dual-bundle plugin. Independent repo. Rspress site +
-          publish pipeline. 9 example apps in a single 22h session.
+          Dual-bundle plugin. Rspress site. 9 apps in one 22h session.
         </p>
       </div>
       <div class="tl-item">
         <span class="tl-item__week">Final · 3/17&ndash;3/23</span>
         <h3 class="tl-item__title">Polish &amp; HackerNews</h3>
         <p class="tl-item__copy">
-          Transition, Vue Query, Tailwind. HackerNews port for
-          differential evaluation. Bilingual docs overnight by agent.
+          Transition, Vue Query, Tailwind. HackerNews port. Bilingual docs.
         </p>
       </div>
     </div>
+    <aside class="notes">
+      <p><strong>The arc.</strong> Foundations: Vue's mature Custom Renderer API, Lynx's dual-thread architecture, and Claude as the harness. Don't dive into harness engineering — that's a different talk.</p>
+    </aside>
+  </section>
 
-    <div class="story__bill">
+  <!-- ====================================================
+       14 — Story · the receipts
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The receipts</span>
+    <div class="story__bill" style="width:100%;max-width:1000px">
       <div class="bill__cell">
         <span class="label">commits</span>
         <span class="value">160</span>
@@ -428,19 +438,12 @@
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Three foundations:</strong></p>
-      <ul>
-        <li><strong>Vue</strong> has a mature Custom Renderer API — that did the heavy lifting</li>
-        <li><strong>Lynx</strong> ships a dual-threaded architecture — that's what made the native-feel possible</li>
-        <li><strong>Agentic dev</strong> with Claude as the harness — that compressed the calendar</li>
-      </ul>
-      <p>Concrete signal: 852 of 949 upstream Vue tests pass. The skiplist is documented, every failure accounted for.</p>
-      <p>Don't dive into harness engineering — that's a different talk. Pivot: "the foundation underneath made this possible at all."</p>
+      <p><strong>The receipts.</strong> Concrete signal: 852 of 949 upstream Vue tests pass — the skiplist is documented, every failure accounted for. Pivot: "the foundation underneath made this possible at all."</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 10 — Divider: Lynx Platform
+       15 — Divider III · Lynx platform
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter III</span>
@@ -451,33 +454,32 @@
       </h2>
     </div>
     <p class="divider__tag">
-      None of this would matter if the floor underneath wasn't built right.
-      Vue Lynx exists because Lynx is two things at once: web-friendly on
-      the surface, architecturally serious underneath.
+      Web-friendly on the surface, architecturally serious underneath.
     </p>
     <aside class="notes">
-      <p><strong>Setup for the Lynx pitch.</strong> Frame: "Vue Lynx is only as good as the platform it sits on. Let me tell you why Lynx is the platform."</p>
-      <p>Two-part argument coming up: web-friendly surface, performant core. Don't pre-empt.</p>
+      <p><strong>Setup for the Lynx pitch.</strong> "Vue Lynx is only as good as the platform it sits on." Two-part argument: web-friendly surface, performant core.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 11 — Web-friendly
+       16 — Web-friendly · headline (one idea)
        ==================================================== -->
-  <section class="slide web">
-    <div class="web__body">
-      <span class="eyebrow">a · Web-friendly</span>
-      <h2 class="h-section">
-        The code you'd write <em style="font-family:var(--serif);font-weight:400">anyway</em>.
-      </h2>
-      <ul class="web__list">
-        <li><span><b>SFCs, templates, CSS.</b> The same .vue file. Class selectors and CSS variables that just work.</span></li>
-        <li><span><b>HTML-shaped tags.</b> <code>&lt;view&gt;</code>, <code>&lt;text&gt;</code>, <code>&lt;image&gt;</code>, <code>&lt;list&gt;</code> &mdash; the mental model is one swap away.</span></li>
-        <li><span><b>Renders on the web too.</b> Every example in the deck is running through Lynx for Web right now.</span></li>
-      </ul>
-    </div>
+  <section class="slide stage">
+    <span class="eyebrow">a · Web-friendly</span>
+    <h2 class="h-section" style="text-align:center">
+      The code you'd write
+      <em style="font-family:var(--serif);font-weight:400">anyway</em>.
+    </h2>
+    <aside class="notes">
+      <p><strong>Web-friendly is a feature, not an accident.</strong> SFCs, templates, scoped CSS — all the same. The next slide shows the actual file.</p>
+    </aside>
+  </section>
 
-    <div class="codeframe">
+  <!-- ====================================================
+       17 — Web-friendly · the SFC
+       ==================================================== -->
+  <section class="slide stage">
+    <div class="codeframe" style="width:100%;max-width:720px;text-align:left">
       <div class="codeframe__head">
         <span class="dots"><span></span><span></span><span></span></span>
         <span>HelloWorld.vue</span>
@@ -496,81 +498,114 @@
       Tapped {{ count }} · doubled {{ doubled }}
     <span class="code-tag">&lt;/text&gt;</span>
   <span class="code-tag">&lt;/view&gt;</span>
-<span class="code-tag">&lt;/template&gt;</span>
-
-<span class="code-tag">&lt;style scoped&gt;</span>
-<span class="code-com">/* same CSS you write today */</span>
-.card { padding: <span class="code-str">24px</span>; border-radius: <span class="code-str">16px</span>; }
-.title { font-size: <span class="code-str">28px</span>; font-weight: <span class="code-str">600</span>; }
-<span class="code-tag">&lt;/style&gt;</span></pre>
+<span class="code-tag">&lt;/template&gt;</span></pre>
     </div>
+    <p class="lead" data-mm-fade>
+      The same <code>.vue</code> file — only the tags are HTML-shaped:
+      <code>&lt;view&gt;</code>, <code>&lt;text&gt;</code>, <code>&lt;image&gt;</code>, <code>&lt;list&gt;</code>.
+    </p>
     <aside class="notes">
-      <p><strong>Web-friendly is a feature, not an accident.</strong></p>
-      <p>SFCs, templates, scoped CSS — all the same. The element vocabulary is HTML-shaped: <code>&lt;view&gt;</code> for <code>&lt;div&gt;</code>, <code>&lt;text&gt;</code> for <code>&lt;p&gt;</code>/<code>&lt;span&gt;</code>, <code>&lt;image&gt;</code> for <code>&lt;img&gt;</code>, plus <code>&lt;list&gt;</code> when you need virtualization.</p>
-      <p>Important: the same bundle renders on the web via Lynx for Web — that's how every demo in this deck is running right now.</p>
-      <p>Next slide pivots: "and it's serious underneath" → dual thread.</p>
+      <p>The element vocabulary is HTML-shaped: <code>&lt;view&gt;</code> for <code>&lt;div&gt;</code>, <code>&lt;text&gt;</code> for <code>&lt;p&gt;</code>, <code>&lt;image&gt;</code> for <code>&lt;img&gt;</code>, plus <code>&lt;list&gt;</code> for virtualization. The mental model is one swap away.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 12 — Architecturally performing (dual thread)
+       18 — Web-friendly · renders on the web too
        ==================================================== -->
-  <section class="slide arch">
-    <div class="arch__head">
-      <span class="eyebrow">b · Architecturally performing</span>
-      <h2 class="h-section">
-        Two threads, by design.
-      </h2>
-      <p class="lead">
-        Lynx splits your app across a dedicated <em>background</em> thread
-        for framework work and a <em>main</em> thread that owns the UI.
-        Vue Lynx puts the whole reactivity system on one, and lets the
-        other stay free for layout, scrolling, and gesture response.
-      </p>
-    </div>
-    <div class="arch__diagram">
-      <div class="thread thread--bg">
-        <span class="thread__label">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--vue-green);"></span>
-          Background thread
-        </span>
-        <h3 class="thread__title">Vue 3 runtime &amp; your code</h3>
-        <ul class="thread__list">
-          <li>reactivity, lifecycle</li>
+  <section class="slide stage">
+    <span class="eyebrow">a · Web-friendly</span>
+    <h2 class="h-section" style="text-align:center">
+      And it renders on the <span class="brand-text">web</span>, too.
+    </h2>
+    <p class="lead">
+      Every demo in this deck is a real Vue Lynx app running through Lynx for
+      Web — right now, no simulator.
+    </p>
+    <aside class="notes">
+      <p>The same bundle renders on the web via Lynx for Web — that's how every demo in this deck is running. Next: "and it's serious underneath" → dual thread.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       19 — Architecture · headline (build begins)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · Architecturally performing</span>
+    <h2 class="h-section" style="text-align:center">Two threads, by design.</h2>
+    <p class="lead">
+      Lynx splits your app across a dedicated background thread and a main
+      thread that owns the UI.
+    </p>
+    <aside class="notes">
+      <p><strong>The architectural punchline.</strong> Two threads, both fully programmable in your bundle. Watch it build over the next two slides.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       20 — Architecture · background thread solo
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · Architecturally performing</span>
+    <div class="archflow is-solo">
+      <div class="node" data-flip="node-bg">
+        <span class="node__label"><span class="dot"></span>Background thread</span>
+        <h3 class="node__title">Vue 3 runtime &amp; your code</h3>
+        <ul class="node__list">
+          <li>reactivity &amp; lifecycle</li>
           <li>component tree diff</li>
           <li>event handlers</li>
           <li>data fetching</li>
-          <li>flat ops &rarr;</li>
-        </ul>
-      </div>
-      <div class="thread thread--main">
-        <span class="thread__label">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--brand-teal);"></span>
-          Main (UI) thread
-        </span>
-        <h3 class="thread__title">Native elements &amp; render</h3>
-        <ul class="thread__list">
-          <li>&larr; ops interpreter</li>
-          <li>layout &amp; paint</li>
-          <li>gestures &amp; scrolling</li>
-          <li>Main-Thread Script handlers</li>
-          <li>events &rarr;</li>
         </ul>
       </div>
     </div>
-    <p class="arch__caption">
-      One bundle, two layers, no JS bridge round-trip on the hot path.
-    </p>
+    <p class="lead" data-mm-fade>Your whole Vue app runs here — on a thread of its own.</p>
     <aside class="notes">
-      <p><strong>The architectural punchline.</strong></p>
-      <p>Two threads, both fully programmable in your bundle. Vue runtime — reactivity, diff, lifecycle, handlers — lives on the <strong>background</strong>. Native layout, paint, gestures, scroll live on the <strong>main</strong> thread.</p>
-      <p>They talk via a flat <em>ops</em> buffer, batched per Vue tick. <strong>No JS bridge round-trip on the hot path.</strong> That's why gestures stay 60fps even while reactivity does its job.</p>
-      <p>For people from RN-land: this is the part that's different. RN's bridge sits between you and the UI. Lynx doesn't have a bridge — both threads <em>are</em> your bundle.</p>
+      <p>The Vue runtime — reactivity, diff, lifecycle, handlers — lives on the <strong>background</strong> thread. Next slide: the main thread lands beside it.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 13 — Vue + Lynx = Vue Native
+       21 — Architecture · both threads + bus
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · Architecturally performing</span>
+    <div class="archflow">
+      <div class="node" data-flip="node-bg">
+        <span class="node__label"><span class="dot"></span>Background thread</span>
+        <h3 class="node__title">Vue 3 runtime &amp; your code</h3>
+        <ul class="node__list">
+          <li>reactivity &amp; lifecycle</li>
+          <li>component tree diff</li>
+          <li>event handlers</li>
+          <li>data fetching</li>
+        </ul>
+      </div>
+      <div class="archflow__bus" data-mm-fade>
+        <span class="arrow">ops &rarr;</span>
+        <span>flat buffer</span>
+        <span class="arrow rev">&larr; events</span>
+      </div>
+      <div class="node node--main" data-flip="node-main">
+        <span class="node__label"><span class="dot"></span>Main (UI) thread</span>
+        <h3 class="node__title">Native elements &amp; render</h3>
+        <ul class="node__list">
+          <li>layout &amp; paint</li>
+          <li>gestures &amp; scrolling</li>
+          <li>Main-Thread Script</li>
+          <li>ops interpreter</li>
+        </ul>
+      </div>
+    </div>
+    <p class="arch__caption" data-mm-fade>
+      One bundle, two layers — no JS bridge round-trip on the hot path.
+    </p>
+    <aside class="notes">
+      <p>They talk via a flat <em>ops</em> buffer, batched per Vue tick. <strong>No JS bridge on the hot path</strong> — that's why gestures stay 60fps while reactivity does its job. For RN folks: Lynx has no bridge; both threads <em>are</em> your bundle.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       22 — Vue × Lynx = native
        ==================================================== -->
   <section class="slide combine">
     <div class="combine__tile">
@@ -595,13 +630,12 @@
       </h2>
     </div>
     <aside class="notes">
-      <p><strong>The headline.</strong> Vue × Lynx = Vue on native.</p>
-      <p>Hold the moment briefly — let the equation land. Then transition: "And we'd love your help making this a thing."</p>
+      <p><strong>The headline.</strong> Vue × Lynx = Vue on native. Hold the moment — let the equation land. Then: "And we'd love your help making this a thing."</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 14 — Divider: Close
+       23 — Divider IV · Close
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter IV</span>
@@ -612,30 +646,37 @@
       </h2>
     </div>
     <p class="divider__tag">
-      Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface
-      is large. What ships next depends on who shows up.
+      Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface is
+      large. What ships next depends on who shows up.
     </p>
     <aside class="notes">
-      <p><strong>Tone shift to ask.</strong> Set up that the project is real but needs the community.</p>
-      <p>Reinforce: architecture is solid (we showed it), but Vue's surface area is huge and the ecosystem is vast.</p>
+      <p><strong>Tone shift to the ask.</strong> The project is real but needs the community. Architecture is solid; Vue's surface area is huge.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 15 — The Ask
+       24 — The ask (one line)
        ==================================================== -->
-  <section class="slide cta">
+  <section class="slide stage">
     <span class="eyebrow">The ask</span>
-    <h2 class="cta__title">
+    <h2 class="cta__title" style="text-align:center;max-width:20ch">
       Native shouldn't be a different <span class="brand-text">team</span>.
     </h2>
-    <p class="cta__sub">
-      Vue developers should ship native apps as naturally as they ship for
-      the web today. The foundation is laid. The path is clear. The
-      ecosystem we already know &mdash; Pinia, Router, Query, Tailwind &mdash;
-      runs here.
+    <p class="cta__sub" style="margin-inline:auto;text-align:center">
+      Vue developers should ship native apps as naturally as they ship for the
+      web today.
     </p>
-    <div style="display:flex;gap:48px;margin-top:24px;flex-wrap:wrap">
+    <aside class="notes">
+      <p>Land on <em>"native shouldn't be a different team"</em> — that's the line you want them to remember.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       25 — What's there / what's open
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Where it stands</span>
+    <div style="display:flex;gap:clamp(32px,6vw,80px);flex-wrap:wrap;justify-content:center;text-align:left">
       <div class="stack-y gap-sm">
         <span class="eyebrow" style="margin-bottom:8px">What's there</span>
         <ul class="web__list">
@@ -656,20 +697,17 @@
       </div>
     </div>
     <aside class="notes">
-      <p><strong>The ask, expanded.</strong> What's there is real. What's open is where help matters.</p>
-      <p>Left column = what works today, ready for production exploration. Right column = where contributors can move the needle.</p>
-      <p>Land on: <em>"native shouldn't be a different team"</em> — that's the line you want them to remember.</p>
+      <p>Left = what works today, ready for production exploration. Right = where contributors can move the needle.</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 16 — Try today
+       26 — Try it tonight
        ==================================================== -->
-  <section class="slide cta">
+  <section class="slide stage">
     <span class="eyebrow">Try it tonight</span>
-    <h2 class="cta__title">
-      One <span class="brand-text">npm create</span>, and you're shipping
-      native.
+    <h2 class="cta__title" style="text-align:center;max-width:16ch">
+      One <span class="brand-text">npm create</span>, and you're shipping native.
     </h2>
 
     <div class="cta__commandbox" data-copy="npm create vue-lynx@latest" style="cursor:pointer">
@@ -681,7 +719,7 @@
       <div class="agent">for Agent</div>
     </div>
 
-    <div class="cta__links">
+    <div class="cta__links" style="justify-content:center">
       <a class="cta__link cta__link--brand"
          href="https://vue.lynxjs.org/guide/quick-start"
          target="_blank" rel="noreferrer">
@@ -693,31 +731,24 @@
         github.com/Huxpro/vue-lynx
       </a>
       <a class="cta__link"
-         href="https://lynxjs.org"
-         target="_blank" rel="noreferrer">
-        lynxjs.org
-      </a>
-      <a class="cta__link"
          href="https://vue.lynxjs.org/guide/introduction"
          target="_blank" rel="noreferrer">
         Read the intro
       </a>
     </div>
     <aside class="notes">
-      <p><strong>The call to action.</strong> One command — <code>npm create vue-lynx@latest</code>.</p>
-      <p>Repo, docs, intro all linked. The "for Agent" button copies a prompt the agent can use to bootstrap a new project — for the AI-pilled.</p>
-      <p>Promise: "Tonight, on the bus home, you can have a Vue app running on an iPhone."</p>
+      <p><strong>Call to action.</strong> One command — <code>npm create vue-lynx@latest</code>. The "for Agent" button copies a bootstrap prompt. Promise: "Tonight, on the bus home, you can have a Vue app running on an iPhone."</p>
     </aside>
   </section>
 
   <!-- ====================================================
-       Slide 17 — Thank you
+       27 — Thank you
        ==================================================== -->
   <section class="slide thankyou">
     <span class="eyebrow">Fin.</span>
     <h1><span class="brand-text">Thank</span> you.</h1>
     <p class="sig">
-      Questions, PRs, opinions &mdash; all welcome.
+      Questions, PRs, opinions — all welcome.
     </p>
     <div class="handles">
       <a href="https://x.com/Huxpro" target="_blank" rel="noreferrer">@Huxpro</a>
@@ -725,9 +756,8 @@
       <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
     </div>
     <aside class="notes">
-      <p><strong>Close.</strong> Thank them. Invite questions. Stay on this slide for Q&amp;A.</p>
-      <p>If asked "is this production?" — pre-alpha, but the architecture is solid and the surface that's there is well-tested.</p>
-      <p>If asked "what about Android?" — Lynx is cross-platform, the same bundle runs on both.</p>
+      <p><strong>Close.</strong> Thank them. Invite questions. Stay here for Q&amp;A.</p>
+      <p>"Is this production?" — pre-alpha, architecture solid, tested surface. "Android?" — Lynx is cross-platform, same bundle runs on both.</p>
     </aside>
   </section>
 
