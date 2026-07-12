@@ -578,7 +578,6 @@ h1, h2, h3, p { margin: 0; }
   aspect-ratio: 270 / 590;
   height: var(--phone-h);
   width: auto;
-  max-width: 100%;
   padding: 4px;
   background: #16181d;
   border-radius: 26px;
@@ -588,6 +587,30 @@ h1, h2, h3, p { margin: 0; }
   box-sizing: border-box;
   position: relative;
 }
+
+/* Drag-to-resize grip (bottom-right). Aspect-locked; handled in main.js. */
+.phone__resize {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  cursor: nwse-resize;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  touch-action: none;
+  background:
+    linear-gradient(135deg,
+      transparent 0 46%,
+      var(--vue-green) 46% 54%,
+      transparent 54% 66%,
+      var(--vue-green) 66% 74%,
+      transparent 74% 100%);
+}
+.phone:hover .phone__resize,
+.phone__resize:active { opacity: 0.85; }
 
 .phone__inner {
   position: relative;
