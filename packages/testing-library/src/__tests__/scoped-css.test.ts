@@ -1,13 +1,12 @@
 /**
  * Scoped CSS tests — verify the cssId pipeline:
  *
- * 1. nodeOps.setScopeId() → SET_SCOPE_ID op with correct numeric cssId
- * 2. Full component render with __scopeId → ops reach main thread
+ * 1. nodeOps.setScopeId() → composable scope classes
+ * 2. Full component render with __scopeId → class ops reach main thread
  *
  * These tests capture the integration points between:
- * - scope-bridge.ts (scopeIdToCssId conversion)
- * - node-ops.ts (setScopeId → pushOp)
- * - ops-apply.ts (SET_SCOPE_ID → __SetCSSId)
+ * - node-ops.ts (setScopeId → resolved class state)
+ * - tree-ops.ts (base + scope + transition class composition)
  *
  * Build-time CSS wrapping (@cssId in extracted CSS) is verified by the
  * examples/css-features pipeline build in CI, not here.
@@ -17,93 +16,50 @@ import { describe, it, expect } from 'vitest';
 import {
   h,
   defineComponent,
-  nextTick,
   registerElementTemplate,
 } from 'vue-lynx';
 import { OP } from '../../../vue-lynx/internal/src/ops.js';
-import { applyScopeId, nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
+import { nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
 import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
 import { ShadowElement } from '../../../vue-lynx/runtime/src/shadow-element.js';
 import { scopeIdToCssId } from '../../../vue-lynx/runtime/src/scope-bridge.js';
+import { resolveClass } from '../../../vue-lynx/runtime/src/tree-ops.js';
 import { render } from '../index.js';
 
 // ---------------------------------------------------------------------------
-// Low-level: nodeOps.setScopeId → ops buffer
+// Low-level: nodeOps.setScopeId → composable class state
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (nodeOps)', () => {
-  it('pushes SET_SCOPE_ID op with numeric cssId', () => {
+describe('scoped CSS classes (nodeOps)', () => {
+  it('adds a scope token to the resolved class', () => {
     const el = new ShadowElement('view', 99);
 
     nodeOps.setScopeId!(el,'data-v-8f634878');
 
     const ops = takeOps();
-    expect(ops[0]).toBe(OP.SET_SCOPE_ID);
+    expect(ops[0]).toBe(OP.SET_CLASS);
     expect(ops[1]).toBe(99); // element id
-    // 0x8f634878 & 0x7fffffff = 258164856
-    expect(ops[2]).toBe(258164856);
+    expect(ops[2]).toBe('data-v-8f634878');
+    expect(el._scopeClasses).toEqual(new Set(['data-v-8f634878']));
   });
 
-  it('cssId conversion matches between scope-bridge and plugin formula', () => {
-    // The build-time plugin uses the same formula:
-    //   Number.parseInt(hash, 16) & 0x7fffffff
-    // This test ensures the runtime conversion stays in sync.
-    const cases = [
-      ['data-v-8f634878', Number.parseInt('8f634878', 16) & 0x7fffffff],
-      ['data-v-00000001', 1],
-      ['data-v-7fffffff', 0x7fffffff],
-      // High bit set — mask must clamp to positive int32
-      ['data-v-ffffffff', Number.parseInt('ffffffff', 16) & 0x7fffffff],
-    ] as const;
-
-    for (const [scopeId, expected] of cases) {
-      expect(scopeIdToCssId(scopeId)).toBe(expected);
-    }
-  });
-
-  it('keeps the first scope when Vue applies several to one element', () => {
+  it('composes and deduplicates multiple scope tokens', () => {
     const el = new ShadowElement('view', 10);
+    el._baseClass = 'box';
 
-    // Vue calls setScopeId once per scope on the element: its own scope
-    // first, then the scope of every ancestor component whose subtree root
-    // it is. Lynx elements carry exactly one cssId, so only the first (the
-    // owning component's) survives — otherwise the component's own scoped
-    // rules stop matching its root element (issue #317).
-    nodeOps.setScopeId!(el, 'data-v-aaa00001');
-    nodeOps.setScopeId!(el, 'data-v-bbb00002');
+    nodeOps.setScopeId!(el,'data-v-aaa00001');
+    nodeOps.setScopeId!(el,'data-v-bbb00002');
+    nodeOps.setScopeId!(el,'data-v-aaa00001');
 
     const ops = takeOps();
-    expect(ops).toEqual([
-      OP.SET_SCOPE_ID,
-      10,
-      scopeIdToCssId('data-v-aaa00001'),
-    ]);
-  });
-
-  it('applyScopeId overrides an existing association', () => {
-    const el = new ShadowElement('view', 11);
-
-    nodeOps.setScopeId!(el, 'data-v-aaa00001');
-    // The page root is claimed and released by <page> wrappers, so it must
-    // stay re-scopable (see Page.ts).
-    applyScopeId(el, 'data-v-bbb00002');
-    applyScopeId(el, '');
-
-    const ops = takeOps();
-    expect(ops).toEqual([
-      OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-aaa00001'),
-      OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-bbb00002'),
-      OP.SET_SCOPE_ID, 11, 0,
-    ]);
-  });
-
-  it('applyScopeId skips a redundant re-application', () => {
-    const el = new ShadowElement('view', 12);
-
-    applyScopeId(el, 'data-v-aaa00001');
-    applyScopeId(el, 'data-v-aaa00001');
-
-    expect(takeOps()).toHaveLength(3);
+    expect(ops).toHaveLength(6);
+    expect(el._scopeClasses).toEqual(
+      new Set(['data-v-aaa00001', 'data-v-bbb00002']),
+    );
+    expect(resolveClass(el)).toBe(
+      'box data-v-aaa00001 data-v-bbb00002',
+    );
+    expect(ops).not.toContain(OP.SET_SCOPE_ID);
   });
 });
 
@@ -111,7 +67,7 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
 // Full pipeline: component with __scopeId → dual-thread render
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (full pipeline)', () => {
+describe('scoped CSS classes (full pipeline)', () => {
   it('component with __scopeId renders and applies cssId', () => {
     const Scoped = defineComponent({
       __scopeId: 'data-v-8f634878',
@@ -127,8 +83,7 @@ describe('SET_SCOPE_ID (full pipeline)', () => {
     // Element should be rendered through the full pipeline
     const view = container.querySelector('.scoped-box');
     expect(view).not.toBeNull();
-    // The SET_SCOPE_ID op was flushed to main thread during render.
-    // If __SetCSSId threw, the render would have failed.
+    expect(view!.classList).toContain('data-v-8f634878');
   });
 
   it('child component inside scoped parent renders correctly', () => {

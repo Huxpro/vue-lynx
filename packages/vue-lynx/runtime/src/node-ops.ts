@@ -14,7 +14,6 @@ import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
-import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import {
   idRegistry,
@@ -139,27 +138,6 @@ const onceWrappers = new Map<string, OnceWrapper>();
 
 // Class resolution is shared with the Vapor DOM-compat layer.
 export { resolveClass } from './tree-ops.js';
-
-// ---------------------------------------------------------------------------
-// Scoped CSS
-// ---------------------------------------------------------------------------
-
-/**
- * Associate `el` with the Lynx CSS fragment of `scopeId`, replacing any
- * previous association.
- *
- * Only for elements the Vue renderer does not own — today the native page
- * root, which `<page>` wrappers claim and release explicitly (see Page.ts).
- * Renderer-created elements go through `nodeOps.setScopeId`, which keeps the
- * first scope they are given.
- */
-export function applyScopeId(el: ShadowElement, scopeId: string): void {
-  const cssId = scopeIdToCssId(scopeId);
-  if (el._cssId === cssId) return;
-  el._cssId = cssId;
-  pushOp(OP.SET_SCOPE_ID, el.id, cssId);
-  scheduleFlush();
-}
 
 // ---------------------------------------------------------------------------
 // RendererOptions implementation
@@ -426,25 +404,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     scheduleFlush();
   },
 
-  // Called by Vue's renderer after createElement to apply scoped CSS.
-  //
-  // Vue may call this several times for the same element: after the element's
-  // own scope it walks up and re-applies the scope of every ancestor component
-  // whose subtree root this element is, plus any `:slotted` scope ids. In the
-  // DOM each becomes an independent `data-v-*` attribute and they coexist —
-  // Lynx instead associates an element with exactly ONE CSS fragment, so a
-  // second `__SetCSSId` replaces the first.
-  //
-  // Letting the last call win moved a component's own root element into the
-  // *parent's* fragment, where the component's `<style scoped>` rules no
-  // longer match it: static class/style on a component root silently stopped
-  // working, and the usual workaround was an extra wrapper element (#317).
-  // Vue always emits the owning component's scope first, so keeping the first
-  // association leaves every element in the fragment of the component that
-  // authored it.
+  // Called by Vue's renderer after createElement to apply scoped CSS. Vue can
+  // apply several scope tokens to a component root; they must coexist just as
+  // the corresponding data-v-* attributes do in the DOM renderer.
   setScopeId(el: ShadowElement, id: string): void {
-    if (el._cssId !== undefined) return;
-    applyScopeId(el, id);
+    el._addScopeClass(id);
   },
 
   parentNode(node: ShadowElement): ShadowElement | null {

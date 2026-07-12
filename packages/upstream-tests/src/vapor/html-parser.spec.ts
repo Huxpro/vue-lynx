@@ -109,11 +109,13 @@ describe('vapor html parser', () => {
     expect(el.firstChild!._text).toBe('1 < 2');
   });
 
-  it('records scoped-CSS data-v attributes as cssIds', () => {
+  it('records scoped-CSS data-v attributes as composable classes', () => {
     const frag = parseTemplate('<view data-v-test123><text data-v-test123> ');
     const view = frag.firstChild!;
-    expect(view._scopeIds).toHaveLength(1);
-    expect(view.firstChild!._scopeIds).toHaveLength(1);
+    expect(view._scopeClasses).toEqual(new Set(['data-v-test123']));
+    expect(view.firstChild!._scopeClasses).toEqual(
+      new Set(['data-v-test123']),
+    );
   });
 
   it('supports multiple root nodes', () => {

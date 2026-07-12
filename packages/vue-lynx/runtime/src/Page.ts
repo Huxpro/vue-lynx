@@ -11,7 +11,7 @@ import {
   onDeactivated,
 } from '@vue/runtime-core';
 
-import { applyScopeId, nodeOps } from './node-ops.js';
+import { nodeOps } from './node-ops.js';
 import type { ShadowElement } from './shadow-element.js';
 
 export const PAGE_COMPONENT_NAME = 'VueLynxPage';
@@ -118,10 +118,7 @@ export const Page = defineComponent({
       owned = true;
       const scopeId = instance?.vnode.scopeId;
       if (scopeId) {
-        // The page root outlives every wrapper, so ownership changes must be
-        // able to re-scope it — `nodeOps.setScopeId` deliberately only ever
-        // applies the first scope an element is given.
-        applyScopeId(root, scopeId);
+        nodeOps.setScopeId?.(root, scopeId);
         appliedScopeId = scopeId;
       }
       return true;
@@ -139,8 +136,9 @@ export const Page = defineComponent({
       if (!owned) return;
       applyAttrs({});
       if (appliedScopeId !== null) {
-        // scopeIdToCssId('') maps to cssId 0 — Lynx's unscoped default.
-        applyScopeId(root, '');
+        // Scope ids are composable classes. Remove the token owned by the
+        // releasing wrapper instead of adding an empty scope token.
+        root.removeAttribute(appliedScopeId);
         appliedScopeId = null;
       }
       owned = false;
