@@ -1,5 +1,6 @@
 import './styles.css';
 import { mountMeteors } from './meteors.js';
+import { initArch } from './arch.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -564,6 +565,9 @@ if (!embedMode) {
   // Tell other tabs we just woke up — they'll resync.
   channel.postMessage({ type: 'request-state' });
 }
+
+// Build the layers-&-seams diagrams (landscape chapter).
+initArch();
 
 const canvas = document.querySelector('.meteors');
 if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });

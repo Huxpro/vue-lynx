@@ -112,7 +112,9 @@ first reveal so the opening slides stay snappy.
 ## Files
 
 - `index.html` — every slide as a `<section>` (no framework)
-- `src/main.js` — slide navigation, `<vl-demo>` lazy loader
+- `src/main.js` — slide navigation, magic move, `<vl-demo>` lazy loader
+- `src/arch.js` — data-driven "layers & seams" diagram for the cross-platform
+  landscape chapter (rendered into each `.arch-mount`, one column per slide)
 - `src/styles.css` — design tokens + slide chrome
 - `src/meteors.js` — canvas meteors background, same recipe as the site
 - `public/examples` — symlink to the website's prebuilt example bundles
