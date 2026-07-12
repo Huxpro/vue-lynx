@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+
 import { effectScope, type ComputedRef } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -62,5 +64,19 @@ describe('agent spinner', () => {
     expect(frame.value).toBe('⣾');
     expect(setIntervalSpy).not.toHaveBeenCalled();
     scope.stop();
+  });
+
+  it('keeps Indicator as a compatibility wrapper around AgentSpinner', async () => {
+    const [indicator, spinner] = await Promise.all([
+      readFile(new URL('../src/components/chat/Indicator.vue', import.meta.url), 'utf8'),
+      readFile(new URL('../src/components/chat/AgentSpinner.vue', import.meta.url), 'utf8'),
+    ]);
+
+    expect(indicator).toContain("import AgentSpinner from './AgentSpinner.vue'");
+    expect(indicator).toContain('<AgentSpinner />');
+    expect(indicator).not.toContain('patterns');
+    expect(spinner).toContain('useSpinnerFrame(dots2.frames, dots2.interval)');
+    expect(spinner).toContain('width: 16px');
+    expect(spinner).toContain('height: 16px');
   });
 });
