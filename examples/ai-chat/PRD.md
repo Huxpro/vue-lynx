@@ -56,7 +56,7 @@ Legend: **Port** = same behavior re-implemented • **Adapt** = same intent, Lyn
 | F3.1 | Load chat by id; 404 "Chat not found" view | Port | ☑ | |
 | F3.2 | Message list with auto-scroll while streaming | Adapt | ☑ | `scroll-view` + `scrollTo` on updates; pinned-to-bottom heuristic |
 | F3.3 | User bubble vs assistant plain-text layout | Port | ☑ | |
-| F3.4 | "Thinking…" indicator: agent spinner + text shimmer | Port | ☑ | Uses the vendored `dots2` Vue Lynx spinner while preserving the original submitted-to-first-assistant-part lifetime and “Thinking…” shimmer |
+| F3.4 | "Thinking…" indicator: agent spinner + text shimmer | Port | ☑ | Uses the vendored `dots2` Vue Lynx spinner while preserving the original submitted-to-first-assistant-part lifetime and “Thinking…” shimmer; the in-app demo simulates a 600ms first-token wait so the state remains perceptible without a network |
 | F3.5 | Streaming AI responses (AI SDK UI message stream) | Adapt | ☑ | Custom `useChat` over the same protocol; true SSE streaming on Lynx for Web, incremental cursor polling selected before generation on native |
 | F3.6 | Markdown rendering + streaming code highlighting (Comark/Shiki) | Adapt | ☑ | No DOM/HTML: custom markdown → Lynx-node renderer (headings, bold/italic/inline code, code blocks, lists, links, blockquote, hr, tables). Shiki dropped → lightweight token highlighter for code blocks |
 | F3.7 | Reasoning part: collapsible "Thinking" section | Port | ☑ | |
