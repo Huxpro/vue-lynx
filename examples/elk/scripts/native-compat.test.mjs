@@ -5,6 +5,7 @@ import test from 'node:test';
 const caseAdapter = await import('../src/change-case.ts').catch(() => ({}));
 const domExceptionCompat = await import('../src/dom-exception-compat.ts').catch(() => ({}));
 const fetchCompat = await import('../src/fetch-compat.ts').catch(() => ({}));
+const profileLoadCompat = await import('../src/composables/profile-load.ts').catch(() => ({}));
 const safeAreaCompat = await import('../src/safe-area.ts').catch(() => ({}));
 const lynxConfig = (await import('../lynx.config.ts')).default;
 
@@ -56,6 +57,67 @@ test('timeline error UI does not issue a second diagnostic request', async () =>
   );
 
   assert.doesNotMatch(source, /probeResult|bare fetch/);
+});
+
+test('account routes seed the profile cache from timeline data', async () => {
+  const source = await readFile(
+    new URL('../src/composables/routes.ts', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /cacheAccount\(account\)/);
+  assert.match(source, /return `\/\$\{currentServer\.value\}\/\@\$\{extractAccountHandle\(account\)\}`/);
+});
+
+test('failed profile requests are evicted so a later attempt can recover', async () => {
+  let evictions = 0;
+
+  await assert.rejects(
+    profileLoadCompat.recoverProfileRequest?.(
+      Promise.reject(new TypeError('fetch failed')),
+      () => evictions++,
+    ),
+    /fetch failed/,
+  );
+  assert.equal(evictions, 1);
+});
+
+test('profile lookup retries transport failures but not missing accounts', async () => {
+  let transientAttempts = 0;
+  const account = await profileLoadCompat.retryProfileRequest?.(async () => {
+    transientAttempts++;
+    if (transientAttempts === 1)
+      throw new TypeError('fetch failed');
+    return { id: 'recovered-account' };
+  });
+  assert.equal(account?.id, 'recovered-account');
+  assert.equal(transientAttempts, 2);
+
+  let missingAttempts = 0;
+  const missing = Object.assign(new Error('Record not found'), { statusCode: 404 });
+  await assert.rejects(
+    profileLoadCompat.retryProfileRequest?.(async () => {
+      missingAttempts++;
+      throw missing;
+    }),
+    /Record not found/,
+  );
+  assert.equal(missingAttempts, 1);
+});
+
+test('profile loads ignore stale results and expose an explicit retry action', async () => {
+  const guard = profileLoadCompat.createProfileLoadGuard?.();
+  const first = guard?.begin();
+  const second = guard?.begin();
+  assert.equal(guard?.isCurrent(first), false);
+  assert.equal(guard?.isCurrent(second), true);
+
+  const source = await readFile(
+    new URL('../src/pages/AccountPage.vue', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /class="account-retry"/);
+  assert.match(source, /@tap="load"/);
 });
 
 test('Sparkling iOS global props produce validated top and bottom safe-area insets', () => {

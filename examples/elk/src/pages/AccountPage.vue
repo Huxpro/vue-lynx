@@ -14,6 +14,7 @@ import StatusCard from '../components/StatusCard.vue';
 import { fetchAccountByHandle } from '../composables/cache';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
+import { createProfileLoadGuard } from '../composables/profile-load';
 
 const route = useRoute();
 const router = useRouter();
@@ -24,6 +25,7 @@ const loading = ref(true);
 const error = ref(false);
 const tab = ref<'posts' | 'replies' | 'media'>('posts');
 const statusesLoading = ref(false);
+const loadGuard = createProfileLoadGuard();
 
 const tabs = [
   { key: 'posts', label: 'Posts' },
@@ -55,18 +57,24 @@ async function load() {
   const handle = (route.params.account as string) ?? '';
   if (!handle)
     return;
+  const request = loadGuard.begin();
   loading.value = true;
   error.value = false;
   account.value = null;
   try {
-    account.value = await fetchAccountByHandle(handle.replace(/^@/, ''));
+    const loadedAccount = await fetchAccountByHandle(handle.replace(/^@/, ''));
+    if (!loadGuard.isCurrent(request))
+      return;
+    account.value = loadedAccount;
     await loadStatuses();
   }
   catch (e) {
     console.error(e);
-    error.value = true;
+    if (loadGuard.isCurrent(request))
+      error.value = true;
   }
-  loading.value = false;
+  if (loadGuard.isCurrent(request))
+    loading.value = false;
 }
 
 onMounted(load);
@@ -89,6 +97,9 @@ const joinDate = computed(() => {
     </view>
     <view v-else-if="error || !account" class="account-loading">
       <text class="account-error">Failed to load profile.</text>
+      <view class="account-retry" @tap="load">
+        <text class="account-retry-text">Try again</text>
+      </view>
     </view>
     <scroll-view v-else scroll-orientation="vertical" class="account-scroll">
       <!-- banner -->
@@ -180,6 +191,24 @@ const joinDate = computed(() => {
 .account-error {
   font-size: 14px;
   color: var(--c-danger);
+}
+
+.account-retry {
+  min-width: 96px;
+  min-height: 40px;
+  margin-top: 14px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background-color: var(--c-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-retry-text {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .account-banner {

@@ -3,6 +3,7 @@
 // footprint of the Lynx bundle small with identical behavior at this size.
 import type { mastodon } from 'masto';
 import { useMastoClient } from './masto';
+import { recoverProfileRequest, retryProfileRequest } from './profile-load';
 import { currentServer, currentUser, getInstanceDomainFromServer } from './users';
 
 const MAX_ENTRIES = 1000;
@@ -78,12 +79,16 @@ export function fetchAccountByHandle(acct: string): Promise<mastodon.v1.Account>
   const cached = cacheGet(key);
   if (cached) return Promise.resolve(cached);
 
-  const promise = useMastoClient().v1.accounts.lookup({ acct: userAcct }).then((account) => {
-    if (account.acct && !account.acct.includes('@') && domain)
-      account.acct = `${account.acct}@${domain}`;
-    cacheAccount(account, server, true);
-    return account;
-  });
+  const promise = recoverProfileRequest(
+    retryProfileRequest(() => useMastoClient().v1.accounts.lookup({ acct: userAcct }))
+      .then((account) => {
+        if (account.acct && !account.acct.includes('@') && domain)
+          account.acct = `${account.acct}@${domain}`;
+        cacheAccount(account, server, true);
+        return account;
+      }),
+    () => removeCached(key),
+  );
   setCached(key, promise, true);
   return promise;
 }
