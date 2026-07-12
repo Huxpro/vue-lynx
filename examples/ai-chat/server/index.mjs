@@ -159,7 +159,7 @@ function ownerKey(session) {
 // Streaming
 // ---------------------------------------------------------------------------
 
-/** Active poll-mode streams: id -> { events: string[], done: boolean } */
+/** Active poll-mode streams: id -> { events: object[], done: boolean, abort: AbortController } */
 const pollStreams = new Map();
 
 function sseChunk(obj) {
@@ -422,6 +422,13 @@ const server = createServer(async (req, res) => {
 
     // --- polling fallback stream reader ------------------------------------
     const streamMatch = path.match(/^\/api\/stream\/([^/]+)$/);
+    if (streamMatch && req.method === 'DELETE') {
+      const stream = pollStreams.get(streamMatch[1]);
+      if (!stream) return json(res, 404, { message: 'Stream not found' });
+      stream.abort.abort();
+      pollStreams.delete(streamMatch[1]);
+      return json(res, 200, { ok: true });
+    }
     if (streamMatch && req.method === 'GET') {
       const stream = pollStreams.get(streamMatch[1]);
       if (!stream) return json(res, 404, { message: 'Stream not found' });
@@ -563,7 +570,7 @@ const server = createServer(async (req, res) => {
           // Native Lynx fallback: run the generation server-side, buffer
           // chunks, let the client poll GET /api/stream/:sid.
           const sid = uid();
-          const stream = { events: [], done: false };
+          const stream = { events: [], done: false, abort };
           pollStreams.set(sid, stream);
           runGeneration({
             chat: owned,

@@ -27,17 +27,19 @@ async function availablePort(): Promise<number> {
   });
 }
 
-async function startServer() {
+async function startServer(options: { fastMock?: boolean } = {}) {
   const port = await availablePort();
   const dataDir = await mkdtemp(path.join(tmpdir(), 'vue-lynx-ai-chat-'));
   tempDirs.add(dataDir);
+  const env = {
+    ...process.env,
+    PORT: String(port),
+    AI_CHAT_DATA_DIR: dataDir,
+  };
+  if (options.fastMock !== false) env.FAST_MOCK = '1';
+  else delete env.FAST_MOCK;
   const child = spawn(process.execPath, [serverEntry], {
-    env: {
-      ...process.env,
-      PORT: String(port),
-      FAST_MOCK: '1',
-      AI_CHAT_DATA_DIR: dataDir,
-    },
+    env,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   children.add(child);
@@ -131,5 +133,53 @@ describe('AI chat server ownership', () => {
 
     expect(attackerDelete.status).toBe(404);
     expect(await victimRead.json()).toMatchObject({ id });
+  });
+});
+
+describe('AI chat polling streams', () => {
+  it('cancels and removes an active poll stream', async () => {
+    const { baseUrl } = await startServer({ fastMock: false });
+    const id = `abort-${Date.now()}`;
+    const headers = sessionHeaders('stream-owner');
+
+    await fetch(`${baseUrl}/api/chats`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        id,
+        message: {
+          id: 'user-1',
+          role: 'user',
+          parts: [{ type: 'text', text: 'Help me create a Vue composable' }],
+        },
+      }),
+    });
+    const start = await fetch(`${baseUrl}/api/chats/${id}?mode=poll`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        messages: [
+          {
+            id: 'user-1',
+            role: 'user',
+            parts: [{ type: 'text', text: 'Help me create a Vue composable' }],
+          },
+        ],
+      }),
+    });
+    const { streamId } = (await start.json()) as { streamId: string };
+
+    const cancel = await fetch(`${baseUrl}/api/stream/${streamId}`, {
+      method: 'DELETE',
+      headers,
+    });
+    const afterCancel = await fetch(`${baseUrl}/api/stream/${streamId}`, { headers });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    const chat = await fetch(`${baseUrl}/api/chats/${id}`, { headers });
+    const chatData = (await chat.json()) as { messages: unknown[] };
+
+    expect(cancel.status).toBe(200);
+    expect(afterCancel.status).toBe(404);
+    expect(chatData.messages).toHaveLength(1);
   });
 });
