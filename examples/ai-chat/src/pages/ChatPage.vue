@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue-lynx';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';
 import { useRoute } from 'vue-router';
 
@@ -81,6 +81,8 @@ const chat = useChat({
 });
 
 const { messages, status, error, sendMessage, regenerate, stop } = chat;
+
+onUnmounted(stop);
 
 async function scrollToBottom() {
   // nextTick waits for the main thread to apply pending ops so the

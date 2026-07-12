@@ -46,7 +46,7 @@ onMounted(async () => {
         class="flex-1 flex flex-col bg-default min-w-0 overflow-hidden"
         :class="isMobile ? '' : 'm-4 ml-0 rounded-lg border border-default shadow-sm'"
       >
-        <RouterView />
+        <RouterView :key="$route.fullPath" />
       </view>
     </view>
 
