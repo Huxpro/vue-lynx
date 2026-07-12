@@ -1,7 +1,7 @@
 import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
-import { ZH, ZH_VERBS, normalizeKey } from './i18n.js';
+import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -202,22 +202,27 @@ let blackedOut = false;
 // speaker view via BroadcastChannel so it can render notes
 // without parsing the live DOM.
 // =========================================================
-const slideMeta = slides.map((slide) => {
-  // Title heuristic: first big heading, or eyebrow as fallback.
-  const titleEl = slide.querySelector(
-    '.h-cover, .h-section, .demo__title, .divider__title, .cta__title, .combine__result .result-text, .thankyou h1',
-  );
-  const eyebrowEl = slide.querySelector('.eyebrow');
-  const title = (titleEl?.textContent || eyebrowEl?.textContent || '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 80);
+// Rebuilt after a language switch so the speaker view gets translated
+// titles + notes over the channel.
+let slideMeta = [];
+function buildSlideMeta() {
+  slideMeta = slides.map((slide) => {
+    const titleEl = slide.querySelector(
+      '.h-cover, .h-section, .demo__title, .divider__title, .cta__title, .combine__result .result-text, .thankyou h1',
+    );
+    const eyebrowEl = slide.querySelector('.eyebrow');
+    const title = (titleEl?.textContent || eyebrowEl?.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
 
-  const notesEl = slide.querySelector('aside.notes');
-  const notes = notesEl ? notesEl.innerHTML : '';
+    const notesEl = slide.querySelector('aside.notes');
+    const notes = notesEl ? notesEl.innerHTML : '';
 
-  return { title, notes };
-});
+    return { title, notes };
+  });
+}
+buildSlideMeta();
 
 // =========================================================
 // Magic move (FLIP) — elements tagged with the same
@@ -696,13 +701,19 @@ const I18N_SELECTOR = [
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];
+let noteEls = [];
 function initI18n() {
   i18nEls = [];
   document.querySelectorAll(I18N_SELECTOR).forEach((el) => {
-    if (el.closest('.notes')) return;            // speaker notes stay source
+    if (el.closest('.notes')) return;            // notes handled separately
     if (el.querySelector('[data-cover-verb]')) return; // cycling verb line
     i18nEls.push({ el, en: el.innerHTML, key: normalizeKey(el.textContent) });
   });
+  // Speaker notes, keyed by slide order (ZH_NOTES[i]).
+  noteEls = [...document.querySelectorAll('.slide aside.notes')].map((el) => ({
+    el,
+    en: el.innerHTML,
+  }));
 }
 
 let currentLang = 'en';
@@ -713,8 +724,16 @@ function applyLang(lang, opts = {}) {
     const zh = ZH[key];
     el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
   });
+  noteEls.forEach(({ el, en }, i) => {
+    const zh = ZH_NOTES[i];
+    el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
+  });
   initArch(currentLang);
   setVerbLang(currentLang);
+
+  // Refresh speaker-view metadata (titles + notes) in the new language.
+  buildSlideMeta();
+  if (!embedMode) broadcastState();
 
   const btn = document.querySelector('[data-lang-toggle]');
   if (btn) btn.textContent = currentLang === 'zh' ? 'EN · l' : '中 · l';
@@ -737,12 +756,15 @@ function toggleLang() {
 
 initI18n();
 
-// Initial language: ?lang, then last choice, else English.
+// Initial language: ?lang wins, then last saved choice, else 中文 (default).
 const startLang = (() => {
   if (params.get('lang') === 'zh') return 'zh';
   if (params.get('lang') === 'en') return 'en';
-  try { return localStorage.getItem('deck-lang') === 'zh' ? 'zh' : 'en'; }
-  catch { return 'en'; }
+  try {
+    const saved = localStorage.getItem('deck-lang');
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch { /* ignore */ }
+  return 'zh';
 })();
 applyLang(startLang, { fromChannel: true });
 
@@ -755,8 +777,12 @@ if (!embedMode) {
 }
 channel.addEventListener('message', (ev) => {
   const msg = ev.data;
-  if (msg && msg.type === 'lang' && msg.lang !== currentLang) {
+  if (!msg) return;
+  if (msg.type === 'lang' && msg.lang !== currentLang) {
     applyLang(msg.lang, { fromChannel: true });
+  } else if (msg.type === 'lang-toggle' && !embedMode) {
+    // A speaker-view request — the main deck owns the toggle and rebroadcasts.
+    toggleLang();
   }
 });
 

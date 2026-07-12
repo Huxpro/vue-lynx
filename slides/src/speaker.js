@@ -1,7 +1,44 @@
 import './speaker.css';
+import { SPEAKER_LABELS } from './i18n.js';
 
 const CHANNEL_NAME = 'vue-lynx-deck';
 const channel = new BroadcastChannel(CHANNEL_NAME);
+
+// =========================================================
+// Language — mirrors the main deck (default 中文). The main
+// deck owns the toggle; `l` here requests it over the channel.
+// =========================================================
+let lang = (() => {
+  const p = new URLSearchParams(location.search).get('lang');
+  if (p === 'zh' || p === 'en') return p;
+  try {
+    const saved = localStorage.getItem('deck-lang');
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch { /* ignore */ }
+  return 'zh';
+})();
+let L = SPEAKER_LABELS[lang];
+
+function applySpeakerLang(next) {
+  lang = next === 'en' ? 'en' : 'zh';
+  L = SPEAKER_LABELS[lang];
+  document.documentElement.setAttribute('data-lang', lang);
+  const set = (sel, text) => { const el = document.querySelector(sel); if (el) el.textContent = text; };
+  set('.sv-id span:last-child', L.view);
+  set('.sv-stage--current .sv-stage__label', L.now);
+  set('.sv-stage--next .sv-stage__label', L.next);
+  set('.sv-notes__label', L.notes);
+  set('[data-nav="prev"]', L.prev);
+  set('[data-nav="next"]', L.nextBtn);
+  const tbtn = document.querySelector('[data-timer="toggle"]');
+  if (tbtn) tbtn.textContent = pausedAt ? L.resume : L.pause;
+  set('[data-timer="reset"]', L.reset);
+  const bbtn = document.querySelector('[data-blackout]');
+  if (bbtn) bbtn.textContent = blackedOut ? L.restore : L.blackout;
+  const hints = document.querySelector('.sv-hints');
+  if (hints) hints.innerHTML = L.hints;
+  render();
+}
 
 // =========================================================
 // DOM refs
@@ -89,14 +126,14 @@ function render() {
   if (titleNow) titleNow.textContent = meta.title || '';
   const nextMeta = slideMeta[current + 1] || {};
   if (titleNext) {
-    titleNext.textContent = current + 1 >= total ? '— end of deck —' : (nextMeta.title || '');
+    titleNext.textContent = current + 1 >= total ? L.end : (nextMeta.title || '');
   }
 
   if (notesEl) {
     if (meta.notes?.trim()) {
       notesEl.innerHTML = meta.notes;
     } else {
-      notesEl.innerHTML = '<p class="sv-notes__empty">No notes for this slide.</p>';
+      notesEl.innerHTML = `<p class="sv-notes__empty">${L.empty}</p>`;
     }
   }
 }
@@ -112,6 +149,8 @@ channel.addEventListener('message', (ev) => {
     total = msg.total;
     if (Array.isArray(msg.slides)) slideMeta = msg.slides;
     render();
+  } else if (msg.type === 'lang' && msg.lang !== lang) {
+    applySpeakerLang(msg.lang);
   }
 });
 
@@ -156,6 +195,9 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'r': case 'R':
       resetTimer();
+      break;
+    case 'l': case 'L':
+      channel.postMessage({ type: 'lang-toggle' });
       break;
     case 'b': case 'B':
       toggleBlackout();
@@ -215,7 +257,7 @@ function resetTimer() {
   pausedAt = null;
   tickTimer();
   const btn = document.querySelector('[data-timer="toggle"]');
-  if (btn) btn.textContent = 'Pause';
+  if (btn) btn.textContent = L.pause;
 }
 
 function toggleTimer() {
@@ -224,10 +266,10 @@ function toggleTimer() {
     // resume
     pausedAccum += Date.now() - pausedAt;
     pausedAt = null;
-    if (btn) btn.textContent = 'Pause';
+    if (btn) btn.textContent = L.pause;
   } else {
     pausedAt = Date.now();
-    if (btn) btn.textContent = 'Resume';
+    if (btn) btn.textContent = L.resume;
   }
   tickTimer();
 }
@@ -244,7 +286,7 @@ function toggleBlackout() {
   channel.postMessage({ type: 'blackout', on: blackedOut });
   document.body.classList.toggle('sv-blackout-on', blackedOut);
   const btn = document.querySelector('[data-blackout]');
-  if (btn) btn.textContent = blackedOut ? 'Restore (b)' : 'Blackout (b)';
+  if (btn) btn.textContent = blackedOut ? L.restore : L.blackout;
 }
 document.querySelector('[data-blackout]')?.addEventListener('click', toggleBlackout);
 
@@ -256,5 +298,5 @@ window.addEventListener('beforeunload', () => {
   channel.close();
 });
 
-// First paint
-render();
+// First paint — apply the initial language labels, then render.
+applySpeakerLang(lang);

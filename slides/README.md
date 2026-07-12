@@ -116,11 +116,13 @@ first reveal so the opening slides stay snappy.
 - `src/main.js` — slide navigation, magic move, `<vl-demo>` lazy loader
 - `src/arch.js` — data-driven "layers & seams" diagram for the cross-platform
   landscape chapter (rendered into each `.arch-mount`, one column per slide)
-- `src/i18n.js` — Chinese translations. English is the inline source; text is
-  matched by normalized English `textContent` and swapped in place (so
-  magic-move `data-flip` identity is preserved). Toggle with `l` or the chrome
-  button; `?lang=zh` deep-links and the choice mirrors to the speaker view.
-  Speaker notes stay in the source language.
+- `src/i18n.js` — Chinese translations. English is the inline source; visible
+  text is matched by normalized English `textContent` and swapped in place (so
+  magic-move `data-flip` identity is preserved). Speaker notes (`ZH_NOTES`,
+  indexed by slide order) and the speaker-view chrome (`SPEAKER_LABELS`) are
+  translated too and flow to the speaker window over the channel. The deck
+  **defaults to 中文**; toggle with `l` or the chrome button (works from the
+  speaker view as well), and `?lang=zh` / `?lang=en` deep-links.
 - `src/styles.css` — design tokens + slide chrome
 - `src/meteors.js` — canvas meteors background, same recipe as the site
 - `public/examples` — symlink to the website's prebuilt example bundles
