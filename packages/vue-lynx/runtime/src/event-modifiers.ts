@@ -129,3 +129,19 @@ export function withKeys(
 ): (...args: unknown[]) => unknown {
   return fn;
 }
+
+// ---------------------------------------------------------------------------
+// v-model event payload helpers — shared by the vdom entry (makeVModelHandler)
+// and the Vapor entry (applyTextModel)
+// ---------------------------------------------------------------------------
+
+/** Lynx `input`/`confirm` event payload shape used by v-model. */
+export interface InputEventData {
+  detail?: { value?: string; isComposing?: boolean };
+}
+
+/** `.number` modifier semantics: parseFloat with original-string fallback. */
+export function looseToNumber(val: string): number | string {
+  const n = Number.parseFloat(val);
+  return Number.isNaN(n) ? val : n;
+}

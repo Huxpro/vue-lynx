@@ -55,82 +55,37 @@ export const OP = {
 
 export type OpCode = (typeof OP)[keyof typeof OP];
 
-/**
- * Number of arguments following each opcode in the flat ops array — the
- * frame layout documented above, as data. Consumers that walk ops streams
- * without dispatching them (IFR hydration/teardown) rely on this table; keep
- * it in lockstep when adding an op.
- */
-export const OP_ARITY: Record<OpCode, number> = {
-  [OP.CREATE]: 2, // id, type
-  [OP.CREATE_TEXT]: 1, // id
-  [OP.INSERT]: 3, // parentId, childId, anchorId
-  [OP.REMOVE]: 2, // parentId, childId
-  [OP.SET_PROP]: 3, // id, key, value
-  [OP.SET_TEXT]: 2, // id, text
-  [OP.SET_EVENT]: 4, // id, eventType, eventName, sign
-  [OP.REMOVE_EVENT]: 3, // id, eventType, eventName
-  [OP.SET_STYLE]: 2, // id, styleObject
-  [OP.SET_CLASS]: 2, // id, classString
-  [OP.SET_ID]: 2, // id, idString
-  [OP.SET_WORKLET_EVENT]: 4, // id, eventType, eventName, workletCtx
-  [OP.SET_MT_REF]: 2, // id, refImpl
-  [OP.INIT_MT_REF]: 2, // wvid, initValue
-  [OP.SET_SCOPE_ID]: 2, // id, cssId
-  [OP.INSTANTIATE_TEMPLATE]: 3, // rootId, tplId, holeCount
-};
-
-/**
- * The element id both threads assign to the page root. The BG renderer's
- * ShadowElement id space and the MT element registry must agree on it.
- */
-export const PAGE_ROOT_ID = 1;
-
 // ---------------------------------------------------------------------------
-// Element-template protocol (INSTANTIATE_TEMPLATE support)
+// REGISTER_TEMPLATE structure — the ONE definition both threads must agree
+// on. The BG thread builds this shape (shadow-element.ts buildStructure) and
+// the MT interprets it (ops-apply.ts instantiateTemplate); uids are assigned
+// by identical pre-order walks on both sides, so any drift in this shape or
+// in traversal order silently desyncs element ids across the thread boundary.
 // ---------------------------------------------------------------------------
 
-/** Type-string prefix for compile-time-lowered template vnodes. */
-export const TPL_TYPE_PREFIX = '__vlx-tpl:';
-/** Prop-key prefix for hole bindings on lowered vnodes. */
-export const TPL_HOLE_PREFIX = '__h';
-/**
- * Name of the global through which compiler-generated code registers
- * element templates: `globalThis.<TPL_REGISTER_GLOBAL>(id, holes, create)`.
- * Referenced by compiler codegen, the loader that extracts registrations for
- * interpreter-only MT bundles, and the runtime/main-thread installers.
- */
-export const TPL_REGISTER_GLOBAL = '__vueLynxRegisterElementTemplate';
-
-// ---------------------------------------------------------------------------
-// Cross-thread global handshakes (IFR)
-//
-// The runtime and main-thread packages cannot import each other (they are
-// bundled for different threads), so IFR wires them through globals. Every
-// read site is defensively guarded, which means a one-sided rename would not
-// throw — it would silently disable IFR. Single-sourcing the names here makes
-// that drift impossible.
-// ---------------------------------------------------------------------------
-
-/** Set on the IFR main thread so runtime code can detect the environment. */
-export const IFR_MT_FLAG_GLOBAL = '__VUE_LYNX_IFR_MT__';
-/** MT-side hook the runtime flush hands ops batches to during the IFR render. */
-export const IFR_APPLY_OPS_GLOBAL = '__vueLynxIfrApplyOps';
-/** Runtime-side hook renderPage triggers to run deferred IFR mounts. */
-export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
-/** MT executor registry for element-template create() functions. */
-export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
-
-/**
- * Convert a Vue scope ID (data-v-xxxxx) to a Lynx cssId (numeric).
- * Vue uses 8-char hex hash strings.  Lynx engine uses int32 for cssId,
- * so we mask to 0x7fffffff to stay within the positive int32 range.
- *
- * Cross-thread/compile-time contract: the BG runtime (SET_SCOPE_ID ops), the
- * compile-time element-template lowering (baked __SetCSSId calls), and the
- * scoped-CSS build plugin must all derive identical ids.
- */
-export function scopeIdToCssId(scopeId: string): number {
-  const hex = scopeId.replace(/^data-v-/, '');
-  return Number.parseInt(hex, 16) & 0x7fffffff;
+/** Static props of one template node. */
+export interface TemplateNodeProps {
+  /** class */
+  c?: string;
+  /** inline style (parsed object form) */
+  s?: Record<string, unknown>;
+  /** plain attributes */
+  a?: [string, string][];
+  /** id attribute */
+  i?: string;
+  /** scope cssIds */
+  sc?: number[];
+  /** folded only-child text content */
+  t?: string;
 }
+
+/** [tag, props|0, children] */
+export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
+
+// Global names bridging the vapor build plugin and the runtime DOM shim:
+// the plugin's DefinePlugin rewrites free `document`/`window` identifiers to
+// `globalThis.<name>`, and vapor/dom-shim.ts installs the shims under the
+// same names. Import from here on both sides — a rename must not be able to
+// drift silently.
+export const VAPOR_DOCUMENT_GLOBAL = '__VUE_LYNX_DOCUMENT__';
+export const VAPOR_WINDOW_GLOBAL = '__VUE_LYNX_WINDOW__';

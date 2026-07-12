@@ -38,7 +38,8 @@ import {
 } from '@vue/runtime-vapor';
 import type { App, Component } from '@vue/runtime-core';
 
-import { withKeys, withModifiers } from '../event-modifiers.js';
+import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
+import type { InputEventData } from '../event-modifiers.js';
 import { createPageRoot } from '../shadow-element.js';
 import type { ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';
@@ -116,19 +117,10 @@ export function on(
 // v-model — Lynx input protocol
 // ---------------------------------------------------------------------------
 
-interface InputEventData {
-  detail?: { value?: string; isComposing?: boolean };
-}
-
 interface TextModelModifiers {
   trim?: boolean;
   number?: boolean;
   lazy?: boolean;
-}
-
-function looseToNumber(val: string): number | string {
-  const n = Number.parseFloat(val);
-  return Number.isNaN(n) ? val : n;
 }
 
 /**
@@ -206,11 +198,7 @@ export function delegate(
   event: string,
   handler: AnyFn | AnyFn[],
 ): void {
-  if (Array.isArray(handler)) {
-    for (const fn of handler) delegate(el, event, fn);
-    return;
-  }
-  if (!handler) return;
+  // `on` already handles the array / undefined handler cases.
   on(el, event, handler);
 }
 
