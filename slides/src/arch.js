@@ -55,6 +55,13 @@ const FW = [
   },
 ];
 
+// Chinese overrides for layer names + seam questions (framework
+// names and reference chips stay as-is).
+const ZH = {
+  layers: ['前端', '运行时', '渲染后端', '原生能力', '平台'],
+  seams: ['能接入任意前端?', '能替换渲染模型?', '能新增原生能力?', '能上一个全新平台?'],
+};
+
 const SCORE = { open: 2, part: 1, seal: 0 };
 function scoreOf(gates) {
   const t = gates.reduce((a, g) => a + SCORE[g], 0);
@@ -77,26 +84,29 @@ function el(tag, cls, css) {
   return e;
 }
 
-export function renderArch(mount) {
+export function renderArch(mount, lang = 'en') {
   const shown = Math.max(0, Math.min(FW.length, parseInt(mount.dataset.archShown || '0', 10)));
+  const zh = lang === 'zh';
   const arch = el('div', 'arch');
   arch.setAttribute('data-flip', 'arch');
 
   // layer bands
   LAYERS.forEach((L, i) => {
+    const name = zh ? ZH.layers[i] : L.name;
     const band = el('div', 'arch__layer', `top:${layerY(i)}%`);
     band.innerHTML =
-      `<span class="arch__lname"><b>${L.idx}</b>${L.name}</span>` +
+      `<span class="arch__lname"><b>${L.idx}</b>${name}</span>` +
       (L.refs ? `<span class="arch__refs">${L.refs}</span>` : '');
     arch.append(band);
   });
 
   // seam lines + questions
   SEAMS.forEach((s, i) => {
+    const q = zh ? ZH.seams[i] : s.q;
     const seam = el('div', 'arch__seam', `top:${seamY(i)}%`);
     seam.innerHTML =
       `<span class="arch__seamlab"><span class="arch__ep">${s.k}</span>` +
-      `<span class="arch__q">${s.q}</span></span>`;
+      `<span class="arch__q">${q}</span></span>`;
     arch.append(seam);
   });
 
@@ -129,6 +139,6 @@ export function renderArch(mount) {
   mount.replaceChildren(arch);
 }
 
-export function initArch(root = document) {
-  root.querySelectorAll('.arch-mount').forEach(renderArch);
+export function initArch(lang = 'en', root = document) {
+  root.querySelectorAll('.arch-mount').forEach((m) => renderArch(m, lang));
 }
