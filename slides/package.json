@@ -1,0 +1,19 @@
+{
+  "name": "vue-lynx-slides",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Talk deck for Vue Lynx, with live <lynx-view> embeds",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 4321",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 4321"
+  },
+  "dependencies": {
+    "@lynx-js/web-core": "^0.20.0",
+    "@lynx-js/web-elements": "^0.12.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}
