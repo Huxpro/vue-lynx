@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { rewriteVueScopeAttribute } from '../../../vue-lynx/plugin/src/plugins/vue-scope-strip-css-plugin.js';
+import { rewriteVueScopeAttribute } from '../../../vue-lynx/plugin/src/plugins/vue-scope-class-css-plugin.js';
 
 function attribute(name: string): Record<string, unknown> {
   return {
