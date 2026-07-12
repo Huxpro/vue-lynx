@@ -569,6 +569,60 @@ const canvas = document.querySelector('.meteors');
 if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
 
 // =========================================================
+// Drag-to-resize phone mockups. A corner grip adjusts the
+// phone height (width follows the locked aspect ratio).
+// Pointer deltas are divided by stageScale so the grip tracks
+// the cursor inside the scaled .frame. Double-click resets.
+// =========================================================
+function initPhoneResize() {
+  if (embedMode) return;
+  const AR = 590 / 270; // height per unit width
+  document.querySelectorAll('.phone').forEach((phone) => {
+    if (phone.querySelector('.phone__resize')) return;
+    const handle = document.createElement('div');
+    handle.className = 'phone__resize';
+    handle.setAttribute('aria-hidden', 'true');
+    handle.title = 'Drag to resize · double-click to reset';
+    phone.appendChild(handle);
+
+    let startX = 0, startY = 0, startH = 0, dragging = false;
+
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startH = phone.getBoundingClientRect().height / (stageScale || 1);
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const s = stageScale || 1;
+      const dx = (e.clientX - startX) / s;
+      const dy = (e.clientY - startY) / s;
+      // Corner drag: right and/or down both grow the phone.
+      const h = Math.max(180, Math.min(1600, startH + (dy + dx * AR) / 2));
+      phone.style.height = `${h}px`;
+    });
+    const end = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      try { handle.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+    };
+    handle.addEventListener('pointerup', end);
+    handle.addEventListener('pointercancel', end);
+    // Keep touch drags from bubbling into the deck's swipe navigation.
+    handle.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+    handle.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      phone.style.height = '';
+    });
+  });
+}
+initPhoneResize();
+
+// =========================================================
 // Cycling cover verb — "Unlock", "Vibe", "Render", "Ship"
 // =========================================================
 const verbs = ['Unlock', 'Vibe', 'Render', 'Ship'];
