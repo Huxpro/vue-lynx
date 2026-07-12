@@ -3,30 +3,25 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * CSS-tree plugin that strips Vue scoped `[data-v-xxx]` attribute selectors
- * from the serialized CSS AST.
+ * CSS-tree plugin that rewrites Vue scoped `[data-v-xxx]` attribute selectors
+ * as `.data-v-xxx` class selectors in the serialized Lynx CSS AST.
  *
- * Vue's `<style scoped>` adds `[data-v-{hash}]` to every selector.
- * Lynx's CSS engine doesn't support attribute selectors, and scoping is
- * handled by the native `cssId` mechanism instead.  This plugin removes
- * the attribute selectors during template encoding (via `cssPlugins`
- * on LynxTemplatePlugin / CssExtractPlugin).
+ * Vue component roots can carry multiple scope tokens (their own scope plus
+ * parent/slot scopes), while native Lynx stores only one numeric CSS ID per
+ * element. Hash classes preserve Vue's composable selector semantics without
+ * relying on that single-valued native slot.
  *
  * Plugin format: `{ phaseStandard(ast, ctx) }` — invoked by
  * `@lynx-js/css-serializer`'s `parse()` on the css-tree AST.
  */
 
-// css-tree linked-list node handle
 interface ListItem {
   data: ASTNode;
   next: ListItem | null;
-  prev: ListItem | null;
 }
 
-// css-tree linked-list
 interface List {
   head: ListItem | null;
-  remove(item: ListItem): void;
 }
 
 interface ASTNode {
@@ -60,7 +55,6 @@ export function rewriteVueScopeAttribute(
 }
 
 function rewriteVueScopesInAST(node: ASTNode): void {
-  // Walk children (css-tree uses linked lists)
   if (node.children) {
     let item = node.children.head;
     while (item) {
@@ -71,13 +65,12 @@ function rewriteVueScopesInAST(node: ASTNode): void {
       item = next;
     }
   }
-  // Walk named sub-trees (Rule.prelude = SelectorList, Rule.block = Block)
   if (node.prelude) rewriteVueScopesInAST(node.prelude);
   if (node.block) rewriteVueScopesInAST(node.block);
 }
 
-export const vueScopeStripCSSPlugin = {
-  name: 'vue-scope-strip',
+export const vueScopeClassCSSPlugin = {
+  name: 'vue-scope-class',
   phaseStandard(ast: ASTNode): void {
     rewriteVueScopesInAST(ast);
   },
