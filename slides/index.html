@@ -402,6 +402,194 @@
   </section>
 
   <!-- ====================================================
+       Landscape — cross-platform frameworks
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <h2 class="h-section" style="text-align:center;max-width:18ch">
+      Going native is a <span class="brand-text">crowded</span> field.
+    </h2>
+    <div class="field" data-mm-fade>
+      <span>Web</span>
+      <span>React Native</span>
+      <span>Flutter</span>
+      <span>Ionic</span>
+      <span>NativeScript</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The landscape.</strong> ByteDance open-sourced Lynx into an already-crowded cross-platform field — Web, React Native, Flutter, Ionic, NativeScript. Set up the question: which one is home for a <em>Vue</em> developer?</p>
+    </aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      But Vue never had a native
+      <em style="font-family:var(--serif);font-weight:400">home</em>.
+    </h2>
+    <p class="lead">
+      Its soul stays on the Web — SFCs, templates, scoped CSS. The native
+      options were always thin: Ionic, NativeScript.
+    </p>
+    <aside class="notes">
+      <p><strong>The gap.</strong> React has React Native. Vue never got a dominant native story. And Vue's community leans hard toward the Web — so the answer has to feel like the Web.</p>
+    </aside>
+  </section>
+
+  <!-- Chart: axes appear, then one framework per slide -->
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+    </div>
+    <p class="lead" data-mm-fade>
+      Two axes: how it feels to <em>build</em>, and how it feels to <em>use</em>.
+    </p>
+    <aside class="notes">
+      <p><strong>The map.</strong> Y = native user experience. X = web-like developer experience. Everything trades one for the other. Watch the field fill in.</p>
+    </aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+      <span class="pt" style="left:78%;top:72%" data-mm-fade>
+        <span class="pt__dot"></span>
+        <span class="pt__name">Ionic</span>
+        <span class="pt__note">✗ webview</span>
+      </span>
+    </div>
+    <p class="lead" data-mm-fade>
+      <b>Ionic</b> renders the Web in a webview. Great DX — but not native enough.
+    </p>
+    <aside class="notes"><p>Ionic: real HTML/CSS, but it's a webview. Web DX high, native UX low.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+      <span class="pt" style="left:78%;top:72%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Ionic</span>
+        <span class="pt__note">✗ webview</span>
+      </span>
+      <span class="pt" style="left:24%;top:44%" data-mm-fade>
+        <span class="pt__dot"></span>
+        <span class="pt__name">NativeScript</span>
+        <span class="pt__note">✗ not web</span>
+      </span>
+    </div>
+    <p class="lead" data-mm-fade>
+      <b>NativeScript</b> reaches native widgets — but leaves the Web behind.
+    </p>
+    <aside class="notes"><p>NativeScript: native widgets, but an XML/JS model that isn't the Web.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+      <span class="pt" style="left:78%;top:72%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Ionic</span>
+        <span class="pt__note">✗ webview</span>
+      </span>
+      <span class="pt" style="left:24%;top:44%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">NativeScript</span>
+        <span class="pt__note">✗ not web</span>
+      </span>
+      <span class="pt" style="left:30%;top:24%" data-mm-fade>
+        <span class="pt__dot"></span>
+        <span class="pt__name">Flutter</span>
+        <span class="pt__note">✗ dart · own render</span>
+      </span>
+    </div>
+    <p class="lead" data-mm-fade>
+      <b>Flutter</b> is Dart and its own renderer. Beautiful — a world of its own.
+    </p>
+    <aside class="notes"><p>Flutter: excellent native-feeling UX, but Dart + a self-rendering engine. Nothing about it is the Web.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+      <span class="pt" style="left:78%;top:72%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Ionic</span>
+        <span class="pt__note">✗ webview</span>
+      </span>
+      <span class="pt" style="left:24%;top:44%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">NativeScript</span>
+        <span class="pt__note">✗ not web</span>
+      </span>
+      <span class="pt" style="left:30%;top:24%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Flutter</span>
+        <span class="pt__note">✗ dart · own render</span>
+      </span>
+      <span class="pt" style="left:60%;top:20%" data-mm-fade>
+        <span class="pt__dot"></span>
+        <span class="pt__name">React Native</span>
+        <span class="pt__note">✗ react-only</span>
+      </span>
+    </div>
+    <p class="lead" data-mm-fade>
+      <b>React Native</b> nails native UX — but it's married to React.
+    </p>
+    <aside class="notes"><p>RN: great native UX and a familiar-ish model, but bound to React. No Vue.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <span class="eyebrow">The landscape</span>
+    <div class="qchart" data-flip="chart">
+      <span class="qchart__y">↑ Native experience</span>
+      <span class="qchart__x">Web dev experience →</span>
+      <span class="pt" style="left:78%;top:72%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Ionic</span>
+        <span class="pt__note">✗ webview</span>
+      </span>
+      <span class="pt" style="left:24%;top:44%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">NativeScript</span>
+        <span class="pt__note">✗ not web</span>
+      </span>
+      <span class="pt" style="left:30%;top:24%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">Flutter</span>
+        <span class="pt__note">✗ dart · own render</span>
+      </span>
+      <span class="pt" style="left:60%;top:20%">
+        <span class="pt__dot"></span>
+        <span class="pt__name">React Native</span>
+        <span class="pt__note">✗ react-only</span>
+      </span>
+      <span class="pt pt--lynx" style="left:83%;top:15%" data-mm-fade>
+        <span class="pt__dot"></span>
+        <span class="pt__name">Lynx</span>
+        <span class="pt__note">✓ both</span>
+      </span>
+    </div>
+    <p class="lead" data-mm-fade>
+      <b class="brand-text">Lynx</b> lands in the corner nobody else reaches —
+      Web DX <em>and</em> Native UX, and it's framework-agnostic.
+    </p>
+    <aside class="notes">
+      <p><strong>The answer.</strong> Lynx was evolved to be framework-agnostic. It gives you the Web's developer experience and native's user experience at once — the top-right corner no one else occupies. That's the opening for Vue.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
        16 — Web-friendly · headline (one idea)
        ==================================================== -->
   <section class="slide stage">
