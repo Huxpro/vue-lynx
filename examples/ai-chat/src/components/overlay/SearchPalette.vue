@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue-lynx';
 
 import { useChats } from '../../composables/useChats';
+import { fuzzyMatch } from '../../lib/search';
 import Icon from '../ui/Icon.vue';
 
 /**
@@ -29,10 +30,10 @@ const filteredGroups = computed(() => {
   const chatGroups = groups.value
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
+      items: group.items.filter((item) => fuzzyMatch(item.label, q)),
     }))
     .filter((group) => group.items.length > 0);
-  if (q && !'new chat'.includes(q)) return chatGroups;
+  if (!fuzzyMatch('New chat', q)) return chatGroups;
   return [links, ...chatGroups];
 });
 </script>

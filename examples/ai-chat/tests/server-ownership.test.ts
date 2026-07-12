@@ -67,6 +67,14 @@ async function startServer(options: { fastMock?: boolean } = {}) {
   throw new Error(`Timed out waiting for server: ${stderr}`);
 }
 
+async function waitForFile(filePath: string): Promise<boolean> {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (existsSync(filePath)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return false;
+}
+
 function sessionHeaders(sessionId: string): HeadersInit {
   return {
     'content-type': 'application/json',
@@ -95,9 +103,7 @@ describe('AI chat server storage isolation', () => {
   it('writes its database under AI_CHAT_DATA_DIR when provided', async () => {
     const { dataDir } = await startServer();
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    expect(existsSync(path.join(dataDir, 'db.json'))).toBe(true);
+    expect(await waitForFile(path.join(dataDir, 'db.json'))).toBe(true);
   });
 });
 

@@ -1,6 +1,6 @@
 # AI Chat
 
-一个功能完整的 AI 聊天应用，逐特性移植自官方 [Nuxt AI Chatbot 模板](https://github.com/nuxt-ui-templates/chat)（Nuxt UI + Vercel AI SDK）——这可能是迄今对 Vue Lynx 要求最高的「真实世界」验证：流式响应与思考/推理过程、带代码高亮的 Markdown、工具调用卡片（天气、图表、网络搜索来源）、按日期分组的聊天历史、点赞/点踩、消息编辑、分享/重命名/删除、模型选择器、带明暗模式的运行时主题、附件、命令面板搜索，以及带侧滑抽屉的响应式移动端布局。
+一个功能完整的 AI 聊天应用，逐特性移植自官方 [Nuxt AI Chatbot 模板](https://github.com/nuxt-ui-templates/chat)（Nuxt UI + Vercel AI SDK）——这可能是迄今对 Vue Lynx 要求最高的「真实世界」验证：流式响应与思考/推理过程、带代码高亮和表格的 Markdown、工具调用卡片（天气、图表、网络搜索来源）、按日期分组的聊天历史、点赞/点踩、消息编辑、分享/重命名/删除、模型选择器、可持久化的明暗模式运行时主题、附件、模糊命令面板搜索，以及带侧滑抽屉的响应式移动端布局。
 
 试试下面的快捷提示——*"What is the weather in Bordeaux?"* 会流式输出推理过程和天气卡片；*"Show me a chart of sales data"* 渲染 SVG 折线图；*"Help me create a Vue composable"* 展示带高亮代码的 Markdown。在 native 标签页扫描二维码即可在 [LynxExplorer](https://lynxjs.org/guide/start/quick-start.html) 中运行同一个 bundle。
 
@@ -15,8 +15,8 @@
 | 方面 | Nuxt 原版 | Vue Lynx |
 |------|-----------|----------|
 | **UI 组件库** | @nuxt/ui v4（`UChat*`、`UDashboard*`、Reka UI portal） | 手写 Lynx 组件（`view`/`text`/`image`/`scroll-view`/`input`），复用 Nuxt UI 的语义设计令牌 |
-| **聊天状态** | `@ai-sdk/vue` `useChat` | 自研 `useChat`，讲同一套 SSE 协议（native fetch 走轮询回退） |
-| **Markdown** | Comark + Shiki（HTML 输出） | Markdown → 原生节点渲染器 + 轻量代码分词器 |
+| **聊天状态** | `@ai-sdk/vue` `useChat` | 自研 `useChat`，复用同一套协议（Web 走 SSE；native 走增量轮询并支持取消） |
+| **Markdown** | Comark + Shiki（HTML 输出） | Markdown（含表格）→ 原生节点渲染器 + 轻量代码分词器 |
 | **图表** | nuxt-charts / Unovis（SVG DOM） | 生成内联 SVG 字符串交给原生 `<svg>` 元素 |
 | **下拉/弹窗** | 锚定 popover、portal | 根节点的 action sheet + 居中弹窗 |
 | **主题** | Tailwind v4 + `app.config` | 运行时 `--ui-*` CSS 变量（含 17 主色 × 5 中性色选择器） |

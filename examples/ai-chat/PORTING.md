@@ -18,15 +18,15 @@ Why a straight copy is impossible:
 | Framework | Nuxt 4 (Vue 3) | Vue Lynx (Vue 3) | **Reused** — Vue 3 semantics are the whole point of the port |
 | Routing | Nuxt pages (vue-router web history) | vue-router `createMemoryHistory` | **Reused with config change** |
 | UI kit | @nuxt/ui v4 (`UDashboard*`, `UChat*`, `UButton`, `UModal`, …) | Hand-built Lynx components mirroring Nuxt UI's rendered look (tokens copied from its theme) | **Rewritten** — DOM-only |
-| Chat state | `@ai-sdk/vue` `useChat` + `DefaultChatTransport` | Custom `useChat` composable speaking the same UI-message-stream SSE protocol | **Rewritten (protocol reused)** — the AI SDK client assumes browser `fetch`/`ReadableStream`/`TextDecoderStream` |
+| Chat state | `@ai-sdk/vue` `useChat` + `DefaultChatTransport` | Custom `useChat` composable speaking the same UI-message-stream protocol: SSE on web, cursor polling + explicit cancellation on native | **Rewritten (protocol reused)** — the AI SDK client assumes browser streaming primitives |
 | Message model | AI SDK `UIMessage` with typed parts (text/reasoning/tool-*/source-url/file) | Same shapes, local TS types | **Reused (types re-declared)** |
-| Markdown | Comark + Shiki (HTML output, streaming highlight) | Custom markdown → Lynx-element renderer + tiny code tokenizer | **Rewritten** — HTML output can't be displayed; no `v-html` on Lynx |
+| Markdown | Comark + Shiki (HTML output, streaming highlight) | Custom markdown → Lynx-element renderer (including pipe tables) + tiny code tokenizer | **Rewritten** — HTML output can't be displayed; no `v-html` on Lynx |
 | Charts | nuxt-charts (Unovis, SVG) | Line chart generated as an inline SVG string for Lynx's native `<svg>` element; hover tooltip becomes tap-a-column | **Rewritten** — no DOM/Unovis; SVG string generation instead |
 | Icons | Iconify (`i-lucide-*`, `i-simple-icons-*`, `i-logos-*`) CSS masks | Same glyphs vendored as inline SVG strings (lucide-static / simple-icons / iconify logos) rendered with `<svg content>`; colors baked per theme | **Adapted** — no CSS mask/iconify runtime, no `currentColor` |
 | Animations | motion-v (springs), CSS transitions, View Transitions API | Lynx CSS transitions/animations; View Transitions dropped | **Partially rewritten / dropped** |
 | Composables (`useChats` grouping, `useModels`, `useChatActions` flows, greeting logic, `getMergedParts`) | Plain Vue + date-fns | Same code, `useCookie`→storage shim, `$fetch`→`fetch` wrapper, modals via custom overlay | **Mostly reused** — this is framework-agnostic logic |
 | Server API (chats/messages/votes/title/visibility CRUD) | Nitro `defineEventHandler` + Drizzle/SQLite | Standalone zero-dependency `node:http` server, same routes/payloads, JSON-file store | **Rewritten thin, shapes reused** |
-| AI endpoint | AI SDK `streamText` + gateway + provider tools, `smoothStream`, `stopWhen`, UI-message-stream response | Same in "real" mode; deterministic mock stream generator by default (offline + reproducible screenshots) | **Reused in real mode / mock added** |
+| AI endpoint | AI SDK `streamText` + gateway + provider/custom tools, `smoothStream`, `stopWhen`, UI-message-stream response | Zero-dependency OpenAI-compatible Gateway adapter for real text/reasoning + `gpt-4.1-nano` titles; deterministic tool-capable mock stream by default | **Protocol adapted / mock added** — provider-defined tools and the multi-step tool loop remain mock-only |
 | Serverless demo | n/a (Nitro is always present in a Nuxt app) | In-app fallback backend (`lib/local-backend.ts`): when the API server is unreachable (website `<Go>` playground, LynxExplorer scans, `pnpm dev` without the server) the same seeded data + mock streams run in-memory via `shared/mock-ai.mjs` | **Added** — needed because a Lynx bundle can travel without its server |
 | Custom tools (weather, chart) | `tool()` + zod, simulated data | Same logic in mock server | **Reused (ported to plain TS)** |
 | Auth | GitHub OAuth via nuxt-auth-utils (popup + cookie session) | Mock session endpoint (demo user), header-token session | **Rewritten (mocked)** — OAuth popups/secrets unsuitable for a Lynx example |
@@ -39,6 +39,8 @@ Why a straight copy is impossible:
 - **2026-07-11** Chose `nuxt-ui-templates/chat` (canonical Nuxt template) as the source of truth; `chat-vue` consulted for de-Nuxtified patterns (shared composables, Nitro-external server, session endpoint).
 - **2026-07-11** Server strategy: mock-first (deterministic, offline, screenshot-stable), real AI Gateway passthrough behind `AI_GATEWAY_API_KEY` — mirrors the original's "works on Vercel, key locally" spirit without shipping secrets.
 - **2026-07-11** Auth strategy: mock demo-user login to keep every auth-gated surface (user menu, uploads, owner-only actions, greeting) testable in screenshots.
+- **2026-07-12** Native streaming strategy: choose poll mode before the generation POST, consume cursor events incrementally, and cancel active server streams explicitly on Stop/unmount.
+- **2026-07-12** Parity hardening: enforce globally unique chat ids, remount chat state on route-param navigation, persist color mode, render Markdown tables, and add an example-local regression suite.
 
 
 ## Platform learnings (found while porting, verified on Lynx for Web)
@@ -85,3 +87,9 @@ Why a straight copy is impossible:
     `MessageContent.vue`.
 11. **`fetch` must be `globalThis.fetch`** — the web platform's runtime wrapper shadows the
    `fetch` binding with an undefined parameter (known repo convention, applies here too).
+12. **Choose the stream transport before sending a mutating request.** A non-streaming native
+    `fetch` buffers an SSE response, so probing with a normal generation POST either loses
+    incremental rendering or risks a second generation. Native now starts `?mode=poll` directly.
+13. **Vue Router reuses route components when only params change.** The root keys `RouterView`
+    by `route.fullPath`, and `ChatPage` aborts its stream on unmount, so `/chat/a` → `/chat/b`
+    cannot retain or mutate the first chat's state.

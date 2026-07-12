@@ -32,7 +32,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { MODELS, mockResponseFor, mockTitleFor, SEED_CHATS } from '../shared/mock-ai.mjs';
-import { realModeAvailable, runRealGeneration } from './real-ai.mjs';
+import {
+  generateRealTitle,
+  realModeAvailable,
+  runRealGeneration,
+} from './real-ai.mjs';
 import { SAMPLE_IMAGES } from './samples.mjs';
 
 const PORT = Number(process.env.PORT || 3210);
@@ -543,6 +547,13 @@ const server = createServer(async (req, res) => {
 
         if (!owned.title) {
           owned.title = mockTitleFor(messages[0]);
+          if (realModeAvailable()) {
+            try {
+              owned.title = await generateRealTitle(messages[0]);
+            } catch (error) {
+              console.error('[real-ai] falling back to mock title:', error.message);
+            }
+          }
           saveDb();
         }
 
