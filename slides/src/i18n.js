@@ -199,3 +199,98 @@ export const ZH = {
   'Thank you.': '<span class="brand-text">谢</span>谢。',
   'Questions, PRs, opinions — all welcome.': '提问、PR、想法 —— 都欢迎。',
 };
+
+// Speaker-view chrome labels.
+export const SPEAKER_LABELS = {
+  en: {
+    view: 'Speaker view', now: 'Now', next: 'Next', notes: 'Speaker notes',
+    empty: 'No notes for this slide.', prev: '‹ Prev', nextBtn: 'Next ›',
+    pause: 'Pause', resume: 'Resume', reset: 'Reset',
+    blackout: 'Blackout (b)', restore: 'Restore (b)', end: '— end of deck —',
+    hints: '←/→ navigate · <kbd>s</kbd> from main deck toggles this view · ' +
+      '<kbd>.</kbd> dark · <kbd>l</kbd> 中/EN · <kbd>b</kbd> blackout · ' +
+      '<kbd>r</kbd> reset timer · <kbd>f</kbd> fullscreen',
+  },
+  zh: {
+    view: '演讲者视图', now: '当前', next: '下一页', notes: '演讲备注',
+    empty: '本页没有备注。', prev: '‹ 上一页', nextBtn: '下一页 ›',
+    pause: '暂停', resume: '继续', reset: '重置',
+    blackout: '黑屏 (b)', restore: '恢复 (b)', end: '— 结束 —',
+    hints: '←/→ 翻页 · 主 deck 按 <kbd>s</kbd> 开关此视图 · ' +
+      '<kbd>.</kbd> 深浅色 · <kbd>l</kbd> 中/EN · <kbd>b</kbd> 黑屏 · ' +
+      '<kbd>r</kbd> 重置计时 · <kbd>f</kbd> 全屏',
+  },
+};
+
+// Speaker notes, indexed by slide order (matches the <section.slide>
+// sequence). null → keep the English source for that slide.
+export const ZH_NOTES = [
+  // 1 Cover
+  `<p><strong>开场:</strong>Vue Lynx —— 一个用 Vue 3 构建原生应用的框架。</p><p>Pre-alpha,两周内一个人做出来。今天:先看有什么,简单讲讲故事,再聊为什么 Lynx 是让这一切成为可能的平台。</p><p><em>随时按 <kbd>s</kbd> 在演讲者视图之间切换。</em></p>`,
+  // 2 Pitch
+  `<p><strong>立框架:</strong>Vue Lynx 不是移植,而是一次品类跃迁。同一套代码,跨过桥后有三件事会变。</p><p>接下来三页逐一点名:速度、体验、能力。别停留,先把结构立起来。</p>`,
+  // 3 Speed
+  `<p><strong>速度。</strong>没有 DOM,没有重排税。原生渲染、原生布局、原生滚动。</p><p>这三个词会在接下来两页叠起来 —— 节奏要快。</p>`,
+  // 4 Experience
+  `<p><strong>体验。</strong>主线程脚本带来 60fps 的手势与滚动;原生列表虚拟化。</p>`,
+  // 5 Capabilities
+  `<p><strong>能力。</strong>平台暴露的每一个原生 API。</p><p>这三点接下来就是三页 demo。</p>`,
+  // 6 Demo TodoMVC
+  `<p><strong>速度。</strong>同样的 Composition API、同样的 <code>v-model</code>、同样的 computed 合计。输入是<em>原生</em>的,滚动是<em>原生</em>的。没有 DOM,没有重排税。</p><p><strong>现场演示:</strong>点几个 todo、勾选完成、展示输入框 —— 单帧延迟。</p>`,
+  // 7 Waterfall
+  `<p><strong>体验,其一。</strong>双列瀑布流,滚动得就像系统 —— 因为它<em>就是</em>系统在滚。侧边自定义滚动条是主线程脚本,与滚动同步。</p><p><strong>现场演示:</strong>快速拖动;滚动条毫不迟滞地跟随。</p>`,
+  // 8 Swiper
+  `<p><strong>体验,其二。</strong>滑动回调跑在 <strong>UI 线程</strong>上,而非 Vue 的响应式 tick —— 回调从 Vue 代码里编译出来,注册到原生侧。</p><p><strong>现场演示:</strong>慢慢拖,指示器跟手;再快速一甩,吸附到位。</p>`,
+  // 9 Transition
+  `<p><strong>能力。</strong>你已经熟悉的 Vue —— 全都在。Composition API、SFC、插槽、provide/inject、Suspense、跑在原生合成器上的 Transition。还有生态:Pinia、Router、TanStack Query、Tailwind。</p>`,
+  // 10 Divider · Story
+  `<p><strong>转场。</strong>故事这一章要短。“简单说说它怎么做出来的 —— 因为答案很短,而且这套方法能推广。”</p>`,
+  // 11 Scale
+  `<p><strong>规模。</strong>160 次提交、21 个活跃日、一个人。接下来两页看过程和成绩单。</p>`,
+  // 12 Timeline
+  `<p><strong>过程。</strong>三块地基:Vue 成熟的自定义渲染器 API、Lynx 的双线程架构、以及作为“机架”的 Claude。别陷进 harness 工程 —— 那是另一场演讲。</p>`,
+  // 13 Receipts
+  `<p><strong>成绩单。</strong>硬指标:949 个上游 Vue 测试通过 852 个 —— skiplist 都有记录,每个失败都有交代。转场:“底层的地基,才让这一切成为可能。”</p>`,
+  // 14 Divider · Lynx platform
+  `<p><strong>为 Lynx 平台铺垫。</strong>“Vue Lynx 的上限,取决于它所站的平台。”两段论:表面亲和 Web,内核性能够硬。</p>`,
+  // 15 Landscape · framing
+  `<p><strong>立框架。</strong>不要一层一层地给框架打分 —— 给缝打分。开着的缝是扩展点,焊死的缝是墙。我们来数谁留的缝最多。</p>`,
+  // 16 Landscape · map
+  `<p><strong>地图。</strong>五层,从上到下。层间四条缝,每条是个是非题:EP1 能接任意前端?EP2 能换渲染模型?EP3 能加原生能力?EP4 能上新平台?</p>`,
+  // 17 Web
+  `<p>Web:EP1 开(任意框架),但 EP2/EP3 被沙箱封死;EP4 只算半开 —— 你拿到的是浏览器,不是底层。</p>`,
+  // 18 React Native
+  `<p>RN:EP3 开(Native Module),但 Metro 只认 React(EP1 半开),换渲染要 fork(EP2 半开),新端逐个适配(EP4 半开)。</p>`,
+  // 19 Flutter
+  `<p>Flutter:EP3/EP4 开(自渲染 + embedder),但 EP1 焊死在 Dart,EP2 半开(引擎固定)。</p>`,
+  // 20 NativeScript
+  `<p>NativeScript:EP3 开(直连原生,无需桥),但 EP2/EP4 焊死,EP1 半开(并不真的是 Web)。</p>`,
+  // 21 Lynx · answer
+  `<p><strong>答案。</strong>EP1:Rspack 框架无关 → React/Vue/Svelte + 真 CSS。EP2:引擎适配各端 primitive,也能自渲染。EP3:Native Module。EP4:桌面已落地,TV/VR/穿戴已用自渲染跑通。四条缝,一条不焊。</p>`,
+  // 22 Payoff
+  `<p><strong>收束。</strong>正因为没有一条缝焊死,Vue 才能插进 EP1、驱动整个栈。Web 开发体验 + 原生用户体验。这正是 Vue Lynx 能成立的原因。</p>`,
+  // 23 Web-friendly · headline
+  `<p><strong>亲和 Web 是特性,不是巧合。</strong>SFC、模板、scoped CSS —— 都一样。下一页看真实的文件。</p>`,
+  // 24 SFC
+  `<p>元素词汇是 HTML 形状的:<code>&lt;view&gt;</code> 对应 <code>&lt;div&gt;</code>,<code>&lt;text&gt;</code> 对应 <code>&lt;p&gt;</code>,<code>&lt;image&gt;</code> 对应 <code>&lt;img&gt;</code>,再加一个用于虚拟化的 <code>&lt;list&gt;</code>。心智模型只差一次替换。</p>`,
+  // 25 Renders on web
+  `<p>同一个产物通过 Lynx for Web 也能跑在网页上 —— 这套 deck 里每个 demo 就是这么跑的。下一页转折:“而且它内核够硬” → 双线程。</p>`,
+  // 26 Architecture · headline
+  `<p><strong>架构的点睛之笔。</strong>两条线程,都在你的产物里、都可编程。看它在接下来两页里搭起来。</p>`,
+  // 27 Architecture · bg solo
+  `<p>Vue 运行时 —— 响应式、diff、生命周期、事件处理 —— 都住在<strong>后台</strong>线程。下一页:主线程落到它旁边。</p>`,
+  // 28 Architecture · both
+  `<p>它们通过一段扁平的 <em>ops</em> 缓冲通信,按 Vue 的 tick 批处理。<strong>热路径上没有 JS 桥</strong> —— 这就是为什么响应式在干活、手势还能稳在 60fps。对 RN 的同学:Lynx 没有桥,两条线程<em>就是</em>你的产物。</p>`,
+  // 29 Combine
+  `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿一下,让这个等式落地。然后:“也很希望大家来一起把它做成。”</p>`,
+  // 30 Divider IV
+  `<p><strong>转向请求。</strong>项目是真的,但需要社区。架构很稳;Vue 的表面积很大。</p>`,
+  // 31 Ask
+  `<p>落在这句上 —— <em>“原生,不该是另一个团队的事。”</em>这是你想让他们记住的一句。</p>`,
+  // 32 What's there / open
+  `<p>左边 = 今天就能用、可用于生产探索的。右边 = 贡献者能发力的地方。</p>`,
+  // 33 Try
+  `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。“给 Agent”按钮会复制一段引导 prompt。承诺:“今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。”</p>`,
+  // 34 Thank you
+  `<p><strong>收尾。</strong>感谢,邀请提问,停在这页做 Q&amp;A。</p><p>“能上生产吗?” —— pre-alpha,架构稳,已覆盖的部分测试充分。“Android?” —— Lynx 跨平台,同一产物两端都跑。</p>`,
+];
