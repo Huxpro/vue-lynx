@@ -11,7 +11,7 @@
     "test:local": "vitest run --config vitest.local.config.ts",
     "test:local:watch": "vitest --config vitest.local.config.ts",
     "test:watch": "vitest",
-    "vuejs:init": "git submodule update --init --depth 1 core",
+    "vuejs:init": "git clone --depth 1 --branch v3.6.0-beta.17 https://github.com/vuejs/core.git core",
     "vuejs:status": "cd core && git log --oneline -1"
   },
   "devDependencies": {

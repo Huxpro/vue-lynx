@@ -106,8 +106,8 @@ jobs:
       - run: pnpm install
       - run: pnpm build
 
-      - name: Clone vuejs/core@v3.5.12
-        run: git clone --depth 1 --branch v3.5.12 https://github.com/vuejs/core.git packages/upstream-tests/core
+      - name: Clone vuejs/core@v3.6.0-beta.17
+        run: pnpm --filter vue-lynx-upstream-tests vuejs:init
 
       - name: Run upstream Vue tests (runtime-core, reactivity, runtime-dom)
         run: pnpm test:upstream
