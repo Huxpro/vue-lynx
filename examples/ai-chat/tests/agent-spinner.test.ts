@@ -79,4 +79,16 @@ describe('agent spinner', () => {
     expect(spinner).toContain('width: 16px');
     expect(spinner).toContain('height: 16px');
   });
+
+  it('shows waiting UI only until the assistant emits its first part', async () => {
+    const chatPage = await readFile(
+      new URL('../src/pages/ChatPage.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(chatPage).toContain("status.value === 'submitted'");
+    expect(chatPage).toContain('lastMessage.value.parts.length === 0');
+    expect(chatPage).toContain('<Indicator />');
+    expect(chatPage).toContain('Thinking...');
+  });
 });
