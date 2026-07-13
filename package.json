@@ -7,6 +7,7 @@
     "build:examples:publishable": "node scripts/build-publishable-examples.mjs",
     "dev": "pnpm --filter vue-lynx run dev",
     "examples:inventory": "pnpm --filter vue-lynx-example-harness inventory",
+    "examples:build:vapor": "pnpm --filter vue-lynx-example-harness build:vapor",
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
     "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom && pnpm --filter vue-lynx-upstream-tests run test:local",

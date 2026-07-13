@@ -25,8 +25,15 @@ export function transformSFC(source) {
     throw new Error("Options API SFCs are not supported by Vapor overlays");
   }
 
+  const withSetup = /<script\b/.test(source)
+    ? source
+    : `<script setup vapor></script>\n${source}`;
+
   return transformModule(
-    source.replace(/<script\s+setup(?![^>]*\bvapor\b)/g, "<script setup vapor")
+    withSetup.replace(
+      /<script\s+setup(?![^>]*\bvapor\b)/g,
+      "<script setup vapor"
+    )
   );
 }
 
@@ -89,15 +96,29 @@ function makeGeneratedConfig(source, entries) {
   )}\n${entrySource}\n    ${source.slice(entryRange.closing)}`;
 
   generated = generated.replace(/\/dist\//g, "/dist-vapor/");
-  generated = generated.replace(
-    /output\s*:\s*\{/,
-    "output: {\n    distPath: { root: 'dist-vapor' },"
-  );
-  if (!/\bvapor\s*:\s*true/.test(generated)) {
+  if (/output\s*:\s*\{/.test(generated)) {
     generated = generated.replace(
-      /pluginVueLynx\s*\(\s*\{/,
-      "pluginVueLynx({\n      vapor: true,"
+      /output\s*:\s*\{/,
+      "output: {\n    distPath: { root: 'dist-vapor' },"
     );
+  } else {
+    generated = generated.replace(
+      /source\s*:\s*\{/,
+      "output: {\n    distPath: { root: 'dist-vapor' },\n  },\n  source: {"
+    );
+  }
+  if (!/\bvapor\s*:\s*true/.test(generated)) {
+    if (/pluginVueLynx\s*\(\s*\)/.test(generated)) {
+      generated = generated.replace(
+        /pluginVueLynx\s*\(\s*\)/,
+        "pluginVueLynx({ vapor: true })"
+      );
+    } else {
+      generated = generated.replace(
+        /pluginVueLynx\s*\(\s*\{/,
+        "pluginVueLynx({\n      vapor: true,"
+      );
+    }
   }
   return generated;
 }
