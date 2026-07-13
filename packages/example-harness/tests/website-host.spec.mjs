@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import { describe, expect, test, vi } from "vitest";
 
 import {
@@ -58,5 +60,21 @@ describe("Lynx-for-Web example host", () => {
     expect(template.lepusCode.root).toContain(
       "http://localhost/examples/basic/dist/",
     );
+  });
+
+  test("exposes a local entry-aware VDOM/Vapor control", async () => {
+    const source = await readFile(
+      new URL("../../../website/src/components/go/Go.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).toContain("onEntryChange={handleEntryChange}");
+    expect(source).toContain("metadataForMode(metadata, mode)");
+    expect(source).toContain("exampleMetadata={renderedMetadata}");
+    expect(source).not.toContain("<SWRConfig");
+    expect(source).toContain("window.location.assign(url)");
+    expect(source).toContain('aria-busy="true"');
+    expect(source).toContain("<VaporStatus");
+    expect(source).not.toMatch(/global.*vapor/i);
   });
 });

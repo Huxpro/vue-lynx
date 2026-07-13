@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useCssModule } from 'vue'
+
+const classes = useCssModule()
+
 // Test: <style module>
 //
 // CSS Modules work by:
@@ -16,14 +20,14 @@
 </script>
 
 <template>
-  <view :class="$style.card">
-    <text :class="$style.title">&lt;style module&gt;</text>
-    <text :class="$style.desc">
+  <view :class="classes.card">
+    <text :class="classes.title">&lt;style module&gt;</text>
+    <text :class="classes.desc">
       Uses hashed class names (e.g. .card_abc123).
       These are plain class selectors — Lynx supports them.
     </text>
-    <view :class="$style.demoBox">
-      <text :class="$style.demoText">This text should be purple if modules work</text>
+    <view :class="classes.demoBox">
+      <text :class="classes.demoText">This text should be purple if modules work</text>
     </view>
   </view>
 </template>

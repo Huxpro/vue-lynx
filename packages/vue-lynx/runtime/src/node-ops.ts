@@ -11,9 +11,8 @@ import {
 } from './element-template.js';
 import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
-import { isIfrMainThread } from './ifr-env.js';
+import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
-import { registerWorkletCtx } from './run-on-background.js';
 import { ShadowElement } from './shadow-element.js';
 import {
   idRegistry,
@@ -23,7 +22,6 @@ import {
   setElementTextContent,
   setIdAttr,
 } from './tree-ops.js';
-import type { Worklet } from './worklet-types.js';
 
 // ---------------------------------------------------------------------------
 // Style normalisation – numeric values → 'Npx' (Lynx requires units)
@@ -279,44 +277,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // ------------------------------------------------------------------
     // Main-thread worklet props: :main-thread-bindtap, :main-thread-ref
     // ------------------------------------------------------------------
-    if (key.startsWith('main-thread-')) {
-      const suffix = key.slice('main-thread-'.length);
-      if (suffix === 'ref') {
-        // MainThreadRef — send the serialised { _wvid, _initValue } to MT
-        if (
-          nextValue != null && typeof nextValue === 'object'
-          && '_wvid' in (nextValue as Record<string, unknown>)
-        ) {
-          pushOp(
-            OP.SET_MT_REF,
-            el.uid,
-            (nextValue as { toJSON(): unknown }).toJSON(),
-          );
-        }
-      } else {
-        // Worklet event — suffix is an event key like "bindtap", "bindscroll"
-        const event = parseEventProp(suffix);
-        if (event && nextValue != null) {
-          // registerWorkletCtx wires up runOnBackground dispatch via
-          // lynx.getCoreContext() — a background-thread API.  During an IFR
-          // main-thread render the hydration pass re-applies the background
-          // thread's worklet ctx anyway, so skip the BG-side bookkeeping.
-          if (!isIfrMainThread()) registerWorkletCtx(nextValue as Worklet);
-          pushOp(
-            OP.SET_WORKLET_EVENT,
-            el.uid,
-            event.type,
-            event.name,
-            nextValue,
-          );
-        } else if (event) {
-          // Worklet handler removed — send REMOVE_EVENT so MT clears eventMap
-          pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
-        }
-      }
-      scheduleFlush();
-      return;
-    }
+    if (applyMainThreadProp(el, key, nextValue)) return;
 
     const event = parseEventProp(key);
 
