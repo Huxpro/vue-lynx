@@ -65,6 +65,7 @@ export default defineConfig({
     globalComponents: [
       path.join(__dirname, 'src/components/go/Go.tsx'),
       path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
+      path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
     ],
   },
   route: {
