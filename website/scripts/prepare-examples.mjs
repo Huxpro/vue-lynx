@@ -15,6 +15,10 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 const EXAMPLES_SRC = path.resolve(REPO_ROOT, 'examples');
 const EXAMPLES_DEST = path.resolve(__dirname, '../docs/public/examples');
 const EXAMPLE_GIT_BASE_URL = 'https://github.com/huxpro/vue-lynx/tree/main/examples';
+const vaporSupport = JSON.parse(
+  fs.readFileSync(path.join(EXAMPLES_SRC, 'vapor-support.json'), 'utf-8'),
+);
+const vaporById = new Map(vaporSupport.entries.map((entry) => [entry.id, entry.vapor]));
 
 // File extensions to skip (binary assets in src/)
 const BINARY_EXTENSIONS = new Set([
@@ -26,7 +30,7 @@ const BINARY_EXTENSIONS = new Set([
 ]);
 
 // Directories to skip
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.cache', '.git']);
+const SKIP_DIRS = new Set(['node_modules', 'dist', 'dist-vapor', '.vapor-generated', '.cache', '.git']);
 
 /**
  * Walk a directory recursively and collect relative file paths.
@@ -136,15 +140,22 @@ function processExample(exampleName) {
 
   // Build templateFiles (pointing to expected bundle locations)
   const templateFiles = entries.map(({ name }) => {
+    const vapor = vaporById.get(`${exampleName}/${name}`);
     const entry = {
       name,
       file: `dist/${name}.lynx.bundle`,
+      vaporStatus: vapor?.disposition ?? 'unknown',
+      vaporReason: vapor?.reasonCode,
     };
     // Check if web bundle exists (rspeedy produces .web.bundle)
     const webBundlePath = path.join(srcDir, `dist/${name}.web.bundle`);
     if (fs.existsSync(webBundlePath)) {
       entry.webFile = `dist/${name}.web.bundle`;
     }
+    const vaporBundlePath = path.join(srcDir, `dist-vapor/${name}.lynx.bundle`);
+    const vaporWebBundlePath = path.join(srcDir, `dist-vapor/${name}.web.bundle`);
+    if (fs.existsSync(vaporBundlePath)) entry.vaporFile = `dist-vapor/${name}.lynx.bundle`;
+    if (fs.existsSync(vaporWebBundlePath)) entry.vaporWebFile = `dist-vapor/${name}.web.bundle`;
     return entry;
   });
 
@@ -178,6 +189,10 @@ function processExample(exampleName) {
   const distSrcDir = path.join(srcDir, 'dist');
   if (fs.existsSync(distSrcDir)) {
     copyDirRecursive(distSrcDir, path.join(destDir, 'dist'));
+  }
+  const vaporDistSrcDir = path.join(srcDir, 'dist-vapor');
+  if (fs.existsSync(vaporDistSrcDir)) {
+    copyDirRecursive(vaporDistSrcDir, path.join(destDir, 'dist-vapor'));
   }
 
   // Copy preview image if it exists
@@ -237,5 +252,10 @@ if (needsBuild) {
 for (const example of examples) {
   processExample(example);
 }
+
+fs.writeFileSync(
+  path.join(EXAMPLES_DEST, 'vapor-support.json'),
+  `${JSON.stringify(vaporSupport, null, 2)}\n`,
+);
 
 console.info(`\nDone! Processed ${examples.length} examples.`);
