@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
+import { styles } from './styles'
 
 // WORKAROUND: lynx-stack web-platform's RuntimeWrapperWebpackPlugin shadows
 // `fetch` with an `undefined` parameter. Use `globalThis.fetch` to bypass.
@@ -168,107 +169,3 @@ function deletePost(postId: number) {
     </view>
   </scroll-view>
 </template>
-
-<script lang="ts">
-const styles = {
-  root: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f5f5f5',
-  },
-  container: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    padding: '16px',
-  },
-  title: {
-    fontSize: '22px',
-    fontWeight: 'bold',
-    marginBottom: '12px',
-    color: '#111',
-  },
-  searchInput: {
-    height: '36px',
-    fontSize: '14px',
-    padding: '0 12px',
-    marginBottom: '12px',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    borderWidth: '1px',
-    borderColor: '#ddd',
-  },
-  hint: {
-    fontSize: '14px',
-    color: '#999',
-    marginTop: '20px',
-    textAlign: 'center' as const,
-  },
-  error: {
-    fontSize: '14px',
-    color: '#e53e3e',
-    marginTop: '20px',
-    textAlign: 'center' as const,
-  },
-  // User card
-  userCard: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    padding: '12px',
-    marginBottom: '8px',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-  },
-  userName: {
-    fontSize: '16px',
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  userMeta: {
-    fontSize: '12px',
-    color: '#888',
-    marginTop: '4px',
-  },
-  // Back button
-  backRow: {
-    marginBottom: '12px',
-  },
-  backText: {
-    fontSize: '15px',
-    color: '#4c8caf',
-    fontWeight: 'bold',
-  },
-  // Post card
-  postCard: {
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-    padding: '12px',
-    marginBottom: '8px',
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-  },
-  postHeader: {
-    display: 'flex' as const,
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'flex-start' as const,
-  },
-  postTitle: {
-    fontSize: '14px',
-    fontWeight: 'bold',
-    color: '#222',
-    flex: 1,
-  },
-  deleteBtn: {
-    fontSize: '16px',
-    color: '#e53e3e',
-    marginLeft: '8px',
-    padding: '0 4px',
-  },
-  postBody: {
-    fontSize: '12px',
-    color: '#666',
-    marginTop: '6px',
-    lineHeight: '18px',
-  },
-}
-</script>

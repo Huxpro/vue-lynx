@@ -32,6 +32,12 @@ describe("Vapor overlay transforms", () => {
     );
   });
 
+  test("opts template-only SFCs into Vapor", () => {
+    expect(transformSFC("<template><view /></template>")).toMatch(
+      /^<script setup vapor><\/script>/
+    );
+  });
+
   test("copies binary assets byte-for-byte", async () => {
     const directory = await mkdtemp(join(tmpdir(), "vue-lynx-vapor-"));
     const source = join(directory, "source.png");
@@ -56,5 +62,19 @@ describe("Vapor overlay transforms", () => {
         "utf8"
       )
     ).toContain("<script setup vapor");
+  });
+
+  test("enables Vapor for an empty pluginVueLynx call", async () => {
+    const result = await generateVaporOverlay(root, "event-modifiers");
+    const config = await readFile(result.configPath, "utf8");
+
+    expect(config).toMatch(/pluginVueLynx\(\{[\s\S]*vapor:\s*true/);
+  });
+
+  test("adds an isolated output block when the original config has none", async () => {
+    const result = await generateVaporOverlay(root, "networking");
+    const config = await readFile(result.configPath, "utf8");
+
+    expect(config).toMatch(/output:\s*\{[\s\S]*dist-vapor/);
   });
 });
