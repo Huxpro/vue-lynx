@@ -36,6 +36,11 @@ import {
   createVaporApp as _createVaporApp,
   renderEffect,
 } from '@vue/runtime-vapor';
+import {
+  getCurrentInstance,
+  onMounted,
+  watchPostEffect,
+} from '@vue/runtime-core';
 import type { App, Component } from '@vue/runtime-core';
 
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
@@ -43,6 +48,7 @@ import type { InputEventData } from '../event-modifiers.js';
 import { createPageRoot } from '../shadow-element.js';
 import type { ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';
+import { applyVaporCssVarsToBlock } from './css-vars.js';
 
 // ---------------------------------------------------------------------------
 // Full helper surface (explicit exports below override these).
@@ -156,6 +162,22 @@ export function applyTextModel(
     if (str !== el.value) {
       el.value = str; // emits SET_PROP('value', …)
     }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// SFC CSS variables — ShadowElement block traversal instead of DOM observers
+// ---------------------------------------------------------------------------
+
+/** Lynx-specific runtime-vapor implementation used by SFC CSS v-bind(). */
+export function useVaporCssVars(getter: () => Record<string, string>): void {
+  const instance = getCurrentInstance() as unknown as { block?: unknown } | null;
+  if (!instance) return;
+
+  onMounted(() => {
+    watchPostEffect(() => {
+      applyVaporCssVarsToBlock(instance.block, getter());
+    });
   });
 }
 

@@ -30,6 +30,7 @@ import type {
   TemplateNodeProps,
 } from 'vue-lynx/internal/ops';
 import { scheduleFlush } from './flush.js';
+import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
   idRegistry,
@@ -645,6 +646,7 @@ export class ShadowElement {
   // --- attributes --------------------------------------------------------------
 
   setAttribute(key: string, value: unknown): void {
+    if (!this._inert && applyMainThreadProp(this, key, value)) return;
     const strValue = value == null ? '' : String(value);
     if (this._inert) {
       // Template prototype: record only; ops are emitted on clone.
@@ -685,6 +687,7 @@ export class ShadowElement {
   }
 
   removeAttribute(key: string): void {
+    if (!this._inert && applyMainThreadProp(this, key, null)) return;
     if (key === 'class') {
       if (!this._baseClass) return;
       this._baseClass = '';

@@ -5,9 +5,12 @@
   "scripts": {
     "build:vapor": "node src/build-vapor.mjs",
     "inventory": "node src/inventory-cli.mjs",
+    "verify:status": "node src/verify-status.mjs",
+    "verify:web": "node src/verify-web.mjs",
     "test": "vitest run --no-file-parallelism"
   },
   "devDependencies": {
+    "playwright-core": "^1.61.1",
     "vitest": "^3.2.4"
   }
 }
