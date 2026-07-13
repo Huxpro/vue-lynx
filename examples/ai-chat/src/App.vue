@@ -38,7 +38,10 @@ onMounted(async () => {
 
 <template>
   <view class="root w-full h-full bg-page font-sans" :class="themeClass" :style="rootStyle">
-    <view class="flex flex-row flex-1 h-full" :style="{ opacity: dimmed ? '0.4' : '1' }">
+    <view
+      class="flex flex-row flex-1 h-full app-content"
+      :style="{ opacity: dimmed ? '0.4' : '1' }"
+    >
       <Sidebar v-if="!isMobile" />
 
       <!-- mobile: full-bleed panel, like the original's lg: breakpoint -->
@@ -51,12 +54,21 @@ onMounted(async () => {
     </view>
 
     <!-- mobile slide-over sidebar (UDashboardSidebar's menu mode) -->
-    <template v-if="isMobile && sidebarOpen">
-      <view class="absolute inset-0 z-30" @tap="closeSidebar()" />
-      <view class="absolute top-0 bottom-0 left-0 z-40 drawer-panel shadow-lg">
+    <Transition name="drawer-backdrop" :duration="{ enter: 240, leave: 180 }">
+      <view
+        v-if="isMobile && sidebarOpen"
+        class="absolute inset-0 z-30"
+        @tap="closeSidebar()"
+      />
+    </Transition>
+    <Transition name="drawer-panel" :duration="{ enter: 240, leave: 180 }">
+      <view
+        v-if="isMobile && sidebarOpen"
+        class="absolute top-0 bottom-0 left-0 z-40 drawer-panel shadow-lg"
+      >
         <Sidebar drawer />
       </view>
-    </template>
+    </Transition>
 
     <Toaster />
     <OverlayHost />
@@ -68,8 +80,31 @@ onMounted(async () => {
   display: flex;
   flex-direction: row;
 }
+.app-content {
+  transition: opacity 240ms cubic-bezier(0.25, 1, 0.5, 1);
+}
 .drawer-panel {
   width: 288px;
   background-color: var(--ui-bg-sidebar);
+}
+.drawer-panel-enter-active {
+  transition: transform 240ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.drawer-panel-leave-active {
+  transition: transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.drawer-panel-enter-from,
+.drawer-panel-leave-to {
+  transform: translateX(-100%);
+}
+.drawer-backdrop-enter-active {
+  transition: opacity 240ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.drawer-backdrop-leave-active {
+  transition: opacity 180ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+.drawer-backdrop-enter-from,
+.drawer-backdrop-leave-to {
+  opacity: 0;
 }
 </style>
