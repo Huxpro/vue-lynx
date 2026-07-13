@@ -127,7 +127,17 @@ html, body {
   pointer-events: none;
   opacity: 0.85;
   mask-image: linear-gradient(to bottom, black 0%, black 60%, transparent 100%);
+  transition: opacity 0.5s ease;
 }
+
+/* =========================================================
+   Slide flags — data-bg / data-transition / data-chrome
+   applied per slide by main.js (see systems/flags.js).
+   ========================================================= */
+.deck[data-bg="clean"] .meteors { opacity: 0; }
+.chrome, .progress { transition: opacity 0.4s ease; }
+.is-chrome-hidden { opacity: 0 !important; pointer-events: none !important; }
+.deck.is-cut .slide { transition: none !important; }
 
 .slide {
   position: absolute;

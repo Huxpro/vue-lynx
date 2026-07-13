@@ -28,6 +28,9 @@ Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 | `1`..`9`                  | Jump to slide N         |
 | `.`                       | Toggle light mode       |
 | `l`                       | Toggle 中文 / English   |
+| `⌘K` / `Ctrl-K`           | Command palette         |
+| `/`                       | Palette (slash mode)    |
+| `d`                       | DevTool panel           |
 | **`s`**                   | **Open speaker view**   |
 | `b`                       | Blackout audience screen|
 
@@ -50,6 +53,34 @@ and the whole slide scales down as one piece instead of reflowing. The corner
 Because the frame is a size container, size everything **in `cqw` / `cqh`**
 (1cqw = 12.8px, 1cqh = 7.2px), not `vw` / `vh` — those resolve to the design
 canvas, not the raw viewport.
+
+## Systems — palette, devtool, slide flags
+
+Ported in spirit from [hux.pro](https://hux.pro)'s `systems/` (vanilla JS, in
+this deck's design language) so the two can converge on one slide framework and
+this deck can be embedded into hux.pro later. Lives in `src/systems/`.
+
+**Command Palette** (`⌘K` / `Ctrl-K`, or `/` for slash mode). Search + run:
+navigation (next/prev/first/last), presenter (speaker view, overview, blackout,
+fullscreen), and settings (theme, language, background, devtool). In slash mode
+a single key runs an action (the hint shown on the right).
+
+**DevTool** (`d`). A foldable inspector (top-right) showing the deck's global
+config (theme, language, slide, stage scale, reduced-motion) and the current
+slide's flags + metadata (title, notes, `data-flip` ids). The flag chips are
+clickable — click to cycle and live-override that slide's flag; "reset
+overrides" clears them.
+
+**Slide flags** — standardized `data-*` on each `<section class="slide">`
+(vocabulary in `systems/flags.js`, applied in `main.js`):
+
+| Flag              | Values                    | Default | Effect |
+| ----------------- | ------------------------- | ------- | ------ |
+| `data-bg`         | `beam` · `clean`          | `beam`  | meteor field vs flat stage |
+| `data-transition` | `magic` · `fade` · `cut`  | `magic` | how the slide enters (magic move / fade / hard cut) |
+| `data-chrome`     | `full` · `minimal` · `none` (or a piece list: `brand controls counter link progress`, or edge aliases `top bottom left right`) | `full` | which corner chrome + progress bar show |
+
+Example: `<section class="slide thankyou" data-bg="clean" data-chrome="minimal">`.
 
 ## Magic move (Keynote-style)
 

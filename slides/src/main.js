@@ -2,6 +2,9 @@ import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
 import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
+import { readFlags, expandChrome } from './systems/flags.js';
+import { initCommand } from './systems/command.js';
+import { initDevtool } from './systems/devtool.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -313,6 +316,49 @@ function magicMove(fromSlide, toSlide) {
   return true;
 }
 
+// =========================================================
+// Slide flags — background / transition / chrome per slide.
+// Overrides (from the DevTool) merge over the slide's data-*.
+// =========================================================
+const flagOverrides = new Map(); // index -> { bg?, transition?, chrome? }
+const CHROME_EL = {
+  brand: document.querySelector('.chrome--top'),
+  controls: document.querySelector('.chrome--top-right'),
+  counter: document.querySelector('.chrome--bottom'),
+  link: document.querySelector('.chrome--bottom-right'),
+  progress: document.querySelector('.progress'),
+};
+
+function resolveFlags(index) {
+  return { ...readFlags(slides[index]), ...(flagOverrides.get(index) || {}) };
+}
+
+function applyChromeAndBg(flags) {
+  deck.dataset.bg = flags.bg;
+  const visible = expandChrome(flags.chrome);
+  for (const [piece, elx] of Object.entries(CHROME_EL)) {
+    if (elx) elx.classList.toggle('is-chrome-hidden', !visible.has(piece));
+  }
+}
+
+function setFlagOverride(index, key, value) {
+  const cur = flagOverrides.get(index) || {};
+  if (value == null) delete cur[key];
+  else cur[key] = value;
+  if (Object.keys(cur).length) flagOverrides.set(index, cur);
+  else flagOverrides.delete(index);
+  if (index === current) applyChromeAndBg(resolveFlags(current));
+}
+
+function hasFlagOverride(index, key) {
+  return flagOverrides.get(index)?.[key] !== undefined;
+}
+
+function clearFlags(index) {
+  flagOverrides.delete(index);
+  if (index === current) applyChromeAndBg(resolveFlags(current));
+}
+
 function setSlide(index, opts = {}) {
   // Finalize any in-flight magic move before changing slides, so a fast
   // navigation can't leave a morphing slide pinned visible (is-morphing-in).
@@ -320,13 +366,24 @@ function setSlide(index, opts = {}) {
   const prev = current;
   current = Math.max(0, Math.min(slides.length - 1, index));
   const adjacent = Math.abs(current - prev) === 1;
+  const flags = resolveFlags(current);
+  const cut = flags.transition === 'cut';
+  if (cut) deck.classList.add('is-cut'); // disables .slide transition for this change
+
   slides.forEach((s, i) => {
     s.classList.toggle('is-active', i === current);
     s.classList.toggle('is-prev', i < current);
   });
-  if (adjacent && !opts.jump) {
+  applyChromeAndBg(flags);
+
+  if (flags.transition === 'magic' && adjacent && !opts.jump) {
     magicMove(slides[prev], slides[current]);
   }
+  if (cut) {
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => deck.classList.remove('is-cut')));
+  }
+
   if (progressBar) {
     progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
   }
@@ -342,6 +399,9 @@ function setSlide(index, opts = {}) {
   if (!opts.fromChannel) {
     broadcastState();
   }
+  document.dispatchEvent(new CustomEvent('deck:change', {
+    detail: { index: current, total: slides.length },
+  }));
 }
 
 function preloadDemosNear(index) {
@@ -462,6 +522,7 @@ function applyBlackout(on) {
 if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
+    if (document.querySelector('.cmdk')) return; // command palette owns the keyboard
 
     switch (e.key) {
       case 'ArrowRight':
@@ -523,6 +584,7 @@ if (!embedMode) {
   let wheelLock = false;
   deck.addEventListener('wheel', (e) => {
     if (deck.classList.contains('overview')) return;
+    if (document.querySelector('.cmdk')) return;
     if (wheelLock) return;
     const threshold = 30;
     if (Math.abs(e.deltaY) < threshold && Math.abs(e.deltaX) < threshold) return;
@@ -772,6 +834,7 @@ document.querySelector('[data-lang-toggle]')?.addEventListener('click', toggleLa
 if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
+    if (document.querySelector('.cmdk')) return; // palette handles its own 'l'
     if (e.key === 'l' || e.key === 'L') toggleLang();
   });
 }
@@ -785,6 +848,46 @@ channel.addEventListener('message', (ev) => {
     toggleLang();
   }
 });
+
+// =========================================================
+// Deck controller — the single API the Command Palette and
+// DevTool read/drive. Mirrors hux.pro's provider surface so
+// the two decks can converge on one slide framework.
+// =========================================================
+const deckApi = {
+  next, prev, first, last,
+  goto: (i) => setSlide(i, { jump: true }),
+  current: () => current,
+  total: () => slides.length,
+  meta: () => slideMeta,
+  slideEl: (i) => slides[i ?? current],
+  flags: (i) => resolveFlags(i ?? current),
+  setFlag: (key, value, i) => setFlagOverride(i ?? current, key, value),
+  hasOverride: (i, key) => hasFlagOverride(i, key),
+  clearFlags: (i) => clearFlags(i ?? current),
+  lang: () => currentLang,
+  toggleLang,
+  theme: () => (document.documentElement.classList.contains('light') ? 'light' : 'dark'),
+  toggleTheme: () => {
+    document.documentElement.classList.toggle('light');
+    channel.postMessage({ type: 'theme-toggle-mirror' });
+  },
+  overview: () => deck.classList.contains('overview'),
+  toggleOverview: () => deck.classList.toggle('overview'),
+  isBlackout: () => blackedOut,
+  blackout: () => {
+    applyBlackout(!blackedOut);
+    channel.postMessage({ type: 'blackout', on: blackedOut });
+  },
+  fullscreen: toggleFullscreen,
+  openSpeaker: openSpeakerWindow,
+  stageScale: () => stageScale,
+  reducedMotion: () => REDUCED_MOTION,
+  embed: () => embedMode,
+};
+
+const devtool = initDevtool(deckApi);
+initCommand(deckApi, { devtool });
 
 // Tell the world we're closing too (so the speaker can grey out if needed)
 window.addEventListener('beforeunload', () => {
