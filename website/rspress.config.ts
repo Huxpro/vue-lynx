@@ -115,6 +115,7 @@ export default defineConfig({
         { text: 'TodoMVC', link: '/guide/todomvc' },
         { text: '7GUIs', link: '/guide/7guis' },
         { text: 'HackerNews', link: '/guide/hackernews' },
+        { text: 'AI Chat', link: '/guide/ai-chat' },
         {
           dividerType: 'solid',
         },
@@ -157,6 +158,7 @@ export default defineConfig({
         { text: 'TodoMVC', link: '/zh/guide/todomvc' },
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
+        { text: 'AI Chat', link: '/zh/guide/ai-chat' },
         {
           dividerType: 'solid',
         },

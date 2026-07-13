@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind utilities;
+
+/*
+ * Nuxt UI v4 design tokens (neutral = zinc, primary = blue), ported from the
+ * original template's compiled theme. Light is the :root default; themes are
+ * switched by applying .theme-light / .theme-dark on the root element.
+ *
+ * Note: an explicit .theme-light class mirrors :root to work around
+ * __SetClasses not handling empty class strings (lynx issue #5685).
+ */
+
+:root,
+.theme-light {
+  /* code tokens (github-light-ish, replaces Shiki themes) */
+  --tok-kw: #cf222e;
+  --tok-str: #0a3069;
+  --tok-com: #6e7781;
+  --tok-num: #0550ae;
+  --tok-fn: #8250df;
+  --tok-plain: #24292f;
+
+  --ui-primary: #2563eb; /* blue-600 */
+  --ui-error: #ef4444; /* red-500 */
+  --ui-success: #22c55e; /* green-500 */
+
+  --ui-text-dimmed: #a1a1aa; /* zinc-400 */
+  --ui-text-muted: #71717a; /* zinc-500 */
+  --ui-text-toned: #52525b; /* zinc-600 */
+  --ui-text: #3f3f46; /* zinc-700 */
+  --ui-text-highlighted: #18181b; /* zinc-900 */
+  --ui-text-inverted: #ffffff;
+
+  --ui-bg-page: #fafafa; /* body: bg-neutral-50 */
+  --ui-bg: #ffffff;
+  --ui-bg-muted: #fafafa; /* zinc-50 */
+  --ui-bg-elevated: #f4f4f5; /* zinc-100 */
+  --ui-bg-accented: #e4e4e7; /* zinc-200 */
+  --ui-bg-inverted: #18181b;
+
+  --ui-border: #e4e4e7; /* zinc-200 */
+  --ui-border-muted: #e4e4e7;
+  --ui-border-accented: #d4d4d8; /* zinc-300 */
+
+  /* sidebar uses bg-elevated in light, neutral-900 in dark (template override) */
+  --ui-bg-sidebar: #fafafa;
+  --ui-bg-elevated-half: #f9f9fa; /* 50% blend of bg and elevated */
+}
+
+.theme-dark {
+  /* code tokens (github-dark-ish) */
+  --tok-kw: #ff7b72;
+  --tok-str: #a5d6ff;
+  --tok-com: #8b949e;
+  --tok-num: #79c0ff;
+  --tok-fn: #d2a8ff;
+  --tok-plain: #e6edf3;
+
+  --ui-primary: #60a5fa; /* blue-400 */
+  --ui-error: #f87171; /* red-400 */
+  --ui-success: #4ade80; /* green-400 */
+
+  --ui-text-dimmed: #71717a; /* zinc-500 */
+  --ui-text-muted: #a1a1aa; /* zinc-400 */
+  --ui-text-toned: #d4d4d8; /* zinc-300 */
+  --ui-text: #e4e4e7; /* zinc-200 */
+  --ui-text-highlighted: #ffffff;
+  --ui-text-inverted: #18181b;
+
+  --ui-bg-page: #09090b; /* body: bg-neutral-950 */
+  --ui-bg: #18181b; /* zinc-900 */
+  --ui-bg-muted: #27272a; /* zinc-800 */
+  --ui-bg-elevated: #27272a; /* zinc-800 */
+  --ui-bg-accented: #3f3f46; /* zinc-700 */
+  --ui-bg-inverted: #ffffff;
+
+  --ui-border: #27272a; /* zinc-800 */
+  --ui-border-muted: #3f3f46;
+  --ui-border-accented: #3f3f46; /* zinc-700 */
+
+  --ui-bg-sidebar: #09090b;
+  --ui-bg-elevated-half: #202023;
+}
+
+/* --- semantic text/bg utilities not expressible via the tailwind config --- */
+
+.text-default {
+  color: var(--ui-text);
+}
+
+.bg-sidebar {
+  background-color: var(--ui-bg-sidebar);
+}
+
+/* --- utilities missing from @lynx-js/tailwind-preset ---------------------- */
+
+.justify-start {
+  justify-content: flex-start;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+
+/* --- code token colors ---------------------------------------------------- */
+
+.tok-kw {
+  color: var(--tok-kw);
+}
+.tok-str {
+  color: var(--tok-str);
+}
+.tok-com {
+  color: var(--tok-com);
+}
+.tok-num {
+  color: var(--tok-num);
+}
+.tok-fn {
+  color: var(--tok-fn);
+}
+.tok-plain {
+  color: var(--tok-plain);
+}
+
+/* --- shared overlay/animation classes -------------------------------------
+   Component <style> blocks are scoped to their component's cssId on Lynx,
+   so classes used across components must be declared globally here. */
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.55);
+}
+
+.sheet-backdrop {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.shimmer-pulse {
+  animation: shimmer-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.text-white {
+  color: #ffffff;
+}
