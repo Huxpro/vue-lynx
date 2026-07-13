@@ -104,6 +104,7 @@ export default defineConfig({
         'src/components/home-comps/showcase/ScaleCompare.tsx',
       ),
       path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
+      path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
     ],
   },
   route: {
