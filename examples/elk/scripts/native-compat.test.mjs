@@ -7,7 +7,120 @@ const domExceptionCompat = await import('../src/dom-exception-compat.ts').catch(
 const fetchCompat = await import('../src/fetch-compat.ts').catch(() => ({}));
 const profileLoadCompat = await import('../src/composables/profile-load.ts').catch(() => ({}));
 const safeAreaCompat = await import('../src/safe-area.ts').catch(() => ({}));
+const sheetGesture = await import('../src/components/sheet/gesture.ts').catch(() => ({}));
+const navItems = await import('../src/components/nav-items.ts').catch(() => ({}));
 const lynxConfig = (await import('../lynx.config.ts')).default;
+
+test('sheet drag only follows intentional downward gestures and dismisses at 120px', () => {
+  assert.equal(sheetGesture.clampDownwardDrag?.(-18), 0);
+  assert.equal(sheetGesture.clampDownwardDrag?.(42), 42);
+  assert.equal(sheetGesture.isDownwardSheetGesture?.(0, 7), false);
+  assert.equal(sheetGesture.isDownwardSheetGesture?.(18, 12), false);
+  assert.equal(sheetGesture.isDownwardSheetGesture?.(4, 12), true);
+  assert.equal(sheetGesture.isDownwardSheetGesture?.(0, -12), false);
+  assert.equal(sheetGesture.shouldDismissSheet?.(119, 120), false);
+  assert.equal(sheetGesture.shouldDismissSheet?.(120, 120), true);
+});
+
+test('Vue Lynx Sheet keeps presence controlled and drag work on the main thread', async () => {
+  const source = await readFile(
+    new URL('../src/components/sheet/Sheet.vue', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /modelValue/);
+  assert.match(source, /v-show="modelValue"/);
+  assert.doesNotMatch(source, /v-if="modelValue"/);
+  assert.match(source, /class="sheet-backdrop"[^>]*@tap="requestClose"/s);
+  assert.match(source, /<scroll-view/);
+  assert.match(source, /:main-thread-ref="panelRef"/);
+  assert.match(source, /:main-thread-bindtouchstart="handleTouchStart"/);
+  assert.match(source, /:main-thread-bindtouchmove="handleTouchMove"/);
+  assert.match(source, /:main-thread-bindtouchend="handleTouchEnd"/);
+  assert.match(source, /runOnBackground\(requestClose\)/);
+  assert.match(source, /transition:\s*opacity/);
+  assert.match(source, /transition:\s*transform/);
+  assert.doesNotMatch(source, /transition:\s*all/);
+});
+
+test('guest bottom navigation and More menu mirror upstream Elk', () => {
+  const tabs = navItems.buildBottomTabs?.({ authenticated: false, server: 'mas.to' });
+  assert.deepEqual(tabs?.map(item => item.label), [
+    'Explore',
+    'Local',
+    'Federated',
+    'More menu',
+  ]);
+
+  const menu = navItems.buildMoreMenuItems?.({
+    authenticated: false,
+    server: 'mas.to',
+    activePath: '/mas.to/public',
+  });
+  assert.deepEqual(menu?.map(item => item.label), [
+    'Search',
+    'Home',
+    'Notifications',
+    'Conversations',
+    'Favorites',
+    'Bookmarks',
+    'Compose',
+    'Scheduled posts',
+    'Explore',
+    'Local',
+    'Federated',
+    'Lists',
+    'Hashtags',
+    'Settings',
+  ]);
+
+  const byKey = Object.fromEntries(menu?.map(item => [item.key, item]) ?? []);
+  for (const key of ['home', 'notifications', 'conversations', 'favorites', 'bookmarks', 'compose', 'scheduled', 'lists', 'hashtags'])
+    assert.equal(byKey[key]?.disabled, true, key);
+  for (const key of ['search', 'explore', 'local', 'federated', 'settings'])
+    assert.equal(byKey[key]?.disabled, false, key);
+  assert.equal(byKey.federated?.active, true);
+});
+
+test('authenticated More menu enables implemented private routes', () => {
+  const menu = navItems.buildMoreMenuItems?.({
+    authenticated: true,
+    server: 'mas.to',
+    activePath: '/bookmarks',
+  });
+  const byKey = Object.fromEntries(menu?.map(item => [item.key, item]) ?? []);
+
+  for (const key of ['home', 'notifications', 'favorites', 'bookmarks', 'compose'])
+    assert.equal(byKey[key]?.disabled, false, key);
+  assert.equal(byKey.bookmarks?.active, true);
+  assert.equal(byKey.conversations?.disabled, true);
+});
+
+test('bottom navigation renders the Elk More sheet and persistent close tab', async () => {
+  const source = await readFile(
+    new URL('../src/components/NavBottom.vue', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /import Sheet from '.\/sheet\/Sheet\.vue'/);
+  assert.match(source, /buildBottomTabs/);
+  assert.match(source, /buildMoreMenuItems/);
+  assert.match(source, /<Sheet[^>]*v-model="sheetVisible"/s);
+  assert.match(source, /sheetVisible \? 'close-line' : tab\.icon/);
+  assert.match(source, /nav-sheet-item-disabled/);
+  assert.match(source, /toggleTheme/);
+  assert.match(source, /toggleZenMode/);
+  assert.match(source, /sheetVisible\.value = false/);
+});
+
+test('sheet and bottom bar share one stable root across Transition removal', async () => {
+  const source = await readFile(
+    new URL('../src/components/NavBottom.vue', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(source, /<template>\s*<view class="nav-shell">[\s\S]*<Sheet[\s\S]*<view class="nav-bottom">[\s\S]*<\/view>\s*<\/view>\s*<\/template>/);
+});
 
 test('ASCII case adapter preserves masto action and response key conversion', () => {
   const fixtures = [

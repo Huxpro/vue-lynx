@@ -8,6 +8,7 @@ export interface UserSettings {
   hideRepliesInTimeline: boolean;
   fontSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   colorMode: 'light' | 'dark';
+  zenMode: boolean;
 }
 
 const settings = reactive<UserSettings>({
@@ -15,6 +16,7 @@ const settings = reactive<UserSettings>({
   hideRepliesInTimeline: false,
   fontSize: 'md',
   colorMode: 'light',
+  zenMode: false,
 });
 
 export function useUserSettings() {
