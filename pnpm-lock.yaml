@@ -40,10 +40,10 @@ importers:
     devDependencies:
       '@lynx-js/rspeedy':
         specifier: ^0.13.5
-        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@2.0.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -56,10 +56,10 @@ importers:
     devDependencies:
       '@lynx-js/rspeedy':
         specifier: ^0.13.5
-        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@2.0.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -613,6 +613,12 @@ importers:
       vue-lynx:
         specifier: workspace:*
         version: link:../vue-lynx
+
+  packages/example-harness:
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@25.5.0)(jiti@2.6.1)(jsdom@25.0.1)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/testing-library:
     devDependencies:
