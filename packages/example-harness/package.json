@@ -1,0 +1,12 @@
+{
+  "name": "vue-lynx-example-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "inventory": "node src/inventory-cli.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
