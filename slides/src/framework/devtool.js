@@ -4,7 +4,7 @@
 // and lets you live-override the flags. Toggle with `d` or the palette.
 // =============================================================================
 
-import './systems.css';
+import './framework.css';
 import { FLAG_SPEC } from './flags.js';
 import { icon } from './icons.js';
 

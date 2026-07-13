@@ -141,10 +141,25 @@ piped to the speaker view through the BroadcastChannel.
 app via `@lynx-js/web-core/client`. Each embed lazy-loads the runtime on
 first reveal so the opening slides stay snappy.
 
+## Code layout — framework vs content
+
+There's a deliberate boundary between the **reusable slide engine** and this
+deck's **content**:
+
+- **`src/framework/`** — the content-agnostic engine (stage fit, magic move,
+  slide flags, command palette, devtool). See `src/framework/README.md`. Driven
+  entirely through the `deckApi` controller + a `deck:change` event, so it can
+  converge with hux.pro and be embedded there later.
+- **`src/` (everything else)** — the deck itself: the slides, design language,
+  translations, the landscape diagram, and `main.js` (the app entry that builds
+  the controller, owns navigation, and wires framework → content).
+
 ## Files
 
-- `index.html` — every slide as a `<section>` (no framework)
-- `src/main.js` — slide navigation, magic move, `<vl-demo>` lazy loader
+- `index.html` — every slide as a `<section class="slide">`
+- `src/main.js` — deck app entry: `deckApi` controller, navigation, boot,
+  `<vl-demo>` lazy loader, and framework wiring
+- `src/framework/` — reusable slide engine (see its README)
 - `src/arch.js` — data-driven "layers & seams" diagram for the cross-platform
   landscape chapter (rendered into each `.arch-mount`, one column per slide)
 - `src/i18n.js` — Chinese translations. English is the inline source; visible
