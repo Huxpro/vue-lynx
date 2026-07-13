@@ -111,6 +111,7 @@ export type * from '@vue/runtime-core';
 // ---------------------------------------------------------------------------
 
 export { nextTick } from './next-tick.js';
+export { useCssModule } from './use-css-module.js';
 export { withKeys, withModifiers } from './event-modifiers.js';
 export {
   MainThreadRef,

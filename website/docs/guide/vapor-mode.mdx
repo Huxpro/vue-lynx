@@ -138,7 +138,7 @@ app **fails at build time** instead of misbehaving at runtime.
 Upstream `@vue/runtime-vapor` drives the browser DOM directly — there is no
 custom-renderer hook like the Virtual DOM's `createRenderer()`. Vue Lynx
 instead makes the Background Thread's ShadowElement tree *DOM-compatible*:
-the compiled Vapor code (and the **unmodified** Vapor runtime) call standard
+the compiled Vapor code and its Lynx-specific helper overrides call standard
 DOM APIs — `insertBefore`, `cloneNode`, `setAttribute`, `addEventListener`,
 `el.style` — and those calls emit the same flat ops stream to the Main
 Thread that vdom mode uses.
@@ -208,7 +208,7 @@ The Vapor entry exports everything a Vapor app needs:
 | Reactivity & composition (from Vue) | `ref`, `reactive`, `computed`, `watch`, `watchEffect`, `provide`/`inject`, lifecycle hooks (`onMounted`, …), `effectScope`, `defineComponent`, `defineAsyncComponent`, and the other standard `@vue/runtime-core` APIs |
 | SFC macros | `defineProps`, `defineEmits`, `defineModel`, `defineExpose`, `useTemplateRef` (compiler-handled, typed via the entry) |
 | Vapor runtime helpers | The full `@vue/runtime-vapor` helper surface that compiled `<script setup vapor>` code imports (`template`, `createComponent`, `createFor`, `createIf`, `renderEffect`, …) — you rarely touch these directly |
-| Lynx utilities | `nextTick` (resolves after the Main Thread applies the update — same [tick semantics](/guide/introduction#understanding-the-dual-thread-model) as vdom mode), `withModifiers` / `withKeys`, `MainThreadRef` / `useMainThreadRef`, `runOnMainThread` / `runOnBackground` ([Main Thread Script](/guide/main-thread-script) works identically in Vapor mode) |
+| Lynx utilities | `nextTick` (resolves after the Main Thread applies the update — same [tick semantics](/guide/introduction#understanding-the-dual-thread-model) as vdom mode), `useCssModule`, `withModifiers` / `withKeys`, `MainThreadRef` / `useMainThreadRef`, `runOnMainThread` / `runOnBackground` ([Main Thread Script](/guide/main-thread-script) works identically in Vapor mode) |
 
 Intentionally **absent** (importing them is a build-time error):
 
@@ -219,6 +219,68 @@ Intentionally **absent** (importing them is a build-time error):
   differently; the directives work in templates, only the manual imports are gone
 - `vaporInteropPlugin` — mixing modes is not supported (throws with an
   explanatory error)
+
+## Verified example matrix
+
+Every configured example entry is built and visited in Chromium through Lynx
+for Web. The same scenario runs against VDOM and Vapor; supported rows must
+pass both modes and their feature checkpoint. The current result is **36
+supported / 9 intentionally unsupported**, with **45/45 VDOM entries passing**.
+Each `<Go>` block also exposes this status and a local `VDOM | Vapor` switch
+when the selected entry is supported.
+
+| Entry | Vapor | Strategy / reason |
+|---|---|---|
+| `7guis/cells` | Supported | `direct` |
+| `7guis/circle-drawer` | Supported | `direct` |
+| `7guis/counter` | Supported | `direct` |
+| `7guis/crud` | Supported | `direct` |
+| `7guis/flight-booker` | Supported | `direct` |
+| `7guis/temperature-converter` | Supported | `direct` |
+| `7guis/timer` | Supported | `direct` |
+| `basic/h-counter` | Unsupported | `render-function` |
+| `basic/main` | Supported | `direct` |
+| `css-features/main` | Supported | `direct` |
+| `event-modifiers/main` | Supported | `direct` |
+| `gallery/GalleryAutoScroll` | Supported | `direct` |
+| `gallery/GalleryComplete` | Supported | `direct` |
+| `gallery/GalleryList` | Supported | `direct` |
+| `gallery/GalleryScrollbar` | Supported | `direct` |
+| `gallery/GalleryScrollbarCompare` | Supported | `direct` |
+| `gallery/ImageCard` | Supported | `adapter` |
+| `gallery/LikeCard` | Supported | `adapter` |
+| `hackernews-css/main` | Unsupported | `vue-router-and-transitions` |
+| `hackernews-tailwind/main` | Unsupported | `vue-router-and-transitions` |
+| `hello-world/main` | Supported | `direct` |
+| `keep-alive/main` | Unsupported | `keep-alive` |
+| `main-thread/background-draggable` | Supported | `direct` |
+| `main-thread/cross-thread-calls` | Supported | `direct` |
+| `main-thread/main-thread-draggable` | Supported | `direct` |
+| `main-thread/main-thread-draggable-raw` | Supported | `direct` |
+| `main-thread/shared-module` | Supported | `direct` |
+| `networking/main` | Supported | `adapter` |
+| `option-api/main` | Unsupported | `options-api` |
+| `pinia/main` | Supported | `direct` |
+| `provide-inject/main` | Supported | `direct` |
+| `reactivity/main` | Supported | `direct` |
+| `slots/main` | Supported | `direct` |
+| `suspense/main` | Unsupported | `suspense` |
+| `swiper/Swiper` | Supported | `adapter` |
+| `swiper/SwiperEmpty` | Supported | `adapter` |
+| `swiper/SwiperMTS` | Supported | `adapter` |
+| `tailwindcss/main` | Supported | `direct` |
+| `todomvc-codex/main` | Unsupported | `vue-router` |
+| `todomvc-day1/main` | Supported | `direct` |
+| `todomvc/main` | Supported | `direct` |
+| `transition/transition` | Unsupported | `transition` |
+| `v-model/main` | Supported | `direct` |
+| `vapor/main` | Supported | `direct` |
+| `vue-router/main` | Unsupported | `vue-router` |
+
+The machine-readable matrix, including source hashes and verification evidence,
+lives in `examples/vapor-support.json`. Unsupported reason codes correspond to
+the limitations below; `adapter` means only the entry bootstrap was converted,
+while the feature component and behavior stay the same.
 
 ## Current limitations
 

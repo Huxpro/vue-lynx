@@ -10,7 +10,7 @@ function run(command, arguments_, options) {
   return new Promise((resolve) => {
     const child = spawn(command, arguments_, {
       ...options,
-      env: { ...process.env, FORCE_COLOR: "0" },
+      env: { ...process.env, NODE_ENV: "production", FORCE_COLOR: "0" },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";

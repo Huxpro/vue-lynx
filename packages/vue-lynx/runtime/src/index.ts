@@ -237,6 +237,7 @@ export function createApp(
 
 // nextTick lives in next-tick.ts (shared with the Vapor entry).
 export { nextTick } from './next-tick.js';
+export { useCssModule } from './use-css-module.js';
 
 export {
   MainThreadRef,
