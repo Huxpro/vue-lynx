@@ -1,4 +1,4 @@
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 
 import { describe, expect, test } from "vitest";
 
@@ -26,10 +26,16 @@ describe("Vapor example build", () => {
     expect(
       await exists(new URL("examples/basic/dist-vapor/main.lynx.bundle", root))
     ).toBe(true);
-    expect(
-      await exists(
-        new URL("examples/basic/dist-vapor/h-counter.web.bundle", root)
-      )
-    ).toBe(false);
+      expect(
+        await exists(
+          new URL("examples/basic/dist-vapor/h-counter.web.bundle", root)
+        )
+      ).toBe(false);
+      expect(
+        await readFile(
+          new URL("examples/basic/dist-vapor/main.web.bundle", root),
+          "utf8"
+        )
+      ).not.toContain("process.env.NODE_ENV");
   }, 120_000);
 });

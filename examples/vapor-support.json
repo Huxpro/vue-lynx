@@ -4,44 +4,107 @@
     {
       "id": "7guis/cells",
       "entry": "./src/cells/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/cells"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/cells",
+      "verification": {
+        "sourceHash": "0bbef00d8d7d8ae1d5b9541db94e160d6c7d3d5232bf28f777b82a6c5cbc699b",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/circle-drawer",
       "entry": "./src/circle-drawer/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/circle-drawer"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/circle-drawer",
+      "verification": {
+        "sourceHash": "e5f474ba7645f61dc6855355ee2ed6d05fb0ddb6e8341b366a0f2107e2682ce5",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/counter",
       "entry": "./src/counter/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/counter"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/counter",
+      "verification": {
+        "sourceHash": "cac90d2393f241ba658275b5280dea6e961e498530209492b5e2012964ae731d",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/crud",
       "entry": "./src/crud/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/crud"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/crud",
+      "verification": {
+        "sourceHash": "21523a45d6c9a4aca0a67448e96b48717aafca8bbd7bc264a2b9bfacfd9b9d55",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/flight-booker",
       "entry": "./src/flight-booker/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/flight-booker"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/flight-booker",
+      "verification": {
+        "sourceHash": "38f3db6b00883fd0d2aa5dde855240e7e3e4ca4e2160a49ff44eb09b8fcfba97",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/temperature-converter",
       "entry": "./src/temperature-converter/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/temperature-converter"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/temperature-converter",
+      "verification": {
+        "sourceHash": "f16e95261494c156b00a336af2b16bd0e5c571f47466905df898e02949a22bf3",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "7guis/timer",
       "entry": "./src/timer/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "7guis/timer"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/timer",
+      "verification": {
+        "sourceHash": "71f930ffc8fcdf965c62ec68318e37a708f8ff7a19df88ebfef610a66e41cd87",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "basic/h-counter",
@@ -49,75 +112,169 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "render-function",
-        "evidence": ["examples/basic/src/h-counter.ts"]
+        "evidence": [
+          "examples/basic/src/h-counter.ts"
+        ]
       },
-      "scenario": "basic/h-counter"
+      "scenario": "basic/h-counter",
+      "verification": {
+        "sourceHash": "6710f72fbc24b3c9f2d4a226120315621392c7661d5bb4c3cf2af30eb6d39a5d",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "basic/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "basic/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "basic/main",
+      "verification": {
+        "sourceHash": "c6449977344f6a0aca610574b0958be200912405b33fdfdba4fde176e6c8f152",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "css-features/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "css-features/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "css-features/main",
+      "verification": {
+        "sourceHash": "130767dd8e1ae9ebb22056ee400de0df99a82fc759367b3ecadef595197ffeef",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "event-modifiers/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "event-modifiers/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "event-modifiers/main",
+      "verification": {
+        "sourceHash": "f01f30b6406eead52f1d6aa8153d03502828e5eb6ae5f60b474df32f035c804e",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/GalleryAutoScroll",
       "entry": "./src/GalleryAutoScroll/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "gallery/GalleryAutoScroll"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryAutoScroll",
+      "verification": {
+        "sourceHash": "20e94be511d93ea8bb350f87a7db13336cef0033f2bfd6c46d2a3f69d344df57",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/GalleryComplete",
       "entry": "./src/GalleryComplete/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "gallery/GalleryComplete"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryComplete",
+      "verification": {
+        "sourceHash": "da9b67ce6cd0fc9937ebed5ba92f058be9e1dc06be596f44e6d6cc7ef9c7f232",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/GalleryList",
       "entry": "./src/GalleryList/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "gallery/GalleryList"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryList",
+      "verification": {
+        "sourceHash": "ee579a28890f2391b446218682f0fe069f6a470cabb7fc45ab6ed8b1ac22ad91",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/GalleryScrollbar",
       "entry": "./src/GalleryScrollbar/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "gallery/GalleryScrollbar"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryScrollbar",
+      "verification": {
+        "sourceHash": "87c81e3cb60c4b3837b35c1f1f21c6a0f894ed5b85557c7373f12cecac3c29a6",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/GalleryScrollbarCompare",
       "entry": "./src/GalleryScrollbarCompare/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "gallery/GalleryScrollbarCompare"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryScrollbarCompare",
+      "verification": {
+        "sourceHash": "1f2f9ca5e8ec9feb8e9ffa2b07bf8faf3309e32e4562bfe8082dac4f370bb7da",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/ImageCard",
       "entry": "./src/ImageCard/index.ts",
       "vapor": {
-        "disposition": "adapter",
-        "vaporEntry": "./src/vapor-adapters/ImageCard.ts"
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/ImageCard.ts",
+        "strategy": "adapter"
       },
-      "scenario": "gallery/ImageCard"
+      "scenario": "gallery/ImageCard",
+      "verification": {
+        "sourceHash": "7c2a7fa196b3e6b0cc7bb264253d930d5fcd28ce24cf4a2beb150c36b0810ac6",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "gallery/LikeCard",
       "entry": "./src/LikeCard/index.ts",
       "vapor": {
-        "disposition": "adapter",
-        "vaporEntry": "./src/vapor-adapters/LikeCard.ts"
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/LikeCard.ts",
+        "strategy": "adapter"
       },
-      "scenario": "gallery/LikeCard"
+      "scenario": "gallery/LikeCard",
+      "verification": {
+        "sourceHash": "264a62564c11d50acd8b5d289e8048a78ed9154e1635c228869a6f27600637f0",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "hackernews-css/main",
@@ -130,7 +287,13 @@
           "examples/hackernews-css/src/router.ts"
         ]
       },
-      "scenario": "hackernews-css/main"
+      "scenario": "hackernews-css/main",
+      "verification": {
+        "sourceHash": "c8d8db3e91269c358b69c832797451dc730e94cb077e8521323bc3c12b8df1da",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "hackernews-tailwind/main",
@@ -143,13 +306,28 @@
           "examples/hackernews-tailwind/src/router.ts"
         ]
       },
-      "scenario": "hackernews-tailwind/main"
+      "scenario": "hackernews-tailwind/main",
+      "verification": {
+        "sourceHash": "b1ad1edca662a9d2f7a949f0d38b103aef885cf928c7b7742978ae5db7aaf058",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "hello-world/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "hello-world/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "hello-world/main",
+      "verification": {
+        "sourceHash": "770d42f437d9ad553e6f46eed76a09d137a994fd9a8cf93a801a2e993fad3e99",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "keep-alive/main",
@@ -157,45 +335,108 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "keep-alive",
-        "evidence": ["examples/keep-alive/src/App.vue"]
+        "evidence": [
+          "examples/keep-alive/src/App.vue"
+        ]
       },
-      "scenario": "keep-alive/main"
+      "scenario": "keep-alive/main",
+      "verification": {
+        "sourceHash": "d972953edc487c3d08f7eaaece6276879ff9272485d92f598f318633c8e460f2",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "main-thread/background-draggable",
       "entry": "./src/background-draggable/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "main-thread/background-draggable"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/background-draggable",
+      "verification": {
+        "sourceHash": "91d90211369ca71359c352227fd58841f7c7dc65adc10697069b3a598675a36b",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "main-thread/cross-thread-calls",
       "entry": "./src/cross-thread-calls/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "main-thread/cross-thread-calls"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/cross-thread-calls",
+      "verification": {
+        "sourceHash": "aba421486adad5e60cf7f9dc3227bae9a7305e80a5002ab76eaa50a499f10219",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "main-thread/main-thread-draggable",
       "entry": "./src/main-thread-draggable/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "main-thread/main-thread-draggable"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/main-thread-draggable",
+      "verification": {
+        "sourceHash": "21caa82fe0b6d9617b54dd310af055ce8af6d64b366cafb7413e775d3a32c15f",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "main-thread/main-thread-draggable-raw",
       "entry": "./src/main-thread-draggable-raw/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "main-thread/main-thread-draggable-raw"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/main-thread-draggable-raw",
+      "verification": {
+        "sourceHash": "b47c9b8968a98fc8a66e7813fe726bb4992c70648594b948db57dfef1f747b39",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "main-thread/shared-module",
       "entry": "./src/shared-module/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "main-thread/shared-module"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/shared-module",
+      "verification": {
+        "sourceHash": "2a1e6c2719d5e1f50658a1bc22f8677258ab0d09a4cb71627d10c5ad4058db7c",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "networking/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "adapter", "vaporEntry": "./src/index.ts" },
-      "scenario": "networking/main"
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/index.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "networking/main",
+      "verification": {
+        "sourceHash": "68624253b8c9b4fa87088aa8d6ff56effad6c2e14af441ebec3c0a6fd40fd8b4",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "option-api/main",
@@ -208,31 +449,73 @@
           "examples/option-api/src/Counter.vue"
         ]
       },
-      "scenario": "option-api/main"
+      "scenario": "option-api/main",
+      "verification": {
+        "sourceHash": "b6ebcb060f8f1b89e57c541902af2e3a63e311d01e5f5993249788e64687c7a6",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "pinia/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "pinia/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "pinia/main",
+      "verification": {
+        "sourceHash": "c8a6eac29983aa1ef43bc58de2ecf42fb44d6d97d70387780be3fdcc308af8b4",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "provide-inject/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "provide-inject/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "provide-inject/main",
+      "verification": {
+        "sourceHash": "f8740b364a9733056cd029d7c748b642d18b5461bff7254978c012d82b358967",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "reactivity/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "reactivity/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "reactivity/main",
+      "verification": {
+        "sourceHash": "032ce52ba97321663c24224483ae6f463db95ebd58a4b8be877b865227cf0210",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "slots/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "slots/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "slots/main",
+      "verification": {
+        "sourceHash": "58694ced898133cdc63d2fe537505dfb9c0437bbaa828c1894c967bf9f83fee8",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "suspense/main",
@@ -240,42 +523,80 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "suspense",
-        "evidence": ["examples/suspense/src/App.vue"]
+        "evidence": [
+          "examples/suspense/src/App.vue"
+        ]
       },
-      "scenario": "suspense/main"
+      "scenario": "suspense/main",
+      "verification": {
+        "sourceHash": "a96f8c877eedc834955441579c8a968baed2bef43b0ede11345cdc4db30ae454",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "swiper/Swiper",
       "entry": "./src/Swiper/index.ts",
       "vapor": {
-        "disposition": "adapter",
-        "vaporEntry": "./src/vapor-adapters/Swiper.ts"
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/Swiper.ts",
+        "strategy": "adapter"
       },
-      "scenario": "swiper/Swiper"
+      "scenario": "swiper/Swiper",
+      "verification": {
+        "sourceHash": "592fec12428ab0b7a25284621a83836de840fceefe336560221154ccc06d3b5e",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "swiper/SwiperEmpty",
       "entry": "./src/SwiperEmpty/index.ts",
       "vapor": {
-        "disposition": "adapter",
-        "vaporEntry": "./src/vapor-adapters/SwiperEmpty.ts"
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/SwiperEmpty.ts",
+        "strategy": "adapter"
       },
-      "scenario": "swiper/SwiperEmpty"
+      "scenario": "swiper/SwiperEmpty",
+      "verification": {
+        "sourceHash": "526a515d54e4bcb5db4dd049e65fef6aa9d1f1c433d300a4e9b471b8a3ed6ae5",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "swiper/SwiperMTS",
       "entry": "./src/SwiperMTS/index.ts",
       "vapor": {
-        "disposition": "adapter",
-        "vaporEntry": "./src/vapor-adapters/SwiperMTS.ts"
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/SwiperMTS.ts",
+        "strategy": "adapter"
       },
-      "scenario": "swiper/SwiperMTS"
+      "scenario": "swiper/SwiperMTS",
+      "verification": {
+        "sourceHash": "c7ff7007a2a63bc6af2c310a492c8d015c59df82050e03c2d99011788ce89040",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "tailwindcss/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "tailwindcss/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "tailwindcss/main",
+      "verification": {
+        "sourceHash": "41e341cb5cb4c9fd554400e8b481fe48b279b2c178876164ede0f69991eedf87",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "todomvc-codex/main",
@@ -283,21 +604,47 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "vue-router",
-        "evidence": ["examples/todomvc-codex/src/router.ts"]
+        "evidence": [
+          "examples/todomvc-codex/src/router.ts"
+        ]
       },
-      "scenario": "todomvc-codex/main"
+      "scenario": "todomvc-codex/main",
+      "verification": {
+        "sourceHash": "2660335d587bcc9ae1caabbad368380359b01b3b1ddce24c62cff7333ce59a18",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "todomvc-day1/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "todomvc-day1/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "todomvc-day1/main",
+      "verification": {
+        "sourceHash": "f183fd33168e023d9af1f4f8d09aa4f70689284f1a70146c00986b593b513e7f",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "todomvc/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "todomvc/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "todomvc/main",
+      "verification": {
+        "sourceHash": "e58eb0a5c2105646212c9dbc44fc1e278a132c8edb04548a15b18689f95d5441",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "transition/transition",
@@ -305,21 +652,47 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "transition",
-        "evidence": ["examples/transition/src/App.vue"]
+        "evidence": [
+          "examples/transition/src/App.vue"
+        ]
       },
-      "scenario": "transition/transition"
+      "scenario": "transition/transition",
+      "verification": {
+        "sourceHash": "9a67b71f3f8fcfe5e8658101fd884a4825091876c5abaf3e3afa3cf914491283",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     },
     {
       "id": "v-model/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "v-model/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "v-model/main",
+      "verification": {
+        "sourceHash": "a81520b4147b444de03b23f6feb5699eb394efce4877491a97e1a82c7f8e9946",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "vapor/main",
       "entry": "./src/index.ts",
-      "vapor": { "disposition": "candidate" },
-      "scenario": "vapor/main"
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "vapor/main",
+      "verification": {
+        "sourceHash": "a485f38144ecb2788d60b5e2b1eb01ee2909d1c225bb7156b6aa45cf5eed011b",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
     },
     {
       "id": "vue-router/main",
@@ -327,10 +700,25 @@
       "vapor": {
         "disposition": "unsupported",
         "reasonCode": "vue-router",
-        "evidence": ["examples/vue-router/src/router.ts"]
+        "evidence": [
+          "examples/vue-router/src/router.ts"
+        ]
       },
-      "scenario": "vue-router/main"
+      "scenario": "vue-router/main",
+      "verification": {
+        "sourceHash": "95aac5f6ec4bef3237699075126cb15d71394f5e2b8850b4f6c2304903d11074",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
     }
   ],
-  "results": {}
+  "results": {
+    "environment": "lynx-for-web/chromium",
+    "entries": 45,
+    "supported": 36,
+    "unsupported": 9,
+    "vdomPassed": 45,
+    "vaporPassed": 36
+  }
 }

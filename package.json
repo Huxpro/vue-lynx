@@ -8,6 +8,8 @@
     "dev": "pnpm --filter vue-lynx run dev",
     "examples:inventory": "pnpm --filter vue-lynx-example-harness inventory",
     "examples:build:vapor": "pnpm --filter vue-lynx-example-harness build:vapor",
+    "examples:verify:web": "pnpm --filter vue-lynx-example-harness verify:web",
+    "examples:verify:status": "pnpm --filter vue-lynx-example-harness verify:status",
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
     "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom && pnpm --filter vue-lynx-upstream-tests run test:local",
@@ -36,6 +38,9 @@
       "@vue/runtime-vapor": "3.6.0-beta.17",
       "@vue/shared": "3.6.0-beta.17",
       "@vue/server-renderer": "3.6.0-beta.17"
+    },
+    "patchedDependencies": {
+      "@lynx-js/go-web@0.2.1": "patches/@lynx-js__go-web@0.2.1.patch"
     }
   }
 }

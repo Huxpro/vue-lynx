@@ -13,7 +13,10 @@ type LynxView = {
   browserConfig?: { pixelWidth: number; pixelHeight: number };
   customTemplateLoader?: (url: string) => Promise<unknown>;
   setAttribute(name: string, value: string): void;
-  shadowRoot?: { childNodes: ArrayLike<unknown> } | null;
+  shadowRoot?: {
+    childNodes: ArrayLike<unknown>;
+    querySelector?(selector: string): unknown;
+  } | null;
   url?: string;
 };
 
@@ -84,7 +87,11 @@ export function mountExampleView({
 
   const poll = () => {
     if (disposed) return;
-    if (view.shadowRoot && view.shadowRoot.childNodes.length > 0) {
+    const shadow = view.shadowRoot;
+    const rendered = shadow?.querySelector
+      ? shadow.querySelector('[part="page"] > *')
+      : shadow && shadow.childNodes.length > 0;
+    if (rendered) {
       setStatus('ready');
       return;
     }
