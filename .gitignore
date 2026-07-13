@@ -1,9 +1,12 @@
 node_modules/
 dist/
+dist-vapor/
 dist-naive/
 dist-compiler/
 *.tsbuildinfo
 .rspeedy/
+.vapor-generated/
+lynx.vapor.generated.config.ts
 packages/upstream-tests/core/
 *.log
 .DS_Store
