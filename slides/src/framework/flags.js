@@ -22,9 +22,9 @@ const CHROME_KEYWORDS = {
 export const FLAG_SPEC = {
   bg: {
     label: 'Background',
-    values: ['beam', 'clean'],
-    default: 'beam',
-    desc: 'beam = meteor field · clean = flat stage',
+    values: ['clean', 'beam'],
+    default: 'clean',
+    desc: 'clean = flat stage · beam = meteor field',
   },
   transition: {
     label: 'Enter',
@@ -34,8 +34,8 @@ export const FLAG_SPEC = {
   },
   chrome: {
     label: 'Chrome',
-    values: ['full', 'minimal', 'none'],
-    default: 'full',
+    values: ['minimal', 'full', 'none'],
+    default: 'minimal',
     desc: 'corner chrome + progress bar visibility',
   },
 };

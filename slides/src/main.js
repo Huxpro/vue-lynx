@@ -2,9 +2,11 @@ import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
 import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
-import { readFlags, expandChrome } from './systems/flags.js';
-import { initCommand } from './systems/command.js';
-import { initDevtool } from './systems/devtool.js';
+import { readFlags, expandChrome } from './framework/flags.js';
+import { initCommand } from './framework/command.js';
+import { initDevtool } from './framework/devtool.js';
+import { createStage } from './framework/stage.js';
+import { createMagicMove } from './framework/magic-move.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -178,23 +180,16 @@ const slides = Array.from(document.querySelectorAll('.slide'));
 const progressBar = document.querySelector('.progress__bar');
 const counter = document.querySelector('[data-counter]');
 
-// =========================================================
-// Fixed-stage fit — slides are authored against a 1280x720
-// canvas (the .frame, a CSS size container). We scale the
-// frame to fit the viewport, preserving 16:9 on any screen.
-// stageScale is read by the magic-move engine so FLIP deltas
-// (measured in scaled viewport px) map back to local space.
-// =========================================================
-const STAGE_W = 1280;
-const STAGE_H = 720;
-let stageScale = 1;
-function fitStage() {
-  if (!frame) return;
-  stageScale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
-  frame.style.transform = `translate(-50%, -50%) scale(${stageScale})`;
-}
-fitStage();
-window.addEventListener('resize', fitStage);
+// Framework engine: fixed 16:9 stage + magic-move (see framework/).
+const stage = createStage(frame);
+const REDUCED_MOTION =
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+const mm = createMagicMove({
+  deck,
+  getScale: stage.getScale,
+  reducedMotion: REDUCED_MOTION,
+  embed: embedMode,
+});
 
 let current = 0;
 let speakerWindow = null;
@@ -226,95 +221,6 @@ function buildSlideMeta() {
   });
 }
 buildSlideMeta();
-
-// =========================================================
-// Magic move (FLIP) — elements tagged with the same
-// data-flip id on two adjacent slides morph between their
-// positions/sizes, Keynote-style. Everything else uses the
-// normal slide transition.
-// =========================================================
-const REDUCED_MOTION =
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-const FLIP_MS = 640;
-const FLIP_EASE = 'cubic-bezier(0.34, 0.9, 0.25, 1)';
-let flipCleanup = null;
-
-function collectFlips(slide) {
-  const map = new Map();
-  slide.querySelectorAll('[data-flip]').forEach((el) => {
-    map.set(el.getAttribute('data-flip'), el);
-  });
-  return map;
-}
-
-function magicMove(fromSlide, toSlide) {
-  if (REDUCED_MOTION || embedMode || !fromSlide || !toSlide) return false;
-  if (deck.classList.contains('overview')) return false;
-
-  const fromMap = collectFlips(fromSlide);
-  const pairs = [];
-  toSlide.querySelectorAll('[data-flip]').forEach((toEl) => {
-    const fromEl = fromMap.get(toEl.getAttribute('data-flip'));
-    if (fromEl) pairs.push({ fromEl, toEl });
-  });
-  if (!pairs.length) return false;
-
-  // Finish any in-flight morph before starting a new one.
-  if (flipCleanup) flipCleanup();
-
-  // 1. Source rects (fromSlide is still at rest this frame).
-  pairs.forEach((p) => { p.fromRect = p.fromEl.getBoundingClientRect(); });
-
-  // 2. Pin both slides so geometry is final (no enter/exit transform drift).
-  fromSlide.classList.add('is-morphing-out');
-  toSlide.classList.add('is-morphing-in');
-
-  // 3. Destination rects (toSlide now pinned to its final layout).
-  pairs.forEach((p) => { p.toRect = p.toEl.getBoundingClientRect(); });
-
-  // 4. Invert — place each target element over its source, no transition.
-  //    Rects are in scaled viewport px; divide the translation by the stage
-  //    scale so it maps to the element's own (unscaled) coordinate space.
-  const s = stageScale || 1;
-  pairs.forEach(({ fromRect, toRect, toEl }) => {
-    const dx = (fromRect.left - toRect.left) / s;
-    const dy = (fromRect.top - toRect.top) / s;
-    const sx = toRect.width ? fromRect.width / toRect.width : 1;
-    const sy = toRect.height ? fromRect.height / toRect.height : 1;
-    toEl.classList.add('is-flipping');
-    toEl.style.transformOrigin = 'top left';
-    toEl.style.transition = 'none';
-    toEl.style.transform =
-      `translate(${dx}px, ${dy}px) scale(${sx || 1}, ${sy || 1})`;
-  });
-
-  // 5. Play — release to the identity transform on the next frame.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      pairs.forEach(({ toEl }) => {
-        toEl.style.transition = `transform ${FLIP_MS}ms ${FLIP_EASE}`;
-        toEl.style.transform = 'translate(0, 0) scale(1, 1)';
-      });
-    });
-  });
-
-  // 6. Cleanup.
-  const cleanup = () => {
-    clearTimeout(timer);
-    pairs.forEach(({ toEl }) => {
-      toEl.classList.remove('is-flipping');
-      toEl.style.transform = '';
-      toEl.style.transition = '';
-      toEl.style.transformOrigin = '';
-    });
-    fromSlide.classList.remove('is-morphing-out');
-    toSlide.classList.remove('is-morphing-in');
-    flipCleanup = null;
-  };
-  const timer = setTimeout(cleanup, FLIP_MS + 120);
-  flipCleanup = cleanup;
-  return true;
-}
 
 // =========================================================
 // Slide flags — background / transition / chrome per slide.
@@ -362,7 +268,7 @@ function clearFlags(index) {
 function setSlide(index, opts = {}) {
   // Finalize any in-flight magic move before changing slides, so a fast
   // navigation can't leave a morphing slide pinned visible (is-morphing-in).
-  if (flipCleanup) flipCleanup();
+  mm.finish();
   const prev = current;
   current = Math.max(0, Math.min(slides.length - 1, index));
   const adjacent = Math.abs(current - prev) === 1;
@@ -377,7 +283,7 @@ function setSlide(index, opts = {}) {
   applyChromeAndBg(flags);
 
   if (flags.transition === 'magic' && adjacent && !opts.jump) {
-    magicMove(slides[prev], slides[current]);
+    mm.magicMove(slides[prev], slides[current]);
   }
   if (cut) {
     requestAnimationFrame(() =>
@@ -643,7 +549,7 @@ if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
 // =========================================================
 // Drag-to-resize phone mockups. A corner grip adjusts the
 // phone height (width follows the locked aspect ratio).
-// Pointer deltas are divided by stageScale so the grip tracks
+// Pointer deltas are divided by the stage scale so the grip tracks
 // the cursor inside the scaled .frame. Double-click resets.
 // =========================================================
 function initPhoneResize() {
@@ -665,12 +571,12 @@ function initPhoneResize() {
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      startH = phone.getBoundingClientRect().height / (stageScale || 1);
+      startH = phone.getBoundingClientRect().height / (stage.getScale() || 1);
       handle.setPointerCapture(e.pointerId);
     });
     handle.addEventListener('pointermove', (e) => {
       if (!dragging) return;
-      const s = stageScale || 1;
+      const s = stage.getScale() || 1;
       const dx = (e.clientX - startX) / s;
       const dy = (e.clientY - startY) / s;
       // Corner drag: right and/or down both grow the phone.
@@ -881,7 +787,7 @@ const deckApi = {
   },
   fullscreen: toggleFullscreen,
   openSpeaker: openSpeakerWindow,
-  stageScale: () => stageScale,
+  stageScale: () => stage.getScale(),
   reducedMotion: () => REDUCED_MOTION,
   embed: () => embedMode,
 };

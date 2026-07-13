@@ -4,7 +4,7 @@
 // in the deck's design language. Drives navigation + presenter + settings.
 // =============================================================================
 
-import './systems.css';
+import './framework.css';
 import { icon } from './icons.js';
 
 export function initCommand(api, { devtool } = {}) {
