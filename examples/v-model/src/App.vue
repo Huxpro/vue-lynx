@@ -21,6 +21,33 @@ function setValues() {
 
 // ── Section 3: Native input v-model ──
 const inputText = ref('')
+
+// ── Section 4: Timing-sensitive native v-model ──
+// These cases exercise the directive-hook timing that must line up with the
+// web runtime's listener registration (see PRs #121, #136):
+//
+//  4a. Preset initial value + programmatic change. The `mounted` hook must push
+//      the model's initial value into the native control (otherwise the field
+//      renders empty even though the model is non-empty — the classic symptom),
+//      and `beforeUpdate` must teleport later model changes back (Clear / Fill).
+//  4b. v-model + @input on the same element — vModelText injects its handler
+//      into vnode.props during `created` so patchProp registers a SINGLE merged
+//      PAPI listener; otherwise the two listeners overwrite each other.
+const presetText = ref('写点啥呀！')
+
+const coexistText = ref('')
+const inputEvents = ref(0)
+function onCoexistInput() {
+  // Runs in addition to v-model's own assignment; proves both coexist.
+  inputEvents.value++
+}
+
+function clearPreset() {
+  presetText.value = ''
+}
+function fillPreset() {
+  presetText.value = 'filled from parent'
+}
 </script>
 
 <template>
@@ -80,6 +107,41 @@ const inputText = ref('')
     </text>
     <input v-model="inputText" type="text" placeholder="Type here"
       :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 4: Timing-sensitive native v-model  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <text :style="{ fontSize: 14, fontWeight: 'bold', color: '#00aa44', marginTop: 16, marginBottom: 4 }">
+      4. Native v-model timing cases
+    </text>
+
+    <!-- 4a. Preset initial value must render into the native control -->
+    <text :style="{ fontSize: 12, color: '#666', marginBottom: 4 }">
+      4a. Preset: "{{ presetText }}"
+    </text>
+    <input v-model="presetText" type="text" placeholder="(should not be empty)"
+      :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff', marginBottom: 4 }" />
+    <view :style="{ flexDirection: 'row', gap: 8, marginBottom: 12 }">
+      <view :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, alignSelf: 'flex-start' }" @tap="clearPreset">
+        <text :style="{ color: '#fff', fontSize: 12 }">Clear</text>
+      </view>
+      <view :style="{ padding: '4px 10px', backgroundColor: '#555', borderRadius: 4, alignSelf: 'flex-start' }" @tap="fillPreset">
+        <text :style="{ color: '#fff', fontSize: 12 }">Fill from parent</text>
+      </view>
+    </view>
+
+    <!-- 4b. v-model and @input on the SAME element must coexist -->
+    <text :style="{ fontSize: 12, color: '#666', marginBottom: 4 }">
+      4b. Coexist model: "{{ coexistText }}" | @input fired: {{ inputEvents }}x
+    </text>
+    <input v-model="coexistText" @input="onCoexistInput" type="text" placeholder="v-model + @input"
+      :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
+
+    <!-- NOTE: On the Lynx *web* platform, `<textarea>` is NOT mapped to the
+         `x-textarea` element (web-core's LYNX_TAG_TO_HTML_TAG_MAP has an entry
+         for `input` → `x-input` but none for `textarea`). It renders as a bare
+         HTML <textarea> with no Lynx event bridge, so v-model silently no-ops
+         there. Use <input> on web; the directive itself supports both. -->
 
   </scroll-view>
 </template>
