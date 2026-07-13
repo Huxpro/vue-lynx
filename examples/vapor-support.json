@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "7guis/cells",
+      "entry": "./src/cells/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/cells"
+    },
+    {
+      "id": "7guis/circle-drawer",
+      "entry": "./src/circle-drawer/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/circle-drawer"
+    },
+    {
+      "id": "7guis/counter",
+      "entry": "./src/counter/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/counter"
+    },
+    {
+      "id": "7guis/crud",
+      "entry": "./src/crud/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/crud"
+    },
+    {
+      "id": "7guis/flight-booker",
+      "entry": "./src/flight-booker/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/flight-booker"
+    },
+    {
+      "id": "7guis/temperature-converter",
+      "entry": "./src/temperature-converter/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/temperature-converter"
+    },
+    {
+      "id": "7guis/timer",
+      "entry": "./src/timer/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "7guis/timer"
+    },
+    {
+      "id": "basic/h-counter",
+      "entry": "./src/h-counter.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "render-function",
+        "evidence": ["examples/basic/src/h-counter.ts"]
+      },
+      "scenario": "basic/h-counter"
+    },
+    {
+      "id": "basic/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "basic/main"
+    },
+    {
+      "id": "css-features/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "css-features/main"
+    },
+    {
+      "id": "event-modifiers/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "event-modifiers/main"
+    },
+    {
+      "id": "gallery/GalleryAutoScroll",
+      "entry": "./src/GalleryAutoScroll/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "gallery/GalleryAutoScroll"
+    },
+    {
+      "id": "gallery/GalleryComplete",
+      "entry": "./src/GalleryComplete/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "gallery/GalleryComplete"
+    },
+    {
+      "id": "gallery/GalleryList",
+      "entry": "./src/GalleryList/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "gallery/GalleryList"
+    },
+    {
+      "id": "gallery/GalleryScrollbar",
+      "entry": "./src/GalleryScrollbar/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "gallery/GalleryScrollbar"
+    },
+    {
+      "id": "gallery/GalleryScrollbarCompare",
+      "entry": "./src/GalleryScrollbarCompare/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "gallery/GalleryScrollbarCompare"
+    },
+    {
+      "id": "gallery/ImageCard",
+      "entry": "./src/ImageCard/index.ts",
+      "vapor": {
+        "disposition": "adapter",
+        "vaporEntry": "./src/vapor-adapters/ImageCard.ts"
+      },
+      "scenario": "gallery/ImageCard"
+    },
+    {
+      "id": "gallery/LikeCard",
+      "entry": "./src/LikeCard/index.ts",
+      "vapor": {
+        "disposition": "adapter",
+        "vaporEntry": "./src/vapor-adapters/LikeCard.ts"
+      },
+      "scenario": "gallery/LikeCard"
+    },
+    {
+      "id": "hackernews-css/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/hackernews-css/src/App.vue",
+          "examples/hackernews-css/src/router.ts"
+        ]
+      },
+      "scenario": "hackernews-css/main"
+    },
+    {
+      "id": "hackernews-tailwind/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/hackernews-tailwind/src/App.vue",
+          "examples/hackernews-tailwind/src/router.ts"
+        ]
+      },
+      "scenario": "hackernews-tailwind/main"
+    },
+    {
+      "id": "hello-world/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "hello-world/main"
+    },
+    {
+      "id": "keep-alive/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "keep-alive",
+        "evidence": ["examples/keep-alive/src/App.vue"]
+      },
+      "scenario": "keep-alive/main"
+    },
+    {
+      "id": "main-thread/background-draggable",
+      "entry": "./src/background-draggable/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "main-thread/background-draggable"
+    },
+    {
+      "id": "main-thread/cross-thread-calls",
+      "entry": "./src/cross-thread-calls/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "main-thread/cross-thread-calls"
+    },
+    {
+      "id": "main-thread/main-thread-draggable",
+      "entry": "./src/main-thread-draggable/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "main-thread/main-thread-draggable"
+    },
+    {
+      "id": "main-thread/main-thread-draggable-raw",
+      "entry": "./src/main-thread-draggable-raw/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "main-thread/main-thread-draggable-raw"
+    },
+    {
+      "id": "main-thread/shared-module",
+      "entry": "./src/shared-module/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "main-thread/shared-module"
+    },
+    {
+      "id": "networking/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "adapter", "vaporEntry": "./src/index.ts" },
+      "scenario": "networking/main"
+    },
+    {
+      "id": "option-api/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "options-api",
+        "evidence": [
+          "examples/option-api/src/App.vue",
+          "examples/option-api/src/Counter.vue"
+        ]
+      },
+      "scenario": "option-api/main"
+    },
+    {
+      "id": "pinia/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "pinia/main"
+    },
+    {
+      "id": "provide-inject/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "provide-inject/main"
+    },
+    {
+      "id": "reactivity/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "reactivity/main"
+    },
+    {
+      "id": "slots/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "slots/main"
+    },
+    {
+      "id": "suspense/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "suspense",
+        "evidence": ["examples/suspense/src/App.vue"]
+      },
+      "scenario": "suspense/main"
+    },
+    {
+      "id": "swiper/Swiper",
+      "entry": "./src/Swiper/index.ts",
+      "vapor": {
+        "disposition": "adapter",
+        "vaporEntry": "./src/vapor-adapters/Swiper.ts"
+      },
+      "scenario": "swiper/Swiper"
+    },
+    {
+      "id": "swiper/SwiperEmpty",
+      "entry": "./src/SwiperEmpty/index.ts",
+      "vapor": {
+        "disposition": "adapter",
+        "vaporEntry": "./src/vapor-adapters/SwiperEmpty.ts"
+      },
+      "scenario": "swiper/SwiperEmpty"
+    },
+    {
+      "id": "swiper/SwiperMTS",
+      "entry": "./src/SwiperMTS/index.ts",
+      "vapor": {
+        "disposition": "adapter",
+        "vaporEntry": "./src/vapor-adapters/SwiperMTS.ts"
+      },
+      "scenario": "swiper/SwiperMTS"
+    },
+    {
+      "id": "tailwindcss/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "tailwindcss/main"
+    },
+    {
+      "id": "todomvc-codex/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router",
+        "evidence": ["examples/todomvc-codex/src/router.ts"]
+      },
+      "scenario": "todomvc-codex/main"
+    },
+    {
+      "id": "todomvc-day1/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "todomvc-day1/main"
+    },
+    {
+      "id": "todomvc/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "todomvc/main"
+    },
+    {
+      "id": "transition/transition",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "transition",
+        "evidence": ["examples/transition/src/App.vue"]
+      },
+      "scenario": "transition/transition"
+    },
+    {
+      "id": "v-model/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "v-model/main"
+    },
+    {
+      "id": "vapor/main",
+      "entry": "./src/index.ts",
+      "vapor": { "disposition": "candidate" },
+      "scenario": "vapor/main"
+    },
+    {
+      "id": "vue-router/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router",
+        "evidence": ["examples/vue-router/src/router.ts"]
+      },
+      "scenario": "vue-router/main"
+    }
+  ],
+  "results": {}
+}
