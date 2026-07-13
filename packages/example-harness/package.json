@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:vapor": "node src/build-vapor.mjs",
     "inventory": "node src/inventory-cli.mjs",
-    "test": "vitest run"
+    "test": "vitest run --no-file-parallelism"
   },
   "devDependencies": {
     "vitest": "^3.2.4"
