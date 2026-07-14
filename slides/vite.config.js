@@ -41,6 +41,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         speaker: path.resolve(__dirname, 'speaker.html'),
+        play: path.resolve(__dirname, 'play.html'),
       },
     },
   },

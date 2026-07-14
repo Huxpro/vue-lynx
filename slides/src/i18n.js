@@ -225,6 +225,12 @@ export const SPEAKER_LABELS = {
 // Speaker notes, indexed by slide order (matches the <section.slide>
 // sequence). null → keep the English source for that slide.
 export const ZH_NOTES = [
+  // 0a Logo · React
+  `<p><strong>冷开场。</strong>从 React 讲起 —— 重塑了我们构建 UI 的组件模型。让它单独停一拍。</p>`,
+  // 0b Logo · +Vue
+  `<p><strong>Vue 入场。</strong>React 让到一侧,Vue 出现在旁边 —— 现代 Web 组件模型的两大基石。</p>`,
+  // 0c Logo · +Lynx（三角）
+  `<p><strong>Lynx 升起。</strong>第三个 logo 从下方升上来,把两者顶成一个三角 —— React 和 Vue 在上,Lynx 在下托着它们。这就是主张:Web 的开发体验,Native 的用户体验。</p>`,
   // 1 Cover
   `<p><strong>开场:</strong>Vue Lynx —— 一个用 Vue 3 构建原生应用的框架。</p><p>Pre-alpha,两周内一个人做出来。今天:先看有什么,简单讲讲故事,再聊为什么 Lynx 是让这一切成为可能的平台。</p><p><em>随时按 <kbd>s</kbd> 在演讲者视图之间切换。</em></p>`,
   // 2 Pitch

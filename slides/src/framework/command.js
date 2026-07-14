@@ -110,7 +110,10 @@ export function initCommand(api, { devtool } = {}) {
       selected = 0;
       render();
     });
-    overlay.querySelector('.cmdk__list').addEventListener('pointerdown', (e) => {
+    // Use `click`, not `pointerdown`, so a touch *scroll* over the list doesn't
+    // fire a command — the browser only emits `click` for a real tap, and
+    // suppresses it when the finger moved to scroll.
+    overlay.querySelector('.cmdk__list').addEventListener('click', (e) => {
       const it = e.target.closest('[data-idx]');
       if (it) run(items[Number(it.dataset.idx)]);
     });
@@ -142,7 +145,13 @@ export function initCommand(api, { devtool } = {}) {
   // Global keys
   document.addEventListener('keydown', (e) => {
     const el = e.target;
-    const typing = el.matches?.('input, textarea, [contenteditable]') && !overlay;
+    // Treat focus inside a form field OR a live demo (.phone, whose shadow-DOM
+    // inputs retarget to the host) as "typing", so `/` doesn't open the palette
+    // mid-keystroke. ⌘K still works everywhere.
+    const inField =
+      el.matches?.('input, textarea, [contenteditable]') ||
+      el.closest?.('.phone, .no-deck-scroll');
+    const typing = inField && !overlay;
 
     if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
       e.preventDefault(); toggle(); return;
@@ -155,6 +164,16 @@ export function initCommand(api, { devtool } = {}) {
     // Palette is open — it owns the keyboard.
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }
 
+    // Arrow navigation works in both search and slash modes. The list is a
+    // single column, so ←/↑ move to the previous item and →/↓ to the next.
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault(); selected = Math.min(items.length - 1, selected + 1); render(); return;
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault(); selected = Math.max(0, selected - 1); render(); return;
+    }
+    if (e.key === 'Enter') { e.preventDefault(); run(items[selected]); return; }
+
     if (slash) {
       if (e.key === 'Backspace') { e.preventDefault(); setSlash(false); return; }
       if (e.key.length === 1) {
@@ -163,10 +182,6 @@ export function initCommand(api, { devtool } = {}) {
       }
       return;
     }
-
-    if (e.key === 'ArrowDown') { e.preventDefault(); selected = Math.min(items.length - 1, selected + 1); render(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); selected = Math.max(0, selected - 1); render(); }
-    else if (e.key === 'Enter') { e.preventDefault(); run(items[selected]); }
   }, true);
 
   return { open, close, toggle };

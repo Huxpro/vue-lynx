@@ -7,6 +7,9 @@ import { initCommand } from './framework/command.js';
 import { initDevtool } from './framework/devtool.js';
 import { createStage } from './framework/stage.js';
 import { createMagicMove } from './framework/magic-move.js';
+import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
+import { registerVlDemo } from './demo.js';
+import { initQRCodes } from './qrcodes.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -18,158 +21,8 @@ if (embedMode) {
   document.documentElement.classList.add('is-embed');
 }
 
-// =========================================================
-// Lynx runtime — lazy, single-flight
-// =========================================================
-let lynxRuntimeReady = null;
-function ensureLynxRuntime() {
-  if (!lynxRuntimeReady) {
-    lynxRuntimeReady = import('@lynx-js/web-core/client');
-  }
-  return lynxRuntimeReady;
-}
-
-// Rewrite the webpack publicPath baked into the bundle at build time so image
-// URLs resolve against the bundle location, not the (unreachable) dev-machine
-// address that was captured when the example was built. Both spacing variants
-// occur across bundles: `.p="x"` and `.p = "x"`.
-const WEBPACK_PUBLIC_PATH_RE = /\.p\s*=\s*\\"[^"]*\\"/g;
-
-// Shared group keeps multiple lynx-views on a single worker
-const LYNX_GROUP_ID = 7;
-
-// =========================================================
-// <vl-demo bundle="todomvc/dist/main.web.bundle">
-// =========================================================
-class VlDemo extends HTMLElement {
-  static get observedAttributes() { return ['bundle']; }
-
-  constructor() {
-    super();
-    this._mounted = false;
-    this._loadStarted = false;
-  }
-
-  connectedCallback() {
-    if (this._mounted) return;
-    this._mounted = true;
-    if (embedMode) {
-      // Speaker preview: skip the live demo, show a calm placeholder.
-      this.innerHTML = `
-        <div class="vl-demo__loading vl-demo__loading--embed">
-          <div class="vl-demo__bullet"></div>
-          <div>Live on audience screen</div>
-        </div>
-      `;
-      this.dataset.ready = 'embed';
-      return;
-    }
-    this.innerHTML = `
-      <div class="vl-demo__loading">
-        <div class="spinner"></div>
-        <div>Loading Lynx for Web</div>
-      </div>
-    `;
-  }
-
-  attributeChangedCallback() {
-    if (this._loadStarted) this.load();
-  }
-
-  /** Begin loading the runtime + bundle. Called by the deck on slide reveal. */
-  async load() {
-    if (this._loadStarted) return;
-    this._loadStarted = true;
-
-    const bundle = this.getAttribute('bundle');
-    if (!bundle) return;
-    const url = `/examples/${bundle}`;
-
-    try {
-      await ensureLynxRuntime();
-
-      const view = document.createElement('lynx-view');
-      view.setAttribute('lynx-group-id', String(LYNX_GROUP_ID));
-      view.setAttribute('transform-vh', '');
-      view.setAttribute('transform-vw', '');
-
-      view.customTemplateLoader = async (templateUrl) => {
-        const res = await fetch(templateUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const text = await res.text();
-        const baseUrl = templateUrl.substring(0, templateUrl.lastIndexOf('/') + 1);
-        const rewritten = text.replace(
-          WEBPACK_PUBLIC_PATH_RE,
-          `.p=\\"${baseUrl}\\"`,
-        );
-        const template = JSON.parse(rewritten);
-
-        if (template.lepusCode?.root) {
-          const root = template.lepusCode.root;
-          if (
-            typeof root === 'string' &&
-            root.includes('__webpack_require__') &&
-            !root.includes('function __webpack_require__')
-          ) {
-            template.lepusCode.root =
-              `var __webpack_require__={p:"${baseUrl}"};` + root;
-          }
-        }
-        return template;
-      };
-
-      this.insertBefore(view, this.firstChild);
-
-      const t0 = performance.now();
-      const markReady = () => {
-        this.dataset.ready = 'true';
-      };
-
-      const pollShadow = () => {
-        const sr = view.shadowRoot;
-        if (sr) {
-          if (sr.childElementCount > 0) {
-            markReady();
-            return;
-          }
-          const mo = new MutationObserver(() => {
-            if (sr.childElementCount > 0) {
-              mo.disconnect();
-              markReady();
-            }
-          });
-          mo.observe(sr, { childList: true, subtree: true });
-        } else if (performance.now() - t0 < 5000) {
-          requestAnimationFrame(pollShadow);
-        }
-      };
-
-      view.url = url;
-      pollShadow();
-
-      const updateDims = () => {
-        const r = this.getBoundingClientRect();
-        view.browserConfig = {
-          pixelWidth: Math.round(r.width * window.devicePixelRatio),
-          pixelHeight: Math.round(r.height * window.devicePixelRatio),
-        };
-      };
-      requestAnimationFrame(updateDims);
-      const ro = new ResizeObserver(updateDims);
-      ro.observe(this);
-    } catch (err) {
-      console.error('[demo] load failed', err);
-      const loading = this.querySelector('.vl-demo__loading');
-      if (loading) {
-        loading.innerHTML = `<div style="color:#ff8a8a;text-align:center;">
-          Failed to load demo<br><small style="opacity:.6">${err.message ?? err}</small>
-        </div>`;
-      }
-    }
-  }
-}
-
-customElements.define('vl-demo', VlDemo);
+// <vl-demo> custom element lives in ./demo.js (shared with the play page).
+registerVlDemo();
 
 // =========================================================
 // Deck navigation
@@ -419,6 +272,20 @@ function applyBlackout(on) {
   document.body.classList.toggle('is-blackout', on);
 }
 
+// While blacked out, any tap/click on the audience screen restores it. This is
+// the only way back on touch devices (no keyboard), and the blackout overlay is
+// pointer-events:none so the tap reaches here. Capture phase + stop so the same
+// tap can't also navigate the deck.
+if (!embedMode) {
+  document.addEventListener('pointerdown', (e) => {
+    if (!blackedOut) return;
+    e.preventDefault();
+    e.stopPropagation();
+    applyBlackout(false);
+    channel.postMessage({ type: 'blackout', on: false });
+  }, true);
+}
+
 // =========================================================
 // Keyboard
 // =========================================================
@@ -428,8 +295,16 @@ function applyBlackout(on) {
 if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
+    // Typing inside a live demo (native inputs live in the lynx-view shadow, so
+    // the event retargets to the .phone host) must not drive the deck.
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (document.querySelector('.cmdk')) return; // command palette owns the keyboard
 
+    // Only slide navigation is bound to bare keys. Every discrete action
+    // (fullscreen, overview, theme, speaker view, blackout, language, devtool,
+    // jump-to-slide) lives behind the command palette — press ⌘K / Ctrl-K to
+    // search, or `/` for slash mode. This keeps stray keystrokes from firing
+    // commands while you type.
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowDown':
@@ -442,24 +317,6 @@ if (!embedMode) {
         e.preventDefault(); prev(); break;
       case 'Home': e.preventDefault(); first(); break;
       case 'End': e.preventDefault(); last(); break;
-      case 'f': case 'F': toggleFullscreen(); break;
-      case 'o': case 'O': deck.classList.toggle('overview'); break;
-      case '.':
-        document.documentElement.classList.toggle('light');
-        channel.postMessage({ type: 'theme-toggle-mirror' });
-        break;
-      case 's': case 'S':
-        e.preventDefault();
-        openSpeakerWindow();
-        break;
-      case 'b': case 'B':
-        applyBlackout(!blackedOut);
-        channel.postMessage({ type: 'blackout', on: blackedOut });
-        break;
-      default:
-        if (/^[1-9]$/.test(e.key)) {
-          setSlide(Number(e.key) - 1);
-        }
     }
   });
 }
@@ -491,6 +348,10 @@ if (!embedMode) {
   deck.addEventListener('wheel', (e) => {
     if (deck.classList.contains('overview')) return;
     if (document.querySelector('.cmdk')) return;
+    // Inner scrollable content (live demos in the device mockups, or anything
+    // marked .no-deck-scroll) owns its own scroll — only advance the deck when
+    // the wheel happens over the slide surface itself, not inside a demo.
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (wheelLock) return;
     const threshold = 30;
     if (Math.abs(e.deltaY) < threshold && Math.abs(e.deltaX) < threshold) return;
@@ -502,6 +363,8 @@ if (!embedMode) {
 
   let touchStart = null;
   deck.addEventListener('touchstart', (e) => {
+    // Let demos handle their own scroll/swipe (same rule as the wheel guard).
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) { touchStart = null; return; }
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: true });
   deck.addEventListener('touchend', (e) => {
@@ -516,13 +379,6 @@ if (!embedMode) {
     touchStart = null;
   }, { passive: true });
 }
-
-// =========================================================
-// Dark mode toggle button
-// =========================================================
-document.querySelector('.dark-toggle')?.addEventListener('click', () => {
-  document.documentElement.classList.toggle('light');
-});
 
 // =========================================================
 // Boot
@@ -546,59 +402,25 @@ if (!embedMode) {
 const canvas = document.querySelector('.meteors');
 if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
 
+// Render the Web + Lynx-App QR pair onto each demo slide.
+initQRCodes();
+
 // =========================================================
-// Drag-to-resize phone mockups. A corner grip adjusts the
-// phone height (width follows the locked aspect ratio).
-// Pointer deltas are divided by the stage scale so the grip tracks
-// the cursor inside the scaled .frame. Double-click resets.
+// Device mockups — free drag-to-resize + preset switcher.
+// A corner grip resizes width/height independently (no aspect
+// lock). Three preset buttons (phone / vertical tablet / desktop)
+// snap the frame to a canonical aspect ratio and size. Pointer
+// deltas are divided by the stage scale so the grip tracks the
+// cursor inside the scaled .frame. Double-click resets.
 // =========================================================
-function initPhoneResize() {
+// Shared device-frame controls (preset switcher + drag grip) — see
+// framework/device.js. The play page reuses the same component.
+function initPhoneControls() {
   if (embedMode) return;
-  const AR = 590 / 270; // height per unit width
-  document.querySelectorAll('.phone').forEach((phone) => {
-    if (phone.querySelector('.phone__resize')) return;
-    const handle = document.createElement('div');
-    handle.className = 'phone__resize';
-    handle.setAttribute('aria-hidden', 'true');
-    handle.title = 'Drag to resize · double-click to reset';
-    phone.appendChild(handle);
-
-    let startX = 0, startY = 0, startH = 0, dragging = false;
-
-    handle.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startH = phone.getBoundingClientRect().height / (stage.getScale() || 1);
-      handle.setPointerCapture(e.pointerId);
-    });
-    handle.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const s = stage.getScale() || 1;
-      const dx = (e.clientX - startX) / s;
-      const dy = (e.clientY - startY) / s;
-      // Corner drag: right and/or down both grow the phone.
-      const h = Math.max(180, Math.min(1600, startH + (dy + dx * AR) / 2));
-      phone.style.height = `${h}px`;
-    });
-    const end = (e) => {
-      if (!dragging) return;
-      dragging = false;
-      try { handle.releasePointerCapture(e.pointerId); } catch { /* already released */ }
-    };
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
-    // Keep touch drags from bubbling into the deck's swipe navigation.
-    handle.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
-    handle.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      phone.style.height = '';
-    });
-  });
+  document.querySelectorAll('.phone').forEach((phone) =>
+    attachDeviceControls(phone, { getScale: stage.getScale, presets: DECK_PRESETS }));
 }
-initPhoneResize();
+initPhoneControls();
 
 // =========================================================
 // Cycling cover verb — swaps word list with the language.
@@ -704,7 +526,7 @@ function applyLang(lang, opts = {}) {
   if (!embedMode) broadcastState();
 
   const btn = document.querySelector('[data-lang-toggle]');
-  if (btn) btn.textContent = currentLang === 'zh' ? 'EN · l' : '中 · l';
+  if (btn) btn.textContent = currentLang === 'zh' ? 'EN' : '中';
 
   try { localStorage.setItem('deck-lang', currentLang); } catch { /* ignore */ }
   if (!embedMode) {
@@ -736,14 +558,9 @@ const startLang = (() => {
 })();
 applyLang(startLang, { fromChannel: true });
 
+// The chrome button still toggles language on click; the keyboard shortcut
+// now lives only in the command palette (⌘K / `/` → `l`).
 document.querySelector('[data-lang-toggle]')?.addEventListener('click', toggleLang);
-if (!embedMode) {
-  document.addEventListener('keydown', (e) => {
-    if (e.target.matches?.('input, textarea, [contenteditable]')) return;
-    if (document.querySelector('.cmdk')) return; // palette handles its own 'l'
-    if (e.key === 'l' || e.key === 'L') toggleLang();
-  });
-}
 channel.addEventListener('message', (ev) => {
   const msg = ev.data;
   if (!msg) return;
@@ -793,7 +610,14 @@ const deckApi = {
 };
 
 const devtool = initDevtool(deckApi);
-initCommand(deckApi, { devtool });
+const command = initCommand(deckApi, { devtool });
+
+// Persistent corner launcher — opens the palette in slash mode. This is the
+// primary way to reach commands on touch devices (no keyboard). The palette's
+// list is tappable, so slash mode works fine without any key presses.
+document.querySelector('[data-palette]')?.addEventListener('click', () => {
+  command?.open?.(true);
+});
 
 // Tell the world we're closing too (so the speaker can grey out if needed)
 window.addEventListener('beforeunload', () => {
