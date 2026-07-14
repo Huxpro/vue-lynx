@@ -627,6 +627,59 @@ h1, h2, h3, p { margin: 0; }
   align-items: center;
 }
 
+/* QR pair on demo slides — Web (clickable) + Lynx App (scan). Always a white
+   card so it scans in the dark theme too. */
+.qr-pair {
+  display: flex;
+  gap: 20px;
+  margin-top: 6px;
+}
+.qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--ink-mute);
+}
+.qr__code {
+  width: 96px;
+  height: 96px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+}
+.qr__code svg { width: 100%; height: 100%; display: block; }
+.qr__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.qr__arrow { opacity: 0.6; }
+a.qr { cursor: pointer; transition: color 0.2s ease; }
+a.qr:hover { color: var(--vue-green); }
+a.qr:hover .qr__code {
+  box-shadow: 0 0 0 2px var(--vue-green), 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+}
+
+/* Fullscreen web player (play.html) */
+.play {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+.play__stage {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+.play__stage > vl-demo { position: absolute; inset: 0; }
+
 /* Device frame — light bezel, no notch, fluid so it always fits the stage.
    `--phone-ar` / `--phone-w` / `--phone-h` are driven by the device preset
    (phone / tablet / desktop, set in main.js). A free drag sets explicit inline
