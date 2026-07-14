@@ -88,6 +88,17 @@ describe("Lynx-for-Web example host", () => {
       ),
       "utf8",
     );
+    const themeSource = await readFile(
+      new URL("../../../website/theme/index.tsx", import.meta.url),
+      "utf8",
+    );
+    const modeStyles = await readFile(
+      new URL(
+        "../../../website/src/components/go/vapor-status.scss",
+        import.meta.url,
+      ),
+      "utf8",
+    );
 
     expect(source).toContain("onEntryChange={handleEntryChange}");
     expect(source).toContain("metadataForMode(metadata, mode)");
@@ -98,6 +109,11 @@ describe("Lynx-for-Web example host", () => {
     expect(toolbarSource).toContain("renderModeStore.setMode(");
     expect(toolbarSource).toContain("All supported examples");
     expect(remarkSource).toContain("name: 'GoModeToolbar'");
+    expect(themeSource).toContain("<GoModeNavIndicator");
+    expect(themeSource).toContain("beforeNavMenu={");
+    expect(modeStyles).toMatch(
+      /@media \(width <= 767px\)[\s\S]*\.go-mode-toolbar \{[\s\S]*border: 0;/,
+    );
     expect(storeSource).toContain("browser.history.replaceState(");
     expect(storeSource).not.toContain("location.assign(");
     expect(source).toContain('aria-busy="true"');
