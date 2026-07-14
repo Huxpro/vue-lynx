@@ -2,7 +2,15 @@ import type React from 'react';
 import { useLang } from '@rspress/core/runtime';
 import styles from './index.module.scss';
 
-const showCaseList = [
+interface ShowCaseItem {
+  title: Record<'en' | 'zh', string>;
+  desc: Record<'en' | 'zh', string>;
+  link: string;
+  video?: string;
+  image?: string;
+}
+
+const showCaseList: ShowCaseItem[] = [
   {
     title: {
       en: 'Two-Column Waterfall Gallery',
@@ -28,6 +36,18 @@ const showCaseList = [
     link: '/guide/tutorial-swiper',
     video:
       'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+  },
+  {
+    title: {
+      en: 'Elk — a Mastodon Client',
+      zh: 'Elk — Mastodon 客户端',
+    },
+    desc: {
+      en: 'A real product-grade app: Elk ported to a native Mastodon client, reusing its API and content layers.',
+      zh: '真正产品级的应用：将 Elk 移植为原生 Mastodon 客户端，复用其 API 与内容渲染层。',
+    },
+    link: '/guide/elk',
+    image: '/examples/elk/preview-image.png',
   },
 ];
 
@@ -61,15 +81,25 @@ export const ShowCase: React.FC = () => {
           <li className={styles['show-case-list-item']} key={index}>
             <div className={styles['mobile-show-frame']}>
               <div className={styles['preview']}>
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  aria-label={`${item.title[lang]} preview`}
-                >
-                  <source src={item.video} type="video/mp4" />
-                </video>
+                {item.video
+                  ? (
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      aria-label={`${item.title[lang]} preview`}
+                    >
+                      <source src={item.video} type="video/mp4" />
+                    </video>
+                  )
+                  : (
+                    <img
+                      src={item.image}
+                      alt={`${item.title[lang]} preview`}
+                      loading="lazy"
+                    />
+                  )}
               </div>
             </div>
             <div className={styles['item-title']}>{item.title[lang]}</div>
