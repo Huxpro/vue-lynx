@@ -111,11 +111,13 @@ merged to `main`). Two kinds of preview URL exist:
 - **Per-branch git alias** — **stable** as long as the branch name is unchanged:
 
   ```
-  <project-slug>-git-vueconf-2026-<team-scope>.vercel.app/deck
+  https://vue-lynx-git-vueconf-2026-huxpros-projects.vercel.app/deck
   ```
 
-  Read the exact value in the Vercel dashboard → the project → **Deployments** →
-  any `vueconf-2026` deploy → **Domains** (it's the `…-git-vueconf-2026-…` one).
+  (project `vue-lynx`, team `huxpros-projects`). The general form is
+  `<project-slug>-git-<branch>-<team-scope>.vercel.app`; a long branch name gets
+  truncated + hashed (and is then less stable), which is why the short
+  `vueconf-2026` name is the one to link.
 
 **Nicer fixed URL (optional).** To alias a real/short domain to this branch, do
 it in the dashboard — this can *not* be set from `vercel.json` (its `alias`
