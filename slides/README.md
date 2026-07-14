@@ -102,6 +102,33 @@ served at `<preview-url>/deck` alongside the docs — the live embeds resolve
 their bundles from `/examples` at the site root. Nothing about the standalone
 `pnpm dev` / `pnpm build` flow changes (those stay at `base=/`).
 
+### Stable preview URL (`vueconf-2026`)
+
+The conference deck lives on the `vueconf-2026` branch (built by Vercel, never
+merged to `main`). Two kinds of preview URL exist:
+
+- **Per-commit** — `…-<hash>.vercel.app` — changes on every push. Not stable.
+- **Per-branch git alias** — **stable** as long as the branch name is unchanged:
+
+  ```
+  <project-slug>-git-vueconf-2026-<team-scope>.vercel.app/deck
+  ```
+
+  Read the exact value in the Vercel dashboard → the project → **Deployments** →
+  any `vueconf-2026` deploy → **Domains** (it's the `…-git-vueconf-2026-…` one).
+
+**Nicer fixed URL (optional).** To alias a real/short domain to this branch, do
+it in the dashboard — this can *not* be set from `vercel.json` (its `alias`
+field is deprecated and ignored by the Git integration):
+
+> Project → **Settings → Domains** → add a domain (a custom domain you own, or a
+> free/available `something.vercel.app`) → set **Git Branch = `vueconf-2026`** →
+> Save.
+
+Every future `vueconf-2026` deployment is then aliased to that domain, and the
+deck is at `<that-domain>/deck`. Production (`vue.lynxjs.org`, the `main`
+branch) is unaffected.
+
 ## Speaker view (`s`)
 
 Press `s` on the main deck and a popup window opens at `/speaker.html`. It
