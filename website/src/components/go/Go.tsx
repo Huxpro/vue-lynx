@@ -1,6 +1,7 @@
 import { Go as GoBase, GoConfigProvider, useGoConfig } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
+import { useLang } from '@rspress/core/runtime';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import {
@@ -62,6 +63,7 @@ function metadataForMode(metadata: ExampleMetadata, mode: RenderMode): ExampleMe
 
 function VaporAwareGo(props: GoProps) {
   const { exampleBasePath, withBase = (path: string) => path } = useGoConfig();
+  const locale = useLang().startsWith('zh') ? 'zh' : 'en';
   const metadataUrl = `${withBase(exampleBasePath)}/${props.example}/example-metadata.json`;
   const [metadata, setMetadata] = useState<ExampleMetadata>();
   const [entryName, setEntryName] = useState(props.defaultEntryName ?? '');
@@ -105,10 +107,6 @@ function VaporAwareGo(props: GoProps) {
     props.onEntryChange?.(nextEntry);
   }, [props.onEntryChange]);
 
-  const handleModeChange = useCallback((nextMode: RenderMode) => {
-    renderModeStore.setMode(nextMode, `${props.example}/${entryName}`);
-  }, [entryName, props.example]);
-
   const renderedMetadata = useMemo(
     () => metadata && metadataForMode(metadata, mode),
     [metadata, mode],
@@ -123,9 +121,9 @@ function VaporAwareGo(props: GoProps) {
       <VaporStatus
         entry={`${props.example}/${entryName}`}
         mode={mode}
-        onModeChange={handleModeChange}
         status={currentEntry.vaporStatus ?? 'unsupported'}
         reason={currentEntry.vaporReason}
+        locale={locale}
       />
       <GoBase
         {...props}
