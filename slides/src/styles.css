@@ -199,7 +199,7 @@ html, body {
 .chrome--top { top: 28px; left: 28px; }
 .chrome--top-right {
   top: 28px;
-  right: 76px; /* clears the always-on command launcher at the corner */
+  right: 68px; /* clears the always-on command launcher at the corner */
   pointer-events: auto;
 }
 .chrome--bottom { bottom: 28px; left: 28px; }
@@ -237,42 +237,41 @@ html, body {
 
 /* Command launcher — persistent corner button (not part of the flag-gated
    chrome, so it's reachable on every slide, which matters most on touch
-   devices with no keyboard). Opens the palette in slash mode. */
+   devices with no keyboard). Opens the palette in slash mode. Styled as a
+   compact circle matching the language pill's height + baseline so the two
+   sit as a tidy pair in the top-right. */
 .cmd-launch {
   position: fixed;
-  top: 22px;
-  right: 22px;
+  top: 28px;
+  right: 28px;
   z-index: 101;
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   padding: 0;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--paper) 68%, transparent);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: transparent;
   color: var(--ink-mute);
   cursor: pointer;
-  opacity: 0.55;
-  transition: opacity 0.2s ease, color 0.2s ease,
-              border-color 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease, border-color 0.2s ease,
+              background 0.2s ease, transform 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .cmd-launch:hover,
 .cmd-launch:focus-visible {
-  opacity: 1;
   color: var(--vue-green);
   border-color: var(--vue-green);
   outline: none;
 }
-.cmd-launch:active { transform: scale(0.94); }
-.cmd-launch svg { width: 18px; height: 18px; display: block; }
+.cmd-launch:active { transform: scale(0.92); }
+.cmd-launch svg { width: 14px; height: 14px; display: block; }
 
-/* Bigger tap target + a touch more presence on coarse-pointer (touch) devices. */
+/* Slightly bigger tap target on coarse-pointer (touch) devices. */
 @media (pointer: coarse) {
-  .cmd-launch { width: 46px; height: 46px; opacity: 0.7; }
+  .cmd-launch { width: 32px; height: 32px; }
+  .cmd-launch svg { width: 15px; height: 15px; }
 }
 
 .is-embed .cmd-launch,
