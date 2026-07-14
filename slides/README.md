@@ -62,8 +62,9 @@ this deck can be embedded into hux.pro later. Lives in `src/systems/`.
 
 **Command Palette** (`⌘K` / `Ctrl-K`, or `/` for slash mode). Search + run:
 navigation (next/prev/first/last), presenter (speaker view, overview, blackout,
-fullscreen), and settings (theme, language, background, devtool). In slash mode
-a single key runs an action (the hint shown on the right).
+fullscreen), and settings (theme, language, background, devtool). Move the
+selection with `↑`/`↓` **or** `←`/`→`; `Enter` runs it. In slash mode a single
+key runs an action (the hint shown on the right).
 
 **DevTool** (`d`). A foldable inspector (top-right) showing the deck's global
 config (theme, language, slide, stage scale, reduced-motion) and the current
@@ -140,6 +141,16 @@ piped to the speaker view through the BroadcastChannel.
 `<vl-demo bundle="todomvc/dist/main.web.bundle">` mounts a real Vue Lynx
 app via `@lynx-js/web-core/client`. Each embed lazy-loads the runtime on
 first reveal so the opening slides stay snappy.
+
+The device mockup around a demo (`.phone`) is **resizable**: hover to reveal a
+corner grip (drag to resize freely — width and height are independent, no aspect
+lock) and a preset switcher (bottom-right) with three shapes — **phone**,
+**vertical tablet**, and **desktop**. Double-click the grip to reset to the
+current preset. Seed a non-default starting aspect with `data-ar` on the
+`.phone` (e.g. the to-do list uses `data-ar="300 / 560"` to sit a touch wider).
+Scrolling/swiping inside a mockup scrolls the live app — it no longer advances
+the deck (the wheel/touch navigation ignores anything under `.phone` or an
+element tagged `.no-deck-scroll`).
 
 ## Code layout — framework vs content
 

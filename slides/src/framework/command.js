@@ -155,6 +155,16 @@ export function initCommand(api, { devtool } = {}) {
     // Palette is open — it owns the keyboard.
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }
 
+    // Arrow navigation works in both search and slash modes. The list is a
+    // single column, so ←/↑ move to the previous item and →/↓ to the next.
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault(); selected = Math.min(items.length - 1, selected + 1); render(); return;
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault(); selected = Math.max(0, selected - 1); render(); return;
+    }
+    if (e.key === 'Enter') { e.preventDefault(); run(items[selected]); return; }
+
     if (slash) {
       if (e.key === 'Backspace') { e.preventDefault(); setSlash(false); return; }
       if (e.key.length === 1) {
@@ -163,10 +173,6 @@ export function initCommand(api, { devtool } = {}) {
       }
       return;
     }
-
-    if (e.key === 'ArrowDown') { e.preventDefault(); selected = Math.min(items.length - 1, selected + 1); render(); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); selected = Math.max(0, selected - 1); render(); }
-    else if (e.key === 'Enter') { e.preventDefault(); run(items[selected]); }
   }, true);
 
   return { open, close, toggle };

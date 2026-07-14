@@ -7,6 +7,7 @@ import { initCommand } from './framework/command.js';
 import { initDevtool } from './framework/devtool.js';
 import { createStage } from './framework/stage.js';
 import { createMagicMove } from './framework/magic-move.js';
+import { ICONS } from './framework/icons.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -491,6 +492,10 @@ if (!embedMode) {
   deck.addEventListener('wheel', (e) => {
     if (deck.classList.contains('overview')) return;
     if (document.querySelector('.cmdk')) return;
+    // Inner scrollable content (live demos in the device mockups, or anything
+    // marked .no-deck-scroll) owns its own scroll — only advance the deck when
+    // the wheel happens over the slide surface itself, not inside a demo.
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (wheelLock) return;
     const threshold = 30;
     if (Math.abs(e.deltaY) < threshold && Math.abs(e.deltaX) < threshold) return;
@@ -502,6 +507,8 @@ if (!embedMode) {
 
   let touchStart = null;
   deck.addEventListener('touchstart', (e) => {
+    // Let demos handle their own scroll/swipe (same rule as the wheel guard).
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) { touchStart = null; return; }
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: true });
   deck.addEventListener('touchend', (e) => {
@@ -547,31 +554,81 @@ const canvas = document.querySelector('.meteors');
 if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
 
 // =========================================================
-// Drag-to-resize phone mockups. A corner grip adjusts the
-// phone height (width follows the locked aspect ratio).
-// Pointer deltas are divided by the stage scale so the grip tracks
-// the cursor inside the scaled .frame. Double-click resets.
+// Device mockups — free drag-to-resize + preset switcher.
+// A corner grip resizes width/height independently (no aspect
+// lock). Three preset buttons (phone / vertical tablet / desktop)
+// snap the frame to a canonical aspect ratio and size. Pointer
+// deltas are divided by the stage scale so the grip tracks the
+// cursor inside the scaled .frame. Double-click resets.
 // =========================================================
-function initPhoneResize() {
+// device -> canonical aspect ratio + sizing. Phone/tablet are driven by
+// height (portrait); desktop by width (landscape). A slide can seed a wider
+// default with data-ar (e.g. the to-do list).
+const DEVICE_PRESETS = {
+  phone:   { ar: '270 / 590', w: 'auto',              h: 'min(78cqh, 620px)' },
+  tablet:  { ar: '3 / 4',     w: 'auto',              h: 'min(82cqh, 640px)' },
+  desktop: { ar: '16 / 10',   w: 'min(36cqw, 460px)', h: 'auto' },
+};
+
+function applyDevicePreset(phone, name) {
+  const p = DEVICE_PRESETS[name] || DEVICE_PRESETS.phone;
+  phone.dataset.device = name;
+  phone.style.width = '';   // clear any free-drag size
+  phone.style.height = '';
+  phone.style.setProperty('--phone-ar', p.ar);
+  phone.style.setProperty('--phone-w', p.w);
+  phone.style.setProperty('--phone-h', p.h);
+  phone.querySelectorAll('.phone__preset').forEach((b) =>
+    b.classList.toggle('is-active', b.dataset.device === name));
+}
+
+function initPhoneControls() {
   if (embedMode) return;
-  const AR = 590 / 270; // height per unit width
+  const DEVICES = ['phone', 'tablet', 'desktop'];
+  const DEVICE_ICON = { phone: 'smartphone', tablet: 'tablet', desktop: 'monitor' };
+
   document.querySelectorAll('.phone').forEach((phone) => {
     if (phone.querySelector('.phone__resize')) return;
+
+    // Preset switcher (bottom-right).
+    const bar = document.createElement('div');
+    bar.className = 'phone__presets';
+    bar.setAttribute('aria-label', 'Device size');
+    bar.innerHTML = DEVICES.map((d) =>
+      `<button type="button" class="phone__preset" data-device="${d}" ` +
+      `title="${d}">${ICONS[DEVICE_ICON[d]]}</button>`).join('');
+    phone.appendChild(bar);
+    bar.addEventListener('pointerdown', (e) => e.stopPropagation());
+    bar.addEventListener('click', (e) => {
+      const btn = e.target.closest('.phone__preset');
+      if (!btn) return;
+      e.stopPropagation();
+      applyDevicePreset(phone, btn.dataset.device);
+    });
+
+    // Free drag-to-resize grip.
     const handle = document.createElement('div');
     handle.className = 'phone__resize';
     handle.setAttribute('aria-hidden', 'true');
     handle.title = 'Drag to resize · double-click to reset';
     phone.appendChild(handle);
 
-    let startX = 0, startY = 0, startH = 0, dragging = false;
+    // Seed the initial preset (default phone), then honour a data-ar override.
+    applyDevicePreset(phone, phone.dataset.device || 'phone');
+    if (phone.dataset.ar) phone.style.setProperty('--phone-ar', phone.dataset.ar);
+
+    let startX = 0, startY = 0, startW = 0, startH = 0, dragging = false;
 
     handle.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       e.stopPropagation();
       dragging = true;
+      const s = stage.getScale() || 1;
+      const r = phone.getBoundingClientRect();
       startX = e.clientX;
       startY = e.clientY;
-      startH = phone.getBoundingClientRect().height / (stage.getScale() || 1);
+      startW = r.width / s;
+      startH = r.height / s;
       handle.setPointerCapture(e.pointerId);
     });
     handle.addEventListener('pointermove', (e) => {
@@ -579,9 +636,10 @@ function initPhoneResize() {
       const s = stage.getScale() || 1;
       const dx = (e.clientX - startX) / s;
       const dy = (e.clientY - startY) / s;
-      // Corner drag: right and/or down both grow the phone.
-      const h = Math.max(180, Math.min(1600, startH + (dy + dx * AR) / 2));
-      phone.style.height = `${h}px`;
+      // Independent axes — no aspect lock. Pin both dimensions inline so the
+      // CSS aspect-ratio no longer constrains the frame.
+      phone.style.width = `${Math.max(140, Math.min(1100, startW + dx))}px`;
+      phone.style.height = `${Math.max(140, Math.min(1100, startH + dy))}px`;
     });
     const end = (e) => {
       if (!dragging) return;
@@ -592,13 +650,14 @@ function initPhoneResize() {
     handle.addEventListener('pointercancel', end);
     // Keep touch drags from bubbling into the deck's swipe navigation.
     handle.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+    // Double-click resets to the current preset's canonical size.
     handle.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      phone.style.height = '';
+      applyDevicePreset(phone, phone.dataset.device || 'phone');
     });
   });
 }
-initPhoneResize();
+initPhoneControls();
 
 // =========================================================
 // Cycling cover verb — swaps word list with the language.
