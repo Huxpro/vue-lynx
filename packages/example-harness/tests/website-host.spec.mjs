@@ -74,13 +74,30 @@ describe("Lynx-for-Web example host", () => {
       ),
       "utf8",
     );
+    const toolbarSource = await readFile(
+      new URL(
+        "../../../website/src/components/go/GoModeToolbar.tsx",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const remarkSource = await readFile(
+      new URL(
+        "../../../website/scripts/remark-go-mode-toolbar.ts",
+        import.meta.url,
+      ),
+      "utf8",
+    );
 
     expect(source).toContain("onEntryChange={handleEntryChange}");
     expect(source).toContain("metadataForMode(metadata, mode)");
     expect(source).toContain("exampleMetadata={renderedMetadata}");
     expect(source).not.toContain("<SWRConfig");
     expect(source).toContain("useSyncExternalStore(");
-    expect(source).toContain("renderModeStore.setMode(");
+    expect(source).not.toContain("renderModeStore.setMode(");
+    expect(toolbarSource).toContain("renderModeStore.setMode(");
+    expect(toolbarSource).toContain("All supported examples");
+    expect(remarkSource).toContain("name: 'GoModeToolbar'");
     expect(storeSource).toContain("browser.history.replaceState(");
     expect(storeSource).not.toContain("location.assign(");
     expect(source).toContain('aria-busy="true"');
