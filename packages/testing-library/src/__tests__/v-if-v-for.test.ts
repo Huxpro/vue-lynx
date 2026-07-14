@@ -11,10 +11,79 @@ import {
   nextTick,
   Fragment,
   createCommentVNode,
+  createTextVNode,
 } from 'vue-lynx';
 import { render } from '../index.js';
 
 describe('v-if (conditional rendering)', () => {
+  it('does not materialize comment anchors in the main-thread tree', () => {
+    const Comp = defineComponent({
+      render() {
+        return h('view', null, [
+          createCommentVNode('v-if'),
+          h('text', null, 'visible'),
+          createCommentVNode('v-if'),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const view = container.querySelector('view');
+
+    expect(view).not.toBeNull();
+    expect(view!.childNodes).toHaveLength(1);
+    expect(view!.firstChild).toBe(view!.querySelector('text'));
+  });
+
+  it('does not materialize empty text anchors in the main-thread tree', () => {
+    const Comp = defineComponent({
+      render() {
+        return h('view', null, [
+          createTextVNode(''),
+          h('text', null, 'visible'),
+          createTextVNode(''),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const view = container.querySelector('view');
+
+    expect(view).not.toBeNull();
+    expect(view!.childNodes).toHaveLength(1);
+    expect(view!.textContent).toBe('visible');
+  });
+
+  it('materializes a text anchor only while it has content', async () => {
+    const value = ref('');
+    const Comp = defineComponent({
+      setup() {
+        return () => h('view', null, [
+          h('text', null, 'before'),
+          createTextVNode(value.value),
+          h('text', null, 'after'),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const view = container.querySelector('view')!;
+
+    expect(view.childNodes).toHaveLength(2);
+
+    value.value = 'middle';
+    await nextTick();
+    await nextTick();
+    expect(view.childNodes).toHaveLength(3);
+    expect(view.textContent).toBe('beforemiddleafter');
+
+    value.value = '';
+    await nextTick();
+    await nextTick();
+    expect(view.childNodes).toHaveLength(2);
+    expect(view.textContent).toBe('beforeafter');
+  });
+
   it('renders content when condition is true', () => {
     const Comp = defineComponent({
       render() {

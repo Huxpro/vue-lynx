@@ -26,7 +26,7 @@ const BINARY_EXTENSIONS = new Set([
 ]);
 
 // Directories to skip
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.cache', '.git']);
+const SKIP_DIRS = new Set(['node_modules', 'dist', '.cache', '.git', '.data', '.rspeedy']);
 
 /**
  * Walk a directory recursively and collect relative file paths.

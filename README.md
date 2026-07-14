@@ -57,6 +57,7 @@ pnpm dev
 - [`todomvc`](examples/todomvc) — TodoMVC
 - [`7guis`](examples/7guis) — 7GUIs benchmark tasks
 - [`hackernews-tailwind`](examples/hackernews-tailwind) — HackerNews
+- [`ai-chat`](examples/ai-chat) — AI chatbot (port of the [Nuxt AI Chatbot template](https://github.com/nuxt-ui-templates/chat)): streaming, reasoning, tool-call cards, markdown, theming
 
 ## Contributing
 

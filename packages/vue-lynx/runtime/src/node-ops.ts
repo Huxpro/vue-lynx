@@ -136,6 +136,22 @@ function cleanupIds(el: ShadowElement): void {
   }
 }
 
+function isMaterializedChild(child: ShadowElement): boolean {
+  if (child.type === '#comment') return false;
+  if (child.type === '#text') return child._mtInserted;
+  return true;
+}
+
+function resolveMainThreadAnchor(
+  anchor: ShadowElement | null | undefined,
+): ShadowElement | null {
+  let resolved = anchor ?? null;
+  while (resolved && !isMaterializedChild(resolved)) {
+    resolved = resolved.next;
+  }
+  return resolved;
+}
+
 // ---------------------------------------------------------------------------
 // Class resolution — merges user :class with transition classes
 // ---------------------------------------------------------------------------
@@ -162,22 +178,53 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
   createText(text: string): ShadowElement {
     const el = new ShadowElement('#text');
-    pushOp(OP.CREATE_TEXT, el.id);
-    if (text) pushOp(OP.SET_TEXT, el.id, text);
-    scheduleFlush();
+    el._textValue = text;
+    if (text) {
+      pushOp(OP.CREATE_TEXT, el.id);
+      pushOp(OP.SET_TEXT, el.id, text);
+      el._mtCreated = true;
+      scheduleFlush();
+    }
     return el;
   },
 
   // Comment nodes are used by Vue as position anchors for v-if / Fragment.
-  // We materialise them as invisible placeholder elements on the Main Thread.
+  // Keep them in the Background Thread shadow tree only. Native Lynx gives an
+  // empty raw-text node a default line box, so materialising comments on the
+  // Main Thread adds visible height for every v-if branch and Fragment anchor.
   createComment(_text: string): ShadowElement {
-    const el = new ShadowElement('#comment');
-    pushOp(OP.CREATE, el.id, '__comment');
-    scheduleFlush();
-    return el;
+    return new ShadowElement('#comment');
   },
 
   setText(node: ShadowElement, text: string): void {
+    if (node.type === '#text') {
+      node._textValue = text;
+
+      if (!text) {
+        if (node._mtInserted && node.parent) {
+          pushOp(OP.REMOVE, node.parent.id, node.id);
+          node._mtInserted = false;
+          scheduleFlush();
+        }
+        return;
+      }
+
+      if (!node._mtCreated) {
+        pushOp(OP.CREATE_TEXT, node.id);
+        node._mtCreated = true;
+      }
+      pushOp(OP.SET_TEXT, node.id, text);
+
+      const parent = node.parent;
+      if (!node._mtInserted && parent && parent.type !== 'list') {
+        const anchor = resolveMainThreadAnchor(node.next);
+        pushOp(OP.INSERT, parent.id, node.id, anchor?.id ?? -1);
+        node._mtInserted = true;
+      }
+      scheduleFlush();
+      return;
+    }
+
     pushOp(OP.SET_TEXT, node.id, text);
     scheduleFlush();
   },
@@ -187,9 +234,11 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // Remove all children from shadow tree
     while (el.firstChild) {
       const child = el.firstChild;
+      const materialized = isMaterializedChild(child);
       el.removeChild(child);
       cleanupIds(child);
-      pushOp(OP.REMOVE, el.id, child.id);
+      if (materialized) pushOp(OP.REMOVE, el.id, child.id);
+      if (child.type === '#text') child._mtInserted = false;
     }
     // Set text content directly on the element
     pushOp(OP.SET_TEXT, el.id, text);
@@ -203,39 +252,37 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   ): void {
     // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
     // emit REMOVE from old parent so MT correctly detaches first.
-    if (child.parent && child.parent !== parent) {
+    if (
+      child.parent
+      && child.parent !== parent
+      && isMaterializedChild(child)
+    ) {
       pushOp(OP.REMOVE, child.parent.id, child.id);
+      if (child.type === '#text') child._mtInserted = false;
     }
 
     // Always update the shadow tree (Vue needs it for internal diffing).
     parent.insertBefore(child, anchor ?? null);
 
-    // Lynx's native <list> only accepts <list-item> children.
-    // Vue's v-for creates comment anchor nodes as fragment markers —
-    // skip sending them to the Main Thread to avoid NSInvalidArgumentException.
+    // Comment anchors exist only in the shadow tree. Lynx's native <list>
+    // additionally accepts only <list-item> children, so text anchors there
+    // also stay off the Main Thread.
     if (
-      parent.type === 'list'
-      && (child.type === '#comment' || child.type === '#text')
+      child.type === '#comment'
+      || (child.type === '#text'
+        && (!child._textValue || parent.type === 'list'))
     ) {
       return;
     }
 
-    // If the anchor is a comment node inside a <list>, it was never inserted
-    // on the Main Thread. Walk forward to find the next real (non-comment)
-    // sibling so __InsertElementBefore has a valid reference.
-    let resolvedAnchor: ShadowElement | null = anchor ?? null;
-    if (parent.type === 'list') {
-      while (
-        resolvedAnchor
-        && (resolvedAnchor.type === '#comment'
-          || resolvedAnchor.type === '#text')
-      ) {
-        resolvedAnchor = resolvedAnchor.next;
-      }
-    }
+    // Shadow comments have no Main Thread element. Walk forward to the next
+    // materialised sibling so __InsertElementBefore receives a valid anchor.
+    // Native <list> text anchors are skipped for the same reason.
+    const resolvedAnchor = resolveMainThreadAnchor(anchor);
 
     const anchorId = resolvedAnchor ? resolvedAnchor.id : -1;
     pushOp(OP.INSERT, parent.id, child.id, anchorId);
+    if (child.type === '#text') child._mtInserted = true;
     scheduleFlush();
   },
 
@@ -245,11 +292,16 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // Those children were never mounted, so `vnode.el` is undefined — null
     // guard is required here, not just for the `!parent` case.
     if (child?.parent) {
-      const parentId = child.parent.id;
+      const parent = child.parent;
+      const materialized = isMaterializedChild(child);
+      const parentId = parent.id;
       child.parent.removeChild(child);
       cleanupIds(child);
-      pushOp(OP.REMOVE, parentId, child.id);
-      scheduleFlush();
+      if (materialized) {
+        pushOp(OP.REMOVE, parentId, child.id);
+        scheduleFlush();
+      }
+      if (child.type === '#text') child._mtInserted = false;
     }
   },
 

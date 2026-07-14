@@ -28,6 +28,13 @@ export class ShadowElement {
   prev: ShadowElement | null = null;
   next: ShadowElement | null = null;
 
+  // Empty Vue text VNodes are structural anchors. Native Lynx gives an empty
+  // <text> a default line box, so these nodes are materialised lazily only
+  // while they contain visible text.
+  _textValue = '';
+  _mtCreated = false;
+  _mtInserted = false;
+
   // Cached style object (last value passed to patchProp 'style').
   // Used by vShow to merge display:none without losing the original styles.
   _style: Record<string, unknown> = {};
