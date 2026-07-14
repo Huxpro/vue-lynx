@@ -10,6 +10,7 @@
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
+    "build:deck-root": "node scripts/build-deck-root.mjs",
     "preview": "rspress preview"
   },
   "dependencies": {

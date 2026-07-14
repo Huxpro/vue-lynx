@@ -111,12 +111,22 @@ fragments), which keeps speaker-view sync and deep-links simple.
 
 ## Deploy
 
-`pnpm --filter vue-lynx run` build (the website build) runs
-`website/scripts/prepare-deck.mjs`, which builds this deck with `base=/deck/`
-and copies it into `website/docs/public/deck/`. On Vercel the deck is then
-served at `<preview-url>/deck` alongside the docs — the live embeds resolve
-their bundles from `/examples` at the site root. Nothing about the standalone
-`pnpm dev` / `pnpm build` flow changes (those stay at `base=/`).
+Two deploy shapes, chosen per branch by `website/vercel.json`:
+
+- **`main` (production docs site)** — the website build runs
+  `website/scripts/prepare-deck.mjs`, which builds this deck with `base=/deck/`
+  and copies it into `website/docs/public/deck/`, so the deck is served at
+  `<url>/deck` *alongside* the docs. The live embeds resolve their bundles from
+  `/examples` at the site root.
+- **`vueconf-2026` (deck-first preview)** — the branch's `website/vercel.json`
+  instead runs `pnpm build:deck-root` (`website/scripts/build-deck-root.mjs`),
+  which builds the deck with `base=/` and outputs it (plus `/examples`) as the
+  **site root**. Opening the domain root *is* the deck, and the deck's
+  root-absolute links (`/speaker.html`, `/examples/*`) resolve correctly. This
+  is a branch-only config — **do not merge `vueconf-2026` into `main`**, or the
+  production docs site would be replaced by the deck.
+
+The standalone `pnpm dev` / `pnpm build` flow is unchanged (base `/`).
 
 ### Stable preview URL (`vueconf-2026`)
 
@@ -124,10 +134,11 @@ The conference deck lives on the `vueconf-2026` branch (built by Vercel, never
 merged to `main`). Two kinds of preview URL exist:
 
 - **Per-commit** — `…-<hash>.vercel.app` — changes on every push. Not stable.
-- **Per-branch git alias** — **stable** as long as the branch name is unchanged:
+- **Per-branch git alias** — **stable** as long as the branch name is unchanged
+  (the deck is at the **root**, no `/deck` suffix on this branch):
 
   ```
-  https://vue-lynx-git-vueconf-2026-huxpros-projects.vercel.app/deck
+  https://vue-lynx-git-vueconf-2026-huxpros-projects.vercel.app/
   ```
 
   (project `vue-lynx`, team `huxpros-projects`). The general form is

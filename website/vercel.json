@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm run build",
-  "outputDirectory": "doc_build",
+  "buildCommand": "pnpm run build:deck-root",
+  "outputDirectory": "deck-root",
   "cleanUrls": true
 }

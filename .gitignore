@@ -10,6 +10,7 @@ website/docs/guide/api/
 # files for vue-lynx/testing-library are already tracked and unaffected)
 website/docs/zh/guide/api/
 website/docs/public/deck/
+website/deck-root/
 website/api-sidebar.json
 .vercel
 .claude/
