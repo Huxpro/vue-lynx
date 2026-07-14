@@ -6,7 +6,7 @@
   "scripts": {
     "prepare-examples": "node scripts/prepare-examples.mjs",
     "prepare:docs": "pnpm prepare-examples && pnpm prepare-benchmark && tsx scripts/generate-api.ts",
-    "test:go-mode": "tsx --test src/components/go/render-mode-store.test.ts",
+    "test:go-mode": "tsx --test src/components/go/render-mode-store.test.ts src/components/go/GoModeToolbar.test.tsx scripts/remark-go-mode-toolbar.test.ts",
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
