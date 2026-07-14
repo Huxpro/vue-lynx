@@ -17,30 +17,40 @@ Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 
 ## Navigation
 
-| Key                       | Action                  |
-| ------------------------- | ----------------------- |
-| `→` `↓` `Space` `PageDown`| Next slide              |
-| `←` `↑` `PageUp`          | Previous slide          |
-| `Home`                    | First slide             |
-| `End`                     | Last slide              |
-| `f`                       | Toggle fullscreen       |
-| `o`                       | Toggle overview grid    |
-| `1`..`9`                  | Jump to slide N         |
-| `.`                       | Toggle light mode       |
-| `l`                       | Toggle 中文 / English   |
-| `⌘K` / `Ctrl-K`           | Command palette         |
-| `/`                       | Palette (slash mode)    |
-| `d`                       | DevTool panel           |
-| **`s`**                   | **Open speaker view**   |
-| `b`                       | Blackout audience screen|
+Only **slide movement** is bound to bare keys. Every discrete command lives
+behind the command palette (`⌘K` / `Ctrl-K` to search, or `/` for slash mode),
+so stray keystrokes — e.g. typing in a live demo — can't fire a command.
+
+| Key                        | Action              |
+| -------------------------- | ------------------- |
+| `→` `↓` `Space` `PageDown` | Next slide          |
+| `←` `↑` `PageUp`           | Previous slide      |
+| `Home`                     | First slide         |
+| `End`                      | Last slide          |
+| `⌘K` / `Ctrl-K`            | Command palette     |
+| `/`                        | Palette (slash mode)|
+
+Inside the palette (`⌘K` search or `/` then the key):
+
+| Key | Action              | Key | Action                   |
+| --- | ------------------- | --- | ------------------------ |
+| `n` | Next slide          | `t` | Toggle theme (light/dark)|
+| `p` | Previous slide      | `l` | Toggle 中文 / English    |
+| `[` | First slide         | `g` | Background beam / clean  |
+| `]` | Last slide          | `d` | DevTool panel            |
+| `s` | Open speaker view   | `f` | Toggle fullscreen        |
+| `o` | Overview grid       | `b` | Blackout audience screen |
+
+Jump to any slide by title from the palette's **Slides** section (type to
+filter, `↑`/`↓` or `←`/`→` to move, `Enter` to go).
 
 URL hash reflects the current slide (e.g. `#7`), so you can deep-link.
 
 ## Theme
 
 The deck ships **dark by default** (near-black Keynote-style stage) with the
-Vue Lynx green/teal accents intact. Press `.` to flip to the light theme
-(adds `.light` on `:root`).
+Vue Lynx green/teal accents intact. Flip to the light theme from the command
+palette (`⌘K` → Theme, or `/` then `t`); it adds `.light` on `:root`.
 
 ## Layout — fixed 16:9 stage
 
@@ -66,7 +76,7 @@ fullscreen), and settings (theme, language, background, devtool). Move the
 selection with `↑`/`↓` **or** `←`/`→`; `Enter` runs it. In slash mode a single
 key runs an action (the hint shown on the right).
 
-**DevTool** (`d`). A foldable inspector (top-right) showing the deck's global
+**DevTool** (palette → `d`). A foldable inspector (top-right) showing the deck's global
 config (theme, language, slide, stage scale, reduced-motion) and the current
 slide's flags + metadata (title, notes, `data-flip` ids). The flag chips are
 clickable — click to cycle and live-override that slide's flag; "reset
@@ -131,10 +141,10 @@ Every future `vueconf-2026` deployment is then aliased to that domain, and the
 deck is at `<that-domain>/deck`. Production (`vue.lynxjs.org`, the `main`
 branch) is unaffected.
 
-## Speaker view (`s`)
+## Speaker view
 
-Press `s` on the main deck and a popup window opens at `/speaker.html`. It
-shows:
+Open it from the command palette (`⌘K` → *Open Speaker View*, or `/` then `s`)
+and a popup window opens at `/speaker.html`. It shows:
 
 - The **current slide** rendered live (left)
 - The **next slide** preview (right top)
@@ -143,14 +153,17 @@ shows:
 - **Wall-clock time** beside it
 
 The two windows sync via `BroadcastChannel('vue-lynx-deck')` — navigate in
-either window, both move. Arrow keys + `b` (blackout) + `.` (dark mode)
-work from the speaker view too.
+either window, both move. The **speaker window keeps its own bare-key
+shortcuts** (arrows, `f`, `.`, `l`, `b`, `r`, `1`–`9`) — it's a presenter-only
+surface with no typing, so those don't collide with anything. Only the *main
+deck* moved its commands behind the palette.
 
 ### Recommended setup
 
-1. Drag the main deck window onto the external display, press `f` to
-   fullscreen it.
-2. Press `s` — the speaker popup opens on the laptop screen.
+1. Drag the main deck window onto the external display and fullscreen it
+   (palette → *Toggle fullscreen*, or `/` then `f`).
+2. Open the speaker view (palette → *Open Speaker View*, or `/` then `s`) — the
+   popup opens on the laptop screen.
 3. Drag it to your preferred position (it auto-sizes to ~85% of screen).
 4. Drive the talk from either side; the audience only ever sees the deck.
 
