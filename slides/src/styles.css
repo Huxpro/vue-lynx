@@ -587,14 +587,18 @@ h1, h2, h3, p { margin: 0; }
   align-items: center;
 }
 
-/* Phone frame — light bezel, no notch, fluid so it always fits the stage.
-   Height is driven by the 16:9 safe-area height; width follows the aspect
-   ratio, so the mockup resizes with the viewport instead of a fixed clamp. */
+/* Device frame — light bezel, no notch, fluid so it always fits the stage.
+   `--phone-ar` / `--phone-w` / `--phone-h` are driven by the device preset
+   (phone / tablet / desktop, set in main.js). A free drag sets explicit inline
+   width+height (no aspect lock); presets clear those and restore the vars. */
 .phone {
+  --phone-ar: 270 / 590;
   --phone-h: min(78cqh, 620px);
-  aspect-ratio: 270 / 590;
+  --phone-w: auto;
+  aspect-ratio: var(--phone-ar);
   height: var(--phone-h);
-  width: auto;
+  width: var(--phone-w);
+  max-width: 100%;
   padding: 4px;
   background: #16181d;
   border-radius: 26px;
@@ -605,7 +609,7 @@ h1, h2, h3, p { margin: 0; }
   position: relative;
 }
 
-/* Drag-to-resize grip (bottom-right). Aspect-locked; handled in main.js. */
+/* Free drag-to-resize grip (bottom-right). No aspect lock; handled in main.js. */
 .phone__resize {
   position: absolute;
   right: -7px;
@@ -614,7 +618,7 @@ h1, h2, h3, p { margin: 0; }
   height: 24px;
   border-radius: 7px;
   cursor: nwse-resize;
-  z-index: 6;
+  z-index: 8;
   opacity: 0;
   transition: opacity 0.2s ease;
   touch-action: none;
@@ -628,6 +632,50 @@ h1, h2, h3, p { margin: 0; }
 }
 .phone:hover .phone__resize,
 .phone__resize:active { opacity: 0.85; }
+
+/* Device preset switcher (phone / vertical tablet / desktop) — bottom-right,
+   sits just below the frame, revealed on hover. */
+.phone__presets {
+  position: absolute;
+  right: 0;
+  bottom: -36px;
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--paper-elev);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  z-index: 7;
+}
+.phone:hover .phone__presets {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.phone__preset {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.phone__preset:hover { background: var(--paper); color: var(--ink); }
+.phone__preset.is-active {
+  color: var(--vue-green);
+  background: rgba(66, 184, 131, 0.14);
+}
+.phone__preset svg { width: 15px; height: 15px; display: block; }
 
 .phone__inner {
   position: relative;
