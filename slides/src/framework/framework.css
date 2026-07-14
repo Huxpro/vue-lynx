@@ -90,7 +90,13 @@
   padding: 3px 9px;
 }
 
-.cmdk__list { overflow-y: auto; padding: 8px; }
+.cmdk__list {
+  overflow-y: auto;
+  padding: 8px;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 .cmdk__empty {
   padding: 26px;
   text-align: center;

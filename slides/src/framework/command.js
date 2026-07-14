@@ -110,7 +110,10 @@ export function initCommand(api, { devtool } = {}) {
       selected = 0;
       render();
     });
-    overlay.querySelector('.cmdk__list').addEventListener('pointerdown', (e) => {
+    // Use `click`, not `pointerdown`, so a touch *scroll* over the list doesn't
+    // fire a command — the browser only emits `click` for a real tap, and
+    // suppresses it when the finger moved to scroll.
+    overlay.querySelector('.cmdk__list').addEventListener('click', (e) => {
       const it = e.target.closest('[data-idx]');
       if (it) run(items[Number(it.dataset.idx)]);
     });
