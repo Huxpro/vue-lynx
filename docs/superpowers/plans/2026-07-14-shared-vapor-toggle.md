@@ -55,7 +55,7 @@ Expected: FAIL because the effective-mode helper does not exist.
 
 - [ ] **Step 3: Integrate the store and page-level toolbar**
 
-Replace local `mode` state and `window.location.assign` with `useSyncExternalStore(renderModeStore.subscribe, renderModeStore.getSnapshot, renderModeStore.getServerSnapshot)`. Initialize only the entry from `go-entry`, derive the current effective mode from entry support and bundle availability, and continue passing transformed metadata to `GoBase`. Add a remark-injected `GoModeToolbar` that calls `renderModeStore.setMode(nextMode)` once per page. Replace each local toggle with localized `Vapor ready`, `Vapor active`, or `VDOM only` capability status.
+Replace local `mode` state and `window.location.assign` with `useSyncExternalStore(renderModeStore.subscribe, renderModeStore.getSnapshot, renderModeStore.getServerSnapshot)`. Initialize only the entry from `go-entry`, derive the current effective mode from entry support and bundle availability, and continue passing transformed metadata to `GoBase`. Add a remark-injected `GoModeToolbar` that calls `renderModeStore.setMode(nextMode)` once per page. Replace each local toggle with localized `Vapor ready`, `Vapor active`, or `VDOM only` capability status. Mount a read-only mode indicator in the Rspress navigation and simplify the mobile page toolbar to one flat row.
 
 - [ ] **Step 4: Run focused tests and verify GREEN**
 

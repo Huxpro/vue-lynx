@@ -13,7 +13,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '../src/components/home-comps';
-import { VaporModeNavLink } from '../src/components/vapor-nav/VaporModeNavLink';
+import { GoModeNavIndicator } from '../src/components/go/GoModeNavIndicator';
 
 import { AGENT_PROMPT } from './agent-prompt';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
@@ -240,11 +240,6 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-/**
- * Site nav gets a Vapor mode teaser: a switch-shaped link over to the Vapor
- * preview build, with an ⓘ explaining that Vapor is still an exploration on
- * the `vapor` branch.
- */
 function Layout({ beforeNavMenu, ...props }: Parameters<typeof BaseLayout>[0]) {
   const locale = useLang().startsWith('zh') ? 'zh' : 'en';
 
@@ -253,7 +248,7 @@ function Layout({ beforeNavMenu, ...props }: Parameters<typeof BaseLayout>[0]) {
       {...props}
       beforeNavMenu={(
         <>
-          <VaporModeNavLink locale={locale} />
+          <GoModeNavIndicator locale={locale} />
           {beforeNavMenu}
         </>
       )}
