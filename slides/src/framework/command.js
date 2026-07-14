@@ -142,7 +142,13 @@ export function initCommand(api, { devtool } = {}) {
   // Global keys
   document.addEventListener('keydown', (e) => {
     const el = e.target;
-    const typing = el.matches?.('input, textarea, [contenteditable]') && !overlay;
+    // Treat focus inside a form field OR a live demo (.phone, whose shadow-DOM
+    // inputs retarget to the host) as "typing", so `/` doesn't open the palette
+    // mid-keystroke. ⌘K still works everywhere.
+    const inField =
+      el.matches?.('input, textarea, [contenteditable]') ||
+      el.closest?.('.phone, .no-deck-scroll');
+    const typing = inField && !overlay;
 
     if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
       e.preventDefault(); toggle(); return;

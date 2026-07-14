@@ -68,8 +68,8 @@ export function initDevtool(api) {
         `</section>` +
       `</div>` +
 
-      `<div class="dt__foot"><span>press ` +
-        `<span class="sys-kbd">d</span> to toggle</span>` +
+      `<div class="dt__foot"><span>toggle from ` +
+        `<span class="sys-kbd">⌘K</span></span>` +
         `<button class="dt__reset" data-reset>reset overrides</button></div>`;
   }
 
@@ -101,16 +101,8 @@ export function initDevtool(api) {
 
   document.addEventListener('deck:change', refresh);
 
-  // `d` toggles the panel (unless typing or the palette is open)
-  document.addEventListener('keydown', (e) => {
-    if (e.key !== 'd' && e.key !== 'D') return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    const el = e.target;
-    if (el.matches?.('input, textarea, [contenteditable]')) return;
-    if (document.querySelector('.cmdk')) return; // palette open
-    e.preventDefault();
-    toggle();
-  });
+  // No bare-key binding — the panel is toggled only from the command palette
+  // (⌘K / `/` → `d`), so stray keystrokes can't open it while you type.
 
   return { toggle, open: show, close: hide, isOpen: () => open };
 }

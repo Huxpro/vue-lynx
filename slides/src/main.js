@@ -429,8 +429,16 @@ function applyBlackout(on) {
 if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
+    // Typing inside a live demo (native inputs live in the lynx-view shadow, so
+    // the event retargets to the .phone host) must not drive the deck.
+    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (document.querySelector('.cmdk')) return; // command palette owns the keyboard
 
+    // Only slide navigation is bound to bare keys. Every discrete action
+    // (fullscreen, overview, theme, speaker view, blackout, language, devtool,
+    // jump-to-slide) lives behind the command palette — press ⌘K / Ctrl-K to
+    // search, or `/` for slash mode. This keeps stray keystrokes from firing
+    // commands while you type.
     switch (e.key) {
       case 'ArrowRight':
       case 'ArrowDown':
@@ -443,24 +451,6 @@ if (!embedMode) {
         e.preventDefault(); prev(); break;
       case 'Home': e.preventDefault(); first(); break;
       case 'End': e.preventDefault(); last(); break;
-      case 'f': case 'F': toggleFullscreen(); break;
-      case 'o': case 'O': deck.classList.toggle('overview'); break;
-      case '.':
-        document.documentElement.classList.toggle('light');
-        channel.postMessage({ type: 'theme-toggle-mirror' });
-        break;
-      case 's': case 'S':
-        e.preventDefault();
-        openSpeakerWindow();
-        break;
-      case 'b': case 'B':
-        applyBlackout(!blackedOut);
-        channel.postMessage({ type: 'blackout', on: blackedOut });
-        break;
-      default:
-        if (/^[1-9]$/.test(e.key)) {
-          setSlide(Number(e.key) - 1);
-        }
     }
   });
 }
@@ -795,14 +785,9 @@ const startLang = (() => {
 })();
 applyLang(startLang, { fromChannel: true });
 
+// The chrome button still toggles language on click; the keyboard shortcut
+// now lives only in the command palette (⌘K / `/` → `l`).
 document.querySelector('[data-lang-toggle]')?.addEventListener('click', toggleLang);
-if (!embedMode) {
-  document.addEventListener('keydown', (e) => {
-    if (e.target.matches?.('input, textarea, [contenteditable]')) return;
-    if (document.querySelector('.cmdk')) return; // palette handles its own 'l'
-    if (e.key === 'l' || e.key === 'L') toggleLang();
-  });
-}
 channel.addEventListener('message', (ev) => {
   const msg = ev.data;
   if (!msg) return;
