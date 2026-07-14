@@ -15,7 +15,13 @@ the More icon to the primary-colored close icon, dims the timeline, and raises
 a rounded sheet above the bar. The sheet height is capped so roughly 200 px of
 the viewport remains outside the panel. Its content scrolls independently and
 can be dismissed through the backdrop, the close button, navigation, or a
-downward drag of 120 px.
+downward drag.
+
+The gesture refinement also follows the current `lynx-ui` Sheet implementation
+from `origin/main` (package version 3.134.0). Its relevant behaviors are an 8 px
+direction-lock threshold, angle-based gesture claiming, a nonlinear rubber-band
+at the fully-open boundary, velocity-projected dismissal, motion that stays on
+the main thread, and backdrop opacity derived from sheet progress.
 
 ## Considered approaches
 
@@ -33,29 +39,47 @@ downward drag of 120 px.
 ## Architecture
 
 `components/sheet/Sheet.vue` owns controlled visibility, backdrop dismissal,
-mount/unmount transitions, and downward drag-to-dismiss. It exposes a default
-slot and keeps visual surface choices configurable through classes and CSS.
-Main-thread touch handlers update only `transform` and `transition` on the
-panel. A small pure helper module owns drag clamping and dismissal decisions so
-the behavior can be covered by Node tests without rendering Lynx.
+mount/unmount transitions, and drag-to-dismiss. It exposes a default slot and
+keeps visual surface choices configurable through classes and CSS. A dedicated
+28 px handle is always draggable. The scrollable content also accepts a
+downward drag only while its scroll position is at the top; upward gestures and
+content gestures that start while scrolled remain owned by the scroll view.
+
+Main-thread touch handlers direction-lock after 8 px, sample drag velocity,
+update the panel, handle, rubber fill, and backdrop together, and settle using
+a short requestAnimationFrame spring. The background thread is contacted only
+after a dismiss animation finishes. A small pure helper module owns angle
+classification, nonlinear rubber resistance, velocity filtering, progress,
+and dismissal decisions so the behavior can be covered by Node tests without
+rendering Lynx.
 
 `NavBottom.vue` owns Elk-specific destinations, active/disabled state, menu
 rows, theme and Zen Mode actions, and route navigation. It renders the sheet as
-an absolute overlay in the existing safe-content containing block so the panel
-ends above the persistent bottom bar. Guest and authenticated tab sets mirror
-upstream Elk where the current port has matching routes.
+a root-level fixed overlay whose bottom inset includes the persistent bar and
+the Sparkling safe area. Guest and authenticated tab sets mirror upstream Elk
+where the current port has matching routes.
 
 ## Interaction and visual details
 
 - Backdrop opacity enters with the sheet and uses Elk's black 50% scrim.
-- Panel entry is 250 ms ease-out; exit is 188 ms ease-in.
+- Panel entry is 250 ms ease-out; direct backdrop/route exit is 188 ms ease-in.
+- A visible 36 × 4 px grabber sits inside a 28 px touch target at the top edge.
 - The panel has Elk's 8 px top radius, 1 px top border, translucent themed
   surface, and independent vertical scrolling.
 - Rows use 20 px horizontal padding, 40 px minimum height, 20 px icons, and the
   upstream active, disabled, and primary colors.
 - Pressed rows and bottom tabs use short transform/opacity feedback.
-- Drag follows the finger on the main thread, never moves upward past rest,
-  dismisses at 120 px, and otherwise snaps back.
+- The handle claims vertical drags in either direction after 8 px. Content only
+  claims a downward drag when `scrollTop` is zero, preserving natural scrolling.
+- Pulling upward past the fully-open position uses the same asymptotic
+  rubber-band equation as `lynx-ui` with coefficient 0.5 and an 80 px cap.
+- Pulling downward follows the finger. Release dismisses after the distance
+  threshold or after a deliberate minimum-distance fast fling; otherwise it
+  springs back to rest without a background-thread round trip.
+- Backdrop opacity follows open progress during drag and settle, rather than
+  remaining fully dark until dismissal completes.
+- A cancelled gesture always springs to the open position and clears captured
+  direction/velocity state.
 - Route changes, backdrop taps, and enabled row taps close the sheet. Disabled
   items do not navigate or close it.
 - The existing Sparkling safe-area spacers remain outside the overlay, so the
@@ -63,11 +87,13 @@ upstream Elk where the current port has matching routes.
 
 ## Testing and verification
 
-Tests first cover drag clamping, the exact dismissal boundary, menu structure,
-main-thread bindings, and the persistent More/close state. Verification then
-runs the Elk native compatibility suite, the example build, the repository
-checks affected by Vue SFC worklets, the Vercel mobile preview, and the native
-bundle in iOS Lynx Explorer with cache and app restarts.
+Tests first cover direction locking, hybrid content/handle ownership,
+rubber-band limits, velocity filtering, distance/fling dismissal, backdrop
+progress, menu structure, main-thread bindings, and the persistent More/close
+state. Verification then runs the Elk native compatibility suite, the example
+build, the repository checks affected by Vue SFC worklets, the Vercel mobile
+preview, and real slow/fast/cancelled drags on the native bundle in iOS Lynx
+Explorer with cache and app restarts.
 
 ## Scope
 
