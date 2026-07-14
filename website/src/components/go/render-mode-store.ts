@@ -1,5 +1,11 @@
 export type RenderMode = 'vdom' | 'vapor';
 
+interface VaporEntry {
+  vaporStatus?: 'supported' | 'unsupported';
+  vaporFile?: string;
+  vaporWebFile?: string;
+}
+
 type Listener = () => void;
 
 export interface RenderModeBrowser {
@@ -23,6 +29,18 @@ export interface RenderModeStore {
 function modeFromHref(href?: string): RenderMode {
   if (!href) return 'vdom';
   return new URL(href).searchParams.get('go-mode') === 'vapor' ? 'vapor' : 'vdom';
+}
+
+export function resolveRenderMode(
+  requestedMode: RenderMode,
+  entry?: VaporEntry,
+): RenderMode {
+  return requestedMode === 'vapor'
+    && entry?.vaporStatus === 'supported'
+    && Boolean(entry.vaporFile)
+    && Boolean(entry.vaporWebFile)
+    ? 'vapor'
+    : 'vdom';
 }
 
 export function createRenderModeStore(browser?: RenderModeBrowser): RenderModeStore {
