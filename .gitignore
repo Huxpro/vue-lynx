@@ -11,6 +11,7 @@ website/docs/guide/api/
 website/docs/zh/guide/api/
 website/docs/public/deck/
 website/deck-root/
+slides/public/examples
 website/api-sidebar.json
 .vercel
 .claude/
