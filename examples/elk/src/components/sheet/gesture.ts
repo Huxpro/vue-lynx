@@ -73,6 +73,18 @@ export function smoothSheetVelocity(
   return previousVelocity * (1 - sampleWeight) + sampleVelocity * sampleWeight;
 }
 
+export function sheetReleaseVelocity(
+  velocity: number,
+  sampleAgeMs: number,
+  maximumAgeMs = 80,
+): number {
+  'main thread';
+  if (sampleAgeMs < 0 || sampleAgeMs > maximumAgeMs)
+    return 0;
+
+  return velocity;
+}
+
 export function projectSheetRelease(
   distance: number,
   velocity: number,

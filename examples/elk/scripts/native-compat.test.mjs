@@ -54,6 +54,8 @@ test('sheet backdrop progress follows downward travel', () => {
 
 test('sheet filters noisy velocity samples and integrates a stable spring step', () => {
   assert.equal(sheetGesture.smoothSheetVelocity?.(0, 9, 10, 0.25), 225);
+  assert.equal(sheetGesture.sheetReleaseVelocity?.(450, 40), 450);
+  assert.equal(sheetGesture.sheetReleaseVelocity?.(450, 120), 0);
   const next = sheetGesture.stepSheetSpring?.(100, 0, 0, 1 / 60);
   assert.ok(next.value < 100);
   assert.ok(next.velocity < 0);
@@ -95,6 +97,9 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /:main-thread-bindtouchmove="handleTouchMove"/);
   assert.match(source, /:main-thread-bindtouchend="handleTouchEnd"/);
   assert.match(source, /requestAnimationFrame/);
+  assert.match(source, /animationGenerationRef/);
+  assert.match(source, /watch\(\(\) => props\.modelValue/);
+  assert.match(source, /prepareSheetForOpen/);
   assert.match(source, /runOnBackground\(requestClose\)/);
   assert.match(source, /@after-leave="handleAfterLeave"/);
   assert.match(source, /transition:\s*opacity/);

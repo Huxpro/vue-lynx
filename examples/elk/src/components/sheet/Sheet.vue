@@ -4,11 +4,13 @@ import {
   runOnBackground,
   runOnMainThread,
   useMainThreadRef,
+  watch,
 } from 'vue-lynx';
 import {
   resolveSheetDrag,
   sheetDismissThreshold,
   sheetOpenProgress,
+  sheetReleaseVelocity,
   shouldClaimSheetGesture,
   shouldDismissSheet,
   smoothSheetVelocity,
@@ -69,6 +71,7 @@ const gestureSourceRef = useMainThreadRef<SheetGestureSource>('content');
 const gestureLockedRef = useMainThreadRef(false);
 const gestureRejectedRef = useMainThreadRef(false);
 const animationFrameRef = useMainThreadRef(0);
+const animationGenerationRef = useMainThreadRef(0);
 
 const layerStyle = computed(() => ({ bottom: `${props.bottomInset}px` }));
 const surfaceStyle = computed(() => ({
@@ -112,6 +115,7 @@ function applySheetMotion(translation: number) {
 
 function cancelSettle() {
   'main thread';
+  animationGenerationRef.current += 1;
   if (animationFrameRef.current !== 0) {
     cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = 0;
@@ -125,8 +129,11 @@ function resetGestureState() {
   velocityRef.current = 0;
 }
 
-function finishSettle(target: number, dismiss: boolean) {
+function finishSettle(target: number, dismiss: boolean, generation: number) {
   'main thread';
+  if (generation !== animationGenerationRef.current)
+    return;
+
   animationFrameRef.current = 0;
   velocityRef.current = 0;
   applySheetMotion(target);
@@ -143,10 +150,14 @@ function finishSettle(target: number, dismiss: boolean) {
 function animateSheetTo(target: number, dismiss: boolean) {
   'main thread';
   cancelSettle();
+  const generation = animationGenerationRef.current;
   setMotionTransition('none');
 
   let lastFrameTime = 0;
   function step(frameTime: number) {
+    if (generation !== animationGenerationRef.current)
+      return;
+
     const deltaSeconds = lastFrameTime === 0
       ? 1 / 60
       : (frameTime - lastFrameTime) / 1000;
@@ -165,7 +176,7 @@ function animateSheetTo(target: number, dismiss: boolean) {
       Math.abs(next.value - target) < 0.5
       && Math.abs(next.velocity) < 0.5
     ) {
-      finishSettle(target, dismiss);
+      finishSettle(target, dismiss, generation);
       return;
     }
 
@@ -269,7 +280,10 @@ function handleTouchEnd() {
     : 640;
   const dismiss = shouldDismissSheet(
     downwardDistance,
-    velocityRef.current,
+    sheetReleaseVelocity(
+      velocityRef.current,
+      Date.now() - lastTouchTimeRef.current,
+    ),
     sheetDismissThreshold(sheetSize, props.dismissDistance),
   );
   const dismissTarget = sheetSize + 32;
@@ -294,6 +308,23 @@ function resetSheetMotion() {
   resetGestureState();
   setMotionTransition('');
 }
+
+function prepareSheetForOpen() {
+  'main thread';
+  if (
+    animationFrameRef.current === 0
+    && Math.abs(translationRef.current) < 0.5
+  ) {
+    return;
+  }
+
+  resetSheetMotion();
+}
+
+watch(() => props.modelValue, (visible) => {
+  if (visible)
+    runOnMainThread(prepareSheetForOpen)();
+});
 
 function handleAfterLeave() {
   runOnMainThread(resetSheetMotion)();
