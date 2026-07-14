@@ -116,12 +116,6 @@ export default defineConfig({
         { text: '7GUIs', link: '/guide/7guis' },
         { text: 'HackerNews', link: '/guide/hackernews' },
         { text: 'AI Chat', link: '/guide/ai-chat' },
-        {
-          dividerType: 'solid',
-        },
-        {
-          sectionHeaderText: 'Showcase',
-        },
         { text: 'Elk (Mastodon Client)', link: '/guide/elk' },
         {
           dividerType: 'solid',
@@ -166,12 +160,6 @@ export default defineConfig({
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
         { text: 'AI Chat', link: '/zh/guide/ai-chat' },
-        {
-          dividerType: 'solid',
-        },
-        {
-          sectionHeaderText: '案例展示',
-        },
         { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
         {
           dividerType: 'solid',
