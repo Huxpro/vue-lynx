@@ -22,6 +22,7 @@ export const ICONS = {
   smartphone: S('<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/>'),
   tablet: S('<rect x="4.5" y="3.5" width="15" height="17" rx="2.2"/><path d="M11 17.5h2"/>'),
   monitor: S('<rect x="2.5" y="4" width="19" height="12" rx="2"/><path d="M8.5 20h7M12 16v4"/>'),
+  resize: S('<path d="M20 10 10 20M20 15l-5 5"/>'),
   chevronRight: S('<path d="m9 6 6 6-6 6"/>'),
   x: S('<path d="M18 6 6 18M6 6l12 12"/>'),
   sparkles: S('<path d="M12 3l1.8 4.7L18.5 9.5 13.8 11.3 12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.9 2.3L22 18l-2.1.7L19 21l-.9-2.3L16 18l2.1-.7z"/>'),
