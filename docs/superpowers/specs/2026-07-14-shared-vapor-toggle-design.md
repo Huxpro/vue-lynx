@@ -32,11 +32,12 @@ The existing `metadataForMode` mapping swaps `dist` URLs for `dist-vapor` URLs. 
 ## Interaction and Visual Design
 
 - One `Preview renderer` toolbar controls the page, avoiding repeated controls that look independent but behave globally.
+- The site navigation carries a read-only `Examples · VDOM/Vapor` indicator. It makes the requested preference visible across the website without introducing a second control or implying that the documentation itself uses that renderer.
 - Supporting copy says `All supported examples · resets preview state`, making both scope and reset behavior visible without a tooltip.
 - Each example exposes its capability as a small non-interactive status; internal reason codes are mapped to concise English and Chinese explanations.
 - The component uses the existing Rspress surfaces, divider, text, and Vue green brand tokens in light and dark themes.
-- At narrow container widths, the segmented control moves to its own row. Coarse pointers receive 44px touch targets, keyboard focus is visible, and reduced-motion preferences disable transitions.
+- On mobile, the page toolbar becomes a flat single row: the icon, explanatory line, card border, and tinted surface disappear, leaving only the label and segmented control. The navigation indicator contracts to its mode dot and name. Coarse pointers receive 44px touch targets, keyboard focus is visible, and reduced-motion preferences disable transitions.
 
 ## Tests
 
-Add focused Node tests for the external store covering shared subscribers, URL replacement without navigation, preservation of unrelated URL state, invalid-mode fallback, and popstate synchronization. Test that the remark plugin inserts exactly one localized toolbar, that entry statuses have no local mode buttons, and that capability copy is localized. Run website type/build checks and manually verify multiple supported `<Go>` instances switch together while the document remains mounted, plus unsupported fallback and desktop/mobile light/dark presentation.
+Add focused Node tests for the external store covering shared subscribers, URL replacement without navigation, preservation of unrelated URL state, invalid-mode fallback, and popstate synchronization. Test that the remark plugin inserts exactly one localized toolbar, that entry statuses have no local mode buttons, that capability copy is localized, and that the theme mounts the read-only global indicator. Run website type/build checks and manually verify multiple supported `<Go>` instances switch together while the document remains mounted, plus unsupported fallback and desktop/mobile light/dark presentation at widths down to 320px.

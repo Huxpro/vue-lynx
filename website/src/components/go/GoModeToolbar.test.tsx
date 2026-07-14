@@ -17,6 +17,14 @@ async function loadToolbar() {
   }
 }
 
+async function loadNavIndicator() {
+  try {
+    return (await import('./GoModeNavIndicator')).GoModeNavIndicator;
+  } catch {
+    return undefined;
+  }
+}
+
 test('describes one page-wide preview preference', async () => {
   const GoModeToolbar = await loadToolbar();
   assert.equal(typeof GoModeToolbar, 'function');
@@ -41,6 +49,31 @@ test('localizes the page-wide preference for Chinese docs', async () => {
   assert.match(html, /预览渲染器/);
   assert.match(html, /所有支持的示例/);
   assert.match(html, /切换会重置状态/);
+});
+
+test('shows the requested example renderer in the global navigation', async () => {
+  const GoModeNavIndicator = await loadNavIndicator();
+  assert.equal(typeof GoModeNavIndicator, 'function');
+
+  const html = renderToStaticMarkup(createElement(GoModeNavIndicator!));
+
+  assert.match(html, /Examples/);
+  assert.match(html, /VDOM/);
+  assert.match(html, /aria-live="polite"/);
+  assert.match(html, /data-mode="vdom"/);
+  assert.doesNotMatch(html, /<button/);
+});
+
+test('localizes the global renderer context for Chinese docs', async () => {
+  const GoModeNavIndicator = await loadNavIndicator();
+  assert.equal(typeof GoModeNavIndicator, 'function');
+
+  const html = renderToStaticMarkup(
+    createElement(GoModeNavIndicator!, { locale: 'zh' }),
+  );
+
+  assert.match(html, /示例/);
+  assert.match(html, /VDOM/);
 });
 
 test('supported examples show capability without another mode switch', () => {
