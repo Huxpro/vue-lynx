@@ -628,29 +628,42 @@ h1, h2, h3, p { margin: 0; }
 }
 
 /* QR pair on demo slides — Web (clickable) + Lynx App (scan). Always a white
-   card so it scans in the dark theme too. */
+   card so it scans in the dark theme too. Hovering a code zooms it up big so
+   it's easy to scan from a distance. */
 .qr-pair {
   display: flex;
-  gap: 20px;
-  margin-top: 6px;
+  gap: 22px;
+  margin-top: 8px;
 }
 .qr {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   text-decoration: none;
   color: var(--ink-mute);
 }
+.qr:hover { z-index: 30; } /* lift the whole item so the zoom sits on top */
 .qr__code {
-  width: 96px;
-  height: 96px;
-  padding: 6px;
+  width: 120px;
+  height: 120px;
+  padding: 7px;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+  transform-origin: left bottom;
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
+              box-shadow 0.22s ease;
+  will-change: transform;
 }
 .qr__code svg { width: 100%; height: 100%; display: block; }
+/* Hover zoom — grows up-and-right from the bottom-left so it stays on-screen. */
+.qr:hover .qr__code {
+  transform: scale(2.5);
+  box-shadow: 0 26px 60px -14px rgba(0, 0, 0, 0.85);
+  position: relative;
+  z-index: 30;
+}
 .qr__label {
   font-family: var(--mono);
   font-size: 10px;
@@ -661,24 +674,52 @@ h1, h2, h3, p { margin: 0; }
 a.qr { cursor: pointer; transition: color 0.2s ease; }
 a.qr:hover { color: var(--vue-green); }
 a.qr:hover .qr__code {
-  box-shadow: 0 0 0 2px var(--vue-green), 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0 2px var(--vue-green), 0 26px 60px -14px rgba(0, 0, 0, 0.85);
 }
 
-/* Fullscreen web player (play.html) */
+/* Fullscreen web player (play.html) — a shared device frame, centered. */
 .play {
   position: fixed;
   inset: 0;
   background: #000;
   display: flex;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
 }
 .play__stage {
-  position: relative;
-  width: 100%;
-  max-width: 520px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-.play__stage > vl-demo { position: absolute; inset: 0; }
+/* On the play page the device controls are the primary UI: always visible, and
+   the preset switcher is a fixed toolbar at the bottom so it's reachable at any
+   device size (including fullscreen). */
+.phone--play .phone__presets {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 20px;
+  transform: translateX(-50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+.phone--play .phone__resize { opacity: 0.85; }
+
+/* Desktop preset = fill the whole window (no bezel). */
+.phone.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  width: auto !important;
+  height: auto !important;
+  max-width: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+}
+.phone.is-fullscreen .phone__inner { border-radius: 0; }
+.phone.is-fullscreen .phone__resize { display: none; }
 
 /* Device frame — light bezel, no notch, fluid so it always fits the stage.
    `--phone-ar` / `--phone-w` / `--phone-h` are driven by the device preset
