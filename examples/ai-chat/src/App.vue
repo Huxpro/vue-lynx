@@ -30,6 +30,10 @@ const themeClass = computed(() => `theme-${colorMode.value}`);
 // fading the content underneath instead, approximating UModal's backdrop.
 const dimmed = computed(() => stack.value.length > 0 || (isMobile.value && sidebarOpen.value));
 
+function handleSidebarShowChange(show: boolean) {
+  if (!show) closeSidebar();
+}
+
 onMounted(async () => {
   await fetchSession();
   await fetchChats();
@@ -53,22 +57,25 @@ onMounted(async () => {
       </view>
     </view>
 
-    <!-- mobile slide-over sidebar (UDashboardSidebar's menu mode) -->
-    <Transition name="drawer-backdrop" :duration="{ enter: 240, leave: 180 }">
-      <view
-        v-if="isMobile && sidebarOpen"
-        class="absolute inset-0 z-30"
-        @tap="closeSidebar()"
-      />
-    </Transition>
-    <Transition name="drawer-panel" :duration="{ enter: 240, leave: 180 }">
-      <view
-        v-if="isMobile && sidebarOpen"
-        class="absolute top-0 bottom-0 left-0 z-40 drawer-panel shadow-lg"
-      >
-        <Sidebar drawer />
-      </view>
-    </Transition>
+    <!-- Mobile side sheet: mount the hit-test layer only while it is open. -->
+    <view
+      v-if="isMobile && sidebarOpen"
+      class="absolute inset-0 drawer-backdrop"
+      :event-through="false"
+      :style="{ opacity: sidebarOpen ? '1' : '0' }"
+      @tap="handleSidebarShowChange(false)"
+    />
+    <!-- Keep only the moving surface mounted so its transform can animate. -->
+    <view
+      v-if="isMobile"
+      class="absolute top-0 bottom-0 left-0 drawer-panel shadow-lg"
+      :event-through="false"
+      :style="{
+        transform: sidebarOpen ? 'translateX(0px)' : 'translateX(-288px)',
+      }"
+    >
+      <Sidebar drawer />
+    </view>
 
     <Toaster />
     <OverlayHost />
@@ -84,27 +91,13 @@ onMounted(async () => {
   transition: opacity 240ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 .drawer-panel {
+  z-index: 40;
   width: 288px;
   background-color: var(--ui-bg-sidebar);
-}
-.drawer-panel-enter-active {
   transition: transform 240ms cubic-bezier(0.25, 1, 0.5, 1);
 }
-.drawer-panel-leave-active {
-  transition: transform 180ms cubic-bezier(0.25, 1, 0.5, 1);
-}
-.drawer-panel-enter-from,
-.drawer-panel-leave-to {
-  transform: translateX(-100%);
-}
-.drawer-backdrop-enter-active {
+.drawer-backdrop {
+  z-index: 30;
   transition: opacity 240ms cubic-bezier(0.25, 1, 0.5, 1);
-}
-.drawer-backdrop-leave-active {
-  transition: opacity 180ms cubic-bezier(0.25, 1, 0.5, 1);
-}
-.drawer-backdrop-enter-from,
-.drawer-backdrop-leave-to {
-  opacity: 0;
 }
 </style>

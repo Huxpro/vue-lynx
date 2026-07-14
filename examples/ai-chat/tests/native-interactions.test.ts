@@ -80,17 +80,34 @@ describe('native keyboard avoidance', () => {
 });
 
 describe('native drawer motion', () => {
-  it('animates the backdrop and panel with explicit native-safe transitions', async () => {
+  it('animates the persistent backdrop and panel with native-safe style updates', async () => {
     const source = await readFile(path.resolve(import.meta.dirname, '../src/App.vue'), 'utf8');
 
-    expect(source).toContain(
-      '<Transition name="drawer-backdrop" :duration="{ enter: 240, leave: 180 }">',
+    expect(source).toMatch(/\.drawer-panel\s*{[^}]*transition:\s*transform 240ms/);
+    expect(source).toMatch(/\.drawer-backdrop\s*{[^}]*transition:\s*opacity 240ms/);
+    expect(source).toContain("opacity: sidebarOpen ? '1' : '0'");
+  });
+
+  it('mounts the native backdrop only while open and keeps the moving surface stable', async () => {
+    const source = await readFile(path.resolve(import.meta.dirname, '../src/App.vue'), 'utf8');
+
+    expect(source).toContain('v-if="isMobile && sidebarOpen"');
+    expect(source).toContain('class="absolute inset-0 drawer-backdrop"');
+    expect(source).toContain('@tap="handleSidebarShowChange(false)"');
+    expect(source).toContain(':event-through="false"');
+    expect(source).toMatch(/v-if="isMobile"\s+class="absolute top-0 bottom-0 left-0/);
+    expect(source).toContain("transform: sidebarOpen ? 'translateX(0px)' : 'translateX(-288px)'");
+    expect(source).not.toContain('drawer-layer');
+    expect(source).not.toContain('<Transition name="drawer-panel"');
+  });
+
+  it('keeps the drawer close control below the iOS status area', async () => {
+    const source = await readFile(
+      path.resolve(import.meta.dirname, '../src/components/Sidebar.vue'),
+      'utf8',
     );
-    expect(source).toContain(
-      '<Transition name="drawer-panel" :duration="{ enter: 240, leave: 180 }">',
-    );
-    expect(source).toMatch(/\.drawer-panel-enter-from[\s\S]*translateX\(-100%\)/);
-    expect(source).toMatch(/\.drawer-backdrop-enter-from[\s\S]*opacity:\s*0/);
+    expect(source).toContain("const drawerTopPadding = isIOS ? '60px' : '16px'");
+    expect(source).toContain('paddingTop: drawer ? drawerTopPadding : undefined');
   });
 });
 
