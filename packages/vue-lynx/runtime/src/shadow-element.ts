@@ -33,6 +33,10 @@ import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
+  normalizeStylePropertyName,
+  normalizeStyleValue,
+} from './style-normalization.js';
+import {
   idRegistry,
   insertNode,
   parseInlineStyle,
@@ -86,20 +90,22 @@ const STYLE_METHODS = new Set([
 function createStyleFacade(el: ShadowElement): Record<string, unknown> {
   const methods = {
     getPropertyValue(name: string): string {
-      const v = el._style[name];
+      const v = el._style[normalizeStylePropertyName(name)];
       return v == null ? '' : String(v);
     },
     setProperty(name: string, value: unknown, _priority?: string): void {
+      const property = normalizeStylePropertyName(name);
       if (value == null || value === '') {
-        delete el._style[name];
+        delete el._style[property];
       } else {
-        el._style[name] = value;
+        el._style[property] = normalizeStyleValue(property, value);
       }
       if (!el._inert) pushStyleOp(el);
     },
     removeProperty(name: string): string {
-      const prev = el._style[name];
-      delete el._style[name];
+      const property = normalizeStylePropertyName(name);
+      const prev = el._style[property];
+      delete el._style[property];
       if (!el._inert) pushStyleOp(el);
       return prev == null ? '' : String(prev);
     },
@@ -118,16 +124,19 @@ function createStyleFacade(el: ShadowElement): Record<string, unknown> {
       if (key === 'cssText') {
         return serializeInlineStyle(el._style);
       }
-      return el._style[key];
+      return el._style[normalizeStylePropertyName(key)];
     },
     set(_target, key: string | symbol, value: unknown) {
       if (typeof key !== 'string') return true;
       if (key === 'cssText') {
         el._style = typeof value === 'string' ? parseInlineStyle(value) : {};
-      } else if (value == null || value === '') {
-        delete el._style[key];
       } else {
-        el._style[key] = value;
+        const property = normalizeStylePropertyName(key);
+        if (value == null || value === '') {
+          delete el._style[property];
+        } else {
+          el._style[property] = normalizeStyleValue(property, value);
+        }
       }
       if (!el._inert) pushStyleOp(el);
       return true;

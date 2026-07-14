@@ -10,7 +10,9 @@
     "test": "vitest run --no-file-parallelism"
   },
   "devDependencies": {
+    "pixelmatch": "^7.2.0",
     "playwright-core": "^1.61.1",
+    "pngjs": "^7.0.0",
     "vitest": "^3.2.4"
   }
 }
