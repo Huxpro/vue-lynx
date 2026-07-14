@@ -88,6 +88,11 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.doesNotMatch(source, /v-if="modelValue"/);
   assert.match(source, /class="sheet-backdrop"[^>]*:main-thread-ref="backdropRef"[^>]*@tap="requestClose"/s);
   assert.match(source, /class="sheet-surface"/);
+  assert.match(
+    source,
+    /\.sheet-layer\s*\{[^}]*overflow:\s*hidden/s,
+    'the sheet viewport must clip motion above the bottom nav and safe area',
+  );
   assert.match(source, /:main-thread-ref="surfaceRef"/);
   assert.match(source, /:main-thread-bindlayoutchange="handleSurfaceLayout"/);
   assert.match(source, /class="sheet-handle"/);
@@ -106,7 +111,22 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /setAttribute\?\.\('enable-scroll', enabled\)/);
   assert.match(source, /setPanelScrollEnabled\(false\)/);
   assert.match(source, /setPanelScrollEnabled\(true\)/);
-  assert.match(source, /requestAnimationFrame/);
+  assert.match(
+    source,
+    /setMotionTransition\(\s*`transform \$\{duration\}ms[^`]+`,\s*`opacity \$\{duration\}ms[^`]+`,\s*\)/s,
+    'release settling must use native transform and opacity interpolation',
+  );
+  assert.match(
+    source,
+    /settleTimerRef\.current = setTimeout\(\(\) => \{[\s\S]*?applySheetMotion\(target\);/,
+    'the transition must be committed before its target in a later frame',
+  );
+  assert.match(source, /setTimeout\(\(\) => finishSettle/);
+  assert.doesNotMatch(
+    source,
+    /requestAnimationFrame\(step\)/,
+    'a recursive worklet rAF loop can collapse into one native render batch',
+  );
   assert.match(source, /animationGenerationRef/);
   assert.match(source, /watch\(\(\) => props\.modelValue/);
   assert.match(source, /prepareSheetForOpen/);

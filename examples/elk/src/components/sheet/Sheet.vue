@@ -14,7 +14,6 @@ import {
   shouldClaimSheetGesture,
   shouldDismissSheet,
   smoothSheetVelocity,
-  stepSheetSpring,
 } from './gesture';
 import type { SheetGestureSource } from './gesture';
 
@@ -73,7 +72,7 @@ const scrollTopAtTouchStartRef = useMainThreadRef(0);
 const gestureSourceRef = useMainThreadRef<SheetGestureSource>('content');
 const gestureLockedRef = useMainThreadRef(false);
 const gestureRejectedRef = useMainThreadRef(false);
-const animationFrameRef = useMainThreadRef(0);
+const settleTimerRef = useMainThreadRef(0);
 const animationGenerationRef = useMainThreadRef(0);
 
 const layerStyle = computed(() => ({ bottom: `${props.bottomInset}px` }));
@@ -95,10 +94,10 @@ function touchY(event: SheetTouchEvent): number {
   return event.detail?.y ?? event.touches?.[0]?.clientY ?? 0;
 }
 
-function setMotionTransition(value: string) {
+function setMotionTransition(surfaceValue: string, backdropValue: string) {
   'main thread';
-  surfaceRef.current?.setStyleProperty?.('transition', value);
-  backdropRef.current?.setStyleProperty?.('transition', value);
+  surfaceRef.current?.setStyleProperty?.('transition', surfaceValue);
+  backdropRef.current?.setStyleProperty?.('transition', backdropValue);
 }
 
 function setPanelScrollEnabled(enabled: boolean) {
@@ -124,9 +123,9 @@ function applySheetMotion(translation: number) {
 function cancelSettle() {
   'main thread';
   animationGenerationRef.current += 1;
-  if (animationFrameRef.current !== 0) {
-    cancelAnimationFrame(animationFrameRef.current);
-    animationFrameRef.current = 0;
+  if (settleTimerRef.current !== 0) {
+    clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = 0;
   }
 }
 
@@ -143,7 +142,7 @@ function finishSettle(target: number, dismiss: boolean, generation: number) {
   if (generation !== animationGenerationRef.current)
     return;
 
-  animationFrameRef.current = 0;
+  settleTimerRef.current = 0;
   velocityRef.current = 0;
   applySheetMotion(target);
   resetGestureState();
@@ -152,7 +151,7 @@ function finishSettle(target: number, dismiss: boolean, generation: number) {
     runOnBackground(requestClose)();
   }
   else {
-    setMotionTransition('');
+    setMotionTransition('', '');
   }
 }
 
@@ -160,43 +159,33 @@ function animateSheetTo(target: number, dismiss: boolean) {
   'main thread';
   cancelSettle();
   const generation = animationGenerationRef.current;
-  setMotionTransition('none');
+  const duration = dismiss ? 320 : 360;
+  const easing = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
-  let lastFrameTime = 0;
-  function step(frameTime: number) {
+  setMotionTransition(
+    `transform ${duration}ms ${easing}`,
+    `opacity ${duration}ms ${easing}`,
+  );
+  settleTimerRef.current = setTimeout(() => {
     if (generation !== animationGenerationRef.current)
       return;
 
-    const deltaSeconds = lastFrameTime === 0
-      ? 1 / 60
-      : (frameTime - lastFrameTime) / 1000;
-    lastFrameTime = frameTime;
-
-    const next = stepSheetSpring(
-      translationRef.current,
-      velocityRef.current,
+    applySheetMotion(target);
+    settleTimerRef.current = setTimeout(() => finishSettle(
       target,
-      deltaSeconds,
-    );
-    velocityRef.current = next.velocity;
-    applySheetMotion(next.value);
-
-    if (
-      Math.abs(next.value - target) < 0.5
-      && Math.abs(next.velocity) < 0.5
-    ) {
-      finishSettle(target, dismiss, generation);
-      return;
-    }
-
-    animationFrameRef.current = requestAnimationFrame(step);
-  }
-
-  animationFrameRef.current = requestAnimationFrame(step);
+      dismiss,
+      generation,
+    ), duration);
+  }, 16);
 }
 
 function beginGesture(source: SheetGestureSource, event: SheetTouchEvent) {
   'main thread';
+  if (settleTimerRef.current !== 0) {
+    gestureRejectedRef.current = true;
+    return;
+  }
+
   const x = touchX(event);
   const y = touchY(event);
   touchStartXRef.current = x;
@@ -247,7 +236,7 @@ function handleTouchMove(event: SheetTouchEvent) {
       scrollTopAtTouchStartRef.current,
     )) {
       cancelSettle();
-      setMotionTransition('none');
+      setMotionTransition('none', 'none');
       setPanelScrollEnabled(false);
       gestureLockedRef.current = true;
     }
@@ -318,16 +307,16 @@ function handleTouchCancel() {
 function resetSheetMotion() {
   'main thread';
   cancelSettle();
-  setMotionTransition('none');
+  setMotionTransition('none', 'none');
   applySheetMotion(0);
   resetGestureState();
-  setMotionTransition('');
+  setMotionTransition('', '');
 }
 
 function prepareSheetForOpen() {
   'main thread';
   if (
-    animationFrameRef.current === 0
+    settleTimerRef.current === 0
     && Math.abs(translationRef.current) < 0.5
   ) {
     return;
@@ -398,6 +387,7 @@ function handleAfterLeave() {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  overflow: hidden;
   opacity: 1;
   transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
