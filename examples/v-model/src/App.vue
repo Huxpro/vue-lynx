@@ -137,11 +137,16 @@ function fillPreset() {
     <input v-model="coexistText" @input="onCoexistInput" type="text" placeholder="v-model + @input"
       :style="{ padding: 8, borderRadius: 4, fontSize: 14, backgroundColor: '#fff' }" />
 
-    <!-- NOTE: On the Lynx *web* platform, `<textarea>` is NOT mapped to the
-         `x-textarea` element (web-core's LYNX_TAG_TO_HTML_TAG_MAP has an entry
-         for `input` → `x-input` but none for `textarea`). It renders as a bare
-         HTML <textarea> with no Lynx event bridge, so v-model silently no-ops
-         there. Use <input> on web; the directive itself supports both. -->
+    <!-- v-model works identically on <textarea> (a first-class Lynx element),
+         so this demo keeps to <input> only for a web-preview reason:
+         `<input>` is in web-core's built-in tag map, but `<textarea>` is an
+         opt-in ("additional dependency") element. To render it on web the HOST
+         must (1) import `@lynx-js/web-elements/XTextarea` and (2) map the Lynx
+         tag to the custom element via the `<lynx-view>`'s
+         `overrideLynxTagToHTMLTagMap={{ textarea: 'x-textarea' }}`. Without that
+         registration web-core creates a bare <textarea> with no Lynx event
+         bridge. It works out of the box on native, and this repo's bundled
+         preview harness doesn't set the override — hence <input> here. -->
 
     <!-- Bottom spacer: keeps the lower inputs scrollable above the soft
          keyboard so a focused field is never trapped behind it. -->
