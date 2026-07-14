@@ -62,9 +62,16 @@ describe("Lynx-for-Web example host", () => {
     );
   });
 
-  test("exposes a local entry-aware VDOM/Vapor control", async () => {
+  test("exposes a shared entry-aware VDOM/Vapor control", async () => {
     const source = await readFile(
       new URL("../../../website/src/components/go/Go.tsx", import.meta.url),
+      "utf8",
+    );
+    const storeSource = await readFile(
+      new URL(
+        "../../../website/src/components/go/render-mode-store.ts",
+        import.meta.url,
+      ),
       "utf8",
     );
 
@@ -72,9 +79,11 @@ describe("Lynx-for-Web example host", () => {
     expect(source).toContain("metadataForMode(metadata, mode)");
     expect(source).toContain("exampleMetadata={renderedMetadata}");
     expect(source).not.toContain("<SWRConfig");
-    expect(source).toContain("window.location.assign(url)");
+    expect(source).toContain("useSyncExternalStore(");
+    expect(source).toContain("renderModeStore.setMode(");
+    expect(storeSource).toContain("browser.history.replaceState(");
+    expect(storeSource).not.toContain("location.assign(");
     expect(source).toContain('aria-busy="true"');
     expect(source).toContain("<VaporStatus");
-    expect(source).not.toMatch(/global.*vapor/i);
   });
 });
