@@ -39,6 +39,7 @@ interface SheetLayoutEvent {
 
 interface MainThreadElement {
   setStyleProperty?: (name: string, value: string) => void;
+  setAttribute?: (name: string, value: boolean) => void;
 }
 
 const props = withDefaults(defineProps<{
@@ -58,6 +59,7 @@ const emit = defineEmits<{
 
 const surfaceRef = useMainThreadRef<MainThreadElement | null>(null);
 const backdropRef = useMainThreadRef<MainThreadElement | null>(null);
+const panelRef = useMainThreadRef<MainThreadElement | null>(null);
 const surfaceHeightRef = useMainThreadRef(0);
 const touchStartXRef = useMainThreadRef(0);
 const touchStartYRef = useMainThreadRef(0);
@@ -67,6 +69,7 @@ const lastTouchTimeRef = useMainThreadRef(0);
 const translationRef = useMainThreadRef(0);
 const velocityRef = useMainThreadRef(0);
 const scrollTopRef = useMainThreadRef(0);
+const scrollTopAtTouchStartRef = useMainThreadRef(0);
 const gestureSourceRef = useMainThreadRef<SheetGestureSource>('content');
 const gestureLockedRef = useMainThreadRef(false);
 const gestureRejectedRef = useMainThreadRef(false);
@@ -98,6 +101,11 @@ function setMotionTransition(value: string) {
   backdropRef.current?.setStyleProperty?.('transition', value);
 }
 
+function setPanelScrollEnabled(enabled: boolean) {
+  'main thread';
+  panelRef.current?.setAttribute?.('enable-scroll', enabled);
+}
+
 function applySheetMotion(translation: number) {
   'main thread';
   const sheetSize = surfaceHeightRef.current > 0
@@ -124,6 +132,7 @@ function cancelSettle() {
 
 function resetGestureState() {
   'main thread';
+  setPanelScrollEnabled(true);
   gestureLockedRef.current = false;
   gestureRejectedRef.current = false;
   velocityRef.current = 0;
@@ -193,6 +202,7 @@ function beginGesture(source: SheetGestureSource, event: SheetTouchEvent) {
   touchStartXRef.current = x;
   touchStartYRef.current = y;
   touchStartTranslationRef.current = translationRef.current;
+  scrollTopAtTouchStartRef.current = scrollTopRef.current;
   lastTouchYRef.current = y;
   lastTouchTimeRef.current = Date.now();
   gestureSourceRef.current = source;
@@ -234,10 +244,11 @@ function handleTouchMove(event: SheetTouchEvent) {
       gestureSourceRef.current,
       deltaX,
       deltaY,
-      scrollTopRef.current,
+      scrollTopAtTouchStartRef.current,
     )) {
       cancelSettle();
       setMotionTransition('none');
+      setPanelScrollEnabled(false);
       gestureLockedRef.current = true;
     }
     else if (
@@ -288,16 +299,20 @@ function handleTouchEnd() {
   );
   const dismissTarget = sheetSize + 32;
   animateSheetTo(dismiss ? dismissTarget : 0, dismiss);
+  setPanelScrollEnabled(true);
   gestureLockedRef.current = false;
   gestureRejectedRef.current = false;
 }
 
 function handleTouchCancel() {
   'main thread';
-  if (gestureLockedRef.current)
+  if (gestureLockedRef.current) {
+    setPanelScrollEnabled(true);
     animateSheetTo(0, false);
-  else
+  }
+  else {
     resetGestureState();
+  }
 }
 
 function resetSheetMotion() {
@@ -358,6 +373,8 @@ function handleAfterLeave() {
         <scroll-view
           class="sheet-panel"
           scroll-orientation="vertical"
+          :bounces="false"
+          :main-thread-ref="panelRef"
           :main-thread-bindscroll="handlePanelScroll"
           :main-thread-bindtouchstart="handleContentTouchStart"
           :main-thread-bindtouchmove="handleTouchMove"

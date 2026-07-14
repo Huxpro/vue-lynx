@@ -92,10 +92,20 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /:main-thread-bindlayoutchange="handleSurfaceLayout"/);
   assert.match(source, /class="sheet-handle"/);
   assert.match(source, /<scroll-view/);
+  assert.match(source, /:main-thread-ref="panelRef"/);
+  assert.match(source, /:bounces="false"/);
   assert.match(source, /:main-thread-bindtouchstart="handleHandleTouchStart"/);
   assert.match(source, /:main-thread-bindtouchstart="handleContentTouchStart"/);
   assert.match(source, /:main-thread-bindtouchmove="handleTouchMove"/);
   assert.match(source, /:main-thread-bindtouchend="handleTouchEnd"/);
+  assert.match(source, /scrollTopAtTouchStartRef\.current = scrollTopRef\.current/);
+  assert.match(
+    source,
+    /shouldClaimSheetGesture\([\s\S]*?scrollTopAtTouchStartRef\.current,[\s\S]*?\)/,
+  );
+  assert.match(source, /setAttribute\?\.\('enable-scroll', enabled\)/);
+  assert.match(source, /setPanelScrollEnabled\(false\)/);
+  assert.match(source, /setPanelScrollEnabled\(true\)/);
   assert.match(source, /requestAnimationFrame/);
   assert.match(source, /animationGenerationRef/);
   assert.match(source, /watch\(\(\) => props\.modelValue/);
