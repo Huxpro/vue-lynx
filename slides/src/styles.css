@@ -235,43 +235,41 @@ html, body {
   color: var(--vue-green);
 }
 
-/* Command launcher — persistent corner button (not part of the flag-gated
+/* Command launcher — persistent corner control (not part of the flag-gated
    chrome, so it's reachable on every slide, which matters most on touch
-   devices with no keyboard). Opens the palette in slash mode. Styled as a
-   compact circle matching the language pill's height + baseline so the two
-   sit as a tidy pair in the top-right. */
+   devices with no keyboard). Opens the palette in slash mode. Rendered as a
+   bare `/` glyph (no frame) for a concise look, but keeps a full 28/32px hit
+   area so it stays easy to tap. Aligned to the language pill's baseline. */
 .cmd-launch {
   position: fixed;
   top: 28px;
-  right: 28px;
+  right: 30px;
   z-index: 101;
   width: 28px;
   height: 28px;
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 50%;
-  border: 1px solid var(--line);
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--ink-mute);
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease,
-              background 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease, transform 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
 .cmd-launch:hover,
 .cmd-launch:focus-visible {
   color: var(--vue-green);
-  border-color: var(--vue-green);
   outline: none;
 }
-.cmd-launch:active { transform: scale(0.92); }
-.cmd-launch svg { width: 14px; height: 14px; display: block; }
+.cmd-launch:active { transform: scale(0.9); }
+.cmd-launch svg { width: 16px; height: 16px; display: block; }
 
-/* Slightly bigger tap target on coarse-pointer (touch) devices. */
+/* Bigger tap target on coarse-pointer (touch) devices — the glyph stays the
+   same size, only the invisible hit area grows. */
 @media (pointer: coarse) {
   .cmd-launch { width: 32px; height: 32px; }
-  .cmd-launch svg { width: 15px; height: 15px; }
 }
 
 .is-embed .cmd-launch,
