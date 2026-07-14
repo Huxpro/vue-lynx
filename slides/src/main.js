@@ -515,13 +515,6 @@ if (!embedMode) {
 }
 
 // =========================================================
-// Dark mode toggle button
-// =========================================================
-document.querySelector('.dark-toggle')?.addEventListener('click', () => {
-  document.documentElement.classList.toggle('light');
-});
-
-// =========================================================
 // Boot
 // =========================================================
 const startIndex = (() => {
@@ -753,7 +746,7 @@ function applyLang(lang, opts = {}) {
   if (!embedMode) broadcastState();
 
   const btn = document.querySelector('[data-lang-toggle]');
-  if (btn) btn.textContent = currentLang === 'zh' ? 'EN · l' : '中 · l';
+  if (btn) btn.textContent = currentLang === 'zh' ? 'EN' : '中';
 
   try { localStorage.setItem('deck-lang', currentLang); } catch { /* ignore */ }
   if (!embedMode) {
@@ -837,7 +830,14 @@ const deckApi = {
 };
 
 const devtool = initDevtool(deckApi);
-initCommand(deckApi, { devtool });
+const command = initCommand(deckApi, { devtool });
+
+// Persistent corner launcher — opens the palette in slash mode. This is the
+// primary way to reach commands on touch devices (no keyboard). The palette's
+// list is tappable, so slash mode works fine without any key presses.
+document.querySelector('[data-palette]')?.addEventListener('click', () => {
+  command?.open?.(true);
+});
 
 // Tell the world we're closing too (so the speaker can grey out if needed)
 window.addEventListener('beforeunload', () => {

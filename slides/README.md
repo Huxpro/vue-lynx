@@ -76,6 +76,12 @@ fullscreen), and settings (theme, language, background, devtool). Move the
 selection with `↑`/`↓` **or** `←`/`→`; `Enter` runs it. In slash mode a single
 key runs an action (the hint shown on the right).
 
+A persistent **command launcher** sits in the top-right corner (the `/` button)
+and opens the palette in slash mode — this is the entry point on **touch
+devices**, where there's no keyboard: the palette list is fully tappable, so
+every command is reachable by finger. The launcher lives outside the flag-gated
+chrome, so it's present on every slide (hidden only in embed / overview).
+
 **DevTool** (palette → `d`). A foldable inspector (top-right) showing the deck's global
 config (theme, language, slide, stage scale, reduced-motion) and the current
 slide's flags + metadata (title, notes, `data-flip` ids). The flag chips are
