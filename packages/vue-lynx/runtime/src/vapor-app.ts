@@ -111,7 +111,9 @@ export type * from '@vue/runtime-core';
 // ---------------------------------------------------------------------------
 
 export { nextTick } from './next-tick.js';
-export { useCssModule } from './use-css-module.js';
+// Vapor owns its component-instance state through @vue/runtime-dom. Reuse its
+// helper so CSS modules read from the same current-instance singleton.
+export { useCssModule } from '@vue/runtime-dom';
 export { withKeys, withModifiers } from './event-modifiers.js';
 export {
   MainThreadRef,

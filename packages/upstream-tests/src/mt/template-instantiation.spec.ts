@@ -60,10 +60,31 @@ describe('MT template instantiation', () => {
     expect(rootEl.getAttribute('custom')).toBe('x');
     expect(cellEl.getAttribute('class')).toBe('cell');
     expect(cellEl.textContent).toBe('hi');
+    expect((anchorEl as HTMLElement).style.display).toBe('none');
     // instantiated subtree is attached under the root insert
     const container = elements.get(ROOT) as Element;
     expect(container.contains(rootEl)).toBe(true);
     expect(rootEl.contains(cellEl)).toBe(true);
+  });
+
+  it('keeps standalone comment anchors out of flex layout', () => {
+    const anchorId = nextId++;
+    applyOps([
+      OP.CREATE, anchorId, '__comment',
+      OP.INSERT, ROOT, anchorId, -1,
+    ]);
+
+    expect((elements.get(anchorId) as HTMLElement).style.display).toBe('none');
+  });
+
+  it('keeps empty text anchors out of flex layout', () => {
+    const anchorId = nextId++;
+    applyOps([
+      OP.CREATE_TEXT, anchorId,
+      OP.INSERT, ROOT, anchorId, -1,
+    ]);
+
+    expect((elements.get(anchorId) as HTMLElement).style.display).toBe('none');
   });
 
   it('clones the same template repeatedly with independent uid blocks', () => {

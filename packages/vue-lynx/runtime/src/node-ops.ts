@@ -9,6 +9,7 @@ import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import { ShadowElement } from './shadow-element.js';
+import { normalizeStyleObject } from './style-normalization.js';
 import {
   idRegistry,
   insertNode,
@@ -17,65 +18,6 @@ import {
   setElementTextContent,
   setIdAttr,
 } from './tree-ops.js';
-
-// ---------------------------------------------------------------------------
-// Style normalisation – numeric values → 'Npx' (Lynx requires units)
-// ---------------------------------------------------------------------------
-
-// Properties that accept a bare number (no unit needed).
-const DIMENSIONLESS = new Set([
-  'flex',
-  'flexGrow',
-  'flexShrink',
-  'flexOrder',
-  'order',
-  'opacity',
-  'zIndex',
-  'aspectRatio',
-  'fontWeight',
-  'lineClamp',
-]);
-
-/**
- * Warned property names — each auto-converted property is warned only once
- * per session to avoid log spam.
- */
-const _warnedProps: Set<string> | undefined = __DEV__ ? new Set() : undefined;
-
-function normalizeStyle(
-  style: Record<string, unknown>,
-): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const key of Object.keys(style)) {
-    const val = style[key];
-    // TODO(huxpro): Remove this workaround once the Lynx engine fixes
-    // inline style object handling for `flex: 1`.
-    //
-    // Today the engine may read an int32 numeric `flex` value as 0 when
-    // it arrives through the object-style `__SetInlineStyles` path, so we
-    // stringify numeric `flex` here to force the engine onto its string parser.
-    if (key === 'flex' && typeof val === 'number') {
-      out[key] = `${val}`;
-    } else if (
-      __VUE_LYNX_AUTO_PIXEL_UNIT__
-      && typeof val === 'number'
-      && !DIMENSIONLESS.has(key)
-    ) {
-      if (__DEV__ && val !== 0 && !_warnedProps!.has(key)) {
-        _warnedProps!.add(key);
-        console.warn(
-          `[vue-lynx] Numeric style value detected (${key}: ${val} → "${val}px"). `
-          + 'This auto-conversion is deprecated and will be removed in the next major version. '
-          + 'Use string values with explicit units instead.',
-        );
-      }
-      out[key] = val === 0 ? 0 : `${val}px`;
-    } else {
-      out[key] = val;
-    }
-  }
-  return out;
-}
 
 // ---------------------------------------------------------------------------
 // Event prop classification
@@ -261,7 +203,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       }
     } else if (key === 'style') {
       const style = nextValue != null && typeof nextValue === 'object'
-        ? normalizeStyle(nextValue as Record<string, unknown>)
+        ? normalizeStyleObject(nextValue as Record<string, unknown>)
         : {};
       el._style = style;
       const effective = el._vShowHidden ? { ...style, display: 'none' } : style;

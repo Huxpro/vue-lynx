@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { access, cp, mkdir, rm, writeFile } from "node:fs/promises";
+import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +7,7 @@ import { chromium } from "playwright-core";
 
 import { loadManifest } from "./manifest.mjs";
 import { scenarios } from "./scenarios.mjs";
+import { comparePngBuffers } from "./visual-diff.mjs";
 import { startStaticServer } from "./web-server.mjs";
 
 const chromeCandidates = [
@@ -24,6 +25,48 @@ export function isActionableRequestFailure(errorText) {
 
 export function selectAllShortcut(platform = process.platform) {
   return platform === "darwin" ? "Meta+A" : "Control+A";
+}
+
+export function localExampleAssetUrl(origin, requestUrl) {
+  const url = new URL(requestUrl);
+  if (url.origin !== "https://vue.lynxjs.org" || !url.pathname.startsWith("/examples/")) {
+    return null;
+  }
+  return new URL(`${url.pathname}${url.search}`, origin).href;
+}
+
+export function visualArtifactPaths(artifacts, id) {
+  const directory = join(artifacts, "visual");
+  const safeId = id.replaceAll("/", "__");
+  return {
+    directory,
+    vdom: join(directory, `${safeId}__vdom.png`),
+    vapor: join(directory, `${safeId}__vapor.png`),
+    diff: join(directory, `${safeId}__diff.png`),
+  };
+}
+
+export function applyVisualComparison(vdom, vapor, comparison, paths) {
+  const visualParity = {
+    status: comparison.matches ? "passed" : "failed",
+    diffPixels: comparison.diffPixels,
+    diffRatio: comparison.diffRatio,
+    totalPixels: comparison.totalPixels,
+    width: comparison.width,
+    height: comparison.height,
+    artifacts: {
+      vdom: paths.vdom,
+      vapor: paths.vapor,
+      ...(comparison.matches ? {} : { diff: paths.diff }),
+    },
+  };
+  vdom.visualParity = visualParity;
+  vapor.visualParity = visualParity;
+  if (!comparison.matches) {
+    vapor.ok = false;
+    vapor.error = `Visual parity mismatch: ${comparison.diffPixels}/${comparison.totalPixels} pixels (${(comparison.diffRatio * 100).toFixed(3)}%)`;
+  }
+  return visualParity;
 }
 
 async function exists(path) {
@@ -63,7 +106,16 @@ async function prepareWebsite(rootPath) {
   }
 }
 
-async function installFixtures(page) {
+async function installFixtures(page, origin) {
+  await page.route("https://vue.lynxjs.org/examples/**", async (route) => {
+    const localUrl = localExampleAssetUrl(origin, route.request().url());
+    if (!localUrl) {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch({ url: localUrl });
+    await route.fulfill({ response });
+  });
   await page.route("**/jsonplaceholder.typicode.com/**", async (route) => {
     const url = route.request().url();
     const body = url.includes("/posts")
@@ -101,6 +153,75 @@ async function installFixtures(page) {
   });
 }
 
+async function closeRoutedContext(page, context) {
+  // A routed image request can still be resolving when the scenario is done.
+  // Ignore those teardown-only errors before disposing the request context.
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await context.close();
+}
+
+async function installVisualClock(page) {
+  await page.addInitScript(() => {
+    const intervals = new Set();
+    const timeouts = new Set();
+    const frames = new Set();
+    const nativeSetInterval = window.setInterval.bind(window);
+    const nativeClearInterval = window.clearInterval.bind(window);
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    const nativeClearTimeout = window.clearTimeout.bind(window);
+    const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+    const nativeCancelAnimationFrame = window.cancelAnimationFrame.bind(window);
+
+    window.setInterval = (handler, timeout, ...arguments_) => {
+      const id = nativeSetInterval(handler, timeout, ...arguments_);
+      intervals.add(id);
+      return id;
+    };
+    window.clearInterval = (id) => {
+      intervals.delete(id);
+      return nativeClearInterval(id);
+    };
+    window.setTimeout = (handler, timeout, ...arguments_) => {
+      let id;
+      const wrapped = (...callbackArguments) => {
+        timeouts.delete(id);
+        if (typeof handler === "function") return handler(...callbackArguments);
+        return Function(handler)();
+      };
+      id = nativeSetTimeout(wrapped, timeout, ...arguments_);
+      timeouts.add(id);
+      return id;
+    };
+    window.clearTimeout = (id) => {
+      timeouts.delete(id);
+      return nativeClearTimeout(id);
+    };
+    window.requestAnimationFrame = (callback) => {
+      let id;
+      id = nativeRequestAnimationFrame((time) => {
+        frames.delete(id);
+        callback(time);
+      });
+      frames.add(id);
+      return id;
+    };
+    window.cancelAnimationFrame = (id) => {
+      frames.delete(id);
+      return nativeCancelAnimationFrame(id);
+    };
+    window.__VUE_LYNX_VISUAL_CLOCK__ = {
+      freeze() {
+        for (const id of intervals) nativeClearInterval(id);
+        for (const id of timeouts) nativeClearTimeout(id);
+        for (const id of frames) nativeCancelAnimationFrame(id);
+        intervals.clear();
+        timeouts.clear();
+        frames.clear();
+      },
+    };
+  });
+}
+
 function deepDomHelpers() {
   const page = document
     .querySelector("lynx-view")
@@ -128,6 +249,25 @@ async function snapshot(page) {
       .trim();
     return {
       elementCount: elements.length,
+      classNames: [...new Set(
+        elements
+          .map((element) => element.getAttribute?.("class"))
+          .filter(Boolean),
+      )].slice(0, 200),
+      imageSources: elements
+        .filter((element) =>
+          element.tagName === "IMG"
+          || element.tagName === "IMAGE"
+          || element.tagName === "LYNX-IMAGE",
+        )
+        .map((element) => ({
+          tag: element.tagName,
+          src: element.getAttribute?.("src") ?? null,
+          resolvedSrc: element.src ?? null,
+          complete: element.complete ?? null,
+          naturalWidth: element.naturalWidth ?? null,
+        }))
+        .slice(0, 100),
       inputValues: elements
         .filter((element) => element.tagName === "INPUT")
         .map((element) => element.value),
@@ -190,7 +330,7 @@ async function fillInput(page, action) {
   if (!box) throw new Error(`Could not find input: ${action.placeholder}`);
   await page.mouse.click(box.x, box.y);
   await page.keyboard.press(selectAllShortcut());
-  await page.keyboard.type(action.value);
+  await page.keyboard.insertText(action.value);
   await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 }
 
@@ -231,6 +371,64 @@ async function runScenario(page, scenario) {
   return { before, after, signature };
 }
 
+async function waitForVisualReady(page) {
+  await page.evaluate(async (helperSource) => {
+    await document.fonts?.ready;
+    const elements = (0, eval)(`(${helperSource})`)();
+    const images = elements.filter((element) => element.tagName === "IMG");
+    await Promise.all(
+      images.map((element) => {
+        if (element.complete) return undefined;
+        return new Promise((resolve) => {
+          element.addEventListener("load", resolve, { once: true });
+          element.addEventListener("error", resolve, { once: true });
+        });
+      }),
+    );
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+  }, deepDomHelpers.toString());
+}
+
+async function captureVisualScreenshot(page, path) {
+  await waitForVisualReady(page);
+  const view = page.locator("lynx-view");
+  await view.waitFor({ state: "visible", timeout: 20_000 });
+  await page.evaluate((helperSource) => {
+    window.__VUE_LYNX_VISUAL_CLOCK__?.freeze();
+    const elements = (0, eval)(`(${helperSource})`)();
+    for (const element of elements) {
+      if (typeof element.scrollTo === "function") element.scrollTo(0, 0);
+      if ("scrollTop" in element) element.scrollTop = 0;
+      if ("scrollLeft" in element) element.scrollLeft = 0;
+      if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+        element.blur();
+        element.setSelectionRange?.(0, 0);
+      }
+      for (const animation of element.getAnimations?.() ?? []) animation.pause();
+    }
+  }, deepDomHelpers.toString());
+
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setScriptExecutionDisabled", { value: true });
+  try {
+    const options = { animations: "disabled", caret: "hide" };
+    const first = await view.screenshot(options);
+    const second = await view.screenshot({ ...options, path });
+    const stability = comparePngBuffers(first, second);
+    return {
+      path,
+      stable: stability.matches,
+      diffPixels: stability.diffPixels,
+      diffRatio: stability.diffRatio,
+    };
+  } finally {
+    await cdp.send("Emulation.setScriptExecutionDisabled", { value: false });
+    await cdp.detach();
+  }
+}
+
 async function verifyEntry(browser, origin, row, mode, artifacts) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
@@ -254,7 +452,8 @@ async function verifyEntry(browser, origin, row, mode, artifacts) {
       errors.push(`requestfailed: ${request.url()} (${errorText})`);
     }
   });
-  await installFixtures(page);
+  await installVisualClock(page);
+  await installFixtures(page, origin);
   const [example, name] = row.id.split("/");
   const directory = mode === "vapor" ? "dist-vapor" : "dist";
   const bundle = `/examples/${example}/${directory}/${name}.web.bundle`;
@@ -286,13 +485,20 @@ async function verifyEntry(browser, origin, row, mode, artifacts) {
     );
     const checkpoints = await runScenario(page, scenarios[row.scenario]);
     if (errors.length > 0) throw new Error(errors.join("\n"));
-    return { id: row.id, mode, ok: true, bundle, checkpoints };
+    let visualCapture;
+    if (row.vapor.disposition !== "unsupported") {
+      const paths = visualArtifactPaths(artifacts, row.id);
+      await mkdir(paths.directory, { recursive: true });
+      const path = paths[mode];
+      visualCapture = await captureVisualScreenshot(page, path);
+    }
+    return { id: row.id, mode, ok: true, bundle, checkpoints, visualCapture };
   } catch (error) {
     const safeId = row.id.replaceAll("/", "__");
     await page.screenshot({ path: join(artifacts, `${safeId}__${mode}.png`), fullPage: true });
     return { id: row.id, mode, ok: false, bundle, error: error.stack ?? String(error), errors };
   } finally {
-    await context.close();
+    await closeRoutedContext(page, context);
   }
 }
 
@@ -309,6 +515,7 @@ async function verifyWebsiteModeControl(browser, origin, artifacts) {
   page.on("pageerror", (error) =>
     errors.push(`pageerror: ${error.stack ?? error.message ?? String(error)}`),
   );
+  await installFixtures(page, origin);
 
   try {
     await page.goto(`${origin}/guide/quick-start`, { waitUntil: "domcontentloaded" });
@@ -354,7 +561,7 @@ async function verifyWebsiteModeControl(browser, origin, artifacts) {
       errors,
     };
   } finally {
-    await context.close();
+    await closeRoutedContext(page, context);
   }
 }
 
@@ -398,6 +605,31 @@ export async function verifyWeb(root, { mode = "all", entry } = {}) {
             vdom: vdom.checkpoints.signature,
             vapor: vapor.checkpoints.signature,
           })}`;
+        }
+
+        const paths = visualArtifactPaths(artifacts, row.id);
+        process.stdout.write(`[Web visual] ${row.id} ... `);
+        try {
+          if (!vdom.visualCapture?.stable || !vapor.visualCapture?.stable) {
+            throw new Error(`Unstable screenshot capture: ${JSON.stringify({
+              vdom: vdom.visualCapture,
+              vapor: vapor.visualCapture,
+            })}`);
+          }
+          const comparison = comparePngBuffers(
+            await readFile(paths.vdom),
+            await readFile(paths.vapor),
+          );
+          await rm(paths.diff, { force: true });
+          if (!comparison.matches) await writeFile(paths.diff, comparison.diffBuffer);
+          const visualParity = applyVisualComparison(vdom, vapor, comparison, paths);
+          process.stdout.write(
+            `${visualParity.status === "passed" ? "PASS" : "FAIL"} (${(visualParity.diffRatio * 100).toFixed(3)}%)\n`,
+          );
+        } catch (error) {
+          vapor.ok = false;
+          vapor.error = `Visual parity comparison failed: ${error.stack ?? String(error)}`;
+          process.stdout.write("FAIL\n");
         }
       }
       if (!entry) {

@@ -153,6 +153,48 @@ function noop() {}
 </style>
 `;
 
+const STATIC_INLINE_STYLE_SFC = `
+<script setup vapor lang="ts">
+const label = 'styled'
+</script>
+<template>
+  <view :style="{ padding: 16, marginBottom: 12, flex: 1, opacity: 0.5 }">
+    <text>{{ label }}</text>
+  </view>
+</template>
+`;
+
+const DYNAMIC_INLINE_STYLE_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#123456')
+</script>
+<template>
+  <view :style="{ padding: 16, marginBottom: 12, borderRadius: 8, opacity: 0.5, backgroundColor: color }">
+    <text>dynamic styled</text>
+  </view>
+</template>
+`;
+
+const CSS_MODULE_SFC = `
+<script setup vapor lang="ts">
+import { useCssModule } from 'vue'
+const classes = useCssModule()
+</script>
+<template>
+  <view :class="classes.card"><text :class="classes.title">module styled</text></view>
+</template>
+`;
+
+const CSS_VARS_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#1565c0')
+</script>
+<template><view><text class="label">css var styled</text></view></template>
+<style>.label { color: v-bind(color); }</style>
+`;
+
 // ---------------------------------------------------------------------------
 // Contract: every helper the compiler emits exists on our export surface
 // ---------------------------------------------------------------------------
@@ -259,6 +301,92 @@ describe('vapor SFC e2e: kitchen sink', () => {
     expect(events.some((e) => e.args[2] === 'touchstart')).toBe(true);
     // v-model wires the input event
     expect(events.some((e) => e.args[2] === 'input')).toBe(true);
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: static inline styles', () => {
+  it('normalizes compiler-stringified styles like the VDOM renderer', async () => {
+    const { code } = compileVaporSfc('StaticStyles.vue', STATIC_INLINE_STYLE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_STYLE).map((operation) => operation.args[1]))
+      .toContainEqual({
+        padding: '16px',
+        marginBottom: '12px',
+        flex: '1',
+        opacity: '0.5',
+      });
+
+    app.unmount();
+  });
+
+  it('normalizes numeric values in style objects with dynamic fields', async () => {
+    const { code } = compileVaporSfc('DynamicStyles.vue', DYNAMIC_INLINE_STYLE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_STYLE).map((operation) => operation.args[1]))
+      .toContainEqual({
+        padding: '16px',
+        marginBottom: '12px',
+        borderRadius: '8px',
+        opacity: '0.5',
+        backgroundColor: '#123456',
+      });
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: CSS modules', () => {
+  it('resolves mappings attached to a compiled component before mount', async () => {
+    const { code } = compileVaporSfc('CssModule.vue', CSS_MODULE_SFC);
+    const mod = await importCompiled(code);
+    const component = mod.default as {
+      __cssModules?: Record<string, Record<string, string>>;
+    };
+    component.__cssModules = {
+      $style: { card: 'card_hash', title: 'title_hash' },
+    };
+
+    const app = vaporSurface.createApp(component as never);
+    app.mount();
+
+    const classes = opsOf(await flushedOps(), OP.SET_CLASS).map(
+      (operation) => operation.args[1],
+    );
+    expect(classes).toContain('card_hash');
+    expect(classes).toContain('title_hash');
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: CSS variables', () => {
+  it('applies SFC v-bind variables to the component root block', async () => {
+    const { code } = compileVaporSfc('CssVars.vue', CSS_VARS_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const styles = opsOf(await flushedOps(), OP.SET_STYLE).map(
+      (operation) => operation.args[1] as Record<string, unknown>,
+    );
+    expect(styles.some((style) =>
+      Object.entries(style).some(
+        ([property, value]) => property.startsWith('--') && value === '#1565c0',
+      )
+    )).toBe(true);
 
     app.unmount();
   });
