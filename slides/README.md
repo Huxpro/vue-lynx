@@ -208,11 +208,15 @@ Each heavy-demo slide gets a small **Web** + **Lynx App** QR pair (`src/qrcodes.
 both built from `location.origin` at runtime so they resolve on whatever domain
 the deck is served from:
 
-- **Web** (also a clickable link) → `play.html?bundle=…`, a fullscreen
-  single-example player on the deck's own origin (`src/play.js`). Scan or click
-  to run that example in a browser.
+- **Web** (also a clickable link) → `play.html?bundle=…`, a single-example
+  player on the deck's own origin (`src/play.js`). It defaults to a phone frame
+  and reuses the **same device controls** as the slide mockups — switch to
+  tablet or **desktop (fullscreen)**, or drag to resize. Scan or click to run
+  that example in a browser.
 - **Lynx App** → the hosted `…/examples/<ex>/dist/<name>.lynx.bundle`, for the
   Lynx Explorer app to open natively.
+
+Hovering either code zooms it up large so it's easy to scan from a distance.
 
 > The Web QR currently points at the deck's own play page. When the website's
 > `Go` component gains a fullscreen deep-link param (a **separate PR to the
@@ -225,6 +229,10 @@ lock) and a preset switcher (bottom-right) with three shapes — **phone**,
 **vertical tablet**, and **desktop**. Double-click the grip to reset to the
 current preset. Seed a non-default starting aspect with `data-ar` on the
 `.phone` (e.g. the to-do list uses `data-ar="300 / 560"` to sit a touch wider).
+The controls live in `src/framework/device.js` (`attachDeviceControls`) and are
+shared with the fullscreen play page — presets are injected so each context
+sizes for its own space (cqw/cqh on the scaled stage, vh/vw + a fullscreen
+desktop on the play page).
 Scrolling/swiping inside a mockup scrolls the live app — it no longer advances
 the deck (the wheel/touch navigation ignores anything under `.phone` or an
 element tagged `.no-deck-scroll`).
