@@ -420,6 +420,20 @@ function applyBlackout(on) {
   document.body.classList.toggle('is-blackout', on);
 }
 
+// While blacked out, any tap/click on the audience screen restores it. This is
+// the only way back on touch devices (no keyboard), and the blackout overlay is
+// pointer-events:none so the tap reaches here. Capture phase + stop so the same
+// tap can't also navigate the deck.
+if (!embedMode) {
+  document.addEventListener('pointerdown', (e) => {
+    if (!blackedOut) return;
+    e.preventDefault();
+    e.stopPropagation();
+    applyBlackout(false);
+    channel.postMessage({ type: 'blackout', on: false });
+  }, true);
+}
+
 // =========================================================
 // Keyboard
 // =========================================================

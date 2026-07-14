@@ -151,6 +151,13 @@ channel.addEventListener('message', (ev) => {
     render();
   } else if (msg.type === 'lang' && msg.lang !== lang) {
     applySpeakerLang(msg.lang);
+  } else if (msg.type === 'blackout') {
+    // Keep the speaker's blackout state + button label in sync when the
+    // audience screen toggles it (e.g. tap-to-restore on a phone).
+    blackedOut = !!msg.on;
+    document.body.classList.toggle('sv-blackout-on', blackedOut);
+    const btn = document.querySelector('[data-blackout]');
+    if (btn) btn.textContent = blackedOut ? L.restore : L.blackout;
   }
 });
 
