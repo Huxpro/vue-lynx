@@ -1633,6 +1633,11 @@ body.is-blackout::after {
   display: grid;
   place-items: center;
 }
+/* The FLIP engine tags morphing elements `.is-flipping`, whose framework rule
+   forces `position: relative` (fine for in-flow targets). For an absolutely-
+   positioned logo that would drop it into flow mid-morph — the element tweens
+   at the wrong spot, then snaps back on cleanup. Keep it absolute. */
+.slide .logo.is-flipping { position: absolute; }
 .logo svg { width: 100%; height: 100%; display: block; }
 
 .logo--lynx svg { fill: #ffffff; }
