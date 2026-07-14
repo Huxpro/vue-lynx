@@ -7,6 +7,7 @@ packages/upstream-tests/core/
 .DS_Store
 website/docs/guide/api/
 website/docs/public/deck/
+website/deck-root/
 website/api-sidebar.json
 .vercel
 .claude/
