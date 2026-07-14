@@ -225,7 +225,7 @@ function toggleZenMode() {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding-top: 24px;
+  padding-top: 8px;
   padding-bottom: 24px;
 }
 

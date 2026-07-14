@@ -11,18 +11,71 @@ const sheetGesture = await import('../src/components/sheet/gesture.ts').catch(()
 const navItems = await import('../src/components/nav-items.ts').catch(() => ({}));
 const lynxConfig = (await import('../lynx.config.ts')).default;
 
-test('sheet drag only follows intentional downward gestures and dismisses at 120px', () => {
-  assert.equal(sheetGesture.clampDownwardDrag?.(-18), 0);
-  assert.equal(sheetGesture.clampDownwardDrag?.(42), 42);
-  assert.equal(sheetGesture.isDownwardSheetGesture?.(0, 7), false);
-  assert.equal(sheetGesture.isDownwardSheetGesture?.(18, 12), false);
-  assert.equal(sheetGesture.isDownwardSheetGesture?.(4, 12), true);
-  assert.equal(sheetGesture.isDownwardSheetGesture?.(0, -12), false);
-  assert.equal(sheetGesture.shouldDismissSheet?.(119, 120), false);
-  assert.equal(sheetGesture.shouldDismissSheet?.(120, 120), true);
+function isolateWorklet(worklet, captures = {}) {
+  const names = Object.keys(captures);
+  return Function(...names, `return (${worklet.toString()})`)(
+    ...names.map(name => captures[name]),
+  );
+}
+
+test('sheet claims handle drags vertically and content drags only downward at scroll top', () => {
+  assert.equal(sheetGesture.shouldClaimSheetGesture?.('handle', 2, -12, 40), true);
+  assert.equal(sheetGesture.shouldClaimSheetGesture?.('handle', 20, 10, 0), false);
+  assert.equal(sheetGesture.shouldClaimSheetGesture?.('content', 2, 12, 0), true);
+  assert.equal(sheetGesture.shouldClaimSheetGesture?.('content', 2, -12, 0), false);
+  assert.equal(sheetGesture.shouldClaimSheetGesture?.('content', 2, 12, 1), false);
 });
 
-test('Vue Lynx Sheet keeps presence controlled and drag work on the main thread', async () => {
+test('sheet uses bounded rubber resistance above the open position', () => {
+  assert.equal(sheetGesture.resolveSheetDrag?.(30), 30);
+  assert.ok(Math.abs(sheetGesture.resolveSheetDrag?.(-40, 80, 0.5) + 16) < 0.0001);
+  assert.ok(sheetGesture.resolveSheetDrag?.(-10000, 80, 0.5) > -80);
+});
+
+test('sheet release uses distance or projected fling travel to dismiss', () => {
+  assert.equal(sheetGesture.shouldDismissSheet?.(120, 0, 120), true);
+  assert.equal(sheetGesture.shouldDismissSheet?.(119, 0, 120), false);
+  assert.equal(sheetGesture.shouldDismissSheet?.(24, 900, 120), true);
+  assert.equal(sheetGesture.shouldDismissSheet?.(10, 1200, 120), false);
+  assert.equal(sheetGesture.shouldDismissSheet?.(60, -900, 120), false);
+});
+
+test('sheet dismiss threshold scales with native layout units', () => {
+  assert.equal(sheetGesture.sheetDismissThreshold(1600), 240);
+  assert.equal(sheetGesture.sheetDismissThreshold(1600, 180), 180);
+  assert.equal(sheetGesture.sheetDismissThreshold(0), 120);
+});
+
+test('sheet backdrop progress follows downward travel', () => {
+  assert.equal(sheetGesture.sheetOpenProgress?.(-20, 600), 1);
+  assert.equal(sheetGesture.sheetOpenProgress?.(150, 600), 0.75);
+  assert.equal(sheetGesture.sheetOpenProgress?.(800, 600), 0);
+});
+
+test('sheet filters noisy velocity samples and integrates a stable spring step', () => {
+  assert.equal(sheetGesture.smoothSheetVelocity?.(0, 9, 10, 0.25), 225);
+  const next = sheetGesture.stepSheetSpring?.(100, 0, 0, 1 / 60);
+  assert.ok(next.value < 100);
+  assert.ok(next.velocity < 0);
+});
+
+test('sheet worklets keep primitive defaults when detached from module scope', () => {
+  const claim = isolateWorklet(sheetGesture.shouldClaimSheetGesture);
+  const resolveDrag = isolateWorklet(sheetGesture.resolveSheetDrag, {
+    rubberEffect: sheetGesture.rubberEffect,
+  });
+  const project = isolateWorklet(sheetGesture.projectSheetRelease);
+  const dismiss = isolateWorklet(sheetGesture.shouldDismissSheet, {
+    projectSheetRelease: project,
+  });
+
+  assert.equal(claim('handle', 2, -12, 40), true);
+  assert.equal(resolveDrag(30), 30);
+  assert.equal(project(24, 900), 226.5);
+  assert.equal(dismiss(24, 900, 120), true);
+});
+
+test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', async () => {
   const source = await readFile(
     new URL('../src/components/sheet/Sheet.vue', import.meta.url),
     'utf8',
@@ -31,13 +84,19 @@ test('Vue Lynx Sheet keeps presence controlled and drag work on the main thread'
   assert.match(source, /modelValue/);
   assert.match(source, /v-show="modelValue"/);
   assert.doesNotMatch(source, /v-if="modelValue"/);
-  assert.match(source, /class="sheet-backdrop"[^>]*@tap="requestClose"/s);
+  assert.match(source, /class="sheet-backdrop"[^>]*:main-thread-ref="backdropRef"[^>]*@tap="requestClose"/s);
+  assert.match(source, /class="sheet-surface"/);
+  assert.match(source, /:main-thread-ref="surfaceRef"/);
+  assert.match(source, /:main-thread-bindlayoutchange="handleSurfaceLayout"/);
+  assert.match(source, /class="sheet-handle"/);
   assert.match(source, /<scroll-view/);
-  assert.match(source, /:main-thread-ref="panelRef"/);
-  assert.match(source, /:main-thread-bindtouchstart="handleTouchStart"/);
+  assert.match(source, /:main-thread-bindtouchstart="handleHandleTouchStart"/);
+  assert.match(source, /:main-thread-bindtouchstart="handleContentTouchStart"/);
   assert.match(source, /:main-thread-bindtouchmove="handleTouchMove"/);
   assert.match(source, /:main-thread-bindtouchend="handleTouchEnd"/);
+  assert.match(source, /requestAnimationFrame/);
   assert.match(source, /runOnBackground\(requestClose\)/);
+  assert.match(source, /@after-leave="handleAfterLeave"/);
   assert.match(source, /transition:\s*opacity/);
   assert.match(source, /transition:\s*transform/);
   assert.doesNotMatch(source, /transition:\s*all/);
