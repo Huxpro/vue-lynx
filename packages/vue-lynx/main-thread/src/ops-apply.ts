@@ -70,6 +70,15 @@ function createTypedElement(
   }
 }
 
+function createCommentAnchor(): LynxElement {
+  const el = __CreateView(pageUniqueId);
+  __SetCSSId([el], 0);
+  // A zero-width node still participates in flex `gap`. Keep anchors fully
+  // out of layout while retaining a concrete node for insertBefore/remove.
+  __SetInlineStyles(el, { display: 'none' });
+  return el;
+}
+
 // ---------------------------------------------------------------------------
 // Template instantiation (Vapor fast path)
 // ---------------------------------------------------------------------------
@@ -77,6 +86,7 @@ function createTypedElement(
 
 
 const templates = new Map<number, TemplateNode>();
+const textElements = new WeakSet<LynxElement>();
 
 /**
  * Instantiate a registered template. Element ids are assigned by pre-order
@@ -93,12 +103,14 @@ function instantiateTemplate(
 
   let el: LynxElement;
   if (tag === '#comment') {
-    el = __CreateRawText('');
+    el = createCommentAnchor();
     elements.set(uid, el);
     return { el, uid };
   }
   if (tag === '#text') {
     el = __CreateText(pageUniqueId);
+    textElements.add(el);
+    __SetInlineStyles(el, { display: 'none' });
   } else {
     el = createTypedElement(tag, pageUniqueId);
   }
@@ -116,7 +128,12 @@ function instantiateTemplate(
     if (props.sc) {
       for (const cssId of props.sc) __SetCSSId([el], cssId);
     }
-    if (props.t !== undefined) __SetAttribute(el, 'text', props.t);
+    if (props.t !== undefined) {
+      __SetAttribute(el, 'text', props.t);
+      if (tag === '#text') {
+        __SetInlineStyles(el, { display: props.t === '' ? 'none' : 'flex' });
+      }
+    }
   }
 
   for (const childNode of children) {
@@ -171,8 +188,8 @@ export function applyOps(ops: unknown[]): void {
         let el: LynxElement;
         if (type === '__comment') {
           // Vue uses comment nodes as Fragment / v-if anchors.
-          // Create a zero-size text node as an invisible placeholder.
-          el = __CreateRawText('');
+          // A hidden view remains addressable without affecting flex layout.
+          el = createCommentAnchor();
         } else if (type === 'list') {
           el = createListElement(id);
         } else {
@@ -196,6 +213,10 @@ export function applyOps(ops: unknown[]): void {
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
         const el = __CreateText(pageUniqueId);
+        textElements.add(el);
+        // Vue also uses empty text nodes as Fragment / Teleport anchors.
+        // Hide by default; SET_TEXT makes real text nodes visible.
+        __SetInlineStyles(el, { display: 'none' });
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
@@ -275,7 +296,12 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const text = ops[i++] as string;
         const el = elements.get(id);
-        if (el) __SetAttribute(el, 'text', text);
+        if (el) {
+          __SetAttribute(el, 'text', text);
+          if (textElements.has(el)) {
+            __SetInlineStyles(el, { display: text === '' ? 'none' : 'flex' });
+          }
+        }
         break;
       }
 

@@ -17,6 +17,10 @@
 
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
+import {
+  normalizeStylePropertyName,
+  normalizeStyleValue,
+} from './style-normalization.js';
 import type { ShadowElement } from './shadow-element.js';
 
 // ---------------------------------------------------------------------------
@@ -79,9 +83,9 @@ export function parseInlineStyle(text: string): Record<string, unknown> {
   for (const decl of text.split(';')) {
     const idx = decl.indexOf(':');
     if (idx <= 0) continue;
-    const key = decl.slice(0, idx).trim();
+    const key = normalizeStylePropertyName(decl.slice(0, idx).trim());
     const value = decl.slice(idx + 1).trim();
-    if (key) out[key] = value;
+    if (key) out[key] = normalizeStyleValue(key, value);
   }
   return out;
 }

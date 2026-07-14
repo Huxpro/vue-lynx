@@ -36,11 +36,8 @@ import {
   createVaporApp as _createVaporApp,
   renderEffect,
 } from '@vue/runtime-vapor';
-import {
-  getCurrentInstance,
-  onMounted,
-  watchPostEffect,
-} from '@vue/runtime-core';
+import * as runtimeDom from '@vue/runtime-dom';
+import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
@@ -171,7 +168,11 @@ export function applyTextModel(
 
 /** Lynx-specific runtime-vapor implementation used by SFC CSS v-bind(). */
 export function useVaporCssVars(getter: () => Record<string, string>): void {
-  const instance = getCurrentInstance() as unknown as { block?: unknown } | null;
+  // runtime-dom exposes this internal live binding at runtime, but omits it
+  // from the public declaration surface.
+  const instance = (runtimeDom as unknown as {
+    readonly currentInstance: { block?: unknown } | null;
+  }).currentInstance;
   if (!instance) return;
 
   onMounted(() => {
