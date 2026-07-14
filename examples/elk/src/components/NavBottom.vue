@@ -13,6 +13,12 @@ import {
 } from './nav-items';
 import Sheet from './sheet/Sheet.vue';
 
+const props = withDefaults(defineProps<{
+  safeAreaBottom?: number;
+}>(), {
+  safeAreaBottom: 0,
+});
+
 const router = useRouter();
 const route = useRoute();
 const settings = useUserSettings();
@@ -30,6 +36,7 @@ const menuItems = computed(() => buildMoreMenuItems({
   server: currentServer.value,
   activePath: route.path,
 }));
+const sheetBottomInset = computed(() => 56 + props.safeAreaBottom);
 
 watch(() => route.path, () => {
   sheetVisible.value = false;
@@ -96,7 +103,7 @@ function toggleZenMode() {
   <view class="nav-shell">
     <Sheet
       v-model="sheetVisible"
-      :bottom-inset="56"
+      :bottom-inset="sheetBottomInset"
       :top-inset="144"
       :dismiss-distance="120"
     >
@@ -176,7 +183,6 @@ function toggleZenMode() {
 
 <style>
 .nav-shell {
-  position: static;
   width: 100%;
   height: 56px;
   flex-shrink: 0;

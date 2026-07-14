@@ -21,7 +21,7 @@ const safeAreaBottomStyle = { height: `${safeArea.bottom}px` };
       <view class="app-content">
         <RouterView />
       </view>
-      <NavBottom />
+      <NavBottom :safe-area-bottom="safeArea.bottom" />
       <MediaPreview />
     </view>
     <view v-if="safeArea.bottom" class="safe-area-spacer" :style="safeAreaBottomStyle" />

@@ -114,12 +114,20 @@ test('bottom navigation renders the Elk More sheet and persistent close tab', as
 });
 
 test('sheet and bottom bar share one stable root across Transition removal', async () => {
-  const source = await readFile(
-    new URL('../src/components/NavBottom.vue', import.meta.url),
-    'utf8',
-  );
+  const [source, sheetSource] = await Promise.all([
+    readFile(
+      new URL('../src/components/NavBottom.vue', import.meta.url),
+      'utf8',
+    ),
+    readFile(
+      new URL('../src/components/sheet/Sheet.vue', import.meta.url),
+      'utf8',
+    ),
+  ]);
 
   assert.match(source, /<template>\s*<view class="nav-shell">[\s\S]*<Sheet[\s\S]*<view class="nav-bottom">[\s\S]*<\/view>\s*<\/view>\s*<\/template>/);
+  assert.doesNotMatch(source, /position:\s*static/);
+  assert.match(sheetSource, /\.sheet-layer\s*\{[^}]*position:\s*fixed/s);
 });
 
 test('ASCII case adapter preserves masto action and response key conversion', () => {
@@ -290,15 +298,24 @@ test('safe-area insets fall back to zero outside valid Sparkling iOS props', () 
 });
 
 test('the root layout applies both safe-area edges around content and navigation', async () => {
-  const source = await readFile(
-    new URL('../src/App.vue', import.meta.url),
-    'utf8',
-  );
+  const [source, navSource] = await Promise.all([
+    readFile(
+      new URL('../src/App.vue', import.meta.url),
+      'utf8',
+    ),
+    readFile(
+      new URL('../src/components/NavBottom.vue', import.meta.url),
+      'utf8',
+    ),
+  ]);
 
   assert.match(source, /getSparklingSafeAreaInsets/);
   assert.match(source, /safeArea\.top/);
   assert.match(source, /safeArea\.bottom/);
   assert.match(source, /class="safe-area-spacer"/);
+  assert.match(source, /<NavBottom\s+:safe-area-bottom="safeArea\.bottom"\s*\/>/);
+  assert.match(navSource, /const sheetBottomInset = computed\(\(\) => 56 \+ props\.safeAreaBottom\)/);
+  assert.match(navSource, /:bottom-inset="sheetBottomInset"/);
 });
 
 test('Elk fidelity uses the upstream system sans typography and compact body rhythm', async () => {
