@@ -29,6 +29,9 @@ const overlay = useOverlay();
 const { close: closeDrawer } = useSidebarDrawer();
 
 const collapsed = ref(false);
+const isIOS =
+  (globalThis as { SystemInfo?: { platform?: string } }).SystemInfo?.platform === 'iOS';
+const drawerTopPadding = isIOS ? '60px' : '16px';
 
 function afterNavigate() {
   if (props.drawer) closeDrawer();
@@ -71,7 +74,10 @@ function openChat(id: string) {
 <template>
   <view
     class="flex flex-col py-4 bg-sidebar shrink-0 h-full"
-    :style="{ width: drawer ? '100%' : collapsed ? '56px' : '256px' }"
+    :style="{
+      width: drawer ? '100%' : collapsed ? '56px' : '256px',
+      paddingTop: drawer ? drawerTopPadding : undefined,
+    }"
   >
     <!-- header -->
     <view class="flex flex-row items-center px-4 pb-3" :class="collapsed ? 'justify-center px-2' : ''">

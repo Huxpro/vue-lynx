@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from 'vue-lynx';
+import { computed, nextTick, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue-lynx';
 import type { ShadowElement } from 'vue-lynx';
 import { useRoute } from 'vue-router';
 
@@ -14,6 +14,7 @@ import Icon from '../components/ui/Icon.vue';
 import { useAttachments } from '../composables/useAttachments';
 import { useChat } from '../composables/useChat';
 import { useChats } from '../composables/useChats';
+import { useKeyboardAvoidance } from '../composables/useKeyboardAvoidance';
 import { useModels } from '../composables/useModels';
 import { useOverlay } from '../composables/useOverlay';
 import { useToast } from '../composables/useToast';
@@ -58,6 +59,8 @@ const editingMessageId = ref<string | null>(null);
 const { files, open, removeFile, clearFiles, uploading, uploadedFiles } = useAttachments();
 
 const scrollRef = useTemplateRef<ShadowElement>('scrollRef');
+const promptRef = useTemplateRef<ShadowElement>('promptRef');
+useKeyboardAvoidance(promptRef);
 
 const chat = useChat({
   id: chatId,
@@ -81,6 +84,8 @@ const chat = useChat({
 });
 
 const { messages, status, error, sendMessage, regenerate, stop } = chat;
+
+onUnmounted(stop);
 
 async function scrollToBottom() {
   // nextTick waits for the main thread to apply pending ops so the
@@ -248,7 +253,7 @@ const showIndicator = computed(
 </script>
 
 <template>
-  <view v-if="data?.id" class="flex-1 flex flex-col min-w-0 min-h-0">
+  <view v-if="data?.id" class="flex-1 flex flex-col min-w-0 min-h-0 chat-page">
     <Navbar>
       <template #title>
         <ChatTitle
@@ -310,32 +315,34 @@ const showIndicator = computed(
       </view>
     </scroll-view>
 
-    <view v-if="isOwner" class="pb-4 pt-1 prompt-container" :class="isMobile ? 'px-4' : 'px-6'">
-      <PromptBox
-        v-model="input"
-        :status="status"
-        :error="error?.message"
-        :disabled="uploading"
-        @submit="handleSubmit"
-        @stop="stop()"
-        @reload="regenerate()"
-        @attach="open"
-      >
-        <template v-if="files.length > 0" #header>
-          <view class="flex flex-row flex-wrap gap-2 px-2 pt-2">
-            <FilePreview
-              v-for="file in files"
-              :key="file.id"
-              :name="file.name"
-              :type="file.mediaType"
-              :preview-url="file.url"
-              :status="file.status"
-              removable
-              @remove="removeFile(file.id)"
-            />
-          </view>
-        </template>
-      </PromptBox>
+    <view v-if="isOwner" ref="promptRef" class="prompt-dock">
+      <view class="pb-4 pt-1 prompt-container" :class="isMobile ? 'px-4' : 'px-6'">
+        <PromptBox
+          v-model="input"
+          :status="status"
+          :error="error?.message"
+          :disabled="uploading"
+          @submit="handleSubmit"
+          @stop="stop()"
+          @reload="regenerate()"
+          @attach="open"
+        >
+          <template v-if="files.length > 0" #header>
+            <view class="flex flex-row flex-wrap gap-2 px-2 pt-2">
+              <FilePreview
+                v-for="file in files"
+                :key="file.id"
+                :name="file.name"
+                :type="file.mediaType"
+                :preview-url="file.url"
+                :status="file.status"
+                removable
+                @remove="removeFile(file.id)"
+              />
+            </view>
+          </template>
+        </PromptBox>
+      </view>
     </view>
   </view>
 
@@ -346,6 +353,22 @@ const showIndicator = computed(
 </template>
 
 <style>
+.chat-page {
+  position: relative;
+}
+.chat-container {
+  padding-bottom: 128px;
+}
+.prompt-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ui-bg);
+}
 .chat-container,
 .prompt-container {
   max-width: 768px;

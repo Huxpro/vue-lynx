@@ -97,8 +97,12 @@ export function localApi(path: string, method: string, body?: unknown): unknown 
       id?: string;
       message?: { id?: string; parts?: UIMessagePart[] };
     };
+    const chatId = id || uid();
+    if (chats.some((chat) => chat.id === chatId)) {
+      throw Object.assign(new Error('Chat id already exists'), { status: 409 });
+    }
     const chat: ChatRow = {
-      id: id || uid(),
+      id: chatId,
       title: null,
       visibility: 'private',
       createdAt: new Date().toISOString(),
@@ -185,7 +189,7 @@ export function localApi(path: string, method: string, body?: unknown): unknown 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Mirrors the server's runGeneration (word-paced mock streaming). */
-export async function localStream(
+export function localStream(
   chatId: string,
   body: { model?: string; messages?: UIMessage[] },
   signal: AbortSignal,
@@ -224,51 +228,59 @@ export async function localStream(
   onChunk({ type: 'start', messageId });
   onChunk({ type: 'start-step' });
 
-  for (const step of script) {
-    if (signal.aborted) break;
-    if (step.kind === 'reasoning' || step.kind === 'text') {
-      const id = uid();
-      onChunk({ type: `${step.kind}-start`, id });
-      let text = '';
-      for (const word of step.text.split(/(?<=\s)/)) {
-        if (signal.aborted) break;
-        text += word;
-        onChunk({ type: `${step.kind}-delta`, id, delta: word });
-        await sleep(step.kind === 'reasoning' ? 24 : 18);
+  // The real template has a visible submitted phase while the request reaches
+  // the model. Keep that feedback in the zero-network demo too; otherwise the
+  // synchronous fallback jumps straight to the first reasoning part and the
+  // waiting spinner never becomes perceptible.
+  // Keep this as a promise chain: lowering an outer await in this complex
+  // function produces invalid QuickJS bytecode in the native Lynx bundle.
+  return sleep(600).then(async () => {
+    for (const step of script) {
+      if (signal.aborted) break;
+      if (step.kind === 'reasoning' || step.kind === 'text') {
+        const id = uid();
+        onChunk({ type: `${step.kind}-start`, id });
+        let text = '';
+        for (const word of step.text.split(/(?<=\s)/)) {
+          if (signal.aborted) break;
+          text += word;
+          onChunk({ type: `${step.kind}-delta`, id, delta: word });
+          await sleep(step.kind === 'reasoning' ? 24 : 18);
+        }
+        onChunk({ type: `${step.kind}-end`, id });
+        parts.push({ type: step.kind, text, state: 'done' });
+      } else if (step.kind === 'tool') {
+        const toolCallId = uid();
+        onChunk({ type: 'tool-input-start', toolCallId, toolName: step.name });
+        await sleep(300);
+        onChunk({ type: 'tool-input-available', toolCallId, toolName: step.name, input: step.input });
+        await sleep(1500);
+        onChunk({ type: 'tool-output-available', toolCallId, output: step.output });
+        parts.push({
+          type: `tool-${step.name}`,
+          toolCallId,
+          state: 'output-available',
+          input: step.input,
+          output: step.output,
+        });
+      } else if (step.kind === 'source') {
+        const sourceId = uid();
+        onChunk({ type: 'source-url', sourceId, url: step.url, title: step.title });
+        parts.push({ type: 'source-url', sourceId, url: step.url, title: step.title });
       }
-      onChunk({ type: `${step.kind}-end`, id });
-      parts.push({ type: step.kind, text, state: 'done' });
-    } else if (step.kind === 'tool') {
-      const toolCallId = uid();
-      onChunk({ type: 'tool-input-start', toolCallId, toolName: step.name });
-      await sleep(300);
-      onChunk({ type: 'tool-input-available', toolCallId, toolName: step.name, input: step.input });
-      await sleep(1500);
-      onChunk({ type: 'tool-output-available', toolCallId, output: step.output });
-      parts.push({
-        type: `tool-${step.name}`,
-        toolCallId,
-        state: 'output-available',
-        input: step.input,
-        output: step.output,
-      });
-    } else if (step.kind === 'source') {
-      const sourceId = uid();
-      onChunk({ type: 'source-url', sourceId, url: step.url, title: step.title });
-      parts.push({ type: 'source-url', sourceId, url: step.url, title: step.title });
     }
-  }
 
-  onChunk({ type: 'finish-step' });
-  onChunk({ type: 'finish' });
+    onChunk({ type: 'finish-step' });
+    onChunk({ type: 'finish' });
 
-  if (parts.length && !signal.aborted) {
-    messages.push({
-      id: messageId,
-      chatId,
-      role: 'assistant',
-      parts,
-      createdAt: new Date().toISOString(),
-    });
-  }
+    if (parts.length && !signal.aborted) {
+      messages.push({
+        id: messageId,
+        chatId,
+        role: 'assistant',
+        parts,
+        createdAt: new Date().toISOString(),
+      });
+    }
+  });
 }

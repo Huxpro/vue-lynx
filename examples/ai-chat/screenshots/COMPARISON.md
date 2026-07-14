@@ -5,12 +5,17 @@ Both columns captured at 1280×800.
 - **Original**: the live [chat-template.nuxt.dev](https://chat-template.nuxt.dev/) (real Nuxt app with real AI models), driven headlessly.
 - **Lynx**: this example running on **Lynx for Web** (`rspeedy dev` → `/__web_preview`), backed by the example's mock server (deterministic streams).
 
+> Refreshed for #200 (parity + native-streaming hardening). New this round: the **Markdown table**
+> pair below. One deliberate divergence introduced by #200 — the "Thinking…" indicator changed
+> from the original's 4×4 dot-matrix to a braille CLI spinner (`⠿`, see `lynx/spinner.png`).
+
 | Surface | Original | Vue Lynx port |
 |---|---|---|
 | Home (light) | ![original home](original/home.png) | ![lynx home](lynx/home.png) |
 | Weather tool chat | ![original weather](original/weather.png) | ![lynx weather](lynx/weather.png) |
 | Chart prompt | ![original chart](original/chart.png) | ![lynx chart](lynx/chart.png) |
 | Markdown + code | ![original code](original/code.png) | ![lynx code](lynx/code.png) |
+| Markdown table | ![original table](original/table.png) | ![lynx table](lynx/table.png) |
 | Home (dark) | ![original dark](original/dark.png) | ![lynx dark](lynx/dark.png) |
 | Search palette | ![original search](original/search.png) | ![lynx search](lynx/search.png) |
 | Web-search tool | ![original websearch](original/websearch.png) | ![lynx websearch](lynx/websearch.png) |
@@ -46,6 +51,12 @@ with syntax highlighting. The original highlights with Shiki grammars; the port 
 lightweight regex tokenizer with github-ish token colors, so colors are similar but not
 token-identical.
 
+**Markdown table** — GFM pipe tables (added in #200): shaded header row, cell borders, bold
+cells, inline code, and column alignment. The original renders `<table>` through Comark; Lynx
+has no `<table>` element, so the port lays the table out with `view` rows/cells inside a
+horizontal `scroll-view` (min column width, so wide tables scroll rather than crush). Both
+columns here were prompted for the same UnJS package overview.
+
 **Search palette** — the original's ⌘K modal vs the port's overlay: same input header, grouped
 results. The original dims the page behind the modal with a translucent backdrop; translucent
 overlay backgrounds don't composite on the Lynx web platform, so the port fades the underlying
@@ -76,8 +87,8 @@ empty history because the live demo session was fresh.
 
 **Mobile markdown (composable)** — reasoning row, streamed prose, and a highlighted code block.
 The vertical rhythm matches the original's prose spacing (28px line-height, ~16px between
-blocks). Getting here required a Lynx-specific fix: Vue's `v-if`/`v-else-if` chains and
-`v-for` fragments leave zero-size placeholder nodes as siblings, and Lynx flex `gap` adds space
-around *every* child — placeholders included — which multiplied the spacing between markdown
-blocks. The renderer now wraps each block/part in a single `<view>` and spaces with
-`margin-top` instead of container `gap` (see PORTING.md "Platform learnings" #11).
+blocks). Vue's `v-if`/`v-else-if` chains and `v-for` fragments leave placeholder nodes as
+siblings. On web they participate in flex `gap`; on native, empty `<text>` nodes also receive a
+14px default line box. The block renderer avoids fragment gaps with one wrapper and per-block
+`margin-top`, while the Vue Lynx renderer keeps comment anchors off the Main Thread and
+materialises text anchors only while non-empty (see PORTING.md "Platform learnings" #10/#14).

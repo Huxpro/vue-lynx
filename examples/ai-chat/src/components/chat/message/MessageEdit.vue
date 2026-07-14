@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue-lynx';
+import { computed, ref, useTemplateRef } from 'vue-lynx';
+import type { ShadowElement } from 'vue-lynx';
 
+import { useNativeInputValue } from '../../../composables/useNativeInputValue';
 import type { UIMessage } from '../../../types/ai';
 import UButton from '../../ui/UButton.vue';
 
@@ -16,22 +18,21 @@ const emit = defineEmits<{
 }>();
 
 const editingText = ref(props.text);
+const inputRef = useTemplateRef<ShadowElement>('inputRef');
+useNativeInputValue(inputRef, () => editingText.value);
 const canSave = computed(
   () => editingText.value.trim().length > 0 && editingText.value !== props.text,
 );
 
-function onInput(e: { detail?: { value?: string } }) {
-  editingText.value = e.detail?.value ?? '';
-}
 </script>
 
 <template>
   <view class="flex flex-col gap-2 w-full">
     <input
-      :value="editingText"
+      ref="inputRef"
+      v-model="editingText"
       class="edit-input text-base text-highlighted"
       confirm-type="done"
-      @input="onInput"
       @confirm="canSave && emit('save', message, editingText)"
     />
 
