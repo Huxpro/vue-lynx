@@ -10,7 +10,6 @@ import {
   type RenderMode,
 } from './render-mode-store';
 import { VaporStatus } from './VaporStatus';
-import './vapor-status.scss';
 
 const config = {
   exampleBasePath: '/examples',
