@@ -19,11 +19,8 @@
     <span>Vue Lynx · pre-alpha</span>
   </div>
   <div class="chrome chrome--top-right">
-    <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Press l to toggle language">
-      中 · l
-    </button>
-    <button class="dark-toggle" aria-label="Toggle theme" title="Press . to toggle">
-      theme · .
+    <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">
+      中
     </button>
   </div>
   <div class="chrome chrome--bottom">
@@ -32,6 +29,17 @@
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
   </div>
+
+  <!-- Command launcher — always available (esp. on touch, where there's no
+       keyboard). Opens the command palette in slash mode. -->
+  <button class="cmd-launch" data-palette type="button"
+          aria-label="Open command palette"
+          title="Commands · press / or ⌘K">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 20 16 4" />
+    </svg>
+  </button>
 
   <div class="progress"><div class="progress__bar"></div></div>
 
