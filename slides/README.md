@@ -199,7 +199,25 @@ piped to the speaker view through the BroadcastChannel.
 
 `<vl-demo bundle="todomvc/dist/main.web.bundle">` mounts a real Vue Lynx
 app via `@lynx-js/web-core/client`. Each embed lazy-loads the runtime on
-first reveal so the opening slides stay snappy.
+first reveal so the opening slides stay snappy. The element lives in
+`src/demo.js` (shared with the play page below).
+
+### Try-it QR codes (demo slides)
+
+Each heavy-demo slide gets a small **Web** + **Lynx App** QR pair (`src/qrcodes.js`),
+both built from `location.origin` at runtime so they resolve on whatever domain
+the deck is served from:
+
+- **Web** (also a clickable link) → `play.html?bundle=…`, a fullscreen
+  single-example player on the deck's own origin (`src/play.js`). Scan or click
+  to run that example in a browser.
+- **Lynx App** → the hosted `…/examples/<ex>/dist/<name>.lynx.bundle`, for the
+  Lynx Explorer app to open natively.
+
+> The Web QR currently points at the deck's own play page. When the website's
+> `Go` component gains a fullscreen deep-link param (a **separate PR to the
+> website `main` branch**), swap the `web` URL in `buildUrls()` to that — it's
+> the single seam.
 
 The device mockup around a demo (`.phone`) is **resizable**: hover to reveal a
 corner grip (drag to resize freely — width and height are independent, no aspect
