@@ -1,8 +1,13 @@
 import { Go as GoBase, GoConfigProvider, useGoConfig } from '@lynx-js/go-web';
 import type { GoProps } from '@lynx-js/go-web';
 import { rspressAdapter } from '@lynx-js/go-web/adapters/rspress';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
+import {
+  renderModeStore,
+  resolveRenderMode,
+  type RenderMode,
+} from './render-mode-store';
 import { VaporStatus } from './VaporStatus';
 import './vapor-status.scss';
 
@@ -30,9 +35,7 @@ interface ExampleMetadata {
   exampleGitBaseUrl?: string;
 }
 
-type RenderMode = 'vdom' | 'vapor';
 const ENTRY_QUERY = 'go-entry';
-const MODE_QUERY = 'go-mode';
 
 function initialEntry(metadata: ExampleMetadata, props: GoProps): string {
   if (props.defaultEntryName) return props.defaultEntryName;
@@ -62,7 +65,11 @@ function VaporAwareGo(props: GoProps) {
   const metadataUrl = `${withBase(exampleBasePath)}/${props.example}/example-metadata.json`;
   const [metadata, setMetadata] = useState<ExampleMetadata>();
   const [entryName, setEntryName] = useState(props.defaultEntryName ?? '');
-  const [mode, setMode] = useState<RenderMode>('vdom');
+  const requestedMode = useSyncExternalStore(
+    renderModeStore.subscribe,
+    renderModeStore.getSnapshot,
+    renderModeStore.getServerSnapshot,
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -73,24 +80,16 @@ function VaporAwareGo(props: GoProps) {
       })
       .then((next) => {
         let nextEntry = initialEntry(next, props);
-        let nextMode: RenderMode = 'vdom';
         if (typeof window !== 'undefined') {
           const query = new URLSearchParams(window.location.search);
           const requestedEntry = query.get(ENTRY_QUERY);
-          const requestedMode = query.get(MODE_QUERY);
           const match = next.templateFiles.find(
             ({ name }) => `${props.example}/${name}` === requestedEntry,
           );
-          if (match) {
-            nextEntry = match.name;
-            if (requestedMode === 'vapor' && match.vaporStatus === 'supported') {
-              nextMode = 'vapor';
-            }
-          }
+          if (match) nextEntry = match.name;
         }
         setMetadata(next);
         setEntryName(nextEntry);
-        setMode(nextMode);
       })
       .catch((error: Error) => {
         if (error.name !== 'AbortError') console.error(error);
@@ -99,9 +98,7 @@ function VaporAwareGo(props: GoProps) {
   }, [metadataUrl, props.defaultEntryFile, props.defaultEntryName]);
 
   const currentEntry = metadata?.templateFiles.find(({ name }) => name === entryName);
-  useEffect(() => {
-    if (mode === 'vapor' && currentEntry?.vaporStatus !== 'supported') setMode('vdom');
-  }, [currentEntry?.vaporStatus, mode]);
+  const mode = resolveRenderMode(requestedMode, currentEntry);
 
   const handleEntryChange = useCallback((nextEntry: string) => {
     setEntryName(nextEntry);
@@ -109,12 +106,8 @@ function VaporAwareGo(props: GoProps) {
   }, [props.onEntryChange]);
 
   const handleModeChange = useCallback((nextMode: RenderMode) => {
-    if (nextMode === mode) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set(ENTRY_QUERY, `${props.example}/${entryName}`);
-    url.searchParams.set(MODE_QUERY, nextMode);
-    window.location.assign(url);
-  }, [entryName, mode, props.example]);
+    renderModeStore.setMode(nextMode, `${props.example}/${entryName}`);
+  }, [entryName, props.example]);
 
   const renderedMetadata = useMemo(
     () => metadata && metadataForMode(metadata, mode),

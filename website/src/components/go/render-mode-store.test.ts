@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   createRenderModeStore,
+  resolveRenderMode,
   type RenderModeBrowser,
 } from './render-mode-store';
 
@@ -91,4 +92,41 @@ test('resynchronizes subscribers after popstate', () => {
   assert.equal(store.getSnapshot(), 'vdom');
   assert.deepEqual(snapshots, ['vdom']);
   store.destroy();
+});
+
+test('uses Vapor only for supported entries with both bundles', () => {
+  assert.equal(
+    resolveRenderMode('vapor', {
+      vaporStatus: 'supported',
+      vaporFile: 'dist-vapor/main.lynx.bundle',
+      vaporWebFile: 'dist-vapor/main.web.bundle',
+    }),
+    'vapor',
+  );
+  assert.equal(
+    resolveRenderMode('vapor', {
+      vaporStatus: 'unsupported',
+      vaporFile: 'dist-vapor/main.lynx.bundle',
+      vaporWebFile: 'dist-vapor/main.web.bundle',
+    }),
+    'vdom',
+  );
+  assert.equal(
+    resolveRenderMode('vapor', {
+      vaporStatus: 'supported',
+      vaporFile: 'dist-vapor/main.lynx.bundle',
+    }),
+    'vdom',
+  );
+});
+
+test('keeps VDOM when it is the requested mode', () => {
+  assert.equal(
+    resolveRenderMode('vdom', {
+      vaporStatus: 'supported',
+      vaporFile: 'dist-vapor/main.lynx.bundle',
+      vaporWebFile: 'dist-vapor/main.web.bundle',
+    }),
+    'vdom',
+  );
 });
