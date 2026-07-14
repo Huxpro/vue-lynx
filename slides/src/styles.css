@@ -643,7 +643,6 @@ h1, h2, h3, p { margin: 0; }
   text-decoration: none;
   color: var(--ink-mute);
 }
-.qr:hover { z-index: 30; } /* lift the whole item so the zoom sits on top */
 .qr__code {
   width: 120px;
   height: 120px;
@@ -654,16 +653,8 @@ h1, h2, h3, p { margin: 0; }
   transform-origin: left bottom;
   transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1),
               box-shadow 0.22s ease;
-  will-change: transform;
 }
 .qr__code svg { width: 100%; height: 100%; display: block; }
-/* Hover zoom — grows up-and-right from the bottom-left so it stays on-screen. */
-.qr:hover .qr__code {
-  transform: scale(2.5);
-  box-shadow: 0 26px 60px -14px rgba(0, 0, 0, 0.85);
-  position: relative;
-  z-index: 30;
-}
 .qr__label {
   font-family: var(--mono);
   font-size: 10px;
@@ -671,10 +662,38 @@ h1, h2, h3, p { margin: 0; }
   text-transform: uppercase;
 }
 .qr__arrow { opacity: 0.6; }
-a.qr { cursor: pointer; transition: color 0.2s ease; }
+
+/* Clickable codes: Web → open link, Lynx App → tap to copy the bundle URL. */
+a.qr, button.qr { cursor: pointer; }
+button.qr {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  padding: 0;
+  color: inherit;
+}
 a.qr:hover { color: var(--vue-green); }
-a.qr:hover .qr__code {
-  box-shadow: 0 0 0 2px var(--vue-green), 0 26px 60px -14px rgba(0, 0, 0, 0.85);
+.qr--copy.is-copied { color: var(--vue-green); }
+.qr--copy.is-copied .qr__code {
+  box-shadow: 0 0 0 2px var(--vue-green), 0 6px 18px -8px rgba(0, 0, 0, 0.55);
+}
+
+/* Hover zoom — desktop only. Touch devices tap (Web opens, App copies) instead
+   of zooming, so the code never balloons under a finger. Grows up-and-right
+   from the bottom-left so it stays on-screen. */
+@media (hover: hover) and (pointer: fine) {
+  .qr:hover { z-index: 30; }
+  .qr:hover .qr__code {
+    transform: scale(2.5);
+    box-shadow: 0 26px 60px -14px rgba(0, 0, 0, 0.85);
+    position: relative;
+    z-index: 30;
+    will-change: transform;
+  }
+  a.qr:hover .qr__code {
+    box-shadow: 0 0 0 2px var(--vue-green), 0 26px 60px -14px rgba(0, 0, 0, 0.85);
+  }
 }
 
 /* Fullscreen web player (play.html) — a shared device frame, centered. */
@@ -743,29 +762,34 @@ a.qr:hover .qr__code {
   position: relative;
 }
 
-/* Free drag-to-resize grip (bottom-right). No aspect lock; handled in main.js. */
+/* Free drag-to-resize grip (bottom-right) — a small chip that matches the
+   preset switcher so the two read as one control family. No aspect lock. */
 .phone__resize {
   position: absolute;
-  right: -7px;
-  bottom: -7px;
-  width: 24px;
-  height: 24px;
+  right: -8px;
+  bottom: -8px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
   border-radius: 7px;
+  background: var(--paper-elev);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+  color: var(--ink-mute);
   cursor: nwse-resize;
   z-index: 8;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, color 0.15s ease, border-color 0.15s ease;
   touch-action: none;
-  background:
-    linear-gradient(135deg,
-      transparent 0 46%,
-      var(--vue-green) 46% 54%,
-      transparent 54% 66%,
-      var(--vue-green) 66% 74%,
-      transparent 74% 100%);
 }
-.phone:hover .phone__resize,
-.phone__resize:active { opacity: 0.85; }
+.phone__resize svg { width: 12px; height: 12px; display: block; }
+.phone:hover .phone__resize { opacity: 1; }
+.phone__resize:hover,
+.phone__resize:active {
+  color: var(--vue-green);
+  border-color: var(--vue-green);
+}
 
 /* Device preset switcher (phone / vertical tablet / desktop) — bottom-right,
    sits just below the frame, revealed on hover. */

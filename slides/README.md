@@ -214,9 +214,12 @@ the deck is served from:
   tablet or **desktop (fullscreen)**, or drag to resize. Scan or click to run
   that example in a browser.
 - **Lynx App** → the hosted `…/examples/<ex>/dist/<name>.lynx.bundle`, for the
-  Lynx Explorer app to open natively.
+  Lynx Explorer app to open natively. **Tap it to copy** the bundle URL (handy
+  on mobile — paste it straight into the app).
 
-Hovering either code zooms it up large so it's easy to scan from a distance.
+On desktop, hovering either code zooms it up large so it's easy to scan from a
+distance. On touch there's no zoom — tap the Web code to open it, or the Lynx
+App code to copy its URL.
 
 > The Web QR currently points at the deck's own play page. When the website's
 > `Go` component gains a fullscreen deep-link param (a **separate PR to the

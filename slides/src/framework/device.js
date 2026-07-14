@@ -71,11 +71,12 @@ export function attachDeviceControls(el, {
     applyDevicePreset(el, btn.dataset.device, presets);
   });
 
-  // Free drag-to-resize grip.
+  // Free drag-to-resize grip — a small chip matching the preset switcher.
   const handle = document.createElement('div');
   handle.className = 'phone__resize';
   handle.setAttribute('aria-hidden', 'true');
   handle.title = 'Drag to resize · double-click to reset';
+  handle.innerHTML = ICONS.resize;
   el.appendChild(handle);
 
   applyDevicePreset(el, initial || el.dataset.device || 'phone', presets);
