@@ -362,7 +362,7 @@ function handleAfterLeave() {
         <scroll-view
           class="sheet-panel"
           scroll-orientation="vertical"
-          :bounces="false"
+          :bounces="true"
           :main-thread-ref="panelRef"
           :main-thread-bindscroll="handlePanelScroll"
           :main-thread-bindtouchstart="handleContentTouchStart"
@@ -423,7 +423,7 @@ function handleAfterLeave() {
   bottom: -80px;
   left: 0;
   height: 80px;
-  background-color: var(--c-sheet-bg);
+  background-color: var(--c-sheet-fill-bg);
 }
 
 .sheet-handle-hit-area {

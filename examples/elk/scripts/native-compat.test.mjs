@@ -82,6 +82,10 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
     new URL('../src/components/sheet/Sheet.vue', import.meta.url),
     'utf8',
   );
+  const theme = await readFile(
+    new URL('../src/styles/theme.css', import.meta.url),
+    'utf8',
+  );
 
   assert.match(source, /modelValue/);
   assert.match(source, /v-show="modelValue"/);
@@ -98,7 +102,11 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /class="sheet-handle"/);
   assert.match(source, /<scroll-view/);
   assert.match(source, /:main-thread-ref="panelRef"/);
-  assert.match(source, /:bounces="false"/);
+  assert.match(
+    source,
+    /:bounces="true"/,
+    'content keeps native bounce until the sheet claims a downward drag',
+  );
   assert.match(source, /:main-thread-bindtouchstart="handleHandleTouchStart"/);
   assert.match(source, /:main-thread-bindtouchstart="handleContentTouchStart"/);
   assert.match(source, /:main-thread-bindtouchmove="handleTouchMove"/);
@@ -111,6 +119,13 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /setAttribute\?\.\('enable-scroll', enabled\)/);
   assert.match(source, /setPanelScrollEnabled\(false\)/);
   assert.match(source, /setPanelScrollEnabled\(true\)/);
+  assert.match(
+    source,
+    /\.sheet-rubber-fill\s*\{[^}]*background-color:\s*var\(--c-sheet-fill-bg\)/s,
+    'over-drag fill must stay opaque above the backdrop',
+  );
+  assert.match(theme, /--c-sheet-fill-bg:\s*#fafafa/);
+  assert.match(theme, /\.app-dark\s*\{[^}]*--c-sheet-fill-bg:\s*#111111/s);
   assert.match(
     source,
     /setMotionTransition\(\s*`transform \$\{duration\}ms[^`]+`,\s*`opacity \$\{duration\}ms[^`]+`,\s*\)/s,
