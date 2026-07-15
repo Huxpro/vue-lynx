@@ -108,6 +108,78 @@ export function setIdAttr(el: ShadowElement, value: unknown): void {
 }
 
 // ---------------------------------------------------------------------------
+// Main Thread materialization
+//
+// Comment nodes and empty #text nodes are renderer bookkeeping (v-if /
+// Fragment / Vapor block anchors) — they exist only in the Background Thread
+// shadow tree and never reach the Main Thread. Native Lynx gives an empty
+// raw-text node a default line box, so materialising anchors adds visible
+// height; keeping them BG-only removes the artifact and the per-anchor
+// native element. A #text node is materialised lazily, only while it has
+// content (`_mtCreated`: MT element exists; `_mtInserted`: currently in the
+// MT tree).
+// ---------------------------------------------------------------------------
+
+/** Does this node currently have a Main Thread element in the MT tree? */
+export function isMaterialized(node: ShadowElement): boolean {
+  if (node.tag === '#comment') return false;
+  if (node.tag === '#text') return node._mtInserted;
+  return true;
+}
+
+/**
+ * Shadow-only anchors have no Main Thread element. Walk forward to the next
+ * materialised sibling so __InsertElementBefore receives a valid reference.
+ */
+export function resolveMainThreadAnchor(
+  anchor: ShadowElement | null | undefined,
+): ShadowElement | null {
+  let resolved = anchor ?? null;
+  while (resolved && !isMaterialized(resolved)) {
+    resolved = resolved.next;
+  }
+  return resolved;
+}
+
+/** Emit CREATE_TEXT for a #text node's MT element if it doesn't exist yet. */
+function ensureTextCreated(node: ShadowElement): void {
+  if (node._mtCreated) return;
+  pushOp(OP.CREATE_TEXT, node.uid);
+  node._mtCreated = true;
+}
+
+/**
+ * Set a #text node's character data, materialising or dematerialising its
+ * Main Thread element as the content appears / disappears. Shared by the
+ * vdom renderer's setText and the Vapor nodeValue/data setters.
+ */
+export function setTextNode(node: ShadowElement, text: string): void {
+  node._text = text;
+
+  if (!text) {
+    if (node._mtInserted && node.parent) {
+      pushOp(OP.REMOVE, node.parent.uid, node.uid);
+      node._mtInserted = false;
+      scheduleFlush();
+    }
+    return;
+  }
+
+  ensureTextCreated(node);
+  pushOp(OP.SET_TEXT, node.uid, text);
+
+  // Lynx's native <list> only accepts <list-item> children — text nodes
+  // there stay off the Main Thread entirely.
+  const parent = node.parent;
+  if (!node._mtInserted && parent && parent.tag !== 'list') {
+    const anchor = resolveMainThreadAnchor(node.next);
+    pushOp(OP.INSERT, parent.uid, node.uid, anchor ? anchor.uid : -1);
+    node._mtInserted = true;
+  }
+  scheduleFlush();
+}
+
+// ---------------------------------------------------------------------------
 // Structural mutations
 // ---------------------------------------------------------------------------
 
@@ -128,39 +200,26 @@ export function insertNode(
 
   // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
   // emit REMOVE from old parent so MT correctly detaches first.
-  if (child.parent && child.parent !== parent) {
+  if (child.parent && child.parent !== parent && isMaterialized(child)) {
     pushOp(OP.REMOVE, child.parent.uid, child.uid);
+    if (child.tag === '#text') child._mtInserted = false;
+    scheduleFlush();
   }
 
   // Always update the shadow tree (Vue needs it for internal diffing).
   parent._link(child, anchor ?? null);
 
-  // Lynx's native <list> only accepts <list-item> children.
-  // Vue's v-for creates comment anchor nodes as fragment markers —
-  // skip sending them to the Main Thread to avoid NSInvalidArgumentException.
-  if (
-    parent.tag === 'list'
-    && (child.tag === '#comment' || child.tag === '#text')
-  ) {
+  // Shadow-only anchors: comments always, text while empty or under <list>.
+  if (child.tag === '#comment') return;
+  if (child.tag === '#text' && (!child._text || parent.tag === 'list')) {
     return;
   }
 
-  // If the anchor is a comment node inside a <list>, it was never inserted
-  // on the Main Thread. Walk forward to find the next real (non-comment)
-  // sibling so __InsertElementBefore has a valid reference.
-  let resolvedAnchor: ShadowElement | null = anchor ?? null;
-  if (parent.tag === 'list') {
-    while (
-      resolvedAnchor
-      && (resolvedAnchor.tag === '#comment'
-        || resolvedAnchor.tag === '#text')
-    ) {
-      resolvedAnchor = resolvedAnchor.next;
-    }
-  }
+  if (child.tag === '#text') ensureTextCreated(child);
 
-  const anchorId = resolvedAnchor ? resolvedAnchor.uid : -1;
-  pushOp(OP.INSERT, parent.uid, child.uid, anchorId);
+  const resolvedAnchor = resolveMainThreadAnchor(anchor);
+  pushOp(OP.INSERT, parent.uid, child.uid, resolvedAnchor ? resolvedAnchor.uid : -1);
+  if (child.tag === '#text') child._mtInserted = true;
   scheduleFlush();
 }
 
@@ -184,10 +243,14 @@ export function removeNode(child: ShadowElement): void {
   // guard is required here, not just for the `!parent` case.
   if (child?.parent) {
     const parentUid = child.parent.uid;
+    const materialized = isMaterialized(child);
     child.parent._unlink(child);
     releaseSubtree(child);
-    pushOp(OP.REMOVE, parentUid, child.uid);
-    scheduleFlush();
+    if (materialized) {
+      pushOp(OP.REMOVE, parentUid, child.uid);
+      scheduleFlush();
+    }
+    if (child.tag === '#text') child._mtInserted = false;
   }
 }
 
@@ -204,9 +267,11 @@ export function setElementTextContent(el: ShadowElement, text: string): void {
   // Remove all children from shadow tree
   while (el.firstChild) {
     const child = el.firstChild;
+    const materialized = isMaterialized(child);
     el._unlink(child);
     releaseSubtree(child);
-    pushOp(OP.REMOVE, el.uid, child.uid);
+    if (materialized) pushOp(OP.REMOVE, el.uid, child.uid);
+    if (child.tag === '#text') child._mtInserted = false;
   }
   // Set text content directly on the element
   pushOp(OP.SET_TEXT, el.uid, text);

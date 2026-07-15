@@ -3,6 +3,7 @@ dist/
 dist-vapor/
 dist-naive/
 dist-compiler/
+.rslib/
 *.tsbuildinfo
 .rspeedy/
 .vapor-generated/
@@ -12,7 +13,8 @@ packages/upstream-tests/core/
 *.log
 .DS_Store
 website/docs/guide/api/
-# generated zh mirror of API docs (hand-written index.mdx files stay tracked)
+# generated zh mirrors from generate-api.ts (hand-written zh index.mdx
+# files for vue-lynx/testing-library are already tracked and unaffected)
 website/docs/zh/guide/api/
 website/api-sidebar.json
 .vercel

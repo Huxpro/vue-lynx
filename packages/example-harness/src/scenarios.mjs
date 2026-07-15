@@ -34,6 +34,13 @@ function indexedInput(index, value, expectedValue) {
 
 export const scenarios = {
   "7guis/cells": smoke(),
+  // The greeting always starts with "Good …". The app probes its optional
+  // local API server (localhost:3210) and falls back to the in-memory
+  // backend — that probe's connection failure is expected, not a defect.
+  "ai-chat/main": {
+    ...smoke("Good"),
+    allowedRequestFailures: [/^http:\/\/localhost:3210\//],
+  },
   "7guis/circle-drawer": tap("Undo"),
   "7guis/counter": tap("Count"),
   "7guis/crud": tap("Create"),
@@ -43,6 +50,9 @@ export const scenarios = {
   "basic/h-counter": tap("Tap to increment", "h() counter"),
   "basic/main": tap("Tap to increment", "History"),
   "css-features/main": smoke("CSS"),
+  // Guest-mode Mastodon client against a live public instance — remote
+  // content is not deterministic, so only the rendered shell is asserted.
+  "elk/main": smoke(),
   "event-modifiers/main": tap("Tap", "Event Modifiers"),
   "gallery/GalleryAutoScroll": smoke(),
   "gallery/GalleryComplete": smoke(),

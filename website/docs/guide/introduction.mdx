@@ -43,12 +43,25 @@ Text content must be wrapped in `<text>` — Lynx does not support bare text nod
 
 ### Different events
 
-Lynx uses its own event system. Use `:bindeventname` for events that propagate, and `:catcheventname` for events that don't:
+Lynx uses its own event system. Unlike the DOM, where an event is identified by its name alone, every Lynx event is registered with a **type** that controls propagation and threading: `bind` (propagates), `catch` (stops propagation), `global-bind` (app-global events from [GlobalEventEmitter](https://lynxjs.org/api/lynx-api/lynx/lynx-get-js-module.html)), and `main-thread` variants (Main Thread Script handlers that run on the main thread). Vue Lynx keeps Lynx's own attribute naming for all of them, so any event from the Lynx docs works verbatim as an attribute binding:
+
+```vue
+<view
+  :bindtap="onTap"
+  :catchtap="onTapAndStop"
+  :global-bindkeyboardstatuschanged="onKeyboard"
+  :main-thread-bindtap="onMainThreadTap"
+/>
+```
+
+For the common `bind` type, Vue's familiar `@` syntax works as sugar. `@tap` is equivalent to `:bindtap`, and the `.stop` modifier upgrades the registration to a native `catch` (`@tap.stop` ≙ `:catchtap`):
 
 ```diff
 - <div @click="handleClick" @touchstart="onTouch">
-+ <view :bindtap="handleClick" :bindtouchstart="onTouch">
++ <view @tap="handleClick" @touchstart="onTouch">
 ```
+
+`global-bind*` and `main-thread-*` have no `@` form: they encode registration semantics that Vue's `v-on` cannot express. In particular, a `main-thread` handler is a [Main Thread Script](/guide/main-thread-script) function rather than a regular one, and bypasses the `v-on` pipeline entirely.
 
 See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-handling.html) for more details.
 
@@ -69,16 +82,16 @@ The main thing that differs is the threading model. If you've worked with Web Wo
 Under the hood, Vue Lynx uses a [custom renderer](https://vuejs.org/api/custom-renderer) that builds a **ShadowElement** tree on the background thread. Changes are batched as **ops** and flushed to the main thread. User interactions flow back as **events**. This forms a cycle analogous to the browser event loop:
 
 ```
-        ┌──────────────────────────────────────────────────────┐
-        │                  Background Thread                   │
-        │  Vue 3 runtime · reactivity · lifecycle · your code  │
-        └──────────────┬──────────────────────▲────────────────┘
+        ┌────────────────────────────────────────────────────────────┐
+        │                     Background Thread                      │
+        │  Vue 3 runtime · reactivity · lifecycle · your code        │
+        └──────────────┬──────────────────────▲──────────────────────┘
                   ops  │                      │  events
                        ▼                      │
-        ┌──────────────────────────────────────┴───────────────┐
-        │                    Main Thread                       │
-        │  Native elements · layout · rendering · MTS handlers │
-        └──────────────────────────────────────────────────────┘
+        ┌─────────────────────────────────────┴──────────────────────┐
+        │                        Main Thread                         │
+        │  Native elements · layout · rendering · Main Thread Script │
+        └────────────────────────────────────────────────────────────┘
 ```
 
 One full cycle — ops down, events back up — is one **tick**. Vue Lynx's `nextTick` resolves after a complete cycle, so by the time your callback fires, native elements are fully materialized. This is the same mental model as Vue's `nextTick` on the web (wait for DOM update), just extended across threads.
@@ -135,7 +148,7 @@ When you need synchronous access — smooth animations, gesture handling, layout
 import { ref, useMainThreadRef } from 'vue-lynx'
 
 const divRef = ref(null)               // ShadowElement (background thread)
-const mtRef = useMainThreadRef(null)    // Native element (main thread, MTS only)
+const mtRef = useMainThreadRef(null)    // Native element (Main Thread Script only)
 </script>
 
 <template>
@@ -149,5 +162,5 @@ See [Vue Features Compatibility](/guide/vue-compatibility) for feature-specific 
 
 - [Vue Compatibility](/guide/vue-compatibility) — Feature-by-feature breakdown of what works and what differs
 - [Main Thread Script](/guide/main-thread-script) — Run performance-critical logic on the main thread
-- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with tap-to-like, auto-scroll, and MTS scrollbar
+- [Tutorial: Product Gallery](/guide/tutorial-gallery) — Build a waterfall gallery with tap-to-like, auto-scroll, and a Main Thread Script scrollbar
 - [Tutorial: Product Detail](/guide/tutorial-swiper) — Build a touch-swipeable image carousel with snap animation

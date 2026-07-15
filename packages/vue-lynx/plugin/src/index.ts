@@ -116,6 +116,36 @@ export interface PluginVueLynxOptions {
   autoPixelUnit?: boolean;
 
   /**
+   * Allowlist of bare-import specifiers whose `'main thread'` worklets
+   * should be reached by the MT bundler.
+   *
+   * The worklet loader follows relative imports (`./foo`, `../bar`) and
+   * resolves non-relative imports: path aliases and tsconfig `paths` that
+   * point at project source (outside `node_modules`) are followed
+   * automatically. Imports resolving INTO `node_modules` are dropped by
+   * default — list the package names (or RegExps matching them) here to
+   * follow worklets shipped as a published/installed package.
+   *
+   * Both checkpoints reduce their input to the package root before matching,
+   * so a pattern always matches the package name (e.g. `'@my-org/foo'`), never
+   * a subpath or the resolved filesystem path:
+   *   - strings match the root exactly — `'@vue-lynx/motion-mini'` covers the
+   *     package and all its subpath imports, but NOT `'@vue-lynx/motion-mini-x'`;
+   *   - a RegExp like `/^@my-org\//` matches whether the package is reached as
+   *     an import or carved out of the `node_modules` loader exclude.
+   *
+   * @example
+   * ```ts
+   * pluginVueLynx({
+   *   includeWorkletPackages: ['@vue-lynx/motion-mini', /^@my-org\/lynx-/],
+   * })
+   * ```
+   *
+   * @defaultValue []
+   */
+  includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+
+  /**
    * Enable Vue Vapor mode support (experimental).
    *
    * Vapor mode is Vue's compilation-based, Virtual-DOM-free rendering mode,
@@ -157,6 +187,7 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    includeWorkletPackages = [],
     vapor = false,
   } = options;
 
@@ -319,6 +350,7 @@ export function pluginVueLynx(
           customCSSInheritanceList,
           enableCSSInlineVariables,
           debugInfoOutside,
+          includeWorkletPackages,
         });
       },
     },

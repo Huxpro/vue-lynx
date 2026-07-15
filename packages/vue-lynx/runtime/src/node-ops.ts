@@ -17,6 +17,7 @@ import {
   resolveClass,
   setElementTextContent,
   setIdAttr,
+  setTextNode,
 } from './tree-ops.js';
 
 // Class resolution is shared with the Vapor DOM-compat layer.
@@ -40,22 +41,29 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
   createText(text: string): ShadowElement {
     const el = new ShadowElement('#text');
-    pushOp(OP.CREATE_TEXT, el.uid);
-    if (text) pushOp(OP.SET_TEXT, el.uid, text);
-    scheduleFlush();
+    el._text = text;
+    if (text) {
+      pushOp(OP.CREATE_TEXT, el.uid);
+      pushOp(OP.SET_TEXT, el.uid, text);
+      el._mtCreated = true;
+      scheduleFlush();
+    }
     return el;
   },
 
   // Comment nodes are used by Vue as position anchors for v-if / Fragment.
-  // We materialise them as invisible placeholder elements on the Main Thread.
-  createComment(_text: string): ShadowElement {
+  // They stay in the Background Thread shadow tree only — see tree-ops.ts.
+  createComment(text: string): ShadowElement {
     const el = new ShadowElement('#comment');
-    pushOp(OP.CREATE, el.uid, '__comment');
-    scheduleFlush();
+    el._text = text;
     return el;
   },
 
   setText(node: ShadowElement, text: string): void {
+    if (node.tag === '#text') {
+      setTextNode(node, text);
+      return;
+    }
     pushOp(OP.SET_TEXT, node.uid, text);
     scheduleFlush();
   },

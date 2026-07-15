@@ -68,47 +68,37 @@ function createTypedElement(
   }
 }
 
-function createCommentAnchor(): LynxElement {
-  const el = __CreateView(pageUniqueId);
-  __SetCSSId([el], 0);
-  // A zero-width node still participates in flex `gap`. Keep anchors fully
-  // out of layout while retaining a concrete node for insertBefore/remove.
-  __SetInlineStyles(el, { display: 'none' });
-  return el;
-}
-
 // ---------------------------------------------------------------------------
 // Template instantiation (Vapor fast path)
 // ---------------------------------------------------------------------------
 
-
-
 const templates = new Map<number, TemplateNode>();
-const textElements = new WeakSet<LynxElement>();
 
 /**
  * Instantiate a registered template. Element ids are assigned by pre-order
  * traversal starting at baseUid — the exact allocation order the BG thread
  * used for its shadow clone, so both sides agree without a transmitted map.
+ *
+ * Comment nodes and empty #text nodes are Background Thread anchors: the
+ * walk consumes their uid (keeping both sides' pre-order counters in
+ * lockstep) but creates no Main Thread element — returns null.
  */
 function instantiateTemplate(
   node: TemplateNode,
   base: number,
   counter: { value: number },
-): { el: LynxElement; uid: number } {
+): { el: LynxElement; uid: number } | null {
   const uid = base + counter.value++;
   const [tag, props, children] = node;
 
-  let el: LynxElement;
-  if (tag === '#comment') {
-    el = createCommentAnchor();
-    elements.set(uid, el);
-    return { el, uid };
+  if (tag === '#comment') return null;
+  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
+    return null;
   }
+
+  let el: LynxElement;
   if (tag === '#text') {
     el = __CreateText(pageUniqueId);
-    textElements.add(el);
-    __SetInlineStyles(el, { display: 'none' });
   } else {
     el = createTypedElement(tag, pageUniqueId);
   }
@@ -125,16 +115,15 @@ function instantiateTemplate(
     if (props.i !== undefined) __SetID(el, props.i);
     if (props.t !== undefined) {
       __SetAttribute(el, 'text', props.t);
-      if (tag === '#text') {
-        __SetInlineStyles(el, { display: props.t === '' ? 'none' : 'flex' });
-      }
     }
   }
 
   for (const childNode of children) {
     const child = instantiateTemplate(childNode, base, counter);
-    __AppendElement(el, child.el);
-    trackInsert(uid, child.uid);
+    if (child) {
+      __AppendElement(el, child.el);
+      trackInsert(uid, child.uid);
+    }
   }
   return { el, uid };
 }
@@ -178,11 +167,7 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const type = ops[i++] as string;
         let el: LynxElement;
-        if (type === '__comment') {
-          // Vue uses comment nodes as Fragment / v-if anchors.
-          // A hidden view remains addressable without affecting flex layout.
-          el = createCommentAnchor();
-        } else if (type === 'list') {
+        if (type === 'list') {
           el = createListElement(id);
         } else {
           // Use typed PAPI creators for known element types.
@@ -195,20 +180,15 @@ export function applyOps(ops: unknown[]): void {
         }
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries.
-        // Comment nodes (__CreateRawText) can't have attributes.
-        if (type !== '__comment') {
-          __SetAttribute(el, `vue-ref-${id}`, 1);
-        }
+        __SetAttribute(el, `vue-ref-${id}`, 1);
         break;
       }
 
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
+        // The BG thread only creates MT text elements for text with content
+        // (empty text nodes are BG-only anchors), so no hiding is needed.
         const el = __CreateText(pageUniqueId);
-        textElements.add(el);
-        // Vue also uses empty text nodes as Fragment / Teleport anchors.
-        // Hide by default; SET_TEXT makes real text nodes visible.
-        __SetInlineStyles(el, { display: 'none' });
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
@@ -283,12 +263,7 @@ export function applyOps(ops: unknown[]): void {
         const id = ops[i++] as number;
         const text = ops[i++] as string;
         const el = elements.get(id);
-        if (el) {
-          __SetAttribute(el, 'text', text);
-          if (textElements.has(el)) {
-            __SetInlineStyles(el, { display: text === '' ? 'none' : 'flex' });
-          }
-        }
+        if (el) __SetAttribute(el, 'text', text);
         break;
       }
 

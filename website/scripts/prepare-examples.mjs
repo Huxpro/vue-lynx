@@ -42,7 +42,16 @@ const BINARY_EXTENSIONS = new Set([
 ]);
 
 // Directories to skip
-const SKIP_DIRS = new Set(['node_modules', 'dist', 'dist-vapor', '.vapor-generated', '.cache', '.git']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'dist-vapor',
+  '.vapor-generated',
+  '.cache',
+  '.git',
+  '.data',
+  '.rspeedy',
+]);
 
 /**
  * Walk a directory recursively and collect relative file paths.

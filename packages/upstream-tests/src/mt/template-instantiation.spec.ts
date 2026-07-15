@@ -50,41 +50,53 @@ describe('MT template instantiation', () => {
 
     const rootEl = elements.get(base) as Element;
     const cellEl = elements.get(base + 1) as Element;
-    const anchorEl = elements.get(base + 2);
     expect(rootEl).toBeTruthy();
     expect(cellEl).toBeTruthy();
-    expect(anchorEl).toBeTruthy();
+
+    // Comment anchors are BG-only: the uid is consumed by the pre-order
+    // walk but no Main Thread element is created for it.
+    expect(elements.has(base + 2)).toBe(false);
 
     // structure applied: class, attrs, folded text, child order
     expect(rootEl.getAttribute('class')).toBe('row');
     expect(rootEl.getAttribute('custom')).toBe('x');
     expect(cellEl.getAttribute('class')).toBe('cell');
     expect(cellEl.textContent).toBe('hi');
-    expect((anchorEl as HTMLElement).style.display).toBe('none');
     // instantiated subtree is attached under the root insert
     const container = elements.get(ROOT) as Element;
     expect(container.contains(rootEl)).toBe(true);
     expect(rootEl.contains(cellEl)).toBe(true);
+    // no hidden anchor element pads the child list
+    expect(rootEl.childNodes).toHaveLength(1);
   });
 
-  it('keeps standalone comment anchors out of flex layout', () => {
-    const anchorId = nextId++;
+  it('keeps template #text/#comment anchors off the Main Thread', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 4;
+
+    // <view><!>(empty #text)<text …>hi</text></view> — anchors first, so the
+    // materialized child would misplace if their uids were not consumed.
     applyOps([
-      OP.CREATE, anchorId, '__comment',
-      OP.INSERT, ROOT, anchorId, -1,
+      OP.REGISTER_TEMPLATE, tplId, [
+        'view',
+        0,
+        [
+          ['#comment', 0, []],
+          ['#text', 0, []],
+          ['text', { t: 'hi' }, []],
+        ],
+      ],
+      OP.CLONE_TEMPLATE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
     ]);
 
-    expect((elements.get(anchorId) as HTMLElement).style.display).toBe('none');
-  });
-
-  it('keeps empty text anchors out of flex layout', () => {
-    const anchorId = nextId++;
-    applyOps([
-      OP.CREATE_TEXT, anchorId,
-      OP.INSERT, ROOT, anchorId, -1,
-    ]);
-
-    expect((elements.get(anchorId) as HTMLElement).style.display).toBe('none');
+    expect(elements.has(base + 1)).toBe(false); // comment anchor
+    expect(elements.has(base + 2)).toBe(false); // empty text anchor
+    const textEl = elements.get(base + 3) as Element;
+    expect(textEl).toBeTruthy();
+    expect(textEl.textContent).toBe('hi');
+    expect((elements.get(base) as Element).childNodes).toHaveLength(1);
   });
 
   it('clones the same template repeatedly with independent uid blocks', () => {
@@ -127,6 +139,5 @@ describe('MT template instantiation', () => {
     applyOps([OP.REMOVE, ROOT, base]);
     expect(elements.has(base)).toBe(false);
     expect(elements.has(base + 1)).toBe(false);
-    expect(elements.has(base + 2)).toBe(false);
   });
 });

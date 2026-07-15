@@ -79,19 +79,17 @@ function expandNode(
   base: number,
   counter: { value: number },
   out: DecodedOp[],
-): number {
+): number | null {
   const uid = base + counter.value++;
   const [tag, props, children] = node;
 
-  if (tag === '#comment') {
-    out.push({ op: OP.CREATE, args: [uid, '__comment'] });
-    return uid;
-  }
+  // BG-only anchors: the uid is consumed (pre-order contract) but no MT
+  // element is created — mirrors instantiateTemplate in ops-apply.ts.
+  if (tag === '#comment') return null;
   if (tag === '#text') {
+    if (!props || props.t === undefined || props.t === '') return null;
     out.push({ op: OP.CREATE_TEXT, args: [uid] });
-    if (props && props.t !== undefined) {
-      out.push({ op: OP.SET_TEXT, args: [uid, props.t] });
-    }
+    out.push({ op: OP.SET_TEXT, args: [uid, props.t] });
     return uid;
   }
 
@@ -109,7 +107,9 @@ function expandNode(
   }
   for (const child of children) {
     const childUid = expandNode(child, base, counter, out);
-    out.push({ op: OP.INSERT, args: [uid, childUid, -1] });
+    if (childUid !== null) {
+      out.push({ op: OP.INSERT, args: [uid, childUid, -1] });
+    }
   }
   return uid;
 }

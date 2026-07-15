@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { discoverInventory } from "./inventory.mjs";
 import { loadManifest } from "./manifest.mjs";
 import { scenarios } from "./scenarios.mjs";
 import { buildSourceGraph } from "./source-graph.mjs";
@@ -133,13 +134,22 @@ async function main() {
   }
 
   const errors = await validateManifestStatus(root, manifest);
-  if (manifest.entries.length !== 45) errors.push(`expected 45 entries, got ${manifest.entries.length}`);
+  // The manifest must cover exactly the discovered example inventory — the
+  // count is derived, not hard-coded, so new examples fail loudly here
+  // until they are verified rather than silently skewing the matrix.
+  const inventory = await discoverInventory(root);
+  const expected = inventory.entries.length;
+  if (manifest.entries.length !== expected) {
+    errors.push(
+      `expected ${expected} entries (discovered inventory), got ${manifest.entries.length}`,
+    );
+  }
   if (errors.length > 0) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
   } else {
     console.info(
-      `Vapor example status: ${manifest.results.supported} supported, ${manifest.results.unsupported} unsupported; 45/45 VDOM Web passed`,
+      `Vapor example status: ${manifest.results.supported} supported, ${manifest.results.unsupported} unsupported; ${expected}/${expected} VDOM Web passed`,
     );
   }
 }

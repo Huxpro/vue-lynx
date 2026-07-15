@@ -47,6 +47,7 @@ import {
   resolveClass,
   setElementTextContent,
   setIdAttr,
+  setTextNode,
 } from './tree-ops.js';
 
 // ---------------------------------------------------------------------------
@@ -197,6 +198,13 @@ export class ShadowElement {
   lastChild: ShadowElement | null = null;
   prev: ShadowElement | null = null;
   next: ShadowElement | null = null;
+
+  // Empty Vue text VNodes are structural anchors. Native Lynx gives an empty
+  // <text> a default line box, so #text nodes are materialised lazily, only
+  // while they contain visible text (see tree-ops.ts). _mtCreated: the MT
+  // element exists; _mtInserted: it is currently in the MT tree.
+  _mtCreated = false;
+  _mtInserted = false;
 
   // Cached style object (last value passed to patchProp 'style').
   // Used by vShow to merge display:none without losing the original styles.
@@ -460,12 +468,14 @@ export class ShadowElement {
   set nodeValue(value: string | null) {
     const text = value ?? '';
     this._text = text;
-    if (this.tag === '#text' && !this._inert) {
-      // Aliased only-child text lives on the host element on the MT side.
-      const target = this._textHost ?? this;
-      pushOp(OP.SET_TEXT, target.uid, text);
+    if (this.tag !== '#text' || this._inert) return;
+    // Aliased only-child text lives on the host element on the MT side.
+    if (this._textHost) {
+      pushOp(OP.SET_TEXT, this._textHost.uid, text);
       scheduleFlush();
+      return;
     }
+    setTextNode(this, text);
   }
 
   /** `data` — CharacterData alias for nodeValue (comments/text). */
@@ -563,11 +573,15 @@ export class ShadowElement {
 
     if (this.tag === '#text') {
       clone._text = this._text;
-      pushOp(OP.CREATE_TEXT, clone.uid);
-      if (this._text) pushOp(OP.SET_TEXT, clone.uid, this._text);
+      // Lazy materialisation: empty text clones stay BG-only anchors.
+      if (this._text) {
+        pushOp(OP.CREATE_TEXT, clone.uid);
+        pushOp(OP.SET_TEXT, clone.uid, this._text);
+        clone._mtCreated = true;
+      }
     } else if (this.tag === '#comment') {
+      // Comments never reach the Main Thread.
       clone._text = this._text;
-      pushOp(OP.CREATE, clone.uid, '__comment');
     } else {
       pushOp(OP.CREATE, clone.uid, this.tag);
       clone._baseClass = this._baseClass;
@@ -624,7 +638,16 @@ export class ShadowElement {
         while (child) {
           const childClone = child.cloneNode(true);
           clone._link(childClone, null);
-          pushOp(OP.INSERT, clone.uid, childClone.uid, -1);
+          // Shadow-only anchors (comments, empty text) and <list> text
+          // children have no MT element to insert.
+          if (
+            childClone.tag !== '#comment'
+            && !(childClone.tag === '#text'
+              && (!childClone._mtCreated || clone.tag === 'list'))
+          ) {
+            pushOp(OP.INSERT, clone.uid, childClone.uid, -1);
+            if (childClone.tag === '#text') childClone._mtInserted = true;
+          }
           child = child.next;
         }
       }
@@ -645,11 +668,16 @@ export class ShadowElement {
     this._aliasedTextChild = undefined;
     aliased._textHost = undefined;
     if (this._inert) return;
-    // Clear the host-level text; the text now lives in a real child node.
+    // Clear the host-level text; the text (if any) moves to a real child
+    // node. An empty aliased text stays a BG-only anchor (lazy).
     pushOp(OP.SET_TEXT, this.uid, '');
-    pushOp(OP.CREATE_TEXT, aliased.uid);
-    if (aliased._text) pushOp(OP.SET_TEXT, aliased.uid, aliased._text);
-    pushOp(OP.INSERT, this.uid, aliased.uid, -1);
+    if (aliased._text) {
+      pushOp(OP.CREATE_TEXT, aliased.uid);
+      pushOp(OP.SET_TEXT, aliased.uid, aliased._text);
+      aliased._mtCreated = true;
+      pushOp(OP.INSERT, this.uid, aliased.uid, -1);
+      aliased._mtInserted = true;
+    }
     scheduleFlush();
   }
 
@@ -1003,6 +1031,13 @@ function buildShadowClone(
 
   if (proto.tag === '#text' || proto.tag === '#comment') {
     clone._text = proto._text;
+    // The MT instantiation walk consumes the uid either way, but only
+    // creates (and inserts) an element for a #text node with content —
+    // comments and empty text stay BG-only anchors.
+    if (proto.tag === '#text' && proto._text) {
+      clone._mtCreated = true;
+      clone._mtInserted = true;
+    }
     return clone;
   }
 
