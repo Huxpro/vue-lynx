@@ -14,6 +14,13 @@ type ApiPackageConfig = {
   entryPoints: string[];
   homepageFileName?: string;
   showHomepageInSidebar?: boolean;
+  /**
+   * Skip pages for re-exported external symbols. Used for vapor-app, whose
+   * surface is dominated by @vue/runtime-core / @vue/runtime-vapor
+   * re-exports — documented on vuejs.org, and whose upstream doc comments
+   * contain raw template markup that breaks MDX compilation.
+   */
+  excludeExternals?: boolean;
 };
 
 const packages = [
@@ -23,6 +30,14 @@ const packages = [
     entryPoints: [path.join(repoRoot, 'packages/vue-lynx/runtime/src/index.ts')],
     homepageFileName: 'index',
     showHomepageInSidebar: false,
+  },
+  {
+    label: 'vue-lynx/vapor-app',
+    dirName: 'vapor-app',
+    entryPoints: [path.join(repoRoot, 'packages/vue-lynx/runtime/src/vapor-app.ts')],
+    homepageFileName: 'index',
+    showHomepageInSidebar: false,
+    excludeExternals: true,
   },
   {
     label: 'vue-lynx/plugin',
@@ -78,6 +93,29 @@ const VUE_LYNX_APIS = new Set([
   'Function.transformToWorklet',
 ]);
 
+// Lynx-facing APIs of the pure Vapor entry — the only sidebar entries for
+// vue-lynx/vapor-app. Everything else it exports is either a Vue re-export
+// (documented on vuejs.org) or a compiler-emitted helper users never import.
+const VAPOR_APP_APIS = new Set([
+  'Function.createApp',
+  'Interface.VueLynxApp',
+  'Function.nextTick',
+  'Class.MainThreadRef',
+  'Function.useMainThreadRef',
+  'Function.runOnMainThread',
+  'Function.runOnBackground',
+  'Function.transformToWorklet',
+  'Function.useVaporCssVars',
+  'Function.withModifiers',
+]);
+
+// dirName → curated sidebar allowlist (packages whose full surface is
+// dominated by re-exports).
+const SIDEBAR_ALLOWLISTS: Record<string, Set<string>> = {
+  'vue-lynx': VUE_LYNX_APIS,
+  'vapor-app': VAPOR_APP_APIS,
+};
+
 /** Read generated .mdx files and return sidebar items for a package */
 async function collectSidebarItems(
   outputDir: string,
@@ -99,12 +137,13 @@ async function collectSidebarItems(
     link: `/guide/api/${dirName}/${name}`,
   });
 
-  // For the main vue-lynx package, only show Vue Lynx specific APIs in sidebar.
-  // Vue re-exports are still generated (accessible from the index page) but
-  // don't need sidebar entries — users can look them up at vuejs.org.
-  if (dirName === 'vue-lynx') {
+  // Packages dominated by re-exports only show their curated APIs in the
+  // sidebar. Re-exports are still generated (accessible from the index page)
+  // but don't need sidebar entries — users can look them up at vuejs.org.
+  const allowlist = SIDEBAR_ALLOWLISTS[dirName];
+  if (allowlist) {
     return allFiles
-      .filter((name) => VUE_LYNX_APIS.has(name))
+      .filter((name) => allowlist.has(name))
       .sort((a, b) => a.localeCompare(b))
       .map(toItem);
   }
@@ -118,6 +157,7 @@ async function generatePackageDocs(
   outputDir: string,
   homepageFileName = 'index',
   _showHomepageInSidebar = false,
+  excludeExternals = false,
 ) {
   await fs.rm(outputDir, { recursive: true, force: true });
   await fs.mkdir(outputDir, { recursive: true });
@@ -144,6 +184,7 @@ async function generatePackageDocs(
       sort: ['source-order'],
       excludePrivate: true,
       excludeInternal: true,
+      excludeExternals,
     },
     [new TSConfigReader()],
   );
@@ -231,6 +272,85 @@ ${vueReexports.map(fmtRow).join('\n')}
 }
 
 /**
+ * Rewrite the vapor-app index.mdx: intro to the pure Vapor entry, curated
+ * Lynx API table, then everything else (Vue re-exports + Vapor compiler
+ * helpers) in one lookup table.
+ */
+async function rewriteVaporAppIndex(outputDir: string) {
+  const entries = await fs.readdir(outputDir, { withFileTypes: true });
+  const allFiles = entries
+    .filter((e) => e.isFile() && /\.mdx?$/.test(e.name))
+    .map((e) => e.name.replace(/\.mdx?$/, ''))
+    .filter((n) => n !== 'index');
+
+  const lynxApis = allFiles
+    .filter((n) => VAPOR_APP_APIS.has(n))
+    .sort((a, b) => a.localeCompare(b));
+
+  const rest = allFiles
+    .filter((n) => !VAPOR_APP_APIS.has(n) && !HIDDEN_APIS.has(n))
+    .sort((a, b) => a.localeCompare(b));
+
+  const fmtRow = (name: string) => {
+    const [kind, api] = name.split('.');
+    return `| [${api}](${name}.mdx) | ${kind} |`;
+  };
+
+  const md = `# vue-lynx/vapor-app
+
+The **pure Vapor** application entry. With \`pluginVueLynx({ vapor: true })\`,
+\`'vue'\` is aliased to this module — it provides everything a Vapor app
+imports from \`'vue'\` (reactivity, lifecycle, watchers, DI, SFC macros, the
+Vapor helper surface) **without** the vdom renderer. See the
+[Vapor Mode guide](/guide/vapor-mode) for how the mode works and its
+current limitations.
+
+\`\`\`ts
+import { createApp } from 'vue-lynx/vapor-app'
+import App from './App.vue'
+
+createApp(App).mount()
+\`\`\`
+
+vdom-only APIs (\`h()\`, \`render()\`, \`<Transition>\`, \`<Teleport>\`,
+\`<KeepAlive>\`, \`<Suspense>\`, \`vShow\`, \`vModelText\`,
+\`vaporInteropPlugin\`) are **intentionally absent** — importing them in a
+Vapor app fails at build time instead of misbehaving at runtime.
+
+## Vue Lynx APIs
+
+APIs specific to Lynx's dual-thread architecture. They behave identically
+to their \`vue-lynx\` (vdom entry) counterparts:
+
+| Name | Kind |
+| ------ | ------ |
+${lynxApis.map(fmtRow).join('\n')}
+
+## Vue Re-exports
+
+The standard Vue 3 surface — \`ref\`, \`reactive\`, \`computed\`, \`watch\`,
+lifecycle hooks, \`provide\`/\`inject\`, SFC macros, \`useCssModule\`, and the
+rest of \`@vue/runtime-core\` — is re-exported unchanged and behaves exactly
+as documented in the [Vue.js API Reference](https://vuejs.org/api/). The
+\`@vue/runtime-vapor\` helper surface that compiled
+\`<script setup vapor>\` code imports (\`template\`, \`createComponent\`,
+\`createFor\`, \`renderEffect\`, …) is also re-exported — you rarely touch it
+directly.
+
+## Lynx Vapor Adapters
+
+Lynx-specific pieces of the Vapor surface (mostly compiler-facing —
+compiled \`<script setup vapor>\` output imports these):
+
+| Name | Kind |
+| ------ | ------ |
+${rest.map(fmtRow).join('\n')}
+`;
+
+  await fs.writeFile(path.join(outputDir, 'index.mdx'), md);
+}
+
+/**
  * Rewrite the testing-library index.mdx with setup/usage docs,
  * modeled after @lynx-js/react/testing-library.
  */
@@ -303,6 +423,7 @@ for (const pkg of packages) {
     outputDir,
     pkg.homepageFileName,
     pkg.showHomepageInSidebar,
+    'excludeExternals' in pkg ? pkg.excludeExternals : false,
   );
   const items = await collectSidebarItems(
     outputDir,
@@ -321,6 +442,7 @@ for (const pkg of packages) {
 
 // Rewrite index pages with curated sections
 await rewriteVueLynxIndex(path.join(apiOutputDir, 'vue-lynx'));
+await rewriteVaporAppIndex(path.join(apiOutputDir, 'vapor-app'));
 await rewriteTestingLibraryIndex(path.join(apiOutputDir, 'testing-library'));
 
 // Write sidebar JSON for rspress.config.ts to import
@@ -339,6 +461,19 @@ await fs.mkdir(zhApiOutputDir, { recursive: true });
 for (const pkg of packages) {
   const srcDir = path.join(apiOutputDir, pkg.dirName);
   const destDir = path.join(zhApiOutputDir, pkg.dirName);
+  // Clean the mirror first — stale pages from earlier generations would
+  // otherwise survive (only the en side is cleaned by generatePackageDocs).
+  if (zhTranslatedIndexDirs.has(pkg.dirName)) {
+    // Preserve only the hand-written zh index.mdx.
+    const existing = await fs.readdir(destDir, { withFileTypes: true }).catch(() => []);
+    for (const file of existing) {
+      if (file.isFile() && file.name !== 'index.mdx') {
+        await fs.rm(path.join(destDir, file.name));
+      }
+    }
+  } else {
+    await fs.rm(destDir, { recursive: true, force: true });
+  }
   await fs.mkdir(destDir, { recursive: true });
 
   const files = await fs.readdir(srcDir, { withFileTypes: true });
