@@ -8,14 +8,12 @@ interface GoModeNavIndicatorProps {
 
 const copy = {
   en: {
-    context: 'Examples',
     label: 'Example renderer',
     description: 'Switches every supported example on this page',
     coverage: (supported: number, total: number) =>
       `${supported} of ${total} examples on this page run Vapor; the rest fall back to VDOM`,
   },
   zh: {
-    context: '示例',
     label: '示例渲染器',
     description: '切换本页所有支持的示例',
     coverage: (supported: number, total: number) =>
@@ -31,9 +29,10 @@ interface GoModeNavControlProps {
 }
 
 /**
- * Presentational VDOM/Vapor segmented control. Renders nothing when the
- * page has no examples; shows a coverage chip ("2/3") when Vapor is
- * selected but some examples on the page fall back to VDOM.
+ * Presentational VDOM/Vapor segmented control: a compact pill with a
+ * sliding thumb. Renders nothing when the page has no examples; shows a
+ * coverage chip ("2/3") when Vapor is selected but some examples on the
+ * page fall back to VDOM.
  */
 export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavControlProps) {
   const labels = copy[locale];
@@ -49,12 +48,12 @@ export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavCo
       data-mode={mode}
       title={partial ? coverageText : labels.description}
     >
-      <span className="go-mode-nav-control__context">{labels.context}</span>
       <div
         className="go-mode-nav-control__modes"
         role="group"
         aria-label={labels.label}
       >
+        <span className="go-mode-nav-control__thumb" aria-hidden="true" />
         {(['vdom', 'vapor'] as const).map((candidate) => (
           <button
             type="button"

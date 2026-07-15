@@ -14,6 +14,16 @@ Vue 3.6 beta / prerelease 线中，Vue 团队也标记其为不稳定。Vue Lynx
 `vue@3.6.0-beta.17`。
 :::
 
+## 亲手运行
+
+下面就是仓库里的 Vapor 演示应用——插值、`v-if`/`v-for`、`v-model`、
+props/emits、scoped CSS，全部经 `@vue/compiler-vapor` 编译。用站点导航栏的
+**VDOM | Vapor** 切换（或示例底栏的徽标）在同一份源码下更换渲染器；徽标
+始终显示当前实际运行的是哪一个。选择会跨页面、跨访问保持，全站所有支持的
+示例都会跟随。
+
+<Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
+
 ## 开启 Vapor mode
 
 Vapor 是**以应用为粒度的构建期决策**。切换一个应用需要改三处：插件开关、
@@ -152,7 +162,7 @@ Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成
 | 文档级事件委托 | 编译期关闭（`eventDelegation: false`），事件逐元素注册 |
 | `@tap.stop` | 原生 `catchEvent`（Lynx 的阻止冒泡机制） |
 | `<input>` 上的 `v-model` | Lynx `input` / `confirm`（`.lazy`）事件，取 `detail.value` |
-| Scoped CSS 的 `data-v-*` 属性 | Lynx `cssId`（与 vdom 模式同一桥接） |
+| Scoped CSS 的 `data-v-*` 属性 | 可组合的 scope **class**（构建期把 `[data-v-*]` 选择器改写为 class 选择器；与 vdom 模式同一机制） |
 
 ### 跨线程的模板克隆
 
@@ -208,65 +218,14 @@ Vapor 入口导出 Vapor 应用需要的一切：
 
 ## 已验证的 example 矩阵
 
-所有配置的 example entry 都会通过 Lynx for Web 在 Chromium 中构建并访问。
-同一个场景分别运行 VDOM 与 Vapor；支持项必须同时通过两种模式及其 feature
-checkpoint。目前结果是 **36 个支持 / 9 个明确不支持**，并且 **45/45 个 VDOM
-entry 全部通过**。含有可运行示例的页面会在站点导航栏出现
-`VDOM | Vapor` 切换——选择会跨页面、跨访问持久化。选中 Vapor 时，每个示例
-会标明自己实际运行的是 Vapor 还是回退（以及原因）；当两者不一致时导航栏
-还会显示本页的覆盖比例。
+站点上的每个示例都针对两种渲染器验证过，而这个站点本身就是演示：在含有
+可运行示例的页面上，导航栏的 `VDOM | Vapor` 切换会更换所有支持的示例，
+每个示例底栏的徽标显示实际生效的渲染器，出现回退时导航栏还会显示本页的
+Vapor 覆盖比例。下表由机器可读的验证产物生成
+（`examples/vapor-support.json`，其中还记录了源码哈希与逐项证据）——
+不支持的 reason code 对应下方[限制](#当前限制)。
 
-| Entry | Vapor | 策略 / 原因 |
-|---|---|---|
-| `7guis/cells` | 支持 | `direct` |
-| `7guis/circle-drawer` | 支持 | `direct` |
-| `7guis/counter` | 支持 | `direct` |
-| `7guis/crud` | 支持 | `direct` |
-| `7guis/flight-booker` | 支持 | `direct` |
-| `7guis/temperature-converter` | 支持 | `direct` |
-| `7guis/timer` | 支持 | `direct` |
-| `basic/h-counter` | 不支持 | `render-function` |
-| `basic/main` | 支持 | `direct` |
-| `css-features/main` | 支持 | `direct` |
-| `event-modifiers/main` | 支持 | `direct` |
-| `gallery/GalleryAutoScroll` | 支持 | `direct` |
-| `gallery/GalleryComplete` | 支持 | `direct` |
-| `gallery/GalleryList` | 支持 | `direct` |
-| `gallery/GalleryScrollbar` | 支持 | `direct` |
-| `gallery/GalleryScrollbarCompare` | 支持 | `direct` |
-| `gallery/ImageCard` | 支持 | `adapter` |
-| `gallery/LikeCard` | 支持 | `adapter` |
-| `hackernews-css/main` | 不支持 | `vue-router-and-transitions` |
-| `hackernews-tailwind/main` | 不支持 | `vue-router-and-transitions` |
-| `hello-world/main` | 支持 | `direct` |
-| `keep-alive/main` | 不支持 | `keep-alive` |
-| `main-thread/background-draggable` | 支持 | `direct` |
-| `main-thread/cross-thread-calls` | 支持 | `direct` |
-| `main-thread/main-thread-draggable` | 支持 | `direct` |
-| `main-thread/main-thread-draggable-raw` | 支持 | `direct` |
-| `main-thread/shared-module` | 支持 | `direct` |
-| `networking/main` | 支持 | `adapter` |
-| `option-api/main` | 不支持 | `options-api` |
-| `pinia/main` | 支持 | `direct` |
-| `provide-inject/main` | 支持 | `direct` |
-| `reactivity/main` | 支持 | `direct` |
-| `slots/main` | 支持 | `direct` |
-| `suspense/main` | 不支持 | `suspense` |
-| `swiper/Swiper` | 支持 | `adapter` |
-| `swiper/SwiperEmpty` | 支持 | `adapter` |
-| `swiper/SwiperMTS` | 支持 | `adapter` |
-| `tailwindcss/main` | 支持 | `direct` |
-| `todomvc-codex/main` | 不支持 | `vue-router` |
-| `todomvc-day1/main` | 支持 | `direct` |
-| `todomvc/main` | 支持 | `direct` |
-| `transition/transition` | 不支持 | `transition` |
-| `v-model/main` | 支持 | `direct` |
-| `vapor/main` | 支持 | `direct` |
-| `vue-router/main` | 不支持 | `vue-router` |
-
-包含源码哈希与验证证据的机器可读矩阵位于
-`examples/vapor-support.json`。不支持的 reason code 对应下方限制；`adapter`
-仅表示转换了 entry bootstrap，feature 组件与行为保持不变。
+<VaporSupportMatrix />
 
 ## 当前限制
 
