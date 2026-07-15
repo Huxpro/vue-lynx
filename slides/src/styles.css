@@ -1867,6 +1867,136 @@ body.is-blackout::after {
   to   { opacity: 1; translate: 0 0; }
 }
 
+/* Standalone QR card (data-qr) — white so it scans on the dark stage. */
+.qr-solo {
+  width: clamp(120px, 15cqw, 168px);
+  height: clamp(120px, 15cqw, 168px);
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 14px 44px -18px rgba(0, 0, 0, 0.7);
+}
+.qr-solo svg { width: 100%; height: 100%; display: block; }
+
+/* =========================================================
+   Flow diagram — generic canvas for the "how we did it"
+   chapter. Colored blocks = concepts, lanes = threads, text
+   arrows = data flow. Everything absolutely positioned per
+   slide (like .logos) so magic-move FLIPs carry the story.
+   ========================================================= */
+.flow {
+  position: relative;
+  width: min(100%, 1060px);
+  height: clamp(300px, 52cqh, 400px);
+}
+
+/* Thread lanes — soft tinted strips with a mono label at the left. */
+.flane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c, #5dd5a8) 26%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 6%, transparent);
+}
+.flane__label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 72%, var(--ink));
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.flane__label i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c, #5dd5a8);
+  box-shadow: 0 0 8px var(--c, #5dd5a8);
+}
+
+/* Concept block — one colored box per concept, stable data-flip id. */
+.fb {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 11px 18px;
+  border-radius: 11px;
+  border: 1.6px solid var(--c, #5dd5a8);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  z-index: 2;
+}
+.fb small {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 80%, var(--ink));
+}
+.fb.is-dim { opacity: 0.45; }
+.fb.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
+/* Keep absolute positioning while FLIPping (same fix as .logo). */
+.slide .fb.is-flipping { position: absolute; }
+
+/* Text arrow / inline flow label — mono, colorable, fades in. */
+.farr {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--c, var(--ink-mute));
+  white-space: nowrap;
+  z-index: 1;
+}
+.farr b { font-weight: 600; }
+
+/* Big center annotation (e.g. “= 1 tick”). */
+.fcenter {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: clamp(18px, 2cqw, 26px);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  z-index: 3;
+}
+.fcenter b { color: var(--vue-green); font-weight: 600; }
+
+/* Container box — e.g. the .lynx.bundle anatomy. */
+.fbox {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 16px;
+  border: 1.6px dashed color-mix(in srgb, var(--c, #5dd5a8) 55%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 4%, transparent);
+  z-index: 0;
+}
+.fbox__label {
+  position: absolute;
+  top: -11px;
+  left: 22px;
+  padding: 0 10px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 80%, var(--ink));
+}
+
 /* =========================================================
    Framework icon row — the "many answers" landscape teaser
    ========================================================= */

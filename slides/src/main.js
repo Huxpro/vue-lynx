@@ -513,6 +513,7 @@ const I18N_SELECTOR = [
   '.chip', '.pstack__item', '.cover__tagline', '.cover__title-line',
   '.combine__name', '.result-label', '.tl-item__week', '.node__label',
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
+  '.flane__label', '.fcenter',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];
