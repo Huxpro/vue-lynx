@@ -19,6 +19,9 @@ overrides:
   '@vue/server-renderer': 3.6.0-beta.17
 
 patchedDependencies:
+  '@lynx-js/go-web@0.6.0':
+    hash: 1cc2b98197fc826096883473fb7cd32f50c201a816ffc3eeec5dcc10f515e54d
+    path: patches/@lynx-js__go-web@0.6.0.patch
   '@lynx-js/web-core@0.22.1':
     hash: e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad
     path: patches/@lynx-js__web-core@0.22.1.patch
@@ -827,7 +830,7 @@ importers:
         version: 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@lynx-js/go-web':
         specifier: ^0.6.0
-        version: 0.6.0(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.22.1(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/css-serializer@0.1.6)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
+        version: 0.6.0(patch_hash=1cc2b98197fc826096883473fb7cd32f50c201a816ffc3eeec5dcc10f515e54d)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.22.1(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/css-serializer@0.1.6)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
       '@lynx-js/web-core':
         specifier: ^0.22.1
         version: 0.22.1(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/css-serializer@0.1.6)(tslib@2.8.1)
@@ -7993,7 +7996,7 @@ snapshots:
 
   '@lynx-js/debug-metadata@0.1.0': {}
 
-  '@lynx-js/go-web@0.6.0(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.22.1(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/css-serializer@0.1.6)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
+  '@lynx-js/go-web@0.6.0(patch_hash=1cc2b98197fc826096883473fb7cd32f50c201a816ffc3eeec5dcc10f515e54d)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.22.1(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/css-serializer@0.1.6)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
     dependencies:
       '@douyinfe/semi-icons': 2.92.2(react@19.2.4)
       '@douyinfe/semi-ui': 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
