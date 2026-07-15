@@ -4,7 +4,7 @@
 
 **Goal:** Share VDOM/Vapor mode across all supported `<Go>` previews and switch bundles without refreshing the documentation page.
 
-**Architecture:** A focused external store owns the requested browser mode and URL synchronization. Each `<Go>` subscribes with `useSyncExternalStore`, derives an entry-specific effective mode, and passes swapped metadata into the already reactive `GoBase` preview. A remark plugin injects one page-level toolbar before the first `<Go>`; individual previews expose capability status without duplicating controls.
+**Architecture:** A focused external store owns the requested browser mode and URL synchronization. Each `<Go>` subscribes with `useSyncExternalStore`, derives an entry-specific effective mode, and passes swapped metadata into the already reactive `GoBase` preview. One control in the Rspress navigation changes the preference; individual previews expose only their effective renderer and fallback reason.
 
 **Tech Stack:** React 19, TypeScript, Node test runner, tsx, Rspress, `@lynx-js/go-web`
 
@@ -53,9 +53,9 @@ Run: `pnpm --dir website test:go-mode`
 
 Expected: FAIL because the effective-mode helper does not exist.
 
-- [ ] **Step 3: Integrate the store and page-level toolbar**
+- [ ] **Step 3: Integrate the store and global navigation control**
 
-Replace local `mode` state and `window.location.assign` with `useSyncExternalStore(renderModeStore.subscribe, renderModeStore.getSnapshot, renderModeStore.getServerSnapshot)`. Initialize only the entry from `go-entry`, derive the current effective mode from entry support and bundle availability, and continue passing transformed metadata to `GoBase`. Add a remark-injected `GoModeToolbar` that calls `renderModeStore.setMode(nextMode)` once per page. Replace each local toggle with localized `Vapor ready`, `Vapor active`, or `VDOM only` capability status. Mount a read-only mode indicator in the Rspress navigation and simplify the mobile page toolbar to one flat row.
+Replace local `mode` state and `window.location.assign` with `useSyncExternalStore(renderModeStore.subscribe, renderModeStore.getSnapshot, renderModeStore.getServerSnapshot)`. Initialize only the entry from `go-entry`, derive the current effective mode from entry support and bundle availability, and continue passing transformed metadata to `GoBase`. Mount the only VDOM/Vapor control in the Rspress navigation and call `renderModeStore.setMode(nextMode)` there. Each preview reports its actual `VDOM` or `Vapor` renderer; unsupported entries report localized `VDOM only` reasons and never render another switch.
 
 - [ ] **Step 4: Run focused tests and verify GREEN**
 
@@ -82,7 +82,7 @@ Expected: Rspress build completes with exit code 0.
 
 - [ ] **Step 3: Verify Lynx for Web interaction**
 
-Start the built website preview, open a page containing at least two supported `<Go>` previews, and assert that it contains exactly one page-level toolbar and no entry-level mode buttons. Switch the toolbar to Vapor and assert that every supported status and preview changes together, each preview requests its `dist-vapor` bundle, the page URL changes through `replaceState`, and a document-level sentinel plus scroll position remain unchanged. Verify an unsupported entry remains on `dist`, then inspect English/Chinese, light/dark, desktop/mobile presentation.
+Start the built website preview, open a page containing at least two supported `<Go>` previews, and assert that the navigation contains the only renderer control and no page/entry-level mode buttons exist. Increment an example, switch the global control to Vapor, and assert that every supported status changes to `Vapor`, each `<lynx-view>.url` changes from `dist` to `dist-vapor`, and the example runtime resets while the document sentinel, `<Go>` shell, scroll position, and history length remain unchanged. Confirm the keyed inner `<lynx-view>` is replaced without disposal errors, switch back to VDOM, and verify the reverse URL change. Verify an unsupported entry remains on `dist` with `VDOM only`, then inspect English/Chinese, light/dark, desktop/mobile presentation.
 
 - [ ] **Step 4: Review the final diff**
 

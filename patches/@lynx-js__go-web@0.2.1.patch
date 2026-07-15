@@ -1,6 +1,6 @@
 --- a/src/example-preview/index.tsx
 +++ b/src/example-preview/index.tsx
-@@ -62,6 +62,10 @@ export interface ExamplePreviewProps {
+@@ -62,6 +62,10 @@
     * - `'qrcode'`  — QR code for Lynx Explorer
     */
    defaultTab?: PreviewTab;
@@ -9,9 +9,9 @@
 +  /** Called whenever the active configured entry changes. */
 +  onEntryChange?: (entryName: string) => void;
  }
-
+ 
  export interface ExampleMetadata {
-@@ -103,6 +107,8 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -103,6 +107,8 @@
      schemaOptions,
      langAlias,
      defaultTab: propsDefaultTab,
@@ -19,8 +19,8 @@
 +    onEntryChange,
      mode = 'linked',
    } = props;
-
-@@ -113,6 +119,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+ 
+@@ -113,6 +119,10 @@
    const [currentFile, setCurrentFile] = useState('');
    const [isAssetFile, setIsAssetFile] = useState(isAssetFileType(defaultFile));
    const [currentEntry, setCurrentEntry] = useState('');
@@ -28,31 +28,31 @@
 +    setCurrentEntry(entryName);
 +    onEntryChange?.(entryName);
 +  };
-
+ 
    const [defaultWebPreviewFile, setDefaultWebPreviewFile] = useState('');
    const [initState, setInitState] = useState(false);
-@@ -123,8 +133,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -123,8 +133,10 @@
        : highlight || {};
    }, [highlight, defaultFile]);
-
+ 
 -  const { error, data: exampleData } = useSWR<ExampleMetadata>(
 -    `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
 +  const { error, data: fetchedExampleData } = useSWR<ExampleMetadata>(
 +    exampleMetadata
 +      ? null
 +      : `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
-
+ 
      async (url) => {
        const response = await fetch(url);
-@@ -135,6 +147,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -135,6 +147,7 @@
      },
      { revalidateOnFocus: false },
    );
 +  const exampleData = exampleMetadata ?? fetchedExampleData;
-
+ 
    const { trigger } = useSWRMutation(
      `${EXAMPLE_BASE_URL}/${example}/${currentName}`,
-@@ -211,7 +224,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -211,7 +224,7 @@
            const fullWebFile = `${window.location.origin}${EXAMPLE_BASE_URL}/${example}/${tmpEntry.webFile}`;
            setDefaultWebPreviewFile(fullWebFile);
          }
@@ -61,19 +61,19 @@
        } else {
          console.warn(
            'defaultEntryFile or defaultEntryName params error, please check!',
-@@ -219,9 +232,9 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -219,9 +232,9 @@
        }
        setInitState(true);
      }
 -  }, [exampleData, defaultEntryFile, defaultEntryName]);
 +  }, [exampleData, defaultEntryFile, defaultEntryName, onEntryChange]);
-
+ 
 -  if (error) {
 +  if (error && !exampleMetadata) {
      const ErrorComp = ErrorComponent || DefaultErrorWrap;
      return <ErrorComp example={example} exampleBaseUrl={EXAMPLE_BASE_URL} />;
    }
-@@ -244,7 +257,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -244,7 +257,7 @@
        langAlias={langAlias}
        currentEntryFileUrl={currentEntryFileUrl}
        currentEntry={currentEntry}
@@ -82,3 +82,13 @@
        entryFiles={exampleData?.templateFiles}
        highlight={highlightData[currentName]}
        entry={entry}
+--- a/src/example-preview/components/web-iframe.tsx
++++ b/src/example-preview/components/web-iframe.tsx
+@@ -317,6 +317,7 @@
+       <LoadingOverlay visible={loading} error={error} />
+       {show && src && (
+         <lynx-view
++          key={src}
+           ref={lynxViewRef}
+           style={LYNX_VIEW_STYLE}
+           lynx-group-id={LYNX_GROUP_ID}
