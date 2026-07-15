@@ -9,7 +9,8 @@
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
-    "preview": "rspress preview"
+    "preview": "rspress preview",
+    "validate:ai-chat-media": "node scripts/validate-ai-chat-media.mjs"
   },
   "dependencies": {
     "@douyinfe/semi-icons": "^2.74.0",
