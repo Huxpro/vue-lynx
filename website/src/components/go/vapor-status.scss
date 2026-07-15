@@ -76,7 +76,7 @@
   display: inline-flex;
   align-items: center;
   width: 58px;
-  height: 20px;
+  height: 22px;
   flex: none;
   border-radius: 999px;
   background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
@@ -95,16 +95,16 @@
 .go-mode-nav-control__mode {
   position: absolute;
   top: 0;
-  right: 7px;
-  left: 22px;
+  right: 8px;
+  left: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   color: var(--rp-c-text-2);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   transition: color 200ms ease-out;
 }
 
@@ -115,8 +115,8 @@
 }
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__mode {
-  right: 22px;
-  left: 7px;
+  right: 24px;
+  left: 8px;
   color: #fff;
   text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
 }
@@ -125,8 +125,8 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
@@ -134,7 +134,7 @@
 }
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
-  transform: translateX(38px);
+  transform: translateX(36px);
 }
 
 /* ⓘ — scope explainer */
@@ -216,11 +216,12 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 20px;
-  padding: 0 8px;
-  border: 1px solid var(--rp-c-divider);
+  min-height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--rp-c-bg-soft) 72%, transparent);
+  /* Same material family as the switch's off track. */
+  background: color-mix(in srgb, var(--rp-c-text-3) 14%, transparent);
   color: var(--rp-c-text-2);
   font-size: 10px;
   font-weight: 500;
@@ -563,9 +564,6 @@ button.vapor-status:focus-visible {
     padding: 8px 2px;
   }
 
-  button.vapor-status {
-    min-height: 26px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
