@@ -48,24 +48,45 @@ export function createMagicMove({ deck, getScale, reducedMotion = false, embed =
     //    Rects are in scaled viewport px; divide the translation by the stage
     //    scale so it maps to the element's own (unscaled) coordinate space.
     const s = (getScale?.() || 1);
-    pairs.forEach(({ fromRect, toRect, toEl }) => {
+    pairs.forEach((p) => {
+      const { fromRect, toRect, toEl } = p;
       const dx = (fromRect.left - toRect.left) / s;
       const dy = (fromRect.top - toRect.top) / s;
       const sx = toRect.width ? fromRect.width / toRect.width : 1;
       const sy = toRect.height ? fromRect.height / toRect.height : 1;
       toEl.classList.add('is-flipping');
+      // FLIP contract: an element keeps its OWN positioning scheme while
+      // morphing. We only need a positioned box (for z-index), so promote
+      // static elements to relative via inline style — never via the class,
+      // which would yank absolutely-positioned elements (logos, diagram
+      // blocks, thread lanes) into flow mid-morph: they'd tween from a wrong
+      // origin, then snap into place at cleanup.
+      const cs = getComputedStyle(toEl);
+      if (cs.position === 'static') {
+        toEl.style.position = 'relative';
+        p.promoted = true;
+      }
+      // Same contract for transforms: elements may carry their OWN transform
+      // (e.g. .fb's translate(-50%,-50%) centering). The FLIP delta must
+      // COMPOSE with it, not replace it — replacing shifts the element by
+      // half its size for the whole morph, then snaps at cleanup. Both rects
+      // were measured with the own transform applied, so prepending the
+      // delta and releasing back to the own matrix is exact.
+      p.own = cs.transform === 'none' ? '' : cs.transform;
       toEl.style.transformOrigin = 'top left';
       toEl.style.transition = 'none';
       toEl.style.transform =
-        `translate(${dx}px, ${dy}px) scale(${sx || 1}, ${sy || 1})`;
+        `translate(${dx}px, ${dy}px) scale(${sx || 1}, ${sy || 1})` +
+        (p.own ? ` ${p.own}` : '');
     });
 
-    // 5. Play — release to the identity transform on the next frame.
+    // 5. Play — release to the (own) identity transform on the next frame.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        pairs.forEach(({ toEl }) => {
+        pairs.forEach(({ toEl, own }) => {
           toEl.style.transition = `transform ${FLIP_MS}ms ${FLIP_EASE}`;
-          toEl.style.transform = 'translate(0, 0) scale(1, 1)';
+          toEl.style.transform =
+            `translate(0, 0) scale(1, 1)${own ? ` ${own}` : ''}`;
         });
       });
     });
@@ -73,11 +94,12 @@ export function createMagicMove({ deck, getScale, reducedMotion = false, embed =
     // 6. Cleanup.
     const cleanup = () => {
       clearTimeout(timer);
-      pairs.forEach(({ toEl }) => {
+      pairs.forEach(({ toEl, promoted }) => {
         toEl.classList.remove('is-flipping');
         toEl.style.transform = '';
         toEl.style.transition = '';
         toEl.style.transformOrigin = '';
+        if (promoted) toEl.style.position = '';
       });
       fromSlide.classList.remove('is-morphing-out');
       toSlide.classList.remove('is-morphing-in');

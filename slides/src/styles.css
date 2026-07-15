@@ -1805,9 +1805,12 @@ body.is-blackout::after {
   transition: opacity 0.16s ease !important;
   z-index: 1;
 }
+/* NB: no `position` here on purpose. The engine (framework/magic-move.js)
+   promotes static elements to relative inline; forcing it from CSS yanked
+   absolutely-positioned flip elements (.logo/.fb/.flane) into flow mid-morph.
+   Contract guarded by slides/tests/morph-invariant.mjs. */
 .slide .is-flipping {
   will-change: transform;
-  position: relative;
   z-index: 4;
 }
 /* Elements marked to wash in behind a morph */
@@ -1839,11 +1842,6 @@ body.is-blackout::after {
   display: grid;
   place-items: center;
 }
-/* The FLIP engine tags morphing elements `.is-flipping`, whose framework rule
-   forces `position: relative` (fine for in-flow targets). For an absolutely-
-   positioned logo that would drop it into flow mid-morph — the element tweens
-   at the wrong spot, then snaps back on cleanup. Keep it absolute. */
-.slide .logo.is-flipping { position: absolute; }
 .logo svg { width: 100%; height: 100%; display: block; }
 
 .logo--lynx svg { fill: #ffffff; }
@@ -1947,13 +1945,6 @@ body.is-blackout::after {
 }
 .fb.is-dim { opacity: 0.45; }
 .fb.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
-/* Keep absolute positioning while FLIPping (same fix as .logo) — the
-   framework's generic .is-flipping rule forces position:relative, which
-   drops these out of their absolute spots mid-morph: the whole lane falls
-   into flow (the MT lane visibly sinks by one lane-height), tweens from the
-   wrong origin, then snaps at cleanup. */
-.slide .fb.is-flipping { position: absolute; }
-.slide .flane.is-flipping { position: absolute; }
 
 /* Text arrow / inline flow label — mono, colorable, fades in. */
 .farr {

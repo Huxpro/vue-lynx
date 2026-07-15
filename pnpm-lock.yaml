@@ -695,6 +695,9 @@ importers:
         specifier: ^2.0.4
         version: 2.0.4
     devDependencies:
+      playwright-core:
+        specifier: ^1.49.0
+        version: 1.61.1
       vite:
         specifier: ^5.4.10
         version: 5.4.21(@types/node@25.5.0)(sass-embedded@1.98.0)(sass@1.98.0)(terser@5.46.0)
@@ -4683,6 +4686,11 @@ packages:
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
+
+  playwright-core@1.61.1:
+    resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -10776,6 +10784,8 @@ snapshots:
       typescript: 5.9.3
 
   pirates@4.0.7: {}
+
+  playwright-core@1.61.1: {}
 
   possible-typed-array-names@1.1.0: {}
 
