@@ -8,8 +8,8 @@ interface VaporStatusProps {
 
 const statusCopy = {
   en: {
-    active: 'Vapor active',
-    ready: 'Vapor ready',
+    vapor: 'Vapor',
+    vdom: 'VDOM',
     fallback: 'VDOM only',
     reasons: {
       'render-function': 'Uses a render function',
@@ -22,8 +22,8 @@ const statusCopy = {
     },
   },
   zh: {
-    active: 'Vapor 已启用',
-    ready: 'Vapor 可用',
+    vapor: 'Vapor',
+    vdom: 'VDOM',
     fallback: '仅 VDOM',
     reasons: {
       'render-function': '使用渲染函数',
@@ -46,7 +46,7 @@ export function VaporStatus({
 }: VaporStatusProps) {
   const copy = statusCopy[locale];
   const label = status === 'supported'
-    ? mode === 'vapor' ? copy.active : copy.ready
+    ? mode === 'vapor' ? copy.vapor : copy.vdom
     : copy.fallback;
   const formattedReason = reason
     ? copy.reasons[reason as keyof typeof copy.reasons] ?? reason
@@ -60,6 +60,7 @@ export function VaporStatus({
       className="vapor-status"
       data-entry={entry}
       data-vapor-status={status}
+      data-render-mode={mode}
       aria-label={`${entry}: ${label}${description}`}
       title={formattedReason}
     >

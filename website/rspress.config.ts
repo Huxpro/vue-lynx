@@ -11,8 +11,6 @@ import {
 } from '@shikijs/transformers';
 
 const PUBLISH_URL = 'https://vue.lynxjs.org/';
-import { remarkGoModeToolbar } from './scripts/remark-go-mode-toolbar';
-
 const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
@@ -88,7 +86,6 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    remarkPlugins: [remarkGoModeToolbar],
     shiki: {
       transformers: [
         transformerNotationDiff(),
@@ -105,7 +102,6 @@ export default defineConfig({
         __dirname,
         'src/components/home-comps/showcase/ScaleCompare.tsx',
       ),
-      path.join(__dirname, 'src/components/go/GoModeToolbar.tsx'),
       path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
       path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
     ],
