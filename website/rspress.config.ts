@@ -127,6 +127,7 @@ export default defineConfig({
         __dirname,
         'src/components/home-comps/showcase/ScaleCompare.tsx',
       ),
+      path.join(__dirname, 'src/components/go/VaporSupportMatrix.tsx'),
       path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
       path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
     ],

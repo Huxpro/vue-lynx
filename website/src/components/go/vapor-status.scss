@@ -1,55 +1,70 @@
+/* ---------------------------------------------------------------------------
+ * VDOM/Vapor segmented control (site nav) — compact pill with sliding thumb.
+ * ------------------------------------------------------------------------- */
+
 .go-mode-nav-control {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   color: var(--rp-c-text-2);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   white-space: nowrap;
 }
 
-.go-mode-nav-control__context {
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .go-mode-nav-control__modes {
+  position: relative;
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(52px, 1fr));
-  gap: 2px;
+  grid-template-columns: repeat(2, minmax(48px, 1fr));
   padding: 2px;
   border: 1px solid var(--rp-c-divider);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--rp-c-bg-soft);
 }
 
+/* Sliding thumb behind the active segment. */
+.go-mode-nav-control__thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: var(--rp-c-bg);
+  box-shadow:
+    inset 0 0 0 1px var(--rp-c-divider),
+    0 1px 2px rgb(0 0 0 / 6%);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease-out;
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__thumb {
+  transform: translateX(100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider)),
+    0 1px 3px color-mix(in srgb, var(--rp-c-brand) 22%, transparent);
+}
+
 .go-mode-nav-control__modes button {
-  min-height: 28px;
+  position: relative;
+  z-index: 1;
+  min-height: 24px;
   padding: 0 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
   color: var(--rp-c-text-2);
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1;
-  transition:
-    background-color 160ms ease-out,
-    color 160ms ease-out,
-    transform 80ms ease-out;
+  transition: color 160ms ease-out;
 }
 
 @media (hover: hover) {
   .go-mode-nav-control__modes button:not([aria-pressed='true']):hover {
-    background: color-mix(in srgb, var(--rp-c-text-1) 6%, transparent);
     color: var(--rp-c-text-1);
   }
-}
-
-.go-mode-nav-control__modes button:active {
-  transform: translateY(1px);
 }
 
 .go-mode-nav-control__modes button:focus-visible {
@@ -58,15 +73,12 @@
 }
 
 .go-mode-nav-control__modes button[aria-pressed='true'] {
-  background: var(--rp-c-bg);
-  box-shadow: inset 0 0 0 1px var(--rp-c-divider);
   color: var(--rp-c-text-1);
   font-weight: 600;
 }
 
 .go-mode-nav-control[data-mode='vapor']
   .go-mode-nav-control__modes button[aria-pressed='true'] {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rp-c-brand) 42%, var(--rp-c-divider));
   color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
 }
 
@@ -82,16 +94,44 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------------------------------------------------------------------
+ * Per-example renderer badge — lives in the <Go> card footer (rightFooter
+ * slot), same pill language as the nav control.
+ * ------------------------------------------------------------------------- */
+
 .vapor-status {
-  display: flex;
-  min-height: 20px;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 6px;
-  margin: 8px 2px;
+  min-height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-soft);
   color: var(--rp-c-text-2);
   font-size: 12px;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+button.vapor-status {
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  transition: border-color 160ms ease-out, color 160ms ease-out, background-color 160ms ease-out;
+}
+
+@media (hover: hover) {
+  button.vapor-status:hover {
+    border-color: color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider));
+    color: var(--rp-c-text-1);
+  }
+}
+
+button.vapor-status:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
 }
 
 .vapor-status__dot {
@@ -108,29 +148,173 @@
 
 .vapor-status__reason {
   overflow: hidden;
+  max-width: 40vw;
   color: var(--rp-c-text-3);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .vapor-status[data-render-mode='vapor'] {
-  color: color-mix(in srgb, var(--rp-c-brand) 82%, var(--rp-c-text-1));
+  border-color: color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider));
+  background: color-mix(in srgb, var(--rp-c-brand) 10%, var(--rp-c-bg-soft));
+  color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
 }
 
-/* Hollow dot whenever the example fell back to VDOM (the badge only renders
-   while Vapor is requested, so effective vdom always means a fallback). */
+/* Hollow dot whenever the example is not running Vapor. */
 .vapor-status[data-render-mode='vdom'] .vapor-status__dot {
   background: transparent;
   box-shadow: inset 0 0 0 1px currentColor;
 }
 
+/* ---------------------------------------------------------------------------
+ * Verified example matrix (Vapor Mode guide) — generated from
+ * vapor-support.json, badges share the vapor-status pill language.
+ * ------------------------------------------------------------------------- */
+
+.vapor-matrix {
+  min-height: 120px;
+  margin: 16px 0;
+}
+
+.vapor-matrix__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.vapor-matrix__summary {
+  color: var(--rp-c-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.vapor-matrix__filters {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-soft);
+}
+
+.vapor-matrix__filters button {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.vapor-matrix__filters button[aria-pressed='true'] {
+  background: var(--rp-c-bg);
+  box-shadow: inset 0 0 0 1px var(--rp-c-divider);
+  color: var(--rp-c-text-1);
+  font-weight: 600;
+}
+
+.vapor-matrix__filters button:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.vapor-matrix__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+}
+
+.vapor-matrix table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 13px;
+}
+
+.vapor-matrix th,
+.vapor-matrix td {
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--rp-c-divider);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.vapor-matrix thead th {
+  background: var(--rp-c-bg-soft);
+  color: var(--rp-c-text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vapor-matrix tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.vapor-matrix td code {
+  background: transparent;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+/* Matrix badges are informational, not interactive — slightly smaller. */
+.vapor-matrix .vapor-status {
+  min-height: 22px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+
+.vapor-matrix__notes {
+  color: var(--rp-c-text-3);
+  font-size: 12.5px;
+}
+
+.vapor-matrix__legend {
+  margin-top: 10px;
+  color: var(--rp-c-text-3);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.vapor-matrix__error {
+  color: var(--rp-c-text-2);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Mode-switch remount: ease the fresh preview in instead of popping.
+ * ------------------------------------------------------------------------- */
+
+.vue-lynx-go > div {
+  animation: vue-lynx-go-enter 240ms ease-out;
+}
+
+@keyframes vue-lynx-go-enter {
+  from {
+    opacity: 0.35;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Responsive / input adjustments
+ * ------------------------------------------------------------------------- */
+
 @media (width <= 767px) {
   .go-mode-nav-control {
     gap: 6px;
-  }
-
-  .go-mode-nav-control__context {
-    display: none;
   }
 
   .go-mode-nav-control__modes {
@@ -139,7 +323,6 @@
 
   .go-mode-nav-control__modes button {
     padding: 0 8px;
-    font-size: 12px;
   }
 }
 
@@ -147,13 +330,23 @@
    and a 44px-tall control inside it collides with adjacent nav items. */
 @media (pointer: coarse) {
   .go-mode-nav-control__modes button {
-    min-height: 34px;
+    min-height: 32px;
     min-width: 52px;
+  }
+
+  button.vapor-status {
+    min-height: 32px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .go-mode-nav-control__modes button {
+  .go-mode-nav-control__thumb,
+  .go-mode-nav-control__modes button,
+  button.vapor-status {
     transition: none;
+  }
+
+  .vue-lynx-go > div {
+    animation: none;
   }
 }

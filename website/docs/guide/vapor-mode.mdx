@@ -16,6 +16,17 @@ Vue team labels it unstable. Vue Lynx's Vapor support inherits that status:
 try it, but don't bet the app on it. Vue Lynx pins `vue@3.6.0-beta.17`.
 :::
 
+## See it running
+
+The app below is the repository's Vapor demo — interpolation, `v-if`/`v-for`,
+`v-model`, props/emits, and scoped CSS, all compiled through
+`@vue/compiler-vapor`. Use the **VDOM | Vapor** toggle in the site nav (or
+the badge in the example's footer) to swap the renderer under the same
+source; the badge always shows which one is live. The choice sticks across
+pages and visits, and every supported example on this site follows it.
+
+<Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
+
 ## Enabling Vapor mode
 
 Vapor is a **per-app, build-time decision**. Switching an app over touches
@@ -160,7 +171,7 @@ A few Lynx-specific translations happen along the way:
 | Document-level event delegation | Compiled away (`eventDelegation: false`); events register per element |
 | `@tap.stop` | Native `catchEvent` (Lynx's stop-propagation) |
 | `v-model` on `<input>` | Lynx `input` / `confirm` (`.lazy`) events carrying `detail.value` |
-| Scoped CSS `data-v-*` attributes | Lynx `cssId` (same bridge as vdom mode) |
+| Scoped CSS `data-v-*` attributes | Composable scope **classes** (the build rewrites `[data-v-*]` selectors to class selectors; same mechanism as vdom mode) |
 
 ### Template cloning across threads
 
@@ -222,67 +233,16 @@ Intentionally **absent** (importing them is a build-time error):
 
 ## Verified example matrix
 
-Every configured example entry is built and visited in Chromium through Lynx
-for Web. The same scenario runs against VDOM and Vapor; supported rows must
-pass both modes and their feature checkpoint. The current result is **36
-supported / 9 intentionally unsupported**, with **45/45 VDOM entries passing**.
-On pages with live examples, a `VDOM | Vapor` switch appears in the site
-nav — the choice persists across pages and visits. While Vapor is selected,
-each example shows whether it actually runs Vapor or fell back (and why),
-and the nav shows the page's coverage when they differ.
+Every example on this site is verified against both renderers, and the site
+itself is the demo: on pages with live examples, the `VDOM | Vapor` toggle
+in the nav switches every supported example, each example's footer badge
+shows which renderer is actually live, and the nav shows the page's Vapor
+coverage when some examples fall back. The matrix below is generated from
+the machine-readable verification output (`examples/vapor-support.json`,
+which also records source hashes and per-entry evidence) — unsupported
+reason codes correspond to the [limitations](#current-limitations) below.
 
-| Entry | Vapor | Strategy / reason |
-|---|---|---|
-| `7guis/cells` | Supported | `direct` |
-| `7guis/circle-drawer` | Supported | `direct` |
-| `7guis/counter` | Supported | `direct` |
-| `7guis/crud` | Supported | `direct` |
-| `7guis/flight-booker` | Supported | `direct` |
-| `7guis/temperature-converter` | Supported | `direct` |
-| `7guis/timer` | Supported | `direct` |
-| `basic/h-counter` | Unsupported | `render-function` |
-| `basic/main` | Supported | `direct` |
-| `css-features/main` | Supported | `direct` |
-| `event-modifiers/main` | Supported | `direct` |
-| `gallery/GalleryAutoScroll` | Supported | `direct` |
-| `gallery/GalleryComplete` | Supported | `direct` |
-| `gallery/GalleryList` | Supported | `direct` |
-| `gallery/GalleryScrollbar` | Supported | `direct` |
-| `gallery/GalleryScrollbarCompare` | Supported | `direct` |
-| `gallery/ImageCard` | Supported | `adapter` |
-| `gallery/LikeCard` | Supported | `adapter` |
-| `hackernews-css/main` | Unsupported | `vue-router-and-transitions` |
-| `hackernews-tailwind/main` | Unsupported | `vue-router-and-transitions` |
-| `hello-world/main` | Supported | `direct` |
-| `keep-alive/main` | Unsupported | `keep-alive` |
-| `main-thread/background-draggable` | Supported | `direct` |
-| `main-thread/cross-thread-calls` | Supported | `direct` |
-| `main-thread/main-thread-draggable` | Supported | `direct` |
-| `main-thread/main-thread-draggable-raw` | Supported | `direct` |
-| `main-thread/shared-module` | Supported | `direct` |
-| `networking/main` | Supported | `adapter` |
-| `option-api/main` | Unsupported | `options-api` |
-| `pinia/main` | Supported | `direct` |
-| `provide-inject/main` | Supported | `direct` |
-| `reactivity/main` | Supported | `direct` |
-| `slots/main` | Supported | `direct` |
-| `suspense/main` | Unsupported | `suspense` |
-| `swiper/Swiper` | Supported | `adapter` |
-| `swiper/SwiperEmpty` | Supported | `adapter` |
-| `swiper/SwiperMTS` | Supported | `adapter` |
-| `tailwindcss/main` | Supported | `direct` |
-| `todomvc-codex/main` | Unsupported | `vue-router` |
-| `todomvc-day1/main` | Supported | `direct` |
-| `todomvc/main` | Supported | `direct` |
-| `transition/transition` | Unsupported | `transition` |
-| `v-model/main` | Supported | `direct` |
-| `vapor/main` | Supported | `direct` |
-| `vue-router/main` | Unsupported | `vue-router` |
-
-The machine-readable matrix, including source hashes and verification evidence,
-lives in `examples/vapor-support.json`. Unsupported reason codes correspond to
-the limitations below; `adapter` means only the entry bootstrap was converted,
-while the feature component and behavior stay the same.
+<VaporSupportMatrix />
 
 ## Current limitations
 
