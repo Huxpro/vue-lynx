@@ -5,12 +5,10 @@
   "type": "module",
   "scripts": {
     "prepare-examples": "node scripts/prepare-examples.mjs",
-    "prepare-deck": "node scripts/prepare-deck.mjs",
-    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts && pnpm prepare-deck",
+    "prepare:docs": "pnpm prepare-examples && tsx scripts/generate-api.ts",
     "dev": "pnpm prepare:docs && rspress dev",
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
-    "build:deck-root": "node scripts/build-deck-root.mjs",
     "preview": "rspress preview"
   },
   "dependencies": {
