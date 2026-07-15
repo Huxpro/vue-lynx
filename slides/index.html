@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 44</span>
+    <span data-counter>01 / 62</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -303,10 +303,10 @@
 
   <section class="slide stage">
     <span class="eyebrow">II · The proof</span>
-    <div class="mega"><span class="brand-text">852</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 949</small></div>
+    <div class="mega"><span class="brand-text">882</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 1013</small></div>
     <p class="lead">upstream Vue core tests, passing on our renderer.</p>
     <aside class="notes">
-      <p><strong>The hard number first.</strong> We re-run Vue core's own test suites against the Vue Lynx renderer: 852 of 949 pass; every skip is documented and accounted for. "Compatible with Vue" here is a measured claim, not a vibe.</p>
+      <p><strong>The hard number first.</strong> We run Vue core's own test suites against the Vue Lynx renderer: 882 of 1013 pass, 131 documented skips, <strong>zero failures</strong>. "Compatible with Vue" here is a measured claim, not a vibe.</p>
     </aside>
   </section>
 
@@ -801,62 +801,530 @@
   </section>
 
   <!-- ====================================================
-       How it works — two threads, then the equation
+       Chapter IV · How we did it
        ==================================================== -->
-  <section class="slide stage">
-    <span class="eyebrow">How it works</span>
-    <div class="archflow is-solo">
-      <div class="node" data-flip="node-bg">
-        <span class="node__label"><span class="dot"></span>Background thread</span>
-        <h3 class="node__title">Vue 3 runtime &amp; your code</h3>
-        <ul class="node__list">
-          <li>reactivity &amp; lifecycle</li>
-          <li>component tree diff</li>
-          <li>event handlers</li>
-          <li>data fetching</li>
-        </ul>
-      </div>
+  <section class="slide divider">
+    <span class="eyebrow">Chapter IV</span>
+    <div class="divider__row">
+      <span class="divider__num numeral--brand">IV</span>
+      <h2 class="divider__title">
+        And how was <br/>this built?
+      </h2>
     </div>
-    <p class="lead" data-mm-fade>Your whole Vue app runs here — on a thread of its own.</p>
+    <p class="divider__tag">
+      Three adaptations — the runtime, the toolchain, the main thread — and an
+      AI harness running through all of them.
+    </p>
     <aside class="notes">
-      <p><strong>One minute of architecture</strong> — how all of this stays smooth. The Vue runtime — reactivity, diff, lifecycle, handlers — lives on the <strong>background</strong> thread. Next slide: the main thread lands beside it.</p>
+      <p><strong>The engineering chapter.</strong> Everything you just saw was built in two weeks by one person — and this chapter is the honest answer to "how". Three adaptations, each revealing one piece of Lynx's architecture: split Vue across two threads without breaking its semantics; make one toolchain emit both worlds; then make the main thread itself programmable. An AI harness threads through the whole story.</p>
     </aside>
   </section>
 
+  <!-- A1 — Vue lands on the background thread -->
   <section class="slide stage">
-    <span class="eyebrow">How it works</span>
-    <div class="archflow">
-      <div class="node" data-flip="node-bg">
-        <span class="node__label"><span class="dot"></span>Background thread</span>
-        <h3 class="node__title">Vue 3 runtime &amp; your code</h3>
-        <ul class="node__list">
-          <li>reactivity &amp; lifecycle</li>
-          <li>component tree diff</li>
-          <li>event handlers</li>
-          <li>data fetching</li>
-        </ul>
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
       </div>
-      <div class="archflow__bus" data-mm-fade>
-        <span class="arrow">ops &rarr;</span>
-        <span>flat buffer</span>
-        <span class="arrow rev">&larr; events</span>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
       </div>
-      <div class="node node--main" data-flip="node-main">
-        <span class="node__label"><span class="dot"></span>Main (UI) thread</span>
-        <h3 class="node__title">Native elements &amp; render</h3>
-        <ul class="node__list">
-          <li>layout &amp; paint</li>
-          <li>gestures &amp; scrolling</li>
-          <li>Main-Thread Script</li>
-          <li>ops interpreter</li>
-        </ul>
+      <div class="fb is-hero" data-flip="fb-vue" style="--c:#42b883;left:50%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
       </div>
     </div>
-    <p class="arch__caption" data-mm-fade>
-      One bundle, two layers — no JS bridge round-trip on the hot path.
+    <p class="lead arch-cap" data-mm-fade>
+      Vue runs <em>whole</em> — on the background thread.
     </p>
     <aside class="notes">
-      <p>They talk via a flat <em>ops</em> buffer, batched per Vue tick. <strong>No JS bridge on the hot path</strong> — that's why the keyboard, the sheet, the swipes stay 60fps while Vue reactivity does its job. The kicker: <em>Main-Thread Script</em> — the sheet gesture, the pressables — is your Vue code, compiled onto the UI thread.</p>
+      <p><strong>First decision: which thread does Vue live on?</strong> An early community experiment put Vue on the main thread — every event then had to be forwarded across. But Lynx delivers events to the background thread natively, so we run the entire runtime there: reactivity, diff, lifecycle, your handlers. Not a fork of Vue — the actual <code>@vue/runtime-core</code>, untouched.</p>
+    </aside>
+  </section>
+
+  <!-- A2 — ShadowElement -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:41.5%;top:25%">nodeOps &rarr;</span>
+      <div class="fb is-hero" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
+        ShadowElement tree
+        <small>linked list · sync reads</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      <code>createRenderer()</code> — a renderer, not a fork.
+    </p>
+    <aside class="notes">
+      <p><strong>Vue's official custom renderer API is the whole trick.</strong> <code>createRenderer()</code> wants synchronous nodes — <code>parentNode()</code>, <code>nextSibling()</code> must answer immediately, but the real elements live on another thread. So nodeOps dual-writes: it maintains a lightweight <em>ShadowElement</em> linked-list on the background thread (satisfying every synchronous read Vue makes) while queueing the real work for later. Same pattern ReactLynx uses for its snapshot instances.</p>
+    </aside>
+  </section>
+
+  <!-- A3 — ops buffer crosses -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
+      </div>
+      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
+      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
+        ShadowElement tree
+        <small>linked list · sync reads</small>
+      </div>
+      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
+      <div class="fb is-hero" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
+        ops
+        <small>flat array · per tick</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Updates leave as a <b style="color:#4FB8F0">flat ops buffer</b> — once per tick.
+    </p>
+    <aside class="notes">
+      <p><strong>The only thing that crosses the thread boundary is data.</strong> <code>[CREATE, id, tag, INSERT, parent, child, SET_PROP, id, key, value…]</code> — numbers and strings, no objects to marshal, no functions. Batched on Vue's own flush cycle, so one reactive tick = one send. And Vue's compiler helps for free: static content produces zero ops — only dynamic bindings travel.</p>
+    </aside>
+  </section>
+
+  <!-- A4 — interpreter + PAPI -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
+      </div>
+      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
+      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
+        ShadowElement tree
+        <small>linked list · sync reads</small>
+      </div>
+      <span class="farr" style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
+      <div class="fb" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
+        ops
+        <small>flat array · per tick</small>
+      </div>
+      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:80%;top:66%">&#8601;</span>
+      <div class="fb" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
+        ops interpreter
+        <small>a switch loop</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:43%;top:75%">&larr; replay</span>
+      <div class="fb is-hero" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
+        Element PAPI
+        <small>__CreateView · __SetAttribute · …</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The main thread <b style="color:#F27A9E">replays</b> them — native elements appear.
+    </p>
+    <aside class="notes">
+      <p><strong>Here's Lynx's framework-agnostic seam, up close.</strong> The main thread runs a tiny interpreter — literally a switch loop — that replays ops against the <em>Element PAPI</em>: <code>__CreateView</code>, <code>__AppendElement</code>, <code>__SetAttribute</code>… That C-flavored API is the contract Lynx offers every framework; ReactLynx feeds it, we feed it, the next framework will too. VDOM → ShadowElement → ops → PAPI: four stops, one straight line.</p>
+    </aside>
+  </section>
+
+  <!-- A5 — events ride back -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
+      </div>
+      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
+      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
+        ShadowElement tree
+        <small>linked list · sync reads</small>
+      </div>
+      <span class="farr" style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
+      <div class="fb" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
+        ops
+        <small>flat array · per tick</small>
+      </div>
+      <span class="farr" style="--c:#4FB8F0;left:80%;top:66%">&#8601;</span>
+      <div class="fb" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
+        ops interpreter
+        <small>a switch loop</small>
+      </div>
+      <span class="farr" style="left:43%;top:75%">&larr; replay</span>
+      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
+        Element PAPI
+        <small>__CreateView · __SetAttribute · …</small>
+      </div>
+      <div class="fb is-hero" data-flip="fb-evt" style="--c:#3deae7;left:8%;top:50%">
+        events
+        <small>&uarr; by sign, not by function</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Events ride back <b style="color:#3deae7">up</b> — handlers never leave Vue.
+    </p>
+    <aside class="notes">
+      <p><strong>The return path closes the loop.</strong> Functions can't cross threads, so they never do: each handler registers under a numeric <em>sign</em>; the main thread dispatches the sign, the background thread looks it up and calls your Vue function right where it lives — closures, reactivity and all. That's why every Vue semantics survives: nothing that matters ever crossed.</p>
+    </aside>
+  </section>
+
+  <!-- A6 — one lap = nextTick -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb is-dim" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
+        Vue 3 runtime
+        <small>@vue/runtime-core · untouched</small>
+      </div>
+      <div class="fb is-dim" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
+        ShadowElement tree
+        <small>linked list · sync reads</small>
+      </div>
+      <div class="fb is-dim" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
+        ops
+        <small>flat array · per tick</small>
+      </div>
+      <div class="fb is-dim" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
+        ops interpreter
+        <small>a switch loop</small>
+      </div>
+      <div class="fb is-dim" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
+        Element PAPI
+        <small>__CreateView · __SetAttribute · …</small>
+      </div>
+      <div class="fb is-dim" data-flip="fb-evt" style="--c:#3deae7;left:8%;top:50%">
+        events
+        <small>&uarr; by sign, not by function</small>
+      </div>
+      <span class="fcenter" data-mm-fade style="left:50%;top:50%">one lap = <b>nextTick()</b></span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The threading leaks into your code in exactly <em>one</em> place.
+    </p>
+    <aside class="notes">
+      <p><strong>How much of this do users feel? Almost none.</strong> The one visible seam: native elements materialize a beat after mount, so "wait for the DOM" means <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> — the same <code>nextTick</code> mental model as web Vue, stretched across a thread. One lap of this diagram <em>is</em> one tick. Everything else — reactivity, lifecycle, composables — behaves exactly as on the web. (Docs: Understanding the Dual-Thread Model.)</p>
+    </aside>
+  </section>
+
+  <!-- A7 — upstream tests -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime · proof</span>
+    <div class="mega"><span class="brand-text">882</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 1013</small></div>
+    <p class="lead">Vue core's own tests, replayed on our renderer. <b>0 fail.</b></p>
+    <aside class="notes">
+      <p><strong>"Semantics preserved" is a measured claim.</strong> We vendored <code>vuejs/core</code>'s test suites and run them against Vue Lynx at two layers: an adapter backing <code>@vue/runtime-test</code> with our real ShadowElement linked-list (validates the full renderer contract — keyed diff, LIS, fragments, lifecycle), and a runtime-dom layer that pushes <code>patchProp → ops → applyOps → PAPI</code> into jsdom. 882 of 1013 pass, 131 documented skips, zero failures.</p>
+    </aside>
+  </section>
+
+  <!-- A8 — testing library, the AI's eyes -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Runtime · proof</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      …and the tests are the <span class="brand-text">AI's eyes</span>.
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip chip--brand">upstream suites</span>
+      <span class="chip chip--brand">vue-lynx-testing-library</span>
+      <span class="chip">render / fireEvent / getByText</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The AI-harness side of testing.</strong> We also built <code>vue-lynx-testing-library</code> — <code>render</code>, <code>fireEvent</code>, <code>getByText</code>, dual-thread abstracted away via <code>@lynx-js/testing-environment</code> — so component behavior is assertable in plain vitest. For a human that's good hygiene; for the AI harness it's <em>perception</em>: red/green is how the agent knows what it just did. The upstream suite was the reward signal that kept two weeks of generated code honest.</p>
+    </aside>
+  </section>
+
+  <!-- B1 — one bundle, two worlds -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Toolchain</span>
+    <div class="flow">
+      <div class="fbox" style="--c:#5dd5a8;left:50%;top:52%;width:56%;height:76%">
+        <span class="fbox__label">app.lynx.bundle</span>
+      </div>
+      <div class="fb" data-flip="fb-bgjs" style="--c:#42b883;left:50%;top:34%">
+        background.js
+        <small>Vue + your app · JS VM</small>
+      </div>
+      <div class="fb" data-flip="fb-mtjs" style="--c:#56b8f0;left:50%;top:70%">
+        main-thread.js
+        <small>Lepus · PrimJS VM</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      One file ships <em>both</em> threads.
+    </p>
+    <aside class="notes">
+      <p><strong>Lynx's deliverable is one bundle carrying two programs</strong> — background code for the JS VM, main-thread code for Lepus (PrimJS). Two VMs, two entries, one artifact; the same file renders natively and, through Lynx for Web, in the browser. So the toolchain question becomes: how does one build emit both worlds from one Vue codebase?</p>
+    </aside>
+  </section>
+
+  <!-- B2 — same code enters twice (layers) -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Toolchain</span>
+    <div class="flow">
+      <div class="fb is-hero" style="--c:#42b883;left:50%;top:8%">
+        App.vue
+        <small>one source</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:32%;top:22%">&#8601;</span>
+      <span class="farr" data-mm-fade style="left:68%;top:22%">&#8600;</span>
+      <div class="fbox" data-mm-fade style="--c:#42b883;left:27%;top:60%;width:38%;height:56%">
+        <span class="fbox__label">layer: vue:background</span>
+      </div>
+      <div class="fbox" data-mm-fade style="--c:#56b8f0;left:73%;top:60%;width:38%;height:56%">
+        <span class="fbox__label">layer: vue:main-thread</span>
+      </div>
+      <div class="fb" data-mm-fade style="--c:#9E86F0;left:27%;top:45%">
+        vue-loader
+        <small>SFC compile</small>
+      </div>
+      <div class="fb" data-mm-fade style="--c:#9E86F0;left:73%;top:45%">
+        vue-loader
+        <small>+ script extractor</small>
+      </div>
+      <div class="fb" data-mm-fade style="--c:#E8B44A;left:27%;top:63%">
+        worklet-loader
+        <small>SWC · JS pass</small>
+      </div>
+      <div class="fb" data-mm-fade style="--c:#E8B44A;left:73%;top:63%">
+        worklet-loader-mt
+        <small>SWC · LEPUS pass</small>
+      </div>
+      <div class="fb" data-flip="fb-bgjs" style="--c:#42b883;left:27%;top:81%">
+        background.js
+        <small>Vue + your app · JS VM</small>
+      </div>
+      <div class="fb" data-flip="fb-mtjs" style="--c:#56b8f0;left:73%;top:81%">
+        main-thread.js
+        <small>Lepus · PrimJS VM</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The same code enters <em>twice</em> — webpack layers route it.
+    </p>
+    <aside class="notes">
+      <p><strong>Both entries import your actual app.</strong> Each entry is compiled under a webpack <em>layer</em> — <code>vue:background</code> and <code>vue:main-thread</code> — and <code>issuerLayer</code> rules give each layer its own loader chain: the BG side compiles the full SFC; the MT side extracts only what the main thread needs. Per-entry scoping falls out of webpack's dependency graph for free. (We adopted this layer approach from ReactLynx after our first flat-bundle architecture couldn't isolate multi-entry apps.)</p>
+    </aside>
+  </section>
+
+  <!-- B3 — a plugin, not a compiler -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Toolchain</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      We wrote a <span class="brand-text">plugin</span> — not a compiler.
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip chip--brand">Rspeedy</span>
+      <span class="chip chip--brand">Rspack / Rsbuild</span>
+      <span class="chip">rspack-vue-loader</span>
+      <span class="chip">PostCSS</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The reuse story, toolchain edition.</strong> Lynx's toolchain (Rspeedy) is Rspack/Rsbuild — and the Vue ecosystem already runs on Rspack, so the entire SFC pipeline came off the shelf: <code>rspack-vue-loader</code>, PostCSS, HMR. <code>pluginVueLynx()</code> is a thin adapter: split each entry into the two layers, wire the worklet loaders, configure CSS — that's the whole surface. Framework-agnostic isn't a slogan; it's measured in how little we had to write.</p>
+    </aside>
+  </section>
+
+  <!-- B4 — CSS is CSS -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Toolchain</span>
+    <div class="flow" style="height:clamp(200px,30cqh,240px)">
+      <div class="fb" style="--c:#9E86F0;left:30%;top:50%">
+        &lt;style scoped&gt;
+        <small>SFC CSS · modules · v-bind()</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:50%;top:50%">&rarr; as-is &rarr;</span>
+      <div class="fb is-hero" style="--c:#F27A9E;left:70%;top:50%">
+        native CSS engine
+        <small>selectors · cascade · animation</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Your CSS isn't translated. It's just <b style="color:#F27A9E">CSS</b>.
+    </p>
+    <aside class="notes">
+      <p><strong>The quiet superpower behind the whole styling chapter:</strong> Lynx ships a real CSS engine on the native side — selectors, cascade, animations. So <code>&lt;style scoped&gt;</code> maps to Lynx's cssId scoping, CSS modules and imported stylesheets pass straight through, <code>v-bind()</code> in CSS rides CSS variables, and Tailwind works because PostCSS is just PostCSS. No StyleSheet-object dialect, no translation layer to leak.</p>
+    </aside>
+  </section>
+
+  <!-- C1 — why gestures lag -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Main-Thread Script</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:25%">
+        onScroll()
+        <small>a Vue handler</small>
+      </div>
+      <span class="farr" style="--c:#3deae7;left:26%;top:50%">&uarr; event</span>
+      <span class="farr" style="--c:#4FB8F0;left:74%;top:50%">&darr; ops</span>
+      <span class="fcenter" data-mm-fade style="left:50%;top:66%"><b style="color:#F27A9E">2</b> crossings behind your finger</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The dual-thread <em>cost</em>: gestures wait for the round trip.
+    </p>
+    <aside class="notes">
+      <p><strong>Honest about the cost before selling the reward.</strong> A scroll-follow animation the normal way: the event fires on the main thread, hops to the background for your handler, and the resulting ops hop back — two crossings on every frame of a gesture. On a busy page that's visible lag. This is the one place the dual-thread architecture charges you.</p>
+    </aside>
+  </section>
+
+  <!-- C2 — the function changes threads -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Main-Thread Script</span>
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:75%">
+        onScroll()
+        <small>'main thread'</small>
+      </div>
+      <span class="fcenter" data-mm-fade style="left:50%;top:25%"><b>0</b> crossings — it runs where events fire</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      One directive. The function <em>changes threads</em>.
+    </p>
+    <aside class="notes">
+      <p><strong>Watch the block move.</strong> Add <code>'main thread'</code> as the first line and the compiler relocates that function into the main-thread bundle — it now runs synchronously where events fire, with direct element access. The rest of your component stays ordinary Vue. That's the progressive-enhancement shape again: the dual-thread reward stays, the cost becomes opt-out per function.</p>
+    </aside>
+  </section>
+
+  <!-- C3 — the code -->
+  <section class="slide stage">
+    <div class="codeframe" style="width:100%;max-width:680px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>Draggable.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;script setup&gt;</span>
+<span class="code-key">import</span> { useMainThreadRef } <span class="code-key">from</span> <span class="code-str">'vue-lynx'</span>
+<span class="code-key">const</span> box <span class="code-key">=</span> <span class="code-fn">useMainThreadRef</span>()
+
+<span class="code-key">const</span> onScroll <span class="code-key">=</span> (e) <span class="code-key">=&gt;</span> {
+  <span class="code-str">'main thread'</span>
+  box.current?.<span class="code-fn">setStyleProperty</span>(<span class="code-str">'transform'</span>,
+    <span class="code-str">`translateX(${e.detail.scrollLeft}px)`</span>)
+}
+<span class="code-tag">&lt;/script&gt;</span>
+
+<span class="code-tag">&lt;template&gt;</span>
+  <span class="code-tag">&lt;scroll-view</span> <span class="code-attr">:main-thread-bindscroll</span>=<span class="code-str">"onScroll"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">:main-thread-ref</span>=<span class="code-str">"box"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;/template&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Still a <code>.vue</code> file. Still <code>ref</code>-shaped. Zero-latency.
+    </p>
+    <aside class="notes">
+      <p>The whole MTS surface in one file: <code>'main thread'</code> marks the function, <code>main-thread-bind*</code> attaches it to the event, <code>useMainThreadRef()</code> gives synchronous element access — <code>setStyleProperty</code> lands the same frame the finger moves.</p>
+    </aside>
+  </section>
+
+  <!-- C4 — tutorials remade, live -->
+  <section class="slide demo demo--reverse">
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="swiper/dist/Swiper.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <div class="demo__body">
+      <span class="eyebrow">IV · Main-Thread Script</span>
+      <h2 class="demo__title">
+        ReactLynx's tutorials, <span class="brand-text">remade in Vue</span>.
+      </h2>
+      <p class="demo__copy">
+        Lynx's two official MTS tutorials — the gallery scrollbar and this
+        swiper — rebuilt line-for-line on Vue Lynx.
+      </p>
+      <div class="demo__meta">
+        <span class="chip chip--brand">tutorial: swiper</span>
+        <span class="chip chip--brand">tutorial: gallery</span>
+        <span class="chip">MTS · 60fps</span>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Proof by replication.</strong> lynxjs.org teaches MTS through two tutorials, written for ReactLynx. Both are remade on Vue Lynx and live on our docs — same drag physics, same snap, same main-thread scrollbar. If the platform tutorials port cleanly, the capability is really there.</p>
+      <p><strong>Do live:</strong> drag slowly — the indicator is pixel-synced; flick to snap.</p>
+    </aside>
+  </section>
+
+  <!-- C5 — reuse + the open API space -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · Main-Thread Script</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Same worklet engine as ReactLynx — <em style="font-family:var(--serif);font-weight:400">today</em>.
+    </h2>
+    <p class="lead">
+      A Vue-flavored MTS API is the open design space.
+    </p>
+    <aside class="notes">
+      <p><strong>Reuse, then evolve.</strong> Under the hood we run ReactLynx's worklet runtime and its API shapes (<code>main-thread-bind*</code>, <code>useMainThreadRef</code>) — battle-tested, and instantly familiar across the Lynx ecosystem. But Vue deserves Vue-shaped ergonomics: think <code>&lt;script main-thread setup&gt;</code>, main-thread computed/watch. That design space is open — and it's a great place for the community to leave a mark.</p>
+    </aside>
+  </section>
+
+  <!-- H1 — the harness -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · The harness</span>
+    <div class="mega" style="font-size:clamp(52px,7.5cqw,120px)"><span class="brand-text">2</span> weeks.</div>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">160 commits</span>
+      <span class="chip">21 active days</span>
+      <span class="chip chip--brand">1 human + Claude</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Now the number makes sense.</strong> Everything in this chapter — renderer, toolchain, MTS — was built nights-and-weekends in two weeks: plans written as specs, an agent harness executing them, upstream tests as the reward signal, AGENTS.md encoding the debugging playbook. And a quiet takeaway for the room: Lynx turned out to be remarkably <em>AI-legible</em> — web-standard APIs and real CSS mean the model's web instincts mostly just transfer.</p>
+    </aside>
+  </section>
+
+  <!-- H2 — the write-up -->
+  <section class="slide stage">
+    <span class="eyebrow">IV · The harness</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      &ldquo;How I <span class="brand-text">vibed</span> this in two weeks&rdquo;
+    </h2>
+    <div class="qr-solo" data-qr="https://x.com/Huxpro/status/2036993665965416601" aria-label="QR: the write-up on X"></div>
+    <p class="lead">The full write-up — harness, prompts, receipts. <b>@Huxpro</b> on X.</p>
+    <aside class="notes">
+      <p><strong>Point the phones here.</strong> The complete methodology is written up on X — how the harness was structured, what the plans looked like, where the AI failed and how the tests caught it. It's also linked from the vue.lynxjs.org homepage badge. Then bridge out: "so that's how it was built — and here's what it adds up to."</p>
     </aside>
   </section>
 
@@ -892,9 +1360,9 @@
        Chapter IV · Close
        ==================================================== -->
   <section class="slide divider">
-    <span class="eyebrow">Chapter IV</span>
+    <span class="eyebrow">Chapter V</span>
     <div class="divider__row">
-      <span class="divider__num numeral--brand">IV</span>
+      <span class="divider__num numeral--brand">V</span>
       <h2 class="divider__title">
         And we'd love <br/>your help.
       </h2>

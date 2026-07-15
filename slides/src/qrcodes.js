@@ -24,6 +24,12 @@ export function initQRCodes() {
   // Speaker-preview iframes don't need the codes (and shouldn't duplicate them).
   if (new URLSearchParams(location.search).has('embed')) return;
 
+  // Standalone QR marks — any element tagged data-qr="<url>" renders a QR of
+  // that URL (e.g. the write-up slide). Independent of the demo pair below.
+  document.querySelectorAll('[data-qr]').forEach((el) => {
+    if (!el.querySelector('svg')) el.innerHTML = qrSvg(el.dataset.qr);
+  });
+
   document.querySelectorAll('.slide').forEach((slide) => {
     const demo = slide.querySelector('vl-demo[bundle]');
     const body = slide.querySelector('.demo__body');
