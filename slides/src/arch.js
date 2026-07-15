@@ -109,7 +109,7 @@ const seamY = (s) => slot(2 * s + 1);
 const colX = (c) => 32 + c * 12; // columns 32–80%, leaving a right gutter for icon rows
 
 function iconRow(keys) {
-  if (!keys || !keys.length) return '';
+  if (!keys || keys.length === 0) return '';
   const items = keys
     .map((k) => {
       const svg = ICON[k] || '';
@@ -128,7 +128,10 @@ function el(tag, cls, css) {
 }
 
 export function renderArch(mount, lang = 'en') {
-  const shown = Math.max(0, Math.min(FW.length, parseInt(mount.dataset.archShown || '0', 10)));
+  const shown = Math.max(
+    0,
+    Math.min(FW.length, Number.parseInt(mount.dataset.archShown || '0', 10)),
+  );
   const zh = lang === 'zh';
   const arch = el('div', 'arch');
   arch.setAttribute('data-flip', 'arch');
@@ -156,8 +159,6 @@ export function renderArch(mount, lang = 'en') {
   FW.slice(0, shown).forEach((f, c) => {
     const isNew = c === shown - 1;
     const heroCls = f.hero ? ' is-hero' : '';
-    const fade = isNew ? 'data-mm-fade' : '';
-
     const spine = el('div', `arch__spine${heroCls}`, `left:${colX(c)}%;--fwc:${f.color}`);
     if (isNew) spine.setAttribute('data-mm-fade', '');
     arch.append(spine);

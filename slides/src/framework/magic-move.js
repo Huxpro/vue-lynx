@@ -29,7 +29,7 @@ export function createMagicMove({ deck, getScale, reducedMotion = false, embed =
       const fromEl = fromMap.get(toEl.getAttribute('data-flip'));
       if (fromEl) pairs.push({ fromEl, toEl });
     });
-    if (!pairs.length) return false;
+    if (pairs.length === 0) return false;
 
     // Finish any in-flight morph before starting a new one.
     if (flipCleanup) flipCleanup();

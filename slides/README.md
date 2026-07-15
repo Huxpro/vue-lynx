@@ -91,7 +91,7 @@ canvas, not the raw viewport.
 
 Ported in spirit from [hux.pro](https://hux.pro)'s `systems/` (vanilla JS, in
 this deck's design language) so the two can converge on one slide framework and
-this deck can be embedded into hux.pro later. Lives in `src/systems/`.
+this deck can be embedded into hux.pro later. Lives in `src/framework/`.
 
 **Command Palette** (`⌘K` / `Ctrl-K`, or `/` for slash mode). Search + run:
 navigation (next/prev/first/last), presenter (speaker view, overview, blackout,
@@ -147,7 +147,7 @@ Two deploy shapes, chosen per branch by `website/vercel.json`:
   instead runs `pnpm build:deck-root` (`website/scripts/build-deck-root.mjs`),
   which builds the deck with `base=/` and outputs it (plus `/examples`) as the
   **site root**. Opening the domain root *is* the deck, and the deck's
-  root-absolute links (`/speaker.html`, `/examples/*`) resolve correctly. This
+  base-aware deck links and root-hosted example bundles resolve correctly. This
   is a branch-only config — **do not merge `vueconf-2026` into `main`**, or the
   production docs site would be replaced by the deck.
 
@@ -180,13 +180,14 @@ field is deprecated and ignored by the Git integration):
 > Save.
 
 Every future `vueconf-2026` deployment is then aliased to that domain, and the
-deck is at `<that-domain>/deck`. Production (`vue.lynxjs.org`, the `main`
+deck is at `<that-domain>/`. Production (`vue.lynxjs.org`, the `main`
 branch) is unaffected.
 
 ## Speaker view
 
 Open it from the command palette (`⌘K` → *Open Speaker View*, or `/` then `s`)
-and a popup window opens at `/speaker.html`. It shows:
+and a popup window opens at `speaker.html` under the deck's configured base. It
+shows:
 
 - The **current slide** rendered live (left)
 - The **next slide** preview (right top)

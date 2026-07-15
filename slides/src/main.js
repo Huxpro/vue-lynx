@@ -17,6 +17,7 @@ import { initQRCodes } from './qrcodes.js';
 // =========================================================
 const params = new URLSearchParams(location.search);
 const embedMode = params.has('embed');
+const deckBase = import.meta.env.BASE_URL || '/';
 if (embedMode) {
   document.documentElement.classList.add('is-embed');
 }
@@ -104,7 +105,7 @@ function setFlagOverride(index, key, value) {
   const cur = flagOverrides.get(index) || {};
   if (value == null) delete cur[key];
   else cur[key] = value;
-  if (Object.keys(cur).length) flagOverrides.set(index, cur);
+  if (Object.keys(cur).length > 0) flagOverrides.set(index, cur);
   else flagOverrides.delete(index);
   if (index === current) applyChromeAndBg(resolveFlags(current));
 }
@@ -193,6 +194,8 @@ function broadcastState() {
     index: current,
     total: slides.length,
     slides: slideMeta,
+    theme: document.documentElement.classList.contains('light') ? 'light' : 'dark',
+    blackout: blackedOut,
   });
 }
 
@@ -259,7 +262,7 @@ function openSpeakerWindow() {
   const w = Math.min(1400, Math.round(screen.availWidth * 0.85));
   const h = Math.min(900, Math.round(screen.availHeight * 0.85));
   speakerWindow = window.open(
-    '/speaker.html',
+    `${deckBase}speaker.html`,
     'vue-lynx-speaker',
     `popup,width=${w},height=${h}`,
   );

@@ -124,9 +124,9 @@ export function mountMeteors(canvas, { gridSize = 120, meteorCount = 3 } = {}) {
     ctx.clearRect(0, 0, w, h);
 
     // grid
-    const gridStroke = document.documentElement.classList.contains('dark')
-      ? 'rgba(255, 255, 255, 0.05)'
-      : 'rgba(15, 18, 22, 0.06)';
+    const gridStroke = document.documentElement.classList.contains('light')
+      ? 'rgba(15, 18, 22, 0.06)'
+      : 'rgba(255, 255, 255, 0.05)';
     ctx.strokeStyle = gridStroke;
     ctx.lineWidth = 1;
     for (let x = 0; x < w; x += gridSize) {

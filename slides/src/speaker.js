@@ -3,6 +3,7 @@ import { SPEAKER_LABELS } from './i18n.js';
 
 const CHANNEL_NAME = 'vue-lynx-deck';
 const channel = new BroadcastChannel(CHANNEL_NAME);
+const deckBase = import.meta.env.BASE_URL || '/';
 
 // =========================================================
 // Language — mirrors the main deck (default 中文). The main
@@ -65,7 +66,7 @@ let blackedOut = false;
 // Frame URL builder
 // =========================================================
 function frameSrcFor(index) {
-  return `/?embed=1#${index + 1}`;
+  return `${deckBase}?embed=1#${index + 1}`;
 }
 
 /**
@@ -148,9 +149,18 @@ channel.addEventListener('message', (ev) => {
     current = msg.index;
     total = msg.total;
     if (Array.isArray(msg.slides)) slideMeta = msg.slides;
+    document.documentElement.classList.toggle('light', msg.theme === 'light');
+    blackedOut = !!msg.blackout;
+    document.body.classList.toggle('sv-blackout-on', blackedOut);
+    const blackoutButton = document.querySelector('[data-blackout]');
+    if (blackoutButton) {
+      blackoutButton.textContent = blackedOut ? L.restore : L.blackout;
+    }
     render();
   } else if (msg.type === 'lang' && msg.lang !== lang) {
     applySpeakerLang(msg.lang);
+  } else if (msg.type === 'theme-toggle-mirror') {
+    document.documentElement.classList.toggle('light');
   } else if (msg.type === 'blackout') {
     // Keep the speaker's blackout state + button label in sync when the
     // audience screen toggles it (e.g. tap-to-restore on a phone).
