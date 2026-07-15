@@ -9,11 +9,13 @@ interface GoModeNavIndicatorProps {
 const copy = {
   en: {
     context: 'Examples',
-    description: 'Requested renderer for supported examples',
+    label: 'Example renderer',
+    description: 'Switches all supported examples and resets preview state',
   },
   zh: {
     context: '示例',
-    description: '支持的示例所使用的渲染器偏好',
+    label: '示例渲染器',
+    description: '切换所有支持的示例，并重置预览状态',
   },
 } as const;
 
@@ -24,20 +26,31 @@ export function GoModeNavIndicator({ locale = 'en' }: GoModeNavIndicatorProps) {
     renderModeStore.getServerSnapshot,
   );
   const labels = copy[locale];
-  const modeLabel = mode === 'vapor' ? 'Vapor' : 'VDOM';
 
   return (
-    <span
-      className="go-mode-nav-indicator"
+    <div
+      className="go-mode-nav-control"
       data-mode={mode}
-      aria-label={`${labels.description}: ${modeLabel}`}
-      aria-live="polite"
+      title={labels.description}
     >
-      <span className="go-mode-nav-indicator__dot" aria-hidden="true" />
-      <span className="go-mode-nav-indicator__context">{labels.context}</span>
-      <span className="go-mode-nav-indicator__separator" aria-hidden="true">·</span>
-      <strong>{modeLabel}</strong>
-    </span>
+      <span className="go-mode-nav-control__context">{labels.context}</span>
+      <div
+        className="go-mode-nav-control__modes"
+        role="group"
+        aria-label={labels.label}
+      >
+        {(['vdom', 'vapor'] as const).map((candidate) => (
+          <button
+            type="button"
+            key={candidate}
+            aria-pressed={mode === candidate}
+            onClick={() => renderModeStore.setMode(candidate)}
+          >
+            {candidate === 'vdom' ? 'VDOM' : 'Vapor'}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

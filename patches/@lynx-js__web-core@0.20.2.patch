@@ -1,0 +1,19 @@
+--- a/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js
++++ b/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js
+@@ -2,7 +2,15 @@ import { disposeEndpoint } from '../../../endpoints.js';
+ export function registerDisposeHandler(rpc, nativeApp, destroyCard, callDestroyLifetimeFun) {
+     rpc.registerHandler(disposeEndpoint, () => {
+         const id = nativeApp.id;
+-        callDestroyLifetimeFun(id);
++        try {
++            callDestroyLifetimeFun(id);
++        }
++        catch (error) {
++            if (!(error instanceof TypeError
++                && error.message.includes('callDestroyLifetimeFun is not a function'))) {
++                throw error;
++            }
++        }
+         destroyCard(id);
+     });
+ }
