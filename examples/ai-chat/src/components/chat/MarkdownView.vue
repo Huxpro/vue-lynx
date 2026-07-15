@@ -19,6 +19,21 @@ function codeLines(code: string) {
   return code.split('\n').map((line) => tokenizeCodeLine(line));
 }
 
+function alignmentStyle(alignment: 'left' | 'center' | 'right' | null) {
+  return { textAlign: alignment ?? 'left' };
+}
+
+function tableStyle(columns: number) {
+  return { width: `${Math.max(320, columns * 160)}px` };
+}
+
+function streamBlockStyle(index: number) {
+  return {
+    marginTop: index > 0 ? '16px' : '0px',
+    animationDelay: props.streaming ? `${Math.min(index, 3) * 28}ms` : '0ms',
+  };
+}
+
 const HEADING_CLASSES: Record<number, string> = {
   1: 'text-2xl font-bold text-highlighted',
   2: 'text-xl font-bold text-highlighted',
@@ -42,7 +57,8 @@ const HEADING_CLASSES: Record<number, string> = {
     <view
       v-for="(block, bi) in blocks"
       :key="bi"
-      :style="bi > 0 ? { marginTop: '16px' } : undefined"
+      :class="streaming ? 'stream-block-enter' : ''"
+      :style="streamBlockStyle(bi)"
     >
       <!-- paragraph / heading / quote share the inline renderer -->
       <text
@@ -87,6 +103,63 @@ const HEADING_CLASSES: Record<number, string> = {
           </text>
         </view>
       </view>
+
+      <scroll-view
+        v-else-if="block.type === 'table'"
+        scroll-x
+        class="md-table-scroll w-full"
+      >
+        <view
+          class="md-table rounded-md border border-default overflow-hidden"
+          :style="tableStyle(block.headers.length)"
+        >
+          <view class="flex flex-row bg-muted md-table-row">
+            <view
+              v-for="(cell, ci) in block.headers"
+              :key="`header-${ci}`"
+              class="md-table-cell px-3 py-2"
+            >
+              <text
+                class="text-sm font-semibold text-highlighted md-line"
+                :style="alignmentStyle(block.alignments[ci])"
+              >
+                <template v-for="(tok, ti) in cell" :key="ti">
+                  <text v-if="tok.type === 'bold'" class="font-bold">{{ tok.text }}</text>
+                  <text v-else-if="tok.type === 'italic'" class="md-italic">{{ tok.text }}</text>
+                  <text v-else-if="tok.type === 'code'" class="md-inline-code">{{ ' ' + tok.text + ' ' }}</text>
+                  <text v-else-if="tok.type === 'link'" class="text-primary md-underline">{{ tok.text }}</text>
+                  <text v-else>{{ tok.text }}</text>
+                </template>
+              </text>
+            </view>
+          </view>
+
+          <view
+            v-for="(row, ri) in block.rows"
+            :key="`row-${ri}`"
+            class="flex flex-row md-table-row"
+          >
+            <view
+              v-for="(cell, ci) in row"
+              :key="`cell-${ri}-${ci}`"
+              class="md-table-cell px-3 py-2"
+            >
+              <text
+                class="text-sm text-default md-line"
+                :style="alignmentStyle(block.alignments[ci])"
+              >
+                <template v-for="(tok, ti) in cell" :key="ti">
+                  <text v-if="tok.type === 'bold'" class="font-bold text-highlighted">{{ tok.text }}</text>
+                  <text v-else-if="tok.type === 'italic'" class="md-italic">{{ tok.text }}</text>
+                  <text v-else-if="tok.type === 'code'" class="md-inline-code">{{ ' ' + tok.text + ' ' }}</text>
+                  <text v-else-if="tok.type === 'link'" class="text-primary md-underline">{{ tok.text }}</text>
+                  <text v-else>{{ tok.text }}</text>
+                </template>
+              </text>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
 
       <view v-else-if="block.type === 'code'" class="rounded-md border border-default bg-muted overflow-hidden">
         <view v-if="block.lang" class="flex flex-row px-3 py-1.5 border-b border-default">
@@ -138,5 +211,15 @@ const HEADING_CLASSES: Record<number, string> = {
   font-size: 13px;
   line-height: 20px;
   white-space: pre;
+}
+.md-table-scroll {
+  max-width: 100%;
+}
+.md-table-cell {
+  width: 160px;
+  border-right: 1px solid var(--ui-border);
+}
+.md-table-row {
+  border-bottom: 1px solid var(--ui-border);
 }
 </style>

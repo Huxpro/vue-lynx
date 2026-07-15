@@ -10,6 +10,7 @@ import { useSidebarDrawer } from '../composables/useViewport';
 import Logo from './Logo.vue';
 import UserMenu from './UserMenu.vue';
 import Icon from './ui/Icon.vue';
+import MotionPressable from './ui/MotionPressable.vue';
 import UButton from './ui/UButton.vue';
 
 /**
@@ -29,6 +30,9 @@ const overlay = useOverlay();
 const { close: closeDrawer } = useSidebarDrawer();
 
 const collapsed = ref(false);
+const isIOS =
+  (globalThis as { SystemInfo?: { platform?: string } }).SystemInfo?.platform === 'iOS';
+const drawerTopPadding = isIOS ? '60px' : '16px';
 
 function afterNavigate() {
   if (props.drawer) closeDrawer();
@@ -71,7 +75,10 @@ function openChat(id: string) {
 <template>
   <view
     class="flex flex-col py-4 bg-sidebar shrink-0 h-full"
-    :style="{ width: drawer ? '100%' : collapsed ? '56px' : '256px' }"
+    :style="{
+      width: drawer ? '100%' : collapsed ? '56px' : '256px',
+      paddingTop: drawer ? drawerTopPadding : undefined,
+    }"
   >
     <!-- header -->
     <view class="flex flex-row items-center px-4 pb-3" :class="collapsed ? 'justify-center px-2' : ''">
@@ -79,12 +86,22 @@ function openChat(id: string) {
         <Logo :size="32" />
         <text class="text-xl font-bold text-highlighted">Chat</text>
       </view>
-      <view v-if="drawer" class="p-1.5 rounded-md" @tap="closeDrawer()">
+      <MotionPressable
+        v-if="drawer"
+        class="p-1.5 rounded-md"
+        accessibility-label="Close navigation"
+        @tap="closeDrawer()"
+      >
         <Icon name="i-lucide-x" tone="muted" :size="20" />
-      </view>
-      <view v-else class="p-1.5 rounded-md" @tap="collapsed = !collapsed">
+      </MotionPressable>
+      <MotionPressable
+        v-else
+        class="p-1.5 rounded-md"
+        accessibility-label="Toggle sidebar"
+        @tap="collapsed = !collapsed"
+      >
         <Icon name="i-lucide-panel-left" tone="muted" :size="20" />
-      </view>
+      </MotionPressable>
     </view>
 
     <!-- primary nav -->

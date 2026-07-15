@@ -32,11 +32,17 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { MODELS, mockResponseFor, mockTitleFor, SEED_CHATS } from '../shared/mock-ai.mjs';
-import { realModeAvailable, runRealGeneration } from './real-ai.mjs';
+import {
+  generateRealTitle,
+  realModeAvailable,
+  runRealGeneration,
+} from './real-ai.mjs';
 import { SAMPLE_IMAGES } from './samples.mjs';
 
 const PORT = Number(process.env.PORT || 3210);
-const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '.data');
+const DATA_DIR = process.env.AI_CHAT_DATA_DIR
+  ? process.env.AI_CHAT_DATA_DIR
+  : join(dirname(fileURLToPath(import.meta.url)), '.data');
 const DB_FILE = join(DATA_DIR, 'db.json');
 
 // ---------------------------------------------------------------------------
@@ -157,7 +163,7 @@ function ownerKey(session) {
 // Streaming
 // ---------------------------------------------------------------------------
 
-/** Active poll-mode streams: id -> { events: string[], done: boolean } */
+/** Active poll-mode streams: id -> { events: object[], done: boolean, abort: AbortController } */
 const pollStreams = new Map();
 
 function sseChunk(obj) {
@@ -394,6 +400,9 @@ const server = createServer(async (req, res) => {
     if (path === '/api/chats' && req.method === 'POST') {
       const body = await readBody(req);
       const id = body.id || uid();
+      if (db.chats.some((chat) => chat.id === id)) {
+        return json(res, 409, { message: 'Chat id already exists' });
+      }
       const chat = {
         id,
         userId: ownerKey(session),
@@ -417,6 +426,13 @@ const server = createServer(async (req, res) => {
 
     // --- polling fallback stream reader ------------------------------------
     const streamMatch = path.match(/^\/api\/stream\/([^/]+)$/);
+    if (streamMatch && req.method === 'DELETE') {
+      const stream = pollStreams.get(streamMatch[1]);
+      if (!stream) return json(res, 404, { message: 'Stream not found' });
+      stream.abort.abort();
+      pollStreams.delete(streamMatch[1]);
+      return json(res, 200, { ok: true });
+    }
     if (streamMatch && req.method === 'GET') {
       const stream = pollStreams.get(streamMatch[1]);
       if (!stream) return json(res, 404, { message: 'Stream not found' });
@@ -531,6 +547,13 @@ const server = createServer(async (req, res) => {
 
         if (!owned.title) {
           owned.title = mockTitleFor(messages[0]);
+          if (realModeAvailable()) {
+            try {
+              owned.title = await generateRealTitle(messages[0]);
+            } catch (error) {
+              console.error('[real-ai] falling back to mock title:', error.message);
+            }
+          }
           saveDb();
         }
 
@@ -558,7 +581,7 @@ const server = createServer(async (req, res) => {
           // Native Lynx fallback: run the generation server-side, buffer
           // chunks, let the client poll GET /api/stream/:sid.
           const sid = uid();
-          const stream = { events: [], done: false };
+          const stream = { events: [], done: false, abort };
           pollStreams.set(sid, stream);
           runGeneration({
             chat: owned,

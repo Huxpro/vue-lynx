@@ -1,8 +1,16 @@
-import { ref } from 'vue-lynx';
+import { ref, watch } from 'vue-lynx';
+
+import { getItem, setItem } from '../lib/storage';
 
 export type ColorMode = 'light' | 'dark';
 
-const colorMode = ref<ColorMode>('light');
+function initialColorMode(): ColorMode {
+  return getItem('ai-chat:color-mode') === 'dark' ? 'dark' : 'light';
+}
+
+const colorMode = ref<ColorMode>(initialColorMode());
+
+watch(colorMode, (value) => setItem('ai-chat:color-mode', value), { flush: 'sync' });
 
 /**
  * Replaces Nuxt's useColorMode(): a shared ref driving the .theme-* root

@@ -2,6 +2,11 @@ import { API_BASE } from './config';
 import { getSessionId } from './api';
 import { backendMode } from './backend-mode';
 import { localStream } from './local-backend';
+import {
+  currentStreamEnvironment,
+  selectStreamTransport,
+  type StreamTransport,
+} from './stream-transport';
 
 const _fetch: typeof fetch = globalThis.fetch ?? fetch;
 
@@ -15,6 +20,11 @@ export interface StreamRequest {
   body: unknown;
   signal: AbortSignal;
   onChunk: (chunk: StreamChunk) => void;
+}
+
+export interface RemoteStreamOptions {
+  transport?: StreamTransport;
+  pollIntervalMs?: number;
 }
 
 /**
@@ -38,68 +48,107 @@ export async function streamUIMessages(req: StreamRequest): Promise<void> {
     return;
   }
 
+  await streamRemoteUIMessages(req);
+}
+
+/** Consume a remote stream using a transport selected before generation starts. */
+export async function streamRemoteUIMessages(
+  req: StreamRequest,
+  options: RemoteStreamOptions = {},
+): Promise<void> {
+  const transport = options.transport ?? selectStreamTransport(currentStreamEnvironment());
+
   const headers = {
     'content-type': 'application/json',
     'x-session-id': getSessionId(),
   };
 
-  const probe = await _fetch(`${API_BASE}${req.path}`, {
+  if (transport === 'poll') {
+    await readPollingStream(req, headers, options.pollIntervalMs ?? 120);
+    return;
+  }
+
+  const response = await _fetch(`${API_BASE}${req.path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(req.body),
     signal: req.signal,
   });
 
-  if (!probe.ok) {
-    const text = await probe.text();
-    let message = `Request failed (${probe.status})`;
-    try {
-      message = JSON.parse(text)?.message || message;
-    } catch {
-      /* keep default */
-    }
-    throw new Error(message);
+  await assertOk(response);
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    throw new Error(
+      'Streaming fetch is unavailable in this runtime; configure the polling transport',
+    );
   }
+  await readSse(response.body, req.onChunk);
+}
 
-  if (probe.body && typeof probe.body.getReader === 'function') {
-    await readSse(probe.body, req.onChunk);
-    return;
-  }
+function pollPath(path: string): string {
+  return `${path}${path.includes('?') ? '&' : '?'}mode=poll`;
+}
 
-  // ---- polling fallback ----------------------------------------------------
-  // The first response was consumed as a full buffer; if the server already
-  // streamed everything into it, parse it directly.
-  const text = await probe.text();
-  if (text.startsWith('data:')) {
-    for (const chunk of parseSseText(text)) req.onChunk(chunk);
-    return;
-  }
-
-  // Otherwise re-request in poll mode.
-  const start = await _fetch(`${API_BASE}${req.path}?mode=poll`, {
+async function readPollingStream(
+  req: StreamRequest,
+  headers: Record<string, string>,
+  pollIntervalMs: number,
+): Promise<void> {
+  const start = await _fetch(`${API_BASE}${pollPath(req.path)}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(req.body),
     signal: req.signal,
   });
-  const { streamId } = (await start.json()) as { streamId: string };
+  await assertOk(start);
+  const { streamId } = (await start.json()) as { streamId?: string };
+  if (!streamId) throw new Error('Polling stream did not return a stream id');
+
   let cursor = 0;
-  for (;;) {
-    if (req.signal.aborted) return;
-    const res = await _fetch(`${API_BASE}/api/stream/${streamId}?cursor=${cursor}`, {
-      headers,
-      signal: req.signal,
-    });
-    const data = (await res.json()) as {
-      events: StreamChunk[];
-      cursor: number;
-      done: boolean;
-    };
-    for (const chunk of data.events) req.onChunk(chunk);
-    cursor = data.cursor;
-    if (data.done) return;
-    await new Promise((r) => setTimeout(r, 120));
+  let completed = false;
+  try {
+    for (;;) {
+      if (req.signal.aborted) return;
+      const res = await _fetch(`${API_BASE}/api/stream/${streamId}?cursor=${cursor}`, {
+        headers,
+        signal: req.signal,
+      });
+      await assertOk(res);
+      if (req.signal.aborted) return;
+      const data = (await res.json()) as {
+        events: StreamChunk[];
+        cursor: number;
+        done: boolean;
+      };
+      for (const chunk of data.events) req.onChunk(chunk);
+      cursor = data.cursor;
+      if (data.done) {
+        completed = true;
+        return;
+      }
+      if (pollIntervalMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+      }
+    }
+  } finally {
+    if (!completed) {
+      await _fetch(`${API_BASE}/api/stream/${streamId}`, {
+        method: 'DELETE',
+        headers,
+      }).catch(() => undefined);
+    }
   }
+}
+
+async function assertOk(response: Response): Promise<void> {
+  if (response.ok) return;
+  const text = await response.text();
+  let message = `Request failed (${response.status})`;
+  try {
+    message = JSON.parse(text)?.message || message;
+  } catch {
+    /* keep default */
+  }
+  throw new Error(message);
 }
 
 async function readSse(
@@ -109,24 +158,19 @@ async function readSse(
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
-  let reads = 0;
-  let emitted = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    reads++;
     buffer += decoder.decode(value, { stream: true });
     const events = buffer.split('\n\n');
     buffer = events.pop() ?? '';
     for (const event of events) {
       const chunk = parseSseEvent(event);
       if (chunk) {
-        emitted++;
         onChunk(chunk);
       }
     }
   }
-  console.log(`[stream] done reads=${reads} emitted=${emitted} leftover=${buffer.length}`);
 }
 
 function parseSseEvent(event: string): StreamChunk | null {
@@ -141,13 +185,4 @@ function parseSseEvent(event: string): StreamChunk | null {
     }
   }
   return null;
-}
-
-function parseSseText(text: string): StreamChunk[] {
-  const chunks: StreamChunk[] = [];
-  for (const event of text.split('\n\n')) {
-    const chunk = parseSseEvent(event);
-    if (chunk) chunks.push(chunk);
-  }
-  return chunks;
 }

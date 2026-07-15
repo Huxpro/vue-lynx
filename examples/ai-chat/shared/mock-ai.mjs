@@ -222,7 +222,7 @@ export function mockResponseFor(prompt, model) {
     return [
       {
         kind: 'text',
-        text: `**UnJS** is an ecosystem of framework-agnostic JavaScript libraries that compose into full-stack tooling:\n\n- **h3** — minimal, composable HTTP server framework\n- **ofetch** — better \`fetch\` with smart defaults and interceptors\n- **nitro** — universal server toolkit that powers Nuxt deployment\n- **unstorage** — key-value storage abstraction with 20+ drivers\n- **unhead** — document head management\n\nEach package is small, typed, and usable standalone — Nuxt itself is largely assembled from UnJS building blocks.`,
+        text: `**UnJS** is an ecosystem of framework-agnostic JavaScript libraries that compose into full-stack tooling:\n\n| Package | Purpose |\n| --- | --- |\n| **h3** | Minimal, composable HTTP server framework |\n| **ofetch** | Better \`fetch\` with smart defaults and interceptors |\n| **nitro** | Universal server toolkit that powers Nuxt deployment |\n| **unstorage** | Key-value storage with 20+ drivers |\n| **unhead** | Document head management |\n\nEach package is small, typed, and usable standalone — Nuxt itself is largely assembled from UnJS building blocks.`,
       },
     ];
   }

@@ -157,6 +157,102 @@
   animation: shimmer-pulse 1.6s ease-in-out infinite;
 }
 
+/* The user bubble is the signature transition: Native supplies a measured
+   distance from the composer while Web uses a zero-distance fade. Streamed
+   blocks stay quiet so the launch remains the focus. */
+.user-message-pending {
+  opacity: 0;
+}
+
+.user-message-enter {
+  animation: user-message-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.assistant-turn-enter {
+  animation: assistant-turn-enter 240ms cubic-bezier(0.25, 1, 0.5, 1) 360ms both;
+}
+
+.stream-block-enter {
+  animation: stream-block-enter 220ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+.message-part-enter {
+  animation: message-part-enter 220ms cubic-bezier(0.25, 1, 0.5, 1) both;
+}
+
+.submit-icon-enter {
+  animation: submit-icon-enter 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes user-message-enter {
+  from {
+    opacity: 0.5;
+    transform: translateY(var(--user-message-launch-distance)) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+}
+
+@keyframes assistant-turn-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes stream-block-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes message-part-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes submit-icon-enter {
+  from {
+    opacity: 0.35;
+    transform: scale(0.72) rotate(-18deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Lynx's CSS parser does not expose media queries. The host preference is
+   mapped to this runtime class by useReducedMotion instead. */
+.motion-reduced .user-message-enter,
+.motion-reduced .assistant-turn-enter,
+.motion-reduced .stream-block-enter,
+.motion-reduced .message-part-enter,
+.motion-reduced .submit-icon-enter,
+.motion-reduced .shimmer-pulse,
+.motion-reduced .spin {
+  animation-duration: 1ms;
+  animation-delay: 0ms;
+  animation-iteration-count: 1;
+}
+
 @keyframes shimmer-pulse {
   0% {
     opacity: 1;

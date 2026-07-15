@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useOverlay } from '../../composables/useOverlay';
 import { assetUrl } from '../../lib/api';
+import { fileIcon } from '../../lib/file-icon';
 import Icon from '../ui/Icon.vue';
 
 /**
@@ -44,7 +45,7 @@ function openZoom() {
         resize="cover"
         class="w-full h-full"
       />
-      <Icon v-else name="i-lucide-file-text" tone="muted" :size="Math.round(size * 0.4)" />
+      <Icon v-else :name="fileIcon(type, name)" tone="muted" :size="Math.round(size * 0.4)" />
     </view>
 
     <view
