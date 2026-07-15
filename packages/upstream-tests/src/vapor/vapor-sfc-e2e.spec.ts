@@ -81,13 +81,18 @@ function compileVaporSfc(filename: string, source: string): CompiledFixture {
 
 let fixtureCounter = 0;
 
-async function importCompiled(code: string): Promise<{ default: unknown }> {
+function writeCompiled(code: string): string {
   fs.mkdirSync(generatedDir, { recursive: true });
   const file = path.join(
     generatedDir,
     `fixture-${process.pid}-${fixtureCounter++}.mts`,
   );
   fs.writeFileSync(file, code);
+  return file;
+}
+
+async function importCompiled(code: string): Promise<{ default: unknown }> {
+  const file = writeCompiled(code);
   return (await import(/* @vite-ignore */ `${file}?t=${Date.now()}`)) as {
     default: unknown;
   };
@@ -192,6 +197,68 @@ import { ref } from 'vue'
 const color = ref('#1565c0')
 </script>
 <template><view><text class="label">css var styled</text></view></template>
+<style>.label { color: v-bind(color); }</style>
+`;
+
+// ReactLynx-style event props (:bindtap / :catchtap) compile to setAttr in
+// Vapor — the runtime must route them to event registration, exactly like
+// the vdom renderer's patchProp does (regression: examples/css-features
+// VBindCSS.vue buttons were dead in Vapor mode).
+const BINDTAP_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const count = ref(0)
+function inc() { count.value++ }
+function noopCatch() {}
+</script>
+<template>
+  <view>
+    <text class="label">Count: {{ count }}</text>
+    <view class="btn" :bindtap="inc"><text>+1</text></view>
+    <view class="stopper" :catchtap="noopCatch"><text>stop</text></view>
+  </view>
+</template>
+`;
+
+// Fallthrough: an event prop on a component tag must reach the child's root
+// element. runtime-vapor applies fallthrough attrs through its internal
+// setAttr (not the compiled import), so this exercises the
+// ShadowElement.setAttribute event routing specifically.
+const BINDTAP_CHILD_SFC = `
+<script setup vapor lang="ts">
+const label = 'child'
+</script>
+<template>
+  <view class="child-root"><text>{{ label }}</text></view>
+</template>
+`;
+
+const BINDTAP_PARENT_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+import Child from './Child.vue'
+const count = ref(0)
+function inc() { count.value++ }
+</script>
+<template>
+  <view>
+    <text class="label">Count: {{ count }}</text>
+    <Child :bindtap="inc" />
+  </view>
+</template>
+`;
+
+// CSS v-bind() must track updates: tapping changes the ref, and the root
+// block's inline style must re-emit with the new custom property value.
+const CSS_VARS_UPDATE_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#1565c0')
+function cycle() { color.value = '#c62828' }
+</script>
+<template>
+  <view :bindtap="cycle"><text class="label">css var styled</text></view>
+</template>
 <style>.label { color: v-bind(color); }</style>
 `;
 
@@ -370,6 +437,60 @@ describe('vapor SFC e2e: CSS modules', () => {
   });
 });
 
+describe('vapor SFC e2e: Lynx event props', () => {
+  it('registers :bindtap / :catchtap as native Lynx events', async () => {
+    const { code } = compileVaporSfc('BindTap.vue', BINDTAP_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const events = opsOf(decoded, OP.SET_EVENT);
+    const bind = events.find((e) => e.args[1] === 'bindEvent' && e.args[2] === 'tap');
+    const catchEv = events.find((e) => e.args[1] === 'catchEvent' && e.args[2] === 'tap');
+    expect(bind).toBeDefined();
+    expect(catchEv).toBeDefined();
+    // The handler must NOT leak into the ops stream as a serialized prop.
+    expect(
+      opsOf(decoded, OP.SET_PROP).some((p) => p.args[1] === 'bindtap'),
+    ).toBe(false);
+
+    // Fire through the Lynx event pipeline: state updates flow back out.
+    publishEvent(bind!.args[3] as string, {});
+    decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]))
+      .toContain('Count: 1');
+
+    app.unmount();
+  });
+
+  it('routes :bindtap fallthrough onto a child component root', async () => {
+    const child = compileVaporSfc('Child.vue', BINDTAP_CHILD_SFC);
+    const childFile = writeCompiled(child.code);
+    const parent = compileVaporSfc('Parent.vue', BINDTAP_PARENT_SFC);
+    const mod = await importCompiled(
+      parent.code.replace('./Child.vue', childFile),
+    );
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const bind = opsOf(decoded, OP.SET_EVENT).find(
+      (e) => e.args[1] === 'bindEvent' && e.args[2] === 'tap',
+    );
+    expect(bind).toBeDefined();
+
+    publishEvent(bind!.args[3] as string, {});
+    decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]))
+      .toContain('Count: 1');
+
+    app.unmount();
+  });
+});
+
 describe('vapor SFC e2e: CSS variables', () => {
   it('applies SFC v-bind variables to the component root block', async () => {
     const { code } = compileVaporSfc('CssVars.vue', CSS_VARS_SFC);
@@ -386,6 +507,31 @@ describe('vapor SFC e2e: CSS variables', () => {
         ([property, value]) => property.startsWith('--') && value === '#1565c0',
       )
     )).toBe(true);
+
+    app.unmount();
+  });
+
+  it('re-applies v-bind variables when the bound ref changes', async () => {
+    const { code } = compileVaporSfc('CssVarsUpdate.vue', CSS_VARS_UPDATE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const varOf = (ops: DecodedOp[]): unknown[] =>
+      opsOf(ops, OP.SET_STYLE).flatMap((operation) =>
+        Object.entries(operation.args[1] as Record<string, unknown>)
+          .filter(([property]) => property.startsWith('--'))
+          .map(([, value]) => value)
+      );
+    expect(varOf(decoded)).toContain('#1565c0');
+
+    const tap = opsOf(decoded, OP.SET_EVENT).find((e) => e.args[2] === 'tap')!;
+    publishEvent(tap.args[3] as string, {});
+
+    decoded = await flushedOps();
+    expect(varOf(decoded)).toContain('#c62828');
 
     app.unmount();
   });
