@@ -123,9 +123,6 @@ function instantiateTemplate(
       for (const [key, value] of props.a) __SetAttribute(el, key, value);
     }
     if (props.i !== undefined) __SetID(el, props.i);
-    if (props.sc) {
-      for (const cssId of props.sc) __SetCSSId([el], cssId);
-    }
     if (props.t !== undefined) {
       __SetAttribute(el, 'text', props.t);
       if (tag === '#text') {
@@ -362,17 +359,6 @@ export function applyOps(ops: unknown[]): void {
         const wvid = ops[i++] as number;
         const initValue = ops[i++];
         applyInitMtRef(wvid, initValue);
-        break;
-      }
-
-      case OP.SET_SCOPE_ID: {
-        const id = ops[i++] as number;
-        const cssId = ops[i++] as number;
-        const el = elements.get(id);
-        if (el) {
-          // Set the CSS scope ID for Lynx's CSS engine
-          __SetCSSId([el], cssId);
-        }
         break;
       }
 

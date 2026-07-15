@@ -54,7 +54,6 @@ describe('scoped CSS classes (nodeOps)', () => {
     expect(resolveClass(el)).toBe(
       'box data-v-aaa00001 data-v-bbb00002',
     );
-    expect(ops).not.toContain(OP.SET_SCOPE_ID);
   });
 });
 
@@ -62,7 +61,7 @@ describe('scoped CSS classes (nodeOps)', () => {
 // Full pipeline: component with __scopeId → dual-thread render
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (full pipeline)', () => {
+describe('scoped CSS classes (full pipeline)', () => {
   it('component with __scopeId renders and applies cssId', () => {
     const Scoped = defineComponent({
       __scopeId: 'data-v-8f634878',

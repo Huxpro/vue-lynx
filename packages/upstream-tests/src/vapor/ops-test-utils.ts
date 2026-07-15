@@ -26,7 +26,6 @@ export const OP_ARITY: Record<number, number> = {
   [OP.SET_WORKLET_EVENT]: 4,
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
-  [OP.SET_SCOPE_ID]: 2,
   [OP.REGISTER_TEMPLATE]: 2,
   [OP.CLONE_TEMPLATE]: 2,
 };
@@ -63,7 +62,6 @@ interface TplProps {
   s?: Record<string, unknown>;
   a?: Array<[string, string]>;
   i?: string;
-  sc?: number[];
   t?: string;
 }
 
@@ -107,11 +105,6 @@ function expandNode(
       }
     }
     if (props.i !== undefined) out.push({ op: OP.SET_ID, args: [uid, props.i] });
-    if (props.sc) {
-      for (const cssId of props.sc) {
-        out.push({ op: OP.SET_SCOPE_ID, args: [uid, cssId] });
-      }
-    }
     if (props.t !== undefined) out.push({ op: OP.SET_TEXT, args: [uid, props.t] });
   }
   for (const child of children) {

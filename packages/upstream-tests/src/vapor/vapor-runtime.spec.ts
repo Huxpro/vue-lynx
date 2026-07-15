@@ -267,7 +267,6 @@ describe('vapor: components', () => {
     const decoded = await flushedOps();
     const classes = opsOf(decoded, OP.SET_CLASS).map((op) => String(op.args[1]));
     expect(classes).toContain('child data-v-child data-v-parent');
-    expect(opsOf(decoded, OP.SET_SCOPE_ID)).toHaveLength(0);
   });
 
   it('mounts child components with reactive props', async () => {
