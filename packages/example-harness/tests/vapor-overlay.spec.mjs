@@ -22,7 +22,7 @@ describe("Vapor overlay transforms", () => {
 
   test("rewrites exact Vue Lynx runtime imports", () => {
     expect(transformModule("import { ref } from 'vue-lynx'\n")).toContain(
-      "from 'vue-lynx/vapor-app'"
+      "from 'vue-lynx/vapor'"
     );
   });
 

@@ -298,8 +298,7 @@ async function rewriteVaporAppIndex(outputDir: string) {
 
   const md = `# vue-lynx/vapor
 
-The **pure Vapor** application entry (\`vue-lynx/vapor-app\` remains a
-deprecated alias). With \`pluginVueLynx({ vapor: true })\`,
+The **pure Vapor** application entry. With \`pluginVueLynx({ vapor: true })\`,
 \`'vue'\` is aliased to this module — it provides everything a Vapor app
 imports from \`'vue'\` (reactivity, lifecycle, watchers, DI, SFC macros, the
 Vapor helper surface) **without** the vdom renderer. See the

@@ -120,7 +120,9 @@ describe("Lynx-for-Web example host", () => {
     expect(source).toContain("exampleMetadata={renderedMetadata}");
     expect(source).not.toContain("<SWRConfig");
     expect(source).toContain("useSyncExternalStore(");
-    expect(source).not.toContain("renderModeStore.setMode(");
+    // Every mode handle (nav switch, per-example badge, ModeTabs) must drive
+    // the one shared store — never a component-local copy of the state.
+    expect(source).not.toContain("createRenderModeStore(");
     expect(navControlSource).toContain("renderModeStore.setMode(");
     expect(configSource).not.toContain("remarkGoModeToolbar");
     expect(configSource).not.toContain("GoModeToolbar.tsx");

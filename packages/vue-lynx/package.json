@@ -26,16 +26,6 @@
       "import": "./runtime/dist/vapor-app.js",
       "default": "./runtime/dist/vapor-app.js"
     },
-    "./vapor-app": {
-      "types": "./runtime/dist/vapor-app.d.ts",
-      "import": "./runtime/dist/vapor-app.js",
-      "default": "./runtime/dist/vapor-app.js"
-    },
-    "./with-vapor": {
-      "types": "./runtime/dist/with-vapor.d.ts",
-      "import": "./runtime/dist/with-vapor.js",
-      "default": "./runtime/dist/with-vapor.js"
-    },
     "./entry-background": {
       "types": "./runtime/dist/entry-background.d.ts",
       "import": "./runtime/dist/entry-background.js",

@@ -4,8 +4,7 @@
 
 /**
  * Pure Vapor application entry — published as `vue-lynx/vapor`
- * (`vue-lynx/vapor-app` remains a deprecated alias; the source file keeps
- * its historical name).
+ * (the source file keeps its historical name).
  *
  * When `pluginVueLynx({ vapor: true })` is set, 'vue' is aliased to this
  * module. It provides everything a Vapor app imports from 'vue' — the shared
