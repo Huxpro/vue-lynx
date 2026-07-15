@@ -1702,6 +1702,158 @@ body.is-blackout::after {
 }
 
 /* =========================================================
+   Element vocabulary — the one-swap map (Ch II)
+   ========================================================= */
+.vocab {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2cqh, 14px);
+  font-family: var(--mono);
+  font-size: clamp(15px, 1.5cqw, 21px);
+}
+.vocab__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: clamp(14px, 2cqw, 28px);
+}
+.vocab__row > code:first-child { color: var(--ink-mute); text-align: right; }
+.vocab__row > code:last-child { text-align: left; }
+.vocab__arr { color: var(--vue-green); }
+
+/* =========================================================
+   Fork contrast — kept vs rebuilt / win vs pay (Ch III, arch)
+   ========================================================= */
+.fork {
+  display: flex;
+  gap: clamp(24px, 4cqw, 64px);
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: left;
+  width: 100%;
+  max-width: 940px;
+}
+.fork__col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+  min-width: 260px;
+  padding: clamp(18px, 2.2cqw, 30px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-elev);
+  box-shadow: var(--shadow-sm);
+}
+.fork__head {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.fork__col--keep { border-color: rgba(66, 184, 131, 0.35); }
+.fork__col--keep .fork__head { color: var(--vue-green); }
+.fork__col--change { border-color: rgba(0, 221, 255, 0.28); }
+.fork__col--change .fork__head { color: var(--brand-teal); }
+.web__list--alt li::before { background: var(--brand-teal); }
+
+/* =========================================================
+   Landmines — the honest "real apps hit real edges" list
+   ========================================================= */
+.landmines {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 800px;
+  text-align: left;
+}
+.landmine {
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand-teal);
+  border-radius: 10px;
+  background: var(--paper-elev);
+  color: var(--ink-soft);
+  font-size: clamp(14px, 1.2cqw, 18px);
+  line-height: 1.5;
+}
+.landmine b { color: var(--ink); }
+.landmine code { font-family: var(--mono); color: var(--brand-teal); }
+
+/* =========================================================
+   Pipe — build & runtime pipeline diagrams that build up
+   step-by-step via magic move (Ch V architecture).
+   ========================================================= */
+.pipe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.4cqh, 16px);
+  width: 100%;
+}
+.pipe__row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.pipe__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: clamp(9px, 1.1cqw, 15px) clamp(11px, 1.4cqw, 20px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-elev);
+  min-width: clamp(94px, 11cqw, 152px);
+  box-shadow: var(--shadow-sm);
+}
+.pipe__step .k {
+  font-family: var(--mono);
+  font-size: clamp(8px, 0.72cqw, 10px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-align: center;
+}
+.pipe__step .t {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(13px, 1.25cqw, 18px);
+  letter-spacing: -0.01em;
+  text-align: center;
+  line-height: 1.15;
+}
+.pipe__arr {
+  color: var(--vue-green);
+  margin: 0 clamp(4px, 0.7cqw, 12px);
+  font-size: clamp(14px, 1.4cqw, 18px);
+}
+.pipe__arr--v { margin: 1px 0; }
+.pipe__step--brand { border-color: rgba(66, 184, 131, 0.45); }
+.pipe__step--bg { border-color: rgba(66, 184, 131, 0.4); }
+.pipe__step--mt { border-color: rgba(0, 221, 255, 0.35); }
+.pipe__step--out {
+  border-color: rgba(66, 184, 131, 0.55);
+  box-shadow: 0 0 0 1px rgba(66, 184, 131, 0.25), var(--shadow-sm);
+}
+.pipe__row--bg .pipe__step { border-color: rgba(66, 184, 131, 0.4); }
+.pipe__row--mt .pipe__step { border-color: rgba(0, 221, 255, 0.35); }
+.pipe__row--mt .pipe__arr { color: var(--brand-teal); }
+.pipe__bridge {
+  font-family: var(--mono);
+  font-size: clamp(10px, 1cqw, 12px);
+  letter-spacing: 0.05em;
+  color: var(--ink-mute);
+  text-align: center;
+  padding: 2px 0;
+}
+.pipe__bridge b { color: var(--ink-soft); }
+
+/* =========================================================
    Magic move (FLIP) — matched [data-flip] elements morph
    between adjacent slides, Keynote-style. Driven by main.js.
    ========================================================= */

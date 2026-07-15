@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 28</span>
+    <span data-counter>01 / 75</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -342,12 +342,766 @@
   </section>
 
   <!-- ====================================================
-       Divider II · Story
+       Divider · Chapter II — It's really Vue
        ==================================================== -->
   <section class="slide divider">
     <span class="eyebrow">Chapter II</span>
     <div class="divider__row">
       <span class="divider__num numeral--brand">II</span>
+      <h2 class="divider__title">
+        It's really<br/>Vue.
+      </h2>
+    </div>
+    <p class="divider__tag">
+      Not a Vue-flavored dialect. The actual Vue 3 you already write —
+      Composition API, SFCs, the ecosystem — compiled to native.
+    </p>
+    <aside class="notes">
+      <p><strong>The proof chapter.</strong> The demos looked native — now show it's genuinely your Vue. We'll flip through real code from the example apps: the language, components, the ecosystem, built-ins. Move quickly; the point is breadth.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Same language — headline
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">a · Same language</span>
+    <h2 class="h-section" style="text-align:center">
+      The code you'd write
+      <em style="font-family:var(--serif);font-weight:400">anyway</em>.
+    </h2>
+    <p class="lead">
+      One <code>.vue</code> file, <code>&lt;script setup&gt;</code>, scoped
+      <code>&lt;style&gt;</code>. The compiler targets native elements instead of
+      the DOM — nothing else moves.
+    </p>
+    <aside class="notes">
+      <p><strong>Web-friendly is the whole point.</strong> SFCs, templates, scoped CSS — identical. The next slide is a real file; the one after maps the element vocabulary.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · The SFC (moved forward from the old platform chapter)
+       ==================================================== -->
+  <section class="slide stage">
+    <div class="codeframe" style="width:100%;max-width:720px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>HelloWorld.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;script setup&gt;</span>
+<span class="code-key">import</span> { ref, computed } <span class="code-key">from</span> <span class="code-str">'vue'</span>
+
+<span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">0</span>)
+<span class="code-key">const</span> doubled <span class="code-key">=</span> <span class="code-fn">computed</span>(() <span class="code-key">=&gt;</span> count.value <span class="code-key">*</span> <span class="code-str">2</span>)
+<span class="code-tag">&lt;/script&gt;</span>
+
+<span class="code-tag">&lt;template&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span><span class="code-tag">&gt;</span>Hello, Lynx<span class="code-tag">&lt;/text&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">@tap</span>=<span class="code-str">"count++"</span><span class="code-tag">&gt;</span>
+      Tapped {{ count }} · doubled {{ doubled }}
+    <span class="code-tag">&lt;/text&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/template&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Reactivity, <code>computed</code>, template syntax, <code>@tap</code>
+      handlers — the same file you'd write for the web.
+    </p>
+    <aside class="notes">
+      <p>A real single-file component. <code>ref</code>, <code>computed</code>, the template, the tap handler — all standard Vue. The only tell is the tag names, which the next slide maps.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Element vocabulary — the one swap
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The one swap</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      HTML-shaped tags, one map away.
+    </h2>
+    <div class="vocab">
+      <div class="vocab__row"><code>&lt;div&gt;</code><span class="vocab__arr">→</span><code class="brand-text">&lt;view&gt;</code></div>
+      <div class="vocab__row"><code>&lt;p&gt; &lt;span&gt;</code><span class="vocab__arr">→</span><code class="brand-text">&lt;text&gt;</code></div>
+      <div class="vocab__row"><code>&lt;img&gt;</code><span class="vocab__arr">→</span><code class="brand-text">&lt;image&gt;</code></div>
+      <div class="vocab__row"><code>@click</code><span class="vocab__arr">→</span><code class="brand-text">@tap</code></div>
+      <div class="vocab__row"><code>list + virtualizer</code><span class="vocab__arr">→</span><code class="brand-text">&lt;list&gt;</code></div>
+    </div>
+    <p class="lead" data-mm-fade>
+      The mental model doesn't change — the vocabulary does. <code>&lt;list&gt;</code>
+      is native virtualization, built in.
+    </p>
+    <aside class="notes">
+      <p>Element vocabulary is HTML-shaped: <code>&lt;view&gt;</code> for <code>&lt;div&gt;</code>, <code>&lt;text&gt;</code> for <code>&lt;p&gt;</code>, <code>&lt;image&gt;</code> for <code>&lt;img&gt;</code>, and <code>&lt;list&gt;</code> is virtualization for free. Every example after this is real code from the repo.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Reactivity
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The language · reactivity</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>examples/reactivity</span>
+      </div>
+<pre><span class="code-key">const</span> user <span class="code-key">=</span> <span class="code-fn">reactive</span>({
+  firstName: <span class="code-str">'Evan'</span>, lastName: <span class="code-str">'You'</span>, age: <span class="code-str">30</span>,
+})
+
+<span class="code-com">// toRefs lets you destructure without losing reactivity</span>
+<span class="code-key">const</span> { firstName, lastName } <span class="code-key">=</span> <span class="code-fn">toRefs</span>(user)
+<span class="code-key">const</span> fullName <span class="code-key">=</span> <span class="code-fn">computed</span>(
+  () <span class="code-key">=&gt;</span> <span class="code-str">`${firstName.value} ${lastName.value}`</span>
+)</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>reactive</code>, <code>ref</code>, <code>toRefs</code>,
+      <code>computed</code>, <code>watch</code> — the reactivity system runs
+      unchanged.
+    </p>
+    <aside class="notes">
+      <p>Pure Vue reactivity, byte-for-byte identical to the web. The reactive core is one of the suites in that 882-test pass count.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Options API
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The language · both API styles</span>
+    <div class="codeframe" style="width:100%;max-width:600px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>Counter.vue · Options API</span>
+      </div>
+<pre><span class="code-fn">defineComponent</span>({
+  <span class="code-key">data</span>() { <span class="code-key">return</span> { count: <span class="code-str">0</span> } },
+  <span class="code-key">computed</span>: {
+    buttonColor() { <span class="code-key">return</span> <span class="code-key">this</span>.count &gt; <span class="code-str">5</span> ? <span class="code-str">'#f40'</span> : <span class="code-str">'#07f'</span> },
+  },
+  <span class="code-key">watch</span>: {
+    count(n) { <span class="code-key">this</span>.tapMessage <span class="code-key">=</span> <span class="code-str">`Now ${n}`</span> },
+  },
+  <span class="code-key">methods</span>: {
+    onTap() { <span class="code-key">this</span>.count++; <span class="code-key">this</span>.<span class="code-fn">$emit</span>(<span class="code-str">'increment'</span>) },
+  },
+})</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Composition <em>or</em> Options — <code>data</code>, <code>computed</code>,
+      <code>watch</code>, <code>methods</code>, <code>$emit</code>, lifecycle all fire.
+    </p>
+    <aside class="notes">
+      <p>Not just Composition API — the full Options API object works too, opt-in via the plugin. Both programming models, one renderer.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Slots
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Components · slots</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>DataList.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;template&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-for</span>=<span class="code-str">"(item, i) in items"</span> <span class="code-attr">:key</span>=<span class="code-str">"item.id"</span><span class="code-tag">&gt;</span>
+    <span class="code-com">&lt;!-- scoped slot exposes row data to the parent --&gt;</span>
+    <span class="code-tag">&lt;slot</span> <span class="code-attr">name</span>=<span class="code-str">"item"</span> <span class="code-attr">:item</span>=<span class="code-str">"item"</span> <span class="code-attr">:index</span>=<span class="code-str">"i"</span><span class="code-tag">&gt;</span>
+      <span class="code-tag">&lt;text&gt;</span>{{ item.name }}<span class="code-tag">&lt;/text&gt;</span>  <span class="code-com">&lt;!-- fallback --&gt;</span>
+    <span class="code-tag">&lt;/slot&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/template&gt;</span>
+
+<span class="code-com">// consumer:  &lt;DataList #item="{ item, index }"&gt; …</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Named slots, scoped slots, <code>#shorthand</code>, fallback content — all
+      standard.
+    </p>
+    <aside class="notes">
+      <p>Slots — named, scoped, shorthand, fallback — behave exactly like web Vue; only the host elements are <code>&lt;view&gt;</code>/<code>&lt;text&gt;</code>.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · v-model
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Components · v-model</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>ModelCounter.vue</span>
+      </div>
+<pre><span class="code-com">// two-way binding on a component, via defineModel()</span>
+<span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">defineModel</span>&lt;<span class="code-key">number</span>&gt;({ default: <span class="code-str">0</span> })
+<span class="code-key">function</span> <span class="code-fn">onTap</span>() { count.value++ }
+
+<span class="code-com">// parent:   &lt;ModelCounter v-model="parentCount" /&gt;</span>
+<span class="code-com">// native:   &lt;input v-model="text" type="text" /&gt;</span>
+<span class="code-com">// named:    &lt;Doc v-model:title="t" v-model:body="b" /&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>v-model</code> on a native <code>&lt;input&gt;</code>, on a component via
+      <code>defineModel</code>, and named models — all three.
+    </p>
+    <aside class="notes">
+      <p><code>v-model</code> compiles to <code>:modelValue</code> + <code>@update:modelValue</code> just like the web; works on native inputs and on components.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · provide / inject
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Components · provide / inject</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>App.vue → ThemedCard.vue</span>
+      </div>
+<pre><span class="code-com">// ancestor provides a reactive value</span>
+<span class="code-key">const</span> theme <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">'light'</span>)
+<span class="code-fn">provide</span>(<span class="code-str">'theme'</span>, theme)
+
+<span class="code-com">// any descendant injects it — reactivity crosses components</span>
+<span class="code-key">const</span> theme <span class="code-key">=</span> <span class="code-fn">inject</span>(<span class="code-str">'theme'</span>)
+<span class="code-key">const</span> appName <span class="code-key">=</span> <span class="code-fn">inject</span>(<span class="code-str">'appName'</span>, <span class="code-str">'Unknown'</span>)</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Reactive <code>provide</code> / <code>inject</code>, defaults included —
+      dependency injection across the tree.
+    </p>
+    <aside class="notes">
+      <p>Nothing Lynx-specific — reactive provide/inject threads through intermediate components untouched.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Pinia
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The ecosystem · Pinia</span>
+    <div class="codeframe" style="width:100%;max-width:620px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>stores/counter.ts</span>
+      </div>
+<pre><span class="code-key">export const</span> useCounterStore <span class="code-key">=</span> <span class="code-fn">defineStore</span>(<span class="code-str">'counter'</span>, () <span class="code-key">=&gt;</span> {
+  <span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">0</span>)
+  <span class="code-key">const</span> doubleCount <span class="code-key">=</span> <span class="code-fn">computed</span>(() <span class="code-key">=&gt;</span> count.value <span class="code-key">*</span> <span class="code-str">2</span>)
+  <span class="code-key">function</span> <span class="code-fn">increment</span>() { count.value++ }
+  <span class="code-key">return</span> { count, doubleCount, increment }
+})
+
+<span class="code-com">// app.use(createPinia())  ·  const s = useCounterStore()</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Stock Pinia — <code>defineStore</code>, getters, actions, <code>createPinia()</code>.
+      Unmodified.
+    </p>
+    <aside class="notes">
+      <p>Real Pinia, unchanged. The only Lynx-ism anywhere near it: <code>app.mount()</code> takes no selector — it mounts to the native root, not <code>#app</code>.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Vue Router
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The ecosystem · Vue Router</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>router.ts</span>
+      </div>
+<pre><span class="code-key">const</span> router <span class="code-key">=</span> <span class="code-fn">createRouter</span>({
+  <span class="code-com">// no window.location on Lynx → memory history</span>
+  history: <span class="code-fn">createMemoryHistory</span>(),
+  routes: [
+    { path: <span class="code-str">'/'</span>, component: Home },
+    { path: <span class="code-str">'/users/:id'</span>, component: UserDetail },
+  ],
+})
+<span class="code-com">// &lt;RouterView /&gt;  ·  &lt;RouterLink :to&gt;  ·  useRoute()/useRouter()</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      The real <code>vue-router</code> — dynamic params, guards, <code>&lt;RouterView&gt;</code>.
+      Swap the history to <code>createMemoryHistory</code> and go.
+    </p>
+    <aside class="notes">
+      <p>Vue Router works; the single adaptation is memory history (there's no <code>window.location</code>). Every ported app in the next chapter uses it.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · TanStack Query
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The ecosystem · data fetching</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>examples/networking · TanStack Query</span>
+      </div>
+<pre><span class="code-key">const</span> { data: users, isLoading } <span class="code-key">=</span> <span class="code-fn">useQuery</span>({
+  queryKey: [<span class="code-str">'users'</span>],
+  queryFn: <span class="code-key">async</span> () <span class="code-key">=&gt;</span> {
+    <span class="code-key">const</span> res <span class="code-key">=</span> <span class="code-key">await</span> <span class="code-fn">fetch</span>(<span class="code-str">'/api/users'</span>)
+    <span class="code-key">return</span> res.<span class="code-fn">json</span>()
+  },
+})</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>@tanstack/vue-query</code> — <code>useQuery</code>, <code>useMutation</code>,
+      caching, dependent queries. It just works.
+    </p>
+    <aside class="notes">
+      <p>TanStack Query runs on Lynx. One load-bearing detail: <code>fetch</code> is read off <code>globalThis</code> because the web runtime wrapper shadows the bare binding — the same trick the ported apps use.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Suspense + async setup
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Built-ins · async</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>App.vue · &lt;Suspense&gt;</span>
+      </div>
+<pre><span class="code-tag">&lt;Suspense&gt;</span>
+  <span class="code-tag">&lt;template</span> <span class="code-attr">#default</span><span class="code-tag">&gt;</span>  <span class="code-tag">&lt;SlowComponent /&gt;</span>  <span class="code-tag">&lt;/template&gt;</span>
+  <span class="code-tag">&lt;template</span> <span class="code-attr">#fallback</span><span class="code-tag">&gt;</span> <span class="code-tag">&lt;text&gt;</span>⏳ Loading…<span class="code-tag">&lt;/text&gt;</span> <span class="code-tag">&lt;/template&gt;</span>
+<span class="code-tag">&lt;/Suspense&gt;</span>
+
+<span class="code-com">// AsyncSetup.vue — top-level await in &lt;script setup&gt;</span>
+<span class="code-key">const</span> result <span class="code-key">=</span> <span class="code-key">await</span> <span class="code-fn">fetchData</span>()</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>&lt;Suspense&gt;</code>, <code>defineAsyncComponent</code>, dynamic
+      <code>import()</code>, top-level <code>await</code> — all resolve.
+    </p>
+    <aside class="notes">
+      <p>Async component boundaries and Suspense work; the fallback UI is just <code>&lt;view&gt;</code>/<code>&lt;text&gt;</code>.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Transition + KeepAlive
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Built-ins · Transition &amp; KeepAlive</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>Transition.vue / App.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;Transition</span> <span class="code-attr">name</span>=<span class="code-str">"fade"</span> <span class="code-attr">:duration</span>=<span class="code-str">"300"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-if</span>=<span class="code-str">"show"</span><span class="code-tag">&gt;</span>…<span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/Transition&gt;</span>
+
+<span class="code-com">/* real CSS drives it */</span>
+.fade-enter-from, .fade-leave-to { opacity: <span class="code-str">0</span>; }
+
+<span class="code-tag">&lt;KeepAlive&gt;</span> <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"tab"</span> <span class="code-tag">/&gt;</span> <span class="code-tag">&lt;/KeepAlive&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>&lt;Transition&gt;</code> drives real Lynx CSS transitions;
+      <code>&lt;KeepAlive&gt;</code> preserves state across <code>&lt;component :is&gt;</code>.
+    </p>
+    <aside class="notes">
+      <p>Vue's <code>-enter-from</code>/<code>-leave-to</code> class machinery toggles real native CSS. <code>&lt;KeepAlive&gt;</code> shipped in #153 — <code>onActivated</code>/<code>onDeactivated</code> included.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Event modifiers
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Built-ins · event modifiers</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>StopDemo.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;view</span> <span class="code-attr">@tap</span>=<span class="code-str">"outer++"</span><span class="code-tag">&gt;</span>
+  <span class="code-com">&lt;!-- .stop halts propagation to the parent --&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap.stop</span>=<span class="code-str">"inner++"</span><span class="code-tag">&gt;</span> … <span class="code-tag">&lt;/view&gt;</span>
+
+  <span class="code-com">&lt;!-- chained: fire once AND stop --&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap.once.stop</span>=<span class="code-str">"go()"</span><span class="code-tag">&gt;</span> … <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/view&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>.stop</code>, <code>.once</code>, <code>.prevent</code>, <code>.self</code>,
+      chained — on <code>@tap</code>, Lynx's native gesture.
+    </p>
+    <aside class="notes">
+      <p>Modifiers compile onto <code>@tap</code> (the native tap gesture) and drive real native propagation control.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Styling
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Styling · real CSS</span>
+    <div class="codeframe" style="width:100%;max-width:640px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>ScopedStyle.vue / tailwindcss</span>
+      </div>
+<pre><span class="code-tag">&lt;style</span> <span class="code-attr">scoped</span><span class="code-tag">&gt;</span>
+.card { display: flex; flex-direction: column; border-radius: <span class="code-str">8px</span>; }
+.title { color: <span class="code-fn">v-bind</span>(textColor); }   <span class="code-com">/* reactive CSS */</span>
+<span class="code-tag">&lt;/style&gt;</span>
+
+<span class="code-com">&lt;!-- or Tailwind utilities, straight on native tags --&gt;</span>
+<span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"text-foreground text-2xl font-bold"</span><span class="code-tag">&gt;</span>Settings<span class="code-tag">&lt;/text&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Scoped styles, CSS Modules, <code>v-bind()</code> in CSS, and Tailwind — real
+      CSS, bridged to Lynx's native <code>cssId</code>.
+    </p>
+    <aside class="notes">
+      <p>Scoped CSS maps to Lynx's native <code>cssId</code> (not <code>[data-v]</code> attributes); <code>v-bind()</code> uses CSS vars; flexbox is the default layout. Tailwind utilities land straight on native tags.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · The Lynx twist — v-for over native list
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The Lynx twist · virtualized by default</span>
+    <div class="codeframe" style="width:100%;max-width:660px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>Gallery.vue</span>
+      </div>
+<pre><span class="code-tag">&lt;list</span> <span class="code-attr">list-type</span>=<span class="code-str">"waterfall"</span> <span class="code-attr">:column-count</span>=<span class="code-str">"2"</span>
+      <span class="code-attr">scroll-orientation</span>=<span class="code-str">"vertical"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;list-item</span> <span class="code-attr">v-for</span>=<span class="code-str">"(pic, i) in pictures"</span> <span class="code-attr">:key</span>=<span class="code-str">"i"</span>
+    <span class="code-attr">:item-key</span>=<span class="code-str">"String(i)"</span> <span class="code-attr">:estimated-main-axis-size-px</span>=<span class="code-str">"180"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;LikeImageCard</span> <span class="code-attr">:picture</span>=<span class="code-str">"pic"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/list-item&gt;</span>
+<span class="code-tag">&lt;/list&gt;</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      The one place it's <em>not</em> identical — and it's an upgrade:
+      <code>v-for</code> over a native, recycling <code>&lt;list&gt;</code>.
+    </p>
+    <aside class="notes">
+      <p>Here Vue meets a native primitive: <code>v-for</code> renders into a real virtualized <code>&lt;list&gt;</code>/<code>&lt;list-item&gt;</code> — cells recycle, no DOM. This is the seam where "just Vue" becomes "better than web."</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Renders on the web too (moved forward)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">And portable</span>
+    <h2 class="h-section" style="text-align:center">
+      It renders on the <span class="brand-text">web</span>, too.
+    </h2>
+    <p class="lead">
+      Every demo in this deck is a real Vue Lynx app running through Lynx for
+      Web — right now, no simulator.
+    </p>
+    <aside class="notes">
+      <p>The same bundle renders on the web via Lynx for Web — that's how every embedded demo here is running live.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Evidence — the test receipts
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Not a claim — a test suite</span>
+    <div class="mega"><span class="brand-text">882</span> / 1013</div>
+    <p class="lead">
+      Upstream <b>vue/core</b> tests, run against our renderer through the full
+      BG&nbsp;→&nbsp;ops&nbsp;→&nbsp;MT&nbsp;→&nbsp;PAPI pipeline. <b>Zero failing.</b>
+      131 skipped, every one categorized.
+    </p>
+    <aside class="notes">
+      <p>The compatibility claim is backed by re-running Vue's own test suites (pinned to v3.5.12) against our custom renderer. 882 pass, 0 fail, 131 documented skips. "It's really Vue" isn't a vibe — it's a green suite.</p>
+    </aside>
+  </section>
+
+
+  <!-- ====================================================
+       Divider · Chapter III — From web app to native
+       ==================================================== -->
+  <section class="slide divider">
+    <span class="eyebrow">Chapter III</span>
+    <div class="divider__row">
+      <span class="divider__num numeral--brand">III</span>
+      <h2 class="divider__title">
+        From web app<br/>to native.
+      </h2>
+    </div>
+    <p class="divider__tag">
+      Not toy demos — two real, production-grade Vue apps, forked from the web
+      and upgraded to run natively. What stays, and what changes.
+    </p>
+    <aside class="notes">
+      <p><strong>The strongest evidence.</strong> Two serious apps: a Nuxt AI chatbot and Elk, the Mastodon client. The recipe is the same each time — reuse the framework-agnostic Vue, rebuild the DOM surface on native. The deltas are the interesting part.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · AI Chat — intro + live demo
+       ==================================================== -->
+  <section class="slide demo">
+    <div class="demo__body">
+      <span class="eyebrow">Case 1 · AI Chat</span>
+      <h2 class="demo__title">
+        A production <span class="brand-text">AI chatbot</span>, ported.
+      </h2>
+      <p class="demo__copy">
+        Forked from the official Nuxt AI Chatbot template — streaming responses,
+        tool cards, markdown, model picker, chat history. 65 features carried
+        over, 10 dropped with reasons.
+      </p>
+      <div class="demo__meta">
+        <span class="chip chip--brand">Nuxt → Lynx</span>
+        <span class="chip">AI SDK protocol</span>
+        <span class="chip">streaming</span>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone" data-ar="300 / 560">
+        <div class="phone__inner">
+          <vl-demo bundle="ai-chat/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Case study one.</strong> The canonical Nuxt AI chat template, running natively. It even travels offline — an in-app fallback backend seeds history and mock streams, so a scanned bundle just works.</p>
+      <p><strong>Do live:</strong> ask "what's the weather in Bordeaux?" — reasoning, then a weather card.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · AI Chat — what stays / what changes
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Case 1 · the fork</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      Keep the logic. Rebuild the surface.
+    </h2>
+    <div class="fork">
+      <div class="fork__col fork__col--keep">
+        <span class="fork__head">Kept — unchanged Vue</span>
+        <ul class="web__list">
+          <li>Composition API, SFCs, reactivity</li>
+          <li>vue-router (memory history)</li>
+          <li><code>UIMessage</code> data model</li>
+          <li>Sidebar / date-grouping composables</li>
+          <li>Server contract &amp; wire protocol</li>
+        </ul>
+      </div>
+      <div class="fork__col fork__col--change">
+        <span class="fork__head">Rebuilt — for native</span>
+        <ul class="web__list web__list--alt">
+          <li>Nuxt UI → Lynx elements</li>
+          <li>Streaming: SSE → poll transport</li>
+          <li>Markdown / charts → native nodes</li>
+          <li>Icons baked per theme</li>
+          <li>Overlays: portals → root host</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>The layer table from PORTING.md, distilled. Everything framework-agnostic — the Vue, the data model, the composable logic, the class vocabulary — is reused verbatim. Everything that touched the DOM or Nuxt gets rebuilt on Lynx primitives.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · AI Chat — native streaming (the headline delta)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Case 1 · the headline delta</span>
+    <div class="codeframe" style="width:100%;max-width:680px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>lib/stream-transport.ts</span>
+      </div>
+<pre><span class="code-com">// Web has a real ReadableStream → consume SSE incrementally.</span>
+<span class="code-com">// Native fetch can't stream a body → start ?mode=poll,</span>
+<span class="code-com">// then GET cursor pages until done. Same wire protocol.</span>
+<span class="code-key">export function</span> <span class="code-fn">selectStreamTransport</span>(env) {
+  <span class="code-key">return</span> env.nativeLynx <span class="code-key">&amp;&amp;</span> !env.standardStreamingFetch
+    ? <span class="code-str">'poll'</span>
+    : <span class="code-str">'sse'</span>
+}</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>@ai-sdk/vue</code>'s <code>useChat</code> assumed browser streaming.
+      A custom composable keeps its exact surface — and picks the transport by
+      capability.
+    </p>
+    <aside class="notes">
+      <p>The #200 story. Native <code>fetch</code> buffers an SSE body instead of streaming it, so the app detects the platform and switches to a poll transport — same server, same protocol, drop-in replacement for <code>useChat</code> with the identical <code>{ messages, status, sendMessage, stop }</code> API.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · Elk — intro + live demo
+       ==================================================== -->
+  <section class="slide demo demo--reverse">
+    <div class="demo__stage">
+      <div class="phone" data-ar="300 / 560">
+        <div class="phone__inner">
+          <vl-demo bundle="elk/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <div class="demo__body">
+      <span class="eyebrow">Case 2 · Elk</span>
+      <h2 class="demo__title">
+        <span class="brand-text">Elk</span> — a real Mastodon client.
+      </h2>
+      <p class="demo__copy">
+        Anthony Fu's Nuxt 3 client: ~196 components, 55 pages, 50 composables.
+        Timelines, threads, profiles, rich content, dark mode — browsing any
+        public instance, natively.
+      </p>
+      <div class="demo__meta">
+        <span class="chip chip--brand">Nuxt 3 → Lynx</span>
+        <span class="chip">masto.js</span>
+        <span class="chip">native &lt;list&gt;</span>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Case study two — the ambitious one.</strong> Elk is a genuine, complex product. No Nuxt, no DOM on Lynx — so the port reuses Elk's framework-agnostic layers and rebuilds the UI on native elements. Guest browsing is fully working.</p>
+      <p><strong>Do live:</strong> scroll a timeline — native <code>&lt;list&gt;</code> recycling; open a thread.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · Elk — what stays / what changes
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Case 2 · the fork</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Reuse the framework-agnostic layers.
+    </h2>
+    <div class="fork">
+      <div class="fork__col fork__col--keep">
+        <span class="fork__head">Kept — verbatim</span>
+        <ul class="web__list">
+          <li>masto.js REST client</li>
+          <li>Content parse / sanitize pipeline</li>
+          <li>Timeline reorder, optimistic updates</li>
+          <li>Search, cache, paginator logic</li>
+          <li>Theme palette (Elk's own CSS vars)</li>
+        </ul>
+      </div>
+      <div class="fork__col fork__col--change">
+        <span class="fork__head">Rebuilt — for native</span>
+        <ul class="web__list web__list--alt">
+          <li>UnoCSS → scoped CSS + tokens</li>
+          <li><code>virtua</code> → native <code>&lt;list&gt;</code></li>
+          <li>File routes → vue-router table</li>
+          <li>Icons → inline SVG, color baked</li>
+          <li>OAuth → guest mode + token paste</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>Same spine as AI Chat, bigger surface. The API client, the content pipeline, the domain logic — all reused. UnoCSS, the DOM virtual scroller, Nuxt file routing, the icon system — all rebuilt on native.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · Elk — the crown jewel (parse reused, render retargeted)
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Case 2 · the crown jewel</span>
+    <div class="codeframe" style="width:100%;max-width:680px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>content-parse.ts (reused) → content-render.ts (retargeted)</span>
+      </div>
+<pre><span class="code-com">// Mastodon HTML → AST → sanitize → transforms:</span>
+<span class="code-com">// reused byte-for-byte. Only the emit target changes —</span>
+<span class="code-com">// h('a') / RouterLink  →  a tappable native &lt;text&gt;.</span>
+<span class="code-key">return</span> <span class="code-fn">h</span>(<span class="code-str">'text'</span>, { class: linkClass, onTap },
+  children.<span class="code-fn">flatMap</span>(c <span class="code-key">=&gt;</span> <span class="code-fn">renderInline</span>(c, ctx)))</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      The content renderer — emoji, mentions, hashtags, polls, media. The
+      <em>parse</em> half is identical; only the <em>render</em> half retargets
+      its vnodes to native.
+    </p>
+    <aside class="notes">
+      <p>The emotional center of the port. Elk's parse/sanitize/transform pipeline is copied unchanged; the renderer that used to emit <code>&lt;p&gt;</code>/<code>&lt;a&gt;</code>/<code>&lt;picture&gt;</code> now emits <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code> runs, with mentions pushing vue-router routes on tap.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · Elk — the native landmines
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">Case 2 · where the work really was</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      Real apps hit real edges.
+    </h2>
+    <div class="landmines">
+      <div class="landmine">
+        <b><code>AbortSignal.any</code></b> — masto.js calls it on every request;
+        missing on native, it broke <em>every</em> fetch. A 387-line polyfill fills it.
+      </div>
+      <div class="landmine">
+        <b><code>change-case</code></b> — its Unicode-property regexes crash PrimJS
+        and abort the whole bundle. Aliased to an ASCII adapter.
+      </div>
+      <div class="landmine">
+        <b>No DOMParser · no SVG decoder · no <code>currentColor</code></b> — entity
+        decoding, icons, and colors all rebuilt for the native runtime.
+      </div>
+    </div>
+    <aside class="notes">
+      <p>This is the honest slide. Porting a real app surfaces platform edges you never see in a toy. Each one is a concrete, documented fix — and each device run found the next. That's the true cost, and it's bounded.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       III · Payoff
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">The recipe</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      The Vue stays Vue. The edges are the work.
+    </h2>
+    <p class="lead">
+      Two real apps, one recipe: reuse every framework-agnostic layer, rebuild
+      the DOM surface on native, pay down a bounded list of platform gaps. The
+      logic never had to change.
+    </p>
+    <aside class="notes">
+      <p>The takeaway before we go under the hood: the value is that your Vue — the hard-won domain logic — carries over intact. What's left is a finite, well-understood set of native adaptations. Now: how does the platform actually pull this off?</p>
+    </aside>
+  </section>
+
+
+  <!-- ====================================================
+       Divider II · Story
+       ==================================================== -->
+  <section class="slide divider">
+    <span class="eyebrow">Chapter IV</span>
+    <div class="divider__row">
+      <span class="divider__num numeral--brand">IV</span>
       <h2 class="divider__title">
         The story of <br/>Vue Lynx.
       </h2>
@@ -431,16 +1185,16 @@
         <span class="value">123<small>h</small></span>
       </div>
       <div class="bill__cell">
-        <span class="label">upstream tests pass</span>
-        <span class="value">852<small>/ 949</small></span>
+        <span class="label">upstream Vue tests</span>
+        <span class="value">882<small>/ 1013</small></span>
       </div>
       <div class="bill__cell">
-        <span class="label">example apps</span>
-        <span class="value">20<small>+</small></span>
+        <span class="label">failing</span>
+        <span class="value">0<small> · 131 skip</small></span>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>The receipts.</strong> Concrete signal: 852 of 949 upstream Vue tests pass — the skiplist is documented, every failure accounted for. Pivot: "the foundation underneath made this possible at all."</p>
+      <p><strong>The receipts.</strong> Concrete signal: 882 of 1013 upstream Vue tests pass, <strong>zero failing</strong> — pinned to vuejs/core v3.5.12, run against our own renderer through the full BG→ops→MT→PAPI pipeline. The 131 skips are categorized in a documented skiplist. Pivot: "the foundation underneath made this possible at all."</p>
     </aside>
   </section>
 
@@ -448,9 +1202,9 @@
        15 — Divider III · Lynx platform
        ==================================================== -->
   <section class="slide divider">
-    <span class="eyebrow">Chapter III</span>
+    <span class="eyebrow">Chapter V</span>
     <div class="divider__row">
-      <span class="divider__num numeral--brand">III</span>
+      <span class="divider__num numeral--brand">V</span>
       <h2 class="divider__title">
         The Lynx<br/>platform itself.
       </h2>
@@ -564,71 +1318,6 @@
   </section>
 
   <!-- ====================================================
-       16 — Web-friendly · headline (one idea)
-       ==================================================== -->
-  <section class="slide stage">
-    <span class="eyebrow">a · Web-friendly</span>
-    <h2 class="h-section" style="text-align:center">
-      The code you'd write
-      <em style="font-family:var(--serif);font-weight:400">anyway</em>.
-    </h2>
-    <aside class="notes">
-      <p><strong>Web-friendly is a feature, not an accident.</strong> SFCs, templates, scoped CSS — all the same. The next slide shows the actual file.</p>
-    </aside>
-  </section>
-
-  <!-- ====================================================
-       17 — Web-friendly · the SFC
-       ==================================================== -->
-  <section class="slide stage">
-    <div class="codeframe" style="width:100%;max-width:720px;text-align:left">
-      <div class="codeframe__head">
-        <span class="dots"><span></span><span></span><span></span></span>
-        <span>HelloWorld.vue</span>
-      </div>
-<pre><span class="code-tag">&lt;script setup&gt;</span>
-<span class="code-key">import</span> { ref, computed } <span class="code-key">from</span> <span class="code-str">'vue'</span>
-
-<span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">0</span>)
-<span class="code-key">const</span> doubled <span class="code-key">=</span> <span class="code-fn">computed</span>(() <span class="code-key">=&gt;</span> count.value <span class="code-key">*</span> <span class="code-str">2</span>)
-<span class="code-tag">&lt;/script&gt;</span>
-
-<span class="code-tag">&lt;template&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span><span class="code-tag">&gt;</span>
-    <span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span><span class="code-tag">&gt;</span>Hello, Lynx<span class="code-tag">&lt;/text&gt;</span>
-    <span class="code-tag">&lt;text</span> <span class="code-attr">@tap</span>=<span class="code-str">"count++"</span><span class="code-tag">&gt;</span>
-      Tapped {{ count }} · doubled {{ doubled }}
-    <span class="code-tag">&lt;/text&gt;</span>
-  <span class="code-tag">&lt;/view&gt;</span>
-<span class="code-tag">&lt;/template&gt;</span></pre>
-    </div>
-    <p class="lead" data-mm-fade>
-      The same <code>.vue</code> file — only the tags are HTML-shaped:
-      <code>&lt;view&gt;</code>, <code>&lt;text&gt;</code>, <code>&lt;image&gt;</code>, <code>&lt;list&gt;</code>.
-    </p>
-    <aside class="notes">
-      <p>The element vocabulary is HTML-shaped: <code>&lt;view&gt;</code> for <code>&lt;div&gt;</code>, <code>&lt;text&gt;</code> for <code>&lt;p&gt;</code>, <code>&lt;image&gt;</code> for <code>&lt;img&gt;</code>, plus <code>&lt;list&gt;</code> for virtualization. The mental model is one swap away.</p>
-    </aside>
-  </section>
-
-  <!-- ====================================================
-       18 — Web-friendly · renders on the web too
-       ==================================================== -->
-  <section class="slide stage">
-    <span class="eyebrow">a · Web-friendly</span>
-    <h2 class="h-section" style="text-align:center">
-      And it renders on the <span class="brand-text">web</span>, too.
-    </h2>
-    <p class="lead">
-      Every demo in this deck is a real Vue Lynx app running through Lynx for
-      Web — right now, no simulator.
-    </p>
-    <aside class="notes">
-      <p>The same bundle renders on the web via Lynx for Web — that's how every demo in this deck is running. Next: "and it's serious underneath" → dual thread.</p>
-    </aside>
-  </section>
-
-  <!-- ====================================================
        19 — Architecture · headline (build begins)
        ==================================================== -->
   <section class="slide stage">
@@ -707,6 +1396,304 @@
   </section>
 
   <!-- ====================================================
+       Arch · THE BUILD — headline
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build</span>
+    <h2 class="h-section" style="text-align:center;max-width:18ch">
+      One source. <span class="brand-text">Two bundles.</span>
+    </h2>
+    <p class="lead">
+      At build time, your single Vue app is compiled into two programs — one per
+      thread — without you writing two of anything.
+    </p>
+    <aside class="notes">
+      <p><strong>Compile-time story.</strong> Watch it build. The punchline is reuse: Vue Lynx didn't write a new toolchain — it stands on Lynx's rspeedy plugin and React Lynx's worklet transform.</p>
+    </aside>
+  </section>
+
+  <!-- ==== Build build-up 1 · source ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build</span>
+    <div class="pipe">
+      <div class="pipe__row">
+        <div class="pipe__step" data-flip="b-src"><span class="k">your app</span><span class="t">.vue SFCs + TS</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>One source tree — the code you already wrote.</p>
+    <aside class="notes"><p>Start with the input: your ordinary Vue app. A single entry.</p></aside>
+  </section>
+
+  <!-- ==== Build build-up 2 · plugin ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build</span>
+    <div class="pipe">
+      <div class="pipe__row">
+        <div class="pipe__step" data-flip="b-src"><span class="k">your app</span><span class="t">.vue SFCs + TS</span></div>
+      </div>
+      <div class="pipe__arr pipe__arr--v" data-flip="b-a1" data-mm-fade>↓</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--brand" data-flip="b-plugin" data-mm-fade><span class="k">rspeedy plugin</span><span class="t">pluginVueLynx</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      One plugin — reusing Lynx's <b>rspeedy</b> toolchain and React Lynx's
+      <b>worklet transform</b>. It's a sibling of the React plugin, not a rewrite.
+    </p>
+    <aside class="notes"><p>The reuse line. <code>pluginVueLynx</code> = the official <code>@rsbuild/plugin-vue</code> for SFCs + a thin Lynx adapter. MTS extraction literally calls React Lynx's SWC transform; the worklet runtime is <code>require.resolve('@lynx-js/react/worklet-runtime')</code>.</p></aside>
+  </section>
+
+  <!-- ==== Build build-up 3 · the split ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build · the split</span>
+    <div class="pipe">
+      <div class="pipe__row">
+        <div class="pipe__step" data-flip="b-src"><span class="k">your app</span><span class="t">.vue SFCs + TS</span></div>
+      </div>
+      <div class="pipe__arr pipe__arr--v" data-flip="b-a1">↓</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--brand" data-flip="b-plugin"><span class="k">rspeedy plugin</span><span class="t">pluginVueLynx</span></div>
+      </div>
+      <div class="pipe__bridge" data-flip="b-br" data-mm-fade><b>issuerLayer</b> routes the same files through two loaders</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--bg" data-flip="b-bg" data-mm-fade><span class="k">vue:background · JS</span><span class="t">worklet-loader</span></div>
+        <div class="pipe__step pipe__step--mt" data-flip="b-mt" data-mm-fade><span class="k">vue:main-thread · LEPUS</span><span class="t">worklet-loader-mt</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      The same files, compiled twice — a background pass (JS) and a main-thread
+      pass (LEPUS bytecode) — routed by webpack's <code>issuerLayer</code>.
+    </p>
+    <aside class="notes"><p>Both layers import the <em>same</em> user code; the layer decides the loader. BG gets a JS worklet pass; MT gets a LEPUS pass that keeps only <code>registerWorkletInternal()</code> calls. This is how one <code>'main thread'</code> function ends up on both sides correctly.</p></aside>
+  </section>
+
+  <!-- ==== Build build-up 4 · the merge ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build · one artifact</span>
+    <div class="pipe">
+      <div class="pipe__row">
+        <div class="pipe__step" data-flip="b-src"><span class="k">your app</span><span class="t">.vue SFCs + TS</span></div>
+      </div>
+      <div class="pipe__arr pipe__arr--v" data-flip="b-a1">↓</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--brand" data-flip="b-plugin"><span class="k">rspeedy plugin</span><span class="t">pluginVueLynx</span></div>
+      </div>
+      <div class="pipe__bridge" data-flip="b-br"><b>issuerLayer</b> routes the same files through two loaders</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--bg" data-flip="b-bg"><span class="k">vue:background · JS</span><span class="t">background.js</span></div>
+        <div class="pipe__step pipe__step--mt" data-flip="b-mt"><span class="k">vue:main-thread · LEPUS</span><span class="t">main-thread.js</span></div>
+      </div>
+      <div class="pipe__arr pipe__arr--v" data-flip="b-a2" data-mm-fade>↓ packaged together ↓</div>
+      <div class="pipe__row">
+        <div class="pipe__step pipe__step--out" data-flip="b-out" data-mm-fade><span class="k">one artifact</span><span class="t">main.lynx.bundle</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Both are packaged by the reused <code>LynxTemplatePlugin</code> into a single
+      <code>.lynx.bundle</code> — one file that boots both threads.
+    </p>
+    <aside class="notes"><p>The Lynx template/encode webpack plugins (reused, not rewritten) pack both entries into one bundle, tagged so the encoder treats it like any Lynx bundle. One file ships; two programs run.</p></aside>
+  </section>
+
+  <!-- ==== Build · the code ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the build · in the plugin</span>
+    <div class="codeframe" style="width:100%;max-width:720px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>plugin/src/entry.ts</span>
+      </div>
+<pre><span class="code-com">// Main-Thread bundle — PAPI bootstrap + reused worklet runtime</span>
+chain.<span class="code-fn">entry</span>(mainThreadEntry).<span class="code-fn">add</span>({
+  layer: LAYERS.MAIN_THREAD,
+  <span class="code-key">import</span>: [entryMain, workletRuntimePath, ...imports],
+})
+
+<span class="code-com">// Background bundle — Vue runtime + your app</span>
+chain.<span class="code-fn">entry</span>(entryName).<span class="code-fn">add</span>({
+  layer: LAYERS.BACKGROUND, <span class="code-key">import</span>: imports,
+}).<span class="code-fn">prepend</span>({ <span class="code-key">import</span>: entryBackground })
+
+<span class="code-com">// workletRuntimePath = require.resolve('@lynx-js/react/worklet-runtime')</span></pre>
+    </div>
+    <p class="lead" data-mm-fade>Two webpack entries, two layers, one reused worklet runtime.</p>
+    <aside class="notes"><p>The actual split, ~14 lines. The last comment is the whole reuse thesis in one line — the worklet runtime is React Lynx's, resolved and bundled as-is.</p></aside>
+  </section>
+
+  <!-- ====================================================
+       Arch · THE RUNTIME — headline
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      Vue mutates. <span class="brand-text">Native renders.</span>
+    </h2>
+    <p class="lead">
+      At runtime, Vue never touches a native view directly. It mutates a shadow
+      tree; the changes travel as ops and are replayed on the UI thread.
+    </p>
+    <aside class="notes">
+      <p><strong>Run-time story.</strong> The chain, built up next: nodeOps → shadow tree → ops → the bus → applyOps → Element PAPI → native. This is why gestures stay smooth: Vue's work and the UI thread's work are decoupled by a buffer.</p>
+    </aside>
+  </section>
+
+  <!-- ==== Runtime build-up 1 · renderer ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime</span>
+    <div class="pipe">
+      <div class="pipe__row pipe__row--bg">
+        <div class="pipe__step" data-flip="r-vue"><span class="k">background thread</span><span class="t">Vue 3 runtime</span></div>
+        <span class="pipe__arr" data-flip="r-a1">→</span>
+        <div class="pipe__step" data-flip="r-nodeops"><span class="k">custom renderer</span><span class="t">nodeOps</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Vue runs through a custom renderer. Every <code>createElement</code>,
+      <code>insert</code>, <code>patchProp</code> is one <code>nodeOps</code> call.
+    </p>
+    <aside class="notes"><p>Vue's <code>createRenderer(nodeOps)</code> — the same extension point React Native and others use. <code>nodeOps</code> is the Vue→Lynx adapter, the heart of it.</p></aside>
+  </section>
+
+  <!-- ==== Runtime build-up 2 · shadow tree + ops ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime · background</span>
+    <div class="pipe">
+      <div class="pipe__row pipe__row--bg">
+        <div class="pipe__step" data-flip="r-vue"><span class="k">background thread</span><span class="t">Vue 3 runtime</span></div>
+        <span class="pipe__arr" data-flip="r-a1">→</span>
+        <div class="pipe__step" data-flip="r-nodeops"><span class="k">custom renderer</span><span class="t">nodeOps</span></div>
+        <span class="pipe__arr" data-flip="r-a2" data-mm-fade>→</span>
+        <div class="pipe__step" data-flip="r-shadow" data-mm-fade><span class="k">BG mirror</span><span class="t">ShadowElement tree</span></div>
+        <span class="pipe__arr" data-flip="r-a3" data-mm-fade>→</span>
+        <div class="pipe__step" data-flip="r-ops" data-mm-fade><span class="k">flat, per tick</span><span class="t">ops buffer</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>nodeOps</code> mutates a <b>ShadowElement tree</b> — a lightweight
+      mirror on the background thread — and appends each change to a flat
+      <b>ops buffer</b>.
+    </p>
+    <aside class="notes"><p>The shadow tree lets Vue call <code>parentNode()</code>/<code>nextSibling()</code> synchronously; the real elements live only on the main thread. Each node holds just an <code>id</code> — the cross-thread handle. Ops are a flat, JSON-serializable array keyed by that id.</p></aside>
+  </section>
+
+  <!-- ==== Runtime build-up 3 · the bus ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime · the bus</span>
+    <div class="pipe">
+      <div class="pipe__row pipe__row--bg">
+        <div class="pipe__step" data-flip="r-vue"><span class="k">background</span><span class="t">Vue 3 runtime</span></div>
+        <span class="pipe__arr" data-flip="r-a1">→</span>
+        <div class="pipe__step" data-flip="r-nodeops"><span class="k">renderer</span><span class="t">nodeOps</span></div>
+        <span class="pipe__arr" data-flip="r-a2">→</span>
+        <div class="pipe__step" data-flip="r-shadow"><span class="k">BG mirror</span><span class="t">ShadowElement tree</span></div>
+        <span class="pipe__arr" data-flip="r-a3">→</span>
+        <div class="pipe__step" data-flip="r-ops"><span class="k">flat, per tick</span><span class="t">ops buffer</span></div>
+      </div>
+      <div class="pipe__bridge" data-flip="r-bridge" data-mm-fade>
+        <b>callLepusMethod('vuePatchUpdate')</b> — one call per reactive tick ↓
+      </div>
+      <div class="pipe__row pipe__row--mt">
+        <div class="pipe__step" data-flip="r-apply" data-mm-fade><span class="k">main thread</span><span class="t">applyOps</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      All ops from one reactive tick coalesce into a single cross-thread call.
+      The main thread's <code>applyOps</code> replays them.
+    </p>
+    <aside class="notes"><p>Batching is the performance trick: <code>scheduleFlush</code> rides Vue's post-flush queue, so a whole tick's mutations become one <code>callLepusMethod</code>. No per-op bridge chatter on the hot path.</p></aside>
+  </section>
+
+  <!-- ==== Runtime build-up 4 · PAPI + native ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime · to the metal</span>
+    <div class="pipe">
+      <div class="pipe__row pipe__row--bg">
+        <div class="pipe__step" data-flip="r-vue"><span class="k">background</span><span class="t">Vue 3 runtime</span></div>
+        <span class="pipe__arr" data-flip="r-a1">→</span>
+        <div class="pipe__step" data-flip="r-nodeops"><span class="k">renderer</span><span class="t">nodeOps</span></div>
+        <span class="pipe__arr" data-flip="r-a2">→</span>
+        <div class="pipe__step" data-flip="r-shadow"><span class="k">BG mirror</span><span class="t">ShadowElement tree</span></div>
+        <span class="pipe__arr" data-flip="r-a3">→</span>
+        <div class="pipe__step" data-flip="r-ops"><span class="k">flat, per tick</span><span class="t">ops buffer</span></div>
+      </div>
+      <div class="pipe__bridge" data-flip="r-bridge">
+        <b>callLepusMethod('vuePatchUpdate')</b> — one call per reactive tick ↓
+      </div>
+      <div class="pipe__row pipe__row--mt">
+        <div class="pipe__step" data-flip="r-apply"><span class="k">main thread</span><span class="t">applyOps</span></div>
+        <span class="pipe__arr" data-flip="r-a4" data-mm-fade>→</span>
+        <div class="pipe__step" data-flip="r-papi" data-mm-fade><span class="k">platform api</span><span class="t">Element PAPI</span></div>
+        <span class="pipe__arr" data-flip="r-a5" data-mm-fade>→</span>
+        <div class="pipe__step pipe__step--out" data-flip="r-native" data-mm-fade><span class="k">__FlushElementTree</span><span class="t">Lynx native</span></div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      <code>applyOps</code> replays each op through the <b>Element PAPI</b> —
+      <code>__CreateView</code>, <code>__SetAttribute</code>, <code>__AddEvent</code>
+      — then <code>__FlushElementTree()</code> commits to native.
+    </p>
+    <aside class="notes"><p>The Element PAPI is Lynx's low-level element interface — the same one React Lynx targets. One commit per batch. Events flow back the other way: registered by <code>sign</code>, delivered to the BG handler.</p></aside>
+  </section>
+
+  <!-- ==== Runtime · the code ==== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the runtime · in the renderer</span>
+    <div class="codeframe" style="width:100%;max-width:700px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>runtime/src/node-ops.ts</span>
+      </div>
+<pre><span class="code-key">export const</span> nodeOps <span class="code-key">=</span> {
+  <span class="code-fn">createElement</span>(type) {
+    <span class="code-key">const</span> el <span class="code-key">=</span> <span class="code-key">new</span> <span class="code-fn">ShadowElement</span>(type)
+    <span class="code-fn">pushOp</span>(OP.CREATE, el.id, type)   <span class="code-com">// → flat ops buffer</span>
+    <span class="code-fn">scheduleFlush</span>()                    <span class="code-com">// batch, one call per tick</span>
+    <span class="code-key">return</span> el
+  },
+  <span class="code-com">// insert, patchProp, remove … each: mutate shadow, pushOp</span>
+}</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      Fourteen methods. Each mutates the shadow tree and pushes one op. That's
+      the entire Vue→native adapter.
+    </p>
+    <aside class="notes"><p>The whole surface is small — <code>createElement</code>, <code>insert</code>, <code>patchProp</code>, <code>remove</code>, <code>setElementText</code>, plus tree walkers. On the main thread, <code>OP.CREATE</code> becomes <code>__CreateView</code>; the batch ends with <code>__FlushElementTree()</code>.</p></aside>
+  </section>
+
+  <!-- ====================================================
+       Arch · why two threads — the trade-off
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">b · the trade-off</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Why split at all?
+    </h2>
+    <div class="fork">
+      <div class="fork__col fork__col--keep">
+        <span class="fork__head">What you win</span>
+        <ul class="web__list">
+          <li>UI thread free for 60fps gestures</li>
+          <li>Reactivity can't jank the scroll</li>
+          <li>One bundle, no native rebuild</li>
+          <li>Batched ops, no per-node bridge</li>
+        </ul>
+      </div>
+      <div class="fork__col fork__col--change">
+        <span class="fork__head">What you pay</span>
+        <ul class="web__list web__list--alt">
+          <li>Reads across threads are async</li>
+          <li>No synchronous DOM-style measure</li>
+          <li>Truly-instant work → Main-Thread Script</li>
+        </ul>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>Honest trade-off. The buffer that keeps gestures smooth also means you can't synchronously read layout from the background thread — you await it, or drop the hot code onto the main thread as a worklet. It's the same bargain React Lynx makes; the win is worth it.</p>
+    </aside>
+  </section>
+
+
+  <!-- ====================================================
        22 — Vue × Lynx = native
        ==================================================== -->
   <section class="slide combine">
@@ -741,9 +1728,9 @@
        23 — Divider IV · Close
        ==================================================== -->
   <section class="slide divider">
-    <span class="eyebrow">Chapter IV</span>
+    <span class="eyebrow">Chapter VI</span>
     <div class="divider__row">
-      <span class="divider__num numeral--brand">IV</span>
+      <span class="divider__num numeral--brand">VI</span>
       <h2 class="divider__title">
         And we'd love<br/>your help.
       </h2>

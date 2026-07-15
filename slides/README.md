@@ -3,6 +3,29 @@
 HTML slide deck for the Vue Lynx talk. Live `<lynx-view>` embeds render
 real Vue Lynx apps inline; design language mirrors `vue.lynxjs.org`.
 
+## Narrative
+
+Six chapters, ~75 slides:
+
+1. **The Pitch** — apps upgrading web → native; the three pillars (Speed /
+   Experience / Capabilities) with four live demos.
+2. **It's really Vue** — the moved-forward intro plus a code gallery proving
+   real Vue features on Lynx (reactivity, Options API, slots, `v-model`,
+   provide/inject, Pinia, Router, TanStack Query, Suspense, Transition,
+   KeepAlive, event modifiers, styling, `v-for` over native `<list>`), backed
+   by the 882 / 1013 upstream `vue/core` test count.
+3. **From web app to native** — two real ports (the Nuxt AI Chatbot template
+   and Elk, the Mastodon client) with a "kept vs rebuilt" fork contrast and the
+   key deltas (native streaming, the content pipeline, runtime landmines).
+4. **The story** — how it was built (solo, ~2 weeks).
+5. **The Lynx platform** — the layers-&-seams landscape, then the architecture
+   deep-dive: the **build** pipeline (one source → `pluginVueLynx` →
+   `issuerLayer` split → one `.lynx.bundle`) and the **runtime** pipeline
+   (`nodeOps` → `ShadowElement` tree → ops buffer → `callLepusMethod` →
+   `applyOps` → Element PAPI → native), each revealed step-by-step via magic
+   move.
+6. **Close** — the ask, what's there / open, and the CTA.
+
 ## Run
 
 ```bash
@@ -105,8 +128,10 @@ Adjacent slides morph shared elements into place, FLIP-style. Give the same
 `data-flip="some-id"` to an element on two consecutive slides and it animates
 between its two positions/sizes when you advance. Tag transient supporting
 content with `data-mm-fade` so it washes in behind the morph. The stack on the
-Pillars slides and the two-thread build on the Architecture slides are the
-worked examples. One `<section class="slide">` = one step (no in-slide
+The Pillars, the opening logo build-up, and the Architecture chapter's **build
+and runtime pipeline** diagrams (`.pipe` steps that carry a `data-flip` id so
+each stage morphs into place as the next one washes in) are the worked
+examples. One `<section class="slide">` = one step (no in-slide
 fragments), which keeps speaker-view sync and deep-links simple.
 
 ## Deploy
