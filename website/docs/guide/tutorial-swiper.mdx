@@ -679,13 +679,13 @@ Congratulations! You've built a high-performance product detail page with an ima
 - **Lynx layout**: `display: linear` + `linear-orientation: horizontal` for high-performance horizontal layout
 - **Main Thread Script** (`'main thread'`): Run touch event handlers directly on the main thread, eliminating cross-thread latency
 - **`useMainThreadRef`**: Create main-thread-readable/writable references, replacing background-thread `ref()`, accessed via `.current`
-- **Vue composables**: Extract MTS logic into reusable modules like `useOffset`, `useUpdateSwiperStyle`, `useAnimate`
+- **Vue composables**: Extract Main Thread Script logic into reusable modules like `useOffset`, `useUpdateSwiperStyle`, `useAnimate`
 - **`runOnBackground`**: Main thread -> background thread function call bridge (indicator state sync)
 - **`runOnMainThread`**: Background thread -> main thread function call bridge (tap-to-jump animation)
 - **Cross-thread value passing**: Serializable background-thread values are automatically passed to main-thread functions; main-thread functions are passed via `main-thread-` prefixed props
 
 The complete source code is in `examples/swiper/src/`, with three progressive versions for reference.
 
-::: info MTS Function Bodies Are Framework-Agnostic
+::: info Main Thread Script Function Bodies Are Framework-Agnostic
 All `'main thread'`-marked function bodies (`handleTouchStart`, `updateOffset`, `animate`, etc.) are compiled by the SWC compiler into a standalone main-thread bundle, independent of the component framework. The `'main thread'` directive works the same way regardless of whether the outer component uses Vue SFCs or JSX.
 :::
