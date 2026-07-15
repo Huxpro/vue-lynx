@@ -18,10 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { CSSLoaderOptions, RsbuildPluginAPI, Rspack } from '@rsbuild/core';
 
-import type {
-  CssExtractRspackPluginOptions,
-  CssExtractWebpackPluginOptions,
-} from '@lynx-js/css-extract-webpack-plugin';
+import type { CssExtractRspackPluginOptions } from '@lynx-js/css-extract-webpack-plugin';
 
 import { LAYERS } from './layers.js';
 import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
@@ -51,12 +48,11 @@ export function applyCSS(
   //    one, configure loaders per layer, and remove lightningcss.
   api.modifyBundlerChain(
     async function handler(chain, { CHAIN_ID }) {
-      const { CssExtractRspackPlugin, CssExtractWebpackPlugin } = await import(
+      // css-extract-webpack-plugin ≥0.8 is Rspack-only (the webpack variant
+      // was removed upstream); rsbuild always drives Rspack here.
+      const { CssExtractRspackPlugin: CssExtractPlugin } = await import(
         '@lynx-js/css-extract-webpack-plugin'
       );
-      const CssExtractPlugin = api.context.bundlerType === 'rspack'
-        ? CssExtractRspackPlugin
-        : CssExtractWebpackPlugin;
 
       const cssRules = [
         CHAIN_ID.RULE.CSS,
@@ -153,18 +149,12 @@ export function applyCSS(
               enableCSSSelector,
               enableCSSInvalidation,
               cssPlugins: [vueScopeStripCSSPlugin],
-            } as
-              | CssExtractWebpackPluginOptions
-              | CssExtractRspackPluginOptions,
+            } as CssExtractRspackPluginOptions,
           ];
         })
         .init((_, args: unknown[]) => {
           return new CssExtractPlugin(
-            ...(args as [
-              options:
-                & CssExtractWebpackPluginOptions
-                & CssExtractRspackPluginOptions,
-            ]),
+            ...(args as [options: CssExtractRspackPluginOptions]),
           );
         })
         .end()
