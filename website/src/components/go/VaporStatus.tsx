@@ -9,8 +9,8 @@ interface VaporStatusProps {
 const statusCopy = {
   en: {
     vapor: 'Vapor',
-    vdom: 'VDOM',
     fallback: 'VDOM only',
+    bundleUnavailable: 'Vapor bundle not built',
     reasons: {
       'render-function': 'Uses a render function',
       'vue-router-and-transitions': 'Uses Vue Router and transitions',
@@ -23,8 +23,8 @@ const statusCopy = {
   },
   zh: {
     vapor: 'Vapor',
-    vdom: 'VDOM',
     fallback: '仅 VDOM',
+    bundleUnavailable: 'Vapor 包未构建',
     reasons: {
       'render-function': '使用渲染函数',
       'vue-router-and-transitions': '使用 Vue Router 和 Transition',
@@ -45,15 +45,20 @@ export function VaporStatus({
   locale = 'en',
 }: VaporStatusProps) {
   const copy = statusCopy[locale];
-  const label = status === 'supported'
-    ? mode === 'vapor' ? copy.vapor : copy.vdom
-    : copy.fallback;
-  const formattedReason = reason
-    ? copy.reasons[reason as keyof typeof copy.reasons] ?? reason
+  // This badge renders only while Vapor is the requested mode, so an
+  // effective mode of 'vdom' always means "this example fell back" — either
+  // the entry is unsupported (reason from the matrix) or its Vapor bundles
+  // are missing from this build.
+  const fellBack = mode === 'vdom';
+  const label = fellBack ? copy.fallback : copy.vapor;
+  const formattedReason = fellBack
+    ? reason
+      ? copy.reasons[reason as keyof typeof copy.reasons] ?? reason
+      : status === 'supported'
+        ? copy.bundleUnavailable
+        : ''
     : '';
-  const description = status === 'unsupported' && formattedReason
-    ? ` · ${formattedReason}`
-    : '';
+  const description = formattedReason ? ` · ${formattedReason}` : '';
 
   return (
     <div
