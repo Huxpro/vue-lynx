@@ -1,3 +1,4 @@
+import { InfoPopover } from './InfoPopover';
 import type { RenderMode } from './render-mode-store';
 
 interface VaporStatusProps {
@@ -40,6 +41,8 @@ const statusCopy = {
     vdom: 'VDOM',
     fallback: 'VDOM only',
     bundleUnavailable: 'Vapor bundle not built',
+    whyLabel: 'Why VDOM only?',
+    whyLead: "This example can't run Vapor:",
     toVdom: 'Running Vue Vapor — click to switch every example to VDOM',
     toVapor: 'Running Vue VDOM — click to switch every example to Vapor',
   },
@@ -48,6 +51,8 @@ const statusCopy = {
     vdom: 'VDOM',
     fallback: '仅 VDOM',
     bundleUnavailable: 'Vapor 包未构建',
+    whyLabel: '为什么仅 VDOM？',
+    whyLead: '此示例无法以 Vapor 运行：',
     toVdom: '正在以 Vapor 运行——点按将所有示例切换为 VDOM',
     toVapor: '正在以 VDOM 运行——点按将所有示例切换为 Vapor',
   },
@@ -61,8 +66,9 @@ const statusCopy = {
  * - effective Vapor → tinted "Vapor" pill (click switches back to VDOM)
  * - effective VDOM, entry supported → neutral "VDOM" pill (click switches
  *   to Vapor — a per-example affordance for the global preference)
- * - entry can't run Vapor → static "VDOM only" pill; the reason shows
- *   inline while Vapor is requested, and in the tooltip otherwise
+ * - entry can't run Vapor → static "VDOM only" pill plus an ⓘ popover
+ *   (opening upward — the footer sits at the card's bottom edge) carrying
+ *   the reason
  */
 export function VaporStatus({
   entry,
@@ -83,22 +89,17 @@ export function VaporStatus({
     : canRunVapor && !fellBack
       ? copy.vdom
       : copy.fallback;
-  const formattedReason = !canRunVapor || fellBack
+  const formattedReason = !canRunVapor
     ? reason
       ? reasons[reason as keyof typeof reasons] ?? reason
       : status === 'supported'
         ? copy.bundleUnavailable
         : ''
     : '';
-  // Reason inline only while it explains a live fallback; tooltip otherwise.
-  const description = fellBack && formattedReason ? ` · ${formattedReason}` : '';
-  const title = canRunVapor
-    ? mode === 'vapor' ? copy.toVdom : copy.toVapor
-    : formattedReason;
 
   const Tag = canRunVapor ? 'button' : 'div';
 
-  return (
+  const badge = (
     <Tag
       {...(canRunVapor ? { type: 'button' as const, onClick: onToggle } : {})}
       className="vapor-status"
@@ -106,11 +107,23 @@ export function VaporStatus({
       data-vapor-status={status}
       data-render-mode={mode}
       data-interactive={canRunVapor || undefined}
-      aria-label={`${entry}: ${label}${description}`}
-      title={title}
+      aria-label={`${entry}: ${label}${formattedReason ? ` · ${formattedReason}` : ''}`}
+      title={canRunVapor ? (mode === 'vapor' ? copy.toVdom : copy.toVapor) : undefined}
     >
       <span className="vapor-status__label">{label}</span>
-      {description && <span className="vapor-status__reason">{description}</span>}
     </Tag>
+  );
+
+  if (canRunVapor || !formattedReason) return badge;
+
+  return (
+    <span className="vapor-status-group">
+      {badge}
+      <InfoPopover label={copy.whyLabel} direction="up">
+        <p>
+          {copy.whyLead} {formattedReason}
+        </p>
+      </InfoPopover>
+    </span>
   );
 }

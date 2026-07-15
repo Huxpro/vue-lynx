@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 
+import { InfoPopover } from './InfoPopover';
 import { renderModeStore, type ExampleCensus, type RenderMode } from './render-mode-store';
 
 interface GoModeNavIndicatorProps {
@@ -12,9 +13,9 @@ const copy = {
     description: 'Switches every supported example and code tab on this page',
     dormant:
       'No mode-aware content on this page — the preference still applies site-wide',
-    coverage: (supported: number, total: number) =>
-      `${supported} of ${total} examples on this page run Vapor; the rest fall back to VDOM`,
     infoLabel: 'About this switch',
+    coverage: (supported: number, total: number) =>
+      `${supported} of ${total} examples on this page run Vapor; the rest fall back to VDOM.`,
     infoBody:
       'Switches the renderer for every supported live example and VDOM/Vapor code tab across this site. Prose never changes. Vapor is experimental.',
     infoLink: 'Learn about Vapor mode',
@@ -24,9 +25,9 @@ const copy = {
     label: '以 Vapor 渲染示例',
     description: '切换本页所有支持的示例与代码示例',
     dormant: '本页没有可切换的内容——偏好仍会应用于全站',
-    coverage: (supported: number, total: number) =>
-      `本页 ${supported}/${total} 个示例支持 Vapor，其余回退到 VDOM`,
     infoLabel: '关于此开关',
+    coverage: (supported: number, total: number) =>
+      `本页 ${supported}/${total} 个示例支持 Vapor，其余回退到 VDOM。`,
     infoBody:
       '切换全站所有支持的可运行示例与 VDOM/Vapor 代码块的渲染器。正文内容不区分模式。Vapor 为实验特性。',
     infoLink: '了解 Vapor mode',
@@ -45,29 +46,14 @@ interface GoModeNavControlProps {
  * Presentational Vapor on/off switch: VDOM is simply "off"; the active mode
  * name lives in the track's free space. Always rendered on doc pages —
  * pages with no mode-aware content show it dormant (dimmed, still working)
- * instead of popping in and out. The ⓘ popover explains exactly what the
- * switch does and does not change.
+ * instead of popping in and out.
+ *
+ * The ⓘ chip explains exactly what the switch does and does not change;
+ * when Vapor is on and some examples on the page fall back, the chip also
+ * carries the coverage count ("2/3 ⓘ") and its popover explains the number.
  */
 export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavControlProps) {
   const labels = copy[locale];
-  const [infoOpen, setInfoOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!infoOpen) return;
-    const close = (event: Event) => {
-      if (!rootRef.current?.contains(event.target as Node)) setInfoOpen(false);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setInfoOpen(false);
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [infoOpen]);
 
   const on = mode === 'vapor';
   const dormant = census.total === 0 && census.tabGroups === 0;
@@ -76,11 +62,10 @@ export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavCo
 
   return (
     <div
-      ref={rootRef}
       className="go-mode-nav-control"
       data-mode={mode}
       data-dormant={dormant || undefined}
-      title={dormant ? labels.dormant : partial ? coverageText : labels.description}
+      title={dormant ? labels.dormant : labels.description}
     >
       <button
         type="button"
@@ -95,34 +80,22 @@ export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavCo
           <span className="go-mode-nav-control__knob" />
         </span>
       </button>
-      {partial && (
-        <span
-          className="go-mode-nav-control__coverage"
-          role="status"
-          aria-label={coverageText}
-        >
-          {census.vaporSupported}/{census.total}
-        </span>
-      )}
-      <button
-        type="button"
-        className="go-mode-nav-control__info"
-        aria-label={labels.infoLabel}
-        aria-expanded={infoOpen}
-        onClick={() => setInfoOpen((open) => !open)}
+      <InfoPopover
+        label={partial ? `${coverageText} ${labels.infoLabel}` : labels.infoLabel}
+        direction="down"
+        className={partial ? 'go-mode-nav-control__coverage' : undefined}
+        trigger={partial
+          ? (
+            <span className="info-popover__count">
+              {census.vaporSupported}/{census.total}
+            </span>
+          )
+          : undefined}
       >
-        <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
-          <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.4" />
-          <circle cx="8" cy="4.9" r="0.9" fill="currentColor" />
-          <rect x="7.25" y="6.8" width="1.5" height="5" rx="0.75" fill="currentColor" />
-        </svg>
-      </button>
-      {infoOpen && (
-        <div className="go-mode-nav-control__popover" role="note">
-          <p>{labels.infoBody}</p>
-          <a href={labels.infoHref}>{labels.infoLink} →</a>
-        </div>
-      )}
+        {partial && <p>{coverageText}</p>}
+        <p>{labels.infoBody}</p>
+        <a href={labels.infoHref}>{labels.infoLink} →</a>
+      </InfoPopover>
     </div>
   );
 }

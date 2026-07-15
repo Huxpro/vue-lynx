@@ -55,10 +55,10 @@ test('exposes a scope explainer via the info button', () => {
     }),
   );
 
-  assert.match(html, /go-mode-nav-control__info/);
+  assert.match(html, /info-popover__button/);
   assert.match(html, /aria-label="About this switch"/);
   // Popover only appears after interaction.
-  assert.doesNotMatch(html, /go-mode-nav-control__popover/);
+  assert.doesNotMatch(html, /info-popover__panel/);
 });
 
 test('renders a single on/off switch showing the current mode in the track', () => {
@@ -101,7 +101,7 @@ test('the switch reports on and reads "Vapor" when active', () => {
   assert.doesNotMatch(html, />VDOM</);
 });
 
-test('shows Vapor coverage when some examples fall back', () => {
+test('coverage count merges into the info chip when some examples fall back', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
@@ -111,9 +111,11 @@ test('shows Vapor coverage when some examples fall back', () => {
     }),
   );
 
+  // One affordance: the "2/3" count rides the ⓘ button, and its popover
+  // (aria-label here) explains the number.
   assert.match(html, /go-mode-nav-control__coverage/);
-  assert.match(html, /2\/3/);
-  assert.match(html, /2 of 3 examples on this page run Vapor/);
+  assert.match(html, /info-popover__count[^>]*>2\/3</);
+  assert.match(html, /aria-label="2 of 3 examples on this page run Vapor[^"]*About this switch"/);
 });
 
 test('hides the coverage chip when every example runs Vapor', () => {
@@ -141,6 +143,7 @@ test('localizes the global renderer control for Chinese docs', () => {
 
   assert.match(html, /aria-label="以 Vapor 渲染示例"/);
   assert.match(html, /本页 1\/3 个示例支持 Vapor/);
+  assert.match(html, /关于此开关/);
 });
 
 test('a Vapor-running example shows a tinted interactive badge', () => {
@@ -187,42 +190,35 @@ test('supported examples with missing Vapor bundles explain their fallback', () 
     }),
   );
 
-  assert.doesNotMatch(html, /<button/);
+  // The badge itself is static; the reason lives behind the ⓘ.
+  assert.doesNotMatch(html, /data-interactive/);
+  assert.match(html, /vapor-status-group/);
   assert.match(html, /VDOM only/);
   assert.match(html, /Vapor bundle not built/);
+  assert.match(html, /aria-label="Why VDOM only\?"/);
 });
 
-test('unsupported examples explain their VDOM fallback while Vapor is requested', () => {
-  const html = renderToStaticMarkup(
-    createElement(VaporStatus, {
-      entry: 'transition/main',
-      requested: 'vapor',
-      mode: 'vdom',
-      status: 'unsupported',
-      reason: 'transition',
-    }),
-  );
+test('unsupported examples put their reason behind the ⓘ popover', () => {
+  for (const requested of ['vapor', 'vdom']) {
+    const html = renderToStaticMarkup(
+      createElement(VaporStatus, {
+        entry: 'transition/main',
+        requested,
+        mode: 'vdom',
+        status: 'unsupported',
+        reason: 'transition',
+      }),
+    );
 
-  assert.doesNotMatch(html, /<button/);
-  assert.match(html, /data-render-mode="vdom"/);
-  assert.match(html, /VDOM only/);
-  assert.match(html, /Uses Transition/);
-});
-
-test('unsupported examples stay quiet in VDOM mode (reason in tooltip only)', () => {
-  const html = renderToStaticMarkup(
-    createElement(VaporStatus, {
-      entry: 'transition/main',
-      requested: 'vdom',
-      mode: 'vdom',
-      status: 'unsupported',
-      reason: 'transition',
-    }),
-  );
-
-  assert.match(html, /VDOM only/);
-  assert.doesNotMatch(html, /vapor-status__reason/);
-  assert.match(html, /title="Uses Transition"/);
+    assert.match(html, /data-render-mode="vdom"/);
+    assert.match(html, /VDOM only/);
+    assert.match(html, /vapor-status-group/);
+    assert.match(html, /aria-label="Why VDOM only\?"/);
+    // Reason reaches assistive tech via the badge label; visually it lives
+    // in the popover, not inline.
+    assert.match(html, /Uses Transition/);
+    assert.doesNotMatch(html, /vapor-status__reason/);
+  }
 });
 
 test('localizes entry capability and reason codes for Chinese docs', () => {
@@ -239,4 +235,5 @@ test('localizes entry capability and reason codes for Chinese docs', () => {
 
   assert.match(html, /仅 VDOM/);
   assert.match(html, /使用 Vue Router/);
+  assert.match(html, /aria-label="为什么仅 VDOM？"/);
 });
