@@ -151,7 +151,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install
-      - run: pnpm --dir packages/example-harness exec playwright install --with-deps chromium
+      # The harness depends on playwright-core (no test runner), whose CLI
+      # provides the same browser installer.
+      - run: pnpm --dir packages/example-harness exec playwright-core install --with-deps chromium
       - run: pnpm build
       - run: pnpm examples:inventory
       - name: Build all VDOM examples
