@@ -24,6 +24,7 @@ import { apiFetch } from '../lib/api';
 import {
   calculateBottomSpacer,
   calculateMessageLaunchDistance,
+  isEarlierMessageDuringHandoff,
   isNearBottom,
   nextWebBottomOffset,
   turnScrollMode,
@@ -96,6 +97,11 @@ interface TouchLikeEvent {
   detail?: { touches?: TouchPoint[] };
 }
 
+// Streaming first mounts an empty assistant shell whose Native minimum
+// footprint is 9⅓ CSS px before its measured height reaches Vue. Matching
+// that shell exactly keeps max scroll stable across the streaming handoff.
+const ALIGNMENT_SCROLL_RESERVE = 28 / 3;
+
 const systemInfo = (
   globalThis as {
     SystemInfo?: { pixelHeight?: number; pixelRatio?: number; platform?: string };
@@ -112,11 +118,13 @@ const keyboardHeight = ref(0);
 const anchoredMessageId = ref<string | null>(null);
 const animatedUserMessageId = ref<string | null>(null);
 const pendingAnimatedUserMessageId = ref<string | null>(null);
+const stagedUserMessageId = ref<string | null>(null);
 const userMessageLaunchDistance = ref(0);
 const anchoredTurnHeight = ref(0);
 const followsOutput = ref(true);
 const webScrollOffset = ref<number>();
 const messageHeights = new Map<string, number>();
+const preparingAnimatedMessageIds = new Set<string>();
 let scrollTop = 0;
 let scrollHeight = 0;
 let scrollDragStartY: number | null = null;
@@ -169,8 +177,7 @@ async function scrollToBottom(smooth = false) {
     .exec();
 }
 
-async function scrollMessageToTop(messageId: string) {
-  await nextTick();
+function invokeScrollMessageToTop(messageId: string) {
   if (typeof lynx === 'undefined') return;
   lynx
     .createSelectorQuery()
@@ -181,11 +188,18 @@ async function scrollMessageToTop(messageId: string) {
         scrollIntoViewOptions: {
           block: 'start',
           inline: 'start',
-          behavior: 'smooth',
+          // The bubble already supplies the transition. A second scroll
+          // animation leaves the previous turn visible until it catches up.
+          behavior: 'none',
         },
       },
     })
     .exec();
+}
+
+async function scrollMessageToTop(messageId: string) {
+  await nextTick();
+  invokeScrollMessageToTop(messageId);
 }
 
 function updateAnchoredTurnHeight() {
@@ -202,7 +216,8 @@ function updateAnchoredTurnHeight() {
     0,
   );
   height += Math.max(0, anchoredMessages.length - 1) * 24;
-  if (showIndicator.value) height += 48;
+  // Reserve the imminent thinking row before status catches up.
+  if (showIndicator.value || pendingAnimatedUserMessageId.value === anchorId) height += 48;
   anchoredTurnHeight.value = Math.max(84, height);
 }
 
@@ -213,6 +228,7 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
   if (turnMode === 'bottom') {
     anchoredMessageId.value = null;
     pendingAnimatedUserMessageId.value = null;
+    stagedUserMessageId.value = null;
     animatedUserMessageId.value = animateUser ? message.id : null;
     userMessageLaunchDistance.value = 0;
     updateAnchoredTurnHeight();
@@ -222,21 +238,39 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
 
   anchoredMessageId.value = message.id;
   pendingAnimatedUserMessageId.value = animateUser ? message.id : null;
+  stagedUserMessageId.value = null;
   animatedUserMessageId.value = null;
   updateAnchoredTurnHeight();
-  void scrollMessageToTop(message.id);
+  if (!animateUser) void scrollMessageToTop(message.id);
 }
 
 function userMessageLaunchStyle(messageId: string) {
   if (
-    messageId !== animatedUserMessageId.value &&
-    messageId !== pendingAnimatedUserMessageId.value
+    messageId !== pendingAnimatedUserMessageId.value &&
+    messageId !== stagedUserMessageId.value
   ) {
     return undefined;
   }
   return {
-    '--user-message-launch-distance': `${userMessageLaunchDistance.value}px`,
+    transform: `translateY(${userMessageLaunchDistance.value}px) scale(0.95)`,
   };
+}
+
+function userMessageMotionClass(message: UIMessage) {
+  if (message.role !== 'user') return '';
+  if (message.id === animatedUserMessageId.value) {
+    return turnMode === 'bottom' ? 'user-message-enter-web' : 'user-message-enter';
+  }
+  if (message.id === stagedUserMessageId.value) return 'user-message-staged';
+  if (message.id === pendingAnimatedUserMessageId.value) return 'user-message-pending';
+  return '';
+}
+
+function isMessageHiddenDuringHandoff(messageId: string) {
+  return (
+    turnMode === 'anchor' &&
+    isEarlierMessageDuringHandoff(messages.value, messageId, pendingAnimatedUserMessageId.value)
+  );
 }
 
 function isAssistantForAnimatedTurn(message: UIMessage) {
@@ -308,7 +342,13 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     messageHeights.set(messageId, height);
     updateAnchoredTurnHeight();
   }
-  if (pendingAnimatedUserMessageId.value !== messageId) return;
+  if (
+    pendingAnimatedUserMessageId.value !== messageId ||
+    preparingAnimatedMessageIds.has(messageId)
+  ) {
+    return;
+  }
+  preparingAnimatedMessageIds.add(messageId);
 
   userMessageLaunchDistance.value = calculateMessageLaunchDistance({
     platform: systemInfo?.platform,
@@ -317,8 +357,41 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     keyboardHeight: keyboardHeight.value,
     messageHeight: height,
   });
-  pendingAnimatedUserMessageId.value = null;
-  animatedUserMessageId.value = messageId;
+
+  const beginAlignedAnimation = () => {
+    try {
+      if (pendingAnimatedUserMessageId.value !== messageId) return;
+      pendingAnimatedUserMessageId.value = null;
+      stagedUserMessageId.value = null;
+      animatedUserMessageId.value = messageId;
+    } finally {
+      preparingAnimatedMessageIds.delete(messageId);
+    }
+  };
+  const stageAlignedAnimation = () => {
+    if (pendingAnimatedUserMessageId.value !== messageId) {
+      preparingAnimatedMessageIds.delete(messageId);
+      return;
+    }
+    // Commit a real launch-position frame before changing transform. Native
+    // can register keyframe animations one display frame after the class op;
+    // a staged CSS transition avoids the target-position flash that caused.
+    stagedUserMessageId.value = messageId;
+    setTimeout(beginAlignedAnimation, 17);
+  };
+  const commitAlignment = () => {
+    if (pendingAnimatedUserMessageId.value !== messageId) {
+      preparingAnimatedMessageIds.delete(messageId);
+      return;
+    }
+    // The first timer lets the measured spacer reach Native layout. The
+    // instant scroll then gets two display frames to commit before the
+    // transform class is enabled. Do not await nextTick from layoutchange:
+    // Lynx SDK 1.4 can keep that promise pending for this commit cycle.
+    invokeScrollMessageToTop(messageId);
+    setTimeout(stageAlignedAnimation, 34);
+  };
+  setTimeout(commitAlignment, 17);
 }
 
 // The title is generated server-side before streaming starts on the first
@@ -493,18 +566,34 @@ const showIndicator = computed(
 
 const showGenerationError = computed(() => status.value === 'error' && Boolean(error.value));
 
+const assistantTurnEntranceClass = computed(() =>
+  pendingAnimatedUserMessageId.value
+    ? 'turn-handoff-hidden'
+    : animatedUserMessageId.value
+      ? 'assistant-turn-enter'
+      : '',
+);
+
 watch(showIndicator, () => {
   void nextTick().then(updateAnchoredTurnHeight);
 });
 
-const bottomSpacerHeight = computed(() =>
-  calculateBottomSpacer({
+const alignmentScrollReserve = computed(() =>
+  turnMode === 'anchor' &&
+  (showIndicator.value || pendingAnimatedUserMessageId.value === anchoredMessageId.value)
+    ? ALIGNMENT_SCROLL_RESERVE
+    : 0,
+);
+
+const bottomSpacerHeight = computed(
+  () =>
+    calculateBottomSpacer({
     composerHeight: isOwner.value ? composerHeight.value : 0,
     keyboardHeight: isOwner.value ? keyboardHeight.value : 0,
     viewportHeight: viewportHeight.value,
     anchoredTurnHeight:
       turnMode === 'anchor' && anchoredMessageId.value ? anchoredTurnHeight.value : undefined,
-  }),
+    }) + alignmentScrollReserve.value,
 );
 </script>
 
@@ -550,11 +639,8 @@ const bottomSpacerHeight = computed(() =>
             class="flex flex-col"
             :class="[
               message.role === 'user' ? 'items-end' : 'items-start',
-              message.role === 'user' && message.id === animatedUserMessageId
-                ? 'user-message-enter'
-                : message.role === 'user' && message.id === pendingAnimatedUserMessageId
-                  ? 'user-message-pending'
-                  : '',
+              userMessageMotionClass(message),
+              isMessageHiddenDuringHandoff(message.id) ? 'turn-handoff-hidden' : '',
               isAssistantForAnimatedTurn(message) ? 'assistant-turn-enter' : '',
             ]"
             :style="userMessageLaunchStyle(message.id)"
@@ -594,7 +680,7 @@ const bottomSpacerHeight = computed(() =>
           <view
             v-if="showIndicator"
             class="flex flex-row items-center gap-1.5"
-            :class="animatedUserMessageId ? 'assistant-turn-enter' : ''"
+            :class="assistantTurnEntranceClass"
           >
             <Indicator />
             <text class="text-sm text-muted shimmer-pulse">Thinking...</text>
@@ -603,7 +689,7 @@ const bottomSpacerHeight = computed(() =>
           <view
             v-if="showGenerationError"
             class="flex flex-row items-center gap-2 rounded-lg border border-default bg-muted px-3 py-2.5 generation-error"
-            :class="animatedUserMessageId ? 'assistant-turn-enter' : ''"
+            :class="assistantTurnEntranceClass"
           >
             <Icon name="i-lucide-alert-circle" tone="error" :size="16" />
             <text class="text-sm text-muted flex-1" text-maxline="2">
