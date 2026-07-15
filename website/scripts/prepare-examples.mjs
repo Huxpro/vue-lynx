@@ -218,10 +218,14 @@ const needsBuild = examples.some((example) =>
 );
 
 if (needsBuild) {
-  // Examples depend on vue-lynx (workspace:*), so build the lib first if needed
-  const libBuilt = fs.existsSync(path.join(REPO_ROOT, 'plugin/dist/index.js'));
+  // Examples depend on vue-lynx (and examples/genui on vue-lynx-genui), so
+  // build the workspace libs first if needed. Root `pnpm build` covers both.
+  const libBuilt =
+    fs.existsSync(
+      path.join(REPO_ROOT, 'packages/vue-lynx/plugin/dist/index.js'),
+    ) && fs.existsSync(path.join(REPO_ROOT, 'packages/genui/dist/index.js'));
   if (!libBuilt) {
-    console.info('Building vue-lynx library (required by examples)...');
+    console.info('Building workspace libraries (required by examples)...');
     execSync('pnpm build', { cwd: REPO_ROOT, stdio: 'inherit' });
   }
 
