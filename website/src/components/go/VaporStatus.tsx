@@ -109,7 +109,6 @@ export function VaporStatus({
       aria-label={`${entry}: ${label}${description}`}
       title={title}
     >
-      <span className="vapor-status__dot" aria-hidden="true" />
       <span className="vapor-status__label">{label}</span>
       {description && <span className="vapor-status__reason">{description}</span>}
     </Tag>

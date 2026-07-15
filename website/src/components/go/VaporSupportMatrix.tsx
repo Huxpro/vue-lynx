@@ -128,7 +128,6 @@ export function VaporSupportMatrix() {
                       data-render-mode={isSupported ? 'vapor' : 'vdom'}
                       data-vapor-status={vapor.disposition}
                     >
-                      <span className="vapor-status__dot" aria-hidden="true" />
                       <span className="vapor-status__label">
                         {isSupported ? t.supported : t.unsupported}
                       </span>
