@@ -104,6 +104,12 @@ export const ZH = {
   'keyboard avoidance': '键盘回避',
   'send motion': '发送动效',
   'MTS pressables': 'MTS 按压反馈',
+  'One native event. One setNativeProps. No viewport hacks.':
+    '一个原生事件,一次 <code>setNativeProps</code>。没有任何视口 hack。',
+  "Send isn't an animation — it's a handoff, choreographed in frames.":
+    '发送不是一段动画 —— 是一次按显示帧编排的<em>接力</em>。',
+  'earlier turns stay masked until the motion starts':
+    '动画启动之前,先前的对话保持遮蔽',
   'III · Case 2 · Elk': 'III · 案例二 · Elk',
   'Elk — a production-scale fork.':
     'Elk —— 一次<span class="brand-text">生产级规模</span>的 fork。',
@@ -313,61 +319,65 @@ export const ZH_NOTES = [
   // 33 AI Chat unchanged
   `<p><strong>不变的部分。</strong>这是 Nuxt 官方 AI Chatbot 模板,逐特性移植:流式 + 思维链、markdown + 代码高亮、天气/图表工具卡片、历史、投票、编辑、主题。里面的 Vue —— 组件、composable、store —— 才是重点:<strong>它们毫无波澜地搬了过来。</strong></p>`,
   // 34 AI Chat native
-  `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
-  // 35 Elk unchanged
+  `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
+  // 35 AI Chat · 键盘代码
+  `<p><strong>键盘,用代码讲。</strong>Lynx 把平台键盘作为一等事件暴露出来,连高度一起给你;输入区用一次 <code>setNativeProps</code> 变换、按原生曲线(入 0.3s、出 0.1s)跟着键盘走。键盘高度还同时喂给发射距离计算和底部 spacer。</p><p><strong>要落的对比:</strong>v0 iOS 团队描述过一个约 1000 行的 <code>useKeyboardAwareMessageList</code> hook,要同时对付六种键盘行为才能让 RN 有原生手感。这里平台直接把事件递到手上 —— 整个 composable 不到 60 行。</p>`,
+  // 36 AI Chat · 发送解剖
+  `<p><strong>发送的解剖(已合入 PR #212)。</strong>两个原生现实决定了这套编排:气泡动之前列表必须先重置滚动;而 Lynx 可能在 class 变更后一个显示帧才注册 keyframe 动画 —— 天真写法要么闪 34–51ms 的上一轮对话,要么气泡在终点闪现。</p><p>所以发送是一次显式接力:① 先前的轮次和 Thinking 行先遮蔽,列表<em>瞬时</em>对齐(<code>behavior: none</code> —— 过渡由气泡提供,不由滚动器提供);② 气泡在测得的发射变换上(<code>translateY(distance) scale(0.95)</code>,距离感知键盘、夹在 44–420px)先落一个真实帧;③ 再用单向 CSS <em>transition</em> 飞到位,旧内容恢复到视口上方。连空的 assistant 壳的 9⅓px 原生底高都被预留,保证流式期间最大滚动稳定。</p><p>逐帧验证过 —— 15fps contact sheet,无鬼影、无闪现、无落点修正。</p>`,
+  // 37 Elk unchanged
   `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
-  // 36 Elk gestures
+  // 38 Elk gestures
   `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>下一步</strong>(也是贡献切入点):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
-  // 37 Divider IV · How we did it
+  // 39 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
-  // 38 A1 · Vue 落在后台线程
+  // 40 A1 · Vue 落在后台线程
   `<p><strong>第一个决定:Vue 住哪条线程?</strong>早期社区实验把 Vue 放在主线程 —— 于是每个事件都要跨线程转发。而 Lynx 原生就把事件送到后台线程,所以我们把整个运行时放在这里:响应式、diff、生命周期、你的回调。不是 fork —— 是原封不动的 <code>@vue/runtime-core</code>。</p>`,
-  // 39 A2 · ShadowElement
+  // 41 A2 · ShadowElement
   `<p><strong>Vue 官方的自定义渲染器 API 就是全部诀窍。</strong><code>createRenderer()</code> 要求同步的节点 —— <code>parentNode()</code>、<code>nextSibling()</code> 必须立刻有答案,但真实元素在另一条线程上。所以 nodeOps 双写:在后台线程维护一棵轻量 <em>ShadowElement</em> 链表(满足 Vue 的所有同步读取),同时把真正的工作排进队列。和 ReactLynx 的 snapshot instance 是同一个 pattern。</p>`,
-  // 40 A3 · ops 缓冲
+  // 42 A3 · ops 缓冲
   `<p><strong>唯一跨过线程边界的,是数据。</strong><code>[CREATE, id, tag, INSERT, parent, child, SET_PROP, id, key, value…]</code> —— 只有数字和字符串,没有对象要序列化,没有函数。按 Vue 自己的 flush 周期批处理:一个响应式 tick = 一次发送。Vue 编译器还白送一层:静态内容零 ops,只有动态绑定在路上跑。</p>`,
-  // 41 A4 · 解释器 + PAPI
+  // 43 A4 · 解释器 + PAPI
   `<p><strong>这里就是 Lynx 框架无关的那条缝,凑近看。</strong>主线程跑一个小解释器 —— 字面意义上的 switch 循环 —— 把 ops 重放到 <em>Element PAPI</em> 上:<code>__CreateView</code>、<code>__AppendElement</code>、<code>__SetAttribute</code>……这套 C 风格 API 是 Lynx 给每个框架的合同;ReactLynx 在喂它,我们在喂它,下一个框架也会。VDOM → ShadowElement → ops → PAPI:四站,一条直线。</p>`,
-  // 42 A5 · 事件回程
+  // 44 A5 · 事件回程
   `<p><strong>回程闭环。</strong>函数不能跨线程,所以它们从来不跨:每个回调注册一个数字 <em>sign</em>;主线程派发 sign,后台线程查表,就地调用你的 Vue 函数 —— 闭包、响应式,全都还在原地。这就是 Vue 语义得以保全的原因:真正要紧的东西从来没离开过。</p>`,
-  // 43 A6 · nextTick
+  // 45 A6 · nextTick
   `<p><strong>用户能感觉到多少?几乎为零。</strong>唯一可见的接缝:原生元素在 mount 之后一拍才落地,所以"等 DOM"写成 <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> —— 和 Web Vue 同一个 <code>nextTick</code> 心智模型,只是跨了一条线程。这张图绕一圈,<em>就是</em>一个 tick。其余一切 —— 响应式、生命周期、组合式函数 —— 行为和 Web 完全一致。(文档:Understanding the Dual-Thread Model。)</p>`,
-  // 44 A7 · 上游测试
+  // 46 A7 · 上游测试
   `<p><strong>"语义保全"是可测量的命题。</strong>我们把 <code>vuejs/core</code> 的测试套件搬进仓库,在两层上对着 Vue Lynx 跑:一层用我们真实的 ShadowElement 链表垫在 <code>@vue/runtime-test</code> 下面(验证完整渲染器合同 —— keyed diff、LIS、fragment、生命周期);另一层 runtime-dom 把 <code>patchProp → ops → applyOps → PAPI</code> 推进 jsdom。1013 个通过 882,131 个 skip 全部有记录,零失败。</p>`,
-  // 45 A8 · 测试是 AI 的眼睛
+  // 47 A8 · 测试是 AI 的眼睛
   `<p><strong>测试的 AI-harness 一面。</strong>我们还做了 <code>vue-lynx-testing-library</code> —— <code>render</code>、<code>fireEvent</code>、<code>getByText</code>,双线程被 <code>@lynx-js/testing-environment</code> 抽象掉 —— 组件行为在普通 vitest 里就能断言。对人来说这是卫生习惯;对 AI harness 来说这是<em>感知</em>:红绿就是 agent 知道自己刚才做了什么的方式。上游套件,就是让两周生成代码保持诚实的 reward signal。</p>`,
-  // 46 B1 · 一个 bundle 两个世界
+  // 48 B1 · 一个 bundle 两个世界
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
-  // 47 B2 · 同一份代码进两次
+  // 49 B2 · 同一份代码进两次
   `<p><strong>两个入口都 import 你的真实应用。</strong>每个入口在一个 webpack <em>layer</em> 下编译 —— <code>vue:background</code> 和 <code>vue:main-thread</code> —— <code>issuerLayer</code> 规则给每层各自的 loader 链:BG 侧编译完整 SFC;MT 侧只抽取主线程需要的部分。逐 entry 的隔离,是 webpack 依赖图白送的。(这套 layer 方案我们是从 ReactLynx 学来的 —— 第一版扁平 bundle 架构隔离不了多入口应用。)</p>`,
-  // 48 B3 · 插件而非编译器
+  // 50 B3 · 插件而非编译器
   `<p><strong>复用故事的工具链篇。</strong>Lynx 的工具链(Rspeedy)就是 Rspack/Rsbuild —— 而 Vue 生态本来就跑在 Rspack 上,所以整条 SFC 流水线是现成的:<code>rspack-vue-loader</code>、PostCSS、HMR。<code>pluginVueLynx()</code> 是一层薄适配:把入口拆成两个 layer、接上 worklet loader、配好 CSS —— 表面积就这么大。框架无关不是口号,是用"我们只需要写多少"来度量的。</p>`,
-  // 49 B4 · CSS 就是 CSS
+  // 51 B4 · CSS 就是 CSS
   `<p><strong>整章样式能力背后安静的超能力:</strong>Lynx 在原生侧带了真正的 CSS 引擎 —— 选择器、级联、动画。所以 <code>&lt;style scoped&gt;</code> 映射到 Lynx 的 cssId 作用域,CSS Modules 和外链样式直接透传,CSS 里的 <code>v-bind()</code> 骑在 CSS 变量上,Tailwind 能跑是因为 PostCSS 就是 PostCSS。没有 StyleSheet 对象方言,没有会漏的翻译层。</p>`,
-  // 50 C1 · 手势为什么会迟
+  // 52 C1 · 手势为什么会迟
   `<p><strong>先诚实讲代价,再卖回报。</strong>普通写法的滚动跟随动画:事件在主线程触发,跳去后台跑你的回调,产生的 ops 再跳回来 —— 手势的每一帧背后是两次跨线程。页面一忙,肉眼可见地迟。这是双线程架构唯一收费的地方。</p>`,
-  // 51 C2 · 函数换线程
+  // 53 C2 · 函数换线程
   `<p><strong>看方块移动。</strong>把 <code>'main thread'</code> 写成函数第一行,编译器就把这个函数搬进主线程 bundle —— 它从此同步运行在事件发生的地方,直接访问元素。组件的其余部分还是普通 Vue。又是渐进增强的形状:双线程的回报留着,代价变成按函数粒度的可选项。</p>`,
-  // 52 C3 · 代码样例
+  // 54 C3 · 代码样例
   `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p>`,
-  // 53 C4 · 教程复刻
+  // 55 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
-  // 54 C5 · 复用与开放的 API 空间
+  // 56 C5 · 复用与开放的 API 空间
   `<p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
-  // 55 H1 · 2 weeks
+  // 57 H1 · 2 weeks
   `<p><strong>现在这个数字说得通了。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。</p>`,
-  // 56 H2 · X 复盘
+  // 58 H2 · X 复盘
   `<p><strong>让观众把手机对准这页。</strong>完整方法论写在 X 上 —— harness 怎么搭、plan 长什么样、AI 在哪儿失手、测试怎么接住的。vue.lynxjs.org 首页的 badge 也链着它。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
-  // 57 Combine
+  // 59 Combine
   `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿,让等式落地。然后:"也很希望大家来一起把它做成。"</p>`,
-  // 58 Divider V · close
+  // 60 Divider V · close
   `<p><strong>转向请求。</strong>项目是真的,但需要社区。架构很稳;Vue 的表面积很大。</p>`,
-  // 59 Ask
+  // 61 Ask
   `<p>落在这句上 —— <em>"原生,不该是另一个团队的事。"</em>这是你想让他们记住的一句。</p>`,
-  // 60 What's there / open
+  // 62 What's there / open
   `<p>左边 = 今天就能用、可以做生产探索的。右边 = 贡献者能发力的地方 —— 第三章里 Elk 的 view pager,就在这个清单上。</p>`,
-  // 61 Try
+  // 63 Try
   `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p>`,
-  // 62 Thank you
+  // 64 Thank you
   `<p><strong>收尾。</strong>感谢,邀请提问,停在这页做 Q&amp;A。</p><p>"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— Lynx 跨平台,同一产物两端都跑。</p>`,
 ];
