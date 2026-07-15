@@ -171,6 +171,7 @@ A few Lynx-specific translations happen along the way:
 | Template HTML strings (`template("<view class=…>")`) | Parsed by a built-in parser into inert prototypes; cloned per instance |
 | Document-level event delegation | Compiled away (`eventDelegation: false`); events register per element |
 | `@tap.stop` | Native `catchEvent` (Lynx's stop-propagation) |
+| `:bindtap` / `:catchtap` / `:global-bind*` props | Routed to native Lynx event registration (same handling as vdom mode), including fallthrough onto a child component's root |
 | `v-model` on `<input>` | Lynx `input` / `confirm` (`.lazy`) events carrying `detail.value` |
 | Scoped CSS `data-v-*` attributes | Composable scope **classes** (the build rewrites `[data-v-*]` selectors to class selectors; same mechanism as vdom mode) |
 
