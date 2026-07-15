@@ -47,6 +47,32 @@ describe('native-first chat motion', () => {
     );
   });
 
+  it('aligns the Native turn before starting the bubble animation', async () => {
+    const chatPage = await source('src/pages/ChatPage.vue');
+    const layoutHandler = chatPage.match(
+      /function handleMessageLayout[\s\S]*?\n}\n\n\/\/ The title/,
+    )?.[0];
+
+    expect(chatPage).toMatch(
+      /scrollIntoViewOptions:\s*\{[\s\S]*?block:\s*'start'[\s\S]*?behavior:\s*'none'/,
+    );
+    expect(chatPage).not.toMatch(
+      /scrollIntoViewOptions:\s*\{[\s\S]*?behavior:\s*'smooth'/,
+    );
+    expect(chatPage).toContain('setTimeout(commitAlignment, 17)');
+    expect(chatPage).toContain('setTimeout(beginAlignedAnimation, 34)');
+    expect(chatPage).toMatch(/if \(!animateUser\) void scrollMessageToTop\(message\.id\)/);
+    expect(layoutHandler).toBeDefined();
+    expect(layoutHandler).toMatch(/invokeScrollMessageToTop\(messageId\)/);
+    expect(layoutHandler).toMatch(
+      /const commitAlignment[\s\S]*?invokeScrollMessageToTop\(messageId\);\s*setTimeout\(beginAlignedAnimation, 34\)/,
+    );
+    expect(chatPage).toContain('const ALIGNMENT_SCROLL_RESERVE = 28 / 3');
+    expect(chatPage).toMatch(
+      /calculateBottomSpacer\([\s\S]*?\) \+ alignmentScrollReserve\.value/,
+    );
+  });
+
   it('reveals streamed semantic blocks without replaying loaded history', async () => {
     const markdown = await source('src/components/chat/MarkdownView.vue');
     const content = await source('src/components/chat/message/MessageContent.vue');

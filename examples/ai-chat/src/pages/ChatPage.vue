@@ -96,6 +96,11 @@ interface TouchLikeEvent {
   detail?: { touches?: TouchPoint[] };
 }
 
+// Streaming first mounts an empty assistant shell whose Native minimum
+// footprint is 9⅓ CSS px before its measured height reaches Vue. Matching
+// that shell exactly keeps max scroll stable across the streaming handoff.
+const ALIGNMENT_SCROLL_RESERVE = 28 / 3;
+
 const systemInfo = (
   globalThis as {
     SystemInfo?: { pixelHeight?: number; pixelRatio?: number; platform?: string };
@@ -117,6 +122,7 @@ const anchoredTurnHeight = ref(0);
 const followsOutput = ref(true);
 const webScrollOffset = ref<number>();
 const messageHeights = new Map<string, number>();
+const preparingAnimatedMessageIds = new Set<string>();
 let scrollTop = 0;
 let scrollHeight = 0;
 let scrollDragStartY: number | null = null;
@@ -169,8 +175,7 @@ async function scrollToBottom(smooth = false) {
     .exec();
 }
 
-async function scrollMessageToTop(messageId: string) {
-  await nextTick();
+function invokeScrollMessageToTop(messageId: string) {
   if (typeof lynx === 'undefined') return;
   lynx
     .createSelectorQuery()
@@ -181,11 +186,18 @@ async function scrollMessageToTop(messageId: string) {
         scrollIntoViewOptions: {
           block: 'start',
           inline: 'start',
-          behavior: 'smooth',
+          // The bubble already supplies the transition. A second scroll
+          // animation leaves the previous turn visible until it catches up.
+          behavior: 'none',
         },
       },
     })
     .exec();
+}
+
+async function scrollMessageToTop(messageId: string) {
+  await nextTick();
+  invokeScrollMessageToTop(messageId);
 }
 
 function updateAnchoredTurnHeight() {
@@ -202,7 +214,8 @@ function updateAnchoredTurnHeight() {
     0,
   );
   height += Math.max(0, anchoredMessages.length - 1) * 24;
-  if (showIndicator.value) height += 48;
+  // Reserve the imminent thinking row before status catches up.
+  if (showIndicator.value || pendingAnimatedUserMessageId.value === anchorId) height += 48;
   anchoredTurnHeight.value = Math.max(84, height);
 }
 
@@ -224,7 +237,7 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
   pendingAnimatedUserMessageId.value = animateUser ? message.id : null;
   animatedUserMessageId.value = null;
   updateAnchoredTurnHeight();
-  void scrollMessageToTop(message.id);
+  if (!animateUser) void scrollMessageToTop(message.id);
 }
 
 function userMessageLaunchStyle(messageId: string) {
@@ -308,7 +321,13 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     messageHeights.set(messageId, height);
     updateAnchoredTurnHeight();
   }
-  if (pendingAnimatedUserMessageId.value !== messageId) return;
+  if (
+    pendingAnimatedUserMessageId.value !== messageId ||
+    preparingAnimatedMessageIds.has(messageId)
+  ) {
+    return;
+  }
+  preparingAnimatedMessageIds.add(messageId);
 
   userMessageLaunchDistance.value = calculateMessageLaunchDistance({
     platform: systemInfo?.platform,
@@ -317,8 +336,29 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     keyboardHeight: keyboardHeight.value,
     messageHeight: height,
   });
-  pendingAnimatedUserMessageId.value = null;
-  animatedUserMessageId.value = messageId;
+
+  const beginAlignedAnimation = () => {
+    try {
+      if (pendingAnimatedUserMessageId.value !== messageId) return;
+      pendingAnimatedUserMessageId.value = null;
+      animatedUserMessageId.value = messageId;
+    } finally {
+      preparingAnimatedMessageIds.delete(messageId);
+    }
+  };
+  const commitAlignment = () => {
+    if (pendingAnimatedUserMessageId.value !== messageId) {
+      preparingAnimatedMessageIds.delete(messageId);
+      return;
+    }
+    // The first timer lets the measured spacer reach Native layout. The
+    // instant scroll then gets two display frames to commit before the
+    // transform class is enabled. Do not await nextTick from layoutchange:
+    // Lynx SDK 1.4 can keep that promise pending for this commit cycle.
+    invokeScrollMessageToTop(messageId);
+    setTimeout(beginAlignedAnimation, 34);
+  };
+  setTimeout(commitAlignment, 17);
 }
 
 // The title is generated server-side before streaming starts on the first
@@ -497,14 +537,22 @@ watch(showIndicator, () => {
   void nextTick().then(updateAnchoredTurnHeight);
 });
 
-const bottomSpacerHeight = computed(() =>
-  calculateBottomSpacer({
+const alignmentScrollReserve = computed(() =>
+  turnMode === 'anchor' &&
+  (showIndicator.value || pendingAnimatedUserMessageId.value === anchoredMessageId.value)
+    ? ALIGNMENT_SCROLL_RESERVE
+    : 0,
+);
+
+const bottomSpacerHeight = computed(
+  () =>
+    calculateBottomSpacer({
     composerHeight: isOwner.value ? composerHeight.value : 0,
     keyboardHeight: isOwner.value ? keyboardHeight.value : 0,
     viewportHeight: viewportHeight.value,
     anchoredTurnHeight:
       turnMode === 'anchor' && anchoredMessageId.value ? anchoredTurnHeight.value : undefined,
-  }),
+    }) + alignmentScrollReserve.value,
 );
 </script>
 
