@@ -1,4 +1,5 @@
-import { Badge, Tab, Tabs } from '@theme';
+import { Badge } from '@theme';
+import { ModeTabs, ModeTab } from '../../src/components/go/ModeTabs';
 
 # Vapor Mode <Badge text="Experimental" type="warning" />
 
@@ -31,10 +32,11 @@ pages and visits, and every supported example on this site follows it.
 
 Vapor is a **per-app, build-time decision**. Switching an app over touches
 three places — the plugin flag, the entry import, and the `vapor` attribute
-on each component:
+on each component. The tabs below follow the site's renderer switch (and
+drive it — one preference, two handles):
 
-<Tabs>
-  <Tab label="Vapor">
+<ModeTabs>
+  <ModeTab mode="vapor">
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -70,8 +72,8 @@ const count = ref(0)
 </template>
 ```
 
-  </Tab>
-  <Tab label="VDOM (default)">
+  </ModeTab>
+  <ModeTab mode="vdom">
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -103,8 +105,8 @@ const count = ref(0)
 </template>
 ```
 
-  </Tab>
-</Tabs>
+  </ModeTab>
+</ModeTabs>
 
 Inside components nothing else changes: `import { ref } from 'vue'` keeps
 working because the plugin aliases `'vue'` to the entry that matches your
@@ -193,52 +195,33 @@ thread boundary in Vapor mode vs **17,000 ops / 327 KB** in vdom mode.
 
 ## Performance
 
-Measured with a port of Vue's official benchmark
-(js-framework-benchmark-derived) running production builds on Lynx for Web —
-full methodology, caveats, and raw data on the
-[VDOM vs Vapor benchmark](/guide/benchmark-vapor) page. The short version:
+The headline: update-path operations run **5.8–9.8× faster on the
+background thread** (2.1–6.3× end-to-end), creation is at parity, and
+cross-thread traffic roughly halves — at the cost of +26% bundle (gzip).
+Full methodology, raw data, and caveats:
 
-| Dimension | Vapor vs VDOM |
-|---|---|
-| Update-path ops (update / select / swap / remove) | **5.8–9.8× faster** on the background thread, 2.1–6.3× end-to-end |
-| List creation (1k / 10k rows) | Parity (within ~±10% end-to-end) |
-| Cross-thread traffic (create 1k rows) | **2.4× fewer ops, −51% bytes** |
-| Bundle size (gzip) | +26% (49.3 vs 39.2 KB) — the Vapor runtime + DOM-compat layer |
-| First screen | +3% (CIs overlap — effectively parity) |
-
-Update-path wins are structural — no vnode allocation, no diffing, writes go
-straight from reactive effects to ops — and independent of the rendering
-engine, so they are expected to hold on native devices.
+- [VDOM vs Vapor benchmark](/guide/benchmark-vapor) — Vue's official
+  benchmark ported to Lynx, both modes head-to-head
+- [Playground: React vs Vue](/guide/benchmark-playground) — cross-framework
+  comparison you can run on your own phone, including Vapor
 
 ## API surface of `vue-lynx/vapor-app`
 
-The Vapor entry exports everything a Vapor app needs (full listing in the
-[`vue-lynx/vapor-app` API reference](/guide/api/vapor-app/)):
-
-| Category | APIs |
-|---|---|
-| Reactivity & composition (from Vue) | `ref`, `reactive`, `computed`, `watch`, `watchEffect`, `provide`/`inject`, lifecycle hooks (`onMounted`, …), `effectScope`, `defineComponent`, `defineAsyncComponent`, and the other standard `@vue/runtime-core` APIs |
-| SFC macros | `defineProps`, `defineEmits`, `defineModel`, `defineExpose`, `useTemplateRef` (compiler-handled, typed via the entry) |
-| Vapor runtime helpers | The full `@vue/runtime-vapor` helper surface that compiled `<script setup vapor>` code imports (`template`, `createComponent`, `createFor`, `createIf`, `renderEffect`, …) — you rarely touch these directly |
-| Lynx utilities | `nextTick` (resolves after the Main Thread applies the update — same [tick semantics](/guide/introduction#understanding-the-dual-thread-model) as vdom mode), `useCssModule`, `withModifiers` / `withKeys`, `MainThreadRef` / `useMainThreadRef`, `runOnMainThread` / `runOnBackground` ([Main Thread Script](/guide/main-thread-script) works identically in Vapor mode) |
-
-Intentionally **absent** (importing them is a build-time error):
-
-- `h()` / `render()` — vdom-only; Vapor components compile to direct element code
-- `<Transition>`, `<TransitionGroup>`, `<Teleport>`, `<KeepAlive>`,
-  `<Suspense>` — not yet implemented by upstream Vapor
-- `vShow` / `vModelText` objects — Vapor compiles `v-show` / `v-model`
-  differently; the directives work in templates, only the manual imports are gone
-- `vaporInteropPlugin` — mixing modes is not supported (throws with an
-  explanatory error)
+The Vapor entry exports everything a Vapor app imports from `'vue'` — the
+standard Vue APIs, SFC macros, Lynx utilities, and the Vapor helper
+surface — while vdom-only APIs (`h()`, `<Transition>`, `<Teleport>`, …)
+are intentionally absent and fail at build time. See the
+[`vue-lynx/vapor-app` API reference](/guide/api/vapor-app/) for the full
+listing and what's excluded.
 
 ## Verified example matrix
 
 Every example on this site is verified against both renderers, and the site
-itself is the demo: on pages with live examples, the `VDOM | Vapor` toggle
-in the nav switches every supported example, each example's footer badge
-shows which renderer is actually live, and the nav shows the page's Vapor
-coverage when some examples fall back. The matrix below is generated from
+itself is the demo: the nav's `VDOM | Vapor` switch flips every supported
+example and code tab (it dims on pages with nothing to switch), each
+example's footer badge shows which renderer is actually live, and the nav
+shows the page's Vapor coverage when some examples fall back. The matrix
+below is generated from
 the machine-readable verification output (`examples/vapor-support.json`,
 which also records source hashes and per-entry evidence) — unsupported
 reason codes correspond to the [limitations](#current-limitations) below.

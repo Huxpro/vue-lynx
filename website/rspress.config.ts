@@ -143,8 +143,6 @@ export default defineConfig({
         {
           sectionHeaderText: 'Benchmark',
         },
-        { text: 'Playground: React vs Vue', link: '/guide/benchmark-playground' },
-        { text: 'VDOM vs Vapor', link: '/guide/benchmark-vapor' },
         { text: 'TodoMVC', link: '/guide/todomvc' },
         { text: '7GUIs', link: '/guide/7guis' },
         { text: 'HackerNews', link: '/guide/hackernews' },
@@ -188,8 +186,6 @@ export default defineConfig({
         {
           sectionHeaderText: '基准测试',
         },
-        { text: 'Playground：React vs Vue', link: '/zh/guide/benchmark-playground' },
-        { text: 'VDOM vs Vapor', link: '/zh/guide/benchmark-vapor' },
         { text: 'TodoMVC', link: '/zh/guide/todomvc' },
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },

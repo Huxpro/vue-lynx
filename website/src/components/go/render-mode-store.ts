@@ -8,12 +8,14 @@ interface VaporEntry {
 
 type Listener = () => void;
 
-/** Aggregate view of the <Go> examples mounted on the current page. */
+/** Aggregate view of the mode-aware content mounted on the current page. */
 export interface ExampleCensus {
   /** Examples currently mounted (with loaded metadata). */
   total: number;
   /** Of those, how many can actually render with Vapor. */
   vaporSupported: number;
+  /** Mode-aware code-tab groups (<ModeTabs>) currently mounted. */
+  tabGroups: number;
 }
 
 export interface RenderModeBrowser {
@@ -35,17 +37,23 @@ export interface RenderModeStore {
   setMode(mode: RenderMode): void;
   /**
    * Announce a mounted example (call from an effect; the returned cleanup
-   * unregisters it). The nav control renders only while at least one
-   * example is registered, so it never appears on pages without examples.
+   * unregisters it). Feeds the nav control's coverage chip and its
+   * dormant/active state.
    */
   registerExample(vaporSupported: boolean): () => void;
+  /** Announce a mounted <ModeTabs> group (same lifecycle contract). */
+  registerModeTabs(): () => void;
   getExampleCensus(): ExampleCensus;
   getServerExampleCensus(): ExampleCensus;
   destroy(): void;
 }
 
 const STORAGE_KEY = 'vue-lynx:go-mode';
-const EMPTY_CENSUS: ExampleCensus = Object.freeze({ total: 0, vaporSupported: 0 });
+const EMPTY_CENSUS: ExampleCensus = Object.freeze({
+  total: 0,
+  vaporSupported: 0,
+  tabGroups: 0,
+});
 
 function parseMode(value: string | null | undefined): RenderMode | undefined {
   return value === 'vapor' || value === 'vdom' ? value : undefined;
@@ -86,6 +94,7 @@ export function createRenderModeStore(browser?: RenderModeBrowser): RenderModeSt
     ?? 'vdom';
   const listeners = new Set<Listener>();
   const examples = new Map<symbol, boolean>();
+  const tabGroups = new Set<symbol>();
   let census: ExampleCensus = EMPTY_CENSUS;
 
   const notify = () => {
@@ -97,9 +106,9 @@ export function createRenderModeStore(browser?: RenderModeBrowser): RenderModeSt
     for (const supported of examples.values()) {
       if (supported) vaporSupported += 1;
     }
-    census = examples.size === 0
+    census = examples.size === 0 && tabGroups.size === 0
       ? EMPTY_CENSUS
-      : { total: examples.size, vaporSupported };
+      : { total: examples.size, vaporSupported, tabGroups: tabGroups.size };
     notify();
   };
 
@@ -147,12 +156,22 @@ export function createRenderModeStore(browser?: RenderModeBrowser): RenderModeSt
         recount();
       };
     },
+    registerModeTabs() {
+      const key = Symbol('mode-tabs');
+      tabGroups.add(key);
+      recount();
+      return () => {
+        tabGroups.delete(key);
+        recount();
+      };
+    },
     getExampleCensus: () => census,
     getServerExampleCensus: () => EMPTY_CENSUS,
     destroy() {
       browser?.removeEventListener('popstate', syncFromLocation);
       listeners.clear();
       examples.clear();
+      tabGroups.clear();
       census = EMPTY_CENSUS;
     },
   };

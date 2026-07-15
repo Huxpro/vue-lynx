@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useLang } from '@rspress/core/runtime';
+import { useLang, usePageData } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
@@ -242,13 +242,16 @@ function Layout({
   ...props
 }: Parameters<typeof BaseLayout>[0]) {
   const locale = useLang().startsWith('zh') ? 'zh' : 'en';
+  const { page } = usePageData();
 
   return (
     <BaseLayout
       {...props}
       beforeNavMenu={(
         <>
-          <GoModeNavIndicator locale={locale} />
+          {/* Persistent on every doc page (dormant when the page has no
+              mode-aware content); the marketing home page keeps its nav clean. */}
+          {page.pageType !== 'home' && <GoModeNavIndicator locale={locale} />}
           {beforeNavMenu}
         </>
       )}
