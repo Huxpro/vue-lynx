@@ -38,11 +38,12 @@
   white-space: nowrap;
 }
 
-/* A single labeled switch: VDOM is simply "off". */
+/* A single labeled switch: VDOM is simply "off". The mode name lives in
+   the track's empty space — "VDOM" right of the knob when off, "Vapor" left
+   of it (on the moving gradient) when on. */
 .go-mode-nav-control__switch {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   padding: 4px 0;
   border: 0;
   background: transparent;
@@ -55,41 +56,18 @@
 .go-mode-nav-control__switch:focus-visible {
   outline: 2px solid var(--rp-c-brand);
   outline-offset: 2px;
-  border-radius: 6px;
-}
-
-.go-mode-nav-control__name {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: var(--rp-c-text-2);
-  transition: color 200ms ease-out;
-}
-
-@media (hover: hover) {
-  .go-mode-nav-control__switch:hover .go-mode-nav-control__name {
-    color: var(--rp-c-text-1);
-  }
-}
-
-/* When on, the name picks up the hero's moving gradient text. */
-.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__name {
-  @include vapor-gradient;
-
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  font-weight: 600;
+  border-radius: 999px;
 }
 
 .go-mode-nav-control__track {
   position: relative;
-  display: inline-block;
-  width: 28px;
-  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  width: 62px;
+  height: 18px;
   flex: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--rp-c-text-3) 28%, transparent);
+  background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
   transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
 }
@@ -100,12 +78,43 @@
   box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
 }
 
+/* Mode name in the free half of the track. Absolute so the knob's motion
+   and the label swap can't nudge the layout. */
+.go-mode-nav-control__mode {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  left: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--rp-c-text-2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 200ms ease-out;
+}
+
+@media (hover: hover) {
+  .go-mode-nav-control__switch:hover .go-mode-nav-control__mode {
+    color: var(--rp-c-text-1);
+  }
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__mode {
+  right: 22px;
+  left: 8px;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+}
+
 .go-mode-nav-control__knob {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
@@ -113,7 +122,7 @@
 }
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
-  transform: translateX(12px);
+  transform: translateX(44px);
 }
 
 /* "2/3" chip: shown only when Vapor is selected but some examples on the
@@ -407,14 +416,13 @@ button.vapor-status:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .go-mode-nav-control__name,
+  .go-mode-nav-control__mode,
   .go-mode-nav-control__track,
   .go-mode-nav-control__knob,
   button.vapor-status {
     transition: none;
   }
 
-  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__name,
   .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track,
   .vapor-status[data-render-mode='vapor'],
   .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {

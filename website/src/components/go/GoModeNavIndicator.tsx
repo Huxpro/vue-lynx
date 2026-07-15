@@ -59,8 +59,8 @@ export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavCo
         className="go-mode-nav-control__switch"
         onClick={() => onSelect(on ? 'vdom' : 'vapor')}
       >
-        <span className="go-mode-nav-control__name">Vapor</span>
         <span className="go-mode-nav-control__track" aria-hidden="true">
+          <span className="go-mode-nav-control__mode">{on ? 'Vapor' : 'VDOM'}</span>
           <span className="go-mode-nav-control__knob" />
         </span>
       </button>
