@@ -447,7 +447,7 @@ it('main thread script', () => {
 ```
 
 :::info
-在生产环境中，`'main thread'` 指令函数会被构建插件转换为 MTS 上下文对象。在测试中，你可以像上面所示直接传递 MTS 上下文，或者如果你的 Vitest 配置包含了 MTS 加载器，也可以使用 SWC 转换。
+在生产环境中，`'main thread'` 指令函数会被构建插件转换为 worklet 上下文对象（worklet 是 Lynx 引擎内部对编译后的主线程脚本函数的称呼）。在测试中，你可以像上面所示直接传递 worklet 上下文，或者如果你的 Vitest 配置包含了 worklet 加载器，也可以使用 SWC 转换。
 :::
 
 ### 更多用法

@@ -447,7 +447,7 @@ it('main thread script', () => {
 ```
 
 :::info
-In production, `'main thread'` directive functions are transformed by the build plugin into MTS context objects. In tests, you can pass the MTS context directly as shown above, or use the SWC transform if your Vitest config includes the MTS loader.
+In production, `'main thread'` directive functions are transformed by the build plugin into worklet context objects (*worklet* is the Lynx engine's internal term for a compiled Main Thread Script function). In tests, you can pass the worklet context directly as shown above, or use the SWC transform if your Vitest config includes the worklet loader.
 :::
 
 ### More usage

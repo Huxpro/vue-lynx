@@ -330,20 +330,20 @@ Lynx 最大的特点是其双线程架构。你可以在 [JavaScript 运行时](
 
 ## 更灵敏的滚动条
 
-为了优化滚动条的性能，我们需要引入[主线程脚本（MTS）](/zh/guide/main-thread-script)来[在主线程上处理事件](https://lynxjs.org/next/guide/interaction/event-handling.html#main-thread-event-processing)，将我们在上一步中对滚动条高度和位置的调整从后台线程迁移到主线程。
+为了优化滚动条的性能，我们需要引入[主线程脚本](/zh/guide/main-thread-script)来[在主线程上处理事件](https://lynxjs.org/next/guide/interaction/event-handling.html#main-thread-event-processing)，将我们在上一步中对滚动条高度和位置的调整从后台线程迁移到主线程。
 
 为了让你更清楚地看到对比，我们保留了两个滚动条：
 
 <Go example="gallery" defaultFile="src/GalleryScrollbarCompare/Gallery.vue" entry="src/GalleryScrollbarCompare" defaultEntryName="GalleryScrollbarCompare" />
 
-MTS 滚动条使用 `:main-thread-ref` 将 `MainThreadRef` 绑定到元素上，允许主线程直接操作它，无需任何后台线程的往返通信。
+主线程脚本滚动条使用 `:main-thread-ref` 将 `MainThreadRef` 绑定到元素上，允许主线程直接操作它，无需任何后台线程的往返通信。
 
 现在你应该能看到，左侧由主线程脚本控制的滚动条（darkkhaki 色）比我们之前实现的右侧滚动条更流畅、更灵敏。如果你在其他 UI 中遇到需要立即更新的问题，可以尝试这种方法。
 
-Vue 中 MTS 的关键概念：
+Vue 中主线程脚本的关键概念：
 
 - `useMainThreadRef(null)` — 创建一个可以在主线程上解析的 ref
-- `:main-thread-bindscroll="ctx"` — 将 MTS 处理器绑定到滚动事件（在主线程上运行，零线程切换）
+- `:main-thread-bindscroll="ctx"` — 将主线程脚本处理器绑定到滚动事件（在主线程上运行，零线程切换）
 - `.toJSON()` — 序列化 ref 以进行跨线程传输（包含内部 `_wvid` 标识符）
 
 ## 总结
@@ -368,8 +368,8 @@ Vue 中 MTS 的关键概念：
 | 列表             | `{arr.map(x => <el key={x} />)}`     | `<el v-for="x in arr" :key="x" />` |
 | 点击事件        | `bindtap={handler}`                  | `@tap="handler"`                   |
 | 滚动事件     | `bindscroll={handler}`               | `@scroll="handler"`                |
-| MTS 滚动       | `main-thread:bindscroll={fn}`        | `:main-thread-bindscroll="ctx"`    |
-| MTS ref          | `main-thread:ref={ref}`              | `:main-thread-ref="ref"`           |
+| 主线程脚本滚动 | `main-thread:bindscroll={fn}`        | `:main-thread-bindscroll="ctx"`    |
+| 主线程脚本 ref   | `main-thread:ref={ref}`              | `:main-thread-ref="ref"`           |
 | 主线程 ref 钩子      | `useMainThreadRef(null)`             | `useMainThreadRef(null)`           |
 | 暴露给父组件 | `forwardRef` + `useImperativeHandle` | `defineExpose({ method })`         |
 | Props            | `function Comp(props: { x: T })`     | `defineProps<{ x: T }>()`          |
@@ -398,4 +398,4 @@ cd packages/vue/e2e-lynx && pnpm dev
 | `GalleryAutoScroll`        | `GalleryAutoScroll.lynx.bundle`        | 自动滚动画廊           |
 | `GalleryScrollbar`         | `GalleryScrollbar.lynx.bundle`         | 画廊 + 后台线程滚动条    |
 | `GalleryScrollbarCompare` | `GalleryScrollbarCompare.lynx.bundle` | 后台 vs 主线程滚动条对比    |
-| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | 带 MTS 滚动条的最终画廊 |
+| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | 带主线程脚本滚动条的最终画廊 |
