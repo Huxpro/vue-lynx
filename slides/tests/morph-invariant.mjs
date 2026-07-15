@@ -171,13 +171,13 @@ try {
   }
 
   await browser.close();
-  console.log(`morph-invariant: ${checked} flip transitions checked across ${total} slides`);
-  if (failures.length) {
+  console.info(`morph-invariant: ${checked} flip transitions checked across ${total} slides`);
+  if (failures.length > 0) {
     console.error(`FAIL (${failures.length}):`);
     for (const f of failures) console.error('  ' + f);
     process.exit(1);
   }
-  console.log('PASS');
+  console.info('PASS');
 } finally {
   vite.kill();
 }
