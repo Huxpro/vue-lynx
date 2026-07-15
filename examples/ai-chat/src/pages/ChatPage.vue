@@ -24,6 +24,7 @@ import { apiFetch } from '../lib/api';
 import {
   calculateBottomSpacer,
   calculateMessageLaunchDistance,
+  isEarlierMessageDuringHandoff,
   isNearBottom,
   nextWebBottomOffset,
   turnScrollMode,
@@ -117,6 +118,7 @@ const keyboardHeight = ref(0);
 const anchoredMessageId = ref<string | null>(null);
 const animatedUserMessageId = ref<string | null>(null);
 const pendingAnimatedUserMessageId = ref<string | null>(null);
+const stagedUserMessageId = ref<string | null>(null);
 const userMessageLaunchDistance = ref(0);
 const anchoredTurnHeight = ref(0);
 const followsOutput = ref(true);
@@ -226,6 +228,7 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
   if (turnMode === 'bottom') {
     anchoredMessageId.value = null;
     pendingAnimatedUserMessageId.value = null;
+    stagedUserMessageId.value = null;
     animatedUserMessageId.value = animateUser ? message.id : null;
     userMessageLaunchDistance.value = 0;
     updateAnchoredTurnHeight();
@@ -235,6 +238,7 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
 
   anchoredMessageId.value = message.id;
   pendingAnimatedUserMessageId.value = animateUser ? message.id : null;
+  stagedUserMessageId.value = null;
   animatedUserMessageId.value = null;
   updateAnchoredTurnHeight();
   if (!animateUser) void scrollMessageToTop(message.id);
@@ -242,14 +246,31 @@ function beginAnchoredTurn(message: UIMessage | undefined, animateUser: boolean)
 
 function userMessageLaunchStyle(messageId: string) {
   if (
-    messageId !== animatedUserMessageId.value &&
-    messageId !== pendingAnimatedUserMessageId.value
+    messageId !== pendingAnimatedUserMessageId.value &&
+    messageId !== stagedUserMessageId.value
   ) {
     return undefined;
   }
   return {
-    '--user-message-launch-distance': `${userMessageLaunchDistance.value}px`,
+    transform: `translateY(${userMessageLaunchDistance.value}px) scale(0.95)`,
   };
+}
+
+function userMessageMotionClass(message: UIMessage) {
+  if (message.role !== 'user') return '';
+  if (message.id === animatedUserMessageId.value) {
+    return turnMode === 'bottom' ? 'user-message-enter-web' : 'user-message-enter';
+  }
+  if (message.id === stagedUserMessageId.value) return 'user-message-staged';
+  if (message.id === pendingAnimatedUserMessageId.value) return 'user-message-pending';
+  return '';
+}
+
+function isMessageHiddenDuringHandoff(messageId: string) {
+  return (
+    turnMode === 'anchor' &&
+    isEarlierMessageDuringHandoff(messages.value, messageId, pendingAnimatedUserMessageId.value)
+  );
 }
 
 function isAssistantForAnimatedTurn(message: UIMessage) {
@@ -341,10 +362,22 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     try {
       if (pendingAnimatedUserMessageId.value !== messageId) return;
       pendingAnimatedUserMessageId.value = null;
+      stagedUserMessageId.value = null;
       animatedUserMessageId.value = messageId;
     } finally {
       preparingAnimatedMessageIds.delete(messageId);
     }
+  };
+  const stageAlignedAnimation = () => {
+    if (pendingAnimatedUserMessageId.value !== messageId) {
+      preparingAnimatedMessageIds.delete(messageId);
+      return;
+    }
+    // Commit a real launch-position frame before changing transform. Native
+    // can register keyframe animations one display frame after the class op;
+    // a staged CSS transition avoids the target-position flash that caused.
+    stagedUserMessageId.value = messageId;
+    setTimeout(beginAlignedAnimation, 17);
   };
   const commitAlignment = () => {
     if (pendingAnimatedUserMessageId.value !== messageId) {
@@ -356,7 +389,7 @@ function handleMessageLayout(messageId: string, event: LayoutEvent) {
     // transform class is enabled. Do not await nextTick from layoutchange:
     // Lynx SDK 1.4 can keep that promise pending for this commit cycle.
     invokeScrollMessageToTop(messageId);
-    setTimeout(beginAlignedAnimation, 34);
+    setTimeout(stageAlignedAnimation, 34);
   };
   setTimeout(commitAlignment, 17);
 }
@@ -533,6 +566,14 @@ const showIndicator = computed(
 
 const showGenerationError = computed(() => status.value === 'error' && Boolean(error.value));
 
+const assistantTurnEntranceClass = computed(() =>
+  pendingAnimatedUserMessageId.value
+    ? 'turn-handoff-hidden'
+    : animatedUserMessageId.value
+      ? 'assistant-turn-enter'
+      : '',
+);
+
 watch(showIndicator, () => {
   void nextTick().then(updateAnchoredTurnHeight);
 });
@@ -598,11 +639,8 @@ const bottomSpacerHeight = computed(
             class="flex flex-col"
             :class="[
               message.role === 'user' ? 'items-end' : 'items-start',
-              message.role === 'user' && message.id === animatedUserMessageId
-                ? 'user-message-enter'
-                : message.role === 'user' && message.id === pendingAnimatedUserMessageId
-                  ? 'user-message-pending'
-                  : '',
+              userMessageMotionClass(message),
+              isMessageHiddenDuringHandoff(message.id) ? 'turn-handoff-hidden' : '',
               isAssistantForAnimatedTurn(message) ? 'assistant-turn-enter' : '',
             ]"
             :style="userMessageLaunchStyle(message.id)"
@@ -642,7 +680,7 @@ const bottomSpacerHeight = computed(
           <view
             v-if="showIndicator"
             class="flex flex-row items-center gap-1.5"
-            :class="animatedUserMessageId ? 'assistant-turn-enter' : ''"
+            :class="assistantTurnEntranceClass"
           >
             <Indicator />
             <text class="text-sm text-muted shimmer-pulse">Thinking...</text>
@@ -651,7 +689,7 @@ const bottomSpacerHeight = computed(
           <view
             v-if="showGenerationError"
             class="flex flex-row items-center gap-2 rounded-lg border border-default bg-muted px-3 py-2.5 generation-error"
-            :class="animatedUserMessageId ? 'assistant-turn-enter' : ''"
+            :class="assistantTurnEntranceClass"
           >
             <Icon name="i-lucide-alert-circle" tone="error" :size="16" />
             <text class="text-sm text-muted flex-1" text-maxline="2">

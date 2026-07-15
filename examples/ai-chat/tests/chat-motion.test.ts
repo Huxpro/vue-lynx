@@ -13,22 +13,30 @@ describe('native-first chat motion', () => {
 
     expect(chatPage).toContain('animatedUserMessageId');
     expect(chatPage).toContain('pendingAnimatedUserMessageId');
+    expect(chatPage).toContain('stagedUserMessageId');
     expect(chatPage).toContain('calculateMessageLaunchDistance');
-    expect(chatPage).toContain("'--user-message-launch-distance'");
+    expect(chatPage).toContain('translateY(${userMessageLaunchDistance.value}px) scale(0.95)');
     expect(chatPage).toContain("'user-message-enter'");
+    expect(chatPage).toContain("'user-message-enter-web'");
+    expect(chatPage).toContain("'user-message-staged'");
     expect(chatPage).toContain("'assistant-turn-enter'");
     expect(chatPage).toMatch(/beginAnchoredTurn\([^)]*,\s*true\)/);
     expect(chatPage).toMatch(/beginAnchoredTurn\([^)]*,\s*false\)/);
     expect(chatPage).toMatch(
       /v-for="message in messages"[\s\S]*?:style="userMessageLaunchStyle\(message\.id\)"[\s\S]*?@layoutchange/,
     );
+    expect(css).toMatch(/\.user-message-pending,[\s\S]*?\.user-message-enter\s*\{[^}]*transition:/s);
+    expect(css).toContain('transform 500ms cubic-bezier(0.22, 1, 0.36, 1)');
+    expect(css).toMatch(/\.user-message-staged\s*\{[^}]*opacity:\s*0\.5/s);
     expect(css).toMatch(
-      /\.user-message-enter\s*{[^}]*500ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/s,
+      /\.user-message-enter\s*\{[^}]*opacity:\s*1[^}]*transform:\s*translateY\(0px\) scale\(1\)/s,
     );
-    expect(css).toContain('var(--user-message-launch-distance)');
     expect(css).toMatch(/\.assistant-turn-enter\s*{[^}]*240ms[^}]*360ms/s);
-    expect(css).not.toMatch(/@keyframes user-message-enter[\s\S]*?70%/);
-    expect(css).not.toMatch(/@keyframes user-message-enter[\s\S]*?86%/);
+    expect(css).not.toMatch(/@keyframes user-message-enter\s*\{/);
+    expect(css).toMatch(
+      /\.user-message-enter-web\s*\{[^}]*animation:\s*user-message-enter-web 500ms/s,
+    );
+    expect(css).toContain('@keyframes user-message-enter-web');
   });
 
   it('falls back to bottom-follow scrolling for Web turns', async () => {
@@ -60,17 +68,43 @@ describe('native-first chat motion', () => {
       /scrollIntoViewOptions:\s*\{[\s\S]*?behavior:\s*'smooth'/,
     );
     expect(chatPage).toContain('setTimeout(commitAlignment, 17)');
-    expect(chatPage).toContain('setTimeout(beginAlignedAnimation, 34)');
+    expect(chatPage).toContain('setTimeout(stageAlignedAnimation, 34)');
+    expect(chatPage).toContain('setTimeout(beginAlignedAnimation, 17)');
     expect(chatPage).toMatch(/if \(!animateUser\) void scrollMessageToTop\(message\.id\)/);
     expect(layoutHandler).toBeDefined();
     expect(layoutHandler).toMatch(/invokeScrollMessageToTop\(messageId\)/);
     expect(layoutHandler).toMatch(
-      /const commitAlignment[\s\S]*?invokeScrollMessageToTop\(messageId\);\s*setTimeout\(beginAlignedAnimation, 34\)/,
+      /const commitAlignment[\s\S]*?invokeScrollMessageToTop\(messageId\);\s*setTimeout\(stageAlignedAnimation, 34\)/,
     );
     expect(chatPage).toContain('const ALIGNMENT_SCROLL_RESERVE = 28 / 3');
     expect(chatPage).toMatch(
       /calculateBottomSpacer\([\s\S]*?\) \+ alignmentScrollReserve\.value/,
     );
+  });
+
+  it('keeps previous turns out of the reset frame until the new bubble takes over', async () => {
+    const chatPage = await source('src/pages/ChatPage.vue');
+    const css = await source('src/App.css');
+
+    expect(chatPage).toContain('isEarlierMessageDuringHandoff');
+    expect(chatPage).toContain("'turn-handoff-hidden'");
+    expect(css).toMatch(/\.turn-handoff-hidden\s*\{[^}]*opacity:\s*0/s);
+    expect(css).toMatch(/\.turn-handoff-hidden\s*\{[^}]*transition:\s*none/s);
+  });
+
+  it('keeps the pending assistant and bubble on their handoff start frames', async () => {
+    const chatPage = await source('src/pages/ChatPage.vue');
+    const css = await source('src/App.css');
+
+    expect(chatPage).toContain('assistantTurnEntranceClass');
+    expect(chatPage).toContain(':class="assistantTurnEntranceClass"');
+    expect(chatPage).toMatch(
+      /pendingAnimatedUserMessageId\.value\s*\?\s*'turn-handoff-hidden'/,
+    );
+    expect(chatPage).toMatch(
+      /stagedUserMessageId\.value = messageId;\s*setTimeout\(beginAlignedAnimation, 17\)/,
+    );
+    expect(css).toMatch(/\.user-message-staged\s*\{[^}]*opacity:\s*0\.5/s);
   });
 
   it('reveals streamed semantic blocks without replaying loaded history', async () => {

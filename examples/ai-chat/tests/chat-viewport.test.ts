@@ -4,6 +4,7 @@ import {
   bottomDistance,
   calculateBottomSpacer,
   calculateMessageLaunchDistance,
+  isEarlierMessageDuringHandoff,
   isNearBottom,
   nextWebBottomOffset,
   turnScrollMode,
@@ -118,5 +119,21 @@ describe('chat viewport geometry', () => {
         messageHeight: 72,
       }),
     ).toBe(0);
+  });
+
+  it('masks only messages before the pending bubble during a Native handoff', () => {
+    const messages = [
+      { id: 'first-user' },
+      { id: 'first-assistant' },
+      { id: 'second-user' },
+      { id: 'second-assistant' },
+      { id: 'third-user' },
+    ];
+
+    expect(isEarlierMessageDuringHandoff(messages, 'first-user', 'third-user')).toBe(true);
+    expect(isEarlierMessageDuringHandoff(messages, 'second-assistant', 'third-user')).toBe(true);
+    expect(isEarlierMessageDuringHandoff(messages, 'third-user', 'third-user')).toBe(false);
+    expect(isEarlierMessageDuringHandoff(messages, 'first-user', null)).toBe(false);
+    expect(isEarlierMessageDuringHandoff(messages, 'missing', 'third-user')).toBe(false);
   });
 });
