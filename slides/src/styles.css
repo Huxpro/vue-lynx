@@ -1947,8 +1947,13 @@ body.is-blackout::after {
 }
 .fb.is-dim { opacity: 0.45; }
 .fb.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
-/* Keep absolute positioning while FLIPping (same fix as .logo). */
+/* Keep absolute positioning while FLIPping (same fix as .logo) — the
+   framework's generic .is-flipping rule forces position:relative, which
+   drops these out of their absolute spots mid-morph: the whole lane falls
+   into flow (the MT lane visibly sinks by one lane-height), tweens from the
+   wrong origin, then snaps at cleanup. */
 .slide .fb.is-flipping { position: absolute; }
+.slide .flane.is-flipping { position: absolute; }
 
 /* Text arrow / inline flow label — mono, colorable, fades in. */
 .farr {
