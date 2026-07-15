@@ -62,5 +62,9 @@ blocked (see PORTING.md "Verification setup").
   (`<p>/<a>/<img>` → `<text>/<image>` with tap navigation).
 - Elk's DOM virtual scroller (virtua) is replaced by Lynx's native
   recycling `<list>` — less code, native performance.
+- Explore and Notifications tabs are native viewpagers
+  (`<x-viewpager-ng>`, wrapped by `TabPager.vue`): panes swipe
+  horizontally like a native client, with the tab bar and pager kept in
+  sync via the pager's `change` event and the `selectTab` UI method.
 - RemixIcon glyphs (Elk's `i-ri:*`) render as tinted XML through Lynx's
   built-in `<svg content>` element.

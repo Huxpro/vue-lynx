@@ -469,16 +469,34 @@ test('status actions and bottom navigation acknowledge native touch input', asyn
 });
 
 test('tabs animate persistent indicators and Explore explains trending content', async () => {
-  const [explore, account] = await Promise.all([
+  const [explore, account, tabPager] = await Promise.all([
     readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/TabPager.vue', import.meta.url), 'utf8'),
   ]);
 
   assert.match(explore, /explore-intro/);
-  assert.doesNotMatch(explore, /v-if="tab === '[^']+'" class="explore-tab-underline"/);
-  assert.match(explore, /explore-tab-underline-active/);
+  assert.doesNotMatch(tabPager, /v-if="modelValue === t\.key" class="tab-pager-underline"/);
+  assert.match(tabPager, /tab-pager-underline-active/);
   assert.doesNotMatch(account, /v-if="tab === t\.key" class="account-tab-underline"/);
   assert.match(account, /account-tab-underline-active/);
+});
+
+test('app-bar tabs page horizontally through the native viewpager', async () => {
+  const [tabPager, explore, notifications] = await Promise.all([
+    readFile(new URL('../src/components/TabPager.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/NotificationsPage.vue', import.meta.url), 'utf8'),
+  ]);
+
+  // Swiping between panes is native: the pager element owns the gesture,
+  // and the tab bar syncs both ways (change event + selectTab method).
+  assert.match(tabPager, /<x-viewpager-ng/);
+  assert.match(tabPager, /<x-viewpager-item-ng/);
+  assert.match(tabPager, /@change="onPagerChange"/);
+  assert.match(tabPager, /method: 'selectTab'/);
+  assert.match(explore, /<TabPager/);
+  assert.match(notifications, /<TabPager/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {

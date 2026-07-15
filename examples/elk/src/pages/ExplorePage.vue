@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Ported from elk: app/pages/[[server]]/explore/{index,tags}.vue —
-// trending posts + trending hashtags tabs.
+// trending posts + trending hashtags tabs. The tabs are backed by the
+// native viewpager (TabPager), so panes swipe horizontally.
 import type { mastodon } from 'masto';
 import { onMounted, ref, watch } from 'vue-lynx';
 import { useRouter } from 'vue-router';
@@ -8,11 +9,18 @@ import AppIcon from '../components/AppIcon.vue';
 import PageHeader from '../components/PageHeader.vue';
 import Spinner from '../components/Spinner.vue';
 import StatusCard from '../components/StatusCard.vue';
+import TabPager from '../components/TabPager.vue';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
 import { getTagRoute } from '../composables/routes';
 
 const router = useRouter();
+
+const tabs = [
+  { key: 'posts', label: 'Posts' },
+  { key: 'tags', label: 'Hashtags' },
+  { key: 'links', label: 'News' },
+] as const;
 
 const tab = ref<'posts' | 'tags' | 'links'>('posts');
 const statuses = ref<mastodon.v1.Status[]>([]);
@@ -56,111 +64,67 @@ function tagUses(tag: mastodon.v1.Tag): number {
   <view class="page">
     <PageHeader title="Explore" icon="compass-3-line" />
 
-    <view class="explore-tabs">
-      <view class="explore-tab" @tap="tab = 'posts'">
-        <text class="explore-tab-text" :class="tab === 'posts' ? 'explore-tab-active' : ''">Posts</text>
-        <view class="explore-tab-underline" :class="tab === 'posts' ? 'explore-tab-underline-active' : ''" />
-      </view>
-      <view class="explore-tab" @tap="tab = 'tags'">
-        <text class="explore-tab-text" :class="tab === 'tags' ? 'explore-tab-active' : ''">Hashtags</text>
-        <view class="explore-tab-underline" :class="tab === 'tags' ? 'explore-tab-underline-active' : ''" />
-      </view>
-      <view class="explore-tab" @tap="tab = 'links'">
-        <text class="explore-tab-text" :class="tab === 'links' ? 'explore-tab-active' : ''">News</text>
-        <view class="explore-tab-underline" :class="tab === 'links' ? 'explore-tab-underline-active' : ''" />
-      </view>
-    </view>
-
-    <view v-if="tab === 'posts' && showIntro" class="explore-intro">
-      <AppIcon name="information-line" :size="20" color="#cc7d24" />
-      <text class="explore-intro-text">These posts from this and other servers in the decentralized network are gaining traction on this server right now.</text>
-      <view class="explore-intro-close" @tap="showIntro = false">
-        <AppIcon name="close-line" :size="18" color="#686868" />
-      </view>
-    </view>
-
-    <view v-if="loading" class="explore-loading">
-      <Spinner />
-    </view>
-
-    <scroll-view v-else-if="tab === 'posts'" scroll-orientation="vertical" class="explore-scroll">
-      <StatusCard v-for="s in statuses" :key="s.id" :status="s" />
-      <view class="explore-bottom-pad" />
-    </scroll-view>
-
-    <scroll-view v-else-if="tab === 'links'" scroll-orientation="vertical" class="explore-scroll">
-      <view v-for="link in links" :key="link.url" class="explore-link">
-        <image v-if="link.image" :src="link.image" class="explore-link-img" mode="aspectFill" />
-        <view class="explore-link-body">
-          <text class="explore-link-host">{{ link.providerName || link.url.replace(/^https?:\/\//, '').split('/')[0] }}</text>
-          <text class="explore-link-title" :text-maxline="2">{{ link.title }}</text>
-          <text v-if="link.description" class="explore-link-desc" :text-maxline="2">{{ link.description }}</text>
+    <TabPager v-model="tab" :tabs="tabs">
+      <template #posts>
+        <view v-if="showIntro" class="explore-intro">
+          <AppIcon name="information-line" :size="20" color="#cc7d24" />
+          <text class="explore-intro-text">These posts from this and other servers in the decentralized network are gaining traction on this server right now.</text>
+          <view class="explore-intro-close" @tap="showIntro = false">
+            <AppIcon name="close-line" :size="18" color="#686868" />
+          </view>
         </view>
-      </view>
-      <view class="explore-bottom-pad" />
-    </scroll-view>
-
-    <scroll-view v-else scroll-orientation="vertical" class="explore-scroll">
-      <view
-        v-for="(tag, i) in tags"
-        :key="tag.name"
-        class="explore-tag"
-        @tap="router.push(getTagRoute(tag.name))"
-      >
-        <text class="explore-tag-rank">{{ i + 1 }}</text>
-        <view class="explore-tag-names">
-          <text class="explore-tag-name">#{{ tag.name }}</text>
-          <text class="explore-tag-uses">{{ formatCompactNumber(tagUses(tag)) }} people in the past 2 days</text>
+        <view v-if="loading && tab === 'posts'" class="explore-loading">
+          <Spinner />
         </view>
-        <AppIcon name="fire-line" :size="18" color="#cc7d24" />
-      </view>
-      <view class="explore-bottom-pad" />
-    </scroll-view>
+        <scroll-view v-else scroll-orientation="vertical" class="explore-scroll">
+          <StatusCard v-for="s in statuses" :key="s.id" :status="s" />
+          <view class="explore-bottom-pad" />
+        </scroll-view>
+      </template>
+
+      <template #tags>
+        <view v-if="loading && tab === 'tags'" class="explore-loading">
+          <Spinner />
+        </view>
+        <scroll-view v-else scroll-orientation="vertical" class="explore-scroll">
+          <view
+            v-for="(tag, i) in tags"
+            :key="tag.name"
+            class="explore-tag"
+            @tap="router.push(getTagRoute(tag.name))"
+          >
+            <text class="explore-tag-rank">{{ i + 1 }}</text>
+            <view class="explore-tag-names">
+              <text class="explore-tag-name">#{{ tag.name }}</text>
+              <text class="explore-tag-uses">{{ formatCompactNumber(tagUses(tag)) }} people in the past 2 days</text>
+            </view>
+            <AppIcon name="fire-line" :size="18" color="#cc7d24" />
+          </view>
+          <view class="explore-bottom-pad" />
+        </scroll-view>
+      </template>
+
+      <template #links>
+        <view v-if="loading && tab === 'links'" class="explore-loading">
+          <Spinner />
+        </view>
+        <scroll-view v-else scroll-orientation="vertical" class="explore-scroll">
+          <view v-for="link in links" :key="link.url" class="explore-link">
+            <image v-if="link.image" :src="link.image" class="explore-link-img" mode="aspectFill" />
+            <view class="explore-link-body">
+              <text class="explore-link-host">{{ link.providerName || link.url.replace(/^https?:\/\//, '').split('/')[0] }}</text>
+              <text class="explore-link-title" :text-maxline="2">{{ link.title }}</text>
+              <text v-if="link.description" class="explore-link-desc" :text-maxline="2">{{ link.description }}</text>
+            </view>
+          </view>
+          <view class="explore-bottom-pad" />
+        </scroll-view>
+      </template>
+    </TabPager>
   </view>
 </template>
 
 <style>
-.explore-tabs {
-  display: flex;
-  flex-direction: row;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.explore-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  padding-top: 10px;
-}
-
-.explore-tab-text {
-  font-size: 14px;
-  color: var(--c-text-secondary);
-  padding-bottom: 8px;
-  transition: color var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
-}
-
-.explore-tab-active {
-  color: var(--c-text-base);
-  font-weight: 600;
-}
-
-.explore-tab-underline {
-  height: 3px;
-  width: 50%;
-  border-radius: 2px;
-  background-color: var(--c-primary);
-  opacity: 0;
-  transform: scaleX(0.35);
-  transition: transform var(--motion-state) var(--ease-out-quart), opacity var(--motion-state) var(--ease-out-quart);
-}
-
-.explore-tab-underline-active {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
 .explore-intro {
   display: flex;
   flex-direction: row;
