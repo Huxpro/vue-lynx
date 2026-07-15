@@ -42,7 +42,7 @@ Text content must be wrapped in `<text>` — Lynx does not support bare text nod
 
 ### Different events
 
-Lynx uses its own event system. Unlike the DOM, where an event is identified by its name alone, every Lynx event is registered with a **type** that controls propagation and threading: `bind` (propagates), `catch` (stops propagation), `global-bind` (app-global events from [GlobalEventEmitter](https://lynxjs.org/api/lynx-api/lynx/lynx-get-js-module.html)), and `main-thread` variants (worklet handlers that run on the main thread). Vue Lynx keeps Lynx's own attribute naming for all of them, so any event from the Lynx docs works verbatim as an attribute binding:
+Lynx uses its own event system. Unlike the DOM, where an event is identified by its name alone, every Lynx event is registered with a **type** that controls propagation and threading: `bind` (propagates), `catch` (stops propagation), `global-bind` (app-global events from [GlobalEventEmitter](https://lynxjs.org/api/lynx-api/lynx/lynx-get-js-module.html)), and `main-thread` variants (MTS handlers that run on the main thread). Vue Lynx keeps Lynx's own attribute naming for all of them, so any event from the Lynx docs works verbatim as an attribute binding:
 
 ```vue
 <view
@@ -53,14 +53,14 @@ Lynx uses its own event system. Unlike the DOM, where an event is identified by 
 />
 ```
 
-For the common `bind` type, Vue's familiar `@` syntax works as sugar — `@tap` is equivalent to `:bindtap`, and the `.stop` modifier upgrades the registration to a native `catch` (`@tap.stop` ≙ `:catchtap`):
+For the common `bind` type, Vue's familiar `@` syntax works as sugar. `@tap` is equivalent to `:bindtap`, and the `.stop` modifier upgrades the registration to a native `catch` (`@tap.stop` ≙ `:catchtap`):
 
 ```diff
 - <div @click="handleClick" @touchstart="onTouch">
 + <view @tap="handleClick" @touchstart="onTouch">
 ```
 
-`global-bind*` and `main-thread-*` have no `@` form: they encode registration semantics that Vue's `v-on` cannot express — in particular, a `main-thread` handler is a [main thread worklet](/guide/main-thread-script) rather than a regular function, and bypasses the `v-on` pipeline entirely.
+`global-bind*` and `main-thread-*` have no `@` form: they encode registration semantics that Vue's `v-on` cannot express. In particular, a `main-thread` handler is a [Main Thread Script (MTS)](/guide/main-thread-script) function rather than a regular one, and bypasses the `v-on` pipeline entirely.
 
 See the [Lynx event handling guide](https://lynxjs.org/guide/interaction/event-handling.html) for more details.
 

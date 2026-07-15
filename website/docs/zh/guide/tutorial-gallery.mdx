@@ -343,7 +343,7 @@ MTS 滚动条使用 `:main-thread-ref` 将 `MainThreadRef` 绑定到元素上，
 Vue 中 MTS 的关键概念：
 
 - `useMainThreadRef(null)` — 创建一个可以在主线程上解析的 ref
-- `:main-thread-bindscroll="ctx"` — 将 worklet 处理器绑定到滚动事件（在主线程上运行，零线程切换）
+- `:main-thread-bindscroll="ctx"` — 将 MTS 处理器绑定到滚动事件（在主线程上运行，零线程切换）
 - `.toJSON()` — 序列化 ref 以进行跨线程传输（包含内部 `_wvid` 标识符）
 
 ## 总结

@@ -343,7 +343,7 @@ Now you should be able to see that the scrollbar on the left (darkkhaki), contro
 Key Vue concepts for MTS:
 
 - `useMainThreadRef(null)` — Creates a ref that can be resolved on the Main Thread
-- `:main-thread-bindscroll="ctx"` — Binds a worklet handler to the scroll event (runs on Main Thread, zero thread crossings)
+- `:main-thread-bindscroll="ctx"` — Binds an MTS handler to the scroll event (runs on Main Thread, zero thread crossings)
 - `.toJSON()` — Serializes the ref for cross-thread transfer (includes the internal `_wvid` identifier)
 
 ## Wrapping Up
