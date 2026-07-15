@@ -621,10 +621,35 @@ h1, h2, h3, p { margin: 0; }
   color: var(--vue-green);
 }
 
+/* The device mockup keeps its phone-sized footprint in the two-column demo
+   layout no matter which preset is active: the stage reserves that space and the
+   frame is absolutely centred inside it, so growing to tablet / desktop makes the
+   frame FLOAT OVER the neighbouring copy instead of reflowing the grid and
+   colliding with the text (which is what the wide presets used to do). */
 .demo__stage {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  height: min(92cqh, 650px);   /* reserved footprint = phone-preset height */
+}
+.demo__stage .phone {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* Let the frame grow past its grid column — that's what makes the wider
+     presets (and free drags) genuinely float over the copy rather than being
+     clamped to the column width by the base `.phone { max-width: 100% }`. */
+  max-width: none;
+}
+/* Lift the frame above the copy (and deepen its shadow) once it grows past the
+   phone preset, so an overlapping expansion reads as floating, not broken. */
+.demo__stage .phone:not([data-device="phone"]) {
+  z-index: 20;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 30px 90px -24px rgba(0, 0, 0, 0.75);
 }
 
 /* QR pair on demo slides — Web (clickable) + Lynx App (scan). Always a white
@@ -762,34 +787,42 @@ a.qr:hover { color: var(--vue-green); }
   position: relative;
 }
 
-/* Free drag-to-resize grip (bottom-right) — a small chip that matches the
-   preset switcher so the two read as one control family. No aspect lock. */
+/* Free drag-to-resize grips — minimal corner affordance: two vue-green diagonal
+   strokes nested in a frame corner (no chip/bezel), echoing the native resize
+   grip. The box stays a generous 24px so it's easy to grab even though only the
+   glyph is painted; the glyph (authored for the SE corner) is flipped/rotated
+   per corner and pinned outward via place-items. */
 .phone__resize {
   position: absolute;
-  right: -8px;
-  bottom: -8px;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: grid;
-  place-items: center;
-  border-radius: 7px;
-  background: var(--paper-elev);
-  border: 1px solid var(--line);
-  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
-  color: var(--ink-mute);
-  cursor: nwse-resize;
+  color: var(--vue-green);
   z-index: 8;
   opacity: 0;
-  transition: opacity 0.2s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: opacity 0.2s ease, transform 0.15s ease;
   touch-action: none;
 }
-.phone__resize svg { width: 12px; height: 12px; display: block; }
+.phone__resize svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
 .phone:hover .phone__resize { opacity: 1; }
 .phone__resize:hover,
-.phone__resize:active {
-  color: var(--vue-green);
-  border-color: var(--vue-green);
-}
+.phone__resize:active { transform: scale(1.15); }
+.phone__resize:hover svg,
+.phone__resize:active svg { opacity: 1; }
+
+.phone__resize[data-corner="se"] { right: 4px; bottom: 4px; place-items: end;         cursor: nwse-resize; }
+.phone__resize[data-corner="sw"] { left: 4px;  bottom: 4px; place-items: end start;   cursor: nesw-resize; }
+.phone__resize[data-corner="ne"] { right: 4px; top: 4px;    place-items: start end;   cursor: nesw-resize; }
+.phone__resize[data-corner="nw"] { left: 4px;  top: 4px;    place-items: start;       cursor: nwse-resize; }
+.phone__resize[data-corner="sw"] svg { transform: scaleX(-1); }
+.phone__resize[data-corner="ne"] svg { transform: scaleY(-1); }
+.phone__resize[data-corner="nw"] svg { transform: rotate(180deg); }
 
 /* Device preset switcher (phone / vertical tablet / desktop) — bottom-right,
    sits just below the frame, revealed on hover. */
@@ -806,13 +839,27 @@ a.qr:hover { color: var(--vue-green); }
   box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  /* Delay the hide so a brief exit (or crossing the frame↔panel seam) doesn't
+     dismiss it; showing stays instant. */
+  transition: opacity 0.2s ease 0.18s, transform 0.2s ease 0.18s;
   pointer-events: none;
   z-index: 7;
+}
+/* Invisible bridge spanning the frame→panel gap so moving the pointer down onto
+   the switcher never leaves a `.phone` descendant — the root cause of the panel
+   flickering away before you could reach it. */
+.phone__presets::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  top: -14px;
+  height: 14px;
 }
 .phone:hover .phone__presets {
   opacity: 1;
   transform: none;
+  transition-delay: 0s;
   pointer-events: auto;
 }
 .phone__preset {
@@ -834,6 +881,16 @@ a.qr:hover { color: var(--vue-green); }
   background: rgba(66, 184, 131, 0.14);
 }
 .phone__preset svg { width: 15px; height: 15px; display: block; }
+
+/* Divider + "open externally" action, appended after the size presets. */
+.phone__presets-div {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 1px;
+  background: var(--line);
+}
+.phone__preset--ext:hover { color: var(--vue-green); }
+.phone__preset--ext svg { width: 14px; height: 14px; }
 
 .phone__inner {
   position: relative;
@@ -874,7 +931,14 @@ vl-demo lynx-view {
   width: 100%;
   height: 100%;
   container-type: size;
-  --rpx-unit: calc(100cqw / 750);
+  /* rpx is Lynx's density unit (750rpx = one screen width). Tracking the frame
+     width 1:1 magnified the mobile UI whenever the frame grew past a phone (the
+     tablet / desktop presets are much wider), which read as "zoomed in". Cap the
+     reference at the widest phone preset (~340px) so 750rpx maps to the phone
+     width there — a real handset density — and the wider presets hold at that
+     same 100% density, revealing more of the app instead of scaling it up.
+     Keep this in sync with the phone preset width in device.js (DECK_PRESETS). */
+  --rpx-unit: calc(min(100cqw, 340px) / 750);
   --vh-unit: 1cqh;
   --vw-unit: 1cqw;
 }
@@ -1588,16 +1652,25 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 
 /* =========================================================
    Overview grid (press 'o'). The frame collapses to
-   display:contents so slides tile directly in the grid; each
-   thumbnail renders the slide at viewport scale and shrinks it
-   with a transform (cqw falls back to the viewport here).
+   display:contents so the slides tile directly in the grid.
+   Each thumbnail renders the slide at its TRUE 1280×720 design
+   size — so every cqw/cqh unit and, crucially, every px floor
+   in the clamp()s resolves exactly as in full view — then the
+   whole box is shrunk uniformly with `zoom`. --ov-zoom is set
+   by fitOverview() in main.js so a row of tiles fills the width.
+
+   Why zoom and not transform: a transform:scale() wouldn't
+   reserve the shrunk box in the grid (tiles would overlap), and
+   shrinking the container alone can't work either — the px
+   minimums in clamp(min,Ncqw,max) keep type and logos full-size
+   in a small container, which is what made the old grid overflow.
    ========================================================= */
 .deck.overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 8px;
+  gap: 14px;
   padding: 32px;
+  align-content: start;
   overflow: auto;
   height: 100vh;
   position: static;
@@ -1613,29 +1686,25 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   position: relative;
   inset: auto;
   margin: 0;
+  width: 1280px;
+  height: 720px;
+  container-type: size;   /* each tile is its own 1280×720 design container */
+  zoom: var(--ov-zoom, 0.2);
   opacity: 1 !important;
   transform: none !important;
-  transform-origin: top left;
-  pointer-events: auto;
   transition: none;
-  width: 25vw;
-  height: 25vh;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  pointer-events: auto;
   overflow: hidden;
   cursor: pointer;
+  /* Chrome is authored in design-space px because `zoom` scales it too:
+     at the default zoom, 5px border ≈ 1px and 30px radius ≈ 6px on screen. */
+  border: 5px solid var(--line);
+  border-radius: 30px;
 }
 
 .deck.overview .slide.is-active {
   border-color: var(--vue-green);
-  box-shadow: 0 0 0 2px var(--vue-green);
-}
-
-.deck.overview .slide > * {
-  transform: scale(0.25);
-  transform-origin: top left;
-  width: 400%;
-  height: 400%;
+  box-shadow: 0 0 0 10px var(--vue-green);
 }
 
 /* =========================================================
