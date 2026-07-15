@@ -13,6 +13,9 @@ import { startStaticServer } from "./web-server.mjs";
 const chromeCandidates = [
   process.env.CHROME_PATH,
   chromium.executablePath(),
+  // Stable symlink in Playwright-provisioned environments — survives
+  // Chromium build-number bumps that break executablePath()'s guess.
+  "/opt/pw-browsers/chromium",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/usr/bin/google-chrome",
   "/usr/bin/chromium",
