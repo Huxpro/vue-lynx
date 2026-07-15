@@ -3,7 +3,9 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * Pure Vapor application entry.
+ * Pure Vapor application entry — published as `vue-lynx/vapor`
+ * (`vue-lynx/vapor-app` remains a deprecated alias; the source file keeps
+ * its historical name).
  *
  * When `pluginVueLynx({ vapor: true })` is set, 'vue' is aliased to this
  * module. It provides everything a Vapor app imports from 'vue' — the shared
@@ -15,8 +17,8 @@
  * so the mode is a per-app build-time decision and each entry ships exactly
  * one runtime:
  *
- *  - `vue-lynx`            → vdom custom renderer only
- *  - `vue-lynx/vapor-app`  → Vapor runtime only (this module)
+ *  - `vue-lynx`        → vdom custom renderer only
+ *  - `vue-lynx/vapor`  → Vapor runtime only (this module)
  *
  * vdom-only APIs (`h`, `Transition`, `vShow`, `vModelText`, `Teleport`,
  * `KeepAlive`, `Suspense`, `useCssVars`, …) are intentionally absent: in

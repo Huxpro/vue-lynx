@@ -127,7 +127,7 @@ export interface PluginVueLynxOptions {
    * `vapor` attribute: `<script setup vapor>`.
    *
    * When enabled:
-   * - `'vue'` is aliased to `vue-lynx/vapor-app` — the pure Vapor entry
+   * - `'vue'` is aliased to `vue-lynx/vapor` — the pure Vapor entry
    *   (shared runtime-core surface + Vapor helpers, no vdom renderer).
    * - Vapor SFC templates compile through `@vue/compiler-vapor` in both
    *   dev (separate template compilation) and prod (inlined) builds.
@@ -282,7 +282,7 @@ export function pluginVueLynx(
           // components import (and none of the vdom renderer).
           chain.resolve.alias.set(
             'vue',
-            vapor ? 'vue-lynx/vapor-app' : 'vue-lynx',
+            vapor ? 'vue-lynx/vapor' : 'vue-lynx',
           );
 
           if (vapor) {
