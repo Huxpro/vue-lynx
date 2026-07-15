@@ -31,7 +31,7 @@ test('renders nothing on pages without examples (and on the server)', () => {
   );
 });
 
-test('renders a single Vapor on/off switch (VDOM is simply "off")', () => {
+test('renders a single on/off switch showing the current mode in the track', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vdom',
@@ -41,8 +41,9 @@ test('renders a single Vapor on/off switch (VDOM is simply "off")', () => {
     }),
   );
 
-  assert.match(html, /Vapor/);
-  assert.doesNotMatch(html, /VDOM/);
+  // Off: the track's free space reads "VDOM".
+  assert.match(html, /go-mode-nav-control__mode[^>]*>VDOM</);
+  assert.doesNotMatch(html, />Vapor</);
   assert.match(html, /role="switch"/);
   assert.match(html, /aria-checked="false"/);
   assert.match(html, /aria-label="Render examples with Vapor"/);
@@ -52,7 +53,7 @@ test('renders a single Vapor on/off switch (VDOM is simply "off")', () => {
   assert.equal(html.match(/<button/g)?.length, 1);
 });
 
-test('the switch reports on when Vapor is active', () => {
+test('the switch reports on and reads "Vapor" when active', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
@@ -64,6 +65,8 @@ test('the switch reports on when Vapor is active', () => {
 
   assert.match(html, /aria-checked="true"/);
   assert.match(html, /data-mode="vapor"/);
+  assert.match(html, /go-mode-nav-control__mode[^>]*>Vapor</);
+  assert.doesNotMatch(html, />VDOM</);
 });
 
 test('shows Vapor coverage when some examples fall back', () => {
