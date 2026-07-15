@@ -621,6 +621,25 @@ h1, h2, h3, p { margin: 0; }
   color: var(--vue-green);
 }
 
+/* API-coverage variant — sample code instead of prose. One Vue feature per
+   slide: eyebrow + feature name + compact codeframe on the left (QR pair is
+   appended into the body by qrcodes.js), live phone on the right. */
+.demo--api { grid-template-columns: 1.15fr 1fr; }
+.demo--api .demo__body { max-width: none; gap: 18px; }
+.demo--api .demo__title { font-size: clamp(24px, 2.4cqw, 36px); }
+.demo--api .demo__title code {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.demo--api .codeframe {
+  width: 100%;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.62;
+}
+.demo--api .codeframe pre { padding: 16px 18px; }
+
 /* The device mockup keeps its phone-sized footprint in the two-column demo
    layout no matter which preset is active: the stage reserves that space and the
    frame is absolutely centred inside it, so growing to tablet / desktop makes the
@@ -1830,6 +1849,40 @@ body.is-blackout::after {
 .logo--lynx svg { fill: #ffffff; }
 :root.light .logo--lynx svg { fill: #0a0a0a; }
 
+/* Small logo variant — past marks parked in the top-left corner. FLIP scales
+   between the 16cqw hero size and this, so the shrink reads as one motion. */
+.logo--mini { width: 7cqw; height: 7cqw; opacity: 0.55; }
+
+/* Caption block under the hero logo on the opening slides. */
+.logos__cap {
+  position: absolute;
+  left: 50%;
+  bottom: 14cqh;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: 84cqw;
+  text-align: center;
+}
+.logos__line {
+  font-family: var(--display);
+  font-size: clamp(22px, 2.6cqw, 38px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.logos__line b { font-weight: 700; }
+.logos__sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
 /* Entrances for logos with no previous-slide match (FLIP can't move them):
    slide in from the right / rise from below — only during a magic move. Uses
    the independent `translate` property so it composes cleanly. */
@@ -1847,6 +1900,23 @@ body.is-blackout::after {
   from { opacity: 0; translate: 0 20cqh; }
   to   { opacity: 1; translate: 0 0; }
 }
+
+/* =========================================================
+   Framework icon row — the "many answers" landscape teaser
+   ========================================================= */
+.fwrow {
+  display: flex;
+  gap: clamp(28px, 4cqw, 64px);
+  align-items: center;
+  justify-content: center;
+  margin-top: 1cqh;
+}
+.fwrow i {
+  width: clamp(44px, 5.4cqw, 72px);
+  height: clamp(44px, 5.4cqw, 72px);
+  opacity: 0.9;
+}
+.fwrow i svg { width: 100%; height: 100%; display: block; }
 
 /* =========================================================
    Big single-idea stage — centered one-thing slides
@@ -2118,7 +2188,7 @@ body.is-blackout::after {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 7px 13px;
+  padding: 6px 10px;
   border-radius: 10px;
   border: 1.6px solid var(--fwc);
   background: color-mix(in srgb, var(--fwc) 14%, var(--paper));
@@ -2127,8 +2197,8 @@ body.is-blackout::after {
 }
 .arch__node.is-hero { box-shadow: 0 0 24px -2px var(--fwc); z-index: 3; }
 .arch__nlogo {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   display: flex;
   color: var(--fwc);
   margin-bottom: 3px;
@@ -2137,7 +2207,7 @@ body.is-blackout::after {
 .arch__nname {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12.5px;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
