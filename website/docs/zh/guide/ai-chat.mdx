@@ -10,19 +10,44 @@
 
 ## 原生聊天的关键技巧
 
-一次流畅的消息发送需要协调布局、滚动、键盘状态和动画。[Vercel 的 v0 iOS 技术复盘](https://vercel.com/blog/how-we-built-the-v0-ios-app)启发了这套写法：先定义用户能感知的交互目标，再解释各个子系统如何共同实现它。Vue Lynx 版本把这个方法落在四个技巧上。
+一次流畅的发送并不只是一段动画，而是输入框、消息列表、键盘和流式响应之间的一次交接。[Vercel 的 v0 iOS 技术复盘](https://vercel.com/blog/how-we-built-the-v0-ios-app)启发我们从用户能看见的几个瞬间来讲这次移植，再回到支撑这些瞬间的系统设计。
 
-### 让输入框跟随键盘
+### 第一条消息先搭好舞台
 
-Lynx 的 [`<input>` 元素不会自动避让键盘](https://lynxjs.org/zh/api/elements/built-in/input#keyboard-avoidance)。输入框保持绝对定位在底部，并监听 [`keyboardstatuschanged` 全局事件](https://lynxjs.org/zh/api/lynx-api/event/global-event#keyboardstatuschanged)。应用通过 `setNativeProps` 使用事件报告的键盘高度；消息列表只在原本跟随新内容时继续滚动。
+在助手消息出现之前，应用先记录输入框和视口的几何信息。发出的文字暂时留在独立的动画层中，而真实消息、滚动位置和响应空间在它下面完成提交。等这次交接结束后才显示助手内容，因此不会先闪到目标位置。
 
-### 为不同渲染器选择滚动策略
+<TechniqueVideo
+  src="/media/ai-chat/native-first-send.mp4"
+  poster="/media/ai-chat/native-first-send.webp"
+  label="第一条原生聊天消息从输入框移动到对话中"
+  caption="第一次发送：气泡离开输入框、落到锚点，并为响应腾出空间。"
+/>
 
-原生端发送消息后，会把新的用户轮次定位到顶部。Vue Lynx 的 [`nextTick()`](https://vue.lynxjs.org/zh/guide/api/vue-lynx/Function.nextTick)先等待待处理操作到达主线程，再用 [`scrollIntoView`](https://lynxjs.org/zh/api/elements/built-in/scroll-view#scrollintoview)对齐该轮次。Web 端则更新可观察的 `scroll-top`，在发送和流式输出期间保持列表位于底部。
+气泡的起始位移由气泡高度、视口、输入框和键盘共同决定。我们先把气泡放到记录下来的输入框位置，提交布局，再在后续帧启动 transform。布局和动画不会争抢同一个首帧。
 
-### 在布局稳定后启动发送动画
+### 第二条消息才是真正的考验
 
-气泡高度、视口、输入框和键盘共同决定气泡的起始位移。应用先把气泡暂存在输入框位置，提交锚点和滚动位置，再在后续帧启动过渡。助手消息会等待这次交接完成，从而避免目标位置闪现或短暂露出上一轮消息。
+空白页会掩盖很多问题，连续发送则会把它们暴露出来。原生端把新的用户轮次对齐到顶部，但在移动气泡接管目标位置之前，上一轮内容会保持稳定。Vue Lynx 的 [`nextTick()`](https://vue.lynxjs.org/zh/guide/api/vue-lynx/Function.nextTick)先等待待处理操作到达主线程，再用 [`scrollIntoView`](https://lynxjs.org/zh/api/elements/built-in/scroll-view#scrollintoview)完成最终对齐；之后才开始显示助手流。
+
+<TechniqueVideo
+  src="/media/ai-chat/native-second-send.mp4"
+  poster="/media/ai-chat/native-second-send.webp"
+  label="第二条原生聊天消息从底部输入框移动到顶部锚点"
+  caption="第二次发送：上一轮保持稳定，新的气泡从屏幕底部进入顶部锚点。"
+/>
+
+Web 端没有同样的原生定位能力，因此采用另一套策略：持续更新可观察的 `scroll-top`，在发送和流式输出期间把消息列表保持在底部。机制不同，但交互仍然符合 Web 用户的预期。
+
+### 键盘也是布局的一部分
+
+Lynx 的 [`<input>` 元素不会自动避让键盘](https://lynxjs.org/zh/api/elements/built-in/input#keyboard-avoidance)。输入框始终绝对定位在底部，并监听 [`keyboardstatuschanged` 全局事件](https://lynxjs.org/zh/api/lynx-api/event/global-event#keyboardstatuschanged)。应用通过 `setNativeProps` 使用事件报告的键盘高度；消息列表只在原本跟随新内容时继续滚动。
+
+<TechniqueVideo
+  src="/media/ai-chat/native-keyboard-follow.mp4"
+  poster="/media/ai-chat/native-keyboard-follow.webp"
+  label="原生聊天输入框跟随 iOS 键盘移动"
+  caption="键盘跟随：输入框贴住键盘，同时让当前轮次保持可读。"
+/>
 
 ### 把手势反馈留在主线程
 

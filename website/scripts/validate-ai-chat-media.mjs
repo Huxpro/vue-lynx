@@ -8,6 +8,9 @@ const MAX_GITHUB_FILE_SIZE = 100 * 1024 * 1024;
 
 const media = [
   { path: 'examples/ai-chat/media/native-chat-ios26-master.mov', kind: 'video' },
+  { path: 'examples/ai-chat/media/native-first-send.mp4', kind: 'video' },
+  { path: 'examples/ai-chat/media/native-second-send.mp4', kind: 'video' },
+  { path: 'examples/ai-chat/media/native-keyboard-follow.mp4', kind: 'video' },
   {
     path: 'website/docs/public/media/ai-chat/native-first-send.mp4',
     kind: 'video',

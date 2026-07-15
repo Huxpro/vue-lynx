@@ -10,21 +10,46 @@ The playground above runs fully self-contained: the app probes for its API serve
 
 ## Native chat techniques
 
-A polished chat send coordinates layout, scrolling, keyboard state, and animation. [Vercel’s v0 iOS technical breakdown](https://vercel.com/blog/how-we-built-the-v0-ios-app) inspired this framing. It starts with visible interaction goals, then explains how each subsystem contributes to the result. The Vue Lynx port applies that approach through four techniques.
+A polished chat send is not one animation. It is a handoff between the composer, message list, keyboard, and streaming response. [Vercel’s account of building the v0 iOS app](https://vercel.com/blog/how-we-built-the-v0-ios-app) inspired us to describe the work through those visible moments, then trace each moment back to the system that makes it possible.
 
-### Keep the composer attached to the keyboard
+### The first send establishes the stage
 
-Lynx [`<input>` elements don’t avoid the keyboard automatically](https://lynxjs.org/api/elements/built-in/input#keyboard-avoidance). The composer stays absolutely positioned at the bottom and listens for the [`keyboardstatuschanged` global event](https://lynxjs.org/api/lynx-api/event/global-event#keyboardstatuschanged). It applies the reported height through `setNativeProps`, while the message list follows only when it was already following new output.
+Before an assistant message exists, the app captures the composer and viewport geometry. The outgoing text stays in a temporary animation layer while the app commits the real message, scroll position, and response space. The assistant reveal begins only after that update, so there is no target-position flash.
 
-### Give each renderer its own scroll policy
+<TechniqueVideo
+  src="/media/ai-chat/native-first-send.mp4"
+  poster="/media/ai-chat/native-first-send.webp"
+  label="The first native chat message moves from the composer into the conversation"
+  caption="First send: the bubble leaves the composer, settles into its anchor, and makes room for the response."
+/>
 
-Native sends position the new user turn at the top. Vue Lynx [`nextTick()`](https://vue.lynxjs.org/guide/api/vue-lynx/Function.nextTick) waits for pending operations to reach the main thread before [`scrollIntoView`](https://lynxjs.org/api/elements/built-in/scroll-view#scrollintoview) aligns the turn. On Web, observed `scroll-top` updates keep the list at the bottom during sends and streaming.
+The launch distance depends on the bubble height, viewport, composer, and keyboard. We stage the bubble at the captured composer position, commit layout, then start its transform on a later frame. Layout and animation never compete for the same first frame.
 
-### Start the send animation after layout settles
+### The second send is the real test
 
-The message height, viewport, composer, and keyboard determine the bubble’s launch distance. The app stages the bubble at the composer, commits the anchor and scroll position, then starts the transition on a later frame. The assistant reveal waits for this handoff, which prevents a target-position flash or a frame from the previous turn.
+Repeat sends expose mistakes that the empty state hides. Native aligns the new user turn at the top, but keeps the previous turn stable until the moving bubble reaches its target. Vue Lynx [`nextTick()`](https://vue.lynxjs.org/guide/api/vue-lynx/Function.nextTick) waits for pending operations to reach the main thread before [`scrollIntoView`](https://lynxjs.org/api/elements/built-in/scroll-view#scrollintoview) performs the final alignment. Only then does the assistant stream appear.
 
-### Keep gesture feedback on the main thread
+<TechniqueVideo
+  src="/media/ai-chat/native-second-send.mp4"
+  poster="/media/ai-chat/native-second-send.webp"
+  label="A second native chat message travels from the bottom composer to the top anchor"
+  caption="Second send: the old turn remains stable while the next bubble travels to the top anchor."
+/>
+
+Web uses a different policy because it does not have the same native positioning guarantees: observed `scroll-top` updates keep the message list pinned to the bottom during sends and streaming. The interaction stays familiar even when the mechanism changes.
+
+### The keyboard participates in layout
+
+Lynx [`<input>` elements do not avoid the keyboard automatically](https://lynxjs.org/api/elements/built-in/input#keyboard-avoidance). The composer remains absolutely positioned at the bottom and listens for the [`keyboardstatuschanged` global event](https://lynxjs.org/api/lynx-api/event/global-event#keyboardstatuschanged). It applies the reported keyboard height with `setNativeProps`; the message list follows only if it was already following new output.
+
+<TechniqueVideo
+  src="/media/ai-chat/native-keyboard-follow.mp4"
+  poster="/media/ai-chat/native-keyboard-follow.webp"
+  label="The native chat composer follows the iOS keyboard"
+  caption="Keyboard follow: the composer tracks the keyboard while the current turn stays readable."
+/>
+
+### Gesture feedback stays on the main thread
 
 Drawer gestures and press feedback use Vue Lynx [Main Thread Script](https://vue.lynxjs.org/guide/main-thread-script). Functions marked with `'main thread'` update element styles from `main-thread-bindtouch*` events without a background-thread round trip. The regular `tap` handler still performs the application action on Vue’s background thread.
 

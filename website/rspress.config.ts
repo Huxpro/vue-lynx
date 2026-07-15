@@ -64,6 +64,7 @@ export default defineConfig({
     },
     globalComponents: [
       path.join(__dirname, 'src/components/go/Go.tsx'),
+      path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
     ],
   },
   route: {
