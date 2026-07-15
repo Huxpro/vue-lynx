@@ -13,6 +13,28 @@ const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
 
+/**
+ * `/__example-harness` exists only for the example-harness Chromium
+ * verification run (verify-web.mjs loads it with ?bundle=…). It must keep
+ * building — the double underscore deliberately dodges rspress's `_*`
+ * exclude convention — but it is not user content: keep it out of the
+ * search index.
+ */
+const excludeHarnessFromSearch = {
+  name: 'vue-lynx:exclude-harness-from-search',
+  // `pages` here is the same array that becomes the runtime page data, so
+  // entries must not be removed (that breaks the route's SSG) — blank the
+  // searchable fields instead so the page can never match a query.
+  modifySearchIndexData(pages: Array<{ routePath: string; title?: string; content?: string }>) {
+    for (const page of pages) {
+      if (page.routePath.includes('__example-harness')) {
+        page.title = '';
+        page.content = '';
+      }
+    }
+  },
+};
+
 /** Prefix all `link` values in sidebar items with the given prefix (e.g. "/zh"). */
 function prefixSidebarLinks(
   items: Array<Record<string, unknown>>,
@@ -53,7 +75,12 @@ export default defineConfig({
       description: 'Vue 3 框架，用于构建 Lynx 应用',
     },
   ],
-  plugins: [pluginLlms()],
+  plugins: [
+    pluginLlms({
+      exclude: ({ page }) => page.routePath.includes('__example-harness'),
+    }),
+    excludeHarnessFromSearch,
+  ],
   markdown: {
     shiki: {
       transformers: [
