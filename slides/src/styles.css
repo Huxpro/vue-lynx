@@ -1849,40 +1849,6 @@ body.is-blackout::after {
 .logo--lynx svg { fill: #ffffff; }
 :root.light .logo--lynx svg { fill: #0a0a0a; }
 
-/* Small logo variant — past marks parked in the top-left corner. FLIP scales
-   between the 16cqw hero size and this, so the shrink reads as one motion. */
-.logo--mini { width: 7cqw; height: 7cqw; opacity: 0.55; }
-
-/* Caption block under the hero logo on the opening slides. */
-.logos__cap {
-  position: absolute;
-  left: 50%;
-  bottom: 14cqh;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: max-content;
-  max-width: 84cqw;
-  text-align: center;
-}
-.logos__line {
-  font-family: var(--display);
-  font-size: clamp(22px, 2.6cqw, 38px);
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-.logos__line b { font-weight: 700; }
-.logos__sub {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-}
-
 /* Entrances for logos with no previous-slide match (FLIP can't move them):
    slide in from the right / rise from below — only during a magic move. Uses
    the independent `translate` property so it composes cleanly. */
