@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-import { renderModeStore } from './render-mode-store';
+import { renderModeStore, type ExampleCensus, type RenderMode } from './render-mode-store';
 
 interface GoModeNavIndicatorProps {
   locale?: 'en' | 'zh';
@@ -10,28 +10,44 @@ const copy = {
   en: {
     context: 'Examples',
     label: 'Example renderer',
-    description: 'Switches all supported examples and resets preview state',
+    description: 'Switches every supported example on this page',
+    coverage: (supported: number, total: number) =>
+      `${supported} of ${total} examples on this page run Vapor; the rest fall back to VDOM`,
   },
   zh: {
     context: '示例',
     label: '示例渲染器',
-    description: '切换所有支持的示例，并重置预览状态',
+    description: '切换本页所有支持的示例',
+    coverage: (supported: number, total: number) =>
+      `本页 ${supported}/${total} 个示例支持 Vapor，其余回退到 VDOM`,
   },
 } as const;
 
-export function GoModeNavIndicator({ locale = 'en' }: GoModeNavIndicatorProps) {
-  const mode = useSyncExternalStore(
-    renderModeStore.subscribe,
-    renderModeStore.getSnapshot,
-    renderModeStore.getServerSnapshot,
-  );
+interface GoModeNavControlProps {
+  mode: RenderMode;
+  census: ExampleCensus;
+  locale: 'en' | 'zh';
+  onSelect(mode: RenderMode): void;
+}
+
+/**
+ * Presentational VDOM/Vapor segmented control. Renders nothing when the
+ * page has no examples; shows a coverage chip ("2/3") when Vapor is
+ * selected but some examples on the page fall back to VDOM.
+ */
+export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavControlProps) {
   const labels = copy[locale];
+
+  if (census.total === 0) return null;
+
+  const partial = mode === 'vapor' && census.vaporSupported < census.total;
+  const coverageText = labels.coverage(census.vaporSupported, census.total);
 
   return (
     <div
       className="go-mode-nav-control"
       data-mode={mode}
-      title={labels.description}
+      title={partial ? coverageText : labels.description}
     >
       <span className="go-mode-nav-control__context">{labels.context}</span>
       <div
@@ -44,13 +60,49 @@ export function GoModeNavIndicator({ locale = 'en' }: GoModeNavIndicatorProps) {
             type="button"
             key={candidate}
             aria-pressed={mode === candidate}
-            onClick={() => renderModeStore.setMode(candidate)}
+            onClick={() => onSelect(candidate)}
           >
             {candidate === 'vdom' ? 'VDOM' : 'Vapor'}
           </button>
         ))}
       </div>
+      {partial && (
+        <span
+          className="go-mode-nav-control__coverage"
+          role="status"
+          aria-label={coverageText}
+        >
+          {census.vaporSupported}/{census.total}
+        </span>
+      )}
     </div>
+  );
+}
+
+/**
+ * Store-wired control for the site nav. Appears only while at least one
+ * <Go> example on the current page is registered with the store, so
+ * API/reference pages never show a dead toggle.
+ */
+export function GoModeNavIndicator({ locale = 'en' }: GoModeNavIndicatorProps) {
+  const mode = useSyncExternalStore(
+    renderModeStore.subscribe,
+    renderModeStore.getSnapshot,
+    renderModeStore.getServerSnapshot,
+  );
+  const census = useSyncExternalStore(
+    renderModeStore.subscribe,
+    renderModeStore.getExampleCensus,
+    renderModeStore.getServerExampleCensus,
+  );
+
+  return (
+    <GoModeNavControl
+      mode={mode}
+      census={census}
+      locale={locale}
+      onSelect={(next) => renderModeStore.setMode(next)}
+    />
   );
 }
 

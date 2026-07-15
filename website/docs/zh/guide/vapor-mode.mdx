@@ -211,8 +211,10 @@ Vapor 入口导出 Vapor 应用需要的一切：
 所有配置的 example entry 都会通过 Lynx for Web 在 Chromium 中构建并访问。
 同一个场景分别运行 VDOM 与 Vapor；支持项必须同时通过两种模式及其 feature
 checkpoint。目前结果是 **36 个支持 / 9 个明确不支持**，并且 **45/45 个 VDOM
-entry 全部通过**。每个 `<Go>` 区块也会显示当前 entry 的状态；支持时提供局部
-`VDOM | Vapor` 切换。
+entry 全部通过**。含有可运行示例的页面会在站点导航栏出现
+`VDOM | Vapor` 切换——选择会跨页面、跨访问持久化。选中 Vapor 时，每个示例
+会标明自己实际运行的是 Vapor 还是回退（以及原因）；当两者不一致时导航栏
+还会显示本页的覆盖比例。
 
 | Entry | Vapor | 策略 / 原因 |
 |---|---|---|
