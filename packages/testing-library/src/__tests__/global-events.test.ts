@@ -1,7 +1,7 @@
 import { effectScope } from '@vue/runtime-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { onLifecycleEvent } from '../../../vue-lynx/runtime/src/global-events';
-import { useGlobalEvent } from '../../../vue-lynx/runtime/src/use-global-event';
+import { onLifecycleEvent } from '../../../vue-lynx/runtime/src/global-events.js';
+import { useGlobalEvent } from '../../../vue-lynx/runtime/src/use-global-event.js';
 
 describe('global events', () => {
   it('routes globalEventFromLepus to GlobalEventEmitter', () => {
@@ -79,7 +79,7 @@ describe('entry-background lifecycle wrapper', () => {
     };
     (globalThis as any).lynxCoreInject = { tt };
 
-    await import('../../../vue-lynx/runtime/src/entry-background');
+    await import('../../../vue-lynx/runtime/src/entry-background.js');
 
     // The wrapper replaced the original handler.
     expect(tt.OnLifecycleEvent).not.toBe(prevOnLifecycleEvent);
