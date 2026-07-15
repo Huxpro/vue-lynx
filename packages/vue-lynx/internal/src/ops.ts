@@ -20,11 +20,13 @@
  *   SET_WORKLET_EVENT: [11, id, eventType, eventName, workletCtx]
  *   SET_MT_REF:        [12, id, refImpl]
  *   INIT_MT_REF:       [13, wvid, initValue]
- *   SET_SCOPE_ID:      [14, id, cssId]   // Vue scoped CSS support
+ *   (retired)          [14]  was SET_SCOPE_ID — scoped CSS now rides on
+ *     classes (scope tokens merge into SET_CLASS / props.c), so no op emits
+ *     14 anymore. The number is not reused to keep old bundles unambiguous.
  *   REGISTER_TEMPLATE: [15, templateId, structure]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
- *     sc?: cssId[], t?: text }. An element whose only child is a #text node
+ *     t?: text }. An element whose only child is a #text node
  *     is folded: the text lives in props.t and the child list is empty
  *     (mirrors the BG-side only-child text aliasing).
  *   CLONE_TEMPLATE:    [16, templateId, baseUid]
@@ -48,7 +50,7 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
-  SET_SCOPE_ID: 14,
+  // 14 retired (was SET_SCOPE_ID) — do not reuse.
   REGISTER_TEMPLATE: 15,
   CLONE_TEMPLATE: 16,
 } as const;
@@ -73,8 +75,6 @@ export interface TemplateNodeProps {
   a?: [string, string][];
   /** id attribute */
   i?: string;
-  /** scope cssIds */
-  sc?: number[];
   /** folded only-child text content */
   t?: string;
 }

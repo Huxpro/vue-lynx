@@ -284,7 +284,6 @@ describe('vapor SFC e2e: kitchen sink', () => {
     // native Lynx's single-valued cssId slot.
     expect(classes.some((value) => value.split(' ').some((c) => c.startsWith('data-v-'))))
       .toBe(true);
-    expect(opsOf(decoded, OP.SET_SCOPE_ID)).toHaveLength(0);
     // v-if true branch only
     const texts = opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]);
     expect(texts).toContain('if');
