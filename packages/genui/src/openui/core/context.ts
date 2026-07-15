@@ -35,10 +35,9 @@ export interface OpenUIContextValue {
   triggerAction: (
     userMessage: string,
     formName?: string,
-    // biome-ignore lint/suspicious/noExplicitAny: form values are dynamically typed
     action?: ActionPlan | {
       type?: string;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
       params?: Record<string, any>;
       url?: string;
       context?: string;
@@ -52,7 +51,7 @@ export interface OpenUIContextValue {
   isQueryLoading: boolean;
 
   /** Get a field value. Top-level for $bindings, nested under formName for form fields. */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
   getFieldValue: (formName: string | undefined, name: string) => any;
 
   /**

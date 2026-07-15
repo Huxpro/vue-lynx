@@ -58,7 +58,7 @@ const TabsRenderer = vueDefineComponent({
     return (): VNodeChild => {
       const props = rp.props;
       const isStreaming = ctx.isStreaming;
-      if (!props.tabs.length) return null;
+      if (props.tabs.length === 0) return null;
 
       const activeTab = props.tabs.find((tab) => tab.value === active.value)
         ?? props.tabs[0];

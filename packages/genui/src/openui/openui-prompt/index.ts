@@ -17,6 +17,7 @@ import { z } from 'zod/v4';
 
 type HeadlessRenderer = () => null;
 
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
 export type OpenUiPromptComponent = DefinedComponent<any, HeadlessRenderer>;
 export type OpenUiPromptLibrary = Library<HeadlessRenderer>;
 

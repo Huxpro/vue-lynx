@@ -17,6 +17,7 @@
     "ignore": [
       "dist/**",
       "**/.rslib/**",
+      "**/material-icons.css",
       "coverage/**",
       "packages/testing-library/**",
       "packages/ifr-bench/**",

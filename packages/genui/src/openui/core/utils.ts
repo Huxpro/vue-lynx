@@ -78,7 +78,9 @@ export function keyFrom(value: unknown, fallbackIndex?: number): string {
         const base = str.length > 50 ? str.slice(0, 50) : str;
         return `obj-${base}-${getFallback()}`;
       }
-    } catch {}
+    } catch {
+      // Non-serializable object: fall through to the fallback key.
+    }
     return `obj-${getFallback()}`;
   }
 

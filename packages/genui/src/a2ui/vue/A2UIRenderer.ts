@@ -183,7 +183,6 @@ export const A2UIRenderer: GenUIComponent = defineComponent({
 
     return (): VNodeChild => {
       const {
-        resource,
         renderUnsupported,
         wrapSurface,
         renderFallback,
@@ -293,7 +292,7 @@ export const NodeRenderer: GenUIComponent = defineComponent({
 
     const latest = useExternalStoreFrom(
       () => props.surface.resources.get(props.component.id!),
-      (resource, cb) => (resource ? resource.subscribe(cb) : () => {}),
+      (resource, cb) => (resource ? resource.subscribe(cb) : () => undefined),
       (resource) => (resource ? resource.getSnapshot() : noResourceSnapshot),
     );
 

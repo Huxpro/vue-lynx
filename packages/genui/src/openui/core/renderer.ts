@@ -213,7 +213,7 @@ const RenderNodeInner = defineComponent({
   name: 'OpenUIRenderNodeInner',
   props: {
     el: { type: Object as PropType<ElementNode>, required: true },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
     Comp: { type: null as unknown as PropType<any>, required: true },
   },
   setup(props: { el: ElementNode; Comp: ComponentRenderer }) {
@@ -342,7 +342,7 @@ const ParsedOpenUiRenderer = defineComponent({
       componentType: string | undefined,
       name: string,
       value: unknown,
-      _shouldTriggerSaveCallback: boolean = true,
+      _shouldTriggerSaveCallback = true,
     ) => {
       const currentState = formState.value;
       const newState = { ...currentState };
