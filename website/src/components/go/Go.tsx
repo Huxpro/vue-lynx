@@ -9,6 +9,7 @@ import {
   resolveRenderMode,
   type RenderMode,
 } from './render-mode-store';
+import { useModePulse } from './use-mode-pulse';
 import { VaporStatus } from './VaporStatus';
 
 const config = {
@@ -100,6 +101,9 @@ function VaporAwareGo(props: GoProps) {
 
   const currentEntry = metadata?.templateFiles.find(({ name }) => name === entryName);
   const mode = resolveRenderMode(requestedMode, currentEntry);
+  // Pulse on the *effective* mode: examples that fell back didn't respond
+  // to the switch, so they stay still.
+  const pulse = useModePulse(mode);
 
   // Register with the store so the nav control appears only on pages that
   // actually mount examples, and can report Vapor coverage for this page.
@@ -142,7 +146,7 @@ function VaporAwareGo(props: GoProps) {
   );
 
   return (
-    <div className="vue-lynx-go">
+    <div className="vue-lynx-go" data-pulse={pulse || undefined}>
       {/* key={mode}: a mode switch swaps the underlying bundle files, so
           force a real remount of the preview instead of relying on the inner
           lynx-view resetting cleanly when its `url` prop is reassigned. */}

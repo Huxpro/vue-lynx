@@ -1,4 +1,5 @@
-import { Badge, Tab, Tabs } from '@theme';
+import { Badge } from '@theme';
+import { ModeTabs, ModeTab } from '../../../src/components/go/ModeTabs';
 
 # Vapor Mode <Badge text="实验性" type="warning" />
 
@@ -27,10 +28,11 @@ props/emits、scoped CSS，全部经 `@vue/compiler-vapor` 编译。用站点导
 ## 开启 Vapor mode
 
 Vapor 是**以应用为粒度的构建期决策**。切换一个应用需要改三处：插件开关、
-入口 import、以及每个组件上的 `vapor` 属性：
+入口 import、以及每个组件上的 `vapor` 属性。下面的代码 tab 跟随站点的
+渲染器开关（也可以反过来驱动它——同一份偏好，两个入口）：
 
-<Tabs>
-  <Tab label="Vapor">
+<ModeTabs>
+  <ModeTab mode="vapor">
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -66,8 +68,8 @@ const count = ref(0)
 </template>
 ```
 
-  </Tab>
-  <Tab label="VDOM（默认）">
+  </ModeTab>
+  <ModeTab mode="vdom">
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -99,8 +101,8 @@ const count = ref(0)
 </template>
 ```
 
-  </Tab>
-</Tabs>
+  </ModeTab>
+</ModeTabs>
 
 组件内部无需任何其他改动：`import { ref } from 'vue'` 照常工作——插件会把
 `'vue'` alias 到与当前模式匹配的入口（`vapor: true` 时为
@@ -181,48 +183,28 @@ create/append op 发送，Vapor 的跨线程流量会比 vdom 更差。因此 Vu
 
 ## 性能
 
-用移植的 Vue 官方基准（js-framework-benchmark 派生）在 Lynx for Web 上跑
-生产构建测得——完整方法学、注意事项与原始数据见
-[VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor)。简要结论：
+结论先行：更新路径操作在后台线程**快 5.8–9.8×**（端到端 2.1–6.3×），
+创建路径持平，跨线程流量约减半——代价是 gzip 包体 +26%。
+完整方法学、原始数据与注意事项：
 
-| 维度 | Vapor vs VDOM |
-|---|---|
-| 更新路径（update / select / swap / remove） | 后台线程 **快 5.8–9.8×**，端到端快 2.1–6.3× |
-| 列表创建（1k / 10k 行） | 持平（端到端 ±10% 以内） |
-| 跨线程流量（创建 1k 行） | **ops 少 2.4×，字节数 −51%** |
-| 包体（gzip） | +26%（49.3 vs 39.2 KB）—— Vapor 运行时 + DOM 兼容层的真实成本 |
-| 首屏 | +3%（置信区间重叠——基本持平） |
-
-更新路径的优势是结构性的——没有 vnode 分配、没有 diff、响应式 effect 直写
-元素——与渲染引擎无关，预期在真机上保持。
+- [VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor) —— Vue 官方基准
+  移植到 Lynx，两种模式正面对比
+- [Playground：React vs Vue](/zh/guide/benchmark-playground) —— 可以在
+  自己手机上运行的跨框架对比，含 Vapor
 
 ## `vue-lynx/vapor-app` 的 API 面
 
-Vapor 入口导出 Vapor 应用需要的一切（完整列表见
-[`vue-lynx/vapor-app` API 参考](/zh/guide/api/vapor-app/)）：
-
-| 类别 | API |
-|---|---|
-| 响应式与组合式（来自 Vue） | `ref`、`reactive`、`computed`、`watch`、`watchEffect`、`provide`/`inject`、生命周期钩子（`onMounted` 等）、`effectScope`、`defineComponent`、`defineAsyncComponent` 及其余标准 `@vue/runtime-core` API |
-| SFC 宏 | `defineProps`、`defineEmits`、`defineModel`、`defineExpose`、`useTemplateRef`（编译器处理，类型由入口提供） |
-| Vapor 运行时 helper | 编译后的 `<script setup vapor>` 代码所 import 的完整 `@vue/runtime-vapor` helper 面（`template`、`createComponent`、`createFor`、`createIf`、`renderEffect` 等）——一般不需要手动使用 |
-| Lynx 工具 | `nextTick`（在主线程应用完更新后 resolve——与 vdom 模式相同的 [tick 语义](/zh/guide/introduction)）、`useCssModule`、`withModifiers` / `withKeys`、`MainThreadRef` / `useMainThreadRef`、`runOnMainThread` / `runOnBackground`（[主线程脚本](/zh/guide/main-thread-script)在 Vapor 模式下用法完全一致） |
-
-刻意**缺席**的 API（import 它们会在构建期报错）：
-
-- `h()` / `render()` —— vdom 专属；Vapor 组件编译为直接操作元素的代码
-- `<Transition>`、`<TransitionGroup>`、`<Teleport>`、`<KeepAlive>`、
-  `<Suspense>` —— 上游 Vapor 尚未实现
-- `vShow` / `vModelText` 对象 —— Vapor 对 `v-show` / `v-model` 的编译方式
-  不同；模板里的指令照常工作，只是手动 import 的形式不存在
-- `vaporInteropPlugin` —— 不支持混用（调用会抛出带说明的错误）
+Vapor 入口导出 Vapor 应用从 `'vue'` import 的一切——标准 Vue API、SFC
+宏、Lynx 工具与 Vapor helper 面；vdom 专属 API（`h()`、`<Transition>`、
+`<Teleport>` 等）刻意缺席，误用会在构建期直接报错。完整列表与缺席清单见
+[`vue-lynx/vapor-app` API 参考](/zh/guide/api/vapor-app/)。
 
 ## 已验证的 example 矩阵
 
-站点上的每个示例都针对两种渲染器验证过，而这个站点本身就是演示：在含有
-可运行示例的页面上，导航栏的 `VDOM | Vapor` 切换会更换所有支持的示例，
-每个示例底栏的徽标显示实际生效的渲染器，出现回退时导航栏还会显示本页的
-Vapor 覆盖比例。下表由机器可读的验证产物生成
+站点上的每个示例都针对两种渲染器验证过，而这个站点本身就是演示：导航栏
+的 `VDOM | Vapor` 开关会更换所有支持的示例与代码 tab（页面上没有可切换
+内容时它会变暗），每个示例底栏的徽标显示实际生效的渲染器，出现回退时
+导航栏还会显示本页的 Vapor 覆盖比例。下表由机器可读的验证产物生成
 （`examples/vapor-support.json`，其中还记录了源码哈希与逐项证据）——
 不支持的 reason code 对应下方[限制](#当前限制)。
 

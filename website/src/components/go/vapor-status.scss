@@ -29,9 +29,10 @@
 }
 
 .go-mode-nav-control {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   color: var(--rp-c-text-2);
   font-size: 12px;
   line-height: 1;
@@ -59,12 +60,23 @@
   border-radius: 999px;
 }
 
+/* Pages with nothing to switch keep the control, dimmed — no pop-in/out. */
+.go-mode-nav-control[data-dormant] {
+  opacity: 0.45;
+  transition: opacity 200ms ease-out;
+}
+
+.go-mode-nav-control[data-dormant]:hover,
+.go-mode-nav-control[data-dormant]:focus-within {
+  opacity: 1;
+}
+
 .go-mode-nav-control__track {
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 62px;
-  height: 18px;
+  width: 58px;
+  height: 20px;
   flex: none;
   border-radius: 999px;
   background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
@@ -83,16 +95,16 @@
 .go-mode-nav-control__mode {
   position: absolute;
   top: 0;
-  right: 8px;
+  right: 7px;
   left: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   color: var(--rp-c-text-2);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   transition: color 200ms ease-out;
 }
 
@@ -104,7 +116,7 @@
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__mode {
   right: 22px;
-  left: 8px;
+  left: 7px;
   color: #fff;
   text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
 }
@@ -113,8 +125,8 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
@@ -122,7 +134,65 @@
 }
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
-  transform: translateX(44px);
+  transform: translateX(38px);
+}
+
+/* ⓘ — scope explainer */
+.go-mode-nav-control__info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rp-c-text-3);
+  cursor: pointer;
+  transition: color 160ms ease-out;
+}
+
+.go-mode-nav-control__info:hover,
+.go-mode-nav-control__info[aria-expanded='true'] {
+  color: var(--rp-c-text-1);
+}
+
+.go-mode-nav-control__info:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 1px;
+}
+
+.go-mode-nav-control__popover {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 252px;
+  padding: 10px 12px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 10px;
+  background: var(--rp-c-bg);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: normal;
+  text-align: left;
+}
+
+.go-mode-nav-control__popover p {
+  margin: 0 0 6px;
+  color: var(--rp-c-text-2);
+}
+
+.go-mode-nav-control__popover a {
+  color: var(--rp-c-brand);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.go-mode-nav-control__popover a:hover {
+  text-decoration: underline;
 }
 
 /* "2/3" chip: shown only when Vapor is selected but some examples on the
@@ -146,15 +216,15 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 22px;
-  padding: 0 9px;
+  min-height: 20px;
+  padding: 0 8px;
   border: 1px solid var(--rp-c-divider);
   border-radius: 999px;
   background: color-mix(in srgb, var(--rp-c-bg-soft) 72%, transparent);
   color: var(--rp-c-text-2);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
   line-height: 1;
   white-space: nowrap;
 }
@@ -162,7 +232,7 @@
 button.vapor-status {
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: 10px;
   transition: border-color 200ms ease-out, color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
@@ -346,8 +416,91 @@ button.vapor-status:focus-visible {
 }
 
 /* ---------------------------------------------------------------------------
+ * Mode-aware code tabs (<ModeTabs>) — same state as the nav switch,
+ * rendered as a compact segmented header over the snippet panel.
+ * ------------------------------------------------------------------------- */
+
+.mode-tabs {
+  margin: 16px 0;
+  border-radius: 12px;
+}
+
+.mode-tabs__header {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 2px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-soft);
+}
+
+.mode-tabs__header button {
+  min-height: 22px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.mode-tabs__header button[aria-selected='true'] {
+  background: var(--rp-c-bg);
+  box-shadow: inset 0 0 0 1px var(--rp-c-divider);
+  color: var(--rp-c-text-1);
+  font-weight: 600;
+}
+
+.mode-tabs[data-mode='vapor'] .mode-tabs__header button[aria-selected='true'] {
+  @include vapor-gradient;
+
+  box-shadow: none;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+}
+
+.mode-tabs__header button:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.mode-tabs__panel > :first-child {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Switch feedback: everything that responded to a mode flip pulses once
+ * with a soft gradient ring, making the toggle's reach visible.
+ * ------------------------------------------------------------------------- */
+
+.vue-lynx-go[data-pulse],
+.mode-tabs[data-pulse] {
+  animation: vapor-pulse 650ms ease-out;
+}
+
+@keyframes vapor-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--major-brand-color) 45%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Mode-switch remount: ease the fresh preview in instead of popping.
  * ------------------------------------------------------------------------- */
+
+.vue-lynx-go {
+  border-radius: 12px;
+}
 
 .vue-lynx-go > div {
   animation: vue-lynx-go-enter 240ms ease-out;
@@ -425,6 +578,7 @@ button.vapor-status:focus-visible {
 
   .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track,
   .vapor-status[data-render-mode='vapor'],
+  .mode-tabs[data-mode='vapor'] .mode-tabs__header button[aria-selected='true'],
   .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {
     animation: none;
     background-image: linear-gradient(
@@ -434,7 +588,9 @@ button.vapor-status:focus-visible {
     );
   }
 
-  .vue-lynx-go > div {
+  .vue-lynx-go > div,
+  .vue-lynx-go[data-pulse],
+  .mode-tabs[data-pulse] {
     animation: none;
   }
 }

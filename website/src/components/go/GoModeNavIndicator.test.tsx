@@ -12,30 +12,60 @@ const { createElement } = React;
 
 const noop = () => {};
 
-test('renders nothing on pages without examples (and on the server)', () => {
-  // The store-wired indicator: SSR census is always empty, so pre-rendered
-  // pages never carry a dead toggle. It appears client-side only after a
-  // <Go> example registers.
-  assert.equal(renderToStaticMarkup(createElement(GoModeNavIndicator)), '');
-
-  assert.equal(
-    renderToStaticMarkup(
-      createElement(GoModeNavControl, {
-        mode: 'vdom',
-        census: { total: 0, vaporSupported: 0 },
-        locale: 'en',
-        onSelect: noop,
-      }),
-    ),
-    '',
+test('renders dormant (not hidden) on pages without mode-aware content', () => {
+  // Persistent control: instead of popping in and out per page, it dims
+  // when nothing on the page responds to it — and still works site-wide.
+  const html = renderToStaticMarkup(
+    createElement(GoModeNavControl, {
+      mode: 'vdom',
+      census: { total: 0, vaporSupported: 0, tabGroups: 0 },
+      locale: 'en',
+      onSelect: noop,
+    }),
   );
+
+  assert.match(html, /data-dormant="true"/);
+  assert.match(html, /role="switch"/);
+  assert.doesNotMatch(html, /go-mode-nav-control__coverage/);
+  // SSR (store-wired) pre-renders the same dormant control.
+  assert.match(renderToStaticMarkup(createElement(GoModeNavIndicator)), /data-dormant="true"/);
+});
+
+test('a page with only ModeTabs wakes the control and shows no coverage chip', () => {
+  const html = renderToStaticMarkup(
+    createElement(GoModeNavControl, {
+      mode: 'vapor',
+      census: { total: 0, vaporSupported: 0, tabGroups: 2 },
+      locale: 'en',
+      onSelect: noop,
+    }),
+  );
+
+  assert.doesNotMatch(html, /data-dormant/);
+  assert.doesNotMatch(html, /go-mode-nav-control__coverage/);
+});
+
+test('exposes a scope explainer via the info button', () => {
+  const html = renderToStaticMarkup(
+    createElement(GoModeNavControl, {
+      mode: 'vdom',
+      census: { total: 1, vaporSupported: 1, tabGroups: 0 },
+      locale: 'en',
+      onSelect: noop,
+    }),
+  );
+
+  assert.match(html, /go-mode-nav-control__info/);
+  assert.match(html, /aria-label="About this switch"/);
+  // Popover only appears after interaction.
+  assert.doesNotMatch(html, /go-mode-nav-control__popover/);
 });
 
 test('renders a single on/off switch showing the current mode in the track', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vdom',
-      census: { total: 2, vaporSupported: 2 },
+      census: { total: 2, vaporSupported: 2, tabGroups: 0 },
       locale: 'en',
       onSelect: noop,
     }),
@@ -50,14 +80,16 @@ test('renders a single on/off switch showing the current mode in the track', () 
   assert.match(html, /data-mode="vdom"/);
   assert.match(html, /go-mode-nav-control__track/);
   assert.match(html, /go-mode-nav-control__knob/);
-  assert.equal(html.match(/<button/g)?.length, 1);
+  // One switch + the info button — no segmented pair.
+  assert.equal(html.match(/role="switch"/g)?.length, 1);
+  assert.equal(html.match(/<button/g)?.length, 2);
 });
 
 test('the switch reports on and reads "Vapor" when active', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
-      census: { total: 2, vaporSupported: 2 },
+      census: { total: 2, vaporSupported: 2, tabGroups: 0 },
       locale: 'en',
       onSelect: noop,
     }),
@@ -73,7 +105,7 @@ test('shows Vapor coverage when some examples fall back', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
-      census: { total: 3, vaporSupported: 2 },
+      census: { total: 3, vaporSupported: 2, tabGroups: 0 },
       locale: 'en',
       onSelect: noop,
     }),
@@ -88,7 +120,7 @@ test('hides the coverage chip when every example runs Vapor', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
-      census: { total: 3, vaporSupported: 3 },
+      census: { total: 3, vaporSupported: 3, tabGroups: 0 },
       locale: 'en',
       onSelect: noop,
     }),
@@ -101,7 +133,7 @@ test('localizes the global renderer control for Chinese docs', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vapor',
-      census: { total: 3, vaporSupported: 1 },
+      census: { total: 3, vaporSupported: 1, tabGroups: 0 },
       locale: 'zh',
       onSelect: noop,
     }),

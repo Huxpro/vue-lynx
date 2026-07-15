@@ -180,22 +180,33 @@ test('counts registered examples and their Vapor coverage', () => {
     events.push(`${vaporSupported}/${total}`);
   });
 
-  assert.deepEqual(store.getExampleCensus(), { total: 0, vaporSupported: 0 });
-  assert.deepEqual(store.getServerExampleCensus(), { total: 0, vaporSupported: 0 });
+  assert.deepEqual(store.getExampleCensus(), { total: 0, vaporSupported: 0, tabGroups: 0 });
+  assert.deepEqual(store.getServerExampleCensus(), { total: 0, vaporSupported: 0, tabGroups: 0 });
 
   const unregisterA = store.registerExample(true);
   const unregisterB = store.registerExample(false);
-  assert.deepEqual(store.getExampleCensus(), { total: 2, vaporSupported: 1 });
+  assert.deepEqual(store.getExampleCensus(), { total: 2, vaporSupported: 1, tabGroups: 0 });
 
   unregisterB();
-  assert.deepEqual(store.getExampleCensus(), { total: 1, vaporSupported: 1 });
+  assert.deepEqual(store.getExampleCensus(), { total: 1, vaporSupported: 1, tabGroups: 0 });
 
   unregisterA();
-  assert.deepEqual(store.getExampleCensus(), { total: 0, vaporSupported: 0 });
+  assert.deepEqual(store.getExampleCensus(), { total: 0, vaporSupported: 0, tabGroups: 0 });
   // The empty census is a stable reference — safe for useSyncExternalStore.
   assert.equal(store.getExampleCensus(), store.getServerExampleCensus());
 
   assert.deepEqual(events, ['1/1', '1/2', '1/1', '0/0']);
+  store.destroy();
+});
+
+test('counts registered ModeTabs groups', () => {
+  const store = createRenderModeStore();
+
+  const unregister = store.registerModeTabs();
+  assert.deepEqual(store.getExampleCensus(), { total: 0, vaporSupported: 0, tabGroups: 1 });
+
+  unregister();
+  assert.equal(store.getExampleCensus(), store.getServerExampleCensus());
   store.destroy();
 });
 
