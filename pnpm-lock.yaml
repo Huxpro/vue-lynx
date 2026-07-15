@@ -29,7 +29,7 @@ importers:
         version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -207,7 +207,7 @@ importers:
         version: 0.2.0
       '@lynx-js/web-core':
         specifier: ^0.20.0
-        version: 0.20.2(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
+        version: 0.20.4(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
       '@lynx-js/web-elements':
         specifier: ^0.12.0
         version: 0.12.0(tslib@2.8.1)
@@ -1531,6 +1531,20 @@ packages:
       tslib:
         optional: true
 
+  '@lynx-js/web-core@0.20.4':
+    resolution: {integrity: sha512-n0lLAjUeK1ndJE7xzCzkccYQE42C1qDMOvRSxqSZ5JdcBaY4pG0ZWswXC6jiL0gaksiY5Y31wZOIWHMlRRotPw==}
+    peerDependencies:
+      '@lynx-js/css-serializer': 0.1.6
+      '@lynx-js/lynx-core': 0.1.3
+      tslib: ^2.5.0
+    peerDependenciesMeta:
+      '@lynx-js/css-serializer':
+        optional: true
+      '@lynx-js/lynx-core':
+        optional: true
+      tslib:
+        optional: true
+
   '@lynx-js/web-core@0.22.1':
     resolution: {integrity: sha512-B5XLDjPTU+aO6fq6ylHt7mf3rYxcQAuKHSD86ifoWweO3WI2io6xUSPjnY+MThp8xCihu+NocpmGTi/puRDHxw==}
     peerDependencies:
@@ -1550,6 +1564,11 @@ packages:
     peerDependencies:
       tslib: ^2.5.0
 
+  '@lynx-js/web-elements@0.12.2':
+    resolution: {integrity: sha512-k6eblA01RUIt09/GRXpRx1eL4n4Ztzs4v81RAE8Pkix8MyRArwjHb5qbV9O64VWuSk/R6h6ZJjen0cfzrBZdzw==}
+    peerDependencies:
+      tslib: ^2.5.0
+
   '@lynx-js/web-elements@0.12.5':
     resolution: {integrity: sha512-plNOkiI/AvdSqTmsN8jDBtll3SOqfrnLUuqicn3DrMUT7tizUhX6569dLNae8dk9KQqnS1pukUK9d/P/Nw9edg==}
     peerDependencies:
@@ -1560,6 +1579,9 @@ packages:
 
   '@lynx-js/web-worker-rpc@0.19.8':
     resolution: {integrity: sha512-POkpPZQjU+a0V/LGWNkaqy+/E6B2WEDYnbh+0FtRNLXcNOBOcgvZNg0fo6VVbw3UInmTwO0v+2g/kMjotizwkg==}
+
+  '@lynx-js/web-worker-rpc@0.20.4':
+    resolution: {integrity: sha512-i4RV8f397nl02zB1wjFfEJDo/bM0c+dvzd9nIPY9gksf2lX8aSOpkXn6Kyou+05qdJAXm2EZIl8SKYiTMi/P6w==}
 
   '@lynx-js/web-worker-rpc@0.22.1':
     resolution: {integrity: sha512-nvC0axgTFJbpc8QcXbMVEG4EQcF3GCfdoDTmSAIE0J6bOOfvx2hK1ztG6MpRERU5dzMSfaHn425QpbPrume9QQ==}
@@ -7279,6 +7301,15 @@ snapshots:
       '@lynx-js/lynx-core': 0.1.3
       tslib: 2.8.1
 
+  '@lynx-js/web-core@0.20.4(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)':
+    dependencies:
+      '@lynx-js/web-elements': 0.12.2(tslib@2.8.1)
+      '@lynx-js/web-worker-rpc': 0.20.4
+      wasm-feature-detect: 1.8.0
+    optionalDependencies:
+      '@lynx-js/lynx-core': 0.1.3
+      tslib: 2.8.1
+
   '@lynx-js/web-core@0.22.1(tslib@2.8.1)':
     dependencies:
       '@lynx-js/web-elements': 0.12.5(tslib@2.8.1)
@@ -7291,6 +7322,12 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
+  '@lynx-js/web-elements@0.12.2(tslib@2.8.1)':
+    dependencies:
+      dompurify: 3.4.11
+      markdown-it: 14.1.1
+      tslib: 2.8.1
+
   '@lynx-js/web-elements@0.12.5(tslib@2.8.1)':
     dependencies:
       dompurify: 3.4.11
@@ -7300,6 +7337,8 @@ snapshots:
   '@lynx-js/web-rsbuild-server-middleware@0.19.8': {}
 
   '@lynx-js/web-worker-rpc@0.19.8': {}
+
+  '@lynx-js/web-worker-rpc@0.20.4': {}
 
   '@lynx-js/web-worker-rpc@0.22.1': {}
 
@@ -7840,6 +7879,16 @@ snapshots:
       rspack-vue-loader: 17.5.0(@rspack/core@2.0.0-beta.3(@swc/helpers@0.5.19))
     optionalDependencies:
       '@rsbuild/core': 1.3.19
+    transitivePeerDependencies:
+      - '@rspack/core'
+      - '@vue/compiler-sfc'
+      - vue
+
+  '@rsbuild/plugin-vue@1.2.7(@rsbuild/core@1.7.3)(@rspack/core@1.7.8(@swc/helpers@0.5.19))':
+    dependencies:
+      rspack-vue-loader: 17.5.0(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+    optionalDependencies:
+      '@rsbuild/core': 1.7.3
     transitivePeerDependencies:
       - '@rspack/core'
       - '@vue/compiler-sfc'
