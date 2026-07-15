@@ -35,6 +35,19 @@ const counter = document.querySelector('[data-counter]');
 
 // Framework engine: fixed 16:9 stage + magic-move (see framework/).
 const stage = createStage(frame);
+
+// Overview grid fit — each thumbnail renders at the full 1280×720 design size
+// and is shrunk uniformly via CSS `zoom` (see .deck.overview in styles.css).
+// Compute the zoom so a row of OV_COLS tiles exactly fills the deck width; the
+// literals here must stay in sync with the grid's columns / gap / padding.
+const OV_COLS = 4, OV_GAP = 14, OV_PAD = 32, OV_BASE_W = 1280;
+function fitOverview() {
+  if (!deck.classList.contains('overview')) return;
+  const inner = deck.clientWidth - OV_PAD * 2 - OV_GAP * (OV_COLS - 1);
+  const zoom = Math.max(0.05, inner / OV_COLS / OV_BASE_W);
+  deck.style.setProperty('--ov-zoom', String(zoom));
+}
+window.addEventListener('resize', fitOverview);
 const REDUCED_MOTION =
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const mm = createMagicMove({
@@ -596,7 +609,11 @@ const deckApi = {
     channel.postMessage({ type: 'theme-toggle-mirror' });
   },
   overview: () => deck.classList.contains('overview'),
-  toggleOverview: () => deck.classList.toggle('overview'),
+  toggleOverview: () => {
+    const on = deck.classList.toggle('overview');
+    if (on) requestAnimationFrame(fitOverview);
+    return on;
+  },
   isBlackout: () => blackedOut,
   blackout: () => {
     applyBlackout(!blackedOut);
