@@ -74,18 +74,15 @@ describe("Lynx-for-Web example host", () => {
       ),
       "utf8",
     );
-    const toolbarSource = await readFile(
+    const navControlSource = await readFile(
       new URL(
-        "../../../website/src/components/go/GoModeToolbar.tsx",
+        "../../../website/src/components/go/GoModeNavIndicator.tsx",
         import.meta.url,
       ),
       "utf8",
     );
-    const remarkSource = await readFile(
-      new URL(
-        "../../../website/scripts/remark-go-mode-toolbar.ts",
-        import.meta.url,
-      ),
+    const configSource = await readFile(
+      new URL("../../../website/rspress.config.ts", import.meta.url),
       "utf8",
     );
     const themeSource = await readFile(
@@ -99,6 +96,24 @@ describe("Lynx-for-Web example host", () => {
       ),
       "utf8",
     );
+    const goWebPatch = await readFile(
+      new URL(
+        "../../../patches/@lynx-js__go-web@0.2.1.patch",
+        import.meta.url,
+      ),
+      "utf8",
+    );
+    const webCorePatch = await readFile(
+      new URL(
+        "../../../patches/@lynx-js__web-core@0.20.2.patch",
+        import.meta.url,
+      ),
+      "utf8",
+    ).catch(() => "");
+    const rootPackage = await readFile(
+      new URL("../../../package.json", import.meta.url),
+      "utf8",
+    );
 
     expect(source).toContain("onEntryChange={handleEntryChange}");
     expect(source).toContain("metadataForMode(metadata, mode)");
@@ -106,14 +121,15 @@ describe("Lynx-for-Web example host", () => {
     expect(source).not.toContain("<SWRConfig");
     expect(source).toContain("useSyncExternalStore(");
     expect(source).not.toContain("renderModeStore.setMode(");
-    expect(toolbarSource).toContain("renderModeStore.setMode(");
-    expect(toolbarSource).toContain("All supported examples");
-    expect(remarkSource).toContain("name: 'GoModeToolbar'");
+    expect(navControlSource).toContain("renderModeStore.setMode(");
+    expect(configSource).not.toContain("remarkGoModeToolbar");
+    expect(configSource).not.toContain("GoModeToolbar.tsx");
     expect(themeSource).toContain("<GoModeNavIndicator");
     expect(themeSource).toContain("beforeNavMenu={");
-    expect(modeStyles).toMatch(
-      /@media \(width <= 767px\)[\s\S]*\.go-mode-toolbar \{[\s\S]*border: 0;/,
-    );
+    expect(modeStyles).not.toContain(".go-mode-toolbar");
+    expect(goWebPatch).toContain("+          key={src}");
+    expect(webCorePatch).toContain("callDestroyLifetimeFun is not a function");
+    expect(rootPackage).toContain('"@lynx-js/web-core@0.20.2"');
     expect(storeSource).toContain("browser.history.replaceState(");
     expect(storeSource).not.toContain("location.assign(");
     expect(source).toContain('aria-busy="true"');
