@@ -29,6 +29,7 @@ import type {
   TemplateNode,
   TemplateNodeProps,
 } from 'vue-lynx/internal/ops';
+import { patchEventProp } from './event-props.js';
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
@@ -656,6 +657,19 @@ export class ShadowElement {
 
   setAttribute(key: string, value: unknown): void {
     if (!this._inert && applyMainThreadProp(this, key, value)) return;
+    // Vapor compiles ReactLynx-style event props (`:bindtap="fn"`,
+    // `:catchtap="fn"`, …) to plain attribute writes — including
+    // runtime-vapor's internal paths (fallthrough attrs, v-bind spreads),
+    // which all funnel through setAttribute. Function values on
+    // event-shaped keys register native Lynx events, mirroring the vdom
+    // renderer's patchProp.
+    if (
+      !this._inert
+      && typeof value === 'function'
+      && patchEventProp(this, key, value)
+    ) {
+      return;
+    }
     const strValue = value == null ? '' : String(value);
     if (this._inert) {
       // Template prototype: record only; ops are emitted on clone.
@@ -697,6 +711,10 @@ export class ShadowElement {
 
   removeAttribute(key: string): void {
     if (!this._inert && applyMainThreadProp(this, key, null)) return;
+    // Unregister an event previously bound through setAttribute's event
+    // routing (`:bindtap="cond ? fn : null"` → removeAttribute). No-op if
+    // the key never registered; falls through to clear any attr record.
+    if (!this._inert) patchEventProp(this, key, null);
     if (key === 'class') {
       if (!this._baseClass) return;
       this._baseClass = '';
