@@ -125,9 +125,6 @@ function instantiateTemplate(
       for (const [key, value] of props.a) __SetAttribute(el, key, value);
     }
     if (props.i !== undefined) __SetID(el, props.i);
-    if (props.sc) {
-      for (const cssId of props.sc) __SetCSSId([el], cssId);
-    }
     if (props.t !== undefined) {
       __SetAttribute(el, 'text', props.t);
       if (tag === '#text') {
@@ -372,49 +369,6 @@ export function applyOps(ops: unknown[]): void {
         const wvid = ops[i++] as number;
         const initValue = ops[i++];
         applyInitMtRef(wvid, initValue);
-        break;
-      }
-
-      case OP.SET_SCOPE_ID: {
-        const id = ops[i++] as number;
-        const cssId = ops[i++] as number;
-        const el = elements.get(id);
-        if (el) {
-          // Set the CSS scope ID for Lynx's CSS engine
-          __SetCSSId([el], cssId);
-        }
-        break;
-      }
-
-      case OP.INSTANTIATE_TEMPLATE: {
-        const rootId = ops[i++] as number;
-        const tplId = ops[i++] as string;
-        const holeCount = ops[i++] as number;
-        const create = getTemplate(tplId);
-        let handles: LynxElement[];
-        if (create) {
-          // The create() function builds the whole lowered subtree with
-          // straight-line PAPI calls and returns [root, hole0, hole1, …].
-          handles = create(pageUniqueId);
-        } else {
-          // Unregistered template (mismatched bundles / extraction failure).
-          // Render an empty view placeholder so the rest of the tree
-          // survives; hole ids alias the placeholder so SET ops don't crash.
-          console.error(
-            `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
-          );
-          const el = createTypedElement('view', pageUniqueId);
-          __SetCSSId([el], 0);
-          handles = [el];
-        }
-        const root = handles[0]!;
-        elements.set(rootId, root);
-        // NodesRef selector parity for the root (it is a vnode.el on the
-        // BG thread); interior nodes are anonymous by design.
-        __SetAttribute(root, `vue-ref-${rootId}`, 1);
-        for (let k = 1; k <= holeCount; k++) {
-          elements.set(rootId + k, handles[k] ?? root);
-        }
         break;
       }
 

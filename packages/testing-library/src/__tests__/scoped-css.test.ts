@@ -59,7 +59,6 @@ describe('scoped CSS classes (nodeOps)', () => {
     expect(resolveClass(el)).toBe(
       'box data-v-aaa00001 data-v-bbb00002',
     );
-    expect(ops).not.toContain(OP.SET_SCOPE_ID);
   });
 });
 
