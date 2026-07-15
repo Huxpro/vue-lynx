@@ -431,7 +431,19 @@ initQRCodes();
 function initPhoneControls() {
   if (embedMode) return;
   document.querySelectorAll('.phone').forEach((phone) =>
-    attachDeviceControls(phone, { getScale: stage.getScale, presets: DECK_PRESETS }));
+    attachDeviceControls(phone, {
+      getScale: stage.getScale,
+      presets: DECK_PRESETS,
+      // Deck frames float over the slide (absolutely centred), so all four
+      // corners resize symmetrically about the middle.
+      corners: ['nw', 'ne', 'sw', 'se'],
+      anchor: 'center',
+      // Embedded in the deck: offer a jump to the standalone play page.
+      externalUrl: (el) => {
+        const bundle = el.querySelector('vl-demo')?.getAttribute('bundle');
+        return bundle ? `${import.meta.env.BASE_URL}play.html?bundle=${bundle}` : null;
+      },
+    }));
 }
 initPhoneControls();
 

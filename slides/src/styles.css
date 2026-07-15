@@ -631,13 +631,17 @@ h1, h2, h3, p { margin: 0; }
   justify-content: center;
   align-items: center;
   position: relative;
-  height: min(78cqh, 620px);   /* reserved footprint = phone-preset height */
+  height: min(92cqh, 650px);   /* reserved footprint = phone-preset height */
 }
 .demo__stage .phone {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  /* Let the frame grow past its grid column — that's what makes the wider
+     presets (and free drags) genuinely float over the copy rather than being
+     clamped to the column width by the base `.phone { max-width: 100% }`. */
+  max-width: none;
 }
 /* Lift the frame above the copy (and deepen its shadow) once it grows past the
    phone preset, so an overlapping expansion reads as floating, not broken. */
@@ -783,20 +787,17 @@ a.qr:hover { color: var(--vue-green); }
   position: relative;
 }
 
-/* Free drag-to-resize grip — minimal corner affordance: two vue-green diagonal
-   strokes nested in the bottom-right corner (no chip/bezel), echoing the native
-   resize grip. The box stays a generous 24px so it's easy to grab even though
-   only the glyph is painted; the glyph is pinned to the corner via place-items. */
+/* Free drag-to-resize grips — minimal corner affordance: two vue-green diagonal
+   strokes nested in a frame corner (no chip/bezel), echoing the native resize
+   grip. The box stays a generous 24px so it's easy to grab even though only the
+   glyph is painted; the glyph (authored for the SE corner) is flipped/rotated
+   per corner and pinned outward via place-items. */
 .phone__resize {
   position: absolute;
-  right: 4px;
-  bottom: 4px;
   width: 24px;
   height: 24px;
   display: grid;
-  place-items: end;
   color: var(--vue-green);
-  cursor: nwse-resize;
   z-index: 8;
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.15s ease;
@@ -814,6 +815,14 @@ a.qr:hover { color: var(--vue-green); }
 .phone__resize:active { transform: scale(1.15); }
 .phone__resize:hover svg,
 .phone__resize:active svg { opacity: 1; }
+
+.phone__resize[data-corner="se"] { right: 4px; bottom: 4px; place-items: end;         cursor: nwse-resize; }
+.phone__resize[data-corner="sw"] { left: 4px;  bottom: 4px; place-items: end start;   cursor: nesw-resize; }
+.phone__resize[data-corner="ne"] { right: 4px; top: 4px;    place-items: start end;   cursor: nesw-resize; }
+.phone__resize[data-corner="nw"] { left: 4px;  top: 4px;    place-items: start;       cursor: nwse-resize; }
+.phone__resize[data-corner="sw"] svg { transform: scaleX(-1); }
+.phone__resize[data-corner="ne"] svg { transform: scaleY(-1); }
+.phone__resize[data-corner="nw"] svg { transform: rotate(180deg); }
 
 /* Device preset switcher (phone / vertical tablet / desktop) — bottom-right,
    sits just below the frame, revealed on hover. */
@@ -873,6 +882,16 @@ a.qr:hover { color: var(--vue-green); }
 }
 .phone__preset svg { width: 15px; height: 15px; display: block; }
 
+/* Divider + "open externally" action, appended after the size presets. */
+.phone__presets-div {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 1px;
+  background: var(--line);
+}
+.phone__preset--ext:hover { color: var(--vue-green); }
+.phone__preset--ext svg { width: 14px; height: 14px; }
+
 .phone__inner {
   position: relative;
   width: 100%;
@@ -914,11 +933,12 @@ vl-demo lynx-view {
   container-type: size;
   /* rpx is Lynx's density unit (750rpx = one screen width). Tracking the frame
      width 1:1 magnified the mobile UI whenever the frame grew past a phone (the
-     tablet / desktop presets are ~1.5× wider), which read as "zoomed in". Cap
-     the reference at a phone-sized 300px so rpx holds at true 100% density on
-     the wider presets — they reveal more of the app instead of scaling it up.
-     Phone-preset frames are ≤300px, so their rendering is unchanged. */
-  --rpx-unit: calc(min(100cqw, 300px) / 750);
+     tablet / desktop presets are much wider), which read as "zoomed in". Cap the
+     reference at the widest phone preset (~340px) so 750rpx maps to the phone
+     width there — a real handset density — and the wider presets hold at that
+     same 100% density, revealing more of the app instead of scaling it up.
+     Keep this in sync with the phone preset width in device.js (DECK_PRESETS). */
+  --rpx-unit: calc(min(100cqw, 340px) / 750);
   --vh-unit: 1cqh;
   --vw-unit: 1cqw;
 }
