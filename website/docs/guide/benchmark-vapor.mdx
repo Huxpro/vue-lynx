@@ -106,7 +106,7 @@ Three iterations, each driven by the ops telemetry — kept here because the
    interpreter ships in the same bundle, so no engine change was needed.
 3. **Pure Vapor entry.** The original composite entry bundled both
    runtimes: +48% gzip and +29% first screen. Splitting into pure
-   `vue-lynx` / `vue-lynx/vapor-app` entries cut that to +26% and +3%
+   `vue-lynx` / `vue-lynx/vapor` entries cut that to +26% and +3%
    with zero regression elsewhere.
 
 A side win: the create-10k stress loop exposed a Main-Thread element-registry

@@ -52,7 +52,7 @@ export default defineConfig({
 ```
 
 ```ts title="src/index.ts"
-import { createApp } from 'vue-lynx/vapor-app' // [!code highlight]
+import { createApp } from 'vue-lynx/vapor' // [!code highlight]
 import App from './App.vue'
 
 createApp(App).mount()
@@ -110,18 +110,18 @@ const count = ref(0)
 
 Inside components nothing else changes: `import { ref } from 'vue'` keeps
 working because the plugin aliases `'vue'` to the entry that matches your
-mode (`vue-lynx/vapor-app` when `vapor: true`, `vue-lynx` otherwise).
+mode (`vue-lynx/vapor` when `vapor: true`, `vue-lynx` otherwise).
 
 See the `examples/vapor` demo in the
 [repository's examples directory](https://github.com/Huxpro/vue-lynx/tree/main/examples)
 for a complete app using interpolation, `v-if`/`v-for`, `v-model`,
 component props/emits, and scoped CSS in Vapor mode.
 
-:::info Migrating from `vue-lynx/with-vapor`
-Earlier previews used a composite `vue-lynx/with-vapor` entry that bundled
-**both** runtimes. It still works as a deprecated alias of
-`vue-lynx/vapor-app`, but the pure entry ships ~12% less gzipped JS and
-starts faster — switch the one import line.
+:::info Migrating from earlier entry names
+Earlier previews used `vue-lynx/with-vapor` (a composite entry bundling
+**both** runtimes — ~12% more gzipped JS) and then `vue-lynx/vapor-app`.
+Both still work as deprecated aliases of `vue-lynx/vapor` — switch the one
+import line.
 :::
 
 ## One app, one mode
@@ -139,11 +139,11 @@ ships **two pure entries**:
 | Entry | Contains | Use for |
 |---|---|---|
 | `vue-lynx` | vdom renderer + Vue runtime-core | Regular (default) apps |
-| `vue-lynx/vapor-app` | Vapor runtime + Lynx DOM-compat layer | Vapor apps |
+| `vue-lynx/vapor` | Vapor runtime + Lynx DOM-compat layer | Vapor apps |
 
 This has a nice side effect: vdom-only APIs (`h()`, `<Transition>`,
 `<Teleport>`, `<KeepAlive>`, `<Suspense>`, `vShow`, `vModelText`) simply
-don't exist on `vue-lynx/vapor-app`, so accidentally using them in a Vapor
+don't exist on `vue-lynx/vapor`, so accidentally using them in a Vapor
 app **fails at build time** instead of misbehaving at runtime.
 
 ## How it works on Lynx
@@ -158,7 +158,7 @@ Thread that vdom mode uses.
 
 ```
 compiled vapor component
-  → import from 'vue' (aliased to vue-lynx/vapor-app)
+  → import from 'vue' (aliased to vue-lynx/vapor)
     → @vue/runtime-vapor            (unmodified upstream)
       → document / Node / Element shims
       → ShadowElement DOM-compat surface
@@ -205,13 +205,13 @@ Full methodology, raw data, and caveats:
 - [Playground: React vs Vue](/guide/benchmark-playground) — cross-framework
   comparison you can run on your own phone, including Vapor
 
-## API surface of `vue-lynx/vapor-app`
+## API surface of `vue-lynx/vapor`
 
 The Vapor entry exports everything a Vapor app imports from `'vue'` — the
 standard Vue APIs, SFC macros, Lynx utilities, and the Vapor helper
 surface — while vdom-only APIs (`h()`, `<Transition>`, `<Teleport>`, …)
 are intentionally absent and fail at build time. See the
-[`vue-lynx/vapor-app` API reference](/guide/api/vapor-app/) for the full
+[`vue-lynx/vapor` API reference](/guide/api/vapor/) for the full
 listing and what's excluded.
 
 ## Verified example matrix

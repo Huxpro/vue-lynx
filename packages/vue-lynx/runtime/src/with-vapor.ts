@@ -3,7 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * @deprecated Use `vue-lynx/vapor-app` instead.
+ * @deprecated Use `vue-lynx/vapor` instead.
  *
  * This entry used to compose BOTH runtimes (vdom custom renderer + Vapor) so
  * that `createApp` could route on `__vapor` at runtime — paying ~48% extra

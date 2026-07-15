@@ -9,7 +9,7 @@
  * tests run whatever the actual compiler emits today.
  *
  * Mechanism: compiled module code (which imports helpers from 'vue') is
- * rewritten to import from 'vue-lynx/vapor-app', written to a gitignored
+ * rewritten to import from 'vue-lynx/vapor', written to a gitignored
  * .generated/ dir, and dynamically imported so vite resolves the imports
  * through the same aliases as everything else.
  */
@@ -22,7 +22,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import { nextTick, resetForTesting } from 'vue-lynx';
 import { OP } from 'vue-lynx/internal/ops';
-import * as vaporSurface from 'vue-lynx/vapor-app';
+import * as vaporSurface from 'vue-lynx/vapor';
 import { publishEvent } from '../../../vue-lynx/runtime/src/event-registry.js';
 import { collectFlushedOps, resetCapturedOps } from '../local-test-setup.js';
 import {
@@ -74,7 +74,7 @@ function compileVaporSfc(filename: string, source: string): CompiledFixture {
 
   const code = result.content.replace(
     /from\s*(['"])vue\1/g,
-    "from 'vue-lynx/vapor-app'",
+    "from 'vue-lynx/vapor'",
   );
   return { code, importsFromVue };
 }
