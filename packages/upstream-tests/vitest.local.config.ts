@@ -57,22 +57,6 @@ export default defineConfig({
           '../vue-lynx/runtime/src/vapor-app.ts',
         ),
       },
-      // deprecated alias of vue-lynx/vapor
-      {
-        find: /^vue-lynx\/vapor-app$/,
-        replacement: path.resolve(
-          __dirname,
-          '../vue-lynx/runtime/src/vapor-app.ts',
-        ),
-      },
-      // deprecated composite entry
-      {
-        find: /^vue-lynx\/with-vapor$/,
-        replacement: path.resolve(
-          __dirname,
-          '../vue-lynx/runtime/src/with-vapor.ts',
-        ),
-      },
       // vue-lynx → runtime source
       {
         find: /^vue-lynx$/,

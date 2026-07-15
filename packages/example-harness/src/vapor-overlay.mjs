@@ -16,7 +16,7 @@ const textExtensions = new Set([
 
 export function transformModule(source) {
   return source.replace(/(from\s*|import\s*\()['"]vue-lynx['"]/g, (match) =>
-    match.replace("vue-lynx", "vue-lynx/vapor-app")
+    match.replace("vue-lynx", "vue-lynx/vapor")
   );
 }
 
