@@ -335,7 +335,7 @@ export function useOpenUIState(
     componentType: string | undefined,
     name: string,
     value: unknown,
-    shouldTriggerSaveCallback: boolean = true,
+    shouldTriggerSaveCallback = true,
   ) => {
     const wrapped = { value, componentType };
     if (formName) {
@@ -564,7 +564,7 @@ export function useOpenUIState(
     }
 
     // Parser validation errors → enriched OpenUIError (with hints)
-    if (result.value?.meta?.errors?.length) {
+    if ((result.value?.meta?.errors?.length ?? 0) > 0) {
       errors.push(
         ...enrichErrors(
           result.value.meta.errors,

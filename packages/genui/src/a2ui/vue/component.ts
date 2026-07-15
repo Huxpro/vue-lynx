@@ -13,7 +13,7 @@ import type { VNodeChild } from '@vue/runtime-core';
  * `(props) => VNodeChild` or `defineComponent(...)` objects; both are
  * renderable via `h()`.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
 export type GenUIComponent = any;
 
 /**

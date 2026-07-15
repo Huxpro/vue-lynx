@@ -16,6 +16,8 @@
     "enabled": true,
     "ignore": [
       "dist/**",
+      "**/.rslib/**",
+      "**/material-icons.css",
       "coverage/**",
       "packages/testing-library/**",
       "packages/upstream-tests/**",

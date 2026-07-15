@@ -12,13 +12,13 @@ export interface CreateOpenUiLibraryOptions {
   /** Override the root component name. Defaults to `'Stack'`. */
   root?: string;
   /** Replace or extend the built-in component set. */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
   components?: DefinedComponent<any>[];
   /** Replace or extend the built-in component groups. */
   componentGroups?: ComponentGroup[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
 const DEFAULT_COMPONENTS: DefinedComponent<any>[] = [
   c.Stack,
   c.Row,

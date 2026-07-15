@@ -42,8 +42,8 @@ export interface ComponentRenderProps<P = Record<string, unknown>>
  * `(props: ComponentRenderProps<P>) => VNodeChild` or a stateful
  * `defineComponent(...)` accepting the same props.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ComponentRenderer<P = Record<string, unknown>> = any;
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
+export type ComponentRenderer<_P = Record<string, unknown>> = any;
 
 export type DefinedComponent<T extends $ZodObject = $ZodObject> =
   CoreDefinedComponent<
@@ -51,10 +51,10 @@ export type DefinedComponent<T extends $ZodObject = $ZodObject> =
     ComponentRenderer<z.infer<T>>
   >;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
 export type Library = CoreLibrary<ComponentRenderer<any>>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
 export type LibraryDefinition = CoreLibraryDefinition<ComponentRenderer<any>>;
 
 // ─── defineComponent (Vue) ──────────────────────────────────────────────────
@@ -82,7 +82,7 @@ export function defineComponent<T extends $ZodObject>(config: {
  * @internal
  */
 export function createLibrary(input: LibraryDefinition): Library {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: ported upstream API is typed with `any`
   return coreCreateLibrary<ComponentRenderer<any>>(input) as Library;
 }
 
