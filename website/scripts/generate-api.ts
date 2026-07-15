@@ -15,7 +15,7 @@ type ApiPackageConfig = {
   homepageFileName?: string;
   showHomepageInSidebar?: boolean;
   /**
-   * Skip pages for re-exported external symbols. Used for vapor-app, whose
+   * Skip pages for re-exported external symbols. Used for the vapor entry, whose
    * surface is dominated by @vue/runtime-core / @vue/runtime-vapor
    * re-exports — documented on vuejs.org, and whose upstream doc comments
    * contain raw template markup that breaks MDX compilation.
@@ -32,8 +32,8 @@ const packages = [
     showHomepageInSidebar: false,
   },
   {
-    label: 'vue-lynx/vapor-app',
-    dirName: 'vapor-app',
+    label: 'vue-lynx/vapor',
+    dirName: 'vapor',
     entryPoints: [path.join(repoRoot, 'packages/vue-lynx/runtime/src/vapor-app.ts')],
     homepageFileName: 'index',
     showHomepageInSidebar: false,
@@ -96,7 +96,7 @@ const VUE_LYNX_APIS = new Set([
 // Lynx-facing APIs of the pure Vapor entry — the only sidebar entries for
 // vue-lynx/vapor-app. Everything else it exports is either a Vue re-export
 // (documented on vuejs.org) or a compiler-emitted helper users never import.
-const VAPOR_APP_APIS = new Set([
+const VAPOR_APIS = new Set([
   'Function.createApp',
   'Interface.VueLynxApp',
   'Function.nextTick',
@@ -113,7 +113,7 @@ const VAPOR_APP_APIS = new Set([
 // dominated by re-exports).
 const SIDEBAR_ALLOWLISTS: Record<string, Set<string>> = {
   'vue-lynx': VUE_LYNX_APIS,
-  'vapor-app': VAPOR_APP_APIS,
+  vapor: VAPOR_APIS,
 };
 
 /** Read generated .mdx files and return sidebar items for a package */
@@ -284,11 +284,11 @@ async function rewriteVaporAppIndex(outputDir: string) {
     .filter((n) => n !== 'index');
 
   const lynxApis = allFiles
-    .filter((n) => VAPOR_APP_APIS.has(n))
+    .filter((n) => VAPOR_APIS.has(n))
     .sort((a, b) => a.localeCompare(b));
 
   const rest = allFiles
-    .filter((n) => !VAPOR_APP_APIS.has(n) && !HIDDEN_APIS.has(n))
+    .filter((n) => !VAPOR_APIS.has(n) && !HIDDEN_APIS.has(n))
     .sort((a, b) => a.localeCompare(b));
 
   const fmtRow = (name: string) => {
@@ -296,9 +296,10 @@ async function rewriteVaporAppIndex(outputDir: string) {
     return `| [${api}](${name}.mdx) | ${kind} |`;
   };
 
-  const md = `# vue-lynx/vapor-app
+  const md = `# vue-lynx/vapor
 
-The **pure Vapor** application entry. With \`pluginVueLynx({ vapor: true })\`,
+The **pure Vapor** application entry (\`vue-lynx/vapor-app\` remains a
+deprecated alias). With \`pluginVueLynx({ vapor: true })\`,
 \`'vue'\` is aliased to this module — it provides everything a Vapor app
 imports from \`'vue'\` (reactivity, lifecycle, watchers, DI, SFC macros, the
 Vapor helper surface) **without** the vdom renderer. See the
@@ -306,7 +307,7 @@ Vapor helper surface) **without** the vdom renderer. See the
 current limitations.
 
 \`\`\`ts
-import { createApp } from 'vue-lynx/vapor-app'
+import { createApp } from 'vue-lynx/vapor'
 import App from './App.vue'
 
 createApp(App).mount()
@@ -442,7 +443,7 @@ for (const pkg of packages) {
 
 // Rewrite index pages with curated sections
 await rewriteVueLynxIndex(path.join(apiOutputDir, 'vue-lynx'));
-await rewriteVaporAppIndex(path.join(apiOutputDir, 'vapor-app'));
+await rewriteVaporAppIndex(path.join(apiOutputDir, 'vapor'));
 await rewriteTestingLibraryIndex(path.join(apiOutputDir, 'testing-library'));
 
 // Write sidebar JSON for rspress.config.ts to import

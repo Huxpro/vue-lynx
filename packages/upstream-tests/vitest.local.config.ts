@@ -48,15 +48,16 @@ export default defineConfig({
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
       },
-      // vue-lynx/vapor → vapor runtime source
+      // vue-lynx/vapor → pure vapor entry source (the app entry; the
+      // adapter surface it re-exports lives in runtime/src/vapor/)
       {
         find: /^vue-lynx\/vapor$/,
         replacement: path.resolve(
           __dirname,
-          '../vue-lynx/runtime/src/vapor/index.ts',
+          '../vue-lynx/runtime/src/vapor-app.ts',
         ),
       },
-      // vue-lynx/vapor-app → pure vapor entry source
+      // deprecated alias of vue-lynx/vapor
       {
         find: /^vue-lynx\/vapor-app$/,
         replacement: path.resolve(
@@ -64,7 +65,7 @@ export default defineConfig({
           '../vue-lynx/runtime/src/vapor-app.ts',
         ),
       },
-      // deprecated alias of vapor-app
+      // deprecated composite entry
       {
         find: /^vue-lynx\/with-vapor$/,
         replacement: path.resolve(

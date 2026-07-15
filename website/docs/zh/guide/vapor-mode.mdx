@@ -48,7 +48,7 @@ export default defineConfig({
 ```
 
 ```ts title="src/index.ts"
-import { createApp } from 'vue-lynx/vapor-app' // [!code highlight]
+import { createApp } from 'vue-lynx/vapor' // [!code highlight]
 import App from './App.vue'
 
 createApp(App).mount()
@@ -106,17 +106,17 @@ const count = ref(0)
 
 组件内部无需任何其他改动：`import { ref } from 'vue'` 照常工作——插件会把
 `'vue'` alias 到与当前模式匹配的入口（`vapor: true` 时为
-`vue-lynx/vapor-app`，否则为 `vue-lynx`）。
+`vue-lynx/vapor`，否则为 `vue-lynx`）。
 
 完整示例见仓库
 [examples 目录](https://github.com/Huxpro/vue-lynx/tree/main/examples)中的
 `examples/vapor`，覆盖插值、`v-if`/`v-for`、`v-model`、组件 props/emits 和
 scoped CSS。
 
-:::info 从 `vue-lynx/with-vapor` 迁移
-早期预览版使用复合入口 `vue-lynx/with-vapor`，会**同时打包两套运行时**。
-它仍以 deprecated 别名的形式指向 `vue-lynx/vapor-app`，但纯入口的 gzip 体积
-小约 12%、启动更快——改一行 import 即可。
+:::info 从旧入口名迁移
+早期预览版先后使用过 `vue-lynx/with-vapor`（复合入口，**同时打包两套
+运行时**，gzip 体积大约 12%）与 `vue-lynx/vapor-app`。两者都保留为
+`vue-lynx/vapor` 的 deprecated 别名——改一行 import 即可。
 :::
 
 ## 一个应用，一种模式
@@ -131,11 +131,11 @@ Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成
 | 入口 | 内容 | 用途 |
 |---|---|---|
 | `vue-lynx` | vdom renderer + Vue runtime-core | 常规（默认）应用 |
-| `vue-lynx/vapor-app` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
+| `vue-lynx/vapor` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
 
 这带来一个好处：vdom 专属 API（`h()`、`<Transition>`、`<Teleport>`、
 `<KeepAlive>`、`<Suspense>`、`vShow`、`vModelText`）在
-`vue-lynx/vapor-app` 上根本不存在——在 Vapor 应用里误用它们会**在构建期
+`vue-lynx/vapor` 上根本不存在——在 Vapor 应用里误用它们会**在构建期
 直接报错**，而不是在运行时出现难以排查的行为。
 
 ## 在 Lynx 上的工作原理
@@ -149,7 +149,7 @@ Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成
 
 ```
 编译后的 vapor 组件
-  → import from 'vue'（alias 到 vue-lynx/vapor-app）
+  → import from 'vue'（alias 到 vue-lynx/vapor）
     → @vue/runtime-vapor            （上游原样复用）
       → document / Node / Element 全局 shim
       → ShadowElement 的 DOM 兼容面
@@ -192,12 +192,12 @@ create/append op 发送，Vapor 的跨线程流量会比 vdom 更差。因此 Vu
 - [Playground：React vs Vue](/zh/guide/benchmark-playground) —— 可以在
   自己手机上运行的跨框架对比，含 Vapor
 
-## `vue-lynx/vapor-app` 的 API 面
+## `vue-lynx/vapor` 的 API 面
 
 Vapor 入口导出 Vapor 应用从 `'vue'` import 的一切——标准 Vue API、SFC
 宏、Lynx 工具与 Vapor helper 面；vdom 专属 API（`h()`、`<Transition>`、
 `<Teleport>` 等）刻意缺席，误用会在构建期直接报错。完整列表与缺席清单见
-[`vue-lynx/vapor-app` API 参考](/zh/guide/api/vapor-app/)。
+[`vue-lynx/vapor` API 参考](/zh/guide/api/vapor/)。
 
 ## 已验证的 example 矩阵
 

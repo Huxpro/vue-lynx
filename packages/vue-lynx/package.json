@@ -22,9 +22,9 @@
       "default": "./runtime/dist/index.js"
     },
     "./vapor": {
-      "types": "./runtime/dist/vapor/index.d.ts",
-      "import": "./runtime/dist/vapor/index.js",
-      "default": "./runtime/dist/vapor/index.js"
+      "types": "./runtime/dist/vapor-app.d.ts",
+      "import": "./runtime/dist/vapor-app.js",
+      "default": "./runtime/dist/vapor-app.js"
     },
     "./vapor-app": {
       "types": "./runtime/dist/vapor-app.d.ts",
