@@ -636,12 +636,30 @@ h1, h2, h3, p { margin: 0; }
 .demo__stage .phone {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   /* Let the frame grow past its grid column — that's what makes the wider
      presets (and free drags) genuinely float over the copy rather than being
      clamped to the column width by the base `.phone { max-width: 100% }`. */
   max-width: none;
+}
+/* Phone preset sits centred in its column. */
+.demo__stage .phone[data-device="phone"] {
+  left: 50%;
+  right: auto;
+  transform: translate(-50%, -50%);
+}
+/* Tablet / desktop pin to the phone's OUTER edge and expand inward over the
+   copy — the direction follows which column the phone sits in (normal demo =
+   right column, reverse demo = left column). */
+.demo:not(.demo--reverse) .demo__stage .phone[data-device="tablet"],
+.demo:not(.demo--reverse) .demo__stage .phone[data-device="desktop"] {
+  right: 0;
+  left: auto;
+}
+.demo--reverse .demo__stage .phone[data-device="tablet"],
+.demo--reverse .demo__stage .phone[data-device="desktop"] {
+  left: 0;
+  right: auto;
 }
 /* Lift the frame above the copy (and deepen its shadow) once it grows past the
    phone preset, so an overlapping expansion reads as floating, not broken. */

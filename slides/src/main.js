@@ -434,10 +434,10 @@ function initPhoneControls() {
     attachDeviceControls(phone, {
       getScale: stage.getScale,
       presets: DECK_PRESETS,
-      // Deck frames float over the slide (absolutely centred), so all four
-      // corners resize symmetrically about the middle.
+      // Deck frames are absolutely placed in the stage, so a drag can reposition
+      // them to keep the opposite corner locked; all four corners are grabbable.
       corners: ['nw', 'ne', 'sw', 'se'],
-      anchor: 'center',
+      anchor: 'absolute',
       // Embedded in the deck: offer a jump to the standalone play page.
       externalUrl: (el) => {
         const bundle = el.querySelector('vl-demo')?.getAttribute('bundle');

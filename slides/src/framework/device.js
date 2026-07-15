@@ -25,6 +25,13 @@ export function applyDevicePreset(el, name, presets = DECK_PRESETS) {
   el.dataset.device = name;
   el.style.width = '';   // clear any free-drag size
   el.style.height = '';
+  // Clear the explicit box a free drag pins inline (see the 'absolute' drag
+  // path) so the preset's CSS anchoring — including its side — takes over again.
+  el.style.left = '';
+  el.style.top = '';
+  el.style.right = '';
+  el.style.bottom = '';
+  el.style.transform = '';
   el.classList.toggle('is-fullscreen', !!p.fullscreen);
   if (p.fullscreen) {
     el.style.removeProperty('--phone-ar');
@@ -40,9 +47,9 @@ export function applyDevicePreset(el, name, presets = DECK_PRESETS) {
 }
 
 // Corner geometry for the drag grips. sx/sy are the growth signs: dragging a
-// corner in its outward direction enlarges the frame. `center` anchoring grows
-// symmetrically about the middle (so the grabbed corner tracks the cursor at 2×
-// the half-delta); `corner` anchoring keeps the top-left pinned (the play page).
+// corner in its outward direction enlarges the frame. Resize always locks the
+// OPPOSITE corner — dragging SE pins NW, dragging NE pins SW, etc. — so the grip
+// tracks the cursor exactly (like a native window resize).
 const CORNERS = {
   se: { sx: 1, sy: 1, cursor: 'nwse-resize' },
   sw: { sx: -1, sy: 1, cursor: 'nesw-resize' },
@@ -60,7 +67,10 @@ const CORNERS = {
  * @param {string} [opts.initial]         starting preset
  * @param {[number, number]} [opts.clamp] min/max px for free drag
  * @param {string[]} [opts.corners]       resize grips to render (default ['se'])
- * @param {'corner'|'center'} [opts.anchor]  how a free drag grows the frame
+ * @param {'flow'|'absolute'} [opts.anchor]  positioning of `el`. 'absolute' (deck)
+ *        means the frame is absolutely placed and a drag repositions it via
+ *        left/top to keep the opposite corner fixed; 'flow' (play page) keeps the
+ *        top-left pinned by layout and only resizes width/height.
  * @param {(el: HTMLElement) => (string|null)} [opts.externalUrl]  if it returns a
  *        URL, an "open externally" button is added to the switcher.
  */
@@ -71,7 +81,7 @@ export function attachDeviceControls(el, {
   initial,
   clamp = [140, 1100],
   corners = ['se'],
-  anchor = 'corner',
+  anchor = 'flow',
   externalUrl = null,
 } = {}) {
   if (el.querySelector('.phone__resize')) return; // already wired
@@ -108,8 +118,9 @@ export function attachDeviceControls(el, {
   });
 
   const clampVal = (v) => Math.max(clamp[0], Math.min(clamp[1], v));
-  const gain = anchor === 'center' ? 2 : 1;
-  let startX = 0, startY = 0, startW = 0, startH = 0, dragging = false, sign = CORNERS.se;
+  const positioned = anchor === 'absolute';
+  let startX = 0, startY = 0, startW = 0, startH = 0;
+  let startL = 0, startT = 0, dragging = false, sign = CORNERS.se;
 
   // Free drag-to-resize grips — one minimal corner grip per requested corner.
   corners.forEach((corner) => {
@@ -135,6 +146,19 @@ export function attachDeviceControls(el, {
       startW = r.width / s;
       startH = r.height / s;
       el.classList.remove('is-fullscreen'); // a free drag leaves fullscreen
+      if (positioned) {
+        // Freeze the current box as an explicit position in the parent's own
+        // coordinate space, so the corner opposite the grip stays put while this
+        // one follows the cursor (rather than growing from the centre).
+        const pr = el.parentElement.getBoundingClientRect();
+        startL = (r.left - pr.left) / s;
+        startT = (r.top - pr.top) / s;
+        el.style.transform = 'none';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+        el.style.left = `${startL}px`;
+        el.style.top = `${startT}px`;
+      }
       handle.setPointerCapture(e.pointerId);
     });
     handle.addEventListener('pointermove', (e) => {
@@ -142,10 +166,16 @@ export function attachDeviceControls(el, {
       const s = getScale() || 1;
       const dx = (e.clientX - startX) / s;
       const dy = (e.clientY - startY) / s;
-      // Independent axes — no aspect lock. Pin both dimensions inline so the CSS
-      // aspect-ratio no longer constrains the frame.
-      el.style.width = `${clampVal(startW + gain * sign.sx * dx)}px`;
-      el.style.height = `${clampVal(startH + gain * sign.sy * dy)}px`;
+      // Independent axes — no aspect lock. The grip tracks the cursor 1:1.
+      const w = clampVal(startW + sign.sx * dx);
+      const h = clampVal(startH + sign.sy * dy);
+      el.style.width = `${w}px`;
+      el.style.height = `${h}px`;
+      if (positioned) {
+        // West / north grips move the left / top edge; the opposite edge holds.
+        if (sign.sx < 0) el.style.left = `${startL + startW - w}px`;
+        if (sign.sy < 0) el.style.top = `${startT + startH - h}px`;
+      }
     });
     const end = (e) => {
       if (!dragging) return;
