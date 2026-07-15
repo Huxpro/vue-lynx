@@ -163,6 +163,7 @@ Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成
 | 模板 HTML 字符串（`template("<view class=…>")`） | 内置解析器解析为惰性原型，按实例克隆 |
 | 文档级事件委托 | 编译期关闭（`eventDelegation: false`），事件逐元素注册 |
 | `@tap.stop` | 原生 `catchEvent`（Lynx 的阻止冒泡机制） |
+| `:bindtap` / `:catchtap` / `:global-bind*` 属性 | 路由到原生 Lynx 事件注册（与 vdom 模式同一处理），包括透传到子组件根元素的场景 |
 | `<input>` 上的 `v-model` | Lynx `input` / `confirm`（`.lazy`）事件，取 `detail.value` |
 | Scoped CSS 的 `data-v-*` 属性 | 可组合的 scope **class**（构建期把 `[data-v-*]` 选择器改写为 class 选择器；与 vdom 模式同一机制） |
 
