@@ -117,7 +117,7 @@ function setFlagOverride(index, key, value) {
   const cur = flagOverrides.get(index) || {};
   if (value == null) delete cur[key];
   else cur[key] = value;
-  if (Object.keys(cur).length) flagOverrides.set(index, cur);
+  if (Object.keys(cur).length > 0) flagOverrides.set(index, cur);
   else flagOverrides.delete(index);
   if (index === current) applyChromeAndBg(resolveFlags(current));
 }
