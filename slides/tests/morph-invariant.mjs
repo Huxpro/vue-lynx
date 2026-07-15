@@ -72,15 +72,25 @@ try {
 
   const grabRects = () => page.evaluate(() => {
     const out = {};
+    const slides = [...document.querySelectorAll('.slide')];
+    const active = document.querySelector('.slide.is-active');
     document
       .querySelectorAll('.slide.is-active [data-flip]')
       .forEach((el) => {
         const r = el.getBoundingClientRect();
         out[el.getAttribute('data-flip')] = {
           left: r.left, top: r.top, right: r.right, bottom: r.bottom,
+          // Designed entrance offsets (data-logo-enter) legitimately travel
+          // outside the from→to corridor — exempt them from the path check.
+          enter: el.hasAttribute('data-logo-enter'),
         };
       });
-    return out;
+    // 1-based index of the active slide, so callers can verify they sampled
+    // the slide they think they did (guards boot/navigation races).
+    Object.defineProperty(out, '__slide', {
+      value: slides.indexOf(active) + 1, enumerable: false,
+    });
+    return { rects: out, slide: slides.indexOf(active) + 1 };
   });
 
   // Fixed sleeps are flaky under load (the slide-enter transition may still
@@ -90,7 +100,7 @@ try {
     a && b && Object.keys(a).length === Object.keys(b).length &&
     Object.keys(a).every((k) => b[k] &&
       Math.abs(a[k].left - b[k].left) < 0.5 && Math.abs(a[k].top - b[k].top) < 0.5);
-  async function stableRects(tries = 20) {
+  async function stableRects(expectSlide, tries = 20) {
     // The slide-enter transition (translateY(20px) -> 0) can START late when
     // boot work (QR generation, demo loaders) blocks the main thread — two
     // early samples would agree on the frozen pre-transition state. Wait for
@@ -106,7 +116,11 @@ try {
     for (let t = 0; t < tries; t++) {
       await page.waitForTimeout(160);
       const next = await grabRects();
-      if (same(prev, next)) return next;
+      if (expectSlide != null && next.slide !== expectSlide) {
+        prev = next;
+        continue; // navigation not landed yet — keep waiting
+      }
+      if (same(prev.rects, next.rects) && prev.slide === next.slide) return next;
       prev = next;
     }
     return prev; // last read; the assertions will surface any residual drift
@@ -119,9 +133,15 @@ try {
   const total = await page.evaluate(() => document.querySelectorAll('.slide').length);
   const resting = [null]; // 1-indexed
   for (let i = 1; i <= total; i++) {
-    await page.goto(`${BASE}/?lang=en&mi=${i}#${i}`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(400);
-    resting[i] = await stableRects();
+    // Retry the load if the deck booted onto the wrong slide (rare race).
+    let got = null;
+    for (let attempt = 0; attempt < 3 && (!got || got.slide !== i); attempt++) {
+      await page.goto(`${BASE}/?lang=en&mi=${i}r${attempt}#${i}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(400);
+      got = await stableRects(i);
+    }
+    if (got.slide !== i) throw new Error(`could not land on slide ${i} (got ${got.slide})`);
+    resting[i] = got.rects;
   }
 
   // Pass 2 — drive each transition that shares flip ids; sample mid + settled.
@@ -133,12 +153,18 @@ try {
 
     await page.goto(`${BASE}/?lang=en&mv=${i}#${i}`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(400);
-    await stableRects(); // let the entry settle before driving the morph
+    await stableRects(i); // let the entry settle before driving the morph
     await page.keyboard.press('ArrowRight');
     await page.waitForTimeout(250); // mid-FLIP (engine runs 640ms)
-    const mid = await grabRects();
+    const midSample = await grabRects();
     await page.waitForTimeout(700);
-    const end = await stableRects();
+    const endSample = await stableRects(i + 1);
+    if (midSample.slide !== i + 1 || endSample.slide !== i + 1) {
+      failures.push(`#${i}->#${i + 1} transition never landed (mid on ${midSample.slide}, end on ${endSample.slide})`);
+      continue;
+    }
+    const mid = midSample.rects;
+    const end = endSample.rects;
 
     for (const id of shared) {
       checked++;
@@ -152,7 +178,7 @@ try {
         right: Math.max(a.right, b.right) + PATH_MARGIN,
         bottom: Math.max(a.bottom, b.bottom) + PATH_MARGIN,
       };
-      if (m && (m.left < box.left || m.top < box.top ||
+      if (m && !m.enter && (m.left < box.left || m.top < box.top ||
                 m.right > box.right || m.bottom > box.bottom)) {
         failures.push(
           `#${i}->#${i + 1} [${id}] OFF-PATH mid-morph: ` +

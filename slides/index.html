@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 62</span>
+    <span data-counter>01 / 64</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -748,7 +748,65 @@
     </div>
     <aside class="notes">
       <p><strong>What changed — the upgrades.</strong> ① <em>Keyboard avoidance</em>: the native <code>keyboardstatuschanged</code> event drives <code>setNativeProps</code> transforms, so the prompt box and thread follow the keyboard with a native curve — no web viewport hacks. ② <em>Send motion</em>: your message physically detaches from the input and flies into the thread as a bubble. ③ Press feedback runs as Main-Thread Script.</p>
+      <p>Credit where due: this native-chat bar was set by Vercel's <em>"How we built the v0 iOS app"</em> write-up — the next two slides show how the same feel costs far less on Lynx.</p>
       <p><strong>Do live:</strong> focus the input (keyboard slides, layout follows), then send a message — watch the bubble.</p>
+    </aside>
+  </section>
+
+  <!-- Case 1 · AI Chat · the keyboard, in code -->
+  <section class="slide stage">
+    <span class="eyebrow">III · Case 1 · AI Chat</span>
+    <div class="codeframe" style="width:100%;max-width:660px;text-align:left">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>useKeyboardAvoidance.ts</span>
+      </div>
+<pre>lynx.<span class="code-fn">getJSModule</span>(<span class="code-str">'GlobalEventEmitter'</span>)
+  .<span class="code-fn">addListener</span>(<span class="code-str">'keyboardstatuschanged'</span>,
+    (status, height) <span class="code-key">=&gt;</span> {
+      <span class="code-key">const</span> off <span class="code-key">=</span> status <span class="code-key">===</span> <span class="code-str">'on'</span> ? height : <span class="code-str">0</span>
+      composer.<span class="code-fn">setNativeProps</span>({
+        transform: <span class="code-str">`translateY(${-off}px)`</span>,
+        transition: <span class="code-str">'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'</span>,
+      }).<span class="code-fn">exec</span>()
+    })</pre>
+    </div>
+    <p class="lead" data-mm-fade>
+      One native event. One <code>setNativeProps</code>. No viewport hacks.
+    </p>
+    <aside class="notes">
+      <p><strong>The keyboard, in code.</strong> Lynx surfaces the platform keyboard as a first-class event with its height; the composer rides it with a <code>setNativeProps</code> transform on a native curve (0.3s in, 0.1s out). The keyboard height also feeds the launch-distance math and the bottom spacer.</p>
+      <p><strong>The contrast to land:</strong> the v0 iOS team describes a ~1,000-line <code>useKeyboardAwareMessageList</code> hook juggling six keyboard behaviors to make React Native feel native. Here the platform hands you the event — the whole composable is under 60 lines.</p>
+    </aside>
+  </section>
+
+  <!-- Case 1 · AI Chat · anatomy of the send -->
+  <section class="slide stage">
+    <span class="eyebrow">III · Case 1 · AI Chat</span>
+    <div class="flow" style="height:clamp(190px,26cqh,230px)">
+      <div class="fb" style="--c:#4FB8F0;left:17%;top:40%">
+        align
+        <small>scrollIntoView · behavior: none</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:33.5%;top:40%">+2 frames &rarr;</span>
+      <div class="fb" style="--c:#E8B44A;left:50%;top:40%">
+        stage
+        <small>1 real frame at launch transform</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:66.5%;top:40%">+1 frame &rarr;</span>
+      <div class="fb is-hero" style="--c:#42b883;left:83%;top:40%">
+        fly
+        <small>one-way transition · .95 &rarr; 1</small>
+      </div>
+      <span class="fcenter" data-mm-fade style="left:50%;top:82%;font-size:clamp(13px,1.2cqw,16px);color:var(--ink-mute)">earlier turns stay masked until the motion starts</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Send isn't an animation — it's a <em>handoff</em>, choreographed in frames.
+    </p>
+    <aside class="notes">
+      <p><strong>Anatomy of the send (merged as PR #212).</strong> Two native realities force the choreography: the list must reset its scroll before the bubble can move, and Lynx can register a keyframe animation one display frame after the class change — naïvely you get a 34–51ms flash of the previous turn, or the bubble blinking at its destination.</p>
+      <p>So send is an explicit handoff: ① earlier turns and the Thinking row are hidden while the list <em>instantly</em> aligns (<code>behavior: none</code> — the bubble supplies the transition, not the scroller); ② the bubble commits one real frame at its measured launch transform (<code>translateY(distance) scale(0.95)</code>, distance keyboard-aware, clamped 44–420px); ③ then a one-way CSS <em>transition</em> flies it home and the old content is restored above the viewport. Even the empty assistant shell's 9⅓px native footprint is reserved so max-scroll stays stable during streaming.</p>
+      <p>Verified frame-by-frame on device — 15fps contact sheets, no ghost, no flash, no end-of-motion correction.</p>
     </aside>
   </section>
 
