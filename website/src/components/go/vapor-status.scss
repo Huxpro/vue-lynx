@@ -1,13 +1,39 @@
 /* ---------------------------------------------------------------------------
- * VDOM/Vapor segmented control (site nav) — compact pill with sliding thumb.
+ * VDOM/Vapor segmented control (site nav) — petite pill with a sliding
+ * thumb. In Vapor state the thumb fills with the homepage's moving brand
+ * gradient (same stops + drift as the hero `.brand` text and badge hover).
  * ------------------------------------------------------------------------- */
+
+/* Homepage brand gradient, shared by the toggle thumb and the Vapor badge. */
+@mixin vapor-gradient {
+  background-image: linear-gradient(
+    270deg,
+    var(--major-brand-color),
+    var(--gradient-brand-color),
+    var(--second-brand-color),
+    var(--gradient-brand-color),
+    var(--major-brand-color)
+  );
+  background-size: 220% 100%;
+  animation: vapor-gradient-drift 6s linear infinite;
+}
+
+@keyframes vapor-gradient-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: -220% 50%;
+  }
+}
 
 .go-mode-nav-control {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   color: var(--rp-c-text-2);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
   white-space: nowrap;
 }
@@ -15,11 +41,16 @@
 .go-mode-nav-control__modes {
   position: relative;
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(48px, 1fr));
+  grid-template-columns: repeat(2, minmax(42px, 1fr));
   padding: 2px;
   border: 1px solid var(--rp-c-divider);
   border-radius: 999px;
-  background: var(--rp-c-bg-soft);
+  background: color-mix(in srgb, var(--rp-c-bg-soft) 72%, transparent);
+  transition: border-color 240ms ease-out;
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__modes {
+  border-color: color-mix(in srgb, var(--major-brand-color) 35%, var(--rp-c-divider));
 }
 
 /* Sliding thumb behind the active segment. */
@@ -34,31 +65,32 @@
   box-shadow:
     inset 0 0 0 1px var(--rp-c-divider),
     0 1px 2px rgb(0 0 0 / 6%);
-  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease-out;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease-out;
 }
 
 .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__thumb {
+  @include vapor-gradient;
+
   transform: translateX(100%);
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider)),
-    0 1px 3px color-mix(in srgb, var(--rp-c-brand) 22%, transparent);
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 40%, transparent);
 }
 
 .go-mode-nav-control__modes button {
   position: relative;
   z-index: 1;
-  min-height: 24px;
-  padding: 0 10px;
+  min-height: 20px;
+  padding: 0 9px;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--rp-c-text-2);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
+  letter-spacing: 0.01em;
   line-height: 1;
-  transition: color 160ms ease-out;
+  transition: color 200ms ease-out;
 }
 
 @media (hover: hover) {
@@ -77,9 +109,11 @@
   font-weight: 600;
 }
 
+/* Label rides the gradient thumb: white with a whisper of depth. */
 .go-mode-nav-control[data-mode='vapor']
   .go-mode-nav-control__modes button[aria-pressed='true'] {
-  color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
 }
 
 /* "2/3" chip: shown only when Vapor is selected but some examples on the
@@ -87,9 +121,9 @@
 .go-mode-nav-control__coverage {
   padding: 3px 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--rp-c-brand) 12%, transparent);
-  color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
-  font-size: 11px;
+  background: color-mix(in srgb, var(--major-brand-color) 12%, transparent);
+  color: color-mix(in srgb, var(--major-brand-color) 80%, var(--rp-c-text-1));
+  font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -102,15 +136,16 @@
 .vapor-status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 24px;
-  padding: 0 10px;
+  gap: 5px;
+  min-height: 22px;
+  padding: 0 9px;
   border: 1px solid var(--rp-c-divider);
   border-radius: 999px;
-  background: var(--rp-c-bg-soft);
+  background: color-mix(in srgb, var(--rp-c-bg-soft) 72%, transparent);
   color: var(--rp-c-text-2);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
+  letter-spacing: 0.01em;
   line-height: 1;
   white-space: nowrap;
 }
@@ -118,14 +153,15 @@
 button.vapor-status {
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
-  transition: border-color 160ms ease-out, color 160ms ease-out, background-color 160ms ease-out;
+  font-size: 11px;
+  transition: border-color 200ms ease-out, color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out;
 }
 
 @media (hover: hover) {
   button.vapor-status:hover {
-    border-color: color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider));
+    border-color: color-mix(in srgb, var(--major-brand-color) 50%, var(--rp-c-divider));
     color: var(--rp-c-text-1);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--major-brand-color) 18%, transparent);
   }
 }
 
@@ -135,8 +171,8 @@ button.vapor-status:focus-visible {
 }
 
 .vapor-status__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   flex: none;
   border-radius: 50%;
   background: currentColor;
@@ -154,10 +190,27 @@ button.vapor-status:focus-visible {
   white-space: nowrap;
 }
 
+/* Live Vapor: the badge itself becomes a sliver of the homepage gradient. */
 .vapor-status[data-render-mode='vapor'] {
-  border-color: color-mix(in srgb, var(--rp-c-brand) 45%, var(--rp-c-divider));
-  background: color-mix(in srgb, var(--rp-c-brand) 10%, var(--rp-c-bg-soft));
-  color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
+  @include vapor-gradient;
+
+  border-color: transparent;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 40%, transparent);
+}
+
+.vapor-status[data-render-mode='vapor'] .vapor-status__dot {
+  background: #fff;
+  box-shadow: 0 0 4px rgb(255 255 255 / 80%);
+}
+
+@media (hover: hover) {
+  button.vapor-status[data-render-mode='vapor']:hover {
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 1px 10px color-mix(in srgb, var(--major-brand-color) 60%, transparent);
+  }
 }
 
 /* Hollow dot whenever the example is not running Vapor. */
@@ -266,11 +319,27 @@ button.vapor-status:focus-visible {
   font-size: 12.5px;
 }
 
-/* Matrix badges are informational, not interactive — slightly smaller. */
+/* Matrix badges are informational, not interactive — smaller, and with the
+   moving gradient frozen to a calm tint (36 drifting pills would be noise). */
 .vapor-matrix .vapor-status {
-  min-height: 22px;
-  padding: 0 9px;
-  font-size: 11.5px;
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.vapor-matrix .vapor-status[data-render-mode='vapor'] {
+  animation: none;
+  background-image: none;
+  background-color: color-mix(in srgb, var(--major-brand-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--major-brand-color) 35%, var(--rp-c-divider));
+  color: color-mix(in srgb, var(--major-brand-color) 82%, var(--rp-c-text-1));
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.vapor-matrix .vapor-status[data-render-mode='vapor'] .vapor-status__dot {
+  background: currentColor;
+  box-shadow: none;
 }
 
 .vapor-matrix__notes {
@@ -318,7 +387,7 @@ button.vapor-status:focus-visible {
   }
 
   .go-mode-nav-control__modes {
-    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    grid-template-columns: repeat(2, minmax(40px, 1fr));
   }
 
   .go-mode-nav-control__modes button {
@@ -326,16 +395,16 @@ button.vapor-status:focus-visible {
   }
 }
 
-/* Touch targets: widen instead of growing taller — the nav bar caps height,
-   and a 44px-tall control inside it collides with adjacent nav items. */
+/* Touch targets: nudge up, not to 44px — the nav bar caps height, and the
+   petite pill should stay petite. The two halves are generous horizontally. */
 @media (pointer: coarse) {
   .go-mode-nav-control__modes button {
-    min-height: 32px;
-    min-width: 52px;
+    min-height: 26px;
+    min-width: 46px;
   }
 
   button.vapor-status {
-    min-height: 32px;
+    min-height: 26px;
   }
 }
 
@@ -344,6 +413,16 @@ button.vapor-status:focus-visible {
   .go-mode-nav-control__modes button,
   button.vapor-status {
     transition: none;
+  }
+
+  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__thumb,
+  .vapor-status[data-render-mode='vapor'] {
+    animation: none;
+    background-image: linear-gradient(
+      135deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color)
+    );
   }
 
   .vue-lynx-go > div {
