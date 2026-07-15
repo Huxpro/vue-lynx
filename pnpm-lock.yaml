@@ -23,7 +23,7 @@ patchedDependencies:
     hash: a79f90c645dad9205a1be38e62895c8cb71f679522271b985b2f1eeb2df22e7b
     path: patches/@lynx-js__go-web@0.2.1.patch
   '@lynx-js/web-core@0.20.2':
-    hash: 0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef
+    hash: e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad
     path: patches/@lynx-js__web-core@0.20.2.patch
 
 importers:
@@ -753,10 +753,10 @@ importers:
         version: 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@lynx-js/go-web':
         specifier: ^0.2.1
-        version: 0.2.1(patch_hash=a79f90c645dad9205a1be38e62895c8cb71f679522271b985b2f1eeb2df22e7b)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(patch_hash=0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
+        version: 0.2.1(patch_hash=a79f90c645dad9205a1be38e62895c8cb71f679522271b985b2f1eeb2df22e7b)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)
       '@lynx-js/web-core':
         specifier: ^0.20.0
-        version: 0.20.2(patch_hash=0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
+        version: 0.20.2(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
       '@lynx-js/web-elements':
         specifier: ^0.12.0
         version: 0.12.0(tslib@2.8.1)
@@ -7824,11 +7824,11 @@ snapshots:
 
   '@lynx-js/debug-metadata@0.1.0': {}
 
-  '@lynx-js/go-web@0.2.1(patch_hash=a79f90c645dad9205a1be38e62895c8cb71f679522271b985b2f1eeb2df22e7b)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(patch_hash=0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
+  '@lynx-js/go-web@0.2.1(patch_hash=a79f90c645dad9205a1be38e62895c8cb71f679522271b985b2f1eeb2df22e7b)(@douyinfe/semi-icons@2.92.2(react@19.2.4))(@douyinfe/semi-ui@2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@lynx-js/web-core@0.20.2(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1))(@rspress/core@2.0.5(@types/mdast@4.0.4)(@types/react@19.2.14)(core-js@3.47.0)(micromark-util-types@2.0.2)(micromark@4.0.2))(@shikijs/transformers@3.23.0)(qrcode.react@4.2.0(react@19.2.4))(react-copy-to-clipboard@5.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(swr@2.4.1(react@19.2.4))(vscode-icons-js@11.6.1)':
     dependencies:
       '@douyinfe/semi-icons': 2.92.2(react@19.2.4)
       '@douyinfe/semi-ui': 2.92.2(@floating-ui/dom@1.7.6)(@tiptap/suggestion@3.20.1(@tiptap/core@3.20.1(@tiptap/pm@3.20.1))(@tiptap/pm@3.20.1))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@lynx-js/web-core': 0.20.2(patch_hash=0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
+      '@lynx-js/web-core': 0.20.2(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)
       '@shikijs/transformers': 3.23.0
       qrcode.react: 4.2.0(react@19.2.4)
       react: 19.2.4
@@ -8039,7 +8039,7 @@ snapshots:
       '@lynx-js/lynx-core': 0.1.3
       tslib: 2.8.1
 
-  '@lynx-js/web-core@0.20.2(patch_hash=0bf7b36eb7bdcffd9bc104d57452bb99e74332ba8d570bd64434d27b4c9089ef)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)':
+  '@lynx-js/web-core@0.20.2(patch_hash=e55082865178c10630667e6486a617cf53a0e881e787d2823c4d093c614600ad)(@lynx-js/lynx-core@0.1.3)(tslib@2.8.1)':
     dependencies:
       '@lynx-js/web-elements': 0.12.0(tslib@2.8.1)
       '@lynx-js/web-worker-rpc': 0.20.2
