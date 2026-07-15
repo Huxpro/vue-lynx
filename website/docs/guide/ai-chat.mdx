@@ -8,6 +8,26 @@ Try the quick prompts below — *"What is the weather in Bordeaux?"* streams a r
 
 The playground above runs fully self-contained: the app probes for its API server and, when unreachable, falls back to an in-app demo backend with the same seeded history and deterministic mock AI streams. When you run the example locally with `pnpm dev:server`, the same UI talks to a standalone Node server that reimplements the Nuxt template's API routes — and streams **real models** through the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) if you set `AI_GATEWAY_API_KEY`.
 
+## Native chat techniques
+
+A polished chat send coordinates layout, scrolling, keyboard state, and animation. [Vercel’s v0 iOS technical breakdown](https://vercel.com/blog/how-we-built-the-v0-ios-app) inspired this framing. It starts with visible interaction goals, then explains how each subsystem contributes to the result. The Vue Lynx port applies that approach through four techniques.
+
+### Keep the composer attached to the keyboard
+
+Lynx [`<input>` elements don’t avoid the keyboard automatically](https://lynxjs.org/api/elements/built-in/input#keyboard-avoidance). The composer stays absolutely positioned at the bottom and listens for the [`keyboardstatuschanged` global event](https://lynxjs.org/api/lynx-api/event/global-event#keyboardstatuschanged). It applies the reported height through `setNativeProps`, while the message list follows only when it was already following new output.
+
+### Give each renderer its own scroll policy
+
+Native sends position the new user turn at the top. Vue Lynx [`nextTick()`](https://vue.lynxjs.org/guide/api/vue-lynx/Function.nextTick) waits for pending operations to reach the main thread before [`scrollIntoView`](https://lynxjs.org/api/elements/built-in/scroll-view#scrollintoview) aligns the turn. On Web, observed `scroll-top` updates keep the list at the bottom during sends and streaming.
+
+### Start the send animation after layout settles
+
+The message height, viewport, composer, and keyboard determine the bubble’s launch distance. The app stages the bubble at the composer, commits the anchor and scroll position, then starts the transition on a later frame. The assistant reveal waits for this handoff, which prevents a target-position flash or a frame from the previous turn.
+
+### Keep gesture feedback on the main thread
+
+Drawer gestures and press feedback use Vue Lynx [Main Thread Script](https://vue.lynxjs.org/guide/main-thread-script). Functions marked with `'main thread'` update element styles from `main-thread-bindtouch*` events without a background-thread round trip. The regular `tap` handler still performs the application action on Vue’s background thread.
+
 ## Porting notes
 
 The port keeps the original's data model (AI SDK v5 `UIMessage` parts over the UI-message-stream protocol) and nearly all of its composable/page logic, while re-implementing the DOM-coupled layers with Lynx elements:
