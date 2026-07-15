@@ -16,6 +16,39 @@ const { devDependencies } = require('../package.json') as {
   devDependencies: Record<string, string>;
 };
 
+/**
+ * Version map used to rewrite template dependencies (create-rstack replaces
+ * each matching dependency in the template's package.json with the mapped
+ * range).
+ *
+ * Some devDependencies use the pnpm `workspace:` protocol, which only works
+ * inside this monorepo — scaffolded apps must get real semver ranges or
+ * `npm install` fails with EUNSUPPORTEDPROTOCOL. `scripts/sync-versions.mjs`
+ * (run on build/prepack) resolves those entries into `dist/versions.json`.
+ * As a last resort, any `workspace:` spec that still slips through falls
+ * back to `latest`.
+ */
+function loadTemplateVersions(): Record<string, string> {
+  const versions: Record<string, string> = { ...devDependencies };
+
+  try {
+    Object.assign(
+      versions,
+      require('./versions.json') as Record<string, string>,
+    );
+  } catch {
+    // dist/versions.json is only missing in unbuilt dev checkouts.
+  }
+
+  for (const [name, spec] of Object.entries(versions)) {
+    if (spec.startsWith('workspace:')) {
+      versions[name] = 'latest';
+    }
+  }
+
+  return versions;
+}
+
 const TEMPLATES = [
   { template: 'vue', lang: 'ts' as LANG },
   { template: 'vue', lang: 'js' as LANG },
@@ -54,6 +87,6 @@ void create({
   templates: TEMPLATES.map(({ template, lang }) =>
     composeTemplateName({ template, lang }),
   ),
-  version: devDependencies,
+  version: loadTemplateVersions(),
   getTemplateName,
 });

@@ -87,6 +87,9 @@ jobs:
       - name: Run pipeline tests (testing-library)
         run: pnpm test
 
+      - name: Run create-vue-lynx scaffold tests
+        run: pnpm test:create
+
   test-upstream:
     name: Test - Vue Upstream
     runs-on: ubuntu-latest

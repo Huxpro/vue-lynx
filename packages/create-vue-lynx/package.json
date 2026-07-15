@@ -16,8 +16,9 @@
     "template-vue-js"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "prepack": "npm run build"
+    "build": "tsc -p tsconfig.build.json && node scripts/sync-versions.mjs",
+    "prepack": "npm run build",
+    "test": "npm run build && vitest run"
   },
   "dependencies": {
     "create-rstack": "^1.0.0"
@@ -28,7 +29,8 @@
     "@rsbuild/plugin-vue": "^1.2.6",
     "vue": "^3.5.0",
     "vue-lynx": "workspace:*",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
   },
   "engines": {
     "node": ">=20"
