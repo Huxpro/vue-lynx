@@ -34,11 +34,16 @@ console.info('Preparing GenUI playground...');
 // `pnpm build` runs rspeedy (lynx-src → www/) then rsbuild (shell → dist/,
 // which copies www/ in as its public dir).
 if (!fs.existsSync(path.join(PLAYGROUND_DIST, 'index.html'))) {
+  // The playground imports both vue-lynx and vue-lynx-genui — make sure
+  // both workspace dists exist (root `pnpm build` builds the two of them).
   const libBuilt = fs.existsSync(
     path.join(REPO_ROOT, 'packages/vue-lynx/plugin/dist/index.js'),
-  ) || fs.existsSync(path.join(REPO_ROOT, 'plugin/dist/index.js'));
-  if (!libBuilt) {
-    console.info('Building vue-lynx library (required by the playground)...');
+  );
+  const genuiBuilt = fs.existsSync(
+    path.join(REPO_ROOT, 'packages/genui/dist/index.js'),
+  );
+  if (!libBuilt || !genuiBuilt) {
+    console.info('Building workspace libraries (required by the playground)...');
     execSync('pnpm build', { cwd: REPO_ROOT, stdio: 'inherit' });
   }
   console.info('Building playground (no dist/ found)...');

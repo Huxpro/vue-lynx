@@ -2,7 +2,7 @@
   "name": "vue-lynx-monorepo",
   "private": true,
   "scripts": {
-    "build": "pnpm --filter vue-lynx run build",
+    "build": "pnpm --filter vue-lynx run build && pnpm --filter vue-lynx-genui run build",
     "build:examples": "pnpm --filter './examples/*' --parallel run build",
     "build:examples:publishable": "node scripts/build-publishable-examples.mjs",
     "dev": "pnpm --filter vue-lynx run dev",

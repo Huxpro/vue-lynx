@@ -564,10 +564,11 @@ export function useOpenUIState(
     }
 
     // Parser validation errors → enriched OpenUIError (with hints)
-    if ((result.value?.meta?.errors?.length ?? 0) > 0) {
+    const parserErrors = result.value?.meta?.errors;
+    if (parserErrors && parserErrors.length > 0) {
       errors.push(
         ...enrichErrors(
-          result.value.meta.errors,
+          parserErrors,
           library().toJSONSchema(),
           Object.keys(library().components),
         ),
