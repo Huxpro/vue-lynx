@@ -3,19 +3,19 @@
   align-items: center;
   gap: 8px;
   color: var(--rp-c-text-2);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1;
   white-space: nowrap;
 }
 
 .go-mode-nav-control__context {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .go-mode-nav-control__modes {
   display: inline-grid;
-  grid-template-columns: repeat(2, minmax(48px, 1fr));
+  grid-template-columns: repeat(2, minmax(52px, 1fr));
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--rp-c-divider);
@@ -25,14 +25,14 @@
 
 .go-mode-nav-control__modes button {
   min-height: 28px;
-  padding: 0 8px;
+  padding: 0 10px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--rp-c-text-2);
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
   transition:
@@ -61,13 +61,25 @@
   background: var(--rp-c-bg);
   box-shadow: inset 0 0 0 1px var(--rp-c-divider);
   color: var(--rp-c-text-1);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .go-mode-nav-control[data-mode='vapor']
   .go-mode-nav-control__modes button[aria-pressed='true'] {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rp-c-brand) 42%, var(--rp-c-divider));
   color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
+}
+
+/* "2/3" chip: shown only when Vapor is selected but some examples on the
+   page fall back — the aggregate signal that the toggle is partially a no-op. */
+.go-mode-nav-control__coverage {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rp-c-brand) 12%, transparent);
+  color: color-mix(in srgb, var(--rp-c-brand) 78%, var(--rp-c-text-1));
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .vapor-status {
@@ -78,7 +90,7 @@
   gap: 6px;
   margin: 8px 2px;
   color: var(--rp-c-text-2);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -105,12 +117,18 @@
   color: color-mix(in srgb, var(--rp-c-brand) 82%, var(--rp-c-text-1));
 }
 
-.vapor-status[data-vapor-status='unsupported'] .vapor-status__dot {
+/* Hollow dot whenever the example fell back to VDOM (the badge only renders
+   while Vapor is requested, so effective vdom always means a fallback). */
+.vapor-status[data-render-mode='vdom'] .vapor-status__dot {
   background: transparent;
   box-shadow: inset 0 0 0 1px currentColor;
 }
 
 @media (width <= 767px) {
+  .go-mode-nav-control {
+    gap: 6px;
+  }
+
   .go-mode-nav-control__context {
     display: none;
   }
@@ -120,13 +138,17 @@
   }
 
   .go-mode-nav-control__modes button {
-    padding: 0 6px;
+    padding: 0 8px;
+    font-size: 12px;
   }
 }
 
+/* Touch targets: widen instead of growing taller — the nav bar caps height,
+   and a 44px-tall control inside it collides with adjacent nav items. */
 @media (pointer: coarse) {
   .go-mode-nav-control__modes button {
-    min-height: 44px;
+    min-height: 34px;
+    min-width: 52px;
   }
 }
 

@@ -226,8 +226,10 @@ Every configured example entry is built and visited in Chromium through Lynx
 for Web. The same scenario runs against VDOM and Vapor; supported rows must
 pass both modes and their feature checkpoint. The current result is **36
 supported / 9 intentionally unsupported**, with **45/45 VDOM entries passing**.
-Each `<Go>` block also exposes this status and a local `VDOM | Vapor` switch
-when the selected entry is supported.
+On pages with live examples, a `VDOM | Vapor` switch appears in the site
+nav — the choice persists across pages and visits. While Vapor is selected,
+each example shows whether it actually runs Vapor or fell back (and why),
+and the nav shows the page's coverage when they differ.
 
 | Entry | Vapor | Strategy / reason |
 |---|---|---|

@@ -101,6 +101,15 @@ function VaporAwareGo(props: GoProps) {
   const currentEntry = metadata?.templateFiles.find(({ name }) => name === entryName);
   const mode = resolveRenderMode(requestedMode, currentEntry);
 
+  // Register with the store so the nav control appears only on pages that
+  // actually mount examples, and can report Vapor coverage for this page.
+  const entryLoaded = Boolean(currentEntry);
+  const entrySupportsVapor = resolveRenderMode('vapor', currentEntry) === 'vapor';
+  useEffect(() => {
+    if (!entryLoaded) return;
+    return renderModeStore.registerExample(entrySupportsVapor);
+  }, [entryLoaded, entrySupportsVapor]);
+
   const handleEntryChange = useCallback((nextEntry: string) => {
     setEntryName(nextEntry);
     props.onEntryChange?.(nextEntry);
@@ -117,14 +126,23 @@ function VaporAwareGo(props: GoProps) {
 
   return (
     <div className="vue-lynx-go">
-      <VaporStatus
-        entry={`${props.example}/${entryName}`}
-        mode={mode}
-        status={currentEntry.vaporStatus ?? 'unsupported'}
-        reason={currentEntry.vaporReason}
-        locale={locale}
-      />
+      {/* The badge only carries signal while Vapor is requested: either
+          "this example runs Vapor" or "this one fell back, and why". In the
+          default VDOM mode every example would just say "VDOM" — noise. */}
+      {requestedMode === 'vapor' && (
+        <VaporStatus
+          entry={`${props.example}/${entryName}`}
+          mode={mode}
+          status={currentEntry.vaporStatus ?? 'unsupported'}
+          reason={currentEntry.vaporReason}
+          locale={locale}
+        />
+      )}
+      {/* key={mode}: a mode switch swaps the underlying bundle files, so
+          force a real remount of the preview instead of relying on the inner
+          lynx-view resetting cleanly when its `url` prop is reassigned. */}
       <GoBase
+        key={mode}
         {...props}
         defaultEntryFile={undefined}
         defaultEntryName={entryName}
