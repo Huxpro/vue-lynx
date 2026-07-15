@@ -122,7 +122,7 @@ export default defineConfig({
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        { text: 'Vapor Mode', link: '/guide/vapor-mode' },
+        { text: 'Vapor Mode', link: '/guide/vapor-mode', context: 'vapor' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
@@ -167,7 +167,7 @@ export default defineConfig({
         { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
-        { text: 'Vapor Mode', link: '/zh/guide/vapor-mode' },
+        { text: 'Vapor Mode', link: '/zh/guide/vapor-mode', context: 'vapor' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         {

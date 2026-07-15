@@ -8,13 +8,13 @@ interface GoModeNavIndicatorProps {
 
 const copy = {
   en: {
-    label: 'Example renderer',
+    label: 'Render examples with Vapor',
     description: 'Switches every supported example on this page',
     coverage: (supported: number, total: number) =>
       `${supported} of ${total} examples on this page run Vapor; the rest fall back to VDOM`,
   },
   zh: {
-    label: '示例渲染器',
+    label: '以 Vapor 渲染示例',
     description: '切换本页所有支持的示例',
     coverage: (supported: number, total: number) =>
       `本页 ${supported}/${total} 个示例支持 Vapor，其余回退到 VDOM`,
@@ -29,17 +29,20 @@ interface GoModeNavControlProps {
 }
 
 /**
- * Presentational VDOM/Vapor segmented control: a compact pill with a
- * sliding thumb. Renders nothing when the page has no examples; shows a
- * coverage chip ("2/3") when Vapor is selected but some examples on the
- * page fall back to VDOM.
+ * Presentational Vapor on/off switch: VDOM is simply "off", so the control
+ * is a single labeled switch instead of a two-segment pill. When on, the
+ * track fills with the homepage's moving brand gradient and the label
+ * picks up the hero's gradient text. Renders nothing when the page has no
+ * examples; shows a coverage chip ("2/3") when Vapor is on but some
+ * examples on the page fall back.
  */
 export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavControlProps) {
   const labels = copy[locale];
 
   if (census.total === 0) return null;
 
-  const partial = mode === 'vapor' && census.vaporSupported < census.total;
+  const on = mode === 'vapor';
+  const partial = on && census.vaporSupported < census.total;
   const coverageText = labels.coverage(census.vaporSupported, census.total);
 
   return (
@@ -48,23 +51,19 @@ export function GoModeNavControl({ mode, census, locale, onSelect }: GoModeNavCo
       data-mode={mode}
       title={partial ? coverageText : labels.description}
     >
-      <div
-        className="go-mode-nav-control__modes"
-        role="group"
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
         aria-label={labels.label}
+        className="go-mode-nav-control__switch"
+        onClick={() => onSelect(on ? 'vdom' : 'vapor')}
       >
-        <span className="go-mode-nav-control__thumb" aria-hidden="true" />
-        {(['vdom', 'vapor'] as const).map((candidate) => (
-          <button
-            type="button"
-            key={candidate}
-            aria-pressed={mode === candidate}
-            onClick={() => onSelect(candidate)}
-          >
-            {candidate === 'vdom' ? 'VDOM' : 'Vapor'}
-          </button>
-        ))}
-      </div>
+        <span className="go-mode-nav-control__name">Vapor</span>
+        <span className="go-mode-nav-control__track" aria-hidden="true">
+          <span className="go-mode-nav-control__knob" />
+        </span>
+      </button>
       {partial && (
         <span
           className="go-mode-nav-control__coverage"

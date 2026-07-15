@@ -31,7 +31,7 @@ test('renders nothing on pages without examples (and on the server)', () => {
   );
 });
 
-test('switches the requested example renderer from the global navigation', () => {
+test('renders a single Vapor on/off switch (VDOM is simply "off")', () => {
   const html = renderToStaticMarkup(
     createElement(GoModeNavControl, {
       mode: 'vdom',
@@ -41,14 +41,29 @@ test('switches the requested example renderer from the global navigation', () =>
     }),
   );
 
-  assert.match(html, /VDOM/);
   assert.match(html, /Vapor/);
-  assert.match(html, /role="group"/);
-  assert.match(html, /aria-label="Example renderer"/);
+  assert.doesNotMatch(html, /VDOM/);
+  assert.match(html, /role="switch"/);
+  assert.match(html, /aria-checked="false"/);
+  assert.match(html, /aria-label="Render examples with Vapor"/);
   assert.match(html, /data-mode="vdom"/);
-  assert.match(html, /go-mode-nav-control__thumb/);
-  assert.equal(html.match(/<button/g)?.length, 2);
-  assert.match(html, /aria-pressed="true"[^>]*>VDOM/);
+  assert.match(html, /go-mode-nav-control__track/);
+  assert.match(html, /go-mode-nav-control__knob/);
+  assert.equal(html.match(/<button/g)?.length, 1);
+});
+
+test('the switch reports on when Vapor is active', () => {
+  const html = renderToStaticMarkup(
+    createElement(GoModeNavControl, {
+      mode: 'vapor',
+      census: { total: 2, vaporSupported: 2 },
+      locale: 'en',
+      onSelect: noop,
+    }),
+  );
+
+  assert.match(html, /aria-checked="true"/);
+  assert.match(html, /data-mode="vapor"/);
 });
 
 test('shows Vapor coverage when some examples fall back', () => {
@@ -89,8 +104,7 @@ test('localizes the global renderer control for Chinese docs', () => {
     }),
   );
 
-  assert.match(html, /VDOM/);
-  assert.match(html, /aria-label="示例渲染器"/);
+  assert.match(html, /aria-label="以 Vapor 渲染示例"/);
   assert.match(html, /本页 1\/3 个示例支持 Vapor/);
 });
 
