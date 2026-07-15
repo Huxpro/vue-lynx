@@ -30,5 +30,29 @@
   "go.qrcode.entry": {
     "en": "Entry",
     "zh": "入口"
+  },
+  "go.deeplink.open.default": {
+    "en": "Open in Lynx Explorer",
+    "zh": "在 Lynx Explorer 中打开"
+  },
+  "go.deeplink.open.lynxtron": {
+    "en": "Open in Lynxtron Go",
+    "zh": "在 Lynxtron Go 中打开"
+  },
+  "go.deeplink.open.sparkling": {
+    "en": "Open in Sparkling",
+    "zh": "在 Sparkling 中打开"
+  },
+  "go.deeplink.hint-desktop": {
+    "en": "desktop only",
+    "zh": "仅限桌面端"
+  },
+  "go.deeplink.hint-mobile": {
+    "en": "mobile only",
+    "zh": "仅限移动端"
+  },
+  "go.deeplink.or": {
+    "en": "or",
+    "zh": "或"
   }
 }

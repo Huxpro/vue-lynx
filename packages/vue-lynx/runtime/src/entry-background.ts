@@ -14,6 +14,7 @@
  */
 
 import { publishEvent } from './event-registry.js';
+import { onLifecycleEvent } from './global-events.js';
 
 // `lynxCoreInject` is injected by RuntimeWrapperWebpackPlugin as a parameter
 // of the outer __init_card_bundle__ function – it is available as a bare
@@ -22,6 +23,7 @@ import { publishEvent } from './event-registry.js';
 declare var lynxCoreInject:
   | {
     tt?: {
+      OnLifecycleEvent?: (event: [string, unknown]) => void;
       publishEvent?: (handlerName: string, data: unknown) => void;
       [key: string]: unknown;
     };
@@ -33,8 +35,15 @@ const g = globalThis as Record<string, unknown>;
 
 // Primary path: lynxCoreInject.tt.publishEvent (used by modern Lynx)
 if (typeof lynxCoreInject !== 'undefined' && lynxCoreInject?.tt) {
-  lynxCoreInject.tt.publishEvent = publishEvent;
-  lynxCoreInject.tt['publicComponentEvent'] = (
+  const tt = lynxCoreInject.tt;
+  const prevOnLifecycleEvent = tt.OnLifecycleEvent;
+
+  tt.publishEvent = publishEvent;
+  tt.OnLifecycleEvent = (event: [string, unknown]) => {
+    onLifecycleEvent(event);
+    prevOnLifecycleEvent?.(event);
+  };
+  tt['publicComponentEvent'] = (
     _cid: string,
     sign: string,
     data: unknown,

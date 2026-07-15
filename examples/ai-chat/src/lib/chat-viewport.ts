@@ -23,6 +23,10 @@ interface MessageLaunchMetrics {
   messageHeight: number;
 }
 
+interface MessageIdentity {
+  id: string;
+}
+
 function positive(value: number): number {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
@@ -75,4 +79,15 @@ export function calculateMessageLaunchDistance(metrics: MessageLaunchMetrics): n
     NEW_TURN_TOP_GAP;
 
   return Math.min(420, Math.max(44, distance));
+}
+
+export function isEarlierMessageDuringHandoff(
+  messages: readonly MessageIdentity[],
+  messageId: string,
+  pendingMessageId: string | null,
+): boolean {
+  if (!pendingMessageId) return false;
+  const pendingIndex = messages.findIndex((message) => message.id === pendingMessageId);
+  const messageIndex = messages.findIndex((message) => message.id === messageId);
+  return pendingIndex > 0 && messageIndex >= 0 && messageIndex < pendingIndex;
 }

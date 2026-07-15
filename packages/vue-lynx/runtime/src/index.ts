@@ -228,6 +228,7 @@ export {
   runOnBackground,
   transformToWorklet,
 };
+export { useGlobalEvent } from './use-global-event.js';
 
 /** @internal Exposed for upstream-tests bridge render(). */
 export { createPageRoot } from './shadow-element.js';
