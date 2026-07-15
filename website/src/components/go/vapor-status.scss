@@ -33,87 +33,87 @@
   align-items: center;
   gap: 7px;
   color: var(--rp-c-text-2);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   white-space: nowrap;
 }
 
-.go-mode-nav-control__modes {
-  position: relative;
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(42px, 1fr));
-  padding: 2px;
-  border: 1px solid var(--rp-c-divider);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--rp-c-bg-soft) 72%, transparent);
-  transition: border-color 240ms ease-out;
-}
-
-.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__modes {
-  border-color: color-mix(in srgb, var(--major-brand-color) 35%, var(--rp-c-divider));
-}
-
-/* Sliding thumb behind the active segment. */
-.go-mode-nav-control__thumb {
-  position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 2px;
-  width: calc(50% - 2px);
-  border-radius: 999px;
-  background: var(--rp-c-bg);
-  box-shadow:
-    inset 0 0 0 1px var(--rp-c-divider),
-    0 1px 2px rgb(0 0 0 / 6%);
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease-out;
-}
-
-.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__thumb {
-  @include vapor-gradient;
-
-  transform: translateX(100%);
-  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 40%, transparent);
-}
-
-.go-mode-nav-control__modes button {
-  position: relative;
-  z-index: 1;
-  min-height: 20px;
-  padding: 0 9px;
+/* A single labeled switch: VDOM is simply "off". */
+.go-mode-nav-control__switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
   border: 0;
-  border-radius: 999px;
   background: transparent;
-  color: var(--rp-c-text-2);
+  color: inherit;
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  line-height: 1;
+}
+
+.go-mode-nav-control__switch:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.go-mode-nav-control__name {
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  line-height: 1;
+  color: var(--rp-c-text-2);
   transition: color 200ms ease-out;
 }
 
 @media (hover: hover) {
-  .go-mode-nav-control__modes button:not([aria-pressed='true']):hover {
+  .go-mode-nav-control__switch:hover .go-mode-nav-control__name {
     color: var(--rp-c-text-1);
   }
 }
 
-.go-mode-nav-control__modes button:focus-visible {
-  outline: 2px solid var(--rp-c-brand);
-  outline-offset: 2px;
-}
+/* When on, the name picks up the hero's moving gradient text. */
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__name {
+  @include vapor-gradient;
 
-.go-mode-nav-control__modes button[aria-pressed='true'] {
-  color: var(--rp-c-text-1);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
   font-weight: 600;
 }
 
-/* Label rides the gradient thumb: white with a whisper of depth. */
-.go-mode-nav-control[data-mode='vapor']
-  .go-mode-nav-control__modes button[aria-pressed='true'] {
-  color: #fff;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+.go-mode-nav-control__track {
+  position: relative;
+  display: inline-block;
+  width: 28px;
+  height: 16px;
+  flex: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rp-c-text-3) 28%, transparent);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
+  transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track {
+  @include vapor-gradient;
+
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
+}
+
+.go-mode-nav-control__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
+  transform: translateX(12px);
 }
 
 /* "2/3" chip: shown only when Vapor is selected but some examples on the
@@ -170,14 +170,6 @@ button.vapor-status:focus-visible {
   outline-offset: 2px;
 }
 
-.vapor-status__dot {
-  width: 5px;
-  height: 5px;
-  flex: none;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 .vapor-status__label {
   font-weight: 600;
 }
@@ -200,23 +192,12 @@ button.vapor-status:focus-visible {
   box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 40%, transparent);
 }
 
-.vapor-status[data-render-mode='vapor'] .vapor-status__dot {
-  background: #fff;
-  box-shadow: 0 0 4px rgb(255 255 255 / 80%);
-}
-
 @media (hover: hover) {
   button.vapor-status[data-render-mode='vapor']:hover {
     border-color: transparent;
     color: #fff;
     box-shadow: 0 1px 10px color-mix(in srgb, var(--major-brand-color) 60%, transparent);
   }
-}
-
-/* Hollow dot whenever the example is not running Vapor. */
-.vapor-status[data-render-mode='vdom'] .vapor-status__dot {
-  background: transparent;
-  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 /* ---------------------------------------------------------------------------
@@ -337,10 +318,6 @@ button.vapor-status:focus-visible {
   box-shadow: none;
 }
 
-.vapor-matrix .vapor-status[data-render-mode='vapor'] .vapor-status__dot {
-  background: currentColor;
-  box-shadow: none;
-}
 
 .vapor-matrix__notes {
   color: var(--rp-c-text-3);
@@ -381,26 +358,47 @@ button.vapor-status:focus-visible {
  * Responsive / input adjustments
  * ------------------------------------------------------------------------- */
 
-@media (width <= 767px) {
-  .go-mode-nav-control {
-    gap: 6px;
-  }
+/* ---------------------------------------------------------------------------
+ * Sidebar: the "Vapor Mode" guide entry wears the brand gradient.
+ * (`context: 'vapor'` in rspress.config.ts → data-context on the item.)
+ * ------------------------------------------------------------------------- */
 
-  .go-mode-nav-control__modes {
-    grid-template-columns: repeat(2, minmax(40px, 1fr));
-  }
+.rp-sidebar-item[data-context='vapor'] .rp-sidebar-item__left > span {
+  background-image: linear-gradient(
+    90deg,
+    var(--major-brand-color),
+    var(--gradient-brand-color),
+    var(--second-brand-color)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 500;
+}
 
-  .go-mode-nav-control__modes button {
-    padding: 0 8px;
+@media (hover: hover) {
+  .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {
+    background-image: linear-gradient(
+      270deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color),
+      var(--second-brand-color),
+      var(--gradient-brand-color),
+      var(--major-brand-color)
+    );
+    background-size: 220% 100%;
+    animation: vapor-gradient-drift 6s linear infinite;
   }
 }
 
-/* Touch targets: nudge up, not to 44px — the nav bar caps height, and the
-   petite pill should stay petite. The two halves are generous horizontally. */
+/* ---------------------------------------------------------------------------
+ * Responsive / input adjustments
+ * ------------------------------------------------------------------------- */
+
+/* Touch: pad the switch's hit area invisibly — the control stays petite. */
 @media (pointer: coarse) {
-  .go-mode-nav-control__modes button {
-    min-height: 26px;
-    min-width: 46px;
+  .go-mode-nav-control__switch {
+    padding: 8px 2px;
   }
 
   button.vapor-status {
@@ -409,14 +407,17 @@ button.vapor-status:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .go-mode-nav-control__thumb,
-  .go-mode-nav-control__modes button,
+  .go-mode-nav-control__name,
+  .go-mode-nav-control__track,
+  .go-mode-nav-control__knob,
   button.vapor-status {
     transition: none;
   }
 
-  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__thumb,
-  .vapor-status[data-render-mode='vapor'] {
+  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__name,
+  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track,
+  .vapor-status[data-render-mode='vapor'],
+  .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {
     animation: none;
     background-image: linear-gradient(
       135deg,
