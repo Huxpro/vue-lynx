@@ -522,18 +522,30 @@ async function verifyWebsiteModeControl(browser, origin, artifacts) {
 
   try {
     await page.goto(`${origin}/guide/quick-start`, { waitUntil: "domcontentloaded" });
-    const status = page.locator(".vapor-status").first();
-    await status.waitFor({ timeout: 20_000 });
-    const vaporRequest = page.waitForRequest(
-      (request) => request.url().includes("/examples/hello-world/dist-vapor/main.web.bundle"),
+    // Current UI: a single nav switch (role="switch") drives the global
+    // preference; the per-example footer badge reflects the effective
+    // renderer via data-render-mode.
+    const badge = page.locator(".vue-lynx-go .vapor-status").first();
+    await badge.waitFor({ timeout: 20_000 });
+    await page.locator('.go-mode-nav-control [role="switch"]').click();
+    await page
+      .locator('.vue-lynx-go .vapor-status[data-render-mode="vapor"]')
+      .first()
+      .waitFor({ timeout: 20_000 });
+    // web-core fetches bundles inside its module worker, which Playwright's
+    // page-level network events don't observe — assert on the lynx-view's
+    // effective bundle URL instead of a waitForRequest that can never fire.
+    const bundleHandle = await page.waitForFunction(
+      () => {
+        const view = document.querySelector("lynx-view");
+        const url = view?.getAttribute("url") ?? view?.url;
+        return typeof url === "string" && url.includes("dist-vapor/") ? url : null;
+      },
+      null,
       { timeout: 20_000 },
     );
-    await status.getByRole("button", { name: "Vapor" }).click();
-    const request = await vaporRequest;
-    await page
-      .locator('.vapor-status button[aria-pressed="true"]')
-      .filter({ hasText: "Vapor" })
-      .waitFor({ timeout: 20_000 });
+    const bundleUrl = await bundleHandle.jsonValue();
+    const request = { url: () => bundleUrl };
     await page.waitForFunction(
       () =>
         Boolean(
