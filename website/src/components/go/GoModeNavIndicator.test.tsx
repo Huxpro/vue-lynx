@@ -41,12 +41,12 @@ test('switches the requested example renderer from the global navigation', () =>
     }),
   );
 
-  assert.match(html, /Examples/);
   assert.match(html, /VDOM/);
   assert.match(html, /Vapor/);
   assert.match(html, /role="group"/);
   assert.match(html, /aria-label="Example renderer"/);
   assert.match(html, /data-mode="vdom"/);
+  assert.match(html, /go-mode-nav-control__thumb/);
   assert.equal(html.match(/<button/g)?.length, 2);
   assert.match(html, /aria-pressed="true"[^>]*>VDOM/);
 });
@@ -89,59 +89,98 @@ test('localizes the global renderer control for Chinese docs', () => {
     }),
   );
 
-  assert.match(html, /示例/);
   assert.match(html, /VDOM/);
   assert.match(html, /aria-label="示例渲染器"/);
   assert.match(html, /本页 1\/3 个示例支持 Vapor/);
 });
 
-test('supported examples show their effective Vapor renderer', () => {
+test('a Vapor-running example shows a tinted interactive badge', () => {
   const html = renderToStaticMarkup(
     createElement(VaporStatus, {
       entry: '7guis/counter',
+      requested: 'vapor',
       mode: 'vapor',
       status: 'supported',
+      onToggle: noop,
     }),
   );
 
+  assert.match(html, /<button/);
   assert.match(html, /data-render-mode="vapor"/);
   assert.match(html, />Vapor</);
-  assert.doesNotMatch(html, /<button/);
+  assert.match(html, /click to switch every example to VDOM/);
+});
+
+test('a supported example in VDOM mode invites switching to Vapor', () => {
+  const html = renderToStaticMarkup(
+    createElement(VaporStatus, {
+      entry: '7guis/counter',
+      requested: 'vdom',
+      mode: 'vdom',
+      status: 'supported',
+      onToggle: noop,
+    }),
+  );
+
+  assert.match(html, /<button/);
+  assert.match(html, />VDOM</);
+  assert.doesNotMatch(html, /VDOM only/);
+  assert.match(html, /click to switch every example to Vapor/);
 });
 
 test('supported examples with missing Vapor bundles explain their fallback', () => {
   const html = renderToStaticMarkup(
     createElement(VaporStatus, {
       entry: 'hello-world/main',
+      requested: 'vapor',
       mode: 'vdom',
       status: 'supported',
     }),
   );
 
+  assert.doesNotMatch(html, /<button/);
   assert.match(html, /VDOM only/);
   assert.match(html, /Vapor bundle not built/);
 });
 
-test('unsupported examples explain their VDOM fallback', () => {
+test('unsupported examples explain their VDOM fallback while Vapor is requested', () => {
   const html = renderToStaticMarkup(
     createElement(VaporStatus, {
       entry: 'transition/main',
+      requested: 'vapor',
       mode: 'vdom',
       status: 'unsupported',
       reason: 'transition',
     }),
   );
 
+  assert.doesNotMatch(html, /<button/);
   assert.match(html, /data-render-mode="vdom"/);
   assert.match(html, /VDOM only/);
   assert.match(html, /Uses Transition/);
-  assert.doesNotMatch(html, /<button/);
+});
+
+test('unsupported examples stay quiet in VDOM mode (reason in tooltip only)', () => {
+  const html = renderToStaticMarkup(
+    createElement(VaporStatus, {
+      entry: 'transition/main',
+      requested: 'vdom',
+      mode: 'vdom',
+      status: 'unsupported',
+      reason: 'transition',
+    }),
+  );
+
+  assert.match(html, /VDOM only/);
+  assert.doesNotMatch(html, /vapor-status__reason/);
+  assert.match(html, /title="Uses Transition"/);
 });
 
 test('localizes entry capability and reason codes for Chinese docs', () => {
   const html = renderToStaticMarkup(
     createElement(VaporStatus, {
       entry: 'vue-router/main',
+      requested: 'vapor',
       mode: 'vdom',
       status: 'unsupported',
       reason: 'vue-router',

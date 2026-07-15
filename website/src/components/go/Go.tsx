@@ -124,20 +124,25 @@ function VaporAwareGo(props: GoProps) {
     return <div className="vue-lynx-go" aria-busy="true" />;
   }
 
+  // Renderer badge, seated in the card footer next to the Code/Preview
+  // controls (go-web's rightFooter slot). Clicking it flips the global
+  // preference — a per-example affordance for the nav toggle.
+  const statusBadge = (
+    <VaporStatus
+      entry={`${props.example}/${entryName}`}
+      requested={requestedMode}
+      mode={mode}
+      status={currentEntry.vaporStatus ?? 'unsupported'}
+      reason={currentEntry.vaporReason}
+      locale={locale}
+      onToggle={entrySupportsVapor
+        ? () => renderModeStore.setMode(mode === 'vapor' ? 'vdom' : 'vapor')
+        : undefined}
+    />
+  );
+
   return (
     <div className="vue-lynx-go">
-      {/* The badge only carries signal while Vapor is requested: either
-          "this example runs Vapor" or "this one fell back, and why". In the
-          default VDOM mode every example would just say "VDOM" — noise. */}
-      {requestedMode === 'vapor' && (
-        <VaporStatus
-          entry={`${props.example}/${entryName}`}
-          mode={mode}
-          status={currentEntry.vaporStatus ?? 'unsupported'}
-          reason={currentEntry.vaporReason}
-          locale={locale}
-        />
-      )}
       {/* key={mode}: a mode switch swaps the underlying bundle files, so
           force a real remount of the preview instead of relying on the inner
           lynx-view resetting cleanly when its `url` prop is reassigned. */}
@@ -148,6 +153,11 @@ function VaporAwareGo(props: GoProps) {
         defaultEntryName={entryName}
         exampleMetadata={renderedMetadata}
         onEntryChange={handleEntryChange}
+        rightFooter={
+          props.rightFooter
+            ? <>{props.rightFooter}{statusBadge}</>
+            : statusBadge
+        }
       />
     </div>
   );
