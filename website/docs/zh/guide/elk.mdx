@@ -12,6 +12,20 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 
 <Go example="elk" defaultFile="src/App.vue" />
 
+### 原生 viewpager 变体 <Badge text="需要较新的 Lynx 引擎" type="warning" />
+
+`elk-viewpager` 分叉用**原生 viewpager 元件**承载 Explore 与通知页的标签页
+（[`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)）：
+面板可以横向滑动翻页、带原生吸附动画，滑走再滑回时内容与滚动位置都保留，
+标签栏与翻页器双向同步（翻页器的 `change` 事件 ↔ `selectTab` UI 方法）。
+体验更接近原生客户端，代价是对宿主要求更高：Web 端使用 `<x-viewpager-ng>`
+现在即可运行；原生端则需要注册了新版 `<viewpager>` 元件的 Lynx 引擎
+（lynx-family/lynx develop 2026-04 之后——比任何已发布的 LynxExplorer 都新，
+已发布版本两个名字都没有）。在旧宿主上标签区域会渲染为空白，
+届时请使用上方的原始示例。
+
+<Go example="elk-viewpager" defaultFile="src/components/TabPager.vue" />
+
 ## 为什么 Elk 是一块试金石
 
 Elk 是一个约 196 个组件、55 个页面、50 个 composable 的 Nuxt 3 应用。

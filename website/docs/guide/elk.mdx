@@ -13,6 +13,22 @@ installing it) to run the same `main.lynx.bundle` natively on your phone.
 
 <Go example="elk" defaultFile="src/App.vue" />
 
+### Native viewpager variant <Badge text="newer Lynx engine" type="warning" />
+
+The `elk-viewpager` fork backs the Explore and Notifications tabs with the
+**native viewpager element** ([`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)):
+panes swipe horizontally with a native snap animation, keep content and
+scroll position across swipes, and the tab bar syncs both ways (the
+pager's `change` event ↔ the `selectTab` UI method). It feels closer to a
+native client, at the cost of a heavier host requirement: on the web it
+uses `<x-viewpager-ng>` and works today, but native hosts need a Lynx
+engine that registers the extracted `<viewpager>` element
+(lynx-family/lynx develop after 2026-04 — newer than any released
+LynxExplorer, whose builds ship neither name). On older hosts the tab
+area renders blank; prefer the original example above there.
+
+<Go example="elk-viewpager" defaultFile="src/components/TabPager.vue" />
+
 ## Why Elk is a serious test
 
 Elk is a Nuxt 3 app with ~196 components, 55 pages and 50 composables.
