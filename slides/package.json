@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 4321",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4321"
+    "preview": "vite preview --host 0.0.0.0 --port 4321",
+    "test:morph": "node tests/morph-invariant.mjs"
   },
   "dependencies": {
     "@lynx-js/web-core": "^0.20.0",
@@ -15,6 +16,7 @@
     "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
+    "playwright-core": "^1.49.0",
     "vite": "^5.4.10"
   }
 }

@@ -22,6 +22,29 @@ object built in `../main.js` (next/prev/goto, flags, theme/lang, overview,
 blackout, speaker, stageScale, …) plus a `deck:change` DOM event. Swap the
 controller and content and the framework is reusable elsewhere.
 
+## The FLIP contract (magic-move.js)
+
+A `data-flip` element **keeps its own layout while morphing** — the engine
+must never change how the element is positioned or replace its transform:
+
+- **Positioning**: the `.is-flipping` class must NOT set `position` (only a
+  positioned box is needed, for z-index). The engine promotes *static*
+  elements to `relative` via inline style and restores them at cleanup.
+  Forcing `relative` from CSS yanks absolutely-positioned elements (logos,
+  diagram blocks, thread lanes) into flow mid-morph: they tween from a wrong
+  origin, then snap into place when the morph ends.
+- **Transforms**: the FLIP delta is **composed with** the element's own
+  computed transform (e.g. a `translate(-50%,-50%)` centering) and released
+  back to it — never overwritten, which would shift the element by half its
+  size for the duration of the morph.
+
+Both rules are guarded by `slides/tests/morph-invariant.mjs`
+(`pnpm test:morph`): it walks every adjacent slide pair sharing `data-flip`
+ids, asserts each element's mid-morph rect stays inside the corridor spanned
+by its source/target rects, and that it lands exactly where a fresh load of
+the target slide puts it. Run it whenever you touch `magic-move.js`, the
+`.is-flipping` styles, or add a new positioned flip-element type.
+
 ## What's *not* in here (deck content — lives in `src/`)
 
 - `index.html` — the slides themselves
