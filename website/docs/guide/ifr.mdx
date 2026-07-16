@@ -193,48 +193,50 @@ configuration.
 
 The table keeps the three product configurations separate. FCP is hello-world
 on Lynx for Web with a real Web Worker (no CPU throttle; the median win across
-ten examples is −24%). Render cost is the warm median for a roughly
+ten examples is −19% in the default configuration). Render cost is the warm
+median for a roughly
 1,000-element dynamic-content scene under V8 `--jitless`. TTI and gzip are
 medians from the all-examples sweep, normalized to No IFR. These are separate
 campaigns; the columns should not be read as one end-to-end trace.
 
 | configuration | flags | FCP | render cost | TTI proxy | bundle gzip |
 | --- | --- | ---: | ---: | ---: | ---: |
-| No IFR | `IFR=false, ET=false` | 97.8 ms | 9.4 ms | 1.00x | 1.00x |
-| **IFR + ET** | `IFR=true, ET=default` | **69.6 ms (−29%)** | **1.3 ms** | 1.35x | ~2.26x |
-| IFR without ET | `IFR=true, ET=false` | 70.3 ms (−28%) | 8.4 ms | 1.36x | ~2.26x |
+| No IFR | `IFR=false, ET=false` | 96.6 ms | 9.4 ms | 1.00x | 1.00x |
+| **IFR + ET** | `IFR=true, ET=default` | **75.4 ms (−22%)** | **1.3 ms** | 1.35x | ~2.26x |
+| IFR without ET | `IFR=true, ET=false` | 75.8 ms (−22%) | 8.4 ms | 1.36x | ~2.26x |
 
 ### What the data says
 
 1. **IFR's win is real, structural, and matches the reference
    implementation.** Across ten examples with a genuine thread boundary
-   (Lynx for Web), IFR improves FCP on every single one — −9% to −29%,
-   median **−24%**, the same class as ReactLynx's −31…−26% on identical
-   harnesses. The win comes from removing background-thread boot + IPC from
-   the critical path, which is also why a single-process benchmark cannot
-   see it.
+   (Lynx for Web), IFR improves FCP on nine — −8% to −23%, median
+   **−19%** in the default configuration, the same class as ReactLynx's
+   −23% on an identical harness. The win comes from removing
+   background-thread boot + IPC from the critical path, which is also why
+   a single-process benchmark cannot see it.
 2. **Element Templates attack the one cost IFR adds.** The synchronous
    main-thread render gets 7–15× cheaper and the ops payload shrinks
    3–1,000× (a 1,400-element static screen ships 69 bytes instead of
-   78 KB). On small screens at full CPU speed this doesn't move FCP —
-   the render is milliseconds either way — but ET pulls ahead exactly
-   where render cost bites: slow CPUs, big screens (302-node gallery at
-   4× throttle: −7% vs −1%), and native interpreters. It also cheapens
-   hydration itself. This asymmetry — never worse than noise, wins where
-   it matters — is why ET defaults on with IFR.
+   78 KB). On web FCP for small screens this doesn't show — the render is
+   milliseconds either way, so the two IFR configurations measure within
+   noise of each other — but the render-cost term is exactly what grows
+   with screen size and shrinks CPU speed, and it dominates on native
+   interpreters (no JIT), where validation confirmed ET meaningfully cuts
+   the synchronous render. This asymmetry — never worse than noise, wins
+   where render cost bites — is why ET defaults on with IFR.
 3. **The price is bundle size, and it defines the counter-profile.**
    `main.lynx.bundle` gzip grows ×2.26 (median) and serial work until
    interactive grows up to ×1.36 (overlapped by background boot on
    devices). A big bundle with a skeleton-only, fetch-driven first screen
-   can invert on the web, where bundle parse lands on the FCP path
-   (hackernews: +19% under throttle); native precompiled bytecode shrinks
-   that term.
+   inverts on the web, where bundle parse lands on the FCP path
+   (hackernews: +14% at full speed, +9…11% throttled); native precompiled
+   bytecode shrinks that term.
 
 ### Recommendations
 
 | your first screen | do this |
 | --- | --- |
-| content-first, renders from synchronous data | **enable `enableIFR: true`** (brings ET) — this is the target profile, worth −24% FCP at the median |
+| content-first, renders from synchronous data | **enable `enableIFR: true`** (brings ET) — this is the target profile, worth −19% FCP at the median |
 | data-driven with synchronous initial data | enable |
 | fetch-driven — nothing to paint before a response | don't enable; or restructure to render a real skeleton first, then enable |
 | bundle-size-critical | measure first — gzip roughly doubles |

@@ -132,19 +132,21 @@ dual-thread pipeline is worth doing for correctness alone.
 
 ## 3. Real threads
 
-> **Takeaway: with a genuine thread boundary, IFR wins on every example —
-> FCP −9% to −29% (median −24%) across ten screens at full speed, matching
-> the −26% of the ReactLynx control. The win comes from removing background
-> boot + IPC from the critical path. At full CPU speed IFR + ET and IFR
-> without ET tie within noise; under 4× throttling ET pulls ahead on most
-> screens — most clearly on the biggest one.**
+> **Takeaway: with a genuine thread boundary, IFR wins on nine of ten
+> examples at full CPU speed — FCP −8% to −23%, median −19% in the default
+> configuration — matching the ReactLynx control's −23%. The win comes from
+> removing background boot + IPC from the critical path. The two IFR
+> configurations (with and without ET) are within run-to-run noise of each
+> other on these screens: ET's measured advantages are render cost and ops
+> payload (campaign 1) and native cold starts, not web FCP on small pages.**
 
 Setup: Lynx for Web — the background runtime runs in a genuine Web Worker
 with real postMessage IPC, in headless Chromium. FCP = `<lynx-view>`
 insertion → first painted content, medians of 7 fresh browser contexts.
-These tables are a fresh campaign measured under the **current** flag
-semantics (`enableIFR: true` = IFR + ET; opt-out = IFR without ET) — no
-historical mapping needed.
+Both throttle levels below come from one session measured under the
+**current** flag semantics (`enableIFR: true` = IFR + ET; explicit opt-out =
+IFR without ET). Absolute milliseconds drift with host load between
+sessions; within-run ratios are the stable currency.
 
 ### The ReactLynx control
 
@@ -160,61 +162,57 @@ feature without a thread boundary either:
 | IFR off (emulated) | 24.3 ms | 24.3 ms |
 
 On real threads both frameworks win, by the same class of margin: the
-ReactLynx probe (85 nodes) improves 88.3 → 65.0 ms (**−26%**), squarely
-inside the −9…−29% range the Vue examples below span.
+ReactLynx probe (85 nodes) improves 97.7 → 75.2 ms (**−23%**), squarely
+inside the range the Vue examples below span.
 
 ### Full matrix — no CPU throttle
 
-| example (nodes) | No IFR | IFR w/o ET | Δ | IFR + ET | Δ |
+| example (nodes) | No IFR | IFR w/o ET | Δ | IFR + ET (default) | Δ |
 |---|---|---|---|---|---|
-| hello-world (16) | 97.8 | 70.3 | −28% | 69.6 | **−29%** |
-| todomvc-day1 (7) | 97.7 | 70.3 | −28% | 69.4 | **−29%** |
-| swiper (39) | 100.0 | 72.9 | −27% | 74.0 | −26% |
-| tailwindcss (68) | 101.8 | 76.9 | −24% | 77.6 | −24% |
-| keep-alive (49) | 104.4 | 79.7 | −24% | 80.7 | −23% |
-| transition (55) | 103.0 | 79.1 | −23% | 80.1 | −22% |
-| 7guis (145) | 104.4 | 81.5 | −22% | 80.5 | −23% |
-| gallery (302) | 125.3 | 93.4 | −25% | 95.4 | −24% |
-| css-features (50) | 102.2 | 83.3 | −19% | 87.0 | −15% |
-| hackernews-css (18) | 116.5 | 103.7 | −11% | 105.7 | −9% |
+| hello-world (16) | 96.6 | 75.8 | −22% | 75.4 | −22% |
+| todomvc-day1 (7) | 92.9 | 78.6 | −15% | 73.4 | −21% |
+| swiper (39) | 100.5 | 77.7 | −23% | 79.1 | −21% |
+| tailwindcss (68) | 95.7 | 80.9 | −15% | 80.6 | −16% |
+| keep-alive (49) | 103.5 | 86.0 | −17% | 84.4 | −18% |
+| transition (55) | 104.6 | 93.3 | −11% | 85.1 | −19% |
+| 7guis (145) | 104.1 | 90.3 | −13% | 80.6 | −23% |
+| gallery (302) | 136.6 | 104.5 | −23% | 109.9 | −20% |
+| css-features (50) | 102.0 | 93.9 | −8% | 100.3 | −2% |
+| hackernews-css (18) | 115.3 | 131.7 | **+14%** ⚠ | 131.8 | **+14%** ⚠ |
 
-(FCP in ms. Median IFR win: **−24%**.)
+(FCP in ms. Medians: **−19%** default, −15% without ET — the per-example
+differences between the two configurations flip between runs and should be
+read as noise.)
 
-### 4× CPU throttle — where the configurations separate
+### 4× CPU throttle
 
 | example | No IFR | IFR w/o ET | Δ | IFR + ET | Δ |
 |---|---|---|---|---|---|
-| 7guis | 324.9 | 297.3 | −8% | 291.9 | **−10%** |
-| todomvc-day1 | 268.5 | 251.5 | −6% | 244.1 | **−9%** |
-| hello-world | 275.3 | 250.3 | −9% | 251.9 | −9% |
-| swiper | 289.3 | 266.3 | −8% | 266.0 | −8% |
-| gallery (302 nodes) | 376.5 | 371.0 | −1% | 349.6 | **−7%** |
-| keep-alive | 301.0 | 296.2 | −2% | 287.7 | **−4%** |
-| tailwindcss | 298.8 | 297.1 | −1% | 287.3 | **−4%** |
-| transition | 308.1 | 317.4 | +3% | 320.8 | +4% |
-| css-features | 298.8 | 309.3 | +4% | 321.6 | +8% |
-| hackernews-css | 297.8 | 355.0 | **+19%** ⚠ | 349.9 | +17% |
+| hello-world | 344.1 | 282.8 | −18% | 289.1 | −16% |
+| todomvc-day1 | 313.2 | 281.7 | −10% | 280.6 | −10% |
+| swiper | 333.1 | 304.9 | −8% | 298.4 | −10% |
+| tailwindcss | 339.9 | 330.7 | −3% | 316.4 | −7% |
+| keep-alive | 391.4 | 366.6 | −6% | 370.8 | −5% |
+| gallery (302 nodes) | 437.2 | 430.5 | −2% | 434.5 | −1% |
+| css-features | 352.0 | 353.6 | +0% | 346.4 | −2% |
+| transition | 350.6 | 355.2 | +1% | 367.6 | +5% |
+| 7guis | 352.1 | 366.8 | +4% | 355.0 | +1% |
+| hackernews-css | 324.0 | 352.9 | **+9%** ⚠ | 360.0 | +11% |
+| ReactLynx probe | 331.6 | 308.0 | −7% | — | |
 
-Two patterns, both predicted by campaigns 1–2:
+Two readings:
 
-1. **ET's render-cost win appears when the render is the bottleneck.** At
-   full speed the two IFR configurations are 1–2 ms apart — the synchronous
-   render costs single-digit milliseconds on 16–300-node screens, while both
-   configurations pay the same ~70–100 ms of view boot, worker spawn, and
-   bundle parse. Under 4× throttling ET leads on 7 of 10 examples, most
-   clearly on the biggest screen (gallery, 302 nodes: −7% vs −1%) — and on
-   native interpreters (no JIT) the cold-run ladder (16.4 ms → 5.3 ms)
-   predicts a larger separation still.
-2. **The inversion profile is bundle-parse-bound, and throttle-dependent.**
-   hackernews — the biggest bundle with a skeleton-only first screen — still
-   wins −11% at full speed but inverts to +19% under throttling, where the
-   doubled bundle's parse cost (which the web platform pays on the FCP path;
-   native precompiled bytecode does not) grows 4×. css-features and
-   transition show the same effect in miniature (+3…+8%). The profile
-   guidance stands: fetch-driven, skeleton-first screens pay size for little
-   win. Notably, ET also cuts hackernews' *hydration* cost — settle time
-   drops from 427.8 ms (IFR w/o ET) to 366.6 ms — because the lowered ops
-   stream is 3–1000× smaller to reconcile.
+1. **Content-first screens keep their win under throttling** (hello-world
+   −16…−18%, todomvc-day1 −10%, swiper −10%), while screens whose FCP is
+   dominated by CSS processing or big bundles compress toward zero — a
+   throttled CPU multiplies the bundle-parse term that the web platform
+   pays on the FCP path.
+2. **The inversion profile reproduces at both throttle levels.**
+   hackernews — the biggest bundle in the suite with a skeleton-only first
+   screen — pays +14% at full speed and +9…11% throttled. The profile
+   guidance stands: fetch-driven, skeleton-first screens pay bundle size
+   for no first-frame win. On native, precompiled lepus bytecode shrinks
+   the parse term this inversion is made of.
 
 ### How far is this from plain single-threaded web?
 
@@ -224,9 +222,9 @@ the remaining gap. On the ReactLynx probe screen, no throttle:
 
 | component | cost | evidence |
 |---|---|---|
-| render 85 elements + paint (preact on DOM) | ~18 ms | plain-preact, framework pre-parsed |
-| + framework fetch+parse on the FCP path | +8 ms | cold − warm |
-| + the Lynx-for-Web platform layer | +39 ms | rl-ifr − plain-preact cold |
+| render 85 elements + paint (preact on DOM) | ~21 ms | plain-preact, framework pre-parsed |
+| + framework fetch+parse on the FCP path | +7 ms | cold − warm |
+| + the Lynx-for-Web platform layer | +47 ms | rl-ifr − plain-preact cold |
 | + background boot + hydration IPC round-trip | +23 ms | rl-noifr − rl-ifr |
 
 The thread boundary costs ~23 ms and **IFR removes exactly that slice**.
