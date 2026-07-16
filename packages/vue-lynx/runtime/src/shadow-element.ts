@@ -191,6 +191,11 @@ function createClassList(el: ShadowElement): ClassListFacade {
 export class ShadowElement {
   static nextUid = 2; // 1 is reserved for the page root
 
+  /** @internal Native host nodes must retain object identity through Vue reactivity. */
+  get __v_skip(): true {
+    return true;
+  }
+
   uid: number;
   tag: string;
   parent: ShadowElement | null = null;
@@ -466,7 +471,7 @@ export class ShadowElement {
   }
 
   set nodeValue(value: string | null) {
-    const text = value ?? '';
+    const text = String(value ?? '');
     this._text = text;
     if (this.tag !== '#text' || this._inert) return;
     // Aliased only-child text lives on the host element on the MT side.
@@ -684,6 +689,11 @@ export class ShadowElement {
   // --- attributes --------------------------------------------------------------
 
   setAttribute(key: string, value: unknown): void {
+    // runtime-vapor adds this browser-only mount marker to its container.
+    // The Lynx page root is not a DOM element, so do not emit a native prop
+    // or misclassify the marker as a scoped-CSS class. Preserve normal
+    // data-v-app attribute behavior on user-created elements.
+    if (this.uid === PAGE_ROOT_ID && key === 'data-v-app') return;
     if (!this._inert && applyMainThreadProp(this, key, value)) return;
     // Vapor compiles ReactLynx-style event props (`:bindtap="fn"`,
     // `:catchtap="fn"`, …) to plain attribute writes — including
