@@ -13,7 +13,11 @@ live Mastodon instance; switch to the **QR Code** tab and scan it with
 Lynx Go / Lynx Explorer (see [Quick Start](/guide/quick-start) for
 installing it) to run the same `main.lynx.bundle` natively on your phone.
 
-<Go example="elk" defaultFile="src/App.vue" />
+<Go
+  example="elk"
+  defaultFile="src/App.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+/>
 
 ### Native viewpager variant <Badge text="newer Lynx engine" type="warning" />
 
@@ -37,6 +41,7 @@ use the extracted `<viewpager>` / `<viewpager-item>`.
 <Go
   example="elk-viewpager"
   defaultFile="src/components/TabPager.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
   highlight={{
     'src/components/TabPager.vue': '{12-18,40-56,72-87}',
   }}

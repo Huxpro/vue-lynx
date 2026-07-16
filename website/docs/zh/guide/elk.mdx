@@ -12,7 +12,11 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 （安装方式见[快速开始](/zh/guide/quick-start)）扫码，即可在手机上原生运行
 同一份 `main.lynx.bundle`。
 
-<Go example="elk" defaultFile="src/App.vue" />
+<Go
+  example="elk"
+  defaultFile="src/App.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+/>
 
 ### 原生 viewpager 变体 <Badge text="需要较新的 Lynx 引擎" type="warning" />
 
@@ -35,6 +39,7 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 <Go
   example="elk-viewpager"
   defaultFile="src/components/TabPager.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
   highlight={{
     'src/components/TabPager.vue': '{12-18,40-56,72-87}',
   }}
