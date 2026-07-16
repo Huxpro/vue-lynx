@@ -79,9 +79,11 @@ async function succeed() {
 
   try {
     const source = await fs.readFile(mainThreadBundle, 'utf8');
+    // Regexes stay loose on quoting/formatting so Rspack codegen changes
+    // don't break the smoke test; they only assert the bootstrap survived.
     if (
-      !source.includes("g['renderPage'] = function")
-      || !source.includes("__CreatePage('0', 0)")
+      !/g\[['"]renderPage['"]\]\s*=/.test(source)
+      || !/__CreatePage\(/.test(source)
     ) {
       fail(
         'The Lynx main-thread bundle is missing the Vue bootstrap '

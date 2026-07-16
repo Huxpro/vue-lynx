@@ -213,6 +213,13 @@ export function createApp(
  * Vue Lynx's version also waits for the main thread to apply the ops, so
  * native Lynx elements are fully materialised when the callback fires.
  *
+ * Caveat: some Lynx builds never invoke the `callLepusMethod` callback that
+ * carries the acknowledgement. Until the engine has delivered one real
+ * acknowledgement, each flush falls back to a short timer so `nextTick()`
+ * cannot hang forever — on such engines the materialisation guarantee is
+ * best-effort (a dev-mode warning is logged when the fallback fires). Once a
+ * real acknowledgement has been observed, the strict guarantee applies.
+ *
  * @param fn - Optional callback to execute after flush
  * @returns A promise that resolves when the main thread has applied all pending ops
  *
@@ -1313,9 +1320,14 @@ export function withKeys(
 }
 
 // ===========================================================================
-// Built-in components — Transition
+// Built-in components — Page, Transition
 // ===========================================================================
 
+// `Page` is the transparent wrapper behind explicit `<page>` roots — see
+// ./Page.ts for the full contract (single owner, attrs forwarded to the
+// native root). In templates, use lowercase `<page>` (rewritten by the
+// compiler) or import `Page` explicitly; only `VueLynxPage` is registered
+// globally.
 export { Page, Transition, TransitionGroup };
 
 // ===========================================================================

@@ -170,6 +170,20 @@ export function resolveClass(el: ShadowElement): string {
 
 export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
+    // Lynx owns exactly one native <page>, created before the app runs. A
+    // `page` vnode must go through the transparent Page built-in (the plugin
+    // compiler rewrites template <page> tags; the exported `h` routes
+    // h('page', ...)). Reaching here means a bypass path was used —
+    // createVNode/JSX or a template compiled without vueLynxCompilerOptions —
+    // and the engine will reject the second __CreatePage (error 9901).
+    if (__DEV__ && type === 'page') {
+      console.error(
+        '[vue-lynx] A <page> element reached the renderer as a plain element. '
+          + 'It must render through the Page built-in: compile templates with '
+          + "pluginVueLynx, or use h('page', ...) / the exported Page "
+          + 'component from vue-lynx.',
+      );
+    }
     const el = new ShadowElement(type);
     pushOp(OP.CREATE, el.id, type);
     scheduleFlush();

@@ -4,6 +4,7 @@ import {
   defineComponent,
   h,
   nextTick,
+  nodeOps,
   popScopeId,
   pushScopeId,
   ref,
@@ -241,6 +242,217 @@ describe('explicit <page> root', () => {
     await nextTick();
 
     expect(pageRef.value?.id).toBe(1);
+    app.unmount();
+  });
+
+  it('rejects <page> nested inside a native element at compile time', () => {
+    expect(() =>
+      compile('<view><page class="inner" /></view>', {
+        mode: 'module',
+        ...vueLynxCompilerOptions,
+      })
+    ).toThrow(/outermost/);
+  });
+
+  it('re-claims the root when a <page> remounts after unmounting', async () => {
+    const show = ref(true);
+    const App = defineComponent({
+      setup() {
+        return () =>
+          show.value
+            ? h('page', { class: 'first-life' }, [h('view')])
+            : h('view', { id: 'other-root' });
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+    collectFlushedOps();
+
+    show.value = false;
+    await nextTick();
+    expect(findOps(collectFlushedOps(), OP.SET_CLASS, 3)).toContainEqual([
+      OP.SET_CLASS,
+      1,
+      '',
+    ]);
+
+    show.value = true;
+    await nextTick();
+    expect(findOps(collectFlushedOps(), OP.SET_CLASS, 3)).toContainEqual([
+      OP.SET_CLASS,
+      1,
+      'first-life',
+    ]);
+
+    app.unmount();
+  });
+
+  it('hands ownership to a concurrent <page> when the owner unmounts', async () => {
+    const report = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const showA = ref(true);
+    const showB = ref(false);
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('view', null, [
+            showA.value
+              ? h('page', { key: 'a', class: 'page-a' }, [h('text', null, 'a')])
+              : null,
+            showB.value
+              ? h('page', { key: 'b', class: 'page-b' }, [h('text', null, 'b')])
+              : null,
+          ]);
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+    collectFlushedOps();
+
+    // B mounts while A still owns the root — reported, attrs deferred.
+    showB.value = true;
+    await nextTick();
+    expect(report).toHaveBeenCalledWith(
+      expect.stringContaining('more than one <page>'),
+    );
+    expect(findOps(collectFlushedOps(), OP.SET_CLASS, 3)).not.toContainEqual([
+      OP.SET_CLASS,
+      1,
+      'page-b',
+    ]);
+
+    // A unmounts — B takes over and applies its attributes to the root.
+    showA.value = false;
+    await nextTick();
+    expect(findOps(collectFlushedOps(), OP.SET_CLASS, 3)).toContainEqual([
+      OP.SET_CLASS,
+      1,
+      'page-b',
+    ]);
+
+    app.unmount();
+    report.mockRestore();
+  });
+
+  it('clears the scope id from the root when the wrapper unmounts', async () => {
+    const show = ref(true);
+    const App = defineComponent({
+      setup() {
+        return () => {
+          if (!show.value) return h('view');
+          pushScopeId('data-v-1a2b3c4d');
+          const vnode = h('page', { class: 'scoped' }, [h('view')]);
+          popScopeId();
+          return vnode;
+        };
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+    expect(
+      findOps(collectFlushedOps(), OP.SET_SCOPE_ID, 3).some(op => op[1] === 1),
+    ).toBe(true);
+
+    show.value = false;
+    await nextTick();
+    const clearOps = findOps(collectFlushedOps(), OP.SET_SCOPE_ID, 3);
+    expect(clearOps).toContainEqual([OP.SET_SCOPE_ID, 1, 0]);
+
+    app.unmount();
+  });
+
+  it('does not re-emit SET_STYLE for an identical rebuilt style object', async () => {
+    const label = ref('one');
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('page', { style: { backgroundColor: 'white' } }, [
+            h('text', null, label.value),
+          ]);
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+    collectFlushedOps();
+
+    label.value = 'two';
+    await nextTick();
+
+    const styleOps = findOps(collectFlushedOps(), OP.SET_STYLE, 3)
+      .filter(op => op[1] === 1);
+    expect(styleOps).toHaveLength(0);
+
+    app.unmount();
+  });
+
+  it('forwards main-thread worklet props to the page root', async () => {
+    const lynxStub = (globalThis as Record<string, unknown>)['lynx'] as Record<
+      string,
+      unknown
+    >;
+    lynxStub['getCoreContext'] ??= () => ({
+      addEventListener() {},
+      removeEventListener() {},
+    });
+
+    const worklet = { _wkltId: 'wklt-page-tap' };
+    const mtRef = {
+      _wvid: 7,
+      toJSON: () => ({ _wvid: 7 }),
+    };
+    const App = defineComponent({
+      setup() {
+        return () =>
+          h('page', {
+            'main-thread-bindtap': worklet,
+            'main-thread-ref': mtRef,
+          }, [h('view')]);
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const workletOps = findOps(ops, OP.SET_WORKLET_EVENT, 5);
+    expect(
+      workletOps.some(op => op[1] === 1 && op[3] === 'tap'),
+    ).toBe(true);
+    expect(findOps(ops, OP.SET_MT_REF, 3)).toContainEqual([
+      OP.SET_MT_REF,
+      1,
+      { _wvid: 7 },
+    ]);
+
+    app.unmount();
+  });
+
+  it('registers an id on the page root for Teleport target resolution', async () => {
+    const App = defineComponent({
+      setup() {
+        return () => h('page', { id: 'root-target' }, [h('view')]);
+      },
+    });
+
+    const app = createApp(App);
+    app.mount();
+    await nextTick();
+
+    expect(findOps(collectFlushedOps(), OP.SET_ID, 3)).toContainEqual([
+      OP.SET_ID,
+      1,
+      'root-target',
+    ]);
+    expect(nodeOps.querySelector?.('#root-target')?.id).toBe(1);
+
     app.unmount();
   });
 });

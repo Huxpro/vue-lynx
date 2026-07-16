@@ -33,7 +33,14 @@ Use an explicit `<page>` when you need to bind a class, inline style, event, ID,
 
 Vue Lynx compiles this wrapper to a transparent built-in component. Its attributes and events are applied to the already-created native page, while its children mount directly beneath that root. It does **not** create a second `<page>` element. The same behavior is available from render functions through `h('page', props, children)` or the exported `Page` component.
 
-Only one `<page>` wrapper is allowed, and it must be the outermost element representing the screen. Do not nest it or render multiple wrappers. As with Lynx itself, the containing native view controls the page dimensions: `width`, `height`, `left`, and `top` cannot resize or reposition the page directly.
+Only one `<page>` wrapper is allowed, and it must be the outermost element representing the screen. Do not nest it or render multiple wrappers — nesting inside a native element is rejected at compile time, and rendering two wrappers at once reports a runtime error. As with Lynx itself, the containing native view controls the page dimensions: `width`, `height`, `left`, and `top` cannot resize or reposition the page directly.
+
+A few caveats follow from `<page>` compiling to a component rather than a native element:
+
+- **Directives** — `v-show` and custom directives on `<page>` are applied to the component's children, not the native root. Bind `:style` / `:class` directly instead.
+- **Template refs** — `ref` on `<page>` resolves to the exposed page root: `.id`, `.invoke()`, `.setNativeProps()`, and `.fields()` all work, but it is not a plain element reference.
+- **In templates**, use lowercase `<page>` (rewritten by the compiler). The capitalized `<Page>` form requires an explicit `import { Page } from 'vue-lynx'` in `<script setup>`.
+- **Ownership handoff** — when route components each render their own `<page>`, the incoming wrapper takes over the native root as soon as the outgoing one unmounts or is deactivated by `<KeepAlive>`. During a `<Transition>` without `mode="out-in"`, both wrappers briefly coexist; the incoming page's root attributes apply only after the leave finishes, so prefer `out-in` when the two pages style the root differently.
 
 :::warning Lynx engine compatibility
 Use Lynx Engine **3.8.1 or later** for applications that rely on an explicit `<page>` root. This is a conservative compatibility floor inferred from the [HackerNews engine bisect](/guide/hackernews#lynx-engine-compatibility): 3.8.1 is the oldest tested engine that rendered the complete application, while 3.6.0 and 3.7.0 loaded data but left the active route invisible. The fixed explicit-root bundle has been directly verified on a source-built Engine 4.1; the fix has not yet been rerun on every intermediate engine.
