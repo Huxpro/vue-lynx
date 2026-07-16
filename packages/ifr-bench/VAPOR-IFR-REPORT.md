@@ -3,6 +3,13 @@
 **Date:** 2026-07-16  
 **Implementation:** `pluginVueLynx({ vapor: true, enableIFR: true })`
 
+> **2026-07-16 review addendum.** A take-over review found that the first
+> frame silently crashed into fallback on every Lynx-for-Web run, so this
+> report's original "Browser FCP" section measured a broken IFR. See
+> [Review addendum](#review-addendum-2026-07-16) for the root cause, the fix,
+> and the corrected same-source browser matrix (~1,000 elements, IFR now
+> −14% FCP at 1× instead of the mixed result below).
+
 ## Executive result
 
 Route C is implemented with deterministic replay and an explicit Background-to-Main completion handshake. A real built Vapor SFC paints 10 nodes inside `renderPage()`, hydrates to the same 10-node tree, keeps scoped CSS and event signs aligned, and accepts reactive updates from the Background Thread without duplicate nodes or listeners.
@@ -75,6 +82,13 @@ That gap was profiled rather than hidden. After selector deferral, real Vapor an
 
 ## Browser FCP
 
+> **Superseded.** These runs predate the Lynx-for-Web DOM-constructor fix:
+> in every "IFR on" sample below, the Main-Thread first frame threw inside
+> the Vapor runtime and fell back to the Background render, so the deltas
+> measure the IFR bundle/evaluation tax with none of the early paint. The
+> corrected results are in the
+> [review addendum](#review-addendum-2026-07-16).
+
 Method: final emitted `.web.bundle` files in the existing dual-thread `lynx-view` web harness, Chrome for Testing 149 on macOS arm64, seven fresh contexts per entry. Every off/on sample rendered exactly 10 final nodes. Raw FCP, settled-time, plain-control, and node-count arrays are in [`browser-results-vapor.json`](./results/browser-results-vapor.json) and [`browser-results-vapor-x4.json`](./results/browser-results-vapor-x4.json).
 
 | CPU throttle | IFR off median | IFR on median | Delta |
@@ -146,3 +160,121 @@ pnpm --filter vue-lynx-ifr-bench run bench
 node web-harness/run-browser.mjs <bundlesDir> 7 1 vapor
 node web-harness/run-browser.mjs <bundlesDir> 7 4 vapor
 ```
+
+---
+
+## Review addendum (2026-07-16)
+
+A take-over review of this implementation ran the full suites, audited the
+protocol/build/test surfaces, and re-benchmarked in a real browser at the
+same scale as the historical VDOM work (a ~1,000-element generated SFC)
+instead of the 10-node example. Two of its findings invalidate sections
+above; the fixes are landed on this branch.
+
+### Critical: the first frame crashed on Lynx for Web
+
+On Lynx for Web the Background runtime runs in a Worker (no DOM globals),
+but the **Main-Thread Lepus chunk executes on the page's main thread, where
+real `Node`/`Element`/`Text`/`document` globals exist**. The Vapor DOM shim
+installs its globals with skip-if-present semantics, so in that realm every
+`instanceof Node/Element` classification inside `@vue/runtime-vapor`
+resolved against the host DOM, returned `false` for ShadowElements, sent
+`insert()` down the fragment path, and threw
+`TypeError: Cannot read properties of undefined (reading 'anchor')` inside
+`runIfrRender()`. The catch boundary then fell back to the Background
+render — silently. Every "IFR on" browser sample in the section above
+therefore paid the IFR bundle and evaluation tax and painted on the classic
+BG path; the reported "+4.31%/−5.87%" deltas measured noise plus that tax.
+The jsdom smoke test could not catch this because its Main-Thread realm has
+no DOM globals, exactly like native Lepus (where the feature works).
+
+**Fix:** the plugin now rewrites the free DOM-constructor identifiers to
+internal shim globals (`Node` → `globalThis.__VUE_LYNX_NODE__`, …) exactly
+as it already did for `document`/`window`, and the DOM shim installs those
+rewrite targets unconditionally in every realm (`VAPOR_DOM_CTOR_GLOBALS` in
+`vue-lynx/internal/ops`). The emitted-bundle spec now evaluates the
+Main-Thread section in a hostile realm with real jsdom DOM globals
+installed, reproducing the browser failure mode in CI.
+
+### Corrected browser FCP — same-source matrix at ~1,000 elements
+
+Method: one **generated SFC** (`sfc-probe/generate.mjs`) mirroring the
+bench "content" scene — a feed header plus 125 literal cards, each with one
+dynamic class and two dynamic text bindings against reactive state
+(1,004 elements) — built four ways from identical source so renderer mode
+and `enableIFR` are the only variables. `examples/vapor` (10 nodes) rides
+along for continuity with the superseded runs. Headless Chromium
+(playwright, Linux container), the same dual-thread `lynx-view` harness,
+seven fresh contexts per entry, medians. Raw arrays:
+[`browser-results-sfc.json`](./results/browser-results-sfc.json),
+[`browser-results-sfc-x4.json`](./results/browser-results-sfc-x4.json);
+section sizes: [`sfc-probe-sizes.json`](./results/sfc-probe-sizes.json).
+
+| Entry (elements) | 1× off | 1× on | Δ | 4× off | 4× on | Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| content vapor (1,004) | 161.6 ms | 138.9 ms | **−14.0%** | 482.9 ms | 510.6 ms | **+5.7%** |
+| content vdom (1,004) | 146.7 ms | 118.8 ms | **−19.0%** | 473.9 ms | 443.0 ms | **−6.5%** |
+| ten vapor (10) | 104.1 ms | 76.5 ms | **−26.5%** | 283.0 ms | 243.4 ms | −14.0% |
+
+Reading (seven-run medians on shared cloud CPU are directional; a second
+independent post-fix run agreed at 1× and put the two ×4 vapor rows at
++2.8% and −3.5%):
+
+- With the crash fixed, Vapor IFR's structural win is real and lands in the
+  historical VDOM range at 1× (−14% at 1,000 elements, −26% at 10). The
+  original "route c has no consistent FCP win" conclusion is superseded.
+- The ×4 large-content row is the remaining honest weakness: the vapor IFR
+  MT section is the largest of the matrix (174 KB raw vs 136 KB for vdom
+  IFR), and on a slow CPU its parse/eval plus the real Vapor runtime work
+  still outweigh the saved worker startup and IPC. VDOM replay IFR keeps a
+  −6.5% win on the same source at ×4. The original report's residual
+  diagnosis — the MT path is not yet compiler-direct — stands.
+- Same-source bundle increments (gzip): enabling IFR costs the vapor entry
+  **+11.3 KB MT / +16.4 KB total**, and the vdom entry
+  **+14.0 KB MT / +14.9 KB total**. Route c's *incremental* MT cost is
+  smaller than VDOM replay's (the pure entry carries no vdom renderer), but
+  the vapor entry remains absolutely larger.
+
+### Other defects found and fixed in review
+
+1. **Fallback boundaries could throw into Lepus.** An in-place hydration
+   patch or the post-teardown history replay ran outside any catch; a
+   native rejection there escaped `vuePatchUpdate`. Both now fall back
+   (patch failure → full history rebuild) or contain the error, with tests.
+2. **Dev builds crashed timer-less Lepus realms.** A development IFR bundle
+   reaches `setTimeout` during module evaluation (runtime-core's
+   devtools-hook replay sees the shim `window`), outside the render
+   fallback boundary. `enableIFR()` now installs a no-op timer stub when
+   the realm has none.
+3. **The emitted-bundle spec built dev bundles under vitest.** Vitest
+   exports `NODE_ENV=test`, which Rsbuild inherited; the spec now forces
+   `NODE_ENV=production` and treats a dev-mode bundle in `dist/` as stale.
+4. **`worklet-utils` Babel grammar broke valid TS.** `typescript`+`jsx`
+   parsed together reject angle-bracket type assertions (`<T>expr`) in
+   plain `.ts`, turning previously-building files into build errors (and
+   silently dropping their MT import edges). Parsing now cascades: plain TS
+   grammar first, JSX grammar on failure.
+5. **The correctness oracle leaked scheduler state across variants.** A
+   straggling post-flush callback from one variant could fire inside the
+   next variant's run. The oracle now drains the shared scheduler while
+   each variant's guards are still installed.
+6. **`INIT_MT_REF` replay semantics were changed without a lock.** BG-
+   authoritative replay overwrites a ref value an MT worklet wrote during
+   the pre-hydration window (the reference branch kept first-write-wins).
+   The designed trade — one unambiguous owner over interaction state in
+   that narrow window — is now pinned by a test.
+
+### Caveats that remain (unchanged recommendation)
+
+- The JS-cost table above compares variants fairly, but its warm medians
+  reuse the parsed template prototypes and `buildStructure` caches across
+  iterations. A production MT realm pays that work once in its single first
+  frame: with per-run fresh template closures the real variant measures
+  roughly 2.6× its cached warm median. Treat the 0.728/2.080 ms rows as
+  relative, not absolute fresh-realm cost.
+- The completion handshake (`vueIfrHydrationComplete`) has end-to-end but
+  no unit coverage; the Node PAPI test env cannot express it.
+- `enableIFR` stays experimental and off by default. Measure the target
+  screen: 1× wins are consistent; slow-CPU large screens can still regress
+  until the MT first-frame target is compiler-direct.
+
