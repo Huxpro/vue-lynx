@@ -273,7 +273,7 @@ export const ZH_NOTES = [
   // 5 一排候选人
   `<p><strong>一排看过去。</strong>行业里其实并不缺跨端解决方案:Flutter、React Native、NativeScript、还有 Web 本身 —— 它周围还绕着一圈自己的壳家族(Electron、Tauri、Ionic)。队尾那个新面孔,是 Lynx。</p>`,
   // 6 Vue 入场找爹
-  `<p><strong>Vue 入场 —— 一脸问号。</strong>那一排里每一个,都有自己的"亲儿子"框架故事。而 Vue —— 全球最大的前端社区之一 —— 一直没有一个统治级的跨端方案。Weex 试过,NativeScript-Vue 试过,都没立住。</p><p>那就相亲吧,一个一个来。</p>`,
+  `<p><strong>Vue 入场 —— 站上顶端,俯视一排候选人。</strong>下面每一个,都有自己的"亲儿子"框架故事。而 Vue —— 全球最大的前端社区之一 —— 一直没有一个统治级的跨端方案。Weex 试过,NativeScript-Vue 试过,都没立住。</p><p>那就相亲吧,一个一个来。</p>`,
   // 7 Flutter
   `<p><strong>候选一:Flutter。</strong>全靠自渲染 —— Skia/Impeller —— 平台覆盖确实漂亮:iOS、Android、桌面、甚至 Web。但上层唯一的门是 Dart。语言不对、生态不对:Vue 根本插不进去。这根线,压根连不上。</p>`,
   // 8 React Native
@@ -283,7 +283,7 @@ export const ZH_NOTES = [
   // 10 Web · 今天的选择
   `<p><strong>于是社区留在了 Web</strong> —— 这就是今天的现实选择。它连接得毫无障碍:浏览器无处不在,壳家族(Electron、Tauri、Ionic —— 此刻在 Chrome 周围点亮)把缝隙都糊上了。但有一个问题任何壳都修不了:它还是<em>不够 Native</em> —— 这就是我们 demo 章节里见过的那个天花板。</p>`,
   // 11 Lynx 主动连上
-  `<p><strong>然后,Lynx 自己走出了那一排</strong> —— 朝 Vue 走过来。前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,连得上,而且是实线。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
+  `<p><strong>然后,Lynx 走出队列 —— 站到正中央,Vue 的正下方;其余候选人整体让到左侧。</strong>前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,短、垂直、实心。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
   // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
   // 13 Divider II
