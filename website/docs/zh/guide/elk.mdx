@@ -14,17 +14,38 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 
 ### 原生 viewpager 变体 <Badge text="需要较新的 Lynx 引擎" type="warning" />
 
-`elk-viewpager` 分叉用**原生 viewpager 元件**承载 Explore 与通知页的标签页
-（[`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)）：
-面板可以横向滑动翻页、带原生吸附动画，滑走再滑回时内容与滚动位置都保留，
-标签栏与翻页器双向同步（翻页器的 `change` 事件 ↔ `selectTab` UI 方法）。
-体验更接近原生客户端，代价是对宿主要求更高：Web 端使用 `<x-viewpager-ng>`
-现在即可运行；原生端则需要注册了新版 `<viewpager>` 元件的 Lynx 引擎
-（lynx-family/lynx develop 2026-04 之后——比任何已发布的 LynxExplorer 都新，
-已发布版本两个名字都没有）。在旧宿主上标签区域会渲染为空白，
-届时请使用上方的原始示例。
+`elk-viewpager` 分叉用原生
+[`<viewpager>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+元件承载 Explore 与通知页的标签页，取代默认示例里按条件渲染的面板。在
+[`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)
+中，每个面板都是 `<viewpager>` 下的一个 `<viewpager-item>`：面板可以横向
+滑动翻页、带原生吸附动画，滑走再滑回时内容与滚动位置都保留，标签栏与翻页器
+双向同步——滑动会触发翻页器的 `change` 事件（→ 切换当前标签），点按标签则
+调用翻页器的 `selectTab` UI 方法（→ 动画翻到该页）。体验更接近原生客户端。
 
-<Go example="elk-viewpager" defaultFile="src/components/TabPager.vue" />
+`viewpager` 以 Lynx
+[XElement](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+形式提供，在不同平台上注册为不同的标签名，因此 `TabPager.vue` 会在运行时
+根据 `SystemInfo.platform` 选择标签名（下方高亮处）：Lynx for Web 使用旧版
+`<x-viewpager-ng>`，而原生 OSS 引擎使用抽取出来的 `<viewpager>` /
+`<viewpager-item>`。
+
+<Go
+  example="elk-viewpager"
+  defaultFile="src/components/TabPager.vue"
+  highlight={{
+    'src/components/TabPager.vue': '{12-18,40-56,72-87}',
+  }}
+/>
+
+:::warning 引擎版本依赖
+抽取出来的原生 `<viewpager>` 元件是在 lynx-family/lynx `c1d8d7920`
+（2026-04）才进入 OSS 引擎的，**比任何已发布的 LynxExplorer 都新**：
+3.8.1 及更早版本既没有 `<viewpager>` 也没有 `<x-viewpager-ng>`，因此标签
+区域在这些宿主上会渲染为空白（并伴随 `LynxCreateUIException`）。请在从
+lynx `develop` 构建的宿主上运行该变体；在当前已发布的 Explorer 上，请使用
+上方的默认 Elk 示例——它的标签按条件渲染，无需 pager 元件。
+:::
 
 ## 为什么 Elk 是一块试金石
 
