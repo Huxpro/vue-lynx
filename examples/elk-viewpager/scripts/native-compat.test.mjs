@@ -469,17 +469,22 @@ test('status actions and bottom navigation acknowledge native touch input', asyn
 });
 
 test('tabs animate persistent indicators and Explore explains trending content', async () => {
-  const [explore, account, tabPager] = await Promise.all([
+  const [explore, account, tabPager, stickyTabView] = await Promise.all([
     readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/TabPager.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/StickyTabView.vue', import.meta.url), 'utf8'),
   ]);
 
   assert.match(explore, /explore-intro/);
   assert.doesNotMatch(tabPager, /v-if="modelValue === t\.key" class="tab-pager-underline"/);
   assert.match(tabPager, /tab-pager-underline-active/);
-  assert.doesNotMatch(account, /v-if="tab === t\.key" class="account-tab-underline"/);
-  assert.match(account, /account-tab-underline-active/);
+  // The profile tabs live in the sticky collapsing-header scaffold now; its
+  // underline is a persistent element toggled by class (animated), not
+  // mounted/unmounted per tab with v-if.
+  assert.match(account, /<StickyTabView/);
+  assert.doesNotMatch(stickyTabView, /v-if="modelValue === t\.key" class="stv-tab-underline"/);
+  assert.match(stickyTabView, /stv-tab-underline-active/);
 });
 
 test('app-bar tabs page horizontally through the native viewpager', async () => {
@@ -491,12 +496,38 @@ test('app-bar tabs page horizontally through the native viewpager', async () => 
 
   // Swiping between panes is native: the pager element owns the gesture,
   // and the tab bar syncs both ways (change event + selectTab method).
-  assert.match(tabPager, /<x-viewpager-ng/);
-  assert.match(tabPager, /<x-viewpager-item-ng/);
+  assert.match(tabPager, /'x-viewpager-ng'/);
+  assert.match(tabPager, /'x-viewpager-item-ng'/);
   assert.match(tabPager, /@change="onPagerChange"/);
   assert.match(tabPager, /method: 'selectTab'/);
   assert.match(explore, /<TabPager/);
   assert.match(notifications, /<TabPager/);
+});
+
+test('profile pins its tabs with a native collapsing header (scroll-coordinator)', async () => {
+  const [sticky, account] = await Promise.all([
+    readFile(new URL('../src/components/StickyTabView.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
+  ]);
+
+  // Per-platform coordinator element: legacy foldview names on Lynx for Web,
+  // the extracted scroll-coordinator on native OSS engines.
+  assert.match(sticky, /'x-foldview-ng'/);
+  assert.match(sticky, /'scroll-coordinator'/);
+  // header (collapses) + toolbar (sticky tab bar) + slot (the viewpager panes).
+  assert.match(sticky, /'x-foldview-header-ng'/);
+  assert.match(sticky, /'scroll-coordinator-header'/);
+  assert.match(sticky, /'x-foldview-toolbar-ng'/);
+  assert.match(sticky, /'scroll-coordinator-toolbar'/);
+  assert.match(sticky, /'x-foldview-slot-ng'/);
+  assert.match(sticky, /'scroll-coordinator-slot'/);
+  // The pinned tab bar still drives the viewpager, synced both ways.
+  assert.match(sticky, /'x-viewpager-ng'/);
+  assert.match(sticky, /method: 'selectTab'/);
+  // The profile supplies a collapsing #header and one pane per tab.
+  assert.match(account, /<StickyTabView/);
+  assert.match(account, /<template #header>/);
+  assert.match(account, /<template #posts>/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {
