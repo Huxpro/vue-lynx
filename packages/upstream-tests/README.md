@@ -4,22 +4,22 @@
 
 This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.6.0-beta.17, pinned at `core/`.
 
-**Totals (Vue 3.6.0-beta.17): upstream 917 + 60 pass / 148 skip, local 48 pass, 0 fail**
+**Collected totals (Vue 3.6.0-beta.17): 1,529 pass / 268 skip / 7 todo, 0 fail; 16 runtime-vapor files explicitly excluded**
 
 | Config                                         | Suites | Pass    | Skip   | Fail  |
 | ---------------------------------------------- | ------ | ------- | ------ | ----- |
-| `pnpm test` (runtime-core, reactivity, shared) | 44     | 824     | 89     | 0     |
-| `pnpm test:dom` (runtime-dom)                  | 7      | 58      | 42     | 0     |
-| **Total**                                      | **51** | **882** | **131** | **0** |
+| `pnpm test` (runtime-core, reactivity, shared) | 45     | 917     | 102    | 0     |
+| `pnpm test:dom` (runtime-dom)                  | 9      | 67      | 46     | 0     |
+| `pnpm test:vapor` (runtime-vapor)              | 30     | 545     | 120    | 0     |
+| **Collected total**                            | **84** | **1,529** | **268** | **0** |
 
 ### By package
 
 | Package      | Suites | Pass | Skip |
 | ------------ | ------ | ---- | ---- |
-| runtime-core | 24     | 433  | 71   |
-| reactivity   | 15     | 345  | 18   |
-| shared       | 5      | 46   | 0    |
-| runtime-dom  | 7      | 58   | 42   |
+| runtime-core + reactivity + shared | 45 | 917 | 102 |
+| runtime-dom  | 9      | 67   | 46   |
+| runtime-vapor | 30    | 545  | 120  |
 
 > _Note: `computed.spec.ts` (48 tests) excluded due to module initialization conflict; 4 gc tests auto-skipped by `describe.skipIf(!global.gc)`. reactivity and shared test the upstream npm packages themselves (version compatibility smoke tests), not our pipeline._
 
@@ -27,15 +27,16 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 
 ## Testing Approach
 
-We run Vue's upstream tests at two layers, each with a different adapter that exercises a different slice of our pipeline. A third layer of hand-written tests covers Lynx-specific functionality that the upstream suite cannot reach.
+We run Vue's upstream tests at three layers, each with an adapter that exercises a different slice of our pipeline. A fourth layer of hand-written tests covers Lynx-specific functionality that the upstream suite cannot reach.
 
 The tests that actually validate our pipeline are runtime-core + runtime-dom:
 
 | Layer            | What it validates                             | Pass    | Skip   |
 | ---------------- | --------------------------------------------- | ------- | ------ |
-| **runtime-core** | ShadowElement linked-list + Vue VDOM diff      | 407     | 59     |
-| **runtime-dom**  | patchProp / render -> ops -> applyOps -> PAPI -> jsdom  | 58      | 42     |
-| **Total**        |                                               | **465** | **101** |
+| **runtime-core/reactivity/shared command** | ShadowElement linked-list + Vue VDOM diff and package smoke tests | 917 | 102 |
+| **runtime-dom**  | patchProp / render -> ops -> applyOps -> PAPI -> jsdom  | 67      | 46     |
+| **runtime-vapor** | upstream Vapor helpers/components on ShadowElement | 545 | 120 |
+| **Collected total** |                                            | **1,529** | **268** |
 
 ### Layer 1: Conformance tests (`pnpm test`)
 
@@ -86,7 +87,17 @@ These shims run after the full pipeline so ops serialization and cross-thread tr
 
 Covers: runtime-dom (7 suites: patchStyle, patchClass, patchEvents, patchProps, patchAttrs, vOn, vModel).
 
-### Layer 3: E2E pipeline tests (`testing-library/`)
+### Layer 3: Vapor conformance tests (`pnpm test:vapor`)
+
+**Config**: `vitest.vapor.config.ts` | **Adapter**: `src/lynx-runtime-vapor-bridge.ts` + `src/vapor-upstream-setup.ts`
+
+Runs 30 upstream `runtime-vapor` entries against the real `vue-lynx/vapor` surface and `ShadowElement` tree. A test-only serializer exposes DOM-shaped assertion fields such as `innerHTML`, `textContent`, selectors, attributes, and events without replacing Lynx's production helper overrides. Private helpers used by upstream source-level tests are re-exported from the installed runtime-vapor ESM bundle so every test shares the same runtime singleton. Note: `exposeRuntimeVaporTestInternals` in `vitest.vapor.config.ts` performs exact-text surgery on that installed bundle, so bumping the pinned Vue version requires updating the plugin alongside it (it fails loudly at config load if the expected text is missing).
+
+`skiplist-vapor.json` is a closed inventory: every upstream spec is either included or explicitly excluded, every skipped test/suite/file has a non-empty reason, and stale or unknown entries fail config loading. The current run has 545 pass, 120 skipped, and 5 upstream todos (18 templateRef tests un-skipped after the ShadowElement `__v_skip` reactivity fix). Its 16 file-level exclusions are reported separately from the collected Vitest totals; they are primarily hydration/SSR, custom elements, SVG/MathML, browser transitions, browser event/form semantics, and Lynx's intentional helper differences (`on`, `delegate`, `applyTextModel`, `setHtml`, and CSS vars).
+
+The runtime-dom command currently reports 67 passes, including 7 local MT bridge checks under `src/mt`; the suite table intentionally reports command-level totals rather than labeling all 67 as cloned upstream cases.
+
+### Layer 4: E2E pipeline tests (`testing-library/`)
 
 **Config**: `testing-library/vitest.config.ts` | **No adapter** -- uses vue-lynx directly
 
@@ -106,13 +117,13 @@ Since we run upstream test files from outside the `vuejs/core` monorepo, three m
 
 **Module instance unification**: Explicit Vite aliases ensure that bare specifiers (`@vue/runtime-core`) resolve to the same ESM bundle files that the import-rewrite plugins target. Without this, Vite creates separate module instances with independent module-scoped variables (`currentRenderingInstance`, scheduler queues, etc.), breaking ref owner tracking, flush timing, and injection context.
 
-**Skiplist**: A Vite transform plugin reads `skiplist.json` / `skiplist-dom.json` and converts `it('name'` to `it.skip('name'` for listed test names. This avoids modifying upstream test files.
+**Skiplist**: Vite transform plugins read `skiplist.json`, `skiplist-dom.json`, and `skiplist-vapor.json`, converting listed test declarations to skips without modifying upstream files. The Vapor config additionally validates a closed spec inventory and a 1:1 reason map for test- and file-level exclusions.
 
 ---
 
-## Skip Analysis
+## Legacy runtime-core/runtime-dom Skip Analysis
 
-131 skips break down into four categories: structurally impossible (cannot pass outside the Vue monorepo), substantive (related to platform differences or our pipeline), Teleport-specific (tests requiring DOM renderer or template compiler), and vModel-specific (Lynx element/event model differences).
+The detailed counts below are retained from the original runtime-core/runtime-dom migration as a rationale taxonomy; they are not the current command totals. The current collected counts are in the suite table above, and the machine-checked JSON skiplists are the source of truth.
 
 ### Structurally impossible (77 skips)
 
