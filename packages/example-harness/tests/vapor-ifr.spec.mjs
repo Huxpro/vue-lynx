@@ -106,7 +106,13 @@ function isIfrBundle(bundle) {
   return (
     typeof bundle?.lepusCode?.root === "string" &&
     typeof bundle?.manifest?.["/app-service.js"] === "string" &&
-    bundle.lepusCode.root.includes("__VUE_LYNX_IFR_MT__") &&
+    // `__VUE_LYNX_IFR_ENABLED__` is assigned only inside enableIFR(), which
+    // only the IFR MT prelude (entry-ifr.js) pulls into the bundle. The
+    // `__VUE_LYNX_IFR_MT__` *check* ships in every vapor bundle via
+    // runtime/src/ifr-env.ts, so it cannot distinguish an IFR build from a
+    // plain one — a plain dist/ (the committed default: enableIFR is
+    // env-gated off) must be rebuilt below, not accepted as the fixture.
+    bundle.lepusCode.root.includes("__VUE_LYNX_IFR_ENABLED__") &&
     // A dev-mode bundle (e.g. left in dist/ by `rspeedy dev`) keeps
     // `process.env.NODE_ENV` unreplaced and dev-only code paths alive; this
     // spec asserts the production shape, so treat such a bundle as stale and
