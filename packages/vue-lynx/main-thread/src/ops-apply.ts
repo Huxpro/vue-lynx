@@ -65,7 +65,15 @@ function createTypedElement(
   }
 }
 
-export function applyOps(ops: unknown[]): void {
+/**
+ * Apply a flat ops batch through PAPI.
+ *
+ * @param flush - Present the result with `__FlushElementTree` afterwards.
+ *   The IFR render passes `false` for batches applied synchronously inside
+ *   `renderPage`, which presents the whole frame with a single flush at the
+ *   end instead of one per batch.
+ */
+export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
 
@@ -301,7 +309,7 @@ export function applyOps(ops: unknown[]): void {
   flushListUpdates();
 
   // Flush all pending PAPI changes to the native layer in one shot.
-  __FlushElementTree();
+  if (flush) __FlushElementTree();
 }
 
 /** Expose elements map so entry-main.ts can seed the page-root entry. */

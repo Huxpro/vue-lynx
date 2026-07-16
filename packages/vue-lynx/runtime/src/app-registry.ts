@@ -13,6 +13,8 @@
  * page root exists.  If renderPage already fired we mount immediately.
  */
 
+import { IFR_MOUNT_APPS_GLOBAL } from 'vue-lynx/internal/ops'
+
 type MountFn = () => void
 
 const pendingMounts: MountFn[] = []
@@ -26,7 +28,7 @@ export function registerMount(fn: MountFn): void {
     // Expose the trigger for the main-thread bootstrap (which lives in a
     // separate package and communicates via globalThis hooks, matching the
     // renderPage / vuePatchUpdate convention).
-    ;(globalThis as Record<string, unknown>)['__vueLynxIfrMountApps'] =
+    ;(globalThis as Record<string, unknown>)[IFR_MOUNT_APPS_GLOBAL] =
       triggerRenderPage
   }
 }
@@ -43,5 +45,5 @@ export function triggerRenderPage(): void {
 export function resetAppRegistry(): void {
   pendingMounts.length = 0
   renderPageCalled = false
-  delete (globalThis as Record<string, unknown>)['__vueLynxIfrMountApps']
+  delete (globalThis as Record<string, unknown>)[IFR_MOUNT_APPS_GLOBAL]
 }

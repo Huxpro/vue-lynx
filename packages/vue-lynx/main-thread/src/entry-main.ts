@@ -13,7 +13,11 @@
  *   - globalThis.vuePatchUpdate – receives ops from Background Thread
  */
 
-import { PAGE_ROOT_ID, TPL_REGISTER_GLOBAL } from 'vue-lynx/internal/ops';
+import {
+  PAGE_ROOT_ID,
+  TPL_EXECUTOR_REGISTRY_GLOBAL,
+  TPL_REGISTER_GLOBAL,
+} from 'vue-lynx/internal/ops';
 
 import { elements, setPageUniqueId } from './element-registry.js';
 import { registerTemplate } from './element-templates.js';
@@ -47,7 +51,7 @@ g['runOnBackground'] = runOnBackground;
 //    registration statements, which resolve __vueLynxRegisterElementTemplate
 //    at evaluation time — entry-main runs first, so they land in the
 //    create-only adapter
-g['__vueLynxRegisterTemplate'] = registerTemplate;
+g[TPL_EXECUTOR_REGISTRY_GLOBAL] = registerTemplate;
 g[TPL_REGISTER_GLOBAL] = (
   id: string,
   _holes: unknown,

@@ -35,7 +35,14 @@
  * BG side stamps `_execId` (required for `runOnBackground`).
  */
 
-import { OP, OP_ARITY, PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
+import {
+  IFR_APPLY_OPS_GLOBAL,
+  IFR_MOUNT_APPS_GLOBAL,
+  IFR_MT_FLAG_GLOBAL,
+  OP,
+  OP_ARITY,
+  PAGE_ROOT_ID,
+} from 'vue-lynx/internal/ops';
 
 import { elements } from './element-registry.js';
 import { applyOps } from './ops-apply.js';
@@ -117,12 +124,17 @@ function sameValue(a: unknown, b: unknown): boolean {
  */
 export function enableIFR(): void {
   const g = globalThis as Record<string, unknown>;
-  g['__VUE_LYNX_IFR_MT__'] = true;
-  g['__vueLynxIfrApplyOps'] = recordAndApply;
+  g[IFR_MT_FLAG_GLOBAL] = true;
+  g[IFR_APPLY_OPS_GLOBAL] = recordAndApply;
   phase = 'enabled';
 }
 
 let warnedPostHydrationOps = false;
+
+// True while runIfrRender is synchronously mounting inside renderPage —
+// batches applied then skip the per-batch engine flush (renderPage presents
+// the frame with one __FlushElementTree at the end).
+let inSyncRender = false;
 
 function recordAndApply(ops: unknown[]): void {
   // After hydration the background thread owns the tree (matching
@@ -144,7 +156,7 @@ function recordAndApply(ops: unknown[]): void {
     return;
   }
   recordedBatches.push(ops);
-  applyOps(ops);
+  applyOps(ops, !inSyncRender);
 }
 
 /**
@@ -162,7 +174,7 @@ export function runIfrRender(): void {
   phase = 'enabled';
 
   const trigger = (globalThis as Record<string, unknown>)[
-    '__vueLynxIfrMountApps'
+    IFR_MOUNT_APPS_GLOBAL
   ] as (() => void) | undefined;
   if (!trigger) return;
 
@@ -170,6 +182,7 @@ export function runIfrRender(): void {
     // Mounting is fully synchronous: Vue renders, the runtime's flush hook
     // hands each ops batch to recordAndApply, and the elements are created
     // through PAPI before this call returns.
+    inSyncRender = true;
     trigger();
     phase = 'rendered';
   } catch (err) {
@@ -182,6 +195,8 @@ export function runIfrRender(): void {
     );
     teardownIfrTree();
     phase = 'hydrated';
+  } finally {
+    inSyncRender = false;
   }
 }
 
@@ -370,8 +385,8 @@ export function resetIfrForTesting(): void {
   batchCursor = 0;
   warnedPostHydrationOps = false;
   const g = globalThis as Record<string, unknown>;
-  delete g['__VUE_LYNX_IFR_MT__'];
-  delete g['__vueLynxIfrApplyOps'];
+  delete g[IFR_MT_FLAG_GLOBAL];
+  delete g[IFR_APPLY_OPS_GLOBAL];
 }
 
 /** Current hydration phase — for testing/diagnostics only. */

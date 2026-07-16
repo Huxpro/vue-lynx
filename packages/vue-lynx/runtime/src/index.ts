@@ -203,20 +203,19 @@ export function createApp(
     },
 
     mount(): void {
+      const doMount = () => {
+        const root = createPageRoot();
+        internalApp.provide(pageRootContextKey, { root, owner: null });
+        internalApp.mount(root);
+      };
       // IFR main-thread bundle: user code evaluates *before* Lynx calls
       // renderPage, so the actual mount is deferred until the page root
       // exists.  On the background thread (flag absent) mount immediately.
       if (isIfrMainThread()) {
-        registerMount(() => {
-          const root = createPageRoot();
-          internalApp.provide(pageRootContextKey, { root, owner: null });
-          internalApp.mount(root);
-        });
-        return;
+        registerMount(doMount);
+      } else {
+        doMount();
       }
-      const root = createPageRoot();
-      internalApp.provide(pageRootContextKey, { root, owner: null });
-      internalApp.mount(root);
     },
 
     unmount(): void {
@@ -1384,6 +1383,19 @@ export { Page, Transition, TransitionGroup };
  * @hidden
  */
 export { registerElementTemplate } from './element-template.js';
+
+/**
+ * True while executing inside the IFR main-thread first-screen render.
+ *
+ * Apps whose first screen cannot render on the main thread (e.g. fully
+ * network-driven) can gate their `app.mount()` on `!isIfrMainThread()` to
+ * opt that screen out of IFR while keeping module evaluation — and with it
+ * worklet/template registration — intact. Always `false` on the background
+ * thread and in non-IFR builds.
+ *
+ * @public
+ */
+export { isIfrMainThread } from './ifr-env.js';
 
 /**
  * Gate for LEPUS-transformed worklet registrations.

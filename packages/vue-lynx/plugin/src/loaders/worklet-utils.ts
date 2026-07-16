@@ -280,18 +280,36 @@ export async function extractLocalImports(
  * TypeScript compilation still applies, so the shared module's code
  * is available as regular JS on the MT layer.
  */
+/** Quick check for the `'main thread'` worklet directive. */
+export function hasMainThreadDirective(source: string): boolean {
+  return source.includes('\'main thread\'')
+    || source.includes('"main thread"');
+}
+
+/**
+ * One grammar for `import … from '…' with { … runtime: 'shared' … }`.
+ * SWC may reformat the attribute block across multiple lines, hence the
+ * [\s\S]*? tolerance. Capture groups: 1 = the plain import statement
+ * (through the closing quote), 2 = specifiers, 3 = quote, 4 = module path.
+ * Both consumers below derive from this single source so they cannot drift.
+ */
+const SHARED_IMPORT_RE_SOURCE =
+  /(import\s+(.+?)\s+from\s+(['"])([^'"]+)\3)\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/
+    .source;
+
 export function extractSharedImports(source: string): string {
-  // Match import statements containing `with { runtime: 'shared' }`.
-  // SWC may reformat across multiple lines, so we use [\s\S]*? for the
-  // attribute block.
-  const re = /import\s+(.+?)\s+from\s+(['"])([^'"]+)\2\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g;
+  // Cheap prefilter: virtually no module carries the attribute, and the
+  // comment-strip + backtracking regex below are full-source passes run on
+  // every MT-layer module.
+  if (!source.includes('runtime:')) return '';
+  const re = new RegExp(SHARED_IMPORT_RE_SOURCE, 'g');
   const imports: string[] = [];
   let match;
   source = stripComments(source);
   while ((match = re.exec(source)) !== null) {
-    const specifiers = match[1]!;
-    const quote = match[2]!;
-    const modulePath = match[3]!;
+    const specifiers = match[2]!;
+    const quote = match[3]!;
+    const modulePath = match[4]!;
     // Use `!!` with explicit `builtin:swc-loader` to skip all configured
     // loaders (especially worklet-loader-mt) while keeping TS compilation.
     imports.push(`import ${specifiers} from ${quote}!!builtin:swc-loader!${modulePath}${quote};`);
@@ -347,10 +365,7 @@ export function stripSharedImportAttributes(code: string): string {
   // Cheap prefilter: virtually no module carries the attribute, and the
   // backtracking regex below is run on every MT-layer module in IFR builds.
   if (!code.includes('runtime:')) return code;
-  return code.replace(
-    /(import\s+.+?\s+from\s+(['"])[^'"]+\2)\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g,
-    '$1;',
-  );
+  return code.replace(new RegExp(SHARED_IMPORT_RE_SOURCE, 'g'), '$1;');
 }
 
 /**

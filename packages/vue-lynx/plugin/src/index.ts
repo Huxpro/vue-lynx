@@ -27,9 +27,11 @@ import { fileURLToPath } from 'node:url';
 import type { RsbuildPlugin } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 
-import { elementTemplateTransform } from './compiler/element-template-transform.js';
 import { applyCSS } from './css.js';
-import { vueLynxCompilerOptions } from './compiler-options.js';
+import {
+  resolveElementTemplatesFlag,
+  resolveVueLynxCompilerOptions,
+} from './compiler-options.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 
@@ -216,7 +218,7 @@ export function pluginVueLynx(
     enableIFR = false,
     includeWorkletPackages = [],
   } = options;
-  const enableElementTemplates = options.enableElementTemplates ?? enableIFR;
+  const enableElementTemplates = resolveElementTemplatesFlag(options);
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
@@ -225,15 +227,9 @@ export function pluginVueLynx(
         experimentalInlineMatchResource: true,
         // Element templates: lower eligible static-structure subtrees into
         // main-thread element templates (single INSTANTIATE op + holes).
-        compilerOptions: enableElementTemplates
-          ? {
-            ...vueLynxCompilerOptions,
-            nodeTransforms: [
-              ...vueLynxCompilerOptions.nodeTransforms,
-              elementTemplateTransform,
-            ],
-          }
-          : vueLynxCompilerOptions,
+        compilerOptions: resolveVueLynxCompilerOptions(
+          enableElementTemplates,
+        ),
       },
     }),
 

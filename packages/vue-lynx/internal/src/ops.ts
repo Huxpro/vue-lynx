@@ -96,6 +96,25 @@ export const TPL_HOLE_PREFIX = '__h';
  */
 export const TPL_REGISTER_GLOBAL = '__vueLynxRegisterElementTemplate';
 
+// ---------------------------------------------------------------------------
+// Cross-thread global handshakes (IFR)
+//
+// The runtime and main-thread packages cannot import each other (they are
+// bundled for different threads), so IFR wires them through globals. Every
+// read site is defensively guarded, which means a one-sided rename would not
+// throw — it would silently disable IFR. Single-sourcing the names here makes
+// that drift impossible.
+// ---------------------------------------------------------------------------
+
+/** Set on the IFR main thread so runtime code can detect the environment. */
+export const IFR_MT_FLAG_GLOBAL = '__VUE_LYNX_IFR_MT__';
+/** MT-side hook the runtime flush hands ops batches to during the IFR render. */
+export const IFR_APPLY_OPS_GLOBAL = '__vueLynxIfrApplyOps';
+/** Runtime-side hook renderPage triggers to run deferred IFR mounts. */
+export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
+/** MT executor registry for element-template create() functions. */
+export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
+
 /**
  * Convert a Vue scope ID (data-v-xxxxx) to a Lynx cssId (numeric).
  * Vue uses 8-char hex hash strings.  Lynx engine uses int32 for cssId,

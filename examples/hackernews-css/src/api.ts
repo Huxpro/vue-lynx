@@ -1,10 +1,7 @@
-export function hasFetch(): boolean {
-  return typeof globalThis.fetch === 'function' || typeof fetch === 'function';
-}
-
+// Resolved lazily at request time: the IFR main-thread context has no
+// fetch, and a module-scope reference would crash bundle evaluation there.
 function getFetch(): typeof fetch {
-  const fetchImpl = globalThis.fetch as typeof fetch | undefined;
-  if (typeof fetchImpl === 'function') return fetchImpl;
+  if (typeof globalThis.fetch === 'function') return globalThis.fetch;
   if (typeof fetch === 'function') return fetch;
 
   throw new Error('fetch is not available in this runtime');

@@ -36,6 +36,7 @@ import {
   extractRegistrations,
   extractSharedImports,
   extractTemplateRegistrations,
+  hasMainThreadDirective,
   stripSharedImportAttributes,
   stripStyleImports,
 } from './worklet-utils.js';
@@ -137,20 +138,15 @@ async function transformModule(
       keepTpl,
     );
 
-    if (
-      !source.includes('\'main thread\'') && !source.includes('"main thread"')
-    ) {
-      return [localImports, tplRegistrations, 'export default {};']
+    const scriptStub = () =>
+      [localImports, tplRegistrations, 'export default {};']
         .filter(Boolean)
         .join('\n');
-    }
+
+    if (!hasMainThreadDirective(source)) return scriptStub();
 
     const lepusCode = runLepusTransform(ctx, source);
-    if (lepusCode === null) {
-      return [localImports, tplRegistrations, 'export default {};']
-        .filter(Boolean)
-        .join('\n');
-    }
+    if (lepusCode === null) return scriptStub();
 
     const registrations = extractRegistrations(lepusCode);
     const sharedImports = extractSharedImports(lepusCode);
@@ -178,9 +174,7 @@ async function transformModule(
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
   // (but still extract shared imports from source since they don't need LEPUS)
-  if (
-    !source.includes('\'main thread\'') && !source.includes('"main thread"')
-  ) {
+  if (!hasMainThreadDirective(source)) {
     const sharedImports = extractSharedImports(source);
     return [sharedImports, localImports, tplRegistrations]
       .filter(Boolean)
@@ -273,9 +267,7 @@ function ifrTransform(
     return stripStyleImports(source);
   }
 
-  if (
-    !source.includes("'main thread'") && !source.includes('"main thread"')
-  ) {
+  if (!hasMainThreadDirective(source)) {
     return stripSharedImportAttributes(source);
   }
 

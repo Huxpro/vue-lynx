@@ -1,110 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
+import {
+  resolveElementTemplatesFlag,
+  resolveVueLynxCompilerOptions,
+  vueLynxCompilerOptions,
+} from '../../../vue-lynx/plugin/src/compiler-options.js';
 import { elementTemplateTransform } from '../../../vue-lynx/plugin/src/compiler/element-template-transform.js';
-import { pluginVueLynx } from '../../../vue-lynx/plugin/src/index.js';
 
-interface VueLoaderOptions {
-  compilerOptions?: {
-    nodeTransforms?: unknown[];
-  };
-}
-
-function elementTemplatesEnabled(
-  options: Parameters<typeof pluginVueLynx>[0],
-): boolean {
-  const [vuePlugin] = pluginVueLynx(options);
-  const bundlerCallbacks: Array<(chain: unknown, context: unknown) => void> = [];
-
-  const setup = vuePlugin.setup as (api: unknown) => void;
-  setup({
-    context: { callerName: 'rstest' },
-    modifyEnvironmentConfig() {},
-    modifyBundlerChain(callback: (chain: unknown, context: unknown) => void) {
-      bundlerCallbacks.push(callback);
-    },
-  });
-
-  let loaderOptions: VueLoaderOptions | undefined;
-  const vueUse = {
-    loader() {
-      return vueUse;
-    },
-    options(options: VueLoaderOptions) {
-      loaderOptions = options;
-      return vueUse;
-    },
-  };
-  const vueRule = {
-    test() {
-      return vueRule;
-    },
-    use() {
-      return vueUse;
-    },
-  };
-  const cssRule = {
-    test() {
-      return cssRule;
-    },
-  };
-  const pluginUse = {
-    use() {
-      return pluginUse;
-    },
-  };
-  const pluginBefore = {
-    before() {
-      return pluginUse;
-    },
-  };
-  const chain = {
-    resolve: {
-      extensions: {
-        add() {},
-      },
-    },
-    module: {
-      rule(name: string) {
-        return name === 'vue' ? vueRule : cssRule;
-      },
-    },
-    plugin() {
-      return pluginBefore;
-    },
-  };
-
-  bundlerCallbacks[0]?.(chain, {
-    CHAIN_ID: {
-      RULE: { VUE: 'vue', CSS: 'css' },
-      USE: { VUE: 'vue-loader' },
-      PLUGIN: {
-        VUE_LOADER_PLUGIN: 'vue-loader-plugin',
-        REACT_FAST_REFRESH: 'react-fast-refresh',
-      },
-    },
-  });
-
-  // The base compiler options always carry transformPageElement — detect the
-  // element-template lowering transform specifically.
-  return Boolean(
-    loaderOptions?.compilerOptions?.nodeTransforms?.includes(
-      elementTemplateTransform,
-    ),
-  );
-}
+// pluginVueLynx passes resolveElementTemplatesFlag(options) straight into
+// resolveVueLynxCompilerOptions — asserting on the two helpers covers the
+// defaulting rule and the compiler-options composition without mocking
+// @rsbuild/plugin-vue's bundler-chain surface.
 
 describe('pluginVueLynx optimization defaults', () => {
   it('keeps element templates off when IFR is off', () => {
-    expect(elementTemplatesEnabled({})).toBe(false);
+    expect(resolveElementTemplatesFlag({})).toBe(false);
   });
 
   it('enables element templates by default with IFR', () => {
-    expect(elementTemplatesEnabled({ enableIFR: true })).toBe(true);
+    expect(resolveElementTemplatesFlag({ enableIFR: true })).toBe(true);
   });
 
   it('honors the element templates opt-out with IFR', () => {
     expect(
-      elementTemplatesEnabled({
+      resolveElementTemplatesFlag({
         enableIFR: true,
         enableElementTemplates: false,
       }),
@@ -112,8 +31,26 @@ describe('pluginVueLynx optimization defaults', () => {
   });
 
   it('allows element templates without IFR', () => {
-    expect(elementTemplatesEnabled({ enableElementTemplates: true })).toBe(
+    expect(resolveElementTemplatesFlag({ enableElementTemplates: true })).toBe(
       true,
+    );
+  });
+});
+
+describe('resolveVueLynxCompilerOptions', () => {
+  it('appends the lowering transform when templates are enabled', () => {
+    const options = resolveVueLynxCompilerOptions(true);
+    expect(options.nodeTransforms).toContain(elementTemplateTransform);
+    // The shared base transforms are preserved, not replaced.
+    for (const transform of vueLynxCompilerOptions.nodeTransforms) {
+      expect(options.nodeTransforms).toContain(transform);
+    }
+  });
+
+  it('returns the shared base options untouched when disabled', () => {
+    expect(resolveVueLynxCompilerOptions(false)).toBe(vueLynxCompilerOptions);
+    expect(vueLynxCompilerOptions.nodeTransforms).not.toContain(
+      elementTemplateTransform,
     );
   });
 });

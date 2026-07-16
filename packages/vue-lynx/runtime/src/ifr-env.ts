@@ -17,10 +17,16 @@
  *
  * On the background thread (and in test environments) the flag is absent,
  * so all behavior is unchanged.
+ *
+ * Exported from `vue-lynx` as a public predicate: apps whose first screen
+ * cannot render on the main thread (e.g. fully network-driven) use it to
+ * opt out of the IFR mount while keeping module evaluation (and template
+ * registration) intact.
  */
+import { IFR_MT_FLAG_GLOBAL } from 'vue-lynx/internal/ops';
+
 export function isIfrMainThread(): boolean {
   return (
-    (globalThis as { __VUE_LYNX_IFR_MT__?: unknown }).__VUE_LYNX_IFR_MT__
-      === true
+    (globalThis as Record<string, unknown>)[IFR_MT_FLAG_GLOBAL] === true
   );
 }

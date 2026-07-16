@@ -31,8 +31,6 @@ export default defineConfig({
       enableIFR: true,
       optionsApi: false,
       enableCSSSelector: true,
-      // Element templates: compile-time lowering of static-structure subtrees.
-      enableElementTemplates: true,
     }),
   ],
 });

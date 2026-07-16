@@ -24,9 +24,6 @@ export default defineConfig({
       // IFR: render the first screen on the main thread during
       // loadTemplate, then hydrate when the background thread boots.
       enableIFR: true,
-      // Element templates: lower static-structure subtrees into
-      // single-op main-thread templates (compile-time snapshot).
-      enableElementTemplates: true,
       optionsApi: false,
       enableCSSSelector: true,
     }),

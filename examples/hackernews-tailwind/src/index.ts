@@ -1,10 +1,9 @@
-import { createApp } from 'vue-lynx';
+import { createApp, isIfrMainThread } from 'vue-lynx';
 import { createPinia } from 'pinia';
 import { VueQueryPlugin } from '@tanstack/vue-query';
 
 import router from './router';
 import App from './App.vue';
-import { hasFetch } from './api';
 
 const app = createApp(App);
 app.use(createPinia());
@@ -13,8 +12,8 @@ app.use(router);
 
 router.push('/');
 
-// Network-driven screens do not have a deterministic IFR render when the
-// main-thread PrimJS context has no fetch. All modules have still evaluated
-// by this point, so element-template registrations are available for the
-// background render that follows.
-if (hasFetch()) app.mount();
+// This screen is network-driven — there is nothing meaningful to paint
+// before a response arrives — so it opts out of the IFR main-thread mount.
+// Module evaluation still runs on both threads, keeping worklet and
+// element-template registrations available.
+if (!isIfrMainThread()) app.mount();

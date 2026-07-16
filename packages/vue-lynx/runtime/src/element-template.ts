@@ -36,6 +36,7 @@
  */
 
 import {
+  TPL_EXECUTOR_REGISTRY_GLOBAL,
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
   TPL_TYPE_PREFIX,
@@ -75,7 +76,7 @@ export function registerElementTemplate(
   // Main-thread executor registry (present on the Lynx main thread — both
   // IFR and interpreter-only bundles; absent on the background thread).
   const register = (globalThis as Record<string, unknown>)[
-    '__vueLynxRegisterTemplate'
+    TPL_EXECUTOR_REGISTRY_GLOBAL
   ] as ((id: string, create: ElementTemplateCreate) => void) | undefined;
   register?.(id, create);
   return id;

@@ -208,16 +208,22 @@ export interface ApplyEntryOptions {
   customCSSInheritanceList?: string[];
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
-  /** IFR: main-thread bundle carries the full Vue runtime + app code. */
-  enableIFR?: boolean;
+  /**
+   * IFR: main-thread bundle carries the full Vue runtime + app code.
+   *
+   * Required (not optional): `pluginVueLynx` resolves the defaulting —
+   * including `enableElementTemplates ?? enableIFR` — exactly once; a second
+   * defaulting layer here could silently drift from that rule.
+   */
+  enableIFR: boolean;
   /** Element templates: preserve template registrations on the MT layer. */
-  enableElementTemplates?: boolean;
+  enableElementTemplates: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
 }
 
 export function applyEntry(
   api: RsbuildPluginAPI,
-  opts: ApplyEntryOptions = {},
+  opts: ApplyEntryOptions,
 ): void {
   // ------------------------------------------------------------------
   // Bidirectional plugin communication (matching pluginReactLynx pattern)
@@ -251,7 +257,8 @@ export function applyEntry(
     ];
     for (const key of configKeys) {
       if (Object.hasOwn(exposedConfig.config, key)) {
-        (opts as Record<string, unknown>)[key] = exposedConfig.config[key];
+        (opts as unknown as Record<string, unknown>)[key] =
+          exposedConfig.config[key];
       }
     }
   }
@@ -357,25 +364,32 @@ export function applyEntry(
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
     const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
-    // The runtime dist enters the MT module graph in IFR builds (user code
-    // imports 'vue-lynx' and is no longer stripped). It is library code and
-    // must pass through untransformed. In pnpm workspaces it resolves via
-    // symlink to a real path outside node_modules, so the /node_modules/
-    // exclude alone is insufficient (same reason as main-thread above).
-    const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
+    // The runtime dist enters the MT module graph in IFR builds ONLY (user
+    // code imports 'vue-lynx' and is no longer stripped). There it is library
+    // code that must pass through untransformed; in pnpm workspaces it
+    // resolves via symlink to a real path outside node_modules, so the
+    // /node_modules/ exclude alone is insufficient (same reason as
+    // main-thread above). In non-IFR builds the runtime must NOT be excluded:
+    // worklet-loader-mt strips it to nothing like any other module —
+    // excluding it would bundle (and evaluate) the whole Vue runtime on the
+    // interpreter-only main thread for workspace-resolved builds.
+    const runtimePkgDir = opts.enableIFR
+      ? path.resolve(pkgRoot, 'runtime')
+      : null;
     const isBootstrapModule = (resource: string): boolean => {
       const resolvedResource = path.resolve(resource);
       return resolvedResource === mainThreadPkgDir
         || resolvedResource.startsWith(`${mainThreadPkgDir}${path.sep}`)
         || resolvedResource === vueInternalPkgDir
         || resolvedResource.startsWith(`${vueInternalPkgDir}${path.sep}`)
-        || resolvedResource === runtimePkgDir
-        || resolvedResource.startsWith(`${runtimePkgDir}${path.sep}`);
+        || (runtimePkgDir !== null
+          && (resolvedResource === runtimePkgDir
+            || resolvedResource.startsWith(`${runtimePkgDir}${path.sep}`)));
     };
 
     const workletMtOptions = {
-      ifr: opts.enableIFR ?? false,
-      elementTemplates: opts.enableElementTemplates ?? false,
+      ifr: opts.enableIFR,
+      elementTemplates: opts.enableElementTemplates,
       includeWorkletPackages,
     };
 

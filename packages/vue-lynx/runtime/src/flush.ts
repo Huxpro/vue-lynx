@@ -4,6 +4,8 @@
 
 import { queuePostFlushCb } from '@vue/runtime-core';
 
+import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
+
 import { isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
 
@@ -129,7 +131,7 @@ function doFlush(): void {
   // bootstrap (enableIFR) before user code evaluates.
   if (isIfrMainThread()) {
     const applyLocal = (globalThis as Record<string, unknown>)[
-      '__vueLynxIfrApplyOps'
+      IFR_APPLY_OPS_GLOBAL
     ] as ((ops: unknown[]) => void) | undefined;
     if (applyLocal) {
       applyLocal(ops);
