@@ -122,6 +122,13 @@ export function enableIFR(): void {
   g[IFR_APPLY_OPS_GLOBAL] = recordAndApply;
   g['__vueLynxIfrSealOps'] = sealIfrRender;
 
+  // Native Lepus realms have no timers. Dev builds of the user graph reach
+  // setTimeout during module evaluation (e.g. runtime-core's devtools-hook
+  // replay buffer sees the Vapor dom-shim's `window`), which is outside the
+  // runIfrRender fallback boundary — an uncaught throw there kills renderPage
+  // for the whole page, not just IFR. A timer that never fires is the correct
+  // semantic for the ephemeral MT realm: everything after handoff is
+  // discarded anyway.
   if (typeof g['setTimeout'] !== 'function') {
     g['setTimeout'] = (): number => 0;
     g['clearTimeout'] = (): void => undefined;
@@ -322,6 +329,9 @@ export function interceptPatchUpdate(data: string): boolean {
     try {
       applyOps(patchOps);
     } catch (error) {
+      // A failed in-place patch leaves the adopted tree in an unknown state;
+      // the complete buffered BG history is still available, so rebuild from
+      // it instead of letting the throw escape vuePatchUpdate into Lepus.
       console.error(
         '[vue-lynx] IFR hydration patch failed; replaying the complete '
           + 'background render.',
@@ -353,6 +363,9 @@ function fallbackToBackground(): void {
     teardownIfrTree();
     for (const batch of history) applyOps(batch);
   } catch (error) {
+    // vuePatchUpdate must remain a no-throw boundary. There is no further
+    // recovery below the authoritative replay itself; log and keep whatever
+    // portion of the BG tree was rebuilt.
     console.error(
       '[vue-lynx] IFR fallback replay failed; the page may be incomplete.',
       error,

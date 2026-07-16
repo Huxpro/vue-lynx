@@ -33,6 +33,22 @@ const VAPOR_REALM_GLOBALS = [
   "MathMLElement",
   "HTMLSlotElement",
   "ShadowRoot",
+  // Rewrite targets installed by the Vapor DOM shim (see
+  // VAPOR_DOM_CTOR_GLOBALS in vue-lynx/internal/ops). Each realm must
+  // install its own: the shims close over that realm's ShadowElement class.
+  "__VUE_LYNX_NODE__",
+  "__VUE_LYNX_ELEMENT__",
+  "__VUE_LYNX_TEXT__",
+  "__VUE_LYNX_COMMENT__",
+  "__VUE_LYNX_CHARACTER_DATA__",
+  "__VUE_LYNX_DOCUMENT_FRAGMENT__",
+  "__VUE_LYNX_HTML_ELEMENT__",
+  "__VUE_LYNX_SVG_ELEMENT__",
+  "__VUE_LYNX_MATHML_ELEMENT__",
+  "__VUE_LYNX_HTML_SLOT_ELEMENT__",
+  "__VUE_LYNX_HTML_STYLE_ELEMENT__",
+  "__VUE_LYNX_SHADOW_ROOT__",
+  "__VUE_LYNX_DOCUMENT_CTOR__",
   "__VUE_LYNX_IFR_MT__",
   "__VUE_LYNX_IFR_ENABLED__",
   "__vueLynxIfrApplyOps",
@@ -90,7 +106,12 @@ function isIfrBundle(bundle) {
   return (
     typeof bundle?.lepusCode?.root === "string" &&
     typeof bundle?.manifest?.["/app-service.js"] === "string" &&
-    bundle.lepusCode.root.includes("__VUE_LYNX_IFR_MT__")
+    bundle.lepusCode.root.includes("__VUE_LYNX_IFR_MT__") &&
+    // A dev-mode bundle (e.g. left in dist/ by `rspeedy dev`) keeps
+    // `process.env.NODE_ENV` unreplaced and dev-only code paths alive; this
+    // spec asserts the production shape, so treat such a bundle as stale and
+    // rebuild it below.
+    !bundle.lepusCode.root.includes("process.env.NODE_ENV")
   );
 }
 
@@ -131,7 +152,11 @@ async function loadIfrBundle() {
     ["build"],
     {
       cwd: fileURLToPath(vaporExample),
-      env: { ...process.env, VUE_LYNX_ENABLE_IFR: "1" },
+      // vitest exports NODE_ENV=test; without the explicit production
+      // override, Rsbuild inherits it and emits a dev-mode bundle whose
+      // devtools code calls setTimeout during MT evaluation (absent on
+      // Lepus and in this spec's realm).
+      env: { ...process.env, NODE_ENV: "production", VUE_LYNX_ENABLE_IFR: "1" },
     },
   );
 
@@ -217,6 +242,29 @@ describe("built Vapor IFR bundle", () => {
         };
 
         env.switchToMainThread();
+        // On Lynx for Web the Lepus chunk executes on the page's main
+        // thread, where real DOM globals exist. Reproduce that hostile realm
+        // for the MT evaluation: the Vapor runtime must classify
+        // ShadowElements through its own shims (via the plugin's identifier
+        // rewrite), not through whatever host DOM happens to be present.
+        // These land in the MT snapshot only; `restoreDescriptors(
+        // backgroundRealm)` below removes them before the BG evaluation,
+        // matching the DOM-less background Worker.
+        globalThis.document = jsdom.window.document;
+        globalThis.window = jsdom.window;
+        for (const ctor of [
+          "Node",
+          "Element",
+          "Text",
+          "Comment",
+          "CharacterData",
+          "DocumentFragment",
+          "HTMLElement",
+          "SVGElement",
+          "HTMLSlotElement",
+        ]) {
+          globalThis[ctor] = jsdom.window[ctor];
+        }
         new vm.Script(`(function(){${bundle.lepusCode.root}\n})()`, {
           filename: fileURLToPath(url),
         }).runInThisContext();

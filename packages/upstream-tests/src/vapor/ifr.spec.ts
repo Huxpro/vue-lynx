@@ -628,6 +628,29 @@ describe('Vapor IFR hydration ownership', () => {
     expect(appliedRef).not.toBe(mtRef);
     expect(papi.workletRefMap[7]?.current).toBe(view);
   });
+
+  it('overwrites an MT-mutated MainThreadRef with the BG initial value', () => {
+    // INIT_MT_REF is replayed 'always' with BG as the authority: a worklet
+    // that wrote into the ref during the pre-hydration window (e.g. a scroll
+    // offset) is deliberately reset to the deterministic initial value. This
+    // trades interaction state captured in that narrow window for a single
+    // unambiguous owner; a design change here must update VALUE_OP and
+    // applyInitMtRef together.
+    const frame = [OP.CREATE, 2, 'view', OP.INIT_MT_REF, 9, 'init', OP.INSERT, 1, 2, -1];
+
+    renderMtOps(frame);
+    expect(papi.workletRefMap[9]?.current).toBe('init');
+    const entry = papi.workletRefMap[9]!;
+    entry.current = 'mt-mutated';
+
+    papi.patch([...frame]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    // The registry entry object is preserved (worklet-runtime may hold it)…
+    expect(papi.workletRefMap[9]).toBe(entry);
+    // …but its value is the replayed BG payload, not the MT mutation.
+    expect(papi.workletRefMap[9]?.current).toBe('init');
+  });
 });
 
 describe('Vapor IFR correctness fallbacks', () => {
@@ -769,6 +792,55 @@ describe('Vapor IFR correctness fallbacks', () => {
     expect(papi.queryAll('text')).toHaveLength(0);
     expect(papi.queryAll('image')).toHaveLength(1);
     expect(papi.queryOne('image')?.attrs['src']).toBe('bg.png');
+  });
+
+  it('rebuilds from the buffered history when an in-place patch throws', () => {
+    const make = (color: string) => [
+      OP.CREATE,
+      2,
+      'view',
+      OP.SET_STYLE,
+      2,
+      { color },
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ];
+
+    renderMtOps(make('red'));
+
+    // First native style write after the paint throws (e.g. a host rejecting
+    // a value); the replayed history afterwards applies normally.
+    const setStyles = globals['__SetInlineStyles'] as (
+      ...args: unknown[]
+    ) => unknown;
+    let throwOnce = true;
+    globals['__SetInlineStyles'] = (...args: unknown[]) => {
+      if (throwOnce) {
+        throwOnce = false;
+        throw new Error('native style rejection');
+      }
+      return setStyles(...args);
+    };
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      // A differing style value forces an in-place patch — vuePatchUpdate
+      // must not throw even though the patch write does.
+      expect(() => papi.patch(make('blue'))).not.toThrow();
+    } finally {
+      globals['__SetInlineStyles'] = setStyles;
+    }
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('IFR hydration patch failed'),
+      expect.any(Error),
+    );
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    // The tree was rebuilt from the authoritative BG history.
+    expect(papi.queryAll('view')).toHaveLength(1);
+    expect(papi.queryOne('view')?.style).toEqual({ color: 'blue' });
   });
 
   it('rebuilds list metadata when a BG platform-info value differs', () => {
