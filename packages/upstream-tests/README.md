@@ -4,14 +4,14 @@
 
 This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.6.0-beta.17, pinned at `core/`.
 
-**Collected totals (Vue 3.6.0-beta.17): 1,511 pass / 286 skip / 7 todo, 0 fail; 16 runtime-vapor files explicitly excluded**
+**Collected totals (Vue 3.6.0-beta.17): 1,529 pass / 268 skip / 7 todo, 0 fail; 16 runtime-vapor files explicitly excluded**
 
 | Config                                         | Suites | Pass    | Skip   | Fail  |
 | ---------------------------------------------- | ------ | ------- | ------ | ----- |
 | `pnpm test` (runtime-core, reactivity, shared) | 45     | 917     | 102    | 0     |
 | `pnpm test:dom` (runtime-dom)                  | 9      | 67      | 46     | 0     |
-| `pnpm test:vapor` (runtime-vapor)              | 30     | 527     | 138    | 0     |
-| **Collected total**                            | **84** | **1,511** | **286** | **0** |
+| `pnpm test:vapor` (runtime-vapor)              | 30     | 545     | 120    | 0     |
+| **Collected total**                            | **84** | **1,529** | **268** | **0** |
 
 ### By package
 
@@ -19,7 +19,7 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 | ------------ | ------ | ---- | ---- |
 | runtime-core + reactivity + shared | 45 | 917 | 102 |
 | runtime-dom  | 9      | 67   | 46   |
-| runtime-vapor | 30    | 527  | 138  |
+| runtime-vapor | 30    | 545  | 120  |
 
 > _Note: `computed.spec.ts` (48 tests) excluded due to module initialization conflict; 4 gc tests auto-skipped by `describe.skipIf(!global.gc)`. reactivity and shared test the upstream npm packages themselves (version compatibility smoke tests), not our pipeline._
 
@@ -35,8 +35,8 @@ The tests that actually validate our pipeline are runtime-core + runtime-dom:
 | ---------------- | --------------------------------------------- | ------- | ------ |
 | **runtime-core/reactivity/shared command** | ShadowElement linked-list + Vue VDOM diff and package smoke tests | 917 | 102 |
 | **runtime-dom**  | patchProp / render -> ops -> applyOps -> PAPI -> jsdom  | 67      | 46     |
-| **runtime-vapor** | upstream Vapor helpers/components on ShadowElement | 527 | 138 |
-| **Collected total** |                                            | **1,511** | **286** |
+| **runtime-vapor** | upstream Vapor helpers/components on ShadowElement | 545 | 120 |
+| **Collected total** |                                            | **1,529** | **268** |
 
 ### Layer 1: Conformance tests (`pnpm test`)
 
@@ -91,9 +91,9 @@ Covers: runtime-dom (7 suites: patchStyle, patchClass, patchEvents, patchProps, 
 
 **Config**: `vitest.vapor.config.ts` | **Adapter**: `src/lynx-runtime-vapor-bridge.ts` + `src/vapor-upstream-setup.ts`
 
-Runs 30 upstream `runtime-vapor` entries against the real `vue-lynx/vapor` surface and `ShadowElement` tree. A test-only serializer exposes DOM-shaped assertion fields such as `innerHTML`, `textContent`, selectors, attributes, and events without replacing Lynx's production helper overrides. Private helpers used by upstream source-level tests are re-exported from the installed runtime-vapor ESM bundle so every test shares the same runtime singleton.
+Runs 30 upstream `runtime-vapor` entries against the real `vue-lynx/vapor` surface and `ShadowElement` tree. A test-only serializer exposes DOM-shaped assertion fields such as `innerHTML`, `textContent`, selectors, attributes, and events without replacing Lynx's production helper overrides. Private helpers used by upstream source-level tests are re-exported from the installed runtime-vapor ESM bundle so every test shares the same runtime singleton. Note: `exposeRuntimeVaporTestInternals` in `vitest.vapor.config.ts` performs exact-text surgery on that installed bundle, so bumping the pinned Vue version requires updating the plugin alongside it (it fails loudly at config load if the expected text is missing).
 
-`skiplist-vapor.json` is a closed inventory: every upstream spec is either included or explicitly excluded, every skipped test/suite/file has a non-empty reason, and stale or unknown entries fail config loading. The current run has 527 pass, 138 skipped, and 5 upstream todos. Its 16 file-level exclusions are reported separately from the collected Vitest totals; they are primarily hydration/SSR, custom elements, SVG/MathML, browser transitions, browser event/form semantics, and Lynx's intentional helper differences (`on`, `delegate`, `applyTextModel`, `setHtml`, and CSS vars).
+`skiplist-vapor.json` is a closed inventory: every upstream spec is either included or explicitly excluded, every skipped test/suite/file has a non-empty reason, and stale or unknown entries fail config loading. The current run has 545 pass, 120 skipped, and 5 upstream todos (18 templateRef tests un-skipped after the ShadowElement `__v_skip` reactivity fix). Its 16 file-level exclusions are reported separately from the collected Vitest totals; they are primarily hydration/SSR, custom elements, SVG/MathML, browser transitions, browser event/form semantics, and Lynx's intentional helper differences (`on`, `delegate`, `applyTextModel`, `setHtml`, and CSS vars).
 
 The runtime-dom command currently reports 67 passes, including 7 local MT bridge checks under `src/mt`; the suite table intentionally reports command-level totals rather than labeling all 67 as cloned upstream cases.
 
