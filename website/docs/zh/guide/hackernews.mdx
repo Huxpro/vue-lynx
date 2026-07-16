@@ -16,6 +16,23 @@
 
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
+## Lynx 引擎兼容性
+
+我们同时对前端 bundle 和 Lynx Engine 版本进行了回归 bisect：
+
+| Bundle | Lynx Engine | 实测结果 |
+|---|---|---|
+| Tailwind 0.2.1（隐式 page 根节点） | [3.6.0](https://github.com/lynx-family/lynx/releases/tag/3.6.0)、[3.7.0](https://github.com/lynx-family/lynx/releases/tag/3.7.0) | 数据加载成功，但当前路由不可见 |
+| Tailwind 0.2.1（隐式 page 根节点） | [3.8.1](https://github.com/lynx-family/lynx/releases/tag/3.8.1)、[3.9.0](https://github.com/lynx-family/lynx/releases/tag/3.9.0) | Feed 正常渲染 |
+| CSS 0.2.1（显式 page 根节点，修复前） | 3.6.0、3.8.1、源码构建的 4.1 | 出现完全一致的 `990100 page ui not found` 错误 |
+| CSS 0.2.6 / 修复前的当前 bundle | 源码构建的 4.1 | 同样出现 `990100` 错误 |
+
+:::warning 推断的最低引擎版本
+这些示例请使用 **Lynx Engine 3.8.1 或更高版本**。3.8.1 是测试中能够完整渲染 Tailwind 应用的最早引擎。3.6.0 和 3.7.0 即使数据请求成功，仍存在独立的路由不可见问题。
+
+CSS 错误在 3.6.0、3.8.1 和 4.1 上保持一致，因此它属于前端根节点处理回归，不能据此认为显式 `<page>` 要求 Engine 4.1。修复后的 bundle 已在源码构建的 4.1 引擎上直接验证；对 3.8.1 和 3.9.0 的支持是根据这次 bisect 以及本修复复用既有原生 page 的实现推断得出，仍待在对应 Explorer release 上直接复测。
+:::
+
 ## 改动概览
 
 大部分代码可以直接迁移 —— 组件逻辑、Vue Router、Composition API，甚至 `<Transition>`/`<TransitionGroup>` 都完全一致。Vue HackerNews 3.0 参考实现是一个基于 Webpack 的 SSR 应用，使用 Vue 3 + Vuex 4 + axios。移植到 Lynx 时的改动如下：

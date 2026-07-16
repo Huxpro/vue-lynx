@@ -50,7 +50,7 @@ let scheduled = false;
 let pendingAckResolve: (() => void) | null = null;
 let pendingAckPromise: Promise<void> | null = null;
 
-// Older Lynx engines apply callLepusMethod successfully but do not invoke its
+// Some Lynx builds apply callLepusMethod successfully but do not invoke its
 // callback. Never let nextTick()/Transition wait forever in that case.
 const ACK_FALLBACK_MS = 50;
 

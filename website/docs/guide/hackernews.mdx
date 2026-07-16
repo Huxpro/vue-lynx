@@ -16,6 +16,23 @@ Both HackerNews variants intentionally keep an explicit outermost `<page>`. Vue 
 
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
+## Lynx Engine Compatibility
+
+The regression was bisected across both the frontend bundle and Lynx Engine versions:
+
+| Bundle | Lynx Engine | Observed result |
+|---|---|---|
+| Tailwind 0.2.1 (implicit page root) | [3.6.0](https://github.com/lynx-family/lynx/releases/tag/3.6.0), [3.7.0](https://github.com/lynx-family/lynx/releases/tag/3.7.0) | Data loaded, but the active route remained invisible |
+| Tailwind 0.2.1 (implicit page root) | [3.8.1](https://github.com/lynx-family/lynx/releases/tag/3.8.1), [3.9.0](https://github.com/lynx-family/lynx/releases/tag/3.9.0) | Feed rendered |
+| CSS 0.2.1 (explicit page root, before this fix) | 3.6.0, 3.8.1, source-built 4.1 | Exact `990100 page ui not found` error |
+| CSS 0.2.6 / pre-fix current bundle | source-built 4.1 | Same `990100` error |
+
+:::warning Minimum inferred engine version
+Use **Lynx Engine 3.8.1 or later** for these examples. It is the oldest tested engine that rendered the full Tailwind application. Engines 3.6.0 and 3.7.0 have a separate route-visibility limitation even when the data request succeeds.
+
+The CSS error reproduced unchanged on 3.6.0, 3.8.1, and 4.1, so it was a frontend root-handling regression, not evidence that explicit `<page>` requires Engine 4.1. The fixed bundle has been directly verified on the source-built 4.1 engine; support for 3.8.1 and 3.9.0 is inferred from this bisect and the fix's reuse of the already-existing native page, pending a direct rerun on those Explorer releases.
+:::
+
 ## Overview of Changes
 
 Most code transferred directly — component logic, Vue Router, Composition API, and even `<Transition>`/`<TransitionGroup>` work identically. The Vue HackerNews 3.0 reference is a Webpack-based SSR app using Vue 3 + Vuex 4 + axios. Here's what we changed when porting to Lynx:
