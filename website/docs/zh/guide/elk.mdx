@@ -4,13 +4,12 @@ import { Badge } from '@theme';
 
 为了验证 Vue Lynx 能承载真正产品级的应用，我们把 Anthony Fu 团队广受喜爱的
 Mastodon Web 客户端 [Elk](https://github.com/elk-zone/elk) 移植成了一个
-**原生 Mastodon 客户端**。它能以游客身份浏览任意公开 Mastodon 实例
-（默认 `mas.to`），支持时间线、会话串、个人主页、搜索、趋势、深色模式等。
+**原生 Mastodon 客户端**。它以游客身份浏览任意公开 Mastodon 实例
+（默认 `mas.to`）：时间线、会话串、个人主页、搜索、趋势、深色模式等。
 
-在下方直接体验：**Web** 标签页通过 Lynx for Web 运行真实应用并连接线上
-Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explorer
-（安装方式见[快速开始](/zh/guide/quick-start)）扫码，即可在手机上原生运行
-同一份 `main.lynx.bundle`。
+在下方直接体验。**Web** 标签页通过 Lynx for Web 连接线上实例运行真实应用；
+**二维码** 标签页原生运行同一份 `main.lynx.bundle`——用 Lynx Go /
+Lynx Explorer 扫码即可（安装见[快速开始](/zh/guide/quick-start)）。
 
 <Go
   example="elk"
@@ -22,18 +21,18 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 
 `elk-viewpager` 分叉用原生
 [`<viewpager>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
-元件承载 Explore 与通知页的标签页，取代默认示例里按条件渲染的面板。在
+元件承载 Explore 与通知页的标签页，取代按条件渲染的面板。在
 [`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)
-中，每个面板都是 `<viewpager>` 下的一个 `<viewpager-item>`：面板可以横向
-滑动翻页、带原生吸附动画，滑走再滑回时内容与滚动位置都保留，标签栏与翻页器
-双向同步——滑动会触发翻页器的 `change` 事件（→ 切换当前标签），点按标签则
-调用翻页器的 `selectTab` UI 方法（→ 动画翻到该页）。体验更接近原生客户端。
+中，每个面板都是一个 `<viewpager-item>`：可横向滑动翻页、带原生吸附动画，
+滑走再滑回时内容与滚动位置都保留，标签栏与翻页器双向同步——滑动触发翻页器的
+`change` 事件（→ 当前标签），点按标签调用其 `selectTab` 方法（→ 动画翻到
+该页）。体验更接近原生客户端。
 
-`viewpager` 以 Lynx
-[XElement](https://lynxjs.org/guide/ui/elements-components.html#xelement)
-形式提供，在不同平台上注册为不同的标签名，因此 `TabPager.vue` 会在运行时
-根据 `SystemInfo.platform` 选择标签名（下方高亮处）：Lynx for Web 使用旧版
-`<x-viewpager-ng>`，而原生 OSS 引擎使用抽取出来的 `<viewpager>` /
+`<viewpager>` 是一个 Lynx
+[XElement](https://lynxjs.org/guide/ui/elements-components.html#xelement)，
+在不同平台注册为不同标签名，因此 `TabPager.vue` 在运行时根据
+`SystemInfo.platform` 选择标签名（下方高亮处）：Lynx for Web 用
+`<x-viewpager-ng>`，原生 OSS 引擎用抽取出来的 `<viewpager>` /
 `<viewpager-item>`。
 
 <Go
@@ -46,23 +45,23 @@ Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explore
 />
 
 :::warning 引擎版本依赖
-抽取出来的原生 `<viewpager>` 元件是在 lynx-family/lynx `c1d8d7920`
-（2026-04）才进入 OSS 引擎的，**比任何已发布的 LynxExplorer 都新**：
-3.8.1 及更早版本既没有 `<viewpager>` 也没有 `<x-viewpager-ng>`，因此标签
-区域在这些宿主上会渲染为空白（并伴随 `LynxCreateUIException`）。请在从
-lynx `develop` 构建的宿主上运行该变体；在当前已发布的 Explorer 上，请使用
-上方的默认 Elk 示例——它的标签按条件渲染，无需 pager 元件。
+抽取出来的 `<viewpager>` 是在 lynx-family/lynx `c1d8d7920`（2026-04）才进入
+OSS 引擎的——**比任何已发布的 LynxExplorer 都新**。3.8.1 及更早版本既没有
+`<viewpager>` 也没有 `<x-viewpager-ng>`，标签区域会渲染为空白（并伴随
+`LynxCreateUIException`）。请在从 lynx `develop` 构建的宿主上运行该变体；
+在已发布的 Explorer 上，请用上方的默认 Elk 示例——它按条件渲染的标签无需
+pager 元件。
 :::
 
 #### 换成原生 pager，到底要改多少代码？
 
-几乎不用。把整个应用切到原生 pager，只动了 **三个文件**：一个新增的
+几乎不用。把整个应用切到原生 pager 只动了 **三个文件**：新增的
 `TabPager.vue`，以及承载可滑动标签页的两个页面（`ExplorePage.vue`、
 `NotificationsPage.vue`）。其余约 55 个源文件——masto.js 客户端、内容
 渲染器、路由、虚拟化 `<list>`——逐字节完全一致。
 
-在调用处就是一次直接替换。原来是手写的标签栏加上 `v-if` / `v-else-if`
-面板，任一时刻只有当前面板存在：
+在调用处就是一次直接替换。原来的手写标签栏加 `v-if` / `v-else-if` 面板，
+任一时刻只有当前面板存在：
 
 ```vue
 <!-- elk：一次只渲染一个面板 -->
@@ -84,13 +83,13 @@ lynx `develop` 构建的宿主上运行该变体；在当前已发布的 Explore
 </TabPager>
 ```
 
-UI 侧的全部改动就是这次 `v-if` → slot 的重写——标签栏、下划线动画、
-以及 pager ↔ 标签的双向同步，统统搬进了 `TabPager`。
+UI 侧的全部改动就是这次 `v-if` → slot 重写——标签栏、下划线动画、
+pager ↔ 标签双向同步，统统搬进 `TabPager`。
 
-只有一处不是机械替换，而它恰好把「原生翻页」的本质讲清楚了。用 `v-if`
-时只有可见面板存在，所以一个共享的 paginator 就够了。换成 pager 后，
-**所有面板同时挂载**、可以来回滑动——于是每个标签得各自保留自己的数据
-和滚动位置。通知页因此从「一个共享 feed」改成「每个标签一份 feed」：
+只有一处不是机械替换，它恰好把「原生翻页」的本质讲清楚了。用 `v-if` 时
+只有可见面板存在，一个共享 paginator 就够了。换成 pager 后 **所有面板同时
+挂载**、可来回滑动——于是每个标签各自保留数据和滚动位置。通知页因此从
+「一个共享 feed」改成「每标签一份」：
 
 ```diff
 - let pager = signedIn ? makePaginator() : empty;
@@ -101,8 +100,8 @@ UI 侧的全部改动就是这次 `v-if` → slot 的重写——标签栏、下
 + });
 ```
 
-这就是原生手感所要求的取舍：你放弃了「只渲染可见内容」，换来的是面板
-始终「热着」——滑走再滑回，还停在你离开时的位置，无需重新加载。
+这就是取舍：你放弃「只渲染可见内容」，换来面板始终「热着」——滑走再滑回，
+还停在你离开的位置，无需重新加载。
 
 ## 为什么 Elk 是一块试金石
 
