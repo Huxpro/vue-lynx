@@ -13,6 +13,7 @@
  *
  *  - `withVaporModifiers` / `withVaporKeys` — Lynx event modifier semantics
  *    (`.stop` → native catchEvent, `.prevent` no-op, …)
+ *  - `on` / `onBinding` — preserve `.stop` through Vapor invoker wrappers
  *  - `applyTextModel` — v-model on <input>/<textarea> via Lynx `input` /
  *    `confirm` events carrying `detail.value`
  *  - `setHtml` / `setBlockHtml` — v-html is unsupported (no HTML on Lynx)
@@ -34,6 +35,7 @@ installVaporDomShim();
 import {
   createInvoker,
   createVaporApp as _createVaporApp,
+  onBinding as _onBinding,
   renderEffect,
 } from '@vue/runtime-vapor';
 import * as runtimeDom from '@vue/runtime-dom';
@@ -57,7 +59,9 @@ export * from '@vue/runtime-vapor';
 // Event modifier helpers — Lynx semantics
 // ---------------------------------------------------------------------------
 
-type AnyFn = (...args: unknown[]) => unknown;
+type AnyFn = ReturnType<typeof createInvoker>;
+type EventHandlerValue = Parameters<typeof _onBinding>[2];
+type OnBindingOptions = NonNullable<Parameters<typeof _onBinding>[3]>;
 
 /**
  * Vapor counterpart of vue-lynx's `withModifiers`: wraps the handler with
@@ -82,13 +86,29 @@ export function withVaporKeys(fn: AnyFn, keys: string[]): AnyFn {
 }
 
 // ---------------------------------------------------------------------------
-// on — preserve the `.stop` → catchEvent tag through the invoker wrapper
+// Events — preserve the `.stop` → catchEvent tag through invoker wrappers
 // ---------------------------------------------------------------------------
 
 interface OnOptions {
   once?: boolean;
   capture?: boolean;
   passive?: boolean;
+}
+
+function usesLynxCatch(handler: AnyFn): boolean {
+  return !!(handler as { _lynxCatch?: boolean })._lynxCatch;
+}
+
+function addVaporEventListener(
+  el: ShadowElement,
+  event: string,
+  handler: AnyFn,
+  options: OnOptions,
+  forceCatch = usesLynxCatch(handler),
+): void {
+  const invoker = createInvoker(handler) as AnyFn & { _lynxCatch?: boolean };
+  if (forceCatch) invoker._lynxCatch = true;
+  el.addEventListener(event, invoker as (data: unknown) => void, options);
 }
 
 /**
@@ -105,15 +125,66 @@ export function on(
   options: OnOptions = {},
 ): void {
   if (Array.isArray(handler)) {
-    for (const fn of handler) on(el, event, fn, options);
+    const forceCatch = handler.some(usesLynxCatch);
+    for (const fn of handler) {
+      addVaporEventListener(el, event, fn, options, forceCatch);
+    }
     return;
   }
   if (!handler) return;
-  const invoker = createInvoker(handler) as AnyFn & { _lynxCatch?: boolean };
-  if ((handler as { _lynxCatch?: boolean })._lynxCatch) {
-    invoker._lynxCatch = true;
-  }
-  el.addEventListener(event, invoker as (data: unknown) => void, options);
+  addVaporEventListener(el, event, handler, options);
+}
+
+/**
+ * Reactive event binding used by the Vapor compiler for dynamic event names.
+ *
+ * Delegate effect cleanup and array handling to upstream `onBinding`, but
+ * intercept its generated invoker before it reaches ShadowElement so the
+ * original handler's `_lynxCatch` marker survives. The adapter forwards the
+ * exact same invoker to removal, preserving upstream's onEffectCleanup
+ * identity and rebinding semantics.
+ * @public
+ */
+export function onBinding(
+  el: ShadowElement,
+  event: string,
+  handler: EventHandlerValue,
+  options: OnBindingOptions = {},
+): void {
+  if (!handler) return;
+
+  const handlers = Array.isArray(handler) ? handler : [handler];
+  const forceCatch = handlers.some(usesLynxCatch);
+
+  const target = {
+    addEventListener(
+      name: string,
+      invoker: EventListener,
+      eventOptions?: AddEventListenerOptions | boolean,
+    ) {
+      if (forceCatch) {
+        (invoker as unknown as { _lynxCatch?: boolean })._lynxCatch = true;
+      }
+      el.addEventListener(
+        name,
+        invoker as unknown as (data: unknown) => void,
+        eventOptions,
+      );
+    },
+    removeEventListener(name: string, invoker: EventListener) {
+      el.removeEventListener(
+        name,
+        invoker as unknown as (data: unknown) => void,
+      );
+    },
+  };
+
+  _onBinding(
+    target as unknown as Element,
+    event,
+    handler,
+    options,
+  );
 }
 
 // ---------------------------------------------------------------------------
