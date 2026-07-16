@@ -35,6 +35,7 @@ export const ZH = {
   "today's choice": '今天的选择',
   'a browser, everywhere': '哪里都有浏览器',
   'not native enough': '不够 Native',
+  'out-of-tree': '树外维护 out-of-tree',
   'native UI primitives': '原生 UI primitive',
   'custom rendering engine': '自定义渲染引擎',
   'open — an extension point': '<i></i>开 —— 一个扩展点',
@@ -275,11 +276,11 @@ export const ZH_NOTES = [
   // 6 Vue 入场找爹
   `<p><strong>Vue 入场 —— 站上顶端,俯视一排候选人。</strong>下面每一个,都有自己的"亲儿子"框架故事。而 Vue —— 全球最大的前端社区之一 —— 一直没有一个统治级的跨端方案。Weex 试过,NativeScript-Vue 试过,都没立住。</p><p>那就相亲吧,一个一个来。</p>`,
   // 7 Flutter
-  `<p><strong>候选一:Flutter。</strong>全靠自渲染 —— Skia/Impeller —— 平台覆盖确实漂亮:iOS、Android、桌面、甚至 Web。但上层唯一的门是 Dart。语言不对、生态不对:Vue 根本插不进去。这根线,压根连不上。</p>`,
+  `<p><strong>候选一:Flutter。</strong>全靠自渲染 —— Skia/Impeller —— 平台覆盖确实漂亮:iOS、Android、桌面、甚至 Web。但上层唯一的门是 Dart。语言不对、生态不对:Vue 根本插不进去。这根线,压根连不上。(注意 Web 那条边是虚线 —— Flutter Web 的质量出了名的粗糙。)</p>`,
   // 8 React Native
-  `<p><strong>候选二:React Native。</strong>原生 UI primitive,理念上离得最近。但整条链路绑死在 React 上:Metro、渲染器、编程模型。不是 Vue 不受欢迎 —— 是门的形状就不对。(而且 iOS/Android 之外的每个新端都要手动移植。)</p>`,
+  `<p><strong>候选二:React Native。</strong>原生 UI primitive,理念上离得最近。但整条链路绑死在 React 上:Metro、渲染器、编程模型。不是 Vue 不受欢迎 —— 是门的形状就不对。(Web 和桌面确实到得了 —— 图上是虚线 —— react-native-web 和各桌面端口都是树外维护,支持是"flaky"级别的。)</p>`,
   // 9 NativeScript
-  `<p><strong>候选三:NativeScript。</strong>这个 Vue <em>确实</em>接得上 —— 但只有一半:编程模型和生态过不去,渲染模型也不像 Web(没有真正的 CSS 布局引擎)。更糟的是,目标平台里甚至没有 Web —— 你要维护第二套代码,换来的覆盖面反而更小。投入产出比太低。</p>`,
+  `<p><strong>候选三:NativeScript。</strong>这个 Vue <em>确实</em>接得上 —— 但只有一半:编程模型和生态过不去,渲染模型也不像 Web(没有真正的 CSS 布局引擎)。更糟的是,目标平台里甚至没有 Web(桌面端有,但也是虚线级别)—— 你要维护第二套代码,换来的覆盖面反而更小。投入产出比太低。</p>`,
   // 10 Web · 今天的选择
   `<p><strong>于是社区留在了 Web</strong> —— 这就是今天的现实选择。它连接得毫无障碍:浏览器无处不在,壳家族(Electron、Tauri、Ionic —— 此刻在 Chrome 周围点亮)把缝隙都糊上了。但有一个问题任何壳都修不了:它还是<em>不够 Native</em> —— 这就是我们 demo 章节里见过的那个天花板。</p>`,
   // 11 Lynx 主动连上

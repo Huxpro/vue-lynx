@@ -1852,6 +1852,7 @@ body.is-blackout::after {
    the 1280x720 design canvas; magic-move carries the stable marks. */
 .logo--row { width: 10cqw; height: 10cqw; }
 .logo--seek { width: 13cqw; height: 13cqw; }
+.logo--seek-sm { width: 10.5cqw; height: 10.5cqw; } /* Vue on the tree slides */
 .logo.is-dim { opacity: 0.2; filter: saturate(0.35); }
 .logo.is-lit { filter: drop-shadow(0 0 20px rgba(93, 213, 168, 0.3)); }
 
@@ -1906,6 +1907,7 @@ body.is-blackout::after {
   z-index: 2;
 }
 .lg-plat svg { width: 100%; height: 100%; display: block; }
+.lg-plat.is-dim { opacity: 0.4; } /* flaky / out-of-tree targets */
 
 /* The lost-Vue question marks. */
 .lgq {
