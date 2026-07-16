@@ -12,7 +12,7 @@
     "examples:verify:status": "pnpm --filter vue-lynx-example-harness verify:status",
     "test": "pnpm --filter vue-lynx-testing-library run test",
     "test:dev-smoke": "node scripts/dev-smoke.mjs",
-    "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom && pnpm --filter vue-lynx-upstream-tests run test:local",
+    "test:upstream": "pnpm --filter vue-lynx-upstream-tests run test && pnpm --filter vue-lynx-upstream-tests run test:dom && pnpm --filter vue-lynx-upstream-tests run test:vapor && pnpm --filter vue-lynx-upstream-tests run test:local",
     "check-links": "node scripts/check-links.mjs",
     "lint": "biome check .",
     "changeset": "changeset",
