@@ -1,4 +1,14 @@
-const _fetch: typeof fetch = globalThis.fetch ?? fetch;
+export function hasFetch(): boolean {
+  return typeof globalThis.fetch === 'function' || typeof fetch === 'function';
+}
+
+function getFetch(): typeof fetch {
+  const fetchImpl = globalThis.fetch as typeof fetch | undefined;
+  if (typeof fetchImpl === 'function') return fetchImpl;
+  if (typeof fetch === 'function') return fetch;
+
+  throw new Error('fetch is not available in this runtime');
+}
 
 const BASE_URL = 'https://api.hackerwebapp.com';
 
@@ -53,7 +63,7 @@ export async function fetchFeed(
   feed: string,
   page: number,
 ): Promise<FeedItem[]> {
-  const res = await _fetch(`${BASE_URL}/${feed}?page=${page}`);
+  const res = await getFetch()(`${BASE_URL}/${feed}?page=${page}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch ${feed} page ${page}`);
   }
@@ -61,7 +71,7 @@ export async function fetchFeed(
 }
 
 export async function fetchItem(id: number): Promise<ItemDetail> {
-  const res = await _fetch(`${BASE_URL}/item/${id}`);
+  const res = await getFetch()(`${BASE_URL}/item/${id}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch item ${id}`);
   }
@@ -69,7 +79,7 @@ export async function fetchItem(id: number): Promise<ItemDetail> {
 }
 
 export async function fetchUser(id: string): Promise<UserData> {
-  const res = await _fetch(
+  const res = await getFetch()(
     `https://hacker-news.firebaseio.com/v0/user/${id}.json`,
   );
   if (!res.ok) {
