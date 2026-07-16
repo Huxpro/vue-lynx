@@ -35,6 +35,10 @@ Vue Lynx compiles this wrapper to a transparent built-in component. Its attribut
 
 Only one `<page>` wrapper is allowed, and it must be the outermost element representing the screen. Do not nest it or render multiple wrappers. As with Lynx itself, the containing native view controls the page dimensions: `width`, `height`, `left`, and `top` cannot resize or reposition the page directly.
 
+:::warning Lynx engine compatibility
+Explicit `<page>` root reuse is verified with Lynx SDK 1.4.0 on iOS 18.5 and iOS 26.2 simulators. Older Lynx SDKs have not been verified. Use SDK 1.4.0 or later when relying on an explicit `<page>` wrapper; when targeting an older engine, omit the wrapper and let Vue Lynx use the automatically created native page.
+:::
+
 ## Reactivity + Composables
 
 Vue Lynx reuses 100% of Vue's reactivity core (`@vue/reactivity`). Every reactivity API works identically to standard Vue, with no Lynx-specific caveats or adaptations.
