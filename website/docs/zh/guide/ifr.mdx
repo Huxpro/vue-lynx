@@ -143,4 +143,6 @@ Vue Lynx 当前不使用 Lynx 的二进制 `elementTemplates` bundle section、`
 | **IFR + ET** | `IFR=true, ET=default` | **333.3 ms（−17%）** | **1.3 ms** | 1.35x | ~2.26x |
 | IFR without ET | `IFR=true, ET=false` | 354.4 ms（−12%） | 8.4 ms | 1.36x | ~2.26x |
 
-元素模板可按屏幕静态程度把记录的 ops 载荷缩小 3–1000 倍；一个 1400 元素的静态密集场景从约 78 KB 降到 69 字节。完整数据与方法见[策略 benchmark](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md)、[全示例扫描](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/EXAMPLES-REPORT.md)和[真实浏览器验证](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/VERIFICATION.md)。
+元素模板可按屏幕静态程度把记录的 ops 载荷缩小 3–1000 倍；一个 1400 元素的静态密集场景从约 78 KB 降到 69 字节。
+
+这张表只是摘要。完整的测量数据——七 variant 策略阶梯、全示例逐项 FCP/TTI/体积、Lynx for Web 真实双线程与 ReactLynx 的对照、以及单线程裸 Web 基线分解——见专门的 [IFR 性能数据](/zh/guide/ifr-benchmarks)页面。

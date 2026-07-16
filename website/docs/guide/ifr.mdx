@@ -206,7 +206,10 @@ end-to-end trace.
 
 Element Templates reduce the recorded ops payload by 3–1,000x depending on how
 static the screen is; a 1,400-element static-heavy scene drops from about 78 KB
-to 69 bytes. Full data and methodology are in the
-[strategy benchmark](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md),
-[all-examples sweep](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/EXAMPLES-REPORT.md),
-and [real-browser verification](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/VERIFICATION.md).
+to 69 bytes.
+
+This table is a summary. The full measurement campaigns — the seven-variant
+strategy ladder, per-example FCP/TTI/size across the whole example suite, the
+real-browser dual-thread comparison against ReactLynx, and the single-threaded
+plain-web decomposition — are on the dedicated
+[IFR Benchmarks](/guide/ifr-benchmarks) page.

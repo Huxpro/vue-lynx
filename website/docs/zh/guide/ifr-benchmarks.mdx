@@ -1,0 +1,186 @@
+# IFR 性能数据
+
+本页收录支撑[首屏直出（IFR）](/zh/guide/ifr)与元素模板的全部测量数据。三轮
+campaign 回答三个不同的问题，贯穿它们的是同一条方法学结论：**单进程测量只能
+看到 JS 成本——IFR 的核心收益是结构性的（把后台线程启动 + IPC 从关键路径上
+移除），只有跨真实线程边界才能显现。**下表均为中位数；完整方法学与原始数据
+见仓库（[策略基准](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md)、
+[全示例扫描](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/EXAMPLES-REPORT.md)、
+[真实浏览器验证](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/VERIFICATION.md)）。
+
+## 1. 策略阶梯——每种 IFR 设计的 JS 成本
+
+在收敛到当前设计之前，七种渲染策略被逐一原型化，对同样的逻辑首屏、经同一
+Element PAPI 表面测量。`bg-baseline` 与 `ifr-replay` 是真实线上代码；
+`ifr-block-tpl` 成为了线上的元素模板；其余为保留参考的原型。所有 variant
+的渲染文档逐字节一致（对真实 jsdom PAPI 环境验证）。
+
+场景由同一 DSL 生成，约 1000–1400 元素：**static-heavy**（落地页/骨架屏，
+模板静态占比 99.7%）、**content**（卡片流，37%）、**list**（v-for，12%）。
+
+### Warm 渲染耗时，`--jitless` V8（解释器 ≈ 主线程引擎代理）
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| bg-baseline（无 IFR） | 11.86 ms | 9.36 ms | 6.87 ms |
+| ifr-replay（线上 `enableIFR`） | 10.94 ms | 8.40 ms | 6.57 ms |
+| ifr-direct（原型） | 8.17 ms | 6.36 ms | 4.89 ms |
+| ifr-static-tpl（原型） | 1.11 ms | 5.29 ms | 4.00 ms |
+| **ifr-block-tpl（线上 `enableElementTemplates`）** | **0.74 ms** | **1.26 ms** | **1.44 ms** |
+| ifr-vapor（原型上界） | 0.53 ms | 0.55 ms | 0.46 ms |
+| papi-floor（参照） | 0.54 ms | 0.39 ms | 0.31 ms |
+
+### Cold 首次执行，`--jitless`（模拟设备一次性首帧）
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| ifr-replay | 18.0 ms | 16.4 ms | 11.7 ms |
+| **ifr-block-tpl** | **4.2 ms** | **5.3 ms** | **4.9 ms** |
+| ifr-vapor | 1.4 ms | 1.2 ms | 0.8 ms |
+
+### 需要跨线程传输的 ops 载荷
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| replay / baseline | 77.6 KB | 60.4 KB | 45.1 KB |
+| **元素模板** | **69 B** | **9.2 KB** | **17.1 KB** |
+
+解读：replay IFR 不减少 JS 工作量——它搬运工作（收益在于首帧**何时**绘制，
+而非跑了多少 JS）。元素模板是拐点：所有场景形状下 7–15×，且协议缩减同样
+惠及普通管线与每次更新。Vapor 式无 vdom 设计贴着 PAPI 地板，仍是跟踪中的
+endgame；其原型省略了 reactive-effect 簿记，数字应视为乐观上界。
+
+## 2. 全示例——真实 bundle 上的 FCP、TTI 与体积
+
+仓库中每个示例都以三种配置（off / ifr / ifr+et）构建，作为真实 bundle 的
+两半在 PAPI-over-jsdom 环境中执行（每项 5 次取中位，`--jitless`，设备代理：
+主线程 parse 剔除，等价于 lepus 字节码预编译）。23 个可构建示例中 22 个在
+三配置下渲染出逐字节一致的最终文档。
+
+**中位数：FCP ×1.04（ifr）/ ×1.02（ifr+et），TTI ×1.36 / ×1.35，
+`main.lynx.bundle` gzip ×2.26。**纯 JS 工作量意义上 FCP 是中性的——真正的
+收益来源见第 3 节。
+
+| example | FCP off | FCP ifr | ΔFCP | FCP ifr+et | TTI off | TTI ifr | ΔTTI | nodes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 7guis | 65.6 | 63.1 | −4% | 64.3 | 65.6 | 76.0 | +16% | 169 |
+| basic | 32.0 | 34.3 | +7% | 33.7 | 32.0 | 44.0 | +38% | 9 |
+| css-features | 43.3 | 50.0 | +15% | 44.2 | 43.3 | 63.3 | +46% | 51 |
+| gallery | 66.6 | 65.0 | −2% | 69.5 | 66.6 | 89.4 | +34% | 4 |
+| hackernews-css | 40.0 | 35.4 | −11% | 38.9 | 40.0 | 58.8 | +47% | 14 |
+| hackernews-tailwind | 55.9 | 53.0 | −5% | 52.2 | 55.9 | 76.1 | +36% | 20 |
+| hello-world | 33.5 | 35.6 | +6% | 36.0 | 33.5 | 45.7 | +36% | 16 |
+| keep-alive | 47.7 | 44.5 | −7% | 46.5 | 47.7 | 57.0 | +19% | 56 |
+| main-thread | 26.7 | 24.3 | −9% | 24.5 | 26.7 | 33.0 | +24% | 3 |
+| networking | 24.9 | 30.5 | +23% | 35.1 | 24.9 | 30.5 | +23% | 0 |
+| option-api | 53.8 | 57.1 | +6% | 59.7 | 53.8 | 68.8 | +28% | 9 |
+| pinia | 40.1 | 38.7 | −4% | 39.4 | 40.1 | 50.0 | +25% | 19 |
+| provide-inject | 32.2 | 34.3 | +6% | 37.9 | 32.2 | 43.7 | +36% | 13 |
+| reactivity | 33.6 | 36.1 | +7% | 36.0 | 33.6 | 46.1 | +37% | 19 |
+| slots | 40.1 | 43.8 | +9% | 39.0 | 40.1 | 54.3 | +35% | 47 |
+| suspense | 42.3 | 38.4 | −9% | 38.3 | 42.3 | 51.1 | +21% | 16 |
+| swiper | 30.3 | 28.5 | −6% | 29.8 | 30.3 | 41.1 | +36% | 47 |
+| tailwindcss | 22.5 | 25.8 | +15% | 20.9 | 22.5 | 36.9 | +64% | 71 |
+| todomvc | 17.9 | 21.6 | +21% | 20.7 | 17.9 | 31.4 | +76% | 11 |
+| todomvc-day1 | 20.4 | 20.1 | −2% | 15.9 | 20.4 | 29.4 | +44% | 7 |
+| transition | 45.9 | 45.2 | −1% | 47.7 | 45.9 | 59.7 | +30% | 56 |
+| v-model | 39.1 | 40.9 | +4% | 40.7 | 39.1 | 52.3 | +34% | 26 |
+| vue-router | 43.2 | 45.4 | +5% | 45.0 | 43.2 | 60.3 | +40% | 6 |
+
+（单位 ms。`networking` 首帧 0 节点——fetch 驱动型，即文档标注"不建议开
+IFR"的画像。`todomvc-codex` 测量时应用代码线程不兼容——渲染期访问浏览器
+全局，之后已在 example 层修复。）
+
+### Bundle 体积（gzip，KiB）
+
+| example | off | ifr | Δ | ifr+et |
+| --- | --- | --- | --- | --- |
+| hello-world | 34.5 | 76.3 | +121% | 77.0 |
+| gallery | 37.2 | 80.0 | +115% | 80.1 |
+| hackernews-css | 72.6 | 179.1 | +147% | 180.7 |
+| networking | 57.5 | 145.5 | +153% | 146.1 |
+| tailwindcss | 36.2 | 79.0 | +118% | 81.0 |
+| **中位（全示例）** | | | **×2.26** | |
+
+翻倍的 bundle 是 IFR 的最主要成本：主线程段从 ~17 KiB（仅 worklet 注册）
+增长到 78–195 KiB（Vue 运行时 + 应用副本）。元素模板在此之上仅增加约 1%。
+这次扫描还发现并修复了三个真实 bug（`SystemInfo` 覆写、数字样式烘焙绕过
+auto-px 归一化、CSS Modules 令主线程 bundle 崩溃）——四种引擎模式的完整
+per-example 表格见[扫描报告](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/EXAMPLES-REPORT.md)。
+
+## 3. 真实线程——Lynx for Web，以 ReactLynx 为对照
+
+上面的表里 FCP 大致是*持平*的——因为单进程中 JS 工作量守恒。为验证收益的
+结构性来源，同样的 bundle 在 Lynx for Web 上重新测量：后台运行时跑在真实
+Web Worker 中、真实 postMessage IPC、headless Chromium（FCP = `<lynx-view>`
+插入 → 首次绘制内容，7 个全新浏览器 context 取中位）。ReactLynx 作为参照
+对照组，用空主线程首屏的方式模拟其 IFR 关闭。
+
+先看对照实验：**同一单进程 harness 中，ReactLynx 的 FCP 同样持平（±4%）、
+TTI 同样回退**——参照实现在没有线程边界时同样无法展示自己的招牌特性。
+再看真实线程：
+
+### 无 CPU 节流
+
+| bundle | FCP off | FCP ifr | Δ | FCP ifr+et |
+|---|---|---|---|---|
+| vue hello-world | 92.0 ms | 74.3 ms | **−19%** | 73.4 ms |
+| vue gallery（304 节点） | 127.9 ms | 106.2 ms | **−17%** | 110.6 ms |
+| vue hackernews-css | 114.9 ms | 114.1 ms | ~0% | 114.4 ms |
+| **ReactLynx 探针（85 节点）** | 99.2 ms | 68.9 ms | **−31%** | — |
+
+### 4× CPU 节流（移动端代理）
+
+| bundle | FCP off | FCP ifr | Δ | FCP ifr+et |
+|---|---|---|---|---|
+| vue hello-world | 283.4 ms | 266.2 ms | −6% | 268.5 ms |
+| vue hello-world（前一轮会话） | 402.9 ms | 354.4 ms | **−12%** | **333.3 ms（−17%）** |
+| vue hackernews-css | 314.0 ms | 377.4 ms | **+20%** ⚠ | 391.9 ms |
+| **ReactLynx 探针** | 303.1 ms | 266.6 ms | **−12%** | — |
+
+Vue Lynx 的 IFR 拿到了与 ReactLynx 同一类的收益（可比屏幕上 −17…−19% vs
+−31%），CPU 节流下元素模板反超纯 IFR。hackernews 的**反转**（+20%）正是
+画像指南的可视化：web 平台没有 lepus 字节码预编译，翻倍 bundle 的解析成本
+落在 FCP 路径上——大 bundle + 纯骨架首屏付出体积却没有收益。原生端预编译
+字节码会把这一项压缩到接近零。
+
+### 距离单线程裸 Web 有多远？
+
+为区分双线程税与平台层成本，同样的屏幕用单线程原生基线重新渲染：plain Vue
+（`@vue/runtime-dom`）与 plain Preact（ReactLynx 的同款 preact fork 指回
+真实 DOM）——各测 **warm**（框架在 t0 前解析）与 **cold**（框架解析落在
+FCP 路径上）两种口径。以 ReactLynx 探针屏、无节流为例分解：
+
+| 组成 | 成本 | 证据 |
+|---|---|---|
+| 渲染 85 个元素 + 绘制（preact on DOM） | ~16 ms | plain-preact warm |
+| + 框架拉取+解析落在 FCP 路径 | +13 ms | cold − warm |
+| + Lynx-for-Web 平台层 | +40 ms | rl-ifr − plain-preact cold |
+| + 后台启动 + hydration IPC 往返 | +30 ms | rl-noifr − rl-ifr |
+
+线程边界的成本约 30 ms，**IFR 移除的正是这一片**。与裸 Web 的剩余差距是
+web 宿主的仿真层（worker 创建、bundle 协议、PAPI→DOM 桥接、WASM 样式
+引擎）——这是每个宿主自己的常数项，原生 Lynx 的平台层是原生代码，不付这笔。
+
+## 4. 原生引擎观察
+
+全示例套件已在原生模拟器（LynxExplorer，Lynx SDK 1.4 / PrimJS）上验证：
+24/25 通过、**0 次 hydration mismatch**，off 与 IFR+ET 视觉一致（SSIM ≥
+0.9977；scoped CSS、烘焙 inline style 与 auto-px 语义在原生引擎全部正确）。
+单次冷启动录屏显示 IFR 首帧内容提前约 0.3 s（gallery）到约 1.2 s（7guis）
+——是机制方向的确认，不作为稳定 benchmark。
+
+## 复现
+
+```bash
+# 策略阶梯 + 正确性 oracle
+pnpm --filter vue-lynx-ifr-bench run check
+pnpm --filter vue-lynx-ifr-bench run bench
+
+# 全示例扫描
+node packages/ifr-bench/examples-sweep/orchestrate.mjs <dir>
+node packages/ifr-bench/examples-sweep/sweep.mjs <dir>
+
+# 真实浏览器（Lynx for Web）测量，含 plain-web 基线
+node packages/ifr-bench/web-harness/run-browser.mjs <bundlesDir> [runs] [throttle]
+```
