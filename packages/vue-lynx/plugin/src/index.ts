@@ -127,7 +127,11 @@ export interface PluginVueLynxOptions {
    * directives, `<list>`) always stay on the normal vdom path; lowering is
    * purely an optimization and never changes rendering semantics.
    *
-   * @defaultValue false
+   * Defaults to the value of `enableIFR`: enabling IFR also enables element
+   * templates unless this option is explicitly set to `false`. It can still
+   * be enabled independently when IFR is off.
+   *
+   * @defaultValue enableIFR
    */
   enableElementTemplates?: boolean;
 
@@ -179,8 +183,8 @@ export function pluginVueLynx(
     debugInfoOutside = true,
     autoPixelUnit = true,
     enableIFR = false,
-    enableElementTemplates = false,
   } = options;
+  const enableElementTemplates = options.enableElementTemplates ?? enableIFR;
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
