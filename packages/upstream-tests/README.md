@@ -121,11 +121,15 @@ Since we run upstream test files from outside the `vuejs/core` monorepo, three m
 
 ---
 
-## Legacy runtime-core/runtime-dom Skip Analysis
+## Skip Analysis
 
-The detailed counts below are retained from the original runtime-core/runtime-dom migration as a rationale taxonomy; they are not the current command totals. The current collected counts are in the suite table above, and the machine-checked JSON skiplists are the source of truth.
+Both migrations carry a skip inventory. This section analyzes what those skips actually mean, first per mode, then head-to-head. The one-line summary: **in neither mode is the skip count a list of broken things** — the overwhelming majority of non-running tests are either impossible outside a browser/SSR host, test-infrastructure artifacts, or semantics vue-lynx intentionally implements differently (with local tests of its own). The machine-checked JSON skiplists are the source of truth for entries; the counts below are the analysis snapshot.
 
-### Structurally impossible (77 skips)
+### vdom (runtime-core / runtime-dom) skip analysis
+
+Current run on this branch: runtime-core 493 pass / 84 skip (25 suites), upstream runtime-dom 60 pass / 46 skip (7 suites). The detailed counts below are retained from the original migration as a rationale taxonomy; entry-level truth lives in `skiplist.json` / `skiplist-dom.json`.
+
+#### Structurally impossible (77 skips)
 
 These tests import Vue's private internal symbols (`queueJob`, `normalizeVNode`, `currentInstance`, `targetMap`, etc.) via relative paths like `from '../src/scheduler'`. Our import-rewrite plugin maps these to the published ESM bundle, which only exports public API. The imports silently resolve to `undefined`.
 
@@ -142,9 +146,9 @@ These tests import Vue's private internal symbols (`queueJob`, `normalizeVNode`,
 | SSR                          | 1     | Requires `@vue/server-renderer`                             |
 | Bridge: no full `render()`  | 6     | Tests need `render(h(...), container)`, bridge only supports `patchProp` |
 
-### Substantive skips (20 skips)
+#### Substantive skips (20 skips)
 
-#### Web/Lynx platform differences (14 tests)
+##### Web/Lynx platform differences (14 tests)
 
 Lynx doesn't support certain Web platform capabilities. If Lynx adds support for any of these, the corresponding tests can be unskipped directly.
 
@@ -155,13 +159,13 @@ Lynx doesn't support certain Web platform capabilities. If Lynx adds support for
 | Event system differences    | 4     | native `onclick` string, Vue timestamp guard, type check  |
 | Form element DOM behavior   | 1     | `<select>` / `<option>` value reflection                  |
 
-#### Serialization limitations (3 tests)
+##### Serialization limitations (3 tests)
 
 | Subcategory                 | Count | Root cause                                                |
 | --------------------------- | ----- | --------------------------------------------------------- |
 | `JSON.stringify` limitation | 3     | `Symbol` values lost in cross-thread serialization        |
 
-### Teleport-specific skips (12 skips)
+#### Teleport-specific skips (12 skips)
 
 The `components/Teleport.spec.ts` suite has 38 tests; 26 pass through our adapter, 12 are skipped.
 
@@ -171,11 +175,11 @@ The `components/Teleport.spec.ts` suite has 38 tests; 26 pass through our adapte
 | Template compiler (`compile()`)    | 2     | `compile` is not available in this build (requires `vue/dist/vue.esm-bundler.js`) |
 | Name collision (`"should work"`)   | 2     | Accidentally matched by existing skiplist entry for directives suite |
 
-### vModel-specific skips (22 skips)
+#### vModel-specific skips (22 skips)
 
 The `directives/vModel.spec.ts` suite has 26 tests; 4 pass through the bridge, 22 remain skipped.
 
-#### Passing (4 tests)
+##### Passing (4 tests)
 
 These tests exercise `vModelText` through the full dual-thread pipeline via the bridge's `render()` function. The bridge forwards DOM `input`/`change` events to PAPI `bindEvent:input`/`bindEvent:confirm` listeners with Lynx-style `detail.value` payloads, and patches `setAttribute('value')` to also sync the `.value` DOM property.
 
@@ -184,7 +188,7 @@ These tests exercise `vModelText` through the full dual-thread pipeline via the 
 - `should work with textarea` -- textarea two-way binding
 - `should support modifiers` -- `.number`, `.trim`, `.lazy` (bridge maps `change` -> `confirm`)
 
-#### Skipped: Lynx element/event model (22 tests)
+##### Skipped: Lynx element/event model (22 tests)
 
 | Subcategory                        | Count | Root cause                                                 |
 | ---------------------------------- | ----- | ---------------------------------------------------------- |
@@ -195,3 +199,54 @@ These tests exercise `vModelText` through the full dual-thread pipeline via the 
 | Composition events                 | 1     | Uses `compositionstart`/`compositionend` DOM events; Lynx uses `detail.isComposing` |
 | MutationObserver                   | 1     | Asserts no unnecessary DOM writes; bridge value sync interferes |
 | Numeric edge case                  | 1     | Leading-zero value comparison + `vModelDynamic` behavior    |
+
+### runtime-vapor skip analysis
+
+The Vapor inventory is **closed**: all 46 upstream spec files (1,503 static tests) are classified as included (30 files, 671 tests) or excluded-with-reason (16 files, 832 tests); config load fails on anything unclassified. Of the included tests, 545 pass, 120 skip, 5 are upstream todos. That leaves 952 non-running tests (120 skips + 832 in excluded files). Categorized:
+
+| Category | Skipped tests | Suite-level skips | Excluded-file tests | Total | Share |
+| --- | --- | --- | --- | --- | --- |
+| VDOM/Vapor interop | 18 | 59 | 111 (`vdomInterop`) | 188 | 19.7% |
+| SSR / hydration | 6 | 4 | 344 (`hydration`, `hydrateFragment`) | 354 | 37.2% |
+| Browser-only platform | 14 | — | 210 (`customElement`, `hmr`, `dom/event`, `dom/prop`, `svg`, `mathML`) | 224 | 23.5% |
+| Intentional Lynx differences | 10 | — | 161 (`Teleport`, `scopeId`, `Transition(+Group)`, `vModel`, `useCssVars`) | 171 | 18.0% |
+| Test infrastructure (dist `__DEV__`) | 9 | — | — | 9 | 0.9% |
+| Harness gap (deferred) | — | — | 6 (`Suspense`) | 6 | 0.6% |
+
+Reading the categories:
+
+- **Interop + SSR/hydration are 56.9% of everything that doesn't run — and neither is a Lynx-compatibility signal.** Hydration requires server-rendered browser markup (no SSR surface exists on Lynx in either mode), and VDOM/Vapor interop is a mode-mixing feature vue-lynx explicitly does not support (upstream interop is hard-wired to the browser renderer singleton).
+- **Browser-only platform (23.5%)** mirrors the vdom analysis's SVG/Web-Components category: custom elements, MathML/SVG namespaces, browser event delegation/bubbling/timestamps, `CSSStyleDeclaration` details, dev-server HMR, `HTMLTemplateElement.content`, DOM error contracts, and `[object HTMLDivElement]` constructor tags. These would fail on any non-browser host, not just Lynx.
+- **Intentional Lynx differences (18.0%)** are the semantics vue-lynx deliberately reimplements — Teleport, Transition, `v-model`'s `detail.value` protocol, scope classes instead of `data-v-*` attributes, ShadowElement-based CSS vars, `on`/`delegate` event routing, `setHtml` as a warning no-op. Each has its own Lynx-flavored local tests (`src/vapor/`, testing-library); the upstream versions assert browser behavior we specifically chose not to have.
+- **Test infrastructure is only 0.9%** (nine tests that mutate the source-level `__DEV__` global, which cannot affect the already-compiled installed bundle). Contrast with the vdom analysis, where structurally-impossible imports were the *largest* category (77 of 131): the Vapor harness's raw-bundle re-export technique (`exposeRuntimeVaporTestInternals`) eliminates the private-import problem almost entirely. Retrofitting the same technique to the runtime-core suite is an open follow-up that could unskip a large slice of those 77.
+- **Found bugs: zero remain.** The port initially recorded 19 templateRef skips for a real bug it discovered (ShadowElement was proxyable by Vue reactivity); the `__v_skip` fix landed separately and 18 of the 19 now pass (the 19th was re-attributed to a browser constructor-tag assertion). This is the audit value of upstream ports: the suite found a user-facing bug that months of hand-written tests had not.
+
+### vdom vs Vapor: which mode is friendlier to Lynx?
+
+"Friendly" here means: *how much of the upstream contract runs on Lynx's host surface, and how much simulation was needed to make it run.* Two data axes:
+
+**1. Pass rates on comparable ground.**
+
+| Metric | vdom (runtime-core) | vdom (runtime-dom) | Vapor (runtime-vapor) |
+| --- | --- | --- | --- |
+| Upstream universe (static tests) | 1,018 | 232 | 1,503 |
+| Inventoried for running | 577 (25 files) | 106 (7 files) | 671 (30 files) |
+| Passing | 493 | 60 | 545 |
+| Pass rate of inventoried | 85.4% | **56.6%** | **81.3%** |
+| Non-inventoried tests | 468 (silent) | 126 (silent) | 832 (all reasoned) |
+
+runtime-core's high pass rate is expected and *not* a host signal — it tests the renderer-agnostic vdom diff through an in-memory adapter. The host-integration comparison is **runtime-dom (56.6%) vs runtime-vapor (81.3%)**: upstream tests that touch the actual element surface pass at a substantially higher rate in Vapor, even though runtime-vapor also covers component/renderer behavior that runtime-dom doesn't. (Caveat: the vdom configs predate the closed-inventory methodology, so their denominators carry 594 silently-unincluded tests; the true vdom ratios are somewhat uncertain in both directions.)
+
+**2. Shimming depth — the stronger signal.**
+
+| | vdom | Vapor |
+| --- | --- | --- |
+| Adapter code | `lynx-runtime-test.ts` (443 LOC) + `lynx-runtime-dom-bridge.ts` (631 LOC) | `lynx-runtime-vapor-bridge.ts` (77 LOC) + `vapor-upstream-setup.ts` facade (542 LOC) |
+| Nature | **Behavioral**: a replacement renderer, plus a bridge that re-implements `render()` → ops → MT → PAPI → jsdom with DOM event forwarders and value syncing — simulation sits *in the execution path* | **Assertion-only**: production `vue-lynx/vapor` + ShadowElement run unmodified; the facade adds `innerHTML` serialization, selectors, and `attributes` for *reading* results, restored after the run |
+| What runs in production form | patchProp slice (bridge routes it); renderer core replaced by test adapter | the entire runtime: template cloning, block ops, component mount/unmount, events, refs |
+
+This is the crux: **Vapor's host contract is narrow enough (clone a template + imperative setters on nodes) that upstream tests run against the production surface directly.** The vdom DOM layer's contract is "be a browser", which required the heaviest simulation in this repo to satisfy. The same asymmetry shows up in production code: Vapor mode reuses `@vue/runtime-vapor` unmodified over the ShadowElement DOM-compat surface, whereas vdom mode needs a full custom renderer (`node-ops.ts`).
+
+**Where Vapor is *less* friendly**, for balance: its templates are HTML strings, so vue-lynx ships a real HTML parser for `template()` (a production cost vdom never pays); `HTMLTemplateElement.content` semantics are unsupported (7 skips); testing its internals required exact-text surgery on the installed bundle; and `dom/prop.spec.ts` / `dom/event.spec.ts` are currently excluded wholesale while vdom's equivalents (`patchProps`, `patchEvents`) do run through the bridge — a coverage debt noted as follow-up.
+
+**Verdict**: on the host-integration axis, Vapor is measurably the better fit for Lynx — higher upstream pass rate on element-surface tests (81% vs 57%), zero behavioral shimming needed, and a non-running remainder dominated by categories orthogonal to Lynx (interop + SSR = 57%). vdom's renderer core is equally portable by design; its browser-emulation layer is where the friction concentrates. This is a statement about *contract fit*, not performance — for speed comparisons see the benchmark docs.
