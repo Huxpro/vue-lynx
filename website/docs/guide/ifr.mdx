@@ -80,6 +80,26 @@ Use IFR when your screen has synchronous, useful content:
 
 The in-repository report at `packages/ifr-bench/VAPOR-IFR-REPORT.md` records the production implementation's JavaScript cost, real-browser FCP at 1× and 4× CPU, bundle sizes, and comparison with the VDOM reference.
 
+## Measured results
+
+The numbers below come from one generated single-file component built four ways from identical source, so renderer mode and `enableIFR` are the only variables. The page mirrors a content feed: a header plus 125 cards, 1,004 elements, each card carrying one dynamic class and two dynamic text bindings. The harness runs the emitted `.web.bundle` files in Lynx for Web — genuinely dual-threaded, with the Background runtime in a Web Worker — in headless Chromium, seven fresh browser contexts per entry, reporting medians. A 10-element example rides along to show the small-page profile.
+
+First Contentful Paint, `enableIFR: false` → `true`:
+
+| Entry | 1× CPU | 4× CPU |
+|---|---|---|
+| Vapor, 1,004 elements | 162 ms → 139 ms (**−14%**) | 483 ms → 511 ms (**+6%**) |
+| VDOM, 1,004 elements | 147 ms → 119 ms (−19%) | 474 ms → 443 ms (−7%) |
+| Vapor, 10 elements | 104 ms → 77 ms (−27%) | 283 ms → 243 ms (−14%) |
+
+How to read this:
+
+- IFR's win is structural: the Main Thread paints during `loadTemplate`, before Background startup and the first IPC round-trip. At 1× the win is consistent at both page sizes.
+- The 4× row is the honest caveat. IFR adds the application to the Main-Thread bundle — for the Vapor entry above, +11.3 KB gzip on the Main-Thread section (+16.4 KB total; the equivalent VDOM entry pays +14.0 KB / +14.9 KB). On a slow CPU, parsing and evaluating that larger Main-Thread program can outweigh the saved startup on large screens. Measure your target device before shipping.
+- Vapor IFR's per-frame JavaScript cost sits between the VDOM replay path and the theoretical compiler-direct floor: under `--jitless` on the same 1,000-element scene, the Background baseline costs 6.8 ms, VDOM replay IFR 5.3 ms, real Vapor IFR 2.1 ms, and an optimistic no-runtime prototype 0.3 ms. Treat these as relative — the remaining gap is dependency-tracked effects and protocol bookkeeping that a future compiler-direct first-frame target could remove.
+
+Full methodology, raw sample arrays, and bundle-size tables are in `packages/ifr-bench/VAPOR-IFR-REPORT.md` (see the review addendum for the current browser matrix).
+
 ## Account for current limitations
 
 Vapor IFR adds these constraints to [Vapor mode](/guide/vapor-mode#current-limitations):
