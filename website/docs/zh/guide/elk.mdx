@@ -54,6 +54,56 @@ lynx `develop` 构建的宿主上运行该变体；在当前已发布的 Explore
 上方的默认 Elk 示例——它的标签按条件渲染，无需 pager 元件。
 :::
 
+#### 换成原生 pager，到底要改多少代码？
+
+几乎不用。把整个应用切到原生 pager，只动了 **三个文件**：一个新增的
+`TabPager.vue`，以及承载可滑动标签页的两个页面（`ExplorePage.vue`、
+`NotificationsPage.vue`）。其余约 55 个源文件——masto.js 客户端、内容
+渲染器、路由、虚拟化 `<list>`——逐字节完全一致。
+
+在调用处就是一次直接替换。原来是手写的标签栏加上 `v-if` / `v-else-if`
+面板，任一时刻只有当前面板存在：
+
+```vue
+<!-- elk：一次只渲染一个面板 -->
+<view class="explore-tabs">
+  <view class="explore-tab" @tap="tab = 'posts'">…</view>
+  <view class="explore-tab" @tap="tab = 'tags'">…</view>
+</view>
+<scroll-view v-if="tab === 'posts'">…</scroll-view>
+<scroll-view v-else-if="tab === 'tags'">…</scroll-view>
+```
+
+……换成一个「每个面板一个具名 slot」的组件：
+
+```vue
+<!-- elk-viewpager：所有面板同时存活、可滑动 -->
+<TabPager v-model="tab" :tabs="tabs">
+  <template #posts>…</template>
+  <template #tags>…</template>
+</TabPager>
+```
+
+UI 侧的全部改动就是这次 `v-if` → slot 的重写——标签栏、下划线动画、
+以及 pager ↔ 标签的双向同步，统统搬进了 `TabPager`。
+
+只有一处不是机械替换，而它恰好把「原生翻页」的本质讲清楚了。用 `v-if`
+时只有可见面板存在，所以一个共享的 paginator 就够了。换成 pager 后，
+**所有面板同时挂载**、可以来回滑动——于是每个标签得各自保留自己的数据
+和滚动位置。通知页因此从「一个共享 feed」改成「每个标签一份 feed」：
+
+```diff
+- let pager = signedIn ? makePaginator() : empty;
+- const items = ref([]);          // 单个活动 feed，切标签即重置
++ const feeds = reactive({         // 每个面板一份 feed，滑动之间保留
++   all:     { items: [], state: 'idle' },
++   mention: { items: [], state: 'idle' },
++ });
+```
+
+这就是原生手感所要求的取舍：你放弃了「只渲染可见内容」，换来的是面板
+始终「热着」——滑走再滑回，还停在你离开时的位置，无需重新加载。
+
 ## 为什么 Elk 是一块试金石
 
 Elk 是一个约 196 个组件、55 个页面、50 个 composable 的 Nuxt 3 应用。

@@ -57,6 +57,60 @@ LynxExplorer**: 3.8.1 and earlier register neither `<viewpager>` nor
 above, whose tabs render conditionally and need no pager element.
 :::
 
+#### How much code does the native upgrade take?
+
+Almost none. Moving the whole app onto the native pager touches **three
+files**: a new `TabPager.vue`, plus the two pages that host swipeable tabs
+(`ExplorePage.vue`, `NotificationsPage.vue`). The other ~55 source files —
+the masto.js client, content renderer, router, virtualized `<list>` — are
+byte-for-byte identical.
+
+At the call site it's a straight swap. A hand-rolled tab bar with
+`v-if` / `v-else-if` panes, where only the active pane exists:
+
+```vue
+<!-- elk: one pane rendered at a time -->
+<view class="explore-tabs">
+  <view class="explore-tab" @tap="tab = 'posts'">…</view>
+  <view class="explore-tab" @tap="tab = 'tags'">…</view>
+</view>
+<scroll-view v-if="tab === 'posts'">…</scroll-view>
+<scroll-view v-else-if="tab === 'tags'">…</scroll-view>
+```
+
+…becomes a component with one named slot per pane:
+
+```vue
+<!-- elk-viewpager: all panes live, swipeable -->
+<TabPager v-model="tab" :tabs="tabs">
+  <template #posts>…</template>
+  <template #tags>…</template>
+</TabPager>
+```
+
+That `v-if` → slot rewrite is the whole story on the UI side — the tab bar,
+the underline animation, and the pager ↔ tab sync all move into `TabPager`.
+
+There's exactly one non-mechanical catch, and it's a neat illustration of
+what "native paging" actually means. With `v-if`, only the visible pane
+exists, so one shared paginator was fine. With the pager, **every pane is
+mounted at once** and you can swipe between them — so each tab has to keep
+its own data and scroll position. Notifications goes from one shared feed
+to one feed per tab:
+
+```diff
+- let pager = signedIn ? makePaginator() : empty;
+- const items = ref([]);          // one active feed, reset on tab switch
++ const feeds = reactive({         // one feed per pane, retained across swipes
++   all:     { items: [], state: 'idle' },
++   mention: { items: [], state: 'idle' },
++ });
+```
+
+That's the trade the native feel asks for: you give up "only render what's
+visible," and in return the panes stay warm — swipe away and back and
+you're exactly where you left off, no reload.
+
 ## Why Elk is a serious test
 
 Elk is a Nuxt 3 app with ~196 components, 55 pages and 50 composables.
