@@ -40,6 +40,7 @@ import {
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 import { VueLynxVaporTemplatePlugin } from './plugins/vapor-template-plugin.js';
+import { transformLynxEventDialect } from './vapor/event-dialect-transform.js';
 
 const require = createRequire(import.meta.url);
 
@@ -238,6 +239,28 @@ export interface PluginVueLynxOptions {
    * @defaultValue false
    */
   vaporBuildTimeTemplates?: boolean;
+
+  /**
+   * Normalize ReactLynx-style event props at compile time (issue #234, Part B).
+   *
+   * `@vue/compiler-vapor` compiles `:bindtap="fn"` to `setAttr(el, "bindtap",
+   * fn)`, which the `ShadowElement.setAttribute` chokepoint reroutes to event
+   * registration at runtime. With this on, a template-compiler `nodeTransform`
+   * rewrites statically-written dialect props to their `v-on` equivalent —
+   * `:bindtap` → `on(el, 'tap', fn)`, `:catchtap` → `on(el, 'tap',
+   * withModifiers(fn, ['stop']))` — i.e. the exact code the native `@tap` /
+   * `@tap.stop` sugar produces. This moves the #219 class of bug ("a new
+   * pipeline forgets to intercept event props") from runtime discipline to a
+   * compile-time guarantee.
+   *
+   * The runtime chokepoint stays as the safety net for dynamic keys, v-bind
+   * spreads, and precompiled code; `global-bind*`/`global-catch*` and
+   * `main-thread-*` are intentionally left to it. Only meaningful together
+   * with {@link vapor}.
+   *
+   * @defaultValue false
+   */
+  vaporNormalizeEventDialect?: boolean;
 }
 
 /**
@@ -265,8 +288,25 @@ export function pluginVueLynx(
     includeWorkletPackages = [],
     vapor = false,
     vaporBuildTimeTemplates = false,
+    vaporNormalizeEventDialect = false,
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
+
+  // Vue SFC compiler options, plus the issue #234 Part B dialect-normalization
+  // transform appended (vapor + vaporNormalizeEventDialect only) so it composes
+  // with the resolved nodeTransforms rather than replacing them.
+  const baseCompilerOptions = resolveVueLynxCompilerOptions(
+    enableElementTemplates,
+  );
+  const vueSfcCompilerOptions = vapor && vaporNormalizeEventDialect
+    ? {
+      ...baseCompilerOptions,
+      nodeTransforms: [
+        ...baseCompilerOptions.nodeTransforms,
+        transformLynxEventDialect as (typeof baseCompilerOptions.nodeTransforms)[number],
+      ],
+    }
+    : baseCompilerOptions;
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
@@ -275,9 +315,12 @@ export function pluginVueLynx(
         experimentalInlineMatchResource: true,
         // Element templates: lower eligible static-structure subtrees into
         // main-thread element templates (single INSTANTIATE op + holes).
-        compilerOptions: resolveVueLynxCompilerOptions(
-          enableElementTemplates,
-        ),
+        // Part B (#234): when vaporNormalizeEventDialect is on, APPEND the
+        // dialect-normalization transform to the resolved nodeTransforms (so it
+        // composes with transformPageElement / elementTemplateTransform rather
+        // than replacing them). Gated on `vapor` so the vdom compiler — which
+        // routes dialect props through patchProp — is untouched.
+        compilerOptions: vueSfcCompilerOptions,
       },
     }),
 
