@@ -102,6 +102,18 @@ export function enableIFR(): void {
   g['__VUE_LYNX_IFR_ENABLED__'] = true;
   g['__vueLynxIfrApplyOps'] = recordAndApply;
   g['__vueLynxIfrSealOps'] = sealIfrRender;
+
+  // Native Lepus realms have no timers. Dev builds of the user graph reach
+  // setTimeout during module evaluation (e.g. runtime-core's devtools-hook
+  // replay buffer sees the Vapor dom-shim's `window`), which is outside the
+  // runIfrRender fallback boundary — an uncaught throw there kills renderPage
+  // for the whole page, not just IFR. A timer that never fires is the correct
+  // semantic for the disposable MT realm: everything after handoff is
+  // discarded anyway.
+  if (typeof g['setTimeout'] !== 'function') {
+    g['setTimeout'] = (): number => 0;
+    g['clearTimeout'] = (): void => undefined;
+  }
   phase = 'enabled';
   recordedOps = [];
   recordedCursor = 0;
@@ -288,7 +300,22 @@ export function interceptPatchUpdate(data: string): boolean {
     incomingCursor += incomingArity + 1;
   }
 
-  if (patchOps.length > 0) applyOps(patchOps);
+  if (patchOps.length > 0) {
+    try {
+      applyOps(patchOps);
+    } catch (error) {
+      // A failed in-place patch leaves the adopted tree in an unknown state;
+      // the complete buffered BG history is still available, so rebuild from
+      // it instead of letting the throw escape vuePatchUpdate into Lepus.
+      console.error(
+        '[vue-lynx] IFR hydration patch failed; replaying the complete '
+          + 'background render.',
+        error,
+      );
+      fallbackToBackground();
+      return true;
+    }
+  }
 
   if (recordedCursor >= recordedOps.length) finishHydration();
   return true;
@@ -307,9 +334,20 @@ function fallbackToBackground(): void {
   // batch-by-batch preserves normal REMOVE/INSERT and list flush semantics.
   const history = backgroundHistory;
   clearIfrSelectorAttributeDeferral();
-  teardownIfrTree();
-  finishHydration(false);
-  for (const batch of history) applyOps(batch);
+  try {
+    teardownIfrTree();
+    for (const batch of history) applyOps(batch);
+  } catch (error) {
+    // vuePatchUpdate must remain a no-throw boundary. There is no further
+    // recovery below the authoritative replay itself; log and keep whatever
+    // portion of the BG tree was rebuilt.
+    console.error(
+      '[vue-lynx] IFR fallback replay failed; the page may be incomplete.',
+      error,
+    );
+  } finally {
+    finishHydration(false);
+  }
 }
 
 function finishHydration(adoptIfrTree = true): void {

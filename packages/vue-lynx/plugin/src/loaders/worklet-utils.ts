@@ -11,11 +11,24 @@ interface AstNode {
   [key: string]: unknown;
 }
 
-const PARSER_PLUGINS: ParserPlugin[] = [
-  'typescript',
-  'jsx',
-  ['importAttributes', { deprecatedAssertSyntax: true }],
-  'decorators-legacy',
+// Loaders see sources without a reliable dialect signal, and TypeScript's
+// angle-bracket type assertion (`<T>expr`, legal in .ts) is unparseable with
+// the jsx plugin enabled while JSX is unparseable without it. Try the plain
+// TS grammar first and fall back to the JSX grammar: real JSX always fails
+// the first pass (an element's closing tag is a syntax error after a type
+// assertion), so the cascade accepts both dialects.
+const PARSER_PLUGIN_SETS: ParserPlugin[][] = [
+  [
+    'typescript',
+    ['importAttributes', { deprecatedAssertSyntax: true }],
+    'decorators-legacy',
+  ],
+  [
+    'typescript',
+    'jsx',
+    ['importAttributes', { deprecatedAssertSyntax: true }],
+    'decorators-legacy',
+  ],
 ];
 
 function asAstNode(value: unknown): AstNode | null {
@@ -28,14 +41,17 @@ function asAstNode(value: unknown): AstNode | null {
 }
 
 function parseProgram(source: string): AstNode | null {
-  try {
-    return parse(source, {
-      sourceType: 'unambiguous',
-      plugins: [...PARSER_PLUGINS],
-    }).program as unknown as AstNode;
-  } catch {
-    return null;
+  for (const plugins of PARSER_PLUGIN_SETS) {
+    try {
+      return parse(source, {
+        sourceType: 'unambiguous',
+        plugins: [...plugins],
+      }).program as unknown as AstNode;
+    } catch {
+      // Try the next grammar.
+    }
   }
+  return null;
 }
 
 function programBody(program: AstNode | null): AstNode[] {
