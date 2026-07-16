@@ -18,6 +18,7 @@
 import {
   nextTick as _vueNextTick,
   createRenderer,
+  h as _vueH,
   // Re-export types need explicit imports for isolatedDeclarations
 } from '@vue/runtime-core';
 import type {
@@ -65,6 +66,11 @@ import {
 } from './main-thread-ref.js';
 import { nodeOps, resetNodeOpsState } from './node-ops.js';
 import { OP, pushOp, takeOps } from './ops.js';
+import {
+  Page,
+  PAGE_COMPONENT_NAME,
+  pageRootContextKey,
+} from './Page.js';
 import {
   resetRunOnBackgroundState,
   runOnBackground,
@@ -166,6 +172,7 @@ export function createApp(
   rootProps?: Record<string, unknown>,
 ): VueLynxApp {
   const internalApp = _createApp(rootComponent, rootProps);
+  internalApp.component(PAGE_COMPONENT_NAME, Page);
 
   const app: VueLynxApp = {
     get config() {
@@ -187,6 +194,7 @@ export function createApp(
 
     mount(): void {
       const root = createPageRoot();
+      internalApp.provide(pageRootContextKey, { root, owner: null });
       internalApp.mount(root);
     },
 
@@ -670,7 +678,52 @@ export { defineAsyncComponent } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/render-function.html#h | Vue docs}
  * @public
  */
-export { h } from '@vue/runtime-core';
+function isVNodeLike(value: unknown): boolean {
+  return value != null
+    && typeof value === 'object'
+    && '__v_isVNode' in value;
+}
+
+function normalizePageSlots(children: unknown): unknown {
+  if (
+    children != null
+    && typeof children === 'object'
+    && !Array.isArray(children)
+    && !isVNodeLike(children)
+  ) {
+    return children;
+  }
+  if (typeof children === 'function') {
+    return { default: children };
+  }
+  return { default: () => children };
+}
+
+const _hWithPageRoot = (...args: unknown[]): VNode => {
+  const [type, propsOrChildren, children] = args;
+  const vueH = _vueH as (...values: unknown[]) => VNode;
+  if (type !== 'page') {
+    return vueH(...args);
+  }
+
+  if (args.length === 1) {
+    return vueH(Page);
+  }
+  if (args.length === 2) {
+    const secondArgIsChildren = Array.isArray(propsOrChildren)
+      || typeof propsOrChildren === 'function'
+      || typeof propsOrChildren === 'string'
+      || typeof propsOrChildren === 'number'
+      || isVNodeLike(propsOrChildren);
+    return secondArgIsChildren
+      ? vueH(Page, null, normalizePageSlots(propsOrChildren))
+      : vueH(Page, propsOrChildren);
+  }
+
+  return vueH(Page, propsOrChildren, normalizePageSlots(children));
+};
+
+export const h: typeof _vueH = _hWithPageRoot as typeof _vueH;
 
 /**
  * Returns the internal instance of the current component. For advanced use cases and library authors.
@@ -1263,7 +1316,7 @@ export function withKeys(
 // Built-in components — Transition
 // ===========================================================================
 
-export { Transition, TransitionGroup };
+export { Page, Transition, TransitionGroup };
 
 // ===========================================================================
 // @internal — Testing utilities

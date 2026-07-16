@@ -50,6 +50,33 @@ let scheduled = false;
 let pendingAckResolve: (() => void) | null = null;
 let pendingAckPromise: Promise<void> | null = null;
 
+// Older Lynx engines apply callLepusMethod successfully but do not invoke its
+// callback. Never let nextTick()/Transition wait forever in that case.
+const ACK_FALLBACK_MS = 50;
+
+/** @internal Exported for deterministic fallback timing tests. */
+export function createFlushAck(
+  timeoutMs = ACK_FALLBACK_MS,
+): { promise: Promise<void>; resolve: () => void } {
+  let fulfill!: () => void;
+  let settled = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const promise = new Promise<void>((resolve) => {
+    fulfill = resolve;
+  });
+  const resolve = () => {
+    if (settled) return;
+    settled = true;
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    fulfill();
+  };
+  timer = setTimeout(resolve, timeoutMs);
+  return { promise, resolve };
+}
+
 /**
  * Returns a promise that resolves once the most recent ops batch has been
  * applied on the main thread.  If no ops are in flight, resolves immediately.
@@ -67,6 +94,7 @@ export function scheduleFlush(): void {
 /** Reset module state – for testing only. */
 export function resetFlushState(): void {
   scheduled = false;
+  pendingAckResolve?.();
   pendingAckResolve = null;
   pendingAckPromise = null;
 }
@@ -78,19 +106,23 @@ function doFlush(): void {
 
   // Create the ack promise BEFORE sending so that any `nextTick` call that
   // resolves after this point will chain on it.
-  pendingAckPromise = new Promise<void>((resolve) => {
-    pendingAckResolve = resolve;
+  const ack = createFlushAck();
+  pendingAckPromise = ack.promise;
+  pendingAckResolve = ack.resolve;
+  ack.promise.then(() => {
+    // A newer batch may already be in flight by the time an older fallback
+    // settles. Only clear the state that belongs to this acknowledgement.
+    if (pendingAckPromise === ack.promise) {
+      pendingAckResolve = null;
+      pendingAckPromise = null;
+    }
   });
 
   const app = lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
     { data: JSON.stringify(ops) },
-    () => {
-      // Main thread has finished applying the ops — resolve the promise.
-      pendingAckResolve?.();
-      pendingAckResolve = null;
-      pendingAckPromise = null;
-    },
+    // Main thread has finished applying the ops — resolve the promise.
+    ack.resolve,
   );
 }

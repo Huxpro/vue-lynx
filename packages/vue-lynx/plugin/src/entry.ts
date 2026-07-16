@@ -352,7 +352,14 @@ export function applyEntry(
     // These are sibling directories within the vue-lynx package root.
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
-    const vueInternalPkgDir: string | undefined = path.resolve(pkgRoot, 'internal');
+    const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
+    const isBootstrapModule = (resource: string): boolean => {
+      const resolvedResource = path.resolve(resource);
+      return resolvedResource === mainThreadPkgDir
+        || resolvedResource.startsWith(`${mainThreadPkgDir}${path.sep}`)
+        || resolvedResource === vueInternalPkgDir
+        || resolvedResource.startsWith(`${vueInternalPkgDir}${path.sep}`);
+    };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
     // constraint). This enforce:'post' rule runs worklet-loader-mt AFTER
@@ -382,10 +389,10 @@ export function applyEntry(
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
       .add(nodeModulesExcludeWithAllowlist)
-      .add(mainThreadPkgDir);
-    if (vueInternalPkgDir) {
-      workletMtExclude.add(vueInternalPkgDir);
-    }
+      // A string RuleSet condition is not consistently treated as a directory
+      // prefix across Rspack versions. Match explicitly so entry-main and its
+      // dependencies can never be stripped by worklet-loader-mt.
+      .add(isBootstrapModule);
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))

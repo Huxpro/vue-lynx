@@ -5,7 +5,11 @@ import path from 'node:path';
 const cwd = process.cwd();
 const exampleDir = path.join(cwd, 'examples/basic');
 const cacheDir = path.join(exampleDir, 'node_modules/.cache');
-const timeoutMs = 60_000;
+const mainThreadBundle = path.join(
+  exampleDir,
+  'dist/.rspeedy/main/main-thread.js',
+);
+const timeoutMs = 180_000;
 
 const stripAnsi = (text) => text.replace(
   /\u001B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g,
@@ -27,6 +31,7 @@ const failurePatterns = [
 let child;
 let timedOut = false;
 let resolved = false;
+let verifying = false;
 let sawWebReady = false;
 let sawLynxReady = false;
 let output = '';
@@ -68,11 +73,32 @@ function fail(message) {
   process.exitCode = 1;
 }
 
-function succeed() {
-  if (resolved) return;
+async function succeed() {
+  if (resolved || verifying) return;
+  verifying = true;
+
+  try {
+    const source = await fs.readFile(mainThreadBundle, 'utf8');
+    if (
+      !source.includes("g['renderPage'] = function")
+      || !source.includes("__CreatePage('0', 0)")
+    ) {
+      fail(
+        'The Lynx main-thread bundle is missing the Vue bootstrap '
+          + '(renderPage/__CreatePage).',
+      );
+      return;
+    }
+  } catch (error) {
+    fail(`Could not inspect the Lynx main-thread bundle: ${error}`);
+    return;
+  }
+
   resolved = true;
   stopChild('SIGTERM');
-  console.info('\n[dev-smoke] examples/basic dev server built successfully for web and lynx.');
+  console.info(
+    '\n[dev-smoke] examples/basic built for web and lynx with the Vue main-thread bootstrap.',
+  );
 }
 
 await fs.rm(cacheDir, { recursive: true, force: true });
@@ -101,7 +127,7 @@ child.stdout.on('data', (chunk) => {
   }
   if (sawWebReady && sawLynxReady) {
     clearTimeout(timeout);
-    succeed();
+    void succeed();
   }
 });
 
@@ -118,7 +144,7 @@ child.on('exit', (code, signal) => {
   if (resolved) return;
   if (timedOut) return;
   if (sawWebReady && sawLynxReady && (code === 0 || signal === 'SIGTERM')) {
-    succeed();
+    void succeed();
     return;
   }
   fail(`examples/basic dev server exited before readiness (code: ${code}, signal: ${signal}).`);

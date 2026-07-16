@@ -12,6 +12,8 @@ In the first iteration, we had AI rewrite the styles using Tailwind CSS (`@lynx-
 
 For this version, we had AI reuse the original SCSS files from the reference implementation as much as possible. Interestingly, the CSS version maintains the `max-width` centered layout from the reference on desktop. Try clicking the "fullscreen" button below to see this in action.
 
+Both HackerNews variants intentionally keep an explicit outermost `<page>`. Vue Lynx forwards that wrapper's classes, styles, and events to the single native page root; it does not create another native element. This lets the examples exercise root-level Tailwind and SCSS styling in LynxExplorer.
+
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
 ## Overview of Changes

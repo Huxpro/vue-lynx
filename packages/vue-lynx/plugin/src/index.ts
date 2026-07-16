@@ -28,6 +28,7 @@ import type { RsbuildPlugin } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 
 import { applyCSS } from './css.js';
+import { vueLynxCompilerOptions } from './compiler-options.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 
@@ -170,18 +171,7 @@ export function pluginVueLynx(
     pluginVue({
       vueLoaderOptions: {
         experimentalInlineMatchResource: true,
-        compilerOptions: {
-          // Lynx native tags (view, text, image, etc.) should not be resolved
-          // via resolveComponent — treat everything as native.
-          isNativeTag: () => true,
-          whitespace: 'condense',
-          // Disable static hoisting: @vue/compiler-dom's stringifyStatic
-          // transform converts runs of 5+ constant-prop siblings into a single
-          // HTML string VNode requiring insertStaticContent() in the renderer.
-          // Our ShadowElement custom renderer can't parse HTML strings, so we
-          // disable hoisting entirely — the standard approach for non-DOM renderers.
-          hoistStatic: false,
-        },
+        compilerOptions: vueLynxCompilerOptions,
       },
     }),
 

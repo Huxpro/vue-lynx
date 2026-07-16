@@ -4,6 +4,37 @@ Vue Lynx 构建在官方 Vue 3 运行时核心（`@vue/runtime-core`）之上，
 
 下面是我们已在 Lynx 上验证的 Vue 特性的逐项说明。如果存在 Lynx 特有的注意事项，会在对应位置标注。关于双线程架构底层工作原理的详细信息，请参阅[理解双线程模型](/zh/guide/introduction#understanding-the-dual-thread-model)。
 
+## `<page>` 根节点
+
+每个 Lynx 页面都只有一个原生 [`<page>`](https://lynxjs.org/api/elements/built-in/page) 根节点。Vue Lynx 会在应用挂载前自动创建它，因此可以省略显式包装：
+
+```vue
+<template>
+  <view class="app">...</view>
+</template>
+
+<style>
+page,
+:root {
+  background-color: white;
+}
+</style>
+```
+
+当你需要直接给原生根节点绑定 class、内联样式、事件、ID 或模板 ref 时，可以显式使用 `<page>`：
+
+```vue
+<template>
+  <page class="app" :style="pageStyle" @tap="onPageTap">
+    <view>...</view>
+  </page>
+</template>
+```
+
+Vue Lynx 会把这个包装编译成透明的内置组件：属性和事件应用到已经创建的原生 page，子节点则直接挂载到该根节点下；它**不会**再创建第二个 `<page>`。渲染函数可以使用 `h('page', props, children)`，也可以直接使用导出的 `Page` 组件，行为相同。
+
+一个页面只能有一个 `<page>` 包装，并且它必须是表示整个页面的最外层元素。不要嵌套或同时渲染多个 `<page>`。与 Lynx 本身一致，page 的尺寸由外层原生 View 决定，不能通过 `width`、`height`、`left` 或 `top` 直接改变 page 的大小或位置。
+
 ## 响应式系统 + 组合式函数
 
 Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个响应式 API 的行为与标准 Vue 完全一致，没有任何 Lynx 特有的注意事项或适配。

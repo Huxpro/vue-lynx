@@ -12,6 +12,8 @@
 
 在这一版中，我们让 AI 尽可能复用参考实现原有的 SCSS 文件。有趣的是，CSS 版本保留了桌面端的 `max-width` 居中布局。你可以点击下方的「全屏」按钮来体验这个效果。
 
+两个 HackerNews 版本都特意保留了最外层的显式 `<page>`。Vue Lynx 会把这个包装上的 class、样式和事件转发到唯一的原生 page 根节点，而不会再创建一个原生元素。这样示例就能在 LynxExplorer 中同时覆盖 Tailwind 和 SCSS 的根节点样式。
+
 <Go example="hackernews-css" defaultFile="src/App.vue" />
 
 ## 改动概览

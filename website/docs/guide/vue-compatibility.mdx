@@ -4,6 +4,37 @@ Vue Lynx is built on the official Vue 3 runtime core (`@vue/runtime-core`), so y
 
 Below is a feature-by-feature breakdown of the Vue features we've verified on Lynx. Where Lynx-specific caveats exist, they are called out inline. For details on how the dual-thread architecture works under the hood, see [Understanding the Dual-Thread Model](/guide/introduction#understanding-the-dual-thread-model).
 
+## The `<page>` Root
+
+Every Lynx screen has exactly one native [`<page>`](https://lynxjs.org/api/elements/built-in/page) root. Vue Lynx creates it automatically before mounting your app, so an explicit wrapper is optional:
+
+```vue
+<template>
+  <view class="app">...</view>
+</template>
+
+<style>
+page,
+:root {
+  background-color: white;
+}
+</style>
+```
+
+Use an explicit `<page>` when you need to bind a class, inline style, event, ID, or template ref directly to the native root:
+
+```vue
+<template>
+  <page class="app" :style="pageStyle" @tap="onPageTap">
+    <view>...</view>
+  </page>
+</template>
+```
+
+Vue Lynx compiles this wrapper to a transparent built-in component. Its attributes and events are applied to the already-created native page, while its children mount directly beneath that root. It does **not** create a second `<page>` element. The same behavior is available from render functions through `h('page', props, children)` or the exported `Page` component.
+
+Only one `<page>` wrapper is allowed, and it must be the outermost element representing the screen. Do not nest it or render multiple wrappers. As with Lynx itself, the containing native view controls the page dimensions: `width`, `height`, `left`, and `top` cannot resize or reposition the page directly.
+
 ## Reactivity + Composables
 
 Vue Lynx reuses 100% of Vue's reactivity core (`@vue/reactivity`). Every reactivity API works identically to standard Vue, with no Lynx-specific caveats or adaptations.

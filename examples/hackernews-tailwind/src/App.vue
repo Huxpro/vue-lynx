@@ -10,7 +10,7 @@ const feedKeys = Object.keys(validFeeds);
 </script>
 
 <template>
-  <view class="w-full h-full bg-hn-bg flex flex-col">
+  <page class="w-full h-full bg-hn-bg flex flex-col">
     <!-- Header: 55px, matching reference -->
     <view
       class="bg-hn-green flex flex-col"
@@ -81,7 +81,7 @@ const feedKeys = Object.keys(validFeeds);
         />
       </Transition>
     </RouterView>
-  </view>
+  </page>
 </template>
 
 <style>
