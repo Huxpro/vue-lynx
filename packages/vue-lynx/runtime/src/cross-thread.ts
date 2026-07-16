@@ -13,6 +13,7 @@
  */
 
 import { onFunctionCall } from './function-call.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { registerWorkletCtx } from './run-on-background.js';
 import type { Worklet } from './worklet-types.js';
 
@@ -41,7 +42,7 @@ const RUN_WORKLET_CTX = 'Lynx.Worklet.runWorkletCtx';
 export function runOnMainThread<R, Fn extends (...args: unknown[]) => R>(
   fn: Fn,
 ): (...args: Parameters<Fn>) => Promise<R> {
-  registerWorkletCtx(fn as unknown as Worklet);
+  if (!isIfrMainThread()) registerWorkletCtx(fn as unknown as Worklet);
   return async (...params: Parameters<Fn>): Promise<R> => {
     return new Promise((resolve) => {
       const resolveId = onFunctionCall(resolve as (value: unknown) => void);

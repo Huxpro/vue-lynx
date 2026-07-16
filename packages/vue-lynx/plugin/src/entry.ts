@@ -208,6 +208,10 @@ export interface ApplyEntryOptions {
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  /** IFR: main-thread bundle carries the full Vapor runtime and app code. */
+  enableIFR?: boolean;
+  /** Use the pure Vapor runtime entry in generated worklet imports. */
+  vapor?: boolean;
 }
 
 export function applyEntry(
@@ -327,6 +331,7 @@ export function applyEntry(
       .exclude.add(nodeModulesExcludeWithAllowlist).end()
       .use('worklet-loader')
       .loader(path.resolve(_dirname, './loaders/worklet-loader'))
+      .options({ vapor: opts.vapor ?? false })
       .end();
   });
 
@@ -352,6 +357,14 @@ export function applyEntry(
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
     const vueInternalPkgDir: string | undefined = path.resolve(pkgRoot, 'internal');
+    // IFR follows the full user graph, including vue-lynx/runtime. Library
+    // code must pass through unchanged; pnpm resolves it outside node_modules.
+    const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
+    const workletMtOptions = {
+      includeWorkletPackages,
+      ifr: opts.enableIFR ?? false,
+      vapor: opts.vapor ?? false,
+    };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
     // constraint). This enforce:'post' rule runs worklet-loader-mt AFTER
@@ -369,7 +382,7 @@ export function applyEntry(
       .test(/\.vue$/)
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
-      .options({ includeWorkletPackages })
+      .options(workletMtOptions)
       .end();
 
     // JS/TS on MT: LEPUS worklet transform (extract registerWorkletInternal calls).
@@ -381,14 +394,15 @@ export function applyEntry(
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
       .add(nodeModulesExcludeWithAllowlist)
-      .add(mainThreadPkgDir);
+      .add(mainThreadPkgDir)
+      .add(runtimePkgDir);
     if (vueInternalPkgDir) {
       workletMtExclude.add(vueInternalPkgDir);
     }
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))
-      .options({ includeWorkletPackages })
+      .options(workletMtOptions)
       .end();
   });
 
@@ -457,11 +471,21 @@ export function applyEntry(
       // vue-sfc-script-extractor + worklet-loader-mt strip everything except
       // registerWorkletInternal() calls. webpack's dependency graph provides
       // natural per-entry isolation (each entry sees only its own worklets).
+      const mainThreadImports = [
+        path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'),
+      ];
+      if (opts.enableIFR) {
+        mainThreadImports.push(
+          path.resolve(vueLynxRoot, 'main-thread/dist/entry-ifr.js'),
+        );
+      }
+      mainThreadImports.push(workletRuntimePath, ...imports);
+
       chain
         .entry(mainThreadEntry)
         .add({
           layer: LAYERS.MAIN_THREAD,
-          import: [path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'), workletRuntimePath, ...imports],
+          import: mainThreadImports,
           filename: mainThreadName,
         })
         .when(enabledHMR, entry => {
@@ -487,6 +511,22 @@ export function applyEntry(
         .prepend({
           layer: LAYERS.BACKGROUND,
           import: path.resolve(vueLynxRoot, 'runtime/dist/entry-background.js'),
+        })
+        .when(opts.enableIFR ?? false, entry => {
+          entry.prepend({
+            layer: LAYERS.BACKGROUND,
+            import: path.resolve(
+              vueLynxRoot,
+              'runtime/dist/entry-ifr-background.js',
+            ),
+          });
+          entry.add({
+            layer: LAYERS.BACKGROUND,
+            import: path.resolve(
+              vueLynxRoot,
+              'runtime/dist/entry-ifr-background-complete.js',
+            ),
+          });
         })
         .when(enabledHMR, entry => {
           entry.prepend({

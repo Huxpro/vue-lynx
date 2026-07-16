@@ -3,6 +3,7 @@
 // LICENSE file in the root directory of this source tree.
 
 import { scheduleFlush } from './flush.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
 import type { ShadowElement } from './shadow-element.js';
@@ -56,7 +57,7 @@ export function applyMainThreadProp(
   } else {
     const event = parseMainThreadEvent(suffix);
     if (event && value != null) {
-      registerWorkletCtx(value as Worklet);
+      if (!isIfrMainThread()) registerWorkletCtx(value as Worklet);
       pushOp(
         OP.SET_WORKLET_EVENT,
         element.uid,

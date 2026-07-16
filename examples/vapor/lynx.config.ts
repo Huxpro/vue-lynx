@@ -31,6 +31,7 @@ export default defineConfig({
     pluginVueLynx({
       optionsApi: false,
       vapor: true,
+      enableIFR: process.env.VUE_LYNX_ENABLE_IFR === '1',
     }),
   ],
 });

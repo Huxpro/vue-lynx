@@ -10,7 +10,7 @@
  * each operation using Lynx PAPI.
  */
 
-import { OP } from 'vue-lynx/internal/ops';
+import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
 
 import {
@@ -74,6 +74,79 @@ function createTypedElement(
 
 const templates = new Map<number, TemplateNode>();
 
+const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
+
+// NodesRef selector attributes are only consumed by the Background Thread.
+// IFR can paint without them, then install them immediately before BG adopts
+// the tree. Keeping this state here makes CREATE and CLONE_TEMPLATE follow the
+// same protocol and keeps normal/non-IFR applyOps behavior unchanged.
+let deferIfrSelectorAttributes = false;
+let deferredIfrSelectorIds: number[] = [];
+
+function installSelectorAttribute(id: number, el: LynxElement): void {
+  if (deferIfrSelectorAttributes) {
+    deferredIfrSelectorIds.push(id);
+    return;
+  }
+  __SetAttribute(el, `vue-ref-${id}`, 1);
+}
+
+/** Start one IFR first-frame window in which NodesRef selectors are deferred. */
+export function beginIfrSelectorAttributeDeferral(): void {
+  deferIfrSelectorAttributes = true;
+  deferredIfrSelectorIds = [];
+}
+
+/** Install every deferred selector before the Background Thread owns the tree. */
+export function commitIfrSelectorAttributes(): void {
+  const ids = deferredIfrSelectorIds;
+  deferredIfrSelectorIds = [];
+  deferIfrSelectorAttributes = false;
+
+  let installed = false;
+  for (const id of ids) {
+    const el = elements.get(id);
+    if (el) {
+      __SetAttribute(el, `vue-ref-${id}`, 1);
+      installed = true;
+    }
+  }
+  if (installed) __FlushElementTree();
+}
+
+/** Discard deferred MT selectors before teardown or normal BG replay. */
+export function clearIfrSelectorAttributeDeferral(): void {
+  deferIfrSelectorAttributes = false;
+  deferredIfrSelectorIds = [];
+}
+
+/**
+ * Detect a duplicate initial render even when value/ref frames precede its
+ * first allocator. Vapor can emit INIT_MT_REF or SET_TEXT before registering
+ * and cloning a template, so checking only ops[0] misses real duplicates.
+ */
+function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
+  let cursor = 0;
+  while (cursor < ops.length) {
+    const code = ops[cursor] as number;
+    const arity = ARITY[code];
+    if (arity === undefined || cursor + arity >= ops.length) return false;
+
+    if (code === OP.CREATE || code === OP.CREATE_TEXT) {
+      return elements.has(ops[cursor + 1] as number);
+    }
+    if (code === OP.REGISTER_TEMPLATE) {
+      return templates.has(ops[cursor + 1] as number);
+    }
+    if (code === OP.CLONE_TEMPLATE) {
+      return elements.has(ops[cursor + 2] as number);
+    }
+
+    cursor += arity + 1;
+  }
+  return false;
+}
+
 /**
  * Instantiate a registered template. Element ids are assigned by pre-order
  * traversal starting at baseUid — the exact allocation order the BG thread
@@ -104,7 +177,7 @@ function instantiateTemplate(
   }
   __SetCSSId([el], 0);
   elements.set(uid, el);
-  __SetAttribute(el, `vue-ref-${uid}`, 1);
+  installSelectorAttribute(uid, el);
 
   if (props) {
     if (props.c !== undefined) __SetClasses(el, props.c);
@@ -137,25 +210,9 @@ export function applyOps(ops: unknown[]): void {
   // is deferred until the end of the batch and cancelled by a re-insert.
   const removedRoots = new Set<number>();
 
-  // Detect duplicate batch from double BG bundle evaluation.
-  // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
-  // ShadowElement.nextId resets to 2, producing the same element IDs.
-  // If the first CREATE op targets an ID that already exists in our elements Map,
-  // this is a duplicate batch — skip it entirely.
-  if (len >= 3 && ops[0] === OP.CREATE) {
-    const firstId = ops[1] as number;
-    if (elements.has(firstId)) {
-      return;
-    }
-  }
-  // Same guard for Vapor batches, which start with template registration or
-  // instantiation instead of CREATE.
-  if (len >= 3 && ops[0] === OP.REGISTER_TEMPLATE && templates.has(ops[1] as number)) {
-    return;
-  }
-  if (len >= 3 && ops[0] === OP.CLONE_TEMPLATE && elements.has(ops[2] as number)) {
-    return;
-  }
+  // Detect duplicate batches from double BG bundle evaluation by locating
+  // the first allocator frame, rather than assuming it is the first frame.
+  if (hasDuplicateFirstAllocator(ops)) return;
 
   let i = 0;
 
@@ -180,7 +237,7 @@ export function applyOps(ops: unknown[]): void {
         }
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries.
-        __SetAttribute(el, `vue-ref-${id}`, 1);
+        installSelectorAttribute(id, el);
         break;
       }
 
@@ -192,7 +249,7 @@ export function applyOps(ops: unknown[]): void {
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
-        __SetAttribute(el, `vue-ref-${id}`, 1);
+        installSelectorAttribute(id, el);
         break;
       }
 
@@ -361,6 +418,7 @@ export { elements };
 
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
+  clearIfrSelectorAttributeDeferral();
   resetElementRegistry();
   templates.clear();
   setPageUniqueId(1);

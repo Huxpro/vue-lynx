@@ -1,0 +1,93 @@
+# Enable instant first-frame rendering
+
+Instant First-Frame Rendering (IFR) renders synchronous page content during Lynx `loadTemplate`, before the Background Thread starts. Enable it for content-first screens that can produce the same initial structure on both threads.
+
+:::warning Experimental
+Vapor mode uses Vue 3.6 prerelease packages. Vapor IFR inherits that status. Measure your own bundle and first screen before shipping it.
+:::
+
+## Enable IFR for a Vapor app
+
+Set `enableIFR: true` beside `vapor: true`. The option is off by default and doesn't change application code.
+
+```ts title="lynx.config.ts" {7-8}
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      vapor: true,
+      enableIFR: true,
+    }),
+  ],
+})
+```
+
+The `vapor` option selects the Virtual-DOM-free runtime. The renderer-neutral `enableIFR` option controls when the first frame renders.
+
+## Understand the two-thread render
+
+IFR runs the same initial application render in two JavaScript realms. The Main Thread paints first, then the Background Thread establishes reactive ownership.
+
+```text
+Main Thread:       evaluate app -> renderPage -> Vapor render -> first paint
+                                      |
+Background Thread:                  start -> Vapor render -> hydrate -> updates
+```
+
+The handoff has three stages:
+
+1. The Main Thread evaluates the Vapor app and defers `mount()` until `renderPage()` creates the page root.
+2. The real Vapor templates and initial `renderEffect` functions emit operations. Vue Lynx applies and records those operations locally, so `renderPage()` returns with visible content.
+3. The Background Thread performs its normal mount. Vue Lynx compares its initial operation frames with the recorded stream, adopts Background-owned refs and worklet contexts, then gives the Background Thread exclusive update ownership.
+
+Vapor already compiles static markup into `template()` clones. Vue Lynx maps those clones to `REGISTER_TEMPLATE` and `CLONE_TEMPLATE` operations with deterministic element IDs. Vapor IFR doesn't use the VDOM-only element-template transform from the reference implementation.
+
+## Keep the initial render deterministic
+
+Deterministic structure keeps hydration on its fast path. Derive the initial tree from synchronous inputs that both threads share.
+
+Avoid these values while choosing first-screen structure:
+
+- `Math.random()` or `Date.now()`
+- thread-specific globals such as `window`, `document`, or `location`
+- mutable module state that differs between realm evaluations
+- data that only exists after a network request
+
+Text, class, style, and attribute differences patch in place. A structural difference removes the Main-Thread tree and replays the complete Background render. The page remains correct, but that load loses the IFR latency benefit.
+
+## Put side effects on the Background Thread
+
+Vue Lynx suppresses eight Composition API lifecycle registrations during the Main-Thread render: `onBeforeMount`, `onMounted`, `onBeforeUpdate`, `onUpdated`, `onBeforeUnmount`, `onUnmounted`, `onActivated`, and `onDeactivated`. The same hooks run normally on the Background Thread.
+
+Synchronous module code, `setup()` side effects, and user-created watchers still run in both realms. Keep those operations idempotent and thread-neutral. Static module evaluation happens before `renderPage()`, so the render fallback can't recover from an exception thrown by a top-level import or statement.
+
+Initial `renderEffect` functions run on the Main Thread because they populate dynamic template bindings. After hydration, Vue Lynx drops later Main-Thread operations and applies Background updates only.
+
+## Choose screens that benefit
+
+IFR removes Background startup and inter-process communication (IPC) from the first-paint path. It doesn't remove the second application evaluation, and it adds the application to the Main-Thread bundle.
+
+Use IFR when your screen has synchronous, useful content:
+
+| First-screen profile | Recommendation |
+|---|---|
+| Product detail, settings, or cached feed | Enable IFR and measure the bundle |
+| Synchronous skeleton with useful navigation | Enable IFR if the skeleton improves perceived latency |
+| Entire screen waits for `fetch()` | Leave IFR off or render a synchronous shell |
+| Bundle-size-sensitive entry | Compare Main-Thread gzip size and First Contentful Paint (FCP) first |
+
+The in-repository report at `packages/ifr-bench/VAPOR-IFR-REPORT.md` records the production implementation's JavaScript cost, real-browser FCP at 1× and 4× CPU, bundle sizes, and comparison with the VDOM reference.
+
+## Account for current limitations
+
+Vapor IFR adds these constraints to [Vapor mode](/guide/vapor-mode#current-limitations):
+
+- Regular events that occur before Background handler registration are dropped. [Main Thread Script](/guide/main-thread-script) handlers remain available.
+- `useVaporCssVars()` installs its reactive CSS-variable effect on the Background Thread. CSS `v-bind()` values can appear at hydration instead of the Main-Thread paint.
+- `onErrorCaptured` remains active, but it doesn't extend the fallback boundary around top-level module evaluation.
+- The Main-Thread reactive graph remains allocated after handoff. Its later visible operations are discarded.
+- Async first-screen data still arrives through the normal Background update path.
+
+CSS Modules retain their generated class maps in the Main-Thread build. Scoped CSS and ordinary extracted styles use the same stylesheet output as non-IFR Vapor builds.

@@ -13,15 +13,24 @@
  *   - globalThis.vuePatchUpdate – receives ops from Background Thread
  */
 
+import { PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
+
 import { elements, setPageUniqueId } from './element-registry.js';
+import {
+  completeIfrHydration,
+  interceptPatchUpdate,
+  runIfrRender,
+} from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
 const g = globalThis as Record<string, unknown>;
 
-// Expose SystemInfo on globalThis (the worklet-runtime reads it).
-// In React's main-thread bundle this is done by the generated snapshot code.
-g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
+// Expose SystemInfo on globalThis (the worklet-runtime reads it). Preserve an
+// engine-provided global object: some hosts do not mirror it on lynx.
+if (g['SystemInfo'] == null) {
+  g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
+}
 
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
@@ -31,9 +40,6 @@ g['runOnBackground'] = runOnBackground;
 // main-thread entry by the vue-lynx plugin — it provides:
 //   globalThis.runWorklet, globalThis.registerWorkletInternal,
 //   globalThis.lynxWorkletImpl (with Element class, Animation, etc.)
-
-/** PAGE_ROOT_ID must match the value in runtime/src/shadow-element.ts */
-const PAGE_ROOT_ID = 1;
 
 // Lynx Lepus runtime requires globalThis.processData to be set.
 // It is called to transform initial data before renderPage runs.
@@ -57,6 +63,7 @@ g['renderPage'] = function(_data: unknown): void {
   __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
+  runIfrRender();
   __FlushElementTree(page);
 };
 
@@ -72,9 +79,14 @@ g['updateGlobalProps'] = function(_data: unknown): void {
 
 // Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
 g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+  if (interceptPatchUpdate(data)) return;
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);
 };
+
+// Sent by the IFR Background entry after its complete initial op stream has
+// been applied. This disambiguates a valid split batch from a strict prefix.
+g['vueIfrHydrationComplete'] = completeIfrHydration;
 
 // Worklet registrations are included in this bundle via webpack's dependency
 // graph — user code on the MT layer is processed by worklet-loader-mt which
