@@ -112,6 +112,24 @@ Inside components nothing else changes: `import { ref } from 'vue'` keeps
 working because the plugin aliases `'vue'` to the entry that matches your
 mode (`vue-lynx/vapor` when `vapor: true`, `vue-lynx` otherwise).
 
+### Render the first frame before Background startup
+
+Vapor apps can also render synchronous content during Lynx `loadTemplate`.
+Add `enableIFR: true` to the same plugin options:
+
+```ts title="lynx.config.ts" {4-5}
+pluginVueLynx({
+  vapor: true,
+  enableIFR: true,
+})
+```
+
+Both threads run the initial Vapor render. The Main Thread paints first, and
+the Background Thread hydrates that deterministic output before it owns all
+updates. Read [Enable instant first-frame rendering](/guide/ifr) for the
+selection guidance, lifecycle behavior, fallback guarantees, and measured
+costs.
+
 See the `examples/vapor` demo in the
 [repository's examples directory](https://github.com/Huxpro/vue-lynx/tree/main/examples)
 for a complete app using interpolation, `v-if`/`v-for`, `v-model`,
@@ -240,3 +258,6 @@ reason codes correspond to the [limitations](#current-limitations) below.
 - **No SSR / hydration** — Lynx has no SSR.
 - Vapor-mode Vue constraints apply as usual: `<script setup>` only, no
   Options API, `getCurrentInstance()` returns `null`.
+- Vapor IFR requires deterministic, thread-neutral initial rendering.
+  Synchronous `setup()` side effects and watchers run in both realms; see the
+  [IFR limitations](/guide/ifr#account-for-current-limitations).

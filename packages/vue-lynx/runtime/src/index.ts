@@ -17,7 +17,6 @@
 
 import {
   createRenderer,
-  h as _vueH,
   onActivated as _onActivated,
   onBeforeMount as _onBeforeMount,
   onBeforeUnmount as _onBeforeUnmount,
@@ -68,6 +67,11 @@ import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
 import { isIfrMainThread } from './ifr-env.js';
+import {
+  ifrInert,
+  isIfrMainThread,
+  loadWorkletRuntime,
+} from './ifr-env.js';
 import {
   MainThreadRef,
   resetMainThreadRefState,
@@ -212,19 +216,15 @@ export function createApp(
     },
 
     mount(): void {
-      const doMount = () => {
-        const root = createPageRoot();
-        internalApp.provide(pageRootContextKey, { root, owner: null });
-        internalApp.mount(root);
-      };
-      // IFR main-thread bundle: user code evaluates *before* Lynx calls
-      // renderPage, so the actual mount is deferred until the page root
-      // exists.  On the background thread (flag absent) mount immediately.
       if (isIfrMainThread()) {
-        registerMount(doMount);
-      } else {
-        doMount();
+        registerMount(() => {
+          const root = createPageRoot();
+          internalApp.mount(root);
+        });
+        return;
       }
+      const root = createPageRoot();
+      internalApp.mount(root);
     },
 
     unmount(): void {
@@ -245,6 +245,7 @@ export {
   runOnMainThread,
   runOnBackground,
   transformToWorklet,
+  loadWorkletRuntime,
 };
 export { useGlobalEvent } from './use-global-event.js';
 
@@ -1326,9 +1327,6 @@ export function resetForTesting(): void {
   resetFunctionCallState();
   resetRunOnBackgroundState();
   resetAppRegistry();
-  // NOTE: element-template registrations are intentionally NOT reset —
-  // they are bundle-lifetime (hoisted per render module, id-keyed,
-  // idempotent), like the main-thread template registry.
   takeOps(); // drain any leftover ops
   resetTemplateState();
   ShadowElement.nextUid = 2;

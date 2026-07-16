@@ -138,6 +138,20 @@ export interface PluginVueLynxOptions {
    * @defaultValue false
    */
   vapor?: boolean;
+
+  /**
+   * Whether to enable IFR (Instant First-Frame Rendering).
+   *
+   * In Vapor mode the main-thread bundle carries the full application and
+   * renders its first frame synchronously during `loadTemplate`. The normal
+   * Background render then hydrates that deterministic output.
+   *
+   * The initial render must be deterministic across threads. Lifecycle side
+   * effects are suppressed on the IFR Main Thread and run normally on BG.
+   *
+   * @defaultValue false
+   */
+  enableIFR?: boolean;
 }
 
 /**
@@ -162,6 +176,7 @@ export function pluginVueLynx(
     debugInfoOutside = true,
     autoPixelUnit = true,
     vapor = false,
+    enableIFR = false,
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -327,6 +342,8 @@ export function pluginVueLynx(
           enableIFR,
           enableElementTemplates,
           includeWorkletPackages,
+          enableIFR,
+          vapor,
         });
       },
     },

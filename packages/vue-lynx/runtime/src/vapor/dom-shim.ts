@@ -50,7 +50,11 @@ export class LynxTemplateHost {
   content: ShadowElement;
 
   constructor() {
-    this.content = new ShadowElement('#fragment');
+    // runtime-vapor keeps one module-global template host and immediately
+    // replaces this placeholder on the first `innerHTML` assignment. It must
+    // not consume a protocol uid: doing so makes the first mount's allocator
+    // state differ from subsequent reset-and-replay mounts in the same realm.
+    this.content = new ShadowElement('#fragment', 0);
     this.content._inert = true;
   }
 

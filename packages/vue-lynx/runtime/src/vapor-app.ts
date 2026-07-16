@@ -31,6 +31,33 @@
 // Shared runtime-core surface (reactivity, lifecycle, DI, scopes, macros)
 // ---------------------------------------------------------------------------
 
+import {
+  onActivated as _onActivated,
+  onBeforeMount as _onBeforeMount,
+  onBeforeUnmount as _onBeforeUnmount,
+  onBeforeUpdate as _onBeforeUpdate,
+  onDeactivated as _onDeactivated,
+  onMounted as _onMounted,
+  onUnmounted as _onUnmounted,
+  onUpdated as _onUpdated,
+} from '@vue/runtime-core';
+
+import { ifrInert, loadWorkletRuntime } from './ifr-env.js';
+
+export const onMounted: typeof _onMounted = ifrInert(_onMounted);
+export const onBeforeMount: typeof _onBeforeMount = ifrInert(_onBeforeMount);
+export const onUnmounted: typeof _onUnmounted = ifrInert(_onUnmounted);
+export const onBeforeUnmount: typeof _onBeforeUnmount = ifrInert(
+  _onBeforeUnmount,
+);
+export const onUpdated: typeof _onUpdated = ifrInert(_onUpdated);
+export const onBeforeUpdate: typeof _onBeforeUpdate = ifrInert(
+  _onBeforeUpdate,
+);
+export const onActivated: typeof _onActivated = ifrInert(_onActivated);
+export const onDeactivated: typeof _onDeactivated = ifrInert(_onDeactivated);
+export { loadWorkletRuntime };
+
 export {
   // reactivity
   computed,
@@ -54,17 +81,9 @@ export {
   isShallow,
   markRaw,
   // lifecycle
-  onMounted,
-  onBeforeMount,
-  onUnmounted,
-  onBeforeUnmount,
-  onUpdated,
-  onBeforeUpdate,
   onErrorCaptured,
   onRenderTracked,
   onRenderTriggered,
-  onActivated,
-  onDeactivated,
   // watchers
   watch,
   watchEffect,
