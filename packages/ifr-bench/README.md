@@ -17,6 +17,9 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 | `src/harness.mjs` | One-configuration subprocess (fresh module state, genuine cold first run) |
 | `src/correctness.mjs` | Renders every variant against jsdom and requires identical output |
 | `run.mjs` | Orchestrator: V8 + `--jitless` matrix → `results/results.json` + tables |
+| `sfc-probe/` | Same-source generated SFC (content scene, ~1000 elements) built as the vdom/vapor × IFR off/on matrix for browser runs |
+| `web-harness/run-browser.mjs` | Real dual-thread browser FCP runs over a directory of `.web.bundle` files |
+| `web-harness/probe-ifr.mjs` | Single-bundle diagnostic: paint timeline + browser console (catches silent IFR fallbacks) |
 
 ## Run
 
