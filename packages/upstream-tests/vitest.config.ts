@@ -273,6 +273,10 @@ export default defineConfig({
     include: includedTests,
     alias: [
       {
+        find: 'vue-lynx/internal/ops',
+        replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
+      },
+      {
         find: '@vue/runtime-test',
         replacement: path.resolve(__dirname, 'src/lynx-runtime-test.ts'),
       },

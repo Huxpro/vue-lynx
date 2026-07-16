@@ -10,7 +10,8 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 | ---------------------------------------------- | ------ | ------- | ------ | ----- |
 | `pnpm test` (runtime-core, reactivity, shared) | 44     | 824     | 89     | 0     |
 | `pnpm test:dom` (runtime-dom)                  | 7      | 58      | 42     | 0     |
-| **Total**                                      | **51** | **882** | **131** | **0** |
+| `pnpm test:vapor` (runtime-vapor)             | 1      | 1       | 6      | 0     |
+| **Total**                                      | **52** | **883** | **137** | **0** |
 
 ### By package
 
@@ -20,6 +21,7 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 | reactivity   | 15     | 345  | 18   |
 | shared       | 5      | 46   | 0    |
 | runtime-dom  | 7      | 58   | 42   |
+| runtime-vapor | 1      | 1    | 6    |
 
 > _Note: `computed.spec.ts` (48 tests) excluded due to module initialization conflict; 4 gc tests auto-skipped by `describe.skipIf(!global.gc)`. reactivity and shared test the upstream npm packages themselves (version compatibility smoke tests), not our pipeline._
 
@@ -27,7 +29,7 @@ This package runs the official `vuejs/core` test suites against our **ShadowElem
 
 ## Testing Approach
 
-We run Vue's upstream tests at two layers, each with a different adapter that exercises a different slice of our pipeline. A third layer of hand-written tests covers Lynx-specific functionality that the upstream suite cannot reach.
+We run Vue's upstream tests at three upstream layers, each with a different adapter that exercises a different slice of our pipeline. A fourth layer of hand-written tests covers Lynx-specific functionality that the upstream suite cannot reach.
 
 The tests that actually validate our pipeline are runtime-core + runtime-dom:
 
@@ -35,7 +37,8 @@ The tests that actually validate our pipeline are runtime-core + runtime-dom:
 | ---------------- | --------------------------------------------- | ------- | ------ |
 | **runtime-core** | ShadowElement linked-list + Vue VDOM diff      | 407     | 59     |
 | **runtime-dom**  | patchProp / render -> ops -> applyOps -> PAPI -> jsdom  | 58      | 42     |
-| **Total**        |                                               | **465** | **101** |
+| **runtime-vapor** | Vapor block helpers through vue-lynx/vapor + ShadowElement DOM shim | 1 | 6 |
+| **Total**        |                                               | **466** | **107** |
 
 ### Layer 1: Conformance tests (`pnpm test`)
 
@@ -86,7 +89,16 @@ These shims run after the full pipeline so ops serialization and cross-thread tr
 
 Covers: runtime-dom (7 suites: patchStyle, patchClass, patchEvents, patchProps, patchAttrs, vOn, vModel).
 
-### Layer 3: E2E pipeline tests (`testing-library/`)
+
+### Layer 3: Vapor upstream smoke tests (`pnpm test:vapor`)
+
+**Config**: `vitest.vapor.config.ts` | **Adapter**: `src/lynx-runtime-vapor-bridge.ts` + `src/vapor-setup.ts`
+
+Runs selected upstream `runtime-vapor` tests against `vue-lynx/vapor`, with relative `../src` imports rewritten to a bridge that re-exports the vue-lynx Vapor surface and fills the first low-level private block helper needed by the upstream suite. The initial port intentionally starts with `block.spec.ts`: `normalizeBlock` passes against `ShadowElement` text nodes and `VaporFragment`; the remaining low-level insertion/removal helpers are explicit skiplist entries with reasons in `skiplist-vapor.json` while the ShadowElement bridge grows.
+
+Covers: runtime-vapor (1 suite: block).
+
+### Layer 4: E2E pipeline tests (`testing-library/`)
 
 **Config**: `testing-library/vitest.config.ts` | **No adapter** -- uses vue-lynx directly
 
@@ -106,7 +118,7 @@ Since we run upstream test files from outside the `vuejs/core` monorepo, three m
 
 **Module instance unification**: Explicit Vite aliases ensure that bare specifiers (`@vue/runtime-core`) resolve to the same ESM bundle files that the import-rewrite plugins target. Without this, Vite creates separate module instances with independent module-scoped variables (`currentRenderingInstance`, scheduler queues, etc.), breaking ref owner tracking, flush timing, and injection context.
 
-**Skiplist**: A Vite transform plugin reads `skiplist.json` / `skiplist-dom.json` and converts `it('name'` to `it.skip('name'` for listed test names. This avoids modifying upstream test files.
+**Skiplist**: A Vite transform plugin reads `skiplist.json` / `skiplist-dom.json` / `skiplist-vapor.json` and converts `it('name'` to `it.skip('name'` for listed test names. This avoids modifying upstream test files.
 
 ---
 

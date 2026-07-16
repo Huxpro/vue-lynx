@@ -12,7 +12,9 @@
     "test:local:watch": "vitest --config vitest.local.config.ts",
     "test:watch": "vitest",
     "vuejs:init": "git clone --depth 1 --branch v3.6.0-beta.17 https://github.com/vuejs/core.git core",
-    "vuejs:status": "cd core && git log --oneline -1"
+    "vuejs:status": "cd core && git log --oneline -1",
+    "test:vapor": "vitest run --config vitest.vapor.config.ts",
+    "test:vapor:watch": "vitest --config vitest.vapor.config.ts"
   },
   "devDependencies": {
     "@lynx-js/testing-environment": "^0.1.11",
@@ -22,6 +24,8 @@
     "@vue/shared": "3.6.0-beta.17",
     "jsdom": "^25.0.0",
     "vitest": "^3.0.0",
-    "vue-lynx": "workspace:*"
+    "vue-lynx": "workspace:*",
+    "@vue/runtime-vapor": "3.6.0-beta.17",
+    "@vue/runtime-dom": "3.6.0-beta.17"
   }
 }
