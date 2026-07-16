@@ -8,6 +8,10 @@
  * This runs BEFORE any test module is imported, so by the time Vue's runtime
  * modules load, all ambient globals (lynx, lynxCoreInject, __MAIN_THREAD__, etc.)
  * are already in place.
+ *
+ * Vue-specific pipeline state survives `lynxTestingEnv.reset()` via the public
+ * setup hooks of @lynx-js/testing-environment (`onInjectMainThreadGlobals`,
+ * `onInjectBackgroundThreadGlobals`).
  */
 
 import { JSDOM } from 'jsdom';
@@ -16,10 +20,12 @@ import { LynxTestingEnv } from '@lynx-js/testing-environment';
 // --- Create the testing environment -----------------------------------------
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-const lynxTestingEnv = new LynxTestingEnv(jsdom);
+const lynxTestingEnv = new LynxTestingEnv({
+  window: jsdom.window as unknown as Window & typeof globalThis,
+});
 
 // Expose globally so render() / fireEvent() can access it.
-(globalThis as any).lynxTestingEnv = lynxTestingEnv;
+globalThis.lynxTestingEnv = lynxTestingEnv;
 
 // --- Wire Main Thread globals -----------------------------------------------
 
@@ -43,9 +49,8 @@ const mainThreadFns = {
   updateGlobalProps: (globalThis as any).updateGlobalProps,
 };
 
-// Also store them on the main thread globalThis so they survive resets.
-const mtGlobal = lynxTestingEnv.mainThread.globalThis as any;
-Object.assign(mtGlobal, mainThreadFns);
+// Also store them on the main thread globalThis so they survive thread switches.
+Object.assign(lynxTestingEnv.mainThread.globalThis as object, mainThreadFns);
 
 // --- Wire Background Thread globals ----------------------------------------
 
@@ -58,26 +63,33 @@ await import('vue-lynx/entry-background');
 const publishEventFn = (globalThis as any).publishEvent;
 
 // Also store on the BG thread globalThis.
-const bgGlobal = lynxTestingEnv.backgroundThread.globalThis as any;
-bgGlobal.publishEvent = publishEventFn;
+(lynxTestingEnv.backgroundThread.globalThis as any).publishEvent =
+  publishEventFn;
 
-// --- Hooks for post-reset re-wiring ----------------------------------------
+// --- Setup hooks for post-reset re-wiring ----------------------------------
 
-// After lynxTestingEnv.reset(), the globals are re-injected from scratch.
-// We need to re-set our custom functions (renderPage, vuePatchUpdate,
-// publishEvent) because the fresh injectGlobals() doesn't know about them.
-
-(globalThis as any).onSwitchedToMainThread = () => {
-  // Re-install main-thread pipeline functions
-  Object.assign(globalThis, mainThreadFns);
-};
-
-(globalThis as any).onSwitchedToBackgroundThread = () => {
-  // Re-install publishEvent on lynxCoreInject.tt and globalThis
-  if ((globalThis as any).lynxCoreInject?.tt) {
-    (globalThis as any).lynxCoreInject.tt.publishEvent = publishEventFn;
-  }
-  (globalThis as any).publishEvent = publishEventFn;
-};
+// `lynxTestingEnv.reset()` re-injects both threads' globals from scratch
+// (fresh `lynxCoreInject.tt`, etc.), which would drop the Vue pipeline
+// functions wired above. These hooks re-apply them onto the freshly injected
+// thread globals; the thread switches inside `reset()` then copy them onto
+// the live globalThis.
+//
+// The hooks are declared as global functions by @lynx-js/testing-environment,
+// so they must be installed via Object.assign (TS disallows re-assigning
+// function declarations).
+Object.assign(globalThis, {
+  onInjectMainThreadGlobals: (globals: Record<string, unknown>): void => {
+    Object.assign(globals, mainThreadFns);
+  },
+  onInjectBackgroundThreadGlobals: (globals: Record<string, unknown>): void => {
+    globals['publishEvent'] = publishEventFn;
+    const tt = (globals['lynxCoreInject'] as
+      | { tt?: Record<string, unknown> }
+      | undefined)?.tt;
+    if (tt) {
+      tt['publishEvent'] = publishEventFn;
+    }
+  },
+});
 
 // Stay on background thread (tests start on BG by default).

@@ -16,9 +16,11 @@ import { initBridge, resetBridge } from './lynx-runtime-dom-bridge.js';
 // --- Create the testing environment -----------------------------------------
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-const lynxTestingEnv = new LynxTestingEnv(jsdom);
+const lynxTestingEnv = new LynxTestingEnv({
+  window: jsdom.window as unknown as Window & typeof globalThis,
+});
 
-(globalThis as Record<string, unknown>)['lynxTestingEnv'] = lynxTestingEnv;
+globalThis.lynxTestingEnv = lynxTestingEnv;
 
 // --- Wire Main Thread globals -----------------------------------------------
 
@@ -80,23 +82,28 @@ const publishEventFn = (globalThis as Record<string, unknown>)['publishEvent'];
 
 initBridge({ applyOps, elements, resetMainThreadState });
 
-// --- Hooks for post-reset re-wiring ----------------------------------------
+// --- Setup hooks for post-reset re-wiring ----------------------------------
 
-(globalThis as Record<string, unknown>)['onSwitchedToMainThread'] = () => {
-  Object.assign(globalThis, mainThreadFns);
-};
-
-(globalThis as Record<string, unknown>)['onSwitchedToBackgroundThread'] =
-  () => {
-    const g = globalThis as Record<string, unknown>;
-    const inject = g['lynxCoreInject'] as
+// `lynxTestingEnv.reset()` re-injects both threads' globals from scratch
+// (fresh `lynxCoreInject.tt`, etc.). These public @lynx-js/testing-environment
+// hooks re-apply the pipeline functions onto the freshly injected thread
+// globals; the thread switches inside `reset()` then copy them onto the live
+// globalThis. Installed via Object.assign because TS disallows re-assigning
+// the hooks' global function declarations.
+Object.assign(globalThis, {
+  onInjectMainThreadGlobals: (globals: Record<string, unknown>): void => {
+    Object.assign(globals, mainThreadFns);
+  },
+  onInjectBackgroundThreadGlobals: (globals: Record<string, unknown>): void => {
+    globals['publishEvent'] = publishEventFn;
+    const tt = (globals['lynxCoreInject'] as
       | { tt?: Record<string, unknown> }
-      | undefined;
-    if (inject?.tt) {
-      inject.tt['publishEvent'] = publishEventFn;
+      | undefined)?.tt;
+    if (tt) {
+      tt['publishEvent'] = publishEventFn;
     }
-    g['publishEvent'] = publishEventFn;
-  };
+  },
+});
 
 // --- Per-test reset ---------------------------------------------------------
 

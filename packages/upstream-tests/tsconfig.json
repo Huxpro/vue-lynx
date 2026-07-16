@@ -6,7 +6,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["vitest/globals"],
+    "types": ["vitest/globals", "@lynx-js/testing-environment"],
     "baseUrl": ".",
     "paths": {
       "vue-lynx": ["../vue-lynx/runtime/src/index.ts"],

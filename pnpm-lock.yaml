@@ -629,8 +629,8 @@ importers:
   packages/testing-library:
     devDependencies:
       '@lynx-js/testing-environment':
-        specifier: ^0.1.11
-        version: 0.1.11
+        specifier: ^0.3.0
+        version: 0.3.0
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
@@ -656,8 +656,8 @@ importers:
   packages/upstream-tests:
     devDependencies:
       '@lynx-js/testing-environment':
-        specifier: ^0.1.11
-        version: 0.1.11
+        specifier: ^0.3.0
+        version: 0.3.0
       '@vue/reactivity':
         specifier: ^3.5.0
         version: 3.5.30
@@ -1377,8 +1377,8 @@ packages:
     resolution: {integrity: sha512-2wl6BM2dfWs2W++FLeGjhh1z5wgUdhrITZ9pXteEXoZXDx6/28+mpaLFKUX2/Q13tUgjRXI7IfZKBNCwUGe5Gg==}
     engines: {node: '>=18'}
 
-  '@lynx-js/testing-environment@0.1.11':
-    resolution: {integrity: sha512-mpexU1pHHSNUKWbogKF1uuIAzrodHQh5j3uo2a2eY6O2vro76rqcIpCidSYHLQfkQUuzIP+gVPNJePRqY29g4A==}
+  '@lynx-js/testing-environment@0.3.0':
+    resolution: {integrity: sha512-a08y6fmEZZHNva/bCs4UT8SavTPFnH8j0wb01gnnC6RA28r0139I5ApjAzaPi+LSaj1pH+A5o41bDts2iV+ulw==}
 
   '@lynx-js/type-element-api@0.0.3':
     resolution: {integrity: sha512-e8+V1aU9VD6fmVJhS1VoE5ZxUD2udhEtTTsGBj2jlxYNscND2V6fyYFGF/dUPN+s9EwRiB80vUY/Im8tYSsMWA==}
@@ -6799,7 +6799,7 @@ snapshots:
       - '@lynx-js/lynx-core'
       - tslib
 
-  '@lynx-js/testing-environment@0.1.11': {}
+  '@lynx-js/testing-environment@0.3.0': {}
 
   '@lynx-js/type-element-api@0.0.3': {}
 

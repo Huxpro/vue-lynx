@@ -47,8 +47,8 @@ export const fireEvent:
     elem: Element,
     event: Event,
   ) => boolean) = ((elem: Element, event: Event) => {
-    const env = (globalThis as any).lynxTestingEnv;
-    const isMainThread = (globalThis as any).__MAIN_THREAD__;
+    const env = globalThis.lynxTestingEnv;
+    const isMainThread = globalThis.__MAIN_THREAD__;
 
     env.switchToBackgroundThread();
     const ans = domFireEvent(elem, event);
@@ -65,8 +65,8 @@ for (const key of Object.keys(eventMap)) {
     elem: Element,
     init?: Record<string, unknown>,
   ): boolean => {
-    const env = (globalThis as any).lynxTestingEnv;
-    const isMainThread = (globalThis as any).__MAIN_THREAD__;
+    const env = globalThis.lynxTestingEnv;
+    const isMainThread = globalThis.__MAIN_THREAD__;
 
     env.switchToBackgroundThread();
 

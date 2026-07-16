@@ -16,6 +16,6 @@ import { cleanup } from './render.js';
 if (typeof afterEach === 'function') {
   afterEach(() => {
     cleanup();
-    (globalThis as any).lynxTestingEnv?.reset();
+    globalThis.lynxTestingEnv?.reset();
   });
 }

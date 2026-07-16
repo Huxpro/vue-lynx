@@ -34,7 +34,7 @@ export interface RenderResult {
 
 export function cleanup(): void {
   if (currentApp) {
-    const env = (globalThis as any).lynxTestingEnv;
+    const env = globalThis.lynxTestingEnv;
     env.switchToBackgroundThread();
     currentApp.unmount();
     currentApp = null;
@@ -45,14 +45,16 @@ export function render(
   rootComponent: Component,
   rootProps?: Record<string, unknown>,
 ): RenderResult {
-  const env = (globalThis as any).lynxTestingEnv;
+  const env = globalThis.lynxTestingEnv;
 
   // 1. Cleanup previous render
   cleanup();
 
-  // 2. Clear JSDOM body so previous render's elements are gone
+  // 2. Clear JSDOM body so previous render's elements are gone.
+  // After switching threads, `document` is the shared jsdom document
+  // injected by LynxTestingEnv.
   env.switchToMainThread();
-  const doc = env.jsdom.window.document;
+  const doc = document;
   doc.body.innerHTML = '';
 
   // 3. Call renderPage to create page root (id=1)
@@ -101,7 +103,7 @@ export function render(
  * outside of event handlers.
  */
 export async function waitForUpdate(): Promise<void> {
-  const env = (globalThis as any).lynxTestingEnv;
+  const env = globalThis.lynxTestingEnv;
   env.switchToBackgroundThread();
   await nextTick();
   await nextTick();

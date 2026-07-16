@@ -63,10 +63,7 @@ function syncFlush(): void {
   const ops = takeOps();
   if (ops.length === 0) return;
 
-  const env = (globalThis as Record<string, unknown>)['lynxTestingEnv'] as {
-    switchToMainThread(): void;
-    switchToBackgroundThread(): void;
-  };
+  const env = globalThis.lynxTestingEnv;
   env.switchToMainThread();
   _applyOps(ops);
   env.switchToBackgroundThread();
@@ -604,15 +601,13 @@ export { withModifiers, withKeys } from '@vue/runtime-dom';
  * works for upstream test assertions.
  */
 export function render(vnode: VNode, container: Element): void {
-  const env = (globalThis as Record<string, unknown>)['lynxTestingEnv'] as {
-    switchToMainThread(): void;
-    switchToBackgroundThread(): void;
-    jsdom: { window: { document: Document } };
-  };
+  const env = globalThis.lynxTestingEnv;
 
-  // 1. Set up Main Thread — renderPage creates PAPI page root (id=1)
+  // 1. Set up Main Thread — renderPage creates PAPI page root (id=1).
+  // After switching threads, `document` is the shared jsdom document
+  // injected by LynxTestingEnv.
   env.switchToMainThread();
-  const doc = env.jsdom.window.document;
+  const doc = document;
   doc.body.innerHTML = '';
   const renderPageFn = (globalThis as Record<string, unknown>)['renderPage'] as
     | ((opts: Record<string, unknown>) => void)
