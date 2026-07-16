@@ -2,7 +2,7 @@
  * Real-browser FCP experiment driver (Lynx for Web = genuinely dual-threaded:
  * the background runtime runs in a Web Worker; IPC is real postMessage).
  *
- *   node web-harness/run-browser.mjs <bundlesDir> [runsPerBundle=7] [cpuThrottle=1]
+ *   node web-harness/run-browser.mjs <bundlesDir> [runsPerBundle=7] [cpuThrottle=1] [resultLabel]
  *
  * Expects bundle files inside <bundlesDir>; measures every *.web.bundle
  * found there, plus the single-threaded plain-web baselines (vanilla Vue /
@@ -25,7 +25,12 @@ const { chromium } = require('playwright-core');
 const bundlesDir = process.argv[2];
 const RUNS = Number(process.argv[3] ?? 7);
 const THROTTLE = Number(process.argv[4] ?? 1);
+const RESULT_LABEL = process.argv[5];
 const PORT = 8321;
+
+if (RESULT_LABEL && !/^[a-z0-9][a-z0-9-]*$/i.test(RESULT_LABEL)) {
+  throw new Error(`Invalid result label: ${RESULT_LABEL}`);
+}
 
 // Cold plain variants are pure concatenations — generate, don't commit.
 for (const [fw, app, out] of [
@@ -51,31 +56,9 @@ const median = (xs) => {
   return s[Math.floor(s.length / 2)];
 };
 
-function resolveChromium() {
-  if (process.env.PLAYWRIGHT_CHROMIUM_PATH) {
-    return process.env.PLAYWRIGHT_CHROMIUM_PATH;
-  }
-  const candidates = [
-    'ls -d /opt/pw-browsers/chromium-*/chrome-linux/chrome 2>/dev/null',
-    'ls -d /home/ubuntu/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null',
-    'ls -d "$HOME"/.cache/ms-playwright/chromium-*/chrome-linux64/chrome 2>/dev/null',
-    'command -v google-chrome',
-  ];
-  for (const cmd of candidates) {
-    try {
-      const path = execFileSync('bash', ['-c', cmd], { encoding: 'utf8' })
-        .trim()
-        .split('\n')[0];
-      if (path) return path;
-    } catch {
-      // try next
-    }
-  }
-  throw new Error('No Chromium executable found for Playwright');
-}
-
 const browser = await chromium.launch({
-  executablePath: resolveChromium(),
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH
+    ?? execFileSync('bash', ['-c', 'ls -d /opt/pw-browsers/chromium-*/chrome-linux/chrome'], { encoding: 'utf8' }).trim(),
   headless: true,
 });
 
@@ -99,7 +82,7 @@ for (const bundle of bundles) {
   const plainEntry = PLAIN.find((p) => p.name === bundle);
   const fcps = [];
   const settleds = [];
-  let finalCount = 0;
+  const finalCounts = [];
   for (let i = 0; i < RUNS; i++) {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
@@ -118,26 +101,33 @@ for (const bundle of bundles) {
     }));
     fcps.push(r.fcp);
     settleds.push(r.settled);
-    finalCount = r.finalCount;
+    finalCounts.push(r.finalCount);
     await ctx.close();
   }
   const row = {
     bundle,
     fcpMedianMs: median(fcps),
     settledMedianMs: median(settleds),
-    finalCount,
+    finalCount: median(finalCounts),
     fcps,
+    settleds,
+    finalCounts,
   };
   results.push(row);
   console.log(
     `${bundle.padEnd(28)} fcp ${row.fcpMedianMs.toFixed(1).padStart(8)}ms  settled ${
       row.settledMedianMs.toFixed(1).padStart(8)
-    }ms  nodes ${String(finalCount).padStart(4)}  throttle×${THROTTLE}`,
+    }ms  nodes ${String(row.finalCount).padStart(4)}  throttle×${THROTTLE}`,
   );
 }
 
 fs.writeFileSync(
-  path.resolve(_dirname, `../results/browser-results${THROTTLE > 1 ? `-x${THROTTLE}` : ''}.json`),
+  path.resolve(
+    _dirname,
+    `../results/browser-results${RESULT_LABEL ? `-${RESULT_LABEL}` : ''}${
+      THROTTLE > 1 ? `-x${THROTTLE}` : ''
+    }.json`,
+  ),
   JSON.stringify(results, null, 2),
 );
 

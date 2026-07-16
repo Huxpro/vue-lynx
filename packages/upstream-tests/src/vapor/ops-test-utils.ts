@@ -9,26 +9,7 @@
  * exactly the uids the template contract implies.
  */
 
-import { OP } from 'vue-lynx/internal/ops';
-
-export const OP_ARITY: Record<number, number> = {
-  [OP.CREATE]: 2,
-  [OP.CREATE_TEXT]: 1,
-  [OP.INSERT]: 3,
-  [OP.REMOVE]: 2,
-  [OP.SET_PROP]: 3,
-  [OP.SET_TEXT]: 2,
-  [OP.SET_EVENT]: 4,
-  [OP.REMOVE_EVENT]: 3,
-  [OP.SET_STYLE]: 2,
-  [OP.SET_CLASS]: 2,
-  [OP.SET_ID]: 2,
-  [OP.SET_WORKLET_EVENT]: 4,
-  [OP.SET_MT_REF]: 2,
-  [OP.INIT_MT_REF]: 2,
-  [OP.REGISTER_TEMPLATE]: 2,
-  [OP.CLONE_TEMPLATE]: 2,
-};
+import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 
 export interface DecodedOp {
   op: number;

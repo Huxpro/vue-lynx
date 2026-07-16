@@ -23,6 +23,7 @@
 
 import { describe, expect, it } from 'vitest';
 
+import workletLoader from '../../../vue-lynx/plugin/src/loaders/worklet-loader.js';
 import workletLoaderMT from '../../../vue-lynx/plugin/src/loaders/worklet-loader-mt.js';
 import type { ResolveImport } from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
 import {
@@ -354,6 +355,19 @@ describe('extractLocalImports', () => {
     expect(out).not.toContain(`import './shared.js'`);
   });
 
+  it('keeps graph edges beside a deprecated import assertion', async () => {
+    const out = await extractLocalImports(
+      `
+      import data from './data.json' assert { type: 'json' };
+      import './nested-worklet.ts';
+    `,
+      noResolve,
+    );
+
+    expect(out).not.toContain('data.json');
+    expect(out).toContain(`import './nested-worklet.ts';`);
+  });
+
   it('keeps vue script sub-modules, drops template/style', async () => {
     const out = await extractLocalImports(
       `
@@ -415,6 +429,8 @@ interface RunOptions {
   resourceQuery?: string;
   resolve?: Record<string, string>;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  ifr?: boolean;
+  vapor?: boolean;
 }
 
 /** Drive the async loader with a minimal mock LoaderContext. */
@@ -427,7 +443,11 @@ function runLoaderMT(source: string, opts: RunOptions = {}): Promise<string> {
           err ? reject(err) : resolve(result ?? '');
       },
       getOptions() {
-        return { includeWorkletPackages: opts.includeWorkletPackages };
+        return {
+          includeWorkletPackages: opts.includeWorkletPackages,
+          ifr: opts.ifr,
+          vapor: opts.vapor,
+        };
       },
       getResolve() {
         return (_context: string, request: string) => {
@@ -449,6 +469,28 @@ function runLoaderMT(source: string, opts: RunOptions = {}): Promise<string> {
     ) => void;
     loader.call(ctx, source);
   });
+}
+
+/** Drive the synchronous BG loader with the same resource identity. */
+function runLoaderBG(source: string, opts: RunOptions = {}): string {
+  const errors: Error[] = [];
+  const ctx = {
+    cacheable() {},
+    getOptions() {
+      return { vapor: opts.vapor };
+    },
+    resourcePath: opts.resourcePath ?? '/project/src/mod.ts',
+    emitError(error: Error) {
+      errors.push(error);
+    },
+  };
+  const loader = workletLoader as unknown as (
+    this: typeof ctx,
+    source: string,
+  ) => string;
+  const result = loader.call(ctx, source);
+  expect(errors).toEqual([]);
+  return result;
 }
 
 describe('worklet-loader-mt (end-to-end)', () => {
@@ -544,5 +586,126 @@ describe('worklet-loader-mt (end-to-end)', () => {
     const src = `import { gone } from '@/missing';\nexport const x = gone;`;
     const out = await runLoaderMT(src, { resourcePath: '/project/src/App.ts' });
     expect(out).not.toContain('@/missing');
+  });
+});
+
+describe('worklet loaders in IFR Vapor mode', () => {
+  it('keeps the full SFC connector graph, drops plain style effects, and preserves CSS-module bindings', async () => {
+    const connector = `
+      import script from './App.vue?vue&type=script&setup=true&lang.ts';
+      export * from './App.vue?vue&type=script&setup=true&lang.ts';
+      import { render } from './App.vue?vue&type=template&id=abc';
+      import './App.vue?vue&type=style&index=0&id=abc&lang.css';
+      import style0 from './App.vue?vue&type=style&index=1&id=abc&module=true&lang.css';
+      const cssModules = {};
+      cssModules['$style'] = style0;
+      script.__cssModules = cssModules;
+      script.render = render;
+      export default script;
+    `;
+
+    const out = await runLoaderMT(connector, {
+      ifr: true,
+      vapor: true,
+      resourcePath: '/project/src/App.vue',
+    });
+
+    expect(out).toContain('type=script');
+    expect(out).toContain('type=template');
+    expect(out).not.toContain('type=style&index=0');
+    expect(out).toContain('type=style&index=1');
+    expect(out).toContain("cssModules['$style'] = style0");
+    expect(out).toContain('export default script');
+  });
+
+  it('keeps complete script and template sub-modules and strips shared import attributes', async () => {
+    const script = `
+      import { shared } from './shared.ts' with { runtime: 'shared' };
+      export const answer = shared + 1;
+      export default { name: 'App' };
+    `;
+    const template = `
+      import { template, setText } from 'vue';
+      const t0 = template('<view><text></text></view>');
+      export function render() { return t0(); }
+    `;
+
+    const scriptOut = await runLoaderMT(script, {
+      ifr: true,
+      vapor: true,
+      resourcePath: '/project/src/App.vue',
+      resourceQuery: '?vue&type=script&setup=true&lang.ts',
+    });
+    const templateOut = await runLoaderMT(template, {
+      ifr: true,
+      vapor: true,
+      resourcePath: '/project/src/App.vue',
+      resourceQuery: '?vue&type=template&id=abc',
+    });
+
+    expect(scriptOut).toContain("import { shared } from './shared.ts';");
+    expect(scriptOut).not.toContain("runtime: 'shared'");
+    expect(scriptOut).toContain('export const answer = shared + 1');
+    expect(scriptOut).toContain("export default { name: 'App' }");
+    expect(templateOut).toBe(template);
+  });
+
+  it('only transforms real directive statements, not comments or ordinary strings', async () => {
+    const lookalikes = `
+      // 'main thread'
+      const description = 'main thread';
+      const quoted = "the words 'main thread' are documentation";
+      export const untouched = () => description + quoted;
+    `;
+    const realWorklet = `
+      export const onTap = () => {
+        'main thread'
+        return 1
+      }
+    `;
+
+    expect(await runLoaderMT(lookalikes, {
+      ifr: true,
+      vapor: true,
+      resourcePath: '/project/src/App.ts',
+    })).toBe(lookalikes);
+    expect(runLoaderBG(lookalikes, {
+      vapor: true,
+      resourcePath: '/project/src/App.ts',
+    })).toBe(lookalikes);
+
+    const transformed = await runLoaderMT(realWorklet, {
+      ifr: true,
+      vapor: true,
+      resourcePath: '/project/src/App.ts',
+    });
+    expect(transformed).toContain('export const onTap');
+    expect(transformed).toContain('registerWorkletInternal');
+  });
+
+  it('uses the Vapor runtime and produces matching BG/MT worklet hashes', async () => {
+    const source = `
+      const base = 2;
+      export const onTap = () => {
+        'main thread'
+        return base + 1
+      }
+    `;
+    const resourcePath = '/project/src/App.ts';
+
+    const bg = runLoaderBG(source, { vapor: true, resourcePath });
+    const mt = await runLoaderMT(source, {
+      ifr: true,
+      vapor: true,
+      resourcePath,
+    });
+    const bgHash = bg.match(/_wkltId:\s*["']([^"']+)["']/)?.[1];
+    const mtHash = mt.match(
+      /registerWorkletInternal\(\s*["']main-thread["']\s*,\s*["']([^"']+)["']/,
+    )?.[1];
+
+    expect(bgHash).toBeTruthy();
+    expect(mtHash).toBe(bgHash);
+    expect(mt).toContain('from "vue-lynx/vapor"');
   });
 });

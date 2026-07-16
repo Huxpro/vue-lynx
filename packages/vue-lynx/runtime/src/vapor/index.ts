@@ -40,8 +40,10 @@ import * as runtimeDom from '@vue/runtime-dom';
 import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
+import { registerMount } from '../app-registry.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
+import { isIfrMainThread } from '../ifr-env.js';
 import { createPageRoot } from '../shadow-element.js';
 import type { ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';
@@ -168,6 +170,8 @@ export function applyTextModel(
 
 /** Lynx-specific runtime-vapor implementation used by SFC CSS v-bind(). */
 export function useVaporCssVars(getter: () => Record<string, string>): void {
+  if (isIfrMainThread()) return;
+
   // runtime-dom exposes this internal live binding at runtime, but omits it
   // from the public declaration surface.
   const instance = (runtimeDom as unknown as {
@@ -292,6 +296,13 @@ export function createVaporApp(
     },
 
     mount(): void {
+      if (isIfrMainThread()) {
+        registerMount(() => {
+          const root = createPageRoot();
+          internalApp.mount(root);
+        });
+        return;
+      }
       const root = createPageRoot();
       internalApp.mount(root);
     },

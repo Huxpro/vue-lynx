@@ -35,6 +35,8 @@
  *     baseUid — the BG thread allocates the identical contiguous block, so
  *     both sides agree on ids without transmitting them.
  */
+export const PAGE_ROOT_ID = 1;
+
 export const OP = {
   CREATE: 0,
   CREATE_TEXT: 1,
@@ -56,6 +58,26 @@ export const OP = {
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
+
+/** Number of payload fields following each active opcode in the flat stream. */
+export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
+  [OP.CREATE]: 2,
+  [OP.CREATE_TEXT]: 1,
+  [OP.INSERT]: 3,
+  [OP.REMOVE]: 2,
+  [OP.SET_PROP]: 3,
+  [OP.SET_TEXT]: 2,
+  [OP.SET_EVENT]: 4,
+  [OP.REMOVE_EVENT]: 3,
+  [OP.SET_STYLE]: 2,
+  [OP.SET_CLASS]: 2,
+  [OP.SET_ID]: 2,
+  [OP.SET_WORKLET_EVENT]: 4,
+  [OP.SET_MT_REF]: 2,
+  [OP.INIT_MT_REF]: 2,
+  [OP.REGISTER_TEMPLATE]: 2,
+  [OP.CLONE_TEMPLATE]: 2,
+});
 
 // ---------------------------------------------------------------------------
 // REGISTER_TEMPLATE structure — the ONE definition both threads must agree

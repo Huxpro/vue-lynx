@@ -114,19 +114,75 @@ export function makeCountingBackend() {
 // ---------------------------------------------------------------------------
 
 export async function makeJsdomBackend() {
+  // LynxTestingEnv installs its jsdom `document`/`window` on globalThis every
+  // time it switches to the Main Thread.  That is correct for the PAPI
+  // implementation, but the real Vapor variant must keep using vue-lynx's
+  // ShadowElement DOM shim (production bundles rewrite those accesses to the
+  // shim globals).  Capture and restore the runtime-facing constructors while
+  // leaving the testing environment's PAPI functions installed.
+  const runtimeGlobalNames = [
+    'document',
+    'window',
+    'Node',
+    'Element',
+    'Text',
+    'Comment',
+    'CharacterData',
+    'DocumentFragment',
+    'HTMLElement',
+    'SVGElement',
+    'MathMLElement',
+    'HTMLSlotElement',
+    'ShadowRoot',
+  ];
+  const runtimeGlobals = new Map(
+    runtimeGlobalNames.map((name) => [name, globalThis[name]]),
+  );
+  const restoreRuntimeGlobals = () => {
+    for (const [name, value] of runtimeGlobals) {
+      if (value !== undefined) globalThis[name] = value;
+    }
+  };
+
   const { JSDOM } = await import('jsdom');
   const { LynxTestingEnv } = await import('@lynx-js/testing-environment');
   const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
   const env = new LynxTestingEnv(jsdom);
   globalThis.lynxTestingEnv = env;
-  env.switchToMainThread();
+  const installMainThreadPapi = () => {
+    env.switchToMainThread();
+    const papi = new Map(PAPI_NAMES.map((name) => [name, globalThis[name]]));
+    const papiDomGlobals = new Map(
+      runtimeGlobalNames
+        .filter((name) => env.mainThread.globalThis[name] !== undefined)
+        .map((name) => [name, env.mainThread.globalThis[name]]),
+    );
+    restoreRuntimeGlobals();
+
+    // ElementPAPI's functions read the active `document` global.  Wrap each
+    // call so only the PAPI observes jsdom; application/runtime code keeps
+    // observing the ShadowElement shim between calls.
+    for (const [name, fn] of papi) {
+      globalThis[name] = (...args) => {
+        for (const [globalName, value] of papiDomGlobals) {
+          globalThis[globalName] = value;
+        }
+        try {
+          return fn(...args);
+        } finally {
+          restoreRuntimeGlobals();
+        }
+      };
+    }
+  };
+  installMainThreadPapi();
 
   return {
     kind: 'jsdom',
     env,
     document: jsdom.window.document,
     install() {
-      env.switchToMainThread();
+      installMainThreadPapi();
     },
     reset() {
       jsdom.window.document.body.innerHTML = '';
@@ -141,6 +197,12 @@ export async function makeJsdomBackend() {
 export function normalizeHtml(html) {
   return html
     .replace(/ vue-ref-\d+="[^"]*"/g, '')
+    // Upstream runtime-vapor marks its mount container with `data-v-app`.
+    // It is renderer bookkeeping on the engine-owned page, not app output.
+    .replace(/^<page class="([^"]*)">/, (_match, classes) => {
+      const kept = classes.split(/\s+/).filter((name) => name !== 'data-v-app');
+      return kept.length > 0 ? `<page class="${kept.join(' ')}">` : '<page>';
+    })
     // Vue's fragment machinery uses empty text nodes as position anchors
     // (hostCreateText('')). They are invisible zero-size placeholders; the
     // lowered variants intentionally don't emit them.

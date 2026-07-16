@@ -2,8 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-/** Enable IFR before the main-thread copy of user code evaluates. */
+/** Enable the Background side of the IFR completion handshake. */
 
-import { enableIFR } from './ifr.js';
+import { enableIfrRuntime } from './ifr-env.js';
 
-enableIFR();
+enableIfrRuntime();

@@ -1,5 +1,5 @@
 /**
- * The seven first-frame rendering strategies under comparison.
+ * The eight first-frame rendering strategies under comparison.
  *
  * Variant contract: `makeVariant(bundle)` returns
  *   { reset(ctx), run(), collect() }
@@ -25,12 +25,15 @@
  *   ifr-vapor     — route (c)/Q1 upper bound: no vdom at all; skeleton fns +
  *                   per-hole closure application (≈ Vapor's template()+
  *                   renderEffect on first render; effect re-tracking omitted)
+ *   ifr-vapor-real— route (c): @vue/compiler-vapor + shipped Vapor runtime
+ *                   running through the production IFR recorder/interpreter
  *   papi-floor    — absolute floor: one generated straight-line function
  */
 
 import { createRenderer } from '@vue/runtime-core';
 import { OP } from 'vue-lynx/internal/ops';
 import { ShadowElement, createApp, resetForTesting } from 'vue-lynx';
+import { createApp as createVaporApp } from 'vue-lynx/vapor';
 
 import {
   elements,
@@ -164,76 +167,76 @@ function makeDirectRenderer(hooks) {
       if (!claimed) {
         const native = createTyped(type, state.P);
         __SetCSSId([native], 0);
-        __SetAttribute(native, `vue-ref-${sh.id}`, 1);
+        __SetAttribute(native, `vue-ref-${sh.uid}`, 1);
         sh._native = native;
-        state.record.push(OP.CREATE, sh.id, type);
+        state.record.push(OP.CREATE, sh.uid, type);
       }
-      state.handleMap.set(sh.id, sh._native);
+      state.handleMap.set(sh.uid, sh._native);
       return sh;
     },
     createText(text) {
       const sh = new ShadowElement('#text');
       const native = __CreateText(state.P);
       __SetCSSId([native], 0);
-      __SetAttribute(native, `vue-ref-${sh.id}`, 1);
+      __SetAttribute(native, `vue-ref-${sh.uid}`, 1);
       sh._native = native;
-      state.record.push(OP.CREATE_TEXT, sh.id);
-      state.handleMap.set(sh.id, native);
+      state.record.push(OP.CREATE_TEXT, sh.uid);
+      state.handleMap.set(sh.uid, native);
       if (text) {
         __SetAttribute(native, 'text', text);
-        state.record.push(OP.SET_TEXT, sh.id, text);
+        state.record.push(OP.SET_TEXT, sh.uid, text);
       }
       return sh;
     },
     createComment() {
       const sh = new ShadowElement('#comment');
       sh._native = __CreateRawText('');
-      state.record.push(OP.CREATE, sh.id, '__comment');
-      state.handleMap.set(sh.id, sh._native);
+      state.record.push(OP.CREATE, sh.uid, '__comment');
+      state.handleMap.set(sh.uid, sh._native);
       return sh;
     },
     setText(node, text) {
       __SetAttribute(node._native, 'text', text);
-      state.record.push(OP.SET_TEXT, node.id, text);
+      state.record.push(OP.SET_TEXT, node.uid, text);
     },
     setElementText(el, text) {
       __SetAttribute(el._native, 'text', text);
-      state.record.push(OP.SET_TEXT, el.id, text);
+      state.record.push(OP.SET_TEXT, el.uid, text);
     },
     insert(child, parent, anchor) {
       parent.insertBefore(child, anchor ?? null);
       const target = parent._slotNative ?? parent._native;
       if (anchor) __InsertElementBefore(target, child._native, anchor._native);
       else __AppendElement(target, child._native);
-      state.record.push(OP.INSERT, parent.id, child.id, anchor ? anchor.id : -1);
+      state.record.push(OP.INSERT, parent.uid, child.uid, anchor ? anchor.uid : -1);
     },
     remove(child) {
       if (child.parent) {
         const p = child.parent;
         p.removeChild(child);
         __RemoveElement(p._slotNative ?? p._native, child._native);
-        state.record.push(OP.REMOVE, p.id, child.id);
+        state.record.push(OP.REMOVE, p.uid, child.uid);
       }
     },
     patchProp(el, key, _prev, next) {
       if (hooks.patchProp?.(el, key, next, state)) return;
       if (key === 'class') {
         __SetClasses(el._native, next ?? '');
-        state.record.push(OP.SET_CLASS, el.id, next ?? '');
+        state.record.push(OP.SET_CLASS, el.uid, next ?? '');
       } else if (key === 'style') {
         __SetInlineStyles(el._native, next ?? {});
-        state.record.push(OP.SET_STYLE, el.id, next ?? {});
+        state.record.push(OP.SET_STYLE, el.uid, next ?? {});
       } else if (key === 'id') {
         __SetID(el._native, next ?? undefined);
-        state.record.push(OP.SET_ID, el.id, next);
+        state.record.push(OP.SET_ID, el.uid, next);
       } else if (/^on[A-Z]/.test(key)) {
         const name = key.slice(2, 3).toLowerCase() + key.slice(3);
         const sign = registerEvent(next);
         __AddEvent(el._native, 'bindEvent', name, sign);
-        state.record.push(OP.SET_EVENT, el.id, 'bindEvent', name, sign);
+        state.record.push(OP.SET_EVENT, el.uid, 'bindEvent', name, sign);
       } else {
         __SetAttribute(el._native, key, next);
-        state.record.push(OP.SET_PROP, el.id, key, next);
+        state.record.push(OP.SET_PROP, el.uid, key, next);
       }
     },
     parentNode: (n) => n.parent,
@@ -250,7 +253,7 @@ function directVariant(bundle, component, hooks = {}) {
   return {
     reset(ctx) {
       ctx0 = ctx;
-      ShadowElement.nextId = 2;
+      ShadowElement.nextUid = 2;
       made = makeDirectRenderer(hooks);
       made.state.P = ctx.pageUid;
       hooks.onReset?.(made.state);
@@ -286,7 +289,7 @@ function ifrStaticTpl(bundle) {
       const tpl = registry.get(type);
       if (!tpl) return false;
       sh._native = tpl.create(null, state.P, null);
-      state.record.push(OP_INSTANTIATE, sh.id, type);
+      state.record.push(OP_INSTANTIATE, sh.uid, type);
       return true;
     },
   };
@@ -325,7 +328,7 @@ function ifrBlockTpl(bundle) {
       sh._holes = H;
       sh._holeMeta = tpl.holes;
       if (S.length > 0) sh._slotNative = S[0];
-      state.record.push(OP_INSTANTIATE, sh.id, type);
+      state.record.push(OP_INSTANTIATE, sh.uid, type);
       return true;
     },
     patchProp(el, key, next, state) {
@@ -333,7 +336,7 @@ function ifrBlockTpl(bundle) {
         const idx = Number(key.slice(1));
         if (!Number.isNaN(idx)) {
           applyHole(el._holeMeta[idx], el._holes[idx], next, state);
-          state.record.push(OP.SET_PROP, el.id, key, next);
+          state.record.push(OP.SET_PROP, el.uid, key, next);
           return true;
         }
       }
@@ -402,6 +405,37 @@ function ifrVapor(bundle) {
 }
 
 // ---------------------------------------------------------------------------
+// ifr-vapor-real (route c): compiler-vapor + shipped Vapor IFR pipeline
+// ---------------------------------------------------------------------------
+
+function ifrVaporReal(bundle) {
+  let recorded = [];
+  return {
+    reset(ctx) {
+      resetRealPipeline(ctx);
+      enableIFR();
+      const g = globalThis;
+      const apply = g.__vueLynxIfrApplyOps;
+      recorded = [];
+      g.__vueLynxIfrApplyOps = (ops) => {
+        recorded.push(ops);
+        apply(ops);
+      };
+      // Production IFR evaluates user code before renderPage. Vapor mount()
+      // therefore registers the app now and performs no render work here.
+      createVaporApp(bundle.vaporComponent).mount();
+    },
+    run() {
+      runIfrRender({});
+    },
+    collect: () => ({
+      opsBytes: recorded.reduce((n, ops) => n + JSON.stringify(ops).length, 0),
+      opsFrames: recorded.reduce((n, ops) => n + ops.length, 0),
+    }),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // papi-floor
 // ---------------------------------------------------------------------------
 
@@ -433,5 +467,6 @@ export const VARIANTS = {
   'ifr-static-tpl': ifrStaticTpl,
   'ifr-block-tpl': ifrBlockTpl,
   'ifr-vapor': ifrVapor,
+  'ifr-vapor-real': ifrVaporReal,
   'papi-floor': papiFloor,
 };

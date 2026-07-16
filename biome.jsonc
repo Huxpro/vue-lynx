@@ -22,6 +22,7 @@
       "packages/ifr-bench/**",
       "packages/upstream-tests/**",
       "packages/benchmark/**",
+      "packages/ifr-bench/**",
       "packages/create-vue-lynx/**",
       "examples/**",
       "website/**",

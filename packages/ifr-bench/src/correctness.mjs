@@ -10,9 +10,24 @@ import { prepareScene } from './prep.mjs';
 import { SIZES, allScenes } from './scenes.mjs';
 import { VARIANTS } from './variants.mjs';
 
+const normalizationProbe = normalizeHtml(
+  '<page class="data-v-app"><page class="data-v-app"></page></page>',
+);
+if (normalizationProbe !== '<page><page class="data-v-app"></page></page>') {
+  throw new Error('normalization must preserve nested application output');
+}
+
 const backend = await makeJsdomBackend();
 
 let failures = 0;
+
+const requiredVariants = ['ifr-vapor-real'];
+for (const name of requiredVariants) {
+  if (!(name in VARIANTS)) {
+    console.error(`✗ missing required variant: ${name}`);
+    failures++;
+  }
+}
 
 for (const sceneEntry of allScenes(SIZES.small)) {
   const bundle = prepareScene(sceneEntry, sceneEntry.sizeArg);
