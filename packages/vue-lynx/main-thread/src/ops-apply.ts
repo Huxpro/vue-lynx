@@ -394,9 +394,25 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
 
-      default:
-        // Unknown op – skip (future-compat)
+      default: {
+        // Unknown op: skip its payload by arity so one unimplemented opcode
+        // cannot desync the rest of the walk. Without an arity there is no
+        // safe resync point — stop consuming this batch (the tail below
+        // still flushes whatever applied).
+        const arity = ARITY[code];
+        if (arity === undefined) {
+          if (__DEV__) {
+            console.warn(
+              `[vue-lynx] applyOps: unknown opcode ${code}; `
+                + 'dropping the rest of the batch.',
+            );
+          }
+          i = len;
+          break;
+        }
+        i += arity;
         break;
+      }
     }
   }
 

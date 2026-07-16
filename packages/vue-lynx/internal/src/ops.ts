@@ -52,9 +52,20 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
-  // 14 retired (was SET_SCOPE_ID) — do not reuse.
+  // 14 retired (was SET_SCOPE_ID) — do not reuse. The pre-Vapor lineage
+  // still emits SET_SCOPE_ID=14; on this lineage scoped CSS rides on
+  // classes, and 14 stays retired after the lineages merge.
   REGISTER_TEMPLATE: 15,
   CLONE_TEMPLATE: 16,
+  // 17 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
+  // enableElementTemplates on the claude/vue-lynx-ifr-optimization-hy6jmy
+  // branch, where it is currently numbered 15). That opcode must renumber
+  // to 17 when it lands here — 15/16 belong to the Vapor template protocol
+  // above. Consumers handle unknown opcodes conservatively (hydration
+  // falls back to the full BG replay; the interpreter stops at an opcode
+  // it has no arity for), and both sides of the protocol always ship
+  // inside one bundle, so the reservation is a merge contract rather than
+  // a wire-compatibility concern.
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
