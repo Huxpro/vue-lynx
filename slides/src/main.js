@@ -167,6 +167,7 @@ function setSlide(index, opts = {}) {
     history.replaceState(null, '', `#${current + 1}`);
   }
   preloadDemosNear(current);
+  syncSlideMedia(current);
 
   if (!opts.fromChannel) {
     broadcastState();
@@ -185,6 +186,24 @@ function preloadDemosNear(index) {
     if (!slide) continue;
     slide.querySelectorAll('vl-demo').forEach((d) => d.load?.());
   }
+}
+
+// Native recording clips (<video>) only play on the current slide — every
+// other clip is paused and rewound so the deck stays quiet and cheap. When
+// reduced-motion is set we leave the poster frame up instead of autoplaying.
+function syncSlideMedia(index) {
+  document.querySelectorAll('video.native-clip').forEach((v) => {
+    const onCurrent = slides[index] && slides[index].contains(v);
+    if (onCurrent && !REDUCED_MOTION && !embedMode) {
+      const p = v.play?.();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } else {
+      v.pause?.();
+      if (!onCurrent) {
+        try { v.currentTime = 0; } catch { /* not seekable yet */ }
+      }
+    }
+  });
 }
 
 function next() { setSlide(current + 1); }
@@ -514,6 +533,7 @@ const I18N_SELECTOR = [
   '.combine__name', '.result-label', '.tl-item__week', '.node__label',
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
   '.flane__label', '.fcenter', '.lgtag',
+  '.demo__caption', '.videopair figcaption',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];

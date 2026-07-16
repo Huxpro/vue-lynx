@@ -2455,3 +2455,158 @@ body.is-blackout::after {
 .gap-sm { gap: 8px; }
 .gap-md { gap: 16px; }
 .gap-lg { gap: 32px; }
+
+/* =========================================================
+   Case studies — native recordings + UI mocks (AI Chat · Elk)
+   Net-new visuals layered into Chapter III: looping on-device
+   clips in a phone, a keyboard-inset mock, and a viewpager mock.
+   ========================================================= */
+.techslide {
+  --c-list: color-mix(in srgb, var(--ink) 12%, transparent);
+  --c-bubble: color-mix(in srgb, var(--ink) 22%, transparent);
+  --c-blank: #4FB8F0;          /* "blank size" — matches the deck's blue accent */
+  --c-kb: var(--brand-teal);   /* keyboard height — teal */
+  --c-primary: var(--vue-green);
+}
+
+/* Looping native recording, framed by the shared .phone bezel. */
+.phone__inner > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #0a0c10;
+}
+
+.demo__caption {
+  margin-top: 14px;
+  max-width: 32ch;
+  text-align: center;
+  color: var(--ink-mute);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.demo__stage-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: min(92cqh, 650px);
+  position: relative;
+}
+.demo__stage-wrap .phone { position: relative; top: auto; left: auto; transform: none; }
+
+/* Two on-device clips side by side (first send · second send). */
+.videopair {
+  display: flex;
+  gap: clamp(28px, 5cqw, 72px);
+  align-items: flex-start;
+  justify-content: center;
+}
+.videopair figure { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.videopair .phone { height: min(60cqh, 500px); }
+.videopair figcaption {
+  margin-top: 12px;
+  text-align: center;
+  color: var(--ink-mute);
+  font-size: 12px;
+  line-height: 1.45;
+  max-width: 22ch;
+}
+.videopair figcaption b { color: var(--ink-soft); font-weight: 600; }
+
+/* --- Mock 1 — keyboard participates in layout (contentInset) --- */
+.kbmock {
+  --w: 172px;
+  width: var(--w);
+  aspect-ratio: 172 / 300;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper-elev);
+  padding: 12px 12px 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.kbmock__bar { height: 5px; width: 40%; border-radius: 3px; background: var(--c-list); margin: 2px auto 12px; }
+.kbmock__list { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.kbmock__msg { height: 14px; border-radius: 7px; background: var(--c-list); }
+.kbmock__msg.w70 { width: 70%; }
+.kbmock__msg.w90 { width: 90%; }
+.kbmock__msg.tall { height: 44px; background: var(--c-bubble); }
+.kbmock__blank {
+  flex: 1; min-height: 30px;
+  border: 1.5px dashed color-mix(in srgb, var(--c-blank) 70%, transparent);
+  border-radius: 10px; margin: 6px 0;
+  display: grid; place-items: center;
+  color: var(--c-blank); font-size: 9.5px;
+  font-family: var(--mono); letter-spacing: 0.05em;
+}
+.kbmock__composer {
+  height: 26px; border-radius: 999px;
+  background: color-mix(in srgb, var(--c-primary) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-primary) 60%, transparent);
+  margin: 0 0 10px; flex: none;
+}
+.kbmock__kb {
+  height: 82px; margin: 0 -12px 0;
+  border-top: 1.5px dashed color-mix(in srgb, var(--c-kb) 75%, transparent);
+  background: color-mix(in srgb, var(--c-kb) 12%, transparent);
+  border-radius: 0 0 20px 20px;
+  display: grid; place-items: center;
+  color: var(--c-kb); font-size: 9.5px;
+  font-family: var(--mono); letter-spacing: 0.05em;
+}
+.kbmock__lift {
+  position: absolute; right: -30px; bottom: 82px; height: 48px;
+  display: flex; align-items: center; gap: 5px;
+  color: var(--c-primary); font-family: var(--mono); font-size: 9px;
+}
+.kbmock__lift .up { font-size: 15px; line-height: 1; }
+.kbmock-legend {
+  display: flex; flex-direction: column; gap: 6px;
+  font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+}
+.kbmock-legend .k { display: inline-flex; align-items: center; gap: 8px; }
+.kbmock-legend .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+/* --- Mock 3 — native viewpager (Elk tabs) --- */
+.pagermock {
+  width: 208px;
+  aspect-ratio: 208 / 300;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper-elev);
+  padding: 12px 0 0;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.pagermock__tabs { display: flex; padding: 0 12px; border-bottom: 1px solid var(--line); }
+.pagermock__tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-bottom: 8px; }
+.pagermock__tab .t { font-size: 9.5px; font-family: var(--mono); color: var(--ink-mute); }
+.pagermock__tab.is-active .t { color: var(--ink); font-weight: 600; }
+.pagermock__tab .u { height: 3px; width: 60%; border-radius: 2px; background: var(--c-primary); opacity: 0; transform: scaleX(0.35); }
+.pagermock__tab.is-active .u { opacity: 1; transform: scaleX(1); }
+.pagermock__strip { flex: 1; display: flex; overflow: hidden; position: relative; }
+.pagermock__pane { min-width: 84%; flex: none; padding: 12px; display: flex; flex-direction: column; gap: 8px; border-right: 1px dashed var(--line); }
+.pagermock__pane .row { height: 14px; border-radius: 7px; background: var(--c-list); }
+.pagermock__pane .row.w60 { width: 60%; }
+.pagermock__pane .row.w85 { width: 85%; }
+.pagermock__pane--next { opacity: 0.5; }
+.pagermock__swipe {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; gap: 4px;
+  color: var(--c-primary); font-family: var(--mono); font-size: 9px;
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+  padding: 3px 6px; border-radius: 999px;
+}
+.sync2 { display: flex; flex-direction: column; gap: 10px; }
+.sync2__row { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+.sync2__row .from, .sync2__row .to { padding: 3px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper-elev); white-space: nowrap; }
+.sync2__row .to { color: var(--vue-green); border-color: color-mix(in srgb, var(--vue-green) 45%, transparent); }
+.sync2__row .arr { color: var(--ink-faint); }
+.sync2__row .via { color: var(--ink-mute); font-size: 10px; }
