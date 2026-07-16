@@ -20,13 +20,23 @@ export const ZH = {
   'Develop Lynx with the familiar Vue 3.': '用熟悉的 Vue 3 开发 Lynx。',
 
   // ---- Chapter I · The gap ----
-  'I · The gap': 'I · 空缺',
-  'I · The gap · the map': 'I · 空缺 · 地图',
-  'I · The gap · the answer': 'I · 空缺 · 答案',
-  'Cross-platform has many answers…':
-    '跨端,从来不缺<span class="brand-text">答案</span>……',
-  '…but Vue never got a dominant one.':
-    '……但 <span class="brand-text">Vue</span>,一直没有一个足够统治的。',
+  'IV · The landscape': 'IV · 格局',
+  'IV · The landscape · the map': 'IV · 格局 · 地图',
+  'IV · The landscape · the answer': 'IV · 格局 · 答案',
+  'Zoom out: every stack is layers — and seams.':
+    '拉远看:每个技术栈都是<span class="brand-text">层</span> —— 与缝。',
+  'self-rendered': '自渲染',
+  'Dart — wrong language': 'Dart —— 语言不对',
+  'native UI': '原生 UI',
+  'bound to React — wrong model': '绑定 React —— 编程模型不对',
+  'plugs in — model half-survives': '接得上 —— 模型只保得住一半',
+  'layout ≠ Web': '布局 ≠ Web',
+  'no Web — low ROI': '不含 Web —— 投入产出比低',
+  "today's choice": '今天的选择',
+  'a browser, everywhere': '哪里都有浏览器',
+  'not native enough': '不够 Native',
+  'native UI primitives': '原生 UI primitive',
+  'custom rendering engine': '自定义渲染引擎',
   'open — an extension point': '<i></i>开 —— 一个扩展点',
   'half-open': '<i class="part"></i>半开',
   'welded shut': '<i class="seal"></i>焊死',
@@ -260,124 +270,136 @@ export const ZH_NOTES = [
   `<p><strong>Chrome 从下方升起</strong> —— React 和 Vue 抬到上方两角,三个 logo 落成三角,Web 在底下托着它们。</p><p>"先聊 Web。"React 和 Vue 只是载体 —— 我们真正共同站立的地面,是 Web:它的开发体验、它的开放性、它的可达性。</p>`,
   // 4 Logo · Lynx 取代 Chrome
   `<p><strong>Lynx 顶掉 Chrome</strong>,落在三角的同一个位置 —— 同一个位置,换了引擎。我在解的问题没变;脚下的地面变了。</p><p>快速给事实:Lynx 是字节跳动的跨平台引擎 —— TikTok 的界面就在跑 —— 而且已经开源。</p>`,
-  // 5 Many answers
-  `<p><strong>先看格局。</strong>跨端从来不缺答案:Web 本身、React Native、Flutter、Ionic、NativeScript……这场对话已经吵了十几年。</p>`,
-  // 6 Vue never got one
-  `<p><strong>空缺。</strong>React 有 RN,Flutter 有 Dart 自成一派。而 Vue —— 拥有全球最大的前端社区之一,尤其在中文世界 —— 却始终没有一个足够统治的原生方案。Weex 试过,NativeScript-Vue 试过,都没立住。</p><p>为什么?我们从结构上看。</p>`,
-  // 7 Map scaffold
-  `<p><strong>地图。</strong>把任何跨端栈拆成五层;层间四条缝,每条是个是非题:EP1 能接任意前端?EP2 能换渲染模型?EP3 能加原生能力?EP4 能上新平台?开着的缝是扩展点,焊死的缝是墙。</p>`,
-  // 8 Web column
-  `<p>Web:EP1 全开 —— 任意框架。但渲染和能力被沙箱焊死;"新平台"只等于"那里有浏览器"。开发体验封顶,用户体验也封顶。</p>`,
-  // 9 Ionic
-  `<p>Ionic(以及所有 WebView 套壳):上层保住了 Web 的开放,Capacitor 把能力那条缝撬到半开 —— 但渲染仍然是 WebView 里的 DOM。它继承了 Web 的天花板:<strong>不够 Native</strong>。</p>`,
-  // 10 NativeScript
-  `<p>NativeScript:反向的取舍。谁都比不过的直接原生访问 —— 但它不是真正的 Web:没有真 CSS 引擎、没有 DOM 语义,渲染和新平台两处焊死。<strong>不够 Web</strong>。</p>`,
-  // 11 Flutter
-  `<p>Flutter:下半场全开 —— 自渲染、embedder 上新平台。代价是上层只留 Dart 一扇门。它不是在延伸 Web,是在替代 Web —— <strong>一个平行宇宙</strong>。</p>`,
-  // 12 React Native
-  `<p>React Native:能力开放、生态庞大 —— 离梦想最近。但前端那条缝焊死在 React 上:Metro、渲染器、心智模型全都是。如果你是 Vue,<strong>这扇门从来不属于你</strong>。</p>`,
-  // 13 Lynx column
-  `<p><strong>答案。</strong>EP1:基于 Rspack 的工具链,框架无关 —— 真 CSS、任意前端。EP2:引擎既能适配原生 primitive,也能自渲染。EP3:Native Module。EP4:移动 + 桌面已落地,TV/VR 用自渲染跑通。四条缝,一条不焊 —— 包括 Vue 需要的那条。</p>`,
-  // 14 Framework-agnostic
-  `<p>Lynx 从 ReactLynx 起步,但平台被刻意演进为框架无关 —— 前端层是真正的扩展点,不是 React 的附属功能。这不是宣传话术;马上给你看实证。</p>`,
-  // 15 Web DX Native UX
-  `<p><strong>一句话论点。</strong>Lynx 给你 Web 的开发体验、Native 的用户体验。而因为前端那条缝是开的 —— 这就是 Vue 的机会。于是……</p>`,
-  // 16 Title reveal · Vue Lynx 正式亮相
+  // 5 一排候选人
+  `<p><strong>一排看过去。</strong>行业里其实并不缺跨端解决方案:Flutter、React Native、NativeScript、还有 Web 本身 —— 它周围还绕着一圈自己的壳家族(Electron、Tauri、Ionic)。队尾那个新面孔,是 Lynx。</p>`,
+  // 6 Vue 入场找爹
+  `<p><strong>Vue 入场 —— 一脸问号。</strong>那一排里每一个,都有自己的"亲儿子"框架故事。而 Vue —— 全球最大的前端社区之一 —— 一直没有一个统治级的跨端方案。Weex 试过,NativeScript-Vue 试过,都没立住。</p><p>那就相亲吧,一个一个来。</p>`,
+  // 7 Flutter
+  `<p><strong>候选一:Flutter。</strong>全靠自渲染 —— Skia/Impeller —— 平台覆盖确实漂亮:iOS、Android、桌面、甚至 Web。但上层唯一的门是 Dart。语言不对、生态不对:Vue 根本插不进去。这根线,压根连不上。</p>`,
+  // 8 React Native
+  `<p><strong>候选二:React Native。</strong>原生 UI primitive,理念上离得最近。但整条链路绑死在 React 上:Metro、渲染器、编程模型。不是 Vue 不受欢迎 —— 是门的形状就不对。(而且 iOS/Android 之外的每个新端都要手动移植。)</p>`,
+  // 9 NativeScript
+  `<p><strong>候选三:NativeScript。</strong>这个 Vue <em>确实</em>接得上 —— 但只有一半:编程模型和生态过不去,渲染模型也不像 Web(没有真正的 CSS 布局引擎)。更糟的是,目标平台里甚至没有 Web —— 你要维护第二套代码,换来的覆盖面反而更小。投入产出比太低。</p>`,
+  // 10 Web · 今天的选择
+  `<p><strong>于是社区留在了 Web</strong> —— 这就是今天的现实选择。它连接得毫无障碍:浏览器无处不在,壳家族(Electron、Tauri、Ionic —— 此刻在 Chrome 周围点亮)把缝隙都糊上了。但有一个问题任何壳都修不了:它还是<em>不够 Native</em> —— 这就是我们 demo 章节里见过的那个天花板。</p>`,
+  // 11 Lynx 主动连上
+  `<p><strong>然后,Lynx 自己走出了那一排</strong> —— 朝 Vue 走过来。前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,连得上,而且是实线。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
+  // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
-  // 18 Divider II
+  // 13 Divider II
   `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、完整应用、然后是原生超能力。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
-  // 18 852/949
+  // 14 852/949
   `<p><strong>先上硬指标。</strong>我们把 Vue core 自己的测试套件拿来直接跑在 Vue Lynx 渲染器上:949 个通过 852 个;每个 skip 都有记录、有交代。"兼容 Vue"在这里是可测量的命题,不是一句口号。</p>`,
-  // 19 ref
+  // 15 ref
   `<p><strong>从最简单的开始:</strong><code>ref()</code>、一个事件回调、一个样式绑定。整页和 Web Vue 的差别只有两处:import 写 <code>vue-lynx</code>,标签是 <code>&lt;view&gt;/&lt;text&gt;/&lt;image&gt;</code>。</p><p><strong>现场:</strong>点一下 —— logo 沿着 ref 驱动的 transform 弹起来。</p>`,
-  // 20 reactive
+  // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
-  // 21 v-model
+  // 17 v-model
   `<p>双向绑定,两种形态都有:组件层 <code>defineModel</code>(含具名 model),以及直接绑在 Lynx <strong>原生</strong> <code>&lt;input&gt;/&lt;textarea&gt;</code> 上的 <code>v-model</code> —— 连 <code>.lazy/.trim/.number</code> 修饰符都在。时序敏感的场景(预置值、程序化赋值、与 <code>@input</code> 共存)也都覆盖了。</p>`,
-  // 22 event modifiers
+  // 18 event modifiers
   `<p>Vue 的事件修饰符映射到 Lynx 事件系统:<code>.once</code>、<code>.stop</code>、<code>.self</code>、链式组合 —— demo 里每个都和"不加修饰符"的孪生版本并排对照。(<code>.prevent</code> 是兼容性 no-op —— 原生没有默认行为可阻止。)</p>`,
-  // 23 slots
+  // 19 slots
   `<p>组合模式整体平移:默认插槽、具名插槽、作用域插槽 —— 你搭设计系统用的整套组件写法都在。</p>`,
-  // 24 provide/inject
+  // 20 provide/inject
   `<p>跨层级依赖注入 —— 响应式值也支持。根部切主题,深层子组件通过注入的 ref 一起重渲染。Pinia 和 Router 正是骑在这套机制上工作的 —— 这也是它们能直接跑通的原因。</p>`,
-  // 25 style scoped
+  // 21 style scoped
   `<p>真 CSS 是 Lynx 的超能力 —— 所以 Vue 的 SFC CSS 特性全都落地:<code>&lt;style scoped&gt;</code>、CSS Modules、外链样式,甚至 CSS 里的 <code>v-bind()</code>,让响应式状态直接驱动原生样式。</p>`,
-  // 26 Suspense
+  // 22 Suspense
   `<p>异步编排:<code>defineAsyncComponent</code>、异步 <code>setup()</code>、嵌套 Suspense 边界、重挂载时的 fallback —— 全部跑在原生元素树上。</p>`,
-  // 27 Transition
+  // 23 Transition
   `<p>覆盖度的收官:<code>&lt;Transition&gt;</code> 和 <code>&lt;TransitionGroup&gt;</code>,由<strong>原生合成器</strong>上的 CSS 动画驱动 —— 进入/离开、列表移动,类名全是你熟的那套。</p><p>九个特性、九个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
-  // 28 Whole apps
+  // 24 Whole apps
   `<p>API 逐个通过只是入场券。"Web DX 是基线"真正的考验,是把一整个 Vue 代码库 —— 状态、路由、样式、数据请求 —— 整体落到原生上。来两个经典。</p>`,
-  // 29 TodoMVC
+  // 25 TodoMVC
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
-  // 30 HackerNews
+  // 26 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,
-  // 31 Runs on web
+  // 27 Runs on web
   `<p><strong>Web 兼容的点睛:</strong>刚才没有任何模拟器。每个手机壳里都是 <em>Lynx for Web</em>,跑的就是发到 iOS/Android 的那份产物。任何一页扫 Web 码 —— 浏览器直接打开;扫 App 码 —— 同一份产物,原生运行。</p><p>Web DX 进,Web 渲染目标出。基线讲完 —— 上超集。</p>`,
-  // 32 Divider III
+  // 28 Divider III
   `<p><strong>超集章节。</strong>覆盖度和移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,fork 它,然后<em>升级</em>它 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。两个真实 fork。</p>`,
-  // 33 AI Chat unchanged
+  // 29 AI Chat unchanged
   `<p><strong>不变的部分。</strong>这是 Nuxt 官方 AI Chatbot 模板,逐特性移植:流式 + 思维链、markdown + 代码高亮、天气/图表工具卡片、历史、投票、编辑、主题。里面的 Vue —— 组件、composable、store —— 才是重点:<strong>它们毫无波澜地搬了过来。</strong></p>`,
-  // 34 AI Chat native
+  // 30 AI Chat native
   `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
-  // 35 AI Chat · 键盘代码
+  // 31 AI Chat · 键盘代码
   `<p><strong>键盘,用代码讲。</strong>Lynx 把平台键盘作为一等事件暴露出来,连高度一起给你;输入区用一次 <code>setNativeProps</code> 变换、按原生曲线(入 0.3s、出 0.1s)跟着键盘走。键盘高度还同时喂给发射距离计算和底部 spacer。</p><p><strong>要落的对比:</strong>v0 iOS 团队描述过一个约 1000 行的 <code>useKeyboardAwareMessageList</code> hook,要同时对付六种键盘行为才能让 RN 有原生手感。这里平台直接把事件递到手上 —— 整个 composable 不到 60 行。</p>`,
-  // 36 AI Chat · 发送解剖
+  // 32 AI Chat · 发送解剖
   `<p><strong>发送的解剖(已合入 PR #212)。</strong>两个原生现实决定了这套编排:气泡动之前列表必须先重置滚动;而 Lynx 可能在 class 变更后一个显示帧才注册 keyframe 动画 —— 天真写法要么闪 34–51ms 的上一轮对话,要么气泡在终点闪现。</p><p>所以发送是一次显式接力:① 先前的轮次和 Thinking 行先遮蔽,列表<em>瞬时</em>对齐(<code>behavior: none</code> —— 过渡由气泡提供,不由滚动器提供);② 气泡在测得的发射变换上(<code>translateY(distance) scale(0.95)</code>,距离感知键盘、夹在 44–420px)先落一个真实帧;③ 再用单向 CSS <em>transition</em> 飞到位,旧内容恢复到视口上方。连空的 assistant 壳的 9⅓px 原生底高都被预留,保证流式期间最大滚动稳定。</p><p>逐帧验证过 —— 15fps contact sheet,无鬼影、无闪现、无落点修正。</p>`,
-  // 37 Elk unchanged
+  // 33 Elk unchanged
   `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
-  // 38 Elk gestures
+  // 34 Elk gestures
   `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>下一步</strong>(也是贡献切入点):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
-  // 39 Divider IV · How we did it
+  // 35 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
-  // 40 A1 · Vue 落在后台线程
+  // 36 A1 · Vue 落在后台线程
   `<p><strong>第一个决定:Vue 住哪条线程?</strong>早期社区实验把 Vue 放在主线程 —— 于是每个事件都要跨线程转发。而 Lynx 原生就把事件送到后台线程,所以我们把整个运行时放在这里:响应式、diff、生命周期、你的回调。不是 fork —— 是原封不动的 <code>@vue/runtime-core</code>。</p>`,
-  // 41 A2 · ShadowElement
+  // 37 A2 · ShadowElement
   `<p><strong>Vue 官方的自定义渲染器 API 就是全部诀窍。</strong><code>createRenderer()</code> 要求同步的节点 —— <code>parentNode()</code>、<code>nextSibling()</code> 必须立刻有答案,但真实元素在另一条线程上。所以 nodeOps 双写:在后台线程维护一棵轻量 <em>ShadowElement</em> 链表(满足 Vue 的所有同步读取),同时把真正的工作排进队列。和 ReactLynx 的 snapshot instance 是同一个 pattern。</p>`,
-  // 42 A3 · ops 缓冲
+  // 38 A3 · ops 缓冲
   `<p><strong>唯一跨过线程边界的,是数据。</strong><code>[CREATE, id, tag, INSERT, parent, child, SET_PROP, id, key, value…]</code> —— 只有数字和字符串,没有对象要序列化,没有函数。按 Vue 自己的 flush 周期批处理:一个响应式 tick = 一次发送。Vue 编译器还白送一层:静态内容零 ops,只有动态绑定在路上跑。</p>`,
-  // 43 A4 · 解释器 + PAPI
+  // 39 A4 · 解释器 + PAPI
   `<p><strong>这里就是 Lynx 框架无关的那条缝,凑近看。</strong>主线程跑一个小解释器 —— 字面意义上的 switch 循环 —— 把 ops 重放到 <em>Element PAPI</em> 上:<code>__CreateView</code>、<code>__AppendElement</code>、<code>__SetAttribute</code>……这套 C 风格 API 是 Lynx 给每个框架的合同;ReactLynx 在喂它,我们在喂它,下一个框架也会。VDOM → ShadowElement → ops → PAPI:四站,一条直线。</p>`,
-  // 44 A5 · 事件回程
+  // 40 A5 · 事件回程
   `<p><strong>回程闭环。</strong>函数不能跨线程,所以它们从来不跨:每个回调注册一个数字 <em>sign</em>;主线程派发 sign,后台线程查表,就地调用你的 Vue 函数 —— 闭包、响应式,全都还在原地。这就是 Vue 语义得以保全的原因:真正要紧的东西从来没离开过。</p>`,
-  // 45 A6 · nextTick
+  // 41 A6 · nextTick
   `<p><strong>用户能感觉到多少?几乎为零。</strong>唯一可见的接缝:原生元素在 mount 之后一拍才落地,所以"等 DOM"写成 <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> —— 和 Web Vue 同一个 <code>nextTick</code> 心智模型,只是跨了一条线程。这张图绕一圈,<em>就是</em>一个 tick。其余一切 —— 响应式、生命周期、组合式函数 —— 行为和 Web 完全一致。(文档:Understanding the Dual-Thread Model。)</p>`,
-  // 46 A7 · 上游测试
+  // 42 A7 · 上游测试
   `<p><strong>"语义保全"是可测量的命题。</strong>我们把 <code>vuejs/core</code> 的测试套件搬进仓库,在两层上对着 Vue Lynx 跑:一层用我们真实的 ShadowElement 链表垫在 <code>@vue/runtime-test</code> 下面(验证完整渲染器合同 —— keyed diff、LIS、fragment、生命周期);另一层 runtime-dom 把 <code>patchProp → ops → applyOps → PAPI</code> 推进 jsdom。1013 个通过 882,131 个 skip 全部有记录,零失败。</p>`,
-  // 47 A8 · 测试是 AI 的眼睛
+  // 43 A8 · 测试是 AI 的眼睛
   `<p><strong>测试的 AI-harness 一面。</strong>我们还做了 <code>vue-lynx-testing-library</code> —— <code>render</code>、<code>fireEvent</code>、<code>getByText</code>,双线程被 <code>@lynx-js/testing-environment</code> 抽象掉 —— 组件行为在普通 vitest 里就能断言。对人来说这是卫生习惯;对 AI harness 来说这是<em>感知</em>:红绿就是 agent 知道自己刚才做了什么的方式。上游套件,就是让两周生成代码保持诚实的 reward signal。</p>`,
-  // 48 B1 · 一个 bundle 两个世界
+  // 44 B1 · 一个 bundle 两个世界
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
-  // 49 B2 · 同一份代码进两次
+  // 45 B2 · 同一份代码进两次
   `<p><strong>两个入口都 import 你的真实应用。</strong>每个入口在一个 webpack <em>layer</em> 下编译 —— <code>vue:background</code> 和 <code>vue:main-thread</code> —— <code>issuerLayer</code> 规则给每层各自的 loader 链:BG 侧编译完整 SFC;MT 侧只抽取主线程需要的部分。逐 entry 的隔离,是 webpack 依赖图白送的。(这套 layer 方案我们是从 ReactLynx 学来的 —— 第一版扁平 bundle 架构隔离不了多入口应用。)</p>`,
-  // 50 B3 · 插件而非编译器
+  // 46 B3 · 插件而非编译器
   `<p><strong>复用故事的工具链篇。</strong>Lynx 的工具链(Rspeedy)就是 Rspack/Rsbuild —— 而 Vue 生态本来就跑在 Rspack 上,所以整条 SFC 流水线是现成的:<code>rspack-vue-loader</code>、PostCSS、HMR。<code>pluginVueLynx()</code> 是一层薄适配:把入口拆成两个 layer、接上 worklet loader、配好 CSS —— 表面积就这么大。框架无关不是口号,是用"我们只需要写多少"来度量的。</p>`,
-  // 51 B4 · CSS 就是 CSS
+  // 47 B4 · CSS 就是 CSS
   `<p><strong>整章样式能力背后安静的超能力:</strong>Lynx 在原生侧带了真正的 CSS 引擎 —— 选择器、级联、动画。所以 <code>&lt;style scoped&gt;</code> 映射到 Lynx 的 cssId 作用域,CSS Modules 和外链样式直接透传,CSS 里的 <code>v-bind()</code> 骑在 CSS 变量上,Tailwind 能跑是因为 PostCSS 就是 PostCSS。没有 StyleSheet 对象方言,没有会漏的翻译层。</p>`,
-  // 52 C1 · 手势为什么会迟
+  // 48 C1 · 手势为什么会迟
   `<p><strong>先诚实讲代价,再卖回报。</strong>普通写法的滚动跟随动画:事件在主线程触发,跳去后台跑你的回调,产生的 ops 再跳回来 —— 手势的每一帧背后是两次跨线程。页面一忙,肉眼可见地迟。这是双线程架构唯一收费的地方。</p>`,
-  // 53 C2 · 函数换线程
+  // 49 C2 · 函数换线程
   `<p><strong>看方块移动。</strong>把 <code>'main thread'</code> 写成函数第一行,编译器就把这个函数搬进主线程 bundle —— 它从此同步运行在事件发生的地方,直接访问元素。组件的其余部分还是普通 Vue。又是渐进增强的形状:双线程的回报留着,代价变成按函数粒度的可选项。</p>`,
-  // 54 C3 · 代码样例
+  // 50 C3 · 代码样例
   `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p>`,
-  // 55 C4 · 教程复刻
+  // 51 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
-  // 56 C5 · 复用与开放的 API 空间
+  // 52 C5 · 复用与开放的 API 空间
   `<p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
-  // 57 H1 · 2 weeks
+  // 53 IV · 格局 · 引入
+  `<p><strong>兑现承诺的 deep-dive。</strong>开场时我们是"凭感觉"相亲;现在运行时、工具链、MTS 都摆上桌了,可以来架构级的版本了。把任何跨端栈拆成五层,层间四条缝 —— 每条要么是扩展点,要么是焊死的墙。诚实地给所有人打分,包括 Lynx 自己。</p>`,
+  // 54 Map scaffold
+  `<p><strong>地图。</strong>把任何跨端栈拆成五层;层间四条缝,每条是个是非题:EP1 能接任意前端?EP2 能换渲染模型?EP3 能加原生能力?EP4 能上新平台?开着的缝是扩展点,焊死的缝是墙。</p>`,
+  // 55 Web column
+  `<p>Web:EP1 全开 —— 任意框架。但渲染和能力被沙箱焊死;"新平台"只等于"那里有浏览器"。开发体验封顶,用户体验也封顶。</p>`,
+  // 56 Ionic
+  `<p>Ionic(以及所有 WebView 套壳):上层保住了 Web 的开放,Capacitor 把能力那条缝撬到半开 —— 但渲染仍然是 WebView 里的 DOM。它继承了 Web 的天花板:<strong>不够 Native</strong>。</p>`,
+  // 57 NativeScript
+  `<p>NativeScript:反向的取舍。谁都比不过的直接原生访问 —— 但它不是真正的 Web:没有真 CSS 引擎、没有 DOM 语义,渲染和新平台两处焊死。<strong>不够 Web</strong>。</p>`,
+  // 58 Flutter
+  `<p>Flutter:下半场全开 —— 自渲染、embedder 上新平台。代价是上层只留 Dart 一扇门。它不是在延伸 Web,是在替代 Web —— <strong>一个平行宇宙</strong>。</p>`,
+  // 59 React Native
+  `<p>React Native:能力开放、生态庞大 —— 离梦想最近。但前端那条缝焊死在 React 上:Metro、渲染器、心智模型全都是。如果你是 Vue,<strong>这扇门从来不属于你</strong>。</p>`,
+  // 60 Lynx column
+  `<p><strong>答案。</strong>EP1:基于 Rspack 的工具链,框架无关 —— 真 CSS、任意前端。EP2:引擎既能适配原生 primitive,也能自渲染。EP3:Native Module。EP4:移动 + 桌面已落地,TV/VR 用自渲染跑通。四条缝,一条不焊 —— 包括 Vue 需要的那条。</p>`,
+  // 61 Framework-agnostic
+  `<p>Lynx 从 ReactLynx 起步,但平台被刻意演进为框架无关 —— 前端层是真正的扩展点,不是 React 的附属功能。这不是宣传话术;马上给你看实证。</p>`,
+  // 62 Web DX Native UX
+  `<p><strong>一句话论点。</strong>Lynx 给你 Web 的开发体验、Native 的用户体验。而因为前端那条缝是开的 —— 这就是 Vue 的机会。于是……</p>`,
+  // 63 H1 · 2 weeks
   `<p><strong>现在这个数字说得通了。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。</p>`,
-  // 58 H2 · X 复盘
+  // 64 H2 · X 复盘
   `<p><strong>让观众把手机对准这页。</strong>完整方法论写在 X 上 —— harness 怎么搭、plan 长什么样、AI 在哪儿失手、测试怎么接住的。vue.lynxjs.org 首页的 badge 也链着它。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
-  // 59 Combine
+  // 65 Combine
   `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿,让等式落地。然后:"也很希望大家来一起把它做成。"</p>`,
-  // 60 Divider V · close
+  // 66 Divider V · close
   `<p><strong>转向请求。</strong>项目是真的,但需要社区。架构很稳;Vue 的表面积很大。</p>`,
-  // 61 Ask
+  // 67 Ask
   `<p>落在这句上 —— <em>"原生,不该是另一个团队的事。"</em>这是你想让他们记住的一句。</p>`,
-  // 62 What's there / open
+  // 68 What's there / open
   `<p>左边 = 今天就能用、可以做生产探索的。右边 = 贡献者能发力的地方 —— 第三章里 Elk 的 view pager,就在这个清单上。</p>`,
-  // 63 Try
+  // 69 Try
   `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p>`,
-  // 64 Thank you
+  // 70 Thank you
   `<p><strong>收尾。</strong>感谢,邀请提问,停在这页做 Q&amp;A。</p><p>"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— Lynx 跨平台,同一产物两端都跑。</p>`,
 ];

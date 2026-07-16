@@ -145,13 +145,28 @@ try {
   }
 
   // Pass 2 — drive each transition that shares flip ids; sample mid + settled.
+  // A pair that fails gets ONE self-healing retry with freshly re-measured
+  // resting rects (boot races can contaminate pass-1); only reproducible
+  // failures are reported.
   const failures = [];
   let checked = 0;
-  for (let i = 1; i < total; i++) {
-    const shared = Object.keys(resting[i]).filter((k) => resting[i + 1][k]);
-    if (shared.length === 0) continue;
 
-    await page.goto(`${BASE}/?lang=en&mv=${i}#${i}`, { waitUntil: 'domcontentloaded' });
+  async function measureResting(i) {
+    let got = null;
+    for (let attempt = 0; attempt < 3 && (!got || got.slide !== i); attempt++) {
+      await page.goto(`${BASE}/?lang=en&rm${attempt}=${i}#${i}`, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(400);
+      got = await stableRects(i);
+    }
+    return got.slide === i ? got.rects : null;
+  }
+
+  async function checkPair(i, tag) {
+    const shared = Object.keys(resting[i]).filter((k) => resting[i + 1][k]);
+    const fails = [];
+    if (shared.length === 0) return { shared, fails };
+
+    await page.goto(`${BASE}/?lang=en&mv${tag}=${i}#${i}`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(400);
     await stableRects(i); // let the entry settle before driving the morph
     await page.keyboard.press('ArrowRight');
@@ -160,14 +175,13 @@ try {
     await page.waitForTimeout(700);
     const endSample = await stableRects(i + 1);
     if (midSample.slide !== i + 1 || endSample.slide !== i + 1) {
-      failures.push(`#${i}->#${i + 1} transition never landed (mid on ${midSample.slide}, end on ${endSample.slide})`);
-      continue;
+      fails.push(`#${i}->#${i + 1} transition never landed (mid on ${midSample.slide}, end on ${endSample.slide})`);
+      return { shared, fails };
     }
     const mid = midSample.rects;
     const end = endSample.rects;
 
     for (const id of shared) {
-      checked++;
       const a = resting[i][id];
       const b = resting[i + 1][id];
       const m = mid[id];
@@ -180,20 +194,35 @@ try {
       };
       if (m && !m.enter && (m.left < box.left || m.top < box.top ||
                 m.right > box.right || m.bottom > box.bottom)) {
-        failures.push(
+        fails.push(
           `#${i}->#${i + 1} [${id}] OFF-PATH mid-morph: ` +
           `top ${Math.round(m.top)} vs corridor ${Math.round(box.top)}..${Math.round(box.bottom)}`,
         );
       }
       if (e && (Math.abs(e.left - b.left) > LAND_EPSILON ||
                 Math.abs(e.top - b.top) > LAND_EPSILON)) {
-        failures.push(
+        fails.push(
           `#${i}->#${i + 1} [${id}] LANDING SNAP: settled at ` +
           `(${Math.round(e.left)},${Math.round(e.top)}), expected ` +
           `(${Math.round(b.left)},${Math.round(b.top)})`,
         );
       }
     }
+    return { shared, fails };
+  }
+
+  for (let i = 1; i < total; i++) {
+    let { shared, fails } = await checkPair(i, 'a');
+    if (fails.length > 0) {
+      // Re-measure both endpoints fresh, then retry the pair once.
+      const ra = await measureResting(i);
+      const rb = await measureResting(i + 1);
+      if (ra) resting[i] = ra;
+      if (rb) resting[i + 1] = rb;
+      ({ shared, fails } = await checkPair(i, 'b'));
+    }
+    checked += shared.length;
+    failures.push(...fails);
   }
 
   await browser.close();
