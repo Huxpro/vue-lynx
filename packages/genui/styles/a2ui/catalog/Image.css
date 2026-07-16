@@ -1,0 +1,54 @@
+@import "../theme.css";
+
+.a2ui-image {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: var(--a2ui-color-surface-muted);
+  border: 1px solid var(--a2ui-color-border-strong);
+  box-shadow: 0 8px 24px var(--a2ui-color-overlay);
+}
+
+.image-weighted {
+  flex: 1 1 0;
+}
+
+.row-weighted-item .a2ui-image,
+.column-weighted-item .a2ui-image {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.image-variant-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.image-variant-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 6px 16px var(--a2ui-color-overlay);
+}
+
+.image-variant-header {
+  width: 100%;
+  height: 200px;
+  border-radius: 18px;
+}
+
+.image-variant-smallFeature {
+  max-width: 120px;
+}
+
+.image-variant-mediumFeature {
+  max-width: 240px;
+}
+
+.image-variant-largeFeature {
+  max-height: 400px;
+}

@@ -87,6 +87,9 @@ jobs:
       - name: Run pipeline tests (testing-library)
         run: pnpm test
 
+      - name: Run genui tests (a2ui + openui ports)
+        run: pnpm test:genui
+
   test-upstream:
     name: Test - Vue Upstream
     runs-on: ubuntu-latest

@@ -1,0 +1,208 @@
+@import "@lynx-js/luna-styles/index.css";
+@import "vue-lynx-genui/a2ui/styles/theme.css";
+
+:root {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background-color: var(--canvas);
+  color: var(--content);
+}
+
+.page {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  color: var(--content);
+  background-color: var(--canvas);
+}
+
+.a2ui-root-container {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--content);
+  background-color: var(--canvas);
+}
+
+.a2ui-container {
+  width: 100%;
+}
+
+.a2ui-scrollPaused .a2ui-container {
+  opacity: 0.92;
+}
+
+.a2ui-loadingOverlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: var(--canvas);
+  color: var(--content-muted);
+  z-index: 10;
+}
+
+.a2ui-loadingTitle {
+  color: var(--content-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  max-width: 220px;
+  animation-name: a2ui-loading-pulse;
+  animation-duration: 1.8s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.a2ui-loadingDots {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.a2ui-loadingDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--content-muted);
+  opacity: 0.35;
+  animation-name: a2ui-loading-dot;
+  animation-duration: 1.2s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.a2ui-loadingDotDelay1 {
+  animation-delay: 0.15s;
+}
+
+.a2ui-loadingDotDelay2 {
+  animation-delay: 0.3s;
+}
+
+@keyframes a2ui-loading-pulse {
+  0%, 100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes a2ui-loading-dot {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 0.9;
+  }
+}
+
+/* Override A2UI tokens with Luna tokens for the playground preview. */
+:root, .a2ui-light, .a2ui-dark {
+  --a2ui-color-background: var(--canvas);
+  --a2ui-color-on-background: var(--content);
+  --a2ui-color-surface: var(--paper);
+  --a2ui-color-on-surface: var(--content);
+  --a2ui-color-primary: var(--primary);
+  --a2ui-color-primary-hover: var(--primary-2);
+  --a2ui-color-on-primary: var(--primary-content);
+  --a2ui-color-secondary: var(--secondary);
+  --a2ui-color-secondary-hover: var(--secondary-2);
+  --a2ui-color-on-secondary: var(--secondary-content);
+  --a2ui-color-border: var(--line);
+  --a2ui-color-input: var(--paper-clear);
+  --a2ui-color-on-input: var(--content);
+  --a2ui-color-input-error: #d92d20;
+  --a2ui-color-input-error-bg: rgba(217, 45, 32, 0.08);
+  --a2ui-color-background-ambient: var(--canvas-ambient);
+  --a2ui-color-surface-muted: var(--neutral-film);
+  --a2ui-color-surface-strong: var(--paper-clear);
+  --a2ui-color-border-strong: var(--rule);
+  --a2ui-color-text-muted: var(--content-muted);
+  --a2ui-color-text-subtle: var(--content-muted-2);
+  --a2ui-color-overlay: var(--neutral-film);
+  --a2ui-icon-font-family: "Material Icons Round";
+  --a2ui-icon-color-primary: var(--primary);
+  --a2ui-icon-color-muted: var(--content-muted);
+}
+
+/* ── Demo picker toolbar (Vue Lynx standalone example only) ─────────── */
+
+.demo-toolbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.demo-strip {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+}
+
+.demo-strip-row {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  padding-right: 12px;
+}
+
+.demo-chip {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background-color: var(--paper);
+}
+
+.demo-chip-active {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.demo-chip-text {
+  font-size: 12px;
+  color: var(--content);
+  white-space: nowrap;
+}
+
+.demo-chip-active .demo-chip-text {
+  color: var(--primary-content);
+}
+
+.demo-theme-toggle {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background-color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.demo-theme-toggle-text {
+  font-size: 15px;
+  color: var(--content);
+}

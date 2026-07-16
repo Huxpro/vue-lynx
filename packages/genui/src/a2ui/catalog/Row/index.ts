@@ -1,0 +1,79 @@
+// Copyright 2026 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+import { defineComponent, h } from '@vue/runtime-core';
+import type { VNodeChild } from '@vue/runtime-core';
+
+import { catalogProps } from '../shared.js';
+import { NodeRenderer } from '../../vue/A2UIRenderer.js';
+import type { GenUIComponent } from '../../vue/component.js';
+import type { GenericComponentProps } from '../../store/types.js';
+
+import '../../../../styles/a2ui/catalog/Row.css';
+
+/**
+ * Props for the built-in Row catalog component.
+ *
+ * @a2uiCatalog Row
+ */
+export interface RowProps extends GenericComponentProps {
+  /** Static child IDs array or template object. */
+  children: string[] | { componentId: string; path: string };
+  justify?:
+    | 'start'
+    | 'center'
+    | 'end'
+    | 'stretch'
+    | 'spaceBetween'
+    | 'spaceAround'
+    | 'spaceEvenly';
+  align?: 'start' | 'center' | 'end' | 'stretch';
+}
+
+/**
+ * Render child component ids in horizontal order.
+ */
+export const Row: GenUIComponent = defineComponent({
+  name: 'Row',
+  props: catalogProps('children', 'justify', 'align'),
+  setup(rawProps: Record<string, unknown>) {
+    const props = rawProps as unknown as RowProps;
+    return (): VNodeChild => {
+      const children = props.children;
+      const surface = props.surface;
+      const dataContextPath = props.dataContextPath;
+      const justify = props.justify as string | undefined ?? 'start';
+      const align = props.align as string | undefined ?? 'stretch';
+      const explicitChildren = Array.isArray(children) ? children : [];
+
+      return h(
+        'view',
+        { class: `row alignment-${align} distribution-${justify}` },
+        explicitChildren.map((childId: string) => {
+          const child = surface.components.get(childId);
+          if (!child) return null;
+          const childWithContext = dataContextPath
+            ? { ...child, dataContextPath: dataContextPath }
+            : child;
+          const weight = (child as unknown as { weight?: number }).weight;
+          if (typeof weight === 'number' && weight > 0) {
+            return h(
+              'view',
+              {
+                key: childId,
+                class: `row-weighted-item row-weighted-item-${weight}`,
+                style: { flex: `${weight} ${weight} 0`, minWidth: 0 },
+              },
+              [h(NodeRenderer, { component: childWithContext, surface })],
+            );
+          }
+          return h(NodeRenderer, {
+            key: childId,
+            component: childWithContext,
+            surface,
+          });
+        }),
+      );
+    };
+  },
+});

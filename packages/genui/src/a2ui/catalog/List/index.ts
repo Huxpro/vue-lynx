@@ -1,0 +1,128 @@
+// Copyright 2026 The Lynx Authors. All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+import type * as v0_9 from '@a2ui/web_core/v0_9';
+
+import { defineComponent, h } from '@vue/runtime-core';
+import type { VNodeChild } from '@vue/runtime-core';
+
+import { catalogProps } from '../shared.js';
+import { NodeRenderer } from '../../vue/A2UIRenderer.js';
+import type { GenUIComponent } from '../../vue/component.js';
+import { useDataBinding } from '../../vue/useDataBinding.js';
+import type { GenericComponentProps } from '../../store/types.js';
+
+import '../../../../styles/a2ui/catalog/List.css';
+
+/**
+ * Props for the built-in List catalog component.
+ *
+ * @a2uiCatalog List
+ */
+export interface ListProps extends GenericComponentProps {
+  /** Static child IDs array or template object. */
+  children: string[] | { componentId: string; path: string };
+  direction?: 'horizontal' | 'vertical';
+  align?: 'start' | 'center' | 'end' | 'stretch';
+}
+
+interface ListItem {
+  key: string;
+  component: v0_9.AnyComponent & { dataContextPath?: string };
+}
+
+/**
+ * Render child component ids inside a scrollable list container.
+ */
+export const List: GenUIComponent = defineComponent({
+  name: 'List',
+  props: catalogProps('children', 'direction', 'align'),
+  setup(rawProps: Record<string, unknown>) {
+    const props = rawProps as unknown as ListProps;
+
+    const template = () => {
+      const children = props.children;
+      const isDynamic = children && !Array.isArray(children)
+        && typeof children === 'object';
+      return isDynamic
+        ? (children as { path: string; componentId: string })
+        : undefined;
+    };
+
+    const [listData, , fullPath] = useDataBinding<Record<string, unknown>[]>(
+      () => {
+        const t = template();
+        return t ? { path: t.path } : undefined;
+      },
+      () => props.surface,
+      () => props.dataContextPath,
+      [],
+    );
+
+    return (): VNodeChild => {
+      const {
+        children,
+        surface,
+        dataContextPath,
+        direction = 'vertical',
+        align = 'stretch',
+      } = props;
+
+      let content: (ListItem | null)[] = [];
+      if (Array.isArray(children)) {
+        content = children.map((childId: string) => {
+          const child = surface.components.get(childId);
+          if (!child) return null;
+          // Propagate dataContextPath
+          const childWithContext = dataContextPath
+            ? { ...child, dataContextPath: dataContextPath }
+            : child;
+          return {
+            key: childId,
+            component: childWithContext,
+          };
+        });
+      } else if (template()) {
+        const items = Array.isArray(listData.value) ? listData.value : [];
+
+        content = items.map((item, index) => {
+          const componentId = template()!.componentId;
+          const child = surface.components.get(componentId);
+          if (!child) return null;
+
+          const key = item && typeof item === 'object' && 'key' in item
+            ? String(item['key'])
+            : `${index}`;
+
+          const itemPath = `${fullPath.value}/${index}`;
+          const childWithContext = { ...child, dataContextPath: itemPath };
+
+          return {
+            key: key,
+            component: childWithContext,
+          };
+        });
+      }
+
+      return h(
+        'list',
+        {
+          class: `list list-${String(direction)} list-align-${String(align)}`,
+          'scroll-orientation': direction === 'vertical'
+            ? 'vertical'
+            : 'horizontal',
+          'list-type': 'single',
+          'span-count': 1,
+        },
+        content.map((item) => {
+          if (!item) return null;
+          return h(
+            'list-item',
+            { key: item.key, 'item-key': item.key },
+            [h(NodeRenderer, { component: item.component, surface })],
+          );
+        }),
+      );
+    };
+  },
+});
