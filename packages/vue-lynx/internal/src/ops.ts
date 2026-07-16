@@ -35,6 +35,8 @@
  *     baseUid — the BG thread allocates the identical contiguous block, so
  *     both sides agree on ids without transmitting them.
  */
+export const PAGE_ROOT_ID = 1;
+
 export const OP = {
   CREATE: 0,
   CREATE_TEXT: 1,
@@ -50,12 +52,43 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
-  // 14 retired (was SET_SCOPE_ID) — do not reuse.
+  // 14 retired (was SET_SCOPE_ID) — do not reuse. The pre-Vapor lineage
+  // still emits SET_SCOPE_ID=14; on this lineage scoped CSS rides on
+  // classes, and 14 stays retired after the lineages merge.
   REGISTER_TEMPLATE: 15,
   CLONE_TEMPLATE: 16,
+  // 17 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
+  // enableElementTemplates on the claude/vue-lynx-ifr-optimization-hy6jmy
+  // branch, where it is currently numbered 15). That opcode must renumber
+  // to 17 when it lands here — 15/16 belong to the Vapor template protocol
+  // above. Consumers handle unknown opcodes conservatively (hydration
+  // falls back to the full BG replay; the interpreter stops at an opcode
+  // it has no arity for), and both sides of the protocol always ship
+  // inside one bundle, so the reservation is a merge contract rather than
+  // a wire-compatibility concern.
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
+
+/** Number of payload fields following each active opcode in the flat stream. */
+export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
+  [OP.CREATE]: 2,
+  [OP.CREATE_TEXT]: 1,
+  [OP.INSERT]: 3,
+  [OP.REMOVE]: 2,
+  [OP.SET_PROP]: 3,
+  [OP.SET_TEXT]: 2,
+  [OP.SET_EVENT]: 4,
+  [OP.REMOVE_EVENT]: 3,
+  [OP.SET_STYLE]: 2,
+  [OP.SET_CLASS]: 2,
+  [OP.SET_ID]: 2,
+  [OP.SET_WORKLET_EVENT]: 4,
+  [OP.SET_MT_REF]: 2,
+  [OP.INIT_MT_REF]: 2,
+  [OP.REGISTER_TEMPLATE]: 2,
+  [OP.CLONE_TEMPLATE]: 2,
+});
 
 // ---------------------------------------------------------------------------
 // REGISTER_TEMPLATE structure — the ONE definition both threads must agree
@@ -89,3 +122,31 @@ export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 // drift silently.
 export const VAPOR_DOCUMENT_GLOBAL = '__VUE_LYNX_DOCUMENT__';
 export const VAPOR_WINDOW_GLOBAL = '__VUE_LYNX_WINDOW__';
+
+// DOM constructor identifiers referenced freely by @vue/runtime-vapor (and
+// runtime-dom) for `instanceof` classification and prototype warm-ups. They
+// must ALWAYS resolve to the ShadowElement-aware shims, never to a host DOM.
+// This matters on Lynx for Web: the Background Thread runs in a Worker (no
+// DOM globals — the shim's global installs win), but the Main Thread Lepus
+// chunk executes on the page's main thread, where real `Node`/`Element`/
+// `Text` globals exist. Under IFR the full Vapor runtime evaluates there, and
+// classifying a ShadowElement with `instanceof <real DOM Node>` returns
+// false, which sends insert() down the fragment path and crashes the first
+// frame. The plugin therefore rewrites these identifiers to the globals
+// below, which the shim installs unconditionally in every realm.
+export const VAPOR_DOM_CTOR_GLOBALS: Readonly<Record<string, string>> = Object
+  .freeze({
+    Node: '__VUE_LYNX_NODE__',
+    Element: '__VUE_LYNX_ELEMENT__',
+    Text: '__VUE_LYNX_TEXT__',
+    Comment: '__VUE_LYNX_COMMENT__',
+    CharacterData: '__VUE_LYNX_CHARACTER_DATA__',
+    DocumentFragment: '__VUE_LYNX_DOCUMENT_FRAGMENT__',
+    HTMLElement: '__VUE_LYNX_HTML_ELEMENT__',
+    SVGElement: '__VUE_LYNX_SVG_ELEMENT__',
+    MathMLElement: '__VUE_LYNX_MATHML_ELEMENT__',
+    HTMLSlotElement: '__VUE_LYNX_HTML_SLOT_ELEMENT__',
+    HTMLStyleElement: '__VUE_LYNX_HTML_STYLE_ELEMENT__',
+    ShadowRoot: '__VUE_LYNX_SHADOW_ROOT__',
+    Document: '__VUE_LYNX_DOCUMENT_CTOR__',
+  });

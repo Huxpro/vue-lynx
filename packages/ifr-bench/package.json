@@ -1,0 +1,22 @@
+{
+  "name": "vue-lynx-ifr-bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "First-frame rendering benchmark comparing IFR implementation strategies",
+  "scripts": {
+    "bench": "node run.mjs",
+    "check": "node --import ./register-hooks.mjs src/correctness.mjs"
+  },
+  "dependencies": {
+    "@lynx-js/testing-environment": "^0.1.2",
+    "@vue/compiler-dom": "^3.5.0",
+    "@vue/compiler-vapor": "3.6.0-beta.17",
+    "@vue/runtime-core": "^3.5.0",
+    "jsdom": "^26.0.0",
+    "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.61.1"
+  }
+}

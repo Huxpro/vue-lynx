@@ -19,19 +19,25 @@ import type { Rspack } from '@rsbuild/core';
 
 import { transformReactLynxSync } from '@lynx-js/react/transform';
 
+import { hasMainThreadDirective } from './worklet-utils.js';
+
+export interface WorkletLoaderOptions {
+  /** Use the pure Vapor runtime entry for generated worklet imports. */
+  vapor?: boolean;
+}
+
 export default function workletLoader(
-  this: Rspack.LoaderContext,
+  this: Rspack.LoaderContext<WorkletLoaderOptions>,
   source: string,
 ): string {
   this.cacheable(true);
 
-  // Quick check: skip files that don't contain the 'main thread' directive
-  if (
-    !source.includes('\'main thread\'') && !source.includes('"main thread"')
-  ) {
+  // Skip comments and ordinary string values that only mention the phrase.
+  if (!hasMainThreadDirective(source)) {
     return source;
   }
 
+  const { vapor = false } = this.getOptions?.() ?? {};
   const resourcePath = this.resourcePath;
   const filename = resourcePath;
 
@@ -49,7 +55,7 @@ export default function workletLoader(
     worklet: {
       target: 'JS',
       filename,
-      runtimePkg: 'vue-lynx',
+      runtimePkg: vapor ? 'vue-lynx/vapor' : 'vue-lynx',
     },
   });
 

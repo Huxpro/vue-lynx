@@ -2,6 +2,113 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { parse, type ParserPlugin } from '@babel/parser';
+
+interface AstNode {
+  end?: number | null;
+  start?: number | null;
+  type: string;
+  [key: string]: unknown;
+}
+
+// Loaders see sources without a reliable dialect signal, and TypeScript's
+// angle-bracket type assertion (`<T>expr`, legal in .ts) is unparseable with
+// the jsx plugin enabled while JSX is unparseable without it. Try the plain
+// TS grammar first and fall back to the JSX grammar: real JSX always fails
+// the first pass (an element's closing tag is a syntax error after a type
+// assertion), so the cascade accepts both dialects.
+const PARSER_PLUGIN_SETS: ParserPlugin[][] = [
+  [
+    'typescript',
+    ['importAttributes', { deprecatedAssertSyntax: true }],
+    'decorators-legacy',
+  ],
+  [
+    'typescript',
+    'jsx',
+    ['importAttributes', { deprecatedAssertSyntax: true }],
+    'decorators-legacy',
+  ],
+];
+
+function asAstNode(value: unknown): AstNode | null {
+  if (
+    value === null
+    || typeof value !== 'object'
+    || typeof (value as { type?: unknown }).type !== 'string'
+  ) return null;
+  return value as AstNode;
+}
+
+function parseProgram(source: string): AstNode | null {
+  for (const plugins of PARSER_PLUGIN_SETS) {
+    try {
+      return parse(source, {
+        sourceType: 'unambiguous',
+        plugins: [...plugins],
+      }).program as unknown as AstNode;
+    } catch {
+      // Try the next grammar.
+    }
+  }
+  return null;
+}
+
+function programBody(program: AstNode | null): AstNode[] {
+  const body = program?.['body'];
+  return Array.isArray(body)
+    ? body.map(asAstNode).filter((node): node is AstNode => node !== null)
+    : [];
+}
+
+function stringValue(value: unknown): string | undefined {
+  if (value === null || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record['value'] === 'string') return record['value'];
+  if (typeof record['name'] === 'string') return record['name'];
+  return undefined;
+}
+
+function directiveValue(value: unknown): string | undefined {
+  if (value !== null && typeof value === 'object') {
+    const extra = (value as Record<string, unknown>)['extra'];
+    if (extra !== null && typeof extra === 'object') {
+      const expressionValue = (extra as Record<string, unknown>)[
+        'expressionValue'
+      ];
+      if (typeof expressionValue === 'string') return expressionValue;
+    }
+  }
+  return stringValue(value);
+}
+
+function importAttributes(node: AstNode): AstNode[] {
+  const value = node['attributes'] ?? node['assertions'];
+  return Array.isArray(value)
+    ? value.map(asAstNode).filter((entry): entry is AstNode => entry !== null)
+    : [];
+}
+
+function hasSharedRuntimeAttribute(node: AstNode): boolean {
+  return importAttributes(node).some(attribute =>
+    stringValue(attribute['key']) === 'runtime'
+    && stringValue(attribute['value']) === 'shared'
+  );
+}
+
+function replaceRanges(
+  source: string,
+  ranges: ReadonlyArray<{ end: number; replacement?: string; start: number }>,
+): string {
+  let output = source;
+  for (const range of [...ranges].sort((a, b) => b.start - a.start)) {
+    output = output.slice(0, range.start)
+      + (range.replacement ?? '')
+      + output.slice(range.end);
+  }
+  return output;
+}
+
 /**
  * Resolve a specifier to an absolute path. Returns `null` when the
  * specifier cannot be resolved (the import is then skipped rather than
@@ -150,6 +257,46 @@ export function tokenizeLiterals(source: string): {
 }
 
 /**
+ * Whether `source` contains a real `'main thread'` directive statement.
+ *
+ * Babel's directive value is decoded, so compiler-valid escaped forms such as
+ * `'main\\x20thread'` are recognized while documentation comments and ordinary
+ * string values remain excluded.
+ */
+export function hasMainThreadDirective(source: string): boolean {
+  const program = parseProgram(source);
+  if (!program) {
+    // A candidate in syntax Babel does not understand is safer to transform:
+    // the worklet compiler remains the authority and false negatives would
+    // silently omit registrations from both thread bundles.
+    return true;
+  }
+
+  const stack: AstNode[] = [program];
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    if (
+      node.type === 'Directive'
+      && directiveValue(node['value']) === 'main thread'
+    ) return true;
+
+    for (const [key, value] of Object.entries(node)) {
+      if (key === 'loc' || key === 'extra' || key === 'comments') continue;
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          const child = asAstNode(item);
+          if (child) stack.push(child);
+        }
+      } else {
+        const child = asAstNode(value);
+        if (child) stack.push(child);
+      }
+    }
+  }
+  return false;
+}
+
+/**
  * Parse the import specifiers of a module that the MT graph may need to
  * follow.
  *
@@ -169,33 +316,17 @@ export function tokenizeLiterals(source: string): {
 export function extractImportSpecifiers(source: string): string[] {
   const specifiers = new Set<string>();
 
-  // Mask literals / drop comments before scanning (see tokenizeLiterals) so
-  // import-like text inside them is never followed as a real edge.
-  const { code, literals } = tokenizeLiterals(source);
-  const unquote = (lit: string) => lit.slice(1, -1);
-
-  // An import attribute always follows the specifier with only whitespace
-  // between, so a lookahead from the end of the match catches it regardless
-  // of line breaks (SWC may reformat `with { runtime: 'shared' }` onto the
-  // next line). This keeps us in lockstep with extractSharedImports, which
-  // is multiline-aware — without it a reformatted shared import would leak
-  // through here and be followed as a plain local import.
-  const attribAhead = /^\s*with\s*\{/;
-
-  // Match the `from` clause of any import (relative OR non-relative), and any
-  // re-export (`export … from`), keying on `from` + a masked specifier.
-  const fromRe = /from\s+\u0000(\d+)\u0000/g;
-  let match;
-  while ((match = fromRe.exec(code)) !== null) {
-    if (attribAhead.test(code.slice(fromRe.lastIndex))) continue;
-    specifiers.add(unquote(literals[Number(match[1])]!));
-  }
-
-  // Match bare side-effect imports: import './foo' or import 'pkg'.
-  const bareRe = /import\s+\u0000(\d+)\u0000/g;
-  while ((match = bareRe.exec(code)) !== null) {
-    if (attribAhead.test(code.slice(bareRe.lastIndex))) continue;
-    specifiers.add(unquote(literals[Number(match[1])]!));
+  for (const node of programBody(parseProgram(source))) {
+    const isImport = node.type === 'ImportDeclaration';
+    const isReexport = (
+      node.type === 'ExportNamedDeclaration'
+      || node.type === 'ExportAllDeclaration'
+    ) && node['source'] !== null;
+    if ((!isImport && !isReexport) || importAttributes(node).length > 0) {
+      continue;
+    }
+    const specifier = stringValue(node['source']);
+    if (specifier !== undefined) specifiers.add(specifier);
   }
 
   return [...specifiers].filter(s => {
@@ -267,22 +398,100 @@ export async function extractLocalImports(
  * is available as regular JS on the MT layer.
  */
 export function extractSharedImports(source: string): string {
-  // Match import statements containing `with { runtime: 'shared' }`.
-  // SWC may reformat across multiple lines, so we use [\s\S]*? for the
-  // attribute block.
-  const re = /import\s+(.+?)\s+from\s+(['"])([^'"]+)\2\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/g;
   const imports: string[] = [];
-  let match;
-  source = stripComments(source);
-  while ((match = re.exec(source)) !== null) {
-    const specifiers = match[1]!;
-    const quote = match[2]!;
-    const modulePath = match[3]!;
+  for (const node of programBody(parseProgram(source))) {
+    if (node.type !== 'ImportDeclaration' || !hasSharedRuntimeAttribute(node)) {
+      continue;
+    }
+    const sourceNode = asAstNode(node['source']);
+    const modulePath = stringValue(node['source']);
+    if (
+      sourceNode?.start == null
+      || node.start == null
+      || modulePath === undefined
+    ) continue;
+    const rawSource = source.slice(sourceNode.start, sourceNode.end ?? undefined);
+    const quote = rawSource[0] === '"' ? '"' : "'";
+    const importHead = source.slice(node.start, sourceNode.start);
     // Use `!!` with explicit `builtin:swc-loader` to skip all configured
     // loaders (especially worklet-loader-mt) while keeping TS compilation.
-    imports.push(`import ${specifiers} from ${quote}!!builtin:swc-loader!${modulePath}${quote};`);
+    imports.push(
+      `${importHead}${quote}!!builtin:swc-loader!${modulePath}${quote};`,
+    );
   }
   return imports.join('\n');
+}
+
+/**
+ * Strip `with { runtime: 'shared' }` from imports while preserving the import.
+ *
+ * IFR keeps complete modules on the main thread, so the loader-bypass import
+ * attribute is unnecessary there and must not reach the normal module parser.
+ */
+export function stripSharedImportAttributes(code: string): string {
+  const ranges: Array<{ end: number; start: number }> = [];
+  for (const node of programBody(parseProgram(code))) {
+    if (node.type !== 'ImportDeclaration' || !hasSharedRuntimeAttribute(node)) {
+      continue;
+    }
+    const sourceNode = asAstNode(node['source']);
+    if (sourceNode?.end == null || node.end == null) continue;
+    const attributes = importAttributes(node);
+    const lastAttribute = attributes[attributes.length - 1];
+    if (lastAttribute?.end == null) continue;
+
+    // Babel exposes ranges for each attribute but not for the surrounding
+    // `with { ... }`. Starting after the last attribute value, skip trivia to
+    // the real closing brace. This deliberately ignores braces inside comments
+    // and accepts comments between `with` and `{`.
+    let cursor = lastAttribute.end;
+    while (cursor < node.end) {
+      const char = code[cursor];
+      if (char === '}') break;
+      if (char === '/' && code[cursor + 1] === '*') {
+        const commentEnd = code.indexOf('*/', cursor + 2);
+        cursor = commentEnd < 0 ? node.end : commentEnd + 2;
+        continue;
+      }
+      if (char === '/' && code[cursor + 1] === '/') {
+        const lineEnd = code.indexOf('\n', cursor + 2);
+        cursor = lineEnd < 0 ? node.end : lineEnd + 1;
+        continue;
+      }
+      cursor++;
+    }
+    if (code[cursor] !== '}') continue;
+    ranges.push({
+      start: sourceNode.end,
+      end: cursor + 1,
+    });
+  }
+  return replaceRanges(code, ranges);
+}
+
+/**
+ * Drop ordinary Vue SFC style side-effect imports from an IFR connector.
+ *
+ * CSS is extracted from the Background layer, so importing ordinary styles
+ * again from the Main Thread duplicates that work. A CSS-module style import,
+ * however, has a binding used by the connector's `__cssModules` mapping. Keep
+ * bound style imports so the MT `exportOnlyLocals` CSS rule supplies the same
+ * hashed class names used by the first frame.
+ */
+export function stripStyleImports(code: string): string {
+  const ranges: Array<{ end: number; start: number }> = [];
+  for (const node of programBody(parseProgram(code))) {
+    if (
+      node.type !== 'ImportDeclaration'
+      || !stringValue(node['source'])?.includes('type=style')
+    ) continue;
+    const specifiers = node['specifiers'];
+    if (Array.isArray(specifiers) && specifiers.length > 0) continue;
+    if (node.start != null && node.end != null) {
+      ranges.push({ start: node.start, end: node.end });
+    }
+  }
+  return replaceRanges(code, ranges);
 }
 
 /**

@@ -1,0 +1,81 @@
+{
+  "nCards": 125,
+  "cells": [
+    {
+      "cell": "content-vdom",
+      "webBundle": {
+        "raw": 181559,
+        "gzip": 46665
+      },
+      "lynxBundle": {
+        "raw": 188633,
+        "gzip": 62889
+      },
+      "mtSection": {
+        "raw": 57177,
+        "gzip": 19156
+      },
+      "bgSection": {
+        "raw": 115433,
+        "gzip": 26698
+      }
+    },
+    {
+      "cell": "content-vdom-ifr",
+      "webBundle": {
+        "raw": 267665,
+        "gzip": 61526
+      },
+      "lynxBundle": {
+        "raw": 266259,
+        "gzip": 88725
+      },
+      "mtSection": {
+        "raw": 136027,
+        "gzip": 33178
+      },
+      "bgSection": {
+        "raw": 117925,
+        "gzip": 27509
+      }
+    },
+    {
+      "cell": "content-vapor",
+      "webBundle": {
+        "raw": 254590,
+        "gzip": 70217
+      },
+      "lynxBundle": {
+        "raw": 277572,
+        "gzip": 98229
+      },
+      "mtSection": {
+        "raw": 95753,
+        "gzip": 32204
+      },
+      "bgSection": {
+        "raw": 153675,
+        "gzip": 37049
+      }
+    },
+    {
+      "cell": "content-vapor-ifr",
+      "webBundle": {
+        "raw": 348288,
+        "gzip": 86660
+      },
+      "lynxBundle": {
+        "raw": 383126,
+        "gzip": 127171
+      },
+      "mtSection": {
+        "raw": 173934,
+        "gzip": 43546
+      },
+      "bgSection": {
+        "raw": 168907,
+        "gzip": 42052
+      }
+    }
+  ]
+}

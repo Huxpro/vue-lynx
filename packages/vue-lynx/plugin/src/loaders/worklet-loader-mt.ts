@@ -31,7 +31,14 @@ import type { Rspack } from '@rsbuild/core';
 import { transformReactLynxSync } from '@lynx-js/react/transform';
 
 import type { ResolveImport } from './worklet-utils.js';
-import { extractLocalImports, extractRegistrations, extractSharedImports } from './worklet-utils.js';
+import {
+  extractLocalImports,
+  extractRegistrations,
+  extractSharedImports,
+  hasMainThreadDirective,
+  stripSharedImportAttributes,
+  stripStyleImports,
+} from './worklet-utils.js';
 
 export interface WorkletLoaderMTOptions {
   /**
@@ -41,6 +48,10 @@ export interface WorkletLoaderMTOptions {
    * `node_modules`) are always followed and do not need to be listed.
    */
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  /** Keep complete application modules so Vapor can render the IFR frame. */
+  ifr?: boolean;
+  /** Use the pure Vapor runtime entry for generated worklet imports. */
+  vapor?: boolean;
 }
 
 export default function workletLoaderMT(
@@ -52,7 +63,7 @@ export default function workletLoaderMT(
   this.cacheable(true);
   const callback = this.async();
 
-  const includeWorkletPackages = this.getOptions()?.includeWorkletPackages ?? [];
+  const options = this.getOptions?.() ?? {};
 
   // Resolve specifiers exactly as the importing module would (honours the
   // bundler's alias + tsconfig `paths`). Unresolvable specifiers resolve to
@@ -72,7 +83,7 @@ export default function workletLoaderMT(
     }
   };
 
-  transformModule(this, source, resolveImport, includeWorkletPackages).then(
+  transformModule(this, source, resolveImport, options).then(
     (result) => callback(null, result),
     (err) => callback(err instanceof Error ? err : new Error(String(err))),
   );
@@ -82,8 +93,13 @@ async function transformModule(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
   resolveImport: ResolveImport,
-  includeWorkletPackages: ReadonlyArray<string | RegExp>,
+  options: WorkletLoaderMTOptions,
 ): Promise<string> {
+  if (options.ifr === true) {
+    return ifrTransform(ctx, source, options.vapor === true);
+  }
+
+  const includeWorkletPackages = options.includeWorkletPackages ?? [];
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
   // the proxy fails with ESModulesLinkingError. Instead, emit local imports
@@ -100,13 +116,11 @@ async function transformModule(
       includeWorkletPackages,
     );
 
-    if (
-      !source.includes('\'main thread\'') && !source.includes('"main thread"')
-    ) {
+    if (!hasMainThreadDirective(source)) {
       return (localImports ? localImports + '\n' : '') + 'export default {};';
     }
 
-    const lepusCode = runLepusTransform(ctx, source);
+    const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
     if (lepusCode === null) {
       return (localImports ? localImports + '\n' : '') + 'export default {};';
     }
@@ -132,15 +146,13 @@ async function transformModule(
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
   // (but still extract shared imports from source since they don't need LEPUS)
-  if (
-    !source.includes('\'main thread\'') && !source.includes('"main thread"')
-  ) {
+  if (!hasMainThreadDirective(source)) {
     const sharedImports = extractSharedImports(source);
     if (!sharedImports) return localImports;
     return sharedImports + (localImports ? '\n' + localImports : '');
   }
 
-  const lepusCode = runLepusTransform(ctx, source);
+  const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
   if (lepusCode === null) return localImports;
 
   // Extract shared imports from the LEPUS output (SWC preserves them)
@@ -160,6 +172,7 @@ async function transformModule(
 function runLepusTransform(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
+  vapor: boolean,
 ): string | null {
   const resourcePath = ctx.resourcePath;
   const result = transformReactLynxSync(source, {
@@ -175,7 +188,7 @@ function runLepusTransform(
     worklet: {
       target: 'LEPUS',
       filename: resourcePath,
-      runtimePkg: 'vue-lynx',
+      runtimePkg: vapor ? 'vue-lynx/vapor' : 'vue-lynx',
     },
   });
 
@@ -189,4 +202,33 @@ function runLepusTransform(
   }
 
   return result.code;
+}
+
+/**
+ * IFR keeps complete application modules on the Main Thread.
+ *
+ * Connector modules retain script/template edges and CSS-module bindings but
+ * drop ordinary style side effects. Directive-bearing modules are transformed
+ * from their original bytes so the LEPUS hash is identical to the BG JS pass.
+ */
+function ifrTransform(
+  ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
+  source: string,
+  vapor: boolean,
+): string {
+  const isVueSubModule = ctx.resourceQuery?.includes('vue')
+    && ctx.resourceQuery.includes('type=');
+
+  if (ctx.resourcePath.endsWith('.vue') && !isVueSubModule) {
+    return stripSharedImportAttributes(stripStyleImports(source));
+  }
+
+  if (!hasMainThreadDirective(source)) {
+    return stripSharedImportAttributes(source);
+  }
+
+  // Use the original source for both transforms. Pre-stripping shared import
+  // attributes here would change the transform input and therefore _wkltId.
+  const transformed = runLepusTransform(ctx, source, vapor);
+  return stripSharedImportAttributes(transformed ?? source);
 }

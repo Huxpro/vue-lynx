@@ -10,6 +10,8 @@
  * renderPage already fired (e.g., page reload) we mount immediately.
  */
 
+import { completeIfrInitialRender } from './flush.js'
+
 type MountFn = () => void
 
 const pendingMounts: MountFn[] = []
@@ -20,6 +22,8 @@ export function registerMount(fn: MountFn): void {
     fn()
   } else {
     pendingMounts.push(fn)
+    ;(globalThis as Record<string, unknown>)['__vueLynxIfrMountApps'] =
+      triggerRenderPage
   }
 }
 
@@ -29,4 +33,12 @@ export function triggerRenderPage(): void {
     fn()
   }
   pendingMounts.length = 0
+  completeIfrInitialRender()
+}
+
+/** Reset deferred-mount state between page/test realms. */
+export function resetAppRegistry(): void {
+  pendingMounts.length = 0
+  renderPageCalled = false
+  delete (globalThis as Record<string, unknown>)['__vueLynxIfrMountApps']
 }

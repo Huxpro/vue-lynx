@@ -29,6 +29,7 @@
 
 import {
   VAPOR_DOCUMENT_GLOBAL,
+  VAPOR_DOM_CTOR_GLOBALS,
   VAPOR_WINDOW_GLOBAL,
 } from 'vue-lynx/internal/ops';
 import { nodeOps } from '../node-ops.js';
@@ -50,7 +51,11 @@ export class LynxTemplateHost {
   content: ShadowElement;
 
   constructor() {
-    this.content = new ShadowElement('#fragment');
+    // runtime-vapor keeps one module-global template host and immediately
+    // replaces this placeholder on the first `innerHTML` assignment. It must
+    // not consume a protocol uid: doing so makes the first mount's allocator
+    // state differ from subsequent reset-and-replay mounts in the same realm.
+    this.content = new ShadowElement('#fragment', 0);
     this.content._inert = true;
   }
 
@@ -235,18 +240,35 @@ export function installVaporDomShim(): void {
     define('document', lynxDocument);
   }
 
-  define('Node', makeCtorShim(classify(null)));
-  define('Element', makeCtorShim(classify([1])));
-  define('Text', makeCtorShim(classify([3])));
-  define('Comment', makeCtorShim(classify([8])));
-  define('CharacterData', makeCtorShim(classify([3, 8])));
-  define('DocumentFragment', makeCtorShim(classify([11])));
-  // Never matched — exist only so `instanceof` does not throw.
-  define('HTMLElement', makeCtorShim(() => false));
-  define('SVGElement', makeCtorShim(() => false));
-  define('MathMLElement', makeCtorShim(() => false));
-  define('HTMLSlotElement', makeCtorShim(() => false));
-  define('ShadowRoot', makeCtorShim(() => false));
+  const ctorShims: Record<string, unknown> = {
+    Node: makeCtorShim(classify(null)),
+    Element: makeCtorShim(classify([1])),
+    Text: makeCtorShim(classify([3])),
+    Comment: makeCtorShim(classify([8])),
+    CharacterData: makeCtorShim(classify([3, 8])),
+    DocumentFragment: makeCtorShim(classify([11])),
+    // Never matched — exist only so `instanceof` does not throw.
+    HTMLElement: makeCtorShim(() => false),
+    SVGElement: makeCtorShim(() => false),
+    MathMLElement: makeCtorShim(() => false),
+    HTMLSlotElement: makeCtorShim(() => false),
+    HTMLStyleElement: makeCtorShim(() => false),
+    ShadowRoot: makeCtorShim(() => false),
+    Document: makeCtorShim(() => false),
+  };
+
+  // Bundled code reaches these via the plugin's identifier rewrite
+  // (`Node` → globalThis.__VUE_LYNX_NODE__, …), so install the rewrite
+  // targets in every realm — including realms that already own real DOM
+  // constructors, like the page main thread executing the IFR Lepus chunk on
+  // Lynx for Web. The plain names below remain a best-effort install for
+  // unbundled consumers (unit tests importing the runtime directly).
+  for (const [name, key] of Object.entries(VAPOR_DOM_CTOR_GLOBALS)) {
+    define(key, ctorShims[name]);
+  }
+  for (const [name, shim] of Object.entries(ctorShims)) {
+    define(name, shim);
+  }
 
   // Dev-mode `window.ShadowRoot` probe in runtime-dom's normalizeContainer.
   define('window', g);

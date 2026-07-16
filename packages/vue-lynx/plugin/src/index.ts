@@ -22,6 +22,7 @@
 
 import {
   VAPOR_DOCUMENT_GLOBAL,
+  VAPOR_DOM_CTOR_GLOBALS,
   VAPOR_WINDOW_GLOBAL,
 } from 'vue-lynx/internal/ops';
 import { createRequire } from 'node:module';
@@ -164,6 +165,22 @@ export interface PluginVueLynxOptions {
    * @defaultValue false
    */
   vapor?: boolean;
+
+  /**
+   * Whether to enable IFR (Instant First-Frame Rendering).
+   *
+   * The main-thread bundle carries the full application and renders its
+   * first frame synchronously during `loadTemplate`. The normal Background
+   * render then hydrates that deterministic output. Works in both renderer
+   * modes: with `vapor: true` the main thread runs the pure Vapor pipeline
+   * (route c); without it, the vdom custom renderer replays (replay IFR).
+   *
+   * The initial render must be deterministic across threads. Lifecycle side
+   * effects are suppressed on the IFR Main Thread and run normally on BG.
+   *
+   * @defaultValue false
+   */
+  enableIFR?: boolean;
 }
 
 /**
@@ -189,6 +206,7 @@ export function pluginVueLynx(
     autoPixelUnit = true,
     includeWorkletPackages = [],
     vapor = false,
+    enableIFR = false,
   } = options;
 
   return [
@@ -276,6 +294,17 @@ export function pluginVueLynx(
                   ? {
                     document: `globalThis.${VAPOR_DOCUMENT_GLOBAL}`,
                     window: `globalThis.${VAPOR_WINDOW_GLOBAL}`,
+                    // DOM constructors must resolve to the ShadowElement
+                    // shims even where host DOM globals exist — the IFR
+                    // main-thread chunk runs on the page main thread under
+                    // Lynx for Web, and a real `Node` there breaks every
+                    // runtime-vapor `instanceof` classification (the first
+                    // frame then crashes into fallback).
+                    ...Object.fromEntries(
+                      Object.entries(VAPOR_DOM_CTOR_GLOBALS).map((
+                        [name, key],
+                      ) => [name, `globalThis.${key}`]),
+                    ),
                   }
                   : {}),
               },
@@ -351,6 +380,8 @@ export function pluginVueLynx(
           enableCSSInlineVariables,
           debugInfoOutside,
           includeWorkletPackages,
+          enableIFR,
+          vapor,
         });
       },
     },

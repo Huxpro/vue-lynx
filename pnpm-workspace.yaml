@@ -2,6 +2,7 @@ packages:
   - packages/*
   - packages/benchmark/apps/ui-react
   - packages/benchmark/apps/web-baseline
+  - packages/ifr-bench/sfc-probe
   - examples/*
   - website
 
