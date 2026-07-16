@@ -136,6 +136,23 @@ export const ZH = {
     '无限时间线跑在原生 <code>&lt;list&gt;</code> 上。底部抽屉带橡皮筋回弹与甩动惯性 —— 每一帧都在 UI 线程。',
   'MTS bottom sheet': 'MTS 底部抽屉',
   'next: view pager': '下一步:view pager',
+  'native view pager': '原生 view pager',
+
+  // ---- Chapter III · case-study additions (recordings + mocks) ----
+  'The layout follows the keyboard.':
+    '布局<span class="brand-text">跟随</span>键盘。',
+  'The composer rides the keyboard; the current turn stays readable.':
+    '输入框贴着键盘走;当前轮次保持可读。',
+  'First send. Then the real test.':
+    '第一次发送,然后是<span class="brand-text">真正的考验。</span>',
+  'First send — the bubble leaves the composer and settles into its anchor.':
+    '<b>First send</b> —— 气泡离开输入框,落到锚点。',
+  'Second send — the old turn holds steady while the new one travels to the top.':
+    '<b>Second send</b> —— 旧轮次保持稳定,新一轮移动到顶部。',
+  'Tabs on a native view pager.':
+    '标签页跑在<span class="brand-text">原生 view pager</span> 上。',
+  'Panes swipe with a native snap; content & scroll position are retained across swipes.':
+    '分屏以原生吸附滑动;内容与滚动位置在滑动间保留。',
 
   'Main-Thread Script': '<b>主线程脚本</b>',
 
@@ -325,12 +342,18 @@ export const ZH_NOTES = [
   `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
   // 31 AI Chat · 键盘代码
   `<p><strong>键盘,用代码讲。</strong>Lynx 把平台键盘作为一等事件暴露出来,连高度一起给你;输入区用一次 <code>setNativeProps</code> 变换、按原生曲线(入 0.3s、出 0.1s)跟着键盘走。键盘高度还同时喂给发射距离计算和底部 spacer。</p><p><strong>要落的对比:</strong>v0 iOS 团队描述过一个约 1000 行的 <code>useKeyboardAwareMessageList</code> hook,要同时对付六种键盘行为才能让 RN 有原生手感。这里平台直接把事件递到手上 —— 整个 composable 不到 60 行。</p>`,
+  // 31b AI Chat · 键盘,在真机上
+  `<p><strong>同一份代码,在真机上。</strong>输入框吸在 <code>bottom:0</code>;<code>keyboardstatuschanged</code> 的高度变成一次 <code>translateY</code> 变换。mock 对应 v0 的草图 —— 一块空白的 <em>contentInset</em> 被键盘吃掉,输入框正好抬升一个键盘高度。列表只在原本就跟随新内容时才继续跟随。</p><p><strong>现场:</strong>循环片段 —— 看输入框贴着键盘曲线走。</p>`,
   // 32 AI Chat · 发送解剖
   `<p><strong>发送的解剖(已合入 PR #212)。</strong>两个原生现实决定了这套编排:气泡动之前列表必须先重置滚动;而 Lynx 可能在 class 变更后一个显示帧才注册 keyframe 动画 —— 天真写法要么闪 34–51ms 的上一轮对话,要么气泡在终点闪现。</p><p>所以发送是一次显式接力:① 先前的轮次和 Thinking 行先遮蔽,列表<em>瞬时</em>对齐(<code>behavior: none</code> —— 过渡由气泡提供,不由滚动器提供);② 气泡在测得的发射变换上(<code>translateY(distance) scale(0.95)</code>,距离感知键盘、夹在 44–420px)先落一个真实帧;③ 再用单向 CSS <em>transition</em> 飞到位,旧内容恢复到视口上方。连空的 assistant 壳的 9⅓px 原生底高都被预留,保证流式期间最大滚动稳定。</p><p>逐帧验证过 —— 15fps contact sheet,无鬼影、无闪现、无落点修正。</p>`,
+  // 32b AI Chat · 发送,在真机上
+  `<p><strong>把编排放到真机上验证。</strong>第一次发送从空状态建立舞台。<em>第二次</em>发送才是真正的考验 —— 重复发送会暴露空状态藏起来的问题:<code>nextTick()</code> 等挂起的 ops 抵达主线程,再由 <code>scrollIntoView({ block: 'start' })</code> 把新一轮锚定在顶部,同时让上一轮保持稳定。Web 则把列表钉在底部 —— 手感一致,机制不同。</p><p><strong>现场:</strong>两个片段并排循环 —— 对比空状态发送与重复发送。</p>`,
   // 33 Elk unchanged
   `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
   // 34 Elk gestures
-  `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>下一步</strong>(也是贡献切入点):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
+  `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>现已合入</strong>(PR #223):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它。下一页。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
+  // 34b Elk · 原生 view pager
+  `<p><strong>原生 view pager(已合入 PR #223)。</strong><code>elk-viewpager</code> 分支用原生 <strong>viewpager</strong> 元素(通过 <code>TabPager.vue</code>)承载 Explore / Notifications 标签。分屏以原生吸附滑动,并在滑动间保留内容与滚动位置。</p><p><strong>难点在于元素名按平台不同:</strong>Lynx for Web 提供旧名 <code>x-viewpager-ng</code>(今天可用);原生 OSS 引擎注册抽取出的 <code>viewpager</code>(需要基于 lynx develop 构建的宿主)。<code>TabPager.vue</code> 在运行时按 <code>SystemInfo.platform</code> 选标签名。</p><p><strong>双向同步:</strong>点标签 → <code>selectTab()</code> 动画切页;滑动分页 → 其 <code>change</code> 事件移动激活标签。</p>`,
   // 35 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
   // 36 A1 · Vue 落在后台线程
