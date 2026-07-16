@@ -44,6 +44,11 @@ for (const sceneEntry of allScenes(SIZES.small)) {
     v.run();
     __FlushElementTree(page);
     outputs.set(name, normalizeHtml(backend.html()));
+    // All variants share one runtime-core scheduler. Drain its microtask
+    // flush queue while THIS variant's document and IFR guards are still
+    // installed, so a straggling post-flush callback cannot leak ops into
+    // the next variant's fresh document (or be silently seal-dropped there).
+    for (let i = 0; i < 8; i++) await Promise.resolve();
   }
 
   const reference = outputs.get('bg-baseline');
