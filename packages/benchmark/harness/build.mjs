@@ -26,12 +26,19 @@ export function generateVaporApp() {
   generateVaporVariant('vdom', 'vapor');
 }
 
+// vapor-bt runs the identical Vapor App.vue as `vapor`; only the plugin flag
+// (vaporBuildTimeTemplates) differs, so the source is generated the same way.
+export function generateVaporBtApp() {
+  generateVaporVariant('vdom', 'vapor-bt');
+}
+
 export function generateVaporUiApp() {
   generateVaporVariant('ui-vdom', 'ui-vapor');
 }
 
 export function buildApps({ silent = false, apps = ['vdom', 'vapor'] } = {}) {
   if (apps.includes('vapor')) generateVaporApp();
+  if (apps.includes('vapor-bt')) generateVaporBtApp();
   if (apps.includes('ui-vapor')) generateVaporUiApp();
   for (const app of apps) {
     const cwd = path.join(root, 'apps', app);

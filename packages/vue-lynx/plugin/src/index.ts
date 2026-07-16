@@ -219,6 +219,25 @@ export interface PluginVueLynxOptions {
    */
   vapor?: boolean;
 
+  /**
+   * Emit Vapor static templates as build-time **structured** literals instead
+   * of minified HTML strings parsed on the Background Thread at startup
+   * (issue #234, Part A).
+   *
+   * With this on, a build transform parses each `@vue/compiler-vapor`
+   * `template("<html>", …)` call at build time and rewrites it to the
+   * structured form `template([<VaporTemplateIR>], …)`. The runtime rebuilds
+   * the inert template prototype directly from that data — same REGISTER_TREE
+   * payload, same deterministic uid contract — skipping the per-template HTML
+   * parse. The runtime keeps accepting the string form, so precompiled
+   * third-party Vapor code is unaffected.
+   *
+   * Only meaningful together with {@link vapor}. Opt-in so a plugin preset can
+   * enable/disable it independently.
+   *
+   * @defaultValue false
+   */
+  vaporBuildTimeTemplates?: boolean;
 }
 
 /**
@@ -245,6 +264,7 @@ export function pluginVueLynx(
     enableIFR = false,
     includeWorkletPackages = [],
     vapor = false,
+    vaporBuildTimeTemplates = false,
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -411,6 +431,7 @@ export function pluginVueLynx(
           enableElementTemplates,
           includeWorkletPackages,
           vapor,
+          vaporBuildTimeTemplates,
         });
       },
     },
