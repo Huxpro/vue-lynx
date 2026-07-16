@@ -16,18 +16,39 @@ installing it) to run the same `main.lynx.bundle` natively on your phone.
 ### Native viewpager variant <Badge text="newer Lynx engine" type="warning" />
 
 The `elk-viewpager` fork backs the Explore and Notifications tabs with the
-**native viewpager element** ([`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)):
-panes swipe horizontally with a native snap animation, keep content and
-scroll position across swipes, and the tab bar syncs both ways (the
-pager's `change` event ↔ the `selectTab` UI method). It feels closer to a
-native client, at the cost of a heavier host requirement: on the web it
-uses `<x-viewpager-ng>` and works today, but native hosts need a Lynx
-engine that registers the extracted `<viewpager>` element
-(lynx-family/lynx develop after 2026-04 — newer than any released
-LynxExplorer, whose builds ship neither name). On older hosts the tab
-area renders blank; prefer the original example above there.
+native [`<viewpager>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+element instead of the default's conditionally rendered panes. In
+[`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)
+each pane is a `<viewpager-item>` child of a `<viewpager>`: panes swipe
+horizontally with a native snap animation, keep content and scroll
+position across swipes, and the tab bar stays in sync both ways — swiping
+fires the pager's `change` event (→ moves the active tab), while tapping a
+tab calls the pager's `selectTab` UI method (→ animates to that page). It
+feels much closer to a native client.
 
-<Go example="elk-viewpager" defaultFile="src/components/TabPager.vue" />
+`viewpager` ships as a Lynx [XElement](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+that is registered under a different tag per platform, so `TabPager.vue`
+picks the tag at runtime from `SystemInfo.platform` (highlighted below):
+Lynx for Web uses the legacy `<x-viewpager-ng>`, while native OSS engines
+use the extracted `<viewpager>` / `<viewpager-item>`.
+
+<Go
+  example="elk-viewpager"
+  defaultFile="src/components/TabPager.vue"
+  highlight={{
+    'src/components/TabPager.vue': '{12-18,40-56,72-87}',
+  }}
+/>
+
+:::warning Engine version dependency
+The extracted native `<viewpager>` element landed in the OSS engine in
+lynx-family/lynx `c1d8d7920` (2026-04), which is **newer than any released
+LynxExplorer**: 3.8.1 and earlier register neither `<viewpager>` nor
+`<x-viewpager-ng>`, so the tab area renders blank there (with a
+`LynxCreateUIException`). Run this variant on a host built from lynx
+`develop`; on today's released Explorers, use the default Elk example
+above, whose tabs render conditionally and need no pager element.
+:::
 
 ## Why Elk is a serious test
 
