@@ -11,10 +11,10 @@
       </text>
       <view :style="{ marginTop: '10px', padding: '10px', backgroundColor: '#f5f5f5', borderRadius: '6px' }">
         <text :style="{ fontSize: '11px', color: '#666', fontFamily: 'monospace' }">
-          {'<!-- same behavior as @tap on Lynx -->'}
+          &lt;!-- same behavior as @tap on Lynx --&gt;
         </text>
         <text :style="{ fontSize: '11px', color: '#007744', fontFamily: 'monospace', marginTop: '4px' }">
-          {'<view @tap.prevent="handler" />'}
+          &lt;view @tap.prevent="handler" /&gt;
         </text>
       </view>
     </view>

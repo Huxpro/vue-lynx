@@ -173,6 +173,25 @@
       }
     },
     {
+      "id": "elk-viewpager/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/elk-viewpager/src/router.ts",
+          "examples/elk-viewpager/src/components/sheet/Sheet.vue"
+        ]
+      },
+      "scenario": "elk-viewpager/main",
+      "verification": {
+        "sourceHash": "5c060a0bb12f67305bebcb6d9d364a60af7fdf817b4fc5d27e0900bab1e8f6c6",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
       "id": "elk/main",
       "entry": "./src/index.ts",
       "vapor": {
@@ -200,7 +219,7 @@
       },
       "scenario": "event-modifiers/main",
       "verification": {
-        "sourceHash": "d5f57140f3104790f433b7183f5b4a30c86cfaeda562b8701b061d9d319edda8",
+        "sourceHash": "7de13153c5676f60b104629e1e9310dd77c3e2c9002fab0e50009f4afe774906",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -752,10 +771,10 @@
   ],
   "results": {
     "environment": "lynx-for-web/chromium",
-    "entries": 47,
+    "entries": 48,
     "supported": 36,
-    "unsupported": 11,
-    "vdomPassed": 47,
+    "unsupported": 12,
+    "vdomPassed": 48,
     "vaporPassed": 36
   }
 }

@@ -50,8 +50,9 @@ export const scenarios = {
   "basic/h-counter": tap("Tap to increment", "h() counter"),
   "basic/main": tap("Tap to increment", "History"),
   "css-features/main": smoke("CSS"),
-  // Guest-mode Mastodon client against a live public instance — remote
+  // Guest-mode Mastodon clients against a live public instance — remote
   // content is not deterministic, so only the rendered shell is asserted.
+  "elk-viewpager/main": smoke(),
   "elk/main": smoke(),
   "event-modifiers/main": tap("Tap", "Event Modifiers"),
   "gallery/GalleryAutoScroll": smoke(),

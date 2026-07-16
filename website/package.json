@@ -11,7 +11,8 @@
     "dev:fast": "rspress dev",
     "build": "pnpm prepare:docs && rspress build",
     "preview": "rspress preview",
-    "prepare-benchmark": "node scripts/prepare-benchmark.mjs"
+    "prepare-benchmark": "node scripts/prepare-benchmark.mjs",
+    "validate:ai-chat-media": "node scripts/validate-ai-chat-media.mjs"
   },
   "dependencies": {
     "@douyinfe/semi-icons": "^2.74.0",

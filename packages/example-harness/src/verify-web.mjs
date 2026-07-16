@@ -96,7 +96,12 @@ async function prepareWebsite(rootPath) {
     cwd: rootPath,
     stdio: "inherit",
   });
-  if (!(await exists(output))) {
+  // A stale doc_build silently verifies the WRONG site (it once green-lit a
+  // pre-upgrade go-web build and then red-flagged a healthy one). Reuse is
+  // opt-in only, for pipelines that just built the site themselves (CI does).
+  const reuse = process.env.VUE_LYNX_VERIFY_REUSE_SITE === "1"
+    && (await exists(output));
+  if (!reuse) {
     execFileSync("pnpm", ["--dir", "website", "build"], {
       cwd: rootPath,
       stdio: "inherit",
