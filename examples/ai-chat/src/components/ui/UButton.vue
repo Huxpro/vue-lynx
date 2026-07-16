@@ -2,6 +2,7 @@
 import { computed } from 'vue-lynx';
 
 import Icon from './Icon.vue';
+import MotionPressable from './MotionPressable.vue';
 
 /**
  * Lynx re-implementation of the UButton subset the template uses.
@@ -114,10 +115,15 @@ function onTap() {
 </script>
 
 <template>
-  <view :class="classes" @tap="onTap">
+  <MotionPressable
+    :class="classes"
+    :disabled="disabled"
+    :accessibility-label="label"
+    @tap="onTap"
+  >
     <Icon v-if="icon" :name="icon" :tone="iconTone" :size="iconSize" />
     <slot />
     <text v-if="label" :class="labelClass">{{ label }}</text>
     <Icon v-if="trailingIcon" :name="trailingIcon" :tone="iconTone" :size="iconSize" />
-  </view>
+  </MotionPressable>
 </template>

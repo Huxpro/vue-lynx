@@ -1,0 +1,51 @@
+# Elk — Mastodon 客户端
+
+为了验证 Vue Lynx 能承载真正产品级的应用，我们把 Anthony Fu 团队广受喜爱的
+Mastodon Web 客户端 [Elk](https://github.com/elk-zone/elk) 移植成了一个
+**原生 Mastodon 客户端**。它能以游客身份浏览任意公开 Mastodon 实例
+（默认 `mas.to`），支持时间线、会话串、个人主页、搜索、趋势、深色模式等。
+
+在下方直接体验：**Web** 标签页通过 Lynx for Web 运行真实应用并连接线上
+Mastodon 实例；切换到 **二维码** 标签页，用 Lynx Go / Lynx Explorer
+（安装方式见[快速开始](/zh/guide/quick-start)）扫码，即可在手机上原生运行
+同一份 `main.lynx.bundle`。
+
+<Go example="elk" defaultFile="src/App.vue" />
+
+## 为什么 Elk 是一块试金石
+
+Elk 是一个约 196 个组件、55 个页面、50 个 composable 的 Nuxt 3 应用。
+Vue Lynx 没有 Nuxt（没有 SSR、文件路由、Nitro、自动导入），也没有 DOM ——
+所以移植没有走 fork 路线，而是**复用 Elk 与框架无关的层，在 Lynx 元件上重建 UI**：
+
+| 层 | 结论 | 说明 |
+|----|------|------|
+| **masto.js API 客户端** | ✅ 原样复用 | 将包装器注入的原生 `fetch` 与 Web 端的 `globalThis.fetch` 同步；其余构造器通过定向 `source.define` 和按需原生补丁兼容 |
+| **内容解析管线**（`content-parse.ts`） | ✅ 约 95% 原样 | ultrahtml 消毒 + 自定义表情 / markdown / 提及折叠等变换 |
+| **内容渲染器**（`content-render.ts`） | ♻️ 重定向输出 | AST 遍历逻辑不变；产出从 `<p>`/`<a>`/`RouterLink` 换成带点按导航的 `<text>`/`<image>` |
+| **分页器、时间线过滤、状态操作、搜索、缓存** | ✅ 复用 | DOM 滚动触发 → 原生 `<list>` 的 `scrolltolower` |
+| **虚拟滚动** | ♻️ 替换 | Elk 的 DOM 虚拟滚动库（virtua）→ Lynx 原生复用型 `<list>`，代码反而更少 |
+| **路由** | ♻️ 重建 | Nuxt 文件路由 → 基于 `createMemoryHistory` 的显式 vue-router 路由表，路径形状保持一致，内容渲染器的提及/话题改写无需变更 |
+| **所有模板** | ♻️ 重建 | `<div>`→`<view>`、`<span>`→`<text>`、`@click`→`@tap`，Elk 的主题色板原样搬为 Lynx CSS 变量 |
+| **图标** | ♻️ 适配 | Elk 的 RemixIcon 图标集（`i-ri:*`）以着色 XML 交给 Lynx 内置 `<svg content>` 元件渲染 |
+| **原生安全区** | ✅ 适配 | iOS 全屏卡片读取 Sparkling 的 `topHeight` / `bottomHeight` global props，并兼容 Lynx Explorer 别名 |
+
+完整的功能对齐清单（包括刻意未移植的项与原因 —— OAuth 重定向、TipTap、
+PWA、Shiki、blurhash 等）见
+[PRD.md](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/PRD.md)，
+架构对照见
+[PORTING.md](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/PORTING.md)，
+与原版 elk.zone 的逐屏截图对比见
+[screenshots/](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/screenshots/README.md)。
+
+## 亮点
+
+- **内容渲染器是皇冠明珠**：Mastodon 的嘟文以消毒后的 HTML 下发。Elk 把它解析成
+  AST 再渲染为 vnode；移植保持解析步骤逐字节不变，只替换 vnode 目标 ——
+  自定义表情变为行内 `<image>`，提及/话题变为可点按的 `<text>`，直接推入 vue-router 路由。
+- **原生虚拟化时间线**：无限时间线是带 `estimated-main-axis-size-px` 提示的 Lynx
+  `<list>`；masto.js `Paginator` 迭代与 Elk 的排序/缓冲逻辑原样驱动。
+- **深链**：向 LynxView 传入 `globalProps: { initialPath: '/mas.to/tags/caturday' }`
+  即可让应用直接打开对应路由 —— 宿主应用处理通知点击时用的就是同一机制。
+- **游客 + 令牌会话**：像 Elk 游客模式一样匿名浏览，或在设置中粘贴个人访问令牌，
+  解锁主页时间线、通知、发帖、转发与喜欢。

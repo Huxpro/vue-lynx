@@ -28,6 +28,41 @@ export function realModeAvailable() {
   return Boolean(process.env.AI_GATEWAY_API_KEY);
 }
 
+/** Generate the first-turn title with the same model used by the source template. */
+export async function generateRealTitle(firstMessage, { fetchImpl = fetch } = {}) {
+  const res = await fetchImpl(GATEWAY_URL, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4.1-nano',
+      stream: false,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Generate a plain-text chat title under 30 characters. Summarize the first user message without quotes, colons, punctuation, or Markdown.',
+        },
+        { role: 'user', content: JSON.stringify(firstMessage) },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Gateway title error ${res.status}: ${text.slice(0, 200)}`);
+  }
+  const json = await res.json();
+  const title = String(json.choices?.[0]?.message?.content ?? '')
+    .replace(/["':;#*`]/g, '')
+    .trim()
+    .slice(0, 30)
+    .trim();
+  if (!title) throw new Error('Gateway returned an empty title');
+  return title;
+}
+
 function toGatewayMessages(messages) {
   return [
     { role: 'system', content: INSTRUCTIONS },

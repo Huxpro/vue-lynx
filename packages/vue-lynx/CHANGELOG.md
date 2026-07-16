@@ -1,5 +1,35 @@
 # vue-lynx
 
+## 0.4.2
+
+### Patch Changes
+
+- Route native `globalEventFromLepus` global events to `GlobalEventEmitter` and add the `useGlobalEvent` composable. ([#193](https://github.com/Huxpro/vue-lynx/pull/193))
+
+- Fix MT worklet loader dropping non-relative imports from the module graph. Aliased, tsconfig-path, and package worklets are now resolved and followed, so they no longer fail at runtime. Imports inside comments and string/template literals are ignored when following the worklet graph. Adds opt-in `includeWorkletPackages` to follow worklet imports into named `node_modules` packages. ([#190](https://github.com/Huxpro/vue-lynx/pull/190))
+
+- fix(runtime): suppress empty native layout anchors ([#201](https://github.com/Huxpro/vue-lynx/pull/201))
+
+  Vue's renderer emits comment nodes (`v-if`/`v-for` fragment anchors) and empty text nodes as real host nodes. Previously these were materialized on the Lynx Main Thread as native elements. An empty native `<text>` still gets a default line box from Lynx's layout engine, so these anchors introduced phantom vertical spacing between rendered content.
+
+  Comment anchors are now kept entirely off the Main Thread, and empty text nodes are materialized lazily — a native `<text>` element is created only while the node actually holds visible text, and is removed again when its content becomes empty. This eliminates the spurious gaps without changing the Background Thread VNode tree that Vue reconciles against.
+
+- fix(v-model): apply programmatic value changes to native `<input>`/`<textarea>` ([#203](https://github.com/Huxpro/vue-lynx/pull/203))
+
+  `vModelText` pushed value updates to the Main Thread via `OP.SET_PROP` →
+  `__SetAttribute(el, 'value', …)`. Native (iOS/Android) treats an input's `value`
+  prop as the _initial_ value only — a post-mount attribute write is ignored once
+  the control is live — so programmatic model changes (a reset/clear button, or
+  any code that reassigns the bound ref) never updated the on-screen field. Typing
+  still worked, and web was unaffected because web-core reflects the `value`
+  attribute live, which masked the gap.
+
+  On a programmatic change `vModelText` now also invokes the platform's `setValue`
+  UI method on the element, which is the supported way to set input text
+  imperatively across iOS/Android/Harmony/Web. User keystrokes are unaffected
+  (that path already no-ops the value push to avoid clobbering the caret), and the
+  `SET_PROP` attribute write is retained for web and the initial value.
+
 ## 0.4.1
 
 ### Patch Changes

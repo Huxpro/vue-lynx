@@ -104,9 +104,9 @@ Example: `<section class="slide thankyou" data-bg="clean" data-chrome="minimal">
 Adjacent slides morph shared elements into place, FLIP-style. Give the same
 `data-flip="some-id"` to an element on two consecutive slides and it animates
 between its two positions/sizes when you advance. Tag transient supporting
-content with `data-mm-fade` so it washes in behind the morph. The stack on the
-Pillars slides and the two-thread build on the Architecture slides are the
-worked examples. One `<section class="slide">` = one step (no in-slide
+content with `data-mm-fade` so it washes in behind the morph. The opening
+logo build (React → Chrome → Lynx), the landscape columns, and the two-thread
+build on the How-it-works slides are the worked examples. One `<section class="slide">` = one step (no in-slide
 fragments), which keeps speaker-view sync and deep-links simple.
 
 ## Deploy

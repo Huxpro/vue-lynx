@@ -621,6 +621,25 @@ h1, h2, h3, p { margin: 0; }
   color: var(--vue-green);
 }
 
+/* API-coverage variant — sample code instead of prose. One Vue feature per
+   slide: eyebrow + feature name + compact codeframe on the left (QR pair is
+   appended into the body by qrcodes.js), live phone on the right. */
+.demo--api { grid-template-columns: 1.15fr 1fr; }
+.demo--api .demo__body { max-width: none; gap: 18px; }
+.demo--api .demo__title { font-size: clamp(24px, 2.4cqw, 36px); }
+.demo--api .demo__title code {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.demo--api .codeframe {
+  width: 100%;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.62;
+}
+.demo--api .codeframe pre { padding: 16px 18px; }
+
 /* The device mockup keeps its phone-sized footprint in the two-column demo
    layout no matter which preset is active: the stage reserves that space and the
    frame is absolutely centred inside it, so growing to tablet / desktop makes the
@@ -1786,9 +1805,12 @@ body.is-blackout::after {
   transition: opacity 0.16s ease !important;
   z-index: 1;
 }
+/* NB: no `position` here on purpose. The engine (framework/magic-move.js)
+   promotes static elements to relative inline; forcing it from CSS yanked
+   absolutely-positioned flip elements (.logo/.fb/.flane) into flow mid-morph.
+   Contract guarded by slides/tests/morph-invariant.mjs. */
 .slide .is-flipping {
   will-change: transform;
-  position: relative;
   z-index: 4;
 }
 /* Elements marked to wash in behind a morph */
@@ -1820,15 +1842,82 @@ body.is-blackout::after {
   display: grid;
   place-items: center;
 }
-/* The FLIP engine tags morphing elements `.is-flipping`, whose framework rule
-   forces `position: relative` (fine for in-flow targets). For an absolutely-
-   positioned logo that would drop it into flow mid-morph — the element tweens
-   at the wrong spot, then snaps back on cleanup. Keep it absolute. */
-.slide .logo.is-flipping { position: absolute; }
 .logo svg { width: 100%; height: 100%; display: block; }
 
 .logo--lynx svg { fill: #ffffff; }
 :root.light .logo--lynx svg { fill: #0a0a0a; }
+
+/* ---- Matchmaking prologue — the candidate row, the seeking Vue,
+   the wires and the platform trees. All coordinates live inline in
+   the 1280x720 design canvas; magic-move carries the stable marks. */
+.logo--row { width: 10cqw; height: 10cqw; }
+.logo--seek { width: 13cqw; height: 13cqw; }
+.logo--seek-sm { width: 10.5cqw; height: 10.5cqw; } /* Vue on the tree slides */
+.logo.is-dim { opacity: 0.2; filter: saturate(0.35); }
+.logo.is-lit { filter: drop-shadow(0 0 20px rgba(93, 213, 168, 0.3)); }
+
+.lg-sat {
+  position: absolute;
+  width: 4.6cqw;
+  height: 4.6cqw;
+  display: grid;
+  place-items: center;
+  opacity: 0.85;
+}
+.lg-sat svg { width: 100%; height: 100%; display: block; }
+.lg-sat.is-dim { opacity: 0.18; filter: saturate(0.35); }
+
+/* Full-bleed connector overlay — design-canvas coordinates. */
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.wires path,
+.wires line { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+
+/* Mono tag pinned on the diagram — blocker (red), caveat (amber), ok (green). */
+.lgtag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
+  border: 1.4px solid var(--c, #5dd5a8);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* Platform mini-icons fanned under a candidate. */
+.lg-plat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 3.6cqw;
+  height: 3.6cqw;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  z-index: 2;
+}
+.lg-plat svg { width: 100%; height: 100%; display: block; }
+.lg-plat.is-dim { opacity: 0.4; } /* flaky / out-of-tree targets */
+
+/* The lost-Vue question marks. */
+.lgq {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--ink-mute);
+  z-index: 2;
+}
 
 /* Entrances for logos with no previous-slide match (FLIP can't move them):
    slide in from the right / rise from below — only during a magic move. Uses
@@ -1847,6 +1936,151 @@ body.is-blackout::after {
   from { opacity: 0; translate: 0 20cqh; }
   to   { opacity: 1; translate: 0 0; }
 }
+
+/* Standalone QR card (data-qr) — white so it scans on the dark stage. */
+.qr-solo {
+  width: clamp(120px, 15cqw, 168px);
+  height: clamp(120px, 15cqw, 168px);
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 14px 44px -18px rgba(0, 0, 0, 0.7);
+}
+.qr-solo svg { width: 100%; height: 100%; display: block; }
+
+/* =========================================================
+   Flow diagram — generic canvas for the "how we did it"
+   chapter. Colored blocks = concepts, lanes = threads, text
+   arrows = data flow. Everything absolutely positioned per
+   slide (like .logos) so magic-move FLIPs carry the story.
+   ========================================================= */
+.flow {
+  position: relative;
+  width: min(100%, 1060px);
+  height: clamp(300px, 52cqh, 400px);
+}
+
+/* Thread lanes — soft tinted strips with a mono label at the left. */
+.flane {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c, #5dd5a8) 26%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 6%, transparent);
+}
+.flane__label {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 72%, var(--ink));
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.flane__label i {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c, #5dd5a8);
+  box-shadow: 0 0 8px var(--c, #5dd5a8);
+}
+
+/* Concept block — one colored box per concept, stable data-flip id. */
+.fb {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 11px 18px;
+  border-radius: 11px;
+  border: 1.6px solid var(--c, #5dd5a8);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+  z-index: 2;
+}
+.fb small {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 80%, var(--ink));
+}
+.fb.is-dim { opacity: 0.45; }
+.fb.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
+
+/* Text arrow / inline flow label — mono, colorable, fades in. */
+.farr {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  color: var(--c, var(--ink-mute));
+  white-space: nowrap;
+  z-index: 1;
+}
+.farr b { font-weight: 600; }
+
+/* Big center annotation (e.g. “= 1 tick”). */
+.fcenter {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: clamp(18px, 2cqw, 26px);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  z-index: 3;
+}
+.fcenter b { color: var(--vue-green); font-weight: 600; }
+
+/* Container box — e.g. the .lynx.bundle anatomy. */
+.fbox {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 16px;
+  border: 1.6px dashed color-mix(in srgb, var(--c, #5dd5a8) 55%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 4%, transparent);
+  z-index: 0;
+}
+.fbox__label {
+  position: absolute;
+  top: -11px;
+  left: 22px;
+  padding: 0 10px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 80%, var(--ink));
+}
+
+/* =========================================================
+   Framework icon row — the "many answers" landscape teaser
+   ========================================================= */
+.fwrow {
+  display: flex;
+  gap: clamp(28px, 4cqw, 64px);
+  align-items: center;
+  justify-content: center;
+  margin-top: 1cqh;
+}
+.fwrow i {
+  width: clamp(44px, 5.4cqw, 72px);
+  height: clamp(44px, 5.4cqw, 72px);
+  opacity: 0.9;
+}
+.fwrow i svg { width: 100%; height: 100%; display: block; }
 
 /* =========================================================
    Big single-idea stage — centered one-thing slides
@@ -2118,7 +2352,7 @@ body.is-blackout::after {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 7px 13px;
+  padding: 6px 10px;
   border-radius: 10px;
   border: 1.6px solid var(--fwc);
   background: color-mix(in srgb, var(--fwc) 14%, var(--paper));
@@ -2127,8 +2361,8 @@ body.is-blackout::after {
 }
 .arch__node.is-hero { box-shadow: 0 0 24px -2px var(--fwc); z-index: 3; }
 .arch__nlogo {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
   display: flex;
   color: var(--fwc);
   margin-bottom: 3px;
@@ -2137,7 +2371,7 @@ body.is-blackout::after {
 .arch__nname {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12.5px;
   letter-spacing: -0.01em;
   color: var(--ink);
 }

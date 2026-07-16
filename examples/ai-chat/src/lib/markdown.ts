@@ -11,12 +11,20 @@ export interface InlineToken {
   href?: string;
 }
 
+export type TableAlignment = 'left' | 'center' | 'right' | null;
+
 export type Block =
   | { type: 'p'; inline: InlineToken[] }
   | { type: 'heading'; level: number; inline: InlineToken[] }
   | { type: 'code'; lang: string; code: string }
   | { type: 'list'; ordered: boolean; items: InlineToken[][] }
   | { type: 'quote'; inline: InlineToken[] }
+  | {
+      type: 'table';
+      headers: InlineToken[][];
+      rows: InlineToken[][][];
+      alignments: TableAlignment[];
+    }
   | { type: 'hr' };
 
 const INLINE_RE = /(`([^`]+)`)|(\*\*([^*]+)\*\*)|(\*([^*\s][^*]*)\*)|(\[([^\]]+)\]\(([^)\s]+)\))/;
@@ -39,6 +47,93 @@ export function parseInline(text: string): InlineToken[] {
     else if (match[7]) tokens.push({ type: 'link', text: match[8]!, href: match[9]! });
     rest = rest.slice(match.index + match[0].length);
   }
+}
+
+function hasUnescapedTerminalPipe(source: string): boolean {
+  if (!source.endsWith('|')) return false;
+  let slashes = 0;
+  for (let i = source.length - 2; i >= 0 && source[i] === '\\'; i--) slashes++;
+  return slashes % 2 === 0;
+}
+
+/** Split a Markdown pipe row while preserving escaped and inline-code pipes. */
+function splitTableRow(line: string): string[] | null {
+  const source = line.trim();
+  const cells: string[] = [];
+  let cell = '';
+  let inCode = false;
+  let sawPipe = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i]!;
+    if (char === '\\' && source[i + 1] === '|') {
+      cell += '|';
+      i++;
+      continue;
+    }
+    if (char === '`') {
+      inCode = !inCode;
+      cell += char;
+      continue;
+    }
+    if (char === '|' && !inCode) {
+      cells.push(cell.trim());
+      cell = '';
+      sawPipe = true;
+      continue;
+    }
+    cell += char;
+  }
+
+  if (!sawPipe) return null;
+  cells.push(cell.trim());
+  if (source.startsWith('|')) cells.shift();
+  if (hasUnescapedTerminalPipe(source)) cells.pop();
+  return cells;
+}
+
+function tableAlignment(cell: string): TableAlignment | undefined {
+  const delimiter = cell.trim();
+  if (!/^:?-{3,}:?$/.test(delimiter)) return undefined;
+  const left = delimiter.startsWith(':');
+  const right = delimiter.endsWith(':');
+  if (left && right) return 'center';
+  if (right) return 'right';
+  if (left) return 'left';
+  return null;
+}
+
+function parseTable(
+  lines: string[],
+  start: number,
+): { block: Extract<Block, { type: 'table' }>; next: number } | null {
+  const header = splitTableRow(lines[start] ?? '');
+  const delimiter = splitTableRow(lines[start + 1] ?? '');
+  if (!header?.length || !delimiter || delimiter.length !== header.length) return null;
+
+  const alignments = delimiter.map(tableAlignment);
+  if (alignments.some((alignment) => alignment === undefined)) return null;
+
+  const rows: InlineToken[][][] = [];
+  let next = start + 2;
+  while (next < lines.length && lines[next]!.trim()) {
+    const cells = splitTableRow(lines[next]!);
+    if (!cells) break;
+    const normalized = cells.slice(0, header.length);
+    while (normalized.length < header.length) normalized.push('');
+    rows.push(normalized.map(parseInline));
+    next++;
+  }
+
+  return {
+    block: {
+      type: 'table',
+      headers: header.map(parseInline),
+      rows,
+      alignments: alignments as TableAlignment[],
+    },
+    next,
+  };
 }
 
 export function parseMarkdown(source: string): Block[] {
@@ -65,7 +160,8 @@ export function parseMarkdown(source: string): Block[] {
     }
   };
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex]!;
     if (code) {
       if (line.trimEnd() === '```') {
         blocks.push({ type: 'code', lang: code.lang, code: code.lines.join('\n') });
@@ -73,6 +169,15 @@ export function parseMarkdown(source: string): Block[] {
       } else {
         code.lines.push(line);
       }
+      continue;
+    }
+
+    const table = parseTable(lines, lineIndex);
+    if (table) {
+      flushParagraph();
+      flushList();
+      blocks.push(table.block);
+      lineIndex = table.next - 1;
       continue;
     }
 

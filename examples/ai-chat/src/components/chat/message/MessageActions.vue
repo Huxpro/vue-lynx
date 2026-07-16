@@ -5,6 +5,7 @@ import { useToast } from '../../../composables/useToast';
 import type { UIMessage } from '../../../types/ai';
 import { getTextFromMessage, isFileUIPart } from '../../../types/ai';
 import Icon from '../../ui/Icon.vue';
+import MotionPressable from '../../ui/MotionPressable.vue';
 
 /**
  * Port of app/components/chat/message/MessageActions.vue. UTooltips are
@@ -62,32 +63,49 @@ async function copy() {
 
 <template>
   <template v-if="message.role === 'assistant' && !streaming">
-    <view class="p-1.5 rounded-md" @tap="copy">
+    <MotionPressable class="p-1.5 rounded-md" accessibility-label="Copy response" @tap="copy">
       <Icon
         :name="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
         :tone="copied ? 'primary' : 'muted'"
         :size="16"
       />
-    </view>
+    </MotionPressable>
 
-    <view class="p-1.5 rounded-md" @tap="emit('vote', message, true)">
+    <MotionPressable
+      class="p-1.5 rounded-md"
+      accessibility-label="Helpful response"
+      @tap="emit('vote', message, true)"
+    >
       <Icon name="i-lucide-thumbs-up" :tone="vote === true ? 'success' : 'muted'" :size="16" />
-    </view>
+    </MotionPressable>
 
-    <view class="p-1.5 rounded-md" @tap="emit('vote', message, false)">
+    <MotionPressable
+      class="p-1.5 rounded-md"
+      accessibility-label="Unhelpful response"
+      @tap="emit('vote', message, false)"
+    >
       <Icon name="i-lucide-thumbs-down" :tone="vote === false ? 'error' : 'muted'" :size="16" />
-    </view>
+    </MotionPressable>
 
-    <view class="p-1.5 rounded-md" @tap="emit('regenerate', message)">
+    <MotionPressable
+      class="p-1.5 rounded-md"
+      accessibility-label="Regenerate response"
+      @tap="emit('regenerate', message)"
+    >
       <Icon name="i-lucide-rotate-cw" tone="muted" :size="16" />
-    </view>
+    </MotionPressable>
   </template>
 
   <template v-if="message.role === 'user' && !streaming && !editing">
     <text v-if="formattedDate" class="text-xs text-muted mr-1.5">{{ formattedDate }}</text>
 
-    <view v-if="!hasFiles" class="p-1.5 rounded-md" @tap="emit('edit', message)">
+    <MotionPressable
+      v-if="!hasFiles"
+      class="p-1.5 rounded-md"
+      accessibility-label="Edit message"
+      @tap="emit('edit', message)"
+    >
       <Icon name="i-lucide-pencil" tone="muted" :size="16" />
-    </view>
+    </MotionPressable>
   </template>
 </template>

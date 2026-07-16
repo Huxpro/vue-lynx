@@ -58,7 +58,7 @@ export function initCommand(api, { devtool } = {}) {
     if (selected >= items.length) selected = Math.max(0, items.length - 1);
 
     const list = overlay.querySelector('.cmdk__list');
-    if (!items.length) {
+    if (items.length === 0) {
       list.innerHTML = `<div class="cmdk__empty">No commands</div>`;
       return;
     }

@@ -117,7 +117,7 @@ function setFlagOverride(index, key, value) {
   const cur = flagOverrides.get(index) || {};
   if (value == null) delete cur[key];
   else cur[key] = value;
-  if (Object.keys(cur).length) flagOverrides.set(index, cur);
+  if (Object.keys(cur).length > 0) flagOverrides.set(index, cur);
   else flagOverrides.delete(index);
   if (index === current) applyChromeAndBg(resolveFlags(current));
 }
@@ -513,6 +513,7 @@ const I18N_SELECTOR = [
   '.chip', '.pstack__item', '.cover__tagline', '.cover__title-line',
   '.combine__name', '.result-label', '.tl-item__week', '.node__label',
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
+  '.flane__label', '.fcenter', '.lgtag',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];

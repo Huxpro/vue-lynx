@@ -1,0 +1,629 @@
+// Ported from elk: app/composables/content-parse.ts — near-verbatim.
+// This is Elk's Mastodon-HTML → ultrahtml-AST pipeline: sanitize with the
+// Mastodon element allow-list, then run transforms for custom emoji, inline
+// markdown, named mentions and mention collapsing.
+//
+// Differences from Elk:
+// - Unicode-emoji → twemoji <img> transforms removed (native Lynx text
+//   renders emoji glyphs directly; drops @iconify/utils + twemoji data)
+// - `~~/config/emojis`, auto-imported globals (UserLinkRE, currentServer)
+//   replaced with explicit imports
+import type { mastodon } from 'masto';
+import type { Node } from 'ultrahtml';
+import { decode } from './html-entities';
+import {
+  DOCUMENT_NODE,
+  ELEMENT_NODE,
+  h,
+  parse,
+  TEXT_NODE,
+} from 'ultrahtml';
+import { currentServer } from './users';
+
+export const UserLinkRE = /^(?:https:\/)?\/([^/]+)\/@([^/]+)$/;
+export const TagLinkRE = /^https?:\/\/([^/]+)\/tags\/([^/]+)\/?$/;
+
+const NEWLINE_TAG_REGEX = /\n(<[^>]+>)/g;
+const CODE_BLOCK_REGEX = />(?<fence>```|~~~)(?<lang>[^\s<]*)(?=[<\s])(?<code>[\s\S]+?)\k<fence>/g;
+const HTML_ESCAPE_REGEX = {
+  LESS_THAN: /</g,
+  GREATER_THAN: />/g,
+  BACKTICK: /`/g,
+  ASTERISK: /\*/g,
+};
+const INLINE_CODE_REGEX = /`([^`\n]*)`/g;
+const WHITESPACE_SPLIT_REGEX = /\s/g;
+const AMPERSAND_REGEX = /&amp;/g;
+const EMOJI_SPLIT_REGEX = {
+  WITH_COLON: /\s?:([\w-]+):/g,
+  WITHOUT_COLON: /:([\w-]+):/g,
+};
+const SERVER_DOMAIN_REGEX = /(.+\.)(.+\..+)/;
+
+export interface ContentParseOptions {
+  emojis?: Record<string, mastodon.v1.CustomEmoji>;
+  hideEmojis?: boolean;
+  mentions?: mastodon.v1.StatusMention[];
+  markdown?: boolean;
+  astTransforms?: Transform[];
+  collapseMentionLink?: boolean;
+  status?: mastodon.v1.Status;
+  inReplyToStatus?: mastodon.v1.Status;
+}
+
+const sanitizerBasicClasses = filterClasses(
+  /^h-\S*|p-\S*|u-\S*|dt-\S*|e-\S*|mention|hashtag|ellipsis|invisible$/u,
+);
+const sanitizer = sanitize({
+  // Allow basic elements as seen in https://github.com/mastodon/mastodon/blob/17f79082b098e05b68d6f0d38fabb3ac121879a9/lib/sanitize_ext/sanitize_config.rb
+  br: {},
+  p: {
+    class: filterClasses(/^quote-inline$/),
+  },
+  a: {
+    href: filterHref(),
+    class: sanitizerBasicClasses,
+  },
+  span: {
+    class: sanitizerBasicClasses,
+  },
+  pre: {},
+  code: {
+    class: filterClasses(/^language-\w+$/),
+  },
+  abbr: {
+    title: keep,
+  },
+  del: {},
+  blockquote: {
+    cite: filterHref(),
+  },
+  b: {},
+  strong: {},
+  u: {},
+  sub: {},
+  sup: {},
+  i: {},
+  em: {},
+  h1: {},
+  h2: {},
+  h3: {},
+  h4: {},
+  h5: {},
+  ul: {},
+  ol: {
+    start: keep,
+    reversed: keep,
+  },
+  li: {
+    value: keep,
+  },
+  ruby: {},
+  rp: {},
+  rt: {},
+});
+
+/**
+ * Parse raw HTML from a Mastodon server to an AST,
+ * with interop of custom emojis and inline Markdown syntax.
+ */
+export function parseMastodonHTML(
+  html: string,
+  options: ContentParseOptions = {},
+) {
+  html = html.trim();
+  const {
+    markdown = true,
+    collapseMentionLink = false,
+    hideEmojis = false,
+    mentions,
+    status,
+    inReplyToStatus,
+  } = options;
+
+  // remove newline before Tags
+  html = html.replace(NEWLINE_TAG_REGEX, (_1, raw) => {
+    return raw;
+  });
+
+  if (markdown) {
+    // Handle code blocks
+    html = html
+      .replace(CODE_BLOCK_REGEX, (_match, _fence, lang: string, raw: string) => {
+        const code = htmlToText(raw)
+          .replace(HTML_ESCAPE_REGEX.LESS_THAN, '&lt;')
+          .replace(HTML_ESCAPE_REGEX.GREATER_THAN, '&gt;')
+          .replace(HTML_ESCAPE_REGEX.BACKTICK, '&#96;')
+          .replace(HTML_ESCAPE_REGEX.ASTERISK, '&ast;');
+        const classes = lang ? ` class="language-${lang}"` : '';
+        return `><pre><code${classes}>${code}</code></pre>`;
+      })
+      .replace(INLINE_CODE_REGEX, (_1, raw) => {
+        return raw
+          ? `<code>${htmlToText(raw).replace(HTML_ESCAPE_REGEX.LESS_THAN, '&lt;').replace(HTML_ESCAPE_REGEX.GREATER_THAN, '&gt;').replace(HTML_ESCAPE_REGEX.ASTERISK, '&ast;')}</code>`
+          : '';
+      });
+  }
+
+  // Always sanitize the raw HTML data *after* it has been modified
+  const transforms: Transform[] = [sanitizer, ...(options.astTransforms || [])];
+
+  if (hideEmojis)
+    transforms.push(removeCustomEmoji(options.emojis ?? {}));
+  else
+    transforms.push(replaceCustomEmoji(options.emojis ?? {}));
+
+  if (markdown)
+    transforms.push(transformMarkdown);
+
+  if (mentions?.length)
+    transforms.push(createTransformNamedMentions(mentions));
+
+  transforms.push(transformParagraphs);
+
+  if (collapseMentionLink)
+    transforms.push(transformCollapseMentions(status, inReplyToStatus));
+
+  return transformSync(parse(html), transforms);
+}
+
+export function htmlToText(html: string) {
+  try {
+    const tree = parse(html);
+    return (tree.children as Node[])
+      .map(n => treeToText(n))
+      .join('')
+      .trim();
+  }
+  catch (err) {
+    console.error(err);
+    return '';
+  }
+}
+
+export function recursiveTreeToText(input: Node): string {
+  if (input && input.children && input.children.length > 0)
+    return input.children.map((n: Node) => recursiveTreeToText(n)).join('');
+  else return treeToText(input);
+}
+
+const emojiIdNeedsWrappingRE = /^[\w-]+$/;
+
+export function treeToText(input: Node): string {
+  let pre = '';
+  let body = '';
+  let post = '';
+
+  if (input.type === TEXT_NODE)
+    return decode(input.value);
+
+  if (input.name === 'br')
+    return '\n';
+
+  if (['p', 'pre'].includes(input.name))
+    pre = '\n';
+
+  if (input.attributes?.['data-type'] === 'mention') {
+    const acct = input.attributes['data-id'];
+    if (acct)
+      return acct.startsWith('@') ? acct : `@${acct}`;
+  }
+
+  if (input.name === 'code') {
+    if (input.parent?.name === 'pre') {
+      const lang = input.attributes.class?.replace('language-', '');
+      pre = `\`\`\`${lang || ''}\n`;
+      post = '\n```';
+    }
+    else {
+      pre = '`';
+      post = '`';
+    }
+  }
+  else if (input.name === 'b' || input.name === 'strong') {
+    pre = '**';
+    post = '**';
+  }
+  else if (input.name === 'i' || input.name === 'em') {
+    pre = '*';
+    post = '*';
+  }
+  else if (input.name === 'del') {
+    pre = '~~';
+    post = '~~';
+  }
+
+  if ('children' in input)
+    body = (input.children as Node[]).map(n => treeToText(n)).join('');
+
+  if (input.name === 'img' || input.name === 'picture') {
+    if (input.attributes.class?.includes('custom-emoji')) {
+      const id
+        = input.attributes['data-emoji-id']
+          ?? input.attributes.alt
+          ?? input.attributes.title
+          ?? 'unknown';
+      return emojiIdNeedsWrappingRE.test(id) ? `:${id}:` : id;
+    }
+  }
+
+  return pre + body + post;
+}
+
+// A tree transform function takes an ultrahtml Node object and returns
+// new content that will replace the given node in the tree.
+// Returning a null removes the node from the tree.
+// Strings get converted to text nodes.
+// The input node's children have been transformed before the node itself
+// gets transformed.
+export type Transform = (
+  node: Node,
+  root: Node,
+) => (Node | string)[] | Node | string | null;
+
+// Helpers for transforming (filtering, modifying, ...) a parsed HTML tree
+// by running the given chain of transform functions one-by-one.
+function transformSync(doc: Node, transforms: Transform[]) {
+  function visit(node: Node, transform: Transform, root: Node) {
+    if (Array.isArray(node.children)) {
+      const children = [] as (Node | string)[];
+      for (let i = 0; i < node.children.length; i++) {
+        const result = visit(node.children[i], transform, root);
+        if (Array.isArray(result))
+          children.push(...result);
+        else if (result)
+          children.push(result);
+      }
+
+      node.children = children.map((value) => {
+        if (typeof value === 'string')
+          return { type: TEXT_NODE, value, parent: node };
+        value.parent = node;
+        return value;
+      });
+    }
+    return transform(node, root);
+  }
+
+  for (const transform of transforms) doc = visit(doc, transform, doc) as Node;
+
+  return doc;
+}
+
+// A tree transform for sanitizing elements & their attributes.
+type AttrSanitizers = Record<
+  string,
+  (value: string | undefined) => string | undefined
+>;
+function sanitize(allowedElements: Record<string, AttrSanitizers>): Transform {
+  return (node) => {
+    if (node.type !== ELEMENT_NODE)
+      return node;
+
+    if (!Object.hasOwn(allowedElements, node.name))
+      return null;
+
+    const attrSanitizers = allowedElements[node.name];
+    const attrs = {} as Record<string, string>;
+    for (const [name, func] of Object.entries(attrSanitizers)) {
+      const value = func(node.attributes[name]);
+      if (value !== undefined)
+        attrs[name] = value;
+    }
+    node.attributes = attrs;
+    return node;
+  };
+}
+
+function filterClasses(allowed: RegExp) {
+  return (c: string | undefined) => {
+    if (!c)
+      return undefined;
+
+    return c
+      .split(WHITESPACE_SPLIT_REGEX)
+      .filter(cls => allowed.test(cls))
+      .join(' ');
+  };
+}
+
+function keep(value: string | undefined) {
+  return value;
+}
+
+function filterHref() {
+  const LINK_PROTOCOLS = new Set([
+    'http:',
+    'https:',
+    'dat:',
+    'dweb:',
+    'ipfs:',
+    'ipns:',
+    'ssb:',
+    'gopher:',
+    'xmpp:',
+    'magnet:',
+    'gemini:',
+  ]);
+  const PROTOCOL_REGEX = /^([a-z][\w+.-]*:)/i;
+
+  return (href: string | undefined) => {
+    if (href === undefined)
+      return undefined;
+
+    // Allow relative links
+    if (href.startsWith('/') || href.startsWith('.'))
+      return href;
+
+    href = href.replace(AMPERSAND_REGEX, '&');
+
+    // The Lynx JS runtime has no URL constructor; a protocol allow-list
+    // check is what Elk's `new URL(href).protocol` amounted to.
+    const match = href.match(PROTOCOL_REGEX);
+    if (match && LINK_PROTOCOLS.has(match[1].toLowerCase()))
+      return href;
+    return '#';
+  };
+}
+
+function removeCustomEmoji(
+  customEmojis: Record<string, mastodon.v1.CustomEmoji>,
+): Transform {
+  return (node) => {
+    if (node.type !== TEXT_NODE)
+      return node;
+
+    const split = node.value.split(EMOJI_SPLIT_REGEX.WITH_COLON);
+    if (split.length === 1)
+      return node;
+
+    return split
+      .map((name, i) => {
+        if (i % 2 === 0)
+          return name;
+
+        const emoji = customEmojis[name] as mastodon.v1.CustomEmoji;
+        if (!emoji)
+          return `:${name}:`;
+
+        return '';
+      })
+      .filter(Boolean);
+  };
+}
+
+function replaceCustomEmoji(
+  customEmojis: Record<string, mastodon.v1.CustomEmoji>,
+): Transform {
+  return (node) => {
+    if (node.type !== TEXT_NODE)
+      return node;
+
+    const split = node.value.split(EMOJI_SPLIT_REGEX.WITHOUT_COLON);
+    if (split.length === 1)
+      return node;
+
+    return split
+      .map((name, i) => {
+        if (i % 2 === 0)
+          return name;
+
+        const emoji = customEmojis[name] as mastodon.v1.CustomEmoji;
+        if (!emoji)
+          return `:${name}:`;
+
+        // Elk emits <picture><source/><img/></picture> for reduced-motion
+        // support; Lynx has a single <image> element, so keep just the img
+        // (static variant, like Elk's reduced-motion source).
+        return h('img', {
+          'src': emoji.staticUrl || emoji.url,
+          'alt': `:${name}:`,
+          'class': 'custom-emoji',
+          'data-emoji-id': name,
+        });
+      })
+      .filter(Boolean);
+  };
+}
+
+const _markdownReplacements: [RegExp, (c: (string | Node)[]) => Node][] = [
+  [/\*\*\*(.*?)\*\*\*/g, ([c]) => h('b', null, [h('em', null, c)])],
+  [/\*\*(.*?)\*\*/g, c => h('b', null, c)],
+  [/\*(.*?)\*/g, c => h('em', null, c)],
+  [/~~(.*?)~~/g, c => h('del', null, c)],
+  [/`([^`]+)`/g, c => h('code', null, c)],
+];
+
+function _markdownProcess(value: string) {
+  const results = [] as (string | Node)[];
+
+  let start = 0;
+  while (true) {
+    let found:
+      | {
+        match: RegExpMatchArray;
+        replacer: (c: (string | Node)[]) => Node;
+      }
+      | undefined;
+
+    for (const [re, replacer] of _markdownReplacements) {
+      re.lastIndex = start;
+
+      const match = re.exec(value);
+      if (match) {
+        if (!found || match.index < found.match.index!)
+          found = { match, replacer };
+      }
+    }
+
+    if (!found)
+      break;
+
+    results.push(value.slice(start, found.match.index));
+    results.push(found.replacer(_markdownProcess(found.match[1])));
+    start = found.match.index! + found.match[0].length;
+  }
+
+  results.push(value.slice(start));
+  return results.filter(Boolean);
+}
+
+function transformMarkdown(node: Node) {
+  if (node.type !== TEXT_NODE)
+    return node;
+  return _markdownProcess(node.value);
+}
+
+function transformParagraphs(node: Node): Node | Node[] {
+  // For top level paragraphs, inject an empty <p> to preserve status
+  // paragraph spacing (Elk does the same; the <bdi>/dir=auto handling is
+  // dropped — no bidi isolation element in Lynx).
+  if (
+    node.parent?.type === DOCUMENT_NODE
+    && node.name === 'p'
+    && node.parent.children.at(-1) !== node
+  ) {
+    return [node, h('p')];
+  }
+
+  return node;
+}
+
+function isMention(node: Node) {
+  const child = node.children?.length === 1 ? node.children[0] : null;
+  return Boolean(
+    child?.name === 'a' && child.attributes.class?.includes('mention'),
+  );
+}
+
+function isSpacing(node: Node) {
+  return node.type === TEXT_NODE && !node.value.trim();
+}
+
+// Extract the username from a known mention node
+function getMentionHandle(node: Node): string | undefined {
+  return (
+    hrefToHandle(node.children?.[0].attributes.href)
+    ?? node.children?.[0]?.children?.[0]?.attributes?.['data-id']
+  );
+}
+
+function transformCollapseMentions(
+  status?: mastodon.v1.Status,
+  inReplyToStatus?: mastodon.v1.Status,
+): Transform {
+  let processed = false;
+
+  return (node: Node, root: Node): Node | Node[] => {
+    if (processed || node.parent !== root || !node.children)
+      return node;
+    const mentions: (Node | undefined)[] = [];
+    const children = node.children as Node[];
+    let trimContentStart: (() => void) | undefined;
+    for (const child of children) {
+      // mention
+      if (isMention(child)) {
+        mentions.push(child);
+      }
+      // spaces in between
+      else if (isSpacing(child)) {
+        mentions.push(child);
+      }
+      // other content, stop collapsing
+      else {
+        if (child.type === TEXT_NODE) {
+          trimContentStart = () => {
+            child.value = child.value.trimStart();
+          };
+        }
+        // remove <br> after mention
+        if (child.name === 'br')
+          mentions.push(undefined);
+        break;
+      }
+    }
+    processed = true;
+    if (mentions.length === 0)
+      return node;
+
+    let mentionsCount = 0;
+    let contextualMentionsCount = 0;
+    let removeNextSpacing = false;
+
+    const contextualMentions = mentions.filter((mention) => {
+      if (!mention)
+        return false;
+
+      if (removeNextSpacing && isSpacing(mention)) {
+        removeNextSpacing = false;
+        return false;
+      }
+
+      if (isMention(mention)) {
+        mentionsCount++;
+        if (inReplyToStatus) {
+          const mentionHandle = getMentionHandle(mention);
+          if (
+            inReplyToStatus.account.acct === mentionHandle
+            || inReplyToStatus.mentions.some(m => m.acct === mentionHandle)
+          ) {
+            removeNextSpacing = true;
+            return false;
+          }
+        }
+        contextualMentionsCount++;
+      }
+      return true;
+    }) as Node[];
+
+    // We have a special case for single mentions that are part of a reply.
+    // We already have the replying to badge in this case or the status is connected to the previous one.
+    const showMentions = !(
+      contextualMentionsCount === 0
+      || (mentionsCount === 1 && status?.inReplyToAccountId)
+    );
+    const grouped = contextualMentionsCount > 2;
+    if (!showMentions || grouped)
+      trimContentStart?.();
+
+    const contextualChildren = children.slice(mentions.length);
+    const mentionNodes = showMentions
+      ? grouped
+        ? [h('mention-group', null, ...contextualMentions)]
+        : contextualMentions
+      : [];
+    return {
+      ...node,
+      children: [...mentionNodes, ...contextualChildren],
+    };
+  };
+}
+
+export function hrefToHandle(href: string): string | undefined {
+  const matchUser = href?.match(UserLinkRE);
+  if (matchUser) {
+    const [, server, username] = matchUser;
+    return `${username}@${server.replace(SERVER_DOMAIN_REGEX, '$2')}`;
+  }
+}
+
+function createTransformNamedMentions(mentions: mastodon.v1.StatusMention[]) {
+  return (node: Node): string | Node | (string | Node)[] | null => {
+    if (node.name === 'a' && node.attributes.class?.includes('mention')) {
+      const href = node.attributes.href;
+      const mention = href && mentions.find(m => m.url === href);
+      if (mention) {
+        node.attributes.href = `/${currentServer.value}/@${mention.acct}`;
+        node.children = [
+          h(
+            'span',
+            { 'data-type': 'mention', 'data-id': mention.acct },
+            `@${mention.username}`,
+          ),
+        ];
+        return node;
+      }
+    }
+    return node;
+  };
+}

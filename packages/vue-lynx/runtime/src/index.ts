@@ -228,6 +228,7 @@ export {
   runOnBackground,
   transformToWorklet,
 };
+export { useGlobalEvent } from './use-global-event.js';
 
 /** @internal Exposed for upstream-tests bridge render(). */
 export { createPageRoot } from './shadow-element.js';
@@ -1041,6 +1042,29 @@ function injectVModelEvent(el: ShadowElement, vnode: VNode): void {
   }
 }
 
+/**
+ * Imperatively push a new value into the native <input>/<textarea>.
+ *
+ * `<input>`/`<textarea>` treat the `value` prop as the INITIAL value only. On
+ * native (iOS/Android) a post-mount `__SetAttribute(el, 'value', …)` — which is
+ * what OP.SET_PROP resolves to — is ignored once the control is live, so a
+ * programmatic model change (e.g. a reset/clear button) never reaches the
+ * field. The platform's `setValue` UI method is the supported way to update the
+ * text imperatively (see @lynx-js/types Input/TextArea `setValue`, iOS/Android/
+ * Harmony/Web). Web reflects the `value` attribute live, so SET_PROP already
+ * covers it there and this is a harmless redundant call.
+ *
+ * Wrapped defensively: selector-query / UI-method APIs are unavailable in some
+ * environments (in-memory test adapters), and the SET_PROP path is the fallback.
+ */
+function setNativeInputValue(el: ShadowElement, value: string): void {
+  try {
+    el.invoke({ method: 'setValue', params: { value } }).exec();
+  } catch {
+    // no-op — OP.SET_PROP already carried the value where it can be applied.
+  }
+}
+
 export const vModelText: ObjectDirective<ShadowElement> = {
   created(el, { modifiers }, vnode) {
     const isLazy = modifiers?.lazy;
@@ -1070,11 +1094,16 @@ export const vModelText: ObjectDirective<ShadowElement> = {
     // "removed" and calling REMOVE_EVENT.
     injectVModelEvent(el, vnode);
 
-    // Push value to MT only if changed
+    // Push value to MT only if changed. This branch is the programmatic path
+    // (model changed from code): user keystrokes already set el._vModelValue in
+    // the event handler, so they no-op here and never clobber the caret.
     const strVal = value == null ? '' : String(value);
     if (strVal !== el._vModelValue) {
       el._vModelValue = strVal;
+      // SET_PROP drives web (live attribute reflection) and the initial value;
+      // setValue() drives native, where the post-mount value attribute is inert.
       pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      setNativeInputValue(el, strVal);
       scheduleFlush();
     }
   },

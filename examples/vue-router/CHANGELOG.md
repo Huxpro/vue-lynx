@@ -1,5 +1,12 @@
 # @vue-lynx-example/vue-router
 
+## 0.2.7
+
+### Patch Changes
+
+- Updated dependencies [[`39ccc7c`](https://github.com/Huxpro/vue-lynx/commit/39ccc7c5095c6999612f56461623db75f123a47d), [`9f72927`](https://github.com/Huxpro/vue-lynx/commit/9f72927f1b4a8580468e47e70b0e4ad5eb415783), [`747acd2`](https://github.com/Huxpro/vue-lynx/commit/747acd24f025ccba4dda4b22db99d62bb76851d3), [`eaf275a`](https://github.com/Huxpro/vue-lynx/commit/eaf275adb7ef1184adebaac60fe8e5b0b40b7783)]:
+  - vue-lynx@0.4.2
+
 ## 0.2.6
 
 ### Patch Changes

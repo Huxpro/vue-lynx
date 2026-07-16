@@ -63,8 +63,8 @@ export function initDevtool(api) {
         `</section>` +
         `<section class="dt__sec"><div class="dt__sec-h">This slide · flags</div>` +
           flagRow('bg') + flagRow('transition') + flagRow('chrome') +
-          row('notes', yn(!!(meta.notes && meta.notes.trim()), lang)) +
-          row('flips', flips.length ? flips.join(', ') : '—') +
+          row('notes', yn(!!(meta.notes?.trim()), lang)) +
+          row('flips', flips.length > 0 ? flips.join(', ') : '—') +
         `</section>` +
       `</div>` +
 

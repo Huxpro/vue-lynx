@@ -18,7 +18,9 @@ const LAYERS = [
 ];
 
 // Logo mark for each framework node (rendered in the column's accent colour).
-const FW_LOGO = { web: 'globe', rn: 'react', flutter: 'flutter', ns: 'ns', lynx: 'lynx' };
+const FW_LOGO = {
+  web: 'globe', ionic: 'ionic', ns: 'ns', flutter: 'flutter', rn: 'react', lynx: 'lynx',
+};
 
 // Brand colours for the layer reference icons (others fall back to muted).
 const BRAND = {
@@ -44,6 +46,7 @@ const ICON = {
   xr: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M4 9h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-3.5l-1.8-2h-3.4L9.5 15H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1z"/></svg>`,
   flutter: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14.3 0 2.3 12l3.7 3.7L21.7 0zM14.3 11.1l-6.4 6.4L14.3 24h7.4l-6.4-6.5 6.4-6.4z"/></svg>`,
   ns: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="5" stroke-width="1.7"/><path d="M8.5 16V8l7 8V8" stroke-width="1.9" stroke-linejoin="round"/></svg>`,
+  ionic: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/><circle cx="18.4" cy="5.6" r="2.1" fill="currentColor" stroke="none"/></svg>`,
   // Official Lynx mark from lynxjs.org (lynx-*-logo.svg), recoloured to inherit.
   lynx: `<svg viewBox="0 0 27 28" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>`,
 };
@@ -58,16 +61,24 @@ const SEAMS = [
 
 // gates: one verdict per seam, in EP1..EP4 order.
 //   open = extension point · part = half-open · seal = welded wall
+// Column order = reveal order in the talk: the Web baseline, then the
+// "not-quite" contenders (Ionic 不够 native · NS 不够 Web · Flutter 平行宇宙 ·
+// RN 绑定 React), and Lynx lands last as the answer.
 const FW = [
   {
     id: 'web', name: 'Web', color: '#4FB8F0',
     gates: ['open', 'seal', 'seal', 'part'],
-    thesis: 'Open on top, sealed below — takes any frontend, but the sandbox welds rendering and capabilities shut.',
+    thesis: 'The DX everyone wants — but the sandbox welds rendering and capabilities shut.',
   },
   {
-    id: 'rn', name: 'React Native', color: '#9E86F0',
-    gates: ['part', 'part', 'open', 'part'],
-    thesis: 'Capabilities wide open — but the frontend is bound to React, and each new platform is ported by hand.',
+    id: 'ionic', name: 'Ionic', color: '#6FA8FF',
+    gates: ['open', 'seal', 'part', 'part'],
+    thesis: 'The Web in a shell — Capacitor pries capabilities half-open, but rendering is still a WebView. Not native enough.',
+  },
+  {
+    id: 'ns', name: 'NativeScript', color: '#E8B44A',
+    gates: ['part', 'seal', 'open', 'seal'],
+    thesis: 'The most direct native access — but no real CSS/DOM semantics. Not Web enough.',
   },
   {
     id: 'flutter', name: 'Flutter', color: '#F27A9E',
@@ -75,9 +86,9 @@ const FW = [
     thesis: 'The bottom half is open — at the cost of a single Dart-only door on top.',
   },
   {
-    id: 'ns', name: 'NativeScript', color: '#E8B44A',
-    gates: ['part', 'seal', 'open', 'seal'],
-    thesis: 'The most direct native access — but rendering and new platforms are both welded shut.',
+    id: 'rn', name: 'React Native', color: '#9E86F0',
+    gates: ['part', 'part', 'open', 'part'],
+    thesis: 'Closest to the dream — but the frontend seam is welded to React.',
   },
   {
     id: 'lynx', name: 'Lynx', color: '#5dd5a8', hero: true,
@@ -106,10 +117,10 @@ function scoreOf(gates) {
 const slot = (j) => ((j + 0.5) / 9) * 100;
 const layerY = (i) => slot(2 * i);
 const seamY = (s) => slot(2 * s + 1);
-const colX = (c) => 32 + c * 12; // columns 32–80%, leaving a right gutter for icon rows
+const colX = (c) => 30 + c * 9.9; // six columns 30–79.5%, right gutter for icon rows
 
 function iconRow(keys) {
-  if (!keys || !keys.length) return '';
+  if (!keys || keys.length === 0) return '';
   const items = keys
     .map((k) => {
       const svg = ICON[k] || '';
@@ -128,7 +139,7 @@ function el(tag, cls, css) {
 }
 
 export function renderArch(mount, lang = 'en') {
-  const shown = Math.max(0, Math.min(FW.length, parseInt(mount.dataset.archShown || '0', 10)));
+  const shown = Math.max(0, Math.min(FW.length, Number.parseInt(mount.dataset.archShown || '0', 10)));
   const zh = lang === 'zh';
   const arch = el('div', 'arch');
   arch.setAttribute('data-flip', 'arch');
@@ -156,7 +167,6 @@ export function renderArch(mount, lang = 'en') {
   FW.slice(0, shown).forEach((f, c) => {
     const isNew = c === shown - 1;
     const heroCls = f.hero ? ' is-hero' : '';
-    const fade = isNew ? 'data-mm-fade' : '';
 
     const spine = el('div', `arch__spine${heroCls}`, `left:${colX(c)}%;--fwc:${f.color}`);
     if (isNew) spine.setAttribute('data-mm-fade', '');

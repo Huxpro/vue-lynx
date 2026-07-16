@@ -34,6 +34,11 @@ const emit = defineEmits<{
 const merged = computed(() => getMergedParts(props.message.parts));
 const sources = computed(() => collectSources(props.message.parts));
 const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
+
+function partEntranceClass(part: UIMessage['parts'][number]) {
+  if (props.message.role !== 'assistant' || isTextUIPart(part) || !isPartStreaming(part)) return '';
+  return 'message-part-enter';
+}
 </script>
 
 <template>
@@ -56,6 +61,7 @@ const fileParts = computed(() => props.message.parts.filter(isFileUIPart));
     <view
       v-for="(part, index) in merged"
       :key="`${message.id}-${part.type}-${index}`"
+      :class="partEntranceClass(part)"
       :style="index > 0 || fileParts.length ? { marginTop: '12px' } : undefined"
     >
       <ReasoningPart
