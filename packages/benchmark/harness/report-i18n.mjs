@@ -27,10 +27,10 @@ export function copy(lang) {
       cells: (n) => (zh ? `数据格：${n}` : `cells: ${n}`),
       conclusions: (n) => (zh ? `结论：${n}` : `conclusions: ${n}`),
     },
-    hConclusions: zh ? '结论（先看这里）' : 'Conclusions (start here)',
+    hConclusions: zh ? '结论' : 'Conclusions',
     subConclusions: zh
-      ? '每条：一句话 takeaway → 含义（怎么用）→ 核对用的关键数字。不要跨环境比毫秒。'
-      : 'Each card: one-line takeaway → so what (how to use it) → key numbers to verify. Never ratio ms across environments.',
+      ? '标题是 takeaway；含义怎么用；核对是数字。勿跨环境比毫秒。'
+      : 'Title = takeaway; so what = how to use; verify = numbers. Never ratio ms across environments.',
     whyLabel: zh ? '含义' : 'so what',
     evidenceLabel: zh ? '核对' : 'verify',
     altLang: zh
@@ -201,42 +201,28 @@ export function buildConclusions(d, lang) {
   const out = [];
   const r = (a, b) => (a != null && b != null && b !== 0 ? a / b : null);
 
-  // --- Product decisions first ---
   const vaporX = r(stormVdom, stormVapor);
   const vaporRx = r(stormReact, stormVapor);
   if (vaporX != null) {
+    const bgX =
+      bgSelectV != null && bgSelectD != null
+        ? (bgSelectD / bgSelectV).toFixed(1)
+        : null;
     out.push({
       tone: 'good',
       title: zh
-        ? `点状更新上 Vapor（selectStorm@10k ≈ ${vaporX.toFixed(1)}× vs VDOM）`
-        : `Ship Vapor for point updates (~${vaporX.toFixed(1)}× vs VDOM @10k selectStorm)`,
+        ? `Vapor 点状更新 ~${vaporX.toFixed(1)}×`
+        : `Vapor ~${vaporX.toFixed(1)}× on point updates`,
       why: zh
-        ? 'Select = 点状更新（选中态/少量 class）。高频点状交互是用户能感觉到的差距；单次点击常被帧地板盖住。交互密集列表默认 Vapor。'
-        : 'Select = point update (selection / a few classes). High-frequency point interaction is what users feel; one-shot taps often sit on the frame floor. Default Vapor for interaction-heavy lists.',
+        ? 'Select = 点状更新。交互密集列表默认 Vapor；单次点击常贴帧地板。'
+        : 'Select = point update. Default Vapor for interaction-heavy lists; one-shots often sit on the frame floor.',
       evidence: zh
-        ? `VDOM ${stormVdom.toFixed(0)} ms → Vapor ${stormVapor.toFixed(0)} ms` +
-          (vaporRx != null
-            ? `；相对 ReactLynx ≈ ${vaporRx.toFixed(0)}×（${stormReact.toFixed(0)} ms）`
-            : '')
-        : `VDOM ${stormVdom.toFixed(0)} ms → Vapor ${stormVapor.toFixed(0)} ms` +
-          (vaporRx != null
-            ? `; ~${vaporRx.toFixed(0)}× vs ReactLynx (${stormReact.toFixed(0)} ms)`
-            : ''),
-    });
-  }
-
-  if (bgSelectV != null && bgSelectD != null) {
-    out.push({
-      tone: 'good',
-      title: zh
-        ? `BG 微基准印证：Vapor select ≈ ${(bgSelectD / bgSelectV).toFixed(1)}×`
-        : `BG micro confirms it: Vapor select ~${(bgSelectD / bgSelectV).toFixed(1)}×`,
-      why: zh
-        ? 'Instrumented BG 看的是管道本身；storm 是用户可见版。两套尺子同向，说明不是测量假象。'
-        : 'Instrumented BG measures the pipeline; storms are the user-visible version. Same direction on both instruments → not a measurement artifact.',
-      evidence: zh
-        ? `vdom bg ${bgSelectD.toFixed(2)} ms → vapor ${bgSelectV.toFixed(2)} ms`
-        : `vdom bg ${bgSelectD.toFixed(2)} ms → vapor ${bgSelectV.toFixed(2)} ms`,
+        ? `selectStorm@10k ${stormVdom.toFixed(0)}→${stormVapor.toFixed(0)} ms` +
+          (vaporRx != null ? ` · vs RL ~${vaporRx.toFixed(0)}×` : '') +
+          (bgX != null ? ` · BG ~${bgX}×` : '')
+        : `selectStorm@10k ${stormVdom.toFixed(0)}→${stormVapor.toFixed(0)} ms` +
+          (vaporRx != null ? ` · vs RL ~${vaporRx.toFixed(0)}×` : '') +
+          (bgX != null ? ` · BG ~${bgX}×` : ''),
     });
   }
 
@@ -245,14 +231,14 @@ export function buildConclusions(d, lang) {
     out.push({
       tone: 'good',
       title: zh
-        ? `大批量创建：ReactLynx 仍领先（create@10k ≈ ${x.toFixed(2)}× vs VDOM）`
-        : `ReactLynx still wins bulk create (~${x.toFixed(2)}× vs VDOM @10k)`,
+        ? `ReactLynx 创建更快 ~${x.toFixed(2)}×`
+        : `ReactLynx wins create ~${x.toFixed(2)}×`,
       why: zh
-        ? 'Snapshot 批量实例化擅长“一次铺开很多节点”。创建 ≠ 更新——别用创建输赢否定更新结论。'
-        : 'Snapshot bulk-instantiate is great at laying down many nodes once. Creation ≠ update — don’t mix the two stories.',
+        ? 'Snapshot 擅长一次铺开大量节点。创建 ≠ 更新。'
+        : 'Snapshot bulk-instantiate. Creation ≠ update.',
       evidence: zh
-        ? `ReactLynx ${createReact.toFixed(0)} · VDOM ${createVdom.toFixed(0)} · Vapor ${createVapor?.toFixed(0) ?? '—'} ms`
-        : `ReactLynx ${createReact.toFixed(0)} · VDOM ${createVdom.toFixed(0)} · Vapor ${createVapor?.toFixed(0) ?? '—'} ms`,
+        ? `create@10k RL ${createReact.toFixed(0)} · VDOM ${createVdom.toFixed(0)} · Vapor ${createVapor?.toFixed(0) ?? '—'} ms`
+        : `create@10k RL ${createReact.toFixed(0)} · VDOM ${createVdom.toFixed(0)} · Vapor ${createVapor?.toFixed(0) ?? '—'} ms`,
     });
   }
 
@@ -260,14 +246,14 @@ export function buildConclusions(d, lang) {
     out.push({
       tone: 'good',
       title: zh
-        ? `首帧：ReactLynx 最低（FCP@10k ${fcpReact.toFixed(0)} ms）`
-        : `First frame: ReactLynx lowest (FCP@10k ${fcpReact.toFixed(0)} ms)`,
+        ? `ReactLynx 首帧最低`
+        : `ReactLynx lowest FCP`,
       why: zh
-        ? '同密度内容探针上，Snapshot+IFR（RL 默认）比 Vue 各配置都快。Vue 要追首帧，默认走 IFR+ET。'
-        : 'On the same-density probe, Snapshot+IFR (RL default) beats every Vue cell. For Vue first-frame, default to IFR+ET.',
+        ? '同密度探针上 RL 最快。Vue 追首帧 → IFR+ET。'
+        : 'Same-density probe: RL wins. Vue first-frame → IFR+ET.',
       evidence: zh
-        ? `ReactLynx ${fcpReact.toFixed(0)} · VDOM+IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`
-        : `ReactLynx ${fcpReact.toFixed(0)} · VDOM+IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`,
+        ? `FCP@10k RL ${fcpReact.toFixed(0)} · IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`
+        : `FCP@10k RL ${fcpReact.toFixed(0)} · IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`,
     });
   }
 
@@ -276,15 +262,13 @@ export function buildConclusions(d, lang) {
     const d10 = ((fcpIfr - fcpOff) / fcpOff) * 100;
     out.push({
       tone: d10 > 0 ? 'critical' : 'warn',
-      title: zh
-        ? `别裸开 IFR：小屏 ${d1.toFixed(0)}%，10k 反而 +${d10.toFixed(0)}%`
-        : `Don’t ship IFR without ET: ${d1.toFixed(0)}% @1k → +${d10.toFixed(0)}% @10k`,
+      title: zh ? '别裸开 IFR' : 'No IFR without ET',
       why: zh
-        ? '“FCP −19%”不是常数。无 ET 的 IFR 在中大树上会变成负担；ET 才是规模对冲。文档/默认配置不要只写 IFR。'
-        : '“−19% FCP” is not a constant. Plain IFR becomes a liability on mid/large trees; ET is the scale hedge. Don’t document “just enable IFR.”',
+        ? '“−19%”不是常数。中大树无 ET 会变慢；默认 IFR+ET。'
+        : '“−19%” isn’t a constant. Plain IFR loses at scale; default IFR+ET.',
       evidence: zh
-        ? `VDOM+IFR vs off：1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`
-        : `VDOM+IFR vs off: 1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`,
+        ? `vs off：1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`
+        : `vs off: 1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`,
     });
   }
 
@@ -293,54 +277,39 @@ export function buildConclusions(d, lang) {
     out.push({
       tone: 'warn',
       title: zh
-        ? `ET 不只服务首帧：挂载后 storm 也快约 ${fasterPct.toFixed(0)}%`
-        : `ET isn’t first-frame-only: post-mount storms ~${fasterPct.toFixed(0)}% faster`,
+        ? `ET 也加速更新 ~${fasterPct.toFixed(0)}%`
+        : `ET speeds updates ~${fasterPct.toFixed(0)}%`,
       why: zh
-        ? '模板 clone 会加速后续重复结构的创建/更新。裸 IFR ≈ 关闭；加 ET 才有持续收益。'
-        : 'Template clone speeds later repeated create/update. Plain IFR ≈ off; ET is what keeps paying off.',
+        ? '模板 clone 挂载后仍有用。裸 IFR ≈ off。'
+        : 'Template clone helps post-mount too. Plain IFR ≈ off.',
       evidence: zh
-        ? `selectStorm@10k：off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · IFR+ET ${stormEt.toFixed(0)} ms`
-        : `selectStorm@10k: off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · IFR+ET ${stormEt.toFixed(0)} ms`,
+        ? `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`
+        : `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`,
     });
   }
 
   out.push({
-    tone: 'good',
+    tone: 'warn',
     title: zh
-      ? '缩放形态：没有指数爆炸；FCP 还是次线性'
-      : 'Scaling shape: nothing exponential; FCP is sublinear',
+      ? '创建→RL · 更新→Vapor · 首帧→IFR+ET'
+      : 'create→RL · updates→Vapor · Vue FCP→IFR+ET',
     why: zh
-      ? '拟合 cost ∝ N^α：FCP α≈0.7（次线性，固定开销被摊薄）；create/update storm ≈线性。真正拉开的是 Vapor 的 select（长大后仍更平）。'
-      : 'Fit cost ∝ N^α: FCP α≈0.7 (sublinear — fixed overhead amortizes); create/update storms ~linear. The separator is Vapor select (stays flatter as N grows).',
+      ? 'Select=点状，Update=批量。产品选择压成这一句。'
+      : 'Select=point, Update=batch. Product choice collapses to this line.',
     evidence: zh
-      ? 'FCP α≈0.68–0.79 · create α≈0.95 · updateStorm α≈1.0–1.2 · React/VDOM selectStorm α≈1.05（Vapor 更低）'
-      : 'FCP α≈0.68–0.79 · create α≈0.95 · updateStorm α≈1.0–1.2 · React/VDOM selectStorm α≈1.05 (Vapor lower)',
+      ? '见下方表；跨表勿用毫秒互除。'
+      : 'See tables below; never divide ms across instruments.',
   });
 
   out.push({
     tone: 'warn',
-    title: zh
-      ? '一句话分工：创建→React；点状/批量更新→Vapor；Vue 首帧→IFR+ET'
-      : 'Cheat sheet: create→ReactLynx · point/batch updates→Vapor · Vue first-frame→IFR+ET',
+    title: zh ? '报比率，别报绝对 ms' : 'Quote ratios, not ms',
     why: zh
-      ? 'Select 看点状，Update 看批量——别混。三套旧 bench 打架时，统一阶梯后的产品选择可以压成这一句。'
-      : 'Select = point, Update = batch — don’t mix them. The three old benches fought; on one ladder the product choice collapses to this line.',
+      ? '换机器中位数可差 2×+。只带同机比率。'
+      : 'Medians move 2×+ across hosts. Same-host ratios only.',
     evidence: zh
-      ? '详见下方 storm 表 + FCP 表；跨表不要用毫秒互除。'
-      : 'See storm + FCP tables below; never divide ms across those instruments.',
-  });
-
-  out.push({
-    tone: 'warn',
-    title: zh
-      ? '引用比率，别引用绝对毫秒'
-      : 'Quote ratios, not absolute milliseconds',
-    why: zh
-      ? '同协议换机器，中位数能差 2×+。可携带的是同机比率（Vapor/VDOM、React/Vapor、IFR Δ%）。'
-      : 'Same protocol, different hosts can move medians 2×+. Portable claims are same-host ratios.',
-    evidence: zh
-      ? '例：旧 playground React selectStorm@10k ≈2544 ms；本机 ≈1018 ms。'
-      : 'Ex: older playground React selectStorm@10k ≈2544 ms; this host ≈1018 ms.',
+      ? `例：旧机 React selectStorm@10k ≈2544 ms；本机 ≈${stormReact?.toFixed(0) ?? '1018'} ms。`
+      : `Ex: older host React selectStorm@10k ≈2544 ms; this host ≈${stormReact?.toFixed(0) ?? '1018'} ms.`,
   });
 
   return out;

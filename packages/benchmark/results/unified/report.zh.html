@@ -115,48 +115,40 @@
   <span class="pill">环境：lynx-web（主）</span>
   <span class="pill">阶梯：1k → 30k</span>
   <span class="pill">数据格：457</span>
-  <span class="pill">结论：9</span>
+  <span class="pill">结论：7</span>
 </div>
 <p class="lang-switch"><a href="report.html">English</a></p>
 
-<h2>结论（先看这里）</h2>
-<p class="sub">每条：一句话 takeaway → 含义（怎么用）→ 核对用的关键数字。不要跨环境比毫秒。</p>
+<h2>结论</h2>
+<p class="sub">标题是 takeaway；含义怎么用；核对是数字。勿跨环境比毫秒。</p>
 <div class="verdicts"><article class="verdict good">
-      <header><strong class="takeaway">点状更新上 Vapor（selectStorm@10k ≈ 8.2× vs VDOM）</strong></header>
-      <p class="why"><span class="lbl">含义</span> Select = 点状更新（选中态/少量 class）。高频点状交互是用户能感觉到的差距；单次点击常被帧地板盖住。交互密集列表默认 Vapor。</p>
-      <p class="evidence"><span class="lbl">核对</span> VDOM 367 ms → Vapor 45 ms；相对 ReactLynx ≈ 23×（1018 ms）</p>
+      <header><strong class="takeaway">Vapor 点状更新 ~8.2×</strong></header>
+      <p class="why"><span class="lbl">含义</span> Select = 点状更新。交互密集列表默认 Vapor；单次点击常贴帧地板。</p>
+      <p class="evidence"><span class="lbl">核对</span> selectStorm@10k 367→45 ms · vs RL ~23× · BG ~9.8×</p>
     </article><article class="verdict good">
-      <header><strong class="takeaway">BG 微基准印证：Vapor select ≈ 9.8×</strong></header>
-      <p class="why"><span class="lbl">含义</span> Instrumented BG 看的是管道本身；storm 是用户可见版。两套尺子同向，说明不是测量假象。</p>
-      <p class="evidence"><span class="lbl">核对</span> vdom bg 2.95 ms → vapor 0.30 ms</p>
+      <header><strong class="takeaway">ReactLynx 创建更快 ~1.16×</strong></header>
+      <p class="why"><span class="lbl">含义</span> Snapshot 擅长一次铺开大量节点。创建 ≠ 更新。</p>
+      <p class="evidence"><span class="lbl">核对</span> create@10k RL 689 · VDOM 798 · Vapor 853 ms</p>
     </article><article class="verdict good">
-      <header><strong class="takeaway">大批量创建：ReactLynx 仍领先（create@10k ≈ 1.16× vs VDOM）</strong></header>
-      <p class="why"><span class="lbl">含义</span> Snapshot 批量实例化擅长“一次铺开很多节点”。创建 ≠ 更新——别用创建输赢否定更新结论。</p>
-      <p class="evidence"><span class="lbl">核对</span> ReactLynx 689 · VDOM 798 · Vapor 853 ms</p>
-    </article><article class="verdict good">
-      <header><strong class="takeaway">首帧：ReactLynx 最低（FCP@10k 228 ms）</strong></header>
-      <p class="why"><span class="lbl">含义</span> 同密度内容探针上，Snapshot+IFR（RL 默认）比 Vue 各配置都快。Vue 要追首帧，默认走 IFR+ET。</p>
-      <p class="evidence"><span class="lbl">核对</span> ReactLynx 228 · VDOM+IFR+ET 278 · VDOM 310 ms</p>
+      <header><strong class="takeaway">ReactLynx 首帧最低</strong></header>
+      <p class="why"><span class="lbl">含义</span> 同密度探针上 RL 最快。Vue 追首帧 → IFR+ET。</p>
+      <p class="evidence"><span class="lbl">核对</span> FCP@10k RL 228 · IFR+ET 278 · VDOM 310 ms</p>
     </article><article class="verdict critical">
-      <header><strong class="takeaway">别裸开 IFR：小屏 -10%，10k 反而 +22%</strong></header>
-      <p class="why"><span class="lbl">含义</span> “FCP −19%”不是常数。无 ET 的 IFR 在中大树上会变成负担；ET 才是规模对冲。文档/默认配置不要只写 IFR。</p>
-      <p class="evidence"><span class="lbl">核对</span> VDOM+IFR vs off：1k -10% · 10k +22%</p>
+      <header><strong class="takeaway">别裸开 IFR</strong></header>
+      <p class="why"><span class="lbl">含义</span> “−19%”不是常数。中大树无 ET 会变慢；默认 IFR+ET。</p>
+      <p class="evidence"><span class="lbl">核对</span> vs off：1k -10% · 10k +22%</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">ET 不只服务首帧：挂载后 storm 也快约 28%</strong></header>
-      <p class="why"><span class="lbl">含义</span> 模板 clone 会加速后续重复结构的创建/更新。裸 IFR ≈ 关闭；加 ET 才有持续收益。</p>
-      <p class="evidence"><span class="lbl">核对</span> selectStorm@10k：off 367 · IFR 372 · IFR+ET 264 ms</p>
-    </article><article class="verdict good">
-      <header><strong class="takeaway">缩放形态：没有指数爆炸；FCP 还是次线性</strong></header>
-      <p class="why"><span class="lbl">含义</span> 拟合 cost ∝ N^α：FCP α≈0.7（次线性，固定开销被摊薄）；create/update storm ≈线性。真正拉开的是 Vapor 的 select（长大后仍更平）。</p>
-      <p class="evidence"><span class="lbl">核对</span> FCP α≈0.68–0.79 · create α≈0.95 · updateStorm α≈1.0–1.2 · React/VDOM selectStorm α≈1.05（Vapor 更低）</p>
+      <header><strong class="takeaway">ET 也加速更新 ~28%</strong></header>
+      <p class="why"><span class="lbl">含义</span> 模板 clone 挂载后仍有用。裸 IFR ≈ off。</p>
+      <p class="evidence"><span class="lbl">核对</span> selectStorm@10k off 367 · IFR 372 · ET 264 ms</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">一句话分工：创建→React；点状/批量更新→Vapor；Vue 首帧→IFR+ET</strong></header>
-      <p class="why"><span class="lbl">含义</span> Select 看点状，Update 看批量——别混。三套旧 bench 打架时，统一阶梯后的产品选择可以压成这一句。</p>
-      <p class="evidence"><span class="lbl">核对</span> 详见下方 storm 表 + FCP 表；跨表不要用毫秒互除。</p>
+      <header><strong class="takeaway">创建→RL · 更新→Vapor · 首帧→IFR+ET</strong></header>
+      <p class="why"><span class="lbl">含义</span> Select=点状，Update=批量。产品选择压成这一句。</p>
+      <p class="evidence"><span class="lbl">核对</span> 见下方表；跨表勿用毫秒互除。</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">引用比率，别引用绝对毫秒</strong></header>
-      <p class="why"><span class="lbl">含义</span> 同协议换机器，中位数能差 2×+。可携带的是同机比率（Vapor/VDOM、React/Vapor、IFR Δ%）。</p>
-      <p class="evidence"><span class="lbl">核对</span> 例：旧 playground React selectStorm@10k ≈2544 ms；本机 ≈1018 ms。</p>
+      <header><strong class="takeaway">报比率，别报绝对 ms</strong></header>
+      <p class="why"><span class="lbl">含义</span> 换机器中位数可差 2×+。只带同机比率。</p>
+      <p class="evidence"><span class="lbl">核对</span> 例：旧机 React selectStorm@10k ≈2544 ms；本机 ≈1018 ms。</p>
     </article></div>
 
 <h2>交互 Storms — IFR × 框架矩阵</h2>
