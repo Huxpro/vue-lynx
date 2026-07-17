@@ -129,7 +129,6 @@ export default defineConfig({
           link: '/guide/ifr',
           context: 'vapor',
         },
-        { text: 'Element Templates', link: '/guide/element-templates' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
@@ -177,7 +176,6 @@ export default defineConfig({
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
         { text: 'Vapor Mode', link: '/zh/guide/vapor-mode', context: 'vapor' },
         { text: '首屏直出（IFR）', link: '/zh/guide/ifr', context: 'vapor' },
-        { text: '元素模板', link: '/zh/guide/element-templates' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         {
