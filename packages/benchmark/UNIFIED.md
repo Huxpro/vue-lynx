@@ -67,7 +67,7 @@ pnpm --filter vue-lynx-benchmark run bench:synthesize
 pnpm --filter vue-lynx-benchmark run bench:unified:full
 ```
 
-Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html}`.
+Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html,report.zh.html}`.
 
 **Human-facing report** (playground-style tinted tables + charts):
 
