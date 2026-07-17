@@ -178,8 +178,9 @@ const otherTable = renderPlainTable(
 
 
 // ---------------------------------------------------------------------------
-// scale curves: x = create N rows (ms), y = storm per-tick (ms), log-log.
-// One polyline per framework through sizes 1k -> 3k -> 5k -> 10k.
+// scale curves: x = create N rows (ms), y = storm per-tick (ms).
+// One polyline per framework through sizes 1k -> 3k -> 5k -> 10k (+).
+// Both linear (zero baseline) and log-log variants.
 // ---------------------------------------------------------------------------
 
 const SIZES = ['1k', '3k', '5k', '10k', '20k', '30k'];
@@ -197,20 +198,70 @@ function seriesPoints(col, stormOp) {
   return pts;
 }
 
-function renderScaleChart(stormOp, titleText, subText) {
+function niceLinearTicks(lo, hi, maxTicks = 6) {
+  if (!(hi > lo)) return [lo];
+  const span = hi - lo;
+  const step0 = span / Math.max(1, maxTicks - 1);
+  const mag = 10 ** Math.floor(Math.log10(step0));
+  const residual = step0 / mag;
+  const step = residual <= 1.5
+    ? mag
+    : residual <= 3
+      ? 2 * mag
+      : residual <= 7
+        ? 5 * mag
+        : 10 * mag;
+  const start = Math.ceil((lo - step * 1e-9) / step) * step;
+  const ticks = [];
+  for (let t = start; t <= hi + step * 1e-6; t += step) ticks.push(t);
+  return ticks;
+}
+
+function renderScaleChart(stormOp, titleText, subText, scale = 'log') {
+  const useLog = scale === 'log';
+  const scaleTag = useLog ? 'log' : 'linear';
   const allPts = COLUMNS.flatMap((c) => seriesPoints(c, stormOp));
   if (allPts.length === 0) return '';
   const xs = allPts.map((p) => p.x);
   const ys = allPts.map((p) => p.y);
-  const pad = 1.35;
-  const xmin = Math.min(...xs) / pad, xmax = Math.max(...xs) * pad;
-  const ymin = Math.min(...ys) / pad, ymax = Math.max(...ys) * pad;
+  let xmin, xmax, ymin, ymax;
+  if (useLog) {
+    const pad = 1.35;
+    xmin = Math.min(...xs) / pad;
+    xmax = Math.max(...xs) * pad;
+    ymin = Math.min(...ys) / pad;
+    ymax = Math.max(...ys) * pad;
+  } else {
+    xmin = 0;
+    xmax = Math.max(...xs) * 1.08;
+    ymin = 0;
+    ymax = Math.max(...ys) * 1.08;
+  }
   const W = 480, H = 380, ML = 52, MR = 118, MT = 14, MB = 40;
-  const px = (v) => ML + ((Math.log10(v) - Math.log10(xmin)) / (Math.log10(xmax) - Math.log10(xmin))) * (W - ML - MR);
-  const py = (v) => H - MB - ((Math.log10(v) - Math.log10(ymin)) / (Math.log10(ymax) - Math.log10(ymin))) * (H - MT - MB);
-  const tickVals = (lo, hi) =>
-    [0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000].filter((t) => t >= lo && t <= hi);
-  const fmtTick = (t) => (t >= 1000 ? `${t / 1000}s` : `${t}ms`);
+  const px = (v) => {
+    if (useLog) {
+      return ML + ((Math.log10(v) - Math.log10(xmin)) / (Math.log10(xmax) - Math.log10(xmin))) * (W - ML - MR);
+    }
+    return ML + ((v - xmin) / (xmax - xmin)) * (W - ML - MR);
+  };
+  const py = (v) => {
+    if (useLog) {
+      return H - MB - ((Math.log10(v) - Math.log10(ymin)) / (Math.log10(ymax) - Math.log10(ymin))) * (H - MT - MB);
+    }
+    return H - MB - ((v - ymin) / (ymax - ymin)) * (H - MT - MB);
+  };
+  const logTicks = [0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000];
+  const tickVals = (lo, hi) => {
+    if (useLog) return logTicks.filter((t) => t >= lo && t <= hi);
+    const ticks = niceLinearTicks(lo, hi);
+    if (lo === 0 && (ticks.length === 0 || ticks[0] !== 0)) ticks.unshift(0);
+    return ticks;
+  };
+  const fmtTick = (t) => {
+    if (t === 0) return '0';
+    if (t >= 1000) return `${t / 1000}s`;
+    return Number.isInteger(t) ? `${t}ms` : `${t.toFixed(1)}ms`;
+  };
 
   let g = '';
   for (const t of tickVals(xmin, xmax)) {
@@ -245,11 +296,12 @@ function renderScaleChart(stormOp, titleText, subText) {
     marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel ${cls}">${col.label}</text>`;
   }
 
-  return `<div class="chart"><h3>${titleText}</h3><p class="sub">${subText}</p>
-<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${titleText}">
+  const stormLabel = stormOp === 'updateStorm' ? 'update' : 'select';
+  return `<div class="chart"><h3>${titleText} (${scaleTag})</h3><p class="sub">${subText}</p>
+<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${titleText} (${scaleTag})">
 ${g}
-<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">create N rows — ms, log</text>
-<text x="12" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 12 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${stormOp === 'updateStorm' ? 'update' : 'select'} storm — ms per tick, log</text>
+<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">create N rows — ms, ${scaleTag}</text>
+<text x="12" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 12 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${stormLabel} storm — ms per tick, ${scaleTag}</text>
 ${marks}
 </svg></div>`;
 }
@@ -355,13 +407,23 @@ function lynxTaxSection() {
 
 
 const scaleSection = (() => {
-  const c1 = renderScaleChart('updateStorm', 'Creation vs update throughput',
-    'Right = slower creation at that scale; up = slower update ticks. Lower-left dominates.');
-  const c2 = renderScaleChart('selectStorm', 'Creation vs selection throughput',
-    'Selection isolates fine-grained updates: two class changes per tick.');
-  if (!c1 && !c2) return '';
+  const linearUpdate = renderScaleChart('updateStorm', 'Creation vs update throughput',
+    'Linear, zero baseline. Right = slower creation; up = slower update ticks. Absolute gaps pop more than on log-log.',
+    'linear');
+  const linearSelect = renderScaleChart('selectStorm', 'Creation vs selection throughput',
+    'Linear, zero baseline. Selection isolates fine-grained updates: two class changes per tick.',
+    'linear');
+  const logUpdate = renderScaleChart('updateStorm', 'Creation vs update throughput',
+    'Log-log. Right = slower creation at that scale; up = slower update ticks. Lower-left dominates.',
+    'log');
+  const logSelect = renderScaleChart('selectStorm', 'Creation vs selection throughput',
+    'Log-log. Selection isolates fine-grained updates: two class changes per tick.',
+    'log');
+  if (!linearUpdate && !logUpdate) return '';
   return `<h2>Scaling curves (1k → 30k rows)</h2>
-<div class="charts">${c1}${c2}</div>
+<p class="sub">Linear charts first (zero baseline — absolute ms gaps); log-log below for scaling shape.</p>
+<div class="charts">${linearUpdate}${linearSelect}</div>
+<div class="charts">${logUpdate}${logSelect}</div>
 <details class="tv"><summary>table view</summary><div class="scroll">${scaleTableView()}</div></details>
 <h2>Scaling exponents (least-squares fit of cost ∝ N<sup>α</sup> across sizes)</h2>
 <p class="sub">α ≈ 1 is linear scaling; α &gt; 1 superlinear. Fitted over all sizes with data (up to 1k–30k).</p>
