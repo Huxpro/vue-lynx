@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 70</span>
+    <span data-counter>01 / 106</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2152,8 +2152,471 @@
       <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
     </div>
     <aside class="notes">
-      <p><strong>Close.</strong> Thank them. Invite questions. Stay here for Q&amp;A.</p>
-      <p>"Is this production?" — pre-alpha, architecture solid, tested surface. "Android?" — Lynx is cross-platform, same bundle runs on both.</p>
+      <p><strong>The fake close.</strong> Play it completely straight: thank them, half a bow, reach for the water — hold until the room starts to applaud.</p>
+      <p>Then, deadpan: "啊——没有哈。这才过去十分钟。" Advance into the real second half.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       Epilogue · The elephant in the room — AI, fabrics,
+       and the case for weaving. The (real) second half.
+       ==================================================== -->
+  <section class="slide divider">
+    <span class="eyebrow">Epilogue</span>
+    <div class="divider__row">
+      <span class="divider__num numeral--brand">&infin;</span>
+      <h2 class="divider__title">
+        The elephant<br/>in the room.
+      </h2>
+    </div>
+    <p class="divider__tag">
+      &ldquo;Vibe coding&rdquo; is barely eighteen months old &mdash; and it
+      already writes native apps. So why frameworks? Why Lynx? Why any of this?
+    </p>
+    <aside class="notes">
+      <p><strong>Reset the room.</strong> "So — with the ten minutes we saved, let's talk about the elephant." If AI can do everything, why not just prompt out N native apps and skip the framework, the cross-platform layer, all of it?</p>
+      <p>Tone shift: less product pitch, more thinking-out-loud. This half is the <em>why</em>, not the <em>what</em>.</p>
+    </aside>
+  </section>
+
+  <!-- E2 — the question, honestly -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · the question</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      Does AI obsolete <span class="brand-text">all of us</span>?
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">no frameworks?</span>
+      <span class="chip">no libraries?</span>
+      <span class="chip">no docs?</span>
+      <span class="chip">no us?</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Be honest first: I don't know.</strong> What does AI mean for Lynx, for Vue — why do I even bother? Does documentation matter if no human reads it? Do libraries matter if the model can rebuild them from bare metal?</p>
+      <p>Datapoints to drop: React usage <em>spiked</em> in the AI era — models default to it — and yet React itself matters less than it used to; Anthropic just wrote about Claude building one-off internal tools in plain HTML, no framework at all. The ground is genuinely moving.</p>
+    </aside>
+  </section>
+
+  <!-- E3 — the claim / roadmap -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · a claim</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      What <span class="brand-text">survives</span> AI?
+    </h2>
+    <div class="tiles">
+      <span class="tile" style="--c:#8b93a3">infrastructure</span>
+      <span class="tilearr">&rarr;</span>
+      <span class="tile" style="--c:#E8B44A">enablers</span>
+      <span class="tilearr">&rarr;</span>
+      <span class="tile" style="--c:#56b8f0">platforms</span>
+      <span class="tilearr">&rarr;</span>
+      <span class="tile" style="--c:#9E86F0">ecosystems</span>
+      <span class="tilearr">&rarr;</span>
+      <span class="tile is-hero" style="--c:#42b883">people</span>
+    </div>
+    <p class="lead" data-mm-fade>Two lemmas, then an answer.</p>
+    <aside class="notes">
+      <p><strong>The thesis, stated up front so the chapter has a spine.</strong> What's "saved" from AI is everything that <em>enables</em> instead of merely produces: infrastructure, enablers, platforms, ecosystems — and, at the end of the chain, people. Note the progression: each one is saved <em>because</em> it feeds the next.</p>
+      <p>I'll argue it with two lemmas: (1) technology's role flips from interface to harness; (2) technology's real job is connecting ecosystems — and people.</p>
+    </aside>
+  </section>
+
+  <!-- E4 — Lemma 1 · the stack, rewritten -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · Lemma 1</span>
+    <div class="flow" style="height:56cqh;width:min(100%,880px)">
+      <div class="fb" data-flip="stk-human" style="--c:#8b93a3;left:44%;top:4%">human</div>
+      <div class="fb is-hero" data-flip="stk-nl" style="--c:#42b883;left:44%;top:22.4%">natural languages</div>
+      <div class="fb is-hero" data-flip="stk-agent" style="--c:#56b8f0;left:44%;top:40.8%">agent</div>
+      <div class="fb" data-flip="stk-code" style="--c:#8b93a3;left:44%;top:59.2%">code</div>
+      <div class="fb" data-flip="stk-fw" style="--c:#8b93a3;left:44%;top:77.6%">frameworks</div>
+      <div class="fb" data-flip="stk-sys" style="--c:#8b93a3;left:44%;top:96%">system</div>
+      <span class="farr" data-mm-fade style="--c:#42b883;left:71%;top:22.4%">&larr; the new source</span>
+      <span class="farr" data-mm-fade style="--c:#56b8f0;left:71.5%;top:40.8%">&larr; the new interface</span>
+      <span class="farr" data-mm-fade style="left:73%;top:77.6%">&larr; they stay &mdash; and evolve</span>
+    </div>
+    <p class="lead" data-mm-fade>The stack, rewritten.</p>
+    <aside class="notes">
+      <p><strong>Lemma 1 opens with the new stack.</strong> Natural language is the new source code; the agent is the new interface sitting where IDEs and GUIs used to. But look below the agent: code, frameworks, the system — they didn't vanish. They became what the agent <em>drives</em>.</p>
+      <p>Technology's job flipped: from serving humans directly to <em>harnessing</em> the thing that serves humans.</p>
+    </aside>
+  </section>
+
+  <!-- E5 — what makes a harness -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · Lemma 1 · harness</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      AI can do anything &mdash; <span class="brand-text">harnessed</span>.
+    </h2>
+    <div class="tiles">
+      <span class="tile" style="--c:#E8B44A">context <small>docs &middot; priors &middot; AGENTS.md</small></span>
+      <span class="tile" style="--c:#56b8f0">tools <small>functions &middot; capabilities</small></span>
+      <span class="tile" style="--c:#9E86F0">environment <small>runtime &middot; sandbox</small></span>
+      <span class="tile" style="--c:#42b883">feedback <small>render &middot; tests &middot; logs</small></span>
+    </div>
+    <aside class="notes">
+      <p><strong>Define the word, because the whole chapter leans on it.</strong> A harness is what turns raw capability into reliable work: context (what it knows going in), tools (what it can act with), an environment (where actions are safe and cheap), feedback (how it sees what it just did).</p>
+      <p>Chapter IV was secretly this slide: AGENTS.md was context, the toolchain was tools, LynxExplorer the environment, the upstream tests the feedback.</p>
+    </aside>
+  </section>
+
+  <!-- E6 — the browser is a great harness -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · Lemma 1 · platforms</span>
+    <div class="logo" style="position:static;width:8cqw;height:8cqw">
+      <svg viewBox="0 0 48 48" aria-label="Chrome logo"><circle cx="24" cy="24" r="12" fill="#fff"/><path fill="#EA4335" d="M24 12h20.78a23.99 23.99 0 0 0-41.56.003L13.61 30l.009-.002A11.99 11.99 0 0 1 24 12Z"/><path fill="#FBBC04" d="M34.39 30.003 24 48a23.99 23.99 0 0 0 20.78-35.997H24l-.003.009a11.99 11.99 0 0 1 10.393 17.991Z"/><path fill="#34A853" d="M13.61 30.003 3.22 12.006A23.99 23.99 0 0 0 24 48l10.39-17.997-.007-.007a11.99 11.99 0 0 1-20.773.007Z"/><circle cx="24" cy="24" r="9.5" fill="#1A73E8"/></svg>
+    </div>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Nobody says AI will replace <span style="color:#4FB8F0">the browser</span>.
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">open by default</span>
+      <span class="chip">sandboxed</span>
+      <span class="chip">endlessly capable</span>
+      <span class="chip">fully observable</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Platforms survive because platforms are great harnesses.</strong> The browser: open data and open docs (context), an enormous capability surface (tools), a natural sandbox (environment), and total transparency — the DOM, DevTools (feedback).</p>
+      <p>Nobody argues the Web gets obsoleted by AI. I'd go further: GUI itself won't be — humans still need to <em>see</em>.</p>
+    </aside>
+  </section>
+
+  <!-- E7 — frameworks were always harnesses -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue · Lemma 1 · frameworks</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Frameworks were always <span class="brand-text">harnesses</span>.
+    </h2>
+    <div class="tiles">
+      <span class="tile" style="--c:#8b93a3">then <small>architecting how humans reason</small></span>
+      <span class="tilearr">&rarr;</span>
+      <span class="tile is-hero" style="--c:#42b883">now <small>steering what models emit</small></span>
+    </div>
+    <aside class="notes">
+      <p><strong>The reframe that makes frameworks AI-relevant.</strong> On the web you could always mutate the DOM however you liked — React and Vue won because they <em>constrained</em> us: an architecture that harnessed human reasoning into emitting the next token of correct code.</p>
+      <p>We were the first token predictors being harnessed. The model is just the next one. Higher-level abstraction still helps — it helped us, it helps it.</p>
+    </aside>
+  </section>
+
+  <!-- E8 — FABRIC I · every technology is a fabric -->
+  <section class="slide weave" data-bg="clean" data-chrome="minimal" data-weave="fabric">
+    <p class="weave-kicker">Every technology is a fabric.</p>
+    <aside class="notes">
+      <p><strong>The chapter's image arrives.</strong> Let the threads breathe for a moment before speaking. In my "Frontend is Dead" talk I argued from first principles that we'll always need the UI/App abstraction — some woven layer between intent and pixels. Modern software is stitched, not carved.</p>
+      <p>So here's the metaphor that carries the rest of the talk: every technology is a fabric — with its own fibers, its own weave, its own feel.</p>
+    </aside>
+  </section>
+
+  <!-- E9 — FABRIC I · Vue's texture -->
+  <section class="slide weave" data-bg="clean" data-chrome="minimal" data-weave="fabric-dense">
+    <p class="weave-kicker">Vue &mdash; a weave you can feel.</p>
+    <div class="demo__meta" data-mm-fade
+         style="position:absolute;left:50%;bottom:11cqh;transform:translateX(-50%);justify-content:center;z-index:2">
+      <span class="chip chip--brand">templates</span>
+      <span class="chip chip--brand">reactivity</span>
+      <span class="chip chip--brand">mutable state</span>
+      <span class="chip chip--brand">SFC</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The weave tightens.</strong> Different fabrics have different characteristics — and maybe Vue's is exactly the texture you want: templates, fine-grained reactivity, mutable state that just works, single-file components.</p>
+      <p>The point isn't Vue vs anything. It's that the <em>material</em> still matters — to humans choosing it, and to models trained on oceans of it.</p>
+    </aside>
+  </section>
+
+  <!-- E10 — intermission meme -->
+  <section class="slide stage" data-bg="clean">
+    <span class="eyebrow">Epilogue &middot; intermission</span>
+    <div class="meme">[ meme goes here ]</div>
+    <p class="kicker" style="text-align:center">&ldquo;Getting metaphysical again &mdash; &#38634;&#30887; is going to roast me.&rdquo;</p>
+    <aside class="notes">
+      <p><strong>Breather.</strong> Self-aware beat before Lemma 2 — drop the meme in, take the laugh, move on. (Placeholder frame: replace with the actual image in <code>public/media/</code>.)</p>
+    </aside>
+  </section>
+
+  <!-- E11 — FABRIC II · the loom -->
+  <section class="slide weave" data-bg="clean" data-chrome="minimal" data-weave="loom">
+    <p class="weave-kicker">Lynx &mdash; the loom.</p>
+    <span class="wlab" style="--c:#42b883;left:5cqw;top:50cqh">Vue <i></i></span>
+    <div class="wlynx" data-flip="weave-lynx">
+      <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
+    </div>
+    <span class="wlab" data-mm-fade style="--c:#cdd6e4;right:5cqw;top:30cqh"><i></i> iOS</span>
+    <span class="wlab" data-mm-fade style="--c:#3ddc84;right:5cqw;top:50cqh"><i></i> Android</span>
+    <span class="wlab" data-mm-fade style="--c:#56b8f0;right:5cqw;top:70cqh"><i></i> Web</span>
+    <aside class="notes">
+      <p><strong>Lemma 2 opens as a picture, not a claim.</strong> The green fabric pulls through a single point — the loom — and comes out the other side woven into iOS, Android, the Web. Watch a thread: it keeps its color into the waist, and takes the platform's color out of it.</p>
+      <p>What makes Lynx able to be this? A web-friendly surface on one side, a serious native architecture on the other, and openness at every level in between.</p>
+    </aside>
+  </section>
+
+  <!-- E12 — own the patchwork -->
+  <section class="slide stage" data-bg="clean" data-weave="loom-dim">
+    <span class="eyebrow">Epilogue &middot; Lemma 2</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      &ldquo;A patchwork monster&rdquo;? <span class="brand-text">Exactly.</span>
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">web-friendly surface</span>
+      <span class="chip">strong native core</span>
+      <span class="chip">framework-agnostic</span>
+      <span class="chip">hybrid rendering</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Own the insult.</strong> People call Lynx a 缝合怪 — a stitched-together monster. Yes! We just said code comes in fabrics — of course the thing that joins them is stitched. A loom is <em>supposed</em> to be a patchwork machine.</p>
+      <p>What the stitching buys: it absorbs the raw entropy of N platforms so it isn't re-paid in every app — and that's exactly the part AI is bad at amortizing on its own. The framework holds the translation contract; the agent writes against compressed semantics.</p>
+    </aside>
+  </section>
+
+  <!-- E13 — FABRIC · compression -->
+  <section class="slide weave" data-bg="clean" data-chrome="minimal" data-weave="compress">
+    <p class="weave-kicker">Frameworks compress the search space.</p>
+    <span class="wlab wlab--soft" style="left:5cqw;top:16cqh">everything the model could emit</span>
+    <span class="wlab" style="--c:#42b883;right:5cqw;top:38cqh">the idiom</span>
+    <aside class="notes">
+      <p><strong>The same loom, one abstraction up.</strong> On the left: the model's whole choice space — gray, wide, chaotic. Through the framework it comes out narrow, bright, aligned: the idiom. Steering, visualized.</p>
+      <p>This is why cross-platform frameworks are <em>semantic compression layers</em> for AI: fewer tokens, a denser region of the training distribution, less room to hallucinate. Correctness is a probability problem — compression moves the probability.</p>
+    </aside>
+  </section>
+
+  <!-- E14 — people -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; Lemma 2 &middot; people</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Technology is nothing without its <span class="brand-text">people</span>.
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">3D prints &middot; &#23567;&#38899;</span>
+      <span class="chip">a dinner in Fuzhou &middot; &#38634;&#30887;</span>
+      <span class="chip">Poland, then here &middot; Nector</span>
+      <span class="chip chip--brand">Evan &middot; Anthony &middot; you</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The lemma lands on humans.</strong> If AI ultimately boils down to human taste, people become <em>more</em> important, not less — and connecting a community is connecting its people.</p>
+      <p>Make it concrete, name the room: 小音 who 3D-printed help for the demo; 雪碧 — last time we ate together was Fuzhou, and here we are; Nector — last time was Poland! You could say "I can only watch this idol on this platform" — well, Evan and Anthony are on this one.</p>
+    </aside>
+  </section>
+
+  <!-- E15 — not a framework, a connection -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; Lemma 2</span>
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      Vue Lynx isn't a framework. It's a <span class="brand-text">connection</span>.
+    </h2>
+    <div class="flow" style="height:22cqh;width:min(100%,780px)">
+      <div class="fb" style="--c:#4FB8F0;left:16%;top:50%">Web<small>DOM &middot; CSS &middot; JS</small></div>
+      <span class="farr" style="left:33.5%;top:50%">&harr;</span>
+      <div class="fb is-hero" style="--c:#5dd5a8;left:50%;top:50%">Lynx<small>the designed seam</small></div>
+      <span class="farr" style="left:66.5%;top:50%">&harr;</span>
+      <div class="fb" style="--c:#F27A9E;left:84%;top:50%">Native<small>iOS &middot; Android &middot; &hellip;</small></div>
+    </div>
+    <aside class="notes">
+      <p><strong>So what did I actually build?</strong> In the AI era you arguably don't <em>need</em> a framework — ten years ago I built an online editor for HTML slides; this deck is fully generated, zero libraries underneath. Vue Lynx is really a beginning: convincing the Vue community to build for native.</p>
+      <p>Here's the deeper reason it works: wherever a connection <em>exists</em>, AI multiplies the connections that happen. Porting between languages is easy because every language is Turing-complete with a runtime — the bridge exists. Web ↔ Native has no natural bridge. Lynx, as a project, IS the design of that bridge. (And when I pick what to work on: commercial value counts for one, but there'd better be some ideal in it too.)</p>
+    </aside>
+  </section>
+
+  <!-- E16 — connections compound -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; Lemma 2 &middot; compounding</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      One connection <span class="brand-text">compounds</span>.
+    </h2>
+    <div class="wgrid">
+      <div class="wg"><b>Web</b><div class="demo__meta"><span class="chip">Motion</span><span class="chip">Pretext</span></div></div>
+      <div class="wg"><b>Electron</b><div class="demo__meta"><span class="chip">Node-API</span></div></div>
+      <div class="wg"><b>JSI</b><div class="demo__meta"><span class="chip">Expo Modules</span></div></div>
+      <div class="wg"><b>Rendering</b><div class="demo__meta"><span class="chip">native</span><span class="chip">custom</span><span class="chip">hybrid</span></div></div>
+      <div class="wg"><b>Agents</b><div class="demo__meta"><span class="chip">A2UI</span><span class="chip">OpenUI</span></div></div>
+      <div class="wg"><b>Lynx</b><div class="demo__meta"><span class="chip chip--brand">Sparkling</span><span class="chip chip--brand">Lynxtron</span></div></div>
+    </div>
+    <aside class="notes">
+      <p><strong>Connect to Lynx and you connect to everything Lynx connects.</strong> The web fabrics you already use — Motion, Pretext — carry over. Electron via Node-API; the JSI world, Expo Modules included; every rendering strategy; the agent-UI protocols taking shape. And Lynx's own ecosystem — Sparkling, Lynxtron.</p>
+      <p>The ecosystem and the community are what get carried over. That's the compounding.</p>
+    </aside>
+  </section>
+
+  <!-- E17 — a place to vibe -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; Lemma 2</span>
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      AI doesn't need mature libraries. It needs a place to <span class="brand-text">vibe</span>.
+    </h2>
+    <p class="lead">The Web was that place. Lynx carries it to native.</p>
+    <aside class="notes">
+      <p><strong>Sharpen the ecosystem point for the AI era.</strong> With an agent at the keyboard, what you need isn't even a mature library — it's a platform where trying things is cheap, observable, and safe. That's what made the Web the Web. Lynx's bet is carrying that property to native.</p>
+    </aside>
+  </section>
+
+  <!-- E18 — one more thing -->
+  <section class="slide stage" data-bg="clean" data-chrome="none">
+    <p class="kicker" style="font-size:clamp(44px,5.6cqw,80px);text-align:center;max-width:none">One more thing&hellip;</p>
+    <aside class="notes">
+      <p><strong>Hold it.</strong> Count two beats before advancing.</p>
+    </aside>
+  </section>
+
+  <!-- E19 — Vapor on Lynx -->
+  <section class="slide stage">
+    <span class="eyebrow">One more thing &middot; Vue Vapor</span>
+    <div class="flow" style="height:34cqh;width:min(100%,900px)">
+      <div class="fb is-hero" style="--c:#42b883;left:16%;top:34%">Vue Vapor<small>no VDOM &middot; signals</small></div>
+      <span class="farr" style="--c:#4FB8F0;left:34.5%;top:34%">&rarr;</span>
+      <div class="fb" style="--c:#4FB8F0;left:50%;top:34%">ops<small>flat array &middot; per tick</small></div>
+      <span class="farr" style="--c:#F27A9E;left:65.5%;top:34%">&rarr;</span>
+      <div class="fb" style="--c:#F27A9E;left:83%;top:34%">Element PAPI<small>__CreateView &middot; &hellip;</small></div>
+      <div class="fb is-dim" style="--c:#8b93a3;left:50%;top:82%">VDOM &middot; ShadowElement<small>the layer we get to drop</small></div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Vapor on Lynx &mdash; no VDOM. Straight to <b style="color:#4FB8F0">ops</b>.
+    </p>
+    <aside class="notes">
+      <p><strong>Connecting innovation itself.</strong> Remember the chapter-IV pipeline: VDOM → ShadowElement → ops → PAPI. Vapor mode renders without a VDOM — so on Lynx, an entire layer of the pipeline simply falls away: signals drive effects that emit ops directly. Implementation-wise we get to <em>drop</em> abstraction, not add it.</p>
+      <p>Status honesty: this is the design sketch and early experiments, not a shipped mode — which is exactly why it's exciting: the seam is open, and this is the kind of innovation that a connection lets flow both ways.</p>
+    </aside>
+  </section>
+
+  <!-- E20 — the cradle -->
+  <section class="slide stage">
+    <span class="eyebrow">One more thing</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      A <span class="brand-text">cradle</span> for framework design.
+    </h2>
+    <p class="lead">A team that loves the Web &mdash; and dares to break it.</p>
+    <aside class="notes">
+      <p><strong>Why framework authors should care about Lynx.</strong> Lynx has made interesting — even controversial — design choices, and keeps making them: dual threads, MTS, a real CSS engine off the DOM. This is a team that loves the Web and has both the guts and the room to break it where it must.</p>
+      <p>For Vue specifically: a native platform with genuine room to run — the kind of space where a Vapor-native renderer is a weekend of vibing away.</p>
+    </aside>
+  </section>
+
+  <!-- E21 — FABRIC III · panorama, left half -->
+  <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama-left">
+    <p class="weave-kicker">Weave the whole Web&hellip;</p>
+    <span class="wlab" data-flip="wl-vue" style="--c:#42b883;left:4cqw;top:16cqh">Vue <i></i></span>
+    <span class="wlab" data-flip="wl-react" style="--c:#61dafb;left:4cqw;top:25cqh">React <i></i></span>
+    <span class="wlab" data-flip="wl-svelte" style="--c:#ff9a4d;left:4cqw;top:33cqh">Svelte <i></i></span>
+    <span class="wlab" data-flip="wl-solid" style="--c:#ffd166;left:4cqw;top:40cqh">Solid <i></i></span>
+    <span class="wlab" data-flip="wl-octane" style="--c:#ff5468;left:4cqw;top:47cqh">Octane <i></i></span>
+    <span class="wlab" data-flip="wl-css" style="--c:#8a63d2;left:4cqw;top:55cqh">CSS <i></i></span>
+    <span class="wlab" data-flip="wl-tailwind" style="--c:#38bdf8;left:4cqw;top:63cqh">Tailwind <i></i></span>
+    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion &middot; Pretext <i></i></span>
+    <span class="wlab" data-flip="wl-rspack" style="--c:#ff7a1a;left:4cqw;top:80cqh">Rspack <i></i></span>
+    <div class="wlynx" data-flip="weave-lynx">
+      <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
+    </div>
+    <aside class="notes">
+      <p><strong>The panorama begins.</strong> Name the strands as they land: Vue green, React blue, the faint yellows of Svelte and Solid, Octane red — a brand-new fabric still being spun — CSS, Tailwind, Motion and Pretext, Rspack orange. The whole web ecosystem, as threads.</p>
+      <p>They all pull toward one thin, strong waist.</p>
+    </aside>
+  </section>
+
+  <!-- E22 — FABRIC III · the full panorama -->
+  <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama">
+    <p class="weave-kicker">&hellip;into every platform.</p>
+    <span class="wlab" data-flip="wl-vue" style="--c:#42b883;left:4cqw;top:16cqh">Vue <i></i></span>
+    <span class="wlab" data-flip="wl-react" style="--c:#61dafb;left:4cqw;top:25cqh">React <i></i></span>
+    <span class="wlab" data-flip="wl-svelte" style="--c:#ff9a4d;left:4cqw;top:33cqh">Svelte <i></i></span>
+    <span class="wlab" data-flip="wl-solid" style="--c:#ffd166;left:4cqw;top:40cqh">Solid <i></i></span>
+    <span class="wlab" data-flip="wl-octane" style="--c:#ff5468;left:4cqw;top:47cqh">Octane <i></i></span>
+    <span class="wlab" data-flip="wl-css" style="--c:#8a63d2;left:4cqw;top:55cqh">CSS <i></i></span>
+    <span class="wlab" data-flip="wl-tailwind" style="--c:#38bdf8;left:4cqw;top:63cqh">Tailwind <i></i></span>
+    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion &middot; Pretext <i></i></span>
+    <span class="wlab" data-flip="wl-rspack" style="--c:#ff7a1a;left:4cqw;top:80cqh">Rspack <i></i></span>
+    <div class="wlynx" data-flip="weave-lynx">
+      <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
+    </div>
+    <span class="wlab" data-mm-fade style="--c:#cdd6e4;right:4cqw;top:16cqh"><i></i> iOS</span>
+    <span class="wlab" data-mm-fade style="--c:#3ddc84;right:4cqw;top:25.7cqh"><i></i> Android</span>
+    <span class="wlab" data-mm-fade style="--c:#56b8f0;right:4cqw;top:35.4cqh"><i></i> Web</span>
+    <span class="wlab" data-mm-fade style="--c:#ff6f61;right:4cqw;top:45.1cqh"><i></i> HarmonyOS</span>
+    <span class="wlab" data-mm-fade style="--c:#aab4c8;right:4cqw;top:54.9cqh"><i></i> macOS</span>
+    <span class="wlab" data-mm-fade style="--c:#2f7fe0;right:4cqw;top:64.6cqh"><i></i> Windows</span>
+    <span class="wlab" data-mm-fade style="--c:#f5c04a;right:4cqw;top:74.3cqh"><i></i> Linux</span>
+    <span class="wlab" data-mm-fade style="--c:#8b93a3;right:4cqw;top:84cqh"><i></i> more&hellip;</span>
+    <aside class="notes">
+      <p><strong>The money shot — don't talk over its first second.</strong> The waist blossoms: every fabric on the left re-emerges woven into iOS, Android, Web, HarmonyOS, macOS, Windows, Linux, and whatever comes next.</p>
+      <p>One thin, strong loom in the middle. That's the whole argument in one picture: harness on the left half, connection on the right half. Hold it, then quietly: "Lynx is giving you the right skills — and the right harness — to weave any of these fabrics."</p>
+    </aside>
+  </section>
+
+  <!-- E23 — coda · Germany, part 1 -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; coda</span>
+    <p class="wquote">&ldquo;AI took away the fun.&rdquo;</p>
+    <span class="wattr">&mdash; a workshop attendee &middot; Germany, last week</span>
+    <p class="lead" data-mm-fade>Find a new dopamine.</p>
+    <aside class="notes">
+      <p><strong>Story time — drop the slides-per-minute, slow the voice.</strong> Last week I ran a workshop in Germany. One attendee told me AI took the "fun" of development away from him. My answer was blunt: you need to find a new dopamine.</p>
+    </aside>
+  </section>
+
+  <!-- E24 — the frontend died. again. -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      The frontend is dead. <em style="font-family:var(--serif);font-weight:400">Again.</em>
+    </h2>
+    <aside class="notes">
+      <p><strong>The callback.</strong> Some of you know I once gave a talk called "The Frontend Is Dead." Well — in the old sense of the word, it really did die again. Let that sit; the reversal is two slides away.</p>
+    </aside>
+  </section>
+
+  <!-- E25 — coda · Germany, part 2 -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; coda</span>
+    <p class="wquote">&ldquo;But prompting <em>is</em> the dopamine.&rdquo;</p>
+    <span class="wattr">&mdash; another attendee &middot; he vibed a Pok&eacute;mon game that night</span>
+    <p class="lead" data-mm-fade>
+      I know AI makes it easy. I'm glad it's easy &mdash; I haven't been this excited in years.
+    </p>
+    <aside class="notes">
+      <p><strong>The counter-story.</strong> Another attendee pushed back: prompting IS the dopamine — and that night he vibed a whole Pokémon game. I know that with AI, that's not hard. And I'm <em>glad</em> it's not hard — I haven't been this excited in years.</p>
+      <p>Confess the AI-psychosis bit: I can't sleep without kicking off a few <code>/goal</code> <code>/loop</code> runs; when Fable or Codex goes down it feels like withdrawal. The room has felt it too.</p>
+    </aside>
+  </section>
+
+  <!-- E26 — ten years, renewed -->
+  <section class="slide stage">
+    <span class="eyebrow">Epilogue &middot; coda</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      I rebuilt everything <span class="brand-text">ten-years-ago me</span> dreamed of.
+    </h2>
+    <div class="demo__meta" style="justify-content:center">
+      <span class="chip">hux.pro &mdash; untouched for 10 years</span>
+      <span class="chip">my first Vue app &mdash; v0.12</span>
+      <span class="chip chip--brand">this deck &mdash; zero libraries, vibed</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Personal receipts.</strong> This past year I went back and renewed every project ten-years-ago me dreamed of: my personal site that sat untouched for a decade; my very first Vue project, on Vue 0.12; and this deck — hand-vibed HTML, no slide library underneath, the direct descendant of the slide editor I built back then.</p>
+    </aside>
+  </section>
+
+  <!-- E27 — still frontend -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      I just changed languages &mdash; to <span class="brand-text">natural language</span>.
+    </h2>
+    <p class="lead">I'm still doing frontend.</p>
+    <aside class="notes">
+      <p><strong>The turn.</strong> So what am I actually doing all day, prompting instead of typing? I just switched languages one more time — assembly to C to JS to… natural language. The source changed. The work didn't: I'm still translating human intent into something people can see and touch.</p>
+      <p>That has always been the job. That <em>is</em> frontend.</p>
+    </aside>
+  </section>
+
+  <!-- E28 — finale · long live the frontend -->
+  <section class="slide thankyou" data-bg="clean" data-chrome="minimal" data-weave="finale">
+    <span class="eyebrow">Fin. &mdash; for real</span>
+    <p class="fin-dead">The frontend is dead.</p>
+    <h1>Long live <span class="brand-text">the frontend</span>.</h1>
+    <p class="sig">
+      Thank you &mdash; for real this time.
+    </p>
+    <div class="handles">
+      <a href="https://x.com/Huxpro" target="_blank" rel="noreferrer">@Huxpro</a>
+      <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
+      <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
+    </div>
+    <aside class="notes">
+      <p><strong>The real close.</strong> Small print struck through: the frontend is dead. Big print: long live the frontend. 前端永生. Thank them — for real this time — and stay for Q&amp;A.</p>
+      <p>Q&amp;A ammo: "Is this production?" — pre-alpha, architecture solid, tested surface. "Android?" — same bundle, both platforms. "Will AI replace Vue?" — you just watched the whole answer.</p>
     </aside>
   </section>
 

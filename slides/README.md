@@ -109,6 +109,30 @@ logo build (React → Chrome → Lynx), the landscape columns, and the two-threa
 build on the How-it-works slides are the worked examples. One `<section class="slide">` = one step (no in-slide
 fragments), which keeps speaker-view sync and deep-links simple.
 
+## The weave layer (epilogue)
+
+The epilogue's "fabrics" visual is a single persistent canvas
+(`src/weave.js`) mounted *under* the slides inside the frame. A slide opts in
+with `data-weave="<scene>"` and the engine tweens the whole thread field
+between scenes on navigation, so adjacent weave slides read as one continuous
+magic move of the threads themselves. Scenes:
+
+| Scene | Picture |
+| ----- | ------- |
+| `fabric` / `fabric-dense` | Vue alone — glowing green threads |
+| `loom` / `loom-dim`       | Vue pinches through the Lynx mark into iOS / Android / Web |
+| `compress`                | the model's gray choice space → the bright idiom |
+| `panorama-left`           | the whole web ecosystem weaves toward the waist |
+| `panorama`                | …and fans out into every platform |
+| `finale`                  | the panorama, dimmed to a backdrop |
+
+Lane fractions in `weave.js` are mirrored by the `.wlab` label positions in
+`index.html` (canvas fraction `0.16` ↔ `top:16cqh`) — keep them in sync when
+moving bundles. The Lynx mark at the waist is DOM (`.wlynx`, ink-colored so it
+flips black/white with the theme) and participates in magic move via
+`data-flip="weave-lynx"`. Reduced motion and embed previews render a single
+static frame instead of animating.
+
 ## Deploy
 
 Two deploy shapes, chosen per branch by `website/vercel.json`:

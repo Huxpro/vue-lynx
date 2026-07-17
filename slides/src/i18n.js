@@ -296,6 +296,119 @@ export const ZH = {
   'Fin.': '完。',
   'Thank you.': '<span class="brand-text">谢</span>谢。',
   'Questions, PRs, opinions — all welcome.': '提问、PR、想法 —— 都欢迎。',
+
+  // ---- Epilogue · the elephant / fabrics ----
+  'Epilogue': '终章',
+  'The elephant in the room.': '聊聊房间里的<br/>大象。',
+  '“Vibe coding” is barely eighteen months old — and it already writes native apps. So why frameworks? Why Lynx? Why any of this?':
+    '"vibe coding" 这个词诞生至今不过一年半 —— 它已经能直接写出原生应用了。那,还要框架干嘛?还要 Lynx 干嘛?这一切还有什么意义?',
+  'Epilogue · the question': '终章 · 问题',
+  'Does AI obsolete all of us?':
+    'AI 会让<span class="brand-text">我们所有人</span>都过时吗?',
+  'no frameworks?': '不要框架?',
+  'no libraries?': '不要类库?',
+  'no docs?': '不要文档?',
+  'no us?': '不要我们?',
+  'Epilogue · a claim': '终章 · 一个论断',
+  'What survives AI?':
+    '什么能在 AI 之后<span class="brand-text">留下来</span>?',
+  'infrastructure': '基础设施',
+  'enablers': '使能者',
+  'platforms': '平台',
+  'ecosystems': '生态',
+  'people': '人',
+  'Two lemmas, then an answer.': '两个引理,一个答案。',
+  'Epilogue · Lemma 1': '终章 · 引理一',
+  'The stack, rewritten.': '技术栈,被重写了。',
+  'Epilogue · Lemma 1 · harness': '终章 · 引理一 · Harness',
+  'AI can do anything — harnessed.':
+    'AI 什么都能做 —— 只要有好的 <span class="brand-text">harness</span>。',
+  'context docs · priors · AGENTS.md': '上下文 <small>文档 · 先验 · AGENTS.md</small>',
+  'tools functions · capabilities': '工具 <small>函数 · 能力</small>',
+  'environment runtime · sandbox': '环境 <small>运行时 · 沙箱</small>',
+  'feedback render · tests · logs': '反馈 <small>渲染 · 测试 · 日志</small>',
+  'Epilogue · Lemma 1 · platforms': '终章 · 引理一 · 平台',
+  'Nobody says AI will replace the browser.':
+    '没人会说,AI 要取代<span style="color:#4FB8F0">浏览器</span>。',
+  'open by default': '天生开放',
+  'sandboxed': '天然沙箱',
+  'endlessly capable': '能力无穷',
+  'fully observable': '完全可观测',
+  'Epilogue · Lemma 1 · frameworks': '终章 · 引理一 · 框架',
+  'Frameworks were always harnesses.':
+    '框架,从来都是 <span class="brand-text">harness</span>。',
+  'then architecting how humans reason': '过去 <small>规训人类如何推理</small>',
+  'now steering what models emit': '现在 <small>引导模型吐出什么</small>',
+  'Every technology is a fabric.': '每一种技术,都是一种织物。',
+  'Vue — a weave you can feel.': 'Vue —— 一种你能触到的织法。',
+  'templates': '模板',
+  'reactivity': '响应式',
+  'mutable state': '可变状态',
+  'Epilogue · intermission': '终章 · 幕间',
+  '“Getting metaphysical again — 雪碧 is going to roast me.”':
+    '"又开始形而上了 —— 雪碧又要批评我了。"',
+  'Lynx — the loom.': 'Lynx —— 织机。',
+  'Epilogue · Lemma 2': '终章 · 引理二',
+  '“A patchwork monster”? Exactly.':
+    '"缝合怪"?—— <span class="brand-text">正是。</span>',
+  'web-friendly surface': 'Web 亲和的表面',
+  'strong native core': '扎实的原生内核',
+  'hybrid rendering': '混合渲染',
+  'Frameworks compress the search space.': '框架,压缩了搜索空间。',
+  'everything the model could emit': '模型可能吐出的一切',
+  'the idiom': '惯用法',
+  'Epilogue · Lemma 2 · people': '终章 · 引理二 · 人',
+  'Technology is nothing without its people.':
+    '技术若没有<span class="brand-text">人</span>,什么都不是。',
+  '3D prints · 小音': '帮忙 3D 打印 · 小音',
+  'a dinner in Fuzhou · 雪碧': '上一顿饭在福州 · 雪碧',
+  'Poland, then here · Nector': '上一面在波兰 · Nector',
+  'Evan · Anthony · you': 'Evan · Anthony · 还有你',
+  "Vue Lynx isn't a framework. It's a connection.":
+    'Vue Lynx 不是一个框架,而是一次<span class="brand-text">连接</span>。',
+  'Epilogue · Lemma 2 · compounding': '终章 · 引理二 · 复利',
+  'One connection compounds.':
+    '一次连接,产生<span class="brand-text">复利</span>。',
+  'Rendering': '渲染',
+  'Agents': '智能体',
+  'native': '原生元件',
+  'custom': '自渲染',
+  'hybrid': '混合',
+  "AI doesn't need mature libraries. It needs a place to vibe.":
+    'AI 要的不是成熟的类库,而是一个能 <span class="brand-text">vibe</span> 的地方。',
+  'The Web was that place. Lynx carries it to native.':
+    'Web 曾经就是那个地方。Lynx 把它带到原生。',
+  'Vapor on Lynx — no VDOM. Straight to ops.':
+    'Vapor on Lynx —— 没有 VDOM,直达 <b style="color:#4FB8F0">ops</b>。',
+  'A cradle for framework design.':
+    '框架设计的<span class="brand-text">摇篮</span>。',
+  'A team that loves the Web — and dares to break it.':
+    '一支深爱 Web、也敢于打破 Web 的团队。',
+  'Weave the whole Web…': '把整个 Web 织进来……',
+  '…into every platform.': '……再织向每一个平台。',
+  'more…': '<i></i> 更多……',
+  'Epilogue · coda': '终章 · 尾声',
+  '“AI took away the fun.”': '"AI 把乐趣拿走了。"',
+  '— a workshop attendee · Germany, last week': '—— 一位 workshop 学员 · 上周,德国',
+  'Find a new dopamine.': '去找新的多巴胺。',
+  'The frontend is dead. Again.': '前端,确实又死了。',
+  '“But prompting is the dopamine.”': '"可 prompt 本身,就是多巴胺。"',
+  '— another attendee · he vibed a Pokémon game that night':
+    '—— 另一位学员 · 他当晚 vibe 出了一个宝可梦',
+  "I know AI makes it easy. I'm glad it's easy — I haven't been this excited in years.":
+    '我知道有 AI 这不难。我很高兴这不难 —— 我好久没这么兴奋过了。',
+  'I rebuilt everything ten-years-ago me dreamed of.':
+    '我把 <span class="brand-text">10 年前的自己</span>想做的东西,全部翻新了一遍。',
+  'hux.pro — untouched for 10 years': 'hux.pro —— 十年没动过',
+  'my first Vue app — v0.12': '我的第一个 Vue 应用 —— v0.12',
+  'this deck — zero libraries, vibed': '这套 deck —— 零依赖,纯 vibe',
+  'I just changed languages — to natural language.':
+    '我只是又换了一门语言 —— <span class="brand-text">自然语言</span>。',
+  "I'm still doing frontend.": '可我做的,还是前端。',
+  'Fin. — for real': '终 · 这次是真的',
+  'The frontend is dead.': '前端已死。',
+  'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
+  'Thank you — for real this time.': '谢谢 —— 这次是真的。',
 };
 
 // Speaker-view chrome labels.
@@ -477,6 +590,62 @@ export const ZH_NOTES = [
   `<p>左边 = 今天就能用、可以做生产探索的。右边 = 贡献者能发力的地方 —— 第三章里 Elk 的 view pager,就在这个清单上。</p>`,
   // 69 Try
   `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p>`,
-  // 70 Thank you
-  `<p><strong>收尾。</strong>感谢,邀请提问,停在这页做 Q&amp;A。</p><p>"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— Lynx 跨平台,同一产物两端都跑。</p>`,
+  // 70 Thank you (the FAKE close)
+  `<p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。</p><p>然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
+  // 71 Epilogue divider · 大象
+  `<p><strong>重置全场。</strong>"那,用省下来的十分钟,聊聊房间里的大象。"如果 AI 什么都能做,为什么不直接 prompt 出 N 个原生应用,跳过框架、跳过跨端、跳过这一切?</p><p>语气转变:少一点产品推介,多一点自言自语。这半场讲的是 <em>why</em>,不是 <em>what</em>。</p>`,
+  // 72 E2 · 诚实的问题
+  `<p><strong>先诚实:我不知道。</strong>AI 对 Lynx、对 Vue 意味着什么,我为什么还要费这个劲?如果没有人类会读,文档还重要吗?如果模型能从裸金属重建,类库还重要吗?</p><p>可以丢的数据点:AI 时代 React 的使用量反而<em>暴涨</em> —— 模型默认写 React —— 但 React 本身却没有过去那么重要了;Anthropic 刚写过 Claude 用纯 HTML 搓一次性内部工具、什么框架都不用。地面真的在动。</p>`,
+  // 73 E3 · 论断
+  `<p><strong>先把论点立起来,这一章才有脊柱。</strong>从 AI 手里"幸存"下来的,是所有<em>使能</em>而非仅仅产出的东西:基础设施、使能者、平台、生态 —— 以及链条尽头的,人。注意这是递进:每一环都因为喂养下一环而幸存。</p><p>我用两个引理来论证:(1) 技术的角色从 interface 翻转为 harness;(2) 技术真正的工作,是连接生态 —— 和人。</p>`,
+  // 74 E4 · 新的栈
+  `<p><strong>引理一,从新的技术栈开始。</strong>自然语言是新的源代码;agent 是新的 interface,坐在 IDE 和 GUI 曾经的位置上。但看 agent 下面:code、frameworks、system —— 它们没有消失,它们变成了 agent <em>驾驭的对象</em>。</p><p>技术的工作翻转了:从直接服务人,变成 harness 那个服务人的东西。</p>`,
+  // 75 E5 · harness 是什么
+  `<p><strong>把这个词定义清楚,整章都压在它上面。</strong>Harness 是把原始能力变成可靠工作的东西:上下文(它带着什么进来)、工具(它能用什么行动)、环境(行动在哪里既安全又便宜)、反馈(它如何看见自己刚做了什么)。</p><p>第四章其实偷偷讲的就是这页:AGENTS.md 是上下文,工具链是工具,LynxExplorer 是环境,上游测试是反馈。</p>`,
+  // 76 E6 · 浏览器是个好 harness
+  `<p><strong>平台之所以幸存,是因为平台是极好的 harness。</strong>浏览器:开放的数据与文档(上下文)、巨大的能力表面(工具)、天然的沙箱(环境)、彻底的透明 —— DOM、DevTools(反馈)。</p><p>没有人argue Web 会被 AI 淘汰。我甚至更进一步:GUI 本身都不会 —— 人类总要<em>看</em>。</p>`,
+  // 77 E7 · 框架一直是 harness
+  `<p><strong>让框架与 AI 相关的那次重构。</strong>在 Web 上你本来爱怎么改 DOM 都行 —— React 和 Vue 赢,是因为它们<em>约束</em>了我们:一种架构,把人类的推理 harness 成吐出下一个正确 token 的过程。</p><p>我们才是第一批被 harness 的 token 预测器。模型只是下一批。高层抽象仍然有用 —— 它帮过我们,也会帮它。</p>`,
+  // 78 E8 · FABRIC I
+  `<p><strong>本章的意象登场。</strong>先让线呼吸一会儿再开口。在我"前端已死"的演讲里,我试着从第一性原理论证:UI/App 抽象永远都需要 —— 意图与像素之间,总要有一层织物。现代软件是缝出来的,不是凿出来的。</p><p>于是,贯穿后半场的比喻:每一种技术都是一种织物 —— 有自己的纤维、自己的织法、自己的手感。</p>`,
+  // 79 E9 · Vue 的质地
+  `<p><strong>织得更密了。</strong>不同的织物有不同的特性 —— 而 Vue 的质地也许正是你想要的:模板、细粒度响应式、"直接改就行"的可变状态、单文件组件。</p><p>重点不是 Vue 对谁。重点是<em>材质</em>依然重要 —— 对选择它的人重要,对在它的海洋里训练出来的模型也重要。</p>`,
+  // 80 E10 · meme 幕间
+  `<p><strong>喘口气。</strong>进入引理二之前的自嘲一拍 —— 把 meme 放进来,收下笑声,继续。(占位框:把真图放进 <code>public/media/</code> 后替换。)</p>`,
+  // 81 E11 · FABRIC II · 织机
+  `<p><strong>引理二用画面开场,不用论断。</strong>绿色的织物穿过一个点 —— 织机 —— 在另一侧被织进 iOS、Android、Web。盯住一根线:进腰身之前它保持自己的颜色,出来时带上了平台的颜色。</p><p>Lynx 凭什么能当这台织机?一侧是 Web 亲和的表面,另一侧是扎实的原生架构,中间是每一层的开放。</p>`,
+  // 82 E12 · 认领"缝合怪"
+  `<p><strong>把这个"骂名"认下来。</strong>有人叫 Lynx 缝合怪 —— 对!我们刚说了,代码本来就是一块块织物 —— 把它们接起来的东西,当然是缝起来的。织机<em>本来</em>就该是台缝合机器。</p><p>缝合换来的:它吸收了 N 个平台的原始熵,让每个应用不必重新支付 —— 而这恰恰是 AI 自己最难摊销的部分。框架持有翻译合同,agent 只对压缩后的语义写作。</p>`,
+  // 83 E13 · 压缩
+  `<p><strong>同一台织机,抽象上移一层。</strong>左边:模型的整个选择空间 —— 灰、宽、混沌。穿过框架,出来时又窄又亮又齐:惯用法。所谓 steering,画出来就是这样。</p><p>这就是为什么跨端框架是 AI 的<em>语义压缩层</em>:更少的 token、训练分布里更密的区域、更小的幻觉空间。正确性是个概率问题 —— 压缩,挪动的就是概率。</p>`,
+  // 84 E14 · 人
+  `<p><strong>引理落在人身上。</strong>如果 AI 最终 boil down 到人的品味,那人只会更重要 —— 连接一个社区,就是连接一群人。</p><p>点名现场:帮忙 3D 打印的小音,非常感谢;雪碧 —— 上一顿饭还在福州,没想到今天在这里遇见;Nector —— 上一面还在波兰!你可以说"这个平台才有我想追的偶像" —— 那,Evan 和 Anthony 就在这个平台上。</p>`,
+  // 85 E15 · 不是框架,是连接
+  `<p><strong>那我到底做了个什么?</strong>AI 时代你理论上并不<em>需要</em>框架 —— 十年前我做过一个在线 HTML slides 编辑器;今天这套 deck 完全是生成的,底下什么库都没有。Vue Lynx 真正是一个开端:说服 Vue 社区,来给原生做点东西。</p><p>更深一层的道理:只要连接<em>存在</em>,AI 就会放大发生的连接。编程语言之间移植容易,因为大家都图灵完备、都有 runtime —— 桥本来就在。Web ↔ Native 之间没有天然的桥。Lynx 这个开源项目的命题,就是那座桥的<em>设计</em>。(顺带:我选择投身的技术,商业价值是一,理想也总要有一点。)</p>`,
+  // 86 E16 · 连接复利
+  `<p><strong>连上 Lynx,就连上了 Lynx 连接的一切。</strong>你已经在用的 Web 织物 —— Motion、Pretext —— 直接带过来;经 Node-API 连 Electron;JSI 世界连 Expo Modules;每一种渲染策略;正在成形的 agent-UI 协议。还有 Lynx 自己的生态 —— Sparkling、Lynxtron。</p><p>被带过来的,是生态和社区本身。这就是复利。</p>`,
+  // 87 E17 · 能 vibe 的地方
+  `<p><strong>把生态论点按 AI 时代磨尖。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
+  // 88 E18 · One more thing
+  `<p><strong>停住。</strong>数两拍,再翻页。</p>`,
+  // 89 E19 · Vapor on Lynx
+  `<p><strong>连接创新本身。</strong>回想第四章的流水线:VDOM → ShadowElement → ops → PAPI。Vapor 模式不需要 VDOM —— 于是在 Lynx 上,整整一层直接消失:signal 驱动 effect,effect 直接吐 ops。在实现上我们做的是<em>删掉</em>抽象,不是增加抽象。</p><p>诚实交代进度:这是设计草图和早期实验,不是已发布的模式 —— 而这正是它令人兴奋的地方:缝是开着的,创新可以沿着连接双向流动。</p>`,
+  // 90 E20 · 摇篮
+  `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
+  // 91 E21 · 全景 · 左半
+  `<p><strong>全景开始。</strong>线落下时逐一点名:Vue 的绿、React 的蓝、Svelte 和 Solid 隐约的黄、Octane 的红 —— 一种还在纺的新织物 —— CSS、Tailwind、Motion 和 Pretext、Rspack 的橘。整个 Web 生态,化作丝线。</p><p>它们全都收向同一个又细又有力的腰身。</p>`,
+  // 92 E22 · 全景
+  `<p><strong>压轴画面 —— 头一秒别说话。</strong>腰身绽开:左侧的每一种织物,重新织进 iOS、Android、Web、HarmonyOS、macOS、Windows、Linux,以及接下来的任何平台。</p><p>中间是那台又细又强的织机。整个论证浓缩成一张图:左半是 harness,右半是连接。停住,然后轻轻说:"Lynx 给你的,是织任何一种织物所需要的技艺 —— 和 harness。"</p>`,
+  // 93 E23 · 德国 · 上
+  `<p><strong>讲故事的时间 —— 降低翻页速度,放慢声音。</strong>上周我在德国带 workshop。一位学员说,AI 把开发的"乐趣"从他手里拿走了。我的回答很直接:你需要找到新的多巴胺。</p>`,
+  // 94 E24 · 又死了
+  `<p><strong>callback。</strong>有些朋友知道,我讲过一场"前端已死"。嗯 —— 按旧的定义,它确实又死了一次。让这句话悬着;反转在两页之后。</p>`,
+  // 95 E25 · 德国 · 下
+  `<p><strong>反例来了。</strong>另一位学员不同意:prompt 本身就是多巴胺 —— 那天晚上他 vibe 出了一整个宝可梦游戏。我知道有 AI 这不难。而我<em>很高兴</em>这不难 —— 我好久没这么兴奋过了。</p><p>坦白 AI 精神病环节:不睡前跑几个 <code>/goal</code> <code>/loop</code> 就睡不着;Fable 或 Codex 一挂就像戒断。在座的应该也有同感。</p>`,
+  // 96 E26 · 十年翻新
+  `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站;我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p>`,
+  // 97 E27 · 还是前端
+  `<p><strong>转折。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。</p><p>这从来就是这份工作。这<em>就是</em>前端。</p>`,
+  // 98 E28 · 前端永生
+  `<p><strong>真正的收尾。</strong>小字划掉:前端已死。大字:前端永生。谢谢 —— 这次是真的 —— 然后留在这页做 Q&amp;A。</p><p>Q&amp;A 弹药:"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— 同一份产物,两端都跑。"AI 会取代 Vue 吗?" —— 你刚看完整个答案。</p>`,
 ];

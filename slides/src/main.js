@@ -1,6 +1,7 @@
 import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
+import { initWeave } from './weave.js';
 import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
 import { readFlags, expandChrome } from './framework/flags.js';
 import { initCommand } from './framework/command.js';
@@ -55,6 +56,19 @@ const mm = createMagicMove({
   getScale: stage.getScale,
   reducedMotion: REDUCED_MOTION,
   embed: embedMode,
+});
+
+// The epilogue's "fabrics" canvas — one persistent layer under the
+// slides; scenes are declared per-slide via data-weave and tweened
+// across navigations (see src/weave.js). Embed iframes render a
+// single static frame so speaker previews stay cheap.
+const weave = initWeave(frame, {
+  getScale: stage.getScale,
+  reducedMotion: REDUCED_MOTION,
+  embed: embedMode,
+});
+document.addEventListener('deck:change', (e) => {
+  weave.setScene(slides[e.detail.index]?.dataset.weave || null);
 });
 
 let current = 0;
@@ -534,6 +548,7 @@ const I18N_SELECTOR = [
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
   '.flane__label', '.fcenter', '.lgtag',
   '.demo__caption', '.videopair figcaption',
+  '.tile', '.wlab', '.wattr', '.wg b',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];
