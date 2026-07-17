@@ -115,48 +115,40 @@
   <span class="pill">env: lynx-web (primary)</span>
   <span class="pill">ladder: 1k → 30k</span>
   <span class="pill">cells: 457</span>
-  <span class="pill">conclusions: 9</span>
+  <span class="pill">conclusions: 7</span>
 </div>
 <p class="lang-switch"><a href="report.zh.html">中文</a></p>
 
-<h2>Conclusions (start here)</h2>
-<p class="sub">Each card: one-line takeaway → so what (how to use it) → key numbers to verify. Never ratio ms across environments.</p>
+<h2>Conclusions</h2>
+<p class="sub">Title = takeaway; so what = how to use; verify = numbers. Never ratio ms across environments.</p>
 <div class="verdicts"><article class="verdict good">
-      <header><strong class="takeaway">Ship Vapor for point updates (~8.2× vs VDOM @10k selectStorm)</strong></header>
-      <p class="why"><span class="lbl">so what</span> Select = point update (selection / a few classes). High-frequency point interaction is what users feel; one-shot taps often sit on the frame floor. Default Vapor for interaction-heavy lists.</p>
-      <p class="evidence"><span class="lbl">verify</span> VDOM 367 ms → Vapor 45 ms; ~23× vs ReactLynx (1018 ms)</p>
+      <header><strong class="takeaway">Vapor ~8.2× on point updates</strong></header>
+      <p class="why"><span class="lbl">so what</span> Select = point update. Default Vapor for interaction-heavy lists; one-shots often sit on the frame floor.</p>
+      <p class="evidence"><span class="lbl">verify</span> selectStorm@10k 367→45 ms · vs RL ~23× · BG ~9.8×</p>
     </article><article class="verdict good">
-      <header><strong class="takeaway">BG micro confirms it: Vapor select ~9.8×</strong></header>
-      <p class="why"><span class="lbl">so what</span> Instrumented BG measures the pipeline; storms are the user-visible version. Same direction on both instruments → not a measurement artifact.</p>
-      <p class="evidence"><span class="lbl">verify</span> vdom bg 2.95 ms → vapor 0.30 ms</p>
+      <header><strong class="takeaway">ReactLynx wins create ~1.16×</strong></header>
+      <p class="why"><span class="lbl">so what</span> Snapshot bulk-instantiate. Creation ≠ update.</p>
+      <p class="evidence"><span class="lbl">verify</span> create@10k RL 689 · VDOM 798 · Vapor 853 ms</p>
     </article><article class="verdict good">
-      <header><strong class="takeaway">ReactLynx still wins bulk create (~1.16× vs VDOM @10k)</strong></header>
-      <p class="why"><span class="lbl">so what</span> Snapshot bulk-instantiate is great at laying down many nodes once. Creation ≠ update — don’t mix the two stories.</p>
-      <p class="evidence"><span class="lbl">verify</span> ReactLynx 689 · VDOM 798 · Vapor 853 ms</p>
-    </article><article class="verdict good">
-      <header><strong class="takeaway">First frame: ReactLynx lowest (FCP@10k 228 ms)</strong></header>
-      <p class="why"><span class="lbl">so what</span> On the same-density probe, Snapshot+IFR (RL default) beats every Vue cell. For Vue first-frame, default to IFR+ET.</p>
-      <p class="evidence"><span class="lbl">verify</span> ReactLynx 228 · VDOM+IFR+ET 278 · VDOM 310 ms</p>
+      <header><strong class="takeaway">ReactLynx lowest FCP</strong></header>
+      <p class="why"><span class="lbl">so what</span> Same-density probe: RL wins. Vue first-frame → IFR+ET.</p>
+      <p class="evidence"><span class="lbl">verify</span> FCP@10k RL 228 · IFR+ET 278 · VDOM 310 ms</p>
     </article><article class="verdict critical">
-      <header><strong class="takeaway">Don’t ship IFR without ET: -10% @1k → +22% @10k</strong></header>
-      <p class="why"><span class="lbl">so what</span> “−19% FCP” is not a constant. Plain IFR becomes a liability on mid/large trees; ET is the scale hedge. Don’t document “just enable IFR.”</p>
-      <p class="evidence"><span class="lbl">verify</span> VDOM+IFR vs off: 1k -10% · 10k +22%</p>
+      <header><strong class="takeaway">No IFR without ET</strong></header>
+      <p class="why"><span class="lbl">so what</span> “−19%” isn’t a constant. Plain IFR loses at scale; default IFR+ET.</p>
+      <p class="evidence"><span class="lbl">verify</span> vs off: 1k -10% · 10k +22%</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">ET isn’t first-frame-only: post-mount storms ~28% faster</strong></header>
-      <p class="why"><span class="lbl">so what</span> Template clone speeds later repeated create/update. Plain IFR ≈ off; ET is what keeps paying off.</p>
-      <p class="evidence"><span class="lbl">verify</span> selectStorm@10k: off 367 · IFR 372 · IFR+ET 264 ms</p>
-    </article><article class="verdict good">
-      <header><strong class="takeaway">Scaling shape: nothing exponential; FCP is sublinear</strong></header>
-      <p class="why"><span class="lbl">so what</span> Fit cost ∝ N^α: FCP α≈0.7 (sublinear — fixed overhead amortizes); create/update storms ~linear. The separator is Vapor select (stays flatter as N grows).</p>
-      <p class="evidence"><span class="lbl">verify</span> FCP α≈0.68–0.79 · create α≈0.95 · updateStorm α≈1.0–1.2 · React/VDOM selectStorm α≈1.05 (Vapor lower)</p>
+      <header><strong class="takeaway">ET speeds updates ~28%</strong></header>
+      <p class="why"><span class="lbl">so what</span> Template clone helps post-mount too. Plain IFR ≈ off.</p>
+      <p class="evidence"><span class="lbl">verify</span> selectStorm@10k off 367 · IFR 372 · ET 264 ms</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">Cheat sheet: create→ReactLynx · point/batch updates→Vapor · Vue first-frame→IFR+ET</strong></header>
-      <p class="why"><span class="lbl">so what</span> Select = point, Update = batch — don’t mix them. The three old benches fought; on one ladder the product choice collapses to this line.</p>
-      <p class="evidence"><span class="lbl">verify</span> See storm + FCP tables below; never divide ms across those instruments.</p>
+      <header><strong class="takeaway">create→RL · updates→Vapor · Vue FCP→IFR+ET</strong></header>
+      <p class="why"><span class="lbl">so what</span> Select=point, Update=batch. Product choice collapses to this line.</p>
+      <p class="evidence"><span class="lbl">verify</span> See tables below; never divide ms across instruments.</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">Quote ratios, not absolute milliseconds</strong></header>
-      <p class="why"><span class="lbl">so what</span> Same protocol, different hosts can move medians 2×+. Portable claims are same-host ratios.</p>
-      <p class="evidence"><span class="lbl">verify</span> Ex: older playground React selectStorm@10k ≈2544 ms; this host ≈1018 ms.</p>
+      <header><strong class="takeaway">Quote ratios, not ms</strong></header>
+      <p class="why"><span class="lbl">so what</span> Medians move 2×+ across hosts. Same-host ratios only.</p>
+      <p class="evidence"><span class="lbl">verify</span> Ex: older host React selectStorm@10k ≈2544 ms; this host ≈1018 ms.</p>
     </article></div>
 
 <h2>Table storms — IFR × framework matrix</h2>
