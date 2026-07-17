@@ -9,6 +9,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -31,6 +32,17 @@ function loadVaporSupport() {
 }
 const vaporSupport = loadVaporSupport();
 const vaporById = new Map(vaporSupport.entries.map((entry) => [entry.id, entry.vapor]));
+
+const PLUGIN_DIST = path.join(
+  REPO_ROOT,
+  'packages/vue-lynx/plugin/dist/index.js',
+);
+
+// On Vercel, pre-gzip *.lynx.bundle so QR/device fetches stay under LynxExplorer's
+// ~10s timeout. IFR roughly doubled uncompressed size; Vercel only auto-compresses
+// when the client sends Accept-Encoding, and some native fetchers do not.
+// vercel.json sets Content-Encoding: gzip for these paths.
+const PRE_GZIP_LYNX_BUNDLES = Boolean(process.env.VERCEL);
 
 // File extensions to skip (binary assets in src/)
 const BINARY_EXTENSIONS = new Set([
@@ -210,8 +222,12 @@ function processExample(exampleName) {
 
   // Copy entire dist/ (bundles + static assets referenced by bundles)
   const distSrcDir = path.join(srcDir, 'dist');
+  const distDestDir = path.join(destDir, 'dist');
   if (fs.existsSync(distSrcDir)) {
-    copyDirRecursive(distSrcDir, path.join(destDir, 'dist'));
+    copyDirRecursive(distSrcDir, distDestDir);
+    if (PRE_GZIP_LYNX_BUNDLES) {
+      gzipLynxBundlesInPlace(distDestDir);
+    }
   }
   const vaporDistSrcDir = path.join(srcDir, 'dist-vapor');
   if (fs.existsSync(vaporDistSrcDir)) {
@@ -226,6 +242,34 @@ function processExample(exampleName) {
   }
 
   console.info(`  -> ${textFiles.length} files, ${templateFiles.length} entries`);
+}
+
+/**
+ * Replace each *.lynx.bundle with its gzip payload (same filename).
+ * Paired with vercel.json Content-Encoding: gzip so HTTP clients inflate.
+ */
+function gzipLynxBundlesInPlace(dir) {
+  if (!fs.existsSync(dir)) return;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      gzipLynxBundlesInPlace(fullPath);
+      continue;
+    }
+    if (!entry.name.endsWith('.lynx.bundle')) continue;
+
+    const raw = fs.readFileSync(fullPath);
+    // Already gzipped (magic 1f 8b) — leave as-is so re-runs are idempotent.
+    if (raw.length >= 2 && raw[0] === 0x1f && raw[1] === 0x8b) continue;
+
+    const compressed = gzipSync(raw, { level: 9 });
+    fs.writeFileSync(fullPath, compressed);
+    const ratio = raw.length === 0 ? 0 : compressed.length / raw.length;
+    console.info(
+      `  gzip ${entry.name}: ${raw.length} -> ${compressed.length} bytes (${(ratio * 100).toFixed(1)}%)`,
+    );
+  }
 }
 
 // Main
@@ -264,7 +308,7 @@ const needsVaporBuild = vaporExamples.some((example) =>
 
 if (needsBuild || needsVaporBuild) {
   // Examples depend on vue-lynx (workspace:*), so build the lib first if needed
-  const libBuilt = fs.existsSync(path.join(REPO_ROOT, 'plugin/dist/index.js'));
+  const libBuilt = fs.existsSync(PLUGIN_DIST);
   if (!libBuilt) {
     console.info('Building vue-lynx library (required by examples)...');
     execSync('pnpm build', { cwd: REPO_ROOT, stdio: 'inherit' });

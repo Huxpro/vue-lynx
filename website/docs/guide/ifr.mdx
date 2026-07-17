@@ -68,7 +68,11 @@ its inputs:
 - Options API `mounted()` is not yet suppressed on the main thread. Prefer
   Composition API hooks for first-screen components that use IFR.
 - IFR can only paint synchronously available data. A fetch-driven screen
-  should render a useful shell or skeleton if it needs an earlier first frame.
+  should still **mount** and render a useful shell or skeleton on the main
+  thread — gate the network work (for example
+  `useQuery({ enabled: !isIfrMainThread() })`), do not skip `app.mount()`
+  entirely. Skipping the mount keeps the larger IFR bundle with none of the
+  first-paint benefit.
 - Regular events can be dropped in the short window before the background
   registry is ready. [Main Thread Script](/guide/main-thread-script) handlers
   stay interactive because they already live on the main thread.
@@ -260,18 +264,19 @@ Vapor builds.
 
 | Question | Answer |
 | --- | --- |
-| Does IFR improve first paint? | **Yes.** On Lynx for Web (real Worker boundary), median FCP across ten examples is about **−19%** with default IFR — the same class as ReactLynx (−23%) on the same harness. |
+| Does IFR improve first paint? | **Yes.** Content-first Lynx-for-Web FCP for default IFR + ET sits roughly in **−12% to −26%** (median **−19%** on a ten-example suite; about **−12%** on a later set that adds TodoMVC / gallery and larger apps). Same class as ReactLynx (−23%) on the first harness. |
 | Should VDOM ship ET with IFR? | **Yes.** ET is what keeps the sync main-thread render cheap as screens grow. Without it, IFR can lose to plain VDOM by ~10k elements and sit ~**+20%** slower by 30k. With ET, VDOM stays fastest through 30k. |
 | What about Vapor? | Vapor IFR wins at 1× CPU on content screens (~−9% in the same-source matrix), but by less than VDOM+IFR+ET. Measure on your target device — at 4× CPU, MT bundle cost can erase the win. |
-| When *not* to enable? | Fetch-driven screens with nothing to paint before a response, or bundle-critical apps where ~2× gzip is unacceptable without measuring. |
+| When *not* to enable? | Fetch-driven screens with nothing to paint before a response, large web bundles under heavy CPU throttle (Elk / AI Chat have measured **+25% to +44%** FCP), or bundle-critical apps where ~2× gzip is unacceptable without measuring. Paint a real shell under IFR — Hacker News recovered from about **+38% to −12%** after switching to shell IFR. |
 
 ### Recommendations
 
 | Your first screen | Do this |
 | --- | --- |
-| Content-first, synchronous data | **`enableIFR: true`** (VDOM brings ET; Vapor uses the tree protocol) |
-| Data-driven but initial data is sync | Enable |
+| Content-first, synchronous data | **`enableIFR: true`** (VDOM brings ET; Vapor uses the tree protocol) — typical web FCP win about **−12% to −26%** |
+| Data-driven with a sync shell / skeleton | Enable; gate fetches off the IFR main-thread pass |
 | Fetch-driven — nothing to paint before a response | Don't enable, or ship a real skeleton first then enable |
+| Large bundle on web + slow CPU | Measure — throttle can erase or reverse the win |
 | Bundle-size-critical | Measure first — gzip roughly doubles |
 
 Regardless of profile: keep the first screen deterministic and put side
@@ -314,4 +319,4 @@ cost space (MT gzip × FCP); then FCP vs N
 
 Full methodology, strategy ladder, per-example sweeps, and ReactLynx
 comparison: [IFR Benchmarks](/guide/ifr-benchmarks). Campaign write-up:
-[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
+[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/UNIFIED-RERUN.md).

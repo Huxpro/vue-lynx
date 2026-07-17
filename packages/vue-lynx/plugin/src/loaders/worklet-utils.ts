@@ -544,10 +544,15 @@ export function extractRegistrations(lepusCode: string): string {
 /**
  * Extract element-template registrations from a compiled render module.
  *
- * The compiler hoists calls of the form
- * `(globalThis.__vueLynxRegisterElementTemplate || function () {})(...)`.
- * Interpreter-only MT bundles strip the rest of the module, so these
- * self-contained registrations must be re-emitted verbatim.
+ * The element-template compiler transform hoists statements of the form
+ *   const _hoisted_N = (globalThis.__vueLynxRegisterElementTemplate ||
+ *     function () {})("<id>", [...], function(P){…})
+ * into the compiled script/template sub-module. On the interpreter-only
+ * (non-IFR) main thread the module is otherwise stripped, but these
+ * registrations must survive: the ops executor resolves create() functions
+ * through them. The calls are self-contained (they resolve the global at
+ * evaluation time; entry-main installs it before user code runs), so they
+ * are re-emitted verbatim.
  *
  * Matches inside line or block comments are skipped — documentation
  * examples of the registration shape (including the one in
@@ -566,6 +571,7 @@ export function extractTemplateRegistrations(source: string): string {
       searchFrom = idx + marker.length;
       continue;
     }
+    // The marker sits inside `(globalThis.… || function () {})(args…)`.
     const wrapperStart = source.lastIndexOf('(', idx);
     if (wrapperStart === -1) {
       searchFrom = idx + marker.length;

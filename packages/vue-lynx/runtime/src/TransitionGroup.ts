@@ -51,9 +51,12 @@ function nextFrame(cb: () => void): void {
   queuePostFlushCb(() => {
     waitForFlush().then(() => {
       if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(cb);
-      } else {
-        cb();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(cb);
+        });
+      }
+      else {
+        setTimeout(cb, 16);
       }
     });
   });

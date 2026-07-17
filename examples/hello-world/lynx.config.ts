@@ -30,9 +30,6 @@ export default defineConfig({
   plugins: [
     pluginVueLynx({
       optionsApi: false,
-      // IFR: render the first screen on the main thread during loadTemplate,
-      // then hydrate when the background thread boots.
-      enableIFR: true,
     }),
   ],
 });

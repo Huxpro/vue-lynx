@@ -5,12 +5,23 @@
 /**
  * Instant First-Frame Rendering for the pure Vapor entry.
  *
- * The main-thread render and the background render execute the same Vapor
- * template protocol in fresh realms. Their initial op streams are therefore
- * deterministic. We paint the main-thread stream immediately, then consume
- * the background stream frame-by-frame. Identical structural frames are
- * skipped, background values/worklet state are adopted, and a structural
- * mismatch falls back to replaying the complete background history.
+ * When `enableIFR: true`, the main-thread bundle contains the Vue runtime +
+ * user app. Both threads run the same Vapor template protocol in fresh
+ * realms, so initial op streams are deterministic:
+ *
+ *   1. `renderPage` mounts on the main thread during `loadTemplate` and
+ *      applies ops locally (first frame without a cross-thread round-trip).
+ *      Applied batches are recorded; the stream is sealed when the sync
+ *      first-screen mount returns (`sealIfrRender`).
+ *   2. The background thread boots and renders the same app.
+ *   3. Hydration compares BG batches against the recorded stream —
+ *      identical structural frames are skipped, values/worklets are adopted
+ *      from BG, and a structural mismatch falls back to replaying the
+ *      complete background history.
+ *
+ * Events use the same sign strings (`vue:N`) on both sides. Worklet event
+ * contexts are always re-applied from BG (needs `_execId` for
+ * `runOnBackground`).
  */
 
 import {
@@ -132,12 +143,18 @@ export function enableIFR(): void {
 }
 
 function recordAndApply(ops: unknown[]): void {
+  // Drop once the first-screen snapshot is sealed or BG owns the tree.
+  // Setup-time async work (Suspense / defineAsyncComponent) must not extend
+  // the recorded stream: a structural mismatch would tear down IFR and apply
+  // only an incremental BG batch onto an empty page.
   if (phase === 'hydrated' || renderSealed) {
     if (__DEV__ && !warnedPostHydrationOps) {
       warnedPostHydrationOps = true;
       console.warn(
-        '[vue-lynx] IFR: dropping main-thread render ops produced after the '
-          + 'first-frame handoff; the background thread owns updates.',
+        '[vue-lynx] IFR: dropping main-thread render ops produced after '
+          + 'the first-screen snapshot. First-screen code must not keep '
+          + 'updating on the main thread (side effects belong in onMounted '
+          + '/ watchers, which only run on the background thread).',
       );
     }
     return;

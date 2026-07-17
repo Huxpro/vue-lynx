@@ -90,6 +90,7 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /modelValue/);
   assert.match(source, /v-show="modelValue"/);
   assert.doesNotMatch(source, /v-if="modelValue"/);
+  assert.match(source, /<Transition name="sheet" @after-leave="handleAfterLeave">/);
   assert.match(source, /class="sheet-backdrop"[^>]*:main-thread-ref="backdropRef"[^>]*@tap="requestClose"/s);
   assert.match(source, /class="sheet-surface"/);
   assert.match(
@@ -143,10 +144,27 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
     'a recursive worklet rAF loop can collapse into one native render batch',
   );
   assert.match(source, /animationGenerationRef/);
-  assert.match(source, /watch\(\(\) => props\.modelValue/);
-  assert.match(source, /prepareSheetForOpen/);
+  assert.doesNotMatch(source, /watch\(\(\) => props\.modelValue/);
+  assert.doesNotMatch(source, /prepareSheetForOpen/);
+  assert.match(
+    source,
+    /class="sheet-surface-transition"[^>]*:style="surfaceStyle"/,
+    'transition motion must use a wrapper separate from gesture inline styles',
+  );
+  assert.doesNotMatch(
+    source,
+    /class="sheet-surface"[^>]*:style="surfaceStyle"/,
+    'top inset must only be subtracted by the transition wrapper',
+  );
+  assert.match(source, /\.sheet-surface\s*\{[^}]*height:\s*100%/s);
+  assert.match(
+    source,
+    /\.sheet-enter-from \.sheet-surface-transition,[\s\S]*?\.sheet-leave-to \.sheet-surface-transition\s*\{[^}]*transform:\s*translateY\(100%\)/s,
+    'v-show enter and leave classes must move the dedicated transition wrapper',
+  );
+  assert.doesNotMatch(source, /\.sheet-enter-from \.sheet-surface,/);
+  assert.match(source, /function resetSheetMotion\(\)[\s\S]*?applySheetMotion\(0\)/);
   assert.match(source, /runOnBackground\(requestClose\)/);
-  assert.match(source, /@after-leave="handleAfterLeave"/);
   assert.match(source, /transition:\s*opacity/);
   assert.match(source, /transition:\s*transform/);
   assert.doesNotMatch(source, /transition:\s*all/);
@@ -469,17 +487,22 @@ test('status actions and bottom navigation acknowledge native touch input', asyn
 });
 
 test('tabs animate persistent indicators and Explore explains trending content', async () => {
-  const [explore, account, tabPager] = await Promise.all([
+  const [explore, account, tabPager, stickyTabView] = await Promise.all([
     readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/TabPager.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/StickyTabView.vue', import.meta.url), 'utf8'),
   ]);
 
   assert.match(explore, /explore-intro/);
   assert.doesNotMatch(tabPager, /v-if="modelValue === t\.key" class="tab-pager-underline"/);
   assert.match(tabPager, /tab-pager-underline-active/);
-  assert.doesNotMatch(account, /v-if="tab === t\.key" class="account-tab-underline"/);
-  assert.match(account, /account-tab-underline-active/);
+  // The profile tabs live in the sticky collapsing-header scaffold now; its
+  // underline is a persistent element toggled by class (animated), not
+  // mounted/unmounted per tab with v-if.
+  assert.match(account, /<StickyTabView/);
+  assert.doesNotMatch(stickyTabView, /v-if="modelValue === t\.key" class="stv-tab-underline"/);
+  assert.match(stickyTabView, /stv-tab-underline-active/);
 });
 
 test('app-bar tabs page horizontally through the native viewpager', async () => {
@@ -491,12 +514,45 @@ test('app-bar tabs page horizontally through the native viewpager', async () => 
 
   // Swiping between panes is native: the pager element owns the gesture,
   // and the tab bar syncs both ways (change event + selectTab method).
-  assert.match(tabPager, /<x-viewpager-ng/);
-  assert.match(tabPager, /<x-viewpager-item-ng/);
+  assert.match(tabPager, /const pagerTag = isWeb \? 'x-viewpager-ng' : 'viewpager'/);
+  assert.match(
+    tabPager,
+    /const pagerItemTag = isWeb \? 'x-viewpager-item-ng' : 'viewpager-item'/,
+  );
+  assert.match(tabPager, /:is="pagerTag"/);
+  assert.match(tabPager, /:is="pagerItemTag"/);
   assert.match(tabPager, /@change="onPagerChange"/);
   assert.match(tabPager, /method: 'selectTab'/);
   assert.match(explore, /<TabPager/);
   assert.match(notifications, /<TabPager/);
+});
+
+test('profile tabs sit below the header and stick on scroll', async () => {
+  const [sticky, account] = await Promise.all([
+    readFile(new URL('../src/components/StickyTabView.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
+  ]);
+
+  // Per-platform coordinator element: foldview on Lynx for Web, the extracted
+  // scroll-coordinator on native OSS engines.
+  assert.match(sticky, /'x-foldview-ng'/);
+  assert.match(sticky, /'scroll-coordinator'/);
+  assert.match(sticky, /'x-foldview-slot-ng'/);
+  assert.match(sticky, /'scroll-coordinator-slot'/);
+  // The tab bar lives INSIDE the slot, above the viewpager — that is what
+  // makes it start below the header and pin only on scroll. There is no
+  // sticky toolbar element (that variant pins the tabs from the top).
+  assert.doesNotMatch(sticky, /foldview-toolbar|scroll-coordinator-toolbar/);
+  assert.match(sticky, /class="stv-bar"/);
+  // Horizontal paging stays with the viewpager, synced both ways.
+  assert.match(sticky, /'x-viewpager-ng'/);
+  assert.match(sticky, /method: 'selectTab'/);
+  // The profile supplies the collapsing #header and one scrollable pane per
+  // tab (the coordinator hands scroll off to the active pane's list).
+  assert.match(account, /<StickyTabView/);
+  assert.match(account, /<template #header>/);
+  assert.match(account, /<template #posts>/);
+  assert.match(account, /scroll-orientation="vertical" class="account-pane"/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {
