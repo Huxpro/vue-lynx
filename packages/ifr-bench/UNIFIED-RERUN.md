@@ -99,11 +99,12 @@ FCP (ET's create() tax shows up before its render-cost win matters). On HN
 with shell IFR, FCP improves at 1× but **settled** time grows (early shell +
 later fetch/hydration); at 4× FCP regresses — bundle cost dominates.
 
-## 4. Scale trends (playground-style log-log)
+## 4. Scale trends (linear + log-log)
 
 Same five architectures, same generated SFC, scaled to ~1k / 3k / 5k / 10k
 elements (`nCards = 125/375/625/1250`). Charts reuse the benchmark-playground
-pattern: **log-log polylines** + least-squares `α` in `cost ~ N^α`.
+pattern: **linear (zero baseline)** for absolute FCP gaps, plus **log-log
+polylines** and least-squares `α` in `cost ~ N^α`.
 
 Interactive HTML (committed under `results/`, also served from the site):
 
