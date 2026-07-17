@@ -384,14 +384,12 @@ export const ZH = {
     '框架设计的<span class="brand-text">摇篮</span>。',
   'A team that loves the Web — and dares to break it.':
     '一支深爱 Web、也敢于打破 Web 的团队。',
-  'A template is part static, part dynamic.':
-    '模板,一半<span style="color:#5dd5a8">静态</span>,一半<span style="color:#E8B44A">动态</span>。',
-  'One question splits every renderer: when is “what changes” resolved?':
-    '所有渲染器的分歧只有一个问题:<b>何时</b>求解“哪里会变”?',
   'Cut a thread — what can cross the wire?':
     '切一刀线程 —— 什么能过桥?',
-  'Only closed, first-order terms survive the cut. Pointers and closures don’t.':
-    '只有封闭的一阶项能扛过这一刀;指针与闭包过不去。',
+  'Only closed, first-order terms survive the cut — a flat ops stream, i.e. a display list.':
+    '只有封闭的一阶项能扛过这一刀 —— 一串扁平的 ops,也就是一份 display list。',
+  'Pointers die — names take over.':
+    '指针死去 —— <span class="brand-text">名字</span>接管。',
   'Weave the whole Web…': '把整个 Web 织进来……',
   '…into every platform.': '……再织向每一个平台。',
   'more…': '<i></i> 更多……',
@@ -658,10 +656,10 @@ export const ZH_NOTES = [
   `<p><strong>连接创新本身。</strong>回想第四章的流水线:VDOM → ShadowElement → ops → PAPI。Vapor 模式不需要 VDOM —— 于是在 Lynx 上,整整一层直接消失:signal 驱动 effect,effect 直接吐 ops。在实现上我们做的是<em>删掉</em>抽象,不是增加抽象。</p><p>诚实交代进度:这是设计草图和早期实验,不是已发布的模式 —— 而这正是它令人兴奋的地方:缝是开着的,创新可以沿着连接双向流动。</p>`,
   // 90 E20 · 摇篮
   `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
-  // 90b E20b · 动静光谱
-  `<p><strong>把设计空间浓缩成一张图。</strong>模板是一段混合阶段的程序:绿色部分(标签、类名、静态文案)在你写下的那一刻就定了;只有 <code>{{ title }}</code> 要等运行期才有值。这就是绑定时间分析 —— 着色即标注。</p><p>每个渲染器持有的是<em>同一份</em>知识,分歧只在<em>何时</em>求解动态部分:VDOM 每次更新用 diff 重新发现;Vapor 把它接线进创建期,换来 O(1) 更新;Element Templates 把静态壳一路特化成代码。同一条光谱、不同坐标 —— VDOM、Vapor、ET 不是三个孤立发明,而是同一空间里的三个点。</p>`,
-  // 90c E20c · 异步的那一刀
+  // 90b E20b · 异步的那一刀
   `<p><strong>异步的那一刀。</strong>双线程是"架构化的异步" —— 就像浏览器把合成交给独立线程。代价是:树(MT)和驱动它的程序(BG)不再共享地址空间。那什么能穿过序列化边界?只有封闭的一阶项 —— 数据与名字。指针只在本地堆有意义;闭包捕获了对面不存在的环境。</p><p>于是过桥的形态只剩一种:一条扁平、封闭、一阶的 <strong>ops 流</strong> —— 这正是 display list。它不是实现细节,是整套架构的宪法(也是为什么 Vapor-on-Lynx 直接吐 ops)。</p>`,
+  // 90c E20c · 稠密 vs 稀疏命名
+  `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p>`,
   // 91 E21 · 全景 · 左半
   `<p><strong>全景开始。</strong>线落下时逐一点名:Vue 的绿、React 的蓝、Svelte 和 Solid 隐约的黄、Octane 的红 —— 一种还在纺的新织物 —— CSS、Tailwind、Motion 和 Pretext、Rspack 的橘。整个 Web 生态,化作丝线。</p><p>它们全都收向同一个又细又有力的腰身。</p>`,
   // 92 E22 · 全景

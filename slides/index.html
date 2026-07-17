@@ -2651,101 +2651,112 @@
     </aside>
   </section>
 
-  <!-- E20b — design space · the static/dynamic spectrum -->
-  <section class="slide stage dspace">
-    <span class="eyebrow">One more thing &middot; the design space</span>
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      A template is part <span style="color:#5dd5a8">static</span>, part <span style="color:#E8B44A">dynamic</span>.
-    </h2>
-    <div class="dsplit">
-      <div>
-        <div class="codeframe" style="width:100%">
-          <div class="codeframe__head">
-            <span class="dots"><span></span><span></span><span></span></span>
-            <span>card.vue · by binding time</span>
-          </div>
-<pre><span class="code-static">&lt;view class="card"&gt;</span>
-<span class="code-static">  &lt;image class="icon" src="…" /&gt;</span>
-<span class="code-static">  &lt;view class="body"&gt;</span>
-<span class="code-static">    &lt;text&gt;</span><span class="code-dyn">{{ title }}</span><span class="code-static">&lt;/text&gt;</span>
-<span class="code-static">    &lt;text&gt;Static description&lt;/text&gt;</span>
-<span class="code-static">  &lt;/view&gt;</span>
-<span class="code-static">&lt;/view&gt;</span></pre>
-        </div>
-        <div class="ds-legend" data-mm-fade>
-          <span class="k"><span class="sw" style="background:#5dd5a8"></span>static &middot; known when you write it</span>
-          <span class="k"><span class="sw" style="background:#E8B44A"></span>dynamic &middot; known only at runtime</span>
-        </div>
-      </div>
-      <div class="track" data-mm-fade>
-        <div class="track__line"></div>
-        <div class="track__stops">
-          <div class="stop">
-            <span class="stop__dot" style="border-color:#4FB8F0"></span>
-            <span class="stop__name">VDOM</span>
-            <span class="stop__sub">interpret + diff · re-discover each update</span>
-          </div>
-          <div class="stop">
-            <span class="stop__dot" style="border-color:#42b883"></span>
-            <span class="stop__name">Vapor</span>
-            <span class="stop__sub">wire it into create-time · O(1) update</span>
-          </div>
-          <div class="stop">
-            <span class="stop__dot" style="border-color:#8a63d2"></span>
-            <span class="stop__name">Element Templates</span>
-            <span class="stop__sub">bake the static shell to code</span>
-          </div>
-        </div>
-        <div class="track__ends">
-          <span>resolve at runtime</span>
-          <span>resolve at compile time</span>
-        </div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade style="text-align:center;max-width:52ch">
-      One question splits every renderer: <b>when</b> is &ldquo;what changes&rdquo; resolved?
-    </p>
-    <aside class="notes">
-      <p><strong>The design space, in one picture.</strong> A template is a mixed-stage program: the green parts (tags, classes, static text) are fixed the moment you write them; only <code>{{ title }}</code> waits for a runtime value. This is binding-time analysis — coloring = annotating.</p>
-      <p>Every renderer holds the <em>same</em> knowledge; they differ only in <em>when</em> they resolve the dynamic part. VDOM re-discovers it each update by diffing. Vapor wires it into create-time so updates are O(1). Element Templates bake the static shell all the way down to code. Same spectrum, different coordinates — VDOM, Vapor, and ET aren't rival inventions, they're points in one space.</p>
-    </aside>
-  </section>
-
-  <!-- E20c — design space · the async cut (thread boundary) -->
+  <!-- E20b — design space · the async cut (schematic) -->
   <section class="slide stage dspace">
     <span class="eyebrow">One more thing &middot; the design space</span>
     <h2 class="h-section" style="text-align:center;max-width:24ch">
       Cut a thread — what can cross the wire?
     </h2>
-    <div class="dboundary">
-      <div class="drealm">
-        <div class="drealm__t">BG · background thread · the program</div>
-        <ul class="xfer">
-          <li><span class="ok">✓</span><span class="lbl"><b>first-order data</b> — numbers, strings, plain objects</span></li>
-          <li><span class="ok">✓</span><span class="lbl"><b>names</b> — ids, template no., event signs</span></li>
-          <li><span class="no">✗</span><span class="lbl"><b>pointers</b> — <code>nthChild(root,1)</code>, only local</span></li>
-          <li><span class="no">✗</span><span class="lbl"><b>closures</b> — <code>effect(fn)</code> captures the heap</span></li>
-        </ul>
-      </div>
-      <div class="dwall"><span>serialization boundary</span></div>
-      <div class="drealm">
-        <div class="drealm__t">MT · main thread · the tree</div>
-        <div class="opstream">
-          <span class="op">CREATE 2 view</span>
-          <span class="op">SET_CLASS 2 "card"</span>
-          <span class="op dyn">SET_TEXT 6 "Hello"</span>
-          <span class="op">INSERT 1 2 -1</span>
-          <span class="op">…</span>
-        </div>
-        <p class="dboundary__cap">one flat <b>ops stream</b> crosses &mdash; and that stream <em>is</em> a display list.</p>
-      </div>
+    <div class="dschem">
+      <svg viewBox="0 0 900 268" role="img" aria-label="What crosses the BG/MT serialization boundary: data and names cross as an ops stream; pointers and closures are blocked.">
+        <defs>
+          <marker id="dsArrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#5dd5a8"/>
+          </marker>
+        </defs>
+        <!-- BG realm -->
+        <rect class="box" x="28" y="40" width="326" height="196" rx="14"/>
+        <text class="lane" x="52" y="72">BG · the program</text>
+        <text class="ok" x="52" y="114" font-size="16">✓</text><text class="chip-t" x="76" y="114">first-order data</text>
+        <text class="ok" x="52" y="150" font-size="16">✓</text><text class="chip-t" x="76" y="150">names · ids, signs</text>
+        <text class="no" x="52" y="186" font-size="16">✗</text><text class="chip-t" x="76" y="186">pointers</text><text class="chip-s" x="212" y="186">local heap only</text>
+        <text class="no" x="52" y="222" font-size="16">✗</text><text class="chip-t" x="76" y="222">closures</text><text class="chip-s" x="212" y="222">capture the heap</text>
+        <!-- wall -->
+        <line class="wall" x1="452" y1="34" x2="452" y2="244"/>
+        <text class="walltag" x="452" y="139" transform="rotate(90 452 139)" text-anchor="middle">serialization boundary</text>
+        <!-- data + names cross as an ops stream -->
+        <path class="flow-ok" d="M356 108 L600 108"/>
+        <path class="flow-ok" d="M356 150 L600 150"/>
+        <text class="streamlbl" x="474" y="98">ops stream</text>
+        <!-- pointers + closures blocked at the wall -->
+        <path class="flow-no" d="M356 186 L438 186"/>
+        <text class="no" x="446" y="191" font-size="15">✗</text>
+        <path class="flow-no" d="M356 222 L438 222"/>
+        <text class="no" x="446" y="227" font-size="15">✗</text>
+        <!-- MT realm: the native tree it builds -->
+        <rect class="box" x="612" y="58" width="260" height="160" rx="14"/>
+        <text class="lane" x="636" y="90">MT · the tree</text>
+        <line class="edge" x1="742" y1="132" x2="686" y2="166"/>
+        <line class="edge" x1="742" y1="132" x2="800" y2="166"/>
+        <rect class="opnode" x="702" y="110" width="80" height="24" rx="6"/><text class="optext" x="718" y="126">view</text>
+        <rect class="opnode" x="648" y="164" width="76" height="22" rx="6"/><text class="optext" x="662" y="179">text</text>
+        <rect class="opnode dyn" x="764" y="164" width="76" height="22" rx="6"/><text class="optext" x="778" y="179">{{…}}</text>
+      </svg>
     </div>
-    <p class="lead" data-mm-fade style="text-align:center;max-width:56ch">
-      Only closed, first-order terms survive the cut. Pointers and closures don&rsquo;t.
+    <p class="lead" data-mm-fade style="text-align:center;max-width:58ch">
+      Only closed, first-order terms survive the cut — a flat ops stream, i.e. a <b>display list</b>.
     </p>
     <aside class="notes">
       <p><strong>The async cut.</strong> The dual-thread split is architected async — like the browser handing compositing to its own thread. The catch: the tree (MT) and the program that drives it (BG) no longer share an address space. So what can cross the serialization boundary? Only closed, first-order terms — data and names. Pointers are meaningful only in the local heap; closures capture an environment the other side doesn't have.</p>
       <p>That leaves exactly one shape for what crosses: a flat, closed, first-order <strong>ops stream</strong> — which is precisely a <em>display list</em>. It's not an implementation detail; it's the constitution of the whole architecture (and why Vapor-on-Lynx emits ops directly).</p>
+    </aside>
+  </section>
+
+  <!-- E20c — design space · dense vs sparse naming -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Pointers die — <span class="brand-text">names</span> take over.
+    </h2>
+    <div class="dtrees">
+      <figure>
+        <figcaption><b>Vapor · dense</b> — every node gets a name</figcaption>
+        <svg class="dtree" viewBox="0 0 460 246" role="img" aria-label="Dense naming: preorder assigns uid 2 to 7 to every node.">
+          <line class="edge" x1="230" y1="52" x2="110" y2="102"/>
+          <line class="edge" x1="230" y1="52" x2="290" y2="102"/>
+          <line class="edge" x1="290" y1="130" x2="180" y2="178"/>
+          <line class="edge" x1="290" y1="130" x2="380" y2="178"/>
+          <line class="edge" x1="180" y1="206" x2="180" y2="218"/>
+          <g><rect class="nodebox st" x="178" y="26" width="104" height="28" rx="6"/><text class="tag" x="192" y="45">view.card</text></g>
+          <g><rect class="nodebox st" x="56" y="102" width="108" height="28" rx="6"/><text class="tag" x="70" y="121">image.icon</text></g>
+          <g><rect class="nodebox st" x="238" y="102" width="104" height="28" rx="6"/><text class="tag" x="252" y="121">view.body</text></g>
+          <g><rect class="nodebox st" x="126" y="178" width="108" height="28" rx="6"/><text class="tag" x="140" y="197">text.title</text></g>
+          <g><rect class="nodebox dy" x="146" y="212" width="68" height="22" rx="5"/><text class="tag" x="154" y="227" style="font-size:10px">#text ✎</text></g>
+          <g><rect class="nodebox st" x="326" y="178" width="106" height="28" rx="6"/><text class="tag" x="340" y="197">text.desc</text></g>
+          <g><rect class="uidbg" x="260" y="20" width="26" height="16" rx="7"/><text class="uid" x="268" y="32">2</text></g>
+          <g><rect class="uidbg" x="142" y="96" width="26" height="16" rx="7"/><text class="uid" x="150" y="108">3</text></g>
+          <g><rect class="uidbg" x="320" y="96" width="26" height="16" rx="7"/><text class="uid" x="328" y="108">4</text></g>
+          <g><rect class="uidbg" x="212" y="172" width="26" height="16" rx="7"/><text class="uid" x="220" y="184">5</text></g>
+          <g><rect class="uidbg" x="192" y="206" width="26" height="16" rx="7"/><text class="uid" x="200" y="218">6</text></g>
+          <g><rect class="uidbg" x="410" y="172" width="26" height="16" rx="7"/><text class="uid" x="418" y="184">7</text></g>
+        </svg>
+      </figure>
+      <figure>
+        <figcaption><b>Element Templates · sparse</b> — only the <span class="hot">holes</span> are named</figcaption>
+        <svg class="dtree" viewBox="0 0 460 246" role="img" aria-label="Sparse naming: only the root and the hole get ids; the static nodes are ghosted.">
+          <line class="edge ghost" x1="230" y1="52" x2="110" y2="102"/>
+          <line class="edge ghost" x1="230" y1="52" x2="290" y2="102"/>
+          <line class="edge ghost" x1="290" y1="130" x2="180" y2="178"/>
+          <line class="edge ghost" x1="290" y1="130" x2="380" y2="178"/>
+          <g><rect class="nodebox st" x="178" y="26" width="104" height="28" rx="6"/><text class="tag" x="192" y="45">view.card</text>
+             <rect class="uidbg" x="258" y="20" width="60" height="16" rx="7"/><text class="uid" x="264" y="32">root=2</text></g>
+          <g class="ghost"><rect class="nodebox" x="56" y="102" width="108" height="28" rx="6"/><text class="tag" x="70" y="121">image.icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="238" y="102" width="104" height="28" rx="6"/><text class="tag" x="252" y="121">view.body</text></g>
+          <g><rect class="nodebox dy" x="126" y="178" width="108" height="28" rx="6"/><text class="tag" x="140" y="197">text.title</text>
+             <rect class="uidbg" x="212" y="172" width="64" height="16" rx="7"/><text class="uid" x="218" y="184">hole=3</text>
+             <text class="holelbl" x="126" y="224">the one dynamic point → the one hole</text></g>
+          <g class="ghost"><rect class="nodebox" x="326" y="178" width="106" height="28" rx="6"/><text class="tag" x="340" y="197">text.desc</text></g>
+        </svg>
+      </figure>
+    </div>
+    <div class="ds-legend" data-mm-fade>
+      <span class="k"><span class="sw" style="background:#5dd5a8"></span>static</span>
+      <span class="k"><span class="sw" style="background:#E8B44A"></span>dynamic (the hole)</span>
+      <span class="k"><span class="sw name"></span>a name that crosses the wire</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Once pointers can't cross, names take over — and there are two ways to hand them out.</strong> Vapor names <em>densely</em>: a preorder walk gives every node a uid (2–7). Both threads run the same walk, so they agree on every name with zero bytes transferred — the addressable set is open (anything might get touched by an effect, event, or ref).</p>
+      <p>Element Templates name <em>sparsely</em>: the VDOM compiler already proved a closed set of dynamic points (the holes), and diffing guarantees the static nodes are never addressed — so only the holes get names and the grey nodes are invisible to the protocol. Sparse isn't saved, it's <em>proven</em>. Same template, two coordinates on the design space.</p>
     </aside>
   </section>
 
