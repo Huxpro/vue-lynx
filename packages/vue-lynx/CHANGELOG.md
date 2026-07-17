@@ -1,5 +1,11 @@
 # vue-lynx
 
+## 0.5.1
+
+### Patch Changes
+
+- Seal the IFR first-screen ops snapshot when the sync mount returns, so Suspense / `defineAsyncComponent` resolves on the main thread cannot extend the hydration stream and wipe the tree on mismatch. ([#257](https://github.com/Huxpro/vue-lynx/pull/257))
+
 ## 0.5.0
 
 ### Minor Changes
