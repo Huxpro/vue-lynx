@@ -8,7 +8,7 @@ import {
 interface TestEnvironment {
   switchToMainThread(): void;
   switchToBackgroundThread(): void;
-  jsdom: { window: { document: Document } };
+  env: { window: { document: Document } };
 }
 
 it('reuses one native page through the complete BG-to-MT pipeline', async () => {
@@ -36,7 +36,7 @@ it('reuses one native page through the complete BG-to-MT pipeline', async () => 
   await nextTick();
 
   env.switchToMainThread();
-  const document = env.jsdom.window.document;
+  const document = env.env.window.document;
   const pages = document.body.querySelectorAll('page');
   expect(pages).toHaveLength(1);
   expect(pages[0]?.className).toBe('native-root');
