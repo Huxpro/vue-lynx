@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { readFile, rm } from "node:fs/promises";
+import { readFile, rm, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import vm from "node:vm";
@@ -57,24 +57,11 @@ const VAPOR_REALM_GLOBALS = [
   "__VUE_LYNX_EVENT_REGISTRY__",
 ];
 
-const OP_ARITY = Object.freeze({
-  0: 2,
-  1: 1,
-  2: 3,
-  3: 2,
-  4: 3,
-  5: 2,
-  6: 4,
-  7: 3,
-  8: 2,
-  9: 2,
-  10: 2,
-  11: 4,
-  12: 2,
-  13: 2,
-  16: 2,
-  17: 2,
-});
+// Single-source protocol tables: a hand-maintained copy silently drifts
+// when opcodes are renumbered (it happened with 15/16 → 16/17).
+const { OP, OP_ARITY } = await import(
+  new URL("../../vue-lynx/internal/dist/ops.js", import.meta.url).href
+);
 
 function captureDescriptors(names = Object.getOwnPropertyNames(globalThis)) {
   return new Map(
@@ -125,6 +112,31 @@ async function readBundle(url) {
   return JSON.parse(await readFile(url, "utf8"));
 }
 
+/**
+ * A fixture built before the library was last rebuilt embeds the OLD runtime
+ * (and potentially an old ops protocol) — shape checks alone cannot see that.
+ * Compare against the built library entry points the bundle embeds.
+ */
+async function isFixtureStale(bundleUrl) {
+  const bundleTime = (await stat(bundleUrl)).mtimeMs;
+  const libraryMarkers = [
+    "vue-lynx/runtime/dist/vapor-app.js",
+    "vue-lynx/main-thread/dist/entry-main.js",
+    "vue-lynx/internal/dist/ops.js",
+    "vue-lynx/plugin/dist/index.js",
+  ].map((rel) => new URL(`packages/${rel}`, root));
+  for (const marker of libraryMarkers) {
+    try {
+      if ((await stat(marker)).mtimeMs > bundleTime) return true;
+    } catch {
+      // A missing build output means the surrounding job will build it;
+      // treat the fixture as stale so the rebuild uses fresh outputs.
+      return true;
+    }
+  }
+  return false;
+}
+
 async function loadIfrBundle() {
   const explicitPath = process.env.VUE_LYNX_VAPOR_IFR_BUNDLE;
   if (explicitPath) {
@@ -140,7 +152,9 @@ async function loadIfrBundle() {
 
   try {
     const bundle = await readBundle(generatedBundle);
-    if (isIfrBundle(bundle)) return { bundle, url: generatedBundle };
+    if (isIfrBundle(bundle) && !(await isFixtureStale(generatedBundle))) {
+      return { bundle, url: generatedBundle };
+    }
   } catch {
     // Build the generated fixture below.
   }
@@ -192,9 +206,11 @@ function eventFrames(ops) {
     const code = ops[cursor];
     const arity = OP_ARITY[code];
     if (arity === undefined || cursor + arity >= ops.length) {
-      throw new Error(`Malformed Vapor op stream at offset ${cursor}`);
+      throw new Error(
+        `Malformed Vapor op stream at offset ${cursor} (opcode ${String(code)})`,
+      );
     }
-    if (code === 6) {
+    if (code === OP.SET_EVENT) {
       events.push({
         eventType: ops[cursor + 2],
         eventName: ops[cursor + 3],

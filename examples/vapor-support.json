@@ -364,7 +364,7 @@
       },
       "scenario": "hackernews-tailwind/main",
       "verification": {
-        "sourceHash": "bdcc18135dd9522fb027022d80ba914ae010485d125bf12d95371504989e6778",
+        "sourceHash": "e3e8aacad18ca7c3f25fd0030fec1b9916bbbaa66f637d945362eb0a4a1ed276",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"

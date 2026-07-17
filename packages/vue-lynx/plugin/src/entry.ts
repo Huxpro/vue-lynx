@@ -356,7 +356,7 @@ export function applyEntry(
     // These are sibling directories within the vue-lynx package root.
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
-    const vueInternalPkgDir: string | undefined = path.resolve(pkgRoot, 'internal');
+    const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
     // IFR follows the full user graph, including vue-lynx/runtime. Library
     // code must pass through unchanged; pnpm resolves it outside node_modules.
     const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
@@ -364,6 +364,18 @@ export function applyEntry(
       includeWorkletPackages,
       ifr: opts.enableIFR ?? false,
       vapor: opts.vapor ?? false,
+    };
+    const libraryPassThroughDirs = [
+      mainThreadPkgDir,
+      vueInternalPkgDir,
+      runtimePkgDir,
+    ];
+    const isBootstrapModule = (resource: string): boolean => {
+      const resolvedResource = path.resolve(resource);
+      return libraryPassThroughDirs.some((dir) =>
+        resolvedResource === dir
+        || resolvedResource.startsWith(`${dir}${path.sep}`)
+      );
     };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
@@ -394,11 +406,12 @@ export function applyEntry(
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
       .add(nodeModulesExcludeWithAllowlist)
-      .add(mainThreadPkgDir)
-      .add(runtimePkgDir);
-    if (vueInternalPkgDir) {
-      workletMtExclude.add(vueInternalPkgDir);
-    }
+      // A string RuleSet condition is not consistently treated as a directory
+      // prefix across Rspack versions. Match explicitly so the library's
+      // bootstrap and runtime modules (entry-main, internal, and the full
+      // runtime that IFR pulls onto the MT) can never be stripped by
+      // worklet-loader-mt.
+      .add(isBootstrapModule);
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))

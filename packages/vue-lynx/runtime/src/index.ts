@@ -17,6 +17,7 @@
 
 import {
   createRenderer,
+  h as _vueH,
   onActivated as _onActivated,
   onBeforeMount as _onBeforeMount,
   onBeforeUnmount as _onBeforeUnmount,
@@ -78,6 +79,11 @@ import {
 } from './main-thread-ref.js';
 import { nodeOps, resetNodeOpsState } from './node-ops.js';
 import { OP, pushOp, takeOps } from './ops.js';
+import {
+  Page,
+  PAGE_COMPONENT_NAME,
+  pageRootContextKey,
+} from './Page.js';
 import {
   resetRunOnBackgroundState,
   runOnBackground,
@@ -190,6 +196,7 @@ export function createApp(
   rootProps?: Record<string, unknown>,
 ): VueLynxApp {
   const internalApp = ensureRenderer().createApp(rootComponent, rootProps);
+  internalApp.component(PAGE_COMPONENT_NAME, Page);
 
   const app: VueLynxApp = {
     get config() {
@@ -213,11 +220,17 @@ export function createApp(
       if (isIfrMainThread()) {
         registerMount(() => {
           const root = createPageRoot();
+          // Explicit <page> must reuse the native page root on the IFR
+          // main thread too — same context as the background mount below,
+          // so both renders resolve the identical root and stay
+          // deterministic across threads.
+          internalApp.provide(pageRootContextKey, { root, owner: null });
           internalApp.mount(root);
         });
         return;
       }
       const root = createPageRoot();
+      internalApp.provide(pageRootContextKey, { root, owner: null });
       internalApp.mount(root);
     },
 
@@ -688,7 +701,52 @@ export { defineAsyncComponent } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/render-function.html#h | Vue docs}
  * @public
  */
-export { h } from '@vue/runtime-core';
+function isVNodeLike(value: unknown): boolean {
+  return value != null
+    && typeof value === 'object'
+    && '__v_isVNode' in value;
+}
+
+function normalizePageSlots(children: unknown): unknown {
+  if (
+    children != null
+    && typeof children === 'object'
+    && !Array.isArray(children)
+    && !isVNodeLike(children)
+  ) {
+    return children;
+  }
+  if (typeof children === 'function') {
+    return { default: children };
+  }
+  return { default: () => children };
+}
+
+const _hWithPageRoot = (...args: unknown[]): VNode => {
+  const [type, propsOrChildren, children] = args;
+  const vueH = _vueH as (...values: unknown[]) => VNode;
+  if (type !== 'page') {
+    return vueH(...args);
+  }
+
+  if (args.length === 1) {
+    return vueH(Page);
+  }
+  if (args.length === 2) {
+    const secondArgIsChildren = Array.isArray(propsOrChildren)
+      || typeof propsOrChildren === 'function'
+      || typeof propsOrChildren === 'string'
+      || typeof propsOrChildren === 'number'
+      || isVNodeLike(propsOrChildren);
+    return secondArgIsChildren
+      ? vueH(Page, null, normalizePageSlots(propsOrChildren))
+      : vueH(Page, propsOrChildren);
+  }
+
+  return vueH(Page, propsOrChildren, normalizePageSlots(children));
+};
+
+export const h: typeof _vueH = _hWithPageRoot as typeof _vueH;
 
 /**
  * Returns the internal instance of the current component. For advanced use cases and library authors.
@@ -1154,10 +1212,15 @@ export const vModelRadio: ObjectDirective = vModelUnsupported;
 export { withKeys, withModifiers } from './event-modifiers.js';
 
 // ===========================================================================
-// Built-in components — Transition
+// Built-in components — Page, Transition
 // ===========================================================================
 
-export { Transition, TransitionGroup };
+// `Page` is the transparent wrapper behind explicit `<page>` roots — see
+// ./Page.ts for the full contract (single owner, attrs forwarded to the
+// native root). In templates, use lowercase `<page>` (rewritten by the
+// compiler) or import `Page` explicitly; only `VueLynxPage` is registered
+// globally.
+export { Page, Transition, TransitionGroup };
 
 // ===========================================================================
 // @internal — Testing utilities

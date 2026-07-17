@@ -13,6 +13,13 @@ import { waitForFlush } from './flush.js';
  * Vue Lynx's version also waits for the main thread to apply the ops, so
  * native Lynx elements are fully materialised when the callback fires.
  *
+ * Caveat: some Lynx builds never invoke the `callLepusMethod` callback that
+ * carries the acknowledgement. Until the engine has delivered one real
+ * acknowledgement, each flush falls back to a short timer so `nextTick()`
+ * cannot hang forever — on such engines the materialisation guarantee is
+ * best-effort (a dev-mode warning is logged when the fallback fires). Once a
+ * real acknowledgement has been observed, the strict guarantee applies.
+ *
  * @param fn - Optional callback to execute after flush
  * @returns A promise that resolves when the main thread has applied all pending ops
  *

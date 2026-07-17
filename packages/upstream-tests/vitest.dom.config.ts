@@ -140,6 +140,20 @@ const includedTests = [
 
 // Local (non-upstream) tests that need the full MT pipeline.
 includedTests.push(path.resolve(__dirname, 'src/mt/*.spec.ts'));
+includedTests.push(
+  path.resolve(__dirname, 'src/page-root-dom.spec.ts'),
+);
+
+const setupFiles = [
+  path.resolve(__dirname, 'src/runtime-dom-setup.ts'),
+];
+const upstreamSetup = path.resolve(
+  __dirname,
+  'core/scripts/setup-vitest.ts',
+);
+if (fs.existsSync(upstreamSetup)) {
+  setupFiles.push(upstreamSetup);
+}
 
 // ---------------------------------------------------------------------------
 // Config
@@ -167,10 +181,7 @@ export default defineConfig({
   test: {
     globals: true,
     include: includedTests,
-    setupFiles: [
-      path.resolve(__dirname, 'src/runtime-dom-setup.ts'),
-      path.resolve(__dirname, 'core/scripts/setup-vitest.ts'),
-    ],
+    setupFiles,
     testTimeout: 10000,
     alias: [
       {

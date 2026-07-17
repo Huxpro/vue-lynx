@@ -115,3 +115,31 @@ plus two fixes forward:
   (`vue-scope-class-css-plugin` — main's strip/cssid pair has no
   remaining call sites and its imports were dropped).
 - `prepare-examples` skip-dirs are the union of both branches.
+
+## Round 3 (Jul 17): #226 page-root reuse × IFR/scope-class lineage
+
+Main's #226 (explicit `<page>` reuses the native page root) merged after
+the IFR work and the 16/17 ops renumbering. The union resolutions:
+
+- `flush.ts`: main's ack-fallback timer (`createFlushAck`,
+  `engineAckObserved` latch) merged with the IFR completion signal — the
+  in-flight counter now decrements on the ack *settle* (callback OR
+  fallback OR test reset), so `vueIfrHydrationComplete` can never stall
+  behind an engine that drops callbacks. The fallback timer itself is
+  guarded for timer-less realms (Lepus MT, minimal BG test realms).
+- `createApp`: lazy `ensureRenderer()` (ours) + `Page` component
+  registration and `pageRootContextKey` provide (main's) — provided on
+  the IFR deferred-mount path too, so explicit `<page>` resolves the
+  same root on both threads.
+- Page.ts release: main cleared the scope id via `setScopeId(root, '')`
+  (cssId semantics); on the scope-class lineage that would *add* an
+  empty token — release now removes the applied `data-v-*` class.
+- Main's `page-root.spec.ts` ported: retired `SET_SCOPE_ID` assertions →
+  SET_CLASS tokens on uid 1; `.id` → `.uid`. Compiler options unified on
+  main's shared `vueLynxCompilerOptions` (with the `<page>` compile-time
+  nesting guard) plus our Vapor `eventDelegation: false`.
+- The IFR spec's hand-copied arity table had already drifted once
+  (15/16 → 16/17): it now imports the canonical `OP_ARITY` and rebuilds
+  its fixture whenever the built library is newer than the bundle —
+  shape checks alone cannot see protocol drift or an embedded old
+  runtime.

@@ -5,31 +5,108 @@ import { Badge } from '@theme';
 To prove Vue Lynx can carry a real product-grade app, we ported
 [Elk](https://github.com/elk-zone/elk) — the beloved Mastodon web client
 by Anthony Fu and team — into a **native Mastodon client**. It browses any
-public Mastodon instance as a guest (default `mas.to`), with timelines,
-threads, profiles, search, trends, dark mode and more.
+public Mastodon instance as a guest (default `mas.to`): timelines, threads,
+profiles, search, trends, dark mode and more.
 
-Try it below: the **Web** tab runs the real app on Lynx for Web against a
-live Mastodon instance; switch to the **QR Code** tab and scan it with
-Lynx Go / Lynx Explorer (see [Quick Start](/guide/quick-start) for
-installing it) to run the same `main.lynx.bundle` natively on your phone.
+Try it below. The **Web** tab runs the real app on Lynx for Web against a
+live instance; the **QR Code** tab runs the same `main.lynx.bundle`
+natively — scan it with Lynx Go / Lynx Explorer (see
+[Quick Start](/guide/quick-start) to install one).
 
-<Go example="elk" defaultFile="src/App.vue" />
+<Go
+  example="elk"
+  defaultFile="src/App.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+/>
 
 ### Native viewpager variant <Badge text="newer Lynx engine" type="warning" />
 
 The `elk-viewpager` fork backs the Explore and Notifications tabs with the
-**native viewpager element** ([`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)):
-panes swipe horizontally with a native snap animation, keep content and
-scroll position across swipes, and the tab bar syncs both ways (the
-pager's `change` event ↔ the `selectTab` UI method). It feels closer to a
-native client, at the cost of a heavier host requirement: on the web it
-uses `<x-viewpager-ng>` and works today, but native hosts need a Lynx
-engine that registers the extracted `<viewpager>` element
-(lynx-family/lynx develop after 2026-04 — newer than any released
-LynxExplorer, whose builds ship neither name). On older hosts the tab
-area renders blank; prefer the original example above there.
+native [`<viewpager>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+element instead of conditionally rendered panes. In
+[`TabPager.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/TabPager.vue)
+each pane is a `<viewpager-item>`: panes swipe horizontally with a native
+snap animation, keep content and scroll position across swipes, and the tab
+bar syncs both ways — a swipe fires the pager's `change` event (→ active
+tab), a tab tap calls its `selectTab` method (→ animate to that page). It
+feels much closer to a native client.
 
-<Go example="elk-viewpager" defaultFile="src/components/TabPager.vue" />
+`<viewpager>` is a Lynx [XElement](https://lynxjs.org/guide/ui/elements-components.html#xelement),
+registered under a different tag per platform, so `TabPager.vue` picks the
+tag at runtime from `SystemInfo.platform` (highlighted below):
+`<x-viewpager-ng>` on Lynx for Web, the extracted `<viewpager>` /
+`<viewpager-item>` on native OSS engines.
+
+<Go
+  example="elk-viewpager"
+  defaultFile="src/components/TabPager.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+  highlight={{
+    'src/components/TabPager.vue': '{12-18,40-56,72-87}',
+  }}
+/>
+
+:::warning Engine version dependency
+The extracted `<viewpager>` landed in the OSS engine in lynx-family/lynx
+`c1d8d7920` (2026-04) — **newer than any released LynxExplorer**. 3.8.1 and
+earlier register neither `<viewpager>` nor `<x-viewpager-ng>`, so the tab
+area renders blank (with a `LynxCreateUIException`). Run this variant on a
+host built from lynx `develop`; on released Explorers, use the default Elk
+example above, whose conditional tabs need no pager element.
+:::
+
+#### How much code does the native upgrade take?
+
+Almost none. Moving the whole app onto the native pager touches **three
+files**: the new `TabPager.vue` plus the two pages with swipeable tabs
+(`ExplorePage.vue`, `NotificationsPage.vue`). The other ~55 source files —
+masto.js client, content renderer, router, virtualized `<list>` — are
+byte-for-byte identical.
+
+At the call site it's a straight swap. The hand-rolled tab bar and
+`v-if` / `v-else-if` panes, where only the active pane exists:
+
+```vue
+<!-- elk: one pane rendered at a time -->
+<view class="explore-tabs">
+  <view class="explore-tab" @tap="tab = 'posts'">…</view>
+  <view class="explore-tab" @tap="tab = 'tags'">…</view>
+</view>
+<scroll-view v-if="tab === 'posts'">…</scroll-view>
+<scroll-view v-else-if="tab === 'tags'">…</scroll-view>
+```
+
+…become a component with one named slot per pane:
+
+```vue
+<!-- elk-viewpager: all panes live, swipeable -->
+<TabPager v-model="tab" :tabs="tabs">
+  <template #posts>…</template>
+  <template #tags>…</template>
+</TabPager>
+```
+
+That `v-if` → slot rewrite is the whole UI-side story — tab bar, underline
+animation, and pager ↔ tab sync all move into `TabPager`.
+
+One change isn't mechanical, and it captures what "native paging" really
+means. With `v-if`, only the visible pane exists, so a single shared
+paginator was enough. With the pager, **every pane is mounted at once** and
+swipeable — so each tab keeps its own data and scroll position.
+Notifications goes from one shared feed to one per tab:
+
+```diff
+- let pager = signedIn ? makePaginator() : empty;
+- const items = ref([]);          // one active feed, reset on tab switch
++ const feeds = reactive({         // one feed per pane, retained across swipes
++   all:     { items: [], state: 'idle' },
++   mention: { items: [], state: 'idle' },
++ });
+```
+
+That's the trade: you give up "render only what's visible," and the panes
+stay warm — swipe away and back, and you're exactly where you left off, no
+reload.
 
 ## Why Elk is a serious test
 
