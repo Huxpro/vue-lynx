@@ -19,8 +19,10 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 | `src/harness.mjs` | One-configuration subprocess (fresh module state, genuine cold first run) |
 | `src/correctness.mjs` | Renders every variant against jsdom and requires identical output |
 | `run.mjs` | Orchestrator: V8 + `--jitless` matrix → `results/results.json` + tables |
-| `sfc-probe/` | Same-source generated SFC built as VDOM `{off,ifr,ifr-et}` × Vapor `{off,ifr}` (explicit ET flag; never rely on `enableIFR` defaulting) |
-| `UNIFIED-RERUN.md` | Post-merge re-measurement on the unified vapor←main lineage |
+| `sfc-probe/` | Same-source generated SFC; `build-matrix.mjs` (fixed N) and `build-scale-matrix.mjs` (1k→10k × 5 architectures) |
+| `report-scale-trends.mjs` | Playground-style log-log FCP/bundle charts + α fits from scale-matrix results |
+| `UNIFIED-RERUN.md` | Post-merge re-measurement + scale-trend architecture read |
+| `results/scale-trends-*.html` | Generated trend pages (also copied to `website/docs/public/benchmark/`) |
 | `web-harness/run-browser.mjs` | Real dual-thread browser FCP runs over a directory of `.web.bundle` files |
 | `web-harness/probe-ifr.mjs` | Single-bundle diagnostic: paint timeline + browser console (catches silent IFR fallbacks) |
 

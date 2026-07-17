@@ -222,6 +222,22 @@ First Contentful Paint：
 - 4× 行是诚实的 caveat。无 ET 的 IFR 可能因 MT bundle 解析/执行而回退；本机上 IFR+ET 相对 off 仍略优。Vapor IFR 在 4× 回退——请按目标设备实测。
 - ET 在 gzip 上并不免费（本场景 MT section 相对纯 IFR 大约翻倍）。把它当作渲染成本对冲，而不是体积优化。
 
+### 规模趋势（1k → 10k）
+
+同一套五种架构、同一份生成 SFC，按 [benchmark playground](/zh/guide/benchmark-playground) 的思路做规模扫描。Log-log 的 FCP vs N、FCP vs MT gzip，以及缩放指数 α
+（<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 全页 ↗</a>
+·
+<a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 全页 ↗</a>）：
+
+<iframe
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR 架构规模趋势（CPU ×1）"
+  style={{ width: '100%', height: '1100px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
+  loading="lazy"
+/>
+
+×1 曲线的结论：**不带 ET 的 VDOM+IFR 在约 10k 元素时会慢过纯 VDOM**（375 vs 315 ms）——付了主线程 Vue 拷贝却没有 ET 的渲染成本对冲。VDOM+IFR+ET 全程最低。完整写法见 [`UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md)。
+
 ## Vapor 特有限制
 
 Vapor IFR 在 [Vapor 模式](/zh/guide/vapor-mode#current-limitations)之上增加这些约束：

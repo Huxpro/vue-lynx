@@ -118,7 +118,9 @@ for (const bundle of bundles) {
     await page.goto(
       `http://127.0.0.1:${PORT}/?${plainEntry ? plainEntry.query : `bundle=${bundle}`}`,
     );
-    await page.waitForFunction(() => window.__settled !== undefined, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.__settled !== undefined, null, {
+      timeout: 180_000,
+    });
     const r = await page.evaluate(() => ({
       fcp: window.__fcp,
       settled: window.__settled,

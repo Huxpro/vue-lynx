@@ -315,6 +315,27 @@ How to read this:
 - ET is not free on gzip (MT section roughly doubles vs IFR alone on this
   scene). Treat it as a render-cost hedge, not a size optimization.
 
+### Scale trends (1k → 10k)
+
+Same five architectures on one generated SFC, scaled like the
+[benchmark playground](/guide/benchmark-playground) storms. Log-log FCP vs N
+and FCP vs MT gzip, with scaling exponents α
+(<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 full page ↗</a>
+·
+<a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 full page ↗</a>):
+
+<iframe
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR architecture scale trends (CPU ×1)"
+  style={{ width: '100%', height: '1100px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
+  loading="lazy"
+/>
+
+Headline from the ×1 curve: **VDOM+IFR without ET crosses above plain VDOM by
+~10k elements** (375 vs 315 ms) — the MT Vue copy without ET's render-cost
+hedge. VDOM+IFR+ET stays lowest across the range. Full write-up:
+[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
+
 ## Vapor-specific limitations
 
 Vapor IFR adds these constraints to
