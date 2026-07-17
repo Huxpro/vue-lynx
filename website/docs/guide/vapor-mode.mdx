@@ -8,9 +8,8 @@ manipulates elements directly — no Virtual DOM, no per-component diffing.
 Vue Lynx runs it on Lynx's dual-thread architecture. On the update path it is
 **5.8–9.8× faster** on the background thread than VDOM (2.1–6.3× end-to-end),
 with creation at parity and roughly half the cross-thread traffic, for about
-**+26%** bundle gzip — full numbers in the
-[VDOM vs Vapor benchmark](/guide/benchmark-vapor) and the
-[React vs Vue playground](/guide/benchmark-playground).
+**+26%** bundle gzip — full numbers (and an interactive playground; ReactLynx
+as reference) in the [framework bench](/guide/benchmark-vapor).
 
 :::warning Experimental
 Vapor mode itself is **not part of any stable Vue release yet** — as of

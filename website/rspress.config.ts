@@ -204,12 +204,7 @@ export default defineConfig({
           context: 'vapor',
         },
         {
-          text: 'React vs Vue Playground',
-          link: '/guide/benchmark-playground',
-          context: 'vapor',
-        },
-        {
-          text: 'VDOM vs Vapor',
+          text: 'Framework bench',
           link: '/guide/benchmark-vapor',
           context: 'vapor',
         },
@@ -278,12 +273,7 @@ export default defineConfig({
           context: 'vapor',
         },
         {
-          text: 'React vs Vue Playground',
-          link: '/zh/guide/benchmark-playground',
-          context: 'vapor',
-        },
-        {
-          text: 'VDOM vs Vapor',
+          text: '框架测试',
           link: '/zh/guide/benchmark-vapor',
           context: 'vapor',
         },
