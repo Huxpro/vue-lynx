@@ -64,19 +64,20 @@ export const ZH = {
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/13': 'II · Vue 覆盖度 · 1/13',
-  'II · Vue coverage · 2/13': 'II · Vue 覆盖度 · 2/13',
-  'II · Vue coverage · 3/13': 'II · Vue 覆盖度 · 3/13',
-  'II · Vue coverage · 4/13': 'II · Vue 覆盖度 · 4/13',
-  'II · Vue coverage · 5/13': 'II · Vue 覆盖度 · 5/13',
-  'II · Vue coverage · 6/13': 'II · Vue 覆盖度 · 6/13',
-  'II · Vue coverage · 7/13': 'II · Vue 覆盖度 · 7/13',
-  'II · Vue coverage · 8/13': 'II · Vue 覆盖度 · 8/13',
-  'II · Vue coverage · 9/13': 'II · Vue 覆盖度 · 9/13',
-  'II · Vue coverage · 10/13': 'II · Vue 覆盖度 · 10/13',
-  'II · Vue coverage · 11/13': 'II · Vue 覆盖度 · 11/13',
-  'II · Vue coverage · 12/13': 'II · Vue 覆盖度 · 12/13',
-  'II · Vue coverage · 13/13': 'II · Vue 覆盖度 · 13/13',
+  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
+  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
+  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
+  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
+  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
+  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
+  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
+  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
+  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
+  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
+  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
+  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
+  'v-once / v-memo':
+    '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
@@ -632,10 +633,8 @@ export const ZH_NOTES = [
   `<p>原生树上的组件实例缓存 —— 切 tab 再回来,状态还在。<code>include</code> / <code>exclude</code> / <code>max</code>,加上 <code>onActivated</code> / <code>onDeactivated</code>。@jynxbt 贡献(#153),落在 <code>0.4.0</code>。</p>`,
   // 25 Teleport
   `<p>按 id 渲染到目标节点 —— modal / overlay,不用和滚动层叠硬刚。BG 侧 <code>idRegistry</code> 解析 <code>to="#id"</code>;内容保持响应式,<code>:disabled</code> 则就地渲染。@sentomk 贡献(#161),落在 <code>0.4.0</code>。</p>`,
-  // 26 v-once
-  `<p><code>v-once</code> 首次渲染后冻结。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong> —— 比浏览器更值钱。@KealanAU 验证并文档化(#176), <code>0.4.0</code>。点 Increment:live 会变,frozen 不动。</p>`,
-  // 27 v-memo
-  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十三个特性、十三个现场应用。API 讲完了 —— 接下来,骑在它上面的生态。</p>`,
+  // 26 v-once / v-memo
+  `<p><strong>两个跳过指令,同一套跨线程收益。</strong><code>v-once</code> 首次渲染后冻结;<code>v-memo</code> 在依赖未变时跳过 —— 同一思路,按依赖列表判定。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong>。@KealanAU:<code>v-once</code>(#176), <code>isMemoSame</code> + <code>v-memo</code>(#156 / #181), <code>0.4.0</code>。</p><p><strong>现场:</strong>点 Increment —— live 会变,frozen 不动;行在依赖未变前会跳过,直到你 toggle/rename。十二个特性。API 讲完了 —— 接下来,骑在它上面的生态。</p>`,
   // 28 Ecosystem intro
   `<p><strong>把兼容性主张说死。</strong>Vue 不只是一套 API —— 它是一个生态。如果 Pinia、Router、Query、Tailwind 都要 fork 才能跑,我们就失败了。它们不用。接下来四台现场手机;同一批包、同一套 API。</p>`,
   // 29 Pinia
