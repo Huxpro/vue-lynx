@@ -71,8 +71,8 @@ the other measures the bill.
 | **Fast how?** | Paint in `loadTemplate` on MT; BG boot overlaps. Cheap create path (ET / Vapor trees) required at scale. |
 | **Cost** | Dual bundles · ~**2×** gzip · sync MT work. Empty fetch-first screens don’t benefit. |
 | **Architecture** | Wins only where a real thread boundary creates a blank frame. |
-| **Ship** | VDOM: **`enableIFR: true`** (brings ET). Don’t ship IFR without ET at scale. |
-| **Skip when** | Nothing to paint before a fetch, or ~2× gzip is unacceptable without measuring. |
+| **Ship** | VDOM: **`enableIFR: true`** (brings ET). Don’t ship IFR without ET at scale. Always **mount** a real shell — gate fetches, don’t skip `app.mount()`. |
+| **Skip when** | Nothing to paint before a fetch; large web bundles under heavy CPU throttle (measure first); or ~2× gzip is unacceptable without measuring. |
 
 ---
 
@@ -81,6 +81,7 @@ the other measures the bill.
 <span id="ifr-on-vapor" />
 <span id="element-templates" />
 <span id="hydration" />
+<span id="writing-ifr-friendly-first-screens" />
 <span id="account-for-current-limitations" />
 
 ## Enable
@@ -103,9 +104,10 @@ export default defineConfig({
 | --- | --- |
 | **Hydration** | Same app + initial data on both threads; structural mismatch drops the IFR win (dev log), not correctness. |
 | **First-screen rules** | Deterministic render; side effects in Composition API lifecycles (suppressed on MT); Options API `mounted()` is not yet suppressed. |
+| **Shell IFR** | Fetch-driven screens should still **mount** a useful shell on the main thread — gate network work (e.g. `useQuery({ enabled: !isIfrMainThread() })`), do not skip `app.mount()`. Skipping mount keeps the larger IFR bundle with none of the first-paint benefit. |
 | **Bisect ET** | `enableIFR: true, enableElementTemplates: false` — debug only, not a perf knob. |
 | **Vapor** | Experimental (Vue 3.6 prerelease). See [Vapor mode](/guide/vapor-mode#current-limitations). |
 
-Strategy ladder, cost space, examples gzip/TTI, native:
-**[IFR Benchmarks](/guide/ifr-benchmarks)** · product FCP:
+Strategy ladder, real-thread FCP, cost space, examples gzip/TTI, native:
+**[IFR Benchmarks](/guide/ifr-benchmarks)** · product FCP matrix:
 **[Unified Matrix](/guide/benchmark-unified)**.

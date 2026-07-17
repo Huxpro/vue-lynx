@@ -2,7 +2,7 @@
   "name": "@vue-lynx-example/elk-viewpager",
   "version": "0.0.1",
   "private": true,
-  "description": "Elk (Mastodon client) ported to Vue-Lynx \u2014 native Mastodon client example",
+  "description": "Elk (Mastodon client) ported to Vue-Lynx — native Mastodon client example",
   "license": "MIT",
   "type": "module",
   "files": [

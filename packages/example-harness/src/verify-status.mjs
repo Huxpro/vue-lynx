@@ -23,13 +23,20 @@ export async function computeEntrySourceHash(root, row) {
   }
 
   const rootPath = fileURLToPath(root);
-  for (const path of [
-    join(rootPath, "examples", example, "lynx.config.ts"),
-    join(rootPath, "examples", example, "package.json"),
-  ]) {
-    hash.update(await readFile(path));
-    hash.update("\0");
-  }
+  hash.update(await readFile(join(rootPath, "examples", example, "lynx.config.ts")));
+  hash.update("\0");
+
+  // package.json feeds the hash without its version field: changesets bumps
+  // versions on every release with no source change, and PR CI runs on the
+  // merge ref — a release on main would otherwise mark every published
+  // example stale at once.
+  const pkg = JSON.parse(
+    await readFile(join(rootPath, "examples", example, "package.json"), "utf8"),
+  );
+  delete pkg.version;
+  hash.update(JSON.stringify(pkg));
+  hash.update("\0");
+
   hash.update(JSON.stringify(scenarios[row.scenario]));
   return hash.digest("hex");
 }

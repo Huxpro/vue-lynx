@@ -50,8 +50,9 @@ export const ENTRIES = {
 };
 
 // Explicit flags for every dimension. After #216, `enableIFR: true` alone
-// ALSO enables Element Templates by default — injecting IFR without
-// `enableElementTemplates: false` makes `ifr` identical to `ifr-et`.
+// ALSO enables Element Templates by default — the previous `ifr` inject
+// (without `enableElementTemplates: false`) was therefore identical to
+// `ifr-et` and could not isolate the ET contribution.
 const CONFIGS = {
   off: '      enableIFR: false,\n      enableElementTemplates: false,\n',
   ifr: '      enableIFR: true,\n      enableElementTemplates: false,\n',

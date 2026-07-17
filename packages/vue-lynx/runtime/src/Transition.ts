@@ -88,9 +88,12 @@ function removeTransitionClass(el: ShadowElement, cls: string): void {
 // 2. Wait for the MT ack (waitForFlush) — ensures the first batch of ops
 //    (enter-from / leave-from classes) has been applied on the Main Thread.
 //
-// 3. On web/dev, requestAnimationFrame provides a real frame boundary so
-//    the browser has painted the initial state before we apply the next.
-//    On native BG thread, the cross-thread round-trip already provides this.
+// 3. On web/dev, use the same double-rAF boundary as Vue DOM so the browser
+//    paints the initial state before we apply the next.  On native BG thread,
+//    requestAnimationFrame is not generally available, and the MT ack only
+//    confirms that the ops were applied — it does not guarantee a rendered
+//    frame.  Defer one timer tick there instead of switching classes
+//    immediately.
 // ---------------------------------------------------------------------------
 
 function nextFrame(cb: () => void): void {
@@ -98,11 +101,14 @@ function nextFrame(cb: () => void): void {
   queuePostFlushCb(() => {
     // Step 2: wait for MT to acknowledge it applied the ops
     waitForFlush().then(() => {
-      // Step 3: ensure at least one frame so the initial state is rendered
+      // Step 3: ensure the initial state reaches a rendered frame.
       if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(cb);
-      } else {
-        cb();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(cb);
+        });
+      }
+      else {
+        setTimeout(cb, 16);
       }
     });
   });

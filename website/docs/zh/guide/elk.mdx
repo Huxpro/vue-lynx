@@ -103,6 +103,20 @@ pager ↔ 标签双向同步，统统搬进 `TabPager`。
 这就是取舍：你放弃「只渲染可见内容」，换来面板始终「热着」——滑走再滑回，
 还停在你离开的位置，无需重新加载。
 
+#### 更进一步：会折叠的个人主页
+
+个人主页把这套模式又往「原生 profile」推进了一步。
+[`AccountPage`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/pages/AccountPage.vue)
+把同一个 viewpager 包进了 Lynx 的折叠头部协调器
+（[`StickyTabView.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/StickyTabView.vue)）：
+向下滚动时，banner／简介／统计构成的**头部折叠收起**，**标签栏吸顶**，
+下面的 Posts / Replies / Media 面板继续**横向翻页**，各自保留自己的 feed
+和滚动位置。协调器按「头部（折叠）+ 工具栏（吸顶标签）+ 插槽（viewpager）」
+堆叠，其嵌套滚动会先折叠头部，再把滚动交给当前面板的列表。和 viewpager
+一样，它按平台注册不同标签名——Lynx for Web 用旧版 `<x-foldview-ng>`，
+原生 OSS 引擎用抽取出来的
+[`<scroll-coordinator>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)。
+
 ## 为什么 Elk 是一块试金石
 
 Elk 是一个约 196 个组件、55 个页面、50 个 composable 的 Nuxt 3 应用。

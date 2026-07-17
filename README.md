@@ -42,6 +42,7 @@ pnpm dev
 - [`provide-inject`](examples/provide-inject) — `provide()` / `inject()`
 - [`suspense`](examples/suspense) — Suspense and async components
 - [`transition`](examples/transition) — `<Transition>` and `<TransitionGroup>`
+- [`teleport`](examples/teleport) — `<Teleport to="#id">`
 - [`css-features`](examples/css-features) — CSS selectors and features
 - [`main-thread`](examples/main-thread) — Main thread script
 - [`networking`](examples/networking) — Network requests and data fetching
