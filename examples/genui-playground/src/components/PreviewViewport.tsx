@@ -58,7 +58,13 @@ function withPreviewMetricId(src: string, metricId: string): string {
 
   try {
     const url = new URL(src, window.location.href);
-    if (!url.pathname.endsWith('/render.html')) return src;
+    // Accept both `render.html` and Vercel cleanUrls `/render`.
+    if (
+      !url.pathname.endsWith('/render.html')
+      && !url.pathname.endsWith('/render')
+    ) {
+      return src;
+    }
     url.searchParams.set(RENDER_METRIC_ID_QUERY_PARAM, metricId);
     return url.toString();
   } catch {

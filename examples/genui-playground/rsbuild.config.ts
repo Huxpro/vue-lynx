@@ -268,9 +268,9 @@ export default defineConfig({
     ],
   },
   output: {
-    // 'auto' keeps asset URLs relative so the built app works both served
-    // at the root and mounted under a subpath (e.g. the Vue Lynx website
-    // embeds it at /genui-playground/).
+    // Absolute when ASSET_PREFIX is set (website embed under
+    // /genui-playground/); 'auto' keeps relative URLs for standalone
+    // `pnpm build` / `pnpm preview` at the server root.
     assetPrefix: process.env.ASSET_PREFIX ?? 'auto',
     copy: [
       {

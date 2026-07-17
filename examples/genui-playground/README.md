@@ -2,7 +2,7 @@
 
 An IDE-style web playground for the GenUI protocols (A2UI v0.9 and OpenUI
 Lang v0.5), ported from `lynx-family/lynx-stack`'s `genui/playground` and
-embedded on the Vue Lynx website at `/playground`.
+embedded on the Vue Lynx website at `/genui`.
 
 ## Architecture
 
@@ -33,7 +33,8 @@ pnpm dev:lynx     # rspeedy dev server (for native preview via QR code)
 ```
 
 The website copies `dist/` to `docs/public/genui-playground/` via
-`website/scripts/prepare-playground.mjs`.
+`website/scripts/prepare-playground.mjs` (built with
+`ASSET_PREFIX=/genui-playground/` so hashed assets survive cleanUrls).
 
 ## Divergences from upstream
 

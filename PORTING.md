@@ -164,10 +164,10 @@ Legend: ✅ done · 🚧 in progress · ⬜ pending · ❌ not ported (reason gi
 | `ui-judge/` | Dev-only LLM screenshot-judging harness for upstream CI. Not part of the shipped library. |
 | `playground/lynx-src/a2ui-lazy-component` + the `lazy-component` demo / `LazyComponent` catalog entry | Requires a separately-built Lynx **lazy bundle** (`experimental_isLazyBundle`) — a ReactLynx toolchain feature the Vue Lynx plugin does not implement. The `LazyComponent` catalog *component* itself is ported; only the playground demo that needs a real lazy bundle is omitted. |
 
-## Playground (`playground/` → `examples/genui-playground` + website `/playground`)
+## Playground (`playground/` → `examples/genui-playground` + website `/genui`)
 
 The full IDE-style playground is adopted as `examples/genui-playground` and
-embedded on the website at `/playground` (nav entry, `docs/playground.mdx`
+embedded on the website at `/genui` (nav entry, `docs/genui.mdx`
 full-bleed iframe; static build copied to `docs/public/genui-playground/`
 by `website/scripts/prepare-playground.mjs`).
 
@@ -175,7 +175,7 @@ by `website/scripts/prepare-playground.mjs`).
 | ----- | ------ | ----- |
 | `playground/src` web shell (Create / Examples / Catalog / Bench, editor, phone preview, QR, playback) | ✅ copied as-is (React DOM) | Kept React deliberately: it is website chrome, not Lynx UI — the Vue Lynx website is already React (rspress), and rewriting ~40 shell components in Vue adds no user value. Decision recorded in `examples/genui-playground/README.md`. |
 | `playground/lynx-src/{a2ui,openui}` preview apps | ✅ ported to Vue | Full playground protocol: `globalProps` boot, mock-agent streaming, playback mode (`A2UI_PLAYBACK_CONTROL`/`A2UI_PLAYBACK_PROGRESS`), `A2UI_REPLAY_MESSAGES`/`A2UI_LIVE_MESSAGES`/`A2UI_ACTION_RESPONSE`, `A2UI_PLAYBACK_SYNC`/`A2UI_USER_ACTION` bridge calls. |
-| Website embed | ✅ | `/playground` + `/zh/playground` pages; verified in-browser (all tabs for both protocols, instant-example tiles, replay into preview, playback metrics FCP/FMP/TTI reporting, icon glyphs). |
+| Website embed | ✅ | `/genui` + `/zh/genui` pages; verified in-browser (all tabs for both protocols, instant-example tiles, replay into preview, playback metrics FCP/FMP/TTI reporting, icon glyphs). |
 | Shell divergences | — | Bundle filenames `*.web.bundle` (Vue plugin) instead of `*.web.js`; host page imports `material-icons.css` (shadow-root `@font-face` limitation below); dead `UsageSection.tsx` and rstest files dropped; `lazy-component` demo omitted (see ❌ table). |
 
 ## Host-framework fixes & limitations found during verification

@@ -1,7 +1,7 @@
 /**
  * Pre-build script that builds the GenUI playground (examples/genui-playground)
  * and copies its static dist into docs/public/genui-playground/, where the
- * /playground page embeds it via an iframe.
+ * /genui page embeds it via an iframe.
  */
 
 import { execSync } from 'node:child_process';
@@ -14,6 +14,9 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 const PLAYGROUND_DIR = path.resolve(REPO_ROOT, 'examples/genui-playground');
 const PLAYGROUND_DIST = path.join(PLAYGROUND_DIR, 'dist');
 const DEST = path.resolve(__dirname, '../docs/public/genui-playground');
+// Absolute prefix so hashed assets resolve even if a host strips the trailing
+// slash from /genui-playground/ (e.g. Vercel cleanUrls + /index.html redirects).
+const ASSET_PREFIX = '/genui-playground/';
 
 function copyDirRecursive(src, dest) {
   fs.mkdirSync(dest, { recursive: true });
@@ -31,9 +34,9 @@ function copyDirRecursive(src, dest) {
 console.info('Preparing GenUI playground...');
 
 // The playground build needs the built Lynx bundles (www/) and the shell.
-// `pnpm build` runs rspeedy (lynx-src → www/) then rsbuild (shell → dist/,
-// which copies www/ in as its public dir).
-if (!fs.existsSync(path.join(PLAYGROUND_DIST, 'index.html'))) {
+// Always rebuild with the website asset prefix so a leftover local `dist/`
+// (dev `assetPrefix: 'auto'`) is never published under the wrong paths.
+{
   // The playground imports both vue-lynx and vue-lynx-genui — make sure
   // both workspace dists exist (root `pnpm build` builds the two of them).
   const libBuilt = fs.existsSync(
@@ -46,8 +49,23 @@ if (!fs.existsSync(path.join(PLAYGROUND_DIST, 'index.html'))) {
     console.info('Building workspace libraries (required by the playground)...');
     execSync('pnpm build', { cwd: REPO_ROOT, stdio: 'inherit' });
   }
-  console.info('Building playground (no dist/ found)...');
-  execSync('pnpm build', { cwd: PLAYGROUND_DIR, stdio: 'inherit' });
+  console.info(
+    `Building playground with ASSET_PREFIX=${ASSET_PREFIX}...`,
+  );
+  execSync('pnpm build', {
+    cwd: PLAYGROUND_DIR,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      ASSET_PREFIX,
+    },
+  });
+}
+
+if (!fs.existsSync(path.join(PLAYGROUND_DIST, 'index.html'))) {
+  throw new Error(
+    `Playground build did not produce ${path.join(PLAYGROUND_DIST, 'index.html')}`,
+  );
 }
 
 if (fs.existsSync(DEST)) {

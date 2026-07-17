@@ -180,8 +180,8 @@ export default defineConfig({
         link: '/guide/quick-start',
       },
       {
-        text: 'Playground',
-        link: '/playground',
+        text: 'GenUI',
+        link: '/genui',
       },
       {
         text: 'API',
@@ -198,8 +198,8 @@ export default defineConfig({
             link: '/guide/quick-start',
           },
           {
-            text: 'Playground',
-            link: '/playground',
+            text: 'GenUI',
+            link: '/genui',
           },
           {
             text: 'API',
@@ -216,8 +216,8 @@ export default defineConfig({
             link: '/zh/guide/quick-start',
           },
           {
-            text: '演练场',
-            link: '/zh/playground',
+            text: 'GenUI',
+            link: '/zh/genui',
           },
           {
             text: 'API',
