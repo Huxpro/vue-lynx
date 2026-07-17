@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-17T22:18:45.856Z @ 5a045d1a
+> Generated 2026-07-17T22:55:16.556Z @ fac8b548
 > Host: 4× Intel(R) Xeon(R) Processor
 
 ## Why unify?
@@ -32,7 +32,7 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vdom-ifr-et | ✓ | ✓ | — | — |
 | vapor | ✓ | ✓ | ✓ | — |
 | vapor-ifr | ✓ | ✓ | — | — |
-| react | ✓ | — | — | — |
+| react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
 
@@ -120,14 +120,14 @@ create@10k react/vdom = 0.86×; selectStorm@10k react/vapor = 22.9×.
 
 ### Content-probe FCP (lynx-web ×1, ms median)
 
-| scale | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
-|---|---|---|---|---|---|
-| 1k | 87 | 78 | 70 | 93 | 87 |
-| 3k | 143 | 120 | 119 | 156 | 141 |
-| 5k | 188 | 163 | 161 | 210 | 193 |
-| 10k | 310 | 379 | 278 | 365 | 338 |
-| 20k | 587 | 695 | 526 | 692 | 637 |
-| 30k | 842 | 1010 | 771 | 1010 | 906 |
+| scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
+|---|---|---|---|---|---|---|
+| 1k | 61 | 87 | 78 | 70 | 93 | 87 |
+| 3k | 99 | 143 | 120 | 119 | 156 | 141 |
+| 5k | 141 | 188 | 163 | 161 | 210 | 193 |
+| 10k | 228 | 310 | 379 | 278 | 365 | 338 |
+| 20k | 434 | 587 | 695 | 526 | 692 | 637 |
+| 30k | 631 | 842 | 1010 | 771 | 1010 | 906 |
 
 
 ## Sources ingested
@@ -139,6 +139,8 @@ create@10k react/vdom = 0.86×; selectStorm@10k react/vapor = 22.9×.
 - instrumented-vdom-vapor: `/workspace/packages/benchmark/results/latest.json`
 - ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-x1.json`
 - ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-x4.json`
+- ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-react-x1.json`
+- ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-react-x4.json`
 - strategy-node-jitless: `/workspace/packages/ifr-bench/results/results.json`
 - bare-dom: `/workspace/packages/benchmark/results/web-baseline-latest.json`
 

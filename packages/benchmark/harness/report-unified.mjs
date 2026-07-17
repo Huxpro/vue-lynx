@@ -77,6 +77,7 @@ const STORM_ROWS = [
 ];
 
 const FCP_ARCHS = [
+  { key: 'react', label: 'ReactLynx', color: '#eda100' },
   { key: 'vdom', label: 'VDOM', color: '#6b7280' },
   { key: 'vdom-ifr', label: 'VDOM+IFR', color: '#2563eb' },
   { key: 'vdom-ifr-et', label: 'VDOM+IFR+ET', color: '#7c3aed' },
@@ -287,26 +288,119 @@ function fcpSeries(cpu) {
   })).filter((s) => s.pts.length);
 }
 
-const STATUS_CLASS = {
-  holds: 'good',
-  'holds-with-caveat': 'warn',
-  'holds-locally': 'warn',
-  'holds-as-negative-control': 'good',
-  challenge: 'serious',
-  weakened: 'serious',
-  'needs-data': 'warn',
-  'falsified-as-universal': 'critical',
-  falsified: 'critical',
-};
+function g(arch, scale, metric, workload = 'table', cpu = 1) {
+  return unified.cells.find(
+    (c) =>
+      c.architecture === arch &&
+      c.scale === scale &&
+      c.metric === metric &&
+      c.workload === workload &&
+      (c.cpuThrottle ?? 1) === cpu,
+  )?.median;
+}
 
-function renderVerdicts() {
+function fmtRatio(a, b) {
+  if (a == null || b == null || b === 0) return null;
+  return a / b;
+}
+
+/** Takeaway cards — headlines a human can quote, not claim-status badges. */
+function buildConclusions() {
+  const stormVapor = g('vapor', '10k', 'selectStorm');
+  const stormVdom = g('vdom', '10k', 'selectStorm');
+  const stormReact = g('react', '10k', 'selectStorm');
+  const stormEt = g('vdom-ifr-et', '10k', 'selectStorm');
+  const stormIfr = g('vdom-ifr', '10k', 'selectStorm');
+  const createReact = g('react', '10k', 'create');
+  const createVdom = g('vdom', '10k', 'create');
+  const createVapor = g('vapor', '10k', 'create');
+  const fcpReact = g('react', '10k', 'fcp', 'content-probe');
+  const fcpEt = g('vdom-ifr-et', '10k', 'fcp', 'content-probe');
+  const fcpOff = g('vdom', '10k', 'fcp', 'content-probe');
+  const fcpIfr = g('vdom-ifr', '10k', 'fcp', 'content-probe');
+  const fcpIfr1k = g('vdom-ifr', '1k', 'fcp', 'content-probe');
+  const fcpOff1k = g('vdom', '1k', 'fcp', 'content-probe');
+  const bgSelectV = unified.cells.find(
+    (c) => c.architecture === 'vapor' && c.metric === 'select_bg' && c.instrumented,
+  )?.median;
+  const bgSelectD = unified.cells.find(
+    (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
+  )?.median;
+
+  const out = [];
+
+  const vaporStormX = fmtRatio(stormVdom, stormVapor);
+  const vaporReactX = fmtRatio(stormReact, stormVapor);
+  if (vaporStormX != null) {
+    out.push({
+      tone: 'good',
+      title: `Vapor ~${vaporStormX.toFixed(1)}× VDOM on selectStorm@10k`,
+      body: `Black-box sustained select: VDOM ${stormVdom?.toFixed(0)} ms → Vapor ${stormVapor?.toFixed(0)} ms${
+        vaporReactX != null
+          ? ` · ~${vaporReactX.toFixed(0)}× vs ReactLynx (${stormReact?.toFixed(0)} ms)`
+          : ''
+      }. One-shot select stays near the frame floor.`,
+    });
+  }
+
+  if (bgSelectV != null && bgSelectD != null) {
+    out.push({
+      tone: 'good',
+      title: `Vapor ~${(bgSelectD / bgSelectV).toFixed(1)}× on BG select (instrumented)`,
+      body: `Micro pipeline: vdom bg ${bgSelectD.toFixed(2)} ms → vapor ${bgSelectV.toFixed(2)} ms. Storms are the user-visible version of this gap.`,
+    });
+  }
+
+  if (createReact != null && createVdom != null) {
+    const x = createVdom / createReact;
+    out.push({
+      tone: 'good',
+      title: `ReactLynx leads create@10k (~${x.toFixed(2)}× vs VDOM)`,
+      body: `ReactLynx ${createReact.toFixed(0)} ms · VDOM ${createVdom.toFixed(0)} ms · Vapor ${createVapor?.toFixed(0) ?? '—'} ms. Snapshot bulk-instantiate wins creation; Vue wins updates.`,
+    });
+  }
+
+  if (fcpReact != null && fcpEt != null && fcpOff != null) {
+    out.push({
+      tone: 'good',
+      title: `ReactLynx lowest FCP@10k (${fcpReact.toFixed(0)} ms)`,
+      body: `Same-density content probe: ReactLynx ${fcpReact.toFixed(0)} · VDOM+IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms. Snapshot+IFR is always on for RL.`,
+    });
+  }
+
+  if (fcpIfr != null && fcpOff != null && fcpIfr1k != null && fcpOff1k != null) {
+    const d1 = ((fcpIfr1k - fcpOff1k) / fcpOff1k) * 100;
+    const d10 = ((fcpIfr - fcpOff) / fcpOff) * 100;
+    out.push({
+      tone: d10 > 0 ? 'critical' : 'warn',
+      title: `IFR without ET: ${d1.toFixed(0)}% @1k → +${d10.toFixed(0)}% @10k`,
+      body: `“−19% FCP” is not a constant. Plain IFR helps small screens, then loses by ~${Math.abs(d10).toFixed(0)}% at 10k+. IFR+ET is the scale hedge.`,
+    });
+  }
+
+  if (stormEt != null && stormVdom != null && stormIfr != null) {
+    out.push({
+      tone: 'warn',
+      title: `IFR+ET also speeds post-mount storms (${(stormEt / stormVdom).toFixed(2)}×)`,
+      body: `selectStorm@10k: off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · IFR+ET ${stormEt.toFixed(0)} ms. Plain IFR ≈ off; ET clone helps after first frame too.`,
+    });
+  }
+
+  out.push({
+    tone: 'warn',
+    title: 'Absolute ms are host-bound — quote ratios',
+    body: 'Same harness, different machines move medians by 2×+. Prefer same-host ratios (Vapor/VDOM, React/Vapor, IFR Δ%).',
+  });
+
+  return out;
+}
+
+function renderConclusions() {
   let html = '<div class="verdicts">';
-  for (const v of unified.verdicts ?? []) {
-    const cls = STATUS_CLASS[v.status] ?? 'warn';
-    html += `<article class="verdict ${cls}">
-      <header><code>${v.id}</code><span class="badge">${v.status}</span></header>
-      <p class="claim">${escapeHtml(v.claim)}</p>
-      <p class="detail">${escapeHtml(v.detail)}</p>
+  for (const c of buildConclusions()) {
+    html += `<article class="verdict ${c.tone}">
+      <header><strong class="takeaway">${escapeHtml(c.title)}</strong></header>
+      <p class="detail">${escapeHtml(c.body)}</p>
     </article>`;
   }
   return `${html}</div>`;
@@ -317,17 +411,6 @@ function escapeHtml(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-}
-
-function renderFindings() {
-  const bullets = [
-    'Absolute ms are <b>host-bound</b> — old playground quoted React selectStorm@10k ≈ 2544 ms; this host ≈ 1018 ms. Ratios travel.',
-    'Vapor selectStorm@10k is <b>~8×</b> VDOM and <b>~23×</b> React on the same host. One-shot select stays near the frame floor.',
-    'Plain IFR ≈ off for post-mount table ops (selectStorm@10k 1.01×). First-frame / bundle concern only.',
-    '<b>IFR+ET is not first-frame-only</b> on this table: selectStorm@10k 0.72× vs off — template clone helps after mount.',
-    '“−19% FCP” is not a constant: IFR without ET <b>loses ~20% at 10k–30k</b>; IFR+ET stays ahead across the ladder.',
-  ];
-  return `<ul class="findings">${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>`;
 }
 
 function coverageTable() {
@@ -421,18 +504,9 @@ const html = `<!doctype html>
   .verdict.warn { border-left: 4px solid var(--warn); }
   .verdict.serious { border-left: 4px solid var(--serious); }
   .verdict.critical { border-left: 4px solid var(--critical); }
-  .verdict header { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 6px; }
-  .verdict code { font-size: 11.5px; }
-  .badge {
-    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-    padding: 2px 7px; border-radius: 999px; background: var(--line); color: var(--ink);
-  }
-  .verdict.good .badge { background: color-mix(in srgb, var(--good) 28%, var(--surface)); }
-  .verdict.warn .badge { background: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
-  .verdict.serious .badge { background: color-mix(in srgb, var(--serious) 35%, var(--surface)); }
-  .verdict.critical .badge { background: color-mix(in srgb, var(--critical) 35%, var(--surface)); color: #fff; }
-  .claim { font-size: 12.5px; color: var(--ink-2); margin: 0 0 8px; font-style: italic; }
-  .detail { font-size: 13px; margin: 0; }
+  .verdict header { margin-bottom: 8px; }
+  .takeaway { font-size: 14px; font-weight: 700; line-height: 1.35; }
+  .detail { font-size: 13px; margin: 0; color: var(--ink-2); }
   .findings { margin: 0 0 8px; padding-left: 18px; max-width: 920px; }
   .findings li { margin: 6px 0; }
   .notes { margin-top: 24px; font-size: 12.5px; color: var(--ink-2); max-width: 920px; }
@@ -456,15 +530,12 @@ const html = `<!doctype html>
   <span class="pill">env: lynx-web (primary)</span>
   <span class="pill">ladder: 1k → 30k</span>
   <span class="pill">cells: ${unified.cells.length}</span>
-  <span class="pill">claims graded: ${(unified.verdicts ?? []).length}</span>
+  <span class="pill">conclusions: ${buildConclusions().length}</span>
 </div>
 
-<h2>Claim reevaluation</h2>
-<p class="sub">Published assumptions from the three old campaigns, graded against the unified result set.</p>
-${renderVerdicts()}
-
-<h2>Same-host findings</h2>
-${renderFindings()}
+<h2>Conclusions</h2>
+<p class="sub">Takeaways from the unified same-scale matrix — quote the headline, then the detail.</p>
+${renderConclusions()}
 
 <h2>Table storms — IFR × framework matrix</h2>
 <p class="sub">
@@ -508,26 +579,24 @@ ${renderFindings()}
   })}
 </div>
 
-<h2>Content-probe FCP (IFR architecture ladder)</h2>
+<h2>Content-probe FCP (architecture ladder)</h2>
 <p class="sub">
-  Same generated <b>Vue</b> SFC, ~1k→30k elements — product configs for Vue Lynx IFR/ET only.
-  ReactLynx is <b>not</b> on this ladder yet: the probe is one compiled Vue source with
-  flag cells; RL would need a parallel same-content app (see <code>ifr-bench/rl-probe</code>
-  for a small-screen control, not the 1k→30k matrix). This is the first-frame scale —
+  Same card density (~1k→30k elements): Vue SFC flag matrix + parallel ReactLynx
+  Snapshot+IFR probe (<code>ifr-bench/rl-scale-probe</code>). First-frame scale —
   <b>not</b> comparable to storm ms above. CPU ×1.
 </p>
 <div class="scroll">${renderFcpTable(1)}</div>
 <div class="charts" style="margin-top:16px">
   ${renderLineChart({
     title: 'FCP vs content scale (CPU ×1)',
-    sub: 'IFR without ET crosses above plain VDOM by 10k. IFR+ET stays lowest through 30k.',
+    sub: 'ReactLynx Snapshot+IFR leads. Among Vue: IFR without ET crosses above plain VDOM by 10k; IFR+ET is the Vue scale hedge.',
     series: fcpSeries(1),
     xLabel: 'elements N — linear',
     yLabel: 'FCP — ms',
   })}
   ${renderLineChart({
     title: 'FCP vs content scale (CPU ×4)',
-    sub: 'Throttled CPU amplifies MT bundle-parse cost. Plain IFR often regresses.',
+    sub: 'Throttled CPU amplifies MT bundle-parse cost. Plain IFR often regresses; ReactLynx stays lowest.',
     series: fcpSeries(4),
     xLabel: 'elements N — linear',
     yLabel: 'FCP — ms',

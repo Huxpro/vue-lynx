@@ -169,16 +169,17 @@ function ingestInstrumented(unified) {
 }
 
 function ingestIfrScaleFcp(unified) {
+  // Vue ladder + ReactLynx ladder (same nCards → ~elements mapping).
   for (const [file, cpu] of [
     ['browser-results-scale-x1.json', 1],
     ['browser-results-scale-x4.json', 4],
+    ['browser-results-scale-react-x1.json', 1],
+    ['browser-results-scale-react-x4.json', 4],
   ]) {
     const p = path.join(ifrRoot, 'results', file);
     const data = readJson(p);
     if (!data) continue;
     unified.sources.push({ kind: 'ifr-scale-fcp', path: p, cpu });
-    // Expected shape: { results: { "vdom@1k": { fcp: [...], settled: [...] }, ... } }
-    // or array of { name, fcpMedian, settledMedian }
     const entries = normalizeIfrBrowserResults(data);
     for (const e of entries) {
       const { arch, scale } = parseIfrName(e.name);
@@ -279,13 +280,15 @@ function median(xs) {
 
 function parseIfrName(name) {
   if (!name) return {};
-  // vdom@10k / vdom-ifr-et@30k / content-vdom-ifr
+  // vdom@10k / vdom-ifr-et@30k / react@30k / content-vdom-ifr
   const m = String(name)
     .replace(/\.web\.bundle$/, '')
-    .match(/^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor)@(1k|3k|5k|10k|20k|30k)$/);
+    .match(
+      /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)@(1k|3k|5k|10k|20k|30k)$/,
+    );
   if (m) return { arch: m[1], scale: m[2] };
   const m2 = String(name).match(
-    /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor)$/,
+    /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)$/,
   );
   if (m2) return { arch: m2[1], scale: '1k' };
   return {};
@@ -896,7 +899,7 @@ function renderStormTable(unified) {
 }
 
 function renderFcpTable(unified) {
-  const modes = ['vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'];
+  const modes = ['react', 'vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'];
   let md = `### Content-probe FCP (lynx-web ×1, ms median)\n\n`;
   md += `| scale | ${modes.join(' | ')} |\n|---|${modes.map(() => '---').join('|')}|\n`;
   let any = false;
