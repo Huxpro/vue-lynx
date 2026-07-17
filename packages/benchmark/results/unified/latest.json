@@ -1,7 +1,7 @@
 {
   "meta": {
-    "date": "2026-07-17T22:18:45.856Z",
-    "sha": "5a045d1a",
+    "date": "2026-07-17T22:55:16.556Z",
+    "sha": "fac8b548",
     "node": "v22.14.0",
     "cpus": 4,
     "cpuModel": "Intel(R) Xeon(R) Processor",
@@ -193,6 +193,16 @@
     {
       "kind": "ifr-scale-fcp",
       "path": "/workspace/packages/ifr-bench/results/browser-results-scale-x4.json",
+      "cpu": 4
+    },
+    {
+      "kind": "ifr-scale-fcp",
+      "path": "/workspace/packages/ifr-bench/results/browser-results-scale-react-x1.json",
+      "cpu": 1
+    },
+    {
+      "kind": "ifr-scale-fcp",
+      "path": "/workspace/packages/ifr-bench/results/browser-results-scale-react-x4.json",
       "cpu": 4
     },
     {
@@ -5043,6 +5053,270 @@
       "metric": "settled",
       "unit": "ms",
       "median": 640
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 228.29999999701977
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 228.39999999850988
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 60.79999999701977
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 60.899999998509884
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 434.3999999985099
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 445.5
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 631.0999999940395
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 779.6000000014901
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 99
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 99.20000000298023
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 140.79999999701977
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 141
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 784.6999999955297
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1355.3999999985099
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 217.20000000298023
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 217.80000000447035
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1473.2999999970198
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 2482.4000000059605
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 2242
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 4190.70000000298
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 359.1000000014901
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 363.5
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 475.30000000447035
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "react",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 483.70000000298023
     },
     {
       "schemaVersion": 1,
