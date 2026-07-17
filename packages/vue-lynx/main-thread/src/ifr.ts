@@ -28,6 +28,11 @@
  *      Either way the background thread ends up owning the tree, and all
  *      subsequent updates flow through the normal ops pipeline.
  *
+ * The recorded stream is sealed when the synchronous first-screen mount
+ * returns. Later main-thread Vue updates (Suspense resolves, timers, etc.)
+ * are dropped so they cannot extend the hydration stream or desync the
+ * tree from the background thread.
+ *
  * Events bound during the IFR render use the same sign strings the
  * background thread will register (`vue:N`), so taps that happen after the
  * background thread boots are routed correctly with no re-binding.  Worklet
@@ -137,20 +142,26 @@ let warnedPostHydrationOps = false;
 let inSyncRender = false;
 
 function recordAndApply(ops: unknown[]): void {
-  // After hydration the background thread owns the tree (matching
-  // ReactLynx, where the main thread stops responding to updates once it
-  // hands over control). Ops produced by the main-thread Vue app past that
-  // point — e.g. a timer-driven effect, or buffered leftovers from a failed
-  // render — would desync the tree from the background thread's view, so
-  // they are dropped.
-  if (phase === 'hydrated') {
+  // The IFR snapshot is sealed once the synchronous first-screen render
+  // finishes (`phase === 'rendered'`), and the background thread owns the
+  // tree after hydration (`phase === 'hydrated'`).
+  //
+  // Setup-time async work (Suspense / defineAsyncComponent / top-level
+  // await) still runs on the main-thread Vue app after paint — if those
+  // resolve batches were recorded and applied, hydration would compare
+  // against a stream the background thread cannot reproduce in the same
+  // order. A structural mismatch then tears the IFR tree down and applies
+  // only the incremental BG batch onto an empty page (blank UI). Drop
+  // post-snapshot MT ops so the recorded stream stays the sync first
+  // screen; BG Suspense resolutions apply normally after hydration.
+  if (phase === 'rendered' || phase === 'hydrated') {
     if (__DEV__ && !warnedPostHydrationOps) {
       warnedPostHydrationOps = true;
       console.warn(
         '[vue-lynx] IFR: dropping main-thread render ops produced after '
-          + 'hydration. First-screen code must not keep updating on the '
-          + 'main thread (side effects belong in onMounted / watchers, '
-          + 'which only run on the background thread).',
+          + 'the first-screen snapshot. First-screen code must not keep '
+          + 'updating on the main thread (side effects belong in onMounted '
+          + '/ watchers, which only run on the background thread).',
       );
     }
     return;

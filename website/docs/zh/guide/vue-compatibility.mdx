@@ -170,7 +170,11 @@ Vue 的 [`provide`](https://vuejs.org/guide/components/provide-inject.html) 和 
 
 ## Suspense
 
-Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于懒加载的 `defineAsyncComponent`。
+Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于延迟加载的 `defineAsyncComponent`。
+
+:::tip 关于代码分割
+`defineAsyncComponent(() => import('./X.vue'))` 会产出依赖 Lynx lazy-bundle 运行时（`lynx.requireModuleAsync` / `lynx.loadLazyBundle`）的 webpack 异步 chunk。这些 API 在 Lynx Web Preview 中不可用，因此文档示例改用静态导入组件 + 延迟 Promise——Suspense 的 fallback 路径与真正的懒加载相同。
+:::
 
 <Go
   example="suspense"

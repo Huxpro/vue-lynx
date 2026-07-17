@@ -170,7 +170,11 @@ The example below provides a reactive `theme` ref and a static `appName` string 
 
 ## Suspense
 
-Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
+Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for deferred loading.
+
+:::tip Code-splitting
+`defineAsyncComponent(() => import('./X.vue'))` emits webpack async chunks that need Lynx's lazy-bundle runtime (`lynx.requireModuleAsync` / `lynx.loadLazyBundle`). Those APIs are not available in Lynx Web Preview, so the docs example uses delayed promises over statically imported components instead — the Suspense fallback path is the same.
+:::
 
 <Go
   example="suspense"

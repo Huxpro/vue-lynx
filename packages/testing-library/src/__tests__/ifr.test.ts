@@ -25,6 +25,8 @@ import {
   ref,
   createApp,
   onMounted,
+  Suspense,
+  defineAsyncComponent,
   registerElementTemplate,
   resetForTesting,
 } from 'vue-lynx';
@@ -288,6 +290,80 @@ describe('IFR + element templates', () => {
     await waitForUpdate();
     env().switchToMainThread();
     expect(doc.querySelector('.label')?.textContent).toBe('n:1');
+  });
+});
+
+describe('IFR + Suspense', () => {
+  it('keeps the tree when async components resolve around hydration', async () => {
+    // Reproduces the docs suspense regression: setup-time async work runs on
+    // the IFR main-thread Vue app after the sync first paint. If those resolve
+    // batches are recorded, BG hydration can structurally mismatch, tear down
+    // the IFR tree, and apply only an incremental swap → blank page.
+    //
+    // Build separate component trees for MT vs BG so each thread gets its own
+    // defineAsyncComponent cache (real devices are separate JS contexts; this
+    // shared-globalThis harness would otherwise reuse a resolved loader).
+    function makeComp() {
+      const Child = defineComponent({
+        setup() {
+          return () => h('text', null, 'resolved');
+        },
+      });
+      const AsyncChild = defineAsyncComponent(
+        () =>
+          new Promise<typeof Child>((resolve) => {
+            setTimeout(() => resolve(Child), 30);
+          }),
+      );
+      return defineComponent({
+        setup() {
+          return () =>
+            h(Suspense, null, {
+              default: () => h(AsyncChild),
+              fallback: () => h('text', null, 'loading'),
+            });
+        },
+      });
+    }
+
+    const warnings: string[] = [];
+    const origWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(' '));
+      origWarn.apply(console, args as []);
+    };
+
+    try {
+      const doc = mtFirstScreenRender(makeComp());
+      env().switchToMainThread();
+      expect(doc.querySelector('text')?.textContent).toBe('loading');
+      expect(getIfrPhase()).toBe('rendered');
+
+      // Let the MT async loader resolve *before* BG hydrates — the race that
+      // used to append a second recorded batch and wipe the tree on mismatch.
+      await new Promise((r) => setTimeout(r, 50));
+      env().switchToMainThread();
+      // Snapshot is frozen: still showing the sync first-screen fallback.
+      expect(doc.querySelector('text')?.textContent).toBe('loading');
+      expect(getIfrPhase()).toBe('rendered');
+
+      bgHydrate(makeComp());
+      await waitForUpdate();
+      // BG's initial fallback batch hydrates against the sealed snapshot.
+      expect(getIfrPhase()).toBe('hydrated');
+      expect(
+        warnings.some((w) => w.includes('IFR hydration mismatch')),
+      ).toBe(false);
+
+      await new Promise((r) => setTimeout(r, 50));
+      await waitForUpdate();
+
+      env().switchToMainThread();
+      expect(doc.querySelectorAll('text').length).toBe(1);
+      expect(doc.querySelector('text')?.textContent).toBe('resolved');
+    } finally {
+      console.warn = origWarn;
+    }
   });
 });
 
