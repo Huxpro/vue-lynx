@@ -1886,7 +1886,7 @@ body.is-blackout::after {
   padding: 0.55cqw 1.2cqw;
   border-radius: 999px;
   font-family: var(--mono);
-  font-size: clamp(13px, 1.45cqw, 18px);
+  font-size: clamp(15px, 1.75cqw, 22px);
   letter-spacing: 0.04em;
   color: var(--ink);
   background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
@@ -1899,8 +1899,8 @@ body.is-blackout::after {
 .lg-plat {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 5.1cqw;
-  height: 5.1cqw;
+  width: 6cqw;
+  height: 6cqw;
   display: grid;
   place-items: center;
   color: var(--ink-soft);
