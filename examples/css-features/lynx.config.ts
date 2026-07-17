@@ -22,7 +22,10 @@ export default defineConfig({
     pluginVueLynx({
       optionsApi: false,
       enableCSSInlineVariables: true,
-      enableCSSInheritance: true,
+      // Deliberately false: the example must prove that CSS custom property
+      // propagation (lynx-family/lynx#5912, engine >= 3.9.0) works without
+      // inheritance mode masking it.
+      enableCSSInheritance: false,
     }),
   ],
 });
