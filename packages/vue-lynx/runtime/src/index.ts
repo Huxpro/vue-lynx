@@ -272,7 +272,7 @@ export { createPageRoot } from './shadow-element.js';
 // v-show directive (Vue Lynx implementation)
 // ---------------------------------------------------------------------------
 
-function applyVShow(el: ShadowElement, value: unknown): void {
+function setVShowDisplay(el: ShadowElement, value: unknown): void {
   el._vShowHidden = !value;
   const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
   pushOp(OP.SET_STYLE, el.id, style);
@@ -291,11 +291,41 @@ function applyVShow(el: ShadowElement, value: unknown): void {
  * @public
  */
 export const vShow: ObjectDirective<ShadowElement, unknown> = {
-  beforeMount(el, { value }) {
-    applyVShow(el, value);
+  beforeMount(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.beforeEnter(el);
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
   },
-  updated(el, { value, oldValue }) {
-    if (value !== oldValue) applyVShow(el, value);
+  mounted(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.enter(el);
+    }
+  },
+  updated(el, { value, oldValue }, { transition }) {
+    if (!value === !oldValue)
+      return;
+
+    if (transition) {
+      if (value) {
+        transition.beforeEnter(el);
+        setVShowDisplay(el, true);
+        transition.enter(el);
+      }
+      else {
+        transition.leave(el, () => {
+          setVShowDisplay(el, false);
+        });
+      }
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
+  },
+  beforeUnmount(el, { value }) {
+    setVShowDisplay(el, value);
   },
 };
 
