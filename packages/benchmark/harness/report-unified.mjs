@@ -51,13 +51,15 @@ function mergePerOp(...sources) {
 
 const perOp = mergePerOp(scale6, ifrStorms, reactStorms);
 
+// `react` = ReactLynx optimized variant: Snapshot+IFR (always on in RL) +
+// manual memo/useCallback row. Not the naive or compiler builds.
 const COLUMNS = [
   { key: 'vapor', label: 'Vue Vapor' },
   { key: 'vapor-ifr', label: 'Vapor+IFR' },
   { key: 'vdom', label: 'Vue VDOM' },
   { key: 'vdom-ifr', label: 'VDOM+IFR' },
   { key: 'vdom-ifr-et', label: 'VDOM+IFR+ET' },
-  { key: 'react', label: 'React (hooks)' },
+  { key: 'react', label: 'ReactLynx (memo)' },
 ].map((c) => ({ ...c, perOp: perOp[c.key] }));
 
 const STORM_ROWS = [
@@ -467,7 +469,10 @@ ${renderFindings()}
 <h2>Table storms — IFR × framework matrix</h2>
 <p class="sub">
   Black-box protocol: real clicks → composed-DOM end state. Fresh app per (mode, size, rep).
-  Vue IFR cells and React measured on <b>this host</b> (2026-07-17); react-naive/compiler still from the prior scale6 run when present.
+  Vue IFR cells and ReactLynx measured on <b>this host</b> (2026-07-17).
+  <b>ReactLynx (memo)</b> = Snapshot + IFR (always on — RL has no IFR-off) + manual
+  <code>memo</code>/<code>useCallback</code> row. Sibling builds exist
+  (<code>react-naive</code>, <code>react-compiler</code>) but are not columns here.
 </p>
 <div class="scroll">${renderTable(STORM_ROWS, COLUMNS)}</div>
 <div class="legend">
@@ -505,8 +510,11 @@ ${renderFindings()}
 
 <h2>Content-probe FCP (IFR architecture ladder)</h2>
 <p class="sub">
-  Same generated SFC, ~1k→30k elements. This is the first-frame scale — <b>not</b> comparable to storm ms above.
-  CPU ×1.
+  Same generated <b>Vue</b> SFC, ~1k→30k elements — product configs for Vue Lynx IFR/ET only.
+  ReactLynx is <b>not</b> on this ladder yet: the probe is one compiled Vue source with
+  flag cells; RL would need a parallel same-content app (see <code>ifr-bench/rl-probe</code>
+  for a small-screen control, not the 1k→30k matrix). This is the first-frame scale —
+  <b>not</b> comparable to storm ms above. CPU ×1.
 </p>
 <div class="scroll">${renderFcpTable(1)}</div>
 <div class="charts" style="margin-top:16px">
