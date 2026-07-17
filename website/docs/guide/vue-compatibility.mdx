@@ -234,16 +234,7 @@ export default defineComponent({
 
 `<Teleport>` is supported for `to="#id"` string selectors. Direct element refs and non-ID selectors are not yet supported.
 
-## Unsupported Features
-
-Some Vue built-in features are not yet adapted to the dual-thread native environment:
-
-| Feature | Reason | Alternative |
-|---------|--------|-------------|
-| `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
-| `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |
-
-## Top-Level Nodes
+## The `<page>` Top-Level Node
 
 Every Lynx screen has one native [`<page>`](https://lynxjs.org/api/elements/built-in/page) root. Vue Lynx creates it automatically; write an explicit `<page>` only when you need to bind a class, style, event, or ref to the root:
 
@@ -256,3 +247,12 @@ Every Lynx screen has one native [`<page>`](https://lynxjs.org/api/elements/buil
 ```
 
 An explicit `<page>` compiles to a transparent built-in component that applies attributes to the existing native page — it does not create a second one. Use at most one per screen, as the outermost element. Prefer Lynx Engine **3.8.1+** when using an explicit `<page>`.
+
+## Unsupported Features
+
+Some Vue built-in features are not yet adapted to the dual-thread native environment:
+
+| Feature | Reason | Alternative |
+|---------|--------|-------------|
+| `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
+| `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |

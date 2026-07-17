@@ -234,16 +234,7 @@ export default defineComponent({
 
 `<Teleport>` 支持 `to="#id"` 字符串选择器。暂不支持直接传入元素 ref 或非 ID 选择器。
 
-## 不支持的特性
-
-部分 Vue 内置特性尚未适配双线程原生环境：
-
-| 特性 | 原因 | 替代方案 |
-|---------|--------|-------------|
-| `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
-| `withKeys` 按键修饰符 | 原生平台为 no-op —— Lynx 原生运行时在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`），iOS/Android 上的 `event.key` 始终为空。Web 预览在 [lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594) 后可正常使用。原生端支持有赖于上游运行时变更。 | 原生端在 `<input>` 上直接使用 `@confirm` |
-
-## 顶层节点
+## `<page>` 顶层节点
 
 每个 Lynx 页面都有一个原生 [`<page>`](https://lynxjs.org/api/elements/built-in/page) 根节点。Vue Lynx 会自动创建它；只有需要直接给根节点绑定 class、样式、事件或 ref 时，才需要显式写出 `<page>`：
 
@@ -256,3 +247,12 @@ export default defineComponent({
 ```
 
 显式 `<page>` 会被编译成透明内置组件，属性作用在已有的原生 page 上，不会再创建第二个。每个页面只能有一个，且必须是最外层元素。使用显式 `<page>` 时建议 Lynx Engine **3.8.1+**。
+
+## 不支持的特性
+
+部分 Vue 内置特性尚未适配双线程原生环境：
+
+| 特性 | 原因 | 替代方案 |
+|---------|--------|-------------|
+| `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
+| `withKeys` 按键修饰符 | 原生平台为 no-op —— Lynx 原生运行时在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`），iOS/Android 上的 `event.key` 始终为空。Web 预览在 [lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594) 后可正常使用。原生端支持有赖于上游运行时变更。 | 原生端在 `<input>` 上直接使用 `@confirm` |
