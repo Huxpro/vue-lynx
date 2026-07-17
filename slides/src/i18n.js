@@ -154,6 +154,33 @@ export const ZH = {
   'Panes swipe with a native snap; content & scroll position are retained across swipes.':
     '分屏以原生吸附滑动;内容与滚动位置在滑动间保留。',
 
+  // ---- Chapter III · restored original case slides ----
+  'A polished send is a handoff.':
+    '一次漂亮的发送,是一次<span class="brand-text">交接</span>。',
+  'Not one animation — a handoff between the composer, the list, the keyboard, and the stream.':
+    '不是一个动画 —— 而是输入框、列表、键盘与流式响应之间的一次交接。',
+  'First send — the bubble leaves the composer, settles into its anchor, and makes room for the response.':
+    'First send —— 气泡离开输入框,落到锚点,并为响应腾出空间。',
+  'streaming + tools': '流式 + 工具',
+  '65 features ported': '移植 65 项特性',
+  'The keyboard is part of layout.':
+    '键盘也是<span class="brand-text">布局</span>的一部分。',
+  'The composer tracks the keyboard; the current turn stays readable.':
+    '输入框跟随键盘;当前轮次保持可读。',
+  'A new turn belongs at the top.':
+    '新一轮消息该在<span class="brand-text">顶部</span>。',
+  'Second send — the old turn stays stable while the new bubble travels to the top anchor.':
+    'Second send —— 旧轮次保持稳定,新气泡移动到顶部锚点。',
+  'A real Nuxt app, rebuilt on native.':
+    '一个真实的 Nuxt 应用,<span class="brand-text">在原生上重建。</span>',
+  'components': '组件',
+  'pages': '页面',
+  'composables': 'composable',
+  'No Nuxt, no DOM — so instead of forking, the port reuses Elk\'s framework-agnostic layers and rebuilds the UI on Lynx elements.':
+    '没有 Nuxt,没有 DOM —— 于是不去 fork,而是<strong>复用 Elk 与框架无关的层</strong>,在 Lynx 元素上重建 UI。',
+  'masto.js reused': 'masto.js 复用',
+  'content-render retargeted': 'content-render 改目标',
+
   'Main-Thread Script': '<b>主线程脚本</b>',
 
   // ---- Chapter IV · How we did it ----
@@ -340,16 +367,16 @@ export const ZH_NOTES = [
   `<p><strong>不变的部分。</strong>这是 Nuxt 官方 AI Chatbot 模板,逐特性移植:流式 + 思维链、markdown + 代码高亮、天气/图表工具卡片、历史、投票、编辑、主题。里面的 Vue —— 组件、composable、store —— 才是重点:<strong>它们毫无波澜地搬了过来。</strong></p>`,
   // 30 AI Chat native
   `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
-  // 31 AI Chat · 键盘代码
-  `<p><strong>键盘,用代码讲。</strong>Lynx 把平台键盘作为一等事件暴露出来,连高度一起给你;输入区用一次 <code>setNativeProps</code> 变换、按原生曲线(入 0.3s、出 0.1s)跟着键盘走。键盘高度还同时喂给发射距离计算和底部 spacer。</p><p><strong>要落的对比:</strong>v0 iOS 团队描述过一个约 1000 行的 <code>useKeyboardAwareMessageList</code> hook,要同时对付六种键盘行为才能让 RN 有原生手感。这里平台直接把事件递到手上 —— 整个 composable 不到 60 行。</p>`,
-  // 31b AI Chat · 键盘,在真机上
-  `<p><strong>同一份代码,在真机上。</strong>输入框吸在 <code>bottom:0</code>;<code>keyboardstatuschanged</code> 的高度变成一次 <code>translateY</code> 变换。mock 对应 v0 的草图 —— 一块空白的 <em>contentInset</em> 被键盘吃掉,输入框正好抬升一个键盘高度。列表只在原本就跟随新内容时才继续跟随。</p><p><strong>现场:</strong>循环片段 —— 看输入框贴着键盘曲线走。</p>`,
-  // 32 AI Chat · 发送解剖
-  `<p><strong>发送的解剖(已合入 PR #212)。</strong>两个原生现实决定了这套编排:气泡动之前列表必须先重置滚动;而 Lynx 可能在 class 变更后一个显示帧才注册 keyframe 动画 —— 天真写法要么闪 34–51ms 的上一轮对话,要么气泡在终点闪现。</p><p>所以发送是一次显式接力:① 先前的轮次和 Thinking 行先遮蔽,列表<em>瞬时</em>对齐(<code>behavior: none</code> —— 过渡由气泡提供,不由滚动器提供);② 气泡在测得的发射变换上(<code>translateY(distance) scale(0.95)</code>,距离感知键盘、夹在 44–420px)先落一个真实帧;③ 再用单向 CSS <em>transition</em> 飞到位,旧内容恢复到视口上方。连空的 assistant 壳的 9⅓px 原生底高都被预留,保证流式期间最大滚动稳定。</p><p>逐帧验证过 —— 15fps contact sheet,无鬼影、无闪现、无落点修正。</p>`,
-  // 32b AI Chat · 发送,在真机上
-  `<p><strong>把编排放到真机上验证。</strong>第一次发送从空状态建立舞台。<em>第二次</em>发送才是真正的考验 —— 重复发送会暴露空状态藏起来的问题:<code>nextTick()</code> 等挂起的 ops 抵达主线程,再由 <code>scrollIntoView({ block: 'start' })</code> 把新一轮锚定在顶部,同时让上一轮保持稳定。Web 则把列表钉在底部 —— 手感一致,机制不同。</p><p><strong>现场:</strong>两个片段并排循环 —— 对比空状态发送与重复发送。</p>`,
+  // 31 AI Chat · handoff（first send 视频）
+  `<p><strong>AI Chat。</strong>从 Nuxt AI Chatbot 模板逐特性移植的生产级聊天：流式、推理、Markdown、工具卡片、历史 —— 迄今对 Vue Lynx 最苛刻的真实世界考验。</p><p><strong>写作视角</strong>（借鉴 Vercel 的 v0 iOS 复盘）：一次漂亮的发送不是一个动画,而是一次交接 —— 输入框、消息列表、键盘、流式响应之间的交接。接下来三页,把每个瞬间都追溯到背后的 API。</p><p><strong>现场演示:</strong>循环片段 —— first send 从输入框出发,落到锚点。</p>`,
+  // 32 AI Chat · 键盘也是布局
+  `<p><strong>键盘。</strong>Lynx 的 <code>&lt;input&gt;</code> 不会自动避让键盘。输入框绝对定位吸在底部,监听全局 <code>keyboardstatuschanged</code> 事件,用 <code>setNativeProps</code> 施加上报的键盘高度 —— 不绕后台线程。列表只在原本就跟随新内容时才继续跟随。</p><p>这个 mock 就是 v0 草图的思路:一块空白的 <em>contentInset</em> 被键盘吃掉,输入框正好抬升一个键盘高度。</p>`,
+  // 33 AI Chat · 新一轮消息在顶部
+  `<p><strong>第二次发送才是真正的考验。</strong>重复发送会暴露空状态藏起来的问题。原生把新的用户轮次锚定在顶部,但在移动的气泡到位前,让上一轮保持稳定。Vue Lynx 的 <code>nextTick()</code> 等待挂起的 ops 抵达主线程,再由 <code>scrollIntoView</code> 完成最终对齐 —— 然后助手才开始流式输出。</p><p><strong>Web 走另一套策略</strong> —— 没有原生定位保证,于是把列表钉在底部。手感一致,机制不同。</p>`,
   // 33 Elk unchanged
   `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
+  // 34b Elk · 真实 Nuxt 应用,在原生上重建
+  `<p><strong>Elk。</strong>Anthony Fu 团队广受喜爱的 Mastodon Web 客户端,被移植成原生 Mastodon 客户端 —— 时间线、串、资料页、搜索、趋势。一个 Nuxt 3 应用:约 196 个组件、55 个页面、50 个 composable。</p><p><strong>移植手法:</strong>保留与框架无关的层(masto.js 客户端原样复用、HTML 内容解析约 95% 逐字保留),把 vnode 渲染器改写目标到 <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>,再用原生复用 <code>&lt;list&gt;</code> 替换 Elk 的 DOM 虚拟化 —— 代码更<em>少</em>。</p>`,
   // 34 Elk gestures
   `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>现已合入</strong>(PR #223):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它。下一页。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
   // 34b Elk · 原生 view pager
