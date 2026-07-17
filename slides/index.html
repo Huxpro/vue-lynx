@@ -1148,6 +1148,88 @@
     </aside>
   </section>
 
+  <!-- Case 2 · Elk · collapsing profile (viewpager + composed vertical scroll) -->
+  <section class="slide demo demo--tech demo--split demo--reverse techslide">
+    <div class="demo__stage-wrap">
+      <div class="profilemock">
+        <div class="profilemock__header">
+          <div class="profilemock__banner"></div>
+          <div class="profilemock__id">
+            <div class="profilemock__avatar"></div>
+            <div class="profilemock__meta">
+              <div class="r w50"></div>
+              <div class="r w80"></div>
+            </div>
+          </div>
+          <span class="profilemock__badge fold">⇅ collapses</span>
+        </div>
+        <div class="profilemock__tabwrap">
+          <div class="profilemock__tabs">
+            <div class="profilemock__tab is-active"><span class="t">Posts</span><span class="u"></span></div>
+            <div class="profilemock__tab"><span class="t">Replies</span><span class="u"></span></div>
+            <div class="profilemock__tab"><span class="t">Media</span><span class="u"></span></div>
+          </div>
+          <span class="profilemock__badge stick" style="top:-9px">pins on scroll ▲</span>
+        </div>
+        <div class="profilemock__strip">
+          <div class="profilemock__pane">
+            <div class="row w85"></div>
+            <div class="row w60"></div>
+            <div class="row w85"></div>
+            <div class="row w60"></div>
+          </div>
+          <div class="profilemock__pane profilemock__pane--next">
+            <div class="row w60"></div>
+            <div class="row w85"></div>
+          </div>
+          <span class="profilemock__badge scroll">↕ list</span>
+          <span class="profilemock__badge page">↔ page</span>
+        </div>
+      </div>
+      <p class="demo__caption" data-mm-fade>
+        Collapse the header, pin the tabs, page sideways — each pane keeps its
+        own feed &amp; scroll position.
+      </p>
+    </div>
+    <div class="demo__body" style="max-width:none">
+      <span class="app-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk · collapsing profile</span>
+      <h2 class="demo__title" style="font-size:clamp(28px,3.2cqw,46px)">
+        An X-grade profile, <span class="brand-text">composed.</span>
+      </h2>
+      <div class="codeframe" style="width:100%;text-align:left">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>StickyTabView.vue</span>
+        </div>
+<pre><span class="code-com">// per-platform tag, like the pager</span>
+<span class="code-key">const</span> fold <span class="code-key">=</span> isWeb <span class="code-key">?</span> <span class="code-str">'x-foldview-ng'</span> : <span class="code-str">'scroll-coordinator'</span>
+
+<span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"fold"</span><span class="code-tag">&gt;</span>              <span class="code-com">&lt;!-- native nested scroll --&gt;</span>
+  <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"foldHeader"</span><span class="code-tag">&gt;</span>   <span class="code-com">&lt;!-- ⇅ collapses --&gt;</span>
+    <span class="code-tag">&lt;slot</span> <span class="code-attr">name</span>=<span class="code-str">"header"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/component&gt;</span>
+  <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"foldSlot"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"tab-bar"</span><span class="code-tag">&gt;</span> …tabs… <span class="code-tag">&lt;/view&gt;</span>  <span class="code-com">&lt;!-- ▲ sticks --&gt;</span>
+    <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"pager"</span> <span class="code-attr">@change</span>=<span class="code-str">"onPagerChange"</span><span class="code-tag">&gt;</span>
+      <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"pagerItem"</span> <span class="code-attr">v-for</span>=<span class="code-str">"t in tabs"</span><span class="code-tag">&gt;</span>
+        <span class="code-tag">&lt;list</span> <span class="code-attr">…</span><span class="code-tag">/&gt;</span>          <span class="code-com">&lt;!-- ↕ native list --&gt;</span>
+      <span class="code-tag">&lt;/component&gt;</span>
+    <span class="code-tag">&lt;/component&gt;</span>
+  <span class="code-tag">&lt;/component&gt;</span>
+<span class="code-tag">&lt;/component&gt;</span></pre>
+      </div>
+      <div class="demo__meta" data-mm-fade>
+        <span class="chip chip--brand">native scroll thread</span>
+        <span class="chip">one SFC · native + web preview</span>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>The hardest mobile layout, composed.</strong> Collapsing header + sticky tab bar + horizontal paging + each pane its own vertical scroll — the Twitter/X profile. On the web this is a heavyweight library (react-native-collapsible-tab-view, Android's CoordinatorLayout) fighting the main thread; here it's a composition of native elements that runs on the platform's own scroll thread.</p>
+      <p><strong>Native UX ← Web DX.</strong> Lynx exposes the native pieces as elements — <code>&lt;scroll-coordinator&gt;</code> (declarative nested-scroll handoff: fold the header, then hand scrolling to the active pane's list, zero JS scroll listeners), the extracted <code>&lt;viewpager&gt;</code> (native snap paging + per-pane state), and a recycling <code>&lt;list&gt;</code> per pane. We compose them in one Vue SFC. The only platform seam is the tag name (<code>x-foldview-ng</code> / <code>x-viewpager-ng</code> on Lynx for Web ↔ <code>scroll-coordinator</code> / <code>viewpager</code> on native).</p>
+      <p><strong>One codebase, two targets:</strong> the same SFC renders a real native profile and the Lynx-for-Web preview in the docs. Tab bar ↔ pager stay in two-way sync via the native <code>selectTab</code> / <code>change</code> methods, not synthetic DOM events.</p>
+    </aside>
+  </section>
+
   <!-- ====================================================
        Chapter IV · How we did it
        ==================================================== -->
