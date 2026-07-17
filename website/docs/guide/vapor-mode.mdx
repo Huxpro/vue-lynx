@@ -3,34 +3,26 @@ import { Badge } from '@theme';
 # Vapor Mode <Badge text="v0.6" type="tip" />
 
 [Vapor mode](https://github.com/vuejs/core/releases) is Vue's
-compilation-based rendering mode that ships with Vue 3.6: component templates
-compile to code that manipulates elements directly, with no Virtual DOM and
-no per-component diffing. Vue Lynx runs Vapor components on Lynx's dual-thread
-architecture — with large, measured wins on the update path
-([benchmark](/guide/benchmark-vapor)).
+compilation-based rendering mode (Vue 3.6): templates compile to code that
+manipulates elements directly — no Virtual DOM, no per-component diffing.
+Vue Lynx runs it on Lynx's dual-thread architecture. On the update path it is
+**5.8–9.8× faster** on the background thread than VDOM (2.1–6.3× end-to-end),
+with creation at parity and roughly half the cross-thread traffic, for about
+**+26%** bundle gzip — full numbers in the
+[VDOM vs Vapor benchmark](/guide/benchmark-vapor) and the
+[React vs Vue playground](/guide/benchmark-playground).
 
 :::warning Experimental
 Vapor mode itself is **not part of any stable Vue release yet** — as of
-mid-2026 it is published in the Vue 3.6 beta / prerelease line only, and the
-Vue team labels it unstable. Vue Lynx's Vapor support inherits that status:
-try it, but don't bet the app on it. Vue Lynx pins `vue@3.6.0-beta.17`.
+mid-2026 it ships only in the Vue 3.6 beta / prerelease line. Vue Lynx pins
+`vue@3.6.0-beta.17` and inherits that status.
 :::
-
-## See it running
-
-The app below is the repository's Vapor demo — interpolation, `v-if`/`v-for`,
-`v-model`, props/emits, and scoped CSS, all compiled through
-`@vue/compiler-vapor`. Use the **VDOM | Vapor** toggle in the site nav (or
-the badge in the example's footer) to swap the renderer under the same
-source; the badge always shows which one is live.
-
-<Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
 
 ## Enabling Vapor mode
 
-Vapor is a **per-app, build-time decision**. Switching an app over touches
-three places — the plugin flag, the entry import, and the `vapor` attribute
-on each component:
+Vapor is a **per-app, build-time** choice. Turn it on in three places: the
+plugin flag, the `vue-lynx/vapor` entry, and the `vapor` attribute on each
+`<script setup>`:
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -52,147 +44,105 @@ import App from './App.vue'
 createApp(App).mount()
 ```
 
-```vue title="src/Counter.vue"
-<script setup vapor lang="ts">
-import { ref } from 'vue'
+`import { ref } from 'vue'` keeps working — with `vapor: true` the plugin
+aliases `'vue'` to `vue-lynx/vapor`. That entry is the Vapor runtime plus
+Lynx DOM-compat layer (not the default `vue-lynx` VDOM entry). Full export
+list: [`vue-lynx/vapor` API reference](/guide/api/vapor/).
 
-const count = ref(0)
-</script>
+The demo below is the repository's Vapor example — same three changes, live
+on this page:
 
-<template>
-  <view class="button" @tap="count++">
-    <text>Count: {{ count }}</text>
-  </view>
-</template>
-```
+<Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
 
-Inside components nothing else changes: `import { ref } from 'vue'` keeps
-working because the plugin aliases `'vue'` to `vue-lynx/vapor` when
-`vapor: true`.
-
-The entry is `vue-lynx/vapor` (earlier preview names `vue-lynx/with-vapor` and
-`vue-lynx/vapor-app` are gone).
-
-<span id="how-it-works-on-lynx" />
-
-## How it works on Lynx
-
-Upstream `@vue/runtime-vapor` drives the browser DOM directly — there is no
-custom-renderer hook like the Virtual DOM's `createRenderer()`. Vue Lynx
-instead makes the Background Thread's ShadowElement tree *DOM-compatible*:
-the compiled Vapor code and its Lynx-specific helper overrides call standard
-DOM APIs — `insertBefore`, `cloneNode`, `setAttribute`, `addEventListener`,
-`el.style` — and those calls emit the same flat ops stream to the Main
-Thread that vdom mode uses.
-
-```
-compiled vapor component
-  → import from 'vue' (aliased to vue-lynx/vapor)
-    → @vue/runtime-vapor            (unmodified upstream)
-      → document / Node / Element shims
-      → ShadowElement DOM-compat surface
-        → ops stream → Main Thread → native elements
-```
-
-A few Lynx-specific translations happen along the way:
-
-| Web concept | Lynx translation |
-|---|---|
-| Template HTML strings (`template("<view class=…>")`) | Parsed by a built-in parser into inert prototypes; cloned per instance |
-| Document-level event delegation | Compiled away (`eventDelegation: false`); events register per element |
-| `@tap.stop` | Native `catchEvent` (Lynx's stop-propagation) |
-| `:bindtap` / `:catchtap` / `:global-bind*` props | Routed to native Lynx event registration (same handling as vdom mode), including fallthrough onto a child component's root |
-| `v-model` on `<input>` | Lynx `input` / `confirm` (`.lazy`) events carrying `detail.value` |
-| Scoped CSS `data-v-*` attributes | Composable scope **classes** (the build rewrites `[data-v-*]` selectors to class selectors; same mechanism as vdom mode) |
-
-### Template cloning across threads
-
-Vapor's rendering primitive is *clone a template, then bind*. Sending every
-cloned element as individual create/append ops would make Vapor's
-cross-thread traffic strictly worse than vdom's, so Vue Lynx teaches its own
-ops protocol two template instructions:
-
-- `REGISTER_TREE(treeId, structure)` — sent **once per template**,
-  carrying the static structure tree.
-- `CLONE_TREE(treeId, baseUid)` — sent **once per instance**; both
-  threads assign element uids by walking the structure in the same
-  pre-order from `baseUid`, so no id mapping needs to be transferred.
-
-These are Vue Lynx's own opcodes (the Main Thread interpreter ships in the
-same bundle as the Background Thread code), not a Lynx engine change. The
-effect on a 1,000-row list creation: **7,000 ops / 160 KB** across the
-thread boundary in Vapor mode vs **17,000 ops / 327 KB** in vdom mode.
+This site can flip many examples between VDOM and Vapor with the
+**VDOM | Vapor** control in the nav (and the badge in each example's footer).
+Coverage and unsupported reason codes are listed in the
+[example support appendix](#example-support).
 
 ## Instant first-frame rendering
 
-Vapor apps can also paint synchronous content during Lynx `loadTemplate`.
-Add `enableIFR: true` beside `vapor: true`:
+Vapor in **0.6** supports
+[Instant First-Frame Rendering (IFR)](/guide/ifr) — paint synchronous content
+during `loadTemplate` before the background thread starts. Enable it next to
+`vapor`:
 
 ```ts title="lynx.config.ts"
 pluginVueLynx({
   vapor: true,
-  enableIFR: true,
+  enableIFR: true, // [!code highlight]
 })
 ```
 
-Vapor IFR reuses the compiled `template()` / tree protocol — it does **not**
-use VDOM Element Templates. Details, trade-offs, and Vapor-specific limits:
-[IFR on Vapor](/guide/ifr#ifr-on-vapor).
-
-## Performance
-
-**Bottom line:** update-path operations run **5.8–9.8× faster on the
-background thread** (2.1–6.3× end-to-end), creation is at parity, and
-cross-thread traffic roughly halves — at the cost of +26% bundle (gzip).
-
-Full methodology and raw data:
-
-- [VDOM vs Vapor benchmark](/guide/benchmark-vapor)
-- [Playground: React vs Vue](/guide/benchmark-playground) (includes Vapor)
-
-## API surface
-
-The Vapor entry exports everything a Vapor app imports from `'vue'` — the
-standard Vue APIs, SFC macros, Lynx utilities, and the Vapor helper surface —
-while vdom-only APIs (`h()`, `<Transition>`, `<Teleport>`, …) are
-intentionally absent and fail at build time. Full listing:
-[`vue-lynx/vapor` API reference](/guide/api/vapor/).
-
-## Verified example matrix
-
-Every example on this site is verified against both renderers. The nav's
-`VDOM | Vapor` switch flips supported examples; each example's footer badge
-shows which renderer is live. The matrix below is generated from
-`examples/vapor-support.json` — unsupported reason codes correspond to the
-[limitations](#current-limitations) below.
-
-<VaporSupportMatrix />
+Vapor IFR uses the compiled `template()` / tree protocol (not VDOM Element
+Templates). For Vapor-specific IFR limits and measured trade-offs, see
+[IFR on Vapor](/guide/ifr#ifr-on-vapor) and the
+[IFR benchmarks](/guide/ifr-benchmarks).
 
 <span id="current-limitations" />
 
-## Current limitations
+## Limitations
 
-- **One app, one mode.** Vue Lynx does not support mixing vdom and Vapor in
-  the same app (`vaporInteropPlugin` is not wired up yet — upstream hard-codes
-  it to the browser DOM renderer). Mode is a strict either/or, so Vue Lynx
-  ships two pure entries instead of one entry pruned by tree-shaking:
+### Same as upstream Vapor
 
-  | Entry | Contains | Use for |
-  |---|---|---|
-  | `vue-lynx` | vdom renderer + Vue runtime-core | Regular (default) apps |
-  | `vue-lynx/vapor` | Vapor runtime + Lynx DOM-compat layer | Vapor apps |
+These match [Vue's Vapor constraints](https://github.com/vuejs/core/releases)
+today:
 
-  Side effect: vdom-only APIs simply don't exist on `vue-lynx/vapor`, so
-  accidentally using them **fails at build time**.
+- **No Options API** — `<script setup>` only; `getCurrentInstance()` returns
+  `null`.
+- **Not yet shipped upstream:** `<Transition>`, `<Teleport>`, `<KeepAlive>`,
+  `<Suspense>`, and other VDOM-only APIs (`h()`, …). They are absent from
+  `vue-lynx/vapor` and fail at build time if used by mistake.
 
-- **No `<Transition>` / `<Teleport>` / `<KeepAlive>` / `<Suspense>`** in
-  Vapor apps — upstream Vapor hasn't shipped them yet.
-- **No `v-html`** — Lynx elements cannot parse HTML strings (same as vdom-mode
-  Vue Lynx).
-- **No SSR / HTML hydration** — Lynx has no SSR. (Dual-thread [IFR
-  hydration](/guide/ifr#hydration) is a separate mechanism.)
-- Vapor-mode Vue constraints apply as usual: `<script setup>` only, no
-  Options API, `getCurrentInstance()` returns `null`.
-- Vapor IFR requires deterministic, thread-neutral initial rendering.
-  Synchronous `setup()` side effects and watchers run in both realms; see
-  [IFR limitations](/guide/ifr#account-for-current-limitations).
+Lynx also has no HTML string surface, so `v-html` and SSR / HTML hydration
+are unavailable (same as VDOM-mode Vue Lynx). Dual-thread
+[IFR hydration](/guide/ifr#hydration) is a separate mechanism.
+
+### One app, one mode
+
+Vue Lynx does not mix VDOM and Vapor in the same app (`vaporInteropPlugin` is
+not wired up — upstream ties it to the browser DOM renderer). Mode is a
+strict either/or, so Vue Lynx ships two pure entries instead of one entry
+pruned by tree-shaking:
+
+| Entry | Contains | Use for |
+|---|---|---|
+| `vue-lynx` | VDOM renderer + Vue runtime-core | Regular (default) apps |
+| `vue-lynx/vapor` | Vapor runtime + Lynx DOM-compat layer | Vapor apps |
+
+## Appendix
+
+<span id="how-it-works-on-lynx" />
+
+### How it works on Lynx
+
+Upstream `@vue/runtime-vapor` expects a DOM. Vue Lynx gives the background
+thread a DOM-compatible ShadowElement surface; compiled Vapor code calls
+normal DOM APIs, which emit the same ops stream to the main thread as VDOM
+mode:
+
+```
+vapor component → vue-lynx/vapor → @vue/runtime-vapor
+  → DOM-compat ShadowElement → ops → Main Thread
+```
+
+Lynx-specific bits: template strings become cloneable prototypes; document
+event delegation is off (per-element events); `@tap.stop` maps to
+`catchEvent`; scoped CSS uses scope classes instead of `data-v-*`.
+
+To keep clone-heavy lists cheap across threads, Vue Lynx adds two ops:
+
+- `REGISTER_TREE` — static structure once per template
+- `CLONE_TREE` — one op per instance (uids assigned the same way on both
+  threads)
+
+On create-1k that cuts traffic from ~17k ops / 327 KB (VDOM) to
+~7k ops / 160 KB (Vapor).
+
+<span id="example-support" />
+
+### Example support
+
+Every example on this site is checked against both renderers. Unsupported
+reason codes map to the [limitations](#current-limitations) above.
+
+<VaporSupportMatrix />
