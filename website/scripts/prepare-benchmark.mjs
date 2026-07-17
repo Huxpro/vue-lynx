@@ -83,9 +83,27 @@ function generateTable() {
   );
 }
 
+function copyIfrScaleTrends() {
+  const ifrResults = path.join(REPO_ROOT, 'packages/ifr-bench/results');
+  const copies = [
+    ['scale-trends-scale-x1.html', 'ifr-scale-trends-x1.html'],
+    ['scale-trends-scale-x4.html', 'ifr-scale-trends-x4.html'],
+  ];
+  for (const [srcName, destName] of copies) {
+    const src = path.join(ifrResults, srcName);
+    if (!fs.existsSync(src)) {
+      console.warn(`  skip ${destName} (missing ${srcName})`);
+      continue;
+    }
+    fs.copyFileSync(src, path.join(DEST, destName));
+    console.info(`  -> benchmark/${destName}`);
+  }
+}
+
 console.info('Preparing benchmark playground assets...');
 fs.rmSync(DEST, { recursive: true, force: true });
 ensureBundles();
 copyBundles();
 generateTable();
+copyIfrScaleTrends();
 console.info('Done.');
