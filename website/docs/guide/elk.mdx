@@ -108,6 +108,22 @@ That's the trade: you give up "render only what's visible," and the panes
 stay warm — swipe away and back, and you're exactly where you left off, no
 reload.
 
+#### Going further: a collapsing profile
+
+The profile page takes the pattern one step further into "native profile"
+territory. [`AccountPage`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/pages/AccountPage.vue)
+wraps the same viewpager in Lynx's collapsing-header coordinator
+([`StickyTabView.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk-viewpager/src/components/StickyTabView.vue)):
+scroll down and the banner/bio/stats **header collapses**, the **tab bar
+pins** to the top, and the Posts / Replies / Media panes below keep **paging
+horizontally**, each with its own feed and scroll position. The coordinator
+stacks as header (collapses) + toolbar (sticky tabs) + slot (the viewpager),
+and its nested scroll folds the header first, then hands off to the active
+pane's list. Like the viewpager it's registered per platform — the legacy
+`<x-foldview-ng>` on Lynx for Web, the extracted
+[`<scroll-coordinator>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
+on native OSS engines.
+
 ## Why Elk is a serious test
 
 Elk is a Nuxt 3 app with ~196 components, 55 pages and 50 composables.
