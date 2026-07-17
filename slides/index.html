@@ -24,7 +24,11 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
+<<<<<<< HEAD
     <span data-counter>01 / 139</span>
+=======
+    <span data-counter>01 / 122</span>
+>>>>>>> cf31457e (feat(slides): add Vue ecosystem lib demos (Pinia, Router, Query, Tailwind))
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -387,7 +391,7 @@
       running right now.
     </p>
     <aside class="notes">
-      <p><strong>The show-off chapter.</strong> "为了让大家感受到诚意" — to show we're serious, I brought a feast of demos. Three courses: Vue API coverage, whole applications, then native superpowers.</p>
+      <p><strong>The show-off chapter.</strong> "为了让大家感受到诚意" — to show we're serious, I brought a feast of demos. Three courses: Vue API coverage, the ecosystem as-is, then whole applications.</p>
       <p>Every phone you'll see is live — scan the QR codes to run them on your own device as we go.</p>
     </aside>
   </section>
@@ -876,7 +880,179 @@
       </div>
     </div>
     <aside class="notes">
-      <p><code>v-memo</code> skips a subtree when its deps are unchanged — same cross-thread win as <code>v-once</code>, but keyed on a dependency list. Common in <code>v-for</code> rows. <code>isMemoSame</code> export + tests from @KealanAU (#156 / #181) in <code>0.4.0</code>. Thirteen features, thirteen live apps. That's the API story. Now — whole applications.</p>
+      <p><code>v-memo</code> skips a subtree when its deps are unchanged — same cross-thread win as <code>v-once</code>, but keyed on a dependency list. Common in <code>v-for</code> rows. <code>isMemoSame</code> export + tests from @KealanAU (#156 / #181) in <code>0.4.0</code>. Thirteen features, thirteen live apps. That's the API story. Now — the ecosystem that rides on it.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       II · Ecosystem — libraries work as-is
+       ==================================================== -->
+  <section class="slide stage">
+    <span class="eyebrow">II · The proof</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      The ecosystem, <span class="brand-text">as-is</span>.
+    </h2>
+    <p class="lead" style="text-align:center;max-width:36ch;margin-inline:auto">
+      Pinia, Vue Router, TanStack Query, Tailwind — the libraries you'd already reach for on the web, running unchanged.
+    </p>
+    <div class="demo__meta" style="justify-content:center;margin-top:18px">
+      <span class="chip chip--brand">Pinia</span>
+      <span class="chip">Vue Router</span>
+      <span class="chip">Vue Query</span>
+      <span class="chip">Tailwind</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The compatibility claim, sharpened.</strong> Vue isn't just an API — it's an ecosystem. If Pinia, Router, Query, and Tailwind need forks to run, we failed. They don't. Four live phones next; same packages, same APIs.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Ecosystem · 1/4</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><span class="brand-text">Pinia</span></h2>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>stores/counter.ts</span>
+        </div>
+<pre><span class="code-key">import</span> { defineStore } <span class="code-key">from</span> <span class="code-str">'pinia'</span>
+
+<span class="code-key">export const</span> useCounterStore <span class="code-key">=</span> <span class="code-fn">defineStore</span>(
+  <span class="code-str">'counter'</span>, () <span class="code-key">=&gt;</span> {
+  <span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">0</span>)
+  <span class="code-key">const</span> double <span class="code-key">=</span> <span class="code-fn">computed</span>(() <span class="code-key">=&gt;</span> count.value * <span class="code-str">2</span>)
+  <span class="code-key">function</span> <span class="code-fn">increment</span>() { count.value++ }
+  <span class="code-key">return</span> { count, double, increment }
+})</pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="pinia/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Pinia, untouched.</strong> Same <code>createPinia</code>, same setup-store <code>defineStore</code>. It rides on provide/inject — which is why the earlier slide mattered. Two stores in this phone: a counter and a todo list.</p>
+      <p><strong>Do live:</strong> tap +, watch the double getter update; flip to the todos section.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Ecosystem · 2/4</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><span class="brand-text">Vue Router</span></h2>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>router.ts</span>
+        </div>
+<pre><span class="code-key">import</span> { createRouter, createMemoryHistory }
+  <span class="code-key">from</span> <span class="code-str">'vue-router'</span>
+
+<span class="code-key">const</span> router <span class="code-key">=</span> <span class="code-fn">createRouter</span>({
+  history: <span class="code-fn">createMemoryHistory</span>(),
+  routes: [
+    { path: <span class="code-str">'/'</span>, component: Home },
+    { path: <span class="code-str">'/users/:id'</span>, component: UserDetail },
+  ],
+})
+
+app.<span class="code-fn">use</span>(router)</pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="vue-router/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Vue Router, as published.</strong> The only Lynx-shaped choice is the history mode: no <code>window.location</code>, so <code>createMemoryHistory()</code> — the same API React Router's MemoryRouter uses. Nested routes, params, <code>router.push</code> / <code>back</code> all work. Nav uses <code>RouterLink</code>'s custom slot over native <code>&lt;text&gt;</code>.</p>
+      <p><strong>Do live:</strong> tap Home → About → Users → open a user.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Ecosystem · 3/4</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><span class="brand-text">Vue Query</span></h2>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-key">import</span> { useQuery } <span class="code-key">from</span> <span class="code-str">'@tanstack/vue-query'</span>
+
+<span class="code-key">const</span> { data, isLoading } <span class="code-key">=</span> <span class="code-fn">useQuery</span>({
+  queryKey: [<span class="code-str">'users'</span>],
+  queryFn: () <span class="code-key">=&gt;</span>
+    fetch(<span class="code-str">'…/users'</span>).then(r <span class="code-key">=&gt;</span> r.json()),
+})
+
+<span class="code-com">// dependent query refetches when id changes</span>
+<span class="code-key">const</span> { data: posts } <span class="code-key">=</span> <span class="code-fn">useQuery</span>({
+  queryKey: <span class="code-fn">computed</span>(() <span class="code-key">=&gt;</span>
+    [<span class="code-str">'users'</span>, selectedId.value, <span class="code-str">'posts'</span>]),
+  queryFn: () <span class="code-key">=&gt;</span> fetchPosts(selectedId.value),
+})</pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="networking/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>TanStack Vue Query, as-is.</strong> <code>useQuery</code>, dependent keys, mutations, the plugin install — none of it is Lynx-aware. This phone hits a real JSON API: list users, tap one, posts load via a dependent query.</p>
+      <p><strong>Do live:</strong> wait for the list, tap a user, watch posts arrive.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Ecosystem · 4/4</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><span class="brand-text">Tailwind</span></h2>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;scroll-view</span> <span class="code-attr">class</span>=<span class="code-str">"w-full h-full bg-background"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"p-6 flex flex-col gap-6"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"text-2xl font-bold"</span><span class="code-tag">&gt;</span>
+      Settings
+    <span class="code-tag">&lt;/text&gt;</span>
+    <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"bg-card rounded-lg
+      border border-border p-4"</span><span class="code-tag">&gt;</span>
+      …
+    <span class="code-tag">&lt;/view&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/scroll-view&gt;</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="tailwindcss/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Tailwind works because CSS works.</strong> No StyleSheet dialect — PostCSS emits real CSS, Lynx's native engine applies it. Theme tokens via CSS variables; tap Dark / Light / Ocean and watch the whole tree re-token.</p>
+      <p><strong>Do live:</strong> flip themes, toggle a setting.</p>
     </aside>
   </section>
 
@@ -889,7 +1065,7 @@
       Whole <span class="brand-text">apps</span> port, too.
     </h2>
     <aside class="notes">
-      <p>Passing API checks is table stakes. The real test of "Web DX as the baseline" is taking an entire Vue codebase — state, routing, styling, data fetching — and landing it on native. Two classics, then.</p>
+      <p>Libraries in isolation are the warm-up. The real test is composing them — state, routing, styling, data fetching — into an entire Vue codebase on native. Two classics, then.</p>
     </aside>
   </section>
 
