@@ -219,6 +219,8 @@ export interface ApplyEntryOptions {
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
   /** Use the pure Vapor runtime entry in generated worklet imports. */
   vapor?: boolean;
+  /** Rewrite compiled Vapor `template("<html>")` calls to structured IR. */
+  vaporBuildTimeTemplates?: boolean;
 }
 
 export function applyEntry(
@@ -341,6 +343,29 @@ export function applyEntry(
       .loader(path.resolve(_dirname, './loaders/worklet-loader'))
       .options({ vapor: opts.vapor ?? false })
       .end();
+
+    // Build-time structured Vapor templates (issue #234, Part A). A post
+    // loader on the Background layer runs AFTER vue-loader/worklet-loader, so
+    // it sees the compiler's `template("<html>", …)` calls in the emitted JS
+    // and rewrites the HTML string to structured IR. Prod inlines the template
+    // into the .vue script module (the perf-relevant path); dev's separate
+    // template module keeps the string form and the runtime parser handles it.
+    if (opts.vapor && opts.vaporBuildTimeTemplates) {
+      chain.module
+        .rule('vue:vapor-structured-template')
+        .enforce('post')
+        .issuerLayer(LAYERS.BACKGROUND)
+        // Match the same surface as the BG worklet loader: with
+        // experimentalInlineMatchResource, the inlined vapor template lands in
+        // a `.ts`/`.js` match-resource module, not the `.vue` file. node_modules
+        // is excluded on purpose — precompiled third-party Vapor code keeps the
+        // string form and the runtime HTML parser handles it (the fallback).
+        .test(/\.(?:[cm]?[jt]sx?|vue)$/)
+        .exclude.add(/node_modules/).end()
+        .use('structured-template-loader')
+        .loader(path.resolve(_dirname, './loaders/structured-template-loader'))
+        .end();
+    }
   });
 
   // MT-layer loaders: process user code to extract LEPUS worklet registrations.

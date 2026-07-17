@@ -1,6 +1,6 @@
 // VDOM vs Vapor benchmark harness.
 //
-// Serves the two built apps plus the Lynx-for-Web runtime, loads each app's
+// Serves the built apps plus the Lynx-for-Web runtime, loads each app's
 // .web.bundle into a <lynx-view> in headless Chromium (Playwright), and
 // collects:
 //   - per-operation samples streamed by the in-app scenario
@@ -9,7 +9,13 @@
 //   - JS heap at scenario memory markers (page + BG worker, best effort)
 //   - bundle sizes
 //
-// Usage: node harness/run.mjs [--loads 2] [--startup-count 3] [--skip-build]
+// Modes are generic (--modes vdom,vapor,vapor-bt). vapor-bt is apps/vapor with
+// the issue #234 Part A flag (vaporBuildTimeTemplates) on, so vapor→vapor-bt
+// isolates the build-time structured-template effect. The report ends with a
+// dedicated vapor→vapor-bt delta section.
+//
+// Usage: node harness/run.mjs [--modes vdom,vapor,vapor-bt] [--loads 2]
+//        [--startup-count 3] [--skip-build]
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -26,6 +32,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const { values: args } = parseArgs({
   options: {
+    modes: { type: 'string', default: 'vdom,vapor,vapor-bt' },
     loads: { type: 'string', default: '2' },
     'startup-count': { type: 'string', default: '3' },
     'skip-build': { type: 'boolean', default: false },
@@ -33,6 +40,7 @@ const { values: args } = parseArgs({
     port: { type: 'string', default: '8317' },
   },
 });
+const MODES = args.modes.split(',').map((m) => m.trim()).filter(Boolean);
 const LOADS = Number(args.loads);
 const STARTUP_COUNT = Number(args['startup-count']);
 const PORT = Number(args.port);
@@ -89,6 +97,10 @@ const BENCH_HTML = `<!doctype html>
 </body>
 </html>`;
 
+// The first path segment of a request selects the app (a mode). Only the
+// configured modes are served, from apps/<mode>/dist.
+const MODE_SET = new Set(MODES);
+
 function startServer() {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
@@ -100,10 +112,17 @@ function startServer() {
     }
     if (url.pathname.startsWith('/webcore/')) {
       filePath = path.join(webCoreRoot, url.pathname.slice('/webcore/'.length));
-    } else if (url.pathname.startsWith('/vdom/')) {
-      filePath = path.join(root, 'apps/vdom/dist', url.pathname.slice(6));
-    } else if (url.pathname.startsWith('/vapor/')) {
-      filePath = path.join(root, 'apps/vapor/dist', url.pathname.slice(7));
+    } else {
+      const seg = url.pathname.split('/')[1];
+      if (MODE_SET.has(seg)) {
+        filePath = path.join(
+          root,
+          'apps',
+          seg,
+          'dist',
+          url.pathname.slice(seg.length + 2),
+        );
+      }
     }
     if (!filePath || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
       res.writeHead(404);
@@ -314,59 +333,72 @@ function aggregate(loads) {
 }
 
 const fmt = (x, digits = 2) => (x == null ? 'n/a' : x.toFixed(digits));
+const pct = (a, b) =>
+  a == null || b == null || b === 0 ? 'n/a' : `${(((a - b) / b) * 100).toFixed(1)}%`;
 
 function markdownReport(result) {
   const { meta, perOp, startup, memory, bundles } = result;
-  const ops = Object.keys(perOp.vdom ?? {});
+  const modes = meta.modes;
+  const opsSet = new Set();
+  for (const mode of modes) for (const op of Object.keys(perOp[mode] ?? {})) opsSet.add(op);
+  const ops = [...opsSet];
+
   let md = `# VDOM vs Vapor on Lynx — benchmark results\n\n`;
   md += `- date: ${meta.date}\n- git: ${meta.sha}\n- node: ${meta.node}, chromium (playwright-core ${meta.playwright})\n`;
   md += `- host: ${meta.cpus}× ${meta.cpuModel}\n`;
+  md += `- modes: ${modes.join(', ')}\n`;
   md += `- scenario loads per mode: ${meta.loads}; in-app samples per op per load: 10 (heavy ops: 5)\n\n`;
 
-  md += `## Interaction operations (ms, lower is better)\n\n`;
-  md += `bg = Background-Thread cost (reactivity + render + ops serialization). `;
-  md += `e2e = bg + cross-thread transfer + Main-Thread applyOps (DOM applied).\n\n`;
-  md += `| op | vdom bg median | vapor bg median | Δbg | vdom e2e median | vapor e2e median | Δe2e |\n|---|---|---|---|---|---|---|\n`;
+  md += `## Interaction — Background-Thread cost (ms median, lower is better)\n\n`;
+  md += `bg = reactivity + render + ops serialization on the Background Thread.\n\n`;
+  md += `| op | ${modes.map((m) => `${m} bg`).join(' | ')} |\n|${'---|'.repeat(modes.length + 1)}\n`;
   for (const op of ops) {
-    const v = perOp.vdom[op];
-    const p = perOp.vapor[op];
-    const ratio = (a, b) =>
-      a && b && b.median > 0
-        ? `${(a.median / b.median).toFixed(2)}× vdom/vapor`
-        : 'n/a';
-    md += `| ${op} | ${fmt(v?.bg?.median)} ±${fmt(v?.bg?.ci95)} | ${
-      fmt(p?.bg?.median)
-    } ±${fmt(p?.bg?.ci95)} | ${ratio(v?.bg, p?.bg)} | ${
-      fmt(v?.e2e?.median)
-    } ±${fmt(v?.e2e?.ci95)} | ${fmt(p?.e2e?.median)} ±${
-      fmt(p?.e2e?.ci95)
-    } | ${ratio(v?.e2e, p?.e2e)} |\n`;
+    md += `| ${op} | ${
+      modes.map((m) => {
+        const s = perOp[m]?.[op]?.bg;
+        return `${fmt(s?.median)} ±${fmt(s?.ci95)}`;
+      }).join(' | ')
+    } |\n`;
+  }
+
+  md += `\n## Interaction — end-to-end cost (ms median, lower is better)\n\n`;
+  md += `e2e = bg + cross-thread transfer + Main-Thread applyOps (DOM applied).\n\n`;
+  md += `| op | ${modes.map((m) => `${m} e2e`).join(' | ')} |\n|${'---|'.repeat(modes.length + 1)}\n`;
+  for (const op of ops) {
+    md += `| ${op} | ${
+      modes.map((m) => {
+        const s = perOp[m]?.[op]?.e2e;
+        return `${fmt(s?.median)} ±${fmt(s?.ci95)}`;
+      }).join(' | ')
+    } |\n`;
   }
 
   md += `\n## Ops-stream shape (median per operation)\n\n`;
-  md += `| op | vdom ops | vapor ops | vdom bytes | vapor bytes |\n|---|---|---|---|---|\n`;
+  md += `| op | ${modes.map((m) => `${m} ops`).join(' | ')} | ${
+    modes.map((m) => `${m} bytes`).join(' | ')
+  } |\n|${'---|'.repeat(2 * modes.length + 1)}\n`;
   for (const op of ops) {
-    const v = perOp.vdom[op];
-    const p = perOp.vapor[op];
-    md += `| ${op} | ${fmt(v?.ops?.median, 0)} | ${fmt(p?.ops?.median, 0)} | ${
-      fmt(v?.bytes?.median, 0)
-    } | ${fmt(p?.bytes?.median, 0)} |\n`;
+    md += `| ${op} | ${
+      modes.map((m) => fmt(perOp[m]?.[op]?.ops?.median, 0)).join(' | ')
+    } | ${modes.map((m) => fmt(perOp[m]?.[op]?.bytes?.median, 0)).join(' | ')} |\n`;
   }
 
   md += `\n## Startup (first screen: lynx-view attach → first content, ms)\n\n`;
   md += `| mode | median | mean | std | n |\n|---|---|---|---|---|\n`;
-  for (const mode of ['vdom', 'vapor']) {
+  for (const mode of modes) {
     const s = startup[mode];
     md += `| ${mode} | ${fmt(s?.median)} | ${fmt(s?.mean)} | ${fmt(s?.std)} | ${s?.n ?? 0} |\n`;
   }
 
   md += `\n## Memory (JS heap, MB — indicative, no forced GC)\n\n`;
-  md += `| phase | vdom page | vdom worker | vapor page | vapor worker |\n|---|---|---|---|---|\n`;
-  const phases = ['mounted', 'after10k', 'afterClear'];
+  md += `| phase | ${modes.flatMap((m) => [`${m} page`, `${m} worker`]).join(' | ')} |\n|${
+    '---|'.repeat(2 * modes.length + 1)
+  }\n`;
+  const phases = ['mounted', 'after10k', 'afterClear', 'after30k', 'after30kClear'];
   const mb = (x) => (x == null ? 'n/a' : (x / 1048576).toFixed(1));
   for (const phase of phases) {
     const cell = (mode, key) => {
-      const entries = memory[mode].filter((m) => m.phase === phase);
+      const entries = (memory[mode] ?? []).filter((m) => m.phase === phase);
       if (entries.length === 0) return 'n/a';
       const vals = entries
         .map((m) =>
@@ -377,19 +409,50 @@ function markdownReport(result) {
         .filter((x) => x != null);
       return vals.length ? mb(stats(vals).median) : 'n/a';
     };
-    md += `| ${phase} | ${cell('vdom', 'page')} | ${cell('vdom', 'worker')} | ${
-      cell('vapor', 'page')
-    } | ${cell('vapor', 'worker')} |\n`;
+    md += `| ${phase} | ${
+      modes.flatMap((m) => [cell(m, 'page'), cell(m, 'worker')]).join(' | ')
+    } |\n`;
   }
 
   md += `\n## Bundle size (bytes)\n\n`;
-  md += `| bundle | vdom raw | vdom gzip | vapor raw | vapor gzip |\n|---|---|---|---|---|\n`;
+  md += `| bundle | ${modes.flatMap((m) => [`${m} raw`, `${m} gzip`]).join(' | ')} |\n|${
+    '---|'.repeat(2 * modes.length + 1)
+  }\n`;
   for (const file of ['main.lynx.bundle', 'main.web.bundle']) {
-    md += `| ${file} | ${bundles.vdom?.[file]?.raw ?? 'n/a'} | ${
-      bundles.vdom?.[file]?.gzip ?? 'n/a'
-    } | ${bundles.vapor?.[file]?.raw ?? 'n/a'} | ${
-      bundles.vapor?.[file]?.gzip ?? 'n/a'
+    md += `| ${file} | ${
+      modes.flatMap((m) => [
+        bundles[m]?.[file]?.raw ?? 'n/a',
+        bundles[m]?.[file]?.gzip ?? 'n/a',
+      ]).join(' | ')
     } |\n`;
+  }
+
+  // Headline: the Part A flag effect (vapor → vapor-bt), if both ran.
+  if (modes.includes('vapor') && modes.includes('vapor-bt')) {
+    md += `\n## Issue #234 Part A — build-time structured templates (vapor → vapor-bt)\n\n`;
+    md += `Positive % = vapor-bt is that much larger/slower; negative = smaller/faster.\n\n`;
+    const su = startup;
+    md += `**Startup** median: vapor ${fmt(su.vapor?.median)}ms → vapor-bt ${
+      fmt(su['vapor-bt']?.median)
+    }ms (${pct(su['vapor-bt']?.median, su.vapor?.median)}).\n\n`;
+    for (const file of ['main.lynx.bundle', 'main.web.bundle']) {
+      const a = bundles.vapor?.[file];
+      const b = bundles['vapor-bt']?.[file];
+      if (a && b) {
+        md += `**${file}** raw: ${a.raw} → ${b.raw} (${pct(b.raw, a.raw)}); gzip: ${
+          a.gzip
+        } → ${b.gzip} (${pct(b.gzip, a.gzip)}).\n\n`;
+      }
+    }
+    md += `**Per-op bg median delta** (vapor-bt vs vapor):\n\n`;
+    md += `| op | vapor bg | vapor-bt bg | Δ |\n|---|---|---|---|\n`;
+    for (const op of ops) {
+      const a = perOp.vapor?.[op]?.bg;
+      const b = perOp['vapor-bt']?.[op]?.bg;
+      md += `| ${op} | ${fmt(a?.median)} | ${fmt(b?.median)} | ${
+        pct(b?.median, a?.median)
+      } |\n`;
+    }
   }
   return md;
 }
@@ -399,18 +462,19 @@ function markdownReport(result) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  if (!args['skip-build']) buildApps();
+  if (!args['skip-build']) buildApps({ apps: MODES });
 
   const server = await startServer();
   const browser = await launchBrowser();
 
-  const loads = { vdom: [], vapor: [] };
-  const startupSamples = { vdom: [], vapor: [] };
+  const loads = Object.fromEntries(MODES.map((m) => [m, []]));
+  const startupSamples = Object.fromEntries(MODES.map((m) => [m, []]));
 
   try {
-    // Alternate modes across loads to spread thermal / JIT drift fairly.
+    // Alternate mode order across loads to spread thermal / JIT drift fairly.
     for (let i = 0; i < LOADS; i++) {
-      for (const mode of i % 2 === 0 ? ['vdom', 'vapor'] : ['vapor', 'vdom']) {
+      const order = i % 2 === 0 ? MODES : [...MODES].reverse();
+      for (const mode of order) {
         console.log(`[bench] scenario load ${i + 1}/${LOADS} — ${mode}`);
         const load = await runScenarioLoad(browser, mode);
         if (load.errors.length) {
@@ -427,7 +491,7 @@ async function main() {
     }
 
     for (let i = 0; i < STARTUP_COUNT; i++) {
-      for (const mode of ['vdom', 'vapor']) {
+      for (const mode of MODES) {
         const t = await runStartupLoad(browser, mode);
         startupSamples[mode].push(t);
         console.log(`[bench] startup ${mode}: ${t.toFixed(1)}ms`);
@@ -452,20 +516,14 @@ async function main() {
       cpus: os.cpus().length,
       cpuModel: os.cpus()[0]?.model ?? 'unknown',
       loads: LOADS,
+      modes: MODES,
     },
-    perOp: {
-      vdom: aggregate(loads.vdom),
-      vapor: aggregate(loads.vapor),
-    },
-    startup: {
-      vdom: stats(startupSamples.vdom),
-      vapor: stats(startupSamples.vapor),
-    },
-    memory: {
-      vdom: loads.vdom.flatMap((l) => l.memory),
-      vapor: loads.vapor.flatMap((l) => l.memory),
-    },
-    bundles: bundleSizes(),
+    perOp: Object.fromEntries(MODES.map((m) => [m, aggregate(loads[m])])),
+    startup: Object.fromEntries(MODES.map((m) => [m, stats(startupSamples[m])])),
+    memory: Object.fromEntries(
+      MODES.map((m) => [m, loads[m].flatMap((l) => l.memory)]),
+    ),
+    bundles: bundleSizes(MODES),
     raw: loads,
   };
 

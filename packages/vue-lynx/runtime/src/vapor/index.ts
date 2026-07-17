@@ -37,12 +37,15 @@ import {
   createVaporApp as _createVaporApp,
   onBinding as _onBinding,
   renderEffect,
+  template as _template,
 } from '@vue/runtime-vapor';
 import * as runtimeDom from '@vue/runtime-dom';
 import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
+import type { VaporTemplateIR } from 'vue-lynx/internal/ops';
 import { registerMount } from '../app-registry.js';
+import { buildInertFromIR } from './build-inert.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
 import { isIfrMainThread } from '../ifr-env.js';
@@ -56,6 +59,45 @@ import { applyVaporCssVarsToBlock } from './css-vars.js';
 // ---------------------------------------------------------------------------
 
 export * from '@vue/runtime-vapor';
+
+// ---------------------------------------------------------------------------
+// Template factory — accept the build-time structured form (issue #234, A)
+// ---------------------------------------------------------------------------
+
+type TemplateFactory = () => ShadowElement;
+
+/**
+ * Vapor's `template()` helper. Overrides upstream to accept, in addition to
+ * the minified-HTML string, the build-time **structured** form emitted by the
+ * `vaporBuildTimeTemplates` plugin transform: `template([<VaporTemplateIR>],
+ * flags)`. The structured path rebuilds the inert prototype directly (no HTML
+ * parse), then clones it per instance exactly like the string path.
+ *
+ * The string form is preserved verbatim (delegated to upstream) so precompiled
+ * third-party Vapor code — and builds with the flag off — keep working.
+ * @public
+ */
+export function template(
+  input: string | VaporTemplateIR[],
+  flags = 0,
+  ns?: number,
+): TemplateFactory {
+  if (typeof input === 'string') {
+    return _template(input, flags, ns) as unknown as TemplateFactory;
+  }
+  // Structured form: the IR already encodes the parsed tree, so `ns` (the
+  // string parser's svg/math nesting hint) is irrelevant here.
+  const root = !!(flags & 1);
+  let node: ShadowElement | undefined;
+  return () => {
+    if (node === undefined) {
+      node = buildInertFromIR(input).firstChild as ShadowElement;
+    }
+    const ret = node.cloneNode(true) as ShadowElement & { $root?: boolean };
+    if (root) ret.$root = true;
+    return ret;
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Event modifier helpers — Lynx semantics

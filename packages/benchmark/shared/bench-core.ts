@@ -151,6 +151,7 @@ export function memMarker(phase: string): void {
 export interface BenchApi {
   run(): void; // create 1,000 rows (replaces table)
   runLots(): void; // create 10,000 rows (replaces table)
+  runHuge(): void; // create 30,000 rows (replaces table)
   add(): void; // append 1,000 rows
   update(): void; // update every 10th row label
   select(id: number): void;
@@ -166,6 +167,10 @@ export interface ScenarioOptions {
   count?: number;
   /** Samples for the heavy 10k ops. */
   heavyCount?: number;
+  /** Samples for the huge 30k ops (heaviest; fewer by default). */
+  hugeCount?: number;
+  /** Include the huge 30k scale ops (create30k / clear30k). */
+  huge?: boolean;
   /** Warmup iterations (unmeasured). */
   warmup?: number;
 }
@@ -182,6 +187,8 @@ export async function runScenario(
 ): Promise<BenchResult> {
   const count = options.count ?? 10;
   const heavyCount = options.heavyCount ?? 5;
+  const hugeCount = options.hugeCount ?? 3;
+  const huge = options.huge ?? false;
   const warmup = options.warmup ?? 5;
 
   const phase = async (text: string): Promise<void> => {
@@ -271,6 +278,25 @@ export async function runScenario(
     await settle(100);
   }
   memMarker('afterClear');
+
+  // -- create30k / clear30k (larger scale, opt-in) ---------------------------
+  // Referencing #247's ifr-bench 30k scale point. The static template is
+  // registered once (REGISTER_TREE), so Part A's build-time-template effect is
+  // a fixed startup cost independent of row count; this op instead stresses the
+  // per-instance clone / ops-serialization path at 3× the rows.
+  if (huge) {
+    await phase('create30k');
+    for (let i = 0; i < hugeCount; i++) {
+      api.clear();
+      await settle(100);
+      await measure('create30k', () => api.runHuge());
+      await settle(150);
+      memMarker(i === hugeCount - 1 ? 'after30k' : `30k-${i}`);
+      await measure('clear30k', () => api.clear());
+      await settle(150);
+    }
+    memMarker('after30kClear');
+  }
 
   await phase('done');
   const result: BenchResult = { mode, samples };

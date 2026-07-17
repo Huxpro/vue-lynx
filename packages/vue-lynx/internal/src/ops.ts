@@ -158,6 +158,36 @@ export interface TemplateNodeProps {
 /** [tag, props|0, children] */
 export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 
+// ---------------------------------------------------------------------------
+// Vapor build-time structured templates (issue #234, Part A)
+//
+// The `@vue/compiler-vapor` `template("<html>", flags)` helper serializes the
+// static template structure as a minified HTML string, parsed on the
+// Background Thread by runtime/src/vapor/html-parser.ts. When the plugin's
+// `vaporBuildTimeTemplates` flag is on, a build-time loader parses that string
+// at build time and rewrites the call to `template([<VaporTemplateIR>], flags)`
+// — the structured form below — so the runtime skips HTML parsing entirely.
+//
+// This IR is a *faithful* serialization of the inert ShadowElement prototype
+// the HTML parser would have produced (raw attribute list, pre-fold), NOT the
+// REGISTER_TREE `TemplateNode` shape: reconstructing the exact inert tree keeps
+// the downstream buildStructure/buildShadowClone walks — and therefore the
+// REGISTER_TREE payload and the pre-order uid contract — byte-identical to the
+// string-parsing path. See runtime/src/vapor/build-inert.ts.
+// ---------------------------------------------------------------------------
+
+/**
+ * One node of a build-time serialized Vapor template.
+ *  - element: `[tag, attrs, children]` — `attrs` is the raw ordered
+ *    `[name, value]` list exactly as the HTML parser recorded it (entities
+ *    already decoded; class/style/id NOT yet routed — the runtime replays
+ *    them through `_setAttrRecord`).
+ *  - text / comment: `['#text', data]` / `['#comment', data]`.
+ */
+export type VaporTemplateIR =
+  | [tag: string, attrs: [string, string][], children: VaporTemplateIR[]]
+  | [kind: '#text' | '#comment', data: string];
+
 // Global names bridging the vapor build plugin and the runtime DOM shim:
 // the plugin's DefinePlugin rewrites free `document`/`window` identifiers to
 // `globalThis.<name>`, and vapor/dom-shim.ts installs the shims under the
