@@ -64,6 +64,7 @@ export default defineConfig({
     },
     globalComponents: [
       path.join(__dirname, 'src/components/go/Go.tsx'),
+      path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
     ],
   },
   route: {
@@ -92,6 +93,7 @@ export default defineConfig({
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
+        { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         {
@@ -115,6 +117,8 @@ export default defineConfig({
         { text: 'TodoMVC', link: '/guide/todomvc' },
         { text: '7GUIs', link: '/guide/7guis' },
         { text: 'HackerNews', link: '/guide/hackernews' },
+        { text: 'AI Chat', link: '/guide/ai-chat' },
+        { text: 'Elk (Mastodon Client)', link: '/guide/elk' },
         {
           dividerType: 'solid',
         },
@@ -134,6 +138,7 @@ export default defineConfig({
         { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
+        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         {
@@ -157,6 +162,8 @@ export default defineConfig({
         { text: 'TodoMVC', link: '/zh/guide/todomvc' },
         { text: '7GUIs', link: '/zh/guide/7guis' },
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
+        { text: 'AI Chat', link: '/zh/guide/ai-chat' },
+        { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
         {
           dividerType: 'solid',
         },

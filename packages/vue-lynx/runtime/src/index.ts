@@ -18,6 +18,15 @@
 import {
   nextTick as _vueNextTick,
   createRenderer,
+  h as _vueH,
+  onActivated as _onActivated,
+  onBeforeMount as _onBeforeMount,
+  onBeforeUnmount as _onBeforeUnmount,
+  onBeforeUpdate as _onBeforeUpdate,
+  onDeactivated as _onDeactivated,
+  onMounted as _onMounted,
+  onUnmounted as _onUnmounted,
+  onUpdated as _onUpdated,
   // Re-export types need explicit imports for isolatedDeclarations
 } from '@vue/runtime-core';
 import type {
@@ -54,10 +63,12 @@ import type {
   WritableComputedRef,
 } from '@vue/runtime-core';
 
+import { registerMount, resetAppRegistry } from './app-registry.js';
 import { runOnMainThread } from './cross-thread.js';
 import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush, waitForFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
+import { isIfrMainThread } from './ifr-env.js';
 import {
   MainThreadRef,
   resetMainThreadRefState,
@@ -65,6 +76,11 @@ import {
 } from './main-thread-ref.js';
 import { nodeOps, resetNodeOpsState } from './node-ops.js';
 import { OP, pushOp, takeOps } from './ops.js';
+import {
+  Page,
+  PAGE_COMPONENT_NAME,
+  pageRootContextKey,
+} from './Page.js';
 import {
   resetRunOnBackgroundState,
   runOnBackground,
@@ -166,6 +182,7 @@ export function createApp(
   rootProps?: Record<string, unknown>,
 ): VueLynxApp {
   const internalApp = _createApp(rootComponent, rootProps);
+  internalApp.component(PAGE_COMPONENT_NAME, Page);
 
   const app: VueLynxApp = {
     get config() {
@@ -186,8 +203,19 @@ export function createApp(
     },
 
     mount(): void {
-      const root = createPageRoot();
-      internalApp.mount(root);
+      const doMount = () => {
+        const root = createPageRoot();
+        internalApp.provide(pageRootContextKey, { root, owner: null });
+        internalApp.mount(root);
+      };
+      // IFR main-thread bundle: user code evaluates *before* Lynx calls
+      // renderPage, so the actual mount is deferred until the page root
+      // exists.  On the background thread (flag absent) mount immediately.
+      if (isIfrMainThread()) {
+        registerMount(doMount);
+      } else {
+        doMount();
+      }
     },
 
     unmount(): void {
@@ -204,6 +232,13 @@ export function createApp(
  * Unlike standard Vue's `nextTick` which only waits for the scheduler flush,
  * Vue Lynx's version also waits for the main thread to apply the ops, so
  * native Lynx elements are fully materialised when the callback fires.
+ *
+ * Caveat: some Lynx builds never invoke the `callLepusMethod` callback that
+ * carries the acknowledgement. Until the engine has delivered one real
+ * acknowledgement, each flush falls back to a short timer so `nextTick()`
+ * cannot hang forever — on such engines the materialisation guarantee is
+ * best-effort (a dev-mode warning is logged when the fallback fires). Once a
+ * real acknowledgement has been observed, the strict guarantee applies.
  *
  * @param fn - Optional callback to execute after flush
  * @returns A promise that resolves when the main thread has applied all pending ops
@@ -228,6 +263,7 @@ export {
   runOnBackground,
   transformToWorklet,
 };
+export { useGlobalEvent } from './use-global-event.js';
 
 /** @internal Exposed for upstream-tests bridge render(). */
 export { createPageRoot } from './shadow-element.js';
@@ -236,7 +272,7 @@ export { createPageRoot } from './shadow-element.js';
 // v-show directive (Vue Lynx implementation)
 // ---------------------------------------------------------------------------
 
-function applyVShow(el: ShadowElement, value: unknown): void {
+function setVShowDisplay(el: ShadowElement, value: unknown): void {
   el._vShowHidden = !value;
   const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
   pushOp(OP.SET_STYLE, el.id, style);
@@ -255,11 +291,41 @@ function applyVShow(el: ShadowElement, value: unknown): void {
  * @public
  */
 export const vShow: ObjectDirective<ShadowElement, unknown> = {
-  beforeMount(el, { value }) {
-    applyVShow(el, value);
+  beforeMount(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.beforeEnter(el);
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
   },
-  updated(el, { value, oldValue }) {
-    if (value !== oldValue) applyVShow(el, value);
+  mounted(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.enter(el);
+    }
+  },
+  updated(el, { value, oldValue }, { transition }) {
+    if (!value === !oldValue)
+      return;
+
+    if (transition) {
+      if (value) {
+        transition.beforeEnter(el);
+        setVShowDisplay(el, true);
+        transition.enter(el);
+      }
+      else {
+        transition.leave(el, () => {
+          setVShowDisplay(el, false);
+        });
+      }
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
+  },
+  beforeUnmount(el, { value }) {
+    setVShowDisplay(el, value);
   },
 };
 
@@ -436,14 +502,29 @@ export { markRaw } from '@vue/runtime-core';
 // ===========================================================================
 // Vue Core Re-exports — Lifecycle Hooks
 // ===========================================================================
+//
+// Lifecycle registration is a no-op during the IFR main-thread first-screen
+// render: user effects (data fetching, timers, subscriptions) must only run
+// on the background thread, mirroring ReactLynx where useEffect never fires
+// during the MTS render.  Everywhere else these behave exactly like Vue's.
+
+function ifrInert<T extends (...args: never[]) => unknown>(fn: T): T {
+  return ((...args: never[]) => {
+    if (isIfrMainThread()) return undefined;
+    return fn(...args);
+  }) as T;
+}
 
 /**
  * Registers a callback to be called after the component is mounted.
  *
+ * In Vue Lynx, the callback only runs on the background thread — during an
+ * IFR main-thread first-screen render, registration is a no-op.
+ *
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onmounted | Vue docs}
  * @public
  */
-export { onMounted } from '@vue/runtime-core';
+export const onMounted: typeof _onMounted = ifrInert(_onMounted);
 
 /**
  * Registers a hook to be called right before the component is to be mounted.
@@ -451,7 +532,7 @@ export { onMounted } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforemount | Vue docs}
  * @public
  */
-export { onBeforeMount } from '@vue/runtime-core';
+export const onBeforeMount: typeof _onBeforeMount = ifrInert(_onBeforeMount);
 
 /**
  * Registers a callback to be called after the component is unmounted.
@@ -459,7 +540,7 @@ export { onBeforeMount } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onunmounted | Vue docs}
  * @public
  */
-export { onUnmounted } from '@vue/runtime-core';
+export const onUnmounted: typeof _onUnmounted = ifrInert(_onUnmounted);
 
 /**
  * Registers a hook to be called right before the component is about to be unmounted.
@@ -467,7 +548,9 @@ export { onUnmounted } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeunmount | Vue docs}
  * @public
  */
-export { onBeforeUnmount } from '@vue/runtime-core';
+export const onBeforeUnmount: typeof _onBeforeUnmount = ifrInert(
+  _onBeforeUnmount,
+);
 
 /**
  * Registers a callback to be called after the component has updated its DOM tree.
@@ -475,7 +558,7 @@ export { onBeforeUnmount } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onupdated | Vue docs}
  * @public
  */
-export { onUpdated } from '@vue/runtime-core';
+export const onUpdated: typeof _onUpdated = ifrInert(_onUpdated);
 
 /**
  * Registers a hook to be called right before the component is about to update.
@@ -483,7 +566,9 @@ export { onUpdated } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeupdate | Vue docs}
  * @public
  */
-export { onBeforeUpdate } from '@vue/runtime-core';
+export const onBeforeUpdate: typeof _onBeforeUpdate = ifrInert(
+  _onBeforeUpdate,
+);
 
 /**
  * Registers a callback to be called when an error propagating from a descendant
@@ -519,7 +604,7 @@ export { onRenderTriggered } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onactivated | Vue docs}
  * @public
  */
-export { onActivated } from '@vue/runtime-core';
+export const onActivated: typeof _onActivated = ifrInert(_onActivated);
 
 /**
  * Registers a hook to be called when the component is removed from the DOM
@@ -528,7 +613,7 @@ export { onActivated } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#ondeactivated | Vue docs}
  * @public
  */
-export { onDeactivated } from '@vue/runtime-core';
+export const onDeactivated: typeof _onDeactivated = ifrInert(_onDeactivated);
 
 // ===========================================================================
 // Vue Core Re-exports — Watchers
@@ -670,7 +755,52 @@ export { defineAsyncComponent } from '@vue/runtime-core';
  * @see {@link https://vuejs.org/api/render-function.html#h | Vue docs}
  * @public
  */
-export { h } from '@vue/runtime-core';
+function isVNodeLike(value: unknown): boolean {
+  return value != null
+    && typeof value === 'object'
+    && '__v_isVNode' in value;
+}
+
+function normalizePageSlots(children: unknown): unknown {
+  if (
+    children != null
+    && typeof children === 'object'
+    && !Array.isArray(children)
+    && !isVNodeLike(children)
+  ) {
+    return children;
+  }
+  if (typeof children === 'function') {
+    return { default: children };
+  }
+  return { default: () => children };
+}
+
+const _hWithPageRoot = (...args: unknown[]): VNode => {
+  const [type, propsOrChildren, children] = args;
+  const vueH = _vueH as (...values: unknown[]) => VNode;
+  if (type !== 'page') {
+    return vueH(...args);
+  }
+
+  if (args.length === 1) {
+    return vueH(Page);
+  }
+  if (args.length === 2) {
+    const secondArgIsChildren = Array.isArray(propsOrChildren)
+      || typeof propsOrChildren === 'function'
+      || typeof propsOrChildren === 'string'
+      || typeof propsOrChildren === 'number'
+      || isVNodeLike(propsOrChildren);
+    return secondArgIsChildren
+      ? vueH(Page, null, normalizePageSlots(propsOrChildren))
+      : vueH(Page, propsOrChildren);
+  }
+
+  return vueH(Page, propsOrChildren, normalizePageSlots(children));
+};
+
+export const h: typeof _vueH = _hWithPageRoot as typeof _vueH;
 
 /**
  * Returns the internal instance of the current component. For advanced use cases and library authors.
@@ -1041,6 +1171,29 @@ function injectVModelEvent(el: ShadowElement, vnode: VNode): void {
   }
 }
 
+/**
+ * Imperatively push a new value into the native <input>/<textarea>.
+ *
+ * `<input>`/`<textarea>` treat the `value` prop as the INITIAL value only. On
+ * native (iOS/Android) a post-mount `__SetAttribute(el, 'value', …)` — which is
+ * what OP.SET_PROP resolves to — is ignored once the control is live, so a
+ * programmatic model change (e.g. a reset/clear button) never reaches the
+ * field. The platform's `setValue` UI method is the supported way to update the
+ * text imperatively (see @lynx-js/types Input/TextArea `setValue`, iOS/Android/
+ * Harmony/Web). Web reflects the `value` attribute live, so SET_PROP already
+ * covers it there and this is a harmless redundant call.
+ *
+ * Wrapped defensively: selector-query / UI-method APIs are unavailable in some
+ * environments (in-memory test adapters), and the SET_PROP path is the fallback.
+ */
+function setNativeInputValue(el: ShadowElement, value: string): void {
+  try {
+    el.invoke({ method: 'setValue', params: { value } }).exec();
+  } catch {
+    // no-op — OP.SET_PROP already carried the value where it can be applied.
+  }
+}
+
 export const vModelText: ObjectDirective<ShadowElement> = {
   created(el, { modifiers }, vnode) {
     const isLazy = modifiers?.lazy;
@@ -1070,11 +1223,16 @@ export const vModelText: ObjectDirective<ShadowElement> = {
     // "removed" and calling REMOVE_EVENT.
     injectVModelEvent(el, vnode);
 
-    // Push value to MT only if changed
+    // Push value to MT only if changed. This branch is the programmatic path
+    // (model changed from code): user keystrokes already set el._vModelValue in
+    // the event handler, so they no-op here and never clobber the caret.
     const strVal = value == null ? '' : String(value);
     if (strVal !== el._vModelValue) {
       el._vModelValue = strVal;
+      // SET_PROP drives web (live attribute reflection) and the initial value;
+      // setValue() drives native, where the post-mount value attribute is inert.
       pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      setNativeInputValue(el, strVal);
       scheduleFlush();
     }
   },
@@ -1232,10 +1390,61 @@ export function withKeys(
 }
 
 // ===========================================================================
-// Built-in components — Transition
+// Built-in components — Page, Transition
 // ===========================================================================
 
-export { Transition, TransitionGroup };
+// `Page` is the transparent wrapper behind explicit `<page>` roots — see
+// ./Page.ts for the full contract (single owner, attrs forwarded to the
+// native root). In templates, use lowercase `<page>` (rewritten by the
+// compiler) or import `Page` explicitly; only `VueLynxPage` is registered
+// globally.
+export { Page, Transition, TransitionGroup };
+
+// ===========================================================================
+// @internal — IFR (Instant First-Frame Rendering) support
+// ===========================================================================
+
+/**
+ * Register a compile-time-lowered element template.
+ *
+ * Called from compiler-generated code (a hoisted statement in the compiled
+ * render module) — never directly by applications.
+ *
+ * @hidden
+ */
+export { registerElementTemplate } from './element-template.js';
+
+/**
+ * True while executing inside the IFR main-thread first-screen render.
+ *
+ * Apps whose first screen cannot render on the main thread (e.g. fully
+ * network-driven) can gate their `app.mount()` on `!isIfrMainThread()` to
+ * opt that screen out of IFR while keeping module evaluation — and with it
+ * worklet/template registration — intact. Always `false` on the background
+ * thread and in non-IFR builds.
+ *
+ * @public
+ */
+export { isIfrMainThread } from './ifr-env.js';
+
+/**
+ * Gate for LEPUS-transformed worklet registrations.
+ *
+ * The SWC worklet transform (target: LEPUS) emits
+ * `import { loadWorkletRuntime } from "vue-lynx"` followed by
+ * `loadWorkletRuntime(...) && registerWorkletInternal(...)` calls.  In IFR
+ * builds the full LEPUS output is kept on the main thread, so this import
+ * must resolve.  The worklet-runtime is bundled directly into main-thread.js
+ * (it defines `registerWorkletInternal` on globalThis), so "loading" reduces
+ * to checking that we are on a thread where it exists.
+ *
+ * @hidden
+ */
+export function loadWorkletRuntime(_entry?: unknown): boolean {
+  return typeof (globalThis as Record<string, unknown>)[
+    'registerWorkletInternal'
+  ] === 'function';
+}
 
 // ===========================================================================
 // @internal — Testing utilities
@@ -1260,6 +1469,10 @@ export function resetForTesting(): void {
   resetMainThreadRefState();
   resetFunctionCallState();
   resetRunOnBackgroundState();
+  resetAppRegistry();
+  // NOTE: element-template registrations are intentionally NOT reset —
+  // they are bundle-lifetime (hoisted per render module, id-keyed,
+  // idempotent), like the main-thread template registry.
   takeOps(); // drain any leftover ops
   ShadowElement.nextId = 2;
 }

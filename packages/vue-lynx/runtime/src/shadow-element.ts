@@ -17,6 +17,8 @@ import type {
   uiMethodOptions,
 } from '@lynx-js/types';
 
+import { PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
+
 export class ShadowElement {
   static nextId = 2; // 1 is reserved for the page root
 
@@ -27,6 +29,13 @@ export class ShadowElement {
   lastChild: ShadowElement | null = null;
   prev: ShadowElement | null = null;
   next: ShadowElement | null = null;
+
+  // Empty Vue text VNodes are structural anchors. Native Lynx gives an empty
+  // <text> a default line box, so these nodes are materialised lazily only
+  // while they contain visible text.
+  _textValue = '';
+  _mtCreated = false;
+  _mtInserted = false;
 
   // Cached style object (last value passed to patchProp 'style').
   // Used by vShow to merge display:none without losing the original styles.
@@ -48,6 +57,12 @@ export class ShadowElement {
 
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
+
+  // Element-template instance state (only set on lowered template roots —
+  // see element-template.ts). Hole shadows are allocated contiguously after
+  // the root id so both threads agree on ids without shipping them.
+  _tplHoleKeys: string[] | undefined = undefined;
+  _tplHoles: ShadowElement[] | undefined = undefined;
 
   constructor(type: string, forceId?: number) {
     if (forceId === undefined) {
@@ -170,7 +185,7 @@ export class ShadowElement {
   }
 }
 
-export const PAGE_ROOT_ID = 1;
+export { PAGE_ROOT_ID };
 
 /** Create the page root shadow element with the reserved id=1. */
 export function createPageRoot(): ShadowElement {

@@ -16,8 +16,10 @@
     "enabled": true,
     "ignore": [
       "dist/**",
+      "**/.rslib/**",
       "coverage/**",
       "packages/testing-library/**",
+      "packages/ifr-bench/**",
       "packages/upstream-tests/**",
       "packages/create-vue-lynx/**",
       "examples/**",

@@ -1,5 +1,19 @@
 # @vue-lynx-example/hackernews-css
 
+## 0.2.8
+
+### Patch Changes
+
+- Updated dependencies [[`ed9ae0c`](https://github.com/Huxpro/vue-lynx/commit/ed9ae0c0b0f254f03def5b796a33f42106700254), [`2057027`](https://github.com/Huxpro/vue-lynx/commit/2057027776129d61be3d330c787dfba1a21b5447), [`e52d340`](https://github.com/Huxpro/vue-lynx/commit/e52d340b73ce82d7adabfd055727fdd452bc7b76), [`dfcfc9c`](https://github.com/Huxpro/vue-lynx/commit/dfcfc9c082906913b4a2d153549f51f59377a01d)]:
+  - vue-lynx@0.5.0
+
+## 0.2.7
+
+### Patch Changes
+
+- Updated dependencies [[`39ccc7c`](https://github.com/Huxpro/vue-lynx/commit/39ccc7c5095c6999612f56461623db75f123a47d), [`9f72927`](https://github.com/Huxpro/vue-lynx/commit/9f72927f1b4a8580468e47e70b0e4ad5eb415783), [`747acd2`](https://github.com/Huxpro/vue-lynx/commit/747acd24f025ccba4dda4b22db99d62bb76851d3), [`eaf275a`](https://github.com/Huxpro/vue-lynx/commit/eaf275adb7ef1184adebaac60fe8e5b0b40b7783)]:
+  - vue-lynx@0.4.2
+
 ## 0.2.6
 
 ### Patch Changes

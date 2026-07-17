@@ -19,6 +19,7 @@ import { ref, computed, onMounted, defineComponent } from 'vue-lynx';
 | 名称 | 类型 |
 | ------ | ------ |
 | `MainThreadRef` | Class |
+| `Page` | Component |
 | `createApp` | Function |
 | `nextTick` | Function |
 | `runOnBackground` | Function |
@@ -31,6 +32,7 @@ import { ref, computed, onMounted, defineComponent } from 'vue-lynx';
 
 | 组件 | 状态 | 备注 |
 | --------- | ------ | ----- |
+| `<page>` / `Page` 导出 | 支持 | 透明地复用唯一的原生 page 根节点；只允许作为最外层包装使用一次。省略时 Vue Lynx 会自动提供根节点。 |
 | `<Transition>` | 实验性 | 基于 CSS class 的进入/离开动画。需要显式的 `:duration` prop — 后台线程无法使用 `getComputedStyle()`。 |
 | `<TransitionGroup>` | 实验性 | 逐子元素进入/离开动画。不支持移动 (FLIP) 动画 — 后台线程无法使用 `getBoundingClientRect()`。 |
 | `<Suspense>` | 支持 | 从 Vue 重新导出。与 `defineAsyncComponent()` 配合使用。 |

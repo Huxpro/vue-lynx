@@ -13,7 +13,15 @@
  *   - globalThis.vuePatchUpdate – receives ops from Background Thread
  */
 
+import {
+  PAGE_ROOT_ID,
+  TPL_EXECUTOR_REGISTRY_GLOBAL,
+  TPL_REGISTER_GLOBAL,
+} from 'vue-lynx/internal/ops';
+
 import { elements, setPageUniqueId } from './element-registry.js';
+import { registerTemplate } from './element-templates.js';
+import { interceptPatchUpdate, runIfrRender } from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
@@ -21,19 +29,42 @@ const g = globalThis as Record<string, unknown>;
 
 // Expose SystemInfo on globalThis (the worklet-runtime reads it).
 // In React's main-thread bundle this is done by the generated snapshot code.
-g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
+// Never clobber an engine-provided SystemInfo global: some environments
+// (e.g. the Lynx testing environment's main-thread context) define
+// `SystemInfo` directly without mirroring it on `lynx.SystemInfo` — first
+// screen code that measures against screen dimensions depends on it.
+g['SystemInfo'] =
+  (typeof lynx !== 'undefined'
+    && (lynx as { SystemInfo?: unknown }).SystemInfo)
+    ?? g['SystemInfo'] ?? {};
 
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
 g['runOnBackground'] = runOnBackground;
 
+// Element-template registration hooks. Compiler-lowered template create()
+// functions land here from either side:
+//  - IFR bundles: vue-lynx's registerElementTemplate (which overwrites the
+//    adapter below at runtime-module evaluation) forwards create() to
+//    __vueLynxRegisterTemplate
+//  - interpreter-only bundles: worklet-loader-mt re-emits the generated
+//    registration statements, which resolve __vueLynxRegisterElementTemplate
+//    at evaluation time — entry-main runs first, so they land in the
+//    create-only adapter
+g[TPL_EXECUTOR_REGISTRY_GLOBAL] = registerTemplate;
+g[TPL_REGISTER_GLOBAL] = (
+  id: string,
+  _holes: unknown,
+  create: Parameters<typeof registerTemplate>[1],
+): string => {
+  registerTemplate(id, create);
+  return id;
+};
+
 // The worklet-runtime (from @lynx-js/react) is bundled into this
 // main-thread entry by the vue-lynx plugin — it provides:
 //   globalThis.runWorklet, globalThis.registerWorkletInternal,
 //   globalThis.lynxWorkletImpl (with Element class, Animation, etc.)
-
-/** PAGE_ROOT_ID must match the value in runtime/src/shadow-element.ts */
-const PAGE_ROOT_ID = 1;
 
 // Lynx Lepus runtime requires globalThis.processData to be set.
 // It is called to transform initial data before renderPage runs.
@@ -57,6 +88,11 @@ g['renderPage'] = function(_data: unknown): void {
   __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
+  // IFR: mount any Vue app that user code registered on this thread and
+  // paint the first frame synchronously.  No-op in non-IFR bundles (user
+  // code on the MT layer is stripped to worklet registrations, so no app
+  // ever registers).
+  runIfrRender();
   __FlushElementTree(page);
 };
 
@@ -72,6 +108,9 @@ g['updateGlobalProps'] = function(_data: unknown): void {
 
 // Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
 g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+  // IFR hydration: the background thread's initial batches replay the
+  // main-thread first-screen render — skip/patch them instead of applying.
+  if (interceptPatchUpdate(data)) return;
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);
 };

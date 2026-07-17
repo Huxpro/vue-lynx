@@ -69,6 +69,7 @@ const HIDDEN_APIS = new Set([
 // Vue Lynx specific APIs — shown first in the vue-lynx sidebar
 const VUE_LYNX_APIS = new Set([
   'Function.createApp',
+  'Variable.Page',
   'Interface.VueLynxApp',
   'Function.nextTick',
   'Class.MainThreadRef',

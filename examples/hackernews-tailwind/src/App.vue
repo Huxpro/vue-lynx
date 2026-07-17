@@ -10,7 +10,7 @@ const feedKeys = Object.keys(validFeeds);
 </script>
 
 <template>
-  <view class="w-full h-full bg-hn-bg flex flex-col">
+  <page class="w-full h-full bg-hn-bg flex flex-col">
     <!-- Header: 55px, matching reference -->
     <view
       class="bg-hn-green flex flex-col"
@@ -18,56 +18,61 @@ const feedKeys = Object.keys(validFeeds);
     >
       <scroll-view
         scroll-x
+        scroll-orientation="horizontal"
         class="flex-1"
         :style="{ height: '100%' }"
-        :content-container-style="{ display: 'flex', flexDirection: 'row', alignItems: 'center' }"
       >
-        <!-- Logo: Lynx logo with thin white border (YC-style) -->
         <view
-          :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '15px', marginRight: '12px' }"
+          class="flex flex-row items-center h-full"
+          :style="{ minWidth: '100%' }"
         >
+          <!-- Logo: Lynx logo with thin white border (YC-style) -->
           <view
-            class="flex-shrink-0"
-            :style="{ width: '26px', height: '26px', borderWidth: '1px', borderColor: '#fff', borderRadius: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center' }"
+            :style="{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: '15px', marginRight: '12px' }"
           >
-            <image
-              :src="logoUrl"
-              :style="{ width: '24px', height: '24px' }"
-              resize="cover"
-            />
+            <view
+              class="flex-shrink-0"
+              :style="{ width: '26px', height: '26px', borderWidth: '1px', borderColor: '#fff', borderRadius: '0px', display: 'flex', alignItems: 'center', justifyContent: 'center' }"
+            >
+              <image
+                :src="logoUrl"
+                :style="{ width: '24px', height: '24px' }"
+                resize="cover"
+              />
+            </view>
           </view>
-        </view>
 
-        <!-- Feed nav links -->
-        <NavLink
-          v-for="key in feedKeys"
-          :key="key"
-          :to="`/${key}`"
-          :label="validFeeds[key].title"
-        />
+          <!-- Feed nav links -->
+          <NavLink
+            v-for="key in feedKeys"
+            :key="key"
+            :to="`/${key}`"
+            :label="validFeeds[key].title"
+          />
 
-        <!-- Built with VueLynx -->
-        <view
-          :style="{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: 'auto',
-            marginRight: '15px',
-          }"
-        >
-          <text
+          <!-- Built with VueLynx -->
+          <view
             :style="{
-              color: '#fff',
-              fontSize: '14px',
-              fontWeight: '300',
-              letterSpacing: '0.075em',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 'auto',
+              marginRight: '15px',
             }"
           >
-            Built with VueLynx
-          </text>
+            <text
+              :style="{
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: '300',
+                letterSpacing: '0.075em',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }"
+            >
+              Built with VueLynx
+            </text>
+          </view>
         </view>
       </scroll-view>
     </view>
@@ -81,7 +86,7 @@ const feedKeys = Object.keys(validFeeds);
         />
       </Transition>
     </RouterView>
-  </view>
+  </page>
 </template>
 
 <style>

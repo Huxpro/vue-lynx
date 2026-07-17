@@ -1,5 +1,63 @@
 # vue-lynx
 
+## 0.5.0
+
+### Minor Changes
+
+- feat: element templates (compile-time template lowering, route b) ([#216](https://github.com/Huxpro/vue-lynx/pull/216))
+
+  With `pluginVueLynx({ enableElementTemplates: true })`, eligible template subtrees — plain elements with compile-time-known structure — are lowered into element templates: the static skeleton compiles to a straight-line element-creation function executed on the main thread via a single `INSTANTIATE_TEMPLATE` op, while interior dynamic parts ("holes") receive deterministic ids updated through the ordinary SET ops. One vnode and one op replace per-node vdom/ops/interpreter work.
+
+  Structural features (components, v-if/v-for hosts, slots, refs, runtime directives, `<list>`) always stay on the normal vdom path; template roots keep all their props/directives on the vnode, so Transition/v-show/ref on lowered roots behave unchanged. Scoped-CSS ids are baked into skeletons at compile time. Lowered and unlowered renders produce identical documents, and lowered ops streams hydrate through IFR's fast path unchanged — the two features compose.
+
+  In the interpreter-proxy benchmark this renders typical ~1000-element first screens 7–15× faster and shrinks the cross-thread ops payload 3–1000× (see packages/ifr-bench/REPORT.md). Defaults to following `enableIFR` (element templates attack exactly the cost IFR adds — the synchronous main-thread render); pass `enableElementTemplates: false` to opt out while keeping IFR, or `true` to enable them for the ordinary background pipeline alone. Zero behavior change when off.
+
+- feat: Instant First-Frame Rendering (IFR) ([#216](https://github.com/Huxpro/vue-lynx/pull/216))
+
+  Port of ReactLynx's IFR (首屏直出) to Vue Lynx. With `pluginVueLynx({ enableIFR: true })`, the main-thread bundle carries the full Vue runtime + app code, and the first screen is rendered synchronously on the main thread inside `renderPage` — during `loadTemplate`, before any background JavaScript runs — eliminating the blank first frame.
+
+  When the background thread boots, it renders the same app and its initial ops batches are _hydrated_ against the recorded main-thread ops stream instead of re-applied: identical batches are skipped, value-level differences are patched in place, and structural divergence falls back to a full re-render (correctness never depends on the two renders matching). Element ids and event handler signs are deterministic across both threads, so events bound during the first frame route to background handlers with no re-binding.
+
+  Enabling IFR also enables element templates by default (see the companion changeset); opt out with `enableElementTemplates: false` for debugging/bisection. The new public `isIfrMainThread()` predicate lets network-driven screens opt out of the IFR mount while keeping module evaluation (worklet/template registration) intact.
+
+  Constraints (matching ReactLynx IFR): first-screen render output should be deterministic and thread-agnostic; side effects belong in Composition API lifecycle hooks (`onMounted`, watchers), which never run during the main-thread render (Options API `mounted()` is not yet suppressed there).
+
+### Patch Changes
+
+- Fix persisted CSS transitions used with `v-show` by running the Vue transition lifecycle before changing display state. Preserve the initial transition classes for a rendered frame on both Web and native Lynx so enter and leave animations work on every toggle. ([#249](https://github.com/Huxpro/vue-lynx/pull/249))
+
+- Fix explicit `<page>` roots by reusing Lynx's existing native page instead of creating a second page element. Root attributes, styles, events, scope IDs, and refs are forwarded to the native root, ownership hands off between wrappers across route swaps / `<Transition>` / `<KeepAlive>`, and nesting `<page>` inside a native element fails at compile time. Development builds now preserve the Main Thread bootstrap. Flushes fall back to a bounded timer only until the engine delivers its first real `vuePatchUpdate` acknowledgement, so `nextTick()` keeps its strict "applied on the main thread" guarantee on healthy engines. ([#226](https://github.com/Huxpro/vue-lynx/pull/226))
+
+## 0.4.2
+
+### Patch Changes
+
+- Route native `globalEventFromLepus` global events to `GlobalEventEmitter` and add the `useGlobalEvent` composable. ([#193](https://github.com/Huxpro/vue-lynx/pull/193))
+
+- Fix MT worklet loader dropping non-relative imports from the module graph. Aliased, tsconfig-path, and package worklets are now resolved and followed, so they no longer fail at runtime. Imports inside comments and string/template literals are ignored when following the worklet graph. Adds opt-in `includeWorkletPackages` to follow worklet imports into named `node_modules` packages. ([#190](https://github.com/Huxpro/vue-lynx/pull/190))
+
+- fix(runtime): suppress empty native layout anchors ([#201](https://github.com/Huxpro/vue-lynx/pull/201))
+
+  Vue's renderer emits comment nodes (`v-if`/`v-for` fragment anchors) and empty text nodes as real host nodes. Previously these were materialized on the Lynx Main Thread as native elements. An empty native `<text>` still gets a default line box from Lynx's layout engine, so these anchors introduced phantom vertical spacing between rendered content.
+
+  Comment anchors are now kept entirely off the Main Thread, and empty text nodes are materialized lazily — a native `<text>` element is created only while the node actually holds visible text, and is removed again when its content becomes empty. This eliminates the spurious gaps without changing the Background Thread VNode tree that Vue reconciles against.
+
+- fix(v-model): apply programmatic value changes to native `<input>`/`<textarea>` ([#203](https://github.com/Huxpro/vue-lynx/pull/203))
+
+  `vModelText` pushed value updates to the Main Thread via `OP.SET_PROP` →
+  `__SetAttribute(el, 'value', …)`. Native (iOS/Android) treats an input's `value`
+  prop as the _initial_ value only — a post-mount attribute write is ignored once
+  the control is live — so programmatic model changes (a reset/clear button, or
+  any code that reassigns the bound ref) never updated the on-screen field. Typing
+  still worked, and web was unaffected because web-core reflects the `value`
+  attribute live, which masked the gap.
+
+  On a programmatic change `vModelText` now also invokes the platform's `setValue`
+  UI method on the element, which is the supported way to set input text
+  imperatively across iOS/Android/Harmony/Web. User keystrokes are unaffected
+  (that path already no-ops the value push to avoid clobbering the caret), and the
+  `SET_PROP` attribute write is retained for web and the initial value.
+
 ## 0.4.1
 
 ### Patch Changes
