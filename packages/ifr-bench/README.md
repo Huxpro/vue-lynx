@@ -19,8 +19,8 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 | `src/harness.mjs` | One-configuration subprocess (fresh module state, genuine cold first run) |
 | `src/correctness.mjs` | Renders every variant against jsdom and requires identical output |
 | `run.mjs` | Orchestrator: V8 + `--jitless` matrix → `results/results.json` + tables |
-| `sfc-probe/` | Same-source generated SFC; `build-matrix.mjs` (fixed N) and `build-scale-matrix.mjs` (1k→10k × 5 architectures) |
-| `report-scale-trends.mjs` | Playground-style log-log FCP/bundle charts + α fits from scale-matrix results |
+| `sfc-probe/` | Same-source generated SFC; `build-matrix.mjs` (fixed N) and `build-scale-matrix.mjs` (1k→30k × 5 architectures) |
+| `report-scale-trends.mjs` | Playground-style cost-space + FCP/N charts (linear & log-log) + α fits |
 | `UNIFIED-RERUN.md` | Post-merge re-measurement + scale-trend architecture read |
 | `results/scale-trends-*.html` | Generated trend pages (also copied to `website/docs/public/benchmark/`) |
 | `web-harness/run-browser.mjs` | Real dual-thread browser FCP runs over a directory of `.web.bundle` files |
