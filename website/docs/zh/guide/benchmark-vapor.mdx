@@ -2,19 +2,24 @@
 
 [Vapor mode](/zh/guide/vapor-mode) 在 Lynx 上到底快多少？
 
+> **统一基准矩阵的一部分**（[UNIFIED.md](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md)）。
+> 本页只覆盖 *instrumented BG/e2e*（Vue VDOM vs Vapor）。IFR 开关、React、FCP
+> 与断言复核见
+> [`ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md)。
+
 Vue Lynx 移植了 Vue 官方基准
 （[`packages-private/benchmark`](https://github.com/vuejs/core/tree/main/packages-private/benchmark)，
 派生自 [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)），
 让**同一个应用以两种模式**跑完整的双线程管线。
 
-**结论**
+**结论** *（instrumented lynx-web；看比率，不看绝对毫秒）*
 
-| | 结果 |
-| --- | --- |
-| 更新路径（后台） | Vapor 比 VDOM 快 **5.8–9.8×** |
-| 更新路径（端到端） | 快 **2.1–6.3×**（主线程 apply 成本共享） |
-| 列表创建 | 跨线程 ops 约少 **2.4×**；端到端与 VDOM **持平** |
-| 代价 | 包体 gzip **+26%**；首屏差异在噪声内 |
+| | 结果 | 备注 |
+| --- | --- | --- |
+| 更新路径（后台） | Vapor 比 VDOM 快 **5.8–9.8×** | 黑盒 selectStorm@10k 约复现 8× |
+| 更新路径（端到端） | 快 **2.1–6.3×**（主线程 apply 成本共享） | 单次 select 常被帧地板掩盖 |
+| 列表创建 | 跨线程 ops 约少 **2.4×**；端到端与 VDOM **持平** | 黑盒 1k→30k 约 1.0–1.1× |
+| 代价 | 包体 gzip **+26%**；首屏差异在噪声内 | IFR 会改包体/FCP，见 IFR 页 |
 
 想在手机上亲手感受同一批应用？见
 [React vs Vue playground](/zh/guide/benchmark-playground)。

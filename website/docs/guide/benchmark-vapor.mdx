@@ -2,20 +2,25 @@
 
 How much faster is [Vapor mode](/guide/vapor-mode) on Lynx?
 
+> **Part of the [unified benchmark matrix](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md).**
+> This page is the *instrumented BG/e2e* slice (Vue VDOM vs Vapor only).
+> For IFR flags, React, FCP, and claim reevaluation on one scale, see
+> [`results/unified/ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md).
+
 Vue Lynx ports Vue's official benchmark
 ([`packages-private/benchmark`](https://github.com/vuejs/core/tree/main/packages-private/benchmark),
 derived from [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark))
 to Lynx and runs the **same app in both modes** through the full dual-thread
 pipeline.
 
-**Bottom line**
+**Bottom line** *(instrumented lynx-web; ratios, not absolute ms)*
 
-| | Result |
-| --- | --- |
-| Update path (background) | Vapor **5.8–9.8×** faster than VDOM |
-| Update path (end-to-end) | **2.1–6.3×** faster (Main-Thread apply is shared) |
-| List creation | Cross-thread ops **~2.4× fewer**; e2e at **parity** |
-| Cost | Bundle gzip **+26%**; first screen within noise |
+| | Result | Caveat |
+| --- | --- | --- |
+| Update path (background) | Vapor **5.8–9.8×** faster than VDOM | Reproduced ~8× as black-box selectStorm@10k |
+| Update path (end-to-end) | **2.1–6.3×** faster (Main-Thread apply is shared) | One-shot select often frame-floor masked |
+| List creation | Cross-thread ops **~2.4× fewer**; e2e at **parity** | Holds 1k→30k black-box (~1.0–1.1×) |
+| Cost | Bundle gzip **+26%**; first screen within noise | IFR flags change bundle/FCP — see IFR page |
 
 Want to feel the same apps on your phone? See the
 [React vs Vue playground](/guide/benchmark-playground).
