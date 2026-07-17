@@ -18,8 +18,6 @@ const DEST = path.resolve(__dirname, '../docs/public/benchmark');
 
 const MODES = {
   react: 'apps/ui-react/dist',
-  'react-naive': 'apps/ui-react/dist-naive',
-  'react-compiler': 'apps/ui-react/dist-compiler',
   vdom: 'apps/ui-vdom/dist',
   vapor: 'apps/ui-vapor/dist',
 };
@@ -51,19 +49,12 @@ function ensureBundles() {
     'node -e "import(\'./harness/build.mjs\').then(m => m.buildApps({ apps: [\'ui-vdom\', \'ui-vapor\'] }))"',
     { cwd: BENCH_ROOT, stdio: 'inherit', env: { ...process.env, NODE_ENV: 'production' } },
   );
-  // React variants (own rspeedy toolchain).
-  const reactDir = path.join(BENCH_ROOT, 'apps/ui-react');
-  for (const cmd of [
-    'npx rspeedy build',
-    'npx rspeedy build --config lynx.naive.config.ts',
-    'npx rspeedy build --config lynx.compiler.config.ts',
-  ]) {
-    execSync(cmd, {
-      cwd: reactDir,
-      stdio: 'inherit',
-      env: { ...process.env, NODE_ENV: 'production' },
-    });
-  }
+  // ReactLynx memo build (own rspeedy toolchain).
+  execSync('npx rspeedy build', {
+    cwd: path.join(BENCH_ROOT, 'apps/ui-react'),
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' },
+  });
 }
 
 function copyBundles() {

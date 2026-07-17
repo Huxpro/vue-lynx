@@ -1,7 +1,6 @@
 // Generate a krausest-style (js-framework-benchmark) results table as a
 // single self-contained HTML file, from the committed results JSON:
 //   - results/cross-storms-latest.json         (react / vdom / vapor)
-//   - results/cross-storms-react-variants.json (react-naive / react-compiler)
 //   - results/cross-run3-neutralized.json      (sustained scenario, cold, startup, bundles)
 //
 // Cells show median ms with the slowdown factor vs the row's best; the cell
@@ -53,9 +52,6 @@ const TABLE_I18N = {
 const storms = JSON.parse(
   fs.readFileSync(path.join(root, 'results/cross-storms-latest.json'), 'utf-8'),
 );
-const variants = JSON.parse(
-  fs.readFileSync(path.join(root, 'results/cross-storms-react-variants.json'), 'utf-8'),
-);
 const base = JSON.parse(
   fs.readFileSync(path.join(root, 'results/cross-run3-neutralized.json'), 'utf-8'),
 );
@@ -71,17 +67,7 @@ const webBaseline = fs.existsSync(webBaselinePath)
 const COLUMNS = [
   { key: 'vapor', label: 'Vue Vapor', perOp: storms.perOp.vapor },
   { key: 'vdom', label: 'Vue VDOM', perOp: storms.perOp.vdom },
-  { key: 'react', label: 'React (hooks)', perOp: storms.perOp.react },
-  {
-    key: 'react-naive',
-    label: 'React (naive)',
-    perOp: storms.perOp['react-naive'] ?? variants.perOp['react-naive'],
-  },
-  {
-    key: 'react-compiler',
-    label: 'React (compiler)',
-    perOp: storms.perOp['react-compiler'] ?? variants.perOp['react-compiler'],
-  },
+  { key: 'react', label: 'ReactLynx (memo)', perOp: storms.perOp.react },
 ];
 
 // Only rows whose durations exceed the one-frame observation floor — the
@@ -108,7 +94,7 @@ const BASE_ROWS = [
 const BASE_COLUMNS = [
   { key: 'vapor', label: 'Vue Vapor', perOp: base.perOp.vapor },
   { key: 'vdom', label: 'Vue VDOM', perOp: base.perOp.vdom },
-  { key: 'react', label: 'React (hooks)', perOp: base.perOp.react },
+  { key: 'react', label: 'ReactLynx (memo)', perOp: base.perOp.react },
 ];
 
 // ---------------------------------------------------------------------------
@@ -588,8 +574,7 @@ ${scaleSection}
       above are measured with the fix.</li>
     <li><b>Should React vs Vue differ this much? They don't.</b> With the artifact removed, one-shot ops are at
       parity at 1k rows and within ~1.5–2× at 10k; storm throughput puts ReactLynx at ~3–5× Vue — the same order of
-      magnitude, consistent with js-framework-benchmark expectations and real-device behavior.
-      Manual memo/useCallback still helps; React Compiler ≈ naive on ReactLynx's preact-based reconciler.</li>
+      magnitude, consistent with js-framework-benchmark expectations and real-device behavior.</li>
     <li>Harness: Lynx for Web (not a native device) in headless Chromium; identical byte-level protocol for every framework; each framework uses its idiomatic implementation (immutable + memo for React, the official benchmark's shallowRef style for Vue).</li>
     <li>Reproduce: <code>pnpm --filter vue-lynx-benchmark bench:storms</code> · raw data in <code>packages/benchmark/results/</code>.</li>
   </ul>

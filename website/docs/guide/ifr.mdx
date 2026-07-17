@@ -282,28 +282,13 @@ not as a performance dial.
 
 ### Supporting numbers
 
-Hello-world FCP (Lynx for Web), warm render cost (~1k-element scene, V8
-`--jitless`), and all-examples TTI / gzip medians vs No IFR:
-
-| configuration | FCP | render cost | TTI proxy | bundle gzip |
-| --- | ---: | ---: | ---: | ---: |
-| No IFR | 96.6 ms | 9.4 ms | 1.00× | 1.00× |
-| **IFR + ET** (VDOM default) | **75.4 ms (−22%)** | **1.3 ms** | 1.35× | ~2.26× |
-| IFR without ET | 75.8 ms (−22%) | 8.4 ms | 1.36× | ~2.26× |
-
-Same-source content feed (~1k elements), five architectures, CPU ×1 / ×4:
-
-| Entry | 1× CPU | 4× CPU |
-| --- | --- | --- |
-| VDOM off → IFR (no ET) | 95 → 77 ms (**−19%**) | 270 → 287 ms (**+7%**) |
-| VDOM off → IFR + ET | 95 → 72 ms (**−24%**) | 270 → 254 ms (**−6%**) |
-| Vapor off → IFR | 97 → 89 ms (**−9%**) | 304 → 318 ms (**+5%**) |
-
-Same-host IFR × VDOM/Vapor × React FCP story (including ReactLynx):
+Product FCP / IFR×architecture matrices:
 **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
+Strategy cost, real-app gzip/TTI, native checks:
+[IFR Benchmarks](/guide/ifr-benchmarks).
 
-Scale trends on the same SFC through **30k** elements (CPU ×1). Lead chart is
-cost space (MT gzip × FCP); then FCP vs N:
+Scale trends unique to this page — cost space (MT gzip × FCP) through **30k**
+elements (CPU ×1), then FCP vs N:
 
 <BenchArtifactFrame
   src="/benchmark/ifr-scale-trends-x1.html"

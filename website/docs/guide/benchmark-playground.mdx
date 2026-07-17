@@ -1,77 +1,24 @@
 # Playground: React vs Vue on Lynx
 
-> **Part of the [Unified Benchmark Matrix](/guide/benchmark-unified)** —
-> claim cards, IFR×framework storms, and FCP charts live there.
-> This page is the *interactive* black-box slice. Absolute ms are host-bound.
+> Numbers, ratios, and charts:
+> **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
+> This page is only the *interactive* slice — feel the same apps on your device.
 
-Every number in the [VDOM vs Vapor benchmark](/guide/benchmark-vapor) comes
-from apps on Lynx for Web — which means you can run the same apps here, on
-this page, on your phone. Pick a configuration, tap the same buttons the
-harness clicks, and feel the difference. The badge shows **tap → DOM settled**
-for your last tap (the last DOM mutation after your tap, once mutations go
-quiet).
-
-**Storm vocabulary:** **Select = point update** (move selection; a few classes).
-**Update = batch update** (touch many rows each pass). Frameworks often look
-alike on one-shot taps and separate under storms.
+**Select = point update** (selection / a few classes).
+**Update = batch update** (many rows per pass). One-shot taps often feel alike;
+storms separate the frameworks.
 
 <BenchPlayground />
 
 **What to try**
 
-1. **Create 10,000 rows**, then **Select storm** (30 point updates) —
-   Vue Vapor stays near the floor; VDOM and React climb.
-2. On 10,000 rows, **Update storm** (50 batch update passes) —
-   Vapor still leads; gaps are smaller than select but real.
-3. Single taps (Update / Select on a 1k table) feel similar —
-   sustained throughput is what storms amplify.
-
-Full matrices, ratios, and FCP ladder: **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-
-<details>
-<summary>Optional: older single-table HTML (superseded by the unified report)</summary>
-
-<BenchArtifactFrame
-  src="/benchmark/table.html"
-  title="React vs Vue table (legacy)"
-  titleZh="React vs Vue 表（旧版）"
-  height={900}
-/>
-
-</details>
-
-## How this differs from js-framework-benchmark
-
-Same op set (create/update/select/swap/remove/append/clear on 1k–10k rows,
-keyed, idiomatic state) — three differences:
-
-1. **Runtime under test is Lynx's dual-thread pipeline**, not the browser
-   DOM. Latency is *click → composed DOM end state* (polled per animation
-   frame), not paint tracing. Resolution is one frame (~17 ms), so the table
-   ranks multi-frame scenarios.
-2. **Sustained-session dimensions** — cold single-shot *and* storms (one tap
-   = 50 batch updates or 30 point selects) that lift sub-frame per-tick
-   costs above the frame floor.
-3. **Framework scope** — ReactLynx, Vue Lynx VDOM, and Vue Lynx Vapor on the
-   runtime they actually target.
-
-We also measured three React optimization levels (manual `memo` +
-`useCallback`, naive, and [React Compiler](https://react.dev/learn/react-compiler)).
-Try all three in the playground above.
-
-## Caveats
-
-- Harness is **Lynx for Web in Chromium**, not a native device; Vue 3.6 and
-  ReactLynx versions are pinned in the raw results.
-- An earlier draft showed ReactLynx storms at minutes/DNF — a Lynx-for-Web
-  profiling shim artifact (see unified report notes). The harness now
-  neutralizes those entries for every framework.
+1. **Create 10,000** → **Select storm** (30 point updates).
+2. **Update storm** (50 batch passes) on the same table.
+3. Compare Vue Vapor / Vue VDOM / ReactLynx (memo).
 
 ## Reproduce
 
 ```bash
-pnpm --filter vue-lynx-benchmark bench:cross    # base suite
-pnpm --filter vue-lynx-benchmark bench:storms   # update-heavy scenarios
+pnpm --filter vue-lynx-benchmark bench:cross
+pnpm --filter vue-lynx-benchmark bench:storms
 ```
-
-Raw data: [`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark).
