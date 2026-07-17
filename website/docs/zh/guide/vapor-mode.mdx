@@ -173,9 +173,9 @@ Vapor 的渲染原语是*克隆模板再绑定*。如果把每个克隆出的元
 create/append op 发送，Vapor 的跨线程流量会比 vdom 更差。因此 Vue Lynx 给
 自己的 ops 协议增加了两条模板指令：
 
-- `REGISTER_TEMPLATE(templateId, structure)` —— **每模板发送一次**，携带
+- `REGISTER_TREE(treeId, structure)` —— **每模板发送一次**，携带
   静态结构树。
-- `CLONE_TEMPLATE(templateId, baseUid)` —— **每实例一条**；双端按同一
+- `CLONE_TREE(treeId, baseUid)` —— **每实例一条**；双端按同一
   先序遍历从 `baseUid` 起连续分配元素 uid，无需传输任何 id 映射。
 
 这两条是 Vue Lynx 自己的 opcode（主线程解释器与后台线程代码同 bundle 发布），

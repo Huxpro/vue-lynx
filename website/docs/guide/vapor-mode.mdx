@@ -200,9 +200,9 @@ cloned element as individual create/append ops would make Vapor's
 cross-thread traffic strictly worse than vdom's, so Vue Lynx teaches its own
 ops protocol two template instructions:
 
-- `REGISTER_TEMPLATE(templateId, structure)` — sent **once per template**,
+- `REGISTER_TREE(treeId, structure)` — sent **once per template**,
   carrying the static structure tree.
-- `CLONE_TEMPLATE(templateId, baseUid)` — sent **once per instance**; both
+- `CLONE_TREE(treeId, baseUid)` — sent **once per instance**; both
   threads assign element uids by walking the structure in the same
   pre-order from `baseUid`, so no id mapping needs to be transferred.
 

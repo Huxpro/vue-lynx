@@ -72,8 +72,8 @@ const OP_ARITY = Object.freeze({
   11: 4,
   12: 2,
   13: 2,
-  15: 2,
   16: 2,
+  17: 2,
 });
 
 function captureDescriptors(names = Object.getOwnPropertyNames(globalThis)) {
