@@ -2,16 +2,17 @@ import { Badge } from '@theme';
 
 # IFR 性能数据 <Badge text="v0.5" type="tip" />
 
-> 产品级 FCP / IFR×storm 矩阵见
-> **[统一基准矩阵](/zh/guide/benchmark-unified)**。
-> 本页只保留那边**盖不到**的——策略成本、真应用体积/TTI/正确性、native 检查。
+> 产品故事 / 用法见 **[IFR 指南](/zh/guide/ifr)**。
+> 产品级 FCP 矩阵见 **[统一基准矩阵](/zh/guide/benchmark-unified)**。
+> 本页是测量附录——策略成本、真应用体积/TTI、**代价空间**规模图、native。
 > **「FCP −19%」不是与规模无关的常数**——见统一报告。
 
 | campaign | 问题 |
 |---|---|
 | [1. 策略阶梯](#1-策略阶梯) | 主线程同步渲染每种设计**花多少钱**？ |
 | [2. 全示例扫描](#2-全示例扫描) | 真应用上的体积 / TTI **成本**与语义安全 |
-| [3. Native](#3-native-引擎观察) | LynxExplorer 上的 hydration / 视觉一致性 |
+| [3. 代价空间](#3-代价空间-mt-gzip--fcp) | 首帧收益是不是用更大的 MT 包换来的？ |
+| [4. Native](#4-native-引擎观察) | LynxExplorer 上的 hydration / 视觉一致性 |
 
 配置命名：原始 `ifr` = 今天的 **IFR without ET**；`ifr+et` = 默认
 `enableIFR: true`。原始报告：

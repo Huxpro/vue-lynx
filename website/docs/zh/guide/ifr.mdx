@@ -4,6 +4,15 @@ import { Badge } from '@theme';
 
 首屏直出（Instant First-Frame Rendering，IFR）会在 Lynx `loadTemplate` 期间、后台线程启动之前绘制真实内容，去掉原先等待后台启动、首次 Vue 渲染和 IPC 造成的白屏。
 
+本页围绕三件事：
+
+1. **怎么实现快** — 主线程在 `loadTemplate` 里画首帧；后台启动并行（[为什么能消白屏](#ifr-为什么能消除白屏)）。
+2. **代价是什么** — 双 bundle、gzip 约 2×、主线程同步工作（[取舍](#取舍)）。
+3. **为什么是架构优势** — 只有真实线程边界才有可消的白屏；单进程 harness 测不出收益（见 [IFR 性能数据](/zh/guide/ifr-benchmarks)）。
+
+数字与规模曲线在[统一矩阵](/zh/guide/benchmark-unified)和
+[IFR 性能数据](/zh/guide/ifr-benchmarks)——本页只讲产品故事。
+
 IFR 在两种渲染器上是同一产品能力；差别在于主线程首帧怎么建出来：
 
 | 渲染器 | 如何开启 | 首帧机制 |

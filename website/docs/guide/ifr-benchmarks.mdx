@@ -2,17 +2,18 @@ import { Badge } from '@theme';
 
 # IFR Benchmarks <Badge text="v0.5" type="tip" />
 
-> Product FCP / IFR×storm matrices:
-> **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-> This page keeps campaigns that matrix does **not** cover — strategy cost,
-> real-app size/TTI/correctness, and native checks.
+> Product story / how-to: **[IFR guide](/guide/ifr)**.
+> Product FCP matrices: **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
+> This page is the measurement appendix — strategy cost, real-app size/TTI,
+> **cost-space** scale charts, and native checks.
 > **“−19% FCP” is not scale-invariant** — see the unified report.
 
 | campaign | question |
 |---|---|
 | [1. Strategy ladder](#1-strategy-ladder) | How much does the sync main-thread render **cost**, per design? |
 | [2. All-examples sweep](#2-all-examples-sweep) | Size / TTI **cost** and semantic safety on real apps |
-| [3. Native](#3-native-engine-observations) | Hydration / visual parity on LynxExplorer |
+| [3. Cost space](#3-cost-space-mt-gzip--fcp) | Did first-frame wins come from a heavier MT bundle? |
+| [4. Native](#4-native-engine-observations) | Hydration / visual parity on LynxExplorer |
 
 Config naming: raw `ifr` = today’s **IFR without ET**; `ifr+et` = default
 `enableIFR: true`. Raw write-ups:
