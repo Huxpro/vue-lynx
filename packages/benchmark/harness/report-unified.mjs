@@ -3,17 +3,26 @@
  * report-table.mjs (krausest cells + scale charts), covering the full
  * architecture × IFR × FCP matrix and claim reevaluation.
  *
- *   node harness/report-unified.mjs [--out results/unified/report.html]
+ *   node harness/report-unified.mjs
+ *     → results/unified/report.html + report.zh.html
+ *
+ *   node harness/report-unified.mjs --out path/unified.html
+ *     → path/unified.html + path/unified.zh.html
+ *
+ *   node harness/report-unified.mjs --out path.html --lang zh
+ *     → single file
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { copy, buildConclusions } from './report-i18n.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: args } = parseArgs({
   options: {
     out: { type: 'string', default: 'results/unified/report.html' },
+    lang: { type: 'string', default: 'all' }, // en | zh | all
   },
 });
 
@@ -32,7 +41,6 @@ const ifrStorms = readJson('results/cross-storms-unified-ifr.json');
 const reactStorms = readJson('results/cross-storms-unified-react.json');
 const scale6 = readJson('results/cross-storms-scale6.json');
 
-// Merge perOp the same way synthesize prefers newest.
 function mergePerOp(...sources) {
   const out = {};
   const dated = [];
@@ -51,38 +59,36 @@ function mergePerOp(...sources) {
 
 const perOp = mergePerOp(scale6, ifrStorms, reactStorms);
 
-// `react` = ReactLynx optimized variant: Snapshot+IFR (always on in RL) +
-// manual memo/useCallback row. Not the naive or compiler builds.
-const COLUMNS = [
-  { key: 'vapor', label: 'Vue Vapor' },
-  { key: 'vapor-ifr', label: 'Vapor+IFR' },
-  { key: 'vdom', label: 'Vue VDOM' },
-  { key: 'vdom-ifr', label: 'VDOM+IFR' },
-  { key: 'vdom-ifr-et', label: 'VDOM+IFR+ET' },
-  { key: 'react', label: 'ReactLynx (memo)' },
-].map((c) => ({ ...c, perOp: perOp[c.key] }));
-
-const STORM_ROWS = [
-  { key: 'create@1k', label: 'create · 1k rows' },
-  { key: 'updateStorm@1k', label: 'update storm ×50 · 1k' },
-  { key: 'selectStorm@1k', label: 'select storm ×30 · 1k' },
-  { key: 'create@10k', label: 'create · 10k rows' },
-  { key: 'update10th@10k', label: 'update every 10th · 10k' },
-  { key: 'select@10k', label: 'select row · 10k' },
-  { key: 'updateStorm@10k', label: 'update storm ×50 · 10k' },
-  { key: 'selectStorm@10k', label: 'select storm ×30 · 10k' },
-  { key: 'create@30k', label: 'create · 30k rows' },
-  { key: 'updateStorm@30k', label: 'update storm ×50 · 30k' },
-  { key: 'selectStorm@30k', label: 'select storm ×30 · 30k' },
+const COLUMN_KEYS = [
+  'vapor',
+  'vapor-ifr',
+  'vdom',
+  'vdom-ifr',
+  'vdom-ifr-et',
+  'react',
 ];
 
-const FCP_ARCHS = [
-  { key: 'react', label: 'ReactLynx', color: '#eda100' },
-  { key: 'vdom', label: 'VDOM', color: '#6b7280' },
-  { key: 'vdom-ifr', label: 'VDOM+IFR', color: '#2563eb' },
-  { key: 'vdom-ifr-et', label: 'VDOM+IFR+ET', color: '#7c3aed' },
-  { key: 'vapor', label: 'Vapor', color: '#059669' },
-  { key: 'vapor-ifr', label: 'Vapor+IFR', color: '#d97706' },
+const STORM_ROW_KEYS = [
+  'create@1k',
+  'updateStorm@1k',
+  'selectStorm@1k',
+  'create@10k',
+  'update10th@10k',
+  'select@10k',
+  'updateStorm@10k',
+  'selectStorm@10k',
+  'create@30k',
+  'updateStorm@30k',
+  'selectStorm@30k',
+];
+
+const FCP_ARCH_KEYS = [
+  { key: 'react', color: '#eda100' },
+  { key: 'vdom', color: '#6b7280' },
+  { key: 'vdom-ifr', color: '#2563eb' },
+  { key: 'vdom-ifr-et', color: '#7c3aed' },
+  { key: 'vapor', color: '#059669' },
+  { key: 'vapor-ifr', color: '#d97706' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 const SIZE_N = {
@@ -119,17 +125,46 @@ function bucketClass(factor) {
   return 'critical';
 }
 
-function renderTable(rows, columns) {
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function columnsFor(t) {
+  return COLUMN_KEYS.map((key) => ({
+    key,
+    label: t.colLabels[key] ?? key,
+    perOp: perOp[key],
+  }));
+}
+
+function stormRowsFor(t) {
+  return STORM_ROW_KEYS.map((key) => ({
+    key,
+    label: t.stormRowLabels[key] ?? key,
+  }));
+}
+
+function fcpArchsFor(t) {
+  return FCP_ARCH_KEYS.map((a) => ({
+    ...a,
+    label: t.fcpArchLabels[a.key] ?? a.key,
+  }));
+}
+
+function renderTable(rows, columns, t) {
   const factorsByCol = Object.fromEntries(columns.map((c) => [c.key, []]));
-  let html = '<table><thead><tr><th>scenario</th>';
-  for (const c of columns) html += `<th>${c.label}</th>`;
+  let html = `<table><thead><tr><th>${escapeHtml(t.scenario)}</th>`;
+  for (const c of columns) html += `<th>${escapeHtml(c.label)}</th>`;
   html += '</tr></thead><tbody>';
 
   for (const row of rows) {
     const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
     const nums = cells.filter((s) => s?.median != null).map((s) => s.median);
     const best = nums.length ? Math.min(...nums) : null;
-    html += `<tr><td class="op">${row.label}</td>`;
+    html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
     for (const [i, s] of cells.entries()) {
       if (s?.median != null && best != null) {
         const factor = s.median / best;
@@ -145,7 +180,7 @@ function renderTable(rows, columns) {
     html += '</tr>';
   }
 
-  html += `<tr class="geo"><td class="op">slowdown geometric mean</td>`;
+  html += `<tr class="geo"><td class="op">${escapeHtml(t.geoMean)}</td>`;
   for (const c of columns) {
     const f = factorsByCol[c.key];
     if (!f.length) {
@@ -159,15 +194,16 @@ function renderTable(rows, columns) {
   return html;
 }
 
-function renderFcpTable(cpu) {
-  let html = '<table><thead><tr><th>scale</th>';
-  for (const a of FCP_ARCHS) html += `<th>${a.label}</th>`;
+function renderFcpTable(cpu, t) {
+  const archs = fcpArchsFor(t);
+  let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
+  for (const a of archs) html += `<th>${escapeHtml(a.label)}</th>`;
   html += '</tr></thead><tbody>';
   for (const scale of FCP_SCALES) {
-    const vals = FCP_ARCHS.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
+    const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
     const nums = vals.filter((v) => v != null);
     const best = nums.length ? Math.min(...nums) : null;
-    html += `<tr><td class="op">${scale} elements</td>`;
+    html += `<tr><td class="op">${escapeHtml(t.fcpScale(scale))}</td>`;
     for (const v of vals) {
       if (v == null || best == null) {
         html += `<td class="c na">—</td>`;
@@ -202,7 +238,7 @@ function renderLineChart({
   series,
   xLabel,
   yLabel,
-  yFmt = (t) => (t >= 1000 ? `${t / 1000}s` : `${t}ms`),
+  yFmt = (tick) => (tick >= 1000 ? `${tick / 1000}s` : `${tick}ms`),
 }) {
   const all = series.flatMap((s) => s.pts);
   if (!all.length) return '';
@@ -222,15 +258,15 @@ function renderLineChart({
   const py = (v) => H - MB - ((v - ymin) / (ymax - ymin || 1)) * (H - MT - MB);
 
   let g = '';
-  for (const t of niceLinearTicks(xmin, xmax)) {
-    g += `<line x1="${px(t)}" y1="${MT}" x2="${px(t)}" y2="${H - MB}" class="grid"/>`
-      + `<text x="${px(t)}" y="${H - MB + 16}" class="tick" text-anchor="middle">${
-        t >= 1000 ? `${t / 1000}k` : t
+  for (const tick of niceLinearTicks(xmin, xmax)) {
+    g += `<line x1="${px(tick)}" y1="${MT}" x2="${px(tick)}" y2="${H - MB}" class="grid"/>`
+      + `<text x="${px(tick)}" y="${H - MB + 16}" class="tick" text-anchor="middle">${
+        tick >= 1000 ? `${tick / 1000}k` : tick
       }</text>`;
   }
-  for (const t of niceLinearTicks(ymin, ymax)) {
-    g += `<line x1="${ML}" y1="${py(t)}" x2="${W - MR}" y2="${py(t)}" class="grid"/>`
-      + `<text x="${ML - 6}" y="${py(t) + 3.5}" class="tick" text-anchor="end">${yFmt(t)}</text>`;
+  for (const tick of niceLinearTicks(ymin, ymax)) {
+    g += `<line x1="${ML}" y1="${py(tick)}" x2="${W - MR}" y2="${py(tick)}" class="grid"/>`
+      + `<text x="${ML - 6}" y="${py(tick) + 3.5}" class="tick" text-anchor="end">${yFmt(tick)}</text>`;
   }
 
   let marks = '';
@@ -244,48 +280,53 @@ function renderLineChart({
     marks += `<path d="${d}" class="line ${cls}" style="stroke:${s.color}"/>`;
     for (const p of s.pts) {
       marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" class="dot ${cls}" style="fill:${s.color}">`
-        + `<title>${s.label} · ${p.label}\n${yLabel}: ${fmtMs(p.y)}</title></circle>`;
+        + `<title>${escapeHtml(s.label)} · ${p.label}\n${escapeHtml(yLabel)}: ${fmtMs(p.y)}</title></circle>`;
     }
     const last = s.pts[s.pts.length - 1];
     let ly = py(last.y) + 4;
     while (labelYs.some((v) => Math.abs(v - ly) < 13)) ly += 13;
     labelYs.push(ly);
-    marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${s.color}">${s.label}</text>`;
+    marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${s.color}">${escapeHtml(s.label)}</text>`;
   }
 
-  return `<div class="chart"><h3>${title}</h3><p class="sub">${sub}</p>
-<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+  return `<div class="chart"><h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
+<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
 ${g}
-<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${xLabel}</text>
-<text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${yLabel}</text>
+<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${escapeHtml(xLabel)}</text>
+<text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${escapeHtml(yLabel)}</text>
 ${marks}
 </svg></div>`;
 }
 
-function stormSeries(op, ticks = 1) {
-  return COLUMNS.map((c, i) => {
-    const colors = ['#2a78d6', '#d97706', '#1baf7a', '#2563eb', '#7c3aed', '#eda100'];
-    const pts = ['1k', '10k', '30k']
-      .map((size) => {
-        const v = c.perOp?.[`${op}@${size}`]?.median;
-        if (v == null) return null;
-        return { x: SIZE_N[size], y: v / ticks, label: size };
-      })
-      .filter(Boolean);
-    return { label: c.label, color: colors[i], pts };
-  }).filter((s) => s.pts.length);
+function stormSeries(op, t, ticks = 1) {
+  const cols = columnsFor(t);
+  const colors = ['#2a78d6', '#d97706', '#1baf7a', '#2563eb', '#7c3aed', '#eda100'];
+  return cols
+    .map((c, i) => {
+      const pts = ['1k', '10k', '30k']
+        .map((size) => {
+          const v = c.perOp?.[`${op}@${size}`]?.median;
+          if (v == null) return null;
+          return { x: SIZE_N[size], y: v / ticks, label: size };
+        })
+        .filter(Boolean);
+      return { label: c.label, color: colors[i], pts };
+    })
+    .filter((s) => s.pts.length);
 }
 
-function fcpSeries(cpu) {
-  return FCP_ARCHS.map((a) => ({
-    label: a.label,
-    color: a.color,
-    pts: FCP_SCALES.map((scale) => {
-      const v = cellMetric(a.key, scale, 'fcp', cpu);
-      if (v == null) return null;
-      return { x: SIZE_N[scale], y: v, label: scale };
-    }).filter(Boolean),
-  })).filter((s) => s.pts.length);
+function fcpSeries(cpu, t) {
+  return fcpArchsFor(t)
+    .map((a) => ({
+      label: a.label,
+      color: a.color,
+      pts: FCP_SCALES.map((scale) => {
+        const v = cellMetric(a.key, scale, 'fcp', cpu);
+        if (v == null) return null;
+        return { x: SIZE_N[scale], y: v, label: scale };
+      }).filter(Boolean),
+    }))
+    .filter((s) => s.pts.length);
 }
 
 function g(arch, scale, metric, workload = 'table', cpu = 1) {
@@ -299,124 +340,50 @@ function g(arch, scale, metric, workload = 'table', cpu = 1) {
   )?.median;
 }
 
-function fmtRatio(a, b) {
-  if (a == null || b == null || b === 0) return null;
-  return a / b;
+function conclusionNumbers() {
+  return {
+    stormVapor: g('vapor', '10k', 'selectStorm'),
+    stormVdom: g('vdom', '10k', 'selectStorm'),
+    stormReact: g('react', '10k', 'selectStorm'),
+    stormEt: g('vdom-ifr-et', '10k', 'selectStorm'),
+    stormIfr: g('vdom-ifr', '10k', 'selectStorm'),
+    createReact: g('react', '10k', 'create'),
+    createVdom: g('vdom', '10k', 'create'),
+    createVapor: g('vapor', '10k', 'create'),
+    fcpReact: g('react', '10k', 'fcp', 'content-probe'),
+    fcpEt: g('vdom-ifr-et', '10k', 'fcp', 'content-probe'),
+    fcpOff: g('vdom', '10k', 'fcp', 'content-probe'),
+    fcpIfr: g('vdom-ifr', '10k', 'fcp', 'content-probe'),
+    fcpIfr1k: g('vdom-ifr', '1k', 'fcp', 'content-probe'),
+    fcpOff1k: g('vdom', '1k', 'fcp', 'content-probe'),
+    bgSelectV: unified.cells.find(
+      (c) => c.architecture === 'vapor' && c.metric === 'select_bg' && c.instrumented,
+    )?.median,
+    bgSelectD: unified.cells.find(
+      (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
+    )?.median,
+  };
 }
 
-/** Takeaway cards — headlines a human can quote, not claim-status badges. */
-function buildConclusions() {
-  const stormVapor = g('vapor', '10k', 'selectStorm');
-  const stormVdom = g('vdom', '10k', 'selectStorm');
-  const stormReact = g('react', '10k', 'selectStorm');
-  const stormEt = g('vdom-ifr-et', '10k', 'selectStorm');
-  const stormIfr = g('vdom-ifr', '10k', 'selectStorm');
-  const createReact = g('react', '10k', 'create');
-  const createVdom = g('vdom', '10k', 'create');
-  const createVapor = g('vapor', '10k', 'create');
-  const fcpReact = g('react', '10k', 'fcp', 'content-probe');
-  const fcpEt = g('vdom-ifr-et', '10k', 'fcp', 'content-probe');
-  const fcpOff = g('vdom', '10k', 'fcp', 'content-probe');
-  const fcpIfr = g('vdom-ifr', '10k', 'fcp', 'content-probe');
-  const fcpIfr1k = g('vdom-ifr', '1k', 'fcp', 'content-probe');
-  const fcpOff1k = g('vdom', '1k', 'fcp', 'content-probe');
-  const bgSelectV = unified.cells.find(
-    (c) => c.architecture === 'vapor' && c.metric === 'select_bg' && c.instrumented,
-  )?.median;
-  const bgSelectD = unified.cells.find(
-    (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
-  )?.median;
-
-  const out = [];
-
-  const vaporStormX = fmtRatio(stormVdom, stormVapor);
-  const vaporReactX = fmtRatio(stormReact, stormVapor);
-  if (vaporStormX != null) {
-    out.push({
-      tone: 'good',
-      title: `Vapor ~${vaporStormX.toFixed(1)}× VDOM on selectStorm@10k`,
-      body: `Black-box sustained select: VDOM ${stormVdom?.toFixed(0)} ms → Vapor ${stormVapor?.toFixed(0)} ms${
-        vaporReactX != null
-          ? ` · ~${vaporReactX.toFixed(0)}× vs ReactLynx (${stormReact?.toFixed(0)} ms)`
-          : ''
-      }. One-shot select stays near the frame floor.`,
-    });
-  }
-
-  if (bgSelectV != null && bgSelectD != null) {
-    out.push({
-      tone: 'good',
-      title: `Vapor ~${(bgSelectD / bgSelectV).toFixed(1)}× on BG select (instrumented)`,
-      body: `Micro pipeline: vdom bg ${bgSelectD.toFixed(2)} ms → vapor ${bgSelectV.toFixed(2)} ms. Storms are the user-visible version of this gap.`,
-    });
-  }
-
-  if (createReact != null && createVdom != null) {
-    const x = createVdom / createReact;
-    out.push({
-      tone: 'good',
-      title: `ReactLynx leads create@10k (~${x.toFixed(2)}× vs VDOM)`,
-      body: `ReactLynx ${createReact.toFixed(0)} ms · VDOM ${createVdom.toFixed(0)} ms · Vapor ${createVapor?.toFixed(0) ?? '—'} ms. Snapshot bulk-instantiate wins creation; Vue wins updates.`,
-    });
-  }
-
-  if (fcpReact != null && fcpEt != null && fcpOff != null) {
-    out.push({
-      tone: 'good',
-      title: `ReactLynx lowest FCP@10k (${fcpReact.toFixed(0)} ms)`,
-      body: `Same-density content probe: ReactLynx ${fcpReact.toFixed(0)} · VDOM+IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms. Snapshot+IFR is always on for RL.`,
-    });
-  }
-
-  if (fcpIfr != null && fcpOff != null && fcpIfr1k != null && fcpOff1k != null) {
-    const d1 = ((fcpIfr1k - fcpOff1k) / fcpOff1k) * 100;
-    const d10 = ((fcpIfr - fcpOff) / fcpOff) * 100;
-    out.push({
-      tone: d10 > 0 ? 'critical' : 'warn',
-      title: `IFR without ET: ${d1.toFixed(0)}% @1k → +${d10.toFixed(0)}% @10k`,
-      body: `“−19% FCP” is not a constant. Plain IFR helps small screens, then loses by ~${Math.abs(d10).toFixed(0)}% at 10k+. IFR+ET is the scale hedge.`,
-    });
-  }
-
-  if (stormEt != null && stormVdom != null && stormIfr != null) {
-    out.push({
-      tone: 'warn',
-      title: `IFR+ET also speeds post-mount storms (${(stormEt / stormVdom).toFixed(2)}×)`,
-      body: `selectStorm@10k: off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · IFR+ET ${stormEt.toFixed(0)} ms. Plain IFR ≈ off; ET clone helps after first frame too.`,
-    });
-  }
-
-  out.push({
-    tone: 'warn',
-    title: 'Absolute ms are host-bound — quote ratios',
-    body: 'Same harness, different machines move medians by 2×+. Prefer same-host ratios (Vapor/VDOM, React/Vapor, IFR Δ%).',
-  });
-
-  return out;
-}
-
-function renderConclusions() {
+function renderConclusions(lang, t, published) {
+  const conclusions = buildConclusions(conclusionNumbers(), lang);
   let html = '<div class="verdicts">';
-  for (const c of buildConclusions()) {
+  for (const c of conclusions) {
     html += `<article class="verdict ${c.tone}">
       <header><strong class="takeaway">${escapeHtml(c.title)}</strong></header>
-      <p class="detail">${escapeHtml(c.body)}</p>
+      <p class="why"><span class="lbl">${escapeHtml(t.whyLabel)}</span> ${escapeHtml(c.why)}</p>
+      <p class="evidence"><span class="lbl">${escapeHtml(t.evidenceLabel)}</span> ${escapeHtml(c.evidence)}</p>
     </article>`;
   }
-  return `${html}</div>`;
+  return { html: `${html}</div>`, count: conclusions.length };
 }
 
-function escapeHtml(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function coverageTable() {
+function coverageTable(t) {
   const archs = unified.architectures ?? [];
+  const [h0, h1, h2, h3] = t.coverageHeaders;
   let html =
-    '<table><thead><tr><th>architecture</th><th>table storms</th><th>content-probe FCP</th><th>instrumented BG/e2e</th></tr></thead><tbody>';
+    `<table><thead><tr><th>${escapeHtml(h0)}</th><th>${escapeHtml(h1)}</th>`
+    + `<th>${escapeHtml(h2)}</th><th>${escapeHtml(h3)}</th></tr></thead><tbody>`;
   for (const a of archs) {
     const storm = unified.cells.some(
       (c) => c.architecture === a.id && c.metric === 'selectStorm',
@@ -427,7 +394,7 @@ function coverageTable() {
     const bg = unified.cells.some(
       (c) => c.architecture === a.id && c.instrumented,
     );
-    html += `<tr><td class="op">${a.label} <code>${a.id}</code></td>`
+    html += `<tr><td class="op">${escapeHtml(a.label)} <code>${escapeHtml(a.id)}</code></td>`
       + `<td class="c plain">${storm ? '✓' : '—'}</td>`
       + `<td class="c plain">${fcp ? '✓' : '—'}</td>`
       + `<td class="c plain">${bg ? '✓' : '—'}</td></tr>`;
@@ -435,13 +402,34 @@ function coverageTable() {
   return `${html}</tbody></table>`;
 }
 
-const meta = unified.meta;
-const html = `<!doctype html>
-<html lang="en">
+function siblingHref(outBase, lang, published) {
+  // When writing to website/benchmark/unified.html, use published names.
+  const base = path.basename(outBase);
+  if (published || base.startsWith('unified')) {
+    return lang === 'zh' ? 'unified.html' : 'unified.zh.html';
+  }
+  return lang === 'zh' ? 'report.html' : 'report.zh.html';
+}
+
+function renderReport(lang, outPath) {
+  const t = copy(lang);
+  const meta = unified.meta;
+  const published = /[/\\]benchmark[/\\]unified/.test(outPath) || path.basename(outPath).startsWith('unified');
+  const alt = {
+    href: siblingHref(outPath, lang, published),
+    label: lang === 'zh' ? 'English' : '中文',
+  };
+  const { html: conclusionsHtml, count } = renderConclusions(lang, t, published);
+  const cols = columnsFor(t);
+  const rows = stormRowsFor(t);
+  const ch = t.charts;
+
+  return `<!doctype html>
+<html lang="${t.lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unified Vue Lynx benchmark matrix</title>
+<title>${escapeHtml(t.title)}</title>
 <style>
   :root {
     --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df;
@@ -458,11 +446,18 @@ const html = `<!doctype html>
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 20px 16px 48px; background: var(--surface); color: var(--ink);
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font: 14px/1.5 "IBM Plex Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
+      -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   h1 { font-size: 20px; margin: 0 0 4px; }
   h2 { font-size: 15px; margin: 28px 0 8px; }
   .sub { color: var(--ink-2); font-size: 12.5px; margin: 0 0 14px; max-width: 920px; }
+  .lang-switch { margin: 0 0 14px; }
+  .lang-switch a {
+    font-size: 12.5px; color: var(--ink-2); text-decoration: none;
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px;
+  }
+  .lang-switch a:hover { color: var(--ink); }
   .scroll { overflow-x: auto; }
   table { border-collapse: collapse; min-width: 720px; width: 100%; }
   th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; white-space: nowrap; }
@@ -493,7 +488,7 @@ const html = `<!doctype html>
   .dot { stroke: var(--surface); stroke-width: 2; }
   .slabel { font-size: 11px; font-weight: 600; }
   .verdicts {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 12px; margin: 8px 0 18px;
   }
   .verdict {
@@ -506,13 +501,18 @@ const html = `<!doctype html>
   .verdict.critical { border-left: 4px solid var(--critical); }
   .verdict header { margin-bottom: 8px; }
   .takeaway { font-size: 14px; font-weight: 700; line-height: 1.35; }
-  .detail { font-size: 13px; margin: 0; color: var(--ink-2); }
-  .findings { margin: 0 0 8px; padding-left: 18px; max-width: 920px; }
-  .findings li { margin: 6px 0; }
+  .why, .evidence { font-size: 12.5px; margin: 0 0 6px; color: var(--ink-2); line-height: 1.45; }
+  .evidence { margin-bottom: 0; }
+  .lbl {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; margin-right: 4px; color: var(--ink-2); opacity: 0.85;
+  }
+  .why .lbl { color: var(--good); }
+  .evidence .lbl { color: var(--warn); }
   .notes { margin-top: 24px; font-size: 12.5px; color: var(--ink-2); max-width: 920px; }
   .notes li { margin: 4px 0; }
   a { color: inherit; }
-  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 10px; }
   .pill {
     font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
     padding: 4px 10px; color: var(--ink-2);
@@ -520,32 +520,26 @@ const html = `<!doctype html>
 </style>
 </head>
 <body>
-<h1>Unified Vue Lynx benchmark matrix</h1>
+<h1>${escapeHtml(t.title)}</h1>
 <p class="sub">
-  One scale for IFR styles × VDOM/Vapor × React — same-host Lynx for Web reevaluation.
-  Median latency; <b>(n.nn)</b> = slowdown vs the row's best.
-  Generated ${meta.date.slice(0, 10)} · git ${meta.sha} · ${meta.cpus}× ${escapeHtml(meta.cpuModel)}.
+  ${t.lede}
+  ${escapeHtml(t.generated(meta))}.
 </p>
 <div class="pillrow">
-  <span class="pill">env: lynx-web (primary)</span>
-  <span class="pill">ladder: 1k → 30k</span>
-  <span class="pill">cells: ${unified.cells.length}</span>
-  <span class="pill">conclusions: ${buildConclusions().length}</span>
+  <span class="pill">${escapeHtml(t.pills.env)}</span>
+  <span class="pill">${escapeHtml(t.pills.ladder)}</span>
+  <span class="pill">${escapeHtml(t.pills.cells(unified.cells.length))}</span>
+  <span class="pill">${escapeHtml(t.pills.conclusions(count))}</span>
 </div>
+<p class="lang-switch"><a href="${alt.href}">${escapeHtml(alt.label)}</a></p>
 
-<h2>Conclusions</h2>
-<p class="sub">Takeaways from the unified same-scale matrix — quote the headline, then the detail.</p>
-${renderConclusions()}
+<h2>${escapeHtml(t.hConclusions)}</h2>
+<p class="sub">${escapeHtml(t.subConclusions)}</p>
+${conclusionsHtml}
 
-<h2>Table storms — IFR × framework matrix</h2>
-<p class="sub">
-  Black-box protocol: real clicks → composed-DOM end state. Fresh app per (mode, size, rep).
-  Vue IFR cells and ReactLynx measured on <b>this host</b> (2026-07-17).
-  <b>ReactLynx (memo)</b> = Snapshot + IFR (always on — RL has no IFR-off) + manual
-  <code>memo</code>/<code>useCallback</code> row. Sibling builds exist
-  (<code>react-naive</code>, <code>react-compiler</code>) but are not columns here.
-</p>
-<div class="scroll">${renderTable(STORM_ROWS, COLUMNS)}</div>
+<h2>${escapeHtml(t.hStorms)}</h2>
+<p class="sub">${t.subStorms}</p>
+<div class="scroll">${renderTable(rows, cols, t)}</div>
 <div class="legend">
   <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
   <span><i style="background:color-mix(in srgb, var(--warn) var(--tint), var(--surface))"></i>≤ 2.5×</span>
@@ -553,73 +547,83 @@ ${renderConclusions()}
   <span><i style="background:color-mix(in srgb, var(--critical) var(--tint), var(--surface))"></i>&gt; 10×</span>
 </div>
 
-<h2>Storm scaling (1k → 30k)</h2>
-<p class="sub">Linear, zero baseline. Absolute gaps — not log-compressed.</p>
+<h2>${escapeHtml(t.hStormScale)}</h2>
+<p class="sub">${escapeHtml(t.subStormScale)}</p>
 <div class="charts">
   ${renderLineChart({
-    title: 'select storm vs table size',
-    sub: 'Total wall time for 30 sequential selects. Vapor stays flat; React climbs hard; IFR+ET pulls VDOM down.',
-    series: stormSeries('selectStorm'),
-    xLabel: 'rows N — linear',
-    yLabel: 'select storm — ms',
+    title: ch.selectStorm.title,
+    sub: ch.selectStorm.sub,
+    series: stormSeries('selectStorm', t),
+    xLabel: ch.selectStorm.x,
+    yLabel: ch.selectStorm.y,
   })}
   ${renderLineChart({
-    title: 'update storm vs table size',
-    sub: 'Total wall time for 50 update passes. Creation cost is separate — this is sustained update throughput.',
-    series: stormSeries('updateStorm'),
-    xLabel: 'rows N — linear',
-    yLabel: 'update storm — ms',
+    title: ch.updateStorm.title,
+    sub: ch.updateStorm.sub,
+    series: stormSeries('updateStorm', t),
+    xLabel: ch.updateStorm.x,
+    yLabel: ch.updateStorm.y,
   })}
   ${renderLineChart({
-    title: 'create vs table size',
-    sub: 'React still leads creation. IFR+ET slightly helps VDOM create via template clone.',
-    series: stormSeries('create'),
-    xLabel: 'rows N — linear',
-    yLabel: 'create — ms',
+    title: ch.create.title,
+    sub: ch.create.sub,
+    series: stormSeries('create', t),
+    xLabel: ch.create.x,
+    yLabel: ch.create.y,
   })}
 </div>
 
-<h2>Content-probe FCP (architecture ladder)</h2>
-<p class="sub">
-  Same card density (~1k→30k elements): Vue SFC flag matrix + parallel ReactLynx
-  Snapshot+IFR probe (<code>ifr-bench/rl-scale-probe</code>). First-frame scale —
-  <b>not</b> comparable to storm ms above. CPU ×1.
-</p>
-<div class="scroll">${renderFcpTable(1)}</div>
+<h2>${escapeHtml(t.hFcp)}</h2>
+<p class="sub">${t.subFcp}</p>
+<div class="scroll">${renderFcpTable(1, t)}</div>
 <div class="charts" style="margin-top:16px">
   ${renderLineChart({
-    title: 'FCP vs content scale (CPU ×1)',
-    sub: 'ReactLynx Snapshot+IFR leads. Among Vue: IFR without ET crosses above plain VDOM by 10k; IFR+ET is the Vue scale hedge.',
-    series: fcpSeries(1),
-    xLabel: 'elements N — linear',
-    yLabel: 'FCP — ms',
+    title: ch.fcp1.title,
+    sub: ch.fcp1.sub,
+    series: fcpSeries(1, t),
+    xLabel: ch.fcp1.x,
+    yLabel: ch.fcp1.y,
   })}
   ${renderLineChart({
-    title: 'FCP vs content scale (CPU ×4)',
-    sub: 'Throttled CPU amplifies MT bundle-parse cost. Plain IFR often regresses; ReactLynx stays lowest.',
-    series: fcpSeries(4),
-    xLabel: 'elements N — linear',
-    yLabel: 'FCP — ms',
+    title: ch.fcp4.title,
+    sub: ch.fcp4.sub,
+    series: fcpSeries(4, t),
+    xLabel: ch.fcp4.x,
+    yLabel: ch.fcp4.y,
   })}
 </div>
 
-<h2>Coverage</h2>
-<p class="sub">What each architecture has been measured for in the unified schema.</p>
-<div class="scroll">${coverageTable()}</div>
+<h2>${escapeHtml(t.hCoverage)}</h2>
+<p class="sub">${escapeHtml(t.subCoverage)}</p>
+<div class="scroll">${coverageTable(t)}</div>
 
 <div class="notes">
   <ul>
-    <li><b>Environments are not interchangeable.</b> Instrumented BG/e2e, black-box click→DOM, lynx-web FCP, and node <code>--jitless</code> warm render share ladder labels but not a metric scale. This page never ratios across them.</li>
-    <li><b>How to read the tint:</b> same as the React vs Vue playground — color encodes slowdown vs the row best; the number is always authoritative.</li>
-    <li><b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified</code> then <code>bench:synthesize</code> / <code>node harness/report-unified.mjs</code>.</li>
-    <li>Raw: <code>packages/benchmark/results/unified/</code> · design: <code>packages/benchmark/UNIFIED.md</code>.</li>
+    ${t.notes.map((n) => `<li>${n}</li>`).join('\n    ')}
   </ul>
 </div>
 </body>
 </html>
 `;
+}
 
-const outPath = path.isAbsolute(args.out) ? args.out : path.join(root, args.out);
-fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, html);
-console.log(`[report-unified] wrote ${outPath}`);
+function outPathForLang(baseOut, lang) {
+  if (lang === 'en') return baseOut;
+  // report.html → report.zh.html ; unified.html → unified.zh.html
+  return baseOut.replace(/\.html$/i, '.zh.html');
+}
+
+const baseOut = path.isAbsolute(args.out) ? args.out : path.join(root, args.out);
+const langs =
+  args.lang === 'all' ? ['en', 'zh'] : args.lang === 'zh' ? ['zh'] : ['en'];
+
+for (const lang of langs) {
+  const outPath =
+    langs.length === 1 && args.lang !== 'all'
+      ? baseOut
+      : outPathForLang(baseOut, lang);
+  const html = renderReport(lang, outPath);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, html);
+  console.log(`[report-unified] wrote ${outPath}`);
+}

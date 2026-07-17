@@ -3,14 +3,15 @@
 在同一台机器、同一阶梯上，把 IFR 风格、VDOM vs Vapor、React vs Vue
 **一眼看完**——又不把不同量纲混在一起。
 
-<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">打开完整报告 ↗</a>
+<a href="/benchmark/unified.zh.html" target="_blank" rel="noreferrer">打开完整报告 ↗</a>
+（<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">English</a>）
 
 <iframe
-  src="/benchmark/unified.html"
-  title="Unified Vue Lynx benchmark matrix"
+  src="/benchmark/unified.zh.html"
+  title="Vue Lynx 统一基准矩阵"
   style={{
     width: '100%',
-    height: '2200px',
+    height: '2400px',
     border: '1px solid var(--rp-c-divider)',
     borderRadius: '12px',
   }}
@@ -32,7 +33,7 @@
 
 ## 怎么读
 
-1. 顶部的 **Conclusions** — 可直接引用的结论（如 “Vapor ~8× on selectStorm@10k”）。
+1. 顶部的 **结论** — 每条是「takeaway → 含义 → 核对数字」：结论好消化，表格用来验证。
 2. **Storm 表** — IFR × 框架交互延迟（与 playground 同协议）。
 3. **Storm 图** — 同机 select / update / create vs N。
 4. **FCP 表 + 图** — content-probe 首帧阶梯，含同密度的 ReactLynx Snapshot+IFR
