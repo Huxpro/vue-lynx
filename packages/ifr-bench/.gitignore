@@ -3,6 +3,7 @@ web-harness/plain/*-cold.js
 
 # built benchmark bundles (regenerate: sfc-probe/build-matrix.mjs)
 web-bundles/
+web-bundles-*/
 sfc-probe/dist/
 sfc-probe/node_modules/
 sfc-probe/src/

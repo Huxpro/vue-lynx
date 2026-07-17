@@ -146,13 +146,15 @@ for (const bundle of bundles) {
   );
 }
 
+const throttleSuffix = THROTTLE > 1 ? `-x${THROTTLE}` : '';
+const labelAlreadyHasThrottle = RESULT_LABEL
+  ? new RegExp(`-x${THROTTLE}$`).test(RESULT_LABEL)
+  : false;
+const outName = `browser-results${RESULT_LABEL ? `-${RESULT_LABEL}` : ''}${
+  labelAlreadyHasThrottle ? '' : throttleSuffix
+}.json`;
 fs.writeFileSync(
-  path.resolve(
-    _dirname,
-    `../results/browser-results${RESULT_LABEL ? `-${RESULT_LABEL}` : ''}${
-      THROTTLE > 1 ? `-x${THROTTLE}` : ''
-    }.json`,
-  ),
+  path.resolve(_dirname, `../results/${outName}`),
   JSON.stringify(results, null, 2),
 );
 

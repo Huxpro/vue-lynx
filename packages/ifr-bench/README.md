@@ -4,7 +4,9 @@ First-frame rendering benchmark comparing IFR implementation strategies for
 Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 (ReactLynx-style) and a Vapor-style no-vdom floor.
 
-**Results and analysis: [REPORT.md](./REPORT.md)**
+**Results and analysis:**
+- Strategy ladder / historical: [REPORT.md](./REPORT.md)
+- **Unified lineage re-run (VDOM off/ifr/ifr-et + Vapor, corrected flags): [UNIFIED-RERUN.md](./UNIFIED-RERUN.md)**
 
 ## Layout
 
@@ -17,7 +19,8 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 | `src/harness.mjs` | One-configuration subprocess (fresh module state, genuine cold first run) |
 | `src/correctness.mjs` | Renders every variant against jsdom and requires identical output |
 | `run.mjs` | Orchestrator: V8 + `--jitless` matrix → `results/results.json` + tables |
-| `sfc-probe/` | Same-source generated SFC (content scene, ~1000 elements) built as the vdom/vapor × IFR off/on matrix for browser runs |
+| `sfc-probe/` | Same-source generated SFC built as VDOM `{off,ifr,ifr-et}` × Vapor `{off,ifr}` (explicit ET flag; never rely on `enableIFR` defaulting) |
+| `UNIFIED-RERUN.md` | Post-merge re-measurement on the unified vapor←main lineage |
 | `web-harness/run-browser.mjs` | Real dual-thread browser FCP runs over a directory of `.web.bundle` files |
 | `web-harness/probe-ifr.mjs` | Single-bundle diagnostic: paint timeline + browser console (catches silent IFR fallbacks) |
 
