@@ -504,30 +504,27 @@ test('app-bar tabs page horizontally through the native viewpager', async () => 
   assert.match(notifications, /<TabPager/);
 });
 
-test('profile pins its tabs with a native collapsing header (scroll-coordinator)', async () => {
+test('profile tabs sit below the header and stick on scroll', async () => {
   const [sticky, account] = await Promise.all([
     readFile(new URL('../src/components/StickyTabView.vue', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
   ]);
 
-  // Per-platform coordinator element: legacy foldview names on Lynx for Web,
-  // the extracted scroll-coordinator on native OSS engines.
-  assert.match(sticky, /'x-foldview-ng'/);
-  assert.match(sticky, /'scroll-coordinator'/);
-  // header (collapses) + toolbar (sticky tab bar) + slot (the viewpager panes).
-  assert.match(sticky, /'x-foldview-header-ng'/);
-  assert.match(sticky, /'scroll-coordinator-header'/);
-  assert.match(sticky, /'x-foldview-toolbar-ng'/);
-  assert.match(sticky, /'scroll-coordinator-toolbar'/);
-  assert.match(sticky, /'x-foldview-slot-ng'/);
-  assert.match(sticky, /'scroll-coordinator-slot'/);
-  // The pinned tab bar still drives the viewpager, synced both ways.
+  // One vertical <scroll-view> is the single scroller: header, then the tab
+  // bar as a sticky child (so it starts below the header and pins only once
+  // scrolled onto), then the viewpager panes.
+  assert.match(sticky, /<scroll-view scroll-orientation="vertical"/);
+  assert.match(sticky, /sticky class="stv-toolbar"/);
+  assert.match(sticky, /position: sticky/);
+  // Horizontal paging stays with the viewpager, synced both ways.
   assert.match(sticky, /'x-viewpager-ng'/);
   assert.match(sticky, /method: 'selectTab'/);
-  // The profile supplies a collapsing #header and one pane per tab.
+  // The profile supplies the header card and one pane per tab; the panes are
+  // plain views (the single scroll-view scrolls the whole page).
   assert.match(account, /<StickyTabView/);
   assert.match(account, /<template #header>/);
   assert.match(account, /<template #posts>/);
+  assert.match(account, /<view class="account-pane">/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {
