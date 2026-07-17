@@ -652,6 +652,11 @@ h1, h2, h3, p { margin: 0; }
   background: color-mix(in srgb, var(--ink-faint) 35%, transparent);
   flex: none;
 }
+.gh-badge__feat {
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
 
 /* API-coverage variant — sample code instead of prose. One Vue feature per
    slide: eyebrow + feature name + compact codeframe on the left (QR pair is
@@ -659,7 +664,7 @@ h1, h2, h3, p { margin: 0; }
 .demo--api { grid-template-columns: 1.15fr 1fr; }
 .demo--api .demo__body { max-width: none; gap: 18px; }
 .demo--api .demo__title { font-size: clamp(24px, 2.4cqw, 36px); }
-.demo--api .gh-badge { margin-top: -6px; }
+.demo--api .gh-badge { margin-top: -2px; }
 .demo--api .demo__title code {
   font-family: var(--mono);
   font-weight: 600;

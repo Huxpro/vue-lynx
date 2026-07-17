@@ -76,6 +76,7 @@ export const ZH = {
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
+  'CSS features': '<span class="brand-text">CSS</span> 特性',
 
   // ---- Whole apps ----
   'II · Whole apps': 'II · 完整应用',
@@ -358,8 +359,8 @@ export const ZH_NOTES = [
   `<p>组合模式整体平移:默认插槽、具名插槽、作用域插槽 —— 你搭设计系统用的整套组件写法都在。</p>`,
   // 20 provide/inject
   `<p>跨层级依赖注入 —— 响应式值也支持。根部切主题,深层子组件通过注入的 ref 一起重渲染。Pinia 和 Router 正是骑在这套机制上工作的 —— 这也是它们能直接跑通的原因。</p>`,
-  // 21 style scoped
-  `<p>真 CSS 是 Lynx 的超能力 —— 所以 Vue 的 SFC CSS 特性全都落地:<code>&lt;style scoped&gt;</code>、CSS Modules、外链样式,甚至 CSS 里的 <code>v-bind()</code>(Lynx-native <code>useCssVars</code> 由 @KealanAU 贡献,#127),让响应式状态直接驱动原生样式。</p>`,
+  // 21 CSS features
+  `<p>真 CSS 是 Lynx 的超能力 —— 所以 Vue 的 SFC CSS 特性全都落地:普通 <code>&lt;style&gt;</code>、<code>&lt;style scoped&gt;</code>(cssId 桥)、CSS Modules、外链样式,以及 CSS 里的 <code>v-bind()</code>,让响应式状态直接驱动原生样式。<code>v-bind()</code> / Lynx-native <code>useCssVars</code> 路径归功于 @KealanAU(#127) —— 不是整套 CSS 栈。</p>`,
   // 22 Suspense
   `<p>异步编排:<code>defineAsyncComponent</code>、异步 <code>setup()</code>、嵌套 Suspense 边界、重挂载时的 fallback —— 全部跑在原生元素树上。</p>`,
   // 23 Transition
