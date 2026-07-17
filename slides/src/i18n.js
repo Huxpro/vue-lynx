@@ -228,6 +228,58 @@ export const ZH = {
     'Vue core 自己的测试,在我们的渲染器上重放。<b>0 失败。</b>',
   "…and the tests are the AI's eyes.":
     '……而这些测试,就是 <span class="brand-text">AI 的眼睛</span>。',
+
+  // ---- IV · Instant First-Frame Rendering + Element Templates ----
+  'IV · Instant first frame': 'IV · 首屏直出',
+  'IV · Instant first frame · proof': 'IV · 首屏直出 · 佐证',
+  // headlines
+  'Both threads render. The ops stream is the recording.':
+    '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制。',
+  'IFR changes when the frame renders. Element Templates change how much work it does.':
+    'IFR 改变的是<em class="ifr-em">何时</em>渲染这一帧。<br/><span class="brand-text">Element Templates</span> 改变的是这一帧要做多少活。',
+  // leads
+  'Without IFR, the first paint waits a whole lap — BG boot, render, the ops send — all before anything appears.':
+    '没有 IFR,首帧要等<em>整整一圈</em> —— 后台启动、渲染、送 ops —— 全部跑完才有画面。',
+  'IFR puts the whole runtime in the main-thread bundle — it renders during loadTemplate, so paint lands first and the background boots alongside.':
+    'IFR 把整个运行时放进<b style="color:#56b8f0">主线程</b>产物 —— 它在 <code>loadTemplate</code> 期间渲染,于是<b>先出画面</b>,后台在一旁并行启动。',
+  "The MT render records its ops; the BG's first batches hydrate against them. Correctness never depends on the two matching — deterministic ids & vue:N signs route taps to Vue with no rebinding.":
+    '主线程渲染时录下自己的 ops;后台最初的几批拿去和它水合对账。正确性从不依赖两者一致 —— 确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。',
+  'Normally every static element pays the whole chain — a vnode, a shadow node, ops frames, a thread crossing, an interpreter dispatch.':
+    '常规下每个静态元素都要付整条链 —— 一个 vnode、一个影子节点、若干 ops 帧、一次跨线程、一次解释器分发。',
+  'The compiler lowers the static subtree to one create() function. Vue sends one op; only the dynamic holes travel after.':
+    '编译器把静态子树下沉成一个 <code>create()</code> 函数。Vue 只发<b>一个</b> op;之后只有动态空洞在传输。',
+  'Static structure bakes into a create() skeleton; only the holes — dynamic text, class, style, attrs — stay on the vnode path.':
+    '静态结构烘焙进 <code>create()</code> 骨架;只有空洞 —— 动态的文本、class、style、属性 —— 留在 vnode 路径上。',
+  'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
+    'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
+  'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
+    'Element Templates 把录制的 ops 负载缩小 3–1000× —— 这份协议瘦身惠及每一次更新,不只是首帧。',
+  'A tool, not a default-on switch — but for content-first screens, IFR + ET is the recommended setup.':
+    '它是一件工具,不是默认打开的开关 —— 但对内容优先的屏幕,<b class="brand-text">IFR + ET</b> 是推荐配置。',
+  // flow-center labels
+  '× every static node': '× 每个静态节点',
+  'holes update via ordinary SET_* ops': '空洞照走普通 <b>SET_*</b> ops 更新',
+  // chart titles
+  'render cost ~1,000 el · jitless · ms': '渲染开销 <span>~1,000 元素 · jitless · ms</span>',
+  'recorded ops payload 1,400-el static screen': '录制的 ops 负载 <span>1,400 元素静态屏</span>',
+  // chip
+  'recommended': '推荐',
+  // trade-off columns
+  'what it costs': '有什么代价',
+  'when to reach for it': '什么时候用它',
+  'MT bundle carries the runtime + app — ~2.26× gzip':
+    '主线程产物带上运行时 + 应用 —— gzip <b>~2.26×</b>',
+  'App evaluates on both threads — serial TTI +35%':
+    '应用在<b>两条</b>线程都求值 —— 串行 TTI +35%',
+  "Can't accelerate a fetch-first screen":
+    '无法加速<b>请求优先</b>的屏幕',
+  'Content-first screens with sync initial data':
+    '带同步初始数据的<b>内容优先</b>屏幕',
+  'Render a real skeleton if data is async':
+    '数据异步时,先渲染一个真实<b>骨架</b>',
+  'Keep first-screen render deterministic & thread-agnostic':
+    '让首屏渲染保持<b>确定性</b>、与线程无关',
+
   'One file ships both threads.': '一个文件,装下<em>两条</em>线程。',
   'The same code enters twice — webpack layers route it.':
     '同一份代码,进两次 —— webpack layers 负责分流。',
@@ -552,6 +604,26 @@ export const ZH_NOTES = [
   `<p><strong>"语义保全"是可测量的命题。</strong>我们把 <code>vuejs/core</code> 的测试套件搬进仓库,在两层上对着 Vue Lynx 跑:一层用我们真实的 ShadowElement 链表垫在 <code>@vue/runtime-test</code> 下面(验证完整渲染器合同 —— keyed diff、LIS、fragment、生命周期);另一层 runtime-dom 把 <code>patchProp → ops → applyOps → PAPI</code> 推进 jsdom。1013 个通过 882,131 个 skip 全部有记录,零失败。</p>`,
   // 43 A8 · 测试是 AI 的眼睛
   `<p><strong>测试的 AI-harness 一面。</strong>我们还做了 <code>vue-lynx-testing-library</code> —— <code>render</code>、<code>fireEvent</code>、<code>getByText</code>,双线程被 <code>@lynx-js/testing-environment</code> 抽象掉 —— 组件行为在普通 vitest 里就能断言。对人来说这是卫生习惯;对 AI harness 来说这是<em>感知</em>:红绿就是 agent 知道自己刚才做了什么的方式。上游套件,就是让两周生成代码保持诚实的 reward signal。</p>`,
+  // IFR1 · 空白首帧
+  `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
+  // IFR2 · IFR:先出画面
+  `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。后台线程照样跑同一份代码,只是并行、离开关键路径。</p>`,
+  // IFR3 · 录制 + 对账
+  `<p><strong>用 ops 对账做水合。</strong>那条扁平 ops 流本身就是"录下来的 PAPI 调用"。后台最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制:相同 → 跳过(已在屏上),值不同 → 打补丁,结构分歧 → 拆掉首屏树重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。</p>`,
+  // IFR4 · Element Templates 转折
+  `<p><strong>第二个杠杆。</strong>IFR 把绘制提前;打开它会默认打开 Element Templates。它们让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。</p>`,
+  // IFR5 · 逐节点的管线
+  `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
+  // IFR6 · ET 折叠管线
+  `<p>看 <code>VDOM</code> 和 <code>PAPI</code> 留在原地,而管线中段整个塌陷。这是<em>框架级</em>模板 —— 普通的带类型 Element PAPI 调用,不是 Lynx 的二进制引擎模板。</p>`,
+  // IFR7 · 骨架 + 空洞
+  `<p>可下沉 = 每个节点都是纯 Lynx 元素、只有值或文本动态。组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、带 ref/id 的节点留在普通 vnode 路径;它们的纯元素子体仍可下沉。scoped-CSS 的 scope id 会被烘焙进去。</p>`,
+  // IFR8 · 基准测试表
+  `<p>几组独立的实验,不是一条 trace。FCP 收益(中位数 −12…−19%,ReactLynx 对照 −23%)来自去掉后台启动 + IPC —— 需要真实的线程边界,两种 IFR 配置都能拿到(ET 对 web FCP 基本持平)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong>(多次重跑约 6–15×)和 ops 负载 —— 这也是 ET 默认打开的原因。代价:约 2.26× gzip。</p>`,
+  // IFR9 · 基准测试图
+  `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
+  // IFR10 · 诚实的取舍
+  `<p>诚实说代价:包体大约翻倍、应用双线程各求值一遍(设备上主线程渲染与后台启动重叠,所以串行 TTI 是上界)。内容优先的屏幕收益是真的;请求优先的屏幕只付包体、拿不到 FCP 收益。</p>`,
   // 44 B1 · 一个 bundle 两个世界
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
   // 45 B2 · 同一份代码进两次
