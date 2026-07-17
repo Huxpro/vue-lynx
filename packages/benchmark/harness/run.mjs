@@ -127,9 +127,10 @@ function startServer() {
 
 async function launchBrowser() {
   const { chromium } = require('playwright-core');
+  const { resolveChromium } = await import('./chromium.mjs');
   return chromium.launch({
     headless: !args.headed,
-    executablePath: '/opt/pw-browsers/chromium',
+    executablePath: resolveChromium(),
     args: [
       '--enable-precise-memory-info',
       '--js-flags=--expose-gc',
