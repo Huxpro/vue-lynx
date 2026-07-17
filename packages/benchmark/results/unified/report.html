@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unified Vue Lynx benchmark matrix</title>
+<style>
+  :root {
+    --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df;
+    --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --tint: 18%;
+    --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
+      --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px 16px 48px; background: var(--surface); color: var(--ink);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 8px; }
+  .sub { color: var(--ink-2); font-size: 12.5px; margin: 0 0 14px; max-width: 920px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; min-width: 720px; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: right; white-space: nowrap; }
+  th { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+  th:first-child, td.op { text-align: left; }
+  td.op { color: var(--ink-2); font-size: 13px; }
+  td.op code { font-size: 11px; opacity: 0.75; }
+  td.c b { font-weight: 600; }
+  td.c .f { display: block; font-size: 11px; color: var(--ink-2); }
+  td.good     { background: color-mix(in srgb, var(--good) var(--tint), var(--surface)); }
+  td.warn     { background: color-mix(in srgb, var(--warn) var(--tint), var(--surface)); }
+  td.serious  { background: color-mix(in srgb, var(--serious) var(--tint), var(--surface)); }
+  td.critical { background: color-mix(in srgb, var(--critical) var(--tint), var(--surface)); }
+  td.dnf { background: var(--critical); color: #fff; font-weight: 600; }
+  td.na, td.plain { color: var(--ink-2); }
+  tr.geo td { border-top: 2px solid var(--line); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .charts { display: flex; flex-wrap: wrap; gap: 18px; }
+  .chart { flex: 1 1 420px; max-width: 600px; }
+  .chart h3 { font-size: 13.5px; margin: 8px 0 2px; }
+  .chart svg { width: 100%; height: auto; }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .tick, .axis { fill: var(--ink-2); font-size: 10.5px; }
+  .axis { font-size: 11px; }
+  .line { fill: none; stroke-width: 2.4; }
+  .dot { stroke: var(--surface); stroke-width: 2; }
+  .slabel { font-size: 11px; font-weight: 600; }
+  .verdicts {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px; margin: 8px 0 18px;
+  }
+  .verdict {
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    background: color-mix(in srgb, var(--surface) 92%, var(--ink-2));
+  }
+  .verdict.good { border-left: 4px solid var(--good); }
+  .verdict.warn { border-left: 4px solid var(--warn); }
+  .verdict.serious { border-left: 4px solid var(--serious); }
+  .verdict.critical { border-left: 4px solid var(--critical); }
+  .verdict header { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .verdict code { font-size: 11.5px; }
+  .badge {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 2px 7px; border-radius: 999px; background: var(--line); color: var(--ink);
+  }
+  .verdict.good .badge { background: color-mix(in srgb, var(--good) 28%, var(--surface)); }
+  .verdict.warn .badge { background: color-mix(in srgb, var(--warn) 35%, var(--surface)); }
+  .verdict.serious .badge { background: color-mix(in srgb, var(--serious) 35%, var(--surface)); }
+  .verdict.critical .badge { background: color-mix(in srgb, var(--critical) 35%, var(--surface)); color: #fff; }
+  .claim { font-size: 12.5px; color: var(--ink-2); margin: 0 0 8px; font-style: italic; }
+  .detail { font-size: 13px; margin: 0; }
+  .findings { margin: 0 0 8px; padding-left: 18px; max-width: 920px; }
+  .findings li { margin: 6px 0; }
+  .notes { margin-top: 24px; font-size: 12.5px; color: var(--ink-2); max-width: 920px; }
+  .notes li { margin: 4px 0; }
+  a { color: inherit; }
+  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 18px; }
+  .pill {
+    font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
+    padding: 4px 10px; color: var(--ink-2);
+  }
+</style>
+</head>
+<body>
+<h1>Unified Vue Lynx benchmark matrix</h1>
+<p class="sub">
+  One scale for IFR styles × VDOM/Vapor × React — same-host Lynx for Web reevaluation.
+  Median latency; <b>(n.nn)</b> = slowdown vs the row's best.
+  Generated 2026-07-17 · git 5a045d1a · 4× Intel(R) Xeon(R) Processor.
+</p>
+<div class="pillrow">
+  <span class="pill">env: lynx-web (primary)</span>
+  <span class="pill">ladder: 1k → 30k</span>
+  <span class="pill">cells: 433</span>
+  <span class="pill">claims graded: 7</span>
+</div>
+
+<h2>Claim reevaluation</h2>
+<p class="sub">Published assumptions from the three old campaigns, graded against the unified result set.</p>
+<div class="verdicts"><article class="verdict warn">
+      <header><code>vapor-update-bg-5-10x</code><span class="badge">holds-with-caveat</span></header>
+      <p class="claim">Vapor wins update ops 5.8–9.8× on BG thread vs VDOM (instrumented).</p>
+      <p class="detail">Instrumented BG select still ~9.8×. Black-box selectStorm@10k reproduces ~8.2×. One-shot select@10k is near parity (1.51×) — frame-floor masks BG wins. </p>
+    </article><article class="verdict warn">
+      <header><code>vapor-create-parity</code><span class="badge">holds-with-caveat</span></header>
+      <p class="claim">Vapor creation is roughly parity with VDOM (slightly slower e2e).</p>
+      <p class="detail">create@10k vapor/vdom=1.07×. React still leads create@10k (react/vdom=0.86×). </p>
+    </article><article class="verdict critical">
+      <header><code>ifr-fcp-minus-19</code><span class="badge">falsified-as-universal</span></header>
+      <p class="claim">Default IFR wins median −19% FCP on real threads (content scene).</p>
+      <p class="detail">−19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -10%. @10k ×1: 22%. @30k ×1: 20%. @1k ×4: -2%. IFR+ET@30k ×1: -8%. </p>
+    </article><article class="verdict good">
+      <header><code>et-is-inflection</code><span class="badge">holds</span></header>
+      <p class="claim">Element Templates are the render-cost inflection; IFR without ET is dangerous at scale.</p>
+      <p class="detail">IFR-sans-ET slower than off at 10k, 20k, 30k. IFR+ET best at 1k, 3k, 5k, 10k, 20k, 30k. Caveat: on tiny real examples (hello-world), IFR alone can beat IFR+ET on web FCP — ET tax before win.</p>
+    </article><article class="verdict warn">
+      <header><code>react-create-vue-update</code><span class="badge">holds-with-caveat</span></header>
+      <p class="claim">React leads creation; Vue/Vapor lead sustained updates (storms).</p>
+      <p class="detail">React leads create@10k. Vapor selectStorm@10k ≪ React (45 vs 1018 ms). vdom-ifr/vdom selectStorm@10k=1.01× (plain IFR ≈ off: OK). vdom-ifr-et/vdom selectStorm@10k=0.72×, create@10k=0.91×. CHALLENGE: ET is not first-frame-only — template clone accelerates post-mount create/update throughput on this table. </p>
+    </article><article class="verdict good">
+      <header><code>single-process-flat-fcp</code><span class="badge">holds-as-negative-control</span></header>
+      <p class="claim">Single-process FCP is flat across IFR configs — proves dual-thread necessity.</p>
+      <p class="detail">Keep as methodology proof that single-process harnesses cannot show IFR benefit. Do not cite flat FCP as product evidence. Real-thread (lynx-web) + native are the only win scales.</p>
+    </article><article class="verdict critical">
+      <header><code>same-scale</code><span class="badge">falsified</span></header>
+      <p class="claim">The three benchmarks are on comparable scales / can be read as one story.</p>
+      <p class="detail">Four distinct scales coexist: (1) instrumented BG/e2e ms, (2) black-box click→composed-DOM, (3) lynx-web FCP/settled, (4) node --jitless warm render. Same ladder labels (1k–30k) do NOT make (1)–(4) interchangeable. Unified schema tags environment+workload; docs must not ratio across environments.</p>
+    </article></div>
+
+<h2>Same-host findings</h2>
+<ul class="findings"><li>Absolute ms are <b>host-bound</b> — old playground quoted React selectStorm@10k ≈ 2544 ms; this host ≈ 1018 ms. Ratios travel.</li><li>Vapor selectStorm@10k is <b>~8×</b> VDOM and <b>~23×</b> React on the same host. One-shot select stays near the frame floor.</li><li>Plain IFR ≈ off for post-mount table ops (selectStorm@10k 1.01×). First-frame / bundle concern only.</li><li><b>IFR+ET is not first-frame-only</b> on this table: selectStorm@10k 0.72× vs off — template clone helps after mount.</li><li>“−19% FCP” is not a constant: IFR without ET <b>loses ~20% at 10k–30k</b>; IFR+ET stays ahead across the ladder.</li></ul>
+
+<h2>Table storms — IFR × framework matrix</h2>
+<p class="sub">
+  Black-box protocol: real clicks → composed-DOM end state. Fresh app per (mode, size, rep).
+  Vue IFR cells and React measured on <b>this host</b> (2026-07-17); react-naive/compiler still from the prior scale6 run when present.
+</p>
+<div class="scroll"><table><thead><tr><th>scenario</th><th>Vue Vapor</th><th>Vapor+IFR</th><th>Vue VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>React (hooks)</th></tr></thead><tbody><tr><td class="op">create · 1k rows</td><td class="c good"><b>93.1 ms</b><span class="f">(1.15)</span></td><td class="c warn"><b>93.2 ms</b><span class="f">(1.15)</span></td><td class="c good"><b>92.8 ms</b><span class="f">(1.14)</span></td><td class="c good"><b>90.0 ms</b><span class="f">(1.11)</span></td><td class="c good"><b>81.0 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>81.7 ms</b><span class="f">(1.01)</span></td></tr><tr><td class="op">update storm ×50 · 1k</td><td class="c good"><b>26.0 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>24.5 ms</b><span class="f">(1.00)</span></td><td class="c serious"><b>69.6 ms</b><span class="f">(2.84)</span></td><td class="c serious"><b>62.9 ms</b><span class="f">(2.56)</span></td><td class="c warn"><b>53.3 ms</b><span class="f">(2.17)</span></td><td class="c serious"><b>234.8 ms</b><span class="f">(9.56)</span></td></tr><tr><td class="op">select storm ×30 · 1k</td><td class="c good"><b>25.8 ms</b><span class="f">(1.01)</span></td><td class="c good"><b>25.4 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>42.9 ms</b><span class="f">(1.69)</span></td><td class="c good"><b>27.0 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>25.7 ms</b><span class="f">(1.01)</span></td><td class="c serious"><b>92.1 ms</b><span class="f">(3.62)</span></td></tr><tr><td class="op">create · 10k rows</td><td class="c warn"><b>853.3 ms</b><span class="f">(1.24)</span></td><td class="c warn"><b>870.0 ms</b><span class="f">(1.26)</span></td><td class="c warn"><b>797.6 ms</b><span class="f">(1.16)</span></td><td class="c warn"><b>841.9 ms</b><span class="f">(1.22)</span></td><td class="c good"><b>729.4 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>688.9 ms</b><span class="f">(1.00)</span></td></tr><tr><td class="op">update every 10th · 10k</td><td class="c good"><b>30.1 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>32.5 ms</b><span class="f">(1.08)</span></td><td class="c warn"><b>51.3 ms</b><span class="f">(1.70)</span></td><td class="c warn"><b>55.1 ms</b><span class="f">(1.83)</span></td><td class="c warn"><b>48.4 ms</b><span class="f">(1.61)</span></td><td class="c serious"><b>88.7 ms</b><span class="f">(2.94)</span></td></tr><tr><td class="op">select row · 10k</td><td class="c good"><b>22.0 ms</b><span class="f">(1.13)</span></td><td class="c good"><b>19.6 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>33.2 ms</b><span class="f">(1.70)</span></td><td class="c warn"><b>37.1 ms</b><span class="f">(1.90)</span></td><td class="c warn"><b>31.8 ms</b><span class="f">(1.63)</span></td><td class="c serious"><b>51.4 ms</b><span class="f">(2.63)</span></td></tr><tr><td class="op">update storm ×50 · 10k</td><td class="c good"><b>349.8 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>355.6 ms</b><span class="f">(1.02)</span></td><td class="c warn"><b>746.9 ms</b><span class="f">(2.14)</span></td><td class="c warn"><b>734.0 ms</b><span class="f">(2.10)</span></td><td class="c warn"><b>540.5 ms</b><span class="f">(1.55)</span></td><td class="c serious"><b>2.14 s</b><span class="f">(6.10)</span></td></tr><tr><td class="op">select storm ×30 · 10k</td><td class="c warn"><b>44.6 ms</b><span class="f">(1.23)</span></td><td class="c good"><b>36.3 ms</b><span class="f">(1.00)</span></td><td class="c critical"><b>367.2 ms</b><span class="f">(10.13)</span></td><td class="c critical"><b>371.9 ms</b><span class="f">(10.26)</span></td><td class="c serious"><b>263.9 ms</b><span class="f">(7.28)</span></td><td class="c critical"><b>1.02 s</b><span class="f">(28.08)</span></td></tr><tr><td class="op">create · 30k rows</td><td class="c warn"><b>2.68 s</b><span class="f">(1.35)</span></td><td class="c warn"><b>2.62 s</b><span class="f">(1.32)</span></td><td class="c warn"><b>2.51 s</b><span class="f">(1.27)</span></td><td class="c warn"><b>2.47 s</b><span class="f">(1.24)</span></td><td class="c good"><b>2.05 s</b><span class="f">(1.03)</span></td><td class="c good"><b>1.98 s</b><span class="f">(1.00)</span></td></tr><tr><td class="op">update storm ×50 · 30k</td><td class="c good"><b>1.30 s</b><span class="f">(1.00)</span></td><td class="c good"><b>1.30 s</b><span class="f">(1.00)</span></td><td class="c warn"><b>2.87 s</b><span class="f">(2.21)</span></td><td class="c warn"><b>2.75 s</b><span class="f">(2.12)</span></td><td class="c warn"><b>2.18 s</b><span class="f">(1.68)</span></td><td class="c serious"><b>8.38 s</b><span class="f">(6.45)</span></td></tr><tr><td class="op">select storm ×30 · 30k</td><td class="c good"><b>128.5 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>132.0 ms</b><span class="f">(1.03)</span></td><td class="c critical"><b>1.46 s</b><span class="f">(11.35)</span></td><td class="c critical"><b>1.46 s</b><span class="f">(11.33)</span></td><td class="c serious"><b>1.12 s</b><span class="f">(8.70)</span></td><td class="c critical"><b>3.74 s</b><span class="f">(29.13)</span></td></tr><tr class="geo"><td class="op">slowdown geometric mean</td><td class="c good"><b>1.10</b></td><td class="c good"><b>1.07</b></td><td class="c warn"><b>2.36</b></td><td class="c warn"><b>2.27</b></td><td class="c warn"><b>1.88</b></td><td class="c serious"><b>4.27</b></td></tr></tbody></table></div>
+<div class="legend">
+  <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
+  <span><i style="background:color-mix(in srgb, var(--warn) var(--tint), var(--surface))"></i>≤ 2.5×</span>
+  <span><i style="background:color-mix(in srgb, var(--serious) var(--tint), var(--surface))"></i>≤ 10×</span>
+  <span><i style="background:color-mix(in srgb, var(--critical) var(--tint), var(--surface))"></i>&gt; 10×</span>
+</div>
+
+<h2>Storm scaling (1k → 30k)</h2>
+<p class="sub">Linear, zero baseline. Absolute gaps — not log-compressed.</p>
+<div class="charts">
+  <div class="chart"><h3>select storm vs table size</h3><p class="sub">Total wall time for 30 sequential selects. Vapor stays flat; React climbs hard; IFR+ET pulls VDOM down.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="select storm vs table size">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="256.87054272420374" x2="430" y2="256.87054272420374" class="grid"/><text x="50" y="260.37054272420374" class="tick" text-anchor="end">1s</text><line x1="56" y1="177.74108544840752" x2="430" y2="177.74108544840752" class="grid"/><text x="50" y="181.24108544840752" class="tick" text-anchor="end">2s</text><line x1="56" y1="98.61162817261126" x2="430" y2="98.61162817261126" class="grid"/><text x="50" y="102.11162817261126" class="tick" text-anchor="end">3s</text><line x1="56" y1="19.482170896815035" x2="430" y2="19.482170896815035" class="grid"/><text x="50" y="22.982170896815035" class="tick" text-anchor="end">4s</text>
+<text x="243" y="374" class="axis" text-anchor="middle">rows N — linear</text>
+<text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">select storm — ms</text>
+<path d="M67.5,334.0L171.4,332.5L402.3,325.8" class="line s1" style="stroke:#2a78d6"/><circle cx="67.5" cy="334.0" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 1k
+select storm — ms: 25.8 ms</title></circle><circle cx="171.4" cy="332.5" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 10k
+select storm — ms: 44.6 ms</title></circle><circle cx="402.3" cy="325.8" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 30k
+select storm — ms: 128.5 ms</title></circle><text x="411.3" y="329.8" class="slabel" fill="#2a78d6">Vue Vapor</text><path d="M67.5,334.0L171.4,333.1L402.3,325.6" class="line s2" style="stroke:#d97706"/><circle cx="67.5" cy="334.0" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 1k
+select storm — ms: 25.4 ms</title></circle><circle cx="171.4" cy="333.1" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 10k
+select storm — ms: 36.3 ms</title></circle><circle cx="402.3" cy="325.6" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 30k
+select storm — ms: 132.0 ms</title></circle><text x="411.3" y="355.6" class="slabel" fill="#d97706">Vapor+IFR</text><path d="M67.5,332.6L171.4,306.9L402.3,220.6" class="line s3" style="stroke:#1baf7a"/><circle cx="67.5" cy="332.6" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 1k
+select storm — ms: 42.9 ms</title></circle><circle cx="171.4" cy="306.9" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 10k
+select storm — ms: 367.2 ms</title></circle><circle cx="402.3" cy="220.6" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 30k
+select storm — ms: 1.46 s</title></circle><text x="411.3" y="224.6" class="slabel" fill="#1baf7a">Vue VDOM</text><path d="M67.5,333.9L171.4,306.6L402.3,220.8" class="line s4" style="stroke:#2563eb"/><circle cx="67.5" cy="333.9" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 1k
+select storm — ms: 27.0 ms</title></circle><circle cx="171.4" cy="306.6" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 10k
+select storm — ms: 371.9 ms</title></circle><circle cx="402.3" cy="220.8" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 30k
+select storm — ms: 1.46 s</title></circle><text x="411.3" y="237.8" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M67.5,334.0L171.4,315.1L402.3,247.5" class="line s5" style="stroke:#7c3aed"/><circle cx="67.5" cy="334.0" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+select storm — ms: 25.7 ms</title></circle><circle cx="171.4" cy="315.1" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+select storm — ms: 263.9 ms</title></circle><circle cx="402.3" cy="247.5" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 30k
+select storm — ms: 1.12 s</title></circle><text x="411.3" y="251.5" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M67.5,328.7L171.4,255.4L402.3,39.7" class="line s6" style="stroke:#eda100"/><circle cx="67.5" cy="328.7" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 1k
+select storm — ms: 92.1 ms</title></circle><circle cx="171.4" cy="255.4" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 10k
+select storm — ms: 1.02 s</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 30k
+select storm — ms: 3.74 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#eda100">React (hooks)</text>
+</svg></div>
+  <div class="chart"><h3>update storm vs table size</h3><p class="sub">Total wall time for 50 update passes. Creation cost is separate — this is sustained update throughput.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="update storm vs table size">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="265.2599909762024" x2="430" y2="265.2599909762024" class="grid"/><text x="50" y="268.7599909762024" class="tick" text-anchor="end">2s</text><line x1="56" y1="194.51998195240486" x2="430" y2="194.51998195240486" class="grid"/><text x="50" y="198.01998195240486" class="tick" text-anchor="end">4s</text><line x1="56" y1="123.77997292860732" x2="430" y2="123.77997292860732" class="grid"/><text x="50" y="127.27997292860732" class="tick" text-anchor="end">6s</text><line x1="56" y1="53.039963904809724" x2="430" y2="53.039963904809724" class="grid"/><text x="50" y="56.539963904809724" class="tick" text-anchor="end">8s</text>
+<text x="243" y="374" class="axis" text-anchor="middle">rows N — linear</text>
+<text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">update storm — ms</text>
+<path d="M67.5,335.1L171.4,323.6L402.3,289.9" class="line s1" style="stroke:#2a78d6"/><circle cx="67.5" cy="335.1" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 1k
+update storm — ms: 26.0 ms</title></circle><circle cx="171.4" cy="323.6" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 10k
+update storm — ms: 349.8 ms</title></circle><circle cx="402.3" cy="289.9" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 30k
+update storm — ms: 1.30 s</title></circle><text x="411.3" y="293.9" class="slabel" fill="#2a78d6">Vue Vapor</text><path d="M67.5,335.1L171.4,323.4L402.3,290.0" class="line s2" style="stroke:#d97706"/><circle cx="67.5" cy="335.1" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 1k
+update storm — ms: 24.5 ms</title></circle><circle cx="171.4" cy="323.4" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 10k
+update storm — ms: 355.6 ms</title></circle><circle cx="402.3" cy="290.0" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 30k
+update storm — ms: 1.30 s</title></circle><text x="411.3" y="307.0" class="slabel" fill="#d97706">Vapor+IFR</text><path d="M67.5,333.5L171.4,309.6L402.3,234.6" class="line s3" style="stroke:#1baf7a"/><circle cx="67.5" cy="333.5" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 1k
+update storm — ms: 69.6 ms</title></circle><circle cx="171.4" cy="309.6" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 10k
+update storm — ms: 746.9 ms</title></circle><circle cx="402.3" cy="234.6" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 30k
+update storm — ms: 2.87 s</title></circle><text x="411.3" y="238.6" class="slabel" fill="#1baf7a">Vue VDOM</text><path d="M67.5,333.8L171.4,310.0L402.3,238.8" class="line s4" style="stroke:#2563eb"/><circle cx="67.5" cy="333.8" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 1k
+update storm — ms: 62.9 ms</title></circle><circle cx="171.4" cy="310.0" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 10k
+update storm — ms: 734.0 ms</title></circle><circle cx="402.3" cy="238.8" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 30k
+update storm — ms: 2.75 s</title></circle><text x="411.3" y="255.8" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M67.5,334.1L171.4,316.9L402.3,259.0" class="line s5" style="stroke:#7c3aed"/><circle cx="67.5" cy="334.1" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+update storm — ms: 53.3 ms</title></circle><circle cx="171.4" cy="316.9" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+update storm — ms: 540.5 ms</title></circle><circle cx="402.3" cy="259.0" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 30k
+update storm — ms: 2.18 s</title></circle><text x="411.3" y="276.0" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M67.5,327.7L171.4,260.5L402.3,39.7" class="line s6" style="stroke:#eda100"/><circle cx="67.5" cy="327.7" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 1k
+update storm — ms: 234.8 ms</title></circle><circle cx="171.4" cy="260.5" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 10k
+update storm — ms: 2.14 s</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 30k
+update storm — ms: 8.38 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#eda100">React (hooks)</text>
+</svg></div>
+  <div class="chart"><h3>create vs table size</h3><p class="sub">React still leads creation. IFR+ET slightly helps VDOM create via template clone.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="create vs table size">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="280.79911016167114" x2="430" y2="280.79911016167114" class="grid"/><text x="50" y="284.29911016167114" class="tick" text-anchor="end">500ms</text><line x1="56" y1="225.59822032334228" x2="430" y2="225.59822032334228" class="grid"/><text x="50" y="229.09822032334228" class="tick" text-anchor="end">1s</text><line x1="56" y1="170.39733048501338" x2="430" y2="170.39733048501338" class="grid"/><text x="50" y="173.89733048501338" class="tick" text-anchor="end">1.5s</text><line x1="56" y1="115.19644064668455" x2="430" y2="115.19644064668455" class="grid"/><text x="50" y="118.69644064668455" class="tick" text-anchor="end">2s</text><line x1="56" y1="59.99555080835563" x2="430" y2="59.99555080835563" class="grid"/><text x="50" y="63.49555080835563" class="tick" text-anchor="end">2.5s</text>
+<text x="243" y="374" class="axis" text-anchor="middle">rows N — linear</text>
+<text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">create — ms</text>
+<path d="M67.5,325.7L171.4,241.8L402.3,39.7" class="line s1" style="stroke:#2a78d6"/><circle cx="67.5" cy="325.7" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 1k
+create — ms: 93.1 ms</title></circle><circle cx="171.4" cy="241.8" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 10k
+create — ms: 853.3 ms</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s1" style="fill:#2a78d6"><title>Vue Vapor · 30k
+create — ms: 2.68 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#2a78d6">Vue Vapor</text><path d="M67.5,325.7L171.4,240.0L402.3,46.9" class="line s2" style="stroke:#d97706"/><circle cx="67.5" cy="325.7" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 1k
+create — ms: 93.2 ms</title></circle><circle cx="171.4" cy="240.0" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 10k
+create — ms: 870.0 ms</title></circle><circle cx="402.3" cy="46.9" r="4.5" class="dot s2" style="fill:#d97706"><title>Vapor+IFR · 30k
+create — ms: 2.62 s</title></circle><text x="411.3" y="63.9" class="slabel" fill="#d97706">Vapor+IFR</text><path d="M67.5,325.8L171.4,247.9L402.3,58.7" class="line s3" style="stroke:#1baf7a"/><circle cx="67.5" cy="325.8" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 1k
+create — ms: 92.8 ms</title></circle><circle cx="171.4" cy="247.9" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 10k
+create — ms: 797.6 ms</title></circle><circle cx="402.3" cy="58.7" r="4.5" class="dot s3" style="fill:#1baf7a"><title>Vue VDOM · 30k
+create — ms: 2.51 s</title></circle><text x="411.3" y="88.7" class="slabel" fill="#1baf7a">Vue VDOM</text><path d="M67.5,326.1L171.4,243.1L402.3,63.4" class="line s4" style="stroke:#2563eb"/><circle cx="67.5" cy="326.1" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 1k
+create — ms: 90.0 ms</title></circle><circle cx="171.4" cy="243.1" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 10k
+create — ms: 841.9 ms</title></circle><circle cx="402.3" cy="63.4" r="4.5" class="dot s4" style="fill:#2563eb"><title>VDOM+IFR · 30k
+create — ms: 2.47 s</title></circle><text x="411.3" y="106.4" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M67.5,327.1L171.4,255.5L402.3,109.5" class="line s5" style="stroke:#7c3aed"/><circle cx="67.5" cy="327.1" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+create — ms: 81.0 ms</title></circle><circle cx="171.4" cy="255.5" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+create — ms: 729.4 ms</title></circle><circle cx="402.3" cy="109.5" r="4.5" class="dot s5" style="fill:#7c3aed"><title>VDOM+IFR+ET · 30k
+create — ms: 2.05 s</title></circle><text x="411.3" y="126.5" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M67.5,327.0L171.4,259.9L402.3,116.9" class="line s6" style="stroke:#eda100"/><circle cx="67.5" cy="327.0" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 1k
+create — ms: 81.7 ms</title></circle><circle cx="171.4" cy="259.9" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 10k
+create — ms: 688.9 ms</title></circle><circle cx="402.3" cy="116.9" r="4.5" class="dot s6" style="fill:#eda100"><title>React (hooks) · 30k
+create — ms: 1.98 s</title></circle><text x="411.3" y="146.9" class="slabel" fill="#eda100">React (hooks)</text>
+</svg></div>
+</div>
+
+<h2>Content-probe FCP (IFR architecture ladder)</h2>
+<p class="sub">
+  Same generated SFC, ~1k→30k elements. This is the first-frame scale — <b>not</b> comparable to storm ms above.
+  CPU ×1.
+</p>
+<div class="scroll"><table><thead><tr><th>scale</th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">1k elements</td><td class="c warn"><b>86.6 ms</b><span class="f">(1.24)</span></td><td class="c good"><b>77.7 ms</b><span class="f">(1.11)</span></td><td class="c good"><b>70.0 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>93.3 ms</b><span class="f">(1.33)</span></td><td class="c warn"><b>86.9 ms</b><span class="f">(1.24)</span></td></tr><tr><td class="op">3k elements</td><td class="c warn"><b>143.4 ms</b><span class="f">(1.21)</span></td><td class="c good"><b>119.6 ms</b><span class="f">(1.01)</span></td><td class="c good"><b>118.8 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>156.3 ms</b><span class="f">(1.32)</span></td><td class="c warn"><b>141.0 ms</b><span class="f">(1.19)</span></td></tr><tr><td class="op">5k elements</td><td class="c warn"><b>188.3 ms</b><span class="f">(1.17)</span></td><td class="c good"><b>163.1 ms</b><span class="f">(1.01)</span></td><td class="c good"><b>160.9 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>209.5 ms</b><span class="f">(1.30)</span></td><td class="c warn"><b>193.3 ms</b><span class="f">(1.20)</span></td></tr><tr><td class="op">10k elements</td><td class="c good"><b>310.4 ms</b><span class="f">(1.11)</span></td><td class="c warn"><b>378.9 ms</b><span class="f">(1.36)</span></td><td class="c good"><b>278.4 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>365.4 ms</b><span class="f">(1.31)</span></td><td class="c warn"><b>337.6 ms</b><span class="f">(1.21)</span></td></tr><tr><td class="op">20k elements</td><td class="c good"><b>586.9 ms</b><span class="f">(1.12)</span></td><td class="c warn"><b>695.1 ms</b><span class="f">(1.32)</span></td><td class="c good"><b>526.1 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>691.7 ms</b><span class="f">(1.31)</span></td><td class="c warn"><b>637.1 ms</b><span class="f">(1.21)</span></td></tr><tr><td class="op">30k elements</td><td class="c good"><b>841.5 ms</b><span class="f">(1.09)</span></td><td class="c warn"><b>1.01 s</b><span class="f">(1.31)</span></td><td class="c good"><b>770.6 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>1.01 s</b><span class="f">(1.31)</span></td><td class="c warn"><b>905.9 ms</b><span class="f">(1.18)</span></td></tr></tbody></table></div>
+<div class="charts" style="margin-top:16px">
+  <div class="chart"><h3>FCP vs content scale (CPU ×1)</h3><p class="sub">IFR without ET crosses above plain VDOM by 10k. IFR+ET stays lowest through 30k.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="FCP vs content scale (CPU ×1)">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="277.33327466669454" x2="430" y2="277.33327466669454" class="grid"/><text x="50" y="280.83327466669454" class="tick" text-anchor="end">200ms</text><line x1="56" y1="218.66654933338913" x2="430" y2="218.66654933338913" class="grid"/><text x="50" y="222.16654933338913" class="tick" text-anchor="end">400ms</text><line x1="56" y1="159.99982400008366" x2="430" y2="159.99982400008366" class="grid"/><text x="50" y="163.49982400008366" class="tick" text-anchor="end">600ms</text><line x1="56" y1="101.33309866677823" x2="430" y2="101.33309866677823" class="grid"/><text x="50" y="104.83309866677823" class="tick" text-anchor="end">800ms</text><line x1="56" y1="42.66637333347279" x2="430" y2="42.66637333347279" class="grid"/><text x="50" y="46.16637333347279" class="tick" text-anchor="end">1s</text>
+<text x="243" y="374" class="axis" text-anchor="middle">elements N — linear</text>
+<text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">FCP — ms</text>
+<path d="M67.5,310.6L90.6,293.9L113.7,280.8L171.4,244.9L286.9,163.8L402.3,89.2" class="line s1" style="stroke:#6b7280"/><circle cx="67.5" cy="310.6" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 1k
+FCP — ms: 86.6 ms</title></circle><circle cx="90.6" cy="293.9" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 3k
+FCP — ms: 143.4 ms</title></circle><circle cx="113.7" cy="280.8" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 5k
+FCP — ms: 188.3 ms</title></circle><circle cx="171.4" cy="244.9" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 10k
+FCP — ms: 310.4 ms</title></circle><circle cx="286.9" cy="163.8" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 20k
+FCP — ms: 586.9 ms</title></circle><circle cx="402.3" cy="89.2" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 30k
+FCP — ms: 841.5 ms</title></circle><text x="411.3" y="93.2" class="slabel" fill="#6b7280">VDOM</text><path d="M67.5,313.2L90.6,300.9L113.7,288.2L171.4,224.9L286.9,132.1L402.3,39.7" class="line s2" style="stroke:#2563eb"/><circle cx="67.5" cy="313.2" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 1k
+FCP — ms: 77.7 ms</title></circle><circle cx="90.6" cy="300.9" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 3k
+FCP — ms: 119.6 ms</title></circle><circle cx="113.7" cy="288.2" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 5k
+FCP — ms: 163.1 ms</title></circle><circle cx="171.4" cy="224.9" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 10k
+FCP — ms: 378.9 ms</title></circle><circle cx="286.9" cy="132.1" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 20k
+FCP — ms: 695.1 ms</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 30k
+FCP — ms: 1.01 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M67.5,315.5L90.6,301.2L113.7,288.8L171.4,254.3L286.9,181.7L402.3,110.0" class="line s3" style="stroke:#7c3aed"/><circle cx="67.5" cy="315.5" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+FCP — ms: 70.0 ms</title></circle><circle cx="90.6" cy="301.2" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 3k
+FCP — ms: 118.8 ms</title></circle><circle cx="113.7" cy="288.8" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 5k
+FCP — ms: 160.9 ms</title></circle><circle cx="171.4" cy="254.3" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+FCP — ms: 278.4 ms</title></circle><circle cx="286.9" cy="181.7" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 20k
+FCP — ms: 526.1 ms</title></circle><circle cx="402.3" cy="110.0" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 30k
+FCP — ms: 770.6 ms</title></circle><text x="411.3" y="114.0" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M67.5,308.6L90.6,290.2L113.7,274.5L171.4,228.8L286.9,133.1L402.3,39.7" class="line s4" style="stroke:#059669"/><circle cx="67.5" cy="308.6" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 1k
+FCP — ms: 93.3 ms</title></circle><circle cx="90.6" cy="290.2" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 3k
+FCP — ms: 156.3 ms</title></circle><circle cx="113.7" cy="274.5" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 5k
+FCP — ms: 209.5 ms</title></circle><circle cx="171.4" cy="228.8" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 10k
+FCP — ms: 365.4 ms</title></circle><circle cx="286.9" cy="133.1" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 20k
+FCP — ms: 691.7 ms</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 30k
+FCP — ms: 1.01 s</title></circle><text x="411.3" y="69.7" class="slabel" fill="#059669">Vapor</text><path d="M67.5,310.5L90.6,294.6L113.7,279.3L171.4,237.0L286.9,149.1L402.3,70.3" class="line s5" style="stroke:#d97706"/><circle cx="67.5" cy="310.5" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 1k
+FCP — ms: 86.9 ms</title></circle><circle cx="90.6" cy="294.6" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 3k
+FCP — ms: 141.0 ms</title></circle><circle cx="113.7" cy="279.3" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 5k
+FCP — ms: 193.3 ms</title></circle><circle cx="171.4" cy="237.0" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 10k
+FCP — ms: 337.6 ms</title></circle><circle cx="286.9" cy="149.1" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 20k
+FCP — ms: 637.1 ms</title></circle><circle cx="402.3" cy="70.3" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 30k
+FCP — ms: 905.9 ms</title></circle><text x="411.3" y="139.3" class="slabel" fill="#d97706">Vapor+IFR</text>
+</svg></div>
+  <div class="chart"><h3>FCP vs content scale (CPU ×4)</h3><p class="sub">Throttled CPU amplifies MT bundle-parse cost. Plain IFR often regresses.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="FCP vs content scale (CPU ×4)">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="125.25925925925925" y1="16" x2="125.25925925925925" y2="336" class="grid"/><text x="125.25925925925925" y="352" class="tick" text-anchor="middle">2k</text><line x1="194.5185185185185" y1="16" x2="194.5185185185185" y2="336" class="grid"/><text x="194.5185185185185" y="352" class="tick" text-anchor="middle">4k</text><line x1="263.7777777777778" y1="16" x2="263.7777777777778" y2="336" class="grid"/><text x="263.7777777777778" y="352" class="tick" text-anchor="middle">6k</text><line x1="333.037037037037" y1="16" x2="333.037037037037" y2="336" class="grid"/><text x="333.037037037037" y="352" class="tick" text-anchor="middle">8k</text><line x1="402.2962962962963" y1="16" x2="402.2962962962963" y2="336" class="grid"/><text x="402.2962962962963" y="352" class="tick" text-anchor="middle">10k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="286.31503373932156" x2="430" y2="286.31503373932156" class="grid"/><text x="50" y="289.81503373932156" class="tick" text-anchor="end">200ms</text><line x1="56" y1="236.6300674786431" x2="430" y2="236.6300674786431" class="grid"/><text x="50" y="240.1300674786431" class="tick" text-anchor="end">400ms</text><line x1="56" y1="186.94510121796466" x2="430" y2="186.94510121796466" class="grid"/><text x="50" y="190.44510121796466" class="tick" text-anchor="end">600ms</text><line x1="56" y1="137.2601349572862" x2="430" y2="137.2601349572862" class="grid"/><text x="50" y="140.7601349572862" class="tick" text-anchor="end">800ms</text><line x1="56" y1="87.57516869660776" x2="430" y2="87.57516869660776" class="grid"/><text x="50" y="91.07516869660776" class="tick" text-anchor="end">1s</text><line x1="56" y1="37.890202435929325" x2="430" y2="37.890202435929325" class="grid"/><text x="50" y="41.390202435929325" class="tick" text-anchor="end">1.2s</text>
+<text x="243" y="374" class="axis" text-anchor="middle">elements N — linear</text>
+<text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">FCP — ms</text>
+<path d="M90.6,270.5L159.9,228.9L229.1,182.1L402.3,83.8" class="line s1" style="stroke:#6b7280"/><circle cx="90.6" cy="270.5" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 1k
+FCP — ms: 263.7 ms</title></circle><circle cx="159.9" cy="228.9" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 3k
+FCP — ms: 431.1 ms</title></circle><circle cx="229.1" cy="182.1" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 5k
+FCP — ms: 619.7 ms</title></circle><circle cx="402.3" cy="83.8" r="4.5" class="dot s1" style="fill:#6b7280"><title>VDOM · 10k
+FCP — ms: 1.02 s</title></circle><text x="411.3" y="87.8" class="slabel" fill="#6b7280">VDOM</text><path d="M90.6,271.9L159.9,219.9L229.1,184.8L402.3,46.4" class="line s2" style="stroke:#2563eb"/><circle cx="90.6" cy="271.9" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 1k
+FCP — ms: 258.2 ms</title></circle><circle cx="159.9" cy="219.9" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 3k
+FCP — ms: 467.5 ms</title></circle><circle cx="229.1" cy="184.8" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 5k
+FCP — ms: 608.7 ms</title></circle><circle cx="402.3" cy="46.4" r="4.5" class="dot s2" style="fill:#2563eb"><title>VDOM+IFR · 10k
+FCP — ms: 1.17 s</title></circle><text x="411.3" y="50.4" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M90.6,277.5L159.9,231.6L229.1,181.3L402.3,109.0" class="line s3" style="stroke:#7c3aed"/><circle cx="90.6" cy="277.5" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+FCP — ms: 235.5 ms</title></circle><circle cx="159.9" cy="231.6" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 3k
+FCP — ms: 420.2 ms</title></circle><circle cx="229.1" cy="181.3" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 5k
+FCP — ms: 622.9 ms</title></circle><circle cx="402.3" cy="109.0" r="4.5" class="dot s3" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+FCP — ms: 913.9 ms</title></circle><text x="411.3" y="113.0" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M90.6,270.0L159.9,227.1L229.1,178.4L402.3,68.6" class="line s4" style="stroke:#059669"/><circle cx="90.6" cy="270.0" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 1k
+FCP — ms: 265.5 ms</title></circle><circle cx="159.9" cy="227.1" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 3k
+FCP — ms: 438.5 ms</title></circle><circle cx="229.1" cy="178.4" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 5k
+FCP — ms: 634.4 ms</title></circle><circle cx="402.3" cy="68.6" r="4.5" class="dot s4" style="fill:#059669"><title>Vapor · 10k
+FCP — ms: 1.08 s</title></circle><text x="411.3" y="72.6" class="slabel" fill="#059669">Vapor</text><path d="M90.6,264.1L159.9,213.7L229.1,160.0L402.3,39.7" class="line s5" style="stroke:#d97706"/><circle cx="90.6" cy="264.1" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 1k
+FCP — ms: 289.6 ms</title></circle><circle cx="159.9" cy="213.7" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 3k
+FCP — ms: 492.2 ms</title></circle><circle cx="229.1" cy="160.0" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 5k
+FCP — ms: 708.6 ms</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s5" style="fill:#d97706"><title>Vapor+IFR · 10k
+FCP — ms: 1.19 s</title></circle><text x="411.3" y="134.7" class="slabel" fill="#d97706">Vapor+IFR</text>
+</svg></div>
+</div>
+
+<h2>Coverage</h2>
+<p class="sub">What each architecture has been measured for in the unified schema.</p>
+<div class="scroll"><table><thead><tr><th>architecture</th><th>table storms</th><th>content-probe FCP</th><th>instrumented BG/e2e</th></tr></thead><tbody><tr><td class="op">Vue VDOM <code>vdom</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue VDOM+IFR <code>vdom-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue VDOM+IFR+ET <code>vdom-ifr-et</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue Vapor <code>vapor</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue Vapor+IFR <code>vapor-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (hooks) <code>react</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (naive) <code>react-naive</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (compiler) <code>react-compiler</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr></tbody></table></div>
+
+<div class="notes">
+  <ul>
+    <li><b>Environments are not interchangeable.</b> Instrumented BG/e2e, black-box click→DOM, lynx-web FCP, and node <code>--jitless</code> warm render share ladder labels but not a metric scale. This page never ratios across them.</li>
+    <li><b>How to read the tint:</b> same as the React vs Vue playground — color encodes slowdown vs the row best; the number is always authoritative.</li>
+    <li><b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified</code> then <code>bench:synthesize</code> / <code>node harness/report-unified.mjs</code>.</li>
+    <li>Raw: <code>packages/benchmark/results/unified/</code> · design: <code>packages/benchmark/UNIFIED.md</code>.</li>
+  </ul>
+</div>
+</body>
+</html>
