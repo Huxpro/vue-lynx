@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue-lynx';
+import { computed, isIfrMainThread, ref, watch } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/vue-query';
 import { fetchFeed } from '../api';
@@ -15,11 +15,15 @@ const props = defineProps<{
 const router = useRouter();
 const queryClient = useQueryClient();
 
+// IFR main thread has no fetch — paint the shell/spinner, let BG fetch.
+const networkEnabled = !isIfrMainThread();
+
 const { data: items, isLoading, isFetching, isError } = useQuery({
   queryKey: computed(() => ['feed', props.feed, props.page]),
   queryFn: () => fetchFeed(props.feed, props.page),
   staleTime: 5 * 60 * 1000,
   placeholderData: keepPreviousData,
+  enabled: networkEnabled,
 });
 
 // Track slide direction: "next" slides left, "prev" slides right
@@ -29,6 +33,8 @@ const slideDirection = ref<'slide-left' | 'slide-right'>('slide-left');
 watch(
   () => [props.feed, props.page] as const,
   ([feed, page], old) => {
+    if (!networkEnabled) return;
+
     // Determine slide direction from page change
     if (old) {
       const [oldFeed, oldPage] = old;

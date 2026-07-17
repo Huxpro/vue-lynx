@@ -548,6 +548,12 @@ export function extractRegistrations(lepusCode: string): string {
  * `(globalThis.__vueLynxRegisterElementTemplate || function () {})(...)`.
  * Interpreter-only MT bundles strip the rest of the module, so these
  * self-contained registrations must be re-emitted verbatim.
+ *
+ * Matches inside line or block comments are skipped — documentation
+ * examples of the registration shape (including the one in
+ * runtime/src/element-template.ts) must not be re-emitted as executable
+ * code. This matters when workspace tsconfig path aliases resolve
+ * `vue-lynx` to TypeScript source rather than `runtime/dist`.
  */
 export function extractTemplateRegistrations(source: string): string {
   const marker = `globalThis.${TPL_REGISTER_GLOBAL}`;
@@ -556,6 +562,10 @@ export function extractTemplateRegistrations(source: string): string {
   while (true) {
     const idx = source.indexOf(marker, searchFrom);
     if (idx === -1) break;
+    if (isInsideComment(source, idx)) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
     const wrapperStart = source.lastIndexOf('(', idx);
     if (wrapperStart === -1) {
       searchFrom = idx + marker.length;
@@ -575,6 +585,38 @@ export function extractTemplateRegistrations(source: string): string {
     searchFrom = argsEnd + 1;
   }
   return out.join('\n');
+}
+
+/** True when `index` falls inside a `//` or block comment. */
+function isInsideComment(code: string, index: number): boolean {
+  let i = 0;
+  while (i < index) {
+    const ch = code[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      for (i++; i < index; i++) {
+        if (code[i] === '\\') i++;
+        else if (code[i] === ch) {
+          i++;
+          break;
+        }
+      }
+      continue;
+    }
+    if (ch === '/' && code[i + 1] === '/') {
+      const end = code.indexOf('\n', i + 2);
+      if (end === -1 || end >= index) return true;
+      i = end + 1;
+      continue;
+    }
+    if (ch === '/' && code[i + 1] === '*') {
+      const end = code.indexOf('*/', i + 2);
+      if (end === -1 || end + 2 > index) return true;
+      i = end + 2;
+      continue;
+    }
+    i++;
+  }
+  return false;
 }
 
 /**

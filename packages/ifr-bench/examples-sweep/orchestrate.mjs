@@ -49,9 +49,12 @@ export const ENTRIES = {
   // 'event-modifiers': pre-existing VueCompilerError on the base branch — skipped
 };
 
+// Explicit flags for every dimension. After #216, `enableIFR: true` alone
+// ALSO enables Element Templates by default — injecting IFR without
+// `enableElementTemplates: false` makes `ifr` identical to `ifr-et`.
 const CONFIGS = {
-  off: '',
-  ifr: '      enableIFR: true,\n',
+  off: '      enableIFR: false,\n      enableElementTemplates: false,\n',
+  ifr: '      enableIFR: true,\n      enableElementTemplates: false,\n',
   'ifr-et': '      enableIFR: true,\n      enableElementTemplates: true,\n',
 };
 

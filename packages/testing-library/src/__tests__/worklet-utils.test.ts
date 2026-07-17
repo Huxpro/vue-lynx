@@ -114,4 +114,18 @@ describe('IFR worklet loader utilities', () => {
     expect(out).toContain('"call us (maybe)"');
     expect(out.trim()).toMatch(/\);$/);
   });
+
+  it('re-emits real registrations and ignores JSDoc examples', () => {
+    const real =
+      '(globalThis.__vueLynxRegisterElementTemplate || function () {})("ab12", ["#text"], function (P) { return [e0]; })';
+    const src = [
+      '/**',
+      ' *   const _hoisted_1 = (globalThis.__vueLynxRegisterElementTemplate ||',
+      ' *     function () {})("<id>", ["class", "#text"],',
+      ' *     function (P) { return [e0]; })',
+      ' */',
+      `const _hoisted_1 = ${real};`,
+    ].join('\n');
+    expect(extractTemplateRegistrations(src)).toBe(`${real};`);
+  });
 });
