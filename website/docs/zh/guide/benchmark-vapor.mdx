@@ -11,31 +11,31 @@ Vue Lynx 移植了 Vue 官方基准
 派生自 [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)），
 让**同一个应用以两种模式**跑完整的双线程管线。
 
-**结论** *（instrumented lynx-web；看比率，不看绝对毫秒）*
+**结论** *（instrumented lynx-web；看比率，不看绝对毫秒）* ——
+产品级矩阵与黑盒 storms 见[统一基准矩阵](/zh/guide/benchmark-unified)。本页只留 BG/e2e。
 
 | | 结果 | 备注 |
 | --- | --- | --- |
-| 更新路径（后台） | Vapor 比 VDOM 快 **5.8–9.8×** | 黑盒 selectStorm@10k 约复现 8× |
-| 更新路径（端到端） | 快 **2.1–6.3×**（主线程 apply 成本共享） | 单次 select 常被帧地板掩盖 |
-| 列表创建 | 跨线程 ops 约少 **2.4×**；端到端与 VDOM **持平** | 黑盒 1k→30k 约 1.0–1.1× |
-| 代价 | 包体 gzip **+26%**；首屏差异在噪声内 | IFR 会改包体/FCP，见 IFR 页 |
+| 点状更新（select，后台） | Vapor 约 **9.8×** vs VDOM | 黑盒 selectStorm@10k ≈ 8× |
+| 稀疏/批量更新（每 10 行，bg） | Vapor 约 **5.8×** vs VDOM | e2e 更小——主线程 apply 共享 |
+| 列表创建 | ops 约少 **2.4×**；e2e **持平** | 黑盒 1k→30k ≈ 1.0–1.1× |
+| 代价 | 包体 gzip **+26%** | IFR/FCP → [IFR 基准测试](/zh/guide/ifr-benchmarks) |
 
-想在手机上亲手感受同一批应用？见
-[React vs Vue playground](/zh/guide/benchmark-playground)。
+想亲手感受？[Playground](/zh/guide/benchmark-playground)。
 
 ## 结果
 
 ### 更新路径
 
 Vapor 的结构性优势——没有 vnode 树、没有 diff、响应式 effect 直写元素——在
-后台线程上完整呈现：
+后台线程上完整呈现。**Select = 点状更新**；**每 10 行更新 = 稀疏批量**。
 
-| 操作 | vdom bg | vapor bg | bg 倍数 | vdom e2e | vapor e2e | e2e 倍数 |
-|---|---|---|---|---|---|---|
-| 每第 10 行更新 | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
-| 选中行 | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
-| 交换行 | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
-| 删除行 | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
+| 操作 | 类型 | vdom bg | vapor bg | bg 倍数 | vdom e2e | vapor e2e | e2e 倍数 |
+|---|---|---|---|---|---|---|---|
+| 选中行 | 点状 | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
+| 每第 10 行更新 | 批量 | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
+| 交换行 | 近点状 | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
+| 删除行 | 点状 | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
 
 e2e 倍数小于 bg，因为这些操作两种模式发出的 ops 几乎相同——差距全部来自
 后台线程上的 Vue 工作量，而那正是与你的业务逻辑共享的线程。

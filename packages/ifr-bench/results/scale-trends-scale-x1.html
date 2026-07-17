@@ -3,37 +3,55 @@
 <meta charset="utf-8"/>
 <title>IFR architecture scale trends — scale-x1</title>
 <style>
-  :root { color-scheme: light; font-family: ui-sans-serif, system-ui, sans-serif; }
-  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: #111; }
+
+  :root {
+    color-scheme: light;
+    font-family: "IBM Plex Sans", "Noto Sans SC", "PingFang SC", ui-sans-serif, system-ui, sans-serif;
+    --bg: #fafafa; --ink: #111; --muted: #444; --line: #e5e7eb; --panel: #fafafa; --code: #f3f4f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #12141a; --ink: #e8ecf4; --muted: #9aa3b5; --line: #2a3140; --panel: #181c26; --code: #222836;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #12141a; --ink: #e8ecf4; --muted: #9aa3b5; --line: #2a3140; --panel: #181c26; --code: #222836;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #fafafa; --ink: #111; --muted: #444; --line: #e5e7eb; --panel: #fafafa; --code: #f3f4f6;
+  }
+  
+  :root[data-theme="dark"] { color-scheme: dark; }
+  :root[data-theme="light"] { color-scheme: light; }
+
+  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: var(--ink); background: var(--bg); }
   h1 { font-size: 1.45rem; margin: 0 0 8px; }
   h2 { font-size: 1.15rem; margin: 36px 0 10px; }
   h3 { font-size: 1rem; margin: 0 0 4px; }
-  .lede { color: #444; line-height: 1.5; margin-bottom: 24px; }
-  .chart { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: #fafafa; }
-  .sub { color: #666; font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
-  .grid { stroke: #e5e7eb; stroke-width: 1; }
-  .tick { font-size: 10px; fill: #6b7280; }
-  .axis { font-size: 11px; fill: #374151; }
-  .ptlabel { font-size: 10px; fill: #9ca3af; }
+  .lede { color: var(--muted); line-height: 1.5; margin-bottom: 24px; }
+  .chart { border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: var(--panel); }
+  .sub { color: var(--muted); font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .tick { font-size: 10px; fill: var(--muted); }
+  .axis { font-size: 11px; fill: var(--ink); }
+  .ptlabel { font-size: 10px; fill: var(--muted); }
   .slabel { font-size: 12px; font-weight: 600; }
   table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 12px 0 28px; }
-  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; }
-  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
   td.c { font-variant-numeric: tabular-nums; text-align: right; }
   td.op { font-weight: 500; }
-  code { font-size: 0.85em; background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+  code { font-size: 0.85em; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+
 </style>
 <body>
-<h1>IFR architecture scale trends</h1>
-<p class="lede">
-  Five product architectures on one generated content SFC, scaled from ~1k to
-  <strong>~30k</strong> elements (playground ladder). Lead chart is the
-  playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows.
-  Linear (zero baseline) first, then log-log for α shape.
-  Source: <code>browser-results-scale-x1.json</code> · 2026-07-17T16:46:06.770Z
-</p>
+<h1 data-i18n="h1">IFR architecture scale trends</h1>
+<p class="lede" data-i18n="lede">Five product architectures on one generated content SFC, scaled from ~1k to <strong>~30k</strong> elements. Lead chart is cost space (MT gzip × FCP); FCP vs N follows. See also the <em>Unified Benchmark Matrix</em> for the same-host IFR × VDOM/Vapor × React story.</p>
 
-<h2>Linear scale — cost space + FCP vs N</h2>
+<h2 data-i18n="hLinear">Linear scale — cost space + FCP vs N</h2>
 <div class="chart"><h3>Paint vs MT load cost (linear)</h3><p class="sub">Linear cost space (playground-style, zero baseline). Same points as the framework bench's create×update chart: architectures that pay MT gzip without buying FCP shoot right; those that scale poorly shoot up. CPU ×1.</p>
 <svg viewBox="0 0 560 400" role="img" aria-label="Paint vs MT load cost (linear)">
 <line x1="56" y1="16" x2="56" y2="356" class="grid"/><text x="56" y="372" class="tick" text-anchor="middle">0</text><line x1="108.38155020492411" y1="16" x2="108.38155020492411" y2="356" class="grid"/><text x="108.38155020492411" y="372" class="tick" text-anchor="middle">100k</text><line x1="160.76310040984822" y1="16" x2="160.76310040984822" y2="356" class="grid"/><text x="160.76310040984822" y="372" class="tick" text-anchor="middle">200k</text><line x1="213.14465061477233" y1="16" x2="213.14465061477233" y2="356" class="grid"/><text x="213.14465061477233" y="372" class="tick" text-anchor="middle">300k</text><line x1="265.52620081969644" y1="16" x2="265.52620081969644" y2="356" class="grid"/><text x="265.52620081969644" y="372" class="tick" text-anchor="middle">400k</text><line x1="317.90775102462055" y1="16" x2="317.90775102462055" y2="356" class="grid"/><text x="317.90775102462055" y="372" class="tick" text-anchor="middle">500k</text><line x1="370.28930122954466" y1="16" x2="370.28930122954466" y2="356" class="grid"/><text x="370.28930122954466" y="372" class="tick" text-anchor="middle">600k</text><line x1="56" y1="356" x2="420" y2="356" class="grid"/><text x="50" y="359.5" class="tick" text-anchor="end">0</text><line x1="56" y1="293.66660433336295" x2="420" y2="293.66660433336295" class="grid"/><text x="50" y="297.16660433336295" class="tick" text-anchor="end">200</text><line x1="56" y1="231.3332086667259" x2="420" y2="231.3332086667259" class="grid"/><text x="50" y="234.8332086667259" class="tick" text-anchor="end">400</text><line x1="56" y1="168.9998130000889" x2="420" y2="168.9998130000889" class="grid"/><text x="50" y="172.4998130000889" class="tick" text-anchor="end">600</text><line x1="56" y1="106.66641733345185" x2="420" y2="106.66641733345185" class="grid"/><text x="50" y="110.16641733345185" class="tick" text-anchor="end">800</text><line x1="56" y1="44.33302166681483" x2="420" y2="44.33302166681483" class="grid"/><text x="50" y="47.83302166681483" class="tick" text-anchor="end">1k</text>
@@ -109,7 +127,7 @@ N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="393.0" cy="73.7"
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="402.0" y="142.7" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
 
-<h2>Log-log scale</h2>
+<h2 data-i18n="hLog">Log-log scale</h2>
 <div class="chart"><h3>Paint vs MT load cost (log)</h3><p class="sub">Log-log cost space (playground-style). Each polyline is one architecture through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. CPU ×1. Lower-left dominates.</p>
 <svg viewBox="0 0 560 400" role="img" aria-label="Paint vs MT load cost (log)">
 <line x1="100.58882739810429" y1="16" x2="100.58882739810429" y2="356" class="grid"/><text x="100.58882739810429" y="372" class="tick" text-anchor="middle">10k</text><line x1="179.19170631553857" y1="16" x2="179.19170631553857" y2="356" class="grid"/><text x="179.19170631553857" y="372" class="tick" text-anchor="middle">30k</text><line x1="265.3328586897268" y1="16" x2="265.3328586897268" y2="356" class="grid"/><text x="265.3328586897268" y="372" class="tick" text-anchor="middle">100k</text><line x1="343.93573760716106" y1="16" x2="343.93573760716106" y2="356" class="grid"/><text x="343.93573760716106" y="372" class="tick" text-anchor="middle">300k</text><line x1="56" y1="287.7009405414734" x2="420" y2="287.7009405414734" class="grid"/><text x="50" y="291.2009405414734" class="tick" text-anchor="end">100</text><line x1="56" y1="173.4553194946545" x2="420" y2="173.4553194946545" class="grid"/><text x="50" y="176.9553194946545" class="tick" text-anchor="end">300</text><line x1="56" y1="48.25316931622149" x2="420" y2="48.25316931622149" class="grid"/><text x="50" y="51.75316931622149" class="tick" text-anchor="end">1k</text>
@@ -185,17 +203,52 @@ N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="392.7" cy="58.5"
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="401.7" y="140.5" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
 
-<h2>Scaling exponents</h2>
-<p class="lede" style="margin-top:0">
-  α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC).
-  α ≈ 1 → cost grows with content. An architecture that raises MT gzip without
-  lowering α (or FCP) is paying for early-paint capacity that does not show up
-  at that scale on Lynx for Web.
-</p>
+<h2 data-i18n="hAlpha">Scaling exponents</h2>
+<p class="lede" style="margin-top:0" data-i18n="alphaLede">α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC). α ≈ 1 → cost grows with content.</p>
 <table><thead><tr><th>metric ~ N<sup>α</sup></th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">FCP</td><td class="c">α=0.68</td><td class="c">α=0.80</td><td class="c">α=0.72</td><td class="c">α=0.71</td><td class="c">α=0.71</td></tr><tr><td class="op">MT gzip</td><td class="c">α=0.00</td><td class="c">α=0.07</td><td class="c">α=0.73</td><td class="c">α=0.00</td><td class="c">α=0.43</td></tr><tr><td class="op">web gzip</td><td class="c">α=0.08</td><td class="c">α=0.09</td><td class="c">α=0.74</td><td class="c">α=0.43</td><td class="c">α=0.44</td></tr></tbody></table>
 
-<h2>Raw medians</h2>
+<h2 data-i18n="hRaw">Raw medians</h2>
 <table><thead><tr><th>architecture · scale</th><th>elements</th><th>FCP ms</th><th>Δ vs VDOM</th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody><tr><td class="op">VDOM · 1k</td><td class="c">1004</td><td class="c">86.6</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.0 KB</td></tr><tr><td class="op">VDOM+IFR · 1k</td><td class="c">1004</td><td class="c">77.7</td><td class="c">-10%</td><td class="c">33.8 KB</td><td class="c">62.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 1k</td><td class="c">1004</td><td class="c">70.0</td><td class="c">-19%</td><td class="c">54.1 KB</td><td class="c">104.6 KB</td></tr><tr><td class="op">Vapor · 1k</td><td class="c">1004</td><td class="c">93.3</td><td class="c">+8%</td><td class="c">7.1 KB</td><td class="c">44.5 KB</td></tr><tr><td class="op">Vapor+IFR · 1k</td><td class="c">1004</td><td class="c">86.9</td><td class="c">+0%</td><td class="c">43.3 KB</td><td class="c">85.9 KB</td></tr><tr><td class="op">VDOM · 3k</td><td class="c">3004</td><td class="c">143.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.9 KB</td></tr><tr><td class="op">VDOM+IFR · 3k</td><td class="c">3004</td><td class="c">119.6</td><td class="c">-17%</td><td class="c">34.6 KB</td><td class="c">64.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 3k</td><td class="c">3004</td><td class="c">118.8</td><td class="c">-17%</td><td class="c">94.4 KB</td><td class="c">184.9 KB</td></tr><tr><td class="op">Vapor · 3k</td><td class="c">3004</td><td class="c">156.3</td><td class="c">+9%</td><td class="c">7.1 KB</td><td class="c">55.8 KB</td></tr><tr><td class="op">Vapor+IFR · 3k</td><td class="c">3004</td><td class="c">141.0</td><td class="c">-2%</td><td class="c">54.3 KB</td><td class="c">108.3 KB</td></tr><tr><td class="op">VDOM · 5k</td><td class="c">5004</td><td class="c">188.3</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">36.8 KB</td></tr><tr><td class="op">VDOM+IFR · 5k</td><td class="c">5004</td><td class="c">163.1</td><td class="c">-13%</td><td class="c">35.4 KB</td><td class="c">66.5 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 5k</td><td class="c">5004</td><td class="c">160.9</td><td class="c">-15%</td><td class="c">134.3 KB</td><td class="c">266.3 KB</td></tr><tr><td class="op">Vapor · 5k</td><td class="c">5004</td><td class="c">209.5</td><td class="c">+11%</td><td class="c">7.1 KB</td><td class="c">66.6 KB</td></tr><tr><td class="op">Vapor+IFR · 5k</td><td class="c">5004</td><td class="c">193.3</td><td class="c">+3%</td><td class="c">65.4 KB</td><td class="c">129.9 KB</td></tr><tr><td class="op">VDOM · 10k</td><td class="c">10004</td><td class="c">310.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">39.0 KB</td></tr><tr><td class="op">VDOM+IFR · 10k</td><td class="c">10004</td><td class="c">378.9</td><td class="c">+22%</td><td class="c">37.1 KB</td><td class="c">70.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 10k</td><td class="c">10004</td><td class="c">278.4</td><td class="c">-10%</td><td class="c">233.9 KB</td><td class="c">465.7 KB</td></tr><tr><td class="op">Vapor · 10k</td><td class="c">10004</td><td class="c">365.4</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">92.5 KB</td></tr><tr><td class="op">Vapor+IFR · 10k</td><td class="c">10004</td><td class="c">337.6</td><td class="c">+9%</td><td class="c">90.5 KB</td><td class="c">180.8 KB</td></tr><tr><td class="op">VDOM · 20k</td><td class="c">20004</td><td class="c">586.9</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">42.8 KB</td></tr><tr><td class="op">VDOM+IFR · 20k</td><td class="c">20004</td><td class="c">695.1</td><td class="c">+18%</td><td class="c">40.2 KB</td><td class="c">77.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 20k</td><td class="c">20004</td><td class="c">526.1</td><td class="c">-10%</td><td class="c">432.1 KB</td><td class="c">862.3 KB</td></tr><tr><td class="op">Vapor · 20k</td><td class="c">20004</td><td class="c">691.7</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">139.8 KB</td></tr><tr><td class="op">Vapor+IFR · 20k</td><td class="c">20004</td><td class="c">637.1</td><td class="c">+9%</td><td class="c">138.7 KB</td><td class="c">277.4 KB</td></tr><tr><td class="op">VDOM · 30k</td><td class="c">30004</td><td class="c">841.5</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">46.2 KB</td></tr><tr><td class="op">VDOM+IFR · 30k</td><td class="c">30004</td><td class="c">1010.0</td><td class="c">+20%</td><td class="c">43.1 KB</td><td class="c">84.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 30k</td><td class="c">30004</td><td class="c">770.6</td><td class="c">-8%</td><td class="c">628.3 KB</td><td class="c">1260.1 KB</td></tr><tr><td class="op">Vapor · 30k</td><td class="c">30004</td><td class="c">1010.1</td><td class="c">+20%</td><td class="c">7.1 KB</td><td class="c">187.4 KB</td></tr><tr><td class="op">Vapor+IFR · 30k</td><td class="c">30004</td><td class="c">905.9</td><td class="c">+8%</td><td class="c">185.2 KB</td><td class="c">371.3 KB</td></tr></tbody></table>
 
+<script>
+window.__BENCH_I18N = {"en":{"title":"IFR architecture scale trends — scale-x1","h1":"IFR architecture scale trends","lede":"Five product architectures on one generated content SFC, scaled from ~1k to <strong>~30k</strong> elements. Lead chart is cost space (MT gzip × FCP); FCP vs N follows. See also the <em>Unified Benchmark Matrix</em> for the same-host IFR × VDOM/Vapor × React story.","hLinear":"Linear scale — cost space + FCP vs N","hLog":"Log-log scale","hAlpha":"Scaling exponents","alphaLede":"α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC). α ≈ 1 → cost grows with content.","hRaw":"Raw medians"},"zh":{"title":"IFR 架构规模趋势 — scale-x1","h1":"IFR 架构规模趋势","lede":"同一份生成内容 SFC，五种产品架构，从约 1k 扩到 <strong>~30k</strong> 元素。主图是代价空间（MT gzip × FCP），随后是 FCP vs N。同机 IFR × VDOM/Vapor × React 故事见<em>统一基准矩阵</em>。","hLinear":"线性坐标 — 代价空间 + FCP vs N","hLog":"双对数坐标","hAlpha":"缩放指数","alphaLede":"α ≈ 0 → FCP 由固定开销主导（包体解析 / 启动 / IPC）。α ≈ 1 → 成本随内容近似线性增长。","hRaw":"原始中位数"}};
+window.__benchApplyLang = function (lang) {
+  var pack = window.__BENCH_I18N[lang] || window.__BENCH_I18N.en;
+  if (!pack) return;
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    var k = el.getAttribute('data-i18n');
+    if (pack[k] != null) el.innerHTML = pack[k];
+  });
+  if (pack.title) document.title = pack.title;
+};
+</script>
+<script>
+(function () {
+  function applyTheme(t) {
+    if (t !== 'dark' && t !== 'light') return;
+    document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.style.colorScheme = t;
+  }
+  function applyLang(l) {
+    if (l !== 'en' && l !== 'zh') return;
+    document.documentElement.setAttribute('lang', l === 'zh' ? 'zh-CN' : 'en');
+    if (typeof window.__benchApplyLang === 'function') {
+      try { window.__benchApplyLang(l); } catch (_) {}
+    }
+  }
+  var q = new URLSearchParams(location.search);
+  applyTheme(q.get('theme'));
+  applyLang(q.get('lang'));
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.source !== 'vue-lynx-docs') return;
+    if (d.type === 'theme') applyTheme(d.theme);
+    if (d.type === 'lang') applyLang(d.lang);
+  });
+  try {
+    parent.postMessage({ source: 'vue-lynx-bench', type: 'ready' }, '*');
+  } catch (_) {}
+})();
+</script>
 </body>
 </html>

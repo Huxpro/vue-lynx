@@ -42,12 +42,18 @@ export function copy(lang) {
       : { href: 'unified.zh.html', label: '中文' },
     hStorms: zh ? '交互 Storms — IFR × 框架矩阵' : 'Table storms — IFR × framework matrix',
     subStorms: zh
-      ? '黑盒协议：真实点击 → 合成 DOM 终态。本机测量（2026-07-17）。<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。'
-      : 'Black-box: real clicks → composed-DOM end state. Same-host (2026-07-17). <b>ReactLynx (memo)</b> = Snapshot + IFR (always on) + manual memo/useCallback.',
+      ? '黑盒协议：真实点击 → 合成 DOM 终态。本机测量（2026-07-17）。'
+        + '<b>Select = 点状更新</b>（每次只动选中态/少量 class）；'
+        + '<b>Update = 批量更新</b>（每轮改很多行）。'
+        + '<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。'
+      : 'Black-box: real clicks → composed-DOM end state. Same-host (2026-07-17). '
+        + '<b>Select = point update</b> (selection / a few classes per tick); '
+        + '<b>Update = batch update</b> (many rows touched each pass). '
+        + '<b>ReactLynx (memo)</b> = Snapshot + IFR (always on) + manual memo/useCallback.',
     hStormScale: zh ? 'Storm 随规模变化（1k → 30k）' : 'Storm scaling (1k → 30k)',
     subStormScale: zh
-      ? '线性坐标、零基线——看绝对差距，不是对数压缩后的形状。'
-      : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape.',
+      ? '线性坐标、零基线——看绝对差距，不是对数压缩后的形状。Select 曲线看点状更新；Update 曲线看批量吞吐。'
+      : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape. Select charts = point updates; Update charts = batch throughput.',
     hFcp: zh ? '首帧 FCP — 架构阶梯' : 'Content-probe FCP (architecture ladder)',
     subFcp: zh
       ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。CPU ×1。'
@@ -105,18 +111,18 @@ export function copy(lang) {
     },
     charts: {
       selectStorm: {
-        title: zh ? 'Select storm vs 行数' : 'select storm vs table size',
+        title: zh ? 'Select storm（点状）vs 行数' : 'select storm (point) vs table size',
         sub: zh
-          ? '30 次连续选中的总墙钟时间。Vapor 几乎压平；React 陡升；IFR+ET 把 VDOM 往下拉。'
-          : 'Wall time for 30 sequential selects. Vapor stays flat; React climbs; IFR+ET pulls VDOM down.',
+          ? '点状更新：30 次连续选中的总墙钟。每次 tick 只改选中态。Vapor 几乎压平；React 陡升；IFR+ET 把 VDOM 往下拉。'
+          : 'Point updates: wall time for 30 sequential selects — each tick touches selection state only. Vapor stays flat; React climbs; IFR+ET pulls VDOM down.',
         x: zh ? '行数 N — 线性' : 'rows N — linear',
         y: zh ? 'select storm — ms' : 'select storm — ms',
       },
       updateStorm: {
-        title: zh ? 'Update storm vs 行数' : 'update storm vs table size',
+        title: zh ? 'Update storm（批量）vs 行数' : 'update storm (batch) vs table size',
         sub: zh
-          ? '50 轮更新的总墙钟时间。创建成本另算——这里只看持续更新吞吐。'
-          : 'Wall time for 50 update passes. Creation is separate — sustained update throughput only.',
+          ? '批量更新：50 轮全表/多行更新的总墙钟。创建另算——这里只看持续批量吞吐。'
+          : 'Batch updates: wall time for 50 multi-row update passes. Creation is separate — sustained batch throughput only.',
         x: zh ? '行数 N — 线性' : 'rows N — linear',
         y: zh ? 'update storm — ms' : 'update storm — ms',
       },
@@ -199,11 +205,11 @@ export function buildConclusions(d, lang) {
     out.push({
       tone: 'good',
       title: zh
-        ? `持续更新：上 Vapor（selectStorm@10k ≈ ${vaporX.toFixed(1)}× 快于 VDOM）`
-        : `Ship Vapor for sustained updates (~${vaporX.toFixed(1)}× vs VDOM @10k selectStorm)`,
+        ? `点状更新上 Vapor（selectStorm@10k ≈ ${vaporX.toFixed(1)}× vs VDOM）`
+        : `Ship Vapor for point updates (~${vaporX.toFixed(1)}× vs VDOM @10k selectStorm)`,
       why: zh
-        ? '列表高频选中/局部更新是用户能感觉到的差距；单次点击往往被帧地板盖住。产品默认：交互密集列表优先 Vapor。'
-        : 'High-frequency select/partial update is what users feel; one-shot taps often sit on the frame floor. Default: Vapor for interaction-heavy lists.',
+        ? 'Select = 点状更新（选中态/少量 class）。高频点状交互是用户能感觉到的差距；单次点击常被帧地板盖住。交互密集列表默认 Vapor。'
+        : 'Select = point update (selection / a few classes). High-frequency point interaction is what users feel; one-shot taps often sit on the frame floor. Default Vapor for interaction-heavy lists.',
       evidence: zh
         ? `VDOM ${stormVdom.toFixed(0)} ms → Vapor ${stormVapor.toFixed(0)} ms` +
           (vaporRx != null
@@ -311,11 +317,11 @@ export function buildConclusions(d, lang) {
   out.push({
     tone: 'warn',
     title: zh
-      ? '一句话分工：创建看 React；更新看 Vapor；Vue 首帧用 IFR+ET'
-      : 'Cheat sheet: create→ReactLynx · updates→Vapor · Vue first-frame→IFR+ET',
+      ? '一句话分工：创建→React；点状/批量更新→Vapor；Vue 首帧→IFR+ET'
+      : 'Cheat sheet: create→ReactLynx · point/batch updates→Vapor · Vue first-frame→IFR+ET',
     why: zh
-      ? '三套旧 benchmark 各说各话时容易打架；统一阶梯后的产品选择可以压成这一句。'
-      : 'The three old benches fought each other; on one ladder the product choice collapses to this line.',
+      ? 'Select 看点状，Update 看批量——别混。三套旧 bench 打架时，统一阶梯后的产品选择可以压成这一句。'
+      : 'Select = point, Update = batch — don’t mix them. The three old benches fought; on one ladder the product choice collapses to this line.',
     evidence: zh
       ? '详见下方 storm 表 + FCP 表；跨表不要用毫秒互除。'
       : 'See storm + FCP tables below; never divide ms across those instruments.',

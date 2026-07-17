@@ -3,19 +3,16 @@
 One place to **look at** every architecture on the same host and ladder —
 IFR styles, VDOM vs Vapor, and React vs Vue — without mixing metric scales.
 
-<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">Open full report ↗</a>
-(<a href="/benchmark/unified.zh.html" target="_blank" rel="noreferrer">中文</a>)
+**How to read storms:** **Select = point update** (selection / a few classes
+per tick). **Update = batch update** (many rows touched each pass). Don’t
+compare those two curves as if they were the same workload.
 
-<iframe
+<BenchArtifactFrame
   src="/benchmark/unified.html"
-  title="Unified Vue Lynx benchmark matrix"
-  style={{
-    width: '100%',
-    height: '2400px',
-    border: '1px solid var(--rp-c-divider)',
-    borderRadius: '12px',
-  }}
-  loading="lazy"
+  srcZh="/benchmark/unified.zh.html"
+  title="Unified benchmark matrix"
+  titleZh="统一基准矩阵"
+  height={2400}
 />
 
 ## What this page is
@@ -29,26 +26,20 @@ The three older campaigns answered different questions:
 | Vue vs React | black-box click→DOM | [Playground](/guide/benchmark-playground) |
 
 They shared **1k→30k labels** but not a **metric scale**. This report puts
-every cell in one schema, grades the published claims, and shows
-playground-style tinted tables + scaling charts.
+every cell in one schema and leads with decision-first conclusions
+(takeaway → so what → verify). Sibling pages keep the *interactive*,
+*instrumented*, and *strategy* slices — not a second copy of the matrices.
 
 ## How to read it
 
-1. **Conclusions** at the top — each card is takeaway → so what → verify numbers.
-   Easy to digest; tables below are for checking the claim.
-2. **Storm table** — IFR × framework interaction latency (same protocol as the playground).
-3. **Storm charts** — select / update / create vs N on one host.
-4. **FCP table + charts** — content-probe first-frame ladder, including ReactLynx
-   Snapshot+IFR on the same card density (separate instrument from storms!).
+1. **Conclusions** — digestible product guidance; numbers are for checking.
+2. **Storm table / charts** — point (select) vs batch (update) latency.
+3. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
 
-Never ratio storm ms against FCP ms. Absolute milliseconds are host-bound;
-ratios on one host are the portable claim.
+## Environment rules
 
-## Interactive playground
-
-Want to feel the table apps yourself? The
-[React vs Vue playground](/guide/benchmark-playground) still embeds the
-live bundles. This page is the **results artifact**.
+- **lynx-web** — primary product scale (this report).
+- **bare-dom** / **node-jitless** — different instruments; never ratio across them.
 
 ## Reproduce
 

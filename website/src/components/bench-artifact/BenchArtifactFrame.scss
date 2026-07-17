@@ -1,0 +1,103 @@
+.bench-artifact {
+  margin: 1.25rem 0 1.75rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--rp-c-bg-mute, #f6f6f6) 70%, transparent),
+      transparent 48px
+    ),
+    var(--rp-c-bg, #fff);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--rp-c-divider) 60%, transparent);
+}
+
+.bench-artifact__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 14px;
+  border-bottom: 1px solid var(--rp-c-divider);
+  background: color-mix(in srgb, var(--rp-c-bg) 88%, var(--rp-c-bg-mute, #f3f3f3));
+}
+
+.bench-artifact__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.bench-artifact__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: linear-gradient(
+    135deg,
+    var(--major-brand-color, #0ea5e9),
+    var(--second-brand-color, #22c55e)
+  );
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--major-brand-color, #0ea5e9) 18%, transparent);
+}
+
+.bench-artifact__title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--rp-c-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bench-artifact__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--rp-c-divider);
+  background: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.bench-artifact__open:hover {
+  border-color: color-mix(in srgb, var(--major-brand-color, #0ea5e9) 55%, var(--rp-c-divider));
+  background: color-mix(in srgb, var(--major-brand-color, #0ea5e9) 8%, var(--rp-c-bg));
+  transform: translateY(-1px);
+}
+
+.bench-artifact__icon {
+  opacity: 0.85;
+}
+
+.bench-artifact__frame {
+  background: var(--rp-c-bg);
+}
+
+.bench-artifact__frame iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .bench-artifact__open span {
+    /* keep icon+short label readable */
+  }
+  .bench-artifact__bar {
+    padding: 10px;
+  }
+}

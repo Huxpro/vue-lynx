@@ -299,19 +299,31 @@ Same-source content feed (~1k elements), five architectures, CPU ×1 / ×4:
 | VDOM off → IFR + ET | 95 → 72 ms (**−24%**) | 270 → 254 ms (**−6%**) |
 | Vapor off → IFR | 97 → 89 ms (**−9%**) | 304 → 318 ms (**+5%**) |
 
-Scale trends on the same SFC through **30k** elements (CPU ×1). Lead chart is
-cost space (MT gzip × FCP); then FCP vs N
-(<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 full page ↗</a>
-·
-<a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 full page ↗</a>):
+Same-host IFR × VDOM/Vapor × React FCP story (including ReactLynx):
+**[Unified Benchmark Matrix](/guide/benchmark-unified)**.
 
-<iframe
+Scale trends on the same SFC through **30k** elements (CPU ×1). Lead chart is
+cost space (MT gzip × FCP); then FCP vs N:
+
+<BenchArtifactFrame
   src="/benchmark/ifr-scale-trends-x1.html"
-  title="IFR architecture scale trends (CPU ×1)"
-  style={{ width: '100%', height: '2400px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
-  loading="lazy"
+  title="IFR scale trends (CPU ×1)"
+  titleZh="IFR 规模趋势（CPU ×1）"
+  height={1600}
 />
+
+<details>
+<summary>CPU ×4 scale trends</summary>
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x4.html"
+  title="IFR scale trends (CPU ×4)"
+  titleZh="IFR 规模趋势（CPU ×4）"
+  height={1600}
+/>
+
+</details>
 
 Full methodology, strategy ladder, per-example sweeps, and ReactLynx
 comparison: [IFR Benchmarks](/guide/ifr-benchmarks). Campaign write-up:
-[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
+[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/UNIFIED-RERUN.md).

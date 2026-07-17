@@ -3,19 +3,15 @@
 在同一台机器、同一阶梯上，把 IFR 风格、VDOM vs Vapor、React vs Vue
 **一眼看完**——又不把不同量纲混在一起。
 
-<a href="/benchmark/unified.zh.html" target="_blank" rel="noreferrer">打开完整报告 ↗</a>
-（<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">English</a>）
+**怎么读 storms：Select = 点状更新**（每次只动选中态/少量 class）；
+**Update = 批量更新**（每轮改很多行）。别把两条曲线当成同一种工作负载。
 
-<iframe
-  src="/benchmark/unified.zh.html"
-  title="Vue Lynx 统一基准矩阵"
-  style={{
-    width: '100%',
-    height: '2400px',
-    border: '1px solid var(--rp-c-divider)',
-    borderRadius: '12px',
-  }}
-  loading="lazy"
+<BenchArtifactFrame
+  src="/benchmark/unified.html"
+  srcZh="/benchmark/unified.zh.html"
+  title="Unified benchmark matrix"
+  titleZh="统一基准矩阵"
+  height={2400}
 />
 
 ## 这页是什么
@@ -29,23 +25,19 @@
 | Vue vs React | 黑盒 click→DOM | [Playground](/zh/guide/benchmark-playground) |
 
 它们共用 **1k→30k 标签**，但不是同一**量纲**。本报告把每个 cell 放进同一 schema，
-给已发布断言打分，并用 playground 同款着色表 + 缩放曲线展示。
+并以「结论 → 含义 → 核对」开篇。兄弟页保留*可交互*、*instrumented*、*策略*
+切片——不再复述整张矩阵。
 
 ## 怎么读
 
-1. 顶部的 **结论** — 每条是「takeaway → 含义 → 核对数字」：结论好消化，表格用来验证。
-2. **Storm 表** — IFR × 框架交互延迟（与 playground 同协议）。
-3. **Storm 图** — 同机 select / update / create vs N。
-4. **FCP 表 + 图** — content-probe 首帧阶梯，含同密度的 ReactLynx Snapshot+IFR
-  （与 storms 不是同一套仪器！）。
+1. **结论** — 好消化的产品选择；数字用来核对。
+2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。
+3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
 
-不要用 storm 毫秒去除以 FCP 毫秒。绝对毫秒随机器变化；同机比率才可携带。
+## 环境规则
 
-## 可交互 playground
-
-想亲手点按表格应用？见
-[React vs Vue playground](/zh/guide/benchmark-playground)。
-本页是**结果产物**。
+- **lynx-web** — 主产品量纲（本报告）。
+- **bare-dom** / **node-jitless** — 不同仪器；禁止跨环境比毫秒。
 
 ## 复现
 
