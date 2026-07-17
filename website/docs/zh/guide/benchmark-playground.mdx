@@ -1,49 +1,27 @@
 # Playground：React vs Vue on Lynx
 
-我们[基准测试](/zh/guide/benchmark-vapor)里的每一个数字都来自跑在
-Lynx for Web 上的应用——这意味着同样的应用可以直接嵌在这个页面里,
-在你的手机上运行。选择一个配置,亲手点按 harness 所点击的同一批按钮,
-自己感受差异。右上角的徽标显示你最近一次点按的 **tap → DOM settled**
-耗时(点按后最后一次 DOM 变更的时刻,以变更静默为准)。
+[VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor)里的每个数字都来自跑在
+Lynx for Web 上的应用——同一批应用可以直接嵌在这个页面里，在你的手机上运行。
+选择一个配置，亲手点按 harness 所点的按钮，自己感受差异。徽标显示最近一次
+点按的 **tap → DOM settled** 耗时（点按后最后一次 DOM 变更、以变更静默为准）。
 
 <BenchPlayground />
 
-**建议试玩**(值得亲手感受的差异):
+**建议试玩**
 
-1. 先 **Create 10,000 rows**,再点 **Select storm**(30 次选中移动)——
-   Vue Vapor 约 0.2 秒完成,Vue VDOM 约 1 秒,React 约 3 秒。
-2. 在 10,000 行上点 **Update storm**(50 轮全表更新)——
-   Vapor 约 1.2 秒,VDOM 约 2 秒,React 约 6 秒。
-3. 单次点按(1k 表上的 Update / Select)五种配置手感完全一致——框架
-   只在持续吞吐下才拉开差距,这正是风暴场景所放大的。
-
-## 一次更正,以及它教会我们的事
-
-本页早期版本曾报告 ReactLynx 的风暴需要**数分钟**甚至超时(DNF)——
-真机测试推翻了这些数字。完整的置信度审计(零观测对照、定时截图、
-主线程与 worker CPU profile)把全部慢速追溯到一个 **Lynx for Web 运行
-时工件**,而非 ReactLynx 本身:
-
-- `@lynx-js/web-core` 对 Lynx profiling API 的 shim 把
-  `isProfileRecording()` 实现为"只要 `performance` 存在即为 true"——
-  web 上**永远处于录制状态**,而原生 Lynx 上这些调用在未开启 tracing
-  会话时是 no-op。
-- 每对 `profileStart`/`profileEnd` 被映射到 `performance.mark()` /
-  `measure()` / `clearMarks()`,且 **measure 条目从不清除**——
-  performance timeline 无限增长,后续每次调用都要扫描全量。
-- ReactLynx 生产运行时按渲染 snapshot 调用 profiling;Vue Lynx 从不调
-  用。结果是仅 React、仅 web、随操作数超线性的减速:worker CPU profile
-  中 **82.8% 的后台线程时间在 `performance.clearMarks` 里**。
-
-harness(以及本 playground)现已对所有框架一致地中和 `lynx.profile:`
-条目,恢复与原生一致的行为。同一个 react 10k update storm 从 >300 秒
-(DNF)降到本机约 15 秒,worker 大部分时间空闲。
+1. 先 **Create 10,000 rows**，再点 **Select storm**（30 次选中移动）——
+   Vue Vapor 约 0.2 秒，Vue VDOM 约 1 秒，React 约 3 秒。
+2. 在 10,000 行上点 **Update storm**（50 轮全表更新）——
+   Vapor 约 1.2 秒，VDOM 约 2 秒，React 约 6 秒。
+3. 单次点按（1k 表上的 Update / Select）各配置手感一致——框架只在持续吞吐下
+   才拉开差距，这正是风暴所放大的。
 
 ## 结果速览
 
-同一份数据的 [js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)
-风格表格——每次点按的中位延迟,以及相对行内最优的减速系数
-(<a href="/benchmark/table.html" target="_blank" rel="noreferrer">打开完整页面 ↗</a>):
+同一份数据的
+[js-framework-benchmark](https://github.com/krausest/js-framework-benchmark)
+风格表格——每次点按的中位延迟，以及相对行内最优的减速系数
+(<a href="/benchmark/table.html" target="_blank" rel="noreferrer">打开完整页面 ↗</a>)：
 
 <iframe
   src="/benchmark/table.html"
@@ -52,75 +30,48 @@ harness(以及本 playground)现已对所有框架一致地中和 `lynx.profile:
   loading="lazy"
 />
 
+## 结论
+
+| 发现 | 说明 |
+| --- | --- |
+| 单次操作 | 1k 行近乎**持平**；10k 行约 1.5–2× |
+| 风暴吞吐 | ReactLynx 约为 Vue 的 **3–5×**——与 Web 上 keyed React vs Vue 同量级 |
+| Vue / Vapor 领先处 | 持续更新；Vapor 在 **select** 上尤其明显（两次 class effect vs 每 tick O(行数)） |
+| React 领先处 | **创建**（直到 30k 约 1.2×）——ReactLynx 适配层特征（snapshot 批量实例化），不是框架特征 |
+| 规模（1k→30k） | 创建对所有人线性；update storm **收敛**；select storm 保持结构性分离 |
+
+我们也测了三档 React 优化（手工 `memo` + `useCallback`、朴素、
+[React Compiler](https://react.dev/learn/react-compiler)）。Compiler 落在
+朴素与手工 memo 之间——它做的是*组件内部* memo，无法像组件边界的 `memo()`
+那样剪掉 keyed 列表的逐行重渲染。三档都可以在上面的 playground 里试。
+
 ## 与 js-framework-benchmark 有何不同
 
-我们刻意沿用了 krausest 的**操作集**(对 1k–10k 行执行 create/update/
-select/swap/remove/append/clear,keyed 实现,各框架使用惯用状态管理)——
-但有三点根本不同:
+同一套操作集（对 1k–10k 行 create/update/select/swap/remove/append/clear，
+keyed，各框架惯用状态）——三点不同：
 
-1. **被测运行时是 Lynx 的双线程管线**,而不是浏览器的单线程 DOM。框架
-   跑在后台 worker 里;变更以 ops 形式跨序列化边界,由主线程应用。这里
-   的延迟是*点击 → composed DOM 终态*(逐动画帧轮询观测),不是 devtools
-   的 paint tracing。分辨率因此是一帧(~17ms)——所以表格只对跨多帧的
-   场景排名。
-2. **持续会话维度。** krausest 每项基准都在新页面上测、丢弃 warmup。
-   我们两者都测:冷启动单发(每个样本全新应用)*和*持续场景——外加
-   **风暴**(一次点按 = 50 轮连续更新或 30 次选中移动,吞吐量度量,把
-   亚帧级的每 tick 成本放大到帧地板之上)。也正是这套方法抓出了上面的
-   运行时工件——"任何反直觉结果必须用独立通道交叉验证后才可发布"现在
-   是方法论的一部分。
-3. **框架范围。** krausest 在 DOM 上比较数十个 Web 框架;我们比较的是
-   今天构建 Lynx 应用的三种方式——ReactLynx、Vue Lynx VDOM、Vue Lynx
-   Vapor——在它们真正面向的运行时上。
+1. **被测运行时是 Lynx 双线程管线**，不是浏览器 DOM。延迟是*点击 → composed
+   DOM 终态*（逐动画帧轮询），不是 paint tracing。分辨率约一帧（~17 ms），
+   表格只对跨多帧场景排名。
+2. **持续会话维度**——冷启动单发，以及风暴（一次点按 = 50 轮更新或 30 次选中），
+   把亚帧级每 tick 成本放大到帧地板之上。
+3. **框架范围**——ReactLynx、Vue Lynx VDOM、Vue Lynx Vapor，在它们真正面向的
+   运行时上。
 
-## React 和 Vue 应该差这么多吗?
+## 注意事项
 
-工件移除后,差距本来就不大——这才是诚实的结果。单次操作在 1k 行上
-**完全持平**(React 25ms ≈ VDOM 28ms ≈ Vapor 23ms),10k 行上差距
-~1.5–2×。持续吞吐(风暴)下 ReactLynx 约为 Vue 的 3–5×——同一量级,
-与 js-framework-benchmark 上 keyed `react-hooks` 与 `vue` 相差 ~1.5×
-以内的预期一致。
-
-我们也测了三档 React 优化:默认配置即手工优化的 keyed 实现(`memo`
-行组件 + `useCallback`);**朴素**变体(无 memo/useCallback)风暴下慢
-~1.4–1.9×;[React Compiler](https://react.dev/learn/react-compiler)
-变体用 `babel-plugin-react-compiler` 编译朴素源码。Compiler triage 记录:
-最初的 compiler 构建其实在**静默 bail out 整个 `App`**(基准的风暴驱动
-用了 `t++` 修改被 lambda 捕获的变量——不支持的语法模式会让整个组件放弃
-编译);修复脚手架后编译器正常工作,成绩落在朴素版与手工 memo **之间**
-(比朴素版好 ~10–25%,仍不及 `memo(Row)`)。结构性原因:编译器的 memo
-是*组件内部*的——`rows.map(...)` 在 `rows` 或 `selected` 变化时仍会重建
-全部行元素,它无法像组件边界的显式 `memo()` 那样剪掉 keyed 列表的逐行
-重渲染。对 krausest 形态的大列表,手工 `memo` 依然必要。三档都可以在
-上面的 playground 里亲手体验。
-
-Vue 真正领先的是持续更新吞吐——Vapor 在选中场景进一步放大(移动一次
-选中,Vapor 只花两个 class effect;diff 型渲染器每 tick 付 O(行数))。
-反过来,**React 在创建路径上有真实优势**(直到 30k 各规模都快 ~1.2×)。
-由于 ReactLynx 底层是 Preact,我们用正确的 Web 参照验证了这两个特征:
-把**同一套协议直接跑在纯 DOM 上**(`preact-hooks` vs Vue,不经 Lynx)——
-Web 上 preact 创建反而*慢于* Vue、持续更新*快于* Vue,两个方向在 Lynx
-上都发生反转。所以这些是**适配层特征,不是框架特征**:ReactLynx 的
-snapshot 系统在主线程批量实例化静态结构(创建赢),vue-lynx 的每次
-commit 管线更精简(持续更新赢)。
-
-扩到 1k→30k 的 scaling 曲线修正了早先的图景:创建对所有变体都是线性
-(α≈0.9–1.0);**update storm 在大规模下收敛**(vapor/vdom 每 tick 比值
-1.8× @10k → 1.08× @30k——共享的主线程应用成本主导并摊平了后台线程优势;
-react 每 tick α=1.00 线性,更大规模下会追平);而 **select storm 保持
-结构性分离**(vapor α≈0.9 vs vdom α≈1.2;30k 仍差 ~8×——每 tick O(1)
-行的工作无法被摊平)。管线税表还显示了双线程红利:Vue 的 update storm
-在 Lynx 上比同框架跑纯 DOM **快约 2×**(BG 渲染第 N+1 tick 时 MT 在应用
-第 N tick),代价是创建路径贵 2–4×。
+- Harness 是 **Chromium 中的 Lynx for Web**，不是真机；Vue 3.6 与 ReactLynx
+  版本见原始结果。
+- 本页早期草稿曾把 ReactLynx 风暴报成数分钟/DNF。那是 Lynx for Web 的
+  profiling shim（`lynx.profile:` 从不清除 measure；ReactLynx 会调用，Vue
+  不会）。harness 现已对所有框架中和这些条目。完整审计见
+  `plans/0711-1-cross-framework-benchmark.md`。
 
 ## 复现
 
 ```bash
-pnpm --filter vue-lynx-benchmark bench:cross    # 基础套件(首屏、内存、持续操作)
+pnpm --filter vue-lynx-benchmark bench:cross    # 基础套件
 pnpm --filter vue-lynx-benchmark bench:storms   # 更新密集场景
 ```
 
-原始数据与分析:[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)、
-`plans/0711-1-cross-framework-benchmark.md`(含更正的完整审计记录)。
-注意:harness 为 Chromium 中的 Lynx for Web 而非真机;Vue 3.6 为
-prerelease;ReactLynx 0.122.1。
+原始数据：[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)。
