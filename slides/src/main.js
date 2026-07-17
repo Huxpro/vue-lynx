@@ -357,6 +357,42 @@ if (!embedMode) {
 }
 
 // =========================================================
+// Demo focus containment — live demos are real apps, and some
+// autofocus an input the moment they load (TodoMVC), which
+// would silently swallow the arrow keys via the .phone guard
+// below. Policy: only a deliberate pointer/touch INTO a demo
+// hands it the keyboard. Programmatic focus grabs are blurred
+// on the spot, navigation reclaims focus on every slide
+// change, and clicking anywhere outside a demo takes the
+// keyboard back.
+// =========================================================
+let demoEngaged = false;
+const inDemo = (el) => !!el?.closest?.('.phone, .no-deck-scroll');
+
+if (!embedMode) {
+  document.addEventListener('pointerdown', (e) => {
+    const inside = inDemo(e.target);
+    // Clicking outside a demo also releases any focus it still holds,
+    // so arrows never double-drive a demo input AND the deck.
+    if (!inside && inDemo(document.activeElement)) {
+      document.activeElement.blur?.();
+    }
+    demoEngaged = inside;
+  }, true);
+
+  document.addEventListener('focusin', (e) => {
+    // Focus landed inside a demo without a user gesture → an autofocus
+    // grab. Refuse it; the deck keeps the keyboard.
+    if (inDemo(e.target) && !demoEngaged) e.target.blur?.();
+  });
+
+  document.addEventListener('deck:change', () => {
+    demoEngaged = false;
+    if (inDemo(document.activeElement)) document.activeElement.blur?.();
+  });
+}
+
+// =========================================================
 // Keyboard
 // =========================================================
 // In embed mode the deck is read-only — the iframe is just a preview surface
@@ -366,8 +402,10 @@ if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
     // Typing inside a live demo (native inputs live in the lynx-view shadow, so
-    // the event retargets to the .phone host) must not drive the deck.
-    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
+    // the event retargets to the .phone host) must not drive the deck — but
+    // only when the user deliberately clicked into the demo (demoEngaged).
+    // An app that autofocused itself doesn't get to eat the arrow keys.
+    if (demoEngaged && e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (document.querySelector('.cmdk')) return; // command palette owns the keyboard
 
     // Only slide navigation is bound to bare keys. Every discrete action
