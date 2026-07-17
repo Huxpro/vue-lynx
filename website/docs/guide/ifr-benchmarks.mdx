@@ -2,7 +2,7 @@ import { Badge } from '@theme';
 
 # IFR Benchmarks <Badge text="v0.5" type="tip" />
 
-> Product story / how-to: **[IFR guide](/guide/ifr)**.
+> Product thesis (how / cost / architecture): **[IFR guide](/guide/ifr)**.
 > Product FCP matrices: **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
 > This page is the measurement appendix — strategy cost, real-app size/TTI,
 > **cost-space** scale charts, and native checks.
@@ -113,7 +113,47 @@ MT section grows ~17 KiB → 78–195 KiB (Vue runtime + app copy); ET adds ~1%.
 The sweep also caught real bugs (`SystemInfo` clobber, numeric-style auto-px,
 CSS Modules on MT) — worth running for correctness alone.
 
-## 3. Native engine observations
+## 3. Cost space (MT gzip × FCP)
+
+Unlike the unified matrix’s **FCP vs N** (first-frame only), **cost space**
+asks: *did that first frame come from a larger MT bundle?*
+
+| axis | meaning |
+| --- | --- |
+| **X — MT gzip** | Main-thread bundle size (parse / load tax). IFR usually makes this larger. |
+| **Y — FCP** | Time to first paint. Lower is better. |
+| **Each polyline** | One architecture swept from 1k→30k. |
+
+| region | reading |
+| --- | --- |
+| **Lower-left** | Ideal — small MT bundle *and* fast first frame |
+| **Right** | Paid a heavier MT bundle; may or may not buy faster FCP |
+| **Up** | First frame worsens as content grows |
+| **Upper-right** | Worst — heavy *and* slow |
+
+Typical bad shape: plain IFR gets heavier, then FCP crosses above plain VDOM
+on mid/large trees. Good shape: IFR+ET still pays MT size, but FCP stays below.
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR scale trends (CPU ×1)"
+  titleZh="IFR 规模趋势（CPU ×1）"
+  height={1600}
+/>
+
+<details>
+<summary>CPU ×4 scale trends</summary>
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x4.html"
+  title="IFR scale trends (CPU ×4)"
+  titleZh="IFR 规模趋势（CPU ×4）"
+  height={1600}
+/>
+
+</details>
+
+## 4. Native engine observations
 
 LynxExplorer (SDK 1.4 / PrimJS): 24/25 examples pass with **zero hydration
 mismatches**; No-IFR vs IFR+ET screens visually identical (SSIM ≥ 0.9977).
