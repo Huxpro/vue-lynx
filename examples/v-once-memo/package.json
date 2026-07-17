@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/v-once-memo",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": false,
   "description": "Vue-Lynx v-once and v-memo directive demo",
   "license": "Apache-2.0",
