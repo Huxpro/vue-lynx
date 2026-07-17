@@ -10,7 +10,7 @@
       },
       "scenario": "7guis/cells",
       "verification": {
-        "sourceHash": "aef7f0bd045d3b90c3a789865bcc21ea4f6f8d8295e657a1cfee3aaeb04c7613",
+        "sourceHash": "1137788d91e5803dccc55eeda88dada985381f27b77d35ea60576ecec56e3d73",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -25,7 +25,7 @@
       },
       "scenario": "7guis/circle-drawer",
       "verification": {
-        "sourceHash": "59f0c2e31c092086ec066859f1145e461860ebd9607d47c086296beece4091a0",
+        "sourceHash": "a0a0fbd3b986f42548b169852f90b95470778cb3fa4a2024fb3e12402fc11596",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -40,7 +40,7 @@
       },
       "scenario": "7guis/counter",
       "verification": {
-        "sourceHash": "234683f16f71ecc65fd74ba895f203ab7e9389b961a4b5b740458763d0854397",
+        "sourceHash": "cfed1812306e6b9662041469d0661d651e8b4efd0ac7878c399b2fd9b5828f00",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -55,7 +55,7 @@
       },
       "scenario": "7guis/crud",
       "verification": {
-        "sourceHash": "05f79b3ca5023b690146f97fe4bc2b846d280d0ead4b27563990cad135fe9b40",
+        "sourceHash": "2d28431b96f8108c05fa866cfa7add3e623c0266454e26fabbfcde567370c561",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -70,7 +70,7 @@
       },
       "scenario": "7guis/flight-booker",
       "verification": {
-        "sourceHash": "3d9def62ddfd5d9c6abf5a7ea6b7afd9e0ba2ee9a7488774318ce14c112a63e8",
+        "sourceHash": "3bdf3e176c2a44eecde55bd70709cc2481624e1e975ae6be4572bb8e6b42e4f6",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -85,7 +85,7 @@
       },
       "scenario": "7guis/temperature-converter",
       "verification": {
-        "sourceHash": "ff2cf7d7a78afb655ad34f199ea4f9e2c887849bd0ab0109c01433c8ee656b0d",
+        "sourceHash": "ea7123e92a9b871978b3317e08b55d25b374ddb66df6bef1948f070bade58a6d",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -100,7 +100,7 @@
       },
       "scenario": "7guis/timer",
       "verification": {
-        "sourceHash": "64a0f55eefcf90513ca3b8d18d3c72904247822867dcb2d4931cd89d7bf22e4c",
+        "sourceHash": "6c933a8f687217c894db30b254ecb0d4e37b4d396b3b510253646eafa38d8f8d",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -136,7 +136,7 @@
       },
       "scenario": "basic/h-counter",
       "verification": {
-        "sourceHash": "bd353728c04a99d1f04a6e66e181c0a52df9b3f4f790bdcf7e60a25bbfce88e4",
+        "sourceHash": "aa7267b073b7b27e538d636d60ed26b1ef53baff634d27d75c2abdda9110f86f",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -151,7 +151,7 @@
       },
       "scenario": "basic/main",
       "verification": {
-        "sourceHash": "499367aad5d848ff623f25e265a4df6f8f0a177485f689c68723dd20ed0a30ee",
+        "sourceHash": "49de52c4048646c809c5274b61dd1d34d3f96d01f323aa2977e6a2046e8669da",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -166,7 +166,7 @@
       },
       "scenario": "css-features/main",
       "verification": {
-        "sourceHash": "d8e486e299e4ae9ff3bfb42ccd334c2b81224a2b4cae036088ba5d845b49fe02",
+        "sourceHash": "c1eadaf5817b648b010badf9582f00dd8e2b72471d57f46acc6e7be83feaa1ae",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -185,7 +185,7 @@
       },
       "scenario": "elk-viewpager/main",
       "verification": {
-        "sourceHash": "5c060a0bb12f67305bebcb6d9d364a60af7fdf817b4fc5d27e0900bab1e8f6c6",
+        "sourceHash": "4e0f13510c05ed927c11182d24d851c5ef427d49eaf23d49593d8290f4fe0349",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -204,7 +204,7 @@
       },
       "scenario": "elk/main",
       "verification": {
-        "sourceHash": "4e534a5bdec7817697a6299548f65c088f02d0ec0d993d4628d9cd5e17886106",
+        "sourceHash": "74cc6faaf146842dbed7b40b8c9a5c9ac51110e7110499d042e1b21efbd50227",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -219,7 +219,7 @@
       },
       "scenario": "event-modifiers/main",
       "verification": {
-        "sourceHash": "7de13153c5676f60b104629e1e9310dd77c3e2c9002fab0e50009f4afe774906",
+        "sourceHash": "b2bf0b2f7260812fb847334b63f376cd8686f2a57cdf8bdc5aac8c62a0dac3af",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -234,7 +234,7 @@
       },
       "scenario": "gallery/GalleryAutoScroll",
       "verification": {
-        "sourceHash": "82a7dc0972890bc43f6cc1cf858694e6b05c63c3474161208c4340aa7f2defd9",
+        "sourceHash": "755710c01a88036094353f7b1a3fc2ee517edf7940c1f42dd390bb1d2999059b",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -249,7 +249,7 @@
       },
       "scenario": "gallery/GalleryComplete",
       "verification": {
-        "sourceHash": "af379ad0db73df5ec3bb9883603dcda4ef3e7a0e6f41386a76020050477d9f82",
+        "sourceHash": "d349de9b7da6525c71654198a1b8263c33582229dc00df3e6ac6c4556d5e30a2",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -264,7 +264,7 @@
       },
       "scenario": "gallery/GalleryList",
       "verification": {
-        "sourceHash": "9472136a34ed7b07a5ed144c61036f9a58bcdaaece5deb85c3a66e3d006972e8",
+        "sourceHash": "167eb01a1bab15cfd167aedb3ecbd49122b816ee7888aa5ae2c1ac8e08a21cc1",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -279,7 +279,7 @@
       },
       "scenario": "gallery/GalleryScrollbar",
       "verification": {
-        "sourceHash": "84bcc08b69888abc2bf9959515a9ff7f9a0dc7e653a82604d588b5cd2f0e7c49",
+        "sourceHash": "5d2af5522c027a9c977def758c675e2740444edcb1d89c06df379531f19699e1",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -294,7 +294,7 @@
       },
       "scenario": "gallery/GalleryScrollbarCompare",
       "verification": {
-        "sourceHash": "698f9c0c45ecc44201a79f9b58cc26a992953af90e438e56a1624736dd764f5a",
+        "sourceHash": "ed83bea775d0cc582030bfb414f1c8a830f905bbfdf1987b43d9ac07b03cba7d",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -310,7 +310,7 @@
       },
       "scenario": "gallery/ImageCard",
       "verification": {
-        "sourceHash": "2bbaf2f2e07accd78a4aa76361f9376509ca28b8c683787ee9a273d9f5ccedf7",
+        "sourceHash": "8574d5a2ff1b1218ef962aac2111facedbf64c6d3441e5b766e47a62714d119b",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -326,7 +326,7 @@
       },
       "scenario": "gallery/LikeCard",
       "verification": {
-        "sourceHash": "9f9b3fc5fdea19d89178603e76942301f191d3fc2fdb8371d38de9d6b6456593",
+        "sourceHash": "5ed6db993cfa6d843b4f5ed9a0f2770986afd6236bdaae775c05f25003e03b54",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -345,7 +345,7 @@
       },
       "scenario": "hackernews-css/main",
       "verification": {
-        "sourceHash": "d00247d7dc86c0a68ed17cdcd851c35f0c98f05ca45978c84871b9ce377a330d",
+        "sourceHash": "772b0249e5b6a7e4ef50fbc9a71339f98b0e1756c82d53390490fbf0efe5e1cb",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -364,7 +364,7 @@
       },
       "scenario": "hackernews-tailwind/main",
       "verification": {
-        "sourceHash": "e3e8aacad18ca7c3f25fd0030fec1b9916bbbaa66f637d945362eb0a4a1ed276",
+        "sourceHash": "368d26a6ae3bbb5d559731a2f4312b0b1315c885445dac717c0c49d9649bbf8e",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -379,7 +379,7 @@
       },
       "scenario": "hello-world/main",
       "verification": {
-        "sourceHash": "3d1b24751558355dc91d98a2ad90cabaabda2c8a0abbca6ea132e5b97eaeb00b",
+        "sourceHash": "6f2e0c694e0b683554d74ec9b143d7d08070406ab2f97beaed5af58cb1aa9245",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -397,7 +397,7 @@
       },
       "scenario": "keep-alive/main",
       "verification": {
-        "sourceHash": "a7e72fbf27b093306587c8936a1102b1e4184cb5d1cfa6410dbe9f4b53cc6644",
+        "sourceHash": "d8fbb36c1cf8f6f40d6c414280e882dd1e1fcfe8a27523d6d4d0edb8193100cc",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -412,7 +412,7 @@
       },
       "scenario": "main-thread/background-draggable",
       "verification": {
-        "sourceHash": "8e7aeb7e13cdf8d8decdb97e3451e02480ed000f6721f0915d5ce1718420e33c",
+        "sourceHash": "5054c85d54f94c2f566505d637449c16b2b8055cd04523d47161355e69c55381",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -427,7 +427,7 @@
       },
       "scenario": "main-thread/cross-thread-calls",
       "verification": {
-        "sourceHash": "065d5a6743bcebb6dfcee0a57ea103f74dd3be6265357d790f964d25894794b1",
+        "sourceHash": "02542e24e473ac8e448f46e52a5ac90ffcee36b89ca6edede7837a99747795d3",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -442,7 +442,7 @@
       },
       "scenario": "main-thread/main-thread-draggable",
       "verification": {
-        "sourceHash": "1e80d47a49b3444e0105870c98c24cfa9580d394f44617c97bbe4a1e1f1b6c92",
+        "sourceHash": "146e79b30e5f015480ccdf9e12efa54b410e1c21f62d02f040bf6111b0bc4ab1",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -457,7 +457,7 @@
       },
       "scenario": "main-thread/main-thread-draggable-raw",
       "verification": {
-        "sourceHash": "e822f22a474d876d61f02332cdd05578150e2ad4758468520dda6dc7dea97ebd",
+        "sourceHash": "ff792283dc54b4654301902fb5977537081775810157cf10a9f38fbde93c4d5e",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -472,7 +472,7 @@
       },
       "scenario": "main-thread/shared-module",
       "verification": {
-        "sourceHash": "49c635912ba75ab253c919984837b6f04ebc67b3e11e0bc3d3aaed26cb93011c",
+        "sourceHash": "392151166838daa69099f37081dea64d495d7b64f3fb449ab0dcbcfa176e1a23",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -507,7 +507,7 @@
       },
       "scenario": "option-api/main",
       "verification": {
-        "sourceHash": "98e1894e44af9c01620eda87f2bea37e5d24288b6d21db36a894d08aeb621ca8",
+        "sourceHash": "b6c26948df7dab107499f76bc61dc966a69629ad0d522a008f94864a60f1b6fb",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -522,7 +522,7 @@
       },
       "scenario": "pinia/main",
       "verification": {
-        "sourceHash": "26f31a317cf554efcb54b95e0f113f336f97cfdc57521516e531270efca65e10",
+        "sourceHash": "b94a778c6ed3836edfc3255df99b150abacc2e4cfab7bb2e15e78c4b25d790eb",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -537,7 +537,7 @@
       },
       "scenario": "provide-inject/main",
       "verification": {
-        "sourceHash": "df9feeec1320c4593ba4bb5022dbffcbb3e45c4eab2554c1396e0dad3eacd694",
+        "sourceHash": "aca655d5da17e2f2832002981f673311b0a47c205667601fca7bf795d6a08884",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -552,7 +552,7 @@
       },
       "scenario": "reactivity/main",
       "verification": {
-        "sourceHash": "893c699726db91c839125ce4b4e26d7d213c6ea71630fc3425f324945d0f6722",
+        "sourceHash": "aa024ce21ae7558bcbfacbaa556d16441d591e733cda6a0628b3b642fe5a7b99",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -567,7 +567,7 @@
       },
       "scenario": "slots/main",
       "verification": {
-        "sourceHash": "198da1697e2b0acdbfb4c22217737e2dfb46154cb25903f8450e1fa7cd80ed8d",
+        "sourceHash": "0e2171156f9ed1cbca5b732327f15eef22c27af383cc0724807de8ed6baa55a5",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -585,7 +585,7 @@
       },
       "scenario": "suspense/main",
       "verification": {
-        "sourceHash": "dded48537e3f0a7bb560e0daa370c0ce0836fcf51ebf65b561761d8c86b46c3c",
+        "sourceHash": "f68b0bc26023cd93ded9b083658e3611d909f6b3c62ca315e7b6174abbb8cb83",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -601,7 +601,7 @@
       },
       "scenario": "swiper/Swiper",
       "verification": {
-        "sourceHash": "2ca9aa820d0c2d3b01820c223e6b70e3cb5ea2fcfbd9da68c2fd442931ccc544",
+        "sourceHash": "0c9070c3ac5ad1b5fb6599e9c24edd08eeb6083926d4d99d39e7386fc650a625",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -617,7 +617,7 @@
       },
       "scenario": "swiper/SwiperEmpty",
       "verification": {
-        "sourceHash": "7a8d217f6dd2b81d7ed2371f2dd2e8bd3938f864e7af4bb699deb5e6614a7e88",
+        "sourceHash": "3fde515c975653d1d69d84001562cdc913e76c0fc0400bbbd92028823e3b90e3",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -633,7 +633,7 @@
       },
       "scenario": "swiper/SwiperMTS",
       "verification": {
-        "sourceHash": "842dbb0ee11188bd72315e47325de685279c63f6a558314ca56a76a2a56c29f3",
+        "sourceHash": "35140daa272496f9ccc9513237d8e527aae516173dd5a70e499144cbdc259a42",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -648,10 +648,28 @@
       },
       "scenario": "tailwindcss/main",
       "verification": {
-        "sourceHash": "a9c04ed603e92f4a117ed92f26496e19d6bb314d9b769f2b2db5e605716f10a4",
+        "sourceHash": "61d6074ad0bb51dc9857ab76e7f11bd22c1804eff4b3fe52b06d365b5df9d035",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
+      }
+    },
+    {
+      "id": "teleport/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "teleport",
+        "evidence": [
+          "examples/teleport/src/App.vue"
+        ]
+      },
+      "scenario": "teleport/main",
+      "verification": {
+        "sourceHash": "e4abf4d53704782e0d50602d23de3df75f9c5e0badc9b5c20e9136618316c160",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
       }
     },
     {
@@ -666,7 +684,7 @@
       },
       "scenario": "todomvc-codex/main",
       "verification": {
-        "sourceHash": "c73f7e6d6096e01635b0649fdda410caeecff0014d27ef91d6316d38bd0371c1",
+        "sourceHash": "b2aedaaa71b078535c93d618af66d7f0a15b37cda5a60b0c42fbe0471f62eb79",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -696,7 +714,7 @@
       },
       "scenario": "todomvc/main",
       "verification": {
-        "sourceHash": "aeed95818d5eb74829846e482dd93b47b70489e6ebf4a67c3b71ac6e2e07240f",
+        "sourceHash": "bc3b998150afa82da4e6d1f072b3e33e2017731010243687cf6f4cd741e2bca4",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -714,7 +732,7 @@
       },
       "scenario": "transition/transition",
       "verification": {
-        "sourceHash": "393118925eec5d065b454d4d080b38eb58a8a348e58b06eeb2bda9c73cca1a0d",
+        "sourceHash": "12c3b22c3d48567ccbb1c5340e5817a7cb0d63f4963a0e84ea77e6aecd7adea5",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -729,7 +747,22 @@
       },
       "scenario": "v-model/main",
       "verification": {
-        "sourceHash": "67d1f27a512f979ecd33de32a7c684a8864e00ab9764ffb80d407ee661b25a1a",
+        "sourceHash": "70b8c0ec9fdd656988f118d164462e3d60414b659cc1d1dbc0b4725a127a96e3",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "v-once-memo/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "v-once-memo/main",
+      "verification": {
+        "sourceHash": "d9d4e88593aa1d178c06ba15704b97a9788072d1377412b2d52b9c05b3ba5486",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -762,7 +795,7 @@
       },
       "scenario": "vue-router/main",
       "verification": {
-        "sourceHash": "bf2cf75dd8e249912262d31de680dfb14d070c91d4df91e6c0e3639929ef2332",
+        "sourceHash": "5a3466cb1a65088ed777c6e1f28bac333871a3dc74762bc5eabe77b1be616379",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -771,10 +804,10 @@
   ],
   "results": {
     "environment": "lynx-for-web/chromium",
-    "entries": 48,
-    "supported": 36,
-    "unsupported": 12,
-    "vdomPassed": 48,
-    "vaporPassed": 36
+    "entries": 50,
+    "supported": 37,
+    "unsupported": 13,
+    "vdomPassed": 50,
+    "vaporPassed": 37
   }
 }

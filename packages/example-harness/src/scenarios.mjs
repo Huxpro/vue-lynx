@@ -82,11 +82,13 @@ export const scenarios = {
   "swiper/SwiperEmpty": smoke("Order Now"),
   "swiper/SwiperMTS": smoke("Order Now"),
   "tailwindcss/main": smoke("Settings"),
+  "teleport/main": tap("Open Modal", "Teleport"),
   "todomvc-codex/main": input("What needs to be done", "verify Vapor", "todos"),
   "todomvc-day1/main": input("What needs to be done", "verify Vapor", "todos"),
   "todomvc/main": input("What needs to be done", "verify Vapor", "todos"),
   "transition/transition": tap("Toggle", "Transition"),
   "v-model/main": tap("Reset from parent", "v-model"),
+  "v-once-memo/main": tap("Increment", "v-once"),
   "vapor/main": tap("+", "History:"),
   "vue-router/main": tap("Users", "Vue Router"),
 };
