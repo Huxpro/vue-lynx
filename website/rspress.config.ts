@@ -95,6 +95,7 @@ export default defineConfig({
       path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
       path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
       path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
+      path.join(__dirname, 'src/components/artifact-embed/ArtifactEmbed.tsx'),
     ],
   },
   route: {

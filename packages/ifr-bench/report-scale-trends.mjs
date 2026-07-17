@@ -15,6 +15,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  ARTIFACT_I18N_CSS,
+  artifactHostScript,
+  t,
+  tHtml,
+  tSvg,
+} from '../../scripts/artifact-host.mjs';
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const bundlesDir = path.resolve(process.argv[2] ?? './web-bundles-scale');
@@ -158,7 +165,7 @@ function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit, scale = 'l
       .map((p) => ({ ...p, variant: v, x: getX(p), y: getY(p) }))
       .filter((p) => p.x > 0 && p.y > 0)
   );
-  if (allPts.length === 0) return '<p class="sub">No data.</p>';
+  if (allPts.length === 0) return `<p class="sub">${t('No data.', '暂无数据。')}</p>`;
 
   const xs = allPts.map((p) => p.x);
   const ys = allPts.map((p) => p.y);
@@ -273,17 +280,27 @@ function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit, scale = 'l
     marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${color}">${VARIANT_LABEL[variant]}</text>`;
   }
 
-  return `<div class="chart"><h3>${title}</h3><p class="sub">${sub}</p>
-<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+  const titleEn = title.en ?? title;
+  const titleZh = title.zh ?? title;
+  const subEn = sub.en ?? sub;
+  const subZh = sub.zh ?? sub;
+  const xEn = xLabel.en ?? xLabel;
+  const xZh = xLabel.zh ?? xLabel;
+  const yEn = yLabel.en ?? yLabel;
+  const yZh = yLabel.zh ?? yLabel;
+  const xMid = (ML + (W - ML - MR) / 2).toFixed(0);
+  const yMid = (MT + (H - MT - MB) / 2).toFixed(0);
+  return `<div class="chart"><h3>${t(titleEn, titleZh)}</h3><p class="sub">${t(subEn, subZh)}</p>
+<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${titleEn}">
 ${g}
-<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${xLabel}</text>
-<text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${yLabel}</text>
+${tSvg(`x="${xMid}" y="${H - 6}" class="axis" text-anchor="middle"`, xEn, xZh)}
+${tSvg(`x="14" y="${yMid}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${yMid})"`, yEn, yZh)}
 ${marks}
 </svg></div>`;
 }
 
 function slopeTableHtml() {
-  let html = '<table><thead><tr><th>metric ~ N<sup>α</sup></th>';
+  let html = `<table><thead><tr><th>${tHtml('metric ~ N<sup>α</sup>', '指标 ~ N<sup>α</sup>')}</th>`;
   for (const v of VARIANT_ORDER) html += `<th>${VARIANT_LABEL[v]}</th>`;
   html += '</tr></thead><tbody>';
   const metrics = [
@@ -316,7 +333,7 @@ function slopeTableHtml() {
 
 function dataTableHtml() {
   let html =
-    '<table><thead><tr><th>architecture · scale</th><th>elements</th><th>FCP ms</th><th>Δ vs VDOM</th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody>';
+    `<table><thead><tr><th>${t('architecture · scale', '架构 · 规模')}</th><th>${t('elements', '元素数')}</th><th>${t('FCP ms', 'FCP ms')}</th><th>${t('Δ vs VDOM', '相对 VDOM')}</th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody>`;
   for (const scale of SIZES) {
     const vdomFcp = perOp.vdom?.[`fcp@${scale}`]?.median;
     for (const v of VARIANT_ORDER) {
@@ -350,33 +367,71 @@ function chartsForScale(scale) {
   // Playground analogue: x/y are both costs that fan out as N grows.
   // MT gzip is the "create/load tax"; FCP is the paint tax.
   const fcpVsMt = renderChart({
-    title: `Paint vs MT load cost (${scaleTag})`,
+    title: {
+      en: `Paint vs MT load cost (${scaleTag})`,
+      zh: `绘制 vs MT 加载成本（${scaleTag}）`,
+    },
     sub: isLog
-      ? 'Log-log cost space (playground-style). Each polyline is one architecture '
-        + 'through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. '
-        + `CPU ×${throttleGuess}. Lower-left dominates.`
-      : 'Linear cost space (playground-style, zero baseline). Same points as the '
-        + 'framework bench\'s create×update chart: architectures that pay MT gzip '
-        + 'without buying FCP shoot right; those that scale poorly shoot up. '
-        + `CPU ×${throttleGuess}.`,
-    xLabel: `MT section gzip — bytes, ${scaleTag}`,
-    yLabel: `FCP — ms, ${scaleTag}`,
+      ? {
+        en: 'Log-log cost space (playground-style). Each polyline is one architecture '
+          + 'through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. '
+          + `CPU ×${throttleGuess}. Lower-left dominates.`,
+        zh: 'Log-log 成本空间（playground 风格）。每条折线是一种架构，贯穿 1k→30k。'
+          + '右 = 主线程 bundle 更重；上 = FCP 更慢。'
+          + `CPU ×${throttleGuess}。左下角占优。`,
+      }
+      : {
+        en: 'Linear cost space (playground-style, zero baseline). Same points as the '
+          + 'framework bench\'s create×update chart: architectures that pay MT gzip '
+          + 'without buying FCP shoot right; those that scale poorly shoot up. '
+          + `CPU ×${throttleGuess}.`,
+        zh: '线性成本空间（playground 风格，零基线）。与框架基准的 create×update 图同构：'
+          + '为 MT gzip 买单却换不来 FCP 的架构往右偏；规模性差的往上偏。'
+          + `CPU ×${throttleGuess}。`,
+      },
+    xLabel: {
+      en: `MT section gzip — bytes, ${scaleTag}`,
+      zh: `MT section gzip — 字节，${scaleTag}`,
+    },
+    yLabel: {
+      en: `FCP — ms, ${scaleTag}`,
+      zh: `FCP — ms，${scaleTag}`,
+    },
     getX: (p) => p.mtGzip,
     getY: (p) => p.fcp,
     xUnit: 'B',
     scale,
   });
   const fcpVsN = renderChart({
-    title: `FCP vs content scale (${scaleTag})`,
+    title: {
+      en: `FCP vs content scale (${scaleTag})`,
+      zh: `FCP vs 内容规模（${scaleTag}）`,
+    },
     sub: isLog
-      ? 'Log-log. Same generated SFC at ~1k→30k elements. '
-        + `Lynx for Web, CPU ×${throttleGuess}. `
-        + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs.'
-      : 'Linear, zero baseline, 1k→30k — absolute FCP gaps. '
-        + 'VDOM+IFR without ET crosses above plain VDOM and can DNF on deep MT '
-        + `mount. CPU ×${throttleGuess}.`,
-    xLabel: `elements N — ${scaleTag}`,
-    yLabel: `FCP — ms, ${scaleTag}`,
+      ? {
+        en: 'Log-log. Same generated SFC at ~1k→30k elements. '
+          + `Lynx for Web, CPU ×${throttleGuess}. `
+          + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs.',
+        zh: 'Log-log。同一份生成 SFC，约 1k→30k 元素。'
+          + `Lynx for Web，CPU ×${throttleGuess}。`
+          + 'α ≈ 1 → 随 N 线性；α ≪ 1 → 固定成本主导。',
+      }
+      : {
+        en: 'Linear, zero baseline, 1k→30k — absolute FCP gaps. '
+          + 'VDOM+IFR without ET crosses above plain VDOM and can DNF on deep MT '
+          + `mount. CPU ×${throttleGuess}.`,
+        zh: '线性、零基线、1k→30k——绝对 FCP 差距。'
+          + '无 ET 的 VDOM+IFR 会越过纯 VDOM，并可能在深层 MT mount 上 DNF。'
+          + `CPU ×${throttleGuess}。`,
+      },
+    xLabel: {
+      en: `elements N — ${scaleTag}`,
+      zh: `元素数 N — ${scaleTag}`,
+    },
+    yLabel: {
+      en: `FCP — ms, ${scaleTag}`,
+      zh: `FCP — ms，${scaleTag}`,
+    },
     getX: (p) => p.n,
     getY: (p) => p.fcp,
     xUnit: 'els',
@@ -398,57 +453,87 @@ const normalized = {
 
 const html = `<!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IFR architecture scale trends — ${LABEL}</title>
 <style>
-  :root { color-scheme: light; font-family: ui-sans-serif, system-ui, sans-serif; }
-  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: #111; }
+  :root {
+    color-scheme: light dark;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    --surface: #fafafa; --ink: #111; --ink-2: #444; --ink-3: #666;
+    --line: #e5e7eb; --chart: #fafafa; --code: #f3f4f6;
+    --tick: #6b7280; --axis: #374151; --pt: #9ca3af;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #141414; --ink: #f5f5f4; --ink-2: #c3c2b7; --ink-3: #a8a29e;
+      --line: #3a3a37; --chart: #1a1a19; --code: #262626;
+      --tick: #a8a29e; --axis: #d6d3d1; --pt: #78716c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #141414; --ink: #f5f5f4; --ink-2: #c3c2b7; --ink-3: #a8a29e;
+    --line: #3a3a37; --chart: #1a1a19; --code: #262626;
+    --tick: #a8a29e; --axis: #d6d3d1; --pt: #78716c;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --surface: #fafafa; --ink: #111; --ink-2: #444; --ink-3: #666;
+    --line: #e5e7eb; --chart: #fafafa; --code: #f3f4f6;
+    --tick: #6b7280; --axis: #374151; --pt: #9ca3af;
+  }
+  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: var(--ink); background: var(--surface); }
   h1 { font-size: 1.45rem; margin: 0 0 8px; }
   h2 { font-size: 1.15rem; margin: 36px 0 10px; }
   h3 { font-size: 1rem; margin: 0 0 4px; }
-  .lede { color: #444; line-height: 1.5; margin-bottom: 24px; }
-  .chart { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: #fafafa; }
-  .sub { color: #666; font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
-  .grid { stroke: #e5e7eb; stroke-width: 1; }
-  .tick { font-size: 10px; fill: #6b7280; }
-  .axis { font-size: 11px; fill: #374151; }
-  .ptlabel { font-size: 10px; fill: #9ca3af; }
+  .lede { color: var(--ink-2); line-height: 1.5; margin-bottom: 24px; }
+  .chart { border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: var(--chart); }
+  .sub { color: var(--ink-3); font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .tick { font-size: 10px; fill: var(--tick); }
+  .axis { font-size: 11px; fill: var(--axis); }
+  .ptlabel { font-size: 10px; fill: var(--pt); }
   .slabel { font-size: 12px; font-weight: 600; }
   table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 12px 0 28px; }
-  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; }
-  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tick); }
   td.c { font-variant-numeric: tabular-nums; text-align: right; }
   td.op { font-weight: 500; }
-  code { font-size: 0.85em; background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+  code { font-size: 0.85em; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  ${ARTIFACT_I18N_CSS}
 </style>
+<script>${artifactHostScript()}</script>
+</head>
 <body>
-<h1>IFR architecture scale trends</h1>
+<h1>${t('IFR architecture scale trends', 'IFR 架构规模趋势')}</h1>
 <p class="lede">
-  Five product architectures on one generated content SFC, scaled from ~1k to
-  <strong>~30k</strong> elements (playground ladder). Lead chart is the
-  playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows.
-  Linear (zero baseline) first, then log-log for α shape.
-  Source: <code>${path.basename(resultsPath)}</code> · ${normalized.measuredAt}
+  ${tHtml(
+    'Five product architectures on one generated content SFC, scaled from ~1k to <strong>~30k</strong> elements (playground ladder). Lead chart is the playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows. Linear (zero baseline) first, then log-log for α shape.',
+    '五种产品架构，同一份生成内容 SFC，从约 1k 扫到 <strong>~30k</strong> 元素（playground 阶梯）。主图是 playground 风格的<em>成本空间</em>（MT gzip × FCP）；随后是 FCP vs N。先线性（零基线），再 log-log 看 α 形态。',
+  )}
+  ${t('Source:', '数据来源：')} <code>${path.basename(resultsPath)}</code> · ${normalized.measuredAt}
 </p>
 
-<h2>Linear scale — cost space + FCP vs N</h2>
+<h2>${t('Linear scale — cost space + FCP vs N', '线性尺度 — 成本空间 + FCP vs N')}</h2>
 ${linearCharts.fcpVsMt}
 ${linearCharts.fcpVsN}
 
-<h2>Log-log scale</h2>
+<h2>${t('Log-log scale', 'Log-log 尺度')}</h2>
 ${logCharts.fcpVsMt}
 ${logCharts.fcpVsN}
 
-<h2>Scaling exponents</h2>
+<h2>${t('Scaling exponents', '规模指数')}</h2>
 <p class="lede" style="margin-top:0">
-  α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC).
-  α ≈ 1 → cost grows with content. An architecture that raises MT gzip without
-  lowering α (or FCP) is paying for early-paint capacity that does not show up
-  at that scale on Lynx for Web.
+  ${t(
+    'α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC). α ≈ 1 → cost grows with content. An architecture that raises MT gzip without lowering α (or FCP) is paying for early-paint capacity that does not show up at that scale on Lynx for Web.',
+    'α ≈ 0 → FCP 由固定开销主导（bundle 解析 / 启动 / IPC）。α ≈ 1 → 成本随内容增长。抬高 MT gzip 却降不下 α（或 FCP）的架构，是在为在该规模 Lynx for Web 上看不到的早绘能力买单。',
+  )}
 </p>
 ${slopeTableHtml()}
 
-<h2>Raw medians</h2>
+<h2>${t('Raw medians', '原始中位数')}</h2>
 ${dataTableHtml()}
 
 </body>
