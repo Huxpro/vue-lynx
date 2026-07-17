@@ -159,7 +159,14 @@ export const WORKLOADS = {
     id: 'content-probe',
     envs: ['lynx-web'],
     metrics: ['fcp_ms', 'settled_ms', 'bundle_web_gzip', 'bundle_mt_gzip'],
-    architectures: ['vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'],
+    architectures: [
+      'vdom',
+      'vdom-ifr',
+      'vdom-ifr-et',
+      'vapor',
+      'vapor-ifr',
+      'react',
+    ],
   },
   /**
    * Strategy ladder scenes (~1k–1.4k els). Node microbenchmark.
@@ -187,11 +194,9 @@ export function isCellValid({ architecture, environment, workload }) {
   if (!w) return false;
   if (!w.envs.includes(environment)) return false;
   if (w.architectures && !w.architectures.includes(architecture)) return false;
-  // React has no IFR flag dimension; IFR-only cells are Vue.
-  if (
-    architecture.startsWith('react') &&
-    (workload === 'content-probe' || workload === 'strategy-scenes')
-  ) {
+  // ReactLynx has Snapshot+IFR always-on — valid on content-probe as `react`,
+  // but not on the Vue-only strategy ladder.
+  if (architecture.startsWith('react') && workload === 'strategy-scenes') {
     return false;
   }
   // Vapor has no Element Templates path.
