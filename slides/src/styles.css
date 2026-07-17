@@ -3876,3 +3876,59 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   font-weight: 600;
   font-style: normal;
 }
+
+/* ---- Skip-composition bar (upstream-test slides: reasons + stats) ---- */
+.skipbar {
+  width: min(100%, 760px);
+  margin: 4px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6cqh, 16px);
+}
+.skipbar__track {
+  display: flex;
+  height: clamp(16px, 2.4cqh, 24px);
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.skipbar__seg { height: 100%; }
+.skipbar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  font-family: var(--mono);
+  font-size: clamp(11px, 1.15cqw, 13px);
+  color: var(--ink-soft);
+}
+.skipbar__legend span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.skipbar__legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.skipbar__legend b { color: var(--ink); font-weight: 600; font-family: var(--display); }
+
+/* Affinity callout — the "closer fit" payoff line */
+.affinity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: clamp(10px, 1.4cqw, 20px);
+  padding: clamp(10px, 1.3cqh, 16px) clamp(18px, 2.2cqw, 30px);
+  border: 1px solid color-mix(in srgb, var(--vue-green) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vue-green) 10%, var(--paper));
+}
+.affinity b {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(22px, 2.6cqw, 36px);
+  letter-spacing: -0.02em;
+  color: var(--vue-green);
+}
+.affinity .vs { color: var(--ink-mute); font-family: var(--mono); font-size: 0.9em; }
+.affinity .aff-vdom { color: var(--ink-mute); font-weight: 500; }
+.affinity .aff-vdom b { color: var(--ink-mute); }
+.affinity .aff-note {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: clamp(15px, 1.5cqw, 20px);
+}

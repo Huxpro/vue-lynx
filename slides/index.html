@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 128</span>
+    <span data-counter>01 / 139</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -1752,6 +1752,24 @@
     <span class="eyebrow">IV · Runtime · proof</span>
     <div class="mega"><span class="brand-text">882</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 1013</small></div>
     <p class="lead">Vue core's own tests, replayed on our renderer. <b>0 fail.</b></p>
+    <div class="skipbar">
+      <div class="skipbar__track">
+        <span class="skipbar__seg" style="flex:77;background:#8b93a3"></span>
+        <span class="skipbar__seg" style="flex:22;background:#4FB8F0"></span>
+        <span class="skipbar__seg" style="flex:20;background:#9E86F0"></span>
+        <span class="skipbar__seg" style="flex:12;background:#F27A9E"></span>
+      </div>
+      <div class="skipbar__legend">
+        <span><i style="background:#8b93a3"></i><b>77</b> private-import artifacts</span>
+        <span><i style="background:#4FB8F0"></i><b>22</b> v-model · Lynx elements</span>
+        <span><i style="background:#9E86F0"></i><b>20</b> SVG / Web Components</span>
+        <span><i style="background:#F27A9E"></i><b>12</b> Teleport · DOM-only</span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="font-size:clamp(14px,1.25cqw,18px)">
+      131 documented skips — every one a test-infra artifact or browser-only
+      semantic, <b class="brand-text">not a Lynx gap.</b>
+    </p>
     <aside class="notes">
       <p><strong>"Semantics preserved" is a measured claim.</strong> We vendored <code>vuejs/core</code>'s test suites and run them against Vue Lynx at two layers: an adapter backing <code>@vue/runtime-test</code> with our real ShadowElement linked-list (validates the full renderer contract — keyed diff, LIS, fragments, lifecycle), and a runtime-dom layer that pushes <code>patchProp → ops → applyOps → PAPI</code> into jsdom. 882 of 1013 pass, 131 documented skips, zero failures.</p>
     </aside>
@@ -3318,12 +3336,50 @@
     </div>
     <p class="lead" data-mm-fade>
       Every example built &amp; driven in both modes through Lynx for Web.
-      917 upstream tests green. The support matrix is generated from the run —
-      it can't drift from what actually passed.
+      The support matrix is generated from the run — it can't drift from what
+      actually passed.
     </p>
     <aside class="notes">
       <p><strong>How we trust it.</strong> The Vapor app is <em>generated from the vdom source</em> — the only difference is the <code>vapor</code> attribute, so the workload is byte-for-byte identical. 36/36 supported examples hit 0.000% pixel diff against their vdom twin.</p>
       <p>The matrix (<code>examples/vapor-support.json</code>, with per-entry source hashes) generates the docs table — it can't drift from the verification output.</p>
+    </aside>
+  </section>
+
+  <!-- V·10b — Upstream Vapor tests + host-fit (styled like the VDOM proof slide A7) -->
+  <section class="slide stage" data-bg="clean">
+    <span class="eyebrow">One more thing · Vapor · proof</span>
+    <div class="mega" style="font-size:clamp(52px,9cqw,140px)">
+      <span class="brand-text">545</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 671 run · 0 fail</small>
+    </div>
+    <div class="skipbar">
+      <div class="skipbar__track">
+        <span class="skipbar__seg" style="flex:37;background:#F27A9E"></span>
+        <span class="skipbar__seg" style="flex:24;background:#4FB8F0"></span>
+        <span class="skipbar__seg" style="flex:20;background:#9E86F0"></span>
+        <span class="skipbar__seg" style="flex:18;background:#3deae7"></span>
+        <span class="skipbar__seg" style="flex:1;background:#8b93a3"></span>
+      </div>
+      <div class="skipbar__legend">
+        <span><i style="background:#F27A9E"></i><b>37%</b> SSR / hydration</span>
+        <span><i style="background:#4FB8F0"></i><b>24%</b> browser-only</span>
+        <span><i style="background:#9E86F0"></i><b>20%</b> vdom↔vapor interop</span>
+        <span><i style="background:#3deae7"></i><b>18%</b> Lynx diffs</span>
+        <span><i style="background:#8b93a3"></i><b>&lt;1%</b> test-infra</span>
+      </div>
+    </div>
+    <div class="affinity">
+      <span><b>81%</b> Vapor</span>
+      <span class="vs">vs</span>
+      <span class="aff-vdom"><b>57%</b> VDOM</span>
+    </div>
+    <p class="lead" data-mm-fade>
+      Vapor's own suite — <b>unmodified</b> on ShadowElement. It passes the
+      element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.
+    </p>
+    <aside class="notes">
+      <p><strong>Vapor gets its own upstream suite (PR #232).</strong> 30 <code>runtime-vapor</code> spec files run against the real <code>vue-lynx/vapor</code> surface and ShadowElement tree: <strong>545 pass, 120 skip, 0 fail</strong>. The skiplist is a <em>closed inventory</em> — every excluded test carries a reason, config load fails on anything unclassified.</p>
+      <p><strong>The skips aren't a broken list.</strong> SSR/hydration + vdom↔vapor interop are 57% of everything that doesn't run — neither is a Lynx-compatibility signal (no SSR surface exists; interop is deliberately unsupported). Browser-only platform is another 24%. Test-infra is under 1% — vs vdom's dominant 59% — because the raw-bundle re-export trick killed the private-import problem. The port even found a real bug (ShadowElement was reactivity-proxyable; <code>__v_skip</code> fixed it).</p>
+      <p><strong>The affinity point.</strong> On the tests that touch the actual element surface, Vapor passes 81% vs vdom's 57% — and needs <em>zero behavioral shims</em>: production <code>@vue/runtime-vapor</code> runs unmodified over ShadowElement, where vdom mode needed 1,074 LOC of simulation in the execution path. Vapor's host contract — clone a template + imperative setters — is just a closer fit to Lynx. (Contract fit, not speed.)</p>
     </aside>
   </section>
 
