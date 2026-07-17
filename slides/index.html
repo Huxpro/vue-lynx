@@ -993,87 +993,77 @@
     </aside>
   </section>
 
-  <!-- Case 2 · Elk · the draggable sheet · three owners -->
+  <!-- Case 2 · Elk · the draggable sheet · three owners (real UI + code) -->
   <section class="slide stage techslide">
     <span class="app-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk · draggable sheet</span>
     <h2 class="h-section" style="text-align:center;max-width:18ch">
       One sheet, <span class="brand-text">three owners.</span>
     </h2>
-    <div class="layers3-wrap" data-mm-fade style="width:100%;max-width:480px;margin:6px auto 0">
-      <div class="layers3-axis"><span>web</span><span class="bar"></span><span>native</span></div>
-      <div class="layers3">
-        <span class="layers3__tag">① &lt;Transition&gt; <span class="role">· open / close</span></span>
-        <div class="layers3__mid">
-          <span class="layers3__tag">② MTS worklet <span class="role">· drag · rubber</span></span>
-          <div class="layers3__inner">
-            <span class="layers3__tag">③ &lt;scroll-view&gt; <span class="role">· scroll ↔ drag</span></span>
-            <div class="row w90"></div>
-            <div class="row w70"></div>
+    <div class="sheet-split" style="max-width:1060px;margin:10px auto 0">
+      <div class="mockcol" data-mm-fade>
+        <div class="sheetmock">
+          <div class="sheetmock__bg">
+            <div class="hdr"></div>
+            <div class="ln"></div>
+            <div class="ln s"></div>
+            <div class="ln"></div>
           </div>
+          <div class="sheetmock__scrim"></div>
+          <div class="sheetmock__lift">&#8645;</div>
+          <div class="sheetmock__sheet">
+            <div class="sheetmock__handle"></div>
+            <div class="sheetmock__ttl"></div>
+            <div class="sheetmock__list">
+              <div class="row"><div class="av"></div><div class="tx"></div></div>
+              <div class="row"><div class="av"></div><div class="tx s"></div></div>
+              <div class="row"><div class="av"></div><div class="tx"></div></div>
+              <div class="row"><div class="av"></div><div class="tx s"></div></div>
+            </div>
+          </div>
+          <div class="sheetmock__scrollcue">&#8597;</div>
+          <span class="sheetmock__dot d1">1</span>
+          <span class="sheetmock__dot d2">2</span>
+          <span class="sheetmock__dot d3">3</span>
+        </div>
+        <div class="sheet-legend">
+          <span class="k"><span class="n n1">&#9312;</span> &lt;Transition&gt; <span class="role">· open / close</span></span>
+          <span class="k"><span class="n n2">&#9313;</span> MTS worklet <span class="role">· drag · rubber</span></span>
+          <span class="k"><span class="n n3">&#9314;</span> &lt;scroll-view&gt; <span class="role">· scroll &#8596; drag</span></span>
         </div>
       </div>
-    </div>
-    <p class="lead sheet-payoff" data-mm-fade>
-      The drag runs on the main thread — so even while Vue's background thread
-      fetches, diffs, or rebuilds the list, the sheet still tracks the finger.
-      <span class="dim">On the web, gesture JS and render share one thread.</span>
-    </p>
-    <aside class="notes">
-      <p><strong>The draggable sheet — the hard part isn't sliding up, it's three state machines cooperating.</strong> Vue Transition owns <em>whether the sheet exists</em> in the visual state (open/close). A Main-Thread Script worklet owns <em>where the finger is each frame</em> (drag + rubber-band). The native <code>&lt;scroll-view&gt;</code> owns <em>who this touch belongs to</em> (scroll vs sheet). Draw the boundaries and you get Vue's declarative state, native scrolling, and near-native tracking at once.</p>
-      <p><strong>Structure = property ownership.</strong> <code>sheet-surface-transition</code> is owned by Vue Transition (CSS classes); the inner <code>sheet-surface</code> is owned by the drag (inline <code>transform</code>). If both wrote the same element's transform, the inline style clobbers the Transition class — the classic "animates once, then never again" bug.</p>
-      <p><strong>The dual-thread payoff:</strong> on the web, gesture JS, Vue render, and business code share one main thread — any long task drops frames. Here the drag lives on the UI thread, next to native input and layout, so it stays glued to the finger regardless of what Vue is doing.</p>
-    </aside>
-  </section>
-
-  <!-- Case 2 · Elk · the draggable sheet · in code -->
-  <section class="slide stage techslide">
-    <span class="app-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk · draggable sheet</span>
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      Three owners, <span class="brand-text">in code.</span>
-    </h2>
-    <div class="sheet-cols" style="max-width:1060px;margin:10px auto 0">
-      <div class="codeframe">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>Sheet.vue · template</span>
-        </div>
-<pre><span class="code-com">&lt;!-- ① Vue owns open / close --&gt;</span>
-<span class="code-tag">&lt;Transition</span> <span class="code-attr">name</span>=<span class="code-str">"sheet"</span><span class="code-tag">&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">v-show</span>=<span class="code-str">"open"</span>
-        <span class="code-attr">class</span>=<span class="code-str">"sheet-surface-transition"</span><span class="code-tag">&gt;</span>
-    <span class="code-com">&lt;!-- ② MTS owns the drag --&gt;</span>
-    <span class="code-tag">&lt;view</span> <span class="code-attr">ref</span>=<span class="code-str">"surface"</span> <span class="code-attr">class</span>=<span class="code-str">"sheet-surface"</span>
-          <span class="code-attr">:main-thread-bindtouchmove</span>=<span class="code-str">"onMove"</span><span class="code-tag">&gt;</span>
-      <span class="code-com">&lt;!-- ③ native scroll --&gt;</span>
-      <span class="code-tag">&lt;scroll-view</span> <span class="code-attr">ref</span>=<span class="code-str">"panel"</span>
-        <span class="code-attr">:main-thread-bindscroll</span>=<span class="code-str">"onScroll"</span> <span class="code-tag">/&gt;</span>
+      <div class="codestack">
+        <div class="codeframe">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>Sheet.vue · template</span>
+          </div>
+<pre><span class="code-tag">&lt;Transition</span> <span class="code-attr">name</span>=<span class="code-str">"sheet"</span><span class="code-tag">&gt;</span>              <span class="code-com">&lt;!-- &#9312; open / close --&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-show</span>=<span class="code-str">"open"</span> <span class="code-attr">class</span>=<span class="code-str">"surface-transition"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;view</span> <span class="code-attr">ref</span>=<span class="code-str">"surface"</span>                <span class="code-com">&lt;!-- &#9313; drag · MTS --&gt;</span>
+      <span class="code-attr">:main-thread-bindtouchmove</span>=<span class="code-str">"onMove"</span><span class="code-tag">&gt;</span>
+      <span class="code-tag">&lt;scroll-view</span> <span class="code-attr">:main-thread-bindscroll</span>=<span class="code-str">"onScroll"</span> <span class="code-tag">/&gt;</span>  <span class="code-com">&lt;!-- &#9314; --&gt;</span>
     <span class="code-tag">&lt;/view&gt;</span>
   <span class="code-tag">&lt;/view&gt;</span>
 <span class="code-tag">&lt;/Transition&gt;</span></pre>
-      </div>
-      <div class="codeframe">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>onMove · 'main thread'</span>
         </div>
+        <div class="codeframe">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>onMove · 'main thread'</span>
+          </div>
 <pre><span class="code-key">function</span> <span class="code-fn">onMove</span>(e) {
   <span class="code-str">'main thread'</span>
-  <span class="code-com">// follow the finger — no Vue render</span>
-  surface.<span class="code-fn">setStyleProperty</span>(
-    <span class="code-str">'transform'</span>, <span class="code-str">`translateY(${y}px)`</span>)
-
-  <span class="code-com">// arbitrate: list at top → sheet wins</span>
-  <span class="code-key">if</span> (deltaY <span class="code-key">&gt;</span> <span class="code-str">0</span> <span class="code-key">&amp;&amp;</span> scrollTop <span class="code-key">&lt;=</span> <span class="code-str">0</span>)
+  surface.<span class="code-fn">setStyleProperty</span>(<span class="code-str">'transform'</span>, <span class="code-str">`translateY(${y}px)`</span>)
+  <span class="code-key">if</span> (deltaY <span class="code-key">&gt;</span> <span class="code-str">0</span> <span class="code-key">&amp;&amp;</span> scrollTop <span class="code-key">&lt;=</span> <span class="code-str">0</span>)   <span class="code-com">// at top → sheet wins</span>
     panel.<span class="code-fn">setAttribute</span>(<span class="code-str">'enable-scroll'</span>, <span class="code-str">false</span>)
-}
-
-<span class="code-com">// settle done → hand back to Vue</span>
-<span class="code-fn">runOnBackground</span>(requestClose)()</pre>
+}</pre>
+        </div>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>Minimal, representative slice.</strong> ① The <code>&lt;Transition&gt;</code> + <code>v-show</code> pair keeps the node mounted (scroll position and state survive close) while running the full persisted-transition lifecycle — the capability that let Vue Lynx graduate this from experimental. ② The drag is a <code>'main thread'</code> worklet bound via <code>:main-thread-bindtouch*</code>; it writes <code>transform</code>/<code>opacity</code> with <code>setStyleProperty</code>, bypassing Vue diff. ③ Gesture arbitration: an 8px lock decides direction/source once, then — if you're dragging down with the list already at the top — the sheet disables the native scroll (<code>enable-scroll=false</code>) and takes the drag; otherwise it defers to the scroll-view. <code>runOnBackground</code> only crosses threads at the state boundary (on close), never per frame.</p>
-      <p><strong>Why the web struggles:</strong> reading live <code>scrollTop</code>, arbitrating ownership, smoothing velocity, applying rubber resistance, and toggling inner scroll all need the JS main thread — which the browser shares with render. Lynx runs that logic on the UI thread instead.</p>
+      <p><strong>The draggable sheet — the hard part isn't sliding up, it's three state machines cooperating.</strong> ① Vue <code>&lt;Transition&gt;</code> owns whether the sheet exists in the visual state (open/close); <code>v-show</code> keeps the node mounted so scroll position and state survive close, while the persisted-transition lifecycle runs — the fix that let Vue Lynx graduate this from experimental. ② A <code>'main thread'</code> worklet owns where the finger is each frame: bound via <code>:main-thread-bindtouch*</code>, it writes <code>transform</code> with <code>setStyleProperty</code>, bypassing Vue diff, plus rubber-band resistance past the top. ③ The native <code>&lt;scroll-view&gt;</code> owns the touch: an 8px lock decides direction/source once, then if you drag down with the list already at the top the sheet disables native scroll (<code>enable-scroll=false</code>) and takes the drag; otherwise it defers. <code>runOnBackground</code> crosses threads only at the state boundary (on close), never per frame.</p>
+      <p><strong>Structure = property ownership:</strong> the outer surface is owned by Transition (CSS classes), the inner by the drag (inline <code>transform</code>) — write both to one element and inline clobbers the class, the classic "animates once, then never again" bug.</p>
+      <p><strong>Dual-thread payoff:</strong> the drag lives on the UI thread, next to native input and layout, so it stays glued to the finger even while Vue's background thread fetches / diffs / rebuilds the list. On the web, gesture JS and render share one thread — any long task drops frames.</p>
     </aside>
   </section>
 
