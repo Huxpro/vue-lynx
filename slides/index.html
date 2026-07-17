@@ -745,35 +745,90 @@
     </aside>
   </section>
 
-  <!-- Case 1 · AI Chat · the keyboard, in code -->
-  <section class="slide stage">
-    <span class="eyebrow">III · Case 1 · AI Chat</span>
-    <div class="codeframe" style="width:100%;max-width:660px;text-align:left">
-      <div class="codeframe__head">
-        <span class="dots"><span></span><span></span><span></span></span>
-        <span>useKeyboardAvoidance.ts</span>
+  <!-- Case 1 · AI Chat · the send is a handoff (restored) -->
+  <section class="slide demo demo--reverse techslide">
+    <div class="demo__stage-wrap">
+      <div class="phone">
+        <div class="phone__inner">
+          <video class="native-clip" src="/media/ai-chat/native-first-send.mp4"
+            autoplay muted loop playsinline preload="auto"></video>
+        </div>
       </div>
-<pre>lynx.<span class="code-fn">getJSModule</span>(<span class="code-str">'GlobalEventEmitter'</span>)
-  .<span class="code-fn">addListener</span>(<span class="code-str">'keyboardstatuschanged'</span>,
-    (status, height) <span class="code-key">=&gt;</span> {
-      <span class="code-key">const</span> off <span class="code-key">=</span> status <span class="code-key">===</span> <span class="code-str">'on'</span> ? height : <span class="code-str">0</span>
-      composer.<span class="code-fn">setNativeProps</span>({
-        transform: <span class="code-str">`translateY(${-off}px)`</span>,
-        transition: <span class="code-str">'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'</span>,
-      }).<span class="code-fn">exec</span>()
-    })</pre>
+      <p class="demo__caption" data-mm-fade>
+        First send — the bubble leaves the composer, settles into its anchor,
+        and makes room for the response.
+      </p>
     </div>
-    <p class="lead" data-mm-fade>
-      One native event. One <code>setNativeProps</code>. No viewport hacks.
-    </p>
+    <div class="demo__body">
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <h2 class="demo__title">
+        A polished send is a <span class="brand-text">handoff</span>.
+      </h2>
+      <p class="thesis" data-mm-fade>
+        Not one animation — a handoff between the composer, the list,
+        the keyboard, and the stream.
+      </p>
+      <div class="handoff" data-mm-fade>
+        <span class="handoff__step"><span class="d"></span>composer</span>
+        <span class="handoff__arrow">&rarr;</span>
+        <span class="handoff__step"><span class="d"></span>list</span>
+        <span class="handoff__arrow">&rarr;</span>
+        <span class="handoff__step"><span class="d"></span>keyboard</span>
+        <span class="handoff__arrow">&rarr;</span>
+        <span class="handoff__step"><span class="d"></span>stream</span>
+      </div>
+      <div class="demo__meta">
+        <span class="chip chip--brand">streaming + tools</span>
+        <span class="chip">65 features ported</span>
+      </div>
+    </div>
     <aside class="notes">
-      <p><strong>The keyboard, in code.</strong> Lynx surfaces the platform keyboard as a first-class event with its height; the composer rides it with a <code>setNativeProps</code> transform on a native curve (0.3s in, 0.1s out). The keyboard height also feeds the launch-distance math and the bottom spacer.</p>
-      <p><strong>The contrast to land:</strong> the v0 iOS team describes a ~1,000-line <code>useKeyboardAwareMessageList</code> hook juggling six keyboard behaviors to make React Native feel native. Here the platform hands you the event — the whole composable is under 60 lines.</p>
+      <p><strong>AI Chat.</strong> A production chatbot ported feature-by-feature from the Nuxt AI Chatbot template — streaming, reasoning, markdown, tool cards, history. The most demanding real-world test of Vue Lynx so far.</p>
+      <p><strong>The framing</strong> (borrowed from Vercel's v0 iOS write-up): a polished send is not one animation. It's a handoff between the composer, the message list, the keyboard, and the streaming response. The next three slides trace each moment back to the API that makes it possible.</p>
+      <p><strong>Do live:</strong> the clip loops — first send leaves the composer and lands at its anchor.</p>
     </aside>
   </section>
 
-  <!-- Case 1 · AI Chat · the keyboard, on device -->
-  <section class="slide demo demo--reverse techslide">
+  <!-- Case 1 · AI Chat · the keyboard participates in layout (restored) -->
+  <section class="slide demo demo--tech demo--split techslide">
+    <div class="demo__body">
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <h2 class="demo__title" style="font-size:clamp(28px,3cqw,44px)">
+        The keyboard is part of <span class="brand-text">layout</span>.
+      </h2>
+      <div class="tech-row">
+        <div class="kbmock">
+          <div class="kbmock__bar"></div>
+          <div class="kbmock__list">
+            <div class="kbmock__msg w70"></div>
+            <div class="kbmock__msg tall"></div>
+            <div class="kbmock__msg w90"></div>
+          </div>
+          <div class="kbmock__blank">contentInset</div>
+          <div class="kbmock__composer"></div>
+          <div class="kbmock__kb">keyboard height</div>
+          <div class="kbmock__lift"><span class="up">&uarr;</span>translateY(&minus;h)</div>
+        </div>
+        <div class="codeframe tech-code">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>useKeyboardAvoidance.ts</span>
+          </div>
+<pre><span class="code-fn">lynx</span>.getJSModule(<span class="code-str">'GlobalEventEmitter'</span>)
+  .addListener(<span class="code-str">'keyboardstatuschanged'</span>,
+    (status, height) <span class="code-key">=&gt;</span> {
+      <span class="code-key">const</span> h <span class="code-key">=</span> status <span class="code-key">===</span> <span class="code-str">'on'</span> <span class="code-key">?</span> height : <span class="code-str">0</span>
+      composer.value.<span class="code-fn">setNativeProps</span>({
+        transform: <span class="code-str">`translateY(${-h}px)`</span>,
+      }).<span class="code-fn">exec</span>()
+    })</pre>
+        </div>
+      </div>
+      <div class="kbmock-legend" data-mm-fade>
+        <span class="k"><span class="sw" style="background:color-mix(in srgb,var(--c-primary) 40%,transparent)"></span>composer · <code>position:absolute; bottom:0</code></span>
+        <span class="k"><span class="sw" style="background:color-mix(in srgb,var(--c-kb) 40%,transparent)"></span>keyboard height, applied with <code>setNativeProps</code></span>
+      </div>
+    </div>
     <div class="demo__stage-wrap">
       <div class="phone">
         <div class="phone__inner">
@@ -782,96 +837,76 @@
         </div>
       </div>
       <p class="demo__caption" data-mm-fade>
-        The composer rides the keyboard; the current turn stays readable.
+        The composer tracks the keyboard; the current turn stays readable.
+      </p>
+    </div>
+    <aside class="notes">
+      <p><strong>Keyboard.</strong> Lynx <code>&lt;input&gt;</code> does not avoid the keyboard automatically. The composer stays absolutely docked at the bottom and listens for the global <code>keyboardstatuschanged</code> event; it applies the reported keyboard height with <code>setNativeProps</code> — no background-thread round-trip. The list follows only if it was already following new output.</p>
+      <p>The mock is the same idea as the v0 sketch: a blank <em>contentInset</em> that the keyboard eats into; the composer lifts by exactly the keyboard height.</p>
+    </aside>
+  </section>
+
+  <!-- Case 1 · AI Chat · a new turn belongs at the top (restored) -->
+  <section class="slide demo demo--tech demo--split demo--reverse techslide">
+    <div class="demo__stage-wrap">
+      <div class="phone">
+        <div class="phone__inner">
+          <video class="native-clip" src="/media/ai-chat/native-second-send.mp4"
+            autoplay muted loop playsinline preload="auto"></video>
+        </div>
+      </div>
+      <p class="demo__caption" data-mm-fade>
+        Second send — the old turn stays stable while the new bubble travels
+        to the top anchor.
       </p>
     </div>
     <div class="demo__body">
-      <span class="eyebrow">III · Case 1 · AI Chat</span>
-      <h2 class="demo__title" style="font-size:clamp(30px,3.4cqw,48px)">
-        The layout <span class="brand-text">follows</span> the keyboard.
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <h2 class="demo__title" style="font-size:clamp(28px,3cqw,44px)">
+        A new turn belongs at the <span class="brand-text">top</span>.
       </h2>
-      <div class="kbmock" data-mm-fade>
-        <div class="kbmock__bar"></div>
-        <div class="kbmock__list">
-          <div class="kbmock__msg w70"></div>
-          <div class="kbmock__msg tall"></div>
-          <div class="kbmock__msg w90"></div>
-        </div>
-        <div class="kbmock__blank">contentInset</div>
-        <div class="kbmock__composer"></div>
-        <div class="kbmock__kb">keyboard height</div>
-        <div class="kbmock__lift"><span class="up">&uarr;</span>translateY(&minus;h)</div>
-      </div>
-      <div class="kbmock-legend" data-mm-fade>
-        <span class="k"><span class="sw" style="background:color-mix(in srgb,var(--c-primary) 40%,transparent)"></span>composer &middot; <code>position:absolute; bottom:0</code></span>
-        <span class="k"><span class="sw" style="background:color-mix(in srgb,var(--c-kb) 40%,transparent)"></span>keyboard height, applied with <code>setNativeProps</code></span>
-      </div>
-    </div>
-    <aside class="notes">
-      <p><strong>The same code, on device.</strong> The composer is docked at <code>bottom:0</code>; the <code>keyboardstatuschanged</code> height becomes a <code>translateY</code> transform. The mock mirrors the v0 sketch — a blank <em>contentInset</em> the keyboard eats into, and the composer lifts by exactly the keyboard height. The list follows only if it was already following new output.</p>
-      <p><strong>Do live:</strong> the clip loops — watch the composer track the keyboard curve.</p>
-    </aside>
-  </section>
-
-  <!-- Case 1 · AI Chat · anatomy of the send -->
-  <section class="slide stage">
-    <span class="eyebrow">III · Case 1 · AI Chat</span>
-    <div class="flow" style="height:clamp(190px,26cqh,230px)">
-      <div class="fb" style="--c:#4FB8F0;left:17%;top:40%">
-        align
-        <small>scrollIntoView · behavior: none</small>
-      </div>
-      <span class="farr" data-mm-fade style="left:33.5%;top:40%">+2 frames &rarr;</span>
-      <div class="fb" style="--c:#E8B44A;left:50%;top:40%">
-        stage
-        <small>1 real frame at launch transform</small>
-      </div>
-      <span class="farr" data-mm-fade style="left:66.5%;top:40%">+1 frame &rarr;</span>
-      <div class="fb is-hero" style="--c:#42b883;left:83%;top:40%">
-        fly
-        <small>one-way transition · .95 &rarr; 1</small>
-      </div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:82%;font-size:clamp(13px,1.2cqw,16px);color:var(--ink-mute)">earlier turns stay masked until the motion starts</span>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Send isn't an animation — it's a <em>handoff</em>, choreographed in frames.
-    </p>
-    <aside class="notes">
-      <p><strong>Anatomy of the send (merged as PR #212).</strong> Two native realities force the choreography: the list must reset its scroll before the bubble can move, and Lynx can register a keyframe animation one display frame after the class change — naïvely you get a 34–51ms flash of the previous turn, or the bubble blinking at its destination.</p>
-      <p>So send is an explicit handoff: ① earlier turns and the Thinking row are hidden while the list <em>instantly</em> aligns (<code>behavior: none</code> — the bubble supplies the transition, not the scroller); ② the bubble commits one real frame at its measured launch transform (<code>translateY(distance) scale(0.95)</code>, distance keyboard-aware, clamped 44–420px); ③ then a one-way CSS <em>transition</em> flies it home and the old content is restored above the viewport. Even the empty assistant shell's 9⅓px native footprint is reserved so max-scroll stays stable during streaming.</p>
-      <p>Verified frame-by-frame on device — 15fps contact sheets, no ghost, no flash, no end-of-motion correction.</p>
-    </aside>
-  </section>
-
-  <!-- Case 1 · AI Chat · the send, on device -->
-  <section class="slide stage techslide">
-    <span class="eyebrow">III · Case 1 · AI Chat</span>
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      First send. Then the <span class="brand-text">real test.</span>
-    </h2>
-    <div class="videopair" data-mm-fade>
-      <figure>
-        <div class="phone">
-          <div class="phone__inner">
-            <video class="native-clip" src="/media/ai-chat/native-first-send.mp4"
-              autoplay muted loop playsinline preload="auto"></video>
+      <div class="tech-row">
+        <div class="sendmock">
+          <div class="miniphone">
+            <div class="reply"></div>
+            <div class="spacer"></div>
+            <div class="bubble"></div>
+            <span class="miniphone__label">web · pinned to bottom</span>
+          </div>
+          <div class="sendmock__arrow">
+            <svg viewBox="0 0 42 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 20 C 14 20, 20 6, 40 5"/>
+              <path d="M33 3 L40 5 L36 11"/>
+            </svg>
+            <span>native<br/>anchors top</span>
+          </div>
+          <div class="miniphone">
+            <div class="bubble is-hero"></div>
+            <div class="reply"></div>
+            <div class="spacer"></div>
+            <span class="miniphone__label">native · new turn on top</span>
           </div>
         </div>
-        <figcaption><b>First send</b> — the bubble leaves the composer and settles into its anchor.</figcaption>
-      </figure>
-      <figure>
-        <div class="phone">
-          <div class="phone__inner">
-            <video class="native-clip" src="/media/ai-chat/native-second-send.mp4"
-              autoplay muted loop playsinline preload="auto"></video>
+        <div class="codeframe tech-code">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>ChatPage.vue</span>
           </div>
+<pre><span class="code-key">async function</span> <span class="code-fn">scrollToTop</span>(id) {
+  <span class="code-key">await</span> <span class="code-fn">nextTick</span>()  <span class="code-com">// ops → MT</span>
+  lynx.<span class="code-fn">createSelectorQuery</span>()
+    .select(<span class="code-str">`#chat-message-${id}`</span>)
+    .invoke({ method: <span class="code-str">'scrollIntoView'</span>,
+      params: { scrollIntoViewOptions:
+        { block: <span class="code-str">'start'</span> } } })
+    .<span class="code-fn">exec</span>()
+}</pre>
         </div>
-        <figcaption><b>Second send</b> — the old turn holds steady while the new one travels to the top.</figcaption>
-      </figure>
+      </div>
     </div>
     <aside class="notes">
-      <p><strong>The choreography, proven on device.</strong> First send establishes the stage from the empty state. The <em>second</em> send is the real test — repeat sends expose what the empty state hides: <code>nextTick()</code> waits for pending ops to reach the main thread, then <code>scrollIntoView({ block: 'start' })</code> anchors the new turn at the top while the previous turn stays stable. Web keeps the list pinned to the bottom instead — same feel, different mechanism.</p>
-      <p><strong>Do live:</strong> both clips loop side by side — contrast the empty-state send with the repeat send.</p>
+      <p><strong>The second send is the real test.</strong> Repeat sends expose what the empty state hides. Native anchors the new user turn at the top but keeps the previous turn stable until the moving bubble arrives. Vue Lynx <code>nextTick()</code> waits for pending ops to reach the main thread before <code>scrollIntoView</code> does the final alignment — then the assistant stream appears.</p>
+      <p><strong>Web uses a different policy</strong> — no native positioning guarantees, so it keeps the list pinned to the bottom. Same felt interaction, different mechanism.</p>
     </aside>
   </section>
 
@@ -890,6 +925,41 @@
     <p class="lead">Elk's framework-agnostic layers, reused. Only the UI was rebuilt.</p>
     <aside class="notes">
       <p><strong>Scale is the argument here.</strong> Elk is a real Mastodon client, not a demo: timelines, threads, profiles, polls, content warnings, custom emoji, search, compose. We forked it and kept its brains — the masto.js API client, the Mastodon-HTML content pipeline, themes, domain logic — and rebuilt only the view layer on native elements. That's the porting economics: the bigger the app, the more carries over.</p>
+    </aside>
+  </section>
+
+  <!-- Case 2 · Elk · a real Nuxt app, rebuilt on native (restored) -->
+  <section class="slide stage techslide">
+    <span class="app-badge" data-flip="elk-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk</span>
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
+      A real Nuxt app, <span class="brand-text">rebuilt on native.</span>
+    </h2>
+    <div class="statset" data-mm-fade style="display:flex;gap:clamp(28px,5cqw,72px);justify-content:center;margin:8px 0 4px">
+      <div style="text-align:center">
+        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">196</span></div>
+        <div class="app-badge" style="justify-content:center">components</div>
+      </div>
+      <div style="text-align:center">
+        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">55</span></div>
+        <div class="app-badge" style="justify-content:center">pages</div>
+      </div>
+      <div style="text-align:center">
+        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">50</span></div>
+        <div class="app-badge" style="justify-content:center">composables</div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="max-width:52ch">
+      No Nuxt, no DOM — so instead of forking, the port <strong>reuses Elk's
+      framework-agnostic layers</strong> and rebuilds the UI on Lynx elements.
+    </p>
+    <div class="demo__meta" data-mm-fade style="justify-content:center">
+      <span class="chip chip--brand">masto.js reused</span>
+      <span class="chip">content-render retargeted</span>
+      <span class="chip">native &lt;list&gt;</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Elk.</strong> The beloved Mastodon web client by Anthony Fu and team, ported into a native Mastodon client — timelines, threads, profiles, search, trends. A Nuxt 3 app: ~196 components, 55 pages, 50 composables.</p>
+      <p><strong>The porting move:</strong> keep the framework-agnostic layers (masto.js client reused unpatched, the HTML content parser ~95% verbatim), retarget the vnode renderer to <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>, and swap Elk's DOM virtualizer for the native recycling <code>&lt;list&gt;</code> — <em>less</em> code.</p>
     </aside>
   </section>
 
