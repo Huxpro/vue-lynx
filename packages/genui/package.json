@@ -1,0 +1,106 @@
+{
+  "name": "vue-lynx-genui",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Generative UI (A2UI + OpenUI renderers) for Vue Lynx. Port of @lynx-js/genui.",
+  "keywords": [
+    "vue",
+    "lynx",
+    "vue-lynx",
+    "genui",
+    "a2ui",
+    "openui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx.git",
+    "directory": "packages/genui"
+  },
+  "license": "Apache-2.0",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./a2ui": {
+      "types": "./dist/a2ui/index.d.ts",
+      "default": "./dist/a2ui/index.js"
+    },
+    "./a2ui/store": {
+      "types": "./dist/a2ui/store/index.d.ts",
+      "default": "./dist/a2ui/store/index.js"
+    },
+    "./a2ui/snapshot": {
+      "types": "./dist/a2ui/snapshot/index.d.ts",
+      "default": "./dist/a2ui/snapshot/index.js"
+    },
+    "./a2ui/catalog": {
+      "types": "./dist/a2ui/catalog/index.d.ts",
+      "default": "./dist/a2ui/catalog/index.js"
+    },
+    "./a2ui/vue": {
+      "types": "./dist/a2ui/vue/index.d.ts",
+      "default": "./dist/a2ui/vue/index.js"
+    },
+    "./a2ui/functions": {
+      "types": "./dist/a2ui/functions/index.d.ts",
+      "default": "./dist/a2ui/functions/index.js"
+    },
+    "./a2ui/styles/theme.css": "./styles/a2ui/theme.css",
+    "./a2ui/styles/material-icons.css": "./styles/a2ui/material-icons.css",
+    "./a2ui-prompt": {
+      "types": "./dist/a2ui-prompt/index.d.ts",
+      "default": "./dist/a2ui-prompt/index.js"
+    },
+    "./openui": {
+      "types": "./dist/openui/core/index.d.ts",
+      "default": "./dist/openui/core/index.js"
+    },
+    "./openui/catalog": {
+      "types": "./dist/openui/catalog/index.d.ts",
+      "default": "./dist/openui/catalog/index.js"
+    },
+    "./openui/prompt": {
+      "types": "./dist/openui/openui-prompt/index.d.ts",
+      "default": "./dist/openui/openui-prompt/index.js"
+    },
+    "./openui/styles/theme.css": "./styles/openui/theme.css",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "styles",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run && vitest run --config vitest.dom.config.ts",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
+    "test:dom": "vitest run --config vitest.dom.config.ts"
+  },
+  "dependencies": {
+    "@a2ui/web_core": "0.9.1",
+    "@openuidev/lang-core": "^0.2.7",
+    "@vue/reactivity": "^3.5.0",
+    "@vue/runtime-core": "^3.5.0",
+    "zod": "^3.25.76 || ^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "jsdom": "^25.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0",
+    "vue-lynx": "workspace:*",
+    "vue-lynx-testing-library": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

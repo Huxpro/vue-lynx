@@ -3,5 +3,9 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "doc_build",
   "cleanUrls": true,
-  "ignoreCommand": "node scripts/vercel-ignore.mjs"
+  "ignoreCommand": "node scripts/vercel-ignore.mjs",
+  "redirects": [
+    { "source": "/playground", "destination": "/genui", "permanent": true },
+    { "source": "/zh/playground", "destination": "/zh/genui", "permanent": true }
+  ]
 }

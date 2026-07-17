@@ -180,6 +180,10 @@ export default defineConfig({
         link: '/guide/quick-start',
       },
       {
+        text: 'GenUI',
+        link: '/genui',
+      },
+      {
         text: 'API',
         link: '/guide/api/vue-lynx/',
       },
@@ -194,6 +198,10 @@ export default defineConfig({
             link: '/guide/quick-start',
           },
           {
+            text: 'GenUI',
+            link: '/genui',
+          },
+          {
             text: 'API',
             link: '/guide/api/vue-lynx/',
           },
@@ -206,6 +214,10 @@ export default defineConfig({
           {
             text: '指南',
             link: '/zh/guide/quick-start',
+          },
+          {
+            text: 'GenUI',
+            link: '/zh/genui',
           },
           {
             text: 'API',
