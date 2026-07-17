@@ -607,7 +607,7 @@ export function render(vnode: VNode, container: Element): void {
   const env = (globalThis as Record<string, unknown>)['lynxTestingEnv'] as {
     switchToMainThread(): void;
     switchToBackgroundThread(): void;
-    jsdom: { window: { document: Document } };
+    env: { window: { document: Document } };
   };
 
   // 1. Set up Main Thread — renderPage creates PAPI page root (id=1)
