@@ -2651,6 +2651,104 @@
     </aside>
   </section>
 
+  <!-- E20b — design space · the static/dynamic spectrum -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      A template is part <span style="color:#5dd5a8">static</span>, part <span style="color:#E8B44A">dynamic</span>.
+    </h2>
+    <div class="dsplit">
+      <div>
+        <div class="codeframe" style="width:100%">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>card.vue · by binding time</span>
+          </div>
+<pre><span class="code-static">&lt;view class="card"&gt;</span>
+<span class="code-static">  &lt;image class="icon" src="…" /&gt;</span>
+<span class="code-static">  &lt;view class="body"&gt;</span>
+<span class="code-static">    &lt;text&gt;</span><span class="code-dyn">{{ title }}</span><span class="code-static">&lt;/text&gt;</span>
+<span class="code-static">    &lt;text&gt;Static description&lt;/text&gt;</span>
+<span class="code-static">  &lt;/view&gt;</span>
+<span class="code-static">&lt;/view&gt;</span></pre>
+        </div>
+        <div class="ds-legend" data-mm-fade>
+          <span class="k"><span class="sw" style="background:#5dd5a8"></span>static &middot; known when you write it</span>
+          <span class="k"><span class="sw" style="background:#E8B44A"></span>dynamic &middot; known only at runtime</span>
+        </div>
+      </div>
+      <div class="track" data-mm-fade>
+        <div class="track__line"></div>
+        <div class="track__stops">
+          <div class="stop">
+            <span class="stop__dot" style="border-color:#4FB8F0"></span>
+            <span class="stop__name">VDOM</span>
+            <span class="stop__sub">interpret + diff · re-discover each update</span>
+          </div>
+          <div class="stop">
+            <span class="stop__dot" style="border-color:#42b883"></span>
+            <span class="stop__name">Vapor</span>
+            <span class="stop__sub">wire it into create-time · O(1) update</span>
+          </div>
+          <div class="stop">
+            <span class="stop__dot" style="border-color:#8a63d2"></span>
+            <span class="stop__name">Element Templates</span>
+            <span class="stop__sub">bake the static shell to code</span>
+          </div>
+        </div>
+        <div class="track__ends">
+          <span>resolve at runtime</span>
+          <span>resolve at compile time</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="text-align:center;max-width:52ch">
+      One question splits every renderer: <b>when</b> is &ldquo;what changes&rdquo; resolved?
+    </p>
+    <aside class="notes">
+      <p><strong>The design space, in one picture.</strong> A template is a mixed-stage program: the green parts (tags, classes, static text) are fixed the moment you write them; only <code>{{ title }}</code> waits for a runtime value. This is binding-time analysis — coloring = annotating.</p>
+      <p>Every renderer holds the <em>same</em> knowledge; they differ only in <em>when</em> they resolve the dynamic part. VDOM re-discovers it each update by diffing. Vapor wires it into create-time so updates are O(1). Element Templates bake the static shell all the way down to code. Same spectrum, different coordinates — VDOM, Vapor, and ET aren't rival inventions, they're points in one space.</p>
+    </aside>
+  </section>
+
+  <!-- E20c — design space · the async cut (thread boundary) -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Cut a thread — what can cross the wire?
+    </h2>
+    <div class="dboundary">
+      <div class="drealm">
+        <div class="drealm__t">BG · background thread · the program</div>
+        <ul class="xfer">
+          <li><span class="ok">✓</span><span class="lbl"><b>first-order data</b> — numbers, strings, plain objects</span></li>
+          <li><span class="ok">✓</span><span class="lbl"><b>names</b> — ids, template no., event signs</span></li>
+          <li><span class="no">✗</span><span class="lbl"><b>pointers</b> — <code>nthChild(root,1)</code>, only local</span></li>
+          <li><span class="no">✗</span><span class="lbl"><b>closures</b> — <code>effect(fn)</code> captures the heap</span></li>
+        </ul>
+      </div>
+      <div class="dwall"><span>serialization boundary</span></div>
+      <div class="drealm">
+        <div class="drealm__t">MT · main thread · the tree</div>
+        <div class="opstream">
+          <span class="op">CREATE 2 view</span>
+          <span class="op">SET_CLASS 2 "card"</span>
+          <span class="op dyn">SET_TEXT 6 "Hello"</span>
+          <span class="op">INSERT 1 2 -1</span>
+          <span class="op">…</span>
+        </div>
+        <p class="dboundary__cap">one flat <b>ops stream</b> crosses &mdash; and that stream <em>is</em> a display list.</p>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="text-align:center;max-width:56ch">
+      Only closed, first-order terms survive the cut. Pointers and closures don&rsquo;t.
+    </p>
+    <aside class="notes">
+      <p><strong>The async cut.</strong> The dual-thread split is architected async — like the browser handing compositing to its own thread. The catch: the tree (MT) and the program that drives it (BG) no longer share an address space. So what can cross the serialization boundary? Only closed, first-order terms — data and names. Pointers are meaningful only in the local heap; closures capture an environment the other side doesn't have.</p>
+      <p>That leaves exactly one shape for what crosses: a flat, closed, first-order <strong>ops stream</strong> — which is precisely a <em>display list</em>. It's not an implementation detail; it's the constitution of the whole architecture (and why Vapor-on-Lynx emits ops directly).</p>
+    </aside>
+  </section>
+
   <!-- E21 — FABRIC III · panorama, left half -->
   <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama-left">
     <p class="weave-kicker">Weave the whole Web&hellip;</p>

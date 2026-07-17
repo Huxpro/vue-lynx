@@ -3199,3 +3199,60 @@ vl-media.snap.is-missing .vl-ph {
   color: rgba(15, 18, 22, 0.5);
 }
 vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
+
+/* =========================================================
+   "One more thing" · design-space slides (epilogue)
+   ① static/dynamic spectrum  ② the async cut (thread boundary)
+   ========================================================= */
+.dspace { --ds-static: #5dd5a8; --ds-dyn: #E8B44A; }
+.dsplit {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: clamp(28px, 5cqw, 64px);
+  align-items: center;
+  width: 100%;
+  max-width: 1080px;
+  margin: 8px auto 0;
+}
+.dsplit .codeframe { text-align: left; }
+/* binding-time coloring inside the card code */
+.code-static { color: var(--ds-static); }
+.code-dyn { color: var(--ds-dyn); background: color-mix(in srgb, var(--ds-dyn) 16%, transparent); border-radius: 3px; padding: 0 3px; }
+.ds-legend { display: flex; gap: 20px; justify-content: center; margin-top: 16px; font-family: var(--mono); font-size: 12px; color: var(--ink-mute); }
+.ds-legend .k { display: inline-flex; align-items: center; gap: 8px; }
+.ds-legend .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+/* spectrum: 3 stops on a runtime → compile-time track */
+.track { position: relative; padding: 30px 6px 0; }
+.track__line { position: absolute; left: 12%; right: 12%; top: 38px; height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, #4FB8F0, #42b883, #8a63d2); }
+.track__stops { display: flex; justify-content: space-between; position: relative; z-index: 1; }
+.stop { display: flex; flex-direction: column; align-items: center; gap: 9px; width: 33%; text-align: center; }
+.stop__dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid; background: var(--paper); }
+.stop__name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--ink); }
+.stop__sub { font-family: var(--mono); font-size: 11px; line-height: 1.45; color: var(--ink-mute); max-width: 15ch; }
+.track__ends { display: flex; justify-content: space-between; margin-top: 18px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
+
+/* the async cut — BG | wall | MT */
+.dboundary { display: grid; grid-template-columns: 1fr 48px 1fr; align-items: stretch; gap: 0;
+  width: 100%; max-width: 1000px; margin: 12px auto 0; }
+.drealm { border: 1px solid var(--line); border-radius: 12px; background: var(--paper-elev); padding: 18px 20px; box-shadow: var(--shadow-sm); }
+.drealm__t { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 15px; }
+.xfer { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.xfer li { display: flex; gap: 10px; align-items: baseline; font-size: 14px; }
+.xfer .mono { font-family: var(--mono); }
+.xfer .ok { color: var(--vue-green); font-weight: 700; }
+.xfer .no { color: #e07570; font-weight: 700; }
+.xfer .lbl b { color: var(--ink); font-weight: 600; }
+.xfer .lbl { color: var(--ink-soft); }
+.dwall { position: relative; }
+.dwall::before { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; border-left: 2px dashed var(--ink-faint); }
+.dwall span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(90deg);
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute);
+  background: var(--paper); padding: 3px 9px; white-space: nowrap; }
+.opstream { display: flex; flex-wrap: wrap; gap: 8px; }
+.opstream .op { font-family: var(--mono); font-size: 12px; padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--paper-elev); color: var(--ink-soft); white-space: nowrap; }
+.opstream .op.dyn { color: #E8B44A; border-color: color-mix(in srgb, #E8B44A 55%, transparent); background: color-mix(in srgb, #E8B44A 12%, transparent); }
+.dboundary__cap { font-family: var(--mono); font-size: 11.5px; color: var(--ink-mute); margin-top: 12px; }
