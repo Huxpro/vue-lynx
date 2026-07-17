@@ -1834,7 +1834,7 @@ body.is-blackout::after {
    scales). The Lynx mark is monochrome + theme-aware: white on
    the dark stage, black in the light theme.
    ========================================================= */
-.slide.logos { padding: 0; }
+.slide.logos { padding: 0; overflow: hidden; }
 .logo {
   position: absolute;
   width: 16cqw;
@@ -1883,10 +1883,10 @@ body.is-blackout::after {
 .lgtag {
   position: absolute;
   transform: translate(-50%, -50%);
-  padding: 5px 12px;
+  padding: 0.55cqw 1.2cqw;
   border-radius: 999px;
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: clamp(15px, 1.75cqw, 22px);
   letter-spacing: 0.04em;
   color: var(--ink);
   background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
@@ -1899,8 +1899,8 @@ body.is-blackout::after {
 .lg-plat {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 3.6cqw;
-  height: 3.6cqw;
+  width: 6cqw;
+  height: 6cqw;
   display: grid;
   place-items: center;
   color: var(--ink-soft);
