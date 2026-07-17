@@ -190,7 +190,7 @@ const joinDate = computed(() => {
       </template>
 
       <template #posts>
-        <view class="account-pane">
+        <scroll-view scroll-orientation="vertical" class="account-pane">
           <view v-if="feeds.posts.loading" class="account-loading">
             <Spinner />
           </view>
@@ -199,11 +199,11 @@ const joinDate = computed(() => {
             <text class="account-empty-text">No posts yet.</text>
           </view>
           <view class="account-bottom-pad" />
-        </view>
+        </scroll-view>
       </template>
 
       <template #replies>
-        <view class="account-pane">
+        <scroll-view scroll-orientation="vertical" class="account-pane">
           <view v-if="feeds.replies.loading" class="account-loading">
             <Spinner />
           </view>
@@ -212,11 +212,11 @@ const joinDate = computed(() => {
             <text class="account-empty-text">No posts yet.</text>
           </view>
           <view class="account-bottom-pad" />
-        </view>
+        </scroll-view>
       </template>
 
       <template #media>
-        <view class="account-pane">
+        <scroll-view scroll-orientation="vertical" class="account-pane">
           <view v-if="feeds.media.loading" class="account-loading">
             <Spinner />
           </view>
@@ -225,7 +225,7 @@ const joinDate = computed(() => {
             <text class="account-empty-text">No media yet.</text>
           </view>
           <view class="account-bottom-pad" />
-        </view>
+        </scroll-view>
       </template>
     </StickyTabView>
   </view>
@@ -239,9 +239,10 @@ const joinDate = computed(() => {
 }
 
 .account-pane {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
+  height: 100%;
 }
 
 .account-loading {

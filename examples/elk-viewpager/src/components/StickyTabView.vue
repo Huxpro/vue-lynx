@@ -1,23 +1,29 @@
 <script setup lang="ts">
 // A collapsing-header + sticky-tab-bar + horizontally-paged scaffold — the
-// "native profile" pattern (Twitter/X, Mastodon apps): the #header slot
-// scrolls away with the page, the tab bar sticks to the top once you scroll
-// onto it, and the panes below keep swiping horizontally.
+// "native profile" pattern (Twitter/X, Mastodon apps): the #header scrolls
+// away, the tab bar rises with it and pins to the top once you scroll onto
+// it, and the panes below keep swiping horizontally, each with its own
+// vertical scroll.
 //
-// One vertical <scroll-view> is the single scroller; the tab bar is a
-// sticky child (Lynx's scroll-view sticky capability — the `sticky`
-// attribute natively, `position: sticky` on the web runtime). The panes are
-// laid out at their natural height, so the whole page scrolls as one and
-// the header genuinely collapses before the list continues — no nested
-// scroll to fight. Horizontal paging is still owned by the viewpager.
+// It uses Lynx's scroll-coordinator (a.k.a. foldview): an absolutely
+// positioned header that collapses, and a flex slot that holds the tab bar
+// *above* the viewpager. As the coordinator scrolls, the whole slot slides
+// up under the collapsing header until the tab bar reaches the top and pins;
+// the slot then hands the scroll to the active viewpager pane's list. The
+// tabs live in the slot (not in a sticky toolbar), which is what makes them
+// start below the card and stick only on scroll.
 import type { ShadowElement } from 'vue-lynx';
 import { computed, ref, useTemplateRef, watch } from 'vue-lynx';
 
 declare const SystemInfo: { platform?: string } | undefined;
 
+// Like the viewpager, the coordinator element is registered under different
+// names per platform: Lynx for Web ships the legacy XElement foldview names,
+// while native OSS engines register the extracted scroll-coordinator element.
 const isWeb = typeof SystemInfo !== 'undefined' && SystemInfo?.platform === 'web';
-// The viewpager element is registered under different names per platform:
-// the legacy XElement name on Lynx for Web, the extracted element natively.
+const foldTag = isWeb ? 'x-foldview-ng' : 'scroll-coordinator';
+const foldHeaderTag = isWeb ? 'x-foldview-header-ng' : 'scroll-coordinator-header';
+const foldSlotTag = isWeb ? 'x-foldview-slot-ng' : 'scroll-coordinator-slot';
 const pagerTag = isWeb ? 'x-viewpager-ng' : 'viewpager';
 const pagerItemTag = isWeb ? 'x-viewpager-item-ng' : 'viewpager-item';
 
@@ -61,12 +67,14 @@ watch(activeIndex, (index) => {
 </script>
 
 <template>
-  <scroll-view scroll-orientation="vertical" class="stv">
-    <view class="stv-header">
+  <component :is="foldTag" class="stv">
+    <component :is="foldHeaderTag" class="stv-header">
       <slot name="header" />
-    </view>
+    </component>
 
-    <view sticky class="stv-toolbar">
+    <component :is="foldSlotTag" class="stv-slot">
+      <!-- Tab bar sits at the top of the slot, above the viewpager. It rides
+           up with the collapsing header and pins once it reaches the top. -->
       <view class="stv-bar">
         <view
           v-for="t in tabs"
@@ -78,54 +86,58 @@ watch(activeIndex, (index) => {
           <view class="stv-tab-underline" :class="modelValue === t.key ? 'stv-tab-underline-active' : ''" />
         </view>
       </view>
-    </view>
 
-    <component
-      :is="pagerTag"
-      ref="pagerRef"
-      class="stv-pages"
-      :initial-select-index="activeIndex"
-      @change="onPagerChange"
-    >
       <component
-        :is="pagerItemTag"
-        v-for="t in tabs"
-        :key="t.key"
-        class="stv-page"
+        :is="pagerTag"
+        ref="pagerRef"
+        class="stv-pages"
+        :initial-select-index="activeIndex"
+        @change="onPagerChange"
       >
-        <slot :name="t.key" />
+        <component
+          :is="pagerItemTag"
+          v-for="t in tabs"
+          :key="t.key"
+          class="stv-page"
+        >
+          <slot :name="t.key" />
+        </component>
       </component>
     </component>
-  </scroll-view>
+  </component>
 </template>
 
 <style>
 .stv {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
   width: 100%;
 }
 
 .stv-header {
-  display: flex;
-  flex-direction: column;
+  position: absolute;
   width: 100%;
 }
 
-.stv-toolbar {
-  /* Sticks to the top of the scroll-view once scrolled onto. `sticky` is the
-     native Lynx attribute; `position: sticky` covers the web runtime. */
-  position: sticky;
-  top: 0;
-  z-index: 2;
+.stv-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
-  background-color: var(--c-bg-base);
+  /* Web (foldview) is a standard-flexbox container, so a Lynx flex weight
+     doesn't reach this raw child — a definite height keeps the slot filled. */
+  height: 100%;
 }
 
 .stv-bar {
   display: flex;
   flex-direction: row;
+  flex-shrink: 0;
   border-bottom: 1px solid var(--c-border);
+  /* Opaque so the collapsing header never shows through the pinned tab bar. */
+  background-color: var(--c-bg-base);
 }
 
 .stv-tab {
@@ -164,6 +176,8 @@ watch(activeIndex, (index) => {
 }
 
 .stv-pages {
+  flex: 1;
+  min-height: 0;
   width: 100%;
 }
 
@@ -171,5 +185,6 @@ watch(activeIndex, (index) => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 </style>

@@ -510,21 +510,26 @@ test('profile tabs sit below the header and stick on scroll', async () => {
     readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
   ]);
 
-  // One vertical <scroll-view> is the single scroller: header, then the tab
-  // bar as a sticky child (so it starts below the header and pins only once
-  // scrolled onto), then the viewpager panes.
-  assert.match(sticky, /<scroll-view scroll-orientation="vertical"/);
-  assert.match(sticky, /sticky class="stv-toolbar"/);
-  assert.match(sticky, /position: sticky/);
+  // Per-platform coordinator element: foldview on Lynx for Web, the extracted
+  // scroll-coordinator on native OSS engines.
+  assert.match(sticky, /'x-foldview-ng'/);
+  assert.match(sticky, /'scroll-coordinator'/);
+  assert.match(sticky, /'x-foldview-slot-ng'/);
+  assert.match(sticky, /'scroll-coordinator-slot'/);
+  // The tab bar lives INSIDE the slot, above the viewpager — that is what
+  // makes it start below the header and pin only on scroll. There is no
+  // sticky toolbar element (that variant pins the tabs from the top).
+  assert.doesNotMatch(sticky, /foldview-toolbar|scroll-coordinator-toolbar/);
+  assert.match(sticky, /class="stv-bar"/);
   // Horizontal paging stays with the viewpager, synced both ways.
   assert.match(sticky, /'x-viewpager-ng'/);
   assert.match(sticky, /method: 'selectTab'/);
-  // The profile supplies the header card and one pane per tab; the panes are
-  // plain views (the single scroll-view scrolls the whole page).
+  // The profile supplies the collapsing #header and one scrollable pane per
+  // tab (the coordinator hands scroll off to the active pane's list).
   assert.match(account, /<StickyTabView/);
   assert.match(account, /<template #header>/);
   assert.match(account, /<template #posts>/);
-  assert.match(account, /<view class="account-pane">/);
+  assert.match(account, /scroll-orientation="vertical" class="account-pane"/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {
