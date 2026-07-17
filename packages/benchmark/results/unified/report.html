@@ -115,7 +115,7 @@
   <span class="pill">env: lynx-web (primary)</span>
   <span class="pill">ladder: 1k → 30k</span>
   <span class="pill">cells: 457</span>
-  <span class="pill">conclusions: 10</span>
+  <span class="pill">conclusions: 9</span>
 </div>
 <p class="lang-switch"><a href="report.zh.html">中文</a></p>
 
@@ -157,10 +157,6 @@
       <header><strong class="takeaway">Quote ratios, not absolute milliseconds</strong></header>
       <p class="why"><span class="lbl">so what</span> Same protocol, different hosts can move medians 2×+. Portable claims are same-host ratios.</p>
       <p class="evidence"><span class="lbl">verify</span> Ex: older playground React selectStorm@10k ≈2544 ms; this host ≈1018 ms.</p>
-    </article><article class="verdict warn">
-      <header><strong class="takeaway">On CPU ×4, Vue stops at 10k — it didn’t vanish</strong></header>
-      <p class="why"><span class="lbl">so what</span> Historical Vue ×4 campaign only ran through 10k; React newly to 30k. Only React extends — a coverage gap.</p>
-      <p class="evidence"><span class="lbl">verify</span> Vue ×4: 1k–10k present; React ×4: 1k–30k present.</p>
     </article></div>
 
 <h2>Table storms — IFR × framework matrix</h2>
@@ -254,8 +250,10 @@ create — ms: 1.98 s</title></circle><text x="411.3" y="146.9" class="slabel" f
 </div>
 
 <h2>Content-probe FCP (architecture ladder)</h2>
-<p class="sub">Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. CPU ×1.</p>
+<p class="sub">Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1.</p>
 <div class="scroll"><table><thead><tr><th>scale</th><th>ReactLynx</th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">1k elements</td><td class="c good"><b>60.8 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>86.6 ms</b><span class="f">(1.42)</span></td><td class="c warn"><b>77.7 ms</b><span class="f">(1.28)</span></td><td class="c warn"><b>70.0 ms</b><span class="f">(1.15)</span></td><td class="c warn"><b>93.3 ms</b><span class="f">(1.53)</span></td><td class="c warn"><b>86.9 ms</b><span class="f">(1.43)</span></td></tr><tr><td class="op">3k elements</td><td class="c good"><b>99.0 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>143.4 ms</b><span class="f">(1.45)</span></td><td class="c warn"><b>119.6 ms</b><span class="f">(1.21)</span></td><td class="c warn"><b>118.8 ms</b><span class="f">(1.20)</span></td><td class="c warn"><b>156.3 ms</b><span class="f">(1.58)</span></td><td class="c warn"><b>141.0 ms</b><span class="f">(1.42)</span></td></tr><tr><td class="op">5k elements</td><td class="c good"><b>140.8 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>188.3 ms</b><span class="f">(1.34)</span></td><td class="c warn"><b>163.1 ms</b><span class="f">(1.16)</span></td><td class="c good"><b>160.9 ms</b><span class="f">(1.14)</span></td><td class="c warn"><b>209.5 ms</b><span class="f">(1.49)</span></td><td class="c warn"><b>193.3 ms</b><span class="f">(1.37)</span></td></tr><tr><td class="op">10k elements</td><td class="c good"><b>228.3 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>310.4 ms</b><span class="f">(1.36)</span></td><td class="c warn"><b>378.9 ms</b><span class="f">(1.66)</span></td><td class="c warn"><b>278.4 ms</b><span class="f">(1.22)</span></td><td class="c warn"><b>365.4 ms</b><span class="f">(1.60)</span></td><td class="c warn"><b>337.6 ms</b><span class="f">(1.48)</span></td></tr><tr><td class="op">20k elements</td><td class="c good"><b>434.4 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>586.9 ms</b><span class="f">(1.35)</span></td><td class="c warn"><b>695.1 ms</b><span class="f">(1.60)</span></td><td class="c warn"><b>526.1 ms</b><span class="f">(1.21)</span></td><td class="c warn"><b>691.7 ms</b><span class="f">(1.59)</span></td><td class="c warn"><b>637.1 ms</b><span class="f">(1.47)</span></td></tr><tr><td class="op">30k elements</td><td class="c good"><b>631.1 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>841.5 ms</b><span class="f">(1.33)</span></td><td class="c warn"><b>1.01 s</b><span class="f">(1.60)</span></td><td class="c warn"><b>770.6 ms</b><span class="f">(1.22)</span></td><td class="c warn"><b>1.01 s</b><span class="f">(1.60)</span></td><td class="c warn"><b>905.9 ms</b><span class="f">(1.44)</span></td></tr></tbody></table></div>
+<p class="sub" style="margin-top:16px">CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).</p>
+<div class="scroll"><table><thead><tr><th>scale</th><th>ReactLynx</th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">1k elements</td><td class="c good"><b>217.2 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>263.7 ms</b><span class="f">(1.21)</span></td><td class="c warn"><b>258.2 ms</b><span class="f">(1.19)</span></td><td class="c good"><b>235.5 ms</b><span class="f">(1.08)</span></td><td class="c warn"><b>265.5 ms</b><span class="f">(1.22)</span></td><td class="c warn"><b>289.6 ms</b><span class="f">(1.33)</span></td></tr><tr><td class="op">3k elements</td><td class="c good"><b>359.1 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>431.1 ms</b><span class="f">(1.20)</span></td><td class="c warn"><b>467.5 ms</b><span class="f">(1.30)</span></td><td class="c warn"><b>420.2 ms</b><span class="f">(1.17)</span></td><td class="c warn"><b>438.5 ms</b><span class="f">(1.22)</span></td><td class="c warn"><b>492.2 ms</b><span class="f">(1.37)</span></td></tr><tr><td class="op">5k elements</td><td class="c good"><b>475.3 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>619.7 ms</b><span class="f">(1.30)</span></td><td class="c warn"><b>608.7 ms</b><span class="f">(1.28)</span></td><td class="c warn"><b>622.9 ms</b><span class="f">(1.31)</span></td><td class="c warn"><b>634.4 ms</b><span class="f">(1.33)</span></td><td class="c warn"><b>708.6 ms</b><span class="f">(1.49)</span></td></tr><tr><td class="op">10k elements</td><td class="c good"><b>784.7 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>1.02 s</b><span class="f">(1.29)</span></td><td class="c warn"><b>1.17 s</b><span class="f">(1.49)</span></td><td class="c warn"><b>913.9 ms</b><span class="f">(1.16)</span></td><td class="c warn"><b>1.08 s</b><span class="f">(1.37)</span></td><td class="c warn"><b>1.19 s</b><span class="f">(1.52)</span></td></tr></tbody></table></div>
 <div class="charts" style="margin-top:16px">
   <div class="chart"><h3>FCP vs content scale (CPU ×1)</h3><p class="sub">ReactLynx lowest throughout. Among Vue: IFR without ET crosses above plain VDOM by 10k; IFR+ET is the scale hedge.</p>
 <svg viewBox="0 0 560 380" role="img" aria-label="FCP vs content scale (CPU ×1)">
@@ -300,38 +298,36 @@ FCP — ms: 337.6 ms</title></circle><circle cx="286.9" cy="149.1" r="4.5" class
 FCP — ms: 637.1 ms</title></circle><circle cx="402.3" cy="70.3" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 30k
 FCP — ms: 905.9 ms</title></circle><text x="411.3" y="139.3" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
-  <div class="chart"><h3>FCP vs content scale (CPU ×4)</h3><p class="sub">Note: Vue ×4 only measured through 10k; React through 30k — so only React extends. Slow CPU amplifies MT parse cost.</p>
-<svg viewBox="0 0 560 380" role="img" aria-label="FCP vs content scale (CPU ×4)">
-<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="269.9214325833416" x2="430" y2="269.9214325833416" class="grid"/><text x="50" y="273.4214325833416" class="tick" text-anchor="end">500ms</text><line x1="56" y1="203.8428651666832" x2="430" y2="203.8428651666832" class="grid"/><text x="50" y="207.3428651666832" class="tick" text-anchor="end">1s</text><line x1="56" y1="137.76429775002478" x2="430" y2="137.76429775002478" class="grid"/><text x="50" y="141.26429775002478" class="tick" text-anchor="end">1.5s</text><line x1="56" y1="71.6857303333664" x2="430" y2="71.6857303333664" class="grid"/><text x="50" y="75.1857303333664" class="tick" text-anchor="end">2s</text>
+  <div class="chart"><h3>FCP vs content scale (CPU ×4, through 10k)</h3><p class="sub">Ladder clipped to 10k (full ×4 coverage). Slow CPU amplifies MT parse cost.</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="FCP vs content scale (CPU ×4, through 10k)">
+<line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="125.25925925925925" y1="16" x2="125.25925925925925" y2="336" class="grid"/><text x="125.25925925925925" y="352" class="tick" text-anchor="middle">2k</text><line x1="194.5185185185185" y1="16" x2="194.5185185185185" y2="336" class="grid"/><text x="194.5185185185185" y="352" class="tick" text-anchor="middle">4k</text><line x1="263.7777777777778" y1="16" x2="263.7777777777778" y2="336" class="grid"/><text x="263.7777777777778" y="352" class="tick" text-anchor="middle">6k</text><line x1="333.037037037037" y1="16" x2="333.037037037037" y2="336" class="grid"/><text x="333.037037037037" y="352" class="tick" text-anchor="middle">8k</text><line x1="402.2962962962963" y1="16" x2="402.2962962962963" y2="336" class="grid"/><text x="402.2962962962963" y="352" class="tick" text-anchor="middle">10k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="286.31503373932156" x2="430" y2="286.31503373932156" class="grid"/><text x="50" y="289.81503373932156" class="tick" text-anchor="end">200ms</text><line x1="56" y1="236.6300674786431" x2="430" y2="236.6300674786431" class="grid"/><text x="50" y="240.1300674786431" class="tick" text-anchor="end">400ms</text><line x1="56" y1="186.94510121796466" x2="430" y2="186.94510121796466" class="grid"/><text x="50" y="190.44510121796466" class="tick" text-anchor="end">600ms</text><line x1="56" y1="137.2601349572862" x2="430" y2="137.2601349572862" class="grid"/><text x="50" y="140.7601349572862" class="tick" text-anchor="end">800ms</text><line x1="56" y1="87.57516869660776" x2="430" y2="87.57516869660776" class="grid"/><text x="50" y="91.07516869660776" class="tick" text-anchor="end">1s</text><line x1="56" y1="37.890202435929325" x2="430" y2="37.890202435929325" class="grid"/><text x="50" y="41.390202435929325" class="tick" text-anchor="end">1.2s</text>
 <text x="243" y="374" class="axis" text-anchor="middle">elements N — linear</text>
 <text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">FCP — ms</text>
-<path d="M67.5,307.3L90.6,288.5L113.7,273.2L171.4,232.3L286.9,141.3L402.3,39.7" class="line s1" style="stroke:#eda100"/><circle cx="67.5" cy="307.3" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 1k
-FCP — ms: 217.2 ms</title></circle><circle cx="90.6" cy="288.5" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 3k
-FCP — ms: 359.1 ms</title></circle><circle cx="113.7" cy="273.2" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 5k
-FCP — ms: 475.3 ms</title></circle><circle cx="171.4" cy="232.3" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 10k
-FCP — ms: 784.7 ms</title></circle><circle cx="286.9" cy="141.3" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 20k
-FCP — ms: 1.47 s</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 30k
-FCP — ms: 2.24 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#eda100">ReactLynx</text><path d="M67.5,301.2L90.6,279.0L113.7,254.1L171.4,201.8" class="line s2" style="stroke:#6b7280"/><circle cx="67.5" cy="301.2" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 1k
-FCP — ms: 263.7 ms</title></circle><circle cx="90.6" cy="279.0" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 3k
-FCP — ms: 431.1 ms</title></circle><circle cx="113.7" cy="254.1" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 5k
-FCP — ms: 619.7 ms</title></circle><circle cx="171.4" cy="201.8" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 10k
-FCP — ms: 1.02 s</title></circle><text x="180.4" y="205.8" class="slabel" fill="#6b7280">VDOM</text><path d="M67.5,301.9L90.6,274.2L113.7,255.6L171.4,181.9" class="line s3" style="stroke:#2563eb"/><circle cx="67.5" cy="301.9" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 1k
-FCP — ms: 258.2 ms</title></circle><circle cx="90.6" cy="274.2" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 3k
-FCP — ms: 467.5 ms</title></circle><circle cx="113.7" cy="255.6" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 5k
-FCP — ms: 608.7 ms</title></circle><circle cx="171.4" cy="181.9" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 10k
-FCP — ms: 1.17 s</title></circle><text x="180.4" y="185.9" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M67.5,304.9L90.6,280.5L113.7,253.7L171.4,215.2" class="line s4" style="stroke:#7c3aed"/><circle cx="67.5" cy="304.9" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
-FCP — ms: 235.5 ms</title></circle><circle cx="90.6" cy="280.5" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 3k
-FCP — ms: 420.2 ms</title></circle><circle cx="113.7" cy="253.7" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 5k
-FCP — ms: 622.9 ms</title></circle><circle cx="171.4" cy="215.2" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
-FCP — ms: 913.9 ms</title></circle><text x="180.4" y="219.2" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M67.5,300.9L90.6,278.0L113.7,252.2L171.4,193.8" class="line s5" style="stroke:#059669"/><circle cx="67.5" cy="300.9" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 1k
-FCP — ms: 265.5 ms</title></circle><circle cx="90.6" cy="278.0" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 3k
-FCP — ms: 438.5 ms</title></circle><circle cx="113.7" cy="252.2" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 5k
-FCP — ms: 634.4 ms</title></circle><circle cx="171.4" cy="193.8" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 10k
-FCP — ms: 1.08 s</title></circle><text x="180.4" y="236.8" class="slabel" fill="#059669">Vapor</text><path d="M67.5,297.7L90.6,271.0L113.7,242.4L171.4,178.4" class="line s6" style="stroke:#d97706"/><circle cx="67.5" cy="297.7" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 1k
-FCP — ms: 289.6 ms</title></circle><circle cx="90.6" cy="271.0" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 3k
-FCP — ms: 492.2 ms</title></circle><circle cx="113.7" cy="242.4" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 5k
-FCP — ms: 708.6 ms</title></circle><circle cx="171.4" cy="178.4" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 10k
-FCP — ms: 1.19 s</title></circle><text x="180.4" y="260.4" class="slabel" fill="#d97706">Vapor+IFR</text>
+<path d="M90.6,282.0L159.9,246.8L229.1,217.9L402.3,141.1" class="line s1" style="stroke:#eda100"/><circle cx="90.6" cy="282.0" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 1k
+FCP — ms: 217.2 ms</title></circle><circle cx="159.9" cy="246.8" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 3k
+FCP — ms: 359.1 ms</title></circle><circle cx="229.1" cy="217.9" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 5k
+FCP — ms: 475.3 ms</title></circle><circle cx="402.3" cy="141.1" r="4.5" class="dot s1" style="fill:#eda100"><title>ReactLynx · 10k
+FCP — ms: 784.7 ms</title></circle><text x="411.3" y="145.1" class="slabel" fill="#eda100">ReactLynx</text><path d="M90.6,270.5L159.9,228.9L229.1,182.1L402.3,83.8" class="line s2" style="stroke:#6b7280"/><circle cx="90.6" cy="270.5" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 1k
+FCP — ms: 263.7 ms</title></circle><circle cx="159.9" cy="228.9" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 3k
+FCP — ms: 431.1 ms</title></circle><circle cx="229.1" cy="182.1" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 5k
+FCP — ms: 619.7 ms</title></circle><circle cx="402.3" cy="83.8" r="4.5" class="dot s2" style="fill:#6b7280"><title>VDOM · 10k
+FCP — ms: 1.02 s</title></circle><text x="411.3" y="87.8" class="slabel" fill="#6b7280">VDOM</text><path d="M90.6,271.9L159.9,219.9L229.1,184.8L402.3,46.4" class="line s3" style="stroke:#2563eb"/><circle cx="90.6" cy="271.9" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 1k
+FCP — ms: 258.2 ms</title></circle><circle cx="159.9" cy="219.9" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 3k
+FCP — ms: 467.5 ms</title></circle><circle cx="229.1" cy="184.8" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 5k
+FCP — ms: 608.7 ms</title></circle><circle cx="402.3" cy="46.4" r="4.5" class="dot s3" style="fill:#2563eb"><title>VDOM+IFR · 10k
+FCP — ms: 1.17 s</title></circle><text x="411.3" y="50.4" class="slabel" fill="#2563eb">VDOM+IFR</text><path d="M90.6,277.5L159.9,231.6L229.1,181.3L402.3,109.0" class="line s4" style="stroke:#7c3aed"/><circle cx="90.6" cy="277.5" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 1k
+FCP — ms: 235.5 ms</title></circle><circle cx="159.9" cy="231.6" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 3k
+FCP — ms: 420.2 ms</title></circle><circle cx="229.1" cy="181.3" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 5k
+FCP — ms: 622.9 ms</title></circle><circle cx="402.3" cy="109.0" r="4.5" class="dot s4" style="fill:#7c3aed"><title>VDOM+IFR+ET · 10k
+FCP — ms: 913.9 ms</title></circle><text x="411.3" y="113.0" class="slabel" fill="#7c3aed">VDOM+IFR+ET</text><path d="M90.6,270.0L159.9,227.1L229.1,178.4L402.3,68.6" class="line s5" style="stroke:#059669"/><circle cx="90.6" cy="270.0" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 1k
+FCP — ms: 265.5 ms</title></circle><circle cx="159.9" cy="227.1" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 3k
+FCP — ms: 438.5 ms</title></circle><circle cx="229.1" cy="178.4" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 5k
+FCP — ms: 634.4 ms</title></circle><circle cx="402.3" cy="68.6" r="4.5" class="dot s5" style="fill:#059669"><title>Vapor · 10k
+FCP — ms: 1.08 s</title></circle><text x="411.3" y="72.6" class="slabel" fill="#059669">Vapor</text><path d="M90.6,264.1L159.9,213.7L229.1,160.0L402.3,39.7" class="line s6" style="stroke:#d97706"/><circle cx="90.6" cy="264.1" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 1k
+FCP — ms: 289.6 ms</title></circle><circle cx="159.9" cy="213.7" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 3k
+FCP — ms: 492.2 ms</title></circle><circle cx="229.1" cy="160.0" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 5k
+FCP — ms: 708.6 ms</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s6" style="fill:#d97706"><title>Vapor+IFR · 10k
+FCP — ms: 1.19 s</title></circle><text x="411.3" y="160.7" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
 </div>
 
@@ -343,7 +339,7 @@ FCP — ms: 1.19 s</title></circle><text x="180.4" y="260.4" class="slabel" fill
   <ul>
     <li><b>Environments are not interchangeable.</b> Instrumented BG/e2e, black-box click→DOM, lynx-web FCP, and node --jitless share ladder labels but not a metric scale.</li>
     <li><b>How to read the tint:</b> same as the playground — color is slowdown vs row best; the number is authoritative.</li>
-    <li><b>CPU ×4 gap:</b> Vue historically measured only through 10k; React newly through 30k. Not “only React survives throttle.”</li>
+    <li><b>CPU ×4 display:</b> ladder clipped to 10k (full coverage at that throttle).</li>
     <li><b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code></li>
   </ul>
 </div>

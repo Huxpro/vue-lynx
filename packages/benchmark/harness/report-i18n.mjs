@@ -56,8 +56,11 @@ export function copy(lang) {
       : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape. Select charts = point updates; Update charts = batch throughput.',
     hFcp: zh ? '首帧 FCP — 架构阶梯' : 'Content-probe FCP (architecture ladder)',
     subFcp: zh
-      ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。CPU ×1。'
-      : 'Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. CPU ×1.',
+      ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1。'
+      : 'Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1.',
+    subFcp4: zh
+      ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
+      : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -143,10 +146,10 @@ export function copy(lang) {
         y: 'FCP — ms',
       },
       fcp4: {
-        title: zh ? 'FCP vs 内容规模（CPU ×4）' : 'FCP vs content scale (CPU ×4)',
+        title: zh ? 'FCP vs 内容规模（CPU ×4，至 10k）' : 'FCP vs content scale (CPU ×4, through 10k)',
         sub: zh
-          ? '注意：Vue ×4 目前只测到 10k；React 测到 30k——所以长线只有 React。慢 CPU 放大 MT 包体解析成本。'
-          : 'Note: Vue ×4 only measured through 10k; React through 30k — so only React extends. Slow CPU amplifies MT parse cost.',
+          ? '阶梯截到 10k（×4 完整覆盖范围）。慢 CPU 放大 MT 包体解析成本。'
+          : 'Ladder clipped to 10k (full ×4 coverage). Slow CPU amplifies MT parse cost.',
         x: zh ? '元素数 N — 线性' : 'elements N — linear',
         y: 'FCP — ms',
       },
@@ -158,13 +161,13 @@ export function copy(lang) {
       ? [
           '<b>量纲不能混。</b> Instrumented BG/e2e、黑盒 click→DOM、lynx-web FCP、node --jitless 暖渲染共用 1k→30k 标签，但不是同一把尺子。',
           '<b>着色怎么读：</b>与 playground 相同——颜色是相对该行最优的慢速倍数；数字本身才是权威。',
-          '<b>CPU ×4 缺口：</b>Vue 侧历史 campaign 只跑到 10k；React 新测到 30k。不是“节流后只剩 React”。',
+          '<b>CPU ×4 展示：</b>阶梯截到 10k（该 throttle 下完整覆盖范围）。',
           '<b>复现：</b><code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code>',
         ]
       : [
           '<b>Environments are not interchangeable.</b> Instrumented BG/e2e, black-box click→DOM, lynx-web FCP, and node --jitless share ladder labels but not a metric scale.',
           '<b>How to read the tint:</b> same as the playground — color is slowdown vs row best; the number is authoritative.',
-          '<b>CPU ×4 gap:</b> Vue historically measured only through 10k; React newly through 30k. Not “only React survives throttle.”',
+          '<b>CPU ×4 display:</b> ladder clipped to 10k (full coverage at that throttle).',
           '<b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code>',
         ],
   };
@@ -338,19 +341,6 @@ export function buildConclusions(d, lang) {
     evidence: zh
       ? '例：旧 playground React selectStorm@10k ≈2544 ms；本机 ≈1018 ms。'
       : 'Ex: older playground React selectStorm@10k ≈2544 ms; this host ≈1018 ms.',
-  });
-
-  out.push({
-    tone: 'warn',
-    title: zh
-      ? 'CPU ×4 图上 Vue 停在 10k，不是消失了'
-      : 'On CPU ×4, Vue stops at 10k — it didn’t vanish',
-    why: zh
-      ? '历史 Vue ×4 campaign 只跑到 10k；React 新测到 30k。长线只有 React，是覆盖缺口。'
-      : 'Historical Vue ×4 campaign only ran through 10k; React newly to 30k. Only React extends — a coverage gap.',
-    evidence: zh
-      ? 'Vue ×4：1k–10k 有数；React ×4：1k–30k 有数。'
-      : 'Vue ×4: 1k–10k present; React ×4: 1k–30k present.',
   });
 
   return out;
