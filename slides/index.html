@@ -376,6 +376,10 @@
     <div class="demo__body">
       <span class="eyebrow">II · Vue coverage · 3/9</span>
       <h2 class="demo__title"><code class="brand-text">v-model</code></h2>
+      <a class="gh-badge" href="https://github.com/jynxbt" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/jynxbt.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@jynxbt</span>
+      </a>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -400,7 +404,7 @@
       </div>
     </div>
     <aside class="notes">
-      <p>Two-way binding, both flavors: component <code>v-model</code> via <code>defineModel</code> (incl. named models), and <code>v-model</code> straight on Lynx's <strong>native</strong> <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code> — with <code>.lazy/.trim/.number</code>. The timing-sensitive cases (preset values, programmatic writes, <code>@input</code> coexisting) are all covered.</p>
+      <p>Two-way binding, both flavors: component <code>v-model</code> via <code>defineModel</code> (incl. named models), and <code>v-model</code> straight on Lynx's <strong>native</strong> <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code> — with <code>.lazy/.trim/.number</code>. Native <code>vModelText</code> landed via @jynxbt (#121). The timing-sensitive cases (preset values, programmatic writes, <code>@input</code> coexisting) are all covered.</p>
     </aside>
   </section>
 
@@ -408,6 +412,10 @@
     <div class="demo__body">
       <span class="eyebrow">II · Vue coverage · 4/9</span>
       <h2 class="demo__title">Event <span class="brand-text">modifiers</span></h2>
+      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@KealanAU</span>
+      </a>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -431,7 +439,7 @@
       </div>
     </div>
     <aside class="notes">
-      <p>Vue's event modifiers, mapped onto Lynx's event system: <code>.once</code>, <code>.stop</code>, <code>.self</code>, chained combinations — the demo shows each side-by-side with its unmodified twin. (<code>.prevent</code> is a compatibility no-op — nothing to prevent natively.)</p>
+      <p>Vue's event modifiers, mapped onto Lynx's event system: <code>.once</code>, <code>.stop</code>, <code>.self</code>, chained combinations — shipped by @KealanAU (#155). The demo shows each side-by-side with its unmodified twin. (<code>.prevent</code> is a compatibility no-op — nothing to prevent natively.)</p>
     </aside>
   </section>
 
@@ -501,6 +509,10 @@
     <div class="demo__body">
       <span class="eyebrow">II · Vue coverage · 7/9</span>
       <h2 class="demo__title"><code class="brand-text">&lt;style scoped&gt;</code></h2>
+      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer" title="v-bind() in CSS — #127">
+        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@KealanAU</span>
+      </a>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -524,7 +536,7 @@
       </div>
     </div>
     <aside class="notes">
-      <p>Real CSS is a Lynx superpower — so Vue's SFC CSS features land whole: <code>&lt;style scoped&gt;</code>, CSS modules, imported stylesheets, even <code>v-bind()</code> in CSS driving native styles off reactive state.</p>
+      <p>Real CSS is a Lynx superpower — so Vue's SFC CSS features land whole: <code>&lt;style scoped&gt;</code>, CSS modules, imported stylesheets, even <code>v-bind()</code> in CSS (Lynx-native <code>useCssVars</code> by @KealanAU, #127) driving native styles off reactive state.</p>
     </aside>
   </section>
 
