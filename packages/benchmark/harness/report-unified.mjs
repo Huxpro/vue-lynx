@@ -92,6 +92,8 @@ const FCP_ARCH_KEYS = [
   { key: 'vapor-ifr', color: '#d97706' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
+/** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
+const FCP_SCALES_X4 = ['1k', '3k', '5k', '10k'];
 const SIZE_N = {
   '1k': 1000,
   '3k': 3000,
@@ -195,12 +197,17 @@ function renderTable(rows, columns, t) {
   return html;
 }
 
+function fcpScalesFor(cpu) {
+  return cpu === 4 ? FCP_SCALES_X4 : FCP_SCALES;
+}
+
 function renderFcpTable(cpu, t) {
   const archs = fcpArchsFor(t);
+  const scales = fcpScalesFor(cpu);
   let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
   for (const a of archs) html += `<th>${escapeHtml(a.label)}</th>`;
   html += '</tr></thead><tbody>';
-  for (const scale of FCP_SCALES) {
+  for (const scale of scales) {
     const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
     const nums = vals.filter((v) => v != null);
     const best = nums.length ? Math.min(...nums) : null;
@@ -317,11 +324,12 @@ function stormSeries(op, t, ticks = 1) {
 }
 
 function fcpSeries(cpu, t) {
+  const scales = fcpScalesFor(cpu);
   return fcpArchsFor(t)
     .map((a) => ({
       label: a.label,
       color: a.color,
-      pts: FCP_SCALES.map((scale) => {
+      pts: scales.map((scale) => {
         const v = cellMetric(a.key, scale, 'fcp', cpu);
         if (v == null) return null;
         return { x: SIZE_N[scale], y: v, label: scale };
@@ -586,6 +594,8 @@ ${conclusionsHtml}
 <h2>${escapeHtml(t.hFcp)}</h2>
 <p class="sub">${t.subFcp}</p>
 <div class="scroll">${renderFcpTable(1, t)}</div>
+<p class="sub" style="margin-top:16px">${escapeHtml(t.subFcp4)}</p>
+<div class="scroll">${renderFcpTable(4, t)}</div>
 <div class="charts" style="margin-top:16px">
   ${renderLineChart({
     title: ch.fcp1.title,
