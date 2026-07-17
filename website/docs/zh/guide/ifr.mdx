@@ -123,7 +123,7 @@ Vue Lynx 当前不使用 Lynx 的二进制 `elementTemplates` bundle section、`
 - 保持首屏输出确定性。渲染路径中避免 `Math.random()`、`Date.now()` 和依赖线程的分支。
 - 把数据请求、定时器、订阅和其他副作用放进组合式 API 生命周期钩子。这些钩子会在主线程渲染期间被抑制，只在后台线程运行。
 - Options API 的 `mounted()` 目前不会在主线程被抑制。使用 IFR 的首屏组件应优先使用组合式 API 钩子。
-- IFR 只能绘制同步可用的数据。fetch 驱动页面如果需要更早的首帧，应提供有意义的外壳或骨架。
+- IFR 只能绘制同步可用的数据。fetch 驱动页面仍应 **mount**，并在主线程画出有意义的外壳或骨架——用例如 `useQuery({ enabled: !isIfrMainThread() })` 关掉网络请求，而不是整段跳过 `app.mount()`。跳过 mount 只会留下更大的 IFR bundle，却拿不到首屏收益。
 - 后台 handler registry 就绪前的短暂窗口中，普通事件可能被丢弃。[主线程脚本](/zh/guide/main-thread-script) handler 本来就在主线程，因此仍可交互。
 
 ## 取舍
@@ -137,43 +137,47 @@ Vue Lynx 当前不使用 Lynx 的二进制 `elementTemplates` bundle section、`
 
 ## Benchmark
 
-下表把三种产品配置明确分开。FCP 来自 Lynx for Web 的真实 Web Worker，hello-world 无 CPU 节流测量（十个 example 上默认配置的收益中位为 −19%）；渲染成本来自约 1000 元素动态内容场景的 V8 `--jitless` warm 中位；TTI 和 gzip 是全示例扫描相对 No IFR 归一化后的中位数。这些列来自不同轮次，不应视为同一条端到端 trace。
+下表把三种产品配置明确分开。FCP 来自 Lynx for Web 的真实 Web Worker，hello-world 无 CPU 节流测量；渲染成本来自约 1000 元素动态内容场景的 V8 `--jitless` warm 中位；TTI 和 gzip 是全示例扫描相对 No IFR 归一化后的中位数。这些列来自不同轮次，不应视为同一条端到端 trace。
 
-| 配置 | flags | FCP | 渲染成本 | TTI proxy | bundle gzip |
+| 配置 | flags | FCP（hello-world） | 渲染成本 | TTI proxy | bundle gzip |
 | --- | --- | ---: | ---: | ---: | ---: |
 | No IFR | `IFR=false, ET=false` | 96.6 ms | 9.4 ms | 1.00x | 1.00x |
 | **IFR + ET** | `IFR=true, ET=default` | **75.4 ms（−22%）** | **1.3 ms** | 1.35x | ~2.26x |
 | IFR without ET | `IFR=true, ET=false` | 75.8 ms（−22%） | 8.4 ms | 1.36x | ~2.26x |
 
+跨多轮测量，**内容优先**首屏在 Lynx for Web 上的 IFR + ET FCP 收益大致落在
+**−12% 到 −26%**（十个 demo 中位 −19%；后续含 TodoMVC / gallery / 更大应用的
+七应用集中位约 −12%）。绝对毫秒随宿主漂移；比值才是稳定货币。详见
+[IFR 性能数据](/zh/guide/ifr-benchmarks)。
+
 ### 数据说明了什么
 
-1. **IFR 的收益是真实的、结构性的，且与参照实现同级。**在有真实线程边界的
-   Lynx for Web 上，十个 example 中九个的 FCP 改善——−8% 到 −23%，默认
-   配置中位 **−19%**，与 ReactLynx 在同一 harness 上的 −23% 属同一量级。
-   收益来源是把后台线程启动 + IPC 从关键路径上移除——这也是单进程
-   benchmark 看不到它的原因。
-2. **元素模板攻击的正是 IFR 新增的那笔成本。**主线程同步渲染便宜 7–15×，
-   ops 载荷缩小 3–1000×（一个 1400 元素的静态屏从 78 KB 缩到 69 字节）。
-   小屏的 web FCP 上这看不出来——渲染本来就只有几毫秒，两种 IFR 配置的
-   测量差异在噪声之内——但渲染成本这一项恰恰随屏幕变大、CPU 变慢而增长，
-   并在没有 JIT 的原生解释器上占主导：原生验证确认 ET 显著降低同步渲染
-   成本。这种不对称性——最差不过噪声、渲染成本要紧处必赢——就是 ET
-   默认随 IFR 开启的原因。
-3. **代价是 bundle 体积，它也定义了反面画像。**`main.lynx.bundle` gzip
-   中位增长 ×2.26，可交互前的串行工作量最多 ×1.36（真机上与后台启动
-   重叠）。大 bundle 配纯骨架、fetch 驱动的首屏在 web 上会反转
-   （hackernews：满速 +14%、节流 +9…11%）——因为 web 把 bundle 解析付在
-   FCP 路径上；原生预编译字节码会把这一项压小。
+1. **IFR 在内容优先首屏上的收益是真实的、结构性的。**有真实线程边界的
+   Lynx for Web 会把后台启动 + IPC 移出关键路径——这也是单进程 benchmark
+   看不到它的原因。一轮（十个偏小 example）看到 **−8% 到 −23%，中位 −19%**；
+   后续含 TodoMVC、gallery、Hacker News（shell IFR）、AI Chat、Elk 的复测
+   中，内容优先中位约 **−12%**（hello-world 单独约 −22% 到 −26%，视宿主而定）。
+   ReactLynx 在第一轮 harness 上为 −23%，同属这一量级。
+2. **元素模板攻击的正是 IFR 新增的那笔成本。**主线程同步渲染跨复测约便宜
+   **6–15×**，ops 载荷缩小 3–1000×。小屏 web FCP 上这常常看不出来——两种
+   IFR 配置通常只差几个百分点——但渲染成本随屏幕变大、CPU 变慢而增长，
+   因此 ET 默认随 IFR 开启。
+3. **代价是 bundle 体积，大应用 / fetch 重应用可能反转。**`main.lynx.bundle`
+   gzip 约 **×2.2–2.5**（套件中位 ~×2.26）。Web 上 bundle 解析在 FCP 路径上：
+   4× CPU 节流下，Elk / AI Chat 曾测到约 **+25% 到 +44%**；小内容屏仍可保留
+   较薄收益。IFR 下应画出真正的外壳，不要因数据异步就跳过 `app.mount()`
+   （Hacker News 改 shell IFR 后，满速从约 **+38% 回到 −12%**）。
 
 ### 给开发者的建议
 
 | 你的首屏 | 建议 |
 | --- | --- |
-| 内容优先、由同步数据渲染 | **开 `enableIFR: true`**（自带 ET）——这是目标画像，中位 −19% FCP |
-| 数据驱动但初始数据同步可得 | 开 |
-| fetch 驱动——响应回来前无物可画 | 不开；或先重构出真正的骨架屏再开 |
+| 内容优先、由同步数据渲染 | **开 `enableIFR: true`**（自带 ET）——内容优先集上典型 web FCP 约 **−12% 到 −26%** |
+| 数据驱动但有同步外壳 / 骨架 | 开；把 fetch 挡在 IFR 主线程之外 |
+| fetch 驱动——响应前**完全无物可画** | 不开；或先做出真正外壳再开 |
+| Web 上大 bundle + 慢 CPU | 先实测——节流可能抹平甚至反转收益 |
 | 体积极度敏感 | 先实测——gzip 大约翻倍 |
 
 无论哪种画像：保持首屏确定性、副作用放进组合式 API 生命周期钩子（见[编写 IFR 友好的首屏](#编写-ifr-友好的首屏)）；`enableElementTemplates: false` 只用于二分定位疑似 ET 问题——它不是性能调节项。
 
-这张表只是摘要。完整的测量数据——七 variant 策略阶梯、全示例逐项 FCP/TTI/体积、Lynx for Web 真实双线程与 ReactLynx 的对照、以及单线程裸 Web 基线分解——见专门的 [IFR 性能数据](/zh/guide/ifr-benchmarks)页面。
+这张表只是摘要。完整的测量数据——七 variant 策略阶梯、全示例逐项 FCP/TTI/体积、Lynx for Web 真实双线程与 ReactLynx 的对照、后续大应用复测、以及单线程裸 Web 基线分解——见专门的 [IFR 性能数据](/zh/guide/ifr-benchmarks)页面。

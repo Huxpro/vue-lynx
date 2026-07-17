@@ -170,7 +170,10 @@ function of its inputs:
 - Options API `mounted()` is not yet suppressed on the main thread. Prefer
   Composition API hooks for first-screen components that use IFR.
 - IFR paints only synchronously available data. A fetch-driven screen should
-  render a useful shell or skeleton if it needs an earlier first frame.
+  still **mount** and render a useful shell or skeleton on the main thread —
+  gate the network work (for example `useQuery({ enabled: !isIfrMainThread() })`),
+  do not skip `app.mount()` entirely. Skipping the mount keeps the larger IFR
+  bundle with none of the first-paint benefit.
 - Regular events can be dropped in the short interval before the background
   registry is ready. [Main Thread Script](/guide/main-thread-script) handlers
   remain interactive because they already live on the main thread.
@@ -194,53 +197,59 @@ configuration.
 ## Benchmarks
 
 The table keeps the three product configurations separate. FCP is hello-world
-on Lynx for Web with a real Web Worker (no CPU throttle; the median win across
-ten examples is −19% in the default configuration). Render cost is the warm
-median for a roughly
-1,000-element dynamic-content scene under V8 `--jitless`. TTI and gzip are
-medians from the all-examples sweep, normalized to No IFR. These are separate
-campaigns; the columns should not be read as one end-to-end trace.
+on Lynx for Web with a real Web Worker (no CPU throttle). Render cost is the
+warm median for a roughly 1,000-element dynamic-content scene under V8
+`--jitless`. TTI and gzip are medians from the all-examples sweep, normalized
+to No IFR. These are separate campaigns; the columns should not be read as one
+end-to-end trace.
 
-| configuration | flags | FCP | render cost | TTI proxy | bundle gzip |
+| configuration | flags | FCP (hello-world) | render cost | TTI proxy | bundle gzip |
 | --- | --- | ---: | ---: | ---: | ---: |
 | No IFR | `IFR=false, ET=false` | 96.6 ms | 9.4 ms | 1.00x | 1.00x |
 | **IFR + ET** | `IFR=true, ET=default` | **75.4 ms (−22%)** | **1.3 ms** | 1.35x | ~2.26x |
 | IFR without ET | `IFR=true, ET=false` | 75.8 ms (−22%) | 8.4 ms | 1.36x | ~2.26x |
 
+Across campaigns, the **content-first** Lynx-for-Web FCP win for default
+IFR + ET sits roughly in **−12% to −26%** (medians −19% on a ten-example
+demo suite; −12% on a later seven-app set that adds TodoMVC / gallery and
+larger apps). Absolute milliseconds drift by host; ratios are the stable
+currency. See [IFR Benchmarks](/guide/ifr-benchmarks) for both runs.
+
 ### What the data says
 
-1. **IFR's win is real, structural, and matches the reference
-   implementation.** Across ten examples with a genuine thread boundary
-   (Lynx for Web), IFR improves FCP on nine — −8% to −23%, median
-   **−19%** in the default configuration, the same class as ReactLynx's
-   −23% on an identical harness. The win comes from removing
-   background-thread boot + IPC from the critical path, which is also why
-   a single-process benchmark cannot see it.
+1. **IFR's win is real and structural on content-first screens.** With a
+   genuine thread boundary (Lynx for Web), IFR removes background-thread boot
+   + IPC from the critical path — which is also why a single-process
+   benchmark cannot see it. One campaign (ten mostly small examples) saw
+   **−8% to −23%, median −19%**; a later reevaluation including TodoMVC,
+   gallery, Hacker News (shell IFR), AI Chat, and Elk saw content-first
+   medians around **−12%** at full speed (hello-world alone about −22% to
+   −26% depending on host). ReactLynx's control on the first harness was
+   −23%, the same class of win.
 2. **Element Templates attack the one cost IFR adds.** The synchronous
-   main-thread render gets 7–15× cheaper and the ops payload shrinks
-   3–1,000× (a 1,400-element static screen ships 69 bytes instead of
-   78 KB). On web FCP for small screens this doesn't show — the render is
-   milliseconds either way, so the two IFR configurations measure within
-   noise of each other — but the render-cost term is exactly what grows
-   with screen size and shrinks CPU speed, and it dominates on native
-   interpreters (no JIT), where validation confirmed ET meaningfully cuts
-   the synchronous render. This asymmetry — never worse than noise, wins
-   where render cost bites — is why ET defaults on with IFR.
-3. **The price is bundle size, and it defines the counter-profile.**
-   `main.lynx.bundle` gzip grows ×2.26 (median) and serial work until
-   interactive grows up to ×1.36 (overlapped by background boot on
-   devices). A big bundle with a skeleton-only, fetch-driven first screen
-   inverts on the web, where bundle parse lands on the FCP path
-   (hackernews: +14% at full speed, +9…11% throttled); native precompiled
-   bytecode shrinks that term.
+   main-thread render gets about **6–15×** cheaper across strategy-ladder
+   reruns, and the ops payload shrinks 3–1,000× (a 1,400-element static
+   screen ships 69 bytes instead of 78 KB). On web FCP for small screens
+   this often does not show — the two IFR configurations are usually within
+   a few percent — but the render-cost term grows with screen size and
+   shrinks with CPU speed, which is why ET defaults on with IFR.
+3. **The price is bundle size, and large / fetch-heavy apps can invert.**
+   `main.lynx.bundle` gzip grows about **×2.2–2.5** (suite median ~×2.26).
+   On the web, bundle parse sits on the FCP path: under 4× CPU throttle,
+   big apps (Elk, AI Chat) have measured **+25% to +44%** FCP with IFR, while
+   small content-first screens still keep a thinner win. Paint a real shell
+   under IFR; do not skip `app.mount()` just because data is async
+   (Hacker News recovered from about **+38% to −12%** at full speed after
+   switching to shell IFR).
 
 ### Recommendations
 
 | your first screen | do this |
 | --- | --- |
-| content-first, renders from synchronous data | **enable `enableIFR: true`** (brings ET) — this is the target profile, worth −19% FCP at the median |
-| data-driven with synchronous initial data | enable |
-| fetch-driven — nothing to paint before a response | don't enable; or restructure to render a real skeleton first, then enable |
+| content-first, renders from synchronous data | **enable `enableIFR: true`** (brings ET) — typical web FCP win about **−12% to −26%** on content-first sets |
+| data-driven with a sync shell / skeleton | enable; gate fetches off the IFR main-thread pass |
+| fetch-driven with **nothing** useful to paint before a response | don't enable; or add a real shell first, then enable |
+| large bundle on web + slow CPU | measure — throttle can erase or reverse the win |
 | bundle-size-critical | measure first — gzip roughly doubles |
 
 And regardless of profile: keep the first screen deterministic and put side
@@ -251,6 +260,6 @@ ET issue — not as a performance setting.
 
 The full measurement campaigns — the seven-variant strategy ladder,
 per-example FCP/TTI/size across the whole example suite, the real-browser
-dual-thread comparison against ReactLynx, and the single-threaded plain-web
-decomposition — are on the dedicated [IFR Benchmarks](/guide/ifr-benchmarks)
-page.
+dual-thread comparison against ReactLynx, a later large-app reevaluation,
+and the single-threaded plain-web decomposition — are on the dedicated
+[IFR Benchmarks](/guide/ifr-benchmarks) page.
