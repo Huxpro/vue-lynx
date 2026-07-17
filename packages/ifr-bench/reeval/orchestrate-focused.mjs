@@ -1,12 +1,17 @@
 /**
- * Example sweep orchestrator: builds every example under three configs
- * (off / ifr / ifr+et), stashing the produced bundles for measurement.
+ * Focused IFR/ET reevaluation build matrix.
  *
- *   node examples-sweep/orchestrate.mjs <bundles-out-dir>
+ * Fixes the post-#216 flag semantics bug in examples-sweep/orchestrate.mjs:
+ * `enableIFR: true` alone now ALSO enables Element Templates by default, so
+ * the old `ifr` inject (without an explicit opt-out) was identical to `ifr-et`.
  *
- * Configs are produced by rewriting each example's lynx.config.ts in place
- * (existing enableIFR/enableElementTemplates lines stripped, flags injected
- * after `pluginVueLynx({`). Restore with `git checkout -- examples` after.
+ * Configs measured:
+ *   off     — enableIFR: false, enableElementTemplates: false
+ *   et      — ET only (advanced composition)
+ *   ifr     — IFR without ET (explicit enableElementTemplates: false)
+ *   ifr-et  — IFR + ET (product default when enableIFR: true)
+ *
+ *   node packages/ifr-bench/reeval/orchestrate-focused.mjs <bundles-out-dir>
  */
 
 import { execFileSync } from 'node:child_process';
@@ -18,50 +23,32 @@ const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(_dirname, '../../..');
 const examplesDir = path.join(repoRoot, 'examples');
 const outDir = process.argv[2];
-if (!outDir) throw new Error('usage: orchestrate.mjs <bundles-out-dir>');
+if (!outDir) throw new Error('usage: orchestrate-focused.mjs <bundles-out-dir>');
 
-/** example → entry to measure (tutorials: completed state). */
+/** Focus set: small sanity + TodoMVC + larger apps the published matrix skipped. */
 export const ENTRIES = {
-  '7guis': 'cells',
-  basic: 'main',
-  'css-features': 'main',
+  'hello-world': 'main',
+  todomvc: 'main',
+  'todomvc-day1': 'main',
   gallery: 'GalleryComplete',
   'hackernews-css': 'main',
-  'hackernews-tailwind': 'main',
-  'hello-world': 'main',
-  'keep-alive': 'main',
-  'main-thread': 'cross-thread-calls',
-  networking: 'main',
-  'option-api': 'main',
-  pinia: 'main',
-  'provide-inject': 'main',
-  reactivity: 'main',
-  slots: 'main',
-  suspense: 'main',
-  swiper: 'Swiper',
-  tailwindcss: 'main',
-  todomvc: 'main',
-  'todomvc-codex': 'main',
-  'todomvc-day1': 'main',
-  transition: 'transition',
-  'v-model': 'main',
-  'vue-router': 'main',
-  // 'event-modifiers': pre-existing VueCompilerError on the base branch — skipped
+  'ai-chat': 'main',
+  elk: 'main',
 };
 
-// Explicit flags for every dimension. After #216, `enableIFR: true` alone
-// ALSO enables Element Templates by default — the previous `ifr` inject
-// (without `enableElementTemplates: false`) was therefore identical to
-// `ifr-et` and could not isolate the ET contribution.
+/**
+ * Explicit flags for every dimension — never rely on defaults for a benchmark.
+ * Comments are stripped by rewriteConfig, so keep inject as pure option lines.
+ */
 const CONFIGS = {
   off: '      enableIFR: false,\n      enableElementTemplates: false,\n',
+  et: '      enableIFR: false,\n      enableElementTemplates: true,\n',
   ifr: '      enableIFR: true,\n      enableElementTemplates: false,\n',
   'ifr-et': '      enableIFR: true,\n      enableElementTemplates: true,\n',
 };
 
 function rewriteConfig(configPath, inject) {
   let src = fs.readFileSync(configPath, 'utf8');
-  // Strip any existing flags (and the descriptive comments above them).
   src = src.replace(/^\s*\/\/.*(?:IFR|first screen|Element templates|first frame|snapshot).*\n/gim, '');
   src = src.replace(/^\s*enable(?:IFR|ElementTemplates):.*\n/gm, '');
   if (!/pluginVueLynx\(\{/.test(src)) {
@@ -72,7 +59,13 @@ function rewriteConfig(configPath, inject) {
   fs.writeFileSync(configPath, src);
 }
 
+function gzipSize(buf) {
+  return execFileSync('gzip', ['-c'], { input: buf }).length;
+}
+
 const results = [];
+fs.mkdirSync(outDir, { recursive: true });
+
 for (const [example, entry] of Object.entries(ENTRIES)) {
   const dir = path.join(examplesDir, example);
   const configPath = path.join(dir, 'lynx.config.ts');
@@ -93,28 +86,35 @@ for (const [example, entry] of Object.entries(ENTRIES)) {
       execFileSync('pnpm', ['build'], {
         cwd: dir,
         stdio: 'pipe',
-        timeout: 240_000,
+        timeout: 360_000,
       });
     } catch (e) {
       ok = false;
-      err = String(e.stdout ?? e).slice(-400);
+      err = String(e.stderr ?? e.stdout ?? e).slice(-600);
     }
     const buildMs = Date.now() - t0;
 
-    const destDir = path.join(outDir, example);
-    fs.mkdirSync(destDir, { recursive: true });
+    const sizes = {};
     for (const platform of ['web', 'lynx']) {
       const bundle = path.join(dir, 'dist', `${entry}.${platform}.bundle`);
+      const dest = path.join(outDir, `${example}-${cfg}.${platform}.bundle`);
       if (ok && fs.existsSync(bundle)) {
-        fs.copyFileSync(bundle, path.join(destDir, `${cfg}.${platform}.bundle`));
+        fs.copyFileSync(bundle, dest);
+        const raw = fs.readFileSync(bundle);
+        sizes[platform] = {
+          bytes: raw.length,
+          gzip: gzipSize(raw),
+        };
       } else if (ok) {
         ok = false;
         err = `bundle missing: ${entry}.${platform}.bundle`;
       }
     }
-    results.push({ example, entry, cfg, ok, buildMs, err });
+    results.push({ example, entry, cfg, ok, buildMs, err, sizes });
     console.log(
-      `${ok ? 'OK  ' : 'FAIL'} ${example.padEnd(20)} ${cfg.padEnd(7)} ${buildMs}ms ${err}`,
+      `${ok ? 'OK  ' : 'FAIL'} ${example.padEnd(16)} ${cfg.padEnd(7)} ${
+        String(buildMs).padStart(6)
+      }ms  web.gz=${sizes.web ? (sizes.web.gzip / 1024).toFixed(1) + 'KiB' : '-'}  ${err}`,
     );
   }
   fs.writeFileSync(configPath, original);

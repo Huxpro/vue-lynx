@@ -3,7 +3,26 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { stripStyleImports } from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
+import {
+  extractTemplateRegistrations,
+  stripStyleImports,
+} from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
+
+describe('extractTemplateRegistrations', () => {
+  it('re-emits real registrations and ignores JSDoc examples', () => {
+    const real =
+      '(globalThis.__vueLynxRegisterElementTemplate || function () {})("ab12", ["#text"], function (P) { return [e0]; })';
+    const src = [
+      '/**',
+      ' *   const _hoisted_1 = (globalThis.__vueLynxRegisterElementTemplate ||',
+      ' *     function () {})("<id>", ["class", "#text"],',
+      ' *     function (P) { return [e0]; })',
+      ' */',
+      `const _hoisted_1 = ${real};`,
+    ].join('\n');
+    expect(extractTemplateRegistrations(src)).toBe(`${real};`);
+  });
+});
 
 describe('stripStyleImports', () => {
   it('drops side-effect style imports and keeps everything else', () => {

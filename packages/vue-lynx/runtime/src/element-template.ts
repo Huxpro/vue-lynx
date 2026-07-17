@@ -20,13 +20,13 @@
  *    protocol
  *
  * This module is the background-thread (and IFR main-thread) side of the
- * registry. The generated code registers through
- * `globalThis.__vueLynxRegisterElementTemplate` (a global rather than an
- * import, so it is independent of which compiler copy performed codegen):
- *
- *   const _hoisted_1 = (globalThis.__vueLynxRegisterElementTemplate ||
- *     function () {})("<id>", ["class", "#text"],
- *     function (P) { …straight-line PAPI…; return [e0, e3, e5]; })
+ * registry. The generated code registers through the
+ * `globalThis.__vueLynxRegisterElementTemplate` global (rather than an
+ * import, so it is independent of which compiler copy performed codegen).
+ * The compiler emits a call shaped like
+ * `(globalThis.<TPL_REGISTER_GLOBAL> || noop)(id, holes, create)` — the
+ * concrete shape lives in the compiler transform, not as a copy-paste
+ * example here, so source-scanning MT loaders cannot mistake docs for code.
  *
  * This module installs the global at evaluation time (it evaluates before
  * any user render module — they import 'vue-lynx' first). On the
