@@ -2687,3 +2687,93 @@ body.is-blackout::after {
   font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.02em;
 }
 .sendmock__arrow svg { width: 42px; height: 24px; }
+
+/* =========================================================
+   Elk draggable sheet — three-owner layered mock + code
+   Vue <Transition> (declarative) → MTS worklet (main thread)
+   → native <scroll-view> (arbitration). Most web → most native.
+   ========================================================= */
+.layers3 {
+  --l-vue: #42b883;            /* Vue Transition — declarative */
+  --l-mts: var(--brand-teal);  /* MTS worklet — main thread */
+  --l-scroll: #E8B44A;         /* native scroll-view */
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+  border: 1.5px solid color-mix(in srgb, var(--l-vue) 62%, transparent);
+  border-radius: 16px;
+  padding: 21px 12px 12px;
+  position: relative;
+  background: color-mix(in srgb, var(--l-vue) 6%, transparent);
+}
+.layers3__mid {
+  border: 1.5px solid color-mix(in srgb, var(--l-mts) 62%, transparent);
+  border-radius: 13px;
+  padding: 21px 12px 12px;
+  position: relative;
+  background: color-mix(in srgb, var(--l-mts) 7%, transparent);
+}
+.layers3__inner {
+  border: 1.5px solid color-mix(in srgb, var(--l-scroll) 62%, transparent);
+  border-radius: 10px;
+  padding: 21px 12px 12px;
+  position: relative;
+  background: color-mix(in srgb, var(--l-scroll) 8%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.layers3__inner .row { height: 11px; border-radius: 6px; background: var(--c-list); }
+.layers3__inner .row.w70 { width: 70%; }
+.layers3__inner .row.w90 { width: 90%; }
+/* one pill per layer: number + element + dim role — no collisions */
+.layers3__tag {
+  position: absolute;
+  top: -11px;
+  left: 13px;
+  padding: 2px 11px;
+  border-radius: 999px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.layers3 > .layers3__tag { color: var(--l-vue); border: 1px solid color-mix(in srgb, var(--l-vue) 55%, transparent); }
+.layers3__mid > .layers3__tag { color: var(--l-mts); border: 1px solid color-mix(in srgb, var(--l-mts) 55%, transparent); }
+.layers3__inner > .layers3__tag { color: var(--l-scroll); border: 1px solid color-mix(in srgb, var(--l-scroll) 55%, transparent); }
+.layers3__tag .role { color: var(--ink-mute); font-weight: 400; }
+/* web → native axis beside the stack */
+.layers3-wrap { display: flex; align-items: stretch; gap: 14px; }
+.layers3-axis {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 4px 0;
+}
+.layers3-axis .bar {
+  flex: 1;
+  width: 3px;
+  margin: 8px 0;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #42b883, var(--brand-teal), #E8B44A);
+}
+
+/* two-column: mock | code for the sheet slides */
+.sheet-cols {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: clamp(28px, 5cqw, 68px);
+  align-items: center;
+  width: 100%;
+}
+.sheet-cols .codeframe { text-align: left; }
+.sheet-payoff { max-width: 62ch; }
+.sheet-payoff .dim { color: var(--ink-mute); }
