@@ -1,9 +1,9 @@
-name: Release
+name: Backfill vue-lynx 0.4.1
 
 on:
   push:
     branches:
-      - main
+      - huxcx/backfill-vue-lynx-0.4.1
 
 permissions: {}
 
@@ -35,25 +35,15 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://registry.npmjs.org
 
       - name: Install Dependencies
         run: pnpm install
 
       - name: Build
-        run: pnpm build && pnpm --filter create-vue-lynx run build && pnpm build:examples:publishable
+        run: pnpm build
 
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: pnpm run release
+      - name: Publish vue-lynx 0.4.1
+        run: pnpm --filter vue-lynx publish --no-git-checks --access public --provenance
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Use GitHub generated release notes
-        if: steps.changesets.outputs.published == 'true'
-        run: node scripts/sync-github-release-notes.mjs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
