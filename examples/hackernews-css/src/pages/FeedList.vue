@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue-lynx';
+import { computed, isIfrMainThread, ref, watch } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 import {
   keepPreviousData,
@@ -20,16 +20,22 @@ const router = useRouter();
 const queryClient = useQueryClient();
 const slideDirection = ref<'slide-left' | 'slide-right'>('slide-left');
 
+// IFR main thread has no fetch — paint the shell/spinner, let BG fetch.
+const networkEnabled = !isIfrMainThread();
+
 const { data: items, isLoading, isFetching, isError } = useQuery({
   queryKey: computed(() => ['feed', props.feed, props.page]),
   queryFn: () => fetchFeed(props.feed, props.page),
   staleTime: 5 * 60 * 1000,
   placeholderData: keepPreviousData,
+  enabled: networkEnabled,
 });
 
 watch(
   () => [props.feed, props.page] as const,
   ([feed, page], oldValue) => {
+    if (!networkEnabled) return;
+
     if (oldValue) {
       const [oldFeed, oldPage] = oldValue;
       slideDirection.value =

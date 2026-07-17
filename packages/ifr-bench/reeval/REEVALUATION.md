@@ -215,14 +215,55 @@ IFR can win FCP and still lose “time to stable tree”:
 - ET-only is fine after the comment-scan fix, but it is not a performance
   feature on Lynx for Web.
 
-## 7. Reproduce
+## 8. Follow-ups after review
 
-```bash
-pnpm --filter vue-lynx run build
-node packages/ifr-bench/reeval/orchestrate-focused.mjs /tmp/ifr-reeval-bundles
-PLAYWRIGHT_CHROMIUM_PATH=... node packages/ifr-bench/web-harness/run-browser.mjs /tmp/ifr-reeval-bundles 7 1
-PLAYWRIGHT_CHROMIUM_PATH=... node packages/ifr-bench/web-harness/run-browser.mjs /tmp/ifr-reeval-bundles 7 4
-pnpm --filter vue-lynx-ifr-bench run bench
-```
+### 8a. ifr-without-ET **is** in the matrix
 
-Raw JSON: `packages/ifr-bench/reeval/results/`.
+Every table above has four cells: `off` / `et` / `ifr` (explicit
+`enableElementTemplates: false`) / `ifr-et`. Raw JSON:
+`results/browser-results-x1.json` (7 apps × 4 configs). If a summary
+row only quoted `ifr+et` deltas, that was narrative compression — not a
+missing config.
+
+### 8b. ET-without-IFR — what was actually verified
+
+| check | result |
+|---|---|
+| Build (after comment-scan fix) | 7/7 apps OK (was 2/7) |
+| Unit test: JSDoc not re-emitted | pass (`worklet-utils.test.ts`) |
+| Bundle contents | `todomvc` et: lepus `CreateView`×7 + registrations (off: ~0 real creates) |
+| Lynx-for-Web FCP | et-only paints correct node counts (hello 16, todomvc 11, gallery 304, …) |
+| FCP delta vs off | ≈ flat (not a web-FCP win) |
+| In-process `measure-run` | **broken for both off and et** here (`setTimeout is not a function`) — does not isolate ET |
+| Dedicated INSTANTIATE_TEMPLATE e2e on et-only | **not done** — runtime path covered by `element-template.test.ts` (shared pipeline), not by a rebuilt-example assertion |
+
+So: the build bug is real and fixed; et-only bundles contain MT template
+`create()`s and paint in the browser; we did **not** add a new e2e that
+asserts op-level `INSTANTIATE_TEMPLATE` on an et-only example rebuild.
+
+### 8c. Hacker News mount skip — history and fix
+
+| commit | what |
+|---|---|
+| `0de30fe` (during #216) | `if (hasFetch()) app.mount()` — PrimJS MT has no fetch |
+| `cc9e426` (#216 simplify) | replaced with `if (!isIfrMainThread()) app.mount()` |
+
+That skipped the whole tree, including the sync chrome. Wrong product
+shape: IFR should paint the shell; only network work must stay off the
+MT pass.
+
+**Fix (this branch):** always `app.mount()`; gate vue-query with
+`enabled: !isIfrMainThread()` (and skip prefetch on MT). In-process
+check: `contentAtRenderPage` goes **0 → 11** (header/nav/shell) under
+IFR.
+
+Remeasured Lynx-for-Web FCP for `hackernews-css` after the fix:
+
+| | off | ifr | ifr+et | ifr+et Δ |
+|---|---:|---:|---:|---:|
+| x1 **before** (mount skip) | 62.9 | 90.7 | 87.1 | **+38%** |
+| x1 **after** (shell IFR) | 71.5 | 64.1 | **63.0** | **−12%** |
+| x4 after | 172.5 | 183.5 | 186.7 | +8% |
+
+Shell IFR recovers the x1 win; under 4× throttle the big-bundle parse
+term still dominates (same class as other large apps).

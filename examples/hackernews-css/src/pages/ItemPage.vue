@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, isIfrMainThread } from 'vue-lynx';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchItem } from '../api';
@@ -16,6 +16,7 @@ const { data: item, isLoading, isError } = useQuery({
   queryKey: computed(() => ['item', itemId.value]),
   queryFn: () => fetchItem(itemId.value),
   staleTime: 60 * 1000,
+  enabled: !isIfrMainThread(),
 });
 
 const itemUrl = computed(() => (item.value ? toHost(item.value.url) : ''));

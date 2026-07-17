@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue-lynx';
+import { computed, isIfrMainThread } from 'vue-lynx';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuery } from '@tanstack/vue-query';
 import { fetchUser } from '../api';
@@ -15,6 +15,7 @@ const { data: user, isLoading, isError } = useQuery({
   queryKey: computed(() => ['user', userId.value]),
   queryFn: () => fetchUser(userId.value),
   staleTime: 60 * 1000,
+  enabled: !isIfrMainThread(),
 });
 
 function goBack() {
