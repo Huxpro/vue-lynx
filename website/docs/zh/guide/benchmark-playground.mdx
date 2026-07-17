@@ -1,71 +1,23 @@
 # Playground：React vs Vue on Lynx
 
-> **[统一基准矩阵](/zh/guide/benchmark-unified)的一部分** ——
-> 断言卡片、IFR×框架 storms、FCP 曲线在那里。
-> 本页是*可交互*黑盒切片。绝对毫秒随机器变化。
+> 数字、比率与图表见
+> **[统一基准矩阵](/zh/guide/benchmark-unified)**。
+> 本页只留*可交互*切片——在你的设备上亲手感受同一批应用。
 
-[VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor)里的每个数字都来自跑在
-Lynx for Web 上的应用——同一批应用可以直接嵌在这个页面里，在你的手机上运行。
-选择一个配置，亲手点按 harness 所点的按钮，自己感受差异。徽标显示最近一次
-点按的 **tap → DOM settled** 耗时（点按后最后一次 DOM 变更、以变更静默为准）。
-
-**Storm 用语：Select = 点状更新**（移动选中态；少量 class）；
-**Update = 批量更新**（每轮改很多行）。单次点击往往手感接近，storm 才会拉开。
+**Select = 点状更新**（选中态 / 少量 class）。
+**Update = 批量更新**（每轮改很多行）。单次点击往往手感接近；storm 才会拉开。
 
 <BenchPlayground />
 
 **建议试玩**
 
-1. 先 **Create 10,000 rows**，再点 **Select storm**（30 次点状更新）——
-   Vue Vapor 贴近地板；VDOM / React 会爬升。
-2. 在 10,000 行上点 **Update storm**（50 轮批量更新）——
-   Vapor 仍领先；差距小于 select，但真实存在。
-3. 单次点按（1k 表上的 Update / Select）手感接近——
-   持续吞吐才是 storm 放大的东西。
-
-完整矩阵、比率与 FCP 阶梯见 **[统一基准矩阵](/zh/guide/benchmark-unified)**。
-
-<details>
-<summary>可选：旧版单表 HTML（已被统一报告取代）</summary>
-
-<BenchArtifactFrame
-  src="/benchmark/table.html"
-  title="React vs Vue table (legacy)"
-  titleZh="React vs Vue 表（旧版）"
-  height={900}
-/>
-
-</details>
-
-## 与 js-framework-benchmark 有何不同
-
-同一套操作集（对 1k–10k 行 create/update/select/swap/remove/append/clear，
-keyed，各框架惯用状态）——三点不同：
-
-1. **被测运行时是 Lynx 双线程管线**，不是浏览器 DOM。延迟是*点击 → composed
-   DOM 终态*（逐动画帧轮询），不是 paint tracing。分辨率约一帧（~17 ms），
-   表格只对跨多帧场景排名。
-2. **持续会话维度**——冷启动单发，以及风暴（一次点按 = 50 轮批量更新或 30 次点状选中），
-   把亚帧级每 tick 成本放大到帧地板之上。
-3. **框架范围**——ReactLynx、Vue Lynx VDOM、Vue Lynx Vapor，在它们真正面向的
-   运行时上。
-
-我们也测了三档 React 优化（手工 `memo` + `useCallback`、朴素、
-[React Compiler](https://react.dev/learn/react-compiler)）。三档都可以在上面的
-playground 里试。
-
-## 注意事项
-
-- Harness 是 **Chromium 中的 Lynx for Web**，不是真机；Vue 3.6 与 ReactLynx
-  版本见原始结果。
-- 早期草稿曾把 ReactLynx 风暴报成数分钟/DNF——那是 Lynx for Web profiling shim
-  假象（见统一报告说明）。harness 现已对所有框架中和这些条目。
+1. **Create 10,000** → **Select storm**（30 次点状更新）。
+2. 同一张表上再跑 **Update storm**（50 轮批量）。
+3. 对比 Vue Vapor / Vue VDOM / ReactLynx (memo)。
 
 ## 复现
 
 ```bash
-pnpm --filter vue-lynx-benchmark bench:cross    # 基础套件
-pnpm --filter vue-lynx-benchmark bench:storms   # 更新密集场景
+pnpm --filter vue-lynx-benchmark bench:cross
+pnpm --filter vue-lynx-benchmark bench:storms
 ```
-
-原始数据：[`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark)。

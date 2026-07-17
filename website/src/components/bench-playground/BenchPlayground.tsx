@@ -3,8 +3,8 @@
  *
  * Loads the black-box benchmark apps (packages/benchmark/apps/ui-*) as real
  * Lynx-for-Web bundles inside a <lynx-view>, with a config picker so readers
- * can feel the difference between ReactLynx (three optimization levels),
- * Vue VDOM, and Vue Vapor by tapping the same buttons the harness clicks.
+ * can feel the difference between ReactLynx (memo), Vue VDOM, and Vue Vapor
+ * by tapping the same buttons the harness clicks.
  *
  * A latency badge measures tap → DOM-settled (last shadow-DOM mutation
  * followed by 300 ms of quiet), the embeddable cousin of the harness metric.
@@ -26,9 +26,7 @@ declare global {
 const CONFIGS = [
   { key: 'vapor', label: 'Vue Vapor' },
   { key: 'vdom', label: 'Vue VDOM' },
-  { key: 'react', label: 'React (hooks)' },
-  { key: 'react-naive', label: 'React (naive)' },
-  { key: 'react-compiler', label: 'React (compiler)' },
+  { key: 'react', label: 'ReactLynx (memo)' },
 ] as const;
 
 type ConfigKey = (typeof CONFIGS)[number]['key'];
