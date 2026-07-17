@@ -666,7 +666,7 @@
       },
       "scenario": "teleport/main",
       "verification": {
-        "sourceHash": "e4abf4d53704782e0d50602d23de3df75f9c5e0badc9b5c20e9136618316c160",
+        "sourceHash": "07b2805afb8d373324747b8b4198258bb3b42035b788011ee6ee70cc95c24e07",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -762,7 +762,7 @@
       },
       "scenario": "v-once-memo/main",
       "verification": {
-        "sourceHash": "d9d4e88593aa1d178c06ba15704b97a9788072d1377412b2d52b9c05b3ba5486",
+        "sourceHash": "0c6b5ba9291b0193ca8bbc6adb501a22fe8dd3db2e4c4096598cca50cbf7c874",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
