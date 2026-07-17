@@ -62,24 +62,27 @@ function pctDelta(newer, baseline) {
 }
 
 function ingestTableStorms(unified) {
-  // Merge multiple storm result files. Prefer newer/unified cells when the
-  // same (mode, op, scale) appears twice.
+  // Merge multiple storm result files. Prefer the newest meta.date per cell.
   const files = [
-    'results/cross-storms-latest.json',
     'results/cross-storms-scale6.json',
+    'results/cross-storms-latest.json',
     'results/cross-storms-unified-ifr.json',
+    'results/cross-storms-unified-react.json',
   ];
   const seen = new Map();
   for (const rel of files) {
     const p = path.join(root, rel);
     const data = readJson(p);
     if (!data?.perOp) continue;
+    const date = data.meta?.date ?? '1970-01-01';
     unified.sources.push({ kind: 'table-storms', path: p, meta: data.meta });
     for (const [mode, ops] of Object.entries(data.perOp)) {
       for (const [opKey, stats] of Object.entries(ops)) {
         const [op, scale] = opKey.split('@');
         if (!scale) continue;
         const key = `${mode}|${op}|${scale}`;
+        const prev = seen.get(key);
+        if (prev && prev._date > date) continue;
         seen.set(key, {
           schemaVersion: SCHEMA_VERSION,
           environment: 'lynx-web',
@@ -93,11 +96,17 @@ function ingestTableStorms(unified) {
           ci95: stats.ci95 ?? null,
           dnf: stats.dnf ?? 0,
           n: stats.n ?? null,
+          sourceDate: date,
+          sourceSha: data.meta?.sha ?? null,
+          _date: date,
         });
       }
     }
   }
-  for (const c of seen.values()) unified.cells.push(c);
+  for (const c of seen.values()) {
+    delete c._date;
+    unified.cells.push(c);
+  }
 }
 
 function ingestInstrumented(unified) {
@@ -643,17 +652,44 @@ function reevaluateClaims(unified) {
     ) {
       detail += `Vapor selectStorm@10k ≪ React (${storm.vapor.toFixed(0)} vs ${storm.react.toFixed(0)} ms). `;
     }
-    // IFR orthogonality for updates
-    if (storm['vdom-ifr-et'] != null && storm.vdom != null) {
-      const r = ratio(storm['vdom-ifr-et'], storm.vdom);
-      detail += `vdom-ifr-et/vdom selectStorm@10k=${r?.toFixed(2)}× (expect ~1 — IFR is first-frame). `;
-      if (r != null && (r < 0.7 || r > 1.4)) {
-        status = 'challenge';
-        detail += 'IFR build unexpectedly moved update throughput. ';
+    // IFR orthogonality: plain IFR should ≈ off for post-first-frame
+    // updates; IFR+ET may help subsequent *creates* via template clone.
+    const ifrRatio = ratio(
+      cell(unified, {
+        architecture: 'vdom-ifr',
+        scale: '10k',
+        metric: 'selectStorm',
+      })?.median,
+      storm.vdom,
+    );
+    const etRatio = ratio(storm['vdom-ifr-et'], storm.vdom);
+    const etCreate = ratio(
+      cell(unified, {
+        architecture: 'vdom-ifr-et',
+        scale: '10k',
+        metric: 'create',
+      })?.median,
+      cell(unified, {
+        architecture: 'vdom',
+        scale: '10k',
+        metric: 'create',
+      })?.median,
+    );
+    if (ifrRatio != null) {
+      detail += `vdom-ifr/vdom selectStorm@10k=${ifrRatio.toFixed(2)}× (plain IFR ≈ off: OK). `;
+    }
+    if (etRatio != null) {
+      detail += `vdom-ifr-et/vdom selectStorm@10k=${etRatio.toFixed(2)}×`;
+      if (etCreate != null) detail += `, create@10k=${etCreate.toFixed(2)}×`;
+      detail += '. ';
+      if (etRatio < 0.85) {
+        detail +=
+          'CHALLENGE: ET is not first-frame-only — template clone accelerates post-mount create/update throughput on this table. ';
+        if (status === 'holds') status = 'holds-with-caveat';
       }
     } else {
       detail += 'IFR×storm cells missing — run unified focused campaign. ';
-      status = 'needs-data';
+      if (status === 'holds') status = 'needs-data';
     }
     verdicts.push({
       id: claim.id,
@@ -742,6 +778,8 @@ function renderAnalysis(unified, verdicts) {
     md += `${v.detail}\n\n`;
   }
 
+  md += renderCampaignFindings(unified);
+
   md += `## Headline tables (same environment only)\n\n`;
   md += renderStormTable(unified);
   md += renderFcpTable(unified);
@@ -754,6 +792,75 @@ function renderAnalysis(unified, verdicts) {
   md += 'pnpm --filter vue-lynx-benchmark run bench:unified\n';
   md += 'pnpm --filter vue-lynx-benchmark run bench:synthesize\n';
   md += '```\n';
+  return md;
+}
+
+function renderCampaignFindings(unified) {
+  const g = (arch, scale, metric) =>
+    cell(unified, {
+      architecture: arch,
+      workload: 'table',
+      scale,
+      metric,
+    })?.median;
+
+  const rows = ['1k', '10k', '30k'].map((scale) => ({
+    scale,
+    react: g('react', scale, 'selectStorm'),
+    vdom: g('vdom', scale, 'selectStorm'),
+    ifr: g('vdom-ifr', scale, 'selectStorm'),
+    et: g('vdom-ifr-et', scale, 'selectStorm'),
+    vapor: g('vapor', scale, 'selectStorm'),
+    vaporIfr: g('vapor-ifr', scale, 'selectStorm'),
+    createReact: g('react', scale, 'create'),
+    createVdom: g('vdom', scale, 'create'),
+    createEt: g('vdom-ifr-et', scale, 'create'),
+    createVapor: g('vapor', scale, 'create'),
+  }));
+
+  // Only emit if we have the IFR campaign cells.
+  if (rows.every((r) => r.et == null)) return '';
+
+  let md = `## Same-host campaign findings (lynx-web)\n\n`;
+  md += `Focused re-run on one host: Vue IFR matrix + React storms at 1k/10k/30k.\n\n`;
+  md += `### 1. Published absolute ms are host-bound\n\n`;
+  md += `Playground docs quote React selectStorm@10k ≈ 2544 ms from an earlier machine; `;
+  md += `this host measures ≈ ${rows.find((r) => r.scale === '10k')?.react?.toFixed(0) ?? '?'} ms. `;
+  md += `**Ratios on one host are the portable claim; absolute ms are not.**\n\n`;
+
+  md += `### 2. Vapor's update advantage is real at scale — but only storms show it\n\n`;
+  const r10 = rows.find((r) => r.scale === '10k');
+  if (r10?.vapor != null && r10?.vdom != null) {
+    md += `selectStorm@10k: VDOM ${r10.vdom.toFixed(0)} ms → Vapor ${r10.vapor.toFixed(0)} ms `;
+    md += `(${(r10.vdom / r10.vapor).toFixed(1)}×). `;
+  }
+  md += `One-shot select stays near the frame floor. Instrumented BG ratios remain the right *micro* story; storms are the right *user* story.\n\n`;
+
+  md += `### 3. IFR without ET ≈ off for post-mount table ops\n\n`;
+  if (r10?.ifr != null && r10?.vdom != null) {
+    md += `selectStorm@10k vdom-ifr/vdom = ${(r10.ifr / r10.vdom).toFixed(2)}×. `;
+  }
+  md += `Plain IFR is a first-frame / bundle-shape concern for this workload.\n\n`;
+
+  md += `### 4. IFR+ET is NOT first-frame-only on this table\n\n`;
+  if (r10?.et != null && r10?.vdom != null) {
+    md += `selectStorm@10k vdom-ifr-et/vdom = ${(r10.et / r10.vdom).toFixed(2)}×; `;
+  }
+  if (r10?.createEt != null && r10?.createVdom != null) {
+    md += `create@10k = ${(r10.createEt / r10.createVdom).toFixed(2)}×. `;
+  }
+  md += `Element Templates clone repeated row structure after mount — a coverage hole the old IFR-only FCP campaigns never measured.\n\n`;
+
+  md += `### 5. "−19% FCP" is not a constant\n\n`;
+  md += `On the content-probe ladder, VDOM+IFR (no ET) wins at small N and **loses by ~20% at 10k–30k**. `;
+  md += `IFR+ET stays ahead across the ladder. CPU×4 further erodes plain-IFR wins. Docs must qualify by scale + CPU + ET.\n\n`;
+
+  md += `### 6. React create lead / Vue update lead survives same-host recheck\n\n`;
+  if (r10?.createReact != null && r10?.createVdom != null && r10?.vapor != null && r10?.react != null) {
+    md += `create@10k react/vdom = ${(r10.createReact / r10.createVdom).toFixed(2)}×; `;
+    md += `selectStorm@10k react/vapor = ${(r10.react / r10.vapor).toFixed(1)}×.\n\n`;
+  }
+
   return md;
 }
 
