@@ -1,0 +1,59 @@
+# Unified Benchmark Matrix
+
+One place to **look at** every architecture on the same host and ladder —
+IFR styles, VDOM vs Vapor, and React vs Vue — without mixing metric scales.
+
+<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">Open full report ↗</a>
+
+<iframe
+  src="/benchmark/unified.html"
+  title="Unified Vue Lynx benchmark matrix"
+  style={{
+    width: '100%',
+    height: '2200px',
+    border: '1px solid var(--rp-c-divider)',
+    borderRadius: '12px',
+  }}
+  loading="lazy"
+/>
+
+## What this page is
+
+The three older campaigns answered different questions:
+
+| campaign | question | doc |
+|---|---|---|
+| IFR styles | first-frame cost & FCP | [IFR Benchmarks](/guide/ifr-benchmarks) |
+| VDOM vs Vapor | instrumented BG / e2e | [VDOM vs Vapor](/guide/benchmark-vapor) |
+| Vue vs React | black-box click→DOM | [Playground](/guide/benchmark-playground) |
+
+They shared **1k→30k labels** but not a **metric scale**. This report puts
+every cell in one schema, grades the published claims, and shows
+playground-style tinted tables + scaling charts.
+
+## How to read it
+
+1. **Claim cards** at the top — holds / caveat / falsified.
+2. **Storm table** — IFR × framework interaction latency (same protocol as the playground).
+3. **Storm charts** — select / update / create vs N on one host.
+4. **FCP table + charts** — content-probe first-frame ladder (separate instrument!).
+
+Never ratio storm ms against FCP ms. Absolute milliseconds are host-bound;
+ratios on one host are the portable claim.
+
+## Interactive playground
+
+Want to feel the table apps yourself? The
+[React vs Vue playground](/guide/benchmark-playground) still embeds the
+live bundles. This page is the **results artifact**.
+
+## Reproduce
+
+```bash
+pnpm --filter vue-lynx-benchmark bench:unified
+pnpm --filter vue-lynx-benchmark bench:synthesize
+pnpm --filter vue-lynx-benchmark bench:report
+```
+
+Design notes: [`packages/benchmark/UNIFIED.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md) ·
+raw analysis: [`ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md).

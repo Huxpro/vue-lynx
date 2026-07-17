@@ -83,6 +83,18 @@ function generateTable() {
   );
 }
 
+function generateUnifiedReport() {
+  const out = path.join(DEST, 'unified.html');
+  execSync(`node harness/report-unified.mjs --out ${out}`, {
+    cwd: BENCH_ROOT,
+    stdio: 'inherit',
+  });
+  // Also keep a copy next to the committed ANALYSIS.md for repo browsing.
+  const repoCopy = path.join(BENCH_ROOT, 'results/unified/report.html');
+  fs.copyFileSync(out, repoCopy);
+  console.info('  -> benchmark/unified.html');
+}
+
 function copyIfrScaleTrends() {
   const ifrResults = path.join(REPO_ROOT, 'packages/ifr-bench/results');
   const copies = [
@@ -105,5 +117,6 @@ fs.rmSync(DEST, { recursive: true, force: true });
 ensureBundles();
 copyBundles();
 generateTable();
+generateUnifiedReport();
 copyIfrScaleTrends();
 console.info('Done.');
