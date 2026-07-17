@@ -221,47 +221,32 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
-## v-once
+## v-once / v-memo
 
-[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) renders an element or component exactly once and skips all future updates. It works in Vue Lynx without any configuration — the SFC template compiler emits a cache lookup using `setBlockTracking` and the component's `_cache` array, and the runtime short-circuits on subsequent renders.
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) and [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) work in Vue Lynx without any configuration. The SFC template compiler already emits the cache lookups (`setBlockTracking` / `_cache` for `v-once`, `withMemo()` for `v-memo`), and the runtime bails out before the patcher runs.
 
-In Lynx, `v-once` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch. After the initial mount:
-
-- The VNode patcher receives the same cached VNode object reference.
-- No `patchProp` calls are made, so no ops enter the buffer.
-- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
-
-Use `v-once` for genuinely static content that should never update after first render:
+On Lynx a cache hit is especially valuable: the whole cross-thread op batch for that subtree is skipped, not just DOM diffing. Prefer `v-once` for content that never changes after first render; use `v-memo` when a subtree should update only for a short dependency list (common in `v-for` rows):
 
 ```vue
 <text v-once>{{ expensiveInitialValue }}</text>
-```
 
-> `v-once` is a stronger guarantee than `v-memo` — it caches unconditionally, with no dependency array to check. Prefer it when content is truly static.
-
-## v-memo
-
-[`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) skips a subtree re-render when its dependency array hasn't changed. It works in Vue Lynx without any configuration — the SFC template compiler already emits the correct `withMemo()` calls, and the runtime bails out before the patcher runs.
-
-In Lynx, `v-memo` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch, not just DOM diffing. When deps are unchanged:
-
-- The VNode patcher short-circuits (same VNode object reference).
-- No `patchProp` calls are made, so no ops enter the buffer.
-- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
-
-The primary use case is `v-for` lists where only some items change on each update:
-
-```vue
-<list-item
+<view
   v-for="item in list"
   :key="item.id"
   v-memo="[item.selected, item.label]"
 >
   <!-- Only re-renders when selected or label changes -->
-</list-item>
+</view>
 ```
 
-For render functions written in JavaScript, `withMemo` is exported directly from `vue-lynx`:
+The example below freezes a value with `v-once`, then shows a memoized list whose rows keep a stale "saw count" until their deps change:
+
+<Go
+  example="v-once-memo"
+  defaultFile="src/App.vue"
+/>
+
+For render functions, `withMemo` is exported from `vue-lynx`:
 
 ```ts
 import { defineComponent, h, ref } from 'vue'
