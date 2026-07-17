@@ -223,43 +223,14 @@ pluginVueLynx({
 
 ## v-once / v-memo
 
-[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) 与 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 在 Vue Lynx 中无需任何配置即可使用。SFC 模板编译器已经会生成对应的缓存查找（`v-once` 使用 `setBlockTracking` / `_cache`，`v-memo` 使用 `withMemo()`），运行时会在 patcher 执行前短路。
-
-在 Lynx 上缓存命中尤其有价值：会跳过该子树的整批跨线程 op，而不仅仅是 DOM diff。内容在首次渲染后永不变化时优先用 `v-once`；当子树只应随一小段依赖更新时用 `v-memo`（常见于 `v-for` 列表项）：
-
-```vue
-<text v-once>{{ expensiveInitialValue }}</text>
-
-<view
-  v-for="item in list"
-  :key="item.id"
-  v-memo="[item.selected, item.label]"
->
-  <!-- 仅在 selected 或 label 变化时重新渲染 -->
-</view>
-```
-
-下面的示例用 `v-once` 冻结一个值，再用 memoized 列表展示：行内的 "saw count" 会保持旧值，直到该行的依赖发生变化：
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) 与 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 在 Vue Lynx 中无需任何配置即可使用。在 Lynx 上缓存命中会跳过该子树的整批跨线程 op——内容永不变化时用 `v-once`，子树只应随一小段依赖更新时用 `v-memo`（常见于 `v-for` 列表项）。
 
 <Go
   example="v-once-memo"
   defaultFile="src/App.vue"
 />
 
-对于用 JavaScript 编写的渲染函数，`withMemo` 可直接从 `vue-lynx` 导入：
-
-```ts
-import { defineComponent, h, ref } from 'vue'
-import { withMemo } from 'vue-lynx'
-
-export default defineComponent({
-  setup() {
-    const dep = ref('')
-    const cache: unknown[] = [] // 每实例独立，对应 SFC 编译产物中的 _cache
-    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
-  },
-})
-```
+对于渲染函数，Vue 的 `withMemo` 辅助函数（编译器为 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 生成的运行时 API）已从 `vue-lynx` 重新导出。
 
 ## Teleport
 

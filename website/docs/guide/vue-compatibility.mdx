@@ -223,43 +223,14 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
 
 ## v-once / v-memo
 
-[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) and [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) work in Vue Lynx without any configuration. The SFC template compiler already emits the cache lookups (`setBlockTracking` / `_cache` for `v-once`, `withMemo()` for `v-memo`), and the runtime bails out before the patcher runs.
-
-On Lynx a cache hit is especially valuable: the whole cross-thread op batch for that subtree is skipped, not just DOM diffing. Prefer `v-once` for content that never changes after first render; use `v-memo` when a subtree should update only for a short dependency list (common in `v-for` rows):
-
-```vue
-<text v-once>{{ expensiveInitialValue }}</text>
-
-<view
-  v-for="item in list"
-  :key="item.id"
-  v-memo="[item.selected, item.label]"
->
-  <!-- Only re-renders when selected or label changes -->
-</view>
-```
-
-The example below freezes a value with `v-once`, then shows a memoized list whose rows keep a stale "saw count" until their deps change:
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) and [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) work in Vue Lynx without any configuration. On Lynx a cache hit skips the whole cross-thread op batch for that subtree — prefer `v-once` for never-changing content, and `v-memo` when a subtree should update only for a short dependency list (common in `v-for` rows).
 
 <Go
   example="v-once-memo"
   defaultFile="src/App.vue"
 />
 
-For render functions, `withMemo` is exported from `vue-lynx`:
-
-```ts
-import { defineComponent, h, ref } from 'vue'
-import { withMemo } from 'vue-lynx'
-
-export default defineComponent({
-  setup() {
-    const dep = ref('')
-    const cache: unknown[] = [] // per-instance, mirrors SFC _cache
-    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
-  },
-})
-```
+For render functions, Vue's `withMemo` helper (what the compiler emits for [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo)) is re-exported from `vue-lynx`.
 
 ## Teleport
 
