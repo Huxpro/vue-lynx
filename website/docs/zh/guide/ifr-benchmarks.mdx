@@ -2,7 +2,7 @@ import { Badge } from '@theme';
 
 # IFR 性能数据 <Badge text="v0.5" type="tip" />
 
-> 产品故事 / 用法见 **[IFR 指南](/zh/guide/ifr)**。
+> 产品论点（怎么快 / 代价 / 架构优势）：**[IFR 指南](/zh/guide/ifr)**。
 > 产品级 FCP 矩阵见 **[统一基准矩阵](/zh/guide/benchmark-unified)**。
 > 本页是测量附录——策略成本、真应用体积/TTI、**代价空间**规模图、native。
 > **「FCP −19%」不是与规模无关的常数**——见统一报告。
@@ -108,7 +108,47 @@ import { Badge } from '@theme';
 主线程段 ~17 KiB → 78–195 KiB；ET 约 +1%。扫描还修过真实 bug
 （`SystemInfo` 覆写、数字样式 auto-px、CSS Modules 崩 MT）——正确性本身就值得跑。
 
-## 3. Native 引擎观察
+## 3. 代价空间（MT gzip × FCP）
+
+和统一矩阵的 **FCP vs N**（只看首帧）不同，**代价空间**多问一句：
+*这份首帧是不是用更大的 MT 包换来的？*
+
+| 轴 | 含义 |
+| --- | --- |
+| **横轴 MT gzip** | 主线程包体（解析 / 加载税）。IFR 通常会变大。 |
+| **纵轴 FCP** | 首帧时间。越小越好。 |
+| **每条折线** | 一种架构从 1k→30k 的轨迹。 |
+
+| 位置 | 读法 |
+| --- | --- |
+| **左下** | 理想——包小，首帧也快 |
+| **往右** | 付了更大的 MT 包，未必换来更快首帧 |
+| **往上** | 内容变大后首帧变差 |
+| **右上** | 最差——又重又慢 |
+
+典型坏形状：裸 IFR 包变重，中大树上 FCP 反超 plain VDOM。
+好形状：IFR+ET 仍付包体，但 FCP 压在下面。
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR scale trends (CPU ×1)"
+  titleZh="IFR 规模趋势（CPU ×1）"
+  height={1600}
+/>
+
+<details>
+<summary>CPU ×4 规模趋势</summary>
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x4.html"
+  title="IFR scale trends (CPU ×4)"
+  titleZh="IFR 规模趋势（CPU ×4）"
+  height={1600}
+/>
+
+</details>
+
+## 4. Native 引擎观察
 
 LynxExplorer（SDK 1.4 / PrimJS）：24/25 示例 **零 hydration mismatch**；
 No-IFR vs IFR+ET 视觉一致（SSIM ≥ 0.9977）。单次冷启动：IFR 首内容约早
