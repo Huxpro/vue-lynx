@@ -64,18 +64,19 @@ export const ZH = {
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
-  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
-  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
-  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
-  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
-  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
-  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
-  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
-  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
-  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
-  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
-  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
+  'II · Vue coverage · 1/13': 'II · Vue 覆盖度 · 1/13',
+  'II · Vue coverage · 2/13': 'II · Vue 覆盖度 · 2/13',
+  'II · Vue coverage · 3/13': 'II · Vue 覆盖度 · 3/13',
+  'II · Vue coverage · 4/13': 'II · Vue 覆盖度 · 4/13',
+  'II · Vue coverage · 5/13': 'II · Vue 覆盖度 · 5/13',
+  'II · Vue coverage · 6/13': 'II · Vue 覆盖度 · 6/13',
+  'II · Vue coverage · 7/13': 'II · Vue 覆盖度 · 7/13',
+  'II · Vue coverage · 8/13': 'II · Vue 覆盖度 · 8/13',
+  'II · Vue coverage · 9/13': 'II · Vue 覆盖度 · 9/13',
+  'II · Vue coverage · 10/13': 'II · Vue 覆盖度 · 10/13',
+  'II · Vue coverage · 11/13': 'II · Vue 覆盖度 · 11/13',
+  'II · Vue coverage · 12/13': 'II · Vue 覆盖度 · 12/13',
+  'II · Vue coverage · 13/13': 'II · Vue 覆盖度 · 13/13',
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
@@ -280,10 +281,9 @@ export const ZH = {
   "What's there": '已经有的',
   "What's open": '还缺的',
   'Composition API & SFCs': '<b>Composition API 与 SFC</b>',
-  'Transition, Suspense, KeepAlive': '<b>Transition、Suspense、KeepAlive</b>',
+  'Transition, Suspense, KeepAlive, Teleport': '<b>Transition、Suspense、KeepAlive、Teleport</b>',
   'Pinia, Router, Query, Tailwind': '<b>Pinia、Router、Query、Tailwind</b>',
   'Main-Thread Script': '<b>Main-Thread Script</b>',
-  'Teleport example & polish': '<b>Teleport example 与打磨</b>',
   'View pager & more gestures': '<b>View pager 与更多手势</b>',
   'Vue DevTools integration': '<b>Vue DevTools 集成</b>',
   "The ecosystem you'd port": '<b>等你来移植的生态</b>',
@@ -371,13 +371,15 @@ export const ZH_NOTES = [
   `<p>Vue 的事件修饰符映射到 Lynx 事件系统:<code>.once</code>、<code>.stop</code>、<code>.self</code>、链式组合 —— @KealanAU 落地(#155), <code>0.4.0</code>。demo 里每个都和"不加修饰符"的孪生版本并排对照。(<code>.prevent</code> 是兼容性 no-op —— 原生没有默认行为可阻止。)</p>`,
   // 24 KeepAlive
   `<p>原生树上的组件实例缓存 —— 切 tab 再回来,状态还在。<code>include</code> / <code>exclude</code> / <code>max</code>,加上 <code>onActivated</code> / <code>onDeactivated</code>。@jynxbt 贡献(#153),落在 <code>0.4.0</code>。</p>`,
-  // 25 v-once
+  // 25 Teleport
+  `<p>按 id 渲染到目标节点 —— modal / overlay,不用和滚动层叠硬刚。BG 侧 <code>idRegistry</code> 解析 <code>to="#id"</code>;内容保持响应式,<code>:disabled</code> 则就地渲染。@sentomk 贡献(#161),落在 <code>0.4.0</code>。</p>`,
+  // 26 v-once
   `<p><code>v-once</code> 首次渲染后冻结。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong> —— 比浏览器更值钱。@KealanAU 验证并文档化(#176), <code>0.4.0</code>。点 Increment:live 会变,frozen 不动。</p>`,
-  // 26 v-memo
-  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十二个特性、十二个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
-  // 27 Whole apps
+  // 27 v-memo
+  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十三个特性、十三个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
+  // 28 Whole apps
   `<p>API 逐个通过只是入场券。"Web DX 是基线"真正的考验,是把一整个 Vue 代码库 —— 状态、路由、样式、数据请求 —— 整体落到原生上。来两个经典。</p>`,
-  // 25 TodoMVC
+  // 29 TodoMVC
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
   // 26 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,

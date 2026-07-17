@@ -124,7 +124,11 @@ The example below provides a reactive `theme` ref and a static `appName` string 
 
 ## Suspense
 
-Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
+Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for deferred loading.
+
+:::tip Code-splitting
+`defineAsyncComponent(() => import('./X.vue'))` emits webpack async chunks that need Lynx's lazy-bundle runtime (`lynx.requireModuleAsync` / `lynx.loadLazyBundle`). Those APIs are not available in Lynx Web Preview, so the docs example uses delayed promises over statically imported components instead — the Suspense fallback path is the same.
+:::
 
 <Go
   example="suspense"
@@ -188,7 +192,20 @@ For render functions, Vue's `withMemo` helper (what the compiler emits for [`v-m
 
 ## Teleport
 
-`<Teleport>` is supported for `to="#id"` string selectors. Direct element refs and non-ID selectors are not yet supported.
+Vue's [`<Teleport>`](https://vuejs.org/guide/built-ins/teleport.html) moves a template fragment to a different place in the UI tree. Vue Lynx supports it for `to="#id"` string selectors via a background-thread `idRegistry` lookup — the same pattern as a modal rendered at the page root while its trigger lives deeper in the component tree.
+
+:::warning Caveats
+Direct element refs and non-ID selectors (e.g. `to=".class"` or `to="body"`) are not yet supported. Give the destination an `id` and target it with `to="#that-id"`.
+
+The target element must already exist when `<Teleport>` mounts — place the `id` host earlier in the tree than the `<Teleport>` (or outside the component that owns it). Vue cannot resolve a target that is created by the same render as the teleport.
+:::
+
+The example below shows a modal teleported to `#overlay-root`, plus reactive content with the `disabled` prop:
+
+<Go
+  example="teleport"
+  defaultFile="src/App.vue"
+/>
 
 ## The `<page>` Top-Level Node
 

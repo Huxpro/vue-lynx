@@ -124,7 +124,11 @@ Vue 的 [`provide`](https://vuejs.org/guide/components/provide-inject.html) 和 
 
 ## Suspense
 
-Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于懒加载的 `defineAsyncComponent`。
+Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于延迟加载的 `defineAsyncComponent`。
+
+:::tip 关于代码分割
+`defineAsyncComponent(() => import('./X.vue'))` 会产出依赖 Lynx lazy-bundle 运行时（`lynx.requireModuleAsync` / `lynx.loadLazyBundle`）的 webpack 异步 chunk。这些 API 在 Lynx Web Preview 中不可用，因此文档示例改用静态导入组件 + 延迟 Promise——Suspense 的 fallback 路径与真正的懒加载相同。
+:::
 
 <Go
   example="suspense"
@@ -188,7 +192,20 @@ pluginVueLynx({
 
 ## Teleport
 
-`<Teleport>` 支持 `to="#id"` 字符串选择器。暂不支持直接传入元素 ref 或非 ID 选择器。
+Vue 的 [`<Teleport>`](https://cn.vuejs.org/guide/built-ins/teleport.html) 可以将模板片段渲染到 UI 树中的另一处。Vue Lynx 通过后台线程的 `idRegistry` 查找支持 `to="#id"` 字符串选择器——典型用法是触发器在组件树深处，弹层却渲染到页面根节点。
+
+:::warning 注意事项
+暂不支持直接传入元素 ref，以及非 ID 选择器（例如 `to=".class"` 或 `to="body"`）。请给目标节点设置 `id`，并用 `to="#that-id"` 指向它。
+
+`<Teleport>` 挂载时目标元素必须已经存在——把带 `id` 的宿主放在 `<Teleport>` 之前（或放在拥有它的组件之外）。Vue 无法解析与 teleport 同一次渲染才创建出来的目标。
+:::
+
+下面的示例演示了传送到 `#overlay-root` 的弹层，以及带 `disabled` prop 的响应式内容：
+
+<Go
+  example="teleport"
+  defaultFile="src/App.vue"
+/>
 
 ## `<page>` 顶层节点
 
