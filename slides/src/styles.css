@@ -3509,3 +3509,426 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .ifr-trade__list.is-cost li::before { background: #f4a6ba; }
 .ifr-trade__list.is-use li::before { background: var(--vue-green); }
 .ifr-trade__list b { color: var(--ink); font-weight: 600; }
+
+/* =========================================================
+   ONE MORE THING — Vapor chapter
+   Concept blocks, compile→runtime pipeline, cross-thread
+   template protocol, benchmark chart + table. Reuses the
+   deck tokens; green = background/Vue, teal = main thread.
+   ========================================================= */
+
+/* "One more thing." reveal (Keynote serif) */
+.omt {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(14px, 2.4cqh, 30px);
+}
+.omt__line {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(56px, 9cqw, 150px);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+}
+
+/* Experimental tag pill */
+.xtag {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 180, 74, 0.4);
+  background: rgba(232, 180, 74, 0.08);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e8b44a;
+}
+.xtag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e8b44a;
+  box-shadow: 0 0 10px rgba(232, 180, 74, 0.7);
+}
+
+/* ---- Concept flow: colored blocks + arrows (VDOM vs Vapor path) ---- */
+.vflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(6px, 1cqw, 16px);
+  width: 100%;
+}
+.vnode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: clamp(92px, 11.5cqw, 148px);
+  padding: clamp(13px, 1.7cqw, 22px) clamp(10px, 1.4cqw, 18px);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-elev);
+  backdrop-filter: blur(20px);
+}
+.vnode__k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.vnode__t {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(14px, 1.5cqw, 20px);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink);
+  text-align: center;
+}
+.vnode--ghost { border-style: dashed; opacity: 0.9; }
+.vnode--ghost .vnode__t { color: var(--ink-mute); font-weight: 500; }
+.vnode--vue {
+  border-color: color-mix(in srgb, var(--vue-green) 55%, transparent);
+  background: color-mix(in srgb, var(--vue-green) 13%, var(--paper));
+}
+.vnode--vue .vnode__t { color: var(--vue-green); }
+.vnode--teal {
+  border-color: color-mix(in srgb, var(--brand-teal) 55%, transparent);
+  background: color-mix(in srgb, var(--brand-teal) 13%, var(--paper));
+}
+.vnode--teal .vnode__t { color: var(--brand-teal); }
+.vflow__arr {
+  font-family: var(--mono);
+  color: var(--ink-faint);
+  font-size: clamp(16px, 1.8cqw, 24px);
+  flex: none;
+}
+.vflow__arr.is-brand { color: var(--vue-green); }
+
+/* ---- Compile→runtime pipeline: vertical stack + reuse highlight ---- */
+.pipe {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: min(100%, 640px);
+  margin: 0 auto;
+}
+.pipe__layer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: clamp(9px, 1.2cqw, 15px) clamp(14px, 1.8cqw, 22px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-elev);
+  backdrop-filter: blur(20px);
+}
+.pipe__layer .k {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  flex: none;
+  width: clamp(58px, 8cqw, 92px);
+}
+.pipe__layer .t {
+  font-family: var(--mono);
+  font-size: clamp(12px, 1.25cqw, 16px);
+  color: var(--ink);
+}
+.pipe__layer .t b { color: var(--vue-green); font-weight: 600; }
+.pipe__layer--key {
+  border-color: color-mix(in srgb, var(--vue-green) 60%, transparent);
+  background: color-mix(in srgb, var(--vue-green) 12%, var(--paper));
+  box-shadow: 0 0 30px -8px color-mix(in srgb, var(--vue-green) 60%, transparent);
+}
+.pipe__layer--main {
+  border-color: color-mix(in srgb, var(--brand-teal) 42%, transparent);
+  background: color-mix(in srgb, var(--brand-teal) 9%, var(--paper));
+}
+.pipe__reuse {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vue-green);
+  border: 1px solid color-mix(in srgb, var(--vue-green) 50%, transparent);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.pipe__arr {
+  align-self: center;
+  color: var(--ink-faint);
+  font-size: 13px;
+  line-height: 0.5;
+}
+
+/* ---- Cross-thread template wire (sits in the .archflow middle) ---- */
+.xwire {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.4cqh, 26px);
+  min-width: clamp(120px, 17cqw, 240px);
+}
+.xwire__op { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.xwire__name {
+  font-family: var(--mono);
+  font-size: clamp(10px, 1cqw, 12px);
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+.xwire__line {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--vue-green), var(--brand-teal));
+}
+.xwire__line::after {
+  content: '▶';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--brand-teal);
+}
+.xwire__line.is-multi {
+  background-image: repeating-linear-gradient(
+    90deg, var(--vue-green) 0 8px, transparent 8px 15px);
+  animation: xwireFlow 0.9s linear infinite;
+}
+@keyframes xwireFlow { to { background-position: 15px 0; } }
+.xwire__count {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.xwire__count b { color: var(--vue-green); }
+/* structure glyph — a tiny nested-block tree that "crosses once" */
+.xstruct { display: inline-flex; gap: 3px; align-items: center; }
+.xstruct i {
+  width: 8px; height: 8px; border-radius: 2px;
+  background: color-mix(in srgb, var(--vue-green) 55%, transparent);
+}
+.xstruct i:nth-child(2) { width: 5px; height: 5px; }
+.xstruct i:nth-child(3) { width: 5px; height: 5px; }
+
+/* ---- Benchmark bar chart ---- */
+.bench {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6cqh, 18px);
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+.bench__row {
+  display: grid;
+  grid-template-columns: clamp(150px, 20cqw, 230px) 1fr auto;
+  align-items: center;
+  gap: clamp(12px, 1.6cqw, 22px);
+}
+.bench__name {
+  font-family: var(--mono);
+  font-size: clamp(12px, 1.25cqw, 15px);
+  color: var(--ink-soft);
+  text-align: right;
+}
+.bench__name small { display: block; color: var(--ink-mute); font-size: 0.82em; }
+.bench__track {
+  height: clamp(18px, 2.6cqh, 26px);
+  border-radius: 7px;
+  background: var(--line-soft);
+  overflow: hidden;
+}
+.bench__fill {
+  height: 100%;
+  border-radius: 7px;
+  background: var(--brand-gradient);
+  background-size: 200% 100%;
+  animation: gradientMove 6s linear infinite;
+  box-shadow: 0 0 18px -4px var(--brand-emerald);
+}
+.bench__val {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(18px, 2.2cqw, 30px);
+  letter-spacing: -0.02em;
+  color: var(--vue-green);
+  min-width: 3.2ch;
+  text-align: right;
+}
+
+/* ---- Benchmark data table ---- */
+.btable {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  border-collapse: collapse;
+  font-family: var(--mono);
+}
+.btable th,
+.btable td {
+  padding: clamp(9px, 1.3cqh, 15px) clamp(12px, 1.6cqw, 22px);
+  text-align: right;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+.btable th:first-child,
+.btable td:first-child { text-align: left; }
+.btable thead th {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-weight: 400;
+}
+.btable tbody td {
+  font-size: clamp(13px, 1.4cqw, 18px);
+  color: var(--ink-soft);
+}
+.btable tbody .metric {
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.btable td.win { color: var(--vue-green); font-weight: 600; }
+.btable td.cost { color: #f9a8b8; font-weight: 600; }
+.btable td.flat { color: var(--ink-mute); }
+.btable tbody tr:last-child td { border-bottom: 0; }
+
+/* ---- Verification split (same source → two renderers) ---- */
+.vsplit {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: clamp(18px, 3cqw, 44px);
+  width: min(100%, 900px);
+  margin: 0 auto;
+}
+.vsource {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(16px, 2cqw, 26px);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-elev);
+}
+.vsplit__fork {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.4cqh, 26px);
+}
+.vrender {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: clamp(14px, 1.8cqw, 24px) clamp(16px, 2cqw, 28px);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-elev);
+  backdrop-filter: blur(20px);
+}
+.vrender--vue { border-color: color-mix(in srgb, var(--vue-green) 50%, transparent); }
+.vrender--teal { border-color: color-mix(in srgb, var(--brand-teal) 50%, transparent); }
+.vrender__name {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.vrender--vue .vrender__name::before,
+.vrender--teal .vrender__name::before {
+  content: '';
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.vrender--vue .vrender__name::before { background: var(--vue-green); box-shadow: 0 0 10px var(--vue-green); }
+.vrender--teal .vrender__name::before { background: var(--brand-teal); box-shadow: 0 0 10px var(--brand-teal); }
+.vrender__meta { font-family: var(--mono); font-size: clamp(11px, 1.1cqw, 13px); color: var(--ink-soft); }
+.vrender__meta b { color: var(--vue-green); }
+
+/* Small annotation numbers on code (①②③) */
+.codenote {
+  color: var(--brand-teal);
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* ---- Skip-composition bar (upstream-test slides: reasons + stats) ---- */
+.skipbar {
+  width: min(100%, 760px);
+  margin: 4px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6cqh, 16px);
+}
+.skipbar__track {
+  display: flex;
+  height: clamp(16px, 2.4cqh, 24px);
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.skipbar__seg { height: 100%; }
+.skipbar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  font-family: var(--mono);
+  font-size: clamp(11px, 1.15cqw, 13px);
+  color: var(--ink-soft);
+}
+.skipbar__legend span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.skipbar__legend i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.skipbar__legend b { color: var(--ink); font-weight: 600; font-family: var(--display); }
+
+/* Affinity callout — the "closer fit" payoff line */
+.affinity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: clamp(10px, 1.4cqw, 20px);
+  padding: clamp(10px, 1.3cqh, 16px) clamp(18px, 2.2cqw, 30px);
+  border: 1px solid color-mix(in srgb, var(--vue-green) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vue-green) 10%, var(--paper));
+}
+.affinity b {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(22px, 2.6cqw, 36px);
+  letter-spacing: -0.02em;
+  color: var(--vue-green);
+}
+.affinity .vs { color: var(--ink-mute); font-family: var(--mono); font-size: 0.9em; }
+.affinity .aff-vdom { color: var(--ink-mute); font-weight: 500; }
+.affinity .aff-vdom b { color: var(--ink-mute); }
+.affinity .aff-note {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: clamp(15px, 1.5cqw, 20px);
+}
