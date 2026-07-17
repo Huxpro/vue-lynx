@@ -433,7 +433,7 @@ describe('Vapor IFR hydration ownership', () => {
     expect(papi.flushCount).toBeGreaterThan(firstFrameFlushes);
   });
 
-  it('skips an identical REGISTER_TEMPLATE/CLONE_TEMPLATE stream without duplication', async () => {
+  it('skips an identical REGISTER_TREE/CLONE_TREE stream without duplication', async () => {
     const realms: CounterRealm[] = [];
     const App = makeCounterApp(realms);
     await renderVaporFirstFrame(App);
@@ -700,10 +700,10 @@ describe('Vapor IFR correctness fallbacks', () => {
       [['image', { a: [['src', 'template-bg.png']] }, []]],
     ];
     const mt = [
-      OP.REGISTER_TEMPLATE,
+      OP.REGISTER_TREE,
       1,
       mtStructure,
-      OP.CLONE_TEMPLATE,
+      OP.CLONE_TREE,
       1,
       2,
       OP.INSERT,
@@ -712,10 +712,10 @@ describe('Vapor IFR correctness fallbacks', () => {
       -1,
     ];
     const bg = [
-      OP.REGISTER_TEMPLATE,
+      OP.REGISTER_TREE,
       1,
       bgStructure,
-      OP.CLONE_TEMPLATE,
+      OP.CLONE_TREE,
       1,
       2,
       OP.INSERT,
@@ -729,7 +729,7 @@ describe('Vapor IFR correctness fallbacks', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     papi.patch(bg);
 
-    // applyOps has a duplicate-batch guard for REGISTER_TEMPLATE.  Fallback
+    // applyOps has a duplicate-batch guard for REGISTER_TREE.  Fallback
     // must reset that registry (and then reseed page id 1), otherwise the BG
     // replay is silently skipped at its first opcode.
     expect(ifr().getIfrPhase()).toBe('hydrated');
@@ -1110,10 +1110,10 @@ describe('non-IFR regression', () => {
       [['text', { t: 'only once' }, []]],
     ];
     const allocatorTail = [
-      OP.REGISTER_TEMPLATE,
+      OP.REGISTER_TREE,
       77,
       structure,
-      OP.CLONE_TEMPLATE,
+      OP.CLONE_TREE,
       77,
       2,
       OP.INSERT,

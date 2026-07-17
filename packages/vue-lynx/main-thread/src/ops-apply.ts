@@ -78,7 +78,7 @@ const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
 // NodesRef selector attributes are only consumed by the Background Thread.
 // IFR can paint without them, then install them immediately before BG adopts
-// the tree. Keeping this state here makes CREATE and CLONE_TEMPLATE follow the
+// the tree. Keeping this state here makes CREATE and CLONE_TREE follow the
 // same protocol and keeps normal/non-IFR applyOps behavior unchanged.
 let deferIfrSelectorAttributes = false;
 let deferredIfrSelectorIds: number[] = [];
@@ -135,10 +135,10 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     if (code === OP.CREATE || code === OP.CREATE_TEXT) {
       return elements.has(ops[cursor + 1] as number);
     }
-    if (code === OP.REGISTER_TEMPLATE) {
+    if (code === OP.REGISTER_TREE) {
       return templates.has(ops[cursor + 1] as number);
     }
-    if (code === OP.CLONE_TEMPLATE) {
+    if (code === OP.CLONE_TREE) {
       return elements.has(ops[cursor + 2] as number);
     }
 
@@ -286,14 +286,14 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
 
-      case OP.REGISTER_TEMPLATE: {
+      case OP.REGISTER_TREE: {
         const tplId = ops[i++] as number;
         const structure = ops[i++] as TemplateNode;
         templates.set(tplId, structure);
         break;
       }
 
-      case OP.CLONE_TEMPLATE: {
+      case OP.CLONE_TREE: {
         const tplId = ops[i++] as number;
         const baseUid = ops[i++] as number;
         const structure = templates.get(tplId);

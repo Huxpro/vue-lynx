@@ -561,8 +561,8 @@ export class ShadowElement {
    * the Main Thread materialises it (detached until inserted).
    *
    * Template prototypes (inert, deep) take the fast path: the static
-   * structure is REGISTER_TEMPLATE'd once, and each instance is a single
-   * CLONE_TEMPLATE op with a deterministic contiguous uid block — instead of
+   * structure is REGISTER_TREE'd once, and each instance is a single
+   * CLONE_TREE op with a deterministic contiguous uid block — instead of
    * re-serializing the identical CREATE/SET/INSERT sequence per instance.
    */
   cloneNode(deep?: boolean): ShadowElement {
@@ -953,8 +953,8 @@ export function createPageRoot(): ShadowElement {
 // Vapor mounts by cloning a static template prototype once per instance —
 // the static structure is identical for every clone. Instead of
 // re-serializing the same CREATE/SET/INSERT sequence per instance, the
-// structure is sent once (REGISTER_TEMPLATE) and each instance is a single
-// CLONE_TEMPLATE op. The uid contract: the Main Thread assigns element ids
+// structure is sent once (REGISTER_TREE) and each instance is a single
+// CLONE_TREE op. The uid contract: the Main Thread assigns element ids
 // by pre-order traversal of the structure starting at baseUid; the walk
 // below allocates the identical contiguous block, so both sides agree
 // without transmitting a mapping. Aliased only-child #text shadow nodes are
@@ -1090,7 +1090,7 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
 
   if (!registeredTemplateIds.has(cache.id)) {
     registeredTemplateIds.add(cache.id);
-    pushOp(OP.REGISTER_TEMPLATE, cache.id, cache.structure);
+    pushOp(OP.REGISTER_TREE, cache.id, cache.structure);
   }
 
   // Reserve the contiguous uid block for materialized nodes; aliased text
@@ -1106,7 +1106,7 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
     );
   }
 
-  pushOp(OP.CLONE_TEMPLATE, cache.id, base);
+  pushOp(OP.CLONE_TREE, cache.id, base);
   scheduleFlush();
   return root;
 }
