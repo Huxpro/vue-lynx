@@ -396,6 +396,8 @@ const normalized = {
   measuredAt: new Date().toISOString(),
 };
 
+// Theme + i18n chrome are applied by patch-scale-trends-embed.mjs after write
+// (keeps this generator focused on charts). Call the patcher after regenerating.
 const html = `<!doctype html>
 <html lang="en">
 <meta charset="utf-8"/>
@@ -465,3 +467,12 @@ const htmlPath = path.join(resultsDir, `scale-trends-${LABEL}.html`);
 fs.writeFileSync(htmlPath, html);
 console.log(`Wrote ${htmlPath}`);
 console.log(`Wrote results/scale-trends-${LABEL}.json`);
+try {
+  const { execSync } = await import('node:child_process');
+  execSync('node patch-scale-trends-embed.mjs', {
+    cwd: _dirname,
+    stdio: 'inherit',
+  });
+} catch (err) {
+  console.warn('[report-scale-trends] embed patch skipped:', err.message);
+}

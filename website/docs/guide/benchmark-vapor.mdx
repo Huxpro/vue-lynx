@@ -12,31 +12,33 @@ derived from [js-framework-benchmark](https://github.com/krausest/js-framework-b
 to Lynx and runs the **same app in both modes** through the full dual-thread
 pipeline.
 
-**Bottom line** *(instrumented lynx-web; ratios, not absolute ms)*
+**Bottom line** *(instrumented lynx-web; ratios, not absolute ms)* —
+product matrices and black-box storms live in the
+[Unified Benchmark Matrix](/guide/benchmark-unified). Here: BG/e2e only.
 
 | | Result | Caveat |
 | --- | --- | --- |
-| Update path (background) | Vapor **5.8–9.8×** faster than VDOM | Reproduced ~8× as black-box selectStorm@10k |
-| Update path (end-to-end) | **2.1–6.3×** faster (Main-Thread apply is shared) | One-shot select often frame-floor masked |
-| List creation | Cross-thread ops **~2.4× fewer**; e2e at **parity** | Holds 1k→30k black-box (~1.0–1.1×) |
-| Cost | Bundle gzip **+26%**; first screen within noise | IFR flags change bundle/FCP — see IFR page |
+| Point update (select, background) | Vapor **~9.8×** vs VDOM | ~8× as black-box selectStorm@10k |
+| Sparse/batch update (every 10th, bg) | Vapor **~5.8×** vs VDOM | e2e smaller — MT apply is shared |
+| List creation | Ops **~2.4× fewer**; e2e **parity** | Holds 1k→30k black-box (~1.0–1.1×) |
+| Cost | Bundle gzip **+26%** | IFR/FCP → [IFR Benchmarks](/guide/ifr-benchmarks) |
 
-Want to feel the same apps on your phone? See the
-[React vs Vue playground](/guide/benchmark-playground).
+Want to feel the same apps? [Playground](/guide/benchmark-playground).
 
 ## Results
 
 ### Update-path operations
 
 Vapor's structural advantage — no vnode tree, no diffing, reactive effects
-write straight to elements — shows up unfiltered on the background thread:
+write straight to elements — shows up unfiltered on the background thread.
+**Select = point update**; **update every 10th = sparse batch**.
 
-| Operation | vdom bg | vapor bg | bg speedup | vdom e2e | vapor e2e | e2e speedup |
-|---|---|---|---|---|---|---|
-| update every 10th row | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
-| select row | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
-| swap rows | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
-| remove row | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
+| Operation | kind | vdom bg | vapor bg | bg speedup | vdom e2e | vapor e2e | e2e speedup |
+|---|---|---|---|---|---|---|---|
+| select row | point | 2.95 ms | 0.30 ms | **9.8×** | 3.45 ms | 0.55 ms | 6.3× |
+| update every 10th row | batch | 3.20 ms | 0.55 ms | **5.8×** | 4.85 ms | 2.30 ms | 2.1× |
+| swap rows | point-ish | 3.90 ms | 0.65 ms | **6.0×** | 4.65 ms | 1.20 ms | 3.9× |
+| remove row | point | 2.85 ms | 0.40 ms | **7.1×** | 3.40 ms | 0.90 ms | 3.8× |
 
 The e2e multiplier is smaller because both modes emit near-identical ops for
 these operations — the entire delta is Vue work on the background thread,

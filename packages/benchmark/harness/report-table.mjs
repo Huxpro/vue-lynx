@@ -11,11 +11,44 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { THEME_BRIDGE_CSS, THEME_BRIDGE_SCRIPT } from './theme-bridge.mjs';
+import { runtimeI18nScript } from './embed-i18n.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: args } = parseArgs({
   options: { out: { type: 'string', default: 'results/cross-table.html' } },
 });
+
+const TABLE_I18N = {
+  en: {
+    title: 'Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor',
+    h1: 'Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor',
+    lede:
+      'Black-box protocol on Lynx for Web: real clicks → composed-DOM end state. '
+      + 'Median per-click latency; <b>(n.nn)</b> = slowdown factor vs the row\'s best. '
+      + '<b>Select = point update</b>; <b>Update = batch update</b>.',
+    hStorms: 'Update-heavy scenarios (above the one-frame observation floor)',
+    subStorms:
+      'Storms: one click triggers N sequential state→render→DOM ticks (update ×50 = <b>batch</b>, select ×30 = <b>point</b>). Fresh app per repetition.',
+    hSustained: 'Sustained krausest scenario (70 consecutive operations per load)',
+    subSustained: 'The classic js-framework-benchmark op set, run back-to-back in one session.',
+    hOther: 'Other dimensions',
+  },
+  zh: {
+    title: 'Lynx 框架基准 — React vs Vue VDOM vs Vue Vapor',
+    h1: 'Lynx 框架基准 — React vs Vue VDOM vs Vue Vapor',
+    lede:
+      'Lynx for Web 黑盒协议：真实点击 → 合成 DOM 终态。中位数延迟；'
+      + '<b>(n.nn)</b> = 相对该行最优的慢速倍数。'
+      + '<b>Select = 点状更新</b>；<b>Update = 批量更新</b>。',
+    hStorms: '更新密集场景（高于一帧观察地板）',
+    subStorms:
+      'Storm：一次点击触发 N 次 state→render→DOM（update ×50 = <b>批量</b>，select ×30 = <b>点状</b>）。每次重复使用全新应用。',
+    hSustained: '持续 krausest 场景（每次加载连续 70 次操作）',
+    subSustained: '经典 js-framework-benchmark 操作集，在同一会话中连续跑完。',
+    hOther: '其他维度',
+  },
+};
 
 const storms = JSON.parse(
   fs.readFileSync(path.join(root, 'results/cross-storms-latest.json'), 'utf-8'),
@@ -446,10 +479,11 @@ const html = `<!doctype html>
     --tint: 18%;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%; }
+    :root:not([data-theme="light"]) { --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%; }
   }
   :root[data-theme="dark"] { --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%; }
   :root[data-theme="light"] { --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df; --tint: 18%; }
+  ${THEME_BRIDGE_CSS}
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 20px 16px 32px; background: var(--surface); color: var(--ink);
@@ -480,7 +514,7 @@ const html = `<!doctype html>
   /* categorical series palette (validated slot order; dark steps selected) */
   :root { --s1: #2a78d6; --s2: #1baf7a; --s3: #eda100; --s4: #008300; --s5: #4a3aa7; }
   @media (prefers-color-scheme: dark) {
-    :root { --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300; --s5: #9085e9; }
+    :root:not([data-theme="light"]) { --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300; --s5: #9085e9; }
   }
   :root[data-theme="dark"] { --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300; --s5: #9085e9; }
   :root[data-theme="light"] { --s1: #2a78d6; --s2: #1baf7a; --s3: #eda100; --s4: #008300; --s5: #4a3aa7; }
@@ -507,15 +541,18 @@ const html = `<!doctype html>
 </style>
 </head>
 <body>
-<h1>Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor</h1>
+<h1 data-i18n="h1">Lynx framework benchmark — React vs Vue VDOM vs Vue Vapor</h1>
 <p class="sub">
+  <span data-i18n="lede">
   Black-box protocol on Lynx for Web: real clicks → composed-DOM end state.
   Median per-click latency; <b>(n.nn)</b> = slowdown factor vs the row's best.
+  <b>Select = point update</b>; <b>Update = batch update</b>.
+  </span>
   ${meta.date.slice(0, 10)} · @lynx-js/react ${meta.reactLynxVersion} · vue ${meta.vueVersion} · web-core ${meta.webCoreVersion} · headless Chromium.
 </p>
 
-<h2>Update-heavy scenarios (above the one-frame observation floor)</h2>
-<p class="sub">Storms: one click triggers N sequential state→render→DOM ticks in the app (update ×50, select ×30). Fresh app per repetition.</p>
+<h2 data-i18n="hStorms">Update-heavy scenarios (above the one-frame observation floor)</h2>
+<p class="sub" data-i18n="subStorms">Storms: one click triggers N sequential state→render→DOM ticks (update ×50 = <b>batch</b>, select ×30 = <b>point</b>). Fresh app per repetition.</p>
 <div class="scroll">${renderTable(STORM_ROWS, COLUMNS)}</div>
 <div class="legend">
   <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
@@ -528,11 +565,11 @@ const html = `<!doctype html>
 
 ${scaleSection}
 
-<h2>Sustained krausest scenario (70 consecutive operations per load)</h2>
-<p class="sub">The classic js-framework-benchmark op set, run back-to-back in one session.</p>
+<h2 data-i18n="hSustained">Sustained krausest scenario (70 consecutive operations per load)</h2>
+<p class="sub" data-i18n="subSustained">The classic js-framework-benchmark op set, run back-to-back in one session.</p>
 <div class="scroll">${renderTable(BASE_ROWS, BASE_COLUMNS)}</div>
 
-<h2>Other dimensions</h2>
+<h2 data-i18n="hOther">Other dimensions</h2>
 <div class="scroll">${otherTable}</div>
 
 <div class="notes">
@@ -557,6 +594,8 @@ ${scaleSection}
     <li>Reproduce: <code>pnpm --filter vue-lynx-benchmark bench:storms</code> · raw data in <code>packages/benchmark/results/</code>.</li>
   </ul>
 </div>
+<script>${runtimeI18nScript(TABLE_I18N)}</script>
+<script>${THEME_BRIDGE_SCRIPT}</script>
 </body>
 </html>
 `;

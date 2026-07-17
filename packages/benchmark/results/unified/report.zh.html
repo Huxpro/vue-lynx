@@ -12,11 +12,23 @@
     --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
       --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
     }
   }
+  :root[data-theme="dark"] {
+    --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
+    --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
+  }
+  :root[data-theme="light"] {
+    --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df; --tint: 18%;
+    --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
+  }
+  
+  :root[data-theme="dark"] { color-scheme: dark; }
+  :root[data-theme="light"] { color-scheme: light; }
+
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 20px 16px 48px; background: var(--surface); color: var(--ink);
@@ -110,8 +122,8 @@
 <h2>结论（先看这里）</h2>
 <p class="sub">每条：一句话 takeaway → 含义（怎么用）→ 核对用的关键数字。不要跨环境比毫秒。</p>
 <div class="verdicts"><article class="verdict good">
-      <header><strong class="takeaway">持续更新：上 Vapor（selectStorm@10k ≈ 8.2× 快于 VDOM）</strong></header>
-      <p class="why"><span class="lbl">含义</span> 列表高频选中/局部更新是用户能感觉到的差距；单次点击往往被帧地板盖住。产品默认：交互密集列表优先 Vapor。</p>
+      <header><strong class="takeaway">点状更新上 Vapor（selectStorm@10k ≈ 8.2× vs VDOM）</strong></header>
+      <p class="why"><span class="lbl">含义</span> Select = 点状更新（选中态/少量 class）。高频点状交互是用户能感觉到的差距；单次点击常被帧地板盖住。交互密集列表默认 Vapor。</p>
       <p class="evidence"><span class="lbl">核对</span> VDOM 367 ms → Vapor 45 ms；相对 ReactLynx ≈ 23×（1018 ms）</p>
     </article><article class="verdict good">
       <header><strong class="takeaway">BG 微基准印证：Vapor select ≈ 9.8×</strong></header>
@@ -138,8 +150,8 @@
       <p class="why"><span class="lbl">含义</span> 拟合 cost ∝ N^α：FCP α≈0.7（次线性，固定开销被摊薄）；create/update storm ≈线性。真正拉开的是 Vapor 的 select（长大后仍更平）。</p>
       <p class="evidence"><span class="lbl">核对</span> FCP α≈0.68–0.79 · create α≈0.95 · updateStorm α≈1.0–1.2 · React/VDOM selectStorm α≈1.05（Vapor 更低）</p>
     </article><article class="verdict warn">
-      <header><strong class="takeaway">一句话分工：创建看 React；更新看 Vapor；Vue 首帧用 IFR+ET</strong></header>
-      <p class="why"><span class="lbl">含义</span> 三套旧 benchmark 各说各话时容易打架；统一阶梯后的产品选择可以压成这一句。</p>
+      <header><strong class="takeaway">一句话分工：创建→React；点状/批量更新→Vapor；Vue 首帧→IFR+ET</strong></header>
+      <p class="why"><span class="lbl">含义</span> Select 看点状，Update 看批量——别混。三套旧 bench 打架时，统一阶梯后的产品选择可以压成这一句。</p>
       <p class="evidence"><span class="lbl">核对</span> 详见下方 storm 表 + FCP 表；跨表不要用毫秒互除。</p>
     </article><article class="verdict warn">
       <header><strong class="takeaway">引用比率，别引用绝对毫秒</strong></header>
@@ -152,7 +164,7 @@
     </article></div>
 
 <h2>交互 Storms — IFR × 框架矩阵</h2>
-<p class="sub">黑盒协议：真实点击 → 合成 DOM 终态。本机测量（2026-07-17）。<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。</p>
+<p class="sub">黑盒协议：真实点击 → 合成 DOM 终态。本机测量（2026-07-17）。<b>Select = 点状更新</b>（每次只动选中态/少量 class）；<b>Update = 批量更新</b>（每轮改很多行）。<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。</p>
 <div class="scroll"><table><thead><tr><th>场景</th><th>Vue Vapor</th><th>Vapor+IFR</th><th>Vue VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>ReactLynx (memo)</th></tr></thead><tbody><tr><td class="op">创建 · 1k 行</td><td class="c good"><b>93.1 ms</b><span class="f">(1.15)</span></td><td class="c warn"><b>93.2 ms</b><span class="f">(1.15)</span></td><td class="c good"><b>92.8 ms</b><span class="f">(1.14)</span></td><td class="c good"><b>90.0 ms</b><span class="f">(1.11)</span></td><td class="c good"><b>81.0 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>81.7 ms</b><span class="f">(1.01)</span></td></tr><tr><td class="op">update storm ×50 · 1k</td><td class="c good"><b>26.0 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>24.5 ms</b><span class="f">(1.00)</span></td><td class="c serious"><b>69.6 ms</b><span class="f">(2.84)</span></td><td class="c serious"><b>62.9 ms</b><span class="f">(2.56)</span></td><td class="c warn"><b>53.3 ms</b><span class="f">(2.17)</span></td><td class="c serious"><b>234.8 ms</b><span class="f">(9.56)</span></td></tr><tr><td class="op">select storm ×30 · 1k</td><td class="c good"><b>25.8 ms</b><span class="f">(1.01)</span></td><td class="c good"><b>25.4 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>42.9 ms</b><span class="f">(1.69)</span></td><td class="c good"><b>27.0 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>25.7 ms</b><span class="f">(1.01)</span></td><td class="c serious"><b>92.1 ms</b><span class="f">(3.62)</span></td></tr><tr><td class="op">创建 · 10k 行</td><td class="c warn"><b>853.3 ms</b><span class="f">(1.24)</span></td><td class="c warn"><b>870.0 ms</b><span class="f">(1.26)</span></td><td class="c warn"><b>797.6 ms</b><span class="f">(1.16)</span></td><td class="c warn"><b>841.9 ms</b><span class="f">(1.22)</span></td><td class="c good"><b>729.4 ms</b><span class="f">(1.06)</span></td><td class="c good"><b>688.9 ms</b><span class="f">(1.00)</span></td></tr><tr><td class="op">每 10 行更新 · 10k</td><td class="c good"><b>30.1 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>32.5 ms</b><span class="f">(1.08)</span></td><td class="c warn"><b>51.3 ms</b><span class="f">(1.70)</span></td><td class="c warn"><b>55.1 ms</b><span class="f">(1.83)</span></td><td class="c warn"><b>48.4 ms</b><span class="f">(1.61)</span></td><td class="c serious"><b>88.7 ms</b><span class="f">(2.94)</span></td></tr><tr><td class="op">选中一行 · 10k</td><td class="c good"><b>22.0 ms</b><span class="f">(1.13)</span></td><td class="c good"><b>19.6 ms</b><span class="f">(1.00)</span></td><td class="c warn"><b>33.2 ms</b><span class="f">(1.70)</span></td><td class="c warn"><b>37.1 ms</b><span class="f">(1.90)</span></td><td class="c warn"><b>31.8 ms</b><span class="f">(1.63)</span></td><td class="c serious"><b>51.4 ms</b><span class="f">(2.63)</span></td></tr><tr><td class="op">update storm ×50 · 10k</td><td class="c good"><b>349.8 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>355.6 ms</b><span class="f">(1.02)</span></td><td class="c warn"><b>746.9 ms</b><span class="f">(2.14)</span></td><td class="c warn"><b>734.0 ms</b><span class="f">(2.10)</span></td><td class="c warn"><b>540.5 ms</b><span class="f">(1.55)</span></td><td class="c serious"><b>2.14 s</b><span class="f">(6.10)</span></td></tr><tr><td class="op">select storm ×30 · 10k</td><td class="c warn"><b>44.6 ms</b><span class="f">(1.23)</span></td><td class="c good"><b>36.3 ms</b><span class="f">(1.00)</span></td><td class="c critical"><b>367.2 ms</b><span class="f">(10.13)</span></td><td class="c critical"><b>371.9 ms</b><span class="f">(10.26)</span></td><td class="c serious"><b>263.9 ms</b><span class="f">(7.28)</span></td><td class="c critical"><b>1.02 s</b><span class="f">(28.08)</span></td></tr><tr><td class="op">创建 · 30k 行</td><td class="c warn"><b>2.68 s</b><span class="f">(1.35)</span></td><td class="c warn"><b>2.62 s</b><span class="f">(1.32)</span></td><td class="c warn"><b>2.51 s</b><span class="f">(1.27)</span></td><td class="c warn"><b>2.47 s</b><span class="f">(1.24)</span></td><td class="c good"><b>2.05 s</b><span class="f">(1.03)</span></td><td class="c good"><b>1.98 s</b><span class="f">(1.00)</span></td></tr><tr><td class="op">update storm ×50 · 30k</td><td class="c good"><b>1.30 s</b><span class="f">(1.00)</span></td><td class="c good"><b>1.30 s</b><span class="f">(1.00)</span></td><td class="c warn"><b>2.87 s</b><span class="f">(2.21)</span></td><td class="c warn"><b>2.75 s</b><span class="f">(2.12)</span></td><td class="c warn"><b>2.18 s</b><span class="f">(1.68)</span></td><td class="c serious"><b>8.38 s</b><span class="f">(6.45)</span></td></tr><tr><td class="op">select storm ×30 · 30k</td><td class="c good"><b>128.5 ms</b><span class="f">(1.00)</span></td><td class="c good"><b>132.0 ms</b><span class="f">(1.03)</span></td><td class="c critical"><b>1.46 s</b><span class="f">(11.35)</span></td><td class="c critical"><b>1.46 s</b><span class="f">(11.33)</span></td><td class="c serious"><b>1.12 s</b><span class="f">(8.70)</span></td><td class="c critical"><b>3.74 s</b><span class="f">(29.13)</span></td></tr><tr class="geo"><td class="op">慢速几何平均</td><td class="c good"><b>1.10</b></td><td class="c good"><b>1.07</b></td><td class="c warn"><b>2.36</b></td><td class="c warn"><b>2.27</b></td><td class="c warn"><b>1.88</b></td><td class="c serious"><b>4.27</b></td></tr></tbody></table></div>
 <div class="legend">
   <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
@@ -162,10 +174,10 @@
 </div>
 
 <h2>Storm 随规模变化（1k → 30k）</h2>
-<p class="sub">线性坐标、零基线——看绝对差距，不是对数压缩后的形状。</p>
+<p class="sub">线性坐标、零基线——看绝对差距，不是对数压缩后的形状。Select 曲线看点状更新；Update 曲线看批量吞吐。</p>
 <div class="charts">
-  <div class="chart"><h3>Select storm vs 行数</h3><p class="sub">30 次连续选中的总墙钟时间。Vapor 几乎压平；React 陡升；IFR+ET 把 VDOM 往下拉。</p>
-<svg viewBox="0 0 560 380" role="img" aria-label="Select storm vs 行数">
+  <div class="chart"><h3>Select storm（点状）vs 行数</h3><p class="sub">点状更新：30 次连续选中的总墙钟。每次 tick 只改选中态。Vapor 几乎压平；React 陡升；IFR+ET 把 VDOM 往下拉。</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="Select storm（点状）vs 行数">
 <line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="256.87054272420374" x2="430" y2="256.87054272420374" class="grid"/><text x="50" y="260.37054272420374" class="tick" text-anchor="end">1s</text><line x1="56" y1="177.74108544840752" x2="430" y2="177.74108544840752" class="grid"/><text x="50" y="181.24108544840752" class="tick" text-anchor="end">2s</text><line x1="56" y1="98.61162817261126" x2="430" y2="98.61162817261126" class="grid"/><text x="50" y="102.11162817261126" class="tick" text-anchor="end">3s</text><line x1="56" y1="19.482170896815035" x2="430" y2="19.482170896815035" class="grid"/><text x="50" y="22.982170896815035" class="tick" text-anchor="end">4s</text>
 <text x="243" y="374" class="axis" text-anchor="middle">行数 N — 线性</text>
 <text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">select storm — ms</text>
@@ -189,8 +201,8 @@ select storm — ms: 92.1 ms</title></circle><circle cx="171.4" cy="255.4" r="4.
 select storm — ms: 1.02 s</title></circle><circle cx="402.3" cy="39.7" r="4.5" class="dot s6" style="fill:#eda100"><title>ReactLynx (memo) · 30k
 select storm — ms: 3.74 s</title></circle><text x="411.3" y="43.7" class="slabel" fill="#eda100">ReactLynx (memo)</text>
 </svg></div>
-  <div class="chart"><h3>Update storm vs 行数</h3><p class="sub">50 轮更新的总墙钟时间。创建成本另算——这里只看持续更新吞吐。</p>
-<svg viewBox="0 0 560 380" role="img" aria-label="Update storm vs 行数">
+  <div class="chart"><h3>Update storm（批量）vs 行数</h3><p class="sub">批量更新：50 轮全表/多行更新的总墙钟。创建另算——这里只看持续批量吞吐。</p>
+<svg viewBox="0 0 560 380" role="img" aria-label="Update storm（批量）vs 行数">
 <line x1="56" y1="16" x2="56" y2="336" class="grid"/><text x="56" y="352" class="tick" text-anchor="middle">0</text><line x1="113.71604938271605" y1="16" x2="113.71604938271605" y2="336" class="grid"/><text x="113.71604938271605" y="352" class="tick" text-anchor="middle">5k</text><line x1="171.4320987654321" y1="16" x2="171.4320987654321" y2="336" class="grid"/><text x="171.4320987654321" y="352" class="tick" text-anchor="middle">10k</text><line x1="229.14814814814812" y1="16" x2="229.14814814814812" y2="336" class="grid"/><text x="229.14814814814812" y="352" class="tick" text-anchor="middle">15k</text><line x1="286.8641975308642" y1="16" x2="286.8641975308642" y2="336" class="grid"/><text x="286.8641975308642" y="352" class="tick" text-anchor="middle">20k</text><line x1="344.5802469135802" y1="16" x2="344.5802469135802" y2="336" class="grid"/><text x="344.5802469135802" y="352" class="tick" text-anchor="middle">25k</text><line x1="402.29629629629625" y1="16" x2="402.29629629629625" y2="336" class="grid"/><text x="402.29629629629625" y="352" class="tick" text-anchor="middle">30k</text><line x1="56" y1="336" x2="430" y2="336" class="grid"/><text x="50" y="339.5" class="tick" text-anchor="end">0ms</text><line x1="56" y1="265.2599909762024" x2="430" y2="265.2599909762024" class="grid"/><text x="50" y="268.7599909762024" class="tick" text-anchor="end">2s</text><line x1="56" y1="194.51998195240486" x2="430" y2="194.51998195240486" class="grid"/><text x="50" y="198.01998195240486" class="tick" text-anchor="end">4s</text><line x1="56" y1="123.77997292860732" x2="430" y2="123.77997292860732" class="grid"/><text x="50" y="127.27997292860732" class="tick" text-anchor="end">6s</text><line x1="56" y1="53.039963904809724" x2="430" y2="53.039963904809724" class="grid"/><text x="50" y="56.539963904809724" class="tick" text-anchor="end">8s</text>
 <text x="243" y="374" class="axis" text-anchor="middle">行数 N — 线性</text>
 <text x="14" y="176" class="axis" text-anchor="middle" transform="rotate(-90 14 176)">update storm — ms</text>
@@ -335,5 +347,33 @@ FCP — ms: 1.19 s</title></circle><text x="180.4" y="260.4" class="slabel" fill
     <li><b>复现：</b><code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code></li>
   </ul>
 </div>
+<script>
+(function () {
+  function applyTheme(t) {
+    if (t !== 'dark' && t !== 'light') return;
+    document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.style.colorScheme = t;
+  }
+  function applyLang(l) {
+    if (l !== 'en' && l !== 'zh') return;
+    document.documentElement.setAttribute('lang', l === 'zh' ? 'zh-CN' : 'en');
+    if (typeof window.__benchApplyLang === 'function') {
+      try { window.__benchApplyLang(l); } catch (_) {}
+    }
+  }
+  var q = new URLSearchParams(location.search);
+  applyTheme(q.get('theme'));
+  applyLang(q.get('lang'));
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (!d || d.source !== 'vue-lynx-docs') return;
+    if (d.type === 'theme') applyTheme(d.theme);
+    if (d.type === 'lang') applyLang(d.lang);
+  });
+  try {
+    parent.postMessage({ source: 'vue-lynx-bench', type: 'ready' }, '*');
+  } catch (_) {}
+})();
+</script>
 </body>
 </html>
