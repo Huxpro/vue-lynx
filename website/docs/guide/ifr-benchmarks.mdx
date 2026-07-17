@@ -2,11 +2,24 @@ import { Badge } from '@theme';
 
 # IFR Benchmarks <Badge text="v0.5" type="tip" />
 
-> Product thesis (how / cost / architecture): **[IFR guide](/guide/ifr)**.
+> Product thesis (how / architecture): **[IFR guide](/guide/ifr)**.
 > Product FCP matrices: **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-> This page is the measurement appendix — strategy cost, real-app size/TTI,
-> real-thread FCP, **cost-space** scale charts, and native checks.
+> This page owns the **cost ledger** and the measurement campaigns behind it —
+> strategy render cost, real-app size/TTI, real-thread FCP, **cost-space**
+> charts, and native checks.
 > **“−19% FCP” is not scale-invariant** — see §3b and the unified report.
+
+<span id="what-it-costs" />
+
+## What it costs
+
+| Cost | Rough shape | Where measured |
+| --- | --- | --- |
+| Dual bundles | Vue runtime + app on both threads | [§2](#2-all-examples-sweep) |
+| Bundle size | `main.lynx.bundle` gzip ~**2×** (median) | [§2](#2-all-examples-sweep) · [§3c](#3c-cost-space-mt-gzip--fcp) |
+| Sync MT work | Extra serial work until interactive (~+35% all-examples proxy); on device, MT paint overlaps BG startup | [§1](#1-strategy-ladder) · [§2](#2-all-examples-sweep) |
+| Async / empty first screen | Cannot accelerate content that does not exist until a fetch returns | [§2](#2-all-examples-sweep) (`networking`) · [§3b](#3b-large-app-reevaluation) shell IFR |
+| Large web + heavy throttle | Bundle-parse term can erase or reverse the FCP win | [§3](#3-real-threads) · [§3b](#3b-large-app-reevaluation) |
 
 | campaign | question |
 |---|---|

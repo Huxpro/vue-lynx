@@ -6,8 +6,9 @@ IFR paints real content during Lynx `loadTemplate`, before the background
 thread has started — so the blank frame that waits on background boot, first
 Vue render, and IPC is gone.
 
-This page is the product thesis. Numbers live in
-[IFR Benchmarks](/guide/ifr-benchmarks) and the
+This page is the product thesis — **how** IFR is fast and **why** that is an
+architecture win. Cost ledger, gzip/TTI, cost-space charts, and FCP numbers:
+[IFR Benchmarks](/guide/ifr-benchmarks) ·
 [unified matrix](/guide/benchmark-unified).
 
 ## 1. How IFR is fast
@@ -39,19 +40,7 @@ Plain IFR without ET still replays roughly a full create path on the main
 thread. That is why VDOM ships IFR **with** Element Templates by default —
 see the strategy ladder on [IFR Benchmarks](/guide/ifr-benchmarks).
 
-## 2. What it costs
-
-| Cost | Rough shape |
-| --- | --- |
-| Dual bundles | Vue runtime + app on both threads |
-| Bundle size | `main.lynx.bundle` gzip ~**2×** (median across examples) |
-| Sync MT work | Extra serial work until interactive (~+35% in the all-examples proxy); on device, MT paint overlaps BG startup |
-| Async content | Cannot accelerate a screen that does not exist until a fetch returns |
-
-Cost-space charts (MT gzip × FCP) and the examples gzip/TTI sweep:
-**[IFR Benchmarks](/guide/ifr-benchmarks)**.
-
-## 3. Architecture advantage
+## 2. Architecture advantage
 
 IFR is not “a faster first paint in any harness.” It removes a blank frame that
 exists **because of a real thread boundary**. Single-process / same-isolate
@@ -69,7 +58,7 @@ the other measures the bill.
 | | |
 | --- | --- |
 | **Fast how?** | Paint in `loadTemplate` on MT; BG boot overlaps. Cheap create path (ET / Vapor trees) required at scale. |
-| **Cost** | Dual bundles · ~**2×** gzip · sync MT work. Empty fetch-first screens don’t benefit. |
+| **Cost** | Dual bundles · ~**2×** gzip · sync MT work — see [IFR Benchmarks](/guide/ifr-benchmarks#what-it-costs). |
 | **Architecture** | Wins only where a real thread boundary creates a blank frame. |
 | **Ship** | VDOM: **`enableIFR: true`** (brings ET). Don’t ship IFR without ET at scale. Always **mount** a real shell — gate fetches, don’t skip `app.mount()`. |
 | **Skip when** | Nothing to paint before a fetch; large web bundles under heavy CPU throttle (measure first); or ~2× gzip is unacceptable without measuring. |
