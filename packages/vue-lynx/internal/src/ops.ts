@@ -170,10 +170,10 @@ export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 //
 // This IR is a *faithful* serialization of the inert ShadowElement prototype
 // the HTML parser would have produced (raw attribute list, pre-fold), NOT the
-// REGISTER_TEMPLATE `TemplateNode` shape: reconstructing the exact inert tree
-// keeps the downstream buildStructure/buildShadowClone walks — and therefore
-// the REGISTER_TEMPLATE payload and the pre-order uid contract — byte-identical
-// to the string-parsing path. See runtime/src/vapor/build-inert.ts.
+// REGISTER_TREE `TemplateNode` shape: reconstructing the exact inert tree keeps
+// the downstream buildStructure/buildShadowClone walks — and therefore the
+// REGISTER_TREE payload and the pre-order uid contract — byte-identical to the
+// string-parsing path. See runtime/src/vapor/build-inert.ts.
 // ---------------------------------------------------------------------------
 
 /**

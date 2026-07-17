@@ -26,6 +26,10 @@ const api: BenchApi = {
     rows.value = buildData(10000)
     selected.value = undefined
   },
+  runHuge() {
+    rows.value = buildData(30000)
+    selected.value = undefined
+  },
   add() {
     rows.value.push(...buildData(1000))
     triggerRef(rows)
@@ -70,7 +74,7 @@ const api: BenchApi = {
 
 onMounted(() => {
   setTimeout(async () => {
-    const result = await runScenario(MODE, api)
+    const result = await runScenario(MODE, api, { huge: true })
     resultJson.value = JSON.stringify(result)
   }, 50)
 })

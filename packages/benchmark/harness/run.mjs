@@ -394,7 +394,7 @@ function markdownReport(result) {
   md += `| phase | ${modes.flatMap((m) => [`${m} page`, `${m} worker`]).join(' | ')} |\n|${
     '---|'.repeat(2 * modes.length + 1)
   }\n`;
-  const phases = ['mounted', 'after10k', 'afterClear'];
+  const phases = ['mounted', 'after10k', 'afterClear', 'after30k', 'after30kClear'];
   const mb = (x) => (x == null ? 'n/a' : (x / 1048576).toFixed(1));
   for (const phase of phases) {
     const cell = (mode, key) => {
