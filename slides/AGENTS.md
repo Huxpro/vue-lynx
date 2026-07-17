@@ -39,6 +39,11 @@ one step (no in-slide fragments). Everything is authored against a fixed
   two sides of a pair.
 - `pnpm test:morph` drives every adjacent pair and fails on off-path or
   landing-snap regressions. Run it after touching flips or `framework/magic-move.js`.
+- Morphing elements are elevated to `z-index: 4` (`.is-flipping`) so they ride
+  above slide content. When overlapping elements have a meaningful stacking
+  order (a cascade: later on top), give each an explicit inline `z-index`
+  (1, 2, 3…) on **every** slide of the sequence — inline wins over the
+  elevation, so stacking stays stable mid-morph.
 
 ## Overlays
 
