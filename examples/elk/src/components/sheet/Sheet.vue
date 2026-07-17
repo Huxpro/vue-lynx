@@ -4,7 +4,6 @@ import {
   runOnBackground,
   runOnMainThread,
   useMainThreadRef,
-  watch,
 } from 'vue-lynx';
 import {
   resolveSheetDrag,
@@ -313,23 +312,6 @@ function resetSheetMotion() {
   setMotionTransition('', '');
 }
 
-function prepareSheetForOpen() {
-  'main thread';
-  if (
-    settleTimerRef.current === 0
-    && Math.abs(translationRef.current) < 0.5
-  ) {
-    return;
-  }
-
-  resetSheetMotion();
-}
-
-watch(() => props.modelValue, (visible) => {
-  if (visible)
-    runOnMainThread(prepareSheetForOpen)();
-});
-
 function handleAfterLeave() {
   runOnMainThread(resetSheetMotion)();
 }
@@ -343,35 +325,36 @@ function handleAfterLeave() {
         :main-thread-ref="backdropRef"
         @tap="requestClose"
       />
-      <view
-        class="sheet-surface"
-        :style="surfaceStyle"
-        :main-thread-ref="surfaceRef"
-        :main-thread-bindlayoutchange="handleSurfaceLayout"
-      >
-        <view class="sheet-rubber-fill" />
+      <view class="sheet-surface-transition" :style="surfaceStyle">
         <view
-          class="sheet-handle-hit-area"
-          :main-thread-bindtouchstart="handleHandleTouchStart"
-          :main-thread-bindtouchmove="handleTouchMove"
-          :main-thread-bindtouchend="handleTouchEnd"
-          :main-thread-bindtouchcancel="handleTouchCancel"
+          class="sheet-surface"
+          :main-thread-ref="surfaceRef"
+          :main-thread-bindlayoutchange="handleSurfaceLayout"
         >
-          <view class="sheet-handle" />
+          <view class="sheet-rubber-fill" />
+          <view
+            class="sheet-handle-hit-area"
+            :main-thread-bindtouchstart="handleHandleTouchStart"
+            :main-thread-bindtouchmove="handleTouchMove"
+            :main-thread-bindtouchend="handleTouchEnd"
+            :main-thread-bindtouchcancel="handleTouchCancel"
+          >
+            <view class="sheet-handle" />
+          </view>
+          <scroll-view
+            class="sheet-panel"
+            scroll-orientation="vertical"
+            :bounces="true"
+            :main-thread-ref="panelRef"
+            :main-thread-bindscroll="handlePanelScroll"
+            :main-thread-bindtouchstart="handleContentTouchStart"
+            :main-thread-bindtouchmove="handleTouchMove"
+            :main-thread-bindtouchend="handleTouchEnd"
+            :main-thread-bindtouchcancel="handleTouchCancel"
+          >
+            <slot />
+          </scroll-view>
         </view>
-        <scroll-view
-          class="sheet-panel"
-          scroll-orientation="vertical"
-          :bounces="true"
-          :main-thread-ref="panelRef"
-          :main-thread-bindscroll="handlePanelScroll"
-          :main-thread-bindtouchstart="handleContentTouchStart"
-          :main-thread-bindtouchmove="handleTouchMove"
-          :main-thread-bindtouchend="handleTouchEnd"
-          :main-thread-bindtouchcancel="handleTouchCancel"
-        >
-          <slot />
-        </scroll-view>
       </view>
     </view>
   </Transition>
@@ -403,12 +386,22 @@ function handleAfterLeave() {
   transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.sheet-surface {
+.sheet-surface-transition {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
+  transform: translateY(0);
+  transition: transform 250ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sheet-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   border-top: 1px solid var(--c-border);
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -460,8 +453,8 @@ function handleAfterLeave() {
   opacity: 0;
 }
 
-.sheet-enter-from .sheet-surface,
-.sheet-leave-to .sheet-surface {
+.sheet-enter-from .sheet-surface-transition,
+.sheet-leave-to .sheet-surface-transition {
   transform: translateY(100%);
 }
 
@@ -475,8 +468,9 @@ function handleAfterLeave() {
   transition-timing-function: ease-in;
 }
 
-.sheet-leave-active .sheet-surface {
+.sheet-leave-active .sheet-surface-transition {
   transition-duration: 188ms;
   transition-timing-function: ease-in;
 }
+
 </style>
