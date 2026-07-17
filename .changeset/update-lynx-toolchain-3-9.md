@@ -8,4 +8,4 @@ Bumps the upstream `@lynx-js/*` dependencies to their latest versions: `@lynx-js
 
 Notable internal adjustments: `__SetID` accepts `string | null` (Lynx types 3.9), and the testing setup tracks the `@lynx-js/testing-environment` `0.2` API (`new LynxTestingEnv({ window })`, `env.env.window`).
 
-The website pins `@lynx-js/lynx-core` to the exact version `web-core` resolves it as a peer (`0.1.3`); it's only added so `web-core`'s `/web` subpath resolves after the lockfile re-resolution, and a range would risk a second, mismatched copy.
+The website pins `@lynx-js/lynx-core` to the exact version `web-core` resolves it as a peer (`0.1.4`); it's only added so `web-core`'s `/web` subpath resolves after the lockfile re-resolution, and a range would risk a second, mismatched copy.
