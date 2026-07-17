@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { copy, buildConclusions } from './report-i18n.mjs';
+import { THEME_BRIDGE_CSS, THEME_BRIDGE_SCRIPT } from './theme-bridge.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: args } = parseArgs({
@@ -438,11 +439,20 @@ function renderReport(lang, outPath) {
     --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
       --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
     }
   }
+  :root[data-theme="dark"] {
+    --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
+    --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
+  }
+  :root[data-theme="light"] {
+    --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df; --tint: 18%;
+    --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
+  }
+  ${THEME_BRIDGE_CSS}
   * { box-sizing: border-box; }
   body {
     margin: 0; padding: 20px 16px 48px; background: var(--surface); color: var(--ink);
@@ -602,6 +612,7 @@ ${conclusionsHtml}
     ${t.notes.map((n) => `<li>${n}</li>`).join('\n    ')}
   </ul>
 </div>
+<script>${THEME_BRIDGE_SCRIPT}</script>
 </body>
 </html>
 `;
