@@ -33,7 +33,7 @@ Vapor satisfies the required invariants in fresh realms:
 
 - the engine page is protocol ID 1 and element IDs allocate from 2;
 - template IDs and clone base IDs are monotonic;
-- `REGISTER_TEMPLATE`/`CLONE_TEMPLATE` reserve the same preorder UID range on both threads;
+- `REGISTER_TREE`/`CLONE_TREE` reserve the same preorder UID range on both threads;
 - event signs, worklet IDs, refs, and emitted op order are deterministic.
 
 The Main Thread evaluates the full Vapor entry but defers `mount()` until `renderPage()`. Its real template clones and initial `renderEffect` calls write to a local recorder/interpreter. The Background Thread then mounts normally and owns the ShadowElement tree, reactivity, events, refs, and subsequent updates.

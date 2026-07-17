@@ -42,7 +42,7 @@ The handoff has three stages:
 2. The real Vapor templates and initial `renderEffect` functions emit operations. Vue Lynx applies and records those operations locally, so `renderPage()` returns with visible content.
 3. The Background Thread performs its normal mount. Vue Lynx compares its initial operation frames with the recorded stream, adopts Background-owned refs and worklet contexts, then gives the Background Thread exclusive update ownership.
 
-Vapor already compiles static markup into `template()` clones. Vue Lynx maps those clones to `REGISTER_TEMPLATE` and `CLONE_TEMPLATE` operations with deterministic element IDs. Vapor IFR doesn't use the VDOM-only element-template transform from the reference implementation.
+Vapor already compiles static markup into `template()` clones. Vue Lynx maps those clones to `REGISTER_TREE` and `CLONE_TREE` operations with deterministic element IDs. Vapor IFR doesn't use the VDOM-only element-template transform from the reference implementation.
 
 ## Keep the initial render deterministic
 

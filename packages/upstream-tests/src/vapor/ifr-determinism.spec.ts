@@ -112,7 +112,7 @@ describe('Vapor IFR deterministic replay invariant', () => {
 
     expect(JSON.stringify(second)).toBe(JSON.stringify(first));
 
-    const registrations = opsOf(first, OP.REGISTER_TEMPLATE);
+    const registrations = opsOf(first, OP.REGISTER_TREE);
     expect(registrations.map((entry) => entry.args[0])).toEqual([1, 2]);
 
     const rootStructure = registrations[0]!.args[1] as [
@@ -127,7 +127,7 @@ describe('Vapor IFR deterministic replay invariant', () => {
     ]);
     expect(rootStructure[2][0]![2]).toEqual([]);
 
-    const clones = opsOf(first, OP.CLONE_TEMPLATE);
+    const clones = opsOf(first, OP.CLONE_TREE);
     expect(clones.map((entry) => entry.args[0])).toEqual([1, 2, 2, 2]);
     expect(clones.map((entry) => entry.args[1])).toEqual(
       [...clones.map((entry) => entry.args[1])].sort((a, b) =>
