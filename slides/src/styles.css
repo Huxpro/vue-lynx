@@ -2689,94 +2689,84 @@ body.is-blackout::after {
 .sendmock__arrow svg { width: 42px; height: 24px; }
 
 /* =========================================================
-   Elk draggable sheet — three-owner layered mock + code
-   Vue <Transition> (declarative) → MTS worklet (main thread)
-   → native <scroll-view> (arbitration). Most web → most native.
+   Elk draggable sheet — real bottom-sheet UI mock + stacked code
+   Three owners annotated on the actual UI:
+   ① Vue <Transition> (open/close) ② MTS worklet (drag/rubber)
+   ③ native <scroll-view> (scroll ↔ drag).
    ========================================================= */
-.layers3 {
-  --l-vue: #42b883;            /* Vue Transition — declarative */
-  --l-mts: var(--brand-teal);  /* MTS worklet — main thread */
-  --l-scroll: #E8B44A;         /* native scroll-view */
-  flex: 1;
-  width: 100%;
-  max-width: 420px;
-  border: 1.5px solid color-mix(in srgb, var(--l-vue) 62%, transparent);
-  border-radius: 16px;
-  padding: 21px 12px 12px;
-  position: relative;
-  background: color-mix(in srgb, var(--l-vue) 6%, transparent);
-}
-.layers3__mid {
-  border: 1.5px solid color-mix(in srgb, var(--l-mts) 62%, transparent);
-  border-radius: 13px;
-  padding: 21px 12px 12px;
-  position: relative;
-  background: color-mix(in srgb, var(--l-mts) 7%, transparent);
-}
-.layers3__inner {
-  border: 1.5px solid color-mix(in srgb, var(--l-scroll) 62%, transparent);
-  border-radius: 10px;
-  padding: 21px 12px 12px;
-  position: relative;
-  background: color-mix(in srgb, var(--l-scroll) 8%, transparent);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.layers3__inner .row { height: 11px; border-radius: 6px; background: var(--c-list); }
-.layers3__inner .row.w70 { width: 70%; }
-.layers3__inner .row.w90 { width: 90%; }
-/* one pill per layer: number + element + dim role — no collisions */
-.layers3__tag {
-  position: absolute;
-  top: -11px;
-  left: 13px;
-  padding: 2px 11px;
-  border-radius: 999px;
-  background: var(--paper);
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  font-weight: 600;
-}
-.layers3 > .layers3__tag { color: var(--l-vue); border: 1px solid color-mix(in srgb, var(--l-vue) 55%, transparent); }
-.layers3__mid > .layers3__tag { color: var(--l-mts); border: 1px solid color-mix(in srgb, var(--l-mts) 55%, transparent); }
-.layers3__inner > .layers3__tag { color: var(--l-scroll); border: 1px solid color-mix(in srgb, var(--l-scroll) 55%, transparent); }
-.layers3__tag .role { color: var(--ink-mute); font-weight: 400; }
-/* web → native axis beside the stack */
-.layers3-wrap { display: flex; align-items: stretch; gap: 14px; }
-.layers3-axis {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  font-family: var(--mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-  padding: 4px 0;
-}
-.layers3-axis .bar {
-  flex: 1;
-  width: 3px;
-  margin: 8px 0;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, #42b883, var(--brand-teal), #E8B44A);
-}
-
-/* two-column: mock | code for the sheet slides */
-.sheet-cols {
+.sheet-split {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  gap: clamp(28px, 5cqw, 68px);
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: clamp(28px, 5cqw, 60px);
   align-items: center;
   width: 100%;
 }
-.sheet-cols .codeframe { text-align: left; }
-.sheet-payoff { max-width: 62ch; }
-.sheet-payoff .dim { color: var(--ink-mute); }
+.sheet-split .codeframe { text-align: left; }
+.sheet-split .mockcol { display: flex; flex-direction: column; align-items: center; }
+.codestack { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+
+/* the phone + backdrop + bottom sheet */
+.sheetmock {
+  --o-vue: #42b883; --o-mts: var(--brand-teal); --o-scroll: #E8B44A;
+  width: 214px;
+  aspect-ratio: 214 / 300;
+  border: 1.5px solid var(--line);
+  border-radius: 26px;
+  background: #0b0d11;
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.sheetmock__bg { position: absolute; inset: 0; padding: 15px 14px; display: flex; flex-direction: column; gap: 9px; }
+.sheetmock__bg .hdr { height: 15px; width: 52%; border-radius: 5px; background: var(--c-list); opacity: 0.5; }
+.sheetmock__bg .ln { height: 9px; border-radius: 4px; background: var(--c-list); opacity: 0.3; }
+.sheetmock__bg .ln.s { width: 72%; }
+.sheetmock__scrim { position: absolute; inset: 0; background: rgba(4, 6, 9, 0.55); }
+.sheetmock__sheet {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 62%;
+  background: var(--paper-elev);
+  border: 1.5px solid color-mix(in srgb, var(--o-vue) 60%, transparent);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  padding: 0 14px 14px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 -12px 32px -14px rgba(0, 0, 0, 0.6);
+}
+.sheetmock__handle { width: 40px; height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--o-mts) 80%, transparent); margin: 10px auto 13px; }
+.sheetmock__ttl { height: 12px; width: 44%; border-radius: 5px; background: var(--c-bubble); margin-bottom: 13px; }
+.sheetmock__list {
+  flex: 1; overflow: hidden;
+  display: flex; flex-direction: column; gap: 11px;
+  padding-left: 8px;
+  border-left: 2px solid color-mix(in srgb, var(--o-scroll) 55%, transparent);
+}
+.sheetmock__list .row { display: flex; align-items: center; gap: 9px; }
+.sheetmock__list .row .av { width: 19px; height: 19px; border-radius: 50%; background: var(--c-list); flex: none; }
+.sheetmock__list .row .tx { flex: 1; height: 9px; border-radius: 4px; background: var(--c-list); }
+.sheetmock__list .row .tx.s { max-width: 58%; }
+/* ⇅ slide-up affordance on the sheet's shoulder */
+.sheetmock__lift { position: absolute; left: 4px; top: 33.5%; color: var(--o-vue); font-size: 13px; line-height: 1; }
+/* ↕ scroll affordance in the list */
+.sheetmock__scrollcue { position: absolute; right: 9px; bottom: 30px; color: var(--o-scroll); font-size: 12px; }
+/* numbered owner dots pinned to the real UI parts */
+.sheetmock__dot {
+  position: absolute; width: 17px; height: 17px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+  background: var(--paper); border: 1.5px solid; z-index: 3;
+}
+.sheetmock__dot.d1 { color: var(--o-vue); border-color: var(--o-vue); top: calc(38% - 9px); left: 12px; }
+.sheetmock__dot.d2 { color: var(--o-mts); border-color: var(--o-mts); top: calc(38% + 12px); right: 16px; }
+.sheetmock__dot.d3 { color: var(--o-scroll); border-color: var(--o-scroll); bottom: 30px; left: 10px; }
+
+/* compact legend mapping ①②③ → owner */
+.sheet-legend { display: flex; flex-direction: column; gap: 7px; margin-top: 16px; font-family: var(--mono); font-size: 11px; }
+.sheet-legend .k { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.sheet-legend .n { font-weight: 700; }
+.sheet-legend .n.n1 { color: #42b883; }
+.sheet-legend .n.n2 { color: var(--brand-teal); }
+.sheet-legend .n.n3 { color: #E8B44A; }
+.sheet-legend .role { color: var(--ink-mute); }
 
 /* =========================================================
    Elk collapsing profile — extends the viewpager mock with a
