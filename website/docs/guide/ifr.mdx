@@ -315,11 +315,12 @@ How to read this:
 - ET is not free on gzip (MT section roughly doubles vs IFR alone on this
   scene). Treat it as a render-cost hedge, not a size optimization.
 
-### Scale trends (1k → 10k)
+### Scale trends (1k → 30k)
 
 Same five architectures on one generated SFC, scaled like the
-[benchmark playground](/guide/benchmark-playground) storms. Linear (zero
-baseline) and log-log FCP vs N / FCP vs MT gzip, with scaling exponents α
+[benchmark playground](/guide/benchmark-playground) storms (through **30k**
+elements). Lead chart is playground-style **cost space** (MT gzip × FCP), then
+FCP vs N — linear and log-log
 (<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 full page ↗</a>
 ·
 <a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 full page ↗</a>):
@@ -327,13 +328,13 @@ baseline) and log-log FCP vs N / FCP vs MT gzip, with scaling exponents α
 <iframe
   src="/benchmark/ifr-scale-trends-x1.html"
   title="IFR architecture scale trends (CPU ×1)"
-  style={{ width: '100%', height: '2100px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
+  style={{ width: '100%', height: '2400px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
   loading="lazy"
 />
 
 Headline from the ×1 curve: **VDOM+IFR without ET crosses above plain VDOM by
-~10k elements** (375 vs 315 ms) — the MT Vue copy without ET's render-cost
-hedge. VDOM+IFR+ET stays lowest across the range. Full write-up:
+~10k** and is ~+20% slower by 30k (1010 vs 842 ms). VDOM+IFR+ET stays lowest
+across the range. Full write-up:
 [`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
 
 ## Vapor-specific limitations

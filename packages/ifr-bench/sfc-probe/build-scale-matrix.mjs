@@ -8,10 +8,12 @@
  *   vapor           — IFR off
  *   vapor-ifr       — IFR on
  *
- * Scales (nCards → ~elements = 4 + nCards*8):
- *   125 → ~1k,  375 → ~3k,  625 → ~5k,  1250 → ~10k
+ * Scales (nCards → ~elements = 4 + nCards*8), matching the playground ladder:
+ *   125 → ~1k,  375 → ~3k,  625 → ~5k,  1250 → ~10k,
+ *   2500 → ~20k, 3750 → ~30k
  *
- *   node build-scale-matrix.mjs [outDir=../web-bundles-scale]
+ *   node build-scale-matrix.mjs [outDir=../web-bundles-scale] [--only=20k,30k]
+ *   Existing cells are kept; pass --force to rebuild every cell.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -23,9 +25,17 @@ import zlib from 'node:zlib';
 import { generateProbe } from './generate.mjs';
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const flags = new Set(process.argv.slice(2).filter((a) => a.startsWith('--')));
+const onlyFlag = [...flags].find((f) => f.startsWith('--only='));
+const onlyTags = onlyFlag
+  ? new Set(onlyFlag.slice('--only='.length).split(',').filter(Boolean))
+  : null;
+const force = flags.has('--force');
+
 const outDir = path.resolve(
   _dirname,
-  process.argv[2] ?? path.join(_dirname, '../web-bundles-scale'),
+  args[0] ?? path.join(_dirname, '../web-bundles-scale'),
 );
 
 const VARIANTS = [
@@ -41,15 +51,35 @@ const SCALES = [
   { tag: '3k', nCards: 375 },
   { tag: '5k', nCards: 625 },
   { tag: '10k', nCards: 1250 },
+  { tag: '20k', nCards: 2500 },
+  { tag: '30k', nCards: 3750 },
 ];
 
 const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
 
 fs.mkdirSync(outDir, { recursive: true });
+const manifestPath = path.join(outDir, 'scale-manifest.json');
+const prev = fs.existsSync(manifestPath)
+  ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+  : { cells: [] };
+const cellByName = new Map((prev.cells ?? []).map((c) => [c.name, c]));
 const manifest = { variants: VARIANTS, scales: SCALES, cells: [] };
 
 for (const scale of SCALES) {
   for (const v of VARIANTS) {
+    const name = `${v.id}@${scale.tag}`;
+    const destName = `${name}.web.bundle`;
+    const destPath = path.join(outDir, destName);
+    if (onlyTags && !onlyTags.has(scale.tag)) {
+      if (cellByName.has(name)) manifest.cells.push(cellByName.get(name));
+      continue;
+    }
+    if (!force && fs.existsSync(destPath) && cellByName.has(name)) {
+      console.log(`[skip] ${name} (already built)`);
+      manifest.cells.push(cellByName.get(name));
+      continue;
+    }
+
     const { elements } = generateProbe(v.mode, scale.nCards);
     fs.rmSync(path.join(_dirname, 'node_modules/.cache'), {
       recursive: true,
@@ -57,7 +87,6 @@ for (const scale of SCALES) {
     });
     fs.rmSync(path.join(_dirname, 'dist'), { recursive: true, force: true });
 
-    const name = `${v.id}@${scale.tag}`;
     console.log(
       `[build] ${name} (cards=${scale.nCards} ~${elements} els vapor=${
         v.mode === 'vapor' ? 1 : 0
@@ -65,9 +94,15 @@ for (const scale of SCALES) {
     );
 
     const t0 = Date.now();
+    const rspeedyJs = path.join(
+      _dirname,
+      'node_modules/@lynx-js/rspeedy/bin/rspeedy.js',
+    );
+    // Large unrolled SFCs (vapor especially) need a deeper V8 stack than
+    // the default ~1k frames — otherwise the Vue compiler overflows.
     execFileSync(
-      path.join(_dirname, 'node_modules/.bin/rspeedy'),
-      ['build'],
+      process.execPath,
+      ['--stack-size=65536', rspeedyJs, 'build'],
       {
         cwd: _dirname,
         stdio: 'inherit',
@@ -83,8 +118,7 @@ for (const scale of SCALES) {
 
     const webBundlePath = path.join(_dirname, 'dist/main.web.bundle');
     const raw = fs.readFileSync(webBundlePath);
-    const destName = `${name}.web.bundle`;
-    fs.copyFileSync(webBundlePath, path.join(outDir, destName));
+    fs.copyFileSync(webBundlePath, destPath);
 
     const parsed = JSON.parse(raw.toString('utf8'));
     const mt = Buffer.from(parsed.lepusCode?.root ?? '', 'utf8');

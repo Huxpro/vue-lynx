@@ -4,7 +4,9 @@
     "1k": 1004,
     "3k": 3004,
     "5k": 5004,
-    "10k": 10004
+    "10k": 10004,
+    "20k": 20004,
+    "30k": 30004
   },
   "perOp": {
     "vdom": {
@@ -191,7 +193,13 @@
       "elements@5k": 5004,
       "webGzip@10k": 39888,
       "mtGzip@10k": 7239,
-      "elements@10k": 10004
+      "elements@10k": 10004,
+      "webGzip@20k": 43844,
+      "mtGzip@20k": 7239,
+      "elements@20k": 20004,
+      "webGzip@30k": 47324,
+      "mtGzip@30k": 7239,
+      "elements@30k": 30004
     },
     "vdom-ifr": {
       "webGzip@1k": 64430,
@@ -205,7 +213,13 @@
       "elements@5k": 5004,
       "webGzip@10k": 72371,
       "mtGzip@10k": 37943,
-      "elements@10k": 10004
+      "elements@10k": 10004,
+      "webGzip@20k": 79770,
+      "mtGzip@20k": 41130,
+      "elements@20k": 20004,
+      "webGzip@30k": 86943,
+      "mtGzip@30k": 44164,
+      "elements@30k": 30004
     },
     "vdom-ifr-et": {
       "webGzip@1k": 107079,
@@ -219,7 +233,13 @@
       "elements@5k": 5004,
       "webGzip@10k": 476923,
       "mtGzip@10k": 239507,
-      "elements@10k": 10004
+      "elements@10k": 10004,
+      "webGzip@20k": 883009,
+      "mtGzip@20k": 442521,
+      "elements@20k": 20004,
+      "webGzip@30k": 1290348,
+      "mtGzip@30k": 643427,
+      "elements@30k": 30004
     },
     "vapor": {
       "webGzip@1k": 45610,
@@ -233,7 +253,13 @@
       "elements@5k": 5004,
       "webGzip@10k": 94727,
       "mtGzip@10k": 7239,
-      "elements@10k": 10004
+      "elements@10k": 10004,
+      "webGzip@20k": 143183,
+      "mtGzip@20k": 7239,
+      "elements@20k": 20004,
+      "webGzip@30k": 191882,
+      "mtGzip@30k": 7239,
+      "elements@30k": 30004
     },
     "vapor-ifr": {
       "webGzip@1k": 87925,
@@ -247,8 +273,14 @@
       "elements@5k": 5004,
       "webGzip@10k": 185166,
       "mtGzip@10k": 92687,
-      "elements@10k": 10004
+      "elements@10k": 10004,
+      "webGzip@20k": 284089,
+      "mtGzip@20k": 141986,
+      "elements@20k": 20004,
+      "webGzip@30k": 380220,
+      "mtGzip@30k": 189637,
+      "elements@30k": 30004
     }
   },
-  "measuredAt": "2026-07-17T16:15:04.984Z"
+  "measuredAt": "2026-07-17T16:46:40.033Z"
 }

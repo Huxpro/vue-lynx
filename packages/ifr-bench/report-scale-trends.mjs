@@ -24,8 +24,15 @@ const resultsPath = path.resolve(
 const LABEL = process.argv[4]
   ?? path.basename(resultsPath, '.json').replace(/^browser-results-/, '');
 
-const SIZES = ['1k', '3k', '5k', '10k'];
-const SIZE_N = { '1k': 1004, '3k': 3004, '5k': 5004, '10k': 10004 };
+const SIZES = ['1k', '3k', '5k', '10k', '20k', '30k'];
+const SIZE_N = {
+  '1k': 1004,
+  '3k': 3004,
+  '5k': 5004,
+  '10k': 10004,
+  '20k': 20004,
+  '30k': 30004,
+};
 const VARIANT_ORDER = [
   'vdom',
   'vdom-ifr',
@@ -101,16 +108,28 @@ function seriesFcp(variant) {
   for (const scale of SIZES) {
     const fcp = perOp[variant]?.[`fcp@${scale}`]?.median;
     const n = sizes[variant]?.[`elements@${scale}`] ?? SIZE_N[scale];
-    if (fcp == null) continue;
+    if (fcp == null || !(fcp > 0)) continue;
     pts.push({
       scale,
       n,
       fcp,
       webGzip: sizes[variant]?.[`webGzip@${scale}`],
       mtGzip: sizes[variant]?.[`mtGzip@${scale}`],
+      dnf: false,
     });
   }
   return pts;
+}
+
+function dnfScales(variant) {
+  return SIZES.filter((scale) => {
+    const fcp = perOp[variant]?.[`fcp@${scale}`]?.median;
+    const nodes = perOp[variant]?.[`settled@${scale}`]
+      ? sizes[variant]?.[`elements@${scale}`]
+      : null;
+    // DNF: measured but no positive FCP (crash / empty tree / hard timeout).
+    return fcp != null && !(fcp > 0);
+  });
 }
 
 function niceLinearTicks(lo, hi, maxTicks = 6) {
@@ -230,17 +249,22 @@ function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit, scale = 'l
     const pathD = pts
       .map((p, k) => `${k ? 'L' : 'M'}${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`)
       .join('');
-    marks += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.2"/>`;
+    marks += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.8"/>`;
     for (const p of pts) {
-      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" fill="${color}">`
+      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="5" fill="${color}">`
         + `<title>${VARIANT_LABEL[variant]} · ${p.scale}\nN=${p.n}  FCP=${p.fcp.toFixed(1)}ms`
         + (p.mtGzip != null ? `  MT gz=${(p.mtGzip / 1024).toFixed(1)}KB` : '')
         + `</title></circle>`;
     }
     if (variant === 'vdom') {
       for (const p of pts) {
-        marks += `<text x="${px(p.x).toFixed(1)}" y="${(py(p.y) + 15).toFixed(1)}" class="ptlabel" text-anchor="middle">${p.scale}</text>`;
+        marks += `<text x="${px(p.x).toFixed(1)}" y="${(py(p.y) + 16).toFixed(1)}" class="ptlabel" text-anchor="middle">${p.scale}</text>`;
       }
+    }
+    const dnfs = dnfScales(variant);
+    if (dnfs.length && pts.length) {
+      const last = pts[pts.length - 1];
+      marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${(py(last.y) - 10).toFixed(1)}" class="ptlabel" fill="${color}">DNF @${dnfs.join(',')}</text>`;
     }
     const last = pts[pts.length - 1];
     let ly = py(last.y) + 4;
@@ -301,14 +325,15 @@ function dataTableHtml() {
       const n = sizes[v]?.[`elements@${scale}`] ?? SIZE_N[scale];
       const mt = sizes[v]?.[`mtGzip@${scale}`];
       const web = sizes[v]?.[`webGzip@${scale}`];
-      const delta = vdomFcp != null
+      const isDnf = !(fcp > 0);
+      const delta = (!isDnf && vdomFcp != null && vdomFcp > 0)
         ? `${(((fcp - vdomFcp) / vdomFcp) * 100) >= 0 ? '+' : ''}${
           (((fcp - vdomFcp) / vdomFcp) * 100).toFixed(0)
         }%`
         : '—';
       html += `<tr><td class="op">${VARIANT_LABEL[v]} · ${scale}</td>`
         + `<td class="c">${n}</td>`
-        + `<td class="c">${fcp.toFixed(1)}</td>`
+        + `<td class="c">${isDnf ? 'DNF' : fcp.toFixed(1)}</td>`
         + `<td class="c">${v === 'vdom' ? '—' : delta}</td>`
         + `<td class="c">${mt == null ? '—' : (mt / 1024).toFixed(1) + ' KB'}</td>`
         + `<td class="c">${web == null ? '—' : (web / 1024).toFixed(1) + ' KB'}</td></tr>`;
@@ -322,35 +347,39 @@ const throttleGuess = /x(\d+)/.exec(LABEL)?.[1] ?? '1';
 function chartsForScale(scale) {
   const isLog = scale === 'log';
   const scaleTag = isLog ? 'log' : 'linear';
-  const fcpVsN = renderChart({
-    title: `FCP vs content scale (${scaleTag})`,
-    sub: isLog
-      ? 'Log-log. Same generated SFC at ~1k / 3k / 5k / 10k elements. '
-        + `Lynx for Web, CPU ×${throttleGuess}. `
-        + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs (bundle parse, boot, IPC).'
-      : 'Linear, zero baseline. Absolute FCP gaps grow with N — the crossing where '
-        + 'VDOM+IFR (no ET) overtakes plain VDOM is easier to see than on log-log. '
-        + `CPU ×${throttleGuess}.`,
-    xLabel: `elements N — ${scaleTag}`,
-    yLabel: `FCP — ms, ${scaleTag}`,
-    getX: (p) => p.n,
-    getY: (p) => p.fcp,
-    xUnit: 'els',
-    scale,
-  });
+  // Playground analogue: x/y are both costs that fan out as N grows.
+  // MT gzip is the "create/load tax"; FCP is the paint tax.
   const fcpVsMt = renderChart({
-    title: `FCP vs main-thread bundle gzip (${scaleTag})`,
+    title: `Paint vs MT load cost (${scaleTag})`,
     sub: isLog
-      ? 'Same points, x = MT section gzip. IFR copies the app onto the MT bundle; '
-        + 'ET adds baked create() code. Moving right without dropping FCP is '
-        + 'parse/eval tax without early-paint payoff at that scale.'
-      : 'Linear, zero baseline. Same points as the log chart — absolute MT gzip '
-        + 'vs FCP so parse/eval tax and early-paint payoff are comparable in ms/KB.',
+      ? 'Log-log cost space (playground-style). Each polyline is one architecture '
+        + 'through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. '
+        + `CPU ×${throttleGuess}. Lower-left dominates.`
+      : 'Linear cost space (playground-style, zero baseline). Same points as the '
+        + 'framework bench\'s create×update chart: architectures that pay MT gzip '
+        + 'without buying FCP shoot right; those that scale poorly shoot up. '
+        + `CPU ×${throttleGuess}.`,
     xLabel: `MT section gzip — bytes, ${scaleTag}`,
     yLabel: `FCP — ms, ${scaleTag}`,
     getX: (p) => p.mtGzip,
     getY: (p) => p.fcp,
     xUnit: 'B',
+    scale,
+  });
+  const fcpVsN = renderChart({
+    title: `FCP vs content scale (${scaleTag})`,
+    sub: isLog
+      ? 'Log-log. Same generated SFC at ~1k→30k elements. '
+        + `Lynx for Web, CPU ×${throttleGuess}. `
+        + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs.'
+      : 'Linear, zero baseline, 1k→30k — absolute FCP gaps. '
+        + 'VDOM+IFR without ET crosses above plain VDOM and can DNF on deep MT '
+        + `mount. CPU ×${throttleGuess}.`,
+    xLabel: `elements N — ${scaleTag}`,
+    yLabel: `FCP — ms, ${scaleTag}`,
+    getX: (p) => p.n,
+    getY: (p) => p.fcp,
+    xUnit: 'els',
     scale,
   });
   return { fcpVsN, fcpVsMt };
@@ -395,19 +424,20 @@ const html = `<!doctype html>
 <body>
 <h1>IFR architecture scale trends</h1>
 <p class="lede">
-  Five product architectures on one generated content SFC, scaled from ~1k to ~10k elements.
-  Linear charts (zero baseline) make absolute FCP gaps pop; log-log charts show scaling
-  shape for the exponents <code>α</code> in <code>cost ~ N<sup>α</sup></code>.
+  Five product architectures on one generated content SFC, scaled from ~1k to
+  <strong>~30k</strong> elements (playground ladder). Lead chart is the
+  playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows.
+  Linear (zero baseline) first, then log-log for α shape.
   Source: <code>${path.basename(resultsPath)}</code> · ${normalized.measuredAt}
 </p>
 
-<h2>Linear scale</h2>
-${linearCharts.fcpVsN}
+<h2>Linear scale — cost space + FCP vs N</h2>
 ${linearCharts.fcpVsMt}
+${linearCharts.fcpVsN}
 
 <h2>Log-log scale</h2>
-${logCharts.fcpVsN}
 ${logCharts.fcpVsMt}
+${logCharts.fcpVsN}
 
 <h2>Scaling exponents</h2>
 <p class="lede" style="margin-top:0">

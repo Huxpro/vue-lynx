@@ -52,6 +52,14 @@
     {
       "tag": "10k",
       "nCards": 1250
+    },
+    {
+      "tag": "20k",
+      "nCards": 2500
+    },
+    {
+      "tag": "30k",
+      "nCards": 3750
     }
   ],
   "cells": [
@@ -653,6 +661,297 @@
       "bgSection": {
         "raw": 778381,
         "gzip": 91269
+      }
+    },
+    {
+      "name": "vdom@20k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1095388,
+        "gzip": 43844
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 980568,
+        "gzip": 34900
+      }
+    },
+    {
+      "name": "vdom-ifr@20k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2170399,
+        "gzip": 79770
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 1002037,
+        "gzip": 41130
+      },
+      "bgSection": {
+        "raw": 983550,
+        "gzip": 35922
+      }
+    },
+    {
+      "name": "vdom-ifr-et@20k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 7040779,
+        "gzip": 883009
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 3392219,
+        "gzip": 442521
+      },
+      "bgSection": {
+        "raw": 3373732,
+        "gzip": 435159
+      }
+    },
+    {
+      "name": "vapor@20k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 4115,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1468321,
+        "gzip": 143183
+      },
+      "lynxBundle": {
+        "raw": 1475863,
+        "gzip": 150209
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 1443172,
+        "gzip": 134451
+      }
+    },
+    {
+      "name": "vapor-ifr@20k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 7764,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2933185,
+        "gzip": 284089
+      },
+      "lynxBundle": {
+        "raw": 3123442,
+        "gzip": 486853
+      },
+      "mtSection": {
+        "raw": 1464288,
+        "gzip": 141986
+      },
+      "bgSection": {
+        "raw": 1463381,
+        "gzip": 140565
+      }
+    },
+    {
+      "name": "vdom@30k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 4428,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1594138,
+        "gzip": 47324
+      },
+      "lynxBundle": {
+        "raw": 1473283,
+        "gzip": 52815
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 1434318,
+        "gzip": 37971
+      }
+    },
+    {
+      "name": "vdom-ifr@30k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 5333,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 3167899,
+        "gzip": 86943
+      },
+      "lynxBundle": {
+        "raw": 2413771,
+        "gzip": 115530
+      },
+      "mtSection": {
+        "raw": 1455787,
+        "gzip": 44164
+      },
+      "bgSection": {
+        "raw": 1437300,
+        "gzip": 38970
+      }
+    },
+    {
+      "name": "vdom-ifr-et@30k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 37030,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 10503275,
+        "gzip": 1290348
+      },
+      "lynxBundle": {
+        "raw": 8392942,
+        "gzip": 1625926
+      },
+      "mtSection": {
+        "raw": 5055967,
+        "gzip": 643427
+      },
+      "bgSection": {
+        "raw": 5037480,
+        "gzip": 636672
+      }
+    },
+    {
+      "name": "vapor@30k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 6942,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2150821,
+        "gzip": 191882
+      },
+      "lynxBundle": {
+        "raw": 2160863,
+        "gzip": 198802
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 2125672,
+        "gzip": 182700
+      }
+    },
+    {
+      "name": "vapor-ifr@30k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 12600,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 4300685,
+        "gzip": 380220
+      },
+      "lynxBundle": {
+        "raw": 4585671,
+        "gzip": 669623
+      },
+      "mtSection": {
+        "raw": 2146788,
+        "gzip": 189637
+      },
+      "bgSection": {
+        "raw": 2148381,
+        "gzip": 188768
       }
     }
   ]

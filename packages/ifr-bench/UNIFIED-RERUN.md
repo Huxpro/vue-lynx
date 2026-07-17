@@ -99,49 +99,48 @@ FCP (ET's create() tax shows up before its render-cost win matters). On HN
 with shell IFR, FCP improves at 1× but **settled** time grows (early shell +
 later fetch/hydration); at 4× FCP regresses — bundle cost dominates.
 
-## 4. Scale trends (linear + log-log)
+## 4. Scale trends (linear + log-log, 1k → 30k)
 
-Same five architectures, same generated SFC, scaled to ~1k / 3k / 5k / 10k
-elements (`nCards = 125/375/625/1250`). Charts reuse the benchmark-playground
-pattern: **linear (zero baseline)** for absolute FCP gaps, plus **log-log
-polylines** and least-squares `α` in `cost ~ N^α`.
+Same five architectures, same generated SFC, scaled to ~1k / 3k / 5k / 10k /
+20k / 30k elements (`nCards = 125/375/625/1250/2500/3750`) — the same ladder as
+the framework playground. Charts:
+
+1. **Paint vs MT load cost** (playground-style cost space: MT gzip × FCP)
+2. **FCP vs N**
+
+Linear (zero baseline) first for absolute gaps; log-log for α shape.
+
+Also fixed the web harness settle heuristic: it used to arm a 400ms idle timer
+while the tree was still empty, which falsely DNFed slow large mounts
+(notably `vapor@30k`). Settle now waits for FCP first; hard timeout is 120s.
 
 Interactive HTML (committed under `results/`, also served from the site):
 
 - [scale-trends x1](./results/scale-trends-scale-x1.html)
-- [scale-trends x4](./results/scale-trends-scale-x4.html)
+- [scale-trends x4](./results/scale-trends-scale-x4.html) (still 1k→10k)
 
 ### FCP vs N (CPU ×1)
 
-| architecture | 1k | 3k | 5k | 10k | α |
-|---|---:|---:|---:|---:|---:|
-| VDOM | 87.1 | 136.3 | 187.2 | 315.0 | 0.55 |
-| VDOM+IFR | 73.7 | 120.5 | 156.1 | **375.1** | **0.67** |
-| **VDOM+IFR+ET** | **70.0** | **114.3** | 159.6 | **280.4** | 0.59 |
-| Vapor | 95.3 | 153.9 | 211.0 | 372.8 | 0.58 |
-| Vapor+IFR | 83.4 | 136.7 | 195.2 | 338.9 | 0.60 |
-
-### MT gzip growth with N
-
-| architecture | 1k | 10k | α |
-|---|---:|---:|---:|
-| VDOM / Vapor (no IFR) | 7.1 KB | 7.1 KB | **0.00** (fixed stub) |
-| VDOM+IFR | 33.8 | 37.1 | 0.04 (almost fixed — Vue on MT) |
-| Vapor+IFR | 43.3 | 90.5 | 0.31 |
-| VDOM+IFR+ET | 54.1 | **233.9** | **0.63** (create() scales with content) |
+| architecture | 1k | 3k | 5k | 10k | 20k | 30k | α |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| VDOM | 87 | 143 | 188 | 310 | 587 | 842 | 0.68 |
+| VDOM+IFR | 78 | 120 | 163 | **379** | **695** | **1010** | **0.80** |
+| **VDOM+IFR+ET** | **70** | **119** | **161** | **278** | **526** | **771** | 0.72 |
+| Vapor | 93 | 156 | 210 | 365 | 692 | 1010 | 0.71 |
+| Vapor+IFR | 87 | 141 | 193 | 338 | 637 | 906 | 0.71 |
 
 ### Architecture read
 
-1. **IFR without ET is the dangerous curve.** At 10k ×1 it is *slower than
-   plain VDOM* (375 vs 315 ms) and has the steepest FCP α (0.67). You paid the
-   MT Vue copy and still interpret the tree.
-2. **ET is the scale hedge for VDOM IFR.** It wins every ×1 point through 10k
-   and is the only IFR config whose MT gzip honestly tracks content (α≈0.63)
-   while still delivering the best FCP.
-3. **Vapor+IFR beats Vapor-off at ×1 across the range**, but never catches
-   VDOM+IFR+ET on web FCP. Its MT growth is milder than ET (α=0.31).
-4. **At ×4, Vapor+IFR loses to Vapor-off at every scale** — parse/eval of the
-   larger MT program dominates. VDOM+IFR+ET remains the least-bad IFR option.
+1. **IFR without ET is the dangerous curve.** By 10k it is already slower than
+   plain VDOM; at 20k/30k the gap is ~+18–20%. On 30k it also hit a real MT
+   stack overflow during IFR mount (falls back to BG — late FCP).
+2. **ET is the scale hedge.** Lowest FCP at every point through 30k, and the
+   only IFR config whose MT gzip honestly tracks content (~54 KB → ~628 KB).
+3. **Cost-space chart** matches the playground vibe: no-IFR climbs the left
+   wall (fixed ~7 KB MT stub); ET sweeps right while staying lowest; IFR-sans-ET
+   climbs without buying much x-axis room.
+4. **Vapor+IFR** beats Vapor-off across the range at ×1, but never catches
+   VDOM+IFR+ET on web FCP.
 
 ```bash
 node packages/ifr-bench/sfc-probe/build-scale-matrix.mjs \
