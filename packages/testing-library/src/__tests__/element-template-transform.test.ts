@@ -14,7 +14,10 @@ import { compile } from '@vue/compiler-dom';
 import { nextTick, reactive } from 'vue-lynx';
 import * as VueLynx from 'vue-lynx';
 import type { Component } from 'vue-lynx';
-import { elementTemplateTransform } from '../../../vue-lynx/plugin/src/compiler/element-template-transform.js';
+import {
+  createElementTemplateTransform,
+  elementTemplateTransform,
+} from '../../../vue-lynx/plugin/src/compiler/element-template-transform.js';
 import { render } from '../index.js';
 import { fireEvent } from '../fire-event.js';
 
@@ -264,6 +267,28 @@ describe('element-template transform', () => {
     });
     const cssId = Number.parseInt('1a2b3c4d', 16) & 0x7fffffff;
     expect(code).toContain(`__SetCSSId([e1], ${cssId})`);
+  });
+
+  it('routes all scope emission through the scope adapter seam', () => {
+    // The adapter is the single swap point for lineages with a different
+    // scope model (issue #230): a stub adapter must fully replace the
+    // default __SetCSSId association in the baked create() source.
+    const stubTransform = createElementTemplateTransform({
+      elementScopeStatements: (varName, scopeId) => [
+        `__STUB_SCOPE__(${varName}, ${JSON.stringify(scopeId)});`,
+      ],
+    });
+    const { code } = compile(CARD_TEMPLATE, {
+      mode: 'module',
+      prefixIdentifiers: true,
+      hoistStatic: false,
+      isNativeTag: () => true,
+      nodeTransforms: [stubTransform],
+      scopeId: 'data-v-1a2b3c4d',
+      filename: 'test.vue',
+    });
+    expect(code).toContain('__STUB_SCOPE__(e0, "data-v-1a2b3c4d");');
+    expect(code).not.toContain('__SetCSSId');
   });
 
   it('does not lower single-element subtrees (threshold)', () => {

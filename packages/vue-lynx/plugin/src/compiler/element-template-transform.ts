@@ -63,8 +63,10 @@ import {
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
   TPL_TYPE_PREFIX,
-  scopeIdToCssId,
 } from 'vue-lynx/internal/ops';
+
+import type { TemplateScopeAdapter } from './scope-adapter.js';
+import { cssIdScopeAdapter } from './scope-adapter.js';
 
 /**
  * Registration entry point referenced by the generated code.
@@ -186,6 +188,7 @@ function printBakedValue(
 function analyzeSubtree(
   rootEl: ElementNode,
   context: TransformContext,
+  scope: TemplateScopeAdapter,
 ): TemplatePlan | null {
   const lines: string[] = [];
   const holes: Hole[] = [];
@@ -193,9 +196,7 @@ function analyzeSubtree(
   let elementCount = 0;
   let nextVar = 0;
 
-  const cssId = context.scopeId != null
-    ? scopeIdToCssId(context.scopeId)
-    : 0;
+  const scopeId = context.scopeId ?? null;
 
   const emitElement = (el: ElementNode, isRoot: boolean): string => {
     if (el.type !== NodeTypes.ELEMENT) throw INELIGIBLE;
@@ -213,7 +214,7 @@ function analyzeSubtree(
         ? `const ${v} = ${createFn}(P);`
         : `const ${v} = __CreateElement(${JSON.stringify(el.tag)}, P);`,
     );
-    lines.push(`__SetCSSId([${v}], ${cssId});`);
+    lines.push(...scope.elementScopeStatements(v, scopeId));
 
     if (!isRoot) {
       // Interior nodes must be fully expressible as skeleton + holes.
@@ -301,7 +302,7 @@ function analyzeSubtree(
         } else if (child.type === NodeTypes.TEXT) {
           const tv = `e${nextVar++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
-          lines.push(`__SetCSSId([${tv}], ${cssId});`);
+          lines.push(...scope.elementScopeStatements(tv, scopeId));
           lines.push(
             `__SetAttribute(${tv}, 'text', ${JSON.stringify(child.content)});`,
           );
@@ -312,7 +313,7 @@ function analyzeSubtree(
           if (content.type !== NodeTypes.TEXT) throw INELIGIBLE;
           const tv = `e${nextVar++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
-          lines.push(`__SetCSSId([${tv}], ${cssId});`);
+          lines.push(...scope.elementScopeStatements(tv, scopeId));
           lines.push(
             `__SetAttribute(${tv}, 'text', ${
               JSON.stringify(content.content)
@@ -353,7 +354,7 @@ function lowerElement(
   const cg = el.codegenNode as VNodeCall;
 
   const holeKeys = plan.holes.map((h) => h.key);
-  const id = templateId(`${plan.src} ${holeKeys.join(',')}`);
+  const id = templateId(`${plan.src}\u0000${holeKeys.join(',')}`);
 
   // Hoist the registration once per (module, template id).
   if (!seen.has(id)) {
@@ -424,30 +425,31 @@ function walk(
   children: TemplateChildNode[],
   context: TransformContext,
   seen: Set<string>,
+  scope: TemplateScopeAdapter,
 ): void {
   for (const child of children) {
     switch (child.type) {
       case NodeTypes.ELEMENT: {
         const el = child as ElementNode;
         if (el.tagType === ElementTypes.ELEMENT && isLowerableRoot(el)) {
-          const plan = analyzeSubtree(el, context);
+          const plan = analyzeSubtree(el, context, scope);
           if (plan && plan.elementCount >= MIN_ELEMENTS) {
             lowerElement(el, plan, context, seen);
             continue; // fully lowered — nothing left inside
           }
         }
-        walk(el.children, context, seen);
+        walk(el.children, context, seen, scope);
         break;
       }
       case NodeTypes.IF: {
         for (const branch of child.branches) {
-          walk(branch.children, context, seen);
+          walk(branch.children, context, seen, scope);
         }
         break;
       }
       case NodeTypes.IF_BRANCH:
       case NodeTypes.FOR: {
-        walk(child.children, context, seen);
+        walk(child.children, context, seen, scope);
         break;
       }
       default:
@@ -457,16 +459,32 @@ function walk(
 }
 
 /**
- * The lowering transform. Runs at ROOT exit — after all built-in transforms
- * have produced codegen nodes, before codegen itself.
+ * Build the lowering transform. Runs at ROOT exit — after all built-in
+ * transforms have produced codegen nodes, before codegen itself.
+ *
+ * `scopeAdapter` is the single seam through which scoped CSS reaches baked
+ * elements (see scope-adapter.ts); lineages with a different scope model
+ * swap the adapter and leave this transform untouched.
  *
  * @public
  */
-export const elementTemplateTransform: NodeTransform = (node, context) => {
-  if (node.type !== NodeTypes.ROOT) return;
-  return () => {
-    // Dedups hoisted registrations per compilation.
-    const seen = new Set<string>();
-    walk((node as RootNode).children, context, seen);
+export function createElementTemplateTransform(
+  scopeAdapter: TemplateScopeAdapter = cssIdScopeAdapter,
+): NodeTransform {
+  return (node, context) => {
+    if (node.type !== NodeTypes.ROOT) return;
+    return () => {
+      // Dedups hoisted registrations per compilation.
+      const seen = new Set<string>();
+      walk((node as RootNode).children, context, seen, scopeAdapter);
+    };
   };
-};
+}
+
+/**
+ * The lowering transform with this lineage's default (cssId) scope adapter.
+ *
+ * @public
+ */
+export const elementTemplateTransform: NodeTransform =
+  createElementTemplateTransform();
