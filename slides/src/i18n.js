@@ -90,10 +90,6 @@ export const ZH = {
   'II · Ecosystem · 2/4': 'II · 生态 · 2/4',
   'II · Ecosystem · 3/4': 'II · 生态 · 3/4',
   'II · Ecosystem · 4/4': 'II · 生态 · 4/4',
-  'Pinia': '<span class="brand-text">Pinia</span>',
-  'Vue Router': '<span class="brand-text">Vue Router</span>',
-  'Vue Query': '<span class="brand-text">Vue Query</span>',
-  'Tailwind': '<span class="brand-text">Tailwind</span>',
 
   // ---- Whole apps ----
   'II · Whole apps': 'II · 完整应用',
