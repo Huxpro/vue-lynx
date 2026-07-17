@@ -4,52 +4,6 @@ Vue Lynx is built on the official Vue 3 runtime core (`@vue/runtime-core`), so y
 
 Below is a feature-by-feature breakdown of the Vue features we've verified on Lynx. Where Lynx-specific caveats exist, they are called out inline. For details on how the dual-thread architecture works under the hood, see [Understanding the Dual-Thread Model](/guide/introduction#understanding-the-dual-thread-model).
 
-## The `<page>` Root
-
-Every Lynx screen has exactly one native [`<page>`](https://lynxjs.org/api/elements/built-in/page) root. Vue Lynx creates it automatically before mounting your app, so an explicit wrapper is optional:
-
-```vue
-<template>
-  <view class="app">...</view>
-</template>
-
-<style>
-page,
-:root {
-  background-color: white;
-}
-</style>
-```
-
-Use an explicit `<page>` when you need to bind a class, inline style, event, ID, or template ref directly to the native root:
-
-```vue
-<template>
-  <page class="app" :style="pageStyle" @tap="onPageTap">
-    <view>...</view>
-  </page>
-</template>
-```
-
-Vue Lynx compiles this wrapper to a transparent built-in component. Its attributes and events are applied to the already-created native page, while its children mount directly beneath that root. It does **not** create a second `<page>` element. The same behavior is available from render functions through `h('page', props, children)` or the exported `Page` component.
-
-Only one `<page>` wrapper is allowed, and it must be the outermost element representing the screen. Do not nest it or render multiple wrappers — nesting inside a native element is rejected at compile time, and rendering two wrappers at once reports a runtime error. As with Lynx itself, the containing native view controls the page dimensions: `width`, `height`, `left`, and `top` cannot resize or reposition the page directly.
-
-A few caveats follow from `<page>` compiling to a component rather than a native element:
-
-- **Directives** — `v-show` and custom directives on `<page>` are applied to the component's children, not the native root. Bind `:style` / `:class` directly instead.
-- **Template refs** — `ref` on `<page>` resolves to the exposed page root: `.id`, `.invoke()`, `.setNativeProps()`, and `.fields()` all work, but it is not a plain element reference.
-- **In templates**, use lowercase `<page>` (rewritten by the compiler). The capitalized `<Page>` form requires an explicit `import { Page } from 'vue-lynx'` in `<script setup>`.
-- **Ownership handoff** — when route components each render their own `<page>`, the incoming wrapper takes over the native root as soon as the outgoing one unmounts or is deactivated by `<KeepAlive>`. During a `<Transition>` without `mode="out-in"`, both wrappers briefly coexist; the incoming page's root attributes apply only after the leave finishes, so prefer `out-in` when the two pages style the root differently.
-
-:::warning Lynx engine compatibility
-Use Lynx Engine **3.8.1 or later** for applications that rely on an explicit `<page>` root. This is a conservative compatibility floor inferred from the [HackerNews engine bisect](/guide/hackernews#lynx-engine-compatibility): 3.8.1 is the oldest tested engine that rendered the complete application, while 3.6.0 and 3.7.0 loaded data but left the active route invisible. The fixed explicit-root bundle has been directly verified on a source-built Engine 4.1; the fix has not yet been rerun on every intermediate engine.
-
-The same pre-fix CSS bundle produced error `990100` on Engines 3.6.0, 3.8.1, and 4.1. This shows that the crash followed Vue Lynx's attempt to create a second native page rather than requiring Engine 4.1. When targeting 3.6.x or 3.7.x, omit the explicit wrapper, but note that those engines still have the separate route-rendering limitation found by the bisect.
-
-Use `SystemInfo.engineVersion` to identify the engine. In a source-built iOS Lynx without [`Lynx_POD_VERSION`](https://github.com/lynx-family/lynx/blob/develop/platform/darwin/common/lynx/base/LynxVersion.m), the DevTool `sdkVersion` field and the `sdk` field in error reports can contain the fallback value `1.4.0`; that value is not the Lynx Engine version.
-:::
-
 ## Reactivity + Composables
 
 Vue Lynx reuses 100% of Vue's reactivity core (`@vue/reactivity`). Every reactivity API works identically to standard Vue, with no Lynx-specific caveats or adaptations.
@@ -288,3 +242,17 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 |---------|--------|-------------|
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
 | `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |
+
+## Top-Level Nodes
+
+Every Lynx screen has one native [`<page>`](https://lynxjs.org/api/elements/built-in/page) root. Vue Lynx creates it automatically; write an explicit `<page>` only when you need to bind a class, style, event, or ref to the root:
+
+```vue
+<template>
+  <page class="app" :style="pageStyle" @tap="onPageTap">
+    <view>...</view>
+  </page>
+</template>
+```
+
+An explicit `<page>` compiles to a transparent built-in component that applies attributes to the existing native page — it does not create a second one. Use at most one per screen, as the outermost element. Prefer Lynx Engine **3.8.1+** when using an explicit `<page>`.
