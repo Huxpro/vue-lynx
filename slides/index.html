@@ -308,7 +308,7 @@
        ==================================================== -->
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 1/12</span>
+      <span class="eyebrow">II · Vue coverage · 1/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">ref()</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -346,7 +346,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 2/12</span>
+      <span class="eyebrow">II · Vue coverage · 2/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">reactive()</code> + composables</h2>
         <span class="ver-badge">0.2.0</span>
@@ -380,7 +380,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 3/12</span>
+      <span class="eyebrow">II · Vue coverage · 3/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">v-model</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -419,7 +419,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 4/12</span>
+      <span class="eyebrow">II · Vue coverage · 4/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;slot&gt;</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -455,7 +455,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 5/12</span>
+      <span class="eyebrow">II · Vue coverage · 5/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">provide / inject</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -487,7 +487,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 6/12</span>
+      <span class="eyebrow">II · Vue coverage · 6/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;Suspense&gt;</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -522,7 +522,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 7/12</span>
+      <span class="eyebrow">II · Vue coverage · 7/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;Transition&gt;</code></h2>
         <span class="ver-badge">0.2.0</span>
@@ -555,7 +555,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 8/12</span>
+      <span class="eyebrow">II · Vue coverage · 8/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">CSS</span> features</h2>
         <span class="ver-badge">0.3.0</span>
@@ -598,7 +598,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 9/12</span>
+      <span class="eyebrow">II · Vue coverage · 9/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title">Event <span class="brand-text">modifiers</span></h2>
         <span class="ver-badge">0.4.0</span>
@@ -636,7 +636,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 10/12</span>
+      <span class="eyebrow">II · Vue coverage · 10/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;KeepAlive&gt;</code></h2>
         <span class="ver-badge">0.4.0</span>
@@ -672,7 +672,44 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 11/12</span>
+      <span class="eyebrow">II · Vue coverage · 11/13</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">&lt;Teleport&gt;</code></h2>
+        <span class="ver-badge">0.4.0</span>
+      </div>
+      <a class="gh-badge" href="https://github.com/sentomk" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/sentomk.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@sentomk</span>
+      </a>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;view</span> <span class="code-attr">id</span>=<span class="code-str">"overlay-root"</span> <span class="code-tag">/&gt;</span>
+
+<span class="code-tag">&lt;Teleport</span> <span class="code-attr">to</span>=<span class="code-str">"#overlay-root"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>=<span class="code-str">"modal"</span><span class="code-tag">&gt;</span>…<span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/Teleport&gt;</span>
+
+<span class="code-com">// to="#id" only — reactive + :disabled</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="teleport/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>Render into a target by id — modals and overlays without fighting scroll stacking. BG-side <code>idRegistry</code> resolves <code>to="#id"</code>; content stays reactive, and <code>:disabled</code> renders in place. Shipped by @sentomk (#161) in <code>0.4.0</code>.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Vue coverage · 12/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">v-once</code></h2>
         <span class="ver-badge">0.4.0</span>
@@ -707,7 +744,7 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 12/12</span>
+      <span class="eyebrow">II · Vue coverage · 13/13</span>
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">v-memo</code></h2>
         <span class="ver-badge">0.4.0</span>
@@ -740,7 +777,7 @@
       </div>
     </div>
     <aside class="notes">
-      <p><code>v-memo</code> skips a subtree when its deps are unchanged — same cross-thread win as <code>v-once</code>, but keyed on a dependency list. Common in <code>v-for</code> rows. <code>isMemoSame</code> export + tests from @KealanAU (#156 / #181) in <code>0.4.0</code>. Twelve features, twelve live apps. That's the API story. Now — whole applications.</p>
+      <p><code>v-memo</code> skips a subtree when its deps are unchanged — same cross-thread win as <code>v-once</code>, but keyed on a dependency list. Common in <code>v-for</code> rows. <code>isMemoSame</code> export + tests from @KealanAU (#156 / #181) in <code>0.4.0</code>. Thirteen features, thirteen live apps. That's the API story. Now — whole applications.</p>
     </aside>
   </section>
 
@@ -2083,7 +2120,7 @@
         <span class="eyebrow" style="margin-bottom:8px">What's there</span>
         <ul class="web__list">
           <li><b>Composition API &amp; SFCs</b></li>
-          <li><b>Transition, Suspense, KeepAlive</b></li>
+          <li><b>Transition, Suspense, KeepAlive, Teleport</b></li>
           <li><b>Pinia, Router, Query, Tailwind</b></li>
           <li><b>Main-Thread Script</b></li>
         </ul>
@@ -2091,7 +2128,6 @@
       <div class="stack-y gap-sm">
         <span class="eyebrow" style="margin-bottom:8px">What's open</span>
         <ul class="web__list">
-          <li><b>Teleport example &amp; polish</b></li>
           <li><b>View pager &amp; more gestures</b></li>
           <li><b>Vue DevTools integration</b></li>
           <li><b>The ecosystem you'd port</b></li>
