@@ -701,6 +701,14 @@ h1, h2, h3, p { margin: 0; }
 }
 .demo--api .codeframe pre { padding: 16px 18px; }
 
+/* Two compact codeframes on one API slide (v-once / v-memo). */
+.demo--api-duo .demo__body { gap: 10px; }
+.demo--api-duo .codeframe {
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.demo--api-duo .codeframe pre { padding: 12px 14px; }
+
 /* The device mockup keeps its phone-sized footprint in the two-column demo
    layout no matter which preset is active: the stage reserves that space and the
    frame is absolutely centred inside it, so growing to tablet / desktop makes the

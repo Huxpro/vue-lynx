@@ -64,23 +64,33 @@ export const ZH = {
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/13': 'II · Vue 覆盖度 · 1/13',
-  'II · Vue coverage · 2/13': 'II · Vue 覆盖度 · 2/13',
-  'II · Vue coverage · 3/13': 'II · Vue 覆盖度 · 3/13',
-  'II · Vue coverage · 4/13': 'II · Vue 覆盖度 · 4/13',
-  'II · Vue coverage · 5/13': 'II · Vue 覆盖度 · 5/13',
-  'II · Vue coverage · 6/13': 'II · Vue 覆盖度 · 6/13',
-  'II · Vue coverage · 7/13': 'II · Vue 覆盖度 · 7/13',
-  'II · Vue coverage · 8/13': 'II · Vue 覆盖度 · 8/13',
-  'II · Vue coverage · 9/13': 'II · Vue 覆盖度 · 9/13',
-  'II · Vue coverage · 10/13': 'II · Vue 覆盖度 · 10/13',
-  'II · Vue coverage · 11/13': 'II · Vue 覆盖度 · 11/13',
-  'II · Vue coverage · 12/13': 'II · Vue 覆盖度 · 12/13',
-  'II · Vue coverage · 13/13': 'II · Vue 覆盖度 · 13/13',
+  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
+  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
+  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
+  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
+  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
+  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
+  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
+  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
+  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
+  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
+  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
+  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
+  'v-once / v-memo':
+    '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
   'CSS features': '<span class="brand-text">CSS</span> 特性',
+
+  // ---- Ecosystem ----
+  'The ecosystem, as-is.': '生态,<span class="brand-text">原样</span>可用。',
+  'Pinia, Vue Router, TanStack Query, Tailwind — the libraries you\'d already reach for on the web, running unchanged.':
+    'Pinia、Vue Router、TanStack Query、Tailwind —— 你在 Web 上已经会用的库,原封不动就能跑。',
+  'II · Ecosystem · 1/4': 'II · 生态 · 1/4',
+  'II · Ecosystem · 2/4': 'II · 生态 · 2/4',
+  'II · Ecosystem · 3/4': 'II · 生态 · 3/4',
+  'II · Ecosystem · 4/4': 'II · 生态 · 4/4',
 
   // ---- Whole apps ----
   'II · Whole apps': 'II · 完整应用',
@@ -598,7 +608,7 @@ export const ZH_NOTES = [
   // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
   // 13 Divider II
-  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、完整应用、然后是原生超能力。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
+  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、生态原样可用、然后是完整应用。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
   // 14 852/949
   `<p><strong>先上硬指标。</strong>我们把 Vue core 自己的测试套件拿来直接跑在 Vue Lynx 渲染器上:949 个通过 852 个;每个 skip 都有记录、有交代。"兼容 Vue"在这里是可测量的命题,不是一句口号。</p>`,
   // 15 ref
@@ -623,17 +633,25 @@ export const ZH_NOTES = [
   `<p>原生树上的组件实例缓存 —— 切 tab 再回来,状态还在。<code>include</code> / <code>exclude</code> / <code>max</code>,加上 <code>onActivated</code> / <code>onDeactivated</code>。@jynxbt 贡献(#153),落在 <code>0.4.0</code>。</p>`,
   // 25 Teleport
   `<p>按 id 渲染到目标节点 —— modal / overlay,不用和滚动层叠硬刚。BG 侧 <code>idRegistry</code> 解析 <code>to="#id"</code>;内容保持响应式,<code>:disabled</code> 则就地渲染。@sentomk 贡献(#161),落在 <code>0.4.0</code>。</p>`,
-  // 26 v-once
-  `<p><code>v-once</code> 首次渲染后冻结。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong> —— 比浏览器更值钱。@KealanAU 验证并文档化(#176), <code>0.4.0</code>。点 Increment:live 会变,frozen 不动。</p>`,
-  // 27 v-memo
-  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十三个特性、十三个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
-  // 28 Whole apps
-  `<p>API 逐个通过只是入场券。"Web DX 是基线"真正的考验,是把一整个 Vue 代码库 —— 状态、路由、样式、数据请求 —— 整体落到原生上。来两个经典。</p>`,
-  // 29 TodoMVC
+  // 26 v-once / v-memo
+  `<p><strong>两个跳过指令,同一套跨线程收益。</strong><code>v-once</code> 首次渲染后冻结;<code>v-memo</code> 在依赖未变时跳过 —— 同一思路,按依赖列表判定。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong>。@KealanAU:<code>v-once</code>(#176), <code>isMemoSame</code> + <code>v-memo</code>(#156 / #181), <code>0.4.0</code>。</p><p><strong>现场:</strong>点 Increment —— live 会变,frozen 不动;行在依赖未变前会跳过,直到你 toggle/rename。十二个特性。API 讲完了 —— 接下来,骑在它上面的生态。</p>`,
+  // 28 Ecosystem intro
+  `<p><strong>把兼容性主张说死。</strong>Vue 不只是一套 API —— 它是一个生态。如果 Pinia、Router、Query、Tailwind 都要 fork 才能跑,我们就失败了。它们不用。接下来四台现场手机;同一批包、同一套 API。</p>`,
+  // 29 Pinia
+  `<p><strong>Pinia,原封不动。</strong>同样的 <code>createPinia</code>,同样的 setup-store <code>defineStore</code>。它骑在 provide/inject 上 —— 所以前面那页才重要。这台手机里有两个 store:一个计数器,一个待办列表。</p><p><strong>现场:</strong>点 +,看 double getter 更新;再切到 todos 区。</p>`,
+  // 30 Vue Router
+  `<p><strong>Vue Router,按发布原样。</strong>唯一带 Lynx 形状的选择是 history 模式:没有 <code>window.location</code>,所以用 <code>createMemoryHistory()</code> —— 和 React Router 的 MemoryRouter 同一套 API。嵌套路由、params、<code>router.push</code> / <code>back</code> 全都有。导航用 <code>RouterLink</code> 的 custom slot 渲染原生 <code>&lt;text&gt;</code>。</p><p><strong>现场:</strong>点 Home → About → Users → 打开一个用户。</p>`,
+  // 31 Vue Query
+  `<p><strong>TanStack Vue Query,原样可用。</strong><code>useQuery</code>、依赖 key、mutation、插件安装 —— 没有任何一处是 Lynx 特供。这台手机打真实 JSON API:列用户、点一个、帖子通过依赖查询加载。</p><p><strong>现场:</strong>等列表出来,点一个用户,看 posts 到达。</p>`,
+  // 32 Tailwind
+  `<p><strong>Tailwind 能跑,是因为 CSS 能跑。</strong>没有 StyleSheet 方言 —— PostCSS 吐真实 CSS,Lynx 的原生引擎直接吃。主题 token 走 CSS 变量;点 Dark / Light / Ocean,整棵树跟着换 token。</p><p><strong>现场:</strong>切主题,拨一个开关。</p>`,
+  // 33 Whole apps
+  `<p>库单独跑通只是热身。真正的考验是把它们组合起来 —— 状态、路由、样式、数据请求 —— 整份 Vue 代码库落到原生上。来两个经典。</p>`,
+  // 34 TodoMVC
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
-  // 26 HackerNews
+  // 35 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,
-  // 27 Runs on web
+  // 36 Runs on web
   `<p><strong>Web 兼容的点睛:</strong>刚才没有任何模拟器。每个手机壳里都是 <em>Lynx for Web</em>,跑的就是发到 iOS/Android 的那份产物。任何一页扫 Web 码 —— 浏览器直接打开;扫 App 码 —— 同一份产物,原生运行。</p><p>Web DX 进,Web 渲染目标出。基线讲完 —— 上超集。</p>`,
   // 28 Divider III
   `<p><strong>超集章节。</strong>覆盖度和移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,fork 它,然后<em>升级</em>它 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。两个真实 fork。</p>`,
