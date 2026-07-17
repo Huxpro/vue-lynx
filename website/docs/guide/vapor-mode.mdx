@@ -126,9 +126,8 @@ pluginVueLynx({
 
 Both threads run the initial Vapor render. The Main Thread paints first, and
 the Background Thread hydrates that deterministic output before it owns all
-updates. Read [Enable instant first-frame rendering](/guide/ifr) for the
-selection guidance, lifecycle behavior, fallback guarantees, and measured
-costs.
+updates. Read [IFR on Vapor](/guide/ifr#ifr-on-vapor) for enablement,
+limitations, and how Vapor IFR differs from the VDOM + Element Templates path.
 
 See the `examples/vapor` demo in the
 [repository's examples directory](https://github.com/Huxpro/vue-lynx/tree/main/examples)

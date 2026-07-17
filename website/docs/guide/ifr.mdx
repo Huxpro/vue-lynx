@@ -2,16 +2,97 @@ import { Badge } from '@theme';
 
 # Instant First-Frame Rendering (IFR) <Badge text="v0.5" type="tip" />
 
-Instant First-Frame Rendering (IFR) displays real content during
-`loadTemplate`, before the background thread starts. On the VDOM entry, Vue
-Lynx pairs IFR with Element Templates, which reduce the work required to
-create static-structure subtrees. On the [Vapor](/guide/vapor-mode) entry,
-IFR reuses Vapor's compiled `template()` clones over the tree protocol
-instead.
+Instant First-Frame Rendering (IFR) paints real content during Lynx
+`loadTemplate`, before the background thread has started. The blank frame
+that usually waits on background boot, first Vue render, and IPC is gone.
 
-## Configuration
+IFR is the same product feature on both renderers. What differs is how the
+main-thread first frame is built:
 
-Enable IFR in `lynx.config.ts`:
+| Renderer | How to enable | First-frame mechanism |
+| --- | --- | --- |
+| **VDOM** | `enableIFR: true` | Vue VDOM render on the main thread, with [Element Templates](#element-templates) to cut sync create cost |
+| **Vapor** | `vapor: true` + `enableIFR: true` | Vapor `template()` clones via `REGISTER_TREE` / `CLONE_TREE` — not Element Templates |
+
+## Why IFR removes the blank frame
+
+Without IFR, visible content waits for the background thread:
+
+```text
+Main Thread:       empty page ─────────────────────────▶ apply ops ─▶ paint
+Background Thread:             boot ─▶ render ─▶ IPC ──┘
+```
+
+With IFR, the main-thread bundle carries the Vue runtime and application.
+Vue renders synchronously inside `loadTemplate` while the background thread
+starts in parallel:
+
+```text
+Main Thread:       loadTemplate ─▶ render ─▶ paint
+Background Thread:              boot ─▶ render ─▶ hydrate
+```
+
+The first screen appears before any background JavaScript has run. After
+hydration, the background thread owns the tree and all later updates use the
+normal ops pipeline.
+
+## Hydration
+
+Both threads run the same application with the same initial data. The
+main-thread render records the ops it applies; the background thread's
+initial batches are reconciled against that recording:
+
+- Identical structural frames are skipped — the result is already on screen.
+- Text, style, and attribute differences are patched in place.
+- Structural differences tear down the first-screen tree and rebuild from
+  background ops.
+
+Correctness does not require the two renders to match. A structural mismatch
+only loses the IFR performance benefit and logs
+`[vue-lynx] IFR hydration mismatch` in development.
+
+Event signs and element IDs are deterministic across both renders. Once the
+background handler registry is ready, events from first-frame elements route
+to normal Vue handlers without rebinding.
+
+## Writing IFR-friendly first screens
+
+The initial render runs once per thread, so treat it as a pure function of
+its inputs:
+
+- Keep first-screen output deterministic. Avoid `Math.random()`, `Date.now()`,
+  or thread-dependent branching in render paths.
+- Put data fetching, timers, subscriptions, and other side effects in
+  Composition API lifecycle hooks. Those hooks are suppressed on the
+  main-thread render and run on the background thread.
+- Options API `mounted()` is not yet suppressed on the main thread. Prefer
+  Composition API hooks for first-screen components that use IFR.
+- IFR can only paint synchronously available data. A fetch-driven screen
+  should render a useful shell or skeleton if it needs an earlier first frame.
+- Regular events can be dropped in the short window before the background
+  registry is ready. [Main Thread Script](/guide/main-thread-script) handlers
+  stay interactive because they already live on the main thread.
+
+## Trade-offs
+
+- The Vue runtime and application ship in both thread bundles. Across the
+  example suite, `main.lynx.bundle` gzip grows about **2.26×** at the median.
+- The application evaluates on both threads. Serial work until interactive
+  grows about **35–36%** in the all-examples proxy; on device, main-thread
+  paint overlaps background startup.
+- IFR cannot accelerate content that does not exist until an async request
+  completes.
+- CSS Modules class names can appear un-hashed on the first frame and patch
+  to their final names during hydration.
+
+---
+
+<span id="ifr-on-vdom" />
+
+## IFR on VDOM
+
+Enable IFR in `lynx.config.ts`. No app-code changes are required for a
+typical component tree:
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -26,17 +107,81 @@ export default defineConfig({
 })
 ```
 
-Element Templates are enabled automatically when IFR is enabled on the VDOM
-entry. No app-code changes are required for a typical component tree.
+On the VDOM entry, `enableIFR: true` also turns on **Element Templates** by
+default. That combination — IFR for *when* the first frame paints, Element
+Templates for *how cheaply* the static skeleton is created — is the
+recommended VDOM path.
+
+<span id="element-templates" />
+
+### Element Templates
+
+Element Templates are a **VDOM-only** compiler optimization. They do not
+apply to Vapor.
+
+In the ordinary path, each static element still creates a vnode and shadow
+node, emits several ops frames, crosses the thread boundary, and reaches the
+main-thread interpreter. The compiler can collapse an eligible subtree:
+
+```text
+Without ET: vnode → ShadowElement → per-node ops → interpreter → PAPI
+With ET:    one vnode → INSTANTIATE_TEMPLATE → straight-line PAPI create()
+```
+
+The static skeleton becomes a compiler-generated JavaScript `create()`
+function. Vue sends one `INSTANTIATE_TEMPLATE` op for the subtree; dynamic
+text, classes, styles, and attributes remain holes updated through ordinary
+`SET_*` ops.
+
+#### What gets lowered
+
+A subtree is eligible when its structure is known at compile time: every node
+is a plain Lynx element and only property values or text content are dynamic.
+
+```vue
+<view class="card">                       <!-- one lowered subtree -->
+  <image class="icon" src="a.png" />     <!-- baked skeleton      -->
+  <text class="title">{{ title }}</text> <!-- dynamic text hole   -->
+  <view :class="badgeClass">...</view>   <!-- dynamic class hole  -->
+</view>
+```
+
+Structural features stay on the normal vnode path:
+
+- components, slots, and `v-if` / `v-for` hosts (their plain-element bodies
+  can still be lowered)
+- runtime directives, refs, keys, IDs, and vnode hooks on interior nodes
+- `<list>` and `<list-item>`, which have dedicated main-thread behavior
+- comments and mixed dynamic text runs
+
+The template root keeps its normal vnode props and directives. Scoped CSS is
+supported via the component's scope class token. Static inline styles are
+baked only when their semantics match the ordinary style path.
+
+#### Framework templates, not binary engine templates
+
+Vue Lynx does not currently use Lynx's binary `elementTemplates` bundle
+section, `__ElementFromBinary`, or `__GetTemplateParts`. Element Templates
+here are a framework-level optimization built from ordinary typed Element
+PAPI calls — removing vnode, per-node ops, serialization, and interpreter
+dispatch while preserving the existing renderer and hydration protocol.
+
+#### Semantics
+
+Lowering is an optimization, not a separate rendering mode. Ineligible
+structures fall back automatically. Lowered and unlowered trees must produce
+the same document and updates. Nodes that need identity (`ref`, ID, …) stay
+off the anonymous interior path.
+
+### VDOM configuration
 
 | configuration | `enableIFR` | `enableElementTemplates` | purpose |
 | --- | ---: | ---: | --- |
 | No IFR | `false` | `false` | Default background-thread rendering |
-| IFR + ET | `true` | omitted or `true` | Recommended VDOM IFR path |
-| IFR without ET | `true` | `false` | Compatibility, debugging, and measurement opt-out |
+| **IFR + ET** | `true` | omitted or `true` | Recommended VDOM IFR path |
+| IFR without ET | `true` | `false` | Compatibility, debugging, measurement opt-out |
 
-To isolate an Element Templates issue while keeping IFR active, opt out
-explicitly:
+To keep IFR while bisecting an Element Templates issue:
 
 ```ts title="lynx.config.ts"
 pluginVueLynx({
@@ -45,15 +190,22 @@ pluginVueLynx({
 })
 ```
 
-Element Templates can also be enabled independently for ordinary background
-rendering with `enableElementTemplates: true`. This is an advanced composition,
+You can also enable Element Templates alone for ordinary background rendering
+(`enableElementTemplates: true` without IFR). That is an advanced composition,
 not the recommended IFR setup.
 
-### Vapor mode
+---
 
-Set `enableIFR: true` beside `vapor: true`. The renderer-neutral `enableIFR`
-option controls when the first frame renders; `vapor` selects the
-Virtual-DOM-free runtime.
+<span id="ifr-on-vapor" />
+
+## IFR on Vapor
+
+Vapor already compiles static markup into `template()` clones. With IFR,
+Vue Lynx maps those clones to `REGISTER_TREE` / `CLONE_TREE` with
+deterministic element IDs so the main thread can paint during `loadTemplate`.
+
+Vapor IFR does **not** use Element Templates. The VDOM-only ET transform is
+unnecessary when the compiler already emits cloneable trees.
 
 ```ts title="lynx.config.ts" {7-8}
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -69,258 +221,86 @@ export default defineConfig({
 })
 ```
 
+`enableIFR` controls *when* the first frame paints; `vapor` selects the
+Virtual-DOM-free runtime.
+
 :::warning Experimental
 Vapor mode uses Vue 3.6 prerelease packages. Vapor IFR inherits that status.
 Measure your own bundle and first screen before shipping it.
 :::
 
-Vapor already compiles static markup into `template()` clones. Vue Lynx maps
-those clones to `REGISTER_TREE` / `CLONE_TREE` with deterministic element IDs.
-Vapor IFR does **not** use the VDOM-only Element Templates transform.
+<span id="account-for-current-limitations" />
 
-## Why IFR removes the blank frame
+### Vapor IFR limitations
 
-Without IFR, visible content waits for the background thread to boot, evaluate
-the application, render Vue's tree, and send an ops batch back to the main
-thread:
+On top of [Vapor mode](/guide/vapor-mode#current-limitations):
 
-```text
-Main Thread:       empty page ─────────────────────────▶ apply ops ─▶ paint
-Background Thread:             boot ─▶ render ─▶ IPC ──┘
-```
+- Regular events that fire before background handler registration are
+  dropped. [Main Thread Script](/guide/main-thread-script) handlers remain
+  available.
+- `useVaporCssVars()` installs its reactive CSS-variable effect on the
+  background thread. CSS `v-bind()` values can appear at hydration instead of
+  the main-thread paint.
+- `onErrorCaptured` remains active, but it does not wrap top-level module
+  evaluation in a fallback boundary.
+- The main-thread reactive graph stays allocated after handoff; later visible
+  operations on it are discarded.
+- Async first-screen data still arrives through the normal background update
+  path.
 
-With IFR, the main-thread bundle carries the Vue runtime and application code.
-Vue renders synchronously inside `loadTemplate`, while the background thread
-starts in parallel:
+CSS Modules keep their generated class maps in the main-thread build. Scoped
+CSS and ordinary extracted styles use the same stylesheet output as non-IFR
+Vapor builds.
 
-```text
-Main Thread:       loadTemplate ─▶ render ─▶ paint
-Background Thread:              boot ─▶ render ─▶ hydrate
-```
-
-The first screen therefore appears before any background JavaScript has run.
-After hydration, the background thread owns the tree and all later updates use
-the normal ops pipeline.
-
-## Hydration
-
-Both threads execute the same application with the same initial data. The
-main-thread render records the ops stream it applies. The background thread's
-initial batches are reconciled against that recording:
-
-- Identical structural frames are skipped because their result is already on
-  screen.
-- Text, style, and attribute differences are patched in place.
-- Structural differences remove the first-screen tree and rebuild it from the
-  background ops.
-
-Correctness does not depend on both renders matching. A structural mismatch
-only loses the IFR performance benefit and produces an
-`[vue-lynx] IFR hydration mismatch` warning in development.
-
-Event signs and element IDs are deterministic across both renders. Once the
-background handler registry is ready, events from first-frame elements route to
-the normal Vue handlers without rebinding.
-
-<span id="element-templates" />
-
-## Element Templates
-
-IFR changes **when** the first frame is rendered. Element Templates reduce
-**how much work** that render performs on the **VDOM** entry.
-
-In the ordinary path, each static element still creates a vnode and shadow
-node, emits several ops frames, crosses the thread boundary, and reaches the
-main-thread ops interpreter. The compiler can collapse an eligible subtree:
-
-```text
-Without ET: vnode → ShadowElement → per-node ops → interpreter → PAPI
-With ET:    one vnode → INSTANTIATE_TEMPLATE → straight-line PAPI create()
-```
-
-The static skeleton becomes a compiler-generated JavaScript `create()`
-function. Vue sends one `INSTANTIATE_TEMPLATE` op for the subtree; dynamic text,
-classes, styles, and attributes are holes updated through the ordinary
-`SET_*` ops.
-
-### What gets lowered
-
-A subtree is eligible when its structure is known at compile time: every node
-is a plain Lynx element and only property values or text content are dynamic.
-
-```vue
-<view class="card">                       <!-- one lowered subtree -->
-  <image class="icon" src="a.png" />     <!-- baked skeleton      -->
-  <text class="title">{{ title }}</text> <!-- dynamic text hole   -->
-  <view :class="badgeClass">...</view>   <!-- dynamic class hole  -->
-</view>
-```
-
-Structural features stay on the normal vnode path:
-
-- components, slots, and `v-if` / `v-for` hosts; their plain-element bodies can
-  still be lowered
-- runtime directives, refs, keys, IDs, and vnode hooks on interior nodes
-- `<list>` and `<list-item>`, which have dedicated main-thread behavior
-- comments and mixed dynamic text runs
-
-The template root retains its normal vnode props and directives. Scoped CSS is
-supported: the compiler associates each lowered element with the component's
-scope token (on this lineage, as a class). Static inline styles are baked only
-when their semantics are known to match the ordinary style path.
-
-### Framework templates, not binary engine templates
-
-Vue Lynx does not currently use Lynx's binary `elementTemplates` bundle section,
-`__ElementFromBinary`, or `__GetTemplateParts`. Its Element Templates are a
-framework-level optimization built from ordinary typed Element PAPI calls.
-
-This removes vnode, per-node ops, serialization, and interpreter dispatch while
-preserving the existing renderer and hydration protocol. A binary-template
-backend could consume the same static-skeleton and hole metadata in the future,
-but it is not part of this implementation.
-
-### Semantics guarantee
-
-Lowering is an optimization, not a rendering mode. Ineligible structures fall
-back automatically, and lowered and unlowered trees must produce the same
-rendered document and updates. Interior nodes do not carry Vue's selector
-bookkeeping attributes, but any element with a `ref`, ID, or other identity
-requirement is kept out of the anonymous interior path.
-
-## Writing IFR-friendly first screens
-
-The initial render executes once per thread, so it should behave like a pure
-function of its inputs:
-
-- Keep first-screen output deterministic. Avoid `Math.random()`, `Date.now()`,
-  or thread-dependent branching in render paths.
-- Put data fetching, timers, subscriptions, and other side effects in
-  Composition API lifecycle hooks. These hooks are suppressed during the
-  main-thread render and run on the background thread.
-- Options API `mounted()` is not yet suppressed on the main thread. Prefer
-  Composition API hooks for first-screen components that use IFR.
-- IFR paints only synchronously available data. A fetch-driven screen should
-  render a useful shell or skeleton if it needs an earlier first frame.
-- Regular events can be dropped in the short interval before the background
-  registry is ready. [Main Thread Script](/guide/main-thread-script) handlers
-  remain interactive because they already live on the main thread.
-
-## Trade-offs
-
-- IFR places the Vue runtime and application in both thread bundles. Across the
-  example suite, `main.lynx.bundle` gzip size grows by about 2.26x at the median.
-- The application evaluates on both threads. The all-examples serial-work TTI
-  proxy grows by about 35–36%; on a device, main-thread rendering overlaps with
-  background startup.
-- IFR cannot accelerate content that does not exist until an asynchronous
-  request completes.
-- CSS Modules class names can be un-hashed on the first frame and patched to
-  their final names during hydration.
-
-Measure bundle-sensitive and fetch-driven screens before enabling IFR. For
-content-first screens with synchronous initial data, IFR + ET is the recommended
-VDOM configuration.
+---
 
 ## Benchmarks
 
-The table keeps the three product configurations separate. FCP is hello-world
-on Lynx for Web with a real Web Worker (no CPU throttle; the median win across
-ten examples is −19% in the default configuration). Render cost is the warm
-median for a roughly
-1,000-element dynamic-content scene under V8 `--jitless`. TTI and gzip are
-medians from the all-examples sweep, normalized to No IFR. These are separate
-campaigns; the columns should not be read as one end-to-end trace.
+**Bottom line**
 
-| configuration | flags | FCP | render cost | TTI proxy | bundle gzip |
-| --- | --- | ---: | ---: | ---: | ---: |
-| No IFR | `IFR=false, ET=false` | 96.6 ms | 9.4 ms | 1.00x | 1.00x |
-| **IFR + ET** | `IFR=true, ET=default` | **75.4 ms (−22%)** | **1.3 ms** | 1.35x | ~2.26x |
-| IFR without ET | `IFR=true, ET=false` | 75.8 ms (−22%) | 8.4 ms | 1.36x | ~2.26x |
-
-### What the data says
-
-1. **IFR's win is real, structural, and matches the reference
-   implementation.** Across ten examples with a genuine thread boundary
-   (Lynx for Web), IFR improves FCP on nine — −8% to −23%, median
-   **−19%** in the default configuration, the same class as ReactLynx's
-   −23% on an identical harness. The win comes from removing
-   background-thread boot + IPC from the critical path, which is also why
-   a single-process benchmark cannot see it.
-2. **Element Templates attack the one cost IFR adds.** The synchronous
-   main-thread render gets 7–15× cheaper and the ops payload shrinks
-   3–1,000× (a 1,400-element static screen ships 69 bytes instead of
-   78 KB). On web FCP for small screens this doesn't show — the render is
-   milliseconds either way, so the two IFR configurations measure within
-   noise of each other — but the render-cost term is exactly what grows
-   with screen size and shrinks CPU speed, and it dominates on native
-   interpreters (no JIT), where validation confirmed ET meaningfully cuts
-   the synchronous render. This asymmetry — never worse than noise, wins
-   where render cost bites — is why ET defaults on with IFR.
-3. **The price is bundle size, and it defines the counter-profile.**
-   `main.lynx.bundle` gzip grows ×2.26 (median) and serial work until
-   interactive grows up to ×1.36 (overlapped by background boot on
-   devices). A big bundle with a skeleton-only, fetch-driven first screen
-   inverts on the web, where bundle parse lands on the FCP path
-   (hackernews: +14% at full speed, +9…11% throttled); native precompiled
-   bytecode shrinks that term.
+| Question | Answer |
+| --- | --- |
+| Does IFR improve first paint? | **Yes.** On Lynx for Web (real Worker boundary), median FCP across ten examples is about **−19%** with default IFR — the same class as ReactLynx (−23%) on the same harness. |
+| Should VDOM ship ET with IFR? | **Yes.** ET is what keeps the sync main-thread render cheap as screens grow. Without it, IFR can lose to plain VDOM by ~10k elements and sit ~**+20%** slower by 30k. With ET, VDOM stays fastest through 30k. |
+| What about Vapor? | Vapor IFR wins at 1× CPU on content screens (~−9% in the same-source matrix), but by less than VDOM+IFR+ET. Measure on your target device — at 4× CPU, MT bundle cost can erase the win. |
+| When *not* to enable? | Fetch-driven screens with nothing to paint before a response, or bundle-critical apps where ~2× gzip is unacceptable without measuring. |
 
 ### Recommendations
 
-| your first screen | do this |
+| Your first screen | Do this |
 | --- | --- |
-| content-first, renders from synchronous data | **enable `enableIFR: true`** (brings ET on VDOM) — this is the target profile, worth −19% FCP at the median |
-| data-driven with synchronous initial data | enable |
-| fetch-driven — nothing to paint before a response | don't enable; or restructure to render a real skeleton first, then enable |
-| bundle-size-critical | measure first — gzip roughly doubles |
+| Content-first, synchronous data | **`enableIFR: true`** (VDOM brings ET; Vapor uses the tree protocol) |
+| Data-driven but initial data is sync | Enable |
+| Fetch-driven — nothing to paint before a response | Don't enable, or ship a real skeleton first then enable |
+| Bundle-size-critical | Measure first — gzip roughly doubles |
 
-And regardless of profile: keep the first screen deterministic and put side
-effects in Composition API lifecycle hooks (see
-[Writing IFR-friendly first screens](#writing-ifr-friendly-first-screens));
-reach for `enableElementTemplates: false` only to bisect a suspected
-ET issue — not as a performance setting.
+Regardless of profile: keep the first screen deterministic and put side
+effects in Composition API lifecycle hooks
+([Writing IFR-friendly first screens](#writing-ifr-friendly-first-screens)).
+Use `enableElementTemplates: false` only to bisect a suspected ET issue —
+not as a performance dial.
 
-The full measurement campaigns — the seven-variant strategy ladder,
-per-example FCP/TTI/size across the whole example suite, the real-browser
-dual-thread comparison against ReactLynx, and the single-threaded plain-web
-decomposition — are on the dedicated [IFR Benchmarks](/guide/ifr-benchmarks)
-page.
+### Supporting numbers
 
-### Same-source Vapor vs VDOM matrix
+Hello-world FCP (Lynx for Web), warm render cost (~1k-element scene, V8
+`--jitless`), and all-examples TTI / gzip medians vs No IFR:
 
-> **Re-measured** on the unified lineage after #230 step 3, with the #246
-> flag-matrix fix (`ifr` ≠ `ifr-et`). Full tables, sizes, and focused examples:
-> [`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
+| configuration | FCP | render cost | TTI proxy | bundle gzip |
+| --- | ---: | ---: | ---: | ---: |
+| No IFR | 96.6 ms | 9.4 ms | 1.00× | 1.00× |
+| **IFR + ET** (VDOM default) | **75.4 ms (−22%)** | **1.3 ms** | 1.35× | ~2.26× |
+| IFR without ET | 75.8 ms (−22%) | 8.4 ms | 1.36× | ~2.26× |
 
-The numbers below come from one generated single-file component built five ways
-from identical source (VDOM × `{off, ifr, ifr-et}` and Vapor × `{off, ifr}`).
-The page mirrors a content feed: a header plus 125 cards, 1,004 elements.
-Lynx for Web, headless Chromium, seven fresh contexts per entry, medians.
-
-First Contentful Paint:
+Same-source content feed (~1k elements), five architectures, CPU ×1 / ×4:
 
 | Entry | 1× CPU | 4× CPU |
-|---|---|---|
-| VDOM off → ifr (ET=false) | 95.3 → 77.4 ms (**−19%**) | 269.5 → 287.3 ms (**+7%**) |
-| VDOM off → ifr-et | 95.3 → 71.9 ms (**−24%**) | 269.5 → 254.1 ms (**−6%**) |
-| Vapor off → ifr | 97.0 → 88.7 ms (**−9%**) | 304.2 → 318.2 ms (**+5%**) |
+| --- | --- | --- |
+| VDOM off → IFR (no ET) | 95 → 77 ms (**−19%**) | 270 → 287 ms (**+7%**) |
+| VDOM off → IFR + ET | 95 → 72 ms (**−24%**) | 270 → 254 ms (**−6%**) |
+| Vapor off → IFR | 97 → 89 ms (**−9%**) | 304 → 318 ms (**+5%**) |
 
-How to read this:
-
-- At 1×, VDOM IFR alone recovers the classic ~−19% FCP; ET adds a further win
-  on this dense scene. Vapor IFR also wins, but by less.
-- The 4× row is the honest caveat. IFR without ET can regress when MT bundle
-  parse/eval dominates; IFR+ET still nets slightly ahead of off on VDOM here.
-  Vapor IFR regresses at 4× on this host — measure your target device.
-- ET is not free on gzip (MT section roughly doubles vs IFR alone on this
-  scene). Treat it as a render-cost hedge, not a size optimization.
-
-### Scale trends (1k → 30k)
-
-Same five architectures on one generated SFC, scaled like the
-[benchmark playground](/guide/benchmark-playground) storms (through **30k**
-elements). Lead chart is playground-style **cost space** (MT gzip × FCP), then
-FCP vs N — linear and log-log
+Scale trends on the same SFC through **30k** elements (CPU ×1). Lead chart is
+cost space (MT gzip × FCP); then FCP vs N
 (<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 full page ↗</a>
 ·
 <a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 full page ↗</a>):
@@ -332,28 +312,6 @@ FCP vs N — linear and log-log
   loading="lazy"
 />
 
-Headline from the ×1 curve: **VDOM+IFR without ET crosses above plain VDOM by
-~10k** and is ~+20% slower by 30k (1010 vs 842 ms). VDOM+IFR+ET stays lowest
-across the range. Full write-up:
+Full methodology, strategy ladder, per-example sweeps, and ReactLynx
+comparison: [IFR Benchmarks](/guide/ifr-benchmarks). Campaign write-up:
 [`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
-
-## Vapor-specific limitations
-
-Vapor IFR adds these constraints to
-[Vapor mode](/guide/vapor-mode#current-limitations):
-
-- Regular events that occur before Background handler registration are dropped.
-  [Main Thread Script](/guide/main-thread-script) handlers remain available.
-- `useVaporCssVars()` installs its reactive CSS-variable effect on the
-  Background Thread. CSS `v-bind()` values can appear at hydration instead of
-  the Main-Thread paint.
-- `onErrorCaptured` remains active, but it doesn't extend the fallback boundary
-  around top-level module evaluation.
-- The Main-Thread reactive graph remains allocated after handoff. Its later
-  visible operations are discarded.
-- Async first-screen data still arrives through the normal Background update
-  path.
-
-CSS Modules retain their generated class maps in the Main-Thread build. Scoped
-CSS and ordinary extracted styles use the same stylesheet output as non-IFR
-Vapor builds.
