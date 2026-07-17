@@ -300,16 +300,16 @@ Same-source content feed (~1k elements), five architectures, CPU ×1 / ×4:
 | Vapor off → IFR | 97 → 89 ms (**−9%**) | 304 → 318 ms (**+5%**) |
 
 Scale trends on the same SFC through **30k** elements (CPU ×1). Lead chart is
-cost space (MT gzip × FCP); then FCP vs N
-(<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 full page ↗</a>
-·
-<a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 full page ↗</a>):
+cost space (MT gzip × FCP); then FCP vs N:
 
-<iframe
+<ArtifactEmbed
   src="/benchmark/ifr-scale-trends-x1.html"
   title="IFR architecture scale trends (CPU ×1)"
-  style={{ width: '100%', height: '2400px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
-  loading="lazy"
+  label="Scale trends · CPU ×1"
+  height={2400}
+  links={[
+    { href: '/benchmark/ifr-scale-trends-x4.html', label: 'CPU ×4' },
+  ]}
 />
 
 Full methodology, strategy ladder, per-example sweeps, and ReactLynx

@@ -1,44 +1,128 @@
 <!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>IFR architecture scale trends — scale-x1</title>
 <style>
-  :root { color-scheme: light; font-family: ui-sans-serif, system-ui, sans-serif; }
-  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: #111; }
+  :root {
+    color-scheme: light dark;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    --surface: #fafafa; --ink: #111; --ink-2: #444; --ink-3: #666;
+    --line: #e5e7eb; --chart: #fafafa; --code: #f3f4f6;
+    --tick: #6b7280; --axis: #374151; --pt: #9ca3af;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #141414; --ink: #f5f5f4; --ink-2: #c3c2b7; --ink-3: #a8a29e;
+      --line: #3a3a37; --chart: #1a1a19; --code: #262626;
+      --tick: #a8a29e; --axis: #d6d3d1; --pt: #78716c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #141414; --ink: #f5f5f4; --ink-2: #c3c2b7; --ink-3: #a8a29e;
+    --line: #3a3a37; --chart: #1a1a19; --code: #262626;
+    --tick: #a8a29e; --axis: #d6d3d1; --pt: #78716c;
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --surface: #fafafa; --ink: #111; --ink-2: #444; --ink-3: #666;
+    --line: #e5e7eb; --chart: #fafafa; --code: #f3f4f6;
+    --tick: #6b7280; --axis: #374151; --pt: #9ca3af;
+  }
+  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: var(--ink); background: var(--surface); }
   h1 { font-size: 1.45rem; margin: 0 0 8px; }
   h2 { font-size: 1.15rem; margin: 36px 0 10px; }
   h3 { font-size: 1rem; margin: 0 0 4px; }
-  .lede { color: #444; line-height: 1.5; margin-bottom: 24px; }
-  .chart { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: #fafafa; }
-  .sub { color: #666; font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
-  .grid { stroke: #e5e7eb; stroke-width: 1; }
-  .tick { font-size: 10px; fill: #6b7280; }
-  .axis { font-size: 11px; fill: #374151; }
-  .ptlabel { font-size: 10px; fill: #9ca3af; }
+  .lede { color: var(--ink-2); line-height: 1.5; margin-bottom: 24px; }
+  .chart { border: 1px solid var(--line); border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: var(--chart); }
+  .sub { color: var(--ink-3); font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .tick { font-size: 10px; fill: var(--tick); }
+  .axis { font-size: 11px; fill: var(--axis); }
+  .ptlabel { font-size: 10px; fill: var(--pt); }
   .slabel { font-size: 12px; font-weight: 600; }
   table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 12px 0 28px; }
-  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; }
-  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
+  th, td { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tick); }
   td.c { font-variant-numeric: tabular-nums; text-align: right; }
   td.op { font-weight: 500; }
-  code { font-size: 0.85em; background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+  code { font-size: 0.85em; background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  
+  .i18n-zh { display: none; }
+  html[lang="zh"] .i18n-en { display: none; }
+  html[lang="zh"] .i18n-zh { display: inline; }
+  html[lang="zh"] p .i18n-zh,
+  html[lang="zh"] h1 .i18n-zh,
+  html[lang="zh"] h2 .i18n-zh,
+  html[lang="zh"] h3 .i18n-zh,
+  html[lang="zh"] li .i18n-zh,
+  html[lang="zh"] td .i18n-zh,
+  html[lang="zh"] th .i18n-zh,
+  html[lang="zh"] .sub .i18n-zh,
+  html[lang="zh"] .lede .i18n-zh { display: inline; }
+  html[lang="zh"] .i18n-zh.i18n-block { display: block; }
+  /* SVG text: toggle whole nodes */
+  text.i18n-zh { display: none; }
+  html[lang="zh"] text.i18n-en { display: none; }
+  html[lang="zh"] text.i18n-zh { display: inherit; }
+
 </style>
+<script>(() => {
+  const MSG = "vue-lynx:artifact-host";
+  const root = document.documentElement;
+  function applyTheme(theme) {
+    if (theme !== 'dark' && theme !== 'light') return;
+    root.setAttribute('data-theme', theme);
+    root.style.colorScheme = theme;
+  }
+  function applyLang(lang) {
+    if (lang !== 'zh' && lang !== 'en') return;
+    root.lang = lang;
+  }
+  function fromQuery() {
+    try {
+      const q = new URLSearchParams(location.search);
+      const theme = q.get('theme');
+      const lang = q.get('lang');
+      if (theme) applyTheme(theme);
+      if (lang) applyLang(lang);
+    } catch (_) {}
+  }
+  // Standalone open: prefer explicit query, else follow OS preference for theme.
+  if (!root.hasAttribute('data-theme')) {
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(prefersDark ? 'dark' : 'light');
+  }
+  fromQuery();
+  window.addEventListener('message', (event) => {
+    const data = event && event.data;
+    if (!data || data.type !== MSG) return;
+    if (data.theme) applyTheme(data.theme);
+    if (data.lang) applyLang(data.lang);
+  });
+  // Tell parent we are ready so it can re-send the current prefs.
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: MSG, ready: true }, '*');
+    }
+  } catch (_) {}
+})();</script>
+</head>
 <body>
-<h1>IFR architecture scale trends</h1>
+<h1><span class="i18n-en">IFR architecture scale trends</span><span class="i18n-zh">IFR 架构规模趋势</span></h1>
 <p class="lede">
-  Five product architectures on one generated content SFC, scaled from ~1k to
-  <strong>~30k</strong> elements (playground ladder). Lead chart is the
-  playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows.
-  Linear (zero baseline) first, then log-log for α shape.
-  Source: <code>browser-results-scale-x1.json</code> · 2026-07-17T16:46:06.770Z
+  <span class="i18n-en">Five product architectures on one generated content SFC, scaled from ~1k to <strong>~30k</strong> elements (playground ladder). Lead chart is the playground-style <em>cost space</em> (MT gzip × FCP); FCP vs N follows. Linear (zero baseline) first, then log-log for α shape.</span><span class="i18n-zh">五种产品架构，同一份生成内容 SFC，从约 1k 扫到 <strong>~30k</strong> 元素（playground 阶梯）。主图是 playground 风格的<em>成本空间</em>（MT gzip × FCP）；随后是 FCP vs N。先线性（零基线），再 log-log 看 α 形态。</span>
+  <span class="i18n-en">Source:</span><span class="i18n-zh">数据来源：</span> <code>browser-results-scale-x1.json</code> · 2026-07-17T21:49:16.948Z
 </p>
 
-<h2>Linear scale — cost space + FCP vs N</h2>
-<div class="chart"><h3>Paint vs MT load cost (linear)</h3><p class="sub">Linear cost space (playground-style, zero baseline). Same points as the framework bench's create×update chart: architectures that pay MT gzip without buying FCP shoot right; those that scale poorly shoot up. CPU ×1.</p>
+<h2><span class="i18n-en">Linear scale — cost space + FCP vs N</span><span class="i18n-zh">线性尺度 — 成本空间 + FCP vs N</span></h2>
+<div class="chart"><h3><span class="i18n-en">Paint vs MT load cost (linear)</span><span class="i18n-zh">绘制 vs MT 加载成本（linear）</span></h3><p class="sub"><span class="i18n-en">Linear cost space (playground-style, zero baseline). Same points as the framework bench's create×update chart: architectures that pay MT gzip without buying FCP shoot right; those that scale poorly shoot up. CPU ×1.</span><span class="i18n-zh">线性成本空间（playground 风格，零基线）。与框架基准的 create×update 图同构：为 MT gzip 买单却换不来 FCP 的架构往右偏；规模性差的往上偏。CPU ×1。</span></p>
 <svg viewBox="0 0 560 400" role="img" aria-label="Paint vs MT load cost (linear)">
 <line x1="56" y1="16" x2="56" y2="356" class="grid"/><text x="56" y="372" class="tick" text-anchor="middle">0</text><line x1="108.38155020492411" y1="16" x2="108.38155020492411" y2="356" class="grid"/><text x="108.38155020492411" y="372" class="tick" text-anchor="middle">100k</text><line x1="160.76310040984822" y1="16" x2="160.76310040984822" y2="356" class="grid"/><text x="160.76310040984822" y="372" class="tick" text-anchor="middle">200k</text><line x1="213.14465061477233" y1="16" x2="213.14465061477233" y2="356" class="grid"/><text x="213.14465061477233" y="372" class="tick" text-anchor="middle">300k</text><line x1="265.52620081969644" y1="16" x2="265.52620081969644" y2="356" class="grid"/><text x="265.52620081969644" y="372" class="tick" text-anchor="middle">400k</text><line x1="317.90775102462055" y1="16" x2="317.90775102462055" y2="356" class="grid"/><text x="317.90775102462055" y="372" class="tick" text-anchor="middle">500k</text><line x1="370.28930122954466" y1="16" x2="370.28930122954466" y2="356" class="grid"/><text x="370.28930122954466" y="372" class="tick" text-anchor="middle">600k</text><line x1="56" y1="356" x2="420" y2="356" class="grid"/><text x="50" y="359.5" class="tick" text-anchor="end">0</text><line x1="56" y1="293.66660433336295" x2="420" y2="293.66660433336295" class="grid"/><text x="50" y="297.16660433336295" class="tick" text-anchor="end">200</text><line x1="56" y1="231.3332086667259" x2="420" y2="231.3332086667259" class="grid"/><text x="50" y="234.8332086667259" class="tick" text-anchor="end">400</text><line x1="56" y1="168.9998130000889" x2="420" y2="168.9998130000889" class="grid"/><text x="50" y="172.4998130000889" class="tick" text-anchor="end">600</text><line x1="56" y1="106.66641733345185" x2="420" y2="106.66641733345185" class="grid"/><text x="50" y="110.16641733345185" class="tick" text-anchor="end">800</text><line x1="56" y1="44.33302166681483" x2="420" y2="44.33302166681483" class="grid"/><text x="50" y="47.83302166681483" class="tick" text-anchor="end">1k</text>
-<text x="238" y="394" class="axis" text-anchor="middle">MT section gzip — bytes, linear</text>
-<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)">FCP — ms, linear</text>
+<text x="238" y="394" class="axis" text-anchor="middle" class="i18n-en">MT section gzip — bytes, linear</text><text x="238" y="394" class="axis" text-anchor="middle" class="i18n-zh">MT section gzip — 字节，linear</text>
+<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-en">FCP — ms, linear</text><text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-zh">FCP — ms，linear</text>
 <path d="M59.8,329.0L59.8,311.3L59.8,297.3L59.8,259.3L59.8,173.1L59.8,93.7" fill="none" stroke="#6b7280" stroke-width="2.8"/><circle cx="59.8" cy="329.0" r="5" fill="#6b7280"><title>VDOM · 1k
 N=1004  FCP=86.6ms  MT gz=7.1KB</title></circle><circle cx="59.8" cy="311.3" r="5" fill="#6b7280"><title>VDOM · 3k
 N=3004  FCP=143.4ms  MT gz=7.1KB</title></circle><circle cx="59.8" cy="297.3" r="5" fill="#6b7280"><title>VDOM · 5k
@@ -71,11 +155,11 @@ N=10004  FCP=337.6ms  MT gz=90.5KB</title></circle><circle cx="130.4" cy="157.4"
 N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="155.3" cy="73.7" r="5" fill="#d97706"><title>Vapor+IFR · 30k
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="164.3" y="142.7" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
-<div class="chart"><h3>FCP vs content scale (linear)</h3><p class="sub">Linear, zero baseline, 1k→30k — absolute FCP gaps. VDOM+IFR without ET crosses above plain VDOM and can DNF on deep MT mount. CPU ×1.</p>
+<div class="chart"><h3><span class="i18n-en">FCP vs content scale (linear)</span><span class="i18n-zh">FCP vs 内容规模（linear）</span></h3><p class="sub"><span class="i18n-en">Linear, zero baseline, 1k→30k — absolute FCP gaps. VDOM+IFR without ET crosses above plain VDOM and can DNF on deep MT mount. CPU ×1.</span><span class="i18n-zh">线性、零基线、1k→30k——绝对 FCP 差距。无 ET 的 VDOM+IFR 会越过纯 VDOM，并可能在深层 MT mount 上 DNF。CPU ×1。</span></p>
 <svg viewBox="0 0 560 400" role="img" aria-label="FCP vs content scale (linear)">
 <line x1="56" y1="16" x2="56" y2="356" class="grid"/><text x="56" y="372" class="tick" text-anchor="middle">0</text><line x1="112.16535079273379" y1="16" x2="112.16535079273379" y2="356" class="grid"/><text x="112.16535079273379" y="372" class="tick" text-anchor="middle">5k</text><line x1="168.33070158546758" y1="16" x2="168.33070158546758" y2="356" class="grid"/><text x="168.33070158546758" y="372" class="tick" text-anchor="middle">10k</text><line x1="224.49605237820143" y1="16" x2="224.49605237820143" y2="356" class="grid"/><text x="224.49605237820143" y="372" class="tick" text-anchor="middle">15k</text><line x1="280.66140317093516" y1="16" x2="280.66140317093516" y2="356" class="grid"/><text x="280.66140317093516" y="372" class="tick" text-anchor="middle">20k</text><line x1="336.82675396366903" y1="16" x2="336.82675396366903" y2="356" class="grid"/><text x="336.82675396366903" y="372" class="tick" text-anchor="middle">25k</text><line x1="392.99210475640285" y1="16" x2="392.99210475640285" y2="356" class="grid"/><text x="392.99210475640285" y="372" class="tick" text-anchor="middle">30k</text><line x1="56" y1="356" x2="420" y2="356" class="grid"/><text x="50" y="359.5" class="tick" text-anchor="end">0</text><line x1="56" y1="293.66660433336295" x2="420" y2="293.66660433336295" class="grid"/><text x="50" y="297.16660433336295" class="tick" text-anchor="end">200</text><line x1="56" y1="231.3332086667259" x2="420" y2="231.3332086667259" class="grid"/><text x="50" y="234.8332086667259" class="tick" text-anchor="end">400</text><line x1="56" y1="168.9998130000889" x2="420" y2="168.9998130000889" class="grid"/><text x="50" y="172.4998130000889" class="tick" text-anchor="end">600</text><line x1="56" y1="106.66641733345185" x2="420" y2="106.66641733345185" class="grid"/><text x="50" y="110.16641733345185" class="tick" text-anchor="end">800</text><line x1="56" y1="44.33302166681483" x2="420" y2="44.33302166681483" class="grid"/><text x="50" y="47.83302166681483" class="tick" text-anchor="end">1k</text>
-<text x="238" y="394" class="axis" text-anchor="middle">elements N — linear</text>
-<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)">FCP — ms, linear</text>
+<text x="238" y="394" class="axis" text-anchor="middle" class="i18n-en">elements N — linear</text><text x="238" y="394" class="axis" text-anchor="middle" class="i18n-zh">元素数 N — linear</text>
+<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-en">FCP — ms, linear</text><text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-zh">FCP — ms，linear</text>
 <path d="M67.3,329.0L89.7,311.3L112.2,297.3L168.4,259.3L280.7,173.1L393.0,93.7" fill="none" stroke="#6b7280" stroke-width="2.8"/><circle cx="67.3" cy="329.0" r="5" fill="#6b7280"><title>VDOM · 1k
 N=1004  FCP=86.6ms  MT gz=7.1KB</title></circle><circle cx="89.7" cy="311.3" r="5" fill="#6b7280"><title>VDOM · 3k
 N=3004  FCP=143.4ms  MT gz=7.1KB</title></circle><circle cx="112.2" cy="297.3" r="5" fill="#6b7280"><title>VDOM · 5k
@@ -109,12 +193,12 @@ N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="393.0" cy="73.7"
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="402.0" y="142.7" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
 
-<h2>Log-log scale</h2>
-<div class="chart"><h3>Paint vs MT load cost (log)</h3><p class="sub">Log-log cost space (playground-style). Each polyline is one architecture through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. CPU ×1. Lower-left dominates.</p>
+<h2><span class="i18n-en">Log-log scale</span><span class="i18n-zh">Log-log 尺度</span></h2>
+<div class="chart"><h3><span class="i18n-en">Paint vs MT load cost (log)</span><span class="i18n-zh">绘制 vs MT 加载成本（log）</span></h3><p class="sub"><span class="i18n-en">Log-log cost space (playground-style). Each polyline is one architecture through 1k→30k. Right = heavier main-thread bundle; up = slower FCP. CPU ×1. Lower-left dominates.</span><span class="i18n-zh">Log-log 成本空间（playground 风格）。每条折线是一种架构，贯穿 1k→30k。右 = 主线程 bundle 更重；上 = FCP 更慢。CPU ×1。左下角占优。</span></p>
 <svg viewBox="0 0 560 400" role="img" aria-label="Paint vs MT load cost (log)">
 <line x1="100.58882739810429" y1="16" x2="100.58882739810429" y2="356" class="grid"/><text x="100.58882739810429" y="372" class="tick" text-anchor="middle">10k</text><line x1="179.19170631553857" y1="16" x2="179.19170631553857" y2="356" class="grid"/><text x="179.19170631553857" y="372" class="tick" text-anchor="middle">30k</text><line x1="265.3328586897268" y1="16" x2="265.3328586897268" y2="356" class="grid"/><text x="265.3328586897268" y="372" class="tick" text-anchor="middle">100k</text><line x1="343.93573760716106" y1="16" x2="343.93573760716106" y2="356" class="grid"/><text x="343.93573760716106" y="372" class="tick" text-anchor="middle">300k</text><line x1="56" y1="287.7009405414734" x2="420" y2="287.7009405414734" class="grid"/><text x="50" y="291.2009405414734" class="tick" text-anchor="end">100</text><line x1="56" y1="173.4553194946545" x2="420" y2="173.4553194946545" class="grid"/><text x="50" y="176.9553194946545" class="tick" text-anchor="end">300</text><line x1="56" y1="48.25316931622149" x2="420" y2="48.25316931622149" class="grid"/><text x="50" y="51.75316931622149" class="tick" text-anchor="end">1k</text>
-<text x="238" y="394" class="axis" text-anchor="middle">MT section gzip — bytes, log</text>
-<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)">FCP — ms, log</text>
+<text x="238" y="394" class="axis" text-anchor="middle" class="i18n-en">MT section gzip — bytes, log</text><text x="238" y="394" class="axis" text-anchor="middle" class="i18n-zh">MT section gzip — 字节，log</text>
+<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-en">FCP — ms, log</text><text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-zh">FCP — ms，log</text>
 <path d="M77.5,302.7L77.5,250.2L77.5,221.9L77.5,169.9L77.5,103.7L77.5,66.2" fill="none" stroke="#6b7280" stroke-width="2.8"/><circle cx="77.5" cy="302.7" r="5" fill="#6b7280"><title>VDOM · 1k
 N=1004  FCP=86.6ms  MT gz=7.1KB</title></circle><circle cx="77.5" cy="250.2" r="5" fill="#6b7280"><title>VDOM · 3k
 N=3004  FCP=143.4ms  MT gz=7.1KB</title></circle><circle cx="77.5" cy="221.9" r="5" fill="#6b7280"><title>VDOM · 5k
@@ -147,11 +231,11 @@ N=10004  FCP=337.6ms  MT gz=90.5KB</title></circle><circle cx="290.4" cy="95.1" 
 N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="311.1" cy="58.5" r="5" fill="#d97706"><title>Vapor+IFR · 30k
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="320.1" y="140.5" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
-<div class="chart"><h3>FCP vs content scale (log)</h3><p class="sub">Log-log. Same generated SFC at ~1k→30k elements. Lynx for Web, CPU ×1. α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs.</p>
+<div class="chart"><h3><span class="i18n-en">FCP vs content scale (log)</span><span class="i18n-zh">FCP vs 内容规模（log）</span></h3><p class="sub"><span class="i18n-en">Log-log. Same generated SFC at ~1k→30k elements. Lynx for Web, CPU ×1. α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs.</span><span class="i18n-zh">Log-log。同一份生成 SFC，约 1k→30k 元素。Lynx for Web，CPU ×1。α ≈ 1 → 随 N 线性；α ≪ 1 → 固定成本主导。</span></p>
 <svg viewBox="0 0 560 400" role="img" aria-label="FCP vs content scale (log)">
 <line x1="82.96277303537617" y1="16" x2="82.96277303537617" y2="356" class="grid"/><text x="82.96277303537617" y="372" class="tick" text-anchor="middle">1k</text><line x1="182.99781604321595" y1="16" x2="182.99781604321595" y2="356" class="grid"/><text x="182.99781604321595" y="372" class="tick" text-anchor="middle">3k</text><line x1="292.62654721918693" y1="16" x2="292.62654721918693" y2="356" class="grid"/><text x="292.62654721918693" y="372" class="tick" text-anchor="middle">10k</text><line x1="392.6615902270267" y1="16" x2="392.6615902270267" y2="356" class="grid"/><text x="392.6615902270267" y="372" class="tick" text-anchor="middle">30k</text><line x1="56" y1="287.7009405414734" x2="420" y2="287.7009405414734" class="grid"/><text x="50" y="291.2009405414734" class="tick" text-anchor="end">100</text><line x1="56" y1="173.4553194946545" x2="420" y2="173.4553194946545" class="grid"/><text x="50" y="176.9553194946545" class="tick" text-anchor="end">300</text><line x1="56" y1="48.25316931622149" x2="420" y2="48.25316931622149" class="grid"/><text x="50" y="51.75316931622149" class="tick" text-anchor="end">1k</text>
-<text x="238" y="394" class="axis" text-anchor="middle">elements N — log</text>
-<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)">FCP — ms, log</text>
+<text x="238" y="394" class="axis" text-anchor="middle" class="i18n-en">elements N — log</text><text x="238" y="394" class="axis" text-anchor="middle" class="i18n-zh">元素数 N — log</text>
+<text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-en">FCP — ms, log</text><text x="14" y="186" class="axis" text-anchor="middle" transform="rotate(-90 14 186)" class="i18n-zh">FCP — ms，log</text>
 <path d="M83.3,302.7L183.1,250.2L229.6,221.9L292.7,169.9L355.8,103.7L392.7,66.2" fill="none" stroke="#6b7280" stroke-width="2.8"/><circle cx="83.3" cy="302.7" r="5" fill="#6b7280"><title>VDOM · 1k
 N=1004  FCP=86.6ms  MT gz=7.1KB</title></circle><circle cx="183.1" cy="250.2" r="5" fill="#6b7280"><title>VDOM · 3k
 N=3004  FCP=143.4ms  MT gz=7.1KB</title></circle><circle cx="229.6" cy="221.9" r="5" fill="#6b7280"><title>VDOM · 5k
@@ -185,17 +269,14 @@ N=20004  FCP=637.1ms  MT gz=138.7KB</title></circle><circle cx="392.7" cy="58.5"
 N=30004  FCP=905.9ms  MT gz=185.2KB</title></circle><text x="401.7" y="140.5" class="slabel" fill="#d97706">Vapor+IFR</text>
 </svg></div>
 
-<h2>Scaling exponents</h2>
+<h2><span class="i18n-en">Scaling exponents</span><span class="i18n-zh">规模指数</span></h2>
 <p class="lede" style="margin-top:0">
-  α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC).
-  α ≈ 1 → cost grows with content. An architecture that raises MT gzip without
-  lowering α (or FCP) is paying for early-paint capacity that does not show up
-  at that scale on Lynx for Web.
+  <span class="i18n-en">α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC). α ≈ 1 → cost grows with content. An architecture that raises MT gzip without lowering α (or FCP) is paying for early-paint capacity that does not show up at that scale on Lynx for Web.</span><span class="i18n-zh">α ≈ 0 → FCP 由固定开销主导（bundle 解析 / 启动 / IPC）。α ≈ 1 → 成本随内容增长。抬高 MT gzip 却降不下 α（或 FCP）的架构，是在为在该规模 Lynx for Web 上看不到的早绘能力买单。</span>
 </p>
-<table><thead><tr><th>metric ~ N<sup>α</sup></th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">FCP</td><td class="c">α=0.68</td><td class="c">α=0.80</td><td class="c">α=0.72</td><td class="c">α=0.71</td><td class="c">α=0.71</td></tr><tr><td class="op">MT gzip</td><td class="c">α=0.00</td><td class="c">α=0.07</td><td class="c">α=0.73</td><td class="c">α=0.00</td><td class="c">α=0.43</td></tr><tr><td class="op">web gzip</td><td class="c">α=0.08</td><td class="c">α=0.09</td><td class="c">α=0.74</td><td class="c">α=0.43</td><td class="c">α=0.44</td></tr></tbody></table>
+<table><thead><tr><th><span class="i18n-en">metric ~ N<sup>α</sup></span><span class="i18n-zh">指标 ~ N<sup>α</sup></span></th><th>VDOM</th><th>VDOM+IFR</th><th>VDOM+IFR+ET</th><th>Vapor</th><th>Vapor+IFR</th></tr></thead><tbody><tr><td class="op">FCP</td><td class="c">α=0.68</td><td class="c">α=0.80</td><td class="c">α=0.72</td><td class="c">α=0.71</td><td class="c">α=0.71</td></tr><tr><td class="op">MT gzip</td><td class="c">α=0.00</td><td class="c">α=0.07</td><td class="c">α=0.73</td><td class="c">α=0.00</td><td class="c">α=0.43</td></tr><tr><td class="op">web gzip</td><td class="c">α=0.08</td><td class="c">α=0.09</td><td class="c">α=0.74</td><td class="c">α=0.43</td><td class="c">α=0.44</td></tr></tbody></table>
 
-<h2>Raw medians</h2>
-<table><thead><tr><th>architecture · scale</th><th>elements</th><th>FCP ms</th><th>Δ vs VDOM</th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody><tr><td class="op">VDOM · 1k</td><td class="c">1004</td><td class="c">86.6</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.0 KB</td></tr><tr><td class="op">VDOM+IFR · 1k</td><td class="c">1004</td><td class="c">77.7</td><td class="c">-10%</td><td class="c">33.8 KB</td><td class="c">62.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 1k</td><td class="c">1004</td><td class="c">70.0</td><td class="c">-19%</td><td class="c">54.1 KB</td><td class="c">104.6 KB</td></tr><tr><td class="op">Vapor · 1k</td><td class="c">1004</td><td class="c">93.3</td><td class="c">+8%</td><td class="c">7.1 KB</td><td class="c">44.5 KB</td></tr><tr><td class="op">Vapor+IFR · 1k</td><td class="c">1004</td><td class="c">86.9</td><td class="c">+0%</td><td class="c">43.3 KB</td><td class="c">85.9 KB</td></tr><tr><td class="op">VDOM · 3k</td><td class="c">3004</td><td class="c">143.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.9 KB</td></tr><tr><td class="op">VDOM+IFR · 3k</td><td class="c">3004</td><td class="c">119.6</td><td class="c">-17%</td><td class="c">34.6 KB</td><td class="c">64.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 3k</td><td class="c">3004</td><td class="c">118.8</td><td class="c">-17%</td><td class="c">94.4 KB</td><td class="c">184.9 KB</td></tr><tr><td class="op">Vapor · 3k</td><td class="c">3004</td><td class="c">156.3</td><td class="c">+9%</td><td class="c">7.1 KB</td><td class="c">55.8 KB</td></tr><tr><td class="op">Vapor+IFR · 3k</td><td class="c">3004</td><td class="c">141.0</td><td class="c">-2%</td><td class="c">54.3 KB</td><td class="c">108.3 KB</td></tr><tr><td class="op">VDOM · 5k</td><td class="c">5004</td><td class="c">188.3</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">36.8 KB</td></tr><tr><td class="op">VDOM+IFR · 5k</td><td class="c">5004</td><td class="c">163.1</td><td class="c">-13%</td><td class="c">35.4 KB</td><td class="c">66.5 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 5k</td><td class="c">5004</td><td class="c">160.9</td><td class="c">-15%</td><td class="c">134.3 KB</td><td class="c">266.3 KB</td></tr><tr><td class="op">Vapor · 5k</td><td class="c">5004</td><td class="c">209.5</td><td class="c">+11%</td><td class="c">7.1 KB</td><td class="c">66.6 KB</td></tr><tr><td class="op">Vapor+IFR · 5k</td><td class="c">5004</td><td class="c">193.3</td><td class="c">+3%</td><td class="c">65.4 KB</td><td class="c">129.9 KB</td></tr><tr><td class="op">VDOM · 10k</td><td class="c">10004</td><td class="c">310.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">39.0 KB</td></tr><tr><td class="op">VDOM+IFR · 10k</td><td class="c">10004</td><td class="c">378.9</td><td class="c">+22%</td><td class="c">37.1 KB</td><td class="c">70.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 10k</td><td class="c">10004</td><td class="c">278.4</td><td class="c">-10%</td><td class="c">233.9 KB</td><td class="c">465.7 KB</td></tr><tr><td class="op">Vapor · 10k</td><td class="c">10004</td><td class="c">365.4</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">92.5 KB</td></tr><tr><td class="op">Vapor+IFR · 10k</td><td class="c">10004</td><td class="c">337.6</td><td class="c">+9%</td><td class="c">90.5 KB</td><td class="c">180.8 KB</td></tr><tr><td class="op">VDOM · 20k</td><td class="c">20004</td><td class="c">586.9</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">42.8 KB</td></tr><tr><td class="op">VDOM+IFR · 20k</td><td class="c">20004</td><td class="c">695.1</td><td class="c">+18%</td><td class="c">40.2 KB</td><td class="c">77.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 20k</td><td class="c">20004</td><td class="c">526.1</td><td class="c">-10%</td><td class="c">432.1 KB</td><td class="c">862.3 KB</td></tr><tr><td class="op">Vapor · 20k</td><td class="c">20004</td><td class="c">691.7</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">139.8 KB</td></tr><tr><td class="op">Vapor+IFR · 20k</td><td class="c">20004</td><td class="c">637.1</td><td class="c">+9%</td><td class="c">138.7 KB</td><td class="c">277.4 KB</td></tr><tr><td class="op">VDOM · 30k</td><td class="c">30004</td><td class="c">841.5</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">46.2 KB</td></tr><tr><td class="op">VDOM+IFR · 30k</td><td class="c">30004</td><td class="c">1010.0</td><td class="c">+20%</td><td class="c">43.1 KB</td><td class="c">84.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 30k</td><td class="c">30004</td><td class="c">770.6</td><td class="c">-8%</td><td class="c">628.3 KB</td><td class="c">1260.1 KB</td></tr><tr><td class="op">Vapor · 30k</td><td class="c">30004</td><td class="c">1010.1</td><td class="c">+20%</td><td class="c">7.1 KB</td><td class="c">187.4 KB</td></tr><tr><td class="op">Vapor+IFR · 30k</td><td class="c">30004</td><td class="c">905.9</td><td class="c">+8%</td><td class="c">185.2 KB</td><td class="c">371.3 KB</td></tr></tbody></table>
+<h2><span class="i18n-en">Raw medians</span><span class="i18n-zh">原始中位数</span></h2>
+<table><thead><tr><th><span class="i18n-en">architecture · scale</span><span class="i18n-zh">架构 · 规模</span></th><th><span class="i18n-en">elements</span><span class="i18n-zh">元素数</span></th><th><span class="i18n-en">FCP ms</span><span class="i18n-zh">FCP ms</span></th><th><span class="i18n-en">Δ vs VDOM</span><span class="i18n-zh">相对 VDOM</span></th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody><tr><td class="op">VDOM · 1k</td><td class="c">1004</td><td class="c">86.6</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.0 KB</td></tr><tr><td class="op">VDOM+IFR · 1k</td><td class="c">1004</td><td class="c">77.7</td><td class="c">-10%</td><td class="c">33.8 KB</td><td class="c">62.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 1k</td><td class="c">1004</td><td class="c">70.0</td><td class="c">-19%</td><td class="c">54.1 KB</td><td class="c">104.6 KB</td></tr><tr><td class="op">Vapor · 1k</td><td class="c">1004</td><td class="c">93.3</td><td class="c">+8%</td><td class="c">7.1 KB</td><td class="c">44.5 KB</td></tr><tr><td class="op">Vapor+IFR · 1k</td><td class="c">1004</td><td class="c">86.9</td><td class="c">+0%</td><td class="c">43.3 KB</td><td class="c">85.9 KB</td></tr><tr><td class="op">VDOM · 3k</td><td class="c">3004</td><td class="c">143.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">35.9 KB</td></tr><tr><td class="op">VDOM+IFR · 3k</td><td class="c">3004</td><td class="c">119.6</td><td class="c">-17%</td><td class="c">34.6 KB</td><td class="c">64.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 3k</td><td class="c">3004</td><td class="c">118.8</td><td class="c">-17%</td><td class="c">94.4 KB</td><td class="c">184.9 KB</td></tr><tr><td class="op">Vapor · 3k</td><td class="c">3004</td><td class="c">156.3</td><td class="c">+9%</td><td class="c">7.1 KB</td><td class="c">55.8 KB</td></tr><tr><td class="op">Vapor+IFR · 3k</td><td class="c">3004</td><td class="c">141.0</td><td class="c">-2%</td><td class="c">54.3 KB</td><td class="c">108.3 KB</td></tr><tr><td class="op">VDOM · 5k</td><td class="c">5004</td><td class="c">188.3</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">36.8 KB</td></tr><tr><td class="op">VDOM+IFR · 5k</td><td class="c">5004</td><td class="c">163.1</td><td class="c">-13%</td><td class="c">35.4 KB</td><td class="c">66.5 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 5k</td><td class="c">5004</td><td class="c">160.9</td><td class="c">-15%</td><td class="c">134.3 KB</td><td class="c">266.3 KB</td></tr><tr><td class="op">Vapor · 5k</td><td class="c">5004</td><td class="c">209.5</td><td class="c">+11%</td><td class="c">7.1 KB</td><td class="c">66.6 KB</td></tr><tr><td class="op">Vapor+IFR · 5k</td><td class="c">5004</td><td class="c">193.3</td><td class="c">+3%</td><td class="c">65.4 KB</td><td class="c">129.9 KB</td></tr><tr><td class="op">VDOM · 10k</td><td class="c">10004</td><td class="c">310.4</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">39.0 KB</td></tr><tr><td class="op">VDOM+IFR · 10k</td><td class="c">10004</td><td class="c">378.9</td><td class="c">+22%</td><td class="c">37.1 KB</td><td class="c">70.7 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 10k</td><td class="c">10004</td><td class="c">278.4</td><td class="c">-10%</td><td class="c">233.9 KB</td><td class="c">465.7 KB</td></tr><tr><td class="op">Vapor · 10k</td><td class="c">10004</td><td class="c">365.4</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">92.5 KB</td></tr><tr><td class="op">Vapor+IFR · 10k</td><td class="c">10004</td><td class="c">337.6</td><td class="c">+9%</td><td class="c">90.5 KB</td><td class="c">180.8 KB</td></tr><tr><td class="op">VDOM · 20k</td><td class="c">20004</td><td class="c">586.9</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">42.8 KB</td></tr><tr><td class="op">VDOM+IFR · 20k</td><td class="c">20004</td><td class="c">695.1</td><td class="c">+18%</td><td class="c">40.2 KB</td><td class="c">77.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 20k</td><td class="c">20004</td><td class="c">526.1</td><td class="c">-10%</td><td class="c">432.1 KB</td><td class="c">862.3 KB</td></tr><tr><td class="op">Vapor · 20k</td><td class="c">20004</td><td class="c">691.7</td><td class="c">+18%</td><td class="c">7.1 KB</td><td class="c">139.8 KB</td></tr><tr><td class="op">Vapor+IFR · 20k</td><td class="c">20004</td><td class="c">637.1</td><td class="c">+9%</td><td class="c">138.7 KB</td><td class="c">277.4 KB</td></tr><tr><td class="op">VDOM · 30k</td><td class="c">30004</td><td class="c">841.5</td><td class="c">—</td><td class="c">7.1 KB</td><td class="c">46.2 KB</td></tr><tr><td class="op">VDOM+IFR · 30k</td><td class="c">30004</td><td class="c">1010.0</td><td class="c">+20%</td><td class="c">43.1 KB</td><td class="c">84.9 KB</td></tr><tr><td class="op">VDOM+IFR+ET · 30k</td><td class="c">30004</td><td class="c">770.6</td><td class="c">-8%</td><td class="c">628.3 KB</td><td class="c">1260.1 KB</td></tr><tr><td class="op">Vapor · 30k</td><td class="c">30004</td><td class="c">1010.1</td><td class="c">+20%</td><td class="c">7.1 KB</td><td class="c">187.4 KB</td></tr><tr><td class="op">Vapor+IFR · 30k</td><td class="c">30004</td><td class="c">905.9</td><td class="c">+8%</td><td class="c">185.2 KB</td><td class="c">371.3 KB</td></tr></tbody></table>
 
 </body>
 </html>

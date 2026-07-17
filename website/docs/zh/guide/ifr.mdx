@@ -230,16 +230,16 @@ Hello-world FCP（Lynx for Web）、约 1k 元素场景的 warm 渲染成本（V
 | VDOM off → IFR + ET | 95 → 72 ms (**−24%**) | 270 → 254 ms (**−6%**) |
 | Vapor off → IFR | 97 → 89 ms (**−9%**) | 304 → 318 ms (**+5%**) |
 
-同一份 SFC 扫到 **30k** 元素的规模趋势（CPU ×1）。主图是成本空间（MT gzip × FCP），其次是 FCP vs N
-（<a href="/benchmark/ifr-scale-trends-x1.html" target="_blank" rel="noreferrer">×1 全页 ↗</a>
-·
-<a href="/benchmark/ifr-scale-trends-x4.html" target="_blank" rel="noreferrer">×4 全页 ↗</a>）：
+同一份 SFC 扫到 **30k** 元素的规模趋势（CPU ×1）。主图是成本空间（MT gzip × FCP），其次是 FCP vs N：
 
-<iframe
+<ArtifactEmbed
   src="/benchmark/ifr-scale-trends-x1.html"
   title="IFR 架构规模趋势（CPU ×1）"
-  style={{ width: '100%', height: '2400px', border: '1px solid var(--rp-c-divider)', borderRadius: '12px' }}
-  loading="lazy"
+  label="规模趋势 · CPU ×1"
+  height={2400}
+  links={[
+    { href: '/benchmark/ifr-scale-trends-x4.html', label: 'CPU ×4' },
+  ]}
 />
 
 完整方法学、策略阶梯、逐示例扫描与 ReactLynx 对照见 [IFR 性能数据](/zh/guide/ifr-benchmarks)。Campaign 写法：[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md)。
