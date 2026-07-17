@@ -65,7 +65,7 @@ fixes (see [iterations](#how-creation-reached-parity) below).
 
 ## Cross-thread traffic (ops telemetry)
 
-Per create-1k operation, after the `CLONE_TEMPLATE` protocol work:
+Per create-1k operation, after the `CLONE_TREE` protocol work:
 
 | | vdom | vapor |
 |---|---|---|
@@ -99,7 +99,7 @@ Three iterations, each driven by the ops telemetry — kept here because the
    element; the naive Vapor clone materialized a separate Main-Thread text
    node per cell. Aliasing only-child `#text` nodes onto their host aligned
    Vapor's ops count with vdom's (25,000 → 17,000 for create-1k).
-2. **`REGISTER_TEMPLATE` / `CLONE_TEMPLATE`.** Vapor's clone-a-template
+2. **`REGISTER_TREE` / `CLONE_TREE`.** Vapor's clone-a-template
    primitive lets the static structure cross the thread boundary **once**,
    with instances expressed as a single op each (17,000 → 7,000 ops,
    −51% bytes). These are Vue Lynx's own protocol ops — the Main-Thread

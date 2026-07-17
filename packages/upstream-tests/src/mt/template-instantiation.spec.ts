@@ -1,5 +1,5 @@
 /**
- * Main Thread REGISTER_TEMPLATE / CLONE_TEMPLATE tests, running against the
+ * Main Thread REGISTER_TREE / CLONE_TREE tests, running against the
  * real ops-apply + jsdom PAPI pipeline.
  *
  * The uid contract under test: instantiation assigns ids by pre-order
@@ -43,8 +43,8 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TEMPLATE, tplId, structure(),
-      OP.CLONE_TEMPLATE, tplId, base,
+      OP.REGISTER_TREE, tplId, structure(),
+      OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
 
@@ -78,7 +78,7 @@ describe('MT template instantiation', () => {
     // <view><!>(empty #text)<text …>hi</text></view> — anchors first, so the
     // materialized child would misplace if their uids were not consumed.
     applyOps([
-      OP.REGISTER_TEMPLATE, tplId, [
+      OP.REGISTER_TREE, tplId, [
         'view',
         0,
         [
@@ -87,7 +87,7 @@ describe('MT template instantiation', () => {
           ['text', { t: 'hi' }, []],
         ],
       ],
-      OP.CLONE_TEMPLATE, tplId, base,
+      OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
 
@@ -107,10 +107,10 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TEMPLATE, tplId, structure(),
-      OP.CLONE_TEMPLATE, tplId, base1,
+      OP.REGISTER_TREE, tplId, structure(),
+      OP.CLONE_TREE, tplId, base1,
       OP.INSERT, ROOT, base1, -1,
-      OP.CLONE_TEMPLATE, tplId, base2,
+      OP.CLONE_TREE, tplId, base2,
       OP.INSERT, ROOT, base2, -1,
     ]);
 
@@ -130,8 +130,8 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TEMPLATE, tplId, structure(),
-      OP.CLONE_TEMPLATE, tplId, base,
+      OP.REGISTER_TREE, tplId, structure(),
+      OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
     expect(elements.has(base + 1)).toBe(true);

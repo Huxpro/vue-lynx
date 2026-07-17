@@ -23,17 +23,31 @@
  *   (retired)          [14]  was SET_SCOPE_ID — scoped CSS now rides on
  *     classes (scope tokens merge into SET_CLASS / props.c), so no op emits
  *     14 anymore. The number is not reused to keep old bundles unambiguous.
- *   REGISTER_TEMPLATE: [15, templateId, structure]
+ *   (reserved)         [15]  INSTANTIATE_TEMPLATE — the VDOM element-template
+ *     op (enableElementTemplates), arriving via #216. It is NOT emitted on
+ *     this lineage yet; 15 is held for it so both protocols share one
+ *     numbering after the lineages merge.
+ *   REGISTER_TREE:     [16, treeId, structure]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
  *     t?: text }. An element whose only child is a #text node
  *     is folded: the text lives in props.t and the child list is empty
  *     (mirrors the BG-side only-child text aliasing).
- *   CLONE_TEMPLATE:    [16, templateId, baseUid]
- *     Instantiates a registered template. Element ids are assigned
+ *   CLONE_TREE:        [17, treeId, baseUid]
+ *     Instantiates a registered tree. Element ids are assigned
  *     deterministically: pre-order traversal of the structure starting at
  *     baseUid — the BG thread allocates the identical contiguous block, so
  *     both sides agree on ids without transmitting them.
+ *
+ * Naming: INSTANTIATE_TEMPLATE (15) and REGISTER_TREE/CLONE_TREE (16/17) are
+ * genuinely different mechanisms, named by mechanism rather than renderer.
+ * The ET op registers baked create() code at build time and names only root
+ * + holes (sparse, id-light — the closed dynamic-point set is proved by the
+ * VDOM compiler's block analysis): a standard template + closed parts list,
+ * hence TEMPLATE. The vapor object is a named tree prototype — serialized
+ * structure over the wire plus dense pre-order naming, required because Vapor
+ * codegen's addressing knowledge lives in navigation code the protocol cannot
+ * see — hence TREE, not TEMPLATE.
  */
 export const PAGE_ROOT_ID = 1;
 
@@ -55,17 +69,19 @@ export const OP = {
   // 14 retired (was SET_SCOPE_ID) — do not reuse. The pre-Vapor lineage
   // still emits SET_SCOPE_ID=14; on this lineage scoped CSS rides on
   // classes, and 14 stays retired after the lineages merge.
-  REGISTER_TEMPLATE: 15,
-  CLONE_TEMPLATE: 16,
-  // 17 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
+  //
+  // 15 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
   // enableElementTemplates on the claude/vue-lynx-ifr-optimization-hy6jmy
-  // branch, where it is currently numbered 15). That opcode must renumber
-  // to 17 when it lands here — 15/16 belong to the Vapor template protocol
-  // above. Consumers handle unknown opcodes conservatively (hydration
-  // falls back to the full BG replay; the interpreter stops at an opcode
-  // it has no arity for), and both sides of the protocol always ship
-  // inside one bundle, so the reservation is a merge contract rather than
-  // a wire-compatibility concern.
+  // branch, where it already carries number 15). It arrives via #216 and is
+  // NOT emitted on this lineage yet, so it is intentionally absent from OP
+  // and OP_ARITY here — the number is held so both protocols share one
+  // numbering once the lineages merge.
+  REGISTER_TREE: 16,
+  CLONE_TREE: 17,
+  // Consumers handle unknown opcodes conservatively (hydration falls back to
+  // the full BG replay; the interpreter stops at an opcode it has no arity
+  // for), and both sides of the protocol always ship inside one bundle, so
+  // reserving 15 is a merge contract rather than a wire-compatibility concern.
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -86,12 +102,12 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.SET_WORKLET_EVENT]: 4,
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
-  [OP.REGISTER_TEMPLATE]: 2,
-  [OP.CLONE_TEMPLATE]: 2,
+  [OP.REGISTER_TREE]: 2,
+  [OP.CLONE_TREE]: 2,
 });
 
 // ---------------------------------------------------------------------------
-// REGISTER_TEMPLATE structure — the ONE definition both threads must agree
+// REGISTER_TREE structure — the ONE definition both threads must agree
 // on. The BG thread builds this shape (shadow-element.ts buildStructure) and
 // the MT interprets it (ops-apply.ts instantiateTemplate); uids are assigned
 // by identical pre-order walks on both sides, so any drift in this shape or

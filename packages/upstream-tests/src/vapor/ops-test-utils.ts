@@ -1,7 +1,7 @@
 /**
  * Shared ops-stream decoding for the Vapor test suites.
  *
- * `expandOps` additionally expands REGISTER_TEMPLATE / CLONE_TEMPLATE into
+ * `expandOps` additionally expands REGISTER_TREE / CLONE_TREE into
  * the granular CREATE/SET/INSERT ops the Main Thread instantiation performs,
  * assigning uids by the same pre-order contract (baseUid + counter). Tests
  * assert against the expanded stream, which keeps assertions readable AND
@@ -102,13 +102,13 @@ function expandNode(
 export function expandOps(decoded: DecodedOp[]): DecodedOp[] {
   const out: DecodedOp[] = [];
   for (const entry of decoded) {
-    if (entry.op === OP.REGISTER_TEMPLATE) {
+    if (entry.op === OP.REGISTER_TREE) {
       templates.set(entry.args[0] as number, entry.args[1] as TplNode);
-    } else if (entry.op === OP.CLONE_TEMPLATE) {
+    } else if (entry.op === OP.CLONE_TREE) {
       const structure = templates.get(entry.args[0] as number);
       if (!structure) {
         throw new Error(
-          `CLONE_TEMPLATE for unregistered template ${String(entry.args[0])}`,
+          `CLONE_TREE for unregistered template ${String(entry.args[0])}`,
         );
       }
       expandNode(structure, entry.args[1] as number, { value: 0 }, out);
