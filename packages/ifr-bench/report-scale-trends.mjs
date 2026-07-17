@@ -113,7 +113,27 @@ function seriesFcp(variant) {
   return pts;
 }
 
-function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit }) {
+function niceLinearTicks(lo, hi, maxTicks = 6) {
+  if (!(hi > lo)) return [lo];
+  const span = hi - lo;
+  const step0 = span / Math.max(1, maxTicks - 1);
+  const mag = 10 ** Math.floor(Math.log10(step0));
+  const residual = step0 / mag;
+  const step = residual <= 1.5
+    ? mag
+    : residual <= 3
+      ? 2 * mag
+      : residual <= 7
+        ? 5 * mag
+        : 10 * mag;
+  const start = Math.ceil((lo - step * 1e-9) / step) * step;
+  const ticks = [];
+  for (let t = start; t <= hi + step * 1e-6; t += step) ticks.push(t);
+  return ticks;
+}
+
+function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit, scale = 'log' }) {
+  const useLog = scale === 'log';
   const allPts = VARIANT_ORDER.flatMap((v) =>
     seriesFcp(v)
       .map((p) => ({ ...p, variant: v, x: getX(p), y: getY(p) }))
@@ -123,40 +143,70 @@ function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit }) {
 
   const xs = allPts.map((p) => p.x);
   const ys = allPts.map((p) => p.y);
-  const pad = 1.35;
-  const xmin = Math.min(...xs) / pad;
-  const xmax = Math.max(...xs) * pad;
-  const ymin = Math.min(...ys) / pad;
-  const ymax = Math.max(...ys) * pad;
+  let xmin;
+  let xmax;
+  let ymin;
+  let ymax;
+  if (useLog) {
+    const pad = 1.35;
+    xmin = Math.min(...xs) / pad;
+    xmax = Math.max(...xs) * pad;
+    ymin = Math.min(...ys) / pad;
+    ymax = Math.max(...ys) * pad;
+  } else {
+    // Zero baseline makes absolute gaps visually striking.
+    xmin = 0;
+    xmax = Math.max(...xs) * 1.08;
+    ymin = 0;
+    ymax = Math.max(...ys) * 1.08;
+  }
   const W = 560;
   const H = 400;
   const ML = 56;
   const MR = 140;
   const MT = 16;
   const MB = 44;
-  const px = (v) =>
-    ML
-    + ((Math.log10(v) - Math.log10(xmin))
-      / (Math.log10(xmax) - Math.log10(xmin)))
-      * (W - ML - MR);
-  const py = (v) =>
-    H
-    - MB
-    - ((Math.log10(v) - Math.log10(ymin))
-      / (Math.log10(ymax) - Math.log10(ymin)))
-      * (H - MT - MB);
+  const px = (v) => {
+    if (useLog) {
+      return ML
+        + ((Math.log10(v) - Math.log10(xmin))
+          / (Math.log10(xmax) - Math.log10(xmin)))
+          * (W - ML - MR);
+    }
+    return ML + ((v - xmin) / (xmax - xmin)) * (W - ML - MR);
+  };
+  const py = (v) => {
+    if (useLog) {
+      return H
+        - MB
+        - ((Math.log10(v) - Math.log10(ymin))
+          / (Math.log10(ymax) - Math.log10(ymin)))
+          * (H - MT - MB);
+    }
+    return H - MB - ((v - ymin) / (ymax - ymin)) * (H - MT - MB);
+  };
 
   const tickCandidates = [
     0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000,
   ];
-  const tickVals = (lo, hi) => tickCandidates.filter((t) => t >= lo && t <= hi);
+  const tickVals = (lo, hi) => {
+    if (useLog) return tickCandidates.filter((t) => t >= lo && t <= hi);
+    const ticks = niceLinearTicks(lo, hi);
+    if (lo === 0 && (ticks.length === 0 || ticks[0] !== 0)) ticks.unshift(0);
+    return ticks;
+  };
   const fmtTick = (t) => {
     if (xUnit === 'els' || xUnit === 'B') {
-      if (t >= 1000) return `${t / 1000}k`;
-      return String(t);
+      if (t === 0) return '0';
+      if (t >= 1000) {
+        const k = t / 1000;
+        return Number.isInteger(k) ? `${k}k` : `${k.toFixed(1)}k`;
+      }
+      return String(Math.round(t));
     }
+    if (t === 0) return '0';
     if (t >= 1000) return `${t / 1000}s`;
-    return `${t}`;
+    return Number.isInteger(t) ? `${t}` : t.toFixed(t < 10 ? 1 : 0);
   };
 
   let g = '';
@@ -269,31 +319,45 @@ function dataTableHtml() {
 
 const throttleGuess = /x(\d+)/.exec(LABEL)?.[1] ?? '1';
 
-const chartFcpVsN = renderChart({
-  title: 'FCP vs content scale',
-  sub:
-    'Log-log. Same generated SFC at ~1k / 3k / 5k / 10k elements. '
-    + `Lynx for Web, CPU ×${throttleGuess}. `
-    + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs (bundle parse, boot, IPC).',
-  xLabel: 'elements N — log',
-  yLabel: 'FCP — ms, log',
-  getX: (p) => p.n,
-  getY: (p) => p.fcp,
-  xUnit: 'els',
-});
+function chartsForScale(scale) {
+  const isLog = scale === 'log';
+  const scaleTag = isLog ? 'log' : 'linear';
+  const fcpVsN = renderChart({
+    title: `FCP vs content scale (${scaleTag})`,
+    sub: isLog
+      ? 'Log-log. Same generated SFC at ~1k / 3k / 5k / 10k elements. '
+        + `Lynx for Web, CPU ×${throttleGuess}. `
+        + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs (bundle parse, boot, IPC).'
+      : 'Linear, zero baseline. Absolute FCP gaps grow with N — the crossing where '
+        + 'VDOM+IFR (no ET) overtakes plain VDOM is easier to see than on log-log. '
+        + `CPU ×${throttleGuess}.`,
+    xLabel: `elements N — ${scaleTag}`,
+    yLabel: `FCP — ms, ${scaleTag}`,
+    getX: (p) => p.n,
+    getY: (p) => p.fcp,
+    xUnit: 'els',
+    scale,
+  });
+  const fcpVsMt = renderChart({
+    title: `FCP vs main-thread bundle gzip (${scaleTag})`,
+    sub: isLog
+      ? 'Same points, x = MT section gzip. IFR copies the app onto the MT bundle; '
+        + 'ET adds baked create() code. Moving right without dropping FCP is '
+        + 'parse/eval tax without early-paint payoff at that scale.'
+      : 'Linear, zero baseline. Same points as the log chart — absolute MT gzip '
+        + 'vs FCP so parse/eval tax and early-paint payoff are comparable in ms/KB.',
+    xLabel: `MT section gzip — bytes, ${scaleTag}`,
+    yLabel: `FCP — ms, ${scaleTag}`,
+    getX: (p) => p.mtGzip,
+    getY: (p) => p.fcp,
+    xUnit: 'B',
+    scale,
+  });
+  return { fcpVsN, fcpVsMt };
+}
 
-const chartFcpVsMt = renderChart({
-  title: 'FCP vs main-thread bundle gzip',
-  sub:
-    'Same points, x = MT section gzip. IFR copies the app onto the MT bundle; '
-    + 'ET adds baked create() code. Moving right without dropping FCP is '
-    + 'parse/eval tax without early-paint payoff at that scale.',
-  xLabel: 'MT section gzip — bytes, log',
-  yLabel: 'FCP — ms, log',
-  getX: (p) => p.mtGzip,
-  getY: (p) => p.fcp,
-  xUnit: 'B',
-});
+const linearCharts = chartsForScale('linear');
+const logCharts = chartsForScale('log');
 
 const normalized = {
   label: LABEL,
@@ -332,13 +396,18 @@ const html = `<!doctype html>
 <h1>IFR architecture scale trends</h1>
 <p class="lede">
   Five product architectures on one generated content SFC, scaled from ~1k to ~10k elements.
-  Charts follow the benchmark-playground pattern: <strong>log-log polylines</strong> plus
-  least-squares scaling exponents <code>α</code> in <code>cost ~ N<sup>α</sup></code>.
+  Linear charts (zero baseline) make absolute FCP gaps pop; log-log charts show scaling
+  shape for the exponents <code>α</code> in <code>cost ~ N<sup>α</sup></code>.
   Source: <code>${path.basename(resultsPath)}</code> · ${normalized.measuredAt}
 </p>
 
-${chartFcpVsN}
-${chartFcpVsMt}
+<h2>Linear scale</h2>
+${linearCharts.fcpVsN}
+${linearCharts.fcpVsMt}
+
+<h2>Log-log scale</h2>
+${logCharts.fcpVsN}
+${logCharts.fcpVsMt}
 
 <h2>Scaling exponents</h2>
 <p class="lede" style="margin-top:0">
