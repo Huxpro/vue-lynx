@@ -4,13 +4,14 @@ One place to **look at** every architecture on the same host and ladder —
 IFR styles, VDOM vs Vapor, and React vs Vue — without mixing metric scales.
 
 <a href="/benchmark/unified.html" target="_blank" rel="noreferrer">Open full report ↗</a>
+(<a href="/benchmark/unified.zh.html" target="_blank" rel="noreferrer">中文</a>)
 
 <iframe
   src="/benchmark/unified.html"
   title="Unified Vue Lynx benchmark matrix"
   style={{
     width: '100%',
-    height: '2200px',
+    height: '2400px',
     border: '1px solid var(--rp-c-divider)',
     borderRadius: '12px',
   }}
@@ -33,7 +34,8 @@ playground-style tinted tables + scaling charts.
 
 ## How to read it
 
-1. **Conclusions** at the top — quotable takeaways (e.g. “Vapor ~8× on selectStorm@10k”).
+1. **Conclusions** at the top — each card is takeaway → so what → verify numbers.
+   Easy to digest; tables below are for checking the claim.
 2. **Storm table** — IFR × framework interaction latency (same protocol as the playground).
 3. **Storm charts** — select / update / create vs N on one host.
 4. **FCP table + charts** — content-probe first-frame ladder, including ReactLynx

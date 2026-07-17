@@ -89,10 +89,17 @@ function generateUnifiedReport() {
     cwd: BENCH_ROOT,
     stdio: 'inherit',
   });
-  // Also keep a copy next to the committed ANALYSIS.md for repo browsing.
-  const repoCopy = path.join(BENCH_ROOT, 'results/unified/report.html');
-  fs.copyFileSync(out, repoCopy);
-  console.info('  -> benchmark/unified.html');
+  // report-unified writes EN + ZH next to --out (unified.html + unified.zh.html).
+  const outZh = path.join(DEST, 'unified.zh.html');
+  const repoDir = path.join(BENCH_ROOT, 'results/unified');
+  fs.copyFileSync(out, path.join(repoDir, 'report.html'));
+  if (fs.existsSync(outZh)) {
+    fs.copyFileSync(outZh, path.join(repoDir, 'report.zh.html'));
+    console.info('  -> benchmark/unified.html');
+    console.info('  -> benchmark/unified.zh.html');
+  } else {
+    console.info('  -> benchmark/unified.html');
+  }
 }
 
 function copyIfrScaleTrends() {
