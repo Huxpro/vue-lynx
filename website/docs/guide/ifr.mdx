@@ -6,6 +6,20 @@ Instant First-Frame Rendering (IFR) paints real content during Lynx
 `loadTemplate`, before the background thread has started. The blank frame
 that usually waits on background boot, first Vue render, and IPC is gone.
 
+This page is about three ideas:
+
+1. **How IFR is fast** — paint on the main thread during `loadTemplate`;
+   background boot runs in parallel ([why](#why-ifr-removes-the-blank-frame)).
+2. **What it costs** — dual bundles, ~2× gzip, sync work on the main thread
+   ([trade-offs](#trade-offs)).
+3. **Why it’s an architecture win** — only a real thread boundary has a blank
+   frame to remove; single-process harnesses stay flat (see
+   [IFR Benchmarks](/guide/ifr-benchmarks)).
+
+Numbers and scale charts live in the
+[unified matrix](/guide/benchmark-unified) and
+[IFR Benchmarks](/guide/ifr-benchmarks) — this page keeps the product story.
+
 IFR is the same product feature on both renderers. What differs is how the
 main-thread first frame is built:
 
@@ -254,82 +268,15 @@ Vapor builds.
 
 ---
 
-## Benchmarks
+## Conclusions
 
-**Bottom line**
-
-| Question | Answer |
+| | |
 | --- | --- |
-| Does IFR improve first paint? | **Yes.** On Lynx for Web (real Worker boundary), median FCP across ten examples is about **−19%** with default IFR — the same class as ReactLynx (−23%) on the same harness. |
-| Should VDOM ship ET with IFR? | **Yes.** ET is what keeps the sync main-thread render cheap as screens grow. Without it, IFR can lose to plain VDOM by ~10k elements and sit ~**+20%** slower by 30k. With ET, VDOM stays fastest through 30k. |
-| What about Vapor? | Vapor IFR wins at 1× CPU on content screens (~−9% in the same-source matrix), but by less than VDOM+IFR+ET. Measure on your target device — at 4× CPU, MT bundle cost can erase the win. |
-| When *not* to enable? | Fetch-driven screens with nothing to paint before a response, or bundle-critical apps where ~2× gzip is unacceptable without measuring. |
+| **Fast how?** | Paint in `loadTemplate` on the main thread; BG boot overlaps. Needs a real thread boundary. |
+| **Cost** | Dual bundles · ~**2×** gzip · sync MT work. Fetch-empty first screens don’t benefit. |
+| **Ship** | VDOM: **`enableIFR: true`** (brings ET). Don’t ship IFR without ET at scale. |
+| **Skip when** | Nothing to paint before a fetch, or ~2× gzip is unacceptable without measuring. |
 
-### Recommendations
-
-| Your first screen | Do this |
-| --- | --- |
-| Content-first, synchronous data | **`enableIFR: true`** (VDOM brings ET; Vapor uses the tree protocol) |
-| Data-driven but initial data is sync | Enable |
-| Fetch-driven — nothing to paint before a response | Don't enable, or ship a real skeleton first then enable |
-| Bundle-size-critical | Measure first — gzip roughly doubles |
-
-Regardless of profile: keep the first screen deterministic and put side
-effects in Composition API lifecycle hooks
-([Writing IFR-friendly first screens](#writing-ifr-friendly-first-screens)).
-Use `enableElementTemplates: false` only to bisect a suspected ET issue —
-not as a performance dial.
-
-### Supporting numbers
-
-Product FCP / IFR×architecture matrices:
-**[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-Strategy cost, real-app gzip/TTI, native checks:
-[IFR Benchmarks](/guide/ifr-benchmarks).
-
-Scale trends unique to this page — **cost space** (MT gzip × FCP) through
-**30k** elements (CPU ×1), then FCP vs N.
-
-**How to read cost space.** It is a two-axis ledger: what you pay vs what the
-user waits for.
-
-| axis | meaning |
-| --- | --- |
-| **X — MT gzip** | Main-thread bundle size (parse / load tax). IFR usually makes this larger. |
-| **Y — FCP** | Time to first paint. Lower is better. |
-| **Each polyline** | One architecture (VDOM / IFR / IFR+ET / Vapor…) swept from 1k→30k. |
-
-| region | reading |
-| --- | --- |
-| **Lower-left** | Ideal — small MT bundle *and* fast first frame |
-| **Right** | Paid a heavier MT bundle for IFR; may or may not buy faster FCP |
-| **Up** | First frame worsens as content grows (poor scaling) |
-| **Upper-right** | Worst — heavy *and* slow |
-
-Unlike the unified matrix’s **FCP vs N** (first-frame only), cost space asks
-one more question: *did that first frame come from a larger MT bundle?*
-Typical bad shape: plain IFR gets heavier, then FCP crosses above plain VDOM
-on mid/large trees. Good shape: IFR+ET still pays MT size, but FCP stays below.
-
-<BenchArtifactFrame
-  src="/benchmark/ifr-scale-trends-x1.html"
-  title="IFR scale trends (CPU ×1)"
-  titleZh="IFR 规模趋势（CPU ×1）"
-  height={1600}
-/>
-
-<details>
-<summary>CPU ×4 scale trends</summary>
-
-<BenchArtifactFrame
-  src="/benchmark/ifr-scale-trends-x4.html"
-  title="IFR scale trends (CPU ×4)"
-  titleZh="IFR 规模趋势（CPU ×4）"
-  height={1600}
-/>
-
-</details>
-
-Full methodology, strategy ladder, per-example sweeps, and ReactLynx
-comparison: [IFR Benchmarks](/guide/ifr-benchmarks). Campaign write-up:
-[`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/UNIFIED-RERUN.md).
+Details, strategy ladder, cost-space charts, examples gzip/TTI, native:
+**[IFR Benchmarks](/guide/ifr-benchmarks)** · product FCP matrix:
+**[Unified Matrix](/guide/benchmark-unified)**.
