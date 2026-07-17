@@ -8,10 +8,11 @@ import { loadManifest } from "./manifest.mjs";
 import { scenarios } from "./scenarios.mjs";
 import { buildSourceGraph } from "./source-graph.mjs";
 
-export async function computeEntrySourceHash(root, row) {
+export async function computeEntrySourceHash(root, row, { debug = false } = {}) {
   const [example] = row.id.split("/");
   const inputs = [row.entry, row.vapor.vaporEntry].filter(Boolean);
   const hash = createHash("sha256");
+  const parts = [];
 
   for (const entry of [...new Set(inputs)].sort()) {
     const path = join("examples", example, entry.replace(/^\.\//, ""));
@@ -20,6 +21,9 @@ export async function computeEntrySourceHash(root, row) {
     hash.update("\0");
     hash.update(graph.hash);
     hash.update("\0");
+    if (debug) {
+      parts.push(`entry:${path}:${graph.hash}:${graph.files.join(",")}`);
+    }
   }
 
   const rootPath = fileURLToPath(root);
@@ -27,11 +31,26 @@ export async function computeEntrySourceHash(root, row) {
     join(rootPath, "examples", example, "lynx.config.ts"),
     join(rootPath, "examples", example, "package.json"),
   ]) {
-    hash.update(await readFile(path));
+    const bytes = await readFile(path);
+    hash.update(bytes);
     hash.update("\0");
+    if (debug) {
+      parts.push(
+        `${path.split("/").slice(-2).join("/")}:sha256=${createHash("sha256").update(bytes).digest("hex")}`,
+      );
+    }
   }
-  hash.update(JSON.stringify(scenarios[row.scenario]));
-  return hash.digest("hex");
+  const scenarioJson = JSON.stringify(scenarios[row.scenario]);
+  hash.update(scenarioJson);
+  if (debug) {
+    parts.push(`scenario:${createHash("sha256").update(scenarioJson).digest("hex")}`);
+    parts.push(`root:${rootPath}`);
+  }
+  const digest = hash.digest("hex");
+  if (debug) {
+    console.error(`[source-hash debug] ${row.id} => ${digest}\n  ${parts.join("\n  ")}`);
+  }
+  return digest;
 }
 
 export function validateStatusRecords(entries, currentHashes) {
@@ -110,7 +129,8 @@ export async function finalizeManifest(root, manifest, results) {
 export async function validateManifestStatus(root, manifest) {
   const hashes = new Map();
   for (const row of manifest.entries) {
-    hashes.set(row.id, await computeEntrySourceHash(root, row));
+    const debug = row.id === "basic/main" || row.id === "vapor/main";
+    hashes.set(row.id, await computeEntrySourceHash(root, row, { debug }));
   }
   return validateStatusRecords(manifest.entries, hashes);
 }
