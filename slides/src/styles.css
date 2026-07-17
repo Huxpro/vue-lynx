@@ -621,12 +621,73 @@ h1, h2, h3, p { margin: 0; }
   color: var(--vue-green);
 }
 
+/* GitHub contributor credit — same pill language as .chip / .badge,
+   with a circular avatar instead of a status dot. */
+.gh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 12px 0 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper-elev);
+  backdrop-filter: blur(20px);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  text-decoration: none;
+  width: fit-content;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+.gh-badge:hover {
+  border-color: color-mix(in srgb, var(--vue-green) 45%, transparent);
+  color: var(--ink-soft);
+}
+.gh-badge__avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ink-faint) 35%, transparent);
+  flex: none;
+}
+.gh-badge__feat {
+  color: var(--ink-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Release version chip — sits beside the feature title. */
+.demo__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ver-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper-elev);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+  flex: none;
+  transform: translateY(-2px);
+}
+
 /* API-coverage variant — sample code instead of prose. One Vue feature per
    slide: eyebrow + feature name + compact codeframe on the left (QR pair is
    appended into the body by qrcodes.js), live phone on the right. */
 .demo--api { grid-template-columns: 1.15fr 1fr; }
 .demo--api .demo__body { max-width: none; gap: 18px; }
 .demo--api .demo__title { font-size: clamp(24px, 2.4cqw, 36px); }
+.demo--api .gh-badge { margin-top: -2px; }
 .demo--api .demo__title code {
   font-family: var(--mono);
   font-weight: 600;

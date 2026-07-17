@@ -64,18 +64,22 @@ export const ZH = {
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/9': 'II · Vue 覆盖度 · 1/9',
-  'II · Vue coverage · 2/9': 'II · Vue 覆盖度 · 2/9',
-  'II · Vue coverage · 3/9': 'II · Vue 覆盖度 · 3/9',
-  'II · Vue coverage · 4/9': 'II · Vue 覆盖度 · 4/9',
-  'II · Vue coverage · 5/9': 'II · Vue 覆盖度 · 5/9',
-  'II · Vue coverage · 6/9': 'II · Vue 覆盖度 · 6/9',
-  'II · Vue coverage · 7/9': 'II · Vue 覆盖度 · 7/9',
-  'II · Vue coverage · 8/9': 'II · Vue 覆盖度 · 8/9',
-  'II · Vue coverage · 9/9': 'II · Vue 覆盖度 · 9/9',
+  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
+  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
+  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
+  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
+  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
+  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
+  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
+  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
+  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
+  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
+  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
+  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
+  'CSS features': '<span class="brand-text">CSS</span> 特性',
 
   // ---- Whole apps ----
   'II · Whole apps': 'II · 完整应用',
@@ -276,9 +280,10 @@ export const ZH = {
   "What's there": '已经有的',
   "What's open": '还缺的',
   'Composition API & SFCs': '<b>Composition API 与 SFC</b>',
-  'Transition, Suspense, slots': '<b>Transition、Suspense、插槽</b>',
+  'Transition, Suspense, KeepAlive': '<b>Transition、Suspense、KeepAlive</b>',
   'Pinia, Router, Query, Tailwind': '<b>Pinia、Router、Query、Tailwind</b>',
-  'KeepAlive, Teleport': '<b>KeepAlive、Teleport</b>',
+  'Main-Thread Script': '<b>Main-Thread Script</b>',
+  'Teleport example & polish': '<b>Teleport example 与打磨</b>',
   'View pager & more gestures': '<b>View pager 与更多手势</b>',
   'Vue DevTools integration': '<b>Vue DevTools 集成</b>',
   "The ecosystem you'd port": '<b>等你来移植的生态</b>',
@@ -351,20 +356,26 @@ export const ZH_NOTES = [
   // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
   // 17 v-model
-  `<p>双向绑定,两种形态都有:组件层 <code>defineModel</code>(含具名 model),以及直接绑在 Lynx <strong>原生</strong> <code>&lt;input&gt;/&lt;textarea&gt;</code> 上的 <code>v-model</code> —— 连 <code>.lazy/.trim/.number</code> 修饰符都在。时序敏感的场景(预置值、程序化赋值、与 <code>@input</code> 共存)也都覆盖了。</p>`,
-  // 18 event modifiers
-  `<p>Vue 的事件修饰符映射到 Lynx 事件系统:<code>.once</code>、<code>.stop</code>、<code>.self</code>、链式组合 —— demo 里每个都和"不加修饰符"的孪生版本并排对照。(<code>.prevent</code> 是兼容性 no-op —— 原生没有默认行为可阻止。)</p>`,
-  // 19 slots
+  `<p>双向绑定,两种形态都有:组件层 <code>defineModel</code>(含具名 model),以及直接绑在 Lynx <strong>原生</strong> <code>&lt;input&gt;/&lt;textarea&gt;</code> 上的 <code>v-model</code> —— 连 <code>.lazy/.trim/.number</code> 修饰符都在。原生 <code>vModelText</code> 由 @jynxbt 贡献(#121),落在 <code>0.2.0</code>。时序敏感的场景(预置值、程序化赋值、与 <code>@input</code> 共存)也都覆盖了。</p>`,
+  // 18 slots
   `<p>组合模式整体平移:默认插槽、具名插槽、作用域插槽 —— 你搭设计系统用的整套组件写法都在。</p>`,
-  // 20 provide/inject
+  // 19 provide/inject
   `<p>跨层级依赖注入 —— 响应式值也支持。根部切主题,深层子组件通过注入的 ref 一起重渲染。Pinia 和 Router 正是骑在这套机制上工作的 —— 这也是它们能直接跑通的原因。</p>`,
-  // 21 style scoped
-  `<p>真 CSS 是 Lynx 的超能力 —— 所以 Vue 的 SFC CSS 特性全都落地:<code>&lt;style scoped&gt;</code>、CSS Modules、外链样式,甚至 CSS 里的 <code>v-bind()</code>,让响应式状态直接驱动原生样式。</p>`,
-  // 22 Suspense
+  // 20 Suspense
   `<p>异步编排:<code>defineAsyncComponent</code>、异步 <code>setup()</code>、嵌套 Suspense 边界、重挂载时的 fallback —— 全部跑在原生元素树上。</p>`,
-  // 23 Transition
-  `<p>覆盖度的收官:<code>&lt;Transition&gt;</code> 和 <code>&lt;TransitionGroup&gt;</code>,由<strong>原生合成器</strong>上的 CSS 动画驱动 —— 进入/离开、列表移动,类名全是你熟的那套。</p><p>九个特性、九个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
-  // 24 Whole apps
+  // 21 Transition
+  `<p><code>&lt;Transition&gt;</code> 和 <code>&lt;TransitionGroup&gt;</code>,由<strong>原生合成器</strong>上的 CSS 动画驱动 —— 进入/离开、列表移动,类名全是你熟的那套。</p>`,
+  // 22 CSS features
+  `<p>真 CSS 是 Lynx 的超能力 —— 所以 Vue 的 SFC CSS 特性全都落地:普通 <code>&lt;style&gt;</code>、<code>&lt;style scoped&gt;</code>(cssId 桥在 <code>0.4.0</code>)、CSS Modules、外链样式,以及 CSS 里的 <code>v-bind()</code>(<code>0.3.0</code>),让响应式状态直接驱动原生样式。<code>v-bind()</code> / Lynx-native <code>useCssVars</code> 路径归功于 @KealanAU(#127) —— 不是整套 CSS 栈。</p>`,
+  // 23 event modifiers
+  `<p>Vue 的事件修饰符映射到 Lynx 事件系统:<code>.once</code>、<code>.stop</code>、<code>.self</code>、链式组合 —— @KealanAU 落地(#155), <code>0.4.0</code>。demo 里每个都和"不加修饰符"的孪生版本并排对照。(<code>.prevent</code> 是兼容性 no-op —— 原生没有默认行为可阻止。)</p>`,
+  // 24 KeepAlive
+  `<p>原生树上的组件实例缓存 —— 切 tab 再回来,状态还在。<code>include</code> / <code>exclude</code> / <code>max</code>,加上 <code>onActivated</code> / <code>onDeactivated</code>。@jynxbt 贡献(#153),落在 <code>0.4.0</code>。</p>`,
+  // 25 v-once
+  `<p><code>v-once</code> 首次渲染后冻结。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong> —— 比浏览器更值钱。@KealanAU 验证并文档化(#176), <code>0.4.0</code>。点 Increment:live 会变,frozen 不动。</p>`,
+  // 26 v-memo
+  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十二个特性、十二个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
+  // 27 Whole apps
   `<p>API 逐个通过只是入场券。"Web DX 是基线"真正的考验,是把一整个 Vue 代码库 —— 状态、路由、样式、数据请求 —— 整体落到原生上。来两个经典。</p>`,
   // 25 TodoMVC
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
