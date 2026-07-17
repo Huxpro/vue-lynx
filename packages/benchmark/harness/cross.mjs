@@ -867,14 +867,8 @@ async function runStormsSuite(browser) {
   );
   const md = stormMarkdownReport(result);
   fs.writeFileSync(path.join(outDir, `${stem}.md`), md);
-  // Keep latest pointer when unlabeled, or also mirror labeled runs.
-  if (RESULT_LABEL) {
-    fs.writeFileSync(
-      path.join(outDir, 'cross-storms-latest.json'),
-      JSON.stringify(result, null, 2),
-    );
-    fs.writeFileSync(path.join(outDir, 'cross-storms-latest.md'), md);
-  }
+  // Only unlabeled full runs update the latest pointer — labeled partial
+  // campaigns (e.g. IFR-only / React-only) must not clobber it.
   console.log('\n' + md);
   console.log(`[storms] wrote results/${stem}.{json,md}`);
 }

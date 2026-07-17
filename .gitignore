@@ -3,6 +3,8 @@ dist/
 dist-vapor/
 dist-naive/
 dist-compiler/
+dist-ifr/
+dist-ifr-et/
 .rslib/
 *.tsbuildinfo
 .rspeedy/
