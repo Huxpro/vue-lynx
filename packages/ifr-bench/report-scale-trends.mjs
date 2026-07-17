@@ -1,0 +1,368 @@
+/**
+ * Playground-style scale-trend charts for IFR architectures.
+ *
+ * Reads:
+ *   <bundlesDir>/scale-manifest.json
+ *   results/browser-results-<label>.json   (from web-harness/run-browser.mjs)
+ *
+ * Writes:
+ *   results/scale-trends-<label>.html
+ *   results/scale-trends-<label>.json
+ *
+ *   node report-scale-trends.mjs <bundlesDir> <browserResultsJson> [outLabel]
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const bundlesDir = path.resolve(process.argv[2] ?? './web-bundles-scale');
+const resultsPath = path.resolve(
+  process.argv[3] ?? './results/browser-results-scale-x1.json',
+);
+const LABEL = process.argv[4]
+  ?? path.basename(resultsPath, '.json').replace(/^browser-results-/, '');
+
+const SIZES = ['1k', '3k', '5k', '10k'];
+const SIZE_N = { '1k': 1004, '3k': 3004, '5k': 5004, '10k': 10004 };
+const VARIANT_ORDER = [
+  'vdom',
+  'vdom-ifr',
+  'vdom-ifr-et',
+  'vapor',
+  'vapor-ifr',
+];
+const VARIANT_LABEL = {
+  vdom: 'VDOM',
+  'vdom-ifr': 'VDOM+IFR',
+  'vdom-ifr-et': 'VDOM+IFR+ET',
+  vapor: 'Vapor',
+  'vapor-ifr': 'Vapor+IFR',
+};
+const COLORS = {
+  vdom: '#6b7280',
+  'vdom-ifr': '#2563eb',
+  'vdom-ifr-et': '#7c3aed',
+  vapor: '#059669',
+  'vapor-ifr': '#d97706',
+};
+
+const manifest = JSON.parse(
+  fs.readFileSync(path.join(bundlesDir, 'scale-manifest.json'), 'utf8'),
+);
+const rawResults = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+
+function parseName(bundle) {
+  const base = String(bundle).replace(/\.web\.bundle$/, '');
+  const at = base.lastIndexOf('@');
+  if (at === -1) return null;
+  return { variant: base.slice(0, at), scale: base.slice(at + 1) };
+}
+
+const perOp = Object.fromEntries(VARIANT_ORDER.map((v) => [v, {}]));
+const sizes = Object.fromEntries(VARIANT_ORDER.map((v) => [v, {}]));
+
+for (const cell of manifest.cells) {
+  SIZE_N[cell.scale] = cell.elements;
+  sizes[cell.variant][`webGzip@${cell.scale}`] = cell.webBundle.gzip;
+  sizes[cell.variant][`mtGzip@${cell.scale}`] = cell.mtSection.gzip;
+  sizes[cell.variant][`elements@${cell.scale}`] = cell.elements;
+}
+
+for (const row of rawResults) {
+  const parsed = parseName(row.bundle);
+  if (!parsed || !perOp[parsed.variant]) continue;
+  perOp[parsed.variant][`fcp@${parsed.scale}`] = {
+    median: row.fcpMedianMs,
+    n: row.fcps?.length ?? 1,
+  };
+  perOp[parsed.variant][`settled@${parsed.scale}`] = {
+    median: row.settledMedianMs,
+    n: row.settleds?.length ?? 1,
+  };
+}
+
+function slopeFit(pairs) {
+  const pts = pairs
+    .filter(([n, v]) => n > 0 && v > 0)
+    .map(([n, v]) => [Math.log10(n), Math.log10(v)]);
+  if (pts.length < 3) return null;
+  const m = pts.length;
+  const sx = pts.reduce((a, p) => a + p[0], 0);
+  const sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  const sxy = pts.reduce((a, p) => a + p[0] * p[1], 0);
+  return (m * sxy - sx * sy) / (m * sxx - sx * sx);
+}
+
+function seriesFcp(variant) {
+  const pts = [];
+  for (const scale of SIZES) {
+    const fcp = perOp[variant]?.[`fcp@${scale}`]?.median;
+    const n = sizes[variant]?.[`elements@${scale}`] ?? SIZE_N[scale];
+    if (fcp == null) continue;
+    pts.push({
+      scale,
+      n,
+      fcp,
+      webGzip: sizes[variant]?.[`webGzip@${scale}`],
+      mtGzip: sizes[variant]?.[`mtGzip@${scale}`],
+    });
+  }
+  return pts;
+}
+
+function renderChart({ title, sub, xLabel, yLabel, getX, getY, xUnit }) {
+  const allPts = VARIANT_ORDER.flatMap((v) =>
+    seriesFcp(v)
+      .map((p) => ({ ...p, variant: v, x: getX(p), y: getY(p) }))
+      .filter((p) => p.x > 0 && p.y > 0)
+  );
+  if (allPts.length === 0) return '<p class="sub">No data.</p>';
+
+  const xs = allPts.map((p) => p.x);
+  const ys = allPts.map((p) => p.y);
+  const pad = 1.35;
+  const xmin = Math.min(...xs) / pad;
+  const xmax = Math.max(...xs) * pad;
+  const ymin = Math.min(...ys) / pad;
+  const ymax = Math.max(...ys) * pad;
+  const W = 560;
+  const H = 400;
+  const ML = 56;
+  const MR = 140;
+  const MT = 16;
+  const MB = 44;
+  const px = (v) =>
+    ML
+    + ((Math.log10(v) - Math.log10(xmin))
+      / (Math.log10(xmax) - Math.log10(xmin)))
+      * (W - ML - MR);
+  const py = (v) =>
+    H
+    - MB
+    - ((Math.log10(v) - Math.log10(ymin))
+      / (Math.log10(ymax) - Math.log10(ymin)))
+      * (H - MT - MB);
+
+  const tickCandidates = [
+    0.3, 1, 3, 10, 30, 100, 300, 1000, 3000, 10000, 30000, 100000, 300000,
+  ];
+  const tickVals = (lo, hi) => tickCandidates.filter((t) => t >= lo && t <= hi);
+  const fmtTick = (t) => {
+    if (xUnit === 'els' || xUnit === 'B') {
+      if (t >= 1000) return `${t / 1000}k`;
+      return String(t);
+    }
+    if (t >= 1000) return `${t / 1000}s`;
+    return `${t}`;
+  };
+
+  let g = '';
+  for (const t of tickVals(xmin, xmax)) {
+    g += `<line x1="${px(t)}" y1="${MT}" x2="${px(t)}" y2="${H - MB}" class="grid"/>`
+      + `<text x="${px(t)}" y="${H - MB + 16}" class="tick" text-anchor="middle">${fmtTick(t)}</text>`;
+  }
+  for (const t of tickVals(ymin, ymax)) {
+    g += `<line x1="${ML}" y1="${py(t)}" x2="${W - MR}" y2="${py(t)}" class="grid"/>`
+      + `<text x="${ML - 6}" y="${py(t) + 3.5}" class="tick" text-anchor="end">${fmtTick(t)}</text>`;
+  }
+
+  let marks = '';
+  const labelYs = [];
+  for (const variant of VARIANT_ORDER) {
+    const pts = seriesFcp(variant)
+      .map((p) => ({ ...p, x: getX(p), y: getY(p) }))
+      .filter((p) => p.x > 0 && p.y > 0);
+    if (pts.length === 0) continue;
+    const color = COLORS[variant];
+    const pathD = pts
+      .map((p, k) => `${k ? 'L' : 'M'}${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`)
+      .join('');
+    marks += `<path d="${pathD}" fill="none" stroke="${color}" stroke-width="2.2"/>`;
+    for (const p of pts) {
+      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" fill="${color}">`
+        + `<title>${VARIANT_LABEL[variant]} · ${p.scale}\nN=${p.n}  FCP=${p.fcp.toFixed(1)}ms`
+        + (p.mtGzip != null ? `  MT gz=${(p.mtGzip / 1024).toFixed(1)}KB` : '')
+        + `</title></circle>`;
+    }
+    if (variant === 'vdom') {
+      for (const p of pts) {
+        marks += `<text x="${px(p.x).toFixed(1)}" y="${(py(p.y) + 15).toFixed(1)}" class="ptlabel" text-anchor="middle">${p.scale}</text>`;
+      }
+    }
+    const last = pts[pts.length - 1];
+    let ly = py(last.y) + 4;
+    while (labelYs.some((v) => Math.abs(v - ly) < 13)) ly += 13;
+    labelYs.push(ly);
+    marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${color}">${VARIANT_LABEL[variant]}</text>`;
+  }
+
+  return `<div class="chart"><h3>${title}</h3><p class="sub">${sub}</p>
+<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">
+${g}
+<text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${xLabel}</text>
+<text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${yLabel}</text>
+${marks}
+</svg></div>`;
+}
+
+function slopeTableHtml() {
+  let html = '<table><thead><tr><th>metric ~ N<sup>α</sup></th>';
+  for (const v of VARIANT_ORDER) html += `<th>${VARIANT_LABEL[v]}</th>`;
+  html += '</tr></thead><tbody>';
+  const metrics = [
+    ['FCP', (v) =>
+      SIZES.map((sz) => [
+        sizes[v]?.[`elements@${sz}`] ?? SIZE_N[sz],
+        perOp[v]?.[`fcp@${sz}`]?.median,
+      ])],
+    ['MT gzip', (v) =>
+      SIZES.map((sz) => [
+        sizes[v]?.[`elements@${sz}`] ?? SIZE_N[sz],
+        sizes[v]?.[`mtGzip@${sz}`],
+      ])],
+    ['web gzip', (v) =>
+      SIZES.map((sz) => [
+        sizes[v]?.[`elements@${sz}`] ?? SIZE_N[sz],
+        sizes[v]?.[`webGzip@${sz}`],
+      ])],
+  ];
+  for (const [label, pairsOf] of metrics) {
+    html += `<tr><td class="op">${label}</td>`;
+    for (const v of VARIANT_ORDER) {
+      const a = slopeFit(pairsOf(v));
+      html += `<td class="c">${a == null ? '—' : 'α=' + a.toFixed(2)}</td>`;
+    }
+    html += '</tr>';
+  }
+  return html + '</tbody></table>';
+}
+
+function dataTableHtml() {
+  let html =
+    '<table><thead><tr><th>architecture · scale</th><th>elements</th><th>FCP ms</th><th>Δ vs VDOM</th><th>MT gzip</th><th>web gzip</th></tr></thead><tbody>';
+  for (const scale of SIZES) {
+    const vdomFcp = perOp.vdom?.[`fcp@${scale}`]?.median;
+    for (const v of VARIANT_ORDER) {
+      const fcp = perOp[v]?.[`fcp@${scale}`]?.median;
+      if (fcp == null) continue;
+      const n = sizes[v]?.[`elements@${scale}`] ?? SIZE_N[scale];
+      const mt = sizes[v]?.[`mtGzip@${scale}`];
+      const web = sizes[v]?.[`webGzip@${scale}`];
+      const delta = vdomFcp != null
+        ? `${(((fcp - vdomFcp) / vdomFcp) * 100) >= 0 ? '+' : ''}${
+          (((fcp - vdomFcp) / vdomFcp) * 100).toFixed(0)
+        }%`
+        : '—';
+      html += `<tr><td class="op">${VARIANT_LABEL[v]} · ${scale}</td>`
+        + `<td class="c">${n}</td>`
+        + `<td class="c">${fcp.toFixed(1)}</td>`
+        + `<td class="c">${v === 'vdom' ? '—' : delta}</td>`
+        + `<td class="c">${mt == null ? '—' : (mt / 1024).toFixed(1) + ' KB'}</td>`
+        + `<td class="c">${web == null ? '—' : (web / 1024).toFixed(1) + ' KB'}</td></tr>`;
+    }
+  }
+  return html + '</tbody></table>';
+}
+
+const throttleGuess = /x(\d+)/.exec(LABEL)?.[1] ?? '1';
+
+const chartFcpVsN = renderChart({
+  title: 'FCP vs content scale',
+  sub:
+    'Log-log. Same generated SFC at ~1k / 3k / 5k / 10k elements. '
+    + `Lynx for Web, CPU ×${throttleGuess}. `
+    + 'α ≈ 1 → linear in N; α ≪ 1 → dominated by fixed costs (bundle parse, boot, IPC).',
+  xLabel: 'elements N — log',
+  yLabel: 'FCP — ms, log',
+  getX: (p) => p.n,
+  getY: (p) => p.fcp,
+  xUnit: 'els',
+});
+
+const chartFcpVsMt = renderChart({
+  title: 'FCP vs main-thread bundle gzip',
+  sub:
+    'Same points, x = MT section gzip. IFR copies the app onto the MT bundle; '
+    + 'ET adds baked create() code. Moving right without dropping FCP is '
+    + 'parse/eval tax without early-paint payoff at that scale.',
+  xLabel: 'MT section gzip — bytes, log',
+  yLabel: 'FCP — ms, log',
+  getX: (p) => p.mtGzip,
+  getY: (p) => p.fcp,
+  xUnit: 'B',
+});
+
+const normalized = {
+  label: LABEL,
+  sizes: SIZE_N,
+  perOp,
+  bundleGzip: sizes,
+  measuredAt: new Date().toISOString(),
+};
+
+const html = `<!doctype html>
+<html lang="en">
+<meta charset="utf-8"/>
+<title>IFR architecture scale trends — ${LABEL}</title>
+<style>
+  :root { color-scheme: light; font-family: ui-sans-serif, system-ui, sans-serif; }
+  body { max-width: 980px; margin: 32px auto; padding: 0 20px 64px; color: #111; }
+  h1 { font-size: 1.45rem; margin: 0 0 8px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 10px; }
+  h3 { font-size: 1rem; margin: 0 0 4px; }
+  .lede { color: #444; line-height: 1.5; margin-bottom: 24px; }
+  .chart { border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 12px 8px; margin: 16px 0 28px; background: #fafafa; }
+  .sub { color: #666; font-size: 0.85rem; line-height: 1.45; margin: 0 0 10px; }
+  .grid { stroke: #e5e7eb; stroke-width: 1; }
+  .tick { font-size: 10px; fill: #6b7280; }
+  .axis { font-size: 11px; fill: #374151; }
+  .ptlabel { font-size: 10px; fill: #9ca3af; }
+  .slabel { font-size: 12px; font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 12px 0 28px; }
+  th, td { border-bottom: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6b7280; }
+  td.c { font-variant-numeric: tabular-nums; text-align: right; }
+  td.op { font-weight: 500; }
+  code { font-size: 0.85em; background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+</style>
+<body>
+<h1>IFR architecture scale trends</h1>
+<p class="lede">
+  Five product architectures on one generated content SFC, scaled from ~1k to ~10k elements.
+  Charts follow the benchmark-playground pattern: <strong>log-log polylines</strong> plus
+  least-squares scaling exponents <code>α</code> in <code>cost ~ N<sup>α</sup></code>.
+  Source: <code>${path.basename(resultsPath)}</code> · ${normalized.measuredAt}
+</p>
+
+${chartFcpVsN}
+${chartFcpVsMt}
+
+<h2>Scaling exponents</h2>
+<p class="lede" style="margin-top:0">
+  α ≈ 0 → FCP dominated by fixed overhead (bundle parse / boot / IPC).
+  α ≈ 1 → cost grows with content. An architecture that raises MT gzip without
+  lowering α (or FCP) is paying for early-paint capacity that does not show up
+  at that scale on Lynx for Web.
+</p>
+${slopeTableHtml()}
+
+<h2>Raw medians</h2>
+${dataTableHtml()}
+
+</body>
+</html>
+`;
+
+const resultsDir = path.join(_dirname, 'results');
+fs.mkdirSync(resultsDir, { recursive: true });
+fs.writeFileSync(
+  path.join(resultsDir, `scale-trends-${LABEL}.json`),
+  `${JSON.stringify(normalized, null, 2)}\n`,
+);
+const htmlPath = path.join(resultsDir, `scale-trends-${LABEL}.html`);
+fs.writeFileSync(htmlPath, html);
+console.log(`Wrote ${htmlPath}`);
+console.log(`Wrote results/scale-trends-${LABEL}.json`);

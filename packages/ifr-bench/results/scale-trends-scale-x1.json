@@ -1,0 +1,254 @@
+{
+  "label": "scale-x1",
+  "sizes": {
+    "1k": 1004,
+    "3k": 3004,
+    "5k": 5004,
+    "10k": 10004
+  },
+  "perOp": {
+    "vdom": {
+      "fcp@10k": {
+        "median": 315,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 318.5,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 87.10000000149012,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 87.30000000447035,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 136.29999999701977,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 136.5,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 187.19999999552965,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 187.29999999701977,
+        "n": 5
+      }
+    },
+    "vdom-ifr": {
+      "fcp@10k": {
+        "median": 375.1000000014901,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 380.20000000298023,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 73.69999999552965,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 74,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 120.5,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 121,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 156.09999999403954,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 156.29999999701977,
+        "n": 5
+      }
+    },
+    "vdom-ifr-et": {
+      "fcp@10k": {
+        "median": 280.3999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 282.29999999701977,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 70,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 70.09999999403954,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 114.29999999701977,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 114.39999999850988,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 159.60000000149012,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 159.89999999850988,
+        "n": 5
+      }
+    },
+    "vapor": {
+      "fcp@10k": {
+        "median": 372.79999999701977,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 374.1000000014901,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 95.29999999701977,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 95.5,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 153.89999999850988,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 154.19999999552965,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 211,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 214.20000000298023,
+        "n": 5
+      }
+    },
+    "vapor-ifr": {
+      "fcp@10k": {
+        "median": 338.8999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 339.20000000298023,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 83.39999999850988,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 83.5,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 136.70000000298023,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 136.89999999850988,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 195.20000000298023,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 195.39999999850988,
+        "n": 5
+      }
+    }
+  },
+  "bundleGzip": {
+    "vdom": {
+      "webGzip@1k": 35865,
+      "mtGzip@1k": 7239,
+      "elements@1k": 1004,
+      "webGzip@3k": 36809,
+      "mtGzip@3k": 7239,
+      "elements@3k": 3004,
+      "webGzip@5k": 37670,
+      "mtGzip@5k": 7239,
+      "elements@5k": 5004,
+      "webGzip@10k": 39888,
+      "mtGzip@10k": 7239,
+      "elements@10k": 10004
+    },
+    "vdom-ifr": {
+      "webGzip@1k": 64430,
+      "mtGzip@1k": 34633,
+      "elements@1k": 1004,
+      "webGzip@3k": 66274,
+      "mtGzip@3k": 35475,
+      "elements@3k": 3004,
+      "webGzip@5k": 68052,
+      "mtGzip@5k": 36244,
+      "elements@5k": 5004,
+      "webGzip@10k": 72371,
+      "mtGzip@10k": 37943,
+      "elements@10k": 10004
+    },
+    "vdom-ifr-et": {
+      "webGzip@1k": 107079,
+      "mtGzip@1k": 55396,
+      "elements@1k": 1004,
+      "webGzip@3k": 189296,
+      "mtGzip@3k": 96700,
+      "elements@3k": 3004,
+      "webGzip@5k": 272696,
+      "mtGzip@5k": 137476,
+      "elements@5k": 5004,
+      "webGzip@10k": 476923,
+      "mtGzip@10k": 239507,
+      "elements@10k": 10004
+    },
+    "vapor": {
+      "webGzip@1k": 45610,
+      "mtGzip@1k": 7239,
+      "elements@1k": 1004,
+      "webGzip@3k": 57102,
+      "mtGzip@3k": 7239,
+      "elements@3k": 3004,
+      "webGzip@5k": 68158,
+      "mtGzip@5k": 7239,
+      "elements@5k": 5004,
+      "webGzip@10k": 94727,
+      "mtGzip@10k": 7239,
+      "elements@10k": 10004
+    },
+    "vapor-ifr": {
+      "webGzip@1k": 87925,
+      "mtGzip@1k": 44296,
+      "elements@1k": 1004,
+      "webGzip@3k": 110943,
+      "mtGzip@3k": 55646,
+      "elements@3k": 3004,
+      "webGzip@5k": 133048,
+      "mtGzip@5k": 66925,
+      "elements@5k": 5004,
+      "webGzip@10k": 185166,
+      "mtGzip@10k": 92687,
+      "elements@10k": 10004
+    }
+  },
+  "measuredAt": "2026-07-17T15:55:52.558Z"
+}
