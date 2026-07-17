@@ -176,6 +176,7 @@ export default defineConfig({
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
         { text: 'Vapor Mode', link: '/zh/guide/vapor-mode', context: 'vapor' },
+        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', context: 'vapor' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         { text: 'scroll-view 与 list', link: '/zh/guide/scroll-view-vs-list' },
