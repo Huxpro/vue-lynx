@@ -13,7 +13,14 @@
  * mismatch falls back to replaying the complete background history.
  */
 
-import { OP, OP_ARITY, PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
+import {
+  IFR_APPLY_OPS_GLOBAL,
+  IFR_MOUNT_APPS_GLOBAL,
+  IFR_MT_FLAG_GLOBAL,
+  OP,
+  OP_ARITY,
+  PAGE_ROOT_ID,
+} from 'vue-lynx/internal/ops';
 
 import {
   elements,
@@ -39,6 +46,7 @@ let recordedCursor = 0;
 let backgroundHistory: unknown[][] = [];
 let warnedPostHydrationOps = false;
 let renderSealed = false;
+let inSyncRender = false;
 
 /**
  * Value-bearing frames whose final payload does not define tree identity.
@@ -98,9 +106,9 @@ function sameValue(a: unknown, b: unknown): boolean {
 /** Install the globals consumed by the Vapor runtime in the IFR realm. */
 export function enableIFR(): void {
   const g = globalThis as Record<string, unknown>;
-  g['__VUE_LYNX_IFR_MT__'] = true;
+  g[IFR_MT_FLAG_GLOBAL] = true;
   g['__VUE_LYNX_IFR_ENABLED__'] = true;
-  g['__vueLynxIfrApplyOps'] = recordAndApply;
+  g[IFR_APPLY_OPS_GLOBAL] = recordAndApply;
   g['__vueLynxIfrSealOps'] = sealIfrRender;
 
   // Native Lepus realms have no timers. Dev builds of the user graph reach
@@ -120,6 +128,7 @@ export function enableIFR(): void {
   backgroundHistory = [];
   warnedPostHydrationOps = false;
   renderSealed = false;
+  inSyncRender = false;
 }
 
 function recordAndApply(ops: unknown[]): void {
@@ -135,7 +144,7 @@ function recordAndApply(ops: unknown[]): void {
   }
 
   recordedOps.push(...ops);
-  applyOps(ops);
+  applyOps(ops, !inSyncRender);
 }
 
 /** Freeze the MT first-frame stream before the Background realm starts. */
@@ -154,14 +163,19 @@ export function runIfrRender(): void {
   renderSealed = false;
 
   const trigger = (globalThis as Record<string, unknown>)[
-    '__vueLynxIfrMountApps'
+    IFR_MOUNT_APPS_GLOBAL
   ] as (() => void) | undefined;
   if (!trigger) return;
 
   beginIfrSelectorAttributeDeferral();
   try {
-    trigger();
-    phase = 'rendered';
+    inSyncRender = true;
+    try {
+      trigger();
+      phase = 'rendered';
+    } finally {
+      inSyncRender = false;
+    }
   } catch (error) {
     console.error(
       '[vue-lynx] IFR first-screen render failed; falling back to the '
@@ -414,11 +428,13 @@ export function resetIfrForTesting(): void {
   backgroundHistory = [];
   warnedPostHydrationOps = false;
   renderSealed = false;
+  inSyncRender = false;
 
   const g = globalThis as Record<string, unknown>;
-  delete g['__VUE_LYNX_IFR_MT__'];
+  delete g[IFR_MT_FLAG_GLOBAL];
   delete g['__VUE_LYNX_IFR_ENABLED__'];
-  delete g['__vueLynxIfrApplyOps'];
+  delete g[IFR_APPLY_OPS_GLOBAL];
+  delete g[IFR_MOUNT_APPS_GLOBAL];
   delete g['__vueLynxIfrSealOps'];
 }
 

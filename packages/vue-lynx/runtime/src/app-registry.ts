@@ -10,6 +10,8 @@
  * renderPage already fired (e.g., page reload) we mount immediately.
  */
 
+import { IFR_MOUNT_APPS_GLOBAL } from 'vue-lynx/internal/ops'
+
 import { completeIfrInitialRender } from './flush.js'
 
 type MountFn = () => void
@@ -22,7 +24,7 @@ export function registerMount(fn: MountFn): void {
     fn()
   } else {
     pendingMounts.push(fn)
-    ;(globalThis as Record<string, unknown>)['__vueLynxIfrMountApps'] =
+    ;(globalThis as Record<string, unknown>)[IFR_MOUNT_APPS_GLOBAL] =
       triggerRenderPage
   }
 }
@@ -40,5 +42,5 @@ export function triggerRenderPage(): void {
 export function resetAppRegistry(): void {
   pendingMounts.length = 0
   renderPageCalled = false
-  delete (globalThis as Record<string, unknown>)['__vueLynxIfrMountApps']
+  delete (globalThis as Record<string, unknown>)[IFR_MOUNT_APPS_GLOBAL]
 }

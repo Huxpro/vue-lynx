@@ -48,10 +48,10 @@ importers:
     devDependencies:
       '@lynx-js/rspeedy':
         specifier: ^0.13.5
-        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4(postcss@8.5.8))
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
+        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@2.0.8(@swc/helpers@0.5.19))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -612,10 +612,10 @@ importers:
     devDependencies:
       '@lynx-js/rspeedy':
         specifier: ^0.13.5
-        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4(postcss@8.5.8))
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.2.6
-        version: 1.2.7(@rsbuild/core@1.7.3)(@rspack/core@2.0.8(@swc/helpers@0.5.19))
+        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
@@ -890,6 +890,9 @@ importers:
       '@rsbuild/core':
         specifier: ^1.0.0
         version: 1.3.19
+      '@vue/compiler-core':
+        specifier: 3.6.0-beta.17
+        version: 3.6.0-beta.17
       '@vue/runtime-core':
         specifier: 3.6.0-beta.17
         version: 3.6.0-beta.17
@@ -10111,7 +10114,7 @@ snapshots:
 
   '@types/babel__template@7.4.4':
     dependencies:
-      '@babel/parser': 7.29.0
+      '@babel/parser': 7.29.7
       '@babel/types': 7.29.0
 
   '@types/babel__traverse@7.28.0':

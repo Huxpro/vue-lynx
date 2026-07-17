@@ -21,6 +21,7 @@ import {
   setPageUniqueId,
   trackInsert,
 } from './element-registry.js';
+import { getTemplate } from './element-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -132,7 +133,11 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     const arity = ARITY[code];
     if (arity === undefined || cursor + arity >= ops.length) return false;
 
-    if (code === OP.CREATE || code === OP.CREATE_TEXT) {
+    if (
+      code === OP.CREATE
+      || code === OP.CREATE_TEXT
+      || code === OP.INSTANTIATE_TEMPLATE
+    ) {
       return elements.has(ops[cursor + 1] as number);
     }
     if (code === OP.REGISTER_TREE) {
@@ -201,7 +206,7 @@ function instantiateTemplate(
   return { el, uid };
 }
 
-export function applyOps(ops: unknown[]): void {
+export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
 
@@ -394,6 +399,31 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
 
+      case OP.INSTANTIATE_TEMPLATE: {
+        const rootId = ops[i++] as number;
+        const tplId = ops[i++] as string;
+        const holeCount = ops[i++] as number;
+        const create = getTemplate(tplId);
+        let handles: LynxElement[];
+        if (create) {
+          handles = create(pageUniqueId);
+        } else {
+          console.error(
+            `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
+          );
+          const el = createTypedElement('view', pageUniqueId);
+          __SetCSSId([el], 0);
+          handles = [el];
+        }
+        const root = handles[0]!;
+        elements.set(rootId, root);
+        installSelectorAttribute(rootId, root);
+        for (let k = 1; k <= holeCount; k++) {
+          elements.set(rootId + k, handles[k] ?? root);
+        }
+        break;
+      }
+
       default: {
         // Unknown op: skip its payload by arity so one unimplemented opcode
         // cannot desync the rest of the walk. Without an arity there is no
@@ -426,7 +456,7 @@ export function applyOps(ops: unknown[]): void {
   }
 
   // Flush all pending PAPI changes to the native layer in one shot.
-  __FlushElementTree();
+  if (flush) __FlushElementTree();
 }
 
 /** Expose elements map so entry-main.ts can seed the page-root entry. */

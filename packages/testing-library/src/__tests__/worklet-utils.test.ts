@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractImportSpecifiers,
+  extractTemplateRegistrations,
   hasMainThreadDirective,
   stripSharedImportAttributes,
   stripStyleImports,
@@ -74,5 +76,42 @@ describe('IFR worklet loader utilities', () => {
     String.raw`export const f = () => { 'main\x20thread'; return 1 }`,
   ])('accepts a real directive statement: %s', (source) => {
     expect(hasMainThreadDirective(source)).toBe(true);
+  });
+
+  it('keeps Vue template submodules only when element templates are enabled', () => {
+    const source = `
+      import script from './App.vue?vue&type=script&lang.ts';
+      import { render } from './App.vue?vue&type=template&lang.ts';
+      import './App.vue?vue&type=style&index=0&lang.css';
+    `;
+
+    expect(extractImportSpecifiers(source)).toEqual([
+      './App.vue?vue&type=script&lang.ts',
+    ]);
+    expect(extractImportSpecifiers(source, true)).toEqual([
+      './App.vue?vue&type=script&lang.ts',
+      './App.vue?vue&type=template&lang.ts',
+    ]);
+  });
+
+  it('extracts compiler-hoisted element-template registrations', () => {
+    const source = `
+      const _hoisted_1 = (globalThis.__vueLynxRegisterElementTemplate || function () {})(
+        "tpl-a",
+        ["#text", "class"],
+        function(P) {
+          const e0 = __CreateView(P);
+          __SetAttribute(e0, 'text', "call us (maybe)");
+          return [e0];
+        }
+      );
+      export function render() {}
+    `;
+
+    const out = extractTemplateRegistrations(source);
+    expect(out).toContain('globalThis.__vueLynxRegisterElementTemplate');
+    expect(out).toContain('"tpl-a"');
+    expect(out).toContain('"call us (maybe)"');
+    expect(out.trim()).toMatch(/\);$/);
   });
 });

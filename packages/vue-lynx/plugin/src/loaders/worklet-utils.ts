@@ -4,6 +4,8 @@
 
 import { parse, type ParserPlugin } from '@babel/parser';
 
+import { TPL_REGISTER_GLOBAL } from 'vue-lynx/internal/ops';
+
 interface AstNode {
   end?: number | null;
   start?: number | null;
@@ -313,7 +315,14 @@ export function hasMainThreadDirective(source: string): boolean {
  * Classification of non-relative specifiers (alias vs package) is left to
  * the caller, which resolves them — see {@link extractLocalImports}.
  */
-export function extractImportSpecifiers(source: string): string[] {
+export function extractImportSpecifiers(
+  source: string,
+  /**
+   * Keep `?vue&type=template` sub-module imports. Element templates hoist
+   * registrations into compiled template modules for non-script-setup SFCs.
+   */
+  keepTemplateSubModules = false,
+): string[] {
   const specifiers = new Set<string>();
 
   for (const node of programBody(parseProgram(source))) {
@@ -331,7 +340,9 @@ export function extractImportSpecifiers(source: string): string[] {
 
   return [...specifiers].filter(s => {
     if (!s.includes('?vue')) return true;
-    return s.includes('type=script');
+    if (s.includes('type=script')) return true;
+    if (keepTemplateSubModules && s.includes('type=template')) return true;
+    return false;
   });
 }
 
@@ -357,10 +368,11 @@ export async function extractLocalImports(
   source: string,
   resolveImport: ResolveImport,
   includeWorkletPackages: ReadonlyArray<string | RegExp> = [],
+  keepTemplateSubModules = false,
 ): Promise<string> {
   const kept: string[] = [];
 
-  for (const spec of extractImportSpecifiers(source)) {
+  for (const spec of extractImportSpecifiers(source, keepTemplateSubModules)) {
     // Relative imports are always followed — no resolution needed.
     if (spec.startsWith('.')) {
       kept.push(spec);
@@ -515,19 +527,11 @@ export function extractRegistrations(lepusCode: string): string {
     const idx = lepusCode.indexOf(marker, searchFrom);
     if (idx === -1) break;
 
-    // Find the end of the registerWorkletInternal(...) call using bracket counting
-    let depth = 0;
-    let i = idx + marker.length - 1; // position of the opening '('
-    for (; i < lepusCode.length; i++) {
-      if (lepusCode[i] === '(') depth++;
-      else if (lepusCode[i] === ')') {
-        depth--;
-        if (depth === 0) break;
-      }
-    }
+    const close = findBalancedEnd(lepusCode, idx + marker.length - 1);
+    if (close === -1) break;
 
     // Extract the full call including trailing semicolon
-    let end = i + 1;
+    let end = close + 1;
     if (end < lepusCode.length && lepusCode[end] === ';') end++;
 
     registrations.push(lepusCode.slice(idx, end));
@@ -535,4 +539,65 @@ export function extractRegistrations(lepusCode: string): string {
   }
 
   return registrations.join('\n');
+}
+
+/**
+ * Extract element-template registrations from a compiled render module.
+ *
+ * The compiler hoists calls of the form
+ * `(globalThis.__vueLynxRegisterElementTemplate || function () {})(...)`.
+ * Interpreter-only MT bundles strip the rest of the module, so these
+ * self-contained registrations must be re-emitted verbatim.
+ */
+export function extractTemplateRegistrations(source: string): string {
+  const marker = `globalThis.${TPL_REGISTER_GLOBAL}`;
+  const out: string[] = [];
+  let searchFrom = 0;
+  while (true) {
+    const idx = source.indexOf(marker, searchFrom);
+    if (idx === -1) break;
+    const wrapperStart = source.lastIndexOf('(', idx);
+    if (wrapperStart === -1) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    const wrapperEnd = findBalancedEnd(source, wrapperStart);
+    if (wrapperEnd === -1 || source[wrapperEnd + 1] !== '(') {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    const argsEnd = findBalancedEnd(source, wrapperEnd + 1);
+    if (argsEnd === -1) {
+      searchFrom = idx + marker.length;
+      continue;
+    }
+    out.push(`${source.slice(wrapperStart, argsEnd + 1)};`);
+    searchFrom = argsEnd + 1;
+  }
+  return out.join('\n');
+}
+
+/**
+ * Return the index of the closing parenthesis for `openIndex`.
+ *
+ * String/template literals are skipped so generated create() functions with
+ * text containing parentheses do not unbalance the scan.
+ */
+function findBalancedEnd(code: string, openIndex: number): number {
+  let depth = 0;
+  for (let i = openIndex; i < code.length; i++) {
+    const ch = code[i];
+    if (ch === '"' || ch === "'" || ch === '`') {
+      for (i++; i < code.length; i++) {
+        if (code[i] === '\\') i++;
+        else if (code[i] === ch) break;
+      }
+    } else if (ch === '(') {
+      depth++;
+    } else if (ch === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
 }

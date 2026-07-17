@@ -207,16 +207,23 @@ export interface ApplyEntryOptions {
   customCSSInheritanceList?: string[];
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
+  /**
+   * IFR: main-thread bundle carries the full Vue/Vapor runtime + app code.
+   *
+   * Required: pluginVueLynx resolves defaults once, including
+   * `enableElementTemplates ?? enableIFR`.
+   */
+  enableIFR: boolean;
+  /** Element templates: preserve template registrations on the MT layer. */
+  enableElementTemplates: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
-  /** IFR: main-thread bundle carries the full Vapor runtime and app code. */
-  enableIFR?: boolean;
   /** Use the pure Vapor runtime entry in generated worklet imports. */
   vapor?: boolean;
 }
 
 export function applyEntry(
   api: RsbuildPluginAPI,
-  opts: ApplyEntryOptions = {},
+  opts: ApplyEntryOptions,
 ): void {
   // ------------------------------------------------------------------
   // Bidirectional plugin communication (matching pluginReactLynx pattern)
@@ -250,7 +257,8 @@ export function applyEntry(
     ];
     for (const key of configKeys) {
       if (Object.hasOwn(exposedConfig.config, key)) {
-        (opts as Record<string, unknown>)[key] = exposedConfig.config[key];
+        (opts as unknown as Record<string, unknown>)[key] =
+          exposedConfig.config[key];
       }
     }
   }
@@ -359,23 +367,25 @@ export function applyEntry(
     const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
     // IFR follows the full user graph, including vue-lynx/runtime. Library
     // code must pass through unchanged; pnpm resolves it outside node_modules.
-    const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
+    // In non-IFR builds it must still be stripped like ordinary MT modules.
+    const runtimePkgDir = opts.enableIFR
+      ? path.resolve(pkgRoot, 'runtime')
+      : null;
     const workletMtOptions = {
       includeWorkletPackages,
-      ifr: opts.enableIFR ?? false,
+      ifr: opts.enableIFR,
+      elementTemplates: opts.enableElementTemplates,
       vapor: opts.vapor ?? false,
     };
-    const libraryPassThroughDirs = [
-      mainThreadPkgDir,
-      vueInternalPkgDir,
-      runtimePkgDir,
-    ];
     const isBootstrapModule = (resource: string): boolean => {
       const resolvedResource = path.resolve(resource);
-      return libraryPassThroughDirs.some((dir) =>
-        resolvedResource === dir
-        || resolvedResource.startsWith(`${dir}${path.sep}`)
-      );
+      return resolvedResource === mainThreadPkgDir
+        || resolvedResource.startsWith(`${mainThreadPkgDir}${path.sep}`)
+        || resolvedResource === vueInternalPkgDir
+        || resolvedResource.startsWith(`${vueInternalPkgDir}${path.sep}`)
+        || (runtimePkgDir !== null
+          && (resolvedResource === runtimePkgDir
+            || resolvedResource.startsWith(`${runtimePkgDir}${path.sep}`)));
     };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer

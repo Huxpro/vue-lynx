@@ -1,0 +1,179 @@
+import { Badge } from '@theme';
+
+# 首屏直出（IFR） <Badge text="v0.5" type="tip" />
+
+首屏直出（Instant First-Frame Rendering，IFR）会在 `loadTemplate` 期间、后台线程启动之前绘制真实内容。Vue Lynx 将 IFR 与元素模板（Element Templates，ET）组合使用：IFR 消除等待后台线程造成的白屏，ET 则降低主线程同步渲染静态结构子树的成本。
+
+## 配置
+
+在 `lynx.config.ts` 中开启 IFR：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      enableIFR: true,
+    }),
+  ],
+})
+```
+
+开启 IFR 时会自动开启元素模板。典型组件树不需要修改应用代码。
+
+| 配置 | `enableIFR` | `enableElementTemplates` | 用途 |
+| --- | ---: | ---: | --- |
+| No IFR | `false` | `false` | 默认的后台线程渲染 |
+| IFR + ET | `true` | 省略或 `true` | 推荐的 IFR 路径 |
+| IFR without ET | `true` | `false` | 兼容、调试和性能对照的退出开关 |
+
+如果要在保留 IFR 的同时二分元素模板问题，请显式关闭 ET：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableIFR: true,
+  enableElementTemplates: false,
+})
+```
+
+也可以通过 `enableElementTemplates: true` 在普通后台渲染中独立开启 ET。这是高级组合方式，不是推荐的 IFR 配置。
+
+## IFR 为什么能消除白屏
+
+没有 IFR 时，可见内容必须等待后台线程启动、执行应用、完成 Vue 首次渲染，再把 ops 批次发回主线程：
+
+```text
+主线程：   空页面 ───────────────────────▶ 应用 ops ─▶ 绘制
+后台线程：          启动 ─▶ 渲染 ─▶ IPC ─┘
+```
+
+开启 IFR 后，主线程 bundle 会携带 Vue 运行时和应用代码。Vue 在 `loadTemplate` 内同步渲染，同时后台线程并行启动：
+
+```text
+主线程：   loadTemplate ─▶ 渲染 ─▶ 绘制
+后台线程：               启动 ─▶ 渲染 ─▶ hydration
+```
+
+因此首屏可以在任何后台 JavaScript 运行之前出现。Hydration 完成后，树由后台线程接管，后续更新全部走正常 ops 管线。
+
+## Hydration
+
+两个线程使用相同初始数据执行同一个应用。主线程会记录自己应用的每一批 ops；后台线程的初始批次不直接重复执行，而是与记录逐批协调：
+
+- 完全一致的批次会被跳过，因为内容已经在屏幕上。
+- 文本、样式和属性差异会原地 patch。
+- 结构差异会拆除首屏树，再按后台 ops 重建。
+
+正确性不依赖两次渲染一致。结构不一致只会失去该屏的 IFR 性能收益，并在开发环境输出 `[vue-lynx] IFR hydration mismatch` 警告。
+
+事件 sign 和元素 ID 在两次渲染中保持确定性。后台 handler registry 就绪后，首帧元素的事件会直接路由到正常的 Vue handler，无需重新绑定。
+
+<span id="element-templates" />
+
+## 元素模板（Element Templates）
+
+IFR 决定首帧**何时渲染**；元素模板减少这次渲染**需要多少工作**。
+
+普通路径中，每个静态元素仍要创建 vnode 和 shadow node、产生多条 ops、跨线程传输，再由主线程解释器分发。编译器可以把符合条件的子树折叠为：
+
+```text
+没有 ET：vnode → ShadowElement → 逐节点 ops → 解释器 → PAPI
+使用 ET：一个 vnode → INSTANTIATE_TEMPLATE → 直线 PAPI create()
+```
+
+静态骨架会变成编译器生成的 JavaScript `create()` 函数。Vue 为整棵子树只发送一条 `INSTANTIATE_TEMPLATE` op；动态文本、class、样式和属性作为“洞”，继续通过普通 `SET_*` ops 更新。
+
+### 哪些结构会下沉
+
+当子树结构在编译期完全可知时，它可以下沉：每个节点都是普通 Lynx 元素，只有属性值或文本内容是动态的。
+
+```vue
+<view class="card">                       <!-- 一棵下沉子树 -->
+  <image class="icon" src="a.png" />     <!-- 烘焙静态骨架 -->
+  <text class="title">{{ title }}</text> <!-- 动态文本洞   -->
+  <view :class="badgeClass">...</view>   <!-- 动态 class 洞 -->
+</view>
+```
+
+以下结构保留在普通 vnode 路径：
+
+- 组件、slot、`v-if` / `v-for` 宿主；它们内部的普通元素结构仍可下沉
+- 内部节点上的运行时指令、ref、key、ID 和 vnode hook
+- 有专用主线程行为的 `<list>` 和 `<list-item>`
+- 注释和混合动态文本段
+
+模板根节点会保留正常 vnode props 和指令。Scoped CSS 受到完整支持：编译器会把组件 CSS scope ID 烘焙到每个下沉元素。只有确认与普通样式路径语义一致时，静态 inline style 才会被烘焙。
+
+### 框架模板，不是引擎二进制模板
+
+Vue Lynx 当前不使用 Lynx 的二进制 `elementTemplates` bundle section、`__ElementFromBinary` 或 `__GetTemplateParts`。这里的元素模板是框架层优化，由普通 typed Element PAPI 调用组成。
+
+它消除的是 vnode、逐节点 ops、序列化和解释器分发，同时保留现有 renderer 与 hydration 协议。未来可以让二进制模板后端复用相同的静态骨架和洞元数据，但它不属于当前实现。
+
+### 语义保证
+
+下沉是优化，不是新的渲染模式。不符合条件的结构会自动回退；下沉和未下沉的树必须产生相同的最终文档与更新结果。内部匿名节点不会携带 Vue 的 selector bookkeeping 属性，但任何带 `ref`、ID 或其他身份要求的元素都不会进入匿名内部路径。
+
+## 编写 IFR 友好的首屏
+
+初始渲染会在每个线程各执行一次，因此它应表现为输入的纯函数：
+
+- 保持首屏输出确定性。渲染路径中避免 `Math.random()`、`Date.now()` 和依赖线程的分支。
+- 把数据请求、定时器、订阅和其他副作用放进组合式 API 生命周期钩子。这些钩子会在主线程渲染期间被抑制，只在后台线程运行。
+- Options API 的 `mounted()` 目前不会在主线程被抑制。使用 IFR 的首屏组件应优先使用组合式 API 钩子。
+- IFR 只能绘制同步可用的数据。fetch 驱动页面如果需要更早的首帧，应提供有意义的外壳或骨架。
+- 后台 handler registry 就绪前的短暂窗口中，普通事件可能被丢弃。[主线程脚本](/zh/guide/main-thread-script) handler 本来就在主线程，因此仍可交互。
+
+## 取舍
+
+- IFR 会在两个线程 bundle 中都放入 Vue 运行时和应用。全示例中 `main.lynx.bundle` gzip 体积的中位增长约为 2.26 倍。
+- 应用会在两个线程各求值一次。全示例串行工作量的 TTI proxy 增长约 35–36%；在真机上，主线程渲染会与后台启动重叠。
+- IFR 无法加速只有异步请求完成后才存在的内容。
+- CSS Modules 的 class 名可能在首帧尚未哈希，并在 hydration 时 patch 为最终名称。
+
+对体积敏感或完全由 fetch 驱动的首屏应先实测。对于具有同步初始数据的内容型首屏，IFR + ET 是推荐配置。
+
+## Benchmark
+
+下表把三种产品配置明确分开。FCP 来自 Lynx for Web 的真实 Web Worker，hello-world 无 CPU 节流测量（十个 example 上默认配置的收益中位为 −19%）；渲染成本来自约 1000 元素动态内容场景的 V8 `--jitless` warm 中位；TTI 和 gzip 是全示例扫描相对 No IFR 归一化后的中位数。这些列来自不同轮次，不应视为同一条端到端 trace。
+
+| 配置 | flags | FCP | 渲染成本 | TTI proxy | bundle gzip |
+| --- | --- | ---: | ---: | ---: | ---: |
+| No IFR | `IFR=false, ET=false` | 96.6 ms | 9.4 ms | 1.00x | 1.00x |
+| **IFR + ET** | `IFR=true, ET=default` | **75.4 ms（−22%）** | **1.3 ms** | 1.35x | ~2.26x |
+| IFR without ET | `IFR=true, ET=false` | 75.8 ms（−22%） | 8.4 ms | 1.36x | ~2.26x |
+
+### 数据说明了什么
+
+1. **IFR 的收益是真实的、结构性的，且与参照实现同级。**在有真实线程边界的
+   Lynx for Web 上，十个 example 中九个的 FCP 改善——−8% 到 −23%，默认
+   配置中位 **−19%**，与 ReactLynx 在同一 harness 上的 −23% 属同一量级。
+   收益来源是把后台线程启动 + IPC 从关键路径上移除——这也是单进程
+   benchmark 看不到它的原因。
+2. **元素模板攻击的正是 IFR 新增的那笔成本。**主线程同步渲染便宜 7–15×，
+   ops 载荷缩小 3–1000×（一个 1400 元素的静态屏从 78 KB 缩到 69 字节）。
+   小屏的 web FCP 上这看不出来——渲染本来就只有几毫秒，两种 IFR 配置的
+   测量差异在噪声之内——但渲染成本这一项恰恰随屏幕变大、CPU 变慢而增长，
+   并在没有 JIT 的原生解释器上占主导：原生验证确认 ET 显著降低同步渲染
+   成本。这种不对称性——最差不过噪声、渲染成本要紧处必赢——就是 ET
+   默认随 IFR 开启的原因。
+3. **代价是 bundle 体积，它也定义了反面画像。**`main.lynx.bundle` gzip
+   中位增长 ×2.26，可交互前的串行工作量最多 ×1.36（真机上与后台启动
+   重叠）。大 bundle 配纯骨架、fetch 驱动的首屏在 web 上会反转
+   （hackernews：满速 +14%、节流 +9…11%）——因为 web 把 bundle 解析付在
+   FCP 路径上；原生预编译字节码会把这一项压小。
+
+### 给开发者的建议
+
+| 你的首屏 | 建议 |
+| --- | --- |
+| 内容优先、由同步数据渲染 | **开 `enableIFR: true`**（自带 ET）——这是目标画像，中位 −19% FCP |
+| 数据驱动但初始数据同步可得 | 开 |
+| fetch 驱动——响应回来前无物可画 | 不开；或先重构出真正的骨架屏再开 |
+| 体积极度敏感 | 先实测——gzip 大约翻倍 |
+
+无论哪种画像：保持首屏确定性、副作用放进组合式 API 生命周期钩子（见[编写 IFR 友好的首屏](#编写-ifr-友好的首屏)）；`enableElementTemplates: false` 只用于二分定位疑似 ET 问题——它不是性能调节项。
+
+这张表只是摘要。完整的测量数据——七 variant 策略阶梯、全示例逐项 FCP/TTI/体积、Lynx for Web 真实双线程与 ReactLynx 的对照、以及单线程裸 Web 基线分解——见专门的 [IFR 性能数据](/zh/guide/ifr-benchmarks)页面。

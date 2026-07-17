@@ -1,0 +1,259 @@
+import { Badge } from '@theme';
+
+# IFR Benchmarks <Badge text="v0.5" type="tip" />
+
+This page collects the measurement campaigns behind [Instant First-Frame
+Rendering](/guide/ifr) and Element Templates. Each campaign answers one
+question:
+
+| campaign | the question it answers |
+|---|---|
+| [1. Strategy ladder](#1-strategy-ladder) | How much does the synchronous main-thread render **cost**, per design — and what is the ceiling? |
+| [2. All-examples sweep](#2-all-examples-sweep) | What does IFR **cost in size and TTI** on real apps, and is it semantically safe? (Also: proof that a single process cannot measure its benefit.) |
+| [3. Real threads](#3-real-threads) | What does IFR actually **win**, measured across a genuine thread boundary — with ReactLynx as the control? |
+
+**A note on configuration names.** Campaigns 1 and 2 ran before `enableIFR`
+defaulted to enabling Element Templates. Columns are labeled with today's
+product configurations: what the raw reports call `ifr` is today's **IFR
+without ET** (`enableElementTemplates: false` opt-out), and `ifr+et` is
+today's **default `enableIFR: true`**. Full methodology and raw data:
+[strategy benchmark](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/REPORT.md),
+[all-examples sweep](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/EXAMPLES-REPORT.md),
+[real-browser verification](https://github.com/Huxpro/vue-lynx/blob/main/packages/ifr-bench/VERIFICATION.md).
+
+## 1. Strategy ladder
+
+> **Takeaway: Element Templates are the inflection point of render cost.
+> Plain IFR replay costs as much JS as a full render (~8–11 ms per 1000
+> elements under an interpreter); ET cuts it 7–15×; a Vapor-style design
+> would buy another 2–3× and sit at the PAPI floor.** This is why ET is
+> enabled by default with IFR: it attacks the one real cost IFR adds to the
+> main thread — the synchronous first-screen render inside `loadTemplate`.
+
+Seven rendering strategies were prototyped and measured against the same
+logical first screens through the same Element PAPI surface. All variants
+produce byte-identical rendered documents. Scenes are ~1000–1400 elements:
+**static-heavy** (99.7% template-static), **content** (card feed, 37%),
+**list** (v-for, 12%).
+
+### Warm render time, `--jitless` V8 (interpreter ≈ main-thread engine proxy)
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| bg-baseline (No IFR pipeline) | 11.86 ms | 9.36 ms | 6.87 ms |
+| IFR without ET (shipped) | 10.94 ms | 8.40 ms | 6.57 ms |
+| ifr-direct (prototype) | 8.17 ms | 6.36 ms | 4.89 ms |
+| ifr-static-tpl (prototype) | 1.11 ms | 5.29 ms | 4.00 ms |
+| **IFR + ET (shipped, default)** | **0.74 ms** | **1.26 ms** | **1.44 ms** |
+| ifr-vapor (prototype upper bound) | 0.53 ms | 0.55 ms | 0.46 ms |
+| papi-floor (reference) | 0.54 ms | 0.39 ms | 0.31 ms |
+
+### Cold first run, `--jitless` (models a device's one-shot first frame)
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| IFR without ET | 18.0 ms | 16.4 ms | 11.7 ms |
+| **IFR + ET** | **4.2 ms** | **5.3 ms** | **4.9 ms** |
+| ifr-vapor | 1.4 ms | 1.2 ms | 0.8 ms |
+
+### Ops payload that would cross the thread boundary
+
+| variant | static-heavy | content | list |
+|---|---|---|---|
+| without ET | 77.6 KB | 60.4 KB | 45.1 KB |
+| **with ET** | **69 B** | **9.2 KB** | **17.1 KB** |
+
+The prototypes are kept for reference: `ifr-direct` was superseded by ET
+(handle-based application is implied by template instantiation), and the
+Vapor design remains the tracked endgame — its prototype omits
+reactive-effect bookkeeping, so read its numbers as an optimistic bound.
+
+## 2. All-examples sweep
+
+> **Takeaway: this campaign measures IFR's *costs* and its *semantic
+> safety* — not its benefit. Bundle gzip ×2.26 and a TTI upper bound of
+> ×1.36 are the price; 22/23 examples rendering byte-identical documents
+> across all configurations is the safety result. The per-example FCP
+> columns come out flat (median ×1.04) — which is itself a finding: IFR is
+> a dual-thread architecture optimization, and a single-process harness has
+> no background boot or IPC to remove. Read the flat FCP as proof that the
+> JS work is conserved, then see campaign 3 for the actual win.**
+
+Every example was built in three configurations and executed as real bundle
+halves in a PAPI-over-jsdom environment (5 runs each, medians, `--jitless`,
+main-thread parse excluded as lepus ships precompiled bytecode).
+
+| example | No IFR | IFR w/o ET | Δ | IFR + ET | TTI No IFR | TTI IFR w/o ET | ΔTTI | nodes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 7guis | 65.6 | 63.1 | −4% | 64.3 | 65.6 | 76.0 | +16% | 169 |
+| basic | 32.0 | 34.3 | +7% | 33.7 | 32.0 | 44.0 | +38% | 9 |
+| css-features | 43.3 | 50.0 | +15% | 44.2 | 43.3 | 63.3 | +46% | 51 |
+| gallery | 66.6 | 65.0 | −2% | 69.5 | 66.6 | 89.4 | +34% | 4 |
+| hackernews-css | 40.0 | 35.4 | −11% | 38.9 | 40.0 | 58.8 | +47% | 14 |
+| hackernews-tailwind | 55.9 | 53.0 | −5% | 52.2 | 55.9 | 76.1 | +36% | 20 |
+| hello-world | 33.5 | 35.6 | +6% | 36.0 | 33.5 | 45.7 | +36% | 16 |
+| keep-alive | 47.7 | 44.5 | −7% | 46.5 | 47.7 | 57.0 | +19% | 56 |
+| main-thread | 26.7 | 24.3 | −9% | 24.5 | 26.7 | 33.0 | +24% | 3 |
+| networking | 24.9 | 30.5 | +23% | 35.1 | 24.9 | 30.5 | +23% | 0 |
+| option-api | 53.8 | 57.1 | +6% | 59.7 | 53.8 | 68.8 | +28% | 9 |
+| pinia | 40.1 | 38.7 | −4% | 39.4 | 40.1 | 50.0 | +25% | 19 |
+| provide-inject | 32.2 | 34.3 | +6% | 37.9 | 32.2 | 43.7 | +36% | 13 |
+| reactivity | 33.6 | 36.1 | +7% | 36.0 | 33.6 | 46.1 | +37% | 19 |
+| slots | 40.1 | 43.8 | +9% | 39.0 | 40.1 | 54.3 | +35% | 47 |
+| suspense | 42.3 | 38.4 | −9% | 38.3 | 42.3 | 51.1 | +21% | 16 |
+| swiper | 30.3 | 28.5 | −6% | 29.8 | 30.3 | 41.1 | +36% | 47 |
+| tailwindcss | 22.5 | 25.8 | +15% | 20.9 | 22.5 | 36.9 | +64% | 71 |
+| todomvc | 17.9 | 21.6 | +21% | 20.7 | 17.9 | 31.4 | +76% | 11 |
+| todomvc-day1 | 20.4 | 20.1 | −2% | 15.9 | 20.4 | 29.4 | +44% | 7 |
+| transition | 45.9 | 45.2 | −1% | 47.7 | 45.9 | 59.7 | +30% | 56 |
+| v-model | 39.1 | 40.9 | +4% | 40.7 | 39.1 | 52.3 | +34% | 26 |
+| vue-router | 43.2 | 45.4 | +5% | 45.0 | 43.2 | 60.3 | +40% | 6 |
+
+(FCP/TTI in ms. `networking` renders 0 nodes at first frame — fetch-driven,
+the documented "don't enable IFR" profile. `todomvc-codex` was
+thread-incompatible at measurement time and has since been fixed at the
+example level.)
+
+### Bundle size (gzip, KiB) — the headline cost
+
+| example | No IFR | with IFR | Δ |
+| --- | --- | --- | --- |
+| hello-world | 34.5 | 76.3 | +121% |
+| gallery | 37.2 | 80.0 | +115% |
+| hackernews-css | 72.6 | 179.1 | +147% |
+| networking | 57.5 | 145.5 | +153% |
+| tailwindcss | 36.2 | 79.0 | +118% |
+| **median (all examples)** | | | **×2.26** |
+
+The main-thread bundle section grows from ~17 KiB (worklet registrations
+only) to 78–195 KiB (Vue runtime + app copy); ET adds ~1% on top. The sweep
+also surfaced and fixed three real bugs (`SystemInfo` clobbering,
+numeric-style baking bypassing auto-px normalization, CSS Modules crashing
+the main-thread bundle) — running every real app shape through the
+dual-thread pipeline is worth doing for correctness alone.
+
+## 3. Real threads
+
+> **Takeaway: with a genuine thread boundary, IFR wins on nine of ten
+> examples at full CPU speed — FCP −8% to −23%, median −19% in the default
+> configuration — matching the ReactLynx control's −23%. The win comes from
+> removing background boot + IPC from the critical path. The two IFR
+> configurations (with and without ET) are within run-to-run noise of each
+> other on these screens: ET's measured advantages are render cost and ops
+> payload (campaign 1) and native cold starts, not web FCP on small pages.**
+
+Setup: Lynx for Web — the background runtime runs in a genuine Web Worker
+with real postMessage IPC, in headless Chromium. FCP = `<lynx-view>`
+insertion → first painted content, medians of 7 fresh browser contexts.
+Both throttle levels below come from one session measured under the
+**current** flag semantics (`enableIFR: true` = IFR + ET; explicit opt-out =
+IFR without ET). Absolute milliseconds drift with host load between
+sessions; within-run ratios are the stable currency.
+
+### The ReactLynx control
+
+ReactLynx has no IFR-off switch, so "off" is emulated faithfully (empty
+main-thread first screen, full background render + hydration). First, in the
+**same single-process harness as campaign 2**, ReactLynx is just as flat as
+Vue Lynx — the reference implementation cannot demonstrate its own headline
+feature without a thread boundary either:
+
+| ReactLynx probe (single process, jitless) | FCP | TTI |
+|---|---|---|
+| IFR on | 25.3 ms | 32.7 ms |
+| IFR off (emulated) | 24.3 ms | 24.3 ms |
+
+On real threads both frameworks win, by the same class of margin: the
+ReactLynx probe (85 nodes) improves 97.7 → 75.2 ms (**−23%**), squarely
+inside the range the Vue examples below span.
+
+### Full matrix — no CPU throttle
+
+| example (nodes) | No IFR | IFR w/o ET | Δ | IFR + ET (default) | Δ |
+|---|---|---|---|---|---|
+| hello-world (16) | 96.6 | 75.8 | −22% | 75.4 | −22% |
+| todomvc-day1 (7) | 92.9 | 78.6 | −15% | 73.4 | −21% |
+| swiper (39) | 100.5 | 77.7 | −23% | 79.1 | −21% |
+| tailwindcss (68) | 95.7 | 80.9 | −15% | 80.6 | −16% |
+| keep-alive (49) | 103.5 | 86.0 | −17% | 84.4 | −18% |
+| transition (55) | 104.6 | 93.3 | −11% | 85.1 | −19% |
+| 7guis (145) | 104.1 | 90.3 | −13% | 80.6 | −23% |
+| gallery (302) | 136.6 | 104.5 | −23% | 109.9 | −20% |
+| css-features (50) | 102.0 | 93.9 | −8% | 100.3 | −2% |
+| hackernews-css (18) | 115.3 | 131.7 | **+14%** ⚠ | 131.8 | **+14%** ⚠ |
+
+(FCP in ms. Medians: **−19%** default, −15% without ET — the per-example
+differences between the two configurations flip between runs and should be
+read as noise.)
+
+### 4× CPU throttle
+
+| example | No IFR | IFR w/o ET | Δ | IFR + ET | Δ |
+|---|---|---|---|---|---|
+| hello-world | 344.1 | 282.8 | −18% | 289.1 | −16% |
+| todomvc-day1 | 313.2 | 281.7 | −10% | 280.6 | −10% |
+| swiper | 333.1 | 304.9 | −8% | 298.4 | −10% |
+| tailwindcss | 339.9 | 330.7 | −3% | 316.4 | −7% |
+| keep-alive | 391.4 | 366.6 | −6% | 370.8 | −5% |
+| gallery (302 nodes) | 437.2 | 430.5 | −2% | 434.5 | −1% |
+| css-features | 352.0 | 353.6 | +0% | 346.4 | −2% |
+| transition | 350.6 | 355.2 | +1% | 367.6 | +5% |
+| 7guis | 352.1 | 366.8 | +4% | 355.0 | +1% |
+| hackernews-css | 324.0 | 352.9 | **+9%** ⚠ | 360.0 | +11% |
+| ReactLynx probe | 331.6 | 308.0 | −7% | — | |
+
+Two readings:
+
+1. **Content-first screens keep their win under throttling** (hello-world
+   −16…−18%, todomvc-day1 −10%, swiper −10%), while screens whose FCP is
+   dominated by CSS processing or big bundles compress toward zero — a
+   throttled CPU multiplies the bundle-parse term that the web platform
+   pays on the FCP path.
+2. **The inversion profile reproduces at both throttle levels.**
+   hackernews — the biggest bundle in the suite with a skeleton-only first
+   screen — pays +14% at full speed and +9…11% throttled. The profile
+   guidance stands: fetch-driven, skeleton-first screens pay bundle size
+   for no first-frame win. On native, precompiled lepus bytecode shrinks
+   the parse term this inversion is made of.
+
+### How far is this from plain single-threaded web?
+
+Vanilla single-threaded baselines (plain Vue via `@vue/runtime-dom`; plain
+Preact via ReactLynx's exact fork pointed back at the real DOM) decompose
+the remaining gap. On the ReactLynx probe screen, no throttle:
+
+| component | cost | evidence |
+|---|---|---|
+| render 85 elements + paint (preact on DOM) | ~21 ms | plain-preact, framework pre-parsed |
+| + framework fetch+parse on the FCP path | +7 ms | cold − warm |
+| + the Lynx-for-Web platform layer | +47 ms | rl-ifr − plain-preact cold |
+| + background boot + hydration IPC round-trip | +23 ms | rl-noifr − rl-ifr |
+
+The thread boundary costs ~23 ms and **IFR removes exactly that slice**.
+The remaining gap vs plain web is the web-host emulation layer — a per-host
+constant that native Lynx, whose platform layer is native code, does not pay.
+
+## 4. Native engine observations
+
+The full example suite was validated on a native simulator (LynxExplorer,
+Lynx SDK 1.4 / PrimJS): 24/25 examples pass with **zero hydration
+mismatches**, and No-IFR vs IFR+ET screens are visually identical (SSIM ≥
+0.9977; scoped CSS, baked inline styles, and auto-px semantics all correct
+on the native engine). Single-sample cold-start recordings show first
+content ~0.3 s earlier (gallery) up to ~1.2 s earlier (7guis) with IFR —
+directional confirmation of the mechanism, not a stable benchmark.
+
+## Reproduce
+
+```bash
+# strategy ladder + correctness oracle
+pnpm --filter vue-lynx-ifr-bench run check
+pnpm --filter vue-lynx-ifr-bench run bench
+
+# all-examples sweep
+node packages/ifr-bench/examples-sweep/orchestrate.mjs <dir>
+node packages/ifr-bench/examples-sweep/sweep.mjs <dir>
+
+# real-browser (Lynx for Web) measurement, with plain-web baselines
+node packages/ifr-bench/web-harness/run-browser.mjs <bundlesDir> [runs] [throttle]
+```

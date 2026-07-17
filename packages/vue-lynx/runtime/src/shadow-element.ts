@@ -234,6 +234,12 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
+  // Element-template instance state (only set on lowered template roots).
+  // Hole shadows use contiguous uids after the root so both threads agree on
+  // ids without shipping a per-hole mapping.
+  _tplHoleKeys: string[] | undefined = undefined;
+  _tplHoles: ShadowElement[] | undefined = undefined;
+
   // --- Vapor / DOM-compat state --------------------------------------------
 
   /** Text content for '#text' / '#comment' nodes (and setElementText). */

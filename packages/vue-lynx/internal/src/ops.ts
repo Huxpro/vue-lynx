@@ -23,10 +23,12 @@
  *   (retired)          [14]  was SET_SCOPE_ID — scoped CSS now rides on
  *     classes (scope tokens merge into SET_CLASS / props.c), so no op emits
  *     14 anymore. The number is not reused to keep old bundles unambiguous.
- *   (reserved)         [15]  INSTANTIATE_TEMPLATE — the VDOM element-template
- *     op (enableElementTemplates), arriving via #216. It is NOT emitted on
- *     this lineage yet; 15 is held for it so both protocols share one
- *     numbering after the lineages merge.
+ *   INSTANTIATE_TEMPLATE: [15, rootId, tplId, holeCount]
+ *     Element-template instantiation (compile-time-lowered static subtree).
+ *     The main thread builds the whole subtree via the registered create()
+ *     function; the root maps to rootId and the template's holes (interior
+ *     nodes with dynamic parts) map to rootId+1 … rootId+holeCount, so all
+ *     later SET_* ops target them like ordinary elements.
  *   REGISTER_TREE:     [16, treeId, structure]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
@@ -66,22 +68,11 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
-  // 14 retired (was SET_SCOPE_ID) — do not reuse. The pre-Vapor lineage
-  // still emits SET_SCOPE_ID=14; on this lineage scoped CSS rides on
-  // classes, and 14 stays retired after the lineages merge.
-  //
-  // 15 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
-  // enableElementTemplates on the claude/vue-lynx-ifr-optimization-hy6jmy
-  // branch, where it already carries number 15). It arrives via #216 and is
-  // NOT emitted on this lineage yet, so it is intentionally absent from OP
-  // and OP_ARITY here — the number is held so both protocols share one
-  // numbering once the lineages merge.
+  // 14 retired (was SET_SCOPE_ID) — do not reuse. Scoped CSS rides on
+  // classes (scope tokens merge into SET_CLASS / props.c).
+  INSTANTIATE_TEMPLATE: 15,
   REGISTER_TREE: 16,
   CLONE_TREE: 17,
-  // Consumers handle unknown opcodes conservatively (hydration falls back to
-  // the full BG replay; the interpreter stops at an opcode it has no arity
-  // for), and both sides of the protocol always ship inside one bundle, so
-  // reserving 15 is a merge contract rather than a wire-compatibility concern.
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -102,9 +93,45 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.SET_WORKLET_EVENT]: 4,
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
+  [OP.INSTANTIATE_TEMPLATE]: 3,
   [OP.REGISTER_TREE]: 2,
   [OP.CLONE_TREE]: 2,
 });
+
+// ---------------------------------------------------------------------------
+// Element-template protocol (INSTANTIATE_TEMPLATE support)
+// ---------------------------------------------------------------------------
+
+/** Type-string prefix for compile-time-lowered template vnodes. */
+export const TPL_TYPE_PREFIX = '__vlx-tpl:';
+/** Prop-key prefix for hole bindings on lowered vnodes. */
+export const TPL_HOLE_PREFIX = '__h';
+/**
+ * Name of the global through which compiler-generated code registers
+ * element templates: `globalThis.<TPL_REGISTER_GLOBAL>(id, holes, create)`.
+ * Referenced by compiler codegen, the loader that extracts registrations for
+ * interpreter-only MT bundles, and the runtime/main-thread installers.
+ */
+export const TPL_REGISTER_GLOBAL = '__vueLynxRegisterElementTemplate';
+
+// ---------------------------------------------------------------------------
+// Cross-thread global handshakes (IFR)
+//
+// The runtime and main-thread packages cannot import each other (they are
+// bundled for different threads), so IFR wires them through globals. Every
+// read site is defensively guarded, which means a one-sided rename would not
+// throw — it would silently disable IFR. Single-sourcing the names here makes
+// that drift impossible.
+// ---------------------------------------------------------------------------
+
+/** Set on the IFR main thread so runtime code can detect the environment. */
+export const IFR_MT_FLAG_GLOBAL = '__VUE_LYNX_IFR_MT__';
+/** MT-side hook the runtime flush hands ops batches to during the IFR render. */
+export const IFR_APPLY_OPS_GLOBAL = '__vueLynxIfrApplyOps';
+/** Runtime-side hook renderPage triggers to run deferred IFR mounts. */
+export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
+/** MT executor registry for element-template create() functions. */
+export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
 
 // ---------------------------------------------------------------------------
 // REGISTER_TREE structure — the ONE definition both threads must agree

@@ -33,7 +33,10 @@ import type { RsbuildPlugin } from '@rsbuild/core';
 import { pluginVue } from '@rsbuild/plugin-vue';
 
 import { applyCSS } from './css.js';
-import { vueLynxCompilerOptions } from './compiler-options.js';
+import {
+  resolveElementTemplatesFlag,
+  resolveVueLynxCompilerOptions,
+} from './compiler-options.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 import { VueLynxVaporTemplatePlugin } from './plugins/vapor-template-plugin.js';
@@ -118,6 +121,55 @@ export interface PluginVueLynxOptions {
   autoPixelUnit?: boolean;
 
   /**
+   * Whether to enable element templates (compile-time template lowering).
+   *
+   * Eligible template subtrees — plain elements with compile-time-known
+   * structure — are lowered into "element templates": the static skeleton
+   * becomes a straight-line element-creation function executed on the main
+   * thread via a single `INSTANTIATE_TEMPLATE` op, and interior dynamic
+   * parts ("holes") receive deterministic ids updated through the ordinary
+   * ops. This removes the per-static-node vdom/ops/interpreter cost on
+   * first render and shrinks the cross-thread payload — for both the
+   * normal pipeline and IFR (they compose).
+   *
+   * Structural features (components, v-if/v-for hosts, slots, refs,
+   * directives, `<list>`) always stay on the normal vdom path; lowering is
+   * purely an optimization and never changes rendering semantics.
+   *
+   * Defaults to the value of `enableIFR`: enabling IFR also enables element
+   * templates unless this option is explicitly set to `false`. It can still
+   * be enabled independently when IFR is off.
+   *
+   * @defaultValue enableIFR
+   */
+  enableElementTemplates?: boolean;
+
+  /**
+   * Whether to enable IFR (Instant First-Frame Rendering).
+   *
+   * When enabled, the main-thread bundle contains the full Vue runtime and
+   * app code (instead of only worklet registrations). The first screen is
+   * rendered synchronously on the main thread during `loadTemplate` —
+   * before any background JavaScript runs — eliminating the blank-frame gap.
+   * When the background thread boots, its initial render is hydrated
+   * against the main-thread output instead of being re-applied.
+   *
+   * Constraints (matching ReactLynx IFR):
+   * - First-screen render output must be deterministic and thread-agnostic
+   *   (no `Math.random()` / `Date.now()` in render, no thread-dependent
+   *   branching). Divergence is detected and falls back to a full
+   *   background render, losing the IFR benefit for that screen.
+   * - Side effects belong in lifecycle hooks (`onMounted`, `watch`
+   *   callbacks) — these never run during the main-thread render.
+   * - Increases the main-thread bundle size (it now carries the Vue
+   *   runtime).
+   *
+   * @see https://lynxjs.org/guide/interaction/ifr
+   * @defaultValue false
+   */
+  enableIFR?: boolean;
+
+  /**
    * Allowlist of bare-import specifiers whose `'main thread'` worklets
    * should be reached by the MT bundler.
    *
@@ -167,21 +219,6 @@ export interface PluginVueLynxOptions {
    */
   vapor?: boolean;
 
-  /**
-   * Whether to enable IFR (Instant First-Frame Rendering).
-   *
-   * The main-thread bundle carries the full application and renders its
-   * first frame synchronously during `loadTemplate`. The normal Background
-   * render then hydrates that deterministic output. Works in both renderer
-   * modes: with `vapor: true` the main thread runs the pure Vapor pipeline
-   * (route c); without it, the vdom custom renderer replays (replay IFR).
-   *
-   * The initial render must be deterministic across threads. Lifecycle side
-   * effects are suppressed on the IFR Main Thread and run normally on BG.
-   *
-   * @defaultValue false
-   */
-  enableIFR?: boolean;
 }
 
 /**
@@ -205,17 +242,22 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    enableIFR = false,
     includeWorkletPackages = [],
     vapor = false,
-    enableIFR = false,
   } = options;
+  const enableElementTemplates = resolveElementTemplatesFlag(options);
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
     pluginVue({
       vueLoaderOptions: {
         experimentalInlineMatchResource: true,
-        compilerOptions: vueLynxCompilerOptions,
+        // Element templates: lower eligible static-structure subtrees into
+        // main-thread element templates (single INSTANTIATE op + holes).
+        compilerOptions: resolveVueLynxCompilerOptions(
+          enableElementTemplates,
+        ),
       },
     }),
 
@@ -365,8 +407,9 @@ export function pluginVueLynx(
           customCSSInheritanceList,
           enableCSSInlineVariables,
           debugInfoOutside,
-          includeWorkletPackages,
           enableIFR,
+          enableElementTemplates,
+          includeWorkletPackages,
           vapor,
         });
       },

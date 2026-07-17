@@ -5,6 +5,11 @@
 import type { RendererOptions } from '@vue/runtime-core';
 
 import { patchEventProp, resetEventPropState } from './event-props.js';
+import {
+  TPL_HOLE_PREFIX,
+  TPL_TYPE_PREFIX,
+  getElementTemplateHoles,
+} from './element-template.js';
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
@@ -31,8 +36,41 @@ export { patchEventProp } from './event-props.js';
 // RendererOptions implementation
 // ---------------------------------------------------------------------------
 
+/**
+ * Mount a compile-time-lowered element template (`__vlx-tpl:<id>` vnode).
+ *
+ * The root ShadowElement represents the whole subtree. Hole shadows allocate
+ * the contiguous uid range following the root; the main thread maps those ids
+ * to the create() function's returned hole handles.
+ */
+function createTemplateInstance(type: string): ShadowElement {
+  const tplId = type.slice(TPL_TYPE_PREFIX.length);
+  const holeKeys = getElementTemplateHoles(tplId);
+  const el = new ShadowElement(type);
+  if (!holeKeys) {
+    if (__DEV__) {
+      console.error(
+        `[vue-lynx] element template "${tplId}" is not registered — rendering an empty view.`,
+      );
+    }
+    pushOp(OP.CREATE, el.uid, 'view');
+    scheduleFlush();
+    return el;
+  }
+
+  const holes = holeKeys.map(() => new ShadowElement('#tpl-hole'));
+  el._tplHoleKeys = holeKeys;
+  el._tplHoles = holes;
+  pushOp(OP.INSTANTIATE_TEMPLATE, el.uid, tplId, holeKeys.length);
+  scheduleFlush();
+  return el;
+}
+
 export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
+    if (type.startsWith(TPL_TYPE_PREFIX)) {
+      return createTemplateInstance(type);
+    }
     // Lynx owns exactly one native <page>, created before the app runs. A
     // `page` vnode must go through the transparent Page built-in (the plugin
     // compiler rewrites template <page> tags; the exported `h` routes
@@ -105,6 +143,28 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     _prevValue: unknown,
     nextValue: unknown,
   ): void {
+    // Element-template holes: lowered template vnode props are named __hN.
+    // Delegate to the hole with its original prop key so event/class/style
+    // behavior stays identical to the normal renderer path.
+    if (el._tplHoles !== undefined && key.startsWith(TPL_HOLE_PREFIX)) {
+      const idx = Number(key.slice(TPL_HOLE_PREFIX.length));
+      const holeKey = el._tplHoleKeys?.[idx];
+      const holeEl = el._tplHoles[idx];
+      if (holeKey !== undefined && holeEl !== undefined) {
+        if (holeKey === '#text') {
+          pushOp(
+            OP.SET_TEXT,
+            holeEl.uid,
+            nextValue == null ? '' : String(nextValue),
+          );
+          scheduleFlush();
+        } else {
+          nodeOps.patchProp(holeEl, holeKey, undefined, nextValue);
+        }
+        return;
+      }
+    }
+
     // ------------------------------------------------------------------
     // Main-thread worklet props: :main-thread-bindtap, :main-thread-ref
     // ------------------------------------------------------------------

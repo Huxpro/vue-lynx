@@ -2,13 +2,14 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-// Structural mirrors of @vue/compiler-core's AST types. The plugin does not
-// depend on @vue/compiler-core directly (it arrives transitively through
-// @rsbuild/plugin-vue), and pnpm's strict node_modules would make even a
-// type-only import unresolvable — so we mirror the handful of numeric enum
-// values we need. Values are stable public API:
-//   NodeTypes.ROOT = 0, NodeTypes.ELEMENT = 1
-//   ElementTypes.ELEMENT = 0 (native), ElementTypes.COMPONENT = 1
+import type { NodeTransform } from '@vue/compiler-core';
+import { ElementTypes, NodeTypes } from '@vue/compiler-core';
+
+import { elementTemplateTransform } from './compiler/element-template-transform.js';
+
+// Structural views of @vue/compiler-core's AST nodes — the transform accepts
+// `unknown` (it must tolerate whichever compiler copy vue-loader bundles),
+// so these interfaces describe just the fields it touches.
 interface CompilerElementNode {
   type: number;
   tag: string;
@@ -21,9 +22,9 @@ interface CompilerTransformContext {
   onError(error: Error): void;
 }
 
-const ELEMENT_NODE = 1;
-const NATIVE_ELEMENT_TAG = 0;
-const COMPONENT_TAG = 1;
+const ELEMENT_NODE = NodeTypes.ELEMENT;
+const NATIVE_ELEMENT_TAG = ElementTypes.ELEMENT;
+const COMPONENT_TAG = ElementTypes.COMPONENT;
 
 /**
  * Rewrite the reserved Lynx page tag to Vue Lynx's transparent root component.
@@ -77,7 +78,10 @@ export const vueLynxCompilerOptions = {
   // Lynx native tags (view, text, image, etc.) should not be resolved
   // via resolveComponent — treat everything as native.
   isNativeTag: () => true,
-  nodeTransforms: [transformPageElement],
+  // Widened to NodeTransform[]: transformPageElement takes `unknown` (it
+  // must tolerate whichever compiler copy vue-loader bundles) and is
+  // assignable to the stricter NodeTransform signature.
+  nodeTransforms: [transformPageElement] as NodeTransform[],
   whitespace: 'condense' as const,
   // Disable static hoisting: @vue/compiler-dom's stringifyStatic
   // transform converts runs of 5+ constant-prop siblings into a single
@@ -90,3 +94,37 @@ export const vueLynxCompilerOptions = {
   // to. Ignored by the vdom compiler.
   eventDelegation: false,
 };
+
+/**
+ * Resolve the effective `enableElementTemplates` flag: element templates
+ * default to following `enableIFR` (they attack the one cost IFR adds — the
+ * synchronous main-thread render), with an explicit value winning either way.
+ *
+ * This is THE defaulting rule; every layer below receives the resolved
+ * boolean rather than re-deriving it.
+ */
+export function resolveElementTemplatesFlag(options: {
+  enableIFR?: boolean;
+  enableElementTemplates?: boolean;
+}): boolean {
+  return options.enableElementTemplates ?? options.enableIFR ?? false;
+}
+
+/**
+ * The Vue SFC compiler options for a resolved `enableElementTemplates` flag:
+ * the shared Lynx options, plus the element-template lowering transform when
+ * templates are enabled.
+ */
+export function resolveVueLynxCompilerOptions(
+  enableElementTemplates: boolean,
+): typeof vueLynxCompilerOptions {
+  return enableElementTemplates
+    ? {
+      ...vueLynxCompilerOptions,
+      nodeTransforms: [
+        ...vueLynxCompilerOptions.nodeTransforms,
+        elementTemplateTransform,
+      ],
+    }
+    : vueLynxCompilerOptions;
+}

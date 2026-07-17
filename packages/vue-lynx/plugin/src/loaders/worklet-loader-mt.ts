@@ -35,6 +35,7 @@ import {
   extractLocalImports,
   extractRegistrations,
   extractSharedImports,
+  extractTemplateRegistrations,
   hasMainThreadDirective,
   stripSharedImportAttributes,
   stripStyleImports,
@@ -50,6 +51,11 @@ export interface WorkletLoaderMTOptions {
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
   /** Keep complete application modules so Vapor can render the IFR frame. */
   ifr?: boolean;
+  /**
+   * Element templates: additionally preserve compiler-hoisted registration
+   * statements and template submodule dependency edges.
+   */
+  elementTemplates?: boolean;
   /** Use the pure Vapor runtime entry for generated worklet imports. */
   vapor?: boolean;
 }
@@ -99,6 +105,10 @@ async function transformModule(
     return ifrTransform(ctx, source, options.vapor === true);
   }
 
+  const keepTpl = options.elementTemplates === true;
+  const tplRegistrations = keepTpl
+    ? extractTemplateRegistrations(source)
+    : '';
   const includeWorkletPackages = options.includeWorkletPackages ?? [];
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
@@ -114,22 +124,32 @@ async function transformModule(
       source,
       resolveImport,
       includeWorkletPackages,
+      keepTpl,
     );
 
+    const scriptStub = () =>
+      [localImports, tplRegistrations, 'export default {};']
+        .filter(Boolean)
+        .join('\n');
+
     if (!hasMainThreadDirective(source)) {
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return scriptStub();
     }
 
     const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
     if (lepusCode === null) {
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return scriptStub();
     }
 
     const registrations = extractRegistrations(lepusCode);
     const sharedImports = extractSharedImports(lepusCode);
-    const parts = [sharedImports, localImports, registrations, 'export default {};'].filter(
-      Boolean,
-    );
+    const parts = [
+      sharedImports,
+      localImports,
+      registrations,
+      tplRegistrations,
+      'export default {};',
+    ].filter(Boolean);
     return parts.join('\n');
   }
 
@@ -142,25 +162,30 @@ async function transformModule(
     source,
     resolveImport,
     includeWorkletPackages,
+    keepTpl,
   );
 
   // Quick check: skip LEPUS transform for files without 'main thread' directive
   // (but still extract shared imports from source since they don't need LEPUS)
   if (!hasMainThreadDirective(source)) {
     const sharedImports = extractSharedImports(source);
-    if (!sharedImports) return localImports;
-    return sharedImports + (localImports ? '\n' + localImports : '');
+    return [sharedImports, localImports, tplRegistrations]
+      .filter(Boolean)
+      .join('\n');
   }
 
   const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
-  if (lepusCode === null) return localImports;
+  if (lepusCode === null) {
+    return [localImports, tplRegistrations].filter(Boolean).join('\n');
+  }
 
   // Extract shared imports from the LEPUS output (SWC preserves them)
   const sharedImports = extractSharedImports(lepusCode);
 
   // Return shared imports + local imports (for dep graph) + extracted registrations
   const registrations = extractRegistrations(lepusCode);
-  const parts = [sharedImports, localImports, registrations].filter(Boolean);
+  const parts = [sharedImports, localImports, registrations, tplRegistrations]
+    .filter(Boolean);
   return parts.join('\n');
 }
 
