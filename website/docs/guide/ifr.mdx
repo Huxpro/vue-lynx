@@ -287,8 +287,29 @@ Product FCP / IFR×architecture matrices:
 Strategy cost, real-app gzip/TTI, native checks:
 [IFR Benchmarks](/guide/ifr-benchmarks).
 
-Scale trends unique to this page — cost space (MT gzip × FCP) through **30k**
-elements (CPU ×1), then FCP vs N:
+Scale trends unique to this page — **cost space** (MT gzip × FCP) through
+**30k** elements (CPU ×1), then FCP vs N.
+
+**How to read cost space.** It is a two-axis ledger: what you pay vs what the
+user waits for.
+
+| axis | meaning |
+| --- | --- |
+| **X — MT gzip** | Main-thread bundle size (parse / load tax). IFR usually makes this larger. |
+| **Y — FCP** | Time to first paint. Lower is better. |
+| **Each polyline** | One architecture (VDOM / IFR / IFR+ET / Vapor…) swept from 1k→30k. |
+
+| region | reading |
+| --- | --- |
+| **Lower-left** | Ideal — small MT bundle *and* fast first frame |
+| **Right** | Paid a heavier MT bundle for IFR; may or may not buy faster FCP |
+| **Up** | First frame worsens as content grows (poor scaling) |
+| **Upper-right** | Worst — heavy *and* slow |
+
+Unlike the unified matrix’s **FCP vs N** (first-frame only), cost space asks
+one more question: *did that first frame come from a larger MT bundle?*
+Typical bad shape: plain IFR gets heavier, then FCP crosses above plain VDOM
+on mid/large trees. Good shape: IFR+ET still pays MT size, but FCP stays below.
 
 <BenchArtifactFrame
   src="/benchmark/ifr-scale-trends-x1.html"
