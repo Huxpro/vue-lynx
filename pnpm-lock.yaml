@@ -521,6 +521,22 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
 
+  examples/teleport:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../../packages/vue-lynx
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   examples/todomvc:
     dependencies:
       vue-lynx:
@@ -602,6 +618,22 @@ importers:
         version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
       typescript:
         specifier: ~5.9.3
+        version: 5.9.3
+
+  examples/v-once-memo:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../../packages/vue-lynx
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@2.0.8(@swc/helpers@0.5.23))(typescript@5.9.3)(webpack@5.105.4)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.11(core-js@3.47.0))(@rspack/core@2.0.8(@swc/helpers@0.5.23))
+      typescript:
+        specifier: ^5.0.0
         version: 5.9.3
 
   examples/vapor:
