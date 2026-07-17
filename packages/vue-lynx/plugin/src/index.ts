@@ -71,8 +71,8 @@ export interface PluginVueLynxOptions {
    *
    * Note: `v-bind()` in `<style>` blocks works without this flag — `useCssVars`
    * stamps CSS vars on the component root element(s) and the Lynx engine
-   * propagates them to descendants via the CSS inheritance chain
-   * (fixed in lynx-family/lynx#5912).
+   * propagates them to descendants (lynx-family/lynx#5912, requires
+   * engine >= 3.9.0).
    * @defaultValue false
    */
   enableCSSInheritance?: boolean;

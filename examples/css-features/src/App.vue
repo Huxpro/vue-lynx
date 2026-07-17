@@ -22,7 +22,7 @@ import ImportedCSS from './ImportedCSS.vue'
     <VBindCSS />
     <VBindThreads />
 
-    <!-- enableCSSInheritance isolation test — no useCssVars, pure :style + var() inheritance -->
+    <!-- Engine custom-property propagation test — no useCssVars, enableCSSInheritance off -->
     <CSSInheritanceTest />
 
     <!-- Divider -->

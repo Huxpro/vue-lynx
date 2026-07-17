@@ -73,8 +73,9 @@ function applyVarsToVNode(
  * style and sends them to the Main Thread via the ops pipeline.
  *
  * CSS vars are stamped on the component's root element(s). The Lynx engine
- * propagates custom property updates to descendants via the CSS inheritance
- * chain (fixed in lynx-family/lynx#5912, closing #5889).
+ * propagates custom property updates to descendants (lynx-family/lynx#5912,
+ * closing #5889; requires engine >= 3.9.0, the first tagged release with the
+ * propagation code).
  *
  * Requires `enableCSSInlineVariables: true` in `lynx.config.ts`.
  *

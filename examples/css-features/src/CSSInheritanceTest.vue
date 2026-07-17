@@ -19,11 +19,12 @@ function cycleColor() {
     marginBottom: '12px',
   }">
     <text :style="{ fontSize: '15px', fontWeight: 'bold', marginBottom: '2px', color: '#333' }">
-      enableCSSInheritance — CSS var propagation (CSSInheritanceTest.vue)
+      CSS custom property propagation (CSSInheritanceTest.vue)
     </text>
     <text :style="{ fontSize: '11px', color: '#888', marginBottom: '10px' }">
       Parent sets --test-color via :style. Children consume it via var() in class rules.
-      No useCssVars involved. Tests whether enableCSSInheritance propagates CSS custom properties.
+      No useCssVars, and enableCSSInheritance is false — tests that engine-level custom
+      property propagation (lynx#5912, engine >= 3.9.0) works on its own.
     </text>
 
     <!-- Parent sets the CSS var via :style only — no v-bind(), no useCssVars -->

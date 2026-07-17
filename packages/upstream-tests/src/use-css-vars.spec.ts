@@ -404,7 +404,7 @@ describe('useCssVars — reactivity', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 7. Root-only stamping (engine propagates to descendants via lynx#5912 fix)
+// 7. Root-only stamping
 // ---------------------------------------------------------------------------
 
 describe('useCssVars — root-only stamping', () => {
@@ -412,10 +412,11 @@ describe('useCssVars — root-only stamping', () => {
     const color = ref('red');
 
     // Structure: view (root) > view (mid) > text (leaf)
-    // The Lynx engine propagates the CSS custom property to descendants via
-    // RecursivelyMarkChildrenCSSVariableDirty (fixed in lynx-family/lynx#5912, closing #5889).
-    // useCssVars must stamp only the root; descendants must not receive a
-    // redundant SET_STYLE.
+    // This test only verifies the BG-runtime contract: useCssVars stamps the
+    // root and emits no redundant SET_STYLE for descendants. Whether the
+    // native engine actually cascades the var to descendants is NOT covered
+    // here — that is engine behavior (lynx-family/lynx#5912, first in the
+    // 3.9.0 tag) and is verified manually via the css-features example.
     const App = defineComponent({
       setup() {
         useCssVars((_ctx: unknown) => ({ 'deep1': color.value }));
@@ -438,7 +439,8 @@ describe('useCssVars — root-only stamping', () => {
       (op) => (op.style as Record<string, unknown>)['--deep1'] !== undefined,
     );
 
-    // Only the root view should be stamped — not mid or leaf.
+    // Only the root view should be stamped — not mid or leaf. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
     expect(cssVarOps.length).toBe(1);
     expect((cssVarOps[0].style as Record<string, unknown>)['--deep1']).toBe('red');
   });
@@ -470,7 +472,8 @@ describe('useCssVars — root-only stamping', () => {
       (op) => (op.style as Record<string, unknown>)['--deep2'] !== undefined,
     );
 
-    // Only the root view is stamped; the child text is not.
+    // Only the root view is stamped; the child text is not. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
     expect(cssVarOps.length).toBe(1);
     expect((cssVarOps[0].style as Record<string, unknown>)['--deep2']).toBe('blue');
   });
