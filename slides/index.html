@@ -2651,7 +2651,54 @@
     </aside>
   </section>
 
-  <!-- E20b — design space · the async cut (schematic) -->
+  <!-- E20b — design space · the retained→immediate spectrum -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      One template — a whole <span class="brand-text">spectrum</span> of renderers.
+    </h2>
+    <div class="spectrum">
+      <div class="spectrum__bar">
+        <span class="spectrum__end left">retained mode<i>address &amp; mutate at runtime · needs pointers</i></span>
+        <span class="spectrum__end right">immediate mode<i>write once · a display list</i></span>
+        <span class="spectrum__dot" style="left:12.5%;--c:#4FB8F0"></span>
+        <span class="spectrum__dot" style="left:37.5%;--c:#42b883"></span>
+        <span class="spectrum__dot" style="left:62.5%;--c:#8bd6a0"></span>
+        <span class="spectrum__dot" style="left:87.5%;--c:#a78fff"></span>
+      </div>
+      <div class="spectrum__stops">
+        <div class="sstop" style="--c:#4FB8F0">
+          <span class="sstop__name">React · VDOM</span>
+          <span class="sstop__sub">fully dynamic — interpret + diff</span>
+        </div>
+        <div class="sstop" style="--c:#42b883">
+          <span class="sstop__name">Vue · Block VDOM</span>
+          <span class="sstop__sub">compiler-hinted — skip the statics</span>
+        </div>
+        <div class="sstop" style="--c:#8bd6a0">
+          <span class="sstop__name">Vapor</span>
+          <span class="sstop__sub">compiled — <b>but keeps pointers</b> to address nodes</span>
+        </div>
+        <div class="sstop hot" style="--c:#a78fff">
+          <span class="sstop__name">Element Templates</span>
+          <span class="sstop__sub">write-only — paint it, then let go</span>
+        </div>
+      </div>
+      <div class="spectrum__braces">
+        <span class="brace ret">still retained — holds runtime pointers</span>
+        <span class="brace imm">immediate — nothing to address</span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="text-align:center;max-width:60ch">
+      Even <b>Vapor</b> stays retained — it keeps pointers. But cross a thread up front and pointers can&rsquo;t follow — so Lynx lives at the write-only end.
+    </p>
+    <aside class="notes">
+      <p><strong>The design space is one wide spectrum</strong> — from fully retained to fully immediate. <strong>React VDOM</strong> is fully dynamic: interpret a tree and diff it every update. <strong>Vue</strong>'s compiler-hinted, block-based VDOM does better — blocks let it skip the static subtrees. <strong>Vapor</strong> looks like it compiled everything away, but it still reserves a slice for the in-browser runtime: pointers, used to <em>read</em> / address live nodes. So Vapor is still <em>retained mode</em>.</p>
+      <p><strong>Why that matters at a thread boundary.</strong> Retained pointers only survive a thread hop if the tree itself is shared: RN's Fabric keeps pointers in a C++ shadow tree that both sides reach. Lynx can't — we cross threads from the very first frame. <strong>Element Templates</strong> go the other way: write-only, one direction, much closer to an immediate-mode <em>display list</em>. That crosses threads beautifully — but the price is giving up dynamism on the MT side. Like a painting: you draw it once, then let the canvas go.</p>
+    </aside>
+  </section>
+
+  <!-- E20c — design space · the async cut (schematic) -->
   <section class="slide stage dspace">
     <span class="eyebrow">One more thing &middot; the design space</span>
     <h2 class="h-section" style="text-align:center;max-width:24ch">
@@ -2702,7 +2749,7 @@
     </aside>
   </section>
 
-  <!-- E20c — design space · dense vs sparse naming -->
+  <!-- E20d — design space · dense vs sparse naming -->
   <section class="slide stage dspace">
     <span class="eyebrow">One more thing &middot; the design space</span>
     <h2 class="h-section" style="text-align:center;max-width:24ch">

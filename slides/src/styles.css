@@ -3245,3 +3245,26 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .ds-legend .k { display: inline-flex; align-items: center; gap: 8px; }
 .ds-legend .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
 .ds-legend .sw.name { border-radius: 50%; background: var(--ds-name); }
+
+/* retained→immediate spectrum (E20b) */
+.spectrum { width: 100%; max-width: 1080px; margin: 30px auto 0; }
+.spectrum__bar { position: relative; height: 6px; border-radius: 6px; margin: 40px 40px 0; background: linear-gradient(90deg, #4FB8F0, #42b883, #8bd6a0, #a78fff); }
+.spectrum__end { position: absolute; top: -30px; font-family: var(--mono); font-size: 12.5px; color: var(--ink); display: flex; flex-direction: column; line-height: 1.25; }
+.spectrum__end i { font-style: normal; font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.01em; }
+.spectrum__end.left { left: -28px; text-align: left; }
+.spectrum__end.right { right: -28px; text-align: right; }
+.spectrum__end.right i { align-self: flex-end; }
+.spectrum__dot { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--paper); border: 3px solid var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+.spectrum__stops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 26px; }
+.sstop { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 0 6px; }
+.sstop__name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--c); }
+.sstop__sub { font-family: var(--mono); font-size: 11px; line-height: 1.4; color: var(--ink-mute); max-width: 22ch; }
+.sstop__sub b { color: var(--ink); font-weight: 600; }
+.sstop.hot .sstop__sub b { color: var(--ds-name); }
+.spectrum__braces { display: grid; grid-template-columns: 3fr 1fr; gap: 12px; margin-top: 16px; }
+.brace { position: relative; padding-top: 13px; text-align: center; font-family: var(--mono); font-size: 11.5px; }
+.brace::before { content: ''; position: absolute; top: 0; left: 8%; right: 8%; height: 8px; border: 1.5px solid var(--line); border-bottom: none; border-radius: 7px 7px 0 0; }
+.brace.ret { color: var(--ds-dyn); }
+.brace.ret::before { border-color: color-mix(in srgb, var(--ds-dyn) 42%, transparent); }
+.brace.imm { color: var(--ds-name); }
+.brace.imm::before { border-color: color-mix(in srgb, var(--ds-name) 45%, transparent); }
