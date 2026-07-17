@@ -67,7 +67,17 @@ pnpm --filter vue-lynx-benchmark run bench:synthesize
 pnpm --filter vue-lynx-benchmark run bench:unified:full
 ```
 
-Outputs land in `results/unified/{latest.json,ANALYSIS.md}`.
+Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html}`.
+
+**Human-facing report** (playground-style tinted tables + charts):
+
+```bash
+pnpm --filter vue-lynx-benchmark run bench:report
+# → results/unified/report.html
+# docs embed: /benchmark/unified.html  (via website/scripts/prepare-benchmark.mjs)
+```
+
+Docs page: [`/guide/benchmark-unified`](../../website/docs/guide/benchmark-unified.mdx).
 
 ## Claim reevaluation
 

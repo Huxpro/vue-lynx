@@ -1,0 +1,57 @@
+# 统一基准矩阵
+
+在同一台机器、同一阶梯上，把 IFR 风格、VDOM vs Vapor、React vs Vue
+**一眼看完**——又不把不同量纲混在一起。
+
+<a href="/benchmark/unified.html" target="_blank" rel="noreferrer">打开完整报告 ↗</a>
+
+<iframe
+  src="/benchmark/unified.html"
+  title="Unified Vue Lynx benchmark matrix"
+  style={{
+    width: '100%',
+    height: '2200px',
+    border: '1px solid var(--rp-c-divider)',
+    borderRadius: '12px',
+  }}
+  loading="lazy"
+/>
+
+## 这页是什么
+
+三套旧 campaign 各自回答不同问题：
+
+| campaign | 问题 | 文档 |
+|---|---|---|
+| IFR 风格 | 首帧成本与 FCP | [IFR 基准测试](/zh/guide/ifr-benchmarks) |
+| VDOM vs Vapor | instrumented BG / e2e | [VDOM vs Vapor](/zh/guide/benchmark-vapor) |
+| Vue vs React | 黑盒 click→DOM | [Playground](/zh/guide/benchmark-playground) |
+
+它们共用 **1k→30k 标签**，但不是同一**量纲**。本报告把每个 cell 放进同一 schema，
+给已发布断言打分，并用 playground 同款着色表 + 缩放曲线展示。
+
+## 怎么读
+
+1. 顶部的 **断言卡片** — holds / caveat / falsified。
+2. **Storm 表** — IFR × 框架交互延迟（与 playground 同协议）。
+3. **Storm 图** — 同机 select / update / create vs N。
+4. **FCP 表 + 图** — content-probe 首帧阶梯（另一套仪器！）。
+
+不要用 storm 毫秒去除以 FCP 毫秒。绝对毫秒随机器变化；同机比率才可携带。
+
+## 可交互 playground
+
+想亲手点按表格应用？见
+[React vs Vue playground](/zh/guide/benchmark-playground)。
+本页是**结果产物**。
+
+## 复现
+
+```bash
+pnpm --filter vue-lynx-benchmark bench:unified
+pnpm --filter vue-lynx-benchmark bench:synthesize
+pnpm --filter vue-lynx-benchmark bench:report
+```
+
+设计说明：[`packages/benchmark/UNIFIED.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md) ·
+原始分析：[`ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md)。

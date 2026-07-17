@@ -160,6 +160,32 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
+          sectionHeaderText: 'Performance',
+        },
+        {
+          text: 'Unified Matrix',
+          link: '/guide/benchmark-unified',
+          context: 'vapor',
+        },
+        {
+          text: 'React vs Vue Playground',
+          link: '/guide/benchmark-playground',
+          context: 'vapor',
+        },
+        {
+          text: 'VDOM vs Vapor',
+          link: '/guide/benchmark-vapor',
+          context: 'vapor',
+        },
+        {
+          text: 'IFR Benchmarks',
+          link: '/guide/ifr-benchmarks',
+          context: 'vapor',
+        },
+        {
+          dividerType: 'solid',
+        },
+        {
           sectionHeaderText: 'API Reference',
         },
         ...apiSidebar,
@@ -203,6 +229,32 @@ export default defineConfig({
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
         { text: 'AI Chat', link: '/zh/guide/ai-chat' },
         { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '性能',
+        },
+        {
+          text: '统一基准矩阵',
+          link: '/zh/guide/benchmark-unified',
+          context: 'vapor',
+        },
+        {
+          text: 'React vs Vue Playground',
+          link: '/zh/guide/benchmark-playground',
+          context: 'vapor',
+        },
+        {
+          text: 'VDOM vs Vapor',
+          link: '/zh/guide/benchmark-vapor',
+          context: 'vapor',
+        },
+        {
+          text: 'IFR 基准测试',
+          link: '/zh/guide/ifr-benchmarks',
+          context: 'vapor',
+        },
         {
           dividerType: 'solid',
         },

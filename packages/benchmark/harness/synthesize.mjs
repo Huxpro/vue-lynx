@@ -959,6 +959,16 @@ function main() {
   console.log(md);
   console.log(`[synthesize] wrote ${outDir}/latest.json and ANALYSIS.md`);
   console.log(`[synthesize] cells=${unified.cells.length} verdicts=${verdicts.length}`);
+
+  // Refresh the human-facing HTML artifact alongside ANALYSIS.md.
+  try {
+    execSync('node harness/report-unified.mjs', {
+      cwd: root,
+      stdio: 'inherit',
+    });
+  } catch (err) {
+    console.warn('[synthesize] report-unified failed:', err.message);
+  }
 }
 
 main();
