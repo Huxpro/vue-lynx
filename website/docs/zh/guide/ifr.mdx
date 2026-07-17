@@ -204,23 +204,23 @@ Vue Lynx 当前不使用 Lynx 的二进制 `elementTemplates` bundle section、`
 
 ### 同源 Vapor vs VDOM 矩阵
 
-下表来自同一份生成的单文件组件按四种方式构建：渲染器模式与 `enableIFR` 是唯一变量。页面模拟内容流：页头 + 125 张卡片、共 1,004 个元素，每张卡片带一个动态 class 与两处动态文本。Harness 在 Lynx for Web（真实双线程，后台运行时在 Web Worker）上跑发出的 `.web.bundle`，无头 Chromium、每个条目七个全新浏览器上下文，取中位。
+> **已重测**：#230 step 3 统一 lineage 之后，并套用 #246 的 flag matrix 修正（`ifr` ≠ `ifr-et`）。完整表格、体积与 focused examples 见 [`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md)。
 
-First Contentful Paint，`enableIFR: false` → `true`：
+下表来自同一份生成的单文件组件按五种方式构建（VDOM × `{off, ifr, ifr-et}`，Vapor × `{off, ifr}`）。页面模拟内容流：页头 + 125 张卡片、共 1,004 个元素。Lynx for Web、无头 Chromium、每条目七个全新上下文，取中位。
+
+First Contentful Paint：
 
 | 条目 | 1× CPU | 4× CPU |
 |---|---|---|
-| Vapor，1,004 元素 | 162 ms → 139 ms (**−14%**) | 483 ms → 511 ms (**+6%**) |
-| VDOM，1,004 元素 | 147 ms → 119 ms (−19%) | 474 ms → 443 ms (−7%) |
-| Vapor，10 元素 | 104 ms → 77 ms (−27%) | 283 ms → 243 ms (−14%) |
+| VDOM off → ifr（ET=false） | 95.3 → 77.4 ms (**−19%**) | 269.5 → 287.3 ms (**+7%**) |
+| VDOM off → ifr-et | 95.3 → 71.9 ms (**−24%**) | 269.5 → 254.1 ms (**−6%**) |
+| Vapor off → ifr | 97.0 → 88.7 ms (**−9%**) | 304.2 → 318.2 ms (**+5%**) |
 
 如何阅读：
 
-- IFR 的收益是结构性的：主线程在 `loadTemplate` 期间绘制，早于后台启动与首次 IPC。1× 下两种页面规模都稳定。
-- 4× 行是诚实的 caveat。IFR 把应用放进主线程 bundle；慢 CPU 上解析/执行更大主线程程序可能盖过省下的启动。上线前请按目标设备实测。
-- Vapor IFR 的逐帧 JS 成本介于 VDOM replay 与理论上的编译器直达下限之间。把 `--jitless` 微基准当作相对量即可。
-
-该矩阵的完整方法、原始样本与包体积表见 `packages/ifr-bench/VAPOR-IFR-REPORT.md`。
+- 1× 下 VDOM IFR 单独即可拿到经典约 −19% FCP；ET 在该密集场景上再加一点。Vapor IFR 也赢，但幅度更小。
+- 4× 行是诚实的 caveat。无 ET 的 IFR 可能因 MT bundle 解析/执行而回退；本机上 IFR+ET 相对 off 仍略优。Vapor IFR 在 4× 回退——请按目标设备实测。
+- ET 在 gzip 上并不免费（本场景 MT section 相对纯 IFR 大约翻倍）。把它当作渲染成本对冲，而不是体积优化。
 
 ## Vapor 特有限制
 

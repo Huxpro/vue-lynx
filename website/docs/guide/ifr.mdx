@@ -288,38 +288,32 @@ page.
 
 ### Same-source Vapor vs VDOM matrix
 
-The numbers below come from one generated single-file component built four ways
-from identical source, so renderer mode and `enableIFR` are the only variables.
-The page mirrors a content feed: a header plus 125 cards, 1,004 elements, each
-card carrying one dynamic class and two dynamic text bindings. The harness runs
-the emitted `.web.bundle` files in Lynx for Web — genuinely dual-threaded, with
-the Background runtime in a Web Worker — in headless Chromium, seven fresh
-browser contexts per entry, reporting medians.
+> **Re-measured** on the unified lineage after #230 step 3, with the #246
+> flag-matrix fix (`ifr` ≠ `ifr-et`). Full tables, sizes, and focused examples:
+> [`packages/ifr-bench/UNIFIED-RERUN.md`](https://github.com/Huxpro/vue-lynx/blob/cursor/merge-main-into-vapor-5402/packages/ifr-bench/UNIFIED-RERUN.md).
 
-First Contentful Paint, `enableIFR: false` → `true`:
+The numbers below come from one generated single-file component built five ways
+from identical source (VDOM × `{off, ifr, ifr-et}` and Vapor × `{off, ifr}`).
+The page mirrors a content feed: a header plus 125 cards, 1,004 elements.
+Lynx for Web, headless Chromium, seven fresh contexts per entry, medians.
+
+First Contentful Paint:
 
 | Entry | 1× CPU | 4× CPU |
 |---|---|---|
-| Vapor, 1,004 elements | 162 ms → 139 ms (**−14%**) | 483 ms → 511 ms (**+6%**) |
-| VDOM, 1,004 elements | 147 ms → 119 ms (−19%) | 474 ms → 443 ms (−7%) |
-| Vapor, 10 elements | 104 ms → 77 ms (−27%) | 283 ms → 243 ms (−14%) |
+| VDOM off → ifr (ET=false) | 95.3 → 77.4 ms (**−19%**) | 269.5 → 287.3 ms (**+7%**) |
+| VDOM off → ifr-et | 95.3 → 71.9 ms (**−24%**) | 269.5 → 254.1 ms (**−6%**) |
+| Vapor off → ifr | 97.0 → 88.7 ms (**−9%**) | 304.2 → 318.2 ms (**+5%**) |
 
 How to read this:
 
-- IFR's win is structural: the Main Thread paints during `loadTemplate`, before
-  Background startup and the first IPC round-trip. At 1× the win is consistent
-  at both page sizes.
-- The 4× row is the honest caveat. IFR adds the application to the Main-Thread
-  bundle. On a slow CPU, parsing and evaluating that larger Main-Thread program
-  can outweigh the saved startup on large screens. Measure your target device
-  before shipping.
-- Vapor IFR's per-frame JavaScript cost sits between the VDOM replay path and
-  the theoretical compiler-direct floor. Treat `--jitless` microbenchmarks as
-  relative — the remaining gap is dependency-tracked effects and protocol
-  bookkeeping that a future compiler-direct first-frame target could remove.
-
-Full methodology, raw sample arrays, and bundle-size tables for this matrix are
-in `packages/ifr-bench/VAPOR-IFR-REPORT.md`.
+- At 1×, VDOM IFR alone recovers the classic ~−19% FCP; ET adds a further win
+  on this dense scene. Vapor IFR also wins, but by less.
+- The 4× row is the honest caveat. IFR without ET can regress when MT bundle
+  parse/eval dominates; IFR+ET still nets slightly ahead of off on VDOM here.
+  Vapor IFR regresses at 4× on this host — measure your target device.
+- ET is not free on gzip (MT section roughly doubles vs IFR alone on this
+  scene). Treat it as a render-cost hedge, not a size optimization.
 
 ## Vapor-specific limitations
 
