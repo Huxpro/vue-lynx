@@ -1,24 +1,5 @@
 # Playground: React vs Vue on Lynx
 
-> Numbers, ratios, and charts:
-> **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-> This page is only the *interactive* slice — feel the same apps on your device.
-
-**Select = point update** (selection / a few classes).
-**Update = batch update** (many rows per pass). One-shot taps often feel alike;
-storms separate the frameworks.
-
-<BenchPlayground />
-
-**What to try**
-
-1. **Create 10,000** → **Select storm** (30 point updates).
-2. **Update storm** (50 batch passes) on the same table.
-3. Compare Vue Vapor / Vue VDOM / ReactLynx (memo).
-
-## Reproduce
-
-```bash
-pnpm --filter vue-lynx-benchmark bench:cross
-pnpm --filter vue-lynx-benchmark bench:storms
-```
+> Moved into the framework bench — ReactLynx is a **reference baseline** there.
+>
+> → **[Framework bench: VDOM vs Vapor](/guide/benchmark-vapor)**

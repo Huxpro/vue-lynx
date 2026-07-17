@@ -1,23 +1,5 @@
 # Playground：React vs Vue on Lynx
 
-> 数字、比率与图表见
-> **[统一基准矩阵](/zh/guide/benchmark-unified)**。
-> 本页只留*可交互*切片——在你的设备上亲手感受同一批应用。
-
-**Select = 点状更新**（选中态 / 少量 class）。
-**Update = 批量更新**（每轮改很多行）。单次点击往往手感接近；storm 才会拉开。
-
-<BenchPlayground />
-
-**建议试玩**
-
-1. **Create 10,000** → **Select storm**（30 次点状更新）。
-2. 同一张表上再跑 **Update storm**（50 轮批量）。
-3. 对比 Vue Vapor / Vue VDOM / ReactLynx (memo)。
-
-## 复现
-
-```bash
-pnpm --filter vue-lynx-benchmark bench:cross
-pnpm --filter vue-lynx-benchmark bench:storms
-```
+> 已并入框架测试页——其中 ReactLynx 是**参考系**。
+>
+> → **[框架测试：VDOM vs Vapor](/zh/guide/benchmark-vapor)**

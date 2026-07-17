@@ -1,13 +1,25 @@
-# Benchmark: VDOM vs Vapor
+# Framework bench: VDOM vs Vapor
 
-> Product matrices (black-box storms, FCP):
+> Product matrices (storms, FCP):
 > **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
-> This page keeps what that report does **not** show — instrumented BG/e2e,
-> cross-thread traffic, and bundle / memory cost for Vue VDOM vs Vapor only.
+> This page is the Vue framework slice — instrumented BG/e2e, traffic, bundle
+> cost — plus an interactive playground. **ReactLynx is a reference baseline**,
+> not the subject under test.
 
-Same app, both modes, full dual-thread pipeline
+Same Vue app in both modes, full dual-thread pipeline
 ([Vue core benchmark](https://github.com/vuejs/core/tree/main/packages-private/benchmark)
-ported to Lynx). **Select = point update**; **update every 10th = sparse batch**.
+ported to Lynx). **Select = point update**; **Update = batch update**.
+
+## Try it
+
+Tap the same buttons the harness clicks. Badge = **tap → DOM settled**.
+Compare **Vue Vapor** / **Vue VDOM**; **ReactLynx (memo)** is there as a
+reference so you can feel the order of magnitude — not as a ReactLynx product
+bench (that lives in the [unified matrix](/guide/benchmark-unified)).
+
+<BenchPlayground />
+
+**What to try:** Create 10k → Select storm (point) → Update storm (batch).
 
 ## Instrumented BG / e2e
 
@@ -43,13 +55,12 @@ the payload crosses a serialization boundary — halving it matters more there.
 | Bundle gzip (`main.lynx.bundle`) | 39.2 KB | 49.3 KB | +26% |
 | JS heap after 10k rows | 76–136 MB | 76–105 MB | indicative only |
 
-Feel the apps: [Playground](/guide/benchmark-playground).
-
 ## Reproduce
 
 ```bash
-pnpm --filter vue-lynx-benchmark bench
-pnpm --filter vue-lynx-benchmark bench:quick
+pnpm --filter vue-lynx-benchmark bench          # instrumented
+pnpm --filter vue-lynx-benchmark bench:cross    # black-box (+ React ref)
+pnpm --filter vue-lynx-benchmark bench:storms
 ```
 
 Raw: [`packages/benchmark/results/`](https://github.com/huxpro/vue-lynx/tree/main/packages/benchmark).

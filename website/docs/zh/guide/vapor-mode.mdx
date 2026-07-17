@@ -6,9 +6,8 @@ import { Badge } from '@theme';
 模式：模板直接编译为操作元素的代码，没有 Virtual DOM，也没有逐组件 diff。
 Vue Lynx 把它跑在 Lynx 双线程架构上。更新路径上，后台线程相对 VDOM 快
 **5.8–9.8×**（端到端 2.1–6.3×），创建持平，跨线程流量约减半，代价是 gzip
-包体约 **+26%**——完整数据见
-[VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor) 与
-[React vs Vue playground](/zh/guide/benchmark-playground)。
+包体约 **+26%**——完整数据（含可交互 playground；ReactLynx 作参考系）见
+[框架测试](/zh/guide/benchmark-vapor)。
 
 :::warning 实验性
 Vapor mode 本身**尚未进入任何 Vue 稳定版本**——截至 2026 年年中，它只发布在

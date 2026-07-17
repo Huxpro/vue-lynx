@@ -21,8 +21,7 @@
 | campaign | 问题 | 文档 |
 |---|---|---|
 | IFR 风格 | 首帧成本与 FCP | [IFR 基准测试](/zh/guide/ifr-benchmarks) |
-| VDOM vs Vapor | instrumented BG / e2e | [VDOM vs Vapor](/zh/guide/benchmark-vapor) |
-| Vue vs React | 黑盒 click→DOM | [Playground](/zh/guide/benchmark-playground) |
+| 框架（VDOM vs Vapor） | instrumented BG/e2e + 可交互 | [框架测试](/zh/guide/benchmark-vapor) |
 
 它们共用 **1k→30k 标签**，但不是同一**量纲**。本报告把每个 cell 放进同一 schema，
 并以「结论 → 含义 → 核对」开篇。
@@ -31,8 +30,7 @@
 
 | 页面 | 保留内容 |
 |---|---|
-| [Playground](/zh/guide/benchmark-playground) | 可交互应用 |
-| [VDOM vs Vapor](/zh/guide/benchmark-vapor) | instrumented BG/e2e、ops 字节、包体/heap |
+| [框架测试](/zh/guide/benchmark-vapor) | 可交互（React 作参考系）、instrumented BG/e2e、ops 字节、包体/heap |
 | [IFR 基准测试](/zh/guide/ifr-benchmarks) | 策略阶梯、示例 gzip/TTI、native |
 
 ## 怎么读
