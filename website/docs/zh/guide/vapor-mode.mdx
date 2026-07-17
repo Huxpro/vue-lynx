@@ -1,12 +1,11 @@
 import { Badge } from '@theme';
-import { ModeTabs, ModeTab } from '../../../src/components/go/ModeTabs';
 
 # Vapor Mode <Badge text="实验性" type="warning" />
 
 [Vapor mode](https://github.com/vuejs/core/releases) 是 Vue 3.6 引入的编译式
 渲染模式：组件模板直接编译为操作元素的代码，没有 Virtual DOM，也没有逐组件
-diff。Vue Lynx 支持在 Lynx 双线程架构上运行 Vapor 组件——更新路径有可量化的
-大幅性能优势（见[基准测试](/zh/guide/benchmark-vapor)）。
+diff。Vue Lynx 在 Lynx 双线程架构上运行 Vapor 组件——更新路径有可量化的大幅
+性能优势（见[基准测试](/zh/guide/benchmark-vapor)）。
 
 :::warning 实验性
 Vapor mode 本身**尚未进入任何 Vue 稳定版本**——截至 2026 年年中，它只发布在
@@ -20,19 +19,14 @@ Vue 3.6 beta / prerelease 线中，Vue 团队也标记其为不稳定。Vue Lynx
 下面就是仓库里的 Vapor 演示应用——插值、`v-if`/`v-for`、`v-model`、
 props/emits、scoped CSS，全部经 `@vue/compiler-vapor` 编译。用站点导航栏的
 **VDOM | Vapor** 切换（或示例底栏的徽标）在同一份源码下更换渲染器；徽标
-始终显示当前实际运行的是哪一个。选择会跨页面、跨访问保持，全站所有支持的
-示例都会跟随。
+始终显示当前实际运行的是哪一个。
 
 <Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
 
 ## 开启 Vapor mode
 
 Vapor 是**以应用为粒度的构建期决策**。切换一个应用需要改三处：插件开关、
-入口 import、以及每个组件上的 `vapor` 属性。下面的代码 tab 跟随站点的
-渲染器开关（也可以反过来驱动它——同一份偏好，两个入口）：
-
-<ModeTabs>
-  <ModeTab mode="vapor">
+入口 import、以及每个组件上的 `vapor` 属性：
 
 ```ts title="lynx.config.ts"
 import { defineConfig } from '@lynx-js/rspeedy'
@@ -68,75 +62,11 @@ const count = ref(0)
 </template>
 ```
 
-  </ModeTab>
-  <ModeTab mode="vdom">
+组件内部无需其他改动：`import { ref } from 'vue'` 照常工作——`vapor: true`
+时插件会把 `'vue'` alias 到 `vue-lynx/vapor`。
 
-```ts title="lynx.config.ts"
-import { defineConfig } from '@lynx-js/rspeedy'
-import { pluginVueLynx } from 'vue-lynx/plugin'
-
-export default defineConfig({
-  plugins: [pluginVueLynx()],
-})
-```
-
-```ts title="src/index.ts"
-import { createApp } from 'vue-lynx'
-import App from './App.vue'
-
-createApp(App).mount()
-```
-
-```vue title="src/Counter.vue"
-<script setup lang="ts">
-import { ref } from 'vue'
-
-const count = ref(0)
-</script>
-
-<template>
-  <view class="button" @tap="count++">
-    <text>Count: {{ count }}</text>
-  </view>
-</template>
-```
-
-  </ModeTab>
-</ModeTabs>
-
-组件内部无需任何其他改动：`import { ref } from 'vue'` 照常工作——插件会把
-`'vue'` alias 到与当前模式匹配的入口（`vapor: true` 时为
-`vue-lynx/vapor`，否则为 `vue-lynx`）。
-
-完整示例见仓库
-[examples 目录](https://github.com/Huxpro/vue-lynx/tree/main/examples)中的
-`examples/vapor`，覆盖插值、`v-if`/`v-for`、`v-model`、组件 props/emits 和
-scoped CSS。
-
-:::info 从旧入口名迁移
-早期预览版先后使用过 `vue-lynx/with-vapor`（复合入口，**同时打包两套
-运行时**）与 `vue-lynx/vapor-app`。两者均已移除——入口就是
-`vue-lynx/vapor`，改一行 import 即可。
-:::
-
-## 一个应用，一种模式
-
-上游 Vue 只发布单一 `'vue'` 入口，靠 **tree-shaking** 决定你为哪些代码付费：
-vdom renderer 惰性创建、全量标注 side-effect-free，因此纯 Vapor 的 Web 应用
-不会打包 vdom 运行时，而混用应用（经 `vaporInteropPlugin`）会同时引入两者。
-
-Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成为应用级的严格
-二选一。所以 Vue Lynx 不做"单入口 + 摇树"，而是直接发布**两个纯入口**：
-
-| 入口 | 内容 | 用途 |
-|---|---|---|
-| `vue-lynx` | vdom renderer + Vue runtime-core | 常规（默认）应用 |
-| `vue-lynx/vapor` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
-
-这带来一个好处：vdom 专属 API（`h()`、`<Transition>`、`<Teleport>`、
-`<KeepAlive>`、`<Suspense>`、`vShow`、`vModelText`）在
-`vue-lynx/vapor` 上根本不存在——在 Vapor 应用里误用它们会**在构建期
-直接报错**，而不是在运行时出现难以排查的行为。
+入口就是 `vue-lynx/vapor`（早期预览名 `vue-lynx/with-vapor`、
+`vue-lynx/vapor-app` 已移除）。
 
 ## 在 Lynx 上的工作原理
 
@@ -144,8 +74,8 @@ Vue Lynx 目前不支持混用（见[限制](#当前限制)），模式因此成
 `createRenderer()` 那样的 custom renderer 钩子。Vue Lynx 的做法是让后台线程
 的 ShadowElement 树*足够 DOM 兼容*：编译产物及 Lynx 专用 helper 覆盖调用
 标准 DOM API——`insertBefore`、`cloneNode`、`setAttribute`、
-`addEventListener`、`el.style`——这些调用最终发出与 vdom 模式完全相同的
-扁平 ops 流到主线程。
+`addEventListener`、`el.style`——这些调用最终发出与 vdom 模式相同的扁平 ops
+流到主线程。
 
 ```
 编译后的 vapor 组件
@@ -182,43 +112,72 @@ create/append op 发送，Vapor 的跨线程流量会比 vdom 更差。因此 Vu
 不是 Lynx 引擎变更。效果：创建 1,000 行列表时，Vapor 模式跨线程只需
 **7,000 ops / 160 KB**，而 vdom 模式为 **17,000 ops / 327 KB**。
 
+## 首屏直出（IFR）
+
+Vapor 应用也可以在 Lynx `loadTemplate` 期间绘制同步内容。在 `vapor: true`
+旁加上 `enableIFR: true`：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  vapor: true,
+  enableIFR: true,
+})
+```
+
+Vapor IFR 复用已编译的 `template()` / 树协议——**不使用** VDOM 元素模板。
+细节、取舍与 Vapor 特有限制见 [Vapor 上的 IFR](/zh/guide/ifr#ifr-on-vapor)。
+
 ## 性能
 
-结论先行：更新路径操作在后台线程**快 5.8–9.8×**（端到端 2.1–6.3×），
-创建路径持平，跨线程流量约减半——代价是 gzip 包体 +26%。
-完整方法学、原始数据与注意事项：
+**结论：** 更新路径操作在后台线程**快 5.8–9.8×**（端到端 2.1–6.3×），创建
+路径持平，跨线程流量约减半——代价是 gzip 包体 +26%。
 
-- [VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor) —— Vue 官方基准
-  移植到 Lynx，两种模式正面对比
-- [Playground：React vs Vue](/zh/guide/benchmark-playground) —— 可以在
-  自己手机上运行的跨框架对比，含 Vapor
+完整方法学与原始数据：
 
-## `vue-lynx/vapor` 的 API 面
+- [VDOM vs Vapor 基准测试](/zh/guide/benchmark-vapor)
+- [Playground：React vs Vue](/zh/guide/benchmark-playground)（含 Vapor）
 
-Vapor 入口导出 Vapor 应用从 `'vue'` import 的一切——标准 Vue API、SFC
-宏、Lynx 工具与 Vapor helper 面；vdom 专属 API（`h()`、`<Transition>`、
-`<Teleport>` 等）刻意缺席，误用会在构建期直接报错。完整列表与缺席清单见
+## API 面
+
+Vapor 入口导出 Vapor 应用从 `'vue'` import 的一切——标准 Vue API、SFC 宏、
+Lynx 工具与 Vapor helper 面；vdom 专属 API（`h()`、`<Transition>`、
+`<Teleport>` 等）刻意缺席，误用会在构建期直接报错。完整列表见
 [`vue-lynx/vapor` API 参考](/zh/guide/api/vapor/)。
 
 ## 已验证的 example 矩阵
 
-站点上的每个示例都针对两种渲染器验证过，而这个站点本身就是演示：导航栏
-的 `VDOM | Vapor` 开关会更换所有支持的示例与代码 tab（页面上没有可切换
-内容时它会变暗），每个示例底栏的徽标显示实际生效的渲染器，出现回退时
-导航栏还会显示本页的 Vapor 覆盖比例。下表由机器可读的验证产物生成
-（`examples/vapor-support.json`，其中还记录了源码哈希与逐项证据）——
-不支持的 reason code 对应下方[限制](#当前限制)。
+站点上的每个示例都针对两种渲染器验证过。导航栏的 `VDOM | Vapor` 开关会
+更换支持的示例；每个示例底栏徽标显示实际生效的渲染器。下表由
+`examples/vapor-support.json` 生成——不支持的 reason code 对应下方
+[限制](#当前限制)。
 
 <VaporSupportMatrix />
 
+<span id="当前限制" />
+<span id="current-limitations" />
+
 ## 当前限制
 
-- **不支持 vdom ↔ vapor 混用。** 一个应用要么全 Vapor 要么全 vdom；
-  `vaporInteropPlugin` 尚未接入（上游将其硬编码到浏览器 DOM renderer）。
+- **一个应用，一种模式。** Vue Lynx 不支持在同一应用里混用 vdom 与 Vapor
+  （`vaporInteropPlugin` 尚未接入——上游将其硬编码到浏览器 DOM renderer）。
+  模式是应用级严格二选一，因此 Vue Lynx 发布两个纯入口，而不是单入口靠
+  tree-shaking 裁剪：
+
+  | 入口 | 内容 | 用途 |
+  |---|---|---|
+  | `vue-lynx` | vdom renderer + Vue runtime-core | 常规（默认）应用 |
+  | `vue-lynx/vapor` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
+
+  附带好处：vdom 专属 API 在 `vue-lynx/vapor` 上根本不存在——误用会**在
+  构建期直接报错**。
+
 - Vapor 应用中**暂无 `<Transition>` / `<Teleport>` / `<KeepAlive>` /
   `<Suspense>`** —— 上游 Vapor 尚未发布这些能力。
 - **不支持 `v-html`** —— Lynx 元素无法解析 HTML 字符串（与 vdom 模式的
   Vue Lynx 一致）。
-- **不支持 SSR / hydration** —— Lynx 没有 SSR。
+- **不支持 SSR / HTML hydration** —— Lynx 没有 SSR。（双线程
+  [IFR hydration](/zh/guide/ifr#hydration) 是另一套机制。）
 - Vapor 模式的常规 Vue 约束同样适用：仅 `<script setup>`、无 Options API、
   `getCurrentInstance()` 返回 `null`。
+- Vapor IFR 要求首屏确定性、与线程无关。同步 `setup()` 副作用与 watcher 会
+  在两端各跑一遍；见 [IFR 限制](/zh/guide/ifr#account-for-current-limitations)。
