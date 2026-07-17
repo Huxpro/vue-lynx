@@ -25,10 +25,10 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 
 ### Architectures
 
-`vdom` · `vdom-ifr` · `vdom-ifr-et` · `vapor` · `vapor-ifr` ·
-`react` · `react-naive` · `react-compiler`
+`vdom` · `vdom-ifr` · `vdom-ifr-et` · `vapor` · `vapor-ifr` · `react`
 
-(Vapor has no Element Templates path.)
+(`react` = ReactLynx Snapshot+IFR + manual memo. Vapor has no Element Templates
+path. `react-naive` / `react-compiler` are not part of the published matrix.)
 
 ### Environments (not interchangeable)
 
