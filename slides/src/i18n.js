@@ -188,6 +188,14 @@ export const ZH = {
   "The drag runs on the main thread — so even while Vue's background thread fetches, diffs, or rebuilds the list, the sheet still tracks the finger. On the web, gesture JS and render share one thread.":
     '拖拽跑在主线程上 —— 于是即便 Vue 的后台线程正在请求数据、diff 或重建列表,sheet 依然跟手。<span class="dim">在 Web 上,手势 JS 与渲染共享同一条主线程。</span>',
 
+  // ---- Chapter III · Elk collapsing profile ----
+  'III · Case 2 · Elk · collapsing profile': 'III · 案例二 · Elk · 折叠 profile',
+  'An X-grade profile, composed.': 'X 级折叠 profile,<span class="brand-text">组合而成。</span>',
+  'Collapse the header, pin the tabs, page sideways — each pane keeps its own feed & scroll position.':
+    '折叠头部、吸顶 tab、横向翻页 —— 每个 pane 各自保留自己的信息流与滚动位置。',
+  'native scroll thread': '原生滚动线程',
+  'one SFC · native + web preview': '一个 SFC · 原生 + Web 预览',
+
   'Main-Thread Script': '<b>主线程脚本</b>',
 
   // ---- Chapter IV · How we did it ----
@@ -392,6 +400,8 @@ export const ZH_NOTES = [
   `<p><strong>最小且有代表性的切片。</strong>① <code>&lt;Transition&gt;</code> + <code>v-show</code> 让节点保持挂载(关闭后滚动位置与状态得以保留),同时跑完整的 persisted transition 生命周期 —— 正是这项修复让该能力从 experimental 毕业。② 拖拽是 <code>'main thread'</code> worklet,通过 <code>:main-thread-bindtouch*</code> 绑定,用 <code>setStyleProperty</code> 直接写 <code>transform</code>/<code>opacity</code>,绕开 Vue diff。③ 手势仲裁:8px 手势锁先一次性判定方向与来源;若向下拖且列表已到顶,sheet 关掉原生滚动(<code>enable-scroll=false</code>)接管本次拖动,否则让给 scroll-view。<code>runOnBackground</code> 只在状态边界(关闭时)跨线程,绝不每帧跨。</p><p><strong>Web 为何吃力:</strong>读实时 <code>scrollTop</code>、仲裁归属、平滑速度、橡皮筋阻力、切换内部滚动,都要 JS 主线程 —— 而浏览器把它和渲染放在一起。Lynx 把这套逻辑放到 UI 线程上。</p>`,
   // 34b Elk · 原生 view pager
   `<p><strong>原生 view pager(已合入 PR #223)。</strong><code>elk-viewpager</code> 分支用原生 <strong>viewpager</strong> 元素(通过 <code>TabPager.vue</code>)承载 Explore / Notifications 标签。分屏以原生吸附滑动,并在滑动间保留内容与滚动位置。</p><p><strong>难点在于元素名按平台不同:</strong>Lynx for Web 提供旧名 <code>x-viewpager-ng</code>(今天可用);原生 OSS 引擎注册抽取出的 <code>viewpager</code>(需要基于 lynx develop 构建的宿主)。<code>TabPager.vue</code> 在运行时按 <code>SystemInfo.platform</code> 选标签名。</p><p><strong>双向同步:</strong>点标签 → <code>selectTab()</code> 动画切页;滑动分页 → 其 <code>change</code> 事件移动激活标签。</p>`,
+  // 34e Elk · 折叠 profile · 组合
+  `<p><strong>移动端最难的布局,靠组合做出来。</strong>折叠头部 + 吸顶 tab + 横向翻页 + 每个 pane 各自纵向滚动 —— Twitter/X 的 profile。Web 上这是重型库(react-native-collapsible-tab-view、Android 的 CoordinatorLayout)在和主线程搏斗;这里是一次原生元件的组合,跑在平台自己的滚动线程上。</p><p><strong>Native UX ← Web DX。</strong>Lynx 把原生构件暴露成元件:<code>&lt;scroll-coordinator&gt;</code>(声明式的嵌套滚动交接:先折叠头部,再把滚动交给当前 pane 的列表,零 JS 滚动监听)、抽取出的 <code>&lt;viewpager&gt;</code>(原生吸附翻页 + 每个 pane 状态保留)、以及每个 pane 一个复用型 <code>&lt;list&gt;</code>。我们在一个 Vue SFC 里把它们组合起来。唯一的平台接缝就是标签名(Lynx for Web 的 <code>x-foldview-ng</code>/<code>x-viewpager-ng</code> ↔ 原生的 <code>scroll-coordinator</code>/<code>viewpager</code>)。</p><p><strong>一套代码,两个目标:</strong>同一个 SFC 既渲染真正的原生 profile,又渲染文档站里的 Lynx-for-Web 预览。tab 栏与翻页器通过原生 <code>selectTab</code>/<code>change</code> 方法双向同步,而非合成 DOM 事件。</p>`,
   // 35 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
   // 36 A1 · Vue 落在后台线程

@@ -2777,3 +2777,67 @@ body.is-blackout::after {
 .sheet-cols .codeframe { text-align: left; }
 .sheet-payoff { max-width: 62ch; }
 .sheet-payoff .dim { color: var(--ink-mute); }
+
+/* =========================================================
+   Elk collapsing profile — extends the viewpager mock with a
+   collapsing header + sticky tab bar + per-pane vertical scroll.
+   Three scroll intents: collapse (⇅) · page (↔) · list (↕).
+   ========================================================= */
+.profilemock {
+  width: 214px;
+  aspect-ratio: 214 / 320;
+  border: 1.5px solid var(--line);
+  border-radius: 22px;
+  background: var(--paper-elev);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+}
+.profilemock__header {
+  padding: 12px 12px 10px;
+  position: relative;
+  background: color-mix(in srgb, var(--vue-green) 6%, transparent);
+  border-bottom: 1px solid var(--line-soft);
+}
+.profilemock__banner { height: 30px; border-radius: 8px; background: var(--c-bubble); margin-bottom: 8px; }
+.profilemock__id { display: flex; gap: 8px; align-items: center; }
+.profilemock__avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--c-list); flex: none; }
+.profilemock__meta { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.profilemock__meta .r { height: 6px; border-radius: 3px; background: var(--c-list); }
+.profilemock__meta .r.w50 { width: 50%; }
+.profilemock__meta .r.w80 { width: 80%; }
+/* sticky tab bar */
+.profilemock__tabs { display: flex; border-bottom: 1px solid var(--line); position: relative; background: var(--paper-elev); }
+.profilemock__tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 0 7px; }
+.profilemock__tab .t { font-size: 9px; font-family: var(--mono); color: var(--ink-mute); }
+.profilemock__tab.is-active .t { color: var(--ink); font-weight: 600; }
+.profilemock__tab .u { height: 3px; width: 58%; border-radius: 2px; background: var(--c-primary); opacity: 0; }
+.profilemock__tab.is-active .u { opacity: 1; }
+/* horizontally paged panes, each a vertical list */
+.profilemock__strip { flex: 1; display: flex; overflow: hidden; position: relative; }
+.profilemock__pane { min-width: 82%; flex: none; padding: 10px; display: flex; flex-direction: column; gap: 6px; border-right: 1px dashed var(--line); }
+.profilemock__pane .row { height: 11px; border-radius: 6px; background: var(--c-list); }
+.profilemock__pane .row.w60 { width: 60%; }
+.profilemock__pane .row.w85 { width: 85%; }
+.profilemock__pane--next { opacity: 0.45; }
+/* motion badges */
+.profilemock__badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 78%, transparent);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.profilemock__badge.fold { top: 9px; right: 9px; color: var(--vue-green); border: 1px solid color-mix(in srgb, var(--vue-green) 50%, transparent); }
+.profilemock__badge.stick { right: 8px; color: var(--brand-teal); border: 1px solid color-mix(in srgb, var(--brand-teal) 50%, transparent); }
+.profilemock__badge.page { bottom: 10px; right: 8px; color: #E8B44A; border: 1px solid color-mix(in srgb, #E8B44A 50%, transparent); }
+.profilemock__badge.scroll { top: 50%; left: 8px; transform: translateY(-50%); color: #E8B44A; border: 1px solid color-mix(in srgb, #E8B44A 45%, transparent); }
+.profilemock__tabwrap { position: relative; }
