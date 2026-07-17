@@ -304,12 +304,15 @@
 
   <!-- ====================================================
        II · Vue API coverage — one feature per slide
-       code + phone + QR, simple → complex
+       ordered by vue-lynx release version
        ==================================================== -->
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 1/9</span>
-      <h2 class="demo__title"><code class="brand-text">ref()</code></h2>
+      <span class="eyebrow">II · Vue coverage · 1/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">ref()</code></h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -343,8 +346,11 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 2/9</span>
-      <h2 class="demo__title"><code class="brand-text">reactive()</code> + composables</h2>
+      <span class="eyebrow">II · Vue coverage · 2/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">reactive()</code> + composables</h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -374,8 +380,11 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 3/9</span>
-      <h2 class="demo__title"><code class="brand-text">v-model</code></h2>
+      <span class="eyebrow">II · Vue coverage · 3/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">v-model</code></h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
       <a class="gh-badge" href="https://github.com/jynxbt" target="_blank" rel="noopener noreferrer">
         <img class="gh-badge__avatar" src="https://github.com/jynxbt.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
         <span>@jynxbt</span>
@@ -404,49 +413,17 @@
       </div>
     </div>
     <aside class="notes">
-      <p>Two-way binding, both flavors: component <code>v-model</code> via <code>defineModel</code> (incl. named models), and <code>v-model</code> straight on Lynx's <strong>native</strong> <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code> — with <code>.lazy/.trim/.number</code>. Native <code>vModelText</code> landed via @jynxbt (#121). The timing-sensitive cases (preset values, programmatic writes, <code>@input</code> coexisting) are all covered.</p>
+      <p>Two-way binding, both flavors: component <code>v-model</code> via <code>defineModel</code> (incl. named models), and <code>v-model</code> straight on Lynx's <strong>native</strong> <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code> — with <code>.lazy/.trim/.number</code>. Native <code>vModelText</code> landed via @jynxbt (#121) in <code>0.2.0</code>. The timing-sensitive cases (preset values, programmatic writes, <code>@input</code> coexisting) are all covered.</p>
     </aside>
   </section>
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 4/9</span>
-      <h2 class="demo__title">Event <span class="brand-text">modifiers</span></h2>
-      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer">
-        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
-        <span>@KealanAU</span>
-      </a>
-      <div class="codeframe">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>App.vue</span>
-        </div>
-<pre><span class="code-com">&lt;!-- fires once, then unbinds --&gt;</span>
-<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.once</span>=<span class="code-str">"claim"</span><span class="code-tag">&gt;</span>
-
-<span class="code-com">&lt;!-- stops propagation --&gt;</span>
-<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.stop</span>=<span class="code-str">"inner"</span><span class="code-tag">&gt;</span>
-
-<span class="code-com">&lt;!-- ignores bubbled taps --&gt;</span>
-<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.self</span>=<span class="code-str">"outer"</span><span class="code-tag">&gt;</span></pre>
+      <span class="eyebrow">II · Vue coverage · 4/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">&lt;slot&gt;</code></h2>
+        <span class="ver-badge">0.2.0</span>
       </div>
-    </div>
-    <div class="demo__stage">
-      <div class="phone">
-        <div class="phone__inner">
-          <vl-demo bundle="event-modifiers/dist/main.web.bundle"></vl-demo>
-        </div>
-      </div>
-    </div>
-    <aside class="notes">
-      <p>Vue's event modifiers, mapped onto Lynx's event system: <code>.once</code>, <code>.stop</code>, <code>.self</code>, chained combinations — shipped by @KealanAU (#155). The demo shows each side-by-side with its unmodified twin. (<code>.prevent</code> is a compatibility no-op — nothing to prevent natively.)</p>
-    </aside>
-  </section>
-
-  <section class="slide demo demo--api">
-    <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 5/9</span>
-      <h2 class="demo__title"><code class="brand-text">&lt;slot&gt;</code></h2>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -478,8 +455,11 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 6/9</span>
-      <h2 class="demo__title"><code class="brand-text">provide / inject</code></h2>
+      <span class="eyebrow">II · Vue coverage · 5/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">provide / inject</code></h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -507,8 +487,79 @@
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 7/9</span>
-      <h2 class="demo__title"><span class="brand-text">CSS</span> features</h2>
+      <span class="eyebrow">II · Vue coverage · 6/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">&lt;Suspense&gt;</code></h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-key">const</span> Slow <span class="code-key">=</span> <span class="code-fn">defineAsyncComponent</span>(() <span class="code-key">=&gt;</span>
+  <span class="code-key">import</span>(<span class="code-str">'./SlowContent.vue'</span>))
+
+<span class="code-tag">&lt;Suspense&gt;</span>
+  <span class="code-tag">&lt;template</span> <span class="code-attr">#default</span><span class="code-tag">&gt;</span><span class="code-tag">&lt;Slow /&gt;</span><span class="code-tag">&lt;/template&gt;</span>
+  <span class="code-tag">&lt;template</span> <span class="code-attr">#fallback</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;text&gt;</span>⏳ loading…<span class="code-tag">&lt;/text&gt;</span>
+  <span class="code-tag">&lt;/template&gt;</span>
+<span class="code-tag">&lt;/Suspense&gt;</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="suspense/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>Async orchestration: <code>defineAsyncComponent</code>, async <code>setup()</code>, nested suspense boundaries, fallbacks on remount — all running on the native tree.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Vue coverage · 7/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">&lt;Transition&gt;</code></h2>
+        <span class="ver-badge">0.2.0</span>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;Transition</span> <span class="code-attr">name</span>=<span class="code-str">"fade"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-if</span>=<span class="code-str">"shown"</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;/Transition&gt;</span>
+
+<span class="code-tag">&lt;TransitionGroup</span> <span class="code-attr">name</span>=<span class="code-str">"list"</span> <span class="code-attr">tag</span>=<span class="code-str">"view"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-for</span>=<span class="code-str">"it in items"</span> <span class="code-attr">:key</span>=<span class="code-str">"it.id"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;/TransitionGroup&gt;</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="transition/dist/transition.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><code>&lt;Transition&gt;</code> and <code>&lt;TransitionGroup&gt;</code>, driven by CSS animation on the <strong>native compositor</strong> — enter/leave, list moves, the classes you already know.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Vue coverage · 8/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><span class="brand-text">CSS</span> features</h2>
+        <span class="ver-badge">0.3.0</span>
+      </div>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
@@ -541,70 +592,155 @@
       </div>
     </div>
     <aside class="notes">
-      <p>Real CSS is a Lynx superpower — so Vue's SFC CSS features land whole: plain <code>&lt;style&gt;</code>, <code>&lt;style scoped&gt;</code> (cssId bridge), CSS modules, imported stylesheets, and <code>v-bind()</code> in CSS driving native styles off reactive state. Credit @KealanAU for the Lynx-native <code>useCssVars</code> / <code>v-bind()</code> path (#127) — not the whole CSS stack.</p>
+      <p>Real CSS is a Lynx superpower — so Vue's SFC CSS features land whole: plain <code>&lt;style&gt;</code>, <code>&lt;style scoped&gt;</code> (cssId bridge in <code>0.4.0</code>), CSS modules, imported stylesheets, and <code>v-bind()</code> in CSS (<code>0.3.0</code>) driving native styles off reactive state. Credit @KealanAU for the Lynx-native <code>useCssVars</code> / <code>v-bind()</code> path (#127) — not the whole CSS stack.</p>
     </aside>
   </section>
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 8/9</span>
-      <h2 class="demo__title"><code class="brand-text">&lt;Suspense&gt;</code></h2>
+      <span class="eyebrow">II · Vue coverage · 9/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title">Event <span class="brand-text">modifiers</span></h2>
+        <span class="ver-badge">0.4.0</span>
+      </div>
+      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@KealanAU</span>
+      </a>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
           <span>App.vue</span>
         </div>
-<pre><span class="code-key">const</span> Slow <span class="code-key">=</span> <span class="code-fn">defineAsyncComponent</span>(() <span class="code-key">=&gt;</span>
-  <span class="code-key">import</span>(<span class="code-str">'./SlowContent.vue'</span>))
+<pre><span class="code-com">&lt;!-- fires once, then unbinds --&gt;</span>
+<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.once</span>=<span class="code-str">"claim"</span><span class="code-tag">&gt;</span>
 
-<span class="code-tag">&lt;Suspense&gt;</span>
-  <span class="code-tag">&lt;template</span> <span class="code-attr">#default</span><span class="code-tag">&gt;</span><span class="code-tag">&lt;Slow /&gt;</span><span class="code-tag">&lt;/template&gt;</span>
-  <span class="code-tag">&lt;template</span> <span class="code-attr">#fallback</span><span class="code-tag">&gt;</span>
-    <span class="code-tag">&lt;text&gt;</span>⏳ loading…<span class="code-tag">&lt;/text&gt;</span>
-  <span class="code-tag">&lt;/template&gt;</span>
-<span class="code-tag">&lt;/Suspense&gt;</span></pre>
+<span class="code-com">&lt;!-- stops propagation --&gt;</span>
+<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.stop</span>=<span class="code-str">"inner"</span><span class="code-tag">&gt;</span>
+
+<span class="code-com">&lt;!-- ignores bubbled taps --&gt;</span>
+<span class="code-tag">&lt;view</span> <span class="code-attr">@tap.self</span>=<span class="code-str">"outer"</span><span class="code-tag">&gt;</span></pre>
       </div>
     </div>
     <div class="demo__stage">
       <div class="phone">
         <div class="phone__inner">
-          <vl-demo bundle="suspense/dist/main.web.bundle"></vl-demo>
+          <vl-demo bundle="event-modifiers/dist/main.web.bundle"></vl-demo>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p>Async orchestration: <code>defineAsyncComponent</code>, async <code>setup()</code>, nested suspense boundaries, fallbacks on remount — all running on the native tree.</p>
+      <p>Vue's event modifiers, mapped onto Lynx's event system: <code>.once</code>, <code>.stop</code>, <code>.self</code>, chained combinations — shipped by @KealanAU (#155) in <code>0.4.0</code>. The demo shows each side-by-side with its unmodified twin. (<code>.prevent</code> is a compatibility no-op — nothing to prevent natively.)</p>
     </aside>
   </section>
 
   <section class="slide demo demo--api">
     <div class="demo__body">
-      <span class="eyebrow">II · Vue coverage · 9/9</span>
-      <h2 class="demo__title"><code class="brand-text">&lt;Transition&gt;</code></h2>
+      <span class="eyebrow">II · Vue coverage · 10/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">&lt;KeepAlive&gt;</code></h2>
+        <span class="ver-badge">0.4.0</span>
+      </div>
+      <a class="gh-badge" href="https://github.com/jynxbt" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/jynxbt.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@jynxbt</span>
+      </a>
       <div class="codeframe">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
           <span>App.vue</span>
         </div>
-<pre><span class="code-tag">&lt;Transition</span> <span class="code-attr">name</span>=<span class="code-str">"fade"</span><span class="code-tag">&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">v-if</span>=<span class="code-str">"shown"</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span> <span class="code-tag">/&gt;</span>
-<span class="code-tag">&lt;/Transition&gt;</span>
+<pre><span class="code-tag">&lt;KeepAlive</span> <span class="code-attr">:include</span>=<span class="code-str">"includeList"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;component</span> <span class="code-attr">:is</span>=<span class="code-str">"active"</span> <span class="code-attr">:key</span>=<span class="code-str">"tab"</span> <span class="code-tag">/&gt;</span>
+<span class="code-tag">&lt;/KeepAlive&gt;</span>
 
-<span class="code-tag">&lt;TransitionGroup</span> <span class="code-attr">name</span>=<span class="code-str">"list"</span> <span class="code-attr">tag</span>=<span class="code-str">"view"</span><span class="code-tag">&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">v-for</span>=<span class="code-str">"it in items"</span> <span class="code-attr">:key</span>=<span class="code-str">"it.id"</span> <span class="code-tag">/&gt;</span>
-<span class="code-tag">&lt;/TransitionGroup&gt;</span></pre>
+<span class="code-com">// switch tabs — counters keep their state</span>
+<span class="code-com">// include / exclude / max all work</span></pre>
       </div>
     </div>
     <div class="demo__stage">
       <div class="phone">
         <div class="phone__inner">
-          <vl-demo bundle="transition/dist/transition.web.bundle"></vl-demo>
+          <vl-demo bundle="keep-alive/dist/main.web.bundle"></vl-demo>
         </div>
       </div>
     </div>
     <aside class="notes">
-      <p>The finale of coverage: <code>&lt;Transition&gt;</code> and <code>&lt;TransitionGroup&gt;</code>, driven by CSS animation on the <strong>native compositor</strong> — enter/leave, list moves, the classes you already know.</p>
-      <p>Nine features, nine live apps. That's the API story. Now — whole applications.</p>
+      <p>Component instance cache on a native tree — switch tabs, come back, state is still there. <code>include</code> / <code>exclude</code> / <code>max</code>, plus <code>onActivated</code> / <code>onDeactivated</code>. Shipped by @jynxbt (#153) in <code>0.4.0</code>.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Vue coverage · 11/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">v-once</code></h2>
+        <span class="ver-badge">0.4.0</span>
+      </div>
+      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@KealanAU</span>
+      </a>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;text&gt;</span>Live: {{ count }}<span class="code-tag">&lt;/text&gt;</span>
+<span class="code-tag">&lt;text</span> <span class="code-attr">v-once</span><span class="code-tag">&gt;</span>Frozen: {{ count }}<span class="code-tag">&lt;/text&gt;</span>
+
+<span class="code-com">// cache hit → zero cross-thread ops</span>
+<span class="code-com">// for that subtree on later renders</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="v-once-memo/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><code>v-once</code> freezes after the first render. On Lynx a cache hit skips the <strong>entire cross-thread op batch</strong> for that subtree — more valuable than in the browser. Verified and documented by @KealanAU (#176) in <code>0.4.0</code>. Tap Increment: live updates, frozen stays.</p>
+    </aside>
+  </section>
+
+  <section class="slide demo demo--api">
+    <div class="demo__body">
+      <span class="eyebrow">II · Vue coverage · 12/12</span>
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">v-memo</code></h2>
+        <span class="ver-badge">0.4.0</span>
+      </div>
+      <a class="gh-badge" href="https://github.com/KealanAU" target="_blank" rel="noopener noreferrer">
+        <img class="gh-badge__avatar" src="https://github.com/KealanAU.png?size=48" alt="" width="18" height="18" loading="lazy" decoding="async" />
+        <span>@KealanAU</span>
+      </a>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;view</span>
+  <span class="code-attr">v-for</span>=<span class="code-str">"item in items"</span>
+  <span class="code-attr">:key</span>=<span class="code-str">"item.id"</span>
+  <span class="code-attr">v-memo</span>=<span class="code-str">"[item.selected, item.label]"</span>
+<span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;text&gt;</span>{{ item.label }} · saw {{ count }}<span class="code-tag">&lt;/text&gt;</span>
+<span class="code-tag">&lt;/view&gt;</span>
+
+<span class="code-com">// bump count → rows skip; toggle → refresh</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage">
+      <div class="phone">
+        <div class="phone__inner">
+          <vl-demo bundle="v-once-memo/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><code>v-memo</code> skips a subtree when its deps are unchanged — same cross-thread win as <code>v-once</code>, but keyed on a dependency list. Common in <code>v-for</code> rows. <code>isMemoSame</code> export + tests from @KealanAU (#156 / #181) in <code>0.4.0</code>. Twelve features, twelve live apps. That's the API story. Now — whole applications.</p>
     </aside>
   </section>
 
@@ -1947,7 +2083,7 @@
         <span class="eyebrow" style="margin-bottom:8px">What's there</span>
         <ul class="web__list">
           <li><b>Composition API &amp; SFCs</b></li>
-          <li><b>Transition, Suspense, slots</b></li>
+          <li><b>Transition, Suspense, KeepAlive</b></li>
           <li><b>Pinia, Router, Query, Tailwind</b></li>
           <li><b>Main-Thread Script</b></li>
         </ul>
@@ -1955,7 +2091,7 @@
       <div class="stack-y gap-sm">
         <span class="eyebrow" style="margin-bottom:8px">What's open</span>
         <ul class="web__list">
-          <li><b>KeepAlive, Teleport</b></li>
+          <li><b>Teleport example &amp; polish</b></li>
           <li><b>View pager &amp; more gestures</b></li>
           <li><b>Vue DevTools integration</b></li>
           <li><b>The ecosystem you'd port</b></li>
