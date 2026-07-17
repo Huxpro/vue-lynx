@@ -26,6 +26,8 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { buildApps, bundleSizes } from './build.mjs';
+import { resolveChromium } from './chromium.mjs';
+import { ARCHITECTURES } from './matrix.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -41,9 +43,11 @@ const { values: args } = parseArgs({
     smoke: { type: 'boolean', default: false },
     storms: { type: 'boolean', default: false },
     'storm-reps': { type: 'string', default: '2' },
+    'storm-sizes': { type: 'string', default: '' },
     modes: { type: 'string', default: 'react,vdom,vapor' },
     headed: { type: 'boolean', default: false },
     port: { type: 'string', default: '8319' },
+    label: { type: 'string', default: '' },
   },
 });
 const LOADS = Number(args.loads);
@@ -53,17 +57,12 @@ const STARTUP_COUNT = Number(args['startup-count']);
 const FRESH_COUNT = Number(args['fresh-count']);
 const STORM_REPS = Number(args['storm-reps']);
 const PORT = Number(args.port);
+const RESULT_LABEL = args.label;
 
-// Mode → bundle dist dir (relative to apps/). react-naive drops the manual
-// memo/useCallback optimizations; react-compiler is the naive source
-// auto-memoized by babel-plugin-react-compiler.
-const APP_DIST = {
-  react: 'ui-react/dist',
-  'react-naive': 'ui-react/dist-naive',
-  'react-compiler': 'ui-react/dist-compiler',
-  vdom: 'ui-vdom/dist',
-  vapor: 'ui-vapor/dist',
-};
+// Mode → bundle dist dir (relative to apps/). Includes unified IFR cells.
+const APP_DIST = Object.fromEntries(
+  ARCHITECTURES.map((a) => [a.id, a.tableDist]),
+);
 const MODES = args.modes.split(',').map((m) => m.trim()).filter(Boolean);
 for (const m of MODES) {
   if (!APP_DIST[m]) throw new Error(`unknown mode: ${m}`);
@@ -348,7 +347,7 @@ async function launchBrowser() {
   const { chromium } = require('playwright-core');
   return chromium.launch({
     headless: !args.headed,
-    executablePath: '/opt/pw-browsers/chromium',
+    executablePath: resolveChromium(),
     args: [
       '--enable-precise-memory-info',
       '--disable-background-timer-throttling',
@@ -673,7 +672,7 @@ async function runFreshLoad(browser, mode) {
 
 const STORM_TIMEOUT_MS = 240000;
 
-const STORM_SIZES = {
+const ALL_STORM_SIZES = {
   '1k': { button: 'Create 1,000 rows', rows: 1000 },
   '3k': { button: 'Create 3,000 rows', rows: 3000 },
   '5k': { button: 'Create 5,000 rows', rows: 5000 },
@@ -681,6 +680,15 @@ const STORM_SIZES = {
   '20k': { button: 'Create 20,000 rows', rows: 20000 },
   '30k': { button: 'Create 30,000 rows', rows: 30000 },
 };
+const STORM_SIZE_KEYS = args['storm-sizes']
+  ? args['storm-sizes'].split(',').map((s) => s.trim()).filter(Boolean)
+  : Object.keys(ALL_STORM_SIZES);
+for (const k of STORM_SIZE_KEYS) {
+  if (!ALL_STORM_SIZES[k]) throw new Error(`unknown storm size: ${k}`);
+}
+const STORM_SIZES = Object.fromEntries(
+  STORM_SIZE_KEYS.map((k) => [k, ALL_STORM_SIZES[k]]),
+);
 
 async function runStormRep(browser, mode, sizeKey) {
   const size = STORM_SIZES[sizeKey];
@@ -850,14 +858,25 @@ async function runStormsSuite(browser) {
 
   const outDir = path.join(root, 'results');
   fs.mkdirSync(outDir, { recursive: true });
+  const stem = RESULT_LABEL
+    ? `cross-storms-${RESULT_LABEL}`
+    : 'cross-storms-latest';
   fs.writeFileSync(
-    path.join(outDir, 'cross-storms-latest.json'),
+    path.join(outDir, `${stem}.json`),
     JSON.stringify(result, null, 2),
   );
   const md = stormMarkdownReport(result);
-  fs.writeFileSync(path.join(outDir, 'cross-storms-latest.md'), md);
+  fs.writeFileSync(path.join(outDir, `${stem}.md`), md);
+  // Keep latest pointer when unlabeled, or also mirror labeled runs.
+  if (RESULT_LABEL) {
+    fs.writeFileSync(
+      path.join(outDir, 'cross-storms-latest.json'),
+      JSON.stringify(result, null, 2),
+    );
+    fs.writeFileSync(path.join(outDir, 'cross-storms-latest.md'), md);
+  }
   console.log('\n' + md);
-  console.log('[storms] wrote results/cross-storms-latest.{json,md}');
+  console.log(`[storms] wrote results/${stem}.{json,md}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -1027,17 +1046,26 @@ function markdownReport(result) {
 // ---------------------------------------------------------------------------
 
 function buildAll() {
-  buildApps({ apps: ['ui-vdom', 'ui-vapor'] });
-  const cwd = path.join(root, 'apps/ui-react');
-  const variants = [
-    ['dist', 'npx rspeedy build'],
-    ['dist-naive', 'npx rspeedy build --config lynx.naive.config.ts'],
-    ['dist-compiler', 'npx rspeedy build --config lynx.compiler.config.ts'],
-  ];
-  for (const [dist, cmd] of variants) {
-    fs.rmSync(path.join(cwd, dist), { recursive: true, force: true });
-    console.log(`[bench] building apps/ui-react ${dist} (production)…`);
-    execSync(cmd, { cwd, stdio: 'inherit', env: { ...process.env, NODE_ENV: 'production' } });
+  // Build via the unified matrix builder so dist layout matches ARCHITECTURES
+  // (including IFR cells: dist-ifr / dist-ifr-et).
+  const vueModes = MODES.filter((m) => !m.startsWith('react'));
+  const reactModes = MODES.filter((m) => m.startsWith('react'));
+  if (vueModes.length) {
+    execSync(
+      `node harness/build-unified.mjs --skip-react --only=${vueModes.join(',')}`,
+      {
+        cwd: root,
+        stdio: 'inherit',
+        env: { ...process.env, NODE_ENV: 'production' },
+      },
+    );
+  }
+  if (reactModes.length) {
+    execSync(`node harness/build-unified.mjs --only=${reactModes.join(',')}`, {
+      cwd: root,
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'production' },
+    });
   }
 }
 
