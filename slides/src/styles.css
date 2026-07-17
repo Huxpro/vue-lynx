@@ -2892,3 +2892,310 @@ body.is-blackout::after {
 .profilemock__badge.page { bottom: 10px; right: 8px; color: #E8B44A; border: 1px solid color-mix(in srgb, #E8B44A 50%, transparent); }
 .profilemock__badge.scroll { top: 50%; left: 8px; transform: translateY(-50%); color: #E8B44A; border: 1px solid color-mix(in srgb, #E8B44A 45%, transparent); }
 .profilemock__tabwrap { position: relative; }
+
+/* =========================================================
+   Epilogue — the weave layer & fabric-chapter components.
+   The canvas (mounted by src/weave.js) sits UNDER the slides
+   inside the frame; slides opt in with data-weave="…".
+   ========================================================= */
+.weave-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.deck.overview .weave-canvas { display: none; }
+
+/* Serif caption floating over the weave. */
+.weave-kicker {
+  position: absolute;
+  left: 50%;
+  top: 9cqh;
+  transform: translateX(-50%);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(30px, 3.6cqw, 52px);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 0 18px var(--paper), 0 0 6px var(--paper);
+  z-index: 2;
+}
+.weave-kicker--bottom { top: auto; bottom: 9cqh; }
+
+/* Thread-bundle label — a mono tag with a glowing dot, positioned
+   on the lane fractions mirrored from weave.js. */
+.wlab {
+  position: absolute;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: clamp(12px, 1.15cqw, 15px);
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--c, #5dd5a8) 78%, var(--ink));
+  text-shadow: 0 0 12px var(--paper), 0 0 4px var(--paper);
+  white-space: nowrap;
+  z-index: 2;
+}
+.wlab i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c, #5dd5a8);
+  box-shadow: 0 0 10px var(--c, #5dd5a8);
+}
+.wlab--soft { color: var(--ink-mute); }
+
+/* The loom itself — the Lynx mark at the waist. Ink-colored (black
+   or white with the theme), with a paper halo so threads read as
+   passing *through* it. */
+.wlynx {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(56px, 6.4cqw, 84px);
+  color: var(--ink);
+  filter: drop-shadow(0 0 20px color-mix(in srgb, var(--brand-teal) 45%, transparent));
+  z-index: 2;
+}
+.wlynx::before {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--paper) 0 36%, transparent 72%);
+  opacity: 0.92;
+  z-index: -1;
+}
+.wlynx svg { width: 100%; height: auto; display: block; fill: currentColor; }
+
+/* Weave slides own the full stage — labels position against the
+   frame edges, not the text padding. */
+.slide.weave { padding: 0; }
+
+/* Static concept tiles — the flex sibling of the absolutely-
+   positioned .fb, for rows/grids that need no diagram geometry. */
+.tiles {
+  display: flex;
+  gap: clamp(14px, 1.6cqw, 22px);
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: clamp(14px, 2cqh, 20px) clamp(20px, 2.4cqw, 30px);
+  border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--c, #5dd5a8) 55%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 8%, transparent);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(17px, 1.5cqw, 22px);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.tile small {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-mute);
+}
+.tile.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
+.tilearr {
+  font-family: var(--mono);
+  font-size: clamp(15px, 1.4cqw, 19px);
+  color: var(--ink-faint);
+}
+
+/* Big serif pull-quote + mono attribution (the coda stories). */
+.wquote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(40px, 4.8cqw, 68px);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  max-width: 24ch;
+}
+.wattr {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+/* Ecosystem groups — label + chips columns (the "connections
+   compound" grid). */
+.wgrid {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: clamp(18px, 2.6cqh, 28px) clamp(32px, 4cqw, 56px);
+  text-align: left;
+}
+.wg {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wg b {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+/* Meme slot — a <vl-media> wearing this class; the missing-file
+   placeholder chrome comes from .vl-ph. */
+.meme { width: min(52cqw, 500px); }
+.meme img {
+  border-radius: var(--radius);
+  box-shadow: 0 18px 60px -22px rgba(0, 0, 0, 0.55);
+}
+
+/* The finale's struck first line. */
+.fin-dead {
+  font-family: var(--mono);
+  font-size: clamp(13px, 1.2cqw, 16px);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, #ff5468 70%, transparent);
+  text-decoration-thickness: 1.5px;
+}
+
+/* =========================================================
+   Overlay slides + media embeds (<vl-media>, see embeds.js).
+   An .overlay slide keeps its base slide rendered beneath it
+   (main.js marks the nearest non-overlay predecessor
+   `is-under`), so media reads as a layer over the same page.
+   ========================================================= */
+.slide.is-under {
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Embed frame — the demo phone chrome, de-phoned: slim dark bezel,
+   same drag grips + preset switcher (wired in embeds.js). */
+.phone--embed {
+  --phone-ar: 16 / 9;
+  --phone-w: min(62cqw, 800px);
+  --phone-h: auto;
+  padding: 3px;
+  border-radius: 14px;
+}
+.phone--embed .phone__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #0b0d10;
+}
+
+/* <vl-media> — block host; media fills the width, height follows.
+   Inside a .phone__inner it fills the frame instead. */
+vl-media {
+  display: block;
+  position: relative;
+}
+vl-media img,
+vl-media video,
+vl-media iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+}
+.phone__inner vl-media { width: 100%; height: 100%; }
+.phone__inner vl-media img,
+.phone__inner vl-media video { height: 100%; object-fit: contain; }
+.phone__inner vl-media iframe { height: 100%; background: #fff; }
+
+/* Missing-file placeholder — shows the exact path to drop the
+   asset at, so slides can be authored before media exists. */
+vl-media .vl-ph { display: none; }
+vl-media.is-missing > img,
+vl-media.is-missing > video { display: none; }
+vl-media.is-missing .vl-ph {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  width: 100%;
+  aspect-ratio: var(--ph-ar, 16 / 9);
+  border: 1.6px dashed var(--line);
+  border-radius: 12px;
+  background: var(--paper-elev);
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 14px;
+  box-sizing: border-box;
+}
+vl-media .vl-ph__kind {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-mute);
+}
+.phone__inner vl-media.is-missing .vl-ph {
+  aspect-ratio: auto;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Crop window — a fixed viewport a tall image pans inside via
+   magic move (the vibe-coding tweet reveal). */
+.crop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-elev);
+  box-shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.6);
+}
+.crop vl-media {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+
+/* Snapshot look for bare photo embeds (the coda three-up). */
+.snap {
+  padding: 6px 6px 10px;
+  background: #f4f5f7;
+  border-radius: 6px;
+  box-shadow: 0 18px 48px -16px rgba(0, 0, 0, 0.55);
+}
+.snap img { border-radius: 2px; }
+/* The polaroid card is light in both themes — the missing-file
+   placeholder must re-ink dark-on-light or it vanishes into the card. */
+.snap .vl-ph { --ph-ar: 4 / 5; }
+vl-media.snap.is-missing .vl-ph {
+  background: rgba(15, 18, 22, 0.05);
+  border-color: rgba(15, 18, 22, 0.3);
+  color: rgba(15, 18, 22, 0.5);
+}
+vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }

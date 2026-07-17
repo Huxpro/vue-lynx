@@ -109,6 +109,63 @@ logo build (React → Chrome → Lynx), the landscape columns, and the two-threa
 build on the How-it-works slides are the worked examples. One `<section class="slide">` = one step (no in-slide
 fragments), which keeps speaker-view sync and deep-links simple.
 
+## The weave layer (epilogue)
+
+The epilogue's "fabrics" visual is a single persistent canvas
+(`src/weave.js`) mounted *under* the slides inside the frame. A slide opts in
+with `data-weave="<scene>"` and the engine tweens the whole thread field
+between scenes on navigation, so adjacent weave slides read as one continuous
+magic move of the threads themselves. Scenes:
+
+| Scene | Picture |
+| ----- | ------- |
+| `fabric` / `fabric-dense` | Vue alone — glowing green threads |
+| `loom` / `loom-dim`       | Vue pinches through the Lynx mark into iOS / Android / Web |
+| `compress`                | the model's gray choice space → the bright idiom |
+| `panorama-left`           | the whole web ecosystem weaves toward the waist |
+| `panorama`                | …and fans out into every platform |
+| `finale`                  | the panorama, dimmed to a backdrop |
+
+Lane fractions in `weave.js` are mirrored by the `.wlab` label positions in
+`index.html` (canvas fraction `0.16` ↔ `top:16cqh`) — keep them in sync when
+moving bundles. The Lynx mark at the waist is DOM (`.wlynx`, ink-colored so it
+flips black/white with the theme) and participates in magic move via
+`data-flip="weave-lynx"`. Reduced motion and embed previews render a single
+static frame instead of animating.
+
+## Overlay slides & media embeds
+
+An **overlay slide** (`<section class="slide overlay">`) keeps the nearest
+previous non-overlay slide rendered beneath it (`is-under`), so a media layer
+reads as "the same page, plus a layer" instead of a hard cut — consecutive
+overlays share one base, and an overlay inherits the base's `data-weave`
+unless it declares its own. To "dismiss" an overlay run back into the base
+look, follow it with a duplicate of the base slide (the deck's usual
+copy-the-markup idiom), which also restores magic-move continuity into the
+next slide.
+
+**`<vl-media src="…">`** (`src/embeds.js`) embeds a video, image, or iframe
+(kind inferred from the URL, or forced with `kind=`):
+
+- **Videos** reset on every slide change (pause + rewind — audio can never
+  leak across pages) and autoplay when their slide becomes current; opt out
+  with `data-autoplay="false"`, and use `unmuted` / `no-loop` / `controls`
+  to override the muted-loop defaults.
+- **Iframes** mount when their slide is one step away and unload two steps
+  out, so a heavy embedded page (e.g. the live PWA-talk deck) never taxes
+  the rest of the talk.
+- **Missing files** render as a labeled placeholder showing the exact path to
+  drop the asset at — author slides first, add media later. Expected files
+  are listed in `public/media/embeds/README.md`.
+
+For a **resizable** frame, wrap the `<vl-media>` in
+`.phone.phone--embed.no-deck-scroll` with `data-embed="wide|portrait|browser"`
+— it gets the demo mockups' drag grips + preset switcher (embed-shaped
+presets), and `data-w`/`data-h` seed a per-slide starting size (used by the
+cascade sequence). The tweet-reveal pair shows the other trick: a fixed
+`.crop` window whose inner `vl-media` carries `data-flip`, so magic move
+pans/zooms the image inside the crop.
+
 ## Deploy
 
 Two deploy shapes, chosen per branch by `website/vercel.json`:

@@ -1,6 +1,7 @@
 import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
+import { initWeave } from './weave.js';
 import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
 import { readFlags, expandChrome } from './framework/flags.js';
 import { initCommand } from './framework/command.js';
@@ -9,6 +10,7 @@ import { createStage } from './framework/stage.js';
 import { createMagicMove } from './framework/magic-move.js';
 import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
 import { registerVlDemo } from './demo.js';
+import { initEmbeds } from './embeds.js';
 import { initQRCodes } from './qrcodes.js';
 
 // =========================================================
@@ -52,6 +54,32 @@ const REDUCED_MOTION =
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const mm = createMagicMove({
   deck,
+  getScale: stage.getScale,
+  reducedMotion: REDUCED_MOTION,
+  embed: embedMode,
+});
+
+// The epilogue's "fabrics" canvas — one persistent layer under the
+// slides; scenes are declared per-slide via data-weave and tweened
+// across navigations (see src/weave.js). Embed iframes render a
+// single static frame so speaker previews stay cheap.
+const weave = initWeave(frame, {
+  getScale: stage.getScale,
+  reducedMotion: REDUCED_MOTION,
+  embed: embedMode,
+});
+document.addEventListener('deck:change', (e) => {
+  // Overlay slides float above their base slide (see setSlide) — unless
+  // they declare their own scene, they inherit the base's weave so the
+  // canvas doesn't blink out under a media layer.
+  let i = e.detail.index;
+  while (i > 0 && slides[i].classList.contains('overlay') && !slides[i].dataset.weave) i--;
+  weave.setScene(slides[i]?.dataset.weave || null);
+});
+
+// Media embeds — <vl-media> lifecycle (video reset/autoplay, iframe
+// proximity mount/unload) + resizable .phone--embed frames.
+initEmbeds({
   getScale: stage.getScale,
   reducedMotion: REDUCED_MOTION,
   embed: embedMode,
@@ -142,9 +170,19 @@ function setSlide(index, opts = {}) {
   const cut = flags.transition === 'cut';
   if (cut) deck.classList.add('is-cut'); // disables .slide transition for this change
 
+  // Overlay slides keep their base slide visible beneath them: the
+  // nearest previous non-overlay slide stays rendered (`is-under`), so
+  // a media layer reads as "the same page, plus a layer" instead of a
+  // hard cut. Consecutive overlays share one base.
+  let under = -1;
+  if (slides[current]?.classList.contains('overlay')) {
+    under = current - 1;
+    while (under >= 0 && slides[under].classList.contains('overlay')) under--;
+  }
   slides.forEach((s, i) => {
     s.classList.toggle('is-active', i === current);
-    s.classList.toggle('is-prev', i < current);
+    s.classList.toggle('is-under', i === under);
+    s.classList.toggle('is-prev', i < current && i !== under);
   });
   applyChromeAndBg(flags);
 
@@ -319,6 +357,42 @@ if (!embedMode) {
 }
 
 // =========================================================
+// Demo focus containment — live demos are real apps, and some
+// autofocus an input the moment they load (TodoMVC), which
+// would silently swallow the arrow keys via the .phone guard
+// below. Policy: only a deliberate pointer/touch INTO a demo
+// hands it the keyboard. Programmatic focus grabs are blurred
+// on the spot, navigation reclaims focus on every slide
+// change, and clicking anywhere outside a demo takes the
+// keyboard back.
+// =========================================================
+let demoEngaged = false;
+const inDemo = (el) => !!el?.closest?.('.phone, .no-deck-scroll');
+
+if (!embedMode) {
+  document.addEventListener('pointerdown', (e) => {
+    const inside = inDemo(e.target);
+    // Clicking outside a demo also releases any focus it still holds,
+    // so arrows never double-drive a demo input AND the deck.
+    if (!inside && inDemo(document.activeElement)) {
+      document.activeElement.blur?.();
+    }
+    demoEngaged = inside;
+  }, true);
+
+  document.addEventListener('focusin', (e) => {
+    // Focus landed inside a demo without a user gesture → an autofocus
+    // grab. Refuse it; the deck keeps the keyboard.
+    if (inDemo(e.target) && !demoEngaged) e.target.blur?.();
+  });
+
+  document.addEventListener('deck:change', () => {
+    demoEngaged = false;
+    if (inDemo(document.activeElement)) document.activeElement.blur?.();
+  });
+}
+
+// =========================================================
 // Keyboard
 // =========================================================
 // In embed mode the deck is read-only — the iframe is just a preview surface
@@ -328,8 +402,10 @@ if (!embedMode) {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches?.('input, textarea, [contenteditable]')) return;
     // Typing inside a live demo (native inputs live in the lynx-view shadow, so
-    // the event retargets to the .phone host) must not drive the deck.
-    if (e.target?.closest?.('.phone, .no-deck-scroll')) return;
+    // the event retargets to the .phone host) must not drive the deck — but
+    // only when the user deliberately clicked into the demo (demoEngaged).
+    // An app that autofocused itself doesn't get to eat the arrow keys.
+    if (demoEngaged && e.target?.closest?.('.phone, .no-deck-scroll')) return;
     if (document.querySelector('.cmdk')) return; // command palette owns the keyboard
 
     // Only slide navigation is bound to bare keys. Every discrete action
@@ -449,7 +525,9 @@ initQRCodes();
 // framework/device.js. The play page reuses the same component.
 function initPhoneControls() {
   if (embedMode) return;
-  document.querySelectorAll('.phone').forEach((phone) =>
+  // (embed frames wire their own controls in initEmbeds, with
+  // embed-shaped presets — skip them here)
+  document.querySelectorAll('.phone:not(.phone--embed)').forEach((phone) =>
     attachDeviceControls(phone, {
       getScale: stage.getScale,
       presets: DECK_PRESETS,
@@ -534,6 +612,7 @@ const I18N_SELECTOR = [
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
   '.flane__label', '.fcenter', '.lgtag',
   '.demo__caption', '.videopair figcaption',
+  '.tile', '.wlab', '.wattr', '.wg b',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
 let i18nEls = [];

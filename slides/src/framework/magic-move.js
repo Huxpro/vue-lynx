@@ -73,6 +73,11 @@ export function createMagicMove({ deck, getScale, reducedMotion = false, embed =
       // were measured with the own transform applied, so prepending the
       // delta and releasing back to the own matrix is exact.
       p.own = cs.transform === 'none' ? '' : cs.transform;
+      // The own transform may live in the element's INLINE style (the embed
+      // frames center with an inline translate(-50%,-50%)) — the morph is
+      // about to overwrite that inline slot, so remember it and put it back
+      // at cleanup. Clearing to '' only restores class-based transforms.
+      p.prevInline = toEl.style.transform;
       toEl.style.transformOrigin = 'top left';
       toEl.style.transition = 'none';
       toEl.style.transform =
@@ -94,9 +99,9 @@ export function createMagicMove({ deck, getScale, reducedMotion = false, embed =
     // 6. Cleanup.
     const cleanup = () => {
       clearTimeout(timer);
-      pairs.forEach(({ toEl, promoted }) => {
+      pairs.forEach(({ toEl, promoted, prevInline }) => {
         toEl.classList.remove('is-flipping');
-        toEl.style.transform = '';
+        toEl.style.transform = prevInline || '';
         toEl.style.transition = '';
         toEl.style.transformOrigin = '';
         if (promoted) toEl.style.position = '';
