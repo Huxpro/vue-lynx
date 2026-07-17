@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { buildApps, bundleSizes } from './build.mjs';
+import { resolveChromium } from './browser.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -348,7 +349,7 @@ async function launchBrowser() {
   const { chromium } = require('playwright-core');
   return chromium.launch({
     headless: !args.headed,
-    executablePath: '/opt/pw-browsers/chromium',
+    executablePath: resolveChromium(),
     args: [
       '--enable-precise-memory-info',
       '--disable-background-timer-throttling',
@@ -1166,11 +1167,15 @@ async function main() {
     console.log('[bench] wrote results/cross-latest.json + results/cross-latest.md');
   } finally {
     await browser.close();
-    server.close();
+    server.closeAllConnections?.();
+    await new Promise((resolve) => server.close(resolve));
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main().then(
+  () => process.exit(0),
+  (err) => {
+    console.error(err);
+    process.exit(1);
+  },
+);

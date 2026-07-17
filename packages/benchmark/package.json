@@ -10,7 +10,11 @@
     "bench:quick": "node harness/run.mjs --count 5 --startup-count 2",
     "bench:cross": "node harness/cross.mjs",
     "bench:cross:quick": "node harness/cross.mjs --loads 1 --count 5",
-    "bench:storms": "node harness/cross.mjs --storms"
+    "bench:storms": "node harness/cross.mjs --storms",
+    "bench:unified": "node harness/unified.mjs",
+    "bench:unified:quick": "node harness/unified.mjs --run --profile quick",
+    "bench:unified:all": "node harness/unified.mjs --run --profile standard",
+    "test:unified": "node --test harness/unified.test.mjs"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
