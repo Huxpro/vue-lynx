@@ -34,8 +34,6 @@ export const ZH = {
   'no Web — low ROI': '不含 Web',
   'not native enough': '不够 Native',
   'out-of-tree': '树外维护',
-  'native UI primitives': '原生 UI primitive',
-  'custom rendering engine': '自定义渲染引擎',
   'open — an extension point': '<i></i>开',
   'half-open': '<i class="part"></i>半开',
   'welded shut': '<i class="seal"></i>焊死',
