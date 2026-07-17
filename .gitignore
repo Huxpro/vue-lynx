@@ -1,11 +1,15 @@
 node_modules/
 dist/
+.rslib/
 *.tsbuildinfo
 .rspeedy/
 packages/upstream-tests/core/
 *.log
 .DS_Store
 website/docs/guide/api/
+# generated zh mirrors from generate-api.ts (hand-written zh index.mdx
+# files for vue-lynx/testing-library are already tracked and unaffected)
+website/docs/zh/guide/api/
 website/api-sidebar.json
 .vercel
 .claude/

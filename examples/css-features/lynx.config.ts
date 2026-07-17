@@ -20,6 +20,9 @@ export default defineConfig({
   },
   plugins: [
     pluginVueLynx({
+      // IFR: render the first screen on the main thread during
+      // loadTemplate, then hydrate when the background thread boots.
+      enableIFR: true,
       optionsApi: false,
       enableCSSInlineVariables: true,
       // Deliberately false: the example must prove that CSS custom property

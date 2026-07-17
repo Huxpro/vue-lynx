@@ -4,6 +4,9 @@
 
 import { queuePostFlushCb } from '@vue/runtime-core';
 
+import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
+
+import { isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
 
 /**
@@ -50,6 +53,49 @@ let scheduled = false;
 let pendingAckResolve: (() => void) | null = null;
 let pendingAckPromise: Promise<void> | null = null;
 
+// Some Lynx builds apply callLepusMethod successfully but do not invoke its
+// callback. Never let nextTick()/Transition wait forever in that case.
+const ACK_FALLBACK_MS = 50;
+
+// Latched to true the first time the engine invokes a vuePatchUpdate callback.
+// A healthy engine acks every batch, so once one real ack is observed the
+// fallback timer is no longer armed — `nextTick()` keeps its strict
+// "ops applied on the main thread" guarantee even when a large batch takes
+// longer than ACK_FALLBACK_MS to apply.  Only engines that never invoke the
+// callback keep racing the timer.
+let engineAckObserved = false;
+let warnedAckFallback = false;
+
+/** @internal Exported for deterministic fallback timing tests. */
+export function createFlushAck(
+  timeoutMs: number | null = ACK_FALLBACK_MS,
+  onTimeout?: () => void,
+): { promise: Promise<void>; resolve: () => void } {
+  let fulfill!: () => void;
+  let settled = false;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const promise = new Promise<void>((resolve) => {
+    fulfill = resolve;
+  });
+  const resolve = () => {
+    if (settled) return;
+    settled = true;
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    fulfill();
+  };
+  if (timeoutMs !== null) {
+    timer = setTimeout(() => {
+      if (settled) return;
+      onTimeout?.();
+      resolve();
+    }, timeoutMs);
+  }
+  return { promise, resolve };
+}
+
 /**
  * Returns a promise that resolves once the most recent ops batch has been
  * applied on the main thread.  If no ops are in flight, resolves immediately.
@@ -67,8 +113,11 @@ export function scheduleFlush(): void {
 /** Reset module state – for testing only. */
 export function resetFlushState(): void {
   scheduled = false;
+  pendingAckResolve?.();
   pendingAckResolve = null;
   pendingAckPromise = null;
+  engineAckObserved = false;
+  warnedAckFallback = false;
 }
 
 function doFlush(): void {
@@ -76,10 +125,48 @@ function doFlush(): void {
   const ops = takeOps();
   if (ops.length === 0) return;
 
+  // IFR main-thread render: the Vue app is running *on* the main thread, so
+  // ops are applied locally and synchronously — no cross-thread call, no ack
+  // tracking needed.  The hook is installed by vue-lynx/main-thread's IFR
+  // bootstrap (enableIFR) before user code evaluates.
+  if (isIfrMainThread()) {
+    const applyLocal = (globalThis as Record<string, unknown>)[
+      IFR_APPLY_OPS_GLOBAL
+    ] as ((ops: unknown[]) => void) | undefined;
+    if (applyLocal) {
+      applyLocal(ops);
+      return;
+    }
+  }
+
   // Create the ack promise BEFORE sending so that any `nextTick` call that
-  // resolves after this point will chain on it.
-  pendingAckPromise = new Promise<void>((resolve) => {
-    pendingAckResolve = resolve;
+  // resolves after this point will chain on it.  Once the engine has proven
+  // it invokes callbacks, drop the fallback timer entirely — resolving early
+  // on a slow-but-healthy engine would let `nextTick()` observe a main thread
+  // that has not applied the ops yet.
+  const ack = createFlushAck(
+    engineAckObserved ? null : ACK_FALLBACK_MS,
+    () => {
+      if (__DEV__ && !warnedAckFallback) {
+        warnedAckFallback = true;
+        console.warn(
+          '[vue-lynx] The engine did not acknowledge vuePatchUpdate within '
+            + `${ACK_FALLBACK_MS}ms; nextTick() resolved via the fallback timer. `
+            + 'On engines with this behavior, elements may not be materialised '
+            + 'on the main thread yet when nextTick() settles.',
+        );
+      }
+    },
+  );
+  pendingAckPromise = ack.promise;
+  pendingAckResolve = ack.resolve;
+  ack.promise.then(() => {
+    // A newer batch may already be in flight by the time an older fallback
+    // settles. Only clear the state that belongs to this acknowledgement.
+    if (pendingAckPromise === ack.promise) {
+      pendingAckResolve = null;
+      pendingAckPromise = null;
+    }
   });
 
   const app = lynx?.getNativeApp?.();
@@ -87,10 +174,10 @@ function doFlush(): void {
     'vuePatchUpdate',
     { data: JSON.stringify(ops) },
     () => {
-      // Main thread has finished applying the ops — resolve the promise.
-      pendingAckResolve?.();
-      pendingAckResolve = null;
-      pendingAckPromise = null;
+      // Main thread has finished applying the ops — resolve the promise and
+      // latch that this engine delivers callbacks.
+      engineAckObserved = true;
+      ack.resolve();
     },
   );
 }

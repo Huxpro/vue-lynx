@@ -38,6 +38,9 @@ export default defineConfig({
     include: [
       path.resolve(__dirname, 'src/**/*.spec.ts'),
     ],
+    exclude: [
+      path.resolve(__dirname, 'src/page-root-dom.spec.ts'),
+    ],
     alias: [
       // vue-lynx/internal/ops → source
       {

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "jsx": "react-jsx",
+    "jsxImportSource": "@lynx-js/react",
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "strict": true
+  },
+  "include": ["src"]
+}

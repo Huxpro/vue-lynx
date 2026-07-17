@@ -17,6 +17,7 @@ import {
   pageUniqueId,
   setPageUniqueId,
 } from './element-registry.js';
+import { getTemplate } from './element-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -64,16 +65,27 @@ function createTypedElement(
   }
 }
 
-export function applyOps(ops: unknown[]): void {
+/**
+ * Apply a flat ops batch through PAPI.
+ *
+ * @param flush - Present the result with `__FlushElementTree` afterwards.
+ *   The IFR render passes `false` for batches applied synchronously inside
+ *   `renderPage`, which presents the whole frame with a single flush at the
+ *   end instead of one per batch.
+ */
+export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
 
   // Detect duplicate batch from double BG bundle evaluation.
   // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
   // ShadowElement.nextId resets to 2, producing the same element IDs.
-  // If the first CREATE op targets an ID that already exists in our elements Map,
-  // this is a duplicate batch — skip it entirely.
-  if (len >= 3 && ops[0] === OP.CREATE) {
+  // If the first CREATE/INSTANTIATE op targets an ID that already exists in
+  // our elements Map, this is a duplicate batch — skip it entirely.
+  if (
+    len >= 3
+    && (ops[0] === OP.CREATE || ops[0] === OP.INSTANTIATE_TEMPLATE)
+  ) {
     const firstId = ops[1] as number;
     if (elements.has(firstId)) {
       return;
@@ -256,6 +268,38 @@ export function applyOps(ops: unknown[]): void {
         break;
       }
 
+      case OP.INSTANTIATE_TEMPLATE: {
+        const rootId = ops[i++] as number;
+        const tplId = ops[i++] as string;
+        const holeCount = ops[i++] as number;
+        const create = getTemplate(tplId);
+        let handles: LynxElement[];
+        if (create) {
+          // The create() function builds the whole lowered subtree with
+          // straight-line PAPI calls and returns [root, hole0, hole1, …].
+          handles = create(pageUniqueId);
+        } else {
+          // Unregistered template (mismatched bundles / extraction failure).
+          // Render an empty view placeholder so the rest of the tree
+          // survives; hole ids alias the placeholder so SET ops don't crash.
+          console.error(
+            `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
+          );
+          const el = createTypedElement('view', pageUniqueId);
+          __SetCSSId([el], 0);
+          handles = [el];
+        }
+        const root = handles[0]!;
+        elements.set(rootId, root);
+        // NodesRef selector parity for the root (it is a vnode.el on the
+        // BG thread); interior nodes are anonymous by design.
+        __SetAttribute(root, `vue-ref-${rootId}`, 1);
+        for (let k = 1; k <= holeCount; k++) {
+          elements.set(rootId + k, handles[k] ?? root);
+        }
+        break;
+      }
+
       default:
         // Unknown op – skip (future-compat)
         break;
@@ -265,7 +309,7 @@ export function applyOps(ops: unknown[]): void {
   flushListUpdates();
 
   // Flush all pending PAPI changes to the native layer in one shot.
-  __FlushElementTree();
+  if (flush) __FlushElementTree();
 }
 
 /** Expose elements map so entry-main.ts can seed the page-root entry. */

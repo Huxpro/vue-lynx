@@ -83,8 +83,8 @@ Vue's [event modifiers](https://vuejs.org/guide/essentials/event-handling.html#e
 
 :::
 
-:::info Main-thread (worklet) event handlers
-Vue's modifier system does not apply to `:main-thread-bind*` handlers (e.g. `:main-thread-bindtap`). These use Lynx-native v-bind syntax and bypass Vue's v-on event pipeline entirely — the compiler never generates `onTapOnce` keys or `withModifiers()` wrappers for them. Use the native equivalents instead: `:main-thread-catchtap` for propagation stopping, and inline worklet logic for `.once`/`.self` behaviour.
+:::info Main Thread Script event handlers
+Vue's modifier system does not apply to `:main-thread-bind*` handlers (e.g. `:main-thread-bindtap`). These use Lynx-native v-bind syntax and bypass Vue's v-on event pipeline entirely — the compiler never generates `onTapOnce` keys or `withModifiers()` wrappers for them. Use the native equivalents instead: `:main-thread-catchtap` for propagation stopping, and inline Main Thread Script logic for `.once`/`.self` behaviour.
 :::
 
 The example below demonstrates `.once`, `.stop`, and `.self`. The `.prevent` card explains why no interactive demo is shown for that modifier:
@@ -121,7 +121,11 @@ The example below provides a reactive `theme` ref and a static `appName` string 
 
 ## Suspense
 
-Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for lazy-loading.
+Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays fallback content while waiting for async components to resolve. On Lynx, `<Suspense>` works with both async `setup()` (top-level `await` in `<script setup>`) and `defineAsyncComponent` for deferred loading.
+
+:::tip Code-splitting
+`defineAsyncComponent(() => import('./X.vue'))` emits webpack async chunks that need Lynx's lazy-bundle runtime (`lynx.requireModuleAsync` / `lynx.loadLazyBundle`). Those APIs are not available in Lynx Web Preview, so the docs example uses delayed promises over statically imported components instead — the Suspense fallback path is the same.
+:::
 
 <Go
   example="suspense"
@@ -133,8 +137,10 @@ Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays f
 
 Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
 
-:::warning
-`<Transition>` and `<TransitionGroup>` are **experimental**. Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable.
+Since [#248](https://github.com/Huxpro/vue-lynx/issues/248) (v0.5), transitions are no longer experimental. Vue Lynx follows Vue's persisted transition behavior for `v-show`: enter and leave hooks run on every visibility change, and `display: none` is applied only after the leave animation finishes. This makes patterns such as drawers, sheets, popovers, and other state-preserving overlays behave consistently with official Vue on both Web and native Lynx.
+
+:::info Lynx-specific limitations
+Always pass an explicit `:duration` prop — `getComputedStyle()` is unavailable from the background thread. Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable. Enter and leave transitions are supported.
 :::
 
 <Go
@@ -170,42 +176,47 @@ The example below uses `defineComponent` with `data()`, `computed`, `watch`, `me
   defaultFile="src/App.vue"
 />
 
-## v-memo
+## v-once / v-memo
 
-[`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) skips a subtree re-render when its dependency array hasn't changed. It works in Vue Lynx without any configuration — the SFC template compiler already emits the correct `withMemo()` calls, and the runtime bails out before the patcher runs.
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) and [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) work in Vue Lynx without any configuration. On Lynx a cache hit skips the whole cross-thread op batch for that subtree — prefer `v-once` for never-changing content, and `v-memo` when a subtree should update only for a short dependency list (common in `v-for` rows).
 
-In Lynx, `v-memo` is more impactful than in the browser because a cache hit eliminates the entire cross-thread op batch, not just DOM diffing. When deps are unchanged:
+<Go
+  example="v-once-memo"
+  defaultFile="src/App.vue"
+/>
 
-- The VNode patcher short-circuits (same VNode object reference).
-- No `patchProp` calls are made, so no ops enter the buffer.
-- `doFlush` sees an empty buffer and skips `callLepusMethod` entirely — the main thread is never contacted for that subtree.
+For render functions, Vue's `withMemo` helper (what the compiler emits for [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo)) is re-exported from `vue-lynx`.
 
-The primary use case is `v-for` lists where only some items change on each update:
+## Teleport
+
+Vue's [`<Teleport>`](https://vuejs.org/guide/built-ins/teleport.html) moves a template fragment to a different place in the UI tree. Vue Lynx supports it for `to="#id"` string selectors via a background-thread `idRegistry` lookup — the same pattern as a modal rendered at the page root while its trigger lives deeper in the component tree.
+
+:::warning Caveats
+Direct element refs and non-ID selectors (e.g. `to=".class"` or `to="body"`) are not yet supported. Give the destination an `id` and target it with `to="#that-id"`.
+
+The target element must already exist when `<Teleport>` mounts — place the `id` host earlier in the tree than the `<Teleport>` (or outside the component that owns it). Vue cannot resolve a target that is created by the same render as the teleport.
+:::
+
+The example below shows a modal teleported to `#overlay-root`, plus reactive content with the `disabled` prop:
+
+<Go
+  example="teleport"
+  defaultFile="src/App.vue"
+/>
+
+## The `<page>` Top-Level Node
+
+Every Lynx screen has one native [`<page>`](https://lynxjs.org/api/elements/built-in/page) root. Vue Lynx creates it automatically; write an explicit `<page>` only when you need to bind a class, style, event, or ref to the root:
 
 ```vue
-<list-item
-  v-for="item in list"
-  :key="item.id"
-  v-memo="[item.selected, item.label]"
->
-  <!-- Only re-renders when selected or label changes -->
-</list-item>
+<template>
+  <page class="app" :style="pageStyle" @tap="onPageTap">
+    <view>...</view>
+  </page>
+</template>
 ```
 
-For render functions written in JavaScript, `withMemo` is exported directly from `vue-lynx`:
-
-```ts
-import { defineComponent, h, ref } from 'vue'
-import { withMemo } from 'vue-lynx'
-
-export default defineComponent({
-  setup() {
-    const dep = ref('')
-    const cache: unknown[] = [] // per-instance, mirrors SFC _cache
-    return () => withMemo([dep.value], () => h('view', { content: dep.value }), cache, 0)
-  },
-})
-```
+An explicit `<page>` compiles to a transparent built-in component that applies attributes to the existing native page — it does not create a second one. Use at most one per screen, as the outermost element. Prefer Lynx Engine **3.8.1+** when using an explicit `<page>`.
 
 ## Unsupported Features
 
@@ -213,5 +224,5 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<Teleport>` | Requires `querySelector` to resolve string targets, unavailable in the dual-thread architecture | Conditional rendering at the target location |
 | `<Transition>` auto-duration | `getComputedStyle()` is unavailable on the background thread | Always pass an explicit `:duration` prop |
+| `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |

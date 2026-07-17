@@ -2,6 +2,12 @@
 
 This is a Vue Lynx project bootstrapped with `create-vue-lynx`.
 
+## IDE Setup
+
+This project is pre-configured for [Vue Language Features (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.volar). VS Code will prompt you to install it automatically.
+
+Volar provides prop completions, type checking, and Lynx-specific diagnostics for `.vue` files.
+
 ## Getting Started
 
 First, install the dependencies:

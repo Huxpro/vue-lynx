@@ -12,4 +12,8 @@ app.use(router);
 
 router.push('/');
 
+// Mount on both threads. IFR paints the chrome (header / nav / loading
+// shell); network queries are gated off during the main-thread pass
+// (see pages/* — `enabled: !isIfrMainThread()`), so the first frame stays
+// deterministic without fetch. Background mount hydrates and then fetches.
 app.mount();

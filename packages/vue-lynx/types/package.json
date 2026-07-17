@@ -7,7 +7,9 @@
   "type": "module",
   "scripts": {
     "build": "rslib build",
-    "dev": "rslib build --watch"
+    "dev": "rslib build --watch",
+    "generate:native-tags": "node scripts/generate-native-tags.mjs",
+    "test:types": "tsc -p tsconfig.type-tests.json --noEmit"
   },
   "dependencies": {
     "@lynx-js/types": "workspace:*"

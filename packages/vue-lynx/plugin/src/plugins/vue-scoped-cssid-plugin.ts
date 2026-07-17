@@ -2,6 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { scopeIdToCssId } from 'vue-lynx/internal/ops';
+
 const PLUGIN_NAME = 'lynx:vue-scoped-cssid';
 
 function extractCssIdFromQuery(query: string): number | null {
@@ -9,8 +11,7 @@ function extractCssIdFromQuery(query: string): number | null {
   if (query.includes('cssId=')) return null;
   const match = query.match(/[?&]id=([a-f0-9]+)/);
   if (!match) return null;
-  // Mask to int32 positive range — Lynx engine uses int32 for cssId
-  return Number.parseInt(match[1], 16) & 0x7fffffff;
+  return scopeIdToCssId(match[1]);
 }
 
 export class VueScopedCSSIdPlugin {

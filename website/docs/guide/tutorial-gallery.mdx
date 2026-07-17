@@ -330,20 +330,20 @@ The biggest feature of Lynx is its dual-thread architecture. You can find a more
 
 ## A More Responsive Scrollbar
 
-To optimize the performance of the scrollbar, we need to introduce [Main Thread Script (MTS)](/guide/main-thread-script) to [handle events on the main thread](https://lynxjs.org/next/guide/interaction/event-handling.html#main-thread-event-processing), migrating the adjustments we made in the previous step for the scrollbar's height and position from the background thread to the main thread.
+To optimize the performance of the scrollbar, we need to introduce [Main Thread Script](/guide/main-thread-script) to [handle events on the main thread](https://lynxjs.org/next/guide/interaction/event-handling.html#main-thread-event-processing), migrating the adjustments we made in the previous step for the scrollbar's height and position from the background thread to the main thread.
 
 To let you see the comparison more clearly, we keep both scrollbars:
 
 <Go example="gallery" defaultFile="src/GalleryScrollbarCompare/Gallery.vue" entry="src/GalleryScrollbarCompare" defaultEntryName="GalleryScrollbarCompare" />
 
-The MTS scrollbar uses `:main-thread-ref` to bind a `MainThreadRef` to the element, allowing the Main Thread to directly manipulate it without any background thread round-trips.
+The Main Thread Script scrollbar uses `:main-thread-ref` to bind a `MainThreadRef` to the element, allowing the Main Thread to directly manipulate it without any background thread round-trips.
 
 Now you should be able to see that the scrollbar on the left (darkkhaki), controlled with main thread scripting, is smoother and more responsive compared to the scrollbar on the right that we implemented earlier. If you encounter issues in other UIs where updates need to happen immediately, try this method.
 
-Key Vue concepts for MTS:
+Key Vue concepts for Main Thread Script:
 
 - `useMainThreadRef(null)` — Creates a ref that can be resolved on the Main Thread
-- `:main-thread-bindscroll="ctx"` — Binds a worklet handler to the scroll event (runs on Main Thread, zero thread crossings)
+- `:main-thread-bindscroll="ctx"` — Binds a Main Thread Script handler to the scroll event (runs on Main Thread, zero thread crossings)
 - `.toJSON()` — Serializes the ref for cross-thread transfer (includes the internal `_wvid` identifier)
 
 ## Wrapping Up
@@ -368,8 +368,8 @@ Congratulations! You have successfully created a product gallery page! Throughou
 | List             | `{arr.map(x => <el key={x} />)}`     | `<el v-for="x in arr" :key="x" />` |
 | Tap event        | `bindtap={handler}`                  | `@tap="handler"`                   |
 | Scroll event     | `bindscroll={handler}`               | `@scroll="handler"`                |
-| MTS scroll       | `main-thread:bindscroll={fn}`        | `:main-thread-bindscroll="ctx"`    |
-| MTS ref          | `main-thread:ref={ref}`              | `:main-thread-ref="ref"`           |
+| Main Thread Script scroll | `main-thread:bindscroll={fn}`        | `:main-thread-bindscroll="ctx"`    |
+| Main Thread Script ref    | `main-thread:ref={ref}`              | `:main-thread-ref="ref"`           |
 | MT ref hook      | `useMainThreadRef(null)`             | `useMainThreadRef(null)`           |
 | Expose to parent | `forwardRef` + `useImperativeHandle` | `defineExpose({ method })`         |
 | Props            | `function Comp(props: { x: T })`     | `defineProps<{ x: T }>()`          |
@@ -398,4 +398,4 @@ Then open each bundle in LynxExplorer:
 | `GalleryAutoScroll`        | `GalleryAutoScroll.lynx.bundle`        | Auto-scrolling gallery           |
 | `GalleryScrollbar`         | `GalleryScrollbar.lynx.bundle`         | Gallery + BG Thread scrollbar    |
 | `GalleryScrollbarCompare` | `GalleryScrollbarCompare.lynx.bundle` | BG vs MT scrollbar comparison    |
-| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | Final gallery with MTS scrollbar |
+| `GalleryComplete`          | `GalleryComplete.lynx.bundle`          | Final gallery with Main Thread Script scrollbar |

@@ -4,19 +4,19 @@
 
 This package runs the official `vuejs/core` test suites against our **ShadowElement-backed custom renderer**, validating that our linked-list tree implementation satisfies Vue's renderer contract. Source: `vuejs/core` v3.5.12, pinned via git submodule at `core/`.
 
-**Total: 975 tests across 50 suites -- 856 pass, 119 skip, 0 fail**
+**Total: 1013 tests across 51 suites -- 882 pass, 131 skip, 0 fail**
 
 | Config                                         | Suites | Pass    | Skip   | Fail  |
 | ---------------------------------------------- | ------ | ------- | ------ | ----- |
-| `pnpm test` (runtime-core, reactivity, shared) | 43     | 798     | 77     | 0     |
+| `pnpm test` (runtime-core, reactivity, shared) | 44     | 824     | 89     | 0     |
 | `pnpm test:dom` (runtime-dom)                  | 7      | 58      | 42     | 0     |
-| **Total**                                      | **50** | **856** | **119** | **0** |
+| **Total**                                      | **51** | **882** | **131** | **0** |
 
 ### By package
 
 | Package      | Suites | Pass | Skip |
 | ------------ | ------ | ---- | ---- |
-| runtime-core | 23     | 407  | 59   |
+| runtime-core | 24     | 433  | 71   |
 | reactivity   | 15     | 345  | 18   |
 | shared       | 5      | 46   | 0    |
 | runtime-dom  | 7      | 58   | 42   |
@@ -112,7 +112,7 @@ Since we run upstream test files from outside the `vuejs/core` monorepo, three m
 
 ## Skip Analysis
 
-119 skips break down into three categories: structurally impossible (cannot pass outside the Vue monorepo), substantive (related to platform differences or our pipeline), and vModel-specific (Lynx element/event model differences).
+131 skips break down into four categories: structurally impossible (cannot pass outside the Vue monorepo), substantive (related to platform differences or our pipeline), Teleport-specific (tests requiring DOM renderer or template compiler), and vModel-specific (Lynx element/event model differences).
 
 ### Structurally impossible (77 skips)
 
@@ -149,6 +149,16 @@ Lynx doesn't support certain Web platform capabilities. If Lynx adds support for
 | Subcategory                 | Count | Root cause                                                |
 | --------------------------- | ----- | --------------------------------------------------------- |
 | `JSON.stringify` limitation | 3     | `Symbol` values lost in cross-thread serialization        |
+
+### Teleport-specific skips (12 skips)
+
+The `components/Teleport.spec.ts` suite has 38 tests; 26 pass through our adapter, 12 are skipped.
+
+| Subcategory                        | Count | Root cause                                                 |
+| ---------------------------------- | ----- | ---------------------------------------------------------- |
+| DOM renderer (`domRender`/`createDOMApp`) | 8 | Tests mount into `document.createElement('div')` via the DOM renderer; our adapter only provides the test renderer — `parent._se` is undefined on HTMLElement |
+| Template compiler (`compile()`)    | 2     | `compile` is not available in this build (requires `vue/dist/vue.esm-bundler.js`) |
+| Name collision (`"should work"`)   | 2     | Accidentally matched by existing skiplist entry for directives suite |
 
 ### vModel-specific skips (22 skips)
 

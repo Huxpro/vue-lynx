@@ -200,6 +200,8 @@ const runtimeCoreTests = [
   'scopeId',
   // Phase 4 — KeepAlive
   'components/KeepAlive',
+  // Phase 5 — Teleport
+  'components/Teleport',
 ].map((name) => `${runtimeCoreDir}/${name}.spec.ts`);
 
 const reactivityTests = [

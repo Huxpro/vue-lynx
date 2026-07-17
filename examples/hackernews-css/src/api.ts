@@ -1,4 +1,11 @@
-const _fetch: typeof fetch = globalThis.fetch ?? fetch;
+// Resolved lazily at request time: the IFR main-thread context has no
+// fetch, and a module-scope reference would crash bundle evaluation there.
+function getFetch(): typeof fetch {
+  if (typeof globalThis.fetch === 'function') return globalThis.fetch;
+  if (typeof fetch === 'function') return fetch;
+
+  throw new Error('fetch is not available in this runtime');
+}
 
 const BASE_URL = 'https://api.hackerwebapp.com';
 
@@ -53,7 +60,7 @@ export async function fetchFeed(
   feed: string,
   page: number,
 ): Promise<FeedItem[]> {
-  const res = await _fetch(`${BASE_URL}/${feed}?page=${page}`);
+  const res = await getFetch()(`${BASE_URL}/${feed}?page=${page}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch ${feed} page ${page}`);
   }
@@ -61,7 +68,7 @@ export async function fetchFeed(
 }
 
 export async function fetchItem(id: number): Promise<ItemDetail> {
-  const res = await _fetch(`${BASE_URL}/item/${id}`);
+  const res = await getFetch()(`${BASE_URL}/item/${id}`);
   if (!res.ok) {
     throw new Error(`Failed to fetch item ${id}`);
   }
@@ -69,7 +76,7 @@ export async function fetchItem(id: number): Promise<ItemDetail> {
 }
 
 export async function fetchUser(id: string): Promise<UserData> {
-  const res = await _fetch(
+  const res = await getFetch()(
     `https://hacker-news.firebaseio.com/v0/user/${id}.json`,
   );
   if (!res.ok) {

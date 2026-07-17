@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "pnpm run build",
   "outputDirectory": "doc_build",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "ignoreCommand": "node scripts/vercel-ignore.mjs"
 }
