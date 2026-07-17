@@ -2,15 +2,20 @@
   "name": "vue-lynx-benchmark",
   "version": "0.0.0",
   "private": true,
-  "description": "VDOM vs Vapor (and cross-framework ReactLynx vs Vue) benchmarks on Lynx \u2014 port of vuejs/core packages-private/benchmark (js-framework-benchmark derived) running on Lynx for Web",
+  "description": "Unified Vue Lynx benchmark matrix (IFR × VDOM/Vapor × React) on Lynx for Web — table interaction, storms, and synthesis with ifr-bench FCP",
   "type": "module",
   "scripts": {
     "build": "node harness/build.mjs",
+    "build:unified": "node harness/build-unified.mjs",
     "bench": "node harness/run.mjs",
-    "bench:quick": "node harness/run.mjs --count 5 --startup-count 2",
+    "bench:quick": "node harness/run.mjs --startup-count 2",
     "bench:cross": "node harness/cross.mjs",
     "bench:cross:quick": "node harness/cross.mjs --loads 1 --count 5",
-    "bench:storms": "node harness/cross.mjs --storms"
+    "bench:storms": "node harness/cross.mjs --storms",
+    "bench:unified": "node harness/unified.mjs --campaign focused",
+    "bench:unified:smoke": "node harness/unified.mjs --campaign smoke",
+    "bench:unified:full": "node harness/unified.mjs --campaign full",
+    "bench:synthesize": "node harness/synthesize.mjs"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
