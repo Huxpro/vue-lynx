@@ -10,6 +10,7 @@ import { createStage } from './framework/stage.js';
 import { createMagicMove } from './framework/magic-move.js';
 import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
 import { registerVlDemo } from './demo.js';
+import { initEmbeds } from './embeds.js';
 import { initQRCodes } from './qrcodes.js';
 
 // =========================================================
@@ -68,7 +69,20 @@ const weave = initWeave(frame, {
   embed: embedMode,
 });
 document.addEventListener('deck:change', (e) => {
-  weave.setScene(slides[e.detail.index]?.dataset.weave || null);
+  // Overlay slides float above their base slide (see setSlide) — unless
+  // they declare their own scene, they inherit the base's weave so the
+  // canvas doesn't blink out under a media layer.
+  let i = e.detail.index;
+  while (i > 0 && slides[i].classList.contains('overlay') && !slides[i].dataset.weave) i--;
+  weave.setScene(slides[i]?.dataset.weave || null);
+});
+
+// Media embeds — <vl-media> lifecycle (video reset/autoplay, iframe
+// proximity mount/unload) + resizable .phone--embed frames.
+initEmbeds({
+  getScale: stage.getScale,
+  reducedMotion: REDUCED_MOTION,
+  embed: embedMode,
 });
 
 let current = 0;
@@ -156,9 +170,19 @@ function setSlide(index, opts = {}) {
   const cut = flags.transition === 'cut';
   if (cut) deck.classList.add('is-cut'); // disables .slide transition for this change
 
+  // Overlay slides keep their base slide visible beneath them: the
+  // nearest previous non-overlay slide stays rendered (`is-under`), so
+  // a media layer reads as "the same page, plus a layer" instead of a
+  // hard cut. Consecutive overlays share one base.
+  let under = -1;
+  if (slides[current]?.classList.contains('overlay')) {
+    under = current - 1;
+    while (under >= 0 && slides[under].classList.contains('overlay')) under--;
+  }
   slides.forEach((s, i) => {
     s.classList.toggle('is-active', i === current);
-    s.classList.toggle('is-prev', i < current);
+    s.classList.toggle('is-under', i === under);
+    s.classList.toggle('is-prev', i < current && i !== under);
   });
   applyChromeAndBg(flags);
 
@@ -463,7 +487,9 @@ initQRCodes();
 // framework/device.js. The play page reuses the same component.
 function initPhoneControls() {
   if (embedMode) return;
-  document.querySelectorAll('.phone').forEach((phone) =>
+  // (embed frames wire their own controls in initEmbeds, with
+  // embed-shaped presets — skip them here)
+  document.querySelectorAll('.phone:not(.phone--embed)').forEach((phone) =>
     attachDeviceControls(phone, {
       getScale: stage.getScale,
       presets: DECK_PRESETS,

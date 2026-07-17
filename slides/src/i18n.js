@@ -440,8 +440,20 @@ export const ZH_NOTES = [
   `<p><strong>冷开场 —— 屏幕上没有一个字。</strong>"Hey what's up guys —— 我是 Hux 黄玄,前 React 团队成员。"让 logo 单独停一拍。</p>`,
   // 2 Logo · +Vue
   `<p><strong>Vue 入场。</strong>React 让到一侧,Vue 落在旁边 —— 组件模型时代的两大基石。</p><p>抖包袱:React 一直没有一个自己的中文会议 —— 所以,很高兴来到 VueConf!(真心的)</p>`,
+  // 2a Overlay · 第一段视频
+  `<p><strong>第一段视频淡入,浮在两个 logo 之上</strong> —— React 岁月的影像。静音循环,人声压在上面讲;logo 在背后一直可见。</p><p>文件放到 <code>slides/public/media/embeds/02-video-1.mp4</code> —— 放进去之前这里显示带路径的占位框。</p>`,
+  // 2b Overlay · 第二段视频
+  `<p><strong>第二段视频加入</strong> —— 第一段缩进角落(定格),新的一段播放。Keynote 式的层层堆叠。</p><p>文件:<code>02-video-2.mp4</code>。</p>`,
+  // 2c Overlay · 照片
+  `<p><strong>照片落下</strong> —— 两段视频定格缩小,快照落在正中。那个时代的拼贴,完成。</p><p>文件:<code>02-image.png</code>。</p>`,
+  // 2d 回归 · 两个 logo
+  `<p><strong>图层散去</strong> —— 回到两个 logo 本身。停一拍,进入 Web 三角。</p>`,
   // 3 Logo · +Chrome(三角)
   `<p><strong>Chrome 从下方升起</strong> —— React 和 Vue 抬到上方两角,三个 logo 落成三角,Web 在底下托着它们。</p><p>"先聊 Web。"React 和 Vue 只是载体 —— 我们真正共同站立的地面,是 Web:它的开发体验、它的开放性、它的可达性。</p>`,
+  // 3a Overlay · PWA 演讲 iframe
+  `<p><strong>"先聊 Web"的实证:</strong>2016 年的 PWA 演讲,以 <em>live iframe</em> 浮在三角之上。点进框内可以翻那套 deck;在框外滚轮/按键才翻这套。角上的把手可拖拽缩放;切换器有桌面/平板/手机三档;↗ 按钮在新标签页打开。</p><p>iframe 在到达前一页时才加载、离开两页后卸载 —— 不拖累整场演讲。(需要会场网络;↗ 是 plan B。)</p>`,
+  // 3b 回归 · Web 三角
+  `<p><strong>关掉 PWA 窗口</strong> —— 三角回来,故事继续踩在这块地面上:是 Web 载着我们。</p>`,
   // 4 Logo · Lynx 取代 Chrome
   `<p><strong>Lynx 顶掉 Chrome</strong>,落在三角的同一个位置 —— 同一个位置,换了引擎。我在解的问题没变;脚下的地面变了。</p><p>快速给事实:Lynx 是字节跳动的跨平台引擎 —— TikTok 的界面就在跑 —— 而且已经开源。</p>`,
   // 5 一排候选人
@@ -594,6 +606,10 @@ export const ZH_NOTES = [
   `<p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。</p><p>然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
   // 71 Epilogue divider · 大象
   `<p><strong>重置全场。</strong>"那,用省下来的十分钟,聊聊房间里的大象。"如果 AI 什么都能做,为什么不直接 prompt 出 N 个原生应用,跳过框架、跳过跨端、跳过这一切?</p><p>语气转变:少一点产品推介,多一点自言自语。这半场讲的是 <em>why</em>,不是 <em>what</em>。</p>`,
+  // 71a Overlay · 推文上半
+  `<p><strong>推文本尊,浮在 divider 之上。</strong>2025 年 2 月 2 日 —— Karpathy 造出 "vibe coding" 这个词。先露上半截:<em>"fully give in to the vibes, embrace exponentials, and forget that the code even exists."</em></p><p>文件:<code>slides/public/media/embeds/79-vibe-coding.png</code> —— 一整张全高截图,由这个窗口裁切。</p>`,
+  // 71b Overlay · 推文下半
+  `<p><strong>下移 + 轻微放大</strong> —— 下半截:<em>"It's not too bad for throwaway weekend projects…"</em> 十八个月后,它已经在写原生应用了。让这句落地,翻页 —— 推文淡出,进入提问。</p>`,
   // 72 E2 · 诚实的问题
   `<p><strong>先诚实:我不知道。</strong>AI 对 Lynx、对 Vue 意味着什么,我为什么还要费这个劲?如果没有人类会读,文档还重要吗?如果模型能从裸金属重建,类库还重要吗?</p><p>可以丢的数据点:AI 时代 React 的使用量反而<em>暴涨</em> —— 模型默认写 React —— 但 React 本身却没有过去那么重要了;Anthropic 刚写过 Claude 用纯 HTML 搓一次性内部工具、什么框架都不用。地面真的在动。</p>`,
   // 73 E3 · 论断
@@ -642,6 +658,10 @@ export const ZH_NOTES = [
   `<p><strong>callback。</strong>有些朋友知道,我讲过一场"前端已死"。嗯 —— 按旧的定义,它确实又死了一次。让这句话悬着;反转在两页之后。</p>`,
   // 95 E25 · 德国 · 下
   `<p><strong>反例来了。</strong>另一位学员不同意:prompt 本身就是多巴胺 —— 那天晚上他 vibe 出了一整个宝可梦游戏。我知道有 AI 这不难。而我<em>很高兴</em>这不难 —— 我好久没这么兴奋过了。</p><p>坦白 AI 精神病环节:不睡前跑几个 <code>/goal</code> <code>/loop</code> 就睡不着;Fable 或 Codex 一挂就像戒断。在座的应该也有同感。</p>`,
+  // 95a Overlay · 德国现场三连
+  `<p><strong>证据甩上桌</strong> —— 两张照片夹着中间的竖屏视频,压在 quote 之上。中间的视频静音自动播放;照片带一点快照式的倾斜。</p><p>文件:<code>103-photo-1.png</code>、<code>103-video-portrait.mp4</code>、<code>103-photo-2.png</code>,放在 <code>slides/public/media/embeds/</code>。</p>`,
+  // 95b Overlay · 宝可梦横屏
+  `<p><strong>再点一下 —— 宝可梦,全宽登场。</strong>三连散去,横屏视频占满舞台。文件:<code>103-video-wide.mp4</code>。</p>`,
   // 96 E26 · 十年翻新
   `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站;我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p>`,
   // 97 E27 · 还是前端

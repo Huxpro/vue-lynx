@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 106</span>
+    <span data-counter>01 / 116</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -78,6 +78,72 @@
   </section>
 
   <!-- ====================================================
+       2a–2d — OVERLAYS over the two marks · the years
+       (media drop-in: slides/public/media/embeds/)
+       ==================================================== -->
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02a"
+         data-w="min(56cqw, 700px)"
+         style="position:absolute;left:50%;top:47%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/02-video-1.mp4" label="02-video-1.mp4 · landscape"></vl-media></div>
+    </div>
+    <aside class="notes">
+      <p><strong>First clip fades in over the two marks</strong> — the React-era years. Muted and looping; talk over it, the logos stay visible behind.</p>
+      <p>Drop the file at <code>slides/public/media/embeds/02-video-1.mp4</code> — until then this shows a labeled placeholder.</p>
+    </aside>
+  </section>
+
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02a"
+         data-w="min(36cqw, 450px)"
+         style="position:absolute;left:30%;top:32%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/02-video-1.mp4" data-autoplay="false" label="02-video-1.mp4 · landscape"></vl-media></div>
+    </div>
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02b"
+         data-w="min(42cqw, 530px)" data-mm-fade
+         style="position:absolute;left:67%;top:63%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/02-video-2.mp4" label="02-video-2.mp4 · landscape"></vl-media></div>
+    </div>
+    <aside class="notes">
+      <p><strong>Second clip joins</strong> — the first shrinks into the corner (frozen), the new one plays. A cascade building up, Keynote-style.</p>
+      <p>File: <code>02-video-2.mp4</code>.</p>
+    </aside>
+  </section>
+
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02a"
+         data-w="min(30cqw, 380px)"
+         style="position:absolute;left:25%;top:26%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/02-video-1.mp4" data-autoplay="false" label="02-video-1.mp4 · landscape"></vl-media></div>
+    </div>
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02b"
+         data-w="min(32cqw, 400px)"
+         style="position:absolute;left:74%;top:30%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/02-video-2.mp4" data-autoplay="false" label="02-video-2.mp4 · landscape"></vl-media></div>
+    </div>
+    <vl-media class="snap" data-mm-fade src="/media/embeds/02-image.png" label="02-image.png · photo"
+              style="position:absolute;left:49%;top:64%;width:34cqw;transform:translate(-50%,-50%) rotate(-1.5deg);--ph-ar:4/3"></vl-media>
+    <aside class="notes">
+      <p><strong>The photo lands</strong> — both clips freeze small, the snapshot drops center-stage. The collage of that era, complete.</p>
+      <p>File: <code>02-image.png</code>.</p>
+    </aside>
+  </section>
+
+  <section class="slide logos" data-bg="clean" data-chrome="none">
+    <div class="logo logo--react" data-flip="brand-react"
+         style="left:calc(37% - 8cqw);top:calc(50% - 8cqw)">
+      <svg viewBox="-11.5 -10.232 23 20.464" fill="none" aria-label="React logo"><circle r="2.05" fill="#61dafb"/><g stroke="#61dafb" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>
+    </div>
+    <div class="logo logo--vue" data-flip="brand-vue"
+         style="left:calc(63% - 8cqw);top:calc(50% - 8cqw)">
+      <svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg>
+    </div>
+    <aside class="notes">
+      <p><strong>The overlay clears</strong> — back to the two marks alone. A beat, then on into the Web triangle.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
        3 — Logo build-up · + Chrome (triangle)
        ==================================================== -->
   <section class="slide logos" data-bg="clean" data-chrome="none">
@@ -96,6 +162,39 @@
     <aside class="notes">
       <p><strong>Chrome rises from below</strong> — React and Vue lift into the top corners, and the three settle into a triangle with the Web underneath, carrying both.</p>
       <p>"先聊 Web。" React and Vue were the vehicles — the ground we all actually stood on was the Web: its DX, its reach, its openness.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       3a–3b — OVERLAY over the triangle · the PWA talk, live
+       ==================================================== -->
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="browser" data-flip="em-03"
+         data-w="min(64cqw, 820px)"
+         style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media kind="iframe" src="https://huangxuan.me/pwa-qcon2016/#/" label="huangxuan.me/pwa-qcon2016 · live iframe"></vl-media></div>
+    </div>
+    <aside class="notes">
+      <p><strong>The receipts for "先聊 Web":</strong> the 2016 PWA talk, embedded <em>live</em> over the triangle. Click inside the frame to drive that deck; wheel/keys outside it drive this one. The corner grip resizes; the switcher has desktop/tablet/phone shapes; the ↗ button opens it in a new tab.</p>
+      <p>The iframe loads one slide before you arrive and unloads two slides after you leave — it never taxes the rest of the talk. (Needs venue network; the ↗ fallback is your plan B.)</p>
+    </aside>
+  </section>
+
+  <section class="slide logos" data-bg="clean" data-chrome="none">
+    <div class="logo logo--react" data-flip="brand-react"
+         style="left:calc(34% - 8cqw);top:calc(31% - 8cqw)">
+      <svg viewBox="-11.5 -10.232 23 20.464" fill="none" aria-label="React logo"><circle r="2.05" fill="#61dafb"/><g stroke="#61dafb" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>
+    </div>
+    <div class="logo logo--vue" data-flip="brand-vue"
+         style="left:calc(66% - 8cqw);top:calc(31% - 8cqw)">
+      <svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg>
+    </div>
+    <div class="logo logo--chrome" data-flip="brand-chrome"
+         style="left:calc(50% - 8cqw);top:calc(60% - 8cqw)">
+      <svg viewBox="0 0 48 48" aria-label="Chrome logo"><circle cx="24" cy="24" r="12" fill="#fff"/><path fill="#EA4335" d="M24 12h20.78a23.99 23.99 0 0 0-41.56.003L13.61 30l.009-.002A11.99 11.99 0 0 1 24 12Z"/><path fill="#FBBC04" d="M34.39 30.003 24 48a23.99 23.99 0 0 0 20.78-35.997H24l-.003.009a11.99 11.99 0 0 1 10.393 17.991Z"/><path fill="#34A853" d="M13.61 30.003 3.22 12.006A23.99 23.99 0 0 0 24 48l10.39-17.997-.007-.007a11.99 11.99 0 0 1-20.773.007Z"/><circle cx="24" cy="24" r="9.5" fill="#1A73E8"/></svg>
+    </div>
+    <aside class="notes">
+      <p><strong>Close the PWA window</strong> — the triangle returns, and the story continues on this ground: the Web carried us.</p>
     </aside>
   </section>
 
@@ -2179,6 +2278,33 @@
     </aside>
   </section>
 
+  <!-- ====================================================
+       ∞a–∞b — OVERLAY over the divider · the tweet
+       (top half → pan to the bottom half → fade out)
+       ==================================================== -->
+  <section class="slide overlay" data-chrome="none">
+    <div class="crop" data-flip="k-frame" style="width:44cqw;height:54cqh">
+      <vl-media data-flip="k-img" src="/media/embeds/79-vibe-coding.png"
+                label="79-vibe-coding.png · full tweet screenshot"
+                style="top:0;--ph-ar:842/1000"></vl-media>
+    </div>
+    <aside class="notes">
+      <p><strong>The tweet itself, over the divider.</strong> Feb 2, 2025 — Karpathy coins "vibe coding". Top half first: <em>"fully give in to the vibes, embrace exponentials, and forget that the code even exists."</em></p>
+      <p>File: <code>slides/public/media/embeds/79-vibe-coding.png</code> — one full-height screenshot; this window crops it.</p>
+    </aside>
+  </section>
+
+  <section class="slide overlay" data-chrome="none">
+    <div class="crop" data-flip="k-frame" style="width:44cqw;height:54cqh">
+      <vl-media data-flip="k-img" src="/media/embeds/79-vibe-coding.png"
+                label="79-vibe-coding.png · full tweet screenshot"
+                style="bottom:0;left:-3%;width:106%;--ph-ar:842/1000"></vl-media>
+    </div>
+    <aside class="notes">
+      <p><strong>Pan down, slight zoom</strong> — the bottom half: <em>"It's not too bad for throwaway weekend projects…"</em> Eighteen months later, it writes native apps. Let that land, advance — the tweet fades out into the question.</p>
+    </aside>
+  </section>
+
   <!-- E2 — the question, honestly -->
   <section class="slide stage">
     <span class="eyebrow">Epilogue · the question</span>
@@ -2326,10 +2452,11 @@
   <!-- E10 — intermission meme -->
   <section class="slide stage" data-bg="clean">
     <span class="eyebrow">Epilogue &middot; intermission</span>
-    <div class="meme">[ meme goes here ]</div>
+    <vl-media class="meme" src="/media/embeds/88-meme.png" label="88-meme.png · the roast"
+              style="--ph-ar:4/3"></vl-media>
     <p class="kicker" style="text-align:center">&ldquo;Getting metaphysical again &mdash; &#38634;&#30887; is going to roast me.&rdquo;</p>
     <aside class="notes">
-      <p><strong>Breather.</strong> Self-aware beat before Lemma 2 — drop the meme in, take the laugh, move on. (Placeholder frame: replace with the actual image in <code>public/media/</code>.)</p>
+      <p><strong>Breather.</strong> Self-aware beat before Lemma 2 — drop the meme in, take the laugh, move on. File: <code>slides/public/media/embeds/88-meme.png</code>; until it exists this shows the labeled placeholder.</p>
     </aside>
   </section>
 
@@ -2570,6 +2697,35 @@
     <aside class="notes">
       <p><strong>The counter-story.</strong> Another attendee pushed back: prompting IS the dopamine — and that night he vibed a whole Pokémon game. I know that with AI, that's not hard. And I'm <em>glad</em> it's not hard — I haven't been this excited in years.</p>
       <p>Confess the AI-psychosis bit: I can't sleep without kicking off a few <code>/goal</code> <code>/loop</code> runs; when Fable or Codex goes down it feels like withdrawal. The room has felt it too.</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       coda-a/b — OVERLAYS over the quote · Germany receipts
+       ==================================================== -->
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <vl-media class="snap" data-mm-fade src="/media/embeds/103-photo-1.png" label="103-photo-1.png"
+              style="position:absolute;left:22%;top:48%;width:24cqw;transform:translate(-50%,-50%) rotate(-2.5deg)"></vl-media>
+    <div class="phone phone--embed no-deck-scroll" data-embed="portrait" data-flip="em-103v"
+         style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/103-video-portrait.mp4" label="103-video-portrait.mp4 · vertical"></vl-media></div>
+    </div>
+    <vl-media class="snap" data-mm-fade src="/media/embeds/103-photo-2.png" label="103-photo-2.png"
+              style="position:absolute;left:78%;top:54%;width:24cqw;transform:translate(-50%,-50%) rotate(2deg)"></vl-media>
+    <aside class="notes">
+      <p><strong>Receipts, tossed on the table</strong> — two photos flanking the vertical clip, dropped over the quote. The center video autoplays muted; the photos tilt like snapshots.</p>
+      <p>Files: <code>103-photo-1.png</code>, <code>103-video-portrait.mp4</code>, <code>103-photo-2.png</code> under <code>slides/public/media/embeds/</code>.</p>
+    </aside>
+  </section>
+
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-103w"
+         data-w="min(60cqw, 760px)"
+         style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media src="/media/embeds/103-video-wide.mp4" label="103-video-wide.mp4 · landscape"></vl-media></div>
+    </div>
+    <aside class="notes">
+      <p><strong>One more click — the Pokémon, full width.</strong> The three-up clears, the landscape video takes the stage. File: <code>103-video-wide.mp4</code>.</p>
     </aside>
   </section>
 

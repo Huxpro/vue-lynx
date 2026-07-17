@@ -133,6 +133,39 @@ flips black/white with the theme) and participates in magic move via
 `data-flip="weave-lynx"`. Reduced motion and embed previews render a single
 static frame instead of animating.
 
+## Overlay slides & media embeds
+
+An **overlay slide** (`<section class="slide overlay">`) keeps the nearest
+previous non-overlay slide rendered beneath it (`is-under`), so a media layer
+reads as "the same page, plus a layer" instead of a hard cut — consecutive
+overlays share one base, and an overlay inherits the base's `data-weave`
+unless it declares its own. To "dismiss" an overlay run back into the base
+look, follow it with a duplicate of the base slide (the deck's usual
+copy-the-markup idiom), which also restores magic-move continuity into the
+next slide.
+
+**`<vl-media src="…">`** (`src/embeds.js`) embeds a video, image, or iframe
+(kind inferred from the URL, or forced with `kind=`):
+
+- **Videos** reset on every slide change (pause + rewind — audio can never
+  leak across pages) and autoplay when their slide becomes current; opt out
+  with `data-autoplay="false"`, and use `unmuted` / `no-loop` / `controls`
+  to override the muted-loop defaults.
+- **Iframes** mount when their slide is one step away and unload two steps
+  out, so a heavy embedded page (e.g. the live PWA-talk deck) never taxes
+  the rest of the talk.
+- **Missing files** render as a labeled placeholder showing the exact path to
+  drop the asset at — author slides first, add media later. Expected files
+  are listed in `public/media/embeds/README.md`.
+
+For a **resizable** frame, wrap the `<vl-media>` in
+`.phone.phone--embed.no-deck-scroll` with `data-embed="wide|portrait|browser"`
+— it gets the demo mockups' drag grips + preset switcher (embed-shaped
+presets), and `data-w`/`data-h` seed a per-slide starting size (used by the
+cascade sequence). The tweet-reveal pair shows the other trick: a fixed
+`.crop` window whose inner `vl-media` carries `data-flip`, so magic move
+pans/zooms the image inside the crop.
+
 ## Deploy
 
 Two deploy shapes, chosen per branch by `website/vercel.json`:

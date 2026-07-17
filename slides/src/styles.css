@@ -3060,22 +3060,13 @@ body.is-blackout::after {
   color: var(--ink-mute);
 }
 
-/* Meme placeholder — a dashed frame ready for the actual image. */
-.meme {
-  width: min(52cqw, 500px);
-  aspect-ratio: 4 / 3;
-  border: 1.6px dashed var(--line);
+/* Meme slot — a <vl-media> wearing this class; the missing-file
+   placeholder chrome comes from .vl-ph. */
+.meme { width: min(52cqw, 500px); }
+.meme img {
   border-radius: var(--radius);
-  display: grid;
-  place-items: center;
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-  background: var(--paper-elev);
-  overflow: hidden;
+  box-shadow: 0 18px 60px -22px rgba(0, 0, 0, 0.55);
 }
-.meme img { width: 100%; height: 100%; object-fit: cover; }
 
 /* The finale's struck first line. */
 .fin-dead {
@@ -3088,3 +3079,123 @@ body.is-blackout::after {
   text-decoration-color: color-mix(in srgb, #ff5468 70%, transparent);
   text-decoration-thickness: 1.5px;
 }
+
+/* =========================================================
+   Overlay slides + media embeds (<vl-media>, see embeds.js).
+   An .overlay slide keeps its base slide rendered beneath it
+   (main.js marks the nearest non-overlay predecessor
+   `is-under`), so media reads as a layer over the same page.
+   ========================================================= */
+.slide.is-under {
+  opacity: 1;
+  transform: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Embed frame — the demo phone chrome, de-phoned: slim dark bezel,
+   same drag grips + preset switcher (wired in embeds.js). */
+.phone--embed {
+  --phone-ar: 16 / 9;
+  --phone-w: min(62cqw, 800px);
+  --phone-h: auto;
+  padding: 3px;
+  border-radius: 14px;
+}
+.phone--embed .phone__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #0b0d10;
+}
+
+/* <vl-media> — block host; media fills the width, height follows.
+   Inside a .phone__inner it fills the frame instead. */
+vl-media {
+  display: block;
+  position: relative;
+}
+vl-media img,
+vl-media video,
+vl-media iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0;
+}
+.phone__inner vl-media { width: 100%; height: 100%; }
+.phone__inner vl-media img,
+.phone__inner vl-media video { height: 100%; object-fit: contain; }
+.phone__inner vl-media iframe { height: 100%; background: #fff; }
+
+/* Missing-file placeholder — shows the exact path to drop the
+   asset at, so slides can be authored before media exists. */
+vl-media .vl-ph { display: none; }
+vl-media.is-missing > img,
+vl-media.is-missing > video { display: none; }
+vl-media.is-missing .vl-ph {
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  width: 100%;
+  aspect-ratio: var(--ph-ar, 16 / 9);
+  border: 1.6px dashed var(--line);
+  border-radius: 12px;
+  background: var(--paper-elev);
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-align: center;
+  padding: 14px;
+  box-sizing: border-box;
+}
+vl-media .vl-ph__kind {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-mute);
+}
+.phone__inner vl-media.is-missing .vl-ph {
+  aspect-ratio: auto;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Crop window — a fixed viewport a tall image pans inside via
+   magic move (the vibe-coding tweet reveal). */
+.crop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-elev);
+  box-shadow: 0 24px 70px -24px rgba(0, 0, 0, 0.6);
+}
+.crop vl-media {
+  position: absolute;
+  left: 0;
+  width: 100%;
+}
+
+/* Snapshot look for bare photo embeds (the coda three-up). */
+.snap {
+  padding: 6px 6px 10px;
+  background: #f4f5f7;
+  border-radius: 6px;
+  box-shadow: 0 18px 48px -16px rgba(0, 0, 0, 0.55);
+}
+.snap img { border-radius: 2px; }
+/* The polaroid card is light in both themes — the missing-file
+   placeholder must re-ink dark-on-light or it vanishes into the card. */
+.snap .vl-ph { --ph-ar: 4 / 5; }
+vl-media.snap.is-missing .vl-ph {
+  background: rgba(15, 18, 22, 0.05);
+  border-color: rgba(15, 18, 22, 0.3);
+  color: rgba(15, 18, 22, 0.5);
+}
+vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
