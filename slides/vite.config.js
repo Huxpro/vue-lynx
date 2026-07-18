@@ -27,33 +27,12 @@ function ensureExamplesSymlink() {
 }
 ensureExamplesSymlink();
 
-// Mount Evan Bacon's serve-sim preview at /.sim so the deck can stream a local
-// iOS Simulator during the talk. Helper ports stay on loopback (no upgrade
-// hijack — Vite HMR keeps its WebSocket). Start the helper separately:
-//   npx serve-sim --detach
-function serveSimPlugin() {
-  return {
-    name: 'serve-sim',
-    async configureServer(server) {
-      try {
-        const { simMiddleware } = await import('serve-sim/middleware');
-        const middleware = simMiddleware({ basePath: '/.sim' });
-        server.middlewares.use(middleware);
-        console.log('[slides] serve-sim preview at /.sim  (run: npx serve-sim --detach)');
-      } catch (err) {
-        console.warn('[slides] serve-sim middleware unavailable:', err?.message ?? err);
-      }
-    },
-  };
-}
-
 export default defineConfig({
   // When built for the docs site it is served under /deck/ (see
   // website/scripts/prepare-deck.mjs); standalone dev/build stays at root.
   base: process.env.DECK_BASE || '/',
   // web-core ships top-level await — needs ES2022+
   esbuild: { target: 'es2022' },
-  plugins: [serveSimPlugin()],
   build: {
     target: 'es2022',
     outDir: 'dist',
