@@ -555,7 +555,7 @@ let vtext = verbs[0];
 let vdeleting = false;
 let vpaused = false;
 
-function setVerbLang(lang) {
+function setVerbLang(_lang) {
   // Cover title stays English in both languages; only the tagline is bilingual.
   verbs = EN_VERBS;
   vi = 0;

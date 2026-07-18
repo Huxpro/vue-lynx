@@ -291,21 +291,8 @@ export const ZH = {
   'no libraries?': '不要类库?',
   'no docs?': '不要文档?',
   'no us?': '不要我们?',
-  'What survives AI?':
-    '什么能在 AI 之后<span class="brand-text">留下来</span>?',
-  'infrastructure': '基础设施',
-  'enablers': '使能者',
-  'platforms': '平台',
-  'ecosystems': '生态',
-  'people': '人',
-  'Two lemmas, then an answer.': '两个引理,一个答案。',
-  'The stack, rewritten.': '技术栈,被重写了。',
-  'AI can do anything — harnessed.':
-    'AI 什么都能做 —— 只要有好的 <span class="brand-text">harness</span>。',
-  'context docs · priors · AGENTS.md': '上下文 <small>文档 · 先验 · AGENTS.md</small>',
-  'tools functions · capabilities': '工具 <small>函数 · 能力</small>',
-  'environment runtime · sandbox': '环境 <small>运行时 · 沙箱</small>',
-  'feedback render · tests · logs': '反馈 <small>渲染 · 测试 · 日志</small>',
+  'Technology: from interface to Harness.':
+    '技术：从接口到 <span class="brand-text">Harness</span>。',
   'Nobody says AI will replace the browser.':
     '没人会说,AI 要取代<span style="color:#4FB8F0">浏览器</span>。',
   'open by default': '天生开放',
@@ -665,15 +652,11 @@ export const ZH_NOTES = [
   `<p><strong>下移 + 轻微放大</strong> —— 下半截:<em>"It's not too bad for throwaway weekend projects…"</em> 十八个月后,它已经在写原生应用了。让这句落地,翻页 —— 推文淡出,进入提问。</p>`,
   // 72 E2 · 诚实的问题
   `<p><strong>先诚实:我不知道。</strong>AI 对 Lynx、对 Vue 意味着什么,我为什么还要费这个劲?如果没有人类会读,文档还重要吗?如果模型能从裸金属重建,类库还重要吗?</p><p>可以丢的数据点:AI 时代 React 的使用量反而<em>暴涨</em> —— 模型默认写 React —— 但 React 本身却没有过去那么重要了;Anthropic 刚写过 Claude 用纯 HTML 搓一次性内部工具、什么框架都不用。地面真的在动。</p>`,
-  // 73 E3 · 论断
-  `<p><strong>先把论点立起来,这一章才有脊柱。</strong>从 AI 手里"幸存"下来的,是所有<em>使能</em>而非仅仅产出的东西:基础设施、使能者、平台、生态 —— 以及链条尽头的,人。注意这是递进:每一环都因为喂养下一环而幸存。</p><p>我用两个引理来论证:(1) 技术的角色从 interface 翻转为 harness;(2) 技术真正的工作,是连接生态 —— 和人。</p>`,
-  // 74 E4 · 新的栈
-  `<p><strong>引理一,从新的技术栈开始。</strong>自然语言是新的源代码;agent 是新的 interface,坐在 IDE 和 GUI 曾经的位置上。但看 agent 下面:code、frameworks、system —— 它们没有消失,它们变成了 agent <em>驾驭的对象</em>。</p><p>技术的工作翻转了:从直接服务人,变成 harness 那个服务人的东西。</p>`,
-  // 75 E5 · harness 是什么
-  `<p><strong>把这个词定义清楚,整章都压在它上面。</strong>Harness 是把原始能力变成可靠工作的东西:上下文(它带着什么进来)、工具(它能用什么行动)、环境(行动在哪里既安全又便宜)、反馈(它如何看见自己刚做了什么)。</p><p>第四章其实偷偷讲的就是这页:AGENTS.md 是上下文,工具链是工具,LynxExplorer 是环境,上游测试是反馈。</p>`,
-  // 76 E6 · 浏览器是个好 harness
+  // 73 E3 · 技术：从接口到 Harness（含原「留下来」「harness 定义」）
+  `<p><strong>什么能在 AI 之后留下来?</strong>从 AI 手里"幸存"下来的,是所有<em>使能</em>而非仅仅产出的东西:基础设施 → 使能者 → 平台 → 生态 → 人。每一环都因为喂养下一环而幸存。两个引理:(1) 技术从 interface 翻转为 harness;(2) 技术真正的工作,是连接生态 —— 和人。</p><p><strong>引理一 —— 技术栈被重写了。</strong>自然语言是新的源代码;agent 是新的 interface,坐在 IDE 和 GUI 曾经的位置上。agent 下面:code、frameworks、system —— 没有消失,变成了 agent <em>驾驭的对象</em>。技术的工作翻转了:从直接服务人,变成 harness 那个服务人的东西。</p><p><strong>AI 什么都能做 —— 只要有好的 harness。</strong>Harness 把原始能力变成可靠工作:上下文(文档 · 先验 · AGENTS.md)、工具(函数 · 能力)、环境(运行时 · 沙箱)、反馈(渲染 · 测试 · 日志)。第四章其实偷偷讲的就是这拍:AGENTS.md 是上下文,工具链是工具,LynxExplorer 是环境,上游测试是反馈。</p>`,
+  // 74 E4 · 浏览器是个好 harness
   `<p><strong>平台之所以幸存,是因为平台是极好的 harness。</strong>浏览器:开放的数据与文档(上下文)、巨大的能力表面(工具)、天然的沙箱(环境)、彻底的透明 —— DOM、DevTools(反馈)。</p><p>没有人argue Web 会被 AI 淘汰。我甚至更进一步:GUI 本身都不会 —— 人类总要<em>看</em>。</p>`,
-  // 77 E7 · 框架一直是 harness
+  // 75 E5 · 框架一直是 harness
   `<p><strong>让框架与 AI 相关的那次重构。</strong>在 Web 上你本来爱怎么改 DOM 都行 —— React 和 Vue 赢,是因为它们<em>约束</em>了我们:一种架构,把人类的推理 harness 成吐出下一个正确 token 的过程。</p><p>我们才是第一批被 harness 的 token 预测器。模型只是下一批。高层抽象仍然有用 —— 它帮过我们,也会帮它。</p>`,
   // 78 E8 · FABRIC I
   `<p><strong>本章的意象登场。</strong>先让线呼吸一会儿再开口。在我"前端已死"的演讲里,我试着从第一性原理论证:UI/App 抽象永远都需要 —— 意图与像素之间,总要有一层织物。现代软件是缝出来的,不是凿出来的。</p><p>于是,贯穿后半场的比喻:每一种技术都是一种织物 —— 有自己的纤维、自己的织法、自己的手感。</p>`,

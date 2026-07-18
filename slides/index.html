@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 138</span>
+    <span data-counter>01 / 136</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2640,30 +2640,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- E3 — the claim / roadmap -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      What <span class="brand-text">survives</span> AI?
-    </h2>
-    <div class="tiles">
-      <span class="tile" style="--c:#8b93a3">infrastructure</span>
-      <span class="tilearr">&rarr;</span>
-      <span class="tile" style="--c:#E8B44A">enablers</span>
-      <span class="tilearr">&rarr;</span>
-      <span class="tile" style="--c:#56b8f0">platforms</span>
-      <span class="tilearr">&rarr;</span>
-      <span class="tile" style="--c:#9E86F0">ecosystems</span>
-      <span class="tilearr">&rarr;</span>
-      <span class="tile is-hero" style="--c:#42b883">people</span>
-    </div>
-    <p class="lead" data-mm-fade>Two lemmas, then an answer.</p>
-    <aside class="notes">
-      <p><strong>The thesis, stated up front so the chapter has a spine.</strong> What's "saved" from AI is everything that <em>enables</em> instead of merely produces: infrastructure, enablers, platforms, ecosystems — and, at the end of the chain, people. Note the progression: each one is saved <em>because</em> it feeds the next.</p>
-      <p>I'll argue it with two lemmas: (1) technology's role flips from interface to harness; (2) technology's real job is connecting ecosystems — and people.</p>
-    </aside>
-  </section>
-
-  <!-- E4 — Lemma 1 · the stack, rewritten -->
+  <!-- E3 — Lemma 1 · from interface to Harness -->
   <section class="slide stage">
     <div class="flow" style="height:56cqh;width:min(100%,880px)">
       <div class="fb" data-flip="stk-human" style="--c:#8b93a3;left:44%;top:4%">human</div>
@@ -2676,31 +2653,15 @@ app.<span class="code-fn">use</span>(router)</pre>
       <span class="farr" data-mm-fade style="--c:#56b8f0;left:71.5%;top:40.8%">&larr; the new interface</span>
       <span class="farr" data-mm-fade style="left:73%;top:77.6%">&larr; they stay &mdash; and evolve</span>
     </div>
-    <p class="lead" data-mm-fade>The stack, rewritten.</p>
+    <p class="lead" data-mm-fade>Technology: from interface to <span class="brand-text">Harness</span>.</p>
     <aside class="notes">
-      <p><strong>Lemma 1 opens with the new stack.</strong> Natural language is the new source code; the agent is the new interface sitting where IDEs and GUIs used to. But look below the agent: code, frameworks, the system — they didn't vanish. They became what the agent <em>drives</em>.</p>
-      <p>Technology's job flipped: from serving humans directly to <em>harnessing</em> the thing that serves humans.</p>
+      <p><strong>What survives AI?</strong> Everything that <em>enables</em> instead of merely produces: infrastructure → enablers → platforms → ecosystems → people. Each one is saved <em>because</em> it feeds the next. Two lemmas: (1) technology flips from interface to harness; (2) technology's real job is connecting ecosystems — and people.</p>
+      <p><strong>Lemma 1 — the stack, rewritten.</strong> Natural language is the new source code; the agent is the new interface where IDEs and GUIs used to sit. Below the agent: code, frameworks, the system — they didn't vanish; they became what the agent <em>drives</em>. Technology's job flipped: from serving humans directly to <em>harnessing</em> the thing that serves humans.</p>
+      <p><strong>AI can do anything — harnessed.</strong> A harness turns raw capability into reliable work: context (docs · priors · AGENTS.md), tools (functions · capabilities), environment (runtime · sandbox), feedback (render · tests · logs). Chapter IV was secretly that beat: AGENTS.md was context, the toolchain tools, LynxExplorer the environment, upstream tests the feedback.</p>
     </aside>
   </section>
 
-  <!-- E5 — what makes a harness -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      AI can do anything &mdash; <span class="brand-text">harnessed</span>.
-    </h2>
-    <div class="tiles">
-      <span class="tile" style="--c:#E8B44A">context <small>docs &middot; priors &middot; AGENTS.md</small></span>
-      <span class="tile" style="--c:#56b8f0">tools <small>functions &middot; capabilities</small></span>
-      <span class="tile" style="--c:#9E86F0">environment <small>runtime &middot; sandbox</small></span>
-      <span class="tile" style="--c:#42b883">feedback <small>render &middot; tests &middot; logs</small></span>
-    </div>
-    <aside class="notes">
-      <p><strong>Define the word, because the whole chapter leans on it.</strong> A harness is what turns raw capability into reliable work: context (what it knows going in), tools (what it can act with), an environment (where actions are safe and cheap), feedback (how it sees what it just did).</p>
-      <p>Chapter IV was secretly this slide: AGENTS.md was context, the toolchain was tools, LynxExplorer the environment, the upstream tests the feedback.</p>
-    </aside>
-  </section>
-
-  <!-- E6 — the browser is a great harness -->
+  <!-- E4 — the browser is a great harness -->
   <section class="slide stage">
     <div class="logo" style="position:static;width:8cqw;height:8cqw">
       <svg viewBox="0 0 48 48" aria-label="Chrome logo"><circle cx="24" cy="24" r="12" fill="#fff"/><path fill="#EA4335" d="M24 12h20.78a23.99 23.99 0 0 0-41.56.003L13.61 30l.009-.002A11.99 11.99 0 0 1 24 12Z"/><path fill="#FBBC04" d="M34.39 30.003 24 48a23.99 23.99 0 0 0 20.78-35.997H24l-.003.009a11.99 11.99 0 0 1 10.393 17.991Z"/><path fill="#34A853" d="M13.61 30.003 3.22 12.006A23.99 23.99 0 0 0 24 48l10.39-17.997-.007-.007a11.99 11.99 0 0 1-20.773.007Z"/><circle cx="24" cy="24" r="9.5" fill="#1A73E8"/></svg>
