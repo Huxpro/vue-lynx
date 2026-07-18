@@ -3301,10 +3301,20 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="node" data-flip="vx-bg">
         <span class="node__label"><span class="dot"></span>Background · Vapor</span>
         <h3 class="node__title">template()</h3>
-        <ul class="node__list">
-          <li>parse the static shape</li>
-          <li>walk pre-order &rarr; uids</li>
-        </ul>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="card template walked pre-order, uid 2 to 7">
+          <line class="edge" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="120" y="6" width="60" height="22" rx="5"/><text class="tag" x="131" y="21">card</text><rect class="uidbg" x="158" y="0" width="20" height="14" rx="6"/><text class="uid" x="164" y="11">2</text></g>
+          <g><rect class="nodebox st" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text><rect class="uidbg" x="54" y="54" width="20" height="14" rx="6"/><text class="uid" x="60" y="65">3</text></g>
+          <g><rect class="nodebox st" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text><rect class="uidbg" x="220" y="54" width="20" height="14" rx="6"/><text class="uid" x="226" y="65">4</text></g>
+          <g><rect class="nodebox st" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="20" height="14" rx="6"/><text class="uid" x="170" y="119">5</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text><rect class="uidbg" x="185" y="147" width="20" height="14" rx="6"/><text class="uid" x="191" y="158">6</text></g>
+          <g><rect class="nodebox st" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text><rect class="uidbg" x="262" y="108" width="20" height="14" rx="6"/><text class="uid" x="268" y="119">7</text></g>
+        </svg>
+        <span class="node__cap">parse &amp; walk pre-order &rarr; <b>uids</b></span>
       </div>
       <div class="xwire">
         <div class="xwire__op">
@@ -3317,14 +3327,24 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="node node--main" data-flip="vx-mt">
         <span class="node__label"><span class="dot"></span>Main · interpreter</span>
         <h3 class="node__title">inert prototype</h3>
-        <ul class="node__list">
-          <li>cache the structure</li>
-          <li>same pre-order &rarr; uids</li>
-        </ul>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="cached prototype, same pre-order uids 2 to 7">
+          <line class="edge" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="120" y="6" width="60" height="22" rx="5"/><text class="tag" x="131" y="21">card</text><rect class="uidbg" x="158" y="0" width="20" height="14" rx="6"/><text class="uid" x="164" y="11">2</text></g>
+          <g><rect class="nodebox st" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text><rect class="uidbg" x="54" y="54" width="20" height="14" rx="6"/><text class="uid" x="60" y="65">3</text></g>
+          <g><rect class="nodebox st" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text><rect class="uidbg" x="220" y="54" width="20" height="14" rx="6"/><text class="uid" x="226" y="65">4</text></g>
+          <g><rect class="nodebox st" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="20" height="14" rx="6"/><text class="uid" x="170" y="119">5</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text><rect class="uidbg" x="185" y="147" width="20" height="14" rx="6"/><text class="uid" x="191" y="158">6</text></g>
+          <g><rect class="nodebox st" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text><rect class="uidbg" x="262" y="108" width="20" height="14" rx="6"/><text class="uid" x="268" y="119">7</text></g>
+        </svg>
+        <span class="node__cap">same walk &rarr; <b>same uids</b></span>
       </div>
     </div>
     <p class="lead" data-mm-fade>
-      The static structure crosses <em>once</em> — not one op per element.
+      Pointers can&rsquo;t cross the boundary — so both sides <em>walk the same pre-order</em> and name every node alike. No id map is ever sent.
     </p>
     <aside class="notes">
       <p><strong>The problem first.</strong> Vapor's primitive is "clone a template, then bind." Naively, every cloned element would be its own create/append op — Vapor's cross-thread traffic would be <em>worse</em> than vdom's.</p>
@@ -3339,10 +3359,20 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="node" data-flip="vx-bg">
         <span class="node__label"><span class="dot"></span>Background · Vapor</span>
         <h3 class="node__title">clone &times; 1,000</h3>
-        <ul class="node__list">
-          <li>one op per row</li>
-          <li>base uid only</li>
-        </ul>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="clone from base uid 2">
+          <line class="edge" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="120" y="6" width="60" height="22" rx="5" style="stroke:var(--ds-name);stroke-width:2"/><text class="tag" x="131" y="21">card</text><rect class="uidbg" x="150" y="0" width="30" height="14" rx="6"/><text class="uid" x="156" y="11">2</text></g>
+          <g class="ghost"><rect class="nodebox st" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
+          <g class="ghost"><rect class="nodebox st" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
+          <g class="ghost"><rect class="nodebox st" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text></g>
+          <g class="ghost"><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
+          <g class="ghost"><rect class="nodebox st" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
+        </svg>
+        <span class="node__cap">one op per row &middot; <b>base uid 2</b></span>
       </div>
       <div class="xwire">
         <div class="xwire__op" style="opacity:.4">
@@ -3359,10 +3389,20 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="node node--main" data-flip="vx-mt">
         <span class="node__label"><span class="dot"></span>Main · interpreter</span>
         <h3 class="node__title">clone &rarr; native</h3>
-        <ul class="node__list">
-          <li>re-walk from base uid</li>
-          <li>materialize real elements</li>
-        </ul>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="re-walk from base uid to materialize native elements">
+          <line class="edge" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="120" y="6" width="60" height="22" rx="5"/><text class="tag" x="131" y="21">card</text><rect class="uidbg" x="158" y="0" width="20" height="14" rx="6"/><text class="uid" x="164" y="11">2</text></g>
+          <g><rect class="nodebox st" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text><rect class="uidbg" x="54" y="54" width="20" height="14" rx="6"/><text class="uid" x="60" y="65">3</text></g>
+          <g><rect class="nodebox st" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text><rect class="uidbg" x="220" y="54" width="20" height="14" rx="6"/><text class="uid" x="226" y="65">4</text></g>
+          <g><rect class="nodebox st" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="20" height="14" rx="6"/><text class="uid" x="170" y="119">5</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text><rect class="uidbg" x="185" y="147" width="20" height="14" rx="6"/><text class="uid" x="191" y="158">6</text></g>
+          <g><rect class="nodebox st" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text><rect class="uidbg" x="262" y="108" width="20" height="14" rx="6"/><text class="uid" x="268" y="119">7</text></g>
+        </svg>
+        <span class="node__cap">re-walk from base &rarr; <b>native</b></span>
       </div>
     </div>
     <p class="lead" data-mm-fade>
@@ -3567,7 +3607,112 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- E20 — the cradle -->
+  <!-- E20a — design space · Vapor tree vs ET (naming) -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      Pointers die — <span class="brand-text">names</span> take over.
+    </h2>
+    <div class="dtrees">
+      <figure>
+        <figcaption><b>Vapor · dense</b> — every node gets a name</figcaption>
+        <svg class="dtree" viewBox="0 0 460 246" role="img" aria-label="Dense naming: preorder assigns uid 2 to 7 to every node.">
+          <line class="edge" x1="230" y1="52" x2="110" y2="102"/>
+          <line class="edge" x1="230" y1="52" x2="290" y2="102"/>
+          <line class="edge" x1="290" y1="130" x2="180" y2="178"/>
+          <line class="edge" x1="290" y1="130" x2="380" y2="178"/>
+          <line class="edge" x1="180" y1="206" x2="180" y2="218"/>
+          <g><rect class="nodebox st" x="178" y="26" width="104" height="28" rx="6"/><text class="tag" x="192" y="45">view.card</text></g>
+          <g><rect class="nodebox st" x="56" y="102" width="108" height="28" rx="6"/><text class="tag" x="70" y="121">image.icon</text></g>
+          <g><rect class="nodebox st" x="238" y="102" width="104" height="28" rx="6"/><text class="tag" x="252" y="121">view.body</text></g>
+          <g><rect class="nodebox st" x="126" y="178" width="108" height="28" rx="6"/><text class="tag" x="140" y="197">text.title</text></g>
+          <g><rect class="nodebox dy" x="146" y="212" width="68" height="22" rx="5"/><text class="tag" x="154" y="227" style="font-size:10px">#text ✎</text></g>
+          <g><rect class="nodebox st" x="326" y="178" width="106" height="28" rx="6"/><text class="tag" x="340" y="197">text.desc</text></g>
+          <g><rect class="uidbg" x="260" y="20" width="26" height="16" rx="7"/><text class="uid" x="268" y="32">2</text></g>
+          <g><rect class="uidbg" x="142" y="96" width="26" height="16" rx="7"/><text class="uid" x="150" y="108">3</text></g>
+          <g><rect class="uidbg" x="320" y="96" width="26" height="16" rx="7"/><text class="uid" x="328" y="108">4</text></g>
+          <g><rect class="uidbg" x="212" y="172" width="26" height="16" rx="7"/><text class="uid" x="220" y="184">5</text></g>
+          <g><rect class="uidbg" x="192" y="206" width="26" height="16" rx="7"/><text class="uid" x="200" y="218">6</text></g>
+          <g><rect class="uidbg" x="410" y="172" width="26" height="16" rx="7"/><text class="uid" x="418" y="184">7</text></g>
+        </svg>
+      </figure>
+      <figure>
+        <figcaption><b>Element Templates · sparse</b> — only the <span class="hot">holes</span> are named</figcaption>
+        <svg class="dtree" viewBox="0 0 460 246" role="img" aria-label="Sparse naming: only the root and the hole get ids; the static nodes are ghosted.">
+          <line class="edge ghost" x1="230" y1="52" x2="110" y2="102"/>
+          <line class="edge ghost" x1="230" y1="52" x2="290" y2="102"/>
+          <line class="edge ghost" x1="290" y1="130" x2="180" y2="178"/>
+          <line class="edge ghost" x1="290" y1="130" x2="380" y2="178"/>
+          <g><rect class="nodebox st" x="178" y="26" width="104" height="28" rx="6"/><text class="tag" x="192" y="45">view.card</text>
+             <rect class="uidbg" x="258" y="20" width="60" height="16" rx="7"/><text class="uid" x="264" y="32">root=2</text></g>
+          <g class="ghost"><rect class="nodebox" x="56" y="102" width="108" height="28" rx="6"/><text class="tag" x="70" y="121">image.icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="238" y="102" width="104" height="28" rx="6"/><text class="tag" x="252" y="121">view.body</text></g>
+          <g><rect class="nodebox dy" x="126" y="178" width="108" height="28" rx="6"/><text class="tag" x="140" y="197">text.title</text>
+             <rect class="uidbg" x="212" y="172" width="64" height="16" rx="7"/><text class="uid" x="218" y="184">hole=3</text>
+             <text class="holelbl" x="126" y="224">the one dynamic point → the one hole</text></g>
+          <g class="ghost"><rect class="nodebox" x="326" y="178" width="106" height="28" rx="6"/><text class="tag" x="340" y="197">text.desc</text></g>
+        </svg>
+      </figure>
+    </div>
+    <div class="ds-legend" data-mm-fade>
+      <span class="k"><span class="sw" style="background:#5dd5a8"></span>static</span>
+      <span class="k"><span class="sw" style="background:#E8B44A"></span>dynamic (the hole)</span>
+      <span class="k"><span class="sw name"></span>a name that crosses the wire</span>
+    </div>
+    <aside class="notes">
+      <p><strong>Once pointers can't cross, names take over — and there are two ways to hand them out.</strong> Vapor names <em>densely</em>: a preorder walk gives every node a uid (2–7). Both threads run the same walk, so they agree on every name with zero bytes transferred — the addressable set is open (anything might get touched by an effect, event, or ref).</p>
+      <p>Element Templates name <em>sparsely</em>: the VDOM compiler already proved a closed set of dynamic points (the holes), and diffing guarantees the static nodes are never addressed — so only the holes get names and the grey nodes are invisible to the protocol. Sparse isn't saved, it's <em>proven</em>. Same template, two coordinates on the design space.</p>
+    </aside>
+  </section>
+
+  <!-- E20b — design space · the retained→write-only spectrum -->
+  <section class="slide stage dspace">
+    <span class="eyebrow">One more thing &middot; the design space</span>
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      One template — a whole <span class="brand-text">spectrum</span> of renderers.
+    </h2>
+    <div class="spectrum">
+      <div class="spectrum__bar">
+        <span class="spectrum__end left">retained mode<i>address &amp; mutate at runtime · needs pointers</i></span>
+        <span class="spectrum__end right">write-only<i>emit names · a display list</i></span>
+        <span class="spectrum__dot" style="left:12.5%;--c:#4FB8F0"></span>
+        <span class="spectrum__dot" style="left:37.5%;--c:#42b883"></span>
+        <span class="spectrum__dot" style="left:62.5%;--c:#8bd6a0"></span>
+        <span class="spectrum__dot" style="left:87.5%;--c:#a78fff"></span>
+      </div>
+      <div class="spectrum__stops">
+        <div class="sstop" style="--c:#4FB8F0">
+          <span class="sstop__name">React · VDOM</span>
+          <span class="sstop__sub">fully dynamic — interpret + diff</span>
+        </div>
+        <div class="sstop" style="--c:#42b883">
+          <span class="sstop__name">Vue · Block VDOM</span>
+          <span class="sstop__sub">compiler-hinted — skip the statics</span>
+        </div>
+        <div class="sstop" style="--c:#8bd6a0">
+          <span class="sstop__name">Vapor</span>
+          <span class="sstop__sub">compiled — <b>but keeps pointers</b> to address nodes</span>
+        </div>
+        <div class="sstop hot" style="--c:#a78fff">
+          <span class="sstop__name">Element Templates</span>
+          <span class="sstop__sub">write-only — paint it, then let go</span>
+        </div>
+      </div>
+      <div class="spectrum__braces">
+        <span class="brace ret">still retained — holds runtime pointers</span>
+        <span class="brace imm">write-only — names, not pointers</span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade style="text-align:center;max-width:60ch">
+      Even <b>Vapor</b> stays retained — it keeps pointers. But cross a thread up front and pointers can&rsquo;t follow — so Lynx lives at the write-only end.
+    </p>
+    <aside class="notes">
+      <p><strong>The design space is one wide spectrum</strong> — from fully retained to fully immediate. <strong>React VDOM</strong> is fully dynamic: interpret a tree and diff it every update. <strong>Vue</strong>'s compiler-hinted, block-based VDOM does better — blocks let it skip the static subtrees. <strong>Vapor</strong> looks like it compiled everything away, but it still reserves a slice for the in-browser runtime: pointers, used to <em>read</em> / address live nodes. So Vapor is still <em>retained mode</em>.</p>
+      <p><strong>Why that matters at a thread boundary.</strong> Retained pointers only survive a thread hop if the tree itself is shared: RN's Fabric keeps pointers in a C++ shadow tree that both sides reach. Lynx can't — we cross threads from the very first frame. <strong>Element Templates</strong> go the other way: write-only, one direction, much closer to an immediate-mode <em>display list</em>. That crosses threads beautifully — but the price is giving up dynamism on the MT side. Like a painting: you draw it once, then let the canvas go.</p>
+    </aside>
+  </section>
+
+  <!-- E20c — the cradle · closes the design-space arc -->
   <section class="slide stage">
     <span class="eyebrow">One more thing</span>
     <h2 class="h-section" style="text-align:center;max-width:22ch">
@@ -3577,6 +3722,33 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Why framework authors should care about Lynx.</strong> Lynx has made interesting — even controversial — design choices, and keeps making them: dual threads, MTS, a real CSS engine off the DOM. This is a team that loves the Web and has both the guts and the room to break it where it must.</p>
       <p>For Vue specifically: a native platform with genuine room to run — the kind of space where a Vapor-native renderer is a weekend of vibing away.</p>
+    </aside>
+  </section>
+
+  <!-- E21·a — panorama seed · React first -->
+  <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama-r">
+    <p class="weave-kicker">Weave the whole Web&hellip;</p>
+    <span class="wlab" data-flip="wl-react" style="--c:#61dafb;left:4cqw;top:25cqh">React <i></i></span>
+    <div class="wlynx" data-flip="weave-lynx">
+      <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
+    </div>
+    <aside class="notes">
+      <p><strong>The weave starts with one strand.</strong> React was the first to prove the pattern at scale — declarative UI, a runtime that reconciles. Name it, let it settle onto the loom.</p>
+      <p>Start here so the build reads as a story: one thread, then two, then the whole web.</p>
+    </aside>
+  </section>
+
+  <!-- E21·b — panorama seed · React + Vue -->
+  <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama-rv">
+    <p class="weave-kicker">Weave the whole Web&hellip;</p>
+    <span class="wlab" data-flip="wl-vue" style="--c:#42b883;left:4cqw;top:16cqh">Vue <i></i></span>
+    <span class="wlab" data-flip="wl-react" style="--c:#61dafb;left:4cqw;top:25cqh">React <i></i></span>
+    <div class="wlynx" data-flip="weave-lynx">
+      <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
+    </div>
+    <aside class="notes">
+      <p><strong>Vue joins — now two strands.</strong> The whole argument is that neither is special: React and Vue are two coordinates in one design space, both weavable onto the same loom.</p>
+      <p>Beat here, then let the rest of the web pour in.</p>
     </aside>
   </section>
 
@@ -3590,13 +3762,13 @@ app.<span class="code-fn">use</span>(router)</pre>
     <span class="wlab" data-flip="wl-octane" style="--c:#ff5468;left:4cqw;top:47cqh">Octane <i></i></span>
     <span class="wlab" data-flip="wl-css" style="--c:#8a63d2;left:4cqw;top:55cqh">CSS <i></i></span>
     <span class="wlab" data-flip="wl-tailwind" style="--c:#38bdf8;left:4cqw;top:63cqh">Tailwind <i></i></span>
-    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion &middot; Pretext <i></i></span>
-    <span class="wlab" data-flip="wl-rspack" style="--c:#ff7a1a;left:4cqw;top:80cqh">Rspack <i></i></span>
+    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion <i></i></span>
+    <span class="wlab" data-flip="wl-pretext" style="--c:#ffc24d;left:4cqw;top:80cqh">Pretext <i></i></span>
     <div class="wlynx" data-flip="weave-lynx">
       <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
     </div>
     <aside class="notes">
-      <p><strong>The panorama begins.</strong> Name the strands as they land: Vue green, React blue, the faint yellows of Svelte and Solid, Octane red — a brand-new fabric still being spun — CSS, Tailwind, Motion and Pretext, Rspack orange. The whole web ecosystem, as threads.</p>
+      <p><strong>The panorama begins.</strong> Name the strands as they land: Vue green, React blue, the faint yellows of Svelte and Solid, Octane red — a brand-new fabric still being spun — CSS, Tailwind, Motion, Pretext. The whole web ecosystem, as threads.</p>
       <p>They all pull toward one thin, strong waist.</p>
     </aside>
   </section>
@@ -3611,8 +3783,8 @@ app.<span class="code-fn">use</span>(router)</pre>
     <span class="wlab" data-flip="wl-octane" style="--c:#ff5468;left:4cqw;top:47cqh">Octane <i></i></span>
     <span class="wlab" data-flip="wl-css" style="--c:#8a63d2;left:4cqw;top:55cqh">CSS <i></i></span>
     <span class="wlab" data-flip="wl-tailwind" style="--c:#38bdf8;left:4cqw;top:63cqh">Tailwind <i></i></span>
-    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion &middot; Pretext <i></i></span>
-    <span class="wlab" data-flip="wl-rspack" style="--c:#ff7a1a;left:4cqw;top:80cqh">Rspack <i></i></span>
+    <span class="wlab" data-flip="wl-motion" style="--c:#f7e14d;left:4cqw;top:71cqh">Motion <i></i></span>
+    <span class="wlab" data-flip="wl-pretext" style="--c:#ffc24d;left:4cqw;top:80cqh">Pretext <i></i></span>
     <div class="wlynx" data-flip="weave-lynx">
       <svg viewBox="0 0 27 28" aria-label="Lynx"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.56542 6.19594L3.90642 8.7164C3.50877 8.99031 3.23346 9.40191 3.13675 9.86708L2.77902 11.5878C2.76005 11.679 2.71799 11.7642 2.65665 11.8355L0.996306 14.0121C0.772761 14.2722 0.778152 14.9632 1.39044 15.4057C1.62523 15.6103 1.93915 16.0691 2.29622 16.591C3.05224 17.6959 4.00169 19.0836 4.80312 18.9394C5.9372 18.541 7.32544 18.4135 8.39128 18.9394C10.4632 20.7282 9.95449 22.3775 9.22514 24.7421C8.93165 25.6936 8.60243 26.7609 8.39128 27.9997C9.38643 24.3777 11.6242 20.1711 15.6592 18.7437C14.9322 18.1498 13.4486 17.5981 12.1357 17.4653C12.1357 17.4653 16.1691 14.0121 21.1439 12.4254C17.671 4.16205 11.9386 0.213095 11.9386 0.213095C11.6465 -0.148197 11.0566 -0.0296711 10.9349 0.414774C10.8371 1.72112 10.675 2.60942 10.4074 3.44676L8.39128 1.12029C8.18068 0.866399 7.75965 1.013 7.76176 1.33949C8.10312 3.23719 8.05521 4.30239 7.56542 6.19594ZM8.9846 6.02248L8.99663 6.02171C9.02298 6.02002 9.0489 6.01659 9.07424 6.01153L8.9846 6.02248ZM11.7123 1.7617C13.094 4.1491 13.7199 5.5054 13.9322 8.03659C12.4625 7.2017 11.8221 6.98923 10.7413 6.99451C11.3718 5.0773 11.5644 3.92284 11.7123 1.7617Z"/><path d="M20.5916 19.4929C14.9639 20.7806 11.7672 22.7198 9.32227 28.0001C13.7111 20.6367 26.9966 21.9536 26.9966 21.9536C26.7484 20.7508 24.1069 18.4571 22.3696 17.0503C22.3696 17.0503 23.7712 15.3272 26.8697 14.455C26.8697 14.455 20.9125 14.8002 17.4445 16.6727C18.568 17.2656 20.0071 18.2663 20.5916 19.4929Z"/></svg>
     </div>

@@ -3220,6 +3220,80 @@ vl-media.snap.is-missing .vl-ph {
 vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 
 /* =========================================================
+   "One more thing" · design-space slides (epilogue)
+   ① the async cut (thread boundary, schematic)
+   ② dense vs sparse naming trees (from the design note)
+   ========================================================= */
+.dspace { --ds-static: #5dd5a8; --ds-dyn: #E8B44A; --ds-name: #a78fff; }
+
+/* ① async cut — schematic SVG */
+.dschem { width: 100%; max-width: 1000px; margin: 14px auto 0; }
+.dschem svg { width: 100%; height: auto; display: block; }
+.dschem .lane { font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ink-mute); }
+.dschem .chip-t { font-family: var(--mono); font-size: 13px; fill: var(--ink); }
+.dschem .chip-s { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-mute); }
+.dschem .box { fill: var(--paper-elev); stroke: var(--line); }
+.dschem .flow-ok { stroke: var(--ds-static); stroke-width: 2; fill: none; marker-end: url(#dsArrow); }
+.dschem .flow-no { stroke: #e07570; stroke-width: 2; fill: none; stroke-dasharray: 5 4; }
+.dschem .wall { stroke: var(--ink-faint); stroke-width: 2; stroke-dasharray: 6 5; }
+.dschem .walltag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; fill: var(--ink-mute); }
+.dschem .ok { fill: var(--ds-static); font-weight: 700; }
+.dschem .no { fill: #e07570; font-weight: 700; }
+.dschem .opnode { fill: color-mix(in srgb, var(--ds-static) 12%, transparent); stroke: color-mix(in srgb, var(--ds-static) 55%, transparent); }
+.dschem .opnode.dyn { fill: color-mix(in srgb, var(--ds-dyn) 14%, transparent); stroke: color-mix(in srgb, var(--ds-dyn) 55%, transparent); }
+.dschem .optext { font-family: var(--mono); font-size: 11px; fill: var(--ink-soft); }
+.dschem .streamlbl { font-family: var(--mono); font-size: 12px; fill: var(--ds-static); font-weight: 600; }
+
+/* ② dense / sparse naming trees */
+.dtrees { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 4cqw, 60px); width: 100%; max-width: 1060px; margin: 6px auto 0; align-items: start; }
+.dtrees figure { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.dtrees figcaption { font-family: var(--mono); font-size: 12.5px; color: var(--ink-mute); text-align: center; }
+.dtrees figcaption b { color: var(--ink); font-weight: 600; }
+.dtrees figcaption .hot { color: var(--ds-name); }
+.dtree { width: 100%; height: auto; display: block; }
+.dtree .edge { stroke: var(--ink-faint); stroke-width: 1.4; }
+.dtree .edge.ghost, .dtree g.ghost { opacity: 0.26; }
+.dtree .nodebox { fill: var(--paper-elev); stroke: var(--line); }
+.dtree .nodebox.st { stroke: #5dd5a8; }
+.dtree .nodebox.dy { stroke: #E8B44A; }
+.dtree .tag { font-family: var(--mono); font-size: 12px; fill: var(--ink); }
+.dtree .uidbg { fill: rgba(167, 143, 255, 0.16); stroke: color-mix(in srgb, var(--ds-name) 45%, transparent); }
+.dtree .uid { font-family: var(--mono); font-size: 11px; font-weight: 700; fill: var(--ds-name); }
+.dtree .holelbl { font-family: var(--mono); font-size: 10px; fill: #E8B44A; }
+.ds-legend { display: flex; gap: 22px; justify-content: center; margin-top: 18px; font-family: var(--mono); font-size: 12px; color: var(--ink-mute); flex-wrap: wrap; }
+.ds-legend .k { display: inline-flex; align-items: center; gap: 8px; }
+.ds-legend .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+.ds-legend .sw.name { border-radius: 50%; background: var(--ds-name); }
+
+/* retained→immediate spectrum (E20b) */
+.spectrum { width: 100%; max-width: 1080px; margin: 30px auto 0; }
+.spectrum__bar { position: relative; height: 6px; border-radius: 6px; margin: 40px 40px 0; background: linear-gradient(90deg, #4FB8F0, #42b883, #8bd6a0, #a78fff); }
+.spectrum__end { position: absolute; top: -30px; font-family: var(--mono); font-size: 12.5px; color: var(--ink); display: flex; flex-direction: column; line-height: 1.25; }
+.spectrum__end i { font-style: normal; font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.01em; }
+.spectrum__end.left { left: -28px; text-align: left; }
+.spectrum__end.right { right: -28px; text-align: right; }
+.spectrum__end.right i { align-self: flex-end; }
+.spectrum__dot { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--paper); border: 3px solid var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+.spectrum__stops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 26px; }
+.sstop { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 0 6px; }
+.sstop__name { font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--c); }
+.sstop__sub { font-family: var(--mono); font-size: 11px; line-height: 1.4; color: var(--ink-mute); max-width: 22ch; }
+.sstop__sub b { color: var(--ink); font-weight: 600; }
+.sstop.hot .sstop__sub b { color: var(--ds-name); }
+.spectrum__braces { display: grid; grid-template-columns: 3fr 1fr; gap: 12px; margin-top: 16px; }
+.brace { position: relative; padding-top: 13px; text-align: center; font-family: var(--mono); font-size: 11.5px; }
+.brace::before { content: ''; position: absolute; top: 0; left: 8%; right: 8%; height: 8px; border: 1.5px solid var(--line); border-bottom: none; border-radius: 7px 7px 0 0; }
+.brace.ret { color: var(--ds-dyn); }
+.brace.ret::before { border-color: color-mix(in srgb, var(--ds-dyn) 42%, transparent); }
+.brace.imm { color: var(--ds-name); }
+.brace.imm::before { border-color: color-mix(in srgb, var(--ds-name) 45%, transparent); }
+
+/* card tree inside the Vapor REGISTER/CLONE boxes (V·7a/b) */
+.node .dtree { width: 100%; max-width: 300px; height: auto; margin: 8px auto 2px; display: block; }
+.node__cap { display: block; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+.node__cap b { color: var(--ds-name); font-weight: 600; }
+
+/* =========================================================
    IV · Instant First-Frame Rendering + Element Templates.
    Reuses the runtime chapter's .flow / .fb / .farr / .fcenter
    system; adds timelines, hydration reconcile, template code,
