@@ -25,9 +25,8 @@ const DEVICE_ICON = { phone: 'smartphone', tablet: 'tablet', desktop: 'monitor' 
  * growth runs toward the empty side of the screen instead of scaling from the
  * center (which pushes equal overflow off both edges).
  *
- * Uses the CSS `translate` property (`--phone-ox` / `--phone-oy`) so it
- * composes with any existing `transform` (centering, magic-move, inline
- * embed positioning) without fighting them.
+ * Offsets are written to `--phone-ox` / `--phone-oy` and consumed by the
+ * centering `transform` on `.demo__stage .phone` / `.phone--play`.
  */
 export function containDeviceFrame(el, getScale = () => 1) {
   if (!el || el.classList.contains('is-fullscreen')) {
@@ -37,6 +36,13 @@ export function containDeviceFrame(el, getScale = () => 1) {
   }
   // Embed frames carry inline transforms for magic-move; leave them alone.
   if (el.classList.contains('phone--embed')) {
+    el.style.setProperty('--phone-ox', '0px');
+    el.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+  // Inactive slides aren't visible — skip (keeps offsets neutral until arrival).
+  const slide = el.closest('.slide');
+  if (slide && !slide.classList.contains('is-active')) {
     el.style.setProperty('--phone-ox', '0px');
     el.style.setProperty('--phone-oy', '0px');
     return;
@@ -54,11 +60,30 @@ export function containDeviceFrame(el, getScale = () => 1) {
   const rect = el.getBoundingClientRect();
   const s = getScale() || 1;
 
+  // Slides animate translateY(±20px) on enter/exit. getBoundingClientRect
+  // includes that interpolated offset, which would bias vertical containment
+  // for the whole transition. Strip the slide's own translate so we measure
+  // against the stage as if the slide were at rest.
+  let slideTX = 0;
+  let slideTY = 0;
+  if (slide) {
+    const tf = getComputedStyle(slide).transform;
+    if (tf && tf !== 'none') {
+      const m = new DOMMatrix(tf);
+      slideTX = m.m41;
+      slideTY = m.m42;
+    }
+  }
+  const left = rect.left - slideTX;
+  const right = rect.right - slideTX;
+  const top = rect.top - slideTY;
+  const bottom = rect.bottom - slideTY;
+
   // Positive ⇒ that edge is past the clip bounds.
-  const overL = bounds.left - rect.left;
-  const overR = rect.right - bounds.right;
-  const overT = bounds.top - rect.top;
-  const overB = rect.bottom - bounds.bottom;
+  const overL = bounds.left - left;
+  const overR = right - bounds.right;
+  const overT = bounds.top - top;
+  const overB = bottom - bounds.bottom;
 
   let ox = 0;
   let oy = 0;
@@ -71,7 +96,7 @@ export function containDeviceFrame(el, getScale = () => 1) {
   const BIAS = 24;
 
   if (overL > 0 && overR > 0) {
-    const bias = (rect.left + rect.right) / 2 - (bounds.left + bounds.right) / 2;
+    const bias = (left + right) / 2 - (bounds.left + bounds.right) / 2;
     if (Math.abs(bias) >= BIAS) ox = (bias > 0 ? -overR : overL) / s;
     else ox = (overL - overR) / (2 * s); // equalize
   } else if (overL > 0) {
@@ -81,7 +106,7 @@ export function containDeviceFrame(el, getScale = () => 1) {
   }
 
   if (overT > 0 && overB > 0) {
-    const bias = (rect.top + rect.bottom) / 2 - (bounds.top + bounds.bottom) / 2;
+    const bias = (top + bottom) / 2 - (bounds.top + bounds.bottom) / 2;
     if (Math.abs(bias) >= BIAS) oy = (bias > 0 ? -overB : overT) / s;
     else oy = (overT - overB) / (2 * s); // equalize
   } else if (overT > 0) {
@@ -151,11 +176,24 @@ export function attachDeviceControls(el, {
 } = {}) {
   if (el.querySelector('.phone__resize')) return; // already wired
 
-  const contain = () => containDeviceFrame(el, getScale);
+  // Coalesce containment to one measure per frame — ResizeObserver + preset
+  // apply + drag can otherwise thrash style ↔ layout in a tight loop.
+  let containRaf = 0;
+  const contain = () => {
+    if (containRaf) cancelAnimationFrame(containRaf);
+    containRaf = requestAnimationFrame(() => {
+      containRaf = 0;
+      containDeviceFrame(el, getScale);
+    });
+  };
+  const containNow = () => {
+    if (containRaf) { cancelAnimationFrame(containRaf); containRaf = 0; }
+    containDeviceFrame(el, getScale);
+  };
   const apply = (name) => {
     applyDevicePreset(el, name, presets);
     // Layout must flush before we can measure overflow.
-    contain();
+    containNow();
   };
 
   // Preset switcher.
@@ -230,13 +268,13 @@ export function attachDeviceControls(el, {
       el.style.height = `${clampVal(startH + gain * sign.sy * dy)}px`;
       // Re-contain on every move so growth runs into empty space once an edge
       // hits the stage — not continue scaling off-screen from the center.
-      contain();
+      containNow();
     });
     const end = (e) => {
       if (!dragging) return;
       dragging = false;
       try { handle.releasePointerCapture(e.pointerId); } catch { /* already released */ }
-      contain();
+      containNow();
     };
     handle.addEventListener('pointerup', end);
     handle.addEventListener('pointercancel', end);
@@ -250,14 +288,17 @@ export function attachDeviceControls(el, {
   apply(initial || el.dataset.device || 'phone');
   if (el.dataset.ar) el.style.setProperty('--phone-ar', el.dataset.ar);
   // data-ar can change the laid-out size — re-contain after it applies.
-  contain();
+  containNow();
 
-  // Keep containment honest across viewport / stage resizes.
+  // Keep containment honest across viewport resizes, phone size changes, and
+  // slide navigations (inactive slides are skipped — see containDeviceFrame).
   window.addEventListener('resize', contain);
+  document.addEventListener('deck:change', contain);
   if (typeof ResizeObserver !== 'undefined') {
+    // Observe only the phone itself. Observing the shared `.frame` made every
+    // device on every slide re-contain on one resize, including inactive
+    // slides whose enter/exit translateY poisoned the vertical offset.
     const ro = new ResizeObserver(() => contain());
     ro.observe(el);
-    const boundsEl = el.closest('.frame') || el.closest('.play');
-    if (boundsEl) ro.observe(boundsEl);
   }
 }
