@@ -63,12 +63,17 @@ export function containDeviceFrame(el, getScale = () => 1) {
   let ox = 0;
   let oy = 0;
 
+  // Threshold for "clearly nearer one edge" vs "essentially centered". A few
+  // px of layout noise (slide padding, stage alignment) shouldn't flip a
+  // taller-than-stage phone into edge-pinning — that throws more of it off
+  // screen. Only pin when the home position is meaningfully off-center
+  // (e.g. a right-column demo), so overflow runs into the empty interior.
+  const BIAS = 24;
+
   if (overL > 0 && overR > 0) {
-    // Wider than the stage — pin to the nearer vertical edge so overflow runs
-    // into the interior (the empty / copy side), not off the outer edge.
-    // A truly centered frame (bias ≈ 0) keeps equal overflow on both sides.
     const bias = (rect.left + rect.right) / 2 - (bounds.left + bounds.right) / 2;
-    if (Math.abs(bias) >= 1) ox = (bias > 0 ? -overR : overL) / s;
+    if (Math.abs(bias) >= BIAS) ox = (bias > 0 ? -overR : overL) / s;
+    else ox = (overL - overR) / (2 * s); // equalize
   } else if (overL > 0) {
     ox = overL / s;
   } else if (overR > 0) {
@@ -77,7 +82,8 @@ export function containDeviceFrame(el, getScale = () => 1) {
 
   if (overT > 0 && overB > 0) {
     const bias = (rect.top + rect.bottom) / 2 - (bounds.top + bounds.bottom) / 2;
-    if (Math.abs(bias) >= 1) oy = (bias > 0 ? -overB : overT) / s;
+    if (Math.abs(bias) >= BIAS) oy = (bias > 0 ? -overB : overT) / s;
+    else oy = (overT - overB) / (2 * s); // equalize
   } else if (overT > 0) {
     oy = overT / s;
   } else if (overB > 0) {
