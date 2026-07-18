@@ -16,7 +16,9 @@ import { initBridge, resetBridge } from './lynx-runtime-dom-bridge.js';
 // --- Create the testing environment -----------------------------------------
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-const lynxTestingEnv = new LynxTestingEnv(jsdom);
+const lynxTestingEnv = new LynxTestingEnv({
+  window: jsdom.window as unknown as Window & typeof globalThis,
+});
 
 (globalThis as Record<string, unknown>)['lynxTestingEnv'] = lynxTestingEnv;
 

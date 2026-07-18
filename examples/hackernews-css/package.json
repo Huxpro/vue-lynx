@@ -27,8 +27,8 @@
     "@tanstack/vue-query": "^5.90.0"
   },
   "devDependencies": {
-    "@lynx-js/rspeedy": "^0.13.5",
-    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
+    "@lynx-js/rspeedy": "^0.14.5",
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.7",
     "@rsbuild/plugin-vue": "^1.2.6",
     "@rsbuild/plugin-sass": "^1.5.1",
     "sass": "^1.86.0",

@@ -117,7 +117,7 @@ export async function makeJsdomBackend() {
   const { JSDOM } = await import('jsdom');
   const { LynxTestingEnv } = await import('@lynx-js/testing-environment');
   const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-  const env = new LynxTestingEnv(jsdom);
+  const env = new LynxTestingEnv({ window: jsdom.window });
   globalThis.lynxTestingEnv = env;
   env.switchToMainThread();
 
