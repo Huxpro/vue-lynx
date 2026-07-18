@@ -1,8 +1,8 @@
 diff --git a/src/example-preview/index.tsx b/src/example-preview/index.tsx
-index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb1f43fed6 100644
+index 7ee3410eb6c600ef05230ec92a1aa8070755a382..0af743c5f3d37a5eb07397c5641729fe6b8d30ee 100644
 --- a/src/example-preview/index.tsx
 +++ b/src/example-preview/index.tsx
-@@ -51,6 +51,10 @@ export interface ExamplePreviewProps {
+@@ -52,6 +52,10 @@ export interface ExamplePreviewProps {
    entry?: string | string[];
    schema?: string;
    rightFooter?: React.ReactNode;
@@ -13,7 +13,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
    schemaOptions?: SchemaOptionsData;
    langAlias?: Record<string, string>;
    mode?: ExamplePreviewMode;
-@@ -132,6 +136,8 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -133,6 +137,8 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
      entry,
      schema,
      rightFooter,
@@ -22,7 +22,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
      schemaOptions,
      langAlias,
      defaultTab: propsDefaultTab,
-@@ -157,6 +163,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -158,6 +164,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
    const [currentFile, setCurrentFile] = useState('');
    const [isAssetFile, setIsAssetFile] = useState(isAssetFileType(defaultFile));
    const [currentEntry, setCurrentEntry] = useState('');
@@ -33,7 +33,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
  
    const [defaultWebPreviewFile, setDefaultWebPreviewFile] = useState('');
    const [initState, setInitState] = useState(false);
-@@ -167,8 +177,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -168,8 +178,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
        : highlight || {};
    }, [highlight, defaultFile]);
  
@@ -46,7 +46,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
  
      async (url) => {
        const response = await fetch(url);
-@@ -179,6 +191,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -180,6 +192,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
      },
      { revalidateOnFocus: false },
    );
@@ -54,7 +54,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
  
    const { trigger } = useSWRMutation(
      `${EXAMPLE_BASE_URL}/${example}/${currentName}`,
-@@ -258,7 +271,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -259,7 +272,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
          } else {
            setDefaultWebPreviewFile('');
          }
@@ -63,7 +63,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
        } else {
          console.warn(
            'defaultEntryFile or defaultEntryName params error, please check!',
-@@ -266,9 +279,9 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -267,9 +280,9 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
        }
        setInitState(true);
      }
@@ -75,7 +75,7 @@ index 6dfa13a34d2a6e67346cf8a078446abea73116ff..dfb33653b4c52f98f31205bc740486fb
      const ErrorComp = ErrorComponent || DefaultErrorWrap;
      return <ErrorComp example={example} exampleBaseUrl={EXAMPLE_BASE_URL} />;
    }
-@@ -291,7 +304,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+@@ -323,7 +336,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
        langAlias={langAlias}
        currentEntryFileUrl={currentEntryFileUrl}
        currentEntry={currentEntry}

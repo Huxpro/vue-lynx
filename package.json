@@ -41,7 +41,7 @@
     },
     "patchedDependencies": {
       "@lynx-js/web-core@0.22.1": "patches/@lynx-js__web-core@0.22.1.patch",
-      "@lynx-js/go-web@0.6.0": "patches/@lynx-js__go-web@0.6.0.patch"
+      "@lynx-js/go-web@0.7.0": "patches/@lynx-js__go-web@0.7.0.patch"
     }
   }
 }
