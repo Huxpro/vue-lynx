@@ -8,14 +8,12 @@
     "dev": "vite --host 0.0.0.0 --port 4321",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 4321",
-    "sim": "serve-sim --detach",
     "test:morph": "node tests/morph-invariant.mjs"
   },
   "dependencies": {
     "@lynx-js/web-core": "^0.20.0",
     "@lynx-js/web-elements": "^0.12.0",
-    "qrcode-generator": "^2.0.4",
-    "serve-sim": "0.1.44"
+    "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
     "playwright-core": "^1.49.0",
