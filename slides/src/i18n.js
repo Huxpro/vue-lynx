@@ -20,9 +20,6 @@ export const ZH = {
   'Develop Lynx with the familiar Vue 3.': '用熟悉的 Vue 3 开发 Lynx。',
 
   // ---- Chapter I · The gap ----
-  'IV · The landscape': 'IV · 格局',
-  'IV · The landscape · the map': 'IV · 格局 · 地图',
-  'IV · The landscape · the answer': 'IV · 格局 · 答案',
   'Zoom out: every stack is layers — and seams.':
     '拉远看:每个技术栈都是<span class="brand-text">层</span> —— 与缝。',
   'self-rendered': '自渲染',
@@ -55,27 +52,13 @@ export const ZH = {
     '<span style="color:#4FB8F0">Web</span> 的开发体验。<br/><span class="brand-text">Native</span> 的用户体验。',
 
   // ---- Chapter II · The proof ----
-  'Chapter II': '第二章',
   'So, how far does it go?': '那,它到底<br/>做到哪一步了?',
   'A feast of live demos — every phone in this deck is a real Vue Lynx app, running right now.':
     '一桌丰盛的现场 demo —— 这套 deck 里的每台手机,都是一个此刻正在运行的 Vue Lynx 应用。',
-  'II · The proof': 'II · 完成度',
   'upstream Vue core tests, passing on our renderer.':
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
-  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
-  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
-  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
-  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
-  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
-  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
-  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
-  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
-  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
-  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
-  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
   'v-once / v-memo':
     '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
@@ -87,13 +70,7 @@ export const ZH = {
   'The ecosystem, as-is.': '生态,<span class="brand-text">原样</span>可用。',
   'Pinia, Vue Router, TanStack Query, Tailwind — the libraries you\'d already reach for on the web, running unchanged.':
     'Pinia、Vue Router、TanStack Query、Tailwind —— 你在 Web 上已经会用的库,原封不动就能跑。',
-  'II · Ecosystem · 1/4': 'II · 生态 · 1/4',
-  'II · Ecosystem · 2/4': 'II · 生态 · 2/4',
-  'II · Ecosystem · 3/4': 'II · 生态 · 3/4',
-  'II · Ecosystem · 4/4': 'II · 生态 · 4/4',
-
   // ---- Whole apps ----
-  'II · Whole apps': 'II · 完整应用',
   'Whole apps port, too.': '整个<span class="brand-text">应用</span>,也搬得动。',
   'The classic, verbatim — reactive state, v-model, computed totals. On a native input and native scroll.':
     '经典原样照搬 —— 响应式状态、<code>v-model</code>、computed 合计。跑在原生输入框、原生滚动上。',
@@ -107,7 +84,6 @@ export const ZH = {
   'native <list>': '原生 &lt;list&gt;',
 
   // ---- Chapter III · The upgrade ----
-  'Chapter III': '第三章',
   'Apps, upgrading from Web to native.':
     'App,从 Web <em style="font-family:var(--serif);font-weight:400">升级</em>到原生。',
   "Progressive enhancement: keep the codebase you have — gain the platform you don't.":
@@ -210,15 +186,9 @@ export const ZH = {
   'Main-Thread Script': '<b>主线程脚本</b>',
 
   // ---- Chapter IV · How we did it ----
-  'Chapter IV': '第四章',
   'And how was this built?': '那,它是<br/>怎么被做出来的?',
   'Three adaptations — the runtime, the toolchain, the main thread — and an AI harness running through all of them.':
     '三次适配 —— 运行时、工具链、主线程 —— 以及一路贯穿其中的 AI harness。',
-  'IV · Runtime': 'IV · 运行时',
-  'IV · Runtime · proof': 'IV · 运行时 · 实证',
-  'IV · Toolchain': 'IV · 工具链',
-  'IV · Main-Thread Script': 'IV · 主线程脚本',
-  'IV · The harness': 'IV · Harness',
   'Background thread': '<i></i>后台线程',
   'Main (UI) thread': '<i></i>主(UI)线程',
   'Vue runs whole — on the background thread.':
@@ -240,8 +210,6 @@ export const ZH = {
     '……而这些测试,就是 <span class="brand-text">AI 的眼睛</span>。',
 
   // ---- IV · Instant First-Frame Rendering + Element Templates ----
-  'IV · Instant first frame': 'IV · 首屏直出',
-  'IV · Instant first frame · proof': 'IV · 首屏直出 · 佐证',
   // headlines
   'Both threads render. The ops stream is the recording.':
     '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制。',
@@ -323,23 +291,18 @@ export const ZH = {
   '1 human + Claude': '1 个人 + Claude',
   'The full write-up — harness, prompts, receipts. @Huxpro on X.':
     '完整复盘 —— harness、prompt、全部凭证。X 上的 <b>@Huxpro</b>。',
-  'Chapter V': '第五章',
-
   // ---- Combine ----
   'A new path': '一条新路',
   'Vue, on native.': 'Vue,<span class="brand-text">跑在原生上。</span>',
 
   // ---- Close ----
-  'Chapter IV': '第四章',
   "And we'd love your help.": '也很希望你能<br/>搭把手。',
   "Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface is large. What ships next depends on who shows up.":
     'Vue Lynx 还是 pre-alpha。架构很稳;Vue 的 API 面很大。接下来能做出什么,取决于谁愿意来。',
-  'The ask': '我们的请求',
   "Native shouldn't be a different team.":
     '原生,不该是另一个<span class="brand-text">团队</span>的事。',
   'Vue developers should ship native apps as naturally as they ship for the web today.':
     'Vue 开发者应该能像今天发 Web 一样,自然地发原生应用。',
-  'Where it stands': '现状',
   "What's there": '已经有的',
   "What's open": '还缺的',
   'Composition API & SFCs': '<b>Composition API 与 SFC</b>',
@@ -349,29 +312,24 @@ export const ZH = {
   'View pager & more gestures': '<b>View pager 与更多手势</b>',
   'Vue DevTools integration': '<b>Vue DevTools 集成</b>',
   "The ecosystem you'd port": '<b>等你来移植的生态</b>',
-  'Try it tonight': '今晚就试',
   "One npm create, and you're shipping native.":
     '一行 <span class="brand-text">npm create</span>,你就在发原生了。',
   'for Agent': '给 Agent',
   'Quick Start →': '快速开始 →',
   'Read the intro': '读简介',
-  'Fin.': '完。',
   'Thank you.': '<span class="brand-text">谢</span>谢。',
   'Questions, PRs, opinions — all welcome.': '提问、PR、想法 —— 都欢迎。',
 
   // ---- Epilogue · the elephant / fabrics ----
-  'Epilogue': '终章',
   'The elephant in the room.': '聊聊房间里的<br/>大象。',
   '“Vibe coding” is barely eighteen months old — and it already writes native apps. So why frameworks? Why Lynx? Why any of this?':
     '"vibe coding" 这个词诞生至今不过一年半 —— 它已经能直接写出原生应用了。那,还要框架干嘛?还要 Lynx 干嘛?这一切还有什么意义?',
-  'Epilogue · the question': '终章 · 问题',
   'Does AI obsolete all of us?':
     'AI 会让<span class="brand-text">我们所有人</span>都过时吗?',
   'no frameworks?': '不要框架?',
   'no libraries?': '不要类库?',
   'no docs?': '不要文档?',
   'no us?': '不要我们?',
-  'Epilogue · a claim': '终章 · 一个论断',
   'What survives AI?':
     '什么能在 AI 之后<span class="brand-text">留下来</span>?',
   'infrastructure': '基础设施',
@@ -380,23 +338,19 @@ export const ZH = {
   'ecosystems': '生态',
   'people': '人',
   'Two lemmas, then an answer.': '两个引理,一个答案。',
-  'Epilogue · Lemma 1': '终章 · 引理一',
   'The stack, rewritten.': '技术栈,被重写了。',
-  'Epilogue · Lemma 1 · harness': '终章 · 引理一 · Harness',
   'AI can do anything — harnessed.':
     'AI 什么都能做 —— 只要有好的 <span class="brand-text">harness</span>。',
   'context docs · priors · AGENTS.md': '上下文 <small>文档 · 先验 · AGENTS.md</small>',
   'tools functions · capabilities': '工具 <small>函数 · 能力</small>',
   'environment runtime · sandbox': '环境 <small>运行时 · 沙箱</small>',
   'feedback render · tests · logs': '反馈 <small>渲染 · 测试 · 日志</small>',
-  'Epilogue · Lemma 1 · platforms': '终章 · 引理一 · 平台',
   'Nobody says AI will replace the browser.':
     '没人会说,AI 要取代<span style="color:#4FB8F0">浏览器</span>。',
   'open by default': '天生开放',
   'sandboxed': '天然沙箱',
   'endlessly capable': '能力无穷',
   'fully observable': '完全可观测',
-  'Epilogue · Lemma 1 · frameworks': '终章 · 引理一 · 框架',
   'Frameworks were always harnesses.':
     '框架,从来都是 <span class="brand-text">harness</span>。',
   'then architecting how humans reason': '过去 <small>规训人类如何推理</small>',
@@ -406,11 +360,9 @@ export const ZH = {
   'templates': '模板',
   'reactivity': '响应式',
   'mutable state': '可变状态',
-  'Epilogue · intermission': '终章 · 幕间',
   '“Getting metaphysical again — 雪碧 is going to roast me.”':
     '"又开始形而上了 —— 雪碧又要批评我了。"',
   'Lynx — the loom.': 'Lynx —— 织机。',
-  'Epilogue · Lemma 2': '终章 · 引理二',
   '“A patchwork monster”? Exactly.':
     '"缝合怪"?—— <span class="brand-text">正是。</span>',
   'web-friendly surface': 'Web 亲和的表面',
@@ -419,7 +371,6 @@ export const ZH = {
   'Frameworks compress the search space.': '框架,压缩了搜索空间。',
   'everything the model could emit': '模型可能吐出的一切',
   'the idiom': '惯用法',
-  'Epilogue · Lemma 2 · people': '终章 · 引理二 · 人',
   'Technology is nothing without its people.':
     '技术若没有<span class="brand-text">人</span>,什么都不是。',
   '3D prints · 小音': '帮忙 3D 打印 · 小音',
@@ -428,7 +379,6 @@ export const ZH = {
   'Evan · Anthony · you': 'Evan · Anthony · 还有你',
   "Vue Lynx isn't a framework. It's a connection.":
     'Vue Lynx 不是一个框架,而是一次<span class="brand-text">连接</span>。',
-  'Epilogue · Lemma 2 · compounding': '终章 · 引理二 · 复利',
   'One connection compounds.':
     '一次连接,产生<span class="brand-text">复利</span>。',
   'Rendering': '渲染',
@@ -459,7 +409,6 @@ export const ZH = {
   'Weave the whole Web…': '把整个 Web 织进来……',
   '…into every platform.': '……再织向每一个平台。',
   'more…': '<i></i> 更多……',
-  'Epilogue · coda': '终章 · 尾声',
   '“AI took away the fun.”': '"AI 把乐趣拿走了。"',
   '— a workshop attendee · Germany, last week': '—— 一位 workshop 学员 · 上周,德国',
   'Find a new dopamine.': '去找新的多巴胺。',
@@ -477,35 +426,27 @@ export const ZH = {
   'I just changed languages — to natural language.':
     '我只是又换了一门语言 —— <span class="brand-text">自然语言</span>。',
   "I'm still doing frontend.": '可我做的,还是前端。',
-  'Fin. — for real': '终 · 这次是真的',
   'The frontend is dead.': '前端已死。',
   'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
 
   // ---- One more thing · Vue Vapor (the deep dive) ----
-  'One more thing · Vue Vapor': '还有一件事 · Vue Vapor',
   'Vapor mode — no Virtual DOM.':
     '<span class="brand-text">Vapor</span> 模式 —— 没有虚拟 DOM。',
   "Templates compile straight to code that touches elements directly. We taught it to run on Lynx's two threads.":
     '模板直接编译成操作元素的代码。我们让它跑在了 Lynx 的两条线程上。',
 
-  'Virtual DOM · the update path': '虚拟 DOM · 更新路径',
-  'Vapor · the update path': 'Vapor · 更新路径',
   'Every change re-runs the component, rebuilds a VNode tree, and diffs it. Work scales with the whole tree.':
     '每次变更都要重跑组件、重建 VNode 树、再做 diff。开销随整棵树增长。',
   'No tree. No diff. A reactive effect writes straight to the one node that changed — work scales with what actually changed.':
     '没有树。没有 diff。一个响应式 effect 直接写入那个变化的节点 —— 开销只随真正变化的部分增长。',
 
-  'The Vapor output · @vue/compiler-vapor': 'Vapor 产物 · @vue/compiler-vapor',
   '① a template registered once · ② cloned per instance · ③ one effect that updates a single node.':
     '<span class="codenote">①</span> 模板注册一次 · <span class="codenote">②</span> 每个实例克隆一份 · <span class="codenote">③</span> 一个 effect 只更新一个节点。',
 
-  'Code reuse · from compile to runtime': '代码复用 · 从编译到运行时',
   "Vapor drives the browser DOM directly. We make the background thread's tree look like the DOM — so upstream Vapor runs untouched.":
     'Vapor 直接驱动浏览器 DOM。我们让后台线程的那棵树“长得像”DOM —— 于是上游 Vapor 原封不动地跑起来。',
 
-  'Across the thread boundary · register': '跨越线程边界 · 注册',
-  'Across the thread boundary · clone': '跨越线程边界 · 克隆',
   'Background · Vapor': '<span class="dot"></span>后台 · Vapor',
   'Main · interpreter': '<span class="dot"></span>主线程 · 解释器',
   'inert prototype': '惰性原型',
@@ -524,32 +465,26 @@ export const ZH = {
   'create-1k across the boundary: 17,000 ops · 327 KB → 7,000 ops · 160 KB':
     'create-1k 跨越边界:<span style="color:var(--ink-mute);text-decoration:line-through">17,000 ops · 327 KB</span> → <b class="brand-text">7,000 ops · 160 KB</b>',
 
-  'Benchmark · update path, background thread': 'Benchmark · 更新路径,后台线程',
   'Where Vapor pulls away: 5.8–9.8×.':
     'Vapor 拉开差距的地方:<span class="brand-text">5.8–9.8×</span>。',
   'The entire delta is Vue work on the thread you share with your app logic — lower background cost means more headroom before dropped frames.':
     '整个差距都是 Vue 在那条你与应用逻辑共享的线程上的开销 —— 后台开销越低,离掉帧就越远。',
 
-  'Benchmark · the whole ledger': 'Benchmark · 完整账本',
   'Big wins on updates and traffic; creation at parity; you pay in bundle size.':
     '更新与传输大幅领先;创建打平;代价是产物体积。',
 
-  'The workflow · one source, two renderers': '工作流 · 一份源码,两个渲染器',
   "Every example built & driven in both modes through Lynx for Web. The support matrix is generated from the run — it can't drift from what actually passed.":
     '每个示例都通过 Lynx for Web 在两种模式下构建并驱动。支持矩阵由运行结果生成 —— 不会与真正通过的结果发生漂移。',
 
   // ---- upstream-test slides (VDOM A7 skip breakdown + Vapor proof) ----
   '131 documented skips — every one a test-infra artifact or browser-only semantic, not a Lynx gap.':
     '131 个 skip 都有据可查 —— 每一个要么是测试设施产物,要么是浏览器专属语义,<b class="brand-text">没有一个是 Lynx 的缺口。</b>',
-  'One more thing · Vapor · proof': '还有一件事 · Vapor · 佐证',
   "Vapor's own suite — unmodified on ShadowElement. It passes the element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.":
     'Vapor 自己的上游测试 —— 在 ShadowElement 上<b>原封不动</b>地跑。触及元素表面的那些测试,它以 81% 对 vdom 的 57% 通过:与 Lynx 更亲近的契合。',
 
-  'One more number': '还有一个数字',
   'Vapor vs Vue VDOM on the 10,000-row select storm — same app, same bundle, one attribute apart.':
     'Vapor 对 Vue VDOM,在 10,000 行的 select 风暴中 —— 同一个应用、同一个产物,只差一个属性。',
 
-  'Vapor · one flag away': 'Vapor · 只差一个开关',
   'Same source. Flip a switch.':
     '同一份源码。<span class="brand-text">拨一下开关。</span>',
   'Experimental today — but the fast path is already here.':
