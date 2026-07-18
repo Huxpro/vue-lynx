@@ -10,13 +10,10 @@ export function normalizeKey(s) {
   return (s || '').replace(/\s+/g, ' ').trim();
 }
 
-// Cover verbs cycle via main.js — swapped there, not here.
-export const ZH_VERBS = ['解锁', '随手写', '渲染', '发布'];
-
 // key = normalized English textContent · value = Chinese innerHTML
 export const ZH = {
   // ---- Cover ----
-  'Native for Vue': '原生,给 <span class="brand-text">Vue</span>',
+  // Big title stays English ("Unlock Native for Vue"); only the tagline flips.
   'Develop Lynx with the familiar Vue 3.': '用熟悉的 Vue 3 开发 Lynx。',
 
   // ---- Chapter I · The gap ----
