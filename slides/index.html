@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 134</span>
+    <span data-counter>01 / 133</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2845,18 +2845,29 @@ app.<span class="code-fn">use</span>(router)</pre>
         "One more thing…" reveal, leads into "the cradle")
        ==================================================== -->
 
-  <!-- V·2 — Vapor headline -->
+  <!-- V·2 — Vapor headline + the switch -->
   <section class="slide stage" data-bg="beam">
     <div class="xtag">Experimental</div>
     <h2 class="h-section" style="text-align:center;max-width:19ch">
       Vue <span class="brand-text">Vapor</span>.
     </h2>
+    <div class="codeframe" style="text-align:left;max-width:560px">
+      <div class="codeframe__head">
+        <span class="dots"><span></span><span></span><span></span></span>
+        <span>lynx.config.ts · src/index.ts</span>
+      </div>
+<pre><span class="code-fn">pluginVueLynx</span>({ <span class="code-attr">vapor</span>: <span class="code-key">true</span> })
+
+<span class="code-key">import</span> { <span class="code-fn">createApp</span> } <span class="code-key">from</span> <span class="code-str">'vue-lynx/vapor'</span>
+<span class="code-fn">createApp</span>(App).<span class="code-fn">mount</span>()</pre>
+    </div>
     <p class="lead">
       Templates compile straight to code that touches elements directly.
       We taught it to run on Lynx's two threads.
     </p>
     <aside class="notes">
       <p><strong>What Vapor is — no Virtual DOM.</strong> Vue 3.6's compilation-based renderer: no vnode tree, no per-component diffing. Prerelease — pinned to <code>vue@3.6.0-beta.17</code>.</p>
+      <p><strong>Same source — flip a switch.</strong> Per-app, build-time flag: the plugin option, the entry import, the <code>vapor</code> attribute. Two pure entries — <code>vue-lynx</code> and <code>vue-lynx/vapor</code> — so vdom-only APIs fail at build time in a Vapor app instead of misbehaving at runtime.</p>
       <p>The claim we'll back with numbers: same Vue, far less update-path work.</p>
     </aside>
   </section>
@@ -3266,31 +3277,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>Vapor gets its own upstream suite (PR #232).</strong> 30 <code>runtime-vapor</code> spec files run against the real <code>vue-lynx/vapor</code> surface and ShadowElement tree: <strong>545 pass, 120 skip, 0 fail</strong>. The skiplist is a <em>closed inventory</em> — every excluded test carries a reason, config load fails on anything unclassified.</p>
       <p><strong>The skips aren't a broken list.</strong> SSR/hydration + vdom↔vapor interop are 57% of everything that doesn't run — neither is a Lynx-compatibility signal (no SSR surface exists; interop is deliberately unsupported). Browser-only platform is another 24%. Test-infra is under 1% — vs vdom's dominant 59% — because the raw-bundle re-export trick killed the private-import problem. The port even found a real bug (ShadowElement was reactivity-proxyable; <code>__v_skip</code> fixed it).</p>
       <p><strong>The affinity point.</strong> On the tests that touch the actual element surface, Vapor passes 81% vs vdom's 57% — and needs <em>zero behavioral shims</em>: production <code>@vue/runtime-vapor</code> runs unmodified over ShadowElement, where vdom mode needed 1,074 LOC of simulation in the execution path. Vapor's host contract — clone a template + imperative setters — is just a closer fit to Lynx. (Contract fit, not speed.)</p>
-    </aside>
-  </section>
-
-  <!-- V·11 — Close: flip a switch -->
-  <section class="slide stage" data-bg="beam" data-chrome="minimal">
-    <h2 class="cta__title" style="text-align:center;max-width:15ch">
-      Same source. <span class="brand-text">Flip a switch.</span>
-    </h2>
-    <div class="codeframe" style="text-align:left;max-width:560px">
-      <div class="codeframe__head">
-        <span class="dots"><span></span><span></span><span></span></span>
-        <span>lynx.config.ts · src/index.ts</span>
-      </div>
-<pre><span class="code-fn">pluginVueLynx</span>({ <span class="code-attr">vapor</span>: <span class="code-key">true</span> })
-
-<span class="code-key">import</span> { <span class="code-fn">createApp</span> } <span class="code-key">from</span> <span class="code-str">'vue-lynx/vapor'</span>
-<span class="code-fn">createApp</span>(App).<span class="code-fn">mount</span>()</pre>
-    </div>
-    <p class="cta__sub" style="margin-inline:auto;text-align:center">
-      Experimental today — but the fast path is already here.
-    </p>
-    <aside class="notes">
       <p><strong>The mic-drop number — 7× VDOM.</strong> Cross-framework suite (ReactLynx vs Vue VDOM vs Vue Vapor), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor 7.0× VDOM on the 10k select storm, 1.9× on update storm — same app, same bundle, one attribute apart.</p>
-      <p><strong>Close the encore.</strong> Vapor is a per-app, build-time flag: the plugin option, the entry import, the <code>vapor</code> attribute. Two pure entries — <code>vue-lynx</code> and <code>vue-lynx/vapor</code> — so vdom-only APIs fail at build time in a Vapor app instead of misbehaving at runtime.</p>
-      <p>Land it: "same Vue you already write — now with a compile-time fast path. That's the one more thing."</p>
     </aside>
   </section>
 
