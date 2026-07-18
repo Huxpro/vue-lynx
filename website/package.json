@@ -15,7 +15,7 @@
   "dependencies": {
     "@douyinfe/semi-icons": "^2.74.0",
     "@douyinfe/semi-ui": "^2.75.0",
-    "@lynx-js/go-web": "^0.6.0",
+    "@lynx-js/go-web": "^0.7.0",
     "@lynx-js/web-core": "^0.22.1",
     "@lynx-js/web-elements": "^0.12.5",
     "@rspress/core": "^2.0.3",
