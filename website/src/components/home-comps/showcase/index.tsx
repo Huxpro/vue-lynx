@@ -1,42 +1,18 @@
 import type React from 'react';
 import { useLang } from '@rspress/core/runtime';
+import { Go } from '../../go/Go';
 import styles from './index.module.scss';
 
 interface ShowCaseItem {
   title: Record<'en' | 'zh', string>;
   desc: Record<'en' | 'zh', string>;
   link: string;
-  video?: string;
-  image?: string;
+  example: string;
+  defaultFile?: string;
+  schema?: string;
 }
 
 const showCaseList: ShowCaseItem[] = [
-  {
-    title: {
-      en: 'Two-Column Waterfall Gallery',
-      zh: '双列瀑布流画廊',
-    },
-    desc: {
-      en: 'Cover everything you need to know to start building with Vue Lynx.',
-      zh: '覆盖使用 Vue Lynx 开发所需的一切知识。',
-    },
-    link: '/guide/tutorial-gallery',
-    video:
-      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
-  },
-  {
-    title: {
-      en: 'Product Detail with Carousel',
-      zh: '带轮播的商品详情页',
-    },
-    desc: {
-      en: 'Deep dive into main thread scripting by building a highly responsive swiper.',
-      zh: '通过构建一个高响应性的轮播组件，深入学习主线程脚本。',
-    },
-    link: '/guide/tutorial-swiper',
-    video:
-      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
-  },
   {
     title: {
       en: 'Elk — a Mastodon Client',
@@ -47,7 +23,35 @@ const showCaseList: ShowCaseItem[] = [
       zh: '真正产品级的应用：将 Elk 移植为原生 Mastodon 客户端，复用其 API 与内容渲染层。',
     },
     link: '/guide/elk',
-    image: '/examples/elk/preview-image.png',
+    example: 'elk',
+    defaultFile: 'src/App.vue',
+    schema: '{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa',
+  },
+  {
+    title: {
+      en: 'Nuxt AI Chat',
+      zh: 'Nuxt AI Chat',
+    },
+    desc: {
+      en: 'A full-featured AI chatbot ported from the Nuxt AI Chat template — streaming, tools, markdown, and more.',
+      zh: '从 Nuxt AI Chat 模板移植的完整 AI 聊天应用——流式响应、工具调用、Markdown 等。',
+    },
+    link: '/guide/ai-chat',
+    example: 'ai-chat',
+    defaultFile: 'src/App.vue',
+  },
+  {
+    title: {
+      en: 'Vue HackerNews',
+      zh: 'Vue HackerNews',
+    },
+    desc: {
+      en: "Evan You's classic HackerNews demo on Vue Lynx — Vue Router, Pinia, TanStack Query, and Tailwind.",
+      zh: 'Evan You 经典 HackerNews 示例的 Vue Lynx 版——Vue Router、Pinia、TanStack Query 与 Tailwind。',
+    },
+    link: '/guide/hackernews',
+    example: 'hackernews-tailwind',
+    defaultFile: 'src/App.vue',
   },
 ];
 
@@ -57,8 +61,8 @@ const sectionTitle = {
 };
 
 const sectionDesc = {
-  en: 'Experience true native feel, instant launch, and silky interactions.',
-  zh: '体验真正的原生质感、瞬时启动和丝滑交互。',
+  en: 'Live apps in the phone frame — with Go’s loading overlay until first paint.',
+  zh: '手机框内的真实应用——Go 加载遮罩会一直显示到首帧绘制。',
 };
 
 const learnByDoing = {
@@ -77,29 +81,21 @@ export const ShowCase: React.FC = () => {
         {sectionDesc[lang]}
       </div>
       <ul className={styles['show-case-list']}>
-        {showCaseList.map((item, index) => (
-          <li className={styles['show-case-list-item']} key={index}>
+        {showCaseList.map((item) => (
+          <li className={styles['show-case-list-item']} key={item.example}>
             <div className={styles['mobile-show-frame']}>
               <div className={styles['preview']}>
-                {item.video
-                  ? (
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      aria-label={`${item.title[lang]} preview`}
-                    >
-                      <source src={item.video} type="video/mp4" />
-                    </video>
-                  )
-                  : (
-                    <img
-                      src={item.image}
-                      alt={`${item.title[lang]} preview`}
-                      loading="lazy"
-                    />
-                  )}
+                <Go
+                  example={item.example}
+                  defaultFile={item.defaultFile}
+                  schema={item.schema}
+                  mode="preview"
+                  defaultTab="web"
+                  webPreviewMode="fit"
+                  designWidth={375}
+                  designHeight={812}
+                  fit="cover"
+                />
               </div>
             </div>
             <div className={styles['item-title']}>{item.title[lang]}</div>
