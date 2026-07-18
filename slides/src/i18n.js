@@ -260,8 +260,8 @@ export const ZH = {
     '编译器把静态子树下沉成一个 <code>create()</code> 函数。Vue 只发<b>一个</b> op;之后只有动态空洞在传输。',
   'Static structure bakes into a create() skeleton; only the holes — dynamic text, class, style, attrs — stay on the vnode path.':
     '静态结构烘焙进 <code>create()</code> 骨架;只有空洞 —— 动态的文本、class、style、属性 —— 留在 vnode 路径上。',
-  'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
-    'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
+  'FCP over a real Web Worker + IPC (Lynx for Web): −12% to −19% at 1k–5k — but not a constant. Plain IFR reverses past ~10k rows; IFR + ET holds the win across scale.':
+    'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 在 1k–5k 时 −12% 到 −19%,但这不是常数。纯 IFR 过了约 10k 行会反转;<b class="brand-text">IFR + ET</b> 才能在各种规模上守住优势。',
   'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
     'Element Templates 把录制的 ops 负载缩小 3–1000× —— 这份协议瘦身惠及每一次更新,不只是首帧。',
   'A tool, not a default-on switch — but for content-first screens, IFR + ET is the recommended setup.':
@@ -535,6 +535,12 @@ export const ZH = {
   "Vapor's own suite — unmodified on ShadowElement. It passes the element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.":
     'Vapor 自己的上游测试 —— 在 ShadowElement 上<b>原封不动</b>地跑。触及元素表面的那些测试,它以 81% 对 vdom 的 57% 通过:与 Lynx 更亲近的契合。',
 
+  'One more thing · the whole field, at 10k rows': '还有一件事 · 整个战场,在 10k 行',
+  'On the 10k select storm Vapor is 8.2× VDOM and 23× ReactLynx — React leads only creation.':
+    '在 10k 的 select 风暴上,Vapor 是 VDOM 的 <b class="brand-text">8.2×</b>、ReactLynx 的 <b class="brand-text">23×</b> —— React 只在创建上领先。',
+  'One more thing · select storm × scale': '还有一件事 · select 风暴 × 规模',
+  "Point updates as rows grow: VDOM and ReactLynx climb linearly; Vapor stays near the floor — 128 ms at 30k vs VDOM's 1.46 s.":
+    '行数增长时的点状更新:VDOM 和 ReactLynx 线性攀升;Vapor 几乎贴着地板 —— <b class="brand-text">30k 时 128 ms</b>,而 VDOM 是 1.46 s。',
   'One more number': '还有一个数字',
   'Vapor vs Vue VDOM on the 10,000-row select storm — same app, same bundle, one attribute apart.':
     'Vapor 对 Vue VDOM,在 10,000 行的 select 风暴中 —— 同一个应用、同一个产物,只差一个属性。',
@@ -710,7 +716,7 @@ export const ZH_NOTES = [
   // IFR7 · 骨架 + 空洞
   `<p>可下沉 = 每个节点都是纯 Lynx 元素、只有值或文本动态。组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、带 ref/id 的节点留在普通 vnode 路径;它们的纯元素子体仍可下沉。scoped-CSS 的 scope id 会被烘焙进去。</p>`,
   // IFR8 · 基准测试表
-  `<p>几组独立的实验,不是一条 trace。FCP 收益(中位数 −12…−19%,ReactLynx 对照 −23%)来自去掉后台启动 + IPC —— 需要真实的线程边界,两种 IFR 配置都能拿到(ET 对 web FCP 基本持平)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong>(多次重跑约 6–15×)和 ops 负载 —— 这也是 ET 默认打开的原因。代价:约 2.26× gzip。</p>`,
+  `<p>几组独立的实验,不是一条 trace。FCP 收益来自去掉后台启动 + IPC —— 需要真实的线程边界。但统一重跑(PR #266)推翻了把 −19% 当作<em>普适</em>常数的说法:那只是中等规模 ×1 的结果。纯 <code>vdom-ifr</code> 在 1k 是 −10%,到 10k 变成 <strong>+22%(反而更慢)</strong>,30k 是 +20%;<strong>IFR + ET 在整条阶梯上都领先</strong>,而 ReactLynx 的 FCP@10k 最低(228ms)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong> 和 ops 负载 —— 而且它不只管首帧(挂载后的风暴也快 0.72× @10k)。代价:约 2.26× gzip。</p>`,
   // IFR9 · 基准测试图
   `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
   // IFR10 · 诚实的取舍
@@ -832,8 +838,12 @@ export const ZH_NOTES = [
   `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
   // 45b Vapor 上游测试 + 亲近性（对应 VDOM 那页 A7）
   `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p>`,
+  // 45c 统一跨框架矩阵（#266）
+  `<p><strong>统一矩阵(PR #266)。</strong>IFR × VDOM/Vapor × ReactLynx,同一台机、同一把尺 —— 黑盒点击到 composed-DOM 收敛。风暴才是用户故事:<em>select</em> 是点状更新,<em>update</em> 是批量。随着行数增长,Vapor 的结构性优势(没有 vnode 树、effect 直接写节点)毫无遮掩地显现。</p><p>诚实地读:<strong>React 创建领先</strong>(create@10k 689 对 798 ms),<strong>Vue/Vapor 持续更新领先</strong>。“慢速几何平均”那一行是平衡:Vapor 1.10 对 React 4.27。绝对 ms 与机器绑定 —— <em>比值</em>才是可移植的结论。</p>`,
+  // 45d select 风暴 × 规模
+  `<p><strong>规模画面。</strong>selectStorm 跨 1k → 10k → 30k,每个 tick 只重选一行(点状更新)。VDOM 每轮重跑 render 并 diff 整张列表,曲线随 N 上扬;ReactLynx 在此之上再加自己的开销。Vapor 的响应式 effect 只碰变化的那个节点,曲线几乎压平 —— 差距随规模拉大(对 VDOM:1k 1.7× → 10k 8.2× → 30k 11.4×)。</p>`,
   // 46 那一个数字（mic-drop）
-  `<p><strong>压轴数字。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9×。</p><p>让它悬一会儿。然后最后一页。</p>`,
+  `<p><strong>压轴数字。</strong>统一跨框架矩阵(PR #266),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor <strong>8.2×</strong> VDOM(367 → 45 ms),update 风暴 2.1×;对 ReactLynx 约 23×。插桩 BG 约 9.8×,一次性操作被帧底掩盖,风暴才显出来。</p><p>让它悬一会儿。然后最后一页。</p>`,
   // 47 收束 · 拨一下开关
   `<p><strong>收尾返场。</strong>Vapor 是按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>落地:“还是你早就在写的那套 Vue —— 只是多了一条编译期的快路。这就是那‘还有一件事’。”</p>`,
   // 90 E20 · 摇篮
