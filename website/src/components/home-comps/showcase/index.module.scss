@@ -42,37 +42,39 @@
     // mode="preview" still paints Go chrome (tabs/footer/"Open in").
     // Strip it so WebIframe's LoadingOverlay + lynx-view fill the phone —
     // same spinner path as ultra, without ultra's fixed full-viewport shell.
-    :global {
-      [class*='box'] {
-        width: 100% !important;
-        height: 100% !important;
-        border: none !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-      }
+    //
+    // Use one :global(...) per selector — a comma list inside `:global { }`
+    // gets partially remapped by CSS modules (only the first keeps the hashed
+    // parent), which left preview-header / open-in visible.
+    :global([class*='box']) {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
 
-      [class*='content'] {
-        padding: 0 !important;
-      }
+    :global([class*='content']) {
+      padding: 0 !important;
+    }
 
-      [class*='footer'],
-      [class*='preview-header'],
-      [class*='open-in'] {
-        display: none !important;
-      }
+    :global([class*='footer']),
+    :global([class*='preview-header']),
+    :global([class*='open-in']) {
+      display: none !important;
+    }
 
-      [class*='preview-wrap'] {
-        border: none !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        height: 100% !important;
-      }
+    :global([class*='preview-wrap']) {
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      height: 100% !important;
+    }
 
-      [class*='preview-wrap-content'],
-      [class*='preview-body'],
-      [class*='preview-panel'] {
-        height: 100% !important;
-      }
+    :global([class*='preview-wrap-content']),
+    :global([class*='preview-body']),
+    :global([class*='preview-panel']) {
+      height: 100% !important;
     }
   }
 }

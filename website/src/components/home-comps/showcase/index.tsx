@@ -61,8 +61,8 @@ const sectionTitle = {
 };
 
 const sectionDesc = {
-  en: 'Live apps in the phone frame — with Go’s loading overlay until first paint.',
-  zh: '手机框内的真实应用——Go 加载遮罩会一直显示到首帧绘制。',
+  en: "Live Elk, AI Chat, and HackerNews — Go's loading overlay stays up until first paint.",
+  zh: '真实运行的 Elk、AI Chat 与 HackerNews——Go 加载遮罩会保持到首帧绘制。',
 };
 
 const learnByDoing = {
@@ -91,10 +91,9 @@ export const ShowCase: React.FC = () => {
                   schema={item.schema}
                   mode="preview"
                   defaultTab="web"
-                  webPreviewMode="fit"
-                  designWidth={375}
-                  designHeight={812}
-                  fit="cover"
+                  // responsive: lynx-view fills the phone frame. fit/cover was
+                  // collapsing HackerNews list rows to width:0 in this bezel.
+                  webPreviewMode="responsive"
                 />
               </div>
             </div>
