@@ -359,14 +359,8 @@ export const ZH = {
     '—— 另一位学员 · 他当晚 vibe 出了一个宝可梦',
   "I know AI makes it easy. I'm glad it's easy — I haven't been this excited in years.":
     '我知道有 AI 这不难。我很高兴这不难 —— 我好久没这么兴奋过了。',
-  'I rebuilt everything ten-years-ago me dreamed of.':
-    '我把 <span class="brand-text">10 年前的自己</span>想做的东西,全部翻新了一遍。',
-  'hux.pro — untouched for 10 years': 'hux.pro —— 十年没动过',
-  'my first Vue app — v0.12': '我的第一个 Vue 应用 —— v0.12',
-  'this deck — zero libraries, vibed': '这套 deck —— 零依赖,纯 vibe',
-  'I just changed languages — to natural language.':
-    '我只是又换了一门语言 —— <span class="brand-text">自然语言</span>。',
-  "I'm still doing frontend.": '可我做的,还是前端。',
+  'Natural language.':
+    '<span class="brand-text">自然语言</span>。',
   'The frontend is dead.': '前端已死。',
   'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
@@ -710,10 +704,8 @@ export const ZH_NOTES = [
   `<p><strong>证据甩上桌</strong> —— 两张照片夹着中间的竖屏视频,压在 quote 之上。中间的视频静音自动播放;照片带一点快照式的倾斜。</p><p>文件:<code>103-photo-1.png</code>、<code>103-video-portrait.mp4</code>、<code>103-photo-2.png</code>,放在 <code>slides/public/media/embeds/</code>。</p>`,
   // 95b Overlay · 宝可梦横屏
   `<p><strong>再点一下 —— 宝可梦,全宽登场。</strong>三连散去,横屏视频占满舞台。文件:<code>103-video-wide.mp4</code>。</p>`,
-  // 96 E26 · 十年翻新
-  `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站;我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p>`,
-  // 97 E27 · 还是前端
-  `<p><strong>转折。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。</p><p>这从来就是这份工作。这<em>就是</em>前端。</p>`,
-  // 98 E28 · 前端永生
+  // 96 E26 · 自然语言（含原「十年翻新」「还是前端」）
+  `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站(hux.pro);我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p><p><strong>转折 —— 可我做的,还是前端。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。这从来就是这份工作。这<em>就是</em>前端。</p>`,
+  // 97 E27 · 前端永生
   `<p><strong>真正的收尾。</strong>小字划掉:前端已死。大字:前端永生。谢谢 —— 这次是真的 —— 然后留在这页做 Q&amp;A。</p><p>Q&amp;A 弹药:"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— 同一份产物,两端都跑。"AI 会取代 Vue 吗?" —— 你刚看完整个答案。</p>`,
 ];
