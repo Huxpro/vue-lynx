@@ -254,32 +254,12 @@ export const ZH = {
   '1 human + Claude': '1 个人 + Claude',
   'The full write-up — harness, prompts, receipts. @Huxpro on X.':
     '完整复盘 —— harness、prompt、全部凭证。X 上的 <b>@Huxpro</b>。',
-  // ---- Combine ----
-  'A new path': '一条新路',
-  'Vue, on native.': 'Vue,<span class="brand-text">跑在原生上。</span>',
-
-  // ---- Close ----
-  "And we'd love your help.": '也很希望你能<br/>搭把手。',
-  "Native shouldn't be a different team.":
-    '原生,不该是另一个<span class="brand-text">团队</span>的事。',
-  'Vue developers should ship native apps as naturally as they ship for the web today.':
-    'Vue 开发者应该能像今天发 Web 一样,自然地发原生应用。',
-  "What's there": '已经有的',
-  "What's open": '还缺的',
-  'Composition API & SFCs': '<b>Composition API 与 SFC</b>',
-  'Transition, Suspense, KeepAlive, Teleport': '<b>Transition、Suspense、KeepAlive、Teleport</b>',
-  'Pinia, Router, Query, Tailwind': '<b>Pinia、Router、Query、Tailwind</b>',
-  'Main-Thread Script': '<b>Main-Thread Script</b>',
-  'View pager & more gestures': '<b>View pager 与更多手势</b>',
-  'Vue DevTools integration': '<b>Vue DevTools 集成</b>',
-  "The ecosystem you'd port": '<b>等你来移植的生态</b>',
-  "One npm create, and you're shipping native.":
-    '一行 <span class="brand-text">npm create</span>,你就在发原生了。',
+  // ---- Close · one npm command (fake thank-you) ----
+  'Stars, questions, PRs': 'Star、提问、PR',
+  'One npm command.':
+    '一行 <span class="brand-text">npm</span> 命令。',
   'for Agent': '给 Agent',
-  'Quick Start →': '快速开始 →',
-  'Read the intro': '读简介',
-  'Thank you.': '<span class="brand-text">谢</span>谢。',
-  'Questions, PRs, opinions — all welcome.': '提问、PR、想法 —— 都欢迎。',
+  'Thank you.': '谢谢。',
 
   // ---- Epilogue · the elephant / fabrics ----
   'The elephant in the room.': '聊聊房间里的<br/>大象。',
@@ -611,18 +591,8 @@ export const ZH_NOTES = [
   `<p><strong>现在这个数字说得通了。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。</p>`,
   // 64 H2 · X 复盘
   `<p><strong>让观众把手机对准这页。</strong>完整方法论写在 X 上 —— harness 怎么搭、plan 长什么样、AI 在哪儿失手、测试怎么接住的。vue.lynxjs.org 首页的 badge 也链着它。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
-  // 65 Combine
-  `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿,让等式落地。然后:"也很希望大家来一起把它做成。"</p>`,
-  // 66 Divider V · close
-  `<p><strong>转向请求。</strong>项目是真的,但需要社区。架构很稳;Vue 的表面积很大。</p>`,
-  // 67 Ask
-  `<p>落在这句上 —— <em>"原生,不该是另一个团队的事。"</em>这是你想让他们记住的一句。</p>`,
-  // 68 What's there / open
-  `<p>左边 = 今天就能用、可以做生产探索的。右边 = 贡献者能发力的地方 —— 第三章里 Elk 的 view pager,就在这个清单上。</p>`,
-  // 69 Try
-  `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p>`,
-  // 70 Thank you (the FAKE close)
-  `<p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。</p><p>然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
+  // 65 Close · 一行 npm 命令（含原 combine / 搭把手 / 另一个团队 / what's there / 假收尾）
+  `<p><strong>标题句,然后请求。</strong>Vue × Lynx = Vue 跑在原生上。也很希望你能搭把手 —— 架构很稳;Vue 的表面积很大。记住这句:<em>原生,不该是另一个团队的事</em>。已经有的:Composition API 与 SFC、Transition/Suspense/KeepAlive/Teleport、Pinia/Router/Query/Tailwind、Main-Thread Script。还缺的:view pager 与更多手势、Vue DevTools、等你来移植的生态。</p><p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p><p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
   // 71 Epilogue divider · 大象
   `<p><strong>重置全场。</strong>"那,用省下来的十分钟,聊聊房间里的大象。"如果 AI 什么都能做,为什么不直接 prompt 出 N 个原生应用,跳过框架、跳过跨端、跳过这一切?</p><p>语气转变:少一点产品推介,多一点自言自语。这半场讲的是 <em>why</em>,不是 <em>what</em>。</p>`,
   // 71a Overlay · 推文上半
