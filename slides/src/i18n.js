@@ -50,6 +50,7 @@ export const ZH = {
 
   // ---- Chapter II · demos ----
   // ---- API coverage ----
+  'ref() · live sim': '<code class="brand-text">ref()</code> <span class="demo__title-sub">· 真机模拟</span>',
   'v-once / v-memo':
     '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
@@ -459,6 +460,8 @@ export const ZH_NOTES = [
   `<p><strong>然后,Lynx 走出队列 —— 站到正中央,Vue 的正下方;其余候选人整体让到左侧。</strong>前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,短、垂直、实心。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
   // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入 demo。</p>`,
+  // 13 ref + serve-sim (first lynx-view demo + local simulator)
+  `<p><strong>从最简单的开始 —— 并排真机模拟器。</strong><code>ref()</code>、一个事件回调、一个样式绑定。左边是 Lynx for Web(<code>&lt;lynx-view&gt;</code>);右边是通过 <a href="https://github.com/EvanBacon/serve-sim">serve-sim</a> 在 <code>/.sim</code> 推过来的本地 iOS Simulator。</p><p><strong>上场前:</strong>先 boot 模拟器 + Lynx Explorer 加载 hello-world bundle,再跑 <code>npx serve-sim --detach</code>。Vite deck 会自动挂上 preview middleware。</p>`,
   // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
   // 17 v-model

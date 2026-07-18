@@ -15,6 +15,24 @@ pnpm dev
 Vite serves example bundles via a symlink to `../website/docs/public/examples`.
 Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 
+### Local iOS Simulator (`serve-sim`)
+
+The Vite dev server mounts [serve-sim](https://github.com/EvanBacon/serve-sim)
+middleware at **`/.sim`**, so the deck can stream a booted Apple Simulator into
+the browser (used by the duplicated `ref()` slide — Web `<lynx-view>` beside
+the native sim).
+
+```bash
+# macOS + Xcode, with a simulator already booted (e.g. Lynx Explorer):
+npx serve-sim --detach
+cd slides && pnpm dev
+# preview UI: http://localhost:4321/.sim
+```
+
+`proxyHelpers` stays off so Vite's HMR WebSocket is untouched; the helper's
+own loopback ports serve the stream (CORS is open). Production / Vercel builds
+do not include the middleware — the slide's iframe is for local presenting.
+
 ## Navigation
 
 Only **slide movement** is bound to bare keys. Every discrete command lives
