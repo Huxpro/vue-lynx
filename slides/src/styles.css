@@ -1154,39 +1154,13 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   gap: 24px;
 }
 
-.divider__row {
-  display: flex;
-  align-items: flex-end;
-  gap: clamp(24px, 4cqw, 56px);
-  max-width: 100%;
-}
-
-.divider__num {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: clamp(160px, 22cqw, 320px);
-  line-height: 0.85;
-  letter-spacing: -0.05em;
-  color: var(--ink);
-  flex-shrink: 0;
-}
-
-.divider__num.numeral--brand {
-  background: var(--brand-gradient);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: gradientMove 9s linear infinite;
-}
-
 .divider__title {
   font-family: var(--display);
   font-weight: 600;
   font-size: clamp(48px, 6cqw, 96px);
   line-height: 0.95;
   letter-spacing: -0.035em;
-  max-width: 16ch;
+  max-width: 18ch;
   padding-bottom: clamp(20px, 2cqw, 32px);
 }
 
@@ -1726,7 +1700,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .thankyou .sig {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(20px, 2cqw, 32px);
+  font-size: clamp(24px, 2.4cqw, 38px);
   color: var(--ink-soft);
 }
 
@@ -1734,7 +1708,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   display: flex;
   gap: 28px;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-mute);
 }
 .thankyou .handles a {

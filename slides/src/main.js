@@ -2,7 +2,7 @@ import './styles.css';
 import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
 import { initWeave } from './weave.js';
-import { ZH, ZH_VERBS, ZH_NOTES, normalizeKey } from './i18n.js';
+import { ZH, ZH_NOTES, normalizeKey } from './i18n.js';
 import { readFlags, expandChrome } from './framework/flags.js';
 import { initCommand } from './framework/command.js';
 import { initDevtool } from './framework/devtool.js';
@@ -555,8 +555,9 @@ let vtext = verbs[0];
 let vdeleting = false;
 let vpaused = false;
 
-function setVerbLang(lang) {
-  verbs = lang === 'zh' ? ZH_VERBS : EN_VERBS;
+function setVerbLang(_lang) {
+  // Cover title stays English in both languages; only the tagline is bilingual.
+  verbs = EN_VERBS;
   vi = 0;
   vtext = '';
   vdeleting = false;
@@ -607,7 +608,7 @@ document.querySelectorAll('[data-copy]').forEach((el) => {
 // =========================================================
 const I18N_SELECTOR = [
   '.eyebrow', 'h1', 'h2', 'h3', 'p', 'li',
-  '.chip', '.pstack__item', '.cover__tagline', '.cover__title-line',
+  '.chip', '.pstack__item', '.cover__tagline',
   '.combine__name', '.result-label', '.tl-item__week', '.node__label',
   '.arrow', '.cta__link', '.agent', '.mega', '.label',
   '.flane__label', '.ifrlane__label', '.fcenter', '.lgtag',

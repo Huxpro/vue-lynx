@@ -10,19 +10,13 @@ export function normalizeKey(s) {
   return (s || '').replace(/\s+/g, ' ').trim();
 }
 
-// Cover verbs cycle via main.js — swapped there, not here.
-export const ZH_VERBS = ['解锁', '随手写', '渲染', '发布'];
-
 // key = normalized English textContent · value = Chinese innerHTML
 export const ZH = {
   // ---- Cover ----
-  'Native for Vue': '原生,给 <span class="brand-text">Vue</span>',
+  // Big title stays English ("Unlock Native for Vue"); only the tagline flips.
   'Develop Lynx with the familiar Vue 3.': '用熟悉的 Vue 3 开发 Lynx。',
 
   // ---- Chapter I · The gap ----
-  'IV · The landscape': 'IV · 格局',
-  'IV · The landscape · the map': 'IV · 格局 · 地图',
-  'IV · The landscape · the answer': 'IV · 格局 · 答案',
   'Zoom out: every stack is layers — and seams.':
     '拉远看:每个技术栈都是<span class="brand-text">层</span> —— 与缝。',
   'self-rendered': '自渲染',
@@ -54,28 +48,8 @@ export const ZH = {
   'Web DX. Native UX.':
     '<span style="color:#4FB8F0">Web</span> 的开发体验。<br/><span class="brand-text">Native</span> 的用户体验。',
 
-  // ---- Chapter II · The proof ----
-  'Chapter II': '第二章',
-  'So, how far does it go?': '那,它到底<br/>做到哪一步了?',
-  'A feast of live demos — every phone in this deck is a real Vue Lynx app, running right now.':
-    '一桌丰盛的现场 demo —— 这套 deck 里的每台手机,都是一个此刻正在运行的 Vue Lynx 应用。',
-  'II · The proof': 'II · 完成度',
-  'upstream Vue core tests, passing on our renderer.':
-    '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
-
+  // ---- Chapter II · demos ----
   // ---- API coverage ----
-  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
-  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
-  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
-  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
-  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
-  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
-  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
-  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
-  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
-  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
-  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
-  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
   'v-once / v-memo':
     '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
@@ -87,42 +61,31 @@ export const ZH = {
   'The ecosystem, as-is.': '生态,<span class="brand-text">原样</span>可用。',
   'Pinia, Vue Router, TanStack Query, Tailwind — the libraries you\'d already reach for on the web, running unchanged.':
     'Pinia、Vue Router、TanStack Query、Tailwind —— 你在 Web 上已经会用的库,原封不动就能跑。',
-  'II · Ecosystem · 1/4': 'II · 生态 · 1/4',
-  'II · Ecosystem · 2/4': 'II · 生态 · 2/4',
-  'II · Ecosystem · 3/4': 'II · 生态 · 3/4',
-  'II · Ecosystem · 4/4': 'II · 生态 · 4/4',
-
   // ---- Whole apps ----
-  'II · Whole apps': 'II · 完整应用',
   'Whole apps port, too.': '整个<span class="brand-text">应用</span>,也搬得动。',
   'The classic, verbatim — reactive state, v-model, computed totals. On a native input and native scroll.':
     '经典原样照搬 —— 响应式状态、<code>v-model</code>、computed 合计。跑在原生输入框、原生滚动上。',
   'Live API, infinite feed, comment trees — Vue Query for data, Tailwind for styling, native <list> for scroll.':
     '真实 API、无限流、评论树 —— 数据用 Vue Query,样式用 Tailwind,滚动用原生 <code>&lt;list&gt;</code>。',
-  'And the same bundles run on the Web.':
-    '而且,同一份产物还能跑回 <span class="brand-text">Web</span>。',
-  'Every phone in this deck is Lynx for Web — the same bundle that runs natively, rendering in your browser right now.':
-    'deck 里的每台手机都是 Lynx for Web —— 和原生端同一份产物,此刻就渲染在你的浏览器里。',
   'native <input>': '原生 &lt;input&gt;',
   'native <list>': '原生 &lt;list&gt;',
 
   // ---- Chapter III · The upgrade ----
-  'Chapter III': '第三章',
-  'Apps, upgrading from Web to native.':
-    'App,从 Web <em style="font-family:var(--serif);font-weight:400">升级</em>到原生。',
-  "Progressive enhancement: keep the codebase you have — gain the platform you don't.":
-    '渐进增强:留住你已有的代码,得到你还没有的平台。',
+  'Upgrading to native.': '升级到<span class="brand-text">原生体验</span>。',
+  'Native experience?': '原生体验？',
+  'The Nuxt AI Chatbot, forked — streaming, reasoning, markdown, tool cards. Then the native interactions: the keyboard lifts the thread; send flies the bubble into the conversation.':
+    'Nuxt 官方 AI Chatbot,fork 过来 —— 流式、思维链、markdown、工具卡片。再看原生交互:键盘托起对话流;发送让气泡飞进会话。',
+  'Native gestures?': '原生手势？',
+  'Elk — a production Mastodon client. Framework-agnostic layers reused; only the UI rebuilt on Lynx elements.':
+    'Elk —— 生产级 Mastodon 客户端。与框架无关的层全部复用;只在 Lynx 元素上重建 UI。',
+  'Sheet with Rubberband effect': '带<span class="brand-text">橡皮筋</span>效果的 Sheet',
+  'Native Viewpager': '原生 <span class="brand-text">Viewpager</span>',
+
   'III · Case 1 · AI Chat': 'III · 案例一 · AI Chat',
-  'The Nuxt AI Chatbot, forked.':
-    'Nuxt 官方 AI Chatbot,<span class="brand-text">fork</span> 过来。',
   'AI SDK streaming': 'AI SDK 流式',
   'reasoning': '思维链',
   'tool cards': '工具卡片',
   'theming': '主题系统',
-  'Everything above came across unchanged.': '上面这些,原封不动地搬了过来。',
-  'Then it went native.': '然后,它<span class="brand-text">原生</span>了。',
-  'The keyboard slides in — the thread glides up with it. Hit send — the bubble flies from the prompt box into the conversation.':
-    '键盘升起 —— 对话跟着一起上滑。按下发送 —— 气泡从输入框飞进对话流。',
   'keyboard avoidance': '键盘回避',
   'send motion': '发送动效',
   'MTS pressables': 'MTS 按压反馈',
@@ -133,18 +96,10 @@ export const ZH = {
   'earlier turns stay masked until the motion starts':
     '动画启动之前,先前的对话保持遮蔽',
   'III · Case 2 · Elk': 'III · 案例二 · Elk',
-  'Elk — a production-scale fork.':
-    'Elk —— 一次<span class="brand-text">生产级规模</span>的 fork。',
   'masto.js client': 'masto.js 客户端',
   'content pipeline': '内容管线',
   'theme system': '主题系统',
   'domain logic': '领域逻辑',
-  "Elk's framework-agnostic layers, reused. Only the UI was rebuilt.":
-    'Elk 与框架无关的那些层,全部复用 —— 只重建了 UI。',
-  'Native gestures, for free-ish.':
-    '原生<span class="brand-text">手势</span>,几乎白拿。',
-  'Infinite timelines on the native <list>. A bottom sheet with rubber-banding and fling — every frame on the UI thread.':
-    '无限时间线跑在原生 <code>&lt;list&gt;</code> 上。底部抽屉带橡皮筋回弹与甩动惯性 —— 每一帧都在 UI 线程。',
   'MTS bottom sheet': 'MTS 底部抽屉',
   'next: view pager': '下一步:view pager',
   'native view pager': '原生 view pager',
@@ -160,8 +115,6 @@ export const ZH = {
     '<b>First send</b> —— 气泡离开输入框,落到锚点。',
   'Second send — the old turn holds steady while the new one travels to the top.':
     '<b>Second send</b> —— 旧轮次保持稳定,新一轮移动到顶部。',
-  'Tabs on a native view pager.':
-    '标签页跑在<span class="brand-text">原生 view pager</span> 上。',
   'Panes swipe with a native snap; content & scroll position are retained across swipes.':
     '分屏以原生吸附滑动;内容与滚动位置在滑动间保留。',
 
@@ -182,19 +135,13 @@ export const ZH = {
     '新一轮消息该在<span class="brand-text">顶部</span>。',
   'Second send — the old turn stays stable while the new bubble travels to the top anchor.':
     'Second send —— 旧轮次保持稳定,新气泡移动到顶部锚点。',
-  'A real Nuxt app, rebuilt on native.':
-    '一个真实的 Nuxt 应用,<span class="brand-text">在原生上重建。</span>',
   'components': '组件',
   'pages': '页面',
   'composables': 'composable',
-  'No Nuxt, no DOM — so instead of forking, the port reuses Elk\'s framework-agnostic layers and rebuilds the UI on Lynx elements.':
-    '没有 Nuxt,没有 DOM —— 于是不去 fork,而是<strong>复用 Elk 与框架无关的层</strong>,在 Lynx 元素上重建 UI。',
   'masto.js reused': 'masto.js 复用',
   'content-render retargeted': 'content-render 改目标',
 
   // ---- Chapter III · Elk draggable sheet ----
-  'III · Case 2 · Elk · draggable sheet': 'III · 案例二 · Elk · 可拖拽 sheet',
-  'One sheet, three owners.': '一个 sheet,<span class="brand-text">三个归属者。</span>',
   'Three owners, in code.': '三个归属者,<span class="brand-text">用代码讲。</span>',
   "The drag runs on the main thread — so even while Vue's background thread fetches, diffs, or rebuilds the list, the sheet still tracks the finger. On the web, gesture JS and render share one thread.":
     '拖拽跑在主线程上 —— 于是即便 Vue 的后台线程正在请求数据、diff 或重建列表,sheet 依然跟手。<span class="dim">在 Web 上,手势 JS 与渲染共享同一条主线程。</span>',
@@ -210,15 +157,7 @@ export const ZH = {
   'Main-Thread Script': '<b>主线程脚本</b>',
 
   // ---- Chapter IV · How we did it ----
-  'Chapter IV': '第四章',
   'And how was this built?': '那,它是<br/>怎么被做出来的?',
-  'Three adaptations — the runtime, the toolchain, the main thread — and an AI harness running through all of them.':
-    '三次适配 —— 运行时、工具链、主线程 —— 以及一路贯穿其中的 AI harness。',
-  'IV · Runtime': 'IV · 运行时',
-  'IV · Runtime · proof': 'IV · 运行时 · 实证',
-  'IV · Toolchain': 'IV · 工具链',
-  'IV · Main-Thread Script': 'IV · 主线程脚本',
-  'IV · The harness': 'IV · Harness',
   'Background thread': '<i></i>后台线程',
   'Main (UI) thread': '<i></i>主(UI)线程',
   'Vue runs whole — on the background thread.':
@@ -240,8 +179,6 @@ export const ZH = {
     '……而这些测试,就是 <span class="brand-text">AI 的眼睛</span>。',
 
   // ---- IV · Instant First-Frame Rendering + Element Templates ----
-  'IV · Instant first frame': 'IV · 首屏直出',
-  'IV · Instant first frame · proof': 'IV · 首屏直出 · 佐证',
   // headlines
   'Both threads render. The ops stream is the recording.':
     '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制。',
@@ -293,8 +230,6 @@ export const ZH = {
   'One file ships both threads.': '一个文件,装下<em>两条</em>线程。',
   'The same code enters twice — webpack layers route it.':
     '同一份代码,进两次 —— webpack layers 负责分流。',
-  'We wrote a plugin — not a compiler.':
-    '我们写的是一个<span class="brand-text">插件</span> —— 不是编译器。',
   "Your CSS isn't translated. It's just CSS.":
     '你的 CSS 没有被翻译。它就是 <b style="color:#F27A9E">CSS</b>。',
   '2 crossings behind your finger':
@@ -313,90 +248,37 @@ export const ZH = {
     'Lynx 的两个官方 MTS 教程 —— gallery 滚动条和这个 swiper —— 在 Vue Lynx 上逐行重建。',
   'tutorial: swiper': '教程:swiper',
   'tutorial: gallery': '教程:gallery',
-  'Same worklet engine as ReactLynx — today.':
-    '与 ReactLynx <em style="font-family:var(--serif);font-weight:400">同一套</em> worklet 引擎 —— 这是今天。',
-  'A Vue-flavored MTS API is the open design space.':
-    '而 Vue 味的 MTS API,是留给未来的设计空间。',
   '2 weeks.': '<span class="brand-text">2</span> 周。',
   '160 commits': '160 次提交',
   '21 active days': '21 个活跃日',
   '1 human + Claude': '1 个人 + Claude',
   'The full write-up — harness, prompts, receipts. @Huxpro on X.':
     '完整复盘 —— harness、prompt、全部凭证。X 上的 <b>@Huxpro</b>。',
-  'Chapter V': '第五章',
-
-  // ---- Combine ----
-  'A new path': '一条新路',
-  'Vue, on native.': 'Vue,<span class="brand-text">跑在原生上。</span>',
-
-  // ---- Close ----
-  'Chapter IV': '第四章',
-  "And we'd love your help.": '也很希望你能<br/>搭把手。',
-  "Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface is large. What ships next depends on who shows up.":
-    'Vue Lynx 还是 pre-alpha。架构很稳;Vue 的 API 面很大。接下来能做出什么,取决于谁愿意来。',
-  'The ask': '我们的请求',
-  "Native shouldn't be a different team.":
-    '原生,不该是另一个<span class="brand-text">团队</span>的事。',
-  'Vue developers should ship native apps as naturally as they ship for the web today.':
-    'Vue 开发者应该能像今天发 Web 一样,自然地发原生应用。',
-  'Where it stands': '现状',
-  "What's there": '已经有的',
-  "What's open": '还缺的',
-  'Composition API & SFCs': '<b>Composition API 与 SFC</b>',
-  'Transition, Suspense, KeepAlive, Teleport': '<b>Transition、Suspense、KeepAlive、Teleport</b>',
-  'Pinia, Router, Query, Tailwind': '<b>Pinia、Router、Query、Tailwind</b>',
-  'Main-Thread Script': '<b>Main-Thread Script</b>',
-  'View pager & more gestures': '<b>View pager 与更多手势</b>',
-  'Vue DevTools integration': '<b>Vue DevTools 集成</b>',
-  "The ecosystem you'd port": '<b>等你来移植的生态</b>',
-  'Try it tonight': '今晚就试',
-  "One npm create, and you're shipping native.":
-    '一行 <span class="brand-text">npm create</span>,你就在发原生了。',
+  // ---- Close · one npm command (fake thank-you) ----
+  'Stars, questions, PRs': 'Star、提问、PR',
+  'One npm command.':
+    '一行 <span class="brand-text">npm</span> 命令。',
   'for Agent': '给 Agent',
-  'Quick Start →': '快速开始 →',
-  'Read the intro': '读简介',
-  'Fin.': '完。',
-  'Thank you.': '<span class="brand-text">谢</span>谢。',
-  'Questions, PRs, opinions — all welcome.': '提问、PR、想法 —— 都欢迎。',
+  'Thank you.': '谢谢。',
 
   // ---- Epilogue · the elephant / fabrics ----
-  'Epilogue': '终章',
   'The elephant in the room.': '聊聊房间里的<br/>大象。',
   '“Vibe coding” is barely eighteen months old — and it already writes native apps. So why frameworks? Why Lynx? Why any of this?':
     '"vibe coding" 这个词诞生至今不过一年半 —— 它已经能直接写出原生应用了。那,还要框架干嘛?还要 Lynx 干嘛?这一切还有什么意义?',
-  'Epilogue · the question': '终章 · 问题',
   'Does AI obsolete all of us?':
     'AI 会让<span class="brand-text">我们所有人</span>都过时吗?',
   'no frameworks?': '不要框架?',
   'no libraries?': '不要类库?',
   'no docs?': '不要文档?',
   'no us?': '不要我们?',
-  'Epilogue · a claim': '终章 · 一个论断',
-  'What survives AI?':
-    '什么能在 AI 之后<span class="brand-text">留下来</span>?',
-  'infrastructure': '基础设施',
-  'enablers': '使能者',
-  'platforms': '平台',
-  'ecosystems': '生态',
-  'people': '人',
-  'Two lemmas, then an answer.': '两个引理,一个答案。',
-  'Epilogue · Lemma 1': '终章 · 引理一',
-  'The stack, rewritten.': '技术栈,被重写了。',
-  'Epilogue · Lemma 1 · harness': '终章 · 引理一 · Harness',
-  'AI can do anything — harnessed.':
-    'AI 什么都能做 —— 只要有好的 <span class="brand-text">harness</span>。',
-  'context docs · priors · AGENTS.md': '上下文 <small>文档 · 先验 · AGENTS.md</small>',
-  'tools functions · capabilities': '工具 <small>函数 · 能力</small>',
-  'environment runtime · sandbox': '环境 <small>运行时 · 沙箱</small>',
-  'feedback render · tests · logs': '反馈 <small>渲染 · 测试 · 日志</small>',
-  'Epilogue · Lemma 1 · platforms': '终章 · 引理一 · 平台',
+  'Technology: from interface to Harness.':
+    '技术：从接口到 <span class="brand-text">Harness</span>。',
   'Nobody says AI will replace the browser.':
     '没人会说,AI 要取代<span style="color:#4FB8F0">浏览器</span>。',
   'open by default': '天生开放',
   'sandboxed': '天然沙箱',
   'endlessly capable': '能力无穷',
   'fully observable': '完全可观测',
-  'Epilogue · Lemma 1 · frameworks': '终章 · 引理一 · 框架',
   'Frameworks were always harnesses.':
     '框架,从来都是 <span class="brand-text">harness</span>。',
   'then architecting how humans reason': '过去 <small>规训人类如何推理</small>',
@@ -406,11 +288,9 @@ export const ZH = {
   'templates': '模板',
   'reactivity': '响应式',
   'mutable state': '可变状态',
-  'Epilogue · intermission': '终章 · 幕间',
   '“Getting metaphysical again — 雪碧 is going to roast me.”':
     '"又开始形而上了 —— 雪碧又要批评我了。"',
   'Lynx — the loom.': 'Lynx —— 织机。',
-  'Epilogue · Lemma 2': '终章 · 引理二',
   '“A patchwork monster”? Exactly.':
     '"缝合怪"?—— <span class="brand-text">正是。</span>',
   'web-friendly surface': 'Web 亲和的表面',
@@ -419,16 +299,13 @@ export const ZH = {
   'Frameworks compress the search space.': '框架,压缩了搜索空间。',
   'everything the model could emit': '模型可能吐出的一切',
   'the idiom': '惯用法',
-  'Epilogue · Lemma 2 · people': '终章 · 引理二 · 人',
-  'Technology is nothing without its people.':
-    '技术若没有<span class="brand-text">人</span>,什么都不是。',
+  // Stays English in both languages (like the cover title).
   '3D prints · 小音': '帮忙 3D 打印 · 小音',
   'a dinner in Fuzhou · 雪碧': '上一顿饭在福州 · 雪碧',
   'Poland, then here · Nector': '上一面在波兰 · Nector',
   'Evan · Anthony · you': 'Evan · Anthony · 还有你',
   "Vue Lynx isn't a framework. It's a connection.":
     'Vue Lynx 不是一个框架,而是一次<span class="brand-text">连接</span>。',
-  'Epilogue · Lemma 2 · compounding': '终章 · 引理二 · 复利',
   'One connection compounds.':
     '一次连接,产生<span class="brand-text">复利</span>。',
   'Rendering': '渲染',
@@ -436,10 +313,6 @@ export const ZH = {
   'native': '原生元件',
   'custom': '自渲染',
   'hybrid': '混合',
-  "AI doesn't need mature libraries. It needs a place to vibe.":
-    'AI 要的不是成熟的类库,而是一个能 <span class="brand-text">vibe</span> 的地方。',
-  'The Web was that place. Lynx carries it to native.':
-    'Web 曾经就是那个地方。Lynx 把它带到原生。',
   'Vapor on Lynx — no VDOM. Straight to ops.':
     'Vapor on Lynx —— 没有 VDOM,直达 <b style="color:#4FB8F0">ops</b>。',
   'A cradle for framework design.':
@@ -454,12 +327,9 @@ export const ZH = {
     '切一刀线程 —— 什么能过桥?',
   'Only closed, first-order terms survive the cut — a flat ops stream, i.e. a display list.':
     '只有封闭的一阶项能扛过这一刀 —— 一串扁平的 ops,也就是一份 display list。',
-  'Pointers die — names take over.':
-    '指针死去 —— <span class="brand-text">名字</span>接管。',
   'Weave the whole Web…': '把整个 Web 织进来……',
   '…into every platform.': '……再织向每一个平台。',
   'more…': '<i></i> 更多……',
-  'Epilogue · coda': '终章 · 尾声',
   '“AI took away the fun.”': '"AI 把乐趣拿走了。"',
   '— a workshop attendee · Germany, last week': '—— 一位 workshop 学员 · 上周,德国',
   'Find a new dopamine.': '去找新的多巴胺。',
@@ -469,43 +339,28 @@ export const ZH = {
     '—— 另一位学员 · 他当晚 vibe 出了一个宝可梦',
   "I know AI makes it easy. I'm glad it's easy — I haven't been this excited in years.":
     '我知道有 AI 这不难。我很高兴这不难 —— 我好久没这么兴奋过了。',
-  'I rebuilt everything ten-years-ago me dreamed of.':
-    '我把 <span class="brand-text">10 年前的自己</span>想做的东西,全部翻新了一遍。',
-  'hux.pro — untouched for 10 years': 'hux.pro —— 十年没动过',
-  'my first Vue app — v0.12': '我的第一个 Vue 应用 —— v0.12',
-  'this deck — zero libraries, vibed': '这套 deck —— 零依赖,纯 vibe',
-  'I just changed languages — to natural language.':
-    '我只是又换了一门语言 —— <span class="brand-text">自然语言</span>。',
-  "I'm still doing frontend.": '可我做的,还是前端。',
-  'Fin. — for real': '终 · 这次是真的',
+  'Natural language.':
+    '<span class="brand-text">自然语言</span>。',
   'The frontend is dead.': '前端已死。',
-  'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
+  'Long live the frontend': '前端<span class="brand-text">永生</span>',
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
 
   // ---- One more thing · Vue Vapor (the deep dive) ----
-  'One more thing · Vue Vapor': '还有一件事 · Vue Vapor',
-  'Vapor mode — no Virtual DOM.':
-    '<span class="brand-text">Vapor</span> 模式 —— 没有虚拟 DOM。',
+  // "Vue Vapor." stays English in both languages.
   "Templates compile straight to code that touches elements directly. We taught it to run on Lynx's two threads.":
     '模板直接编译成操作元素的代码。我们让它跑在了 Lynx 的两条线程上。',
 
-  'Virtual DOM · the update path': '虚拟 DOM · 更新路径',
-  'Vapor · the update path': 'Vapor · 更新路径',
   'Every change re-runs the component, rebuilds a VNode tree, and diffs it. Work scales with the whole tree.':
     '每次变更都要重跑组件、重建 VNode 树、再做 diff。开销随整棵树增长。',
   'No tree. No diff. A reactive effect writes straight to the one node that changed — work scales with what actually changed.':
     '没有树。没有 diff。一个响应式 effect 直接写入那个变化的节点 —— 开销只随真正变化的部分增长。',
 
-  'The Vapor output · @vue/compiler-vapor': 'Vapor 产物 · @vue/compiler-vapor',
   '① a template registered once · ② cloned per instance · ③ one effect that updates a single node.':
     '<span class="codenote">①</span> 模板注册一次 · <span class="codenote">②</span> 每个实例克隆一份 · <span class="codenote">③</span> 一个 effect 只更新一个节点。',
 
-  'Code reuse · from compile to runtime': '代码复用 · 从编译到运行时',
   "Vapor drives the browser DOM directly. We make the background thread's tree look like the DOM — so upstream Vapor runs untouched.":
     'Vapor 直接驱动浏览器 DOM。我们让后台线程的那棵树“长得像”DOM —— 于是上游 Vapor 原封不动地跑起来。',
 
-  'Across the thread boundary · register': '跨越线程边界 · 注册',
-  'Across the thread boundary · clone': '跨越线程边界 · 克隆',
   'Background · Vapor': '<span class="dot"></span>后台 · Vapor',
   'Main · interpreter': '<span class="dot"></span>主线程 · 解释器',
   'inert prototype': '惰性原型',
@@ -524,37 +379,24 @@ export const ZH = {
   'create-1k across the boundary: 17,000 ops · 327 KB → 7,000 ops · 160 KB':
     'create-1k 跨越边界:<span style="color:var(--ink-mute);text-decoration:line-through">17,000 ops · 327 KB</span> → <b class="brand-text">7,000 ops · 160 KB</b>',
 
-  'Benchmark · update path, background thread': 'Benchmark · 更新路径,后台线程',
   'Where Vapor pulls away: 5.8–9.8×.':
     'Vapor 拉开差距的地方:<span class="brand-text">5.8–9.8×</span>。',
   'The entire delta is Vue work on the thread you share with your app logic — lower background cost means more headroom before dropped frames.':
     '整个差距都是 Vue 在那条你与应用逻辑共享的线程上的开销 —— 后台开销越低,离掉帧就越远。',
 
-  'Benchmark · the whole ledger': 'Benchmark · 完整账本',
   'Big wins on updates and traffic; creation at parity; you pay in bundle size.':
     '更新与传输大幅领先;创建打平;代价是产物体积。',
 
-  'The workflow · one source, two renderers': '工作流 · 一份源码,两个渲染器',
   "Every example built & driven in both modes through Lynx for Web. The support matrix is generated from the run — it can't drift from what actually passed.":
     '每个示例都通过 Lynx for Web 在两种模式下构建并驱动。支持矩阵由运行结果生成 —— 不会与真正通过的结果发生漂移。',
 
   // ---- upstream-test slides (VDOM A7 skip breakdown + Vapor proof) ----
   '131 documented skips — every one a test-infra artifact or browser-only semantic, not a Lynx gap.':
     '131 个 skip 都有据可查 —— 每一个要么是测试设施产物,要么是浏览器专属语义,<b class="brand-text">没有一个是 Lynx 的缺口。</b>',
-  'One more thing · Vapor · proof': '还有一件事 · Vapor · 佐证',
   "Vapor's own suite — unmodified on ShadowElement. It passes the element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.":
     'Vapor 自己的上游测试 —— 在 ShadowElement 上<b>原封不动</b>地跑。触及元素表面的那些测试,它以 81% 对 vdom 的 57% 通过:与 Lynx 更亲近的契合。',
 
-  'One more number': '还有一个数字',
-  'Vapor vs Vue VDOM on the 10,000-row select storm — same app, same bundle, one attribute apart.':
-    'Vapor 对 Vue VDOM,在 10,000 行的 select 风暴中 —— 同一个应用、同一个产物,只差一个属性。',
-
-  'Vapor · one flag away': 'Vapor · 只差一个开关',
-  'Same source. Flip a switch.':
-    '同一份源码。<span class="brand-text">拨一下开关。</span>',
-  'Experimental today — but the fast path is already here.':
-    '今天还是实验性的 —— 但那条快路已经在这了。',
-};
+  };
 
 // Speaker-view chrome labels.
 export const SPEAKER_LABELS = {
@@ -616,13 +458,7 @@ export const ZH_NOTES = [
   // 11 Lynx 主动连上
   `<p><strong>然后,Lynx 走出队列 —— 站到正中央,Vue 的正下方;其余候选人整体让到左侧。</strong>前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,短、垂直、实心。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
   // 12 Title reveal · Vue Lynx 正式亮相
-  `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
-  // 13 Divider II
-  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、生态原样可用、然后是完整应用。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
-  // 14 852/949
-  `<p><strong>先上硬指标。</strong>我们把 Vue core 自己的测试套件拿来直接跑在 Vue Lynx 渲染器上:949 个通过 852 个;每个 skip 都有记录、有交代。"兼容 Vue"在这里是可测量的命题,不是一句口号。</p>`,
-  // 15 ref
-  `<p><strong>从最简单的开始:</strong><code>ref()</code>、一个事件回调、一个样式绑定。整页和 Web Vue 的差别只有两处:import 写 <code>vue-lynx</code>,标签是 <code>&lt;view&gt;/&lt;text&gt;/&lt;image&gt;</code>。</p><p><strong>现场:</strong>点一下 —— logo 沿着 ref 驱动的 transform 弹起来。</p>`,
+  `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入 demo。</p>`,
   // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
   // 17 v-model
@@ -661,26 +497,18 @@ export const ZH_NOTES = [
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
   // 35 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,
-  // 36 Runs on web
-  `<p><strong>Web 兼容的点睛:</strong>刚才没有任何模拟器。每个手机壳里都是 <em>Lynx for Web</em>,跑的就是发到 iOS/Android 的那份产物。任何一页扫 Web 码 —— 浏览器直接打开;扫 App 码 —— 同一份产物,原生运行。</p><p>Web DX 进,Web 渲染目标出。基线讲完 —— 上超集。</p>`,
   // 28 Divider III
-  `<p><strong>超集章节。</strong>覆盖度和移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,fork 它,然后<em>升级</em>它 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。两个真实 fork。</p>`,
+  `<p><strong>升级章节。</strong>移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,然后<em>升级</em>到原生体验 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。</p>`,
   // 29 AI Chat unchanged
-  `<p><strong>不变的部分。</strong>这是 Nuxt 官方 AI Chatbot 模板,逐特性移植:流式 + 思维链、markdown + 代码高亮、天气/图表工具卡片、历史、投票、编辑、主题。里面的 Vue —— 组件、composable、store —— 才是重点:<strong>它们毫无波澜地搬了过来。</strong></p>`,
-  // 30 AI Chat native
-  `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
+  `<p><strong>这个 app 的交互。</strong>Nuxt 官方 AI Chatbot 模板逐特性移植后,再升级原生手感:① 键盘回避 —— 原生 <code>keyboardstatuschanged</code> + <code>setNativeProps</code>;② 发送动效 —— 气泡从输入框飞进对话流;③ MTS 按压反馈。</p><p><strong>现场:</strong>聚焦输入框(键盘升、布局跟),再发一条 —— 看气泡。</p>`,
   // 31 AI Chat · handoff（first send 视频）
   `<p><strong>AI Chat。</strong>从 Nuxt AI Chatbot 模板逐特性移植的生产级聊天：流式、推理、Markdown、工具卡片、历史 —— 迄今对 Vue Lynx 最苛刻的真实世界考验。</p><p><strong>写作视角</strong>（借鉴 Vercel 的 v0 iOS 复盘）：一次漂亮的发送不是一个动画,而是一次交接 —— 输入框、消息列表、键盘、流式响应之间的交接。接下来三页,把每个瞬间都追溯到背后的 API。</p><p><strong>现场演示:</strong>循环片段 —— first send 从输入框出发,落到锚点。</p>`,
   // 32 AI Chat · 键盘也是布局
   `<p><strong>键盘。</strong>Lynx 的 <code>&lt;input&gt;</code> 不会自动避让键盘。输入框绝对定位吸在底部,监听全局 <code>keyboardstatuschanged</code> 事件,用 <code>setNativeProps</code> 施加上报的键盘高度 —— 不绕后台线程。列表只在原本就跟随新内容时才继续跟随。</p><p>这个 mock 就是 v0 草图的思路:一块空白的 <em>contentInset</em> 被键盘吃掉,输入框正好抬升一个键盘高度。</p>`,
   // 33 AI Chat · 新一轮消息在顶部
   `<p><strong>第二次发送才是真正的考验。</strong>重复发送会暴露空状态藏起来的问题。原生把新的用户轮次锚定在顶部,但在移动的气泡到位前,让上一轮保持稳定。Vue Lynx 的 <code>nextTick()</code> 等待挂起的 ops 抵达主线程,再由 <code>scrollIntoView</code> 完成最终对齐 —— 然后助手才开始流式输出。</p><p><strong>Web 走另一套策略</strong> —— 没有原生定位保证,于是把列表钉在底部。手感一致,机制不同。</p>`,
-  // 33 Elk unchanged
-  `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
-  // 34b Elk · 真实 Nuxt 应用,在原生上重建
-  `<p><strong>Elk。</strong>Anthony Fu 团队广受喜爱的 Mastodon Web 客户端,被移植成原生 Mastodon 客户端 —— 时间线、串、资料页、搜索、趋势。一个 Nuxt 3 应用:约 196 个组件、55 个页面、50 个 composable。</p><p><strong>移植手法:</strong>保留与框架无关的层(masto.js 客户端原样复用、HTML 内容解析约 95% 逐字保留),把 vnode 渲染器改写目标到 <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>,再用原生复用 <code>&lt;list&gt;</code> 替换 Elk 的 DOM 虚拟化 —— 代码更<em>少</em>。</p>`,
   // 34 Elk gestures
-  `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>现已合入</strong>(PR #223):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它(见本章后续)。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
+  `<p><strong>这个 app 的形态。</strong>Elk 是生产级 Mastodon 客户端 —— 约 196 个组件、55 个页面、50 个 composable。保住大脑(masto.js、内容管线、主题),只把视图层重建到原生元素上。规模本身就是论证。</p><p><strong>现场:</strong>滚时间线、打开发帖 —— 感受一个复杂应用落在原生上的分量。</p>`,
   // 34c Elk · 可拖拽 sheet · 三个归属者（真实 UI + 代码）
   `<p><strong>可拖拽 sheet —— 难的不是"从底部滑上来",而是三套状态机协同。</strong>① Vue <code>&lt;Transition&gt;</code> 管"sheet 是否存在于视觉状态"(开/关);<code>v-show</code> 让节点保持挂载,关闭后滚动位置与状态得以保留,同时跑完整的 persisted transition 生命周期 —— 正是这项修复让该能力从 experimental 毕业。② 一个 <code>'main thread'</code> worklet 管"手指每一帧在哪":通过 <code>:main-thread-bindtouch*</code> 绑定,用 <code>setStyleProperty</code> 直接写 <code>transform</code>,绕开 Vue diff,并在拉过顶部时施加橡皮筋阻力。③ 原生 <code>&lt;scroll-view&gt;</code> 管"这串触摸属于谁":8px 手势锁先一次性判定方向与来源;若向下拖且列表已到顶,sheet 关掉原生滚动(<code>enable-scroll=false</code>)接管拖动,否则让给它。<code>runOnBackground</code> 只在状态边界(关闭时)跨线程,绝不每帧跨。</p><p><strong>结构即属性归属:</strong>外层 surface 归 Transition(CSS class),内层归拖动(inline <code>transform</code>)。两者写同一元素,inline 覆盖 class —— 经典的"第一次能动,之后动画消失"。</p><p><strong>双线程红利:</strong>拖拽跑在 UI 线程上,贴着原生输入与布局,即便 Vue 后台线程正在请求数据、diff 或重建列表也照样跟手;Web 上手势 JS 与渲染共享一条主线程,一有长任务就掉帧。</p>`,
   // 34b Elk · 原生 view pager
@@ -729,20 +557,16 @@ export const ZH_NOTES = [
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
   // 45 B2 · 同一份代码进两次
   `<p><strong>两个入口都 import 你的真实应用。</strong>每个入口在一个 webpack <em>layer</em> 下编译 —— <code>vue:background</code> 和 <code>vue:main-thread</code> —— <code>issuerLayer</code> 规则给每层各自的 loader 链:BG 侧编译完整 SFC;MT 侧只抽取主线程需要的部分。逐 entry 的隔离,是 webpack 依赖图白送的。(这套 layer 方案我们是从 ReactLynx 学来的 —— 第一版扁平 bundle 架构隔离不了多入口应用。)</p>`,
-  // 46 B3 · 插件而非编译器
-  `<p><strong>复用故事的工具链篇。</strong>Lynx 的工具链(Rspeedy)就是 Rspack/Rsbuild —— 而 Vue 生态本来就跑在 Rspack 上,所以整条 SFC 流水线是现成的:<code>rspack-vue-loader</code>、PostCSS、HMR。<code>pluginVueLynx()</code> 是一层薄适配:把入口拆成两个 layer、接上 worklet loader、配好 CSS —— 表面积就这么大。框架无关不是口号,是用"我们只需要写多少"来度量的。</p>`,
   // 47 B4 · CSS 就是 CSS
   `<p><strong>整章样式能力背后安静的超能力:</strong>Lynx 在原生侧带了真正的 CSS 引擎 —— 选择器、级联、动画。所以 <code>&lt;style scoped&gt;</code> 映射到 Lynx 的 cssId 作用域,CSS Modules 和外链样式直接透传,CSS 里的 <code>v-bind()</code> 骑在 CSS 变量上,Tailwind 能跑是因为 PostCSS 就是 PostCSS。没有 StyleSheet 对象方言,没有会漏的翻译层。</p>`,
   // 48 C1 · 手势为什么会迟
-  `<p><strong>先诚实讲代价,再卖回报。</strong>普通写法的滚动跟随动画:事件在主线程触发,跳去后台跑你的回调,产生的 ops 再跳回来 —— 手势的每一帧背后是两次跨线程。页面一忙,肉眼可见地迟。这是双线程架构唯一收费的地方。</p>`,
+  `<p><strong>先认账再卖点。</strong>和文档里的 <code>&lt;Go&gt;</code>（<a href="https://vue.lynxjs.org/guide/main-thread-script">vue.lynxjs.org/guide/main-thread-script</a>）同一个 demo：滚黄色列表 —— 蓝方块走后台线程，每一帧两次跨线程，跟手会有可见延迟。</p><p><strong>现场：</strong>快滚列表，看方块掉队。</p>`,
   // 49 C2 · 函数换线程
-  `<p><strong>看方块移动。</strong>把 <code>'main thread'</code> 写成函数第一行,编译器就把这个函数搬进主线程 bundle —— 它从此同步运行在事件发生的地方,直接访问元素。组件的其余部分还是普通 Vue。又是渐进增强的形状:双线程的回报留着,代价变成按函数粒度的可选项。</p>`,
+  `<p><strong>看方块移动。</strong>文档 <code>&lt;Go&gt;</code> 的对比：左边方块跑在主线程（<code>'main thread'</code>），右边仍走后台 —— 一滚就能摸到差别。还是同一个 Vue 文件；一条指令把处理函数换了线程。</p><p><strong>现场：</strong>滚动 —— 左边（MT）跟手，右边掉帧。</p>`,
   // 50 C3 · 代码样例
-  `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p>`,
+  `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p><p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 51 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
-  // 52 C5 · 复用与开放的 API 空间
-  `<p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 53 IV · 格局 · 引入
   `<p><strong>兑现承诺的 deep-dive。</strong>开场时我们是"凭感觉"相亲;现在运行时、工具链、MTS 都摆上桌了,可以来架构级的版本了。把任何跨端栈拆成五层,层间四条缝 —— 每条要么是扩展点,要么是焊死的墙。诚实地给所有人打分,包括 Lynx 自己。</p>`,
   // 54 Map scaffold
@@ -767,18 +591,8 @@ export const ZH_NOTES = [
   `<p><strong>现在这个数字说得通了。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。</p>`,
   // 64 H2 · X 复盘
   `<p><strong>让观众把手机对准这页。</strong>完整方法论写在 X 上 —— harness 怎么搭、plan 长什么样、AI 在哪儿失手、测试怎么接住的。vue.lynxjs.org 首页的 badge 也链着它。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
-  // 65 Combine
-  `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿,让等式落地。然后:"也很希望大家来一起把它做成。"</p>`,
-  // 66 Divider V · close
-  `<p><strong>转向请求。</strong>项目是真的,但需要社区。架构很稳;Vue 的表面积很大。</p>`,
-  // 67 Ask
-  `<p>落在这句上 —— <em>"原生,不该是另一个团队的事。"</em>这是你想让他们记住的一句。</p>`,
-  // 68 What's there / open
-  `<p>左边 = 今天就能用、可以做生产探索的。右边 = 贡献者能发力的地方 —— 第三章里 Elk 的 view pager,就在这个清单上。</p>`,
-  // 69 Try
-  `<p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p>`,
-  // 70 Thank you (the FAKE close)
-  `<p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。</p><p>然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
+  // 65 Close · 一行 npm 命令（含原 combine / 搭把手 / 另一个团队 / what's there / 假收尾）
+  `<p><strong>标题句,然后请求。</strong>Vue × Lynx = Vue 跑在原生上。也很希望你能搭把手 —— 架构很稳;Vue 的表面积很大。记住这句:<em>原生,不该是另一个团队的事</em>。已经有的:Composition API 与 SFC、Transition/Suspense/KeepAlive/Teleport、Pinia/Router/Query/Tailwind、Main-Thread Script。还缺的:view pager 与更多手势、Vue DevTools、等你来移植的生态。</p><p><strong>行动号召。</strong>一行命令 —— <code>npm create vue-lynx@latest</code>。"给 Agent"按钮会复制一段引导 prompt。承诺:"今晚回家的公交上,你就能让一个 Vue 应用跑在 iPhone 上。"</p><p><strong>假收尾。</strong>演得越真越好:道谢、微微鞠躬、伸手去拿水 —— 停住,等掌声起来。然后面无表情:"啊——没有哈。这才过去十分钟。"翻页,进入真正的后半场。</p>`,
   // 71 Epilogue divider · 大象
   `<p><strong>重置全场。</strong>"那,用省下来的十分钟,聊聊房间里的大象。"如果 AI 什么都能做,为什么不直接 prompt 出 N 个原生应用,跳过框架、跳过跨端、跳过这一切?</p><p>语气转变:少一点产品推介,多一点自言自语。这半场讲的是 <em>why</em>,不是 <em>what</em>。</p>`,
   // 71a Overlay · 推文上半
@@ -787,15 +601,11 @@ export const ZH_NOTES = [
   `<p><strong>下移 + 轻微放大</strong> —— 下半截:<em>"It's not too bad for throwaway weekend projects…"</em> 十八个月后,它已经在写原生应用了。让这句落地,翻页 —— 推文淡出,进入提问。</p>`,
   // 72 E2 · 诚实的问题
   `<p><strong>先诚实:我不知道。</strong>AI 对 Lynx、对 Vue 意味着什么,我为什么还要费这个劲?如果没有人类会读,文档还重要吗?如果模型能从裸金属重建,类库还重要吗?</p><p>可以丢的数据点:AI 时代 React 的使用量反而<em>暴涨</em> —— 模型默认写 React —— 但 React 本身却没有过去那么重要了;Anthropic 刚写过 Claude 用纯 HTML 搓一次性内部工具、什么框架都不用。地面真的在动。</p>`,
-  // 73 E3 · 论断
-  `<p><strong>先把论点立起来,这一章才有脊柱。</strong>从 AI 手里"幸存"下来的,是所有<em>使能</em>而非仅仅产出的东西:基础设施、使能者、平台、生态 —— 以及链条尽头的,人。注意这是递进:每一环都因为喂养下一环而幸存。</p><p>我用两个引理来论证:(1) 技术的角色从 interface 翻转为 harness;(2) 技术真正的工作,是连接生态 —— 和人。</p>`,
-  // 74 E4 · 新的栈
-  `<p><strong>引理一,从新的技术栈开始。</strong>自然语言是新的源代码;agent 是新的 interface,坐在 IDE 和 GUI 曾经的位置上。但看 agent 下面:code、frameworks、system —— 它们没有消失,它们变成了 agent <em>驾驭的对象</em>。</p><p>技术的工作翻转了:从直接服务人,变成 harness 那个服务人的东西。</p>`,
-  // 75 E5 · harness 是什么
-  `<p><strong>把这个词定义清楚,整章都压在它上面。</strong>Harness 是把原始能力变成可靠工作的东西:上下文(它带着什么进来)、工具(它能用什么行动)、环境(行动在哪里既安全又便宜)、反馈(它如何看见自己刚做了什么)。</p><p>第四章其实偷偷讲的就是这页:AGENTS.md 是上下文,工具链是工具,LynxExplorer 是环境,上游测试是反馈。</p>`,
-  // 76 E6 · 浏览器是个好 harness
+  // 73 E3 · 技术：从接口到 Harness（含原「留下来」「harness 定义」）
+  `<p><strong>什么能在 AI 之后留下来?</strong>从 AI 手里"幸存"下来的,是所有<em>使能</em>而非仅仅产出的东西:基础设施 → 使能者 → 平台 → 生态 → 人。每一环都因为喂养下一环而幸存。两个引理:(1) 技术从 interface 翻转为 harness;(2) 技术真正的工作,是连接生态 —— 和人。</p><p><strong>引理一 —— 技术栈被重写了。</strong>自然语言是新的源代码;agent 是新的 interface,坐在 IDE 和 GUI 曾经的位置上。agent 下面:code、frameworks、system —— 没有消失,变成了 agent <em>驾驭的对象</em>。技术的工作翻转了:从直接服务人,变成 harness 那个服务人的东西。</p><p><strong>AI 什么都能做 —— 只要有好的 harness。</strong>Harness 把原始能力变成可靠工作:上下文(文档 · 先验 · AGENTS.md)、工具(函数 · 能力)、环境(运行时 · 沙箱)、反馈(渲染 · 测试 · 日志)。第四章其实偷偷讲的就是这拍:AGENTS.md 是上下文,工具链是工具,LynxExplorer 是环境,上游测试是反馈。</p>`,
+  // 74 E4 · 浏览器是个好 harness
   `<p><strong>平台之所以幸存,是因为平台是极好的 harness。</strong>浏览器:开放的数据与文档(上下文)、巨大的能力表面(工具)、天然的沙箱(环境)、彻底的透明 —— DOM、DevTools(反馈)。</p><p>没有人argue Web 会被 AI 淘汰。我甚至更进一步:GUI 本身都不会 —— 人类总要<em>看</em>。</p>`,
-  // 77 E7 · 框架一直是 harness
+  // 75 E5 · 框架一直是 harness
   `<p><strong>让框架与 AI 相关的那次重构。</strong>在 Web 上你本来爱怎么改 DOM 都行 —— React 和 Vue 赢,是因为它们<em>约束</em>了我们:一种架构,把人类的推理 harness 成吐出下一个正确 token 的过程。</p><p>我们才是第一批被 harness 的 token 预测器。模型只是下一批。高层抽象仍然有用 —— 它帮过我们,也会帮它。</p>`,
   // 78 E8 · FABRIC I
   `<p><strong>本章的意象登场。</strong>先让线呼吸一会儿再开口。在我"前端已死"的演讲里,我试着从第一性原理论证:UI/App 抽象永远都需要 —— 意图与像素之间,总要有一层织物。现代软件是缝出来的,不是凿出来的。</p><p>于是,贯穿后半场的比喻:每一种技术都是一种织物 —— 有自己的纤维、自己的织法、自己的手感。</p>`,
@@ -813,15 +623,13 @@ export const ZH_NOTES = [
   `<p><strong>引理落在人身上。</strong>如果 AI 最终 boil down 到人的品味,那人只会更重要 —— 连接一个社区,就是连接一群人。</p><p>点名现场:帮忙 3D 打印的小音,非常感谢;雪碧 —— 上一顿饭还在福州,没想到今天在这里遇见;Nector —— 上一面还在波兰!你可以说"这个平台才有我想追的偶像" —— 那,Evan 和 Anthony 就在这个平台上。</p>`,
   // 85 E15 · 不是框架,是连接
   `<p><strong>那我到底做了个什么?</strong>AI 时代你理论上并不<em>需要</em>框架 —— 十年前我做过一个在线 HTML slides 编辑器;今天这套 deck 完全是生成的,底下什么库都没有。Vue Lynx 真正是一个开端:说服 Vue 社区,来给原生做点东西。</p><p>更深一层的道理:只要连接<em>存在</em>,AI 就会放大发生的连接。编程语言之间移植容易,因为大家都图灵完备、都有 runtime —— 桥本来就在。Web ↔ Native 之间没有天然的桥。Lynx 这个开源项目的命题,就是那座桥的<em>设计</em>。(顺带:我选择投身的技术,商业价值是一,理想也总要有一点。)</p>`,
-  // 86 E16 · 连接复利
-  `<p><strong>连上 Lynx,就连上了 Lynx 连接的一切。</strong>你已经在用的 Web 织物 —— Motion、Pretext —— 直接带过来;经 Node-API 连 Electron;JSI 世界连 Expo Modules;每一种渲染策略;正在成形的 agent-UI 协议。还有 Lynx 自己的生态 —— Sparkling、Lynxtron。</p><p>被带过来的,是生态和社区本身。这就是复利。</p>`,
-  // 87 E17 · 能 vibe 的地方
-  `<p><strong>把生态论点按 AI 时代磨尖。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
-  // 88 E18 · One more thing
+  // 86 E16 · 连接复利（含原「能 vibe 的地方」）
+  `<p><strong>连上 Lynx,就连上了 Lynx 连接的一切。</strong>你已经在用的 Web 织物 —— Motion、Pretext —— 直接带过来;经 Node-API 连 Electron;JSI 世界连 Expo Modules;每一种渲染策略;正在成形的 agent-UI 协议。还有 Lynx 自己的生态 —— Sparkling、Lynxtron。</p><p>被带过来的,是生态和社区本身。这就是复利。</p><p><strong>AI 要的不是成熟的类库,而是一个能 vibe 的地方。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
+  // 87 E17 · One more thing
   `<p><strong>停住。</strong>数两拍,再翻页。</p>`,
   // ---- One more thing · Vue Vapor deep dive (12 slides) ----
-  // 36 Vapor 标题
-  `<p><strong>Vapor 是什么。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
+  // 36 Vapor 标题 + 开关代码（原“拨一下开关”并入）
+  `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p><strong>同一份源码 —— 拨一下开关。</strong>按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
   // 37 虚拟 DOM 更新路径
   `<p><strong>先立对比。</strong>从左到右过一遍五个方块。中间三个虚线的就是税:重跑、分配、diff —— 每次更新都要交,无论变了多少。</p><p>下一页用一次 magic move 把中间这段收掉。</p>`,
   // 38 Vapor 更新路径
@@ -840,12 +648,8 @@ export const ZH_NOTES = [
   `<p><strong>诚实的成绩单。</strong>别夸大 —— 创建是打平的(一开始慢 1.9×;是 ops 遥测把它推到持平)。代价是产物 +26%:Vapor 运行时加上 DOM 兼容垫片。首屏差异在噪声范围内。</p><p>绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
   // 45 工作流 · 一份源码两个渲染器
   `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
-  // 45b Vapor 上游测试 + 亲近性（对应 VDOM 那页 A7）
-  `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p>`,
-  // 46 那一个数字（mic-drop）
-  `<p><strong>压轴数字。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9×。</p><p>让它悬一会儿。然后最后一页。</p>`,
-  // 47 收束 · 拨一下开关
-  `<p><strong>收尾返场。</strong>Vapor 是按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>落地:“还是你早就在写的那套 Vue —— 只是多了一条编译期的快路。这就是那‘还有一件事’。”</p>`,
+  // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
+  `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p><p><strong>压轴数字 —— 7× VDOM。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9× —— 同一个应用、同一个产物,只差一个属性。</p>`,
   // 90a E20a · 稠密 vs 稀疏 (Vapor tree vs ET)
   `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p>`,
   // 90b E20b · 动静光谱 · retained → write-only
@@ -870,10 +674,8 @@ export const ZH_NOTES = [
   `<p><strong>证据甩上桌</strong> —— 两张照片夹着中间的竖屏视频,压在 quote 之上。中间的视频静音自动播放;照片带一点快照式的倾斜。</p><p>文件:<code>103-photo-1.png</code>、<code>103-video-portrait.mp4</code>、<code>103-photo-2.png</code>,放在 <code>slides/public/media/embeds/</code>。</p>`,
   // 95b Overlay · 宝可梦横屏
   `<p><strong>再点一下 —— 宝可梦,全宽登场。</strong>三连散去,横屏视频占满舞台。文件:<code>103-video-wide.mp4</code>。</p>`,
-  // 96 E26 · 十年翻新
-  `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站;我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p>`,
-  // 97 E27 · 还是前端
-  `<p><strong>转折。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。</p><p>这从来就是这份工作。这<em>就是</em>前端。</p>`,
-  // 98 E28 · 前端永生
+  // 96 E26 · 自然语言（含原「十年翻新」「还是前端」）
+  `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站(hux.pro);我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p><p><strong>转折 —— 可我做的,还是前端。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。这从来就是这份工作。这<em>就是</em>前端。</p>`,
+  // 97 E27 · 前端永生
   `<p><strong>真正的收尾。</strong>小字划掉:前端已死。大字:前端永生。谢谢 —— 这次是真的 —— 然后留在这页做 Q&amp;A。</p><p>Q&amp;A 弹药:"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— 同一份产物,两端都跑。"AI 会取代 Vue 吗?" —— 你刚看完整个答案。</p>`,
 ];
