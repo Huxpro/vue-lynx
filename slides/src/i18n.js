@@ -333,10 +333,6 @@ export const ZH = {
   'native': '原生元件',
   'custom': '自渲染',
   'hybrid': '混合',
-  "AI doesn't need mature libraries. It needs a place to vibe.":
-    'AI 要的不是成熟的类库,而是一个能 <span class="brand-text">vibe</span> 的地方。',
-  'The Web was that place. Lynx carries it to native.':
-    'Web 曾经就是那个地方。Lynx 把它带到原生。',
   'Vapor on Lynx — no VDOM. Straight to ops.':
     'Vapor on Lynx —— 没有 VDOM,直达 <b style="color:#4FB8F0">ops</b>。',
   'A cradle for framework design.':
@@ -673,11 +669,9 @@ export const ZH_NOTES = [
   `<p><strong>引理落在人身上。</strong>如果 AI 最终 boil down 到人的品味,那人只会更重要 —— 连接一个社区,就是连接一群人。</p><p>点名现场:帮忙 3D 打印的小音,非常感谢;雪碧 —— 上一顿饭还在福州,没想到今天在这里遇见;Nector —— 上一面还在波兰!你可以说"这个平台才有我想追的偶像" —— 那,Evan 和 Anthony 就在这个平台上。</p>`,
   // 85 E15 · 不是框架,是连接
   `<p><strong>那我到底做了个什么?</strong>AI 时代你理论上并不<em>需要</em>框架 —— 十年前我做过一个在线 HTML slides 编辑器;今天这套 deck 完全是生成的,底下什么库都没有。Vue Lynx 真正是一个开端:说服 Vue 社区,来给原生做点东西。</p><p>更深一层的道理:只要连接<em>存在</em>,AI 就会放大发生的连接。编程语言之间移植容易,因为大家都图灵完备、都有 runtime —— 桥本来就在。Web ↔ Native 之间没有天然的桥。Lynx 这个开源项目的命题,就是那座桥的<em>设计</em>。(顺带:我选择投身的技术,商业价值是一,理想也总要有一点。)</p>`,
-  // 86 E16 · 连接复利
-  `<p><strong>连上 Lynx,就连上了 Lynx 连接的一切。</strong>你已经在用的 Web 织物 —— Motion、Pretext —— 直接带过来;经 Node-API 连 Electron;JSI 世界连 Expo Modules;每一种渲染策略;正在成形的 agent-UI 协议。还有 Lynx 自己的生态 —— Sparkling、Lynxtron。</p><p>被带过来的,是生态和社区本身。这就是复利。</p>`,
-  // 87 E17 · 能 vibe 的地方
-  `<p><strong>把生态论点按 AI 时代磨尖。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
-  // 88 E18 · One more thing
+  // 86 E16 · 连接复利（含原「能 vibe 的地方」）
+  `<p><strong>连上 Lynx,就连上了 Lynx 连接的一切。</strong>你已经在用的 Web 织物 —— Motion、Pretext —— 直接带过来;经 Node-API 连 Electron;JSI 世界连 Expo Modules;每一种渲染策略;正在成形的 agent-UI 协议。还有 Lynx 自己的生态 —— Sparkling、Lynxtron。</p><p>被带过来的,是生态和社区本身。这就是复利。</p><p><strong>AI 要的不是成熟的类库,而是一个能 vibe 的地方。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
+  // 87 E17 · One more thing
   `<p><strong>停住。</strong>数两拍,再翻页。</p>`,
   // ---- One more thing · Vue Vapor deep dive (12 slides) ----
   // 36 Vapor 标题
