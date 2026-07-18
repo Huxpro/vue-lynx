@@ -51,13 +51,7 @@ export const ZH = {
   'Web DX. Native UX.':
     '<span style="color:#4FB8F0">Web</span> 的开发体验。<br/><span class="brand-text">Native</span> 的用户体验。',
 
-  // ---- Chapter II · The proof ----
-  'So, how far does it go?': '那,它到底<br/>做到哪一步了?',
-  'A feast of live demos — every phone in this deck is a real Vue Lynx app, running right now.':
-    '一桌丰盛的现场 demo —— 这套 deck 里的每台手机,都是一个此刻正在运行的 Vue Lynx 应用。',
-  'upstream Vue core tests, passing on our renderer.':
-    '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
-
+  // ---- Chapter II · demos ----
   // ---- API coverage ----
   'v-once / v-memo':
     '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
@@ -76,29 +70,25 @@ export const ZH = {
     '经典原样照搬 —— 响应式状态、<code>v-model</code>、computed 合计。跑在原生输入框、原生滚动上。',
   'Live API, infinite feed, comment trees — Vue Query for data, Tailwind for styling, native <list> for scroll.':
     '真实 API、无限流、评论树 —— 数据用 Vue Query,样式用 Tailwind,滚动用原生 <code>&lt;list&gt;</code>。',
-  'And the same bundles run on the Web.':
-    '而且,同一份产物还能跑回 <span class="brand-text">Web</span>。',
-  'Every phone in this deck is Lynx for Web — the same bundle that runs natively, rendering in your browser right now.':
-    'deck 里的每台手机都是 Lynx for Web —— 和原生端同一份产物,此刻就渲染在你的浏览器里。',
   'native <input>': '原生 &lt;input&gt;',
   'native <list>': '原生 &lt;list&gt;',
 
   // ---- Chapter III · The upgrade ----
-  'Apps, upgrading from Web to native.':
-    'App,从 Web <em style="font-family:var(--serif);font-weight:400">升级</em>到原生。',
-  "Progressive enhancement: keep the codebase you have — gain the platform you don't.":
-    '渐进增强:留住你已有的代码,得到你还没有的平台。',
+  'Upgrading to native.': '升级到<span class="brand-text">原生体验</span>。',
+  'Native experience?': '原生体验？',
+  'The Nuxt AI Chatbot, forked — streaming, reasoning, markdown, tool cards. Then the native interactions: the keyboard lifts the thread; send flies the bubble into the conversation.':
+    'Nuxt 官方 AI Chatbot,fork 过来 —— 流式、思维链、markdown、工具卡片。再看原生交互:键盘托起对话流;发送让气泡飞进会话。',
+  'Native gestures?': '原生手势？',
+  'Elk — a production Mastodon client. Framework-agnostic layers reused; only the UI rebuilt on Lynx elements.':
+    'Elk —— 生产级 Mastodon 客户端。与框架无关的层全部复用;只在 Lynx 元素上重建 UI。',
+  'Sheet with Rubberband effect': '带<span class="brand-text">橡皮筋</span>效果的 Sheet',
+  'Native Viewpager': '原生 <span class="brand-text">Viewpager</span>',
+
   'III · Case 1 · AI Chat': 'III · 案例一 · AI Chat',
-  'The Nuxt AI Chatbot, forked.':
-    'Nuxt 官方 AI Chatbot,<span class="brand-text">fork</span> 过来。',
   'AI SDK streaming': 'AI SDK 流式',
   'reasoning': '思维链',
   'tool cards': '工具卡片',
   'theming': '主题系统',
-  'Everything above came across unchanged.': '上面这些,原封不动地搬了过来。',
-  'Then it went native.': '然后,它<span class="brand-text">原生</span>了。',
-  'The keyboard slides in — the thread glides up with it. Hit send — the bubble flies from the prompt box into the conversation.':
-    '键盘升起 —— 对话跟着一起上滑。按下发送 —— 气泡从输入框飞进对话流。',
   'keyboard avoidance': '键盘回避',
   'send motion': '发送动效',
   'MTS pressables': 'MTS 按压反馈',
@@ -109,18 +99,10 @@ export const ZH = {
   'earlier turns stay masked until the motion starts':
     '动画启动之前,先前的对话保持遮蔽',
   'III · Case 2 · Elk': 'III · 案例二 · Elk',
-  'Elk — a production-scale fork.':
-    'Elk —— 一次<span class="brand-text">生产级规模</span>的 fork。',
   'masto.js client': 'masto.js 客户端',
   'content pipeline': '内容管线',
   'theme system': '主题系统',
   'domain logic': '领域逻辑',
-  "Elk's framework-agnostic layers, reused. Only the UI was rebuilt.":
-    'Elk 与框架无关的那些层,全部复用 —— 只重建了 UI。',
-  'Native gestures, for free-ish.':
-    '原生<span class="brand-text">手势</span>,几乎白拿。',
-  'Infinite timelines on the native <list>. A bottom sheet with rubber-banding and fling — every frame on the UI thread.':
-    '无限时间线跑在原生 <code>&lt;list&gt;</code> 上。底部抽屉带橡皮筋回弹与甩动惯性 —— 每一帧都在 UI 线程。',
   'MTS bottom sheet': 'MTS 底部抽屉',
   'next: view pager': '下一步:view pager',
   'native view pager': '原生 view pager',
@@ -136,8 +118,6 @@ export const ZH = {
     '<b>First send</b> —— 气泡离开输入框,落到锚点。',
   'Second send — the old turn holds steady while the new one travels to the top.':
     '<b>Second send</b> —— 旧轮次保持稳定,新一轮移动到顶部。',
-  'Tabs on a native view pager.':
-    '标签页跑在<span class="brand-text">原生 view pager</span> 上。',
   'Panes swipe with a native snap; content & scroll position are retained across swipes.':
     '分屏以原生吸附滑动;内容与滚动位置在滑动间保留。',
 
@@ -158,19 +138,13 @@ export const ZH = {
     '新一轮消息该在<span class="brand-text">顶部</span>。',
   'Second send — the old turn stays stable while the new bubble travels to the top anchor.':
     'Second send —— 旧轮次保持稳定,新气泡移动到顶部锚点。',
-  'A real Nuxt app, rebuilt on native.':
-    '一个真实的 Nuxt 应用,<span class="brand-text">在原生上重建。</span>',
   'components': '组件',
   'pages': '页面',
   'composables': 'composable',
-  'No Nuxt, no DOM — so instead of forking, the port reuses Elk\'s framework-agnostic layers and rebuilds the UI on Lynx elements.':
-    '没有 Nuxt,没有 DOM —— 于是不去 fork,而是<strong>复用 Elk 与框架无关的层</strong>,在 Lynx 元素上重建 UI。',
   'masto.js reused': 'masto.js 复用',
   'content-render retargeted': 'content-render 改目标',
 
   // ---- Chapter III · Elk draggable sheet ----
-  'III · Case 2 · Elk · draggable sheet': 'III · 案例二 · Elk · 可拖拽 sheet',
-  'One sheet, three owners.': '一个 sheet,<span class="brand-text">三个归属者。</span>',
   'Three owners, in code.': '三个归属者,<span class="brand-text">用代码讲。</span>',
   "The drag runs on the main thread — so even while Vue's background thread fetches, diffs, or rebuilds the list, the sheet still tracks the finger. On the web, gesture JS and render share one thread.":
     '拖拽跑在主线程上 —— 于是即便 Vue 的后台线程正在请求数据、diff 或重建列表,sheet 依然跟手。<span class="dim">在 Web 上,手势 JS 与渲染共享同一条主线程。</span>',
@@ -551,13 +525,7 @@ export const ZH_NOTES = [
   // 11 Lynx 主动连上
   `<p><strong>然后,Lynx 走出队列 —— 站到正中央,Vue 的正下方;其余候选人整体让到左侧。</strong>前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,短、垂直、实心。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
   // 12 Title reveal · Vue Lynx 正式亮相
-  `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
-  // 13 Divider II
-  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、生态原样可用、然后是完整应用。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
-  // 14 852/949
-  `<p><strong>先上硬指标。</strong>我们把 Vue core 自己的测试套件拿来直接跑在 Vue Lynx 渲染器上:949 个通过 852 个;每个 skip 都有记录、有交代。"兼容 Vue"在这里是可测量的命题,不是一句口号。</p>`,
-  // 15 ref
-  `<p><strong>从最简单的开始:</strong><code>ref()</code>、一个事件回调、一个样式绑定。整页和 Web Vue 的差别只有两处:import 写 <code>vue-lynx</code>,标签是 <code>&lt;view&gt;/&lt;text&gt;/&lt;image&gt;</code>。</p><p><strong>现场:</strong>点一下 —— logo 沿着 ref 驱动的 transform 弹起来。</p>`,
+  `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入 demo。</p>`,
   // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
   // 17 v-model
@@ -596,26 +564,18 @@ export const ZH_NOTES = [
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
   // 35 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,
-  // 36 Runs on web
-  `<p><strong>Web 兼容的点睛:</strong>刚才没有任何模拟器。每个手机壳里都是 <em>Lynx for Web</em>,跑的就是发到 iOS/Android 的那份产物。任何一页扫 Web 码 —— 浏览器直接打开;扫 App 码 —— 同一份产物,原生运行。</p><p>Web DX 进,Web 渲染目标出。基线讲完 —— 上超集。</p>`,
   // 28 Divider III
-  `<p><strong>超集章节。</strong>覆盖度和移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,fork 它,然后<em>升级</em>它 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。两个真实 fork。</p>`,
+  `<p><strong>升级章节。</strong>移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,然后<em>升级</em>到原生体验 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。</p>`,
   // 29 AI Chat unchanged
-  `<p><strong>不变的部分。</strong>这是 Nuxt 官方 AI Chatbot 模板,逐特性移植:流式 + 思维链、markdown + 代码高亮、天气/图表工具卡片、历史、投票、编辑、主题。里面的 Vue —— 组件、composable、store —— 才是重点:<strong>它们毫无波澜地搬了过来。</strong></p>`,
-  // 30 AI Chat native
-  `<p><strong>变的部分 —— 升级项。</strong>① <em>键盘回避</em>:原生 <code>keyboardstatuschanged</code> 事件驱动 <code>setNativeProps</code> 变换,输入框和对话流跟着键盘一起、按原生曲线上滑 —— 不需要任何 Web 视口 hack。② <em>发送动效</em>:消息从输入框里"physically"飞出,变成气泡落进对话流。③ 按压反馈全部是主线程脚本。</p><p>致谢:这套原生聊天体验的标准,是 Vercel 的《How we built the v0 iOS app》立下的 —— 接下来两页看同样的手感在 Lynx 上要付出多少。</p><p><strong>现场:</strong>先聚焦输入框(键盘升、布局跟),再发一条消息 —— 看气泡。</p>`,
+  `<p><strong>这个 app 的交互。</strong>Nuxt 官方 AI Chatbot 模板逐特性移植后,再升级原生手感:① 键盘回避 —— 原生 <code>keyboardstatuschanged</code> + <code>setNativeProps</code>;② 发送动效 —— 气泡从输入框飞进对话流;③ MTS 按压反馈。</p><p><strong>现场:</strong>聚焦输入框(键盘升、布局跟),再发一条 —— 看气泡。</p>`,
   // 31 AI Chat · handoff（first send 视频）
   `<p><strong>AI Chat。</strong>从 Nuxt AI Chatbot 模板逐特性移植的生产级聊天：流式、推理、Markdown、工具卡片、历史 —— 迄今对 Vue Lynx 最苛刻的真实世界考验。</p><p><strong>写作视角</strong>（借鉴 Vercel 的 v0 iOS 复盘）：一次漂亮的发送不是一个动画,而是一次交接 —— 输入框、消息列表、键盘、流式响应之间的交接。接下来三页,把每个瞬间都追溯到背后的 API。</p><p><strong>现场演示:</strong>循环片段 —— first send 从输入框出发,落到锚点。</p>`,
   // 32 AI Chat · 键盘也是布局
   `<p><strong>键盘。</strong>Lynx 的 <code>&lt;input&gt;</code> 不会自动避让键盘。输入框绝对定位吸在底部,监听全局 <code>keyboardstatuschanged</code> 事件,用 <code>setNativeProps</code> 施加上报的键盘高度 —— 不绕后台线程。列表只在原本就跟随新内容时才继续跟随。</p><p>这个 mock 就是 v0 草图的思路:一块空白的 <em>contentInset</em> 被键盘吃掉,输入框正好抬升一个键盘高度。</p>`,
   // 33 AI Chat · 新一轮消息在顶部
   `<p><strong>第二次发送才是真正的考验。</strong>重复发送会暴露空状态藏起来的问题。原生把新的用户轮次锚定在顶部,但在移动的气泡到位前,让上一轮保持稳定。Vue Lynx 的 <code>nextTick()</code> 等待挂起的 ops 抵达主线程,再由 <code>scrollIntoView</code> 完成最终对齐 —— 然后助手才开始流式输出。</p><p><strong>Web 走另一套策略</strong> —— 没有原生定位保证,于是把列表钉在底部。手感一致,机制不同。</p>`,
-  // 33 Elk unchanged
-  `<p><strong>这一页讲规模。</strong>Elk 是真实的 Mastodon 客户端,不是 demo:时间线、会话、个人页、投票、内容警告、自定义表情、搜索、发帖。我们 fork 它,保住它的"大脑" —— masto.js API 客户端、Mastodon-HTML 内容管线、主题、领域逻辑 —— 只把视图层重建到原生元素上。这就是移植经济学:<strong>应用越大,能复用的越多。</strong></p>`,
-  // 34b Elk · 真实 Nuxt 应用,在原生上重建
-  `<p><strong>Elk。</strong>Anthony Fu 团队广受喜爱的 Mastodon Web 客户端,被移植成原生 Mastodon 客户端 —— 时间线、串、资料页、搜索、趋势。一个 Nuxt 3 应用:约 196 个组件、55 个页面、50 个 composable。</p><p><strong>移植手法:</strong>保留与框架无关的层(masto.js 客户端原样复用、HTML 内容解析约 95% 逐字保留),把 vnode 渲染器改写目标到 <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>,再用原生复用 <code>&lt;list&gt;</code> 替换 Elk 的 DOM 虚拟化 —— 代码更<em>少</em>。</p>`,
   // 34 Elk gestures
-  `<p><strong>手势升级。</strong>底部抽屉从头到尾是主线程脚本:8px 手势锁判定谁接管拖拽,超限后的橡皮筋阻尼,带真实速度 + 减速度的甩动开合 —— 零后台线程往返,流式加载中也不掉帧。</p><p><strong>现已合入</strong>(PR #223):原生 view pager,横滑切时间线 tab —— 抽屉展示了范式,pager 复用它(见本章后续)。</p><p><strong>现场:</strong>滚时间线,慢拖抽屉(橡皮筋),再甩一下。</p>`,
+  `<p><strong>这个 app 的形态。</strong>Elk 是生产级 Mastodon 客户端 —— 约 196 个组件、55 个页面、50 个 composable。保住大脑(masto.js、内容管线、主题),只把视图层重建到原生元素上。规模本身就是论证。</p><p><strong>现场:</strong>滚时间线、打开发帖 —— 感受一个复杂应用落在原生上的分量。</p>`,
   // 34c Elk · 可拖拽 sheet · 三个归属者（真实 UI + 代码）
   `<p><strong>可拖拽 sheet —— 难的不是"从底部滑上来",而是三套状态机协同。</strong>① Vue <code>&lt;Transition&gt;</code> 管"sheet 是否存在于视觉状态"(开/关);<code>v-show</code> 让节点保持挂载,关闭后滚动位置与状态得以保留,同时跑完整的 persisted transition 生命周期 —— 正是这项修复让该能力从 experimental 毕业。② 一个 <code>'main thread'</code> worklet 管"手指每一帧在哪":通过 <code>:main-thread-bindtouch*</code> 绑定,用 <code>setStyleProperty</code> 直接写 <code>transform</code>,绕开 Vue diff,并在拉过顶部时施加橡皮筋阻力。③ 原生 <code>&lt;scroll-view&gt;</code> 管"这串触摸属于谁":8px 手势锁先一次性判定方向与来源;若向下拖且列表已到顶,sheet 关掉原生滚动(<code>enable-scroll=false</code>)接管拖动,否则让给它。<code>runOnBackground</code> 只在状态边界(关闭时)跨线程,绝不每帧跨。</p><p><strong>结构即属性归属:</strong>外层 surface 归 Transition(CSS class),内层归拖动(inline <code>transform</code>)。两者写同一元素,inline 覆盖 class —— 经典的"第一次能动,之后动画消失"。</p><p><strong>双线程红利:</strong>拖拽跑在 UI 线程上,贴着原生输入与布局,即便 Vue 后台线程正在请求数据、diff 或重建列表也照样跟手;Web 上手势 JS 与渲染共享一条主线程,一有长任务就掉帧。</p>`,
   // 34b Elk · 原生 view pager

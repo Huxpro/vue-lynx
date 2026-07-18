@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 143</span>
+    <span data-counter>01 / 140</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -220,7 +220,6 @@
     </aside>
   </section>
 
-
   <!-- ====================================================
        5 — The field · every cross-platform answer, in a row
        ==================================================== -->
@@ -367,78 +366,17 @@
     </div>
     <aside class="notes">
       <p><strong>The reveal.</strong> This is Vue Lynx's first formal appearance — the title lands only after the argument earned it: the gap is real, the door is open, and this is the project walking through it.</p>
-      <p>Say the name, let the beam breathe, then straight into the proof.</p>
+      <p>Say the name, let the beam breathe, then straight into the demos.</p>
     </aside>
   </section>
 
-  <!-- ====================================================
-       Chapter II · The proof — how far does it go?
-       ==================================================== -->
-  <section class="slide divider">
-    <div class="divider__row">
-      <span class="divider__num numeral--brand">II</span>
-      <h2 class="divider__title">
-        So, how far <br/>does it go?
-      </h2>
-    </div>
-    <p class="divider__tag">
-      A feast of live demos — every phone in this deck is a real Vue Lynx app,
-      running right now.
-    </p>
-    <aside class="notes">
-      <p><strong>The show-off chapter.</strong> "为了让大家感受到诚意" — to show we're serious, I brought a feast of demos. Three courses: Vue API coverage, the ecosystem as-is, then whole applications.</p>
-      <p>Every phone you'll see is live — scan the QR codes to run them on your own device as we go.</p>
-    </aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="mega"><span class="brand-text">882</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 1013</small></div>
-    <p class="lead">upstream Vue core tests, passing on our renderer.</p>
-    <aside class="notes">
-      <p><strong>The hard number first.</strong> We run Vue core's own test suites against the Vue Lynx renderer: 882 of 1013 pass, 131 documented skips, <strong>zero failures</strong>. "Compatible with Vue" here is a measured claim, not a vibe.</p>
-    </aside>
-  </section>
+  
 
   <!-- ====================================================
        II · Vue API coverage — one feature per slide
        ordered by vue-lynx release version
        ==================================================== -->
-  <section class="slide demo demo--api">
-    <div class="demo__body">
-      <div class="demo__title-row">
-        <h2 class="demo__title"><code class="brand-text">ref()</code></h2>
-        <span class="ver-badge">0.2.0</span>
-      </div>
-      <div class="codeframe">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>App.vue</span>
-        </div>
-<pre><span class="code-tag">&lt;script setup&gt;</span>
-<span class="code-key">import</span> { ref } <span class="code-key">from</span> <span class="code-str">'vue-lynx'</span>
-<span class="code-key">const</span> { y, jump } <span class="code-key">=</span> <span class="code-fn">useFlappy</span>()  <span class="code-com">// ref(0) inside</span>
-<span class="code-tag">&lt;/script&gt;</span>
-
-<span class="code-tag">&lt;template&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap</span>=<span class="code-str">"jump"</span><span class="code-tag">&gt;</span>
-    <span class="code-tag">&lt;image</span> <span class="code-attr">:style</span>=<span class="code-str">"{ transform:
-      `translateY(${y}px)` }"</span> <span class="code-tag">/&gt;</span>
-  <span class="code-tag">&lt;/view&gt;</span>
-<span class="code-tag">&lt;/template&gt;</span></pre>
-      </div>
-    </div>
-    <div class="demo__stage">
-      <div class="phone">
-        <div class="phone__inner">
-          <vl-demo bundle="hello-world/dist/main.web.bundle"></vl-demo>
-        </div>
-      </div>
-    </div>
-    <aside class="notes">
-      <p><strong>Start at the beginning:</strong> <code>ref()</code>, an event handler, a style binding. The only differences from web Vue on this whole slide: the import says <code>vue-lynx</code>, and the tags are <code>&lt;view&gt;</code>/<code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>.</p>
-      <p><strong>Do live:</strong> tap — the logo springs on a ref-driven transform.</p>
-    </aside>
-  </section>
+  
 
   <section class="slide demo demo--api">
     <div class="demo__body">
@@ -1072,58 +1010,21 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:20ch">
-      And the same bundles run on the <span class="brand-text">Web</span>.
-    </h2>
-    <p class="lead">
-      Every phone in this deck is Lynx for Web — the same bundle that runs
-      natively, rendering in your browser right now.
-    </p>
-    <aside class="notes">
-      <p><strong>The kicker for web compatibility:</strong> nothing you saw was a simulator. Each mockup is <em>Lynx for Web</em> running the exact bundle that ships to iOS/Android. Scan the Web QR on any slide — it opens in your phone's browser; scan the App QR — same bundle, native.</p>
-      <p>Web DX in, and the Web as a first-class render target out. That's the baseline. Now for the superset.</p>
-    </aside>
-  </section>
+  
 
   <!-- ====================================================
        Chapter III · The upgrade — web apps gaining native
        ==================================================== -->
-  <section class="slide divider">
-    <div class="divider__row">
-      <span class="divider__num numeral--brand">III</span>
-      <h2 class="divider__title">
-        Apps, <em style="font-family:var(--serif);font-weight:400">upgrading</em> <br/>
-        from Web to native.
-      </h2>
-    </div>
-    <p class="divider__tag">
-      Progressive enhancement: keep the codebase you have — gain the platform
-      you don't.
-    </p>
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:16ch">
+      Upgrading to <span class="brand-text">native</span>.
+    </h2>
     <aside class="notes">
-      <p><strong>The superset chapter.</strong> Coverage and ports prove the baseline. The real pitch is upward: take a living web app, fork it, and <em>upgrade</em> it — same Vue code where it matters, native capabilities where it counts. Two real forks follow.</p>
+      <p><strong>The upgrade chapter.</strong> Ports prove the baseline. The real pitch is upward: take a living web app and gain native capabilities — same Vue where it matters, native where it counts.</p>
     </aside>
   </section>
 
   <!-- Case 1 · AI Chat -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      The Nuxt AI Chatbot, <span class="brand-text">forked</span>.
-    </h2>
-    <div class="demo__meta" style="justify-content:center">
-      <span class="chip chip--brand">AI SDK streaming</span>
-      <span class="chip">reasoning</span>
-      <span class="chip">markdown + code</span>
-      <span class="chip">tool cards</span>
-      <span class="chip">theming</span>
-    </div>
-    <p class="lead">Everything above came across <em>unchanged</em>.</p>
-    <aside class="notes">
-      <p><strong>What stayed.</strong> This is the official Nuxt AI Chatbot template, ported feature-by-feature: streaming with thinking/reasoning, markdown with highlighted code, weather/chart tool-call cards, history, votes, editing, theme picker. The Vue in it — components, composables, stores — is the point: it moved without drama.</p>
-    </aside>
-  </section>
-
   <section class="slide demo demo--reverse">
     <div class="demo__stage">
       <div class="phone">
@@ -1134,24 +1035,27 @@ app.<span class="code-fn">use</span>(router)</pre>
     </div>
     <div class="demo__body">
       <h2 class="demo__title">
-        Then it went <span class="brand-text">native</span>.
+        Native <span class="brand-text">experience</span>?
       </h2>
       <p class="demo__copy">
-        The keyboard slides in — the thread glides up with it. Hit send —
-        the bubble flies from the prompt box into the conversation.
+        The Nuxt AI Chatbot, forked — streaming, reasoning, markdown, tool cards.
+        Then the native interactions: the keyboard lifts the thread; send flies
+        the bubble into the conversation.
       </p>
       <div class="demo__meta">
         <span class="chip chip--brand">keyboard avoidance</span>
         <span class="chip chip--brand">send motion</span>
-        <span class="chip">MTS pressables</span>
+        <span class="chip">AI SDK streaming</span>
+        <span class="chip">tool cards</span>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>What changed — the upgrades.</strong> ① <em>Keyboard avoidance</em>: the native <code>keyboardstatuschanged</code> event drives <code>setNativeProps</code> transforms, so the prompt box and thread follow the keyboard with a native curve — no web viewport hacks. ② <em>Send motion</em>: your message physically detaches from the input and flies into the thread as a bubble. ③ Press feedback runs as Main-Thread Script.</p>
-      <p>Credit where due: this native-chat bar was set by Vercel's <em>"How we built the v0 iOS app"</em> write-up — the next two slides show how the same feel costs far less on Lynx.</p>
-      <p><strong>Do live:</strong> focus the input (keyboard slides, layout follows), then send a message — watch the bubble.</p>
+      <p><strong>What the app feels like.</strong> Official Nuxt AI Chatbot template, ported feature-by-feature — then upgraded: ① keyboard avoidance via native <code>keyboardstatuschanged</code> + <code>setNativeProps</code>; ② send motion — the bubble detaches from the prompt and flies into the thread; ③ MTS press feedback.</p>
+      <p><strong>Do live:</strong> focus the input (keyboard slides, layout follows), then send — watch the bubble.</p>
     </aside>
   </section>
+
+  
 
   <!-- Case 1 · AI Chat · the send is a handoff (restored) -->
   <section class="slide demo demo--reverse techslide">
@@ -1319,70 +1223,38 @@ app.<span class="code-fn">use</span>(router)</pre>
   </section>
 
   <!-- Case 2 · Elk -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      Elk — a <span class="brand-text">production-scale</span> fork.
-    </h2>
-    <div class="demo__meta" style="justify-content:center">
-      <span class="chip chip--brand">masto.js client</span>
-      <span class="chip">content pipeline</span>
-      <span class="chip">theme system</span>
-      <span class="chip">domain logic</span>
-    </div>
-    <p class="lead">Elk's framework-agnostic layers, reused. Only the UI was rebuilt.</p>
-    <aside class="notes">
-      <p><strong>Scale is the argument here.</strong> Elk is a real Mastodon client, not a demo: timelines, threads, profiles, polls, content warnings, custom emoji, search, compose. We forked it and kept its brains — the masto.js API client, the Mastodon-HTML content pipeline, themes, domain logic — and rebuilt only the view layer on native elements. That's the porting economics: the bigger the app, the more carries over.</p>
-    </aside>
-  </section>
+  
 
   <!-- Case 2 · Elk · a real Nuxt app, rebuilt on native (restored) -->
-  <section class="slide stage techslide">
-    <span class="app-badge" data-flip="elk-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk</span>
-    <h2 class="h-section" style="text-align:center;max-width:20ch">
-      A real Nuxt app, <span class="brand-text">rebuilt on native.</span>
-    </h2>
-    <div class="statset" data-mm-fade style="display:flex;gap:clamp(28px,5cqw,72px);justify-content:center;margin:8px 0 4px">
-      <div style="text-align:center">
-        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">196</span></div>
-        <div class="app-badge" style="justify-content:center">components</div>
-      </div>
-      <div style="text-align:center">
-        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">55</span></div>
-        <div class="app-badge" style="justify-content:center">pages</div>
-      </div>
-      <div style="text-align:center">
-        <div class="mega" style="font-size:clamp(40px,5cqw,72px)"><span class="brand-text">50</span></div>
-        <div class="app-badge" style="justify-content:center">composables</div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade style="max-width:52ch">
-      No Nuxt, no DOM — so instead of forking, the port <strong>reuses Elk's
-      framework-agnostic layers</strong> and rebuilds the UI on Lynx elements.
-    </p>
-    <div class="demo__meta" data-mm-fade style="justify-content:center">
-      <span class="chip chip--brand">masto.js reused</span>
-      <span class="chip">content-render retargeted</span>
-      <span class="chip">native &lt;list&gt;</span>
-    </div>
-    <aside class="notes">
-      <p><strong>Elk.</strong> The beloved Mastodon web client by Anthony Fu and team, ported into a native Mastodon client — timelines, threads, profiles, search, trends. A Nuxt 3 app: ~196 components, 55 pages, 50 composables.</p>
-      <p><strong>The porting move:</strong> keep the framework-agnostic layers (masto.js client reused unpatched, the HTML content parser ~95% verbatim), retarget the vnode renderer to <code>&lt;text&gt;</code>/<code>&lt;image&gt;</code>, and swap Elk's DOM virtualizer for the native recycling <code>&lt;list&gt;</code> — <em>less</em> code.</p>
-    </aside>
-  </section>
+  
 
   <section class="slide demo">
     <div class="demo__body">
       <h2 class="demo__title">
-        Native <span class="brand-text">gestures</span>, for free-ish.
+        Native <span class="brand-text">gestures</span>?
       </h2>
+      <div class="statset" style="display:flex;gap:clamp(20px,3.5cqw,48px);margin:4px 0 8px">
+        <div style="text-align:center">
+          <div class="mega" style="font-size:clamp(32px,4cqw,56px)"><span class="brand-text">196</span></div>
+          <div class="app-badge" style="justify-content:center">components</div>
+        </div>
+        <div style="text-align:center">
+          <div class="mega" style="font-size:clamp(32px,4cqw,56px)"><span class="brand-text">55</span></div>
+          <div class="app-badge" style="justify-content:center">pages</div>
+        </div>
+        <div style="text-align:center">
+          <div class="mega" style="font-size:clamp(32px,4cqw,56px)"><span class="brand-text">50</span></div>
+          <div class="app-badge" style="justify-content:center">composables</div>
+        </div>
+      </div>
       <p class="demo__copy">
-        Infinite timelines on the native <code>&lt;list&gt;</code>. A bottom
-        sheet with rubber-banding and fling — every frame on the UI thread.
+        Elk — a production Mastodon client. Framework-agnostic layers reused;
+        only the UI rebuilt on Lynx elements.
       </p>
       <div class="demo__meta">
-        <span class="chip chip--brand">MTS bottom sheet</span>
-        <span class="chip chip--brand">native &lt;list&gt;</span>
-        <span class="chip chip--brand">native view pager</span>
+        <span class="chip chip--brand">masto.js reused</span>
+        <span class="chip">content pipeline</span>
+        <span class="chip">native &lt;list&gt;</span>
       </div>
     </div>
     <div class="demo__stage">
@@ -1393,17 +1265,15 @@ app.<span class="code-fn">use</span>(router)</pre>
       </div>
     </div>
     <aside class="notes">
-      <p><strong>The gesture upgrades.</strong> The compose/bottom sheet is Main-Thread Script end-to-end: an 8px gesture lock decides who owns the drag, rubber-band resistance past the limit, fling with real velocity + deceleration to open or dismiss — zero background-thread round-trips, so it never drops a frame even mid-stream.</p>
-      <p><strong>And now shipped</strong> (merged as PR #223): a native view pager for swiping between timeline tabs — the sheet showed the pattern; the pager repeats it (later in this chapter).</p>
-      <p><strong>Do live:</strong> scroll the timeline, drag the sheet slowly (rubber band), then fling it.</p>
+      <p><strong>Scale is the argument.</strong> Elk is a real Mastodon client — timelines, threads, profiles, polls, search, compose. ~196 components, 55 pages, 50 composables. Keep the brains (masto.js, content pipeline, themes); rebuild only the view layer on native elements.</p>
+      <p><strong>Do live:</strong> scroll the timeline, open compose — feel the weight of a production app on native.</p>
     </aside>
   </section>
 
   <!-- Case 2 · Elk · the draggable sheet · three owners (real UI + code) -->
   <section class="slide stage techslide">
-    <span class="app-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk · draggable sheet</span>
-    <h2 class="h-section" style="text-align:center;max-width:18ch">
-      One sheet, <span class="brand-text">three owners.</span>
+    <h2 class="h-section" style="text-align:center;max-width:24ch;font-size:clamp(26px,3cqw,40px)">
+      Sheet with <span class="brand-text">Rubberband</span> effect
     </h2>
     <div class="sheet-split" style="max-width:1060px;margin:10px auto 0">
       <div class="mockcol" data-mm-fade>
@@ -1502,8 +1372,8 @@ app.<span class="code-fn">use</span>(router)</pre>
       </p>
     </div>
     <div class="demo__body" style="max-width:none">
-      <h2 class="demo__title" style="font-size:clamp(30px,3.4cqw,48px)">
-        Tabs on a <span class="brand-text">native view pager</span>.
+      <h2 class="demo__title">
+        <span class="brand-text">Native</span> Viewpager
       </h2>
       <div class="codeframe" style="width:100%;text-align:left">
         <div class="codeframe__head">
@@ -2463,7 +2333,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-
   <!-- ====================================================
        IV · The landscape — the architecture-level comparison
        ==================================================== -->
@@ -2564,7 +2433,6 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>The thesis, one line.</strong> Lynx gives you the Web's developer experience with native's user experience. And because the frontend seam is open — this is Vue's opening. Which brings us to…</p>
     </aside>
   </section>
-
 
   <!-- H1 — the harness -->
   <section class="slide stage">
