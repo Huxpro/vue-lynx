@@ -319,8 +319,7 @@ export const ZH = {
   'Frameworks compress the search space.': '框架,压缩了搜索空间。',
   'everything the model could emit': '模型可能吐出的一切',
   'the idiom': '惯用法',
-  'Technology is nothing without its people.':
-    '技术若没有<span class="brand-text">人</span>,什么都不是。',
+  // Stays English in both languages (like the cover title).
   '3D prints · 小音': '帮忙 3D 打印 · 小音',
   'a dinner in Fuzhou · 雪碧': '上一顿饭在福州 · 雪碧',
   'Poland, then here · Nector': '上一面在波兰 · Nector',
