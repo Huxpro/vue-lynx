@@ -96,24 +96,24 @@ describe("Lynx-for-Web example host", () => {
       ),
       "utf8",
     );
-    const goWebPatch = await readFile(
-      new URL(
-        "../../../patches/@lynx-js__go-web@0.6.0.patch",
-        import.meta.url,
-      ),
-      "utf8",
-    );
-    const webCorePatch = await readFile(
-      new URL(
-        "../../../patches/@lynx-js__web-core@0.22.1.patch",
-        import.meta.url,
-      ),
-      "utf8",
-    ).catch(() => "");
     const rootPackage = await readFile(
       new URL("../../../package.json", import.meta.url),
       "utf8",
     );
+    // Resolve patch files through pnpm.patchedDependencies rather than
+    // hardcoding versioned filenames — dependency bumps rename the patch
+    // file, and this suite has no CI coverage to catch the stale path.
+    const patchedDependencies =
+      JSON.parse(rootPackage).pnpm?.patchedDependencies ?? {};
+    const readPatch = (name) => {
+      const entry = Object.entries(patchedDependencies).find(([spec]) =>
+        spec.startsWith(`${name}@`),
+      );
+      if (!entry) throw new Error(`no patchedDependencies entry for ${name}`);
+      return readFile(new URL(`../../../${entry[1]}`, import.meta.url), "utf8");
+    };
+    const goWebPatch = await readPatch("@lynx-js/go-web");
+    const webCorePatch = await readPatch("@lynx-js/web-core");
 
     expect(source).toContain("onEntryChange={handleEntryChange}");
     expect(source).toContain("metadataForMode(metadata, mode)");
@@ -134,7 +134,6 @@ describe("Lynx-for-Web example host", () => {
     expect(goWebPatch).toContain("exampleMetadata ?? fetchedExampleData");
     expect(goWebPatch).toContain("onEntryChange?.(entryName)");
     expect(webCorePatch).toContain("callDestroyLifetimeFun is not a function");
-    expect(rootPackage).toContain('"@lynx-js/web-core@0.22.1"');
     expect(storeSource).toContain("browser.history.replaceState(");
     expect(storeSource).not.toContain("location.assign(");
     expect(source).toContain('aria-busy="true"');
