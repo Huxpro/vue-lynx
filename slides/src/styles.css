@@ -2039,6 +2039,51 @@ body.is-blackout::after {
   box-shadow: 0 14px 44px -18px rgba(0, 0, 0, 0.7);
 }
 .qr-solo svg { width: 100%; height: 100%; display: block; }
+.qr-solo--sm { width: clamp(88px, 10cqw, 112px); height: clamp(88px, 10cqw, 112px); padding: 9px; border-radius: 12px; }
+
+/* Harness write-up — tweet embed beside a small QR + one line. */
+.harness-writeup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(24px, 4cqw, 56px);
+  margin-top: 2.4cqh;
+}
+.harness-writeup__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+/* Frame-budget marker on a thread timeline — a dashed deadline the
+   main thread's work must fit inside (single-thread jank motivation). */
+.frame-mark {
+  position: absolute;
+  top: -8%;
+  bottom: -8%;
+  width: 0;
+  border-left: 1.6px dashed #F27A9E;
+  z-index: 4;
+}
+.frame-mark b {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #F27A9E;
+  white-space: nowrap;
+}
+/* the slice of work that overran the frame */
+.tblk.is-over {
+  border-style: dashed;
+  opacity: 0.75;
+}
 
 /* =========================================================
    Flow diagram — generic canvas for the "how we did it"

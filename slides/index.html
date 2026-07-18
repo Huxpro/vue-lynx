@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 128</span>
+    <span data-counter>01 / 124</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -1551,130 +1551,106 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- A1 — Vue lands on the background thread -->
+  <!-- N0 — one thread, one frame budget: the squeeze -->
   <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
-      </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb is-hero" data-flip="fb-vue" style="--c:#42b883;left:50%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
+    <div class="ifrtl" style="height:clamp(140px,22cqh,190px)">
+      <div class="ifrlane" style="--c:#56b8f0;top:14%;height:72%">
+        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
+        <div class="tblk" style="--c:#c9ced6;left:3%;width:12%;top:64%">event</div>
+        <div class="tblk" style="--c:#E8B44A;left:16%;width:34%;top:64%">your JavaScript</div>
+        <div class="tblk is-over" style="--c:#F27A9E;left:51%;width:17%;top:64%">paint</div>
+        <span class="frame-mark" style="left:49%"><b>frame</b></span>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      Vue runs <em>whole</em> — on the background thread.
+      The web runs on <em>one</em> thread — event, your JS, paint — and it all
+      has to land inside a <b style="color:#F27A9E">frame</b>. Cross-platform pins
+      native UI here too; pile an app on top and the budget blows.
     </p>
     <aside class="notes">
-      <p><strong>First decision: which thread does Vue live on?</strong> An early community experiment put Vue on the main thread — every event then had to be forwarded across. But Lynx delivers events to the background thread natively, so we run the entire runtime there: reactivity, diff, lifecycle, your handlers. Not a fork of Vue — the actual <code>@vue/runtime-core</code>, untouched.</p>
+      <p><strong>Start from what everyone knows.</strong> The web is single-threaded:
+      layout, paint, gestures, and all your JS share one thread. Cross-platform
+      systems inherit a harder constraint — <em>native UI must live on the main (UI)
+      thread</em>. Stack a framework's reactivity and diffing on top of that and the
+      UI thread starves. That's the squeeze every cross-platform runtime has to
+      answer, and Lynx answers it with a second thread.</p>
     </aside>
   </section>
 
-  <!-- A2 — ShadowElement -->
+  <!-- N1 — everything on the main thread: doesn't hold -->
   <section class="slide stage">
     <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
-      </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:26%;height:48%">
         <span class="flane__label"><i></i>Main (UI) thread</span>
       </div>
-      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:18%;top:50%">
+        Vue 3 · VDOM
+        <small>@vue/runtime-core</small>
       </div>
-      <span class="farr" data-mm-fade style="left:41.5%;top:25%">nodeOps &rarr;</span>
-      <div class="fb is-hero" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
-        ShadowElement tree
-        <small>linked list · sync reads</small>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      <code>createRenderer()</code> — a renderer, not a fork.
-    </p>
-    <aside class="notes">
-      <p><strong>Vue's official custom renderer API is the whole trick.</strong> <code>createRenderer()</code> wants synchronous nodes — <code>parentNode()</code>, <code>nextSibling()</code> must answer immediately, but the real elements live on another thread. So nodeOps dual-writes: it maintains a lightweight <em>ShadowElement</em> linked-list on the background thread (satisfying every synchronous read Vue makes) while queueing the real work for later. Same pattern ReactLynx uses for its snapshot instances.</p>
-    </aside>
-  </section>
-
-  <!-- A3 — ops buffer crosses -->
-  <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
-      </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
-      </div>
-      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
-      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
-        ShadowElement tree
-        <small>linked list · sync reads</small>
-      </div>
-      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
-      <div class="fb is-hero" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
-        ops
-        <small>flat array · per tick</small>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Updates leave as a <b style="color:#4FB8F0">flat ops buffer</b> — once per tick.
-    </p>
-    <aside class="notes">
-      <p><strong>The only thing that crosses the thread boundary is data.</strong> <code>[CREATE, id, tag, INSERT, parent, child, SET_PROP, id, key, value…]</code> — numbers and strings, no objects to marshal, no functions. Batched on Vue's own flush cycle, so one reactive tick = one send. And Vue's compiler helps for free: static content produces zero ops — only dynamic bindings travel.</p>
-    </aside>
-  </section>
-
-  <!-- A4 — interpreter + PAPI -->
-  <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
-      </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
-      </div>
-      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
-      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
-        ShadowElement tree
-        <small>linked list · sync reads</small>
-      </div>
-      <span class="farr" style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
-      <div class="fb" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
-        ops
-        <small>flat array · per tick</small>
-      </div>
-      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:80%;top:66%">&#8601;</span>
-      <div class="fb" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
-        ops interpreter
-        <small>a switch loop</small>
-      </div>
-      <span class="farr" data-mm-fade style="left:43%;top:75%">&larr; replay</span>
-      <div class="fb is-hero" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
+      <span class="farr" data-mm-fade style="left:35%;top:50%">&rarr;</span>
+      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:50%;top:50%">
         Element PAPI
-        <small>__CreateView · __SetAttribute · …</small>
+        <small>__CreateView · __SetAttribute</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:66%;top:50%">&rarr;</span>
+      <div class="fb is-hero" data-flip="fb-native" style="--c:#9E86F0;left:82%;top:50%">
+        Native UI
+        <small>on the UI thread</small>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      The main thread <b style="color:#F27A9E">replays</b> them — native elements appear.
+      Vue drives native elements through the <b style="color:#F27A9E">Element PAPI</b>.
+      Run it here and reactivity, diff, your handlers all fight the UI —
+      <em>too much for one thread.</em>
     </p>
     <aside class="notes">
-      <p><strong>Here's Lynx's framework-agnostic seam, up close.</strong> The main thread runs a tiny interpreter — literally a switch loop — that replays ops against the <em>Element PAPI</em>: <code>__CreateView</code>, <code>__AppendElement</code>, <code>__SetAttribute</code>… That C-flavored API is the contract Lynx offers every framework; ReactLynx feeds it, we feed it, the next framework will too. VDOM → ShadowElement → ops → PAPI: four stops, one straight line.</p>
+      <p><strong>The naive shape.</strong> Vue could talk straight to Lynx's
+      <em>Element PAPI</em> — <code>__CreateView</code>, <code>__SetAttribute</code>… —
+      to build native UI. But that puts the entire Vue runtime on the same thread as
+      layout and paint. It works, and it janks. So the real question is: how do we get
+      Vue <em>off</em> the UI thread without losing its grip on the elements?</p>
     </aside>
   </section>
 
-  <!-- A5 — events ride back -->
+  <!-- N2 — lift Vue onto the background thread → the gap -->
+  <section class="slide stage">
+    <div class="flow">
+      <div class="flane" data-mm-fade data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb is-hero" data-flip="fb-vue" style="--c:#42b883;left:18%;top:25%">
+        Vue 3 · VDOM
+        <small>@vue/runtime-core</small>
+      </div>
+      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:50%;top:75%">
+        Element PAPI
+        <small>__CreateView · __SetAttribute</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:66%;top:75%">&rarr;</span>
+      <div class="fb" data-flip="fb-native" style="--c:#9E86F0;left:82%;top:75%">
+        Native UI
+        <small>on the UI thread</small>
+      </div>
+      <span class="fcenter" data-mm-fade style="left:33%;top:50%">?</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Lift Vue onto a <b style="color:#5dd5a8">background thread</b>. The runtime
+      is off the UI now — but how does it drive elements it can no longer touch?
+    </p>
+    <aside class="notes">
+      <p><strong>Second decision: which thread does Vue live on?</strong> Lynx delivers
+      events to the background thread natively, so we run the entire runtime there —
+      reactivity, diff, lifecycle, your handlers. Not a fork; the actual
+      <code>@vue/runtime-core</code>, untouched. But Vue's renderer wants synchronous
+      DOM nodes, and the real elements are a thread away. That's the gap the next slide
+      closes.</p>
+    </aside>
+  </section>
+
+  <!-- N3 — ShadowElement fakes the DOM; ops replay into PAPI (timeline) -->
   <section class="slide stage">
     <div class="flow">
       <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
@@ -1683,85 +1659,104 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
         <span class="flane__label"><i></i>Main (UI) thread</span>
       </div>
-      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:12%;top:25%">
+        Vue 3 · VDOM
+        <small>@vue/runtime-core</small>
       </div>
-      <span class="farr" style="left:41.5%;top:25%">nodeOps &rarr;</span>
-      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
-        ShadowElement tree
-        <small>linked list · sync reads</small>
+      <span class="farr" data-mm-fade style="left:28%;top:25%">nodeOps &rarr;</span>
+      <div class="fb is-hero" data-flip="fb-shadow" style="--c:#E8B44A;left:44%;top:25%">
+        ShadowElement
+        <small>fakes the DOM · sync reads</small>
       </div>
-      <span class="farr" style="--c:#4FB8F0;left:80%;top:31%">&#8600;</span>
-      <div class="fb" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
+      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:52%;top:39%">&#8600;</span>
+      <div class="fb is-hero" data-flip="fb-ops" style="--c:#4FB8F0;left:58%;top:50%">
         ops
         <small>flat array · per tick</small>
       </div>
-      <span class="farr" style="--c:#4FB8F0;left:80%;top:66%">&#8601;</span>
-      <div class="fb" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
-        ops interpreter
-        <small>a switch loop</small>
-      </div>
-      <span class="farr" style="left:43%;top:75%">&larr; replay</span>
-      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
+      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:57%;top:64%">&#8600; replay</span>
+      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:60%;top:75%">
         Element PAPI
-        <small>__CreateView · __SetAttribute · …</small>
+        <small>__CreateView · __SetAttribute</small>
       </div>
-      <div class="fb is-hero" data-flip="fb-evt" style="--c:#3deae7;left:8%;top:50%">
+      <span class="farr" style="left:75%;top:75%">&rarr;</span>
+      <div class="fb" data-flip="fb-native" style="--c:#9E86F0;left:87%;top:75%">
+        Native UI
+        <small>on the UI thread</small>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      A <b style="color:#E8B44A">ShadowElement</b> tree fakes the DOM for Vue;
+      edits leave as a flat <b style="color:#4FB8F0">ops</b> buffer the main thread
+      replays into <b style="color:#F27A9E">Element PAPI</b>.
+    </p>
+    <aside class="notes">
+      <p><strong>Read it as a timeline, left to right.</strong> Vue's official
+      <code>createRenderer()</code> wants synchronous nodes, so nodeOps maintains a
+      lightweight <em>ShadowElement</em> linked-list on the background thread —
+      satisfying every synchronous read Vue makes — while queueing the real work.
+      Updates cross the boundary as a flat <code>ops</code> array (numbers and strings,
+      one send per tick), and the main thread replays them straight into the Element
+      PAPI. No interpreter box worth drawing: the replay <em>is</em> a switch loop.
+      VDOM → ShadowElement → ops → PAPI → Native UI, one straight line.</p>
+    </aside>
+  </section>
+
+  <!-- N4 — magic-move the timeline into a ring: one lap = nextTick -->
+  <section class="slide stage">
+    <div class="flow">
+      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+        <span class="flane__label"><i></i>Background thread</span>
+      </div>
+      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+        <span class="flane__label"><i></i>Main (UI) thread</span>
+      </div>
+      <div class="fb" data-flip="fb-vue" style="--c:#42b883;left:28%;top:22%">
+        Vue 3 · VDOM
+        <small>@vue/runtime-core</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:45%;top:19%">&rarr;</span>
+      <div class="fb" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:22%">
+        ShadowElement
+        <small>fakes the DOM · sync reads</small>
+      </div>
+      <span class="farr" data-mm-fade style="--c:#4FB8F0;left:75%;top:35%">&#8600;</span>
+      <div class="fb" data-flip="fb-ops" style="--c:#4FB8F0;left:81%;top:50%">
+        ops
+        <small>flat array · per tick</small>
+      </div>
+      <span class="farr" data-mm-fade style="--c:#F27A9E;left:75%;top:65%">&#8601;</span>
+      <div class="fb" data-flip="fb-papi" style="--c:#F27A9E;left:62%;top:78%">
+        Element PAPI
+        <small>__CreateView · __SetAttribute</small>
+      </div>
+      <span class="farr" data-mm-fade style="left:45%;top:81%">&larr;</span>
+      <div class="fb" data-flip="fb-native" style="--c:#9E86F0;left:28%;top:78%">
+        Native UI
+        <small>on the UI thread</small>
+      </div>
+      <span class="farr" data-mm-fade style="--c:#3deae7;left:15%;top:65%">&#8598;</span>
+      <div class="fb is-hero" data-flip="fb-evt" data-mm-fade style="--c:#3deae7;left:11%;top:50%">
         events
-        <small>&uarr; by sign, not by function</small>
+        <small>&uarr; by sign</small>
       </div>
+      <span class="farr" data-mm-fade style="--c:#3deae7;left:15%;top:35%">&#8599;</span>
+      <span class="fcenter" data-mm-fade style="left:46%;top:50%">one lap = <b>nextTick()</b></span>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      Events ride back <b style="color:#3deae7">up</b> — handlers never leave Vue.
+      Events ride back by numeric <em>sign</em> — handlers never leave Vue. One full
+      lap across both threads is exactly one <code>nextTick()</code>.
     </p>
     <aside class="notes">
-      <p><strong>The return path closes the loop.</strong> Functions can't cross threads, so they never do: each handler registers under a numeric <em>sign</em>; the main thread dispatches the sign, the background thread looks it up and calls your Vue function right where it lives — closures, reactivity and all. That's why every Vue semantics survives: nothing that matters ever crossed.</p>
+      <p><strong>The line closes into a ring.</strong> Functions can't cross threads,
+      so they never do: each handler registers under a numeric <em>sign</em>; the main
+      thread dispatches the sign, the background thread looks it up and calls your Vue
+      function right where it lives. That closes the loop — and one full lap of this
+      ring <em>is</em> one <code>nextTick()</code>, the same mental model as web Vue,
+      stretched across a thread. It's the one place the threading ever leaks into your
+      code: <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code>.</p>
     </aside>
   </section>
 
-  <!-- A6 — one lap = nextTick -->
-  <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
-      </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb is-dim" data-flip="fb-vue" style="--c:#42b883;left:23%;top:25%">
-        Vue 3 runtime · VDOM
-        <small>@vue/runtime-core · untouched</small>
-      </div>
-      <div class="fb is-dim" data-flip="fb-shadow" style="--c:#E8B44A;left:62%;top:25%">
-        ShadowElement tree
-        <small>linked list · sync reads</small>
-      </div>
-      <div class="fb is-dim" data-flip="fb-ops" style="--c:#4FB8F0;left:86%;top:50%">
-        ops
-        <small>flat array · per tick</small>
-      </div>
-      <div class="fb is-dim" data-flip="fb-interp" style="--c:#56b8f0;left:62%;top:75%">
-        ops interpreter
-        <small>a switch loop</small>
-      </div>
-      <div class="fb is-dim" data-flip="fb-papi" style="--c:#F27A9E;left:24%;top:75%">
-        Element PAPI
-        <small>__CreateView · __SetAttribute · …</small>
-      </div>
-      <div class="fb is-dim" data-flip="fb-evt" style="--c:#3deae7;left:8%;top:50%">
-        events
-        <small>&uarr; by sign, not by function</small>
-      </div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:50%">one lap = <b>nextTick()</b></span>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      The threading leaks into your code in exactly <em>one</em> place.
-    </p>
-    <aside class="notes">
-      <p><strong>How much of this do users feel? Almost none.</strong> The one visible seam: native elements materialize a beat after mount, so "wait for the DOM" means <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> — the same <code>nextTick</code> mental model as web Vue, stretched across a thread. One lap of this diagram <em>is</em> one tick. Everything else — reactivity, lifecycle, composables — behaves exactly as on the web. (Docs: Understanding the Dual-Thread Model.)</p>
-    </aside>
-  </section>
 
   <!-- A7 — upstream tests -->
   <section class="slide stage">
@@ -1802,342 +1797,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </div>
     <aside class="notes">
       <p><strong>The AI-harness side of testing.</strong> We also built <code>vue-lynx-testing-library</code> — <code>render</code>, <code>fireEvent</code>, <code>getByText</code>, dual-thread abstracted away via <code>@lynx-js/testing-environment</code> — so component behavior is assertable in plain vitest. For a human that's good hygiene; for the AI harness it's <em>perception</em>: red/green is how the agent knows what it just did. The upstream suite was the reward signal that kept two weeks of generated code honest.</p>
-    </aside>
-  </section>
-
-  <!-- IFR1 — the first frame waits a full lap -->
-  <section class="slide stage">
-    <div class="ifrtl">
-      <div class="ifrlane" style="--c:#56b8f0;top:6%;height:38%">
-        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
-        <div class="tblk is-wait" style="left:3%;width:55%;top:58%">empty page</div>
-        <div class="tblk" style="--c:#F27A9E;left:60%;width:15%;top:58%">apply ops</div>
-        <div class="tblk is-paint" data-flip="ifr-paint" style="left:77%;width:16%;top:58%">paint</div>
-      </div>
-      <div class="ifrlane" style="--c:#5dd5a8;top:56%;height:38%">
-        <span class="ifrlane__label"><i></i>Background thread</span>
-        <div class="tblk" style="--c:#5dd5a8;left:3%;width:20%;top:58%">boot</div>
-        <div class="tblk" style="--c:#5dd5a8;left:25%;width:30%;top:58%">render · one lap</div>
-        <div class="tblk" style="--c:#4FB8F0;left:57%;width:16%;top:58%">ops &rarr;</div>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Without IFR, the first paint waits a <em>whole lap</em> — BG boot, render,
-      the ops send — all before anything appears.
-    </p>
-    <aside class="notes">
-      <p><strong>The cost of the round-trip.</strong> Everything the last six
-      slides described — VDOM → ShadowElement → ops → PAPI — has to happen once
-      before the very first frame. On device that whole lap plus BG-thread boot
-      and bundle eval is tens of milliseconds of blank screen.</p>
-    </aside>
-  </section>
-
-  <!-- IFR2 — IFR: paint first, hydrate later (magic-move the paint flag) -->
-  <section class="slide stage">
-    <div class="ifrtl">
-      <div class="ifrlane" style="--c:#56b8f0;top:6%;height:38%">
-        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
-        <div class="tblk" style="--c:#56b8f0;left:3%;width:16%;top:58%">loadTemplate</div>
-        <div class="tblk" style="--c:#56b8f0;left:21%;width:24%;top:58%">render</div>
-        <div class="tblk is-paint" data-flip="ifr-paint" style="left:47%;width:15%;top:58%">paint</div>
-        <div class="tblk is-idle" style="left:64%;width:33%;top:58%">hands the tree over &rarr;</div>
-      </div>
-      <div class="ifrlane" style="--c:#5dd5a8;top:56%;height:38%">
-        <span class="ifrlane__label"><i></i>Background thread</span>
-        <div class="tblk" style="--c:#5dd5a8;left:3%;width:20%;top:58%">boot</div>
-        <div class="tblk" style="--c:#5dd5a8;left:25%;width:30%;top:58%">render</div>
-        <div class="tblk" style="--c:#3deae7;left:57%;width:22%;top:58%">hydrate</div>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      IFR puts the whole runtime in the <b style="color:#56b8f0">main-thread</b>
-      bundle — it renders during <code>loadTemplate</code>, so
-      <b>paint lands first</b> and the background boots alongside.
-    </p>
-    <aside class="notes">
-      <p><strong>首屏直出 — ported from ReactLynx.</strong> With
-      <code>enableIFR</code>, the main-thread bundle carries the full Vue runtime
-      + app (not just worklets). <code>renderPage</code> mounts it synchronously
-      inside <code>loadTemplate</code> — watch the <strong>paint</strong> flag
-      jump left. The background thread still runs the same code, just in
-      parallel and off the critical path.</p>
-    </aside>
-  </section>
-
-  <!-- IFR3 — the trick: record + reconcile -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:20ch">
-      Both threads render. The ops stream <span class="brand-text">is</span> the recording.
-    </h2>
-    <div class="recon">
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq">=</span>
-          <code class="op">SET_TEXT 3 "Hi"</code>
-        </span>
-        <span class="recon__out is-skip">identical &rarr; skip</span>
-      </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--hot">SET_TEXT 3 "你好"</code>
-        </span>
-        <span class="recon__out is-patch">value differs &rarr; patch in place</span>
-      </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">CREATE 4 view</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--bad">CREATE 4 text</code>
-        </span>
-        <span class="recon__out is-tear">structural &rarr; tear down &amp; rebuild</span>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      The MT render records its ops; the BG's first batches hydrate against them.
-      Correctness never depends on the two matching — deterministic ids &amp;
-      <code>vue:N</code> signs route taps to Vue with no rebinding.
-    </p>
-    <aside class="notes">
-      <p><strong>Hydration by ops reconciliation.</strong> The flat ops stream
-      doubles as the recorded PAPI calls. The BG's initial
-      <code>vuePatchUpdate</code> batches walk the recording frame-by-frame:
-      identical → skipped (already on screen), value diff → patched, structural
-      divergence → tear the first-screen tree down and re-apply. A mismatch only
-      loses the perf win, never correctness (logs
-      <code>IFR hydration mismatch</code> in dev).</p>
-    </aside>
-  </section>
-
-  <!-- IFR4 — Element Templates: the pivot -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
-      <span class="brand-text">Element Templates</span> change how much work it does.
-    </h2>
-    <aside class="notes">
-      <p><strong>The second lever.</strong> IFR moves the paint earlier;
-      enabling it turns on Element Templates by default. They make the render
-      itself an order of magnitude cheaper — and shrink the cross-thread protocol
-      for <em>every</em> update, not just the first frame.</p>
-    </aside>
-  </section>
-
-  <!-- IFR5 — the pipeline, per node (reuses the runtime flow boxes) -->
-  <section class="slide stage">
-    <div class="flow ifr-pipe">
-      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:9%;top:50%">VDOM<small>one vnode / node</small></div>
-      <span class="farr" data-mm-fade style="left:21%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#E8B44A;left:32%;top:50%">Shadow<small>one node</small></div>
-      <span class="farr" data-mm-fade style="left:42%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#4FB8F0;left:51%;top:50%">ops<small>several frames</small></div>
-      <span class="farr" data-mm-fade style="left:60%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#56b8f0;left:69%;top:50%">interp<small>a switch loop</small></div>
-      <span class="farr" data-mm-fade style="left:79%;top:50%">&rarr;</span>
-      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:90%;top:50%">PAPI<small>__CreateView</small></div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:88%">&times; every static node</span>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Normally every static element pays the whole chain — a vnode, a shadow
-      node, ops frames, a thread crossing, an interpreter dispatch.
-    </p>
-    <aside class="notes">
-      <p>The same pipeline from the Runtime chapter — but notice it runs
-      <em>per node</em>, even for structure that never changes.</p>
-    </aside>
-  </section>
-
-  <!-- IFR6 — Element Templates collapse the pipeline (magic-move) -->
-  <section class="slide stage">
-    <div class="flow ifr-pipe">
-      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:16%;top:50%">one vnode<small>__vlx-tpl:…</small></div>
-      <span class="farr" data-mm-fade style="left:33%;top:50%">&rarr;</span>
-      <div class="fb is-hero" data-mm-fade style="--c:#5dd5a8;left:50%;top:50%">INSTANTIATE_TEMPLATE<small>one op · whole subtree</small></div>
-      <span class="farr" data-mm-fade style="left:67%;top:50%">&rarr;</span>
-      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:84%;top:50%">create()<small>straight-line PAPI</small></div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:88%">holes update via ordinary <b>SET_*</b> ops</span>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      The compiler lowers the static subtree to one <code>create()</code>
-      function. Vue sends <b>one</b> op; only the dynamic holes travel after.
-    </p>
-    <aside class="notes">
-      <p>Watch <code>VDOM</code> and <code>PAPI</code> stay put while the middle
-      of the pipeline collapses. These are <em>framework</em> templates —
-      ordinary typed Element PAPI calls, not Lynx's binary engine templates.</p>
-    </aside>
-  </section>
-
-  <!-- IFR7 — baked skeleton + holes + generated create() -->
-  <section class="slide stage">
-    <div class="etcode">
-      <div class="codeframe etcode__src">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>Card.vue · template</span>
-        </div>
-<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
-<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
-      </div>
-      <div class="etcode__legend" aria-hidden="true">
-        <span><i class="et-sw is-static"></i>baked skeleton</span>
-        <span><i class="et-sw is-hole"></i>dynamic hole</span>
-      </div>
-      <div class="codeframe etcode__out">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>compiler output</span>
-        </div>
-<pre><span class="code-fn">registerElementTemplate</span>(
-  <span class="code-str">"__vlx-tpl:rflz…"</span>,
-  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
-  <span class="code-key">function</span> (P) {
-    <span class="code-com">…straight-line PAPI…</span>
-    <span class="code-key">return</span> [e0, e3, e5]
-  },
-)</pre>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Static structure bakes into a <code>create()</code> skeleton; only the
-      holes — dynamic text, class, style, attrs — stay on the vnode path.
-    </p>
-    <aside class="notes">
-      <p>Eligible = every node is a plain Lynx element and only values or text
-      are dynamic. Components, slots, <code>v-if</code>/<code>v-for</code> hosts,
-      <code>&lt;list&gt;</code>, ref/id nodes stay on the normal vnode path;
-      their plain-element bodies can still lower. Scoped-CSS scope ids bake in.</p>
-    </aside>
-  </section>
-
-  <!-- IFR8 — benchmark table (proof) -->
-  <section class="slide stage">
-    <table class="bench-table">
-      <thead>
-        <tr><th>configuration</th><th>FCP</th><th>render cost</th><th>TTI proxy</th><th>bundle gzip</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="bench-cfg">No IFR</td>
-          <td>96.6 ms</td><td>9.4 ms</td><td>1.00&times;</td><td>1.00&times;</td>
-        </tr>
-        <tr class="bench-row--hero">
-          <td class="bench-cfg">IFR + ET <span class="chip chip--brand">recommended</span></td>
-          <td class="is-good">75.4 ms <small>&minus;22%</small></td>
-          <td class="is-good">1.3 ms</td>
-          <td>~1.36&times;</td>
-          <td class="is-cost">~2.26&times;</td>
-        </tr>
-        <tr>
-          <td class="bench-cfg">IFR without ET</td>
-          <td>75.8 ms <small>&minus;22%</small></td>
-          <td>8.4 ms</td>
-          <td>~1.36&times;</td>
-          <td class="is-cost">~2.26&times;</td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="lead arch-cap" data-mm-fade>
-      FCP across a real Web Worker + IPC (Lynx for Web) — suite median
-      &minus;12% to &minus;19%, ReactLynx control &minus;23%. ET stays flat on
-      FCP; its win is render cost (~1,000 el, jitless) and ops payload.
-    </p>
-    <aside class="notes">
-      <p>Separate campaigns, not one trace. The FCP win (median &minus;12…&minus;19%,
-      ReactLynx control &minus;23%) comes from removing background boot + IPC —
-      it needs a real thread boundary, and both IFR rows share it (ET is flat on
-      web FCP). Element Templates' own win is render cost 9.4&nbsp;ms →
-      <strong>1.3&nbsp;ms</strong> (~6&ndash;15&times; across reruns) and the ops
-      payload — the reason ET is on by default. Cost: ~2.26&times; gzip.</p>
-    </aside>
-  </section>
-
-  <!-- IFR9 — benchmark data-viz (proof) -->
-  <section class="slide stage">
-    <div class="bench-viz">
-      <div class="bench-chart">
-        <h3 class="bench-chart__title">render cost <span>~1,000 el · jitless · ms</span></h3>
-        <div class="bench-bar">
-          <span class="bench-bar__label">No IFR</span>
-          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:94%"></span></span>
-          <span class="bench-bar__val">9.4</span>
-        </div>
-        <div class="bench-bar">
-          <span class="bench-bar__label">IFR, no ET</span>
-          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:84%"></span></span>
-          <span class="bench-bar__val">8.4</span>
-        </div>
-        <div class="bench-bar bench-bar--hero">
-          <span class="bench-bar__label">IFR + ET</span>
-          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:13%"></span></span>
-          <span class="bench-bar__val">1.3</span>
-        </div>
-      </div>
-      <div class="bench-chart bench-chart--proto">
-        <h3 class="bench-chart__title">recorded ops payload <span>1,400-el static screen</span></h3>
-        <div class="bench-proto">
-          <div class="bench-proto__col">
-            <span class="bench-proto__bar" style="--h:100%"></span>
-            <span class="bench-proto__cap">77.6 KB</span>
-            <span class="bench-proto__sub">per-node ops</span>
-          </div>
-          <div class="bench-proto__arrow">&rarr;</div>
-          <div class="bench-proto__col">
-            <span class="bench-proto__bar is-brand" style="--h:2%"></span>
-            <span class="bench-proto__cap is-brand">69 B</span>
-            <span class="bench-proto__sub">one template op</span>
-          </div>
-          <div class="mega bench-proto__mult">1000&times;<small>smaller</small></div>
-        </div>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Element Templates shrink the recorded ops payload 3&ndash;1000&times; — and
-      that protocol shrink helps every update, not just the first frame.
-    </p>
-    <aside class="notes">
-      <p>Left: render cost collapses with ET. Right: the cross-thread protocol
-      for a static-heavy screen drops ~78&nbsp;KB → 69&nbsp;bytes. PAPI call
-      counts only drop 5&ndash;20% — native element work is a shared floor; what
-      lowers away is the framework JS and the protocol around it.</p>
-    </aside>
-  </section>
-
-  <!-- IFR10 — honest trade-offs -->
-  <section class="slide stage">
-    <div class="ifr-trade">
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--cost">what it costs</span>
-        <ul class="ifr-trade__list is-cost">
-          <li>MT bundle carries the runtime + app — <b>~2.26&times;</b> gzip</li>
-          <li>App evaluates on <b>both</b> threads — serial TTI +35%</li>
-          <li>Can't accelerate a <b>fetch-first</b> screen</li>
-        </ul>
-      </div>
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--use">when to reach for it</span>
-        <ul class="ifr-trade__list is-use">
-          <li><b>Content-first</b> screens with sync initial data</li>
-          <li>Render a real <b>skeleton</b> if data is async</li>
-          <li>Keep first-screen render <b>deterministic</b> &amp; thread-agnostic</li>
-        </ul>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      A tool, not a default-on switch — but for content-first screens,
-      <b class="brand-text">IFR + ET</b> is the recommended setup.
-    </p>
-    <aside class="notes">
-      <p>Honest costs: bundle roughly doubles, the app double-evaluates (on
-      device the MT render overlaps BG startup, so serial TTI is an upper
-      bound). The win is real for content-first screens; fetch-driven screens
-      pay size for no FCP benefit.</p>
     </aside>
   </section>
 
@@ -2378,6 +2037,281 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
+  <!-- IFR1 — the first frame waits a full lap -->
+  <section class="slide stage">
+    <div class="ifrtl">
+      <div class="ifrlane" style="--c:#56b8f0;top:6%;height:38%">
+        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
+        <div class="tblk is-wait" style="left:3%;width:55%;top:58%">empty page</div>
+        <div class="tblk" style="--c:#F27A9E;left:60%;width:15%;top:58%">apply ops</div>
+        <div class="tblk is-paint" data-flip="ifr-paint" style="left:77%;width:16%;top:58%">paint</div>
+      </div>
+      <div class="ifrlane" style="--c:#5dd5a8;top:56%;height:38%">
+        <span class="ifrlane__label"><i></i>Background thread</span>
+        <div class="tblk" style="--c:#5dd5a8;left:3%;width:20%;top:58%">boot</div>
+        <div class="tblk" style="--c:#5dd5a8;left:25%;width:30%;top:58%">render · one lap</div>
+        <div class="tblk" style="--c:#4FB8F0;left:57%;width:16%;top:58%">ops &rarr;</div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Without IFR, the first paint waits a <em>whole lap</em> — BG boot, render,
+      the ops send — all before anything appears.
+    </p>
+    <aside class="notes">
+      <p><strong>The cost of the round-trip.</strong> Everything the last six
+      slides described — VDOM → ShadowElement → ops → PAPI — has to happen once
+      before the very first frame. On device that whole lap plus BG-thread boot
+      and bundle eval is tens of milliseconds of blank screen.</p>
+    </aside>
+  </section>
+
+  <!-- IFR2 — IFR: paint first, hydrate later (magic-move the paint flag) -->
+  <section class="slide stage">
+    <div class="ifrtl">
+      <div class="ifrlane" style="--c:#56b8f0;top:6%;height:38%">
+        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
+        <div class="tblk" style="--c:#56b8f0;left:3%;width:16%;top:58%">loadTemplate</div>
+        <div class="tblk" style="--c:#56b8f0;left:21%;width:24%;top:58%">render</div>
+        <div class="tblk is-paint" data-flip="ifr-paint" style="left:47%;width:15%;top:58%">paint</div>
+        <div class="tblk is-idle" style="left:64%;width:33%;top:58%">hands the tree over &rarr;</div>
+      </div>
+      <div class="ifrlane" style="--c:#5dd5a8;top:56%;height:38%">
+        <span class="ifrlane__label"><i></i>Background thread</span>
+        <div class="tblk" style="--c:#5dd5a8;left:3%;width:20%;top:58%">boot</div>
+        <div class="tblk" style="--c:#5dd5a8;left:25%;width:30%;top:58%">render</div>
+        <div class="tblk" style="--c:#3deae7;left:57%;width:22%;top:58%">hydrate</div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      IFR puts the whole runtime in the <b style="color:#56b8f0">main-thread</b>
+      bundle — it renders during <code>loadTemplate</code>, so
+      <b>paint lands first</b> and the background boots alongside.
+    </p>
+    <aside class="notes">
+      <p><strong>首屏直出 — ported from ReactLynx.</strong> With
+      <code>enableIFR</code>, the main-thread bundle carries the full Vue runtime
+      + app (not just worklets). <code>renderPage</code> mounts it synchronously
+      inside <code>loadTemplate</code> — watch the <strong>paint</strong> flag
+      jump left. The background thread still runs the same code, just in
+      parallel and off the critical path.</p>
+    </aside>
+  </section>
+
+  <!-- IFR5 — the pipeline, per node (reuses the runtime flow boxes) -->
+  <section class="slide stage">
+    <div class="flow ifr-pipe">
+      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:9%;top:50%">VDOM<small>one vnode / node</small></div>
+      <span class="farr" data-mm-fade style="left:21%;top:50%">&rarr;</span>
+      <div class="fb" data-mm-fade style="--c:#E8B44A;left:32%;top:50%">Shadow<small>one node</small></div>
+      <span class="farr" data-mm-fade style="left:42%;top:50%">&rarr;</span>
+      <div class="fb" data-mm-fade style="--c:#4FB8F0;left:51%;top:50%">ops<small>several frames</small></div>
+      <span class="farr" data-mm-fade style="left:60%;top:50%">&rarr;</span>
+      <div class="fb" data-mm-fade style="--c:#56b8f0;left:69%;top:50%">interp<small>a switch loop</small></div>
+      <span class="farr" data-mm-fade style="left:79%;top:50%">&rarr;</span>
+      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:90%;top:50%">PAPI<small>__CreateView</small></div>
+      <span class="fcenter" data-mm-fade style="left:50%;top:88%">&times; every static node</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Normally every static element pays the whole chain — a vnode, a shadow
+      node, ops frames, a thread crossing, an interpreter dispatch.
+    </p>
+    <aside class="notes">
+      <p>The same pipeline from the Runtime chapter — but notice it runs
+      <em>per node</em>, even for structure that never changes.</p>
+    </aside>
+  </section>
+
+  <!-- IFR6 — Element Templates collapse the pipeline (magic-move) -->
+  <section class="slide stage">
+    <div class="flow ifr-pipe">
+      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:16%;top:50%">one vnode<small>__vlx-tpl:…</small></div>
+      <span class="farr" data-mm-fade style="left:33%;top:50%">&rarr;</span>
+      <div class="fb is-hero" data-mm-fade style="--c:#5dd5a8;left:50%;top:50%">INSTANTIATE_TEMPLATE<small>one op · whole subtree</small></div>
+      <span class="farr" data-mm-fade style="left:67%;top:50%">&rarr;</span>
+      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:84%;top:50%">create()<small>straight-line PAPI</small></div>
+      <span class="fcenter" data-mm-fade style="left:50%;top:88%">holes update via ordinary <b>SET_*</b> ops</span>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The compiler lowers the static subtree to one <code>create()</code>
+      function. Vue sends <b>one</b> op; only the dynamic holes travel after.
+    </p>
+    <aside class="notes">
+      <p>Watch <code>VDOM</code> and <code>PAPI</code> stay put while the middle
+      of the pipeline collapses. These are <em>framework</em> templates —
+      ordinary typed Element PAPI calls, not Lynx's binary engine templates.</p>
+    </aside>
+  </section>
+
+  <!-- IFR7 — baked skeleton + holes + generated create() -->
+  <section class="slide stage">
+    <div class="etcode">
+      <div class="codeframe etcode__src">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>Card.vue · template</span>
+        </div>
+<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
+<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
+      </div>
+      <div class="etcode__legend" aria-hidden="true">
+        <span><i class="et-sw is-static"></i>baked skeleton</span>
+        <span><i class="et-sw is-hole"></i>dynamic hole</span>
+      </div>
+      <div class="codeframe etcode__out">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>compiler output</span>
+        </div>
+<pre><span class="code-fn">registerElementTemplate</span>(
+  <span class="code-str">"__vlx-tpl:rflz…"</span>,
+  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
+  <span class="code-key">function</span> (P) {
+    <span class="code-com">…straight-line PAPI…</span>
+    <span class="code-key">return</span> [e0, e3, e5]
+  },
+)</pre>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Static structure bakes into a <code>create()</code> skeleton; only the
+      holes — dynamic text, class, style, attrs — stay on the vnode path.
+    </p>
+    <aside class="notes">
+      <p>Eligible = every node is a plain Lynx element and only values or text
+      are dynamic. Components, slots, <code>v-if</code>/<code>v-for</code> hosts,
+      <code>&lt;list&gt;</code>, ref/id nodes stay on the normal vnode path;
+      their plain-element bodies can still lower. Scoped-CSS scope ids bake in.</p>
+    </aside>
+  </section>
+
+  <!-- IFR8 — benchmark table (proof) -->
+  <section class="slide stage">
+    <table class="bench-table">
+      <thead>
+        <tr><th>configuration</th><th>FCP</th><th>render cost</th><th>TTI proxy</th><th>bundle gzip</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="bench-cfg">No IFR</td>
+          <td>96.6 ms</td><td>9.4 ms</td><td>1.00&times;</td><td>1.00&times;</td>
+        </tr>
+        <tr class="bench-row--hero">
+          <td class="bench-cfg">IFR + ET <span class="chip chip--brand">recommended</span></td>
+          <td class="is-good">75.4 ms <small>&minus;22%</small></td>
+          <td class="is-good">1.3 ms</td>
+          <td>~1.36&times;</td>
+          <td class="is-cost">~2.26&times;</td>
+        </tr>
+        <tr>
+          <td class="bench-cfg">IFR without ET</td>
+          <td>75.8 ms <small>&minus;22%</small></td>
+          <td>8.4 ms</td>
+          <td>~1.36&times;</td>
+          <td class="is-cost">~2.26&times;</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade>
+      FCP across a real Web Worker + IPC (Lynx for Web) — suite median
+      &minus;12% to &minus;19%, ReactLynx control &minus;23%. ET stays flat on
+      FCP; its win is render cost (~1,000 el, jitless) and ops payload.
+    </p>
+    <aside class="notes">
+      <p>Separate campaigns, not one trace. The FCP win (median &minus;12…&minus;19%,
+      ReactLynx control &minus;23%) comes from removing background boot + IPC —
+      it needs a real thread boundary, and both IFR rows share it (ET is flat on
+      web FCP). Element Templates' own win is render cost 9.4&nbsp;ms →
+      <strong>1.3&nbsp;ms</strong> (~6&ndash;15&times; across reruns) and the ops
+      payload — the reason ET is on by default. Cost: ~2.26&times; gzip.</p>
+    </aside>
+  </section>
+
+  <!-- IFR9 — benchmark data-viz (proof) -->
+  <section class="slide stage">
+    <div class="bench-viz">
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">render cost <span>~1,000 el · jitless · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">No IFR</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:94%"></span></span>
+          <span class="bench-bar__val">9.4</span>
+        </div>
+        <div class="bench-bar">
+          <span class="bench-bar__label">IFR, no ET</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:84%"></span></span>
+          <span class="bench-bar__val">8.4</span>
+        </div>
+        <div class="bench-bar bench-bar--hero">
+          <span class="bench-bar__label">IFR + ET</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:13%"></span></span>
+          <span class="bench-bar__val">1.3</span>
+        </div>
+      </div>
+      <div class="bench-chart bench-chart--proto">
+        <h3 class="bench-chart__title">recorded ops payload <span>1,400-el static screen</span></h3>
+        <div class="bench-proto">
+          <div class="bench-proto__col">
+            <span class="bench-proto__bar" style="--h:100%"></span>
+            <span class="bench-proto__cap">77.6 KB</span>
+            <span class="bench-proto__sub">per-node ops</span>
+          </div>
+          <div class="bench-proto__arrow">&rarr;</div>
+          <div class="bench-proto__col">
+            <span class="bench-proto__bar is-brand" style="--h:2%"></span>
+            <span class="bench-proto__cap is-brand">69 B</span>
+            <span class="bench-proto__sub">one template op</span>
+          </div>
+          <div class="mega bench-proto__mult">1000&times;<small>smaller</small></div>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Element Templates shrink the recorded ops payload 3&ndash;1000&times; — and
+      that protocol shrink helps every update, not just the first frame.
+    </p>
+    <aside class="notes">
+      <p>Left: render cost collapses with ET. Right: the cross-thread protocol
+      for a static-heavy screen drops ~78&nbsp;KB → 69&nbsp;bytes. PAPI call
+      counts only drop 5&ndash;20% — native element work is a shared floor; what
+      lowers away is the framework JS and the protocol around it.</p>
+    </aside>
+  </section>
+
+  <!-- IFR10 — honest trade-offs -->
+  <section class="slide stage">
+    <div class="ifr-trade">
+      <div class="stack-y gap-sm">
+        <span class="eyebrow ifr-trade__head ifr-trade__head--cost">what it costs</span>
+        <ul class="ifr-trade__list is-cost">
+          <li>MT bundle carries the runtime + app — <b>~2.26&times;</b> gzip</li>
+          <li>App evaluates on <b>both</b> threads — serial TTI +35%</li>
+          <li>Can't accelerate a <b>fetch-first</b> screen</li>
+        </ul>
+      </div>
+      <div class="stack-y gap-sm">
+        <span class="eyebrow ifr-trade__head ifr-trade__head--use">when to reach for it</span>
+        <ul class="ifr-trade__list is-use">
+          <li><b>Content-first</b> screens with sync initial data</li>
+          <li>Render a real <b>skeleton</b> if data is async</li>
+          <li>Keep first-screen render <b>deterministic</b> &amp; thread-agnostic</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      A tool, not a default-on switch — but for content-first screens,
+      <b class="brand-text">IFR + ET</b> is the recommended setup.
+    </p>
+    <aside class="notes">
+      <p>Honest costs: bundle roughly doubles, the app double-evaluates (on
+      device the MT render overlaps BG startup, so serial TTI is an upper
+      bound). The win is real for content-first screens; fetch-driven screens
+      pay size for no FCP benefit.</p>
+    </aside>
+  </section>
+
   <!-- Scaffold: five layers, four seams -->
   <section class="slide stage">
     <div class="arch-mount" data-arch-shown="0"></div>
@@ -2467,28 +2401,43 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- H1 — the harness -->
+  <!-- H1 — the harness + write-up (merged) -->
   <section class="slide stage">
-    <div class="mega" style="font-size:clamp(52px,7.5cqw,120px)"><span class="brand-text">2</span> weeks.</div>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      &ldquo;How I <span class="brand-text">vibed</span> this in two weeks&rdquo;
+    </h2>
     <div class="demo__meta" style="justify-content:center">
-      <span class="chip">160 commits</span>
+      <span class="chip"><b class="brand-text">2</b> weeks · 160 commits</span>
       <span class="chip">21 active days</span>
       <span class="chip chip--brand">1 human + Claude</span>
     </div>
+    <div class="harness-writeup">
+      <div class="phone phone--embed no-deck-scroll" data-embed="portrait"
+           data-w="min(30cqw, 340px)" data-h="min(58cqh, 460px)">
+        <div class="phone__inner"><vl-media
+          src="https://platform.twitter.com/embed/Tweet.html?id=2036993665965416601"
+          kind="iframe" label="The write-up · @Huxpro on X"></vl-media></div>
+      </div>
+      <div class="harness-writeup__aside">
+        <div class="qr-solo qr-solo--sm"
+             data-qr="https://x.com/Huxpro/status/2036993665965416601"
+             aria-label="QR: the write-up on X"></div>
+        <p class="lead" style="max-width:15ch;margin:0">
+          The full write-up — harness, prompts, receipts. <b>@Huxpro</b> on X.
+        </p>
+      </div>
+    </div>
     <aside class="notes">
-      <p><strong>Now the number makes sense.</strong> Everything in this chapter — renderer, toolchain, MTS — was built nights-and-weekends in two weeks: plans written as specs, an agent harness executing them, upstream tests as the reward signal, AGENTS.md encoding the debugging playbook. And a quiet takeaway for the room: Lynx turned out to be remarkably <em>AI-legible</em> — web-standard APIs and real CSS mean the model's web instincts mostly just transfer.</p>
-    </aside>
-  </section>
-
-  <!-- H2 — the write-up -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      &ldquo;How I <span class="brand-text">vibed</span> this in two weeks&rdquo;
-    </h2>
-    <div class="qr-solo" data-qr="https://x.com/Huxpro/status/2036993665965416601" aria-label="QR: the write-up on X"></div>
-    <p class="lead">The full write-up — harness, prompts, receipts. <b>@Huxpro</b> on X.</p>
-    <aside class="notes">
-      <p><strong>Point the phones here.</strong> The complete methodology is written up on X — how the harness was structured, what the plans looked like, where the AI failed and how the tests caught it. It's also linked from the vue.lynxjs.org homepage badge. Then bridge out: "so that's how it was built — and here's what it adds up to."</p>
+      <p><strong>Now the number makes sense — and here's where to read it.</strong>
+      Everything in this chapter — renderer, toolchain, MTS — was built
+      nights-and-weekends in two weeks: plans written as specs, an agent harness
+      executing them, upstream tests as the reward signal, AGENTS.md encoding the
+      debugging playbook. The complete methodology is written up on X (embedded here,
+      also linked from the vue.lynxjs.org homepage badge) — scan the QR to read it on
+      your phone. A quiet takeaway for the room: Lynx turned out to be remarkably
+      <em>AI-legible</em> — web-standard APIs and real CSS mean the model's web
+      instincts mostly just transfer. Then bridge out: "so that's how it was built —
+      and here's what it adds up to."</p>
     </aside>
   </section>
 
