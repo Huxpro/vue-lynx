@@ -8,16 +8,85 @@
 import { ICONS } from './icons.js';
 
 // Canonical presets for the deck's scaled 1280×720 stage (authored in cqw/cqh).
-// Sizes are pushed close to the frame height so the phone reads at a realistic
-// handset scale (750rpx ≈ the frame width). The desktop preset is deliberately
-// wider than its column — the frame floats over the copy (see .demo__stage).
+// Phone is sized ~125% of the prior handset footprint so demos read larger on
+// stage; tablet keeps the previous height so the two shapes stay distinct.
+// The desktop preset is deliberately wider than its column — the frame floats
+// over the copy (see .demo__stage).
 export const DECK_PRESETS = {
-  phone:   { ar: '9 / 19.5',  w: 'auto',              h: 'min(92cqh, 650px)' },
+  phone:   { ar: '9 / 19.5',  w: 'auto',              h: 'min(115cqh, 812px)' },
   tablet:  { ar: '3 / 4',     w: 'auto',              h: 'min(92cqh, 650px)' },
   desktop: { ar: '16 / 10',   w: 'min(52cqw, 620px)', h: 'auto' },
 };
 
 const DEVICE_ICON = { phone: 'smartphone', tablet: 'tablet', desktop: 'monitor' };
+
+/**
+ * When a device frame would spill past the stage / play viewport, shift it so
+ * growth runs toward the empty side of the screen instead of scaling from the
+ * center (which pushes equal overflow off both edges).
+ *
+ * Uses the CSS `translate` property (`--phone-ox` / `--phone-oy`) so it
+ * composes with any existing `transform` (centering, magic-move, inline
+ * embed positioning) without fighting them.
+ */
+export function containDeviceFrame(el, getScale = () => 1) {
+  if (!el || el.classList.contains('is-fullscreen')) {
+    el?.style.setProperty('--phone-ox', '0px');
+    el?.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+  // Embed frames carry inline transforms for magic-move; leave them alone.
+  if (el.classList.contains('phone--embed')) {
+    el.style.setProperty('--phone-ox', '0px');
+    el.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+
+  // Measure the natural (uncompensated) position first.
+  el.style.setProperty('--phone-ox', '0px');
+  el.style.setProperty('--phone-oy', '0px');
+
+  const boundsEl =
+    el.closest('.frame') ||
+    el.closest('.play') ||
+    document.documentElement;
+  const bounds = boundsEl.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  const s = getScale() || 1;
+
+  // Positive ⇒ that edge is past the clip bounds.
+  const overL = bounds.left - rect.left;
+  const overR = rect.right - bounds.right;
+  const overT = bounds.top - rect.top;
+  const overB = rect.bottom - bounds.bottom;
+
+  let ox = 0;
+  let oy = 0;
+
+  if (overL > 0 && overR > 0) {
+    // Wider than the stage — pin to the nearer vertical edge so overflow runs
+    // into the interior (the empty / copy side), not off the outer edge.
+    // A truly centered frame (bias ≈ 0) keeps equal overflow on both sides.
+    const bias = (rect.left + rect.right) / 2 - (bounds.left + bounds.right) / 2;
+    if (Math.abs(bias) >= 1) ox = (bias > 0 ? -overR : overL) / s;
+  } else if (overL > 0) {
+    ox = overL / s;
+  } else if (overR > 0) {
+    ox = -overR / s;
+  }
+
+  if (overT > 0 && overB > 0) {
+    const bias = (rect.top + rect.bottom) / 2 - (bounds.top + bounds.bottom) / 2;
+    if (Math.abs(bias) >= 1) oy = (bias > 0 ? -overB : overT) / s;
+  } else if (overT > 0) {
+    oy = overT / s;
+  } else if (overB > 0) {
+    oy = -overB / s;
+  }
+
+  el.style.setProperty('--phone-ox', `${ox}px`);
+  el.style.setProperty('--phone-oy', `${oy}px`);
+}
 
 /** Snap an element to a named preset. `fullscreen` presets fill the viewport. */
 export function applyDevicePreset(el, name, presets = DECK_PRESETS) {
@@ -76,6 +145,13 @@ export function attachDeviceControls(el, {
 } = {}) {
   if (el.querySelector('.phone__resize')) return; // already wired
 
+  const contain = () => containDeviceFrame(el, getScale);
+  const apply = (name) => {
+    applyDevicePreset(el, name, presets);
+    // Layout must flush before we can measure overflow.
+    contain();
+  };
+
   // Preset switcher.
   const bar = document.createElement('div');
   bar.className = 'phone__presets';
@@ -104,7 +180,7 @@ export function attachDeviceControls(el, {
       return;
     }
     const btn = e.target.closest('.phone__preset');
-    if (btn) applyDevicePreset(el, btn.dataset.device, presets);
+    if (btn) apply(btn.dataset.device);
   });
 
   const clampVal = (v) => Math.max(clamp[0], Math.min(clamp[1], v));
@@ -146,21 +222,36 @@ export function attachDeviceControls(el, {
       // aspect-ratio no longer constrains the frame.
       el.style.width = `${clampVal(startW + gain * sign.sx * dx)}px`;
       el.style.height = `${clampVal(startH + gain * sign.sy * dy)}px`;
+      // Re-contain on every move so growth runs into empty space once an edge
+      // hits the stage — not continue scaling off-screen from the center.
+      contain();
     });
     const end = (e) => {
       if (!dragging) return;
       dragging = false;
       try { handle.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+      contain();
     };
     handle.addEventListener('pointerup', end);
     handle.addEventListener('pointercancel', end);
     handle.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     handle.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      applyDevicePreset(el, el.dataset.device || 'phone', presets);
+      apply(el.dataset.device || 'phone');
     });
   });
 
-  applyDevicePreset(el, initial || el.dataset.device || 'phone', presets);
+  apply(initial || el.dataset.device || 'phone');
   if (el.dataset.ar) el.style.setProperty('--phone-ar', el.dataset.ar);
+  // data-ar can change the laid-out size — re-contain after it applies.
+  contain();
+
+  // Keep containment honest across viewport / stage resizes.
+  window.addEventListener('resize', contain);
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => contain());
+    ro.observe(el);
+    const boundsEl = el.closest('.frame') || el.closest('.play');
+    if (boundsEl) ro.observe(boundsEl);
+  }
 }

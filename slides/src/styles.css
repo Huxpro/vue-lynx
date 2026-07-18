@@ -709,23 +709,26 @@ h1, h2, h3, p { margin: 0; }
 }
 .demo--api-duo .codeframe pre { padding: 12px 14px; }
 
-/* The device mockup keeps its phone-sized footprint in the two-column demo
-   layout no matter which preset is active: the stage reserves that space and the
-   frame is absolutely centred inside it, so growing to tablet / desktop makes the
-   frame FLOAT OVER the neighbouring copy instead of reflowing the grid and
-   colliding with the text (which is what the wide presets used to do). */
+/* The device mockup keeps a stable footprint in the two-column demo layout no
+   matter which preset is active: the stage reserves the tablet/prior-phone
+   height and the frame is absolutely centred inside it, so growing to the
+   larger phone / tablet / desktop presets makes the frame FLOAT OVER the
+   neighbouring copy instead of reflowing the grid. Off-screen overflow is
+   pulled back via --phone-ox/--phone-oy (see containDeviceFrame). */
 .demo__stage {
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
-  height: min(92cqh, 650px);   /* reserved footprint = phone-preset height */
+  height: min(92cqh, 650px);   /* reserved footprint — stable across presets */
 }
 .demo__stage .phone {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  /* --phone-ox/--phone-oy shift the frame when it would overflow the stage so
+     growth runs toward the empty side instead of scaling off both edges. */
+  transform: translate(calc(-50% + var(--phone-ox, 0px)), calc(-50% + var(--phone-oy, 0px)));
   /* Let the frame grow past its grid column — that's what makes the wider
      presets (and free drags) genuinely float over the copy rather than being
      clamped to the column width by the base `.phone { max-width: 100% }`. */
@@ -826,6 +829,11 @@ a.qr:hover { color: var(--vue-green); }
 /* On the play page the device controls are the primary UI: always visible, and
    the preset switcher is a fixed toolbar at the bottom so it's reachable at any
    device size (including fullscreen). */
+.phone--play {
+  /* Same overflow compensation as .demo__stage .phone — play page is flex-
+     centered, so the shift is a plain translate rather than a -50% center. */
+  transform: translate(var(--phone-ox, 0px), var(--phone-oy, 0px));
+}
 .phone--play .phone__presets {
   position: fixed;
   left: 50%;
@@ -858,9 +866,11 @@ a.qr:hover { color: var(--vue-green); }
    (phone / tablet / desktop, set in main.js). A free drag sets explicit inline
    width+height (no aspect lock); presets clear those and restore the vars. */
 .phone {
-  --phone-ar: 270 / 590;
-  --phone-h: min(78cqh, 620px);
+  --phone-ar: 9 / 19.5;
+  --phone-h: min(115cqh, 812px);
   --phone-w: auto;
+  --phone-ox: 0px;
+  --phone-oy: 0px;
   aspect-ratio: var(--phone-ar);
   height: var(--phone-h);
   width: var(--phone-w);
@@ -1022,11 +1032,12 @@ vl-demo lynx-view {
   /* rpx is Lynx's density unit (750rpx = one screen width). Tracking the frame
      width 1:1 magnified the mobile UI whenever the frame grew past a phone (the
      tablet / desktop presets are much wider), which read as "zoomed in". Cap the
-     reference at the widest phone preset (~340px) so 750rpx maps to the phone
-     width there — a real handset density — and the wider presets hold at that
-     same 100% density, revealing more of the app instead of scaling it up.
+     reference at the widest phone preset (~375px at the 125% handset size) so
+     750rpx maps to the phone width there — a real handset density — and the
+     wider presets hold at that same 100% density, revealing more of the app
+     instead of scaling it up.
      Keep this in sync with the phone preset width in device.js (DECK_PRESETS). */
-  --rpx-unit: calc(min(100cqw, 340px) / 750);
+  --rpx-unit: calc(min(100cqw, 375px) / 750);
   --vh-unit: 1cqh;
   --vw-unit: 1cqw;
 }

@@ -10,10 +10,11 @@ import { attachDeviceControls } from './framework/device.js';
 
 registerVlDemo();
 
-// Play-page presets sized against the viewport (no scaled stage here). Desktop
+// Play-page presets sized against the viewport (no scaled stage here). Phone
+// matches the deck's ~125% handset scale; tablet height is unchanged. Desktop
 // fills the whole window.
 const PLAY_PRESETS = {
-  phone:   { ar: '9 / 19.5', w: 'auto', h: 'min(90vh, 860px)' },
+  phone:   { ar: '9 / 19.5', w: 'auto', h: 'min(112.5vh, 1075px)' },
   tablet:  { ar: '3 / 4',    w: 'auto', h: 'min(92vh, 1000px)' },
   desktop: { fullscreen: true },
 };
