@@ -362,7 +362,7 @@ export const ZH = {
   'Natural language.':
     '<span class="brand-text">自然语言</span>。',
   'The frontend is dead.': '前端已死。',
-  'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
+  'Long live the frontend': '前端<span class="brand-text">永生</span>',
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
 
   // ---- One more thing · Vue Vapor (the deep dive) ----
