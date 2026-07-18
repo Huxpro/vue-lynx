@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 143</span>
+    <span data-counter>01 / 145</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2183,17 +2183,21 @@ app.<span class="code-fn">use</span>(router)</pre>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade>
-      FCP across a real Web Worker + IPC (Lynx for Web) — suite median
-      &minus;12% to &minus;19%, ReactLynx control &minus;23%. ET stays flat on
-      FCP; its win is render cost (~1,000 el, jitless) and ops payload.
+      FCP over a real Web Worker + IPC (Lynx for Web): &minus;12% to &minus;19%
+      at 1k&ndash;5k — but not a constant. Plain IFR reverses past ~10k rows;
+      <b class="brand-text">IFR + ET</b> holds the win across scale.
     </p>
     <aside class="notes">
-      <p>Separate campaigns, not one trace. The FCP win (median &minus;12…&minus;19%,
-      ReactLynx control &minus;23%) comes from removing background boot + IPC —
-      it needs a real thread boundary, and both IFR rows share it (ET is flat on
-      web FCP). Element Templates' own win is render cost 9.4&nbsp;ms →
-      <strong>1.3&nbsp;ms</strong> (~6&ndash;15&times; across reruns) and the ops
-      payload — the reason ET is on by default. Cost: ~2.26&times; gzip.</p>
+      <p>Separate campaigns, not one trace. The FCP win comes from removing
+      background boot + IPC — it needs a real thread boundary. But the unified
+      re-run (PR #266) falsified &minus;19% as a <em>universal</em> constant:
+      it's a mid-size ×1 result. Plain <code>vdom-ifr</code> is &minus;10% @1k
+      but <strong>+22% (a loss) @10k</strong> and +20% @30k on the content-probe
+      ladder; <strong>IFR + ET stays ahead across the whole ladder</strong>, and
+      ReactLynx has the lowest FCP@10k (228&nbsp;ms). Element Templates' own win
+      is render cost 9.4&nbsp;ms → <strong>1.3&nbsp;ms</strong> and the ops
+      payload — and it's not first-frame-only (it also speeds post-mount storms,
+      0.72× @10k). Cost: ~2.26&times; gzip.</p>
     </aside>
   </section>
 
@@ -3528,16 +3532,95 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
+  <!-- V·10c — Unified cross-framework storms matrix (#266) -->
+  <section class="slide stage" data-bg="clean">
+    <span class="eyebrow">One more thing · the whole field, at 10k rows</span>
+    <table class="btable" style="max-width:1000px">
+      <thead>
+        <tr><th>10k rows · median</th><th>Vue Vapor</th><th>Vue VDOM</th><th>+IFR+ET</th><th>ReactLynx</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="metric">select storm ×30</td>
+          <td class="win">44.6 ms</td><td>367 ms</td><td>264 ms</td><td class="cost">1018 ms</td>
+        </tr>
+        <tr>
+          <td class="metric">update storm ×50</td>
+          <td class="win">350 ms</td><td>747 ms</td><td>541 ms</td><td class="cost">2.14 s</td>
+        </tr>
+        <tr>
+          <td class="metric">create</td>
+          <td>853 ms</td><td>798 ms</td><td>729 ms</td><td class="win">689 ms</td>
+        </tr>
+        <tr>
+          <td class="metric">slow geomean</td>
+          <td class="win">1.10×</td><td>2.36×</td><td>1.88×</td><td class="cost">4.27×</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="lead" data-mm-fade>
+      On the 10k select storm Vapor is <b class="brand-text">8.2×</b> VDOM and
+      <b class="brand-text">23×</b> ReactLynx — React leads only creation.
+    </p>
+    <aside class="notes">
+      <p><strong>The unified matrix (PR #266).</strong> IFR × VDOM/Vapor × ReactLynx on one host, one scale — black-box clicks → composed-DOM settle. Storms are the user story: <em>select</em> = point update, <em>update</em> = batch. Vapor's structural win (no vnode tree, effects write straight to nodes) shows up unfiltered as the row count grows.</p>
+      <p>Read it honestly: <strong>React leads creation</strong> (create@10k 689 vs 798 ms), <strong>Vue/Vapor lead sustained updates</strong>. The "slow geomean" row is the balance: Vapor 1.10 vs React 4.27. Absolute ms are host-bound — the <em>ratios</em> are the portable claim.</p>
+    </aside>
+  </section>
+
+  <!-- V·10d — Select-storm scaling: Vapor stays flat (#266) -->
+  <section class="slide stage" data-bg="clean">
+    <span class="eyebrow">One more thing · select storm × scale</span>
+    <div style="width:min(100%,1000px);margin:0 auto">
+      <svg viewBox="0 0 1000 460" style="width:100%;height:auto" aria-label="Select-storm latency vs rows">
+        <!-- axes -->
+        <line x1="90" y1="400" x2="945" y2="400" stroke="rgba(244,245,247,0.18)" stroke-width="1.5"/>
+        <line x1="90" y1="40" x2="90" y2="400" stroke="rgba(244,245,247,0.18)" stroke-width="1.5"/>
+        <!-- y gridlines + labels (ms) -->
+        <line x1="90" y1="305" x2="945" y2="305" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="210" x2="945" y2="210" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="116" x2="945" y2="116" stroke="rgba(244,245,247,0.07)"/>
+        <text x="80" y="404" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">0</text>
+        <text x="80" y="309" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">1s</text>
+        <text x="80" y="214" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">2s</text>
+        <text x="80" y="120" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">3s</text>
+        <!-- x labels (rows) -->
+        <text x="118" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">1k</text>
+        <text x="373" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">10k</text>
+        <text x="940" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">30k</text>
+        <!-- ReactLynx: 92 / 1018 / 3744 -->
+        <polyline points="118,391 373,304 940,45" fill="none" stroke="#E8B44A" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="118" cy="391" r="5" fill="#E8B44A"/><circle cx="373" cy="304" r="5" fill="#E8B44A"/><circle cx="940" cy="45" r="6" fill="#E8B44A"/>
+        <text x="928" y="40" text-anchor="end" fill="#E8B44A" font-family="Geist, sans-serif" font-size="18" font-weight="600">ReactLynx · 3.74s</text>
+        <!-- VDOM: 43 / 367 / 1459 -->
+        <polyline points="118,396 373,365 940,262" fill="none" stroke="#4FB8F0" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="118" cy="396" r="5" fill="#4FB8F0"/><circle cx="373" cy="365" r="5" fill="#4FB8F0"/><circle cx="940" cy="262" r="6" fill="#4FB8F0"/>
+        <text x="928" y="253" text-anchor="end" fill="#4FB8F0" font-family="Geist, sans-serif" font-size="18" font-weight="600">Vue VDOM · 1.46s</text>
+        <!-- Vapor: 26 / 45 / 128 (flat) -->
+        <polyline points="118,398 373,396 940,388" fill="none" stroke="#5dd5a8" stroke-width="3.5" stroke-linejoin="round"/>
+        <circle cx="118" cy="398" r="5" fill="#5dd5a8"/><circle cx="373" cy="396" r="5" fill="#5dd5a8"/><circle cx="940" cy="388" r="6" fill="#5dd5a8"/>
+        <text x="928" y="378" text-anchor="end" fill="#5dd5a8" font-family="Geist, sans-serif" font-size="18" font-weight="700">Vue Vapor · 128 ms</text>
+      </svg>
+    </div>
+    <p class="lead" data-mm-fade>
+      Point updates as rows grow: VDOM and ReactLynx climb linearly; Vapor stays
+      near the floor — <b class="brand-text">128 ms at 30k</b> vs VDOM's 1.46 s.
+    </p>
+    <aside class="notes">
+      <p><strong>The scaling picture.</strong> selectStorm across 1k → 10k → 30k. Every tick re-selects one row (a point update). VDOM re-runs render + diffs the whole list each pass, so its curve rises with N; ReactLynx pays that plus its own overhead. Vapor's reactive effects touch only the changed node, so the curve is almost flat — the gap widens with scale (1.7× at 1k → 8.2× at 10k → 11.4× at 30k vs VDOM).</p>
+    </aside>
+  </section>
+
   <!-- V·11 — The one number (mic-drop) -->
   <section class="slide stage" data-bg="beam">
     <span class="eyebrow">One more number</span>
-    <div class="mega"><span class="brand-text">7&times;</span> VDOM</div>
+    <div class="mega"><span class="brand-text">8.2&times;</span> VDOM</div>
     <p class="lead">
       Vapor vs Vue VDOM on the 10,000-row select storm — same app, same bundle,
       one attribute apart.
     </p>
     <aside class="notes">
-      <p><strong>The mic-drop.</strong> Cross-framework suite (ReactLynx vs Vue VDOM vs Vue Vapor), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor 7.0× VDOM on the 10k select storm, 1.9× on update storm.</p>
+      <p><strong>The mic-drop.</strong> Unified cross-framework matrix (PR #266), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor <strong>8.2×</strong> VDOM on the 10k select storm (367 → 45 ms), 2.1× on the update storm — and ~23× ReactLynx on the same select storm. Instrumented BG is ~9.8×; the frame floor masks it on one-shot ops, storms reveal it.</p>
       <p>Let it hang. Then the last slide.</p>
     </aside>
   </section>
