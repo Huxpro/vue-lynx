@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 126</span>
+    <span data-counter>01 / 124</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2094,67 +2094,6 @@ app.<span class="code-fn">use</span>(router)</pre>
       inside <code>loadTemplate</code> — watch the <strong>paint</strong> flag
       jump left. The background thread still runs the same code, just in
       parallel and off the critical path.</p>
-    </aside>
-  </section>
-
-  <!-- IFR3 — the trick: record + reconcile -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:20ch">
-      Both threads render. The ops stream <span class="brand-text">is</span> the recording.
-    </h2>
-    <div class="recon">
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq">=</span>
-          <code class="op">SET_TEXT 3 "Hi"</code>
-        </span>
-        <span class="recon__out is-skip">identical &rarr; skip</span>
-      </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--hot">SET_TEXT 3 "你好"</code>
-        </span>
-        <span class="recon__out is-patch">value differs &rarr; patch in place</span>
-      </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">CREATE 4 view</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--bad">CREATE 4 text</code>
-        </span>
-        <span class="recon__out is-tear">structural &rarr; tear down &amp; rebuild</span>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      The MT render records its ops; the BG's first batches hydrate against them.
-      Correctness never depends on the two matching — deterministic ids &amp;
-      <code>vue:N</code> signs route taps to Vue with no rebinding.
-    </p>
-    <aside class="notes">
-      <p><strong>Hydration by ops reconciliation.</strong> The flat ops stream
-      doubles as the recorded PAPI calls. The BG's initial
-      <code>vuePatchUpdate</code> batches walk the recording frame-by-frame:
-      identical → skipped (already on screen), value diff → patched, structural
-      divergence → tear the first-screen tree down and re-apply. A mismatch only
-      loses the perf win, never correctness (logs
-      <code>IFR hydration mismatch</code> in dev).</p>
-    </aside>
-  </section>
-
-  <!-- IFR4 — Element Templates: the pivot -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
-      <span class="brand-text">Element Templates</span> change how much work it does.
-    </h2>
-    <aside class="notes">
-      <p><strong>The second lever.</strong> IFR moves the paint earlier;
-      enabling it turns on Element Templates by default. They make the render
-      itself an order of magnitude cheaper — and shrink the cross-thread protocol
-      for <em>every</em> update, not just the first frame.</p>
     </aside>
   </section>
 
