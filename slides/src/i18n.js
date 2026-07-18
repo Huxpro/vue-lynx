@@ -519,8 +519,8 @@ export const ZH = {
   'base uid only': '只传 base uid',
   're-walk from base uid': '从 base uid 重走一遍',
   'materialize real elements': '生成真实元素',
-  'The static structure crosses once — not one op per element.':
-    '静态结构只跨越<em>一次</em> —— 不是每个元素一个 op。',
+  'Pointers can’t cross the boundary — so both sides walk the same pre-order and name every node alike. No id map is ever sent.':
+    '指针过不了边界 —— 两侧于是各走<em>同一趟前序遍历</em>,给每个节点起一样的名字。从不传一张 id 映射表。',
   'create-1k across the boundary: 17,000 ops · 327 KB → 7,000 ops · 160 KB':
     'create-1k 跨越边界:<span style="color:var(--ink-mute);text-decoration:line-through">17,000 ops · 327 KB</span> → <b class="brand-text">7,000 ops · 160 KB</b>',
 
@@ -846,16 +846,18 @@ export const ZH_NOTES = [
   `<p><strong>压轴数字。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9×。</p><p>让它悬一会儿。然后最后一页。</p>`,
   // 47 收束 · 拨一下开关
   `<p><strong>收尾返场。</strong>Vapor 是按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>落地:“还是你早就在写的那套 Vue —— 只是多了一条编译期的快路。这就是那‘还有一件事’。”</p>`,
-  // 90 E20 · 摇篮
-  `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
-  // 90b E20b · 动静光谱 · retained → immediate
-  `<p><strong>设计空间是一条很宽的光谱</strong> —— 从完全 retained 到完全 immediate。<strong>React VDOM</strong> 完全动态:解释一棵树,每次更新再 diff。<strong>Vue</strong> 的 compiler-hinted、block-based VDOM 好一些 —— block 让它跳过静态子树。<strong>Vapor</strong> 看似把一切都编译掉了,其实仍给浏览器内的运行时留了一块:指针,用来<em>读</em> / 寻址活节点。所以 Vapor 依然是 <em>retained mode</em>。</p><p><strong>为什么这在线程边界上要命。</strong>retained 的指针只有在整棵树本身共享时才能扛过一次线程跳转:RN 的 Fabric 把指针留在一棵两侧都能碰到的 C++ 影子树里。Lynx 做不到 —— 我们从第一帧就跨线程。<strong>Element Templates</strong> 走了反方向:只写、单向,更接近 immediate mode 的 <em>display list</em>。它跨线程极其漂亮 —— 代价是放弃 MT 侧的动态性。就像画一幅画:画一次,然后把画布撒手。</p>`,
-  // 90c E20c · 异步的那一刀
-  `<p><strong>异步的那一刀。</strong>双线程是"架构化的异步" —— 就像浏览器把合成交给独立线程。代价是:树(MT)和驱动它的程序(BG)不再共享地址空间。那什么能穿过序列化边界?只有封闭的一阶项 —— 数据与名字。指针只在本地堆有意义;闭包捕获了对面不存在的环境。</p><p>于是过桥的形态只剩一种:一条扁平、封闭、一阶的 <strong>ops 流</strong> —— 这正是 display list。它不是实现细节,是整套架构的宪法(也是为什么 Vapor-on-Lynx 直接吐 ops)。</p>`,
-  // 90d E20d · 稠密 vs 稀疏命名
+  // 90a E20a · 稠密 vs 稀疏 (Vapor tree vs ET)
   `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p>`,
+  // 90b E20b · 动静光谱 · retained → write-only
+  `<p><strong>设计空间是一条很宽的光谱</strong> —— 从完全 retained 到完全 immediate。<strong>React VDOM</strong> 完全动态:解释一棵树,每次更新再 diff。<strong>Vue</strong> 的 compiler-hinted、block-based VDOM 好一些 —— block 让它跳过静态子树。<strong>Vapor</strong> 看似把一切都编译掉了,其实仍给浏览器内的运行时留了一块:指针,用来<em>读</em> / 寻址活节点。所以 Vapor 依然是 <em>retained mode</em>。</p><p><strong>为什么这在线程边界上要命。</strong>retained 的指针只有在整棵树本身共享时才能扛过一次线程跳转:RN 的 Fabric 把指针留在一棵两侧都能碰到的 C++ 影子树里。Lynx 做不到 —— 我们从第一帧就跨线程。<strong>Element Templates</strong> 走了反方向:只写、单向,更接近 immediate mode 的 <em>display list</em>。它跨线程极其漂亮 —— 代价是放弃 MT 侧的动态性。就像画一幅画:画一次,然后把画布撒手。</p>`,
+  // 90c E20c · 摇篮 · 收束设计空间
+  `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
+  // 91a E21·a · 全景种子 · 先 React
+  `<p><strong>织物从一根线开始。</strong>React 最先把这套模式跑通 —— 声明式 UI、一个做 reconcile 的运行时。先点它的名,让它落到织机上。</p><p>从这里起步,是为了让"生长"读起来像一个故事:一根线,然后两根,然后整张 Web。</p>`,
+  // 91b E21·b · 全景种子 · React + Vue
+  `<p><strong>Vue 加入 —— 现在是两根线。</strong>整场论证的核心就是:谁都不特殊。React 与 Vue 是同一设计空间里的两个坐标,都能织上同一台织机。</p><p>在这里停一拍,再让整张 Web 涌进来。</p>`,
   // 91 E21 · 全景 · 左半
-  `<p><strong>全景开始。</strong>线落下时逐一点名:Vue 的绿、React 的蓝、Svelte 和 Solid 隐约的黄、Octane 的红 —— 一种还在纺的新织物 —— CSS、Tailwind、Motion 和 Pretext、Rspack 的橘。整个 Web 生态,化作丝线。</p><p>它们全都收向同一个又细又有力的腰身。</p>`,
+  `<p><strong>全景开始。</strong>线落下时逐一点名:Vue 的绿、React 的蓝、Svelte 和 Solid 隐约的黄、Octane 的红 —— 一种还在纺的新织物 —— CSS、Tailwind、Motion、Pretext。整个 Web 生态,化作丝线。</p><p>它们全都收向同一个又细又有力的腰身。</p>`,
   // 92 E22 · 全景
   `<p><strong>压轴画面 —— 头一秒别说话。</strong>腰身绽开:左侧的每一种织物,重新织进 iOS、Android、Web、HarmonyOS、macOS、Windows、Linux,以及接下来的任何平台。</p><p>中间是那台又细又强的织机。整个论证浓缩成一张图:左半是 harness,右半是连接。停住,然后轻轻说:"Lynx 给你的,是织任何一种织物所需要的技艺 —— 和 harness。"</p>`,
   // 93 E23 · 德国 · 上

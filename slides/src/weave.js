@@ -52,7 +52,7 @@ const hex = (h) => [1, 3, 5].map((k) => Number.parseInt(h.slice(k, k + 2), 16));
 const PAL = {
   vue: '#42b883', teal: '#3deae7',
   react: '#61dafb', svelte: '#ff9a4d', solid: '#ffd166', octane: '#ff5468',
-  css: '#8a63d2', tailwind: '#38bdf8', motion: '#f7e14d', rspack: '#ff7a1a',
+  css: '#8a63d2', tailwind: '#38bdf8', motion: '#f7e14d', pretext: '#ffc24d',
   ios: '#cdd6e4', android: '#3ddc84', web: '#56b8f0', harmony: '#ff6f61',
   macos: '#aab4c8', windows: '#2f7fe0', linux: '#f5c04a', more: '#8b93a3',
 };
@@ -67,7 +67,7 @@ const ECO = [
   { c: 'css', y: 0.55, n: 4, a: 0.9 },
   { c: 'tailwind', y: 0.63, n: 3, a: 0.85 },
   { c: 'motion', y: 0.71, n: 3, a: 0.7 },
-  { c: 'rspack', y: 0.80, n: 4, a: 0.9 },
+  { c: 'pretext', y: 0.80, n: 3, a: 0.7 },
 ];
 const PLAT = [
   { c: 'ios', y: 0.16 }, { c: 'android', y: 0.257 }, { c: 'web', y: 0.354 },
@@ -156,11 +156,15 @@ function compressScene() {
   return out;
 }
 
-function panoramaScene({ rightA = 1, dim = 1 }) {
+// `only` (a list of ECO keys) reveals just those strands — the rest keep
+// their pool index but tween to alpha 0, so the field builds up strand-by-
+// strand in place (React → React+Vue → all) without any thread reflow.
+function panoramaScene({ rightA = 1, dim = 1, only = null }) {
   const out = [];
   let i = 0;
   for (const g of ECO) {
     const src = hex(PAL[g.c]);
+    const shown = !only || only.includes(g.c);
     for (let k = 0; k < g.n; k++, i++) {
       const pl = PLAT[Math.floor(rnd(i, 11) * PLAT.length) % PLAT.length];
       out.push(mk({
@@ -174,7 +178,7 @@ function panoramaScene({ rightA = 1, dim = 1 }) {
           : pl.y + (rnd(i, 2) - 0.5) * 0.05,
         waist: 1, braid: 6,
         ampL: 6 + rnd(i, 3) * 9, ampR: 5 + rnd(i, 4) * 7,
-        alpha: g.a * dim * (0.75 + rnd(i, 5) * 0.25),
+        alpha: shown ? g.a * dim * (0.75 + rnd(i, 5) * 0.25) : 0,
         width: 1.35, aL: 0.5, aR: rightA * 0.7 + 0.04,
         shim: rnd(i, 7) < (dim < 0.5 ? 0.2 : 0.5) ? 1 : 0,
       }));
@@ -191,6 +195,8 @@ const SCENES = {
   loom: () => loomScene(1),
   'loom-dim': () => loomScene(0.22),
   compress: () => compressScene(),
+  'panorama-r': () => panoramaScene({ rightA: 0, dim: 1, only: ['react'] }),
+  'panorama-rv': () => panoramaScene({ rightA: 0, dim: 1, only: ['react', 'vue'] }),
   'panorama-left': () => panoramaScene({ rightA: 0, dim: 1 }),
   panorama: () => panoramaScene({ rightA: 1, dim: 1 }),
   finale: () => panoramaScene({ rightA: 1, dim: 0.3 }),

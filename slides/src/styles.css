@@ -3277,6 +3277,11 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .brace.imm { color: var(--ds-name); }
 .brace.imm::before { border-color: color-mix(in srgb, var(--ds-name) 45%, transparent); }
 
+/* card tree inside the Vapor REGISTER/CLONE boxes (V·7a/b) */
+.node .dtree { width: 100%; max-width: 300px; height: auto; margin: 8px auto 2px; display: block; }
+.node__cap { display: block; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
+.node__cap b { color: var(--ds-name); font-weight: 600; }
+
 /* =========================================================
    IV · Instant First-Frame Rendering + Element Templates.
    Reuses the runtime chapter's .flow / .fb / .farr / .fcenter
