@@ -15,23 +15,21 @@ pnpm dev
 Vite serves example bundles via a symlink to `../website/docs/public/examples`.
 Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 
-### Local iOS Simulator (`serve-sim`)
+### Local iOS Simulator (`serve-sim`) — optional, localhost only
 
-The Vite dev server mounts [serve-sim](https://github.com/EvanBacon/serve-sim)
-middleware at **`/.sim`**, so the deck can stream a booted Apple Simulator into
-the browser (used by the duplicated `ref()` slide — Web `<lynx-view>` beside
-the native sim).
+For live presenting on your Mac, the Vite **dev** server mounts
+[serve-sim](https://github.com/EvanBacon/serve-sim) at **`/.sim`**. A floating,
+draggable simulator frame can sit above any slide — toggle it from the command
+palette (`⌘K` / `/` → **`m`**). The palette entry and overlay only appear on
+**localhost** / `127.0.0.1`, so cloud-hosted decks (examples, Vercel previews)
+are unaffected. Production builds never include the middleware.
 
 ```bash
 # macOS + Xcode, with a simulator already booted (e.g. Lynx Explorer):
-npx serve-sim --detach
-cd slides && pnpm dev
-# preview UI: http://localhost:4321/.sim
+cd slides
+pnpm sim          # or: npx serve-sim --detach
+pnpm dev          # http://localhost:4321  ·  /.sim ·  palette → m
 ```
-
-`proxyHelpers` stays off so Vite's HMR WebSocket is untouched; the helper's
-own loopback ports serve the stream (CORS is open). Production / Vercel builds
-do not include the middleware — the slide's iframe is for local presenting.
 
 ## Navigation
 
@@ -58,6 +56,7 @@ Inside the palette (`⌘K` search or `/` then the key):
 | `]` | Last slide          | `d` | DevTool panel            |
 | `s` | Open speaker view   | `f` | Toggle fullscreen        |
 | `o` | Overview grid       | `b` | Blackout audience screen |
+| `m` | Simulator overlay   |     | *(localhost only)*       |
 
 Jump to any slide by title from the palette's **Slides** section (type to
 filter, `↑`/`↓` or `←`/`→` to move, `Enter` to go).

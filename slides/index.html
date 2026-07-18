@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 124</span>
+    <span data-counter>01 / 123</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -376,51 +376,6 @@
        II · Vue API coverage — one feature per slide
        ordered by vue-lynx release version
        ==================================================== -->
-  
-
-  <!-- First <lynx-view> demo (ref / hello-world) + local iOS Simulator via
-       serve-sim (Vite mounts /.sim in `pnpm dev`). -->
-  <section class="slide demo demo--api demo--sim">
-    <div class="demo__body">
-      <div class="demo__title-row">
-        <h2 class="demo__title"><code class="brand-text">ref()</code> <span class="demo__title-sub">· live sim</span></h2>
-        <span class="ver-badge">serve-sim</span>
-      </div>
-      <div class="codeframe">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>App.vue</span>
-        </div>
-<pre><span class="code-tag">&lt;script setup&gt;</span>
-<span class="code-key">import</span> { ref } <span class="code-key">from</span> <span class="code-str">'vue-lynx'</span>
-<span class="code-key">const</span> { y, jump } <span class="code-key">=</span> <span class="code-fn">useFlappy</span>()  <span class="code-com">// ref(0) inside</span>
-<span class="code-tag">&lt;/script&gt;</span>
-
-<span class="code-tag">&lt;template&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap</span>=<span class="code-str">"jump"</span><span class="code-tag">&gt;</span>
-    <span class="code-tag">&lt;image</span> <span class="code-attr">:style</span>=<span class="code-str">"{ transform:
-      `translateY(${y}px)` }"</span> <span class="code-tag">/&gt;</span>
-  <span class="code-tag">&lt;/view&gt;</span>
-<span class="code-tag">&lt;/template&gt;</span></pre>
-      </div>
-    </div>
-    <div class="demo__stage demo__stage--pair">
-      <div class="phone" data-caption="Web · lynx-view">
-        <div class="phone__inner">
-          <vl-demo bundle="hello-world/dist/main.web.bundle"></vl-demo>
-        </div>
-      </div>
-      <div class="phone no-deck-scroll" data-caption="Native · serve-sim">
-        <div class="phone__inner">
-          <vl-media kind="iframe" src="/.sim" label="/.sim · local iOS Simulator (serve-sim)"></vl-media>
-        </div>
-      </div>
-    </div>
-    <aside class="notes">
-      <p><strong>Start at the beginning — with the real simulator beside it.</strong> <code>ref()</code>, an event handler, a style binding. Left is Lynx for Web (<code>&lt;lynx-view&gt;</code>); right is the local iOS Simulator streamed through <a href="https://github.com/EvanBacon/serve-sim">serve-sim</a> at <code>/.sim</code>.</p>
-      <p><strong>Before the talk:</strong> boot a sim + Lynx Explorer with the hello-world bundle, then <code>npx serve-sim --detach</code>. The Vite deck mounts the preview middleware automatically.</p>
-    </aside>
-  </section>
 
   <section class="slide demo demo--api">
     <div class="demo__body">

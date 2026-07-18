@@ -27,9 +27,10 @@ function ensureExamplesSymlink() {
 }
 ensureExamplesSymlink();
 
-// Mount Evan Bacon's serve-sim preview at /.sim so the deck can stream a local
-// iOS Simulator during the talk. Helper ports stay on loopback (no upgrade
-// hijack — Vite HMR keeps its WebSocket). Start the helper separately:
+// Optional localhost presenter aid: mount Evan Bacon's serve-sim preview at
+// /.sim during `pnpm dev` only (`configureServer` never runs in production /
+// Vercel builds, so cloud-hosted decks stay unaffected). The floating overlay
+// is toggled from the command palette on loopback hosts. Start the helper:
 //   npx serve-sim --detach
 function serveSimPlugin() {
   return {
@@ -39,7 +40,7 @@ function serveSimPlugin() {
         const { simMiddleware } = await import('serve-sim/middleware');
         const middleware = simMiddleware({ basePath: '/.sim' });
         server.middlewares.use(middleware);
-        console.log('[slides] serve-sim preview at /.sim  (run: npx serve-sim --detach)');
+        console.log('[slides] serve-sim at /.sim  (palette → m · run: npx serve-sim --detach)');
       } catch (err) {
         console.warn('[slides] serve-sim middleware unavailable:', err?.message ?? err);
       }

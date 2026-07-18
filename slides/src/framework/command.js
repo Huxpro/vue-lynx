@@ -11,6 +11,7 @@ export function initCommand(api, { devtool } = {}) {
   if (api.embed()) return null;
 
   // Action = { section, key, label, icon, run }. `label` may be a function.
+  // Localhost-only presenter tools (serve-sim overlay) are appended when available.
   const ACTIONS = [
     { section: 'Navigate', key: 'n', label: 'Next slide', icon: 'arrowRight', run: api.next },
     { section: 'Navigate', key: 'p', label: 'Previous slide', icon: 'arrowLeft', run: api.prev },
@@ -30,6 +31,17 @@ export function initCommand(api, { devtool } = {}) {
 
   const resolveLabel = (a) => (typeof a.label === 'function' ? a.label() : a.label);
 
+  function localActions() {
+    if (!api.simAvailable?.()) return [];
+    return [{
+      section: 'Presenter',
+      key: 'm',
+      label: () => `Simulator: ${api.simOpen?.() ? 'on' : 'off'}`,
+      icon: 'smartphone',
+      run: () => api.toggleSim?.(),
+    }];
+  }
+
   function slideActions() {
     return api.meta().map((m, i) => ({
       section: 'Slides',
@@ -45,8 +57,19 @@ export function initCommand(api, { devtool } = {}) {
   let items = [];
   let selected = 0;
 
+  function allActions() {
+    // Insert localhost simulator next to other Presenter actions.
+    const base = [...ACTIONS];
+    const locals = localActions();
+    if (locals.length) {
+      const i = base.findIndex((a) => a.section === 'Settings');
+      base.splice(i === -1 ? base.length : i, 0, ...locals);
+    }
+    return [...base, ...slideActions()];
+  }
+
   function visibleActions() {
-    const all = [...ACTIONS, ...slideActions()];
+    const all = allActions();
     if (!query) return all;
     const q = query.toLowerCase();
     return all.filter((a) => resolveLabel(a).toLowerCase().includes(q));
@@ -177,7 +200,7 @@ export function initCommand(api, { devtool } = {}) {
     if (slash) {
       if (e.key === 'Backspace') { e.preventDefault(); setSlash(false); return; }
       if (e.key.length === 1) {
-        const a = ACTIONS.find((x) => x.key === e.key.toLowerCase());
+        const a = allActions().find((x) => x.key === e.key.toLowerCase());
         if (a) { e.preventDefault(); run(a); }
       }
       return;

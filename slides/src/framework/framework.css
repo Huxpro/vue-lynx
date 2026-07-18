@@ -240,6 +240,134 @@
 .sys-ic { display: inline-flex; width: 16px; height: 16px; }
 .sys-ic svg { width: 100%; height: 100%; display: block; }
 
+/* =========================================================
+   Local Simulator float (serve-sim) — viewport-fixed, above
+   the scaled stage, below the command palette. localhost only.
+   ========================================================= */
+.sim-float {
+  position: fixed;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  min-height: 320px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #0a0c10;
+  border: 1px solid var(--line);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 24px 70px -18px rgba(0, 0, 0, 0.7);
+  color: var(--ink);
+  touch-action: none;
+  animation: simFloatIn 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@keyframes simFloatIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.sim-float__chrome {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--line-soft);
+  cursor: grab;
+  user-select: none;
+}
+.sim-float__chrome:active { cursor: grabbing; }
+.sim-float__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.sim-float__title .sys-ic { color: var(--vue-green); }
+.sim-float__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.sim-float__btn {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.sim-float__btn:hover {
+  color: var(--vue-green);
+  background: rgba(66, 184, 131, 0.12);
+}
+.sim-float__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #000;
+}
+.sim-float__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #000;
+}
+.sim-float__hint {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-mute);
+  pointer-events: none;
+  opacity: 0.85;
+}
+.sim-float__hint code {
+  color: var(--vue-green);
+  font-size: 10px;
+}
+.sim-float__hint.is-hidden { display: none; }
+.sim-float__resize {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg, transparent 55%, rgba(93, 213, 168, 0.55) 55%,
+      rgba(93, 213, 168, 0.55) 62%, transparent 62%),
+    linear-gradient(135deg, transparent 72%, rgba(93, 213, 168, 0.55) 72%,
+      rgba(93, 213, 168, 0.55) 79%, transparent 79%);
+  opacity: 0.55;
+  z-index: 2;
+}
+.sim-float__resize:hover { opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
-  .cmdk__box, .cmdk__scrim { animation: none; }
+  .cmdk__box, .cmdk__scrim, .sim-float { animation: none; }
 }
