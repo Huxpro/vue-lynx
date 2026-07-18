@@ -148,6 +148,7 @@ export function initEmbeds({ getScale, reducedMotion = false, embed = false } = 
       corners: ['nw', 'ne', 'sw', 'se'],
       anchor: 'center',
       externalUrl: () =>
+        frame.dataset.external ||
         (media && (media.getAttribute('kind') === 'iframe' ||
           inferKind(media.getAttribute('src') || '') === 'iframe')
           ? media.getAttribute('src') : null),

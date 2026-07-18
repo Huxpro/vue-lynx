@@ -3415,6 +3415,9 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   color: var(--ink-soft);
   z-index: 3;
 }
+.ifrlane.is-idle-lane {
+  pointer-events: none;
+}
 
 /* Runtime ring + warn/question center labels */
 .flow--ring { height: clamp(320px, 54cqh, 420px); }

@@ -1677,15 +1677,18 @@ app.<span class="code-fn">use</span>(router)</pre>
   <!-- W1 — Web is single-threaded -->
   <section class="slide stage">
     <span class="eyebrow">IV · Runtime</span>
-    <div class="ifrtl" style="height:clamp(170px,30cqh,230px)">
-      <div class="ifrlane" data-flip="tl-main" style="--c:#56b8f0;top:22%;height:58%">
+    <div class="ifrtl">
+      <div class="ifrlane" data-flip="tl-main" style="--c:#56b8f0;top:6%;height:38%">
         <span class="ifrlane__label"><i></i>Main</span>
-        <div class="tblk tblk--evt" data-flip="tl-evt" style="left:7%;width:12%;top:58%">Event</div>
-        <div class="tblk tblk--js" data-flip="tl-js" style="left:21%;width:38%;top:58%">JavaScript</div>
-        <div class="tblk is-paint" data-flip="tl-paint" style="left:61%;width:14%;top:58%">Paint</div>
-        <div class="tframe" data-flip="tl-frame" style="left:77%">
+        <div class="tblk tblk--evt" data-flip="tl-evt" style="left:5%;width:11%;top:58%">Event</div>
+        <div class="tblk tblk--js" data-flip="tl-js" style="left:18%;width:36%;top:58%">JavaScript</div>
+        <div class="tblk is-paint" data-flip="tl-paint" style="left:56%;width:13%;top:58%">Paint</div>
+        <div class="tframe" data-flip="tl-frame" style="left:72%">
           <span class="tframe__label">Frame</span>
         </div>
+      </div>
+      <div class="ifrlane is-idle-lane" data-flip="tl-bg" style="--c:#5dd5a8;top:56%;height:38%;opacity:0">
+        <span class="ifrlane__label"><i></i>Background</span>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
@@ -1703,13 +1706,13 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="ifrlane" data-flip="tl-main" style="--c:#56b8f0;top:6%;height:38%">
         <span class="ifrlane__label"><i></i>Main</span>
         <div class="tblk tblk--evt" data-flip="tl-evt" style="left:5%;width:11%;top:58%">Event</div>
-        <div class="tblk tblk--ui" data-flip="tl-native" style="left:48%;width:16%;top:58%">Native UI</div>
+        <div class="tblk tblk--ui" data-mm-fade style="left:48%;width:16%;top:58%">Native UI</div>
         <div class="tblk is-paint" data-flip="tl-paint" style="left:66%;width:13%;top:58%">Paint</div>
         <div class="tframe" data-flip="tl-frame" style="left:40%">
           <span class="tframe__label">Frame</span>
         </div>
       </div>
-      <div class="ifrlane" data-flip="tl-bg" data-mm-fade style="--c:#5dd5a8;top:56%;height:38%">
+      <div class="ifrlane" data-flip="tl-bg" style="--c:#5dd5a8;top:56%;height:38%">
         <span class="ifrlane__label"><i></i>Background</span>
         <div class="tblk tblk--js" data-flip="tl-js" style="left:16%;width:30%;top:58%">JavaScript</div>
       </div>
@@ -2652,11 +2655,12 @@ app.<span class="code-fn">use</span>(router)</pre>
         <div class="qr-solo qr-solo--sm" data-qr="https://x.com/Huxpro/status/2036993665965416601" aria-label="QR: the write-up on X"></div>
       </div>
       <div class="phone phone--embed no-deck-scroll writeup__embed" data-embed="browser"
+           data-external="https://x.com/Huxpro/status/2036993665965416601"
            data-w="min(52cqw, 640px)" data-h="min(52cqh, 420px)"
            style="position:relative">
         <div class="phone__inner">
           <vl-media kind="iframe"
-                    src="https://x.com/Huxpro/status/2036993665965416601"
+                    src="https://platform.twitter.com/embed/Tweet.html?id=2036993665965416601"
                     label="x.com/Huxpro · write-up"></vl-media>
         </div>
       </div>
