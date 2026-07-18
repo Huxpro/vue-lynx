@@ -374,8 +374,7 @@ export const ZH = {
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
 
   // ---- One more thing · Vue Vapor (the deep dive) ----
-  'Vapor mode — no Virtual DOM.':
-    '<span class="brand-text">Vapor</span> 模式 —— 没有虚拟 DOM。',
+  // "Vue Vapor." stays English in both languages.
   "Templates compile straight to code that touches elements directly. We taught it to run on Lynx's two threads.":
     '模板直接编译成操作元素的代码。我们让它跑在了 Lynx 的两条线程上。',
 
@@ -674,8 +673,8 @@ export const ZH_NOTES = [
   // 87 E17 · One more thing
   `<p><strong>停住。</strong>数两拍,再翻页。</p>`,
   // ---- One more thing · Vue Vapor deep dive (12 slides) ----
-  // 36 Vapor 标题
-  `<p><strong>Vapor 是什么。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
+  // 36 Vapor 标题（Vue Vapor.；“没有虚拟 DOM”放 notes）
+  `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
   // 37 虚拟 DOM 更新路径
   `<p><strong>先立对比。</strong>从左到右过一遍五个方块。中间三个虚线的就是税:重跑、分配、diff —— 每次更新都要交,无论变了多少。</p><p>下一页用一次 magic move 把中间这段收掉。</p>`,
   // 38 Vapor 更新路径
