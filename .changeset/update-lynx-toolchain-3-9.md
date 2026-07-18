@@ -1,5 +1,5 @@
 ---
-"vue-lynx": minor
+"vue-lynx": patch
 ---
 
 Update the Lynx toolchain to the 3.9 release line.
