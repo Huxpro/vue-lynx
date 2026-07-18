@@ -1700,7 +1700,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
 .thankyou .sig {
   font-family: var(--serif);
   font-style: italic;
-  font-size: clamp(20px, 2cqw, 32px);
+  font-size: clamp(24px, 2.4cqw, 38px);
   color: var(--ink-soft);
 }
 
@@ -1708,7 +1708,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   display: flex;
   gap: 28px;
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ink-mute);
 }
 .thankyou .handles a {
