@@ -8,16 +8,116 @@
 import { ICONS } from './icons.js';
 
 // Canonical presets for the deck's scaled 1280×720 stage (authored in cqw/cqh).
-// Sizes are pushed close to the frame height so the phone reads at a realistic
-// handset scale (750rpx ≈ the frame width). The desktop preset is deliberately
-// wider than its column — the frame floats over the copy (see .demo__stage).
+// Phone is sized ~125% of the prior handset footprint so demos read larger on
+// stage; tablet keeps the previous height so the two shapes stay distinct.
+// The desktop preset is deliberately wider than its column — the frame floats
+// over the copy (see .demo__stage).
 export const DECK_PRESETS = {
-  phone:   { ar: '9 / 19.5',  w: 'auto',              h: 'min(92cqh, 650px)' },
+  phone:   { ar: '9 / 19.5',  w: 'auto',              h: 'min(115cqh, 812px)' },
   tablet:  { ar: '3 / 4',     w: 'auto',              h: 'min(92cqh, 650px)' },
   desktop: { ar: '16 / 10',   w: 'min(52cqw, 620px)', h: 'auto' },
 };
 
 const DEVICE_ICON = { phone: 'smartphone', tablet: 'tablet', desktop: 'monitor' };
+
+/**
+ * When a device frame would spill past the stage / play viewport, shift it so
+ * growth runs toward the empty side of the screen instead of scaling from the
+ * center (which pushes equal overflow off both edges).
+ *
+ * Offsets are written to `--phone-ox` / `--phone-oy` and consumed by the
+ * centering `transform` on `.demo__stage .phone` / `.phone--play`.
+ */
+export function containDeviceFrame(el, getScale = () => 1) {
+  if (!el || el.classList.contains('is-fullscreen')) {
+    el?.style.setProperty('--phone-ox', '0px');
+    el?.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+  // Embed frames carry inline transforms for magic-move; leave them alone.
+  if (el.classList.contains('phone--embed')) {
+    el.style.setProperty('--phone-ox', '0px');
+    el.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+  // Inactive slides aren't visible — skip (keeps offsets neutral until arrival).
+  const slide = el.closest('.slide');
+  if (slide && !slide.classList.contains('is-active')) {
+    el.style.setProperty('--phone-ox', '0px');
+    el.style.setProperty('--phone-oy', '0px');
+    return;
+  }
+
+  // Measure the natural (uncompensated) position first.
+  el.style.setProperty('--phone-ox', '0px');
+  el.style.setProperty('--phone-oy', '0px');
+
+  const boundsEl =
+    el.closest('.frame') ||
+    el.closest('.play') ||
+    document.documentElement;
+  const bounds = boundsEl.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  const s = getScale() || 1;
+
+  // Slides animate translateY(±20px) on enter/exit. getBoundingClientRect
+  // includes that interpolated offset, which would bias vertical containment
+  // for the whole transition. Strip the slide's own translate so we measure
+  // against the stage as if the slide were at rest.
+  let slideTX = 0;
+  let slideTY = 0;
+  if (slide) {
+    const tf = getComputedStyle(slide).transform;
+    if (tf && tf !== 'none') {
+      const m = new DOMMatrix(tf);
+      slideTX = m.m41;
+      slideTY = m.m42;
+    }
+  }
+  const left = rect.left - slideTX;
+  const right = rect.right - slideTX;
+  const top = rect.top - slideTY;
+  const bottom = rect.bottom - slideTY;
+
+  // Positive ⇒ that edge is past the clip bounds.
+  const overL = bounds.left - left;
+  const overR = right - bounds.right;
+  const overT = bounds.top - top;
+  const overB = bottom - bounds.bottom;
+
+  let ox = 0;
+  let oy = 0;
+
+  // Threshold for "clearly nearer one edge" vs "essentially centered". A few
+  // px of layout noise (slide padding, stage alignment) shouldn't flip a
+  // taller-than-stage phone into edge-pinning — that throws more of it off
+  // screen. Only pin when the home position is meaningfully off-center
+  // (e.g. a right-column demo), so overflow runs into the empty interior.
+  const BIAS = 24;
+
+  if (overL > 0 && overR > 0) {
+    const bias = (left + right) / 2 - (bounds.left + bounds.right) / 2;
+    if (Math.abs(bias) >= BIAS) ox = (bias > 0 ? -overR : overL) / s;
+    else ox = (overL - overR) / (2 * s); // equalize
+  } else if (overL > 0) {
+    ox = overL / s;
+  } else if (overR > 0) {
+    ox = -overR / s;
+  }
+
+  if (overT > 0 && overB > 0) {
+    const bias = (top + bottom) / 2 - (bounds.top + bounds.bottom) / 2;
+    if (Math.abs(bias) >= BIAS) oy = (bias > 0 ? -overB : overT) / s;
+    else oy = (overT - overB) / (2 * s); // equalize
+  } else if (overT > 0) {
+    oy = overT / s;
+  } else if (overB > 0) {
+    oy = -overB / s;
+  }
+
+  el.style.setProperty('--phone-ox', `${ox}px`);
+  el.style.setProperty('--phone-oy', `${oy}px`);
+}
 
 /** Snap an element to a named preset. `fullscreen` presets fill the viewport. */
 export function applyDevicePreset(el, name, presets = DECK_PRESETS) {
@@ -76,6 +176,26 @@ export function attachDeviceControls(el, {
 } = {}) {
   if (el.querySelector('.phone__resize')) return; // already wired
 
+  // Coalesce containment to one measure per frame — ResizeObserver + preset
+  // apply + drag can otherwise thrash style ↔ layout in a tight loop.
+  let containRaf = 0;
+  const contain = () => {
+    if (containRaf) cancelAnimationFrame(containRaf);
+    containRaf = requestAnimationFrame(() => {
+      containRaf = 0;
+      containDeviceFrame(el, getScale);
+    });
+  };
+  const containNow = () => {
+    if (containRaf) { cancelAnimationFrame(containRaf); containRaf = 0; }
+    containDeviceFrame(el, getScale);
+  };
+  const apply = (name) => {
+    applyDevicePreset(el, name, presets);
+    // Layout must flush before we can measure overflow.
+    containNow();
+  };
+
   // Preset switcher.
   const bar = document.createElement('div');
   bar.className = 'phone__presets';
@@ -104,7 +224,7 @@ export function attachDeviceControls(el, {
       return;
     }
     const btn = e.target.closest('.phone__preset');
-    if (btn) applyDevicePreset(el, btn.dataset.device, presets);
+    if (btn) apply(btn.dataset.device);
   });
 
   const clampVal = (v) => Math.max(clamp[0], Math.min(clamp[1], v));
@@ -146,21 +266,39 @@ export function attachDeviceControls(el, {
       // aspect-ratio no longer constrains the frame.
       el.style.width = `${clampVal(startW + gain * sign.sx * dx)}px`;
       el.style.height = `${clampVal(startH + gain * sign.sy * dy)}px`;
+      // Re-contain on every move so growth runs into empty space once an edge
+      // hits the stage — not continue scaling off-screen from the center.
+      containNow();
     });
     const end = (e) => {
       if (!dragging) return;
       dragging = false;
       try { handle.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+      containNow();
     };
     handle.addEventListener('pointerup', end);
     handle.addEventListener('pointercancel', end);
     handle.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
     handle.addEventListener('dblclick', (e) => {
       e.stopPropagation();
-      applyDevicePreset(el, el.dataset.device || 'phone', presets);
+      apply(el.dataset.device || 'phone');
     });
   });
 
-  applyDevicePreset(el, initial || el.dataset.device || 'phone', presets);
+  apply(initial || el.dataset.device || 'phone');
   if (el.dataset.ar) el.style.setProperty('--phone-ar', el.dataset.ar);
+  // data-ar can change the laid-out size — re-contain after it applies.
+  containNow();
+
+  // Keep containment honest across viewport resizes, phone size changes, and
+  // slide navigations (inactive slides are skipped — see containDeviceFrame).
+  window.addEventListener('resize', contain);
+  document.addEventListener('deck:change', contain);
+  if (typeof ResizeObserver !== 'undefined') {
+    // Observe only the phone itself. Observing the shared `.frame` made every
+    // device on every slide re-contain on one resize, including inactive
+    // slides whose enter/exit translateY poisoned the vertical offset.
+    const ro = new ResizeObserver(() => contain());
+    ro.observe(el);
+  }
 }
