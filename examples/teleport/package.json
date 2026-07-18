@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/teleport",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": false,
   "description": "Vue-Lynx Teleport demo — render content to a remote #id target",
   "license": "Apache-2.0",
