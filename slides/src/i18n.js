@@ -347,8 +347,6 @@ export const ZH = {
     '切一刀线程 —— 什么能过桥?',
   'Only closed, first-order terms survive the cut — a flat ops stream, i.e. a display list.':
     '只有封闭的一阶项能扛过这一刀 —— 一串扁平的 ops,也就是一份 display list。',
-  'Pointers die — names take over.':
-    '指针死去 —— <span class="brand-text">名字</span>接管。',
   'Weave the whole Web…': '把整个 Web 织进来……',
   '…into every platform.': '……再织向每一个平台。',
   'more…': '<i></i> 更多……',
