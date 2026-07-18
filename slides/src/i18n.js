@@ -64,23 +64,33 @@ export const ZH = {
     '来自 Vue core 上游的测试,在我们的渲染器上直接通过。',
 
   // ---- API coverage ----
-  'II · Vue coverage · 1/13': 'II · Vue 覆盖度 · 1/13',
-  'II · Vue coverage · 2/13': 'II · Vue 覆盖度 · 2/13',
-  'II · Vue coverage · 3/13': 'II · Vue 覆盖度 · 3/13',
-  'II · Vue coverage · 4/13': 'II · Vue 覆盖度 · 4/13',
-  'II · Vue coverage · 5/13': 'II · Vue 覆盖度 · 5/13',
-  'II · Vue coverage · 6/13': 'II · Vue 覆盖度 · 6/13',
-  'II · Vue coverage · 7/13': 'II · Vue 覆盖度 · 7/13',
-  'II · Vue coverage · 8/13': 'II · Vue 覆盖度 · 8/13',
-  'II · Vue coverage · 9/13': 'II · Vue 覆盖度 · 9/13',
-  'II · Vue coverage · 10/13': 'II · Vue 覆盖度 · 10/13',
-  'II · Vue coverage · 11/13': 'II · Vue 覆盖度 · 11/13',
-  'II · Vue coverage · 12/13': 'II · Vue 覆盖度 · 12/13',
-  'II · Vue coverage · 13/13': 'II · Vue 覆盖度 · 13/13',
+  'II · Vue coverage · 1/12': 'II · Vue 覆盖度 · 1/12',
+  'II · Vue coverage · 2/12': 'II · Vue 覆盖度 · 2/12',
+  'II · Vue coverage · 3/12': 'II · Vue 覆盖度 · 3/12',
+  'II · Vue coverage · 4/12': 'II · Vue 覆盖度 · 4/12',
+  'II · Vue coverage · 5/12': 'II · Vue 覆盖度 · 5/12',
+  'II · Vue coverage · 6/12': 'II · Vue 覆盖度 · 6/12',
+  'II · Vue coverage · 7/12': 'II · Vue 覆盖度 · 7/12',
+  'II · Vue coverage · 8/12': 'II · Vue 覆盖度 · 8/12',
+  'II · Vue coverage · 9/12': 'II · Vue 覆盖度 · 9/12',
+  'II · Vue coverage · 10/12': 'II · Vue 覆盖度 · 10/12',
+  'II · Vue coverage · 11/12': 'II · Vue 覆盖度 · 11/12',
+  'II · Vue coverage · 12/12': 'II · Vue 覆盖度 · 12/12',
+  'v-once / v-memo':
+    '<code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code>',
   'reactive() + composables':
     '<code class="brand-text">reactive()</code> + 组合式函数',
   'Event modifiers': '事件<span class="brand-text">修饰符</span>',
   'CSS features': '<span class="brand-text">CSS</span> 特性',
+
+  // ---- Ecosystem ----
+  'The ecosystem, as-is.': '生态,<span class="brand-text">原样</span>可用。',
+  'Pinia, Vue Router, TanStack Query, Tailwind — the libraries you\'d already reach for on the web, running unchanged.':
+    'Pinia、Vue Router、TanStack Query、Tailwind —— 你在 Web 上已经会用的库,原封不动就能跑。',
+  'II · Ecosystem · 1/4': 'II · 生态 · 1/4',
+  'II · Ecosystem · 2/4': 'II · 生态 · 2/4',
+  'II · Ecosystem · 3/4': 'II · 生态 · 3/4',
+  'II · Ecosystem · 4/4': 'II · 生态 · 4/4',
 
   // ---- Whole apps ----
   'II · Whole apps': 'II · 完整应用',
@@ -228,6 +238,58 @@ export const ZH = {
     'Vue core 自己的测试,在我们的渲染器上重放。<b>0 失败。</b>',
   "…and the tests are the AI's eyes.":
     '……而这些测试,就是 <span class="brand-text">AI 的眼睛</span>。',
+
+  // ---- IV · Instant First-Frame Rendering + Element Templates ----
+  'IV · Instant first frame': 'IV · 首屏直出',
+  'IV · Instant first frame · proof': 'IV · 首屏直出 · 佐证',
+  // headlines
+  'Both threads render. The ops stream is the recording.':
+    '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制。',
+  'IFR changes when the frame renders. Element Templates change how much work it does.':
+    'IFR 改变的是<em class="ifr-em">何时</em>渲染这一帧。<br/><span class="brand-text">Element Templates</span> 改变的是这一帧要做多少活。',
+  // leads
+  'Without IFR, the first paint waits a whole lap — BG boot, render, the ops send — all before anything appears.':
+    '没有 IFR,首帧要等<em>整整一圈</em> —— 后台启动、渲染、送 ops —— 全部跑完才有画面。',
+  'IFR puts the whole runtime in the main-thread bundle — it renders during loadTemplate, so paint lands first and the background boots alongside.':
+    'IFR 把整个运行时放进<b style="color:#56b8f0">主线程</b>产物 —— 它在 <code>loadTemplate</code> 期间渲染,于是<b>先出画面</b>,后台在一旁并行启动。',
+  "The MT render records its ops; the BG's first batches hydrate against them. Correctness never depends on the two matching — deterministic ids & vue:N signs route taps to Vue with no rebinding.":
+    '主线程渲染时录下自己的 ops;后台最初的几批拿去和它水合对账。正确性从不依赖两者一致 —— 确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。',
+  'Normally every static element pays the whole chain — a vnode, a shadow node, ops frames, a thread crossing, an interpreter dispatch.':
+    '常规下每个静态元素都要付整条链 —— 一个 vnode、一个影子节点、若干 ops 帧、一次跨线程、一次解释器分发。',
+  'The compiler lowers the static subtree to one create() function. Vue sends one op; only the dynamic holes travel after.':
+    '编译器把静态子树下沉成一个 <code>create()</code> 函数。Vue 只发<b>一个</b> op;之后只有动态空洞在传输。',
+  'Static structure bakes into a create() skeleton; only the holes — dynamic text, class, style, attrs — stay on the vnode path.':
+    '静态结构烘焙进 <code>create()</code> 骨架;只有空洞 —— 动态的文本、class、style、属性 —— 留在 vnode 路径上。',
+  'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
+    'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
+  'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
+    'Element Templates 把录制的 ops 负载缩小 3–1000× —— 这份协议瘦身惠及每一次更新,不只是首帧。',
+  'A tool, not a default-on switch — but for content-first screens, IFR + ET is the recommended setup.':
+    '它是一件工具,不是默认打开的开关 —— 但对内容优先的屏幕,<b class="brand-text">IFR + ET</b> 是推荐配置。',
+  // flow-center labels
+  '× every static node': '× 每个静态节点',
+  'holes update via ordinary SET_* ops': '空洞照走普通 <b>SET_*</b> ops 更新',
+  // chart titles
+  'render cost ~1,000 el · jitless · ms': '渲染开销 <span>~1,000 元素 · jitless · ms</span>',
+  'recorded ops payload 1,400-el static screen': '录制的 ops 负载 <span>1,400 元素静态屏</span>',
+  // chip
+  'recommended': '推荐',
+  // trade-off columns
+  'what it costs': '有什么代价',
+  'when to reach for it': '什么时候用它',
+  'MT bundle carries the runtime + app — ~2.26× gzip':
+    '主线程产物带上运行时 + 应用 —— gzip <b>~2.26×</b>',
+  'App evaluates on both threads — serial TTI +35%':
+    '应用在<b>两条</b>线程都求值 —— 串行 TTI +35%',
+  "Can't accelerate a fetch-first screen":
+    '无法加速<b>请求优先</b>的屏幕',
+  'Content-first screens with sync initial data':
+    '带同步初始数据的<b>内容优先</b>屏幕',
+  'Render a real skeleton if data is async':
+    '数据异步时,先渲染一个真实<b>骨架</b>',
+  'Keep first-screen render deterministic & thread-agnostic':
+    '让首屏渲染保持<b>确定性</b>、与线程无关',
+
   'One file ships both threads.': '一个文件,装下<em>两条</em>线程。',
   'The same code enters twice — webpack layers route it.':
     '同一份代码,进两次 —— webpack layers 负责分流。',
@@ -419,6 +481,79 @@ export const ZH = {
   'The frontend is dead.': '前端已死。',
   'Long live the frontend.': '前端<span class="brand-text">永生</span>。',
   'Thank you — for real this time.': '谢谢 —— 这次是真的。',
+
+  // ---- One more thing · Vue Vapor (the deep dive) ----
+  'One more thing · Vue Vapor': '还有一件事 · Vue Vapor',
+  'Vapor mode — no Virtual DOM.':
+    '<span class="brand-text">Vapor</span> 模式 —— 没有虚拟 DOM。',
+  "Templates compile straight to code that touches elements directly. We taught it to run on Lynx's two threads.":
+    '模板直接编译成操作元素的代码。我们让它跑在了 Lynx 的两条线程上。',
+
+  'Virtual DOM · the update path': '虚拟 DOM · 更新路径',
+  'Vapor · the update path': 'Vapor · 更新路径',
+  'Every change re-runs the component, rebuilds a VNode tree, and diffs it. Work scales with the whole tree.':
+    '每次变更都要重跑组件、重建 VNode 树、再做 diff。开销随整棵树增长。',
+  'No tree. No diff. A reactive effect writes straight to the one node that changed — work scales with what actually changed.':
+    '没有树。没有 diff。一个响应式 effect 直接写入那个变化的节点 —— 开销只随真正变化的部分增长。',
+
+  'The Vapor output · @vue/compiler-vapor': 'Vapor 产物 · @vue/compiler-vapor',
+  '① a template registered once · ② cloned per instance · ③ one effect that updates a single node.':
+    '<span class="codenote">①</span> 模板注册一次 · <span class="codenote">②</span> 每个实例克隆一份 · <span class="codenote">③</span> 一个 effect 只更新一个节点。',
+
+  'Code reuse · from compile to runtime': '代码复用 · 从编译到运行时',
+  "Vapor drives the browser DOM directly. We make the background thread's tree look like the DOM — so upstream Vapor runs untouched.":
+    'Vapor 直接驱动浏览器 DOM。我们让后台线程的那棵树“长得像”DOM —— 于是上游 Vapor 原封不动地跑起来。',
+
+  'Across the thread boundary · register': '跨越线程边界 · 注册',
+  'Across the thread boundary · clone': '跨越线程边界 · 克隆',
+  'Background · Vapor': '<span class="dot"></span>后台 · Vapor',
+  'Main · interpreter': '<span class="dot"></span>主线程 · 解释器',
+  'inert prototype': '惰性原型',
+  'clone × 1,000': '克隆 × 1,000',
+  'clone → native': '克隆 → 原生',
+  'parse the static shape': '解析静态结构',
+  'walk pre-order → uids': '前序遍历 → uid',
+  'cache the structure': '缓存结构树',
+  'same pre-order → uids': '相同前序 → uid',
+  'one op per row': '每行一个 op',
+  'base uid only': '只传 base uid',
+  're-walk from base uid': '从 base uid 重走一遍',
+  'materialize real elements': '生成真实元素',
+  'The static structure crosses once — not one op per element.':
+    '静态结构只跨越<em>一次</em> —— 不是每个元素一个 op。',
+  'create-1k across the boundary: 17,000 ops · 327 KB → 7,000 ops · 160 KB':
+    'create-1k 跨越边界:<span style="color:var(--ink-mute);text-decoration:line-through">17,000 ops · 327 KB</span> → <b class="brand-text">7,000 ops · 160 KB</b>',
+
+  'Benchmark · update path, background thread': 'Benchmark · 更新路径,后台线程',
+  'Where Vapor pulls away: 5.8–9.8×.':
+    'Vapor 拉开差距的地方:<span class="brand-text">5.8–9.8×</span>。',
+  'The entire delta is Vue work on the thread you share with your app logic — lower background cost means more headroom before dropped frames.':
+    '整个差距都是 Vue 在那条你与应用逻辑共享的线程上的开销 —— 后台开销越低,离掉帧就越远。',
+
+  'Benchmark · the whole ledger': 'Benchmark · 完整账本',
+  'Big wins on updates and traffic; creation at parity; you pay in bundle size.':
+    '更新与传输大幅领先;创建打平;代价是产物体积。',
+
+  'The workflow · one source, two renderers': '工作流 · 一份源码,两个渲染器',
+  "Every example built & driven in both modes through Lynx for Web. The support matrix is generated from the run — it can't drift from what actually passed.":
+    '每个示例都通过 Lynx for Web 在两种模式下构建并驱动。支持矩阵由运行结果生成 —— 不会与真正通过的结果发生漂移。',
+
+  // ---- upstream-test slides (VDOM A7 skip breakdown + Vapor proof) ----
+  '131 documented skips — every one a test-infra artifact or browser-only semantic, not a Lynx gap.':
+    '131 个 skip 都有据可查 —— 每一个要么是测试设施产物,要么是浏览器专属语义,<b class="brand-text">没有一个是 Lynx 的缺口。</b>',
+  'One more thing · Vapor · proof': '还有一件事 · Vapor · 佐证',
+  "Vapor's own suite — unmodified on ShadowElement. It passes the element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.":
+    'Vapor 自己的上游测试 —— 在 ShadowElement 上<b>原封不动</b>地跑。触及元素表面的那些测试,它以 81% 对 vdom 的 57% 通过:与 Lynx 更亲近的契合。',
+
+  'One more number': '还有一个数字',
+  'Vapor vs Vue VDOM on the 10,000-row select storm — same app, same bundle, one attribute apart.':
+    'Vapor 对 Vue VDOM,在 10,000 行的 select 风暴中 —— 同一个应用、同一个产物,只差一个属性。',
+
+  'Vapor · one flag away': 'Vapor · 只差一个开关',
+  'Same source. Flip a switch.':
+    '同一份源码。<span class="brand-text">拨一下开关。</span>',
+  'Experimental today — but the fast path is already here.':
+    '今天还是实验性的 —— 但那条快路已经在这了。',
 };
 
 // Speaker-view chrome labels.
@@ -483,7 +618,7 @@ export const ZH_NOTES = [
   // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入"完成度"。</p>`,
   // 13 Divider II
-  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、完整应用、然后是原生超能力。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
+  `<p><strong>秀肌肉章节。</strong>"为了让大家感受到诚意" —— 我带了一桌丰盛的 demo。三道菜:Vue API 覆盖度、生态原样可用、然后是完整应用。</p><p>接下来看到的每台手机都是活的 —— 边看边扫码,在自己设备上跑。</p>`,
   // 14 852/949
   `<p><strong>先上硬指标。</strong>我们把 Vue core 自己的测试套件拿来直接跑在 Vue Lynx 渲染器上:949 个通过 852 个;每个 skip 都有记录、有交代。"兼容 Vue"在这里是可测量的命题,不是一句口号。</p>`,
   // 15 ref
@@ -508,17 +643,25 @@ export const ZH_NOTES = [
   `<p>原生树上的组件实例缓存 —— 切 tab 再回来,状态还在。<code>include</code> / <code>exclude</code> / <code>max</code>,加上 <code>onActivated</code> / <code>onDeactivated</code>。@jynxbt 贡献(#153),落在 <code>0.4.0</code>。</p>`,
   // 25 Teleport
   `<p>按 id 渲染到目标节点 —— modal / overlay,不用和滚动层叠硬刚。BG 侧 <code>idRegistry</code> 解析 <code>to="#id"</code>;内容保持响应式,<code>:disabled</code> 则就地渲染。@sentomk 贡献(#161),落在 <code>0.4.0</code>。</p>`,
-  // 26 v-once
-  `<p><code>v-once</code> 首次渲染后冻结。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong> —— 比浏览器更值钱。@KealanAU 验证并文档化(#176), <code>0.4.0</code>。点 Increment:live 会变,frozen 不动。</p>`,
-  // 27 v-memo
-  `<p><code>v-memo</code> 在依赖未变时跳过子树 —— 和 <code>v-once</code> 一样有跨线程收益,但按依赖列表判定。常见于 <code>v-for</code> 行。<code>isMemoSame</code> 导出与测试来自 @KealanAU(#156 / #181), <code>0.4.0</code>。十三个特性、十三个现场应用。API 讲完了 —— 接下来,整个应用。</p>`,
-  // 28 Whole apps
-  `<p>API 逐个通过只是入场券。"Web DX 是基线"真正的考验,是把一整个 Vue 代码库 —— 状态、路由、样式、数据请求 —— 整体落到原生上。来两个经典。</p>`,
-  // 29 TodoMVC
+  // 26 v-once / v-memo
+  `<p><strong>两个跳过指令,同一套跨线程收益。</strong><code>v-once</code> 首次渲染后冻结;<code>v-memo</code> 在依赖未变时跳过 —— 同一思路,按依赖列表判定。在 Lynx 上缓存命中会跳过该子树的<strong>整批跨线程 ops</strong>。@KealanAU:<code>v-once</code>(#176), <code>isMemoSame</code> + <code>v-memo</code>(#156 / #181), <code>0.4.0</code>。</p><p><strong>现场:</strong>点 Increment —— live 会变,frozen 不动;行在依赖未变前会跳过,直到你 toggle/rename。十二个特性。API 讲完了 —— 接下来,骑在它上面的生态。</p>`,
+  // 28 Ecosystem intro
+  `<p><strong>把兼容性主张说死。</strong>Vue 不只是一套 API —— 它是一个生态。如果 Pinia、Router、Query、Tailwind 都要 fork 才能跑,我们就失败了。它们不用。接下来四台现场手机;同一批包、同一套 API。</p>`,
+  // 29 Pinia
+  `<p><strong>Pinia,原封不动。</strong>同样的 <code>createPinia</code>,同样的 setup-store <code>defineStore</code>。它骑在 provide/inject 上 —— 所以前面那页才重要。这台手机里有两个 store:一个计数器,一个待办列表。</p><p><strong>现场:</strong>点 +,看 double getter 更新;再切到 todos 区。</p>`,
+  // 30 Vue Router
+  `<p><strong>Vue Router,按发布原样。</strong>唯一带 Lynx 形状的选择是 history 模式:没有 <code>window.location</code>,所以用 <code>createMemoryHistory()</code> —— 和 React Router 的 MemoryRouter 同一套 API。嵌套路由、params、<code>router.push</code> / <code>back</code> 全都有。导航用 <code>RouterLink</code> 的 custom slot 渲染原生 <code>&lt;text&gt;</code>。</p><p><strong>现场:</strong>点 Home → About → Users → 打开一个用户。</p>`,
+  // 31 Vue Query
+  `<p><strong>TanStack Vue Query,原样可用。</strong><code>useQuery</code>、依赖 key、mutation、插件安装 —— 没有任何一处是 Lynx 特供。这台手机打真实 JSON API:列用户、点一个、帖子通过依赖查询加载。</p><p><strong>现场:</strong>等列表出来,点一个用户,看 posts 到达。</p>`,
+  // 32 Tailwind
+  `<p><strong>Tailwind 能跑,是因为 CSS 能跑。</strong>没有 StyleSheet 方言 —— PostCSS 吐真实 CSS,Lynx 的原生引擎直接吃。主题 token 走 CSS 变量;点 Dark / Light / Ocean,整棵树跟着换 token。</p><p><strong>现场:</strong>切主题,拨一个开关。</p>`,
+  // 33 Whole apps
+  `<p>库单独跑通只是热身。真正的考验是把它们组合起来 —— 状态、路由、样式、数据请求 —— 整份 Vue 代码库落到原生上。来两个经典。</p>`,
+  // 34 TodoMVC
   `<p><strong>TodoMVC</strong> —— 每个框架的成人礼。和写 Web 一模一样的 Composition API;输入框是<em>原生</em>的,滚动是<em>原生</em>的,点击延迟不到一帧。</p><p><strong>现场:</strong>加一条、勾几条、清除已完成。</p>`,
-  // 26 HackerNews
+  // 35 HackerNews
   `<p><strong>HackerNews</strong> —— 社区公认的"真应用"基准:网络、分页、嵌套评论。数据 TanStack Vue Query,样式 Tailwind,滚动跑在带复用的原生 <code>&lt;list&gt;</code> 上。<strong>跟着过来的不只是框架,是生态。</strong></p>`,
-  // 27 Runs on web
+  // 36 Runs on web
   `<p><strong>Web 兼容的点睛:</strong>刚才没有任何模拟器。每个手机壳里都是 <em>Lynx for Web</em>,跑的就是发到 iOS/Android 的那份产物。任何一页扫 Web 码 —— 浏览器直接打开;扫 App 码 —— 同一份产物,原生运行。</p><p>Web DX 进,Web 渲染目标出。基线讲完 —— 上超集。</p>`,
   // 28 Divider III
   `<p><strong>超集章节。</strong>覆盖度和移植证明的是下限;真正的卖点是向上:拿一个活着的 Web 应用,fork 它,然后<em>升级</em>它 —— 该是 Vue 的地方还是 Vue,该用原生的地方全上原生。两个真实 fork。</p>`,
@@ -562,6 +705,26 @@ export const ZH_NOTES = [
   `<p><strong>"语义保全"是可测量的命题。</strong>我们把 <code>vuejs/core</code> 的测试套件搬进仓库,在两层上对着 Vue Lynx 跑:一层用我们真实的 ShadowElement 链表垫在 <code>@vue/runtime-test</code> 下面(验证完整渲染器合同 —— keyed diff、LIS、fragment、生命周期);另一层 runtime-dom 把 <code>patchProp → ops → applyOps → PAPI</code> 推进 jsdom。1013 个通过 882,131 个 skip 全部有记录,零失败。</p>`,
   // 43 A8 · 测试是 AI 的眼睛
   `<p><strong>测试的 AI-harness 一面。</strong>我们还做了 <code>vue-lynx-testing-library</code> —— <code>render</code>、<code>fireEvent</code>、<code>getByText</code>,双线程被 <code>@lynx-js/testing-environment</code> 抽象掉 —— 组件行为在普通 vitest 里就能断言。对人来说这是卫生习惯;对 AI harness 来说这是<em>感知</em>:红绿就是 agent 知道自己刚才做了什么的方式。上游套件,就是让两周生成代码保持诚实的 reward signal。</p>`,
+  // IFR1 · 空白首帧
+  `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
+  // IFR2 · IFR:先出画面
+  `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。后台线程照样跑同一份代码,只是并行、离开关键路径。</p>`,
+  // IFR3 · 录制 + 对账
+  `<p><strong>用 ops 对账做水合。</strong>那条扁平 ops 流本身就是"录下来的 PAPI 调用"。后台最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制:相同 → 跳过(已在屏上),值不同 → 打补丁,结构分歧 → 拆掉首屏树重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。</p>`,
+  // IFR4 · Element Templates 转折
+  `<p><strong>第二个杠杆。</strong>IFR 把绘制提前;打开它会默认打开 Element Templates。它们让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。</p>`,
+  // IFR5 · 逐节点的管线
+  `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
+  // IFR6 · ET 折叠管线
+  `<p>看 <code>VDOM</code> 和 <code>PAPI</code> 留在原地,而管线中段整个塌陷。这是<em>框架级</em>模板 —— 普通的带类型 Element PAPI 调用,不是 Lynx 的二进制引擎模板。</p>`,
+  // IFR7 · 骨架 + 空洞
+  `<p>可下沉 = 每个节点都是纯 Lynx 元素、只有值或文本动态。组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、带 ref/id 的节点留在普通 vnode 路径;它们的纯元素子体仍可下沉。scoped-CSS 的 scope id 会被烘焙进去。</p>`,
+  // IFR8 · 基准测试表
+  `<p>几组独立的实验,不是一条 trace。FCP 收益(中位数 −12…−19%,ReactLynx 对照 −23%)来自去掉后台启动 + IPC —— 需要真实的线程边界,两种 IFR 配置都能拿到(ET 对 web FCP 基本持平)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong>(多次重跑约 6–15×)和 ops 负载 —— 这也是 ET 默认打开的原因。代价:约 2.26× gzip。</p>`,
+  // IFR9 · 基准测试图
+  `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
+  // IFR10 · 诚实的取舍
+  `<p>诚实说代价:包体大约翻倍、应用双线程各求值一遍(设备上主线程渲染与后台启动重叠,所以串行 TTI 是上界)。内容优先的屏幕收益是真的;请求优先的屏幕只付包体、拿不到 FCP 收益。</p>`,
   // 44 B1 · 一个 bundle 两个世界
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
   // 45 B2 · 同一份代码进两次
@@ -656,8 +819,33 @@ export const ZH_NOTES = [
   `<p><strong>把生态论点按 AI 时代磨尖。</strong>键盘前坐着 agent 的时候,你需要的甚至不是成熟的类库 —— 而是一个试错便宜、可观测、够安全的平台。Web 之所以是 Web,靠的就是这个。Lynx 的赌注,是把这个性质带到原生。</p>`,
   // 88 E18 · One more thing
   `<p><strong>停住。</strong>数两拍,再翻页。</p>`,
-  // 89 E19 · Vapor on Lynx
-  `<p><strong>连接创新本身。</strong>回想第四章的流水线:VDOM → ShadowElement → ops → PAPI。Vapor 模式不需要 VDOM —— 于是在 Lynx 上,整整一层直接消失:signal 驱动 effect,effect 直接吐 ops。在实现上我们做的是<em>删掉</em>抽象,不是增加抽象。</p><p>诚实交代进度:这是设计草图和早期实验,不是已发布的模式 —— 而这正是它令人兴奋的地方:缝是开着的,创新可以沿着连接双向流动。</p>`,
+  // ---- One more thing · Vue Vapor deep dive (12 slides) ----
+  // 36 Vapor 标题
+  `<p><strong>Vapor 是什么。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
+  // 37 虚拟 DOM 更新路径
+  `<p><strong>先立对比。</strong>从左到右过一遍五个方块。中间三个虚线的就是税:重跑、分配、diff —— 每次更新都要交,无论变了多少。</p><p>下一页用一次 magic move 把中间这段收掉。</p>`,
+  // 38 Vapor 更新路径
+  `<p><strong>morph 的回报。</strong>中间三个方块刚刚消失了。状态和目标节点原地不动,一个响应式 effect 把它们连起来。</p><p>这就是全部要点:细粒度更新,而不是整树 diff。</p>`,
+  // 39 Vapor 产物
+  `<p><strong>看右边这一版。</strong>三步:<code>template()</code> 一次性声明静态结构;<code>t0()</code> 克隆它;<code>renderEffect()</code> 是唯一会重跑的东西 —— 而它只碰一个文本节点。</p><p>注意 <code>from 'vue'</code> —— 组件并不知道自己在 Lynx 上。这正是下一页。</p>`,
+  // 40 代码复用 · 管线
+  `<p><strong>复用的故事。</strong>两条绿色的层就是全部诀窍:<code>@vue/runtime-vapor</code> <em>原封不动</em>发布,因为它底下的 ShadowElement 树会响应标准 DOM 调用 —— <code>insertBefore</code>、<code>cloneNode</code>、<code>setAttribute</code>。这些调用变成 vdom 模式已经在用的同一串 ops。</p>`,
+  // 41 跨线程 · 注册
+  `<p><strong>先讲问题。</strong>Vapor 的原语是“克隆模板,再绑定”。天真做法下,每个克隆出的元素都是一条 create/append op —— Vapor 的跨线程流量会比 vdom <em>更差</em>。</p><p>修复第一步:用 <code>REGISTER_TREE</code> 把结构只发一次。两条线程各自以相同的前序遍历分配 uid —— 于是根本不用传任何 id 映射。</p>`,
+  // 42 跨线程 · 克隆
+  `<p><strong>修复第二步。</strong>每个实例就是一条 <code>CLONE_TREE(base)</code> —— 主线程从这个 base uid 重走缓存好的结构,生成原生元素。</p><p>这些是 Vue Lynx 自己的 opcode;解释器和后台代码在同一个产物里,所以无需改 Lynx 引擎。结果:create-1k 上 −59% ops、−51% 字节。</p>`,
+  // 43 Benchmark · 更新柱状图
+  `<p><strong>核心结果。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现。</p><p>端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样;主线程开销是共享的。</p>`,
+  // 44 Benchmark · 账本
+  `<p><strong>诚实的成绩单。</strong>别夸大 —— 创建是打平的(一开始慢 1.9×;是 ops 遥测把它推到持平)。代价是产物 +26%:Vapor 运行时加上 DOM 兼容垫片。首屏差异在噪声范围内。</p><p>绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
+  // 45 工作流 · 一份源码两个渲染器
+  `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
+  // 45b Vapor 上游测试 + 亲近性（对应 VDOM 那页 A7）
+  `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p>`,
+  // 46 那一个数字（mic-drop）
+  `<p><strong>压轴数字。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9×。</p><p>让它悬一会儿。然后最后一页。</p>`,
+  // 47 收束 · 拨一下开关
+  `<p><strong>收尾返场。</strong>Vapor 是按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>落地:“还是你早就在写的那套 Vue —— 只是多了一条编译期的快路。这就是那‘还有一件事’。”</p>`,
   // 90 E20 · 摇篮
   `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
   // 90b E20b · 动静光谱 · retained → immediate
