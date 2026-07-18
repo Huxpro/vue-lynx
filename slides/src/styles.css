@@ -3101,7 +3101,7 @@ body.is-blackout::after {
 
 /* Meme slot — a <vl-media> wearing this class; the missing-file
    placeholder chrome comes from .vl-ph. */
-.meme { width: min(52cqw, 500px); }
+.meme { width: min(68cqw, 720px); }
 .meme img {
   border-radius: var(--radius);
   box-shadow: 0 18px 60px -22px rgba(0, 0, 0, 0.55);
