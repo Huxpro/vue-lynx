@@ -251,10 +251,6 @@ export const ZH = {
     'Lynx 的两个官方 MTS 教程 —— gallery 滚动条和这个 swiper —— 在 Vue Lynx 上逐行重建。',
   'tutorial: swiper': '教程:swiper',
   'tutorial: gallery': '教程:gallery',
-  'Same worklet engine as ReactLynx — today.':
-    '与 ReactLynx <em style="font-family:var(--serif);font-weight:400">同一套</em> worklet 引擎 —— 这是今天。',
-  'A Vue-flavored MTS API is the open design space.':
-    '而 Vue 味的 MTS API,是留给未来的设计空间。',
   '2 weeks.': '<span class="brand-text">2</span> 周。',
   '160 commits': '160 次提交',
   '21 active days': '21 个活跃日',
@@ -625,11 +621,9 @@ export const ZH_NOTES = [
   // 49 C2 · 函数换线程
   `<p><strong>看方块移动。</strong>文档 <code>&lt;Go&gt;</code> 的对比：左边方块跑在主线程（<code>'main thread'</code>），右边仍走后台 —— 一滚就能摸到差别。还是同一个 Vue 文件；一条指令把处理函数换了线程。</p><p><strong>现场：</strong>滚动 —— 左边（MT）跟手，右边掉帧。</p>`,
   // 50 C3 · 代码样例
-  `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p>`,
+  `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p><p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 51 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
-  // 52 C5 · 复用与开放的 API 空间
-  `<p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 53 IV · 格局 · 引入
   `<p><strong>兑现承诺的 deep-dive。</strong>开场时我们是"凭感觉"相亲;现在运行时、工具链、MTS 都摆上桌了,可以来架构级的版本了。把任何跨端栈拆成五层,层间四条缝 —— 每条要么是扩展点,要么是焊死的墙。诚实地给所有人打分,包括 Lynx 自己。</p>`,
   // 54 Map scaffold

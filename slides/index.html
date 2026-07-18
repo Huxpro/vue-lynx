@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 139</span>
+    <span data-counter>01 / 138</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2258,7 +2258,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- C3 — the code -->
+  <!-- C3 — the code (+ worklet reuse commentary in notes) -->
   <section class="slide stage">
     <div class="codeframe" style="width:100%;max-width:680px;text-align:left">
       <div class="codeframe__head">
@@ -2286,6 +2286,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     </p>
     <aside class="notes">
       <p>The whole MTS surface in one file: <code>'main thread'</code> marks the function, <code>main-thread-bind*</code> attaches it to the event, <code>useMainThreadRef()</code> gives synchronous element access — <code>setStyleProperty</code> lands the same frame the finger moves.</p>
+      <p><strong>Reuse, then evolve.</strong> Under the hood we run ReactLynx's worklet runtime and its API shapes (<code>main-thread-bind*</code>, <code>useMainThreadRef</code>) — battle-tested, and instantly familiar across the Lynx ecosystem. But Vue deserves Vue-shaped ergonomics: think <code>&lt;script main-thread setup&gt;</code>, main-thread computed/watch. That design space is open — and it's a great place for the community to leave a mark.</p>
     </aside>
   </section>
 
@@ -2319,17 +2320,7 @@ app.<span class="code-fn">use</span>(router)</pre>
   </section>
 
   <!-- C5 — reuse + the open API space -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      Same worklet engine as ReactLynx — <em style="font-family:var(--serif);font-weight:400">today</em>.
-    </h2>
-    <p class="lead">
-      A Vue-flavored MTS API is the open design space.
-    </p>
-    <aside class="notes">
-      <p><strong>Reuse, then evolve.</strong> Under the hood we run ReactLynx's worklet runtime and its API shapes (<code>main-thread-bind*</code>, <code>useMainThreadRef</code>) — battle-tested, and instantly familiar across the Lynx ecosystem. But Vue deserves Vue-shaped ergonomics: think <code>&lt;script main-thread setup&gt;</code>, main-thread computed/watch. That design space is open — and it's a great place for the community to leave a mark.</p>
-    </aside>
-  </section>
+  
 
   <!-- ====================================================
        IV · The landscape — the architecture-level comparison
