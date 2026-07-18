@@ -161,8 +161,6 @@ export const ZH = {
 
   // ---- Chapter IV · How we did it ----
   'And how was this built?': '那,它是<br/>怎么被做出来的?',
-  'Three adaptations — the runtime, the toolchain, the main thread — and an AI harness running through all of them.':
-    '三次适配 —— 运行时、工具链、主线程 —— 以及一路贯穿其中的 AI harness。',
   'Background thread': '<i></i>后台线程',
   'Main (UI) thread': '<i></i>主(UI)线程',
   'Vue runs whole — on the background thread.':
@@ -235,8 +233,6 @@ export const ZH = {
   'One file ships both threads.': '一个文件,装下<em>两条</em>线程。',
   'The same code enters twice — webpack layers route it.':
     '同一份代码,进两次 —— webpack layers 负责分流。',
-  'We wrote a plugin — not a compiler.':
-    '我们写的是一个<span class="brand-text">插件</span> —— 不是编译器。',
   "Your CSS isn't translated. It's just CSS.":
     '你的 CSS 没有被翻译。它就是 <b style="color:#F27A9E">CSS</b>。',
   '2 crossings behind your finger':
@@ -271,8 +267,6 @@ export const ZH = {
 
   // ---- Close ----
   "And we'd love your help.": '也很希望你能<br/>搭把手。',
-  "Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface is large. What ships next depends on who shows up.":
-    'Vue Lynx 还是 pre-alpha。架构很稳;Vue 的 API 面很大。接下来能做出什么,取决于谁愿意来。',
   "Native shouldn't be a different team.":
     '原生,不该是另一个<span class="brand-text">团队</span>的事。',
   'Vue developers should ship native apps as naturally as they ship for the web today.':
@@ -624,14 +618,12 @@ export const ZH_NOTES = [
   `<p><strong>Lynx 的交付物是一个装着两个程序的 bundle</strong> —— 后台代码跑在 JS VM,主线程代码跑在 Lepus(PrimJS)。两个 VM、两个入口、一个产物;同一个文件既能原生渲染,也能经 Lynx for Web 跑在浏览器里。于是工具链的问题变成:一次构建,怎么从一份 Vue 代码吐出两个世界?</p>`,
   // 45 B2 · 同一份代码进两次
   `<p><strong>两个入口都 import 你的真实应用。</strong>每个入口在一个 webpack <em>layer</em> 下编译 —— <code>vue:background</code> 和 <code>vue:main-thread</code> —— <code>issuerLayer</code> 规则给每层各自的 loader 链:BG 侧编译完整 SFC;MT 侧只抽取主线程需要的部分。逐 entry 的隔离,是 webpack 依赖图白送的。(这套 layer 方案我们是从 ReactLynx 学来的 —— 第一版扁平 bundle 架构隔离不了多入口应用。)</p>`,
-  // 46 B3 · 插件而非编译器
-  `<p><strong>复用故事的工具链篇。</strong>Lynx 的工具链(Rspeedy)就是 Rspack/Rsbuild —— 而 Vue 生态本来就跑在 Rspack 上,所以整条 SFC 流水线是现成的:<code>rspack-vue-loader</code>、PostCSS、HMR。<code>pluginVueLynx()</code> 是一层薄适配:把入口拆成两个 layer、接上 worklet loader、配好 CSS —— 表面积就这么大。框架无关不是口号,是用"我们只需要写多少"来度量的。</p>`,
   // 47 B4 · CSS 就是 CSS
   `<p><strong>整章样式能力背后安静的超能力:</strong>Lynx 在原生侧带了真正的 CSS 引擎 —— 选择器、级联、动画。所以 <code>&lt;style scoped&gt;</code> 映射到 Lynx 的 cssId 作用域,CSS Modules 和外链样式直接透传,CSS 里的 <code>v-bind()</code> 骑在 CSS 变量上,Tailwind 能跑是因为 PostCSS 就是 PostCSS。没有 StyleSheet 对象方言,没有会漏的翻译层。</p>`,
   // 48 C1 · 手势为什么会迟
-  `<p><strong>先诚实讲代价,再卖回报。</strong>普通写法的滚动跟随动画:事件在主线程触发,跳去后台跑你的回调,产生的 ops 再跳回来 —— 手势的每一帧背后是两次跨线程。页面一忙,肉眼可见地迟。这是双线程架构唯一收费的地方。</p>`,
+  `<p><strong>先认账再卖点。</strong>和文档里的 <code>&lt;Go&gt;</code>（<a href="https://vue.lynxjs.org/guide/main-thread-script">vue.lynxjs.org/guide/main-thread-script</a>）同一个 demo：滚黄色列表 —— 蓝方块走后台线程，每一帧两次跨线程，跟手会有可见延迟。</p><p><strong>现场：</strong>快滚列表，看方块掉队。</p>`,
   // 49 C2 · 函数换线程
-  `<p><strong>看方块移动。</strong>把 <code>'main thread'</code> 写成函数第一行,编译器就把这个函数搬进主线程 bundle —— 它从此同步运行在事件发生的地方,直接访问元素。组件的其余部分还是普通 Vue。又是渐进增强的形状:双线程的回报留着,代价变成按函数粒度的可选项。</p>`,
+  `<p><strong>看方块移动。</strong>文档 <code>&lt;Go&gt;</code> 的对比：左边方块跑在主线程（<code>'main thread'</code>），右边仍走后台 —— 一滚就能摸到差别。还是同一个 Vue 文件；一条指令把处理函数换了线程。</p><p><strong>现场：</strong>滚动 —— 左边（MT）跟手，右边掉帧。</p>`,
   // 50 C3 · 代码样例
   `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p>`,
   // 51 C4 · 教程复刻

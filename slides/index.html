@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 140</span>
+    <span data-counter>01 / 139</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -1498,14 +1498,10 @@ app.<span class="code-fn">use</span>(router)</pre>
   <!-- ====================================================
        Chapter IV · How we did it
        ==================================================== -->
-  <section class="slide divider">
-    <h2 class="divider__title">
-      And how was <br/>this built?
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:16ch">
+      And how was <span class="brand-text">this built</span>?
     </h2>
-    <p class="divider__tag">
-      Three adaptations — the runtime, the toolchain, the main thread — and an
-      AI harness running through all of them.
-    </p>
     <aside class="notes">
       <p><strong>The engineering chapter.</strong> Everything you just saw was built in two weeks by one person — and this chapter is the honest answer to "how". Three adaptations, each revealing one piece of Lynx's architecture: split Vue across two threads without breaking its semantics; make one toolchain emit both worlds; then make the main thread itself programmable. An AI harness threads through the whole story.</p>
     </aside>
@@ -2172,21 +2168,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- B3 — a plugin, not a compiler -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      We wrote a <span class="brand-text">plugin</span> — not a compiler.
-    </h2>
-    <div class="demo__meta" style="justify-content:center">
-      <span class="chip chip--brand">Rspeedy</span>
-      <span class="chip chip--brand">Rspack / Rsbuild</span>
-      <span class="chip">rspack-vue-loader</span>
-      <span class="chip">PostCSS</span>
-    </div>
-    <aside class="notes">
-      <p><strong>The reuse story, toolchain edition.</strong> Lynx's toolchain (Rspeedy) is Rspack/Rsbuild — and the Vue ecosystem already runs on Rspack, so the entire SFC pipeline came off the shelf: <code>rspack-vue-loader</code>, PostCSS, HMR. <code>pluginVueLynx()</code> is a thin adapter: split each entry into the two layers, wire the worklet loaders, configure CSS — that's the whole surface. Framework-agnostic isn't a slogan; it's measured in how little we had to write.</p>
-    </aside>
-  </section>
 
   <!-- B4 — CSS is CSS -->
   <section class="slide stage">
@@ -2210,50 +2191,70 @@ app.<span class="code-fn">use</span>(router)</pre>
   </section>
 
   <!-- C1 — why gestures lag -->
-  <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
+  <section class="slide demo demo--tech demo--split">
+    <div class="demo__body">
+      <div class="flow" style="width:100%;height:clamp(200px,36cqh,280px)">
+        <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+          <span class="flane__label"><i></i>Background thread</span>
+        </div>
+        <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+          <span class="flane__label"><i></i>Main (UI) thread</span>
+        </div>
+        <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:25%">
+          onScroll()
+          <small>a Vue handler</small>
+        </div>
+        <span class="farr" style="--c:#3deae7;left:26%;top:50%">&uarr; event</span>
+        <span class="farr" style="--c:#4FB8F0;left:74%;top:50%">&darr; ops</span>
+        <span class="fcenter" data-mm-fade style="left:50%;top:66%;font-size:clamp(14px,1.4cqw,18px)"><b style="color:#F27A9E">2</b> crossings behind your finger</span>
       </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:25%">
-        onScroll()
-        <small>a Vue handler</small>
-      </div>
-      <span class="farr" style="--c:#3deae7;left:26%;top:50%">&uarr; event</span>
-      <span class="farr" style="--c:#4FB8F0;left:74%;top:50%">&darr; ops</span>
-      <span class="fcenter" data-mm-fade style="left:50%;top:66%"><b style="color:#F27A9E">2</b> crossings behind your finger</span>
+      <p class="lead arch-cap" style="margin-top:8px">
+        The dual-thread <em>cost</em>: gestures wait for the round trip.
+      </p>
     </div>
-    <p class="lead arch-cap" data-mm-fade>
-      The dual-thread <em>cost</em>: gestures wait for the round trip.
-    </p>
+    <div class="demo__stage">
+      <div class="phone" data-ar="480 / 400">
+        <div class="phone__inner">
+          <vl-demo bundle="main-thread/dist/background-draggable.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
     <aside class="notes">
-      <p><strong>Honest about the cost before selling the reward.</strong> A scroll-follow animation the normal way: the event fires on the main thread, hops to the background for your handler, and the resulting ops hop back — two crossings on every frame of a gesture. On a busy page that's visible lag. This is the one place the dual-thread architecture charges you.</p>
+      <p><strong>Honest about the cost before selling the reward.</strong> Same demo as the docs <code>&lt;Go&gt;</code> on vue.lynxjs.org/guide/main-thread-script: scroll the yellow list — the blue square follows on the background thread, with a visible lag from two thread crossings per frame.</p>
+      <p><strong>Do live:</strong> scroll the list; the square lags, especially if you scroll fast.</p>
     </aside>
   </section>
 
   <!-- C2 — the function changes threads -->
-  <section class="slide stage">
-    <div class="flow">
-      <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
-        <span class="flane__label"><i></i>Background thread</span>
+  <section class="slide demo demo--tech demo--split">
+    <div class="demo__body">
+      <div class="flow" style="width:100%;height:clamp(200px,36cqh,280px)">
+        <div class="flane" data-flip="lane-bg" style="--c:#5dd5a8;top:4%;height:42%">
+          <span class="flane__label"><i></i>Background thread</span>
+        </div>
+        <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
+          <span class="flane__label"><i></i>Main (UI) thread</span>
+        </div>
+        <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:75%">
+          onScroll()
+          <small>'main thread'</small>
+        </div>
+        <span class="fcenter" data-mm-fade style="left:50%;top:25%;font-size:clamp(14px,1.4cqw,18px)"><b>0</b> crossings — it runs where events fire</span>
       </div>
-      <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:54%;height:42%">
-        <span class="flane__label"><i></i>Main (UI) thread</span>
-      </div>
-      <div class="fb is-hero" data-flip="fb-fn" style="--c:#42b883;left:50%;top:75%">
-        onScroll()
-        <small>'main thread'</small>
-      </div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:25%"><b>0</b> crossings — it runs where events fire</span>
+      <p class="lead arch-cap" style="margin-top:8px">
+        One directive. The function <em>changes threads</em>.
+      </p>
     </div>
-    <p class="lead arch-cap" data-mm-fade>
-      One directive. The function <em>changes threads</em>.
-    </p>
+    <div class="demo__stage">
+      <div class="phone" data-ar="480 / 400">
+        <div class="phone__inner">
+          <vl-demo bundle="main-thread/dist/main-thread-draggable.web.bundle"></vl-demo>
+        </div>
+      </div>
+    </div>
     <aside class="notes">
-      <p><strong>Watch the block move.</strong> Add <code>'main thread'</code> as the first line and the compiler relocates that function into the main-thread bundle — it now runs synchronously where events fire, with direct element access. The rest of your component stays ordinary Vue. That's the progressive-enhancement shape again: the dual-thread reward stays, the cost becomes opt-out per function.</p>
+      <p><strong>Watch the block move.</strong> The docs <code>&lt;Go&gt;</code> comparison: left square runs on the main thread (<code>'main thread'</code>), right square still goes through the background — scroll and feel the difference. Same Vue file; one directive relocates the handler.</p>
+      <p><strong>Do live:</strong> scroll — the left (MT) square sticks to the finger; the right lags.</p>
     </aside>
   </section>
 
@@ -2487,14 +2488,10 @@ app.<span class="code-fn">use</span>(router)</pre>
   <!-- ====================================================
        Chapter IV · Close
        ==================================================== -->
-  <section class="slide divider">
-    <h2 class="divider__title">
-      And we'd love <br/>your help.
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:16ch">
+      And we'd love <span class="brand-text">your help</span>.
     </h2>
-    <p class="divider__tag">
-      Vue Lynx is pre-alpha. The architecture is solid; Vue's API surface is
-      large. What ships next depends on who shows up.
-    </p>
     <aside class="notes">
       <p><strong>Tone shift to the ask.</strong> The project is real but needs the community. Architecture is solid; Vue's surface area is huge.</p>
     </aside>
