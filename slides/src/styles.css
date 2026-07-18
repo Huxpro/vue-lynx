@@ -2097,6 +2097,8 @@ body.is-blackout::after {
 }
 .fb.is-dim { opacity: 0.45; }
 .fb.is-hero { box-shadow: 0 0 22px -4px var(--c, #5dd5a8); }
+.fb.fb--lite { color: #111; }
+.fb.fb--lite small { color: rgba(17, 17, 17, 0.62); }
 
 /* Text arrow / inline flow label — mono, colorable, fades in. */
 .farr {
@@ -3369,6 +3371,177 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   border: 1px dashed var(--line);
   background: transparent;
   color: var(--ink-faint);
+}
+.tblk--evt {
+  --c: #e8eaed;
+  color: #111;
+  font-weight: 600;
+}
+.tblk--js {
+  --c: #E8B44A;
+  color: color-mix(in srgb, #E8B44A 20%, #111);
+  font-weight: 600;
+}
+.tblk--ui {
+  --c: #e8eaed;
+  color: #111;
+  font-weight: 600;
+}
+.tframe {
+  position: absolute;
+  top: 18%;
+  bottom: 10%;
+  width: 2px;
+  background: #F27A9E;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+}
+.tframe__label {
+  position: absolute;
+  top: -2px;
+  left: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #F27A9E;
+  white-space: nowrap;
+}
+.tl-arr {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--ink-soft);
+  z-index: 3;
+}
+
+/* Runtime ring + warn/question center labels */
+.flow--ring { height: clamp(320px, 54cqh, 420px); }
+.fcenter--warn { color: #F27A9E; font-size: clamp(16px, 1.7cqw, 22px); }
+.fcenter--q {
+  font-family: var(--display);
+  font-size: clamp(52px, 7cqw, 84px);
+  font-weight: 700;
+  color: var(--ink-mute);
+  letter-spacing: -0.04em;
+}
+.fcenter--q.is-gone { pointer-events: none; }
+
+/* Testing pipeline coverage */
+.tpipe {
+  width: min(100%, 980px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.2cqh, 22px);
+  margin-top: 1cqh;
+}
+.tpipe__axis {
+  display: grid;
+  grid-template-columns: 1fr 14px 1fr;
+  align-items: stretch;
+  gap: 0;
+}
+.tpipe__half {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 28%, transparent);
+  background: color-mix(in srgb, var(--c) 7%, transparent);
+}
+.tpipe__lab {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c) 75%, var(--ink));
+  margin-right: 4px;
+  flex: none;
+}
+.tpipe__node {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1.3px solid color-mix(in srgb, var(--c) 45%, transparent);
+  background: color-mix(in srgb, var(--c) 12%, var(--paper));
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(12px, 1.2cqw, 15px);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.tpipe__cut {
+  width: 2px;
+  margin: 6px auto;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--ink-mute) 0 5px,
+    transparent 5px 10px
+  );
+}
+.tpipe__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 4px;
+}
+.tpipe__bar {
+  --from: 0;
+  --to: 100;
+  position: relative;
+  height: 28px;
+  margin-left: calc(var(--from) * 1%);
+  width: calc((var(--to) - var(--from)) * 1%);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--c) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c) 70%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  gap: 10px;
+}
+.tpipe__bar-lab {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.tpipe__bar-cap {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  white-space: nowrap;
+}
+
+/* Harness write-up: copy + live iframe + small QR */
+.writeup {
+  width: min(100%, 1100px);
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.15fr);
+  gap: clamp(18px, 2.4cqw, 36px);
+  align-items: center;
+}
+.writeup__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.2cqh;
+}
+.writeup__embed {
+  justify-self: end;
+}
+.qr-solo--sm {
+  width: clamp(72px, 8.5cqw, 96px);
+  height: clamp(72px, 8.5cqw, 96px);
+  padding: 8px;
+  border-radius: 12px;
+  margin-top: 1.2cqh;
 }
 
 /* ---- hydration reconcile (3-way) ---- */

@@ -221,23 +221,34 @@ export const ZH = {
   'IV · The harness': 'IV · Harness',
   'Background thread': '<i></i>后台线程',
   'Main (UI) thread': '<i></i>主(UI)线程',
-  'Vue runs whole — on the background thread.':
-    'Vue <em>整个</em>跑在后台线程上。',
-  'createRenderer() — a renderer, not a fork.':
-    '<code>createRenderer()</code> —— 写一个渲染器,而不是 fork 一个 Vue。',
-  'Updates leave as a flat ops buffer — once per tick.':
-    '更新以<b style="color:#4FB8F0">扁平 ops 缓冲</b>的形式离开 —— 每个 tick 一次。',
-  'The main thread replays them — native elements appear.':
-    '主线程把它们<b style="color:#F27A9E">重放</b>出来 —— 原生元素出现。',
-  'Events ride back up — handlers never leave Vue.':
-    '事件坐车<b style="color:#3deae7">回来</b> —— 回调从未离开过 Vue。',
-  'The threading leaks into your code in exactly one place.':
-    '双线程漏进你代码里的,只有<em>一个</em>地方。',
-  'one lap = nextTick()': '绕一圈 = <b>nextTick()</b>',
-  "Vue core's own tests, replayed on our renderer. 0 fail.":
-    'Vue core 自己的测试,在我们的渲染器上重放。<b>0 失败。</b>',
-  "…and the tests are the AI's eyes.":
-    '……而这些测试,就是 <span class="brand-text">AI 的眼睛</span>。',
+  'Main': '<i></i>Main',
+  'Background': '<i></i>Background',
+  'The Web is one thread.':
+    'Web 是<em>一条</em>线程。',
+  'Native UI owns Main — so JS must leave.':
+    'Native UI 占着 Main —— 所以 JS <em>必须</em>离开。',
+  'Vue through Element PAPI on Main — no.':
+    'Vue <em>经</em> Element PAPI 全压在 Main 上 —— 不行。',
+  'too much on Main': 'Main 装不下',
+  'Vue leaves. What bridges the threads?':
+    'Vue 离开了。谁来桥接双线程?',
+  'ShadowElement → ops → Element PAPI → Native UI.':
+    'ShadowElement → <b style="color:#4FB8F0">ops</b> → Element PAPI → Native UI。',
+  'One lap — a dual-thread nextTick.':
+    '绕一圈 —— 跨双线程的 <b class="brand-text">nextTick</b>。',
+  'nextTick()': 'nextTick()',
+  'Testing?': '测试?',
+  'Upstream Vue tests on our renderer. 0 fail.':
+    '上游 Vue 测试,在我们的渲染器上跑。<b>0 失败。</b>',
+  "the AI's eyes": 'AI 的眼睛',
+  'vue runtime-core': 'vue runtime-core',
+  'vue runtime-dom': 'vue runtime-dom',
+  'E2E pipeline': 'E2E 管线',
+  'Agentic': 'Agentic',
+  'upstream — for free': '上游 —— 白送',
+  '882 / 1013 · 0 fail': '882 / 1013 · 0 失败',
+  'ops → PAPI → jsdom': 'ops → PAPI → jsdom',
+  'DevTool MCP · UI probe': 'DevTool MCP · UI 探针',
 
   // ---- IV · Instant First-Frame Rendering + Element Templates ----
   'IV · Instant first frame': 'IV · 首屏直出',
@@ -689,22 +700,22 @@ export const ZH_NOTES = [
   `<p><strong>移动端最难的布局,靠组合做出来。</strong>折叠头部 + 吸顶 tab + 横向翻页 + 每个 pane 各自纵向滚动 —— Twitter/X 的 profile。Web 上这是重型库(react-native-collapsible-tab-view、Android 的 CoordinatorLayout)在和主线程搏斗;这里是一次原生元件的组合,跑在平台自己的滚动线程上。</p><p><strong>Native UX ← Web DX。</strong>Lynx 把原生构件暴露成元件:<code>&lt;scroll-coordinator&gt;</code>(声明式的嵌套滚动交接:先折叠头部,再把滚动交给当前 pane 的列表,零 JS 滚动监听)、抽取出的 <code>&lt;viewpager&gt;</code>(原生吸附翻页 + 每个 pane 状态保留)、以及每个 pane 一个复用型 <code>&lt;list&gt;</code>。我们在一个 Vue SFC 里把它们组合起来。唯一的平台接缝就是标签名(Lynx for Web 的 <code>x-foldview-ng</code>/<code>x-viewpager-ng</code> ↔ 原生的 <code>scroll-coordinator</code>/<code>viewpager</code>)。</p><p><strong>一套代码,两个目标:</strong>同一个 SFC 既渲染真正的原生 profile,又渲染文档站里的 Lynx-for-Web 预览。tab 栏与翻页器通过原生 <code>selectTab</code>/<code>change</code> 方法双向同步,而非合成 DOM 事件。</p>`,
   // 35 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
-  // 36 A1 · Vue 落在后台线程
-  `<p><strong>第一个决定:Vue 住哪条线程?</strong>早期社区实验把 Vue 放在主线程 —— 于是每个事件都要跨线程转发。而 Lynx 原生就把事件送到后台线程,所以我们把整个运行时放在这里:响应式、diff、生命周期、你的回调。不是 fork —— 是原封不动的 <code>@vue/runtime-core</code>。</p>`,
-  // 37 A2 · ShadowElement
-  `<p><strong>Vue 官方的自定义渲染器 API 就是全部诀窍。</strong><code>createRenderer()</code> 要求同步的节点 —— <code>parentNode()</code>、<code>nextSibling()</code> 必须立刻有答案,但真实元素在另一条线程上。所以 nodeOps 双写:在后台线程维护一棵轻量 <em>ShadowElement</em> 链表(满足 Vue 的所有同步读取),同时把真正的工作排进队列。和 ReactLynx 的 snapshot instance 是同一个 pattern。</p>`,
-  // 38 A3 · ops 缓冲
-  `<p><strong>唯一跨过线程边界的,是数据。</strong><code>[CREATE, id, tag, INSERT, parent, child, SET_PROP, id, key, value…]</code> —— 只有数字和字符串,没有对象要序列化,没有函数。按 Vue 自己的 flush 周期批处理:一个响应式 tick = 一次发送。Vue 编译器还白送一层:静态内容零 ops,只有动态绑定在路上跑。</p>`,
-  // 39 A4 · 解释器 + PAPI
-  `<p><strong>这里就是 Lynx 框架无关的那条缝,凑近看。</strong>主线程跑一个小解释器 —— 字面意义上的 switch 循环 —— 把 ops 重放到 <em>Element PAPI</em> 上:<code>__CreateView</code>、<code>__AppendElement</code>、<code>__SetAttribute</code>……这套 C 风格 API 是 Lynx 给每个框架的合同;ReactLynx 在喂它,我们在喂它,下一个框架也会。VDOM → ShadowElement → ops → PAPI:四站,一条直线。</p>`,
-  // 40 A5 · 事件回程
-  `<p><strong>回程闭环。</strong>函数不能跨线程,所以它们从来不跨:每个回调注册一个数字 <em>sign</em>;主线程派发 sign,后台线程查表,就地调用你的 Vue 函数 —— 闭包、响应式,全都还在原地。这就是 Vue 语义得以保全的原因:真正要紧的东西从来没离开过。</p>`,
-  // 41 A6 · nextTick
-  `<p><strong>用户能感觉到多少?几乎为零。</strong>唯一可见的接缝:原生元素在 mount 之后一拍才落地,所以"等 DOM"写成 <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> —— 和 Web Vue 同一个 <code>nextTick</code> 心智模型,只是跨了一条线程。这张图绕一圈,<em>就是</em>一个 tick。其余一切 —— 响应式、生命周期、组合式函数 —— 行为和 Web 完全一致。(文档:Understanding the Dual-Thread Model。)</p>`,
-  // 42 A7 · 上游测试
-  `<p><strong>"语义保全"是可测量的命题。</strong>我们把 <code>vuejs/core</code> 的测试套件搬进仓库,在两层上对着 Vue Lynx 跑:一层用我们真实的 ShadowElement 链表垫在 <code>@vue/runtime-test</code> 下面(验证完整渲染器合同 —— keyed diff、LIS、fragment、生命周期);另一层 runtime-dom 把 <code>patchProp → ops → applyOps → PAPI</code> 推进 jsdom。1013 个通过 882,131 个 skip 全部有记录,零失败。</p>`,
-  // 43 A8 · 测试是 AI 的眼睛
-  `<p><strong>测试的 AI-harness 一面。</strong>我们还做了 <code>vue-lynx-testing-library</code> —— <code>render</code>、<code>fireEvent</code>、<code>getByText</code>,双线程被 <code>@lynx-js/testing-environment</code> 抽象掉 —— 组件行为在普通 vitest 里就能断言。对人来说这是卫生习惯;对 AI harness 来说这是<em>感知</em>:红绿就是 agent 知道自己刚才做了什么的方式。上游套件,就是让两周生成代码保持诚实的 reward signal。</p>`,
+  // W1 · Web 单线程
+  `<p><strong>从大家已经熟悉的图开始。</strong>浏览器的一帧就是一条 Main:事件进来、JavaScript 跑、Paint 出去。先把这张图立住,再把它拆开。</p>`,
+  // W2 · Native UI 占 Main
+  `<p><strong>跨端的困境。</strong>Native UI 已经住在主线程上了。框架也挤上去,帧预算就死。所以认真的原生栈都会把 JS 拉到后台 —— 事件下行,UI 更新往往下一帧才回来。Lynx 做的是同一刀。</p>`,
+  // A1 · 全压在 Main 不行
+  `<p><strong>天真接法。</strong>Vue 调 Element PAPI,Element PAPI 改 Native UI。整条链都放 Main,等于在原生壳子上重演 Web 的单线程陷阱。</p>`,
+  // A2 · Vue 上移 + ?
+  `<p><strong>把 Vue 挪上去。</strong>运行时 —— 响应式、VDOM、你的回调 —— 属于后台线程。Native UI 和 Element PAPI 留在 Main。真正的问题是那条缝:Vue 的渲染器要同步 DOM 读,真实节点却在另一条线程。</p>`,
+  // A3 · ShadowElement + ops
+  `<p><strong>给这条缝起名。</strong><code>createRenderer()</code> 在后台维护 ShadowElement 链表,同步 DOM 读立刻有答案;变更以扁平 ops 缓冲离开 —— 只有数字和字符串 —— Main 经 Element PAPI 重放到 Native UI。不是 fork Vue;跨边界一条直线。</p>`,
+  // A4 · nextTick 环
+  `<p><strong>闭环。</strong>ops 下行;事件按数字 sign 回程 —— 回调从不离开 Vue。绕一圈就是一个 tick。所以 <code>onMounted(() =&gt; nextTick(() =&gt; lynx.createSelectorQuery()…))</code> 和 Web Vue 是同一个心智模型,只是跨了线程。几乎没有别的东西漏进业务代码。</p>`,
+  // T1 · Testing 管线
+  `<p><strong>两条线程,四段覆盖。</strong>上游 runtime-core 白送 Vue→ShadowElement;runtime-dom 把套件经我们的渲染器接到 PAPI —— 882/1013,零失败。我们的 E2E 桥接跨过线程切面;Agentic 层用 DevTool MCP 看最终 UI。大部分覆盖是继承来的。</p>`,
+  // T2 · AI 的眼睛
+  `<p><strong>实证,然后是感知。</strong>上游套件是让两周生成代码保持诚实的 reward signal。<code>vue-lynx-testing-library</code> 把双线程抽象掉 —— 对人是卫生习惯,对 agent harness 是眼睛:红绿就是它知道自己刚才做了什么。</p>`,
   // IFR1 · 空白首帧
   `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
   // IFR2 · IFR:先出画面
@@ -763,10 +774,8 @@ export const ZH_NOTES = [
   `<p>Lynx 从 ReactLynx 起步,但平台被刻意演进为框架无关 —— 前端层是真正的扩展点,不是 React 的附属功能。这不是宣传话术;马上给你看实证。</p>`,
   // 62 Web DX Native UX
   `<p><strong>一句话论点。</strong>Lynx 给你 Web 的开发体验、Native 的用户体验。而因为前端那条缝是开的 —— 这就是 Vue 的机会。于是……</p>`,
-  // 63 H1 · 2 weeks
-  `<p><strong>现在这个数字说得通了。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。</p>`,
-  // 64 H2 · X 复盘
-  `<p><strong>让观众把手机对准这页。</strong>完整方法论写在 X 上 —— harness 怎么搭、plan 长什么样、AI 在哪儿失手、测试怎么接住的。vue.lynxjs.org 首页的 badge 也链着它。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
+  // H · harness write-up (merged)
+  `<p><strong>现在这个数字说得通了 —— 手机也能直接打开。</strong>这一章的一切是两周的夜晚和周末:plan 写成 spec,agent harness 执行,上游测试当 reward signal。完整复盘嵌在页里,也留了二维码 —— harness 结构、prompt、AI 失手处、测试怎么接住。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
   // 65 Combine
   `<p><strong>标题句。</strong>Vue × Lynx = Vue 跑在原生上。停顿,让等式落地。然后:"也很希望大家来一起把它做成。"</p>`,
   // 66 Divider V · close
