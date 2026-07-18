@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 123</span>
+    <span data-counter>01 / 121</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -1977,21 +1977,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- C5 — reuse + the open API space -->
-  
-
-  <!-- ====================================================
-       IV · The landscape — the architecture-level comparison
-       ==================================================== -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      Zoom out: every stack is <span class="brand-text">layers</span> — and seams.
-    </h2>
-    <aside class="notes">
-      <p><strong>The promised deep-dive.</strong> In the prologue we speed-dated the candidates by feel; now, with the runtime, toolchain and MTS on the table, we can afford the architecture-level version. Split any cross-platform stack into five layers; between them sit four seams — each one either an extension point or a welded wall. Let's grade everyone honestly, Lynx included.</p>
-    </aside>
-  </section>
-
   <!-- IFR1 — the first frame waits a full lap -->
   <section class="slide stage">
     <div class="ifrtl">
@@ -2232,127 +2217,6 @@ app.<span class="code-fn">use</span>(router)</pre>
       for a static-heavy screen drops ~78&nbsp;KB → 69&nbsp;bytes. PAPI call
       counts only drop 5&ndash;20% — native element work is a shared floor; what
       lowers away is the framework JS and the protocol around it.</p>
-    </aside>
-  </section>
-
-  <!-- IFR10 — honest trade-offs -->
-  <section class="slide stage">
-    <div class="ifr-trade">
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--cost">what it costs</span>
-        <ul class="ifr-trade__list is-cost">
-          <li>MT bundle carries the runtime + app — <b>~2.26&times;</b> gzip</li>
-          <li>App evaluates on <b>both</b> threads — serial TTI +35%</li>
-          <li>Can't accelerate a <b>fetch-first</b> screen</li>
-        </ul>
-      </div>
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--use">when to reach for it</span>
-        <ul class="ifr-trade__list is-use">
-          <li><b>Content-first</b> screens with sync initial data</li>
-          <li>Render a real <b>skeleton</b> if data is async</li>
-          <li>Keep first-screen render <b>deterministic</b> &amp; thread-agnostic</li>
-        </ul>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      A tool, not a default-on switch — but for content-first screens,
-      <b class="brand-text">IFR + ET</b> is the recommended setup.
-    </p>
-    <aside class="notes">
-      <p>Honest costs: bundle roughly doubles, the app double-evaluates (on
-      device the MT render overlaps BG startup, so serial TTI is an upper
-      bound). The win is real for content-first screens; fetch-driven screens
-      pay size for no FCP benefit.</p>
-    </aside>
-  </section>
-
-  <!-- Scaffold: five layers, four seams -->
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="0"></div>
-    <div class="gate-legend arch-cap" data-mm-fade>
-      <span><i></i>open — an extension point</span>
-      <span><i class="part"></i>half-open</span>
-      <span><i class="seal"></i>welded shut</span>
-    </div>
-    <aside class="notes">
-      <p><strong>The map.</strong> Split any cross-platform stack into five layers; between them sit four seams, each a yes/no question: EP1 plug in any frontend? EP2 swap the render model? EP3 add native capabilities? EP4 reach a new platform? An open seam is an extension point; a welded seam is a wall.</p>
-    </aside>
-  </section>
-
-  <!-- One framework column drops in per slide -->
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="1"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#4FB8F0">Web</b> — the DX everyone wants. But the sandbox
-      caps how native it can ever feel.
-    </p>
-    <aside class="notes"><p>The Web: EP1 wide open — any framework. But rendering and capabilities are welded shut by the sandbox; a new platform just means "a browser exists there". Great DX, capped UX.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="2"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#6FA8FF">Ionic</b> — the Web in a shell.
-      Not <em>native</em> enough.
-    </p>
-    <aside class="notes"><p>Ionic (and every WebView shell): keeps the Web's openness on top, Capacitor pries the capability seam half-open — but rendering is still the DOM in a WebView. It inherits the Web's ceiling: not native enough.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="3"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#E8B44A">NativeScript</b> — direct native access.
-      Not <em>Web</em> enough.
-    </p>
-    <aside class="notes"><p>NativeScript: the opposite trade. The most direct native access of anyone — but it isn't really the Web: no real CSS engine or DOM semantics, rendering and new platforms welded. Not Web enough.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="4"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#F27A9E">Flutter</b> — Dart plus self-rendering.
-      A parallel universe.
-    </p>
-    <aside class="notes"><p>Flutter: opens the bottom half wide — self-renderer, embedder for new platforms. The price: the only door on top is Dart. It doesn't extend the Web; it replaces it. A parallel universe.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="5"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#9E86F0">React Native</b> — closest to the dream.
-      But the frontend seam is <em>React-only</em>.
-    </p>
-    <aside class="notes"><p>React Native: capabilities open, huge ecosystem — closest to the dream. But the frontend seam is welded to React: Metro, the renderer, the mental model. If you're Vue, this door was never yours.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="6"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b class="brand-text">Lynx</b> — all four seams open.
-      Exactly the door Vue was waiting for.
-    </p>
-    <aside class="notes">
-      <p><strong>The answer.</strong> EP1: Rspack-based toolchain, framework-agnostic — real CSS, any frontend. EP2: the engine adapts native primitives or self-renders. EP3: Native Modules. EP4: mobile + desktop shipped, TV/VR run on the self-renderer. Four seams, none welded — including the one Vue needs.</p>
-    </aside>
-  </section>
-
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      Lynx evolved <span class="brand-text">framework-agnostic</span>.
-    </h2>
-    <aside class="notes">
-      <p>Lynx started with ReactLynx, but the platform was deliberately evolved to be framework-agnostic — the frontend layer is a genuine extension point, not a React feature. That's not marketing; you'll see the receipts in a second.</p>
-    </aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="mega" style="font-size:clamp(44px,6.6cqw,108px);line-height:1.14">
-      <span style="color:#4FB8F0">Web</span> DX.
-      <span class="brand-text">Native</span> UX.
-    </div>
-    <aside class="notes">
-      <p><strong>The thesis, one line.</strong> Lynx gives you the Web's developer experience with native's user experience. And because the frontend seam is open — this is Vue's opening. Which brings us to…</p>
     </aside>
   </section>
 
@@ -3234,6 +3098,95 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Why framework authors should care about Lynx.</strong> Lynx has made interesting — even controversial — design choices, and keeps making them: dual threads, MTS, a real CSS engine off the DOM. This is a team that loves the Web and has both the guts and the room to break it where it must.</p>
       <p>For Vue specifically: a native platform with genuine room to run — the kind of space where a Vapor-native renderer is a weekend of vibing away.</p>
+    </aside>
+  </section>
+
+  <!-- Scaffold: five layers, four seams -->
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="0"></div>
+    <div class="gate-legend arch-cap" data-mm-fade>
+      <span><i></i>open — an extension point</span>
+      <span><i class="part"></i>half-open</span>
+      <span><i class="seal"></i>welded shut</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The map.</strong> Split any cross-platform stack into five layers; between them sit four seams, each a yes/no question: EP1 plug in any frontend? EP2 swap the render model? EP3 add native capabilities? EP4 reach a new platform? An open seam is an extension point; a welded seam is a wall.</p>
+    </aside>
+  </section>
+
+  <!-- One framework column drops in per slide -->
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="1"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#4FB8F0">Web</b> — the DX everyone wants. But the sandbox
+      caps how native it can ever feel.
+    </p>
+    <aside class="notes"><p>The Web: EP1 wide open — any framework. But rendering and capabilities are welded shut by the sandbox; a new platform just means "a browser exists there". Great DX, capped UX.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="2"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#6FA8FF">Ionic</b> — the Web in a shell.
+      Not <em>native</em> enough.
+    </p>
+    <aside class="notes"><p>Ionic (and every WebView shell): keeps the Web's openness on top, Capacitor pries the capability seam half-open — but rendering is still the DOM in a WebView. It inherits the Web's ceiling: not native enough.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="3"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#E8B44A">NativeScript</b> — direct native access.
+      Not <em>Web</em> enough.
+    </p>
+    <aside class="notes"><p>NativeScript: the opposite trade. The most direct native access of anyone — but it isn't really the Web: no real CSS engine or DOM semantics, rendering and new platforms welded. Not Web enough.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="4"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#F27A9E">Flutter</b> — Dart plus self-rendering.
+      A parallel universe.
+    </p>
+    <aside class="notes"><p>Flutter: opens the bottom half wide — self-renderer, embedder for new platforms. The price: the only door on top is Dart. It doesn't extend the Web; it replaces it. A parallel universe.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="5"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#9E86F0">React Native</b> — closest to the dream.
+      But the frontend seam is <em>React-only</em>.
+    </p>
+    <aside class="notes"><p>React Native: capabilities open, huge ecosystem — closest to the dream. But the frontend seam is welded to React: Metro, the renderer, the mental model. If you're Vue, this door was never yours.</p></aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="6"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b class="brand-text">Lynx</b> — all four seams open.
+      Exactly the door Vue was waiting for.
+    </p>
+    <aside class="notes">
+      <p><strong>The answer.</strong> EP1: Rspack-based toolchain, framework-agnostic — real CSS, any frontend. EP2: the engine adapts native primitives or self-renders. EP3: Native Modules. EP4: mobile + desktop shipped, TV/VR run on the self-renderer. Four seams, none welded — including the one Vue needs.</p>
+    </aside>
+  </section>
+
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Lynx evolved <span class="brand-text">framework-agnostic</span>.
+    </h2>
+    <aside class="notes">
+      <p>Lynx started with ReactLynx, but the platform was deliberately evolved to be framework-agnostic — the frontend layer is a genuine extension point, not a React feature. That's not marketing; you'll see the receipts in a second.</p>
+    </aside>
+  </section>
+
+  <section class="slide stage">
+    <div class="mega" style="font-size:clamp(44px,6.6cqw,108px);line-height:1.14">
+      <span style="color:#4FB8F0">Web</span> DX.
+      <span class="brand-text">Native</span> UX.
+    </div>
+    <aside class="notes">
+      <p><strong>The thesis, one line.</strong> Lynx gives you the Web's developer experience with native's user experience. And because the frontend seam is open — this is Vue's opening. Which brings us to…</p>
     </aside>
   </section>
 

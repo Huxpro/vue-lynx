@@ -17,8 +17,6 @@ export const ZH = {
   'Develop Lynx with the familiar Vue 3.': '用熟悉的 Vue 3 开发 Lynx。',
 
   // ---- Chapter I · The gap ----
-  'Zoom out: every stack is layers — and seams.':
-    '拉远看:每个技术栈都是<span class="brand-text">层</span> —— 与缝。',
   'self-rendered': '自渲染',
   'Dart — wrong language': 'Dart',
   'native UI': '原生 UI',
@@ -557,8 +555,6 @@ export const ZH_NOTES = [
   `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p><p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 51 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
-  // 53 IV · 格局 · 引入
-  `<p><strong>兑现承诺的 deep-dive。</strong>开场时我们是"凭感觉"相亲;现在运行时、工具链、MTS 都摆上桌了,可以来架构级的版本了。把任何跨端栈拆成五层,层间四条缝 —— 每条要么是扩展点,要么是焊死的墙。诚实地给所有人打分,包括 Lynx 自己。</p>`,
   // IFR1 · 空白首帧
   `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
   // IFR2 · IFR:先出画面
@@ -573,26 +569,6 @@ export const ZH_NOTES = [
   `<p>几组独立的实验,不是一条 trace。FCP 收益(中位数 −12…−19%,ReactLynx 对照 −23%)来自去掉后台启动 + IPC —— 需要真实的线程边界,两种 IFR 配置都能拿到(ET 对 web FCP 基本持平)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong>(多次重跑约 6–15×)和 ops 负载 —— 这也是 ET 默认打开的原因。代价:约 2.26× gzip。</p>`,
   // IFR9 · 基准测试图
   `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
-  // IFR10 · 诚实的取舍
-  `<p>诚实说代价:包体大约翻倍、应用双线程各求值一遍(设备上主线程渲染与后台启动重叠,所以串行 TTI 是上界)。内容优先的屏幕收益是真的;请求优先的屏幕只付包体、拿不到 FCP 收益。</p>`,
-  // 54 Map scaffold
-  `<p><strong>地图。</strong>把任何跨端栈拆成五层;层间四条缝,每条是个是非题:EP1 能接任意前端?EP2 能换渲染模型?EP3 能加原生能力?EP4 能上新平台?开着的缝是扩展点,焊死的缝是墙。</p>`,
-  // 55 Web column
-  `<p>Web:EP1 全开 —— 任意框架。但渲染和能力被沙箱焊死;"新平台"只等于"那里有浏览器"。开发体验封顶,用户体验也封顶。</p>`,
-  // 56 Ionic
-  `<p>Ionic(以及所有 WebView 套壳):上层保住了 Web 的开放,Capacitor 把能力那条缝撬到半开 —— 但渲染仍然是 WebView 里的 DOM。它继承了 Web 的天花板:<strong>不够 Native</strong>。</p>`,
-  // 57 NativeScript
-  `<p>NativeScript:反向的取舍。谁都比不过的直接原生访问 —— 但它不是真正的 Web:没有真 CSS 引擎、没有 DOM 语义,渲染和新平台两处焊死。<strong>不够 Web</strong>。</p>`,
-  // 58 Flutter
-  `<p>Flutter:下半场全开 —— 自渲染、embedder 上新平台。代价是上层只留 Dart 一扇门。它不是在延伸 Web,是在替代 Web —— <strong>一个平行宇宙</strong>。</p>`,
-  // 59 React Native
-  `<p>React Native:能力开放、生态庞大 —— 离梦想最近。但前端那条缝焊死在 React 上:Metro、渲染器、心智模型全都是。如果你是 Vue,<strong>这扇门从来不属于你</strong>。</p>`,
-  // 60 Lynx column
-  `<p><strong>答案。</strong>EP1:基于 Rspack 的工具链,框架无关 —— 真 CSS、任意前端。EP2:引擎既能适配原生 primitive,也能自渲染。EP3:Native Module。EP4:移动 + 桌面已落地,TV/VR 用自渲染跑通。四条缝,一条不焊 —— 包括 Vue 需要的那条。</p>`,
-  // 61 Framework-agnostic
-  `<p>Lynx 从 ReactLynx 起步,但平台被刻意演进为框架无关 —— 前端层是真正的扩展点,不是 React 的附属功能。这不是宣传话术;马上给你看实证。</p>`,
-  // 62 Web DX Native UX
-  `<p><strong>一句话论点。</strong>Lynx 给你 Web 的开发体验、Native 的用户体验。而因为前端那条缝是开的 —— 这就是 Vue 的机会。于是……</p>`,
   // H1 · 2 weeks + X 复盘(合并)
   `<p><strong>现在这个数字说得通了 —— 顺便告诉大家去哪儿读。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。完整方法论写在 X 上(这里内嵌了,vue.lynxjs.org 首页的 badge 也链着它)—— 扫码就能在手机上读。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
   // 65 Close · 一行 npm 命令（含原 combine / 搭把手 / 另一个团队 / what's there / 假收尾）
@@ -660,6 +636,24 @@ export const ZH_NOTES = [
   `<p><strong>设计空间是一条很宽的光谱</strong> —— 从完全 retained 到完全 immediate。<strong>React VDOM</strong> 完全动态:解释一棵树,每次更新再 diff。<strong>Vue</strong> 的 compiler-hinted、block-based VDOM 好一些 —— block 让它跳过静态子树。<strong>Vapor</strong> 看似把一切都编译掉了,其实仍给浏览器内的运行时留了一块:指针,用来<em>读</em> / 寻址活节点。所以 Vapor 依然是 <em>retained mode</em>。</p><p><strong>为什么这在线程边界上要命。</strong>retained 的指针只有在整棵树本身共享时才能扛过一次线程跳转:RN 的 Fabric 把指针留在一棵两侧都能碰到的 C++ 影子树里。Lynx 做不到 —— 我们从第一帧就跨线程。<strong>Element Templates</strong> 走了反方向:只写、单向,更接近 immediate mode 的 <em>display list</em>。它跨线程极其漂亮 —— 代价是放弃 MT 侧的动态性。就像画一幅画:画一次,然后把画布撒手。</p>`,
   // 90c E20c · 摇篮 · 收束设计空间
   `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
+  // 54 Map scaffold
+  `<p><strong>地图。</strong>把任何跨端栈拆成五层;层间四条缝,每条是个是非题:EP1 能接任意前端?EP2 能换渲染模型?EP3 能加原生能力?EP4 能上新平台?开着的缝是扩展点,焊死的缝是墙。</p>`,
+  // 55 Web column
+  `<p>Web:EP1 全开 —— 任意框架。但渲染和能力被沙箱焊死;"新平台"只等于"那里有浏览器"。开发体验封顶,用户体验也封顶。</p>`,
+  // 56 Ionic
+  `<p>Ionic(以及所有 WebView 套壳):上层保住了 Web 的开放,Capacitor 把能力那条缝撬到半开 —— 但渲染仍然是 WebView 里的 DOM。它继承了 Web 的天花板:<strong>不够 Native</strong>。</p>`,
+  // 57 NativeScript
+  `<p>NativeScript:反向的取舍。谁都比不过的直接原生访问 —— 但它不是真正的 Web:没有真 CSS 引擎、没有 DOM 语义,渲染和新平台两处焊死。<strong>不够 Web</strong>。</p>`,
+  // 58 Flutter
+  `<p>Flutter:下半场全开 —— 自渲染、embedder 上新平台。代价是上层只留 Dart 一扇门。它不是在延伸 Web,是在替代 Web —— <strong>一个平行宇宙</strong>。</p>`,
+  // 59 React Native
+  `<p>React Native:能力开放、生态庞大 —— 离梦想最近。但前端那条缝焊死在 React 上:Metro、渲染器、心智模型全都是。如果你是 Vue,<strong>这扇门从来不属于你</strong>。</p>`,
+  // 60 Lynx column
+  `<p><strong>答案。</strong>EP1:基于 Rspack 的工具链,框架无关 —— 真 CSS、任意前端。EP2:引擎既能适配原生 primitive,也能自渲染。EP3:Native Module。EP4:移动 + 桌面已落地,TV/VR 用自渲染跑通。四条缝,一条不焊 —— 包括 Vue 需要的那条。</p>`,
+  // 61 Framework-agnostic
+  `<p>Lynx 从 ReactLynx 起步,但平台被刻意演进为框架无关 —— 前端层是真正的扩展点,不是 React 的附属功能。这不是宣传话术;马上给你看实证。</p>`,
+  // 62 Web DX Native UX
+  `<p><strong>一句话论点。</strong>Lynx 给你 Web 的开发体验、Native 的用户体验。而因为前端那条缝是开的 —— 这就是 Vue 的机会。于是……</p>`,
   // 91a E21·a · 全景种子 · 先 React
   `<p><strong>织物从一根线开始。</strong>React 最先把这套模式跑通 —— 声明式 UI、一个做 reconcile 的运行时。先点它的名,让它落到织机上。</p><p>从这里起步,是为了让"生长"读起来像一个故事:一根线,然后两根,然后整张 Web。</p>`,
   // 91b E21·b · 全景种子 · React + Vue
@@ -682,4 +676,5 @@ export const ZH_NOTES = [
   `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站(hux.pro);我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p><p><strong>转折 —— 可我做的,还是前端。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。这从来就是这份工作。这<em>就是</em>前端。</p>`,
   // 97 E27 · 前端永生
   `<p><strong>真正的收尾。</strong>小字划掉:前端已死。大字:前端永生。谢谢 —— 这次是真的 —— 然后留在这页做 Q&amp;A。</p><p>Q&amp;A 弹药:"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— 同一份产物,两端都跑。"AI 会取代 Vue 吗?" —— 你刚看完整个答案。</p>`,
+
 ];
