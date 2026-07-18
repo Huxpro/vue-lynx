@@ -54,5 +54,25 @@
   "go.deeplink.or": {
     "en": "or",
     "zh": "或"
+  },
+  "go.openin": {
+    "en": "Open",
+    "zh": "打开"
+  },
+  "go.openin.show-qrcode": {
+    "en": "Show QR Code",
+    "zh": "显示二维码"
+  },
+  "go.ultra": {
+    "en": "Open frameless",
+    "zh": "无边框打开"
+  },
+  "go.ultra.exit": {
+    "en": "Exit frameless",
+    "zh": "退出无边框"
+  },
+  "go.refresh": {
+    "en": "Refresh",
+    "zh": "刷新"
   }
 }
