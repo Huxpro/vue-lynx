@@ -64,3 +64,33 @@ export function readFlags(slide) {
     chrome: slide.dataset.chrome || FLAG_DEFAULTS.chrome,
   };
 }
+
+// ---- Media-embed slides (global "Media embeds: off" skip list) ----
+//
+// `data-media` on a <section.slide>:
+//   keep | on     — never skip (content slide that happens to include <vl-media>)
+//   skip | off | embed — always skippable when the global media-embeds flag is off
+//   (absent)      — auto: skip if the slide has <vl-media> and is an overlay, or
+//                   has media but no title chrome (meme-style beats)
+const MEDIA_TITLE_SEL =
+  '.h-cover, .h-section, .demo__title, .divider__title, .cta__title, .mega, .thankyou h1';
+
+/** True when this slide is a media-embed beat that the global off-switch skips. */
+export function isMediaEmbedSlide(slide) {
+  if (!slide) return false;
+  const policy = String(slide.dataset.media || '').toLowerCase();
+  if (policy === 'keep' || policy === 'on') return false;
+  if (policy === 'skip' || policy === 'off' || policy === 'embed') return true;
+  if (!slide.querySelector('vl-media')) return false;
+  if (slide.classList.contains('overlay')) return true;
+  return !slide.querySelector(MEDIA_TITLE_SEL);
+}
+
+/** True when the slide carries media (or an explicit media policy) — overview editor target. */
+export function isMediaCandidate(slide) {
+  if (!slide) return false;
+  const policy = String(slide.dataset.media || '').toLowerCase();
+  if (policy === 'keep' || policy === 'on' || policy === 'skip' ||
+      policy === 'off' || policy === 'embed') return true;
+  return !!slide.querySelector('vl-media');
+}

@@ -36,6 +36,28 @@ function serveSimPlugin() {
   return {
     name: 'serve-sim',
     async configureServer(server) {
+      // serve-sim's helper proxy can leave Socket 'error' events unhandled
+      // (ECONNRESET when the sim helper drops). Node treats that as fatal
+      // and kills Vite — the browser then shows a blank/failed page.
+      server.httpServer?.on('connection', (socket) => {
+        socket.on('error', (err) => {
+          if (err?.code === 'ECONNRESET' || err?.code === 'EPIPE') return;
+          console.warn('[slides] client socket error:', err?.message ?? err);
+        });
+      });
+      const swallowSimReset = (err) => {
+        if (err?.code === 'ECONNRESET' || err?.code === 'EPIPE') {
+          console.warn(`[slides] serve-sim socket ${err.code} (ignored)`);
+          return;
+        }
+        console.error(err);
+        process.exit(1);
+      };
+      process.on('uncaughtException', swallowSimReset);
+      server.httpServer?.on('close', () => {
+        process.off('uncaughtException', swallowSimReset);
+      });
+
       try {
         const { simMiddleware } = await import('serve-sim/middleware');
         const middleware = simMiddleware({ basePath: '/.sim' });

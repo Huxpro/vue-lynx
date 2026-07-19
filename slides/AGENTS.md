@@ -16,7 +16,7 @@ one step (no in-slide fragments). Everything is authored against a fixed
 | **weave** | the epilogue's canvas thread field; a slide opts in with `data-weave="<scene>"` (`src/weave.js`) |
 | **`<vl-media>`** | universal embed: video / image / iframe with missing-file placeholders (`src/embeds.js`) |
 | **embed frame** | `.phone.phone--embed.no-deck-scroll` wrapper → drag-resize + preset chrome |
-| **flags** | per-slide `data-bg` (clean/beam) · `data-transition` (magic/fade/cut) · `data-chrome` (minimal/full/none) |
+| **flags** | per-slide `data-bg` (clean/beam) · `data-transition` (magic/fade/cut) · `data-chrome` (minimal/full/none) · `data-media` (keep/skip — overrides the global Media embeds palette toggle) |
 
 ## Adding a slide — the invariants
 
@@ -67,6 +67,15 @@ one step (no in-slide fragments). Everything is authored against a fixed
 - Resizable: wrap in `.phone.phone--embed.no-deck-scroll` with
   `data-embed="wide|portrait|browser"`; seed size with `data-w`/`data-h`
   (not inline `--phone-w`, which the preset would clobber).
+- **Global skip:** palette `m` / `?nomedia=1` turns Media embeds off — auto-skips
+  overlay (and title-less) slides that contain `<vl-media>`, and unmounts media.
+  Override per slide with `data-media="keep"` (never skip) or `data-media="skip"`
+  (always skippable).
+- **Overview editor (`o`):** bar toggles Media embeds (eye); each media tile has
+  its own eye to open/hide (`keep` ↔ `skip`). Dimmed tiles = hidden under the
+  current global setting; click the tile (not the eye) to jump there.
+  After a tile jump, `Esc` returns to overview while still on that slide, or
+  within 10s if you've moved on.
 
 ## Weave scenes
 

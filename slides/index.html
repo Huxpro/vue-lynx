@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 123</span>
+    <span data-counter>01 / 125</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -45,6 +45,15 @@
 
   <!-- Fixed 1280x720 stage; scaled to fit by main.js (fitStage) -->
   <div class="frame">
+
+  <!-- ====================================================
+       0 — Black open · beam only
+       ==================================================== -->
+  <section class="slide" data-bg="beam" data-chrome="none">
+    <aside class="notes">
+      <p><strong>Black open — just the beam.</strong> Hold a beat in the dark before the first mark lands.</p>
+    </aside>
+  </section>
 
   <!-- ====================================================
        1 — Logo build-up · React
@@ -92,8 +101,7 @@
       <p>Drop the file at <code>slides/public/media/embeds/02-video-1.mp4</code> — until then this shows a labeled placeholder.</p>
     </aside>
   </section>
-
-  <section class="slide overlay" data-bg="clean" data-chrome="none">
+<section class="slide overlay" data-bg="clean" data-chrome="none">
     <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02a"
          data-w="min(36cqw, 450px)"
          style="position:absolute;z-index:1;left:30%;top:32%;transform:translate(-50%,-50%)">
@@ -109,8 +117,7 @@
       <p>File: <code>02-video-2.mp4</code>.</p>
     </aside>
   </section>
-
-  <section class="slide overlay" data-bg="clean" data-chrome="none">
+<section class="slide overlay" data-bg="clean" data-chrome="none">
     <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-02a"
          data-w="min(30cqw, 380px)"
          style="position:absolute;z-index:1;left:25%;top:26%;transform:translate(-50%,-50%)">
@@ -122,14 +129,13 @@
       <div class="phone__inner"><vl-media src="/media/embeds/02-video-2.mp4" data-autoplay="false" label="02-video-2.mp4 · landscape"></vl-media></div>
     </div>
     <vl-media class="snap" data-mm-fade src="/media/embeds/02-image.png" label="02-image.png · photo"
-              style="position:absolute;z-index:3;left:49%;top:64%;width:34cqw;transform:translate(-50%,-50%) rotate(-1.5deg);--ph-ar:4/3"></vl-media>
+              style="position:absolute;z-index:3;left:49%;top:64%;width:34cqw;transform:translate(-50%,-50%) rotate(-1.5deg);--ph-ar:960/1198"></vl-media>
     <aside class="notes">
       <p><strong>The photo lands</strong> — both clips freeze small, the snapshot drops center-stage. The collage of that era, complete.</p>
       <p>File: <code>02-image.png</code>.</p>
     </aside>
   </section>
-
-  <section class="slide logos" data-bg="clean" data-chrome="none">
+<section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--react" data-flip="brand-react"
          style="left:calc(37% - 8cqw);top:calc(50% - 8cqw)">
       <svg viewBox="-11.5 -10.232 23 20.464" fill="none" aria-label="React logo"><circle r="2.05" fill="#61dafb"/><g stroke="#61dafb" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>
@@ -180,7 +186,18 @@
     </aside>
   </section>
 
-  <section class="slide logos" data-bg="clean" data-chrome="none">
+  <!-- 3a′ — same deck, jump to slide 36, larger frame -->
+  <section class="slide overlay" data-bg="clean" data-chrome="none">
+    <div class="phone phone--embed no-deck-scroll" data-embed="browser" data-flip="em-03"
+         data-w="min(78cqw, 1000px)"
+         style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">
+      <div class="phone__inner"><vl-media kind="iframe" src="https://huangxuan.me/pwa-qcon2016/#/36" label="huangxuan.me/pwa-qcon2016/#/36 · live iframe"></vl-media></div>
+    </div>
+    <aside class="notes">
+      <p><strong>Zoom the frame, land on slide 36</strong> — same live deck, a specific beat. Bigger so the room can read it; still click-inside / wheel-outside.</p>
+    </aside>
+  </section>
+<section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--react" data-flip="brand-react"
          style="left:calc(34% - 8cqw);top:calc(31% - 8cqw)">
       <svg viewBox="-11.5 -10.232 23 20.464" fill="none" aria-label="React logo"><circle r="2.05" fill="#61dafb"/><g stroke="#61dafb" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>
@@ -236,6 +253,7 @@
       <p><strong>The field, in one row.</strong> The industry is not short on cross-platform answers: Flutter, React Native, NativeScript, and the Web itself — with its own shell family orbiting it (Electron, Tauri, Ionic). And the newcomer at the end of the row: Lynx.</p>
     </aside>
   </section>
+
   <!-- ====================================================
        6 — Vue on top · looking down at the candidates
        ==================================================== -->
@@ -256,6 +274,7 @@
       <p><strong>Vue enters — at the top, looking down the row.</strong> Every stack below has a home framework story. Vue — one of the largest frontend communities on earth — has never had a dominant one. Weex tried, NativeScript-Vue tried; nothing stuck.</p><p>So let's speed-date the row, one candidate at a time.</p>
     </aside>
   </section>
+
   <!-- 7 — Candidate · Flutter -->
   <section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--seek-sm" data-flip="brand-vue" style="left:calc(50% - 5.25cqw);top:calc(18.1% - 5.25cqw)"><svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg></div>
@@ -272,6 +291,7 @@
       <p><strong>Candidate 1: Flutter.</strong> Renders everything itself — Skia/Impeller — and the platform spread is impressive: iOS, Android, desktop, even web. But the only door on top is Dart. Wrong language, wrong ecosystem: Vue can't plug in at all. The wire never connects. (Note the dashed web edge — Flutter's web target is notoriously rough.)</p>
     </aside>
   </section>
+
   <!-- 8 — Candidate · React Native -->
   <section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--seek-sm" data-flip="brand-vue" style="left:calc(50% - 5.25cqw);top:calc(18.1% - 5.25cqw)"><svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg></div>
@@ -288,6 +308,7 @@
       <p><strong>Candidate 2: React Native.</strong> Native UI primitives — philosophically the closest. But the entire chain is bound to React: Metro, the renderer, the programming model. Vue isn't just unwelcome; the door literally doesn't fit. (Web and desktop are reachable — dashed here — but react-native-web and the desktop ports are out-of-tree, flaky-tier support.)</p>
     </aside>
   </section>
+
   <!-- 9 — Candidate · NativeScript -->
   <section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--seek-sm" data-flip="brand-vue" style="left:calc(50% - 5.25cqw);top:calc(18.1% - 5.25cqw)"><svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg></div>
@@ -304,6 +325,7 @@
       <p><strong>Candidate 3: NativeScript.</strong> This one Vue <em>can</em> plug into — but only halfway: the programming model and the ecosystem don't fully survive the trip, and the rendering model isn't web-like (no real CSS layout engine). Worse, the target list doesn't even include the Web (desktop exists, but dashed-tier) — so you maintain a second codebase for a smaller reach. Low return on the investment.</p>
     </aside>
   </section>
+
   <!-- 10 — The Web -->
   <section class="slide logos" data-bg="clean" data-chrome="none">
     <div class="logo logo--seek-sm" data-flip="brand-vue" style="left:calc(50% - 5.25cqw);top:calc(18.1% - 5.25cqw)"><svg viewBox="0 0 256 221" fill="none" aria-label="Vue logo"><path fill="#41b883" d="M204.8 0H256L128 220.8 0 0h97.92L128 51.2 157.44 0z"/><path fill="#41b883" d="M0 0l128 220.8L256 0h-51.2L128 132.48 50.56 0z"/><path fill="#35495e" d="M50.56 0L128 133.12 204.8 0h-47.36L128 51.2 97.92 0z"/></svg></div>
@@ -320,6 +342,7 @@
       <p><strong>So the community stays on the Web</strong> — today's actual choice. It connects perfectly: browsers everywhere, and the shell family (Electron, Tauri, Ionic — un-dimmed around Chrome) papering over the gaps. One problem no shell fixes: it's still <em>not native enough</em> — the ceiling we saw in every demo chapter.</p>
     </aside>
   </section>
+
   <!-- ====================================================
        11 — Lynx steps to the center · and connects
        ==================================================== -->
@@ -370,14 +393,54 @@
     </aside>
   </section>
 
-  
-
   <!-- ====================================================
        II · Vue API coverage — one feature per slide
        ordered by vue-lynx release version
        ==================================================== -->
+  <!-- First <lynx-view> demo (ref / hello-world) + local iOS Simulator via
+       serve-sim (Vite mounts /.sim in `pnpm dev`). -->
+  <section class="slide demo demo--api demo--sim" data-media="keep">
+    <div class="demo__body">
+      <div class="demo__title-row">
+        <h2 class="demo__title"><code class="brand-text">ref()</code> <span class="demo__title-sub">· live sim</span></h2>
+        <span class="ver-badge">serve-sim</span>
+      </div>
+      <div class="codeframe">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>App.vue</span>
+        </div>
+<pre><span class="code-tag">&lt;script setup&gt;</span>
+<span class="code-key">import</span> { ref } <span class="code-key">from</span> <span class="code-str">'vue-lynx'</span>
+<span class="code-key">const</span> { y, jump } <span class="code-key">=</span> <span class="code-fn">useFlappy</span>()  <span class="code-com">// ref(0) inside</span>
+<span class="code-tag">&lt;/script&gt;</span>
 
-  <section class="slide demo demo--api">
+<span class="code-tag">&lt;template&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap</span>=<span class="code-str">"jump"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;image</span> <span class="code-attr">:style</span>=<span class="code-str">"{ transform:
+      `translateY(${y}px)` }"</span> <span class="code-tag">/&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/template&gt;</span></pre>
+      </div>
+    </div>
+    <div class="demo__stage demo__stage--pair">
+      <div class="phone" data-caption="Web · lynx-view">
+        <div class="phone__inner">
+          <vl-demo bundle="hello-world/dist/main.web.bundle"></vl-demo>
+        </div>
+      </div>
+      <div class="phone no-deck-scroll" data-caption="Native · serve-sim">
+        <div class="phone__inner">
+          <vl-media kind="iframe" src="/.sim" label="/.sim · local iOS Simulator (serve-sim)"></vl-media>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p><strong>Start at the beginning — with the real simulator beside it.</strong> <code>ref()</code>, an event handler, a style binding. Left is Lynx for Web (<code>&lt;lynx-view&gt;</code>); right is the local iOS Simulator streamed through <a href="https://github.com/EvanBacon/serve-sim">serve-sim</a> at <code>/.sim</code>.</p>
+      <p><strong>Before the talk:</strong> boot a sim + Lynx Explorer with the hello-world bundle, then <code>npx serve-sim --detach</code>. The Vite deck mounts the preview middleware automatically.</p>
+    </aside>
+  </section>
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">reactive()</code> + composables</h2>
@@ -409,8 +472,7 @@
       <p>The whole reactivity core is reused from Vue verbatim — <code>reactive</code>, <code>toRefs</code>, <code>computed</code>, watchers. Which means <strong>composables — the way you actually structure Vue apps — work untouched</strong>. The stopwatch here is a plain composable.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">v-model</code></h2>
@@ -447,8 +509,7 @@
       <p>Two-way binding, both flavors: component <code>v-model</code> via <code>defineModel</code> (incl. named models), and <code>v-model</code> straight on Lynx's <strong>native</strong> <code>&lt;input&gt;</code>/<code>&lt;textarea&gt;</code> — with <code>.lazy/.trim/.number</code>. Native <code>vModelText</code> landed via @jynxbt (#121) in <code>0.2.0</code>. The timing-sensitive cases (preset values, programmatic writes, <code>@input</code> coexisting) are all covered.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;slot&gt;</code></h2>
@@ -482,8 +543,7 @@
       <p>Composition patterns carry over whole: default, named, and scoped slots — the full component-authoring toolkit you use to build design systems.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">provide / inject</code></h2>
@@ -513,8 +573,7 @@
       <p>Dependency injection across the tree — reactive values included. Toggle the theme at the root; deep children re-render through the injected ref. This is also the mechanism Pinia and Router ride on, which is why they work.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;Suspense&gt;</code></h2>
@@ -547,8 +606,7 @@
       <p>Async orchestration: <code>defineAsyncComponent</code>, async <code>setup()</code>, nested suspense boundaries, fallbacks on remount — all running on the native tree.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;Transition&gt;</code></h2>
@@ -579,8 +637,7 @@
       <p><code>&lt;Transition&gt;</code> and <code>&lt;TransitionGroup&gt;</code>, driven by CSS animation on the <strong>native compositor</strong> — enter/leave, list moves, the classes you already know.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">CSS</span> features</h2>
@@ -621,8 +678,7 @@
       <p>Real CSS is a Lynx superpower — so Vue's SFC CSS features land whole: plain <code>&lt;style&gt;</code>, <code>&lt;style scoped&gt;</code> (cssId bridge in <code>0.4.0</code>), CSS modules, imported stylesheets, and <code>v-bind()</code> in CSS (<code>0.3.0</code>) driving native styles off reactive state. Credit @KealanAU for the Lynx-native <code>useCssVars</code> / <code>v-bind()</code> path (#127) — not the whole CSS stack.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title">Event <span class="brand-text">modifiers</span></h2>
@@ -658,8 +714,7 @@
       <p>Vue's event modifiers, mapped onto Lynx's event system: <code>.once</code>, <code>.stop</code>, <code>.self</code>, chained combinations — shipped by @KealanAU (#155) in <code>0.4.0</code>. The demo shows each side-by-side with its unmodified twin. (<code>.prevent</code> is a compatibility no-op — nothing to prevent natively.)</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;KeepAlive&gt;</code></h2>
@@ -693,8 +748,7 @@
       <p>Component instance cache on a native tree — switch tabs, come back, state is still there. <code>include</code> / <code>exclude</code> / <code>max</code>, plus <code>onActivated</code> / <code>onDeactivated</code>. Shipped by @jynxbt (#153) in <code>0.4.0</code>.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">&lt;Teleport&gt;</code></h2>
@@ -729,8 +783,7 @@
       <p>Render into a target by id — modals and overlays without fighting scroll stacking. BG-side <code>idRegistry</code> resolves <code>to="#id"</code>; content stays reactive, and <code>:disabled</code> renders in place. Shipped by @sentomk (#161) in <code>0.4.0</code>.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api demo--api-duo">
+<section class="slide demo demo--api demo--api-duo">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><code class="brand-text">v-once</code> / <code class="brand-text">v-memo</code></h2>
@@ -796,8 +849,7 @@
       <p><strong>The compatibility claim, sharpened.</strong> Vue isn't just an API — it's an ecosystem. If Pinia, Router, Query, and Tailwind need forks to run, we failed. They don't. Four live phones next; same packages, same APIs.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">Pinia</span></h2>
@@ -830,8 +882,7 @@
       <p><strong>Do live:</strong> tap +, watch the double getter update; flip to the todos section.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">Vue Router</span></h2>
@@ -867,8 +918,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>Do live:</strong> tap Home → About → Users → open a user.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">Vue Query</span></h2>
@@ -906,8 +956,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>Do live:</strong> wait for the list, tap a user, watch posts arrive.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--api">
+<section class="slide demo demo--api">
     <div class="demo__body">
       <div class="demo__title-row">
         <h2 class="demo__title"><span class="brand-text">Tailwind</span></h2>
@@ -954,8 +1003,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p>Libraries in isolation are the warm-up. The real test is composing them — state, routing, styling, data fetching — into an entire Vue codebase on native. Two classics, then.</p>
     </aside>
   </section>
-
-  <section class="slide demo">
+<section class="slide demo">
     <div class="demo__body">
       <h2 class="demo__title">
         <span class="brand-text">TodoMVC</span>
@@ -981,8 +1029,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>Do live:</strong> add a todo, toggle a few, clear completed.</p>
     </aside>
   </section>
-
-  <section class="slide demo demo--reverse">
+<section class="slide demo demo--reverse">
     <div class="demo__stage">
       <div class="phone">
         <div class="phone__inner">
@@ -1008,8 +1055,6 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>HackerNews</strong> — the community benchmark for "real app": network, pagination, nested comments. Data via TanStack Vue Query, styling via Tailwind, scrolling on the native <code>&lt;list&gt;</code> with cell recycling. The ecosystem came along, not just the framework.</p>
     </aside>
   </section>
-
-  
 
   <!-- ====================================================
        Chapter III · The upgrade — web apps gaining native
@@ -1054,8 +1099,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  
-
   <!-- Case 1 · AI Chat · the send is a handoff (restored) -->
   <section class="slide demo demo--reverse techslide">
     <div class="demo__stage-wrap">
@@ -1071,7 +1114,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       </p>
     </div>
     <div class="demo__body">
-      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>AI Chat</span>
       <h2 class="demo__title">
         A polished send is a <span class="brand-text">handoff</span>.
       </h2>
@@ -1103,7 +1146,7 @@ app.<span class="code-fn">use</span>(router)</pre>
   <!-- Case 1 · AI Chat · the keyboard participates in layout (restored) -->
   <section class="slide demo demo--tech demo--split techslide">
     <div class="demo__body">
-      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>AI Chat</span>
       <h2 class="demo__title" style="font-size:clamp(28px,3cqw,44px)">
         The keyboard is part of <span class="brand-text">layout</span>.
       </h2>
@@ -1172,7 +1215,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       </p>
     </div>
     <div class="demo__body">
-      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>III · Case 1 · AI Chat</span>
+      <span class="app-badge" data-flip="ai-badge"><span class="dot"></span>AI Chat</span>
       <h2 class="demo__title" style="font-size:clamp(28px,3cqw,44px)">
         A new turn belongs at the <span class="brand-text">top</span>.
       </h2>
@@ -1456,7 +1499,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       </p>
     </div>
     <div class="demo__body" style="max-width:none">
-      <span class="app-badge"><span class="dot dot--teal"></span>III · Case 2 · Elk · collapsing profile</span>
+      <span class="app-badge"><span class="dot dot--teal"></span>Elk</span>
       <h2 class="demo__title" style="font-size:clamp(28px,3.2cqw,46px)">
         An X-grade profile, <span class="brand-text">composed.</span>
       </h2>
@@ -1506,33 +1549,53 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- N0 — one thread, one frame budget: the squeeze -->
+  <!-- N0 — one thread, one frame budget: the web squeeze -->
   <section class="slide stage">
     <div class="ifrtl" style="height:clamp(140px,22cqh,190px)">
-      <div class="ifrlane" style="--c:#56b8f0;top:14%;height:72%">
-        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
-        <div class="tblk" style="--c:#c9ced6;left:3%;width:12%;top:64%">event</div>
-        <div class="tblk" style="--c:#E8B44A;left:16%;width:34%;top:64%">your JavaScript</div>
-        <div class="tblk is-over" style="--c:#F27A9E;left:51%;width:17%;top:64%">paint</div>
-        <span class="frame-mark" style="left:49%"><b>frame</b></span>
+      <div class="ifrlane" data-flip="squeeze-lane" style="--c:#56b8f0;top:14%;height:72%">
+        <span class="ifrlane__label" data-flip="squeeze-label"><i></i>Main (UI) thread</span>
+        <div class="tblk" data-flip="squeeze-event" style="--c:#c9ced6;left:3%;width:12%;top:64%">event</div>
+        <div class="tblk" data-flip="squeeze-js" style="--c:#E8B44A;left:16%;width:34%;top:64%">your JavaScript</div>
+        <div class="tblk is-over" data-flip="squeeze-paint" style="--c:#F27A9E;left:51%;width:17%;top:64%">paint</div>
+        <span class="frame-mark" data-flip="squeeze-frame" style="left:49%"><b>frame</b></span>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
       The web runs on <em>one</em> thread — event, your JS, paint — and it all
-      has to land inside a <b style="color:#F27A9E">frame</b>. Cross-platform pins
-      native UI here too; pile an app on top and the budget blows.
+      has to land inside a <b style="color:#F27A9E">frame</b>.
     </p>
     <aside class="notes">
       <p><strong>Start from what everyone knows.</strong> The web is single-threaded:
-      layout, paint, gestures, and all your JS share one thread. Cross-platform
-      systems inherit a harder constraint — <em>native UI must live on the main (UI)
-      thread</em>. Stack a framework's reactivity and diffing on top of that and the
-      UI thread starves. That's the squeeze every cross-platform runtime has to
-      answer, and Lynx answers it with a second thread.</p>
+      layout, paint, gestures, and all your JS share one thread. Everything has to
+      land inside one frame — that's the squeeze the room already feels.</p>
     </aside>
   </section>
 
-  <!-- N1 — everything on the main thread: doesn't hold -->
+  <!-- N0b — cross-platform pins native UI onto the same budget -->
+  <section class="slide stage">
+    <div class="ifrtl" style="height:clamp(140px,22cqh,190px)">
+      <div class="ifrlane" data-flip="squeeze-lane" style="--c:#56b8f0;top:14%;height:72%">
+        <span class="ifrlane__label" data-flip="squeeze-label"><i></i>Main (UI) thread</span>
+        <div class="tblk" data-flip="squeeze-event" style="--c:#c9ced6;left:3%;width:10%;top:64%">event</div>
+        <div class="tblk" data-flip="squeeze-js" style="--c:#E8B44A;left:14%;width:26%;top:64%">your JavaScript</div>
+        <div class="tblk" data-flip="squeeze-paint" style="--c:#F27A9E;left:41%;width:14%;top:64%">paint</div>
+        <div class="tblk is-over" data-mm-fade data-flip="squeeze-native" style="--c:#9E86F0;left:56%;width:22%;top:64%">native UI</div>
+        <span class="frame-mark" data-flip="squeeze-frame" style="left:49%"><b>frame</b></span>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Cross-platform pins <b style="color:#9E86F0">native UI</b> here too; pile an
+      app on top and the budget blows.
+    </p>
+    <aside class="notes">
+      <p><strong>Cross-platform makes it worse.</strong> Native UI <em>must</em> live
+      on the main (UI) thread — same lane, same frame budget. Pin that down, then
+      stack a whole app on top, and the budget blows. That's the squeeze every
+      cross-platform runtime has to answer.</p>
+    </aside>
+  </section>
+
+  <!-- N1 — Element PAPI on the main thread: Vue can't live here -->
   <section class="slide stage">
     <div class="flow">
       <div class="flane" data-flip="lane-mt" style="--c:#56b8f0;top:26%;height:48%">
@@ -1554,15 +1617,17 @@ app.<span class="code-fn">use</span>(router)</pre>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      Vue drives native elements through the <b style="color:#F27A9E">Element PAPI</b>.
-      Run it here and reactivity, diff, your handlers all fight the UI —
+      Lynx drives native elements through the main-thread
+      <b style="color:#F27A9E">Element PAPI</b>. If Vue runs here, reactivity, diff,
+      your callbacks all fight <b style="color:#9E86F0">Native UI</b> —
       <em>too much for one thread.</em>
     </p>
     <aside class="notes">
-      <p><strong>The naive shape.</strong> Vue could talk straight to Lynx's
-      <em>Element PAPI</em> — <code>__CreateView</code>, <code>__SetAttribute</code>… —
-      to build native UI. But that puts the entire Vue runtime on the same thread as
-      layout and paint. It works, and it janks. So the real question is: how do we get
+      <p><strong>Lynx's contract on this thread.</strong> The main thread drives
+      native elements through the <em>Element PAPI</em> —
+      <code>__CreateView</code>, <code>__SetAttribute</code>…. Put Vue here and
+      reactivity, diff, and your callbacks all fight Native UI for the same
+      thread — one thread can't hold it. So the real question is: how do we get
       Vue <em>off</em> the UI thread without losing its grip on the elements?</p>
     </aside>
   </section>
@@ -1712,7 +1777,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-
   <!-- A7 — upstream tests -->
   <section class="slide stage">
     <div class="mega"><span class="brand-text">882</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 1013</small></div>
@@ -1825,7 +1889,6 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>Both entries import your actual app.</strong> Each entry is compiled under a webpack <em>layer</em> — <code>vue:background</code> and <code>vue:main-thread</code> — and <code>issuerLayer</code> rules give each layer its own loader chain: the BG side compiles the full SFC; the MT side extracts only what the main thread needs. Per-entry scoping falls out of webpack's dependency graph for free. (We adopted this layer approach from ReactLynx after our first flat-bundle architecture couldn't isolate multi-entry apps.)</p>
     </aside>
   </section>
-
 
   <!-- B4 — CSS is CSS -->
   <section class="slide stage">
@@ -1974,21 +2037,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Proof by replication.</strong> lynxjs.org teaches MTS through two tutorials, written for ReactLynx. Both are remade on Vue Lynx and live on our docs — same drag physics, same snap, same main-thread scrollbar. If the platform tutorials port cleanly, the capability is really there.</p>
       <p><strong>Do live:</strong> drag slowly — the indicator is pixel-synced; flick to snap.</p>
-    </aside>
-  </section>
-
-  <!-- C5 — reuse + the open API space -->
-  
-
-  <!-- ====================================================
-       IV · The landscape — the architecture-level comparison
-       ==================================================== -->
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      Zoom out: every stack is <span class="brand-text">layers</span> — and seams.
-    </h2>
-    <aside class="notes">
-      <p><strong>The promised deep-dive.</strong> In the prologue we speed-dated the candidates by feel; now, with the runtime, toolchain and MTS on the table, we can afford the architecture-level version. Split any cross-platform stack into five layers; between them sit four seams — each one either an extension point or a welded wall. Let's grade everyone honestly, Lynx included.</p>
     </aside>
   </section>
 
@@ -2235,129 +2283,8 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR10 — honest trade-offs -->
-  <section class="slide stage">
-    <div class="ifr-trade">
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--cost">what it costs</span>
-        <ul class="ifr-trade__list is-cost">
-          <li>MT bundle carries the runtime + app — <b>~2.26&times;</b> gzip</li>
-          <li>App evaluates on <b>both</b> threads — serial TTI +35%</li>
-          <li>Can't accelerate a <b>fetch-first</b> screen</li>
-        </ul>
-      </div>
-      <div class="stack-y gap-sm">
-        <span class="eyebrow ifr-trade__head ifr-trade__head--use">when to reach for it</span>
-        <ul class="ifr-trade__list is-use">
-          <li><b>Content-first</b> screens with sync initial data</li>
-          <li>Render a real <b>skeleton</b> if data is async</li>
-          <li>Keep first-screen render <b>deterministic</b> &amp; thread-agnostic</li>
-        </ul>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      A tool, not a default-on switch — but for content-first screens,
-      <b class="brand-text">IFR + ET</b> is the recommended setup.
-    </p>
-    <aside class="notes">
-      <p>Honest costs: bundle roughly doubles, the app double-evaluates (on
-      device the MT render overlaps BG startup, so serial TTI is an upper
-      bound). The win is real for content-first screens; fetch-driven screens
-      pay size for no FCP benefit.</p>
-    </aside>
-  </section>
-
-  <!-- Scaffold: five layers, four seams -->
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="0"></div>
-    <div class="gate-legend arch-cap" data-mm-fade>
-      <span><i></i>open — an extension point</span>
-      <span><i class="part"></i>half-open</span>
-      <span><i class="seal"></i>welded shut</span>
-    </div>
-    <aside class="notes">
-      <p><strong>The map.</strong> Split any cross-platform stack into five layers; between them sit four seams, each a yes/no question: EP1 plug in any frontend? EP2 swap the render model? EP3 add native capabilities? EP4 reach a new platform? An open seam is an extension point; a welded seam is a wall.</p>
-    </aside>
-  </section>
-
-  <!-- One framework column drops in per slide -->
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="1"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#4FB8F0">Web</b> — the DX everyone wants. But the sandbox
-      caps how native it can ever feel.
-    </p>
-    <aside class="notes"><p>The Web: EP1 wide open — any framework. But rendering and capabilities are welded shut by the sandbox; a new platform just means "a browser exists there". Great DX, capped UX.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="2"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#6FA8FF">Ionic</b> — the Web in a shell.
-      Not <em>native</em> enough.
-    </p>
-    <aside class="notes"><p>Ionic (and every WebView shell): keeps the Web's openness on top, Capacitor pries the capability seam half-open — but rendering is still the DOM in a WebView. It inherits the Web's ceiling: not native enough.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="3"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#E8B44A">NativeScript</b> — direct native access.
-      Not <em>Web</em> enough.
-    </p>
-    <aside class="notes"><p>NativeScript: the opposite trade. The most direct native access of anyone — but it isn't really the Web: no real CSS engine or DOM semantics, rendering and new platforms welded. Not Web enough.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="4"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#F27A9E">Flutter</b> — Dart plus self-rendering.
-      A parallel universe.
-    </p>
-    <aside class="notes"><p>Flutter: opens the bottom half wide — self-renderer, embedder for new platforms. The price: the only door on top is Dart. It doesn't extend the Web; it replaces it. A parallel universe.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="5"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b style="color:#9E86F0">React Native</b> — closest to the dream.
-      But the frontend seam is <em>React-only</em>.
-    </p>
-    <aside class="notes"><p>React Native: capabilities open, huge ecosystem — closest to the dream. But the frontend seam is welded to React: Metro, the renderer, the mental model. If you're Vue, this door was never yours.</p></aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="arch-mount" data-arch-shown="6"></div>
-    <p class="lead arch-cap" data-mm-fade>
-      <b class="brand-text">Lynx</b> — all four seams open.
-      Exactly the door Vue was waiting for.
-    </p>
-    <aside class="notes">
-      <p><strong>The answer.</strong> EP1: Rspack-based toolchain, framework-agnostic — real CSS, any frontend. EP2: the engine adapts native primitives or self-renders. EP3: Native Modules. EP4: mobile + desktop shipped, TV/VR run on the self-renderer. Four seams, none welded — including the one Vue needs.</p>
-    </aside>
-  </section>
-
-  <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:22ch">
-      Lynx evolved <span class="brand-text">framework-agnostic</span>.
-    </h2>
-    <aside class="notes">
-      <p>Lynx started with ReactLynx, but the platform was deliberately evolved to be framework-agnostic — the frontend layer is a genuine extension point, not a React feature. That's not marketing; you'll see the receipts in a second.</p>
-    </aside>
-  </section>
-
-  <section class="slide stage">
-    <div class="mega" style="font-size:clamp(44px,6.6cqw,108px);line-height:1.14">
-      <span style="color:#4FB8F0">Web</span> DX.
-      <span class="brand-text">Native</span> UX.
-    </div>
-    <aside class="notes">
-      <p><strong>The thesis, one line.</strong> Lynx gives you the Web's developer experience with native's user experience. And because the frontend seam is open — this is Vue's opening. Which brings us to…</p>
-    </aside>
-  </section>
-
   <!-- H1 — the harness + write-up (merged) -->
-  <section class="slide stage">
+  <section class="slide stage" data-media="keep">
     <h2 class="h-section" style="text-align:center;max-width:24ch">
       &ldquo;How I <span class="brand-text">vibed</span> this in two weeks&rdquo;
     </h2>
@@ -2367,15 +2294,18 @@ app.<span class="code-fn">use</span>(router)</pre>
       <span class="chip chip--brand">1 human + Claude</span>
     </div>
     <div class="harness-writeup">
+      <!-- Article URL can't be iframed (X blocks framing → logo only). Preview
+           is the companion tweet card; QR / ↗ open the real article. -->
       <div class="phone phone--embed no-deck-scroll" data-embed="portrait"
-           data-w="min(30cqw, 340px)" data-h="min(58cqh, 460px)">
+           data-w="min(30cqw, 340px)" data-h="min(58cqh, 460px)"
+           data-open="https://x.com/i/article/2036983028677816320">
         <div class="phone__inner"><vl-media
           src="https://platform.twitter.com/embed/Tweet.html?id=2036993665965416601"
           kind="iframe" label="The write-up · @Huxpro on X"></vl-media></div>
       </div>
       <div class="harness-writeup__aside">
         <div class="qr-solo qr-solo--sm"
-             data-qr="https://x.com/Huxpro/status/2036993665965416601"
+             data-qr="https://x.com/i/article/2036983028677816320"
              aria-label="QR: the write-up on X"></div>
         <p class="lead" style="max-width:15ch;margin:0">
           The full write-up — harness, prompts, receipts. <b>@Huxpro</b> on X.
@@ -2448,19 +2378,18 @@ app.<span class="code-fn">use</span>(router)</pre>
     <div class="crop" data-flip="k-frame" style="width:44cqw;height:54cqh">
       <vl-media data-flip="k-img" src="/media/embeds/79-vibe-coding.png"
                 label="79-vibe-coding.png · full tweet screenshot"
-                style="top:0;--ph-ar:842/1000"></vl-media>
+                style="top:0;--ph-ar:860/1024"></vl-media>
     </div>
     <aside class="notes">
       <p><strong>The tweet itself, over the divider.</strong> Feb 2, 2025 — Karpathy coins "vibe coding". Top half first: <em>"fully give in to the vibes, embrace exponentials, and forget that the code even exists."</em></p>
       <p>File: <code>slides/public/media/embeds/79-vibe-coding.png</code> — one full-height screenshot; this window crops it.</p>
     </aside>
   </section>
-
-  <section class="slide overlay" data-chrome="none">
+<section class="slide overlay" data-chrome="none">
     <div class="crop" data-flip="k-frame" style="width:44cqw;height:54cqh">
       <vl-media data-flip="k-img" src="/media/embeds/79-vibe-coding.png"
                 label="79-vibe-coding.png · full tweet screenshot"
-                style="bottom:0;left:-3%;width:106%;--ph-ar:842/1000"></vl-media>
+                style="bottom:0;left:-3%;width:106%;--ph-ar:860/1024"></vl-media>
     </div>
     <aside class="notes">
       <p><strong>Pan down, slight zoom</strong> — the bottom half: <em>"It's not too bad for throwaway weekend projects…"</em> Eighteen months later, it writes native apps. Let that land, advance — the tweet fades out into the question.</p>
@@ -2568,11 +2497,11 @@ app.<span class="code-fn">use</span>(router)</pre>
 
   <!-- E10 — intermission meme -->
   <section class="slide stage" data-bg="clean">
-    <vl-media class="meme" src="/media/embeds/88-meme.png" label="88-meme.png · the roast"
-              style="--ph-ar:4/3"></vl-media>
+    <vl-media class="meme" src="/media/embeds/88-meme.png" label="88-meme.png · 雪碧 roast"
+              style="--ph-ar:1024/610"></vl-media>
     <p class="kicker" style="text-align:center">&ldquo;Getting metaphysical again &mdash; &#38634;&#30887; is going to roast me.&rdquo;</p>
     <aside class="notes">
-      <p><strong>Breather.</strong> Self-aware beat before Lemma 2 — drop the meme in, take the laugh, move on. File: <code>slides/public/media/embeds/88-meme.png</code>; until it exists this shows the labeled placeholder.</p>
+      <p><strong>Breather.</strong> Self-aware beat before Lemma 2 — the Zhihu 雪碧 roast of Huang-Xuan-style answers. Drop the meme in, take the laugh, move on.</p>
     </aside>
   </section>
 
@@ -3237,6 +3166,88 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
+  <!-- Scaffold: five layers, four seams -->
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="0"></div>
+    <div class="gate-legend arch-cap" data-mm-fade>
+      <span><i></i>open — an extension point</span>
+      <span><i class="part"></i>half-open</span>
+      <span><i class="seal"></i>welded shut</span>
+    </div>
+    <aside class="notes">
+      <p><strong>The map.</strong> Split any cross-platform stack into five layers; between them sit four seams, each a yes/no question: EP1 plug in any frontend? EP2 swap the render model? EP3 add native capabilities? EP4 reach a new platform? An open seam is an extension point; a welded seam is a wall.</p>
+    </aside>
+  </section>
+
+  <!-- One framework column drops in per slide -->
+  <section class="slide stage">
+    <div class="arch-mount" data-arch-shown="1"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#4FB8F0">Web</b> — the DX everyone wants. But the sandbox
+      caps how native it can ever feel.
+    </p>
+    <aside class="notes"><p>The Web: EP1 wide open — any framework. But rendering and capabilities are welded shut by the sandbox; a new platform just means "a browser exists there". Great DX, capped UX.</p></aside>
+  </section>
+<section class="slide stage">
+    <div class="arch-mount" data-arch-shown="2"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#6FA8FF">Ionic</b> — the Web in a shell.
+      Not <em>native</em> enough.
+    </p>
+    <aside class="notes"><p>Ionic (and every WebView shell): keeps the Web's openness on top, Capacitor pries the capability seam half-open — but rendering is still the DOM in a WebView. It inherits the Web's ceiling: not native enough.</p></aside>
+  </section>
+<section class="slide stage">
+    <div class="arch-mount" data-arch-shown="3"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#E8B44A">NativeScript</b> — direct native access.
+      Not <em>Web</em> enough.
+    </p>
+    <aside class="notes"><p>NativeScript: the opposite trade. The most direct native access of anyone — but it isn't really the Web: no real CSS engine or DOM semantics, rendering and new platforms welded. Not Web enough.</p></aside>
+  </section>
+<section class="slide stage">
+    <div class="arch-mount" data-arch-shown="4"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#F27A9E">Flutter</b> — Dart plus self-rendering.
+      A parallel universe.
+    </p>
+    <aside class="notes"><p>Flutter: opens the bottom half wide — self-renderer, embedder for new platforms. The price: the only door on top is Dart. It doesn't extend the Web; it replaces it. A parallel universe.</p></aside>
+  </section>
+<section class="slide stage">
+    <div class="arch-mount" data-arch-shown="5"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b style="color:#9E86F0">React Native</b> — closest to the dream.
+      But the frontend seam is <em>React-only</em>.
+    </p>
+    <aside class="notes"><p>React Native: capabilities open, huge ecosystem — closest to the dream. But the frontend seam is welded to React: Metro, the renderer, the mental model. If you're Vue, this door was never yours.</p></aside>
+  </section>
+<section class="slide stage">
+    <div class="arch-mount" data-arch-shown="6"></div>
+    <p class="lead arch-cap" data-mm-fade>
+      <b class="brand-text">Lynx</b> — all four seams open.
+      Exactly the door Vue was waiting for.
+    </p>
+    <aside class="notes">
+      <p><strong>The answer.</strong> EP1: Rspack-based toolchain, framework-agnostic — real CSS, any frontend. EP2: the engine adapts native primitives or self-renders. EP3: Native Modules. EP4: mobile + desktop shipped, TV/VR run on the self-renderer. Four seams, none welded — including the one Vue needs.</p>
+    </aside>
+  </section>
+<section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:22ch">
+      Lynx evolved <span class="brand-text">framework-agnostic</span>.
+    </h2>
+    <aside class="notes">
+      <p>Lynx started with ReactLynx, but the platform was deliberately evolved to be framework-agnostic — the frontend layer is a genuine extension point, not a React feature. That's not marketing; you'll see the receipts in a second.</p>
+    </aside>
+  </section>
+<section class="slide stage">
+    <div class="mega" style="font-size:clamp(44px,6.6cqw,108px);line-height:1.14">
+      <span style="color:#4FB8F0">Web</span> DX.
+      <span class="brand-text">Native</span> UX.
+    </div>
+    <aside class="notes">
+      <p><strong>The thesis, one line.</strong> Lynx gives you the Web's developer experience with native's user experience. And because the frontend seam is open — this is Vue's opening. Which brings us to…</p>
+    </aside>
+  </section>
+
   <!-- E21·a — panorama seed · React first -->
   <section class="slide weave" data-bg="clean" data-chrome="none" data-weave="panorama-r">
     <p class="weave-kicker">Weave the whole Web&hellip;</p>
@@ -3364,8 +3375,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p>Files: <code>103-photo-1.png</code>, <code>103-video-portrait.mp4</code>, <code>103-photo-2.png</code> under <code>slides/public/media/embeds/</code>.</p>
     </aside>
   </section>
-
-  <section class="slide overlay" data-bg="clean" data-chrome="none">
+<section class="slide overlay" data-bg="clean" data-chrome="none">
     <div class="phone phone--embed no-deck-scroll" data-embed="wide" data-flip="em-103w"
          data-w="min(60cqw, 760px)"
          style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)">

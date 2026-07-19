@@ -8,9 +8,9 @@ Names are anchored to the slide numbers used while authoring.
 | ---- | ----- | ----- |
 | `02-video-1.mp4` | over the React + Vue marks — first clip of the cascade | landscape, muted loop |
 | `02-video-2.mp4` | second clip of the cascade | landscape, muted loop |
-| `02-image.png` | the snapshot that completes the cascade | photo, ~4:3 |
-| `88-meme.png` | the "getting metaphysical" intermission | ~4:3 |
-| `79-vibe-coding.png` | the Karpathy vibe-coding tweet over the ∞ divider | ONE full-height screenshot — the slide crops top half, then pans to the bottom half |
+| `02-image.png` | the snapshot that completes the cascade | photo, ~960×1198 |
+| `88-meme.png` | the "getting metaphysical" / 雪碧 roast intermission | ~1024×610 |
+| `79-vibe-coding.png` | the Karpathy vibe-coding tweet over the ∞ divider | ONE full-height screenshot (~860×1024) — the slide crops top half, then pans to the bottom half |
 | `103-photo-1.png` | Germany three-up, left snapshot | portrait-ish |
 | `103-video-portrait.mp4` | Germany three-up, center | vertical (9:16), muted loop |
 | `103-photo-2.png` | Germany three-up, right snapshot | portrait-ish |

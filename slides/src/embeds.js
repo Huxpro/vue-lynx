@@ -130,7 +130,12 @@ export function registerVlMedia() {
   if (!customElements.get('vl-media')) customElements.define('vl-media', VlMedia);
 }
 
-export function initEmbeds({ getScale, reducedMotion = false, embed = false } = {}) {
+export function initEmbeds({
+  getScale,
+  reducedMotion = false,
+  embed = false,
+  mediaEnabled = () => true,
+} = {}) {
   registerVlMedia();
   const still = reducedMotion || embed;
 
@@ -147,7 +152,8 @@ export function initEmbeds({ getScale, reducedMotion = false, embed = false } = 
       initial: frame.dataset.device || conf.initial,
       corners: ['nw', 'ne', 'sw', 'se'],
       anchor: 'center',
-      externalUrl: () =>
+      externalUrl: (el) =>
+        el.dataset.open ||
         (media && (media.getAttribute('kind') === 'iframe' ||
           inferKind(media.getAttribute('src') || '') === 'iframe')
           ? media.getAttribute('src') : null),
@@ -156,13 +162,25 @@ export function initEmbeds({ getScale, reducedMotion = false, embed = false } = 
     if (frame.dataset.h) frame.style.setProperty('--phone-h', frame.dataset.h);
   });
 
-  // Drive media lifecycle from deck navigation.
+  // Drive media lifecycle from deck navigation. When the global media-embeds
+  // flag is off, treat every element as far away so iframes unmount and
+  // videos stay paused (skipped slides shouldn't keep playing in the background).
   const slides = Array.from(document.querySelectorAll('.slide'));
   const medias = Array.from(document.querySelectorAll('vl-media')).map((el) => ({
     el,
     idx: slides.indexOf(el.closest('.slide')),
   }));
-  document.addEventListener('deck:change', (e) => {
-    medias.forEach((m) => m.el.setDistance?.(m.idx - e.detail.index, { still }));
+  function sync(index) {
+    const enabled = mediaEnabled();
+    medias.forEach((m) => {
+      const d = enabled ? m.idx - index : 99;
+      m.el.setDistance?.(d, { still: still || !enabled });
+    });
+  }
+  document.addEventListener('deck:change', (e) => sync(e.detail.index));
+  document.addEventListener('deck:media-embeds', (e) => {
+    sync(typeof e.detail?.index === 'number'
+      ? e.detail.index
+      : slides.findIndex((s) => s.classList.contains('is-active')));
   });
 }

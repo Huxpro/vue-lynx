@@ -38,6 +38,7 @@ export function initCommand(api, { devtool } = {}) {
     { section: 'Settings', key: 't', label: () => `Theme: ${api.theme()}`, icon: 'moon', run: api.toggleTheme },
     { section: 'Settings', key: 'l', label: () => `Language: ${api.lang() === 'zh' ? '中文' : 'English'}`, icon: 'languages', run: api.toggleLang },
     { section: 'Settings', key: 'g', label: () => `Background: ${api.flags().bg}`, icon: 'layers', run: () => api.setFlag('bg', api.flags().bg === 'beam' ? 'clean' : 'beam') },
+    { section: 'Settings', key: 'm', label: () => `Media embeds: ${api.mediaEmbeds() ? 'on' : 'off'}`, icon: 'image', run: api.toggleMediaEmbeds },
     { section: 'Settings', key: 'd', label: 'Toggle DevTool', icon: 'bug', run: () => devtool?.toggle() },
   ];
 
