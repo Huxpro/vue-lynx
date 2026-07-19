@@ -69,6 +69,7 @@
     "dev": "(cd internal && npx tsc -p tsconfig.build.json) && (cd runtime && npx rslib build --watch) & (cd main-thread && npx rslib build --watch) & (cd plugin && npx rslib build --watch) & (cd types && npx rslib build --watch)"
   },
   "dependencies": {
+    "@babel/parser": "^7.25.3",
     "@lynx-js/css-extract-webpack-plugin": "^0.7.0",
     "@lynx-js/react": "^0.116.5",
     "@lynx-js/runtime-wrapper-webpack-plugin": "^0.1.3",

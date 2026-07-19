@@ -2,6 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { parse } from '@babel/parser';
+
 import { TPL_REGISTER_GLOBAL } from 'vue-lynx/internal/ops';
 
 /**
@@ -326,29 +328,58 @@ export function extractSharedImports(source: string): string {
  *   - worklet object declarations
  *   - loadWorkletRuntime(...) && registerWorkletInternal(type, hash, fn);
  *
- * We only need the registerWorkletInternal(...) calls. Uses bracket-depth
- * counting to handle nested braces in function bodies.
+ * We only need the registerWorkletInternal(...) calls. Each call is sliced
+ * out by AST node span (parse once with @babel/parser, which vue-lynx
+ * already ships via @vue/compiler-core) rather than scanned textually:
+ * worklet bodies preserve source comments, so an apostrophe,
+ * backtick, or unmatched paren inside a comment corrupts any scanner —
+ * either truncating a slice (build error downstream) or, worse, silently
+ * dropping every remaining registration in the module. Unparseable input
+ * throws, surfacing as a loader error naming the module.
+ *
+ * The bare call — not the enclosing `loadWorkletRuntime(ctx) && …`
+ * statement — is emitted; the gate identifier doesn't exist in the MT
+ * module.
  */
 export function extractRegistrations(lepusCode: string): string {
+  const ast = parse(lepusCode, { sourceType: 'module' });
   const registrations: string[] = [];
-  const marker = 'registerWorkletInternal(';
-  let searchFrom = 0;
 
-  while (true) {
-    const idx = lepusCode.indexOf(marker, searchFrom);
-    if (idx === -1) break;
-
-    // Find the end of the registerWorkletInternal(...) call.
-    const close = findBalancedEnd(lepusCode, idx + marker.length - 1);
-    if (close === -1) break;
-
-    // Extract the full call including trailing semicolon
-    let end = close + 1;
-    if (end < lepusCode.length && lepusCode[end] === ';') end++;
-
-    registrations.push(lepusCode.slice(idx, end));
-    searchFrom = end;
+  interface AstNode {
+    type: string;
+    start: number;
+    end: number;
+    [key: string]: unknown;
   }
+
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item);
+      return;
+    }
+    if (!value || typeof (value as AstNode).type !== 'string') return;
+    const node = value as AstNode;
+
+    if (node.type === 'CallExpression') {
+      const callee = node.callee as AstNode & { name?: string };
+      if (
+        callee.type === 'Identifier'
+        && callee.name === 'registerWorkletInternal'
+      ) {
+        registrations.push(lepusCode.slice(node.start, node.end) + ';');
+        // Registrations never nest; skipping the subtree mirrors the
+        // previous scanner's resume-past-the-call behavior.
+        return;
+      }
+    }
+
+    for (const key in node) {
+      if (key === 'type' || key === 'start' || key === 'end') continue;
+      const child = node[key];
+      if (child && typeof child === 'object') walk(child);
+    }
+  };
+  walk(ast);
 
   return registrations.join('\n');
 }

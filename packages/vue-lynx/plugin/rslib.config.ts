@@ -21,6 +21,7 @@ export default defineConfig({
   },
   output: {
     externals: [
+      '@babel/parser',
       '@rsbuild/core',
       '@rsbuild/plugin-vue',
       '@lynx-js/css-extract-webpack-plugin',
