@@ -735,43 +735,6 @@ h1, h2, h3, p { margin: 0; }
   max-width: none;
 }
 
-/* Side-by-side Web <lynx-view> + native serve-sim on the duplicated ref() slide. */
-.demo__stage--pair {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2.2cqw;
-  height: min(92cqh, 650px);
-}
-.demo__stage--pair .phone {
-  position: relative;
-  top: auto;
-  left: auto;
-  transform: none;
-  --phone-h: min(72cqh, 520px);
-  flex: 0 0 auto;
-}
-.demo__stage--pair .phone[data-caption]::after {
-  content: attr(data-caption);
-  position: absolute;
-  left: 50%;
-  bottom: -28px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-}
-.demo__title-sub {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-style: italic;
-  color: var(--ink-mute);
-  font-size: 0.55em;
-  margin-left: 0.15em;
-}
 /* Lift the frame above the copy (and deepen its shadow) once it grows past the
    phone preset, so an overlapping expansion reads as floating, not broken. */
 .demo__stage .phone:not([data-device="phone"]) {

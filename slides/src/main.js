@@ -12,6 +12,7 @@ import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
 import { registerVlDemo } from './demo.js';
 import { initEmbeds } from './embeds.js';
 import { initQRCodes } from './qrcodes.js';
+import { initSimOverlay } from './sim-overlay.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -367,7 +368,7 @@ if (!embedMode) {
 // keyboard back.
 // =========================================================
 let demoEngaged = false;
-const inDemo = (el) => !!el?.closest?.('.phone, .no-deck-scroll');
+const inDemo = (el) => !!el?.closest?.('.phone, .no-deck-scroll, .sim-float');
 
 if (!embedMode) {
   document.addEventListener('pointerdown', (e) => {
@@ -738,6 +739,15 @@ const deckApi = {
   reducedMotion: () => REDUCED_MOTION,
   embed: () => embedMode,
 };
+
+// Optional localhost-only floating iOS Simulator (serve-sim at /.sim).
+// Cloud / non-loopback hosts get null — no palette entry, no overlay.
+const sim = initSimOverlay({ embed: embedMode });
+Object.assign(deckApi, {
+  simAvailable: () => !!sim?.available?.(),
+  simOpen: () => !!sim?.isOpen?.(),
+  toggleSim: () => sim?.toggle?.(),
+});
 
 const devtool = initDevtool(deckApi);
 const command = initCommand(deckApi, { devtool });
