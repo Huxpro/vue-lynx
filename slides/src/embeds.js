@@ -152,7 +152,8 @@ export function initEmbeds({
       initial: frame.dataset.device || conf.initial,
       corners: ['nw', 'ne', 'sw', 'se'],
       anchor: 'center',
-      externalUrl: () =>
+      externalUrl: (el) =>
+        el.dataset.open ||
         (media && (media.getAttribute('kind') === 'iframe' ||
           inferKind(media.getAttribute('src') || '') === 'iframe')
           ? media.getAttribute('src') : null),

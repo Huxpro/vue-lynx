@@ -79,7 +79,6 @@ export const ZH = {
   'Sheet with Rubberband effect': '带<span class="brand-text">橡皮筋</span>效果的 Sheet',
   'Native Viewpager': '原生 <span class="brand-text">Viewpager</span>',
 
-  'III · Case 1 · AI Chat': 'III · 案例一 · AI Chat',
   'AI SDK streaming': 'AI SDK 流式',
   'reasoning': '思维链',
   'tool cards': '工具卡片',
@@ -93,7 +92,6 @@ export const ZH = {
     '发送不是一段动画 —— 是一次按显示帧编排的<em>接力</em>。',
   'earlier turns stay masked until the motion starts':
     '动画启动之前,先前的对话保持遮蔽',
-  'III · Case 2 · Elk': 'III · 案例二 · Elk',
   'masto.js client': 'masto.js 客户端',
   'content pipeline': '内容管线',
   'theme system': '主题系统',
@@ -145,7 +143,6 @@ export const ZH = {
     '拖拽跑在主线程上 —— 于是即便 Vue 的后台线程正在请求数据、diff 或重建列表,sheet 依然跟手。<span class="dim">在 Web 上,手势 JS 与渲染共享同一条主线程。</span>',
 
   // ---- Chapter III · Elk collapsing profile ----
-  'III · Case 2 · Elk · collapsing profile': 'III · 案例二 · Elk · 折叠 profile',
   'An X-grade profile, composed.': 'X 级折叠 profile,<span class="brand-text">组合而成。</span>',
   'Collapse the header, pin the tabs, page sideways — each pane keeps its own feed & scroll position.':
     '折叠头部、吸顶 tab、横向翻页 —— 每个 pane 各自保留自己的信息流与滚动位置。',
@@ -172,10 +169,12 @@ export const ZH = {
     '双线程漏进你代码里的,只有<em>一个</em>地方。',
   'one lap = nextTick()': '绕一圈 = <b>nextTick()</b>',
   // ---- Chapter IV · Runtime (dual-thread narrative) ----
-  'The web runs on one thread — event, your JS, paint — and it all has to land inside a frame. Cross-platform pins native UI here too; pile an app on top and the budget blows.':
-    'Web 只跑在<em>一条</em>线程上 —— 事件、你的 JS、绘制,全都得挤进一<b style="color:#F27A9E">帧</b>里。跨端还把 Native UI 也钉在这儿;再把整个 app 压上来,预算就爆了。',
-  'Vue drives native elements through the Element PAPI. Run it here and reactivity, diff, your handlers all fight the UI — too much for one thread.':
-    'Vue 通过 <b style="color:#F27A9E">Element PAPI</b> 驱动原生元素。可它跑在这儿,响应式、diff、你的回调全和 UI 抢线程 —— <em>一条线程扛不住。</em>',
+  'The web runs on one thread — event, your JS, paint — and it all has to land inside a frame.':
+    'Web 只跑在<em>一条</em>线程上 —— 事件、你的 JS、绘制,全都得挤进一<b style="color:#F27A9E">帧</b>里。',
+  'Cross-platform pins native UI here too; pile an app on top and the budget blows.':
+    '跨端还把 <b style="color:#9E86F0">Native UI</b> 也钉在这儿;再把整个 app 压上来,预算就爆了。',
+  'Lynx drives native elements through the main-thread Element PAPI. If Vue runs here, reactivity, diff, your callbacks all fight Native UI — too much for one thread.':
+    'Lynx 通过主线程的 <b style="color:#F27A9E">Element PAPI</b> 驱动原生元素。如果 Vue 跑在这儿,响应式、diff、你的回调全和 <b style="color:#9E86F0">Native UI</b> 抢线程 —— <em>一条线程扛不住。</em>',
   'Lift Vue onto a background thread. The runtime is off the UI now — but how does it drive elements it can no longer touch?':
     '把 Vue 抬上<b style="color:#5dd5a8">后台线程</b>。运行时离开了 UI —— 可它还怎么驱动那些够不着的元素?',
   'A ShadowElement tree fakes the DOM for Vue; edits leave as a flat ops buffer the main thread replays into Element PAPI.':
@@ -473,6 +472,8 @@ export const ZH_NOTES = [
   `<p><strong>然后,Lynx 走出队列 —— 站到正中央,Vue 的正下方;其余候选人整体让到左侧。</strong>前端这条缝是天生打开的:Web 标准的编程模型、真 CSS、框架无关的合同。这根线,短、垂直、实心。</p><p>再看下面的覆盖:iOS、Android、Web、HarmonyOS 走<em>原生 UI primitive</em>;桌面与更多平台走<em>自定义渲染引擎</em>。Web 的开发体验进,Native 的用户体验出 —— 这个组合,配得上一个正式的标题……</p>`,
   // 12 Title reveal · Vue Lynx 正式亮相
   `<p><strong>亮相。</strong>这是 Vue Lynx 第一次正式出场 —— 标题在论证之后才落下:空缺是真的,门是开的,而这个项目正走进那扇门。</p><p>念出名字,让背景光呼吸一拍,然后直接进入 demo。</p>`,
+  // serve-sim · ref() + 真机并排
+  `<p><strong>从起点开始 —— 旁边就是真机模拟器。</strong><code>ref()</code>、事件处理、样式绑定。左边是 Lynx for Web(<code>&lt;lynx-view&gt;</code>);右边是经 <a href="https://github.com/EvanBacon/serve-sim">serve-sim</a> 推流的本地 iOS Simulator,挂在 <code>/.sim</code>。</p><p><strong>开讲前:</strong>先起模拟器 + 载入 hello-world 的 Lynx Explorer,再 <code>npx serve-sim --detach</code>。Vite deck 会自动挂上预览中间件。</p>`,
   // 16 reactive
   `<p>整个响应式内核原样复用自 Vue —— <code>reactive</code>、<code>toRefs</code>、<code>computed</code>、watch 全部一致。这意味着<strong>组合式函数 —— 你组织 Vue 应用的方式 —— 原封不动可用</strong>。这个秒表就是一个普通的 composable。</p>`,
   // 17 v-model
@@ -531,10 +532,12 @@ export const ZH_NOTES = [
   `<p><strong>移动端最难的布局,靠组合做出来。</strong>折叠头部 + 吸顶 tab + 横向翻页 + 每个 pane 各自纵向滚动 —— Twitter/X 的 profile。Web 上这是重型库(react-native-collapsible-tab-view、Android 的 CoordinatorLayout)在和主线程搏斗;这里是一次原生元件的组合,跑在平台自己的滚动线程上。</p><p><strong>Native UX ← Web DX。</strong>Lynx 把原生构件暴露成元件:<code>&lt;scroll-coordinator&gt;</code>(声明式的嵌套滚动交接:先折叠头部,再把滚动交给当前 pane 的列表,零 JS 滚动监听)、抽取出的 <code>&lt;viewpager&gt;</code>(原生吸附翻页 + 每个 pane 状态保留)、以及每个 pane 一个复用型 <code>&lt;list&gt;</code>。我们在一个 Vue SFC 里把它们组合起来。唯一的平台接缝就是标签名(Lynx for Web 的 <code>x-foldview-ng</code>/<code>x-viewpager-ng</code> ↔ 原生的 <code>scroll-coordinator</code>/<code>viewpager</code>)。</p><p><strong>一套代码,两个目标:</strong>同一个 SFC 既渲染真正的原生 profile,又渲染文档站里的 Lynx-for-Web 预览。tab 栏与翻页器通过原生 <code>selectTab</code>/<code>change</code> 方法双向同步,而非合成 DOM 事件。</p>`,
   // 35 Divider IV · How we did it
   `<p><strong>工程章。</strong>刚才看到的一切,是一个人两周做出来的 —— 这一章诚实回答"怎么做到的"。三次适配,每一次都揭开 Lynx 架构的一角:把 Vue 拆上双线程而不破坏语义;让一条工具链吐出两个世界;再让主线程本身可编程。AI harness 贯穿全程。</p>`,
-  // N0 · 单线程帧预算困境
-  `<p><strong>从大家都熟的地方讲起。</strong>Web 是单线程的:布局、绘制、手势、你所有的 JS 共用一条线程。跨端系统还多背一条约束 —— <em>Native UI 必须待在主(UI)线程上</em>。再把一个框架的响应式和 diff 压上去,UI 线程就饿死。这是每个跨端运行时都要回答的困境,而 Lynx 的答案是:再开一条线程。</p>`,
-  // N1 · 全在主线程 —— 扛不住
-  `<p><strong>最朴素的形状。</strong>Vue 可以直接调 Lynx 的 <em>Element PAPI</em> —— <code>__CreateView</code>、<code>__SetAttribute</code>…… —— 来造 Native UI。但这把整个 Vue 运行时和布局、绘制挤在同一条线程上。能跑,但卡。真正的问题是:怎么把 Vue <em>挪出</em>主线程,又不丢掉它对元素的掌控?</p>`,
+  // N0 · 单线程帧预算困境(Web)
+  `<p><strong>从大家都熟的地方讲起。</strong>Web 是单线程的:布局、绘制、手势、你所有的 JS 共用一条线程。全得挤进一帧 —— 这是房间里已经能感觉到的挤压。</p>`,
+  // N0b · 跨端把 Native UI 也钉上来
+  `<p><strong>跨端让事情更糟。</strong>Native UI <em>必须</em>待在主(UI)线程上 —— 同一条 lane,同一份帧预算。钉在这儿,再把整个 app 压上来,预算就爆了。这是每个跨端运行时都要回答的困境。</p>`,
+  // N1 · Element PAPI 在主线程 —— Vue 待不住
+  `<p><strong>Lynx 在这条线程上的合同。</strong>主线程通过 <em>Element PAPI</em> —— <code>__CreateView</code>、<code>__SetAttribute</code>…… —— 驱动原生元素。如果 Vue 跑在这儿,响应式、diff、你的回调全和 Native UI 抢同一条线程 —— 一条线程扛不住。真正的问题是:怎么把 Vue <em>挪出</em>主线程,又不丢掉它对元素的掌控?</p>`,
   // N2 · Vue 上后台线程 → 缺口
   `<p><strong>第二个决定:Vue 住哪条线程?</strong>Lynx 原生就把事件送到后台线程,所以我们把整个运行时放在那里:响应式、diff、生命周期、你的回调。不是 fork —— 是原封不动的 <code>@vue/runtime-core</code>。但 Vue 的渲染器要同步的 DOM 节点,而真实元素在一条线程之外。这就是下一页要补上的缺口。</p>`,
   // N3 · ShadowElement + ops(时序)

@@ -74,6 +74,8 @@ one step (no in-slide fragments). Everything is authored against a fixed
 - **Overview editor (`o`):** bar toggles Media embeds (eye); each media tile has
   its own eye to open/hide (`keep` ↔ `skip`). Dimmed tiles = hidden under the
   current global setting; click the tile (not the eye) to jump there.
+  After a tile jump, `Esc` returns to overview while still on that slide, or
+  within 10s if you've moved on.
 
 ## Weave scenes
 

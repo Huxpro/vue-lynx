@@ -139,6 +139,29 @@ export function applyDevicePreset(el, name, presets = DECK_PRESETS) {
     b.classList.toggle('is-active', b.dataset.device === name));
 }
 
+/**
+ * Apply authoring seeds from `data-ar` / `data-w` / `data-h` after a preset.
+ *
+ * Phone presets size by height. A landscape `data-ar` (e.g. `480 / 400`) kept
+ * on that tall height explodes the width — and `.demo__stage .phone` lifts
+ * `max-width` so the frame can float over copy. For wide/square custom
+ * aspects, switch to width-constrained sizing instead.
+ */
+export function applyPhoneSeeds(el) {
+  const raw = el.dataset.ar;
+  if (raw) {
+    el.style.setProperty('--phone-ar', raw);
+    const [aw, ah] = raw.split('/').map((s) => parseFloat(String(s).trim()));
+    if (aw > 0 && ah > 0 && aw / ah >= 1) {
+      el.style.setProperty('--phone-w', el.dataset.w || 'min(40cqw, 480px)');
+      el.style.setProperty('--phone-h', el.dataset.h || 'auto');
+      return;
+    }
+  }
+  if (el.dataset.w) el.style.setProperty('--phone-w', el.dataset.w);
+  if (el.dataset.h) el.style.setProperty('--phone-h', el.dataset.h);
+}
+
 // Corner geometry for the drag grips. sx/sy are the growth signs: dragging a
 // corner in its outward direction enlarges the frame. `center` anchoring grows
 // symmetrically about the middle (so the grabbed corner tracks the cursor at 2×
@@ -282,12 +305,16 @@ export function attachDeviceControls(el, {
     handle.addEventListener('dblclick', (e) => {
       e.stopPropagation();
       apply(el.dataset.device || 'phone');
+      // Restore authoring seeds after a preset snap (same as initial mount).
+      applyPhoneSeeds(el);
+      containNow();
     });
   });
 
-  apply(initial || el.dataset.device || 'phone');
-  if (el.dataset.ar) el.style.setProperty('--phone-ar', el.dataset.ar);
-  // data-ar can change the laid-out size — re-contain after it applies.
+  // Preset first, then authoring seeds (`data-ar` / `data-w` / `data-h`). Seeds
+  // are initial-only — later preset clicks and free-drags replace them.
+  applyDevicePreset(el, initial || el.dataset.device || 'phone', presets);
+  applyPhoneSeeds(el);
   containNow();
 
   // Keep containment honest across viewport resizes, phone size changes, and

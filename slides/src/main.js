@@ -608,7 +608,16 @@ if (!embedMode) {
     // jump-to-slide) lives behind the command palette — press ⌘K / Ctrl-K to
     // search, or `/` for slash mode. This keeps stray keystrokes from firing
     // commands while you type.
+    // Esc is the one exception: after an overview-click jump, it pops back to
+    // the grid (landing slide, or any slide within 10s).
     switch (e.key) {
+      case 'Escape':
+        if (canReturnToOverview()) {
+          e.preventDefault();
+          overviewReturn = null;
+          setOverview(true);
+        }
+        break;
       case 'ArrowRight':
       case 'ArrowDown':
       case 'PageDown':
@@ -632,6 +641,17 @@ function toggleFullscreen() {
   }
 }
 
+// After jumping in from overview, Esc returns to the grid while still on the
+// landing slide — or within OVERVIEW_RETURN_MS even if you've stepped away.
+const OVERVIEW_RETURN_MS = 10_000;
+let overviewReturn = null; // { index, at }
+
+function canReturnToOverview() {
+  if (!overviewReturn || deck.classList.contains('overview')) return false;
+  if (current === overviewReturn.index) return true;
+  return performance.now() - overviewReturn.at <= OVERVIEW_RETURN_MS;
+}
+
 // Click in overview mode jumps to slide (force: allow landing on media-embed
 // tiles even when the global media-embeds flag is off — useful for rehearsal).
 // Eye buttons / the overview bar handle their own clicks and stopPropagation.
@@ -642,6 +662,7 @@ deck.addEventListener('click', (e) => {
   if (!slide) return;
   const idx = slides.indexOf(slide);
   if (idx >= 0) {
+    overviewReturn = { index: idx, at: performance.now() };
     setOverview(false);
     setSlide(idx, { force: true, jump: true });
   }
