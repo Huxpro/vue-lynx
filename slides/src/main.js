@@ -3,12 +3,13 @@ import { mountMeteors } from './meteors.js';
 import { initArch } from './arch.js';
 import { initWeave } from './weave.js';
 import { ZH, ZH_NOTES, normalizeKey } from './i18n.js';
-import { readFlags, expandChrome } from './framework/flags.js';
+import { readFlags, expandChrome, isMediaEmbedSlide, isMediaCandidate } from './framework/flags.js';
 import { initCommand } from './framework/command.js';
 import { initDevtool } from './framework/devtool.js';
 import { createStage } from './framework/stage.js';
 import { createMagicMove } from './framework/magic-move.js';
 import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
+import { icon } from './framework/icons.js';
 import { registerVlDemo } from './demo.js';
 import { initEmbeds } from './embeds.js';
 import { initQRCodes } from './qrcodes.js';
@@ -17,6 +18,7 @@ import { initSimOverlay, isLocalHost } from './sim-overlay.js';
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
 // strips all chrome so the speaker view can iframe it.
+// ?nomedia=1 starts with media-embed slides skipped (palette: m).
 // =========================================================
 const params = new URLSearchParams(location.search);
 const embedMode = params.has('embed');
@@ -78,17 +80,181 @@ document.addEventListener('deck:change', (e) => {
   weave.setScene(slides[i]?.dataset.weave || null);
 });
 
+let current = 0;
+let speakerWindow = null;
+let blackedOut = false;
+
+// =========================================================
+// Global media-embeds flag — when off, skip media-embed slides
+// (see isMediaEmbedSlide / data-media) and unmount <vl-media>.
+// =========================================================
+function readMediaEmbedsPref() {
+  if (params.has('nomedia')) return false;
+  try {
+    const saved = localStorage.getItem('deck-media-embeds');
+    if (saved === 'off') return false;
+    if (saved === 'on') return true;
+  } catch { /* ignore */ }
+  return true;
+}
+let mediaEmbedsOn = readMediaEmbedsPref();
+deck.classList.toggle('is-media-off', !mediaEmbedsOn);
+
+function refreshMediaClasses() {
+  slides.forEach((s) => {
+    const candidate = isMediaCandidate(s);
+    const embed = isMediaEmbedSlide(s);
+    const hidden = !mediaEmbedsOn && embed;
+    s.classList.toggle('is-media-candidate', candidate);
+    s.classList.toggle('is-media-slide', embed);
+    s.classList.toggle('is-media-hidden', hidden);
+    // Eye on the tile: open = plays in the talk; shut = hidden when embeds are off.
+    const btn = s.querySelector(':scope > .ov-eye');
+    if (!btn) return;
+    const open = !embed; // keep / content → open; skippable embed → shut
+    btn.dataset.open = open ? '1' : '0';
+    btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+    btn.setAttribute(
+      'aria-label',
+      open ? 'Media open — click to hide when embeds are off' : 'Media hidden — click to keep in the talk',
+    );
+    btn.title = open ? 'Open in talk' : 'Hidden when Media embeds is off';
+    btn.innerHTML = icon(open ? 'eye' : 'eyeOff');
+  });
+  if (ovBar) syncOverviewBar();
+}
+
+function shouldSkipMedia(index) {
+  return !mediaEmbedsOn && isMediaEmbedSlide(slides[index]);
+}
+
+function nearestPlayable(from, dir) {
+  let i = from;
+  while (i >= 0 && i < slides.length && shouldSkipMedia(i)) i += dir;
+  return i;
+}
+
+function setMediaEmbeds(on, { fromChannel = false } = {}) {
+  mediaEmbedsOn = !!on;
+  deck.classList.toggle('is-media-off', !mediaEmbedsOn);
+  try {
+    localStorage.setItem('deck-media-embeds', mediaEmbedsOn ? 'on' : 'off');
+  } catch { /* ignore */ }
+  // Mirror into the URL so a shared link preserves the venue preference.
+  const url = new URL(location.href);
+  if (mediaEmbedsOn) url.searchParams.delete('nomedia');
+  else url.searchParams.set('nomedia', '1');
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
+
+  refreshMediaClasses();
+
+  document.dispatchEvent(new CustomEvent('deck:media-embeds', {
+    detail: { on: mediaEmbedsOn, index: current },
+  }));
+
+  if (shouldSkipMedia(current)) {
+    let i = nearestPlayable(current, 1);
+    if (i < 0 || i >= slides.length) i = nearestPlayable(current, -1);
+    if (i >= 0 && i < slides.length) setSlide(i, { jump: true, fromChannel });
+  }
+
+  if (!fromChannel && !embedMode) {
+    channel.postMessage({ type: 'media-embeds', on: mediaEmbedsOn });
+  }
+}
+
+function toggleMediaEmbeds() {
+  setMediaEmbeds(!mediaEmbedsOn);
+}
+
+/** Per-slide open/hide in the overview editor — toggles data-media keep ↔ skip. */
+function toggleSlideMediaOpen(slide) {
+  if (!isMediaCandidate(slide)) return;
+  // Skippable now → force keep (open). Otherwise force skip (hide when off).
+  slide.dataset.media = isMediaEmbedSlide(slide) ? 'keep' : 'skip';
+  refreshMediaClasses();
+  if (shouldSkipMedia(current)) {
+    let i = nearestPlayable(current, 1);
+    if (i < 0 || i >= slides.length) i = nearestPlayable(current, -1);
+    if (i >= 0 && i < slides.length) setSlide(i, { jump: true });
+  }
+}
+
+// Overview editor chrome — global media toggle + per-tile eyes.
+let ovBar = null;
+function syncOverviewBar() {
+  if (!ovBar) return;
+  const nHidden = slides.filter((s) => s.classList.contains('is-media-hidden')).length;
+  const nCand = slides.filter((s) => s.classList.contains('is-media-candidate')).length;
+  const eye = ovBar.querySelector('[data-ov-media]');
+  const status = ovBar.querySelector('[data-ov-status]');
+  if (eye) {
+    eye.dataset.on = mediaEmbedsOn ? '1' : '0';
+    eye.innerHTML = icon(mediaEmbedsOn ? 'eye' : 'eyeOff') +
+      `<span>Media embeds: <b>${mediaEmbedsOn ? 'on' : 'off'}</b></span>`;
+    eye.setAttribute('aria-pressed', mediaEmbedsOn ? 'true' : 'false');
+  }
+  if (status) {
+    status.textContent = mediaEmbedsOn
+      ? `${nCand} media tiles · all play`
+      : `${nHidden} hidden / ${nCand} media`;
+  }
+}
+
+function ensureOverviewEditor() {
+  if (embedMode) return;
+  if (!ovBar) {
+    ovBar = document.createElement('div');
+    ovBar.className = 'ov-bar sys-surface';
+    ovBar.innerHTML =
+      `<button type="button" class="ov-bar__media" data-ov-media aria-pressed="true"></button>` +
+      `<span class="ov-bar__status" data-ov-status></span>` +
+      `<span class="ov-bar__hint">eye on a tile = open/hide · click tile to jump</span>`;
+    document.body.appendChild(ovBar);
+    ovBar.querySelector('[data-ov-media]').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMediaEmbeds();
+    });
+  }
+  // Mount per-tile eye controls on media candidates (once).
+  slides.forEach((s) => {
+    if (!isMediaCandidate(s) || s.querySelector(':scope > .ov-eye')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'ov-eye';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      toggleSlideMediaOpen(s);
+    });
+    s.appendChild(btn);
+  });
+  refreshMediaClasses();
+}
+
+function setOverview(on) {
+  deck.classList.toggle('overview', on);
+  if (on) {
+    ensureOverviewEditor();
+    ovBar?.classList.add('is-visible');
+    requestAnimationFrame(fitOverview);
+  } else {
+    ovBar?.classList.remove('is-visible');
+  }
+  return on;
+}
+
+// Initial class pass (eyes mount when overview opens the first time).
+refreshMediaClasses();
+
 // Media embeds — <vl-media> lifecycle (video reset/autoplay, iframe
 // proximity mount/unload) + resizable .phone--embed frames.
 initEmbeds({
   getScale: stage.getScale,
   reducedMotion: REDUCED_MOTION,
   embed: embedMode,
+  mediaEnabled: () => mediaEmbedsOn,
 });
-
-let current = 0;
-let speakerWindow = null;
-let blackedOut = false;
 
 // =========================================================
 // Slide metadata — title + sanitized notes — shared with the
@@ -165,7 +331,16 @@ function setSlide(index, opts = {}) {
   // navigation can't leave a morphing slide pinned visible (is-morphing-in).
   mm.finish();
   const prev = current;
-  current = Math.max(0, Math.min(slides.length - 1, index));
+  let target = Math.max(0, Math.min(slides.length - 1, index));
+  // Skip media-embed slides unless explicitly forced (overview click / palette goto).
+  if (!opts.force && shouldSkipMedia(target)) {
+    const dir = target >= prev ? 1 : -1;
+    let i = nearestPlayable(target, dir);
+    if (i < 0 || i >= slides.length) i = nearestPlayable(target, -dir);
+    if (i < 0 || i >= slides.length) return; // nowhere to land
+    target = i;
+  }
+  current = target;
   const adjacent = Math.abs(current - prev) === 1;
   const flags = resolveFlags(current);
   const cut = flags.transition === 'cut';
@@ -245,10 +420,26 @@ function syncSlideMedia(index) {
   });
 }
 
-function next() { setSlide(current + 1); }
-function prev() { setSlide(current - 1); }
-function first() { setSlide(0); }
-function last() { setSlide(slides.length - 1); }
+function next() {
+  let i = current + 1;
+  while (i < slides.length && shouldSkipMedia(i)) i++;
+  if (i < slides.length) setSlide(i);
+}
+function prev() {
+  let i = current - 1;
+  while (i >= 0 && shouldSkipMedia(i)) i--;
+  if (i >= 0) setSlide(i);
+}
+function first() {
+  let i = 0;
+  while (i < slides.length && shouldSkipMedia(i)) i++;
+  if (i < slides.length) setSlide(i, { jump: true });
+}
+function last() {
+  let i = slides.length - 1;
+  while (i >= 0 && shouldSkipMedia(i)) i--;
+  if (i >= 0) setSlide(i, { jump: true });
+}
 
 // =========================================================
 // BroadcastChannel — speaker <-> deck sync.
@@ -290,6 +481,9 @@ if (!embedMode) {
         break;
       case 'blackout':
         applyBlackout(!!msg.on);
+        break;
+      case 'media-embeds':
+        if (msg.on !== mediaEmbedsOn) setMediaEmbeds(!!msg.on, { fromChannel: true });
         break;
       case 'speaker-closed':
         speakerWindow = null;
@@ -438,15 +632,18 @@ function toggleFullscreen() {
   }
 }
 
-// Click in overview mode jumps to slide
+// Click in overview mode jumps to slide (force: allow landing on media-embed
+// tiles even when the global media-embeds flag is off — useful for rehearsal).
+// Eye buttons / the overview bar handle their own clicks and stopPropagation.
 deck.addEventListener('click', (e) => {
   if (!deck.classList.contains('overview')) return;
+  if (e.target.closest('.ov-eye, .ov-bar')) return;
   const slide = e.target.closest('.slide');
   if (!slide) return;
   const idx = slides.indexOf(slide);
   if (idx >= 0) {
-    deck.classList.remove('overview');
-    setSlide(idx);
+    setOverview(false);
+    setSlide(idx, { force: true, jump: true });
   }
 });
 
@@ -493,11 +690,17 @@ if (!embedMode) {
 // Boot
 // =========================================================
 const startIndex = (() => {
+  let idx = 0;
   const hash = Number.parseInt(location.hash.replace('#', ''), 10);
   if (!Number.isNaN(hash) && hash >= 1 && hash <= slides.length) {
-    return hash - 1;
+    idx = hash - 1;
   }
-  return 0;
+  if (shouldSkipMedia(idx)) {
+    let i = nearestPlayable(idx, 1);
+    if (i < 0 || i >= slides.length) i = nearestPlayable(idx, -1);
+    if (i >= 0 && i < slides.length) idx = i;
+  }
+  return idx;
 })();
 setSlide(startIndex, { skipHash: true });
 
@@ -706,7 +909,7 @@ channel.addEventListener('message', (ev) => {
 // =========================================================
 const deckApi = {
   next, prev, first, last,
-  goto: (i) => setSlide(i, { jump: true }),
+  goto: (i) => setSlide(i, { jump: true, force: true }),
   current: () => current,
   total: () => slides.length,
   meta: () => slideMeta,
@@ -723,11 +926,9 @@ const deckApi = {
     channel.postMessage({ type: 'theme-toggle-mirror' });
   },
   overview: () => deck.classList.contains('overview'),
-  toggleOverview: () => {
-    const on = deck.classList.toggle('overview');
-    if (on) requestAnimationFrame(fitOverview);
-    return on;
-  },
+  toggleOverview: () => setOverview(!deck.classList.contains('overview')),
+  mediaEmbeds: () => mediaEmbedsOn,
+  toggleMediaEmbeds,
   isBlackout: () => blackedOut,
   blackout: () => {
     applyBlackout(!blackedOut);

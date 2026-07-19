@@ -433,6 +433,8 @@ export const SPEAKER_LABELS = {
 // Speaker notes, indexed by slide order (matches the <section.slide>
 // sequence). null → keep the English source for that slide.
 export const ZH_NOTES = [
+  // 0 纯黑开场 · 只有 beam
+  `<p><strong>纯黑开场 —— 只有背景的光。</strong>先在黑暗里停一拍,再让第一个 logo 落下。</p>`,
   // 1 Logo · React
   `<p><strong>冷开场 —— 屏幕上没有一个字。</strong>"Hey what's up guys —— 我是 Hux 黄玄,前 React 团队成员。"让 logo 单独停一拍。</p>`,
   // 2 Logo · +Vue
@@ -449,6 +451,8 @@ export const ZH_NOTES = [
   `<p><strong>Chrome 从下方升起</strong> —— React 和 Vue 抬到上方两角,三个 logo 落成三角,Web 在底下托着它们。</p><p>"先聊 Web。"React 和 Vue 只是载体 —— 我们真正共同站立的地面,是 Web:它的开发体验、它的开放性、它的可达性。</p>`,
   // 3a Overlay · PWA 演讲 iframe
   `<p><strong>"先聊 Web"的实证:</strong>2016 年的 PWA 演讲,以 <em>live iframe</em> 浮在三角之上。点进框内可以翻那套 deck;在框外滚轮/按键才翻这套。角上的把手可拖拽缩放;切换器有桌面/平板/手机三档;↗ 按钮在新标签页打开。</p><p>iframe 在到达前一页时才加载、离开两页后卸载 —— 不拖累整场演讲。(需要会场网络;↗ 是 plan B。)</p>`,
+  // 3a′ Overlay · PWA 跳到 #/36,放大
+  `<p><strong>框放大,落到第 36 页</strong> —— 还是同一套 live deck,停在一个具体的 beat。放大一点让后排看得清;交互还是框内点、框外滚。</p>`,
   // 3b 回归 · Web 三角
   `<p><strong>关掉 PWA 窗口</strong> —— 三角回来,故事继续踩在这块地面上:是 Web 载着我们。</p>`,
   // 4 Logo · Lynx 取代 Chrome

@@ -1748,6 +1748,7 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   overflow: auto;
   height: 100vh;
   position: static;
+  counter-reset: ov-slide;
 }
 .deck.overview .meteors { opacity: 0.2; }
 .deck.overview .chrome { opacity: 0.3; }
@@ -1770,15 +1771,156 @@ vl-demo[data-ready="true"] .vl-demo__loading {
   pointer-events: auto;
   overflow: hidden;
   cursor: pointer;
+  counter-increment: ov-slide;
   /* Chrome is authored in design-space px because `zoom` scales it too:
      at the default zoom, 5px border ≈ 1px and 30px radius ≈ 6px on screen. */
   border: 5px solid var(--line);
   border-radius: 30px;
 }
 
+/* Slide number badge — inverse-zoom so it stays screen-crisp at any --ov-zoom. */
+.deck.overview .slide::before {
+  content: counter(ov-slide);
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  zoom: calc(1 / var(--ov-zoom, 0.2));
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 0 0 8px 0;
+  padding: 5px 8px;
+  backdrop-filter: blur(6px);
+}
+
 .deck.overview .slide.is-active {
   border-color: var(--vue-green);
   box-shadow: 0 0 0 10px var(--vue-green);
+}
+
+.deck.overview .slide.is-active::before {
+  color: var(--paper);
+  background: var(--vue-green);
+  border-color: var(--vue-green);
+}
+
+/* Overview editor — media open/hide. When Media embeds is off, hidden
+   tiles dim; eye on the tile toggles keep↔skip; bar toggles the global. */
+.deck.overview .slide.is-media-hidden {
+  opacity: 0.38;
+  filter: grayscale(0.35);
+}
+.deck.overview .slide.is-media-hidden.is-active {
+  opacity: 0.7;
+  filter: none;
+}
+
+.ov-eye { display: none; } /* only in overview editor */
+
+.deck.overview .ov-eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 41;
+  zoom: calc(1 / var(--ov-zoom, 0.2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 0 0 0 8px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+.deck.overview .ov-eye .sys-ic,
+.deck.overview .ov-eye .sys-ic svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.deck.overview .ov-eye[data-open="0"] {
+  color: var(--ink-mute);
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+}
+.deck.overview .ov-eye:hover {
+  color: var(--vue-green);
+  border-color: color-mix(in srgb, var(--vue-green) 50%, var(--line));
+}
+.deck.overview .slide.is-media-hidden .ov-eye[data-open="0"] {
+  color: var(--ink-faint);
+}
+
+/* Outside zoom — fixed overview editor bar */
+.ov-bar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 8px;
+  max-width: min(92vw, 640px);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.2;
+}
+.ov-bar.is-visible { display: flex; }
+.ov-bar__media {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper-elev);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.ov-bar__media .sys-ic,
+.ov-bar__media .sys-ic svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.ov-bar__media[data-on="0"] {
+  color: var(--ink-mute);
+}
+.ov-bar__media:hover {
+  border-color: color-mix(in srgb, var(--vue-green) 45%, var(--line));
+  color: var(--vue-green);
+}
+.ov-bar__media b {
+  font-weight: 600;
+  color: var(--vue-green);
+}
+.ov-bar__media[data-on="0"] b { color: var(--ink-mute); }
+.ov-bar__status {
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.ov-bar__hint {
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .ov-bar__hint { display: none; }
 }
 
 /* =========================================================

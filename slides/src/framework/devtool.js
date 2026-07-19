@@ -59,10 +59,12 @@ export function initDevtool(api) {
           row('slide', `${i + 1} / ${api.total()}`) +
           row('title', meta.title || '—', true) +
           row('stage scale', `${scale.toFixed(2)}×`) +
+          row('media embeds', api.mediaEmbeds() ? 'on' : 'off') +
           row('reduced motion', yn(api.reducedMotion(), lang)) +
         `</section>` +
         `<section class="dt__sec"><div class="dt__sec-h">This slide · flags</div>` +
           flagRow('bg') + flagRow('transition') + flagRow('chrome') +
+          row('media', slide?.dataset.media || (slide?.classList.contains('is-media-slide') ? 'embed (auto)' : '—')) +
           row('notes', yn(!!(meta.notes?.trim()), lang)) +
           row('flips', flips.length > 0 ? flips.join(', ') : '—') +
         `</section>` +
