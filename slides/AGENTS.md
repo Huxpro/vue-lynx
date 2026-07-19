@@ -83,8 +83,9 @@ deterministic (seeded `rnd(i, salt)`, never `Math.random`).
 - Demos only get the keyboard after a **deliberate click inside** them;
   autofocus grabs are blurred (`demoEngaged` in `main.js`). Scroll/swipe
   inside `.phone` / `.no-deck-scroll` / `.sim-float` never advances the deck.
-- **Local simulator** (`src/sim-overlay.js`): optional localhost-only floating
-  serve-sim frame, toggled from the palette (`m`). Do not wire it into
+- **Local simulator** (`src/sim-overlay.js`): optional floating serve-sim frame,
+  toggled from the palette (`m`). The palette always lists `m`; off localhost
+  it renders disabled with a “localhost only” note. Do not wire it into
   individual slides — keep cloud-hosted decks free of simulator coupling.
 
 ## Verify

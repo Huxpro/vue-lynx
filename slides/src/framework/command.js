@@ -10,8 +10,9 @@ import { icon } from './icons.js';
 export function initCommand(api, { devtool } = {}) {
   if (api.embed()) return null;
 
-  // Action = { section, key, label, icon, run }. `label` may be a function.
-  // Localhost-only presenter tools (serve-sim overlay) are appended when available.
+  // Action = { section, key, label, icon, run, disabled?, note? }.
+  // `label` / `disabled` / `note` may be functions. Disabled items stay visible
+  // (greyed out) but never run — used for localhost-only tools on cloud hosts.
   const ACTIONS = [
     { section: 'Navigate', key: 'n', label: 'Next slide', icon: 'arrowRight', run: api.next },
     { section: 'Navigate', key: 'p', label: 'Previous slide', icon: 'arrowLeft', run: api.prev },
@@ -22,6 +23,17 @@ export function initCommand(api, { devtool } = {}) {
     { section: 'Presenter', key: 'o', label: () => `Overview: ${api.overview() ? 'on' : 'off'}`, icon: 'grid', run: api.toggleOverview },
     { section: 'Presenter', key: 'b', label: () => `Blackout: ${api.isBlackout() ? 'on' : 'off'}`, icon: 'eye', run: api.blackout },
     { section: 'Presenter', key: 'f', label: 'Toggle fullscreen', icon: 'maximize', run: api.fullscreen },
+    {
+      section: 'Presenter',
+      key: 'm',
+      label: () => (api.simAvailable?.()
+        ? `Simulator: ${api.simOpen?.() ? 'on' : 'off'}`
+        : 'Simulator'),
+      icon: 'smartphone',
+      disabled: () => !api.simAvailable?.(),
+      note: () => (api.simAvailable?.() ? '' : 'localhost only'),
+      run: () => api.toggleSim?.(),
+    },
 
     { section: 'Settings', key: 't', label: () => `Theme: ${api.theme()}`, icon: 'moon', run: api.toggleTheme },
     { section: 'Settings', key: 'l', label: () => `Language: ${api.lang() === 'zh' ? '中文' : 'English'}`, icon: 'languages', run: api.toggleLang },
@@ -30,17 +42,11 @@ export function initCommand(api, { devtool } = {}) {
   ];
 
   const resolveLabel = (a) => (typeof a.label === 'function' ? a.label() : a.label);
-
-  function localActions() {
-    if (!api.simAvailable?.()) return [];
-    return [{
-      section: 'Presenter',
-      key: 'm',
-      label: () => `Simulator: ${api.simOpen?.() ? 'on' : 'off'}`,
-      icon: 'smartphone',
-      run: () => api.toggleSim?.(),
-    }];
-  }
+  const isDisabled = (a) => !!(typeof a.disabled === 'function' ? a.disabled() : a.disabled);
+  const resolveNote = (a) => {
+    const n = typeof a.note === 'function' ? a.note() : a.note;
+    return n || '';
+  };
 
   function slideActions() {
     return api.meta().map((m, i) => ({
@@ -58,21 +64,17 @@ export function initCommand(api, { devtool } = {}) {
   let selected = 0;
 
   function allActions() {
-    // Insert localhost simulator next to other Presenter actions.
-    const base = [...ACTIONS];
-    const locals = localActions();
-    if (locals.length) {
-      const i = base.findIndex((a) => a.section === 'Settings');
-      base.splice(i === -1 ? base.length : i, 0, ...locals);
-    }
-    return [...base, ...slideActions()];
+    return [...ACTIONS, ...slideActions()];
   }
 
   function visibleActions() {
     const all = allActions();
     if (!query) return all;
     const q = query.toLowerCase();
-    return all.filter((a) => resolveLabel(a).toLowerCase().includes(q));
+    return all.filter((a) => {
+      const hay = `${resolveLabel(a)} ${resolveNote(a)}`.toLowerCase();
+      return hay.includes(q);
+    });
   }
 
   function render() {
@@ -92,9 +94,13 @@ export function initCommand(api, { devtool } = {}) {
         section = a.section;
         html += `<div class="cmdk__section">${section}</div>`;
       }
-      html += `<div class="cmdk__item" role="option" data-idx="${idx}" ` +
-        `aria-selected="${idx === selected}">${icon(a.icon)}` +
-        `<span class="cmdk__label">${resolveLabel(a)}</span>` +
+      const disabled = isDisabled(a);
+      const note = resolveNote(a);
+      html += `<div class="cmdk__item${disabled ? ' is-disabled' : ''}" role="option" data-idx="${idx}" ` +
+        `aria-selected="${idx === selected}" aria-disabled="${disabled}">${icon(a.icon)}` +
+        `<span class="cmdk__label">${resolveLabel(a)}` +
+        (note ? `<span class="cmdk__note">${note}</span>` : '') +
+        `</span>` +
         (a.key ? `<span class="cmdk__hint">${a.key}</span>` : '') + `</div>`;
     });
     list.innerHTML = html;
@@ -103,8 +109,10 @@ export function initCommand(api, { devtool } = {}) {
   }
 
   function run(action) {
+    // Disabled items stay visible (e.g. Simulator off localhost) but never fire.
+    if (!action || isDisabled(action)) return;
     close();
-    action?.run?.();
+    action.run?.();
   }
 
   function open(slashMode = false) {
@@ -201,7 +209,7 @@ export function initCommand(api, { devtool } = {}) {
       if (e.key === 'Backspace') { e.preventDefault(); setSlash(false); return; }
       if (e.key.length === 1) {
         const a = allActions().find((x) => x.key === e.key.toLowerCase());
-        if (a) { e.preventDefault(); run(a); }
+        if (a) { e.preventDefault(); run(a); } // run() no-ops when disabled
       }
       return;
     }

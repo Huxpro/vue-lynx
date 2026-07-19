@@ -2,9 +2,10 @@
 // Local iOS Simulator overlay — optional localhost presenter tool.
 //
 // Streams Evan Bacon's serve-sim preview (Vite mounts /.sim in `pnpm dev`) as a
-// floating, draggable frame above any slide. Cloud / non-localhost hosts never
-// see the command or the overlay — examples and the deck stay cloud-safe.
-// Toggle from the command palette (⌘K / `/` → `m`).
+// floating, draggable frame above any slide. The palette always lists `m`; on
+// cloud / non-localhost hosts the entry is disabled ("localhost only") and the
+// overlay never mounts — examples and the deck stay cloud-safe.
+// Toggle from the command palette (⌘K / `/` → `m`) when on loopback.
 // =============================================================================
 
 import { icon } from './framework/icons.js';

@@ -127,9 +127,33 @@
   color: var(--ink);
 }
 .cmdk__item[aria-selected="true"] .sys-ic { color: var(--vue-green); }
-.cmdk__label { flex: 1; font-size: 15px; }
+.cmdk__label {
+  flex: 1;
+  font-size: 15px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.cmdk__note {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
 .cmdk__hint { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
 .cmdk__item[aria-selected="true"] .cmdk__hint { color: var(--ink-mute); }
+.cmdk__item.is-disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.cmdk__item.is-disabled[aria-selected="true"] {
+  background: transparent;
+  color: var(--ink-soft);
+}
+.cmdk__item.is-disabled[aria-selected="true"] .sys-ic { color: var(--ink-mute); }
+.cmdk__item.is-disabled .cmdk__note { color: var(--ink-mute); }
 
 /* =========================================================
    DevTool panel (top-right, Next.js-devtools style)

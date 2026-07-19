@@ -20,9 +20,10 @@ Run `cd ../website && pnpm prepare:docs` once if those bundles are missing.
 For live presenting on your Mac, the Vite **dev** server mounts
 [serve-sim](https://github.com/EvanBacon/serve-sim) at **`/.sim`**. A floating,
 draggable simulator frame can sit above any slide — toggle it from the command
-palette (`⌘K` / `/` → **`m`**). The palette entry and overlay only appear on
-**localhost** / `127.0.0.1`, so cloud-hosted decks (examples, Vercel previews)
-are unaffected. Production builds never include the middleware.
+palette (`⌘K` / `/` → **`m`**). The palette always shows **`m`**; off
+**localhost** / `127.0.0.1` the entry is disabled with a “localhost only” note,
+and the overlay never mounts — so cloud-hosted decks stay unaffected.
+Production builds never include the middleware.
 
 ```bash
 # macOS + Xcode, with a simulator already booted (e.g. Lynx Explorer):
@@ -56,7 +57,7 @@ Inside the palette (`⌘K` search or `/` then the key):
 | `]` | Last slide          | `d` | DevTool panel            |
 | `s` | Open speaker view   | `f` | Toggle fullscreen        |
 | `o` | Overview grid       | `b` | Blackout audience screen |
-| `m` | Simulator overlay   |     | *(localhost only)*       |
+| `m` | Simulator overlay   |     | disabled off localhost   |
 
 Jump to any slide by title from the palette's **Slides** section (type to
 filter, `↑`/`↓` or `←`/`→` to move, `Enter` to go).
