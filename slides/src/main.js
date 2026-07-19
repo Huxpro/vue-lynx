@@ -12,7 +12,7 @@ import { attachDeviceControls, DECK_PRESETS } from './framework/device.js';
 import { registerVlDemo } from './demo.js';
 import { initEmbeds } from './embeds.js';
 import { initQRCodes } from './qrcodes.js';
-import { initSimOverlay } from './sim-overlay.js';
+import { initSimOverlay, isLocalHost } from './sim-overlay.js';
 
 // =========================================================
 // URL flags — ?embed=1 locks the deck to a single slide and
@@ -741,10 +741,10 @@ const deckApi = {
 };
 
 // Optional localhost-only floating iOS Simulator (serve-sim at /.sim).
-// Cloud / non-loopback hosts get null — no palette entry, no overlay.
+// The palette always shows `m`; off loopback it's disabled ("localhost only").
 const sim = initSimOverlay({ embed: embedMode });
 Object.assign(deckApi, {
-  simAvailable: () => !!sim?.available?.(),
+  simAvailable: () => !embedMode && isLocalHost() && !!sim?.available?.(),
   simOpen: () => !!sim?.isOpen?.(),
   toggleSim: () => sim?.toggle?.(),
 });
