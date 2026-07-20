@@ -212,9 +212,12 @@ function warnIfNoRegistrations(
   if (registrations !== '') return;
   ctx.emitWarning(
     new Error(
-      `[worklet-loader-mt] 'main thread' directive present but no worklet `
-        + `registrations were extracted from ${ctx.resourcePath}. If this `
-        + `module defines worklets, the LEPUS emit shape may have changed.`,
+      `[worklet-loader-mt] ${ctx.resourcePath} contains a 'main thread' `
+        + `directive but produced no worklet registrations for the main-thread `
+        + `bundle. If the module defines worklets, they are missing from MT and `
+        + `will crash at runtime with "cannot read property 'bind' of `
+        + `undefined" on first interaction. If the directive is an unrelated `
+        + `string (not a worklet function), this warning is safe to ignore.`,
     ),
   );
 }
