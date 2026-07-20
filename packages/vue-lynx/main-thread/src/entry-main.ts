@@ -53,10 +53,14 @@ g['runOnBackground'] = runOnBackground;
 g[TPL_EXECUTOR_REGISTRY_GLOBAL] = registerTemplate;
 g[TPL_REGISTER_GLOBAL] = (
   id: string,
-  _holes: unknown,
+  holes: unknown,
   create: Parameters<typeof registerTemplate>[1],
 ): string => {
-  registerTemplate(id, create);
+  registerTemplate(
+    id,
+    create,
+    Array.isArray(holes) ? holes as string[] : [],
+  );
   return id;
 };
 

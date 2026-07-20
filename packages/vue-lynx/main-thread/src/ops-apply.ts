@@ -21,7 +21,7 @@ import {
   setPageUniqueId,
   trackInsert,
 } from './element-registry.js';
-import { getTemplate } from './element-templates.js';
+import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -279,10 +279,52 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.INSERT_TEMPLATE_SLOT: {
+        // Slot-index addressing: parent is the slotIndex-th element slot of
+        // the template rooted at rootId (see bindTemplateInstanceSlots).
+        const rootId = ops[i++] as number;
+        const slotIndex = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const anchorId = ops[i++] as number;
+        const parent = getTemplateSlotParent(rootId, slotIndex);
+        const child = elements.get(childId);
+        if (parent && child) {
+          removedRoots.delete(childId);
+          // Parent uid for trackInsert is the slot FiberElement's registry
+          // id (rootId + holeOffset); use child tracking only — the slot
+          // parent is already part of the template instance.
+          if (anchorId === -1) {
+            __AppendElement(parent, child);
+          } else {
+            const anchor = elements.get(anchorId);
+            if (anchor) __InsertElementBefore(parent, child, anchor);
+            else __AppendElement(parent, child);
+          }
+        }
+        break;
+      }
+
       case OP.REMOVE: {
         const parentId = ops[i++] as number;
         const childId = ops[i++] as number;
         const parent = elements.get(parentId);
+        const child = elements.get(childId);
+        if (parent && child) {
+          __RemoveElement(parent, child);
+          removedRoots.add(childId);
+        }
+        // Best-effort: if this REMOVE tears down a template root, drop its
+        // slot-index table (holes share the contiguous id range and are not
+        // individually removed).
+        unbindTemplateInstanceSlots(childId);
+        break;
+      }
+
+      case OP.REMOVE_TEMPLATE_SLOT: {
+        const rootId = ops[i++] as number;
+        const slotIndex = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const parent = getTemplateSlotParent(rootId, slotIndex);
         const child = elements.get(childId);
         if (parent && child) {
           __RemoveElement(parent, child);
@@ -403,10 +445,12 @@ export function applyOps(ops: unknown[], flush = true): void {
         const rootId = ops[i++] as number;
         const tplId = ops[i++] as string;
         const holeCount = ops[i++] as number;
-        const create = getTemplate(tplId);
+        const entry = getTemplate(tplId);
         let handles: LynxElement[];
-        if (create) {
-          handles = create(pageUniqueId);
+        if (entry) {
+          // The create() function builds the whole lowered subtree with
+          // straight-line PAPI calls and returns [root, hole0, hole1, …].
+          handles = entry.create(pageUniqueId);
         } else {
           console.error(
             `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
@@ -421,6 +465,8 @@ export function applyOps(ops: unknown[], flush = true): void {
         for (let k = 1; k <= holeCount; k++) {
           elements.set(rootId + k, handles[k] ?? root);
         }
+        // Bind element-slot handles for slot-index INSERT/REMOVE.
+        bindTemplateInstanceSlots(rootId, handles, entry);
         break;
       }
 
@@ -470,4 +516,5 @@ export function resetMainThreadState(): void {
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
+  resetTemplateInstanceSlots();
 }

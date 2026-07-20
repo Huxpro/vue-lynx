@@ -60,7 +60,11 @@ function compileToComponent(
 }
 
 function normalized(container: Element): string {
-  return container.innerHTML.replace(/ vue-ref-\d+="[^"]*"/g, '');
+  // Element slots use layout-transparent <wrapper> placeholders; strip the
+  // tags (keep children) so lowered and unlowered documents compare equal.
+  return container.innerHTML
+    .replace(/<\/?wrapper[^>]*>/g, '')
+    .replace(/ vue-ref-\d+="[^"]*"/g, '');
 }
 
 /** Render both variants and assert identical documents. */
@@ -199,6 +203,86 @@ describe('element-template transform', () => {
       (lowered.container.querySelector('.shown') as HTMLElement | null)?.style
         .display,
     ).toBe('none');
+  });
+
+  it('lowers a static shell with v-if as an element slot', async () => {
+    const template = `
+<view class="card">
+  <image class="icon" src="a.png" />
+  <view v-if="show" class="cond"><text>visible</text></view>
+  <text class="title">{{ title }}</text>
+</view>`.trim();
+
+    const { lowered, code } = renderBoth(template, () =>
+      reactive({ show: true, title: 'Hello' }));
+    expect(code).toContain('__CreateWrapperElement');
+    expect(code).toContain('"#slot"');
+    expect(lowered.container.querySelector('.cond')?.textContent).toBe(
+      'visible',
+    );
+    expect(lowered.container.querySelector('.title')?.textContent).toBe(
+      'Hello',
+    );
+
+    const state = lowered.state as { show: boolean; title: string };
+    state.show = false;
+    state.title = 'Bye';
+    await nextTick();
+    expect(lowered.container.querySelector('.cond')).toBeNull();
+    expect(lowered.container.querySelector('.title')?.textContent).toBe('Bye');
+
+    state.show = true;
+    await nextTick();
+    expect(lowered.container.querySelector('.cond')?.textContent).toBe(
+      'visible',
+    );
+  });
+
+  it('lowers a static shell with v-for as an element slot', async () => {
+    const template = `
+<view class="card">
+  <text class="head">items</text>
+  <view v-for="item in items" :key="item" class="row">
+    <text class="label">{{ item }}</text>
+  </view>
+</view>`.trim();
+
+    const { lowered, code } = renderBoth(template, () => ({
+      items: reactive(['a', 'b']),
+    }));
+    expect(code).toContain('"#slot"');
+    const labels = () =>
+      [...lowered.container.querySelectorAll('.label')].map((n) =>
+        n.textContent
+      );
+    expect(labels()).toEqual(['a', 'b']);
+
+    const items = lowered.state['items'] as string[];
+    items.push('c');
+    await nextTick();
+    expect(labels()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('lowers a static shell with a component child as an element slot', () => {
+    const template = `
+<view class="card">
+  <image class="icon" src="a.png" />
+  <Child />
+  <text class="tail">end</text>
+</view>`.trim();
+
+    const low = compile(template, {
+      mode: 'module',
+      hoistStatic: false,
+      cacheHandlers: false,
+      whitespace: 'condense',
+      isNativeTag: (t) => t !== 'Child',
+      nodeTransforms: [elementTemplateTransform],
+    });
+    expect(low.code).toContain('__vlx-tpl:');
+    expect(low.code).toContain('"#slot"');
+    expect(low.code).toContain('__CreateWrapperElement');
+    expect(low.code).toContain('__vueLynxRegisterElementTemplate');
   });
 
   it('bakes mixed static text children as text nodes', () => {

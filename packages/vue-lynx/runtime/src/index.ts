@@ -89,6 +89,7 @@ import {
   runOnBackground,
 } from './run-on-background.js';
 import { ShadowElement, createPageRoot, resetTemplateState } from './shadow-element.js';
+import { setTemplateSlotRenderer } from './slot-host.js';
 import { transformToWorklet } from './transform-to-worklet.js';
 import { Transition } from './Transition.js';
 import { TransitionGroup } from './TransitionGroup.js';
@@ -145,6 +146,13 @@ export const _render: (
 ) => void = (vnode, container) => {
   ensureRenderer().render(vnode, container);
 };
+
+// Wire element-template slot mounting through the same renderer (avoids a
+// circular import between node-ops and this module). Lazy: first slot mount
+// ensures the vdom renderer exists.
+setTemplateSlotRenderer((vnode, container) => {
+  ensureRenderer().render(vnode, container);
+});
 
 // ===========================================================================
 // Vue Lynx APIs

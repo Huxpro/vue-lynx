@@ -29,6 +29,9 @@
  *     function; the root maps to rootId and the template's holes (interior
  *     nodes with dynamic parts) map to rootId+1 … rootId+holeCount, so all
  *     later SET_* ops target them like ordinary elements.
+ *     Holes are either attr/text bindings or element slots (`TPL_SLOT_KEY`).
+ *     Element-slot count is not a separate op argument — it is the count of
+ *     `TPL_SLOT_KEY` entries in the template's registered hole-key list.
  *   REGISTER_TREE:     [16, treeId, structure]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
@@ -40,6 +43,12 @@
  *     deterministically: pre-order traversal of the structure starting at
  *     baseUid — the BG thread allocates the identical contiguous block, so
  *     both sides agree on ids without transmitting them.
+ *   INSERT_TEMPLATE_SLOT: [18, rootId, slotIndex, childId, anchorId]
+ *     Insert a dynamic child into the slotIndex-th element slot of the
+ *     template instance rooted at rootId (slot-index addressing — the slot
+ *     parent may be anonymous once sparse ET lands). anchorId=-1 → append.
+ *   REMOVE_TEMPLATE_SLOT: [19, rootId, slotIndex, childId]
+ *     Remove a dynamic child from the slotIndex-th element slot.
  *
  * Naming: INSTANTIATE_TEMPLATE (15) and REGISTER_TREE/CLONE_TREE (16/17) are
  * genuinely different mechanisms, named by mechanism rather than renderer.
@@ -49,7 +58,8 @@
  * hence TEMPLATE. The vapor object is a named tree prototype — serialized
  * structure over the wire plus dense pre-order naming, required because Vapor
  * codegen's addressing knowledge lives in navigation code the protocol cannot
- * see — hence TREE, not TEMPLATE.
+ * see — hence TREE, not TEMPLATE. Element-slot ops (18/19) extend the ET
+ * path so dynamic subtrees can graft into a template by slot-index.
  */
 export const PAGE_ROOT_ID = 1;
 
@@ -73,6 +83,8 @@ export const OP = {
   INSTANTIATE_TEMPLATE: 15,
   REGISTER_TREE: 16,
   CLONE_TREE: 17,
+  INSERT_TEMPLATE_SLOT: 18,
+  REMOVE_TEMPLATE_SLOT: 19,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -96,6 +108,8 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.INSTANTIATE_TEMPLATE]: 3,
   [OP.REGISTER_TREE]: 2,
   [OP.CLONE_TREE]: 2,
+  [OP.INSERT_TEMPLATE_SLOT]: 4,
+  [OP.REMOVE_TEMPLATE_SLOT]: 3,
 });
 
 // ---------------------------------------------------------------------------
@@ -106,6 +120,13 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
 export const TPL_TYPE_PREFIX = '__vlx-tpl:';
 /** Prop-key prefix for hole bindings on lowered vnodes. */
 export const TPL_HOLE_PREFIX = '__h';
+/**
+ * Hole-key marking an element slot (dynamic subtree insertion point).
+ * Attr/text holes use the original prop key or `'#text'`; element slots use
+ * this sentinel. Slot-index `k` is the k-th `TPL_SLOT_KEY` in the holes list
+ * (0-based) and addresses INSERT/REMOVE_TEMPLATE_SLOT ops.
+ */
+export const TPL_SLOT_KEY = '#slot';
 /**
  * Name of the global through which compiler-generated code registers
  * element templates: `globalThis.<TPL_REGISTER_GLOBAL>(id, holes, create)`.
