@@ -106,6 +106,9 @@
  *  - Deployment lifetime (Durable vs Ephemeral) is not in the wire format:
  *    the same ops paint the durable BG-owned tree and the ephemeral IFR
  *    first-frame copy ("disposable" is that axis-D value, not a mechanism).
+ *    This lets Vapor's disposable main-thread first frame use ET-shaped
+ *    sparse, write-only naming while the Background path keeps its durable
+ *    addressing contract.
  */
 export const PAGE_ROOT_ID = 1;
 

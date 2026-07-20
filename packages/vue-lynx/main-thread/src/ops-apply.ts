@@ -14,6 +14,10 @@ import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
 
 import {
+  bakeDenseTreeCreate,
+  type DenseTreeCreator,
+} from './bake-tree-create.js';
+import {
   elements,
   pageUniqueId,
   releaseSubtree,
@@ -102,6 +106,8 @@ interface RegisteredTree {
 }
 
 const templates = new Map<number, RegisteredTree>();
+/** Baked dense creators — one per REGISTER_TREE id (milestone-1 ET bridge). */
+const bakedCreators = new Map<number, DenseTreeCreator>();
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -197,51 +203,26 @@ function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
 }
 
 /**
- * **Named Tree** interpreter (legacy "dense A1") — four-axis coordinate
- * Data / Dense / — / Split (see vue-lynx/internal/matrix): the residual
- * arrives as a lazy AST and this generic walk materializes it, naming
- * every preorder slot.
+ * Instantiate a dense Named Tree through its REGISTER_TREE-baked creator.
  *
- * Element ids are assigned by pre-order traversal starting at baseUid —
- * the exact allocation order the BG thread used for its shadow clone, so
- * both sides agree without a transmitted map.
+ * Element ids are assigned by pre-order traversal starting at baseUid — the
+ * exact allocation order the BG thread used for its shadow clone, so both
+ * sides agree without a transmitted map. Comments / empty #text consume a
+ * uid slot without creating a native element (BG-only anchors).
  *
- * Comment nodes and empty #text nodes are Background Thread anchors: the
- * walk consumes their uid (keeping both sides' pre-order counters in
- * lockstep) but creates no Main Thread element — returns null.
+ * The bake is the milestone-1 bridge toward Element-Template-shaped IFR
+ * paint for Vapor: same dense naming as the historical recursive walk, but
+ * as a straight-line program. Sparse (hole-only) naming for the disposable
+ * IFR MT path lives in `bakeSparseTreeCreate`.
  */
-function instantiateTemplateDense(
-  node: TemplateNode,
-  base: number,
-  counter: { value: number },
+function instantiateTemplate(
+  creator: DenseTreeCreator,
+  baseUid: number,
 ): { el: LynxElement; uid: number } | null {
-  const uid = base + counter.value++;
-  const [tag, props, children] = node;
-
-  if (tag === '#comment') return null;
-  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
-    return null;
-  }
-
-  let el: LynxElement;
-  if (tag === '#text') {
-    el = __CreateText(pageUniqueId);
-  } else {
-    el = createTypedElement(tag, pageUniqueId);
-  }
-  __SetCSSId([el], 0);
-  elements.set(uid, el);
-  installSelectorAttribute(uid, el);
-  applyStaticProps(el, props);
-
-  for (const childNode of children) {
-    const child = instantiateTemplateDense(childNode, base, counter);
-    if (child) {
-      __AppendElement(el, child.el);
-      trackInsert(uid, child.uid);
-    }
-  }
-  return { el, uid };
+  return creator(pageUniqueId, baseUid, {
+    elements,
+    installSelectorAttribute,
+  });
 }
 
 /**
@@ -504,6 +485,7 @@ function instantiateVaporCodeTemplate(
 }
 
 function instantiateRegisteredTree(
+  tplId: number,
   entry: RegisteredTree,
   baseUid: number,
 ): void {
@@ -519,7 +501,8 @@ function instantiateRegisteredTree(
       null,
     );
   } else {
-    instantiateTemplateDense(entry.structure, baseUid, { value: 0 });
+    const creator = bakedCreators.get(tplId);
+    if (creator) instantiateTemplate(creator, baseUid);
   }
 }
 
@@ -685,6 +668,7 @@ export function applyOps(ops: unknown[], flush = true): void {
             ? addressedOr0
             : undefined;
           templates.set(tplId, { structure, addressed });
+          bakedCreators.set(tplId, bakeDenseTreeCreate(structure));
           // Bundle-delivered structures feed the active staging strategy the
           // same way wire-delivered ones do (engine prototype / compiled
           // ephemeral plan).
@@ -705,6 +689,7 @@ export function applyOps(ops: unknown[], flush = true): void {
           ? addressedOr0
           : undefined;
         templates.set(tplId, { structure, addressed });
+        bakedCreators.set(tplId, bakeDenseTreeCreate(structure));
         // Build any per-template resource for the active staging strategy
         // (engine host-resident prototype, compiled ephemeral plan). The
         // Data-Template default needs none. Fail-safe: engine register is a
@@ -729,7 +714,7 @@ export function applyOps(ops: unknown[], flush = true): void {
               break;
             }
           }
-          if (!painted) instantiateRegisteredTree(entry, baseUid);
+          if (!painted) instantiateRegisteredTree(tplId, entry, baseUid);
         }
         break;
       }
@@ -926,6 +911,7 @@ export function resetMainThreadState(): void {
   clearIfrSelectorAttributeDeferral();
   resetElementRegistry();
   templates.clear();
+  bakedCreators.clear();
   for (const strategy of STAGING_STRATEGIES) strategy.reset();
   setPageUniqueId(1);
   resetListState();

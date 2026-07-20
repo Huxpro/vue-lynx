@@ -364,7 +364,12 @@ export function pluginVueLynx(
     enableSparseNaming = true,
     ifrPaint = 'plain',
   } = options;
-  const enableElementTemplates = resolveElementTemplatesFlag(options);
+  const enableElementTemplates = vapor
+    // Vapor steady-state addressing is dense TREE ops, not the VDOM
+    // elementTemplateTransform. IFR×ET sparse paint for Vapor is a separate
+    // path (docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md).
+    ? false
+    : resolveElementTemplatesFlag(options);
 
   // Naming: templateNaming (node|block, legacy dense|sparse) wins over the
   // deprecated boolean alias.
