@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
 :::tip List diff
-Vue Lynx 主线程 list 适配层现在会对常见变更刷新 `insertAction` / `removeAction` / `updateAction`：追加、头部插入、中间插入、删除、同 list 重排（move）、以及 platform-info 更新。`@scrolltolower` 追加仍是最简单路径。尚未做：框架侧 cell 回收、每次 flush 刷新 `__UpdateListCallbacks`——见下方 tracking issues。
+Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 `listItems`（LIS 检测 move，语义对齐 ReactLynx 的 remove+insert）刷新 `insertAction` / `removeAction` / `updateAction`。覆盖追加、头部插入、中间插入、删除、同 list 重排、platform-info 更新。尚未做：框架侧 cell 回收、每次 flush 刷新 `__UpdateListCallbacks`——[#302](https://github.com/Huxpro/vue-lynx/issues/302)、[#303](https://github.com/Huxpro/vue-lynx/issues/303)。
 :::
 
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库

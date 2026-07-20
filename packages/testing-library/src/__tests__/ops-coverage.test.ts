@@ -240,7 +240,7 @@ describe('native list element · mutations', () => {
     ).toBe(false);
   });
 
-  it('reorder does not insert past the list length', async () => {
+  it('reorder reverse keeps all item-keys across the diff', async () => {
     const items = ref(['A', 'B', 'C']);
     const { container } = render(mountKeyedList(items));
     const listEl = container.querySelector('list')!;
@@ -251,11 +251,43 @@ describe('native list element · mutations', () => {
     await nextTick();
 
     const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    // Simulate applying remove+insert to the key list — no key may disappear.
+    let keys = ['A', 'B', 'C'];
     for (const info of infos) {
-      for (const action of info.insertAction) {
-        expect(action.position).toBeLessThan(3);
+      for (const r of [...info.removeAction].sort((a, b) => b - a)) {
+        keys.splice(r, 1);
+      }
+      const inserts = [...info.insertAction].sort(
+        (a, b) => (a.position as number) - (b.position as number),
+      );
+      for (const action of inserts) {
+        keys.splice(action.position as number, 0, String(action['item-key']));
       }
     }
+    expect(keys).toEqual(['C', 'B', 'A']);
+  });
+
+  it('mixed remove middle then remove last across flushes', async () => {
+    const items = ref(['A', 'B', 'C', 'D', 'E', 'F']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+
+    // Remove middle (C)
+    items.value = ['A', 'B', 'D', 'E', 'F'];
+    await nextTick();
+    await nextTick();
+    let info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([2]);
+    expect(info.insertAction).toEqual([]);
+
+    // Remove last (F)
+    items.value = ['A', 'B', 'D', 'E'];
+    await nextTick();
+    await nextTick();
+    info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([4]);
+    expect(info.insertAction).toEqual([]);
   });
 
   it('remove middle emits removeAction', async () => {
