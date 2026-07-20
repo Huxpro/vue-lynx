@@ -90,7 +90,11 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /modelValue/);
   assert.match(source, /v-show="modelValue"/);
   assert.doesNotMatch(source, /v-if="modelValue"/);
-  assert.match(source, /<Transition name="sheet" @after-leave="handleAfterLeave">/);
+  assert.match(
+    source,
+    /<Transition[\s\S]*?name="sheet"[\s\S]*?persisted[\s\S]*?:duration="\{ enter: 250, leave: 188 \}"[\s\S]*?@before-enter="handleBeforeEnter"[\s\S]*?@after-leave="handleAfterLeave"/,
+    'v-show sheet enter must be persisted with explicit durations and a before-enter snap',
+  );
   assert.match(source, /class="sheet-backdrop"[^>]*:main-thread-ref="backdropRef"[^>]*@tap="requestClose"/s);
   assert.match(source, /class="sheet-surface"/);
   assert.match(
@@ -146,6 +150,7 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /animationGenerationRef/);
   assert.doesNotMatch(source, /watch\(\(\) => props\.modelValue/);
   assert.doesNotMatch(source, /prepareSheetForOpen/);
+  assert.match(source, /function handleBeforeEnter\(\)[\s\S]*?runOnMainThread\(resetSheetMotion\)/);
   assert.match(
     source,
     /class="sheet-surface-transition"[^>]*:style="surfaceStyle"/,
@@ -164,9 +169,46 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   );
   assert.doesNotMatch(source, /\.sheet-enter-from \.sheet-surface,/);
   assert.match(source, /function resetSheetMotion\(\)[\s\S]*?applySheetMotion\(0\)/);
+  assert.match(
+    source,
+    /function resetSheetMotion\(\)[\s\S]*?setMotionTransition\('none', 'none'\)[\s\S]*?applySheetMotion\(0\)/,
+    'reset must leave gesture nodes with transition none, not revive stylesheet transitions',
+  );
+  assert.doesNotMatch(
+    source,
+    /function resetSheetMotion\(\)[\s\S]*?setMotionTransition\('', ''\)/,
+  );
   assert.match(source, /runOnBackground\(requestClose\)/);
-  assert.match(source, /transition:\s*opacity/);
-  assert.match(source, /transition:\s*transform/);
+  assert.match(
+    source,
+    /\.sheet-enter-active,[\s\S]*?\.sheet-leave-active\s*\{[^}]*transition:\s*opacity/s,
+    'opacity interpolation must live on enter/leave-active only',
+  );
+  assert.match(
+    source,
+    /\.sheet-enter-active \.sheet-surface-transition,[\s\S]*?\.sheet-leave-active \.sheet-surface-transition\s*\{[^}]*transition:\s*transform/s,
+    'transform interpolation must live on enter/leave-active only',
+  );
+  assert.match(
+    source,
+    /\.sheet-enter-from,[\s\S]*?\.sheet-enter-from \.sheet-surface-transition\s*\{[^}]*transition:\s*none/s,
+    'enter-from must snap closed instead of reverse-animating into the closed pose',
+  );
+  for (const [selector, label] of [
+    ['.sheet-layer', 'layer'],
+    ['.sheet-backdrop', 'backdrop'],
+    ['.sheet-surface-transition', 'wrapper'],
+    ['.sheet-surface', 'gesture surface'],
+  ]) {
+    const escaped = selector.replace(/\./g, '\\.');
+    const block = source.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`));
+    assert.ok(block, `missing base ${label} rule`);
+    assert.doesNotMatch(
+      block[1],
+      /\btransition\s*:/,
+      `always-on ${label} transitions reverse-animate into enter-from on leave interrupt`,
+    );
+  }
   assert.doesNotMatch(source, /transition:\s*all/);
 });
 
