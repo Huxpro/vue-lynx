@@ -100,6 +100,12 @@ export const vueLynxCompilerOptions = {
  * default to following `enableIFR` (they attack the one cost IFR adds — the
  * synchronous main-thread render), with an explicit value winning either way.
  *
+ * VDOM only. Pure Vapor builds keep this off — their static path is
+ * `REGISTER_TREE` / `CLONE_TREE`, and the IFR×ET sparse-hole paint for Vapor
+ * is tracked separately (see the 2026-07-20 vapor-ifr-element-templates
+ * design). Callers that already know `vapor: true` should not invoke this
+ * helper for the VDOM transform.
+ *
  * This is THE defaulting rule; every layer below receives the resolved
  * boolean rather than re-deriving it.
  */

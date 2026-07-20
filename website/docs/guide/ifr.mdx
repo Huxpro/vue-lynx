@@ -34,7 +34,7 @@ Two layers make that sync paint cheap enough to ship:
 | Layer | Role |
 | --- | --- |
 | **When** | IFR — paint on MT during `loadTemplate`; BG boot overlaps |
-| **How cheap** | VDOM: [Element Templates](#enable) with `enableIFR` · Vapor: `template()` → `REGISTER_TREE` / `CLONE_TREE` (no ET) |
+| **How cheap** | VDOM: [Element Templates](#enable) with `enableIFR` · Vapor: `template()` → `REGISTER_TREE` / `CLONE_TREE` today; IFR×ET sparse-hole paint is the tracked follow-up for residual FCP |
 
 Plain IFR without ET still replays roughly a full create path on the main
 thread. That is why VDOM ships IFR **with** Element Templates by default —
@@ -83,7 +83,7 @@ export default defineConfig({
   plugins: [
     pluginVueLynx({
       enableIFR: true, // VDOM: also turns on Element Templates
-      // vapor: true,  // optional — Vapor IFR uses tree clone, not ET
+      // vapor: true,  // optional — Vapor IFR uses tree clone today; ET-shaped MT paint is in progress
     }),
   ],
 })

@@ -30,7 +30,7 @@ import { Badge } from '@theme';
 | 层 | 作用 |
 | --- | --- |
 | **何时画** | IFR — `loadTemplate` 里主线程先画；后台启动重叠 |
-| **画多便宜** | VDOM：`enableIFR` 自带[元素模板](#开启) · Vapor：`template()` → `REGISTER_TREE` / `CLONE_TREE`（不用 ET） |
+| **画多便宜** | VDOM：`enableIFR` 自带[元素模板](#开启) · Vapor：今天走 `template()` → `REGISTER_TREE` / `CLONE_TREE`；IFR×ET 稀疏洞首帧是后续 FCP 优化方向 |
 
 裸 IFR（无 ET）在主线程上仍接近整条 create 路径。所以 VDOM 默认 **IFR + 元素模板** 一起开——数字见 [IFR 性能数据](/zh/guide/ifr-benchmarks) 的策略阶梯。
 
@@ -74,7 +74,7 @@ export default defineConfig({
   plugins: [
     pluginVueLynx({
       enableIFR: true, // VDOM：同时开启元素模板
-      // vapor: true,  // 可选 — Vapor IFR 走树 clone，不用 ET
+      // vapor: true,  // 可选 — Vapor IFR 今天走树 clone；ET 形态的主线程首帧绘制在推进中
     }),
   ],
 })

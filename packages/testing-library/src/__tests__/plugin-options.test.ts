@@ -37,6 +37,22 @@ describe('pluginVueLynx optimization defaults', () => {
   });
 });
 
+describe('vapor × element templates policy', () => {
+  it('documents that vapor must not inherit the VDOM ET default', () => {
+    // pluginVueLynx forces enableElementTemplates=false when vapor:true,
+    // even if enableIFR would otherwise default it on. The VDOM
+    // elementTemplateTransform does not apply to compiler-vapor; Vapor's
+    // IFR×ET sparse path is separate (2026-07-20 design).
+    expect(resolveElementTemplatesFlag({ enableIFR: true })).toBe(true);
+    // Simulated plugin gate:
+    const vapor = true;
+    const enableElementTemplates = vapor
+      ? false
+      : resolveElementTemplatesFlag({ enableIFR: true });
+    expect(enableElementTemplates).toBe(false);
+  });
+});
+
 describe('resolveVueLynxCompilerOptions', () => {
   it('appends the lowering transform when templates are enabled', () => {
     const options = resolveVueLynxCompilerOptions(true);

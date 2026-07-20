@@ -246,7 +246,12 @@ export function pluginVueLynx(
     includeWorkletPackages = [],
     vapor = false,
   } = options;
-  const enableElementTemplates = resolveElementTemplatesFlag(options);
+  const enableElementTemplates = vapor
+    // Vapor steady-state addressing is dense TREE ops, not the VDOM
+    // elementTemplateTransform. IFR×ET sparse paint for Vapor is a separate
+    // path (docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md).
+    ? false
+    : resolveElementTemplatesFlag(options);
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
