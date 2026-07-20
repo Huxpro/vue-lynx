@@ -349,3 +349,72 @@ export function inferHoleSlots(structure: TemplateNode): number[] {
   walk(structure);
   return holes;
 }
+
+/**
+ * Preorder slots that IFR MT must materialise as ShadowElement facades so
+ * vapor `child` / `next` / `txt` can reach holes — without cloning entire
+ * static subtrees off the navigation path.
+ *
+ * Includes: root, holes, ancestors of holes, and prefix siblings up to the
+ * last hole-bearing child at each parent (so `next()` walks stay valid).
+ */
+export function computeIfrNavSlots(
+  structure: TemplateNode,
+  holes: readonly number[],
+): Set<number> {
+  type NodeInfo = {
+    slot: number;
+    parent: number | null;
+    children: number[];
+    /** Preorder slots in this subtree, including self. */
+    subtree: number[];
+  };
+
+  const infos: NodeInfo[] = [];
+  let nextSlot = 0;
+
+  const walk = (node: TemplateNode, parent: number | null): NodeInfo => {
+    const slot = nextSlot++;
+    const children: number[] = [];
+    const subtree: number[] = [slot];
+    const [, , kids] = node;
+    const info: NodeInfo = { slot, parent, children, subtree };
+    infos.push(info);
+    for (const kid of kids) {
+      const childInfo = walk(kid, slot);
+      children.push(childInfo.slot);
+      for (const s of childInfo.subtree) subtree.push(s);
+    }
+    return info;
+  };
+
+  walk(structure, null);
+
+  const bySlot = new Map<number, NodeInfo>();
+  for (const info of infos) bySlot.set(info.slot, info);
+
+  const needed = new Set<number>([0, ...holes]);
+
+  for (const hole of holes) {
+    let parent = bySlot.get(hole)?.parent ?? null;
+    while (parent != null) {
+      needed.add(parent);
+      parent = bySlot.get(parent)?.parent ?? null;
+    }
+  }
+
+  // Prefix siblings: vapor often does child(parent) then next() to a hole.
+  for (const info of infos) {
+    if (info.children.length === 0) continue;
+    let last = -1;
+    for (let i = 0; i < info.children.length; i++) {
+      const childInfo = bySlot.get(info.children[i]!)!;
+      if (childInfo.subtree.some((s) => needed.has(s))) last = i;
+    }
+    if (last >= 0) {
+      for (let i = 0; i <= last; i++) needed.add(info.children[i]!);
+    }
+  }
+
+  return needed;
+}

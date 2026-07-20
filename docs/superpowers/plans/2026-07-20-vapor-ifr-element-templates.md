@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20  
 **Design:** `docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md`  
-**Status:** Milestones 1–2 done; Milestone 3 in progress
+**Status:** Milestones 1–2 done; Milestone 3 mostly done
 
 ## Milestone 1
 
@@ -27,5 +27,6 @@
 - [x] IFR MT ShadowElement lite / static root-only clone
 - [x] IFR `CLONE_TREE` uses sparse bake (root + holes); retain full stack
 - [x] Structural remapping: densify paint registry on selector commit / BG CLONE adopt
-- [ ] Skip ShadowElement entirely for hole templates (facade / compiler-direct)
+- [x] Sparse nav facades: skip ShadowElement for static subtrees off the hole `child`/`next` path
+- [ ] Full compiler-direct IFR (no ShadowElement / hole-index writes)
 - [ ] `vapor {off, ifr, ifr-et}` sfc-probe FCP cell

@@ -32,7 +32,10 @@ import {
   type TemplateNodeProps,
   type VaporTreeAddressing,
 } from 'vue-lynx/internal/ops';
-import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
+import {
+  computeIfrNavSlots,
+  inferHoleSlots,
+} from 'vue-lynx/internal/html-to-template-node';
 import { patchEventProp } from './event-props.js';
 import {
   bundleDeliveryRequested,
@@ -1501,22 +1504,25 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
       scheduleFlush();
       return root;
     }
-    const slots = Array.from({ length: cache.count }, (_, slot) => slot);
+    // Only holes, their ancestors, and prefix siblings need BG navigation.
+    // Keep dense preorder uids because this is the unannotated fallback.
+    const needed = computeIfrNavSlots(cache.structure, holes);
+    const slots = Array.from(needed).sort((a, b) => a - b);
     const counter = { value: 0 };
     const root = buildShadowCloneSparse(
       proto,
       base,
       counter,
-      new Set(slots),
+      needed,
       new Map(slots.map((slot) => [slot, slot])),
       false,
     );
     if (!root) {
-      throw new Error('[vue-lynx] IFR dense template clone produced no root');
+      throw new Error('[vue-lynx] IFR sparse template clone produced no root');
     }
     if (__DEV__ && counter.value !== cache.count) {
       console.warn(
-        `[vue-lynx] IFR dense template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
+        `[vue-lynx] IFR sparse template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
       );
     }
     pushOp(OP.CLONE_TREE, cache.id, base);
