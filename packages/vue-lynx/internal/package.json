@@ -10,6 +10,16 @@
       "types": "./dist/ops.d.ts",
       "import": "./dist/ops.js",
       "default": "./dist/ops.js"
+    },
+    "./html-to-template-node": {
+      "types": "./dist/html-to-template-node.d.ts",
+      "import": "./dist/html-to-template-node.js",
+      "default": "./dist/html-to-template-node.js"
+    },
+    "./vapor-ifr-et": {
+      "types": "./dist/vapor-ifr-et.d.ts",
+      "import": "./dist/vapor-ifr-et.js",
+      "default": "./dist/vapor-ifr-et.js"
     }
   },
   "files": ["dist"],

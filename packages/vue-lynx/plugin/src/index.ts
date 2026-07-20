@@ -246,7 +246,15 @@ export function pluginVueLynx(
     includeWorkletPackages = [],
     vapor = false,
   } = options;
-  const enableElementTemplates = resolveElementTemplatesFlag(options);
+  // VDOM transform vs Vapor IFR×ET sparse paint share the public flag name
+  // but must not share the compiler transform. Vapor never runs
+  // elementTemplateTransform; it gets a DefinePlugin switch instead.
+  const vaporIfrElementTemplates = vapor
+    ? (options.enableElementTemplates ?? enableIFR)
+    : false;
+  const enableElementTemplates = vapor
+    ? false
+    : resolveElementTemplatesFlag(options);
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
@@ -312,6 +320,9 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                __VUE_LYNX_VAPOR_IFR_ET__: JSON.stringify(
+                  vaporIfrElementTemplates,
+                ),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references
@@ -377,6 +388,29 @@ export function pluginVueLynx(
               .use(VueLynxVaporTemplatePlugin, [
                 path.resolve(_pluginDirname, './loaders/vapor-template-loader.js'),
               ]);
+
+            // Build-time structured templates: rewrite template("<view…>")
+            // to template(<TemplateNode>) after SFC/JS compilation so IFR MT
+            // and BG skip the runtime HTML parse (#234 / IFR×ET phase 2).
+            // NOTE: temporarily gated — large sfc-probe vapor builds currently
+            // crash at runtime ($txt on null) with the structured rewrite on;
+            // HTML-string templates remain the production path until fixed.
+            if (process.env.VUE_LYNX_STRUCTURED_TEMPLATES === '1') {
+              chain.module
+                .rule('vue-lynx:vapor-structured-templates')
+                .test(/\.[cm]?[jt]sx?$/)
+                .exclude.add(/node_modules/)
+                .end()
+                .enforce('post')
+                .use('vue-lynx:vapor-structured-template-loader')
+                .loader(
+                  path.resolve(
+                    _pluginDirname,
+                    './loaders/vapor-structured-template-loader.js',
+                  ),
+                )
+                .end();
+            }
           }
 
           // Ensure vue-lynx/internal/ops resolves correctly.

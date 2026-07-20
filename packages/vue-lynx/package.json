@@ -46,6 +46,16 @@
       "import": "./internal/dist/ops.js",
       "default": "./internal/dist/ops.js"
     },
+    "./internal/html-to-template-node": {
+      "types": "./internal/dist/html-to-template-node.d.ts",
+      "import": "./internal/dist/html-to-template-node.js",
+      "default": "./internal/dist/html-to-template-node.js"
+    },
+    "./internal/vapor-ifr-et": {
+      "types": "./internal/dist/vapor-ifr-et.d.ts",
+      "import": "./internal/dist/vapor-ifr-et.js",
+      "default": "./internal/dist/vapor-ifr-et.js"
+    },
     "./types": {
       "types": "./types/dist/index.d.ts",
       "import": "./types/dist/index.js",

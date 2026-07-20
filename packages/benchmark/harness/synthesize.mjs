@@ -284,11 +284,11 @@ function parseIfrName(name) {
   const m = String(name)
     .replace(/\.web\.bundle$/, '')
     .match(
-      /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)@(1k|3k|5k|10k|20k|30k)$/,
+      /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr-et|vapor-ifr|vapor|react)@(1k|3k|5k|10k|20k|30k)$/,
     );
   if (m) return { arch: m[1], scale: m[2] };
   const m2 = String(name).match(
-    /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)$/,
+    /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr-et|vapor-ifr|vapor|react)$/,
   );
   if (m2) return { arch: m2[1], scale: '1k' };
   return {};
@@ -875,6 +875,7 @@ function renderStormTable(unified) {
     'vdom-ifr-et',
     'vapor',
     'vapor-ifr',
+    'vapor-ifr-et',
   ].filter((m) =>
     cells(unified, { architecture: m, workload: 'table', metric: 'selectStorm' })
       .length,
@@ -899,7 +900,7 @@ function renderStormTable(unified) {
 }
 
 function renderFcpTable(unified) {
-  const modes = ['react', 'vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'];
+  const modes = ['react', 'vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr', 'vapor-ifr-et'];
   let md = `### Content-probe FCP (lynx-web ×1, ms median)\n\n`;
   md += `| scale | ${modes.join(' | ')} |\n|---|${modes.map(() => '---').join('|')}|\n`;
   let any = false;

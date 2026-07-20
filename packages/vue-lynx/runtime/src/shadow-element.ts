@@ -29,8 +29,11 @@ import type {
   TemplateNode,
   TemplateNodeProps,
 } from 'vue-lynx/internal/ops';
+import { inferHoleSlots, computeIfrNavSlots } from 'vue-lynx/internal/html-to-template-node';
+import { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 import { patchEventProp } from './event-props.js';
 import { scheduleFlush } from './flush.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
@@ -1085,6 +1088,81 @@ function buildShadowClone(
   return clone;
 }
 
+/**
+ * IFR-MT sparse nav facade helpers live below; the full lite clone was
+ * replaced by sparse allocation (holes + ancestors + prefix siblings only).
+ */
+
+/** Advance `counter` over a proto subtree without allocating clones. */
+function skipProtoSlots(
+  proto: ShadowElement,
+  counter: { value: number },
+): void {
+  counter.value++;
+  if (proto.tag === '#text' || proto.tag === '#comment') return;
+  if (isOnlyChildText(proto)) return;
+  let child = proto.firstChild;
+  while (child) {
+    skipProtoSlots(child, counter);
+    child = child.next;
+  }
+}
+
+/**
+ * IFR-MT sparse nav facade: allocate ShadowElements only for slots in
+ * `needed` (holes + ancestors + prefix siblings). Static subtrees off the
+ * vapor `child`/`next` path are skipped entirely — natives still come from
+ * CLONE_TREE. Uid reservation stays dense (`nextUid += count`).
+ */
+function buildShadowCloneSparse(
+  proto: ShadowElement,
+  base: number,
+  counter: { value: number },
+  needed: Set<number>,
+): ShadowElement | null {
+  const slot = counter.value;
+  if (!needed.has(slot)) {
+    skipProtoSlots(proto, counter);
+    return null;
+  }
+
+  const clone = new ShadowElement(proto.tag, base + counter.value++);
+
+  if (proto.tag === '#text' || proto.tag === '#comment') {
+    clone._text = proto._text;
+    if (proto.tag === '#text' && proto._text) {
+      clone._mtCreated = true;
+      clone._mtInserted = true;
+    }
+    return clone;
+  }
+
+  if (proto._scopeClasses.size > 0) {
+    clone._scopeClasses = proto._scopeClasses;
+  }
+  if (proto._id !== undefined) {
+    clone._id = proto._id;
+    idRegistry.set(proto._id, clone);
+  }
+
+  if (isOnlyChildText(proto)) {
+    const textClone = new ShadowElement('#text');
+    textClone._text = proto.firstChild!._text;
+    textClone._textHost = clone;
+    clone._aliasedTextChild = textClone;
+    clone._link(textClone, null);
+  } else {
+    clone._text = proto._text;
+    let child = proto.firstChild;
+    while (child) {
+      const childClone = buildShadowCloneSparse(child, base, counter, needed);
+      if (childClone) clone._link(childClone, null);
+      child = child.next;
+    }
+  }
+  return clone;
+}
+
 function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   let cache = templateCaches.get(proto);
   if (!cache) {
@@ -1103,6 +1181,40 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   // shadow nodes allocate after it (plain constructor).
   const base = ShadowElement.nextUid;
   ShadowElement.nextUid += cache.count;
+
+  if (isIfrMainThread() && isVaporIfrElementTemplates()) {
+    // Disposable IFR×ET paint: keep the TREE protocol (dense uids for
+    // hydration) but shrink BG-side ShadowElement work.
+    const holes = inferHoleSlots(cache.structure);
+    if (holes.length === 0) {
+      // Fully static: vapor never navigates into children — only the root is
+      // appended to the page. Children exist solely as natives via CLONE_TREE.
+      const root = new ShadowElement(proto.tag, base);
+      root._mtCreated = true;
+      pushOp(OP.CLONE_TREE, cache.id, base);
+      scheduleFlush();
+      return root;
+    }
+    // Hole templates: sparse nav facade — skip ShadowElements for static
+    // subtrees off the child/next path to holes.
+    const needed = computeIfrNavSlots(cache.structure, holes);
+    const counter = { value: 0 };
+    const root = buildShadowCloneSparse(proto, base, counter, needed);
+    if (!root) {
+      // Root is always in `needed`; this is a contract violation.
+      throw new Error(
+        '[vue-lynx] IFR sparse template clone produced no root',
+      );
+    }
+    if (__DEV__ && counter.value !== cache.count) {
+      console.warn(
+        `[vue-lynx] IFR sparse template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
+      );
+    }
+    pushOp(OP.CLONE_TREE, cache.id, base);
+    scheduleFlush();
+    return root;
+  }
 
   const counter = { value: 0 };
   const root = buildShadowClone(proto, base, counter);

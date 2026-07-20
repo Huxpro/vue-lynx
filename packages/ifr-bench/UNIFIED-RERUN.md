@@ -1,11 +1,11 @@
 # Unified lineage IFR re-run (post #230 step 3 + #246 harness fixes)
 
-**Date**: 2026-07-17  
-**Commit**: `07d9119` (harness) + this results commit  
-**Host**: cloud agent, headless Chromium (Playwright 149), Lynx for Web  
-**Why**: after merging main IFR/ET into vapor, keep vapor IFR core + flush-once;
-prior published matrices either used a broken `ifr`≡`ifr-et` flag inject (#246)
-or measured only one lineage.
+**Date**: 2026-07-20 (vapor `{off,ifr,ifr-et}` re-measure)  
+**Commit**: `cursor/vapor-ifr-element-templates-4121`  
+**Host**: cloud agent, headless Chromium, Lynx for Web  
+**Why**: after Vapor IFR×ET milestones 1–3 (sparse CLONE, nav facades,
+paint-registry densify), re-measure the same-source sfc-probe with a real
+`content-vapor-ifr-et` cell.
 
 ## Methodology corrections applied first
 
@@ -15,8 +15,9 @@ or measured only one lineage.
    - `ifr-et`: `enableIFR: true`, `enableElementTemplates: true`
 2. **ET comment-scan** — `extractTemplateRegistrations` skips JSDoc examples.
 3. **HN shell IFR** — always `mount()`; queries gated with `enabled: !isIfrMainThread()`.
-4. **sfc-probe** — five cells: VDOM `{off,ifr,ifr-et}` × Vapor `{off,ifr}`
-   (Vapor has no ET path).
+4. **sfc-probe** — six cells: VDOM `{off,ifr,ifr-et}` × Vapor `{off,ifr,ifr-et}`.
+   Under `vapor: true`, `enableElementTemplates` drives `__VUE_LYNX_VAPOR_IFR_ET__`
+   (sparse IFR first-frame paint), not the VDOM `elementTemplateTransform`.
 
 ## 1. Strategy ladder (Node, V8 `--jitless`, large scenes)
 
@@ -45,32 +46,33 @@ Artifacts: `results/browser-results-unified-x1.json`,
 
 | cell | flags | x1 FCP | Δ vs off | x4 FCP | Δ vs off |
 |---|---|---:|---:|---:|---:|
-| content-vdom | off | 95.3 ms | — | 269.5 ms | — |
-| content-vdom-ifr | IFR, ET=false | 77.4 ms | **−19%** | 287.3 ms | **+7%** |
-| content-vdom-ifr-et | IFR+ET | 71.9 ms | **−24%** | 254.1 ms | **−6%** |
-| content-vapor | off | 97.0 ms | — | 304.2 ms | — |
-| content-vapor-ifr | IFR | 88.7 ms | **−9%** | 318.2 ms | **+5%** |
+| content-vdom | off | 93.7 ms | — | 280.3 ms | — |
+| content-vdom-ifr | IFR, ET=false | 78.3 ms | **−16%** | 266.6 ms | **−5%** |
+| content-vdom-ifr-et | IFR+ET | 74.9 ms | **−20%** | 264.8 ms | **−6%** |
+| content-vapor | off | 102.6 ms | — | 289.6 ms | — |
+| content-vapor-ifr | IFR, ET=false | 88.8 ms | **−13%** | 326.1 ms | **+13%** |
+| content-vapor-ifr-et | IFR+ET (sparse) | 92.2 ms | **−10%** | 293.1 ms | **+1%** |
 
 ### Bundle size (web gzip / MT section gzip)
 
 | cell | web gz | MT gz |
 |---|---:|---:|
-| content-vdom | 35.9 KB | 7.2 KB |
-| content-vdom-ifr | 64.4 KB | 34.6 KB |
-| content-vdom-ifr-et | 107.1 KB | 55.4 KB |
-| content-vapor | 45.6 KB | 7.2 KB |
-| content-vapor-ifr | 87.9 KB | 44.3 KB |
+| content-vdom | 36.7 KB | 8.1 KB |
+| content-vdom-ifr | 65.1 KB | 35.3 KB |
+| content-vdom-ifr-et | 107.0 KB | 55.7 KB |
+| content-vapor | 46.4 KB | 8.1 KB |
+| content-vapor-ifr | 89.5 KB | 46.1 KB |
+| content-vapor-ifr-et | 89.5 KB | 46.1 KB |
 
 **Read:**
 
-- At 1×, VDOM IFR alone recovers the classic ~−19% FCP; adding ET is a further
-  small win on this dense content scene (−24% total).
-- At 4×, IFR **without** ET regresses on this host (parse/eval of the larger MT
-  bundle dominates). IFR+ET still nets slightly ahead of off (−6%).
-- Vapor IFR wins at 1× (−9%) and regresses at 4× (+5%), matching the earlier
-  vapor-lineage caveat on slow CPUs.
-- ET bakes create() into both threads — MT gzip jumps hard on a 1k-element
-  scene. That is expected; it is the render-cost hedge, not a size win.
+- At 1×, VDOM IFR alone recovers ~−16% FCP; adding ET is a further small win
+  (−20% total). Vapor IFR wins at 1× (−13%); sparse IFR×ET is close (−10%).
+- At 4×, dense Vapor IFR **regresses** (+13%) — MT bundle cost dominates.
+  Sparse IFR×ET nearly flat (+1% vs off), recovering the ×4 regression that
+  motivated this work. VDOM IFR/ET stay slightly ahead of off on this host.
+- Vapor ifr vs ifr-et share essentially the same bundle size (runtime switch);
+  VDOM ET still bakes create() into both threads (MT gzip jump).
 
 ## 3. Focused examples (hello-world, todomvc-day1, hackernews-css)
 

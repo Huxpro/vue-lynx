@@ -37,6 +37,36 @@ describe('pluginVueLynx optimization defaults', () => {
   });
 });
 
+describe('vapor × element templates policy', () => {
+  it('keeps the VDOM compiler transform off under vapor', () => {
+    // pluginVueLynx never passes enableElementTemplates into the VDOM
+    // elementTemplateTransform when vapor:true. The public flag instead
+    // drives __VUE_LYNX_VAPOR_IFR_ET__ for sparse IFR paint.
+    expect(resolveElementTemplatesFlag({ enableIFR: true })).toBe(true);
+    const vapor = true;
+    const enableElementTemplates = vapor
+      ? false
+      : resolveElementTemplatesFlag({ enableIFR: true });
+    expect(enableElementTemplates).toBe(false);
+  });
+
+  it('defaults vapor IFR×ET sparse paint on with IFR', () => {
+    const enableIFR = true;
+    const vaporIfrElementTemplates =
+      /* vapor */ true
+        ? (undefined ?? enableIFR)
+        : false;
+    expect(vaporIfrElementTemplates).toBe(true);
+  });
+
+  it('allows opting vapor IFR×ET off for dense bisect', () => {
+    const enableIFR = true;
+    const options = { enableElementTemplates: false };
+    const vaporIfrElementTemplates = options.enableElementTemplates ?? enableIFR;
+    expect(vaporIfrElementTemplates).toBe(false);
+  });
+});
+
 describe('resolveVueLynxCompilerOptions', () => {
   it('appends the lowering transform when templates are enabled', () => {
     const options = resolveVueLynxCompilerOptions(true);

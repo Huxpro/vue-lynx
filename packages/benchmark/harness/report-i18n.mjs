@@ -71,6 +71,7 @@ export function copy(lang) {
     colLabels: {
       vapor: 'Vue Vapor',
       'vapor-ifr': 'Vapor+IFR',
+      'vapor-ifr-et': 'Vapor+IFR+ET',
       vdom: 'Vue VDOM',
       'vdom-ifr': 'VDOM+IFR',
       'vdom-ifr-et': 'VDOM+IFR+ET',
@@ -111,6 +112,7 @@ export function copy(lang) {
       'vdom-ifr-et': 'VDOM+IFR+ET',
       vapor: 'Vapor',
       'vapor-ifr': 'Vapor+IFR',
+      'vapor-ifr-et': 'Vapor+IFR+ET',
     },
     charts: {
       selectStorm: {

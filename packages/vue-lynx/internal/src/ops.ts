@@ -50,6 +50,11 @@
  * structure over the wire plus dense pre-order naming, required because Vapor
  * codegen's addressing knowledge lives in navigation code the protocol cannot
  * see — hence TREE, not TEMPLATE.
+ *
+ * IFR follow-up for Vapor: the disposable main-thread first frame can still
+ * use ET-shaped sparse (hole-only, write-only) naming and discard it after
+ * handoff — Background keeps the dense TREE. See
+ * docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md.
  */
 export const PAGE_ROOT_ID = 1;
 

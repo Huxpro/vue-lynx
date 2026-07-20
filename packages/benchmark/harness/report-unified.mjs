@@ -63,6 +63,7 @@ const perOp = mergePerOp(scale6, ifrStorms, reactStorms);
 const COLUMN_KEYS = [
   'vapor',
   'vapor-ifr',
+  'vapor-ifr-et',
   'vdom',
   'vdom-ifr',
   'vdom-ifr-et',
@@ -90,6 +91,7 @@ const FCP_ARCH_KEYS = [
   { key: 'vdom-ifr-et', color: '#7c3aed' },
   { key: 'vapor', color: '#059669' },
   { key: 'vapor-ifr', color: '#d97706' },
+  { key: 'vapor-ifr-et', color: '#ea580c' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */

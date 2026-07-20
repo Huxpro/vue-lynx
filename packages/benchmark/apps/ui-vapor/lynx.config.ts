@@ -1,12 +1,17 @@
 import { defineConfig } from '@lynx-js/rspeedy';
 import { pluginVueLynx } from 'vue-lynx/plugin';
 
-// Unified matrix cells (Vapor has no Element Templates path):
-//   BENCH_CELL=off|ifr
+// Unified matrix cells:
+//   BENCH_CELL=off|ifr|ifr-et
+//   ifr     — IFR on, ET off (dense CLONE; bisect)
+//   ifr-et  — IFR on, ET on  (sparse IFR×ET; product default with IFR)
 const cell = process.env.BENCH_CELL ?? 'off';
-const enableIFR = cell === 'ifr';
-const modeLabel = cell === 'off' ? 'vapor' : 'vapor-ifr';
-const distRoot = cell === 'off' ? 'dist' : 'dist-ifr';
+const enableIFR = cell === 'ifr' || cell === 'ifr-et';
+const enableElementTemplates = cell === 'ifr-et';
+const modeLabel =
+  cell === 'off' ? 'vapor' : cell === 'ifr-et' ? 'vapor-ifr-et' : 'vapor-ifr';
+const distRoot =
+  cell === 'off' ? 'dist' : cell === 'ifr-et' ? 'dist-ifr-et' : 'dist-ifr';
 
 export default defineConfig({
   environments: {
@@ -31,8 +36,7 @@ export default defineConfig({
       optionsApi: false,
       vapor: true,
       enableIFR,
-      // Explicit: vapor never enables ET.
-      enableElementTemplates: false,
+      enableElementTemplates,
     }),
   ],
 });

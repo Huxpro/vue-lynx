@@ -17,6 +17,8 @@ export default defineConfig({
       'loaders/vue-sfc-script-extractor':
         './src/loaders/vue-sfc-script-extractor.ts',
       'loaders/vapor-template-loader': './src/loaders/vapor-template-loader.ts',
+      'loaders/vapor-structured-template-loader':
+        './src/loaders/vapor-structured-template-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
@@ -32,6 +34,7 @@ export default defineConfig({
       '@lynx-js/template-webpack-plugin',
       'vue-lynx',
       'vue-lynx/internal/ops',
+      'vue-lynx/internal/html-to-template-node',
       'vue-lynx/main-thread',
     ],
     distPath: { root: 'dist' },

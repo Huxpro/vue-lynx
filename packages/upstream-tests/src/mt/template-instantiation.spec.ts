@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { OP } from 'vue-lynx/internal/ops';
 // Same-process module state as the pipeline set up by runtime-dom-setup.ts.
+import { bakeSparseTreeCreate } from '../../../vue-lynx/main-thread/src/bake-tree-create.js';
 import { applyOps, elements } from '../../../vue-lynx/main-thread/src/ops-apply.js';
 
 let nextId = 200000; // far above ids used by other suites in this worker
@@ -139,5 +140,62 @@ describe('MT template instantiation', () => {
     applyOps([OP.REMOVE, ROOT, base]);
     expect(elements.has(base)).toBe(false);
     expect(elements.has(base + 1)).toBe(false);
+  });
+});
+
+describe('sparse bake (IFR-discard hole naming)', () => {
+  it('names only root + holes; interiors stay write-only', () => {
+    // Preorder: 0 view.card, 1 text.title (hole), 2 view.badge (static), 3 text.badge-label (hole)
+    const structure = [
+      'view',
+      { c: 'card' },
+      [
+        ['text', { c: 'title', t: ' ' }, []],
+        [
+          'view',
+          { c: 'badge' },
+          [['text', { t: ' ' }, []]],
+        ],
+      ],
+    ] as const;
+
+    const create = bakeSparseTreeCreate(structure as never, [1, 3]);
+    const scratch = new Map<number, LynxElement>();
+    const baseUid = 5000;
+    const { handles, namedSlots, stack } = create(1, baseUid, {
+      elements: scratch,
+      installSelectorAttribute() {},
+    });
+
+    expect(namedSlots).toEqual([0, 1, 3]);
+    expect(handles).toHaveLength(3);
+    expect(stack).toHaveLength(4);
+    // Only named slots landed in the map — slot 2 (static badge view) did not.
+    expect(scratch.has(baseUid + 0)).toBe(true);
+    expect(scratch.has(baseUid + 1)).toBe(true);
+    expect(scratch.has(baseUid + 2)).toBe(false);
+    expect(scratch.has(baseUid + 3)).toBe(true);
+    // Full stack retained for densify remapping (including unnamed interior).
+    expect(stack[2]).toBeTruthy();
+
+    const [root, title, badgeLabel] = handles as Element[];
+    expect(root.getAttribute('class')).toBe('card');
+    // Static interior still exists in the native tree (append happened) even
+    // though it has no protocol name — the IFR-discard model.
+    expect(root.childNodes.length).toBeGreaterThanOrEqual(1);
+    expect(title).toBeTruthy();
+    expect(badgeLabel).toBeTruthy();
+
+    // Write-only hole updates — no dense uid arithmetic required.
+    __SetAttribute(title, 'text', 'Hello');
+    __SetAttribute(badgeLabel, 'text', 'NEW');
+    expect(title.textContent).toBe('Hello');
+    expect(badgeLabel.textContent).toBe('NEW');
+  });
+
+  it('rejects hole slots outside the preorder range', () => {
+    expect(() => bakeSparseTreeCreate(['view', 0, []] as never, [1])).toThrow(
+      /out of range/,
+    );
   });
 });
