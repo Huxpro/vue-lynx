@@ -685,9 +685,6 @@ importers:
       '@babel/parser':
         specifier: ^7.25.3
         version: 7.29.0
-      '@lynx-js/react':
-        specifier: ^0.116.5
-        version: 0.116.5(@lynx-js/types@3.7.0)(@types/react@19.2.14)
       '@lynx-js/testing-environment':
         specifier: ^0.1.11
         version: 0.1.11

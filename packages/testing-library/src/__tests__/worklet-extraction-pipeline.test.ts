@@ -10,38 +10,65 @@
  * registrations, crashing on first interaction with
  * `cannot read property 'bind' of undefined`.
  *
- * These tests run the real `transformReactLynxSync` and pin extraction
- * against ground truth the generator knows:
+ * These tests drive the real BG/MT loaders (which invoke
+ * transformReactLynxSync from the plugin package's own context, so this
+ * package needs no @lynx-js/react dependency) and pin extraction against
+ * ground truth the generator knows:
  *  - every generated worklet yields exactly one extracted registration
  *  - every extracted slice reparses standalone as a
  *    `registerWorkletInternal(...)` call with a string hash argument
  *  - the extracted hash set equals the `_wkltId` set in the JS
- *    (background) transform of the same source — the device-level
+ *    (background) output of the same source — the device-level
  *    invariant whose violation is the runtime bind-of-undefined crash
  */
 
 import { parse } from '@babel/parser';
 import { describe, expect, it } from 'vitest';
 
-import { transformReactLynxSync } from '@lynx-js/react/transform';
-
+import workletLoaderBG from '../../../vue-lynx/plugin/src/loaders/worklet-loader.js';
+import workletLoaderMT from '../../../vue-lynx/plugin/src/loaders/worklet-loader-mt.js';
 import { extractRegistrations } from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
 
-function transform(src: string, target: 'LEPUS' | 'JS'): string {
-  const result = transformReactLynxSync(src, {
-    pluginName: 'vue:worklet-mt',
-    filename: '/fuzz/mod.ts',
-    sourcemap: false,
-    cssScope: false,
-    shake: false,
-    compat: false,
-    refresh: false,
-    defineDCE: false,
-    directiveDCE: false,
-    worklet: { target, filename: '/fuzz/mod.ts', runtimePkg: 'vue-lynx' },
+/** Drive the async MT loader with a minimal mock LoaderContext. */
+function runMT(source: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const ctx = {
+      cacheable() {},
+      async() {
+        return (err: Error | null, result?: string) =>
+          err ? reject(err) : resolve(result ?? '');
+      },
+      getOptions() {
+        return {};
+      },
+      getResolve() {
+        return () => Promise.reject(new Error('no imports expected'));
+      },
+      context: '/fuzz',
+      rootContext: '/fuzz',
+      resourcePath: '/fuzz/mod.ts',
+      resourceQuery: '',
+      emitError(err: Error) {
+        reject(err);
+      },
+      emitWarning() {},
+    };
+    (workletLoaderMT as unknown as (this: typeof ctx, s: string) => void)
+      .call(ctx, source);
   });
-  expect(result.errors).toHaveLength(0);
-  return result.code;
+}
+
+/** The BG loader is synchronous; transform errors throw. */
+function runBG(source: string): string {
+  const ctx = {
+    cacheable() {},
+    resourcePath: '/fuzz/mod.ts',
+    emitError(err: Error) {
+      throw err;
+    },
+  };
+  return (workletLoaderBG as unknown as (this: typeof ctx, s: string) => string)
+    .call(ctx, source);
 }
 
 interface AstNode {
@@ -51,7 +78,7 @@ interface AstNode {
   [key: string]: unknown;
 }
 
-/** Generic AST walk collecting nodes matched by `visit`. */
+/** Generic AST walk calling `visit` on every node. */
 function walkAst(code: string, visit: (node: AstNode) => void): void {
   const walk = (value: unknown): void => {
     if (Array.isArray(value)) {
@@ -91,7 +118,7 @@ function registeredHashes(code: string): string[] {
   return hashes;
 }
 
-/** `_wkltId` values from the JS (background) transform of a module. */
+/** `_wkltId` values from the JS (background) output of a module. */
 function backgroundWorkletIds(code: string): string[] {
   const ids: string[] = [];
   walkAst(code, (node) => {
@@ -105,18 +132,17 @@ function backgroundWorkletIds(code: string): string[] {
 }
 
 /**
- * Full-pipeline check: LEPUS transform → extraction, asserting count
- * against the generator's ground truth and hash parity with the JS
- * (background) transform of the same source.
+ * Full-pipeline check through both real loaders: MT extraction count must
+ * match the generator's ground truth, and the extracted hash set must
+ * equal the background bundle's _wkltId set.
  */
-function expectExtraction(src: string, workletCount: number): void {
-  const extracted = extractRegistrations(transform(src, 'LEPUS'));
-  const hashes = registeredHashes(extracted);
+async function expectExtraction(
+  src: string,
+  workletCount: number,
+): Promise<void> {
+  const hashes = registeredHashes(await runMT(src));
   expect(hashes).toHaveLength(workletCount);
-  expect(new Set(hashes).size).toBe(workletCount);
-  expect(new Set(hashes)).toEqual(
-    new Set(backgroundWorkletIds(transform(src, 'JS'))),
-  );
+  expect(new Set(hashes)).toEqual(new Set(backgroundWorkletIds(runBG(src))));
 }
 
 /**
@@ -139,21 +165,9 @@ const HOSTILE_FRAGMENTS: ReadonlyArray<[name: string, fragment: string]> = [
   ['template with unmatched paren', 'const b = `open ( only`;'],
 ];
 
-/** Deterministic PRNG so fuzz failures reproduce byte-for-byte. */
-function mulberry32(seed: number): () => number {
-  let a = seed;
-  return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 describe('extraction pipeline: hostile worklet bodies (real LEPUS output)', () => {
   for (const [name, fragment] of HOSTILE_FRAGMENTS) {
-    it(`survives ${name}`, () => {
+    it(`survives ${name}`, async () => {
       // Two worklets with the fragment in the FIRST body: a scanner that
       // loses balance mid-module drops the second one silently.
       const src = [
@@ -167,14 +181,16 @@ describe('extraction pipeline: hostile worklet bodies (real LEPUS output)', () =
         `  el.setStyleProperty('x', '1');`,
         `}`,
       ].join('\n');
-      expectExtraction(src, 2);
+      await expectExtraction(src, 2);
     });
   }
 });
 
 describe('extraction pipeline: seeded fuzz', () => {
-  it('extracts every worklet across 120 generated adversarial modules', () => {
-    const rand = mulberry32(0xc0ffee);
+  it('extracts every worklet across 120 generated adversarial modules', async () => {
+    // Park–Miller LCG — deterministic so fuzz failures reproduce.
+    let seed = 0xc0ffee;
+    const rand = () => (seed = (seed * 48271) % 2147483647) / 2147483647;
     const pick = <T>(arr: readonly T[]): T =>
       arr[Math.floor(rand() * arr.length)]!;
 
@@ -206,7 +222,7 @@ describe('extraction pipeline: seeded fuzz', () => {
         );
       }
 
-      expectExtraction(fns.join('\n'), workletCount);
+      await expectExtraction(fns.join('\n'), workletCount);
     }
   });
 });

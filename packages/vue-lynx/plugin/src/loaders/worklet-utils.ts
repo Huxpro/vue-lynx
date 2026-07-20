@@ -345,38 +345,28 @@ export function extractRegistrations(lepusCode: string): string {
   const ast = parse(lepusCode, { sourceType: 'module' });
   const registrations: string[] = [];
 
-  interface AstNode {
-    type: string;
-    start: number;
-    end: number;
-    [key: string]: unknown;
-  }
-
-  const walk = (value: unknown): void => {
-    if (Array.isArray(value)) {
-      for (const item of value) walk(item);
+  // Structural walk over untyped babel nodes; `any` beats re-declaring
+  // the AST shape.
+  const walk = (node: any): void => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
       return;
     }
-    if (!value || typeof (value as AstNode).type !== 'string') return;
-    const node = value as AstNode;
-
-    if (node.type === 'CallExpression') {
-      const callee = node.callee as AstNode & { name?: string };
-      if (
-        callee.type === 'Identifier'
-        && callee.name === 'registerWorkletInternal'
-      ) {
-        registrations.push(lepusCode.slice(node.start, node.end) + ';');
-        // Registrations never nest; skipping the subtree mirrors the
-        // previous scanner's resume-past-the-call behavior.
-        return;
-      }
+    if (typeof node.type !== 'string') return;
+    if (
+      node.type === 'CallExpression'
+      && node.callee.type === 'Identifier'
+      && node.callee.name === 'registerWorkletInternal'
+    ) {
+      registrations.push(lepusCode.slice(node.start, node.end) + ';');
+      // Registrations never nest; skipping the subtree mirrors the
+      // previous scanner's resume-past-the-call behavior.
+      return;
     }
-
     for (const key in node) {
       if (key === 'type' || key === 'start' || key === 'end') continue;
-      const child = node[key];
-      if (child && typeof child === 'object') walk(child);
+      walk(node[key]);
     }
   };
   walk(ast);
