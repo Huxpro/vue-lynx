@@ -69,10 +69,9 @@ pager 元件。
   <view class="explore-tab" @tap="tab = 'posts'">…</view>
   <view class="explore-tab" @tap="tab = 'tags'">…</view>
 </view>
-<scroll-view v-if="tab === 'posts'">…</scroll-view>
-<scroll-view v-else-if="tab === 'tags'">…</scroll-view>
+<list v-if="tab === 'posts'" @scrolltolower="loadNext">…</list>
+<list v-else-if="tab === 'tags'" @scrolltolower="loadMoreTags">…</list>
 ```
-
 ……换成一个「每个面板一个具名 slot」的组件：
 
 ```vue
@@ -117,6 +116,57 @@ pager ↔ 标签双向同步，统统搬进 `TabPager`。
 原生 OSS 引擎用抽取出来的
 [`<scroll-coordinator>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)。
 
+## 原生 Feed 技巧
+
+Mastodon 客户端几乎全是长列表：主页、本地、联邦、探索、通知、搜索、个人帖子、关注者。Web 版 Elk 用 [`virtua`](https://github.com/inokawa/virtua) 做虚拟列表，再用 DOM 末端锚点的 bounding box 触发下一页。Lynx 提供两种滚动原语——选哪一个，就是整段性能故事。
+
+### `<scroll-view>` 会挂载全部子节点
+
+[`<scroll-view>`](https://lynxjs.org/zh/api/elements/built-in/scroll-view) 适合**短而异构**的页面：设置、发帖、帖子详情、媒体 sheet。每个子节点都会挂载，你滚的是普通布局树。这也是它**不适合**时间线的原因——联邦时间线一旦超过几十条嘟文，视口上下每一张卡片都在付账。
+
+### `<list>` 负责复用与分页
+
+[`<list>`](https://lynxjs.org/zh/api/elements/built-in/list) 是 Lynx 的复用型滚动器。离屏的 `<list-item>` 单元格会被回收；你只保留一扇真实节点窗口。无限滚动是原生事件，不是几何轮询：
+
+```vue
+<list
+  scroll-orientation="vertical"
+  :lower-threshold-item-count="4"
+  @scrolltolower="loadNext"
+>
+  <list-item
+    v-for="status in items"
+    :key="status.id"
+    :item-key="status.id"
+    :estimated-main-axis-size-px="160"
+  >
+    <StatusCard :status="status" />
+  </list-item>
+</list>
+```
+
+三个属性扛起重活：
+
+| 部件 | 作用 |
+|------|------|
+| `estimated-main-axis-size-px` | 在每个单元格实测之前，先估出可滚动范围 |
+| `lower-threshold-item-count` | 距末尾还有多少项时开始请求下一页 |
+| `@scrolltolower` | 触发 `usePaginator.loadNext()` —— Elk 的 masto.js `Paginator` 迭代逻辑原样保留 |
+
+[`TimelinePaginator.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/src/components/TimelinePaginator.vue)
+是共享的 feed 外壳：首屏、错误重试、复用型列表，以及页脚 spinner / 「时间线到底了」。时间线、Explore 帖子、话题页、书签/收藏，以及个人主页的 Posts / Replies / Media 都复用它。Explore 标签/新闻、通知、关注者、搜索则把同一套 `<list>` + `scrolltolower` 接到各自的条目模板上。
+
+`<scroll-view>` 仍用在复用帮不上忙的地方——帖子详情、设置表单、发帖 sheet。移植最终定下的经验法则是：**会无限变长的用 `<list>`；有限页面继续用 `<scroll-view>`。**
+
+<Go
+  example="elk"
+  defaultFile="src/components/TimelinePaginator.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+  highlight={{
+    'src/components/TimelinePaginator.vue': '{21-26,39-59}',
+  }}
+/>
+
 ## 为什么 Elk 是一块试金石
 
 Elk 是一个约 196 个组件、55 个页面、50 个 composable 的 Nuxt 3 应用。
@@ -148,8 +198,7 @@ PWA、Shiki、blurhash 等）见
 - **内容渲染器是皇冠明珠**：Mastodon 的嘟文以消毒后的 HTML 下发。Elk 把它解析成
   AST 再渲染为 vnode；移植保持解析步骤逐字节不变，只替换 vnode 目标 ——
   自定义表情变为行内 `<image>`，提及/话题变为可点按的 `<text>`，直接推入 vue-router 路由。
-- **原生虚拟化时间线**：无限时间线是带 `estimated-main-axis-size-px` 提示的 Lynx
-  `<list>`；masto.js `Paginator` 迭代与 Elk 的排序/缓冲逻辑原样驱动。
+- **原生虚拟化时间线**：feed 使用带 `estimated-main-axis-size-px` 与 `@scrolltolower` 的 Lynx `<list>`（而不是 `<scroll-view>`）；masto.js `Paginator` 迭代与 Elk 的排序/缓冲逻辑原样驱动时间线、探索、个人主页与搜索的 `loadNext()`。
 - **深链**：向 LynxView 传入 `globalProps: { initialPath: '/mas.to/tags/caturday' }`
   即可让应用直接打开对应路由 —— 宿主应用处理通知点击时用的就是同一机制。
 - **游客 + 令牌会话**：像 Elk 游客模式一样匿名浏览，或在设置中粘贴个人访问令牌，

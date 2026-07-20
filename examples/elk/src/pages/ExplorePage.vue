@@ -1,51 +1,61 @@
 <script setup lang="ts">
-// Ported from elk: app/pages/[[server]]/explore/{index,tags}.vue —
-// trending posts + trending hashtags tabs.
+// Ported from elk: app/pages/[[server]]/explore/{index,tags,links}.vue —
+// trending posts + trending hashtags + news. Upstream drives each tab with
+// TimelinePaginator / TagCardPaginator / CommonPaginator; here every feed is
+// a Lynx <list> + usePaginator (posts reuse TimelinePaginator).
 import type { mastodon } from 'masto';
-import { onMounted, ref, watch } from 'vue-lynx';
+import { computed, ref, watch } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import PageHeader from '../components/PageHeader.vue';
 import Spinner from '../components/Spinner.vue';
-import StatusCard from '../components/StatusCard.vue';
+import TimelinePaginator from '../components/TimelinePaginator.vue';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
+import { type PaginatorState, usePaginator } from '../composables/paginator';
 import { getTagRoute } from '../composables/routes';
 
 const router = useRouter();
 
 const tab = ref<'posts' | 'tags' | 'links'>('posts');
-const statuses = ref<mastodon.v1.Status[]>([]);
-const tags = ref<mastodon.v1.Tag[]>([]);
-const links = ref<mastodon.v1.TrendLink[]>([]);
-const loading = ref(true);
 const showIntro = ref(true);
 
-async function load() {
-  loading.value = true;
-  try {
-    const client = useMastoClient();
-    if (tab.value === 'posts' && !statuses.value.length) {
-      const result = await client.v1.trends.statuses.list({ limit: 20 }).values().next();
-      statuses.value = result.value ?? [];
-    }
-    else if (tab.value === 'tags' && !tags.value.length) {
-      const result = await client.v1.trends.tags.list({ limit: 20 }).values().next();
-      tags.value = result.value ?? [];
-    }
-    else if (tab.value === 'links' && !links.value.length) {
-      const result = await client.v1.trends.links.list({ limit: 20 }).values().next();
-      links.value = result.value ?? [];
-    }
-  }
-  catch (e) {
-    console.error(e);
-  }
-  loading.value = false;
+const postsPaginator = computed(() =>
+  useMastoClient().v1.trends.statuses.list({ limit: 20 }),
+);
+
+let tagsPager: ReturnType<typeof usePaginator<mastodon.v1.Tag, any>> | null = null;
+let linksPager: ReturnType<typeof usePaginator<mastodon.v1.TrendLink, any>> | null = null;
+
+const tags = ref<mastodon.v1.Tag[]>([]);
+const tagsState = ref<PaginatorState>('idle');
+const links = ref<mastodon.v1.TrendLink[]>([]);
+const linksState = ref<PaginatorState>('idle');
+
+async function loadMoreTags() {
+  tagsPager ??= usePaginator<mastodon.v1.Tag, any>(
+    useMastoClient().v1.trends.tags.list({ limit: 20 }),
+  );
+  await tagsPager.loadNext();
+  tags.value = [...tagsPager.items.value];
+  tagsState.value = tagsPager.state.value;
 }
 
-onMounted(load);
-watch(tab, load);
+async function loadMoreLinks() {
+  linksPager ??= usePaginator<mastodon.v1.TrendLink, any>(
+    useMastoClient().v1.trends.links.list({ limit: 20 }),
+  );
+  await linksPager.loadNext();
+  links.value = [...linksPager.items.value];
+  linksState.value = linksPager.state.value;
+}
+
+watch(tab, (next) => {
+  if (next === 'tags' && !tagsPager)
+    loadMoreTags();
+  else if (next === 'links' && !linksPager)
+    loadMoreLinks();
+});
 
 function tagUses(tag: mastodon.v1.Tag): number {
   return (tag.history ?? []).slice(0, 2).reduce((acc, h) => acc + Number(h.uses || 0), 0);
@@ -79,43 +89,75 @@ function tagUses(tag: mastodon.v1.Tag): number {
       </view>
     </view>
 
-    <view v-if="loading" class="explore-loading">
-      <Spinner />
-    </view>
+    <TimelinePaginator
+      v-if="tab === 'posts'"
+      :key="'explore-posts'"
+      :paginator="postsPaginator"
+      context="public"
+    />
 
-    <scroll-view v-else-if="tab === 'posts'" scroll-orientation="vertical" class="explore-scroll">
-      <StatusCard v-for="s in statuses" :key="s.id" :status="s" />
-      <view class="explore-bottom-pad" />
-    </scroll-view>
-
-    <scroll-view v-else-if="tab === 'links'" scroll-orientation="vertical" class="explore-scroll">
-      <view v-for="link in links" :key="link.url" class="explore-link">
-        <image v-if="link.image" :src="link.image" class="explore-link-img" mode="aspectFill" />
-        <view class="explore-link-body">
-          <text class="explore-link-host">{{ link.providerName || link.url.replace(/^https?:\/\//, '').split('/')[0] }}</text>
-          <text class="explore-link-title" :text-maxline="2">{{ link.title }}</text>
-          <text v-if="link.description" class="explore-link-desc" :text-maxline="2">{{ link.description }}</text>
-        </view>
-      </view>
-      <view class="explore-bottom-pad" />
-    </scroll-view>
-
-    <scroll-view v-else scroll-orientation="vertical" class="explore-scroll">
-      <view
+    <list
+      v-else-if="tab === 'tags'"
+      class="explore-list"
+      scroll-orientation="vertical"
+      :lower-threshold-item-count="4"
+      @scrolltolower="loadMoreTags"
+    >
+      <list-item
         v-for="(tag, i) in tags"
         :key="tag.name"
-        class="explore-tag"
-        @tap="router.push(getTagRoute(tag.name))"
+        :item-key="tag.name"
+        :estimated-main-axis-size-px="64"
       >
-        <text class="explore-tag-rank">{{ i + 1 }}</text>
-        <view class="explore-tag-names">
-          <text class="explore-tag-name">#{{ tag.name }}</text>
-          <text class="explore-tag-uses">{{ formatCompactNumber(tagUses(tag)) }} people in the past 2 days</text>
+        <view
+          class="explore-tag"
+          @tap="router.push(getTagRoute(tag.name))"
+        >
+          <text class="explore-tag-rank">{{ i + 1 }}</text>
+          <view class="explore-tag-names">
+            <text class="explore-tag-name">#{{ tag.name }}</text>
+            <text class="explore-tag-uses">{{ formatCompactNumber(tagUses(tag)) }} people in the past 2 days</text>
+          </view>
+          <AppIcon name="fire-line" :size="18" color="#cc7d24" />
         </view>
-        <AppIcon name="fire-line" :size="18" color="#cc7d24" />
-      </view>
-      <view class="explore-bottom-pad" />
-    </scroll-view>
+      </list-item>
+      <list-item item-key="__footer" :estimated-main-axis-size-px="60">
+        <view class="explore-footer">
+          <Spinner v-if="tagsState === 'loading' || (!tags.length && tagsState !== 'done' && tagsState !== 'error')" />
+          <text v-else-if="tagsState === 'done'" class="explore-end-text">End of trends</text>
+        </view>
+      </list-item>
+    </list>
+
+    <list
+      v-else
+      class="explore-list"
+      scroll-orientation="vertical"
+      :lower-threshold-item-count="4"
+      @scrolltolower="loadMoreLinks"
+    >
+      <list-item
+        v-for="link in links"
+        :key="link.url"
+        :item-key="link.url"
+        :estimated-main-axis-size-px="96"
+      >
+        <view class="explore-link">
+          <image v-if="link.image" :src="link.image" class="explore-link-img" mode="aspectFill" />
+          <view class="explore-link-body">
+            <text class="explore-link-host">{{ link.providerName || link.url.replace(/^https?:\/\//, '').split('/')[0] }}</text>
+            <text class="explore-link-title" :text-maxline="2">{{ link.title }}</text>
+            <text v-if="link.description" class="explore-link-desc" :text-maxline="2">{{ link.description }}</text>
+          </view>
+        </view>
+      </list-item>
+      <list-item item-key="__footer" :estimated-main-axis-size-px="60">
+        <view class="explore-footer">
+          <Spinner v-if="linksState === 'loading' || (!links.length && linksState !== 'done' && linksState !== 'error')" />
+          <text v-else-if="linksState === 'done'" class="explore-end-text">End of news</text>
+        </view>
+      </list-item>
+    </list>
   </view>
 </template>
 
@@ -188,16 +230,9 @@ function tagUses(tag: mastodon.v1.Tag): number {
   justify-content: center;
 }
 
-.explore-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 48px 0;
-}
-
-.explore-scroll {
-  flex: 1;
+.explore-list {
   width: 100%;
+  flex: 1;
 }
 
 .explore-tag {
@@ -231,10 +266,6 @@ function tagUses(tag: mastodon.v1.Tag): number {
 .explore-tag-uses {
   font-size: 12px;
   color: var(--c-text-secondary);
-}
-
-.explore-bottom-pad {
-  height: 40px;
 }
 
 .explore-link {
@@ -275,5 +306,18 @@ function tagUses(tag: mastodon.v1.Tag): number {
   font-size: 12px;
   color: var(--c-text-secondary);
   margin-top: 2px;
+}
+
+.explore-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.explore-end-text {
+  font-size: 13px;
+  color: var(--c-text-secondary-light);
 }
 </style>

@@ -3,10 +3,8 @@
 // app/components/account/AccountHeader.vue — banner, avatar, names, bio,
 // fields, stats, posts/replies/media tabs.
 //
-// This variant gives the profile a native feel: the header collapses and
-// the tab bar sticks to the top on scroll (StickyTabView / scroll-coordinator),
-// while the Posts / Replies / Media panes below page horizontally and each
-// keep their own feed and scroll position.
+// StickyTabView collapses the header; each pane is a TimelinePaginator
+// (<list> + scrolltolower) so feeds infinite-scroll independently.
 import type { mastodon } from 'masto';
 import { computed, onMounted, reactive, ref, watch } from 'vue-lynx';
 import { useRoute, useRouter } from 'vue-router';
@@ -15,8 +13,8 @@ import AccountDisplayName from '../components/AccountDisplayName.vue';
 import ContentRich from '../components/ContentRich';
 import PageHeader from '../components/PageHeader.vue';
 import Spinner from '../components/Spinner.vue';
-import StatusCard from '../components/StatusCard.vue';
 import StickyTabView from '../components/StickyTabView.vue';
+import TimelinePaginator from '../components/TimelinePaginator.vue';
 import { fetchAccountByHandle } from '../composables/cache';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
@@ -39,46 +37,30 @@ const tabs = [
   { key: 'media', label: 'Media' },
 ] as const;
 
-// One feed per tab so all three panes keep their own data and scroll
-// position while the pager swipes between them; panes load lazily the first
-// time they become active.
-const feeds = reactive<Record<TabKey, {
-  items: mastodon.v1.Status[];
-  loading: boolean;
-  loaded: boolean;
-}>>({
-  posts: { items: [], loading: false, loaded: false },
-  replies: { items: [], loading: false, loaded: false },
-  media: { items: [], loading: false, loaded: false },
-});
+// One masto paginator per pane — TimelinePaginator owns the <list> + loadNext.
+const paginators = reactive<Partial<Record<TabKey, mastodon.Paginator<mastodon.v1.Status[], any>>>>({});
 
-function resetFeeds() {
-  for (const kind of ['posts', 'replies', 'media'] as const) {
-    feeds[kind].items = [];
-    feeds[kind].loading = false;
-    feeds[kind].loaded = false;
-  }
+function makeStatusPaginator(kind: TabKey) {
+  if (!account.value)
+    return null;
+  return useMastoClient().v1.accounts.$select(account.value.id).statuses.list({
+    limit: 30,
+    excludeReplies: kind === 'posts',
+    onlyMedia: kind === 'media',
+  });
 }
 
-async function loadFeed(kind: TabKey) {
-  if (!account.value)
+function ensureFeed(kind: TabKey) {
+  if (!account.value || paginators[kind])
     return;
-  const feed = feeds[kind];
-  feed.loading = true;
-  try {
-    const paginator = useMastoClient().v1.accounts.$select(account.value.id).statuses.list({
-      limit: 30,
-      excludeReplies: kind === 'posts',
-      onlyMedia: kind === 'media',
-    });
-    const result = await paginator.values().next();
-    feed.items = result.value ?? [];
-    feed.loaded = true;
-  }
-  catch (e) {
-    console.error(e);
-  }
-  feed.loading = false;
+  const pager = makeStatusPaginator(kind);
+  if (pager)
+    paginators[kind] = pager;
+}
+
+function resetFeeds() {
+  for (const kind of ['posts', 'replies', 'media'] as const)
+    delete paginators[kind];
 }
 
 async function load() {
@@ -89,13 +71,13 @@ async function load() {
   loading.value = true;
   error.value = false;
   account.value = null;
+  resetFeeds();
   try {
     const loadedAccount = await fetchAccountByHandle(handle.replace(/^@/, ''));
     if (!loadGuard.isCurrent(request))
       return;
     account.value = loadedAccount;
-    resetFeeds();
-    await loadFeed(tab.value);
+    ensureFeed(tab.value);
   }
   catch (e) {
     console.error(e);
@@ -109,10 +91,8 @@ async function load() {
 onMounted(load);
 watch(() => route.params.account, load);
 
-// Lazy-load a pane's feed the first time it becomes active.
 watch(tab, (kind) => {
-  if (!feeds[kind].loaded && !feeds[kind].loading)
-    loadFeed(kind);
+  ensureFeed(kind);
 });
 
 const joinDate = computed(() => {
@@ -137,7 +117,6 @@ const joinDate = computed(() => {
     </view>
     <StickyTabView v-else v-model="tab" :tabs="tabs" class="account-stv">
       <template #header>
-        <!-- banner -->
         <image :src="account.header" class="account-banner" mode="aspectFill" />
 
         <view class="account-head">
@@ -154,7 +133,6 @@ const joinDate = computed(() => {
             <ContentRich :content="account.note" :emojis="account.emojis" />
           </view>
 
-          <!-- fields (Elk AccountHeader fields table) -->
           <view v-if="account.fields?.length" class="account-fields">
             <view
               v-for="field in account.fields"
@@ -171,7 +149,6 @@ const joinDate = computed(() => {
 
           <text class="account-joined">{{ joinDate }}</text>
 
-          <!-- stats row -->
           <view class="account-stats">
             <view class="account-stat">
               <text class="account-stat-num">{{ formatCompactNumber(account.statusesCount) }}</text>
@@ -190,42 +167,30 @@ const joinDate = computed(() => {
       </template>
 
       <template #posts>
-        <scroll-view scroll-orientation="vertical" class="account-pane">
-          <view v-if="feeds.posts.loading" class="account-loading">
-            <Spinner />
-          </view>
-          <StatusCard v-for="s in feeds.posts.items" :key="s.id" :status="s" />
-          <view v-if="feeds.posts.loaded && !feeds.posts.loading && !feeds.posts.items.length" class="account-empty">
-            <text class="account-empty-text">No posts yet.</text>
-          </view>
-          <view class="account-bottom-pad" />
-        </scroll-view>
+        <TimelinePaginator
+          v-if="paginators.posts"
+          :key="`${account.id}-posts`"
+          :paginator="paginators.posts"
+          context="account"
+        />
       </template>
 
       <template #replies>
-        <scroll-view scroll-orientation="vertical" class="account-pane">
-          <view v-if="feeds.replies.loading" class="account-loading">
-            <Spinner />
-          </view>
-          <StatusCard v-for="s in feeds.replies.items" :key="s.id" :status="s" />
-          <view v-if="feeds.replies.loaded && !feeds.replies.loading && !feeds.replies.items.length" class="account-empty">
-            <text class="account-empty-text">No posts yet.</text>
-          </view>
-          <view class="account-bottom-pad" />
-        </scroll-view>
+        <TimelinePaginator
+          v-if="paginators.replies"
+          :key="`${account.id}-replies`"
+          :paginator="paginators.replies"
+          context="account"
+        />
       </template>
 
       <template #media>
-        <scroll-view scroll-orientation="vertical" class="account-pane">
-          <view v-if="feeds.media.loading" class="account-loading">
-            <Spinner />
-          </view>
-          <StatusCard v-for="s in feeds.media.items" :key="s.id" :status="s" />
-          <view v-if="feeds.media.loaded && !feeds.media.loading && !feeds.media.items.length" class="account-empty">
-            <text class="account-empty-text">No media yet.</text>
-          </view>
-          <view class="account-bottom-pad" />
-        </scroll-view>
+        <TimelinePaginator
+          v-if="paginators.media"
+          :key="`${account.id}-media`"
+          :paginator="paginators.media"
+          context="account"
+        />
       </template>
     </StickyTabView>
   </view>
@@ -238,30 +203,11 @@ const joinDate = computed(() => {
   width: 100%;
 }
 
-.account-pane {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .account-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 48px 0;
-}
-
-.account-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-}
-
-.account-empty-text {
-  font-size: 14px;
-  color: var(--c-text-secondary);
 }
 
 .account-error {
@@ -387,9 +333,5 @@ const joinDate = computed(() => {
 .account-stat-label {
   font-size: 13px;
   color: var(--c-text-secondary);
-}
-
-.account-bottom-pad {
-  height: 40px;
 }
 </style>

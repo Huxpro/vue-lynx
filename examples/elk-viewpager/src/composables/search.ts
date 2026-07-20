@@ -83,16 +83,20 @@ export function useSearch(query: MaybeRefOrGetter<string>) {
   });
 
   const next = async () => {
-    if (!q.value || !paginator)
+    if (!q.value || !paginator || done.value || loading.value)
       return;
 
     loading.value = true;
-    const nextResults = await paginator.values().next();
+    try {
+      const nextResults = await paginator.values().next();
+      done.value = !!nextResults.done;
+      if (!nextResults.done)
+        appendResults(nextResults.value);
+    }
+    catch (e) {
+      console.error(e);
+    }
     loading.value = false;
-
-    done.value = !!nextResults.done;
-    if (!nextResults.done)
-      appendResults(nextResults.value);
   };
 
   return {
@@ -100,6 +104,7 @@ export function useSearch(query: MaybeRefOrGetter<string>) {
     hashtags,
     statuses,
     loading: readonly(loading),
+    done: readonly(done),
     next,
   };
 }

@@ -75,10 +75,13 @@ classes — Lynx supports inline text nesting natively.
 ### Virtualized timeline
 
 Elk uses `virtua`'s DOM `WindowVirtualizer`. Lynx's native `<list>` is
-already a recycling virtualized scroller, so the port's timeline is a
-`<list>` with `estimated-main-axis-size-px` hints and
+already a recycling virtualized scroller, so the port's feeds are
+`<list>`s with `estimated-main-axis-size-px` hints and
 `lower-threshold-item-count` + `scrolltolower` driving `loadNext()` —
-*less* code than the DOM version.
+*less* code than the DOM version. Short finite pages (settings, compose,
+thread detail) stay on `<scroll-view>`; anything that paginates without
+bound (timelines, explore, profiles, search, notifications, follow lists)
+uses `<list>`.
 
 ### Navigation
 

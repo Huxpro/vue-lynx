@@ -553,6 +553,26 @@ test('tabs animate persistent indicators and Explore explains trending content',
   assert.match(account, /account-tab-underline-active/);
 });
 
+test('long feeds use recycling list scrolltolower instead of scroll-view', async () => {
+  const [explore, account, search, timeline] = await Promise.all([
+    readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/SearchPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/TimelinePaginator.vue', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(timeline, /@scrolltolower="loadNext"/);
+  assert.match(timeline, /lower-threshold-item-count/);
+  assert.match(explore, /TimelinePaginator/);
+  assert.match(explore, /@scrolltolower="loadMoreTags"/);
+  assert.match(explore, /@scrolltolower="loadMoreLinks"/);
+  assert.doesNotMatch(explore, /<scroll-view/);
+  assert.match(account, /TimelinePaginator/);
+  assert.doesNotMatch(account, /<scroll-view/);
+  assert.match(search, /@scrolltolower="loadMore"/);
+  assert.doesNotMatch(search, /<scroll-view/);
+});
+
 test('media preview motion mirrors Elk using only opacity and transform', async () => {
   const source = await readFile(
     new URL('../src/components/MediaPreview.vue', import.meta.url),

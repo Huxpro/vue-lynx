@@ -61,7 +61,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Public/federated timeline (`v1.timelines.public`)
 - ✅ Local timeline (`public.list({ local: true })`)
 - 🚧 Home timeline (requires token; implemented, verified against API shape only)
-- ✅ Infinite scroll via masto `Paginator` (Elk `usePaginator` core reused; DOM `useElementBounding` trigger → Lynx `<list>` `scrolltolower` event)
+- ✅ Infinite scroll via masto `Paginator` (Elk `usePaginator` core reused; DOM `useElementBounding` trigger → Lynx `<list>` `scrolltolower` event). Covers timelines, explore (posts/tags/news), profile posts/replies/media, search, notifications, and follow lists. Finite pages keep `<scroll-view>`.
 - ✅ Native virtualized scrolling (Elk uses `virtua` DOM virtual scroller → Lynx `<list>` native recycling)
 - ✅ Timeline filtering/reordering (Elk `timeline.ts`: hide replies/boosts prefs, thread reorder — reused verbatim)
 - 🚧 Refresh (header refresh button recreates the paginator; replaces Elk's streaming prepend. Native pull-to-refresh gesture not wired)
@@ -102,7 +102,7 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 - ✅ Profile header: banner image, avatar, display name (emoji), handle, bio (rich content)
 - ✅ Stats row: posts / following / followers counts
 - ✅ Fields/metadata table (with verified-link highlight)
-- ✅ Account posts tab (`v1.accounts.$select(id).statuses`)
+- ✅ Account posts tab (`v1.accounts.$select(id).statuses`) with infinite scroll via `TimelinePaginator`
 - ✅ Posts / Posts+Replies / Media tabs
 - ✅ Following / Followers lists (tappable stats on profile → paginated account list)
 - 🚧 Follow/unfollow button (needs token; UI + optimistic logic ported)
@@ -119,10 +119,10 @@ Elk Lynx = this example (examples/elk) → fresh Vue Lynx shell
 
 ### Search & explore
 
-- ✅ Search page: accounts / hashtags / statuses (`v2.search`, debounced — Elk `useSearch` reused)
-- ✅ Explore: trending posts (`v1.trends.statuses`)
-- ✅ Explore: trending hashtags (`v1.trends.tags`) with usage sparkline numbers
-- ✅ Explore: trending links (News tab: provider, title, description, thumbnail)
+- ✅ Search page: accounts / hashtags / statuses (`v2.search`, debounced — Elk `useSearch` reused; `<list>` `scrolltolower` → `next()`)
+- ✅ Explore: trending posts (`v1.trends.statuses`, `TimelinePaginator`)
+- ✅ Explore: trending hashtags (`v1.trends.tags`) with usage sparkline numbers + infinite scroll
+- ✅ Explore: trending links (News tab: provider, title, description, thumbnail + infinite scroll)
 - ✅ Hashtag timeline page (`v1.timelines.tag`; verified incl. CJK tags + remote instance content)
 - 🚧 Follow hashtag button (auth-gated; on tag page header)
 
