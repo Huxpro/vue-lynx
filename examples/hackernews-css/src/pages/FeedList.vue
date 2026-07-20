@@ -78,7 +78,7 @@ function goNext() {
 </script>
 
 <template>
-  <scroll-view class="view feed-view" scroll-orientation="vertical">
+  <view class="feed-view">
     <view class="news-list-nav">
       <text class="nav-button" :class="{ disabled: !hasPrev }" @tap="goPrev">
         &lt; prev
@@ -89,7 +89,7 @@ function goNext() {
       </text>
     </view>
 
-    <view class="feed-content">
+    <scroll-view class="feed-content" scroll-orientation="vertical">
       <view v-if="isLoading" class="status-card">
         <Spinner :show="true" />
       </view>
@@ -111,26 +111,28 @@ function goNext() {
           </view>
         </Transition>
       </template>
-    </view>
-  </scroll-view>
+    </scroll-view>
+  </view>
 </template>
 
 <style lang="scss">
 .feed-view {
   height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .feed-content {
-  padding-top: 56px;
+  flex: 1;
+  min-height: 0;
   padding-bottom: 30px;
 }
 
 .news-list-nav {
-  position: fixed;
-  top: 55px;
+  flex-shrink: 0;
   z-index: 998;
-  left: 0;
-  right: 0;
   width: 100%;
   padding: 15px 30px;
   text-align: center;
@@ -222,28 +224,17 @@ function goNext() {
   transform: translate(30px, 0);
 }
 
-@media (max-width: 860px) {
-  .news-list-nav {
-    max-width: calc(100% - 60px);
-  }
-}
-
 @media (max-width: 600px) {
   .news-list {
     margin: 10px auto;
   }
 
   .news-list-nav {
-    max-width: calc(100% - 30px);
     padding: 15px;
   }
 
   .status-card {
     margin: 10px auto;
-  }
-
-  .feed-content {
-    padding-top: 52px;
   }
 }
 </style>

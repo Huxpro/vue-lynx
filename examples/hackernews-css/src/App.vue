@@ -30,6 +30,10 @@ function openVueReference() {
 
 <template>
   <page class="page">
+    <!--
+      In-flow flex column (not position:fixed). Fixed positioning is unreliable
+      under scaled lynx-view / Lynx for Web, which left the feed looking empty.
+    -->
     <view class="header">
       <view class="inner">
         <view class="logo" @tap="goHome">
@@ -61,6 +65,8 @@ function openVueReference() {
 <style lang="scss">
 .page {
   height: 100%;
+  display: flex;
+  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 15px;
@@ -70,18 +76,16 @@ function openVueReference() {
 
 .header {
   background-color: #3eaf7c;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
+  flex-shrink: 0;
   height: 55px;
+  z-index: 999;
 
   .inner {
     max-width: 800px;
     box-sizing: border-box;
     margin: 0 auto;
     padding: 15px 5px;
+    height: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -110,7 +114,11 @@ function openVueReference() {
 }
 
 .route-shell {
-  padding-top: 55px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {
