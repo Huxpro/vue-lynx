@@ -10,6 +10,11 @@
       "types": "./dist/ops.d.ts",
       "import": "./dist/ops.js",
       "default": "./dist/ops.js"
+    },
+    "./html-to-template-node": {
+      "types": "./dist/html-to-template-node.d.ts",
+      "import": "./dist/html-to-template-node.js",
+      "default": "./dist/html-to-template-node.js"
     }
   },
   "files": ["dist"],

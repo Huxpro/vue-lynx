@@ -49,6 +49,13 @@ export default defineConfig({
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
       },
+      {
+        find: 'vue-lynx/internal/html-to-template-node',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/html-to-template-node.ts',
+        ),
+      },
       // vue-lynx/vapor → pure vapor entry source (the app entry; the
       // adapter surface it re-exports lives in runtime/src/vapor/)
       {

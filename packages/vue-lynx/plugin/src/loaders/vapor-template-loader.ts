@@ -204,5 +204,22 @@ export default function vaporTemplateLoader(
     }
   }
 
-  loaderContext.callback(null, compiled.code, compiled.map);
+  // Build-time structured templates (#234 / IFR×ET): rewrite
+  // template("<view…>") → template(<TemplateNode>) so both threads skip
+  // the runtime HTML parse. Failures leave the string form intact.
+  let code = compiled.code;
+  if (descriptor.vapor) {
+    try {
+      // Lazy require keeps the loader light when vapor is off; the rewrite
+      // module pulls in the HTML→TemplateNode parser.
+      const { rewriteVaporTemplateCalls } = require(
+        '../compiler/vapor-structured-template.js',
+      ) as typeof import('../compiler/vapor-structured-template.js');
+      code = rewriteVaporTemplateCalls(code).code;
+    } catch {
+      // Keep the HTML-string form if the rewrite cannot load.
+    }
+  }
+
+  loaderContext.callback(null, code, compiled.map);
 }

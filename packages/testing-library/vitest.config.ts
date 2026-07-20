@@ -34,6 +34,13 @@ export default defineConfig({
         ),
       },
       {
+        find: 'vue-lynx/internal/html-to-template-node',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/html-to-template-node.ts',
+        ),
+      },
+      {
         find: /^vue-lynx$/,
         replacement: path.resolve(
           __dirname,

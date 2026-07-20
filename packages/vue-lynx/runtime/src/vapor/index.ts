@@ -36,18 +36,19 @@ import {
   createInvoker,
   createVaporApp as _createVaporApp,
   onBinding as _onBinding,
-  renderEffect,
+  renderEffect as _renderEffect,
+  template as _template,
 } from '@vue/runtime-vapor';
 import * as runtimeDom from '@vue/runtime-dom';
 import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
+import type { TemplateNode } from 'vue-lynx/internal/ops';
 import { registerMount } from '../app-registry.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
 import { isIfrMainThread } from '../ifr-env.js';
-import { createPageRoot } from '../shadow-element.js';
-import type { ShadowElement } from '../shadow-element.js';
+import { createPageRoot, ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';
 import { applyVaporCssVarsToBlock } from './css-vars.js';
 
@@ -56,6 +57,112 @@ import { applyVaporCssVarsToBlock } from './css-vars.js';
 // ---------------------------------------------------------------------------
 
 export * from '@vue/runtime-vapor';
+
+// ---------------------------------------------------------------------------
+// IFR×ET: one-shot renderEffect + structured template()
+// ---------------------------------------------------------------------------
+
+/**
+ * On the disposable IFR main thread, evaluate template bindings once with no
+ * reactive wiring — hole writes are write-only and discarded after handoff.
+ * Background keeps full `RenderEffect` tracking for updates.
+ *
+ * @public
+ */
+export function renderEffect(
+  fn: () => void,
+  noLifecycle?: boolean,
+): void {
+  if (isIfrMainThread()) {
+    fn();
+    return;
+  }
+  _renderEffect(fn, noLifecycle);
+}
+
+/**
+ * Materialise an inert ShadowElement tree from a REGISTER_TREE-shaped
+ * TemplateNode (build-time structured templates / #234).
+ */
+function inertFromTemplateNode(node: TemplateNode): ShadowElement {
+  const [tag, props, children] = node;
+  const el = new ShadowElement(tag);
+  el._inert = true;
+
+  if (tag === '#comment') {
+    el._text = '';
+    return el;
+  }
+  if (tag === '#text') {
+    el._text = props !== 0 && props != null && props.t !== undefined
+      ? props.t
+      : '';
+    return el;
+  }
+
+  if (props !== 0 && props != null) {
+    if (props.c) el._baseClass = props.c;
+    if (props.s) el._style = { ...props.s };
+    if (props.a) {
+      for (const [k, v] of props.a) el._setAttrRecord(k, v);
+    }
+    if (props.i !== undefined) el._id = props.i;
+    if (props.t !== undefined) {
+      // Folded only-child text — recreate the aliased shadow #text so vapor
+      // txt()/setText navigation matches the HTML-parsed prototypes.
+      const text = new ShadowElement('#text');
+      text._inert = true;
+      text._text = props.t;
+      el._link(text, null);
+    }
+  }
+
+  for (const child of children) {
+    el._link(inertFromTemplateNode(child), null);
+  }
+  return el;
+}
+
+function isTemplateNode(value: unknown): value is TemplateNode {
+  return Array.isArray(value)
+    && value.length === 3
+    && typeof value[0] === 'string'
+    && Array.isArray(value[2]);
+}
+
+/**
+ * Vapor `template()` with Lynx extensions:
+ *  - string HTML — same as upstream (parsed via our `<template>` shim)
+ *  - TemplateNode — build-time structured form; skips HTML parse
+ *
+ * @public
+ */
+export function template(
+  htmlOrStructure: string | TemplateNode,
+  flags = 0,
+  ns?: number,
+): () => ShadowElement {
+  if (isTemplateNode(htmlOrStructure)) {
+    const rootFlag = !!(flags & 1);
+    let proto: ShadowElement | undefined;
+    return () => {
+      if (!proto) {
+        proto = inertFromTemplateNode(htmlOrStructure);
+      }
+      const ret = proto.cloneNode(true) as ShadowElement;
+      if (rootFlag) {
+        (ret as ShadowElement & { $root?: boolean }).$root = true;
+      }
+      return ret;
+    };
+  }
+  return _template(htmlOrStructure, flags, ns) as unknown as () => ShadowElement;
+}
+
+export {
+  htmlToTemplateNode,
+  inferHoleSlots,
+} from 'vue-lynx/internal/html-to-template-node';
 
 // ---------------------------------------------------------------------------
 // Event modifier helpers — Lynx semantics

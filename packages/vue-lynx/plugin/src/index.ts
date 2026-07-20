@@ -382,6 +382,24 @@ export function pluginVueLynx(
               .use(VueLynxVaporTemplatePlugin, [
                 path.resolve(_pluginDirname, './loaders/vapor-template-loader.js'),
               ]);
+
+            // Build-time structured templates: rewrite template("<view…>")
+            // to template(<TemplateNode>) after SFC/JS compilation so IFR MT
+            // and BG skip the runtime HTML parse (#234 / IFR×ET phase 2).
+            chain.module
+              .rule('vue-lynx:vapor-structured-templates')
+              .test(/\.[cm]?[jt]sx?$/)
+              .exclude.add(/node_modules/)
+              .end()
+              .enforce('post')
+              .use('vue-lynx:vapor-structured-template-loader')
+              .loader(
+                path.resolve(
+                  _pluginDirname,
+                  './loaders/vapor-structured-template-loader.js',
+                ),
+              )
+              .end();
           }
 
           // Ensure vue-lynx/internal/ops resolves correctly.
