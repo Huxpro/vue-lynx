@@ -203,8 +203,7 @@ function createListCallbacks(bgId: number): {
     const items = listItems.get(bgId);
     if (!items) return;
     const elementIDs: number[] = [];
-    for (let j = 0; j < cellIndexes.length; j++) {
-      const cellIndex = cellIndexes[j]!;
+    for (const cellIndex of cellIndexes) {
       if (cellIndex < 0 || cellIndex >= items.length) {
         elementIDs.push(-1);
         continue;
@@ -275,7 +274,7 @@ export function insertListItem(
   parentId: number,
   child: LynxElement,
   childId: number,
-  anchorId: number = -1,
+  anchorId = -1,
 ): void {
   const items = listItems.get(parentId);
   if (!items) return;
