@@ -12,7 +12,7 @@
 - [x] Sparse bake + tests demonstrating hole-only naming
 - [x] Guard: VDOM `elementTemplateTransform` stays off under `vapor: true`
 - [x] Guide notes pointing at the follow-up
-- [ ] `pnpm --filter vue-lynx run build` + upstream local/vapor + testing-library green
+- [x] `pnpm --filter vue-lynx run build` + upstream local/vapor + testing-library green
 
 ## Milestone 2+
 
