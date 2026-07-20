@@ -2,24 +2,24 @@
  * Homepage phone-frame geometry, derived from the original showcase
  * recordings (ifr.mp4 / mts.mp4):
  *
- *   capture: 1080 × 2412
+ *   capture: 1080 × 2412  (= 360 × 804 CSS-px @3×)
  *   aspect:  1080 / 2412 ≈ 0.4478
  *
- * Lynx / go-web layout at a 375 CSS-px design width (750 rpx @2×), with
- * height matched to the recording aspect so `fit: cover` ≈ `fit: contain`
- * (almost no crop) — the same density the videos had when `object-fit: cover`
- * into the old 260×580 bezel (scale ≈ 260/1080 of the capture, ≈ 260/375 of
- * logical CSS).
+ * Layout at that logical size via go-web `webPreviewMode="fit"`, then scale
+ * into the bezel. 360 matches the recording; go-web's `--rpx-unit` is still
+ * `designWidth / 750` (Lynx's 750-wide rpx baseline).
  */
 
 /** Capture resolution of the original gallery / swiper showcase videos. */
 export const VIDEO_CAPTURE = { width: 1080, height: 2412 } as const;
 
+/** Device pixel ratio implied by the recordings (1080/360 = 2412/804 = 3). */
+export const VIDEO_DPR = 3;
+
 /** Logical phone canvas used by go-web `webPreviewMode="fit"`. */
 export const DESIGN = {
-  width: 375,
-  /** 375 × (2412 / 1080) */
-  height: Math.round((375 * VIDEO_CAPTURE.height) / VIDEO_CAPTURE.width),
+  width: VIDEO_CAPTURE.width / VIDEO_DPR, // 360
+  height: VIDEO_CAPTURE.height / VIDEO_DPR, // 804
 } as const;
 
 /**

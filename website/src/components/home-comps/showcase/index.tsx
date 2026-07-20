@@ -64,8 +64,8 @@ const sectionTitle = {
 };
 
 const sectionDesc = {
-  en: "Live apps at iPhone density (375 CSS-px), scaled into the phone frame — same idea as the original showcase videos.",
-  zh: '按 iPhone 密度（375 CSS 像素）布局后再缩放进手机框——与最早的 showcase 录屏同一思路。',
+  en: 'Live apps at the same density as the original showcase videos (360 CSS-px @3× → phone frame).',
+  zh: '与最早的 showcase 录屏同一密度（360 CSS 像素 @3× → 手机框）。',
 };
 
 const learnByDoing = {
