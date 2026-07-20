@@ -32,6 +32,7 @@ import {
   type TemplateNodeProps,
   type VaporTreeAddressing,
 } from 'vue-lynx/internal/ops';
+import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
 import { patchEventProp } from './event-props.js';
 import {
   bundleDeliveryRequested,
@@ -39,6 +40,7 @@ import {
   sparseNamingEnabled,
 } from './flags.js';
 import { scheduleFlush } from './flush.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
@@ -1288,6 +1290,7 @@ function buildShadowCloneSparse(
   counter: { value: number },
   needed: Set<number>,
   slotToSparse: Map<number, number>,
+  copyStaticState = true,
 ): ShadowElement | null {
   const slot = counter.value;
   if (!needed.has(slot)) {
@@ -1312,14 +1315,18 @@ function buildShadowCloneSparse(
     return clone;
   }
 
-  clone._baseClass = proto._baseClass;
   const scopeClasses = proto._getScopeClasses();
   if (scopeClasses.size > 0) {
-    clone._scopeClasses = new Set(scopeClasses);
+    clone._scopeClasses = copyStaticState
+      ? new Set(scopeClasses)
+      : proto._scopeClasses;
   }
-  const style = proto._getStyle();
-  if (hasAnyKey(style)) clone._style = { ...style };
-  if (proto._attrs) clone._attrs = new Map(proto._attrs);
+  if (copyStaticState) {
+    clone._baseClass = proto._baseClass;
+    const style = proto._getStyle();
+    if (hasAnyKey(style)) clone._style = { ...style };
+    if (proto._attrs) clone._attrs = new Map(proto._attrs);
+  }
   if (proto._id !== undefined) {
     clone._id = proto._id;
     idRegistry.set(proto._id, clone);
@@ -1341,6 +1348,7 @@ function buildShadowCloneSparse(
         counter,
         needed,
         slotToSparse,
+        copyStaticState,
       );
       if (childClone) clone._link(childClone, null);
       child = child.next;
@@ -1454,6 +1462,7 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
       counter,
       needed,
       slotToSparse,
+      !isIfrMainThread(),
     );
     if (!root) {
       throw new Error(
@@ -1481,6 +1490,40 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
 
   // Dense A1 fallback.
   ShadowElement.nextUid += cache.count;
+  if (isIfrMainThread()) {
+    // Unannotated fallback: preserve the dense uid contract while avoiding
+    // disposable static state on the IFR first-frame navigation facade.
+    const holes = inferHoleSlots(cache.structure);
+    if (holes.length === 0) {
+      const root = new ShadowElement(proto.tag, base);
+      root._mtCreated = true;
+      pushOp(OP.CLONE_TREE, cache.id, base);
+      scheduleFlush();
+      return root;
+    }
+    const slots = Array.from({ length: cache.count }, (_, slot) => slot);
+    const counter = { value: 0 };
+    const root = buildShadowCloneSparse(
+      proto,
+      base,
+      counter,
+      new Set(slots),
+      new Map(slots.map((slot) => [slot, slot])),
+      false,
+    );
+    if (!root) {
+      throw new Error('[vue-lynx] IFR dense template clone produced no root');
+    }
+    if (__DEV__ && counter.value !== cache.count) {
+      console.warn(
+        `[vue-lynx] IFR dense template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
+      );
+    }
+    pushOp(OP.CLONE_TREE, cache.id, base);
+    scheduleFlush();
+    return root;
+  }
+
   const counter = { value: 0 };
   const root = buildShadowClone(proto, base, counter);
   if (__DEV__ && counter.value !== cache.count) {

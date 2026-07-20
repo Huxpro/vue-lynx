@@ -147,16 +147,28 @@ export type DenseTreeCreator = (
   pageUniqueId: number,
   baseUid: number,
   hooks: BakeHooks,
-) => { el: LynxElement; uid: number } | null;
+) => {
+  el: LynxElement;
+  uid: number;
+  /** Full preorder stack (null = comment / empty-text skip). */
+  stack: (LynxElement | null)[];
+} | null;
 
 export type SparseTreeCreator = (
   pageUniqueId: number,
+  /** Base uid for dense-preorder or compact addressed naming. */
+  baseUid: number,
   hooks: BakeHooks,
 ) => {
   /** Native handles for [root, hole0, hole1, …] — ET-shaped return. */
   handles: LynxElement[];
   /** Preorder indices of those handles within the full walk. */
   namedSlots: number[];
+  /**
+   * Full preorder stack (null = comment / empty-text skip) for structural
+   * remapping onto dense BG `CLONE_TREE` uids after IFR handoff.
+   */
+  stack: (LynxElement | null)[];
 };
 
 /**
@@ -228,27 +240,29 @@ export function bakeDenseTreeCreate(structure: TemplateNode): DenseTreeCreator {
           break;
       }
     }
-    return root;
+    return root
+      ? { el: root.el, uid: root.uid, stack }
+      : null;
   };
 }
 
 /**
  * Sparse creator for the IFR-discard model: builds the full native tree but
- * only names `holeSlots` (plus the root at slot 0). Returned `handles` are
- * `[root, …holes]` — the same shape as VDOM `INSTANTIATE_TEMPLATE`'s
- * `create()`. Callers that need later dense remapping should retain the
- * full `stack` themselves; this helper intentionally forgets unnamed
- * interiors after linking.
+ * only names selected slots (plus the root at slot 0), using either dense
+ * preorder uids or compact A2 uids. Returned `handles` are `[root, …named]` — the
+ * same shape as VDOM `INSTANTIATE_TEMPLATE`'s `create()`. The full `stack`
+ * is retained for structural remapping onto BG dense `CLONE_TREE` names.
  */
 export function bakeSparseTreeCreate(
   structure: TemplateNode,
-  holeSlots: number[],
+  namedSlots: number[],
+  compactUids = false,
 ): SparseTreeCreator {
   const { prog, slotCount } = flattenTemplate(structure);
   const propsTable = prog._props!;
   const tags = (prog as Prog & { _tags?: string[] })._tags ?? [];
-  const named = new Set<number>([0, ...holeSlots]);
-  for (const s of holeSlots) {
+  const named = new Set<number>([0, ...namedSlots]);
+  for (const s of namedSlots) {
     if (s < 0 || s >= slotCount) {
       throw new RangeError(
         `[vue-lynx] sparse bake: hole slot ${s} out of range 0..${
@@ -258,12 +272,16 @@ export function bakeSparseTreeCreate(
     }
   }
 
-  return (pageUniqueId, hooks) => {
+  return (pageUniqueId, baseUid, hooks) => {
     const { elements, installSelectorAttribute } = hooks;
     const stack: (LynxElement | null)[] = new Array(slotCount).fill(null);
-    const namedSlots = [...named].sort((a, b) => a - b);
-    // Temporary identity map so Append can find children before we forget
-    // unnamed handles. uids here are slot indices (not protocol ids).
+    const orderedNamedSlots = [...named].sort((a, b) => a - b);
+    const slotToUidOffset = new Map(
+      orderedNamedSlots.map((slot, index) => [
+        slot,
+        compactUids ? index : slot,
+      ] as const),
+    );
     let i = 0;
     const len = prog.length;
 
@@ -282,12 +300,11 @@ export function bakeSparseTreeCreate(
           __SetCSSId([el], 0);
           stack[slot] = el;
           if (named.has(slot)) {
-            // Sparse protocol ids are assigned by the caller (rootId+k);
-            // here we only keep handles. Optional map seeding uses slot as
-            // a private key only when the hooks map is the real elements
-            // map — callers doing remapping pass a scratch map.
-            elements.set(slot, el);
-            installSelectorAttribute(slot, el);
+            // Dense-compatible protocol ids so one-shot IFR SET_* and later
+            // remapping agree with BG `baseUid + preorder`.
+            const uid = baseUid + slotToUidOffset.get(slot)!;
+            elements.set(uid, el);
+            installSelectorAttribute(uid, el);
           }
           break;
         }
@@ -297,8 +314,9 @@ export function bakeSparseTreeCreate(
           __SetCSSId([el], 0);
           stack[slot] = el;
           if (named.has(slot)) {
-            elements.set(slot, el);
-            installSelectorAttribute(slot, el);
+            const uid = baseUid + slotToUidOffset.get(slot)!;
+            elements.set(uid, el);
+            installSelectorAttribute(uid, el);
           }
           break;
         }
@@ -314,7 +332,22 @@ export function bakeSparseTreeCreate(
           const childSlot = prog[i++]!;
           const parent = stack[parentSlot];
           const child = stack[childSlot];
-          if (parent && child) __AppendElement(parent, child);
+          if (parent && child) {
+            __AppendElement(parent, child);
+            const parentOffset = slotToUidOffset.get(parentSlot);
+            const childOffset = slotToUidOffset.get(childSlot);
+            if (compactUids) {
+              // A2's addressed closure includes every ancestor of a named
+              // slot, so named parent/child links can use compact uids now.
+              if (parentOffset !== undefined && childOffset !== undefined) {
+                trackInsert(baseUid + parentOffset, baseUid + childOffset);
+              }
+            } else {
+              // Dense IFR remapping fills every materialized preorder slot
+              // before durable BG ownership, so retain the dense links.
+              trackInsert(baseUid + parentSlot, baseUid + childSlot);
+            }
+          }
           break;
         }
         default:
@@ -323,10 +356,10 @@ export function bakeSparseTreeCreate(
     }
 
     const handles: LynxElement[] = [];
-    for (const slot of namedSlots) {
+    for (const slot of orderedNamedSlots) {
       const el = stack[slot];
       if (el) handles.push(el);
     }
-    return { handles, namedSlots };
+    return { handles, namedSlots: orderedNamedSlots, stack };
   };
 }

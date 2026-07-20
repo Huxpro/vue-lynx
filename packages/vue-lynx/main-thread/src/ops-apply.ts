@@ -12,10 +12,13 @@
 
 import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
+import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
 
 import {
   bakeDenseTreeCreate,
+  bakeSparseTreeCreate,
   type DenseTreeCreator,
+  type SparseTreeCreator,
 } from './bake-tree-create.js';
 import {
   elements,
@@ -108,6 +111,22 @@ interface RegisteredTree {
 const templates = new Map<number, RegisteredTree>();
 /** Baked dense creators — one per REGISTER_TREE id (milestone-1 ET bridge). */
 const bakedCreators = new Map<number, DenseTreeCreator>();
+/** Baked sparse creators — IFR first-frame hole-only naming. */
+const sparseCreators = new Map<number, SparseTreeCreator>();
+/**
+ * IFR paint registry: baseUid → preorder native handles (null = skip slot).
+ * Populated when CLONE_TREE paints during the IFR first-frame window; used
+ * for structural remapping if a later path paints sparsely and hydration
+ * needs to adopt by preorder instead of re-creating.
+ */
+interface IfrPaintRecord {
+  /** Full native preorder, including anonymous A2/static slots. */
+  stack: (LynxElement | null)[];
+  /** A2 compact naming list; undefined means dense preorder naming. */
+  addressed?: number[];
+}
+
+const ifrPaintHandles = new Map<number, IfrPaintRecord>();
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -132,8 +151,34 @@ export function beginIfrSelectorAttributeDeferral(): void {
   deferredIfrSelectorIds = [];
 }
 
+function adoptIfrPaint(
+  baseUid: number,
+  pending: IfrPaintRecord,
+  deferSelectors: boolean,
+): void {
+  const slots = pending.addressed
+    ?? pending.stack.map((_, slot) => slot);
+  for (let index = 0; index < slots.length; index++) {
+    const slot = slots[index]!;
+    const el = pending.stack[slot];
+    const uid = baseUid + (pending.addressed ? index : slot);
+    if (el && !elements.has(uid)) {
+      elements.set(uid, el);
+      if (deferSelectors) deferredIfrSelectorIds.push(uid);
+      else installSelectorAttribute(uid, el);
+    }
+  }
+}
+
 /** Install every deferred selector before the Background Thread owns the tree. */
 export function commitIfrSelectorAttributes(): void {
+  // Densify sparse IFR paints (hole-only naming → full preorder map) so BG
+  // SET_* ops targeting interior nodes resolve after handoff.
+  for (const [baseUid, pending] of ifrPaintHandles) {
+    adoptIfrPaint(baseUid, pending, true);
+  }
+  ifrPaintHandles.clear();
+
   const ids = deferredIfrSelectorIds;
   deferredIfrSelectorIds = [];
   deferIfrSelectorAttributes = false;
@@ -218,7 +263,7 @@ function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
 function instantiateTemplate(
   creator: DenseTreeCreator,
   baseUid: number,
-): { el: LynxElement; uid: number } | null {
+): { el: LynxElement; uid: number; stack: (LynxElement | null)[] } | null {
   return creator(pageUniqueId, baseUid, {
     elements,
     installSelectorAttribute,
@@ -669,6 +714,14 @@ export function applyOps(ops: unknown[], flush = true): void {
             : undefined;
           templates.set(tplId, { structure, addressed });
           bakedCreators.set(tplId, bakeDenseTreeCreate(structure));
+          sparseCreators.set(
+            tplId,
+            bakeSparseTreeCreate(
+              structure,
+              addressed ?? inferHoleSlots(structure),
+              addressed !== undefined,
+            ),
+          );
           // Bundle-delivered structures feed the active staging strategy the
           // same way wire-delivered ones do (engine prototype / compiled
           // ephemeral plan).
@@ -690,6 +743,14 @@ export function applyOps(ops: unknown[], flush = true): void {
           : undefined;
         templates.set(tplId, { structure, addressed });
         bakedCreators.set(tplId, bakeDenseTreeCreate(structure));
+        sparseCreators.set(
+          tplId,
+          bakeSparseTreeCreate(
+            structure,
+            addressed ?? inferHoleSlots(structure),
+            addressed !== undefined,
+          ),
+        );
         // Build any per-template resource for the active staging strategy
         // (engine host-resident prototype, compiled ephemeral plan). The
         // Data-Template default needs none. Fail-safe: engine register is a
@@ -703,6 +764,18 @@ export function applyOps(ops: unknown[], flush = true): void {
         const baseUid = ops[i++] as number;
         const entry = templates.get(tplId);
         if (entry) {
+          // Already painted (IFR first frame or remapping adopt) — do not
+          // duplicate natives. Hydration's identical-frame skip usually
+          // prevents a second apply; this guards dual-emission / remapping.
+          if (elements.has(baseUid)) {
+            const pending = ifrPaintHandles.get(baseUid);
+            if (pending && !deferIfrSelectorAttributes) {
+              adoptIfrPaint(baseUid, pending, false);
+              ifrPaintHandles.delete(baseUid);
+            }
+            break;
+          }
+
           // Try each optional staging strategy in priority order; the
           // Data-Template interpreter is the always-on default fallback.
           // Plain and native-paint behavior is unchanged (their tryClone
@@ -712,6 +785,22 @@ export function applyOps(ops: unknown[], flush = true): void {
             if (strategy.tryClone(tplId, entry, baseUid)) {
               painted = true;
               break;
+            }
+          }
+          // The newer Code/Engine staging axes keep their own clone paths.
+          // Data staging uses the IFR creator while selectors are deferred.
+          if (!painted && deferIfrSelectorAttributes) {
+            const sparse = sparseCreators.get(tplId);
+            if (sparse) {
+              const result = sparse(pageUniqueId, baseUid, {
+                elements,
+                installSelectorAttribute,
+              });
+              ifrPaintHandles.set(baseUid, {
+                stack: result.stack,
+                addressed: entry.addressed,
+              });
+              painted = true;
             }
           }
           if (!painted) instantiateRegisteredTree(tplId, entry, baseUid);
@@ -913,6 +1002,8 @@ export function resetMainThreadState(): void {
   templates.clear();
   bakedCreators.clear();
   for (const strategy of STAGING_STRATEGIES) strategy.reset();
+  sparseCreators.clear();
+  ifrPaintHandles.clear();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
@@ -920,4 +1011,16 @@ export function resetMainThreadState(): void {
   // Per-realm numeric → bundle-id bindings are wire state (the bundle
   // registries themselves persist like the element-template registry).
   resetVaporTemplateBindings();
+}
+
+/**
+ * Record a sparse IFR paint for later dense adoption on CLONE_TREE.
+ * `handles[k]` is the native at preorder slot k (null = skip).
+ * @internal
+ */
+export function registerIfrPaintHandles(
+  baseUid: number,
+  handles: (LynxElement | null)[],
+): void {
+  ifrPaintHandles.set(baseUid, { stack: handles });
 }
