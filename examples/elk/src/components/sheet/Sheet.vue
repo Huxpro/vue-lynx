@@ -73,6 +73,8 @@ const gestureLockedRef = useMainThreadRef(false);
 const gestureRejectedRef = useMainThreadRef(false);
 const settleTimerRef = useMainThreadRef(0);
 const animationGenerationRef = useMainThreadRef(0);
+const panelScrollEnabledRef = useMainThreadRef(true);
+const backdropOpacityRef = useMainThreadRef(-1);
 
 const layerStyle = computed(() => ({ bottom: `${props.bottomInset}px` }));
 const surfaceStyle = computed(() => ({
@@ -101,6 +103,9 @@ function setMotionTransition(surfaceValue: string, backdropValue: string) {
 
 function setPanelScrollEnabled(enabled: boolean) {
   'main thread';
+  if (panelScrollEnabledRef.current === enabled)
+    return;
+  panelScrollEnabledRef.current = enabled;
   panelRef.current?.setAttribute?.('enable-scroll', enabled);
 }
 
@@ -110,13 +115,18 @@ function applySheetMotion(translation: number) {
     ? surfaceHeightRef.current
     : 640;
   const progress = sheetOpenProgress(translation, sheetSize);
+  // Quantize opacity writes; transform stays full-precision for drag feel.
+  const opacity = Math.round(progress * 100) / 100;
 
   translationRef.current = translation;
   surfaceRef.current?.setStyleProperty?.(
     'transform',
     `translateY(${translation}px)`,
   );
-  backdropRef.current?.setStyleProperty?.('opacity', String(progress));
+  if (opacity !== backdropOpacityRef.current) {
+    backdropOpacityRef.current = opacity;
+    backdropRef.current?.setStyleProperty?.('opacity', String(opacity));
+  }
 }
 
 function cancelSettle() {
@@ -239,10 +249,7 @@ function handleTouchMove(event: SheetTouchEvent) {
       setPanelScrollEnabled(false);
       gestureLockedRef.current = true;
     }
-    else if (
-      Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-      >= 8
-    ) {
+    else if (deltaX * deltaX + deltaY * deltaY >= 64) {
       gestureRejectedRef.current = true;
       return;
     }
@@ -305,9 +312,19 @@ function handleTouchCancel() {
 
 function resetSheetMotion() {
   'main thread';
-  cancelSettle();
   // Keep transition disabled on gesture-owned nodes. Clearing to '' would
   // revive any stylesheet transition and let later patches animate unexpectedly.
+  if (
+    settleTimerRef.current === 0
+    && Math.abs(translationRef.current) < 0.5
+    && !gestureLockedRef.current
+  ) {
+    setMotionTransition('none', 'none');
+    setPanelScrollEnabled(true);
+    return;
+  }
+
+  cancelSettle();
   setMotionTransition('none', 'none');
   applySheetMotion(0);
   resetGestureState();

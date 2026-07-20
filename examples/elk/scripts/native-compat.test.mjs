@@ -62,7 +62,9 @@ test('sheet filters noisy velocity samples and integrates a stable spring step',
 });
 
 test('sheet worklets keep primitive defaults when detached from module scope', () => {
-  const claim = isolateWorklet(sheetGesture.shouldClaimSheetGesture);
+  const claim = isolateWorklet(sheetGesture.shouldClaimSheetGesture, {
+    SHEET_GESTURE_LOCK_DISTANCE: sheetGesture.SHEET_GESTURE_LOCK_DISTANCE,
+  });
   const resolveDrag = isolateWorklet(sheetGesture.resolveSheetDrag, {
     rubberEffect: sheetGesture.rubberEffect,
   });
@@ -124,6 +126,16 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /setAttribute\?\.\('enable-scroll', enabled\)/);
   assert.match(source, /setPanelScrollEnabled\(false\)/);
   assert.match(source, /setPanelScrollEnabled\(true\)/);
+  assert.match(
+    source,
+    /panelScrollEnabledRef\.current === enabled/,
+    'avoid redundant enable-scroll attribute writes on every gesture reset',
+  );
+  assert.match(
+    source,
+    /backdropOpacityRef/,
+    'quantize backdrop opacity writes during drag',
+  );
   assert.match(
     source,
     /\.sheet-rubber-fill\s*\{[^}]*background-color:\s*var\(--c-sheet-fill-bg\)/s,
