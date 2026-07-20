@@ -31,33 +31,38 @@ function openVueReference() {
 <template>
   <page class="page">
     <!--
-      In-flow flex column (not position:fixed). Fixed positioning is unreliable
-      under scaled lynx-view / Lynx for Web, which left the feed looking empty.
+      Layout lives on an inner <view>, not <page>.
+      On Lynx for Web, div[part=page] keeps flex-direction:row even when
+      .page sets column — the header then eats the width and .route-shell
+      collapses to 0 (stories exist in the DOM but are invisible).
+      Avoid position:fixed under scaled lynx-view as well.
     -->
-    <view class="header">
-      <view class="inner">
-        <view class="logo" @tap="goHome">
-          <image class="logo-image" :src="logoUrl" resize="cover" />
+    <view class="page-inner">
+      <view class="header">
+        <view class="inner">
+          <view class="logo" @tap="goHome">
+            <image class="logo-image" :src="logoUrl" resize="cover" />
+          </view>
+
+          <NavLink
+            v-for="key in feedKeys"
+            :key="key"
+            :to="`/${key}`"
+            :label="validFeeds[key].title"
+            :active="activeFeed === key"
+          />
+
+          <text class="github" @tap="openVueReference">Built with VueLynx</text>
         </view>
-
-        <NavLink
-          v-for="key in feedKeys"
-          :key="key"
-          :to="`/${key}`"
-          :label="validFeeds[key].title"
-          :active="activeFeed === key"
-        />
-
-        <text class="github" @tap="openVueReference">Built with VueLynx</text>
       </view>
-    </view>
 
-    <view class="route-shell">
-      <RouterView v-slot="{ Component }">
-        <Transition name="fade" mode="out-in" :duration="200">
-          <component :is="Component" :key="transitionKey" />
-        </Transition>
-      </RouterView>
+      <view class="route-shell">
+        <RouterView v-slot="{ Component }">
+          <Transition name="fade" mode="out-in" :duration="200">
+            <component :is="Component" :key="transitionKey" />
+          </Transition>
+        </RouterView>
+      </view>
     </view>
   </page>
 </template>
@@ -65,8 +70,6 @@ function openVueReference() {
 <style lang="scss">
 .page {
   height: 100%;
-  display: flex;
-  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 15px;
@@ -74,10 +77,18 @@ function openVueReference() {
   color: #2e495e;
 }
 
+.page-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .header {
   background-color: #3eaf7c;
   flex-shrink: 0;
   height: 55px;
+  width: 100%;
   z-index: 999;
 
   .inner {
