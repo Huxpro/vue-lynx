@@ -54,6 +54,7 @@ import {
   ConstantTypes,
   ElementTypes,
   NodeTypes,
+  createFunctionExpression,
   createObjectExpression,
   createObjectProperty,
   createSimpleExpression,
@@ -204,7 +205,18 @@ function emitElementSlot(
   // it at runtime via INSERT_TEMPLATE_SLOT (slot-index addressing).
   lines.push(`const ${slotVar} = __CreateWrapperElement(P);`);
   lines.push(`__AppendElement(${parentVar}, ${slotVar});`);
-  holes.push({ key: TPL_SLOT_KEY, value: codegen });
+  // Wrap in a thunk so openBlock()/createBlock() inside v-if / v-for /
+  // component codegen does NOT register as a dynamicChild of the template
+  // root block (that would double-mount alongside our slot renderer).
+  // The thunk is invoked from patchProp after the parent render completes.
+  const thunk = createFunctionExpression(
+    undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: CodegenNode → FunctionExpression returns
+    codegen as any,
+    false,
+    false,
+  );
+  holes.push({ key: TPL_SLOT_KEY, value: thunk });
   holeVars.push(slotVar);
 }
 
