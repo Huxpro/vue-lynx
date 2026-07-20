@@ -24,6 +24,7 @@ import {
   insertListItem,
   isListParent,
   isPlatformInfoAttr,
+  removeListItem,
   resetListState,
   setPlatformInfoProp,
 } from './list-apply.js';
@@ -161,6 +162,11 @@ export function applyOps(ops: unknown[], flush = true): void {
         const parent = elements.get(parentId);
         const child = elements.get(childId);
         if (parent && child) {
+          if (isListParent(parentId)) {
+            // Keep listItems / update-list-info in sync — otherwise Reset
+            // re-inserts the same item-keys and native list errors 2202.
+            removeListItem(parentId, childId);
+          }
           __RemoveElement(parent, child);
         }
         break;

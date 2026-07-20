@@ -245,7 +245,7 @@ describe('native list element · mutation gaps', () => {
   );
 
   // Protocol still re-appends moved keys; UI may or may not look wrong —
-  // keep as it.fails until INSERT/REMOVE diffs are correct.
+  // keep as it.fails until INSERT anchors are respected for moves.
   it.fails(
     'reorder does not re-append duplicate item-keys at the tail',
     async () => {
@@ -268,22 +268,56 @@ describe('native list element · mutation gaps', () => {
     },
   );
 
-  // Device smoke: remove looks fine even with empty removeAction.
-  it('remove middle keeps list mounted (smoke)', async () => {
+  // Remove must emit removeAction so Reset / re-adding the same item-keys
+  // does not trip native duplicated item-key (error 2202).
+  it('remove middle emits removeAction', async () => {
     const items = ref(['A', 'B', 'C']);
     const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
 
     items.value = ['A', 'C'];
     await nextTick();
     await nextTick();
 
-    expect(container.querySelector('list')).not.toBeNull();
-    // Still no removeAction today — documented, not treated as a UI failure.
-    const infos = allListInfos(container.querySelector('list')!);
-    expect(infos.every((info) => info.removeAction.length === 0)).toBe(true);
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.removeAction).toEqual([1]);
+    expect(info.insertAction).toEqual([]);
   });
 
-  // Device smoke: filter/restore looks fine.
+  it('remove then restore same keys does not duplicate item-keys', async () => {
+    const items = ref(['A', 'B', 'C', 'D']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+
+    // Drop the tail three (same shape as repeated "Remove last"), then Reset.
+    items.value = ['A'];
+    await nextTick();
+    await nextTick();
+    items.value = ['A', 'B', 'C', 'D'];
+    await nextTick();
+    await nextTick();
+
+    const keys = allListInfos(listEl).flatMap((info) =>
+      info.insertAction.map((a) => String(a['item-key'])),
+    );
+    const counts = keys.reduce<Record<string, number>>((acc, k) => {
+      acc[k] = (acc[k] ?? 0) + 1;
+      return acc;
+    }, {});
+    // Each key inserted once on mount; B/C/D once more on restore — never
+    // stuck as duplicates from a stale listItems array.
+    expect(counts['A']).toBe(1);
+    expect(counts['B']).toBe(2);
+    expect(counts['C']).toBe(2);
+    expect(counts['D']).toBe(2);
+    expect(
+      allListInfos(listEl).some((info) => info.removeAction.length > 0),
+    ).toBe(true);
+  });
+
   it('filter-out then restore keeps list mounted (smoke)', async () => {
     const items = ref(['A', 'B', 'C', 'D']);
     const { container } = render(mountKeyedList(items));
@@ -296,6 +330,19 @@ describe('native list element · mutation gaps', () => {
     await nextTick();
 
     expect(container.querySelector('list')).not.toBeNull();
+    const keys = allListInfos(container.querySelector('list')!).flatMap(
+      (info) => info.insertAction.map((a) => String(a['item-key'])),
+    );
+    // A and C removed then re-inserted once each — not left duplicated from
+    // a stale listItems bookkeeping.
+    const counts = keys.reduce<Record<string, number>>((acc, k) => {
+      acc[k] = (acc[k] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(counts['A']).toBe(2);
+    expect(counts['B']).toBe(1);
+    expect(counts['C']).toBe(2);
+    expect(counts['D']).toBe(1);
   });
 });
 

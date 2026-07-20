@@ -54,6 +54,12 @@ const listItemPlatformInfo = new Map<number, Record<string, unknown>>();
 /** How many items have already been reported via update-list-info per list */
 const listItemsReported = new Map<number, number>();
 
+/**
+ * Pending remove indices per list, expressed against the list state *before*
+ * this applyOps batch's removes (same convention as ReactLynx removeAction).
+ */
+const pendingRemoves = new Map<number, number[]>();
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
@@ -150,6 +156,7 @@ export function createListElement(id: number): LynxElement {
   listElementIds.add(id);
   listItems.set(id, []);
   listItemsReported.set(id, 0);
+  pendingRemoves.set(id, []);
   const cbs = createListCallbacks(id);
   const el = __CreateList(
     pageUniqueId,
@@ -172,6 +179,38 @@ export function insertListItem(
   if (items) items.push({ el: child, bgId: childId });
 }
 
+/**
+ * REMOVE case: drop a child from the list tracking array and queue a
+ * `removeAction` index. Without this, Reset / re-adding the same `item-key`
+ * appends duplicates and native list throws error 2202 (duplicated item-key).
+ */
+export function removeListItem(parentId: number, childId: number): void {
+  const items = listItems.get(parentId);
+  if (!items) return;
+  const idx = items.findIndex((entry) => entry.bgId === childId);
+  if (idx === -1) return;
+
+  const pending = pendingRemoves.get(parentId) ?? [];
+  // Convert current (post-prior-splices) index → pre-batch index.
+  let originalIdx = idx;
+  for (const r of pending) {
+    if (r <= originalIdx) originalIdx++;
+  }
+  pending.push(originalIdx);
+  pendingRemoves.set(parentId, pending);
+
+  items.splice(idx, 1);
+
+  const reported = listItemsReported.get(parentId) ?? 0;
+  if (idx < reported) {
+    listItemsReported.set(parentId, reported - 1);
+  }
+
+  // Drop platform-info bookkeeping for the removed BG id.
+  itemKeyMap.delete(childId);
+  listItemPlatformInfo.delete(childId);
+}
+
 /** SET_PROP case: store a platform-info attribute for a list item */
 export function setPlatformInfoProp(
   id: number,
@@ -188,14 +227,15 @@ export function setPlatformInfoProp(
 }
 
 /**
- * Post-ops flush: for any <list> elements with newly-inserted items, tell the
- * native list via the 'update-list-info' attribute. Only send items added since
- * the last applyOps call to avoid "duplicated item-key" errors.
+ * Post-ops flush: tell the native list about removes + newly-inserted items
+ * via `update-list-info`. Only newly pushed items (beyond `listItemsReported`)
+ * are sent as insertAction to avoid duplicated item-key errors.
  */
 export function flushListUpdates(): void {
   for (const [bgId, items] of listItems) {
+    const removes = pendingRemoves.get(bgId) ?? [];
     const reported = listItemsReported.get(bgId) ?? 0;
-    if (items.length <= reported) continue;
+    if (items.length <= reported && removes.length === 0) continue;
     const listEl = elements.get(bgId);
     if (!listEl) continue;
     const insertAction: Record<string, unknown>[] = [];
@@ -213,10 +253,11 @@ export function flushListUpdates(): void {
     }
     __SetAttribute(listEl, 'update-list-info', {
       insertAction,
-      removeAction: [],
+      removeAction: [...removes].sort((a, b) => a - b),
       updateAction: [],
     });
     listItemsReported.set(bgId, items.length);
+    pendingRemoves.set(bgId, []);
   }
 }
 
@@ -227,4 +268,5 @@ export function resetListState(): void {
   itemKeyMap.clear();
   listItemPlatformInfo.clear();
   listItemsReported.clear();
+  pendingRemoves.clear();
 }

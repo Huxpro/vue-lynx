@@ -3,11 +3,11 @@ import { ref } from 'vue-lynx';
 import { makeCards } from '../shared/data';
 
 /**
- * Regression check: delete from the middle / pop the tail.
+ * Remove + Reset with the *same* item-keys.
  *
- * Empirically looks correct on device even though `removeAction` stays empty
- * (likely helped by `__RemoveElement` on already-attached cells). Keep as a
- * smoke test, not a known-broken demo.
+ * Previously REMOVE did not update listItems / removeAction, so Reset
+ * re-inserted Row-1…N and native list threw duplicated item-key (2202).
+ * That was an impl bug — Reset is the intentional repro / regression check.
  */
 const items = ref(makeCards(12, 'Row'));
 const lastAction = ref('—');
@@ -31,18 +31,20 @@ function removeTail() {
 }
 
 function reset() {
+  // Same ids on purpose — must not 2202 after removes.
   items.value = makeCards(12, 'Row');
-  lastAction.value = 'reset';
+  lastAction.value = 'reset (same item-keys)';
 }
 </script>
 
 <template>
   <view class="root">
     <view class="header">
-      <text class="title">list · remove (smoke)</text>
+      <text class="title">list · remove + reset</text>
       <text class="subtitle">
-        Expectation: rows disappear and the length badge matches. This path
-        has looked fine in practice — use it as a regression check.
+        Remove some rows, then Reset. Reset rebuilds Row-1…12 with the same
+        item-keys. A duplicated item-key toast means the MT adapter forgot to
+        emit removeAction (impl bug — not a flaky demo).
       </text>
     </view>
 
@@ -53,8 +55,8 @@ function reset() {
       <view class="btn" @tap="removeTail">
         <text class="btn-text">Remove last</text>
       </view>
-      <view class="btn" @tap="reset">
-        <text class="btn-text">Reset</text>
+      <view class="btn danger" @tap="reset">
+        <text class="btn-text">Reset same keys</text>
       </view>
     </view>
 

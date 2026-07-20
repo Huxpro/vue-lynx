@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
 :::warning 已确认缺口：头部插入（prepend）
-Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSERT 的 anchor。**头部插入**（unshift / insert-before）会被报成**尾部** insert——见 `ListPrepend`。`@scrolltolower` 追加仍是支持路径。删除 / 过滤在真机上看起来正常（尽管 `removeAction` 为空）；重排需要仔细目视对照（`ListReorder`）。
+Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSERT 的 anchor。**头部插入**（unshift / insert-before）会被报成**尾部** insert——见 `ListPrepend`。`@scrolltolower` 追加仍是支持路径。**Remove** 现已发 `removeAction`（以前 Reset 同 key 会 2202）。重排仍需仔细目视对照（`ListReorder`）。
 :::
 
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库
@@ -234,7 +234,7 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
 |---|---|---|
 | `ListPrepend` | unshift vs append | **已确认缺口** — 新 cell 出现在尾部 |
 | `ListReorder` | Yellow→top / reverse | 仔细对照 — Vue truth 色条 vs `<list>` |
-| `ListRemove` | 删中间 / 删末尾 | 冒烟 — 真机上 OK |
+| `ListRemove` | 删除 + **Reset 同 key** | 曾在 Reset 报 2202；REMOVE 现已发 `removeAction` |
 | `ListFilter` | 偶数过滤切换 | 冒烟 — 真机上 OK |
 
 ### 已确认：prepend
@@ -261,7 +261,7 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
 
 ### 冒烟：remove + filter
 
-真机上表现正常；保留作回归点击。
+**Remove**：先删行，再点 **Reset same keys**。会用相同 `item-key` 重建 `Row-1…N`。若出现 duplicated item-key（error 2202），说明适配层没发 `removeAction`——是实现问题，不是 demo 写坏了。Filter 切换保留作更轻的回归点击。
 
 <Go
   example="scrolling"

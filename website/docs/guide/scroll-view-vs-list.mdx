@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
 :::warning Confirmed gap: prepend
-Vue Lynx's Main Thread list adapter always `push`es into `listItems` and ignores the INSERT anchor. **Prepending** (unshift / insert-before) is reported as a **tail** insert — see `ListPrepend`. Append-only feeds (`@scrolltolower`) stay on the supported path. Remove / filter have looked fine on device despite empty `removeAction`; reorder needs a careful visual check (`ListReorder`).
+Vue Lynx's Main Thread list adapter always `push`es into `listItems` and ignores the INSERT anchor. **Prepending** (unshift / insert-before) is reported as a **tail** insert — see `ListPrepend`. Append-only feeds (`@scrolltolower`) stay on the supported path. **Remove** now emits `removeAction` (Reset-with-same-keys used to 2202). Reorder still needs a careful visual check (`ListReorder`).
 :::
 
 ### 4. Prefer `list` over third-party virtual scrollers
@@ -234,7 +234,7 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 |---|---|---|
 | `ListPrepend` | unshift vs append | **Confirmed gap** — new cell lands at the tail |
 | `ListReorder` | Yellow→top / reverse | Check carefully — Vue-truth color strip vs `<list>` |
-| `ListRemove` | splice middle / pop | Smoke — OK in practice |
+| `ListRemove` | splice + **Reset same keys** | Was 2202 on Reset; REMOVE now emits `removeAction` |
 | `ListFilter` | even-only toggle | Smoke — OK in practice |
 
 ### Confirmed: prepend
@@ -261,7 +261,7 @@ Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list
 
 ### Smoke: remove + filter
 
-These have looked correct on device; kept as regression taps.
+**Remove**: delete rows, then tap **Reset same keys**. That rebuilds `Row-1…N` with identical `item-key`s. A duplicated item-key toast (error 2202) meant the adapter never emitted `removeAction` — an impl bug, not a flaky demo. Filter toggle is kept as a lighter regression tap.
 
 <Go
   example="scrolling"
