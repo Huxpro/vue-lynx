@@ -1,0 +1,242 @@
+# scroll-view 与 list
+
+Lynx 不会像 Web 那样让任意节点滚动。内容超出视口时，你需要显式选择滚动容器——几乎总是 [`<scroll-view>`](https://lynxjs.org/zh/api/elements/built-in/scroll-view) 或 [`<list>`](https://lynxjs.org/zh/api/elements/built-in/list)。本指南说明 lynxjs.org 如何区分二者、这与 Web 上的 Vue 有何不同，以及由此产生的 Vue Lynx 设计模式。
+
+平台侧参考见 lynxjs.org 的[管理滚动](https://lynxjs.org/zh/guide/ui/scrolling)。
+
+## Lynx 与 Web 的区别
+
+在 Web 上，几乎任何元素都能变成滚动容器：
+
+```html
+<div style="overflow: auto; height: 100vh">
+  <!-- anything -->
+</div>
+```
+
+在 Lynx 中，普通 `<view>` **不会**因为 `overflow: scroll` / `overflow: auto` 而获得滚动能力。只有 `<scroll-view>`、`<list>` 等专用容器可以滚动。这是从 DOM 迁到 Lynx 时的第一个设计转变：滚动变成模板里的**结构性选择**，而不是事后补上的 CSS。
+
+| | Web（Vue） | Lynx（Vue Lynx） |
+|---|---|---|
+| 如何开启滚动 | 任意节点上的 `overflow` | 专用的 `<scroll-view>` / `<list>` |
+| 虚拟列表 | 可选库（`vue-virtual-scroller`、Virtua…） | `<list>` 内建 |
+| 长列表 / Feed | 自己做窗口化与 DOM 复用 | 原生回收 + 按需创建 |
+| 复杂网格 | CSS Grid / masonry 库 | `<list list-type="flow\|waterfall">` |
+
+Vue Lynx 仍然是 Composition API、`v-for` 与 SFC——但滚动树的写法会和典型的 Nuxt / Vite SPA 不一样。
+
+## lynxjs.org 怎么说
+
+Lynx 的滚动指南把两者分得很清楚：
+
+1. **用 `<scroll-view>` 做基础滚动**——固定视口；子节点超出时设置 `scroll-orientation` 为 `vertical` 或 `horizontal`。
+2. **用 `<list>` 处理大量 / 无限数据**——只按需创建可见区域的节点。
+3. **用 `<list>` 处理复杂布局**——`scroll-view` 只有线性布局；`list` 提供 `single`、`flow`、`waterfall`。
+
+[`<scroll-view>` API](https://lynxjs.org/zh/api/elements/built-in/scroll-view) 还提醒：
+
+- 子节点会一次性全部创建（可能拖慢首屏）。
+- **没有复用机制**；内容过多可能吃光内存。
+- 内容超过大约 **三屏** 时，优先用 `<list>`，或用曝光事件模拟回收。
+
+可以把 `<scroll-view>` 理解成「刚好需要滚动的短页面」，把 `<list>` 理解成「可回收的 Feed」。
+
+## 选型对照表
+
+| 问题 | 更适合 `<scroll-view>` | 更适合 `<list>` |
+|---|---|---|
+| 内容量？ | 大约三屏以内 | 多屏 / 无上限 |
+| 布局 | 线性堆叠 | 单列 / 网格（`flow`）/ 瀑布流 |
+| 条目形态 | 混杂区块、吸顶栏 | 同质（或大体同质）单元格 |
+| 内存 | 急切创建，子节点常驻 | 回收 + 懒创建 |
+| 无限加载 | 可以，但风险高 | 原生 `@scrolltolower` |
+
+Lynx 的经验法则：**约三屏以内 → `scroll-view`；再多 → `list`。**
+
+## 在 Vue 里用 `<scroll-view>`
+
+普通 Vue 子节点即可——`v-for`、嵌套 SFC、sticky 兄弟节点。除了包一层 `<scroll-view>`，没有额外契约。
+
+<Go
+  example="scrolling"
+  defaultFile="src/ScrollViewBasic/App.vue"
+  entry="src/ScrollViewBasic"
+  defaultEntryName="ScrollViewBasic"
+/>
+
+```vue
+<scroll-view scroll-orientation="vertical">
+  <view class="header">…</view>
+  <view v-for="card in cards" :key="card.id" class="card">
+    <text>{{ card.title }}</text>
+  </view>
+</scroll-view>
+```
+
+适合：设置页、表单、文章正文、短结果页（另见 [Vue Query](/zh/guide/data-fetching) 与 [TodoMVC](/zh/guide/todomvc) 示例）。
+
+:::tip 嵌套布局提示
+`<scroll-view>` 的直接子节点只支持 linear / sticky。若要在滚动区域内使用更丰富的 CSS，先包一层子 `<view>`，再在该子树里排版——这也是 [scroll-view 文档](https://lynxjs.org/zh/api/elements/built-in/scroll-view) 的建议。
+:::
+
+## 在 Vue 里用 `<list>`
+
+`<list>` 要求子节点是 **`<list-item>`**。每个 item 需要：
+
+- Vue 的 `:key` —— VNode 树的协调身份
+- Lynx 的 `:item-key` —— 原生回收器的身份（保持两者一致）
+
+缺少或冲突的 key 是空白 / 错乱单元格的常见原因。
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListBasic/App.vue"
+  entry="src/ListBasic"
+  defaultEntryName="ListBasic"
+/>
+
+```vue
+<list list-type="single" scroll-orientation="vertical">
+  <list-item
+    v-for="card in cards"
+    :key="card.id"
+    :item-key="card.id"
+    :estimated-main-axis-size-px="96"
+  >
+    <view class="card">…</view>
+  </list-item>
+</list>
+```
+
+`estimated-main-axis-size-px` 帮助引擎在单元格尚未测量前估算滚动条与跳转位置——[商品画廊教程](/zh/guide/tutorial-gallery) 的瀑布流图片也用同一提示。
+
+### 瀑布流 / 网格布局
+
+这是 lynxjs.org 区分的另一半：`scroll-view` 做不了多列瀑布流；`list` 可以。
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListWaterfall/App.vue"
+  entry="src/ListWaterfall"
+  defaultEntryName="ListWaterfall"
+/>
+
+```vue
+<list list-type="waterfall" :span-count="2" scroll-orientation="vertical">
+  <list-item
+    v-for="tile in tiles"
+    :key="tile.id"
+    :item-key="tile.id"
+    :estimated-main-axis-size-px="tile.height"
+  >
+    <view class="tile" :style="{ height: `${tile.height}px` }" />
+  </list-item>
+</list>
+```
+
+每个 `list-item` 都可以挂完整的 Vue SFC——画廊教程里的 `LikeImageCard` 就是同一模式的产品级写法。
+
+## 由此产生的 Vue 设计模式
+
+从 Web Vue 迁到 Vue Lynx，响应式模型不变——变的是**滚动放在哪里**，以及**谁负责回收**。
+
+### 1. 在模板里显式声明容器
+
+不要再给根 `<view>` 写 `overflow: auto`。先想清楚：
+
+```vue
+<!-- 短的、混杂的页面 -->
+<scroll-view scroll-orientation="vertical">…</scroll-view>
+
+<!-- 长的同质 Feed -->
+<list list-type="single" scroll-orientation="vertical">…</list>
+```
+
+这个结构选择，相当于在 Web 上决定要不要上虚拟列表库。
+
+### 2. 双重身份：`:key` + `:item-key`
+
+Web 的 `v-for` 只需要 `:key`。Lynx 的 list 两者都要。用同一个稳定业务 id：
+
+```vue
+<list-item
+  v-for="status in items"
+  :key="status.id"
+  :item-key="status.id"
+/>
+```
+
+[Elk](/zh/guide/elk) 移植里的 Mastodon 状态列表正是这一约定。
+
+### 3. Composable 管分页；`<list>` 管回收
+
+在 Web 上，无限滚动通常是：
+
+`useInfiniteQuery` / 自定义 composable **+** 虚拟列表 **+** IntersectionObserver 哨兵。
+
+在 Lynx 里可以去掉虚拟列表。Composable 往 `ref` 数组追加数据；`@scrolltolower`（配合 `lower-threshold-item-count`）请求下一页。原生回收保证内存平稳。
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListInfinite/App.vue"
+  entry="src/ListInfinite"
+  defaultEntryName="ListInfinite"
+/>
+
+```ts
+// shared/useInfiniteFeed.ts
+export function useInfiniteFeed(pageSize = 20) {
+  const items = ref(makeCards(pageSize))
+  const loading = ref(false)
+  // loadMore() 追加下一页…
+  return { items, loading, loadMore }
+}
+```
+
+```vue
+<list
+  :lower-threshold-item-count="3"
+  @scrolltolower="loadMore"
+>
+  <list-item
+    v-for="item in items"
+    :key="item.id"
+    :item-key="item.id"
+  >
+    …
+  </list-item>
+</list>
+```
+
+这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
+
+### 4. 优先用 `list`，而不是第三方虚拟滚动库
+
+依赖测量 DOM（`getBoundingClientRect`、绝对定位窗口）的库，很难直接映射到 Lynx 的双线程 + 原生元件模型。除非布局是 `<list>` 表达不了的特例，否则用内建回收器。
+
+### 5. 单元格继续用 Vue 组件
+
+回收是**原生**职责；组合仍是 **Vue** 职责。把展示型 SFC 放进 `list-item`——不要因为父级是 list 就把一切摊平成巨型模板。
+
+```vue
+<list-item :key="pic.id" :item-key="pic.id">
+  <LikeImageCard :picture="pic" />
+</list-item>
+```
+
+## 决策清单
+
+1. 页面基本是一份线性文档、大约三屏以内？→ **`<scroll-view>`**
+2. 要渲染几十 / 上百条相似行？→ **`<list>`**
+3. 需要瀑布流或多列 flow？→ **`<list list-type="…">`**
+4. 数据集会无限增长？→ **`<list>` + composable + `@scrolltolower`**
+5. `:key` / `:item-key` 是否一致？→ 正确回收所必需
+
+## 延伸阅读
+
+- [管理滚动（Lynx）](https://lynxjs.org/zh/guide/ui/scrolling)
+- [`<scroll-view>` API](https://lynxjs.org/zh/api/elements/built-in/scroll-view)
+- [`<list>` API](https://lynxjs.org/zh/api/elements/built-in/list)
+- [教程：商品画廊](/zh/guide/tutorial-gallery) —— 完整应用中的瀑布流 `<list>`
+- [Elk（Mastodon 客户端）](/zh/guide/elk) —— 用原生 `<list>` 替换 Virtua
+- [主线程脚本](/zh/guide/main-thread-script) —— `<scroll-view>` / `<list>` 上的滚动联动 worklet
