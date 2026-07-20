@@ -134,6 +134,244 @@ describe('native list element', () => {
     // List element should still exist after update
     expect(container.querySelector('list')).not.toBeNull();
   });
+
+  it('append-only flush reports new insertActions with growing positions', async () => {
+    const items = ref(['A']);
+
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h(
+            'list',
+            null,
+            items.value.map((item) =>
+              h('list-item', { key: item, 'item-key': item }, [
+                h('text', null, item),
+              ]),
+            ),
+          );
+      },
+    });
+
+    const { container } = render(Comp);
+    const listEl = container.querySelector('list')!;
+    expect(latestListInfo(listEl)?.insertAction.map((a) => a['item-key']))
+      .toEqual(['A']);
+
+    items.value = ['A', 'B', 'C'];
+    await nextTick();
+    await nextTick();
+
+    const info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([]);
+    expect(info.updateAction).toEqual([]);
+    expect(info.insertAction.map((a) => [a.position, a['item-key']])).toEqual([
+      [1, 'B'],
+      [2, 'C'],
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Native <list> mutation gaps — correct payloads; it.fails until MT diffs land
+// Mirrors examples/scrolling ListRemove | ListPrepend | ListReorder | ListFilter
+// ---------------------------------------------------------------------------
+
+type ListInfo = {
+  insertAction: Array<Record<string, unknown>>;
+  removeAction: number[];
+  updateAction: Array<Record<string, unknown>>;
+};
+
+function allListInfos(listEl: Element): ListInfo[] {
+  const raw = listEl.getAttribute('update-list-info');
+  return raw ? (JSON.parse(raw) as ListInfo[]) : [];
+}
+
+function latestListInfo(listEl: Element): ListInfo | undefined {
+  const all = allListInfos(listEl);
+  return all[all.length - 1];
+}
+
+describe('native list element · mutation gaps', () => {
+  it.fails(
+    'remove middle emits removeAction and stops reporting the deleted key',
+    async () => {
+      const items = ref(['A', 'B', 'C']);
+
+      const Comp = defineComponent({
+        setup() {
+          return () =>
+            h(
+              'list',
+              null,
+              items.value.map((item) =>
+                h('list-item', { key: item, 'item-key': item }, [
+                  h('text', null, item),
+                ]),
+              ),
+            );
+        },
+      });
+
+      const { container } = render(Comp);
+      const listEl = container.querySelector('list')!;
+      const before = allListInfos(listEl).length;
+
+      items.value = ['A', 'C'];
+      await nextTick();
+      await nextTick();
+
+      const infos = allListInfos(listEl).slice(before);
+      expect(infos.length).toBeGreaterThan(0);
+      const info = infos[infos.length - 1]!;
+      expect(info.removeAction).toEqual([1]);
+      expect(info.insertAction).toEqual([]);
+    },
+  );
+
+  it.fails(
+    'prepend emits insertAction at position 0 (not a tail push)',
+    async () => {
+      const items = ref(['A', 'B']);
+
+      const Comp = defineComponent({
+        setup() {
+          return () =>
+            h(
+              'list',
+              null,
+              items.value.map((item) =>
+                h('list-item', { key: item, 'item-key': item }, [
+                  h('text', null, item),
+                ]),
+              ),
+            );
+        },
+      });
+
+      const { container } = render(Comp);
+      const listEl = container.querySelector('list')!;
+      const before = allListInfos(listEl).length;
+
+      items.value = ['Z', 'A', 'B'];
+      await nextTick();
+      await nextTick();
+
+      const infos = allListInfos(listEl).slice(before);
+      expect(infos.length).toBeGreaterThan(0);
+      const info = infos[infos.length - 1]!;
+      expect(info.insertAction).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            position: 0,
+            'item-key': 'Z',
+            type: 'list-item',
+          }),
+        ]),
+      );
+      // Must not claim the new item lives at the end.
+      expect(
+        info.insertAction.some(
+          (a) => a['item-key'] === 'Z' && a.position === 2,
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it.fails(
+    'reorder emits remove+insert (or update) so native order matches Vue',
+    async () => {
+      const items = ref(['A', 'B', 'C']);
+
+      const Comp = defineComponent({
+        setup() {
+          return () =>
+            h(
+              'list',
+              null,
+              items.value.map((item) =>
+                h('list-item', { key: item, 'item-key': item }, [
+                  h('text', null, item),
+                ]),
+              ),
+            );
+        },
+      });
+
+      const { container } = render(Comp);
+      const listEl = container.querySelector('list')!;
+
+      items.value = ['C', 'B', 'A'];
+      await nextTick();
+      await nextTick();
+
+      // Today Vue's keyed moves re-INSERT B/C at the tail (positions 3,4)
+      // without removeAction — native list grows past 3 and order diverges.
+      const inserts = allListInfos(listEl).flatMap((info) => info.insertAction);
+      const keyCounts = inserts.reduce<Record<string, number>>((acc, a) => {
+        const k = String(a['item-key']);
+        acc[k] = (acc[k] ?? 0) + 1;
+        return acc;
+      }, {});
+      expect(keyCounts).toEqual({ A: 1, B: 1, C: 1 });
+      expect(inserts.length).toBe(3);
+      expect(
+        allListInfos(listEl).some((info) => info.removeAction.length > 0),
+      ).toBe(true);
+    },
+  );
+
+  it.fails(
+    'filter-out then restore does not leave duplicated item-keys in inserts',
+    async () => {
+      const items = ref(['A', 'B', 'C', 'D']);
+
+      const Comp = defineComponent({
+        setup() {
+          return () =>
+            h(
+              'list',
+              null,
+              items.value.map((item) =>
+                h('list-item', { key: item, 'item-key': item }, [
+                  h('text', null, item),
+                ]),
+              ),
+            );
+        },
+      });
+
+      const { container } = render(Comp);
+      const listEl = container.querySelector('list')!;
+
+      items.value = ['B', 'D'];
+      await nextTick();
+      await nextTick();
+
+      items.value = ['A', 'B', 'C', 'D'];
+      await nextTick();
+      await nextTick();
+
+      const keys = allListInfos(listEl)
+        .flatMap((info) => info.insertAction.map((a) => String(a['item-key'])));
+      // After a correct remove+reinsert cycle, each key appears once in the
+      // cumulative insert stream (initial mount + restoration of A/C only).
+      const counts = keys.reduce<Record<string, number>>((acc, k) => {
+        acc[k] = (acc[k] ?? 0) + 1;
+        return acc;
+      }, {});
+      expect(counts['A']).toBeLessThanOrEqual(2);
+      expect(counts['B']).toBe(1);
+      expect(counts['C']).toBeLessThanOrEqual(2);
+      expect(counts['D']).toBe(1);
+      // And a remove must have been reported when filtering down.
+      const anyRemove = allListInfos(listEl).some(
+        (info) => info.removeAction.length > 0,
+      );
+      expect(anyRemove).toBe(true);
+    },
+  );
 });
 
 // ---------------------------------------------------------------------------

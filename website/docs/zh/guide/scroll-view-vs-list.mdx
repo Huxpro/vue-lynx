@@ -210,6 +210,10 @@ export function useInfiniteFeed(pageSize = 20) {
 
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
+:::warning 当前只保证追加更新
+Vue Lynx 主线程 list 适配层目前只上报**新增 insert**（`removeAction` / `updateAction` 为空）。`@scrolltolower` 无限追加正好落在这条路径上。删除、头部插入、重排、过滤请先看下面的压测示例，等完整的 `ListUpdateInfoRecording` 式 diff 落地后再依赖它们。
+:::
+
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库
 
 依赖测量 DOM（`getBoundingClientRect`、绝对定位窗口）的库，很难直接映射到 Lynx 的双线程 + 原生元件模型。除非布局是 `<list>` 表达不了的特例，否则用内建回收器。
@@ -224,6 +228,47 @@ export function useInfiniteFeed(pageSize = 20) {
 </list-item>
 ```
 
+## 已知缺口 — 变更压测
+
+下面四个入口是刻意的**踩坑演示**，用来暴露不完整的 list diff。点工具栏，对照橙色 Vue banner 和原生 `<list>` 实际画出的内容。等 MT 适配层补齐完整的 `insertAction` / `removeAction` / `updateAction`（对齐 ReactLynx 的 `ListUpdateInfoRecording`）后，它们应恢复正确。
+
+| 入口 | 变更 | 今天常见症状 |
+|---|---|---|
+| `ListRemove` | 删中间 / 删末尾 | 无 `removeAction` → 幽灵行 / 数量不对 |
+| `ListPrepend` | 头部插入 vs 尾部追加 | INSERT 忽略 anchor → 头部插入被当成尾部 |
+| `ListReorder` | 反转 / 轮转 | move = 删+插却没有 remove → 顺序错乱 |
+| `ListFilter` | 切换「仅偶数」 | 过滤再恢复 → 幽灵行 / 重复 `item-key` |
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListRemove/App.vue"
+  entry="src/ListRemove"
+  defaultEntryName="ListRemove"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListPrepend/App.vue"
+  entry="src/ListPrepend"
+  defaultEntryName="ListPrepend"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListReorder/App.vue"
+  entry="src/ListReorder"
+  defaultEntryName="ListReorder"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListFilter/App.vue"
+  entry="src/ListFilter"
+  defaultEntryName="ListFilter"
+/>
+
+对应的自动化覆盖在 `packages/testing-library` 的 **native list element · mutation gaps** 下，以 `it.fails` 断言*正确*的 `update-list-info` 载荷；适配层修好后这些用例会翻成通过。
+
 ## 决策清单
 
 1. 页面基本是一份线性文档、大约三屏以内？→ **`<scroll-view>`**
@@ -231,6 +276,7 @@ export function useInfiniteFeed(pageSize = 20) {
 3. 需要瀑布流或多列 flow？→ **`<list list-type="…">`**
 4. 数据集会无限增长？→ **`<list>` + composable + `@scrolltolower`**
 5. `:key` / `:item-key` 是否一致？→ 正确回收所必需
+6. 需要删除 / 头部插入 / 重排 / 过滤？→ 先跑压测；在 list diff 完整前优先用追加式 Feed
 
 ## 延伸阅读
 

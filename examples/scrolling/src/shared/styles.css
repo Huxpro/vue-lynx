@@ -106,3 +106,55 @@ page {
   font-size: 13px;
   color: #6b7280;
 }
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  padding: 10px 12px 6px;
+  background-color: #ffffff;
+  border-bottom-width: 1px;
+  border-bottom-color: #e5e7eb;
+}
+
+.btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin: 0 6px 6px 0;
+  padding: 8px 12px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+}
+
+.btn.danger {
+  background-color: #fee2e2;
+}
+
+.btn.ok {
+  background-color: #d1fae5;
+}
+
+.btn-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.banner {
+  padding: 10px 16px;
+  background-color: #fff7ed;
+  border-bottom-width: 1px;
+  border-bottom-color: #fed7aa;
+}
+
+.banner.warn {
+  background-color: #fff7ed;
+}
+
+.banner-text {
+  font-size: 12px;
+  color: #9a3412;
+  line-height: 16px;
+}

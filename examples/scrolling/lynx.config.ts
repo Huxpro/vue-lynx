@@ -19,6 +19,11 @@ export default defineConfig({
       ListBasic: './src/ListBasic/index.ts',
       ListWaterfall: './src/ListWaterfall/index.ts',
       ListInfinite: './src/ListInfinite/index.ts',
+      // Stress / known-gap mutations — see guide "Known gaps" section
+      ListRemove: './src/ListRemove/index.ts',
+      ListPrepend: './src/ListPrepend/index.ts',
+      ListReorder: './src/ListReorder/index.ts',
+      ListFilter: './src/ListFilter/index.ts',
     },
   },
   plugins: [

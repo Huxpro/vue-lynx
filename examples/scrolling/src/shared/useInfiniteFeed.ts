@@ -4,8 +4,8 @@ import { makeCards } from './data';
 /**
  * Tiny infinite-scroll helper: append another page when the list
  * fires `@scrolltolower`. On Web you would usually wire this to a
- * virtualizer + IntersectionObserver; on Lynx the native `<list>`
- * already recycles items, so the composable only owns the data page.
+ * virtualizer + IntersectionObserver; on Lynx the composable only owns
+ * the data page — append-only updates are the supported list path today.
  */
 export function useInfiniteFeed(pageSize = 20) {
   const items = ref(makeCards(pageSize, 'Post'));

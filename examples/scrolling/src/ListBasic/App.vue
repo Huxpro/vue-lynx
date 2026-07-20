@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { makeCards } from '../shared/data';
 
-// list recycles off-screen nodes — hundreds of items stay cheap.
+// Native list lazily attaches visible cells. Keep `:key` === `:item-key`.
 const cards = makeCards(80, 'Row');
 </script>
 

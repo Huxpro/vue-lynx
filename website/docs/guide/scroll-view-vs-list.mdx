@@ -210,6 +210,10 @@ export function useInfiniteFeed(pageSize = 20) {
 
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
+:::warning Append-only updates today
+Vue Lynx's Main Thread list adapter currently reports **new inserts only** (`removeAction` / `updateAction` are empty). Infinite append via `@scrolltolower` matches that path. Deletes, prepends, reorders, and filters need the stress examples below until full `ListUpdateInfoRecording`-style diffs land.
+:::
+
 ### 4. Prefer `list` over third-party virtual scrollers
 
 Libraries that measure DOM nodes (`getBoundingClientRect`, absolute positioning of windows) do not map cleanly onto Lynx's dual-thread + native elements model. Prefer the built-in recycler unless you have a rare layout `<list>` cannot express.
@@ -224,6 +228,47 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 </list-item>
 ```
 
+## Known gaps — mutation stress tests
+
+These four entries are intentional **breakage demos** for the incomplete list diff. Tap the toolbar, then compare the orange Vue banner with what native `<list>` still paints. When the MT adapter gains full `insertAction` / `removeAction` / `updateAction` diffs (ReactLynx's `ListUpdateInfoRecording`), they should start looking correct.
+
+| Entry | Mutation | What goes wrong today |
+|---|---|---|
+| `ListRemove` | splice middle / pop tail | no `removeAction` → ghost rows / stale count |
+| `ListPrepend` | unshift vs append | INSERT ignores anchor → prepend reported as tail |
+| `ListReorder` | reverse / rotate | move = remove+insert without remove → wrong order |
+| `ListFilter` | toggle even-only | filter+restore → ghosts / duplicated `item-key` |
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListRemove/App.vue"
+  entry="src/ListRemove"
+  defaultEntryName="ListRemove"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListPrepend/App.vue"
+  entry="src/ListPrepend"
+  defaultEntryName="ListPrepend"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListReorder/App.vue"
+  entry="src/ListReorder"
+  defaultEntryName="ListReorder"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListFilter/App.vue"
+  entry="src/ListFilter"
+  defaultEntryName="ListFilter"
+/>
+
+Matching automated coverage lives in `packages/testing-library` as `it.fails` cases under **native list element · mutation gaps** — they assert the *correct* `update-list-info` payloads and will flip to passing once the adapter is fixed.
+
 ## Decision checklist
 
 1. Is the page mostly one linear document under ~3 screens? → **`<scroll-view>`**
@@ -231,6 +276,7 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 3. Do you need waterfall or multi-column flow? → **`<list list-type="…">`**
 4. Will the dataset grow without bound? → **`<list>` + composable + `@scrolltolower`**
 5. Did you set matching `:key` / `:item-key`? → required for correct recycling
+6. Do you need delete / prepend / reorder / filter? → stress-test first; prefer append-only feeds until list diffs are complete
 
 ## See also
 
