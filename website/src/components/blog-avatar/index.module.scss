@@ -1,0 +1,118 @@
+.blog-avatar-frame {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: -0.25rem;
+  margin-bottom: 2rem;
+
+  .avatar-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    border-radius: var(--radius);
+    padding: 4px 0;
+  }
+
+  .avatar-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    pointer-events: none;
+  }
+
+  .avatar-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .avatar-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .avatar-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .avatar-role {
+    font-size: 0.75rem;
+    line-height: 1;
+    opacity: 0.6;
+    white-space: nowrap;
+  }
+
+  .avatar-socials {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+
+    .icon-x {
+      width: 12px;
+      height: 12px;
+      display: block;
+    }
+
+    :global(.semi-icon) {
+      font-size: 12px !important;
+      display: block;
+    }
+  }
+
+  .avatar-social-link {
+    display: flex;
+    align-items: center;
+    color: inherit;
+
+    &[role='link'] {
+      cursor: pointer;
+    }
+  }
+
+  .avatar-item:hover .avatar-socials {
+    opacity: 1;
+  }
+}
+
+.compact-authors {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-avatars {
+  display: flex;
+  flex-shrink: 0;
+
+  > :global(.semi-avatar) {
+    border: 2px solid var(--home-features-item-bg, #fff);
+    border-radius: 50%;
+    margin-left: -6px;
+
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+}
+
+.compact-avatar {
+  pointer-events: none;
+}
+
+.compact-names {
+  font-size: 13px;
+  color: var(--home-features-item-desc-color);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

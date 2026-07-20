@@ -13,6 +13,7 @@ import {
 } from '../src/components/home-comps';
 
 import { AGENT_PROMPT } from './agent-prompt';
+import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
 
 const cyclingWords = ['Unlock', 'Vibe', 'Render'];
 
@@ -124,6 +125,8 @@ function whenReady(selector: string, cb: (el: Element) => void): () => void {
 }
 
 function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
+  useBlogBtnDom();
+
   // Tagline → add links on "Lynx" and "Vue 3"
   useEffect(() => {
     const cleanTagline = whenReady(

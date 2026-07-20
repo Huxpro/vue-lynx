@@ -1,0 +1,49 @@
+---
+title: 'Announcing Vue Lynx: Unlock Native for Vue'
+date: 2026-03-20
+sidebar: false
+authors: ['huxpro']
+badge_text: 'Pre-Alpha · Announcing Vue Lynx →'
+description: 'Vue Lynx is a Vue 3 custom renderer for building Lynx apps — familiar Vue APIs on a dual-thread native runtime. Pre-alpha, vibed into existence in two weeks, and ready for early explorers.'
+---
+
+import { BlogHeader } from '@comp';
+
+<BlogHeader />
+
+Today I'm sharing **Vue Lynx** — a Vue 3 framework for building [Lynx](https://lynxjs.org) apps.
+
+If you already know Vue, you already know most of Vue Lynx. You write SFCs, use Composition API, reach for Vue Router and Pinia, and ship to a native dual-thread runtime instead of the DOM.
+
+> **Pre-Alpha** — expect bugs and enjoy. Feedback welcome.
+
+## Why Vue Lynx?
+
+Lynx brings a web-inspired programming model to native apps, with Vue running on a **background thread** while native rendering stays on the **main thread**. Reconciliation never blocks the UI thread by default — the same mental model as offloading work to a Web Worker, except it's the platform default.
+
+Vue Lynx aims to make that model feel like ordinary Vue:
+
+- Familiar Vue 3 APIs and SFC workflow
+- Instant First-Frame Rendering (IFR) for snappy launches
+- Main-thread scripts when you need pixel-perfect interactivity
+- Ecosystem pieces that matter: Router, Pinia, Vue Query, Tailwind, Testing Library
+
+## Vibed in two weeks
+
+The first version came together surprisingly fast — roughly two weeks of focused vibing on top of Lynx's dual-thread architecture and Vue's custom renderer contract. I wrote about that journey in [this thread](https://x.com/Huxpro/status/2036993665965416601); this post is the durable home for the announcement.
+
+## Get started
+
+```bash
+npm create vue-lynx@latest
+```
+
+Then read the [Introduction](/guide/introduction) and [Quick Start](/guide/quick-start), or browse the [examples](https://github.com/huxpro/vue-lynx/tree/main/examples).
+
+## What's next
+
+Vue Lynx is pre-alpha. The docs, examples, and upstream compatibility tests will keep expanding. If you try it, open an issue, send a PR, or tell me what broke — early explorers shape the project more than anyone else.
+
+- Docs: [vue.lynxjs.org](https://vue.lynxjs.org)
+- GitHub: [huxpro/vue-lynx](https://github.com/huxpro/vue-lynx)
+- Follow: [@huxpro](https://x.com/huxpro)

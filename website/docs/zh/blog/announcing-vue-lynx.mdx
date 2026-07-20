@@ -1,0 +1,49 @@
+---
+title: '发布 Vue Lynx：为 Vue 解锁原生体验'
+date: 2026-03-20
+sidebar: false
+authors: ['huxpro']
+badge_text: 'Pre-Alpha · 发布 Vue Lynx →'
+description: 'Vue Lynx 是面向 Lynx 应用的 Vue 3 自定义渲染器——熟悉的 Vue API，运行在双线程原生运行时上。目前处于 Pre-Alpha，两周 vibe 成型，欢迎早期探索者试用。'
+---
+
+import { BlogHeader } from '@comp';
+
+<BlogHeader />
+
+今天正式分享 **Vue Lynx** —— 用于构建 [Lynx](https://lynxjs.org) 应用的 Vue 3 框架。
+
+如果你已经会 Vue，那就已经会 Vue Lynx 的大部分内容。你写 SFC、用 Composition API、接 Vue Router 和 Pinia，最终运行在原生双线程运行时上，而不是 DOM。
+
+> **Pre-Alpha** —— 会有 bug，但请尽情折腾。欢迎反馈。
+
+## 为什么是 Vue Lynx？
+
+Lynx 把 Web 启发的编程模型带到原生应用：Vue 运行在**后台线程**，原生渲染留在**主线程**。默认情况下协调过程不会阻塞 UI 线程——就像把工作交给 Web Worker，但这是平台默认行为。
+
+Vue Lynx 希望让这套模型用起来就像普通 Vue：
+
+- 熟悉的 Vue 3 API 与 SFC 工作流
+- 首屏直出（IFR），启动更跟手
+- 需要像素级交互时，可用主线程脚本
+- 关键生态：Router、Pinia、Vue Query、Tailwind、Testing Library
+
+## 两周 vibe 出来的
+
+第一版成型得意外地快——大约两周，在 Lynx 双线程架构和 Vue 自定义渲染器契约上持续 vibe。那段经历我写在了[这条帖子](https://x.com/Huxpro/status/2036993665965416601)里；这篇博客是公告的长期落点。
+
+## 开始使用
+
+```bash
+npm create vue-lynx@latest
+```
+
+然后阅读[介绍](/zh/guide/introduction)和[快速开始](/zh/guide/quick-start)，或浏览 [examples](https://github.com/huxpro/vue-lynx/tree/main/examples)。
+
+## 接下来
+
+Vue Lynx 仍是 Pre-Alpha。文档、示例和上游兼容性测试会持续扩展。如果你试用了它，欢迎开 Issue、提 PR，或告诉我哪里坏了——早期探索者比任何人都更能塑造这个项目。
+
+- 文档：[vue.lynxjs.org](https://vue.lynxjs.org)
+- GitHub：[huxpro/vue-lynx](https://github.com/huxpro/vue-lynx)
+- 关注：[@huxpro](https://x.com/huxpro)

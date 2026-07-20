@@ -1,0 +1,34 @@
+[
+  {
+    "id": "huxpro",
+    "name": "Xuan Huang",
+    "name_zh": "黄玄",
+    "title": "Creator of Vue Lynx",
+    "title_zh": "Vue Lynx 作者",
+    "image": "https://github.com/huxpro.png",
+    "socials": {
+      "x": {
+        "username": "huxpro",
+        "link": "https://x.com/huxpro"
+      },
+      "github": {
+        "username": "huxpro",
+        "link": "https://github.com/huxpro"
+      }
+    }
+  },
+  {
+    "id": "vue-lynx",
+    "name": "Vue Lynx",
+    "name_zh": "Vue Lynx",
+    "title": "vue.lynxjs.org",
+    "title_zh": "vue.lynxjs.org",
+    "image": "https://vue.lynxjs.org/favicon.png",
+    "socials": {
+      "github": {
+        "username": "huxpro",
+        "link": "https://github.com/huxpro/vue-lynx"
+      }
+    }
+  }
+]
