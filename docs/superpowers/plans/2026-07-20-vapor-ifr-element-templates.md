@@ -22,11 +22,14 @@
 - [x] IFR MT `renderEffect` one-shot (no reactive wiring on disposable tree)
 - [ ] Compiler-emitted authoritative hole lists (replace `inferHoleSlots`)
 
-## Milestone 3 (this iteration)
+## Milestone 3
 
 - [x] IFR MT ShadowElement lite / static root-only clone
 - [x] IFR `CLONE_TREE` uses sparse bake (root + holes); retain full stack
 - [x] Structural remapping: densify paint registry on selector commit / BG CLONE adopt
 - [x] Sparse nav facades: skip ShadowElement for static subtrees off the hole `child`/`next` path
+- [x] `enableElementTemplates` under `vapor: true` → `__VUE_LYNX_VAPOR_IFR_ET__` kill-switch
+- [x] `vapor {off, ifr, ifr-et}` sfc-probe / matrix cells
 - [ ] Full compiler-direct IFR (no ShadowElement / hole-index writes)
-- [ ] `vapor {off, ifr, ifr-et}` sfc-probe FCP cell
+- [ ] Compiler-emitted authoritative hole lists (replace `inferHoleSlots`)
+- [ ] Re-run unified sfc-probe FCP and refresh UNIFIED-RERUN.md

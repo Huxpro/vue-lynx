@@ -1,9 +1,7 @@
 /**
  * Build the same-source matrix for browser FCP:
  *   VDOM:  off | ifr (ET=false) | ifr-et
- *   Vapor: off | ifr
- *
- * Vapor has no Element Templates path — tree protocol is always on.
+ *   Vapor: off | ifr (ET=false) | ifr-et  (Vapor IFR×ET = sparse first-frame paint)
  *
  *   node build-matrix.mjs [outDir=../web-bundles] [nCards=125]
  *
@@ -30,6 +28,7 @@ const CELLS = [
   { name: 'content-vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1' },
   { name: 'content-vapor', mode: 'vapor', ifr: '0', et: '0' },
   { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0' },
+  { name: 'content-vapor-ifr-et', mode: 'vapor', ifr: '1', et: '1' },
 ];
 
 const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;

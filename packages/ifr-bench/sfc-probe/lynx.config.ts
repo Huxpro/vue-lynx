@@ -4,7 +4,9 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 // One config, multi-cell builds. build-matrix.mjs sets env per build:
 //   SFC_PROBE_VAPOR=0|1   renderer mode
 //   SFC_PROBE_IFR=0|1     enableIFR
-//   SFC_PROBE_ET=0|1      enableElementTemplates (explicit; never rely on default)
+//   SFC_PROBE_ET=0|1      enableElementTemplates
+//     VDOM: elementTemplateTransform
+//     Vapor: IFR×ET sparse first-frame paint (__VUE_LYNX_VAPOR_IFR_ET__)
 const enableIFR = process.env.SFC_PROBE_IFR === '1';
 const enableElementTemplates = process.env.SFC_PROBE_ET === '1';
 

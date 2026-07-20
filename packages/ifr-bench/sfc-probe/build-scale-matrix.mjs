@@ -6,7 +6,8 @@
  *   vdom-ifr        — IFR on,  ET off
  *   vdom-ifr-et     — IFR on,  ET on  (VDOM product default with IFR)
  *   vapor           — IFR off
- *   vapor-ifr       — IFR on
+ *   vapor-ifr       — IFR on,  ET off (dense CLONE; bisect)
+ *   vapor-ifr-et    — IFR on,  ET on  (sparse IFR×ET; product default with IFR)
  *
  * Scales (nCards → ~elements = 4 + nCards*8), matching the playground ladder:
  *   125 → ~1k,  375 → ~3k,  625 → ~5k,  1250 → ~10k,
@@ -44,6 +45,13 @@ const VARIANTS = [
   { id: 'vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1', label: 'VDOM+IFR+ET' },
   { id: 'vapor', mode: 'vapor', ifr: '0', et: '0', label: 'Vapor' },
   { id: 'vapor-ifr', mode: 'vapor', ifr: '1', et: '0', label: 'Vapor+IFR' },
+  {
+    id: 'vapor-ifr-et',
+    mode: 'vapor',
+    ifr: '1',
+    et: '1',
+    label: 'Vapor+IFR+ET',
+  },
 ];
 
 const SCALES = [

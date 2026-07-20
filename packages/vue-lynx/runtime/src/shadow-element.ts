@@ -30,6 +30,7 @@ import type {
   TemplateNodeProps,
 } from 'vue-lynx/internal/ops';
 import { inferHoleSlots, computeIfrNavSlots } from 'vue-lynx/internal/html-to-template-node';
+import { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 import { patchEventProp } from './event-props.js';
 import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
@@ -1181,9 +1182,9 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   const base = ShadowElement.nextUid;
   ShadowElement.nextUid += cache.count;
 
-  if (isIfrMainThread()) {
-    // Disposable IFR paint: keep the TREE protocol (dense uids for hydration)
-    // but shrink BG-side work.
+  if (isIfrMainThread() && isVaporIfrElementTemplates()) {
+    // Disposable IFR×ET paint: keep the TREE protocol (dense uids for
+    // hydration) but shrink BG-side ShadowElement work.
     const holes = inferHoleSlots(cache.structure);
     if (holes.length === 0) {
       // Fully static: vapor never navigates into children — only the root is

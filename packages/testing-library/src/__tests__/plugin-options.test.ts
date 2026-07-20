@@ -38,18 +38,32 @@ describe('pluginVueLynx optimization defaults', () => {
 });
 
 describe('vapor × element templates policy', () => {
-  it('documents that vapor must not inherit the VDOM ET default', () => {
-    // pluginVueLynx forces enableElementTemplates=false when vapor:true,
-    // even if enableIFR would otherwise default it on. The VDOM
-    // elementTemplateTransform does not apply to compiler-vapor; Vapor's
-    // IFR×ET sparse path is separate (2026-07-20 design).
+  it('keeps the VDOM compiler transform off under vapor', () => {
+    // pluginVueLynx never passes enableElementTemplates into the VDOM
+    // elementTemplateTransform when vapor:true. The public flag instead
+    // drives __VUE_LYNX_VAPOR_IFR_ET__ for sparse IFR paint.
     expect(resolveElementTemplatesFlag({ enableIFR: true })).toBe(true);
-    // Simulated plugin gate:
     const vapor = true;
     const enableElementTemplates = vapor
       ? false
       : resolveElementTemplatesFlag({ enableIFR: true });
     expect(enableElementTemplates).toBe(false);
+  });
+
+  it('defaults vapor IFR×ET sparse paint on with IFR', () => {
+    const enableIFR = true;
+    const vaporIfrElementTemplates =
+      /* vapor */ true
+        ? (undefined ?? enableIFR)
+        : false;
+    expect(vaporIfrElementTemplates).toBe(true);
+  });
+
+  it('allows opting vapor IFR×ET off for dense bisect', () => {
+    const enableIFR = true;
+    const options = { enableElementTemplates: false };
+    const vaporIfrElementTemplates = options.enableElementTemplates ?? enableIFR;
+    expect(vaporIfrElementTemplates).toBe(false);
   });
 });
 

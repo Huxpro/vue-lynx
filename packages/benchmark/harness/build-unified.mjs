@@ -31,6 +31,7 @@ const VUE_CELLS = [
   { id: 'vdom-ifr-et', app: 'ui-vdom', cell: 'ifr-et' },
   { id: 'vapor', app: 'ui-vapor', cell: 'off' },
   { id: 'vapor-ifr', app: 'ui-vapor', cell: 'ifr' },
+  { id: 'vapor-ifr-et', app: 'ui-vapor', cell: 'ifr-et' },
 ];
 
 export function buildVueMatrix(filter = null) {

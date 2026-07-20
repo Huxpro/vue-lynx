@@ -61,6 +61,15 @@ export const ARCHITECTURES = [
     tableApp: 'ui-vapor',
   },
   {
+    id: 'vapor-ifr-et',
+    family: 'vue-vapor',
+    ifr: true,
+    et: true,
+    label: 'Vue Vapor+IFR+ET',
+    tableDist: 'ui-vapor/dist-ifr-et',
+    tableApp: 'ui-vapor',
+  },
+  {
     id: 'react',
     family: 'reactlynx',
     ifr: null,
@@ -165,6 +174,7 @@ export const WORKLOADS = {
       'vdom-ifr-et',
       'vapor',
       'vapor-ifr',
+      'vapor-ifr-et',
       'react',
     ],
   },
@@ -199,8 +209,6 @@ export function isCellValid({ architecture, environment, workload }) {
   if (architecture.startsWith('react') && workload === 'strategy-scenes') {
     return false;
   }
-  // Vapor has no Element Templates path.
-  if (architecture === 'vapor-ifr-et') return false;
   return true;
 }
 
@@ -265,7 +273,14 @@ export const CLAIMS = [
 /** Default focused campaign used by `unified.mjs --campaign focused`. */
 export const FOCUSED_CAMPAIGN = {
   /** New coverage: IFR flag × table storms (previously never measured). */
-  tableStormModes: ['vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'],
+  tableStormModes: [
+    'vdom',
+    'vdom-ifr',
+    'vdom-ifr-et',
+    'vapor',
+    'vapor-ifr',
+    'vapor-ifr-et',
+  ],
   tableStormScales: ['1k', '10k', '30k'],
   tableStormReps: 2,
   /** Startup on the empty table shell across IFR cells. */
@@ -275,6 +290,7 @@ export const FOCUSED_CAMPAIGN = {
     'vdom-ifr-et',
     'vapor',
     'vapor-ifr',
+    'vapor-ifr-et',
     'react',
   ],
   tableStartupCount: 5,

@@ -13,6 +13,7 @@
 import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
 import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
+import { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 
 import {
   bakeDenseTreeCreate,
@@ -325,10 +326,10 @@ export function applyOps(ops: unknown[], flush = true): void {
           }
           break;
         }
-        // IFR first-frame window: paint with sparse (root + holes) naming
+        // IFR×ET first-frame window: paint with sparse (root + holes) naming
         // and retain the full preorder stack for densify on handoff / BG
-        // CLONE_TREE adopt.
-        if (deferIfrSelectorAttributes) {
+        // CLONE_TREE adopt. Dense vapor-ifr (ET off) keeps the legacy path.
+        if (deferIfrSelectorAttributes && isVaporIfrElementTemplates()) {
           const sparse = sparseCreators.get(tplId);
           if (sparse) {
             const painted = sparse(pageUniqueId, baseUid, {

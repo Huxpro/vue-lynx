@@ -246,10 +246,13 @@ export function pluginVueLynx(
     includeWorkletPackages = [],
     vapor = false,
   } = options;
+  // VDOM transform vs Vapor IFR×ET sparse paint share the public flag name
+  // but must not share the compiler transform. Vapor never runs
+  // elementTemplateTransform; it gets a DefinePlugin switch instead.
+  const vaporIfrElementTemplates = vapor
+    ? (options.enableElementTemplates ?? enableIFR)
+    : false;
   const enableElementTemplates = vapor
-    // Vapor steady-state addressing is dense TREE ops, not the VDOM
-    // elementTemplateTransform. IFR×ET sparse paint for Vapor is a separate
-    // path (docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md).
     ? false
     : resolveElementTemplatesFlag(options);
 
@@ -317,6 +320,9 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                __VUE_LYNX_VAPOR_IFR_ET__: JSON.stringify(
+                  vaporIfrElementTemplates,
+                ),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references
