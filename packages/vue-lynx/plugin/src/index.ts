@@ -192,6 +192,21 @@ export interface PluginVueLynxOptions {
    * @defaultValue []
    */
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+
+  /**
+   * Build-time check that every worklet referenced on the background thread
+   * (`_wkltId`) is registered on the main thread (`registerWorkletInternal`).
+   * A mismatch is the usual cause of the runtime crash `cannot read property
+   * 'bind' of undefined` on first interaction, which nothing surfaces at build
+   * time otherwise.
+   *
+   *   - `'warn'` — report the drift as a build warning (default);
+   *   - `'error'` — fail the build;
+   *   - `'off'` — disable the check.
+   *
+   * @defaultValue 'warn'
+   */
+  checkWorkletRegistrations?: 'error' | 'warn' | 'off';
 }
 
 /**
@@ -217,6 +232,7 @@ export function pluginVueLynx(
     autoPixelUnit = true,
     enableIFR = false,
     includeWorkletPackages = [],
+    checkWorkletRegistrations = 'warn',
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -342,6 +358,7 @@ export function pluginVueLynx(
           enableIFR,
           enableElementTemplates,
           includeWorkletPackages,
+          checkWorkletRegistrations,
         });
       },
     },

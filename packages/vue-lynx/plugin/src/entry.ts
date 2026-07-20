@@ -22,11 +22,16 @@ import {
 } from './loaders/worklet-utils.js';
 import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
 import { VueScopedCSSIdPlugin } from './plugins/vue-scoped-cssid-plugin.js';
+import {
+  type WorkletCheckSeverity,
+  WorkletRegistrationCheckPlugin,
+} from './plugins/worklet-registration-check-plugin.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
 const PLUGIN_RUNTIME_WRAPPER = 'lynx:vue-runtime-wrapper';
 const PLUGIN_ENCODE = 'lynx:vue-encode';
 const PLUGIN_MARK_MAIN_THREAD = 'lynx:vue-mark-main-thread';
+const PLUGIN_WORKLET_CHECK = 'lynx:vue-worklet-registration-check';
 // worklet-runtime is now bundled directly into main-thread.js (no separate chunk).
 const PLUGIN_WEB_ENCODE = 'lynx:vue-web-encode';
 
@@ -219,6 +224,8 @@ export interface ApplyEntryOptions {
   /** Element templates: preserve template registrations on the MT layer. */
   enableElementTemplates: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  /** Build-time check for BG-referenced worklets missing from the MT bundle. */
+  checkWorkletRegistrations?: WorkletCheckSeverity;
 }
 
 export function applyEntry(
@@ -603,6 +610,19 @@ export function applyEntry(
         .plugin(PLUGIN_MARK_MAIN_THREAD)
         .use(VueMarkMainThreadPlugin, [mainThreadFilenames])
         .end();
+
+      // Diff BG-referenced worklet ids against MT-registered ones and report
+      // the drift that otherwise only shows up as a runtime bind-of-undefined.
+      const checkSeverity = opts.checkWorkletRegistrations ?? 'warn';
+      if (checkSeverity !== 'off') {
+        chain
+          .plugin(PLUGIN_WORKLET_CHECK)
+          .use(WorkletRegistrationCheckPlugin, [
+            mainThreadFilenames,
+            checkSeverity,
+          ])
+          .end();
+      }
     }
 
     // ------------------------------------------------------------------
