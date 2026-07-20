@@ -158,19 +158,20 @@ describe('native drawer motion', () => {
     expect(source).toContain(':style="navbarStyle"');
   });
 
-  it('animates the persistent backdrop and panel with direct native style updates', async () => {
+  it('animates the persistent panel with two-phase native style updates', async () => {
     const source = await readFile(path.resolve(import.meta.dirname, '../src/App.vue'), 'utf8');
 
     expect(source).toContain("const drawerRef = useTemplateRef<ShadowElement>('drawerRef')");
-    expect(source).toMatch(/drawerRef\.value\s*\?\.setNativeProps\(\{/);
-    expect(source).toContain("transform: open ? 'translateX(0px)' : 'translateX(-288px)'");
-    expect(source).toContain("transition: reducedMotion.value ? 'none' : `transform 240ms ${DRAWER_EASING}`");
+    expect(source).toContain('function nextPaint()');
+    expect(source).toMatch(/el\.setNativeProps\(\{\s*transition:/);
+    expect(source).toMatch(/el\.setNativeProps\(\{\s*transform:\s*target/);
+    expect(source).toContain('const target = open ? DRAWER_OPEN : DRAWER_CLOSED');
+    expect(source).toContain("transition: 'none'");
     expect(source).toContain('ref="drawerRef"');
-    expect(source).toMatch(/\.drawer-backdrop\s*{[^}]*transition:\s*opacity 240ms/);
-    expect(source).toContain("opacity: sidebarOpen ? '1' : '0'");
+    expect(source).toMatch(/\.drawer-panel\s*{[^}]*transform:\s*translateX\(-288px\)/s);
   });
 
-  it('mounts the native backdrop only while open and keeps the moving surface stable', async () => {
+  it('mounts the native backdrop only while open and keeps transform off Vue :style', async () => {
     const source = await readFile(path.resolve(import.meta.dirname, '../src/App.vue'), 'utf8');
 
     expect(source).toContain('v-if="isMobile && sidebarOpen"');
@@ -180,7 +181,12 @@ describe('native drawer motion', () => {
     expect(source).toMatch(
       /v-if="isMobile"[\s\S]*?ref="drawerRef"[\s\S]*?class="absolute top-0 bottom-0 left-0/,
     );
-    expect(source).toContain("transform: 'translateX(-288px)'");
+    // Transform must not live in a reactive style binding — Vue style
+    // patches overwrite setNativeProps and flash the sheet closed.
+    expect(source).not.toMatch(
+      /class="absolute top-0 bottom-0 left-0 drawer-panel[\s\S]*?:style="/,
+    );
+    expect(source).not.toContain("transform: 'translateX(-288px)'");
     expect(source).not.toContain("transform: sidebarOpen ? 'translateX(0px)' : 'translateX(-288px)'");
     expect(source).not.toContain('drawer-layer');
     expect(source).not.toContain('<Transition name="drawer-panel"');
