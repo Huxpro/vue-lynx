@@ -13,20 +13,6 @@
   border-radius: 26px;
   position: relative;
 
-  // Notch
-  &::before {
-    content: '';
-    position: absolute;
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 22px;
-    background: #1a1a1a;
-    border-radius: 0 0 14px 14px;
-    z-index: 2;
-  }
-
   .preview {
     // Let go-web's @container (max-width: 600px) make .box height: 100%.
     container-type: inline-size;
