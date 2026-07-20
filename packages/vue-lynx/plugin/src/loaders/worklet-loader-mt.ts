@@ -149,6 +149,7 @@ async function transformModule(
     if (lepusCode === null) return scriptStub();
 
     const registrations = extractRegistrations(lepusCode);
+    warnIfNoRegistrations(ctx, registrations);
     const sharedImports = extractSharedImports(lepusCode);
     const parts = [
       sharedImports,
@@ -191,9 +192,31 @@ async function transformModule(
 
   // Return shared imports + local imports (for dep graph) + extracted registrations
   const registrations = extractRegistrations(lepusCode);
+  warnIfNoRegistrations(ctx, registrations);
   const parts = [sharedImports, localImports, registrations, tplRegistrations]
     .filter(Boolean);
   return parts.join('\n');
+}
+
+/**
+ * A 'main thread' directive was present and the LEPUS transform succeeded,
+ * yet extraction found no registerWorkletInternal calls. Legit only when
+ * the directive string appears outside a worklet function; otherwise it
+ * means the transform's emit shape changed under us — surface it instead
+ * of silently shipping an MT bundle with dead worklets.
+ */
+function warnIfNoRegistrations(
+  ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
+  registrations: string,
+): void {
+  if (registrations !== '') return;
+  ctx.emitWarning(
+    new Error(
+      `[worklet-loader-mt] 'main thread' directive present but no worklet `
+        + `registrations were extracted from ${ctx.resourcePath}. If this `
+        + `module defines worklets, the LEPUS emit shape may have changed.`,
+    ),
+  );
 }
 
 /**

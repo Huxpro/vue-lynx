@@ -415,6 +415,7 @@ interface RunOptions {
   resourceQuery?: string;
   resolve?: Record<string, string>;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  onWarning?: (warning: Error) => void;
 }
 
 /** Drive the async loader with a minimal mock LoaderContext. */
@@ -442,6 +443,9 @@ function runLoaderMT(source: string, opts: RunOptions = {}): Promise<string> {
       resourcePath: opts.resourcePath ?? '/project/src/mod.ts',
       resourceQuery: opts.resourceQuery ?? '',
       emitError() {},
+      emitWarning(warning: Error) {
+        opts.onWarning?.(warning);
+      },
     };
     const loader = workletLoaderMT as unknown as (
       this: typeof ctx,
@@ -472,6 +476,29 @@ describe('worklet-loader-mt (end-to-end)', () => {
       resourcePath: '/project/src/gesture.ts',
     });
     expect(out).toContain('registerWorkletInternal');
+  });
+
+  it('warns when a directive-bearing module yields no registrations', async () => {
+    // Forward guard: if the LEPUS emit shape ever changes under us (e.g.
+    // registerWorkletInternal is renamed), extraction returning nothing
+    // must surface as a build warning, not a silently empty MT module.
+    const warnings: Error[] = [];
+    // The directive substring is present but no function carries it, so
+    // the transform legitimately emits zero registrations.
+    await runLoaderMT(`export const label = 'main thread';`, {
+      resourcePath: '/project/src/label.ts',
+      onWarning: (w) => warnings.push(w),
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]!.message).toContain('/project/src/label.ts');
+
+    // And a module that registers normally must NOT warn.
+    const clean: Error[] = [];
+    await runLoaderMT(gestureModule, {
+      resourcePath: '/project/src/gesture.ts',
+      onWarning: (w) => clean.push(w),
+    });
+    expect(clean).toHaveLength(0);
   });
 
   it('re-emits an aliased import edge so MT reaches the worklet module', async () => {
