@@ -162,6 +162,7 @@ export function template(
 export {
   htmlToTemplateNode,
   inferHoleSlots,
+  computeIfrNavSlots,
 } from 'vue-lynx/internal/html-to-template-node';
 
 // ---------------------------------------------------------------------------
