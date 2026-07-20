@@ -59,6 +59,30 @@ describe('extractTemplateRegistrations', () => {
     ].join('\n');
     expect(extractTemplateRegistrations(src)).toBe(`${real};`);
   });
+
+  it('survives a comment with an apostrophe and unmatched paren in the create() body', () => {
+    // Same bug class as extractRegistrations: the old findBalancedEnd
+    // scanner read the apostrophe as a string start and dropped the call.
+    const real =
+      "(globalThis.__vueLynxRegisterElementTemplate || function () {})(\"ab12\", [\"#text\"], function (P) {\n"
+      + "  // don't build twice (see fig 1\n"
+      + '  return [e0];\n'
+      + '})';
+    expect(extractTemplateRegistrations(`const _hoisted_1 = ${real};`)).toBe(
+      `${real};`,
+    );
+  });
+
+  it('extracts registrations alongside user TypeScript (script-setup case)', () => {
+    const real =
+      '(globalThis.__vueLynxRegisterElementTemplate || function () {})("cd34", [], function (P) { return []; })';
+    const src = [
+      'const label: string = "x";',
+      'interface Props { n: number }',
+      `const _hoisted_1 = ${real};`,
+    ].join('\n');
+    expect(extractTemplateRegistrations(src)).toBe(`${real};`);
+  });
 });
 
 describe('stripStyleImports', () => {

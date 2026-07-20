@@ -342,11 +342,28 @@ export function extractSharedImports(source: string): string {
  * module.
  */
 export function extractRegistrations(lepusCode: string): string {
-  const ast = parse(lepusCode, { sourceType: 'module' });
-  const registrations: string[] = [];
+  const out: string[] = [];
+  forEachCall(parse(lepusCode, { sourceType: 'module' }), (node) => {
+    if (
+      node.callee.type === 'Identifier'
+      && node.callee.name === 'registerWorkletInternal'
+    ) {
+      out.push(lepusCode.slice(node.start, node.end) + ';');
+      return true;
+    }
+    return false;
+  });
+  return out.join('\n');
+}
 
-  // Structural walk over untyped babel nodes; `any` beats re-declaring
-  // the AST shape.
+/**
+ * Walk every node of a `@babel/parser` AST and invoke `onCall` for each
+ * `CallExpression`. Returning `true` skips that call's subtree, which
+ * matches the old scanners' resume-past-the-call behavior (registrations
+ * never nest). Nodes are untyped babel objects; `any` beats re-declaring
+ * the AST shape.
+ */
+function forEachCall(ast: any, onCall: (node: any) => boolean): void {
   const walk = (node: any): void => {
     if (!node || typeof node !== 'object') return;
     if (Array.isArray(node)) {
@@ -354,24 +371,13 @@ export function extractRegistrations(lepusCode: string): string {
       return;
     }
     if (typeof node.type !== 'string') return;
-    if (
-      node.type === 'CallExpression'
-      && node.callee.type === 'Identifier'
-      && node.callee.name === 'registerWorkletInternal'
-    ) {
-      registrations.push(lepusCode.slice(node.start, node.end) + ';');
-      // Registrations never nest; skipping the subtree mirrors the
-      // previous scanner's resume-past-the-call behavior.
-      return;
-    }
+    if (node.type === 'CallExpression' && onCall(node)) return;
     for (const key in node) {
       if (key === 'type' || key === 'start' || key === 'end') continue;
       walk(node[key]);
     }
   };
   walk(ast);
-
-  return registrations.join('\n');
 }
 
 /**
@@ -431,100 +437,33 @@ export function stripStyleImports(code: string): string {
  * evaluation time; entry-main installs it before user code runs), so they
  * are re-emitted verbatim.
  *
- * Matches inside line or block comments are skipped — documentation
- * examples of the registration shape (including the one in
- * runtime/src/element-template.ts) must not be re-emitted as executable
- * code. This matters when workspace tsconfig path aliases resolve
- * `vue-lynx` to TypeScript source rather than `runtime/dist`.
+ * The AST walk ignores comments by construction, so documentation examples
+ * of the registration shape (including the one in
+ * runtime/src/element-template.ts) are never re-emitted as executable code.
+ * This matters when workspace tsconfig path aliases resolve `vue-lynx` to
+ * TypeScript source rather than `runtime/dist`. The `typescript` plugin
+ * covers script-setup SFCs, whose compiled sub-module carries the
+ * registrations alongside user TypeScript.
  */
 export function extractTemplateRegistrations(source: string): string {
-  const marker = `globalThis.${TPL_REGISTER_GLOBAL}`;
   const out: string[] = [];
-  let searchFrom = 0;
-  while (true) {
-    const idx = source.indexOf(marker, searchFrom);
-    if (idx === -1) break;
-    if (isInsideComment(source, idx)) {
-      searchFrom = idx + marker.length;
-      continue;
+  const ast = parse(source, { sourceType: 'module', plugins: ['typescript'] });
+  // The hoisted call is `(globalThis.<TPL_REGISTER_GLOBAL> || function () {})(args…)`,
+  // i.e. a CallExpression whose callee is that `||` short-circuit.
+  forEachCall(ast, (node) => {
+    const callee = node.callee;
+    if (
+      callee.type === 'LogicalExpression'
+      && callee.left?.type === 'MemberExpression'
+      && callee.left.object?.type === 'Identifier'
+      && callee.left.object.name === 'globalThis'
+      && callee.left.property?.type === 'Identifier'
+      && callee.left.property.name === TPL_REGISTER_GLOBAL
+    ) {
+      out.push(source.slice(node.start, node.end) + ';');
+      return true;
     }
-    // The marker sits inside `(globalThis.… || function () {})(args…)`.
-    const wrapperStart = source.lastIndexOf('(', idx);
-    if (wrapperStart === -1) {
-      searchFrom = idx + marker.length;
-      continue;
-    }
-    const wrapperEnd = findBalancedEnd(source, wrapperStart);
-    if (wrapperEnd === -1 || source[wrapperEnd + 1] !== '(') {
-      searchFrom = idx + marker.length;
-      continue;
-    }
-    const argsEnd = findBalancedEnd(source, wrapperEnd + 1);
-    if (argsEnd === -1) {
-      searchFrom = idx + marker.length;
-      continue;
-    }
-    out.push(`${source.slice(wrapperStart, argsEnd + 1)};`);
-    searchFrom = argsEnd + 1;
-  }
+    return false;
+  });
   return out.join('\n');
-}
-
-/** True when `index` falls inside a `//` or block comment. */
-function isInsideComment(code: string, index: number): boolean {
-  let i = 0;
-  while (i < index) {
-    const ch = code[i];
-    if (ch === '"' || ch === "'" || ch === '`') {
-      for (i++; i < index; i++) {
-        if (code[i] === '\\') i++;
-        else if (code[i] === ch) {
-          i++;
-          break;
-        }
-      }
-      continue;
-    }
-    if (ch === '/' && code[i + 1] === '/') {
-      const end = code.indexOf('\n', i + 2);
-      if (end === -1 || end >= index) return true;
-      i = end + 1;
-      continue;
-    }
-    if (ch === '/' && code[i + 1] === '*') {
-      const end = code.indexOf('*/', i + 2);
-      if (end === -1 || end + 2 > index) return true;
-      i = end + 2;
-      continue;
-    }
-    i++;
-  }
-  return false;
-}
-
-/**
- * Given the index of a '(' in `code`, return the index of its matching ')'.
- *
- * String/template literals are skipped so parens inside embedded text (e.g.
- * a baked `__SetAttribute(e, 'text', "call us :)")`) don't unbalance the
- * scan. Comments are not handled — the scanned sources are compiler output,
- * which never embeds parens in comments between call arguments.
- */
-function findBalancedEnd(code: string, openIndex: number): number {
-  let depth = 0;
-  for (let i = openIndex; i < code.length; i++) {
-    const ch = code[i];
-    if (ch === '"' || ch === "'" || ch === '`') {
-      for (i++; i < code.length; i++) {
-        if (code[i] === '\\') i++;
-        else if (code[i] === ch) break;
-      }
-    } else if (ch === '(') {
-      depth++;
-    } else if (ch === ')') {
-      depth--;
-      if (depth === 0) return i;
-    }
-  }
-  return -1;
 }
