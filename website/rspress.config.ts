@@ -2,12 +2,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from '@rspress/core';
 import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import {
   transformerNotationDiff,
   transformerNotationFocus,
   transformerNotationHighlight,
 } from '@shikijs/transformers';
+
+const PUBLISH_URL = 'https://vue.lynxjs.org/';
 
 const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
@@ -53,7 +56,34 @@ export default defineConfig({
       description: 'Vue 3 框架，用于构建 Lynx 应用',
     },
   ],
-  plugins: [pluginLlms()],
+  plugins: [
+    pluginLlms(),
+    pluginRss({
+      siteUrl: PUBLISH_URL,
+      feed: [
+        {
+          id: 'blog-rss',
+          test: '/blog',
+          title: 'Vue Lynx Blog',
+          language: 'en',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss.xml',
+          },
+        },
+        {
+          id: 'blog-rss-zh',
+          test: '/zh/blog',
+          title: 'Vue Lynx 博客',
+          language: 'zh-CN',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss-zh.xml',
+          },
+        },
+      ],
+    }),
+  ],
   markdown: {
     shiki: {
       transformers: [
@@ -65,6 +95,8 @@ export default defineConfig({
     globalComponents: [
       path.join(__dirname, 'src/components/go/Go.tsx'),
       path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
+      path.join(__dirname, 'src/components/BlogList.tsx'),
+      path.join(__dirname, 'src/components/BlogHeader.tsx'),
     ],
   },
   route: {
@@ -178,10 +210,17 @@ export default defineConfig({
       {
         text: 'Guide',
         link: '/guide/quick-start',
+        activeMatch: '/guide/',
       },
       {
         text: 'API',
         link: '/guide/api/vue-lynx/',
+        activeMatch: '/guide/api/',
+      },
+      {
+        text: 'Blog',
+        link: '/blog/',
+        activeMatch: '/blog/',
       },
     ],
     locales: [
@@ -192,10 +231,17 @@ export default defineConfig({
           {
             text: 'Guide',
             link: '/guide/quick-start',
+            activeMatch: '/guide/',
           },
           {
             text: 'API',
             link: '/guide/api/vue-lynx/',
+            activeMatch: '/guide/api/',
+          },
+          {
+            text: 'Blog',
+            link: '/blog/',
+            activeMatch: '/blog/',
           },
         ],
       },
@@ -206,10 +252,17 @@ export default defineConfig({
           {
             text: '指南',
             link: '/zh/guide/quick-start',
+            activeMatch: '/zh/guide/',
           },
           {
             text: 'API',
             link: '/zh/guide/api/vue-lynx/',
+            activeMatch: '/zh/guide/api/',
+          },
+          {
+            text: '博客',
+            link: '/zh/blog/',
+            activeMatch: '/zh/blog/',
           },
         ],
       },
@@ -220,6 +273,7 @@ export default defineConfig({
     source: {
       alias: {
         '@comp': path.join(__dirname, 'src/components'),
+        '@site': path.join(__dirname),
       },
     },
     server: {

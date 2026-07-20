@@ -49,6 +49,9 @@ $brand-emerald: #34d399;
   --home-blog-btn-border: 1px solid rgba(17, 17, 19, 0.12);
   --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(0, 0, 0, 0.85);
+  --home-blog-bg-img: url('../docs/public/assets/home/home-blog-logo-light.svg');
+  --home-features-list-frame-bg: url('../docs/public/assets/home/f-light-bg.svg')
+    no-repeat center top;
 
   // Banner
   --home-banner-title-color: #060606;
@@ -69,6 +72,9 @@ $brand-emerald: #34d399;
   --home-blog-btn-border: 1px solid rgba(255, 255, 255, 0.12);
   --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(255, 255, 255, 0.85);
+  --home-blog-bg-img: url('../docs/public/assets/home/home-blog-logo-dark.svg');
+  --home-features-list-frame-bg: url('../docs/public/assets/home/f-dark-bg.svg')
+    no-repeat center top;
 
   --home-banner-title-color: #fff;
 }
@@ -204,8 +210,13 @@ $brand-emerald: #34d399;
   .rp-home-hero__badge {
     font-size: 14px;
     align-self: center;
-    display: flex;
-    align-items: center;
+    position: relative;
+    display: block;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     height: 36px;
     flex-shrink: 0;
     border-radius: 37px;
@@ -215,23 +226,41 @@ $brand-emerald: #34d399;
     color: var(--home-blog-btn-color);
     font-weight: 500;
     line-height: 32px;
-    padding: 0 20px;
-    transition: background 0.3s ease, color 0.3s ease, border 0.3s ease;
+    padding-left: 43px;
+    padding-right: 20px;
+    transition: all 0.3s ease;
     cursor: pointer;
     user-select: none;
-    animation: fadeIn 0.8s ease-in;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
 
-    &:hover {
-      background: linear-gradient(
-        to right,
-        var(--major-brand-color),
-        var(--gradient-brand-color),
-        var(--second-brand-color)
-      );
-      background-size: 200% 100%;
-      animation: gradientMoveBtn 3s ease infinite;
-      color: #fff;
-      -webkit-text-fill-color: #fff;
+    &.active-hover {
+      cursor: pointer;
+
+      &:hover {
+        background: linear-gradient(
+          to right,
+          var(--major-brand-color),
+          var(--gradient-brand-color),
+          var(--second-brand-color)
+        );
+        background-size: 200% 100%;
+        animation: gradientMoveBtn 3s ease infinite;
+        color: #fff;
+        -webkit-text-fill-color: #fff;
+      }
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 19px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 19px;
+      height: 20px;
+      background-image: var(--home-blog-bg-img);
+      background-size: 19px 20px;
     }
 
     a {
@@ -255,7 +284,16 @@ $brand-emerald: #34d399;
     .rp-home-hero__badge {
       font-size: 12px;
       height: 28px;
-      padding: 0 16px;
+      line-height: 26px;
+      padding-left: 38px;
+      padding-right: 16px;
+
+      &::before {
+        width: 16px;
+        height: 17px;
+        left: 16px;
+        background-size: 16px 17px;
+      }
     }
 
     .rp-home-hero .rp-home-hero__title {
