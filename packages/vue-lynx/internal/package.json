@@ -15,6 +15,11 @@
       "types": "./dist/matrix.d.ts",
       "import": "./dist/matrix.js",
       "default": "./dist/matrix.js"
+    },
+    "./html-to-template-node": {
+      "types": "./dist/html-to-template-node.d.ts",
+      "import": "./dist/html-to-template-node.js",
+      "default": "./dist/html-to-template-node.js"
     }
   },
   "files": ["dist"],

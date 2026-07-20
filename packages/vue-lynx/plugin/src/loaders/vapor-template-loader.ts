@@ -227,5 +227,23 @@ export default function vaporTemplateLoader(
     }
   }
 
+  // Build-time structured templates (#234 / IFR×ET): rewrite after the
+  // addressing pass so the returned factory keeps its A2 metadata.
+  if (
+    descriptor.vapor
+    && process.env.VUE_LYNX_STRUCTURED_TEMPLATES === '1'
+  ) {
+    try {
+      // Lazy require keeps the loader light when vapor is off; the rewrite
+      // module pulls in the HTML→TemplateNode parser.
+      const { rewriteVaporTemplateCalls } = require(
+        '../compiler/vapor-structured-template.js',
+      ) as typeof import('../compiler/vapor-structured-template.js');
+      code = rewriteVaporTemplateCalls(code).code;
+    } catch {
+      // Keep the HTML-string form if the rewrite cannot load.
+    }
+  }
+
   loaderContext.callback(null, code, compiled.map);
 }

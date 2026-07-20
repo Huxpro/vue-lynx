@@ -19,6 +19,8 @@ export default defineConfig({
       'loaders/vapor-template-loader': './src/loaders/vapor-template-loader.ts',
       'loaders/vapor-addressing-script-loader':
         './src/loaders/vapor-addressing-script-loader.ts',
+      'loaders/vapor-structured-template-loader':
+        './src/loaders/vapor-structured-template-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
@@ -35,6 +37,7 @@ export default defineConfig({
       '@vue/compiler-vapor',
       'vue-lynx',
       'vue-lynx/internal/ops',
+      'vue-lynx/internal/html-to-template-node',
       'vue-lynx/main-thread',
     ],
     distPath: { root: 'dist' },

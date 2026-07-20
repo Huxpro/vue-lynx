@@ -605,6 +605,26 @@ export function pluginVueLynx(
                 .options({ enabled: true, autoPixelUnit })
                 .end();
             }
+
+            // Build-time structured templates: rewrite template("<view…>")
+            // to template(<TemplateNode>) after SFC/JS compilation so IFR MT
+            // and BG skip the runtime HTML parse (#234 / IFR×ET phase 2).
+            if (process.env.VUE_LYNX_STRUCTURED_TEMPLATES === '1') {
+              chain.module
+                .rule('vue-lynx:vapor-structured-templates')
+                .test(/\.[cm]?[jt]sx?$/)
+                .exclude.add(/node_modules/)
+                .end()
+                .enforce('post')
+                .use('vue-lynx:vapor-structured-template-loader')
+                .loader(
+                  path.resolve(
+                    _pluginDirname,
+                    './loaders/vapor-structured-template-loader.js',
+                  ),
+                )
+                .end();
+            }
           }
 
           // Ensure vue-lynx/internal/ops resolves correctly.
@@ -619,6 +639,10 @@ export function pluginVueLynx(
           chain.resolve.alias.set(
             'vue-lynx/internal/matrix',
             path.resolve(_vueLynxRoot, 'internal/dist/matrix.js'),
+          );
+          chain.resolve.alias.set(
+            'vue-lynx/internal/html-to-template-node',
+            path.resolve(_vueLynxRoot, 'internal/dist/html-to-template-node.js'),
           );
         });
 

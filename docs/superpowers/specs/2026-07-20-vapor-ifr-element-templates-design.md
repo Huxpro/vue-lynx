@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-20
 
-**Status:** Design + milestone-1 implementation
+**Status:** Design + milestones 1–2 implemented
 
 **Parent:** [#230](https://github.com/huxpro/vue-lynx/issues/230) post-merge follow-up
 (“Compiler-direct Vapor MT first frame”)
