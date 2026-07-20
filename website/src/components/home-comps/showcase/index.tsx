@@ -18,6 +18,21 @@ interface ShowCaseItem {
 const showCaseList: ShowCaseItem[] = [
   {
     title: {
+      en: 'Two-Column Waterfall Gallery',
+      zh: '双列瀑布流画廊',
+    },
+    desc: {
+      en: 'Cover everything you need to know to start building with Vue Lynx.',
+      zh: '覆盖使用 Vue Lynx 开发所需的一切知识。',
+    },
+    link: '/guide/tutorial-gallery',
+    example: 'gallery',
+    defaultFile: 'src/GalleryComplete/Gallery.vue',
+    defaultEntryName: 'GalleryComplete',
+    entry: 'src/GalleryComplete',
+  },
+  {
+    title: {
       en: 'Elk — a Mastodon Client',
       zh: 'Elk — Mastodon 客户端',
     },
@@ -83,7 +98,10 @@ export const ShowCase: React.FC = () => {
       <div className={styles['desc']}>{sectionDesc[lang]}</div>
       <ul className={styles['show-case-list']}>
         {showCaseList.map((item) => (
-          <li className={styles['show-case-list-item']} key={item.example}>
+          <li
+            className={styles['show-case-list-item']}
+            key={`${item.example}-${item.defaultEntryName ?? 'main'}`}
+          >
             <PhoneGo
               example={item.example}
               defaultFile={item.defaultFile}
