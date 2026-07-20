@@ -14,6 +14,10 @@
  *   with an LIS-based move detection: items that stay in increasing old-index
  *   order are kept; everything else is remove+insert. This matches ReactLynx's
  *   "move = removeChild + insertBefore" semantics without fragile per-op index math.
+ *
+ * Cell recycling (inspired by ReactLynx `gSignMap` / `gRecycleMap`):
+ * - `enqueueComponent` pools off-screen list-item roots by reuse-identifier.
+ * - `componentAtIndex` prefers self-reuse (same uiSign), then cross-item hydrate.
  */
 
 import { elements, pageUniqueId } from './element-registry.js';
@@ -59,6 +63,24 @@ const listItemPlatformInfo = new Map<number, Record<string, unknown>>();
 
 /** bgIds whose platform info changed since last flush */
 const dirtyPlatformInfo = new Set<number>();
+
+/**
+ * Active on-screen cells: listFiberId → (uiSign → entry).
+ * Mirrors ReactLynx `gSignMap`.
+ */
+const signMaps = new Map<number, Map<number, ListItemEntry>>();
+
+/**
+ * Recycle pools: listFiberId → (reuseKey → (uiSign → entry)).
+ * Mirrors ReactLynx `gRecycleMap`.
+ */
+const recycleMaps = new Map<
+  number,
+  Map<string, Map<number, ListItemEntry>>
+>();
+
+/** BG list id → native Fiber unique id (listID passed to callbacks). */
+const listBgToFiberId = new Map<number, number>();
 
 // ---------------------------------------------------------------------------
 // Diff (exported for unit tests)
@@ -150,12 +172,259 @@ export function diffListItems(
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// Recycling helpers
 // ---------------------------------------------------------------------------
 
-/** No-op: element recycling tracked in #302. */
-// biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op
-function enqueueComponentNoop(): void {}
+function reuseKeyFor(itemBgId: number): string {
+  const info = listItemPlatformInfo.get(itemBgId);
+  const reuseId = info?.['reuse-identifier'];
+  return `list-item${reuseId ?? ''}`;
+}
+
+function childElements(parent: LynxElement): LynxElement[] {
+  const kids: LynxElement[] = [];
+  let child = parent.firstChild as LynxElement | null;
+  while (child) {
+    kids.push(child);
+    child = child.nextSibling as LynxElement | null;
+  }
+  return kids;
+}
+
+function isDomElement(el: LynxElement): boolean {
+  return typeof (el as unknown as { getAttributeNames?: unknown })
+      .getAttributeNames === 'function';
+}
+
+type ContentSnapshot = {
+  text: string | null;
+  attrs: [string, string][];
+};
+
+function snapshotContent(el: LynxElement): ContentSnapshot {
+  if (!isDomElement(el)) {
+    return { text: el.textContent, attrs: [] };
+  }
+  const attrs: [string, string][] = [];
+  for (const name of el.getAttributeNames()) {
+    // vue-ref-* follows bgId ownership and is rewritten after remap.
+    if (name.startsWith('vue-ref-')) continue;
+    attrs.push([name, el.getAttribute(name) ?? '']);
+  }
+  return { text: null, attrs };
+}
+
+function applyContent(el: LynxElement, snap: ContentSnapshot): void {
+  if (!isDomElement(el)) {
+    if (snap.text !== null) el.textContent = snap.text;
+    return;
+  }
+  const keep = new Set(snap.attrs.map(([n]) => n));
+  for (const name of el.getAttributeNames()) {
+    if (name.startsWith('vue-ref-')) continue;
+    if (!keep.has(name)) el.removeAttribute(name);
+  }
+  for (const [name, value] of snap.attrs) {
+    el.setAttribute(name, value);
+  }
+}
+
+function retargetVueRef(el: LynxElement, bgId: number): void {
+  if (!isDomElement(el)) return;
+  for (const name of el.getAttributeNames()) {
+    if (name.startsWith('vue-ref-')) el.removeAttribute(name);
+  }
+  el.setAttribute(`vue-ref-${bgId}`, '1');
+}
+
+/**
+ * Cross-item recycle: swap fiber ownership between donor and target subtrees
+ * and exchange visual content so `recycled` displays target's data while
+ * subsequent ops for each bgId hit the remapped fibers.
+ */
+function hydrateListItemEntry(
+  donor: ListItemEntry,
+  target: ListItemEntry,
+): void {
+  const recycled = donor.el;
+  const orphaned = target.el;
+  if (recycled === orphaned) return;
+
+  const reverse = new Map<LynxElement, number>();
+  for (const [id, el] of elements) {
+    reverse.set(el, id);
+  }
+
+  function walk(a: LynxElement, b: LynxElement): void {
+    const idA = reverse.get(a);
+    const idB = reverse.get(b);
+
+    const contentA = snapshotContent(a);
+    const contentB = snapshotContent(b);
+    applyContent(a, contentB);
+    applyContent(b, contentA);
+
+    if (idA !== undefined && idB !== undefined) {
+      elements.set(idA, b);
+      elements.set(idB, a);
+      reverse.set(a, idB);
+      reverse.set(b, idA);
+      retargetVueRef(a, idB);
+      retargetVueRef(b, idA);
+    } else if (idB !== undefined) {
+      elements.set(idB, a);
+      reverse.set(a, idB);
+      if (idA !== undefined && elements.get(idA) === a) {
+        elements.delete(idA);
+      }
+      retargetVueRef(a, idB);
+    }
+
+    const kidsA = childElements(a);
+    const kidsB = childElements(b);
+    const n = Math.min(kidsA.length, kidsB.length);
+    for (let i = 0; i < n; i++) {
+      walk(kidsA[i]!, kidsB[i]!);
+    }
+  }
+
+  walk(recycled, orphaned);
+  target.el = recycled;
+  donor.el = orphaned;
+}
+
+function purgeItemFromPools(childId: number): void {
+  for (const sm of signMaps.values()) {
+    for (const [sign, entry] of sm) {
+      if (entry.bgId === childId) sm.delete(sign);
+    }
+  }
+  for (const rm of recycleMaps.values()) {
+    for (const bySign of rm.values()) {
+      for (const [sign, entry] of bySign) {
+        if (entry.bgId === childId) bySign.delete(sign);
+      }
+    }
+  }
+}
+
+function mountListItem(
+  list: LynxElement,
+  listID: number,
+  entry: ListItemEntry,
+  operationID: number | undefined,
+  enableBatchRender: boolean,
+  asyncFlush: boolean,
+): number {
+  let signMap = signMaps.get(listID);
+  let recycleMap = recycleMaps.get(listID);
+  if (!signMap || !recycleMap) {
+    // Callbacks can outlive a reset in tests — recreate empty pools.
+    signMap = new Map();
+    recycleMap = new Map();
+    signMaps.set(listID, signMap);
+    recycleMaps.set(listID, recycleMap);
+  }
+
+  const reuseKey = reuseKeyFor(entry.bgId);
+  let recycleSignMap = recycleMap.get(reuseKey);
+  const ownSign = __GetElementUniqueID(entry.el);
+
+  // 1) Self-reuse: same item scrolled back into view.
+  if (recycleSignMap?.has(ownSign)) {
+    recycleSignMap.delete(ownSign);
+    signMap.set(ownSign, entry);
+    __AppendElement(list, entry.el);
+    if (!enableBatchRender) {
+      __FlushElementTree(entry.el, {
+        triggerLayout: true,
+        operationID,
+        elementID: ownSign,
+        listID,
+      });
+    } else if (asyncFlush) {
+      __FlushElementTree(entry.el, { asyncFlush: true });
+    }
+    return ownSign;
+  }
+
+  // 2) Cross-item: hydrate a pooled root onto this entry.
+  if (recycleSignMap && recycleSignMap.size > 0) {
+    const first = recycleSignMap.entries().next().value as
+      | [number, ListItemEntry]
+      | undefined;
+    if (first) {
+      const [recycledSign, donor] = first;
+      recycleSignMap.delete(recycledSign);
+
+      if (donor.bgId !== entry.bgId) {
+        hydrateListItemEntry(donor, entry);
+        // Donor's spare tree (former target root) is immediately recyclable,
+        // matching ReactLynx takeElements → pool hand-off for the displaced root.
+        const spareSign = __GetElementUniqueID(donor.el);
+        if (!recycleMap.has(reuseKey)) {
+          recycleMap.set(reuseKey, new Map());
+          recycleSignMap = recycleMap.get(reuseKey)!;
+        }
+        recycleSignMap!.set(spareSign, donor);
+      }
+
+      signMap.set(recycledSign, entry);
+      __AppendElement(list, entry.el);
+      if (!enableBatchRender) {
+        __FlushElementTree(entry.el, {
+          triggerLayout: true,
+          operationID,
+          elementID: recycledSign,
+          listID,
+        });
+      } else if (asyncFlush) {
+        __FlushElementTree(entry.el, { asyncFlush: true });
+      }
+      return recycledSign;
+    }
+  }
+
+  // 3) Fresh mount — use the eagerly created fiber tree.
+  __AppendElement(list, entry.el);
+  signMap.set(ownSign, entry);
+  if (!enableBatchRender) {
+    __FlushElementTree(entry.el, {
+      triggerLayout: true,
+      operationID,
+      elementID: ownSign,
+      listID,
+    });
+  } else if (asyncFlush) {
+    __FlushElementTree(entry.el, { asyncFlush: true });
+  }
+  return ownSign;
+}
+
+function enqueueListItem(
+  listID: number,
+  sign: number,
+): void {
+  const signMap = signMaps.get(listID);
+  const recycleMap = recycleMaps.get(listID);
+  if (!signMap || !recycleMap) return;
+
+  const entry = signMap.get(sign);
+  if (!entry) return;
+  signMap.delete(sign);
+
+  const reuseKey = reuseKeyFor(entry.bgId);
+  let recycleSignMap = recycleMap.get(reuseKey);
+  if (!recycleSignMap) {
+    recycleSignMap = new Map();
+    recycleMap.set(reuseKey, recycleSignMap);
+  }
+  recycleSignMap.set(sign, entry);
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 
 function createListCallbacks(bgId: number): {
   componentAtIndex: (
@@ -164,7 +433,11 @@ function createListCallbacks(bgId: number): {
     cellIndex: number,
     operationID: number,
   ) => number | undefined;
-  enqueueComponent: (...args: unknown[]) => void;
+  enqueueComponent: (
+    list: LynxElement,
+    listID: number,
+    sign: number,
+  ) => void;
   componentAtIndexes: (
     list: LynxElement,
     listID: number,
@@ -180,19 +453,23 @@ function createListCallbacks(bgId: number): {
   ): number | undefined => {
     const items = listItems.get(bgId);
     if (!items || cellIndex < 0 || cellIndex >= items.length) return undefined;
-    const item = items[cellIndex]!.el;
-    __AppendElement(list, item);
-    const sign = __GetElementUniqueID(item);
-    __FlushElementTree(item, {
-      triggerLayout: true,
-      operationID,
-      elementID: sign,
+    return mountListItem(
+      list,
       listID,
-    });
-    return sign;
+      items[cellIndex]!,
+      operationID,
+      false,
+      false,
+    );
   };
 
-  const enqueueComponent = enqueueComponentNoop;
+  const enqueueComponent = (
+    _list: LynxElement,
+    listID: number,
+    sign: number,
+  ): void => {
+    enqueueListItem(listID, sign);
+  };
 
   const componentAtIndexes = (
     list: LynxElement,
@@ -208,9 +485,16 @@ function createListCallbacks(bgId: number): {
         elementIDs.push(-1);
         continue;
       }
-      const item = items[cellIndex]!.el;
-      __AppendElement(list, item);
-      elementIDs.push(__GetElementUniqueID(item));
+      elementIDs.push(
+        mountListItem(
+          list,
+          listID,
+          items[cellIndex]!,
+          undefined,
+          true,
+          false,
+        ),
+      );
     }
     __FlushElementTree(list, {
       triggerLayout: true,
@@ -262,6 +546,10 @@ export function createListElement(id: number): LynxElement {
     cbs.componentAtIndexes,
   );
   __SetCSSId([el], 0);
+  const listID = __GetElementUniqueID(el);
+  listBgToFiberId.set(id, listID);
+  signMaps.set(listID, new Map());
+  recycleMaps.set(listID, new Map());
   return el;
 }
 
@@ -304,6 +592,7 @@ export function removeListItem(parentId: number, childId: number): void {
   itemKeyMap.delete(childId);
   listItemPlatformInfo.delete(childId);
   dirtyPlatformInfo.delete(childId);
+  purgeItemFromPools(childId);
 }
 
 /** Store a platform-info attribute; mark dirty for updateAction if already flushed. */
@@ -385,9 +674,25 @@ export function resetListState(): void {
   itemKeyMap.clear();
   listItemPlatformInfo.clear();
   dirtyPlatformInfo.clear();
+  signMaps.clear();
+  recycleMaps.clear();
+  listBgToFiberId.clear();
 }
 
 /** Test helper: current live item bgIds for a list. */
 export function getListItemBgIdsForTest(listId: number): number[] {
   return (listItems.get(listId) ?? []).map((e) => e.bgId);
+}
+
+/** Test helper: recycle pool size for a list Fiber id + reuse key. */
+export function getRecyclePoolSizeForTest(
+  listFiberId: number,
+  reuseKey = 'list-item',
+): number {
+  return recycleMaps.get(listFiberId)?.get(reuseKey)?.size ?? 0;
+}
+
+/** Test helper: active sign-map size for a list Fiber id. */
+export function getSignMapSizeForTest(listFiberId: number): number {
+  return signMaps.get(listFiberId)?.size ?? 0;
 }
