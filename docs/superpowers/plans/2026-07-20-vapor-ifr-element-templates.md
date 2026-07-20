@@ -30,6 +30,7 @@
 - [x] Sparse nav facades: skip ShadowElement for static subtrees off the hole `child`/`next` path
 - [x] `enableElementTemplates` under `vapor: true` → `__VUE_LYNX_VAPOR_IFR_ET__` kill-switch
 - [x] `vapor {off, ifr, ifr-et}` sfc-probe / matrix cells
+- [x] Re-run unified sfc-probe FCP and refresh UNIFIED-RERUN.md
 - [ ] Full compiler-direct IFR (no ShadowElement / hole-index writes)
 - [ ] Compiler-emitted authoritative hole lists (replace `inferHoleSlots`)
-- [ ] Re-run unified sfc-probe FCP and refresh UNIFIED-RERUN.md
+- [ ] Re-enable build-time structured templates by default (opt-in via `VUE_LYNX_STRUCTURED_TEMPLATES=1` until green on sfc-probe)
