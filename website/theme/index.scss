@@ -49,9 +49,9 @@ $brand-emerald: #34d399;
   --home-blog-btn-border: 1px solid rgba(17, 17, 19, 0.12);
   --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(0, 0, 0, 0.85);
-  --home-blog-bg-img: url('/assets/home/home-blog-logo-light.svg');
-  --home-features-list-frame-bg: url('/assets/home/f-light-bg.svg') no-repeat
-    center top;
+  --home-blog-bg-img: url('../docs/public/assets/home/home-blog-logo-light.svg');
+  --home-features-list-frame-bg: url('../docs/public/assets/home/f-light-bg.svg')
+    no-repeat center top;
 
   // Banner
   --home-banner-title-color: #060606;
@@ -72,9 +72,9 @@ $brand-emerald: #34d399;
   --home-blog-btn-border: 1px solid rgba(255, 255, 255, 0.12);
   --home-blog-btn-bg: rgba(255, 255, 255, 0.08);
   --home-blog-btn-color: rgba(255, 255, 255, 0.85);
-  --home-blog-bg-img: url('/assets/home/home-blog-logo-dark.svg');
-  --home-features-list-frame-bg: url('/assets/home/f-dark-bg.svg') no-repeat
-    center top;
+  --home-blog-bg-img: url('../docs/public/assets/home/home-blog-logo-dark.svg');
+  --home-features-list-frame-bg: url('../docs/public/assets/home/f-dark-bg.svg')
+    no-repeat center top;
 
   --home-banner-title-color: #fff;
 }

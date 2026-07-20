@@ -1,5 +1,9 @@
 import { useLang, usePageData } from '@rspress/core/runtime';
-import { LlmsContainer, LlmsCopyButton, LlmsViewOptions } from '@theme';
+import {
+  LlmsContainer,
+  LlmsCopyButton,
+  LlmsViewOptions,
+} from '@rspress/core/theme';
 import { getBlogIndexPath } from '../../lib/utils';
 import { BlogAvatar } from '../blog-avatar';
 import styles from './index.module.scss';
