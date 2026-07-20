@@ -39,21 +39,27 @@ function openVueReference() {
     -->
     <view class="page-inner">
       <view class="header">
-        <view class="inner">
-          <view class="logo" @tap="goHome">
-            <image class="logo-image" :src="logoUrl" resize="cover" />
+        <scroll-view
+          class="header-scroll"
+          scroll-x
+          scroll-orientation="horizontal"
+        >
+          <view class="inner">
+            <view class="logo" @tap="goHome">
+              <image class="logo-image" :src="logoUrl" resize="cover" />
+            </view>
+
+            <NavLink
+              v-for="key in feedKeys"
+              :key="key"
+              :to="`/${key}`"
+              :label="validFeeds[key].title"
+              :active="activeFeed === key"
+            />
+
+            <text class="github" @tap="openVueReference">Built with VueLynx</text>
           </view>
-
-          <NavLink
-            v-for="key in feedKeys"
-            :key="key"
-            :to="`/${key}`"
-            :label="validFeeds[key].title"
-            :active="activeFeed === key"
-          />
-
-          <text class="github" @tap="openVueReference">Built with VueLynx</text>
-        </view>
+        </scroll-view>
       </view>
 
       <view class="route-shell">
@@ -91,12 +97,17 @@ function openVueReference() {
   width: 100%;
   z-index: 999;
 
+  .header-scroll {
+    width: 100%;
+    height: 100%;
+  }
+
   .inner {
-    max-width: 800px;
     box-sizing: border-box;
     margin: 0 auto;
     padding: 15px 5px;
     height: 100%;
+    min-width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
