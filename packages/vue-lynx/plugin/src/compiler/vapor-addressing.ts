@@ -1,0 +1,460 @@
+// Copyright 2026 Xuan Huang (huxpro). All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+
+/**
+ * Compile-time Vapor addressing analysis (#297).
+ *
+ * Vapor today is a densely named tree (`REGISTER_TREE` / `CLONE_TREE`) because
+ * addressing knowledge lives in codegen navigation (`n0 = t0()`, `_child`,
+ * `_next`, `_nthChild`, …) that the ops protocol cannot see. To sparsify
+ * naming (A1 → A2, #298) we must extract that set at compile time.
+ *
+ * For each vapor `template()` this module produces:
+ *  - **holes** — nodes with dynamic bind / event / ref / text (or directive)
+ *    writes, plus parents of dynamic children (`v-if` / `v-for` / components)
+ *  - **addressed** — holes ∪ root ∪ ancestors ∪ prefix siblings on the
+ *    `child` / `next` / `nthChild` path (the nav-slot closure)
+ *
+ * Slots are REGISTER_TREE preorder offsets (folded only-child `#text` does
+ * not consume a slot — same contract as `buildStructure`).
+ *
+ * Pure analysis + optional codegen annotation. Does not change runtime
+ * behavior unless a later consumer (#298) reads `__vlxAddressing`.
+ */
+
+import type { BindingMetadata } from '@vue/compiler-dom';
+import type {
+  BlockIRNode,
+  IRDynamicInfo,
+  OperationNode,
+  RootIRNode,
+} from '@vue/compiler-vapor';
+import {
+  DynamicFlag,
+  IRNodeTypes,
+  isBlockOperation,
+  parse,
+  transform,
+  transformChildren,
+  transformComment,
+  transformElement,
+  transformKey,
+  transformSlotOutlet,
+  transformTemplateRef,
+  transformText,
+  transformVBind,
+  transformVFor,
+  transformVHtml,
+  transformVIf,
+  transformVModel,
+  transformVOn,
+  transformVOnce,
+  transformVShow,
+  transformVSlot,
+  transformVText,
+} from '@vue/compiler-vapor';
+
+/** Property stamped onto template factories by {@link annotateVaporAddressing}. */
+export const VAPOR_ADDRESSING_KEY = '__vlxAddressing';
+
+/** Per-template hole + addressed-node metadata (REGISTER_TREE preorder slots). */
+export interface VaporTemplateAddressing {
+  /** Index of this template in the vapor IR (`t0`, `t1`, …). */
+  templateIndex: number;
+  /** Compiler-emitted HTML string passed to `template()`. */
+  content: string;
+  /** Dense preorder length of the REGISTER_TREE structure (incl. anchors). */
+  slotCount: number;
+  /**
+   * Preorder slots that are holes: dynamic bind/event/ref/text targets, or
+   * parents of dynamic children (element-slot insertion points).
+   */
+  holes: number[];
+  /**
+   * Preorder slots codegen navigation actually needs: holes, template root,
+   * ancestors of holes, and prefix siblings up to the last hole-bearing child
+   * (so `_child` / `_next` / `_nthChild` walks stay valid on a sparse tree).
+   */
+  addressed: number[];
+}
+
+export interface VaporAddressingResult {
+  templates: VaporTemplateAddressing[];
+}
+
+export interface AnalyzeVaporAddressingOptions {
+  /**
+   * Binding metadata from `<script setup>` (affects const vs ref codegen, not
+   * the hole set shape for typical templates).
+   */
+  bindingMetadata?: BindingMetadata;
+  /** Override native-tag predicate; defaults to Lynx's "everything is native". */
+  isNativeTag?: (tag: string) => boolean;
+}
+
+function getBaseTransformPreset(): [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Record<string, any>,
+] {
+  return [[
+    transformVOnce,
+    transformVIf,
+    transformVFor,
+    transformKey,
+    transformSlotOutlet,
+    transformTemplateRef,
+    transformElement,
+    transformText,
+    transformVSlot,
+    transformComment,
+    transformChildren,
+  ], {
+    bind: transformVBind,
+    on: transformVOn,
+    html: transformVHtml,
+    text: transformVText,
+    show: transformVShow,
+    model: transformVModel,
+  }];
+}
+
+function isInsertPlaceholder(d: IRDynamicInfo): boolean {
+  return (
+    (d.flags & DynamicFlag.NON_TEMPLATE) !== 0
+    && (d.flags & DynamicFlag.INSERT) !== 0
+  );
+}
+
+/**
+ * Text / comment leaf in the IR dynamic tree (not a real element).
+ * Only-child cases are folded out of REGISTER_TREE preorder.
+ */
+function isTextLike(d: IRDynamicInfo): boolean {
+  if (d.template != null || d.operation != null) return false;
+  if ((d.flags & DynamicFlag.INSERT) !== 0) return false;
+  // Dynamic interpolation text (GET_TEXT_CHILD host child).
+  if ((d.flags & DynamicFlag.NON_TEMPLATE) !== 0) return true;
+  // Static text / comment leaf.
+  return (
+    d.id === undefined
+    && !d.hasDynamicChild
+    && (d.children?.length ?? 0) === 0
+  );
+}
+
+function collectHoleElementIds(block: BlockIRNode, into: Set<number>): void {
+  const consider = (op: OperationNode): void => {
+    switch (op.type) {
+      case IRNodeTypes.SET_PROP:
+      case IRNodeTypes.SET_DYNAMIC_PROPS:
+      case IRNodeTypes.SET_EVENT:
+      case IRNodeTypes.SET_DYNAMIC_EVENTS:
+      case IRNodeTypes.SET_HTML:
+      case IRNodeTypes.SET_TEMPLATE_REF:
+      case IRNodeTypes.SET_TEXT:
+      case IRNodeTypes.DIRECTIVE:
+        if (op.element != null) into.add(op.element);
+        break;
+      case IRNodeTypes.GET_TEXT_CHILD:
+        into.add(op.parent);
+        break;
+      default:
+        break;
+    }
+  };
+  for (const op of block.operation) consider(op);
+  for (const effect of block.effect) {
+    for (const op of effect.operations) consider(op);
+  }
+}
+
+interface SlotInfo {
+  slot: number;
+  parent: number | null;
+  children: number[];
+}
+
+/**
+ * Walk one template's IRDynamicInfo root and assign REGISTER_TREE preorder
+ * slots (with only-child text folding). Marks insert-host slots as holes.
+ */
+function assignSlots(
+  tplRoot: IRDynamicInfo,
+  holeIds: Set<number>,
+  holeSlots: Set<number>,
+): { slotCount: number; idToSlot: Map<number, number>; nodes: SlotInfo[] } {
+  let next = 0;
+  const idToSlot = new Map<number, number>();
+  const nodes: SlotInfo[] = [];
+
+  const walkEl = (d: IRDynamicInfo, parentSlot: number | null): number => {
+    const slot = next++;
+    const info: SlotInfo = { slot, parent: parentSlot, children: [] };
+    nodes[slot] = info;
+    if (d.id !== undefined) idToSlot.set(d.id, slot);
+    if (parentSlot != null) nodes[parentSlot]!.children.push(slot);
+
+    const structKids: IRDynamicInfo[] = [];
+    for (const child of d.children) {
+      if (isInsertPlaceholder(child)) {
+        // Dynamic child (v-if / v-for / component / slot) — host is a hole.
+        holeSlots.add(slot);
+        continue;
+      }
+      structKids.push(child);
+    }
+
+    if (structKids.length === 1 && isTextLike(structKids[0]!)) {
+      // Folded only-child #text — no separate structure slot.
+      return slot;
+    }
+
+    for (const child of structKids) {
+      if (isTextLike(child)) {
+        const textSlot = next++;
+        nodes[textSlot] = { slot: textSlot, parent: slot, children: [] };
+        info.children.push(textSlot);
+      } else {
+        walkEl(child, slot);
+      }
+    }
+    return slot;
+  };
+
+  walkEl(tplRoot, null);
+
+  for (const id of holeIds) {
+    const slot = idToSlot.get(id);
+    if (slot !== undefined) holeSlots.add(slot);
+  }
+
+  return { slotCount: next, idToSlot, nodes };
+}
+
+/**
+ * Nav-slot closure: root + holes + ancestors + prefix siblings (same shape as
+ * IFR sparse facades — keeps `_child` / `_next` / `_nthChild` valid).
+ */
+function computeAddressed(
+  nodes: SlotInfo[],
+  holes: readonly number[],
+): number[] {
+  const needed = new Set<number>([0, ...holes]);
+
+  for (const hole of holes) {
+    let parent = nodes[hole]?.parent ?? null;
+    while (parent != null) {
+      needed.add(parent);
+      parent = nodes[parent]?.parent ?? null;
+    }
+  }
+
+  const subtreeHasNeeded = (slot: number): boolean => {
+    if (needed.has(slot)) return true;
+    const info = nodes[slot];
+    if (!info) return false;
+    for (const child of info.children) {
+      if (subtreeHasNeeded(child)) return true;
+    }
+    return false;
+  };
+
+  for (const info of nodes) {
+    if (!info || info.children.length === 0) continue;
+    let last = -1;
+    for (let i = 0; i < info.children.length; i++) {
+      if (subtreeHasNeeded(info.children[i]!)) last = i;
+    }
+    if (last >= 0) {
+      for (let i = 0; i <= last; i++) needed.add(info.children[i]!);
+    }
+  }
+
+  return [...needed].sort((a, b) => a - b);
+}
+
+function visitNestedBlock(op: OperationNode, visit: (b: BlockIRNode) => void): void {
+  if (!isBlockOperation(op)) return;
+  switch (op.type) {
+    case IRNodeTypes.IF: {
+      visit(op.positive);
+      if (op.negative) {
+        if (op.negative.type === IRNodeTypes.BLOCK) {
+          visit(op.negative);
+        } else {
+          // Nested v-else-if chain: IfIRNode
+          visitNestedBlock(op.negative, visit);
+        }
+      }
+      break;
+    }
+    case IRNodeTypes.FOR:
+      visit(op.render);
+      break;
+    case IRNodeTypes.KEY:
+      visit(op.block);
+      break;
+    default:
+      break;
+  }
+}
+
+function transformToIR(
+  source: string,
+  options: AnalyzeVaporAddressingOptions,
+): RootIRNode {
+  const isNativeTag = options.isNativeTag ?? (() => true);
+  const ast = parse(source, { isNativeTag, whitespace: 'condense' });
+  const [nodeTransforms, directiveTransforms] = getBaseTransformPreset();
+  return transform(ast, {
+    bindingMetadata: options.bindingMetadata,
+    nodeTransforms,
+    directiveTransforms,
+  });
+}
+
+/**
+ * Analyze a Vapor template source string and return per-`template()` metadata.
+ */
+export function analyzeVaporAddressing(
+  source: string,
+  options: AnalyzeVaporAddressingOptions = {},
+): VaporAddressingResult {
+  const ir = transformToIR(source, options);
+  const templates: VaporTemplateAddressing[] = [];
+
+  const visitBlock = (block: BlockIRNode): void => {
+    const walk = (d: IRDynamicInfo): void => {
+      if (d.template != null) {
+        const holeIds = new Set<number>();
+        collectHoleElementIds(block, holeIds);
+        const holeSlots = new Set<number>();
+        const { slotCount, nodes } = assignSlots(d, holeIds, holeSlots);
+        const holes = [...holeSlots].sort((a, b) => a - b);
+        const entry = ir.template.entries[d.template];
+        templates.push({
+          templateIndex: d.template,
+          content: entry?.content ?? '',
+          slotCount,
+          holes,
+          addressed: computeAddressed(nodes, holes),
+        });
+      }
+
+      if (d.operation) visitNestedBlock(d.operation, visitBlock);
+      for (const child of d.children) walk(child);
+    };
+
+    walk(block.dynamic);
+
+    // Block-level structural ops (rare — usually hang off dynamic nodes).
+    for (const op of block.operation) visitNestedBlock(op, visitBlock);
+  };
+
+  visitBlock(ir.block);
+
+  templates.sort((a, b) => a.templateIndex - b.templateIndex);
+  return { templates };
+}
+
+/**
+ * Stamp `__vlxAddressing` onto each `const tN = template(...)` factory in
+ * compiler-vapor output. Runtime ignores the property until #298 consumes it.
+ */
+export function annotateVaporAddressing(
+  code: string,
+  result: VaporAddressingResult,
+): string {
+  if (result.templates.length === 0) return code;
+
+  const byIndex = new Map(
+    result.templates.map((t) => [t.templateIndex, t]),
+  );
+
+  // Match `const t0 = _template(` / `const t0 = template(` and the full call.
+  const re =
+    /\bconst\s+(t(\d+))\s*=\s*(_template|template)\s*\(/g;
+
+  let out = '';
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) {
+    const name = match[1]!;
+    const index = Number(match[2]);
+    const meta = byIndex.get(index);
+    const callStart = match.index + match[0].length - 1; // at '('
+    const callEnd = findMatchingParen(code, callStart);
+    if (callEnd < 0 || !meta) continue;
+
+    // Include trailing semicolon / newline if present.
+    let stmtEnd = callEnd + 1;
+    while (stmtEnd < code.length && /[ \t]/.test(code[stmtEnd]!)) stmtEnd++;
+    if (code[stmtEnd] === ';') stmtEnd++;
+
+    out += code.slice(last, stmtEnd);
+    out += `\n${name}.${VAPOR_ADDRESSING_KEY} = ${
+      stringifyAddressing(meta)
+    }`;
+    last = stmtEnd;
+    re.lastIndex = stmtEnd;
+  }
+  out += code.slice(last);
+  return out;
+}
+
+function stringifyAddressing(meta: VaporTemplateAddressing): string {
+  // Compact JSON — stable key order for snapshots.
+  return JSON.stringify({
+    holes: meta.holes,
+    addressed: meta.addressed,
+    slotCount: meta.slotCount,
+  });
+}
+
+/** Find the `)` matching `code[openIndex] === '('`. */
+function findMatchingParen(code: string, openIndex: number): number {
+  let depth = 0;
+  let inStr: '"' | "'" | '`' | null = null;
+  let escaped = false;
+  for (let i = openIndex; i < code.length; i++) {
+    const ch = code[i]!;
+    if (inStr) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (ch === inStr) inStr = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      inStr = ch;
+      continue;
+    }
+    if (ch === '(') depth++;
+    else if (ch === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * Analyze `source` and annotate compiler-vapor `code` in one step.
+ * Used by the vapor template loader.
+ */
+export function analyzeAndAnnotateVaporCode(
+  source: string,
+  code: string,
+  options: AnalyzeVaporAddressingOptions = {},
+): { code: string; result: VaporAddressingResult } {
+  const result = analyzeVaporAddressing(source, options);
+  return { code: annotateVaporAddressing(code, result), result };
+}
