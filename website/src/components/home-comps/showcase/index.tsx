@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useLang } from '@rspress/core/runtime';
-import { Go } from '../../go/Go';
+import { PhoneGo } from './PhoneFrame';
+import { PREVIEW } from './phone-frame';
 import styles from './index.module.scss';
 
 interface ShowCaseItem {
@@ -9,6 +10,8 @@ interface ShowCaseItem {
   link: string;
   example: string;
   defaultFile?: string;
+  defaultEntryName?: string;
+  entry?: string | string[];
   schema?: string;
 }
 
@@ -61,8 +64,8 @@ const sectionTitle = {
 };
 
 const sectionDesc = {
-  en: "Live Elk, AI Chat, and HackerNews — Go's loading overlay stays up until first paint.",
-  zh: '真实运行的 Elk、AI Chat 与 HackerNews——Go 加载遮罩会保持到首帧绘制。',
+  en: "Live apps at iPhone density (375 CSS-px), scaled into the phone frame — same idea as the original showcase videos.",
+  zh: '按 iPhone 密度（375 CSS 像素）布局后再缩放进手机框——与最早的 showcase 录屏同一思路。',
 };
 
 const learnByDoing = {
@@ -77,29 +80,28 @@ export const ShowCase: React.FC = () => {
   return (
     <div className={styles['show-case-frame']}>
       <div className={styles['title']}>{sectionTitle[lang]}</div>
-      <div className={styles['desc']}>
-        {sectionDesc[lang]}
-      </div>
+      <div className={styles['desc']}>{sectionDesc[lang]}</div>
       <ul className={styles['show-case-list']}>
         {showCaseList.map((item) => (
           <li className={styles['show-case-list-item']} key={item.example}>
-            <div className={styles['mobile-show-frame']}>
-              <div className={styles['preview']}>
-                <Go
-                  example={item.example}
-                  defaultFile={item.defaultFile}
-                  schema={item.schema}
-                  mode="preview"
-                  defaultTab="web"
-                  // responsive: lynx-view fills the phone frame. fit/cover was
-                  // collapsing HackerNews list rows to width:0 in this bezel.
-                  webPreviewMode="responsive"
-                />
-              </div>
-            </div>
+            <PhoneGo
+              example={item.example}
+              defaultFile={item.defaultFile}
+              defaultEntryName={item.defaultEntryName}
+              entry={item.entry}
+              schema={item.schema}
+            />
             <div className={styles['item-title']}>{item.title[lang]}</div>
-            <div className={styles['item-desc']}>{item.desc[lang]}</div>
-            <a href={`${localePrefix}${item.link}`} className={styles['item-link']}>
+            <div
+              className={styles['item-desc']}
+              style={{ maxWidth: PREVIEW.width }}
+            >
+              {item.desc[lang]}
+            </div>
+            <a
+              href={`${localePrefix}${item.link}`}
+              className={styles['item-link']}
+            >
               {learnByDoing[lang]} &rarr;
             </a>
           </li>

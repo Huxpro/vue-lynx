@@ -1,0 +1,11 @@
+# Showcase scale compare
+
+Internal check: does live web at `fit` @ 375×838 match the density of the
+original homepage showcase videos (1080×2412 → phone bezel)?
+
+Left = recording (`object-fit: cover`). Right = `<Go mode="preview"
+webPreviewMode="fit">` into the same bezel. Typography / card sizes should
+line up; if the live side looks much larger, the design canvas is too small
+(or we fell back to responsive layout at bezel CSS pixels).
+
+<ScaleCompare />
