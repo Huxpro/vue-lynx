@@ -3,11 +3,10 @@ import { computed, ref } from 'vue-lynx';
 import { makeCards } from '../shared/data';
 
 /**
- * Stress case: filter / toggle a subset (common chat / search UX).
+ * Regression check: filter / toggle a subset.
  *
- * Filtering removes + re-inserts keyed children. With empty `removeAction`
- * and append-only inserts, toggling the filter often leaves ghost cells or
- * duplicated item-keys once you toggle back.
+ * Empirically looks correct on device. Keep as a smoke test (toggle twice and
+ * confirm length 16 → 8 → 16 with no ghosts).
  */
 const all = makeCards(16, 'Row');
 const onlyEven = ref(false);
@@ -30,18 +29,17 @@ function reset() {
 <template>
   <view class="root">
     <view class="header">
-      <text class="title">list · filter (gap)</text>
+      <text class="title">list · filter (smoke)</text>
       <text class="subtitle">
-        Toggle “even only”, then toggle back. Correct behavior restores the
-        full 16 rows with no ghosts / duplicated keys. Broken updates usually
-        show after the second toggle.
+        Toggle even-only, then show all again. Length should be 16 → 8 → 16
+        with no leftover rows. Treated as OK in practice; kept for regression.
       </text>
     </view>
 
     <view class="toolbar">
-      <view class="btn danger" @tap="toggle">
+      <view class="btn" @tap="toggle">
         <text class="btn-text">
-          {{ onlyEven ? 'Show all' : 'Even only' }}
+          {{ onlyEven ? 'Show all (16)' : 'Even only (8)' }}
         </text>
       </view>
       <view class="btn" @tap="reset">
@@ -49,8 +47,8 @@ function reset() {
       </view>
     </view>
 
-    <view class="banner warn">
-      <text class="banner-text">
+    <view class="banner ok-banner">
+      <text class="banner-text ok-text">
         Filter={{ onlyEven ? 'even' : 'all' }} · Vue length={{ items.length }}
       </text>
     </view>

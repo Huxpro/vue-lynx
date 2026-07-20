@@ -1,47 +1,62 @@
 <script setup lang="ts">
-import { ref } from 'vue-lynx';
-import { makeCards } from '../shared/data';
+import { computed, ref } from 'vue-lynx';
 
 /**
- * Stress case: reverse / rotate keyed children.
+ * Reorder stress — make the Vue truth vs native <list> mismatch obvious.
  *
- * Without `removeAction` + correct insert positions (and without recycling),
- * a reorder can leave native <list> showing the old order or mixed keys.
+ * Left/top strip is ordinary <view>s (always follows Vue). The <list> below
+ * is what the MT adapter drives. After "Yellow → top" or "Reverse", the two
+ * rows of colors must match. If the list keeps the old color order while the
+ * truth strip flips, the list adapter lost the move.
  */
-const items = ref(makeCards(10, 'Row'));
+type Tile = { id: string; label: string; color: string };
+
+const INITIAL: Tile[] = [
+  { id: 'R', label: 'RED', color: '#ef4444' },
+  { id: 'B', label: 'BLUE', color: '#3b82f6' },
+  { id: 'G', label: 'GREEN', color: '#22c55e' },
+  { id: 'Y', label: 'YELLOW', color: '#eab308' },
+];
+
+const items = ref<Tile[]>([...INITIAL]);
+
+const expectedTop = computed(() => items.value[0]!);
+const expectedOrder = computed(() =>
+  items.value.map((t) => t.label).join(' → '),
+);
+
+function yellowToTop() {
+  const rest = items.value.filter((t) => t.id !== 'Y');
+  const yellow = items.value.find((t) => t.id === 'Y')!;
+  items.value = [yellow, ...rest];
+}
 
 function reverse() {
   items.value = [...items.value].reverse();
 }
 
-function rotate() {
-  if (items.value.length < 2) return;
-  const [first, ...rest] = items.value;
-  items.value = [...rest, first!];
-}
-
 function reset() {
-  items.value = makeCards(10, 'Row');
+  items.value = [...INITIAL];
 }
 </script>
 
 <template>
   <view class="root">
     <view class="header">
-      <text class="title">list · reorder (gap)</text>
+      <text class="title">list · reorder</text>
       <text class="subtitle">
-        Vue `:key` / Lynx `:item-key` stay stable, but the MT adapter does not
-        emit a full insert/remove diff. Reverse / rotate and check whether the
-        on-screen order matches the banner.
+        Compare the two color rows. Top = Vue truth (plain views). Bottom =
+        native &lt;list&gt;. After a tap they must show the same left→right
+        order. A mismatch means the list adapter dropped the move.
       </text>
     </view>
 
     <view class="toolbar">
+      <view class="btn danger" @tap="yellowToTop">
+        <text class="btn-text">Yellow → top</text>
+      </view>
       <view class="btn danger" @tap="reverse">
         <text class="btn-text">Reverse</text>
-      </view>
-      <view class="btn danger" @tap="rotate">
-        <text class="btn-text">Rotate ↑</text>
       </view>
       <view class="btn" @tap="reset">
         <text class="btn-text">Reset</text>
@@ -50,24 +65,52 @@ function reset() {
 
     <view class="banner warn">
       <text class="banner-text">
-        Vue order: {{ items.map((c) => c.title).join(' → ') }}
+        Expect list TOP cell = {{ expectedTop.label }} · full order:
+        {{ expectedOrder }}
       </text>
     </view>
 
+    <!-- Vue truth: not a list — always correct -->
+    <view class="truth-block">
+      <text class="truth-label">Vue truth (not list)</text>
+      <view class="truth-row">
+        <view
+          v-for="(tile, i) in items"
+          :key="tile.id"
+          class="truth-chip"
+          :style="{ backgroundColor: tile.color }"
+        >
+          <text class="truth-chip-text">{{ i + 1 }}.{{ tile.label }}</text>
+        </view>
+      </view>
+    </view>
+
+    <text class="truth-label list-label">Native &lt;list&gt; (must match)</text>
+
     <list
-      class="list"
+      class="list reorder-list"
       list-type="single"
       scroll-orientation="vertical"
     >
       <list-item
-        v-for="(card, index) in items"
-        :key="card.id"
-        :item-key="card.id"
-        :estimated-main-axis-size-px="96"
+        v-for="(tile, index) in items"
+        :key="tile.id"
+        :item-key="tile.id"
+        :estimated-main-axis-size-px="88"
       >
-        <view class="card">
-          <text class="card-title">#{{ index + 1 }} · {{ card.title }}</text>
-          <text class="card-body">id={{ card.id }}</text>
+        <view
+          class="reorder-cell"
+          :style="{ backgroundColor: tile.color }"
+        >
+          <text class="reorder-cell-pos">slot {{ index + 1 }}</text>
+          <text class="reorder-cell-label">{{ tile.label }}</text>
+          <text class="reorder-cell-hint">
+            {{
+              index === 0
+                ? `← must be ${expectedTop.label}`
+                : `id=${tile.id}`
+            }}
+          </text>
         </view>
       </list-item>
     </list>

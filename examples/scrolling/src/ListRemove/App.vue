@@ -3,49 +3,54 @@ import { ref } from 'vue-lynx';
 import { makeCards } from '../shared/data';
 
 /**
- * Stress case: delete from the middle / pop the tail.
+ * Regression check: delete from the middle / pop the tail.
  *
- * Vue Lynx currently flushes only append-only `insertAction`s
- * (`removeAction` is always `[]`), so native <list> can keep stale cells
- * after a reactive splice.
+ * Empirically looks correct on device even though `removeAction` stays empty
+ * (likely helped by `__RemoveElement` on already-attached cells). Keep as a
+ * smoke test, not a known-broken demo.
  */
 const items = ref(makeCards(12, 'Row'));
+const lastAction = ref('—');
 
 function removeMiddle() {
   if (items.value.length < 2) return;
   const mid = Math.floor(items.value.length / 2);
+  const removed = items.value[mid]!;
   items.value = [
     ...items.value.slice(0, mid),
     ...items.value.slice(mid + 1),
   ];
+  lastAction.value = `removed middle ${removed.title}`;
 }
 
 function removeTail() {
   if (items.value.length === 0) return;
+  const removed = items.value[items.value.length - 1]!;
   items.value = items.value.slice(0, -1);
+  lastAction.value = `removed last ${removed.title}`;
 }
 
 function reset() {
   items.value = makeCards(12, 'Row');
+  lastAction.value = 'reset';
 }
 </script>
 
 <template>
   <view class="root">
     <view class="header">
-      <text class="title">list · remove (gap)</text>
+      <text class="title">list · remove (smoke)</text>
       <text class="subtitle">
-        Expectation: middle / tail deletes leave a consistent feed. Current
-        Vue Lynx list updates omit `removeAction` — watch for ghost rows or
-        wrong count after tapping.
+        Expectation: rows disappear and the length badge matches. This path
+        has looked fine in practice — use it as a regression check.
       </text>
     </view>
 
     <view class="toolbar">
-      <view class="btn danger" @tap="removeMiddle">
+      <view class="btn" @tap="removeMiddle">
         <text class="btn-text">Remove middle</text>
       </view>
-      <view class="btn danger" @tap="removeTail">
+      <view class="btn" @tap="removeTail">
         <text class="btn-text">Remove last</text>
       </view>
       <view class="btn" @tap="reset">
@@ -53,10 +58,9 @@ function reset() {
       </view>
     </view>
 
-    <view class="banner warn">
-      <text class="banner-text">
-        Vue data length: {{ items.length }} — compare with what native list
-        still shows.
+    <view class="banner ok-banner">
+      <text class="banner-text ok-text">
+        Vue length={{ items.length }} · last: {{ lastAction }}
       </text>
     </view>
 

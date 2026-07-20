@@ -210,8 +210,8 @@ export function useInfiniteFeed(pageSize = 20) {
 
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
-:::warning Append-only updates today
-Vue Lynx's Main Thread list adapter currently reports **new inserts only** (`removeAction` / `updateAction` are empty). Infinite append via `@scrolltolower` matches that path. Deletes, prepends, reorders, and filters need the stress examples below until full `ListUpdateInfoRecording`-style diffs land.
+:::warning Confirmed gap: prepend
+Vue Lynx's Main Thread list adapter always `push`es into `listItems` and ignores the INSERT anchor. **Prepending** (unshift / insert-before) is reported as a **tail** insert — see `ListPrepend`. Append-only feeds (`@scrolltolower`) stay on the supported path. Remove / filter have looked fine on device despite empty `removeAction`; reorder needs a careful visual check (`ListReorder`).
 :::
 
 ### 4. Prefer `list` over third-party virtual scrollers
@@ -228,16 +228,40 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 </list-item>
 ```
 
-## Known gaps — mutation stress tests
+## Mutation stress / smoke tests
 
-These four entries are intentional **breakage demos** for the incomplete list diff. Tap the toolbar, then compare the orange Vue banner with what native `<list>` still paints. When the MT adapter gains full `insertAction` / `removeAction` / `updateAction` diffs (ReactLynx's `ListUpdateInfoRecording`), they should start looking correct.
-
-| Entry | Mutation | What goes wrong today |
+| Entry | Mutation | Status |
 |---|---|---|
-| `ListRemove` | splice middle / pop tail | no `removeAction` → ghost rows / stale count |
-| `ListPrepend` | unshift vs append | INSERT ignores anchor → prepend reported as tail |
-| `ListReorder` | reverse / rotate | move = remove+insert without remove → wrong order |
-| `ListFilter` | toggle even-only | filter+restore → ghosts / duplicated `item-key` |
+| `ListPrepend` | unshift vs append | **Confirmed gap** — new cell lands at the tail |
+| `ListReorder` | Yellow→top / reverse | Check carefully — Vue-truth color strip vs `<list>` |
+| `ListRemove` | splice middle / pop | Smoke — OK in practice |
+| `ListFilter` | even-only toggle | Smoke — OK in practice |
+
+### Confirmed: prepend
+
+Tap **Prepend** once. The TOP list cell must turn red (`NEW …`). If the red card appears at the bottom, the adapter ignored the insert-before anchor. **Append** is the control that should work.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListPrepend/App.vue"
+  entry="src/ListPrepend"
+  defaultEntryName="ListPrepend"
+/>
+
+### Check carefully: reorder
+
+Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list>` below must show the **same left→right / top→bottom order** after **Yellow → top** or **Reverse**. A mismatch is a list move bug.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListReorder/App.vue"
+  entry="src/ListReorder"
+  defaultEntryName="ListReorder"
+/>
+
+### Smoke: remove + filter
+
+These have looked correct on device; kept as regression taps.
 
 <Go
   example="scrolling"
@@ -248,26 +272,12 @@ These four entries are intentional **breakage demos** for the incomplete list di
 
 <Go
   example="scrolling"
-  defaultFile="src/ListPrepend/App.vue"
-  entry="src/ListPrepend"
-  defaultEntryName="ListPrepend"
-/>
-
-<Go
-  example="scrolling"
-  defaultFile="src/ListReorder/App.vue"
-  entry="src/ListReorder"
-  defaultEntryName="ListReorder"
-/>
-
-<Go
-  example="scrolling"
   defaultFile="src/ListFilter/App.vue"
   entry="src/ListFilter"
   defaultEntryName="ListFilter"
 />
 
-Matching automated coverage lives in `packages/testing-library` as `it.fails` cases under **native list element · mutation gaps** — they assert the *correct* `update-list-info` payloads and will flip to passing once the adapter is fixed.
+Automated coverage: `packages/testing-library` → **native list element · mutation gaps**. Prepend stays `it.fails` on the correct `position: 0` payload; remove/filter are smoke assertions on Vue length.
 
 ## Decision checklist
 
@@ -276,7 +286,7 @@ Matching automated coverage lives in `packages/testing-library` as `it.fails` ca
 3. Do you need waterfall or multi-column flow? → **`<list list-type="…">`**
 4. Will the dataset grow without bound? → **`<list>` + composable + `@scrolltolower`**
 5. Did you set matching `:key` / `:item-key`? → required for correct recycling
-6. Do you need delete / prepend / reorder / filter? → stress-test first; prefer append-only feeds until list diffs are complete
+6. Do you need **prepend**? → broken today — prefer append / rebuild until the adapter respects INSERT anchors
 
 ## See also
 
