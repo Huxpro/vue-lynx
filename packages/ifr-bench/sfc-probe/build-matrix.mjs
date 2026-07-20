@@ -42,6 +42,8 @@ const CELLS = [
     coord: 'Data/Dense/—/Split·Durable' },
   { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0', sparse: '1',
     coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral' },
+  { name: 'content-vapor-ifr-et', mode: 'vapor', ifr: '1', et: '1', sparse: '1',
+    coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral(IFR×ET)' },
   // Graph-eng naming-density pair (#301): same IFR vapor, A1 vs A2.
   {
     name: 'content-vapor-ifr-dense',

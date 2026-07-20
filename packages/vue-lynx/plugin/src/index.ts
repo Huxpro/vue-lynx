@@ -364,6 +364,11 @@ export function pluginVueLynx(
     enableSparseNaming = true,
     ifrPaint = 'plain',
   } = options;
+  // The public option selects two render-model-specific implementations:
+  // VDOM compiler lowering or Vapor's sparse disposable IFR paint.
+  const vaporIfrElementTemplates = vapor
+    ? (options.enableElementTemplates ?? enableIFR)
+    : false;
   const enableElementTemplates = vapor
     // Vapor steady-state addressing is dense TREE ops, not the VDOM
     // elementTemplateTransform. IFR×ET sparse paint for Vapor is a separate
@@ -497,6 +502,9 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                __VUE_LYNX_VAPOR_IFR_ET__: JSON.stringify(
+                  vaporIfrElementTemplates,
+                ),
                 [VAPOR_SPARSE_NAMING_GLOBAL]: JSON.stringify(
                   templateNaming === 'block',
                 ),

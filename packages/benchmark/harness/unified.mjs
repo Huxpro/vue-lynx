@@ -82,7 +82,7 @@ function full() {
   // Full = focused Vue IFR storms on all scales + react variants + synthesize.
   // Content-probe FCP rebuild is expensive and lives in ifr-bench; ingest
   // committed scale results unless IFR_SCALE_REBUILD=1.
-  const allVue = 'vdom,vdom-ifr,vdom-ifr-et,vapor,vapor-ifr';
+  const allVue = 'vdom,vdom-ifr,vdom-ifr-et,vapor,vapor-ifr,vapor-ifr-et';
   const all = `${allVue},react,react-naive,react-compiler`;
   if (!args['skip-build']) {
     run(`node harness/build-unified.mjs --only=${all}`);

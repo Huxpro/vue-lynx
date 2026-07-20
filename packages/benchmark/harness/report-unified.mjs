@@ -103,6 +103,7 @@ const COLUMN_KEYS = [
   'vapor-code',
   'vapor-ifr-dense',
   'vapor-ifr',
+  'vapor-ifr-et',
   'vapor-engine',
   'vapor-ifr-engine-et',
   'react',
@@ -133,6 +134,7 @@ const FCP_ARCH_KEYS = [
   { key: 'vapor-code', color: '#0891b2' },
   { key: 'vapor-ifr-dense', color: '#f0b429' },
   { key: 'vapor-ifr', color: '#d97706' },
+  { key: 'vapor-ifr-et', color: '#ea580c' },
   { key: 'vapor-engine', color: '#0d8a5f' },
   { key: 'vapor-ifr-engine-et', color: '#92400e' },
   // code-paint (#340) renders a real measured number, unlike the engine cells.

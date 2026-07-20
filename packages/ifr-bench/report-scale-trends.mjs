@@ -39,6 +39,7 @@ const VARIANT_ORDER = [
   'vdom-ifr-et',
   'vapor',
   'vapor-ifr',
+  'vapor-ifr-et',
 ];
 const VARIANT_LABEL = {
   vdom: 'VDOM',
@@ -46,6 +47,7 @@ const VARIANT_LABEL = {
   'vdom-ifr-et': 'VDOM+IFR+ET',
   vapor: 'Vapor',
   'vapor-ifr': 'Vapor+IFR',
+  'vapor-ifr-et': 'Vapor+IFR+ET',
 };
 const COLORS = {
   vdom: '#6b7280',
@@ -53,6 +55,7 @@ const COLORS = {
   'vdom-ifr-et': '#7c3aed',
   vapor: '#059669',
   'vapor-ifr': '#d97706',
+  'vapor-ifr-et': '#ea580c',
 };
 
 const manifest = JSON.parse(

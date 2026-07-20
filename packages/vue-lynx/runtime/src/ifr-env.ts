@@ -2,8 +2,9 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import { IFR_MT_FLAG_GLOBAL } from 'vue-lynx/internal/ops';
+export { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 
+import { IFR_MT_FLAG_GLOBAL } from 'vue-lynx/internal/ops';
 /** Return true only inside an IFR-enabled main-thread bundle. */
 export function isIfrMainThread(): boolean {
   return (

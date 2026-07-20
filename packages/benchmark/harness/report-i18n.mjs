@@ -90,6 +90,7 @@ export function copy(lang) {
       'vapor-code': zh ? 'vapor +b:c（code 档）' : 'vapor +b:c (code staging)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
       'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
+      'vapor-ifr-et': 'vapor +b +ifr:et',
       'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
         ? 'vapor +b +ifr（alias）'
@@ -144,6 +145,7 @@ export function copy(lang) {
       'vapor-code': zh ? 'vapor +b:c（code 档）' : 'vapor +b:c (code staging)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
       'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
+      'vapor-ifr-et': 'vapor +b +ifr:et',
       'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
         ? 'vapor +b +ifr（alias）'

@@ -36,6 +36,7 @@ import {
   computeIfrNavSlots,
   inferHoleSlots,
 } from 'vue-lynx/internal/html-to-template-node';
+import { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 import { patchEventProp } from './event-props.js';
 import {
   bundleDeliveryRequested,
@@ -1465,7 +1466,7 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
       counter,
       needed,
       slotToSparse,
-      !isIfrMainThread(),
+      !(isIfrMainThread() && isVaporIfrElementTemplates()),
     );
     if (!root) {
       throw new Error(
@@ -1493,7 +1494,7 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
 
   // Dense A1 fallback.
   ShadowElement.nextUid += cache.count;
-  if (isIfrMainThread()) {
+  if (isIfrMainThread() && isVaporIfrElementTemplates()) {
     // Unannotated fallback: preserve the dense uid contract while avoiding
     // disposable static state on the IFR first-frame navigation facade.
     const holes = inferHoleSlots(cache.structure);

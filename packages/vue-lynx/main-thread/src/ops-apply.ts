@@ -13,6 +13,7 @@
 import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
 import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
+import { isVaporIfrElementTemplates } from 'vue-lynx/internal/vapor-ifr-et';
 
 import {
   bakeDenseTreeCreate,
@@ -789,7 +790,11 @@ export function applyOps(ops: unknown[], flush = true): void {
           }
           // The newer Code/Engine staging axes keep their own clone paths.
           // Data staging uses the IFR creator while selectors are deferred.
-          if (!painted && deferIfrSelectorAttributes) {
+          if (
+            !painted
+            && deferIfrSelectorAttributes
+            && isVaporIfrElementTemplates()
+          ) {
             const sparse = sparseCreators.get(tplId);
             if (sparse) {
               const result = sparse(pageUniqueId, baseUid, {

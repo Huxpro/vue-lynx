@@ -27,6 +27,7 @@ export default defineConfig({
     __VUE_PROD_DEVTOOLS__: 'false',
     __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
     __VUE_LYNX_AUTO_PIXEL_UNIT__: 'true',
+    __VUE_LYNX_VAPOR_IFR_ET__: 'true',
     __FEATURE_SUSPENSE__: 'true',
     __FEATURE_PROD_DEVTOOLS__: 'false',
     __FEATURE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
@@ -54,6 +55,13 @@ export default defineConfig({
         replacement: path.resolve(
           __dirname,
           '../vue-lynx/internal/src/html-to-template-node.ts',
+        ),
+      },
+      {
+        find: 'vue-lynx/internal/vapor-ifr-et',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/vapor-ifr-et.ts',
         ),
       },
       // vue-lynx/vapor → pure vapor entry source (the app entry; the

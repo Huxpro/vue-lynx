@@ -32,6 +32,7 @@ const VUE_CELLS = [
   { id: 'vdom-et', app: 'ui-vdom', cell: 'et' },
   { id: 'vapor', app: 'ui-vapor', cell: 'off' },
   { id: 'vapor-ifr', app: 'ui-vapor', cell: 'ifr' },
+  { id: 'vapor-ifr-et', app: 'ui-vapor', cell: 'ifr-et' },
   // Graph-eng four-axis cells (#301/#321/#325) — opt-in via --only=.
   { id: 'vapor-dense', app: 'ui-vapor', cell: 'dense' },
   { id: 'vapor-engine', app: 'ui-vapor', cell: 'engine' },
