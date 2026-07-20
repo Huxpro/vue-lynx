@@ -29,8 +29,10 @@ import type {
   TemplateNode,
   TemplateNodeProps,
 } from 'vue-lynx/internal/ops';
+import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
 import { patchEventProp } from './event-props.js';
 import { scheduleFlush } from './flush.js';
+import { isIfrMainThread } from './ifr-env.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
@@ -1085,6 +1087,54 @@ function buildShadowClone(
   return clone;
 }
 
+/**
+ * IFR-MT lite clone: same uid/preorder contract and navigation links as
+ * `buildShadowClone`, but skips copying static attrs/styles/classes — those
+ * are already baked into REGISTER_TREE / CLONE_TREE. Disposable MT paint only
+ * needs pointers for one-shot hole writes (setText / setClass / on).
+ */
+function buildShadowCloneLite(
+  proto: ShadowElement,
+  base: number,
+  counter: { value: number },
+): ShadowElement {
+  const clone = new ShadowElement(proto.tag, base + counter.value++);
+
+  if (proto.tag === '#text' || proto.tag === '#comment') {
+    clone._text = proto._text;
+    if (proto.tag === '#text' && proto._text) {
+      clone._mtCreated = true;
+      clone._mtInserted = true;
+    }
+    return clone;
+  }
+
+  // Share scope-class identity with the inert proto (read-only on IFR MT).
+  if (proto._scopeClasses.size > 0) {
+    clone._scopeClasses = proto._scopeClasses;
+  }
+  if (proto._id !== undefined) {
+    clone._id = proto._id;
+    idRegistry.set(proto._id, clone);
+  }
+
+  if (isOnlyChildText(proto)) {
+    const textClone = new ShadowElement('#text');
+    textClone._text = proto.firstChild!._text;
+    textClone._textHost = clone;
+    clone._aliasedTextChild = textClone;
+    clone._link(textClone, null);
+  } else {
+    clone._text = proto._text;
+    let child = proto.firstChild;
+    while (child) {
+      clone._link(buildShadowCloneLite(child, base, counter), null);
+      child = child.next;
+    }
+  }
+  return clone;
+}
+
 function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   let cache = templateCaches.get(proto);
   if (!cache) {
@@ -1103,6 +1153,31 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   // shadow nodes allocate after it (plain constructor).
   const base = ShadowElement.nextUid;
   ShadowElement.nextUid += cache.count;
+
+  if (isIfrMainThread()) {
+    // Disposable IFR paint: keep the TREE protocol (dense uids for hydration)
+    // but shrink BG-side work.
+    const holes = inferHoleSlots(cache.structure);
+    if (holes.length === 0) {
+      // Fully static: vapor never navigates into children — only the root is
+      // appended to the page. Children exist solely as natives via CLONE_TREE.
+      const root = new ShadowElement(proto.tag, base);
+      root._mtCreated = true;
+      pushOp(OP.CLONE_TREE, cache.id, base);
+      scheduleFlush();
+      return root;
+    }
+    const counter = { value: 0 };
+    const root = buildShadowCloneLite(proto, base, counter);
+    if (__DEV__ && counter.value !== cache.count) {
+      console.warn(
+        `[vue-lynx] IFR lite template clone materialized ${counter.value} nodes but the registered structure has ${cache.count} — uid contract violated.`,
+      );
+    }
+    pushOp(OP.CLONE_TREE, cache.id, base);
+    scheduleFlush();
+    return root;
+  }
 
   const counter = { value: 0 };
   const root = buildShadowClone(proto, base, counter);

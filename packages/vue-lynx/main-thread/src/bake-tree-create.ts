@@ -147,16 +147,28 @@ export type DenseTreeCreator = (
   pageUniqueId: number,
   baseUid: number,
   hooks: BakeHooks,
-) => { el: LynxElement; uid: number } | null;
+) => {
+  el: LynxElement;
+  uid: number;
+  /** Full preorder stack (null = comment / empty-text skip). */
+  stack: (LynxElement | null)[];
+} | null;
 
 export type SparseTreeCreator = (
   pageUniqueId: number,
+  /** Dense-compatible base uid; named slots land at `baseUid + slot`. */
+  baseUid: number,
   hooks: BakeHooks,
 ) => {
   /** Native handles for [root, hole0, hole1, …] — ET-shaped return. */
   handles: LynxElement[];
   /** Preorder indices of those handles within the full walk. */
   namedSlots: number[];
+  /**
+   * Full preorder stack (null = comment / empty-text skip) for structural
+   * remapping onto dense BG `CLONE_TREE` uids after IFR handoff.
+   */
+  stack: (LynxElement | null)[];
 };
 
 /**
@@ -228,17 +240,18 @@ export function bakeDenseTreeCreate(structure: TemplateNode): DenseTreeCreator {
           break;
       }
     }
-    return root;
+    return root
+      ? { el: root.el, uid: root.uid, stack }
+      : null;
   };
 }
 
 /**
  * Sparse creator for the IFR-discard model: builds the full native tree but
- * only names `holeSlots` (plus the root at slot 0). Returned `handles` are
- * `[root, …holes]` — the same shape as VDOM `INSTANTIATE_TEMPLATE`'s
- * `create()`. Callers that need later dense remapping should retain the
- * full `stack` themselves; this helper intentionally forgets unnamed
- * interiors after linking.
+ * only names `holeSlots` (plus the root at slot 0) under dense-compatible
+ * uids (`baseUid + slot`). Returned `handles` are `[root, …holes]` — the
+ * same shape as VDOM `INSTANTIATE_TEMPLATE`'s `create()`. The full `stack`
+ * is retained for structural remapping onto BG dense `CLONE_TREE` names.
  */
 export function bakeSparseTreeCreate(
   structure: TemplateNode,
@@ -258,12 +271,10 @@ export function bakeSparseTreeCreate(
     }
   }
 
-  return (pageUniqueId, hooks) => {
+  return (pageUniqueId, baseUid, hooks) => {
     const { elements, installSelectorAttribute } = hooks;
     const stack: (LynxElement | null)[] = new Array(slotCount).fill(null);
     const namedSlots = [...named].sort((a, b) => a - b);
-    // Temporary identity map so Append can find children before we forget
-    // unnamed handles. uids here are slot indices (not protocol ids).
     let i = 0;
     const len = prog.length;
 
@@ -282,12 +293,11 @@ export function bakeSparseTreeCreate(
           __SetCSSId([el], 0);
           stack[slot] = el;
           if (named.has(slot)) {
-            // Sparse protocol ids are assigned by the caller (rootId+k);
-            // here we only keep handles. Optional map seeding uses slot as
-            // a private key only when the hooks map is the real elements
-            // map — callers doing remapping pass a scratch map.
-            elements.set(slot, el);
-            installSelectorAttribute(slot, el);
+            // Dense-compatible protocol ids so one-shot IFR SET_* and later
+            // remapping agree with BG `baseUid + preorder`.
+            const uid = baseUid + slot;
+            elements.set(uid, el);
+            installSelectorAttribute(uid, el);
           }
           break;
         }
@@ -297,8 +307,9 @@ export function bakeSparseTreeCreate(
           __SetCSSId([el], 0);
           stack[slot] = el;
           if (named.has(slot)) {
-            elements.set(slot, el);
-            installSelectorAttribute(slot, el);
+            const uid = baseUid + slot;
+            elements.set(uid, el);
+            installSelectorAttribute(uid, el);
           }
           break;
         }
@@ -314,7 +325,12 @@ export function bakeSparseTreeCreate(
           const childSlot = prog[i++]!;
           const parent = stack[parentSlot];
           const child = stack[childSlot];
-          if (parent && child) __AppendElement(parent, child);
+          if (parent && child) {
+            __AppendElement(parent, child);
+            // Track every link (including unnamed interiors) so densify +
+            // releaseSubtree see the full tree once names are filled in.
+            trackInsert(baseUid + parentSlot, baseUid + childSlot);
+          }
           break;
         }
         default:
@@ -327,6 +343,6 @@ export function bakeSparseTreeCreate(
       const el = stack[slot];
       if (el) handles.push(el);
     }
-    return { handles, namedSlots };
+    return { handles, namedSlots, stack };
   };
 }

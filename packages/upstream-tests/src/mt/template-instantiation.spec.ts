@@ -161,18 +161,22 @@ describe('sparse bake (IFR-discard hole naming)', () => {
 
     const create = bakeSparseTreeCreate(structure as never, [1, 3]);
     const scratch = new Map<number, LynxElement>();
-    const { handles, namedSlots } = create(1, {
+    const baseUid = 5000;
+    const { handles, namedSlots, stack } = create(1, baseUid, {
       elements: scratch,
       installSelectorAttribute() {},
     });
 
     expect(namedSlots).toEqual([0, 1, 3]);
     expect(handles).toHaveLength(3);
+    expect(stack).toHaveLength(4);
     // Only named slots landed in the map — slot 2 (static badge view) did not.
-    expect(scratch.has(0)).toBe(true);
-    expect(scratch.has(1)).toBe(true);
-    expect(scratch.has(2)).toBe(false);
-    expect(scratch.has(3)).toBe(true);
+    expect(scratch.has(baseUid + 0)).toBe(true);
+    expect(scratch.has(baseUid + 1)).toBe(true);
+    expect(scratch.has(baseUid + 2)).toBe(false);
+    expect(scratch.has(baseUid + 3)).toBe(true);
+    // Full stack retained for densify remapping (including unnamed interior).
+    expect(stack[2]).toBeTruthy();
 
     const [root, title, badgeLabel] = handles as Element[];
     expect(root.getAttribute('class')).toBe('card');

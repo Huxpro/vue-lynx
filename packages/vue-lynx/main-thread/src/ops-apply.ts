@@ -12,10 +12,13 @@
 
 import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
 import type { TemplateNode } from 'vue-lynx/internal/ops';
+import { inferHoleSlots } from 'vue-lynx/internal/html-to-template-node';
 
 import {
   bakeDenseTreeCreate,
+  bakeSparseTreeCreate,
   type DenseTreeCreator,
+  type SparseTreeCreator,
 } from './bake-tree-create.js';
 import {
   elements,
@@ -80,6 +83,15 @@ function createTypedElement(
 const templates = new Map<number, TemplateNode>();
 /** Baked dense creators — one per REGISTER_TREE id (milestone-1 ET bridge). */
 const bakedCreators = new Map<number, DenseTreeCreator>();
+/** Baked sparse creators — IFR first-frame hole-only naming. */
+const sparseCreators = new Map<number, SparseTreeCreator>();
+/**
+ * IFR paint registry: baseUid → preorder native handles (null = skip slot).
+ * Populated when CLONE_TREE paints during the IFR first-frame window; used
+ * for structural remapping if a later path paints sparsely and hydration
+ * needs to adopt by preorder instead of re-creating.
+ */
+const ifrPaintHandles = new Map<number, (LynxElement | null)[]>();
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -106,6 +118,19 @@ export function beginIfrSelectorAttributeDeferral(): void {
 
 /** Install every deferred selector before the Background Thread owns the tree. */
 export function commitIfrSelectorAttributes(): void {
+  // Densify sparse IFR paints (hole-only naming → full preorder map) so BG
+  // SET_* ops targeting interior nodes resolve after handoff.
+  for (const [baseUid, pending] of ifrPaintHandles) {
+    for (let k = 0; k < pending.length; k++) {
+      const el = pending[k];
+      if (el && !elements.has(baseUid + k)) {
+        elements.set(baseUid + k, el);
+        deferredIfrSelectorIds.push(baseUid + k);
+      }
+    }
+  }
+  ifrPaintHandles.clear();
+
   const ids = deferredIfrSelectorIds;
   deferredIfrSelectorIds = [];
   deferIfrSelectorAttributes = false;
@@ -174,7 +199,7 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
 function instantiateTemplate(
   creator: DenseTreeCreator,
   baseUid: number,
-): { el: LynxElement; uid: number } | null {
+): { el: LynxElement; uid: number; stack: (LynxElement | null)[] } | null {
   return creator(pageUniqueId, baseUid, {
     elements,
     installSelectorAttribute,
@@ -271,15 +296,55 @@ export function applyOps(ops: unknown[], flush = true): void {
         const structure = ops[i++] as TemplateNode;
         templates.set(tplId, structure);
         bakedCreators.set(tplId, bakeDenseTreeCreate(structure));
+        sparseCreators.set(
+          tplId,
+          bakeSparseTreeCreate(structure, inferHoleSlots(structure)),
+        );
         break;
       }
 
       case OP.CLONE_TREE: {
         const tplId = ops[i++] as number;
         const baseUid = ops[i++] as number;
+        // Already painted (IFR first frame or remapping adopt) — do not
+        // duplicate natives. Hydration's identical-frame skip usually
+        // prevents a second apply; this guards dual-emission / remapping.
+        if (elements.has(baseUid)) {
+          const pending = ifrPaintHandles.get(baseUid);
+          if (pending && !deferIfrSelectorAttributes) {
+            // Post-IFR densify: fill any holes-only sparse map from the
+            // retained preorder stack (structural remapping).
+            for (let k = 0; k < pending.length; k++) {
+              const el = pending[k];
+              if (el && !elements.has(baseUid + k)) {
+                elements.set(baseUid + k, el);
+                installSelectorAttribute(baseUid + k, el);
+              }
+            }
+            ifrPaintHandles.delete(baseUid);
+          }
+          break;
+        }
+        // IFR first-frame window: paint with sparse (root + holes) naming
+        // and retain the full preorder stack for densify on handoff / BG
+        // CLONE_TREE adopt.
+        if (deferIfrSelectorAttributes) {
+          const sparse = sparseCreators.get(tplId);
+          if (sparse) {
+            const painted = sparse(pageUniqueId, baseUid, {
+              elements,
+              installSelectorAttribute,
+            });
+            ifrPaintHandles.set(baseUid, painted.stack);
+            break;
+          }
+        }
         const creator = bakedCreators.get(tplId);
         if (creator) {
-          instantiateTemplate(creator, baseUid);
+          const painted = instantiateTemplate(creator, baseUid);
+          if (painted && deferIfrSelectorAttributes) {
+            ifrPaintHandles.set(baseUid, painted.stack);
+          }
         }
         break;
       }
@@ -444,7 +509,21 @@ export function resetMainThreadState(): void {
   resetElementRegistry();
   templates.clear();
   bakedCreators.clear();
+  sparseCreators.clear();
+  ifrPaintHandles.clear();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
+}
+
+/**
+ * Record a sparse IFR paint for later dense adoption on CLONE_TREE.
+ * `handles[k]` is the native at preorder slot k (null = skip).
+ * @internal
+ */
+export function registerIfrPaintHandles(
+  baseUid: number,
+  handles: (LynxElement | null)[],
+): void {
+  ifrPaintHandles.set(baseUid, handles);
 }
