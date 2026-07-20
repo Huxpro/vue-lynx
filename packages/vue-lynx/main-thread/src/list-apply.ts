@@ -191,9 +191,21 @@ function childElements(parent: LynxElement): LynxElement[] {
   return kids;
 }
 
-function isDomElement(el: LynxElement): boolean {
-  return typeof (el as unknown as { getAttributeNames?: unknown })
-      .getAttributeNames === 'function';
+/** Minimal DOM surface used for attr copy during cross-item hydrate. */
+interface DomLike {
+  textContent: string | null;
+  getAttributeNames: () => string[];
+  getAttribute: (name: string) => string | null;
+  setAttribute: (name: string, value: string) => void;
+  removeAttribute: (name: string) => void;
+}
+
+function asDom(el: LynxElement): DomLike | null {
+  const candidate = el as unknown as Partial<DomLike>;
+  if (typeof candidate.getAttributeNames === 'function') {
+    return candidate as DomLike;
+  }
+  return null;
 }
 
 type ContentSnapshot = {
@@ -202,39 +214,44 @@ type ContentSnapshot = {
 };
 
 function snapshotContent(el: LynxElement): ContentSnapshot {
-  if (!isDomElement(el)) {
-    return { text: el.textContent, attrs: [] };
+  const dom = asDom(el);
+  if (!dom) {
+    return { text: (el as { textContent?: string | null }).textContent ?? null, attrs: [] };
   }
   const attrs: [string, string][] = [];
-  for (const name of el.getAttributeNames()) {
+  for (const name of dom.getAttributeNames()) {
     // vue-ref-* follows bgId ownership and is rewritten after remap.
     if (name.startsWith('vue-ref-')) continue;
-    attrs.push([name, el.getAttribute(name) ?? '']);
+    attrs.push([name, dom.getAttribute(name) ?? '']);
   }
   return { text: null, attrs };
 }
 
 function applyContent(el: LynxElement, snap: ContentSnapshot): void {
-  if (!isDomElement(el)) {
-    if (snap.text !== null) el.textContent = snap.text;
+  const dom = asDom(el);
+  if (!dom) {
+    if (snap.text !== null) {
+      (el as { textContent?: string | null }).textContent = snap.text;
+    }
     return;
   }
   const keep = new Set(snap.attrs.map(([n]) => n));
-  for (const name of el.getAttributeNames()) {
+  for (const name of dom.getAttributeNames()) {
     if (name.startsWith('vue-ref-')) continue;
-    if (!keep.has(name)) el.removeAttribute(name);
+    if (!keep.has(name)) dom.removeAttribute(name);
   }
   for (const [name, value] of snap.attrs) {
-    el.setAttribute(name, value);
+    dom.setAttribute(name, value);
   }
 }
 
 function retargetVueRef(el: LynxElement, bgId: number): void {
-  if (!isDomElement(el)) return;
-  for (const name of el.getAttributeNames()) {
-    if (name.startsWith('vue-ref-')) el.removeAttribute(name);
+  const dom = asDom(el);
+  if (!dom) return;
+  for (const name of dom.getAttributeNames()) {
+    if (name.startsWith('vue-ref-')) dom.removeAttribute(name);
   }
-  el.setAttribute(`vue-ref-${bgId}`, '1');
+  dom.setAttribute(`vue-ref-${bgId}`, '1');
 }
 
 /**
@@ -695,4 +712,102 @@ export function getRecyclePoolSizeForTest(
 /** Test helper: active sign-map size for a list Fiber id. */
 export function getSignMapSizeForTest(listFiberId: number): number {
   return signMaps.get(listFiberId)?.size ?? 0;
+}
+
+export interface ListRecycleProbeResult {
+  selfOk: boolean;
+  crossOk: boolean;
+  sign0: number;
+  sign0b: number;
+  sign1: number;
+  poolAfterLeave: number;
+  poolAfterCross: number;
+  reuseKey: string;
+}
+
+function resolveListBgId(list?: LynxElement | null): number {
+  if (list) {
+    for (const id of listElementIds) {
+      if (elements.get(id) === list) return id;
+    }
+    try {
+      const fiberId = __GetElementUniqueID(list);
+      for (const [bgId, fid] of listBgToFiberId) {
+        if (fid === fiberId) return bgId;
+      }
+    } catch {
+      // web wrappers may not expose PAPI unique ids the same way
+    }
+    // Walk ancestors — main-thread-ref may point at an inner node.
+    let cur: { parentNode?: unknown } | null | undefined =
+      list as { parentNode?: unknown };
+    for (let i = 0; i < 8 && cur; i++) {
+      for (const id of listElementIds) {
+        if (elements.get(id) === cur) return id;
+      }
+      cur = cur.parentNode as { parentNode?: unknown } | null | undefined;
+    }
+  }
+  const first = listElementIds.values().next().value as number | undefined;
+  if (first === undefined) {
+    throw new Error('probeListRecycle: no <list> registered on MT');
+  }
+  return first;
+}
+
+/**
+ * Drive enqueue / componentAtIndex against a live list and report whether
+ * uiSigns self-reuse and cross-item-reuse. Used by the ListRecycle example
+ * and headless browser checks.
+ *
+ * Calls the same internal mount/enqueue paths as the native callbacks so it
+ * works even when `main-thread-ref` resolves to a web wrapper without the
+ * callback properties attached.
+ */
+export function probeListRecycle(
+  list?: LynxElement | null,
+): ListRecycleProbeResult {
+  const bgId = resolveListBgId(list);
+  const listEl = elements.get(bgId);
+  const listID = listBgToFiberId.get(bgId);
+  const items = listItems.get(bgId);
+  if (!listEl || listID === undefined || !items || items.length < 2) {
+    throw new Error('probeListRecycle requires a list with ≥ 2 items');
+  }
+
+  const reuseKey = reuseKeyFor(items[0]!.bgId);
+
+  // Warm index 0 then leave so the probe starts from a pooled state.
+  const existing0 = mountListItem(
+    listEl,
+    listID,
+    items[0]!,
+    9001,
+    false,
+    false,
+  );
+  enqueueListItem(listID, existing0);
+
+  const sign0 = mountListItem(listEl, listID, items[0]!, 9002, false, false);
+  enqueueListItem(listID, sign0);
+  const poolAfterLeave = getRecyclePoolSizeForTest(listID, reuseKey);
+
+  const sign0b = mountListItem(listEl, listID, items[0]!, 9003, false, false);
+  const selfOk = sign0b === sign0;
+
+  enqueueListItem(listID, sign0b);
+  const sign1 = mountListItem(listEl, listID, items[1]!, 9004, false, false);
+  const crossOk = sign1 === sign0b;
+  const poolAfterCross = getRecyclePoolSizeForTest(listID, reuseKey);
+
+  return {
+    selfOk,
+    crossOk,
+    sign0,
+    sign0b,
+    sign1,
+    poolAfterLeave,
+    poolAfterCross,
+    reuseKey,
+  };
 }

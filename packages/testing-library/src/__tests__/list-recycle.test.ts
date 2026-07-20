@@ -11,6 +11,7 @@ import { render } from '../index.js';
 import {
   getRecyclePoolSizeForTest,
   getSignMapSizeForTest,
+  probeListRecycle,
 } from '../../../vue-lynx/main-thread/src/list-apply.js';
 
 function env() {
@@ -189,5 +190,20 @@ describe('list cell recycling', () => {
     // After remove, remaining cells can still be entered.
     const sA = tree.enterListItemAtIndex(listEl, 0);
     expect(typeof sA).toBe('number');
+  });
+
+  it('probeListRecycle reports self + cross reuse', () => {
+    const { container } = mountList(['A', 'B', 'C'], 'row');
+    const e = env();
+    e.switchToMainThread();
+    const listEl = container.querySelector('list') as any;
+
+    const result = probeListRecycle(listEl);
+    expect(result.selfOk).toBe(true);
+    expect(result.crossOk).toBe(true);
+    expect(result.sign0b).toBe(result.sign0);
+    expect(result.sign1).toBe(result.sign0b);
+    expect(result.poolAfterLeave).toBe(1);
+    expect(result.reuseKey).toBe('list-itemrow');
   });
 });
