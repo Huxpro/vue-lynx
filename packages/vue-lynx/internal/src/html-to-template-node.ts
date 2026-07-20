@@ -47,6 +47,8 @@ const VOID_ELEMENTS = new Set([
   'embed',
   'hr',
   'img',
+  // Lynx `<image>` is void-like in compiler-vapor HTML (no children).
+  'image',
   'input',
   'link',
   'meta',

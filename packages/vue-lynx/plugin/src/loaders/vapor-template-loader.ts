@@ -206,9 +206,13 @@ export default function vaporTemplateLoader(
 
   // Build-time structured templates (#234 / IFR×ET): rewrite
   // template("<view…>") → template(<TemplateNode>) so both threads skip
-  // the runtime HTML parse. Failures leave the string form intact.
+  // the runtime HTML parse. Opt-in via VUE_LYNX_STRUCTURED_TEMPLATES=1
+  // until the rewrite is green on large sfc-probe vapor builds.
   let code = compiled.code;
-  if (descriptor.vapor) {
+  if (
+    descriptor.vapor
+    && process.env.VUE_LYNX_STRUCTURED_TEMPLATES === '1'
+  ) {
     try {
       // Lazy require keeps the loader light when vapor is off; the rewrite
       // module pulls in the HTML→TemplateNode parser.

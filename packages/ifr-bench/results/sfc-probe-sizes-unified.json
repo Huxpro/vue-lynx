@@ -9,20 +9,20 @@
         "enableElementTemplates": false
       },
       "webBundle": {
-        "raw": 147763,
-        "gzip": 35865
+        "raw": 153119,
+        "gzip": 37545
       },
       "lynxBundle": {
-        "raw": 146533,
-        "gzip": 42452
+        "raw": 152684,
+        "gzip": 45165
       },
       "mtSection": {
-        "raw": 20975,
-        "gzip": 7239
+        "raw": 24140,
+        "gzip": 8281
       },
       "bgSection": {
-        "raw": 118443,
-        "gzip": 27841
+        "raw": 120520,
+        "gzip": 28482
       }
     },
     {
@@ -33,20 +33,20 @@
         "enableElementTemplates": false
       },
       "webBundle": {
-        "raw": 275149,
-        "gzip": 64430
+        "raw": 282393,
+        "gzip": 66658
       },
       "lynxBundle": {
-        "raw": 275018,
-        "gzip": 92678
+        "raw": 283256,
+        "gzip": 96090
       },
       "mtSection": {
-        "raw": 139912,
-        "gzip": 34633
+        "raw": 144833,
+        "gzip": 36188
       },
       "bgSection": {
-        "raw": 121425,
-        "gzip": 28901
+        "raw": 123620,
+        "gzip": 29581
       }
     },
     {
@@ -57,20 +57,20 @@
         "enableElementTemplates": true
       },
       "webBundle": {
-        "raw": 506539,
-        "gzip": 107079
+        "raw": 513783,
+        "gzip": 109612
       },
       "lynxBundle": {
-        "raw": 463938,
-        "gzip": 145942
+        "raw": 472164,
+        "gzip": 149869
       },
       "mtSection": {
-        "raw": 253349,
-        "gzip": 55396
+        "raw": 258270,
+        "gzip": 57003
       },
       "bgSection": {
-        "raw": 234862,
-        "gzip": 50035
+        "raw": 237057,
+        "gzip": 50561
       }
     },
     {
@@ -81,20 +81,20 @@
         "enableElementTemplates": false
       },
       "webBundle": {
-        "raw": 180044,
-        "gzip": 45610
+        "raw": 186095,
+        "gzip": 47508
       },
       "lynxBundle": {
-        "raw": 182834,
-        "gzip": 52051
+        "raw": 189664,
+        "gzip": 54817
       },
       "mtSection": {
-        "raw": 20975,
-        "gzip": 7239
+        "raw": 24140,
+        "gzip": 8281
       },
       "bgSection": {
-        "raw": 154895,
-        "gzip": 37440
+        "raw": 157651,
+        "gzip": 38317
       }
     },
     {
@@ -105,20 +105,44 @@
         "enableElementTemplates": false
       },
       "webBundle": {
-        "raw": 351881,
-        "gzip": 87925
+        "raw": 363754,
+        "gzip": 91639
       },
       "lynxBundle": {
-        "raw": 387538,
-        "gzip": 129125
+        "raw": 400655,
+        "gzip": 134686
       },
       "mtSection": {
-        "raw": 176011,
-        "gzip": 44296
+        "raw": 184694,
+        "gzip": 47192
       },
       "bgSection": {
-        "raw": 170354,
-        "gzip": 42544
+        "raw": 173261,
+        "gzip": 43370
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-et",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 363754,
+        "gzip": 91642
+      },
+      "lynxBundle": {
+        "raw": 400655,
+        "gzip": 134690
+      },
+      "mtSection": {
+        "raw": 184694,
+        "gzip": 47193
+      },
+      "bgSection": {
+        "raw": 173261,
+        "gzip": 43373
       }
     }
   ]
