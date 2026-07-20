@@ -210,8 +210,8 @@ export function useInfiniteFeed(pageSize = 20) {
 
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
-:::warning 已确认缺口：头部插入（prepend）
-Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSERT 的 anchor。**头部插入**（unshift / insert-before）会被报成**尾部** insert——见 `ListPrepend`。`@scrolltolower` 追加仍是支持路径。**Remove** 现已发 `removeAction`（以前 Reset 同 key 会 2202）。重排仍需仔细目视对照（`ListReorder`）。
+:::tip List diff
+Vue Lynx 主线程 list 适配层现在会对常见变更刷新 `insertAction` / `removeAction` / `updateAction`：追加、头部插入、中间插入、删除、同 list 重排（move）、以及 platform-info 更新。`@scrolltolower` 追加仍是最简单路径。尚未做：框架侧 cell 回收、每次 flush 刷新 `__UpdateListCallbacks`——见下方 tracking issues。
 :::
 
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库
@@ -228,18 +228,18 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
 </list-item>
 ```
 
-## 变更压测 / 冒烟
+## 变更演示
 
 | 入口 | 变更 | 状态 |
 |---|---|---|
-| `ListPrepend` | unshift vs append | **已确认缺口** — 新 cell 出现在尾部 |
-| `ListReorder` | Yellow→top / reverse | 仔细对照 — Vue truth 色条 vs `<list>` |
-| `ListRemove` | 删除 + **Reset 同 key** | 曾在 Reset 报 2202；REMOVE 现已发 `removeAction` |
-| `ListFilter` | 偶数过滤切换 | 冒烟 — 真机上 OK |
+| `ListPrepend` | unshift vs append | 已修 — INSERT 尊重 anchor |
+| `ListReorder` | Yellow→top / reverse | 已修 — 同 list move = detach + insert |
+| `ListRemove` | 删除 + Reset 同 key | 已修 — `removeAction`（曾 2202） |
+| `ListFilter` | 偶数过滤切换 | OK |
 
-### 已确认：prepend
+### Prepend
 
-点一次 **Prepend**。列表**最顶部**必须变成红色 `NEW …`。若红卡出现在底部，说明适配层忽略了 insert-before。**Append** 是对照，应当正常。
+点一次 **Prepend**。列表**最顶部**必须变成红色 `NEW …`。**Append** 落在底部。
 
 <Go
   example="scrolling"
@@ -248,9 +248,9 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
   defaultEntryName="ListPrepend"
 />
 
-### 仔细对照：reorder
+### Reorder
 
-四个满宽色块。上方色条是普通 `<view>`（Vue truth）。下方 `<list>` 在 **Yellow → top** 或 **Reverse** 之后必须与色条**同序**。不一致就是 list move 问题。
+四个满宽色块。上方色条是普通 `<view>`（Vue truth）。下方 `<list>` 在 **Yellow → top** 或 **Reverse** 之后必须与色条**同序**。
 
 <Go
   example="scrolling"
@@ -259,9 +259,9 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
   defaultEntryName="ListReorder"
 />
 
-### 冒烟：remove + filter
+### Remove + filter
 
-**Remove**：先删行，再点 **Reset same keys**。会用相同 `item-key` 重建 `Row-1…N`。若出现 duplicated item-key（error 2202），说明适配层没发 `removeAction`——是实现问题，不是 demo 写坏了。Filter 切换保留作更轻的回归点击。
+**Remove**：先删行，再 **Reset same keys**——不得再弹出 duplicated item-key（2202）。Filter 切换作更轻的回归。
 
 <Go
   example="scrolling"
@@ -277,7 +277,12 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
   defaultEntryName="ListFilter"
 />
 
-自动化：`packages/testing-library` → **native list element · mutation gaps**。Prepend 对正确的 `position: 0` 保持 `it.fails`；remove/filter 只做 Vue length 冒烟断言。
+### 仍未做
+
+- 框架侧 cell 回收（`enqueueComponent` / recycle pool）— [#302](https://github.com/Huxpro/vue-lynx/issues/302)
+- 每次 list flush 刷新 `__UpdateListCallbacks` — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
+
+自动化：`packages/testing-library` → **native list element · mutations**。
 
 ## 决策清单
 
@@ -286,7 +291,7 @@ Vue Lynx 主线程 list 适配层往 `listItems` **只会 `push`**，忽略 INSE
 3. 需要瀑布流或多列 flow？→ **`<list list-type="…">`**
 4. 数据集会无限增长？→ **`<list>` + composable + `@scrolltolower`**
 5. `:key` / `:item-key` 是否一致？→ 正确回收所必需
-6. 需要 **prepend**？→ 今天是坏的——在适配层尊重 INSERT anchor 之前，优先追加 / 重建
+6. 需要 prepend / reorder / remove？→ 已由 `update-list-info` diff 支持
 
 ## 延伸阅读
 

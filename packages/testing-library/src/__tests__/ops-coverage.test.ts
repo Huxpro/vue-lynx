@@ -173,7 +173,7 @@ describe('native list element', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Native <list> mutations — prepend is a confirmed gap; remove/filter smoke OK
+// Native <list> mutations — prepend / reorder / remove / updateAction
 // Mirrors examples/scrolling ListPrepend | ListReorder | ListRemove | ListFilter
 // ---------------------------------------------------------------------------
 
@@ -210,66 +210,54 @@ function mountKeyedList(items: { value: string[] }) {
   });
 }
 
-describe('native list element · mutation gaps', () => {
-  // Confirmed on device: prepend lands at the tail (INSERT ignores anchor).
-  it.fails(
-    'prepend emits insertAction at position 0 (not a tail push)',
-    async () => {
-      const items = ref(['A', 'B']);
-      const { container } = render(mountKeyedList(items));
-      const listEl = container.querySelector('list')!;
-      const before = allListInfos(listEl).length;
+describe('native list element · mutations', () => {
+  it('prepend emits insertAction at position 0 (not a tail push)', async () => {
+    const items = ref(['A', 'B']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
 
-      items.value = ['Z', 'A', 'B'];
-      await nextTick();
-      await nextTick();
+    items.value = ['Z', 'A', 'B'];
+    await nextTick();
+    await nextTick();
 
-      const infos = allListInfos(listEl).slice(before);
-      expect(infos.length).toBeGreaterThan(0);
-      const info = infos[infos.length - 1]!;
-      expect(info.insertAction).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            position: 0,
-            'item-key': 'Z',
-            type: 'list-item',
-          }),
-        ]),
-      );
-      expect(
-        info.insertAction.some(
-          (a) => a['item-key'] === 'Z' && a.position === 2,
-        ),
-      ).toBe(false);
-    },
-  );
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.insertAction).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          position: 0,
+          'item-key': 'Z',
+          type: 'list-item',
+        }),
+      ]),
+    );
+    expect(
+      info.insertAction.some(
+        (a) => a['item-key'] === 'Z' && (a.position as number) >= 2,
+      ),
+    ).toBe(false);
+  });
 
-  // Protocol still re-appends moved keys; UI may or may not look wrong —
-  // keep as it.fails until INSERT anchors are respected for moves.
-  it.fails(
-    'reorder does not re-append duplicate item-keys at the tail',
-    async () => {
-      const items = ref(['A', 'B', 'C']);
-      const { container } = render(mountKeyedList(items));
-      const listEl = container.querySelector('list')!;
+  it('reorder does not insert past the list length', async () => {
+    const items = ref(['A', 'B', 'C']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
 
-      items.value = ['C', 'B', 'A'];
-      await nextTick();
-      await nextTick();
+    items.value = ['C', 'B', 'A'];
+    await nextTick();
+    await nextTick();
 
-      const inserts = allListInfos(listEl).flatMap((info) => info.insertAction);
-      const keyCounts = inserts.reduce<Record<string, number>>((acc, a) => {
-        const k = String(a['item-key']);
-        acc[k] = (acc[k] ?? 0) + 1;
-        return acc;
-      }, {});
-      expect(keyCounts).toEqual({ A: 1, B: 1, C: 1 });
-      expect(inserts.length).toBe(3);
-    },
-  );
+    const infos = allListInfos(listEl).slice(before);
+    for (const info of infos) {
+      for (const action of info.insertAction) {
+        expect(action.position).toBeLessThan(3);
+      }
+    }
+  });
 
-  // Remove must emit removeAction so Reset / re-adding the same item-keys
-  // does not trip native duplicated item-key (error 2202).
   it('remove middle emits removeAction', async () => {
     const items = ref(['A', 'B', 'C']);
     const { container } = render(mountKeyedList(items));
@@ -292,7 +280,6 @@ describe('native list element · mutation gaps', () => {
     const { container } = render(mountKeyedList(items));
     const listEl = container.querySelector('list')!;
 
-    // Drop the tail three (same shape as repeated "Remove last"), then Reset.
     items.value = ['A'];
     await nextTick();
     await nextTick();
@@ -307,8 +294,6 @@ describe('native list element · mutation gaps', () => {
       acc[k] = (acc[k] ?? 0) + 1;
       return acc;
     }, {});
-    // Each key inserted once on mount; B/C/D once more on restore — never
-    // stuck as duplicates from a stale listItems array.
     expect(counts['A']).toBe(1);
     expect(counts['B']).toBe(2);
     expect(counts['C']).toBe(2);
@@ -318,7 +303,7 @@ describe('native list element · mutation gaps', () => {
     ).toBe(true);
   });
 
-  it('filter-out then restore keeps list mounted (smoke)', async () => {
+  it('filter-out then restore does not leave stale duplicate inserts', async () => {
     const items = ref(['A', 'B', 'C', 'D']);
     const { container } = render(mountKeyedList(items));
 
@@ -333,8 +318,6 @@ describe('native list element · mutation gaps', () => {
     const keys = allListInfos(container.querySelector('list')!).flatMap(
       (info) => info.insertAction.map((a) => String(a['item-key'])),
     );
-    // A and C removed then re-inserted once each — not left duplicated from
-    // a stale listItems bookkeeping.
     const counts = keys.reduce<Record<string, number>>((acc, k) => {
       acc[k] = (acc[k] ?? 0) + 1;
       return acc;
@@ -343,6 +326,47 @@ describe('native list element · mutation gaps', () => {
     expect(counts['B']).toBe(1);
     expect(counts['C']).toBe(2);
     expect(counts['D']).toBe(1);
+  });
+
+  it('updating platform info on an existing item emits updateAction', async () => {
+    const size = ref(100);
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h('list', null, [
+            h(
+              'list-item',
+              {
+                key: 'A',
+                'item-key': 'A',
+                'estimated-main-axis-size-px': size.value,
+              },
+              [h('text', null, 'A')],
+            ),
+          ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    size.value = 160;
+    await nextTick();
+    await nextTick();
+
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.updateAction.length).toBeGreaterThan(0);
+    expect(info.updateAction[0]).toEqual(
+      expect.objectContaining({
+        from: 0,
+        to: 0,
+        'estimated-main-axis-size-px': 160,
+        'item-key': 'A',
+      }),
+    );
   });
 });
 

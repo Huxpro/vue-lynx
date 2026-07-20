@@ -3,11 +3,8 @@ import { computed, ref } from 'vue-lynx';
 import { makeCards } from '../shared/data';
 
 /**
- * Confirmed gap: insert at the front (unshift).
- *
- * MT `insertListItem` always `push`es and ignores the INSERT anchor, so
- * `update-list-info` reports the new item at the tail. Watch the TOP cell —
- * after Prepend it must become the red "NEW …" card.
+ * Prepend vs append — INSERT now respects the list anchor.
+ * Top cell must become the red NEW card after Prepend.
  */
 const items = ref(makeCards(6, 'Row'));
 let seq = items.value.length;
@@ -19,7 +16,7 @@ function prepend() {
   const card = {
     id: `Row-new-${seq}`,
     title: `NEW ${seq}`,
-    body: 'Must be the FIRST (top) cell. If this shows at the bottom, prepend is broken.',
+    body: 'Must be the FIRST (top) cell after prepend.',
     color: '#ef4444',
     height: 96,
   };
@@ -31,7 +28,7 @@ function append() {
   const card = {
     id: `Row-tail-${seq}`,
     title: `TAIL ${seq}`,
-    body: 'Append-only path — expected to work (lands at bottom).',
+    body: 'Append lands at the bottom.',
     color: '#10b981',
     height: 96,
   };
@@ -47,33 +44,31 @@ function reset() {
 <template>
   <view class="root">
     <view class="header">
-      <text class="title">list · prepend (confirmed gap)</text>
+      <text class="title">list · prepend</text>
       <text class="subtitle">
-        Tap Prepend once. The TOP list cell must turn red and read
-        &quot;NEW …&quot;. If the red card appears at the bottom instead, the
-        adapter ignored the insert-before anchor.
+        Tap Prepend — the TOP list cell must turn red and read
+        &quot;NEW …&quot;. Append is the control that lands at the bottom.
       </text>
     </view>
 
     <view class="toolbar">
       <view class="btn danger" @tap="prepend">
-        <text class="btn-text">Prepend (bug)</text>
+        <text class="btn-text">Prepend</text>
       </view>
       <view class="btn ok" @tap="append">
-        <text class="btn-text">Append (ok)</text>
+        <text class="btn-text">Append</text>
       </view>
       <view class="btn" @tap="reset">
         <text class="btn-text">Reset</text>
       </view>
     </view>
 
-    <view class="banner warn">
-      <text class="banner-text">
-        Vue says TOP = {{ topTitle }} — scroll to top of the list and check.
+    <view class="banner ok-banner">
+      <text class="banner-text ok-text">
+        Vue says TOP = {{ topTitle }}
       </text>
     </view>
 
-    <!-- Truth strip: first Vue item only -->
     <view class="truth-block">
       <text class="truth-label">Vue truth · first item</text>
       <view

@@ -145,7 +145,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const child = elements.get(childId);
         if (parent && child) {
           if (isListParent(parentId)) {
-            insertListItem(parentId, child, childId);
+            insertListItem(parentId, child, childId, anchorId);
           } else if (anchorId === -1) {
             __AppendElement(parent, child);
           } else {

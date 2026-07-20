@@ -9,6 +9,11 @@
  * The native list calls componentAtIndex(list, listID, cellIndex, operationID)
  * when it needs to render an item. We collect items as they're inserted and
  * provide them via the callback.
+ *
+ * Diffs are flushed via `update-list-info` (insertAction / removeAction /
+ * updateAction). INSERT respects anchors (prepend / mid-list). Same-list
+ * moves detach then re-insert (like ReactLynx treating insert-before of an
+ * existing child as remove+insert).
  */
 
 import { elements, pageUniqueId } from './element-registry.js';
@@ -32,9 +37,9 @@ const itemKeyMap = new Map<number, string>();
 
 /**
  * Platform info attributes for list items — these must go ONLY into
- * update-list-info's insertAction, NOT via __SetAttribute on the native element.
- * Setting them both ways causes the native list to count items twice.
- * (Matches React Lynx's platformInfoAttributes in snapshot/platformInfo.ts)
+ * update-list-info's insertAction / updateAction, NOT via __SetAttribute on
+ * the native element. Setting them both ways causes the native list to count
+ * items twice. (Matches React Lynx's platformInfoAttributes.)
  */
 const PLATFORM_INFO_ATTRS = new Set([
   'item-key',
@@ -51,7 +56,7 @@ const PLATFORM_INFO_ATTRS = new Set([
 /** Per list-item bg ID -> platform info attributes (for update-list-info) */
 const listItemPlatformInfo = new Map<number, Record<string, unknown>>();
 
-/** How many items have already been reported via update-list-info per list */
+/** How many items native currently knows about (fully synced list length) */
 const listItemsReported = new Map<number, number>();
 
 /**
@@ -60,11 +65,23 @@ const listItemsReported = new Map<number, number>();
  */
 const pendingRemoves = new Map<number, number[]>();
 
+/** Pending inserts: position is the index in listItems *after* the splice. */
+const pendingInserts = new Map<
+  number,
+  Array<{ position: number; bgId: number }>
+>();
+
+/** Pending platform-info updates for items already known to native. */
+const pendingUpdates = new Map<
+  number,
+  Array<Record<string, unknown>>
+>();
+
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-/** No-op: Vue manages all items; no recycling needed. */
+/** No-op: element recycling is tracked separately (see GitHub issues). */
 // biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op
 function enqueueComponentNoop(): void {}
 
@@ -137,6 +154,86 @@ function createListCallbacks(bgId: number): {
   return { componentAtIndex, enqueueComponent, componentAtIndexes };
 }
 
+/**
+ * Detach `childId` from the list tracking array and queue a removeAction.
+ * @returns the pre-batch remove index, or -1 if not found.
+ */
+function detachListItem(
+  parentId: number,
+  childId: number,
+  clearPlatformInfo: boolean,
+): number {
+  const items = listItems.get(parentId);
+  if (!items) return -1;
+  const idx = items.findIndex((entry) => entry.bgId === childId);
+  if (idx === -1) return -1;
+
+  const pending = pendingRemoves.get(parentId) ?? [];
+  // Convert current (post-prior-splices) index → pre-batch index.
+  let originalIdx = idx;
+  for (const r of pending) {
+    if (r <= originalIdx) originalIdx++;
+  }
+  pending.push(originalIdx);
+  pendingRemoves.set(parentId, pending);
+
+  // Drop any not-yet-flushed insert for this child (move / re-insert same batch).
+  const inserts = pendingInserts.get(parentId);
+  if (inserts) {
+    const filtered = inserts.filter((p) => p.bgId !== childId);
+    pendingInserts.set(parentId, filtered);
+  }
+
+  items.splice(idx, 1);
+
+  const reported = listItemsReported.get(parentId) ?? 0;
+  if (idx < reported) {
+    listItemsReported.set(parentId, reported - 1);
+  }
+
+  if (clearPlatformInfo) {
+    itemKeyMap.delete(childId);
+    listItemPlatformInfo.delete(childId);
+  }
+
+  return originalIdx;
+}
+
+function findListIdForItem(itemBgId: number): number | undefined {
+  for (const [listId, items] of listItems) {
+    if (items.some((e) => e.bgId === itemBgId)) return listId;
+  }
+  return undefined;
+}
+
+function queuePlatformUpdate(listId: number, itemBgId: number): void {
+  const items = listItems.get(listId);
+  if (!items) return;
+  const idx = items.findIndex((e) => e.bgId === itemBgId);
+  if (idx === -1) return;
+
+  // Still in this batch's insertAction — platform info merges there.
+  const inserts = pendingInserts.get(listId) ?? [];
+  if (inserts.some((p) => p.bgId === itemBgId)) return;
+
+  const pInfo = listItemPlatformInfo.get(itemBgId) ?? {};
+  const pending = pendingUpdates.get(listId) ?? [];
+  const existing = pending.findIndex((u) => u.from === idx);
+  const action: Record<string, unknown> = {
+    ...pInfo,
+    from: idx,
+    to: idx,
+    flush: false,
+    type: 'list-item',
+  };
+  if (existing >= 0) {
+    pending[existing] = action;
+  } else {
+    pending.push(action);
+  }
+  pendingUpdates.set(listId, pending);
+}
+
 // ---------------------------------------------------------------------------
 // Public API (called from ops-apply.ts switch cases)
 // ---------------------------------------------------------------------------
@@ -157,6 +254,8 @@ export function createListElement(id: number): LynxElement {
   listItems.set(id, []);
   listItemsReported.set(id, 0);
   pendingRemoves.set(id, []);
+  pendingInserts.set(id, []);
+  pendingUpdates.set(id, []);
   const cbs = createListCallbacks(id);
   const el = __CreateList(
     pageUniqueId,
@@ -169,14 +268,46 @@ export function createListElement(id: number): LynxElement {
   return el;
 }
 
-/** INSERT case: collect a child into a <list> parent's item array */
+/**
+ * INSERT case: place a child into the list array.
+ * `anchorId === -1` → append; otherwise insert before the anchor (prepend /
+ * mid-list). If the child is already in this list, treat as a move
+ * (detach + re-insert), matching ReactLynx's insertBefore-of-existing-child.
+ */
 export function insertListItem(
   parentId: number,
   child: LynxElement,
   childId: number,
+  anchorId: number = -1,
 ): void {
   const items = listItems.get(parentId);
-  if (items) items.push({ el: child, bgId: childId });
+  if (!items) return;
+
+  // Same-list move: Vue hostInsert does INSERT without REMOVE when the
+  // parent stays the same — detach first so we don't duplicate listItems.
+  if (items.some((e) => e.bgId === childId)) {
+    detachListItem(parentId, childId, false);
+  }
+
+  const entry: ListItemEntry = { el: child, bgId: childId };
+  let index: number;
+  if (anchorId === -1) {
+    index = items.length;
+    items.push(entry);
+  } else {
+    const anchorIdx = items.findIndex((e) => e.bgId === anchorId);
+    if (anchorIdx === -1) {
+      index = items.length;
+      items.push(entry);
+    } else {
+      index = anchorIdx;
+      items.splice(index, 0, entry);
+    }
+  }
+
+  const pending = pendingInserts.get(parentId) ?? [];
+  pending.push({ position: index, bgId: childId });
+  pendingInserts.set(parentId, pending);
 }
 
 /**
@@ -185,30 +316,7 @@ export function insertListItem(
  * appends duplicates and native list throws error 2202 (duplicated item-key).
  */
 export function removeListItem(parentId: number, childId: number): void {
-  const items = listItems.get(parentId);
-  if (!items) return;
-  const idx = items.findIndex((entry) => entry.bgId === childId);
-  if (idx === -1) return;
-
-  const pending = pendingRemoves.get(parentId) ?? [];
-  // Convert current (post-prior-splices) index → pre-batch index.
-  let originalIdx = idx;
-  for (const r of pending) {
-    if (r <= originalIdx) originalIdx++;
-  }
-  pending.push(originalIdx);
-  pendingRemoves.set(parentId, pending);
-
-  items.splice(idx, 1);
-
-  const reported = listItemsReported.get(parentId) ?? 0;
-  if (idx < reported) {
-    listItemsReported.set(parentId, reported - 1);
-  }
-
-  // Drop platform-info bookkeeping for the removed BG id.
-  itemKeyMap.delete(childId);
-  listItemPlatformInfo.delete(childId);
+  detachListItem(parentId, childId, true);
 }
 
 /** SET_PROP case: store a platform-info attribute for a list item */
@@ -224,40 +332,56 @@ export function setPlatformInfoProp(
     listItemPlatformInfo.set(id, { [key]: value });
   }
   if (key === 'item-key') itemKeyMap.set(id, String(value));
+
+  const listId = findListIdForItem(id);
+  if (listId !== undefined) {
+    queuePlatformUpdate(listId, id);
+  }
 }
 
 /**
- * Post-ops flush: tell the native list about removes + newly-inserted items
- * via `update-list-info`. Only newly pushed items (beyond `listItemsReported`)
- * are sent as insertAction to avoid duplicated item-key errors.
+ * Post-ops flush: tell the native list about removes / inserts / platform
+ * updates via `update-list-info`.
  */
 export function flushListUpdates(): void {
   for (const [bgId, items] of listItems) {
     const removes = pendingRemoves.get(bgId) ?? [];
-    const reported = listItemsReported.get(bgId) ?? 0;
-    if (items.length <= reported && removes.length === 0) continue;
+    const inserts = pendingInserts.get(bgId) ?? [];
+    const updates = pendingUpdates.get(bgId) ?? [];
+    if (
+      removes.length === 0
+      && inserts.length === 0
+      && updates.length === 0
+    ) {
+      continue;
+    }
     const listEl = elements.get(bgId);
     if (!listEl) continue;
-    const insertAction: Record<string, unknown>[] = [];
-    for (let j = reported; j < items.length; j++) {
-      const entry = items[j]!;
-      const action: Record<string, unknown> = {
-        position: j,
-        type: 'list-item',
-        'item-key': itemKeyMap.get(entry.bgId) ?? String(j),
-      };
-      // Merge any collected platform info attributes into the action
-      const pInfo = listItemPlatformInfo.get(entry.bgId);
-      if (pInfo) Object.assign(action, pInfo);
-      insertAction.push(action);
-    }
+
+    // Stable sort by position; equal positions keep record order (two prepends).
+    const insertAction = inserts
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .map(({ position, bgId: itemBgId }) => {
+        const action: Record<string, unknown> = {
+          position,
+          type: 'list-item',
+          'item-key': itemKeyMap.get(itemBgId) ?? String(position),
+        };
+        const pInfo = listItemPlatformInfo.get(itemBgId);
+        if (pInfo) Object.assign(action, pInfo);
+        return action;
+      });
+
     __SetAttribute(listEl, 'update-list-info', {
       insertAction,
       removeAction: [...removes].sort((a, b) => a - b),
-      updateAction: [],
+      updateAction: updates,
     });
     listItemsReported.set(bgId, items.length);
     pendingRemoves.set(bgId, []);
+    pendingInserts.set(bgId, []);
+    pendingUpdates.set(bgId, []);
   }
 }
 
@@ -269,4 +393,6 @@ export function resetListState(): void {
   listItemPlatformInfo.clear();
   listItemsReported.clear();
   pendingRemoves.clear();
+  pendingInserts.clear();
+  pendingUpdates.clear();
 }

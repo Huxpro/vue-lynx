@@ -46,8 +46,7 @@ function reset() {
       <text class="title">list · reorder</text>
       <text class="subtitle">
         Compare the two color rows. Top = Vue truth (plain views). Bottom =
-        native &lt;list&gt;. After a tap they must show the same left→right
-        order. A mismatch means the list adapter dropped the move.
+        native &lt;list&gt;. After a tap they must show the same order.
       </text>
     </view>
 

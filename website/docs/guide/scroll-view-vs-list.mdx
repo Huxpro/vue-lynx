@@ -210,8 +210,8 @@ export function useInfiniteFeed(pageSize = 20) {
 
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
-:::warning Confirmed gap: prepend
-Vue Lynx's Main Thread list adapter always `push`es into `listItems` and ignores the INSERT anchor. **Prepending** (unshift / insert-before) is reported as a **tail** insert — see `ListPrepend`. Append-only feeds (`@scrolltolower`) stay on the supported path. **Remove** now emits `removeAction` (Reset-with-same-keys used to 2202). Reorder still needs a careful visual check (`ListReorder`).
+:::tip List diffs
+Vue Lynx's Main Thread list adapter now flushes `insertAction` / `removeAction` / `updateAction` for common mutations: append, prepend, mid-list insert, remove, same-list reorder (move), and platform-info updates. Append-only feeds (`@scrolltolower`) remain the simplest path. Still open: framework-side cell recycling and refreshing `__UpdateListCallbacks` each flush — see the tracking issues linked below.
 :::
 
 ### 4. Prefer `list` over third-party virtual scrollers
@@ -228,18 +228,18 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 </list-item>
 ```
 
-## Mutation stress / smoke tests
+## Mutation demos
 
 | Entry | Mutation | Status |
 |---|---|---|
-| `ListPrepend` | unshift vs append | **Confirmed gap** — new cell lands at the tail |
-| `ListReorder` | Yellow→top / reverse | Check carefully — Vue-truth color strip vs `<list>` |
-| `ListRemove` | splice + **Reset same keys** | Was 2202 on Reset; REMOVE now emits `removeAction` |
-| `ListFilter` | even-only toggle | Smoke — OK in practice |
+| `ListPrepend` | unshift vs append | Fixed — INSERT respects anchor |
+| `ListReorder` | Yellow→top / reverse | Fixed — same-list move = detach + insert |
+| `ListRemove` | splice + Reset same keys | Fixed — `removeAction` (was 2202) |
+| `ListFilter` | even-only toggle | OK |
 
-### Confirmed: prepend
+### Prepend
 
-Tap **Prepend** once. The TOP list cell must turn red (`NEW …`). If the red card appears at the bottom, the adapter ignored the insert-before anchor. **Append** is the control that should work.
+Tap **Prepend** once. The TOP list cell must turn red (`NEW …`). **Append** lands at the bottom.
 
 <Go
   example="scrolling"
@@ -248,9 +248,9 @@ Tap **Prepend** once. The TOP list cell must turn red (`NEW …`). If the red ca
   defaultEntryName="ListPrepend"
 />
 
-### Check carefully: reorder
+### Reorder
 
-Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list>` below must show the **same left→right / top→bottom order** after **Yellow → top** or **Reverse**. A mismatch is a list move bug.
+Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list>` below must show the **same order** after **Yellow → top** or **Reverse**.
 
 <Go
   example="scrolling"
@@ -259,9 +259,9 @@ Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list
   defaultEntryName="ListReorder"
 />
 
-### Smoke: remove + filter
+### Remove + filter
 
-**Remove**: delete rows, then tap **Reset same keys**. That rebuilds `Row-1…N` with identical `item-key`s. A duplicated item-key toast (error 2202) meant the adapter never emitted `removeAction` — an impl bug, not a flaky demo. Filter toggle is kept as a lighter regression tap.
+**Remove**: delete rows, then **Reset same keys** — must not toast duplicated item-key (2202). Filter toggle is a lighter regression tap.
 
 <Go
   example="scrolling"
@@ -277,7 +277,12 @@ Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list
   defaultEntryName="ListFilter"
 />
 
-Automated coverage: `packages/testing-library` → **native list element · mutation gaps**. Prepend stays `it.fails` on the correct `position: 0` payload; remove/filter are smoke assertions on Vue length.
+### Still open
+
+- Framework-side cell recycling (`enqueueComponent` / recycle pool) — [#302](https://github.com/Huxpro/vue-lynx/issues/302)
+- Refreshing `__UpdateListCallbacks` on every list flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
+
+Automated coverage: `packages/testing-library` → **native list element · mutations**.
 
 ## Decision checklist
 
@@ -286,7 +291,7 @@ Automated coverage: `packages/testing-library` → **native list element · muta
 3. Do you need waterfall or multi-column flow? → **`<list list-type="…">`**
 4. Will the dataset grow without bound? → **`<list>` + composable + `@scrolltolower`**
 5. Did you set matching `:key` / `:item-key`? → required for correct recycling
-6. Do you need **prepend**? → broken today — prefer append / rebuild until the adapter respects INSERT anchors
+6. Prepend / reorder / remove? → supported via `update-list-info` diffs
 
 ## See also
 
