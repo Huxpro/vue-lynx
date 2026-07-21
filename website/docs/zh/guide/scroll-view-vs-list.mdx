@@ -283,7 +283,7 @@ Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 
 点 **Run recycle probe**。主线程 worklet 通过 `componentAtIndex` / `enqueueComponent` leave→re-enter，必须显示 **self-reuse: PASS** 与 **cross-item: PASS**（池中同一 uiSign）。
 
 :::note 内存
-当前池只是把 uiSign 所有权重映射给原生回收协议。Vue 仍会 eager CREATE 每个 `list-item` 子树，因此主线程树数量仍是 **O(数据条数)**，直到创建真正 defer。跨 item hydrate 需要显式共享的 `reuse-identifier` 且子树同构；空 identifier 只做 self-reuse。
+当前池只是把 uiSign 所有权重映射给原生回收协议。Vue 仍会 eager CREATE 每个 `list-item` 子树，因此主线程树数量仍是 **O(数据条数)**，直到创建真正 defer。跨 item hydrate 需要显式共享的 `reuse-identifier`，且仅适用于**同构（uniform）子树**；空 identifier 只做 self-reuse。内部 `v-if` / `v-for` 导致形状不同的 cell 会跳过跨 item hydrate，而不会做结构 morph。
 :::
 
 <Go

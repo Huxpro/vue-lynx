@@ -148,10 +148,13 @@ export function longestIncreasingSubsequence(
  * Stayers = LIS of old indices among items present in both, in new order.
  * Removals = old indices not in stayers. Insertions = new items not in stayers.
  *
- * `removeAction` indices are relative to the **pre-diff snapshot** and are
- * applied as a batch by native `update-list-info` (same contract as ReactLynx
- * `ListUpdateInfoRecording`) — do not reinterpret them as sequential
- * mutations against a shrinking array.
+ * `removeAction` indices are relative to the **pre-diff snapshot** (`oldItems`)
+ * and must be applied as a batch by native `update-list-info`. Confirmed against
+ * ReactLynx `ListUpdateInfoRecording.__toAttribute`: it pushes
+ * `removals.push(i)` while iterating `oldChildNodes`, then
+ * `removals.sort((a, b) => a - b)` — ascending old indices, not sequential
+ * mutating-array indices. Do not reinterpret as "remove index 2 then index 5
+ * against a shrinking array" (that would require descending order).
  */
 export function diffListItems(
   oldItems: ListItemEntry[],
@@ -352,9 +355,26 @@ function collectSubtree(
   }
 }
 
+function bgIdFromVueRef(el: LynxElement): number | undefined {
+  for (const name of attributeNames(el)) {
+    if (!name.startsWith('vue-ref-')) continue;
+    const n = Number(name.slice('vue-ref-'.length));
+    if (Number.isFinite(n)) return n;
+  }
+  return undefined;
+}
+
 /**
  * Cross-item recycle: swap fiber ownership between donor and target subtrees
  * via Element PAPI (not DOM `.firstChild` / `getAttributeNames`).
+ *
+ * **Verified for uniform / isomorphic cells only.** Callers must pass
+ * `shapesCompatible` first. Cells of the same `reuse-identifier` that differ
+ * via inner `v-if` / `v-for` (different child counts or tags) are skipped and
+ * fall through to a fresh mount — hydrate does not attempt structural morphing.
+ *
+ * Cost: reverse id lookup prefers per-fiber `vue-ref-*` attributes (O(subtree)).
+ * Falls back to a filtered `elements` scan only for fibers missing vue-ref.
  *
  * Note on memory (#302 / #307 review): both trees were eagerly CREATEd by Vue
  * ops. Swapping remaps uiSign ownership for the native protocol but does **not**
@@ -370,14 +390,23 @@ function hydrateListItemEntry(
   const orphaned = target.el;
   if (recycled === orphaned) return;
 
-  // Only index fibers in the two subtrees (avoid full-registry rebuild cost
-  // for unrelated page elements).
   const fibers = new Set<LynxElement>();
   collectSubtree(recycled, fibers);
   collectSubtree(orphaned, fibers);
+
+  // Prefer O(subtree) vue-ref attrs (set on CREATE by ops-apply) over a full
+  // `elements` registry walk on every cross-item recycle.
   const reverse = new Map<LynxElement, number>();
-  for (const [id, el] of elements) {
-    if (fibers.has(el)) reverse.set(el, id);
+  let missing = 0;
+  for (const el of fibers) {
+    const id = bgIdFromVueRef(el);
+    if (id !== undefined) reverse.set(el, id);
+    else missing++;
+  }
+  if (missing > 0) {
+    for (const [id, el] of elements) {
+      if (fibers.has(el) && !reverse.has(el)) reverse.set(el, id);
+    }
   }
 
   function walk(a: LynxElement, b: LynxElement): void {
@@ -407,7 +436,7 @@ function hydrateListItemEntry(
 
     const kidsA = childElements(a);
     const kidsB = childElements(b);
-    // shapesCompatible already enforced equal lengths
+    // shapesCompatible already enforced equal lengths — isomorphic only.
     for (let i = 0; i < kidsA.length; i++) {
       walk(kidsA[i]!, kidsB[i]!);
     }
@@ -475,6 +504,8 @@ function mountListItem(
 
   // 2) Cross-item: only when an explicit reuse-identifier shares a pool
   //    and the donor/target subtrees are structurally isomorphic.
+  //    Cross-item hydrate is verified for **uniform cells only** — mismatched
+  //    shapes (e.g. inner v-if toggling an extra child) skip reuse.
   if (
     allowsCrossItemReuse(reuseKey)
     && recycleSignMap
