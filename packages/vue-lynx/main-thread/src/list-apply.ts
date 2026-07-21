@@ -144,10 +144,13 @@ export function longestIncreasingSubsequence(
  * Stayers = LIS of old indices among items present in both, in new order.
  * Removals = old indices not in stayers. Insertions = new items not in stayers.
  *
- * `removeAction` indices are relative to the **pre-diff snapshot** and are
- * applied as a batch by native `update-list-info` (same contract as ReactLynx
- * `ListUpdateInfoRecording`) — do not reinterpret them as sequential
- * mutations against a shrinking array.
+ * `removeAction` indices are relative to the **pre-diff snapshot** (`oldItems`)
+ * and must be applied as a batch by native `update-list-info`. Confirmed against
+ * ReactLynx `ListUpdateInfoRecording.__toAttribute`: it pushes
+ * `removals.push(i)` while iterating `oldChildNodes`, then
+ * `removals.sort((a, b) => a - b)` — ascending old indices, not sequential
+ * mutating-array indices. Do not reinterpret as "remove index 2 then index 5
+ * against a shrinking array" (that would require descending order).
  */
 export function diffListItems(
   oldItems: ListItemEntry[],

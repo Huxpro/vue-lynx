@@ -102,8 +102,11 @@ describe('diffListItems (ReactLynx-style)', () => {
   });
 
   it('mixed remove middle then remove last (single flush) emits both indices', () => {
-    // Simulate one flush after both ops: [0..5] → drop index 2 and last
-    // old [1,2,3,4,5,6] → [1,2,4,5]
+    // Snapshot-relative contract (ReactLynx ListUpdateInfoRecording):
+    // old [1,2,3,4,5,6] drop indices 2 and 5 → removeAction [2, 5] ascending.
+    // Native applies the whole array against the pre-diff snapshot as a batch.
+    // If native ever applied sequentially against a shrinking array, [2, 5]
+    // would be wrong (would need [2, 4] or descending [5, 2]) — do not "fix".
     const { removeAction, insertAction } = diffListItems(
       entries([1, 2, 3, 4, 5, 6]),
       entries([1, 2, 4, 5]),
