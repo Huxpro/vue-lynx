@@ -44,7 +44,8 @@ g['SystemInfo'] =
 g['runOnBackground'] = runOnBackground;
 
 // List recycle probe for examples / headless browser checks (#302).
-// Worklets and page scripts can call `__vueLynxProbeListRecycle(listEl)`.
+// Kept available in all builds so the ListRecycle Go demo works in Web
+// Preview; it is not part of the native list protocol.
 g['__vueLynxProbeListRecycle'] = probeListRecycle;
 
 // Element-template registration hooks. Compiler-lowered template create()
