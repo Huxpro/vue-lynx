@@ -64,11 +64,19 @@ Real FCP / native-call wins land with **#300 native ET**. Do not treat sparse mi
 ### Microbench artifact
 
 ```bash
-pnpm --filter @vue-lynx/testing-library test -- graph-eng-sparse-microbench
+pnpm --filter vue-lynx-testing-library exec vitest run src/__tests__/graph-eng-sparse-microbench.test.ts
 # → packages/ifr-bench/results/graph-eng-sparse-microbench.json
 ```
 
-Expected shape (static-heavy root-only sparse fixture): large drop in `shadows` and `mtNamed`; `nativeEt: stub` in the flag report.
+Checked-in sample (`static-heavy-24-leaves`, root-only sparse):
+
+| | shadows | mtNamed |
+|--|--------:|--------:|
+| dense A1 | 49 | 25 |
+| sparse A2 | 1 | 1 |
+| savings | −98% | −96% |
+
+Native skeleton still fully built either way; FCP win needs #300.
 
 ## How to run the flag matrix
 
