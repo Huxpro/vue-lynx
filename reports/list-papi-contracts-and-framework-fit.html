@@ -1,0 +1,911 @@
+<title>Lynx &lt;list&gt; — PAPI Contracts &amp; Framework Fit</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface-2: #eef1f4;
+    --ink: #191f27;
+    --ink-soft: #46505c;
+    --ink-faint: #6b7681;
+    --line: #dde2e8;
+    --line-strong: #c6cdd6;
+    --accent: #0e8a8f;
+    --accent-soft: #e0f1f1;
+    --code-bg: #0f1720;
+    --code-ink: #d7e0ea;
+    --code-line: #1f2a36;
+    /* tier ramp: basics -> update -> batch -> recycling */
+    --t1: #0e8a8f; --t1-bg: #e2f1f1;
+    --t2: #2f8f4e; --t2-bg: #e5f2e9;
+    --t3: #b7791f; --t3-bg: #f6ecd8;
+    --t4: #7c4dc4; --t4-bg: #efe8f8;
+    --good: #2f8f4e; --warn: #b7791f; --bad: #c04a4a;
+    --font-head: "Söhne", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Songti SC", "PingFang SC", "Microsoft YaHei", serif;
+    --font-mono: ui-monospace, "SF Mono", "SFMono-Regular", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    --maxw: 74ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1116; --surface: #141a21; --surface-2: #1b232c;
+      --ink: #e6ebf1; --ink-soft: #aeb8c4; --ink-faint: #7d8894;
+      --line: #263039; --line-strong: #35424e;
+      --accent: #35c7cc; --accent-soft: #102a2c;
+      --code-bg: #0a0f15; --code-ink: #d7e0ea; --code-line: #1a232d;
+      --t1: #35c7cc; --t1-bg: #0f2a2b;
+      --t2: #5fce85; --t2-bg: #10241a;
+      --t3: #e0b357; --t3-bg: #2a2113;
+      --t4: #b592ea; --t4-bg: #211930;
+      --good:#5fce85; --warn:#e0b357; --bad:#e87a7a;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f6f8; --surface: #ffffff; --surface-2: #eef1f4;
+    --ink: #191f27; --ink-soft: #46505c; --ink-faint: #6b7681;
+    --line: #dde2e8; --line-strong: #c6cdd6;
+    --accent: #0e8a8f; --accent-soft: #e0f1f1;
+    --code-bg: #0f1720; --code-ink: #d7e0ea; --code-line: #1f2a36;
+    --t1:#0e8a8f;--t1-bg:#e2f1f1;--t2:#2f8f4e;--t2-bg:#e5f2e9;
+    --t3:#b7791f;--t3-bg:#f6ecd8;--t4:#7c4dc4;--t4-bg:#efe8f8;
+    --good:#2f8f4e;--warn:#b7791f;--bad:#c04a4a;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1116; --surface: #141a21; --surface-2: #1b232c;
+    --ink: #e6ebf1; --ink-soft: #aeb8c4; --ink-faint: #7d8894;
+    --line: #263039; --line-strong: #35424e;
+    --accent: #35c7cc; --accent-soft: #102a2c;
+    --code-bg: #0a0f15; --code-ink: #d7e0ea; --code-line: #1a232d;
+    --t1:#35c7cc;--t1-bg:#0f2a2b;--t2:#5fce85;--t2-bg:#10241a;
+    --t3:#e0b357;--t3-bg:#2a2113;--t4:#b592ea;--t4-bg:#211930;
+    --good:#5fce85;--warn:#e0b357;--bad:#e87a7a;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-body); font-size: 17px; line-height: 1.66;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- top bar ---- */
+  .bar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 16px;
+    padding: 10px 22px; background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+  }
+  .bar .mark { font-family: var(--font-mono); font-size: 13px; letter-spacing: .02em; color: var(--ink-soft); }
+  .bar .mark b { color: var(--accent); }
+  .bar .spacer { flex: 1; }
+  .toggle { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
+  .toggle button {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em;
+    padding: 6px 12px; background: var(--surface); color: var(--ink-soft);
+    border: 0; cursor: pointer; transition: background .15s, color .15s;
+  }
+  .toggle button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* ---- layout ---- */
+  main { max-width: 980px; margin: 0 auto; padding: 0 22px 120px; }
+  .lead { max-width: var(--maxw); }
+
+  header.hero { padding: 56px 0 30px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font-family: var(--font-head); font-weight: 620; font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -.02em; text-wrap: balance; margin: 0 0 18px; }
+  .dek { font-size: 19px; color: var(--ink-soft); max-width: var(--maxw); margin: 0 0 22px; }
+  .meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-faint); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .meta span b { color: var(--ink-soft); font-weight: 500; }
+
+  h2 { font-family: var(--font-head); font-weight: 600; font-size: 27px; letter-spacing: -.01em; margin: 64px 0 8px; padding-top: 14px; scroll-margin-top: 70px; text-wrap: balance; }
+  h3 { font-family: var(--font-head); font-weight: 600; font-size: 20px; letter-spacing: -.005em; margin: 40px 0 6px; scroll-margin-top: 70px; }
+  h4 { font-family: var(--font-head); font-weight: 600; font-size: 16px; margin: 26px 0 4px; color: var(--ink); }
+  p { max-width: var(--maxw); }
+  .lead, p, li { hyphens: none; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  .section-tag { font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; color: var(--ink-faint); display:block; margin-bottom: 2px; }
+
+  ul, ol { max-width: var(--maxw); padding-left: 1.25em; }
+  li { margin: 5px 0; }
+  li::marker { color: var(--accent); }
+
+  /* ---- tiers ---- */
+  .tier-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 12px; margin: 26px 0 8px; max-width: 100%; }
+  .tier-card { border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+  .tier-card .n { font-family: var(--font-mono); font-size: 11.5px; letter-spacing:.08em; text-transform: uppercase; }
+  .tier-card h5 { font-family: var(--font-head); font-size: 15px; margin: 3px 0 4px; }
+  .tier-card p { font-size: 13.5px; color: var(--ink-soft); margin: 0; font-family: var(--font-body); }
+  .t1c{border-left-color:var(--t1);} .t1c .n{color:var(--t1);}
+  .t2c{border-left-color:var(--t2);} .t2c .n{color:var(--t2);}
+  .t3c{border-left-color:var(--t3);} .t3c .n{color:var(--t3);}
+  .t4c{border-left-color:var(--t4);} .t4c .n{color:var(--t4);}
+
+  .badge { display: inline-flex; align-items:center; gap:6px; font-family: var(--font-mono); font-size: 11.5px; letter-spacing:.04em; padding: 3px 9px; border-radius: 999px; vertical-align: middle; }
+  .b1{background:var(--t1-bg); color:var(--t1);} .b2{background:var(--t2-bg); color:var(--t2);}
+  .b3{background:var(--t3-bg); color:var(--t3);} .b4{background:var(--t4-bg); color:var(--t4);}
+
+  /* ---- code ---- */
+  .code-wrap { margin: 18px 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--code-line); }
+  .code-head { display:flex; align-items:center; gap:10px; background: var(--code-line); color: var(--code-ink); font-family: var(--font-mono); font-size: 11.5px; letter-spacing:.03em; padding: 7px 14px; }
+  .code-head .dot { width:9px;height:9px;border-radius:50%; background: var(--accent); opacity:.8; }
+  .code-head .file { opacity:.72; }
+  .code-head .repl { margin-left:auto; opacity:.6; text-transform:uppercase; letter-spacing:.1em; font-size:10.5px;}
+  pre { margin: 0; background: var(--code-bg); color: var(--code-ink); font-family: var(--font-mono); font-size: 13px; line-height: 1.62; padding: 16px 18px; overflow-x: auto; }
+  pre code { font-family: inherit; }
+  code.inl { font-family: var(--font-mono); font-size: .86em; background: var(--surface-2); color: var(--ink); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); }
+  .tok-c { color: #6f8296; font-style: italic; }
+  .tok-k { color: #7cc7ff; }
+  .tok-f { color: #e0b357; }
+  .tok-s { color: #8fdca0; }
+  .tok-n { color: #d78cf0; }
+
+  /* ---- tables ---- */
+  .table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-family: var(--font-body); }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--surface-2); font-family: var(--font-head); font-weight: 600; font-size: 12.5px; letter-spacing:.01em; color: var(--ink); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code, th code { font-family: var(--font-mono); font-size: 12px; }
+  .sig { font-family: var(--font-mono); font-size: 12px; color: var(--ink); white-space: nowrap; }
+  td .desc { color: var(--ink-soft); }
+
+  /* ---- callouts ---- */
+  .note { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--surface); border-radius: 10px; padding: 12px 16px; margin: 20px 0; max-width: 100%; }
+  .note .lbl { font-family: var(--font-mono); font-size: 11.5px; letter-spacing:.06em; text-transform: uppercase; color: var(--accent); display:block; margin-bottom: 3px; }
+  .note p { margin: 4px 0 0; max-width: 100%; font-size: 15px; }
+  .note.warn { border-left-color: var(--warn); } .note.warn .lbl { color: var(--warn); }
+  .note.key { border-left-color: var(--t4); } .note.key .lbl { color: var(--t4); }
+
+  /* ---- compare grid ---- */
+  .fw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 14px; margin: 22px 0; }
+  .fw { border: 1px solid var(--line); border-radius: 12px; padding: 16px 17px; background: var(--surface); }
+  .fw h4 { margin: 0 0 8px; display:flex; align-items:center; gap:8px; }
+  .fw .verdict { font-family: var(--font-mono); font-size: 11px; letter-spacing:.03em; padding:2px 8px; border-radius:999px; }
+  .fw ul { font-size: 13.5px; padding-left: 1.1em; margin: 6px 0; }
+  .fw .plus li::marker { color: var(--good); }
+  .fw .minus li::marker { color: var(--bad); }
+  .fw .h { font-family: var(--font-head); font-size: 12px; text-transform: uppercase; letter-spacing:.06em; color: var(--ink-faint); margin: 10px 0 2px; }
+
+  .rule { height:1px; background: var(--line); border:0; margin: 40px 0; }
+  .foot { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); }
+  .foot a { color: var(--accent); }
+
+  .lang-zh { display: none; }
+  :root[data-lang="zh"] .lang-en { display: none; }
+  :root[data-lang="zh"] .lang-zh { display: revert; }
+  :root[data-lang="zh"] body, :root[data-lang="zh"] .lang-zh { --font-body: "Songti SC", "STSong", "PingFang SC", "Microsoft YaHei", Georgia, serif; }
+
+  .toc { columns: 2; column-gap: 34px; font-size: 14px; margin: 24px 0 8px; max-width: 100%; }
+  .toc a { display:block; break-inside: avoid; padding: 2px 0; color: var(--ink-soft); text-decoration: none; border-left: 2px solid transparent; padding-left: 10px; }
+  .toc a:hover { color: var(--accent); border-left-color: var(--accent); }
+  .toc .g { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing:.08em; color: var(--ink-faint); margin: 12px 0 3px; }
+  @media (max-width: 560px) { .toc { columns: 1; } body { font-size: 16px; } }
+</style>
+
+<div class="bar">
+  <span class="mark"><b>&lt;list&gt;</b> · PAPI contracts &amp; framework fit</span>
+  <span class="spacer"></span>
+  <div class="toggle" role="group" aria-label="Language">
+    <button id="en" aria-pressed="true" onclick="setLang('en')">EN</button>
+    <button id="zh" aria-pressed="false" onclick="setLang('zh')">中文</button>
+  </div>
+  <div class="toggle" role="group" aria-label="Theme">
+    <button id="lt" aria-pressed="false" onclick="setTheme('light')" title="Light">☀</button>
+    <button id="dk" aria-pressed="false" onclick="setTheme('dark')" title="Dark">☾</button>
+  </div>
+</div>
+
+<main>
+<!-- ============================= ENGLISH ============================= -->
+<div class="lang-en">
+
+  <header class="hero">
+    <p class="eyebrow">Technical Report · Lynx Runtime</p>
+    <h1>The <code style="font-size:.8em">&lt;list&gt;</code> element: foundational PAPI contracts &amp; which framework they fit</h1>
+    <p class="dek">A ground-up map of the Main-Thread Element PAPI contracts that make a native Lynx <code class="inl">&lt;list&gt;</code> render, scroll, diff, and recycle — from the two-call basics to the full recycling protocol — followed by an analysis of what those contracts reward and punish in React, Vue, and signal-based frameworks.</p>
+    <div class="meta">
+      <span><b>Scope</b> Vanilla Element PAPI (MTS) · ReactLynx reference · vue-lynx adapter</span>
+      <span><b>Companion</b> PR stack #293 → #307 → #311</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <div class="g">Part I · The contracts</div>
+    <a href="#model">0 · Mental model: native virtualizes, the framework is a data source</a>
+    <a href="#basics">1 · Basics — create &amp; feed <span class="badge b1">tier 1</span></a>
+    <a href="#update">2 · Mutation — <code>update-list-info</code> <span class="badge b2">tier 2</span></a>
+    <a href="#batch">3 · Batch &amp; async rendering <span class="badge b3">tier 3</span></a>
+    <a href="#recycle">4 · Recycling — the pool protocol <span class="badge b4">tier 4</span></a>
+    <a href="#reference">PAPI reference table</a>
+    <div class="g">Part II · Framework fit</div>
+    <a href="#demands">5 · What the contract demands of a framework</a>
+    <a href="#frameworks">6 · React / Vue / Signals compared</a>
+    <a href="#q-which">7 · Which framework fits best?</a>
+    <a href="#q-redesign">8 · How to redesign the API for frameworks</a>
+  </nav>
+
+  <h2 id="model"><span class="section-tag">Part I · 0</span>Mental model: the native list virtualizes; the framework is a data source</h2>
+  <p>Unlike a <code class="inl">&lt;scroll-view&gt;</code>, a Lynx <code class="inl">&lt;list&gt;</code> does <em>not</em> hold one element per data row. The native layer owns virtualization: it decides which cells are on-screen and, when it needs one, it <em>calls back into JS</em> to materialize that cell's element subtree. The framework never "renders the list"; it registers a set of <strong>callbacks</strong> and keeps a <strong>side table of item metadata</strong>, and the native list pulls from them on demand.</p>
+  <p>Everything below is an elaboration of that inversion of control. Three things flow across the boundary:</p>
+  <ul>
+    <li><strong>Callbacks</strong> (JS → registered on the element): <code class="inl">componentAtIndex</code>, <code class="inl">enqueueComponent</code>, <code class="inl">componentAtIndexes</code> — native invokes these to mount, recycle, and batch-mount cells.</li>
+    <li><strong>The <code class="inl">update-list-info</code> attribute</strong> (JS → native): a declarative diff of the data source (insert / remove / update actions keyed by <code class="inl">item-key</code>).</li>
+    <li><strong>Platform-info attributes</strong> (per item): <code class="inl">item-key</code>, <code class="inl">reuse-identifier</code>, <code class="inl">sticky-top</code>, <code class="inl">full-span</code>, <code class="inl">estimated-main-axis-size-px</code> — read by native, never applied as ordinary element attributes.</li>
+  </ul>
+  <div class="note key"><span class="lbl">The one idea to hold onto</span><p>The list is a <em>protocol between a virtualizing native widget and a JS data source</em>, not a container you fill with children. A framework "supports <code class="inl">&lt;list&gt;</code>" to exactly the degree that its rendering model can be turned inside-out into <em>pull-based, per-cell, recyclable</em> production.</p></div>
+
+  <div class="tier-legend">
+    <div class="tier-card t1c"><span class="n">Tier 1 · Basics</span><h5>Create &amp; feed</h5><p>One element, N callbacks, a flat item table. Enough to render a static list.</p></div>
+    <div class="tier-card t2c"><span class="n">Tier 2 · Mutation</span><h5><code>update-list-info</code></h5><p>Declarative insert / remove / update diff so data changes reach native without item-key clashes.</p></div>
+    <div class="tier-card t3c"><span class="n">Tier 3 · Batch</span><h5>Async &amp; batched mount</h5><p><code>componentAtIndexes</code>, <code>operationID</code>, <code>asyncFlush</code> for off-main-thread throughput.</p></div>
+    <div class="tier-card t4c"><span class="n">Tier 4 · Recycling</span><h5>The pool protocol</h5><p><code>enqueueComponent</code> + <code>reuse-identifier</code> pools; self-reuse then cross-item hydrate.</p></div>
+  </div>
+
+  <h2 id="basics"><span class="section-tag">Part I · 1 &nbsp;<span class="badge b1">tier 1 · basics</span></span>Basics — create the element &amp; feed items</h2>
+  <p>A native list is created with <code class="inl">__CreateList</code>, which is unique among element-creation PAPIs in that it takes <strong>three callbacks</strong> at construction time. The minimum viable contract is <code class="inl">componentAtIndex</code>: given a cell index, append the element subtree for that row to the list and return its unique id (the <em>uiSign</em>).</p>
+
+  <h4>The PAPIs at this tier</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>PAPI</th><th>Signature</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>__CreateList</code></td><td class="sig">(parentComponentUid, componentAtIndex, enqueueComponent, componentAtIndexes) → Element</td><td class="desc">Creates the native list, binding the three render callbacks.</td></tr>
+      <tr><td><code>componentAtIndex</code></td><td class="sig">(list, listID, cellIndex, operationID) → uiSign</td><td class="desc">Native pull: materialize the cell at <code>cellIndex</code>, append it, return its unique id.</td></tr>
+      <tr><td><code>__AppendElement</code></td><td class="sig">(list, child) → Element</td><td class="desc">Attach the cell subtree under the list before flushing.</td></tr>
+      <tr><td><code>__GetElementUniqueID</code></td><td class="sig">(el) → number</td><td class="desc">The <em>uiSign</em> the list uses to identify a mounted cell.</td></tr>
+      <tr><td><code>__FlushElementTree</code></td><td class="sig">(el, {triggerLayout, operationID, elementID, listID})</td><td class="desc">Commit the subtree to native layout; ties the flush to the pull's <code>operationID</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>REPL-executable: a static list</h4>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js</span><span class="repl">L0 · vanilla PAPI</span></div>
+<pre><code><span class="tok-c">// A minimal &lt;list&gt;: native pulls each visible row via componentAtIndex.</span>
+<span class="tok-k">const</span> page = __CreatePage(<span class="tok-s">"0"</span>, <span class="tok-n">0</span>);
+<span class="tok-k">const</span> rows = [<span class="tok-s">"Alpha"</span>, <span class="tok-s">"Bravo"</span>, <span class="tok-s">"Charlie"</span>, <span class="tok-s">"Delta"</span>];
+
+<span class="tok-k">function</span> <span class="tok-f">componentAtIndex</span>(list, listID, cellIndex, operationID) {
+  <span class="tok-k">const</span> item = __CreateElement(<span class="tok-s">"list-item"</span>, <span class="tok-n">0</span>);
+  __SetAttribute(item, <span class="tok-s">"item-key"</span>, <span class="tok-s">"row-"</span> + cellIndex);   <span class="tok-c">// platform-info, required</span>
+  <span class="tok-k">const</span> text = __CreateElement(<span class="tok-s">"text"</span>, <span class="tok-n">0</span>);
+  __SetAttribute(text, <span class="tok-s">"text"</span>, rows[cellIndex]);
+  __AppendElement(item, text);
+  __AppendElement(list, item);                          <span class="tok-c">// attach under the list</span>
+  <span class="tok-k">const</span> sign = __GetElementUniqueID(item);
+  __FlushElementTree(item, { triggerLayout: <span class="tok-k">true</span>, operationID, elementID: sign, listID });
+  <span class="tok-k">return</span> sign;                                          <span class="tok-c">// native tracks the cell by this uiSign</span>
+}
+
+<span class="tok-k">const</span> list = __CreateList(<span class="tok-n">0</span>, componentAtIndex, <span class="tok-k">function</span>(){}, <span class="tok-k">function</span>(){});
+__SetAttribute(list, <span class="tok-s">"list-type"</span>, <span class="tok-s">"single"</span>);
+__SetAttribute(list, <span class="tok-s">"span-count"</span>, <span class="tok-n">1</span>);
+__AppendElement(page, list);
+__FlushElementTree(page);</code></pre>
+  </div>
+  <p>At this tier <code class="inl">enqueueComponent</code> and <code class="inl">componentAtIndexes</code> are stubbed to no-ops. But there is a hidden problem: the list learns how many rows exist, and any change to that count or ordering, only through the <code class="inl">update-list-info</code> attribute. That is tier 2.</p>
+
+  <h2 id="update"><span class="section-tag">Part I · 2 &nbsp;<span class="badge b2">tier 2 · mutation</span></span>Mutation — the <code>update-list-info</code> diff contract</h2>
+  <p>The native list keeps its own model of the data source. You mutate that model <em>declaratively</em> by setting the <code class="inl">update-list-info</code> attribute with three arrays. This is the contract the PR-stack's merge-order fix is built on.</p>
+
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">the payload shape</span></div>
+<pre><code>__SetAttribute(list, <span class="tok-s">"update-list-info"</span>, {
+  insertAction: [{ position: <span class="tok-n">2</span>, type: <span class="tok-s">"list-item"</span>, <span class="tok-s">"item-key"</span>: <span class="tok-s">"c"</span>, <span class="tok-c">/* ...platform info */</span> }],
+  removeAction: [<span class="tok-n">1</span>, <span class="tok-n">4</span>],           <span class="tok-c">// OLD indices into the pre-diff snapshot, sorted ascending</span>
+  updateAction: [{ from: <span class="tok-n">0</span>, to: <span class="tok-n">0</span>, type: <span class="tok-s">"list-item"</span>, flush: <span class="tok-k">false</span>, <span class="tok-c">/* platform info */</span> }],
+});</code></pre>
+  </div>
+
+  <ul>
+    <li><strong><code class="inl">insertAction</code></strong> — new cells, each with a <code class="inl">position</code> (target index) and the item's platform info folded in.</li>
+    <li><strong><code class="inl">removeAction</code></strong> — indices into the <em>previous</em> snapshot. Both ReactLynx's <code class="inl">ListUpdateInfoRecording.__toAttribute()</code> and the vue-lynx adapter emit these <strong>sorted numerically</strong>; native applies them against the pre-diff snapshot as a batch.</li>
+    <li><strong><code class="inl">updateAction</code></strong> — cells whose <em>platform info</em> changed but which stayed in place (<code class="inl">from</code>/<code class="inl">to</code>).</li>
+  </ul>
+
+  <div class="note"><span class="lbl">Why a diff, not per-op mutation</span><p>Re-declaring the same <code class="inl">item-key</code> makes the native list error <code class="inl">2202 (duplicated item-key)</code>. So the framework cannot naively "append what's new" — it must compute a genuine diff between the last flushed order and the current order, expressing <em>moves</em> as remove+insert. Both runtimes model this the same way (ReactLynx: "move = removeChild + insertBefore").</p></div>
+
+  <h4>How the two runtimes compute the diff</h4>
+  <p>ReactLynx records mutations imperatively as its reconciler walks the tree (<code class="inl">insertBefore</code> map + <code class="inl">appendChild</code> list + <code class="inl">removals</code> set), because the reconciler <em>already visits every change</em>. The vue-lynx adapter has no such hook, so it keeps a <code class="inl">lastFlushed</code> snapshot and computes the diff structurally with a <strong>Longest Increasing Subsequence</strong> over old indices — the LIS is the set of items that stayed; everything else is remove+insert:</p>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">vue-lynx · list-apply.ts (diffListItems)</span></div>
+<pre><code><span class="tok-c">// common items, expressed as their OLD indices in NEW order</span>
+<span class="tok-k">const</span> commonNewOrder = newItems
+  .map(e =&gt; oldIndex.get(e.bgId))
+  .filter(i =&gt; i !== <span class="tok-k">undefined</span>);
+<span class="tok-k">const</span> stayed = longestIncreasingSubsequence(commonNewOrder); <span class="tok-c">// keep these</span>
+<span class="tok-c">// removeAction = old indices not in `stayed`;  insertAction = new items not in `stayed`</span></code></pre>
+  </div>
+  <p class="lead" style="color:var(--ink-soft); font-size:15px;">The results are equivalent, but the <em>source</em> of the diff differs sharply — and that difference is the whole framework-fit story in Part II. React gets the diff for free from reconciliation; Vue reconstructs it after the fact.</p>
+
+  <h2 id="batch"><span class="section-tag">Part I · 3 &nbsp;<span class="badge b3">tier 3 · batch</span></span>Batch &amp; async rendering</h2>
+  <p>Pulling cells one <code class="inl">componentAtIndex</code> call at a time is fine for a handful of visible rows, but native wants to warm several cells (the <code class="inl">preload-buffer-count</code>) in one hop across the thread boundary, and to defer layout. Two mechanisms:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mechanism</th><th>Signature / flag</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>componentAtIndexes</code></td><td class="sig">(list, listID, cellIndexes[], operationIDs[], enableReuseNotification?)</td><td class="desc">Batch form: mount many cells, then one <code>__FlushElementTree(list, …)</code> for the whole batch.</td></tr>
+      <tr><td><code>operationID</code></td><td class="sig">number</td><td class="desc">Correlates a specific native pull with the flush that satisfies it, so native can match async results.</td></tr>
+      <tr><td><code>asyncFlush</code></td><td class="sig">__FlushElementTree(el, {asyncFlush:true})</td><td class="desc">Lets layout happen off the critical path when batch-rendering is enabled.</td></tr>
+      <tr><td><code>enableBatchRender</code></td><td class="sig">runtime capability</td><td class="desc">When set, per-cell layout flushes are suppressed in favor of the batch flush.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js · batch mount</span><span class="repl">L0</span></div>
+<pre><code><span class="tok-k">function</span> <span class="tok-f">componentAtIndexes</span>(list, listID, cellIndexes, operationIDs) {
+  <span class="tok-k">const</span> ids = [];
+  <span class="tok-k">for</span> (<span class="tok-k">const</span> idx <span class="tok-k">of</span> cellIndexes) ids.push(mountCell(list, listID, idx)); <span class="tok-c">// no per-cell flush</span>
+  __FlushElementTree(list, { triggerLayout: <span class="tok-k">true</span>, operationIDs, elementIDs: ids, listID });
+  <span class="tok-k">return</span> ids;
+}</code></pre>
+  </div>
+  <p>These are throughput optimizations, not new semantics — but note that <code class="inl">operationID</code> plumbing is threaded through every mount path, which becomes a source of complexity in the recycling tier.</p>
+
+  <h2 id="recycle"><span class="section-tag">Part I · 4 &nbsp;<span class="badge b4">tier 4 · recycling</span></span>Recycling — the pool protocol</h2>
+  <p>This is where the contract stops being a simple pull and becomes stateful. When a cell scrolls off-screen native calls <code class="inl">enqueueComponent(list, listID, uiSign)</code>. Instead of destroying that subtree, the framework <em>pools</em> it under its <code class="inl">reuse-identifier</code>. The next <code class="inl">componentAtIndex</code> for a compatible cell should <strong>reuse a pooled subtree</strong> rather than build a fresh one — mutating only the parts that differ.</p>
+
+  <h4>The two-map state (both runtimes)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Structure</th><th>ReactLynx</th><th>vue-lynx</th><th>Keyed by</th></tr></thead>
+    <tbody>
+      <tr><td>Active cells</td><td><code>gSignMap</code></td><td><code>signMaps</code></td><td class="desc">listID → (uiSign → entry)</td></tr>
+      <tr><td>Recycle pool</td><td><code>gRecycleMap</code></td><td><code>recycleMaps</code></td><td class="desc">listID → (reuseKey → (uiSign → entry))</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The <code class="inl">componentAtIndex</code> mount path becomes a three-way decision:</p>
+  <ol>
+    <li><strong>Self-reuse</strong> — the same item scrolled back into view; its own <code class="inl">uiSign</code> is still in the pool. Pop it, re-append, done. Cheapest path, no content mutation.</li>
+    <li><strong>Cross-item reuse</strong> — a <em>different</em> item of the same <code class="inl">reuse-identifier</code> is pooled. Take that subtree and <strong>hydrate</strong> it with the new cell's data.</li>
+    <li><strong>Fresh mount</strong> — pool empty; build a new subtree (tier 1 path).</li>
+  </ol>
+
+  <div class="note key"><span class="lbl">The decisive divergence: what "hydrate" means</span>
+    <p><strong>ReactLynx</strong> calls the snapshot's <code class="inl">hydrate(oldSnapshot, newSnapshot)</code> — a <em>compiler-generated</em> function that knows exactly which dynamic slots in the template differ and patches only those. Recycling is a first-class product of its snapshot model.</p>
+    <p style="margin-top:8px;"><strong>vue-lynx</strong> has no per-template hydrate primitive, so <code class="inl">hydrateListItemEntry()</code> does it <em>structurally at runtime</em>: build a reverse element→id index, walk donor and target subtrees in lockstep, swap <code class="inl">textContent</code>/attributes and exchange element-id ownership node-by-node. Correct for isomorphic cells, O(tree) per recycle, and fragile if two cells of the same <code class="inl">reuse-identifier</code> differ in shape (a <code class="inl">v-if</code> branch). See PR&nbsp;#307 review.</p>
+  </div>
+
+  <h4>REPL-executable: a minimal recycling pool</h4>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js · self-reuse + pool</span><span class="repl">L0</span></div>
+<pre><code><span class="tok-c">// Minimal tier-4 sketch: pool by reuse-identifier, prefer self-reuse.</span>
+<span class="tok-k">const</span> signMap = <span class="tok-k">new</span> Map();               <span class="tok-c">// uiSign -&gt; { el, key }  (active)</span>
+<span class="tok-k">const</span> pool    = <span class="tok-k">new</span> Map();               <span class="tok-c">// reuseId -&gt; Map(uiSign -&gt; { el, key })</span>
+
+<span class="tok-k">function</span> <span class="tok-f">componentAtIndex</span>(list, listID, cellIndex, operationID) {
+  <span class="tok-k">const</span> reuseId = reuseIdOf(cellIndex);
+  <span class="tok-k">const</span> bucket  = pool.get(reuseId);
+  <span class="tok-k">let</span> entry;
+  <span class="tok-k">if</span> (bucket &amp;&amp; bucket.size) {                     <span class="tok-c">// reuse a pooled subtree...</span>
+    <span class="tok-k">const</span> [sign, pooled] = bucket.entries().next().value;
+    bucket.delete(sign);
+    hydrate(pooled.el, cellIndex);                <span class="tok-c">// ...only patch what differs</span>
+    entry = pooled;
+  } <span class="tok-k">else</span> {
+    entry = { el: buildCell(cellIndex), key: keyOf(cellIndex) }; <span class="tok-c">// fresh mount</span>
+  }
+  __AppendElement(list, entry.el);
+  <span class="tok-k">const</span> sign = __GetElementUniqueID(entry.el);
+  signMap.set(sign, entry);
+  __FlushElementTree(entry.el, { triggerLayout: <span class="tok-k">true</span>, operationID, elementID: sign, listID });
+  <span class="tok-k">return</span> sign;
+}
+
+<span class="tok-k">function</span> <span class="tok-f">enqueueComponent</span>(list, listID, sign) {   <span class="tok-c">// cell scrolled off-screen</span>
+  <span class="tok-k">const</span> entry = signMap.get(sign);
+  <span class="tok-k">if</span> (!entry) <span class="tok-k">return</span>;
+  signMap.delete(sign);
+  <span class="tok-k">const</span> reuseId = reuseIdOfKey(entry.key);
+  <span class="tok-k">if</span> (!pool.has(reuseId)) pool.set(reuseId, <span class="tok-k">new</span> Map());
+  pool.get(reuseId).set(sign, entry);             <span class="tok-c">// park it, don't destroy</span>
+}
+<span class="tok-c">// hydrate() is the crux — see the note below on what it means per framework.</span></code></pre>
+  </div>
+
+  <h4>The recycling PAPIs &amp; lifecycle</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>PAPI</th><th>Signature</th><th>Role</th></tr></thead>
+    <tbody>
+      <tr><td><code>enqueueComponent</code></td><td class="sig">(list, listID, uiSign) → void</td><td class="desc">Native hands a scrolled-off cell back; move it from the active map into the reuse pool.</td></tr>
+      <tr><td><code>reuse-identifier</code></td><td class="sig">attr on list-item</td><td class="desc">Pool key — only cells sharing it may cross-item-reuse each other.</td></tr>
+      <tr><td><code>__UpdateListCallbacks</code></td><td class="sig">(list, componentAtIndex, enqueueComponent, componentAtIndexes)</td><td class="desc">Re-bind the three callbacks so native holds fresh closures over current data. ReactLynx does this on <em>every</em> <code>flush</code>; vue-lynx followed suit in #311.</td></tr>
+      <tr><td><em>destroy</em></td><td class="sig">install inert callbacks + clear maps</td><td class="desc">On list teardown, ReactLynx's <code>snapshotDestroyList</code> installs no-op callbacks (<code>() =&gt; -1</code>) and clears bookkeeping; vue-lynx's <code>destroyListElement</code> mirrors it (#311).</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note warn"><span class="lbl">Why <code>__UpdateListCallbacks</code> must fire every flush</span><p>The callbacks close over the item table. In a snapshot model the closure must be refreshed so native pulls see the new data — hence ReactLynx's every-flush rebind. In vue-lynx the closures read live <code class="inl">Map</code>s, so the rebind is closer to parity-for-parity's-sake than a functional necessity (PR&nbsp;#311 review) — a small but telling sign that the contract was <em>shaped around</em> the snapshot model.</p></div>
+
+  <h2 id="reference"><span class="section-tag">Part I · reference</span>Consolidated PAPI reference</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Tier</th><th>Contract</th><th>Direction</th><th>Signature</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b1">1</span></td><td><code>__CreateList</code></td><td class="desc">JS creates</td><td class="sig">(uid, cAI, enqueue, cAIs) → Element</td></tr>
+      <tr><td><span class="badge b1">1</span></td><td><code>componentAtIndex</code></td><td class="desc">native → JS</td><td class="sig">(list, listID, idx, opID) → uiSign</td></tr>
+      <tr><td><span class="badge b1">1</span></td><td><code>__AppendElement</code> / <code>__GetElementUniqueID</code> / <code>__FlushElementTree</code></td><td class="desc">JS</td><td class="sig">see tier 1</td></tr>
+      <tr><td><span class="badge b2">2</span></td><td><code>update-list-info</code> (attribute)</td><td class="desc">JS → native</td><td class="sig">{ insertAction[], removeAction[], updateAction[] }</td></tr>
+      <tr><td><span class="badge b2">2</span></td><td>platform info: <code>item-key</code>, <code>sticky-top</code>, <code>full-span</code>, <code>estimated-main-axis-size-px</code></td><td class="desc">per item</td><td class="sig">read by native only</td></tr>
+      <tr><td><span class="badge b3">3</span></td><td><code>componentAtIndexes</code></td><td class="desc">native → JS</td><td class="sig">(list, listID, idxs[], opIDs[], reuseNotif?)</td></tr>
+      <tr><td><span class="badge b3">3</span></td><td><code>operationID</code> / <code>asyncFlush</code></td><td class="desc">correlation</td><td class="sig">number / flush flag</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>enqueueComponent</code></td><td class="desc">native → JS</td><td class="sig">(list, listID, uiSign) → void</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>reuse-identifier</code></td><td class="desc">per item</td><td class="sig">pool key (string)</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>__UpdateListCallbacks</code></td><td class="desc">JS → native</td><td class="sig">(list, cAI, enqueue, cAIs)</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="rule">
+
+  <h2 id="demands"><span class="section-tag">Part II · 5</span>What the contract actually demands of a framework</h2>
+  <p>Strip the PAPIs down to the capabilities they require of whatever framework sits above them. A framework adapting <code class="inl">&lt;list&gt;</code> well must provide, in rough order of difficulty:</p>
+  <ol>
+    <li><strong>Pull-based, index-addressable rendering.</strong> Produce the subtree for <em>row N</em> on demand, out of document order. Most declarative frameworks render a whole subtree top-down, not one indexed child in isolation.</li>
+    <li><strong>A stable, computable order diff.</strong> Turn "the data went from order A to order B" into insert/remove/move against keys — ideally <em>for free</em> from whatever the framework already does to reconcile.</li>
+    <li><strong>A cheap re-target / hydrate primitive.</strong> Take an existing subtree built for item X and make it display item Y by mutating only the differences — the core of cross-item recycling.</li>
+    <li><strong>Stable identity across the thread boundary.</strong> A durable mapping between framework-level nodes and native <code class="inl">uiSign</code>s that survives moves, pooling, and re-target.</li>
+  </ol>
+  <p>Capabilities 2 and 3 are the discriminating ones: they are exactly what a <em>snapshot/VDOM-with-keyed-reconciliation</em> model produces as a by-product, and exactly what other models must bolt on.</p>
+
+  <h2 id="frameworks"><span class="section-tag">Part II · 6</span>React / Vue / signals, compared against the contract</h2>
+
+  <div class="fw-grid">
+    <div class="fw">
+      <h4>ReactLynx <span class="verdict" style="background:var(--t2-bg);color:var(--t2)">native fit</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">Snapshot model + keyed reconciliation. The contract was co-designed with it.</p>
+      <div class="h">Gains</div>
+      <ul class="plus">
+        <li>The reconciler <em>is</em> the diff — <code>insertBefore</code>/removal recording is a free by-product.</li>
+        <li>Compiler-generated <code>hydrate()</code> per snapshot → precise, cheap cross-item re-target.</li>
+        <li>Snapshot instances are natural pool entries with stable identity.</li>
+      </ul>
+      <div class="h">Costs</div>
+      <ul class="minus">
+        <li>Requires the whole snapshot compiler + runtime; not a thin adapter.</li>
+        <li>Callbacks close over data → must rebind every flush.</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>Vue (vue-lynx) <span class="verdict" style="background:var(--t3-bg);color:var(--t3)">workable, with seams</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">Custom renderer over a reactive VNode tree; no compile-time snapshot.</p>
+      <div class="h">Gains</div>
+      <ul class="plus">
+        <li>Reactivity makes the <em>data source</em> side trivial and fine-grained.</li>
+        <li>Custom renderer cleanly intercepts insert/remove into the item table.</li>
+        <li>Live <code>Map</code> closures sidestep some rebind pressure.</li>
+      </ul>
+      <div class="h">Costs</div>
+      <ul class="minus">
+        <li>No free order-diff → must reconstruct it with an LIS over snapshots (#293).</li>
+        <li>No hydrate primitive → structural runtime attr-walk, O(tree) &amp; shape-fragile (#307).</li>
+        <li>Identity remap across pooling is hand-maintained (reverse index rebuild).</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>Signals (Solid-like) <span class="verdict" style="background:var(--t1-bg);color:var(--t1)">promising</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">Fine-grained reactivity, compiled templates, explicit <code>&lt;For&gt;</code>.</p>
+      <div class="h">Gains</div>
+      <ul class="plus">
+        <li>Per-cell reactive scopes map almost 1:1 onto per-cell pull + re-target.</li>
+        <li>A cell is a reactive computation; "hydrate" = swap the row signal, DOM updates itself. This is the cheapest possible cross-item reuse.</li>
+        <li><code>&lt;For&gt;</code> already maintains keyed identity for reconciliation.</li>
+      </ul>
+      <div class="h">Costs</div>
+      <ul class="minus">
+        <li>Must express order changes as the same insert/remove diff.</li>
+        <li>Pull-based, out-of-order mount fights the usual top-down create.</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>Svelte / compiled <span class="verdict" style="background:var(--t3-bg);color:var(--t3)">mixed</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">Compiled surgical updates, keyed <code>{#each}</code> blocks.</p>
+      <div class="h">Gains</div>
+      <ul class="plus">
+        <li>Compiled update fns give a hydrate-like precise re-target, like Solid.</li>
+        <li>Keyed each-blocks carry identity.</li>
+      </ul>
+      <div class="h">Costs</div>
+      <ul class="minus">
+        <li>Block-oriented, not index-addressable — pull-per-cell needs adaptation.</li>
+        <li>Component boundaries are compiled away, complicating pool entries.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note"><span class="lbl">The pattern across all four</span><p>The single capability that separates "native fit" from "workable with seams" is a <strong>per-template re-target/hydrate primitive</strong>. Frameworks that compile templates (React-snapshot, Solid, Svelte) get it for free and recycle precisely. Frameworks that interpret a runtime tree (Vue's VDOM) must emulate it structurally — which is exactly where vue-lynx's #307 risk lives.</p></div>
+
+  <h2 id="q-which"><span class="section-tag">Part II · 7 · direction A</span>Which framework best fits the current <code>&lt;list&gt;</code> API?</h2>
+  <p><strong>As it stands, the API rewards a compile-time-template, keyed-reconciliation model — and ReactLynx fits it best because the two were designed together.</strong> Every hard requirement of the contract (free order-diff, compiler <code>hydrate</code>, snapshot pool entries, every-flush rebind) lines up with a feature the ReactLynx snapshot runtime already has. That is not a neutral coincidence: <code class="inl">update-list-info</code>'s remove+insert move semantics, the <code class="inl">reuse-identifier</code> pool keying, and the rebind-on-flush lifecycle all read like they were <em>extracted from</em> the snapshot reconciler.</p>
+  <p>The most <em>elegant</em> theoretical fit, though, is <strong>fine-grained signals (Solid-style)</strong>: when a cell is a reactive computation, cross-item recycling collapses to "reassign the row's source signal and let the effects patch the DOM" — no structural walk, no manual identity remap, cheaper than even ReactLynx's compiled hydrate. Signals fit the <em>spirit</em> of pull-based recycling better than React fits the <em>letter</em> of the current API.</p>
+  <p><strong>Vue sits in the middle by construction.</strong> Its reactivity makes the data-source half delightful, but its runtime VDOM gives it neither the free diff nor the hydrate primitive, so the adapter must reconstruct both — the LIS diff and the structural attr-walk. It is genuinely workable (the PR stack proves the happy path), but the seams (#307's O(tree) fragile hydrate, #311's semantically-redundant rebind) are the direct price of adapting a runtime-tree framework to a snapshot-shaped contract.</p>
+
+  <h2 id="q-redesign"><span class="section-tag">Part II · 8 · direction B</span>How could the <code>&lt;list&gt;</code> API be redesigned to better support frameworks?</h2>
+  <p>The current contract leaks one implementation's internals (the snapshot reconciler) into the boundary. A more framework-neutral contract would let each framework contribute the piece it is <em>good</em> at and stop forcing the pieces it is not. Concretely:</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Friction in today's API</th><th>Who it hurts</th><th>Redesign direction</th></tr></thead>
+    <tbody>
+      <tr><td>Framework must supply an order-diff (<code>update-list-info</code>) even though native <em>also</em> tracks order and even emits a <code>diffResult</code> in <code>layoutcomplete</code>.</td><td class="desc">Non-reconciling frameworks (Vue, imperative).</td><td class="desc">Accept a <strong>keyed snapshot</strong> of the current order and let native compute the move-diff itself; make <code>diffResult</code> a first-class input path, not just telemetry.</td></tr>
+      <tr><td>Cross-item recycling assumes a <code>hydrate(old,new)</code> exists; frameworks without one must fake it.</td><td class="desc">Runtime-tree frameworks (Vue).</td><td class="desc">Add an explicit <strong><code>recycleComponent(list, uiSign, newCellIndex)</code></strong> callback so the framework re-targets a subtree using its <em>own</em> update path — no structural walking imposed.</td></tr>
+      <tr><td>Callbacks close over data → must rebind every flush.</td><td class="desc">Everyone (needless churn).</td><td class="desc">Pass current data as an <strong>argument</strong> to the pull (<code>componentAtIndex(list, listID, idx, opID, ctx)</code>) so callbacks stay identity-stable and rebind becomes rare.</td></tr>
+      <tr><td>Identity is a raw native <code>uiSign</code> the framework must map back to its own node.</td><td class="desc">Everyone.</td><td class="desc">Let the framework <strong>register an opaque handle</strong> alongside the uiSign so native round-trips it back on <code>enqueue</code>/recycle — no reverse index to rebuild.</td></tr>
+      <tr><td>Platform info is stringly-typed and folded into <code>insertAction</code>.</td><td class="desc">Type-safe frameworks.</td><td class="desc">A typed <code>ListItemInfo</code> struct separate from the diff payload.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The unifying principle: <strong>the boundary should ask frameworks for <em>data + identity</em>, and ask them to <em>perform</em> re-target through their own machinery — not to <em>reproduce</em> a specific reconciler's diff and hydrate.</strong> Today the contract says "be a snapshot reconciler." A framework-neutral contract would say "give me your keys and a way to update a cell, and I'll drive." That change would make Vue's adapter shed both its LIS diff and its structural hydrate, would let a signals framework plug its per-cell effects straight in, and would cost ReactLynx almost nothing (it can still compute the diff and hydrate internally if it prefers).</p>
+
+  <div class="note key"><span class="lbl">Bottom line</span><p><strong>Direction A:</strong> the current API fits ReactLynx best (by design) and suits Solid-style signals most <em>elegantly</em>; Vue is workable but pays for the impedance mismatch at exactly the two points the PR stack had to engineer around. <strong>Direction B:</strong> move order-diffing and identity-tracking to native, and replace the implicit <code>hydrate</code> assumption with an explicit <code>recycleComponent</code> re-target callback — turning a snapshot-shaped contract into a data-and-identity contract that any keyed framework can satisfy with its own update path.</p></div>
+
+  <div class="foot">
+    <p>Sources: Lynx <code>&lt;list&gt;</code> element reference (lynxjs.org) · Element PAPI reference · lynx-stack <code>packages/react/runtime/src/snapshot/list/</code> (list.ts, listUpdateInfo.ts, pendingListUpdates.ts) · <code>@lynx-js/repl</code> · vue-lynx <code>packages/vue-lynx/main-thread/src/list-apply.ts</code> · PR stack #293 / #307 / #311.</p>
+  </div>
+
+</div>
+
+<!-- ============================= 中文 ============================= -->
+<div class="lang-zh">
+
+  <header class="hero">
+    <p class="eyebrow">技术报告 · Lynx 运行时</p>
+    <h1><code style="font-size:.8em">&lt;list&gt;</code> 元素：底层 PAPI 契约，与它适配哪一类框架</h1>
+    <p class="dek">自底向上梳理让原生 Lynx <code class="inl">&lt;list&gt;</code> 得以渲染、滚动、diff、回收的主线程 Element PAPI 契约——从「两个调用」的基础，一路到完整的回收协议；随后分析这些契约在 React、Vue 与信号（signals）类框架中分别奖励什么、惩罚什么。</p>
+    <div class="meta">
+      <span><b>范围</b> 纯 Element PAPI (MTS) · ReactLynx 参考实现 · vue-lynx 适配层</span>
+      <span><b>配套</b> PR 栈 #293 → #307 → #311</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="目录">
+    <div class="g">第一部分 · 契约</div>
+    <a href="#model-zh">0 · 心智模型：原生负责虚拟化，框架是数据源</a>
+    <a href="#basics-zh">1 · 基础——创建与喂数据 <span class="badge b1">层级 1</span></a>
+    <a href="#update-zh">2 · 变更——<code>update-list-info</code> <span class="badge b2">层级 2</span></a>
+    <a href="#batch-zh">3 · 批量与异步渲染 <span class="badge b3">层级 3</span></a>
+    <a href="#recycle-zh">4 · 回收——池化协议 <span class="badge b4">层级 4</span></a>
+    <a href="#reference-zh">PAPI 参考表</a>
+    <div class="g">第二部分 · 框架适配</div>
+    <a href="#demands-zh">5 · 契约对框架的真实要求</a>
+    <a href="#frameworks-zh">6 · React / Vue / 信号 对比</a>
+    <a href="#which-zh">7 · 哪种框架最合适？</a>
+    <a href="#redesign-zh">8 · 底层 API 该如何为框架重新设计</a>
+  </nav>
+
+  <h2 id="model-zh"><span class="section-tag">第一部分 · 0</span>心智模型：原生 list 负责虚拟化，框架只是数据源</h2>
+  <p>与 <code class="inl">&lt;scroll-view&gt;</code> 不同，Lynx 的 <code class="inl">&lt;list&gt;</code> <em>并不</em>为每一行数据持有一个元素。虚拟化由原生层掌控：它决定哪些 cell 在屏幕上，当它需要某个 cell 时，会<em>回调进 JS</em> 来实例化该 cell 的元素子树。框架从不「渲染整个 list」，它只是注册一组<strong>回调</strong>并维护一张<strong>item 元数据侧表</strong>，原生 list 按需从中拉取。</p>
+  <p>下文全部都是对这一「控制反转」的展开。跨越边界流动的有三样东西：</p>
+  <ul>
+    <li><strong>回调</strong>（JS → 注册到元素上）：<code class="inl">componentAtIndex</code>、<code class="inl">enqueueComponent</code>、<code class="inl">componentAtIndexes</code>——原生借此挂载、回收、批量挂载 cell。</li>
+    <li><strong><code class="inl">update-list-info</code> 属性</strong>（JS → 原生）：对数据源的声明式 diff（以 <code class="inl">item-key</code> 为键的 insert / remove / update）。</li>
+    <li><strong>platform-info 属性</strong>（逐 item）：<code class="inl">item-key</code>、<code class="inl">reuse-identifier</code>、<code class="inl">sticky-top</code>、<code class="inl">full-span</code>、<code class="inl">estimated-main-axis-size-px</code>——由原生读取，绝不作为普通元素属性下发。</li>
+  </ul>
+  <div class="note key"><span class="lbl">唯一要抓住的核心</span><p>list 是<em>一个「虚拟化原生控件」与「JS 数据源」之间的协议</em>，而不是一个你往里塞子节点的容器。一个框架能在多大程度上「支持 <code class="inl">&lt;list&gt;</code>」，完全取决于它的渲染模型能否被翻转成<em>拉取式、逐 cell、可回收</em>的生产方式。</p></div>
+
+  <div class="tier-legend">
+    <div class="tier-card t1c"><span class="n">层级 1 · 基础</span><h5>创建与喂数据</h5><p>一个元素、N 个回调、一张扁平 item 表。足以渲染静态列表。</p></div>
+    <div class="tier-card t2c"><span class="n">层级 2 · 变更</span><h5><code>update-list-info</code></h5><p>声明式 insert / remove / update diff，让数据变化不引发 item-key 冲突地到达原生。</p></div>
+    <div class="tier-card t3c"><span class="n">层级 3 · 批量</span><h5>异步与批量挂载</h5><p><code>componentAtIndexes</code>、<code>operationID</code>、<code>asyncFlush</code>，为跨线程吞吐服务。</p></div>
+    <div class="tier-card t4c"><span class="n">层级 4 · 回收</span><h5>池化协议</h5><p><code>enqueueComponent</code> + <code>reuse-identifier</code> 池；先自复用，再跨 item hydrate。</p></div>
+  </div>
+
+  <h2 id="basics-zh"><span class="section-tag">第一部分 · 1 &nbsp;<span class="badge b1">层级 1 · 基础</span></span>基础——创建元素并喂入 item</h2>
+  <p>原生 list 由 <code class="inl">__CreateList</code> 创建，它在所有「元素创建」PAPI 中很特殊——构造时就要传入<strong>三个回调</strong>。最小可用契约是 <code class="inl">componentAtIndex</code>：给定 cell 索引，把该行的元素子树挂到 list 上，并返回它的 unique id（即 <em>uiSign</em>）。</p>
+
+  <h4>本层级涉及的 PAPI</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>PAPI</th><th>签名</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>__CreateList</code></td><td class="sig">(parentComponentUid, componentAtIndex, enqueueComponent, componentAtIndexes) → Element</td><td class="desc">创建原生 list，并绑定三个渲染回调。</td></tr>
+      <tr><td><code>componentAtIndex</code></td><td class="sig">(list, listID, cellIndex, operationID) → uiSign</td><td class="desc">原生拉取：实例化 <code>cellIndex</code> 处的 cell、挂载、返回其 unique id。</td></tr>
+      <tr><td><code>__AppendElement</code></td><td class="sig">(list, child) → Element</td><td class="desc">flush 前把 cell 子树挂到 list 下。</td></tr>
+      <tr><td><code>__GetElementUniqueID</code></td><td class="sig">(el) → number</td><td class="desc">list 用来标识已挂载 cell 的 <em>uiSign</em>。</td></tr>
+      <tr><td><code>__FlushElementTree</code></td><td class="sig">(el, {triggerLayout, operationID, elementID, listID})</td><td class="desc">把子树提交给原生布局；用 <code>operationID</code> 关联本次拉取。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>REPL 可执行：一个静态列表</h4>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js</span><span class="repl">L0 · 纯 PAPI</span></div>
+<pre><code><span class="tok-c">// 最小 &lt;list&gt;：原生通过 componentAtIndex 拉取每个可见行。</span>
+<span class="tok-k">const</span> page = __CreatePage(<span class="tok-s">"0"</span>, <span class="tok-n">0</span>);
+<span class="tok-k">const</span> rows = [<span class="tok-s">"Alpha"</span>, <span class="tok-s">"Bravo"</span>, <span class="tok-s">"Charlie"</span>, <span class="tok-s">"Delta"</span>];
+
+<span class="tok-k">function</span> <span class="tok-f">componentAtIndex</span>(list, listID, cellIndex, operationID) {
+  <span class="tok-k">const</span> item = __CreateElement(<span class="tok-s">"list-item"</span>, <span class="tok-n">0</span>);
+  __SetAttribute(item, <span class="tok-s">"item-key"</span>, <span class="tok-s">"row-"</span> + cellIndex);   <span class="tok-c">// platform-info，必填</span>
+  <span class="tok-k">const</span> text = __CreateElement(<span class="tok-s">"text"</span>, <span class="tok-n">0</span>);
+  __SetAttribute(text, <span class="tok-s">"text"</span>, rows[cellIndex]);
+  __AppendElement(item, text);
+  __AppendElement(list, item);                          <span class="tok-c">// 挂到 list 下</span>
+  <span class="tok-k">const</span> sign = __GetElementUniqueID(item);
+  __FlushElementTree(item, { triggerLayout: <span class="tok-k">true</span>, operationID, elementID: sign, listID });
+  <span class="tok-k">return</span> sign;                                          <span class="tok-c">// 原生用此 uiSign 跟踪 cell</span>
+}
+
+<span class="tok-k">const</span> list = __CreateList(<span class="tok-n">0</span>, componentAtIndex, <span class="tok-k">function</span>(){}, <span class="tok-k">function</span>(){});
+__SetAttribute(list, <span class="tok-s">"list-type"</span>, <span class="tok-s">"single"</span>);
+__SetAttribute(list, <span class="tok-s">"span-count"</span>, <span class="tok-n">1</span>);
+__AppendElement(page, list);
+__FlushElementTree(page);</code></pre>
+  </div>
+  <p>本层级里 <code class="inl">enqueueComponent</code> 与 <code class="inl">componentAtIndexes</code> 都是空实现。但有个隐藏问题：list 只能通过 <code class="inl">update-list-info</code> 属性得知总行数、以及行数/顺序的任何变化。这就是层级 2。</p>
+
+  <h2 id="update-zh"><span class="section-tag">第一部分 · 2 &nbsp;<span class="badge b2">层级 2 · 变更</span></span>变更——<code>update-list-info</code> diff 契约</h2>
+  <p>原生 list 自己维护一份数据源模型。你通过设置 <code class="inl">update-list-info</code> 属性、传三个数组来<em>声明式</em>地变更这份模型。这正是本 PR 栈「合并顺序修复」所依赖的契约。</p>
+
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">payload 结构</span></div>
+<pre><code>__SetAttribute(list, <span class="tok-s">"update-list-info"</span>, {
+  insertAction: [{ position: <span class="tok-n">2</span>, type: <span class="tok-s">"list-item"</span>, <span class="tok-s">"item-key"</span>: <span class="tok-s">"c"</span>, <span class="tok-c">/* ...platform info */</span> }],
+  removeAction: [<span class="tok-n">1</span>, <span class="tok-n">4</span>],           <span class="tok-c">// 指向 diff 前快照的「旧索引」，升序排列</span>
+  updateAction: [{ from: <span class="tok-n">0</span>, to: <span class="tok-n">0</span>, type: <span class="tok-s">"list-item"</span>, flush: <span class="tok-k">false</span>, <span class="tok-c">/* platform info */</span> }],
+});</code></pre>
+  </div>
+
+  <ul>
+    <li><strong><code class="inl">insertAction</code></strong>——新 cell，各带一个 <code class="inl">position</code>（目标索引）并把该 item 的 platform info 合并进来。</li>
+    <li><strong><code class="inl">removeAction</code></strong>——指向<em>上一份</em>快照的索引。ReactLynx 的 <code class="inl">ListUpdateInfoRecording.__toAttribute()</code> 与 vue-lynx 适配层都<strong>按数值升序</strong>输出，原生把它们作为一批、相对 diff 前快照来应用。</li>
+    <li><strong><code class="inl">updateAction</code></strong>——<em>platform info</em> 变了但位置未变的 cell（<code class="inl">from</code>/<code class="inl">to</code>）。</li>
+  </ul>
+
+  <div class="note"><span class="lbl">为什么是 diff，而不是逐操作变更</span><p>重复声明同一个 <code class="inl">item-key</code> 会让原生 list 报 <code class="inl">2202（duplicated item-key）</code>。因此框架不能天真地「把新增的追加上去」——它必须在「上次 flush 的顺序」和「当前顺序」之间算出真正的 diff，把<em>移动</em>表达为 remove+insert。两套运行时的建模一致（ReactLynx：「move = removeChild + insertBefore」）。</p></div>
+
+  <h4>两套运行时如何算 diff</h4>
+  <p>ReactLynx 在 reconciler 遍历树时<em>命令式</em>地记录变更（<code class="inl">insertBefore</code> map + <code class="inl">appendChild</code> 列表 + <code class="inl">removals</code> 集合），因为 reconciler <em>本就访问每一处改动</em>。vue-lynx 适配层没有这种钩子，于是它保留一份 <code class="inl">lastFlushed</code> 快照，用「旧索引」上的<strong>最长递增子序列（LIS）</strong>结构性地算 diff——LIS 即「留在原处」的集合，其余皆为 remove+insert：</p>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">vue-lynx · list-apply.ts (diffListItems)</span></div>
+<pre><code><span class="tok-c">// 共有 item，用其「新顺序中的旧索引」表达</span>
+<span class="tok-k">const</span> commonNewOrder = newItems
+  .map(e =&gt; oldIndex.get(e.bgId))
+  .filter(i =&gt; i !== <span class="tok-k">undefined</span>);
+<span class="tok-k">const</span> stayed = longestIncreasingSubsequence(commonNewOrder); <span class="tok-c">// 保留这些</span>
+<span class="tok-c">// removeAction = 不在 stayed 里的旧索引；insertAction = 不在 stayed 里的新 item</span></code></pre>
+  </div>
+  <p style="color:var(--ink-soft); font-size:15px;">结果等价，但 diff 的<em>来源</em>迥异——而这个差异正是第二部分的全部戏剧。React 从 reconciliation 里免费拿到 diff；Vue 事后重建它。</p>
+
+  <h2 id="batch-zh"><span class="section-tag">第一部分 · 3 &nbsp;<span class="badge b3">层级 3 · 批量</span></span>批量与异步渲染</h2>
+  <p>一次 <code class="inl">componentAtIndex</code> 拉一个 cell，对少量可见行没问题；但原生希望一次跨线程就预热多个 cell（即 <code class="inl">preload-buffer-count</code>）、并延后布局。两个机制：</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>机制</th><th>签名 / 标志</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>componentAtIndexes</code></td><td class="sig">(list, listID, cellIndexes[], operationIDs[], enableReuseNotification?)</td><td class="desc">批量形式：挂载多个 cell，再对整批做一次 <code>__FlushElementTree(list, …)</code>。</td></tr>
+      <tr><td><code>operationID</code></td><td class="sig">number</td><td class="desc">把某次原生拉取与满足它的 flush 关联起来，便于原生匹配异步结果。</td></tr>
+      <tr><td><code>asyncFlush</code></td><td class="sig">__FlushElementTree(el, {asyncFlush:true})</td><td class="desc">启用批量渲染时，让布局离开关键路径。</td></tr>
+      <tr><td><code>enableBatchRender</code></td><td class="sig">运行时能力</td><td class="desc">开启后，逐 cell 的布局 flush 被抑制，改用批量 flush。</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js · 批量挂载</span><span class="repl">L0</span></div>
+<pre><code><span class="tok-k">function</span> <span class="tok-f">componentAtIndexes</span>(list, listID, cellIndexes, operationIDs) {
+  <span class="tok-k">const</span> ids = [];
+  <span class="tok-k">for</span> (<span class="tok-k">const</span> idx <span class="tok-k">of</span> cellIndexes) ids.push(mountCell(list, listID, idx)); <span class="tok-c">// 不逐 cell flush</span>
+  __FlushElementTree(list, { triggerLayout: <span class="tok-k">true</span>, operationIDs, elementIDs: ids, listID });
+  <span class="tok-k">return</span> ids;
+}</code></pre>
+  </div>
+  <p>这些是吞吐优化，而非新语义——但要注意 <code class="inl">operationID</code> 会贯穿每一条挂载路径，这会在回收层级成为复杂度来源。</p>
+
+  <h2 id="recycle-zh"><span class="section-tag">第一部分 · 4 &nbsp;<span class="badge b4">层级 4 · 回收</span></span>回收——池化协议</h2>
+  <p>到这里契约不再是简单拉取，而变得有状态。当 cell 滚出屏幕，原生调用 <code class="inl">enqueueComponent(list, listID, uiSign)</code>。框架不销毁该子树，而是把它按 <code class="inl">reuse-identifier</code> <em>池化</em>。下一次针对兼容 cell 的 <code class="inl">componentAtIndex</code> 应当<strong>复用池中子树</strong>而非重建——只改动有差异的部分。</p>
+
+  <h4>两张 map 状态（两套运行时一致）</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>结构</th><th>ReactLynx</th><th>vue-lynx</th><th>键</th></tr></thead>
+    <tbody>
+      <tr><td>活跃 cell</td><td><code>gSignMap</code></td><td><code>signMaps</code></td><td class="desc">listID → (uiSign → entry)</td></tr>
+      <tr><td>回收池</td><td><code>gRecycleMap</code></td><td><code>recycleMaps</code></td><td class="desc">listID → (reuseKey → (uiSign → entry))</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><code class="inl">componentAtIndex</code> 的挂载路径变成三岔决策：</p>
+  <ol>
+    <li><strong>自复用</strong>——同一 item 又滚回可见区，它自己的 <code class="inl">uiSign</code> 还在池里。弹出、重新挂载即可。最便宜，无需改内容。</li>
+    <li><strong>跨 item 复用</strong>——池里有<em>另一个</em>同 <code class="inl">reuse-identifier</code> 的 item。取那棵子树，用新 cell 的数据<strong>hydrate</strong>它。</li>
+    <li><strong>全新挂载</strong>——池空，构建新子树（层级 1 路径）。</li>
+  </ol>
+
+  <div class="note key"><span class="lbl">决定性分歧：「hydrate」到底是什么</span>
+    <p><strong>ReactLynx</strong> 调用 snapshot 的 <code class="inl">hydrate(oldSnapshot, newSnapshot)</code>——一个<em>编译器生成</em>的函数，精确知道模板里哪些动态槽位不同，只补丁那些。回收是其 snapshot 模型的一等产物。</p>
+    <p style="margin-top:8px;"><strong>vue-lynx</strong> 没有逐模板的 hydrate 原语，于是 <code class="inl">hydrateListItemEntry()</code> 在<em>运行时结构性地</em>做：建立 element→id 反向索引，同步遍历 donor 与 target 子树，逐节点交换 <code class="inl">textContent</code>/属性并互换 element-id 归属。对同构 cell 正确，每次回收 O(树) 开销，且当同 <code class="inl">reuse-identifier</code> 的两个 cell 形状不同（如 <code class="inl">v-if</code> 分支）时会脆弱。见 PR&nbsp;#307 评审。</p>
+  </div>
+
+  <h4>REPL 可执行：一个最小回收池</h4>
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span><span class="file">main-thread.js · 自复用 + 池</span><span class="repl">L0</span></div>
+<pre><code><span class="tok-c">// 最小层级 4 草图：按 reuse-identifier 池化，优先自复用。</span>
+<span class="tok-k">const</span> signMap = <span class="tok-k">new</span> Map();               <span class="tok-c">// uiSign -&gt; { el, key }  (活跃)</span>
+<span class="tok-k">const</span> pool    = <span class="tok-k">new</span> Map();               <span class="tok-c">// reuseId -&gt; Map(uiSign -&gt; { el, key })</span>
+
+<span class="tok-k">function</span> <span class="tok-f">componentAtIndex</span>(list, listID, cellIndex, operationID) {
+  <span class="tok-k">const</span> reuseId = reuseIdOf(cellIndex);
+  <span class="tok-k">const</span> bucket  = pool.get(reuseId);
+  <span class="tok-k">let</span> entry;
+  <span class="tok-k">if</span> (bucket &amp;&amp; bucket.size) {                     <span class="tok-c">// 复用池中子树……</span>
+    <span class="tok-k">const</span> [sign, pooled] = bucket.entries().next().value;
+    bucket.delete(sign);
+    hydrate(pooled.el, cellIndex);                <span class="tok-c">// ……只补丁差异部分</span>
+    entry = pooled;
+  } <span class="tok-k">else</span> {
+    entry = { el: buildCell(cellIndex), key: keyOf(cellIndex) }; <span class="tok-c">// 全新挂载</span>
+  }
+  __AppendElement(list, entry.el);
+  <span class="tok-k">const</span> sign = __GetElementUniqueID(entry.el);
+  signMap.set(sign, entry);
+  __FlushElementTree(entry.el, { triggerLayout: <span class="tok-k">true</span>, operationID, elementID: sign, listID });
+  <span class="tok-k">return</span> sign;
+}
+
+<span class="tok-k">function</span> <span class="tok-f">enqueueComponent</span>(list, listID, sign) {   <span class="tok-c">// cell 滚出屏幕</span>
+  <span class="tok-k">const</span> entry = signMap.get(sign);
+  <span class="tok-k">if</span> (!entry) <span class="tok-k">return</span>;
+  signMap.delete(sign);
+  <span class="tok-k">const</span> reuseId = reuseIdOfKey(entry.key);
+  <span class="tok-k">if</span> (!pool.has(reuseId)) pool.set(reuseId, <span class="tok-k">new</span> Map());
+  pool.get(reuseId).set(sign, entry);             <span class="tok-c">// 停放，不销毁</span>
+}
+<span class="tok-c">// hydrate() 是关键——它对每种框架意味着什么，见下方说明。</span></code></pre>
+  </div>
+
+  <h4>回收相关 PAPI 与生命周期</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>PAPI</th><th>签名</th><th>职责</th></tr></thead>
+    <tbody>
+      <tr><td><code>enqueueComponent</code></td><td class="sig">(list, listID, uiSign) → void</td><td class="desc">原生把滚出的 cell 交还；把它从活跃 map 移入回收池。</td></tr>
+      <tr><td><code>reuse-identifier</code></td><td class="sig">list-item 上的属性</td><td class="desc">池键——只有共享它的 cell 才能相互跨 item 复用。</td></tr>
+      <tr><td><code>__UpdateListCallbacks</code></td><td class="sig">(list, componentAtIndex, enqueueComponent, componentAtIndexes)</td><td class="desc">重新绑定三个回调，让原生持有对当前数据的新闭包。ReactLynx <em>每次</em> <code>flush</code> 都做；vue-lynx 在 #311 跟进。</td></tr>
+      <tr><td><em>destroy</em></td><td class="sig">装入惰性回调 + 清空 map</td><td class="desc">list 拆除时，ReactLynx 的 <code>snapshotDestroyList</code> 装入空回调（<code>() =&gt; -1</code>）并清账；vue-lynx 的 <code>destroyListElement</code> 对齐（#311）。</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note warn"><span class="lbl">为何 <code>__UpdateListCallbacks</code> 必须每次 flush 都触发</span><p>回调闭包捕获了 item 表。在 snapshot 模型里必须刷新闭包，原生拉取才能看到新数据——故 ReactLynx 每次 flush 重绑。而 vue-lynx 的闭包读取实时 <code class="inl">Map</code>，重绑更接近「为对齐而对齐」而非功能必需（PR&nbsp;#311 评审）——这是个虽小却说明问题的信号：契约是<em>围绕</em> snapshot 模型塑形的。</p></div>
+
+  <h2 id="reference-zh"><span class="section-tag">第一部分 · 参考</span>PAPI 汇总参考</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>层级</th><th>契约</th><th>方向</th><th>签名</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge b1">1</span></td><td><code>__CreateList</code></td><td class="desc">JS 创建</td><td class="sig">(uid, cAI, enqueue, cAIs) → Element</td></tr>
+      <tr><td><span class="badge b1">1</span></td><td><code>componentAtIndex</code></td><td class="desc">原生 → JS</td><td class="sig">(list, listID, idx, opID) → uiSign</td></tr>
+      <tr><td><span class="badge b1">1</span></td><td><code>__AppendElement</code> / <code>__GetElementUniqueID</code> / <code>__FlushElementTree</code></td><td class="desc">JS</td><td class="sig">见层级 1</td></tr>
+      <tr><td><span class="badge b2">2</span></td><td><code>update-list-info</code>（属性）</td><td class="desc">JS → 原生</td><td class="sig">{ insertAction[], removeAction[], updateAction[] }</td></tr>
+      <tr><td><span class="badge b2">2</span></td><td>platform info：<code>item-key</code>、<code>sticky-top</code>、<code>full-span</code>、<code>estimated-main-axis-size-px</code></td><td class="desc">逐 item</td><td class="sig">仅原生读取</td></tr>
+      <tr><td><span class="badge b3">3</span></td><td><code>componentAtIndexes</code></td><td class="desc">原生 → JS</td><td class="sig">(list, listID, idxs[], opIDs[], reuseNotif?)</td></tr>
+      <tr><td><span class="badge b3">3</span></td><td><code>operationID</code> / <code>asyncFlush</code></td><td class="desc">关联</td><td class="sig">number / flush 标志</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>enqueueComponent</code></td><td class="desc">原生 → JS</td><td class="sig">(list, listID, uiSign) → void</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>reuse-identifier</code></td><td class="desc">逐 item</td><td class="sig">池键（string）</td></tr>
+      <tr><td><span class="badge b4">4</span></td><td><code>__UpdateListCallbacks</code></td><td class="desc">JS → 原生</td><td class="sig">(list, cAI, enqueue, cAIs)</td></tr>
+    </tbody>
+  </table></div>
+
+  <hr class="rule">
+
+  <h2 id="demands-zh"><span class="section-tag">第二部分 · 5</span>契约对框架的真实要求</h2>
+  <p>把 PAPI 剥到只剩它对上层框架的能力要求。一个能把 <code class="inl">&lt;list&gt;</code> 适配好的框架，须提供（大致按难度排序）：</p>
+  <ol>
+    <li><strong>拉取式、可按索引寻址的渲染。</strong>按需、乱序地产出<em>第 N 行</em>的子树。多数声明式框架是自顶向下渲染整棵子树，而非孤立地渲染某个带索引的子节点。</li>
+    <li><strong>稳定、可计算的顺序 diff。</strong>把「数据从顺序 A 变到顺序 B」转成基于 key 的 insert/remove/move——最好能从框架本就要做的 reconciliation 里<em>免费</em>得到。</li>
+    <li><strong>廉价的重定向 / hydrate 原语。</strong>把一棵为 item X 建的子树、只改差异部分变成显示 item Y——这是跨 item 回收的核心。</li>
+    <li><strong>跨线程边界的稳定标识。</strong>框架节点与原生 <code class="inl">uiSign</code> 之间、能挺过移动/池化/重定向的持久映射。</li>
+  </ol>
+  <p>其中第 2 和第 3 项最有区分度：它们恰是 <em>snapshot/带 key 的 VDOM reconciliation</em> 模型的副产品，也恰是其它模型必须外挂的东西。</p>
+
+  <h2 id="frameworks-zh"><span class="section-tag">第二部分 · 6</span>React / Vue / 信号 与契约对照</h2>
+
+  <div class="fw-grid">
+    <div class="fw">
+      <h4>ReactLynx <span class="verdict" style="background:var(--t2-bg);color:var(--t2)">天然契合</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">snapshot 模型 + 带 key 的 reconciliation。契约与它是共同设计的。</p>
+      <div class="h">收益</div>
+      <ul class="plus">
+        <li>reconciler <em>本身</em>就是 diff——<code>insertBefore</code>/removal 记录是免费副产品。</li>
+        <li>逐 snapshot 编译生成的 <code>hydrate()</code> → 精确、廉价的跨 item 重定向。</li>
+        <li>snapshot 实例天然就是带稳定标识的池条目。</li>
+      </ul>
+      <div class="h">代价</div>
+      <ul class="minus">
+        <li>需要整套 snapshot 编译器 + 运行时；并非轻量适配层。</li>
+        <li>回调捕获数据 → 必须每次 flush 重绑。</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>Vue (vue-lynx) <span class="verdict" style="background:var(--t3-bg);color:var(--t3)">可行，但有缝</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">在响应式 VNode 树上的自定义渲染器；无编译期 snapshot。</p>
+      <div class="h">收益</div>
+      <ul class="plus">
+        <li>响应式让<em>数据源</em>那一侧变得轻松且细粒度。</li>
+        <li>自定义渲染器能干净地拦截 insert/remove 写入 item 表。</li>
+        <li>实时 <code>Map</code> 闭包规避了部分重绑压力。</li>
+      </ul>
+      <div class="h">代价</div>
+      <ul class="minus">
+        <li>没有免费的顺序 diff → 必须用快照上的 LIS 重建（#293）。</li>
+        <li>没有 hydrate 原语 → 运行时结构性属性遍历，O(树) 且对形状脆弱（#307）。</li>
+        <li>池化后的标识重映射需手工维护（重建反向索引）。</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>信号（类 Solid） <span class="verdict" style="background:var(--t1-bg);color:var(--t1)">很有前景</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">细粒度响应式、编译模板、显式 <code>&lt;For&gt;</code>。</p>
+      <div class="h">收益</div>
+      <ul class="plus">
+        <li>逐 cell 的响应式作用域几乎 1:1 映射到逐 cell 拉取 + 重定向。</li>
+        <li>cell 即一个响应式计算；「hydrate」=换掉行的 signal，DOM 自更新。这是最廉价的跨 item 复用。</li>
+        <li><code>&lt;For&gt;</code> 已为 reconciliation 维护带 key 的标识。</li>
+      </ul>
+      <div class="h">代价</div>
+      <ul class="minus">
+        <li>顺序变化仍须表达为同样的 insert/remove diff。</li>
+        <li>拉取式、乱序挂载与常规自顶向下创建相冲突。</li>
+      </ul>
+    </div>
+
+    <div class="fw">
+      <h4>Svelte / 编译型 <span class="verdict" style="background:var(--t3-bg);color:var(--t3)">喜忧参半</span></h4>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 4px;">编译出的外科式更新、带 key 的 <code>{#each}</code> 块。</p>
+      <div class="h">收益</div>
+      <ul class="plus">
+        <li>编译出的 update 函数给出类 hydrate 的精确重定向，类似 Solid。</li>
+        <li>带 key 的 each 块承载标识。</li>
+      </ul>
+      <div class="h">代价</div>
+      <ul class="minus">
+        <li>面向「块」而非按索引寻址——逐 cell 拉取需适配。</li>
+        <li>组件边界被编译掉，池条目更难界定。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note"><span class="lbl">四者共同的规律</span><p>区分「天然契合」与「可行但有缝」的唯一能力，是<strong>逐模板的重定向/hydrate 原语</strong>。编译模板的框架（React-snapshot、Solid、Svelte）免费拥有它、能精确回收；解释运行时树的框架（Vue 的 VDOM）必须结构性地模拟它——这正是 vue-lynx #307 风险的所在。</p></div>
+
+  <h2 id="which-zh"><span class="section-tag">第二部分 · 7 · 方向 A</span>哪种框架最适合当前的 <code>&lt;list&gt;</code> API？</h2>
+  <p><strong>就现状而言，这套 API 奖励「编译期模板 + 带 key reconciliation」模型——而 ReactLynx 最契合，因为二者是一起设计的。</strong>契约的每一条硬性要求（免费顺序 diff、编译器 <code>hydrate</code>、snapshot 池条目、每次 flush 重绑）都对上 ReactLynx snapshot 运行时已有的特性。这并非中立巧合：<code class="inl">update-list-info</code> 的 remove+insert 移动语义、<code class="inl">reuse-identifier</code> 的池键、以及 flush 即重绑的生命周期，读起来都像是<em>从</em> snapshot reconciler 里<em>抽取出来的</em>。</p>
+  <p>不过理论上最<em>优雅</em>的契合，是<strong>细粒度信号（Solid 风格）</strong>：当 cell 是一个响应式计算，跨 item 回收就坍缩为「重赋该行的源 signal，让 effect 去补丁 DOM」——无需结构遍历、无需手工标识重映射，甚至比 ReactLynx 的编译 hydrate 还便宜。信号契合拉取式回收的<em>精神</em>，胜过 React 契合当前 API 的<em>字面</em>。</p>
+  <p><strong>Vue 天生处在中间。</strong>响应式让数据源那半边很愉快，但运行时 VDOM 既没有免费 diff 也没有 hydrate 原语，于是适配层必须把两者都重建——LIS diff 与结构性属性遍历。它确实可行（PR 栈证明了主路径），但那些缝（#307 的 O(树) 脆弱 hydrate、#311 语义冗余的重绑）正是把「运行时树框架」适配到「snapshot 形状契约」上所付的直接代价。</p>
+
+  <h2 id="redesign-zh"><span class="section-tag">第二部分 · 8 · 方向 B</span>如何重新设计 <code>&lt;list&gt;</code> API 以更好支持框架？</h2>
+  <p>当前契约把某一种实现（snapshot reconciler）的内部细节泄漏到了边界上。一套更「框架中立」的契约，应让每个框架贡献它<em>擅长</em>的那块、并停止强求它不擅长的那块。具体地：</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>今日 API 的摩擦</th><th>受害者</th><th>重设方向</th></tr></thead>
+    <tbody>
+      <tr><td>框架必须提供顺序 diff（<code>update-list-info</code>），即便原生<em>也</em>在跟踪顺序、甚至在 <code>layoutcomplete</code> 里发出 <code>diffResult</code>。</td><td class="desc">非 reconciling 框架（Vue、命令式）。</td><td class="desc">接受一份当前顺序的<strong>带 key 快照</strong>，让原生自己算 move-diff；把 <code>diffResult</code> 变成一等的输入通路，而不仅是遥测。</td></tr>
+      <tr><td>跨 item 回收假定存在 <code>hydrate(old,new)</code>；没有它的框架只能伪造。</td><td class="desc">运行时树框架（Vue）。</td><td class="desc">增加显式的 <strong><code>recycleComponent(list, uiSign, newCellIndex)</code></strong> 回调，让框架用<em>自己的</em>更新路径重定向子树——不强加结构遍历。</td></tr>
+      <tr><td>回调捕获数据 → 必须每次 flush 重绑。</td><td class="desc">所有人（无谓抖动）。</td><td class="desc">把当前数据作为<strong>参数</strong>传给拉取（<code>componentAtIndex(list, listID, idx, opID, ctx)</code>），让回调保持标识稳定、重绑变罕见。</td></tr>
+      <tr><td>标识是原始的原生 <code>uiSign</code>，框架必须映回自己的节点。</td><td class="desc">所有人。</td><td class="desc">让框架在 uiSign 旁<strong>注册一个不透明句柄</strong>，原生在 <code>enqueue</code>/回收时原样回传——无需重建反向索引。</td></tr>
+      <tr><td>platform info 是「字符串型」并揉进 <code>insertAction</code>。</td><td class="desc">类型安全的框架。</td><td class="desc">用一个与 diff payload 分离的、带类型的 <code>ListItemInfo</code> 结构。</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>统一原则：<strong>边界应当向框架索取<em>数据 + 标识</em>，并让框架用自己的机制去<em>执行</em>重定向——而不是要求它<em>复现</em>某一特定 reconciler 的 diff 与 hydrate。</strong>今天的契约在说「你得是个 snapshot reconciler」。一套框架中立的契约会说「把你的 key 和一个更新 cell 的办法给我，我来驱动」。这个改动会让 Vue 适配层同时甩掉它的 LIS diff 与结构性 hydrate，会让信号类框架把逐 cell 的 effect 直接插进来，而对 ReactLynx 几乎零成本（它若愿意，仍可在内部自己算 diff 和 hydrate）。</p>
+
+  <div class="note key"><span class="lbl">结论</span><p><strong>方向 A：</strong>当前 API 最契合 ReactLynx（源于共同设计），而对 Solid 式信号最<em>优雅</em>；Vue 可行，但恰在 PR 栈不得不绕开的那两个点上，为阻抗失配付费。<strong>方向 B：</strong>把顺序 diff 与标识跟踪下沉给原生，并用显式的 <code>recycleComponent</code> 重定向回调替换隐式的 <code>hydrate</code> 假定——把一个「snapshot 形状的契约」变成「数据 + 标识的契约」，让任何带 key 的框架都能用自己的更新路径满足它。</p></div>
+
+  <div class="foot">
+    <p>来源：Lynx <code>&lt;list&gt;</code> 元素参考（lynxjs.org）· Element PAPI 参考 · lynx-stack <code>packages/react/runtime/src/snapshot/list/</code>（list.ts、listUpdateInfo.ts、pendingListUpdates.ts）· <code>@lynx-js/repl</code> · vue-lynx <code>packages/vue-lynx/main-thread/src/list-apply.ts</code> · PR 栈 #293 / #307 / #311。</p>
+  </div>
+
+</div>
+</main>
+
+<script>
+  function setLang(l){
+    document.documentElement.setAttribute('data-lang', l);
+    document.getElementById('en').setAttribute('aria-pressed', l==='en');
+    document.getElementById('zh').setAttribute('aria-pressed', l==='zh');
+    window.scrollTo({top:0, behavior:'auto'});
+  }
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('lt').setAttribute('aria-pressed', t==='light');
+    document.getElementById('dk').setAttribute('aria-pressed', t==='dark');
+  }
+  // init theme buttons from current preference
+  (function(){
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.getElementById('lt').setAttribute('aria-pressed', !dark);
+    document.getElementById('dk').setAttribute('aria-pressed', dark);
+  })();
+</script>
