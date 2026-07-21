@@ -43,7 +43,7 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TREE, tplId, structure(),
+      OP.REGISTER_TREE, tplId, structure(), 0,
       OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
@@ -86,7 +86,7 @@ describe('MT template instantiation', () => {
           ['#text', 0, []],
           ['text', { t: 'hi' }, []],
         ],
-      ],
+      ], 0,
       OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
@@ -107,7 +107,7 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TREE, tplId, structure(),
+      OP.REGISTER_TREE, tplId, structure(), 0,
       OP.CLONE_TREE, tplId, base1,
       OP.INSERT, ROOT, base1, -1,
       OP.CLONE_TREE, tplId, base2,
@@ -130,7 +130,7 @@ describe('MT template instantiation', () => {
     nextId += 3;
 
     applyOps([
-      OP.REGISTER_TREE, tplId, structure(),
+      OP.REGISTER_TREE, tplId, structure(), 0,
       OP.CLONE_TREE, tplId, base,
       OP.INSERT, ROOT, base, -1,
     ]);
@@ -139,5 +139,73 @@ describe('MT template instantiation', () => {
     applyOps([OP.REMOVE, ROOT, base]);
     expect(elements.has(base)).toBe(false);
     expect(elements.has(base + 1)).toBe(false);
+  });
+});
+
+describe('MT sparse A2 template instantiation (#298)', () => {
+  // Dense structure: view(0) > text-static(1) > text-hole(2) > image-static(3)
+  // Sparse addressed: [0, 2] — only root + hole named; static siblings anonymous.
+  function sparseStructure() {
+    return [
+      'view',
+      { c: 'card' },
+      [
+        ['text', { c: 'static', t: 'hi' }, []],
+        ['text', { c: 'hole', t: ' ' }, []],
+        ['image', { a: [['src', 'x.png']] }, []],
+      ],
+    ];
+  }
+
+  it('names only addressed slots; static skeleton stays anonymous', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 2; // only 2 addressed uids
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, sparseStructure(), [0, 2],
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    const rootEl = elements.get(base) as Element;
+    const holeEl = elements.get(base + 1) as Element; // sparse index 1 → slot 2
+    expect(rootEl).toBeTruthy();
+    expect(holeEl).toBeTruthy();
+    expect(holeEl.getAttribute('class')).toBe('hole');
+
+    // Static siblings (dense slots 1 and 3) are NOT in the elements map.
+    expect(elements.has(base + 2)).toBe(false);
+    expect(elements.has(base + 3)).toBe(false);
+
+    // Full native tree still exists under root (3 children).
+    expect(rootEl.childNodes).toHaveLength(3);
+    expect((rootEl.childNodes[0] as Element).getAttribute('class')).toBe(
+      'static',
+    );
+    expect((rootEl.childNodes[2] as Element).getAttribute('src')).toBe(
+      'x.png',
+    );
+
+    // Dynamic SET_* targets the sparse hole uid.
+    applyOps([OP.SET_TEXT, base + 1, 'title']);
+    expect(holeEl.textContent).toBe('title');
+  });
+
+  it('falls back to dense naming when addressedOr0 is 0', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 4;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, sparseStructure(), 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    expect(elements.has(base)).toBe(true);
+    expect(elements.has(base + 1)).toBe(true);
+    expect(elements.has(base + 2)).toBe(true);
+    expect(elements.has(base + 3)).toBe(true);
   });
 });

@@ -46,8 +46,11 @@ const OP_ARITY: Record<number, number> = {
   [OP.SET_WORKLET_EVENT]: 4,
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
-  [OP.REGISTER_TREE]: 2,
+  [OP.INSTANTIATE_TEMPLATE]: 3,
+  [OP.REGISTER_TREE]: 3,
   [OP.CLONE_TREE]: 2,
+  [OP.INSERT_TEMPLATE_SLOT]: 4,
+  [OP.REMOVE_TEMPLATE_SLOT]: 3,
 };
 
 function countOps(flat: unknown[]): number {

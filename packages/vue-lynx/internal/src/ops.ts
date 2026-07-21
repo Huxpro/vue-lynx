@@ -32,21 +32,28 @@
  *     Holes are either attr/text bindings or element slots (`TPL_SLOT_KEY`).
  *     Element-slot count is not a separate op argument — it is the count of
  *     `TPL_SLOT_KEY` entries in the template's registered hole-key list.
- *   REGISTER_TREE:     [16, treeId, structure]
+ *   REGISTER_TREE:     [16, treeId, structure, addressedOr0]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
  *     t?: text }. An element whose only child is a #text node
  *     is folded: the text lives in props.t and the child list is empty
  *     (mirrors the BG-side only-child text aliasing).
+ *     addressedOr0: `0` = dense A1 naming (every preorder slot); otherwise a
+ *     sorted number[] of REGISTER_TREE preorder slots that receive names
+ *     (sparse A2 — compiler `__vlxAddressing.addressed`).
  *   CLONE_TREE:        [17, treeId, baseUid]
- *     Instantiates a registered tree. Element ids are assigned
- *     deterministically: pre-order traversal of the structure starting at
- *     baseUid — the BG thread allocates the identical contiguous block, so
- *     both sides agree on ids without transmitting them.
+ *     Instantiates a registered tree.
+ *     Dense (addressedOr0 === 0): element ids are assigned by pre-order
+ *     traversal starting at baseUid — the BG thread allocates the identical
+ *     contiguous block.
+ *     Sparse (addressed list present): only addressed slots are named;
+ *     uid = baseUid + indexInAddressed. Static skeleton nodes are built as
+ *     anonymous write-only natives. Dynamic children under anonymous parents
+ *     use INSERT_TEMPLATE_SLOT (18/19) by slot-index.
  *   INSERT_TEMPLATE_SLOT: [18, rootId, slotIndex, childId, anchorId]
  *     Insert a dynamic child into the slotIndex-th element slot of the
  *     template instance rooted at rootId (slot-index addressing — the slot
- *     parent may be anonymous once sparse ET lands). anchorId=-1 → append.
+ *     parent may be anonymous under sparse A2). anchorId=-1 → append.
  *   REMOVE_TEMPLATE_SLOT: [19, rootId, slotIndex, childId]
  *     Remove a dynamic child from the slotIndex-th element slot.
  *
@@ -56,10 +63,12 @@
  * + holes (sparse, id-light — the closed dynamic-point set is proved by the
  * VDOM compiler's block analysis): a standard template + closed parts list,
  * hence TEMPLATE. The vapor object is a named tree prototype — serialized
- * structure over the wire plus dense pre-order naming, required because Vapor
- * codegen's addressing knowledge lives in navigation code the protocol cannot
- * see — hence TREE, not TEMPLATE. Element-slot ops (18/19) extend the ET
- * path so dynamic subtrees can graft into a template by slot-index.
+ * structure over the wire. Dense A1 naming was required because Vapor
+ * codegen's addressing knowledge lived in navigation code the protocol could
+ * not see; sparse A2 (#298) consumes compile-time `__vlxAddressing` so TREE
+ * naming can match ET's sparse model while keeping dense CLONE_TREE as
+ * fallback when analysis is absent. Element-slot ops (18/19) let dynamic
+ * subtrees graft by slot-index when the insert parent is anonymous.
  */
 export const PAGE_ROOT_ID = 1;
 
@@ -106,7 +115,7 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.SET_MT_REF]: 2,
   [OP.INIT_MT_REF]: 2,
   [OP.INSTANTIATE_TEMPLATE]: 3,
-  [OP.REGISTER_TREE]: 2,
+  [OP.REGISTER_TREE]: 3,
   [OP.CLONE_TREE]: 2,
   [OP.INSERT_TEMPLATE_SLOT]: 4,
   [OP.REMOVE_TEMPLATE_SLOT]: 3,

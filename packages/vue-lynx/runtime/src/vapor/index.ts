@@ -37,16 +37,24 @@ import {
   createVaporApp as _createVaporApp,
   onBinding as _onBinding,
   renderEffect,
+  template as _template,
 } from '@vue/runtime-vapor';
 import * as runtimeDom from '@vue/runtime-dom';
 import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
+import {
+  VAPOR_ADDRESSING_KEY,
+  type VaporTreeAddressing,
+} from 'vue-lynx/internal/ops';
 import { registerMount } from '../app-registry.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
 import { isIfrMainThread } from '../ifr-env.js';
-import { createPageRoot } from '../shadow-element.js';
+import {
+  createPageRoot,
+  setPendingVaporAddressing,
+} from '../shadow-element.js';
 import type { ShadowElement } from '../shadow-element.js';
 import type { VueLynxApp } from '../index.js';
 import { applyVaporCssVarsToBlock } from './css-vars.js';
@@ -56,6 +64,39 @@ import { applyVaporCssVarsToBlock } from './css-vars.js';
 // ---------------------------------------------------------------------------
 
 export * from '@vue/runtime-vapor';
+
+// ---------------------------------------------------------------------------
+// template() — thread compile-time `__vlxAddressing` into sparse A2 clones
+// ---------------------------------------------------------------------------
+
+type TemplateFactory = (() => ShadowElement) & {
+  [VAPOR_ADDRESSING_KEY]?: VaporTreeAddressing;
+};
+
+/**
+ * Vapor `template()` wrapper: when the loader stamps `__vlxAddressing` on the
+ * factory (#297), each clone call threads that metadata into the REGISTER_TREE
+ * / CLONE_TREE path so sparse A2 naming can kick in (#298). Absent metadata
+ * keeps dense A1.
+ *
+ * @public
+ */
+export function template(
+  html: string,
+  trueFlag?: number,
+  ns?: number,
+): () => ShadowElement {
+  const inner = _template(html, trueFlag, ns) as unknown as () => ShadowElement;
+  const factory: TemplateFactory = () => {
+    setPendingVaporAddressing(factory[VAPOR_ADDRESSING_KEY]);
+    try {
+      return inner();
+    } finally {
+      setPendingVaporAddressing(undefined);
+    }
+  };
+  return factory;
+}
 
 // ---------------------------------------------------------------------------
 // Event modifier helpers — Lynx semantics
