@@ -13,8 +13,12 @@ export function resolveFetch(
 
 /**
  * Read a header in a Headers-like / plain-object compatible way.
- * Lynx native Response.headers sometimes omit `.get`, or only expose a
- * subset of names; masto.js pagination depends on `Link`.
+ * Lynx native Response.headers sometimes omit iterable helpers; masto.js
+ * pagination depends on `Link`, and content decoding on `Content-Type`.
+ *
+ * @see https://lynxjs.org/guide/interaction/networking
+ * @see https://lynxjs.org/api/lynx-api/global/fetch — Lynx Fetch aligns with
+ * Web but has subtle differences; third-party libs may need adaptation.
  */
 export function readHeader(headers: unknown, name: string): string | null {
   if (!headers || typeof headers !== 'object')
@@ -28,31 +32,53 @@ export function readHeader(headers: unknown, name: string): string | null {
   };
 
   if (typeof h.get === 'function') {
-    const direct = h.get(name) ?? h.get(lower) ?? h.get(name.replace(/^\w/, c => c.toUpperCase()));
-    if (direct != null && direct !== '')
-      return String(direct);
+    for (const candidate of [name, lower, name.replace(/^\w/, c => c.toUpperCase())]) {
+      try {
+        const direct = h.get(candidate);
+        if (direct != null && direct !== '')
+          return String(direct);
+      }
+      catch {
+        // some native Headers.get implementations throw on unknown names
+      }
+    }
   }
 
   if (typeof h.forEach === 'function') {
     let found: string | null = null;
-    h.forEach((value, key) => {
-      if (found == null && String(key).toLowerCase() === lower)
-        found = String(value);
-    });
+    try {
+      h.forEach((value, key) => {
+        if (found == null && String(key).toLowerCase() === lower)
+          found = String(value);
+      });
+    }
+    catch {
+      // ignore
+    }
     if (found != null)
       return found;
   }
 
   if (typeof h.entries === 'function') {
-    for (const [key, value] of h.entries()) {
-      if (String(key).toLowerCase() === lower)
-        return String(value);
+    try {
+      for (const [key, value] of h.entries()) {
+        if (String(key).toLowerCase() === lower)
+          return String(value);
+      }
+    }
+    catch {
+      // ignore
     }
   }
 
-  for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
-    if (key.toLowerCase() === lower && value != null)
-      return String(value);
+  try {
+    for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+      if (key.toLowerCase() === lower && value != null)
+        return String(value);
+    }
+  }
+  catch {
+    // ignore
   }
 
   return null;
@@ -65,40 +91,60 @@ type MutableHeaders = {
   forEach: (fn: (value: string, key: string) => void) => void;
 };
 
-function copyHeaders(source: unknown): MutableHeaders {
+function createHeadersBag(seed?: Record<string, string>): MutableHeaders {
   const map = new Map<string, string>();
-
-  const set = (name: string, value: string) => {
-    map.set(name.toLowerCase(), value);
+  if (seed) {
+    for (const [k, v] of Object.entries(seed))
+      map.set(k.toLowerCase(), v);
+  }
+  return {
+    get: name => map.get(name.toLowerCase()) ?? null,
+    set: (name, value) => {
+      map.set(name.toLowerCase(), value);
+    },
+    has: name => map.has(name.toLowerCase()),
+    forEach: (fn) => {
+      for (const [k, v] of map) fn(v, k);
+    },
   };
+}
+
+/**
+ * Build a headers bag that always exposes `.get`, seeding critical fields via
+ * readHeader first. Native Lynx Headers often do not enumerate with
+ * Object.entries / forEach the way Web does — copying only via iteration
+ * drops Content-Type and breaks masto's getEncoding().
+ */
+export function normalizeResponseHeaders(source: unknown): MutableHeaders {
+  const headers = createHeadersBag();
+
+  // Prefer explicit gets for fields masto needs.
+  const contentType = readHeader(source, 'content-type');
+  if (contentType)
+    headers.set('content-type', contentType);
+  const link = readHeader(source, 'link');
+  if (link)
+    headers.set('link', link);
 
   if (source && typeof source === 'object') {
     const h = source as {
       forEach?: (fn: (value: string, key: string) => void) => void;
       entries?: () => IterableIterator<[string, string]>;
     };
-    if (typeof h.forEach === 'function') {
-      h.forEach((value, key) => set(key, String(value)));
-    }
-    else if (typeof h.entries === 'function') {
-      for (const [key, value] of h.entries()) set(key, String(value));
-    }
-    else {
-      for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
-        if (value != null)
-          set(key, String(value));
+    try {
+      if (typeof h.forEach === 'function') {
+        h.forEach((value, key) => headers.set(key, String(value)));
       }
+      else if (typeof h.entries === 'function') {
+        for (const [key, value] of h.entries()) headers.set(key, String(value));
+      }
+    }
+    catch {
+      // keep seeded content-type / link
     }
   }
 
-  return {
-    get: name => map.get(name.toLowerCase()) ?? null,
-    set: (name, value) => set(name, value),
-    has: name => map.has(name.toLowerCase()),
-    forEach: (fn) => {
-      for (const [k, v] of map) fn(v, k);
-    },
-  };
+  return headers;
 }
 
 function requestUrl(input: unknown): string {
@@ -136,28 +182,25 @@ export function synthesizeNextLink(
 
   let nextHref: string;
   try {
-    // Prefer URL when available (web / modern native); fall back to string surgery.
-    if (typeof URL === 'function') {
-      const url = new URL(requestHref);
-      const last = data[data.length - 1] as Record<string, unknown>;
-      if (last && last.id != null) {
-        url.searchParams.set('max_id', String(last.id));
-        // Avoid a tight loop if the server ignored max_id and returned the same head.
-        const prevMax = new URL(requestHref).searchParams.get('max_id');
-        if (prevMax === String(last.id))
-          return null;
-      }
-      else {
-        const prevOffset = Number(url.searchParams.get('offset') || '0');
-        if (!Number.isFinite(prevOffset))
-          return null;
-        url.searchParams.set('offset', String(prevOffset + data.length));
-      }
-      nextHref = url.href;
+    if (typeof URL !== 'function')
+      return null;
+
+    const url = new URL(requestHref);
+    const last = data[data.length - 1] as Record<string, unknown>;
+    if (last && last.id != null) {
+      url.searchParams.set('max_id', String(last.id));
+      // Avoid a tight loop if the server ignored max_id and returned the same head.
+      const prevMax = new URL(requestHref).searchParams.get('max_id');
+      if (prevMax === String(last.id))
+        return null;
     }
     else {
-      return null;
+      const prevOffset = Number(url.searchParams.get('offset') || '0');
+      if (!Number.isFinite(prevOffset))
+        return null;
+      url.searchParams.set('offset', String(prevOffset + data.length));
     }
+    nextHref = url.href;
   }
   catch {
     return null;
@@ -166,36 +209,87 @@ export function synthesizeNextLink(
   return `<${nextHref}>; rel="next"`;
 }
 
+function buildPatchedResponse(
+  response: any,
+  text: string,
+  headers: MutableHeaders,
+  input: unknown,
+): any {
+  const status = typeof response?.status === 'number' ? response.status : 200;
+  const ok = typeof response?.ok === 'boolean'
+    ? response.ok
+    : status >= 200 && status < 300;
+  const statusText = response?.statusText ?? '';
+  const url = response?.url ?? requestUrl(input);
+
+  // Prefer a real Response so `instanceof Response` still works in masto's
+  // error path (Lynx documents Response as available since 2.18).
+  if (typeof Response === 'function') {
+    try {
+      const initHeaders: Record<string, string> = {};
+      headers.forEach((value, key) => {
+        initHeaders[key] = value;
+      });
+      const built = new Response(text, { status, statusText, headers: initHeaders });
+      // Some Lynx builds omit .url on constructed Responses.
+      if (!(built as any).url && url) {
+        try {
+          Object.defineProperty(built, 'url', { value: url, configurable: true });
+        }
+        catch {
+          // ignore
+        }
+      }
+      return built;
+    }
+    catch {
+      // fall through to duck-typed response
+    }
+  }
+
+  return {
+    ok,
+    status,
+    statusText,
+    url,
+    headers,
+    async text() {
+      return text;
+    },
+    async json() {
+      return JSON.parse(text);
+    },
+  };
+}
+
 /**
- * Wrap fetch so Response.headers always supports `.get('link')` for masto.js.
- * If the native stack drops `Link`, synthesize the next page URL from the body.
+ * Wrap fetch for masto.js pagination without breaking Lynx's native Response.
  *
- * Body is buffered once (timeline pages are small JSON arrays).
+ * Per https://lynxjs.org/guide/interaction/networking — Lynx Fetch is Web-
+ * compatible with subtle differences; keep the native Response when `Link`
+ * is already readable. Only buffer + rebuild when we must synthesize `Link`
+ * (native stacks often drop that header after the first Mastodon page).
  */
 export function wrapFetchForMastoPagination(fetchImpl: FetchLike): FetchLike {
   return async function fetchWithMastoLink(input: unknown, init?: unknown) {
     const response = await fetchImpl(input, init);
-    const headers = copyHeaders(response?.headers);
+
+    // Fast path: leave Lynx/Web Response untouched when Link is present.
+    if (readHeader(response?.headers, 'link'))
+      return response;
+
+    // Need body to synthesize next — buffer once. Always keep Content-Type
+    // via readHeader; empty iteration of native Headers was dropping it and
+    // causing masto "unknown encoding" → Failed to load timeline.
     const text = await response.text();
+    const headers = normalizeResponseHeaders(response?.headers);
+    if (!headers.get('content-type'))
+      headers.set('content-type', 'application/json');
 
-    if (!headers.get('link')) {
-      const synthesized = synthesizeNextLink(requestUrl(input), text);
-      if (synthesized)
-        headers.set('link', synthesized);
-    }
+    const synthesized = synthesizeNextLink(requestUrl(input), text);
+    if (synthesized)
+      headers.set('link', synthesized);
 
-    return {
-      ok: response.ok,
-      status: response.status,
-      statusText: response.statusText,
-      url: response.url ?? requestUrl(input),
-      headers,
-      async text() {
-        return text;
-      },
-      async json() {
-        return JSON.parse(text);
-      },
-    };
+    return buildPatchedResponse(response, text, headers, input);
   };
 }

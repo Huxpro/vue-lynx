@@ -110,9 +110,12 @@ access-token sign-in** in Settings. Multi-account storage
    (`response.headers.get('link')`). Native Lynx fetch often omits that
    header, so the first page succeeds and the next `paginator.next()` looks
    like end-of-feed ("End of the timeline") while Web keeps scrolling.
-   `wrapFetchForMastoPagination` in `fetch-compat.ts` normalizes headers and,
-   when `Link` is missing, synthesizes `rel="next"` from `max_id` / `offset`
-   in the JSON body.
+   `wrapFetchForMastoPagination` in `fetch-compat.ts` leaves the native
+   Response alone when `Link` is present (see Lynx networking guide:
+   Fetch is Web-compatible with subtle differences — prefer not to replace
+   the host Response). When `Link` is missing it buffers the body, keeps
+   `Content-Type` via `.get` (native Headers often do not enumerate), and
+   synthesizes `rel="next"` from `max_id` / `offset`.
 2. **No DOMParser anywhere** (worker or native). Elk's `tiny-decode`
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for

@@ -373,7 +373,11 @@ test('wrapFetchForMastoPagination synthesizes Link when native headers omit it',
     status: 200,
     statusText: 'OK',
     url: 'https://mas.to/api/v1/timelines/public?limit=2',
-    headers: { 'content-type': 'application/json' },
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'content-type' ? 'application/json' : null;
+      },
+    },
     async text() {
       return JSON.stringify([{ id: '2' }, { id: '1' }]);
     },
@@ -386,26 +390,53 @@ test('wrapFetchForMastoPagination synthesizes Link when native headers omit it',
   assert.equal(body[1].id, '1');
 });
 
-test('wrapFetchForMastoPagination preserves an existing Link header', async () => {
-  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+test('wrapFetchForMastoPagination keeps Content-Type when headers are non-enumerable', async () => {
+  // Mimics Lynx native Headers: .get works, Object.entries is empty.
+  const nativeHeaders = {
+    get(name) {
+      return name.toLowerCase() === 'content-type' ? 'application/json; charset=utf-8' : null;
+    },
+  };
   const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => ({
     ok: true,
     status: 200,
     statusText: 'OK',
+    headers: nativeHeaders,
+    async text() {
+      return JSON.stringify([{ id: '9' }]);
+    },
+  }));
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=1');
+  assert.match(res.headers.get('Content-Type') ?? '', /application\/json/);
+  assert.match(res.headers.get('link') ?? '', /max_id=9/);
+});
+
+test('wrapFetchForMastoPagination passes through when Link already exists', async () => {
+  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+  const original = {
+    ok: true,
+    status: 200,
     headers: {
       get(name) {
         return name.toLowerCase() === 'link' ? existing : null;
       },
-      forEach(fn) {
-        fn(existing, 'link');
-      },
     },
     async text() {
-      return JSON.stringify([{ id: '2' }, { id: '1' }]);
+      throw new Error('should not buffer when Link is present');
     },
-  }));
+  };
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => original);
   const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
-  assert.equal(res.headers.get('link'), existing);
+  assert.equal(res, original);
+});
+
+test('normalizeResponseHeaders seeds Content-Type via .get without enumeration', () => {
+  const headers = fetchCompat.normalizeResponseHeaders?.({
+    get(name) {
+      return name.toLowerCase() === 'content-type' ? 'application/json' : null;
+    },
+  });
+  assert.equal(headers?.get('content-type'), 'application/json');
 });
 
 test('DOMException compatibility preserves name, message and instanceof checks', () => {
