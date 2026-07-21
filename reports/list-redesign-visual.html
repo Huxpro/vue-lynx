@@ -1,0 +1,577 @@
+<title>A Framework-Neutral &lt;list&gt; — Visual Redesign</title>
+<style>
+  :root{
+    --bg:#f5f6f8;--surface:#fff;--surface-2:#eef1f4;--ink:#191f27;--ink-soft:#46505c;--ink-faint:#6b7681;
+    --line:#dde2e8;--line-strong:#c6cdd6;--accent:#0e8a8f;--accent-soft:#e0f1f1;
+    --code-bg:#0f1720;--code-ink:#d7e0ea;--code-line:#1f2a36;
+    --t1:#0e8a8f;--t1-bg:#e2f1f1;--t2:#2f8f4e;--t2-bg:#e5f2e9;--t3:#b7791f;--t3-bg:#f6ecd8;--t4:#7c4dc4;--t4-bg:#efe8f8;
+    --good:#2f8f4e;--warn:#b7791f;--bad:#c04a4a;--bad-bg:#f7e4e4;
+    --typeA:#0e8a8f;--typeA-bg:#d7edee;--typeB:#7c4dc4;--typeB-bg:#ece2f8;
+    --font-head:"Söhne","Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    --font-body:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Songti SC","PingFang SC","Microsoft YaHei",serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --maxw:72ch;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#0d1116;--surface:#141a21;--surface-2:#1b232c;--ink:#e6ebf1;--ink-soft:#aeb8c4;--ink-faint:#7d8894;
+    --line:#263039;--line-strong:#35424e;--accent:#35c7cc;--accent-soft:#102a2c;
+    --code-bg:#0a0f15;--code-ink:#d7e0ea;--code-line:#1a232d;
+    --t1:#35c7cc;--t1-bg:#0f2a2b;--t2:#5fce85;--t2-bg:#10241a;--t3:#e0b357;--t3-bg:#2a2113;--t4:#b592ea;--t4-bg:#211930;
+    --good:#5fce85;--warn:#e0b357;--bad:#e87a7a;--bad-bg:#2a1616;
+    --typeA:#35c7cc;--typeA-bg:#10292b;--typeB:#b592ea;--typeB-bg:#211a30;
+  }}
+  :root[data-theme="light"]{--bg:#f5f6f8;--surface:#fff;--surface-2:#eef1f4;--ink:#191f27;--ink-soft:#46505c;--ink-faint:#6b7681;--line:#dde2e8;--line-strong:#c6cdd6;--accent:#0e8a8f;--accent-soft:#e0f1f1;--code-bg:#0f1720;--code-ink:#d7e0ea;--code-line:#1f2a36;--t1:#0e8a8f;--t1-bg:#e2f1f1;--t2:#2f8f4e;--t2-bg:#e5f2e9;--t3:#b7791f;--t3-bg:#f6ecd8;--t4:#7c4dc4;--t4-bg:#efe8f8;--good:#2f8f4e;--warn:#b7791f;--bad:#c04a4a;--bad-bg:#f7e4e4;--typeA:#0e8a8f;--typeA-bg:#d7edee;--typeB:#7c4dc4;--typeB-bg:#ece2f8;}
+  :root[data-theme="dark"]{--bg:#0d1116;--surface:#141a21;--surface-2:#1b232c;--ink:#e6ebf1;--ink-soft:#aeb8c4;--ink-faint:#7d8894;--line:#263039;--line-strong:#35424e;--accent:#35c7cc;--accent-soft:#102a2c;--code-bg:#0a0f15;--code-ink:#d7e0ea;--code-line:#1a232d;--t1:#35c7cc;--t1-bg:#0f2a2b;--t2:#5fce85;--t2-bg:#10241a;--t3:#e0b357;--t3-bg:#2a2113;--t4:#b592ea;--t4-bg:#211930;--good:#5fce85;--warn:#e0b357;--bad:#e87a7a;--bad-bg:#2a1616;--typeA:#35c7cc;--typeA-bg:#10292b;--typeB:#b592ea;--typeB-bg:#211a30;}
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+
+  .bar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:9px 20px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar .mark{font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft)}.bar .mark b{color:var(--accent)}
+  .bar .spacer{flex:1}
+  .toggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+  .toggle button{font-family:var(--font-mono);font-size:12px;letter-spacing:.03em;padding:6px 11px;background:var(--surface);color:var(--ink-soft);border:0;cursor:pointer;transition:background .15s,color .15s}
+  .toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+  .toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+  main{max-width:1000px;margin:0 auto;padding:0 22px 120px}
+  header.hero{padding:52px 0 26px}
+  .eyebrow{font-family:var(--font-mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-family:var(--font-head);font-weight:620;font-size:clamp(29px,5vw,44px);line-height:1.08;letter-spacing:-.02em;text-wrap:balance;margin:0 0 16px}
+  .dek{font-size:19px;color:var(--ink-soft);max-width:var(--maxw);margin:0 0 6px}
+  h2{font-family:var(--font-head);font-weight:600;font-size:26px;letter-spacing:-.01em;margin:64px 0 6px;scroll-margin-top:64px;text-wrap:balance}
+  h3{font-family:var(--font-head);font-weight:600;font-size:18px;margin:34px 0 6px}
+  .sec-n{font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;color:var(--ink-faint);display:block;margin-bottom:2px}
+  p{max-width:var(--maxw)}
+  a{color:var(--accent)}
+  strong{font-weight:600}
+  code.inl{font-family:var(--font-mono);font-size:.85em;background:var(--surface-2);color:var(--ink);padding:1px 6px;border-radius:5px;border:1px solid var(--line)}
+  .rule{height:1px;background:var(--line);border:0;margin:38px 0}
+
+  /* ---------- interactive sim ---------- */
+  .sim{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:18px;margin:26px 0 8px;box-shadow:0 1px 0 var(--line)}
+  .sim-grid{display:grid;grid-template-columns:minmax(240px,1fr) minmax(220px,.9fr);gap:20px}
+  @media (max-width:720px){.sim-grid{grid-template-columns:1fr}}
+  .stage{position:relative}
+  .stage-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .native-tag{margin-left:auto;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:1px 6px;font-size:10px}
+  .viewport{position:relative;height:288px;border:2px solid var(--line-strong);border-radius:12px;overflow:hidden;background:linear-gradient(var(--surface-2),var(--surface));box-shadow:inset 0 0 0 100vmax transparent}
+  .vp-inner{position:absolute;inset:0}
+  .cell{position:absolute;left:10px;right:10px;height:44px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 12px;font-family:var(--font-mono);font-size:13px;color:var(--ink);border:1px solid var(--line-strong);transition:transform .28s cubic-bezier(.2,.7,.3,1),opacity .22s;will-change:transform}
+  .cell.A{background:var(--typeA-bg);border-color:color-mix(in srgb,var(--typeA) 45%,var(--line))}
+  .cell.B{background:var(--typeB-bg);border-color:color-mix(in srgb,var(--typeB) 45%,var(--line))}
+  .cell .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .cell.A .dot{background:var(--typeA)}.cell.B .dot{background:var(--typeB)}
+  .cell .kk{font-weight:600}
+  .cell .tag{margin-left:auto;font-size:10px;letter-spacing:.04em;padding:1px 6px;border-radius:999px;opacity:0}
+  .cell .tag.show{opacity:1}
+  .cell .tag.reuse{background:var(--good);color:#fff}
+  .cell .tag.fresh{background:var(--warn);color:#fff}
+  .win-frame{position:absolute;left:4px;right:4px;top:4px;bottom:4px;border-radius:9px;pointer-events:none;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent) inset}
+  .scrollbar{position:absolute;right:3px;top:6px;bottom:6px;width:4px;border-radius:4px;background:color-mix(in srgb,var(--ink-faint) 22%,transparent)}
+  .scrollbar i{position:absolute;left:0;right:0;border-radius:4px;background:var(--accent);transition:top .28s,height .28s}
+
+  .pool-wrap{margin-top:14px}
+  .pool-tray{min-height:56px;border:1px dashed var(--line-strong);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;background:var(--surface-2)}
+  .chip{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:7px;border:1px solid var(--line-strong);display:inline-flex;gap:6px;align-items:center;animation:pop .25s ease}
+  .chip.A{background:var(--typeA-bg);color:var(--typeA)}.chip.B{background:var(--typeB-bg);color:var(--typeB)}
+  .chip .dot{width:7px;height:7px;border-radius:50%}.chip.A .dot{background:var(--typeA)}.chip.B .dot{background:var(--typeB)}
+  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+  .panel{display:flex;flex-direction:column;gap:10px}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  .stat .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint)}
+  .stat .v{font-family:var(--font-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.2}
+  .stat .v.good{color:var(--good)}.stat .v.bad{color:var(--bad)}
+  .meter{margin-top:2px}
+  .meter .cap{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);margin-bottom:4px}
+  .meter .track{height:12px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;position:relative}
+  .meter .fill{height:100%;border-radius:6px;transition:width .3s ease;background:var(--bad)}
+  .meter .fill.ok{background:var(--good)}
+  .meter .ideal{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.5}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;align-items:center}
+  .btn{font-family:var(--font-mono);font-size:12.5px;padding:8px 13px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;transition:background .15s,border-color .15s}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .switch{margin-left:auto;display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-size:12.5px;color:var(--ink-soft);cursor:pointer;user-select:none}
+  .switch .track2{width:42px;height:24px;border-radius:999px;background:var(--line-strong);position:relative;transition:background .2s}
+  .switch .track2 i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+  .switch.on .track2{background:var(--good)}.switch.on .track2 i{left:20px}
+  .sim-note{font-family:var(--font-body);font-size:14px;color:var(--ink-soft);margin:14px 2px 0;max-width:100%}
+  .sim-note b{color:var(--ink)}
+
+  /* ---------- generic diagram bits ---------- */
+  .flow{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:24px 0;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  @media (max-width:640px){.flow{grid-template-columns:1fr}}
+  .flow .side{padding:18px}
+  .flow .native{background:var(--accent-soft)}
+  .flow .fw{background:var(--surface)}
+  .flow .side h4{font-family:var(--font-head);font-size:15px;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+  .flow .side .role{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint)}
+  .flow .side ul{margin:8px 0 0;padding-left:1.1em;font-size:14px;color:var(--ink-soft)}
+  .flow .side li{margin:3px 0}
+  .flow .conn{background:var(--surface-2);display:flex;flex-direction:column;justify-content:center;gap:14px;padding:14px 10px;min-width:150px;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  @media (max-width:640px){.flow .conn{border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:wrap}}
+  .arrow{font-family:var(--font-mono);font-size:11.5px;text-align:center}
+  .arrow .a{color:var(--accent);font-weight:600}
+  .arrow .lbl{color:var(--ink-soft);display:block;margin-top:1px;font-size:10.5px}
+  .arrow.pull .a::before{content:"◀━━ "}
+  .arrow.give .a::after{content:" ━━▶"}
+
+  /* lifecycle */
+  .life{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow-x:auto}
+  .lstate{font-family:var(--font-mono);font-size:12.5px;padding:8px 12px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface-2);white-space:nowrap}
+  .lstate.vis{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .lstate.park{background:var(--t3-bg);border-color:var(--t3);color:var(--t3)}
+  .lstate.gone{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+  .ledge{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;min-width:64px}
+  .ledge .a{color:var(--accent);font-size:14px}
+  .ledge .op{color:var(--ink)}
+
+  /* quadrant */
+  .quad-wrap{margin:22px 0;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:8px}
+  svg.quad{width:100%;height:auto;display:block;font-family:var(--font-mono)}
+  .qlegend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);padding:6px 12px 10px}
+  .qlegend b{display:inline-flex;align-items:center;gap:6px}
+  .qlegend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* capability stack + matrix */
+  .stack{display:flex;flex-direction:column;gap:8px;margin:22px 0}
+  .layer{border:1px solid var(--line);border-radius:12px;padding:13px 16px;background:var(--surface);position:relative;overflow:hidden}
+  .layer .k{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+  .layer h4{font-family:var(--font-head);font-size:15.5px;margin:0 0 3px}
+  .layer p{font-size:13.5px;color:var(--ink-soft);margin:0;max-width:100%;font-family:var(--font-body)}
+  .layer.core{border-left:5px solid var(--t2)}.layer.core .k{color:var(--t2)}
+  .layer.opt{border-left:5px solid var(--t3);border-style:dashed}.layer.opt .k{color:var(--t3)}
+  .layer .req{position:absolute;top:12px;right:14px;font-family:var(--font-mono);font-size:10.5px;padding:2px 8px;border-radius:999px}
+  .layer.core .req{background:var(--t2-bg);color:var(--t2)}
+  .layer.opt .req{background:var(--t3-bg);color:var(--t3)}
+
+  .table-wrap{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--surface-2);font-family:var(--font-head);font-weight:600;font-size:12.5px}
+  tbody tr:last-child td{border-bottom:0}
+  td code{font-family:var(--font-mono);font-size:12px}
+  .yes{color:var(--good);font-weight:600}.no{color:var(--ink-faint)}.opt{color:var(--t3);font-weight:600}
+  .desc{color:var(--ink-soft)}
+
+  /* before/after */
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+  @media (max-width:640px){.ba{grid-template-columns:1fr}}
+  .ba .card{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface)}
+  .ba .card.old{border-top:4px solid var(--bad)}
+  .ba .card.new{border-top:4px solid var(--good)}
+  .ba .card .tt{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .ba .card.old .tt{color:var(--bad)}.ba .card.new .tt{color:var(--good)}
+  .ba .card h4{font-family:var(--font-head);font-size:16px;margin:0 0 10px;text-wrap:balance}
+  .ba ul{margin:0;padding-left:1.05em;font-size:13.5px;color:var(--ink-soft)}
+  .ba li{margin:5px 0}
+  .ba .old li::marker{color:var(--bad)}.ba .new li::marker{color:var(--good)}
+
+  .code-wrap{margin:18px 0;border-radius:12px;overflow:hidden;border:1px solid var(--code-line)}
+  .code-head{display:flex;gap:9px;align-items:center;background:var(--code-line);color:var(--code-ink);font-family:var(--font-mono);font-size:11.5px;padding:7px 14px}
+  .code-head .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);opacity:.8}
+  pre{margin:0;background:var(--code-bg);color:var(--code-ink);font-family:var(--font-mono);font-size:12.5px;line-height:1.6;padding:15px 17px;overflow-x:auto}
+  .tok-c{color:#6f8296;font-style:italic}.tok-k{color:#7cc7ff}.tok-f{color:#e0b357}.tok-s{color:#8fdca0}.tok-t{color:#d78cf0}
+
+  .note{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--surface);border-radius:10px;padding:12px 16px;margin:20px 0;max-width:100%}
+  .note .lbl{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:3px}
+  .note.key{border-left-color:var(--t4)}.note.key .lbl{color:var(--t4)}
+  .note p{margin:4px 0 0;max-width:100%;font-size:15px}
+
+  .foot{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:12px;color:var(--ink-faint)}
+
+  .lang-zh{display:none}
+  :root[data-lang="zh"] .lang-en{display:none}
+  :root[data-lang="zh"] .lang-zh{display:revert}
+  :root[data-lang="zh"]{--font-body:"Songti SC","STSong","PingFang SC","Microsoft YaHei",Georgia,serif}
+</style>
+
+<div class="bar">
+  <span class="mark"><b>&lt;list&gt;</b> · framework-neutral redesign</span>
+  <span class="spacer"></span>
+  <div class="toggle" role="group" aria-label="Language">
+    <button id="en" aria-pressed="true" onclick="setLang('en')">EN</button>
+    <button id="zh" aria-pressed="false" onclick="setLang('zh')">中文</button>
+  </div>
+  <div class="toggle" role="group" aria-label="Theme">
+    <button id="lt" aria-pressed="false" onclick="setTheme('light')" title="Light">☀</button>
+    <button id="dk" aria-pressed="false" onclick="setTheme('dark')" title="Dark">☾</button>
+  </div>
+</div>
+
+<main>
+  <header class="hero">
+    <p class="eyebrow"><span class="lang-en">Visual Design Note</span><span class="lang-zh">可视化设计笔记</span></p>
+    <h1>
+      <span class="lang-en">A framework-neutral <code style="font-size:.78em">&lt;list&gt;</code>: three operations, and everything else optional</span>
+      <span class="lang-zh">一个框架中立的 <code style="font-size:.78em">&lt;list&gt;</code>：三个操作，其余皆可选</span>
+    </h1>
+    <p class="dek">
+      <span class="lang-en">The current <code class="inl">&lt;list&gt;</code> contract asks every framework to <em>be a snapshot reconciler</em>. It doesn't have to. Below: an interactive model of what the list actually needs, and a redesign that asks frameworks only for <strong>data + identity</strong> — letting each keep its own way of updating a cell.</span>
+      <span class="lang-zh">当前 <code class="inl">&lt;list&gt;</code> 契约要求每个框架都<em>去当一个 snapshot reconciler</em>。其实不必。下面是一个可交互模型，展示 list 真正需要什么，以及一套只向框架索取<strong>数据 + 标识</strong>的重设方案——让每种框架保留自己更新 cell 的方式。</span>
+    </p>
+  </header>
+
+  <!-- ============ HERO SIM ============ -->
+  <h2><span class="sec-n"><span class="lang-en">Interactive · the model</span><span class="lang-zh">交互 · 模型</span></span><span class="lang-en">Feel it first: native pulls, the framework produces &amp; parks</span><span class="lang-zh">先感受：原生 pull，框架产出并停放</span></h2>
+  <p>
+    <span class="lang-en">Scroll the viewport. Native decides which cells exist and <strong>pulls</strong> them — the framework only answers <code class="inl">mount(key)</code> and <code class="inl">release(token)</code>. Toggle recycling to watch what changes: <em>nothing native sees</em>. Recycling is the framework quietly parking a released cell and handing it back on the next <code class="inl">mount</code>.</span>
+    <span class="lang-zh">滚动这个视口。原生决定哪些 cell 存在并<strong>拉取</strong>它们——框架只回答 <code class="inl">mount(key)</code> 与 <code class="inl">release(token)</code>。打开/关闭回收，看看有什么变化：<em>原生什么都看不到</em>。回收只是框架悄悄把被释放的 cell 停放起来，下次 <code class="inl">mount</code> 时再交回去。</span>
+  </p>
+
+  <div class="sim">
+    <div class="sim-grid">
+      <div class="stage">
+        <p class="stage-label"><span class="lang-en">Viewport</span><span class="lang-zh">视口</span> · <span id="winlbl">rows 0–4</span><span class="native-tag">NATIVE owns this</span></p>
+        <div class="viewport">
+          <div class="vp-inner" id="vp"></div>
+          <div class="win-frame"></div>
+          <div class="scrollbar"><i id="sbthumb"></i></div>
+        </div>
+        <div class="pool-wrap">
+          <p class="stage-label"><span class="lang-en">Framework recycle pool</span><span class="lang-zh">框架回收池</span> · <code class="inl">reuseClass</code> A / B<span class="native-tag" style="color:var(--t3);border-color:var(--t3)">FRAMEWORK-private</span></p>
+          <div class="pool-tray" id="pool"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="stat-row">
+          <div class="stat"><div class="l"><span class="lang-en">DOM cells created</span><span class="lang-zh">创建的 DOM cell</span></div><div class="v" id="s-created">0</div></div>
+          <div class="stat"><div class="l"><span class="lang-en">Reuse hits</span><span class="lang-zh">复用命中</span></div><div class="v good" id="s-reuse">0</div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="l"><span class="lang-en">Live cells</span><span class="lang-zh">活跃 cell</span></div><div class="v" id="s-live">0</div></div>
+          <div class="stat"><div class="l"><span class="lang-en">Destroyed</span><span class="lang-zh">销毁</span></div><div class="v bad" id="s-destroyed">0</div></div>
+        </div>
+        <div class="stat meter">
+          <div class="cap"><span><span class="lang-en">Total cells the framework had to build</span><span class="lang-zh">框架实际构建的 cell 总数</span></span><span id="m-num">0 / ∞</span></div>
+          <div class="track"><div class="fill" id="m-fill" style="width:4%"></div><div class="ideal" id="m-ideal" style="left:16%"></div></div>
+          <div class="cap" style="margin-top:5px;color:var(--ink-faint)"><span class="lang-en">▏ideal = window + pool</span><span class="lang-zh">▏理想 = 窗口 + 池</span><span id="m-verdict"></span></div>
+        </div>
+        <div class="controls">
+          <button class="btn" onclick="sim.step(-1)" aria-label="scroll up">▲</button>
+          <button class="btn" onclick="sim.step(1)" aria-label="scroll down">▼</button>
+          <button class="btn primary" id="autobtn" onclick="sim.toggleAuto()"><span class="lang-en">Auto-scroll</span><span class="lang-zh">自动滚动</span></button>
+          <button class="btn" onclick="sim.reset()"><span class="lang-en">Reset</span><span class="lang-zh">重置</span></button>
+          <label class="switch on" id="recsw" onclick="sim.toggleRecycle()">
+            <span class="track2"><i></i></span><span><span class="lang-en">recycle</span><span class="lang-zh">回收</span></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="sim-note">
+    <span class="lang-en"><b>What to notice.</b> With recycling <b>on</b>, “DOM cells created” plateaus at roughly window + pool no matter how far you scroll. Turn it <b>off</b> and it climbs without bound — every scroll destroys and rebuilds. Native's protocol is <em>identical</em> in both cases: it only ever called <code class="inl">mount</code> / <code class="inl">release</code>. Recycling lives entirely on the framework side — which is exactly why it should not be a shared primitive.</span>
+    <span class="lang-zh"><b>观察点。</b>回收<b>开启</b>时，无论滚多远，「创建的 DOM cell」都稳定在「窗口 + 池」附近。<b>关闭</b>后它无上限地增长——每次滚动都在销毁并重建。而两种情况下原生的协议<em>完全一样</em>：它只调用了 <code class="inl">mount</code> / <code class="inl">release</code>。回收完全活在框架侧——这正是它不该成为共享原语的原因。</span>
+  </p>
+
+  <hr class="rule">
+
+  <!-- ============ INVERSION ============ -->
+  <h2><span class="sec-n"><span class="lang-en">Layer 0 · the physics</span><span class="lang-zh">第 0 层 · 物理约束</span></span><span class="lang-en">The inversion that makes it all non-negotiable</span><span class="lang-zh">一切不可协商的根源：控制反转</span></h2>
+  <p><span class="lang-en">Before designing anything, separate the immovable from the incidental. Only four things are truly forced by what a virtualized list <em>is</em>:</span><span class="lang-zh">动手设计前，先把「不可移动」和「偶然选择」分开。真正被「虚拟化列表」这一本质所强制的，只有四条：</span></p>
+
+  <div class="flow">
+    <div class="side native">
+      <span class="role">non-negotiable</span>
+      <h4>◆ NATIVE</h4>
+      <ul>
+        <li><span class="lang-en">owns the viewport &amp; scroll</span><span class="lang-zh">持有视口与滚动</span></li>
+        <li><span class="lang-en">decides which cells exist (virtualization)</span><span class="lang-zh">决定哪些 cell 存在（虚拟化）</span></li>
+        <li><span class="lang-en">runs on the main thread, off the framework's back</span><span class="lang-zh">跑在主线程，与框架线程解耦</span></li>
+      </ul>
+    </div>
+    <div class="conn">
+      <div class="arrow pull"><span class="a">mount(key)</span><span class="lbl"><span class="lang-en">native asks</span><span class="lang-zh">原生索取</span></span></div>
+      <div class="arrow give"><span class="a">token</span><span class="lbl"><span class="lang-en">framework answers</span><span class="lang-zh">框架应答</span></span></div>
+      <div class="arrow pull"><span class="a">release(token)</span><span class="lbl"><span class="lang-en">native evicts</span><span class="lang-zh">原生驱逐</span></span></div>
+    </div>
+    <div class="side fw">
+      <span class="role">the only obligations</span>
+      <h4>◇ FRAMEWORK</h4>
+      <ul>
+        <li><span class="lang-en">a keyed order — <code>order()</code></span><span class="lang-zh">一份带 key 的顺序 — <code>order()</code></span></li>
+        <li><span class="lang-en">produce one cell by key — <code>mount()</code></span><span class="lang-zh">按 key 产出单个 cell — <code>mount()</code></span></li>
+        <li><span class="lang-en">give it up — <code>release()</code></span><span class="lang-zh">交还它 — <code>release()</code></span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="note key"><span class="lbl"><span class="lang-en">The keystone</span><span class="lang-zh">拱心石</span></span><p>
+    <span class="lang-en">Because native pulls, the framework can never “render the list.” It can only be a <strong>data source that answers questions out of order</strong>. Every design choice below is judged by one test: does it respect these four, or does it smuggle in a fifth assumption?</span>
+    <span class="lang-zh">因为原生 pull，框架永远无法「渲染整个 list」。它只能是一个<strong>能乱序应答的数据源</strong>。下面每个设计选择都用一条标准来评判：它是尊重这四条，还是偷偷夹带了第五条假设？</span>
+  </p></div>
+
+  <!-- ============ LIFECYCLE ============ -->
+  <h2><span class="sec-n"><span class="lang-en">Layer 1 · the minimal contract</span><span class="lang-zh">第 1 层 · 最小契约</span></span><span class="lang-en">A cell's whole life — and where recycling actually hides</span><span class="lang-zh">一个 cell 的一生——以及回收究竟藏在哪</span></h2>
+  <p><span class="lang-en">Trace one cell. The only calls that cross the boundary are <code class="inl">mount</code> and <code class="inl">release</code>. The fork after release — destroy vs park — happens <em>inside</em> the framework. Native never learns which branch was taken.</span><span class="lang-zh">追踪一个 cell。跨越边界的调用只有 <code class="inl">mount</code> 和 <code class="inl">release</code>。release 之后的分岔——销毁还是停放——发生在框架<em>内部</em>。原生永远不知道走了哪条分支。</span></p>
+
+  <div class="life">
+    <span class="lstate"><span class="lang-en">idle</span><span class="lang-zh">空闲</span></span>
+    <span class="ledge"><span class="a">━▶</span><span class="op">mount()</span></span>
+    <span class="lstate vis"><span class="lang-en">VISIBLE</span><span class="lang-zh">可见</span></span>
+    <span class="ledge"><span class="a">━▶</span><span class="op">release()</span></span>
+    <span class="lstate park"><span class="lang-en">parked (pool)</span><span class="lang-zh">停放（池）</span></span>
+    <span class="ledge"><span class="a">↺</span><span class="op">mount()/retarget()</span></span>
+    <span class="lstate vis"><span class="lang-en">VISIBLE</span><span class="lang-zh">可见</span></span>
+    <span class="ledge" style="opacity:.6"><span class="a">━▶</span><span class="op">or</span></span>
+    <span class="lstate gone"><span class="lang-en">destroyed</span><span class="lang-zh">销毁</span></span>
+  </div>
+  <p><span class="lang-en">The dashed <span style="color:var(--t3)">parked → visible</span> loop is the entire recycling story. It needs exactly two things from native, and nothing else:</span><span class="lang-zh"><span style="color:var(--t3)">停放 → 可见</span>这条虚线回路，就是回收的全部故事。它只需要原生给两样东西，别无其它：</span></p>
+  <ul>
+    <li><span class="lang-en"><strong>Native must accept a reused token.</strong> <code class="inl">mount</code> may return a token native has seen before — it can't assume every mount is a fresh element.</span><span class="lang-zh"><strong>原生必须接受被复用的 token。</strong><code class="inl">mount</code> 可以返回一个原生见过的 token——它不能假设每次 mount 都是全新元素。</span></li>
+    <li><span class="lang-en"><strong>An optional <code>reuseClass</code> hint</strong> so native can size its own container buffers. The framework may ignore it entirely.</span><span class="lang-zh"><strong>一个可选的 <code>reuseClass</code> 提示</strong>，好让原生给自己的容器缓冲定容量。框架可以完全无视它。</span></li>
+  </ul>
+
+  <!-- ============ QUADRANT ============ -->
+  <h2><span class="sec-n"><span class="lang-en">Layer 2 · conflict vs freedom</span><span class="lang-zh">第 2 层 · 冲突 vs 自由</span></span><span class="lang-en">What frameworks must bend to — and what the API wrongly locks</span><span class="lang-zh">框架必须屈服于什么——以及 API 错误锁死了什么</span></h2>
+  <p><span class="lang-en">Map every design concern on two axes: is it <em>fundamentally forced</em> by the model (right), or an incidental degree of freedom (left)? And does today's API <em>lock it</em> (bottom) or leave it free (top)? The problem cases are the red ones in the bottom-left: real freedoms, needlessly locked.</span><span class="lang-zh">把每个设计关注点放到两根轴上：它是被模型<em>根本强制</em>的（右），还是一个偶然的自由度（左）？今天的 API 是<em>锁死</em>它（下）还是放行（上）？问题就在左下角那些红点：本是自由，却被无谓地锁死。</span></p>
+
+  <div class="quad-wrap">
+    <svg class="quad" viewBox="0 0 720 420" role="img" aria-label="Conflict vs freedom quadrant">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="var(--ink-faint)"/></marker>
+      </defs>
+      <!-- axes -->
+      <line x1="60" y1="210" x2="690" y2="210" stroke="var(--line-strong)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <line x1="375" y1="390" x2="375" y2="24" stroke="var(--line-strong)" stroke-width="1.5" marker-end="url(#ah)"/>
+      <!-- axis labels -->
+      <text x="80" y="200" fill="var(--ink-faint)" font-size="12" class="lang-en">◀ incidental freedom</text>
+      <text x="80" y="200" fill="var(--ink-faint)" font-size="12" class="lang-zh">◀ 偶然自由度</text>
+      <text x="690" y="200" fill="var(--ink-faint)" font-size="12" text-anchor="end" class="lang-en">fundamentally forced ▶</text>
+      <text x="690" y="200" fill="var(--ink-faint)" font-size="12" text-anchor="end" class="lang-zh">根本强制 ▶</text>
+      <text x="384" y="36" fill="var(--ink-faint)" font-size="12" class="lang-en">left free by API ▲</text>
+      <text x="384" y="36" fill="var(--ink-faint)" font-size="12" class="lang-zh">API 放行 ▲</text>
+      <text x="384" y="384" fill="var(--ink-faint)" font-size="12" class="lang-en">locked by API ▼</text>
+      <text x="384" y="384" fill="var(--ink-faint)" font-size="12" class="lang-zh">API 锁死 ▼</text>
+
+      <!-- fundamental constraints (right, legit — teal) -->
+      <g font-size="12.5" fill="var(--ink)">
+        <circle cx="560" cy="150" r="7" fill="var(--accent)"/><text x="548" y="140" text-anchor="end" class="lang-en">out-of-order single-cell mount</text><text x="548" y="140" text-anchor="end" class="lang-zh">乱序单 cell 产出</text>
+        <circle cx="600" cy="255" r="7" fill="var(--accent)"/><text x="588" y="259" text-anchor="end" class="lang-en">keyed identity</text><text x="588" y="259" text-anchor="end" class="lang-zh">keyed 身份</text>
+        <circle cx="540" cy="330" r="7" fill="var(--accent)"/><text x="528" y="334" text-anchor="end" class="lang-en">native owns side-effects</text><text x="528" y="334" text-anchor="end" class="lang-zh">原生持有 side-effect</text>
+      </g>
+
+      <!-- incidental freedoms wrongly locked (bottom-left, red) -->
+      <g font-size="12.5" fill="var(--ink)">
+        <circle cx="200" cy="320" r="7" fill="var(--bad)"/><text x="214" y="324" class="lang-en">VDOM / Signal / compiled</text><text x="214" y="324" class="lang-zh">VDOM / Signal / 编译</text>
+        <circle cx="150" cy="285" r="7" fill="var(--bad)"/><text x="164" y="289" class="lang-en">where the diff is computed</text><text x="164" y="289" class="lang-zh">diff 算在哪</text>
+        <circle cx="245" cy="360" r="7" fill="var(--bad)"/><text x="259" y="364" class="lang-en">two-thread work split</text><text x="259" y="364" class="lang-zh">两线程工作切分</text>
+      </g>
+
+      <!-- good deliberate constraint (bottom-right, amber) -->
+      <g font-size="12.5" fill="var(--ink)">
+        <circle cx="500" cy="300" r="6" fill="var(--warn)"/><text x="488" y="304" text-anchor="end" class="lang-en">async mount (gated)</text><text x="488" y="304" text-anchor="end" class="lang-zh">异步产出（gated）</text>
+      </g>
+
+      <!-- target zone: move red dots up -->
+      <path d="M175 300 q -30 -110 90 -150" fill="none" stroke="var(--good)" stroke-width="1.4" stroke-dasharray="4 4" marker-end="url(#ah)"/>
+      <text x="60" y="120" fill="var(--good)" font-size="11.5" class="lang-en">redesign: lift these into “free”</text>
+      <text x="60" y="120" fill="var(--good)" font-size="11.5" class="lang-zh">重设：把这些抬进「自由」区</text>
+    </svg>
+    <div class="qlegend">
+      <b><span class="sw" style="background:var(--accent)"></span><span class="lang-en">legit constraint (keep)</span><span class="lang-zh">正当约束（保留）</span></b>
+      <b><span class="sw" style="background:var(--bad)"></span><span class="lang-en">freedom wrongly locked (fix)</span><span class="lang-zh">被错锁的自由（修）</span></b>
+      <b><span class="sw" style="background:var(--warn)"></span><span class="lang-en">deliberate gate (worth it)</span><span class="lang-zh">刻意的门（值得）</span></b>
+    </div>
+  </div>
+  <p><span class="lang-en">The three red dots are locked by a single root cause: the contract <em>assumes a <code>hydrate(old,new)</code> exists</em> and makes callbacks <em>close over data</em>. Remove those two assumptions and all three float up into “free” — no framework is forced into a VDOM shape, a reconciler, or a particular thread split.</span><span class="lang-zh">这三个红点被同一个根因锁住：契约<em>假定存在 <code>hydrate(old,new)</code></em>，并让回调<em>闭包捕获数据</em>。去掉这两个假设，三者都会浮上「自由」区——没有框架被迫套进 VDOM 形状、被迫自带 reconciler、或被迫某种线程切分。</span></p>
+
+  <!-- ============ CAPABILITY STACK ============ -->
+  <h2><span class="sec-n"><span class="lang-en">The redesign · capabilities</span><span class="lang-zh">重设 · 能力分层</span></span><span class="lang-en">One required core, three optional capabilities</span><span class="lang-zh">一个必需内核，三个可选能力</span></h2>
+  <p><span class="lang-en">Instead of one monolithic interface everyone must fully implement, layer it. The core is the Layer-1 contract. Each capability lets a framework contribute the thing it is <em>good</em> at — and skip what it isn't.</span><span class="lang-zh">不再是一个所有人都得完整实现的单体接口，而是分层。内核就是第 1 层契约。每个能力让框架贡献它<em>擅长</em>的那块——并跳过不擅长的。</span></p>
+
+  <div class="stack">
+    <div class="layer core">
+      <span class="req">required</span>
+      <span class="k">core · ListSource</span>
+      <h4><code>order()</code> · <code>mount(key)</code> · <code>release(token)</code></h4>
+      <p><span class="lang-en">Enough to run, with no recycling. Native diffs <code>order()</code> itself. Implementable by imperative JS in ~10 lines.</span><span class="lang-zh">足以运行，无需回收。原生自己 diff <code>order()</code>。命令式 JS 十行即可实现。</span></p>
+    </div>
+    <div class="layer opt">
+      <span class="req">optional</span>
+      <span class="k">capability · Retargetable</span>
+      <h4><code>retarget(token, key)</code> <span style="color:var(--ink-faint);font-weight:400;font-size:13px">— replaces the imposed <code>hydrate</code></span></h4>
+      <p><span class="lang-en">The framework re-points an existing cell to a new key <em>via its own update path</em>: signal reassign, compiled patch, or VDOM patch. Absent → native falls back to <code>release()+mount()</code>. This one hook is what un-privileges the snapshot model.</span><span class="lang-zh">框架用<em>自己的</em>更新路径把已有 cell 重指向新 key：signal 重赋、编译 patch、或 VDOM patch。缺省 → 原生回退到 <code>release()+mount()</code>。正是这一个钩子，让 snapshot 模型不再享有特权。</span></p>
+    </div>
+    <div class="layer opt">
+      <span class="req">optional</span>
+      <span class="k">capability · SelfDiffing</span>
+      <h4><code>mutations()</code> <span style="color:var(--ink-faint);font-weight:400;font-size:13px">— reconcilers keep their small payload</span></h4>
+      <p><span class="lang-en">A framework that already computes a keyed diff (ReactLynx) may hand it over directly instead of a full <code>order()</code> array — saving payload on huge lists. React loses nothing; everyone else ignores it.</span><span class="lang-zh">已经在算 keyed diff 的框架（ReactLynx）可以直接把它交出来，而非传完整 <code>order()</code> 数组——在超大列表上省 payload。React 分文不损；其余框架直接无视。</span></p>
+    </div>
+    <div class="layer opt">
+      <span class="req">optional</span>
+      <span class="k">capability · AsyncMountable</span>
+      <h4><code>mountAsync(key)</code> <span style="color:var(--ink-faint);font-weight:400;font-size:13px">— defer, with <code>operationID</code> confined here</span></h4>
+      <p><span class="lang-en">Only when declared does native thread the operation-correlation ids that today pollute every path. The synchronous 90% stays clean.</span><span class="lang-zh">只有声明它时，原生才会穿针引线那套「操作关联 id」——今天它污染了每一条路径。同步的 90% 保持干净。</span></p>
+    </div>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th><span class="lang-en">Framework</span><span class="lang-zh">框架</span></th>
+      <th>core</th><th>Retargetable</th><th>SelfDiffing</th><th>AsyncMountable</th>
+      <th><span class="lang-en">adapter cost</span><span class="lang-zh">适配成本</span></th>
+    </tr></thead>
+    <tbody>
+      <tr><td><span class="lang-en">Imperative JS</span><span class="lang-zh">命令式 JS</span></td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td class="desc"><span class="lang-en">trivial; no recycling needed</span><span class="lang-zh">极小；无需回收</span></td></tr>
+      <tr><td>Vue</td><td class="yes">✓</td><td class="opt">✓ vdom patch</td><td class="no">—</td><td class="opt">○</td><td class="desc"><span class="lang-en">drops the LIS diff <b>and</b> the structural hydrate (#293/#307 gone)</span><span class="lang-zh">甩掉 LIS diff <b>与</b>结构化 hydrate（#293/#307 消失）</span></td></tr>
+      <tr><td>Solid <span class="desc">(signals)</span></td><td class="yes">✓</td><td class="opt">✓ signal reassign</td><td class="no">—</td><td class="opt">○</td><td class="desc"><span class="lang-en">near-zero: a cell is already a reactive scope</span><span class="lang-zh">几乎为零：cell 本就是响应式作用域</span></td></tr>
+      <tr><td>ReactLynx</td><td class="yes">✓</td><td class="opt">✓ compiled hydrate</td><td class="opt">✓</td><td class="opt">✓</td><td class="desc"><span class="lang-en">unchanged — all its optimizations remain, now opt-in</span><span class="lang-zh">不变——所有优化仍在，只是变成可选</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="code-wrap">
+    <div class="code-head"><span class="dot"></span>list-contract.d.ts</div>
+<pre><code><span class="tok-t">type</span> CellKey = <span class="tok-k">string</span>;
+<span class="tok-t">type</span> CellToken = <span class="tok-k">number</span> &amp; { <span class="tok-k">readonly</span> __brand: <span class="tok-s">'CellToken'</span> };  <span class="tok-c">// opaque, native round-trips it</span>
+
+<span class="tok-c">// —— required: give data + identity, that's all ——</span>
+<span class="tok-k">interface</span> <span class="tok-t">ListSource</span> {
+  order(): <span class="tok-k">readonly</span> CellKey[];                 <span class="tok-c">// native diffs this into moves</span>
+  describe?(key: CellKey): ListItemInfo;         <span class="tok-c">// typed, not stringly platform-info</span>
+  mount(key: CellKey, hint: { reuse?: <span class="tok-k">string</span> }): CellToken;
+  release(token: CellToken): <span class="tok-k">void</span>;             <span class="tok-c">// destroy OR park — native doesn't care</span>
+}
+<span class="tok-c">// —— optional capabilities, composed à la carte ——</span>
+<span class="tok-k">interface</span> <span class="tok-t">Retargetable</span>  { retarget(token: CellToken, key: CellKey): <span class="tok-k">void</span>; }
+<span class="tok-k">interface</span> <span class="tok-t">SelfDiffing</span>   { mutations(): ListMutations; }
+<span class="tok-k">interface</span> <span class="tok-t">AsyncMountable</span>{ mountAsync(key: CellKey, hint: object): <span class="tok-t">Promise</span>&lt;CellToken&gt;; }</code></pre>
+  </div>
+
+  <!-- ============ BEFORE / AFTER ============ -->
+  <h2><span class="sec-n"><span class="lang-en">The shift</span><span class="lang-zh">转变</span></span><span class="lang-en">From “be a reconciler” to “give me data + identity”</span><span class="lang-zh">从「你得是个 reconciler」到「把数据 + 标识给我」</span></h2>
+  <div class="ba">
+    <div class="card old">
+      <div class="tt"><span class="lang-en">Today — snapshot-shaped</span><span class="lang-zh">今天 — snapshot 形状</span></div>
+      <h4><span class="lang-en">The contract demands you act like ReactLynx</span><span class="lang-zh">契约要求你表现得像 ReactLynx</span></h4>
+      <ul class="old">
+        <li><span class="lang-en">compute the order-diff yourself (<code>update-list-info</code>)</span><span class="lang-zh">自己算顺序 diff（<code>update-list-info</code>）</span></li>
+        <li><span class="lang-en">have a per-template <code>hydrate(old,new)</code></span><span class="lang-zh">拥有逐模板的 <code>hydrate(old,new)</code></span></li>
+        <li><span class="lang-en">maintain sign/recycle maps as a mini reconciler</span><span class="lang-zh">维护 sign/recycle map，当个 mini reconciler</span></li>
+        <li><span class="lang-en">close over data → rebind callbacks every flush</span><span class="lang-zh">闭包捕获数据 → 每次 flush 重绑回调</span></li>
+        <li><span class="lang-en">thread <code>operationID</code> through every mount path</span><span class="lang-zh"><code>operationID</code> 贯穿每条挂载路径</span></li>
+      </ul>
+    </div>
+    <div class="card new">
+      <div class="tt"><span class="lang-en">Proposed — data + identity</span><span class="lang-zh">重设 — 数据 + 标识</span></div>
+      <h4><span class="lang-en">The contract asks for keys and a way to update a cell</span><span class="lang-zh">契约只要 key 和一个更新 cell 的办法</span></h4>
+      <ul class="new">
+        <li><span class="lang-en">hand native <code>order()</code>; it diffs (or opt into <code>mutations()</code>)</span><span class="lang-zh">把 <code>order()</code> 交给原生去 diff（或选 <code>mutations()</code>）</span></li>
+        <li><span class="lang-en">re-target via <em>your own</em> <code>retarget()</code> — or skip it</span><span class="lang-zh">用<em>你自己的</em> <code>retarget()</code> 重定向——或干脆不实现</span></li>
+        <li><span class="lang-en">recycling is private: park in <code>release</code>, reuse in <code>mount</code></span><span class="lang-zh">回收是私事：<code>release</code> 里停放，<code>mount</code> 里复用</span></li>
+        <li><span class="lang-en">data arrives as an argument → stable callback identity</span><span class="lang-zh">数据经参数到达 → 回调身份稳定</span></li>
+        <li><span class="lang-en"><code>operationID</code> confined to the async capability</span><span class="lang-zh"><code>operationID</code> 关进异步能力里</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note key"><span class="lbl"><span class="lang-en">Is it worth it?</span><span class="lang-zh">值得吗？</span></span><p>
+    <span class="lang-en"><strong>Yes, and asymmetrically so.</strong> Every freedom-increasing move (native diffs <code>order()</code>, opt-in <code>retarget</code>, data-by-argument) is paired with an escape hatch that costs the incumbent nothing — ReactLynx keeps <code>mutations()</code> and its compiled hydrate. The freedom-decreasing moves (mandatory keys, gated async, sealed cell tree) are deliberate constraints that buy soundness and a clean common path. Net: Vue sheds its two worst seams, signals plug straight in, and React is untouched.</span>
+    <span class="lang-zh"><strong>值得，而且是不对称地值得。</strong>每一个「增加自由度」的动作（原生 diff <code>order()</code>、可选 <code>retarget</code>、数据走参数）都配了一个对既有者零成本的逃生口——ReactLynx 保留 <code>mutations()</code> 和它的编译 hydrate。而「减少自由度」的动作（强制 key、gated 异步、封住 cell 树）是刻意的约束，换来正确性与一条干净的公共路径。净效果：Vue 甩掉两条最糟的缝，signals 直接插入，React 毫发无损。</span>
+  </p></div>
+
+  <div class="foot">
+    <p><span class="lang-en">Companion to the <code>&lt;list&gt;</code> PAPI report. Sources: Lynx <code>&lt;list&gt;</code> docs · ReactLynx <code>snapshot/list/</code> · vue-lynx <code>list-apply.ts</code> · PR stack #293 / #307 / #311. The simulation is a didactic model of the mount/release protocol, not the real native scheduler.</span><span class="lang-zh">配套于 <code>&lt;list&gt;</code> PAPI 报告。来源：Lynx <code>&lt;list&gt;</code> 文档 · ReactLynx <code>snapshot/list/</code> · vue-lynx <code>list-apply.ts</code> · PR 栈 #293 / #307 / #311。此模拟是 mount/release 协议的教学模型，非真实原生调度器。</span></p>
+  </div>
+</main>
+
+<script>
+  function setLang(l){document.documentElement.setAttribute('data-lang',l);en.setAttribute('aria-pressed',l==='en');zh.setAttribute('aria-pressed',l==='zh');sim.render();}
+  function setTheme(t){document.documentElement.setAttribute('data-theme',t);lt.setAttribute('aria-pressed',t==='light');dk.setAttribute('aria-pressed',t==='dark');}
+  (function(){var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;lt.setAttribute('aria-pressed',!d);dk.setAttribute('aria-pressed',d);})();
+
+  const sim = (function(){
+    const N = 22, WINDOW = 5;
+    const items = Array.from({length:N},(_,i)=>({key:'k'+i, type:(i%2)?'B':'A', n:i}));
+    const byKey = k => items.find(it=>it.key===k);
+    let top=0, recycle=true, auto=null;
+    let live=new Map();                 // key -> {reusedThisStep:bool}
+    let pools={A:[],B:[]};
+    let created=0, destroyed=0, reuse=0;
+    let enteredThisStep=new Set();
+
+    function mount(key){
+      const it=byKey(key); let reused=false;
+      if(recycle && pools[it.type].length){ pools[it.type].pop(); reuse++; reused=true; }
+      else { created++; }
+      live.set(key,{reused});
+    }
+    function release(key){
+      const it=byKey(key); live.delete(key);
+      if(recycle){ pools[it.type].push(1); } else { destroyed++; }
+    }
+    function apply(newTop){
+      newTop=Math.max(0,Math.min(N-WINDOW,newTop));
+      const vis=new Set(); for(let i=newTop;i<newTop+WINDOW;i++) vis.add(items[i].key);
+      // release leaving
+      for(const k of [...live.keys()]) if(!vis.has(k)) release(k);
+      // mount entering
+      enteredThisStep=new Set();
+      for(let i=newTop;i<newTop+WINDOW;i++){ const k=items[i].key; if(!live.has(k)){ mount(k); enteredThisStep.add(k);} }
+      top=newTop; render();
+    }
+    function step(d){ apply(top+d); }
+    function reset(){ stopAuto(); top=0; live=new Map(); pools={A:[],B:[]}; created=0;destroyed=0;reuse=0; enteredThisStep=new Set(); apply(0); }
+    function toggleRecycle(){ recycle=!recycle; document.getElementById('recsw').classList.toggle('on',recycle);
+      if(recycle){pools={A:[],B:[]};} // fresh pool when turning on
+      render(); }
+    function toggleAuto(){ auto?stopAuto():startAuto(); }
+    function startAuto(){ const b=document.getElementById('autobtn'); b.classList.remove('primary'); let dir=1;
+      auto=setInterval(()=>{ if(top+WINDOW>=N)dir=-1; if(top<=0)dir=1; step(dir); }, 900); }
+    function stopAuto(){ if(auto){clearInterval(auto);auto=null;} document.getElementById('autobtn').classList.add('primary'); }
+
+    const CELLH=48, PAD=6;
+    function render(){
+      const vp=document.getElementById('vp'); vp.innerHTML='';
+      const isZh=document.documentElement.getAttribute('data-lang')==='zh';
+      for(let i=top;i<top+WINDOW;i++){
+        const it=items[i]; const meta=live.get(it.key)||{};
+        const el=document.createElement('div'); el.className='cell '+it.type;
+        el.style.transform='translateY('+((i-top)*CELLH+PAD)+'px)';
+        const tag = enteredThisStep.has(it.key)
+          ? (meta.reused? '<span class="tag reuse show">♻ '+(isZh?'复用':'reuse')+'</span>'
+                        : '<span class="tag fresh show">✦ '+(isZh?'新建':'fresh')+'</span>')
+          : '<span class="tag"></span>';
+        el.innerHTML='<span class="dot"></span><span class="kk">'+it.key+'</span>'
+          +'<span style="color:var(--ink-faint)">'+(isZh?'第 ':'row ')+it.n+(isZh?' 行':'')+' · '+it.type+'</span>'+tag;
+        vp.appendChild(el);
+      }
+      // scrollbar
+      const th=document.getElementById('sbthumb'); const frac=WINDOW/N;
+      th.style.height=(frac*100)+'%'; th.style.top=(top/N*100)+'%';
+      document.getElementById('winlbl').textContent=(isZh?'第 ':'rows ')+top+'–'+(top+WINDOW-1);
+      // pool
+      const pool=document.getElementById('pool'); pool.innerHTML='';
+      [['A',pools.A.length],['B',pools.B.length]].forEach(([t,c])=>{
+        for(let j=0;j<c;j++){ const chip=document.createElement('span'); chip.className='chip '+t;
+          chip.innerHTML='<span class="dot"></span>'+t; pool.appendChild(chip); }
+      });
+      if(!pools.A.length && !pools.B.length){ pool.innerHTML='<span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:11px;padding:6px">'+(isZh?(recycle?'（空——滚动以停放 cell）':'（回收关闭：cell 被销毁）'):(recycle?'(empty — scroll to park cells)':'(recycle off: cells destroyed)'))+'</span>'; }
+      // stats
+      document.getElementById('s-created').textContent=created;
+      document.getElementById('s-reuse').textContent=reuse;
+      document.getElementById('s-live').textContent=live.size;
+      document.getElementById('s-destroyed').textContent=destroyed;
+      // meter: created vs ideal(window+maxpool≈window+2)
+      const ideal=WINDOW+2;
+      const cap=Math.max(created,ideal, N); // scale
+      const pct=Math.min(100, created/ (N) *100);
+      const fill=document.getElementById('m-fill');
+      fill.style.width=Math.max(4,pct)+'%'; fill.classList.toggle('ok', recycle);
+      document.getElementById('m-ideal').style.left=(ideal/N*100)+'%';
+      document.getElementById('m-num').textContent=created+' / '+N+'+';
+      const v=document.getElementById('m-verdict');
+      v.textContent = recycle ? (isZh?'✓ 已收敛':'✓ converged') : (isZh?'✗ 无上限增长':'✗ unbounded');
+      v.style.color = recycle? 'var(--good)':'var(--bad)';
+    }
+    return {step,reset,toggleRecycle,toggleAuto,render,init:()=>apply(0)};
+  })();
+  sim.init();
+</script>
