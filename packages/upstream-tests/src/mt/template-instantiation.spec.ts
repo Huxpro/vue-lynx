@@ -208,4 +208,117 @@ describe('MT sparse A2 template instantiation (#298)', () => {
     expect(elements.has(base + 2)).toBe(true);
     expect(elements.has(base + 3)).toBe(true);
   });
+
+  it('BG/MT named-uid parity across representative shapes', () => {
+    // For each shape: addressed list ↔ MT elements.set keys in [base, base+n).
+    // Comments in the structure consume preorder slots but never land in
+    // elements — they are excluded from the expected named set when not
+    // materialised (same as dense).
+    type Shape = {
+      structure: unknown;
+      addressed: number[];
+      /** Preorder slots that produce a real MT element when named. */
+      materialSlots: number[];
+    };
+
+    const shapes: Shape[] = [
+      {
+        structure: sparseStructure(),
+        addressed: [0, 2],
+        materialSlots: [0, 2],
+      },
+      {
+        structure: [
+          'view',
+          0,
+          [
+            ['text', { t: 'a' }, []],
+            ['#comment', 0, []],
+            ['text', { t: 'b' }, []],
+          ],
+        ],
+        // name root + both texts; comment addressed but not materialised
+        addressed: [0, 1, 2, 3],
+        materialSlots: [0, 1, 3],
+      },
+      {
+        structure: [
+          'view',
+          { c: 'only' },
+          [
+            ['text', { t: 'x' }, []],
+            ['image', { a: [['src', 'y']] }, []],
+          ],
+        ],
+        addressed: [0],
+        materialSlots: [0],
+      },
+    ];
+
+    for (const shape of shapes) {
+      const tplId = nextTplId++;
+      const base = nextId;
+      nextId += shape.addressed.length + 2;
+
+      applyOps([
+        OP.REGISTER_TREE, tplId, shape.structure, shape.addressed,
+        OP.CLONE_TREE, tplId, base,
+        OP.INSERT, ROOT, base, -1,
+      ]);
+
+      const expected = new Set(
+        shape.materialSlots.map((slot) => {
+          const sparseIdx = shape.addressed.indexOf(slot);
+          return base + sparseIdx;
+        }),
+      );
+      const named = new Set<number>();
+      for (let u = base; u < base + shape.addressed.length; u++) {
+        if (elements.has(u)) named.add(u);
+      }
+      expect(named).toEqual(expected);
+    }
+  });
+
+  it('inserts before a materialized sibling when a comment anchor is unnamed on MT', () => {
+    // Structure: view > hole-text(0+1) / #comment(2) / static-text(3)
+    // Sparse names [0, 1, 3] — comment has a preorder slot but no MT map entry
+    // (same as dense). Dynamic insert uses the static text as anchor.
+    const structure = [
+      'view',
+      0,
+      [
+        ['text', { c: 'hole', t: ' ' }, []],
+        ['#comment', 0, []],
+        ['text', { c: 'static', t: 'tail' }, []],
+      ],
+    ];
+    const addressed = [0, 1, 3];
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += addressed.length + 4;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure, addressed,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    const rootUid = base;
+    const staticUid = base + 2; // sparse index of slot 3
+    const childUid = nextId++;
+    applyOps([
+      OP.CREATE, childUid, 'view',
+      OP.SET_CLASS, childUid, 'dynamic',
+      // Insert before the static trailing text (materialized anchor).
+      OP.INSERT, rootUid, childUid, staticUid,
+    ]);
+
+    const rootEl = elements.get(rootUid) as Element;
+    const classes = [...rootEl.childNodes].map(
+      (n) => (n as Element).getAttribute?.('class'),
+    );
+    // hole, dynamic, static — comment never appears as a native child
+    expect(classes).toEqual(['hole', 'dynamic', 'static']);
+  });
 });

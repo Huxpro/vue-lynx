@@ -6,7 +6,7 @@
  * metadata is absent or mismatched.
  */
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OP } from 'vue-lynx/internal/ops';
 import {
@@ -69,6 +69,7 @@ describe('sparse A2 cloneTemplatePrototype', () => {
       holes: [2],
       addressed: [0, 1, 2], // prefix sibling 1 kept for _nthChild/_next
       slotCount: 4,
+      tags: ['view', 'text', 'text'],
     });
 
     const clone = proto.cloneNode(true) as ShadowElement;
@@ -124,12 +125,33 @@ describe('sparse A2 cloneTemplatePrototype', () => {
       holes: [2],
       addressed: [0, 2],
       slotCount: 99, // wrong
+      tags: ['view', 'text'],
     });
 
     proto.cloneNode(true);
     const ops = takeOps();
     const regIdx = ops.indexOf(OP.REGISTER_TREE);
     expect(ops[regIdx + 3]).toBe(0);
+  });
+
+  it('falls back to dense when tag fingerprints disagree (same-count skew)', () => {
+    const proto = buildInertProto();
+    ShadowElement.nextUid = 2;
+    takeOps();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    setPendingVaporAddressing({
+      holes: [2],
+      addressed: [0, 1, 2],
+      slotCount: 4, // count matches…
+      tags: ['view', 'image', 'text'], // …but tags are shifted
+    });
+
+    proto.cloneNode(true);
+    const ops = takeOps();
+    expect(ops[ops.indexOf(OP.REGISTER_TREE) + 3]).toBe(0);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('threads pending addressing into the first cache build only', () => {
@@ -141,6 +163,7 @@ describe('sparse A2 cloneTemplatePrototype', () => {
       holes: [0],
       addressed: [0],
       slotCount: 4,
+      tags: ['view'],
     });
     const first = proto.cloneNode(true) as ShadowElement;
     takeOps();
@@ -153,9 +176,7 @@ describe('sparse A2 cloneTemplatePrototype', () => {
 
     expect(first.uid).toBe(2);
     expect(second.uid).toBe(100);
-    // Sparse root-only (+ aliased texts if any). Here holes=[0] on a tree
-    // with folded text children still creates aliases when those hosts are
-    // not addressed — only root is linked, so no aliases → +1.
+    // Sparse root-only: only root linked → +1
     expect(ShadowElement.nextUid).toBe(101);
     expect(ops[ops.indexOf(OP.CLONE_TREE) + 2]).toBe(100);
     // No second REGISTER_TREE

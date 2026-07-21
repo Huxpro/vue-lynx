@@ -1027,6 +1027,7 @@ export function setPendingVaporAddressing(
 function isValidAddressing(
   meta: VaporTreeAddressing | undefined,
   slotCount: number,
+  structure: TemplateNode,
 ): meta is VaporTreeAddressing {
   if (!meta) return false;
   if (meta.slotCount !== slotCount) return false;
@@ -1035,7 +1036,29 @@ function isValidAddressing(
   }
   // Root must always be named so the instance can be inserted into the page.
   if (meta.addressed[0] !== 0 && !meta.addressed.includes(0)) return false;
+  // Tag fingerprints — catch same-count preorder skew (IR↔runtime fold drift).
+  if (!Array.isArray(meta.tags) || meta.tags.length !== meta.addressed.length) {
+    return false;
+  }
+  const structureTags = structureTagsPreorder(structure);
+  if (structureTags.length !== slotCount) return false;
+  for (let i = 0; i < meta.addressed.length; i++) {
+    const slot = meta.addressed[i]!;
+    if (slot < 0 || slot >= structureTags.length) return false;
+    if (structureTags[slot] !== meta.tags[i]) return false;
+  }
   return true;
+}
+
+/** Preorder tags of a REGISTER_TREE structure (same order as buildStructure). */
+function structureTagsPreorder(node: TemplateNode): string[] {
+  const tags: string[] = [];
+  const walk = (n: TemplateNode): void => {
+    tags.push(n[0]);
+    for (const child of n[2]) walk(child);
+  };
+  walk(node);
+  return tags;
 }
 
 function isOnlyChildText(proto: ShadowElement): boolean {
@@ -1227,7 +1250,13 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
     const counter = { value: 0 };
     const structure = buildStructure(proto, counter);
     const meta = pendingVaporAddressing;
-    const sparse = isValidAddressing(meta, counter.value);
+    const sparse = isValidAddressing(meta, counter.value, structure);
+    if (__DEV__ && meta && !sparse) {
+      console.warn(
+        '[vue-lynx] sparse addressing metadata failed validation '
+          + '(slotCount / tag fingerprint) — falling back to dense CLONE_TREE.',
+      );
+    }
     cache = {
       id: nextTemplateId++,
       structure,

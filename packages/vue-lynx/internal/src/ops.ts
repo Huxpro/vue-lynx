@@ -199,8 +199,9 @@ export const VAPOR_ADDRESSING_KEY = '__vlxAddressing';
  * slots). `addressed` is what receives uids under A2; `holes` ⊆ `addressed`
  * are write / insert-host targets.
  *
- * `tags` fingerprints `addressed.map(slot => structure[slot].tag)` so
- * runtime can fail-safe to dense A1 on IR↔runtime preorder skew (#298).
+ * `tags` is a fingerprint of `addressed.map(slot => structure[slot].tag)` —
+ * runtime validates these against `buildStructure` and fails safe to dense
+ * A1 on any mismatch (guards against IR↔runtime preorder skew).
  */
 export interface VaporTreeAddressing {
   holes: number[];
