@@ -1,14 +1,12 @@
 /**
- * Build the same-source matrix for browser FCP:
- *   VDOM:  off | ifr (ET=false) | ifr-et
- *   Vapor: off | ifr
+ * Build the same-source matrix for browser FCP + graph-eng axes (#301):
+ *   VDOM:  off | ifr (ET=false / slots-off) | ifr-et (slots-on)
+ *   Vapor: off | ifr | ifr-dense (A1) | ifr-sparse (A2)
  *
- * Vapor has no Element Templates path — tree protocol is always on.
+ * Native ET column (#299/#300) is intentionally absent — stubbed in the
+ * graph-eng report until engine emission lands.
  *
  *   node build-matrix.mjs [outDir=../web-bundles] [nCards=125]
- *
- * Also records raw/gzip sizes of each bundle and of its MT (lepusCode.root)
- * and BG (/app-service.js) sections into <outDir>/sfc-probe-sizes.json.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -23,13 +21,28 @@ const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(_dirname, process.argv[2] ?? '../web-bundles');
 const nCards = Number(process.argv[3] ?? 125);
 
-// Explicit ET flag: after #216, enableIFR alone defaults ET on for VDOM.
+// Explicit flags — never rely on enableIFR→ET defaulting.
 const CELLS = [
-  { name: 'content-vdom', mode: 'vdom', ifr: '0', et: '0' },
-  { name: 'content-vdom-ifr', mode: 'vdom', ifr: '1', et: '0' },
-  { name: 'content-vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1' },
-  { name: 'content-vapor', mode: 'vapor', ifr: '0', et: '0' },
-  { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0' },
+  { name: 'content-vdom', mode: 'vdom', ifr: '0', et: '0', sparse: '1' },
+  { name: 'content-vdom-ifr', mode: 'vdom', ifr: '1', et: '0', sparse: '1' },
+  { name: 'content-vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1', sparse: '1' },
+  { name: 'content-vapor', mode: 'vapor', ifr: '0', et: '0', sparse: '1' },
+  { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0', sparse: '1' },
+  // Graph-eng naming-density pair (#301): same IFR vapor, A1 vs A2.
+  {
+    name: 'content-vapor-ifr-dense',
+    mode: 'vapor',
+    ifr: '1',
+    et: '0',
+    sparse: '0',
+  },
+  {
+    name: 'content-vapor-ifr-sparse',
+    mode: 'vapor',
+    ifr: '1',
+    et: '0',
+    sparse: '1',
+  },
 ];
 
 const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
@@ -39,16 +52,13 @@ const sizes = [];
 
 for (const cell of CELLS) {
   generateProbe(cell.mode, nCards);
-  // rspeedy's webpack persistent cache keys miss env-var-driven plugin
-  // options; a stale cache serves the previous cell's bundle (AGENTS.md's #1
-  // phantom-error cause). Clear it between cells.
   fs.rmSync(path.join(_dirname, 'node_modules/.cache'), {
     recursive: true,
     force: true,
   });
   fs.rmSync(path.join(_dirname, 'dist'), { recursive: true, force: true });
   console.log(
-    `[build] ${cell.name} (vapor=${cell.mode === 'vapor' ? 1 : 0} ifr=${cell.ifr} et=${cell.et})`,
+    `[build] ${cell.name} (vapor=${cell.mode === 'vapor' ? 1 : 0} ifr=${cell.ifr} et=${cell.et} sparse=${cell.sparse})`,
   );
   execFileSync(
     path.join(_dirname, 'node_modules/.bin/rspeedy'),
@@ -62,6 +72,7 @@ for (const cell of CELLS) {
         SFC_PROBE_VAPOR: cell.mode === 'vapor' ? '1' : '0',
         SFC_PROBE_IFR: cell.ifr,
         SFC_PROBE_ET: cell.et,
+        SFC_PROBE_SPARSE: cell.sparse,
       },
     },
   );
@@ -83,6 +94,12 @@ for (const cell of CELLS) {
       vapor: cell.mode === 'vapor',
       enableIFR: cell.ifr === '1',
       enableElementTemplates: cell.et === '1',
+      enableSparseNaming: cell.sparse === '1',
+      slots: cell.et === '1' ? 'on' : 'off',
+      naming: cell.mode === 'vapor'
+        ? (cell.sparse === '1' ? 'sparse' : 'dense')
+        : 'n/a',
+      nativeEt: 'stub',
     },
     webBundle: { raw: raw.length, gzip: gz(raw) },
     lynxBundle: lynxRaw ? { raw: lynxRaw.length, gzip: gz(lynxRaw) } : null,
@@ -98,8 +115,7 @@ fs.writeFileSync(
 console.log(`\nbundles + sfc-probe-sizes.json written to ${outDir}`);
 for (const s of sizes) {
   console.log(
-    `${s.cell.padEnd(22)} web ${String(s.webBundle.raw).padStart(8)}B (gz ${s.webBundle.gzip})  MT ${
-      String(s.mtSection.raw).padStart(8)
-    }B (gz ${s.mtSection.gzip})  BG ${String(s.bgSection.raw).padStart(8)}B (gz ${s.bgSection.gzip})`,
+    `${s.cell.padEnd(28)} web gz ${String(s.webBundle.gzip).padStart(7)}  `
+      + `slots=${s.flags.slots} naming=${s.flags.naming} native=${s.flags.nativeEt}`,
   );
 }

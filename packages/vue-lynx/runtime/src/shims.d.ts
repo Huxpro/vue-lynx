@@ -18,6 +18,11 @@ declare global {
   const __VUE_PROD_DEVTOOLS__: boolean;
   const __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: boolean;
   const __VUE_LYNX_AUTO_PIXEL_UNIT__: boolean;
+  /**
+   * Sparse A2 naming for Vapor CLONE_TREE (#298). When false, force dense A1
+   * even if `__vlxAddressing` is stamped (graph-eng matrix kill-switch).
+   */
+  const __VUE_LYNX_SPARSE_NAMING__: boolean;
 
   /** Injected by entry-background.ts; called by Lynx Native on event fire */
   function publishEvent(sign: string, data: unknown): void;

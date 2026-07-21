@@ -17,6 +17,8 @@ export default defineConfig({
       'loaders/vue-sfc-script-extractor':
         './src/loaders/vue-sfc-script-extractor.ts',
       'loaders/vapor-template-loader': './src/loaders/vapor-template-loader.ts',
+      'loaders/vapor-addressing-script-loader':
+        './src/loaders/vapor-addressing-script-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
