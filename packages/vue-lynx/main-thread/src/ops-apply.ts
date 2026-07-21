@@ -21,6 +21,7 @@ import { getTemplate } from './element-templates.js';
 import {
   createListElement,
   destroyListElement,
+  destroyNestedListsUnder,
   flushListUpdates,
   insertListItem,
   isListElement,
@@ -167,10 +168,15 @@ export function applyOps(ops: unknown[], flush = true): void {
           if (isListElement(childId)) {
             // Tear down list callbacks + MT bookkeeping (ReactLynx destroy).
             destroyListElement(childId);
-          } else if (isListParent(parentId)) {
-            // Keep listItems / update-list-info in sync — otherwise Reset
-            // re-inserts the same item-keys and native list errors 2202.
-            removeListItem(parentId, childId);
+          } else {
+            // Ancestor REMOVE does not emit REMOVE for nested <list>s —
+            // walk the subtree and inert their callbacks first.
+            destroyNestedListsUnder(childId);
+            if (isListParent(parentId)) {
+              // Keep listItems / update-list-info in sync — otherwise Reset
+              // re-inserts the same item-keys and native list errors 2202.
+              removeListItem(parentId, childId);
+            }
           }
           __RemoveElement(parent, child);
         }

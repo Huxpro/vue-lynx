@@ -91,6 +91,44 @@ describe('list UpdateListCallbacks (#303)', () => {
     expect(listEl.componentAtIndex(listEl, listID, 0, 2)).toBe(-1);
   });
 
+  it('tears down nested lists when an ancestor is removed', async () => {
+    const show = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          show.value
+            ? h('view', { class: 'wrap' }, [
+              h('list', null, [
+                h('list-item', { key: 'a', 'item-key': 'a' }, [
+                  h('text', null, 'A'),
+                ]),
+              ]),
+            ])
+            : h('view', null, [h('text', null, 'gone')]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const e = env();
+    e.switchToMainThread();
+    const listEl = container.querySelector('list') as any;
+    expect(listEl).not.toBeNull();
+    const listID = listEl.$$uiSign;
+    const live = listEl.componentAtIndex(listEl, listID, 0, 1);
+    expect(typeof live).toBe('number');
+    expect(live).not.toBe(-1);
+
+    e.switchToBackgroundThread();
+    // Remove the wrapping <view> — Vue emits REMOVE for the ancestor only.
+    show.value = false;
+    await nextTick();
+    await nextTick();
+
+    e.switchToMainThread();
+    expect(listEl.componentAtIndex(listEl, listID, 0, 2)).toBe(-1);
+  });
+
   it('recreate after destroy mounts a fresh working list', async () => {
     const show = ref(true);
 

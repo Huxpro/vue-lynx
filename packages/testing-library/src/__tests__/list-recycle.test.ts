@@ -89,7 +89,59 @@ describe('list cell recycling', () => {
     expect(sign1).toBe(sign0);
 
     // Displaced spare is pooled for the donor.
-    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-itemrow')).toBe(
+    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-item:row')).toBe(
+      1,
+    );
+  });
+
+  it('without reuse-identifier, does not cross-item recycle', () => {
+    const { container } = mountList(['A', 'B']);
+    const e = env();
+    e.switchToMainThread();
+
+    const listEl = container.querySelector('list') as any;
+    const tree = elementTree();
+
+    const sign0 = tree.enterListItemAtIndex(listEl, 0);
+    tree.leaveListItem(listEl, sign0);
+
+    // Empty reuse-identifier → per-item pool only; B must get a fresh sign.
+    const sign1 = tree.enterListItemAtIndex(listEl, 1);
+    expect(sign1).not.toBe(sign0);
+    expect(getRecyclePoolSizeForTest(listEl.$$uiSign)).toBe(1);
+  });
+
+  it('skips cross-item hydrate when shapes are incompatible', () => {
+    const Comp = defineComponent({
+      render() {
+        return h('list', null, [
+          h(
+            'list-item',
+            { key: 'a', 'item-key': 'a', 'reuse-identifier': 'row' },
+            [h('text', null, 'A')],
+          ),
+          h(
+            'list-item',
+            { key: 'b', 'item-key': 'b', 'reuse-identifier': 'row' },
+            [h('text', null, 'B'), h('text', null, 'EXTRA')],
+          ),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const e = env();
+    e.switchToMainThread();
+    const listEl = container.querySelector('list') as any;
+    const tree = elementTree();
+
+    const signA = tree.enterListItemAtIndex(listEl, 0);
+    tree.leaveListItem(listEl, signA);
+
+    const signB = tree.enterListItemAtIndex(listEl, 1);
+    expect(signB).not.toBe(signA);
+    // Donor stays in the pool; B mounts its own tree.
+    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-item:row')).toBe(
       1,
     );
   });
@@ -124,10 +176,10 @@ describe('list cell recycling', () => {
     // type-b must not take type-a's pooled root.
     const signB = tree.enterListItemAtIndex(listEl, 1);
     expect(signB).not.toBe(signA);
-    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-itemtype-a')).toBe(
+    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-item:type-a')).toBe(
       1,
     );
-    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-itemtype-b')).toBe(
+    expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-item:type-b')).toBe(
       0,
     );
   });
@@ -204,6 +256,6 @@ describe('list cell recycling', () => {
     expect(result.sign0b).toBe(result.sign0);
     expect(result.sign1).toBe(result.sign0b);
     expect(result.poolAfterLeave).toBe(1);
-    expect(result.reuseKey).toBe('list-itemrow');
+    expect(result.reuseKey).toBe('list-item:row');
   });
 });
