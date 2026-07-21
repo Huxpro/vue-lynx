@@ -62,14 +62,17 @@
       height: 100% !important;
     }
 
-    video,
-    img {
+    // Full-bleed media for PhoneVideo / static posters only.
+    // Do NOT target nested imgs — LoadingOverlay's 40×40 Lynx logo would
+    // otherwise stretch to fill the entire bezel on first paint.
+    > video,
+    > img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    img {
+    > img {
       object-position: top;
     }
   }
