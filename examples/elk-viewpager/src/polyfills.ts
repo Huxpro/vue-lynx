@@ -13,7 +13,7 @@
 /* eslint-disable no-restricted-globals */
 
 import { installDOMException } from './dom-exception-compat';
-import { resolveFetch } from './fetch-compat';
+import { resolveFetch, wrapFetchForMastoPagination } from './fetch-compat';
 
 const g = globalThis as Record<string, any>;
 
@@ -21,15 +21,22 @@ const g = globalThis as Record<string, any>;
 // parameter, while Lynx for Web exposes it on globalThis. Synchronize the
 // callable implementation before masto modules execute so their bare fetch
 // identifier works in both environments.
+//
+// Then wrap for Mastodon pagination: masto.js reads `Link` via
+// response.headers.get('link'). Native Lynx fetch often drops that header
+// after the first page, so Paginator ends early ("End of the timeline")
+// while Web continues. The wrapper normalizes headers and synthesizes
+// rel="next" from max_id/offset when Link is missing.
 const sharedFetch = resolveFetch(
   g.fetch,
   typeof fetch === 'function' ? fetch : undefined,
 );
 if (sharedFetch) {
-  g.fetch = sharedFetch;
+  const mastoFetch = wrapFetchForMastoPagination(sharedFetch);
+  g.fetch = mastoFetch;
   // Assigns RuntimeWrapperWebpackPlugin's injected wrapper parameter.
   // @ts-expect-error fetch is declared as a global function in DOM typings.
-  fetch = sharedFetch as typeof fetch;
+  fetch = mastoFetch as typeof fetch;
 }
 
 installDOMException(g);
@@ -193,7 +200,24 @@ if (typeof g.Headers !== 'function') {
 //   new URL(absolute), new URL(path, base), url.search = 'a=b', String(url)
 // ---------------------------------------------------------------------------
 
-if (typeof g.URL !== 'function') {
+function hasCompatibleURL(URLCtor: unknown): boolean {
+  if (typeof URLCtor !== 'function')
+    return false;
+  try {
+    const url = new (URLCtor as typeof URL)('https://example.com/path?a=1');
+    if (url.pathname !== '/path' || url.search !== '?a=1')
+      return false;
+    url.searchParams.set('b', '2');
+    return url.pathname === '/path'
+      && url.search.includes('a=1')
+      && url.search.includes('b=2');
+  }
+  catch {
+    return false;
+  }
+}
+
+if (!hasCompatibleURL(g.URL)) {
   const ABSOLUTE_RE = /^([a-z][\w+.-]*):\/\/([^/?#]*)([^?#]*)(\?[^#]*)?(#.*)?$/i;
 
   class LynxURL {
@@ -251,7 +275,19 @@ if (typeof g.URL !== 'function') {
     }
 
     get searchParams() {
-      return new (g.URLSearchParams)(this._search);
+      const params = new (g.URLSearchParams)(this._search);
+      const sync = () => {
+        const query = params.toString();
+        this._search = query ? `?${query}` : '';
+      };
+      for (const method of ['set', 'append', 'delete'] as const) {
+        const original = params[method].bind(params);
+        params[method] = ((...args: unknown[]) => {
+          original(...args);
+          sync();
+        }) as never;
+      }
+      return params;
     }
 
     get origin() {

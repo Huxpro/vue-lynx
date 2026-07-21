@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Ported from elk: app/pages/[[server]]/@[account]/index.vue +
 // app/components/account/AccountHeader.vue — banner, avatar, names, bio,
-// fields, stats, posts/replies/media tabs.
+// fields, stats, posts/replies/media tabs. Status feeds use TimelinePaginator
+// (Lynx <list> + scrolltolower) like upstream Elk's account index pages.
 import type { mastodon } from 'masto';
 import { computed, onMounted, ref, watch } from 'vue-lynx';
 import { useRoute, useRouter } from 'vue-router';
@@ -10,7 +11,7 @@ import AccountDisplayName from '../components/AccountDisplayName.vue';
 import ContentRich from '../components/ContentRich';
 import PageHeader from '../components/PageHeader.vue';
 import Spinner from '../components/Spinner.vue';
-import StatusCard from '../components/StatusCard.vue';
+import TimelinePaginator from '../components/TimelinePaginator.vue';
 import { fetchAccountByHandle } from '../composables/cache';
 import { formatCompactNumber } from '../composables/format';
 import { useMastoClient } from '../composables/masto';
@@ -20,11 +21,9 @@ const route = useRoute();
 const router = useRouter();
 
 const account = ref<mastodon.v1.Account | null>(null);
-const statuses = ref<mastodon.v1.Status[]>([]);
 const loading = ref(true);
 const error = ref(false);
 const tab = ref<'posts' | 'replies' | 'media'>('posts');
-const statusesLoading = ref(false);
 const loadGuard = createProfileLoadGuard();
 
 const tabs = [
@@ -33,25 +32,15 @@ const tabs = [
   { key: 'media', label: 'Media' },
 ] as const;
 
-async function loadStatuses() {
+const statusPaginator = computed(() => {
   if (!account.value)
-    return;
-  statusesLoading.value = true;
-  statuses.value = [];
-  try {
-    const paginator = useMastoClient().v1.accounts.$select(account.value.id).statuses.list({
-      limit: 30,
-      excludeReplies: tab.value === 'posts',
-      onlyMedia: tab.value === 'media',
-    });
-    const result = await paginator.values().next();
-    statuses.value = result.value ?? [];
-  }
-  catch (e) {
-    console.error(e);
-  }
-  statusesLoading.value = false;
-}
+    return null as unknown as mastodon.Paginator<mastodon.v1.Status[], any>;
+  return useMastoClient().v1.accounts.$select(account.value.id).statuses.list({
+    limit: 30,
+    excludeReplies: tab.value === 'posts',
+    onlyMedia: tab.value === 'media',
+  });
+});
 
 async function load() {
   const handle = (route.params.account as string) ?? '';
@@ -66,7 +55,6 @@ async function load() {
     if (!loadGuard.isCurrent(request))
       return;
     account.value = loadedAccount;
-    await loadStatuses();
   }
   catch (e) {
     console.error(e);
@@ -79,7 +67,6 @@ async function load() {
 
 onMounted(load);
 watch(() => route.params.account, load);
-watch(tab, loadStatuses);
 
 const joinDate = computed(() => {
   if (!account.value)
@@ -101,84 +88,85 @@ const joinDate = computed(() => {
         <text class="account-retry-text">Try again</text>
       </view>
     </view>
-    <scroll-view v-else scroll-orientation="vertical" class="account-scroll">
-      <!-- banner -->
-      <image :src="account.header" class="account-banner" mode="aspectFill" />
+    <template v-else>
+      <!-- Profile header stays above the recycling feed list -->
+      <view class="account-profile">
+        <image :src="account.header" class="account-banner" mode="aspectFill" />
 
-      <view class="account-head">
-        <view class="account-avatar-row">
-          <view class="account-avatar-ring">
-            <AccountAvatar :account="account" :size="72" />
+        <view class="account-head">
+          <view class="account-avatar-row">
+            <view class="account-avatar-ring">
+              <AccountAvatar :account="account" :size="72" />
+            </view>
           </view>
-        </view>
 
-        <AccountDisplayName :account="account" :font-size="20" />
-        <text class="account-handle">@{{ account.acct }}</text>
+          <AccountDisplayName :account="account" :font-size="20" />
+          <text class="account-handle">@{{ account.acct }}</text>
 
-        <view v-if="account.note" class="account-note">
-          <ContentRich :content="account.note" :emojis="account.emojis" />
-        </view>
+          <view v-if="account.note" class="account-note">
+            <ContentRich :content="account.note" :emojis="account.emojis" />
+          </view>
 
-        <!-- fields (Elk AccountHeader fields table) -->
-        <view v-if="account.fields?.length" class="account-fields">
-          <view
-            v-for="field in account.fields"
-            :key="field.name"
-            class="account-field"
-            :class="field.verifiedAt ? 'account-field-verified' : ''"
-          >
-            <text class="account-field-name">{{ field.name }}</text>
-            <view class="account-field-value">
-              <ContentRich :content="field.value" :emojis="account.emojis" markdown />
+          <view v-if="account.fields?.length" class="account-fields">
+            <view
+              v-for="field in account.fields"
+              :key="field.name"
+              class="account-field"
+              :class="field.verifiedAt ? 'account-field-verified' : ''"
+            >
+              <text class="account-field-name">{{ field.name }}</text>
+              <view class="account-field-value">
+                <ContentRich :content="field.value" :emojis="account.emojis" markdown />
+              </view>
+            </view>
+          </view>
+
+          <text class="account-joined">{{ joinDate }}</text>
+
+          <view class="account-stats">
+            <view class="account-stat">
+              <text class="account-stat-num">{{ formatCompactNumber(account.statusesCount) }}</text>
+              <text class="account-stat-label">Posts</text>
+            </view>
+            <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/following`)">
+              <text class="account-stat-num">{{ formatCompactNumber(account.followingCount) }}</text>
+              <text class="account-stat-label">Following</text>
+            </view>
+            <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/followers`)">
+              <text class="account-stat-num">{{ formatCompactNumber(account.followersCount) }}</text>
+              <text class="account-stat-label">Followers</text>
             </view>
           </view>
         </view>
 
-        <text class="account-joined">{{ joinDate }}</text>
-
-        <!-- stats row -->
-        <view class="account-stats">
-          <view class="account-stat">
-            <text class="account-stat-num">{{ formatCompactNumber(account.statusesCount) }}</text>
-            <text class="account-stat-label">Posts</text>
-          </view>
-          <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/following`)">
-            <text class="account-stat-num">{{ formatCompactNumber(account.followingCount) }}</text>
-            <text class="account-stat-label">Following</text>
-          </view>
-          <view class="account-stat" @tap="router.push(`${route.path.replace(/\/$/, '')}/followers`)">
-            <text class="account-stat-num">{{ formatCompactNumber(account.followersCount) }}</text>
-            <text class="account-stat-label">Followers</text>
+        <view class="account-tabs">
+          <view
+            v-for="t in tabs"
+            :key="t.key"
+            class="account-tab"
+            @tap="tab = t.key"
+          >
+            <text class="account-tab-text" :class="tab === t.key ? 'account-tab-active' : ''">{{ t.label }}</text>
+            <view class="account-tab-underline" :class="tab === t.key ? 'account-tab-underline-active' : ''" />
           </view>
         </view>
       </view>
 
-      <!-- tabs -->
-      <view class="account-tabs">
-        <view
-          v-for="t in tabs"
-          :key="t.key"
-          class="account-tab"
-          @tap="tab = t.key"
-        >
-          <text class="account-tab-text" :class="tab === t.key ? 'account-tab-active' : ''">{{ t.label }}</text>
-          <view class="account-tab-underline" :class="tab === t.key ? 'account-tab-underline-active' : ''" />
-        </view>
-      </view>
-
-      <view v-if="statusesLoading" class="account-loading">
-        <Spinner />
-      </view>
-      <StatusCard v-for="s in statuses" :key="s.id" :status="s" />
-      <view class="account-bottom-pad" />
-    </scroll-view>
+      <TimelinePaginator
+        :key="`${account.id}-${tab}`"
+        :paginator="statusPaginator"
+        context="account"
+      />
+    </template>
   </view>
 </template>
 
 <style>
-.account-scroll {
-  flex: 1;
+.account-profile {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .account-loading {
@@ -352,9 +340,5 @@ const joinDate = computed(() => {
 .account-tab-underline-active {
   opacity: 1;
   transform: scaleX(1);
-}
-
-.account-bottom-pad {
-  height: 40px;
 }
 </style>

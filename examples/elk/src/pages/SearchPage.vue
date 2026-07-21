@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Ported from elk: app/pages/[[server]]/search.vue + components/search/*.
 // Debounced multi-type search via the ported useSearch composable.
+// Results live in a recycling <list>; scrolltolower calls useSearch.next().
 import { ref } from 'vue-lynx';
 import { useRouter } from 'vue-router';
 import AccountAvatar from '../components/AccountAvatar.vue';
@@ -14,7 +15,7 @@ import { useSearch } from '../composables/search';
 
 const router = useRouter();
 const query = ref('');
-const { accounts, hashtags, statuses, loading } = useSearch(query);
+const { accounts, hashtags, statuses, loading, done, next } = useSearch(query);
 
 function onInput(e: { detail?: { value?: string } }) {
   query.value = e.detail?.value ?? '';
@@ -22,6 +23,12 @@ function onInput(e: { detail?: { value?: string } }) {
 
 function totalUses(tag: { history?: { uses: string }[] }): number {
   return (tag.history ?? []).reduce((acc, h) => acc + Number(h.uses || 0), 0);
+}
+
+function loadMore() {
+  if (!query.value || loading.value || done.value)
+    return;
+  next();
 }
 </script>
 
@@ -39,21 +46,47 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
       />
     </view>
 
-    <scroll-view scroll-orientation="vertical" class="search-results">
-      <view v-if="loading" class="search-loading">
-        <Spinner />
-      </view>
+    <list
+      class="search-results"
+      scroll-orientation="vertical"
+      :lower-threshold-item-count="4"
+      @scrolltolower="loadMore"
+    >
+      <list-item
+        v-if="loading && !accounts.length && !hashtags.length && !statuses.length"
+        item-key="__loading"
+        :estimated-main-axis-size-px="80"
+      >
+        <view class="search-loading">
+          <Spinner />
+        </view>
+      </list-item>
 
-      <view v-else-if="!query" class="search-hint">
-        <text class="search-hint-text">Search for people, hashtags and posts</text>
-      </view>
+      <list-item
+        v-else-if="!query"
+        item-key="__hint"
+        :estimated-main-axis-size-px="80"
+      >
+        <view class="search-hint">
+          <text class="search-hint-text">Search for people, hashtags and posts</text>
+        </view>
+      </list-item>
 
       <template v-else>
-        <view v-if="accounts.length" class="search-section">
+        <list-item
+          v-if="accounts.length"
+          item-key="__people-title"
+          :estimated-main-axis-size-px="32"
+        >
           <text class="search-section-title">People</text>
+        </list-item>
+        <list-item
+          v-for="result in accounts.slice(0, 5)"
+          :key="result.id"
+          :item-key="result.id"
+          :estimated-main-axis-size-px="56"
+        >
           <view
-            v-for="result in accounts.slice(0, 5)"
-            :key="result.id"
             class="search-account"
             @tap="router.push(result.to)"
           >
@@ -63,13 +96,22 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
               <text class="search-account-handle">@{{ result.data.acct }}</text>
             </view>
           </view>
-        </view>
+        </list-item>
 
-        <view v-if="hashtags.length" class="search-section">
+        <list-item
+          v-if="hashtags.length"
+          item-key="__tags-title"
+          :estimated-main-axis-size-px="32"
+        >
           <text class="search-section-title">Hashtags</text>
+        </list-item>
+        <list-item
+          v-for="result in hashtags.slice(0, 5)"
+          :key="result.id"
+          :item-key="result.id"
+          :estimated-main-axis-size-px="48"
+        >
           <view
-            v-for="result in hashtags.slice(0, 5)"
-            :key="result.id"
             class="search-tag"
             @tap="router.push(result.to)"
           >
@@ -77,21 +119,42 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
             <text class="search-tag-name">{{ result.data.name }}</text>
             <text class="search-tag-uses">{{ formatCompactNumber(totalUses(result.data)) }} recent uses</text>
           </view>
-        </view>
+        </list-item>
 
-        <view v-if="statuses.length" class="search-section">
-          <text class="search-section-title">Posts</text>
-          <StatusCard v-for="result in statuses" :key="result.id" :status="result.data" />
-        </view>
-
-        <view
-          v-if="!accounts.length && !hashtags.length && !statuses.length"
-          class="search-hint"
+        <list-item
+          v-if="statuses.length"
+          item-key="__posts-title"
+          :estimated-main-axis-size-px="32"
         >
-          <text class="search-hint-text">No results for "{{ query }}"</text>
-        </view>
+          <text class="search-section-title">Posts</text>
+        </list-item>
+        <list-item
+          v-for="result in statuses"
+          :key="result.id"
+          :item-key="result.id"
+          :estimated-main-axis-size-px="160"
+        >
+          <StatusCard :status="result.data" />
+        </list-item>
+
+        <list-item
+          v-if="!loading && !accounts.length && !hashtags.length && !statuses.length"
+          item-key="__empty"
+          :estimated-main-axis-size-px="80"
+        >
+          <view class="search-hint">
+            <text class="search-hint-text">No results for "{{ query }}"</text>
+          </view>
+        </list-item>
+
+        <list-item item-key="__footer" :estimated-main-axis-size-px="60">
+          <view class="search-footer">
+            <Spinner v-if="loading && (accounts.length || hashtags.length || statuses.length)" />
+            <text v-else-if="done && statuses.length" class="search-end-text">End of results</text>
+          </view>
+        </list-item>
       </template>
-    </scroll-view>
+    </list>
   </view>
 </template>
 
@@ -139,12 +202,6 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
   color: var(--c-text-secondary-light);
 }
 
-.search-section {
-  display: flex;
-  flex-direction: column;
-  padding-top: 8px;
-}
-
 .search-section-title {
   font-size: 13px;
   font-weight: 700;
@@ -188,5 +245,18 @@ function totalUses(tag: { history?: { uses: string }[] }): number {
   font-size: 13px;
   color: var(--c-text-secondary);
   margin-left: auto;
+}
+
+.search-footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.search-end-text {
+  font-size: 13px;
+  color: var(--c-text-secondary-light);
 }
 </style>

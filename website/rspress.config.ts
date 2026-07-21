@@ -100,6 +100,7 @@ export default defineConfig({
         { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
+        { text: 'scroll-view vs list', link: '/guide/scroll-view-vs-list' },
         {
           dividerType: 'solid',
         },
@@ -145,6 +146,7 @@ export default defineConfig({
         { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
+        { text: 'scroll-view 与 list', link: '/zh/guide/scroll-view-vs-list' },
         {
           dividerType: 'solid',
         },

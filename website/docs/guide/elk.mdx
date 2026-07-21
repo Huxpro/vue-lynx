@@ -72,10 +72,9 @@ At the call site it's a straight swap. The hand-rolled tab bar and
   <view class="explore-tab" @tap="tab = 'posts'">…</view>
   <view class="explore-tab" @tap="tab = 'tags'">…</view>
 </view>
-<scroll-view v-if="tab === 'posts'">…</scroll-view>
-<scroll-view v-else-if="tab === 'tags'">…</scroll-view>
+<list v-if="tab === 'posts'" @scrolltolower="loadNext">…</list>
+<list v-else-if="tab === 'tags'" @scrolltolower="loadMoreTags">…</list>
 ```
-
 …become a component with one named slot per pane:
 
 ```vue
@@ -124,6 +123,75 @@ pane's list. Like the viewpager it's registered per platform — the legacy
 [`<scroll-coordinator>`](https://lynxjs.org/guide/ui/elements-components.html#xelement)
 on native OSS engines.
 
+## Native feed techniques
+
+A Mastodon client is mostly long lists: home, local, federated, explore,
+notifications, search, profile posts, followers. On the web Elk virtualizes
+with [`virtua`](https://github.com/inokawa/virtua) and triggers the next page
+from a DOM end-anchor's bounding box. Lynx gives you two scroll primitives —
+and which one you pick is the whole performance story.
+
+### `<scroll-view>` mounts everything
+
+[`<scroll-view>`](https://lynxjs.org/api/elements/built-in/scroll-view) is the
+right tool for **short, heterogeneous** screens: Settings, Compose, a status
+thread, a media sheet. Every child stays mounted; you scroll a normal layout
+tree. That is also why it is the **wrong** tool for a timeline — once the
+federated feed grows past a few dozen statuses, you are paying for every card
+above and below the viewport.
+
+### `<list>` recycles and paginates
+
+[`<list>`](https://lynxjs.org/api/elements/built-in/list) is Lynx's recycling
+scroller. Off-screen `<list-item>` cells are reused; you only keep a window of
+real nodes alive. Infinite scroll is a native event, not a geometry poll:
+
+```vue
+<list
+  scroll-orientation="vertical"
+  :lower-threshold-item-count="4"
+  @scrolltolower="loadNext"
+>
+  <list-item
+    v-for="status in items"
+    :key="status.id"
+    :item-key="status.id"
+    :estimated-main-axis-size-px="160"
+  >
+    <StatusCard :status="status" />
+  </list-item>
+</list>
+```
+
+Three attributes do the heavy lifting:
+
+| Piece | Role |
+|-------|------|
+| `estimated-main-axis-size-px` | Lets the list lay out the scroll range before each cell measures |
+| `lower-threshold-item-count` | How many items from the end before we ask for more |
+| `@scrolltolower` | Fires `usePaginator.loadNext()` — Elk's masto.js `Paginator` iteration, unchanged |
+
+[`TimelinePaginator.vue`](https://github.com/huxpro/vue-lynx/blob/main/examples/elk/src/components/TimelinePaginator.vue)
+is the shared feed shell: first paint, error/retry, the recycling list, and a
+footer spinner / "End of the timeline". Timelines, Explore posts, hashtag
+pages, bookmarks/favourites, and profile Posts / Replies / Media all reuse it.
+Explore tags/news, notifications, followers, and search wire the same
+`<list>` + `scrolltolower` pattern to their own item templates.
+
+`<scroll-view>` still appears where recycling would not help — thread detail,
+settings forms, the compose sheet. The rule of thumb the port settled on:
+**if it can grow without bound, it is a `<list>`; if it is a finite page, keep
+`<scroll-view>`.**
+
+<Go
+  example="elk"
+  defaultFile="src/components/TimelinePaginator.vue"
+  schema="{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa"
+  highlight={{
+    'src/components/TimelinePaginator.vue': '{21-26,39-59}',
+  }}
+/>
+
 ## Why Elk is a serious test
 
 Elk is a Nuxt 3 app with ~196 components, 55 pages and 50 composables.
@@ -158,9 +226,10 @@ and side-by-side screenshot comparisons against the original elk.zone in
   keeps the parse step byte-for-byte and only swaps the vnode targets —
   custom emoji become inline `<image>`, mentions/hashtags become tappable
   `<text>` runs that push vue-router routes.
-- **Native virtualized timeline**: the infinite timeline is a Lynx
-  `<list>` with `estimated-main-axis-size-px` hints; masto.js `Paginator`
-  iteration and Elk's reorder/buffer logic drive it unchanged.
+- **Native virtualized timeline**: feeds use Lynx `<list>` with
+  `estimated-main-axis-size-px` and `@scrolltolower` (not `<scroll-view>`);
+  masto.js `Paginator` iteration and Elk's reorder/buffer logic drive
+  `loadNext()` unchanged across timelines, explore, profiles, and search.
 - **Deep links**: pass `globalProps: { initialPath: '/mas.to/tags/caturday' }`
   to the LynxView and the app opens on that route — the same mechanism a
   host app would use for notification taps.
