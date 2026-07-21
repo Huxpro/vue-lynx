@@ -8,14 +8,13 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { OP, VAPOR_ADDRESSING_KEY } from 'vue-lynx/internal/ops';
+import { OP } from 'vue-lynx/internal/ops';
 import {
   ShadowElement,
   resetTemplateState,
   setPendingVaporAddressing,
 } from '../../../vue-lynx/runtime/src/shadow-element.js';
 import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
-import { template } from '../../../vue-lynx/runtime/src/vapor/index.js';
 
 afterEach(() => {
   resetTemplateState();
@@ -25,10 +24,11 @@ afterEach(() => {
 
 function buildInertProto(): ShadowElement {
   // <view class=card>
-  //   <text class=static>hi</text>
-  //   <text> </text>   <!-- hole -->
+  //   <text class=static>hi</text>   <!-- only-child text folded -->
+  //   <text> </text>                 <!-- hole host, folded -->
   //   <image src=x.png />
   // </view>
+  // REGISTER_TREE slots: 0=view, 1=static text, 2=hole text, 3=image
   const root = new ShadowElement('view');
   root._inert = true;
   root._baseClass = 'card';
@@ -61,8 +61,10 @@ function buildInertProto(): ShadowElement {
 describe('sparse A2 cloneTemplatePrototype', () => {
   it('emits REGISTER_TREE with addressed list and allocates sparse uids', () => {
     const proto = buildInertProto();
-    // slots: 0=view, 1=static text (folded), 2=hole text (folded), 3=image
-    // only-child text folding → slotCount 4 with folded text hosts.
+    // Proto construction consumed uids — reset so the clone block starts at 2.
+    ShadowElement.nextUid = 2;
+    takeOps();
+
     setPendingVaporAddressing({
       holes: [2],
       addressed: [0, 1, 2], // prefix sibling 1 kept for _nthChild/_next
@@ -71,15 +73,19 @@ describe('sparse A2 cloneTemplatePrototype', () => {
 
     const clone = proto.cloneNode(true) as ShadowElement;
     const ops = takeOps();
+    const base = clone.uid;
 
-    expect(clone.uid).toBe(2); // base
-    // Sparse: 3 addressed → nextUid advanced by 3 (2,3,4 used; next is 5)
-    expect(ShadowElement.nextUid).toBe(5);
+    expect(base).toBe(2);
+    // Sparse reserves 3 addressed uids; each folded only-child #text alias
+    // then allocates one more via the plain constructor (outside the block).
+    expect(ShadowElement.nextUid).toBe(base + 3 + 2);
 
     // Root linked children: static + hole (image skipped — not addressed)
     expect(clone.firstChild).toBeTruthy();
     expect(clone.firstChild!.next).toBeTruthy();
     expect(clone.firstChild!.next!.next).toBeNull();
+    expect(clone.firstChild!.uid).toBe(base + 1);
+    expect(clone.firstChild!.next!.uid).toBe(base + 2);
 
     // REGISTER_TREE carries addressed list
     const regIdx = ops.indexOf(OP.REGISTER_TREE);
@@ -87,19 +93,22 @@ describe('sparse A2 cloneTemplatePrototype', () => {
     expect(ops[regIdx + 3]).toEqual([0, 1, 2]);
 
     const cloneIdx = ops.indexOf(OP.CLONE_TREE);
-    expect(ops[cloneIdx + 2]).toBe(2); // baseUid
+    expect(ops[cloneIdx + 2]).toBe(base);
   });
 
   it('falls back to dense naming without addressing metadata', () => {
     const proto = buildInertProto();
+    ShadowElement.nextUid = 2;
+    takeOps();
     setPendingVaporAddressing(undefined);
 
     const clone = proto.cloneNode(true) as ShadowElement;
     const ops = takeOps();
+    const base = clone.uid;
 
-    expect(clone.uid).toBe(2);
-    // Dense: 4 slots → nextUid = 2 + 4
-    expect(ShadowElement.nextUid).toBe(6);
+    expect(base).toBe(2);
+    // Dense: 4 structure slots + 2 aliased only-child #text shadows
+    expect(ShadowElement.nextUid).toBe(base + 4 + 2);
     // All three element children linked
     expect(clone.firstChild!.next!.next).toBeTruthy();
 
@@ -109,6 +118,8 @@ describe('sparse A2 cloneTemplatePrototype', () => {
 
   it('falls back to dense when slotCount mismatches the built structure', () => {
     const proto = buildInertProto();
+    ShadowElement.nextUid = 2;
+    takeOps();
     setPendingVaporAddressing({
       holes: [2],
       addressed: [0, 2],
@@ -120,34 +131,34 @@ describe('sparse A2 cloneTemplatePrototype', () => {
     const regIdx = ops.indexOf(OP.REGISTER_TREE);
     expect(ops[regIdx + 3]).toBe(0);
   });
-});
 
-describe('template() threads __vlxAddressing', () => {
-  it('reads factory.__vlxAddressing on each clone call', () => {
-    const factory = template(
-      '<view class="card"><text class="s">hi</text><text> </text></view>',
-      1,
-    ) as (() => ShadowElement) & {
-      [typeof VAPOR_ADDRESSING_KEY]?: {
-        holes: number[];
-        addressed: number[];
-        slotCount: number;
-      };
-    };
+  it('threads pending addressing into the first cache build only', () => {
+    const proto = buildInertProto();
+    ShadowElement.nextUid = 2;
+    takeOps();
 
-    // Fully static-ish with one text hole host — exact slotCount depends on
-    // HTML parse folding. Stamp after first structure discovery via a
-    // deliberate mismatch first, then correct on second factory.
-    factory[VAPOR_ADDRESSING_KEY] = {
+    setPendingVaporAddressing({
       holes: [0],
       addressed: [0],
-      slotCount: 1,
-    };
+      slotCount: 4,
+    });
+    const first = proto.cloneNode(true) as ShadowElement;
+    takeOps();
 
-    // First call may or may not match slotCount depending on parse; either
-    // sparse or dense is fine — we assert the stamp is consulted (no throw).
-    const el = factory();
-    expect(el).toBeTruthy();
-    expect(el.tag).toBe('view');
+    // Second clone must reuse sparse cache even if pending is cleared.
+    setPendingVaporAddressing(undefined);
+    ShadowElement.nextUid = 100;
+    const second = proto.cloneNode(true) as ShadowElement;
+    const ops = takeOps();
+
+    expect(first.uid).toBe(2);
+    expect(second.uid).toBe(100);
+    // Sparse root-only (+ aliased texts if any). Here holes=[0] on a tree
+    // with folded text children still creates aliases when those hosts are
+    // not addressed — only root is linked, so no aliases → +1.
+    expect(ShadowElement.nextUid).toBe(101);
+    expect(ops[ops.indexOf(OP.CLONE_TREE) + 2]).toBe(100);
+    // No second REGISTER_TREE
+    expect(ops.filter((x) => x === OP.REGISTER_TREE)).toHaveLength(0);
   });
 });
