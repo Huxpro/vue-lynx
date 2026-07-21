@@ -1,8 +1,16 @@
 node_modules/
 dist/
+dist-vapor/
+dist-naive/
+dist-compiler/
+dist-ifr/
+dist-ifr-et/
 .rslib/
 *.tsbuildinfo
 .rspeedy/
+.vapor-generated/
+lynx.vapor.generated.config.ts
+artifacts/example-harness/
 packages/upstream-tests/core/
 *.log
 .DS_Store
@@ -14,3 +22,5 @@ website/api-sidebar.json
 .vercel
 .claude/
 .obsidian/
+packages/upstream-tests/src/vapor/.generated/
+packages/benchmark/results/smoke-*.png

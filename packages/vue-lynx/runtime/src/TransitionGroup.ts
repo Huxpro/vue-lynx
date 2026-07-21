@@ -37,13 +37,13 @@ import type { TransitionProps } from './Transition.js';
 
 function addTransitionClass(el: ShadowElement, cls: string): void {
   el._transitionClasses.add(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }
 
 function removeTransitionClass(el: ShadowElement, cls: string): void {
   el._transitionClasses.delete(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }
 
@@ -75,7 +75,7 @@ function whenTransitionEnds(
     if (settled) return;
     settled = true;
     unregister(sign);
-    pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', eventName);
+    pushOp(OP.REMOVE_EVENT, el.uid, 'bindEvent', eventName);
     scheduleFlush();
     done();
   };
@@ -84,7 +84,7 @@ function whenTransitionEnds(
     finish();
   });
 
-  pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
+  pushOp(OP.SET_EVENT, el.uid, 'bindEvent', eventName, sign);
   scheduleFlush();
 }
 

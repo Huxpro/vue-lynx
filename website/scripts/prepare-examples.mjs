@@ -16,6 +16,23 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 const EXAMPLES_SRC = path.resolve(REPO_ROOT, 'examples');
 const EXAMPLES_DEST = path.resolve(__dirname, '../docs/public/examples');
 const EXAMPLE_GIT_BASE_URL = 'https://github.com/huxpro/vue-lynx/tree/main/examples';
+// The support matrix is produced by the example-harness verification run.
+// Its absence must degrade to "all examples VDOM-only", not break the docs
+// build — this script also runs on checkouts that never ran the harness.
+function loadVaporSupport() {
+  const file = path.join(EXAMPLES_SRC, 'vapor-support.json');
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch (err) {
+    console.warn(
+      `⚠ Could not read ${file} (${err.message}); marking all examples VDOM-only.`,
+    );
+    return { version: 1, entries: [] };
+  }
+}
+const vaporSupport = loadVaporSupport();
+const vaporById = new Map(vaporSupport.entries.map((entry) => [entry.id, entry.vapor]));
+
 const PLUGIN_DIST = path.join(
   REPO_ROOT,
   'packages/vue-lynx/plugin/dist/index.js',
@@ -37,7 +54,16 @@ const BINARY_EXTENSIONS = new Set([
 ]);
 
 // Directories to skip
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.cache', '.git', '.data', '.rspeedy']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'dist-vapor',
+  '.vapor-generated',
+  '.cache',
+  '.git',
+  '.data',
+  '.rspeedy',
+]);
 
 /**
  * Walk a directory recursively and collect relative file paths.
@@ -147,15 +173,24 @@ function processExample(exampleName) {
 
   // Build templateFiles (pointing to expected bundle locations)
   const templateFiles = entries.map(({ name }) => {
+    const vapor = vaporById.get(`${exampleName}/${name}`);
     const entry = {
       name,
       file: `dist/${name}.lynx.bundle`,
+      // Anything but a verified 'supported' (including entries missing from
+      // the matrix) renders as VDOM — the UI types only these two states.
+      vaporStatus: vapor?.disposition === 'supported' ? 'supported' : 'unsupported',
+      vaporReason: vapor?.reasonCode,
     };
     // Check if web bundle exists (rspeedy produces .web.bundle)
     const webBundlePath = path.join(srcDir, `dist/${name}.web.bundle`);
     if (fs.existsSync(webBundlePath)) {
       entry.webFile = `dist/${name}.web.bundle`;
     }
+    const vaporBundlePath = path.join(srcDir, `dist-vapor/${name}.lynx.bundle`);
+    const vaporWebBundlePath = path.join(srcDir, `dist-vapor/${name}.web.bundle`);
+    if (fs.existsSync(vaporBundlePath)) entry.vaporFile = `dist-vapor/${name}.lynx.bundle`;
+    if (fs.existsSync(vaporWebBundlePath)) entry.vaporWebFile = `dist-vapor/${name}.web.bundle`;
     return entry;
   });
 
@@ -193,6 +228,10 @@ function processExample(exampleName) {
     if (PRE_GZIP_LYNX_BUNDLES) {
       gzipLynxBundlesInPlace(distDestDir);
     }
+  }
+  const vaporDistSrcDir = path.join(srcDir, 'dist-vapor');
+  if (fs.existsSync(vaporDistSrcDir)) {
+    copyDirRecursive(vaporDistSrcDir, path.join(destDir, 'dist-vapor'));
   }
 
   // Copy preview image if it exists
@@ -254,7 +293,20 @@ const needsBuild = examples.some((example) =>
   !fs.existsSync(path.join(EXAMPLES_SRC, example, 'dist')),
 );
 
-if (needsBuild) {
+// Examples with at least one Vapor-supported entry also need dist-vapor/
+// (built via the example-harness overlay). Without this, fresh checkouts —
+// including CI/Vercel, where dist* are gitignored — would ship a VDOM/Vapor
+// switch whose Vapor side silently falls back everywhere.
+const vaporExamples = [...new Set(
+  vaporSupport.entries
+    .filter((entry) => entry.vapor?.disposition === 'supported')
+    .map((entry) => entry.id.split('/')[0]),
+)].filter((example) => examples.includes(example));
+const needsVaporBuild = vaporExamples.some((example) =>
+  !fs.existsSync(path.join(EXAMPLES_SRC, example, 'dist-vapor')),
+);
+
+if (needsBuild || needsVaporBuild) {
   // Examples depend on vue-lynx (workspace:*), so build the lib first if needed
   const libBuilt = fs.existsSync(PLUGIN_DIST);
   if (!libBuilt) {
@@ -265,12 +317,26 @@ if (needsBuild) {
   for (const example of examples) {
     const exampleDir = path.join(EXAMPLES_SRC, example);
     const distDir = path.join(exampleDir, 'dist');
-    if (!fs.existsSync(distDir)) {
+    if (needsBuild && !fs.existsSync(distDir)) {
       console.info(`Building example: ${example} (no dist/ found)`);
       try {
         execSync('pnpm build', { cwd: exampleDir, stdio: 'inherit' });
       } catch (err) {
         console.error(`  ⚠ Failed to build ${example}:`, err.message);
+      }
+    }
+    if (vaporExamples.includes(example)
+      && !fs.existsSync(path.join(exampleDir, 'dist-vapor'))) {
+      console.info(`Building example: ${example} (no dist-vapor/ found)`);
+      try {
+        execSync(
+          `node packages/example-harness/src/build-vapor.mjs --example ${example}`,
+          { cwd: REPO_ROOT, stdio: 'inherit' },
+        );
+      } catch (err) {
+        // Degrades cleanly: the entry keeps vaporStatus but has no vapor
+        // bundles, so resolveRenderMode falls back to VDOM for it.
+        console.error(`  ⚠ Failed to build ${example} (vapor):`, err.message);
       }
     }
   }
@@ -280,5 +346,10 @@ if (needsBuild) {
 for (const example of examples) {
   processExample(example);
 }
+
+fs.writeFileSync(
+  path.join(EXAMPLES_DEST, 'vapor-support.json'),
+  `${JSON.stringify(vaporSupport, null, 2)}\n`,
+);
 
 console.info(`\nDone! Processed ${examples.length} examples.`);

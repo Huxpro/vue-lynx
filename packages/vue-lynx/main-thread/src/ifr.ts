@@ -3,41 +3,25 @@
 // LICENSE file in the root directory of this source tree.
 
 /**
- * IFR (Instant First-Frame Rendering) — main-thread first-screen render and
- * background-thread hydration.
+ * Instant First-Frame Rendering for the pure Vapor entry.
  *
- * When the vue-lynx plugin builds with `enableIFR: true`, the main-thread
- * bundle contains the full Vue runtime + user app (not just worklet
- * registrations).  The flow mirrors ReactLynx's IFR:
+ * When `enableIFR: true`, the main-thread bundle contains the Vue runtime +
+ * user app. Both threads run the same Vapor template protocol in fresh
+ * realms, so initial op streams are deterministic:
  *
- *   1. `renderPage` (called synchronously during loadTemplate, before any
- *      background JS runs) mounts the Vue app *on the main thread*.  The ops
- *      the renderer produces are applied locally via {@link applyOps} — the
- *      first frame is on screen without a cross-thread round-trip.  Every
- *      applied batch is also recorded.
- *   2. The background thread boots and renders the same app with the same
- *      data.  Because both threads run identical, deterministic code, the
- *      ShadowElement ids and event signs it generates line up with the
- *      main-thread render.
- *   3. Hydration: the background thread's initial `vuePatchUpdate` batches
- *      are compared against the recorded ops stream —
- *        - identical batch        → skipped (already applied during IFR)
- *        - value-level mismatch   → the background value is patched in place
- *        - structural mismatch    → the IFR tree is torn down and the
- *                                   background batch applied from scratch
- *      Either way the background thread ends up owning the tree, and all
- *      subsequent updates flow through the normal ops pipeline.
+ *   1. `renderPage` mounts on the main thread during `loadTemplate` and
+ *      applies ops locally (first frame without a cross-thread round-trip).
+ *      Applied batches are recorded; the stream is sealed when the sync
+ *      first-screen mount returns (`sealIfrRender`).
+ *   2. The background thread boots and renders the same app.
+ *   3. Hydration compares BG batches against the recorded stream —
+ *      identical structural frames are skipped, values/worklets are adopted
+ *      from BG, and a structural mismatch falls back to replaying the
+ *      complete background history.
  *
- * The recorded stream is sealed when the synchronous first-screen mount
- * returns. Later main-thread Vue updates (Suspense resolves, timers, etc.)
- * are dropped so they cannot extend the hydration stream or desync the
- * tree from the background thread.
- *
- * Events bound during the IFR render use the same sign strings the
- * background thread will register (`vue:N`), so taps that happen after the
- * background thread boots are routed correctly with no re-binding.  Worklet
- * event contexts are always re-applied from the background batch because the
- * BG side stamps `_execId` (required for `runOnBackground`).
+ * Events use the same sign strings (`vue:N`) on both sides. Worklet event
+ * contexts are always re-applied from BG (needs `_execId` for
+ * `runOnBackground`).
  */
 
 import {
@@ -49,112 +33,121 @@ import {
   PAGE_ROOT_ID,
 } from 'vue-lynx/internal/ops';
 
-import { elements } from './element-registry.js';
-import { applyOps } from './ops-apply.js';
+import {
+  elements,
+  pageUniqueId,
+  setPageUniqueId,
+} from './element-registry.js';
+import { isPlatformInfoAttr } from './list-apply.js';
+import {
+  applyOps,
+  beginIfrSelectorAttributeDeferral,
+  clearIfrSelectorAttributeDeferral,
+  commitIfrSelectorAttributes,
+  resetMainThreadState,
+} from './ops-apply.js';
 
-// Widened view: op codes read off the wire are plain numbers and may be
-// unknown to this build (forward compat) — lookups must yield undefined.
-const ARITY = OP_ARITY as Record<number, number | undefined>;
+const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
-type Phase = 'inactive' | 'enabled' | 'rendered' | 'hydrated';
+export type IfrPhase = 'inactive' | 'enabled' | 'rendered' | 'hydrated';
 
-let phase: Phase = 'inactive';
-let recordedBatches: unknown[][] = [];
-let batchCursor = 0;
+let phase: IfrPhase = 'inactive';
+let recordedOps: unknown[] = [];
+let recordedCursor = 0;
+let backgroundHistory: unknown[][] = [];
+let warnedPostHydrationOps = false;
+let renderSealed = false;
+let inSyncRender = false;
 
 /**
- * How a mismatch in the *last* argument of an op is handled during
- * hydration.  Ops not listed here are structural: any difference aborts
- * reconciliation.
- *
- * - 'patch':  apply the background frame when the value differs
- * - 'always': apply the background frame unconditionally (worklet ctx needs
- *             the BG-stamped `_execId`; MT-ref application is idempotent)
+ * Value-bearing frames whose final payload does not define tree identity.
+ * Background worklet contexts and refs are always authoritative because only
+ * that realm has the final execution id and reactive ownership.
  */
-const VALUE_OP: Record<number, 'patch' | 'always'> = {
+const VALUE_OP: Readonly<Record<number, 'patch' | 'always'>> = {
   [OP.SET_PROP]: 'patch',
   [OP.SET_TEXT]: 'patch',
   [OP.SET_EVENT]: 'patch',
   [OP.SET_STYLE]: 'patch',
   [OP.SET_CLASS]: 'patch',
   [OP.SET_ID]: 'patch',
-  [OP.SET_SCOPE_ID]: 'patch',
   [OP.SET_WORKLET_EVENT]: 'always',
   [OP.SET_MT_REF]: 'always',
   [OP.INIT_MT_REF]: 'always',
 };
 
-/**
- * Deep equality over JSON-shaped values (ops are JSON-serializable by
- * construction — they cross the thread boundary as JSON). A structural walk
- * avoids the string allocations a stringify-compare would pay per op on the
- * hydration path.
- */
 function sameValue(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (
-    typeof a !== 'object' || typeof b !== 'object' || a === null || b === null
+    a === null
+    || b === null
+    || typeof a !== 'object'
+    || typeof b !== 'object'
   ) {
     return false;
   }
-  const aArr = Array.isArray(a);
-  if (aArr !== Array.isArray(b)) return false;
-  if (aArr) {
-    const bArrV = b as unknown[];
-    const aArrV = a as unknown[];
-    if (aArrV.length !== bArrV.length) return false;
-    for (let i = 0; i < aArrV.length; i++) {
-      if (!sameValue(aArrV[i], bArrV[i])) return false;
+
+  const aIsArray = Array.isArray(a);
+  if (aIsArray !== Array.isArray(b)) return false;
+  if (aIsArray) {
+    const aArray = a as unknown[];
+    const bArray = b as unknown[];
+    if (aArray.length !== bArray.length) return false;
+    for (let i = 0; i < aArray.length; i++) {
+      if (!sameValue(aArray[i], bArray[i])) return false;
     }
     return true;
   }
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
-  const aKeys = Object.keys(aObj);
-  if (aKeys.length !== Object.keys(bObj).length) return false;
-  for (const k of aKeys) {
-    if (!sameValue(aObj[k], bObj[k])) return false;
+
+  const aObject = a as Record<string, unknown>;
+  const bObject = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObject);
+  if (aKeys.length !== Object.keys(bObject).length) return false;
+  for (const key of aKeys) {
+    if (
+      !Object.prototype.hasOwnProperty.call(bObject, key)
+      || !sameValue(aObject[key], bObject[key])
+    ) {
+      return false;
+    }
   }
   return true;
 }
 
-// ---------------------------------------------------------------------------
-// Public API — wired into entry-main.ts
-// ---------------------------------------------------------------------------
-
-/**
- * Activate IFR on this thread.  Called by the `entry-ifr` bootstrap, which
- * the plugin injects into the main-thread bundle *before* user code, so the
- * flags are visible when `createApp().mount()` evaluates.
- */
+/** Install the globals consumed by the Vapor runtime in the IFR realm. */
 export function enableIFR(): void {
   const g = globalThis as Record<string, unknown>;
   g[IFR_MT_FLAG_GLOBAL] = true;
+  g['__VUE_LYNX_IFR_ENABLED__'] = true;
   g[IFR_APPLY_OPS_GLOBAL] = recordAndApply;
+  g['__vueLynxIfrSealOps'] = sealIfrRender;
+
+  // Native Lepus realms have no timers. Dev builds of the user graph reach
+  // setTimeout during module evaluation (e.g. runtime-core's devtools-hook
+  // replay buffer sees the Vapor dom-shim's `window`), which is outside the
+  // runIfrRender fallback boundary — an uncaught throw there kills renderPage
+  // for the whole page, not just IFR. A timer that never fires is the correct
+  // semantic for the disposable MT realm: everything after handoff is
+  // discarded anyway.
+  if (typeof g['setTimeout'] !== 'function') {
+    g['setTimeout'] = (): number => 0;
+    g['clearTimeout'] = (): void => undefined;
+  }
   phase = 'enabled';
+  recordedOps = [];
+  recordedCursor = 0;
+  backgroundHistory = [];
+  warnedPostHydrationOps = false;
+  renderSealed = false;
+  inSyncRender = false;
 }
 
-let warnedPostHydrationOps = false;
-
-// True while runIfrRender is synchronously mounting inside renderPage —
-// batches applied then skip the per-batch engine flush (renderPage presents
-// the frame with one __FlushElementTree at the end).
-let inSyncRender = false;
-
 function recordAndApply(ops: unknown[]): void {
-  // The IFR snapshot is sealed once the synchronous first-screen render
-  // finishes (`phase === 'rendered'`), and the background thread owns the
-  // tree after hydration (`phase === 'hydrated'`).
-  //
-  // Setup-time async work (Suspense / defineAsyncComponent / top-level
-  // await) still runs on the main-thread Vue app after paint — if those
-  // resolve batches were recorded and applied, hydration would compare
-  // against a stream the background thread cannot reproduce in the same
-  // order. A structural mismatch then tears the IFR tree down and applies
-  // only the incremental BG batch onto an empty page (blank UI). Drop
-  // post-snapshot MT ops so the recorded stream stays the sync first
-  // screen; BG Suspense resolutions apply normally after hydration.
-  if (phase === 'rendered' || phase === 'hydrated') {
+  // Drop once the first-screen snapshot is sealed or BG owns the tree.
+  // Setup-time async work (Suspense / defineAsyncComponent) must not extend
+  // the recorded stream: a structural mismatch would tear down IFR and apply
+  // only an incremental BG batch onto an empty page.
+  if (phase === 'hydrated' || renderSealed) {
     if (__DEV__ && !warnedPostHydrationOps) {
       warnedPostHydrationOps = true;
       console.warn(
@@ -166,241 +159,303 @@ function recordAndApply(ops: unknown[]): void {
     }
     return;
   }
-  recordedBatches.push(ops);
+
+  recordedOps.push(...ops);
   applyOps(ops, !inSyncRender);
 }
 
-/**
- * Run the deferred main-thread mount(s).  Called from `renderPage` right
- * after the page root element is created.  No-op unless {@link enableIFR}
- * ran and user code registered an app on this thread.
- */
+/** Freeze the MT first-frame stream before the Background realm starts. */
+export function sealIfrRender(): void {
+  renderSealed = true;
+}
+
+/** Run the app mounts deferred by the Vapor runtime inside renderPage. */
 export function runIfrRender(): void {
   if (phase === 'inactive') return;
 
-  // renderPage may fire again in the same context (test envs, reload paths);
-  // start every render from a clean slate.
-  recordedBatches = [];
-  batchCursor = 0;
+  recordedOps = [];
+  recordedCursor = 0;
+  backgroundHistory = [];
   phase = 'enabled';
+  renderSealed = false;
 
   const trigger = (globalThis as Record<string, unknown>)[
     IFR_MOUNT_APPS_GLOBAL
   ] as (() => void) | undefined;
   if (!trigger) return;
 
+  beginIfrSelectorAttributeDeferral();
   try {
-    // Mounting is fully synchronous: Vue renders, the runtime's flush hook
-    // hands each ops batch to recordAndApply, and the elements are created
-    // through PAPI before this call returns.
     inSyncRender = true;
-    trigger();
-    phase = 'rendered';
-  } catch (err) {
-    // A failed first-screen render must not take down renderPage — tear down
-    // whatever was partially applied and let the background thread render
-    // normally (no IFR benefit, full correctness).
+    try {
+      trigger();
+      phase = 'rendered';
+    } finally {
+      inSyncRender = false;
+    }
+  } catch (error) {
     console.error(
-      '[vue-lynx] IFR first-screen render failed; falling back to background render.',
-      err,
+      '[vue-lynx] IFR first-screen render failed; falling back to the '
+        + 'background render.',
+      error,
     );
-    teardownIfrTree();
-    phase = 'hydrated';
-  } finally {
-    inSyncRender = false;
+    try {
+      clearIfrSelectorAttributeDeferral();
+      teardownIfrTree();
+    } catch (cleanupError) {
+      // renderPage must remain a no-throw boundary even when a partially
+      // applied native tree also fails cleanup. The BG path remains the last
+      // available recovery mechanism.
+      console.error(
+        '[vue-lynx] IFR first-screen cleanup failed; continuing with the '
+          + 'background render.',
+        cleanupError,
+      );
+    } finally {
+      finishHydration(false);
+    }
   }
 }
 
 /**
- * Hydration entry point.  Called from `vuePatchUpdate` with the raw JSON
- * string before it is parsed/applied.  Returns `true` when the batch was
- * consumed by hydration — skipped as already applied during IFR, value-level
- * differences patched in, or (on structural mismatch) the IFR tree torn down
- * and the background batch applied onto the clean page.  Returns `false`
- * when hydration is over and the caller should apply the batch normally.
+ * Called after the Background entry and all of its initial ops have applied.
+ * A remaining MT tail is real divergence, not an incomplete BG batch.
+ */
+export function completeIfrHydration(): void {
+  if (phase !== 'rendered') return;
+  if (recordedCursor < recordedOps.length) {
+    fallbackToBackground();
+  } else {
+    finishHydration();
+  }
+}
+
+/**
+ * Consume one background batch while hydration is active.
  *
- * When both threads ran identical deterministic code, reconciliation walks
- * the identical streams and produces zero patch ops — the batch is already
- * on screen.
+ * Recorded and incoming batch boundaries are deliberately ignored: only op
+ * frame boundaries matter. This accepts a main-thread flush split into
+ * several BG batches as well as several main-thread flushes coalesced into a
+ * single BG batch.
  */
 export function interceptPatchUpdate(data: string): boolean {
   if (phase !== 'rendered') return false;
 
-  if (batchCursor >= recordedBatches.length) {
-    phase = 'hydrated';
+  const incoming = JSON.parse(data) as unknown[];
+  backgroundHistory.push(incoming);
+
+  // A render that emitted no operations cannot be reconciled. Hand ownership
+  // to BG and let entry-main apply this batch through the normal path.
+  if (recordedOps.length === 0) {
+    finishHydration();
     return false;
   }
 
-  const recorded = recordedBatches[batchCursor]!;
-  const incoming = JSON.parse(data) as unknown[];
-  const patchOps = reconcileBatch(recorded, incoming);
-  if (patchOps) {
-    if (patchOps.length > 0) applyOps(patchOps);
-    advanceCursor();
-    return true;
+  const patchOps: unknown[] = [];
+  let incomingCursor = 0;
+
+  while (incomingCursor < incoming.length) {
+    // The background produced valid trailing frames after matching the whole
+    // first-screen stream. They are normal BG updates and apply verbatim.
+    if (recordedCursor >= recordedOps.length) {
+      patchOps.push(...incoming.slice(incomingCursor));
+      incomingCursor = incoming.length;
+      break;
+    }
+
+    const recordedCode = recordedOps[recordedCursor] as number;
+    const incomingCode = incoming[incomingCursor] as number;
+    const recordedArity = ARITY[recordedCode];
+    const incomingArity = ARITY[incomingCode];
+
+    if (
+      recordedCode !== incomingCode
+      || recordedArity === undefined
+      || incomingArity === undefined
+      || recordedArity !== incomingArity
+      || recordedCursor + recordedArity >= recordedOps.length
+      || incomingCursor + incomingArity >= incoming.length
+    ) {
+      fallbackToBackground();
+      return true;
+    }
+
+    const valueMode = VALUE_OP[recordedCode];
+    const strictArguments = valueMode === undefined
+      ? recordedArity
+      : recordedArity - 1;
+    let matches = true;
+    for (let offset = 1; offset <= strictArguments; offset++) {
+      if (!sameValue(
+        recordedOps[recordedCursor + offset],
+        incoming[incomingCursor + offset],
+      )) {
+        matches = false;
+        break;
+      }
+    }
+    if (!matches) {
+      fallbackToBackground();
+      return true;
+    }
+
+    if (valueMode !== undefined) {
+      const recordedValue = recordedOps[recordedCursor + recordedArity];
+      const incomingValue = incoming[incomingCursor + incomingArity];
+      if (
+        recordedCode === OP.SET_PROP
+        && isPlatformInfoAttr(String(incoming[incomingCursor + 2]))
+        && !sameValue(recordedValue, incomingValue)
+      ) {
+        // List platform metadata is committed through update-list-info when
+        // the item is inserted. A later SET_PROP only updates our JS map and
+        // cannot repair the already-reported native item, so rebuild it from
+        // the authoritative BG history.
+        fallbackToBackground();
+        return true;
+      }
+      if (
+        valueMode === 'always'
+        || !sameValue(recordedValue, incomingValue)
+      ) {
+        patchOps.push(
+          ...incoming.slice(
+            incomingCursor,
+            incomingCursor + incomingArity + 1,
+          ),
+        );
+      }
+    }
+
+    recordedCursor += recordedArity + 1;
+    incomingCursor += incomingArity + 1;
   }
 
-  // Structural mismatch — the renders diverged (non-deterministic render or
-  // thread-dependent branching).  Remove the IFR tree and apply the
-  // background batch onto the clean page.
-  if (__DEV__) {
-    console.warn(
-      '[vue-lynx] IFR hydration mismatch: the background render differs '
-        + 'structurally from the main-thread first-screen render. Falling '
-        + 'back to a full re-render. First-screen code should be '
-        + 'deterministic and thread-agnostic.',
-    );
+  if (patchOps.length > 0) {
+    try {
+      applyOps(patchOps);
+    } catch (error) {
+      // A failed in-place patch leaves the adopted tree in an unknown state;
+      // the complete buffered BG history is still available, so rebuild from
+      // it instead of letting the throw escape vuePatchUpdate into Lepus.
+      console.error(
+        '[vue-lynx] IFR hydration patch failed; replaying the complete '
+          + 'background render.',
+        error,
+      );
+      fallbackToBackground();
+      return true;
+    }
   }
-  teardownIfrTree();
-  phase = 'hydrated';
-  applyOps(incoming);
+
+  if (recordedCursor >= recordedOps.length) finishHydration();
   return true;
 }
 
-function advanceCursor(): void {
-  batchCursor++;
-  if (batchCursor >= recordedBatches.length) {
-    phase = 'hydrated';
-    // The recorded first-screen stream has served its purpose — release it
-    // (it pins every type/class/style payload of the first screen otherwise).
-    recordedBatches = [];
-    batchCursor = 0;
+function fallbackToBackground(): void {
+  if (__DEV__) {
+    console.warn(
+      '[vue-lynx] IFR hydration mismatch: the background render differs '
+        + 'structurally from the main-thread first frame. Replaying the '
+        + 'complete background render.',
+    );
+  }
+
+  // Keep the history before teardown resets protocol registries. Replaying
+  // batch-by-batch preserves normal REMOVE/INSERT and list flush semantics.
+  const history = backgroundHistory;
+  clearIfrSelectorAttributeDeferral();
+  try {
+    teardownIfrTree();
+    for (const batch of history) applyOps(batch);
+  } catch (error) {
+    // vuePatchUpdate must remain a no-throw boundary. There is no further
+    // recovery below the authoritative replay itself; log and keep whatever
+    // portion of the BG tree was rebuilt.
+    console.error(
+      '[vue-lynx] IFR fallback replay failed; the page may be incomplete.',
+      error,
+    );
+  } finally {
+    finishHydration(false);
   }
 }
 
-// ---------------------------------------------------------------------------
-// Reconciliation
-// ---------------------------------------------------------------------------
-
-/**
- * Walk the recorded and incoming ops streams frame-by-frame.
- *
- * Returns the (possibly empty) list of incoming frames that must be applied
- * to bring the IFR tree in line with the background render, or `null` on a
- * structural mismatch.
- *
- * If the incoming stream is longer than the recorded one (e.g. the
- * background thread merged a follow-up update into its first flush), the
- * extra frames are applied verbatim.  If the recorded stream is longer, the
- * main thread rendered elements the background thread doesn't know about —
- * that is structural.
- */
-function reconcileBatch(
-  recorded: unknown[],
-  incoming: unknown[],
-): unknown[] | null {
-  const patchOps: unknown[] = [];
-  let ri = 0;
-  let ii = 0;
-
-  while (ri < recorded.length && ii < incoming.length) {
-    const code = recorded[ri] as number;
-    if (incoming[ii] !== code) return null;
-    const arity = ARITY[code];
-    if (arity === undefined) return null; // unknown op — cannot walk safely
-    if (ri + arity >= recorded.length || ii + arity >= incoming.length) {
-      // Truncated frame on either side.
-      return null;
-    }
-
-    const valueMode = VALUE_OP[code];
-    // All arguments except a trailing "value" argument are identity-bearing
-    // (element ids, prop keys, event names) and must match exactly.
-    const strictArgs = valueMode === undefined ? arity : arity - 1;
-    for (let k = 1; k <= strictArgs; k++) {
-      if (!sameValue(recorded[ri + k], incoming[ii + k])) return null;
-    }
-    if (valueMode !== undefined) {
-      const rVal = recorded[ri + arity];
-      const iVal = incoming[ii + arity];
-      if (valueMode === 'always' || !sameValue(rVal, iVal)) {
-        for (let k = 0; k <= arity; k++) patchOps.push(incoming[ii + k]);
-      }
-    }
-
-    ri += arity + 1;
-    ii += arity + 1;
-  }
-
-  if (ri < recorded.length) return null;
-
-  // Background produced additional trailing ops — apply them as-is.
-  for (; ii < incoming.length; ii++) patchOps.push(incoming[ii]);
-
-  return patchOps;
+function finishHydration(adoptIfrTree = true): void {
+  if (adoptIfrTree) commitIfrSelectorAttributes();
+  else clearIfrSelectorAttributeDeferral();
+  phase = 'hydrated';
+  renderSealed = true;
+  recordedOps = [];
+  recordedCursor = 0;
+  backgroundHistory = [];
 }
 
-// ---------------------------------------------------------------------------
-// Teardown fallback
-// ---------------------------------------------------------------------------
-
 /**
- * Remove every element the IFR render created and forget the recorded
- * stream, leaving only the page root.  Afterwards the background thread's
- * ops apply onto a clean page exactly as in a non-IFR build.
+ * Remove roots painted by IFR, reset every protocol registry, then reseed the
+ * existing native page handle and its component unique id. The page itself
+ * must survive fallback because Lynx owns it outside Vue's op protocol.
  */
 function teardownIfrTree(): void {
-  const createdIds = new Set<number>();
-  const rootChildIds = new Set<number>();
+  const rootChildren = new Set<number>();
+  let cursor = 0;
+  while (cursor < recordedOps.length) {
+    const code = recordedOps[cursor] as number;
+    const arity = ARITY[code];
+    if (arity === undefined || cursor + arity >= recordedOps.length) break;
 
-  for (const batch of recordedBatches) {
-    let i = 0;
-    while (i < batch.length) {
-      const code = batch[i] as number;
-      const arity = ARITY[code];
-      if (arity === undefined) break; // unknown op — stop scanning this batch
-      if (code === OP.CREATE || code === OP.CREATE_TEXT) {
-        createdIds.add(batch[i + 1] as number);
-      } else if (code === OP.INSTANTIATE_TEMPLATE) {
-        // Template instances occupy rootId..rootId+holeCount in the map.
-        const rootId = batch[i + 1] as number;
-        const holeCount = batch[i + 3] as number;
-        for (let k = 0; k <= holeCount; k++) createdIds.add(rootId + k);
-      } else if (code === OP.INSERT) {
-        const parentId = batch[i + 1] as number;
-        const childId = batch[i + 2] as number;
-        if (parentId === PAGE_ROOT_ID) rootChildIds.add(childId);
-        else rootChildIds.delete(childId); // moved off the root
-      } else if (code === OP.REMOVE) {
-        const parentId = batch[i + 1] as number;
-        if (parentId === PAGE_ROOT_ID) {
-          rootChildIds.delete(batch[i + 2] as number);
-        }
+    if (code === OP.INSERT) {
+      const parentId = recordedOps[cursor + 1] as number;
+      const childId = recordedOps[cursor + 2] as number;
+      if (parentId === PAGE_ROOT_ID) rootChildren.add(childId);
+      else rootChildren.delete(childId);
+    } else if (code === OP.REMOVE) {
+      const parentId = recordedOps[cursor + 1] as number;
+      if (parentId === PAGE_ROOT_ID) {
+        rootChildren.delete(recordedOps[cursor + 2] as number);
       }
-      i += arity + 1;
     }
+
+    cursor += arity + 1;
   }
 
   const page = elements.get(PAGE_ROOT_ID);
+  const nativePageUniqueId = pageUniqueId;
   if (page) {
-    for (const id of rootChildIds) {
-      const el = elements.get(id);
-      if (el) __RemoveElement(page, el);
+    for (const childId of rootChildren) {
+      const child = elements.get(childId);
+      if (child) __RemoveElement(page, child);
     }
-    __FlushElementTree(page);
+    if (rootChildren.size > 0) __FlushElementTree(page);
   }
-  for (const id of createdIds) elements.delete(id);
 
-  recordedBatches = [];
-  batchCursor = 0;
+  // Clears elements, parent/child indices, Vapor templates, list state, and
+  // the external worklet-ref map. Then restore the engine-owned page entry.
+  resetMainThreadState();
+  if (page) elements.set(PAGE_ROOT_ID, page);
+  setPageUniqueId(nativePageUniqueId);
 }
 
-// ---------------------------------------------------------------------------
-// Test helpers
-// ---------------------------------------------------------------------------
-
-/** Reset all IFR state and globals — for testing only. */
+/** Reset IFR module state and bridge globals between tests/realms. */
 export function resetIfrForTesting(): void {
+  clearIfrSelectorAttributeDeferral();
   phase = 'inactive';
-  recordedBatches = [];
-  batchCursor = 0;
+  recordedOps = [];
+  recordedCursor = 0;
+  backgroundHistory = [];
   warnedPostHydrationOps = false;
+  renderSealed = false;
+  inSyncRender = false;
+
   const g = globalThis as Record<string, unknown>;
   delete g[IFR_MT_FLAG_GLOBAL];
+  delete g['__VUE_LYNX_IFR_ENABLED__'];
   delete g[IFR_APPLY_OPS_GLOBAL];
+  delete g[IFR_MOUNT_APPS_GLOBAL];
+  delete g['__vueLynxIfrSealOps'];
 }
 
-/** Current hydration phase — for testing/diagnostics only. */
-export function getIfrPhase(): Phase {
+/** Current state for diagnostics and protocol tests. */
+export function getIfrPhase(): IfrPhase {
   return phase;
 }

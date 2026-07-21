@@ -2,26 +2,34 @@
   "name": "vue-lynx-upstream-tests",
   "version": "0.1.0",
   "private": true,
-  "description": "Run vuejs/core upstream tests (runtime-core, runtime-dom, reactivity, shared) against Lynx pipeline",
+  "description": "Run vuejs/core upstream tests (runtime-core, runtime-dom, runtime-vapor, reactivity, shared) against Lynx pipeline",
   "type": "module",
   "scripts": {
     "test": "vitest run",
     "test:dom": "vitest run --config vitest.dom.config.ts",
     "test:dom:watch": "vitest --config vitest.dom.config.ts",
+    "test:vapor": "vitest run --config vitest.vapor.config.ts",
+    "test:vapor:watch": "vitest --config vitest.vapor.config.ts",
     "test:local": "vitest run --config vitest.local.config.ts",
     "test:local:watch": "vitest --config vitest.local.config.ts",
     "test:watch": "vitest",
-    "vuejs:init": "git submodule update --init --depth 1 core",
+    "vuejs:init": "git clone --depth 1 --branch v3.6.0-beta.17 https://github.com/vuejs/core.git core",
     "vuejs:status": "cd core && git log --oneline -1"
   },
   "devDependencies": {
     "@lynx-js/testing-environment": "^0.1.11",
-    "@vue/compiler-dom": "^3.5.0",
-    "vue-lynx": "workspace:*",
-    "@vue/reactivity": "^3.5.0",
-    "@vue/runtime-core": "^3.5.0",
-    "@vue/shared": "^3.5.0",
+    "@vue/compiler-dom": "3.6.0-beta.17",
+    "@vue/compiler-sfc": "3.6.0-beta.17",
+    "@vue/compiler-vapor": "3.6.0-beta.17",
+    "@vue/reactivity": "3.6.0-beta.17",
+    "@vue/runtime-core": "3.6.0-beta.17",
+    "@vue/runtime-dom": "3.6.0-beta.17",
+    "@vue/runtime-vapor": "3.6.0-beta.17",
+    "@vue/shared": "3.6.0-beta.17",
+    "es-module-lexer": "^1.7.0",
     "jsdom": "^25.0.0",
-    "vitest": "^3.0.0"
+    "magic-string": "^0.30.21",
+    "vitest": "^3.0.0",
+    "vue-lynx": "workspace:*"
   }
 }

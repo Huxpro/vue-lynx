@@ -2,15 +2,33 @@ import { Badge } from '@theme';
 
 # IFR 性能数据 <Badge text="v0.5" type="tip" />
 
-本页收录支撑[首屏直出（IFR）](/zh/guide/ifr)与元素模板的全部测量数据。每轮
-campaign 回答一个问题：
+> 产品论点（怎么快 / 架构优势）：**[IFR 指南](/zh/guide/ifr)**。
+> 产品级 FCP 矩阵见 **[统一基准矩阵](/zh/guide/benchmark-unified)**。
+> 本页承担**代价账本**及其背后的测量——策略渲染成本、真应用体积/TTI、
+> 真实线程 FCP、**代价空间**图、native。
+> **「FCP −19%」不是与规模无关的常数**——见 §3b 与统一报告。
 
-| campaign | 它回答的问题 |
+<span id="代价是什么" />
+<span id="what-it-costs" />
+
+## 代价是什么
+
+| 代价 | 大致形态 | 测量出处 |
+| --- | --- | --- |
+| 双 bundle | Vue 运行时 + 应用打进两个线程 | [§2](#2-全示例扫描) |
+| 包体 | `main.lynx.bundle` gzip 约 **2×**（中位） | [§2](#2-全示例扫描) · [§3c](#3c-代价空间-mt-gzip--fcp) |
+| 主线程同步工作 | 串行到可交互约 **+35%**（全示例 proxy）；真机上主线程绘制与后台启动重叠 | [§1](#1-策略阶梯) · [§2](#2-全示例扫描) |
+| 空 / 异步首屏 | 响应前不存在的内容加速不了 | [§2](#2-全示例扫描)（`networking`）· [§3b](#3b-大应用复测) shell IFR |
+| Web 大包 + 重节流 | bundle 解析项可能抹平甚至反转 FCP 收益 | [§3](#3-真实线程) · [§3b](#3b-大应用复测) |
+
+| campaign | 问题 |
 |---|---|
-| [1. 策略阶梯](#1-策略阶梯) | 主线程同步渲染每种设计**花多少钱**——上限在哪里？ |
-| [2. 全示例扫描](#2-全示例扫描) | IFR 在真实应用上的**体积与 TTI 成本**是多少、语义是否安全？（顺带证明：单进程测不出它的收益。） |
-| [3. 真实线程](#3-真实线程) | 跨真实线程边界时 IFR 到底**赢多少**——以 ReactLynx 为对照组。 |
-| [3b. 大应用复测](#3b-大应用复测) | 一旦 TodoMVC / Hacker News / AI Chat / Elk 进入矩阵，−19% 中位是否还站得住？ |
+| [1. 策略阶梯](#1-策略阶梯) | 主线程同步渲染每种设计**花多少钱**？ |
+| [2. 全示例扫描](#2-全示例扫描) | 真应用上的体积 / TTI **成本**与语义安全 |
+| [3. 真实线程](#3-真实线程) | 跨真实线程边界时 IFR 到底**赢多少**？ |
+| [3b. 大应用复测](#3b-大应用复测) | 大应用加入后 −19% 中位是否还站得住？ |
+| [3c. 代价空间](#3c-代价空间-mt-gzip--fcp) | 首帧收益是不是用更大的 MT 包换来的？ |
+| [4. Native](#4-原生引擎观察) | LynxExplorer 上的 hydration / 视觉一致性 |
 
 **关于配置命名。**第 1、2 轮 campaign 早于 `enableIFR` 默认联动元素模板的改动。
 本页各列已映射为今天的产品配置：原始报告中的 `ifr` 即今天的 **IFR without
@@ -232,6 +250,47 @@ ET 默认随 IFR 开启，依据仍是策略阶梯的渲染成本（复测约 **
 
 原始 JSON 与写评：
 [packages/ifr-bench/reeval/](https://github.com/Huxpro/vue-lynx/tree/main/packages/ifr-bench/reeval)。
+
+
+## 3c. 代价空间（MT gzip × FCP）
+
+和统一矩阵的 **FCP vs N**（只看首帧）不同，**代价空间**多问一句：
+*这份首帧是不是用更大的 MT 包换来的？*
+
+| 轴 | 含义 |
+| --- | --- |
+| **横轴 MT gzip** | 主线程包体（解析 / 加载税）。IFR 通常会变大。 |
+| **纵轴 FCP** | 首帧时间。越小越好。 |
+| **每条折线** | 一种架构从 1k→30k 的轨迹。 |
+
+| 位置 | 读法 |
+| --- | --- |
+| **左下** | 理想——包小，首帧也快 |
+| **往右** | 付了更大的 MT 包，未必换来更快首帧 |
+| **往上** | 内容变大后首帧变差 |
+| **右上** | 最差——又重又慢 |
+
+典型坏形状：裸 IFR 包变重，中大树上 FCP 反超 plain VDOM。
+好形状：IFR+ET 仍付包体，但 FCP 压在下面。
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR scale trends (CPU ×1)"
+  titleZh="IFR 规模趋势（CPU ×1）"
+  height={1600}
+/>
+
+<details>
+<summary>CPU ×4 规模趋势</summary>
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x4.html"
+  title="IFR scale trends (CPU ×4)"
+  titleZh="IFR 规模趋势（CPU ×4）"
+  height={1600}
+/>
+
+</details>
 
 ## 4. 原生引擎观察
 

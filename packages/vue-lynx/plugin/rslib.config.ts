@@ -16,11 +16,13 @@ export default defineConfig({
       'loaders/worklet-loader-mt': './src/loaders/worklet-loader-mt.ts',
       'loaders/vue-sfc-script-extractor':
         './src/loaders/vue-sfc-script-extractor.ts',
+      'loaders/vapor-template-loader': './src/loaders/vapor-template-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
   output: {
     externals: [
+      '@babel/parser',
       '@rsbuild/core',
       '@rsbuild/plugin-vue',
       '@lynx-js/css-extract-webpack-plugin',
@@ -29,6 +31,7 @@ export default defineConfig({
       '@lynx-js/runtime-wrapper-webpack-plugin',
       '@lynx-js/template-webpack-plugin',
       'vue-lynx',
+      'vue-lynx/internal/ops',
       'vue-lynx/main-thread',
     ],
     distPath: { root: 'dist' },

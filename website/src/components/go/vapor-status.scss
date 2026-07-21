@@ -1,0 +1,627 @@
+/* ---------------------------------------------------------------------------
+ * VDOM/Vapor segmented control (site nav) — petite pill with a sliding
+ * thumb. In Vapor state the thumb fills with the homepage's moving brand
+ * gradient (same stops + drift as the hero `.brand` text and badge hover).
+ * ------------------------------------------------------------------------- */
+
+/* Homepage brand gradient, shared by the toggle thumb and the Vapor badge. */
+@mixin vapor-gradient {
+  background-image: linear-gradient(
+    270deg,
+    var(--major-brand-color),
+    var(--gradient-brand-color),
+    var(--second-brand-color),
+    var(--gradient-brand-color),
+    var(--major-brand-color)
+  );
+  background-size: 220% 100%;
+  animation: vapor-gradient-drift 6s linear infinite;
+}
+
+@keyframes vapor-gradient-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: -220% 50%;
+  }
+}
+
+.go-mode-nav-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--rp-c-text-2);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* A single labeled switch: VDOM is simply "off". The mode name lives in
+   the track's empty space — "VDOM" right of the knob when off, "Vapor" left
+   of it (on the moving gradient) when on. */
+.go-mode-nav-control__switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.go-mode-nav-control__switch:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+/* Pages with nothing to switch keep the control, dimmed — no pop-in/out. */
+.go-mode-nav-control[data-dormant] {
+  opacity: 0.45;
+  transition: opacity 200ms ease-out;
+}
+
+.go-mode-nav-control[data-dormant]:hover,
+.go-mode-nav-control[data-dormant]:focus-within {
+  opacity: 1;
+}
+
+.go-mode-nav-control__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 62px;
+  height: 22px;
+  flex: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
+  transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track {
+  @include vapor-gradient;
+
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
+}
+
+/* Mode name in the free half of the track. Absolute so the knob's motion
+   and the label swap can't nudge the layout. */
+.go-mode-nav-control__mode {
+  position: absolute;
+  top: 0;
+  right: 11px;
+  left: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--rp-c-text-2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 200ms ease-out;
+}
+
+@media (hover: hover) {
+  .go-mode-nav-control__switch:hover .go-mode-nav-control__mode {
+    color: var(--rp-c-text-1);
+  }
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__mode {
+  right: 27px;
+  left: 11px;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+}
+
+.go-mode-nav-control__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
+  transform: translateX(40px);
+}
+
+/* ---------------------------------------------------------------------------
+ * Shared ⓘ popover (nav scope explainer, coverage chip, badge reasons).
+ * ------------------------------------------------------------------------- */
+
+.info-popover {
+  position: relative;
+  display: inline-flex;
+}
+
+.info-popover__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rp-c-text-3);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  transition: color 160ms ease-out, background-color 160ms ease-out;
+}
+
+.info-popover__button:hover,
+.info-popover__button[aria-expanded='true'] {
+  color: var(--rp-c-text-1);
+}
+
+.info-popover__button:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 1px;
+}
+
+.info-popover__glyph {
+  flex: none;
+}
+
+.info-popover__panel {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 252px;
+  padding: 10px 12px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 10px;
+  background: var(--rp-c-bg);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  color: var(--rp-c-text-2);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+  white-space: normal;
+  text-align: left;
+}
+
+.info-popover[data-direction='up'] .info-popover__panel {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+
+.info-popover__panel p {
+  margin: 0 0 6px;
+  color: var(--rp-c-text-2);
+}
+
+.info-popover__panel p:last-child {
+  margin-bottom: 0;
+}
+
+.info-popover__panel a {
+  color: var(--rp-c-brand);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.info-popover__panel a:hover {
+  text-decoration: underline;
+}
+
+/* Coverage variant: the ⓘ carries the "2/3" count in a brand-tinted chip —
+   one affordance, and its popover explains the number. */
+.go-mode-nav-control__coverage .info-popover__button {
+  padding: 3px 7px;
+  background: color-mix(in srgb, var(--major-brand-color) 12%, transparent);
+  color: color-mix(in srgb, var(--major-brand-color) 80%, var(--rp-c-text-1));
+}
+
+.go-mode-nav-control__coverage .info-popover__button:hover,
+.go-mode-nav-control__coverage .info-popover__button[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--major-brand-color) 20%, transparent);
+  color: color-mix(in srgb, var(--major-brand-color) 90%, var(--rp-c-text-1));
+}
+
+.info-popover__count {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+ * Per-example renderer badge — lives in the <Go> card footer (rightFooter
+ * slot), same pill language as the nav control.
+ * ------------------------------------------------------------------------- */
+
+.vapor-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  /* Same material family as the switch's off track. */
+  background: color-mix(in srgb, var(--rp-c-text-3) 14%, transparent);
+  color: var(--rp-c-text-2);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+button.vapor-status {
+  cursor: pointer;
+  font: inherit;
+  font-size: 10px;
+  transition: border-color 200ms ease-out, color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+
+@media (hover: hover) {
+  button.vapor-status:hover {
+    border-color: color-mix(in srgb, var(--major-brand-color) 50%, var(--rp-c-divider));
+    color: var(--rp-c-text-1);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--major-brand-color) 18%, transparent);
+  }
+}
+
+button.vapor-status:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.vapor-status__label {
+  font-weight: 600;
+}
+
+/* Fallback badge + its "why" ⓘ, seated together in the card footer. */
+.vapor-status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Live Vapor: the badge itself becomes a sliver of the homepage gradient. */
+.vapor-status[data-render-mode='vapor'] {
+  @include vapor-gradient;
+
+  border-color: transparent;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 40%, transparent);
+}
+
+@media (hover: hover) {
+  button.vapor-status[data-render-mode='vapor']:hover {
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 1px 10px color-mix(in srgb, var(--major-brand-color) 60%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Verified example matrix (Vapor Mode guide) — generated from
+ * vapor-support.json, badges share the vapor-status pill language.
+ * ------------------------------------------------------------------------- */
+
+.vapor-matrix {
+  min-height: 120px;
+  margin: 16px 0;
+}
+
+.vapor-matrix__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.vapor-matrix__summary {
+  color: var(--rp-c-text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.vapor-matrix__filters {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-soft);
+}
+
+.vapor-matrix__filters button {
+  min-height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.vapor-matrix__filters button[aria-pressed='true'] {
+  background: var(--rp-c-bg);
+  box-shadow: inset 0 0 0 1px var(--rp-c-divider);
+  color: var(--rp-c-text-1);
+  font-weight: 600;
+}
+
+.vapor-matrix__filters button:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.vapor-matrix__scroll {
+  overflow-x: auto;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+}
+
+.vapor-matrix table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 13px;
+}
+
+.vapor-matrix th,
+.vapor-matrix td {
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--rp-c-divider);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.vapor-matrix thead th {
+  background: var(--rp-c-bg-soft);
+  color: var(--rp-c-text-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vapor-matrix tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.vapor-matrix td code {
+  background: transparent;
+  padding: 0;
+  font-size: 12.5px;
+}
+
+/* Matrix badges are informational, not interactive — smaller, and with the
+   moving gradient frozen to a calm tint (36 drifting pills would be noise). */
+.vapor-matrix .vapor-status {
+  min-height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.vapor-matrix .vapor-status[data-render-mode='vapor'] {
+  animation: none;
+  background-image: none;
+  background-color: color-mix(in srgb, var(--major-brand-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--major-brand-color) 35%, var(--rp-c-divider));
+  color: color-mix(in srgb, var(--major-brand-color) 82%, var(--rp-c-text-1));
+  text-shadow: none;
+  box-shadow: none;
+}
+
+
+.vapor-matrix__notes {
+  color: var(--rp-c-text-3);
+  font-size: 12.5px;
+}
+
+.vapor-matrix__legend {
+  margin-top: 10px;
+  color: var(--rp-c-text-3);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.vapor-matrix__error {
+  color: var(--rp-c-text-2);
+  font-size: 13px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Mode-aware code tabs (<ModeTabs>) — same state as the nav switch,
+ * rendered as a compact segmented header over the snippet panel.
+ * ------------------------------------------------------------------------- */
+
+.mode-tabs {
+  margin: 16px 0;
+  border-radius: 12px;
+}
+
+.mode-tabs__header {
+  display: inline-flex;
+  gap: 2px;
+  margin-bottom: 8px;
+  padding: 2px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-soft);
+}
+
+.mode-tabs__header button {
+  min-height: 22px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rp-c-text-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.mode-tabs__header button[aria-selected='true'] {
+  background: var(--rp-c-bg);
+  box-shadow: inset 0 0 0 1px var(--rp-c-divider);
+  color: var(--rp-c-text-1);
+  font-weight: 600;
+}
+
+.mode-tabs[data-mode='vapor'] .mode-tabs__header button[aria-selected='true'] {
+  @include vapor-gradient;
+
+  box-shadow: none;
+  color: #fff;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+}
+
+.mode-tabs__header button:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.mode-tabs__panel > :first-child {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Switch feedback: everything that responded to a mode flip pulses once
+ * with a soft gradient ring, making the toggle's reach visible.
+ * ------------------------------------------------------------------------- */
+
+.vue-lynx-go[data-pulse],
+.mode-tabs[data-pulse] {
+  animation: vapor-pulse 650ms ease-out;
+}
+
+@keyframes vapor-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--major-brand-color) 45%, transparent);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Mode-switch remount: ease the fresh preview in instead of popping.
+ * ------------------------------------------------------------------------- */
+
+.vue-lynx-go {
+  border-radius: 12px;
+}
+
+.vue-lynx-go > div {
+  animation: vue-lynx-go-enter 240ms ease-out;
+}
+
+@keyframes vue-lynx-go-enter {
+  from {
+    opacity: 0.35;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Responsive / input adjustments
+ * ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+ * Sidebar: the "Vapor Mode" guide entry wears the brand gradient.
+ * (`context: 'vapor'` in rspress.config.ts → data-context on the item.)
+ * ------------------------------------------------------------------------- */
+
+.rp-sidebar-item[data-context='vapor'] .rp-sidebar-item__left > span {
+  background-image: linear-gradient(
+    90deg,
+    var(--major-brand-color),
+    var(--gradient-brand-color),
+    var(--second-brand-color)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 500;
+}
+
+@media (hover: hover) {
+  .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {
+    background-image: linear-gradient(
+      270deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color),
+      var(--second-brand-color),
+      var(--gradient-brand-color),
+      var(--major-brand-color)
+    );
+    background-size: 220% 100%;
+    animation: vapor-gradient-drift 6s linear infinite;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Responsive / input adjustments
+ * ------------------------------------------------------------------------- */
+
+/* Touch: pad the switch's hit area invisibly — the control stays petite. */
+@media (pointer: coarse) {
+  .go-mode-nav-control__switch {
+    padding: 8px 2px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .go-mode-nav-control__mode,
+  .go-mode-nav-control__track,
+  .go-mode-nav-control__knob,
+  button.vapor-status {
+    transition: none;
+  }
+
+  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track,
+  .vapor-status[data-render-mode='vapor'],
+  .mode-tabs[data-mode='vapor'] .mode-tabs__header button[aria-selected='true'],
+  .rp-sidebar-item[data-context='vapor']:hover .rp-sidebar-item__left > span {
+    animation: none;
+    background-image: linear-gradient(
+      135deg,
+      var(--major-brand-color),
+      var(--gradient-brand-color)
+    );
+  }
+
+  .vue-lynx-go > div,
+  .vue-lynx-go[data-pulse],
+  .mode-tabs[data-pulse] {
+    animation: none;
+  }
+}

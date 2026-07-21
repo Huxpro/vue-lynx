@@ -1,0 +1,18 @@
+{
+  "name": "vue-lynx-example-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:vapor": "node src/build-vapor.mjs",
+    "inventory": "node src/inventory-cli.mjs",
+    "verify:status": "node src/verify-status.mjs",
+    "verify:web": "node src/verify-web.mjs",
+    "test": "vitest run --no-file-parallelism"
+  },
+  "devDependencies": {
+    "pixelmatch": "^7.2.0",
+    "playwright-core": "^1.61.1",
+    "pngjs": "^7.0.0",
+    "vitest": "^3.2.4"
+  }
+}

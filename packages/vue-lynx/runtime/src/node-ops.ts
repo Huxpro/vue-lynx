@@ -4,171 +4,33 @@
 
 import type { RendererOptions } from '@vue/runtime-core';
 
+import { patchEventProp, resetEventPropState } from './event-props.js';
 import {
   TPL_HOLE_PREFIX,
   TPL_TYPE_PREFIX,
   getElementTemplateHoles,
 } from './element-template.js';
-import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
-import { isIfrMainThread } from './ifr-env.js';
+import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
-import { registerWorkletCtx } from './run-on-background.js';
-import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
-import type { Worklet } from './worklet-types.js';
+import { normalizeStyleObject } from './style-normalization.js';
+import {
+  idRegistry,
+  insertNode,
+  removeNode,
+  resolveClass,
+  setElementTextContent,
+  setIdAttr,
+  setTextNode,
+} from './tree-ops.js';
 
-// ---------------------------------------------------------------------------
-// Style normalisation – numeric values → 'Npx' (Lynx requires units)
-// ---------------------------------------------------------------------------
+// Class resolution is shared with the Vapor DOM-compat layer.
+export { resolveClass } from './tree-ops.js';
 
-// Properties that accept a bare number (no unit needed).
-const DIMENSIONLESS = new Set([
-  'flex',
-  'flexGrow',
-  'flexShrink',
-  'flexOrder',
-  'order',
-  'opacity',
-  'zIndex',
-  'aspectRatio',
-  'fontWeight',
-  'lineClamp',
-]);
-
-/**
- * Warned property names — each auto-converted property is warned only once
- * per session to avoid log spam.
- */
-const _warnedProps: Set<string> | undefined = __DEV__ ? new Set() : undefined;
-
-function normalizeStyle(
-  style: Record<string, unknown>,
-): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const key of Object.keys(style)) {
-    const val = style[key];
-    // TODO(huxpro): Remove this workaround once the Lynx engine fixes
-    // inline style object handling for `flex: 1`.
-    //
-    // Today the engine may read an int32 numeric `flex` value as 0 when
-    // it arrives through the object-style `__SetInlineStyles` path, so we
-    // stringify numeric `flex` here to force the engine onto its string parser.
-    if (key === 'flex' && typeof val === 'number') {
-      out[key] = `${val}`;
-    } else if (
-      __VUE_LYNX_AUTO_PIXEL_UNIT__
-      && typeof val === 'number'
-      && !DIMENSIONLESS.has(key)
-    ) {
-      if (__DEV__ && val !== 0 && !_warnedProps!.has(key)) {
-        _warnedProps!.add(key);
-        console.warn(
-          `[vue-lynx] Numeric style value detected (${key}: ${val} → "${val}px"). `
-          + 'This auto-conversion is deprecated and will be removed in the next major version. '
-          + 'Use string values with explicit units instead.',
-        );
-      }
-      out[key] = val === 0 ? 0 : `${val}px`;
-    } else {
-      out[key] = val;
-    }
-  }
-  return out;
-}
-
-// ---------------------------------------------------------------------------
-// Event prop classification
-// ---------------------------------------------------------------------------
-
-interface EventSpec {
-  type: string;
-  name: string;
-  /** True when the Vue compiler emitted an `onXxxOnce` prop key. */
-  once: boolean;
-}
-
-function parseEventProp(key: string): EventSpec | null {
-  if (key.startsWith('global-bind')) {
-    return { type: 'bindGlobalEvent', name: key.slice('global-bind'.length), once: false };
-  }
-  if (key.startsWith('global-catch')) {
-    return { type: 'catchGlobalEvent', name: key.slice('global-catch'.length), once: false };
-  }
-  if (key.startsWith('catch')) {
-    return { type: 'catchEvent', name: key.slice('catch'.length), once: false };
-  }
-  if (/^bind(?!ingx)/.test(key)) {
-    return { type: 'bindEvent', name: key.slice('bind'.length), once: false };
-  }
-  if (/^on[A-Z]/.test(key)) {
-    // onTap        → { name: 'tap',       once: false }
-    // onTapOnce    → { name: 'tap',       once: true  }
-    // onTouchStart → { name: 'touchStart', once: false }
-    let name = key.slice(2, 3).toLowerCase() + key.slice(3);
-    let once = false;
-    if (name.endsWith('Once')) {
-      name = name.slice(0, -4);
-      once = true;
-    }
-    return { type: 'bindEvent', name, once };
-  }
-  return null;
-}
-
-// Track the sign registered for each (element, propKey) so we can unregister
-// on prop removal / update.
-const elementEventSigns = new Map<number, Map<string, string>>();
-
-// For once-events (onXxxOnce prop keys): the once-wrapper closes over a
-// mutable `inner` reference so re-renders can update the underlying handler
-// without resetting the `called` state.
-interface OnceWrapper {
-  called: boolean;
-  inner: (data: unknown) => void;
-}
-const onceWrappers = new Map<string, OnceWrapper>();
-
-// Registry for Teleport target resolution: id string → ShadowElement.
-const idRegistry = new Map<string, ShadowElement>();
-
-/** Recursively clean up idRegistry for a subtree being removed. */
-function cleanupIds(el: ShadowElement): void {
-  if (el._id) idRegistry.delete(el._id);
-  let child = el.firstChild;
-  while (child) {
-    cleanupIds(child);
-    child = child.next;
-  }
-}
-
-function isMaterializedChild(child: ShadowElement): boolean {
-  if (child.type === '#comment') return false;
-  if (child.type === '#text') return child._mtInserted;
-  return true;
-}
-
-function resolveMainThreadAnchor(
-  anchor: ShadowElement | null | undefined,
-): ShadowElement | null {
-  let resolved = anchor ?? null;
-  while (resolved && !isMaterializedChild(resolved)) {
-    resolved = resolved.next;
-  }
-  return resolved;
-}
-
-// ---------------------------------------------------------------------------
-// Class resolution — merges user :class with transition classes
-// ---------------------------------------------------------------------------
-
-export function resolveClass(el: ShadowElement): string {
-  if (el._transitionClasses.size === 0) return el._baseClass;
-  const parts: string[] = [];
-  if (el._baseClass) parts.push(el._baseClass);
-  for (const cls of el._transitionClasses) parts.push(cls);
-  return parts.join(' ');
-}
+// Event prop patching lives in event-props.ts — shared with
+// ShadowElement.setAttribute (the Vapor pipeline's chokepoint).
+export { patchEventProp } from './event-props.js';
 
 // ---------------------------------------------------------------------------
 // RendererOptions implementation
@@ -177,36 +39,29 @@ export function resolveClass(el: ShadowElement): string {
 /**
  * Mount a compile-time-lowered element template (`__vlx-tpl:<id>` vnode).
  *
- * One ShadowElement represents the whole subtree; hole shadows are allocated
- * immediately after it (no CREATE ops — the main thread materializes the
- * subtree inside the template's create() function and maps rootId+1+i to the
- * i-th hole). Subsequent updates flow through patchProp's hole delegation
- * below using ordinary SET_* ops.
+ * The root ShadowElement represents the whole subtree. Hole shadows allocate
+ * the contiguous uid range following the root; the main thread maps those ids
+ * to the create() function's returned hole handles.
  */
 function createTemplateInstance(type: string): ShadowElement {
   const tplId = type.slice(TPL_TYPE_PREFIX.length);
   const holeKeys = getElementTemplateHoles(tplId);
   const el = new ShadowElement(type);
   if (!holeKeys) {
-    // Unregistered template (should not happen — registration is hoisted in
-    // the same module as the render fn). Degrade to an empty view so the
-    // surrounding tree still renders.
     if (__DEV__) {
       console.error(
         `[vue-lynx] element template "${tplId}" is not registered — rendering an empty view.`,
       );
     }
-    pushOp(OP.CREATE, el.id, 'view');
+    pushOp(OP.CREATE, el.uid, 'view');
     scheduleFlush();
     return el;
   }
-  const holes: ShadowElement[] = [];
-  for (const _ of holeKeys) {
-    holes.push(new ShadowElement('#tpl-hole'));
-  }
+
+  const holes = holeKeys.map(() => new ShadowElement('#tpl-hole'));
   el._tplHoleKeys = holeKeys;
   el._tplHoles = holes;
-  pushOp(OP.INSTANTIATE_TEMPLATE, el.id, tplId, holeKeys.length);
+  pushOp(OP.INSTANTIATE_TEMPLATE, el.uid, tplId, holeKeys.length);
   scheduleFlush();
   return el;
 }
@@ -231,17 +86,17 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       );
     }
     const el = new ShadowElement(type);
-    pushOp(OP.CREATE, el.id, type);
+    pushOp(OP.CREATE, el.uid, type);
     scheduleFlush();
     return el;
   },
 
   createText(text: string): ShadowElement {
     const el = new ShadowElement('#text');
-    el._textValue = text;
+    el._text = text;
     if (text) {
-      pushOp(OP.CREATE_TEXT, el.id);
-      pushOp(OP.SET_TEXT, el.id, text);
+      pushOp(OP.CREATE_TEXT, el.uid);
+      pushOp(OP.SET_TEXT, el.uid, text);
       el._mtCreated = true;
       scheduleFlush();
     }
@@ -249,60 +104,25 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   // Comment nodes are used by Vue as position anchors for v-if / Fragment.
-  // Keep them in the Background Thread shadow tree only. Native Lynx gives an
-  // empty raw-text node a default line box, so materialising comments on the
-  // Main Thread adds visible height for every v-if branch and Fragment anchor.
-  createComment(_text: string): ShadowElement {
-    return new ShadowElement('#comment');
+  // They stay in the Background Thread shadow tree only — see tree-ops.ts.
+  createComment(text: string): ShadowElement {
+    const el = new ShadowElement('#comment');
+    el._text = text;
+    return el;
   },
 
   setText(node: ShadowElement, text: string): void {
-    if (node.type === '#text') {
-      node._textValue = text;
-
-      if (!text) {
-        if (node._mtInserted && node.parent) {
-          pushOp(OP.REMOVE, node.parent.id, node.id);
-          node._mtInserted = false;
-          scheduleFlush();
-        }
-        return;
-      }
-
-      if (!node._mtCreated) {
-        pushOp(OP.CREATE_TEXT, node.id);
-        node._mtCreated = true;
-      }
-      pushOp(OP.SET_TEXT, node.id, text);
-
-      const parent = node.parent;
-      if (!node._mtInserted && parent && parent.type !== 'list') {
-        const anchor = resolveMainThreadAnchor(node.next);
-        pushOp(OP.INSERT, parent.id, node.id, anchor?.id ?? -1);
-        node._mtInserted = true;
-      }
-      scheduleFlush();
+    if (node.tag === '#text') {
+      setTextNode(node, text);
       return;
     }
-
-    pushOp(OP.SET_TEXT, node.id, text);
+    pushOp(OP.SET_TEXT, node.uid, text);
     scheduleFlush();
   },
 
   // Called when a host element's text content changes (e.g. h('text', null, dynamic)).
   setElementText(el: ShadowElement, text: string): void {
-    // Remove all children from shadow tree
-    while (el.firstChild) {
-      const child = el.firstChild;
-      const materialized = isMaterializedChild(child);
-      el.removeChild(child);
-      cleanupIds(child);
-      if (materialized) pushOp(OP.REMOVE, el.id, child.id);
-      if (child.type === '#text') child._mtInserted = false;
-    }
-    // Set text content directly on the element
-    pushOp(OP.SET_TEXT, el.id, text);
-    scheduleFlush();
+    setElementTextContent(el, text);
   },
 
   insert(
@@ -310,72 +130,22 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     parent: ShadowElement,
     anchor?: ShadowElement | null,
   ): void {
-    // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
-    // emit REMOVE from old parent so MT correctly detaches first.
-    if (
-      child.parent
-      && child.parent !== parent
-      && isMaterializedChild(child)
-    ) {
-      pushOp(OP.REMOVE, child.parent.id, child.id);
-      if (child.type === '#text') child._mtInserted = false;
-    }
-
-    // Always update the shadow tree (Vue needs it for internal diffing).
-    parent.insertBefore(child, anchor ?? null);
-
-    // Comment anchors exist only in the shadow tree. Lynx's native <list>
-    // additionally accepts only <list-item> children, so text anchors there
-    // also stay off the Main Thread.
-    if (
-      child.type === '#comment'
-      || (child.type === '#text'
-        && (!child._textValue || parent.type === 'list'))
-    ) {
-      return;
-    }
-
-    // Shadow comments have no Main Thread element. Walk forward to the next
-    // materialised sibling so __InsertElementBefore receives a valid anchor.
-    // Native <list> text anchors are skipped for the same reason.
-    const resolvedAnchor = resolveMainThreadAnchor(anchor);
-
-    const anchorId = resolvedAnchor ? resolvedAnchor.id : -1;
-    pushOp(OP.INSERT, parent.id, child.id, anchorId);
-    if (child.type === '#text') child._mtInserted = true;
-    scheduleFlush();
+    insertNode(child, parent, anchor);
   },
 
   remove(child: ShadowElement): void {
-    // Vue's Teleport iterates its children on unmount even when target
-    // resolution failed at mount (see @vue/runtime-core TeleportImpl.remove).
-    // Those children were never mounted, so `vnode.el` is undefined — null
-    // guard is required here, not just for the `!parent` case.
-    if (child?.parent) {
-      const parent = child.parent;
-      const materialized = isMaterializedChild(child);
-      const parentId = parent.id;
-      child.parent.removeChild(child);
-      cleanupIds(child);
-      if (materialized) {
-        pushOp(OP.REMOVE, parentId, child.id);
-        scheduleFlush();
-      }
-      if (child.type === '#text') child._mtInserted = false;
-    }
+    removeNode(child);
   },
 
   patchProp(
     el: ShadowElement,
     key: string,
-    prevValue: unknown,
+    _prevValue: unknown,
     nextValue: unknown,
   ): void {
-    // ------------------------------------------------------------------
-    // Element-template holes: a lowered template vnode carries its interior
-    // dynamic parts as __hN props. Delegate to the hole's ShadowElement with
-    // the original prop key so the full event/class/style logic is reused.
-    // ------------------------------------------------------------------
+    // Element-template holes: lowered template vnode props are named __hN.
+    // Delegate to the hole with its original prop key so event/class/style
+    // behavior stays identical to the normal renderer path.
     if (el._tplHoles !== undefined && key.startsWith(TPL_HOLE_PREFIX)) {
       const idx = Number(key.slice(TPL_HOLE_PREFIX.length));
       const holeKey = el._tplHoleKeys?.[idx];
@@ -384,12 +154,12 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         if (holeKey === '#text') {
           pushOp(
             OP.SET_TEXT,
-            holeEl.id,
+            holeEl.uid,
             nextValue == null ? '' : String(nextValue),
           );
           scheduleFlush();
         } else {
-          nodeOps.patchProp(holeEl, holeKey, prevValue, nextValue);
+          nodeOps.patchProp(holeEl, holeKey, undefined, nextValue);
         }
         return;
       }
@@ -398,133 +168,26 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
     // ------------------------------------------------------------------
     // Main-thread worklet props: :main-thread-bindtap, :main-thread-ref
     // ------------------------------------------------------------------
-    if (key.startsWith('main-thread-')) {
-      const suffix = key.slice('main-thread-'.length);
-      if (suffix === 'ref') {
-        // MainThreadRef — send the serialised { _wvid, _initValue } to MT
-        if (
-          nextValue != null && typeof nextValue === 'object'
-          && '_wvid' in (nextValue as Record<string, unknown>)
-        ) {
-          pushOp(
-            OP.SET_MT_REF,
-            el.id,
-            (nextValue as { toJSON(): unknown }).toJSON(),
-          );
-        }
-      } else {
-        // Worklet event — suffix is an event key like "bindtap", "bindscroll"
-        const event = parseEventProp(suffix);
-        if (event && nextValue != null) {
-          // registerWorkletCtx wires up runOnBackground dispatch via
-          // lynx.getCoreContext() — a background-thread API.  During an IFR
-          // main-thread render the hydration pass re-applies the background
-          // thread's worklet ctx anyway, so skip the BG-side bookkeeping.
-          if (!isIfrMainThread()) registerWorkletCtx(nextValue as Worklet);
-          pushOp(
-            OP.SET_WORKLET_EVENT,
-            el.id,
-            event.type,
-            event.name,
-            nextValue,
-          );
-        } else if (event) {
-          // Worklet handler removed — send REMOVE_EVENT so MT clears eventMap
-          pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
-        }
-      }
-      scheduleFlush();
+    if (applyMainThreadProp(el, key, nextValue)) return;
+
+    if (patchEventProp(el, key, nextValue)) {
       return;
-    }
-
-    const event = parseEventProp(key);
-
-    if (event) {
-      let signs = elementEventSigns.get(el.id);
-      const oldSign = signs?.get(key);
-
-      if (nextValue != null) {
-        const handler = nextValue as (data: unknown) => void;
-        if (event.once) {
-          if (oldSign) {
-            // Re-render of a once-event: update the inner handler so the
-            // fresh closure is used when the event eventually fires.
-            // The `called` state is preserved — if it already fired, the
-            // wrapper will keep returning early.
-            const wrapper = onceWrappers.get(oldSign);
-            if (wrapper) wrapper.inner = handler;
-          } else {
-            // First registration of a once-event.
-            const wrapper: OnceWrapper = { called: false, inner: handler };
-            const onceHandler = (data: unknown): void => {
-              if (wrapper.called) return;
-              wrapper.called = true;
-              wrapper.inner(data);
-            };
-            const sign = register(onceHandler);
-            onceWrappers.set(sign, wrapper);
-            if (!signs) {
-              signs = new Map<string, string>();
-              elementEventSigns.set(el.id, signs);
-            }
-            signs.set(key, sign);
-            // Respect _lynxCatch even on once-events (e.g. @tap.once.stop).
-            // The Vue compiler emits onTapOnce: withModifiers(fn, ['stop']),
-            // so _lynxCatch lives on the handler, not on the onceHandler wrapper.
-            const onceEventType = (handler as { _lynxCatch?: boolean })._lynxCatch
-              ? 'catchEvent'
-              : event.type;
-            pushOp(OP.SET_EVENT, el.id, onceEventType, event.name, sign);
-          }
-        } else if (oldSign) {
-          // Re-render: update handler in-place so the sign on the Main Thread
-          // stays valid.  No new SET_EVENT op needed.
-          updateHandler(oldSign, handler);
-        } else {
-          // First time this event is bound on this element.
-          // If the handler is tagged _lynxCatch (from withModifiers '.stop'),
-          // use catchEvent so native Lynx stops bubbling at this element.
-          const eventType = (handler as { _lynxCatch?: boolean })._lynxCatch
-            ? 'catchEvent'
-            : event.type;
-          const sign = register(handler);
-          if (!signs) {
-            signs = new Map<string, string>();
-            elementEventSigns.set(el.id, signs);
-          }
-          signs.set(key, sign);
-          pushOp(OP.SET_EVENT, el.id, eventType, event.name, sign);
-        }
-      } else if (oldSign) {
-        // Handler removed entirely.
-        onceWrappers.delete(oldSign);
-        unregister(oldSign);
-        signs!.delete(key);
-        pushOp(OP.REMOVE_EVENT, el.id, event.type, event.name);
-      }
     } else if (key === 'style') {
       const style = nextValue != null && typeof nextValue === 'object'
-        ? normalizeStyle(nextValue as Record<string, unknown>)
+        ? normalizeStyleObject(nextValue as Record<string, unknown>)
         : {};
       el._style = style;
       const effective = el._vShowHidden ? { ...style, display: 'none' } : style;
-      pushOp(OP.SET_STYLE, el.id, effective);
+      pushOp(OP.SET_STYLE, el.uid, effective);
     } else if (key === 'class') {
       el._baseClass = (nextValue as string) ?? '';
       const finalClass = resolveClass(el);
-      pushOp(OP.SET_CLASS, el.id, finalClass);
+      pushOp(OP.SET_CLASS, el.uid, finalClass);
     } else if (key === 'id') {
-      if (el._id) idRegistry.delete(el._id);
-      el._id = nextValue != null ? String(nextValue) : undefined;
-      if (__DEV__ && el._id && idRegistry.has(el._id) && idRegistry.get(el._id) !== el) {
-        console.warn(
-          `[vue-lynx] Duplicate id "${el._id}" detected. Teleport target resolution may be unreliable.`,
-        );
-      }
-      if (el._id) idRegistry.set(el._id, el);
-      pushOp(OP.SET_ID, el.id, nextValue);
+      setIdAttr(el, nextValue);
+      return;
     } else {
-      pushOp(OP.SET_PROP, el.id, key, nextValue);
+      pushOp(OP.SET_PROP, el.uid, key, nextValue);
     }
 
     scheduleFlush();
@@ -533,8 +196,7 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   // Called by Vue's renderer after createElement to apply scoped CSS.
   // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
   setScopeId(el: ShadowElement, id: string): void {
-    pushOp(OP.SET_SCOPE_ID, el.id, scopeIdToCssId(id));
-    scheduleFlush();
+    el._addScopeClass(id);
   },
 
   parentNode(node: ShadowElement): ShadowElement | null {
@@ -560,7 +222,6 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
-  elementEventSigns.clear();
-  onceWrappers.clear();
+  resetEventPropState();
   idRegistry.clear();
 }

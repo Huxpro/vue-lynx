@@ -20,6 +20,11 @@
  * ```
  */
 
+import {
+  VAPOR_DOCUMENT_GLOBAL,
+  VAPOR_DOM_CTOR_GLOBALS,
+  VAPOR_WINDOW_GLOBAL,
+} from 'vue-lynx/internal/ops';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +39,7 @@ import {
 } from './compiler-options.js';
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
+import { VueLynxVaporTemplatePlugin } from './plugins/vapor-template-plugin.js';
 
 const require = createRequire(import.meta.url);
 
@@ -192,6 +198,27 @@ export interface PluginVueLynxOptions {
    * @defaultValue []
    */
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+
+  /**
+   * Enable Vue Vapor mode support (experimental).
+   *
+   * Vapor mode is Vue's compilation-based, Virtual-DOM-free rendering mode,
+   * available since Vue 3.6 (currently in beta). Components opt in with the
+   * `vapor` attribute: `<script setup vapor>`.
+   *
+   * When enabled:
+   * - `'vue'` is aliased to `vue-lynx/vapor` — the pure Vapor entry
+   *   (shared runtime-core surface + Vapor helpers, no vdom renderer).
+   * - Vapor SFC templates compile through `@vue/compiler-vapor` in both
+   *   dev (separate template compilation) and prod (inlined) builds.
+   *
+   * Pure Vapor apps and pure vdom apps are both supported; mixing vapor and
+   * vdom components in one app (`vaporInteropPlugin`) is not supported yet.
+   *
+   * @defaultValue false
+   */
+  vapor?: boolean;
+
 }
 
 /**
@@ -217,6 +244,7 @@ export function pluginVueLynx(
     autoPixelUnit = true,
     enableIFR = false,
     includeWorkletPackages = [],
+    vapor = false,
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -284,6 +312,29 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                // Lynx's runtime wrapper injects `document`/`window` as
+                // undefined function parameters that shadow globals inside
+                // the Background Thread bundle. @vue/runtime-vapor references
+                // them as free identifiers, so in vapor mode rewrite those
+                // references to the DOM-shim globals installed by
+                // vue-lynx/vapor (see runtime vapor/dom-shim.ts).
+                ...(vapor
+                  ? {
+                    document: `globalThis.${VAPOR_DOCUMENT_GLOBAL}`,
+                    window: `globalThis.${VAPOR_WINDOW_GLOBAL}`,
+                    // DOM constructors must resolve to the ShadowElement
+                    // shims even where host DOM globals exist — the IFR
+                    // main-thread chunk runs on the page main thread under
+                    // Lynx for Web, and a real `Node` there breaks every
+                    // runtime-vapor `instanceof` classification (the first
+                    // frame then crashes into fallback).
+                    ...Object.fromEntries(
+                      Object.entries(VAPOR_DOM_CTOR_GLOBALS).map((
+                        [name, key],
+                      ) => [name, `globalThis.${key}`]),
+                    ),
+                  }
+                  : {}),
               },
             },
             tools: {
@@ -308,8 +359,25 @@ export function pluginVueLynx(
 
         api.modifyBundlerChain((chain) => {
           // "vue" → "vue-lynx" ensures template compiler output
-          // imports from the same module instance (singleton shared state)
-          chain.resolve.alias.set('vue', 'vue-lynx');
+          // imports from the same module instance (singleton shared state).
+          // With vapor enabled, "vue" resolves to the pure Vapor entry
+          // instead, which carries the helper surface compiled vapor
+          // components import (and none of the vdom renderer).
+          chain.resolve.alias.set(
+            'vue',
+            vapor ? 'vue-lynx/vapor' : 'vue-lynx',
+          );
+
+          if (vapor) {
+            // rspack-vue-loader's templateLoader predates Vapor: swap in the
+            // vapor-aware fork so dev-mode (non-inlined) template compilation
+            // of `<script setup vapor>` SFCs uses @vue/compiler-vapor.
+            chain
+              .plugin('vue-lynx:vapor-template-loader')
+              .use(VueLynxVaporTemplatePlugin, [
+                path.resolve(_pluginDirname, './loaders/vapor-template-loader.js'),
+              ]);
+          }
 
           // Ensure vue-lynx/internal/ops resolves correctly.
           // main-thread/dist and runtime/dist import this path, but rspack's
@@ -342,6 +410,7 @@ export function pluginVueLynx(
           enableIFR,
           enableElementTemplates,
           includeWorkletPackages,
+          vapor,
         });
       },
     },

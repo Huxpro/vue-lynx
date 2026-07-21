@@ -2,16 +2,33 @@ import { Badge } from '@theme';
 
 # IFR Benchmarks <Badge text="v0.5" type="tip" />
 
-This page collects the measurement campaigns behind [Instant First-Frame
-Rendering](/guide/ifr) and Element Templates. Each campaign answers one
-question:
+> Product thesis (how / architecture): **[IFR guide](/guide/ifr)**.
+> Product FCP matrices: **[Unified Benchmark Matrix](/guide/benchmark-unified)**.
+> This page owns the **cost ledger** and the measurement campaigns behind it —
+> strategy render cost, real-app size/TTI, real-thread FCP, **cost-space**
+> charts, and native checks.
+> **“−19% FCP” is not scale-invariant** — see §3b and the unified report.
 
-| campaign | the question it answers |
+<span id="what-it-costs" />
+
+## What it costs
+
+| Cost | Rough shape | Where measured |
+| --- | --- | --- |
+| Dual bundles | Vue runtime + app on both threads | [§2](#2-all-examples-sweep) |
+| Bundle size | `main.lynx.bundle` gzip ~**2×** (median) | [§2](#2-all-examples-sweep) · [§3c](#3c-cost-space-mt-gzip--fcp) |
+| Sync MT work | Extra serial work until interactive (~+35% all-examples proxy); on device, MT paint overlaps BG startup | [§1](#1-strategy-ladder) · [§2](#2-all-examples-sweep) |
+| Async / empty first screen | Cannot accelerate content that does not exist until a fetch returns | [§2](#2-all-examples-sweep) (`networking`) · [§3b](#3b-large-app-reevaluation) shell IFR |
+| Large web + heavy throttle | Bundle-parse term can erase or reverse the FCP win | [§3](#3-real-threads) · [§3b](#3b-large-app-reevaluation) |
+
+| campaign | question |
 |---|---|
-| [1. Strategy ladder](#1-strategy-ladder) | How much does the synchronous main-thread render **cost**, per design — and what is the ceiling? |
-| [2. All-examples sweep](#2-all-examples-sweep) | What does IFR **cost in size and TTI** on real apps, and is it semantically safe? (Also: proof that a single process cannot measure its benefit.) |
-| [3. Real threads](#3-real-threads) | What does IFR actually **win**, measured across a genuine thread boundary — with ReactLynx as the control? |
-| [3b. Large-app reevaluation](#3b-large-app-reevaluation) | Does the −19% median still hold once TodoMVC / Hacker News / AI Chat / Elk join the matrix? |
+| [1. Strategy ladder](#1-strategy-ladder) | How much does the sync main-thread render **cost**, per design? |
+| [2. All-examples sweep](#2-all-examples-sweep) | Size / TTI **cost** and semantic safety on real apps |
+| [3. Real threads](#3-real-threads) | What does IFR **win** across a genuine thread boundary? |
+| [3b. Large-app reevaluation](#3b-large-app-reevaluation) | Does the −19% median hold once larger apps join? |
+| [3c. Cost space](#3c-cost-space-mt-gzip--fcp) | Did first-frame wins come from a heavier MT bundle? |
+| [4. Native](#4-native-engine-observations) | Hydration / visual parity on LynxExplorer |
 
 **A note on configuration names.** Campaigns 1 and 2 ran before `enableIFR`
 defaulted to enabling Element Templates. Columns are labeled with today's
@@ -296,6 +313,47 @@ defaulting ET with IFR for the strategy-ladder render-cost win (about
 
 Raw JSON and write-up:
 [packages/ifr-bench/reeval/](https://github.com/Huxpro/vue-lynx/tree/main/packages/ifr-bench/reeval).
+
+
+## 3c. Cost space (MT gzip × FCP)
+
+Unlike the unified matrix’s **FCP vs N** (first-frame only), **cost space**
+asks: *did that first frame come from a larger MT bundle?*
+
+| axis | meaning |
+| --- | --- |
+| **X — MT gzip** | Main-thread bundle size (parse / load tax). IFR usually makes this larger. |
+| **Y — FCP** | Time to first paint. Lower is better. |
+| **Each polyline** | One architecture swept from 1k→30k. |
+
+| region | reading |
+| --- | --- |
+| **Lower-left** | Ideal — small MT bundle *and* fast first frame |
+| **Right** | Paid a heavier MT bundle; may or may not buy faster FCP |
+| **Up** | First frame worsens as content grows |
+| **Upper-right** | Worst — heavy *and* slow |
+
+Typical bad shape: plain IFR gets heavier, then FCP crosses above plain VDOM
+on mid/large trees. Good shape: IFR+ET still pays MT size, but FCP stays below.
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x1.html"
+  title="IFR scale trends (CPU ×1)"
+  titleZh="IFR 规模趋势（CPU ×1）"
+  height={1600}
+/>
+
+<details>
+<summary>CPU ×4 scale trends</summary>
+
+<BenchArtifactFrame
+  src="/benchmark/ifr-scale-trends-x4.html"
+  title="IFR scale trends (CPU ×4)"
+  titleZh="IFR 规模趋势（CPU ×4）"
+  height={1600}
+/>
+
+</details>
 
 ## 4. Native engine observations
 

@@ -260,13 +260,13 @@ describe('element-template transform', () => {
     expect(fixed.style.fontSize).toBe('12px');
   });
 
-  it('bakes the scoped-CSS cssId into interior skeleton nodes', () => {
+  it('bakes scoped-CSS class tokens into interior skeleton nodes', () => {
     const { code } = compileToComponent(CARD_TEMPLATE, {}, {
       lowered: true,
       scopeId: 'data-v-1a2b3c4d',
     });
-    const cssId = Number.parseInt('1a2b3c4d', 16) & 0x7fffffff;
-    expect(code).toContain(`__SetCSSId([e1], ${cssId})`);
+    expect(code).toContain('__SetCSSId([e1], 0)');
+    expect(code).toContain('__SetClasses(e1, "data-v-1a2b3c4d")');
   });
 
   it('routes all scope emission through the scope adapter seam', () => {

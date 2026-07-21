@@ -86,11 +86,11 @@ function ensureShadow(el: Element): ShadowElement {
   if (!shadow) {
     const tag = (el as any).tagName?.toLowerCase() ?? 'div';
     shadow = new ShadowElement(tag);
-    idToShadow.set(shadow.id, shadow);
+    idToShadow.set(shadow.uid, shadow);
     jsdomToShadow.set(el, shadow);
     // Register existing jsdom element in the MT elements map
     // so applyOps can resolve ops targeting this element ID.
-    _elements.set(shadow.id, el);
+    _elements.set(shadow.uid, el);
   }
   return shadow;
 }

@@ -21,22 +21,21 @@ import {
 
 import { elements, setPageUniqueId } from './element-registry.js';
 import { registerTemplate } from './element-templates.js';
-import { interceptPatchUpdate, runIfrRender } from './ifr.js';
+import {
+  completeIfrHydration,
+  interceptPatchUpdate,
+  runIfrRender,
+} from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
 const g = globalThis as Record<string, unknown>;
 
-// Expose SystemInfo on globalThis (the worklet-runtime reads it).
-// In React's main-thread bundle this is done by the generated snapshot code.
-// Never clobber an engine-provided SystemInfo global: some environments
-// (e.g. the Lynx testing environment's main-thread context) define
-// `SystemInfo` directly without mirroring it on `lynx.SystemInfo` — first
-// screen code that measures against screen dimensions depends on it.
-g['SystemInfo'] =
-  (typeof lynx !== 'undefined'
-    && (lynx as { SystemInfo?: unknown }).SystemInfo)
-    ?? g['SystemInfo'] ?? {};
+// Expose SystemInfo on globalThis (the worklet-runtime reads it). Preserve an
+// engine-provided global object: some hosts do not mirror it on lynx.
+if (g['SystemInfo'] == null) {
+  g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
+}
 
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
@@ -114,6 +113,10 @@ g['vuePatchUpdate'] = function({ data }: { data: string }): void {
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);
 };
+
+// Sent by the IFR Background entry after its complete initial op stream has
+// been applied. This disambiguates a valid split batch from a strict prefix.
+g['vueIfrHydrationComplete'] = completeIfrHydration;
 
 // Worklet registrations are included in this bundle via webpack's dependency
 // graph — user code on the MT layer is processed by worklet-loader-mt which

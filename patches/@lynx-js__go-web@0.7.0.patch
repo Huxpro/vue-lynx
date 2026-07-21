@@ -1,0 +1,86 @@
+diff --git a/src/example-preview/index.tsx b/src/example-preview/index.tsx
+index 7ee3410eb6c600ef05230ec92a1aa8070755a382..0af743c5f3d37a5eb07397c5641729fe6b8d30ee 100644
+--- a/src/example-preview/index.tsx
++++ b/src/example-preview/index.tsx
+@@ -52,6 +52,10 @@ export interface ExamplePreviewProps {
+   entry?: string | string[];
+   schema?: string;
+   rightFooter?: React.ReactNode;
++  /** Preloaded metadata. When provided, no metadata request is made. */
++  exampleMetadata?: ExampleMetadata;
++  /** Called whenever the active configured entry changes. */
++  onEntryChange?: (entryName: string) => void;
+   schemaOptions?: SchemaOptionsData;
+   langAlias?: Record<string, string>;
+   mode?: ExamplePreviewMode;
+@@ -133,6 +137,8 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+     entry,
+     schema,
+     rightFooter,
++    exampleMetadata,
++    onEntryChange,
+     schemaOptions,
+     langAlias,
+     defaultTab: propsDefaultTab,
+@@ -158,6 +164,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+   const [currentFile, setCurrentFile] = useState('');
+   const [isAssetFile, setIsAssetFile] = useState(isAssetFileType(defaultFile));
+   const [currentEntry, setCurrentEntry] = useState('');
++  const updateCurrentEntry = (entryName: string) => {
++    setCurrentEntry(entryName);
++    onEntryChange?.(entryName);
++  };
+ 
+   const [defaultWebPreviewFile, setDefaultWebPreviewFile] = useState('');
+   const [initState, setInitState] = useState(false);
+@@ -168,8 +178,10 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+       : highlight || {};
+   }, [highlight, defaultFile]);
+ 
+-  const { error, data: exampleData } = useSWR<ExampleMetadata>(
+-    `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
++  const { error, data: fetchedExampleData } = useSWR<ExampleMetadata>(
++    exampleMetadata
++      ? null
++      : `${EXAMPLE_BASE_URL}/${example}/example-metadata.json`,
+ 
+     async (url) => {
+       const response = await fetch(url);
+@@ -180,6 +192,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+     },
+     { revalidateOnFocus: false },
+   );
++  const exampleData = exampleMetadata ?? fetchedExampleData;
+ 
+   const { trigger } = useSWRMutation(
+     `${EXAMPLE_BASE_URL}/${example}/${currentName}`,
+@@ -259,7 +272,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+         } else {
+           setDefaultWebPreviewFile('');
+         }
+-        setCurrentEntry(tmpEntry.name);
++        updateCurrentEntry(tmpEntry.name);
+       } else {
+         console.warn(
+           'defaultEntryFile or defaultEntryName params error, please check!',
+@@ -267,9 +280,9 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+       }
+       setInitState(true);
+     }
+-  }, [exampleData, defaultEntryFile, defaultEntryName, webPreview]);
++  }, [exampleData, defaultEntryFile, defaultEntryName, webPreview, onEntryChange]);
+ 
+-  if (error) {
++  if (error && !exampleMetadata) {
+     const ErrorComp = ErrorComponent || DefaultErrorWrap;
+     return <ErrorComp example={example} exampleBaseUrl={EXAMPLE_BASE_URL} />;
+   }
+@@ -323,7 +336,7 @@ export const ExamplePreview = (props: ExamplePreviewProps) => {
+       langAlias={langAlias}
+       currentEntryFileUrl={currentEntryFileUrl}
+       currentEntry={currentEntry}
+-      setCurrentEntry={setCurrentEntry}
++      setCurrentEntry={updateCurrentEntry}
+       entryFiles={exampleData?.templateFiles}
+       highlight={highlightData[currentName]}
+       entry={entry}

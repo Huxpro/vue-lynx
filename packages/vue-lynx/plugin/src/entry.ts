@@ -20,8 +20,7 @@ import {
   isWorkletPackage,
   packageNameFromNodeModulesPath,
 } from './loaders/worklet-utils.js';
-import { vueScopeStripCSSPlugin } from './plugins/vue-scope-strip-css-plugin.js';
-import { VueScopedCSSIdPlugin } from './plugins/vue-scoped-cssid-plugin.js';
+import { vueScopeClassCSSPlugin } from './plugins/vue-scope-class-css-plugin.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
 const PLUGIN_RUNTIME_WRAPPER = 'lynx:vue-runtime-wrapper';
@@ -209,16 +208,17 @@ export interface ApplyEntryOptions {
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
   /**
-   * IFR: main-thread bundle carries the full Vue runtime + app code.
+   * IFR: main-thread bundle carries the full Vue/Vapor runtime + app code.
    *
-   * Required (not optional): `pluginVueLynx` resolves the defaulting —
-   * including `enableElementTemplates ?? enableIFR` — exactly once; a second
-   * defaulting layer here could silently drift from that rule.
+   * Required: pluginVueLynx resolves defaults once, including
+   * `enableElementTemplates ?? enableIFR`.
    */
   enableIFR: boolean;
   /** Element templates: preserve template registrations on the MT layer. */
   enableElementTemplates: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
+  /** Use the pure Vapor runtime entry in generated worklet imports. */
+  vapor?: boolean;
 }
 
 export function applyEntry(
@@ -339,6 +339,7 @@ export function applyEntry(
       .exclude.add(nodeModulesExcludeWithAllowlist).end()
       .use('worklet-loader')
       .loader(path.resolve(_dirname, './loaders/worklet-loader'))
+      .options({ vapor: opts.vapor ?? false })
       .end();
   });
 
@@ -364,18 +365,18 @@ export function applyEntry(
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
     const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
-    // The runtime dist enters the MT module graph in IFR builds ONLY (user
-    // code imports 'vue-lynx' and is no longer stripped). There it is library
-    // code that must pass through untransformed; in pnpm workspaces it
-    // resolves via symlink to a real path outside node_modules, so the
-    // /node_modules/ exclude alone is insufficient (same reason as
-    // main-thread above). In non-IFR builds the runtime must NOT be excluded:
-    // worklet-loader-mt strips it to nothing like any other module —
-    // excluding it would bundle (and evaluate) the whole Vue runtime on the
-    // interpreter-only main thread for workspace-resolved builds.
+    // IFR follows the full user graph, including vue-lynx/runtime. Library
+    // code must pass through unchanged; pnpm resolves it outside node_modules.
+    // In non-IFR builds it must still be stripped like ordinary MT modules.
     const runtimePkgDir = opts.enableIFR
       ? path.resolve(pkgRoot, 'runtime')
       : null;
+    const workletMtOptions = {
+      includeWorkletPackages,
+      ifr: opts.enableIFR,
+      elementTemplates: opts.enableElementTemplates,
+      vapor: opts.vapor ?? false,
+    };
     const isBootstrapModule = (resource: string): boolean => {
       const resolvedResource = path.resolve(resource);
       return resolvedResource === mainThreadPkgDir
@@ -385,12 +386,6 @@ export function applyEntry(
         || (runtimePkgDir !== null
           && (resolvedResource === runtimePkgDir
             || resolvedResource.startsWith(`${runtimePkgDir}${path.sep}`)));
-    };
-
-    const workletMtOptions = {
-      ifr: opts.enableIFR,
-      elementTemplates: opts.enableElementTemplates,
-      includeWorkletPackages,
     };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
@@ -422,8 +417,10 @@ export function applyEntry(
       .exclude
       .add(nodeModulesExcludeWithAllowlist)
       // A string RuleSet condition is not consistently treated as a directory
-      // prefix across Rspack versions. Match explicitly so entry-main and its
-      // dependencies can never be stripped by worklet-loader-mt.
+      // prefix across Rspack versions. Match explicitly so the library's
+      // bootstrap and runtime modules (entry-main, internal, and the full
+      // runtime that IFR pulls onto the MT) can never be stripped by
+      // worklet-loader-mt.
       .add(isBootstrapModule);
     workletMtExclude.end()
       .use('worklet-loader-mt')
@@ -497,25 +494,21 @@ export function applyEntry(
       // vue-sfc-script-extractor + worklet-loader-mt strip everything except
       // registerWorkletInternal() calls. webpack's dependency graph provides
       // natural per-entry isolation (each entry sees only its own worklets).
-      //
-      // IFR builds additionally inject the entry-ifr bootstrap between
-      // entry-main and user code (so IFR globals exist before user code
-      // evaluates), and worklet-loader-mt keeps the full user code instead
-      // of stripping it — the Vue app runs on the main thread for the
-      // first frame.
-      const mtBootstrapImports = [
+      const mainThreadImports = [
         path.resolve(vueLynxRoot, 'main-thread/dist/entry-main.js'),
       ];
       if (opts.enableIFR) {
-        mtBootstrapImports.push(
+        mainThreadImports.push(
           path.resolve(vueLynxRoot, 'main-thread/dist/entry-ifr.js'),
         );
       }
+      mainThreadImports.push(workletRuntimePath, ...imports);
+
       chain
         .entry(mainThreadEntry)
         .add({
           layer: LAYERS.MAIN_THREAD,
-          import: [...mtBootstrapImports, workletRuntimePath, ...imports],
+          import: mainThreadImports,
           filename: mainThreadName,
         })
         .when(enabledHMR, entry => {
@@ -541,6 +534,22 @@ export function applyEntry(
         .prepend({
           layer: LAYERS.BACKGROUND,
           import: path.resolve(vueLynxRoot, 'runtime/dist/entry-background.js'),
+        })
+        .when(opts.enableIFR ?? false, entry => {
+          entry.prepend({
+            layer: LAYERS.BACKGROUND,
+            import: path.resolve(
+              vueLynxRoot,
+              'runtime/dist/entry-ifr-background.js',
+            ),
+          });
+          entry.add({
+            layer: LAYERS.BACKGROUND,
+            import: path.resolve(
+              vueLynxRoot,
+              'runtime/dist/entry-ifr-background-complete.js',
+            ),
+          });
         })
         .when(enabledHMR, entry => {
           entry.prepend({
@@ -587,7 +596,7 @@ export function applyEntry(
               enableRemoveCSSScope: false, // Preserve CSS scope for Vue scoped styles
               enableNewGesture: false,
               removeDescendantSelectorScope: true,
-              cssPlugins: [vueScopeStripCSSPlugin],
+              cssPlugins: [vueScopeClassCSSPlugin],
             },
           ])
           .end();
@@ -602,17 +611,6 @@ export function applyEntry(
       chain
         .plugin(PLUGIN_MARK_MAIN_THREAD)
         .use(VueMarkMainThreadPlugin, [mainThreadFilenames])
-        .end();
-    }
-
-    // ------------------------------------------------------------------
-    // VueScopedCSSIdPlugin – inject ?cssId=<N> into vue scoped style
-    // module queries so css-extract-webpack-plugin wraps CSS in @cssId.
-    // ------------------------------------------------------------------
-    if (isLynx || isWeb) {
-      chain
-        .plugin('lynx:vue-scoped-cssid')
-        .use(VueScopedCSSIdPlugin, [])
         .end();
     }
 

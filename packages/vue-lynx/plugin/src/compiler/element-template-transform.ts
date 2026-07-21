@@ -66,7 +66,7 @@ import {
 } from 'vue-lynx/internal/ops';
 
 import type { TemplateScopeAdapter } from './scope-adapter.js';
-import { cssIdScopeAdapter } from './scope-adapter.js';
+import { classTokenScopeAdapter } from './scope-adapter.js';
 
 /**
  * Registration entry point referenced by the generated code.
@@ -469,7 +469,7 @@ function walk(
  * @public
  */
 export function createElementTemplateTransform(
-  scopeAdapter: TemplateScopeAdapter = cssIdScopeAdapter,
+  scopeAdapter: TemplateScopeAdapter = classTokenScopeAdapter,
 ): NodeTransform {
   return (node, context) => {
     if (node.type !== NodeTypes.ROOT) return;
@@ -482,7 +482,7 @@ export function createElementTemplateTransform(
 }
 
 /**
- * The lowering transform with this lineage's default (cssId) scope adapter.
+ * The lowering transform with this lineage's default scope adapter.
  *
  * @public
  */

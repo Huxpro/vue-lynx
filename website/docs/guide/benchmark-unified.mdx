@@ -1,0 +1,58 @@
+# Unified Benchmark Matrix
+
+One place to **look at** every architecture on the same host and ladder —
+IFR styles, VDOM vs Vapor, and React vs Vue — without mixing metric scales.
+
+**How to read storms:** **Select = point update** (selection / a few classes
+per tick). **Update = batch update** (many rows touched each pass). Don’t
+compare those two curves as if they were the same workload.
+
+<BenchArtifactFrame
+  src="/benchmark/unified.html"
+  srcZh="/benchmark/unified.zh.html"
+  title="Unified benchmark matrix"
+  titleZh="统一基准矩阵"
+  height={2400}
+/>
+
+## What this page is
+
+The three older campaigns answered different questions:
+
+| campaign | question | doc |
+|---|---|---|
+| IFR styles | first-frame cost & FCP | [IFR Benchmarks](/guide/ifr-benchmarks) |
+| Framework (VDOM vs Vapor) | instrumented BG/e2e + interactive | [Framework bench](/guide/benchmark-vapor) |
+
+They shared **1k→30k labels** but not a **metric scale**. This report puts
+every cell in one schema and leads with decision-first conclusions
+(takeaway → so what → verify).
+
+Sibling pages keep only what this matrix does **not** cover:
+
+| page | keeps |
+|---|---|
+| [Framework bench](/guide/benchmark-vapor) | interactive apps (React as reference), instrumented BG/e2e, ops bytes, bundle/heap |
+| [IFR Benchmarks](/guide/ifr-benchmarks) | strategy ladder, examples gzip/TTI, native |
+
+## How to read it
+
+1. **Conclusions** — digestible product guidance; numbers are for checking.
+2. **Storm table / charts** — point (select) vs batch (update) latency.
+3. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
+
+## Environment rules
+
+- **lynx-web** — primary product scale (this report).
+- **bare-dom** / **node-jitless** — different instruments; never ratio across them.
+
+## Reproduce
+
+```bash
+pnpm --filter vue-lynx-benchmark bench:unified
+pnpm --filter vue-lynx-benchmark bench:synthesize
+pnpm --filter vue-lynx-benchmark bench:report
+```
+
+Design notes: [`packages/benchmark/UNIFIED.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md) ·
+raw analysis: [`ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md).

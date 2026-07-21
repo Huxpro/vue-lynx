@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useLang, usePageData } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
+  Layout as BaseLayout,
 } from '@rspress/core/theme-original';
 
 import './index.scss';
@@ -11,6 +13,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '../src/components/home-comps';
+import { GoModeNavIndicator } from '../src/components/go/GoModeNavIndicator';
 
 import { AGENT_PROMPT } from './agent-prompt';
 
@@ -234,6 +237,28 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-export { HomeLayout };
+function Layout({
+  beforeNavMenu,
+  ...props
+}: Parameters<typeof BaseLayout>[0]) {
+  const locale = useLang().startsWith('zh') ? 'zh' : 'en';
+  const { page } = usePageData();
+
+  return (
+    <BaseLayout
+      {...props}
+      beforeNavMenu={(
+        <>
+          {/* Persistent on every doc page (dormant when the page has no
+              mode-aware content); the marketing home page keeps its nav clean. */}
+          {page.pageType !== 'home' && <GoModeNavIndicator locale={locale} />}
+          {beforeNavMenu}
+        </>
+      )}
+    />
+  );
+}
+
+export { HomeLayout, Layout };
 
 export * from '@rspress/core/theme-original';

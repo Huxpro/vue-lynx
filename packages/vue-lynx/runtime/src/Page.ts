@@ -136,8 +136,11 @@ export const Page = defineComponent({
       if (!owned) return;
       applyAttrs({});
       if (appliedScopeId !== null) {
-        // scopeIdToCssId('') maps to cssId 0 — Lynx's unscoped default.
-        nodeOps.setScopeId?.(root, '');
+        // Scope ids are composable scope classes on this branch: clearing
+        // means removing the applied token. removeAttribute handles data-v-*
+        // keys (deletes from _scopeClasses and re-emits SET_CLASS); passing
+        // '' to setScopeId would ADD an empty token instead of clearing.
+        root.removeAttribute(appliedScopeId);
         appliedScopeId = null;
       }
       owned = false;

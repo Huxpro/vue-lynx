@@ -31,7 +31,7 @@ function applyVarsToEl(el: ShadowElement, vars: Record<string, string>): void {
   }
   // Preserve vShow hidden state
   const effective = el._vShowHidden ? { ...style, display: 'none' } : style;
-  pushOp(OP.SET_STYLE, el.id, effective);
+  pushOp(OP.SET_STYLE, el.uid, effective);
   scheduleFlush();
 }
 

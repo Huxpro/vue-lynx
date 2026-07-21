@@ -30,6 +30,7 @@ const VARIANTS = [
   'ifr-static-tpl',
   'ifr-block-tpl',
   'ifr-vapor',
+  'ifr-vapor-real',
   'papi-floor',
 ];
 const ITERATIONS = quick ? 10 : 30;

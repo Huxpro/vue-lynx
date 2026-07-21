@@ -106,8 +106,8 @@ jobs:
       - run: pnpm install
       - run: pnpm build
 
-      - name: Clone vuejs/core@v3.5.12
-        run: git clone --depth 1 --branch v3.5.12 https://github.com/vuejs/core.git packages/upstream-tests/core
+      - name: Clone vuejs/core@v3.6.0-beta.17
+        run: pnpm --filter vue-lynx-upstream-tests vuejs:init
 
       - name: Run upstream Vue tests (runtime-core, reactivity, runtime-dom)
         run: pnpm test:upstream
@@ -133,3 +133,44 @@ jobs:
 
       - name: Run examples/basic dev smoke test
         run: pnpm test:dev-smoke
+
+  examples-web:
+    name: Examples - Lynx for Web (VDOM + Vapor)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install
+      # The harness depends on playwright-core (no test runner), whose CLI
+      # provides the same browser installer.
+      - run: pnpm --dir packages/example-harness exec playwright-core install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm examples:inventory
+      - name: Build all VDOM examples
+        run: pnpm --filter './examples/*' --workspace-concurrency=2 run build
+      - run: pnpm examples:build:vapor
+      - run: pnpm --dir website build
+      # The site was just built two steps up — safe to reuse; verify-web
+      # rebuilds it otherwise (a stale doc_build verifies the wrong site).
+      - run: pnpm examples:verify:web -- --mode all
+        env:
+          VUE_LYNX_VERIFY_REUSE_SITE: "1"
+      - run: pnpm examples:verify:status
+
+      - name: Upload browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-harness-web
+          path: artifacts/example-harness
+          if-no-files-found: ignore

@@ -1,0 +1,56 @@
+# 统一基准矩阵
+
+在同一台机器、同一阶梯上，把 IFR 风格、VDOM vs Vapor、React vs Vue
+**一眼看完**——又不把不同量纲混在一起。
+
+**怎么读 storms：Select = 点状更新**（每次只动选中态/少量 class）；
+**Update = 批量更新**（每轮改很多行）。别把两条曲线当成同一种工作负载。
+
+<BenchArtifactFrame
+  src="/benchmark/unified.html"
+  srcZh="/benchmark/unified.zh.html"
+  title="Unified benchmark matrix"
+  titleZh="统一基准矩阵"
+  height={2400}
+/>
+
+## 这页是什么
+
+三套旧 campaign 各自回答不同问题：
+
+| campaign | 问题 | 文档 |
+|---|---|---|
+| IFR 风格 | 首帧成本与 FCP | [IFR 基准测试](/zh/guide/ifr-benchmarks) |
+| 框架（VDOM vs Vapor） | instrumented BG/e2e + 可交互 | [框架测试](/zh/guide/benchmark-vapor) |
+
+它们共用 **1k→30k 标签**，但不是同一**量纲**。本报告把每个 cell 放进同一 schema，
+并以「结论 → 含义 → 核对」开篇。
+
+兄弟页只保留本矩阵**盖不到**的：
+
+| 页面 | 保留内容 |
+|---|---|
+| [框架测试](/zh/guide/benchmark-vapor) | 可交互（React 作参考系）、instrumented BG/e2e、ops 字节、包体/heap |
+| [IFR 基准测试](/zh/guide/ifr-benchmarks) | 策略阶梯、示例 gzip/TTI、native |
+
+## 怎么读
+
+1. **结论** — 好消化的产品选择；数字用来核对。
+2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。
+3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
+
+## 环境规则
+
+- **lynx-web** — 主产品量纲（本报告）。
+- **bare-dom** / **node-jitless** — 不同仪器；禁止跨环境比毫秒。
+
+## 复现
+
+```bash
+pnpm --filter vue-lynx-benchmark bench:unified
+pnpm --filter vue-lynx-benchmark bench:synthesize
+pnpm --filter vue-lynx-benchmark bench:report
+```
+
+设计说明：[`packages/benchmark/UNIFIED.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/UNIFIED.md) ·
+原始分析：[`ANALYSIS.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/results/unified/ANALYSIS.md)。
