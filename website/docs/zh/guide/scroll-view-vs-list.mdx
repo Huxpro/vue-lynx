@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
 :::tip List diff
-Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 `listItems`（LIS 检测 move，语义对齐 ReactLynx 的 remove+insert）刷新 `insertAction` / `removeAction` / `updateAction`。覆盖追加、头部插入、中间插入、删除、同 list 重排、platform-info 更新。尚未做：框架侧 cell 回收、每次 flush 刷新 `__UpdateListCallbacks`——[#302](https://github.com/Huxpro/vue-lynx/issues/302)、[#303](https://github.com/Huxpro/vue-lynx/issues/303)。
+Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 `listItems`（LIS 检测 move，语义对齐 ReactLynx 的 remove+insert）刷新 `insertAction` / `removeAction` / `updateAction`。覆盖追加、头部插入、中间插入、删除、同 list 重排、platform-info 更新，以及框架侧 cell 回收（`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)）。尚未做：每次 flush 刷新 `__UpdateListCallbacks`——[#303](https://github.com/Huxpro/vue-lynx/issues/303)。
 :::
 
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库
@@ -236,6 +236,7 @@ Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 
 | `ListReorder` | Yellow→top / reverse | 已修 — 同 list move = detach + insert |
 | `ListRemove` | 删除 + Reset 同 key | 已修 — `removeAction`（曾 2202） |
 | `ListFilter` | 偶数过滤切换 | OK |
+| `ListRecycle` | leave→re-enter uiSign 复用 | 已修 — `enqueueComponent` 池 (#302) |
 
 ### Prepend
 
@@ -277,12 +278,26 @@ Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 
   defaultEntryName="ListFilter"
 />
 
+### Cell 回收
+
+点 **Run recycle probe**。主线程 worklet 通过 `componentAtIndex` / `enqueueComponent` leave→re-enter，必须显示 **self-reuse: PASS** 与 **cross-item: PASS**（池中同一 uiSign）。
+
+:::note 内存
+当前池只是把 uiSign 所有权重映射给原生回收协议。Vue 仍会 eager CREATE 每个 `list-item` 子树，因此主线程树数量仍是 **O(数据条数)**，直到创建真正 defer。跨 item hydrate 需要显式共享的 `reuse-identifier`，且仅适用于**同构（uniform）子树**；空 identifier 只做 self-reuse。内部 `v-if` / `v-for` 导致形状不同的 cell 会跳过跨 item hydrate，而不会做结构 morph。
+:::
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListRecycle/App.vue"
+  entry="src/ListRecycle"
+  defaultEntryName="ListRecycle"
+/>
+
 ### 仍未做
 
-- 框架侧 cell 回收（`enqueueComponent` / recycle pool）— [#302](https://github.com/Huxpro/vue-lynx/issues/302)
 - 每次 list flush 刷新 `__UpdateListCallbacks` — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
 
-自动化：`packages/testing-library` → **native list element · mutations**。
+自动化：`packages/testing-library` → **native list element · mutations** + **list cell recycling**。
 
 ## 决策清单
 

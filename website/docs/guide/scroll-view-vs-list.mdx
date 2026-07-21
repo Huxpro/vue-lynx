@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
 :::tip List diffs
-Vue Lynx's Main Thread list adapter flushes `insertAction` / `removeAction` / `updateAction` by diffing the last-flushed snapshot against the live `listItems` array (LIS move detection, same idea as ReactLynx's remove+insert moves). Covers append, prepend, mid-list insert, remove, same-list reorder, and platform-info updates. Still open: framework-side cell recycling and refreshing `__UpdateListCallbacks` each flush — [#302](https://github.com/Huxpro/vue-lynx/issues/302), [#303](https://github.com/Huxpro/vue-lynx/issues/303).
+Vue Lynx's Main Thread list adapter flushes `insertAction` / `removeAction` / `updateAction` by diffing the last-flushed snapshot against the live `listItems` array (LIS move detection, same idea as ReactLynx's remove+insert moves). Covers append, prepend, mid-list insert, remove, same-list reorder, platform-info updates, and framework-side cell recycling (`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)). Still open: refreshing `__UpdateListCallbacks` each flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303).
 :::
 
 ### 4. Prefer `list` over third-party virtual scrollers
@@ -236,6 +236,7 @@ Recycling is a **native** concern; composition stays a **Vue** concern. Put pres
 | `ListReorder` | Yellow→top / reverse | Fixed — same-list move = detach + insert |
 | `ListRemove` | splice + Reset same keys | Fixed — `removeAction` (was 2202) |
 | `ListFilter` | even-only toggle | OK |
+| `ListRecycle` | leave→re-enter uiSign reuse | Fixed — `enqueueComponent` pool (#302) |
 
 ### Prepend
 
@@ -277,12 +278,26 @@ Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list
   defaultEntryName="ListFilter"
 />
 
+### Cell recycle
+
+Tap **Run recycle probe**. A main-thread worklet leave→re-enters cells via `componentAtIndex` / `enqueueComponent` and must report **self-reuse: PASS** and **cross-item: PASS** (same uiSign from the pool).
+
+:::note Memory
+The current pool remaps uiSign ownership for the native recycler protocol. Vue still eagerly CREATEs every `list-item` subtree, so total main-thread trees remain **O(data items)** until creation is deferred. Cross-item hydrate needs an explicit shared `reuse-identifier` and **isomorphic (uniform) shapes**; empty identifiers only self-reuse. Cells that differ via inner `v-if` / `v-for` skip cross-item hydrate rather than morph trees.
+:::
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListRecycle/App.vue"
+  entry="src/ListRecycle"
+  defaultEntryName="ListRecycle"
+/>
+
 ### Still open
 
-- Framework-side cell recycling (`enqueueComponent` / recycle pool) — [#302](https://github.com/Huxpro/vue-lynx/issues/302)
 - Refreshing `__UpdateListCallbacks` on every list flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
 
-Automated coverage: `packages/testing-library` → **native list element · mutations**.
+Automated coverage: `packages/testing-library` → **native list element · mutations** + **list cell recycling**.
 
 ## Decision checklist
 

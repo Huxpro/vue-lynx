@@ -24,6 +24,7 @@ export default defineConfig({
       ListPrepend: './src/ListPrepend/index.ts',
       ListReorder: './src/ListReorder/index.ts',
       ListFilter: './src/ListFilter/index.ts',
+      ListRecycle: './src/ListRecycle/index.ts',
     },
   },
   plugins: [
