@@ -38,6 +38,10 @@ Existing device cases also completed without console errors:
 | Basic | 80 | 9 |
 | Waterfall | 40 | 12 |
 | Infinite | 16 | 8 |
+| Remove | 12 | 7 |
+| Prepend | 6 | 6 |
+| Reorder | 4 | 4 |
+| Filter | 16 | 7 |
 | Recycle | 40 | 7 |
 
 An unpaced sequence of several distant `scrollToPosition` calls was intentionally run first. The host queued thousands of cell requests before returning off-screen leases, eventually materializing most rows. The stable workload paces distinct native relayouts by 350 ms. This does not hide an adapter leak: after the paced run the high-water mark remained 18 cells and half were in the recycle pool.
@@ -67,7 +71,7 @@ Evidence: [`list-data-source-benchmark.jpeg`](./list-data-source-benchmark.jpeg)
 
 原生 DOM 显示 `logical=9250 · created=18 · active=9 · pooled=9 · hydrations=72`，并且确实只有 18 个物理 `list-item` 子节点。这独立证明逻辑数据量已不再等于原生树数量。
 
-旧设备案例也均无 console error：Basic 80→9、Waterfall 40→12、Infinite 16→8、Recycle 40→7。
+旧设备案例也均无 console error：Basic 80→9、Waterfall 40→12、Infinite 16→8、Remove 12→7、Prepend 6→6、Reorder 4→4、Filter 16→7、Recycle 40→7。
 
 最初还故意执行了多个完全不间隔的远距离 `scrollToPosition`：host 在归还屏外 lease 之前排队请求了数千个 cell，最后物化了大部分行。稳定 workload 在相互独立的 native relayout 之间间隔 350 ms。这并不是掩盖适配器泄漏：稳定运行后的 cell 高水位仍为 18，并且其中一半已回到 recycle pool。
 

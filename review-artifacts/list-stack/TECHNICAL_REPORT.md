@@ -47,7 +47,7 @@ ReactLynx does perform analogous compiler work. Its SWC list transform rewrites 
 - Scrolling example production build: both web and Lynx bundles passed for all ten entries.
 - iOS Simulator / LynxExplorer, 10k benchmark after all mutations: **9,250 logical rows, 18 native cells created, 9 active, 9 pooled, 72 hydrations**.
 - Native memory inspection for the benchmark page: **18 `list-item` views, 82 element nodes, 87,904 element bytes**. The native DOM inspection independently reported the same 18 physical list-item children.
-- Existing device cases also used the lazy path without console errors: basic 80→9 cells; waterfall 40→12; infinite 16→8; recycle 40→7.
+- Existing device cases also used the lazy path without console errors: basic 80→9 cells; waterfall 40→12; infinite 16→8; remove 12→7; prepend 6→6; reorder 4→4; filter 16→7; recycle 40→7.
 
 The device benchmark includes five dynamic row heights, paced high-velocity jumps, prepend 250, middle removal 1,000, rotation of 2,000 items, and roughly 1,000 reactive field updates. An intentionally unpaced burst of several distant jumps was also tested: native queued thousands of materialization requests before returning leases. That is a host scheduling/benchmark-shape limit, not something a framework may solve by stealing still-active cells. The stable benchmark therefore paces independent native relayout transactions and records the burst result as a separate stress finding.
 
@@ -350,7 +350,7 @@ ReactLynx 的确做了同类编译器处理：SWC list transform 会把 deferred
 - scrolling 示例生产构建：十个入口的 web 与 Lynx bundle 全部通过。
 - iOS Simulator / LynxExplorer 的 10k benchmark 完成所有 mutation 后：**9,250 个逻辑行，只创建 18 个 native cell；9 active、9 pooled、72 次 hydration**。
 - 原生内存检查：benchmark 页面只有 **18 个 `list-item` view、82 个 element node、87,904 element bytes**；DOM 检查也独立确认只有 18 个物理 list-item 子节点。
-- 旧设备案例均进入 lazy path 且无 console error：basic 80→9、waterfall 40→12、infinite 16→8、recycle 40→7。
+- 旧设备案例均进入 lazy path 且无 console error：basic 80→9、waterfall 40→12、infinite 16→8、remove 12→7、prepend 6→6、reorder 4→4、filter 16→7、recycle 40→7。
 
 设备 benchmark 覆盖五档动态高度、带节奏的高速跳转、prepend 250、删除中间 1,000、移动 2,000 项，以及约 1,000 个响应式字段更新。另行测试了多个远距离跳转完全不让出事件循环的 burst：原生端会在归还 lease 前排队请求数千个 cell。框架不能通过抢占仍在使用的 cell 安全解决这种 host 调度情况，因此稳定 benchmark 会让相互独立的原生 relayout 事务之间有间隔，同时把 burst 结果作为单独压力结论保留。
 
