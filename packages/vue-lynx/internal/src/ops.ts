@@ -27,6 +27,11 @@
  *     function; the root maps to rootId and the template's holes (interior
  *     nodes with dynamic parts) map to rootId+1 … rootId+holeCount, so all
  *     later SET_* ops target them like ordinary elements.
+ *   DEFINE_LIST_ITEM_TEMPLATE: [16, rootId, tplId, holeCount]
+ *     Register a logical list-item backed by a compile-time element template.
+ *     Unlike INSTANTIATE_TEMPLATE this does not create native elements. The
+ *     list data-source adapter materializes a bounded number of cells when
+ *     native invokes componentAtIndex and replays the latest root/hole state.
  */
 export const OP = {
   CREATE: 0,
@@ -45,6 +50,7 @@ export const OP = {
   INIT_MT_REF: 13,
   SET_SCOPE_ID: 14,
   INSTANTIATE_TEMPLATE: 15,
+  DEFINE_LIST_ITEM_TEMPLATE: 16,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -72,6 +78,7 @@ export const OP_ARITY: Record<OpCode, number> = {
   [OP.INIT_MT_REF]: 2, // wvid, initValue
   [OP.SET_SCOPE_ID]: 2, // id, cssId
   [OP.INSTANTIATE_TEMPLATE]: 3, // rootId, tplId, holeCount
+  [OP.DEFINE_LIST_ITEM_TEMPLATE]: 3, // rootId, tplId, holeCount
 };
 
 /**
@@ -86,6 +93,8 @@ export const PAGE_ROOT_ID = 1;
 
 /** Type-string prefix for compile-time-lowered template vnodes. */
 export const TPL_TYPE_PREFIX = '__vlx-tpl:';
+/** Type-string prefix for lazily materialized list-item template vnodes. */
+export const LIST_TPL_TYPE_PREFIX = '__vlx-list-tpl:';
 /** Prop-key prefix for hole bindings on lowered vnodes. */
 export const TPL_HOLE_PREFIX = '__h';
 /**

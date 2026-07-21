@@ -114,7 +114,11 @@ async function transformModule(
   resolveImport: ResolveImport,
   includeWorkletPackages: ReadonlyArray<string | RegExp>,
 ): Promise<string> {
-  const keepTpl = ctx.getOptions()?.elementTemplates === true;
+  // ListDataSource lowering is always enabled even when the optional general
+  // element-template optimization is off. Always preserve template-module
+  // edges and extract registration calls; modules without registrations
+  // still collapse to the same tiny stubs.
+  const keepTpl = true;
   // Hoisted element-template registrations: script-setup SFCs inline the
   // compiled template into the script sub-module; non-script-setup SFCs
   // carry them in the compiled template sub-module.

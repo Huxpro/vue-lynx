@@ -85,6 +85,19 @@ export function applySetMtRef(id: number, refImpl: unknown): void {
   }
 }
 
+/** Clear an element-bound MainThreadRef when a recycled cell loses ownership. */
+export function applyClearMtRef(
+  refImpl: unknown,
+  previousElement: LynxElement,
+): void {
+  const impl = getWorkletImpl();
+  const ref = refImpl as { _wvid?: number };
+  if (ref._wvid == null) return;
+  const record = impl?._refImpl?._workletRefMap?.[ref._wvid];
+  // Do not clear a ref that has already been rebound by a newer lease.
+  if (record?.current === previousElement) record.current = null;
+}
+
 /** INIT_MT_REF: register a value-only MainThreadRef in the worklet ref map */
 export function applyInitMtRef(wvid: number, initValue: unknown): void {
   // Value-only refs (e.g. useMainThreadRef<number>(0)) are NOT bound to

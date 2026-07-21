@@ -36,13 +36,14 @@
  */
 
 import {
+  LIST_TPL_TYPE_PREFIX,
   TPL_EXECUTOR_REGISTRY_GLOBAL,
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
   TPL_TYPE_PREFIX,
 } from 'vue-lynx/internal/ops';
 
-export { TPL_HOLE_PREFIX, TPL_TYPE_PREFIX };
+export { LIST_TPL_TYPE_PREFIX, TPL_HOLE_PREFIX, TPL_TYPE_PREFIX };
 
 /** create(pageUniqueId) → [root, hole0, hole1, …] native handles */
 export type ElementTemplateCreate = (

@@ -5,6 +5,7 @@
 import type { RendererOptions } from '@vue/runtime-core';
 
 import {
+  LIST_TPL_TYPE_PREFIX,
   TPL_HOLE_PREFIX,
   TPL_TYPE_PREFIX,
   getElementTemplateHoles,
@@ -184,7 +185,12 @@ export function resolveClass(el: ShadowElement): string {
  * below using ordinary SET_* ops.
  */
 function createTemplateInstance(type: string): ShadowElement {
-  const tplId = type.slice(TPL_TYPE_PREFIX.length);
+  const isListItemTemplate = type.startsWith(LIST_TPL_TYPE_PREFIX);
+  const tplId = type.slice(
+    isListItemTemplate
+      ? LIST_TPL_TYPE_PREFIX.length
+      : TPL_TYPE_PREFIX.length,
+  );
   const holeKeys = getElementTemplateHoles(tplId);
   const el = new ShadowElement(type);
   if (!holeKeys) {
@@ -206,14 +212,24 @@ function createTemplateInstance(type: string): ShadowElement {
   }
   el._tplHoleKeys = holeKeys;
   el._tplHoles = holes;
-  pushOp(OP.INSTANTIATE_TEMPLATE, el.id, tplId, holeKeys.length);
+  pushOp(
+    isListItemTemplate
+      ? OP.DEFINE_LIST_ITEM_TEMPLATE
+      : OP.INSTANTIATE_TEMPLATE,
+    el.id,
+    tplId,
+    holeKeys.length,
+  );
   scheduleFlush();
   return el;
 }
 
 export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
-    if (type.startsWith(TPL_TYPE_PREFIX)) {
+    if (
+      type.startsWith(TPL_TYPE_PREFIX)
+      || type.startsWith(LIST_TPL_TYPE_PREFIX)
+    ) {
       return createTemplateInstance(type);
     }
     // Lynx owns exactly one native <page>, created before the app runs. A
