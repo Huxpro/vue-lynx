@@ -1,0 +1,24 @@
+{
+  "issue": 301,
+  "axis": "naming-density",
+  "fixture": "static-heavy-24-leaves",
+  "note": "Native skeleton still fully built either way; FCP win needs #300. This measures BG shells + MT elements map only.",
+  "dense": {
+    "mode": "dense",
+    "shadows": 49,
+    "mtNamed": 25,
+    "cloneMs": 0.0234,
+    "addressedCount": 25
+  },
+  "sparse": {
+    "mode": "sparse",
+    "shadows": 1,
+    "mtNamed": 1,
+    "cloneMs": 0.0067,
+    "addressedCount": 1
+  },
+  "savings": {
+    "shadowsPct": 98,
+    "mtNamedPct": 96
+  }
+}

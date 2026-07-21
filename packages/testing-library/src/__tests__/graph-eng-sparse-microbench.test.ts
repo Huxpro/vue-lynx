@@ -63,7 +63,6 @@ function countShadow(el: ShadowElement): number {
 describe('graph-eng sparse A2 microbench (#301)', () => {
   it('reports ShadowElement + MT named savings for root-only sparse', () => {
     const staticLeaves = 24;
-    const proto = buildStaticHeavyProto(staticLeaves);
     const slotCount = 1 + staticLeaves; // folded only-child texts
 
     const run = (sparse: boolean) => {
@@ -71,6 +70,12 @@ describe('graph-eng sparse A2 microbench (#301)', () => {
       resetMainThreadState();
       takeOps();
       ShadowElement.nextUid = 2;
+
+      // Fresh proto each run — templateCaches is a WeakMap keyed by proto,
+      // so reusing one would lock the first (dense) registration forever.
+      const proto = buildStaticHeavyProto(staticLeaves);
+      ShadowElement.nextUid = 2;
+      takeOps();
 
       setPendingVaporAddressing(
         sparse
@@ -83,18 +88,26 @@ describe('graph-eng sparse A2 microbench (#301)', () => {
           : undefined,
       );
 
-      const N = 100;
-      const t0 = performance.now();
-      let last!: ShadowElement;
-      for (let i = 0; i < N; i++) last = proto.cloneNode(true) as ShadowElement;
-      const cloneMs = (performance.now() - t0) / N;
+      // Metric sample first — includes REGISTER_TREE + one CLONE_TREE so
+      // applyOps has the template registration.
+      const last = proto.cloneNode(true) as ShadowElement;
       const ops = takeOps();
       applyOps(ops);
 
       const reg = ops.indexOf(OP.REGISTER_TREE);
+      expect(reg).toBeGreaterThanOrEqual(0);
       const addressedOr0 = ops[reg + 3];
+      const mode = Array.isArray(addressedOr0) ? 'sparse' : 'dense';
+
+      // Timing loop (template already registered; discard clone ops).
+      const N = 100;
+      const t0 = performance.now();
+      for (let i = 0; i < N; i++) proto.cloneNode(true);
+      const cloneMs = (performance.now() - t0) / N;
+      takeOps();
+
       return {
-        mode: Array.isArray(addressedOr0) ? 'sparse' : 'dense',
+        mode,
         shadows: countShadow(last),
         mtNamed: [...elements.keys()].filter((id) => id >= 2).length,
         cloneMs: +cloneMs.toFixed(4),
