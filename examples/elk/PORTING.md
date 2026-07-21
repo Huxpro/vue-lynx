@@ -107,15 +107,19 @@ access-token sign-in** in Settings. Multi-account storage
    and mirrors it to both scopes before masto runs. Other free-identifier web
    constructors use targeted `source.define` rewrites (no masto patches).
    **Pagination:** masto.js continues pages via the HTTP `Link` header
-   (`response.headers.get('link')`). Native Lynx fetch often omits that
-   header, so the first page succeeds and the next `paginator.next()` looks
-   like end-of-feed ("End of the timeline") while Web keeps scrolling.
-   `wrapFetchForMastoPagination` in `fetch-compat.ts` leaves the native
-   Response alone when `Link` is present (see Lynx networking guide:
-   Fetch is Web-compatible with subtle differences — prefer not to replace
-   the host Response). When `Link` is missing it buffers the body, keeps
-   `Content-Type` via `.get` (native Headers often do not enumerate), and
-   synthesizes `rel="next"` from `max_id` / `offset`.
+   (`response.headers.get('link')`). Some native Lynx builds enumerate the
+   real mixed-case `Link` and `Content-Type` names but implement `.get()` as
+   case-sensitive, so masto's lowercase lookup sees no next page. The same
+   builds can expose a partial `URL` whose `.search` is missing. Together
+   these made the first page end early or made page 2 throw while Web kept
+   scrolling. `wrapFetchForMastoPagination` patches `.get()` in place with a
+   case-insensitive fallback, preserving the native Response and unread body
+   (see Lynx networking guide: Fetch is Web-compatible with subtle
+   differences). When `Link` is genuinely missing it buffers the body and
+   synthesizes `rel="next"` from `max_id` / `offset` without relying on the
+   host URL implementation. `polyfills.ts` also replaces incomplete URL
+   implementations, not just missing ones, because masto needs both
+   `.pathname` and `.search` from each Link URL.
 2. **No DOMParser anywhere** (worker or native). Elk's `tiny-decode`
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for

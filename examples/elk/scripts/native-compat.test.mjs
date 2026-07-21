@@ -331,6 +331,14 @@ test('native WebSocket remains wrapper-scoped for the Rspeedy dev transport', ()
   assert.equal(lynxConfig.source?.define?.WebSocket, undefined);
 });
 
+test('URL compatibility guard rejects incomplete native URL implementations', async () => {
+  const source = await readFile(new URL('../src/polyfills.ts', import.meta.url), 'utf8');
+  assert.match(source, /url\.search !== '\?a=1'/);
+  assert.match(source, /url\.searchParams\.set\('b', '2'\)/);
+  assert.match(source, /if \(!hasCompatibleURL\(g\.URL\)\)/);
+  assert.match(source, /this\._search = query \? `\?\$\{query\}` : ''/);
+});
+
 test('fetch compatibility prefers the native wrapper and falls back to the web global', () => {
   const nativeFetch = () => 'native';
   const webFetch = () => 'web';
@@ -349,6 +357,7 @@ test('fetch Link synthesis builds max_id next for status arrays when header miss
   assert.match(link ?? '', /rel="next"/);
   assert.match(link ?? '', /max_id=100/);
   assert.match(link ?? '', /local=true/);
+  assert.doesNotMatch(link ?? '', /limit=30\//);
 });
 
 test('fetch Link synthesis uses offset when entities have no id', () => {
@@ -428,6 +437,38 @@ test('wrapFetchForMastoPagination passes through when Link already exists', asyn
   const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => original);
   const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
   assert.equal(res, original);
+});
+
+test('wrapFetchForMastoPagination repairs case-sensitive native Headers.get in place', async () => {
+  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+  const values = new Map([
+    ['Link', existing],
+    ['Content-Type', 'application/json; charset=utf-8'],
+  ]);
+  const nativeHeaders = {
+    get(name) {
+      return values.get(name) ?? null;
+    },
+    forEach(fn) {
+      for (const [name, value] of values)
+        fn(value, name);
+    },
+  };
+  const original = {
+    ok: true,
+    status: 200,
+    headers: nativeHeaders,
+    async text() {
+      throw new Error('native body must remain unread');
+    },
+  };
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => original);
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+
+  assert.equal(res, original);
+  assert.equal(res.headers, nativeHeaders);
+  assert.equal(res.headers.get('link'), existing);
+  assert.match(res.headers.get('content-type') ?? '', /application\/json/);
 });
 
 test('normalizeResponseHeaders seeds Content-Type via .get without enumeration', () => {

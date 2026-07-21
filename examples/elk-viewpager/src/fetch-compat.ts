@@ -147,6 +147,53 @@ export function normalizeResponseHeaders(source: unknown): MutableHeaders {
   return headers;
 }
 
+/**
+ * Lynx native Headers can enumerate mixed-case response names while `.get()`
+ * only matches the original casing. masto always asks for lowercase `link`, so
+ * add a case-insensitive fallback on the existing Headers object. Keeping the
+ * original object means the native Response and its unread body stay intact.
+ */
+function patchNativeHeaderGet(source: unknown): boolean {
+  if (!source || typeof source !== 'object')
+    return false;
+
+  const headers = source as { get?: (name: string) => unknown };
+  if (typeof headers.get !== 'function')
+    return false;
+
+  const originalGet = headers.get.bind(headers);
+  const normalized = normalizeResponseHeaders(source);
+  const compatibleGet = (name: string): string | null => {
+    try {
+      const direct = originalGet(name);
+      if (direct != null && direct !== '')
+        return String(direct);
+    }
+    catch {
+      // Fall back to the case-insensitive snapshot below.
+    }
+    return normalized.get(name);
+  };
+
+  try {
+    Object.defineProperty(headers, 'get', {
+      value: compatibleGet,
+      configurable: true,
+      writable: true,
+    });
+  }
+  catch {
+    try {
+      headers.get = compatibleGet;
+    }
+    catch {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 function requestUrl(input: unknown): string {
   if (typeof input === 'string')
     return input;
@@ -180,30 +227,58 @@ export function synthesizeNextLink(
   if (!Array.isArray(data) || data.length === 0)
     return null;
 
-  let nextHref: string;
-  try {
-    if (typeof URL !== 'function')
-      return null;
-
-    const url = new URL(requestHref);
-    const last = data[data.length - 1] as Record<string, unknown>;
-    if (last && last.id != null) {
-      url.searchParams.set('max_id', String(last.id));
-      // Avoid a tight loop if the server ignored max_id and returned the same head.
-      const prevMax = new URL(requestHref).searchParams.get('max_id');
-      if (prevMax === String(last.id))
-        return null;
-    }
-    else {
-      const prevOffset = Number(url.searchParams.get('offset') || '0');
-      if (!Number.isFinite(prevOffset))
-        return null;
-      url.searchParams.set('offset', String(prevOffset + data.length));
-    }
-    nextHref = url.href;
-  }
-  catch {
+  if (!requestHref)
     return null;
+
+  const hashIndex = requestHref.indexOf('#');
+  const hash = hashIndex >= 0 ? requestHref.slice(hashIndex) : '';
+  const withoutHash = hashIndex >= 0 ? requestHref.slice(0, hashIndex) : requestHref;
+  const queryIndex = withoutHash.indexOf('?');
+  const base = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+  const rawQuery = queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : '';
+  const pairs = rawQuery ? rawQuery.split('&').filter(Boolean) : [];
+
+  const decodeKey = (pair: string) => {
+    const raw = pair.split('=', 1)[0];
+    try {
+      return decodeURIComponent(raw.replace(/\+/g, ' '));
+    }
+    catch {
+      return raw;
+    }
+  };
+  const getParam = (name: string): string | null => {
+    const pair = pairs.find(item => decodeKey(item) === name);
+    if (!pair)
+      return null;
+    const raw = pair.includes('=') ? pair.slice(pair.indexOf('=') + 1) : '';
+    try {
+      return decodeURIComponent(raw.replace(/\+/g, ' '));
+    }
+    catch {
+      return raw;
+    }
+  };
+  const setParam = (name: string, value: string): string => {
+    const kept = pairs.filter(item => decodeKey(item) !== name);
+    kept.push(`${encodeURIComponent(name)}=${encodeURIComponent(value)}`);
+    return `${base}?${kept.join('&')}${hash}`;
+  };
+
+  let nextHref: string;
+  const last = data[data.length - 1] as Record<string, unknown>;
+  if (last && last.id != null) {
+    const nextMax = String(last.id);
+    // Avoid a tight loop if the server ignored max_id and returned the same head.
+    if (getParam('max_id') === nextMax)
+      return null;
+    nextHref = setParam('max_id', nextMax);
+  }
+  else {
+    const prevOffset = Number(getParam('offset') || '0');
+    if (!Number.isFinite(prevOffset))
+      return null;
+    nextHref = setParam('offset', String(prevOffset + data.length));
   }
 
   return `<${nextHref}>; rel="next"`;
@@ -274,9 +349,19 @@ export function wrapFetchForMastoPagination(fetchImpl: FetchLike): FetchLike {
   return async function fetchWithMastoLink(input: unknown, init?: unknown) {
     const response = await fetchImpl(input, init);
 
-    // Fast path: leave Lynx/Web Response untouched when Link is present.
-    if (readHeader(response?.headers, 'link'))
-      return response;
+    // Fast path: leave Lynx/Web Response and body untouched when Link exists.
+    // Lynx may expose it only through iteration because Headers.get is
+    // case-sensitive; patch that method in place before masto reads `link`.
+    if (readHeader(response?.headers, 'link')) {
+      patchNativeHeaderGet(response?.headers);
+      try {
+        if (response?.headers?.get?.('link'))
+          return response;
+      }
+      catch {
+        // Fall through to the buffered compatibility response.
+      }
+    }
 
     // Need body to synthesize next — buffer once. Always keep Content-Type
     // via readHeader; empty iteration of native Headers was dropping it and
