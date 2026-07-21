@@ -283,7 +283,7 @@ Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list
 Tap **Run recycle probe**. A main-thread worklet leave→re-enters cells via `componentAtIndex` / `enqueueComponent` and must report **self-reuse: PASS** and **cross-item: PASS** (same uiSign from the pool).
 
 :::note Memory
-The current pool remaps uiSign ownership for the native recycler protocol. Vue still eagerly CREATEs every `list-item` subtree, so total main-thread trees remain **O(data items)** until creation is deferred. Cross-item hydrate needs an explicit shared `reuse-identifier` and isomorphic shapes; empty identifiers only self-reuse.
+The current pool remaps uiSign ownership for the native recycler protocol. Vue still eagerly CREATEs every `list-item` subtree, so total main-thread trees remain **O(data items)** until creation is deferred. Cross-item hydrate needs an explicit shared `reuse-identifier` and **isomorphic (uniform) shapes**; empty identifiers only self-reuse. Cells that differ via inner `v-if` / `v-for` skip cross-item hydrate rather than morph trees.
 :::
 
 <Go

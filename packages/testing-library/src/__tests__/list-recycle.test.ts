@@ -112,6 +112,9 @@ describe('list cell recycling', () => {
   });
 
   it('skips cross-item hydrate when shapes are incompatible', () => {
+    // Documents the uniform-cells-only limitation: same reuse-identifier but
+    // different child counts (as with an inner v-if) must NOT mis-map content —
+    // shapesCompatible refuses hydrate and B mounts its own tree.
     const Comp = defineComponent({
       render() {
         return h('list', null, [
@@ -123,6 +126,7 @@ describe('list cell recycling', () => {
           h(
             'list-item',
             { key: 'b', 'item-key': 'b', 'reuse-identifier': 'row' },
+            // Conditional-subtree stand-in: extra child vs cell A.
             [h('text', null, 'B'), h('text', null, 'EXTRA')],
           ),
         ]);
@@ -140,10 +144,57 @@ describe('list cell recycling', () => {
 
     const signB = tree.enterListItemAtIndex(listEl, 1);
     expect(signB).not.toBe(signA);
-    // Donor stays in the pool; B mounts its own tree.
+    // Donor stays in the pool; B mounts its own tree (no silent mis-map).
     expect(getRecyclePoolSizeForTest(listEl.$$uiSign, 'list-item:row')).toBe(
       1,
     );
+    // EXTRA text must still be present on B's own tree.
+    const texts = [...listEl.querySelectorAll('text')].map(
+      (n: { textContent?: string }) => n.textContent,
+    );
+    expect(texts).toContain('EXTRA');
+  });
+
+  it('skips cross-item hydrate for reactive conditional subtrees', async () => {
+    // Same reuse-identifier, but one cell gains a child via a reactive flag —
+    // the shape gate must refuse hydrate rather than pair by Math.min length.
+    const showExtra = ref(false);
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h('list', null, [
+            h(
+              'list-item',
+              { key: 'a', 'item-key': 'a', 'reuse-identifier': 'row' },
+              [h('text', null, 'A')],
+            ),
+            h(
+              'list-item',
+              { key: 'b', 'item-key': 'b', 'reuse-identifier': 'row' },
+              showExtra.value
+                ? [h('text', null, 'B'), h('text', null, 'EXTRA')]
+                : [h('text', null, 'B')],
+            ),
+          ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const e = env();
+
+    e.switchToBackgroundThread();
+    showExtra.value = true;
+    await nextTick();
+    await nextTick();
+
+    e.switchToMainThread();
+    const listEl = container.querySelector('list') as any;
+    const tree = elementTree();
+
+    const signA = tree.enterListItemAtIndex(listEl, 0);
+    tree.leaveListItem(listEl, signA);
+    const signB = tree.enterListItemAtIndex(listEl, 1);
+    expect(signB).not.toBe(signA);
   });
 
   it('keeps distinct reuse-identifier pools separate', () => {

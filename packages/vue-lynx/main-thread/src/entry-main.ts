@@ -43,9 +43,10 @@ g['SystemInfo'] =
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
 g['runOnBackground'] = runOnBackground;
 
-// List recycle probe for examples / headless browser checks (#302).
-// Kept available in all builds so the ListRecycle Go demo works in Web
-// Preview; it is not part of the native list protocol.
+// List recycle probe for the ListRecycle Go demo / headless checks (#302).
+// Consciously kept on the production MT entry so docs Web Preview can call it;
+// it is not part of the native list protocol. Gate further behind __DEV__ only
+// once demos have another way to exercise recycle without the global.
 g['__vueLynxProbeListRecycle'] = probeListRecycle;
 
 // Element-template registration hooks. Compiler-lowered template create()
