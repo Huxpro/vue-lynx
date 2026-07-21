@@ -195,6 +195,13 @@ export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 export const VAPOR_ADDRESSING_KEY = '__vlxAddressing';
 
 /**
+ * Build-time define for sparse A2 naming (#298 / #301).
+ * When `false`, runtime forces dense CLONE_TREE even if `__vlxAddressing`
+ * is present — the A1 cell of the graph-eng flag matrix.
+ */
+export const VAPOR_SPARSE_NAMING_GLOBAL = '__VUE_LYNX_SPARSE_NAMING__';
+
+/**
  * Sparse naming metadata for one vapor template (REGISTER_TREE preorder
  * slots). `addressed` is what receives uids under A2; `holes` ⊆ `addressed`
  * are write / insert-host targets.

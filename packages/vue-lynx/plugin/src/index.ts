@@ -23,6 +23,7 @@
 import {
   VAPOR_DOCUMENT_GLOBAL,
   VAPOR_DOM_CTOR_GLOBALS,
+  VAPOR_SPARSE_NAMING_GLOBAL,
   VAPOR_WINDOW_GLOBAL,
 } from 'vue-lynx/internal/ops';
 import { createRequire } from 'node:module';
@@ -145,6 +146,18 @@ export interface PluginVueLynxOptions {
   enableElementTemplates?: boolean;
 
   /**
+   * Whether Vapor `CLONE_TREE` may use sparse A2 naming when compile-time
+   * `__vlxAddressing` metadata is present (#298).
+   *
+   * Set to `false` to force dense A1 naming for A/B measurement in the
+   * graph-eng flag matrix (#301). Has no effect on VDOM (ET naming is
+   * already sparse).
+   *
+   * @defaultValue true
+   */
+  enableSparseNaming?: boolean;
+
+  /**
    * Whether to enable IFR (Instant First-Frame Rendering).
    *
    * When enabled, the main-thread bundle contains the full Vue runtime and
@@ -245,6 +258,7 @@ export function pluginVueLynx(
     enableIFR = false,
     includeWorkletPackages = [],
     vapor = false,
+    enableSparseNaming = true,
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -312,6 +326,9 @@ export function pluginVueLynx(
                 __VUE_PROD_DEVTOOLS__: prodDevtools ? 'true' : 'false',
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
+                [VAPOR_SPARSE_NAMING_GLOBAL]: JSON.stringify(
+                  enableSparseNaming !== false,
+                ),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references
@@ -377,6 +394,25 @@ export function pluginVueLynx(
               .use(VueLynxVaporTemplatePlugin, [
                 path.resolve(_pluginDirname, './loaders/vapor-template-loader.js'),
               ]);
+
+            // Prod inlineTemplate path never hits the template loader — stamp
+            // `__vlxAddressing` on the compiled script so sparse A2 activates
+            // in probe/benchmark bundles (#301).
+            if (enableSparseNaming !== false) {
+              chain.module
+                .rule('vue-lynx:vapor-addressing-script')
+                .test(/\.vue$/)
+                .resourceQuery(/type=script/)
+                .use('vue-lynx:vapor-addressing-script')
+                .loader(
+                  path.resolve(
+                    _pluginDirname,
+                    './loaders/vapor-addressing-script-loader.js',
+                  ),
+                )
+                .options({ enabled: true })
+                .end();
+            }
           }
 
           // Ensure vue-lynx/internal/ops resolves correctly.
