@@ -391,3 +391,124 @@ export function resetListState(): void {
 export function getListItemBgIdsForTest(listId: number): number[] {
   return (listItems.get(listId) ?? []).map((e) => e.bgId);
 }
+
+export interface ListRecycleProbeResult {
+  selfOk: boolean;
+  crossOk: boolean;
+  sign0: number;
+  sign0b: number;
+  sign1: number;
+  poolAfterLeave: number;
+  poolAfterCross: number;
+  reuseKey: string;
+}
+
+/**
+ * Negative-control probe for #302.
+ *
+ * Drives the same componentAtIndex / enqueueComponent path native scroll uses.
+ * On this branch `enqueueComponent` is still a no-op (no signMap/recycleMap),
+ * so leave→other-index cannot hand back a pooled uiSign — `crossOk` is false.
+ * Used by the ListRecycle example to prove the gap before the #302 fix.
+ */
+export function probeListRecycle(
+  list?: LynxElement | null,
+): ListRecycleProbeResult {
+  let bgId: number | undefined;
+  if (list) {
+    for (const id of listElementIds) {
+      if (elements.get(id) === list) {
+        bgId = id;
+        break;
+      }
+    }
+  }
+  if (bgId === undefined) {
+    bgId = listElementIds.values().next().value as number | undefined;
+  }
+  if (bgId === undefined) {
+    throw new Error('probeListRecycle: no <list> registered on MT');
+  }
+
+  const listEl = elements.get(bgId);
+  const items = listItems.get(bgId);
+  if (!listEl || !items || items.length < 2) {
+    throw new Error('probeListRecycle requires a list with ≥ 2 items');
+  }
+
+  const listID = __GetElementUniqueID(listEl);
+  const cai = (
+    listEl as LynxElement & {
+      componentAtIndex?: (
+        list: LynxElement,
+        listID: number,
+        cellIndex: number,
+        operationID: number,
+      ) => number | undefined;
+    }
+  ).componentAtIndex;
+  const enq = (
+    listEl as LynxElement & {
+      enqueueComponent?: (
+        list: LynxElement,
+        listID: number,
+        sign: number,
+      ) => void;
+    }
+  ).enqueueComponent;
+
+  const enter = (index: number, opId: number): number => {
+    if (typeof cai === 'function') {
+      const sign = cai.call(listEl, listEl, listID, index, opId);
+      if (typeof sign !== 'number') {
+        throw new Error(`componentAtIndex(${index}) returned undefined`);
+      }
+      return sign;
+    }
+    // Mirror createListCallbacks.componentAtIndex on this branch.
+    const item = items[index]!.el;
+    __AppendElement(listEl, item);
+    const sign = __GetElementUniqueID(item);
+    __FlushElementTree(item, {
+      triggerLayout: true,
+      operationID: opId,
+      elementID: sign,
+      listID,
+    });
+    return sign;
+  };
+
+  const leave = (sign: number): void => {
+    if (typeof enq === 'function') {
+      enq.call(listEl, listEl, listID, sign);
+    }
+    // else: enqueueComponentNoop
+  };
+
+  const reuseId = listItemPlatformInfo.get(items[0]!.bgId)?.['reuse-identifier'];
+  const reuseKey = `list-item${reuseId ?? ''}`;
+
+  leave(enter(0, 9001));
+  const sign0 = enter(0, 9002);
+  leave(sign0);
+  // No recycle pool on this branch — always 0.
+  const poolAfterLeave = 0;
+  const sign0b = enter(0, 9003);
+  const selfOk = sign0b === sign0;
+
+  leave(sign0b);
+  const sign1 = enter(1, 9004);
+  const crossOk = sign1 === sign0b;
+  const poolAfterCross = 0;
+
+  return {
+    selfOk,
+    crossOk,
+    sign0,
+    sign0b,
+    sign1,
+    poolAfterLeave,
+    poolAfterCross,
+    reuseKey,
+  };
+}

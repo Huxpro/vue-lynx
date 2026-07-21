@@ -22,6 +22,7 @@ import {
 import { elements, setPageUniqueId } from './element-registry.js';
 import { registerTemplate } from './element-templates.js';
 import { interceptPatchUpdate, runIfrRender } from './ifr.js';
+import { probeListRecycle } from './list-apply.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
@@ -41,6 +42,9 @@ g['SystemInfo'] =
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
 g['runOnBackground'] = runOnBackground;
+
+// List recycle probe for the ListRecycle control example (#302 negative).
+g['__vueLynxProbeListRecycle'] = probeListRecycle;
 
 // Element-template registration hooks. Compiler-lowered template create()
 // functions land here from either side:
