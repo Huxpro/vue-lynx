@@ -1029,6 +1029,13 @@ function isValidAddressing(
   slotCount: number,
   structure: TemplateNode,
 ): meta is VaporTreeAddressing {
+  // Graph-eng matrix kill-switch (#301): force dense A1.
+  if (
+    typeof __VUE_LYNX_SPARSE_NAMING__ !== 'undefined'
+    && __VUE_LYNX_SPARSE_NAMING__ === false
+  ) {
+    return false;
+  }
   if (!meta) return false;
   if (meta.slotCount !== slotCount) return false;
   if (!Array.isArray(meta.addressed) || meta.addressed.length === 0) {

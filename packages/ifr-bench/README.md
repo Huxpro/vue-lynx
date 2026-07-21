@@ -7,6 +7,7 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 **Results and analysis:**
 - Strategy ladder / historical: [REPORT.md](./REPORT.md)
 - **Unified lineage re-run (VDOM off/ifr/ifr-et + Vapor, corrected flags): [UNIFIED-RERUN.md](./UNIFIED-RERUN.md)**
+- **Graph-eng flag matrix (slots × dense/sparse × native stub) + ReactLynx positioning: [GRAPH-ENG-MATRIX.md](./GRAPH-ENG-MATRIX.md)** (#301)
 - Post-#216 large-app reevaluation: [reeval/REEVALUATION.md](./reeval/REEVALUATION.md)
 
 ## Layout

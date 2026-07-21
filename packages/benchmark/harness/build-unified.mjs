@@ -31,6 +31,9 @@ const VUE_CELLS = [
   { id: 'vdom-ifr-et', app: 'ui-vdom', cell: 'ifr-et' },
   { id: 'vapor', app: 'ui-vapor', cell: 'off' },
   { id: 'vapor-ifr', app: 'ui-vapor', cell: 'ifr' },
+  // Graph-eng naming-density pair (#301) — opt-in via --only=.
+  { id: 'vapor-ifr-dense', app: 'ui-vapor', cell: 'ifr-dense' },
+  { id: 'vapor-ifr-sparse', app: 'ui-vapor', cell: 'ifr-sparse' },
 ];
 
 export function buildVueMatrix(filter = null) {
@@ -43,8 +46,7 @@ export function buildVueMatrix(filter = null) {
       recursive: true,
       force: true,
     });
-    const distName =
-      c.cell === 'off' ? 'dist' : c.cell === 'ifr' ? 'dist-ifr' : 'dist-ifr-et';
+    const distName = c.cell === 'off' ? 'dist' : `dist-${c.cell}`;
     fs.rmSync(path.join(cwd, distName), { recursive: true, force: true });
     console.log(`[unified-build] ${c.id} (apps/${c.app} BENCH_CELL=${c.cell})`);
     execSync('npx rspeedy build', {

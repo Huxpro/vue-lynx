@@ -47,6 +47,7 @@ export const ARCHITECTURES = [
     family: 'vue-vapor',
     ifr: false,
     et: false,
+    sparse: true,
     label: 'Vue Vapor',
     tableDist: 'ui-vapor/dist',
     tableApp: 'ui-vapor',
@@ -56,8 +57,32 @@ export const ARCHITECTURES = [
     family: 'vue-vapor',
     ifr: true,
     et: false,
+    sparse: true,
     label: 'Vue Vapor+IFR',
     tableDist: 'ui-vapor/dist-ifr',
+    tableApp: 'ui-vapor',
+  },
+  {
+    // Graph-eng naming-density A1 cell (#301 / #297).
+    id: 'vapor-ifr-dense',
+    family: 'vue-vapor',
+    ifr: true,
+    et: false,
+    sparse: false,
+    label: 'Vue Vapor+IFR (dense A1)',
+    tableDist: 'ui-vapor/dist-ifr-dense',
+    tableApp: 'ui-vapor',
+  },
+  {
+    // Graph-eng naming-density A2 cell (#301 / #298) — same as vapor-ifr
+    // product default; kept explicit for matrix coordinates.
+    id: 'vapor-ifr-sparse',
+    family: 'vue-vapor',
+    ifr: true,
+    et: false,
+    sparse: true,
+    label: 'Vue Vapor+IFR (sparse A2)',
+    tableDist: 'ui-vapor/dist-ifr-sparse',
     tableApp: 'ui-vapor',
   },
   {
@@ -88,7 +113,6 @@ export const ARCHITECTURES = [
     tableApp: 'ui-react',
   },
 ];
-
 /**
  * Measurement environments. Each has its own scale semantics.
  *
@@ -165,6 +189,8 @@ export const WORKLOADS = {
       'vdom-ifr-et',
       'vapor',
       'vapor-ifr',
+      'vapor-ifr-dense',
+      'vapor-ifr-sparse',
       'react',
     ],
   },
