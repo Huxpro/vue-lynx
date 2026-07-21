@@ -1051,6 +1051,10 @@ function resolveListBgId(list?: LynxElement | null): number {
  * Calls the same internal mount/enqueue paths as the native callbacks so it
  * works even when `main-thread-ref` resolves to a web wrapper without the
  * callback properties attached.
+ *
+ * Probe-only: `resolveListBgId` walks ancestors when the ref is an inner node
+ * and throws if it cannot resolve — it never silently picks another list on
+ * a multi-list page.
  */
 export function probeListRecycle(
   list?: LynxElement | null,
