@@ -1,0 +1,65 @@
+{
+  "stack": [293, 307, 311],
+  "merge_order": [293, 307, 311],
+  "reviews": [
+    {
+      "pr": 293,
+      "review_id": 4747173741,
+      "commit": "d39b6ffd66d2d32d03f46d7bc538f843394a3558",
+      "findings": [
+        {
+          "IssueDescription": "Every ops flush recomputes the diff and LIS for every registered list, including unrelated text/style updates.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/293#pullrequestreview-4747173741"
+        },
+        {
+          "IssueDescription": "The guide promises flat memory before the Vue adapter implements bounded cell materialization.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/293#pullrequestreview-4747173741"
+        }
+      ]
+    },
+    {
+      "pr": 307,
+      "review_id": 4747190270,
+      "commit": "f2208f0e47731c936da2e733e055510070bac4c2",
+      "findings": [
+        {
+          "IssueDescription": "Hydration uses DOM traversal and mutation on ElementRef even though native handles are opaque and require Element PAPI.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/307#pullrequestreview-4747190270"
+        },
+        {
+          "IssueDescription": "All cells without an explicit reuse identifier share one pool; heterogeneous shapes lose unmatched descendants.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/307#pullrequestreview-4747190270"
+        },
+        {
+          "IssueDescription": "Recycling swaps already-created trees and therefore retains approximately one materialized tree per logical item.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/307#pullrequestreview-4747190270"
+        }
+      ]
+    },
+    {
+      "pr": 311,
+      "review_id": 4747193997,
+      "commit": "01c91a90683a651dfb848fa531c93512b59b8ee1",
+      "findings": [
+        {
+          "IssueDescription": "Removing an ancestor does not unregister descendant list callbacks, retaining stale state and callable handlers.",
+          "IssueSeverity": "P1",
+          "IssueConfidence": "high",
+          "IssueLink": "https://github.com/Huxpro/vue-lynx/pull/311#pullrequestreview-4747193997"
+        }
+      ]
+    }
+  ],
+  "Accuracy": 0.98,
+  "AccuracyReason": "All posted findings are anchored to changed lines, cross-checked against the public contract and ReactLynx, and the two central correctness failures were reproduced in focused tests. The memory finding follows directly from the eager tree ownership and swap algorithm."
+}

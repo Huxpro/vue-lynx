@@ -18,6 +18,7 @@
  *   INIT_MT_REF:       [13, wvid, initValue]
  *   SET_SCOPE_ID:      [14, id, cssId]   // Vue scoped CSS support
  *   INSTANTIATE_TEMPLATE: [15, rootId, tplId, holeCount]
+ *   DEFINE_LIST_ITEM_TEMPLATE: [16, rootId, tplId, holeCount]
  *     Element-template instantiation (compile-time-lowered static subtree).
  *     The main thread builds the whole subtree via the registered create()
  *     function; the root maps to rootId and the template's holes (interior
@@ -41,6 +42,7 @@ export declare const OP: {
     readonly INIT_MT_REF: 13;
     readonly SET_SCOPE_ID: 14;
     readonly INSTANTIATE_TEMPLATE: 15;
+    readonly DEFINE_LIST_ITEM_TEMPLATE: 16;
 };
 export type OpCode = (typeof OP)[keyof typeof OP];
 /**
@@ -57,6 +59,7 @@ export declare const OP_ARITY: Record<OpCode, number>;
 export declare const PAGE_ROOT_ID = 1;
 /** Type-string prefix for compile-time-lowered template vnodes. */
 export declare const TPL_TYPE_PREFIX = "__vlx-tpl:";
+export declare const LIST_TPL_TYPE_PREFIX = "__vlx-list-tpl:";
 /** Prop-key prefix for hole bindings on lowered vnodes. */
 export declare const TPL_HOLE_PREFIX = "__h";
 /**

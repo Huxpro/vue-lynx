@@ -25,6 +25,7 @@ export default defineConfig({
       ListReorder: './src/ListReorder/index.ts',
       ListFilter: './src/ListFilter/index.ts',
       ListRecycle: './src/ListRecycle/index.ts',
+      ListDataSourceBenchmark: './src/ListDataSourceBenchmark/index.ts',
     },
   },
   plugins: [

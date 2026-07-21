@@ -60,6 +60,7 @@ import {
 } from '@vue/compiler-core';
 
 import {
+  LIST_TPL_TYPE_PREFIX,
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
   TPL_TYPE_PREFIX,
@@ -189,6 +190,7 @@ function analyzeSubtree(
   rootEl: ElementNode,
   context: TransformContext,
   scope: TemplateScopeAdapter,
+  allowListItemRoot = false,
 ): TemplatePlan | null {
   const lines: string[] = [];
   const holes: Hole[] = [];
@@ -201,7 +203,10 @@ function analyzeSubtree(
   const emitElement = (el: ElementNode, isRoot: boolean): string => {
     if (el.type !== NodeTypes.ELEMENT) throw INELIGIBLE;
     if (el.tagType !== ElementTypes.ELEMENT) throw INELIGIBLE;
-    if (EXCLUDED_TAGS.has(el.tag)) throw INELIGIBLE;
+    if (
+      EXCLUDED_TAGS.has(el.tag)
+      && !(allowListItemRoot && isRoot && el.tag === 'list-item')
+    ) throw INELIGIBLE;
     const cg = el.codegenNode;
     if (!cg || cg.type !== NodeTypes.VNODE_CALL) throw INELIGIBLE; // v-once, v-memo, …
     const vnodeCall = cg as VNodeCall;
@@ -350,6 +355,7 @@ function lowerElement(
   plan: TemplatePlan,
   context: TransformContext,
   seen: Set<string>,
+  typePrefix = TPL_TYPE_PREFIX,
 ): void {
   const cg = el.codegenNode as VNodeCall;
 
@@ -369,7 +375,7 @@ function lowerElement(
   }
 
   // Rewrite the vnode: template type, hole props appended, no children.
-  cg.tag = JSON.stringify(TPL_TYPE_PREFIX + id);
+  cg.tag = JSON.stringify(typePrefix + id);
   const holeProps = plan.holes.map((h, i) =>
     createObjectProperty(
       createSimpleExpression(`${TPL_HOLE_PREFIX}${i}`, true),
@@ -459,6 +465,52 @@ function walk(
 }
 
 /**
+ * Lower eligible list-item bodies even when general element templates are
+ * disabled. The resulting vnode is a logical data-source record: mounting it
+ * registers its template and dynamic slots, but native elements are created
+ * only from componentAtIndex on the main thread.
+ */
+function walkListItems(
+  children: TemplateChildNode[],
+  context: TransformContext,
+  seen: Set<string>,
+  scope: TemplateScopeAdapter,
+): void {
+  for (const child of children) {
+    switch (child.type) {
+      case NodeTypes.ELEMENT: {
+        const el = child as ElementNode;
+        if (
+          el.tagType === ElementTypes.ELEMENT
+          && el.tag === 'list-item'
+          && isLowerableRoot(el)
+        ) {
+          const plan = analyzeSubtree(el, context, scope, true);
+          if (plan && plan.elementCount >= MIN_ELEMENTS) {
+            lowerElement(el, plan, context, seen, LIST_TPL_TYPE_PREFIX);
+            continue;
+          }
+        }
+        walkListItems(el.children, context, seen, scope);
+        break;
+      }
+      case NodeTypes.IF: {
+        for (const branch of child.branches) {
+          walkListItems(branch.children, context, seen, scope);
+        }
+        break;
+      }
+      case NodeTypes.IF_BRANCH:
+      case NodeTypes.FOR:
+        walkListItems(child.children, context, seen, scope);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+/**
  * Build the lowering transform. Runs at ROOT exit — after all built-in
  * transforms have produced codegen nodes, before codegen itself.
  *
@@ -488,3 +540,23 @@ export function createElementTemplateTransform(
  */
 export const elementTemplateTransform: NodeTransform =
   createElementTemplateTransform();
+
+/**
+ * Always-on list data-source lowering. It is deliberately separate from the
+ * optional general element-template optimization: lazy list materialization
+ * is a correctness/memory contract, not merely a first-render optimization.
+ *
+ * @public
+ */
+export const listItemTemplateTransform: NodeTransform = (node, context) => {
+  if (node.type !== NodeTypes.ROOT) return;
+  return () => {
+    const seen = new Set<string>();
+    walkListItems(
+      (node as RootNode).children,
+      context,
+      seen,
+      cssIdScopeAdapter,
+    );
+  };
+};

@@ -20,8 +20,12 @@ import {
 import { getTemplate } from './element-templates.js';
 import {
   createListElement,
+  destroyListElement,
+  destroyNestedListsUnder,
   flushListUpdates,
   insertListItem,
+  insertListItemTemplate,
+  isListElement,
   isListParent,
   isPlatformInfoAttr,
   removeListItem,
@@ -29,6 +33,12 @@ import {
   setPlatformInfoProp,
 } from './list-apply.js';
 import {
+  applyOrRecordListTemplateMutation,
+  defineListItemTemplate,
+  getListTemplateInstance,
+} from './list-data-source.js';
+import {
+  applyClearMtRef,
   applyInitMtRef,
   applySetMtRef,
   applySetWorkletEvent,
@@ -85,10 +95,12 @@ export function applyOps(ops: unknown[], flush = true): void {
   // our elements Map, this is a duplicate batch — skip it entirely.
   if (
     len >= 3
-    && (ops[0] === OP.CREATE || ops[0] === OP.INSTANTIATE_TEMPLATE)
+    && (ops[0] === OP.CREATE
+      || ops[0] === OP.INSTANTIATE_TEMPLATE
+      || ops[0] === OP.DEFINE_LIST_ITEM_TEMPLATE)
   ) {
     const firstId = ops[1] as number;
-    if (elements.has(firstId)) {
+    if (elements.has(firstId) || getListTemplateInstance(firstId)) {
       return;
     }
   }
@@ -143,6 +155,14 @@ export function applyOps(ops: unknown[], flush = true): void {
         const anchorId = ops[i++] as number;
         const parent = elements.get(parentId);
         const child = elements.get(childId);
+        if (
+          parent
+          && isListParent(parentId)
+          && getListTemplateInstance(childId)
+        ) {
+          insertListItemTemplate(parentId, childId, anchorId);
+          break;
+        }
         if (parent && child) {
           if (isListParent(parentId)) {
             insertListItem(parentId, child, childId, anchorId);
@@ -161,11 +181,27 @@ export function applyOps(ops: unknown[], flush = true): void {
         const childId = ops[i++] as number;
         const parent = elements.get(parentId);
         const child = elements.get(childId);
+        if (
+          parent
+          && isListParent(parentId)
+          && getListTemplateInstance(childId)
+        ) {
+          removeListItem(parentId, childId);
+          break;
+        }
         if (parent && child) {
-          if (isListParent(parentId)) {
-            // Keep listItems / update-list-info in sync — otherwise Reset
-            // re-inserts the same item-keys and native list errors 2202.
-            removeListItem(parentId, childId);
+          if (isListElement(childId)) {
+            // Tear down list callbacks + MT bookkeeping (ReactLynx destroy).
+            destroyListElement(childId);
+          } else {
+            // Ancestor REMOVE does not emit REMOVE for nested <list>s —
+            // walk the subtree and inert their callbacks first.
+            destroyNestedListsUnder(childId);
+            if (isListParent(parentId)) {
+              // Keep listItems / update-list-info in sync — otherwise Reset
+              // re-inserts the same item-keys and native list errors 2202.
+              removeListItem(parentId, childId);
+            }
           }
           __RemoveElement(parent, child);
         }
@@ -179,8 +215,15 @@ export function applyOps(ops: unknown[], flush = true): void {
         if (isPlatformInfoAttr(key)) {
           setPlatformInfoProp(id, key, value);
         } else {
-          const el = elements.get(id);
-          if (el) __SetAttribute(el, key, value);
+          const handled = applyOrRecordListTemplateMutation(
+            id,
+            `prop:${key}`,
+            (el) => __SetAttribute(el, key, value),
+          );
+          if (!handled) {
+            const el = elements.get(id);
+            if (el) __SetAttribute(el, key, value);
+          }
         }
         break;
       }
@@ -188,8 +231,15 @@ export function applyOps(ops: unknown[], flush = true): void {
       case OP.SET_TEXT: {
         const id = ops[i++] as number;
         const text = ops[i++] as string;
-        const el = elements.get(id);
-        if (el) __SetAttribute(el, 'text', text);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'text',
+          (el) => __SetAttribute(el, 'text', text),
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) __SetAttribute(el, 'text', text);
+        }
         break;
       }
 
@@ -198,8 +248,19 @@ export function applyOps(ops: unknown[], flush = true): void {
         const eventType = ops[i++] as string;
         const eventName = ops[i++] as string;
         const sign = ops[i++];
-        const el = elements.get(id);
-        if (el) __AddEvent(el, eventType, eventName, sign as string);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          `event:${eventType}:${eventName}`,
+          (el) => __AddEvent(el, eventType, eventName, sign as string),
+          (el) => {
+            // biome-ignore lint/suspicious/noExplicitAny: documented PAPI removal
+            __AddEvent(el, eventType, eventName, undefined as any);
+          },
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) __AddEvent(el, eventType, eventName, sign as string);
+        }
         break;
       }
 
@@ -207,27 +268,50 @@ export function applyOps(ops: unknown[], flush = true): void {
         const id = ops[i++] as number;
         const eventType = ops[i++] as string;
         const eventName = ops[i++] as string;
-        const el = elements.get(id);
-        // __AddEvent with undefined handler removes the existing listener
-        // biome-ignore lint/suspicious/noExplicitAny: __AddEvent(el,type,name,undefined) is the documented way to remove a listener in PAPI
-        if (el) __AddEvent(el, eventType, eventName, undefined as any);
+        const remove = (el: LynxElement): void => {
+          // __AddEvent with undefined handler removes the existing listener
+          // biome-ignore lint/suspicious/noExplicitAny: documented PAPI removal
+          __AddEvent(el, eventType, eventName, undefined as any);
+        };
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          `event:${eventType}:${eventName}`,
+          remove,
+          remove,
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) remove(el);
+        }
         break;
       }
 
       case OP.SET_STYLE: {
         const id = ops[i++] as number;
         const value = ops[i++] as string | object;
-        const el = elements.get(id);
-        if (el) __SetInlineStyles(el, value);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'style',
+          (el) => __SetInlineStyles(el, value),
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) __SetInlineStyles(el, value);
+        }
         break;
       }
 
       case OP.SET_CLASS: {
         const id = ops[i++] as number;
         const cls = ops[i++] as string;
-        const el = elements.get(id);
-        if (el) {
-          __SetClasses(el, cls);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'class',
+          (el) => __SetClasses(el, cls),
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) __SetClasses(el, cls);
         }
         break;
       }
@@ -235,8 +319,15 @@ export function applyOps(ops: unknown[], flush = true): void {
       case OP.SET_ID: {
         const id = ops[i++] as number;
         const idStr = ops[i++] as string | null | undefined;
-        const el = elements.get(id);
-        if (el) __SetID(el, idStr ?? undefined);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'id',
+          (el) => __SetID(el, idStr ?? undefined),
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) __SetID(el, idStr ?? undefined);
+        }
         break;
       }
 
@@ -245,14 +336,29 @@ export function applyOps(ops: unknown[], flush = true): void {
         const eventType = ops[i++] as string;
         const eventName = ops[i++] as string;
         const ctx = ops[i++] as Record<string, unknown>;
-        applySetWorkletEvent(id, eventType, eventName, ctx);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          `event:${eventType}:${eventName}`,
+          () => applySetWorkletEvent(id, eventType, eventName, ctx),
+          (el) => {
+            // biome-ignore lint/suspicious/noExplicitAny: documented PAPI removal
+            __AddEvent(el, eventType, eventName, undefined as any);
+          },
+        );
+        if (!handled) applySetWorkletEvent(id, eventType, eventName, ctx);
         break;
       }
 
       case OP.SET_MT_REF: {
         const id = ops[i++] as number;
         const refImpl = ops[i++];
-        applySetMtRef(id, refImpl);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'mt-ref',
+          () => applySetMtRef(id, refImpl),
+          (el) => applyClearMtRef(refImpl, el),
+        );
+        if (!handled) applySetMtRef(id, refImpl);
         break;
       }
 
@@ -266,10 +372,15 @@ export function applyOps(ops: unknown[], flush = true): void {
       case OP.SET_SCOPE_ID: {
         const id = ops[i++] as number;
         const cssId = ops[i++] as number;
-        const el = elements.get(id);
-        if (el) {
-          // Set the CSS scope ID for Lynx's CSS engine
-          __SetCSSId([el], cssId);
+        const apply = (el: LynxElement): void => __SetCSSId([el], cssId);
+        const handled = applyOrRecordListTemplateMutation(
+          id,
+          'scope-id',
+          apply,
+        );
+        if (!handled) {
+          const el = elements.get(id);
+          if (el) apply(el);
         }
         break;
       }
@@ -303,6 +414,14 @@ export function applyOps(ops: unknown[], flush = true): void {
         for (let k = 1; k <= holeCount; k++) {
           elements.set(rootId + k, handles[k] ?? root);
         }
+        break;
+      }
+
+      case OP.DEFINE_LIST_ITEM_TEMPLATE: {
+        const rootId = ops[i++] as number;
+        const tplId = ops[i++] as string;
+        const holeCount = ops[i++] as number;
+        defineListItemTemplate(rootId, tplId, holeCount);
         break;
       }
 
