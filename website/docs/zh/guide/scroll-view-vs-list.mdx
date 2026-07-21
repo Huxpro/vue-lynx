@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 这与 Elk 的 `TimelinePaginator` 同构：分页逻辑在 composable，视口交给 `<list>`。
 
 :::tip List diff
-Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 `listItems`（LIS 检测 move，语义对齐 ReactLynx 的 remove+insert）刷新 `insertAction` / `removeAction` / `updateAction`。覆盖追加、头部插入、中间插入、删除、同 list 重排、platform-info 更新，以及框架侧 cell 回收（`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)）。尚未做：每次 flush 刷新 `__UpdateListCallbacks`——[#303](https://github.com/Huxpro/vue-lynx/issues/303)。
+Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 `listItems`（LIS 检测 move，语义对齐 ReactLynx 的 remove+insert）刷新 `insertAction` / `removeAction` / `updateAction`。覆盖追加、头部插入、中间插入、删除、同 list 重排、platform-info 更新、框架侧 cell 回收（`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)），以及每次 list flush 刷新 `__UpdateListCallbacks`（[#303](https://github.com/Huxpro/vue-lynx/issues/303)）。
 :::
 
 ### 4. 优先用 `list`，而不是第三方虚拟滚动库
@@ -289,11 +289,7 @@ Vue Lynx 主线程 list 适配层通过对比「上次 flush 快照」与当前 
   defaultEntryName="ListRecycle"
 />
 
-### 仍未做
-
-- 每次 list flush 刷新 `__UpdateListCallbacks` — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
-
-自动化：`packages/testing-library` → **native list element · mutations** + **list cell recycling**。
+自动化：`packages/testing-library` → **native list element · mutations** + **list cell recycling** + **list UpdateListCallbacks**。
 
 ## 决策清单
 

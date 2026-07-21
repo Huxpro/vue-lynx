@@ -211,7 +211,7 @@ export function useInfiniteFeed(pageSize = 20) {
 This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
 
 :::tip List diffs
-Vue Lynx's Main Thread list adapter flushes `insertAction` / `removeAction` / `updateAction` by diffing the last-flushed snapshot against the live `listItems` array (LIS move detection, same idea as ReactLynx's remove+insert moves). Covers append, prepend, mid-list insert, remove, same-list reorder, platform-info updates, and framework-side cell recycling (`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)). Still open: refreshing `__UpdateListCallbacks` each flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303).
+Vue Lynx's Main Thread list adapter flushes `insertAction` / `removeAction` / `updateAction` by diffing the last-flushed snapshot against the live `listItems` array (LIS move detection, same idea as ReactLynx's remove+insert moves). Covers append, prepend, mid-list insert, remove, same-list reorder, platform-info updates, framework-side cell recycling (`enqueueComponent` / recycle pool — [#302](https://github.com/Huxpro/vue-lynx/issues/302)), and refreshing `__UpdateListCallbacks` on every list flush ([#303](https://github.com/Huxpro/vue-lynx/issues/303)).
 :::
 
 ### 4. Prefer `list` over third-party virtual scrollers
@@ -289,11 +289,7 @@ Tap **Run recycle probe**. A main-thread worklet leave→re-enters cells via `co
   defaultEntryName="ListRecycle"
 />
 
-### Still open
-
-- Refreshing `__UpdateListCallbacks` on every list flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
-
-Automated coverage: `packages/testing-library` → **native list element · mutations** + **list cell recycling**.
+Automated coverage: `packages/testing-library` → **native list element · mutations** + **list cell recycling** + **list UpdateListCallbacks**.
 
 ## Decision checklist
 

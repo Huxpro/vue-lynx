@@ -20,8 +20,10 @@ import {
 import { getTemplate } from './element-templates.js';
 import {
   createListElement,
+  destroyListElement,
   flushListUpdates,
   insertListItem,
+  isListElement,
   isListParent,
   isPlatformInfoAttr,
   removeListItem,
@@ -162,7 +164,10 @@ export function applyOps(ops: unknown[], flush = true): void {
         const parent = elements.get(parentId);
         const child = elements.get(childId);
         if (parent && child) {
-          if (isListParent(parentId)) {
+          if (isListElement(childId)) {
+            // Tear down list callbacks + MT bookkeeping (ReactLynx destroy).
+            destroyListElement(childId);
+          } else if (isListParent(parentId)) {
             // Keep listItems / update-list-info in sync — otherwise Reset
             // re-inserts the same item-keys and native list errors 2202.
             removeListItem(parentId, childId);

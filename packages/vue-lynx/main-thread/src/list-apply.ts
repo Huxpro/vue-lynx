@@ -18,6 +18,10 @@
  * Cell recycling (inspired by ReactLynx `gSignMap` / `gRecycleMap`):
  * - `enqueueComponent` pools off-screen list-item roots by reuse-identifier.
  * - `componentAtIndex` prefers self-reuse (same uiSign), then cross-item hydrate.
+ *
+ * Callback refresh (#303 / ReactLynx `ListUpdateInfoRecording.flush`):
+ * - `__UpdateListCallbacks` is re-bound on every `flushListUpdates`.
+ * - List teardown installs inert callbacks (`snapshotDestroyList` parity).
  */
 
 import { elements, pageUniqueId } from './element-registry.js';
@@ -538,12 +542,46 @@ function buildPlatformAction(
   return action;
 }
 
+/**
+ * ReactLynx parity (#303): re-bind componentAtIndex / enqueueComponent /
+ * componentAtIndexes so native always holds fresh closures.
+ */
+function refreshListCallbacks(bgId: number): void {
+  const listEl = elements.get(bgId);
+  if (!listEl || typeof __UpdateListCallbacks !== 'function') return;
+  const cbs = createListCallbacks(bgId);
+  __UpdateListCallbacks(
+    listEl,
+    cbs.componentAtIndex,
+    cbs.enqueueComponent,
+    cbs.componentAtIndexes,
+  );
+}
+
+/** ReactLynx snapshotDestroyList: install inert callbacks. */
+function clearListCallbacks(listEl: LynxElement): void {
+  if (typeof __UpdateListCallbacks !== 'function') return;
+  __UpdateListCallbacks(
+    listEl,
+    () => -1,
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: inert enqueue
+    () => {},
+    // biome-ignore lint/suspicious/noEmptyBlockStatements: inert batch enter
+    () => {},
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Public API (called from ops-apply.ts switch cases)
 // ---------------------------------------------------------------------------
 
 export function isListParent(parentId: number): boolean {
   return listElementIds.has(parentId);
+}
+
+/** True when `id` is a `<list>` element (not a list-item). */
+export function isListElement(id: number): boolean {
+  return listElementIds.has(id);
 }
 
 export function isPlatformInfoAttr(key: string): boolean {
@@ -568,6 +606,34 @@ export function createListElement(id: number): LynxElement {
   signMaps.set(listID, new Map());
   recycleMaps.set(listID, new Map());
   return el;
+}
+
+/**
+ * Tear down a `<list>` — clear native callbacks and all MT bookkeeping.
+ * Mirrors ReactLynx `snapshotDestroyList`.
+ */
+export function destroyListElement(bgId: number): void {
+  const listEl = elements.get(bgId);
+  if (listEl) clearListCallbacks(listEl);
+
+  const items = listItems.get(bgId) ?? [];
+  for (const entry of items) {
+    itemKeyMap.delete(entry.bgId);
+    listItemPlatformInfo.delete(entry.bgId);
+    dirtyPlatformInfo.delete(entry.bgId);
+    purgeItemFromPools(entry.bgId);
+  }
+
+  const listID = listBgToFiberId.get(bgId);
+  if (listID !== undefined) {
+    signMaps.delete(listID);
+    recycleMaps.delete(listID);
+    listBgToFiberId.delete(bgId);
+  }
+
+  listItems.delete(bgId);
+  lastFlushed.delete(bgId);
+  listElementIds.delete(bgId);
 }
 
 /**
@@ -627,6 +693,7 @@ export function setPlatformInfoProp(
 
 /**
  * Diff lastFlushed → listItems and set `update-list-info`.
+ * Always refreshes `__UpdateListCallbacks` (ReactLynx ListUpdateInfoRecording.flush).
  */
 export function flushListUpdates(): void {
   for (const [bgId, items] of listItems) {
@@ -657,34 +724,39 @@ export function flushListUpdates(): void {
       dirtyPlatformInfo.delete(itemBgId);
     }
 
-    if (
-      removeAction.length === 0
-      && insertAction.length === 0
-      && updateAction.length === 0
-    ) {
-      continue;
+    const hasDiff =
+      removeAction.length > 0
+      || insertAction.length > 0
+      || updateAction.length > 0;
+
+    if (hasDiff) {
+      const listEl = elements.get(bgId);
+      if (listEl) {
+        __SetAttribute(listEl, 'update-list-info', {
+          insertAction: insertAction.map(({ position, bgId: itemBgId }) =>
+            buildPlatformAction(itemBgId, position)
+          ),
+          removeAction,
+          updateAction,
+        });
+        lastFlushed.set(
+          bgId,
+          items.map((e) => ({ el: e.el, bgId: e.bgId })),
+        );
+      }
     }
 
-    const listEl = elements.get(bgId);
-    if (!listEl) continue;
-
-    __SetAttribute(listEl, 'update-list-info', {
-      insertAction: insertAction.map(({ position, bgId: itemBgId }) =>
-        buildPlatformAction(itemBgId, position)
-      ),
-      removeAction,
-      updateAction,
-    });
-
-    lastFlushed.set(
-      bgId,
-      items.map((e) => ({ el: e.el, bgId: e.bgId })),
-    );
+    // #303 — refresh even when there was no diff (remount / no-op patches).
+    refreshListCallbacks(bgId);
   }
 }
 
 /** Reset all list state — for testing only. */
 export function resetListState(): void {
+  for (const bgId of listElementIds) {
+    const el = elements.get(bgId);
+    if (el) clearListCallbacks(el);
+  }
   listItems.clear();
   lastFlushed.clear();
   listElementIds.clear();
