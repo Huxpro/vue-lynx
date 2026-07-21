@@ -60,6 +60,16 @@ const listItemPlatformInfo = new Map<number, Record<string, unknown>>();
 /** bgIds whose platform info changed since last flush */
 const dirtyPlatformInfo = new Set<number>();
 
+/**
+ * List BG ids whose structure or platform-info needs a diff on the next flush.
+ * `applyOps` calls `flushListUpdates` on every patch — without this set we would
+ * re-run LIS over every registered list (including untouched infinite feeds).
+ */
+const dirtyLists = new Set<number>();
+
+/** list-item bgId → owning <list> bgId (for platform-info → dirtyLists). */
+const itemToList = new Map<number, number>();
+
 // ---------------------------------------------------------------------------
 // Diff (exported for unit tests)
 // ---------------------------------------------------------------------------
@@ -111,6 +121,11 @@ export function longestIncreasingSubsequence(
  * Diff old (last flushed) vs new (live listItems) by bgId.
  * Stayers = LIS of old indices among items present in both, in new order.
  * Removals = old indices not in stayers. Insertions = new items not in stayers.
+ *
+ * `removeAction` indices are relative to the **pre-diff snapshot** and are
+ * applied as a batch by native `update-list-info` (same contract as ReactLynx
+ * `ListUpdateInfoRecording`) — do not reinterpret them as sequential
+ * mutations against a shrinking array.
  */
 export function diffListItems(
   oldItems: ListItemEntry[],
@@ -292,6 +307,8 @@ export function insertListItem(
     if (anchorIdx === -1) items.push(entry);
     else items.splice(anchorIdx, 0, entry);
   }
+  itemToList.set(childId, parentId);
+  dirtyLists.add(parentId);
 }
 
 /** Drop a child from the live list array (hard remove). */
@@ -304,6 +321,8 @@ export function removeListItem(parentId: number, childId: number): void {
   itemKeyMap.delete(childId);
   listItemPlatformInfo.delete(childId);
   dirtyPlatformInfo.delete(childId);
+  itemToList.delete(childId);
+  dirtyLists.add(parentId);
 }
 
 /** Store a platform-info attribute; mark dirty for updateAction if already flushed. */
@@ -317,24 +336,38 @@ export function setPlatformInfoProp(
   else listItemPlatformInfo.set(id, { [key]: value });
   if (key === 'item-key') itemKeyMap.set(id, String(value));
   dirtyPlatformInfo.add(id);
+  const listId = itemToList.get(id);
+  if (listId !== undefined) dirtyLists.add(listId);
 }
 
 /**
  * Diff lastFlushed → listItems and set `update-list-info`.
+ * Only lists in `dirtyLists` are diffed (unrelated patches skip the LIS walk).
  */
 export function flushListUpdates(): void {
-  for (const [bgId, items] of listItems) {
+  if (dirtyLists.size === 0) return;
+
+  for (const bgId of dirtyLists) {
+    const items = listItems.get(bgId);
+    if (!items) continue;
+
     const prev = lastFlushed.get(bgId) ?? [];
     const { removeAction, insertAction, stayedBgIds } = diffListItems(
       prev,
       items,
     );
 
+    // Build updateAction with O(stayed) lookups via bgId → index map.
+    const indexByBgId = new Map<number, number>();
+    for (let i = 0; i < items.length; i++) {
+      indexByBgId.set(items[i]!.bgId, i);
+    }
+
     const updateAction: Record<string, unknown>[] = [];
     for (const stayedId of stayedBgIds) {
       if (!dirtyPlatformInfo.has(stayedId)) continue;
-      const idx = items.findIndex((e) => e.bgId === stayedId);
-      if (idx === -1) continue;
+      const idx = indexByBgId.get(stayedId);
+      if (idx === undefined) continue;
       const pInfo = listItemPlatformInfo.get(stayedId) ?? {};
       updateAction.push({
         ...pInfo,
@@ -375,6 +408,8 @@ export function flushListUpdates(): void {
       items.map((e) => ({ el: e.el, bgId: e.bgId })),
     );
   }
+
+  dirtyLists.clear();
 }
 
 /** Reset all list state — for testing only. */
@@ -385,6 +420,8 @@ export function resetListState(): void {
   itemKeyMap.clear();
   listItemPlatformInfo.clear();
   dirtyPlatformInfo.clear();
+  dirtyLists.clear();
+  itemToList.clear();
 }
 
 /** Test helper: current live item bgIds for a list. */
