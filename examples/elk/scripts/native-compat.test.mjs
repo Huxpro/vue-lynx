@@ -341,6 +341,73 @@ test('fetch compatibility prefers the native wrapper and falls back to the web g
   assert.equal(lynxConfig.source?.define?.fetch, undefined);
 });
 
+test('fetch Link synthesis builds max_id next for status arrays when header missing', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/timelines/public?local=true&limit=30',
+    JSON.stringify([{ id: '111' }, { id: '100' }]),
+  );
+  assert.match(link ?? '', /rel="next"/);
+  assert.match(link ?? '', /max_id=100/);
+  assert.match(link ?? '', /local=true/);
+});
+
+test('fetch Link synthesis uses offset when entities have no id', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/trends/tags?limit=10&offset=0',
+    JSON.stringify([{ name: 'a' }, { name: 'b' }]),
+  );
+  assert.match(link ?? '', /offset=2/);
+});
+
+test('fetch Link synthesis stops when max_id would not advance', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/timelines/public?max_id=100',
+    JSON.stringify([{ id: '100' }]),
+  );
+  assert.equal(link, null);
+});
+
+test('wrapFetchForMastoPagination synthesizes Link when native headers omit it', async () => {
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    url: 'https://mas.to/api/v1/timelines/public?limit=2',
+    headers: { 'content-type': 'application/json' },
+    async text() {
+      return JSON.stringify([{ id: '2' }, { id: '1' }]);
+    },
+  }));
+  assert.equal(typeof wrapped, 'function');
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+  assert.match(res.headers.get('link') ?? '', /max_id=1/);
+  assert.match(res.headers.get('content-type') ?? '', /application\/json/);
+  const body = JSON.parse(await res.text());
+  assert.equal(body[1].id, '1');
+});
+
+test('wrapFetchForMastoPagination preserves an existing Link header', async () => {
+  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'link' ? existing : null;
+      },
+      forEach(fn) {
+        fn(existing, 'link');
+      },
+    },
+    async text() {
+      return JSON.stringify([{ id: '2' }, { id: '1' }]);
+    },
+  }));
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+  assert.equal(res.headers.get('link'), existing);
+});
+
 test('DOMException compatibility preserves name, message and instanceof checks', () => {
   const target = {};
   domExceptionCompat.installDOMException?.(target);

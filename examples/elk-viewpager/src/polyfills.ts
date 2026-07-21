@@ -13,7 +13,7 @@
 /* eslint-disable no-restricted-globals */
 
 import { installDOMException } from './dom-exception-compat';
-import { resolveFetch } from './fetch-compat';
+import { resolveFetch, wrapFetchForMastoPagination } from './fetch-compat';
 
 const g = globalThis as Record<string, any>;
 
@@ -21,15 +21,22 @@ const g = globalThis as Record<string, any>;
 // parameter, while Lynx for Web exposes it on globalThis. Synchronize the
 // callable implementation before masto modules execute so their bare fetch
 // identifier works in both environments.
+//
+// Then wrap for Mastodon pagination: masto.js reads `Link` via
+// response.headers.get('link'). Native Lynx fetch often drops that header
+// after the first page, so Paginator ends early ("End of the timeline")
+// while Web continues. The wrapper normalizes headers and synthesizes
+// rel="next" from max_id/offset when Link is missing.
 const sharedFetch = resolveFetch(
   g.fetch,
   typeof fetch === 'function' ? fetch : undefined,
 );
 if (sharedFetch) {
-  g.fetch = sharedFetch;
+  const mastoFetch = wrapFetchForMastoPagination(sharedFetch);
+  g.fetch = mastoFetch;
   // Assigns RuntimeWrapperWebpackPlugin's injected wrapper parameter.
   // @ts-expect-error fetch is declared as a global function in DOM typings.
-  fetch = sharedFetch as typeof fetch;
+  fetch = mastoFetch as typeof fetch;
 }
 
 installDOMException(g);

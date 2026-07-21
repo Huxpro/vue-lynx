@@ -106,6 +106,13 @@ access-token sign-in** in Settings. Multi-account storage
    exposes `globalThis.fetch`. `src/polyfills.ts` selects the callable one
    and mirrors it to both scopes before masto runs. Other free-identifier web
    constructors use targeted `source.define` rewrites (no masto patches).
+   **Pagination:** masto.js continues pages via the HTTP `Link` header
+   (`response.headers.get('link')`). Native Lynx fetch often omits that
+   header, so the first page succeeds and the next `paginator.next()` looks
+   like end-of-feed ("End of the timeline") while Web keeps scrolling.
+   `wrapFetchForMastoPagination` in `fetch-compat.ts` normalizes headers and,
+   when `Link` is missing, synthesizes `rel="next"` from `max_id` / `offset`
+   in the JSON body.
 2. **No DOMParser anywhere** (worker or native). Elk's `tiny-decode`
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for
