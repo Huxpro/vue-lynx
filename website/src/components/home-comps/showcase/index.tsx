@@ -1,15 +1,20 @@
 import type React from 'react';
 import { useLang } from '@rspress/core/runtime';
-import { PhoneGo } from './PhoneFrame';
+import { PhoneGo, PhoneVideo } from './PhoneFrame';
 import { PREVIEW } from './phone-frame';
 import styles from './index.module.scss';
 
-interface ShowCaseItem {
-  title: Record<'en' | 'zh', string>;
-  desc: Record<'en' | 'zh', string>;
-  /** CTA under the card — tutorial vs product showcase. */
-  cta: Record<'en' | 'zh', string>;
+type LocaleText = Record<'en' | 'zh', string>;
+
+interface CardBase {
+  title: LocaleText;
+  desc: LocaleText;
+  cta: LocaleText;
   link: string;
+}
+
+interface LiveShowcaseItem extends CardBase {
+  kind: 'live';
   example: string;
   defaultFile?: string;
   defaultEntryName?: string;
@@ -17,32 +22,17 @@ interface ShowCaseItem {
   schema?: string;
 }
 
-/**
- * Homepage phone-showcase cards. Append items to grow the section —
- * title / desc / cta are per-card. Desktop layout: ≤4 → one row;
- * 5+ → 3 columns (six phones read as 2×3).
- */
-const showCaseList: ShowCaseItem[] = [
+interface VideoTutorialItem extends CardBase {
+  kind: 'video';
+  video: string;
+}
+
+type ShowcaseCard = LiveShowcaseItem | VideoTutorialItem;
+
+/** Product / benchmark apps — live Lynx embeds. */
+const showcaseList: LiveShowcaseItem[] = [
   {
-    title: {
-      en: 'Two-Column Waterfall Gallery',
-      zh: '双列瀑布流画廊',
-    },
-    desc: {
-      en: 'Cover everything you need to know to start building with Vue Lynx.',
-      zh: '覆盖使用 Vue Lynx 开发所需的一切知识。',
-    },
-    cta: {
-      en: 'Learn by doing',
-      zh: '边做边学',
-    },
-    link: '/guide/tutorial-gallery',
-    example: 'gallery',
-    defaultFile: 'src/GalleryComplete/Gallery.vue',
-    defaultEntryName: 'GalleryComplete',
-    entry: 'src/GalleryComplete',
-  },
-  {
+    kind: 'live',
     title: {
       en: 'Elk — a Mastodon Client',
       zh: 'Elk — Mastodon 客户端',
@@ -61,6 +51,7 @@ const showCaseList: ShowCaseItem[] = [
     schema: '{{{url}}}?fullscreen=true&bar_color=fafafa&bg_color=fafafa',
   },
   {
+    kind: 'live',
     title: {
       en: 'Nuxt AI Chat',
       zh: 'Nuxt AI Chat',
@@ -78,6 +69,7 @@ const showCaseList: ShowCaseItem[] = [
     defaultFile: 'src/App.vue',
   },
   {
+    kind: 'live',
     title: {
       en: 'Vue HackerNews',
       zh: 'Vue HackerNews',
@@ -96,46 +88,111 @@ const showCaseList: ShowCaseItem[] = [
   },
 ];
 
-const sectionTitle = {
+/** Learn-by-doing tutorials — original gallery / swiper recordings. */
+const tutorialList: VideoTutorialItem[] = [
+  {
+    kind: 'video',
+    title: {
+      en: 'Two-Column Waterfall Gallery',
+      zh: '双列瀑布流画廊',
+    },
+    desc: {
+      en: 'Cover everything you need to know to start building with Vue Lynx.',
+      zh: '覆盖使用 Vue Lynx 开发所需的一切知识。',
+    },
+    cta: {
+      en: 'Learn by doing',
+      zh: '边做边学',
+    },
+    link: '/guide/tutorial-gallery',
+    video:
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/ifr.mp4',
+  },
+  {
+    kind: 'video',
+    title: {
+      en: 'Product Detail with Carousel',
+      zh: '带轮播的商品详情页',
+    },
+    desc: {
+      en: 'Deep dive into main thread scripting by building a highly responsive swiper.',
+      zh: '通过构建一个高响应性的轮播组件，深入学习主线程脚本。',
+    },
+    cta: {
+      en: 'Learn by doing',
+      zh: '边做边学',
+    },
+    link: '/guide/tutorial-swiper',
+    video:
+      'https://lf-lynx.tiktok-cdns.com/obj/lynx-artifacts-oss-sg/lynx-website/assets/killers/mts.mp4',
+  },
+];
+
+const sectionTitle: LocaleText = {
   en: 'Try it for yourself',
   zh: '亲自体验',
 };
 
-const sectionDesc = {
-  en: 'Live apps at the same density as the original showcase videos (360 CSS-px @3× → phone frame).',
-  zh: '与最早的 showcase 录屏同一密度（360 CSS 像素 @3× → 手机框）。',
+const sectionDesc: LocaleText = {
+  en: 'Live product ports up top — then hands-on tutorials to build the feel yourself.',
+  zh: '上方是真实产品移植，下方是动手教程，亲手做出原生质感。',
 };
 
-export const ShowCase: React.FC = () => {
-  const lang = useLang() as 'en' | 'zh';
-  const localePrefix = lang === 'zh' ? '/zh' : '';
-  // ≤4 stay on one row; 5+ wrap at 3 columns (6 → 2×3).
-  const columns = showCaseList.length <= 4 ? showCaseList.length : 3;
+const rowLabels = {
+  showcases: { en: 'Showcases', zh: '应用展示' } satisfies LocaleText,
+  tutorials: { en: 'Tutorials', zh: '教程' } satisfies LocaleText,
+};
+
+function cardKey(item: ShowcaseCard): string {
+  return item.kind === 'live'
+    ? `${item.example}-${item.defaultEntryName ?? 'main'}`
+    : item.video;
+}
+
+function PhonePreview({
+  item,
+  lang,
+}: {
+  item: ShowcaseCard;
+  lang: 'en' | 'zh';
+}) {
+  if (item.kind === 'live') {
+    return (
+      <PhoneGo
+        example={item.example}
+        defaultFile={item.defaultFile}
+        defaultEntryName={item.defaultEntryName}
+        entry={item.entry}
+        schema={item.schema}
+      />
+    );
+  }
+  return <PhoneVideo src={item.video} label={`${item.title[lang]} preview`} />;
+}
+
+function CardRow({
+  label,
+  items,
+  lang,
+  localePrefix,
+}: {
+  label: LocaleText;
+  items: ShowcaseCard[];
+  lang: 'en' | 'zh';
+  localePrefix: string;
+}) {
+  const columns = items.length <= 4 ? items.length : 3;
 
   return (
-    <div className={styles['show-case-frame']}>
-      <div className={styles['title']}>{sectionTitle[lang]}</div>
-      <div className={styles['desc']}>{sectionDesc[lang]}</div>
+    <div className={styles['show-case-row']}>
+      <div className={styles['row-label']}>{label[lang]}</div>
       <ul
         className={styles['show-case-list']}
-        style={
-          {
-            '--showcase-cols': columns,
-          } as React.CSSProperties
-        }
+        style={{ '--showcase-cols': columns } as React.CSSProperties}
       >
-        {showCaseList.map((item) => (
-          <li
-            className={styles['show-case-list-item']}
-            key={`${item.example}-${item.defaultEntryName ?? 'main'}`}
-          >
-            <PhoneGo
-              example={item.example}
-              defaultFile={item.defaultFile}
-              defaultEntryName={item.defaultEntryName}
-              entry={item.entry}
-              schema={item.schema}
-            />
+        {items.map((item) => (
+          <li className={styles['show-case-list-item']} key={cardKey(item)}>
+            <PhonePreview item={item} lang={lang} />
             <div className={styles['item-title']}>{item.title[lang]}</div>
             <div
               className={styles['item-desc']}
@@ -152,6 +209,30 @@ export const ShowCase: React.FC = () => {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+export const ShowCase: React.FC = () => {
+  const lang = useLang() as 'en' | 'zh';
+  const localePrefix = lang === 'zh' ? '/zh' : '';
+
+  return (
+    <div className={styles['show-case-frame']}>
+      <div className={styles['title']}>{sectionTitle[lang]}</div>
+      <div className={styles['desc']}>{sectionDesc[lang]}</div>
+      <CardRow
+        label={rowLabels.showcases}
+        items={showcaseList}
+        lang={lang}
+        localePrefix={localePrefix}
+      />
+      <CardRow
+        label={rowLabels.tutorials}
+        items={tutorialList}
+        lang={lang}
+        localePrefix={localePrefix}
+      />
     </div>
   );
 };

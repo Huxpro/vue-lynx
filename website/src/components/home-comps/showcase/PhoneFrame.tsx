@@ -39,11 +39,27 @@ type PhoneGoProps = Omit<
   example: string;
 };
 
-/** Live Lynx embed laid out at the 375×838 design canvas, scaled into the bezel. */
+/** Live Lynx embed laid out at the design canvas, scaled into the bezel. */
 export function PhoneGo(props: PhoneGoProps) {
   return (
     <PhoneFrame>
       <Go {...GO_PHONE_PROPS} {...props} />
+    </PhoneFrame>
+  );
+}
+
+type PhoneVideoProps = {
+  src: string;
+  label: string;
+};
+
+/** Looping MP4 preview in the same bezel as live embeds (tutorials). */
+export function PhoneVideo({ src, label }: PhoneVideoProps) {
+  return (
+    <PhoneFrame>
+      <video autoPlay loop muted playsInline aria-label={label}>
+        <source src={src} type="video/mp4" />
+      </video>
     </PhoneFrame>
   );
 }
