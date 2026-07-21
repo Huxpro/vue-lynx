@@ -168,13 +168,13 @@ Web `v-for` only needs `:key`. Lynx lists need both. Treat them as one stable bu
 
 The [Elk](/guide/elk) port follows exactly this contract for Mastodon statuses.
 
-### 3. Composable owns pages; `<list>` owns recycling
+### 3. Composable owns pages; `<list>` owns the viewport
 
 On the Web, infinite feeds usually mean:
 
 `useInfiniteQuery` / custom composable **+** a virtualizer **+** an intersection sentinel.
 
-On Lynx, drop the virtualizer. A composable appends to a `ref` array; `@scrolltolower` (and `lower-threshold-item-count`) asks for the next page. Native recycling keeps memory flat.
+On Lynx, drop the virtualizer. A composable appends to a `ref` array; `@scrolltolower` (and `lower-threshold-item-count`) asks for the next page. Native `<list>` **lazy-attaches** only visible cells to the viewport — that is a platform capability, not yet full framework-side cell recycling in Vue Lynx (see [#302](https://github.com/Huxpro/vue-lynx/issues/302)). Until cells are deferred/unrendered on the main thread, prefer a bounded window or pagination strategy for very long feeds rather than an unbounded `ref` of every row.
 
 <Go
   example="scrolling"
