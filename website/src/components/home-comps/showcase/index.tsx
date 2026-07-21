@@ -17,6 +17,11 @@ interface ShowCaseItem {
   schema?: string;
 }
 
+/**
+ * Homepage phone-showcase cards. Append items to grow the section —
+ * title / desc / cta are per-card. Desktop layout: ≤4 → one row;
+ * 5+ → 3 columns (six phones read as 2×3).
+ */
 const showCaseList: ShowCaseItem[] = [
   {
     title: {
@@ -104,12 +109,21 @@ const sectionDesc = {
 export const ShowCase: React.FC = () => {
   const lang = useLang() as 'en' | 'zh';
   const localePrefix = lang === 'zh' ? '/zh' : '';
+  // ≤4 stay on one row; 5+ wrap at 3 columns (6 → 2×3).
+  const columns = showCaseList.length <= 4 ? showCaseList.length : 3;
 
   return (
     <div className={styles['show-case-frame']}>
       <div className={styles['title']}>{sectionTitle[lang]}</div>
       <div className={styles['desc']}>{sectionDesc[lang]}</div>
-      <ul className={styles['show-case-list']}>
+      <ul
+        className={styles['show-case-list']}
+        style={
+          {
+            '--showcase-cols': columns,
+          } as React.CSSProperties
+        }
+      >
         {showCaseList.map((item) => (
           <li
             className={styles['show-case-list-item']}

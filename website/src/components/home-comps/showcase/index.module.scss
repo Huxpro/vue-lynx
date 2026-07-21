@@ -103,16 +103,22 @@
   }
 
   .show-case-list {
-    display: flex;
-    flex-direction: row;
-    gap: 64px;
+    // Data-driven list. Column count from --showcase-cols (≤4 → one row;
+    // 5+ → 3 so six phones read as 2×3). Narrow: horizontal scroll below.
+    display: grid;
+    grid-template-columns: repeat(var(--showcase-cols, 3), max-content);
+    justify-content: center;
+    gap: 48px 64px;
     padding: 0 20px 20px;
     list-style: none;
+    width: 100%;
+    box-sizing: border-box;
 
     .show-case-list-item {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      width: 290px;
 
       .item-title {
         color: var(--home-title-color);
@@ -175,10 +181,16 @@
     }
 
     .show-case-list {
+      // Below ~3 phones wide: horizontal scroll instead of a cramped grid.
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      max-width: none;
       padding: 0 40px 20px 40px;
       overflow-x: auto;
       width: 100%;
       box-sizing: border-box;
+      gap: 40px;
     }
   }
 }
