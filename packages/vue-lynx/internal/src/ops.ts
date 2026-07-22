@@ -56,6 +56,12 @@
  *     parent may be anonymous under sparse A2). anchorId=-1 → append.
  *   REMOVE_TEMPLATE_SLOT: [19, rootId, slotIndex, childId]
  *     Remove a dynamic child from the slotIndex-th element slot.
+ *   BIND_VAPOR_TEMPLATE: [21, treeId, codeTplId]
+ *     Code staging (`+b:c`, #337): binds the BG's numeric per-realm tree id
+ *     to a bundle-baked create() registry id (a content-hash string), once
+ *     per template. INSTANTIATE_TEMPLATE then carries the NUMERIC id per
+ *     instance, so per-clone wire frames stay the same size as CLONE_TREE
+ *     — the string id crosses exactly once.
  *   REGISTER_TREE_BUNDLE: [20, treeId, structureHash, addressedOr0]
  *     Bundle-delivered REGISTER_TREE (the `+b!` cell, #338): the structure
  *     AST was baked into the MT bundle at build time
@@ -123,6 +129,7 @@ export const OP = {
   INSERT_TEMPLATE_SLOT: 18,
   REMOVE_TEMPLATE_SLOT: 19,
   REGISTER_TREE_BUNDLE: 20,
+  BIND_VAPOR_TEMPLATE: 21,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -149,6 +156,7 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.INSERT_TEMPLATE_SLOT]: 4,
   [OP.REMOVE_TEMPLATE_SLOT]: 3,
   [OP.REGISTER_TREE_BUNDLE]: 3,
+  [OP.BIND_VAPOR_TEMPLATE]: 2,
 });
 
 // ---------------------------------------------------------------------------

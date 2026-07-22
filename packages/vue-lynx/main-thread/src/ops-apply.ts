@@ -28,7 +28,14 @@ import {
   resetEngineTemplatesForTesting,
 } from './engine-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
-import { getVaporStructure, getVaporTemplate } from './vapor-templates.js';
+import {
+  bindVaporTemplateId,
+  getBoundVaporTemplate,
+  getVaporStructure,
+  getVaporTemplate,
+  hasVaporTemplateBinding,
+  resetVaporTemplateBindings,
+} from './vapor-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -176,6 +183,9 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     }
     if (code === OP.REGISTER_TREE || code === OP.REGISTER_TREE_BUNDLE) {
       return templates.has(ops[cursor + 1] as number);
+    }
+    if (code === OP.BIND_VAPOR_TEMPLATE) {
+      return hasVaporTemplateBinding(ops[cursor + 1] as number);
     }
     if (code === OP.CLONE_TREE) {
       return elements.has(ops[cursor + 2] as number);
@@ -515,6 +525,20 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.BIND_VAPOR_TEMPLATE: {
+        // `+b:c` (#337): bind the BG's numeric tree id to a bundle-baked
+        // create() so per-instance INSTANTIATE_TEMPLATE frames stay numeric.
+        const treeId = ops[i++] as number;
+        const codeId = ops[i++] as string;
+        bindVaporTemplateId(treeId, codeId);
+        if (!getVaporTemplate(codeId)) {
+          console.error(
+            `[vue-lynx] BIND_VAPOR_TEMPLATE: no bundle-registered create() for id "${codeId}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
       case OP.REGISTER_TREE_BUNDLE: {
         // `+b!` (#338): the structure was baked into this bundle at build
         // time — only the fingerprint hash crossed the wire. The BG emits
@@ -675,8 +699,11 @@ export function applyOps(ops: unknown[], flush = true): void {
         // ADDRESSED slot in sparse order (null for BG-only anchors). Naming
         // (`rootId + k`), selector attributes, and insert tracking mirror
         // instantiateTemplateSparse exactly — the update path cannot tell
-        // the difference.
-        const ventry = getVaporTemplate(tplId);
+        // the difference. Numeric ids resolve through BIND_VAPOR_TEMPLATE;
+        // string ids hit the vapor registry directly (and then the ET one).
+        const ventry = typeof tplId === 'number'
+          ? getBoundVaporTemplate(tplId)
+          : getVaporTemplate(tplId);
         if (ventry) {
           const handles = ventry.create(pageUniqueId);
           const limit = Math.min(handles.length, holeCount + 1);
@@ -694,7 +721,7 @@ export function applyOps(ops: unknown[], flush = true): void {
           break;
         }
 
-        const entry = getTemplate(tplId);
+        const entry = typeof tplId === 'string' ? getTemplate(tplId) : undefined;
         let handles: LynxElement[];
         if (entry) {
           // The create() function builds the whole lowered subtree with
@@ -767,4 +794,7 @@ export function resetMainThreadState(): void {
   resetListState();
   resetWorkletState();
   resetTemplateInstanceSlots();
+  // Per-realm numeric → bundle-id bindings are wire state (the bundle
+  // registries themselves persist like the element-template registry).
+  resetVaporTemplateBindings();
 }
