@@ -119,9 +119,10 @@ Three hard conclusions the table forces:
 
 ## 2. What was built (M0–M3)
 
-- **M0/M2** — the axes are *flags*: `templateNaming: 'dense'|'sparse'`,
-  `templateStaging: 'opstream'|'data'|'code'|'engine'`,
-  `ifr` × `ifrPaint: 'plain'|'disposable-et'|'engine-et'`. Provenance is
+- **M0/M2** — the axes are *flags* (terminology v2 spellings, legacy
+  accepted): `templateNaming: 'node'|'block'`,
+  `templateStaging: 'ops'|'tree'|'code'|'native'`,
+  `ifr` × `ifrPaint: 'plain'|'code-paint'|'native-paint'`. Addressing is
   derived per render model and recorded as a cell label.
   `legalCells()` (internal/matrix) generates the §4 cell set from one
   config object. All defaults reproduce pre-existing behavior — the
