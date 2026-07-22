@@ -1258,8 +1258,8 @@ ${conclusionsHtml}
   ${renderLineChart({
     title: lang === 'zh' ? 'Select storm — 仅 Vapor（放大）' : 'Select storm — Vapor family (zoom)',
     sub: lang === 'zh'
-      ? '只画 Vapor 各变体、独立纵轴，看清 off / 稠密 / +IFR / +IFR 稠密之间的差异。'
-      : 'Vapor variants only, own y-scale — resolves off / dense / +IFR / +IFR dense from each other.',
+      ? '只画 Vapor 各变体、独立纵轴，看清 基线 / +b / +ifr / +b +ifr 之间的差异（V4 记法）。'
+      : 'Vapor variants only, own y-scale — resolves baseline / +b / +ifr / +b +ifr from each other (V4 notation).',
     series: stormSeries('selectStorm', t, 1, (k) => k.startsWith('vapor')),
     xLabel: ch.selectStorm.x,
     yLabel: ch.selectStorm.y,
