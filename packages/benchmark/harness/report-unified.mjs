@@ -79,20 +79,25 @@ const perOp = mergePerOp(
  * hidden by default behind the "show Engine (N/A) cells" toggle.
  */
 const ENGINE_NA_ARCHS = new Set(['vapor-engine', 'vapor-ifr-engine-et']);
-const isEngineNa = (key) => ENGINE_NA_ARCHS.has(key);
+/** Same-coordinate replicate of vapor +b +ifr — data kept, display omitted. */
+const REPLICATE_ARCHS = new Set(['vapor-ifr-sparse']);
+const isEngineNa = (key) =>
+  ENGINE_NA_ARCHS.has(key) || REPLICATE_ARCHS.has(key);
 
+// Order follows the approved V4 roster: baseline → +b → +ifr → +b +ifr
+// per render model (vdom, then vapor), reference last. The replicate
+// column (legacy vapor-ifr-sparse ≡ vapor +b +ifr) is display-omitted.
 const COLUMN_KEYS = [
-  'vapor',
-  'vapor-dense',
-  'vapor-engine',
-  'vapor-ifr',
-  'vapor-ifr-dense',
-  'vapor-ifr-sparse',
-  'vapor-ifr-engine-et',
   'vdom',
   'vdom-et',
   'vdom-ifr',
   'vdom-ifr-et',
+  'vapor-dense',
+  'vapor',
+  'vapor-ifr-dense',
+  'vapor-ifr',
+  'vapor-engine',
+  'vapor-ifr-engine-et',
   'react',
 ];
 
@@ -111,16 +116,17 @@ const STORM_ROW_KEYS = [
 ];
 
 const FCP_ARCH_KEYS = [
-  { key: 'react', color: '#eda100' },
   { key: 'vdom', color: '#6b7280' },
   { key: 'vdom-et', color: '#374151' },
   { key: 'vdom-ifr', color: '#2563eb' },
   { key: 'vdom-ifr-et', color: '#7c3aed' },
-  { key: 'vapor', color: '#059669' },
   { key: 'vapor-dense', color: '#66c2a4' },
-  { key: 'vapor-engine', color: '#0d8a5f' },
+  { key: 'vapor', color: '#059669' },
+  { key: 'vapor-ifr-dense', color: '#f0b429' },
   { key: 'vapor-ifr', color: '#d97706' },
+  { key: 'vapor-engine', color: '#0d8a5f' },
   { key: 'vapor-ifr-engine-et', color: '#92400e' },
+  { key: 'react', color: '#eda100' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
@@ -554,7 +560,8 @@ function graphEngFactorsSection(t) {
       + OPS.map((o) => `<th>${escapeHtml(o)}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const c of graphEngFactors.perCell) {
-      // Engine cells are N/A on this host — omitted entirely (see footnote).
+      // Engine cells are N/A here; the alias replicate duplicates
+      // vapor +b +ifr — both omitted from display (data stays in JSON).
       if (isEngineNa(c.cell)) continue;
       html += `<tr><td class="op"><b>${escapeHtml(c.flag ?? c.cell)}</b> <code style="font-size:10px">${escapeHtml(c.cell)}</code></td>`
         + `<td class="c plain" style="font-size:11px">${escapeHtml(c.coordinate ?? c.coord ?? '')}</td>`
@@ -809,8 +816,8 @@ function graphEngFactorsSection(t) {
     html += '</tbody></table>';
     html += `<p class="sub" style="margin-top:8px">${
       zhT
-        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b、<code>vapor-dense</code>=vapor 基线、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
-        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b, <code>vapor-dense</code>=vapor baseline, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
+        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b（默认）、<code>vapor-dense</code>=vapor 基线、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e）。<code>vapor-ifr-sparse</code> 是 vapor +b +ifr 的同坐标复测样本，已从显示中省略（数据保留在 JSON）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
+        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b (default), <code>vapor-dense</code>=vapor baseline, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e). <code>vapor-ifr-sparse</code> is a same-coordinate replicate of vapor +b +ifr, omitted from display (data retained in JSON). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
     }</p>`;
     return html;
   };
