@@ -25,22 +25,22 @@ const data = JSON.parse(fs.readFileSync(inFile, 'utf8'));
 const perOp = data.perOp;
 
 /**
- * Five-axis coordinates (terminology v2) per legacy bench id.
+ * Six-column coordinates (staging/naming/addressing/provider/lifetime/delivery) per legacy bench id.
  * canonical = the vue-lynx/internal/matrix legalCells() id.
  * Coordinate columns: staging/naming/addressing/provider/lifetime.
  */
 const CELLS = {
-  'vdom': { flag: 'vdom', canonical: 'vdom-ops-node', coord: 'ops/node/random-access/BTS/persistent', term: 'Op Stream' },
-  'vdom-ifr': { flag: 'vdom +ifr', canonical: 'vdom-ops-node-ifr', coord: 'ops/node/random-access/BTS+MTS/persistent+ephemeral', term: 'Op Stream + IFR' },
-  'vdom-et': { flag: 'vdom +b', canonical: 'vdom-code-block', coord: 'code/block/random-access/BTS/persistent', term: 'Code-Template' },
-  'vdom-ifr-et': { flag: 'vdom +b +ifr', canonical: 'vdom-code-block-ifr', coord: 'code/block/random-access/BTS+MTS/persistent+ephemeral', term: 'Code-Template + IFR' },
-  'vapor': { flag: 'vapor +b', canonical: 'vapor-tree-block', coord: 'tree/block/traversal+recover/BTS/persistent', term: 'Tree-Template' },
-  'vapor-dense': { flag: 'vapor', canonical: 'vapor-tree-node', coord: 'tree/node/traversal/BTS/persistent', term: 'Named Tree' },
-  'vapor-engine': { flag: 'vapor +b:e', canonical: 'vapor-native-block', coord: 'native/block/traversal+recover/Engine/persistent (N/A on web)', term: 'Engine-Template (N/A)' },
-  'vapor-ifr': { flag: 'vapor +b +ifr', canonical: 'vapor-tree-block-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR' },
-  'vapor-ifr-dense': { flag: 'vapor +ifr', canonical: 'vapor-tree-node-ifr', coord: 'tree/node/traversal/BTS+MTS/persistent+ephemeral', term: 'Named Tree + IFR' },
-  'vapor-ifr-sparse': { flag: 'vapor +b +ifr (alias)', canonical: 'vapor-tree-block-ifr', aliasOf: 'vapor-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR (alias)' },
-  'vapor-ifr-engine-et': { flag: 'vapor +b +ifr:e', canonical: 'vapor-tree-block-ifr-native-paint', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral(native-paint) (N/A on web)', term: 'Tree-Template + IFR native-paint (N/A)' },
+  'vdom': { flag: 'vdom', canonical: 'vdom-ops-node', coord: 'ops/node/random-access/BTS/persistent/—', term: 'Op Stream' },
+  'vdom-ifr': { flag: 'vdom +ifr', canonical: 'vdom-ops-node-ifr', coord: 'ops/node/random-access/BTS+MTS/persistent+ephemeral/—', term: 'Op Stream + IFR' },
+  'vdom-et': { flag: 'vdom +b', canonical: 'vdom-code-block', coord: 'code/block/random-access/BTS/persistent/bundle', term: 'Code-Template' },
+  'vdom-ifr-et': { flag: 'vdom +b +ifr', canonical: 'vdom-code-block-ifr', coord: 'code/block/random-access/BTS+MTS/persistent+ephemeral/bundle', term: 'Code-Template + IFR' },
+  'vapor': { flag: 'vapor +b', canonical: 'vapor-data-block', coord: 'data/block/traversal+recover/BTS/persistent/runtime', term: 'Data-Template' },
+  'vapor-dense': { flag: 'vapor', canonical: 'vapor-data-node', coord: 'data/node/traversal/BTS/persistent/runtime', term: 'Named Tree' },
+  'vapor-engine': { flag: 'vapor +b:e', canonical: 'vapor-native-block', coord: 'native/block/traversal+recover/Engine/persistent/runtime (N/A on web)', term: 'Engine-Template (N/A)' },
+  'vapor-ifr': { flag: 'vapor +b +ifr', canonical: 'vapor-data-block-ifr', coord: 'data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime', term: 'Data-Template + IFR' },
+  'vapor-ifr-dense': { flag: 'vapor +ifr', canonical: 'vapor-data-node-ifr', coord: 'data/node/traversal/BTS+MTS/persistent+ephemeral/runtime', term: 'Named Tree + IFR' },
+  'vapor-ifr-sparse': { flag: 'vapor +b +ifr (alias)', canonical: 'vapor-data-block-ifr', aliasOf: 'vapor-ifr', coord: 'data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime', term: 'Data-Template + IFR (alias)' },
+  'vapor-ifr-engine-et': { flag: 'vapor +b +ifr:e', canonical: 'vapor-data-block-ifr-native-paint', coord: 'data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime(native-paint) (N/A on web)', term: 'Data-Template + IFR native-paint (N/A)' },
 };
 
 const modes = Object.keys(perOp).filter((m) => CELLS[m]);
@@ -76,7 +76,7 @@ const PAIRS = {
   '+b effect (vdom, with +ifr)': ['vdom-ifr', 'vdom-ifr-et'],
   '+b effect (vapor, no ifr)': ['vapor-dense', 'vapor'],
   '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr'],
-  '+b:t→e effect (vapor, N/A on web)': ['vapor', 'vapor-engine'],
+  '+b:d→e effect (vapor, N/A on web)': ['vapor', 'vapor-engine'],
   '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
   '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
   '+ifr:e paint effect (N/A on web)': [
@@ -120,7 +120,7 @@ fs.mkdirSync(path.dirname(outStem), { recursive: true });
 fs.writeFileSync(`${outStem}.json`, `${JSON.stringify(out, null, 2)}\n`);
 
 // Markdown.
-let md = '# Unified benchmark — five-axis per-cell create/update + factors (generated)\n\n';
+let md = '# Unified benchmark — six-column per-cell create/update + factors (generated)\n\n';
 md += `source: \`${path.basename(inFile)}\` (${data.meta?.date ?? ''}, reps=${data.meta?.stormReps})\n\n`;
 for (const size of sizes) {
   md += `## Per-cell @${size} (median ms)\n\n`;

@@ -576,7 +576,7 @@ function graphEngFactorsSection(t) {
 
   /** Factors whose pair touches an engine-N/A cell (stub on this host). */
   const isEngineFactor = (name) => /engine|native|:e\b|:e /i.test(name)
-    || name.includes(':e effect') || name.includes('t→e');
+    || name.includes(':e effect') || name.includes('d→e');
 
   const factorTable = (size) => {
     let html =
@@ -682,7 +682,7 @@ function graphEngFactorsSection(t) {
     '+b effect (vdom, with +ifr)': ['vdom-ifr', 'vdom-ifr-et'],
     '+b effect (vapor, no ifr)': ['vapor-dense', 'vapor'],
     '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr'],
-    '+b:t→e effect (vapor, N/A)': ['vapor', 'vapor-engine'],
+    '+b:d→e effect (vapor, N/A)': ['vapor', 'vapor-engine'],
     '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
     '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
     '+ifr:e paint effect (N/A)': ['vapor-ifr', 'vapor-ifr-engine-et'],
@@ -793,15 +793,17 @@ function graphEngFactorsSection(t) {
     const rows = zhT
       ? [
         ['<code>基线</code>', 'per-node addressing —— 最朴素、最安全：每个节点独立命名，无需元数据、无需校验。<code>vdom</code> = op stream；<code>vapor</code> = named tree。'],
-        ['<code>+b</code>', '<b>block templates</b>：用模板块的 parts 信息做块式命名（<code>base+offset</code>）并物化模板。staging 参数缺省为该 render model 的自然档位 —— <code>vdom +b</code> ≡ <code>+b:c</code>（code，baked <code>create()</code>）；<code>vapor +b</code> ≡ <code>+b:t</code>（tree，序列化树 + MT 解释；Split 拓扑所致）。注意：两个 render model 的 <code>+b</code> 因子因此<b>不可互比</b>。信息来源也不同：vdom 是 intrinsic（Vue Block 声明），vapor 是 recovered（编译期恢复，带指纹 fail-safe）。'],
+        ['<code>+b</code>', '<b>block templates</b>：用模板块的 parts 信息做块式命名（<code>base+offset</code>）并物化模板。staging 参数缺省为该 render model 的自然档位 —— <code>vdom +b</code> ≡ <code>+b:c</code>（code，baked <code>create()</code>）；<code>vapor +b</code> ≡ <code>+b:d</code>（data：序列化树在<b>运行期</b>作为数据过线——REGISTER_TREE 每模板一次——由 MT 解释；Split 拓扑所致）。注意：两个 render model 的 <code>+b</code> 因子因此<b>不可互比</b>。信息来源也不同：vdom 是 intrinsic（Vue Block 声明），vapor 是 recovered（编译期恢复，带指纹 fail-safe）。'],
         ['<code>+b:e</code>', 'staging 升到 <b>engine</b> 档：模板常驻引擎（<code>__CreateElementTemplate</code> 家族），native clone。作用于 <b>persistent 本体树</b>。本环境（Lynx for Web）无该 PAPI → N/A。<code>+b:c</code>（vapor 的 code 档，M3a）未实现。'],
+        ['<i>delivery</i>', '（第六列性质，暂无独立 flag）residual 何时到 MT：<code>runtime</code> = 运行期过线（vapor 的 data/native 现状）；<code>bundle</code> = 构建期编进 MT bundle（vdom 的 code、RL Snapshot）。构建期交付 data 的格（候选记法 <code>+b!</code>）尚未实现——可砍掉 BG 解析/序列化/wire/register 四笔 create 期成本。'],
         ['<code>+ifr</code>', 'IFR：MTS 抢跑 <b>ephemeral</b> 首帧副本，BG 启动后 hydration 采纳或整体重放。paint 参数缺省 = 首帧继承本体 staging。'],
         ['<code>+ifr:e</code>', '仅<b>首帧副本</b>用 engine 档画（旧名 engine-et）；本体树照常。区别于 <code>+b:e</code>（全程）。本环境 N/A。同理 <code>+ifr:c</code>（旧名 disposable-et）。'],
       ]
       : [
         ['<code>baseline</code>', 'per-node addressing — plainest and safest: every node named independently, no metadata, no validation. <code>vdom</code> = op stream; <code>vapor</code> = named tree.'],
-        ['<code>+b</code>', '<b>block templates</b>: use the template block\'s parts information for block naming (<code>base+offset</code>) and template materialization. The staging parameter defaults to the render model\'s natural rung — <code>vdom +b</code> ≡ <code>+b:c</code> (code: baked <code>create()</code>); <code>vapor +b</code> ≡ <code>+b:t</code> (tree: serialized tree + MT interpreter, forced by the Split topology). The two <code>+b</code> factors are therefore <b>not comparable across render models</b>. The information source differs too: intrinsic for vdom (declared by Vue\'s Block), recovered for vapor (compile-time analysis, hence the fingerprint fail-safe).'],
+        ['<code>+b</code>', '<b>block templates</b>: use the template block\'s parts information for block naming (<code>base+offset</code>) and template materialization. The staging parameter defaults to the render model\'s natural rung — <code>vdom +b</code> ≡ <code>+b:c</code> (code: baked <code>create()</code>); <code>vapor +b</code> ≡ <code>+b:d</code> (data: the serialized tree crosses the thread boundary as data at RUNTIME — REGISTER_TREE once per template — interpreted on the MT; forced by the Split topology). The two <code>+b</code> factors are therefore <b>not comparable across render models</b>. The information source differs too: intrinsic for vdom (declared by Vue\'s Block), recovered for vapor (compile-time analysis, hence the fingerprint fail-safe).'],
         ['<code>+b:e</code>', 'staging raised to the <b>engine</b> rung: templates live in the engine (<code>__CreateElementTemplate</code> family), native clone. Applies to the <b>persistent tree</b>. N/A on this host (Lynx for Web has no such PAPI). <code>+b:c</code> for vapor (M3a) is unimplemented.'],
+        ['<i>delivery</i>', '(sixth property column, no standalone flag yet) when the residual reaches the MT: <code>runtime</code> = shipped over the wire (vapor\'s data/native today); <code>bundle</code> = compiled into the MT bundle at build (vdom\'s code, RL Snapshot). The bundle-delivered-data cell (tentative notation <code>+b!</code>) is unbuilt — it would cut the BG parse/serialize/wire/register create-time costs.'],
         ['<code>+ifr</code>', 'IFR: the MTS paints an <b>ephemeral</b> first-frame copy; on BG boot, hydration adopts it or replays in full. The paint parameter defaults to inheriting the persistent tree\'s staging.'],
         ['<code>+ifr:e</code>', 'ONLY the first-frame copy is painted at the engine rung (legacy name engine-et); the persistent tree is unchanged. Distinct from <code>+b:e</code> (whole lifetime). N/A on this host. Likewise <code>+ifr:c</code> (legacy disposable-et).'],
       ];
