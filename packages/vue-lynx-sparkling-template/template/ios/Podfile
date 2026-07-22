@@ -1,0 +1,76 @@
+platform :ios, '12.0'
+
+# Use private spec repo for SparklingMethod and Sparkling
+source 'https://cdn.cocoapods.org/'
+
+use_modular_headers!
+
+install! 'cocoapods',
+:generate_multiple_pod_projects => true,
+:incremental_installation => true,
+:deterministic_uuids => true
+
+inhibit_all_warnings!
+
+SPARKLING_VERSION = '2.0.1'
+
+def sparkling_methods
+  pod 'SparklingMethod', SPARKLING_VERSION, :subspecs => [
+  'Lynx', 'DIProvider', 'Debug'
+  ]
+end
+
+def sparkling_methods_dep
+  # BEGIN SPARKLING AUTOLINK
+  pod 'Sparkling-Router', :path => '../node_modules/sparkling-navigation/ios'
+  # END SPARKLING AUTOLINK
+end
+
+def sparkling_kit
+  pod 'Sparkling', SPARKLING_VERSION
+  sparkling_methods
+  sparkling_methods_dep
+  
+  pod 'Lynx', '3.6.0', :subspecs => [
+    'Framework',
+    'ReleaseResource'
+  ]
+  
+  pod 'PrimJS', '3.6.1', :subspecs => ['quickjs', 'napi']
+
+  pod 'LynxService', '3.6.0', :subspecs => [
+  'Image',
+  'Log',
+  'Http',
+  'Devtool'
+  ]
+
+#  pod 'BaseDevtool'
+  pod 'LynxDevtool', '3.6.0', :subspecs => [
+   'Framework',
+  ]
+  
+  pod 'SnapKit'
+  pod 'Mantle', '~> 2.2.0'
+  
+  pod 'SDWebImage','5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+  
+end
+
+use_frameworks!
+target 'SparklingGo' do
+  sparkling_kit
+end
+
+target 'SparklingGoTests' do
+  sparkling_kit
+end
+
+target 'SparklingMethodTests' do
+  sparkling_kit
+end
+
+target 'SparklingGoUITests' do
+  sparkling_kit
+end
