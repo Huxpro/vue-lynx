@@ -26,7 +26,7 @@ export function isIfrEnabled(): boolean {
 }
 
 /**
- * Suppress lifecycle registration during the disposable IFR render while
+ * Suppress lifecycle registration during the ephemeral (IFR scout copy) render while
  * preserving the original API's type and normal background-thread behavior.
  */
 export function ifrInert<T extends (...args: never[]) => unknown>(fn: T): T {

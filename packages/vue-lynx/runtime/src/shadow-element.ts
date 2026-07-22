@@ -1183,10 +1183,15 @@ function skipProtoSlots(
 }
 
 /**
- * Sparse A2 nav facade: allocate ShadowElements only for slots in `needed`
- * (addressed set). Static subtrees off the vapor `child`/`next` path are
+ * BG half of the **recovered Data-Template** (legacy "sparse A2") — four-axis
+ * coordinate Data / Sparse / recovered / Split (see vue-lynx/internal/matrix).
+ *
+ * Nav facade: allocate ShadowElements only for slots in `needed`
+ * (the compiler-recovered addressed closure = holes ∪ root ∪ ancestors ∪
+ * prefix siblings). Static subtrees off the vapor `child`/`next` path are
  * skipped — natives still come from CLONE_TREE. Uids are contiguous over
- * the addressed set: `base + indexInAddressed`.
+ * the addressed set: `base + indexInAddressed` (the MT names the same set
+ * in instantiateTemplateSparse — BG uid set ≡ MT named set).
  */
 function buildShadowCloneSparse(
   proto: ShadowElement,
@@ -1251,6 +1256,17 @@ function buildShadowCloneSparse(
   return clone;
 }
 
+/**
+ * Materialize one vapor `template()` instance — the BG entry point of the
+ * Data-staging ladder (`λ holes. tree`: the residual ships as a lazy AST
+ * via REGISTER_TREE, one CLONE_TREE per instance).
+ *
+ * Four-axis coordinate: Data / (Sparse when `__vlxAddressing` validates,
+ * else Dense fallback) / recovered / Split. Sparse ⇒ **recovered
+ * Data-Template**; dense ⇒ **Named Tree** (legacy "dense tree" / A1).
+ * Deployment lifetime is decided by the caller's realm: the same code
+ * paints the durable BG-owned tree and the ephemeral IFR first frame.
+ */
 function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   let cache = templateCaches.get(proto);
   if (!cache) {

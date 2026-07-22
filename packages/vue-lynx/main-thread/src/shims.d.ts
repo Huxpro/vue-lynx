@@ -14,6 +14,10 @@ import type { ElementRef } from '@lynx-js/type-element-api';
 declare global {
   /** Build-time macros */
   const __DEV__: boolean;
+  /** Axis-A staging define ('opstream'|'data'|'code'|'engine'); typeof-guard reads. */
+  const __VUE_LYNX_TEMPLATE_STAGING__: string;
+  /** Axis-D IFR paint define ('plain'|'disposable-et'|'engine-et'). */
+  const __VUE_LYNX_IFR_PAINT__: string;
 
   /** Alias for ElementRef — keeps ops-apply.ts changes minimal. */
   type LynxElement = ElementRef;

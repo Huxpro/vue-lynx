@@ -21,6 +21,10 @@
  */
 
 import {
+  IFR_PAINT_GLOBAL,
+  TEMPLATE_STAGING_GLOBAL,
+} from 'vue-lynx/internal/matrix';
+import {
   VAPOR_DOCUMENT_GLOBAL,
   VAPOR_DOM_CTOR_GLOBALS,
   VAPOR_SPARSE_NAMING_GLOBAL,
@@ -146,13 +150,67 @@ export interface PluginVueLynxOptions {
   enableElementTemplates?: boolean;
 
   /**
-   * Whether Vapor `CLONE_TREE` may use sparse A2 naming when compile-time
-   * `__vlxAddressing` metadata is present (#298).
+   * Axis B — **naming**: which slots of a materialized template subtree
+   * receive cross-thread identities (see `vue-lynx/internal/matrix`).
    *
-   * Set to `false` to force dense A1 naming for A/B measurement in the
-   * graph-eng flag matrix (#301). Has no effect on VDOM (ET naming is
-   * already sparse).
+   * - `'sparse'` — only the compiler-recovered addressed closure (holes +
+   *   nav ancestors/prefix siblings) is named: Vapor `CLONE_TREE` becomes a
+   *   **recovered Data-Template** (A2, #298) when `__vlxAddressing` is
+   *   present, with fail-safe fallback to dense.
+   * - `'dense'` — every preorder slot is named: the Vapor **Named Tree**
+   *   (A1) cell, used for A/B measurement in the graph-eng matrix (#301).
    *
+   * Has no effect on VDOM (Code-Template naming is intrinsically sparse).
+   *
+   * @defaultValue 'sparse'
+   */
+  templateNaming?: 'dense' | 'sparse';
+
+  /**
+   * Axis A — **staging**: what form the compiled template residual exists
+   * in on the main thread (see `vue-lynx/internal/matrix`).
+   *
+   * - `'opstream'` — per-instruction ops, no template mechanism (VDOM
+   *   default without element templates).
+   * - `'data'` — lazy serialized AST + one generic MT interpreter
+   *   (`REGISTER_TREE`/`CLONE_TREE`; Vapor default → Data-Template).
+   * - `'code'` — per-template compiled `create()` closure, no interpreter
+   *   (`INSTANTIATE_TEMPLATE`; VDOM element templates → Code-Template).
+   *   Not implemented for Vapor (M3a optional) — falls back to `'data'`
+   *   with a warning.
+   * - `'engine'` — host-resident **Engine-Template**: the MT executor
+   *   routes instantiation through the native `__CreateElementTemplate`
+   *   PAPI family when the engine provides it, and falls back to
+   *   `'data'`/`'code'` interpretation (reported as stub) when it does not.
+   *
+   * Defaults preserve current behavior: Vapor → `'data'`; VDOM → `'code'`
+   * when element templates are enabled, else `'opstream'`.
+   *
+   * @defaultValue undefined (per-render-model default above)
+   */
+  templateStaging?: 'opstream' | 'data' | 'code' | 'engine';
+
+  /**
+   * Axis D — **IFR paint mode**: how the ephemeral first-frame copy
+   * materializes templates when {@link enableIFR} is on.
+   *
+   * - `'plain'` — today's behavior: the recorded op stream paints via the
+   *   same staging as the durable tree.
+   * - `'disposable-et'` — first frame paints through the registered
+   *   Code-Template `create()` executors (ephemeral Code-Template; salvaged
+   *   from #290's IFR×ET direction).
+   * - `'engine-et'` — first frame routes through the native
+   *   Engine-Template family when available (stub fallback otherwise).
+   *
+   * @defaultValue 'plain'
+   */
+  ifrPaint?: 'plain' | 'disposable-et' | 'engine-et';
+
+  /**
+   * Whether Vapor `CLONE_TREE` may use sparse A2 naming.
+   *
+   * @deprecated Use {@link templateNaming} (`false` ≡ `'dense'`). When both
+   * are set, `templateNaming` wins.
    * @defaultValue true
    */
   enableSparseNaming?: boolean;
@@ -259,8 +317,43 @@ export function pluginVueLynx(
     includeWorkletPackages = [],
     vapor = false,
     enableSparseNaming = true,
+    ifrPaint = 'plain',
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
+
+  // Axis B (naming): templateNaming wins over the deprecated boolean alias.
+  const templateNaming: 'dense' | 'sparse' = options.templateNaming
+    ?? (enableSparseNaming === false ? 'dense' : 'sparse');
+
+  // Axis A (staging): default = current product behavior per render model.
+  const defaultStaging = vapor
+    ? 'data'
+    : enableElementTemplates
+      ? 'code'
+      : 'opstream';
+  let templateStaging = options.templateStaging ?? defaultStaging;
+  if (vapor && templateStaging === 'opstream') {
+    console.warn(
+      '[vue-lynx] templateStaging:\'opstream\' is not a Vapor cell '
+        + '(template() always registers a tree) — using \'data\'.',
+    );
+    templateStaging = 'data';
+  }
+  if (vapor && templateStaging === 'code') {
+    console.warn(
+      '[vue-lynx] templateStaging:\'code\' (Vapor Code-Template, M3a) is '
+        + 'not implemented — using \'data\'. The matrix reports this cell '
+        + 'as stub.',
+    );
+    templateStaging = 'data';
+  }
+  if (!vapor && templateStaging === 'data') {
+    console.warn(
+      '[vue-lynx] templateStaging:\'data\' is not a VDOM cell (no '
+        + 'CLONE_TREE protocol) — using the default.',
+    );
+    templateStaging = enableElementTemplates ? 'code' : 'opstream';
+  }
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
@@ -327,8 +420,10 @@ export function pluginVueLynx(
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
                 [VAPOR_SPARSE_NAMING_GLOBAL]: JSON.stringify(
-                  enableSparseNaming !== false,
+                  templateNaming === 'sparse',
                 ),
+                [TEMPLATE_STAGING_GLOBAL]: JSON.stringify(templateStaging),
+                [IFR_PAINT_GLOBAL]: JSON.stringify(ifrPaint),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references
@@ -398,7 +493,7 @@ export function pluginVueLynx(
             // Prod inlineTemplate path never hits the template loader — stamp
             // `__vlxAddressing` on the compiled script so sparse A2 activates
             // in probe/benchmark bundles (#301).
-            if (enableSparseNaming !== false) {
+            if (templateNaming === 'sparse') {
               chain.module
                 .rule('vue-lynx:vapor-addressing-script')
                 .test(/\.vue$/)
@@ -423,6 +518,10 @@ export function pluginVueLynx(
           chain.resolve.alias.set(
             'vue-lynx/internal/ops',
             path.resolve(_vueLynxRoot, 'internal/dist/ops.js'),
+          );
+          chain.resolve.alias.set(
+            'vue-lynx/internal/matrix',
+            path.resolve(_vueLynxRoot, 'internal/dist/matrix.js'),
           );
         });
 

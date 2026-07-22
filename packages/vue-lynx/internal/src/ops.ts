@@ -69,6 +69,23 @@
  * naming can match ET's sparse model while keeping dense CLONE_TREE as
  * fallback when analysis is absent. Element-slot ops (18/19) let dynamic
  * subtrees graft by slot-index when the insert parent is anonymous.
+ *
+ * Four-axis coordinates (see vue-lynx/internal/matrix — Staging × Naming ×
+ * Provenance × Deployment; a subtree = `λ holes. tree`, ops materialize its
+ * residual):
+ *  - INSTANTIATE_TEMPLATE (15) — Code / Sparse / intrinsic / Split:
+ *    **intrinsic Code-Template** (legacy alias "JS ET"). The residual is a
+ *    per-template compiled create() closure; no interpretation on the MT.
+ *  - REGISTER_TREE + CLONE_TREE (16/17), addressedOr0 = 0 — Data / Dense /
+ *    — / Split: **Named Tree** (legacy alias "dense tree" / A1). The
+ *    residual is a lazy AST interpreted by one generic MT walker; every
+ *    preorder slot is named.
+ *  - REGISTER_TREE + CLONE_TREE, addressedOr0 = number[] — Data / Sparse /
+ *    recovered / Split: **recovered Data-Template** (A2). Same residual and
+ *    interpreter; only the compiler-recovered addressed closure is named.
+ *  - Deployment lifetime (Durable vs Ephemeral) is not in the wire format:
+ *    the same ops paint the durable BG-owned tree and the ephemeral IFR
+ *    first-frame copy ("disposable" is that axis-D value, not a mechanism).
  */
 export const PAGE_ROOT_ID = 1;
 
@@ -195,9 +212,11 @@ export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 export const VAPOR_ADDRESSING_KEY = '__vlxAddressing';
 
 /**
- * Build-time define for sparse A2 naming (#298 / #301).
- * When `false`, runtime forces dense CLONE_TREE even if `__vlxAddressing`
- * is present — the A1 cell of the graph-eng flag matrix.
+ * Build-time define for the axis-B naming flag (#298 / #301 / #321).
+ * Driven by `templateNaming: 'dense' | 'sparse'` in the plugin (the former
+ * `enableSparseNaming` boolean is a deprecated alias). When `false`
+ * (naming = dense), runtime forces dense CLONE_TREE — the **Named Tree**
+ * cell — even if `__vlxAddressing` is present.
  */
 export const VAPOR_SPARSE_NAMING_GLOBAL = '__VUE_LYNX_SPARSE_NAMING__';
 

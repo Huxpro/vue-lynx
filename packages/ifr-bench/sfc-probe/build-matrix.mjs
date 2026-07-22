@@ -1,10 +1,11 @@
 /**
- * Build the same-source matrix for browser FCP + graph-eng axes (#301):
- *   VDOM:  off | ifr (ET=false / slots-off) | ifr-et (slots-on)
- *   Vapor: off | ifr | ifr-dense (A1) | ifr-sparse (A2)
- *
- * Native ET column (#299/#300) is intentionally absent — stubbed in the
- * graph-eng report until engine emission lands.
+ * Build the same-source matrix for browser FCP + the four-axis graph-eng
+ * matrix (#301/#321/#325). Cells carry four-axis coordinates
+ * (staging/naming/provenance/deployment — see vue-lynx/internal/matrix):
+ *   VDOM:  op-stream | +IFR | Code-Template (+IFR) | Code-Template no-IFR
+ *   Vapor: Data-Template (sparse) ± IFR | Named Tree (dense) ± IFR |
+ *          Engine-Template staging (probe; reports stub when the engine
+ *          PAPI family is absent — never a faked win)
  *
  *   node build-matrix.mjs [outDir=../web-bundles] [nCards=125]
  */
@@ -22,12 +23,25 @@ const outDir = path.resolve(_dirname, process.argv[2] ?? '../web-bundles');
 const nCards = Number(process.argv[3] ?? 125);
 
 // Explicit flags — never rely on enableIFR→ET defaulting.
+// `staging`/`ifrPaint` are optional overrides (axis A / axis D paint).
+// `coord` is the four-axis label recorded into sfc-probe-sizes.json.
 const CELLS = [
-  { name: 'content-vdom', mode: 'vdom', ifr: '0', et: '0', sparse: '1' },
-  { name: 'content-vdom-ifr', mode: 'vdom', ifr: '1', et: '0', sparse: '1' },
-  { name: 'content-vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1', sparse: '1' },
-  { name: 'content-vapor', mode: 'vapor', ifr: '0', et: '0', sparse: '1' },
-  { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0', sparse: '1' },
+  { name: 'content-vdom', mode: 'vdom', ifr: '0', et: '0', sparse: '1',
+    coord: 'OpStream/Dense/intrinsic/Split·Durable' },
+  { name: 'content-vdom-ifr', mode: 'vdom', ifr: '1', et: '0', sparse: '1',
+    coord: 'OpStream/Dense/intrinsic/Split·Durable+Ephemeral' },
+  { name: 'content-vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1', sparse: '1',
+    coord: 'Code/Sparse/intrinsic/Split·Durable+Ephemeral' },
+  // Code-Template without IFR — the §6 "create-benefit" cell.
+  { name: 'content-vdom-et', mode: 'vdom', ifr: '0', et: '1', sparse: '1',
+    coord: 'Code/Sparse/intrinsic/Split·Durable' },
+  { name: 'content-vapor', mode: 'vapor', ifr: '0', et: '0', sparse: '1',
+    coord: 'Data/Sparse/recovered/Split·Durable' },
+  // Named Tree without IFR — dense naming main-effect anchor.
+  { name: 'content-vapor-dense', mode: 'vapor', ifr: '0', et: '0', sparse: '0',
+    coord: 'Data/Dense/—/Split·Durable' },
+  { name: 'content-vapor-ifr', mode: 'vapor', ifr: '1', et: '0', sparse: '1',
+    coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral' },
   // Graph-eng naming-density pair (#301): same IFR vapor, A1 vs A2.
   {
     name: 'content-vapor-ifr-dense',
@@ -35,6 +49,7 @@ const CELLS = [
     ifr: '1',
     et: '0',
     sparse: '0',
+    coord: 'Data/Dense/—/Split·Durable+Ephemeral',
   },
   {
     name: 'content-vapor-ifr-sparse',
@@ -42,6 +57,28 @@ const CELLS = [
     ifr: '1',
     et: '0',
     sparse: '1',
+    coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral',
+  },
+  // Engine staging (#323): probe + stub fallback. On Lynx-for-Web the
+  // engine ET PAPI family is absent → the MT reports 'stub' and interprets;
+  // this cell measures the probe overhead honestly, not a faked engine win.
+  {
+    name: 'content-vapor-engine',
+    mode: 'vapor',
+    ifr: '0',
+    et: '0',
+    sparse: '1',
+    staging: 'engine',
+    coord: 'Engine/Sparse/recovered/Split·Durable (stub-capable)',
+  },
+  {
+    name: 'content-vapor-ifr-engine-et',
+    mode: 'vapor',
+    ifr: '1',
+    et: '0',
+    sparse: '1',
+    ifrPaint: 'engine-et',
+    coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et paint)',
   },
 ];
 
@@ -73,6 +110,8 @@ for (const cell of CELLS) {
         SFC_PROBE_IFR: cell.ifr,
         SFC_PROBE_ET: cell.et,
         SFC_PROBE_SPARSE: cell.sparse,
+        ...(cell.staging ? { SFC_PROBE_STAGING: cell.staging } : {}),
+        ...(cell.ifrPaint ? { SFC_PROBE_IFR_PAINT: cell.ifrPaint } : {}),
       },
     },
   );
@@ -94,12 +133,18 @@ for (const cell of CELLS) {
       vapor: cell.mode === 'vapor',
       enableIFR: cell.ifr === '1',
       enableElementTemplates: cell.et === '1',
-      enableSparseNaming: cell.sparse === '1',
+      templateNaming: cell.sparse === '1' ? 'sparse' : 'dense',
+      templateStaging: cell.staging
+        ?? (cell.mode === 'vapor' ? 'data' : (cell.et === '1' ? 'code' : 'opstream')),
+      ifrPaint: cell.ifrPaint ?? (cell.ifr === '1' ? 'plain' : null),
       slots: cell.et === '1' ? 'on' : 'off',
       naming: cell.mode === 'vapor'
         ? (cell.sparse === '1' ? 'sparse' : 'dense')
         : 'n/a',
-      nativeEt: 'stub',
+      coordinate: cell.coord,
+      // Engine staging is honest-by-construction: the MT publishes
+      // __VUE_LYNX_ENGINE_ET_STATUS__ = 'native'|'stub' at runtime.
+      nativeEt: cell.staging === 'engine' ? 'probe(stub-on-web)' : 'stub',
     },
     webBundle: { raw: raw.length, gzip: gz(raw) },
     lynxBundle: lynxRaw ? { raw: lynxRaw.length, gzip: gz(lynxRaw) } : null,
