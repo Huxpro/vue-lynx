@@ -127,7 +127,7 @@ export function enableIFR(): void {
   // replay buffer sees the Vapor dom-shim's `window`), which is outside the
   // runIfrRender fallback boundary — an uncaught throw there kills renderPage
   // for the whole page, not just IFR. A timer that never fires is the correct
-  // semantic for the disposable MT realm: everything after handoff is
+  // semantic for the ephemeral MT realm: everything after handoff is
   // discarded anyway.
   if (typeof g['setTimeout'] !== 'function') {
     g['setTimeout'] = (): number => 0;

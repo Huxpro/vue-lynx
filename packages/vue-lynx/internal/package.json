@@ -10,6 +10,11 @@
       "types": "./dist/ops.d.ts",
       "import": "./dist/ops.js",
       "default": "./dist/ops.js"
+    },
+    "./matrix": {
+      "types": "./dist/matrix.d.ts",
+      "import": "./dist/matrix.js",
+      "default": "./dist/matrix.js"
     }
   },
   "files": ["dist"],

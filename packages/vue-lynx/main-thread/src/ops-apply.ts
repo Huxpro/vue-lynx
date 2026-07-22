@@ -21,6 +21,12 @@ import {
   setPageUniqueId,
   trackInsert,
 } from './element-registry.js';
+import {
+  buildEngineTemplateDescriptor,
+  instantiateEngineTemplate,
+  registerEngineTemplate,
+  resetEngineTemplatesForTesting,
+} from './engine-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
 import {
   createListElement,
@@ -80,6 +86,27 @@ interface RegisteredTree {
 }
 
 const templates = new Map<number, RegisteredTree>();
+
+/**
+ * Axis-A staging request for template instantiation (#321/#323).
+ * `'engine'` routes REGISTER_TREE/CLONE_TREE through the native
+ * Engine-Template family when the engine provides it. Read from the
+ * build-time define when present (typeof-guarded for test realms), else
+ * from a same-named global so harnesses can flip it per run.
+ */
+function engineStagingRequested(): boolean {
+  const staging = typeof __VUE_LYNX_TEMPLATE_STAGING__ !== 'undefined'
+    ? __VUE_LYNX_TEMPLATE_STAGING__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_STAGING__'];
+  if (staging === 'engine') return true;
+  // Axis-D ephemeral paint may independently request engine routing for the
+  // IFR first frame (`ifrPaint: 'engine-et'`).
+  const paint = typeof __VUE_LYNX_IFR_PAINT__ !== 'undefined'
+    ? __VUE_LYNX_IFR_PAINT__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
+  return paint === 'engine-et'
+    && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
+}
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -172,9 +199,14 @@ function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
 }
 
 /**
- * Dense A1: element ids are assigned by pre-order traversal starting at
- * baseUid — the exact allocation order the BG thread used for its shadow
- * clone, so both sides agree without a transmitted map.
+ * **Named Tree** interpreter (legacy "dense A1") — four-axis coordinate
+ * Data / Dense / — / Split (see vue-lynx/internal/matrix): the residual
+ * arrives as a lazy AST and this generic walk materializes it, naming
+ * every preorder slot.
+ *
+ * Element ids are assigned by pre-order traversal starting at baseUid —
+ * the exact allocation order the BG thread used for its shadow clone, so
+ * both sides agree without a transmitted map.
  *
  * Comment nodes and empty #text nodes are Background Thread anchors: the
  * walk consumes their uid (keeping both sides' pre-order counters in
@@ -215,9 +247,13 @@ function instantiateTemplateDense(
 }
 
 /**
- * Sparse A2: build the full native skeleton, but only name slots in
- * `addressed` (uid = base + indexInAddressed). Anonymous static nodes are
- * write-only handles for `__AppendElement`.
+ * **recovered Data-Template** interpreter (legacy "sparse A2") — four-axis
+ * coordinate Data / Sparse / recovered / Split: same lazy-AST residual and
+ * generic interpreter as the Named Tree, but only the compiler-recovered
+ * addressed closure receives identities (uid = base + indexInAddressed).
+ * Anonymous static nodes are write-only handles for `__AppendElement` —
+ * the full native skeleton is still built (why sparse alone is not an FCP
+ * win; Engine staging removes the per-node JS walk itself).
  */
 function instantiateTemplateSparse(
   node: TemplateNode,
@@ -264,6 +300,71 @@ function instantiateTemplateSparse(
     }
   }
   return { el, uid };
+}
+
+/**
+ * **Engine-Template** fast path (M3b, #323) — coordinate Engine / Sparse
+ * (or Dense) / — / Split: the engine clones a host-resident prototype;
+ * no per-node JS runs here. Returns false when the engine family is
+ * unavailable or instantiation fails (→ caller interprets; the cell is
+ * reported stub). Bookkeeping (elements map, selector attrs, insert
+ * tracking) matches the interpreters exactly so every later op works
+ * unchanged.
+ */
+function tryEngineCloneTree(
+  tplId: number,
+  entry: RegisteredTree,
+  baseUid: number,
+): boolean {
+  if (!engineStagingRequested()) return false;
+
+  // Preorder metadata from the structure: tag, materializability, and the
+  // nearest named ancestor for insert tracking.
+  const tags: string[] = [];
+  const props: TemplateNode[1][] = [];
+  const namedParentOf: (number | null)[] = [];
+  const addressedSet = entry.addressed ? new Set(entry.addressed) : null;
+  const walk = (node: TemplateNode, namedParent: number | null): void => {
+    const slot = tags.length;
+    tags.push(node[0]);
+    props.push(node[1]);
+    namedParentOf.push(namedParent);
+    const selfNamed = addressedSet ? addressedSet.has(slot) : true;
+    for (const child of node[2]) {
+      walk(child, selfNamed ? slot : namedParent);
+    }
+  };
+  walk(entry.structure, null);
+
+  const named = entry.addressed ?? tags.map((_, slot) => slot);
+  const materializable = (slot: number): boolean => {
+    const tag = tags[slot]!;
+    if (tag === '#comment') return false;
+    if (tag === '#text') {
+      const p = props[slot];
+      return !!p && p.t !== undefined && p.t !== '';
+    }
+    return true;
+  };
+
+  const wanted = named.filter(materializable);
+  const handles = instantiateEngineTemplate(tplId, wanted, pageUniqueId);
+  if (!handles) return false;
+
+  const slotToUid = new Map(named.map((s, i) => [s, baseUid + i] as const));
+  for (let i = 0; i < wanted.length; i++) {
+    const slot = wanted[i]!;
+    const uid = slotToUid.get(slot)!;
+    const el = handles[i]!;
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    const parentSlot = namedParentOf[slot];
+    if (parentSlot !== null) {
+      const parentUid = slotToUid.get(parentSlot);
+      if (parentUid !== undefined) trackInsert(parentUid, uid);
+    }
+  }
+  return true;
 }
 
 function instantiateRegisteredTree(
@@ -421,6 +522,18 @@ export function applyOps(ops: unknown[], flush = true): void {
           ? addressedOr0
           : undefined;
         templates.set(tplId, { structure, addressed });
+        // Engine staging: build the host-resident prototype once (fail-safe
+        // no-op when the engine family is absent — the cell reports stub).
+        if (engineStagingRequested()) {
+          registerEngineTemplate(
+            tplId,
+            buildEngineTemplateDescriptor(
+              structure,
+              addressed ?? [],
+              addressed ?? [],
+            ),
+          );
+        }
         break;
       }
 
@@ -429,7 +542,9 @@ export function applyOps(ops: unknown[], flush = true): void {
         const baseUid = ops[i++] as number;
         const entry = templates.get(tplId);
         if (entry) {
-          instantiateRegisteredTree(entry, baseUid);
+          if (!tryEngineCloneTree(tplId, entry, baseUid)) {
+            instantiateRegisteredTree(entry, baseUid);
+          }
         }
         break;
       }
@@ -597,6 +712,7 @@ export function resetMainThreadState(): void {
   clearIfrSelectorAttributeDeferral();
   resetElementRegistry();
   templates.clear();
+  resetEngineTemplatesForTesting();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
