@@ -276,6 +276,12 @@ export default defineConfig({
         find: '@vue/runtime-test',
         replacement: path.resolve(__dirname, 'src/lynx-runtime-test.ts'),
       },
+      // vue-lynx/internal/ops → source (shadow-element.ts imports it since
+      // the sparse-naming work; workspace exports don't resolve under vitest)
+      {
+        find: 'vue-lynx/internal/ops',
+        replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
+      },
       // Some tests import from 'vue' directly
       {
         find: /^vue$/,
