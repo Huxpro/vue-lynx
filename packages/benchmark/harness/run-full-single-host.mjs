@@ -52,6 +52,7 @@ const { values: args } = parseArgs({
     'skip-build': { type: 'boolean', default: false },
     'skip-storms': { type: 'boolean', default: false },
     'skip-fcp': { type: 'boolean', default: false },
+    'skip-fcp-build': { type: 'boolean', default: false },
     'synthesize-only': { type: 'boolean', default: false },
   },
 });
@@ -98,13 +99,15 @@ if (!args['skip-fcp']) {
     const abs = path.join(root, f);
     if (fs.existsSync(abs)) fs.unlinkSync(abs);
   }
+  const skipBuild = args['skip-fcp-build'] ? ' --skip-build' : '';
   // ×1 full ladder (matches committed sweep: runs=3).
   run(
-    `node harness/unified-content.mjs --label content --cpu 1 --runs 3 --rungs 1000,3000,5000,10000,20000,30000 --cells ${FCP_CELLS}`,
+    `node harness/unified-content.mjs --label content --cpu 1 --runs 3 --rungs 1000,3000,5000,10000,20000,30000 --cells ${FCP_CELLS}${skipBuild}`,
   );
-  // ×4 through 10k only.
+  // ×4 through 10k only. Bundles from ×1 are reused when --skip-fcp-build
+  // (or after the ×1 build above already populated unified-bundles/content).
   run(
-    `node harness/unified-content.mjs --label content --cpu 4 --runs 3 --rungs 1000,3000,5000,10000 --cells ${FCP_CELLS}`,
+    `node harness/unified-content.mjs --label content --cpu 4 --runs 3 --rungs 1000,3000,5000,10000 --cells ${FCP_CELLS} --skip-build`,
   );
 }
 
