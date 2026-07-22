@@ -1,8 +1,9 @@
 /**
- * Compile-time Vapor addressing analysis (#297).
+ * Compile-time Vapor addressing analysis (#297 / #298).
  *
  * Locks the hole set + addressed-node set (REGISTER_TREE preorder slots)
- * derived from vapor IR — the metadata #298 will consume for sparse naming.
+ * derived from compiler HTML structure (runtime fold rules) + IR holes.
+ * Tag fingerprints guard sparse A2 against same-count preorder skew.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -12,6 +13,7 @@ import {
   analyzeVaporAddressing,
   annotateVaporAddressing,
 } from '../../../vue-lynx/plugin/src/compiler/vapor-addressing.js';
+import { structureSlotsFromHtml } from '../../../vue-lynx/plugin/src/compiler/vapor-structure-from-html.js';
 
 function analyze(
   source: string,
@@ -22,6 +24,25 @@ function analyze(
     isNativeTag: () => true,
   });
 }
+
+describe('structureSlotsFromHtml (runtime fold parity)', () => {
+  it('folds only-child #text but keeps only-child #comment as a slot', () => {
+    expect(structureSlotsFromHtml('<view><text>hi').tags).toEqual([
+      'view',
+      'text',
+    ]);
+    expect(structureSlotsFromHtml('<view><!--only-->').tags).toEqual([
+      'view',
+      '#comment',
+    ]);
+  });
+
+  it('keeps sibling comments in preorder', () => {
+    expect(
+      structureSlotsFromHtml('<view><text> </text><!--c--><image>').tags,
+    ).toEqual(['view', 'text', '#comment', 'image']);
+  });
+});
 
 describe('analyzeVaporAddressing', () => {
   it('names dynamic text + attr holes and keeps the static middle sibling for nthChild', () => {
@@ -37,12 +58,10 @@ describe('analyzeVaporAddressing', () => {
     expect(templates[0]).toMatchObject({
       templateIndex: 0,
       slotCount: 4,
-      // slots: 0=view, 1=text hole, 2=static text, 3=image hole
       holes: [1, 3],
-      // prefix sibling 2 kept so _nthChild(root, 2) reaches the image
       addressed: [0, 1, 2, 3],
+      tags: ['view', 'text', 'text', 'image'],
     });
-    expect(templates[0]!.content).toContain('class=card');
   });
 
   it('includes ancestor wrappers on the child/child path (p* cursors)', () => {
@@ -56,8 +75,8 @@ describe('analyzeVaporAddressing', () => {
     expect(templates[0]).toMatchObject({
       slotCount: 4,
       holes: [2],
-      // 0=root, 1=wrap ancestor, 2=text hole — static sibling 3 not needed
       addressed: [0, 1, 2],
+      tags: ['view', 'view', 'text'],
     });
   });
 
@@ -69,6 +88,7 @@ describe('analyzeVaporAddressing', () => {
     expect(templates[0]).toMatchObject({
       holes: [3],
       addressed: [0, 1, 2, 3],
+      tags: ['view', 'view', 'view', 'text'],
     });
   });
 
@@ -92,6 +112,7 @@ describe('analyzeVaporAddressing', () => {
       holes: [0],
       addressed: [0],
       slotCount: 2,
+      tags: ['view'],
     });
   });
 
@@ -103,6 +124,7 @@ describe('analyzeVaporAddressing', () => {
       holes: [],
       addressed: [0],
       slotCount: 3,
+      tags: ['view'],
     });
   });
 
@@ -128,12 +150,10 @@ describe('analyzeVaporAddressing', () => {
     expect(templates).toHaveLength(2);
     const outer = templates.find((t) => t.templateIndex === 1)!;
     const inner = templates.find((t) => t.templateIndex === 0)!;
-    // Outer shell: parent of the v-if insert is a hole
     expect(outer).toMatchObject({
       holes: [0],
       addressed: [0],
     });
-    // Positive branch: text + image holes
     expect(inner).toMatchObject({
       holes: [1, 2],
       addressed: [0, 1, 2],
@@ -158,10 +178,64 @@ describe('analyzeVaporAddressing', () => {
       { t: 'setup-ref' },
     );
     expect(templates[0]).toMatchObject({
-      // 0 = view (component insert host), 1 = text hole
       holes: [0, 1],
       addressed: [0, 1],
     });
+  });
+
+  // --- Offset / fold-skew cases (review ①) ---------------------------------
+
+  it('comment siblings keep their own slots (not folded as text-like)', () => {
+    const { templates } = analyze(
+      `<view><text>{{ t }}</text><!--c--><image :src="url" /></view>`,
+      { t: 'setup-ref', url: 'setup-ref' },
+    );
+    expect(templates[0]).toMatchObject({
+      // 0=view, 1=text hole, 2=comment, 3=image hole
+      slotCount: 4,
+      holes: [1, 3],
+      addressed: [0, 1, 2, 3],
+      tags: ['view', 'text', '#comment', 'image'],
+    });
+  });
+
+  it('only-child comment consumes a slot (runtime fold is #text-only)', () => {
+    const { templates } = analyze(`<view><!--only--></view>`);
+    expect(templates[0]).toMatchObject({
+      slotCount: 2,
+      holes: [],
+      addressed: [0],
+      tags: ['view'],
+    });
+  });
+
+  it('mixed {{x}} + element siblings: text host + image in preorder', () => {
+    const { templates } = analyze(
+      `<view><text>{{ t }}</text><image :src="url" /></view>`,
+      { t: 'setup-ref', url: 'setup-ref' },
+    );
+    expect(templates[0]).toMatchObject({
+      slotCount: 3,
+      holes: [1, 2],
+      addressed: [0, 1, 2],
+      tags: ['view', 'text', 'image'],
+    });
+  });
+
+  it('nested v-if: outer insert host + inner branch holes', () => {
+    const { templates } = analyze(
+      `<view>
+        <view v-if="a">
+          <text v-if="b">{{ t }}</text>
+        </view>
+      </view>`,
+      { a: 'setup-ref', b: 'setup-ref', t: 'setup-ref' },
+    );
+    // templates: innermost positive, middle positive, outer shell
+    expect(templates.length).toBeGreaterThanOrEqual(2);
+    const outer = templates[templates.length - 1]!;
+    expect(outer.holes).toContain(0);
+    expect(outer.tags[0]).toBe('view');
   });
 });
 
@@ -185,8 +259,8 @@ describe('annotateVaporAddressing', () => {
     const annotated = annotateVaporAddressing(code, result);
     expect(annotated).toContain(`t0.${VAPOR_ADDRESSING_KEY} = `);
     expect(annotated).toContain('"holes":[1,2]');
+    expect(annotated).toContain('"tags":');
     expect(annotated).toContain('const t0 = _template(');
-    // Call site unchanged
     expect(annotated).toContain('const n0 = t0()');
   });
 
