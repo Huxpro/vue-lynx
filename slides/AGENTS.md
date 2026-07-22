@@ -45,6 +45,14 @@ one step (no in-slide fragments). Everything is authored against a fixed
   (1, 2, 3…) on **every** slide of the sequence — inline wins over the
   elevation, so stacking stays stable mid-morph.
 
+## Slide dormancy (iOS Safari)
+
+Far slides get `.is-dormant` → `display: none` (radius 1 around the current
+slide, plus any overlay `is-under` base). This is load-bearing for iPhone
+Safari — keeping all 132 trees at `opacity: 0` still blew the WebContent
+memory budget. Overview wakes every tile on desktop; on coarse pointers
+overview is a no-op so the zoom-grid can't materialize the full deck.
+
 ## Overlays
 
 - Overlay slides keep the base rendered beneath — use them for media layers

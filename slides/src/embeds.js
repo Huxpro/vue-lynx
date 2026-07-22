@@ -203,10 +203,17 @@ export function initEmbeds({
   registerVlMedia();
   const still = reducedMotion || embed;
 
-  // Resizable embed frames — same chrome as the demo phones, with
-  // embed-shaped presets. Inline data-w/data-h re-apply after the
-  // initial preset so a slide can seed its own size (the cascade).
+  // Resizable embed frames — seed CSS vars now, wire grips lazily when the
+  // slide enters the neighborhood (avoids injecting 4 grips × N frames into
+  // every dormant overlay at boot).
   document.querySelectorAll('.phone--embed').forEach((frame) => {
+    if (frame.dataset.w) frame.style.setProperty('--phone-w', frame.dataset.w);
+    if (frame.dataset.h) frame.style.setProperty('--phone-h', frame.dataset.h);
+  });
+
+  function wireEmbedFrame(frame) {
+    if (frame.dataset.controlsWired) return;
+    frame.dataset.controlsWired = '1';
     const conf = EMBED_DEVICES[frame.dataset.embed] || EMBED_DEVICES.wide;
     const media = frame.querySelector('vl-media');
     attachDeviceControls(frame, {
@@ -222,9 +229,10 @@ export function initEmbeds({
           inferKind(media.getAttribute('src') || '') === 'iframe')
           ? media.getAttribute('src') : null),
     });
+    // Preset apply clears free-drag size — re-seed authoring hints after.
     if (frame.dataset.w) frame.style.setProperty('--phone-w', frame.dataset.w);
     if (frame.dataset.h) frame.style.setProperty('--phone-h', frame.dataset.h);
-  });
+  }
 
   // Drive media lifecycle from deck navigation. When the global media-embeds
   // flag is off, treat every element as far away so iframes unmount and
@@ -239,6 +247,10 @@ export function initEmbeds({
     medias.forEach((m) => {
       const d = enabled ? m.idx - index : 99;
       m.el.setDistance?.(d, { still: still || !enabled });
+      // Wire embed chrome once the slide is in the media neighborhood.
+      if (enabled && Math.abs(d) <= 2) {
+        m.el.closest('.phone--embed') && wireEmbedFrame(m.el.closest('.phone--embed'));
+      }
     });
   }
   document.addEventListener('deck:media-sync', (e) => sync(e.detail.index));
