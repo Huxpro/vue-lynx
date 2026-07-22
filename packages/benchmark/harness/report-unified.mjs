@@ -167,7 +167,7 @@ function escapeHtml(s) {
 }
 
 function columnsFor(t) {
-  return COLUMN_KEYS.map((key) => ({
+  return COLUMN_KEYS.filter((key) => !isEngineNa(key)).map((key) => ({
     key,
     label: t.colLabels[key] ?? key,
     perOp: perOp[key],
@@ -182,7 +182,7 @@ function stormRowsFor(t) {
 }
 
 function fcpArchsFor(t) {
-  return FCP_ARCH_KEYS.map((a) => ({
+  return FCP_ARCH_KEYS.filter((a) => !isEngineNa(a.key)).map((a) => ({
     ...a,
     label: t.fcpArchLabels[a.key] ?? a.key,
   }));
@@ -447,7 +447,9 @@ function renderConclusions(lang, t, published) {
 }
 
 function coverageTable(t) {
-  const archs = unified.architectures ?? [];
+  const archs = (unified.architectures ?? []).filter(
+    (a) => !isEngineNa(a.id),
+  );
   const [h0, h1, h2, h3] = t.coverageHeaders;
   let html =
     `<table><thead><tr><th>${escapeHtml(h0)}</th><th>${escapeHtml(h1)}</th>`
@@ -529,11 +531,11 @@ function graphEngFactorsSection(t) {
       + OPS.map((o) => `<th>${escapeHtml(o)}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const c of graphEngFactors.perCell) {
-      const na = isEngineNa(c.cell);
-      html += `<tr${na ? ' class="engine-na"' : ''}><td class="op"><code>${escapeHtml(c.cell)}</code></td>`
+      // Engine cells are N/A on this host — omitted entirely (see footnote).
+      if (isEngineNa(c.cell)) continue;
+      html += `<tr><td class="op"><code>${escapeHtml(c.cell)}</code></td>`
         + `<td class="c plain" style="font-size:11px">${escapeHtml(c.coordinate ?? c.coord ?? '')}</td>`
         + OPS.map((o) => {
-          if (na) return '<td class="c na">N/A</td>';
           const v = c[`${o}@${size}`];
           return `<td class="c plain">${v == null ? '—' : fmtMs(v)}</td>`;
         }).join('')
@@ -552,10 +554,9 @@ function graphEngFactorsSection(t) {
       + OPS.map((o) => `<th>${escapeHtml(o)}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const [name, f] of Object.entries(graphEngFactors.factors ?? {})) {
-      const na = isEngineFactor(name);
-      html += `<tr${na ? ' class="engine-na"' : ''}><td class="op">${escapeHtml(name)}</td>`
+      if (isEngineFactor(name)) continue; // N/A on this host — omitted.
+      html += `<tr><td class="op">${escapeHtml(name)}</td>`
         + OPS.map((o) => {
-          if (na) return '<td class="c na">N/A</td>';
           const d = f[`${o}@${size}`];
           if (!d) return '<td class="c plain">—</td>';
           const sign = d.deltaPct >= 0 ? '+' : '';
@@ -672,14 +673,7 @@ function graphEngFactorsSection(t) {
       + FCP_SCALES_X4.map((sc) => `<th>×4 @${sc}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const [name, [a, b]] of Object.entries(FCP_FACTOR_PAIRS)) {
-      if (/engine/i.test(name)) {
-        any = true;
-        html += `<tr class="engine-na"><td class="op">${escapeHtml(name)}</td>`
-          + scales.map(() => '<td class="c na">N/A</td>').join('')
-          + FCP_SCALES_X4.map(() => '<td class="c na">N/A</td>').join('')
-          + '</tr>';
-        continue;
-      }
+      if (/engine/i.test(name)) continue; // N/A on this host — omitted.
       const cellsX1 = scales.map((sc) => fcpDelta(a, b, sc, 1));
       const cellsX4 = FCP_SCALES_X4.map((sc) => fcpDelta(a, b, sc, 4));
       if (![...cellsX1, ...cellsX4].some((v) => v != null)) continue;
@@ -953,17 +947,6 @@ function renderReport(lang, outPath) {
     font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
     padding: 4px 10px; color: var(--ink-2);
   }
-  /* Engine-staging cells are N/A on this host (no engine ET PAPI on
-     Lynx-for-Web). Hidden by default; the toggle reveals them as N/A. */
-  th.engine-na, td.engine-na, tr.engine-na { display: none; }
-  body.show-engine th.engine-na, body.show-engine td.engine-na { display: table-cell; }
-  body.show-engine tr.engine-na { display: table-row; }
-  .stub-toggle {
-    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
-    color: var(--ink-2); border: 1px dashed var(--line); border-radius: 999px;
-    padding: 4px 10px; cursor: pointer; user-select: none;
-  }
-  .stub-toggle input { accent-color: var(--critical); margin: 0; }
 </style>
 </head>
 <body>
@@ -977,17 +960,12 @@ function renderReport(lang, outPath) {
   <span class="pill">${escapeHtml(t.pills.ladder)}</span>
   <span class="pill">${escapeHtml(t.pills.cells(unified.cells.length))}</span>
   <span class="pill">${escapeHtml(t.pills.conclusions(count))}</span>
-  <label class="stub-toggle"><input type="checkbox" id="show-engine-toggle">${
+  <span class="pill">${
     t.lang.startsWith('zh')
-      ? '显示 Engine cells（本环境 N/A — Lynx for Web 无引擎 ET PAPI）'
-      : 'show Engine cells (N/A on this host — no engine ET PAPI on Lynx for Web)'
-  }</label>
+      ? 'Engine cells：本环境 N/A（Lynx for Web 无引擎 ET PAPI），已从全部表格与图表省略'
+      : 'Engine cells: N/A on this host (no engine ET PAPI on Lynx for Web) — omitted from all tables and charts'
+  }</span>
 </div>
-<script>
-  document.getElementById('show-engine-toggle').addEventListener('change', (e) => {
-    document.body.classList.toggle('show-engine', e.target.checked);
-  });
-</script>
 <p class="lang-switch"><a href="${alt.href}">${escapeHtml(alt.label)}</a></p>
 
 <h2>${escapeHtml(t.hConclusions)}</h2>
