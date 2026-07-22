@@ -52,6 +52,11 @@ ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 Run the all-permutation create/update sweep + factor decomposition:
 
 ```bash
+# Authoritative single-host full sweep (12 modes × 1k/10k/30k storms +
+# FCP ladder all permutations ×1/×4 → factors → synthesize → report):
+pnpm --filter vue-lynx-benchmark run bench:unified:single-host
+
+# Or the shorter create/update factor matrix (1k/10k only, no FCP rebuild):
 node harness/build-unified.mjs --skip-react \
   --only=vdom,vdom-ifr,vdom-ifr-et,vdom-et,vapor,vapor-dense,vapor-engine,vapor-ifr,vapor-ifr-dense,vapor-ifr-sparse,vapor-ifr-engine-et
 node harness/cross.mjs --skip-build --storms --modes <same list> \

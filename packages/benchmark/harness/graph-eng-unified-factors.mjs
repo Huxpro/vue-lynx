@@ -7,7 +7,8 @@
  *
  *   node harness/graph-eng-unified-factors.mjs [resultsFile] [outStem]
  *
- * Defaults: results/cross-storms-graph-eng-4axis.json →
+ * Defaults: results/cross-storms-graph-eng-4axis-full.json
+ *           (falls back to cross-storms-graph-eng-4axis.json) →
  *           results/unified/graph-eng-unified-factors.{json,md}
  */
 
@@ -16,8 +17,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const defaultFull = path.join(root, 'results/cross-storms-graph-eng-4axis-full.json');
+const defaultPartial = path.join(root, 'results/cross-storms-graph-eng-4axis.json');
 const inFile = process.argv[2]
-  ?? path.join(root, 'results/cross-storms-graph-eng-4axis.json');
+  ?? (fs.existsSync(defaultFull) ? defaultFull : defaultPartial);
 const outStem = process.argv[3]
   ?? path.join(root, 'results/unified/graph-eng-unified-factors');
 
