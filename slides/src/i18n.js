@@ -451,6 +451,18 @@ export const ZH = {
     '<span class="brand-text">+ifr</span> 遇上 +b。',
   'IFR’s hydrate join must replay the recording — at 10k rows that tax outweighs the boot win (+22%). Add +b and the recording is one op per block: the same IFR turns −14%. Flags compose.':
     'IFR 的 hydrate join 要重放整份录制 —— 10k 行时这笔税压过启动收益(+22%)。叠上 +b,录制变成每个 block 一条 op:同一个 IFR 变成 −14%。flag,是可组合的。',
+  'The open cell — vapor +b:c.':
+    '空着的那一格 —— <span class="brand-text">vapor +b:c</span>。',
+  'today · +b:d — data': '<i></i>今天 · +b:d —— data',
+  'open · +b:c — code': '<i></i>空格 · +b:c —— code',
+  'runtime string → wire': '运行时字符串 → 过线',
+  'build-time parse → both bundles': '构建期解析 → 两份产物',
+  'residual crosses every app boot': '残差在每次应用启动时过线',
+  'residual never crosses at runtime': '残差在运行时从不过线',
+  'The one unbuilt cell that stacks all three measured levers — vapor’s update wins, code-staged create, an IFR-sized recording. Probably the highest ceiling on the board.':
+    '唯一能把三根实测杠杆全叠上的未建格 —— vapor 的更新优势、code 档的 create、IFR 尺寸的录制。大概率是整张棋盘上上限最高的一格。',
+  'The catch: upstream hands us the residual only as a runtime string — we must parse it at build time and prove both parses equal, until declared codegen (#332) dissolves the gap.':
+    '困境:上游只把残差装在运行时字符串里给我们 —— 我们得在构建期自己解析,并证明两次解析相等,直到声明式 codegen(#332)把这道鸿沟整个溶解。',
   'Full tables & charts — 1k/10k/30k, storms, FCP ladders: vue.lynxjs.org/guide/benchmark-unified.':
     '完整表格与图表 —— 1k/10k/30k、storms、FCP 阶梯:<a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>。',
   'One axis at a time.':
@@ -884,9 +896,11 @@ export const ZH_NOTES = [
   // Λ5b 逐轴图 · +b 随静态占比
   `<p><strong>模板轴是创建杠杆,而且随"可证明"变化。</strong>同机 sfc-probe 阶梯,同一个应用,两档静态倍数。×1 时行内几乎全是洞 —— 没多少残差可下沉,+b(这里是 vdom 的 ET / Code-Template)只动 FCP 约 2%,贴着噪声。×4 时编译器能证明四倍的骨架,同一个 flag 直接还你 −17%。deck 前面 1000× 载荷那页,就是这条曲线的远端:几乎全静态的屏幕。</p><p><strong>vapor 的 +b 在 create 路径上是同一形状:</strong>storms 里这个动态偏重的构成下 create −5%,随静态占比增长 —— 并记得那句警告:vdom +b 捆绑 staging+naming+delivery,这张图是捆绑包的效果;总结表里只有 vapor 行是单列读数。update 与 select 全程对模板视盲 —— op 帧核对一致。</p>`,
   // Λ5b2 逐轴图 · +ifr 遇上 +b
-  `<p><strong>交互作用图 —— 为什么轴要放在一起读。</strong>IFR 把绘制挪到 BG 启动之前,然后要为 MTS 录制的所有内容付一次 hydrate join。1k 时两列都赢(vdom −11%,vdom +b −9% —— 就是 −22% 那页展示的首帧杠杆)。10k 时录制巨大:纯 vdom 的逐节点 ops 让 join 的开销压过省下的启动(+22%),而 +b 的录制是每个 block 一条 INSTANTIATE 加洞的 SET —— join 缩小,IFR 重新赢回(−14%)。</p><p><strong>这就是 5→3 那页,被测出来了。</strong>缩小协议的那次塌缩,正是让 IFR 能随规模成立的东西。用数据杀掉耦合迷思:ET 不是"IFR 的功能" —— 它是让 IFR 的承诺在规模下兑现的那个 flag。下一页:完整的逐轴总结。</p>`,
+  `<p><strong>交互作用图 —— 为什么轴要放在一起读。</strong>IFR 把绘制挪到 BG 启动之前,然后要为 MTS 录制的所有内容付一次 hydrate join。1k 时两列都赢(vdom −11%,vdom +b −9% —— 就是 −22% 那页展示的首帧杠杆)。10k 时录制巨大:纯 vdom 的逐节点 ops 让 join 的开销压过省下的启动(+22%),而 +b 的录制是每个 block 一条 INSTANTIATE 加洞的 SET —— join 缩小,IFR 重新赢回(−14%)。</p><p><strong>这就是 5→3 那页,被测出来了。</strong>缩小协议的那次塌缩,正是让 IFR 能随规模成立的东西。用数据杀掉耦合迷思:ET 不是"IFR 的功能" —— 它是让 IFR 的承诺在规模下兑现的那个 flag。下一页:这三根杠杆共同指向的那一格 —— 我们还没建的那格。</p>`,
+  // Λ5b3 空着的那一格 · vapor +b:c(架构 + 困境)
+  `<p><strong>为什么这一格的上限大概率最高。</strong>把刚看完的三张图叠起来:它保住 render 轴(update storm −54%、select storm −87% —— 活在 effect 系统里,不受影响);它把 create 挪到 <em>code</em> 档 —— ×4 静态时还你 −17%、ops 载荷 1000× 的那根轴;它的录制是每个 block 一条 INSTANTIATE —— 正是把 IFR 的 +22% 税翻成 −14% 的那个形状。没有第二个未建格能把三根实测杠杆全部组合起来。engine 档(:e)理论上更高,但被平台 PAPI 卡住;+b:c <em>今天</em>就能在我们的插件里建。</p><p><strong>困境,说精确。</strong>上游 <code>@vue/compiler-vapor</code> 只把残差作为运行时 HTML 字符串装在 <code>template()</code> 里发出 —— 没有任何构建期结构可以消费。于是插件必须在构建期自己解析这段字符串、把 <code>create()</code> 烘进两份产物 —— 然后<em>证明</em>自己的解析与 BG 的运行时解析相等,否则克隆会跨线程失步。和 recovered naming 的指纹同一证明类:能建,但需要保险丝。上游声明式 codegen(#332)会把整个义务溶解 —— 编译器把 structure + addressing 发一次,我们的解析和指纹一起退役。诚实的代价:MTS 产物变大(ET 先例:探针应用上约 2.26× gzip),资格规则(组件、v-if/v-for 宿主留在普通路径)照旧。姐妹格:+b! 在产物里交付 <em>data</em> AST 而非代码 —— 更便宜,保留 MT 解释;若肯为 codegen 买单,:c 可以吞并它。</p>`,
   // Λ5c 逐因子 · 一次只动一根轴
-  `<p><strong>边际效应 —— 动一根轴,按住其余。</strong>第一行是头条:换 render 模型,update storm 腰斩、select storm 塌缩;代价是 create 约 +12%(Vapor 的克隆协议)。模板各行在这个格子构成下都在个位数徘徊 —— <em>update 与 select 对模板视盲</em>:我们核对过模板各格的 op 帧与原生调用次数完全一致;模板的回报在 create 和协议字节上,随静态占比增长(这个应用偏动态,所以 deck 前面 1000× ops 载荷那页是曲线的另一端)。</p><p><strong>当心那个脏因子。</strong>vdom +b 那行一次动 staging+naming+delivery —— 它 +11.6% 的 storm 代价是 ET 包装在 10k 的取舍,不是对任何单轴的裁决;只有 vapor 各行是干净的单列读数。+ifr 用一点 create 税换 −12…−22% 的 FCP(FCP 阶梯在链接的报告里,同机跑到 30k),而叠上 +b 后这笔税还会缩小 —— 轴是可组合的。:e 那行的存在就是为了诚实:引擎是 stub 时,差值就是噪声 —— 它量的正是这件事。</p>`,
+  `<p><strong>边际效应 —— 动一根轴,按住其余。</strong>第一行是头条:换 render 模型,update storm 腰斩、select storm 塌缩;代价是 create 约 +12%(Vapor 的克隆协议)。模板各行在这个格子构成下都在个位数徘徊 —— <em>update 与 select 对模板视盲</em>:我们核对过模板各格的 op 帧与原生调用次数完全一致;模板的回报在 create 和协议字节上,随静态占比增长(这个应用偏动态,所以 deck 前面 1000× ops 载荷那页是曲线的另一端)。</p><p><strong>当心那个脏因子。</strong>vdom +b 那行一次动 staging+naming+delivery —— 它 +11.6% 的 storm 代价是 ET 包装在 10k 的取舍,不是对任何单轴的裁决;只有 vapor 各行是干净的单列读数。+ifr 用一点 create 税换 −12…−22% 的 FCP(FCP 阶梯在链接的报告里,同机跑到 30k),而叠上 +b 后这笔税还会缩小 —— 轴是可组合的。:e 那行的存在就是为了诚实:引擎是 stub 时,差值就是噪声 —— 它量的正是这件事。</p><p><strong>置灰的行是排好序的路线图。</strong>+b:c —— 刚看过的那页空格;可建上限最高。+b! —— 便宜的那个:把 structure AST 打进 MTS 产物,零过线成本,MT 仍解释;它把 delivery 轴单独隔离出来供归因。:d→e —— 卡在引擎 PAPI,等一个原生宿主。还有一个为科学而非产品的第四格:data 档的 vdom,能让 vdom 一族像 vapor 阶梯那样一次一列地分解。</p>`,
   // Λ6 定律 · 交接给摇篮
   `<p><strong>定律,与交接。</strong>分线程拓扑会不断复活解释侧 —— 每一条线都会重新把它打开;这不是 Lynx 的怪癖,这是边界对代码做的事。手艺在于按屏幕逐一选择:你把它编译回去多深 —— 不得不时用 ops,能命名时用 data,编译器能证明切分时用 code,引擎愿意替你持有模板时用 native。</p><p>然后翻页 —— <em>这</em>就是 Lynx 是框架设计摇篮的原因:整把梯子都对前端框架开放。带着这个视角读收尾那页。</p>`,
   // 90c E20c · 摇篮 · 收束设计空间
