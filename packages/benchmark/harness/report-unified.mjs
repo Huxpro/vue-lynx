@@ -285,6 +285,16 @@ function niceLinearTicks(lo, hi, maxTicks = 6) {
   return ticks;
 }
 
+function logTicks(lo, hi) {
+  // decade ticks (…,10,100,1000,…) spanning [lo,hi]
+  const ticks = [];
+  for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) {
+    const t = 10 ** e;
+    if (t >= lo * 0.999 && t <= hi * 1.001) ticks.push(t);
+  }
+  return ticks.length ? ticks : [lo, hi];
+}
+
 function renderLineChart({
   title,
   sub,
@@ -292,23 +302,35 @@ function renderLineChart({
   xLabel,
   yLabel,
   yFmt = (tick) => (tick >= 1000 ? `${tick / 1000}s` : `${tick}ms`),
+  w = 560,
+  h = 380,
+  logY = false,
+  wide = false,
 }) {
   const all = series.flatMap((s) => s.pts);
   if (!all.length) return '';
   const xs = all.map((p) => p.x);
-  const ys = all.map((p) => p.y);
+  const ys = all.map((p) => p.y).filter((v) => !logY || v > 0);
   const xmin = 0;
   const xmax = Math.max(...xs) * 1.08;
-  const ymin = 0;
-  const ymax = Math.max(...ys) * 1.08;
-  const W = 560;
-  const H = 380;
+  const rawMin = Math.min(...ys);
+  const rawMax = Math.max(...ys);
+  // log axis: pad to enclosing decades so every series separates vertically
+  const ymin = logY ? 10 ** Math.floor(Math.log10(rawMin)) : 0;
+  const ymax = logY ? 10 ** Math.ceil(Math.log10(rawMax)) : rawMax * 1.08;
+  const W = w;
+  const H = h;
   const ML = 56;
-  const MR = 130;
+  const MR = 132;
   const MT = 16;
   const MB = 44;
+  const l0 = logY ? Math.log10(ymin) : 0;
+  const l1 = logY ? Math.log10(ymax) : 0;
   const px = (v) => ML + ((v - xmin) / (xmax - xmin || 1)) * (W - ML - MR);
-  const py = (v) => H - MB - ((v - ymin) / (ymax - ymin || 1)) * (H - MT - MB);
+  const py = (v) =>
+    logY
+      ? H - MB - ((Math.log10(Math.max(v, ymin)) - l0) / (l1 - l0 || 1)) * (H - MT - MB)
+      : H - MB - ((v - ymin) / (ymax - ymin || 1)) * (H - MT - MB);
 
   let g = '';
   for (const tick of niceLinearTicks(xmin, xmax)) {
@@ -317,7 +339,8 @@ function renderLineChart({
         tick >= 1000 ? `${tick / 1000}k` : tick
       }</text>`;
   }
-  for (const tick of niceLinearTicks(ymin, ymax)) {
+  const yticks = logY ? logTicks(ymin, ymax) : niceLinearTicks(ymin, ymax);
+  for (const tick of yticks) {
     g += `<line x1="${ML}" y1="${py(tick)}" x2="${W - MR}" y2="${py(tick)}" class="grid"/>`
       + `<text x="${ML - 6}" y="${py(tick) + 3.5}" class="tick" text-anchor="end">${yFmt(tick)}</text>`;
   }
@@ -342,7 +365,7 @@ function renderLineChart({
     marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${s.color}">${escapeHtml(s.label)}</text>`;
   }
 
-  return `<div class="chart"><h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
+  return `<div class="chart${wide ? ' wide' : ''}"><h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
 ${g}
 <text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${escapeHtml(xLabel)}</text>
@@ -351,7 +374,7 @@ ${marks}
 </svg></div>`;
 }
 
-function stormSeries(op, t, ticks = 1) {
+function stormSeries(op, t, ticks = 1, pred = null) {
   const cols = columnsFor(t);
   const colors = [
     '#1baf7a', '#0d8a5f', '#66c2a4', // vapor family (greens)
@@ -361,7 +384,7 @@ function stormSeries(op, t, ticks = 1) {
     '#eda100', // react
   ];
   return cols
-    .filter((c) => !isEngineNa(c.key))
+    .filter((c) => !isEngineNa(c.key) && (!pred || pred(c.key)))
     .map((c, i) => {
       const pts = ['1k', '10k', '30k']
         .map((size) => {
@@ -909,6 +932,7 @@ function renderReport(lang, outPath) {
   .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .charts { display: flex; flex-wrap: wrap; gap: 18px; }
   .chart { flex: 1 1 420px; max-width: 600px; }
+  .chart.wide { flex: 1 1 100%; max-width: 100%; }
   .chart h3 { font-size: 13.5px; margin: 8px 0 2px; }
   .chart svg { width: 100%; height: auto; }
   .grid { stroke: var(--line); stroke-width: 1; }
@@ -1008,6 +1032,28 @@ ${conclusionsHtml}
   })}
 </div>
 
+<div class="charts" style="margin-top:8px">
+  ${renderLineChart({
+    title: lang === 'zh' ? 'Select storm — 对数轴（全部）' : 'Select storm — log scale (all)',
+    sub: lang === 'zh'
+      ? '线性轴上 Vapor 家族全被压在底部；对数轴让三个数量级都能读。'
+      : 'On a linear axis the Vapor family is pinned to the floor; a log axis separates all three orders of magnitude.',
+    series: stormSeries('selectStorm', t),
+    xLabel: ch.selectStorm.x,
+    yLabel: ch.selectStorm.y,
+    logY: true,
+  })}
+  ${renderLineChart({
+    title: lang === 'zh' ? 'Select storm — 仅 Vapor（放大）' : 'Select storm — Vapor family (zoom)',
+    sub: lang === 'zh'
+      ? '只画 Vapor 各变体、独立纵轴，看清 off / 稠密 / +IFR / +IFR 稠密之间的差异。'
+      : 'Vapor variants only, own y-scale — resolves off / dense / +IFR / +IFR dense from each other.',
+    series: stormSeries('selectStorm', t, 1, (k) => k.startsWith('vapor')),
+    xLabel: ch.selectStorm.x,
+    yLabel: ch.selectStorm.y,
+  })}
+</div>
+
 <h2>${escapeHtml(t.hFcp)}</h2>
 <p class="sub">${t.subFcp}</p>
 <div class="scroll">${renderFcpTable(1, t)}</div>
@@ -1020,6 +1066,9 @@ ${conclusionsHtml}
     series: fcpSeries(1, t),
     xLabel: ch.fcp1.x,
     yLabel: ch.fcp1.y,
+    wide: true,
+    w: 900,
+    h: 480,
   })}
   ${renderLineChart({
     title: ch.fcp4.title,
@@ -1027,6 +1076,9 @@ ${conclusionsHtml}
     series: fcpSeries(4, t),
     xLabel: ch.fcp4.x,
     yLabel: ch.fcp4.y,
+    wide: true,
+    w: 900,
+    h: 480,
   })}
 </div>
 
