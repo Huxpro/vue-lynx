@@ -1,7 +1,7 @@
 {
   "meta": {
-    "date": "2026-07-17T22:55:16.556Z",
-    "sha": "fac8b548",
+    "date": "2026-07-22T10:41:49.687Z",
+    "sha": "08bc6d71",
     "node": "v22.14.0",
     "cpus": 4,
     "cpuModel": "Intel(R) Xeon(R) Processor",
@@ -66,6 +66,7 @@
       "family": "vue-vapor",
       "ifr": false,
       "et": false,
+      "sparse": true,
       "label": "Vue Vapor",
       "tableDist": "ui-vapor/dist",
       "tableApp": "ui-vapor"
@@ -75,8 +76,29 @@
       "family": "vue-vapor",
       "ifr": true,
       "et": false,
+      "sparse": true,
       "label": "Vue Vapor+IFR",
       "tableDist": "ui-vapor/dist-ifr",
+      "tableApp": "ui-vapor"
+    },
+    {
+      "id": "vapor-ifr-dense",
+      "family": "vue-vapor",
+      "ifr": true,
+      "et": false,
+      "sparse": false,
+      "label": "Vue Vapor+IFR (dense A1)",
+      "tableDist": "ui-vapor/dist-ifr-dense",
+      "tableApp": "ui-vapor"
+    },
+    {
+      "id": "vapor-ifr-sparse",
+      "family": "vue-vapor",
+      "ifr": true,
+      "et": false,
+      "sparse": true,
+      "label": "Vue Vapor+IFR (sparse A2)",
+      "tableDist": "ui-vapor/dist-ifr-sparse",
       "tableApp": "ui-vapor"
     },
     {
@@ -204,6 +226,20 @@
       "kind": "ifr-scale-fcp",
       "path": "/workspace/packages/ifr-bench/results/browser-results-scale-react-x4.json",
       "cpu": 4
+    },
+    {
+      "kind": "graph-eng-naming-fcp",
+      "path": "/workspace/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse.json",
+      "cpu": 1
+    },
+    {
+      "kind": "graph-eng-naming-fcp",
+      "path": "/workspace/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse-x4.json",
+      "cpu": 4
+    },
+    {
+      "kind": "graph-eng-bundle-sizes",
+      "path": "/workspace/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json"
     },
     {
       "kind": "strategy-node-jitless",
@@ -5320,6 +5356,165 @@
     },
     {
       "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 102.19999998807907,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 102.39999997615814,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 91.5,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 91.69999998807907,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 302.9000000357628,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 303.9000000357628,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 310.69999998807907,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 312.5,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 90007,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 89720,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": false,
+        "slots": "off",
+        "naming": "dense",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 90007,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
       "environment": "bare-dom",
       "architecture": "preact-web",
       "workload": "table",
@@ -6606,6 +6801,8 @@
           "vdom-ifr-et",
           "vapor",
           "vapor-ifr",
+          "vapor-ifr-dense",
+          "vapor-ifr-sparse",
           "react",
           "react-naive",
           "react-compiler"
