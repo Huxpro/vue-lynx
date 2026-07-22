@@ -67,6 +67,12 @@ export function copy(lang) {
     subGraphEng: zh
       ? '同款 sfc-probe（~1004 元素）：仅切换 <code>enableSparseNaming</code>。Native ET 仍 stub；稀疏仍全量建 native 树。详见 <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>。'
       : 'Same-source sfc-probe (~1004 els): only <code>enableSparseNaming</code> flips. Native ET still stub; sparse still builds the full native tree. See <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>.',
+    hGraphEngFactors: zh
+      ? '四轴矩阵 — 全排列 create/update 与因子分解'
+      : 'Four-axis matrix — all-permutation create/update + factor decomposition',
+    subGraphEngFactors: zh
+      ? '统一 table app（真实点击、双线程），11 个合法 flag 排列组合（<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在 web 上以 <code>stub</code> 状态诚实运行（引擎 ET PAPI 缺失），其 Δ 只是探测开销。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
+      : 'Unified table app (real clicks, dual-thread), all 11 legal flag permutations (<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells run honestly as <code>stub</code> on web (engine ET PAPI absent) — their deltas are probe overhead. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'

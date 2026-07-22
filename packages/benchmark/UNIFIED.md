@@ -25,11 +25,31 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 
 ### Architectures
 
-`vdom` · `vdom-ifr` · `vdom-ifr-et` · `vapor` · `vapor-ifr` · `vapor-ifr-dense` · `vapor-ifr-sparse` · `react`
+`vdom` · `vdom-ifr` · `vdom-et` · `vdom-ifr-et` · `vapor` · `vapor-dense` ·
+`vapor-engine` · `vapor-ifr` · `vapor-ifr-dense` · `vapor-ifr-sparse` ·
+`vapor-ifr-engine-et` · `react`
 
-(`react` = ReactLynx Snapshot+IFR + manual memo. Vapor has no VDOM Element Templates
-path; `vapor-ifr-dense` / `vapor-ifr-sparse` are graph-eng naming-density cells (#301).
+The 11 Vue cells are the complete legal flag-permutation set of the
+four-axis template matrix (#321/#325 — `templateNaming` ×
+`templateStaging` × `enableIFR` × `ifrPaint`; see
+`vue-lynx/internal/matrix` and `ifr-bench/GRAPH-ENG-REPORT.md`):
+`vdom-et` = intrinsic Code-Template without IFR (the create-benefit
+cell), `vapor-dense` = Named Tree without IFR, `vapor-engine` =
+engine-staging probe (honest `stub` on web —
+`__VUE_LYNX_ENGINE_ET_STATUS__`), `vapor-ifr-engine-et` = engine-et
+ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 `react-naive` / `react-compiler` are not part of the published matrix.)
+
+Run the all-permutation create/update sweep + factor decomposition:
+
+```bash
+node harness/build-unified.mjs --skip-react \
+  --only=vdom,vdom-ifr,vdom-ifr-et,vdom-et,vapor,vapor-dense,vapor-engine,vapor-ifr,vapor-ifr-dense,vapor-ifr-sparse,vapor-ifr-engine-et
+node harness/cross.mjs --skip-build --storms --modes <same list> \
+  --storm-sizes 1k,10k --storm-reps 2 --label graph-eng-4axis
+node harness/graph-eng-unified-factors.mjs   # per-cell + per-factor tables
+node harness/synthesize.mjs && node harness/report-unified.mjs
+```
 
 ### Environments (not interchangeable)
 
