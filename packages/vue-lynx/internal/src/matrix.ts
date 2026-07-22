@@ -30,20 +30,20 @@
  *  - **Lifetime** — `persistent` vs `ephemeral` (IFR scout copy;
  *    browser-fused case additionally `thread=local`).
  *
- * Mechanism terms (unchanged): **Op Stream / Named Tree / Tree-Template /
+ * Mechanism terms (unchanged): **Op Stream / Named Tree / Data-Template /
  * Code-Template / Engine-Template** — the axis level is `native`, the
  * mechanism name stays Engine-Template.
  *
  * Legacy vocabulary (accepted everywhere, normalized here):
  * staging `opstream`≡ops, `data`≡tree, `engine`≡native; naming
- * `dense`≡node, `sparse`≡block. "Data-Template" ≡ Tree-Template;
+ * `dense`≡node, `sparse`≡block. "Data-Template" ≡ Data-Template;
  * "JS ET" ≡ Code-Template; "disposable" is the lifetime value ephemeral.
  */
 
-/** Staging: ops | tree (interpreted) → code | native (compiled). */
-export type TemplateStaging = 'ops' | 'tree' | 'code' | 'native';
+/** Staging: ops | data (interpreted) → code | native (compiled). */
+export type TemplateStaging = 'ops' | 'data' | 'code' | 'native';
 /** Legacy staging spellings still accepted by flags/tools. */
-export type LegacyTemplateStaging = 'opstream' | 'data' | 'engine';
+export type LegacyTemplateStaging = 'opstream' | 'tree' | 'engine';
 
 /** Naming unit: per-node identities vs per-block (base + offset). */
 export type TemplateNaming = 'node' | 'block';
@@ -58,6 +58,18 @@ export type TemplateProvider = 'bts' | 'mts' | 'engine';
 
 export type TemplateLifetime = 'persistent' | 'ephemeral';
 
+/**
+ * Delivery: when the residual reaches the main thread.
+ *  - `runtime`: shipped over the wire at runtime (Vapor `REGISTER_TREE`,
+ *    once per template; also our current engine path, which builds the
+ *    native prototype from the wire payload — proof that `native` staging
+ *    does NOT require build-time delivery).
+ *  - `bundle`: carried by the MT bundle at build time (VDOM `create()`,
+ *    RL Snapshot; the natural optimum for `native`).
+ *  - `null`: no residual (ops staging streams per instance).
+ */
+export type TemplateDelivery = 'runtime' | 'bundle';
+
 /** IFR paint mode — how the ephemeral first frame materializes templates. */
 export type IfrPaintMode = 'plain' | 'code-paint' | 'native-paint';
 /** Legacy paint spellings. */
@@ -71,8 +83,8 @@ export function normalizeStaging(
   switch (v) {
     case 'opstream':
       return 'ops';
-    case 'data':
-      return 'tree';
+    case 'tree':
+      return 'data';
     case 'engine':
       return 'native';
     default:
@@ -109,7 +121,7 @@ export const IFR_PAINT_GLOBAL = '__VUE_LYNX_IFR_PAINT__';
 
 /** One legal cell (a "Vue mode") of the benchmark matrix. */
 export interface MatrixCell {
-  /** Canonical id, e.g. `vapor-tree-block-ifr`. */
+  /** Canonical id, e.g. `vapor-data-block-ifr`. */
   id: string;
   /** Legacy bench id kept for data-file continuity, e.g. `vapor-ifr`. */
   legacyId: string;
@@ -122,7 +134,9 @@ export interface MatrixCell {
   lifetimes: TemplateLifetime[];
   ifr: boolean;
   ifrPaint: IfrPaintMode | null;
-  /** Five-axis coordinate, e.g. `tree/block/traversal+recover/BTS/persistent`. */
+  /** When the residual reaches the MT; null for ops staging. */
+  delivery: TemplateDelivery | null;
+  /** Six-column coordinate, e.g. `data/block/traversal+recover/BTS/persistent/runtime`. */
   coordinate: string;
   /** Mechanism name in the unified terminology. */
   term: string;
@@ -135,11 +149,11 @@ export interface MatrixCell {
 function term(staging: TemplateStaging, naming: TemplateNaming): string {
   if (staging === 'ops') return 'Op Stream';
   if (naming === 'node') {
-    return staging === 'tree' ? 'Named Tree' : `${cap(staging)}-Template (node)`;
+    return staging === 'data' ? 'Named Tree' : `${cap(staging)}-Template (node)`;
   }
   switch (staging) {
-    case 'tree':
-      return 'Tree-Template';
+    case 'data':
+      return 'Data-Template';
     case 'code':
       return 'Code-Template';
     case 'native':
@@ -193,6 +207,10 @@ function makeCell(spec: CellSpec): MatrixCell {
   const provLabel = providers
     .map((p) => (p === 'engine' ? 'Engine' : p.toUpperCase()))
     .join('+');
+  // Delivery: code always rides the bundle; data/native ship over the wire
+  // today (build-bundle data = the unbuilt "+b!" cell); ops has no residual.
+  const delivery: TemplateDelivery | null =
+    staging === 'ops' ? null : staging === 'code' ? 'bundle' : 'runtime';
   const cell: MatrixCell = {
     id,
     legacyId,
@@ -204,7 +222,8 @@ function makeCell(spec: CellSpec): MatrixCell {
     lifetimes,
     ifr,
     ifrPaint: ifr ? (ifrPaint ?? 'plain') : null,
-    coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}${
+    delivery,
+    coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}/${delivery ?? '—'}${
       ifr && ifrPaint && ifrPaint !== 'plain' ? `(${ifrPaint})` : ''
     }`,
     term: term(staging, naming),
@@ -237,15 +256,15 @@ export function legalCells(): MatrixCell[] {
     C({ id: 'vdom-native-block', legacyId: 'vdom-engine', render: 'vdom', staging: 'native', naming: 'block' }),
 
     // --- Vapor --------------------------------------------------------------
-    C({ id: 'vapor-tree-block', legacyId: 'vapor', render: 'vapor', staging: 'tree', naming: 'block' }),
-    C({ id: 'vapor-tree-node', legacyId: 'vapor-dense', render: 'vapor', staging: 'tree', naming: 'node' }),
-    C({ id: 'vapor-tree-block-ifr', legacyId: 'vapor-ifr', render: 'vapor', staging: 'tree', naming: 'block', ifr: true }),
-    C({ id: 'vapor-tree-node-ifr', legacyId: 'vapor-ifr-dense', render: 'vapor', staging: 'tree', naming: 'node', ifr: true }),
+    C({ id: 'vapor-data-block', legacyId: 'vapor', render: 'vapor', staging: 'data', naming: 'block' }),
+    C({ id: 'vapor-data-node', legacyId: 'vapor-dense', render: 'vapor', staging: 'data', naming: 'node' }),
+    C({ id: 'vapor-data-block-ifr', legacyId: 'vapor-ifr', render: 'vapor', staging: 'data', naming: 'block', ifr: true }),
+    C({ id: 'vapor-data-node-ifr', legacyId: 'vapor-ifr-dense', render: 'vapor', staging: 'data', naming: 'node', ifr: true }),
     C({
-      id: 'vapor-tree-block-ifr-native-paint',
+      id: 'vapor-data-block-ifr-native-paint',
       legacyId: 'vapor-ifr-engine-et',
       render: 'vapor',
-      staging: 'tree',
+      staging: 'data',
       naming: 'block',
       ifr: true,
       ifrPaint: 'native-paint',
@@ -262,7 +281,7 @@ export function getCell(id: string): MatrixCell | undefined {
   if (direct) return direct;
   // Known alias: explicit-coordinate duplicate of the product default.
   if (id === 'vapor-ifr-sparse') {
-    const base = cells.find((c) => c.id === 'vapor-tree-block-ifr');
+    const base = cells.find((c) => c.id === 'vapor-data-block-ifr');
     return base ? { ...base, aliasOf: base.id, legacyId: id } : undefined;
   }
   return undefined;
