@@ -220,10 +220,25 @@ export const ZH = {
   'structural → rebuild': '结构分歧 → 重建',
   'Normally every static element pays the whole chain — a vnode, a shadow node, ops frames, a thread crossing, an interpreter dispatch.':
     '常规下每个静态元素都要付整条链 —— 一个 vnode、一个影子节点、若干 ops 帧、一次跨线程、一次解释器分发。',
+  'Without ET, BTS and MTS IFR both pay the fat VDOM → opcode chain — just on different threads.':
+    '没有 ET 时,BTS 和 MTS IFR 都要付那条肥胖的 <b>VDOM → opcode</b> 链 —— 只是跑在不同线程上。',
   'The compiler lowers the static subtree to one create() function. Vue sends one op; only the dynamic holes travel after.':
     '编译器把静态子树下沉成一个 <code>create()</code> 函数。Vue 只发<b>一个</b> op;之后只有动态空洞在传输。',
+  'ET converts the static subtree into a compiled create() — BTS sends one op; MTS IFR runs that function as straight-line PAPI.':
+    'ET 把静态子树编译成 <code>create()</code> —— BTS 只发<b>一个</b> op;MTS IFR 把它当直线 PAPI 跑。',
   'Static structure bakes into a create() skeleton; only the holes — dynamic text, class, style, attrs — stay on the vnode path.':
     '静态结构烘焙进 <code>create()</code> 骨架;只有空洞 —— 动态的文本、class、style、属性 —— 留在 vnode 路径上。',
+  // dual-thread ET pipe labels / roles
+  'Background · BTS': '<i></i>后台 · BTS',
+  'Main IFR · MTS': '<i></i>主线程 IFR · MTS',
+  'VDOM tree → opcodes': 'VDOM 树 → opcodes',
+  'same chain, local apply': '同一条链,本地 apply',
+  'VDOM → one template op': 'VDOM → 一个模板 op',
+  'opcode → create() PAPI': 'opcode → create() PAPI',
+  'many ops / node': '每节点很多 ops',
+  'applyOps → PAPI → paint': 'applyOps → PAPI → paint',
+  'one op · whole subtree': '一个 op · 整棵子树',
+  'straight-line PAPI → paint': '直线 PAPI → paint',
   'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
     'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
   'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
@@ -588,10 +603,10 @@ export const ZH_NOTES = [
   `<p><strong>Straightforward IFR —— hydration 当作 thread join。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上并<em>录下</em>扁平 ops 流。后台并行启动,随后最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制 —— 是一次 join,不是重写:相同 → 跳过,值不同 → 打补丁,结构分歧 → 拆掉重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。</p>`,
   // IFR4 · Element Templates 转折
   `<p><strong>第二个杠杆。</strong>IFR 把绘制提前;打开它会默认打开 Element Templates。它们让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。</p>`,
-  // IFR5 · 逐节点的管线
-  `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
-  // IFR6 · ET 折叠管线
-  `<p>看 <code>VDOM</code> 和 <code>PAPI</code> 留在原地,而管线中段整个塌陷。这是<em>框架级</em>模板 —— 普通的带类型 Element PAPI 调用,不是 Lynx 的二进制引擎模板。</p>`,
+  // IFR5 · 双线程无 ET：肥胖 VDOM→opcode
+  `<p><strong>同一份代码,两条线程,仍然很贵。</strong>BTS 把 VDOM 走进 ShadowElement,吐出一长串扁平 opcode。MTS IFR 在 <code>loadTemplate</code> 期间跑同一份 Vue + <code>nodeOps</code>,录下同形状的 ops,本地 apply 出画面。IFR 改的是<em>何时</em> paint —— 还没把活变少。</p>`,
+  // IFR6 · 双线程有 ET：INSTANTIATE → create()
+  `<p><strong>ET 怎么落到两条线程。</strong>编译器把静态壳下沉成 <code>registerElementTemplate(id, holes, create)</code>。BTS 仍从 VDOM 起步,但静态块变成一个 vnode,只发 <code>INSTANTIATE_TEMPLATE</code> 加空洞 <code>SET_*</code> —— 不再逐节点 <code>CREATE</code>。MTS IFR 上同一个 opcode 进本地解释器,调用烘焙好的 <code>create()</code> —— 一串直线 Element PAPI。下一页看源码 → 编译产物。</p>`,
   // IFR7 · 骨架 + 空洞
   `<p>可下沉 = 每个节点都是纯 Lynx 元素、只有值或文本动态。组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、带 ref/id 的节点留在普通 vnode 路径;它们的纯元素子体仍可下沉。scoped-CSS 的 scope id 会被烘焙进去。</p>`,
   // IFR8 · 基准测试表
