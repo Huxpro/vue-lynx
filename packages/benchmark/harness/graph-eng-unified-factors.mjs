@@ -30,17 +30,17 @@ const perOp = data.perOp;
  * Coordinate columns: staging/naming/addressing/provider/lifetime.
  */
 const CELLS = {
-  'vdom': { canonical: 'vdom-ops-node', coord: 'ops/node/random-access/BTS/persistent', term: 'Op Stream' },
-  'vdom-ifr': { canonical: 'vdom-ops-node-ifr', coord: 'ops/node/random-access/BTS+MTS/persistent+ephemeral', term: 'Op Stream + IFR' },
-  'vdom-et': { canonical: 'vdom-code-block', coord: 'code/block/random-access/BTS/persistent', term: 'Code-Template' },
-  'vdom-ifr-et': { canonical: 'vdom-code-block-ifr', coord: 'code/block/random-access/BTS+MTS/persistent+ephemeral', term: 'Code-Template + IFR' },
-  'vapor': { canonical: 'vapor-tree-block', coord: 'tree/block/traversal+recover/BTS/persistent', term: 'Tree-Template' },
-  'vapor-dense': { canonical: 'vapor-tree-node', coord: 'tree/node/traversal/BTS/persistent', term: 'Named Tree' },
-  'vapor-engine': { canonical: 'vapor-native-block', coord: 'native/block/traversal+recover/Engine/persistent (N/A on web)', term: 'Engine-Template (N/A)' },
-  'vapor-ifr': { canonical: 'vapor-tree-block-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR' },
-  'vapor-ifr-dense': { canonical: 'vapor-tree-node-ifr', coord: 'tree/node/traversal/BTS+MTS/persistent+ephemeral', term: 'Named Tree + IFR' },
-  'vapor-ifr-sparse': { canonical: 'vapor-tree-block-ifr', aliasOf: 'vapor-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR (alias)' },
-  'vapor-ifr-engine-et': { canonical: 'vapor-tree-block-ifr-native-paint', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral(native-paint) (N/A on web)', term: 'Tree-Template + IFR native-paint (N/A)' },
+  'vdom': { flag: 'vdom', canonical: 'vdom-ops-node', coord: 'ops/node/random-access/BTS/persistent', term: 'Op Stream' },
+  'vdom-ifr': { flag: 'vdom +ifr', canonical: 'vdom-ops-node-ifr', coord: 'ops/node/random-access/BTS+MTS/persistent+ephemeral', term: 'Op Stream + IFR' },
+  'vdom-et': { flag: 'vdom +b', canonical: 'vdom-code-block', coord: 'code/block/random-access/BTS/persistent', term: 'Code-Template' },
+  'vdom-ifr-et': { flag: 'vdom +b +ifr', canonical: 'vdom-code-block-ifr', coord: 'code/block/random-access/BTS+MTS/persistent+ephemeral', term: 'Code-Template + IFR' },
+  'vapor': { flag: 'vapor +b', canonical: 'vapor-tree-block', coord: 'tree/block/traversal+recover/BTS/persistent', term: 'Tree-Template' },
+  'vapor-dense': { flag: 'vapor', canonical: 'vapor-tree-node', coord: 'tree/node/traversal/BTS/persistent', term: 'Named Tree' },
+  'vapor-engine': { flag: 'vapor +b:e', canonical: 'vapor-native-block', coord: 'native/block/traversal+recover/Engine/persistent (N/A on web)', term: 'Engine-Template (N/A)' },
+  'vapor-ifr': { flag: 'vapor +b +ifr', canonical: 'vapor-tree-block-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR' },
+  'vapor-ifr-dense': { flag: 'vapor +ifr', canonical: 'vapor-tree-node-ifr', coord: 'tree/node/traversal/BTS+MTS/persistent+ephemeral', term: 'Named Tree + IFR' },
+  'vapor-ifr-sparse': { flag: 'vapor +b +ifr (alias)', canonical: 'vapor-tree-block-ifr', aliasOf: 'vapor-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR (alias)' },
+  'vapor-ifr-engine-et': { flag: 'vapor +b +ifr:e', canonical: 'vapor-tree-block-ifr-native-paint', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral(native-paint) (N/A on web)', term: 'Tree-Template + IFR native-paint (N/A)' },
 };
 
 const modes = Object.keys(perOp).filter((m) => CELLS[m]);
@@ -66,16 +66,20 @@ const perCell = modes.map((m) => {
 });
 
 // Factor pairs — one axis moved at a time.
+// V4 flag-attribution pairs: each factor = turning ONE flag (or one flag
+// parameter) on. Bare `+b`'s staging differs by render model (vdom→:c,
+// vapor→:t) — the two `+b effect` rows are therefore NOT comparable to
+// each other. The render factor compares the two BASELINES (no flags).
 const PAIRS = {
-  'render vdom→vapor (no-IFR)': ['vdom', 'vapor'],
-  'staging ops→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
-  'staging ops→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
-  'naming node→block (vapor, no-IFR)': ['vapor-dense', 'vapor'],
-  'naming node→block (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr-sparse'],
-  'staging tree→native (vapor, N/A on web)': ['vapor', 'vapor-engine'],
-  'ifr off→on (vdom)': ['vdom', 'vdom-ifr'],
-  'ifr off→on (vapor block)': ['vapor', 'vapor-ifr'],
-  'ifrPaint plain→native-paint (N/A on web)': [
+  'render effect (vdom → vapor, baselines)': ['vdom', 'vapor-dense'],
+  '+b effect (vdom, no ifr)': ['vdom', 'vdom-et'],
+  '+b effect (vdom, with +ifr)': ['vdom-ifr', 'vdom-ifr-et'],
+  '+b effect (vapor, no ifr)': ['vapor-dense', 'vapor'],
+  '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr-sparse'],
+  '+b:t→e effect (vapor, N/A on web)': ['vapor', 'vapor-engine'],
+  '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
+  '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
+  '+ifr:e paint effect (N/A on web)': [
     'vapor-ifr-sparse',
     'vapor-ifr-engine-et',
   ],
@@ -120,10 +124,10 @@ let md = '# Unified benchmark — five-axis per-cell create/update + factors (ge
 md += `source: \`${path.basename(inFile)}\` (${data.meta?.date ?? ''}, reps=${data.meta?.stormReps})\n\n`;
 for (const size of sizes) {
   md += `## Per-cell @${size} (median ms)\n\n`;
-  md += '| cell | coordinate | create | update10th | updateStorm | select | selectStorm |\n';
-  md += '|---|---|--:|--:|--:|--:|--:|\n';
+  md += '| flags | data key (legacy) | coordinate | create | update10th | updateStorm | select | selectStorm |\n';
+  md += '|---|---|---|--:|--:|--:|--:|--:|\n';
   for (const c of perCell) {
-    md += `| ${c.cell} | ${c.coord} | ${c[`create@${size}`] ?? '—'} | ${
+    md += `| ${c.flag ?? c.cell} | ${c.cell} | ${c.coord} | ${c[`create@${size}`] ?? '—'} | ${
       c[`update10th@${size}`] ?? '—'
     } | ${c[`updateStorm@${size}`] ?? '—'} | ${c[`select@${size}`] ?? '—'} | ${
       c[`selectStorm@${size}`] ?? '—'
