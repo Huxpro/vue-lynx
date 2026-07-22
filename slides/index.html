@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 132</span>
+    <span data-counter>01 / 138</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2221,6 +2221,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <code>&lt;list&gt;</code>, ref/id stay on the normal path (their plain
       bodies can still lower). Next: the sparse trees on each thread, and what
       actually crosses the wire.</p>
+      <p><strong>Seed for the finale:</strong> what the compiler does here is <em>partial evaluation</em> — the template is a function of its holes, and the Block is its static residual. We give this its real name at the end of the talk.</p>
     </aside>
   </section>
 
@@ -2428,12 +2429,16 @@ app.<span class="code-fn">use</span>(router)</pre>
       IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
       <span class="brand-text">Element Templates</span> change how much work it does.
     </h2>
+    <p class="lead" data-mm-fade style="margin-top:clamp(10px,1.8cqh,20px)">
+      Two levers, orthogonal — they stack.
+    </p>
     <aside class="notes">
       <p><strong>The two levers, in one line.</strong> You just watched the shared
       BTS↔MTS data-flow collapse from five steps to three. IFR moves the paint
       earlier; Element Templates make the render itself an order of magnitude
       cheaper — and shrink the cross-thread protocol for <em>every</em> update,
       not just the first frame. Next: the numbers.</p>
+      <p><strong>Seed:</strong> two orthogonal levers is the whole point — at the end of the talk we write them as flags (+ifr, +b) and show the full decision tree.</p>
     </aside>
   </section>
 
@@ -3197,6 +3202,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>First question — what does Main actually receive?</strong> Vapor compiles to <code>template()</code> + <code>t0()</code> clone. On the Web that clone is the browser DOM. On Lynx the shape is <em>not</em> pre-placed in the MTS/Lepus bundle (unlike Element Templates&rsquo; baked <code>create()</code>).</p>
       <p>On the <em>first</em> <code>t0()</code>, BG walks the inert ShadowElement prototype into a <code>TemplateNode</code> AST — <code>[tag, props|0, children[]]</code> — and pushes <code>REGISTER_TREE</code> once: <code>[16, treeId, structure, 0]</code>. Main only caches <code>{ structure }</code>; natives appear later on <code>CLONE_TREE</code>.</p>
       <p><strong>Why not bake it at build time?</strong> Historical, not essential. Upstream Vapor&rsquo;s codegen only hands you an HTML string (<code>template('&lt;view&gt;…&lt;/view&gt;')</code>). The cheapest Lynx path was: BG runtime parses that string into ShadowElement, then serializes the same tree for <code>REGISTER_TREE</code>. A compile-time residual (ET-style) is still on the table — we just haven&rsquo;t paid for that codegen yet. Next: why the live pointers from <code>child(n0)</code> still can&rsquo;t cross the boundary.</p>
+      <p><strong>Seed:</strong> runtime-delivered vs build-time-delivered is its own axis (<em>delivery</em>) — independent of what form the residual takes. The closing arc returns to it.</p>
     </aside>
   </section>
 
@@ -3574,6 +3580,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Once pointers can't cross, names take over — and there are two ways to hand them out.</strong> Vapor names <em>densely</em>: a preorder walk gives every node a uid (2–7). Both threads run the same walk, so they agree on every name with zero bytes transferred — the addressable set is open (anything might get touched by an effect, event, or ref).</p>
       <p>Element Templates name <em>sparsely</em>: the VDOM compiler already proved a closed set of dynamic points (the holes), and diffing guarantees the static nodes are never addressed — so only the holes get names and the grey nodes are invisible to the protocol. Sparse isn't saved, it's <em>proven</em>. Same template, two coordinates on the design space.</p>
+      <p><strong>Seed:</strong> dense vs sparse is really the <em>naming</em> axis — per-node vs per-block. A property of the tree, not a trick of one framework; the closing arc plots all the axes together.</p>
     </aside>
   </section>
 
@@ -3620,6 +3627,217 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>The design space is one wide spectrum</strong> — from fully retained to fully immediate. <strong>React VDOM</strong> is fully dynamic: interpret a tree and diff it every update. <strong>Vue</strong>'s compiler-hinted, block-based VDOM does better — blocks let it skip the static subtrees. <strong>Vapor</strong> looks like it compiled everything away, but it still reserves a slice for the in-browser runtime: pointers, used to <em>read</em> / address live nodes. So Vapor is still <em>retained mode</em>.</p>
       <p><strong>Why that matters at a thread boundary.</strong> Retained pointers only survive a thread hop if the tree itself is shared: RN's Fabric keeps pointers in a C++ shadow tree that both sides reach. Lynx can't — we cross threads from the very first frame. <strong>Element Templates</strong> go the other way: write-only, one direction, much closer to an immediate-mode <em>display list</em>. That crosses threads beautifully — but the price is giving up dynamism on the MT side. Like a painting: you draw it once, then let the canvas go.</p>
+      <p><strong>Seed:</strong> squint and this spectrum is the <em>staging</em> ladder in disguise — interpret → compile. The next slides name it: ops → data → code → native.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·1 — the thesis: every template is the same function -->
+  <section class="slide stage dspace" data-bg="beam">
+    <div class="mega" style="font-family:var(--mono);font-size:clamp(40px,7cqw,96px);line-height:1.05;letter-spacing:-0.01em">
+      <span style="color:var(--ds-dyn)">λ holes.</span> <span class="brand-text">tree</span>
+    </div>
+    <p class="lead" data-mm-fade style="max-width:46ch;margin-top:clamp(14px,2.4cqh,26px)">
+      Every template today was this one function — holes in, subtree out.
+    </p>
+    <p class="lead" data-mm-fade style="max-width:52ch;margin-top:clamp(6px,1cqh,12px);font-size:clamp(14px,1.55cqw,20px)">
+      A compiler can run the static half early — partial evaluation.
+      What remains is a residual skeleton, plus the holes that stay live.
+    </p>
+    <aside class="notes">
+      <p><strong>Step back — name the thing we've been doing all afternoon.</strong> Every dynamic subtree in this talk is one function: <code>λ holes. tree</code> — feed it the values of its holes, it hands back a subtree. A Vue template, a Vapor component, a ReactLynx JSX element — all of them are this λ.</p>
+      <p><strong>Partial evaluation:</strong> the compiler already knows the static half of that function at build time, so it runs that half <em>early</em>. What falls out is a <em>residual</em> — the static skeleton — plus the holes, the only part still alive at runtime. Every "template mechanism" you've seen today is just a choice of <em>representation for that residual</em>. Hold that thought for two slides.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·2 — three compilers, one split (weaves in ReactLynx Snapshot) -->
+  <section class="slide stage" data-bg="clean">
+    <div style="display:flex;align-items:stretch;gap:clamp(10px,1.5cqw,20px);width:100%;justify-content:center;max-width:1220px">
+      <div class="codeframe" style="text-align:left;flex:1 1 0;min-width:0">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>Vue · VDOM — Block</span>
+        </div>
+<pre><span class="code-com">// compiled render() — one Block</span>
+<span class="et-static">createElementBlock('view', …, [</span>
+  <span class="et-static">…static children…</span>
+<span class="et-static">],</span>
+<span class="et-hole">dynamicChildren: [ {{ title }} ]</span><span class="et-static">)</span></pre>
+      </div>
+      <div class="codeframe" style="text-align:left;flex:1 1 0;min-width:0">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>Vue · Vapor — template()</span>
+        </div>
+<pre><span class="code-com">// compiled vapor</span>
+<span class="et-static">const t0 = template(</span>
+  <span class="et-static">'&lt;view&gt;&lt;text/&gt;&lt;/view&gt;')</span>
+<span class="et-hole">renderEffect(() =&gt;</span>
+  <span class="et-hole">setText(n1, title))</span></pre>
+      </div>
+      <div class="codeframe" style="text-align:left;flex:1 1 0;min-width:0">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>ReactLynx — Snapshot</span>
+        </div>
+<pre><span class="code-com">// compiled JSX — schematic</span>
+<span class="et-static">const __s1 = createSnapshot(</span>
+  <span class="et-static">function create() { …PAPI… },</span>
+  <span class="et-hole">[ updateText(1) ]  <span class="code-com">// parts</span></span><span class="et-static">)</span>
+<span class="et-hole">&lt;__s1 values={[title]}/&gt;</span></pre>
+      </div>
+    </div>
+    <div class="ds-legend" data-mm-fade>
+      <span class="k"><span class="sw" style="background:var(--line);border:1px solid var(--ink-faint)"></span>static skeleton — the residual</span>
+      <span class="k"><span class="sw" style="background:var(--brand-emerald);box-shadow:0 0 10px -2px var(--brand-emerald)"></span>holes — still live at runtime</span>
+    </div>
+    <p class="lead" data-mm-fade>
+      Three compilers, one split. Vue calls it a Block, Vapor bakes it into
+      template(), ReactLynx calls it a Snapshot — the λ is the same.
+    </p>
+    <aside class="notes">
+      <p><strong>Proof by triptych — you have seen this λ three times today.</strong> Vue's compiler partitions a template into a Block: static children vs <code>dynamicChildren</code> (the Card.vue slide). Vapor makes the same split at codegen: the static half becomes <code>template()</code>, the holes become <code>renderEffect</code> + setters. ReactLynx does it too — a <em>Snapshot</em> is a compiled create function plus a list of dynamic parts; JSX instantiates it with <code>values</code>. (Code is schematic, not verbatim.)</p>
+      <p><strong>Where Snapshot sits in our coordinates:</strong> it is an <em>intrinsic Code-Template</em> — the residual ships as code in both bundles, always on, since day one. Same cell as our Element Templates; different default. The differences between the three columns are <em>not</em> the split — the split is identical — but what form the residual takes next. That's the next slide.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·3 — the split revives the interpreter -->
+  <section class="slide stage dspace" data-bg="clean">
+    <div class="dtrees" style="max-width:1080px">
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 10px">
+          <b style="color:var(--ink)">Web · one thread</b> — the residual is already native
+        </p>
+        <div class="dschem" style="margin:0">
+          <svg viewBox="0 0 460 200" role="img" aria-label="Web, one thread: the t0 clone is served by the engine — no interpreter anywhere.">
+            <defs>
+              <marker id="dsArrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="#5dd5a8"/>
+              </marker>
+            </defs>
+            <rect class="box" x="8" y="44" width="184" height="116" rx="12"/>
+            <text class="lane" x="28" y="72">vapor · compiled</text>
+            <text class="chip-t" x="28" y="104">t0()</text>
+            <text class="chip-s" x="28" y="126">residual as code</text>
+            <path class="flow-ok" d="M192 110 L262 110"/>
+            <text class="chip-s" x="227" y="96" text-anchor="middle">cloneNode</text>
+            <rect class="box" x="268" y="44" width="184" height="116" rx="12"/>
+            <text class="lane" x="288" y="72">engine</text>
+            <text class="chip-t" x="288" y="104">clones natively</text>
+            <text class="chip-s" x="288" y="126">an Engine-Template</text>
+          </svg>
+        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:8px 0 0">
+          no interpreter anywhere
+        </p>
+      </figure>
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 10px">
+          <b style="color:var(--ink)">Lynx · split</b> — the residual must cross as data
+        </p>
+        <div class="dschem" style="margin:0">
+          <svg viewBox="0 0 460 200" role="img" aria-label="Lynx split: the residual crosses the boundary as data; the main thread needs an interpreter.">
+            <rect class="box" x="8" y="44" width="168" height="116" rx="12"/>
+            <text class="lane" x="26" y="72">BG · compiled</text>
+            <text class="chip-t" x="26" y="104">t0()</text>
+            <text class="chip-s" x="26" y="126">residual as code</text>
+            <line class="wall" x1="230" y1="30" x2="230" y2="174"/>
+            <text class="walltag" x="230" y="52" transform="rotate(90 230 52)" text-anchor="middle">boundary</text>
+            <path class="flow-ok" d="M176 110 L282 110"/>
+            <text class="chip-s" x="229" y="96" text-anchor="middle">structure · data</text>
+            <rect class="box" x="288" y="44" width="164" height="116" rx="12"/>
+            <text class="lane" x="306" y="72">MT · interpreter</text>
+            <text class="chip-t" x="306" y="104">re-materialize</text>
+            <text class="chip-s" x="306" y="126">data needs interp</text>
+          </svg>
+        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:8px 0 0">
+          the wire re-opens the interpret side
+        </p>
+      </figure>
+    </div>
+    <p class="lead" data-mm-fade>
+      On the Web, t0()&rsquo;s clone was already engine-native. Cross a thread and
+      the residual travels as data — and data brings the interpreter back.
+    </p>
+    <aside class="notes">
+      <p><strong>The dramatic reversal.</strong> On the Web, Vapor's <code>t0()</code> ends in <code>cloneNode(true)</code> — the browser engine clones the residual natively. In our vocabulary that was <em>already an Engine-Template</em>: no interpreter anywhere on the hot path. We had the top of the ladder for free.</p>
+      <p><strong>Then Lynx's split topology takes it away.</strong> A residual that lives as code on BG cannot be called across a wire — it must <em>travel</em>, and anything that travels is data (<code>REGISTER_TREE</code>'s structure AST, or the ops themselves). And data on the far side needs an <em>interpreter</em> to re-materialize it. The boundary un-compiled us — it revived the interpret side. Which means every optimization from here is the same move: compile the interpreter away again. Next: the ladder.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·4 — the staging ladder: compile the interpreter away -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:24ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(10px,1.6cqh,18px)">
+      Compile the <span class="brand-text">interpreter</span> away.
+    </h2>
+    <div class="pipe">
+      <div class="pipe__layer">
+        <span class="k">ops</span><span class="t">Op Stream — interpret every op, every update · <b>vdom</b></span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer">
+        <span class="k">data</span><span class="t">Data-Template — register once, clone by name · <b>vapor</b></span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer pipe__layer--key">
+        <span class="k">code</span><span class="t">Code-Template — create() in both bundles · <b>ET · Snapshot</b></span>
+        <span class="pipe__reuse">futamura Ⅰ</span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer pipe__layer--main">
+        <span class="k">native</span><span class="t">Engine-Template — engine clones, zero JS · <b>cloneNode</b></span>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Each rung compiles more of the interpreter away — partial evaluation,
+      applied to the interpreter itself.
+    </p>
+    <aside class="notes">
+      <p><strong>The ladder, top-down = this talk in order.</strong> <em>ops</em> — vdom's flat stream: MT interprets every op on every update. <em>data</em> — Vapor's <code>REGISTER_TREE</code> / <code>CLONE_TREE</code>: interpret the structure once, then clone by name; the per-update interpreter is mostly gone. <em>code</em> — the residual becomes a function (<code>create()</code>) baked into both bundles: Element Templates and Snapshot live here. That's the first Futamura projection — specializing the interpreter to one fixed program yields compiled code. <em>native</em> — the engine itself holds the template and clones it; even the JS is gone. The Web's <code>cloneNode</code> lived here all along; on Lynx the engine's Element Template API is the same rung (our probe runs it behind a flag — honest caveat: stubbed on Lynx-for-Web today).</p>
+      <p>One sentence to land: <strong>optimization here is partial evaluation of the interpreter itself, rung by rung.</strong></p>
+    </aside>
+  </section>
+
+  <!-- Λ·5 — flags, not forks: the decision tree -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(10px,1.6cqh,18px)">
+      Not features — <span class="brand-text">flags</span>.
+    </h2>
+    <table class="btable btable--compact">
+      <thead>
+        <tr><th>mode</th><th>staging</th><th>naming</th><th>mechanism</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="metric">vdom</td><td>ops</td><td>per-node</td><td>Op Stream</td></tr>
+        <tr><td class="metric">vapor</td><td>data</td><td>per-node</td><td>Named Tree</td></tr>
+        <tr><td class="metric">vapor +b · default</td><td>data</td><td>per-block</td><td>Data-Template</td></tr>
+        <tr><td class="metric">vdom +b · ET</td><td>code</td><td>per-block</td><td>Code-Template</td></tr>
+        <tr><td class="metric">ReactLynx · Snapshot</td><td>code</td><td>per-block</td><td>Code-Template · intrinsic</td></tr>
+        <tr><td class="metric flat">any +b:e</td><td class="flat">native</td><td class="flat">per-block</td><td class="flat">Engine-Template</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade>
+      Each axis moves on its own — every mode today is one cell. And +ifr stacks
+      on any row: it only moves <em>when</em> the first frame paints.
+    </p>
+    <aside class="notes">
+      <p><strong>Kill the coupling myths.</strong> "Element Templates are an IFR feature" — no: ET moves staging to <em>code</em>; IFR only moves <em>when</em> the first frame paints; they compose (that was the 5→3 slide). "Snapshot is a ReactLynx thing" — no: it's a Code-Template with per-block naming, the same cell ET occupies; ReactLynx just defaults to it. "Vapor is fast because it's compiled" — its update win is the render axis (effects vs diff), orthogonal to how the residual is staged.</p>
+      <p><strong>Measured, one axis at a time</strong> (unified benchmark, Lynx-for-Web, medians): the render axis vdom→vapor is the update lever (update storm −54%). +b (per-block naming) is the create lever — benefit ∝ static fraction. +ifr is the first-frame lever (FCP −12…−22%) with a hydrate tax that +b pays back (+12% → +2% at 10k). Each flag's effect is separable — that's why this is a table of axes, not a family tree. And this week Vapor's default moved from per-node to per-block (+b): same source, one flag. The greyed engine rung exists behind a flag; on Lynx-for-Web it's stubbed today.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·6 — the law · hands off to the cradle -->
+  <section class="slide stage" data-bg="beam">
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      Every boundary revives the <em class="ifr-em">interpreter</em>.<br/>
+      Every optimization <span class="brand-text">compiles it back away</span>.
+    </h2>
+    <p class="lead" data-mm-fade style="max-width:44ch;margin-top:clamp(12px,2cqh,22px)">
+      λ holes. tree — evaluated in four stagings. That was the whole talk.
+    </p>
+    <aside class="notes">
+      <p><strong>The law, and the handoff.</strong> Split topologies keep reviving the interpret side — every wire re-opens it; that's not a Lynx quirk, it's what boundaries do to code. The craft is choosing, per screen, how far back down you compile: ops when you must, data when you can name things, code when the compiler can prove the split, native when the engine will hold the template for you.</p>
+      <p>Then turn the page — <em>this</em> is why Lynx is a cradle for framework design: the whole ladder is open to a frontend framework. Read the closing slide in that light.</p>
     </aside>
   </section>
 

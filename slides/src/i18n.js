@@ -413,6 +413,36 @@ export const ZH = {
     '一份模板 —— 一整条渲染器的<span class="brand-text">光谱</span>。',
   'Even Vapor stays retained — it keeps pointers. But cross a thread up front and pointers can’t follow — so Lynx lives at the write-only end.':
     '连 <b>Vapor</b> 也仍是 retained —— 它保留着指针。可一旦上来就跨线程,指针跟不过去 —— 于是 Lynx 落在只写的那一端。',
+
+  // ---- Λ closing arc · λ holes. tree ----
+  'Two levers, orthogonal — they stack.':
+    '两根杠杆,彼此正交 —— 还能叠加。',
+  'Every template today was this one function — holes in, subtree out.':
+    '今天的每一个模板,都是这同一个函数 —— 洞进,子树出。',
+  'A compiler can run the static half early — partial evaluation. What remains is a residual skeleton, plus the holes that stay live.':
+    '编译器可以把静态的那一半提前算掉 —— partial evaluation。剩下的,是一副残差骨架,和仍然活着的洞。',
+  'Three compilers, one split. Vue calls it a Block, Vapor bakes it into template(), ReactLynx calls it a Snapshot — the λ is the same.':
+    '三个编译器,同一次切分。Vue 管它叫 <b>Block</b>,Vapor 把它烘进 <code>template()</code>,ReactLynx 叫它 <b>Snapshot</b> —— 那个 λ,是同一个。',
+  'Web · one thread — the residual is already native':
+    '<b style="color:var(--ink)">Web · 单线程</b> —— 残差本来就已是原生',
+  'no interpreter anywhere': '整条路径上,没有解释器',
+  'Lynx · split — the residual must cross as data':
+    '<b style="color:var(--ink)">Lynx · 双线程</b> —— 残差必须作为数据过线',
+  'the wire re-opens the interpret side': '这条线,把解释侧重新打开',
+  'On the Web, t0()’s clone was already engine-native. Cross a thread and the residual travels as data — and data brings the interpreter back.':
+    '在 Web 上,<code>t0()</code> 的那次 clone 本来就是引擎原生的。跨过一条线程,残差就得作为<em>数据</em>旅行 —— 而数据,把解释器又带了回来。',
+  'Compile the interpreter away.':
+    '把<span class="brand-text">解释器</span>编译掉。',
+  'Each rung compiles more of the interpreter away — partial evaluation, applied to the interpreter itself.':
+    '每往下一档,就把解释器多编译掉一层 —— partial evaluation,施加在解释器自己身上。',
+  'Not features — flags.':
+    '不是功能 —— 是 <span class="brand-text">flag</span>。',
+  'Each axis moves on its own — every mode today is one cell. And +ifr stacks on any row: it only moves when the first frame paints.':
+    '每根轴独立拨动 —— 今天的每个模式,都只是其中一格。而 +ifr 可以叠在任何一行上:它只挪动首帧<em>何时</em>画。',
+  'Every boundary revives the interpreter. Every optimization compiles it back away.':
+    '每一条边界,都会复活<em class="ifr-em">解释器</em>。<br/>每一次优化,都是<span class="brand-text">把它重新编译掉</span>。',
+  'λ holes. tree — evaluated in four stagings. That was the whole talk.':
+    'λ holes. tree —— 分四档求值。这,就是今天的全部。',
   'Cut a thread — what can cross the wire?':
     '切一刀线程 —— 什么能过桥?',
   'Only closed, first-order terms survive the cut — a flat ops stream, i.e. a display list.':
@@ -737,7 +767,7 @@ export const ZH_NOTES = [
   // IFR3 · Straightforward IFR
   `<p><strong>Straightforward IFR —— hydration 当作 thread join。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上并<em>录下</em>扁平 ops 流。后台并行启动,随后最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制 —— 是一次 join,不是重写:相同 → 跳过,值不同 → 打补丁,结构分歧 → 拆掉重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。</p>`,
   // IFR7 · Compiler-hinted Block → ET（紧接 Straightforward）
-  `<p><strong>进入 Element Templates —— 从 Vue 的 Block 说起。</strong>hydrate 仍然在 join 两条肥胖路径。Vue 的编译器早就把模板切成 Block:静态节点 vs 动态空洞(<code>patchFlag</code> / dynamicChildren)。Element Templates 复用这份结构 —— 把静态壳烘焙进 <code>registerElementTemplate(id, holes, create)</code>,只把空洞留在 vnode 路径。可下沉 = 纯 Lynx 元素且只有值/文本动态;组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、ref/id 留在普通路径(它们的纯元素子体仍可下沉)。下一页:两边的稀疏树,以及线上到底同步了什么。</p>`,
+  `<p><strong>进入 Element Templates —— 从 Vue 的 Block 说起。</strong>hydrate 仍然在 join 两条肥胖路径。Vue 的编译器早就把模板切成 Block:静态节点 vs 动态空洞(<code>patchFlag</code> / dynamicChildren)。Element Templates 复用这份结构 —— 把静态壳烘焙进 <code>registerElementTemplate(id, holes, create)</code>,只把空洞留在 vnode 路径。可下沉 = 纯 Lynx 元素且只有值/文本动态;组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、ref/id 留在普通路径(它们的纯元素子体仍可下沉)。下一页:两边的稀疏树,以及线上到底同步了什么。</p><p><strong>给结尾埋的种子:</strong>编译器在这里做的其实是 <em>partial evaluation</em> —— 模板是一个以洞为参数的函数,Block 就是它的静态残差。这个名字,演讲结尾正式请出来。</p>`,
   // IFR8 · 双线程树 + 同步内容
   `<p><strong>两边的树分别是什么。</strong>BTS 侧是稀疏的 VDOM / ShadowElement:静态节点仍在(满足 Vue 的同步读取),但对协议隐形(变灰);只有 hole 有名字(<code>h0</code>…)。MTS IFR 用编译好的 <code>create()</code> 物化同一形状 —— 一棵原生元素树,hole id 对齐。这份稀疏,正是上一页编译出来的 Block。</p><p><strong>同步了什么。</strong>和 Vapor 的 <code>REGISTER_TREE</code> 不同,ET 不传结构:<code>registerElementTemplate</code> 已经把 <code>create()</code> 打进两边产物。跨线只有 <code>INSTANTIATE_TEMPLATE(tplId)</code>(每个实例一次)+ hole 的 <code>SET_*</code> 值。IFR 下 MTS 首屏已录下这些 ops;BTS 最初几批拿去和录制对账 —— 仍是 Straightforward IFR 那次 skip / patch / rebuild join。下一页:没有 ET 时,两条线程仍走肥胖的五步路径。</p>`,
   // IFR5 · 原双线程图 + 中间 5 步连接
@@ -745,7 +775,7 @@ export const ZH_NOTES = [
   // IFR6 · 同一张图,连接 5→3
   `<p><strong>同一张图,更少连接。</strong>看 2–4 步折进一个 <code>INSTANTIATE_TEMPLATE</code> 芯片;VDOM 和 PAPI/<code>create()</code> 留在原地(magic-move)。BTS 仍从 VDOM 起步,但静态块是一个 vnode,只发 INSTANTIATE + hole SET_*。MTS IFR 的解释器调用烘焙好的 <code>create()</code>。下一页:一句话收束 —— IFR 改<em>何时</em>;Element Templates 改做多少活。</p>`,
   // IFR4 · Element Templates 转折（收束）
-  `<p><strong>两个杠杆,一句话。</strong>你刚看完 BTS↔MTS 共享 data-flow 从五步塌成三步。IFR 把绘制提前;Element Templates 让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。下一页:数字。</p>`,
+  `<p><strong>两个杠杆,一句话。</strong>你刚看完 BTS↔MTS 共享 data-flow 从五步塌成三步。IFR 把绘制提前;Element Templates 让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。下一页:数字。</p><p><strong>种子:</strong>"两根正交的杠杆"正是全部要点 —— 演讲结尾我们把它们写成 flag(+ifr、+b),摊开整棵决策树。</p>`,
   // IFR10 · 基准测试图（ops / 渲染开销）
   `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
   // IFR9 · FCP 大字 −22%
@@ -806,7 +836,7 @@ export const ZH_NOTES = [
   // 40b 代码复用 · Lynx 拆到 BG | MT
   `<p><strong>同一组层,双线程安家。</strong>compiled / alias / runtime / shims / ShadowElement 留在后台线程;<code>ops stream → native</code> 落在主线程。两枚绿标:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答那些 DOM 调用 —— 它们变成 vdom 已经在用的同一条 ops 流。</p>`,
   // 39 Vapor 产物 · 第一个疑问:structure 第一次传过去
-  `<p><strong>第一个疑问 —— Main 到底收到什么?</strong>Vapor 编译成 <code>template()</code> + <code>t0()</code> 克隆。在 Web 上那次克隆就是浏览器 DOM。在 Lynx 上,形状<em>不会</em>预先打进 MTS/Lepus 产物(那是 Element Templates 的 baked <code>create()</code>)。</p><p>第一次 <code>t0()</code> 时,BG 把惰性 ShadowElement 原型走成 <code>TemplateNode</code> AST —— <code>[tag, props|0, children[]]</code> —— 并只推一次 <code>REGISTER_TREE</code>:<code>[16, treeId, structure, 0]</code>。Main 只缓存 <code>{ structure }</code>;原生节点要等后面的 <code>CLONE_TREE</code>。</p><p><strong>为什么不在构建期 bake?</strong>历史原因,而非本质。上游 Vapor 的 codegen 只给你一段 HTML 字符串(<code>template('&lt;view&gt;…&lt;/view&gt;')</code>)。Lynx 上最省事的路就是:BG runtime 把字符串 parse 成 ShadowElement,再把同一棵树序列化进 <code>REGISTER_TREE</code>。构建期残差(ET 那种)仍然在桌面上 —— 只是还没为那套 codegen 买单。下一页:为什么 <code>child(n0)</code> 的活指针仍然过不了边界。</p>`,
+  `<p><strong>第一个疑问 —— Main 到底收到什么?</strong>Vapor 编译成 <code>template()</code> + <code>t0()</code> 克隆。在 Web 上那次克隆就是浏览器 DOM。在 Lynx 上,形状<em>不会</em>预先打进 MTS/Lepus 产物(那是 Element Templates 的 baked <code>create()</code>)。</p><p>第一次 <code>t0()</code> 时,BG 把惰性 ShadowElement 原型走成 <code>TemplateNode</code> AST —— <code>[tag, props|0, children[]]</code> —— 并只推一次 <code>REGISTER_TREE</code>:<code>[16, treeId, structure, 0]</code>。Main 只缓存 <code>{ structure }</code>;原生节点要等后面的 <code>CLONE_TREE</code>。</p><p><strong>为什么不在构建期 bake?</strong>历史原因,而非本质。上游 Vapor 的 codegen 只给你一段 HTML 字符串(<code>template('&lt;view&gt;…&lt;/view&gt;')</code>)。Lynx 上最省事的路就是:BG runtime 把字符串 parse 成 ShadowElement,再把同一棵树序列化进 <code>REGISTER_TREE</code>。构建期残差(ET 那种)仍然在桌面上 —— 只是还没为那套 codegen 买单。下一页:为什么 <code>child(n0)</code> 的活指针仍然过不了边界。</p><p><strong>种子:</strong>运行时交付 vs 构建期交付,本身就是一根轴(<em>delivery</em>)—— 与残差取什么形态无关。收尾的弧线会回到它。</p>`,
   // 90pre-a E20pre-a · 问题:需要指针,指针过不了
   `<p><strong>用两拍把问题说清。</strong>Vapor 编译出来的代码,像操作 HTML DOM 一样走树、改树:<code>child(n0)</code> 返回活指针;<code>setText(n1, …)</code> 通过它写入。细粒度更新的故事全靠这个 —— 产物<em>依赖</em>一棵可寻址的树。</p><p><strong>为什么不直接走 engine tree?</strong>从 BG 看,engine element tree 是 write/ops 形的 —— 没有同步的 <code>firstChild</code> walk。所以 Vapor 改走 <em>BG shadow tree</em>(<code>ShadowElement</code>)。这些活指针照样过不了 MT —— 下一页:握着名字的那棵 MT addressable tree。</p>`,
   // 90pre-b E20pre-b · BG shadow vs MT addressable
@@ -818,9 +848,21 @@ export const ZH_NOTES = [
   // 90pre-c E20pre-c · ShadowElement (VDOM & Vapor) vs AddressableNode
   `<p><strong>左边是一张对照表,按列读。</strong>先看共用数据:两边握同一份 <code>ShadowElement</code>。再看矩阵 —— 每行一个 API,每列一个渲染器。VDOM 列是完整 <code>nodeOps</code> 的 create/walk/diff,外加 <code>setText</code>。Vapor 列把那些标成 — ,改用编译出来的 <code>template</code> / <code>child</code> / <code>on</code> 驱动同一棵树,重叠点只有 <code>setText</code>。</p><p>右边:Vapor 的 MT <code>AddressableNode</code> 故意很瘦 —— <code>uid</code> + <code>tag</code>。不是第二棵 ShadowElement;只是一个名字,好让写入落地。</p>`,
   // 90a E20a · 稠密 vs 稀疏 (Vapor tree vs ET)
-  `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p>`,
+  `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p><p><strong>种子:</strong>dense vs sparse 其实就是<em>命名</em>轴 —— per-node vs per-block。这是树的性质,不是某个框架的把戏;收尾的弧线把所有轴摆在一起。</p>`,
   // 90b E20b · 动静光谱 · retained → write-only
-  `<p><strong>设计空间是一条很宽的光谱</strong> —— 从完全 retained 到完全 immediate。<strong>React VDOM</strong> 完全动态:解释一棵树,每次更新再 diff。<strong>Vue</strong> 的 compiler-hinted、block-based VDOM 好一些 —— block 让它跳过静态子树。<strong>Vapor</strong> 看似把一切都编译掉了,其实仍给浏览器内的运行时留了一块:指针,用来<em>读</em> / 寻址活节点。所以 Vapor 依然是 <em>retained mode</em>。</p><p><strong>为什么这在线程边界上要命。</strong>retained 的指针只有在整棵树本身共享时才能扛过一次线程跳转:RN 的 Fabric 把指针留在一棵两侧都能碰到的 C++ 影子树里。Lynx 做不到 —— 我们从第一帧就跨线程。<strong>Element Templates</strong> 走了反方向:只写、单向,更接近 immediate mode 的 <em>display list</em>。它跨线程极其漂亮 —— 代价是放弃 MT 侧的动态性。就像画一幅画:画一次,然后把画布撒手。</p>`,
+  `<p><strong>设计空间是一条很宽的光谱</strong> —— 从完全 retained 到完全 immediate。<strong>React VDOM</strong> 完全动态:解释一棵树,每次更新再 diff。<strong>Vue</strong> 的 compiler-hinted、block-based VDOM 好一些 —— block 让它跳过静态子树。<strong>Vapor</strong> 看似把一切都编译掉了,其实仍给浏览器内的运行时留了一块:指针,用来<em>读</em> / 寻址活节点。所以 Vapor 依然是 <em>retained mode</em>。</p><p><strong>为什么这在线程边界上要命。</strong>retained 的指针只有在整棵树本身共享时才能扛过一次线程跳转:RN 的 Fabric 把指针留在一棵两侧都能碰到的 C++ 影子树里。Lynx 做不到 —— 我们从第一帧就跨线程。<strong>Element Templates</strong> 走了反方向:只写、单向,更接近 immediate mode 的 <em>display list</em>。它跨线程极其漂亮 —— 代价是放弃 MT 侧的动态性。就像画一幅画:画一次,然后把画布撒手。</p><p><strong>种子:</strong>眯起眼看,这条光谱就是 <em>staging</em> 阶梯的伪装 —— interpret → compile。接下来的几页给它起名:ops → data → code → native。</p>`,
+  // Λ1 λ holes. tree · 命题
+  `<p><strong>退后一步 —— 给我们忙了一下午的事情起个名字。</strong>这场演讲里的每一棵动态子树,都是同一个函数:<code>λ holes. tree</code> —— 喂给它洞的值,它还你一棵子树。Vue 模板、Vapor 组件、ReactLynx 的 JSX —— 全都是这个 λ。</p><p><strong>Partial evaluation(部分求值):</strong>这个函数静态的那一半,编译器在构建期就已经知道,于是可以<em>提前</em>把它算掉。掉出来的是<em>残差(residual)</em> —— 静态骨架 —— 加上洞,唯一还活在运行时的部分。今天你见过的每一种"模板机制",都只是<em>给残差选一种表示</em>。这个念头,请按住两页。</p>`,
+  // Λ2 三个编译器 · 同一次切分(带 Snapshot 落位)
+  `<p><strong>三联画作证 —— 这个 λ 你今天已经见过三次。</strong>Vue 的编译器把模板切成 Block:静态子节点 vs <code>dynamicChildren</code>(Card.vue 那页)。Vapor 在 codegen 做同一次切分:静态一半变成 <code>template()</code>,洞变成 <code>renderEffect</code> + setter。ReactLynx 同样如此 —— <em>Snapshot</em> 就是一个编译出的 create 函数,外加一张动态 parts 清单;JSX 用 <code>values</code> 实例化它。(代码是示意,不是逐字。)</p><p><strong>Snapshot 在我们坐标系里的落位:</strong>它是<em>内生的 Code-Template</em> —— 残差以代码形式随两份产物出厂,天生常开。和我们的 Element Templates 同一格;只是默认值不同。三列之间的差异<em>不在</em>切分 —— 切分完全相同 —— 而在残差接下来取什么形态。下一页。</p>`,
+  // Λ3 跨线程复活解释器
+  `<p><strong>戏剧性的反转。</strong>在 Web 上,Vapor 的 <code>t0()</code> 终点是 <code>cloneNode(true)</code> —— 浏览器引擎原生克隆残差。用我们的词说,那<em>本来就已经是 Engine-Template</em>:热路径上哪儿都没有解释器。梯子的顶端,我们免费拿到过。</p><p><strong>然后 Lynx 的分线程拓扑把它收走了。</strong>以代码形式活在 BG 的残差,没法隔着一条线被调用 —— 它必须<em>旅行</em>,而旅行的东西只能是数据(<code>REGISTER_TREE</code> 的 structure AST,或者 ops 本身)。对岸的数据需要一个<em>解释器</em>来重新物化。边界把我们反编译了 —— 它复活了解释侧。这意味着接下来的每一次优化都是同一个动作:把解释器重新编译掉。下一页:那把梯子。</p>`,
+  // Λ4 阶梯 · 把解释器编译掉
+  `<p><strong>这把梯子,自上而下 = 今天讲过的顺序。</strong><em>ops</em> —— vdom 的扁平流:MT 每次更新解释每一条 op。<em>data</em> —— Vapor 的 <code>REGISTER_TREE</code> / <code>CLONE_TREE</code>:structure 解释一次,之后按名克隆;逐次更新的解释器基本消失。<em>code</em> —— 残差变成函数(<code>create()</code>)烘进两份产物:Element Templates 和 Snapshot 都住这里。这正是第一 Futamura 投影 —— 把解释器对一个固定程序特化,得到的就是编译产物。<em>native</em> —— 引擎自己持有模板并克隆;连 JS 都没有了。Web 的 <code>cloneNode</code> 一直住在这一档;Lynx 上引擎的 Element Template API 是同一档(我们的探针在 flag 后面跑 —— 诚实备注:Lynx-for-Web 上今天是 stub)。</p><p>要落地的一句话:<strong>这里的优化,就是对解释器本身做 partial evaluation,一档一档来。</strong></p>`,
+  // Λ5 flag 决策树 · 正交归因
+  `<p><strong>拆掉耦合的迷思。</strong>"Element Templates 是 IFR 的功能" —— 不:ET 把 staging 挪到 <em>code</em>;IFR 只挪首帧<em>何时</em>画;二者可组合(就是 5→3 那页)。"Snapshot 是 ReactLynx 的东西" —— 不:它是 per-block 命名的 Code-Template,和 ET 同一格;ReactLynx 只是默认开。"Vapor 快是因为编译" —— 它的更新优势在 render 轴(effect vs diff),与残差怎么 staging 正交。</p><p><strong>实测,一次只动一根轴</strong>(unified benchmark,Lynx-for-Web,中位数):render 轴 vdom→vapor 是更新杠杆(update storm −54%)。+b(per-block 命名)是创建杠杆 —— 收益 ∝ 静态占比。+ifr 是首帧杠杆(FCP −12…−22%),它的 hydrate 税由 +b 补回(10k 规模 +12% → +2%)。每个 flag 的效果都能单独分离 —— 所以这是一张轴的表格,不是一棵族谱树。而就在这周,Vapor 的默认从 per-node 挪到了 per-block(+b):同一份源码,一个 flag。置灰的引擎档在 flag 后面;Lynx-for-Web 上今天是 stub。</p>`,
+  // Λ6 定律 · 交接给摇篮
+  `<p><strong>定律,与交接。</strong>分线程拓扑会不断复活解释侧 —— 每一条线都会重新把它打开;这不是 Lynx 的怪癖,这是边界对代码做的事。手艺在于按屏幕逐一选择:你把它编译回去多深 —— 不得不时用 ops,能命名时用 data,编译器能证明切分时用 code,引擎愿意替你持有模板时用 native。</p><p>然后翻页 —— <em>这</em>就是 Lynx 是框架设计摇篮的原因:整把梯子都对前端框架开放。带着这个视角读收尾那页。</p>`,
   // 90c E20c · 摇篮 · 收束设计空间
   `<p><strong>框架作者为什么该关心 Lynx。</strong>Lynx 做过很多有趣甚至有争议的设计决定,而且还在继续:双线程、MTS、一台不在 DOM 上的真 CSS 引擎。这是一支深爱 Web、也有胆量和空间在必要处打破 Web 的团队。</p><p>对 Vue 而言:一个真正有奔跑空间的原生平台 —— 在这种空间里,一个 Vapor 原生渲染器,就是一个周末的 vibe 量。</p>`,
   // 54 Map scaffold
