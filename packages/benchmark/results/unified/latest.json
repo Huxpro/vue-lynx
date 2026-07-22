@@ -1,7 +1,7 @@
 {
   "meta": {
-    "date": "2026-07-22T19:05:07.367Z",
-    "sha": "4ee7239",
+    "date": "2026-07-22T19:15:19.263Z",
+    "sha": "ded6b84",
     "node": "v22.22.2",
     "cpus": 4,
     "cpuModel": "Intel(R) Xeon(R) Processor @ 2.80GHz",
@@ -5034,586 +5034,46 @@
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "vapor-dense",
+      "architecture": "react",
       "workload": "content-probe",
-      "scale": "10k",
+      "scale": "20k",
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 3216.100000000093
+      "median": 1473.2999999970198
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "vapor-dense",
+      "architecture": "react",
       "workload": "content-probe",
-      "scale": "10k",
+      "scale": "20k",
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 5332.200000000186
+      "median": 2482.4000000059605
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "vapor-dense",
+      "architecture": "react",
       "workload": "content-probe",
-      "scale": "1k",
+      "scale": "30k",
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 707.5
+      "median": 2242
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "vapor-dense",
+      "architecture": "react",
       "workload": "content-probe",
-      "scale": "1k",
+      "scale": "30k",
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 715.2999999998137
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1360.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 1632
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1943.2000000001863
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 2698.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3389.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 5682.199999999721
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 729.7999999998137
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 734.8999999999069
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1231.3999999999069
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 1501.7999999998137
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1795.7999999998137
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 2613
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3647.2999999998137
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 6008.600000000093
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 869
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 875.2000000001863
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1511
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 1786.5999999996275
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 2113.9000000003725
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3008.9000000003725
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3618.600000000093
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 5882.300000000279
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 783.8999999999069
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 810.8000000002794
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1403.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 1699
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 2096.4000000003725
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 2772.4000000003725
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 2657.8000000002794
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "10k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 4879.800000000279
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 638.7000000001863
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 646.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1153.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "3k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 1464.7000000001863
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 1660.5
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "5k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 2524.3000000002794
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 302.9000000357628,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 303.9000000357628,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-sparse",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 310.69999998807907,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-sparse",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 312.5,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 863.3999999999069,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-dense",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 867.8000000000466,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 831.1000000000931,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-engine",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 835.3000000000466,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 909,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr-engine-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 952.5999999998603,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 808.8999999999069,
-      "campaign": "graph-eng-naming"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-et",
-      "workload": "content-probe",
-      "scale": "1k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 842.2999999998137,
-      "campaign": "graph-eng-naming"
+      "median": 4190.70000000298
     },
     {
       "schemaVersion": 1,
@@ -7511,7 +6971,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 353.5,
+      "median": 582.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7523,7 +6983,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 353.5,
+      "median": 582.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7535,7 +6995,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 677.8000000000466,
+      "median": 1223.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7547,7 +7007,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 677.8000000000466,
+      "median": 1223.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7559,7 +7019,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 990.3999999999069,
+      "median": 1618.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7571,7 +7031,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 990.3999999999069,
+      "median": 1618.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7583,7 +7043,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1641.6000000000931,
+      "median": 2901,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7595,55 +7055,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1641.6000000000931,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3252.5,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3252.5,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 4613.700000000186,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 4613.700000000186,
+      "median": 2901,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7655,7 +7067,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 367.60000000009313,
+      "median": 649.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7667,7 +7079,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 367.60000000009313,
+      "median": 649.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7679,7 +7091,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 648.7999999998137,
+      "median": 1129.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7691,7 +7103,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 648.7999999998137,
+      "median": 1129.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7703,7 +7115,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 826.8000000000466,
+      "median": 1513.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7715,7 +7127,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 826.8000000000466,
+      "median": 1513.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7727,7 +7139,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 2205.3000000000466,
+      "median": 3240.79999999993,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7739,55 +7151,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 2205.3000000000466,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3683.8000000000466,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3683.8000000000466,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 5619.699999999953,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 5619.699999999953,
+      "median": 3240.79999999993,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7799,7 +7163,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 326.10000000009313,
+      "median": 516.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7811,7 +7175,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 326.10000000009313,
+      "median": 516.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7823,7 +7187,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 572.1999999999534,
+      "median": 926.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7835,7 +7199,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 572.1999999999534,
+      "median": 926.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7847,7 +7211,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 869.5999999998603,
+      "median": 1334.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7859,7 +7223,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 869.5999999998603,
+      "median": 1334.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7871,7 +7235,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1424.5,
+      "median": 2363.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7883,55 +7247,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1424.5,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr-et",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 2570.6999999999534,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr-et",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 2570.6999999999534,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr-et",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3886.7000000001863,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vdom-ifr-et",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3886.7000000001863,
+      "median": 2363.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7943,7 +7259,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 368.89999999990687,
+      "median": 627.7999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7955,7 +7271,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 368.89999999990687,
+      "median": 627.7999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7967,7 +7283,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 674.3000000000466,
+      "median": 1184.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7979,7 +7295,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 674.3000000000466,
+      "median": 1184.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7991,7 +7307,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 951.2000000001863,
+      "median": 1690.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8003,7 +7319,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 951.2000000001863,
+      "median": 1690.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8015,7 +7331,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1848.7000000001863,
+      "median": 2761.20000000007,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8027,55 +7343,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1848.7000000001863,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3348.6999999999534,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3348.6999999999534,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 4952.5,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 4952.5,
+      "median": 2761.20000000007,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8087,7 +7355,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 422.30000000004657,
+      "median": 658.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8099,7 +7367,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 422.30000000004657,
+      "median": 658.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8111,7 +7379,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 807.6999999999534,
+      "median": 1345.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8123,7 +7391,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 807.6999999999534,
+      "median": 1345.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8135,7 +7403,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1117.5,
+      "median": 1789.6999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8147,7 +7415,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1117.5,
+      "median": 1789.6999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8159,7 +7427,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 2043.5,
+      "median": 3320.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8171,55 +7439,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 2043.5,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 3850,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr",
-      "workload": "content-probe",
-      "scale": "20k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 3850,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "fcp",
-      "unit": "ms",
-      "median": 5542.100000000093,
-      "campaign": "unified-single-provenance"
-    },
-    {
-      "schemaVersion": 1,
-      "environment": "lynx-web",
-      "architecture": "vapor-ifr",
-      "workload": "content-probe",
-      "scale": "30k",
-      "cpuThrottle": 4,
-      "metric": "settled",
-      "unit": "ms",
-      "median": 5542.100000000093,
+      "median": 3320.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8231,7 +7451,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 267.30000000004657,
+      "median": 462.19999999995343,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8243,7 +7463,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 267.30000000004657,
+      "median": 462.19999999995343,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8255,7 +7475,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 470,
+      "median": 766.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8267,7 +7487,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 470,
+      "median": 766.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8279,7 +7499,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 650,
+      "median": 1165.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8291,7 +7511,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 650,
+      "median": 1165.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8303,7 +7523,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1139.8999999999069,
+      "median": 1976.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8315,55 +7535,583 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1139.8999999999069,
+      "median": 1976.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "react",
+      "architecture": "vdom-et",
       "workload": "content-probe",
-      "scale": "20k",
+      "scale": "1k",
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 2259.100000000093,
+      "median": 510.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "react",
+      "architecture": "vdom-et",
       "workload": "content-probe",
-      "scale": "20k",
+      "scale": "1k",
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 2259.100000000093,
+      "median": 510.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "react",
+      "architecture": "vdom-et",
       "workload": "content-probe",
-      "scale": "30k",
+      "scale": "3k",
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 3177.6999999999534,
+      "median": 1014.5,
       "campaign": "unified-single-provenance"
     },
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
-      "architecture": "react",
+      "architecture": "vdom-et",
       "workload": "content-probe",
-      "scale": "30k",
+      "scale": "3k",
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 3177.6999999999534,
+      "median": 1014.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1422.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1422.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 2467,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 2467,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 700.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 700.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1123.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1123.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1589,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1589,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 2837.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 2837.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 610.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 610.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1209.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1209.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1685.2999999999302,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1685.2999999999302,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 2974.4000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 2974.4000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 590.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 590.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1281.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1281.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1947.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1947.9000000000233,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 3243.8000000000466,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-dense",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 3243.8000000000466,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 670.2000000000698,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 670.2000000000698,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1234.0999999999767,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1234.0999999999767,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1874.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1874.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 3323.8000000000466,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-sparse",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 3323.8000000000466,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 656,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 656,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1320.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1320.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1920.1000000000931,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1920.1000000000931,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 3404.899999999907,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 3404.899999999907,
       "campaign": "unified-single-provenance"
     },
     {
@@ -9523,7 +9271,7 @@
       "id": "ifr-fcp-minus-19",
       "claim": "Default IFR wins median −19% FCP on real threads (content scene).",
       "status": "holds-locally",
-      "detail": "Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 4%. IFR+ET@30k ×1: 36%. ",
+      "detail": "Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 12%. IFR+ET@30k ×1: 36%. ",
       "evidence": {
         "x1_1k": {
           "off": 128.30000000004657,
@@ -9541,14 +9289,14 @@
           "et": 1587.9000000001397
         },
         "x4_1k": {
-          "off": 353.5,
-          "ifr": 367.60000000009313,
-          "et": 326.10000000009313
+          "off": 582.3000000000466,
+          "ifr": 649.4000000000233,
+          "et": 516.3000000000466
         },
         "d1": -20.81060015602227,
         "d10": 33.06790533067224,
         "d30": 29.374572795651638,
-        "d4": 3.9886845827703348,
+        "d4": 11.523269792198413,
         "dEt30": 35.67156527685116
       }
     },

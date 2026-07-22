@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-22T19:05:07.367Z @ 4ee7239
+> Generated 2026-07-22T19:15:19.263Z @ ded6b84
 > Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
 
 ## Why unify?
@@ -60,7 +60,7 @@ create@10k vapor/vdom=0.98×. React still leads create@10k (react/vdom=0.47×).
 
 > Default IFR wins median −19% FCP on real threads (content scene).
 
-Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 4%. IFR+ET@30k ×1: 36%. 
+Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 12%. IFR+ET@30k ×1: 36%. 
 
 ### `et-is-inflection` — **holds**
 
@@ -141,11 +141,11 @@ Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the
 
 | cell | naming | web gzip | FCP ×1 | Δ vs dense | FCP ×4 | Δ vs dense |
 |---|---|---:|---:|---:|---:|---:|
-| vapor-ifr-dense | dense | 89720 | 127.0 | 0.0% | 302.9 | 0.0% |
-| vapor-ifr-sparse | sparse | 90007 | 121.8 | -4.1% | 310.7 | 2.6% |
-| vapor-ifr | sparse | 90007 | 132.2 | 4.1% | 422.3 | 39.4% |
+| vapor-ifr-dense | dense | 89720 | 127.0 | 0.0% | 590.2 | 0.0% |
+| vapor-ifr-sparse | sparse | 90007 | 121.8 | -4.1% | 670.2 | 13.6% |
+| vapor-ifr | sparse | 90007 | 132.2 | 4.1% | 658.9 | 11.6% |
 
-×1 sparse/dense = 0.959× (-4.1%). ×4 sparse/dense = 1.026× (2.6%) — treat as noise / inconclusive for scale hedge.
+×1 sparse/dense = 0.959× (-4.1%). ×4 sparse/dense = 1.136× (13.6%) — treat as noise / inconclusive for scale hedge.
 
 Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 
