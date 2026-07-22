@@ -4304,7 +4304,7 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .pipesplit {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 0.85fr);
-  align-items: center;
+  align-items: end;
   gap: clamp(12px, 1.8cqw, 28px);
   width: min(100%, 1080px);
   margin: 0 auto;
@@ -4314,6 +4314,10 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  align-self: stretch;
+}
+.pipesplit__side:last-child {
+  justify-content: flex-end;
 }
 .pipesplit__lab {
   margin: 0;
@@ -4344,7 +4348,7 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding-top: 28px;
+  padding-bottom: 14px;
 }
 .pipesplit__arrow {
   font-family: var(--mono);
