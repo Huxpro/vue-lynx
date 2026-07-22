@@ -71,8 +71,8 @@ export function copy(lang) {
       ? '四轴矩阵 — 全排列 create/update 与因子分解'
       : 'Four-axis matrix — all-permutation create/update + factor decomposition',
     subGraphEngFactors: zh
-      ? '统一 table app（真实点击、双线程），11 个合法 flag 排列组合（<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在 web 上以 <code>stub</code> 状态诚实运行（引擎 ET PAPI 缺失），其 Δ 只是探测开销。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
-      : 'Unified table app (real clicks, dual-thread), all 11 legal flag permutations (<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells run honestly as <code>stub</code> on web (engine ET PAPI absent) — their deltas are probe overhead. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+      ? '统一 table app（真实点击、双线程），11 个合法 flag 排列组合（<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
+      : 'Unified table app (real clicks, dual-thread), all 11 legal flag permutations (<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -83,13 +83,13 @@ export function copy(lang) {
     colLabels: {
       vapor: 'Vue Vapor',
       'vapor-dense': zh ? 'Vapor 稠密（Named Tree）' : 'Vapor dense (Named Tree)',
-      'vapor-engine': zh ? 'Vapor engine（stub）' : 'Vapor engine (stub)',
+      'vapor-engine': zh ? 'Vapor engine（N/A）' : 'Vapor engine (N/A)',
       'vapor-ifr': 'Vapor+IFR',
       'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR (dense)',
       'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR (sparse)',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor+IFR engine-et（stub）'
-        : 'Vapor+IFR engine-et (stub)',
+        ? 'Vapor+IFR engine-et（N/A）'
+        : 'Vapor+IFR engine-et (N/A)',
       vdom: 'Vue VDOM',
       'vdom-et': zh ? 'VDOM+ET（无 IFR）' : 'VDOM+ET (no IFR)',
       'vdom-ifr': 'VDOM+IFR',
@@ -132,13 +132,13 @@ export function copy(lang) {
       'vdom-ifr-et': 'VDOM+IFR+ET',
       vapor: 'Vapor',
       'vapor-dense': zh ? 'Vapor 稠密' : 'Vapor dense',
-      'vapor-engine': zh ? 'Vapor engine（stub）' : 'Vapor engine (stub)',
+      'vapor-engine': zh ? 'Vapor engine（N/A）' : 'Vapor engine (N/A)',
       'vapor-ifr': 'Vapor+IFR',
       'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR dense',
       'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR sparse',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor+IFR engine-et（stub）'
-        : 'Vapor+IFR engine-et (stub)',
+        ? 'Vapor+IFR engine-et（N/A）'
+        : 'Vapor+IFR engine-et (N/A)',
     },
     charts: {
       selectStorm: {
