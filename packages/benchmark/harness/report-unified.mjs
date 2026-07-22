@@ -44,6 +44,10 @@ const scale6 = readJson('results/cross-storms-scale6.json');
 const graphEngFactors = readJson('results/unified/graph-eng-unified-factors.json');
 const graphEng4axisStorms = readJson('results/cross-storms-graph-eng-4axis.json');
 const graphEng4axisFullStorms = readJson('results/cross-storms-graph-eng-4axis-full.json');
+// Build-time-parse sweep (#337 `+b:c` / #338 `+b!`): all vue cells + the two
+// new cells re-measured in ONE same-host session; newest-date merge below
+// makes it supersede the earlier per-key samples for the cells it covers.
+const graphEngB2Storms = readJson('results/cross-storms-graph-eng-b2.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -69,6 +73,7 @@ const perOp = mergePerOp(
   reactStorms,
   graphEng4axisStorms,
   graphEng4axisFullStorms,
+  graphEngB2Storms,
 );
 
 /**
@@ -1020,6 +1025,11 @@ ${fcpFactorsBlock()}
     const stagingCreate = ['1k', '10k', '30k']
       .map((sz) => d('+b effect (vdom, no ifr)', `create@${sz}`))
       .filter((v) => v != null);
+    const bangCreate = ['1k', '10k', '30k']
+      .map((sz) => d('+b! delivery effect (vapor)', `create@${sz}`));
+    const codeCreate = ['1k', '10k', '30k']
+      .map((sz) => d('+b:d→c effect (vapor)', `create@${sz}`));
+    const hasB2 = [...bangCreate, ...codeCreate].some((v) => v != null);
     const items = zhT
       ? [
         ['<b>Update / select 对模板机制是盲的。</b><code>+b</code> 因子（vdom 与 vapor 两行）在 update10th / select / updateStorm / selectStorm 上各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
@@ -1032,6 +1042,11 @@ ${fcpFactorsBlock()}
         ],
         ['<b>+b:e 与 +ifr:e 在本环境记为 N/A</b>（Lynx for Web 无引擎 ET PAPI；<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。它们的解释回退对照样本仅用作 fail-safe 成本与噪声尺，不作为 engine 结论；这条轴已端到端可跑，等引擎 PAPI 落地即测真值。',
         ],
+        ...(hasB2
+          ? [[
+            `<b>+b!（delivery 单列翻转，#338）与 +b:c（code 档，#337）已实测。</b>+b! create ${bangCreate.map(fmtP).join(' / ')}、+b:c create ${codeCreate.map(fmtP).join(' / ')}（1k/10k/30k），update/select 因子均在噪声内（模板盲性再次验证）。结构字节按设计 0 过线（REGISTER_TREE_BUNDLE 只带指纹哈希；+b:c 连注册都不发），见 factor JSON 内嵌的 wire-bytes 计数。对照原猜测区间——+b:c create −5…−17%（随静态占比）：table app 的 create 被动态行主导、静态占比低，实测落点与「静态占比低 → 收益趋近 0」的预测一致；+b! 的 structure wire −100% 逐字节成立。两格的 update 路径与 vapor +b 逐字节相同（指纹 fail-safe + mutated-hash 测试兜底）。`,
+          ]]
+          : []),
       ]
       : [
         ['<b>Update and select are template-blind.</b> Both <code>+b</code> factor rows (vdom and vapor) sit inside the ±10% noise band on update10th / select / updateStorm / selectStorm at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
@@ -1044,6 +1059,11 @@ ${fcpFactorsBlock()}
         ],
         ['<b>+b:e and +ifr:e are N/A on this host</b> (Lynx for Web has no engine ET PAPI; <code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). Their interpretation-fallback control samples serve only as a fail-safe-cost / noise yardstick, never as engine conclusions; the axis runs end-to-end and reports real numbers the day the engine PAPI ships.',
         ],
+        ...(hasB2
+          ? [[
+            `<b>+b! (delivery flipped alone, #338) and +b:c (code staging, #337) are now measured.</b> +b! create ${bangCreate.map(fmtP).join(' / ')}, +b:c create ${codeCreate.map(fmtP).join(' / ')} (1k/10k/30k); the update/select factors of both sit in noise (template-blindness confirmed again). Structure bytes cross zero by construction (REGISTER_TREE_BUNDLE carries only the fingerprint hash; +b:c sends no registration at all) — see the wire-bytes counters embedded in the factor JSON. Against the prior guess bands — +b:c create −5…−17% scaling with static fraction: the table app's create is dominated by dynamic rows (low static fraction), and the measured deltas match the "low static fraction → benefit approaches 0" end of that prediction; +b!'s structure-wire −100% holds byte-for-byte. Both cells' update paths are byte-identical to vapor +b (fingerprint fail-safe + mutated-hash test underneath).`,
+          ]]
+          : []),
       ];
     // Compact cards (bold takeaway + small detail) so the key point is
     // scannable and sits next to the factor charts, not in one far-away wall.
