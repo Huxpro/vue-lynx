@@ -25,23 +25,23 @@ describe('legalCells (terminology v2)', () => {
     expect(ids).toContain('vdom-ops-node');
     expect(ids).toContain('vdom-code-block'); // create-benefit cell
     expect(ids).toContain('vdom-code-block-ifr'); // first-class now
-    expect(ids).toContain('vapor-tree-block'); // product default
-    expect(ids).toContain('vapor-tree-node'); // Named Tree
+    expect(ids).toContain('vapor-data-block'); // product default
+    expect(ids).toContain('vapor-data-node'); // Named Tree
     expect(ids).toContain('vapor-native-block');
     // Legacy ids resolve to the same cells.
     expect(getCell('vdom-et')?.id).toBe('vdom-code-block');
-    expect(getCell('vapor-dense')?.id).toBe('vapor-tree-node');
-    expect(getCell('vapor-ifr')?.id).toBe('vapor-tree-block-ifr');
+    expect(getCell('vapor-dense')?.id).toBe('vapor-data-node');
+    expect(getCell('vapor-ifr')?.id).toBe('vapor-data-block-ifr');
     expect(getCell('vapor-ifr-engine-et')?.id).toBe(
-      'vapor-tree-block-ifr-native-paint',
+      'vapor-data-block-ifr-native-paint',
     );
     // Explicit-coordinate duplicate is an alias, not a distinct cell.
-    expect(getCell('vapor-ifr-sparse')?.aliasOf).toBe('vapor-tree-block-ifr');
+    expect(getCell('vapor-ifr-sparse')?.aliasOf).toBe('vapor-data-block-ifr');
   });
 
   it('prunes meaningless combinations', () => {
     for (const c of cells) {
-      if (c.render === 'vdom') expect(c.staging).not.toBe('tree');
+      if (c.render === 'vdom') expect(c.staging).not.toBe('data');
       if (c.render === 'vapor') expect(c.staging).not.toBe('ops');
       if (c.staging === 'code' || c.staging === 'native') {
         expect(c.naming).toBe('block');
@@ -52,24 +52,29 @@ describe('legalCells (terminology v2)', () => {
 
   it('derives addressing / provider / lifetime columns', () => {
     expect(getCell('vdom-ops-node')?.addressing).toBe('random-access');
-    expect(getCell('vapor-tree-node')?.addressing).toBe('traversal');
-    expect(getCell('vapor-tree-block')?.addressing).toBe('traversal+recover');
+    expect(getCell('vapor-data-node')?.addressing).toBe('traversal');
+    expect(getCell('vapor-data-block')?.addressing).toBe('traversal+recover');
     expect(getCell('vapor-native-block')?.providers).toEqual(['engine']);
-    expect(getCell('vapor-tree-block-ifr')?.providers).toEqual(['bts', 'mts']);
-    expect(getCell('vapor-tree-block-ifr')?.lifetimes).toEqual([
+    expect(getCell('vapor-data-block-ifr')?.providers).toEqual(['bts', 'mts']);
+    expect(getCell('vapor-data-block-ifr')?.lifetimes).toEqual([
       'persistent',
       'ephemeral',
     ]);
+    // Delivery: code rides the bundle; data/native ship over the wire today.
+    expect(getCell('vdom-ops-node')?.delivery).toBe(null);
+    expect(getCell('vdom-code-block')?.delivery).toBe('bundle');
+    expect(getCell('vapor-data-block')?.delivery).toBe('runtime');
+    expect(getCell('vapor-native-block')?.delivery).toBe('runtime');
     // Engine staging cannot be measured on hosts without the engine PAPI.
     expect(getCell('vapor-native-block')?.engineNaOnWeb).toBe(true);
     expect(
-      getCell('vapor-tree-block-ifr-native-paint')?.engineNaOnWeb,
+      getCell('vapor-data-block-ifr-native-paint')?.engineNaOnWeb,
     ).toBe(true);
   });
 
   it('uses the unified mechanism terms', () => {
-    expect(getCell('vapor-tree-node')?.term).toBe('Named Tree');
-    expect(getCell('vapor-tree-block')?.term).toBe('Tree-Template');
+    expect(getCell('vapor-data-node')?.term).toBe('Named Tree');
+    expect(getCell('vapor-data-block')?.term).toBe('Data-Template');
     expect(getCell('vdom-code-block')?.term).toBe('Code-Template');
     expect(getCell('vapor-native-block')?.term).toBe('Engine-Template');
     expect(getCell('vdom-ops-node')?.term).toBe('Op Stream');
@@ -77,7 +82,7 @@ describe('legalCells (terminology v2)', () => {
 
   it('normalizes legacy spellings', () => {
     expect(normalizeStaging('opstream')).toBe('ops');
-    expect(normalizeStaging('data')).toBe('tree');
+    expect(normalizeStaging('tree')).toBe('data');
     expect(normalizeStaging('engine')).toBe('native');
     expect(normalizeStaging('code')).toBe('code');
     expect(normalizeNaming('dense')).toBe('node');
@@ -89,7 +94,7 @@ describe('legalCells (terminology v2)', () => {
   it('stamps a five-axis coordinate on every cell', () => {
     for (const c of cells) {
       expect(c.coordinate).toMatch(
-        /^(ops|tree|code|native)\/(node|block)\/(random-access|traversal(\+recover)?)\/(BTS|Engine)(\+MTS)?\/persistent(\+ephemeral)?/,
+        /^(ops|data|code|native)\/(node|block)\/(random-access|traversal(\+recover)?)\/(BTS|Engine)(\+MTS)?\/persistent(\+ephemeral)?\/(runtime|bundle|—)/,
       );
     }
   });

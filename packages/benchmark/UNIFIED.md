@@ -32,9 +32,9 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 `vapor +ifr` (`vapor-ifr-dense`) · `vapor +b +ifr:e`
 (`vapor-ifr-engine-et`, N/A) · `rl` (`react`)
 
-Notation: `render [+b[:t|c|e]] [+ifr[:c|e]]` — baseline (per-node,
+Notation: `render [+b[:d|c|e]] [+ifr[:c|e]]` — baseline (per-node,
 plainest/safest) × stacked optimizations; `+b` = block templates (staging
-defaults per model: vdom→:c, vapor→:t), `+b:e` = engine staging
+defaults per model: vdom→:c, vapor→:d), `+b:e` = engine staging
 (persistent tree), `+ifr:e` = engine-painted first frame only. Legend in
 the unified report page and `ifr-bench/GRAPH-ENG-REPORT.md` §1.3c.
 
