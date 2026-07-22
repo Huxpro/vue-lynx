@@ -138,15 +138,17 @@ Vue's [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) displays f
 
 ## Transition
 
-Vue's `<Transition>` and `<TransitionGroup>` components apply enter/leave animations when elements are inserted or removed.
+Vue's [`<Transition>`](https://vuejs.org/guide/built-ins/transition.html) and [`<TransitionGroup>`](https://vuejs.org/guide/built-ins/transition-group.html) components apply enter/leave animations when elements are inserted or removed.
 
-Since [#248](https://github.com/Huxpro/vue-lynx/issues/248) (v0.5), transitions are no longer experimental. Vue Lynx follows Vue's persisted transition behavior for `v-show`: enter and leave hooks run on every visibility change, and `display: none` is applied only after the leave animation finishes. This makes patterns such as drawers, sheets, popovers, and other state-preserving overlays behave consistently with official Vue on both Web and native Lynx.
+`<Transition>` is **fully supported** — CSS transitions, CSS animations, `appear`, `mode`, JS hooks, and transitions with or without an explicit `:duration` prop all work. Since [#248](https://github.com/Huxpro/vue-lynx/issues/248) (v0.5), Vue Lynx also follows Vue's persisted transition behavior for `v-show`: enter and leave hooks run on every visibility change, and `display: none` is applied only after the leave animation finishes. Patterns such as drawers, sheets, and popovers behave consistently with official Vue on both Web and native Lynx.
 
-:::info Lynx-specific limitations
-Prefer an explicit `:duration` when you know the CSS timing — `getComputedStyle()` is unavailable from the background thread. Without it, Vue Lynx waits for the real `transitionend`/`animationend` event and arms a bounded fallback cleanup so interrupted transitions do not leak event-registry handlers ([#286](https://github.com/Huxpro/vue-lynx/issues/286)). Move (FLIP) animations in `<TransitionGroup>` are not supported since `getBoundingClientRect()` is unavailable. Enter and leave transitions are supported.
+Without `:duration`, Vue Lynx waits for the real `transitionend`/`animationend` event (same primary path as Vue DOM). A bounded fallback cleanup ([#286](https://github.com/Huxpro/vue-lynx/issues/286)) unregisters stranded handlers if a transition is interrupted before the event fires.
+
+:::info Remaining limitation (`<TransitionGroup>` only)
+Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable from the background thread. Enter and leave transitions for list items still work.
 :::
 
-Scroll to **9. Registry cleanup** in the example below: hammer a no-`duration` `<Transition>`, watch the event-registry counter climb, then stop — after the fix it returns to baseline within ~4s instead of leaking forever.
+Scroll to **9. Registry cleanup** in the example below to see a no-`duration` `<Transition>` under rapid interruption: the event-registry counter climbs while hammering, then returns to baseline after stop.
 
 <Go
   example="transition"
@@ -229,5 +231,5 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<Transition>` CSS-timed auto-duration | `getComputedStyle()` is unavailable on the background thread | Prefer an explicit `:duration`; without it, event + bounded fallback cleanup still works ([#286](https://github.com/Huxpro/vue-lynx/issues/286)) |
+| `<TransitionGroup>` move (FLIP) | `getBoundingClientRect()` is unavailable on the background thread | Enter/leave list transitions still work; animate layout changes with CSS or Main Thread Script if needed |
 | `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |

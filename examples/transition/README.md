@@ -18,5 +18,5 @@ See `src/App.vue`:
 
 ## Caveats
 
-- Prefer an explicit `:duration` when you know the CSS timing — `getComputedStyle()` is unavailable from the background thread. Without it, Vue Lynx waits for `transitionend`/`animationend` and arms a bounded fallback cleanup so interrupted transitions do not leak event-registry handlers.
-- Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable
+- `<Transition>` has no Lynx-specific limitations — CSS transitions/animations work with or without `:duration` (event + bounded fallback cleanup).
+- Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable from the background thread

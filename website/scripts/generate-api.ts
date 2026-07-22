@@ -207,14 +207,14 @@ ${lynxApis.map(fmtRow).join('\n')}
 
 | Component | Status | Notes |
 | --------- | ------ | ----- |
-| \`<Transition>\` | Supported | CSS class-based enter/leave animations. Prefer explicit \`:duration\` — without it, event + bounded fallback cleanup still works ([#286](https://github.com/Huxpro/vue-lynx/issues/286)). |
+| \`<Transition>\` | Supported | Fully supported: CSS transitions/animations, \`appear\`, \`mode\`, JS hooks, with or without \`:duration\` ([#286](https://github.com/Huxpro/vue-lynx/issues/286)). |
 | \`<TransitionGroup>\` | Supported | Per-child enter/leave animations. Move (FLIP) animations not supported — \`getBoundingClientRect()\` is unavailable from the background thread. |
 | \`<Suspense>\` | Supported | Re-exported from Vue. Works with \`defineAsyncComponent()\`. |
 | \`<KeepAlive>\` | Supported | Caches inactive component instances. Supports \`include\`, \`exclude\`, and \`max\` props. |
 | \`<Teleport>\` | Supported | Supports \`to="#id"\` string selectors only. Direct element refs and non-ID selectors are not yet supported. |
 
 :::info
-Prefer an explicit \`:duration\` on \`<Transition>\` / \`<TransitionGroup>\` when you know the CSS timing — \`getComputedStyle()\` is unavailable from the background thread. Without it, event + bounded fallback cleanup still works ([#286](https://github.com/Huxpro/vue-lynx/issues/286)). Move (FLIP) animations in \`<TransitionGroup>\` are not supported.
+\`<Transition>\` is fully supported (with or without \`:duration\`). The only remaining gap is Move (FLIP) animations in \`<TransitionGroup>\` — \`getBoundingClientRect()\` is unavailable from the background thread.
 :::
 
 <Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />

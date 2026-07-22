@@ -242,7 +242,7 @@ onUnmounted(() => {
       <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">9. Registry cleanup (no duration)</text>
       <text :style="{ fontSize: 12, color: '#555', marginBottom: 8 }">
         Hammer a Transition with no `:duration` prop. Interrupted handlers used to leak forever (#286);
-        after the fix the counter returns to baseline within ~{{ FALLBACK_MS / 1000 }}s of stopping.
+        they now return to baseline within ~{{ FALLBACK_MS / 1000 }}s of stopping.
       </text>
       <view :style="{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }">
         <view @tap="showRegistry = !showRegistry"
