@@ -3562,13 +3562,15 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .ifrjoin__col:first-child { margin-right: clamp(12px, 1.6cqw, 22px); }
 .ifrjoin__col:last-child { margin-left: clamp(12px, 1.6cqw, 22px); }
 .ifrjoin__rail {
-  width: 1px;
+  width: 1.5px;
   justify-self: center;
+  align-self: stretch;
+  margin: 18px 0 8px;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    var(--line) 12%,
-    var(--line) 88%,
+    color-mix(in srgb, var(--ink-mute) 55%, transparent) 10%,
+    color-mix(in srgb, var(--ink-mute) 55%, transparent) 90%,
     transparent 100%
   );
 }
@@ -3613,24 +3615,25 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .ifrjoin__join {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  align-items: center;
+  align-items: end;
   gap: clamp(10px, 1.4cqw, 18px);
   padding: 0 clamp(8px, 1cqw, 16px);
+  margin-top: 2px;
 }
 .ifrjoin__elbow {
-  height: 18px;
-  border-bottom: 1.5px solid var(--line);
+  height: 22px;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--ink-mute) 55%, transparent);
   position: relative;
 }
 .ifrjoin__elbow--l {
-  border-left: 1.5px solid var(--line);
-  border-bottom-left-radius: 12px;
-  margin-left: 28%;
+  border-left: 1.5px solid color-mix(in srgb, var(--ink-mute) 55%, transparent);
+  border-bottom-left-radius: 14px;
+  margin-left: 22%;
 }
 .ifrjoin__elbow--r {
-  border-right: 1.5px solid var(--line);
-  border-bottom-right-radius: 12px;
-  margin-right: 28%;
+  border-right: 1.5px solid color-mix(in srgb, var(--ink-mute) 55%, transparent);
+  border-bottom-right-radius: 14px;
+  margin-right: 22%;
 }
 .ifrjoin__pill {
   font-family: var(--mono);
