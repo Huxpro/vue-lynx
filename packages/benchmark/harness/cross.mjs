@@ -845,6 +845,19 @@ function stormMarkdownReport(result) {
 async function runStormsSuite(browser) {
   const loads = Object.fromEntries(MODES.map((m) => [m, []]));
   for (const sizeKey of Object.keys(STORM_SIZES)) {
+    // Warmup: the very first page of a sweep pays chromium/webcore
+    // cold-start (JIT, cache, GPU init) that a 2-rep median cannot absorb —
+    // load and discard one app instance before any measured rep.
+    if (!globalThis.__stormWarmupDone) {
+      globalThis.__stormWarmupDone = true;
+      console.log('[storms] warmup (discarded)');
+      const { page } = await loadApp(browser, MODES[0]);
+      const d = new Driver(page);
+      await d.settle();
+      await d.clickButton('Create 1,000 rows');
+      await d.until({ type: 'rowCount', value: 1000 });
+      await page.close();
+    }
     for (let rep = 0; rep < STORM_REPS; rep++) {
       const order = MODES.map((_, k) => MODES[(k + rep) % MODES.length]);
       for (const mode of order) {
