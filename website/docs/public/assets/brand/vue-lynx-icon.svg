@@ -1,0 +1,13 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vue Lynx">
+  <!-- App-icon / favicon tile: Vue green→slate gradient with the Lynx bolt -->
+  <defs>
+    <linearGradient id="vl-tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#42B883"/>
+      <stop offset="1" stop-color="#35495E"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="212" height="212" rx="48" fill="url(#vl-tile)"/>
+  <g transform="translate(55 20) scale(2.8 2.8049)">
+    <path d="M20.2467 18.7369L23.7468 8.54559L13.3471 23.2617L18.4847 23.4185L15.5674 32.3364L25.8915 18.9091L20.2467 18.7369Z" fill="#FFFFFF"/>
+  </g>
+</svg>
