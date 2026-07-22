@@ -1,5 +1,11 @@
 # vue-lynx
 
+## 0.5.2
+
+### Patch Changes
+
+- Fix event-registry leaks when `<Transition>` / `<TransitionGroup>` without an explicit `duration` is interrupted before `transitionend`/`animationend`. `whenTransitionEnds()` now arms a bounded fallback cleanup with a per-element generation guard so stranded handlers are unregistered. The Transition example and Vue Compatibility docs include a registry-monitor demo for the before/after behavior. ([#316](https://github.com/Huxpro/vue-lynx/pull/316))
+
 ## 0.5.1
 
 ### Patch Changes

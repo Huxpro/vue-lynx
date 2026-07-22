@@ -1,5 +1,14 @@
 # @vue-lynx-example/hackernews-css
 
+## 0.2.10
+
+### Patch Changes
+
+- Fix HackerNews layout on Lynx for Web by moving flex column off `<page>` onto an inner view (and dropping unreliable fixed positioning in the CSS variant). ([#284](https://github.com/Huxpro/vue-lynx/pull/284))
+
+- Updated dependencies [[`2511182`](https://github.com/Huxpro/vue-lynx/commit/25111827169083fecda5c6b19bfc4541f77e7438)]:
+  - vue-lynx@0.5.2
+
 ## 0.2.9
 
 ### Patch Changes
