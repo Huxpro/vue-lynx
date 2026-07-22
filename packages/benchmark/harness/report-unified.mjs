@@ -568,7 +568,7 @@ function graphEngFactorsSection(t) {
   };
 
   /** Factors whose pair touches an engine-N/A cell (stub on this host). */
-  const isEngineFactor = (name) => /engine/i.test(name);
+  const isEngineFactor = (name) => /engine|native/i.test(name);
 
   const factorTable = (size) => {
     let html =
@@ -670,14 +670,14 @@ function graphEngFactorsSection(t) {
    */
   const FCP_FACTOR_PAIRS = {
     'render vdom→vapor (no-IFR)': ['vdom', 'vapor'],
-    'staging opstream→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
-    'staging opstream→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
-    'naming dense→sparse (vapor, no-IFR)': ['vapor-dense', 'vapor'],
-    'naming dense→sparse (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr'],
-    'staging data→engine (vapor, STUB)': ['vapor', 'vapor-engine'],
+    'staging ops→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
+    'staging ops→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
+    'naming node→block (vapor, no-IFR)': ['vapor-dense', 'vapor'],
+    'naming node→block (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr'],
+    'staging tree→native (vapor, N/A)': ['vapor', 'vapor-engine'],
     'ifr off→on (vdom)': ['vdom', 'vdom-ifr'],
-    'ifr off→on (vapor sparse)': ['vapor', 'vapor-ifr'],
-    'ifrPaint plain→engine-et (STUB)': ['vapor-ifr', 'vapor-ifr-engine-et'],
+    'ifr off→on (vapor block)': ['vapor', 'vapor-ifr'],
+    'ifrPaint plain→native-paint (N/A)': ['vapor-ifr', 'vapor-ifr-engine-et'],
   };
 
   const fcpDelta = (a, b, scale, cpu) => {
@@ -696,7 +696,7 @@ function graphEngFactorsSection(t) {
       + FCP_SCALES_X4.map((sc) => `<th>×4 @${sc}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const [name, [a, b]] of Object.entries(FCP_FACTOR_PAIRS)) {
-      if (/engine/i.test(name)) continue; // N/A on this host — omitted.
+      if (/engine|native/i.test(name)) continue; // N/A on this host — omitted.
       const cellsX1 = scales.map((sc) => fcpDelta(a, b, sc, 1));
       const cellsX4 = FCP_SCALES_X4.map((sc) => fcpDelta(a, b, sc, 4));
       if (![...cellsX1, ...cellsX4].some((v) => v != null)) continue;
@@ -714,7 +714,7 @@ function graphEngFactorsSection(t) {
     // One bar per scale within each factor group.
     const scaleColors = ['var(--s1)', 'var(--s4)', 'var(--s3)', 'var(--s2)', 'var(--s5)', 'var(--s6)'];
     const entries = Object.entries(FCP_FACTOR_PAIRS)
-      .filter(([name]) => !/engine/i.test(name))
+      .filter(([name]) => !/engine|native/i.test(name))
       .map(([name, [a, b]]) => ({
         name,
         vals: scales.map((sc) => fcpDelta(a, b, sc, cpu)),
@@ -807,29 +807,29 @@ ${factorTakeaways()}
       .map((sz) => d('render vdom→vapor (no-IFR)', `updateStorm@${sz}`))
       .filter((v) => v != null);
     const stagingCreate = ['1k', '10k', '30k']
-      .map((sz) => d('staging opstream→code (vdom, no-IFR)', `create@${sz}`))
+      .map((sz) => d('staging ops→code (vdom, no-IFR)', `create@${sz}`))
       .filter((v) => v != null);
     const items = zhT
       ? [
-        ['<b>Update / select 对模板机制是盲的。</b>staging（opstream→code）与 naming（dense→sparse）在 update10th / select / updateStorm / selectStorm 上的因子在各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
+        ['<b>Update / select 对模板机制是盲的。</b>staging（ops→code）与 naming（node→block）在 update10th / select / updateStorm / selectStorm 上的因子在各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
         ],
         [`<b>Create 的模板收益与子树静态占比成正比。</b>table app 的 create 被动态 v-for 行主导（staging 因子 create ${fmtP(stagingCreate[0])}~${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ 噪声）；静态重内容（sfc-probe FCP 阶梯）上 Code-Template 是唯一全场景为负的因子。要 ET 收益，先看你的首屏静态占比。`],
         [`<b>render 轴（vdom→vapor）才是 update 的大杠杆</b>：updateStorm ${renderUS.map(fmtP).join(' / ')}（1k→30k），远超任何模板轴。交互性能选 render model，别指望模板。`],
-        ['<b>IFR 是首帧杠杆，不是交互杠杆</b>：ifr 因子只在 create/FCP 显著，update 因子在噪声内；×4 下 vapor 的 IFR 首帧代价由 sparse naming 收回（dense +12% → sparse +2%）。',
+        ['<b>IFR 是首帧杠杆，不是交互杠杆</b>：ifr 因子只在 create/FCP 显著，update 因子在噪声内；×4 下 vapor 的 IFR 首帧代价由 block naming 收回（node +12% → block +2%）。',
         ],
-        ['<b>naming（dense→sparse）是内存/簿记轴</b>：BG shells −94%、MT 表 −92%（精确计数），FCP 因子随主机与规模在噪声带内摇摆 — 它是阶梯的必要卫生，不是 FCP 特性。',
+        ['<b>naming（node→block）是内存/簿记轴</b>：BG shells −94%、MT 表 −92%（精确计数），FCP 因子随主机与规模在噪声带内摇摆 — 它是阶梯的必要卫生，不是 FCP 特性。',
         ],
         ['<b>engine 与 engine-et 在本环境记为 N/A</b>（Lynx for Web 无引擎 ET PAPI；<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。它们的解释回退对照样本仅用作 fail-safe 成本与噪声尺，不作为 engine 结论；这条轴已端到端可跑，等引擎 PAPI 落地即测真值。',
         ],
       ]
       : [
-        ['<b>Update and select are template-blind.</b> The staging (opstream→code) and naming (dense→sparse) factors on update10th / select / updateStorm / selectStorm sit inside the ±10% noise band at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
+        ['<b>Update and select are template-blind.</b> The staging (ops→code) and naming (node→block) factors on update10th / select / updateStorm / selectStorm sit inside the ±10% noise band at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
         ],
         [`<b>Create benefit scales with the static fraction of the subtree.</b> The table app's create is dominated by dynamic v-for rows (staging factor on create ${fmtP(stagingCreate[0])}…${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ noise); on static-heavy content (the sfc-probe FCP ladder) Code-Template is the one factor negative in every scenario. Check your first screen's static fraction before reaching for ET.`],
         [`<b>The render axis (vdom→vapor) is the update lever</b>: updateStorm ${renderUS.map(fmtP).join(' / ')} (1k→30k) — far beyond any template axis. Pick the render model for interaction performance; don't expect templates to move it.`],
-        ['<b>IFR is a first-frame lever, not an interaction lever</b>: the ifr factor is significant only on create/FCP, its update factors sit in noise; under ×4 vapor\'s IFR first-frame cost is recovered by sparse naming (dense +12% → sparse +2%).',
+        ['<b>IFR is a first-frame lever, not an interaction lever</b>: the ifr factor is significant only on create/FCP, its update factors sit in noise; under ×4 vapor\'s IFR first-frame cost is recovered by block naming (node +12% → block +2%).',
         ],
-        ['<b>Naming (dense→sparse) is the memory/bookkeeping axis</b>: −94% BG shells, −92% MT table entries (exact counts) while its FCP factor wobbles inside noise across hosts and scales — necessary ladder hygiene, not an FCP feature.',
+        ['<b>Naming (node→block) is the memory/bookkeeping axis</b>: −94% BG shells, −92% MT table entries (exact counts) while its FCP factor wobbles inside noise across hosts and scales — necessary ladder hygiene, not an FCP feature.',
         ],
         ['<b>Engine and engine-et are N/A on this host</b> (Lynx for Web has no engine ET PAPI; <code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). Their interpretation-fallback control samples serve only as a fail-safe-cost / noise yardstick, never as engine conclusions; the axis runs end-to-end and reports real numbers the day the engine PAPI ships.',
         ],

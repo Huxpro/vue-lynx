@@ -62,17 +62,17 @@ export function copy(lang) {
       ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
       : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
     hGraphEng: zh
-      ? 'Graph-eng 命名密度 — dense A1 vs sparse A2'
-      : 'Graph-eng naming density — dense A1 vs sparse A2',
+      ? 'Graph-eng 命名单位 — node（Named Tree）vs block（Tree-Template）'
+      : 'Graph-eng naming unit — node (Named Tree) vs block (Tree-Template)',
     subGraphEng: zh
       ? '同款 sfc-probe（~1004 元素）：仅切换 <code>enableSparseNaming</code>。Native ET 仍 stub；稀疏仍全量建 native 树。详见 <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>。'
       : 'Same-source sfc-probe (~1004 els): only <code>enableSparseNaming</code> flips. Native ET still stub; sparse still builds the full native tree. See <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>.',
     hGraphEngFactors: zh
-      ? '四轴矩阵 — 全排列 create/update 与因子分解'
-      : 'Four-axis matrix — all-permutation create/update + factor decomposition',
+      ? '五轴矩阵 — 全排列 create/update 与因子分解'
+      : 'Five-axis matrix — all-permutation create/update + factor decomposition',
     subGraphEngFactors: zh
-      ? '统一 table app（真实点击、双线程），11 个合法 flag 排列组合（<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
-      : 'Unified table app (real clicks, dual-thread), all 11 legal flag permutations (<code>templateNaming</code> × <code>templateStaging</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+      ? '统一 table app（真实点击、双线程），全部合法 flag 排列组合（staging <code>ops|tree|code|native</code> × naming <code>node|block</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
+      : 'Unified table app (real clicks, dual-thread), every legal flag permutation (staging <code>ops|tree|code|native</code> × naming <code>node|block</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -81,20 +81,24 @@ export function copy(lang) {
     geoMean: zh ? '慢速几何平均' : 'slowdown geometric mean',
     scale: zh ? '规模' : 'scale',
     colLabels: {
-      vapor: 'Vue Vapor',
-      'vapor-dense': zh ? 'Vapor 稠密（Named Tree）' : 'Vapor dense (Named Tree)',
-      'vapor-engine': zh ? 'Vapor engine（N/A）' : 'Vapor engine (N/A)',
-      'vapor-ifr': 'Vapor+IFR',
-      'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR (dense)',
-      'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR (sparse)',
+      // Terminology v2: render · staging·naming (+IFR). Legacy bench ids
+      // stay as data keys; labels use the canonical vocabulary.
+      vapor: 'Vapor tree·block',
+      'vapor-dense': zh ? 'Vapor tree·node（Named Tree）' : 'Vapor tree·node (Named Tree)',
+      'vapor-engine': zh ? 'Vapor native·block（N/A）' : 'Vapor native·block (N/A)',
+      'vapor-ifr': 'Vapor tree·block +IFR',
+      'vapor-ifr-dense': 'Vapor tree·node +IFR',
+      'vapor-ifr-sparse': zh
+        ? 'Vapor tree·block +IFR（alias）'
+        : 'Vapor tree·block +IFR (alias)',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor+IFR engine-et（N/A）'
-        : 'Vapor+IFR engine-et (N/A)',
-      vdom: 'Vue VDOM',
-      'vdom-et': zh ? 'VDOM+ET（无 IFR）' : 'VDOM+ET (no IFR)',
-      'vdom-ifr': 'VDOM+IFR',
-      'vdom-ifr-et': 'VDOM+IFR+ET',
-      react: 'ReactLynx (memo)',
+        ? 'Vapor +IFR native-paint（N/A）'
+        : 'Vapor +IFR native-paint (N/A)',
+      vdom: 'VDOM ops·node',
+      'vdom-et': 'VDOM code·block',
+      'vdom-ifr': 'VDOM ops·node +IFR',
+      'vdom-ifr-et': 'VDOM code·block +IFR',
+      react: zh ? 'ReactLynx code·block（memo）' : 'ReactLynx code·block (memo)',
     },
     stormRowLabels: zh
       ? {
@@ -125,20 +129,22 @@ export function copy(lang) {
         },
     fcpScale: (s) => (zh ? `${s} 元素` : `${s} elements`),
     fcpArchLabels: {
-      react: 'ReactLynx',
-      vdom: 'VDOM',
-      'vdom-et': zh ? 'VDOM+ET（无 IFR）' : 'VDOM+ET (no IFR)',
-      'vdom-ifr': 'VDOM+IFR',
-      'vdom-ifr-et': 'VDOM+IFR+ET',
-      vapor: 'Vapor',
-      'vapor-dense': zh ? 'Vapor 稠密' : 'Vapor dense',
-      'vapor-engine': zh ? 'Vapor engine（N/A）' : 'Vapor engine (N/A)',
-      'vapor-ifr': 'Vapor+IFR',
-      'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR dense',
-      'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR sparse',
+      react: 'ReactLynx code·block',
+      vdom: 'VDOM ops·node',
+      'vdom-et': 'VDOM code·block',
+      'vdom-ifr': 'VDOM ops·node +IFR',
+      'vdom-ifr-et': 'VDOM code·block +IFR',
+      vapor: 'Vapor tree·block',
+      'vapor-dense': 'Vapor tree·node',
+      'vapor-engine': zh ? 'Vapor native·block（N/A）' : 'Vapor native·block (N/A)',
+      'vapor-ifr': 'Vapor tree·block +IFR',
+      'vapor-ifr-dense': 'Vapor tree·node +IFR',
+      'vapor-ifr-sparse': zh
+        ? 'Vapor tree·block +IFR（alias）'
+        : 'Vapor tree·block +IFR (alias)',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor+IFR engine-et（N/A）'
-        : 'Vapor+IFR engine-et (N/A)',
+        ? 'Vapor +IFR native-paint（N/A）'
+        : 'Vapor +IFR native-paint (N/A)',
     },
     charts: {
       selectStorm: {
