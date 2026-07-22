@@ -1,0 +1,19 @@
+# build output
+apps/*/dist
+apps/*/dist-*
+node_modules
+
+# generated content-workload source (produced by core/workloads/content.mjs)
+apps/ui-content/src/App.vue
+apps/ui-content/src/index.ts
+apps/ui-content/src/shims-vue.d.ts
+
+# unified runner working bundles + smoke results
+unified-bundles/
+results/unified-*smoke*
+results/unified-tbl-smoke*
+
+# generated React content-workload source (core/workloads/content-react.mjs)
+apps/ui-react/src/ContentApp.tsx
+apps/ui-react/src/index-content.tsx
+apps/ui-react/dist-content/
