@@ -4,6 +4,18 @@
   "outputDirectory": "doc_build",
   "cleanUrls": true,
   "ignoreCommand": "node scripts/vercel-ignore.mjs",
+  "redirects": [
+    {
+      "source": "/vapor",
+      "destination": "https://vue-lynx-git-vapor-huxpros-projects.vercel.app",
+      "permanent": false
+    },
+    {
+      "source": "/vueconf",
+      "destination": "https://vue-lynx-git-vueconf-2026-huxpros-projects.vercel.app",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/examples/(.*)\\.lynx\\.bundle",
