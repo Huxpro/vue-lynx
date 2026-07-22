@@ -358,6 +358,7 @@ function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
 }
 
 let CHART_SEQ = 0;
+let REPORT_LANG = 'en';
 function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wide = false }) {
   const all = series.flatMap((s) => s.pts);
   if (!all.length) return '';
@@ -366,23 +367,22 @@ function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wid
   const ML = 56, MR = 148, MT = 16, MB = 44;
   const xmaxFull = Math.max(...all.map((p) => p.x)) * 1.06;
   const id = `ch${++CHART_SEQ}`;
-  // rung x-values for the scale slider (snap points)
-  const rungs = [...new Set(all.map((p) => p.x))].sort((a, b) => a - b);
   const cfg = {
     W, H, ML, MR, MT, MB, logY,
-    xl: xLabel, yl: yLabel, rungs,
+    xl: xLabel, yl: yLabel,
     s: series
       .filter((s) => s.pts.length)
       .map((s) => ({ l: s.label, c: s.color, p: s.pts.map((p) => [p.x, p.y]) })),
   };
-  const slider = rungs.length > 2
-    ? `<div class="cctl"><label>${escapeHtml(xLabel)} ≤ <b class="xmaxlbl">${
-        rungs.at(-1) >= 1000 ? `${Math.round(rungs.at(-1) / 1000)}k` : Math.round(rungs.at(-1))
-      }</b></label><input type="range" class="xslider" min="2" max="${rungs.length}" value="${rungs.length}" step="1"><span class="chint">拖动 / 滚轮缩放 · hover 高亮</span></div>`
-    : '';
+  const zh = REPORT_LANG === 'zh';
+  const ctl = `<div class="cctl"><button class="creset" type="button" hidden>${
+    zh ? '重置视图' : 'reset view'
+  }</button><span class="chint">${
+    zh ? '拖框放大区域 · 滚轮缩放 · 双击复位 · hover 高亮' : 'drag a box to zoom · wheel to scale · double-click to reset · hover to highlight'
+  }</span></div>`;
   return `<figure class="chart ichart${wide ? ' wide' : ''}" id="${id}">
 <h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
-${slider}
+${ctl}
 <div class="ccanvas" data-chart='${escapeAttr(JSON.stringify(cfg))}'>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
 ${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull })}
@@ -402,8 +402,9 @@ function escapeAttr(s) {
 //     small-N clusters spread out and become readable)
 const LINE_CHART_JS = String.raw`(() => {
   const qq = (s, r = document) => [...r.querySelectorAll(s)];
-  const fmtY = (t) => (t >= 1000 ? (t / 1000) + 's' : Math.round(t) + 'ms');
-  const fmtX = (t) => (t >= 1000 ? Math.round(t / 1000) + 'k' : t);
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const fmtY = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 's' : Math.round(t) + 'ms');
+  const fmtX = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 'k' : Math.round(t));
   function linTicks(lo, hi, max = 6) {
     if (!(hi > lo)) return [lo];
     const step0 = (hi - lo) / (max - 1), mag = 10 ** Math.floor(Math.log10(step0)), r = step0 / mag;
@@ -413,59 +414,123 @@ const LINE_CHART_JS = String.raw`(() => {
   function logTicks(lo, hi) {
     const out = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) { const t = 10 ** e; if (t >= lo * 0.999 && t <= hi * 1.001) out.push(t); } return out.length ? out : [lo, hi];
   }
-  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  function draw(canvas, cfg, xmax) {
-    const { W, H, ML, MR, MT, MB, logY } = cfg;
-    const vis = cfg.s.map((s) => ({ ...s, p: s.p.filter((pt) => pt[0] <= xmax + 1) })).filter((s) => s.p.length);
-    const ys = vis.flatMap((s) => s.p.map((p) => p[1])).filter((v) => !logY || v > 0);
-    if (!ys.length) return;
-    const ymin = logY ? 10 ** Math.floor(Math.log10(Math.min(...ys))) : 0;
-    const ymax = logY ? 10 ** Math.ceil(Math.log10(Math.max(...ys))) : Math.max(...ys) * 1.08;
-    const l0 = logY ? Math.log10(ymin) : 0, l1 = logY ? Math.log10(ymax) : 0;
-    const px = (v) => ML + (v / (xmax || 1)) * (W - ML - MR);
-    const py = (v) => logY ? H - MB - ((Math.log10(Math.max(v, ymin)) - l0) / ((l1 - l0) || 1)) * (H - MT - MB)
-                           : H - MB - ((v - ymin) / ((ymax - ymin) || 1)) * (H - MT - MB);
-    let g = '';
-    for (const t of linTicks(0, xmax)) g += '<line x1="' + px(t) + '" y1="' + MT + '" x2="' + px(t) + '" y2="' + (H - MB) + '" class="grid"/><text x="' + px(t) + '" y="' + (H - MB + 16) + '" class="tick" text-anchor="middle">' + fmtX(t) + '</text>';
-    for (const t of (logY ? logTicks(ymin, ymax) : linTicks(ymin, ymax))) g += '<line x1="' + ML + '" y1="' + py(t) + '" x2="' + (W - MR) + '" y2="' + py(t) + '" class="grid"/><text x="' + (ML - 6) + '" y="' + (py(t) + 3.5) + '" class="tick" text-anchor="end">' + fmtY(t) + '</text>';
-    let m = '';
-    vis.forEach((s, i) => {
-      const d = s.p.map((p, k) => (k ? 'L' : 'M') + px(p[0]).toFixed(1) + ',' + py(p[1]).toFixed(1)).join('');
-      m += '<path d="' + d + '" class="line" data-i="' + i + '" style="stroke:' + s.c + '"/>';
-      m += '<path d="' + d + '" class="hit" data-i="' + i + '"/>';
-      for (const p of s.p) m += '<circle cx="' + px(p[0]).toFixed(1) + '" cy="' + py(p[1]).toFixed(1) + '" r="4.5" class="dot" data-i="' + i + '" style="fill:' + s.c + '"><title>' + esc(s.l) + ' · ' + fmtX(p[0]) + '\n' + fmtY(p[1]) + '</title></circle>';
-    });
-    const ends = vis.map((s, i) => ({ i, l: s.l, c: s.c, x: px(s.p[s.p.length - 1][0]), y: py(s.p[s.p.length - 1][1]) })).sort((a, b) => a.y - b.y);
-    let prev = -1e9;
-    for (const e of ends) { const ly = Math.max(e.y + 4, prev + 13); prev = ly; m += '<text x="' + (e.x + 9).toFixed(1) + '" y="' + ly.toFixed(1) + '" class="slabel" data-i="' + e.i + '" fill="' + e.c + '">' + esc(e.l) + '</text>'; }
-    const ax = '<text x="' + (ML + (W - ML - MR) / 2) + '" y="' + (H - 6) + '" class="axis" text-anchor="middle">' + esc(cfg.xl) + '</text>'
-      + '<text x="14" y="' + (MT + (H - MT - MB) / 2) + '" class="axis" text-anchor="middle" transform="rotate(-90 14 ' + (MT + (H - MT - MB) / 2) + ')">' + esc(cfg.yl) + '</text>';
-    const svg = canvas.querySelector('svg');
-    svg.innerHTML = g + ax + m;
-    const set = (i, on) => {
-      canvas.classList.toggle('hovering', on);
-      qq('[data-i]', svg).forEach((el) => el.classList.toggle('hl', on && +el.dataset.i === i));
-    };
-    qq('.hit,.dot,.slabel', svg).forEach((el) => {
-      el.addEventListener('pointerenter', () => set(+el.dataset.i, true));
-      el.addEventListener('pointerleave', () => set(+el.dataset.i, false));
-    });
+  function distSeg(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+    let t = L ? ((px - ax) * dx + (py - ay) * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
   }
-  qq('.ccanvas').forEach((canvas) => {
+
+  qq('.ccanvas').forEach((canvas, ci) => {
     let cfg; try { cfg = JSON.parse(canvas.getAttribute('data-chart')); } catch (e) { return; }
-    if (!cfg || !cfg.s) return;
-    const rungs = cfg.rungs, fig = canvas.closest('.ichart');
-    let idx = rungs.length - 1;
-    const lbl = fig && fig.querySelector('.xmaxlbl'), slider = fig && fig.querySelector('.xslider');
-    const apply = () => { idx = Math.max(1, Math.min(rungs.length - 1, idx)); if (lbl) lbl.textContent = fmtX(rungs[idx]); draw(canvas, cfg, rungs[idx] * 1.06); };
-    if (slider) slider.addEventListener('input', () => { idx = +slider.value - 1; apply(); });
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      idx += (e.deltaY > 0 ? 1 : -1);
-      if (slider) slider.value = Math.max(2, Math.min(rungs.length, idx + 1));
-      apply();
-    }, { passive: false });
-    apply();
+    if (!cfg || !cfg.s || !cfg.s.length) return;
+    const { W, H, ML, MR, MT, MB, logY } = cfg;
+    const svg = canvas.querySelector('svg');
+    const fig = canvas.closest('.ichart');
+    const resetBtn = fig && fig.querySelector('.creset');
+    const clipId = 'clip' + ci;
+    const plotL = ML, plotR = W - MR, plotT = MT, plotB = H - MB, plotW = plotR - plotL, plotH = plotB - plotT;
+    const allX = cfg.s.flatMap((s) => s.p.map((p) => p[0]));
+    const allY = cfg.s.flatMap((s) => s.p.map((p) => p[1])).filter((v) => !logY || v > 0);
+    const xF = [0, Math.max(...allX) * 1.06];
+    const yF = logY
+      ? [10 ** Math.floor(Math.log10(Math.min(...allY))), 10 ** Math.ceil(Math.log10(Math.max(...allY)))]
+      : [0, Math.max(...allY) * 1.08];
+    let view = { x0: xF[0], x1: xF[1], y0: yF[0], y1: yF[1] };
+    let rendered = [];
+
+    const px = (x) => plotL + ((x - view.x0) / ((view.x1 - view.x0) || 1)) * plotW;
+    const py = (y) => logY
+      ? plotB - ((Math.log10(Math.max(y, 1e-9)) - Math.log10(view.y0)) / ((Math.log10(view.y1) - Math.log10(view.y0)) || 1)) * plotH
+      : plotB - ((y - view.y0) / ((view.y1 - view.y0) || 1)) * plotH;
+    const xAt = (p) => view.x0 + ((p - plotL) / plotW) * (view.x1 - view.x0);
+    const yAt = (p) => logY
+      ? 10 ** (Math.log10(view.y0) + ((plotB - p) / plotH) * (Math.log10(view.y1) - Math.log10(view.y0)))
+      : view.y0 + ((plotB - p) / plotH) * (view.y1 - view.y0);
+    const isFull = () => Math.abs(view.x0 - xF[0]) < 1e-6 && Math.abs(view.x1 - xF[1]) < 1e-6 && Math.abs(view.y0 - yF[0]) < 1e-6 && Math.abs(view.y1 - yF[1]) < 1e-6;
+
+    function draw() {
+      let g = '';
+      for (const t of linTicks(view.x0, view.x1)) { const X = px(t); if (X < plotL - 0.5 || X > plotR + 0.5) continue; g += '<line x1="' + X + '" y1="' + plotT + '" x2="' + X + '" y2="' + plotB + '" class="grid"/><text x="' + X + '" y="' + (plotB + 16) + '" class="tick" text-anchor="middle">' + fmtX(t) + '</text>'; }
+      for (const t of (logY ? logTicks(view.y0, view.y1) : linTicks(view.y0, view.y1))) { const Y = py(t); if (Y < plotT - 0.5 || Y > plotB + 0.5) continue; g += '<line x1="' + plotL + '" y1="' + Y + '" x2="' + plotR + '" y2="' + Y + '" class="grid"/><text x="' + (plotL - 6) + '" y="' + (Y + 3.5) + '" class="tick" text-anchor="end">' + fmtY(t) + '</text>'; }
+      let m = ''; rendered = [];
+      cfg.s.forEach((s, i) => {
+        const pix = s.p.map((p) => [px(p[0]), py(p[1])]);
+        rendered.push({ i, l: s.l, c: s.c, pix });
+        m += '<path d="' + pix.map((q, k) => (k ? 'L' : 'M') + q[0].toFixed(1) + ',' + q[1].toFixed(1)).join('') + '" class="line" data-i="' + i + '" style="stroke:' + s.c + '"/>';
+        for (const p of s.p) { const X = px(p[0]), Y = py(p[1]); if (X < plotL - 3 || X > plotR + 3) continue; m += '<circle cx="' + X.toFixed(1) + '" cy="' + Y.toFixed(1) + '" r="4" class="dot" data-i="' + i + '" style="fill:' + s.c + '"/>'; }
+      });
+      // labels anchored at the right edge (value where each line meets x1), in y order
+      const ends = cfg.s.map((s, i) => {
+        const last = s.p[s.p.length - 1];
+        const xa = Math.min(view.x1, last[0]);
+        let yv = last[1];
+        if (xa < last[0]) { for (let k = 1; k < s.p.length; k++) { if (s.p[k][0] >= xa) { const a = s.p[k - 1], b = s.p[k]; yv = a[1] + (b[1] - a[1]) * ((xa - a[0]) / ((b[0] - a[0]) || 1)); break; } } }
+        return { i, l: s.l, c: s.c, x: Math.min(px(xa), plotR) + 9, y: py(yv) };
+      }).filter((e) => e.y >= plotT - 24 && e.y <= plotB + 24).sort((a, b) => a.y - b.y);
+      let prev = -1e9, lab = '';
+      for (const e of ends) { const ly = Math.max(e.y + 4, prev + 13); prev = ly; lab += '<text x="' + e.x.toFixed(1) + '" y="' + ly.toFixed(1) + '" class="slabel" data-i="' + e.i + '" fill="' + e.c + '">' + esc(e.l) + '</text>'; }
+      const ax = '<text x="' + (plotL + plotW / 2) + '" y="' + (H - 6) + '" class="axis" text-anchor="middle">' + esc(cfg.xl) + '</text>'
+        + '<text x="14" y="' + (plotT + plotH / 2) + '" class="axis" text-anchor="middle" transform="rotate(-90 14 ' + (plotT + plotH / 2) + ')">' + esc(cfg.yl) + '</text>';
+      svg.innerHTML = '<defs><clipPath id="' + clipId + '"><rect x="' + plotL + '" y="' + plotT + '" width="' + plotW + '" height="' + plotH + '"/></clipPath></defs>'
+        + g + '<g clip-path="url(#' + clipId + ')">' + m + '</g>' + ax + lab
+        + '<rect class="overlay" x="' + plotL + '" y="' + plotT + '" width="' + plotW + '" height="' + plotH + '"/>'
+        + '<rect class="brush" x="0" y="0" width="0" height="0" style="display:none"/>';
+      if (resetBtn) resetBtn.hidden = isFull();
+      wire();
+    }
+
+    function highlight(i) {
+      canvas.classList.toggle('hovering', i != null);
+      qq('[data-i]', svg).forEach((el) => el.classList.toggle('hl', i != null && +el.dataset.i === i));
+    }
+    function loc(e) { const m = svg.getScreenCTM().inverse(); const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(m); return [p.x, p.y]; }
+    function nearest(mx, my) {
+      let best = null, bd = 26;
+      for (const s of rendered) for (let k = 1; k < s.pix.length; k++) { const d = distSeg(mx, my, s.pix[k - 1][0], s.pix[k - 1][1], s.pix[k][0], s.pix[k][1]); if (d < bd) { bd = d; best = s.i; } }
+      return best;
+    }
+
+    function wire() {
+      const overlay = svg.querySelector('.overlay');
+      const brush = svg.querySelector('.brush');
+      let drag = null;
+      overlay.addEventListener('pointermove', (e) => {
+        const [mx, my] = loc(e);
+        if (drag) {
+          const x = Math.min(mx, drag[0]), y = Math.min(my, drag[1]), w = Math.abs(mx - drag[0]), h = Math.abs(my - drag[1]);
+          brush.setAttribute('x', x); brush.setAttribute('y', y); brush.setAttribute('width', w); brush.setAttribute('height', h); brush.style.display = '';
+        } else highlight(nearest(mx, my));
+      });
+      overlay.addEventListener('pointerdown', (e) => { drag = loc(e); overlay.setPointerCapture(e.pointerId); highlight(null); });
+      overlay.addEventListener('pointerup', (e) => {
+        if (!drag) return;
+        const [mx, my] = loc(e);
+        const x0p = Math.min(mx, drag[0]), x1p = Math.max(mx, drag[0]), y0p = Math.min(my, drag[1]), y1p = Math.max(my, drag[1]);
+        drag = null; brush.style.display = 'none';
+        if (x1p - x0p > 6 && y1p - y0p > 6) {
+          view = { x0: Math.max(0, xAt(x0p)), x1: xAt(x1p), y0: yAt(y1p), y1: yAt(y0p) };
+          draw();
+        }
+      });
+      overlay.addEventListener('pointerleave', () => { drag = null; brush.style.display = 'none'; highlight(null); });
+      overlay.addEventListener('dblclick', () => { view = { x0: xF[0], x1: xF[1], y0: yF[0], y1: yF[1] }; draw(); });
+      overlay.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const [mx, my] = loc(e), f = e.deltaY > 0 ? 1.12 : 1 / 1.12;
+        const cx = xAt(mx), cy = yAt(my);
+        view.x0 = Math.max(0, cx + (view.x0 - cx) * f); view.x1 = cx + (view.x1 - cx) * f;
+        if (logY) { const l0 = Math.log10(view.y0), l1 = Math.log10(view.y1), lc = Math.log10(Math.max(cy, 1e-9)); view.y0 = 10 ** (lc + (l0 - lc) * f); view.y1 = 10 ** (lc + (l1 - lc) * f); }
+        else { view.y0 = cy + (view.y0 - cy) * f; view.y1 = cy + (view.y1 - cy) * f; }
+        draw();
+      }, { passive: false });
+      qq('.slabel', svg).forEach((el) => {
+        el.addEventListener('pointerenter', () => highlight(+el.dataset.i));
+        el.addEventListener('pointerleave', () => highlight(null));
+      });
+    }
+
+    if (resetBtn) resetBtn.addEventListener('click', () => { view = { x0: xF[0], x1: xF[1], y0: yF[0], y1: yF[1] }; draw(); });
+    draw();
   });
 })()`;
 
@@ -986,6 +1051,7 @@ function siblingHref(outBase, lang, published) {
 }
 
 function renderReport(lang, outPath) {
+  REPORT_LANG = lang;
   const t = copy(lang);
   const meta = unified.meta;
   const published = /[/\\]benchmark[/\\]unified/.test(outPath) || path.basename(outPath).startsWith('unified');
@@ -1075,17 +1141,17 @@ function renderReport(lang, outPath) {
   .axis { font-size: 11px; }
   .line { fill: none; stroke-width: 2.4; transition: opacity .12s, stroke-width .12s; }
   .dot { stroke: var(--surface); stroke-width: 2; transition: opacity .12s; }
-  .slabel { font-size: 11px; font-weight: 600; transition: opacity .12s; cursor: default; }
+  .slabel { font-size: 11px; font-weight: 600; transition: opacity .12s; cursor: pointer; }
   /* hover highlight: dim the rest, thicken the hovered series */
   .ccanvas.hovering .line, .ccanvas.hovering .dot, .ccanvas.hovering .slabel { opacity: .18; }
   .ccanvas .line.hl { opacity: 1; stroke-width: 3.6; }
   .ccanvas .dot.hl, .ccanvas .slabel.hl { opacity: 1; }
   .ccanvas .slabel.hl { font-size: 12.5px; }
-  .ccanvas .hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
+  .ccanvas .overlay { fill: transparent; cursor: crosshair; touch-action: none; }
+  .ccanvas .brush { fill: var(--s4, #2563eb); fill-opacity: .12; stroke: var(--s4, #2563eb); stroke-opacity: .55; stroke-width: 1; }
   .cctl { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
-  .cctl label { white-space: nowrap; }
-  .cctl .xmaxlbl { color: var(--ink); font-variant-numeric: tabular-nums; }
-  .cctl .xslider { flex: 0 1 240px; accent-color: var(--s4, #2563eb); }
+  .cctl .creset { font: inherit; font-size: 11px; padding: 2px 9px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); border-radius: 5px; cursor: pointer; }
+  .cctl .creset:hover { color: var(--ink); border-color: var(--ink-2); }
   .cctl .chint { color: var(--ink-3, var(--ink-2)); font-size: 11px; opacity: .8; }
   .verdicts {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
