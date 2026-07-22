@@ -30,6 +30,7 @@ export default defineConfig({
       '@lynx-js/react/transform',
       '@lynx-js/runtime-wrapper-webpack-plugin',
       '@lynx-js/template-webpack-plugin',
+      '@vue/compiler-vapor',
       'vue-lynx',
       'vue-lynx/internal/ops',
       'vue-lynx/main-thread',
