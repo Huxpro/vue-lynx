@@ -2100,14 +2100,11 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR3 — Straightforward IFR: same renderer, ops stream is the recording -->
+  <!-- IFR3 — Straightforward IFR: record + reconcile (same visual language as IFR1–2) -->
   <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:16ch">
+    <h2 class="h-section" style="text-align:center;max-width:20ch">
       <span class="brand-text">Straightforward</span> IFR
     </h2>
-    <p class="lead" style="text-align:center;max-width:36ch;margin:0 auto 14px">
-      Both threads render. The ops stream <span class="brand-text">is</span> the recording.
-    </p>
     <div class="recon">
       <div class="recon__row">
         <span class="recon__pair">
@@ -2135,9 +2132,9 @@ app.<span class="code-fn">use</span>(router)</pre>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      The MT render records its ops; the BG's first batches hydrate against them.
-      Correctness never depends on the two matching — deterministic ids &amp;
-      <code>vue:N</code> signs route taps to Vue with no rebinding.
+      Both threads render. The ops stream <span class="brand-text">is</span> the recording —
+      the MT records its ops; the BG's first batches hydrate against them.
+      Correctness never depends on the two matching.
     </p>
     <aside class="notes">
       <p><strong>Straightforward IFR — hydration by ops reconciliation.</strong>
@@ -2148,7 +2145,8 @@ app.<span class="code-fn">use</span>(router)</pre>
       recording frame-by-frame: identical → skipped (already on screen), value
       diff → patched, structural divergence → tear the first-screen tree down
       and re-apply. A mismatch only loses the perf win, never correctness (logs
-      <code>IFR hydration mismatch</code> in dev).</p>
+      <code>IFR hydration mismatch</code> in dev). Deterministic ids &amp;
+      <code>vue:N</code> signs route taps to Vue with no rebinding.</p>
     </aside>
   </section>
 
