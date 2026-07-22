@@ -84,10 +84,10 @@ export function copy(lang) {
       // V4 flag notation: `render [+b[:staging]] [+ifr[:paint]]`. Bare +b
       // uses the render model's natural staging (vdom→:c, vapor→:t).
       // Legacy bench ids stay as data keys (see the flag legend).
-      vapor: 'vapor +b',
+      vapor: zh ? 'vapor +b（默认）' : 'vapor +b (default)',
       'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
-      'vapor-ifr': 'vapor +b +ifr',
+      'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
       'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
         ? 'vapor +b +ifr（alias）'
@@ -135,10 +135,10 @@ export function copy(lang) {
       'vdom-et': 'vdom +b',
       'vdom-ifr': 'vdom +ifr',
       'vdom-ifr-et': 'vdom +b +ifr',
-      vapor: 'vapor +b',
+      vapor: zh ? 'vapor +b（默认）' : 'vapor +b (default)',
       'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
-      'vapor-ifr': 'vapor +b +ifr',
+      'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
       'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
         ? 'vapor +b +ifr（alias）'

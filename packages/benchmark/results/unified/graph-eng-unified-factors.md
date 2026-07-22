@@ -60,11 +60,11 @@ source: `cross-storms-graph-eng-4axis-full.json` (2026-07-22T19:01:59.794Z, reps
 | +b effect (vdom, no ifr) | -15.8% | -7.2% | -22.6% | 6.4% | -5% |
 | +b effect (vdom, with +ifr) | 2.6% | -3.3% | -5.4% | -4.7% | -0.5% |
 | +b effect (vapor, no ifr) | 4.8% | -2.4% | 3.6% | -1.6% | 5.8% |
-| +b effect (vapor, with +ifr) | -1.8% | 2.4% | -1.5% | -2.4% | -1.6% |
+| +b effect (vapor, with +ifr) | -3.4% | -3.7% | -4.6% | 2.4% | -3.1% |
 | +b:t→e effect (vapor, N/A on web) | 6% | -9.3% | 14.6% | 3.3% | -8.2% |
 | +ifr effect (vdom) | -11.1% | -8.3% | -14.1% | 8.1% | -3.7% |
 | +ifr effect (vapor +b) | 2% | -4.5% | 7.7% | 4.9% | -3.9% |
-| +ifr:e paint effect (N/A on web) | 2.9% | -3.2% | 18.1% | -6.1% | -20.7% |
+| +ifr:e paint effect (N/A on web) | 4.6% | 3% | 21.9% | -10.5% | -19.4% |
 
 ### @10k
 
@@ -74,11 +74,11 @@ source: `cross-storms-graph-eng-4axis-full.json` (2026-07-22T19:01:59.794Z, reps
 | +b effect (vdom, no ifr) | 7.1% | 12.2% | 11.6% | 14.8% | 13.5% |
 | +b effect (vdom, with +ifr) | 0.8% | 11.5% | 6.1% | 10.8% | 5.7% |
 | +b effect (vapor, no ifr) | -5% | -5.1% | 3.3% | 38% | -3.9% |
-| +b effect (vapor, with +ifr) | -6% | -3.4% | -2% | 0.6% | -3.6% |
+| +b effect (vapor, with +ifr) | -3.1% | -2.5% | -15.6% | 14.3% | -6.7% |
 | +b:t→e effect (vapor, N/A on web) | -0.3% | -0.9% | -2.8% | -16.3% | 1.1% |
 | +ifr effect (vdom) | 1.3% | -3.3% | 2.6% | 0.7% | 3.1% |
 | +ifr effect (vapor +b) | 4.6% | 5% | -12% | -3.3% | 0.6% |
-| +ifr:e paint effect (N/A on web) | 3.9% | 0.2% | -2.5% | 6.5% | 5% |
+| +ifr:e paint effect (N/A on web) | 0.7% | -0.7% | 13.2% | -6.3% | 8.4% |
 
 ### @30k
 
@@ -88,10 +88,10 @@ source: `cross-storms-graph-eng-4axis-full.json` (2026-07-22T19:01:59.794Z, reps
 | +b effect (vdom, no ifr) | -1.7% | 2.9% | 0.3% | 2.9% | 8.4% |
 | +b effect (vdom, with +ifr) | 3.6% | 7.6% | 12.9% | -0.6% | -4.6% |
 | +b effect (vapor, no ifr) | -1.3% | -2.7% | -0.9% | 1.1% | 10.5% |
-| +b effect (vapor, with +ifr) | 3.4% | -1.6% | -17.2% | 3.6% | 0.9% |
+| +b effect (vapor, with +ifr) | 6.8% | 0.2% | -15.2% | -6.2% | 1% |
 | +b:t→e effect (vapor, N/A on web) | 7.2% | -2.2% | 1.2% | -14.8% | -3.6% |
 | +ifr effect (vdom) | 0.8% | -1.5% | 4.1% | -8.1% | 7.2% |
 | +ifr effect (vapor +b) | 4.2% | -2.5% | -6.9% | 3.8% | -4.4% |
-| +ifr:e paint effect (N/A on web) | -1.9% | -2.2% | -8.5% | -17.7% | -7.1% |
+| +ifr:e paint effect (N/A on web) | -5.1% | -3.9% | -10.7% | -9.1% | -7.2% |
 
 > Real mouse-click-driven unified table app on dual-thread Lynx-for-Web. create = Create N rows; update = update10th / updateStorm (50 ticks); engine cells run with __VUE_LYNX_ENGINE_ET_STATUS__ = stub (family absent on web) — their deltas are probe overhead, not engine wins.
