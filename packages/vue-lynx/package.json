@@ -46,6 +46,11 @@
       "import": "./internal/dist/ops.js",
       "default": "./internal/dist/ops.js"
     },
+    "./internal/matrix": {
+      "types": "./internal/dist/matrix.d.ts",
+      "import": "./internal/dist/matrix.js",
+      "default": "./internal/dist/matrix.js"
+    },
     "./types": {
       "types": "./types/dist/index.d.ts",
       "import": "./types/dist/index.js",

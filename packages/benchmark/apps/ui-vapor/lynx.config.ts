@@ -16,8 +16,9 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 const cell = process.env.BENCH_CELL ?? 'off';
 const enableIFR =
   cell === 'ifr' || cell === 'ifr-dense' || cell === 'ifr-sparse';
-// Dense only when explicitly requested; product + `ifr` stay sparse.
-const enableSparseNaming = cell !== 'ifr-dense';
+// Dense (Named Tree) only when explicitly requested; product + `ifr` stay
+// sparse (recovered Data-Template). #321 four-axis naming flag.
+const templateNaming = cell === 'ifr-dense' ? 'dense' as const : 'sparse' as const;
 const modeLabel =
   cell === 'off'
     ? 'vapor'
@@ -58,7 +59,7 @@ export default defineConfig({
       optionsApi: false,
       vapor: true,
       enableIFR,
-      enableSparseNaming,
+      templateNaming,
       // Explicit: vapor never enables VDOM element templates.
       enableElementTemplates: false,
     }),
