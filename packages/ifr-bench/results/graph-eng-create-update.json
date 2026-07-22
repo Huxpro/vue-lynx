@@ -16,12 +16,12 @@
         "opFrames": 51,
         "nativeCalls": 7600,
         "mtNamed": 1300,
-        "wallMs": 87.69
+        "wallMs": 82.698
       },
       "update": {
         "opFrames": 200,
         "nativeCalls": 200,
-        "wallMs": 4.085
+        "wallMs": 4.443
       }
     },
     {
@@ -35,12 +35,12 @@
         "opFrames": 51,
         "nativeCalls": 6400,
         "mtNamed": 100,
-        "wallMs": 95.886
+        "wallMs": 58.82
       },
       "update": {
         "opFrames": 200,
         "nativeCalls": 200,
-        "wallMs": 5.834
+        "wallMs": 2.435
       }
     },
     {
@@ -54,12 +54,12 @@
         "opFrames": 51,
         "nativeCalls": 6300,
         "mtNamed": 1300,
-        "wallMs": 90.451
+        "wallMs": 90.891
       },
       "update": {
         "opFrames": 200,
         "nativeCalls": 200,
-        "wallMs": 16.231
+        "wallMs": 1.361
       }
     },
     {
@@ -73,12 +73,12 @@
         "opFrames": 51,
         "nativeCalls": 5100,
         "mtNamed": 100,
-        "wallMs": 40.691
+        "wallMs": 38.009
       },
       "update": {
         "opFrames": 200,
         "nativeCalls": 200,
-        "wallMs": 1.172
+        "wallMs": 3.672
       }
     }
   ],
