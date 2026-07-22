@@ -185,9 +185,9 @@ interesting cell for both stacks is **sparse × slots × Engine staging**.
 
 | Knob | Where | Effect |
 |------|-------|--------|
-| `templateNaming: 'dense'\|'sparse'` | `pluginVueLynx({…})` | axis B; defines `__VUE_LYNX_SPARSE_NAMING__`; prod script loader stamps `__vlxAddressing` when sparse. Deprecated alias: `enableSparseNaming` |
-| `templateStaging: 'opstream'\|'data'\|'code'\|'engine'` | `pluginVueLynx({…})` | axis A; `'engine'` routes MT instantiation through the native ET family (stub fallback) |
-| `ifrPaint: 'plain'\|'disposable-et'\|'engine-et'` | `pluginVueLynx({…})` | axis D ephemeral paint mode |
+| `templateNaming: 'node'\|'block'` | `pluginVueLynx({…})` | naming unit; defines `__VUE_LYNX_SPARSE_NAMING__`; prod script loader stamps `__vlxAddressing` when block. Legacy `dense\|sparse`; deprecated alias `enableSparseNaming` |
+| `templateStaging: 'ops'\|'tree'\|'code'\|'native'` | `pluginVueLynx({…})` | staging; `'native'` routes MT instantiation through the engine ET family (N/A fallback). Legacy `opstream\|data\|engine` |
+| `ifrPaint: 'plain'\|'code-paint'\|'native-paint'` | `pluginVueLynx({…})` | ephemeral paint staging. Legacy `disposable-et\|engine-et` |
 | `SFC_PROBE_SPARSE` | sfc-probe | `0` → dense (Named Tree) |
 | `BENCH_CELL=ifr-dense` | ui-vapor | dense Named-Tree IFR cell |
 | `__VUE_LYNX_ENGINE_ET_STATUS__` | MT global | `'native'` or `'stub'` — benchmark honesty marker |
