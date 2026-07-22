@@ -3680,6 +3680,108 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .ifrjoin--pipe .ifrjoin__col {
   gap: 6px;
 }
+
+/* ---- ET data-flow bridge (5 → 3 between BTS / MTS) ---- */
+.etbridge {
+  width: min(100%, 1100px);
+  display: grid;
+  grid-template-columns: minmax(150px, 0.95fr) minmax(260px, 1.35fr) minmax(150px, 0.95fr);
+  gap: clamp(8px, 1.2cqw, 18px);
+  align-items: stretch;
+}
+.etbridge__side {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: clamp(14px, 2cqh, 20px) clamp(12px, 1.6cqw, 18px);
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--c, #5dd5a8) 26%, transparent);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 6%, transparent);
+  text-align: left;
+  justify-content: center;
+}
+.etbridge__blurb {
+  margin: 4px 0 0;
+  font-size: clamp(12px, 1.15cqw, 14px);
+  line-height: 1.4;
+  color: var(--ink-soft);
+  max-width: none;
+}
+.etbridge__flow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 0;
+}
+.etb-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0;
+}
+.etb-tick {
+  display: block;
+  height: 1.5px;
+}
+.etb-tick--l {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, #5dd5a8 55%, transparent));
+  margin-right: 6px;
+}
+.etb-tick--r {
+  background: linear-gradient(90deg, color-mix(in srgb, #56b8f0 55%, transparent), transparent);
+  margin-left: 6px;
+}
+.etb {
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--c, #5dd5a8);
+  background: color-mix(in srgb, var(--c, #5dd5a8) 13%, var(--paper));
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(12px, 1.2cqw, 15px);
+  color: color-mix(in srgb, var(--c, #5dd5a8) 80%, var(--ink));
+  white-space: nowrap;
+  min-width: clamp(120px, 16cqw, 180px);
+  text-align: center;
+}
+.etb small {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-mute);
+}
+.etb.is-hero {
+  box-shadow: 0 0 18px -4px var(--c, #5dd5a8);
+  border-width: 1.8px;
+}
+.etb-arr {
+  display: block;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-mute);
+  line-height: 1;
+}
+.etbridge__tag {
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+}
+.etbridge__tag b { color: var(--ink-soft); font-weight: 600; }
+
 .ifrjoin__join {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

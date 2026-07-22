@@ -2107,27 +2107,27 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR3 — Straightforward IFR: dual-thread ops + hydrate join -->
+  <!-- IFR3 — Straightforward IFR: dual-thread ops + hydrate join (BG left · MT right) -->
   <section class="slide stage">
     <h2 class="h-section" style="text-align:center;max-width:20ch">
       <span class="brand-text">Straightforward</span> IFR
     </h2>
     <div class="ifrjoin">
       <div class="ifrjoin__cols">
-        <div class="ifrjoin__col" style="--c:#56b8f0">
-          <span class="ifrjoin__label"><i></i>Main (UI) thread</span>
-          <span class="ifrjoin__role">records</span>
-          <code class="ifrjoin__op is-match">SET_TEXT 3 "Hi"</code>
-          <code class="ifrjoin__op is-patch">SET_TEXT 3 "Hi"</code>
-          <code class="ifrjoin__op is-tear">CREATE 4 view</code>
-        </div>
-        <div class="ifrjoin__rail" aria-hidden="true"></div>
         <div class="ifrjoin__col" style="--c:#5dd5a8">
           <span class="ifrjoin__label"><i></i>Background thread</span>
           <span class="ifrjoin__role">first batches</span>
           <code class="ifrjoin__op is-match">SET_TEXT 3 "Hi"</code>
           <code class="ifrjoin__op is-patch">SET_TEXT 3 "你好"</code>
           <code class="ifrjoin__op is-tear">CREATE 4 text</code>
+        </div>
+        <div class="ifrjoin__rail" aria-hidden="true"></div>
+        <div class="ifrjoin__col" style="--c:#56b8f0">
+          <span class="ifrjoin__label"><i></i>Main (UI) thread</span>
+          <span class="ifrjoin__role">records</span>
+          <code class="ifrjoin__op is-match">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-patch">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-tear">CREATE 4 view</code>
         </div>
       </div>
       <div class="ifrjoin__join">
@@ -2169,94 +2169,171 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>The second lever.</strong> IFR moves the paint earlier;
       enabling it turns on Element Templates by default. They make the render
       itself an order of magnitude cheaper — and shrink the cross-thread protocol
-      for <em>every</em> update, not just the first frame.</p>
+      for <em>every</em> update, not just the first frame. Watch the next two
+      slides: the shared data-flow between BTS and MTS collapses from five
+      steps to three.</p>
     </aside>
   </section>
 
-  <!-- IFR5 — without ET: dual-thread fat VDOM → opcode pipelines -->
+  <!-- IFR5 — without ET: dual-thread + lit 5-step data-flow bridge -->
   <section class="slide stage">
-    <div class="ifrjoin ifrjoin--pipe">
-      <div class="ifrjoin__cols">
-        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
-          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
-          <span class="ifrjoin__role" data-mm-fade>VDOM tree &rarr; opcodes</span>
-          <code class="ifrjoin__op" data-mm-fade>VDOM</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op" data-mm-fade>ShadowElement</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
-          <span class="ifrjoin__hint" data-mm-fade>many ops / node</span>
+    <div class="etbridge">
+      <div class="etbridge__side" data-flip="et-col-bg" style="--c:#5dd5a8">
+        <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+        <span class="ifrjoin__role" data-mm-fade>VDOM tree &rarr; opcodes</span>
+        <p class="etbridge__blurb" data-mm-fade>Walks ShadowElement, emits a long flat stream.</p>
+      </div>
+      <div class="etbridge__flow">
+        <div class="etb-row">
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" data-flip="etp-vdom" style="--c:#42b883">VDOM<small>one vnode / node</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
         </div>
-        <div class="ifrjoin__rail" aria-hidden="true"></div>
-        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
-          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
-          <span class="ifrjoin__role" data-mm-fade>same chain, local apply</span>
-          <code class="ifrjoin__op" data-mm-fade>VDOM</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op" data-mm-fade>record ops</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
-          <span class="ifrjoin__hint" data-mm-fade>applyOps &rarr; PAPI &rarr; paint</span>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row" data-mm-fade>
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" style="--c:#E8B44A">Shadow<small>one node</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
         </div>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row" data-mm-fade>
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" style="--c:#4FB8F0">ops<small>several frames</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        </div>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row" data-mm-fade>
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" style="--c:#56b8f0">interp<small>a switch loop</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        </div>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row">
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" data-flip="etp-papi" style="--c:#F27A9E">PAPI<small>__CreateView</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        </div>
+        <span class="etbridge__tag" data-mm-fade>&times; every static node</span>
+      </div>
+      <div class="etbridge__side" data-flip="et-col-mt" style="--c:#56b8f0">
+        <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+        <span class="ifrjoin__role" data-mm-fade>same chain, local apply</span>
+        <p class="etbridge__blurb" data-mm-fade>Records ops, applyOps &rarr; paint on-thread.</p>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
       Without ET, BTS and MTS IFR both pay the fat
-      <b>VDOM &rarr; opcode</b> chain — just on different threads.
+      <b>5-step</b> data-flow — linked across the thread boundary.
     </p>
     <aside class="notes">
-      <p><strong>Same code, two threads, still expensive.</strong> BTS walks the
-      VDOM into ShadowElement and emits a long flat opcode stream. MTS IFR runs
-      the same Vue + <code>nodeOps</code> during <code>loadTemplate</code>, records
-      the same shape of ops, and applies them locally to paint. IFR moved
-      <em>when</em> paint happens — it did not shrink the work yet.</p>
+      <p><strong>Same code, two threads, still expensive.</strong> The lit chain
+      in the middle is the shared protocol: VDOM → Shadow → ops → interp →
+      PAPI, once per static node. BTS emits it; MTS IFR records and applies it
+      locally. IFR moved <em>when</em> paint happens — the next slide collapses
+      <em>how much</em> work the chain does.</p>
     </aside>
   </section>
 
-  <!-- IFR6 — with ET: BTS emits INSTANTIATE; MTS IFR runs create() -->
+  <!-- IFR6 — with ET: bridge collapses 5 → 3 (magic-move) -->
   <section class="slide stage">
-    <div class="ifrjoin ifrjoin--pipe">
-      <div class="ifrjoin__cols">
-        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
-          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
-          <span class="ifrjoin__role" data-mm-fade>VDOM &rarr; one template op</span>
-          <code class="ifrjoin__op" data-mm-fade>VDOM · __vlx-tpl</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op" data-mm-fade>SET_* holes only</code>
-          <span class="ifrjoin__hint" data-mm-fade>one op · whole subtree</span>
+    <div class="etbridge">
+      <div class="etbridge__side" data-flip="et-col-bg" style="--c:#5dd5a8">
+        <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+        <span class="ifrjoin__role" data-mm-fade>VDOM &rarr; one template op</span>
+        <p class="etbridge__blurb" data-mm-fade>Emits INSTANTIATE_TEMPLATE + hole SET_*.</p>
+      </div>
+      <div class="etbridge__flow">
+        <div class="etb-row">
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" data-flip="etp-vdom" style="--c:#42b883">one vnode<small>__vlx-tpl:…</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
         </div>
-        <div class="ifrjoin__rail" aria-hidden="true"></div>
-        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
-          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
-          <span class="ifrjoin__role" data-mm-fade>opcode &rarr; create() PAPI</span>
-          <code class="ifrjoin__op" data-mm-fade>VDOM · __vlx-tpl</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
-          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-          <code class="ifrjoin__op is-hero" data-mm-fade>create() &rarr; __CreateView&hellip;</code>
-          <span class="ifrjoin__hint" data-mm-fade>straight-line PAPI &rarr; paint</span>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row" data-mm-fade>
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb is-hero" style="--c:#5dd5a8">INSTANTIATE_TEMPLATE<small>one op · whole subtree</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
         </div>
+        <span class="etb-arr" data-mm-fade>&darr;</span>
+        <div class="etb-row">
+          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
+          <div class="etb" data-flip="etp-papi" style="--c:#F27A9E">create()<small>straight-line PAPI</small></div>
+          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        </div>
+        <span class="etbridge__tag" data-mm-fade>holes update via ordinary <b>SET_*</b> ops</span>
+      </div>
+      <div class="etbridge__side" data-flip="et-col-mt" style="--c:#56b8f0">
+        <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+        <span class="ifrjoin__role" data-mm-fade>opcode &rarr; create() PAPI</span>
+        <p class="etbridge__blurb" data-mm-fade>Interpreter runs create() &rarr; paint.</p>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      ET converts the static subtree into a compiled <code>create()</code> —
-      BTS sends <b>one</b> op; MTS IFR runs that function as straight-line PAPI.
+      ET collapses the bridge to <b>3 steps</b> — BTS sends one op; MTS IFR
+      runs the compiled <code>create()</code> as straight-line PAPI.
     </p>
     <aside class="notes">
-      <p><strong>How ET lands on each thread.</strong> The compiler lowers the
-      static shell to <code>registerElementTemplate(id, holes, create)</code>.
-      BTS still starts from a VDOM tree, but the static block is one vnode that
-      emits <code>INSTANTIATE_TEMPLATE</code> plus hole <code>SET_*</code>s — not
-      per-node <code>CREATE</code>s. On MTS IFR the same opcode hits the local
-      interpreter, which calls the baked <code>create()</code> — a straight-line
-      sequence of Element PAPI. Next slide: what each side's tree looks like,
-      and what actually crosses the wire.</p>
+      <p><strong>Watch the middle collapse.</strong> VDOM and PAPI stay put
+      (magic-move); Shadow / ops / interp fold into one
+      <code>INSTANTIATE_TEMPLATE</code>. Framework templates — typed Element
+      PAPI, not Lynx binary engine templates. Next: why Vue can do this —
+      compiler-hinted VDOM already carries Block structure.</p>
     </aside>
   </section>
 
-  <!-- IFR6b — dual-thread trees + what syncs (learn from V·7a archflow) -->
+  <!-- IFR7 — compiler: Block-hinted VDOM → element template -->
+  <section class="slide stage">
+    <div class="etcode">
+      <div class="codeframe etcode__src">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>Card.vue · template</span>
+        </div>
+<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
+<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
+      </div>
+      <div class="etcode__legend" aria-hidden="true">
+        <span><i class="et-sw is-static"></i>Block · static</span>
+        <span><i class="et-sw is-hole"></i>Block · hole</span>
+      </div>
+      <div class="codeframe etcode__out">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>compiler output</span>
+        </div>
+<pre><span class="code-fn">registerElementTemplate</span>(
+  <span class="code-str">"__vlx-tpl:rflz…"</span>,
+  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
+  <span class="code-key">function</span> (P) {
+    <span class="code-com">…straight-line PAPI…</span>
+    <span class="code-key">return</span> [e0, e3, e5]
+  },
+)</pre>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Vue already ships <b>compiler-hinted VDOM</b> — a Block marks static
+      structure vs dynamic holes. That hint is what we lower into
+      <code>create()</code>.
+    </p>
+    <aside class="notes">
+      <p><strong>Why Vue can do this.</strong> Vue's compiler already partitions
+      a template into a Block: static nodes vs dynamic holes
+      (<code>patchFlag</code> / dynamicChildren). Element Templates reuse that
+      structure information — bake the static shell into
+      <code>registerElementTemplate(id, holes, create)</code>, leave only the
+      holes on the vnode path. Eligible = plain Lynx elements with value/text
+      dynamics; components, slots, <code>v-if</code>/<code>v-for</code> hosts,
+      <code>&lt;list&gt;</code>, ref/id stay on the normal path (their plain
+      bodies can still lower). Next: the sparse trees on each thread, and what
+      actually crosses the wire.</p>
+    </aside>
+  </section>
+
+  <!-- IFR8 — dual-thread trees + what syncs (was IFR6b) -->
   <section class="slide stage" data-bg="clean">
     <div class="archflow">
       <div class="node">
@@ -2324,63 +2401,18 @@ app.<span class="code-fn">use</span>(router)</pre>
       protocol-invisible (ghosted). Only holes get names (<code>h0</code>…).
       MTS IFR materializes the same shape via the compiled
       <code>create()</code> — a native element tree with the same sparse hole
-      ids.</p>
+      ids. That sparsity is exactly the Block the previous slide compiled.</p>
       <p><strong>What syncs.</strong> Unlike Vapor's <code>REGISTER_TREE</code>,
       ET does not send structure: <code>registerElementTemplate</code> already
       shipped <code>create()</code> in both bundles. Across the wire:
       <code>INSTANTIATE_TEMPLATE(tplId)</code> (once per instance) +
       <code>SET_*</code> for hole values only. On IFR, MTS recorded those ops
       at first paint; BTS's first batches hydrate against that recording —
-      skip / patch / rebuild, same join as before.</p>
+      skip / patch / rebuild, same join as Straightforward IFR.</p>
     </aside>
   </section>
 
-  <!-- IFR7 — baked skeleton + holes + generated create() -->
-  <section class="slide stage">
-    <div class="etcode">
-      <div class="codeframe etcode__src">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>Card.vue · template</span>
-        </div>
-<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
-<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
-      </div>
-      <div class="etcode__legend" aria-hidden="true">
-        <span><i class="et-sw is-static"></i>baked skeleton</span>
-        <span><i class="et-sw is-hole"></i>dynamic hole</span>
-      </div>
-      <div class="codeframe etcode__out">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>compiler output</span>
-        </div>
-<pre><span class="code-fn">registerElementTemplate</span>(
-  <span class="code-str">"__vlx-tpl:rflz…"</span>,
-  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
-  <span class="code-key">function</span> (P) {
-    <span class="code-com">…straight-line PAPI…</span>
-    <span class="code-key">return</span> [e0, e3, e5]
-  },
-)</pre>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Static structure bakes into a <code>create()</code> skeleton; only the
-      holes — dynamic text, class, style, attrs — stay on the vnode path.
-    </p>
-    <aside class="notes">
-      <p>Eligible = every node is a plain Lynx element and only values or text
-      are dynamic. Components, slots, <code>v-if</code>/<code>v-for</code> hosts,
-      <code>&lt;list&gt;</code>, ref/id nodes stay on the normal vnode path;
-      their plain-element bodies can still lower. Scoped-CSS scope ids bake in.</p>
-    </aside>
-  </section>
-
-  <!-- IFR8 — benchmark table (proof) -->
+  <!-- IFR9 — benchmark table (proof) -->
   <section class="slide stage">
     <table class="bench-table">
       <thead>
@@ -2422,7 +2454,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR9 — benchmark data-viz (proof) -->
+  <!-- IFR10 — benchmark data-viz (proof) -->
   <section class="slide stage">
     <div class="bench-viz">
       <div class="bench-chart">
