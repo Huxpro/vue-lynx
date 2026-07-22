@@ -108,6 +108,132 @@ export function setIdAttr(el: ShadowElement, value: unknown): void {
 }
 
 // ---------------------------------------------------------------------------
+// Main Thread materialization
+//
+// Comment nodes and empty #text nodes are renderer bookkeeping (v-if /
+// Fragment / Vapor block anchors) — they exist only in the Background Thread
+// shadow tree and never reach the Main Thread. Native Lynx gives an empty
+// raw-text node a default line box, so materialising anchors adds visible
+// height; keeping them BG-only removes the artifact and the per-anchor
+// native element. A #text node is materialised lazily, only while it has
+// content (`_mtCreated`: MT element exists; `_mtInserted`: currently in the
+// MT tree).
+// ---------------------------------------------------------------------------
+
+/** Does this node currently have a Main Thread element in the MT tree? */
+export function isMaterialized(node: ShadowElement): boolean {
+  if (node.tag === '#comment') return false;
+  if (node.tag === '#text') return node._mtInserted;
+  return true;
+}
+
+/**
+ * Shadow-only anchors have no Main Thread element. Walk forward to the next
+ * materialised sibling so __InsertElementBefore receives a valid reference.
+ */
+export function resolveMainThreadAnchor(
+  anchor: ShadowElement | null | undefined,
+): ShadowElement | null {
+  let resolved = anchor ?? null;
+  while (resolved && !isMaterialized(resolved)) {
+    resolved = resolved.next;
+  }
+  return resolved;
+}
+
+/** Emit CREATE_TEXT for a #text node's MT element if it doesn't exist yet. */
+function ensureTextCreated(node: ShadowElement): void {
+  if (node._mtCreated) return;
+  pushOp(OP.CREATE_TEXT, node.uid);
+  node._mtCreated = true;
+}
+
+/** Emit INSERT or INSERT_TEMPLATE_SLOT depending on the parent. */
+function pushInsertOp(
+  parent: ShadowElement,
+  child: ShadowElement,
+  anchorUid: number,
+): void {
+  if (
+    parent._tplSlotIndex !== undefined && parent._tplRoot !== undefined
+  ) {
+    // Element-slot wrapper: address by (templateRoot, slotIndex) so sparse
+    // ET can keep the slot parent anonymous.
+    pushOp(
+      OP.INSERT_TEMPLATE_SLOT,
+      parent._tplRoot.uid,
+      parent._tplSlotIndex,
+      child.uid,
+      anchorUid,
+    );
+  } else {
+    pushOp(OP.INSERT, parent.uid, child.uid, anchorUid);
+  }
+}
+
+/** Emit REMOVE or REMOVE_TEMPLATE_SLOT depending on the parent. */
+function pushRemoveOp(parent: ShadowElement, child: ShadowElement): void {
+  if (
+    parent._tplSlotIndex !== undefined && parent._tplRoot !== undefined
+  ) {
+    pushOp(
+      OP.REMOVE_TEMPLATE_SLOT,
+      parent._tplRoot.uid,
+      parent._tplSlotIndex,
+      child.uid,
+    );
+  } else {
+    pushOp(OP.REMOVE, parent.uid, child.uid);
+  }
+}
+
+/**
+ * Optional hook: tear down element-slot Vue trees before a template root is
+ * removed. Installed from node-ops to avoid a tree-ops ↔ slot-host cycle.
+ */
+let teardownTemplateSlotsHook:
+  | ((el: ShadowElement) => void)
+  | null = null;
+
+/** @internal */
+export function setTeardownTemplateSlotsHook(
+  fn: ((el: ShadowElement) => void) | null,
+): void {
+  teardownTemplateSlotsHook = fn;
+}
+
+/**
+ * Set a #text node's character data, materialising or dematerialising its
+ * Main Thread element as the content appears / disappears. Shared by the
+ * vdom renderer's setText and the Vapor nodeValue/data setters.
+ */
+export function setTextNode(node: ShadowElement, text: string): void {
+  node._text = text;
+
+  if (!text) {
+    if (node._mtInserted && node.parent) {
+      pushRemoveOp(node.parent, node);
+      node._mtInserted = false;
+      scheduleFlush();
+    }
+    return;
+  }
+
+  ensureTextCreated(node);
+  pushOp(OP.SET_TEXT, node.uid, text);
+
+  // Lynx's native <list> only accepts <list-item> children — text nodes
+  // there stay off the Main Thread entirely.
+  const parent = node.parent;
+  if (!node._mtInserted && parent && parent.tag !== 'list') {
+    const anchor = resolveMainThreadAnchor(node.next);
+    pushInsertOp(parent, node, anchor ? anchor.uid : -1);
+    node._mtInserted = true;
+  }
+  scheduleFlush();
+}
+
+// ---------------------------------------------------------------------------
 // Structural mutations
 // ---------------------------------------------------------------------------
 
@@ -128,8 +254,10 @@ export function insertNode(
 
   // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
   // emit REMOVE from old parent so MT correctly detaches first.
-  if (child.parent && child.parent !== parent) {
-    pushOp(OP.REMOVE, child.parent.uid, child.uid);
+  if (child.parent && child.parent !== parent && isMaterialized(child)) {
+    pushRemoveOp(child.parent, child);
+    if (child.tag === '#text') child._mtInserted = false;
+    scheduleFlush();
   }
 
   // Always update the shadow tree (Vue needs it for internal diffing).
@@ -159,8 +287,13 @@ export function insertNode(
     }
   }
 
-  const anchorId = resolvedAnchor ? resolvedAnchor.uid : -1;
-  pushOp(OP.INSERT, parent.uid, child.uid, anchorId);
+  const resolvedAnchor = resolveMainThreadAnchor(anchor);
+  pushInsertOp(
+    parent,
+    child,
+    resolvedAnchor ? resolvedAnchor.uid : -1,
+  );
+  if (child.tag === '#text') child._mtInserted = true;
   scheduleFlush();
 }
 
@@ -183,11 +316,18 @@ export function removeNode(child: ShadowElement): void {
   // Those children were never mounted, so `vnode.el` is undefined — null
   // guard is required here, not just for the `!parent` case.
   if (child?.parent) {
-    const parentUid = child.parent.uid;
-    child.parent._unlink(child);
+    const parent = child.parent;
+    const materialized = isMaterialized(child);
+    // Tear down element-slot Vue trees before removing a template root so
+    // component instances inside slots get proper unmount lifecycles.
+    if (child._tplSlots) teardownTemplateSlotsHook?.(child);
+    parent._unlink(child);
     releaseSubtree(child);
-    pushOp(OP.REMOVE, parentUid, child.uid);
-    scheduleFlush();
+    if (materialized) {
+      pushRemoveOp(parent, child);
+      scheduleFlush();
+    }
+    if (child.tag === '#text') child._mtInserted = false;
   }
 }
 

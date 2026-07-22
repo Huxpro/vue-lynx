@@ -23,10 +23,15 @@
  *   (retired)          [14]  was SET_SCOPE_ID — scoped CSS now rides on
  *     classes (scope tokens merge into SET_CLASS / props.c), so no op emits
  *     14 anymore. The number is not reused to keep old bundles unambiguous.
- *   (reserved)         [15]  INSTANTIATE_TEMPLATE — the VDOM element-template
- *     op (enableElementTemplates), arriving via #216. It is NOT emitted on
- *     this lineage yet; 15 is held for it so both protocols share one
- *     numbering after the lineages merge.
+ *   INSTANTIATE_TEMPLATE: [15, rootId, tplId, holeCount]
+ *     Element-template instantiation (compile-time-lowered static subtree).
+ *     The main thread builds the whole subtree via the registered create()
+ *     function; the root maps to rootId and the template's holes (interior
+ *     nodes with dynamic parts) map to rootId+1 … rootId+holeCount, so all
+ *     later SET_* ops target them like ordinary elements.
+ *     Holes are either attr/text bindings or element slots (`TPL_SLOT_KEY`).
+ *     Element-slot count is not a separate op argument — it is the count of
+ *     `TPL_SLOT_KEY` entries in the template's registered hole-key list.
  *   REGISTER_TREE:     [16, treeId, structure]
  *     structure: recursive node tuples [tag, props|0, children[]] where
  *     props = { c?: class, s?: styleObj, a?: [[key, value]…], i?: id,
@@ -38,6 +43,12 @@
  *     deterministically: pre-order traversal of the structure starting at
  *     baseUid — the BG thread allocates the identical contiguous block, so
  *     both sides agree on ids without transmitting them.
+ *   INSERT_TEMPLATE_SLOT: [18, rootId, slotIndex, childId, anchorId]
+ *     Insert a dynamic child into the slotIndex-th element slot of the
+ *     template instance rooted at rootId (slot-index addressing — the slot
+ *     parent may be anonymous once sparse ET lands). anchorId=-1 → append.
+ *   REMOVE_TEMPLATE_SLOT: [19, rootId, slotIndex, childId]
+ *     Remove a dynamic child from the slotIndex-th element slot.
  *
  * Naming: INSTANTIATE_TEMPLATE (15) and REGISTER_TREE/CLONE_TREE (16/17) are
  * genuinely different mechanisms, named by mechanism rather than renderer.
@@ -47,7 +58,8 @@
  * hence TEMPLATE. The vapor object is a named tree prototype — serialized
  * structure over the wire plus dense pre-order naming, required because Vapor
  * codegen's addressing knowledge lives in navigation code the protocol cannot
- * see — hence TREE, not TEMPLATE.
+ * see — hence TREE, not TEMPLATE. Element-slot ops (18/19) extend the ET
+ * path so dynamic subtrees can graft into a template by slot-index.
  */
 export const PAGE_ROOT_ID = 1;
 
@@ -78,10 +90,8 @@ export const OP = {
   // numbering once the lineages merge.
   REGISTER_TREE: 16,
   CLONE_TREE: 17,
-  // Consumers handle unknown opcodes conservatively (hydration falls back to
-  // the full BG replay; the interpreter stops at an opcode it has no arity
-  // for), and both sides of the protocol always ship inside one bundle, so
-  // reserving 15 is a merge contract rather than a wire-compatibility concern.
+  INSERT_TEMPLATE_SLOT: 18,
+  REMOVE_TEMPLATE_SLOT: 19,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -104,7 +114,51 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.INIT_MT_REF]: 2,
   [OP.REGISTER_TREE]: 2,
   [OP.CLONE_TREE]: 2,
+  [OP.INSERT_TEMPLATE_SLOT]: 4,
+  [OP.REMOVE_TEMPLATE_SLOT]: 3,
 });
+
+// ---------------------------------------------------------------------------
+// Element-template protocol (INSTANTIATE_TEMPLATE support)
+// ---------------------------------------------------------------------------
+
+/** Type-string prefix for compile-time-lowered template vnodes. */
+export const TPL_TYPE_PREFIX = '__vlx-tpl:';
+/** Prop-key prefix for hole bindings on lowered vnodes. */
+export const TPL_HOLE_PREFIX = '__h';
+/**
+ * Hole-key marking an element slot (dynamic subtree insertion point).
+ * Attr/text holes use the original prop key or `'#text'`; element slots use
+ * this sentinel. Slot-index `k` is the k-th `TPL_SLOT_KEY` in the holes list
+ * (0-based) and addresses INSERT/REMOVE_TEMPLATE_SLOT ops.
+ */
+export const TPL_SLOT_KEY = '#slot';
+/**
+ * Name of the global through which compiler-generated code registers
+ * element templates: `globalThis.<TPL_REGISTER_GLOBAL>(id, holes, create)`.
+ * Referenced by compiler codegen, the loader that extracts registrations for
+ * interpreter-only MT bundles, and the runtime/main-thread installers.
+ */
+export const TPL_REGISTER_GLOBAL = '__vueLynxRegisterElementTemplate';
+
+// ---------------------------------------------------------------------------
+// Cross-thread global handshakes (IFR)
+//
+// The runtime and main-thread packages cannot import each other (they are
+// bundled for different threads), so IFR wires them through globals. Every
+// read site is defensively guarded, which means a one-sided rename would not
+// throw — it would silently disable IFR. Single-sourcing the names here makes
+// that drift impossible.
+// ---------------------------------------------------------------------------
+
+/** Set on the IFR main thread so runtime code can detect the environment. */
+export const IFR_MT_FLAG_GLOBAL = '__VUE_LYNX_IFR_MT__';
+/** MT-side hook the runtime flush hands ops batches to during the IFR render. */
+export const IFR_APPLY_OPS_GLOBAL = '__vueLynxIfrApplyOps';
+/** Runtime-side hook renderPage triggers to run deferred IFR mounts. */
+export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
+/** MT executor registry for element-template create() functions. */
+export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
 
 // ---------------------------------------------------------------------------
 // REGISTER_TREE structure — the ONE definition both threads must agree

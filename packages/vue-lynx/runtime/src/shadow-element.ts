@@ -239,6 +239,24 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
+  // Element-template instance state (only set on lowered template roots).
+  // Hole shadows use contiguous uids after the root so both threads agree on
+  // ids without shipping a per-hole mapping.
+  _tplHoleKeys: string[] | undefined = undefined;
+  _tplHoles: ShadowElement[] | undefined = undefined;
+  /**
+   * Element-slot hole shadows in slot-index order (subset of `_tplHoles`
+   * whose keys are `'#slot'`). Used to emit INSERT/REMOVE_TEMPLATE_SLOT.
+   */
+  _tplSlots: ShadowElement[] | undefined = undefined;
+
+  /**
+   * When set, this ShadowElement is an element-slot wrapper belonging to
+   * the template rooted at `_tplRoot`. Inserts/removes use slot-index ops.
+   */
+  _tplRoot: ShadowElement | undefined = undefined;
+  _tplSlotIndex: number | undefined = undefined;
+
   // --- Vapor / DOM-compat state --------------------------------------------
 
   /** Text content for '#text' / '#comment' nodes (and setElementText). */
