@@ -62,7 +62,9 @@ one step (no in-slide fragments). Everything is authored against a fixed
 - Videos: muted+loop+autoplay-on-arrival by default; reset (pause+rewind) on
   every slide change. Opt-outs: `data-autoplay="false"`, `unmuted`, `no-loop`,
   `controls`.
-- Iframes mount at distance ≤ 1, unload at ≥ 2 — never keep one always-live.
+- Images & videos mount at distance ≤ 2, unload at ≥ 3; iframes stay at
+  ≤ 1 / ≥ 2. Never keep decoded bitmaps / frame buffers always-live (iOS
+  Safari kills the tab). Author photos ≤1280px on the long edge.
 - Missing files show a labeled placeholder (set `--ph-ar` for its aspect).
 - Resizable: wrap in `.phone.phone--embed.no-deck-scroll` with
   `data-embed="wide|portrait|browser"`; seed size with `data-w`/`data-h`

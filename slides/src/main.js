@@ -362,6 +362,15 @@ function setSlide(index, opts = {}) {
   });
   applyChromeAndBg(flags);
 
+  // Proximity-mount media before FLIP measures rects (images/videos are no
+  // longer eager). Keep the public deck:change event after the morph kick-off
+  // so weave/meteors listeners don't thrash layout mid-measure.
+  preloadDemosNear(current);
+  syncSlideMedia(current);
+  document.dispatchEvent(new CustomEvent('deck:media-sync', {
+    detail: { index: current, total: slides.length },
+  }));
+
   if (flags.transition === 'magic' && adjacent && !opts.jump) {
     mm.magicMove(slides[prev], slides[current]);
   }
@@ -380,8 +389,6 @@ function setSlide(index, opts = {}) {
   if (!opts.skipHash) {
     history.replaceState(null, '', `#${current + 1}`);
   }
-  preloadDemosNear(current);
-  syncSlideMedia(current);
 
   if (!opts.fromChannel) {
     broadcastState();
@@ -402,19 +409,35 @@ function preloadDemosNear(index) {
   }
 }
 
-// Native recording clips (<video>) only play on the current slide — every
-// other clip is paused and rewound so the deck stays quiet and cheap. When
-// reduced-motion is set we leave the poster frame up instead of autoplaying.
+// Native recording clips (<video.native-clip>) only decode + play on the
+// current slide. Eager preload="auto" across every clip used to pin
+// multi‑MB decoded frames in iOS Safari for the whole talk — move the
+// authored `src` into `data-src` and only attach it while on-slide.
 function syncSlideMedia(index) {
   document.querySelectorAll('video.native-clip').forEach((v) => {
+    if (!v.dataset.src) {
+      const src = v.getAttribute('src') || '';
+      if (src) {
+        v.dataset.src = src;
+        v.removeAttribute('src');
+        v.preload = 'none';
+        try { v.load(); } catch { /* ignore */ }
+      }
+    }
     const onCurrent = slides[index] && slides[index].contains(v);
-    if (onCurrent && !REDUCED_MOTION && !embedMode) {
-      const p = v.play?.();
-      if (p && typeof p.catch === 'function') p.catch(() => {});
+    if (onCurrent) {
+      if (v.dataset.src && v.getAttribute('src') !== v.dataset.src) {
+        v.src = v.dataset.src;
+      }
+      if (!REDUCED_MOTION && !embedMode) {
+        const p = v.play?.();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
     } else {
       v.pause?.();
-      if (!onCurrent) {
-        try { v.currentTime = 0; } catch { /* not seekable yet */ }
+      if (v.getAttribute('src')) {
+        v.removeAttribute('src');
+        try { v.load(); } catch { /* release iOS buffer */ }
       }
     }
   });
