@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 125</span>
+    <span data-counter>01 / 126</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2097,6 +2097,58 @@ app.<span class="code-fn">use</span>(router)</pre>
       inside <code>loadTemplate</code> — watch the <strong>paint</strong> flag
       jump left. The background thread still runs the same code, just in
       parallel and off the critical path.</p>
+    </aside>
+  </section>
+
+  <!-- IFR3 — Straightforward IFR: same renderer, ops stream is the recording -->
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:16ch">
+      <span class="brand-text">Straightforward</span> IFR
+    </h2>
+    <p class="lead" style="text-align:center;max-width:36ch;margin:0 auto 14px">
+      Both threads render. The ops stream <span class="brand-text">is</span> the recording.
+    </p>
+    <div class="recon">
+      <div class="recon__row">
+        <span class="recon__pair">
+          <code class="op">SET_TEXT 3 "Hi"</code>
+          <span class="recon__eq">=</span>
+          <code class="op">SET_TEXT 3 "Hi"</code>
+        </span>
+        <span class="recon__out is-skip">identical &rarr; skip</span>
+      </div>
+      <div class="recon__row">
+        <span class="recon__pair">
+          <code class="op">SET_TEXT 3 "Hi"</code>
+          <span class="recon__eq recon__eq--ne">&ne;</span>
+          <code class="op op--hot">SET_TEXT 3 "你好"</code>
+        </span>
+        <span class="recon__out is-patch">value differs &rarr; patch in place</span>
+      </div>
+      <div class="recon__row">
+        <span class="recon__pair">
+          <code class="op">CREATE 4 view</code>
+          <span class="recon__eq recon__eq--ne">&ne;</span>
+          <code class="op op--bad">CREATE 4 text</code>
+        </span>
+        <span class="recon__out is-tear">structural &rarr; tear down &amp; rebuild</span>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      The MT render records its ops; the BG's first batches hydrate against them.
+      Correctness never depends on the two matching — deterministic ids &amp;
+      <code>vue:N</code> signs route taps to Vue with no rebinding.
+    </p>
+    <aside class="notes">
+      <p><strong>Straightforward IFR — hydration by ops reconciliation.</strong>
+      No special first-frame format: the same Vue runtime + app (same
+      <code>nodeOps</code>) runs on the main thread during
+      <code>loadTemplate</code>. The flat ops stream doubles as the recorded
+      PAPI calls. The BG's initial <code>vuePatchUpdate</code> batches walk the
+      recording frame-by-frame: identical → skipped (already on screen), value
+      diff → patched, structural divergence → tear the first-screen tree down
+      and re-apply. A mismatch only loses the perf win, never correctness (logs
+      <code>IFR hydration mismatch</code> in dev).</p>
     </aside>
   </section>
 

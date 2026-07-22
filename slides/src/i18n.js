@@ -189,6 +189,8 @@ export const ZH = {
 
   // ---- IV · Instant First-Frame Rendering + Element Templates ----
   // headlines
+  'Straightforward IFR':
+    '<span class="brand-text">Straightforward</span> IFR',
   'Both threads render. The ops stream is the recording.':
     '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制。',
   'IFR changes when the frame renders. Element Templates change how much work it does.':
@@ -566,6 +568,8 @@ export const ZH_NOTES = [
   `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
   // IFR2 · IFR:先出画面
   `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。后台线程照样跑同一份代码,只是并行、离开关键路径。</p>`,
+  // IFR3 · Straightforward IFR
+  `<p><strong>Straightforward IFR —— 用 ops 对账做水合。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上。那条扁平 ops 流本身就是"录下来的 PAPI 调用"。后台最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制:相同 → 跳过(已在屏上),值不同 → 打补丁,结构分歧 → 拆掉首屏树重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。</p>`,
   // IFR5 · 逐节点的管线
   `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
   // IFR6 · ET 折叠管线
