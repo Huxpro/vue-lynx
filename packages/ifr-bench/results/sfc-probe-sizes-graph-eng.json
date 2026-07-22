@@ -1,0 +1,201 @@
+{
+  "nCards": 125,
+  "cells": [
+    {
+      "cell": "content-vdom",
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "n/a",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 151742,
+        "gzip": 36855
+      },
+      "lynxBundle": {
+        "raw": 150738,
+        "gzip": 43716
+      },
+      "mtSection": {
+        "raw": 22495,
+        "gzip": 7688
+      },
+      "bgSection": {
+        "raw": 120862,
+        "gzip": 28150
+      }
+    },
+    {
+      "cell": "content-vdom-ifr",
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "n/a",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 281886,
+        "gzip": 65931
+      },
+      "lynxBundle": {
+        "raw": 282538,
+        "gzip": 95104
+      },
+      "mtSection": {
+        "raw": 144039,
+        "gzip": 35538
+      },
+      "bgSection": {
+        "raw": 123965,
+        "gzip": 29313
+      }
+    },
+    {
+      "cell": "content-vdom-ifr-et",
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true,
+        "enableSparseNaming": true,
+        "slots": "on",
+        "naming": "n/a",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 513276,
+        "gzip": 108592
+      },
+      "lynxBundle": {
+        "raw": 471434,
+        "gzip": 148518
+      },
+      "mtSection": {
+        "raw": 257476,
+        "gzip": 56698
+      },
+      "bgSection": {
+        "raw": 237402,
+        "gzip": 49834
+      }
+    },
+    {
+      "cell": "content-vapor",
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 184060,
+        "gzip": 46851
+      },
+      "lynxBundle": {
+        "raw": 187077,
+        "gzip": 53610
+      },
+      "mtSection": {
+        "raw": 22495,
+        "gzip": 7690
+      },
+      "bgSection": {
+        "raw": 157353,
+        "gzip": 38194
+      }
+    },
+    {
+      "cell": "content-vapor-ifr",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 359029,
+        "gzip": 90007
+      },
+      "lynxBundle": {
+        "raw": 395045,
+        "gzip": 131904
+      },
+      "mtSection": {
+        "raw": 180440,
+        "gzip": 45550
+      },
+      "bgSection": {
+        "raw": 173003,
+        "gzip": 43332
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-dense",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": false,
+        "slots": "off",
+        "naming": "dense",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 358162,
+        "gzip": 89720
+      },
+      "lynxBundle": {
+        "raw": 394174,
+        "gzip": 131569
+      },
+      "mtSection": {
+        "raw": 180010,
+        "gzip": 45417
+      },
+      "bgSection": {
+        "raw": 172566,
+        "gzip": 43196
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-sparse",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "enableSparseNaming": true,
+        "slots": "off",
+        "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 359029,
+        "gzip": 90007
+      },
+      "lynxBundle": {
+        "raw": 395045,
+        "gzip": 131904
+      },
+      "mtSection": {
+        "raw": 180440,
+        "gzip": 45550
+      },
+      "bgSection": {
+        "raw": 173003,
+        "gzip": 43332
+      }
+    }
+  ]
+}
