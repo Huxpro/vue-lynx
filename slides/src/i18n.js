@@ -285,6 +285,10 @@ export const ZH = {
     '结构从不跨线 —— 两边产物里已经共享 <code>create()</code>。线上走的是 <b>tpl id</b> 和 <b>hole 值</b>;hydrate 把这些 ops join 起来。',
   'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
     'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
+  'FCP with IFR · Lynx for Web':
+    'FCP with IFR · Lynx for Web',
+  'Suite median −12% to −19%. ReactLynx control −23%. ET stays flat on FCP — its win is the render cost and ops payload you just saw.':
+    '全套中位数 −12% 到 −19%。ReactLynx 对照 −23%。ET 对 FCP 基本持平 —— 它的收益就是你刚看过的渲染开销与 ops 负载。',
   'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
     'Element Templates 把录制的 ops 负载缩小 3–1000× —— 这份协议瘦身惠及每一次更新,不只是首帧。',
   'A tool, not a default-on switch — but for content-first screens, IFR + ET is the recommended setup.':
@@ -639,26 +643,28 @@ export const ZH_NOTES = [
   `<p>MTS 的全部表面积,一个文件讲完:<code>'main thread'</code> 标记函数,<code>main-thread-bind*</code> 挂到事件上,<code>useMainThreadRef()</code> 给出同步元素访问 —— <code>setStyleProperty</code> 在手指移动的同一帧落地。</p><p><strong>先复用,再演化。</strong>引擎层我们直接跑 ReactLynx 的 worklet runtime 和它的 API 形状(<code>main-thread-bind*</code>、<code>useMainThreadRef</code>)—— 久经考验,而且在 Lynx 生态里通用。但 Vue 值得 Vue 形状的人体工学:想象 <code>&lt;script main-thread setup&gt;</code>、主线程的 computed/watch。这个设计空间是开放的 —— 也是社区留下印记的好地方。</p>`,
   // 51 C4 · 教程复刻
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
+  // IFR0 · 小节标题
+  `<p><strong>Instant First-Frame Rendering。</strong>工程章最后一块:在后台还没准备好之前画出首帧 —— 再用 Element Templates 让这一笔本身变便宜。</p>`,
   // IFR1 · 空白首帧
   `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
   // IFR2 · IFR:先出画面 + join
   `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。主线程<em>录下</em>自己的 ops;后台并行启动并送出最初几批。发光的 pill 就是 join —— 下一页打开它里面是什么。</p>`,
   // IFR3 · Straightforward IFR
   `<p><strong>Straightforward IFR —— hydration 当作 thread join。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上并<em>录下</em>扁平 ops 流。后台并行启动,随后最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制 —— 是一次 join,不是重写:相同 → 跳过,值不同 → 打补丁,结构分歧 → 拆掉重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。</p>`,
-  // IFR4 · Element Templates 转折
-  `<p><strong>第二个杠杆。</strong>IFR 把绘制提前;打开它会默认打开 Element Templates。它们让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。看接下来两页:BTS 与 MTS 之间那条共享 data-flow 从五步塌成三步。</p>`,
+  // IFR7 · Compiler-hinted Block → ET（紧接 Straightforward）
+  `<p><strong>进入 Element Templates —— 从 Vue 的 Block 说起。</strong>hydrate 仍然在 join 两条肥胖路径。Vue 的编译器早就把模板切成 Block:静态节点 vs 动态空洞(<code>patchFlag</code> / dynamicChildren)。Element Templates 复用这份结构 —— 把静态壳烘焙进 <code>registerElementTemplate(id, holes, create)</code>,只把空洞留在 vnode 路径。可下沉 = 纯 Lynx 元素且只有值/文本动态;组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、ref/id 留在普通路径(它们的纯元素子体仍可下沉)。下一页:两边的稀疏树,以及线上到底同步了什么。</p>`,
+  // IFR8 · 双线程树 + 同步内容
+  `<p><strong>两边的树分别是什么。</strong>BTS 侧是稀疏的 VDOM / ShadowElement:静态节点仍在(满足 Vue 的同步读取),但对协议隐形(变灰);只有 hole 有名字(<code>h0</code>…)。MTS IFR 用编译好的 <code>create()</code> 物化同一形状 —— 一棵原生元素树,hole id 对齐。这份稀疏,正是上一页编译出来的 Block。</p><p><strong>同步了什么。</strong>和 Vapor 的 <code>REGISTER_TREE</code> 不同,ET 不传结构:<code>registerElementTemplate</code> 已经把 <code>create()</code> 打进两边产物。跨线只有 <code>INSTANTIATE_TEMPLATE(tplId)</code>(每个实例一次)+ hole 的 <code>SET_*</code> 值。IFR 下 MTS 首屏已录下这些 ops;BTS 最初几批拿去和录制对账 —— 仍是 Straightforward IFR 那次 skip / patch / rebuild join。下一页:没有 ET 时,两条线程仍走肥胖的五步路径。</p>`,
   // IFR5 · 原双线程图 + 中间 5 步连接
   `<p><strong>同一份代码,两条线程,仍然很贵。</strong>还是原来那两列 —— 中间编号芯片点亮共享的 5 步协议:VDOM → Shadow → ops → interp → PAPI。BTS 发出流;MTS IFR 录下并本地 apply。IFR 改的是<em>何时</em> paint —— 下一页把这五条连接塌成三条。</p>`,
   // IFR6 · 同一张图,连接 5→3
-  `<p><strong>同一张图,更少连接。</strong>看 2–4 步折进一个 <code>INSTANTIATE_TEMPLATE</code> 芯片;VDOM 和 PAPI/<code>create()</code> 留在原地(magic-move)。BTS 仍从 VDOM 起步,但静态块是一个 vnode,只发 INSTANTIATE + hole SET_*。MTS IFR 的解释器调用烘焙好的 <code>create()</code>。下一页:为什么 Vue 能这么做 —— compiler-hinted VDOM 本来就带着 Block 结构。</p>`,
-  // IFR7 · Compiler-hinted Block → ET
-  `<p><strong>为什么 Vue 能这么做。</strong>Vue 的编译器早就把模板切成 Block:静态节点 vs 动态空洞(<code>patchFlag</code> / dynamicChildren)。Element Templates 复用这份结构信息 —— 把静态壳烘焙进 <code>registerElementTemplate(id, holes, create)</code>,只把空洞留在 vnode 路径。可下沉 = 纯 Lynx 元素且只有值/文本动态;组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、ref/id 留在普通路径(它们的纯元素子体仍可下沉)。下一页:两边的稀疏树,以及线上到底同步了什么。</p>`,
-  // IFR8 · 双线程树 + 同步内容
-  `<p><strong>两边的树分别是什么。</strong>BTS 侧是稀疏的 VDOM / ShadowElement:静态节点仍在(满足 Vue 的同步读取),但对协议隐形(变灰);只有 hole 有名字(<code>h0</code>…)。MTS IFR 用编译好的 <code>create()</code> 物化同一形状 —— 一棵原生元素树,hole id 对齐。这份稀疏,正是上一页编译出来的 Block。</p><p><strong>同步了什么。</strong>和 Vapor 的 <code>REGISTER_TREE</code> 不同,ET 不传结构:<code>registerElementTemplate</code> 已经把 <code>create()</code> 打进两边产物。跨线只有 <code>INSTANTIATE_TEMPLATE(tplId)</code>(每个实例一次)+ hole 的 <code>SET_*</code> 值。IFR 下 MTS 首屏已录下这些 ops;BTS 最初几批拿去和录制对账 —— 仍是 Straightforward IFR 那次 skip / patch / rebuild join。</p>`,
-  // IFR9 · 基准测试表
-  `<p>几组独立的实验,不是一条 trace。FCP 收益(中位数 −12…−19%,ReactLynx 对照 −23%)来自去掉后台启动 + IPC —— 需要真实的线程边界,两种 IFR 配置都能拿到(ET 对 web FCP 基本持平)。Element Templates 自己的收益在渲染开销 9.4ms → <strong>1.3ms</strong>(多次重跑约 6–15×)和 ops 负载 —— 这也是 ET 默认打开的原因。代价:约 2.26× gzip。</p>`,
-  // IFR10 · 基准测试图
+  `<p><strong>同一张图,更少连接。</strong>看 2–4 步折进一个 <code>INSTANTIATE_TEMPLATE</code> 芯片;VDOM 和 PAPI/<code>create()</code> 留在原地(magic-move)。BTS 仍从 VDOM 起步,但静态块是一个 vnode,只发 INSTANTIATE + hole SET_*。MTS IFR 的解释器调用烘焙好的 <code>create()</code>。下一页:一句话收束 —— IFR 改<em>何时</em>;Element Templates 改做多少活。</p>`,
+  // IFR4 · Element Templates 转折（收束）
+  `<p><strong>两个杠杆,一句话。</strong>你刚看完 BTS↔MTS 共享 data-flow 从五步塌成三步。IFR 把绘制提前;Element Templates 让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。下一页:数字。</p>`,
+  // IFR10 · 基准测试图（ops / 渲染开销）
   `<p>左:渲染开销随 ET 塌陷。右:静态偏重屏幕的跨线程协议从约 78KB 降到 69 字节。PAPI 调用次数只降 5–20% —— 原生元素工作是共享地板;被下沉掉的是框架 JS 和它周围的协议。</p>`,
+  // IFR9 · FCP 大字 −22%
+  `<p><strong>标题数字。</strong>FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 这一行 −22%,全套中位数 −12…−19%,ReactLynx 对照 −23%。收益来自去掉后台启动 + IPC —— 两种 IFR 配置都能拿到。ET 对 web FCP 基本持平;它自己的收益你上一页已经看过(渲染开销与 ops 负载)。代价:约 2.26× gzip,TTI proxy ~1.36×。</p>`,
   // H1 · 2 weeks + X 复盘(合并)
   `<p><strong>现在这个数字说得通了 —— 顺便告诉大家去哪儿读。</strong>这一章的一切 —— 渲染器、工具链、MTS —— 是两周的夜晚和周末做出来的:plan 写成 spec,agent harness 执行,上游测试当 reward signal,AGENTS.md 固化调试手册。完整方法论写在 X 上(这里内嵌了,vue.lynxjs.org 首页的 badge 也链着它)—— 扫码就能在手机上读。给在座各位一个安静的结论:Lynx 出乎意料地 <em>AI 可读</em> —— Web 标准的 API 和真 CSS,意味着模型的 Web 直觉基本直接迁移。然后收束:"这就是它怎么被做出来的 —— 接下来看看它加起来意味着什么。"</p>`,
   // 65 Close · 一行 npm 命令（含原 combine / 搭把手 / 另一个团队 / what's there / 假收尾）
