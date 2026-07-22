@@ -17,3 +17,6 @@ results/unified-tbl-smoke*
 apps/ui-react/src/ContentApp.tsx
 apps/ui-react/src/index-content.tsx
 apps/ui-react/dist-content/
+
+# scale-proof outputs (one-cell capability checks, not datasets)
+results/unified-proof*
