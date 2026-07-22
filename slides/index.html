@@ -2100,51 +2100,53 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR3 — Straightforward IFR: record + reconcile (same visual language as IFR1–2) -->
+  <!-- IFR3 — Straightforward IFR: dual-thread ops + hydrate join -->
   <section class="slide stage">
     <h2 class="h-section" style="text-align:center;max-width:20ch">
       <span class="brand-text">Straightforward</span> IFR
     </h2>
-    <div class="recon">
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq">=</span>
-          <code class="op">SET_TEXT 3 "Hi"</code>
-        </span>
-        <span class="recon__out is-skip">identical &rarr; skip</span>
+    <div class="ifrjoin">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" style="--c:#56b8f0">
+          <span class="ifrjoin__label"><i></i>Main (UI) thread</span>
+          <span class="ifrjoin__role">records</span>
+          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op">CREATE 4 view</code>
+        </div>
+        <div class="ifrjoin__rail" aria-hidden="true"></div>
+        <div class="ifrjoin__col" style="--c:#5dd5a8">
+          <span class="ifrjoin__label"><i></i>Background thread</span>
+          <span class="ifrjoin__role">first batches</span>
+          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-diff">SET_TEXT 3 "你好"</code>
+          <code class="ifrjoin__op is-diff">CREATE 4 text</code>
+        </div>
       </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">SET_TEXT 3 "Hi"</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--hot">SET_TEXT 3 "你好"</code>
-        </span>
-        <span class="recon__out is-patch">value differs &rarr; patch in place</span>
+      <div class="ifrjoin__join">
+        <span class="ifrjoin__elbow ifrjoin__elbow--l" aria-hidden="true"></span>
+        <span class="ifrjoin__pill">hydrate · thread join</span>
+        <span class="ifrjoin__elbow ifrjoin__elbow--r" aria-hidden="true"></span>
       </div>
-      <div class="recon__row">
-        <span class="recon__pair">
-          <code class="op">CREATE 4 view</code>
-          <span class="recon__eq recon__eq--ne">&ne;</span>
-          <code class="op op--bad">CREATE 4 text</code>
-        </span>
-        <span class="recon__out is-tear">structural &rarr; tear down &amp; rebuild</span>
+      <div class="ifrjoin__outcomes">
+        <span class="ifrjoin__out is-skip">identical &rarr; skip</span>
+        <span class="ifrjoin__out is-patch">value differs &rarr; patch</span>
+        <span class="ifrjoin__out is-tear">structural &rarr; rebuild</span>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
       Both threads render. The ops stream <span class="brand-text">is</span> the recording —
-      the MT records its ops; the BG's first batches hydrate against them.
-      Correctness never depends on the two matching.
+      hydrate joins them. Correctness never depends on the two matching.
     </p>
     <aside class="notes">
-      <p><strong>Straightforward IFR — hydration by ops reconciliation.</strong>
+      <p><strong>Straightforward IFR — hydration as a thread join.</strong>
       No special first-frame format: the same Vue runtime + app (same
       <code>nodeOps</code>) runs on the main thread during
-      <code>loadTemplate</code>. The flat ops stream doubles as the recorded
-      PAPI calls. The BG's initial <code>vuePatchUpdate</code> batches walk the
-      recording frame-by-frame: identical → skipped (already on screen), value
-      diff → patched, structural divergence → tear the first-screen tree down
-      and re-apply. A mismatch only loses the perf win, never correctness (logs
+      <code>loadTemplate</code> and <em>records</em> its flat ops stream. The
+      background boots in parallel, then its first <code>vuePatchUpdate</code>
+      batches walk that recording — a join, not a rewrite: identical → skip,
+      value diff → patch, structural divergence → tear down &amp; rebuild.
+      A mismatch only loses the perf win, never correctness (logs
       <code>IFR hydration mismatch</code> in dev). Deterministic ids &amp;
       <code>vue:N</code> signs route taps to Vue with no rebinding.</p>
     </aside>

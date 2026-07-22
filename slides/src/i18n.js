@@ -204,10 +204,18 @@ export const ZH = {
     '主线程渲染时录下自己的 ops;后台最初的几批拿去和它水合对账。正确性从不依赖两者一致 —— 确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。',
   'Both threads render. The ops stream is the recording — the MT records its ops; the BG\'s first batches hydrate against them. Correctness never depends on the two matching.':
     '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制 —— 主线程录下 ops,后台最初几批拿去水合对账。正确性从不依赖两者一致。',
-  // recon pills
+  'Both threads render. The ops stream is the recording — hydrate joins them. Correctness never depends on the two matching.':
+    '两条线程都渲染。那条 ops 流<span class="brand-text">就是</span>录制 —— hydrate 把它们 join 起来。正确性从不依赖两者一致。',
+  // dual-thread join labels (thread names reuse existing Main/Background keys)
+  'records': '录制',
+  'first batches': '最初几批',
+  'hydrate · thread join': 'hydrate · thread join',
+  // recon / join outcome pills
   'identical → skip': '相同 → 跳过',
   'value differs → patch in place': '值不同 → 原地打补丁',
+  'value differs → patch': '值不同 → 打补丁',
   'structural → tear down & rebuild': '结构分歧 → 拆掉重建',
+  'structural → rebuild': '结构分歧 → 重建',
   'Normally every static element pays the whole chain — a vnode, a shadow node, ops frames, a thread crossing, an interpreter dispatch.':
     '常规下每个静态元素都要付整条链 —— 一个 vnode、一个影子节点、若干 ops 帧、一次跨线程、一次解释器分发。',
   'The compiler lowers the static subtree to one create() function. Vue sends one op; only the dynamic holes travel after.':
@@ -575,7 +583,7 @@ export const ZH_NOTES = [
   // IFR2 · IFR:先出画面
   `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。后台线程照样跑同一份代码,只是并行、离开关键路径。</p>`,
   // IFR3 · Straightforward IFR
-  `<p><strong>Straightforward IFR —— 用 ops 对账做水合。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上。那条扁平 ops 流本身就是"录下来的 PAPI 调用"。后台最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制:相同 → 跳过(已在屏上),值不同 → 打补丁,结构分歧 → 拆掉首屏树重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。</p>`,
+  `<p><strong>Straightforward IFR —— hydration 当作 thread join。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上并<em>录下</em>扁平 ops 流。后台并行启动,随后最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制 —— 是一次 join,不是重写:相同 → 跳过,值不同 → 打补丁,结构分歧 → 拆掉重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。</p>`,
   // IFR5 · 逐节点的管线
   `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
   // IFR6 · ET 折叠管线
