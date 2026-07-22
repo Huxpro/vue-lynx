@@ -18,14 +18,15 @@ sub-terms get names*. That gives four orthogonal axes:
 
 | Column | Question | Levels (terminology v2) |
 |---|---|---|
-| **Staging** | what form does the residual exist in? | `ops (interp)` → `tree (interp)` → `code (compiled)` → `native (compiled)` — the interp/compiled split is the Futamura boundary |
+| **Staging** | what form does the residual exist in? | `ops (interp)` → `data (interp)` → `code (compiled)` → `native (compiled)` — the interp/compiled split is the Futamura boundary |
 | **Naming** | what is the UNIT of cross-thread identity? | `node` (every node named) / `block` (one base id + offsets per template block) |
 | **Addressing** | how are named nodes located? | `random-access` / `traversal` / `traversal+recover` |
 | **Provider** | who materializes the residual? | `BTS` / `MTS` / `Engine` |
 | **Lifetime** | how long does the materialization live? | `persistent` / `ephemeral` (browser-fused case: `thread=local`) |
+| **Delivery** | when does the residual reach the MT? | `runtime` (over the wire, e.g. `REGISTER_TREE` once per template) / `bundle` (compiled into the MT bundle at build) / `—` (ops: no residual, streamed per instance) |
 
 Legacy vocabulary maps 1:1 and stays accepted by every flag: staging
-`opstream`≡ops, `data`≡tree, `engine`≡native; naming `dense`≡node,
+`opstream`≡ops, `tree`≡data, `engine`≡native; naming `dense`≡node,
 `sparse`≡block; provenance `intrinsic`≈random-access,
 `recovered`≈traversal+recover; deployment split into Provider × Lifetime.
 
@@ -66,9 +67,9 @@ mechanisms is the Lynx-engine realization of something Vue already names:
 | Upstream Vue concept | Information it carries | Lynx-side counterpart (v2 term) |
 |---|---|---|
 | **Block** (openBlock / patchFlag / dynamicChildren) | intrinsic mutation frontier of a subtree | **block naming** + random-access addressing — the Code-Template's hole list IS the Block's dynamicChildren |
-| Vapor `template()` string | the static residual | **Tree-Template** residual (`REGISTER_TREE` serialized tree) |
+| Vapor `template()` string | the static residual | **Data-Template** residual (`REGISTER_TREE` serialized tree) |
 | Vapor navigation (child/next/nthChild) | positional addressing | **traversal** addressing (BG walks the ShadowElement facade; MT walks anonymous natives) |
-| `__vlxAddressing` (ours) | *recovered* mutation frontier | block naming for the Tree-Template (traversal+recover) — Vue's Block generalized to a no-vdom render model: VDOM declares it intrinsically, Vapor recovers the equivalent by compile-time analysis (hence the tag-fingerprint fail-safe: recovered info can be wrong, declared info cannot) |
+| `__vlxAddressing` (ours) | *recovered* mutation frontier | block naming for the Data-Template (traversal+recover) — Vue's Block generalized to a no-vdom render model: VDOM declares it intrinsically, Vapor recovers the equivalent by compile-time analysis (hence the tag-fingerprint fail-safe: recovered info can be wrong, declared info cannot) |
 | Vapor-Web `cloneNode` | native prototype clone | **Engine-Template** (native staging, *thread=local*) |
 | SSR **hydration** | adopt pre-existing output | **IFR hydration** (the ephemeral MTS copy is adopted frame-by-frame or replaced by full replay) |
 | static hoisting / partial evaluation | static folding | the residual itself (`λ holes. tree` partially evaluated at compile time) |
@@ -84,14 +85,15 @@ one-to-one:
 - **`+b`** — *block templates*: use the block's parts information for
   block naming (`base+offset`) and template materialization. The staging
   parameter defaults to the render model's natural rung:
-  `vdom +b` ≡ `+b:c` (code, baked `create()`); `vapor +b` ≡ `+b:t`
-  (tree — Split topology forces the residual across the thread boundary
-  as data). The two `+b` factors are therefore **not comparable across
+  `vdom +b` ≡ `+b:c` (code, baked `create()`, bundle-delivered); `vapor +b`
+  ≡ `+b:d` (data — the Split topology forces the residual across the
+  thread boundary as data; today runtime-delivered via `REGISTER_TREE`). The two `+b` factors are therefore **not comparable across
   render models**; information source also differs (vdom intrinsic via
   Vue's Block, vapor recovered via `__vlxAddressing`).
 - **`+b:e`** — staging raised to the engine rung for the **persistent**
   tree (`__CreateElementTemplate` family). N/A on Lynx-for-Web.
-  `+b:c` for vapor is M3a (unimplemented).
+  `+b:c` for vapor is M3a (unimplemented); bundle-delivered data
+  (tentative `+b!`) is likewise unbuilt — see the Delivery column.
 - **`+ifr`** — ephemeral first-frame copy painted by the MTS, adopted or
   replayed on hydration. Paint parameter defaults to inheriting the
   persistent staging.
@@ -111,15 +113,28 @@ reference).
 
 ### 1.4 Placement table (current world → coordinates)
 
-| Mechanism | Staging | Naming | Addressing | Provider | Lifetime | Term |
-|---|---|---|---|---|---|---|
-| VDOM ops | ops | node | random-access | BTS | persistent | Op Stream |
-| Vapor A1 | tree | node | traversal | BTS | persistent | **Named Tree** |
-| Vapor A2 (#309) | tree | **block** | traversal+recover | BTS | persistent | **Tree-Template** |
-| VDOM JS ET (`INSTANTIATE_TEMPLATE`) | code | block | random-access | BTS / MTS(IFR) | persistent / **ephemeral** | **Code-Template** |
-| ReactLynx Snapshot | code | block | random-access | MTS(first frame)/BTS(updates) | persistent | **Code-Template** |
-| Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | **Engine-Template** |
-| Vapor-Web `cloneNode` | native | block | traversal | Engine | persistent · *thread=local* | browser Engine-Template |
+| Mechanism | Staging | Naming | Addressing | Provider | Lifetime | Delivery | Term |
+|---|---|---|---|---|---|---|---|
+| VDOM ops | ops | node | random-access | BTS | persistent | — | Op Stream |
+| Vapor A1 | data | node | traversal | BTS | persistent | runtime | **Named Tree** |
+| Vapor A2 (#309) | data | **block** | traversal+recover | BTS | persistent | runtime | **Data-Template** |
+| VDOM JS ET (`INSTANTIATE_TEMPLATE`) | code | block | random-access | BTS / MTS(IFR) | persistent / **ephemeral** | **bundle** | **Code-Template** |
+| ReactLynx Snapshot | code | block | random-access | MTS(first frame)/BTS(updates) | persistent | bundle | **Code-Template** |
+| Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | bundle (ideal); our probe path proves runtime works | **Engine-Template** |
+| Vapor-Web `cloneNode` | native | block | traversal | Engine | persistent · *thread=local* | bundle (HTML string) | browser Engine-Template |
+
+**Unbuilt cells the Delivery column exposes** (theoretical, tracked for
+the roadmap): `vapor +b!` — bundle-delivered data (compiler emits the
+`TemplateNode` into the MT bundle; kills BG parse + serialize + wire +
+runtime-register, staging stays data — "M3a-lite"); `vapor +b:c` (M3a,
+bundle-delivered code); `vdom +b:e` (needs the compiler to emit a data
+descriptor — the native rung forces the residual back into data form).
+
+**Factor cleanliness under the six columns**: vapor's ladder decomposes
+into single-column factors — `+b` moves Naming only, the future `+b!`
+moves Delivery only, `:c`/`:e` move Staging only. vdom's `+b` is a
+three-column bundle (Staging+Naming+Delivery at once) — which is why the
+two `+b` factor rows must not be compared across render models.
 
 (VDOM Block/openBlock+patchFlag is an addressing/provenance *source*, not
 a materialization mechanism — it stays off the table.)

@@ -157,7 +157,7 @@ export interface PluginVueLynxOptions {
    * receive cross-thread identities (see `vue-lynx/internal/matrix`).
    *
    * - `'block'` — the template block is the naming unit (one base id +
-   *   offsets): Vapor `CLONE_TREE` becomes a **Tree-Template** when
+   *   offsets): Vapor `CLONE_TREE` becomes a **Data-Template** when
    *   `__vlxAddressing` is present, with fail-safe fallback to node naming.
    * - `'node'` — every preorder slot is named independently: the Vapor
    *   **Named Tree** cell, used for A/B measurement in the graph-eng matrix.
@@ -176,31 +176,32 @@ export interface PluginVueLynxOptions {
    *
    * - `'ops'` (interp) — per-instruction stream, no template mechanism
    *   (VDOM default without element templates).
-   * - `'tree'` (interp) — serialized tree + one generic MT interpreter
-   *   (`REGISTER_TREE`/`CLONE_TREE`; Vapor default → Tree-Template).
+   * - `'data'` (interp) — serialized tree shipped as data + one generic
+   *   MT interpreter (`REGISTER_TREE`/`CLONE_TREE`; Vapor default →
+   *   Data-Template).
    * - `'code'` (compiled) — per-template compiled `create()` closure, no
    *   interpreter (`INSTANTIATE_TEMPLATE` → Code-Template). Not
-   *   implemented for Vapor (M3a optional) — falls back to `'tree'` with a
+   *   implemented for Vapor (M3a optional) — falls back to `'data'` with a
    *   warning.
    * - `'native'` (compiled) — host-resident **Engine-Template**: the MT
    *   executor routes instantiation through the `__CreateElementTemplate`
    *   PAPI family when the engine provides it, and falls back to
    *   interpretation (reported N/A/stub) when it does not.
    *
-   * Legacy spellings `'opstream'` ≡ `'ops'`, `'data'` ≡ `'tree'`,
+   * Legacy spellings `'opstream'` ≡ `'ops'`, `'tree'` ≡ `'data'`,
    * `'engine'` ≡ `'native'` are accepted. Defaults preserve current
-   * behavior: Vapor → `'tree'`; VDOM → `'code'` when element templates are
+   * behavior: Vapor → `'data'`; VDOM → `'code'` when element templates are
    * enabled, else `'ops'`.
    *
    * @defaultValue undefined (per-render-model default above)
    */
   templateStaging?:
     | 'ops'
-    | 'tree'
+    | 'data'
     | 'code'
     | 'native'
     | 'opstream'
-    | 'data'
+    | 'tree'
     | 'engine';
 
   /**
@@ -362,28 +363,28 @@ export function pluginVueLynx(
 
   // Staging: normalize legacy spellings; default = current product
   // behavior per render model.
-  const defaultStaging = vapor ? 'tree' : enableElementTemplates ? 'code' : 'ops';
+  const defaultStaging = vapor ? 'data' : enableElementTemplates ? 'code' : 'ops';
   let templateStaging = normalizeStaging(
     options.templateStaging ?? defaultStaging,
   );
   if (vapor && templateStaging === 'ops') {
     console.warn(
       '[vue-lynx] templateStaging:\'ops\' is not a Vapor cell '
-        + '(template() always registers a tree) — using \'tree\'.',
+        + '(template() always registers a tree) — using \'data\'.',
     );
-    templateStaging = 'tree';
+    templateStaging = 'data';
   }
   if (vapor && templateStaging === 'code') {
     console.warn(
       '[vue-lynx] templateStaging:\'code\' (Vapor Code-Template, M3a) is '
-        + 'not implemented — using \'tree\'. The matrix reports this cell '
+        + 'not implemented — using \'data\'. The matrix reports this cell '
         + 'as stub.',
     );
-    templateStaging = 'tree';
+    templateStaging = 'data';
   }
-  if (!vapor && templateStaging === 'tree') {
+  if (!vapor && templateStaging === 'data') {
     console.warn(
-      '[vue-lynx] templateStaging:\'tree\' is not a VDOM cell (no '
+      '[vue-lynx] templateStaging:\'data\' is not a VDOM cell (no '
         + 'CLONE_TREE protocol) — using the default.',
     );
     templateStaging = enableElementTemplates ? 'code' : 'ops';
@@ -391,7 +392,7 @@ export function pluginVueLynx(
   // Define VALUES keep the legacy spelling for compatibility with built
   // bundles and runtime checks (both spellings accepted at read sites).
   const stagingDefine = (
-    { ops: 'opstream', tree: 'data', code: 'code', native: 'engine' } as const
+    { ops: 'opstream', data: 'data', code: 'code', native: 'engine' } as const
   )[templateStaging];
   const paintDefine = (
     { plain: 'plain', 'code-paint': 'disposable-et', 'native-paint': 'engine-et' } as const

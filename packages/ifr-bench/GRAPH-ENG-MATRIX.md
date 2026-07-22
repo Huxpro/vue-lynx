@@ -16,18 +16,19 @@ materialization mechanism is a point on four axes
 
 | Column | Meaning | Levels (terminology v2) |
 |------|---------|--------|
-| **Staging** | what form the residual exists in | `ops (interp)` → `tree (interp)` → `code (compiled)` → `native (compiled)` |
+| **Staging** | what form the residual exists in | `ops (interp)` → `data (interp)` → `code (compiled)` → `native (compiled)` |
 | **Naming** | the UNIT of cross-thread identity | `node` (per-node) / `block` (base id + offsets per template block) |
 | **Addressing** | how named nodes are located | `random-access` / `traversal` / `traversal+recover` |
 | **Provider** | who materializes the residual | `BTS` / `MTS` / `Engine` |
 | **Lifetime** | materialization lifetime | `persistent` / `ephemeral` |
+| **Delivery** | when the residual reaches the MT | `runtime` (wire, `REGISTER_TREE`) / `bundle` (built into the MT bundle) / `—` (ops) |
 
-Legacy flag spellings remain accepted (`opstream|data|engine` ≡
-`ops|tree|native`; `dense|sparse` ≡ `node|block`).
+Legacy flag spellings remain accepted (`opstream|tree|engine` ≡
+`ops|data|native`; `dense|sparse` ≡ `node|block`).
 
-**Benchmark cell notation (V4)**: `render [+b[:t|c|e]] [+ifr[:c|e]]` —
+**Benchmark cell notation (V4)**: `render [+b[:d|c|e]] [+ifr[:c|e]]` —
 baseline (per-node) × stacked optimizations. `+b` = block templates
-(staging defaults to the model's natural rung: vdom→:c, vapor→:t);
+(staging defaults to the model's natural rung: vdom→:c bundle-delivered, vapor→:d runtime-delivered);
 `+b:e` = engine staging for the persistent tree; `+ifr[:c|e]` =
 ephemeral first frame (optionally painted at the code/engine rung).
 Full legend: `GRAPH-ENG-REPORT.md` §1.3c and the unified report page.
@@ -35,11 +36,11 @@ Full legend: `GRAPH-ENG-REPORT.md` §1.3c and the unified report page.
 **Terminology** (the only names code and report use):
 
 - node-named tree mechanism → **Named Tree**; block-named mechanisms →
-  **Template**, qualified by staging: **Tree-Template / Code-Template /
+  **Template**, qualified by staging: **Data-Template / Code-Template /
   Engine-Template** (axis level `native`, mechanism name Engine-Template).
 - `Data → Code` is the first Futamura projection (specialize the
   interpreter to one template); `Code → Engine` compiles away JS itself.
-- Legacy aliases: "dense tree"/"A1" ≡ Named Tree; "sparse A2"/"Data-Template" ≡ Tree-Template; "JS ET" ≡ Code-Template;
+- Legacy aliases: "dense tree"/"A1" ≡ Named Tree; "sparse A2"/"Data-Template" ≡ Data-Template; "JS ET" ≡ Code-Template;
   "disposable" is not a mechanism — it is the lifetime value `ephemeral`.
 
 ## Placement table (current mechanisms → coordinates)
@@ -48,7 +49,7 @@ Full legend: `GRAPH-ENG-REPORT.md` §1.3c and the unified report page.
 |---|---|---|---|---|---|---|
 | VDOM ops | ops | node | random-access | BTS | persistent | Op Stream |
 | Vapor A1 | tree | node | traversal | BTS | persistent | **Named Tree** |
-| Vapor A2 (#309) | tree | **block** | traversal+recover | BTS | persistent | **Tree-Template** |
+| Vapor A2 (#309) | tree | **block** | traversal+recover | BTS | persistent | **Data-Template** |
 | VDOM `INSTANTIATE_TEMPLATE` | code | block | random-access | BTS / MTS(IFR) | persistent / ephemeral | **Code-Template** |
 | ReactLynx Snapshot | code | block | random-access | MTS(first frame)/BTS(updates) | persistent | **Code-Template** |
 | Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | **Engine-Template** |
