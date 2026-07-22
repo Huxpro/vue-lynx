@@ -3789,6 +3789,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>The dramatic reversal.</strong> On the Web, Vapor's <code>t0()</code> ends in <code>cloneNode(true)</code> — the browser engine clones the residual natively. In our vocabulary that was <em>already an Engine-Template</em>: no interpreter anywhere on the hot path. We had the top of the ladder for free.</p>
       <p><strong>Then Lynx's split topology takes it away.</strong> A residual that lives as code on BG cannot be called across a wire — it must <em>travel</em>, and anything that travels is data (<code>REGISTER_TREE</code>'s structure AST, or the ops themselves). And data on the far side needs an <em>interpreter</em> to re-materialize it. The boundary un-compiled us — it revived the interpret side. Which means every optimization from here is the same move: compile the interpreter away again. Next: the ladder.</p>
+      <p><strong>Industry rhyme, if asked.</strong> React Server Components are the network-boundary instance of the same law: the server partially evaluates the tree and ships the residual as data (the Flight payload) to a client-side interpreter. Glimmer compiles templates to a bytecode wire format interpreted by a VM — data-staged templates. Qwik serializes the residual into the document for resumability. Different boundaries — network, bundle-size, thread — same revival of the interpret side.</p>
     </aside>
   </section>
 
@@ -4027,8 +4028,8 @@ app.<span class="code-fn">use</span>(router)</pre>
         <tr><td class="metric">+b · vdom (3-column bundle)</td><td class="cost">+7.1%</td><td class="cost">+11.6%</td><td class="cost">+13.5%</td></tr>
         <tr><td class="metric">+ifr · vdom</td><td>+1.3%</td><td>+2.6%</td><td>+3.1%</td></tr>
         <tr><td class="metric">+ifr · vapor +b</td><td>+4.6%</td><td class="win">−12.0%</td><td>+0.6%</td></tr>
-        <tr><td class="metric flat">+b:c · vapor — unbuilt</td><td class="flat" colspan="3">the open cell — code-staged create on vapor's update wins; highest ceiling</td></tr>
-        <tr><td class="metric flat">+b! · vapor — unbuilt</td><td class="flat" colspan="3">bundle-delivered data — isolates pure delivery; cheapest to build</td></tr>
+        <tr><td class="metric flat">+b:c · vapor — unbuilt · #337</td><td class="flat" colspan="3">est. create −5…−17% by static share · update ~0 · IFR tax → win</td></tr>
+        <tr><td class="metric flat">+b! · vapor — unbuilt · #338</td><td class="flat" colspan="3">est. structure wire −100% · create −1…−3% · update ~0</td></tr>
         <tr><td class="metric flat">+b:d→e · vapor</td><td class="flat" colspan="3">stub delta ≈ noise — a yardstick, not an engine win</td></tr>
       </tbody>
     </table>
@@ -4044,7 +4045,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Marginal effects — move one axis, hold the rest.</strong> Row one is the headline: switching the render model halves update storms and collapses select storms; it costs ~12% on create (Vapor's clone protocol). The template rows hover in single digits at this cell mix — <em>update and select are template-blind</em>: we verified identical op frames and native call counts across template cells; templates pay off on create and on protocol bytes, scaling with the static fraction (this app is dynamic-heavy, so the deck's 1000× ops-payload slide is the other end of that curve).</p>
       <p><strong>Careful with the dirty factor.</strong> The vdom +b row moves staging+naming+delivery at once — its +11.6% storm cost is the ET wrapper trade at 10k, not a verdict on any single axis; only the vapor rows are clean single-column reads. +ifr trades a small create tax for the −12…−22% FCP win (FCP ladder is in the linked report, same-host to 30k), and under +b that tax shrinks — the axes compose. The :e row exists to keep us honest: with a stubbed engine the delta is noise, and that is exactly what it measures.</p>
-      <p><strong>The greyed rows are the roadmap, ranked.</strong> +b:c — the open-cell slide you just saw; highest buildable ceiling. +b! — the cheap one: ship the structure AST in the MTS bundle, no wire cost, MT still interprets; it isolates the delivery axis for clean attribution. :d→e — blocked on engine PAPI, waiting for a native host. A useful fourth for the science, not the product: a data-staged vdom cell would let the vdom family decompose one column at a time the way vapor's ladder does.</p>
+      <p><strong>The greyed rows are the roadmap, ranked — and the est. numbers are projections, not benchmarks.</strong> +b:c (#337) — the open-cell slide you just saw; the range is the measured code-staging analogue (−2% at ×1 static → −17% at ×4), update ~0 because updates are template-blind, and the IFR shape is the +22%→−14% flip. +b! (#338) — ship the structure AST in the MTS bundle: the wire win is definitional (structure bytes → 0 for known templates), the create trim is first-clone amortization; it isolates the delivery axis for clean attribution. :d→e — blocked on engine PAPI, waiting for a native host. A useful fourth for the science, not the product: a data-staged vdom cell would let the vdom family decompose one column at a time the way vapor's ladder does.</p>
     </aside>
   </section>
 
