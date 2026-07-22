@@ -1,5 +1,12 @@
 # @vue-lynx-example/basic
 
+## 0.2.10
+
+### Patch Changes
+
+- Updated dependencies [[`2511182`](https://github.com/Huxpro/vue-lynx/commit/25111827169083fecda5c6b19bfc4541f77e7438)]:
+  - vue-lynx@0.5.2
+
 ## 0.2.9
 
 ### Patch Changes
