@@ -394,6 +394,14 @@ export function pluginVueLynx(
     templateStaging = enableElementTemplates ? 'code' : 'ops';
   }
 
+  if (vapor && templateStaging === 'code' && templateNaming !== 'block') {
+    console.warn(
+      '[vue-lynx] templateStaging:\'code\' is definitionally block-named '
+        + '(#337) — with templateNaming:\'node\' the runtime keeps the dense '
+        + 'data path and the baked create() is never used.',
+    );
+  }
+
   // Delivery (#338): bundle-baked data residual is a Vapor data-staging
   // refinement; code staging intrinsically rides the bundle already.
   let templateDelivery = options.templateDelivery ?? 'runtime';

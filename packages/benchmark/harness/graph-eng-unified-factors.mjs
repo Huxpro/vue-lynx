@@ -108,6 +108,15 @@ for (const [name, [a, b]] of Object.entries(PAIRS)) {
   }
 }
 
+// Create-path wire-bytes counters (#337/#338 acceptance): serialized
+// vuePatchUpdate buffer bytes per op from the instrumented vapor app
+// (harness/wire-bytes.mjs), inlined so the factor data carries the
+// delivery-column evidence next to the timing rows.
+const wireBytesFile = path.join(root, 'results/wire-bytes-latest.json');
+const wireBytes = fs.existsSync(wireBytesFile)
+  ? JSON.parse(fs.readFileSync(wireBytesFile, 'utf8'))
+  : null;
+
 const out = {
   source: path.basename(inFile),
   meta: data.meta,
@@ -116,6 +125,9 @@ const out = {
     + 'create = Create N rows; update = update10th / updateStorm (50 ticks); '
     + 'engine cells run with __VUE_LYNX_ENGINE_ET_STATUS__ = stub (family '
     + 'absent on web) — their deltas are probe overhead, not engine wins.',
+  wireBytes: wireBytes
+    ? { meta: wireBytes.meta, perCell: wireBytes.perCell }
+    : undefined,
   perCell,
   factors,
 };
