@@ -69,8 +69,38 @@ export function getVaporTemplate(id: string): VaporTemplateEntry | undefined {
   return vaporTemplates.get(id);
 }
 
+// ---------------------------------------------------------------------------
+// Numeric id bindings (BIND_VAPOR_TEMPLATE, op 21) — wire state, per BG
+// realm: the BG binds its per-realm numeric tree id to a bundle registry id
+// once, so per-instance INSTANTIATE_TEMPLATE frames stay numeric. Cleared by
+// resetMainThreadState (unlike the bundle registries above).
+// ---------------------------------------------------------------------------
+
+const idBindings = new Map<number, string>();
+
+export function bindVaporTemplateId(treeId: number, codeId: string): void {
+  idBindings.set(treeId, codeId);
+}
+
+export function hasVaporTemplateBinding(treeId: number): boolean {
+  return idBindings.has(treeId);
+}
+
+export function getBoundVaporTemplate(
+  treeId: number,
+): VaporTemplateEntry | undefined {
+  const codeId = idBindings.get(treeId);
+  return codeId === undefined ? undefined : vaporTemplates.get(codeId);
+}
+
+/** Clear per-realm numeric bindings (wire state) — from resetMainThreadState. */
+export function resetVaporTemplateBindings(): void {
+  idBindings.clear();
+}
+
 /** Test helper — clear both bundle registries (never called in product). */
 export function resetVaporTemplateRegistriesForTesting(): void {
   structures.clear();
   vaporTemplates.clear();
+  idBindings.clear();
 }
