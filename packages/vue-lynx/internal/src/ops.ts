@@ -59,9 +59,12 @@
  *   BIND_VAPOR_TEMPLATE: [21, treeId, codeTplId]
  *     Code staging (`+b:c`, #337): binds the BG's numeric per-realm tree id
  *     to a bundle-baked create() registry id (a content-hash string), once
- *     per template. INSTANTIATE_TEMPLATE then carries the NUMERIC id per
- *     instance, so per-clone wire frames stay the same size as CLONE_TREE
- *     — the string id crosses exactly once.
+ *     per template — the string id crosses exactly once.
+ *   INSTANTIATE_BOUND_TEMPLATE: [22, treeId, baseUid]
+ *     Per-instance frame for a bound vapor code template: same argument
+ *     shape (and wire size) as CLONE_TREE, but the MT executes the baked
+ *     create() instead of interpreting the registered structure. The hole
+ *     count is implied by the bound entry's handle list.
  *   REGISTER_TREE_BUNDLE: [20, treeId, structureHash, addressedOr0]
  *     Bundle-delivered REGISTER_TREE (the `+b!` cell, #338): the structure
  *     AST was baked into the MT bundle at build time
@@ -130,6 +133,7 @@ export const OP = {
   REMOVE_TEMPLATE_SLOT: 19,
   REGISTER_TREE_BUNDLE: 20,
   BIND_VAPOR_TEMPLATE: 21,
+  INSTANTIATE_BOUND_TEMPLATE: 22,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -157,6 +161,7 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.REMOVE_TEMPLATE_SLOT]: 3,
   [OP.REGISTER_TREE_BUNDLE]: 3,
   [OP.BIND_VAPOR_TEMPLATE]: 2,
+  [OP.INSTANTIATE_BOUND_TEMPLATE]: 2,
 });
 
 // ---------------------------------------------------------------------------

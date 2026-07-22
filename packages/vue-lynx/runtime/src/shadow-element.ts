@@ -1410,14 +1410,10 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
     if (cache.codeTplId !== undefined) {
       // Code staging (#337): the MT executes the bundle-baked create() and
       // names base + indexInAddressed — handles are returned in addressed
-      // order, so the op-15 `rootId + k` contract IS the sparse uid block.
-      // The numeric id was bound to the create() by BIND_VAPOR_TEMPLATE.
-      pushOp(
-        OP.INSTANTIATE_TEMPLATE,
-        base,
-        cache.id,
-        addressed.length - 1,
-      );
+      // order, so the `base + k` contract IS the sparse uid block. The
+      // numeric id was bound by BIND_VAPOR_TEMPLATE; the per-instance frame
+      // is byte-identical in size to the data path's CLONE_TREE.
+      pushOp(OP.INSTANTIATE_BOUND_TEMPLATE, cache.id, base);
     } else {
       pushOp(OP.CLONE_TREE, cache.id, base);
     }

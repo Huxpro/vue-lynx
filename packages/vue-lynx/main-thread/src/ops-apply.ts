@@ -187,7 +187,7 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     if (code === OP.BIND_VAPOR_TEMPLATE) {
       return hasVaporTemplateBinding(ops[cursor + 1] as number);
     }
-    if (code === OP.CLONE_TREE) {
+    if (code === OP.CLONE_TREE || code === OP.INSTANTIATE_BOUND_TEMPLATE) {
       return elements.has(ops[cursor + 2] as number);
     }
 
@@ -376,6 +376,33 @@ function tryEngineCloneTree(
     }
   }
   return true;
+}
+
+/**
+ * Vapor Code-Template instantiation (`+b:c`, #337): run the bundle-baked
+ * create() and name `base + indexInAddressed` — handles come back in
+ * addressed order (null for BG-only anchors), so naming, selector
+ * attributes, and insert tracking mirror `instantiateTemplateSparse`
+ * exactly and the update path cannot tell the difference.
+ */
+function instantiateVaporCodeTemplate(
+  ventry: import('./vapor-templates.js').VaporTemplateEntry,
+  baseUid: number,
+  maxHandles: number,
+): void {
+  const handles = ventry.create(pageUniqueId);
+  const limit = Math.min(handles.length, maxHandles);
+  for (let k = 0; k < limit; k++) {
+    const el = handles[k];
+    if (!el) continue;
+    const uid = baseUid + k;
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    const parentIdx = ventry.namedParents[k] ?? -1;
+    if (parentIdx >= 0 && handles[parentIdx]) {
+      trackInsert(baseUid + parentIdx, uid);
+    }
+  }
 }
 
 function instantiateRegisteredTree(
@@ -689,39 +716,40 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.INSTANTIATE_BOUND_TEMPLATE: {
+        // `+b:c` (#337) per-instance frame — CLONE_TREE-shaped, executes
+        // the bound bundle-baked create() instead of interpreting.
+        const tplId = ops[i++] as number;
+        const baseUid = ops[i++] as number;
+        const ventry = getBoundVaporTemplate(tplId);
+        if (ventry) {
+          instantiateVaporCodeTemplate(
+            ventry,
+            baseUid,
+            ventry.namedParents.length || Number.MAX_SAFE_INTEGER,
+          );
+        } else {
+          console.error(
+            `[vue-lynx] INSTANTIATE_BOUND_TEMPLATE: no binding for tree id ${tplId} — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
       case OP.INSTANTIATE_TEMPLATE: {
         const rootId = ops[i++] as number;
         const tplId = ops[i++] as string;
         const holeCount = ops[i++] as number;
 
-        // Vapor Code-Template (`+b:c`, #337): the bundle-baked create()
-        // materializes the whole static skeleton and returns one handle per
-        // ADDRESSED slot in sparse order (null for BG-only anchors). Naming
-        // (`rootId + k`), selector attributes, and insert tracking mirror
-        // instantiateTemplateSparse exactly — the update path cannot tell
-        // the difference. Numeric ids resolve through BIND_VAPOR_TEMPLATE;
-        // string ids hit the vapor registry directly (and then the ET one).
-        const ventry = typeof tplId === 'number'
-          ? getBoundVaporTemplate(tplId)
-          : getVaporTemplate(tplId);
+        // Vapor Code-Template by string registry id (direct form; the
+        // product path uses BIND_VAPOR_TEMPLATE + op 22 instead).
+        const ventry = getVaporTemplate(tplId);
         if (ventry) {
-          const handles = ventry.create(pageUniqueId);
-          const limit = Math.min(handles.length, holeCount + 1);
-          for (let k = 0; k < limit; k++) {
-            const el = handles[k];
-            if (!el) continue;
-            const uid = rootId + k;
-            elements.set(uid, el);
-            installSelectorAttribute(uid, el);
-            const parentIdx = ventry.namedParents[k] ?? -1;
-            if (parentIdx >= 0 && handles[parentIdx]) {
-              trackInsert(rootId + parentIdx, uid);
-            }
-          }
+          instantiateVaporCodeTemplate(ventry, rootId, holeCount + 1);
           break;
         }
 
-        const entry = typeof tplId === 'string' ? getTemplate(tplId) : undefined;
+        const entry = getTemplate(tplId);
         let handles: LynxElement[];
         if (entry) {
           // The create() function builds the whole lowered subtree with
