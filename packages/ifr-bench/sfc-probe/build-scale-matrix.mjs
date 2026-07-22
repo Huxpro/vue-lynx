@@ -40,10 +40,15 @@ const outDir = path.resolve(
 
 const VARIANTS = [
   { id: 'vdom', mode: 'vdom', ifr: '0', et: '0', label: 'VDOM' },
+  { id: 'vdom-et', mode: 'vdom', ifr: '0', et: '1', label: 'VDOM+ET (no IFR)' },
   { id: 'vdom-ifr', mode: 'vdom', ifr: '1', et: '0', label: 'VDOM+IFR' },
   { id: 'vdom-ifr-et', mode: 'vdom', ifr: '1', et: '1', label: 'VDOM+IFR+ET' },
   { id: 'vapor', mode: 'vapor', ifr: '0', et: '0', label: 'Vapor' },
+  { id: 'vapor-dense', mode: 'vapor', ifr: '0', et: '0', sparse: '0', label: 'Vapor dense' },
+  { id: 'vapor-engine', mode: 'vapor', ifr: '0', et: '0', staging: 'engine', label: 'Vapor engine (stub)' },
   { id: 'vapor-ifr', mode: 'vapor', ifr: '1', et: '0', label: 'Vapor+IFR' },
+  { id: 'vapor-ifr-dense', mode: 'vapor', ifr: '1', et: '0', sparse: '0', label: 'Vapor+IFR dense' },
+  { id: 'vapor-ifr-engine-et', mode: 'vapor', ifr: '1', et: '0', ifrPaint: 'engine-et', label: 'Vapor+IFR engine-et (stub)' },
 ];
 
 const SCALES = [
@@ -112,6 +117,9 @@ for (const scale of SCALES) {
           SFC_PROBE_VAPOR: v.mode === 'vapor' ? '1' : '0',
           SFC_PROBE_IFR: v.ifr,
           SFC_PROBE_ET: v.et,
+          SFC_PROBE_SPARSE: v.sparse ?? '1',
+          ...(v.staging ? { SFC_PROBE_STAGING: v.staging } : {}),
+          ...(v.ifrPaint ? { SFC_PROBE_IFR_PAINT: v.ifrPaint } : {}),
         },
       },
     );

@@ -43,6 +43,7 @@ const reactStorms = readJson('results/cross-storms-unified-react.json');
 const scale6 = readJson('results/cross-storms-scale6.json');
 const graphEngFactors = readJson('results/unified/graph-eng-unified-factors.json');
 const graphEng4axisStorms = readJson('results/cross-storms-graph-eng-4axis.json');
+const graphEng4axisFullStorms = readJson('results/cross-storms-graph-eng-4axis-full.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -60,7 +61,15 @@ function mergePerOp(...sources) {
   return out;
 }
 
-const perOp = mergePerOp(scale6, ifrStorms, reactStorms, graphEng4axisStorms);
+// Newest-date merge: the single-host full sweep (all modes × 1k/10k/30k)
+// supersedes every earlier per-key sample when present.
+const perOp = mergePerOp(
+  scale6,
+  ifrStorms,
+  reactStorms,
+  graphEng4axisStorms,
+  graphEng4axisFullStorms,
+);
 
 const COLUMN_KEYS = [
   'vapor',
@@ -480,7 +489,12 @@ function graphEngNamingTable(t) {
 function graphEngFactorsSection(t) {
   if (!graphEngFactors?.perCell?.length) return '';
   const OPS = ['create', 'update10th', 'updateStorm', 'select', 'selectStorm'];
-  const sizes = ['1k', '10k'];
+  // Sizes come from the factors file itself so a 30k sweep flows through.
+  const sizes = [...new Set(
+    Object.values(graphEngFactors.factors ?? {}).flatMap((f) =>
+      Object.keys(f).map((k) => k.split('@')[1]),
+    ),
+  )].sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
 
   const cellTable = (size) => {
     let html =
@@ -592,8 +606,7 @@ function graphEngFactorsSection(t) {
   return `
 <h2>${escapeHtml(t.hGraphEngFactors)}</h2>
 <p class="sub">${t.subGraphEngFactors}</p>
-<div class="scroll">${cellTable('1k')}</div>
-<div class="scroll" style="margin-top:10px">${cellTable('10k')}</div>
+${sizes.map((sz, i) => `<div class="scroll"${i ? ' style="margin-top:10px"' : ''}>${cellTable(sz)}</div>`).join('')}
 <p class="sub" style="margin-top:14px">${
     t.lang.startsWith('zh')
       ? '主效应（每次只动一根轴）。图：柱向左（负）= 该轴让该操作更快;±10% 内视为噪声（reps=2）。engine 因子在 web 上是 stub 探测开销。'
@@ -603,7 +616,52 @@ function graphEngFactorsSection(t) {
   ${sizes.map((sz) => factorBars(sz)).join('')}
 </div>
 ${sizes.map((sz) => `<div class="scroll" style="margin-top:10px">${factorTable(sz)}</div>`).join('')}
+${factorTakeaways()}
 `;
+
+  /** Data-driven takeaways for the main effects (en/zh). */
+  function factorTakeaways() {
+    const zhT = t.lang.startsWith('zh');
+    const f = graphEngFactors.factors ?? {};
+    const d = (name, key) => f[name]?.[key]?.deltaPct;
+    const fmtP = (v) => (v == null ? '—' : `${v > 0 ? '+' : ''}${v}%`);
+    const renderUS = ['1k', '10k', '30k']
+      .map((sz) => d('render vdom→vapor (no-IFR)', `updateStorm@${sz}`))
+      .filter((v) => v != null);
+    const stagingCreate = ['1k', '10k', '30k']
+      .map((sz) => d('staging opstream→code (vdom, no-IFR)', `create@${sz}`))
+      .filter((v) => v != null);
+    const items = zhT
+      ? [
+        ['<b>Update 对模板机制是盲的。</b>staging（opstream→code）与 naming（dense→sparse）在 update10th / updateStorm 上的因子在各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
+        ],
+        [`<b>Create 的模板收益与子树静态占比成正比。</b>table app 的 create 被动态 v-for 行主导（staging 因子 create ${fmtP(stagingCreate[0])}~${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ 噪声）；静态重内容（sfc-probe FCP 阶梯）上 Code-Template 是唯一全场景为负的因子。要 ET 收益，先看你的首屏静态占比。`],
+        [`<b>render 轴（vdom→vapor）才是 update 的大杠杆</b>：updateStorm ${renderUS.map(fmtP).join(' / ')}（1k→30k），远超任何模板轴。交互性能选 render model，别指望模板。`],
+        ['<b>IFR 是首帧杠杆，不是交互杠杆</b>：ifr 因子只在 create/FCP 显著，update 因子在噪声内；×4 下 vapor 的 IFR 首帧代价由 sparse naming 收回（dense +12% → sparse +2%）。',
+        ],
+        ['<b>naming（dense→sparse）是内存/簿记轴</b>：BG shells −94%、MT 表 −92%（精确计数），FCP 因子随主机与规模在噪声带内摇摆 — 它是阶梯的必要卫生，不是 FCP 特性。',
+        ],
+        ['<b>engine 与 engine-et 因子 ≈0，因为它们在 web 上是诚实 stub</b>（<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。这条轴已端到端可跑，等引擎 PAPI 落地即可测真值。',
+        ],
+      ]
+      : [
+        ['<b>Update is template-blind.</b> The staging (opstream→code) and naming (dense→sparse) factors on update10th / updateStorm sit inside the ±10% noise band at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
+        ],
+        [`<b>Create benefit scales with the static fraction of the subtree.</b> The table app's create is dominated by dynamic v-for rows (staging factor on create ${fmtP(stagingCreate[0])}…${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ noise); on static-heavy content (the sfc-probe FCP ladder) Code-Template is the one factor negative in every scenario. Check your first screen's static fraction before reaching for ET.`],
+        [`<b>The render axis (vdom→vapor) is the update lever</b>: updateStorm ${renderUS.map(fmtP).join(' / ')} (1k→30k) — far beyond any template axis. Pick the render model for interaction performance; don't expect templates to move it.`],
+        ['<b>IFR is a first-frame lever, not an interaction lever</b>: the ifr factor is significant only on create/FCP, its update factors sit in noise; under ×4 vapor\'s IFR first-frame cost is recovered by sparse naming (dense +12% → sparse +2%).',
+        ],
+        ['<b>Naming (dense→sparse) is the memory/bookkeeping axis</b>: −94% BG shells, −92% MT table entries (exact counts) while its FCP factor wobbles inside noise across hosts and scales — necessary ladder hygiene, not an FCP feature.',
+        ],
+        ['<b>Engine and engine-et factors are ≈0 because they are honest stubs on web</b> (<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). The axis runs end-to-end; real numbers arrive with the engine PAPI.',
+        ],
+      ];
+    return `<h3 style="font-size:13.5px;margin:18px 0 6px">${
+      zhT ? '主效应结论（take away）' : 'Main-effect takeaways'
+    }</h3><ul class="notes" style="margin-top:4px">${
+      items.map(([html]) => `<li>${html}</li>`).join('')
+    }</ul>`;
+  }
 }
 
 function siblingHref(outBase, lang, published) {
@@ -637,22 +695,26 @@ function renderReport(lang, outPath) {
 <style>
   :root {
     --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df;
-    --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    /* Colorblind-safe slowdown ramp: blue (fast) -> orange (slow). */
+    --good: #2a78d6; --warn: #8ea3c2; --serious: #e8a04c; --critical: #c25f05;
     --tint: 18%;
     --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
+      --good: #4d94e8; --warn: #93a7c4; --serious: #f0ad62; --critical: #e07818;
       --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
     }
   }
   :root[data-theme="dark"] {
     --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --line: #3a3a37; --tint: 30%;
+    --good: #4d94e8; --warn: #93a7c4; --serious: #f0ad62; --critical: #e07818;
     --s1: #3987e5; --s2: #f0a020; --s3: #199e70; --s4: #5b8def; --s5: #9085e9; --s6: #c98500;
   }
   :root[data-theme="light"] {
     --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --line: #e4e3df; --tint: 18%;
+    --good: #2a78d6; --warn: #8ea3c2; --serious: #e8a04c; --critical: #c25f05;
     --s1: #2a78d6; --s2: #d97706; --s3: #1baf7a; --s4: #2563eb; --s5: #7c3aed; --s6: #eda100;
   }
   ${THEME_BRIDGE_CSS}
