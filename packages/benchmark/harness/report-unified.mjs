@@ -647,7 +647,8 @@ function coverageTable(t) {
     const bg = unified.cells.some(
       (c) => c.architecture === a.id && c.instrumented,
     );
-    html += `<tr><td class="op">${escapeHtml(a.label)} <code>${escapeHtml(a.id)}</code></td>`
+    const v4 = t.colLabels?.[a.id] ?? t.fcpArchLabels?.[a.id] ?? a.label;
+    html += `<tr><td class="op">${escapeHtml(v4)} <code>${escapeHtml(a.id)}</code></td>`
       + `<td class="c plain">${storm ? '✓' : '—'}</td>`
       + `<td class="c plain">${fcp ? '✓' : '—'}</td>`
       + `<td class="c plain">${bg ? '✓' : '—'}</td></tr>`;
@@ -991,9 +992,9 @@ ${sizes.map((sz, i) => `<div class="scroll"${i ? ' style="margin-top:10px"' : ''
 <div class="charts">
   ${sizes.map((sz) => factorBars(sz)).join('')}
 </div>
+${factorTakeaways()}
 ${sizes.map((sz) => `<div class="scroll" style="margin-top:10px">${factorTable(sz)}</div>`).join('')}
 ${fcpFactorsBlock()}
-${factorTakeaways()}
 `;
 
   /** Data-driven takeaways for the main effects (en/zh). */
@@ -1033,11 +1034,17 @@ ${factorTakeaways()}
         ['<b>+b:e and +ifr:e are N/A on this host</b> (Lynx for Web has no engine ET PAPI; <code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). Their interpretation-fallback control samples serve only as a fail-safe-cost / noise yardstick, never as engine conclusions; the axis runs end-to-end and reports real numbers the day the engine PAPI ships.',
         ],
       ];
-    return `<h3 style="font-size:13.5px;margin:18px 0 6px">${
+    // Compact cards (bold takeaway + small detail) so the key point is
+    // scannable and sits next to the factor charts, not in one far-away wall.
+    const cards = items.map(([html]) => {
+      const cut = html.indexOf('</b>');
+      const lead = cut >= 0 ? html.slice(0, cut).replace(/^<b>/, '') : html;
+      const body = cut >= 0 ? html.slice(cut + 4).trim() : '';
+      return `<div class="tk"><span class="tkhead">${lead}</span>${body ? `<span class="tkbody">${body}</span>` : ''}</div>`;
+    }).join('');
+    return `<h3 style="font-size:13.5px;margin:14px 0 6px">${
       zhT ? '主效应结论（take away）' : 'Main-effect takeaways'
-    }</h3><ul class="notes" style="margin-top:4px">${
-      items.map(([html]) => `<li>${html}</li>`).join('')
-    }</ul>`;
+    }</h3><div class="tkgrid">${cards}</div>`;
   }
 }
 
@@ -1153,6 +1160,10 @@ function renderReport(lang, outPath) {
   .cctl .creset { font: inherit; font-size: 11px; padding: 2px 9px; border: 1px solid var(--line); background: transparent; color: var(--ink-2); border-radius: 5px; cursor: pointer; }
   .cctl .creset:hover { color: var(--ink); border-color: var(--ink-2); }
   .cctl .chint { color: var(--ink-3, var(--ink-2)); font-size: 11px; opacity: .8; }
+  .tkgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; margin: 6px 0 10px; }
+  .tk { border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+  .tk .tkhead { display: block; font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+  .tk .tkbody { display: block; margin-top: 3px; font-size: 11.5px; color: var(--ink-2); line-height: 1.45; }
   .verdicts {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 12px; margin: 8px 0 18px;

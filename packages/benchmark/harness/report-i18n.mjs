@@ -151,8 +151,8 @@ export function copy(lang) {
       selectStorm: {
         title: zh ? 'Select storm（点状）vs 行数' : 'select storm (point) vs table size',
         sub: zh
-          ? '点状更新：30 次连续选中的总墙钟。每次 tick 只改选中态。Vapor 几乎压平；React 陡升；IFR+ET 把 VDOM 往下拉。'
-          : 'Point updates: wall time for 30 sequential selects — each tick touches selection state only. Vapor stays flat; React climbs; IFR+ET pulls VDOM down.',
+          ? '点状更新：30 次连续选中的总墙钟。每次 tick 只改选中态。vapor 全家几乎压平；ReactLynx 陡升；vdom +b +ifr 把 vdom 往下拉。'
+          : 'Point updates: wall time for 30 sequential selects — each tick touches selection state only. The vapor family stays flat; ReactLynx climbs; vdom +b +ifr pulls vdom down.',
         x: zh ? '行数 N — 线性' : 'rows N — linear',
         y: zh ? 'select storm — ms' : 'select storm — ms',
       },
@@ -167,16 +167,16 @@ export function copy(lang) {
       create: {
         title: zh ? 'Create vs 行数' : 'create vs table size',
         sub: zh
-          ? 'ReactLynx 创建仍领先。IFR+ET 通过模板 clone 略微帮助 VDOM 创建。'
-          : 'ReactLynx still leads creation. IFR+ET slightly helps VDOM create via template clone.',
+          ? 'ReactLynx 创建仍领先。vdom +b +ifr 靠模板 clone 略微帮助创建。'
+          : 'ReactLynx still leads creation. vdom +b +ifr slightly helps create via template clone.',
         x: zh ? '行数 N — 线性' : 'rows N — linear',
         y: zh ? 'create — ms' : 'create — ms',
       },
       fcp1: {
         title: zh ? 'FCP vs 内容规模（CPU ×1）' : 'FCP vs content scale (CPU ×1)',
         sub: zh
-          ? 'ReactLynx 全程最低。Vue 侧：无 ET 的 IFR 在 10k 越过 plain VDOM；IFR+ET 是规模对冲。'
-          : 'ReactLynx lowest throughout. Among Vue: IFR without ET crosses above plain VDOM by 10k; IFR+ET is the scale hedge.',
+          ? 'ReactLynx 全程最低。Vue 侧：vdom +ifr（无 +b）在 10k 越过 vdom 基线；vdom +b +ifr 是规模对冲。'
+          : 'ReactLynx lowest throughout. Among Vue: vdom +ifr (no +b) crosses above vdom baseline by 10k; vdom +b +ifr is the scale hedge.',
         x: zh ? '元素数 N — 线性' : 'elements N — linear',
         y: 'FCP — ms',
       },
@@ -288,11 +288,11 @@ export function buildConclusions(d, lang) {
         ? `ReactLynx 首帧最低`
         : `ReactLynx lowest FCP`,
       why: zh
-        ? '同密度探针上 RL 最快。Vue 追首帧 → IFR+ET。'
-        : 'Same-density probe: RL wins. Vue first-frame → IFR+ET.',
+        ? '同密度探针上 RL 最快。Vue 追首帧 → vdom +b +ifr。'
+        : 'Same-density probe: RL wins. Vue first-frame → vdom +b +ifr.',
       evidence: zh
-        ? `FCP@10k RL ${fcpReact.toFixed(0)} · IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`
-        : `FCP@10k RL ${fcpReact.toFixed(0)} · IFR+ET ${fcpEt.toFixed(0)} · VDOM ${fcpOff.toFixed(0)} ms`,
+        ? `FCP@10k RL ${fcpReact.toFixed(0)} · +b +ifr ${fcpEt.toFixed(0)} · vdom 基线 ${fcpOff.toFixed(0)} ms`
+        : `FCP@10k RL ${fcpReact.toFixed(0)} · +b +ifr ${fcpEt.toFixed(0)} · vdom baseline ${fcpOff.toFixed(0)} ms`,
     });
   }
 
@@ -301,10 +301,10 @@ export function buildConclusions(d, lang) {
     const d10 = ((fcpIfr - fcpOff) / fcpOff) * 100;
     out.push({
       tone: d10 > 0 ? 'critical' : 'warn',
-      title: zh ? '别裸开 IFR' : 'No IFR without ET',
+      title: zh ? '别用 +ifr 不带 +b' : 'No +ifr without +b',
       why: zh
-        ? '“−19%”不是常数。中大树无 ET 会变慢；默认 IFR+ET。'
-        : '“−19%” isn’t a constant. Plain IFR loses at scale; default IFR+ET.',
+        ? '“−19%”不是常数。中大树 vdom +ifr（无 +b）会变慢；默认 vdom +b +ifr。'
+        : '“−19%” isn’t a constant. vdom +ifr (no +b) loses at scale; default vdom +b +ifr.',
       evidence: zh
         ? `vs off：1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`
         : `vs off: 1k ${d1.toFixed(0)}% · 10k ${d10 >= 0 ? '+' : ''}${d10.toFixed(0)}%`,
@@ -316,14 +316,14 @@ export function buildConclusions(d, lang) {
     out.push({
       tone: 'warn',
       title: zh
-        ? `ET 也加速更新 ~${fasterPct.toFixed(0)}%`
-        : `ET speeds updates ~${fasterPct.toFixed(0)}%`,
+        ? `+b 也加速更新 ~${fasterPct.toFixed(0)}%`
+        : `+b speeds updates ~${fasterPct.toFixed(0)}%`,
       why: zh
-        ? '模板 clone 挂载后仍有用。裸 IFR ≈ off。'
-        : 'Template clone helps post-mount too. Plain IFR ≈ off.',
+        ? '模板 clone 挂载后仍有用。+ifr（无 +b）≈ 基线。'
+        : 'Template clone helps post-mount too. +ifr (no +b) ≈ baseline.',
       evidence: zh
-        ? `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`
-        : `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`,
+        ? `selectStorm@10k 基线 ${stormVdom.toFixed(0)} · +ifr ${stormIfr.toFixed(0)} · +b +ifr ${stormEt.toFixed(0)} ms`
+        : `selectStorm@10k baseline ${stormVdom.toFixed(0)} · +ifr ${stormIfr.toFixed(0)} · +b +ifr ${stormEt.toFixed(0)} ms`,
     });
   }
 
@@ -356,8 +356,8 @@ export function buildConclusions(d, lang) {
   out.push({
     tone: 'warn',
     title: zh
-      ? '创建→RL · 更新→Vapor · 首帧→IFR+ET'
-      : 'create→RL · updates→Vapor · Vue FCP→IFR+ET',
+      ? '创建→RL · 更新→Vapor · Vue 首帧→vdom +b +ifr'
+      : 'create→RL · updates→Vapor · Vue FCP→vdom +b +ifr',
     why: zh
       ? 'Select=点状，Update=批量。产品选择压成这一句。'
       : 'Select=point, Update=batch. Product choice collapses to this line.',
