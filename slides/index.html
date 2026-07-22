@@ -2117,17 +2117,17 @@ app.<span class="code-fn">use</span>(router)</pre>
         <div class="ifrjoin__col" style="--c:#56b8f0">
           <span class="ifrjoin__label"><i></i>Main (UI) thread</span>
           <span class="ifrjoin__role">records</span>
-          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
-          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
-          <code class="ifrjoin__op">CREATE 4 view</code>
+          <code class="ifrjoin__op is-match">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-patch">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-tear">CREATE 4 view</code>
         </div>
         <div class="ifrjoin__rail" aria-hidden="true"></div>
         <div class="ifrjoin__col" style="--c:#5dd5a8">
           <span class="ifrjoin__label"><i></i>Background thread</span>
           <span class="ifrjoin__role">first batches</span>
-          <code class="ifrjoin__op">SET_TEXT 3 "Hi"</code>
-          <code class="ifrjoin__op is-diff">SET_TEXT 3 "你好"</code>
-          <code class="ifrjoin__op is-diff">CREATE 4 text</code>
+          <code class="ifrjoin__op is-match">SET_TEXT 3 "Hi"</code>
+          <code class="ifrjoin__op is-patch">SET_TEXT 3 "你好"</code>
+          <code class="ifrjoin__op is-tear">CREATE 4 text</code>
         </div>
       </div>
       <div class="ifrjoin__join">
@@ -2173,48 +2173,86 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR5 — the pipeline, per node (reuses the runtime flow boxes) -->
+  <!-- IFR5 — without ET: dual-thread fat VDOM → opcode pipelines -->
   <section class="slide stage">
-    <div class="flow ifr-pipe">
-      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:9%;top:50%">VDOM<small>one vnode / node</small></div>
-      <span class="farr" data-mm-fade style="left:21%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#E8B44A;left:32%;top:50%">Shadow<small>one node</small></div>
-      <span class="farr" data-mm-fade style="left:42%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#4FB8F0;left:51%;top:50%">ops<small>several frames</small></div>
-      <span class="farr" data-mm-fade style="left:60%;top:50%">&rarr;</span>
-      <div class="fb" data-mm-fade style="--c:#56b8f0;left:69%;top:50%">interp<small>a switch loop</small></div>
-      <span class="farr" data-mm-fade style="left:79%;top:50%">&rarr;</span>
-      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:90%;top:50%">PAPI<small>__CreateView</small></div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:88%">&times; every static node</span>
+    <div class="ifrjoin ifrjoin--pipe">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+          <span class="ifrjoin__role" data-mm-fade>VDOM tree &rarr; opcodes</span>
+          <code class="ifrjoin__op" data-mm-fade>VDOM</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op" data-mm-fade>ShadowElement</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
+          <span class="ifrjoin__hint" data-mm-fade>many ops / node</span>
+        </div>
+        <div class="ifrjoin__rail" aria-hidden="true"></div>
+        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+          <span class="ifrjoin__role" data-mm-fade>same chain, local apply</span>
+          <code class="ifrjoin__op" data-mm-fade>VDOM</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op" data-mm-fade>record ops</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
+          <span class="ifrjoin__hint" data-mm-fade>applyOps &rarr; PAPI &rarr; paint</span>
+        </div>
+      </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      Normally every static element pays the whole chain — a vnode, a shadow
-      node, ops frames, a thread crossing, an interpreter dispatch.
+      Without ET, BTS and MTS IFR both pay the fat
+      <b>VDOM &rarr; opcode</b> chain — just on different threads.
     </p>
     <aside class="notes">
-      <p>The same pipeline from the Runtime chapter — but notice it runs
-      <em>per node</em>, even for structure that never changes.</p>
+      <p><strong>Same code, two threads, still expensive.</strong> BTS walks the
+      VDOM into ShadowElement and emits a long flat opcode stream. MTS IFR runs
+      the same Vue + <code>nodeOps</code> during <code>loadTemplate</code>, records
+      the same shape of ops, and applies them locally to paint. IFR moved
+      <em>when</em> paint happens — it did not shrink the work yet.</p>
     </aside>
   </section>
 
-  <!-- IFR6 — Element Templates collapse the pipeline (magic-move) -->
+  <!-- IFR6 — with ET: BTS emits INSTANTIATE; MTS IFR runs create() -->
   <section class="slide stage">
-    <div class="flow ifr-pipe">
-      <div class="fb" data-flip="etp-vdom" style="--c:#42b883;left:16%;top:50%">one vnode<small>__vlx-tpl:…</small></div>
-      <span class="farr" data-mm-fade style="left:33%;top:50%">&rarr;</span>
-      <div class="fb is-hero" data-mm-fade style="--c:#5dd5a8;left:50%;top:50%">INSTANTIATE_TEMPLATE<small>one op · whole subtree</small></div>
-      <span class="farr" data-mm-fade style="left:67%;top:50%">&rarr;</span>
-      <div class="fb" data-flip="etp-papi" style="--c:#F27A9E;left:84%;top:50%">create()<small>straight-line PAPI</small></div>
-      <span class="fcenter" data-mm-fade style="left:50%;top:88%">holes update via ordinary <b>SET_*</b> ops</span>
+    <div class="ifrjoin ifrjoin--pipe">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+          <span class="ifrjoin__role" data-mm-fade>VDOM &rarr; one template op</span>
+          <code class="ifrjoin__op" data-mm-fade>VDOM · __vlx-tpl</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op" data-mm-fade>SET_* holes only</code>
+          <span class="ifrjoin__hint" data-mm-fade>one op · whole subtree</span>
+        </div>
+        <div class="ifrjoin__rail" aria-hidden="true"></div>
+        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+          <span class="ifrjoin__role" data-mm-fade>opcode &rarr; create() PAPI</span>
+          <code class="ifrjoin__op" data-mm-fade>VDOM · __vlx-tpl</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
+          <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+          <code class="ifrjoin__op is-hero" data-mm-fade>create() &rarr; __CreateView&hellip;</code>
+          <span class="ifrjoin__hint" data-mm-fade>straight-line PAPI &rarr; paint</span>
+        </div>
+      </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      The compiler lowers the static subtree to one <code>create()</code>
-      function. Vue sends <b>one</b> op; only the dynamic holes travel after.
+      ET converts the static subtree into a compiled <code>create()</code> —
+      BTS sends <b>one</b> op; MTS IFR runs that function as straight-line PAPI.
     </p>
     <aside class="notes">
-      <p>Watch <code>VDOM</code> and <code>PAPI</code> stay put while the middle
-      of the pipeline collapses. These are <em>framework</em> templates —
-      ordinary typed Element PAPI calls, not Lynx's binary engine templates.</p>
+      <p><strong>How ET lands on each thread.</strong> The compiler lowers the
+      static shell to <code>registerElementTemplate(id, holes, create)</code>.
+      BTS still starts from a VDOM tree, but the static block is one vnode that
+      emits <code>INSTANTIATE_TEMPLATE</code> plus hole <code>SET_*</code>s — not
+      per-node <code>CREATE</code>s. On MTS IFR the same opcode hits the local
+      interpreter, which calls the baked <code>create()</code> — a straight-line
+      sequence of Element PAPI. Next slide shows the source &rarr; compiler
+      output.</p>
     </aside>
   </section>
 
