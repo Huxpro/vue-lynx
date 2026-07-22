@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 126</span>
+    <span data-counter>01 / 127</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2068,35 +2068,42 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR2 — IFR: paint first, hydrate later (magic-move the paint flag) -->
+  <!-- IFR2 — IFR: paint first, then hydrate joins (timeline + join bar) -->
   <section class="slide stage">
-    <div class="ifrtl">
-      <div class="ifrlane" style="--c:#56b8f0;top:6%;height:38%">
-        <span class="ifrlane__label"><i></i>Main (UI) thread</span>
-        <div class="tblk" style="--c:#56b8f0;left:3%;width:16%;top:58%">loadTemplate</div>
-        <div class="tblk" style="--c:#56b8f0;left:21%;width:24%;top:58%">render</div>
-        <div class="tblk is-paint" data-flip="ifr-paint" style="left:47%;width:15%;top:58%">paint</div>
-        <div class="tblk is-idle" style="left:64%;width:33%;top:58%">hands the tree over &rarr;</div>
+    <div class="ifrseq">
+      <div class="ifrtl ifrtl--joinhead">
+        <div class="ifrlane" style="--c:#56b8f0;top:4%;height:42%">
+          <span class="ifrlane__label"><i></i>Main (UI) thread</span>
+          <div class="tblk" style="--c:#56b8f0;left:3%;width:17%;top:58%">loadTemplate</div>
+          <div class="tblk" style="--c:#56b8f0;left:22%;width:16%;top:58%">render</div>
+          <div class="tblk is-paint" data-flip="ifr-paint" style="left:40%;width:14%;top:58%">paint</div>
+          <div class="tblk" style="--c:#56b8f0;left:57%;width:16%;top:58%">records</div>
+        </div>
+        <div class="ifrlane" style="--c:#5dd5a8;top:54%;height:42%">
+          <span class="ifrlane__label"><i></i>Background thread</span>
+          <div class="tblk" style="--c:#5dd5a8;left:3%;width:16%;top:58%">boot</div>
+          <div class="tblk" style="--c:#5dd5a8;left:21%;width:16%;top:58%">render</div>
+          <div class="tblk" style="--c:#5dd5a8;left:40%;width:28%;top:58%">first batches</div>
+        </div>
       </div>
-      <div class="ifrlane" style="--c:#5dd5a8;top:56%;height:38%">
-        <span class="ifrlane__label"><i></i>Background thread</span>
-        <div class="tblk" style="--c:#5dd5a8;left:3%;width:20%;top:58%">boot</div>
-        <div class="tblk" style="--c:#5dd5a8;left:25%;width:30%;top:58%">render</div>
-        <div class="tblk" style="--c:#3deae7;left:57%;width:22%;top:58%">hydrate</div>
+      <div class="ifrjoin__join">
+        <span class="ifrjoin__elbow ifrjoin__elbow--l" aria-hidden="true"></span>
+        <span class="ifrjoin__pill">hydrate · thread join</span>
+        <span class="ifrjoin__elbow ifrjoin__elbow--r" aria-hidden="true"></span>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      IFR puts the whole runtime in the <b style="color:#56b8f0">main-thread</b>
-      bundle — it renders during <code>loadTemplate</code>, so
-      <b>paint lands first</b> and the background boots alongside.
+      IFR paints on the <b style="color:#56b8f0">main thread</b> during
+      <code>loadTemplate</code> — then <b>hydrate joins</b> the two ops streams.
     </p>
     <aside class="notes">
       <p><strong>首屏直出 — ported from ReactLynx.</strong> With
       <code>enableIFR</code>, the main-thread bundle carries the full Vue runtime
       + app (not just worklets). <code>renderPage</code> mounts it synchronously
       inside <code>loadTemplate</code> — watch the <strong>paint</strong> flag
-      jump left. The background thread still runs the same code, just in
-      parallel and off the critical path.</p>
+      jump left. MT <em>records</em> its ops; BG boots in parallel and sends its
+      first batches. The glowing pill is the join — next slide opens what's
+      inside it.</p>
     </aside>
   </section>
 
@@ -2149,6 +2156,20 @@ app.<span class="code-fn">use</span>(router)</pre>
       A mismatch only loses the perf win, never correctness (logs
       <code>IFR hydration mismatch</code> in dev). Deterministic ids &amp;
       <code>vue:N</code> signs route taps to Vue with no rebinding.</p>
+    </aside>
+  </section>
+
+  <!-- IFR4 — Element Templates: the pivot (when vs how-much) -->
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
+      <span class="brand-text">Element Templates</span> change how much work it does.
+    </h2>
+    <aside class="notes">
+      <p><strong>The second lever.</strong> IFR moves the paint earlier;
+      enabling it turns on Element Templates by default. They make the render
+      itself an order of magnitude cheaper — and shrink the cross-thread protocol
+      for <em>every</em> update, not just the first frame.</p>
     </aside>
   </section>
 

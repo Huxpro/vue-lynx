@@ -3468,6 +3468,18 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   width: min(100%, 1040px);
   height: clamp(260px, 42cqh, 340px);
 }
+/* IFR2: timeline + join bar stacked */
+.ifrseq {
+  width: min(100%, 1040px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(4px, 0.8cqh, 10px);
+}
+.ifrtl--joinhead {
+  height: clamp(200px, 32cqh, 260px);
+  width: 100%;
+}
 .ifrlane {
   position: absolute;
   left: 0;
