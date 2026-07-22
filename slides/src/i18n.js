@@ -200,6 +200,8 @@ export const ZH = {
     '没有 IFR,首帧要等<em>整整一圈</em> —— 后台启动、渲染、送 ops —— 全部跑完才有画面。',
   'IFR puts the whole runtime in the main-thread bundle — it renders during loadTemplate, so paint lands first and the background boots alongside.':
     'IFR 把整个运行时放进<b style="color:#56b8f0">主线程</b>产物 —— 它在 <code>loadTemplate</code> 期间渲染,于是<b>先出画面</b>,后台在一旁并行启动。',
+  'IFR paints on the main thread during loadTemplate — then hydrate joins the two ops streams.':
+    'IFR 在 <code>loadTemplate</code> 期间于<b style="color:#56b8f0">主线程</b>绘制 —— 然后 <b>hydrate</b> 把两条 ops 流 join 起来。',
   "The MT render records its ops; the BG's first batches hydrate against them. Correctness never depends on the two matching — deterministic ids & vue:N signs route taps to Vue with no rebinding.":
     '主线程渲染时录下自己的 ops;后台最初的几批拿去和它水合对账。正确性从不依赖两者一致 —— 确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。',
   'Both threads render. The ops stream is the recording — the MT records its ops; the BG\'s first batches hydrate against them. Correctness never depends on the two matching.':
@@ -580,10 +582,12 @@ export const ZH_NOTES = [
   `<p><strong>复刻即证明。</strong>lynxjs.org 用两个教程教 MTS,都是为 ReactLynx 写的。两个都在 Vue Lynx 上重做了,live 在我们的文档站上 —— 同样的拖拽物理、同样的吸附、同样的主线程滚动条。平台教程能干净地移植过来,能力就是真的在。</p><p><strong>现场:</strong>慢慢拖 —— 指示器逐像素同步;一甩,吸附。</p>`,
   // IFR1 · 空白首帧
   `<p><strong>往返的代价。</strong>前六页讲的 VDOM → ShadowElement → ops → PAPI,在第一帧之前必须先整整跑一圈。设备上,这一圈再加后台线程启动与 bundle 求值,就是几十毫秒的白屏。</p>`,
-  // IFR2 · IFR:先出画面
-  `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。后台线程照样跑同一份代码,只是并行、离开关键路径。</p>`,
+  // IFR2 · IFR:先出画面 + join
+  `<p><strong>首屏直出 —— 从 ReactLynx 移植。</strong>开了 <code>enableIFR</code>,主线程产物就带上完整 Vue 运行时 + 应用(不只是 worklet)。<code>renderPage</code> 在 <code>loadTemplate</code> 里同步挂载 —— 看 <strong>paint</strong> 旗标跳到左边。主线程<em>录下</em>自己的 ops;后台并行启动并送出最初几批。发光的 pill 就是 join —— 下一页打开它里面是什么。</p>`,
   // IFR3 · Straightforward IFR
   `<p><strong>Straightforward IFR —— hydration 当作 thread join。</strong>没有特殊的首帧格式:同一份 Vue 运行时 + 应用(同一套 <code>nodeOps</code>)在 <code>loadTemplate</code> 期间跑在主线程上并<em>录下</em>扁平 ops 流。后台并行启动,随后最初的 <code>vuePatchUpdate</code> 批次逐帧走这份录制 —— 是一次 join,不是重写:相同 → 跳过,值不同 → 打补丁,结构分歧 → 拆掉重建。不一致只损失性能收益,绝不损失正确性(开发期打印 <code>IFR hydration mismatch</code>)。确定性 id 与 <code>vue:N</code> 签名让点击无需重绑就路由回 Vue。</p>`,
+  // IFR4 · Element Templates 转折
+  `<p><strong>第二个杠杆。</strong>IFR 把绘制提前;打开它会默认打开 Element Templates。它们让渲染本身便宜一个数量级 —— 而且瘦身的是<em>每一次</em>更新的跨线程协议,不只首帧。</p>`,
   // IFR5 · 逐节点的管线
   `<p>还是 Runtime 那章的同一条管线 —— 但注意它是<em>逐节点</em>跑的,哪怕这些结构永远不变。</p>`,
   // IFR6 · ET 折叠管线
