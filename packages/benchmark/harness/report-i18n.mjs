@@ -42,11 +42,11 @@ export function copy(lang) {
       : { href: 'unified.zh.html', label: '中文' },
     hStorms: zh ? '交互 Storms — IFR × 框架矩阵' : 'Table storms — IFR × framework matrix',
     subStorms: zh
-      ? '黑盒协议：真实点击 → 合成 DOM 终态。本机测量（合并 2026-07-17 与 2026-07-22 四轴全排列跑；四轴 cells 覆盖 1k/10k）。'
+      ? '黑盒协议：真实点击 → 合成 DOM 终态。单机全量测量（四轴全排列 + ReactLynx × 1k/10k/30k 一次跑完；同 key 以最新单机跑为准）。'
         + '<b>Select = 点状更新</b>（每次只动选中态/少量 class）；'
         + '<b>Update = 批量更新</b>（每轮改很多行）。'
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。'
-      : 'Black-box: real clicks → composed-DOM end state. Same-host (2026-07-17 merged with the 2026-07-22 four-axis all-permutation run; four-axis cells cover 1k/10k). '
+      : 'Black-box: real clicks → composed-DOM end state. Single-host full sweep (all four-axis permutations + ReactLynx × 1k/10k/30k in one run; per-key newest single-host samples win). '
         + '<b>Select = point update</b> (selection / a few classes per tick); '
         + '<b>Update = batch update</b> (many rows touched each pass). '
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR (always on) + manual memo/useCallback.',
@@ -56,8 +56,8 @@ export function copy(lang) {
       : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape. Select charts = point updates; Update charts = batch throughput.',
     hFcp: zh ? '首帧 FCP — 架构阶梯' : 'Content-probe FCP (architecture ladder)',
     subFcp: zh
-      ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1。四轴新 cells（VDOM+ET 无 IFR / Vapor 稠密 / engine stub / engine-et）为定尺寸 sfc-probe，只落在 1k 档；折线图只画 ≥2 点的系列。'
-      : 'Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1. Four-axis cells (VDOM+ET no-IFR / Vapor dense / engine stub / engine-et) are fixed-size sfc-probe runs and appear only at the 1k rung; line charts draw only ≥2-point series.',
+      ? '相同卡片密度（约 1k→30k 元素）：全部四轴排列 + ReactLynx Snapshot+IFR，单机一次跑完（sfc-probe 规模阶梯）。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1，全部 cells 覆盖 1k→30k（×4 覆盖到 10k）。'
+      : 'Same card density (~1k→30k els): every four-axis permutation + ReactLynx Snapshot+IFR, one single-host sweep (sfc-probe scale ladder). This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1; every cell covers 1k→30k (×4 covers through 10k).',
     subFcp4: zh
       ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
       : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
