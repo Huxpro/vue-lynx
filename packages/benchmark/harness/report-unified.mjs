@@ -71,6 +71,16 @@ const perOp = mergePerOp(
   graphEng4axisFullStorms,
 );
 
+/**
+ * Engine-staging cells are N/A on Lynx-for-Web: the engine ET PAPI family
+ * does not exist here, so their runs are interpretation-fallback CONTROLS
+ * (probe overhead only). Honest policy: the report displays N/A for them
+ * (raw control samples stay in the committed results JSON), and they are
+ * hidden by default behind the "show Engine (N/A) cells" toggle.
+ */
+const ENGINE_NA_ARCHS = new Set(['vapor-engine', 'vapor-ifr-engine-et']);
+const isEngineNa = (key) => ENGINE_NA_ARCHS.has(key);
+
 const COLUMN_KEYS = [
   'vapor',
   'vapor-dense',
@@ -186,11 +196,15 @@ function renderTable(rows, columns, t) {
 
   for (const row of rows) {
     const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
-    const nums = cells.filter((s) => s?.median != null).map((s) => s.median);
+    const nums = cells
+      .filter((s, i) => s?.median != null && !isEngineNa(columns[i].key))
+      .map((s) => s.median);
     const best = nums.length ? Math.min(...nums) : null;
     html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
     for (const [i, s] of cells.entries()) {
-      if (s?.median != null && best != null) {
+      if (isEngineNa(columns[i].key)) {
+        html += `<td class="c na engine-na">N/A</td>`;
+      } else if (s?.median != null && best != null) {
         const factor = s.median / best;
         factorsByCol[columns[i].key].push(factor);
         html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(s.median)}</b>`
@@ -206,6 +220,10 @@ function renderTable(rows, columns, t) {
 
   html += `<tr class="geo"><td class="op">${escapeHtml(t.geoMean)}</td>`;
   for (const c of columns) {
+    if (isEngineNa(c.key)) {
+      html += `<td class="c na engine-na">N/A</td>`;
+      continue;
+    }
     const f = factorsByCol[c.key];
     if (!f.length) {
       html += `<td class="c na">—</td>`;
@@ -226,15 +244,21 @@ function renderFcpTable(cpu, t) {
   const archs = fcpArchsFor(t);
   const scales = fcpScalesFor(cpu);
   let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
-  for (const a of archs) html += `<th>${escapeHtml(a.label)}</th>`;
+  for (const a of archs) {
+    html += `<th${isEngineNa(a.key) ? ' class="engine-na"' : ''}>${escapeHtml(a.label)}</th>`;
+  }
   html += '</tr></thead><tbody>';
   for (const scale of scales) {
     const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
-    const nums = vals.filter((v) => v != null);
+    const nums = vals.filter(
+      (v, i) => v != null && !isEngineNa(archs[i].key),
+    );
     const best = nums.length ? Math.min(...nums) : null;
     html += `<tr><td class="op">${escapeHtml(t.fcpScale(scale))}</td>`;
-    for (const v of vals) {
-      if (v == null || best == null) {
+    for (const [i, v] of vals.entries()) {
+      if (isEngineNa(archs[i].key)) {
+        html += `<td class="c na engine-na">N/A</td>`;
+      } else if (v == null || best == null) {
         html += `<td class="c na">—</td>`;
       } else {
         const factor = v / best;
@@ -337,6 +361,7 @@ function stormSeries(op, t, ticks = 1) {
     '#eda100', // react
   ];
   return cols
+    .filter((c) => !isEngineNa(c.key))
     .map((c, i) => {
       const pts = ['1k', '10k', '30k']
         .map((size) => {
@@ -353,6 +378,7 @@ function stormSeries(op, t, ticks = 1) {
 function fcpSeries(cpu, t) {
   const scales = fcpScalesFor(cpu);
   return fcpArchsFor(t)
+    .filter((a) => !isEngineNa(a.key))
     .map((a) => ({
       label: a.label,
       color: a.color,
@@ -503,9 +529,11 @@ function graphEngFactorsSection(t) {
       + OPS.map((o) => `<th>${escapeHtml(o)}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const c of graphEngFactors.perCell) {
-      html += `<tr><td class="op"><code>${escapeHtml(c.cell)}</code></td>`
+      const na = isEngineNa(c.cell);
+      html += `<tr${na ? ' class="engine-na"' : ''}><td class="op"><code>${escapeHtml(c.cell)}</code></td>`
         + `<td class="c plain" style="font-size:11px">${escapeHtml(c.coordinate ?? c.coord ?? '')}</td>`
         + OPS.map((o) => {
+          if (na) return '<td class="c na">N/A</td>';
           const v = c[`${o}@${size}`];
           return `<td class="c plain">${v == null ? '—' : fmtMs(v)}</td>`;
         }).join('')
@@ -514,6 +542,9 @@ function graphEngFactorsSection(t) {
     return `${html}</tbody></table>`;
   };
 
+  /** Factors whose pair touches an engine-N/A cell (stub on this host). */
+  const isEngineFactor = (name) => /engine/i.test(name);
+
   const factorTable = (size) => {
     let html =
       '<table><thead><tr>'
@@ -521,8 +552,10 @@ function graphEngFactorsSection(t) {
       + OPS.map((o) => `<th>${escapeHtml(o)}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const [name, f] of Object.entries(graphEngFactors.factors ?? {})) {
-      html += `<tr><td class="op">${escapeHtml(name)}</td>`
+      const na = isEngineFactor(name);
+      html += `<tr${na ? ' class="engine-na"' : ''}><td class="op">${escapeHtml(name)}</td>`
         + OPS.map((o) => {
+          if (na) return '<td class="c na">N/A</td>';
           const d = f[`${o}@${size}`];
           if (!d) return '<td class="c plain">—</td>';
           const sign = d.deltaPct >= 0 ? '+' : '';
@@ -548,6 +581,7 @@ function graphEngFactorsSection(t) {
       { op: 'selectStorm', color: 'var(--s6)' },
     ];
     const entries = Object.entries(graphEngFactors.factors ?? {})
+      .filter(([name]) => !isEngineFactor(name))
       .map(([name, f]) => ({
         name,
         vals: OPSB.map(({ op }) => f[`${op}@${size}`]?.deltaPct ?? null),
@@ -638,6 +672,14 @@ function graphEngFactorsSection(t) {
       + FCP_SCALES_X4.map((sc) => `<th>×4 @${sc}</th>`).join('')
       + '</tr></thead><tbody>';
     for (const [name, [a, b]] of Object.entries(FCP_FACTOR_PAIRS)) {
+      if (/engine/i.test(name)) {
+        any = true;
+        html += `<tr class="engine-na"><td class="op">${escapeHtml(name)}</td>`
+          + scales.map(() => '<td class="c na">N/A</td>').join('')
+          + FCP_SCALES_X4.map(() => '<td class="c na">N/A</td>').join('')
+          + '</tr>';
+        continue;
+      }
       const cellsX1 = scales.map((sc) => fcpDelta(a, b, sc, 1));
       const cellsX4 = FCP_SCALES_X4.map((sc) => fcpDelta(a, b, sc, 4));
       if (![...cellsX1, ...cellsX4].some((v) => v != null)) continue;
@@ -655,6 +697,7 @@ function graphEngFactorsSection(t) {
     // One bar per scale within each factor group.
     const scaleColors = ['var(--s1)', 'var(--s4)', 'var(--s3)', 'var(--s2)', 'var(--s5)', 'var(--s6)'];
     const entries = Object.entries(FCP_FACTOR_PAIRS)
+      .filter(([name]) => !/engine/i.test(name))
       .map(([name, [a, b]]) => ({
         name,
         vals: scales.map((sc) => fcpDelta(a, b, sc, cpu)),
@@ -759,7 +802,7 @@ ${factorTakeaways()}
         ],
         ['<b>naming（dense→sparse）是内存/簿记轴</b>：BG shells −94%、MT 表 −92%（精确计数），FCP 因子随主机与规模在噪声带内摇摆 — 它是阶梯的必要卫生，不是 FCP 特性。',
         ],
-        ['<b>engine 与 engine-et 因子 ≈0，因为它们在 web 上是诚实 stub</b>（<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。这条轴已端到端可跑，等引擎 PAPI 落地即可测真值。',
+        ['<b>engine 与 engine-et 在本环境记为 N/A</b>（Lynx for Web 无引擎 ET PAPI；<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。它们的解释回退对照样本仅用作 fail-safe 成本与噪声尺，不作为 engine 结论；这条轴已端到端可跑，等引擎 PAPI 落地即测真值。',
         ],
       ]
       : [
@@ -771,7 +814,7 @@ ${factorTakeaways()}
         ],
         ['<b>Naming (dense→sparse) is the memory/bookkeeping axis</b>: −94% BG shells, −92% MT table entries (exact counts) while its FCP factor wobbles inside noise across hosts and scales — necessary ladder hygiene, not an FCP feature.',
         ],
-        ['<b>Engine and engine-et factors are ≈0 because they are honest stubs on web</b> (<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). The axis runs end-to-end; real numbers arrive with the engine PAPI.',
+        ['<b>Engine and engine-et are N/A on this host</b> (Lynx for Web has no engine ET PAPI; <code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). Their interpretation-fallback control samples serve only as a fail-safe-cost / noise yardstick, never as engine conclusions; the axis runs end-to-end and reports real numbers the day the engine PAPI ships.',
         ],
       ];
     return `<h3 style="font-size:13.5px;margin:18px 0 6px">${
@@ -910,6 +953,17 @@ function renderReport(lang, outPath) {
     font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
     padding: 4px 10px; color: var(--ink-2);
   }
+  /* Engine-staging cells are N/A on this host (no engine ET PAPI on
+     Lynx-for-Web). Hidden by default; the toggle reveals them as N/A. */
+  th.engine-na, td.engine-na, tr.engine-na { display: none; }
+  body.show-engine th.engine-na, body.show-engine td.engine-na { display: table-cell; }
+  body.show-engine tr.engine-na { display: table-row; }
+  .stub-toggle {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+    color: var(--ink-2); border: 1px dashed var(--line); border-radius: 999px;
+    padding: 4px 10px; cursor: pointer; user-select: none;
+  }
+  .stub-toggle input { accent-color: var(--critical); margin: 0; }
 </style>
 </head>
 <body>
@@ -923,7 +977,17 @@ function renderReport(lang, outPath) {
   <span class="pill">${escapeHtml(t.pills.ladder)}</span>
   <span class="pill">${escapeHtml(t.pills.cells(unified.cells.length))}</span>
   <span class="pill">${escapeHtml(t.pills.conclusions(count))}</span>
+  <label class="stub-toggle"><input type="checkbox" id="show-engine-toggle">${
+    t.lang.startsWith('zh')
+      ? '显示 Engine cells（本环境 N/A — Lynx for Web 无引擎 ET PAPI）'
+      : 'show Engine cells (N/A on this host — no engine ET PAPI on Lynx for Web)'
+  }</label>
 </div>
+<script>
+  document.getElementById('show-engine-toggle').addEventListener('change', (e) => {
+    document.body.classList.toggle('show-engine', e.target.checked);
+  });
+</script>
 <p class="lang-switch"><a href="${alt.href}">${escapeHtml(alt.label)}</a></p>
 
 <h2>${escapeHtml(t.hConclusions)}</h2>
