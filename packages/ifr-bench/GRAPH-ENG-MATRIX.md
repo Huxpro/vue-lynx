@@ -29,7 +29,8 @@ Legacy flag spellings remain accepted (`opstream|tree|engine` ≡
 **Benchmark cell notation (V4)**: `render [+b[:d|c|e]] [+ifr[:c|e]]` —
 baseline (per-node) × stacked optimizations. `+b` = block templates
 (staging defaults to the model's natural rung: vdom→:c bundle-delivered, vapor→:d runtime-delivered);
-`+b:e` = engine staging for the persistent tree; `+ifr[:c|e]` =
+`+b!` = delivery flipped to bundle on data staging (#338);
+`+b:c` = code staging for vapor (#337); `+b:e` = engine staging for the persistent tree; `+ifr[:c|e]` =
 ephemeral first frame (optionally painted at the code/engine rung).
 Full legend: `GRAPH-ENG-REPORT.md` §1.3c and the unified report page.
 

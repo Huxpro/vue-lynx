@@ -218,6 +218,15 @@ export interface ApplyEntryOptions {
   enableIFR?: boolean;
   /** Use the pure Vapor runtime entry in generated worklet imports. */
   vapor?: boolean;
+  /**
+   * Vapor build-time-parse MT registrations (#337 `+b:c` / #338 `+b!`):
+   * `{ structures, codeTemplates, autoPixelUnit }` for worklet-loader-mt.
+   */
+  vaporBundle?: {
+    structures?: boolean;
+    codeTemplates?: boolean;
+    autoPixelUnit?: boolean;
+  };
 }
 
 export function applyEntry(
@@ -371,6 +380,7 @@ export function applyEntry(
       includeWorkletPackages,
       ifr: opts.enableIFR ?? false,
       vapor: opts.vapor ?? false,
+      vaporBundle: opts.vaporBundle,
     };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer

@@ -35,6 +35,9 @@ const VUE_CELLS = [
   // Graph-eng four-axis cells (#301/#321/#325) — opt-in via --only=.
   { id: 'vapor-dense', app: 'ui-vapor', cell: 'dense' },
   { id: 'vapor-engine', app: 'ui-vapor', cell: 'engine' },
+  // Build-time-parse cells (#337 `+b:c` / #338 `+b!`).
+  { id: 'vapor-code', app: 'ui-vapor', cell: 'code' },
+  { id: 'vapor-bang', app: 'ui-vapor', cell: 'bundle' },
   { id: 'vapor-ifr-dense', app: 'ui-vapor', cell: 'ifr-dense' },
   { id: 'vapor-ifr-sparse', app: 'ui-vapor', cell: 'ifr-sparse' },
   { id: 'vapor-ifr-engine-et', app: 'ui-vapor', cell: 'ifr-engine-et' },

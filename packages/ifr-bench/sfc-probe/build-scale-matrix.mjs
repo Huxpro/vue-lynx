@@ -31,6 +31,10 @@ const onlyFlag = [...flags].find((f) => f.startsWith('--only='));
 const onlyTags = onlyFlag
   ? new Set(onlyFlag.slice('--only='.length).split(',').filter(Boolean))
   : null;
+const variantsFlag = [...flags].find((f) => f.startsWith('--variants='));
+const onlyVariants = variantsFlag
+  ? new Set(variantsFlag.slice('--variants='.length).split(',').filter(Boolean))
+  : null;
 const force = flags.has('--force');
 
 const outDir = path.resolve(
@@ -46,6 +50,9 @@ const VARIANTS = [
   { id: 'vapor', mode: 'vapor', ifr: '0', et: '0', label: 'Vapor' },
   { id: 'vapor-dense', mode: 'vapor', ifr: '0', et: '0', sparse: '0', label: 'Vapor dense' },
   { id: 'vapor-engine', mode: 'vapor', ifr: '0', et: '0', staging: 'engine', label: 'Vapor engine (stub)' },
+  // Build-time-parse cells (#337 `+b:c` / #338 `+b!`).
+  { id: 'vapor-code', mode: 'vapor', ifr: '0', et: '0', staging: 'code', label: 'Vapor +b:c (code)' },
+  { id: 'vapor-bang', mode: 'vapor', ifr: '0', et: '0', delivery: 'bundle', label: 'Vapor +b! (bundle)' },
   { id: 'vapor-ifr', mode: 'vapor', ifr: '1', et: '0', label: 'Vapor+IFR' },
   { id: 'vapor-ifr-dense', mode: 'vapor', ifr: '1', et: '0', sparse: '0', label: 'Vapor+IFR dense' },
   { id: 'vapor-ifr-engine-et', mode: 'vapor', ifr: '1', et: '0', ifrPaint: 'engine-et', label: 'Vapor+IFR engine-et (stub)' },
@@ -75,6 +82,10 @@ for (const scale of SCALES) {
     const name = `${v.id}@${scale.tag}`;
     const destName = `${name}.web.bundle`;
     const destPath = path.join(outDir, destName);
+    if (onlyVariants && !onlyVariants.has(v.id)) {
+      if (cellByName.has(name)) manifest.cells.push(cellByName.get(name));
+      continue;
+    }
     if (onlyTags && !onlyTags.has(scale.tag)) {
       if (cellByName.has(name)) manifest.cells.push(cellByName.get(name));
       continue;
@@ -119,6 +130,7 @@ for (const scale of SCALES) {
           SFC_PROBE_ET: v.et,
           SFC_PROBE_SPARSE: v.sparse ?? '1',
           ...(v.staging ? { SFC_PROBE_STAGING: v.staging } : {}),
+          ...(v.delivery ? { SFC_PROBE_DELIVERY: v.delivery } : {}),
           ...(v.ifrPaint ? { SFC_PROBE_IFR_PAINT: v.ifrPaint } : {}),
         },
       },

@@ -95,9 +95,14 @@ function buildCellRung(cell, target) {
     BENCH_VAPOR: cell.renderer === 'vapor' ? '1' : '0',
     BENCH_IFR: cell.flags.enableIFR ? '1' : '0',
     BENCH_ET: cell.flags.enableElementTemplates ? '1' : '0',
-    // four-axis knobs (default off): naming density, engine staging, ifr paint
+    // four-axis knobs (default off): naming density, staging, delivery, paint
     BENCH_NAMING: cell.flags.templateNaming === 'dense' ? 'dense' : 'sparse',
-    BENCH_STAGING: cell.flags.templateStaging === 'engine' ? 'engine' : '',
+    BENCH_STAGING: cell.flags.templateStaging === 'engine'
+      ? 'engine'
+      : cell.flags.templateStaging === 'code'
+      ? 'code'
+      : '',
+    BENCH_DELIVERY: cell.flags.templateDelivery === 'bundle' ? 'bundle' : '',
     BENCH_IFRPAINT: cell.flags.ifrPaint === 'engine-et' ? 'engine-et' : '',
   };
   console.log(`[build] ${cell.id} @ ${rungLabel(target)} (${nCards} cards, ~${elements} el)`);

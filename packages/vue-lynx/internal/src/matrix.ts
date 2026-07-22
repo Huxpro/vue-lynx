@@ -116,6 +116,14 @@ export function normalizeIfrPaint(
  */
 export const TEMPLATE_STAGING_GLOBAL = '__VUE_LYNX_TEMPLATE_STAGING__';
 
+/**
+ * Build-time define carrying the delivery request (`templateDelivery`,
+ * #338): `'runtime'` (default — structure ships over the wire) or
+ * `'bundle'` (structure baked into the MT bundle; BG sends only the
+ * fingerprint hash via REGISTER_TREE_BUNDLE, guarded by the hash fail-safe).
+ */
+export const TEMPLATE_DELIVERY_GLOBAL = '__VUE_LYNX_TEMPLATE_DELIVERY__';
+
 /** Build-time define carrying the IFR paint mode (legacy value spelling). */
 export const IFR_PAINT_GLOBAL = '__VUE_LYNX_IFR_PAINT__';
 
@@ -184,6 +192,11 @@ interface CellSpec {
   ifr?: boolean;
   ifrPaint?: IfrPaintMode;
   aliasOf?: string;
+  /**
+   * Delivery override: `data` staging defaults to `runtime` delivery, but
+   * the `+b!` cell (#338) bakes the same data residual into the MT bundle.
+   */
+  delivery?: TemplateDelivery;
 }
 
 function makeCell(spec: CellSpec): MatrixCell {
@@ -196,6 +209,7 @@ function makeCell(spec: CellSpec): MatrixCell {
     ifr = false,
     ifrPaint,
     aliasOf,
+    delivery: deliveryOverride,
   } = spec;
   const addressing = addressingOf(render, staging, naming);
   const providers: TemplateProvider[] =
@@ -208,9 +222,13 @@ function makeCell(spec: CellSpec): MatrixCell {
     .map((p) => (p === 'engine' ? 'Engine' : p.toUpperCase()))
     .join('+');
   // Delivery: code always rides the bundle; data/native ship over the wire
-  // today (build-bundle data = the unbuilt "+b!" cell); ops has no residual.
-  const delivery: TemplateDelivery | null =
-    staging === 'ops' ? null : staging === 'code' ? 'bundle' : 'runtime';
+  // by default — the `+b!` cell (#338) overrides data staging to bundle
+  // delivery; ops has no residual.
+  const delivery: TemplateDelivery | null = staging === 'ops'
+    ? null
+    : staging === 'code'
+    ? 'bundle'
+    : (deliveryOverride ?? 'runtime');
   const cell: MatrixCell = {
     id,
     legacyId,
@@ -241,7 +259,9 @@ function makeCell(spec: CellSpec): MatrixCell {
  *  - VDOM has no `tree` staging (no CLONE_TREE); Vapor no `ops`.
  *  - `code`/`native` staging is definitionally block-named.
  *  - `ifrPaint` varies only under IFR.
- *  - Vapor `code` staging (M3a) is unimplemented — cell kept, labeled stub.
+ *  - `delivery: 'bundle'` on data staging (`+b!`, #338) varies only the
+ *    Delivery column — one cell, no IFR variant needed (the wire saving is
+ *    identical under IFR).
  */
 export function legalCells(): MatrixCell[] {
   const C = (spec: CellSpec) => makeCell(spec);
@@ -269,7 +289,20 @@ export function legalCells(): MatrixCell[] {
       ifr: true,
       ifrPaint: 'native-paint',
     }),
+    // `+b!` (#338): identical to vapor-data-block except the Delivery column
+    // — the structure AST is baked into the MT bundle (REGISTER_TREE_BUNDLE).
+    C({
+      id: 'vapor-data-block-bundle',
+      legacyId: 'vapor-bang',
+      render: 'vapor',
+      staging: 'data',
+      naming: 'block',
+      delivery: 'bundle',
+    }),
+    // `+b:c` (#337): build-time-compiled create() in both bundles,
+    // INSTANTIATE_TEMPLATE(id) on the wire, hash fail-safe to the data path.
     C({ id: 'vapor-code-block', legacyId: 'vapor-code', render: 'vapor', staging: 'code', naming: 'block' }),
+    C({ id: 'vapor-code-block-ifr', legacyId: 'vapor-ifr-code', render: 'vapor', staging: 'code', naming: 'block', ifr: true }),
     C({ id: 'vapor-native-block', legacyId: 'vapor-engine', render: 'vapor', staging: 'native', naming: 'block' }),
   ];
 }

@@ -13,9 +13,19 @@
  *   - globalThis.vuePatchUpdate – receives ops from Background Thread
  */
 
-import { PAGE_ROOT_ID } from 'vue-lynx/internal/ops';
+import {
+  PAGE_ROOT_ID,
+  TPL_EXECUTOR_REGISTRY_GLOBAL,
+  TPL_REGISTER_GLOBAL,
+  VAPOR_STRUCTURE_REGISTER_GLOBAL,
+  VAPOR_TPL_REGISTER_GLOBAL,
+} from 'vue-lynx/internal/ops';
 
 import { elements, setPageUniqueId } from './element-registry.js';
+import {
+  registerVaporStructure,
+  registerVaporTemplate,
+} from './vapor-templates.js';
 import {
   completeIfrHydration,
   interceptPatchUpdate,
@@ -46,6 +56,12 @@ g['runOnBackground'] = runOnBackground;
 //    at evaluation time — entry-main runs first, so they land in the
 //    create-only adapter
 g[TPL_EXECUTOR_REGISTRY_GLOBAL] = registerTemplate;
+
+// Vapor build-time-parse registries (#337 `+b:c` / #338 `+b!`): the plugin
+// bakes registration statements into this bundle; entry-main evaluates first,
+// so the hooks are installed before any of them run.
+g[VAPOR_STRUCTURE_REGISTER_GLOBAL] = registerVaporStructure;
+g[VAPOR_TPL_REGISTER_GLOBAL] = registerVaporTemplate;
 g[TPL_REGISTER_GLOBAL] = (
   id: string,
   holes: unknown,
