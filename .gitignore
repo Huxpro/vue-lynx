@@ -5,6 +5,12 @@ dist-naive/
 dist-compiler/
 dist-ifr/
 dist-ifr-et/
+dist-et/
+dist-dense/
+dist-engine/
+dist-ifr-dense/
+dist-ifr-sparse/
+dist-ifr-engine-et/
 .rslib/
 *.tsbuildinfo
 .rspeedy/

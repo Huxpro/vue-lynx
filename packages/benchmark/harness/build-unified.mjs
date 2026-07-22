@@ -29,11 +29,15 @@ const VUE_CELLS = [
   { id: 'vdom', app: 'ui-vdom', cell: 'off' },
   { id: 'vdom-ifr', app: 'ui-vdom', cell: 'ifr' },
   { id: 'vdom-ifr-et', app: 'ui-vdom', cell: 'ifr-et' },
+  { id: 'vdom-et', app: 'ui-vdom', cell: 'et' },
   { id: 'vapor', app: 'ui-vapor', cell: 'off' },
   { id: 'vapor-ifr', app: 'ui-vapor', cell: 'ifr' },
-  // Graph-eng naming-density pair (#301) — opt-in via --only=.
+  // Graph-eng four-axis cells (#301/#321/#325) — opt-in via --only=.
+  { id: 'vapor-dense', app: 'ui-vapor', cell: 'dense' },
+  { id: 'vapor-engine', app: 'ui-vapor', cell: 'engine' },
   { id: 'vapor-ifr-dense', app: 'ui-vapor', cell: 'ifr-dense' },
   { id: 'vapor-ifr-sparse', app: 'ui-vapor', cell: 'ifr-sparse' },
+  { id: 'vapor-ifr-engine-et', app: 'ui-vapor', cell: 'ifr-engine-et' },
 ];
 
 export function buildVueMatrix(filter = null) {
