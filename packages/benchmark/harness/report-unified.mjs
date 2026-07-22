@@ -986,13 +986,14 @@ ${flagLegend()}
 ${sizes.map((sz, i) => `<div class="scroll"${i ? ' style="margin-top:10px"' : ''}>${cellTable(sz)}</div>`).join('')}
 <p class="sub" style="margin-top:14px">${
     t.lang.startsWith('zh')
-      ? '主效应（每次只动一根轴）。图：柱向左（负）= 该轴让该操作更快;±10% 内视为噪声（reps=2）。engine 因子在 web 上是 stub 探测开销。'
-      : 'Main effects (one axis moved at a time). Charts: bars left (negative) = the axis makes that op faster; read ±10% as noise (reps=2). Engine factors are stub probe overhead on web.'
+      ? '主效应（每次只翻一个 flag）。每个 flag 会同时挪动几根坐标轴（见下方「flag ↔ 坐标轴」表），所以这些数字归因到 flag 粒度、不能再往单轴拆。图：柱向左（负）= 该 flag 让该操作更快;±10% 内视为噪声（reps=2）。engine 因子在 web 上是 stub 探测开销。'
+      : 'Main effects (one flag flipped at a time). Each flag co-moves several coordinate axes (see the “flag ↔ coordinate axis” map below), so these numbers attribute to flag granularity and cannot be split finer. Charts: bars left (negative) = the flag makes that op faster; read ±10% as noise (reps=2). Engine factors are stub probe overhead on web.'
   }</p>
 <div class="charts">
   ${sizes.map((sz) => factorBars(sz)).join('')}
 </div>
 ${factorTakeaways()}
+${flagAxisMap()}
 ${sizes.map((sz) => `<div class="scroll" style="margin-top:10px">${factorTable(sz)}</div>`).join('')}
 ${fcpFactorsBlock()}
 `;
@@ -1013,11 +1014,11 @@ ${fcpFactorsBlock()}
       ? [
         ['<b>Update / select 对模板机制是盲的。</b><code>+b</code> 因子（vdom 与 vapor 两行）在 update10th / select / updateStorm / selectStorm 上各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
         ],
-        [`<b>Create 的模板收益与子树静态占比成正比。</b>table app 的 create 被动态 v-for 行主导（staging 因子 create ${fmtP(stagingCreate[0])}~${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ 噪声）；静态重内容（sfc-probe FCP 阶梯）上 Code-Template 是唯一全场景为负的因子。要 ET 收益，先看你的首屏静态占比。`],
+        [`<b>模板的 create 收益只在静态重的屏上出现。</b>「负 = 更快」。table app 的 create 被动态 v-for 行主导，模板化只覆盖那一小块静态骨架，所以 staging 因子在 create 上 ${fmtP(stagingCreate[0])}~${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ 噪声；换到静态重内容（sfc-probe FCP 阶梯），block/code 模板就成了唯一在所有规模都为负（更快）的因子。规则：先量你首屏的静态占比，再决定要不要上模板。`],
         [`<b>render 轴（vdom→vapor）才是 update 的大杠杆</b>：updateStorm ${renderUS.map(fmtP).join(' / ')}（1k→30k），远超任何模板轴。交互性能选 render model，别指望模板。`],
         ['<b>IFR 是首帧杠杆，不是交互杠杆</b>：ifr 因子只在 create/FCP 显著，update 因子在噪声内；×4 下 vapor 的 IFR 首帧代价由 +b 收回（基线 +12% → +b +2%）。',
         ],
-        ['<b>vapor 的 +b 是内存/簿记优化</b>：BG shells −94%、MT 表 −92%（精确计数），FCP 因子随主机与规模在噪声带内摇摆 — 它是阶梯的必要卫生，不是 FCP 特性。',
+        ['<b>那 vapor +b 到底做了什么？</b>在动态表格上它对 create / update / select / storm 延迟几乎没影响（各规模都在 ±10% 噪声内）。它真正可测的收益有两处：(1) <b>内存 / 簿记</b> — BG shells −94%、MT 表项 −92%（精确计数）;(2) <b>静态重首屏</b> — block 化让首帧构建更省，收益随子树静态占比上升。一句话：+b 是内存 + 静态首帧优化，不是动态延迟杠杆。我们在 +b / +ifr 上花的功夫，产出的是这两样，而不是表格交互延迟。',
         ],
         ['<b>+b:e 与 +ifr:e 在本环境记为 N/A</b>（Lynx for Web 无引擎 ET PAPI；<code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>）。它们的解释回退对照样本仅用作 fail-safe 成本与噪声尺，不作为 engine 结论；这条轴已端到端可跑，等引擎 PAPI 落地即测真值。',
         ],
@@ -1025,11 +1026,11 @@ ${fcpFactorsBlock()}
       : [
         ['<b>Update and select are template-blind.</b> Both <code>+b</code> factor rows (vdom and vapor) sit inside the ±10% noise band on update10th / select / updateStorm / selectStorm at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
         ],
-        [`<b>Create benefit scales with the static fraction of the subtree.</b> The table app's create is dominated by dynamic v-for rows (staging factor on create ${fmtP(stagingCreate[0])}…${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ noise); on static-heavy content (the sfc-probe FCP ladder) Code-Template is the one factor negative in every scenario. Check your first screen's static fraction before reaching for ET.`],
+        [`<b>Template create benefit shows up only on static-heavy screens.</b> Negative = faster. The table app's create is dominated by dynamic v-for rows and templating only covers the small static skeleton, so the staging factor on create is ${fmtP(stagingCreate[0])}…${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ noise; on static-heavy content (the sfc-probe FCP ladder) block/code templates are the one factor negative (faster) at every scale. Rule: measure your first screen's static fraction before reaching for templates.`],
         [`<b>The render axis (vdom→vapor) is the update lever</b>: updateStorm ${renderUS.map(fmtP).join(' / ')} (1k→30k) — far beyond any template axis. Pick the render model for interaction performance; don't expect templates to move it.`],
         ['<b>IFR is a first-frame lever, not an interaction lever</b>: the ifr factor is significant only on create/FCP, its update factors sit in noise; under ×4 vapor\'s IFR first-frame cost is recovered by +b (baseline +12% → +b +2%).',
         ],
-        ['<b>Vapor\'s +b is a memory/bookkeeping optimization</b>: −94% BG shells, −92% MT table entries (exact counts) while its FCP factor wobbles inside noise across hosts and scales — necessary ladder hygiene, not an FCP feature.',
+        ['<b>So what does vapor +b actually do?</b> On the dynamic table it barely moves create / update / select / storm latency (inside the ±10% noise band at every scale). Its two real, measured payoffs are: (1) <b>memory / bookkeeping</b> — −94% BG shells, −92% MT table entries (exact counts); and (2) <b>static-heavy first frame</b> — block staging makes first-frame construction cheaper, the benefit scaling with the subtree\'s static fraction. In one line: +b is a memory + static-first-frame optimization, not a dynamic-latency lever. The work we spent on +b / +ifr buys those two things, not table interaction latency.',
         ],
         ['<b>+b:e and +ifr:e are N/A on this host</b> (Lynx for Web has no engine ET PAPI; <code>__VUE_LYNX_ENGINE_ET_STATUS__ = stub</code>). Their interpretation-fallback control samples serve only as a fail-safe-cost / noise yardstick, never as engine conclusions; the axis runs end-to-end and reports real numbers the day the engine PAPI ships.',
         ],
@@ -1045,6 +1046,64 @@ ${fcpFactorsBlock()}
     return `<h3 style="font-size:13.5px;margin:14px 0 6px">${
       zhT ? '主效应结论（take away）' : 'Main-effect takeaways'
     }</h3><div class="tkgrid">${cards}</div>`;
+  }
+
+  /**
+   * flag ↔ coordinate-axis map. Each flag factor is a move between two cells;
+   * the 6-slot `coord` string of those cells tells us exactly which axes the
+   * flag moved. Derived by diffing coords (never fabricated), so it stays
+   * honest about collinearity: a flag that lights up 3 columns moves all 3 at
+   * once and its measured delta cannot be split among them.
+   */
+  function flagAxisMap() {
+    const zhT = t.lang.startsWith('zh');
+    const byFlag = new Map();
+    for (const c of graphEngFactors.perCell ?? []) {
+      const coord = c.coordinate ?? c.coord;
+      if (coord && !byFlag.has(c.flag)) byFlag.set(c.flag, coord);
+    }
+    // 6 coordinate slots, in the order the `coord` string uses them.
+    const AXES = zhT
+      ? ['staging 阶段', 'naming 命名', 'access 访问', 'thread 线程', 'lifetime 生命期', 'origin 来源']
+      : ['staging', 'naming', 'access', 'thread', 'lifetime', 'origin'];
+    // Strip only the "(N/A on web)" annotation BEFORE splitting — its "N/A"
+    // slash would otherwise fake extra slots. Keep meaningful parentheticals
+    // like "(native-paint)", which IS the axis change +ifr:e makes.
+    const slots = (coord) => coord.replace(/\s*\(N\/A[^)]*\)/gi, '').split('/').map((s) => s.trim());
+    // factor → (from flag, to flag); N/A pairs touch an engine/native cell.
+    const rows = [
+      { flag: 'render', from: 'vdom', to: 'vapor', na: false },
+      { flag: '+b (vdom)', from: 'vdom', to: 'vdom +b', na: false },
+      { flag: '+b (vapor)', from: 'vapor', to: 'vapor +b', na: false },
+      { flag: '+ifr', from: 'vapor +b', to: 'vapor +b +ifr', na: false },
+      { flag: '+b:e', from: 'vapor +b', to: 'vapor +b:e', na: true },
+      { flag: '+ifr:e', from: 'vapor +b +ifr', to: 'vapor +b +ifr:e', na: true },
+    ].filter((r) => byFlag.has(r.from) && byFlag.has(r.to));
+
+    let html = `<h3 style="font-size:13.5px;margin:18px 0 6px">${
+      zhT ? 'flag ↔ 坐标轴映射（哪些轴被这个 flag 一起挪动）' : 'flag ↔ coordinate-axis map (which axes each flag co-moves)'
+    }</h3>`;
+    html += `<div class="scroll"><table><thead><tr><th>flag</th>${
+      AXES.map((a) => `<th style="font-size:10.5px">${escapeHtml(a)}</th>`).join('')
+    }<th>${zhT ? '同时挪动' : 'axes moved'}</th></tr></thead><tbody>`;
+    for (const r of rows) {
+      const a = slots(byFlag.get(r.from));
+      const b = slots(byFlag.get(r.to));
+      let moved = 0;
+      const cells = AXES.map((_, i) => {
+        if (a[i] === b[i]) return '<td class="c plain" style="color:var(--ink-2)">·</td>';
+        moved += 1;
+        return `<td class="c plain" style="font-size:10px"><b>${escapeHtml(a[i] ?? '')}→${escapeHtml(b[i] ?? '')}</b></td>`;
+      }).join('');
+      html += `<tr><td class="op">${escapeHtml(r.flag)}${r.na ? ` <span class="sub" style="font-size:9.5px">${zhT ? '（web 上 N/A）' : '(N/A on web)'}</span>` : ''}</td>${cells}<td class="c plain"><b>${moved}</b></td></tr>`;
+    }
+    html += '</tbody></table></div>';
+    html += `<p class="sub" style="margin-top:8px">${
+      zhT
+        ? '每一行是一次 cell→cell 的移动，亮起的列 = 该 flag 同时挪动的坐标轴，直接从 6 槽 <code>coord</code> 串 diff 得出（不是编造）。因为这些轴<b>共线</b>——例如 <code>+ifr</code> 永远同时挪 thread 与 lifetime、<code>render</code> 一次挪 3 根——所以上面因子表里的 Δ% 只能归因到 <b>flag 粒度</b>，无法再拆成单轴数字。native/engine 轴在本机记为 N/A（只作 fail-safe 成本尺）。'
+        : 'Each row is one cell→cell move; the lit columns are the axes that flag co-moves, diffed straight from the 6-slot <code>coord</code> string (not invented). Because these axes are <b>collinear</b> — <code>+ifr</code> always moves thread and lifetime together, <code>render</code> moves 3 at once — the Δ% in the factor tables attributes only to <b>flag granularity</b> and cannot be split into per-axis numbers. The native/engine axes are N/A on this host (a fail-safe-cost yardstick only).'
+    }</p>`;
+    return html;
   }
 }
 
