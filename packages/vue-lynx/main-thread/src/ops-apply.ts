@@ -28,6 +28,7 @@ import {
   resetEngineTemplatesForTesting,
 } from './engine-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
+import { getVaporStructure, getVaporTemplate } from './vapor-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -173,7 +174,7 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     ) {
       return elements.has(ops[cursor + 1] as number);
     }
-    if (code === OP.REGISTER_TREE) {
+    if (code === OP.REGISTER_TREE || code === OP.REGISTER_TREE_BUNDLE) {
       return templates.has(ops[cursor + 1] as number);
     }
     if (code === OP.CLONE_TREE) {
@@ -514,6 +515,30 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.REGISTER_TREE_BUNDLE: {
+        // `+b!` (#338): the structure was baked into this bundle at build
+        // time — only the fingerprint hash crossed the wire. The BG emits
+        // this op ONLY after verifying its runtime parse hashes identically
+        // to the build parse, so a registry miss can only mean mismatched
+        // BG/MT bundles; nothing to interpret without the structure, so the
+        // batch entry is dropped loudly.
+        const tplId = ops[i++] as number;
+        const hash = ops[i++] as string;
+        const addressedOr0 = ops[i++] as number[] | 0;
+        const structure = getVaporStructure(hash);
+        if (structure) {
+          templates.set(tplId, {
+            structure,
+            addressed: Array.isArray(addressedOr0) ? addressedOr0 : undefined,
+          });
+        } else {
+          console.error(
+            `[vue-lynx] REGISTER_TREE_BUNDLE: no bundle-registered structure for hash "${hash}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
       case OP.REGISTER_TREE: {
         const tplId = ops[i++] as number;
         const structure = ops[i++] as TemplateNode;
@@ -644,6 +669,31 @@ export function applyOps(ops: unknown[], flush = true): void {
         const rootId = ops[i++] as number;
         const tplId = ops[i++] as string;
         const holeCount = ops[i++] as number;
+
+        // Vapor Code-Template (`+b:c`, #337): the bundle-baked create()
+        // materializes the whole static skeleton and returns one handle per
+        // ADDRESSED slot in sparse order (null for BG-only anchors). Naming
+        // (`rootId + k`), selector attributes, and insert tracking mirror
+        // instantiateTemplateSparse exactly — the update path cannot tell
+        // the difference.
+        const ventry = getVaporTemplate(tplId);
+        if (ventry) {
+          const handles = ventry.create(pageUniqueId);
+          const limit = Math.min(handles.length, holeCount + 1);
+          for (let k = 0; k < limit; k++) {
+            const el = handles[k];
+            if (!el) continue;
+            const uid = rootId + k;
+            elements.set(uid, el);
+            installSelectorAttribute(uid, el);
+            const parentIdx = ventry.namedParents[k] ?? -1;
+            if (parentIdx >= 0 && handles[parentIdx]) {
+              trackInsert(rootId + parentIdx, uid);
+            }
+          }
+          break;
+        }
+
         const entry = getTemplate(tplId);
         let handles: LynxElement[];
         if (entry) {

@@ -27,6 +27,7 @@ import type {
 import { register, unregister } from './event-registry.js';
 import {
   VAPOR_ADDRESSING_KEY,
+  hashVaporStructure,
   type TemplateNode,
   type TemplateNodeProps,
   type VaporTreeAddressing,
@@ -1005,6 +1006,40 @@ interface TemplateCache {
   /** Sparse A2 naming list; undefined → dense A1. */
   addressed?: number[];
   holes?: number[];
+  /**
+   * Bundle delivery (`+b!`, #338): the verified structure fingerprint. Set
+   * only when the runtime hash of `structure` equals the build-time hash
+   * stamped on the factory — registration then crosses as
+   * REGISTER_TREE_BUNDLE (hash only) instead of the full structure.
+   */
+  bundleHash?: string;
+  /**
+   * Code staging (`+b:c`, #337): the MT create() registry id. Set only when
+   * the fingerprint matched AND sparse addressing validated — each clone
+   * then crosses as a single INSTANTIATE_TEMPLATE(base, id, holeCount) and
+   * no REGISTER_TREE/CLONE_TREE is ever sent for this template.
+   */
+  codeTplId?: string;
+}
+
+/**
+ * Delivery request from the build ('runtime' | 'bundle', #338). Reads the
+ * define when present, else a same-named global so tests/harnesses can flip
+ * it per run.
+ */
+function bundleDeliveryRequested(): boolean {
+  const v = typeof __VUE_LYNX_TEMPLATE_DELIVERY__ !== 'undefined'
+    ? __VUE_LYNX_TEMPLATE_DELIVERY__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_DELIVERY__'];
+  return v === 'bundle';
+}
+
+/** Staging request 'code' (`+b:c`, #337) — define or global, like above. */
+function codeStagingRequested(): boolean {
+  const v = typeof __VUE_LYNX_TEMPLATE_STAGING__ !== 'undefined'
+    ? __VUE_LYNX_TEMPLATE_STAGING__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_STAGING__'];
+  return v === 'code';
 }
 
 let nextTemplateId = 1;
@@ -1287,18 +1322,61 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
       addressed: sparse ? [...meta.addressed].sort((a, b) => a - b) : undefined,
       holes: sparse ? [...meta.holes].sort((a, b) => a - b) : undefined,
     };
+
+    // Build-time-parse cells (#337 `+b:c` / #338 `+b!`): the structure
+    // fingerprint fail-safe. The build-stamped hash must equal the hash of
+    // THIS runtime parse before any bundle-resident artifact is trusted;
+    // any disagreement silently keeps today's wire data path (correctness
+    // never rides on the build-time parse).
+    const buildHash = pendingVaporAddressing?.hash;
+    if (buildHash !== undefined
+      && (codeStagingRequested() || bundleDeliveryRequested()))
+    {
+      const runtimeHash = hashVaporStructure(JSON.stringify(structure));
+      if (runtimeHash === buildHash) {
+        if (codeStagingRequested() && cache.addressed) {
+          // Code id = hash(structure)-hash(addressed): both bundles derive
+          // it independently from the same build analysis, so a naming
+          // disagreement changes the id instead of silently mis-naming.
+          cache.codeTplId = `${buildHash}-${
+            hashVaporStructure(cache.addressed.join(','))
+          }`;
+        } else if (bundleDeliveryRequested()) {
+          cache.bundleHash = buildHash;
+        }
+      } else if (__DEV__) {
+        console.warn(
+          '[vue-lynx] build-time template fingerprint mismatch — '
+            + 'falling back to runtime REGISTER_TREE delivery.',
+        );
+      }
+    }
     templateCaches.set(proto, cache);
   }
 
   if (!registeredTemplateIds.has(cache.id)) {
     registeredTemplateIds.add(cache.id);
-    // addressedOr0: 0 = dense A1; number[] = sparse A2 naming list.
-    pushOp(
-      OP.REGISTER_TREE,
-      cache.id,
-      cache.structure,
-      cache.addressed ?? 0,
-    );
+    if (cache.codeTplId !== undefined) {
+      // Code staging: no tree registration at all — instantiation is a
+      // per-clone INSTANTIATE_TEMPLATE against the bundle-baked create().
+    } else if (cache.bundleHash !== undefined) {
+      // Bundle delivery: the structure lives in the MT bundle; only the
+      // fingerprint and the (tiny) naming list cross the wire.
+      pushOp(
+        OP.REGISTER_TREE_BUNDLE,
+        cache.id,
+        cache.bundleHash,
+        cache.addressed ?? 0,
+      );
+    } else {
+      // addressedOr0: 0 = dense A1; number[] = sparse A2 naming list.
+      pushOp(
+        OP.REGISTER_TREE,
+        cache.id,
+        cache.structure,
+        cache.addressed ?? 0,
+      );
+    }
   }
 
   const base = ShadowElement.nextUid;
@@ -1327,7 +1405,19 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
         `[vue-lynx] sparse template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
       );
     }
-    pushOp(OP.CLONE_TREE, cache.id, base);
+    if (cache.codeTplId !== undefined) {
+      // Code staging (#337): the MT executes the bundle-baked create() and
+      // names base + indexInAddressed — handles are returned in addressed
+      // order, so the op-15 `rootId + k` contract IS the sparse uid block.
+      pushOp(
+        OP.INSTANTIATE_TEMPLATE,
+        base,
+        cache.codeTplId,
+        addressed.length - 1,
+      );
+    } else {
+      pushOp(OP.CLONE_TREE, cache.id, base);
+    }
     scheduleFlush();
     return root;
   }

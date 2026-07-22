@@ -56,6 +56,17 @@
  *     parent may be anonymous under sparse A2). anchorId=-1 → append.
  *   REMOVE_TEMPLATE_SLOT: [19, rootId, slotIndex, childId]
  *     Remove a dynamic child from the slotIndex-th element slot.
+ *   REGISTER_TREE_BUNDLE: [20, treeId, structureHash, addressedOr0]
+ *     Bundle-delivered REGISTER_TREE (the `+b!` cell, #338): the structure
+ *     AST was baked into the MT bundle at build time
+ *     (`registerVaporStructure(hash, structure)`); only the fingerprint hash
+ *     and the (tiny) naming list cross the wire. The MT resolves hash →
+ *     structure from its bundle registry and stores the tree exactly as a
+ *     wire REGISTER_TREE would — CLONE_TREE and everything downstream is
+ *     unchanged. The BG only emits this op when its runtime-parsed structure
+ *     hash equals the build-time-parsed hash stamped on the template factory
+ *     (fingerprint fail-safe); on mismatch it falls back to full
+ *     REGISTER_TREE, so correctness never rides on the build-time parse.
  *
  * Naming: INSTANTIATE_TEMPLATE (15) and REGISTER_TREE/CLONE_TREE (16/17) are
  * genuinely different mechanisms, named by mechanism rather than renderer.
@@ -111,6 +122,7 @@ export const OP = {
   CLONE_TREE: 17,
   INSERT_TEMPLATE_SLOT: 18,
   REMOVE_TEMPLATE_SLOT: 19,
+  REGISTER_TREE_BUNDLE: 20,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -136,6 +148,7 @@ export const OP_ARITY: Readonly<Record<number, number>> = Object.freeze({
   [OP.CLONE_TREE]: 2,
   [OP.INSERT_TEMPLATE_SLOT]: 4,
   [OP.REMOVE_TEMPLATE_SLOT]: 3,
+  [OP.REGISTER_TREE_BUNDLE]: 3,
 });
 
 // ---------------------------------------------------------------------------
@@ -179,6 +192,24 @@ export const IFR_APPLY_OPS_GLOBAL = '__vueLynxIfrApplyOps';
 export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
 /** MT executor registry for element-template create() functions. */
 export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
+
+/**
+ * MT bundle-seeded registry for build-time-parsed vapor structures (`+b!`,
+ * #338): `globalThis.<name>(hash, structure)` at bundle evaluation.
+ * REGISTER_TREE_BUNDLE resolves its hash here.
+ */
+export const VAPOR_STRUCTURE_REGISTER_GLOBAL = '__vueLynxRegisterVaporStructure';
+
+/**
+ * MT bundle-seeded registry for compiled vapor template `create()` functions
+ * (`+b:c`, #337): `globalThis.<name>(hash, namedParents, create)` at bundle
+ * evaluation. INSTANTIATE_TEMPLATE resolves vapor ids here (before the
+ * element-template registry). `namedParents[i]` is the index (into the
+ * addressed list) of the nearest NAMED ancestor of addressed slot `i`, or
+ * -1 for the root — MT bookkeeping (insert tracking) mirrors the sparse
+ * interpreter with it.
+ */
+export const VAPOR_TPL_REGISTER_GLOBAL = '__vueLynxRegisterVaporTemplate';
 
 // ---------------------------------------------------------------------------
 // REGISTER_TREE structure — the ONE definition both threads must agree
@@ -235,6 +266,39 @@ export interface VaporTreeAddressing {
   slotCount: number;
   /** Tags at each addressed slot, parallel to `addressed`. */
   tags: string[];
+  /**
+   * Fingerprint of the BUILD-TIME-parsed `TemplateNode` structure
+   * (`hashVaporStructure(JSON.stringify(structure))`), stamped by the plugin
+   * for the bundle-delivery (`+b!`, #338) and code-staging (`+b:c`, #337)
+   * cells. The runtime compares it against the hash of its own
+   * `buildStructure` output at first clone; only on an exact match may the
+   * structure delivery be skipped (bundle) or the compiled `create()` be
+   * instantiated (code) — any mismatch silently falls back to the wire
+   * REGISTER_TREE data path.
+   */
+  hash?: string;
+}
+
+/**
+ * Content hash for a serialized `TemplateNode` structure — the fingerprint
+ * both build-time (plugin) and runtime (BG `buildStructure`) sides compute
+ * over `JSON.stringify(structure)`. Same fnv1a×2 construction as the
+ * element-template content ids. ONE definition shared by both sides so the
+ * fail-safe can never drift by hashing differently.
+ */
+export function hashVaporStructure(structureJson: string): string {
+  const fnv1a = (str: string, seed: number): number => {
+    let h = seed >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  };
+  return (
+    fnv1a(structureJson, 0x811c9dc5).toString(36)
+    + fnv1a(structureJson, 0x9747b28c).toString(36)
+  );
 }
 
 // Global names bridging the vapor build plugin and the runtime DOM shim:

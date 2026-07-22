@@ -27,9 +27,14 @@ describe('legalCells (terminology v2)', () => {
     expect(ids).toContain('vdom-code-block-ifr'); // first-class now
     expect(ids).toContain('vapor-data-block'); // product default
     expect(ids).toContain('vapor-data-node'); // Named Tree
+    expect(ids).toContain('vapor-data-block-bundle'); // +b! (#338)
+    expect(ids).toContain('vapor-code-block'); // +b:c (#337)
+    expect(ids).toContain('vapor-code-block-ifr');
     expect(ids).toContain('vapor-native-block');
     // Legacy ids resolve to the same cells.
     expect(getCell('vdom-et')?.id).toBe('vdom-code-block');
+    expect(getCell('vapor-bang')?.id).toBe('vapor-data-block-bundle');
+    expect(getCell('vapor-code')?.id).toBe('vapor-code-block');
     expect(getCell('vapor-dense')?.id).toBe('vapor-data-node');
     expect(getCell('vapor-ifr')?.id).toBe('vapor-data-block-ifr');
     expect(getCell('vapor-ifr-engine-et')?.id).toBe(
@@ -60,11 +65,19 @@ describe('legalCells (terminology v2)', () => {
       'persistent',
       'ephemeral',
     ]);
-    // Delivery: code rides the bundle; data/native ship over the wire today.
+    // Delivery: code rides the bundle; data/native ship over the wire by
+    // default — `+b!` (#338) flips ONLY the delivery column on data staging.
     expect(getCell('vdom-ops-node')?.delivery).toBe(null);
     expect(getCell('vdom-code-block')?.delivery).toBe('bundle');
     expect(getCell('vapor-data-block')?.delivery).toBe('runtime');
+    expect(getCell('vapor-data-block-bundle')?.delivery).toBe('bundle');
+    expect(getCell('vapor-code-block')?.delivery).toBe('bundle');
     expect(getCell('vapor-native-block')?.delivery).toBe('runtime');
+    // `+b!` differs from vapor-data-block in the delivery column ONLY.
+    const bang = getCell('vapor-data-block-bundle')!;
+    const base = getCell('vapor-data-block')!;
+    expect({ ...bang, id: '', legacyId: '', delivery: '', coordinate: '' })
+      .toEqual({ ...base, id: '', legacyId: '', delivery: '', coordinate: '' });
     // Engine staging cannot be measured on hosts without the engine PAPI.
     expect(getCell('vapor-native-block')?.engineNaOnWeb).toBe(true);
     expect(
