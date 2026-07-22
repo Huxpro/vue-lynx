@@ -24,17 +24,17 @@
  * the root id, and all updates flow through ordinary SET_* ops.
  *
  * Eligibility (per node):
- *  - plain element (no component / slot / <template> / structural directive
- *    on interiors); `list`/`list-item`/`page` excluded (main-thread special
- *    handling)
+ *  - plain element (no slot outlet / <template> on interiors); `list` /
+ *    `list-item` / `page` excluded (main-thread special handling)
  *  - interior nodes: only v-bind/v-on props; no `ref`/`key`/`id`/`onVnode*`;
  *    no runtime directives (v-show, v-model, custom)
  *  - the subtree ROOT keeps all of its own props/directives on the vnode
  *    (they behave exactly like a normal element: Transition classes, v-show,
  *    ref, key, … all still work), so roots are only constrained structurally
- *  - children: elements (recursively eligible), fully-static text, or a
- *    single dynamic-text child (becomes a '#text' hole); anything else
- *    (comments, mixed dynamic text, v-if/v-for/components) breaks the
+ *  - children: elements (recursively eligible), fully-static text, a single
+ *    dynamic-text child (`'#text'` hole), or structural hosts (`v-if` /
+ *    `v-for` / components) registered as element-slot holes (`'#slot'`);
+ *    anything else (comments, slot outlets, mixed dynamic text) breaks the
  *    subtree — descendants are then considered independently
  *
  * Anything ineligible simply stays on the normal vdom/ops path; correctness
@@ -54,6 +54,7 @@ import {
   ConstantTypes,
   ElementTypes,
   NodeTypes,
+  createFunctionExpression,
   createObjectExpression,
   createObjectProperty,
   createSimpleExpression,
@@ -62,6 +63,7 @@ import {
 import {
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
+  TPL_SLOT_KEY,
   TPL_TYPE_PREFIX,
 } from 'vue-lynx/internal/ops';
 
@@ -126,7 +128,10 @@ function templateId(content: string): string {
 // ---------------------------------------------------------------------------
 
 interface Hole {
-  /** original prop key, or '#text' for a text-content binding */
+  /**
+   * Original prop key, `'#text'` for a text-content binding, or
+   * `TPL_SLOT_KEY` (`'#slot'`) for an element-slot (dynamic subtree).
+   */
   key: string;
   /** compiled value expression (moved onto the lowered vnode as __hN) */
   value: unknown;
@@ -185,6 +190,36 @@ function printBakedValue(
     : (value.content ?? 'undefined');
 }
 
+/** Emit a wrapper placeholder for an element-slot and register the hole. */
+function emitElementSlot(
+  lines: string[],
+  holes: Hole[],
+  holeVars: string[],
+  parentVar: string,
+  nextVar: { n: number },
+  codegen: unknown,
+): void {
+  if (codegen == null) throw INELIGIBLE;
+  const slotVar = `e${nextVar.n++}`;
+  // Wrapper is layout-transparent on Lynx; dynamic content is mounted into
+  // it at runtime via INSERT_TEMPLATE_SLOT (slot-index addressing).
+  lines.push(`const ${slotVar} = __CreateWrapperElement(P);`);
+  lines.push(`__AppendElement(${parentVar}, ${slotVar});`);
+  // Wrap in a thunk so openBlock()/createBlock() inside v-if / v-for /
+  // component codegen does NOT register as a dynamicChild of the template
+  // root block (that would double-mount alongside our slot renderer).
+  // The thunk is invoked from patchProp after the parent render completes.
+  const thunk = createFunctionExpression(
+    undefined,
+    // biome-ignore lint/suspicious/noExplicitAny: CodegenNode → FunctionExpression returns
+    codegen as any,
+    false,
+    false,
+  );
+  holes.push({ key: TPL_SLOT_KEY, value: thunk });
+  holeVars.push(slotVar);
+}
+
 function analyzeSubtree(
   rootEl: ElementNode,
   context: TransformContext,
@@ -194,7 +229,7 @@ function analyzeSubtree(
   const holes: Hole[] = [];
   const holeVars: string[] = [];
   let elementCount = 0;
-  let nextVar = 0;
+  const nextVar = { n: 0 };
 
   const scopeId = context.scopeId ?? null;
 
@@ -207,7 +242,7 @@ function analyzeSubtree(
     const vnodeCall = cg as VNodeCall;
 
     elementCount++;
-    const v = `e${nextVar++}`;
+    const v = `e${nextVar.n++}`;
     const createFn = TYPED_CREATE[el.tag];
     lines.push(
       createFn !== undefined
@@ -297,10 +332,36 @@ function analyzeSubtree(
     } else {
       for (const child of kids) {
         if (child.type === NodeTypes.ELEMENT) {
-          const cv = emitElement(child as ElementNode, false);
-          lines.push(`__AppendElement(${v}, ${cv});`);
+          if (child.tagType === ElementTypes.COMPONENT) {
+            // Component child → element slot (static shell stays templated).
+            elementCount++; // wrapper placeholder
+            emitElementSlot(
+              lines,
+              holes,
+              holeVars,
+              v,
+              nextVar,
+              child.codegenNode,
+            );
+          } else {
+            const cv = emitElement(child as ElementNode, false);
+            lines.push(`__AppendElement(${v}, ${cv});`);
+          }
+        } else if (
+          child.type === NodeTypes.IF || child.type === NodeTypes.FOR
+        ) {
+          // Structural directive hosts → element slots.
+          elementCount++; // wrapper placeholder
+          emitElementSlot(
+            lines,
+            holes,
+            holeVars,
+            v,
+            nextVar,
+            child.codegenNode,
+          );
         } else if (child.type === NodeTypes.TEXT) {
-          const tv = `e${nextVar++}`;
+          const tv = `e${nextVar.n++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
           lines.push(...scope.elementScopeStatements(tv, scopeId));
           lines.push(
@@ -311,7 +372,7 @@ function analyzeSubtree(
           // Mixed-children text: bake only when fully static.
           const content = child.content;
           if (content.type !== NodeTypes.TEXT) throw INELIGIBLE;
-          const tv = `e${nextVar++}`;
+          const tv = `e${nextVar.n++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
           lines.push(...scope.elementScopeStatements(tv, scopeId));
           lines.push(
@@ -321,7 +382,7 @@ function analyzeSubtree(
           );
           lines.push(`__AppendElement(${v}, ${tv});`);
         } else {
-          // comments, v-if/v-for, components, dynamic mixed text …
+          // comments, slot outlets, <template>, dynamic mixed text …
           throw INELIGIBLE;
         }
       }

@@ -2,13 +2,21 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
-import type { RendererOptions } from '@vue/runtime-core';
+import type { RendererOptions, VNode } from '@vue/runtime-core';
+import { Fragment, Text, createVNode, isVNode } from '@vue/runtime-core';
 
 import { patchEventProp, resetEventPropState } from './event-props.js';
+import {
+  TPL_HOLE_PREFIX,
+  TPL_SLOT_KEY,
+  TPL_TYPE_PREFIX,
+  getElementTemplateHoles,
+} from './element-template.js';
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import { ShadowElement } from './shadow-element.js';
+import { renderTemplateSlot } from './slot-host.js';
 import { normalizeStyleObject } from './style-normalization.js';
 import {
   idRegistry,
@@ -17,6 +25,8 @@ import {
   resolveClass,
   setElementTextContent,
   setIdAttr,
+  setTeardownTemplateSlotsHook,
+  setTextNode,
 } from './tree-ops.js';
 
 // Class resolution is shared with the Vapor DOM-compat layer.
@@ -27,17 +37,18 @@ export { resolveClass } from './tree-ops.js';
 export { patchEventProp } from './event-props.js';
 
 // ---------------------------------------------------------------------------
-// RendererOptions implementation
+// Element-template helpers
 // ---------------------------------------------------------------------------
 
 /**
  * Mount a compile-time-lowered element template (`__vlx-tpl:<id>` vnode).
  *
- * One ShadowElement represents the whole subtree; hole shadows are allocated
- * immediately after it (no CREATE ops — the main thread materializes the
- * subtree inside the template's create() function and maps rootId+1+i to the
- * i-th hole). Subsequent updates flow through patchProp's hole delegation
- * below using ordinary SET_* ops.
+ * The root ShadowElement represents the whole subtree. Hole shadows allocate
+ * the contiguous uid range following the root; the main thread maps those ids
+ * to the create() function's returned hole handles. Attr/text updates flow
+ * through patchProp's hole delegation using ordinary SET_* ops; element-slot
+ * content is mounted into wrapper holes via the Vue renderer and
+ * INSERT/REMOVE_TEMPLATE_SLOT.
  */
 function createTemplateInstance(type: string): ShadowElement {
   const tplId = type.slice(TPL_TYPE_PREFIX.length);
@@ -56,16 +67,55 @@ function createTemplateInstance(type: string): ShadowElement {
     scheduleFlush();
     return el;
   }
+
   const holes: ShadowElement[] = [];
-  for (const _ of holeKeys) {
-    holes.push(new ShadowElement('#tpl-hole'));
+  const slots: ShadowElement[] = [];
+  for (const key of holeKeys) {
+    const hole = new ShadowElement(
+      key === TPL_SLOT_KEY ? '#tpl-slot' : '#tpl-hole',
+    );
+    holes.push(hole);
+    if (key === TPL_SLOT_KEY) {
+      hole._tplRoot = el;
+      hole._tplSlotIndex = slots.length;
+      slots.push(hole);
+    }
   }
   el._tplHoleKeys = holeKeys;
   el._tplHoles = holes;
-  pushOp(OP.INSTANTIATE_TEMPLATE, el.id, tplId, holeKeys.length);
+  el._tplSlots = slots.length > 0 ? slots : undefined;
+  pushOp(OP.INSTANTIATE_TEMPLATE, el.uid, tplId, holeKeys.length);
   scheduleFlush();
   return el;
 }
+
+/** Normalize a `__hN` slot prop value into a mountable VNode (or null). */
+function normalizeSlotContent(value: unknown): VNode | null {
+  // Compiler wraps slot expressions in thunks so block tracking does not
+  // leak into the template root; invoke here during patchProp.
+  let resolved = value;
+  if (typeof resolved === 'function') {
+    resolved = (resolved as () => unknown)();
+  }
+  if (resolved == null || resolved === false) return null;
+  if (isVNode(resolved)) return resolved;
+  if (Array.isArray(resolved)) return createVNode(Fragment, null, resolved);
+  return createVNode(Text, null, String(resolved));
+}
+
+/** Unmount any element-slot trees rooted on a template instance. */
+function teardownTemplateSlots(el: ShadowElement): void {
+  if (!el._tplSlots) return;
+  for (const slot of el._tplSlots) {
+    renderTemplateSlot(null, slot);
+  }
+}
+
+setTeardownTemplateSlotsHook(teardownTemplateSlots);
+
+// ---------------------------------------------------------------------------
+// RendererOptions implementation
+// ---------------------------------------------------------------------------
 
 export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   createElement(type: string): ShadowElement {
@@ -149,7 +199,13 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       const holeKey = el._tplHoleKeys?.[idx];
       const holeEl = el._tplHoles[idx];
       if (holeKey !== undefined && holeEl !== undefined) {
-        if (holeKey === '#text') {
+        if (holeKey === TPL_SLOT_KEY) {
+          // Element slot: `__hN` carries a VNode (v-if / v-for / component),
+          // often as a thunk so openBlock() does not leak into the template
+          // root's dynamicChildren. Mount into the wrapper via the Vue
+          // renderer; inserts inside emit INSERT_TEMPLATE_SLOT.
+          renderTemplateSlot(normalizeSlotContent(nextValue), holeEl);
+        } else if (holeKey === '#text') {
           pushOp(
             OP.SET_TEXT,
             holeEl.id,
