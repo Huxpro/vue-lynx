@@ -630,93 +630,93 @@
     "+b effect (vapor, with +ifr)": {
       "create@1k": {
         "from": 250,
-        "to": 245.6,
-        "deltaMs": -4.4,
-        "deltaPct": -1.8
+        "to": 241.6,
+        "deltaMs": -8.4,
+        "deltaPct": -3.4
       },
       "update10th@1k": {
         "from": 24.5,
-        "to": 25.1,
-        "deltaMs": 0.6,
-        "deltaPct": 2.4
+        "to": 23.6,
+        "deltaMs": -0.9,
+        "deltaPct": -3.7
       },
       "select@1k": {
         "from": 25,
-        "to": 24.4,
-        "deltaMs": -0.6,
-        "deltaPct": -2.4
+        "to": 25.6,
+        "deltaMs": 0.6,
+        "deltaPct": 2.4
       },
       "updateStorm@1k": {
         "from": 93.8,
-        "to": 92.4,
-        "deltaMs": -1.4,
-        "deltaPct": -1.5
+        "to": 89.5,
+        "deltaMs": -4.3,
+        "deltaPct": -4.6
       },
       "selectStorm@1k": {
         "from": 25.5,
-        "to": 25.1,
-        "deltaMs": -0.4,
-        "deltaPct": -1.6
+        "to": 24.7,
+        "deltaMs": -0.8,
+        "deltaPct": -3.1
       },
       "create@10k": {
         "from": 2315.9,
-        "to": 2176.5,
-        "deltaMs": -139.4,
-        "deltaPct": -6
+        "to": 2244,
+        "deltaMs": -71.9,
+        "deltaPct": -3.1
       },
       "update10th@10k": {
         "from": 136.5,
-        "to": 131.9,
-        "deltaMs": -4.6,
-        "deltaPct": -3.4
+        "to": 133.1,
+        "deltaMs": -3.4,
+        "deltaPct": -2.5
       },
       "select@10k": {
         "from": 105,
-        "to": 105.6,
-        "deltaMs": 0.6,
-        "deltaPct": 0.6
+        "to": 120,
+        "deltaMs": 15,
+        "deltaPct": 14.3
       },
       "updateStorm@10k": {
         "from": 1278.1,
-        "to": 1252.2,
-        "deltaMs": -25.9,
-        "deltaPct": -2
+        "to": 1078.4,
+        "deltaMs": -199.7,
+        "deltaPct": -15.6
       },
       "selectStorm@10k": {
         "from": 173.8,
-        "to": 167.6,
-        "deltaMs": -6.2,
-        "deltaPct": -3.6
+        "to": 162.2,
+        "deltaMs": -11.6,
+        "deltaPct": -6.7
       },
       "create@30k": {
         "from": 6590.9,
-        "to": 6813.4,
-        "deltaMs": 222.5,
-        "deltaPct": 3.4
+        "to": 7041.7,
+        "deltaMs": 450.8,
+        "deltaPct": 6.8
       },
       "update10th@30k": {
         "from": 360.3,
-        "to": 354.7,
-        "deltaMs": -5.6,
-        "deltaPct": -1.6
+        "to": 361.1,
+        "deltaMs": 0.8,
+        "deltaPct": 0.2
       },
       "select@30k": {
         "from": 359.2,
-        "to": 372,
-        "deltaMs": 12.8,
-        "deltaPct": 3.6
+        "to": 337,
+        "deltaMs": -22.2,
+        "deltaPct": -6.2
       },
       "updateStorm@30k": {
         "from": 13178.3,
-        "to": 10912.4,
-        "deltaMs": -2265.9,
-        "deltaPct": -17.2
+        "to": 11175.9,
+        "deltaMs": -2002.4,
+        "deltaPct": -15.2
       },
       "selectStorm@30k": {
         "from": 427.6,
-        "to": 431.5,
-        "deltaMs": 3.9,
-        "deltaPct": 0.9
+        "to": 431.7,
+        "deltaMs": 4.1,
+        "deltaPct": 1
       }
     },
     "+b:t→e effect (vapor, N/A on web)": {
@@ -997,94 +997,94 @@
     },
     "+ifr:e paint effect (N/A on web)": {
       "create@1k": {
-        "from": 245.6,
+        "from": 241.6,
         "to": 252.8,
-        "deltaMs": 7.2,
-        "deltaPct": 2.9
+        "deltaMs": 11.2,
+        "deltaPct": 4.6
       },
       "update10th@1k": {
-        "from": 25.1,
+        "from": 23.6,
         "to": 24.3,
-        "deltaMs": -0.8,
-        "deltaPct": -3.2
+        "deltaMs": 0.7,
+        "deltaPct": 3
       },
       "select@1k": {
-        "from": 24.4,
+        "from": 25.6,
         "to": 22.9,
-        "deltaMs": -1.5,
-        "deltaPct": -6.1
+        "deltaMs": -2.7,
+        "deltaPct": -10.5
       },
       "updateStorm@1k": {
-        "from": 92.4,
+        "from": 89.5,
         "to": 109.1,
-        "deltaMs": 16.7,
-        "deltaPct": 18.1
+        "deltaMs": 19.6,
+        "deltaPct": 21.9
       },
       "selectStorm@1k": {
-        "from": 25.1,
+        "from": 24.7,
         "to": 19.9,
-        "deltaMs": -5.2,
-        "deltaPct": -20.7
+        "deltaMs": -4.8,
+        "deltaPct": -19.4
       },
       "create@10k": {
-        "from": 2176.5,
+        "from": 2244,
         "to": 2260.5,
-        "deltaMs": 84,
-        "deltaPct": 3.9
+        "deltaMs": 16.5,
+        "deltaPct": 0.7
       },
       "update10th@10k": {
-        "from": 131.9,
+        "from": 133.1,
         "to": 132.2,
-        "deltaMs": 0.3,
-        "deltaPct": 0.2
+        "deltaMs": -0.9,
+        "deltaPct": -0.7
       },
       "select@10k": {
-        "from": 105.6,
+        "from": 120,
         "to": 112.5,
-        "deltaMs": 6.9,
-        "deltaPct": 6.5
+        "deltaMs": -7.5,
+        "deltaPct": -6.3
       },
       "updateStorm@10k": {
-        "from": 1252.2,
+        "from": 1078.4,
         "to": 1221,
-        "deltaMs": -31.2,
-        "deltaPct": -2.5
+        "deltaMs": 142.6,
+        "deltaPct": 13.2
       },
       "selectStorm@10k": {
-        "from": 167.6,
+        "from": 162.2,
         "to": 175.9,
-        "deltaMs": 8.3,
-        "deltaPct": 5
+        "deltaMs": 13.7,
+        "deltaPct": 8.4
       },
       "create@30k": {
-        "from": 6813.4,
+        "from": 7041.7,
         "to": 6685.1,
-        "deltaMs": -128.3,
-        "deltaPct": -1.9
+        "deltaMs": -356.6,
+        "deltaPct": -5.1
       },
       "update10th@30k": {
-        "from": 354.7,
+        "from": 361.1,
         "to": 346.9,
-        "deltaMs": -7.8,
-        "deltaPct": -2.2
+        "deltaMs": -14.2,
+        "deltaPct": -3.9
       },
       "select@30k": {
-        "from": 372,
+        "from": 337,
         "to": 306.2,
-        "deltaMs": -65.8,
-        "deltaPct": -17.7
+        "deltaMs": -30.8,
+        "deltaPct": -9.1
       },
       "updateStorm@30k": {
-        "from": 10912.4,
+        "from": 11175.9,
         "to": 9983.1,
-        "deltaMs": -929.3,
-        "deltaPct": -8.5
+        "deltaMs": -1192.8,
+        "deltaPct": -10.7
       },
       "selectStorm@30k": {
-        "from": 431.5,
+        "from": 431.7,
         "to": 400.8,
-        "deltaMs": -30.7,
-        "deltaPct": -7.1
+        "deltaMs": -30.9,
+        "deltaPct": -7.2
       }
     }
   }

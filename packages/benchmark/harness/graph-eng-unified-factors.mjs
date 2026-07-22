@@ -75,12 +75,12 @@ const PAIRS = {
   '+b effect (vdom, no ifr)': ['vdom', 'vdom-et'],
   '+b effect (vdom, with +ifr)': ['vdom-ifr', 'vdom-ifr-et'],
   '+b effect (vapor, no ifr)': ['vapor-dense', 'vapor'],
-  '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr-sparse'],
+  '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr'],
   '+b:t→e effect (vapor, N/A on web)': ['vapor', 'vapor-engine'],
   '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
   '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
   '+ifr:e paint effect (N/A on web)': [
-    'vapor-ifr-sparse',
+    'vapor-ifr',
     'vapor-ifr-engine-et',
   ],
 };
