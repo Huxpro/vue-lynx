@@ -42,11 +42,11 @@ export function copy(lang) {
       : { href: 'unified.zh.html', label: '中文' },
     hStorms: zh ? '交互 Storms — IFR × 框架矩阵' : 'Table storms — IFR × framework matrix',
     subStorms: zh
-      ? '黑盒协议：真实点击 → 合成 DOM 终态。本机测量（2026-07-17）。'
+      ? '黑盒协议：真实点击 → 合成 DOM 终态。本机测量（合并 2026-07-17 与 2026-07-22 四轴全排列跑；四轴 cells 覆盖 1k/10k）。'
         + '<b>Select = 点状更新</b>（每次只动选中态/少量 class）；'
         + '<b>Update = 批量更新</b>（每轮改很多行）。'
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。'
-      : 'Black-box: real clicks → composed-DOM end state. Same-host (2026-07-17). '
+      : 'Black-box: real clicks → composed-DOM end state. Same-host (2026-07-17 merged with the 2026-07-22 four-axis all-permutation run; four-axis cells cover 1k/10k). '
         + '<b>Select = point update</b> (selection / a few classes per tick); '
         + '<b>Update = batch update</b> (many rows touched each pass). '
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR (always on) + manual memo/useCallback.',
@@ -56,8 +56,8 @@ export function copy(lang) {
       : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape. Select charts = point updates; Update charts = batch throughput.',
     hFcp: zh ? '首帧 FCP — 架构阶梯' : 'Content-probe FCP (architecture ladder)',
     subFcp: zh
-      ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1。'
-      : 'Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1.',
+      ? '相同卡片密度（约 1k→30k 元素）：Vue 旗标矩阵 + 并行 ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1。四轴新 cells（VDOM+ET 无 IFR / Vapor 稠密 / engine stub / engine-et）为定尺寸 sfc-probe，只落在 1k 档；折线图只画 ≥2 点的系列。'
+      : 'Same card density (~1k→30k els): Vue flag matrix + parallel ReactLynx Snapshot+IFR. This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1. Four-axis cells (VDOM+ET no-IFR / Vapor dense / engine stub / engine-et) are fixed-size sfc-probe runs and appear only at the 1k rung; line charts draw only ≥2-point series.',
     subFcp4: zh
       ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
       : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
@@ -82,10 +82,16 @@ export function copy(lang) {
     scale: zh ? '规模' : 'scale',
     colLabels: {
       vapor: 'Vue Vapor',
+      'vapor-dense': zh ? 'Vapor 稠密（Named Tree）' : 'Vapor dense (Named Tree)',
+      'vapor-engine': zh ? 'Vapor engine（stub）' : 'Vapor engine (stub)',
       'vapor-ifr': 'Vapor+IFR',
-      'vapor-ifr-dense': 'Vapor+IFR (dense A1)',
-      'vapor-ifr-sparse': 'Vapor+IFR (sparse A2)',
+      'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR (dense)',
+      'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR (sparse)',
+      'vapor-ifr-engine-et': zh
+        ? 'Vapor+IFR engine-et（stub）'
+        : 'Vapor+IFR engine-et (stub)',
       vdom: 'Vue VDOM',
+      'vdom-et': zh ? 'VDOM+ET（无 IFR）' : 'VDOM+ET (no IFR)',
       'vdom-ifr': 'VDOM+IFR',
       'vdom-ifr-et': 'VDOM+IFR+ET',
       react: 'ReactLynx (memo)',
@@ -121,12 +127,18 @@ export function copy(lang) {
     fcpArchLabels: {
       react: 'ReactLynx',
       vdom: 'VDOM',
+      'vdom-et': zh ? 'VDOM+ET（无 IFR）' : 'VDOM+ET (no IFR)',
       'vdom-ifr': 'VDOM+IFR',
       'vdom-ifr-et': 'VDOM+IFR+ET',
       vapor: 'Vapor',
+      'vapor-dense': zh ? 'Vapor 稠密' : 'Vapor dense',
+      'vapor-engine': zh ? 'Vapor engine（stub）' : 'Vapor engine (stub)',
       'vapor-ifr': 'Vapor+IFR',
       'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR dense',
       'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR sparse',
+      'vapor-ifr-engine-et': zh
+        ? 'Vapor+IFR engine-et（stub）'
+        : 'Vapor+IFR engine-et (stub)',
     },
     charts: {
       selectStorm: {
