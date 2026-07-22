@@ -110,6 +110,10 @@ function getBaseTransformPreset(): [
   }];
 }
 
+/**
+ * Out-of-template insertion point appended into its parent (v-if / v-for /
+ * component at the END of a parent's children — no `<!>` anchor emitted).
+ */
 function isInsertPlaceholder(d: IRDynamicInfo): boolean {
   return (
     (d.flags & DynamicFlag.NON_TEMPLATE) !== 0
@@ -117,16 +121,22 @@ function isInsertPlaceholder(d: IRDynamicInfo): boolean {
   );
 }
 
-/** Non-element leaf in the IR dynamic tree (text / comment / interpolation). */
-function isTextLike(d: IRDynamicInfo): boolean {
-  if (d.template != null || d.operation != null) return false;
-  if ((d.flags & DynamicFlag.INSERT) !== 0) return false;
-  if ((d.flags & DynamicFlag.NON_TEMPLATE) !== 0) return true;
+/**
+ * In-template insertion point BETWEEN siblings: the vapor compiler emits a
+ * `<!>` anchor comment into the template HTML and the block is inserted
+ * before it (`setInsertionState(parent, anchor)`). The entry occupies the
+ * anchor's template slot.
+ */
+function isAnchoredInsert(d: IRDynamicInfo): boolean {
   return (
-    d.id === undefined
-    && !d.hasDynamicChild
-    && (d.children?.length ?? 0) === 0
+    (d.flags & DynamicFlag.NON_TEMPLATE) === 0
+    && (d.flags & DynamicFlag.INSERT) !== 0
   );
+}
+
+/** Entry that occupies NO template slot (txt markers, out-of-template). */
+function isNonTemplate(d: IRDynamicInfo): boolean {
+  return (d.flags & DynamicFlag.NON_TEMPLATE) !== 0;
 }
 
 function collectHoleElementIds(block: BlockIRNode, into: Set<number>): void {
@@ -156,46 +166,83 @@ function collectHoleElementIds(block: BlockIRNode, into: Set<number>): void {
 }
 
 /**
- * Map IR element ids → HTML structure slots by walking IR elements in
- * preorder alongside HTML element slots (skipping `#text` / `#comment`).
- * Insert-placeholder children mark the current HTML element slot as a hole.
+ * Map IR element ids → HTML structure slots.
+ *
+ * Mapping law (verified against @vue/compiler-vapor IR dumps): within one
+ * parent, the IR dynamic children map 1:1 IN ORDER onto the parent's
+ * template child slots, except
+ *  - `NON_TEMPLATE` entries (interpolation txt markers, appended blocks)
+ *    occupy no slot — appended blocks (`NON_TEMPLATE|INSERT`) mark the
+ *    PARENT slot as an insert-host hole;
+ *  - anchored inserts (`INSERT` without `NON_TEMPLATE`) occupy the `<!>`
+ *    anchor comment slot the compiler emitted — the parent becomes an
+ *    insert-host hole AND the anchor slot itself must survive sparse
+ *    cloning (it is a navigation target and the insertBefore reference).
+ *
+ * Static template elements and static text nodes DO get slot-occupying IR
+ * entries, so the per-parent walk stays in lockstep where the old global
+ * element-preorder walk desynced (that desync made prod sparse naming crash
+ * on templates with mid-children `v-if` anchors — caught when the prod
+ * stamping rule was fixed).
+ *
+ * Returns null when the walk loses lockstep (an entry with no matching
+ * slot) — the caller then disables sparse naming for this template
+ * (dense fallback) rather than risking a mis-addressed clone.
  */
 function mapIrHolesOntoHtmlSlots(
   tplRoot: IRDynamicInfo,
   holeIds: Set<number>,
-  htmlTags: readonly string[],
-): number[] {
-  const elementSlots: number[] = [];
-  for (let i = 0; i < htmlTags.length; i++) {
-    const tag = htmlTags[i]!;
-    if (tag !== '#text' && tag !== '#comment') elementSlots.push(i);
-  }
-
+  htmlNodes: readonly { tag: string; children: number[] }[],
+): { holes: number[]; anchors: number[] } | null {
+  if (htmlNodes.length === 0) return { holes: [], anchors: [] };
   const holeSlots = new Set<number>();
-  let elIdx = 0;
+  const anchorSlots = new Set<number>();
+  let desynced = false;
 
-  const walkEl = (d: IRDynamicInfo): void => {
-    if (isInsertPlaceholder(d) || isTextLike(d)) return;
+  const walkEl = (d: IRDynamicInfo, slot: number): void => {
+    if (d.id !== undefined && holeIds.has(d.id)) holeSlots.add(slot);
 
-    const htmlSlot = elementSlots[elIdx++];
-    if (htmlSlot === undefined) return;
-
-    if (d.id !== undefined && holeIds.has(d.id)) {
-      holeSlots.add(htmlSlot);
-    }
-
+    const childSlots = htmlNodes[slot]?.children ?? [];
+    let cursor = 0;
     for (const child of d.children) {
-      if (isInsertPlaceholder(child)) {
-        holeSlots.add(htmlSlot);
+      if (isNonTemplate(child)) {
+        // txt markers occupy no slot; appended blocks insert into THIS
+        // element (append — no anchor needed).
+        if ((child.flags & DynamicFlag.INSERT) !== 0) holeSlots.add(slot);
         continue;
       }
-      if (isTextLike(child)) continue;
-      walkEl(child);
+      const childSlot = childSlots[cursor++];
+      if (childSlot === undefined) {
+        // Folded only-child text hosts have no child slots — their single
+        // static-text entry maps to the fold. Anything else is a lockstep
+        // loss: bail to dense.
+        if (
+          !(childSlots.length === 0 && d.children.length === 1
+            && child.id === undefined && !isAnchoredInsert(child))
+        ) {
+          desynced = true;
+        }
+        continue;
+      }
+      if (isAnchoredInsert(child)) {
+        if (htmlNodes[childSlot]?.tag !== '#comment') {
+          desynced = true;
+          continue;
+        }
+        holeSlots.add(slot);
+        anchorSlots.add(childSlot);
+        continue;
+      }
+      walkEl(child, childSlot);
     }
   };
 
-  walkEl(tplRoot);
-  return [...holeSlots].sort((a, b) => a - b);
+  walkEl(tplRoot, 0);
+  if (desynced) return null;
+  return {
+    holes: [...holeSlots].sort((a, b) => a - b),
+    anchors: [...anchorSlots].sort((a, b) => a - b),
+  };
 }
 
 function computeAddressed(
@@ -294,9 +341,15 @@ export function analyzeVaporAddressing(
 
         const holeIds = new Set<number>();
         collectHoleElementIds(block, holeIds);
-        const holes = mapIrHolesOntoHtmlSlots(d, holeIds, tags);
-        const addressed = slotCount > 0
-          ? computeAddressed(nodes, holes)
+        const mapped = slotCount > 0
+          ? mapIrHolesOntoHtmlSlots(d, holeIds, nodes)
+          : { holes: [], anchors: [] };
+        // A lockstep loss (mapped === null) means the IR↔HTML mapping is not
+        // trustworthy for this template — emit no addressed set, so the
+        // runtime keeps the dense data path (correctness over coverage).
+        const holes = mapped?.holes ?? [];
+        const addressed = mapped && slotCount > 0
+          ? computeAddressed(nodes, [...mapped.holes, ...mapped.anchors])
           : [];
         const addressedTags = addressed.map((s) => tags[s] ?? '');
 

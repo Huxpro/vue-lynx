@@ -239,6 +239,54 @@ describe('analyzeVaporAddressing', () => {
   });
 });
 
+describe('anchored inserts + implicit closes (#337/#338 hardening)', () => {
+  it('mid-children v-if anchor: comment slot + insert host are addressed', () => {
+    // The instrumented bench app shape that crashed prod sparse naming:
+    // <view class=page><text.title> </text><text.status> </text><!><view.rows>
+    // — the `<!>` anchor is a navigation target (`_next` chain) and the
+    // insertBefore reference; view.rows hosts the v-for. Both must survive
+    // sparse cloning.
+    const { templates } = analyze(
+      `<view class="page">
+        <text class="title">{{ a }}</text>
+        <text class="status">{{ b }}</text>
+        <view v-if="ok"><text>X</text></view>
+        <view class="rows"><text v-for="i in xs" :key="i">{{ i }}</text></view>
+      </view>`,
+      { a: 'setup-ref', b: 'setup-ref', ok: 'setup-ref', xs: 'setup-ref' },
+    );
+    const page = templates.find((t) => t.content.includes('class=page'))!;
+    // slots: 0=view.page 1=text.title 2=text.status 3=#comment 4=view.rows
+    expect(page.slotCount).toBe(5);
+    expect(page.addressed).toEqual([0, 1, 2, 3, 4]);
+    expect(page.tags).toEqual(['view', 'text', 'text', '#comment', 'view']);
+    // The anchor comment is addressed but is NOT a write/insert hole itself.
+    expect(page.holes).toEqual([0, 1, 2, 4]);
+  });
+
+  it('static elements between dynamic ones stay in lockstep', () => {
+    const { templates } = analyze(
+      `<view><image src="a.png" /><text>{{ x }}</text><view class="deco" /><text @click="f">{{ y }}</text></view>`,
+      { x: 'setup-ref', y: 'setup-ref', f: 'setup-function' },
+    );
+    // slots: 0=view 1=image 2=text(x) 3=view.deco 4=text(y)
+    expect(templates[0]!.slotCount).toBe(5);
+    expect(templates[0]!.holes).toEqual([2, 4]);
+    expect(templates[0]!.addressed).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('implicit closes give the runtime parent/children tree, not one-level pops', () => {
+    // `<text> </view>` closes BOTH text and wrap — text.s is a child of the
+    // ROOT, not of wrap. The flat preorder is identical either way (which is
+    // how a one-level pop hid for so long); the parent tree is not.
+    const { nodes } = structureSlotsFromHtml(
+      '<view><view class=wrap><text> </view><text class=s>static',
+    );
+    expect(nodes[0]!.children).toEqual([1, 3]);
+    expect(nodes[3]!.parent).toBe(0);
+  });
+});
+
 describe('annotateVaporAddressing', () => {
   it('stamps __vlxAddressing onto each tN factory without changing call sites', () => {
     const source =
