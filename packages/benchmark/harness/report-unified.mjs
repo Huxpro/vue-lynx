@@ -544,6 +544,8 @@ function graphEngFactorsSection(t) {
       { op: 'create', color: 'var(--s1)' },
       { op: 'update10th', color: 'var(--s2)' },
       { op: 'updateStorm', color: 'var(--s5)' },
+      { op: 'select', color: 'var(--s3)' },
+      { op: 'selectStorm', color: 'var(--s6)' },
     ];
     const entries = Object.entries(graphEngFactors.factors ?? {})
       .map(([name, f]) => ({
@@ -603,6 +605,121 @@ function graphEngFactorsSection(t) {
     }</h3><div class="legend" style="margin:2px 0 6px">${legend}</div>${svg}</div>`;
   };
 
+  /**
+   * FCP main effects: the same one-axis-at-a-time pairs, applied to the
+   * content-probe FCP ladder (per scale, ×1 and ×4). First-frame scale —
+   * kept separate from the storm factors above (different instrument).
+   */
+  const FCP_FACTOR_PAIRS = {
+    'render vdom→vapor (no-IFR)': ['vdom', 'vapor'],
+    'staging opstream→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
+    'staging opstream→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
+    'naming dense→sparse (vapor, no-IFR)': ['vapor-dense', 'vapor'],
+    'naming dense→sparse (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr'],
+    'staging data→engine (vapor, STUB)': ['vapor', 'vapor-engine'],
+    'ifr off→on (vdom)': ['vdom', 'vdom-ifr'],
+    'ifr off→on (vapor sparse)': ['vapor', 'vapor-ifr'],
+    'ifrPaint plain→engine-et (STUB)': ['vapor-ifr', 'vapor-ifr-engine-et'],
+  };
+
+  const fcpDelta = (a, b, scale, cpu) => {
+    const va = cellMetric(a, scale, 'fcp', cpu);
+    const vb = cellMetric(b, scale, 'fcp', cpu);
+    if (va == null || vb == null) return null;
+    return +(((vb - va) / va) * 100).toFixed(1);
+  };
+
+  const fcpFactorTable = () => {
+    const scales = FCP_SCALES;
+    let any = false;
+    let html = '<table><thead><tr>'
+      + `<th>factor (FCP Δ%)</th>`
+      + scales.map((sc) => `<th>×1 @${sc}</th>`).join('')
+      + FCP_SCALES_X4.map((sc) => `<th>×4 @${sc}</th>`).join('')
+      + '</tr></thead><tbody>';
+    for (const [name, [a, b]] of Object.entries(FCP_FACTOR_PAIRS)) {
+      const cellsX1 = scales.map((sc) => fcpDelta(a, b, sc, 1));
+      const cellsX4 = FCP_SCALES_X4.map((sc) => fcpDelta(a, b, sc, 4));
+      if (![...cellsX1, ...cellsX4].some((v) => v != null)) continue;
+      any = true;
+      const td = (v) =>
+        `<td class="c plain">${v == null ? '—' : `${v > 0 ? '+' : ''}${v}%`}</td>`;
+      html += `<tr><td class="op">${escapeHtml(name)}</td>`
+        + cellsX1.map(td).join('') + cellsX4.map(td).join('') + '</tr>';
+    }
+    return any ? `${html}</tbody></table>` : '';
+  };
+
+  const fcpFactorBars = (cpu) => {
+    const scales = cpu === 4 ? FCP_SCALES_X4 : FCP_SCALES;
+    // One bar per scale within each factor group.
+    const scaleColors = ['var(--s1)', 'var(--s4)', 'var(--s3)', 'var(--s2)', 'var(--s5)', 'var(--s6)'];
+    const entries = Object.entries(FCP_FACTOR_PAIRS)
+      .map(([name, [a, b]]) => ({
+        name,
+        vals: scales.map((sc) => fcpDelta(a, b, sc, cpu)),
+      }))
+      .filter((e) => e.vals.some((v) => v != null));
+    if (!entries.length) return '';
+    const maxAbs = Math.max(
+      10,
+      ...entries.flatMap((e) => e.vals.filter((v) => v != null).map(Math.abs)),
+    );
+    const W = 760;
+    const LABEL_W = 300;
+    const rowH = 12;
+    const groupGap = 10;
+    const groupH = scales.length * rowH + groupGap;
+    const MT2 = 26;
+    const H = MT2 + entries.length * groupH + 24;
+    const plotW = W - LABEL_W - 60;
+    const x0 = LABEL_W + plotW / 2;
+    const px = (v) => (v / maxAbs) * (plotW / 2);
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" style="max-width:${W}px;width:100%">`;
+    svg += `<line x1="${x0}" y1="${MT2 - 8}" x2="${x0}" y2="${H - 18}" stroke="var(--line)" stroke-width="1.5"/>`;
+    for (const gpct of [-Math.round(maxAbs), Math.round(maxAbs)]) {
+      const gx = x0 + px(gpct);
+      svg += `<line x1="${gx}" y1="${MT2 - 4}" x2="${gx}" y2="${H - 18}" stroke="var(--line)" stroke-dasharray="3 4"/>`
+        + `<text x="${gx}" y="${H - 4}" font-size="10" fill="var(--ink-2)" text-anchor="middle">${gpct > 0 ? '+' : ''}${gpct}%</text>`;
+    }
+    let y = MT2;
+    for (const e of entries) {
+      svg += `<text x="${LABEL_W - 8}" y="${y + (scales.length * rowH) / 2 + 4}" font-size="11" fill="var(--ink)" text-anchor="end">${escapeHtml(e.name)}</text>`;
+      scales.forEach((sc, i) => {
+        const v = e.vals[i];
+        if (v == null) return;
+        const w = Math.abs(px(v));
+        const bx = v < 0 ? x0 - w : x0;
+        const by = y + i * rowH + 1.5;
+        svg += `<rect x="${bx}" y="${by}" width="${Math.max(w, 0.5)}" height="${rowH - 4}" fill="${scaleColors[i % scaleColors.length]}" opacity="0.85" rx="2"/>`;
+      });
+      y += groupH;
+    }
+    svg += '</svg>';
+    const legend = scales.map((sc, i) =>
+      `<span><i style="background:${scaleColors[i % scaleColors.length]};opacity:.85"></i>@${sc}</span>`,
+    ).join(' ');
+    const zhT = t.lang.startsWith('zh');
+    return `<div class="chart"><h3 style="font-size:13px;margin:0 0 2px">${
+      zhT
+        ? `FCP 主效应 ×${cpu}（Δ% — 左/负 = 首帧更快）`
+        : `FCP main effects ×${cpu} (Δ% — left/negative = faster first frame)`
+    }</h3><div class="legend" style="margin:2px 0 6px">${legend}</div>${svg}</div>`;
+  };
+
+  const fcpFactorsBlock = () => {
+    const tbl = fcpFactorTable();
+    if (!tbl) return '';
+    const zhT = t.lang.startsWith('zh');
+    return `<p class="sub" style="margin-top:16px">${
+      zhT
+        ? 'FCP 主效应（content-probe 首帧量纲，与上面 storm 毫秒是两套仪器，不可互比）：'
+        : 'FCP main effects (content-probe first-frame scale — a different instrument from the storm ms above; do not ratio across):'
+    }</p>
+<div class="charts">${fcpFactorBars(1)}${fcpFactorBars(4)}</div>
+<div class="scroll" style="margin-top:10px">${tbl}</div>`;
+  };
+
   return `
 <h2>${escapeHtml(t.hGraphEngFactors)}</h2>
 <p class="sub">${t.subGraphEngFactors}</p>
@@ -616,6 +733,7 @@ ${sizes.map((sz, i) => `<div class="scroll"${i ? ' style="margin-top:10px"' : ''
   ${sizes.map((sz) => factorBars(sz)).join('')}
 </div>
 ${sizes.map((sz) => `<div class="scroll" style="margin-top:10px">${factorTable(sz)}</div>`).join('')}
+${fcpFactorsBlock()}
 ${factorTakeaways()}
 `;
 
@@ -633,7 +751,7 @@ ${factorTakeaways()}
       .filter((v) => v != null);
     const items = zhT
       ? [
-        ['<b>Update 对模板机制是盲的。</b>staging（opstream→code）与 naming（dense→sparse）在 update10th / updateStorm 上的因子在各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
+        ['<b>Update / select 对模板机制是盲的。</b>staging（opstream→code）与 naming（dense→sparse）在 update10th / select / updateStorm / selectStorm 上的因子在各规模都落在 ±10% 噪声带内 — 与 ops 级 factorial（所有 cell 的 update 帧数、native 调用完全相同）互证。模板只改变首帧由谁构建，不改变洞怎么写。',
         ],
         [`<b>Create 的模板收益与子树静态占比成正比。</b>table app 的 create 被动态 v-for 行主导（staging 因子 create ${fmtP(stagingCreate[0])}~${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ 噪声）；静态重内容（sfc-probe FCP 阶梯）上 Code-Template 是唯一全场景为负的因子。要 ET 收益，先看你的首屏静态占比。`],
         [`<b>render 轴（vdom→vapor）才是 update 的大杠杆</b>：updateStorm ${renderUS.map(fmtP).join(' / ')}（1k→30k），远超任何模板轴。交互性能选 render model，别指望模板。`],
@@ -645,7 +763,7 @@ ${factorTakeaways()}
         ],
       ]
       : [
-        ['<b>Update is template-blind.</b> The staging (opstream→code) and naming (dense→sparse) factors on update10th / updateStorm sit inside the ±10% noise band at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
+        ['<b>Update and select are template-blind.</b> The staging (opstream→code) and naming (dense→sparse) factors on update10th / select / updateStorm / selectStorm sit inside the ±10% noise band at every scale — corroborating the ops-level factorial (identical update frames + native calls in every cell). Templates change who builds the first frame, not how holes are written.',
         ],
         [`<b>Create benefit scales with the static fraction of the subtree.</b> The table app's create is dominated by dynamic v-for rows (staging factor on create ${fmtP(stagingCreate[0])}…${fmtP(stagingCreate[stagingCreate.length - 1])} ≈ noise); on static-heavy content (the sfc-probe FCP ladder) Code-Template is the one factor negative in every scenario. Check your first screen's static fraction before reaching for ET.`],
         [`<b>The render axis (vdom→vapor) is the update lever</b>: updateStorm ${renderUS.map(fmtP).join(' / ')} (1k→30k) — far beyond any template axis. Pick the render model for interaction performance; don't expect templates to move it.`],
