@@ -25,9 +25,11 @@ import type {
 } from '@lynx-js/types';
 
 import { register, unregister } from './event-registry.js';
-import type {
-  TemplateNode,
-  TemplateNodeProps,
+import {
+  VAPOR_ADDRESSING_KEY,
+  type TemplateNode,
+  type TemplateNodeProps,
+  type VaporTreeAddressing,
 } from 'vue-lynx/internal/ops';
 import { patchEventProp } from './event-props.js';
 import { scheduleFlush } from './flush.js';
@@ -49,6 +51,13 @@ import {
   setIdAttr,
   setTextNode,
 } from './tree-ops.js';
+
+export type {
+  TemplateNode,
+  TemplateNodeProps,
+  VaporTreeAddressing,
+};
+export { VAPOR_ADDRESSING_KEY };
 
 // ---------------------------------------------------------------------------
 // Event bindings (Vapor addEventListener path)
@@ -972,15 +981,16 @@ export function createPageRoot(): ShadowElement {
 // the static structure is identical for every clone. Instead of
 // re-serializing the same CREATE/SET/INSERT sequence per instance, the
 // structure is sent once (REGISTER_TREE) and each instance is a single
-// CLONE_TREE op. The uid contract: the Main Thread assigns element ids
-// by pre-order traversal of the structure starting at baseUid; the walk
-// below allocates the identical contiguous block, so both sides agree
-// without transmitting a mapping. Aliased only-child #text shadow nodes are
-// folded into their host (props.t) and take uids after the block — they
-// have no Main Thread counterpart.
+// CLONE_TREE op.
+//
+// Naming (A1 → A2, #298):
+//  - Dense A1 (fallback): every preorder slot gets uid = base + slot.
+//  - Sparse A2: only `__vlxAddressing.addressed` slots are named;
+//    uid = base + indexInAddressed. Compile-time analysis (#297) stamps the
+//    factory; `template()` threads it onto the prototype via pendingAddressing.
+// Aliased only-child #text shadow nodes are folded into their host (props.t)
+// and take uids after the block — they have no Main Thread counterpart.
 // ===========================================================================
-
-export type { TemplateNode, TemplateNodeProps } from 'vue-lynx/internal/ops';
 
 /** Non-allocating `Object.keys(o).length > 0` — runs per node per clone. */
 function hasAnyKey(o: Record<string, unknown>): boolean {
@@ -992,11 +1002,64 @@ interface TemplateCache {
   id: number;
   structure: TemplateNode;
   count: number;
+  /** Sparse A2 naming list; undefined → dense A1. */
+  addressed?: number[];
+  holes?: number[];
 }
 
 let nextTemplateId = 1;
 const registeredTemplateIds = new Set<number>();
 const templateCaches = new WeakMap<ShadowElement, TemplateCache>();
+
+/**
+ * Addressing stamped on the current `template()` factory, threaded into
+ * `cloneTemplatePrototype` for the duration of one factory call.
+ */
+let pendingVaporAddressing: VaporTreeAddressing | undefined;
+
+/** @internal — called from vapor `template()` wrapper. */
+export function setPendingVaporAddressing(
+  meta: VaporTreeAddressing | undefined,
+): void {
+  pendingVaporAddressing = meta;
+}
+
+function isValidAddressing(
+  meta: VaporTreeAddressing | undefined,
+  slotCount: number,
+  structure: TemplateNode,
+): meta is VaporTreeAddressing {
+  if (!meta) return false;
+  if (meta.slotCount !== slotCount) return false;
+  if (!Array.isArray(meta.addressed) || meta.addressed.length === 0) {
+    return false;
+  }
+  // Root must always be named so the instance can be inserted into the page.
+  if (meta.addressed[0] !== 0 && !meta.addressed.includes(0)) return false;
+  // Tag fingerprints — catch same-count preorder skew (IR↔runtime fold drift).
+  if (!Array.isArray(meta.tags) || meta.tags.length !== meta.addressed.length) {
+    return false;
+  }
+  const structureTags = structureTagsPreorder(structure);
+  if (structureTags.length !== slotCount) return false;
+  for (let i = 0; i < meta.addressed.length; i++) {
+    const slot = meta.addressed[i]!;
+    if (slot < 0 || slot >= structureTags.length) return false;
+    if (structureTags[slot] !== meta.tags[i]) return false;
+  }
+  return true;
+}
+
+/** Preorder tags of a REGISTER_TREE structure (same order as buildStructure). */
+function structureTagsPreorder(node: TemplateNode): string[] {
+  const tags: string[] = [];
+  const walk = (n: TemplateNode): void => {
+    tags.push(n[0]);
+    for (const child of n[2]) walk(child);
+  };
+  walk(node);
+  return tags;
+}
 
 function isOnlyChildText(proto: ShadowElement): boolean {
   return (
@@ -1048,7 +1111,7 @@ function buildStructure(
 
 /**
  * Build the shadow clone of `proto`, assigning uids in the same pre-order
- * the Main Thread uses when instantiating the registered structure.
+ * the Main Thread uses when instantiating the registered structure (dense A1).
  */
 function buildShadowClone(
   proto: ShadowElement,
@@ -1097,25 +1160,157 @@ function buildShadowClone(
   return clone;
 }
 
+/** Advance `counter` over a proto subtree without allocating clones. */
+function skipProtoSlots(
+  proto: ShadowElement,
+  counter: { value: number },
+): void {
+  counter.value++;
+  if (proto.tag === '#text' || proto.tag === '#comment') return;
+  if (isOnlyChildText(proto)) return;
+  let child = proto.firstChild;
+  while (child) {
+    skipProtoSlots(child, counter);
+    child = child.next;
+  }
+}
+
+/**
+ * Sparse A2 nav facade: allocate ShadowElements only for slots in `needed`
+ * (addressed set). Static subtrees off the vapor `child`/`next` path are
+ * skipped — natives still come from CLONE_TREE. Uids are contiguous over
+ * the addressed set: `base + indexInAddressed`.
+ */
+function buildShadowCloneSparse(
+  proto: ShadowElement,
+  base: number,
+  counter: { value: number },
+  needed: Set<number>,
+  slotToSparse: Map<number, number>,
+): ShadowElement | null {
+  const slot = counter.value;
+  if (!needed.has(slot)) {
+    skipProtoSlots(proto, counter);
+    return null;
+  }
+
+  const sparseIdx = slotToSparse.get(slot);
+  if (sparseIdx === undefined) {
+    skipProtoSlots(proto, counter);
+    return null;
+  }
+  counter.value++;
+  const clone = new ShadowElement(proto.tag, base + sparseIdx);
+
+  if (proto.tag === '#text' || proto.tag === '#comment') {
+    clone._text = proto._text;
+    if (proto.tag === '#text' && proto._text) {
+      clone._mtCreated = true;
+      clone._mtInserted = true;
+    }
+    return clone;
+  }
+
+  clone._baseClass = proto._baseClass;
+  clone._scopeClasses = new Set(proto._scopeClasses);
+  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
+  if (proto._attrs) clone._attrs = new Map(proto._attrs);
+  if (proto._id !== undefined) {
+    clone._id = proto._id;
+    idRegistry.set(proto._id, clone);
+  }
+
+  if (isOnlyChildText(proto)) {
+    const textClone = new ShadowElement('#text');
+    textClone._text = proto.firstChild!._text;
+    textClone._textHost = clone;
+    clone._aliasedTextChild = textClone;
+    clone._link(textClone, null);
+  } else {
+    clone._text = proto._text;
+    let child = proto.firstChild;
+    while (child) {
+      const childClone = buildShadowCloneSparse(
+        child,
+        base,
+        counter,
+        needed,
+        slotToSparse,
+      );
+      if (childClone) clone._link(childClone, null);
+      child = child.next;
+    }
+  }
+  return clone;
+}
+
 function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   let cache = templateCaches.get(proto);
   if (!cache) {
     const counter = { value: 0 };
     const structure = buildStructure(proto, counter);
-    cache = { id: nextTemplateId++, structure, count: counter.value };
+    const meta = pendingVaporAddressing;
+    const sparse = isValidAddressing(meta, counter.value, structure);
+    if (__DEV__ && meta && !sparse) {
+      console.warn(
+        '[vue-lynx] sparse addressing metadata failed validation '
+          + '(slotCount / tag fingerprint) — falling back to dense CLONE_TREE.',
+      );
+    }
+    cache = {
+      id: nextTemplateId++,
+      structure,
+      count: counter.value,
+      addressed: sparse ? [...meta.addressed].sort((a, b) => a - b) : undefined,
+      holes: sparse ? [...meta.holes].sort((a, b) => a - b) : undefined,
+    };
     templateCaches.set(proto, cache);
   }
 
   if (!registeredTemplateIds.has(cache.id)) {
     registeredTemplateIds.add(cache.id);
-    pushOp(OP.REGISTER_TREE, cache.id, cache.structure);
+    // addressedOr0: 0 = dense A1; number[] = sparse A2 naming list.
+    pushOp(
+      OP.REGISTER_TREE,
+      cache.id,
+      cache.structure,
+      cache.addressed ?? 0,
+    );
   }
 
-  // Reserve the contiguous uid block for materialized nodes; aliased text
-  // shadow nodes allocate after it (plain constructor).
   const base = ShadowElement.nextUid;
-  ShadowElement.nextUid += cache.count;
 
+  if (cache.addressed) {
+    // Sparse A2: reserve one uid per addressed slot only.
+    const addressed = cache.addressed;
+    ShadowElement.nextUid += addressed.length;
+    const needed = new Set(addressed);
+    const slotToSparse = new Map(addressed.map((s, i) => [s, i]));
+    const counter = { value: 0 };
+    const root = buildShadowCloneSparse(
+      proto,
+      base,
+      counter,
+      needed,
+      slotToSparse,
+    );
+    if (!root) {
+      throw new Error(
+        '[vue-lynx] sparse template clone produced no root',
+      );
+    }
+    if (__DEV__ && counter.value !== cache.count) {
+      console.warn(
+        `[vue-lynx] sparse template clone advanced ${counter.value} slots but the registered structure has ${cache.count} — uid contract violated.`,
+      );
+    }
+    pushOp(OP.CLONE_TREE, cache.id, base);
+    scheduleFlush();
+    return root;
+  }
+
+  // Dense A1 fallback.
+  ShadowElement.nextUid += cache.count;
   const counter = { value: 0 };
   const root = buildShadowClone(proto, base, counter);
   if (__DEV__ && counter.value !== cache.count) {
@@ -1133,4 +1328,5 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
 export function resetTemplateState(): void {
   nextTemplateId = 1;
   registeredTemplateIds.clear();
+  pendingVaporAddressing = undefined;
 }

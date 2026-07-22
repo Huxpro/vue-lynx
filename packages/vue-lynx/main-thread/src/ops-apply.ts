@@ -73,7 +73,13 @@ function createTypedElement(
 // Template instantiation (Vapor fast path)
 // ---------------------------------------------------------------------------
 
-const templates = new Map<number, TemplateNode>();
+interface RegisteredTree {
+  structure: TemplateNode;
+  /** Sparse A2 naming list; undefined → dense A1. */
+  addressed?: number[];
+}
+
+const templates = new Map<number, RegisteredTree>();
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -152,16 +158,29 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
   return false;
 }
 
+function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
+  if (!props) return;
+  if (props.c !== undefined) __SetClasses(el, props.c);
+  if (props.s !== undefined) __SetInlineStyles(el, props.s);
+  if (props.a) {
+    for (const [key, value] of props.a) __SetAttribute(el, key, value);
+  }
+  if (props.i !== undefined) __SetID(el, props.i);
+  if (props.t !== undefined) {
+    __SetAttribute(el, 'text', props.t);
+  }
+}
+
 /**
- * Instantiate a registered template. Element ids are assigned by pre-order
- * traversal starting at baseUid — the exact allocation order the BG thread
- * used for its shadow clone, so both sides agree without a transmitted map.
+ * Dense A1: element ids are assigned by pre-order traversal starting at
+ * baseUid — the exact allocation order the BG thread used for its shadow
+ * clone, so both sides agree without a transmitted map.
  *
  * Comment nodes and empty #text nodes are Background Thread anchors: the
  * walk consumes their uid (keeping both sides' pre-order counters in
  * lockstep) but creates no Main Thread element — returns null.
  */
-function instantiateTemplate(
+function instantiateTemplateDense(
   node: TemplateNode,
   base: number,
   counter: { value: number },
@@ -183,27 +202,88 @@ function instantiateTemplate(
   __SetCSSId([el], 0);
   elements.set(uid, el);
   installSelectorAttribute(uid, el);
-
-  if (props) {
-    if (props.c !== undefined) __SetClasses(el, props.c);
-    if (props.s !== undefined) __SetInlineStyles(el, props.s);
-    if (props.a) {
-      for (const [key, value] of props.a) __SetAttribute(el, key, value);
-    }
-    if (props.i !== undefined) __SetID(el, props.i);
-    if (props.t !== undefined) {
-      __SetAttribute(el, 'text', props.t);
-    }
-  }
+  applyStaticProps(el, props);
 
   for (const childNode of children) {
-    const child = instantiateTemplate(childNode, base, counter);
+    const child = instantiateTemplateDense(childNode, base, counter);
     if (child) {
       __AppendElement(el, child.el);
       trackInsert(uid, child.uid);
     }
   }
   return { el, uid };
+}
+
+/**
+ * Sparse A2: build the full native skeleton, but only name slots in
+ * `addressed` (uid = base + indexInAddressed). Anonymous static nodes are
+ * write-only handles for `__AppendElement`.
+ */
+function instantiateTemplateSparse(
+  node: TemplateNode,
+  base: number,
+  counter: { value: number },
+  slotToSparse: Map<number, number>,
+  parentUid: number | null,
+): { el: LynxElement; uid: number | null } | null {
+  const slot = counter.value++;
+  const [tag, props, children] = node;
+
+  if (tag === '#comment') return null;
+  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
+    return null;
+  }
+
+  let el: LynxElement;
+  if (tag === '#text') {
+    el = __CreateText(pageUniqueId);
+  } else {
+    el = createTypedElement(tag, pageUniqueId);
+  }
+  __SetCSSId([el], 0);
+  applyStaticProps(el, props);
+
+  const sparseIdx = slotToSparse.get(slot);
+  const uid = sparseIdx !== undefined ? base + sparseIdx : null;
+  if (uid !== null) {
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    if (parentUid !== null) trackInsert(parentUid, uid);
+  }
+
+  for (const childNode of children) {
+    const child = instantiateTemplateSparse(
+      childNode,
+      base,
+      counter,
+      slotToSparse,
+      uid,
+    );
+    if (child) {
+      __AppendElement(el, child.el);
+    }
+  }
+  return { el, uid };
+}
+
+function instantiateRegisteredTree(
+  entry: RegisteredTree,
+  baseUid: number,
+): void {
+  if (entry.addressed && entry.addressed.length > 0) {
+    const slotToSparse = new Map(
+      entry.addressed.map((s, i) => [s, i] as const),
+    );
+    instantiateTemplateSparse(
+      entry.structure,
+      baseUid,
+      { value: 0 },
+      slotToSparse,
+      null,
+    );
+  } else {
+    instantiateTemplateDense(entry.structure, baseUid, { value: 0 });
+  }
 }
 
 export function applyOps(ops: unknown[], flush = true): void {
@@ -336,16 +416,20 @@ export function applyOps(ops: unknown[], flush = true): void {
       case OP.REGISTER_TREE: {
         const tplId = ops[i++] as number;
         const structure = ops[i++] as TemplateNode;
-        templates.set(tplId, structure);
+        const addressedOr0 = ops[i++] as number[] | 0;
+        const addressed = Array.isArray(addressedOr0)
+          ? addressedOr0
+          : undefined;
+        templates.set(tplId, { structure, addressed });
         break;
       }
 
       case OP.CLONE_TREE: {
         const tplId = ops[i++] as number;
         const baseUid = ops[i++] as number;
-        const structure = templates.get(tplId);
-        if (structure) {
-          instantiateTemplate(structure, baseUid, { value: 0 });
+        const entry = templates.get(tplId);
+        if (entry) {
+          instantiateRegisteredTree(entry, baseUid);
         }
         break;
       }
