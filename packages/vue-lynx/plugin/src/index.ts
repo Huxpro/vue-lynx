@@ -23,6 +23,9 @@
 import {
   IFR_PAINT_GLOBAL,
   TEMPLATE_STAGING_GLOBAL,
+  normalizeIfrPaint,
+  normalizeNaming,
+  normalizeStaging,
 } from 'vue-lynx/internal/matrix';
 import {
   VAPOR_DOCUMENT_GLOBAL,
@@ -153,42 +156,52 @@ export interface PluginVueLynxOptions {
    * Axis B — **naming**: which slots of a materialized template subtree
    * receive cross-thread identities (see `vue-lynx/internal/matrix`).
    *
-   * - `'sparse'` — only the compiler-recovered addressed closure (holes +
-   *   nav ancestors/prefix siblings) is named: Vapor `CLONE_TREE` becomes a
-   *   **recovered Data-Template** (A2, #298) when `__vlxAddressing` is
-   *   present, with fail-safe fallback to dense.
-   * - `'dense'` — every preorder slot is named: the Vapor **Named Tree**
-   *   (A1) cell, used for A/B measurement in the graph-eng matrix (#301).
+   * - `'block'` — the template block is the naming unit (one base id +
+   *   offsets): Vapor `CLONE_TREE` becomes a **Tree-Template** when
+   *   `__vlxAddressing` is present, with fail-safe fallback to node naming.
+   * - `'node'` — every preorder slot is named independently: the Vapor
+   *   **Named Tree** cell, used for A/B measurement in the graph-eng matrix.
    *
-   * Has no effect on VDOM (Code-Template naming is intrinsically sparse).
+   * Legacy spellings `'sparse'` ≡ `'block'`, `'dense'` ≡ `'node'` are
+   * accepted. Has no effect on VDOM (Code-Template naming is intrinsically
+   * block-unit).
    *
-   * @defaultValue 'sparse'
+   * @defaultValue 'block'
    */
-  templateNaming?: 'dense' | 'sparse';
+  templateNaming?: 'node' | 'block' | 'dense' | 'sparse';
 
   /**
    * Axis A — **staging**: what form the compiled template residual exists
    * in on the main thread (see `vue-lynx/internal/matrix`).
    *
-   * - `'opstream'` — per-instruction ops, no template mechanism (VDOM
-   *   default without element templates).
-   * - `'data'` — lazy serialized AST + one generic MT interpreter
-   *   (`REGISTER_TREE`/`CLONE_TREE`; Vapor default → Data-Template).
-   * - `'code'` — per-template compiled `create()` closure, no interpreter
-   *   (`INSTANTIATE_TEMPLATE`; VDOM element templates → Code-Template).
-   *   Not implemented for Vapor (M3a optional) — falls back to `'data'`
-   *   with a warning.
-   * - `'engine'` — host-resident **Engine-Template**: the MT executor
-   *   routes instantiation through the native `__CreateElementTemplate`
+   * - `'ops'` (interp) — per-instruction stream, no template mechanism
+   *   (VDOM default without element templates).
+   * - `'tree'` (interp) — serialized tree + one generic MT interpreter
+   *   (`REGISTER_TREE`/`CLONE_TREE`; Vapor default → Tree-Template).
+   * - `'code'` (compiled) — per-template compiled `create()` closure, no
+   *   interpreter (`INSTANTIATE_TEMPLATE` → Code-Template). Not
+   *   implemented for Vapor (M3a optional) — falls back to `'tree'` with a
+   *   warning.
+   * - `'native'` (compiled) — host-resident **Engine-Template**: the MT
+   *   executor routes instantiation through the `__CreateElementTemplate`
    *   PAPI family when the engine provides it, and falls back to
-   *   `'data'`/`'code'` interpretation (reported as stub) when it does not.
+   *   interpretation (reported N/A/stub) when it does not.
    *
-   * Defaults preserve current behavior: Vapor → `'data'`; VDOM → `'code'`
-   * when element templates are enabled, else `'opstream'`.
+   * Legacy spellings `'opstream'` ≡ `'ops'`, `'data'` ≡ `'tree'`,
+   * `'engine'` ≡ `'native'` are accepted. Defaults preserve current
+   * behavior: Vapor → `'tree'`; VDOM → `'code'` when element templates are
+   * enabled, else `'ops'`.
    *
    * @defaultValue undefined (per-render-model default above)
    */
-  templateStaging?: 'opstream' | 'data' | 'code' | 'engine';
+  templateStaging?:
+    | 'ops'
+    | 'tree'
+    | 'code'
+    | 'native'
+    | 'opstream'
+    | 'data'
+    | 'engine';
 
   /**
    * Axis D — **IFR paint mode**: how the ephemeral first-frame copy
@@ -196,15 +209,21 @@ export interface PluginVueLynxOptions {
    *
    * - `'plain'` — today's behavior: the recorded op stream paints via the
    *   same staging as the durable tree.
-   * - `'disposable-et'` — first frame paints through the registered
-   *   Code-Template `create()` executors (ephemeral Code-Template; salvaged
-   *   from #290's IFR×ET direction).
-   * - `'engine-et'` — first frame routes through the native
-   *   Engine-Template family when available (stub fallback otherwise).
+   * - `'code-paint'` (legacy `'disposable-et'`) — first frame paints
+   *   through the registered Code-Template `create()` executors
+   *   (ephemeral Code-Template).
+   * - `'native-paint'` (legacy `'engine-et'`) — first frame routes through
+   *   the Engine-Template family when available (N/A/stub fallback
+   *   otherwise).
    *
    * @defaultValue 'plain'
    */
-  ifrPaint?: 'plain' | 'disposable-et' | 'engine-et';
+  ifrPaint?:
+    | 'plain'
+    | 'code-paint'
+    | 'native-paint'
+    | 'disposable-et'
+    | 'engine-et';
 
   /**
    * Whether Vapor `CLONE_TREE` may use sparse A2 naming.
@@ -321,39 +340,49 @@ export function pluginVueLynx(
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
-  // Axis B (naming): templateNaming wins over the deprecated boolean alias.
-  const templateNaming: 'dense' | 'sparse' = options.templateNaming
-    ?? (enableSparseNaming === false ? 'dense' : 'sparse');
+  // Naming: templateNaming (node|block, legacy dense|sparse) wins over the
+  // deprecated boolean alias.
+  const templateNaming = normalizeNaming(
+    options.templateNaming
+      ?? (enableSparseNaming === false ? 'node' : 'block'),
+  );
 
-  // Axis A (staging): default = current product behavior per render model.
-  const defaultStaging = vapor
-    ? 'data'
-    : enableElementTemplates
-      ? 'code'
-      : 'opstream';
-  let templateStaging = options.templateStaging ?? defaultStaging;
-  if (vapor && templateStaging === 'opstream') {
+  // Staging: normalize legacy spellings; default = current product
+  // behavior per render model.
+  const defaultStaging = vapor ? 'tree' : enableElementTemplates ? 'code' : 'ops';
+  let templateStaging = normalizeStaging(
+    options.templateStaging ?? defaultStaging,
+  );
+  if (vapor && templateStaging === 'ops') {
     console.warn(
-      '[vue-lynx] templateStaging:\'opstream\' is not a Vapor cell '
-        + '(template() always registers a tree) — using \'data\'.',
+      '[vue-lynx] templateStaging:\'ops\' is not a Vapor cell '
+        + '(template() always registers a tree) — using \'tree\'.',
     );
-    templateStaging = 'data';
+    templateStaging = 'tree';
   }
   if (vapor && templateStaging === 'code') {
     console.warn(
       '[vue-lynx] templateStaging:\'code\' (Vapor Code-Template, M3a) is '
-        + 'not implemented — using \'data\'. The matrix reports this cell '
+        + 'not implemented — using \'tree\'. The matrix reports this cell '
         + 'as stub.',
     );
-    templateStaging = 'data';
+    templateStaging = 'tree';
   }
-  if (!vapor && templateStaging === 'data') {
+  if (!vapor && templateStaging === 'tree') {
     console.warn(
-      '[vue-lynx] templateStaging:\'data\' is not a VDOM cell (no '
+      '[vue-lynx] templateStaging:\'tree\' is not a VDOM cell (no '
         + 'CLONE_TREE protocol) — using the default.',
     );
-    templateStaging = enableElementTemplates ? 'code' : 'opstream';
+    templateStaging = enableElementTemplates ? 'code' : 'ops';
   }
+  // Define VALUES keep the legacy spelling for compatibility with built
+  // bundles and runtime checks (both spellings accepted at read sites).
+  const stagingDefine = (
+    { ops: 'opstream', tree: 'data', code: 'code', native: 'engine' } as const
+  )[templateStaging];
+  const paintDefine = (
+    { plain: 'plain', 'code-paint': 'disposable-et', 'native-paint': 'engine-et' } as const
+  )[normalizeIfrPaint(ifrPaint)];
 
   return [
     // ① Official Vue SFC support (rspack-vue-loader + VueLoaderPlugin)
@@ -420,10 +449,10 @@ export function pluginVueLynx(
                 __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
                 __VUE_LYNX_AUTO_PIXEL_UNIT__: JSON.stringify(autoPixelUnit),
                 [VAPOR_SPARSE_NAMING_GLOBAL]: JSON.stringify(
-                  templateNaming === 'sparse',
+                  templateNaming === 'block',
                 ),
-                [TEMPLATE_STAGING_GLOBAL]: JSON.stringify(templateStaging),
-                [IFR_PAINT_GLOBAL]: JSON.stringify(ifrPaint),
+                [TEMPLATE_STAGING_GLOBAL]: JSON.stringify(stagingDefine),
+                [IFR_PAINT_GLOBAL]: JSON.stringify(paintDefine),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references
@@ -493,7 +522,7 @@ export function pluginVueLynx(
             // Prod inlineTemplate path never hits the template loader — stamp
             // `__vlxAddressing` on the compiled script so sparse A2 activates
             // in probe/benchmark bundles (#301).
-            if (templateNaming === 'sparse') {
+            if (templateNaming === 'block') {
               chain.module
                 .rule('vue-lynx:vapor-addressing-script')
                 .test(/\.vue$/)
