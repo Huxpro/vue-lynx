@@ -61,6 +61,12 @@ export function copy(lang) {
     subFcp4: zh
       ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
       : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
+    hGraphEng: zh
+      ? 'Graph-eng 命名密度 — dense A1 vs sparse A2'
+      : 'Graph-eng naming density — dense A1 vs sparse A2',
+    subGraphEng: zh
+      ? '同款 sfc-probe（~1004 元素）：仅切换 <code>enableSparseNaming</code>。Native ET 仍 stub；稀疏仍全量建 native 树。详见 <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>。'
+      : 'Same-source sfc-probe (~1004 els): only <code>enableSparseNaming</code> flips. Native ET still stub; sparse still builds the full native tree. See <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -71,6 +77,8 @@ export function copy(lang) {
     colLabels: {
       vapor: 'Vue Vapor',
       'vapor-ifr': 'Vapor+IFR',
+      'vapor-ifr-dense': 'Vapor+IFR (dense A1)',
+      'vapor-ifr-sparse': 'Vapor+IFR (sparse A2)',
       vdom: 'Vue VDOM',
       'vdom-ifr': 'VDOM+IFR',
       'vdom-ifr-et': 'VDOM+IFR+ET',
@@ -111,6 +119,8 @@ export function copy(lang) {
       'vdom-ifr-et': 'VDOM+IFR+ET',
       vapor: 'Vapor',
       'vapor-ifr': 'Vapor+IFR',
+      'vapor-ifr-dense': zh ? 'Vapor+IFR 稠密' : 'Vapor+IFR dense',
+      'vapor-ifr-sparse': zh ? 'Vapor+IFR 稀疏' : 'Vapor+IFR sparse',
     },
     charts: {
       selectStorm: {
@@ -194,6 +204,10 @@ export function buildConclusions(d, lang) {
     fcpIfr,
     fcpIfr1k,
     fcpOff1k,
+    fcpVaporIfrDense,
+    fcpVaporIfrSparse,
+    fcpVaporIfrDense4,
+    fcpVaporIfrSparse4,
     bgSelectV,
     bgSelectD,
   } = d;
@@ -285,6 +299,32 @@ export function buildConclusions(d, lang) {
       evidence: zh
         ? `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`
         : `selectStorm@10k off ${stormVdom.toFixed(0)} · IFR ${stormIfr.toFixed(0)} · ET ${stormEt.toFixed(0)} ms`,
+    });
+  }
+
+  if (fcpVaporIfrDense != null && fcpVaporIfrSparse != null) {
+    const d1 = ((fcpVaporIfrSparse - fcpVaporIfrDense) / fcpVaporIfrDense) * 100;
+    const d4 =
+      fcpVaporIfrDense4 != null && fcpVaporIfrSparse4 != null
+        ? ((fcpVaporIfrSparse4 - fcpVaporIfrDense4) / fcpVaporIfrDense4) * 100
+        : null;
+    out.push({
+      tone: d1 < -5 ? 'good' : 'warn',
+      title: zh
+        ? `Vapor 稀疏命名 ×1 FCP ${d1.toFixed(0)}%`
+        : `Vapor sparse naming ×1 FCP ${d1.toFixed(0)}%`,
+      why: zh
+        ? 'A2 稳态稀疏有同机 ×1 收益；×4 未成 hedge。Native ET 仍是大头。'
+        : 'Keeper sparse A2 helps ×1 on this host; ×4 is not a hedge. Native ET remains the big lever.',
+      evidence: zh
+        ? `dense ${fcpVaporIfrDense.toFixed(1)} → sparse ${fcpVaporIfrSparse.toFixed(1)} ms`
+          + (d4 != null
+            ? ` · ×4 ${d4 >= 0 ? '+' : ''}${d4.toFixed(0)}%`
+            : '')
+        : `dense ${fcpVaporIfrDense.toFixed(1)} → sparse ${fcpVaporIfrSparse.toFixed(1)} ms`
+          + (d4 != null
+            ? ` · ×4 ${d4 >= 0 ? '+' : ''}${d4.toFixed(0)}%`
+            : ''),
     });
   }
 

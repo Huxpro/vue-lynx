@@ -109,13 +109,13 @@
 <h1>Vue Lynx 统一基准矩阵</h1>
 <p class="sub">
   同一量纲下看 IFR × VDOM/Vapor × ReactLynx。上方是结论（好消化）；下方表格与曲线用来核对数据。中位数延迟；<b>(n.nn)</b> = 相对该行最优的慢速倍数。
-  生成于 2026-07-17 · git fac8b548 · 4× Intel(R) Xeon(R) Processor.
+  生成于 2026-07-22 · git 08bc6d71 · 4× Intel(R) Xeon(R) Processor.
 </p>
 <div class="pillrow">
   <span class="pill">环境：lynx-web（主）</span>
   <span class="pill">阶梯：1k → 30k</span>
-  <span class="pill">数据格：457</span>
-  <span class="pill">结论：7</span>
+  <span class="pill">数据格：468</span>
+  <span class="pill">结论：8</span>
 </div>
 <p class="lang-switch"><a href="report.html">English</a></p>
 
@@ -141,6 +141,10 @@
       <header><strong class="takeaway">ET 也加速更新 ~28%</strong></header>
       <p class="why"><span class="lbl">含义</span> 模板 clone 挂载后仍有用。裸 IFR ≈ off。</p>
       <p class="evidence"><span class="lbl">核对</span> selectStorm@10k off 367 · IFR 372 · ET 264 ms</p>
+    </article><article class="verdict good">
+      <header><strong class="takeaway">Vapor 稀疏命名 ×1 FCP -10%</strong></header>
+      <p class="why"><span class="lbl">含义</span> A2 稳态稀疏有同机 ×1 收益；×4 未成 hedge。Native ET 仍是大头。</p>
+      <p class="evidence"><span class="lbl">核对</span> dense 102.2 → sparse 91.5 ms · ×4 +3%</p>
     </article><article class="verdict warn">
       <header><strong class="takeaway">创建→RL · 更新→Vapor · 首帧→IFR+ET</strong></header>
       <p class="why"><span class="lbl">含义</span> Select=点状，Update=批量。产品选择压成这一句。</p>
@@ -323,9 +327,13 @@ FCP — ms: 1.19 s</title></circle><text x="411.3" y="160.7" class="slabel" fill
 </svg></div>
 </div>
 
+<h2>Graph-eng 命名密度 — dense A1 vs sparse A2</h2>
+<p class="sub">同款 sfc-probe（~1004 元素）：仅切换 <code>enableSparseNaming</code>。Native ET 仍 stub；稀疏仍全量建 native 树。详见 <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>。</p>
+<div class="scroll"><table><thead><tr><th>场景</th><th>naming</th><th>web gzip</th><th>FCP ×1</th><th>Δ</th><th>FCP ×4</th><th>Δ</th></tr></thead><tbody><tr><td class="op">Vapor+IFR (dense A1) <code>vapor-ifr-dense</code></td><td class="c plain">dense</td><td class="c plain">89,720</td><td class="c plain">102.2 ms</td><td class="c plain">+0.0%</td><td class="c plain">302.9 ms</td><td class="c plain">+0.0%</td></tr><tr><td class="op">Vapor+IFR (sparse A2) <code>vapor-ifr-sparse</code></td><td class="c plain">sparse</td><td class="c plain">90,007</td><td class="c plain">91.5 ms</td><td class="c plain">-10.5%</td><td class="c plain">310.7 ms</td><td class="c plain">+2.6%</td></tr><tr><td class="op">Vapor+IFR <code>vapor-ifr</code></td><td class="c plain">sparse</td><td class="c plain">90,007</td><td class="c plain">86.9 ms</td><td class="c plain">-15.0%</td><td class="c plain">289.6 ms</td><td class="c plain">-4.4%</td></tr></tbody></table></div>
+
 <h2>覆盖面</h2>
 <p class="sub">每种架构在统一 schema 里量过什么。</p>
-<div class="scroll"><table><thead><tr><th>架构</th><th>交互 storms</th><th>首帧 FCP</th><th>instrumented BG/e2e</th></tr></thead><tbody><tr><td class="op">Vue VDOM <code>vdom</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue VDOM+IFR <code>vdom-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue VDOM+IFR+ET <code>vdom-ifr-et</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue Vapor <code>vapor</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue Vapor+IFR <code>vapor-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (hooks) <code>react</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (naive) <code>react-naive</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (compiler) <code>react-compiler</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>架构</th><th>交互 storms</th><th>首帧 FCP</th><th>instrumented BG/e2e</th></tr></thead><tbody><tr><td class="op">Vue VDOM <code>vdom</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue VDOM+IFR <code>vdom-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue VDOM+IFR+ET <code>vdom-ifr-et</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue Vapor <code>vapor</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">✓</td></tr><tr><td class="op">Vue Vapor+IFR <code>vapor-ifr</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue Vapor+IFR (dense A1) <code>vapor-ifr-dense</code></td><td class="c plain">—</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">Vue Vapor+IFR (sparse A2) <code>vapor-ifr-sparse</code></td><td class="c plain">—</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (hooks) <code>react</code></td><td class="c plain">✓</td><td class="c plain">✓</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (naive) <code>react-naive</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr><tr><td class="op">ReactLynx (compiler) <code>react-compiler</code></td><td class="c plain">✓</td><td class="c plain">—</td><td class="c plain">—</td></tr></tbody></table></div>
 
 <div class="notes">
   <ul>
