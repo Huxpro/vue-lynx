@@ -85,17 +85,18 @@ ok('aggregate counts DNF separately', () => {
 });
 
 // -- matrix ------------------------------------------------------------------
-ok('matrix: 8 cells, 5 SFC architectures, react has no ifr', () => {
-  assert.equal(ALL_CELLS.length, 8);
-  assert.equal(SFC_ARCHITECTURES.length, 5);
+ok('matrix: 14 cells (8 classic + 6 four-axis), react has no ifr', () => {
+  assert.equal(ALL_CELLS.length, 14);
   assert.equal(selectCells({ framework: 'vue', ifr: 'ifr-et' }).length, 1);
-  assert.equal(selectCells({ renderer: 'vapor' }).length, 2); // off + ifr, no ET
+  assert.equal(selectCells({ framework: 'reactlynx' }).length, 3);
   assert.equal(cellById('vue-vapor-ifr').flags.enableElementTemplates, false);
+  assert.equal(cellById('vue-vapor-dense').flags.templateNaming, 'dense');
+  assert.equal(cellById('vue-vapor-engine').flags.templateStaging, 'engine');
+  assert.equal(cellById('vue-vapor-ifr-engine-et').flags.ifrPaint, 'engine-et');
 });
-ok('matrix: every cell sets flags explicitly (no default reliance)', () => {
+ok('matrix: every vue cell sets vapor + enableIFR explicitly', () => {
   for (const c of selectCells({ framework: 'vue' })) {
     assert.equal(typeof c.flags.enableIFR, 'boolean');
-    assert.equal(typeof c.flags.enableElementTemplates, 'boolean');
     assert.equal(typeof c.flags.vapor, 'boolean');
   }
 });

@@ -55,8 +55,65 @@ const VUE_CELLS = [
     renderer: 'vapor',
     ifr: 'ifr',
     // Vapor has no ET path — the REGISTER_TREE/CLONE_TREE protocol is always on.
-    flags: { vapor: true, enableIFR: true, enableElementTemplates: false },
+    // Naming default is sparse, so this is also the vapor-ifr-sparse cell.
+    flags: { vapor: true, enableIFR: true, enableElementTemplates: false, benchCell: 'ifr' },
     label: 'Vapor+IFR',
+  },
+];
+
+// Four-axis graph-eng cells (#321/#325), added on top of the classic matrix so
+// the runner covers every legal Naming × Staging × IFR × ifrPaint permutation
+// the base (#327) models. benchCell mirrors the base app configs'
+// BENCH_CELL value. Engine cells run as `stub` on web (no native engine) — an
+// honest fallback-path cost, not a native-engine claim.
+const FOUR_AXIS_CELLS = [
+  {
+    id: 'vue-vdom-et',
+    framework: 'vue',
+    renderer: 'vdom',
+    ifr: 'et', // Code-Template WITHOUT IFR (create-benefit staging cell)
+    flags: { vapor: false, enableIFR: false, enableElementTemplates: true, benchCell: 'et' },
+    label: 'VDOM+ET (no IFR)',
+  },
+  {
+    id: 'vue-vapor-dense',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'off',
+    flags: { vapor: true, enableIFR: false, templateNaming: 'dense', benchCell: 'dense' },
+    label: 'Vapor dense',
+  },
+  {
+    id: 'vue-vapor-engine',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'off',
+    flags: { vapor: true, enableIFR: false, templateStaging: 'engine', benchCell: 'engine' },
+    label: 'Vapor engine (stub)',
+  },
+  {
+    id: 'vue-vapor-ifr-dense',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'ifr',
+    flags: { vapor: true, enableIFR: true, templateNaming: 'dense', benchCell: 'ifr-dense' },
+    label: 'Vapor+IFR dense',
+  },
+  {
+    id: 'vue-vapor-ifr-sparse',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'ifr',
+    flags: { vapor: true, enableIFR: true, templateNaming: 'sparse', benchCell: 'ifr-sparse' },
+    label: 'Vapor+IFR sparse',
+  },
+  {
+    id: 'vue-vapor-ifr-engine-et',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'ifr',
+    flags: { vapor: true, enableIFR: true, ifrPaint: 'engine-et', benchCell: 'ifr-engine-et' },
+    label: 'Vapor+IFR engine-et (stub)',
   },
 ];
 
@@ -87,7 +144,7 @@ const REACT_CELLS = [
   },
 ];
 
-export const ALL_CELLS = [...VUE_CELLS, ...REACT_CELLS];
+export const ALL_CELLS = [...VUE_CELLS, ...FOUR_AXIS_CELLS, ...REACT_CELLS];
 
 /** Filter the matrix by axis. Each arg is a value or array; omit for "all". */
 export function selectCells({ framework, renderer, ifr, id } = {}) {
