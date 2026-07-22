@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 141</span>
+    <span data-counter>01 / 142</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -3822,76 +3822,138 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>The ladder, top-down = this talk in order.</strong> <em>ops</em> — vdom's flat stream: MT interprets every op on every update. <em>data</em> — Vapor's <code>REGISTER_TREE</code> / <code>CLONE_TREE</code>: interpret the structure once, then clone by name; the per-update interpreter is mostly gone. <em>code</em> — the residual becomes a function (<code>create()</code>) baked into both bundles: Element Templates and Snapshot live here. That's the first Futamura projection — specializing the interpreter to one fixed program yields compiled code. <em>native</em> — the engine itself holds the template and clones it; even the JS is gone. The Web's <code>cloneNode</code> lived here all along; on Lynx the engine's Element Template API is the same rung (our probe runs it behind a flag — honest caveat: stubbed on Lynx-for-Web today).</p>
       <p>One sentence to land: <strong>optimization here is partial evaluation of the interpreter itself, rung by rung.</strong></p>
+      <p><strong>Anticipate the sharp question — why is Vapor parked on data, not code?</strong> Upstream, not physics: <code>@vue/compiler-vapor</code>'s codegen hands us the residual only as an HTML string inside <code>template()</code>, so the cheapest correct move was runtime parse + <code>REGISTER_TREE</code> — data. Nothing forbids a vapor code rung: that string is static, so our plugin could parse it at build time and bake a <code>create()</code> into both bundles, exactly like ET/Snapshot. That's the unbuilt vapor <code>:c</code> / bundle-delivery cell, and upstream declared addressing (#332) would make it clean. History, not essence — the slide-104 seed, resolved.</p>
     </aside>
   </section>
 
-  <!-- Λ·5 — flags, not forks: the decision tree -->
+  <!-- Λ·5 — impact chart: the render axis -->
   <section class="slide stage" data-bg="clean">
-    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(10px,1.6cqh,18px)">
-      Not features — <span class="brand-text">flags</span>.
+    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      The <span class="brand-text">render</span> axis.
     </h2>
-    <table class="btable btable--compact" style="width:min(100%,1140px)">
-      <thead>
-        <tr><th>mode</th><th>staging</th><th>naming</th><th>addressing</th><th>provider</th><th>lifetime</th><th>delivery</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="metric">vdom</td><td>ops</td><td>node</td><td>random</td><td>BTS</td><td>persist</td><td>—</td></tr>
-        <tr><td class="metric">vdom +ifr</td><td>ops</td><td>node</td><td>random</td><td>BTS+MTS</td><td>persist+eph</td><td>—</td></tr>
-        <tr><td class="metric">vdom +b</td><td>code</td><td>block</td><td>random</td><td>BTS</td><td>persist</td><td>bundle</td></tr>
-        <tr><td class="metric">vdom +b +ifr</td><td>code</td><td>block</td><td>random</td><td>BTS+MTS</td><td>persist+eph</td><td>bundle</td></tr>
-        <tr><td class="metric">vapor</td><td>data</td><td>node</td><td>walk</td><td>BTS</td><td>persist</td><td>runtime</td></tr>
-        <tr><td class="metric">vapor +ifr</td><td>data</td><td>node</td><td>walk</td><td>BTS+MTS</td><td>persist+eph</td><td>runtime</td></tr>
-        <tr><td class="metric">vapor +b · default</td><td>data</td><td>block</td><td>walk+recover</td><td>BTS</td><td>persist</td><td>runtime</td></tr>
-        <tr><td class="metric">vapor +b +ifr</td><td>data</td><td>block</td><td>walk+recover</td><td>BTS+MTS</td><td>persist+eph</td><td>runtime</td></tr>
-        <tr><td class="metric">rl · Snapshot</td><td>code</td><td>block</td><td>random</td><td>BTS+MTS</td><td>persist+eph</td><td>bundle</td></tr>
-        <tr><td class="metric flat">vapor +b! · unbuilt</td><td class="flat">data</td><td class="flat">block</td><td class="flat">walk+recover</td><td class="flat">BTS</td><td class="flat">persist</td><td class="flat">bundle</td></tr>
-        <tr><td class="metric flat">vapor +b:e · n/a web</td><td class="flat">native</td><td class="flat">block</td><td class="flat">walk+recover</td><td class="flat">Engine</td><td class="flat">persist</td><td class="flat">runtime</td></tr>
-        <tr><td class="metric flat">vapor +b +ifr:e · n/a web</td><td class="flat">data+paint:e</td><td class="flat">block</td><td class="flat">walk+recover</td><td class="flat">Engine paint</td><td class="flat">persist+eph</td><td class="flat">runtime</td></tr>
-      </tbody>
-    </table>
-    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
-      The vapor ladder moves <em>one column per flag</em>; vdom +b moves three at
-      once — cross-model +b is not one factor. Greyed rows exist but aren&rsquo;t
-      measurable yet.
+    <div class="bench-viz">
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">update storm <span>10k rows · 50 ticks · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">vdom</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val">2585</span>
+        </div>
+        <div class="bench-bar bench-bar--hero">
+          <span class="bench-bar__label">vapor</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:46%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">1187 · −54%</span>
+        </div>
+      </div>
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">select storm <span>10k rows · 50 ticks · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">vdom</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val">1330</span>
+        </div>
+        <div class="bench-bar bench-bar--hero">
+          <span class="bench-bar__label">vapor</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:13%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">168 · −87%</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:62ch">
+      Flip only the render model and updates transform: the storm halves,
+      selection collapses 8× — while create pays ~12% for the clone protocol.
     </p>
     <aside class="notes">
-      <p><strong>Read it by columns — six properties, not one lineage.</strong> <em>Staging</em>: what form the residual takes on Main (ops / data / code / native). <em>Naming</em>: the unit of identity (every node vs base+offset per block). <em>Addressing</em>: how Main finds a node — random access, a pre-order walk, or walk plus the recovery from the provenance slide. <em>Provider</em>: which side materializes (BTS ops, MTS IFR paint, or the Engine itself). <em>Lifetime</em>: persistent tree vs the ephemeral first-frame copy that hydration joins. <em>Delivery</em>: how the residual reaches Main — over the wire at runtime, or baked into the bundle at build time (the slide-104 seed).</p>
-      <p><strong>Kill the coupling myths with the columns.</strong> "ET is an IFR feature" — no: +ifr only flips provider/lifetime; +b flips staging/naming/delivery; they compose. "Snapshot is a ReactLynx thing" — no: same row-shape as vdom +b +ifr, just intrinsic and always-on. And factor cleanliness: each vapor flag flips exactly one column (that's why its ladder decomposes cleanly), while vdom +b flips staging+naming+delivery at once — so the two "+b effects" in the benchmark are <em>not</em> comparable to each other.</p>
-      <p><strong>The greyed rows are the roadmap, not padding.</strong> +b! (bundle-delivered data residual) is designed but unbuilt — it isolates pure delivery. The two :e rows need the engine's Element Template PAPI, which Lynx-for-Web doesn't expose — our probe runs honest stubs behind a flag. Next slide: what the measurable cells actually clock.</p>
+      <p><strong>One axis, held clean.</strong> Both bars are the per-node baselines — no template flags — so this is purely effects-vs-diff on the update path: same app, real clicks, unified storms @10k, medians. The select storm is the purest case (one text flips): vdom re-renders and diffs the component, vapor runs one effect — 1330 → 168 ms, 8×. That matches the earlier chapter&rsquo;s 5.8–9.8× official-bench numbers from the other harness.</p>
+      <p><strong>The honest cost:</strong> create runs ~12% slower (2017 → 2258) — Vapor&rsquo;s REGISTER/CLONE protocol plus per-instance effect setup. Update wins are what you keep every frame; the create tax is paid once — and the next axis is exactly the lever that trims create. Attribution rule this chart enforces: never credit templates for what the render axis did.</p>
     </aside>
   </section>
 
-  <!-- Λ·5b — the matrix, measured (all cells, incl. N/A) -->
+  <!-- Λ·5b — impact chart: +b vs the static fraction -->
   <section class="slide stage" data-bg="clean">
-    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(10px,1.6cqh,18px)">
-      The matrix, <span class="brand-text">measured</span>.
+    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      The <span class="brand-text">+b</span> axis follows the static fraction.
     </h2>
-    <table class="btable btable--compact">
-      <thead>
-        <tr><th>mode</th><th>create 10k</th><th>update storm</th><th>select storm</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="metric">vdom</td><td>2017</td><td>2585</td><td>1330</td></tr>
-        <tr><td class="metric">vdom +ifr</td><td>2043</td><td>2653</td><td>1371</td></tr>
-        <tr><td class="metric">vdom +b</td><td>2161</td><td>2885</td><td>1509</td></tr>
-        <tr><td class="metric">vdom +b +ifr</td><td>2060</td><td>2816</td><td>1449</td></tr>
-        <tr><td class="metric">vapor</td><td>2258</td><td class="win">1187</td><td class="win">168</td></tr>
-        <tr><td class="metric">vapor +ifr</td><td>2316</td><td class="win">1278</td><td class="win">174</td></tr>
-        <tr><td class="metric">vapor +b · default</td><td>2146</td><td class="win">1226</td><td class="win">161</td></tr>
-        <tr><td class="metric">vapor +b +ifr</td><td>2244</td><td class="win">1078</td><td class="win">162</td></tr>
-        <tr><td class="metric">rl · Snapshot+IFR+memo</td><td class="win">1659</td><td class="cost">6041</td><td>2632</td></tr>
-        <tr><td class="metric flat">vapor +b:e</td><td class="flat" colspan="3">n/a — engine ET PAPI absent on Lynx-for-Web (probe runs a stub)</td></tr>
-        <tr><td class="metric flat">vapor +b +ifr:e</td><td class="flat" colspan="3">n/a — engine first-frame paint, same missing PAPI</td></tr>
-      </tbody>
-    </table>
+    <div class="bench-viz">
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">×1 static <span>FCP @10k · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">vdom</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val">762</span>
+        </div>
+        <div class="bench-bar">
+          <span class="bench-bar__label">vdom +b</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:98%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">749 · −2%</span>
+        </div>
+      </div>
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">×4 static <span>FCP @10k · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">vdom</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val">3185</span>
+        </div>
+        <div class="bench-bar bench-bar--hero">
+          <span class="bench-bar__label">vdom +b</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:83%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">2658 · −17%</span>
+        </div>
+      </div>
+    </div>
     <p class="lead arch-cap" data-mm-fade style="max-width:64ch">
-      Same app, real clicks, 10k rows — median ms. Full tables — 1k/10k/30k,
-      FCP ladders, per-factor charts — at
-      <a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>.
+      Same flag, two screens: on a dynamic-heavy table +b barely moves FCP —
+      quadruple the static fraction and the same flag returns −17%. The win
+      tracks what the compiler can prove static.
     </p>
     <aside class="notes">
-      <p><strong>The whole roster, honestly.</strong> Every cell is the same table app driven by real mouse clicks on dual-thread Lynx-for-Web, medians over reps with a warmup instance discarded. The two engine rows stay <em>N/A</em>: the engine's Element Template PAPI doesn't exist on Lynx-for-Web, and we refuse to sell stub numbers as engine wins — the probe exists so a native host can light them up unchanged.</p>
-      <p><strong>What to point at.</strong> The vapor column family: update storm halves (2585→~1200) and select storm collapses 8× (1330→~165) — that's the render axis, not templates. Within vapor, +b trims create and +b +ifr posts the best update storm. The rl control is the honest cross-framework note: fastest create (1659) — Snapshot's intrinsic Code-Template at work — but update storm 6041 with this memo-heavy app shape; different framework, different trade, same coordinate system. Deep-dive link on the slide is the full unified report — en and zh.</p>
+      <p><strong>The template axis is a create lever, and it scales with proof.</strong> Same-host sfc-probe ladder, identical app at two static multipliers. At ×1 the rows are mostly holes — there is little residual to lower, so +b (here vdom&rsquo;s ET / Code-Template) moves FCP by ~2%, noise-adjacent. At ×4 the compiler can prove four times as much skeleton, and the very same flag returns −17%. The deck&rsquo;s earlier 1000×-payload slide is this curve&rsquo;s far end: an almost-fully-static screen.</p>
+      <p><strong>Vapor&rsquo;s +b shows the same shape on the create path:</strong> −5% create in the storms at this dynamic-heavy mix, growing with static share — and remember the caution: vdom +b bundles staging+naming+delivery, so this chart is the bundle&rsquo;s effect; only the vapor rows in the summary table read as a single column. Update and select stay template-blind throughout — identical op frames, verified.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·5b2 — impact chart: +ifr meets +b -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:22ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      <span class="brand-text">+ifr</span> meets +b.
+    </h2>
+    <div class="bench-viz">
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">vdom <span>FCP @10k · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">no ifr</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:82%"></span></span>
+          <span class="bench-bar__val">762</span>
+        </div>
+        <div class="bench-bar">
+          <span class="bench-bar__label">+ifr</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">932 · +22%</span>
+        </div>
+      </div>
+      <div class="bench-chart">
+        <h3 class="bench-chart__title">vdom +b <span>FCP @10k · ms</span></h3>
+        <div class="bench-bar">
+          <span class="bench-bar__label">no ifr</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span>
+          <span class="bench-bar__val">749</span>
+        </div>
+        <div class="bench-bar bench-bar--hero">
+          <span class="bench-bar__label">+ifr</span>
+          <span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:86%"></span></span>
+          <span class="bench-bar__val" style="white-space:nowrap">645 · −14%</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:64ch">
+      IFR&rsquo;s hydrate join must replay the recording — at 10k rows that tax
+      outweighs the boot win (+22%). Add +b and the recording is one op per
+      block: the same IFR turns −14%. Flags compose.
+    </p>
+    <aside class="notes">
+      <p><strong>The interplay chart — why axes must be read together.</strong> IFR moves paint before BG boot, then pays a hydrate join over everything MTS recorded. At 1k both columns win (vdom −11%, vdom +b −9% — the first-frame lever the −22% slide showed). At 10k the recording is huge: plain vdom&rsquo;s per-node ops make the join cost more than the boot it saved (+22%), while +b&rsquo;s recording is one INSTANTIATE plus hole SETs per block — the join shrinks and IFR wins again (−14%).</p>
+      <p><strong>This is the 5→3 slide, measured.</strong> The same collapse that shrank the protocol is what makes IFR scale. Coupling myth, killed in data: ET is not &ldquo;an IFR feature&rdquo; — it is the flag that keeps IFR&rsquo;s promise at scale. Next: the full per-axis summary.</p>
     </aside>
   </section>
 
@@ -3918,6 +3980,10 @@ app.<span class="code-fn">use</span>(router)</pre>
       The render axis is the update lever. The template axes barely touch update —
       they are a create-and-protocol lever, and the win grows with the static
       fraction. +ifr only moves <em>when</em> the first frame paints.
+    </p>
+    <p class="lead" data-mm-fade style="margin-top:clamp(4px,0.8cqh,10px);font-size:clamp(13px,1.4cqw,17px)">
+      Full tables &amp; charts — 1k/10k/30k, storms, FCP ladders:
+      <a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>.
     </p>
     <aside class="notes">
       <p><strong>Marginal effects — move one axis, hold the rest.</strong> Row one is the headline: switching the render model halves update storms and collapses select storms; it costs ~12% on create (Vapor's clone protocol). The template rows hover in single digits at this cell mix — <em>update and select are template-blind</em>: we verified identical op frames and native call counts across template cells; templates pay off on create and on protocol bytes, scaling with the static fraction (this app is dynamic-heavy, so the deck's 1000× ops-payload slide is the other end of that curve).</p>

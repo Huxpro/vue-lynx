@@ -435,18 +435,24 @@ export const ZH = {
     '把<span class="brand-text">解释器</span>编译掉。',
   'Each rung compiles more of the interpreter away — partial evaluation, applied to the interpreter itself.':
     '每往下一档,就把解释器多编译掉一层 —— partial evaluation,施加在解释器自己身上。',
-  'Not features — flags.':
-    '不是功能 —— 是 <span class="brand-text">flag</span>。',
   'Where does the block come from?':
     '这份 <span class="brand-text">block</span> 信息,从哪儿来?',
   'vdom’s split is intrinsic; vapor’s is recovered — and recovery must be provable, so a fingerprint mismatch silently falls back to per-node. Upstream could make it declared.':
     'vdom 的切分是<b>内生</b>的;vapor 的是<b>恢复</b>出来的 —— 恢复必须可证明,指纹不合就静默回退 per-node。上游可以让它变成<b>声明</b>的。',
-  'The vapor ladder moves one column per flag; vdom +b moves three at once — cross-model +b is not one factor. Greyed rows exist but aren’t measurable yet.':
-    'vapor 阶梯每个 flag 只动<em>一列</em>;vdom +b 一次动三列 —— 跨模型的 +b 不是同一个因子。置灰的行存在,但还测不了。',
-  'The matrix, measured.':
-    '这张矩阵,<span class="brand-text">实测</span>。',
-  'Same app, real clicks, 10k rows — median ms. Full tables — 1k/10k/30k, FCP ladders, per-factor charts — at vue.lynxjs.org/guide/benchmark-unified.':
-    '同一个应用,真实点击,10k 行 —— 中位数毫秒。完整表格 —— 1k/10k/30k、FCP 阶梯、逐因子图表 —— 见 <a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>。',
+  'The render axis.':
+    '<span class="brand-text">render</span> 轴。',
+  'Flip only the render model and updates transform: the storm halves, selection collapses 8× — while create pays ~12% for the clone protocol.':
+    '只翻转 render 模型,更新就换了世界:storm 腰斩,select 塌缩 8 倍 —— 而 create 为克隆协议付出约 12%。',
+  'The +b axis follows the static fraction.':
+    '<span class="brand-text">+b</span> 轴,跟随静态占比。',
+  'Same flag, two screens: on a dynamic-heavy table +b barely moves FCP — quadruple the static fraction and the same flag returns −17%. The win tracks what the compiler can prove static.':
+    '同一个 flag,两块屏:动态偏重的表格上 +b 几乎不动 FCP —— 把静态占比放大四倍,同一个 flag 就还你 −17%。收益,跟随编译器能证明为静态的部分。',
+  '+ifr meets +b.':
+    '<span class="brand-text">+ifr</span> 遇上 +b。',
+  'IFR’s hydrate join must replay the recording — at 10k rows that tax outweighs the boot win (+22%). Add +b and the recording is one op per block: the same IFR turns −14%. Flags compose.':
+    'IFR 的 hydrate join 要重放整份录制 —— 10k 行时这笔税压过启动收益(+22%)。叠上 +b,录制变成每个 block 一条 op:同一个 IFR 变成 −14%。flag,是可组合的。',
+  'Full tables & charts — 1k/10k/30k, storms, FCP ladders: vue.lynxjs.org/guide/benchmark-unified.':
+    '完整表格与图表 —— 1k/10k/30k、storms、FCP 阶梯:<a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>。',
   'One axis at a time.':
     '一次只动<span class="brand-text">一根轴</span>。',
   'The render axis is the update lever. The template axes barely touch update — they are a create-and-protocol lever, and the win grows with the static fraction. +ifr only moves when the first frame paints.':
@@ -872,11 +878,13 @@ export const ZH_NOTES = [
   // Λ3 跨线程复活解释器
   `<p><strong>戏剧性的反转。</strong>在 Web 上,Vapor 的 <code>t0()</code> 终点是 <code>cloneNode(true)</code> —— 浏览器引擎原生克隆残差。用我们的词说,那<em>本来就已经是 Engine-Template</em>:热路径上哪儿都没有解释器。梯子的顶端,我们免费拿到过。</p><p><strong>然后 Lynx 的分线程拓扑把它收走了。</strong>以代码形式活在 BG 的残差,没法隔着一条线被调用 —— 它必须<em>旅行</em>,而旅行的东西只能是数据(<code>REGISTER_TREE</code> 的 structure AST,或者 ops 本身)。对岸的数据需要一个<em>解释器</em>来重新物化。边界把我们反编译了 —— 它复活了解释侧。这意味着接下来的每一次优化都是同一个动作:把解释器重新编译掉。下一页:那把梯子。</p>`,
   // Λ4 阶梯 · 把解释器编译掉
-  `<p><strong>这把梯子,自上而下 = 今天讲过的顺序。</strong><em>ops</em> —— vdom 的扁平流:MT 每次更新解释每一条 op。<em>data</em> —— Vapor 的 <code>REGISTER_TREE</code> / <code>CLONE_TREE</code>:structure 解释一次,之后按名克隆;逐次更新的解释器基本消失。<em>code</em> —— 残差变成函数(<code>create()</code>)烘进两份产物:Element Templates 和 Snapshot 都住这里。这正是第一 Futamura 投影 —— 把解释器对一个固定程序特化,得到的就是编译产物。<em>native</em> —— 引擎自己持有模板并克隆;连 JS 都没有了。Web 的 <code>cloneNode</code> 一直住在这一档;Lynx 上引擎的 Element Template API 是同一档(我们的探针在 flag 后面跑 —— 诚实备注:Lynx-for-Web 上今天是 stub)。</p><p>要落地的一句话:<strong>这里的优化,就是对解释器本身做 partial evaluation,一档一档来。</strong></p>`,
-  // Λ5 flag 决策树 · 六列坐标全表
-  `<p><strong>按列读 —— 六个性质,不是一条族谱。</strong><em>Staging</em>:残差在 Main 上取什么形态(ops / data / code / native)。<em>Naming</em>:身份的单位(逐节点,还是 base+offset 的 block)。<em>Addressing</em>:Main 怎么找到节点 —— 随机访问、一趟前序 walk、或 walk 加上一页出处里的恢复。<em>Provider</em>:哪一侧物化(BTS ops、MTS 的 IFR 首帧、或引擎本体)。<em>Lifetime</em>:持久树 vs hydration 要 join 的那份 ephemeral 首帧副本。<em>Delivery</em>:残差怎么抵达 Main —— 运行时过线,还是构建期打进产物(104 页的种子)。</p><p><strong>用列拆掉耦合迷思。</strong>"ET 是 IFR 的功能" —— 不:+ifr 只翻 provider/lifetime;+b 翻 staging/naming/delivery;可组合。"Snapshot 是 ReactLynx 的东西" —— 不:行形状同 vdom +b +ifr,只是内生常开。归因洁净度:vapor 的每个 flag 恰好翻一列(所以它的阶梯能干净分解),vdom +b 一次翻三列 —— 基准里的两个"+b effect"互相<em>不可比</em>。</p><p><strong>置灰的行是路线图,不是凑数。</strong>+b!(bundle 交付的 data 残差)已设计未建 —— 它单独隔离 delivery。两个 :e 行需要引擎的 Element Template PAPI,Lynx-for-Web 不提供 —— 我们的探针在 flag 后面跑诚实的 stub。下一页:能测的格子实际跑多少。</p>`,
-  // Λ5b 矩阵实测 · 全 roster 含 N/A
-  `<p><strong>整张 roster,诚实呈现。</strong>每一格都是同一个表格应用,在双线程 Lynx-for-Web 上被真实鼠标点击驱动,取多次中位数,并丢弃预热实例。两行 engine 保持 <em>N/A</em>:引擎的 Element Template PAPI 在 Lynx-for-Web 上不存在,我们拒绝把 stub 数字当引擎收益卖 —— 探针的意义是让原生宿主原封不动点亮它们。</p><p><strong>指哪儿看。</strong>vapor 一族:update storm 腰斩(2585→约 1200),select storm 塌缩 8 倍(1330→约 165)—— 这是 render 轴,不是模板。vapor 内部,+b 削 create,+b +ifr 拿下最好的 update storm。rl 对照组是诚实的跨框架注脚:create 最快(1659)—— Snapshot 的内生 Code-Template 在发力 —— 但这个 memo 密集的应用形态下 update storm 6041;不同框架、不同取舍、同一套坐标系。页面上的链接就是完整 unified 报告 —— 中英双语。</p>`,
+  `<p><strong>这把梯子,自上而下 = 今天讲过的顺序。</strong><em>ops</em> —— vdom 的扁平流:MT 每次更新解释每一条 op。<em>data</em> —— Vapor 的 <code>REGISTER_TREE</code> / <code>CLONE_TREE</code>:structure 解释一次,之后按名克隆;逐次更新的解释器基本消失。<em>code</em> —— 残差变成函数(<code>create()</code>)烘进两份产物:Element Templates 和 Snapshot 都住这里。这正是第一 Futamura 投影 —— 把解释器对一个固定程序特化,得到的就是编译产物。<em>native</em> —— 引擎自己持有模板并克隆;连 JS 都没有了。Web 的 <code>cloneNode</code> 一直住在这一档;Lynx 上引擎的 Element Template API 是同一档(我们的探针在 flag 后面跑 —— 诚实备注:Lynx-for-Web 上今天是 stub)。</p><p>要落地的一句话:<strong>这里的优化,就是对解释器本身做 partial evaluation,一档一档来。</strong></p><p><strong>预判尖锐提问 —— Vapor 为什么停在 data,不用 code?</strong>是上游,不是物理:<code>@vue/compiler-vapor</code> 的 codegen 只把残差装在 <code>template()</code> 的 HTML 字符串里给我们,于是最省事且正确的路是运行时 parse + <code>REGISTER_TREE</code> —— data。没有什么禁止 vapor 的 code 档:那段字符串是静态的,我们的插件可以在构建期解析它,把 <code>create()</code> 烘进两份产物 —— 和 ET/Snapshot 一模一样。那就是未建成的 vapor <code>:c</code> / bundle 交付格;上游声明式 addressing(#332)会让它更干净。历史,不是本质 —— 104 页的种子,在这里收线。</p>`,
+  // Λ5 逐轴图 · render 轴
+  `<p><strong>一根轴,按干净了读。</strong>两根柱都是 per-node 基线 —— 不带任何模板 flag —— 所以这是更新路径上纯粹的 effect vs diff:同一个应用、真实点击、unified storms @10k、中位数。select storm 是最纯的用例(翻一个文本):vdom 重跑组件再 diff,vapor 跑一个 effect —— 1330 → 168 ms,8 倍。与前面章节另一套 harness 的 5.8–9.8× 官方基准数字互相印证。</p><p><strong>诚实的代价:</strong>create 慢约 12%(2017 → 2258)—— Vapor 的 REGISTER/CLONE 协议加逐实例 effect 建立。更新收益每一帧都在收,create 税只付一次 —— 而下一根轴恰好就是削 create 的杠杆。这张图强制执行的归因纪律:render 轴做到的事,永远不要记在模板头上。</p>`,
+  // Λ5b 逐轴图 · +b 随静态占比
+  `<p><strong>模板轴是创建杠杆,而且随"可证明"变化。</strong>同机 sfc-probe 阶梯,同一个应用,两档静态倍数。×1 时行内几乎全是洞 —— 没多少残差可下沉,+b(这里是 vdom 的 ET / Code-Template)只动 FCP 约 2%,贴着噪声。×4 时编译器能证明四倍的骨架,同一个 flag 直接还你 −17%。deck 前面 1000× 载荷那页,就是这条曲线的远端:几乎全静态的屏幕。</p><p><strong>vapor 的 +b 在 create 路径上是同一形状:</strong>storms 里这个动态偏重的构成下 create −5%,随静态占比增长 —— 并记得那句警告:vdom +b 捆绑 staging+naming+delivery,这张图是捆绑包的效果;总结表里只有 vapor 行是单列读数。update 与 select 全程对模板视盲 —— op 帧核对一致。</p>`,
+  // Λ5b2 逐轴图 · +ifr 遇上 +b
+  `<p><strong>交互作用图 —— 为什么轴要放在一起读。</strong>IFR 把绘制挪到 BG 启动之前,然后要为 MTS 录制的所有内容付一次 hydrate join。1k 时两列都赢(vdom −11%,vdom +b −9% —— 就是 −22% 那页展示的首帧杠杆)。10k 时录制巨大:纯 vdom 的逐节点 ops 让 join 的开销压过省下的启动(+22%),而 +b 的录制是每个 block 一条 INSTANTIATE 加洞的 SET —— join 缩小,IFR 重新赢回(−14%)。</p><p><strong>这就是 5→3 那页,被测出来了。</strong>缩小协议的那次塌缩,正是让 IFR 能随规模成立的东西。用数据杀掉耦合迷思:ET 不是"IFR 的功能" —— 它是让 IFR 的承诺在规模下兑现的那个 flag。下一页:完整的逐轴总结。</p>`,
   // Λ5c 逐因子 · 一次只动一根轴
   `<p><strong>边际效应 —— 动一根轴,按住其余。</strong>第一行是头条:换 render 模型,update storm 腰斩、select storm 塌缩;代价是 create 约 +12%(Vapor 的克隆协议)。模板各行在这个格子构成下都在个位数徘徊 —— <em>update 与 select 对模板视盲</em>:我们核对过模板各格的 op 帧与原生调用次数完全一致;模板的回报在 create 和协议字节上,随静态占比增长(这个应用偏动态,所以 deck 前面 1000× ops 载荷那页是曲线的另一端)。</p><p><strong>当心那个脏因子。</strong>vdom +b 那行一次动 staging+naming+delivery —— 它 +11.6% 的 storm 代价是 ET 包装在 10k 的取舍,不是对任何单轴的裁决;只有 vapor 各行是干净的单列读数。+ifr 用一点 create 税换 −12…−22% 的 FCP(FCP 阶梯在链接的报告里,同机跑到 30k),而叠上 +b 后这笔税还会缩小 —— 轴是可组合的。:e 那行的存在就是为了诚实:引擎是 stub 时,差值就是噪声 —— 它量的正是这件事。</p>`,
   // Λ6 定律 · 交接给摇篮
