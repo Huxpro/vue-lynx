@@ -25,6 +25,13 @@ materialization mechanism is a point on four axes
 Legacy flag spellings remain accepted (`opstream|data|engine` ≡
 `ops|tree|native`; `dense|sparse` ≡ `node|block`).
 
+**Benchmark cell notation (V4)**: `render [+b[:t|c|e]] [+ifr[:c|e]]` —
+baseline (per-node) × stacked optimizations. `+b` = block templates
+(staging defaults to the model's natural rung: vdom→:c, vapor→:t);
+`+b:e` = engine staging for the persistent tree; `+ifr[:c|e]` =
+ephemeral first frame (optionally painted at the code/engine rung).
+Full legend: `GRAPH-ENG-REPORT.md` §1.3c and the unified report page.
+
 **Terminology** (the only names code and report use):
 
 - node-named tree mechanism → **Named Tree**; block-named mechanisms →
