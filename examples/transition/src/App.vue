@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 // 1. Basic fade
 const showFade = ref(true)
@@ -45,6 +45,68 @@ function onEnter(_el: any, done: () => void) {
 function onLeave(_el: any, done: () => void) {
   setTimeout(done, 300)
 }
+
+// 9. Registry cleanup — Transition without `duration`, interrupted before
+// transitionend. Before #286 the event-registry counter climbed forever;
+// after the fix it returns to baseline once the ~4s fallback cleanup runs.
+const REGISTRY_KEY = '__VUE_LYNX_EVENT_REGISTRY__'
+const FALLBACK_MS = 4000
+
+function readRegistrySize(): number {
+  const state = (globalThis as any)[REGISTRY_KEY]
+  return state ? (state.handlers as Map<string, unknown>).size : -1
+}
+
+const showRegistry = ref(true)
+const registrySize = ref(0)
+const registryBaseline = ref(0)
+const registryPeak = ref(0)
+const registryDelta = computed(() => registrySize.value - registryBaseline.value)
+const registryHealthy = computed(() => registryDelta.value <= 5)
+
+function sampleRegistry() {
+  const size = readRegistrySize()
+  registrySize.value = size
+  if (size > registryPeak.value) registryPeak.value = size
+}
+
+function markRegistryBaseline() {
+  registryBaseline.value = readRegistrySize()
+  registryPeak.value = registryBaseline.value
+  sampleRegistry()
+}
+
+const hammering = ref(false)
+let hammerTimer: ReturnType<typeof setInterval> | undefined
+let pollTimer: ReturnType<typeof setInterval> | undefined
+
+function startHammer() {
+  if (hammering.value) return
+  hammering.value = true
+  // Faster than the 300ms CSS fade so nearly every enter/leave is cancelled
+  // before transitionend can fire — the path that used to leak forever.
+  hammerTimer = setInterval(() => {
+    showRegistry.value = !showRegistry.value
+  }, 30)
+}
+
+function stopHammer() {
+  hammering.value = false
+  if (hammerTimer) {
+    clearInterval(hammerTimer)
+    hammerTimer = undefined
+  }
+}
+
+onMounted(() => {
+  setTimeout(markRegistryBaseline, 300)
+  pollTimer = setInterval(sampleRegistry, 200)
+})
+
+onUnmounted(() => {
+  stopHammer()
+  if (pollTimer) clearInterval(pollTimer)
+})
 </script>
 
 <template>
@@ -173,6 +235,60 @@ function onLeave(_el: any, done: () => void) {
           <text :style="{ fontSize: 13 }">JS hooks control my lifecycle!</text>
         </view>
       </Transition>
+    </view>
+
+    <!-- 9. Registry cleanup (no duration — #286) -->
+    <view :style="{ marginBottom: 24 }">
+      <text :style="{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }">9. Registry cleanup (no duration)</text>
+      <text :style="{ fontSize: 12, color: '#555', marginBottom: 8 }">
+        Hammer a Transition with no `:duration` prop. Interrupted handlers used to leak forever (#286);
+        they now return to baseline within ~{{ FALLBACK_MS / 1000 }}s of stopping.
+      </text>
+      <view :style="{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }">
+        <view @tap="showRegistry = !showRegistry"
+              :style="{ backgroundColor: '#4a90d9', padding: 8, borderRadius: 4, marginRight: 8, marginBottom: 4 }">
+          <text :style="{ color: '#fff', fontSize: 13 }">Toggle Once</text>
+        </view>
+        <view @tap="hammering ? stopHammer() : startHammer()"
+              :style="{ backgroundColor: hammering ? '#f44336' : '#4caf50', padding: 8, borderRadius: 4, marginRight: 8, marginBottom: 4 }">
+          <text :style="{ color: '#fff', fontSize: 13 }">{{ hammering ? 'Stop Hammer' : 'Start Hammer (30ms)' }}</text>
+        </view>
+        <view @tap="markRegistryBaseline"
+              :style="{ backgroundColor: '#757575', padding: 8, borderRadius: 4, marginBottom: 4 }">
+          <text :style="{ color: '#fff', fontSize: 13 }">Reset Baseline</text>
+        </view>
+      </view>
+
+      <!-- No `duration` prop — event-registry path -->
+      <Transition name="fade">
+        <view v-if="showRegistry" :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4, marginBottom: 8 }">
+          <text :style="{ fontSize: 13 }">No duration prop — waits for transitionend (+ fallback cleanup)</text>
+        </view>
+      </Transition>
+
+      <view :style="{ backgroundColor: '#fff', padding: 12, borderRadius: 4, borderWidth: 1, borderColor: '#ddd' }">
+        <view :style="{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }">
+          <view :style="{ width: 8, height: 8, borderRadius: 4, backgroundColor: registryHealthy ? '#4caf50' : '#f44336', marginRight: 8 }" />
+          <text :style="{ fontSize: 13, fontWeight: 'bold' }">Event-registry monitor</text>
+        </view>
+        <view :style="{ flexDirection: 'row' }">
+          <view :style="{ flex: 1 }">
+            <text :style="{ fontSize: 20, fontWeight: 'bold', color: registryHealthy ? '#2e7d32' : '#c62828' }">{{ registrySize }}</text>
+            <text :style="{ fontSize: 11, color: '#666' }">current size</text>
+          </view>
+          <view :style="{ flex: 1 }">
+            <text :style="{ fontSize: 20, fontWeight: 'bold' }">+{{ registryDelta }}</text>
+            <text :style="{ fontSize: 11, color: '#666' }">Δ since baseline</text>
+          </view>
+          <view :style="{ flex: 1 }">
+            <text :style="{ fontSize: 20, fontWeight: 'bold' }">{{ registryPeak }}</text>
+            <text :style="{ fontSize: 11, color: '#666' }">peak</text>
+          </view>
+        </view>
+        <text :style="{ fontSize: 11, color: '#888', marginTop: 8 }">
+          Healthy: climbs while hammering, then returns to baseline after stop. Leak: climbs and never drops.
+        </text>
+      </view>
     </view>
   </scroll-view>
 </template>

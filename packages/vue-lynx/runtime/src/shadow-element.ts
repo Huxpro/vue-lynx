@@ -49,6 +49,12 @@ export class ShadowElement {
   // The effective class sent to MT = _baseClass + _transitionClasses joined.
   _baseClass = '';
   _transitionClasses: Set<string> = new Set();
+  // Generation counter bumped each time whenTransitionEnds() starts waiting
+  // on this element. Lets a stale/superseded finish() (fired by the fallback
+  // timeout after a newer transition has already started) detect it's stale
+  // and skip touching the now-current MT event binding — mirrors
+  // @vue/runtime-dom's `el._endId`.
+  _transitionEndId = 0;
 
   // v-model state (BG-thread bookkeeping)
   _vModelValue: string | undefined = undefined;
