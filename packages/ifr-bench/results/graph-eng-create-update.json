@@ -1,0 +1,105 @@
+{
+  "issue": 325,
+  "fixture": "card-24-static-leaves-1-hole",
+  "instances": 50,
+  "updateWrites": 200,
+  "note": "Engine cells use the mocked __CreateElementTemplate family (real engine PAPI absent here): correctness + protocol counts only, not an engine-speed claim.",
+  "cells": [
+    {
+      "cell": "vapor-data-dense",
+      "naming": "dense",
+      "staging": "data",
+      "engineFamily": "none",
+      "engineStatus": "n/a",
+      "create": {
+        "shadowsPerInstance": 51,
+        "opFrames": 51,
+        "nativeCalls": 7600,
+        "mtNamed": 1300,
+        "wallMs": 532.936
+      },
+      "update": {
+        "opFrames": 200,
+        "nativeCalls": 200,
+        "wallMs": 18.786
+      }
+    },
+    {
+      "cell": "vapor-data-sparse",
+      "naming": "sparse",
+      "staging": "data",
+      "engineFamily": "none",
+      "engineStatus": "n/a",
+      "create": {
+        "shadowsPerInstance": 3,
+        "opFrames": 51,
+        "nativeCalls": 6400,
+        "mtNamed": 100,
+        "wallMs": 335.936
+      },
+      "update": {
+        "opFrames": 200,
+        "nativeCalls": 200,
+        "wallMs": 386.87
+      }
+    },
+    {
+      "cell": "vapor-engine-dense",
+      "naming": "dense",
+      "staging": "engine",
+      "engineFamily": "mock",
+      "engineStatus": "native",
+      "create": {
+        "shadowsPerInstance": 51,
+        "opFrames": 51,
+        "nativeCalls": 6300,
+        "mtNamed": 1300,
+        "wallMs": 224.463
+      },
+      "update": {
+        "opFrames": 200,
+        "nativeCalls": 200,
+        "wallMs": 12.184
+      }
+    },
+    {
+      "cell": "vapor-engine-sparse",
+      "naming": "sparse",
+      "staging": "engine",
+      "engineFamily": "mock",
+      "engineStatus": "native",
+      "create": {
+        "shadowsPerInstance": 3,
+        "opFrames": 51,
+        "nativeCalls": 5100,
+        "mtNamed": 100,
+        "wallMs": 200.075
+      },
+      "update": {
+        "opFrames": 200,
+        "nativeCalls": 200,
+        "wallMs": 1.611
+      }
+    }
+  ],
+  "factors": {
+    "naming dense→sparse (staging=data)": {
+      "mtNamed": -1200,
+      "shadowsPerInstance": -48,
+      "nativeCallsCreate": -1200,
+      "nativeCallsUpdate": 0
+    },
+    "staging data→engine (naming=dense, mock)": {
+      "mtNamed": 0,
+      "shadowsPerInstance": 0,
+      "nativeCallsCreate": -1300,
+      "nativeCallsUpdate": 0
+    },
+    "staging data→engine (naming=sparse, mock)": {
+      "mtNamed": 0,
+      "shadowsPerInstance": 0,
+      "nativeCallsCreate": -1300,
+      "nativeCallsUpdate": 0
+    }
+  }
+}
