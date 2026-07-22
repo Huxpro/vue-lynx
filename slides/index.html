@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 142</span>
+    <span data-counter>01 / 143</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -3953,7 +3953,61 @@ app.<span class="code-fn">use</span>(router)</pre>
     </p>
     <aside class="notes">
       <p><strong>The interplay chart — why axes must be read together.</strong> IFR moves paint before BG boot, then pays a hydrate join over everything MTS recorded. At 1k both columns win (vdom −11%, vdom +b −9% — the first-frame lever the −22% slide showed). At 10k the recording is huge: plain vdom&rsquo;s per-node ops make the join cost more than the boot it saved (+22%), while +b&rsquo;s recording is one INSTANTIATE plus hole SETs per block — the join shrinks and IFR wins again (−14%).</p>
-      <p><strong>This is the 5→3 slide, measured.</strong> The same collapse that shrank the protocol is what makes IFR scale. Coupling myth, killed in data: ET is not &ldquo;an IFR feature&rdquo; — it is the flag that keeps IFR&rsquo;s promise at scale. Next: the full per-axis summary.</p>
+      <p><strong>This is the 5→3 slide, measured.</strong> The same collapse that shrank the protocol is what makes IFR scale. Coupling myth, killed in data: ET is not &ldquo;an IFR feature&rdquo; — it is the flag that keeps IFR&rsquo;s promise at scale. Next: the cell those levers point at — the one we haven't built.</p>
+    </aside>
+  </section>
+
+  <!-- Λ·5b3 — the open cell: vapor +b:c (architecture + the dilemma) -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:24ch;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      The open cell — <span class="brand-text">vapor +b:c</span>.
+    </h2>
+    <div class="ifrjoin ifrjoin--pipe">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" style="--c:#5dd5a8">
+          <span class="ifrjoin__label"><i></i>today · +b:d — data</span>
+          <span class="ifrjoin__role" data-mm-fade>runtime string → wire</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op">template('&lt;view&gt;…') · BTS string</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op">runtime parse · BG</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-fat">REGISTER_TREE · structure over wire</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-fat">MT interpreter · re-walk per clone</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>residual crosses every app boot</span>
+        </div>
+        <div class="ifrjoin__rail" aria-hidden="true"></div>
+        <div class="ifrjoin__col" style="--c:#a78fff">
+          <span class="ifrjoin__label"><i></i>open · +b:c — code</span>
+          <span class="ifrjoin__role" data-mm-fade>build-time parse → both bundles</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op is-hero">build-time parse · plugin</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero">create() baked into BTS + MTS</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op">INSTANTIATE · id only over wire</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero">MT create() · straight-line PAPI</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>residual never crosses at runtime</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:64ch">
+      The one unbuilt cell that stacks all three measured levers — vapor&rsquo;s
+      update wins, code-staged create, an IFR-sized recording. Probably the
+      highest ceiling on the board.
+    </p>
+    <p class="lead" data-mm-fade style="margin-top:clamp(4px,0.8cqh,10px);font-size:clamp(13px,1.45cqw,18px);max-width:64ch">
+      The catch: upstream hands us the residual only as a runtime string — we
+      must parse it at build time and prove both parses equal, until declared
+      codegen (#332) dissolves the gap.
+    </p>
+    <aside class="notes">
+      <p><strong>Why this cell's ceiling is probably the highest.</strong> Stack the three charts you just saw: it keeps the render axis (update storm −54%, select storm −87% — those live in the effect system, untouched); it moves create to <em>code</em> staging, the axis that returned −17% at ×4 static and 1000× on the ops payload; and its recording is one INSTANTIATE per block — exactly the shape that turned IFR's +22% tax into −14%. No other unbuilt cell composes all three measured levers. The engine rung (:e) is theoretically higher still, but it's blocked on platform PAPI; +b:c is buildable <em>today</em>, in our plugin.</p>
+      <p><strong>The dilemma, precisely.</strong> Upstream <code>@vue/compiler-vapor</code> emits the residual only as a runtime HTML string inside <code>template()</code> — there is no compile-time structure to consume. So the plugin must parse that string itself at build time and emit <code>create()</code> into both bundles — and then <em>prove</em> its parse equals BG's runtime parse, or clones desync across threads. Same proof-class as the recovered-naming fingerprint: buildable, but it wants a fail-safe. Declared codegen upstream (#332) dissolves the whole obligation — compiler emits structure + addressing once, and both our parse and the fingerprint retire. Costs to state honestly: the MTS bundle grows (ET's precedent: ~2.26× gzip on the probe app) and eligibility rules (components, v-if/v-for hosts stay on the normal path) carry over. Sibling cell: +b! delivers the <em>data</em> AST in the bundle instead of code — cheaper to build, keeps MT interpretation; :c subsumes it if you're willing to pay the codegen.</p>
     </aside>
   </section>
 
@@ -3973,6 +4027,8 @@ app.<span class="code-fn">use</span>(router)</pre>
         <tr><td class="metric">+b · vdom (3-column bundle)</td><td class="cost">+7.1%</td><td class="cost">+11.6%</td><td class="cost">+13.5%</td></tr>
         <tr><td class="metric">+ifr · vdom</td><td>+1.3%</td><td>+2.6%</td><td>+3.1%</td></tr>
         <tr><td class="metric">+ifr · vapor +b</td><td>+4.6%</td><td class="win">−12.0%</td><td>+0.6%</td></tr>
+        <tr><td class="metric flat">+b:c · vapor — unbuilt</td><td class="flat" colspan="3">the open cell — code-staged create on vapor's update wins; highest ceiling</td></tr>
+        <tr><td class="metric flat">+b! · vapor — unbuilt</td><td class="flat" colspan="3">bundle-delivered data — isolates pure delivery; cheapest to build</td></tr>
         <tr><td class="metric flat">+b:d→e · vapor</td><td class="flat" colspan="3">stub delta ≈ noise — a yardstick, not an engine win</td></tr>
       </tbody>
     </table>
@@ -3988,6 +4044,7 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>Marginal effects — move one axis, hold the rest.</strong> Row one is the headline: switching the render model halves update storms and collapses select storms; it costs ~12% on create (Vapor's clone protocol). The template rows hover in single digits at this cell mix — <em>update and select are template-blind</em>: we verified identical op frames and native call counts across template cells; templates pay off on create and on protocol bytes, scaling with the static fraction (this app is dynamic-heavy, so the deck's 1000× ops-payload slide is the other end of that curve).</p>
       <p><strong>Careful with the dirty factor.</strong> The vdom +b row moves staging+naming+delivery at once — its +11.6% storm cost is the ET wrapper trade at 10k, not a verdict on any single axis; only the vapor rows are clean single-column reads. +ifr trades a small create tax for the −12…−22% FCP win (FCP ladder is in the linked report, same-host to 30k), and under +b that tax shrinks — the axes compose. The :e row exists to keep us honest: with a stubbed engine the delta is noise, and that is exactly what it measures.</p>
+      <p><strong>The greyed rows are the roadmap, ranked.</strong> +b:c — the open-cell slide you just saw; highest buildable ceiling. +b! — the cheap one: ship the structure AST in the MTS bundle, no wire cost, MT still interprets; it isolates the delivery axis for clean attribution. :d→e — blocked on engine PAPI, waiting for a native host. A useful fourth for the science, not the product: a data-staged vdom cell would let the vdom family decompose one column at a time the way vapor's ladder does.</p>
     </aside>
   </section>
 
