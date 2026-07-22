@@ -450,6 +450,11 @@ export const ZH = {
 
   "Vapor drives the browser DOM directly. We make the background thread's tree look like the DOM — so upstream Vapor runs untouched.":
     'Vapor 直接驱动浏览器 DOM。我们让后台线程的那棵树“长得像”DOM —— 于是上游 Vapor 原封不动地跑起来。',
+  'Vapor drives the browser DOM directly — compiled through surface, one stack ending at HTMLElement. Upstream runs untouched.':
+    'Vapor 直接驱动浏览器 DOM —— 从 compiled 到 surface,一整条栈,尽头是 <code>HTMLElement</code>。上游原封不动。',
+  'On Lynx, relocate the pipe: BG holds the DOM-shaped stack; MT only ever sees the ops stream.':
+    '在 Lynx 上,把管线挪个家:BG 握着 DOM 形的栈;MT 永远只看见 ops 流。',
+  'browser DOM — HTMLElement': '浏览器 DOM —— <code>HTMLElement</code>',
 
   'Background · Vapor': '<span class="dot"></span>后台 · Vapor',
   'Main · interpreter': '<span class="dot"></span>主线程 · 解释器',
@@ -779,18 +784,18 @@ export const ZH_NOTES = [
   `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p><strong>同一份源码 —— 拨一下开关。</strong>按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
   // 43+44 Benchmark · 更新柱状图 + 账本（合并）
   `<p><strong>核心结果 —— 再看诚实的成绩单。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现(5.8–9.8×)。端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样。</p><p>别夸大:创建是打平的;代价是产物 +26%(Vapor 运行时 + DOM 兼容垫片)。首屏差异在噪声范围内。绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
-  // 40a 代码复用 · 原管线拆到 BG | MT
-  `<p><strong>只是把管线挪个家。</strong>六层没变 —— compiled / alias / runtime / shims / ShadowElement 落在后台线程;<code>ops stream → native</code> 落在主线程。下一拍点亮两层复用。</p>`,
-  // 40b 代码复用 · 点亮 unmodified + the trick
-  `<p><strong>复用故事,还是同一组层。</strong>BG 栈上两枚绿标亮起:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。这些调用变成 Main 上的 ops 流 —— 与 vdom 模式已经在用的同一条。</p>`,
-  // 45 工作流 · 一份源码两个渲染器
-  `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
   // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
   `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p><p><strong>压轴数字 —— 7× VDOM。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9× —— 同一个应用、同一个产物,只差一个属性。</p>`,
+  // 45 工作流 · 一份源码两个渲染器
+  `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
   // 37 虚拟 DOM 更新路径
   `<p><strong>先立对比。</strong>从左到右过一遍五个方块。中间三个虚线的就是税:重跑、分配、diff —— 每次更新都要交,无论变了多少。</p><p>下一页用一次 magic move 把中间这段收掉。</p>`,
   // 38 Vapor 更新路径
-  `<p><strong>morph 的回报。</strong>中间三个方块刚刚消失了。状态和目标节点原地不动,一个响应式 effect 把它们连起来。</p><p>这就是全部要点:细粒度更新,而不是整树 diff。</p>`,
+  `<p><strong>morph 的回报。</strong>中间三个方块刚刚消失了。状态和目标节点原地不动,一个响应式 effect 把它们连起来。</p><p>这就是全部要点:细粒度更新,而不是整树 diff。下一拍:这条更新路径,在 Web 与 Lynx 上分别怎么落地。</p>`,
+  // 40a 代码复用 · Web 单管 → browser DOM
+  `<p><strong>Web 上的复用故事。</strong>两枚绿标就是全部要点:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为底下那层 DOM 兼容表面会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。在 Web 上,那层表面<em>就是</em>浏览器 DOM。</p>`,
+  // 40b 代码复用 · Lynx 拆到 BG | MT
+  `<p><strong>同一组层,双线程安家。</strong>compiled / alias / runtime / shims / ShadowElement 留在后台线程;<code>ops stream → native</code> 落在主线程。两枚绿标:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答那些 DOM 调用 —— 它们变成 vdom 已经在用的同一条 ops 流。</p>`,
   // 39 Vapor 产物
   `<p><strong>看右边这一版。</strong>三步:<code>template()</code> 一次性声明静态结构;<code>t0()</code> 克隆它;<code>renderEffect()</code> 是唯一会重跑的东西 —— 而它只碰一个文本节点。</p><p>注意 <code>from 'vue'</code> —— 组件并不知道自己在 Lynx 上。下一页:这些活指针为什么过不了线程边界。</p>`,
   // 90pre-a E20pre-a · 问题:需要指针,指针过不了

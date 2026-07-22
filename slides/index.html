@@ -2934,135 +2934,6 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- V·6a — original pipe layers, split across BG | MT -->
-  <section class="slide stage" data-bg="clean">
-    <div class="pipesplit">
-      <div class="pipesplit__side" data-flip="vr-col-bg">
-        <p class="pipesplit__lab" data-flip="vr-lab-bg"><i></i>Background · Vapor</p>
-        <div class="pipe pipe--side">
-          <div class="pipe__layer" data-flip="vr-l1">
-            <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l2">
-            <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l3">
-            <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l4">
-            <span class="k">shims</span><span class="t">document · Node · Element</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l5">
-            <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
-          </div>
-        </div>
-      </div>
-      <div class="pipesplit__rail" aria-hidden="true" data-mm-fade>
-        <span class="pipesplit__arrow">&rarr;</span>
-        <span class="pipesplit__cap">ops</span>
-      </div>
-      <div class="pipesplit__side" data-flip="vr-col-mt">
-        <p class="pipesplit__lab" data-flip="vr-lab-mt"><i></i>Main · interpreter</p>
-        <div class="pipe pipe--side">
-          <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
-            <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      Same layers as before — BG holds the DOM-shaped stack; MT only sees the ops stream.
-    </p>
-    <aside class="notes">
-      <p><strong>Just relocate the pipe.</strong> The six layers didn&rsquo;t change — compiled / alias / runtime / shims / ShadowElement sit on the background thread; <code>ops stream → native</code> sits on Main. Next beat: light up the two reuse layers.</p>
-    </aside>
-  </section>
-
-  <!-- V·6b — same split; highlight unmodified + the trick (magic-move) -->
-  <section class="slide stage" data-bg="clean">
-    <div class="pipesplit">
-      <div class="pipesplit__side" data-flip="vr-col-bg">
-        <p class="pipesplit__lab" data-flip="vr-lab-bg"><i></i>Background · Vapor</p>
-        <div class="pipe pipe--side">
-          <div class="pipe__layer" data-flip="vr-l1">
-            <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l2">
-            <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer pipe__layer--key" data-flip="vr-l3">
-            <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
-            <span class="pipe__reuse" data-mm-fade>unmodified</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer" data-flip="vr-l4">
-            <span class="k">shims</span><span class="t">document · Node · Element</span>
-          </div>
-          <div class="pipe__arr">&#9660;</div>
-          <div class="pipe__layer pipe__layer--key" data-flip="vr-l5">
-            <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
-            <span class="pipe__reuse" data-mm-fade>the trick</span>
-          </div>
-        </div>
-      </div>
-      <div class="pipesplit__rail" aria-hidden="true" data-mm-fade>
-        <span class="pipesplit__arrow">&rarr;</span>
-        <span class="pipesplit__cap">ops</span>
-      </div>
-      <div class="pipesplit__side" data-flip="vr-col-mt">
-        <p class="pipesplit__lab" data-flip="vr-lab-mt"><i></i>Main · interpreter</p>
-        <div class="pipe pipe--side">
-          <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
-            <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      Make BG <em>look like</em> the DOM — <code>@vue/runtime-vapor</code> ships
-      unmodified; those calls become the same ops vdom already uses.
-    </p>
-    <aside class="notes">
-      <p><strong>The reuse story, still the same layers.</strong> Two green badges light up on the BG stack: <code>@vue/runtime-vapor</code> is <em>unmodified</em> because ShadowElement answers <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>. Those calls become the ops stream on Main — the same one vdom mode already uses.</p>
-    </aside>
-  </section>
-
-  <!-- V·10 — Workflow: one source, two renderers, verified -->
-  <section class="slide stage" data-bg="clean">
-    <div class="vsplit">
-      <div class="vsource">
-        <span class="node__label" style="color:var(--ink)">App.vue</span>
-        <span class="vrender__meta">byte-identical source<br/>+ one <code>vapor</code> attr</span>
-      </div>
-      <span class="vflow__arr is-brand" style="font-size:clamp(22px,2.6cqw,34px)">&rarr;</span>
-      <div class="vsplit__fork">
-        <div class="vrender vrender--teal">
-          <span class="vrender__name">VDOM</span>
-          <span class="vrender__meta">48 / 48 examples pass</span>
-        </div>
-        <div class="vrender vrender--vue">
-          <span class="vrender__name">Vapor</span>
-          <span class="vrender__meta">36 supported · <b>0.000%</b> visual diff</span>
-        </div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      Every example built &amp; driven in both modes through Lynx for Web.
-      The support matrix is generated from the run — it can't drift from what
-      actually passed.
-    </p>
-    <aside class="notes">
-      <p><strong>How we trust it.</strong> The Vapor app is <em>generated from the vdom source</em> — the only difference is the <code>vapor</code> attribute, so the workload is byte-for-byte identical. 36/36 supported examples hit 0.000% pixel diff against their vdom twin.</p>
-      <p>The matrix (<code>examples/vapor-support.json</code>, with per-entry source hashes) generates the docs table — it can't drift from the verification output.</p>
-    </aside>
-  </section>
-
   <!-- V·10b — Upstream Vapor tests + host-fit (styled like the VDOM proof slide A7) -->
   <section class="slide stage" data-bg="clean">
     <div class="mega" style="font-size:clamp(52px,9cqw,140px)">
@@ -3098,6 +2969,36 @@ app.<span class="code-fn">use</span>(router)</pre>
       <p><strong>The skips aren't a broken list.</strong> SSR/hydration + vdom↔vapor interop are 57% of everything that doesn't run — neither is a Lynx-compatibility signal (no SSR surface exists; interop is deliberately unsupported). Browser-only platform is another 24%. Test-infra is under 1% — vs vdom's dominant 59% — because the raw-bundle re-export trick killed the private-import problem. The port even found a real bug (ShadowElement was reactivity-proxyable; <code>__v_skip</code> fixed it).</p>
       <p><strong>The affinity point.</strong> On the tests that touch the actual element surface, Vapor passes 81% vs vdom's 57% — and needs <em>zero behavioral shims</em>: production <code>@vue/runtime-vapor</code> runs unmodified over ShadowElement, where vdom mode needed 1,074 LOC of simulation in the execution path. Vapor's host contract — clone a template + imperative setters — is just a closer fit to Lynx. (Contract fit, not speed.)</p>
       <p><strong>The mic-drop number — 7× VDOM.</strong> Cross-framework suite (ReactLynx vs Vue VDOM vs Vue Vapor), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor 7.0× VDOM on the 10k select storm, 1.9× on update storm — same app, same bundle, one attribute apart.</p>
+    </aside>
+  </section>
+
+  <!-- V·10 — Workflow: one source, two renderers, verified -->
+  <section class="slide stage" data-bg="clean">
+    <div class="vsplit">
+      <div class="vsource">
+        <span class="node__label" style="color:var(--ink)">App.vue</span>
+        <span class="vrender__meta">byte-identical source<br/>+ one <code>vapor</code> attr</span>
+      </div>
+      <span class="vflow__arr is-brand" style="font-size:clamp(22px,2.6cqw,34px)">&rarr;</span>
+      <div class="vsplit__fork">
+        <div class="vrender vrender--teal">
+          <span class="vrender__name">VDOM</span>
+          <span class="vrender__meta">48 / 48 examples pass</span>
+        </div>
+        <div class="vrender vrender--vue">
+          <span class="vrender__name">Vapor</span>
+          <span class="vrender__meta">36 supported · <b>0.000%</b> visual diff</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Every example built &amp; driven in both modes through Lynx for Web.
+      The support matrix is generated from the run — it can't drift from what
+      actually passed.
+    </p>
+    <aside class="notes">
+      <p><strong>How we trust it.</strong> The Vapor app is <em>generated from the vdom source</em> — the only difference is the <code>vapor</code> attribute, so the workload is byte-for-byte identical. 36/36 supported examples hit 0.000% pixel diff against their vdom twin.</p>
+      <p>The matrix (<code>examples/vapor-support.json</code>, with per-entry source hashes) generates the docs table — it can't drift from the verification output.</p>
     </aside>
   </section>
 
@@ -3149,7 +3050,96 @@ app.<span class="code-fn">use</span>(router)</pre>
     </p>
     <aside class="notes">
       <p><strong>The payoff of the morph.</strong> The three middle boxes just vanished. State and the target node stay put; a single reactive effect bridges them.</p>
-      <p>That's the whole idea: fine-grained updates instead of tree diffing.</p>
+      <p>That's the whole idea: fine-grained updates instead of tree diffing. Next: how that stack lands on Web vs Lynx.</p>
+    </aside>
+  </section>
+
+  <!-- V·6a — Web: single reuse pipe → browser DOM -->
+  <section class="slide stage" data-bg="clean">
+    <div class="pipe">
+      <div class="pipe__layer" data-flip="vr-l1">
+        <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer" data-flip="vr-l2">
+        <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer pipe__layer--key" data-flip="vr-l3">
+        <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
+        <span class="pipe__reuse">unmodified</span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer" data-flip="vr-l4">
+        <span class="k">shims</span><span class="t">document · Node · Element</span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer pipe__layer--key" data-flip="vr-l5">
+        <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
+        <span class="pipe__reuse">the trick</span>
+      </div>
+      <div class="pipe__arr">&#9660;</div>
+      <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
+        <span class="k">host</span><span class="t">browser DOM — HTMLElement</span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Vapor drives the browser DOM directly — compiled through surface, one stack
+      ending at <code>HTMLElement</code>. Upstream runs untouched.
+    </p>
+    <aside class="notes">
+      <p><strong>The reuse story on Web.</strong> Two green layers are the whole idea: <code>@vue/runtime-vapor</code> ships <em>unmodified</em>, because underneath it a DOM-compatible surface answers standard DOM calls — <code>insertBefore</code>, <code>cloneNode</code>, <code>setAttribute</code>. On the Web that surface <em>is</em> the browser DOM.</p>
+    </aside>
+  </section>
+
+  <!-- V·6b — Lynx: same layers, split across BG | MT -->
+  <section class="slide stage" data-bg="clean">
+    <div class="pipesplit">
+      <div class="pipesplit__side" data-flip="vr-col-bg">
+        <p class="pipesplit__lab" data-flip="vr-lab-bg"><i></i>Background · Vapor</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer" data-flip="vr-l1">
+            <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l2">
+            <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer pipe__layer--key" data-flip="vr-l3">
+            <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
+            <span class="pipe__reuse" data-mm-fade>unmodified</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l4">
+            <span class="k">shims</span><span class="t">document · Node · Element</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer pipe__layer--key" data-flip="vr-l5">
+            <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
+            <span class="pipe__reuse" data-mm-fade>the trick</span>
+          </div>
+        </div>
+      </div>
+      <div class="pipesplit__rail" aria-hidden="true" data-mm-fade>
+        <span class="pipesplit__arrow">&rarr;</span>
+        <span class="pipesplit__cap">ops</span>
+      </div>
+      <div class="pipesplit__side" data-flip="vr-col-mt">
+        <p class="pipesplit__lab" data-flip="vr-lab-mt"><i></i>Main · interpreter</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
+            <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      On Lynx, relocate the pipe: BG holds the DOM-shaped stack;
+      MT only ever sees the ops stream.
+    </p>
+    <aside class="notes">
+      <p><strong>Same layers, dual-thread home.</strong> compiled / alias / runtime / shims / ShadowElement stay on the background thread; <code>ops stream → native</code> sits on Main. Two green badges: <code>@vue/runtime-vapor</code> is <em>unmodified</em> because ShadowElement answers <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code> — those calls become the ops stream vdom already uses.</p>
     </aside>
   </section>
 

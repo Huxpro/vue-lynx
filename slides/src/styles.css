@@ -4300,7 +4300,7 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   line-height: 0.5;
 }
 
-/* Original pipe layers, parked on BG | MT (V·6a/b) */
+/* Lynx: original pipe layers parked on BG | MT (V·6b) */
 .pipesplit {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 0.85fr);
