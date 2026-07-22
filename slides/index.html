@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 128</span>
+    <span data-counter>01 / 129</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2040,6 +2040,18 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
+  <!-- IFR0 — section title -->
+  <section class="slide stage">
+    <h2 class="h-section" style="text-align:center;max-width:10ch">
+      <span class="brand-text">IFR</span>
+    </h2>
+    <aside class="notes">
+      <p><strong>Instant First-Frame Rendering.</strong> Last piece of the
+      engineering chapter: paint the first frame before the background is ready —
+      then make that paint cheap with Element Templates.</p>
+    </aside>
+  </section>
+
   <!-- IFR1 — the first frame waits a full lap -->
   <section class="slide stage">
     <div class="ifrtl">
@@ -2159,19 +2171,135 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR4 — Element Templates: the pivot (when vs how-much) -->
+  <!-- IFR7 — compiler: Block-hinted VDOM → element template -->
   <section class="slide stage">
-    <h2 class="h-section" style="text-align:center;max-width:24ch">
-      IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
-      <span class="brand-text">Element Templates</span> change how much work it does.
-    </h2>
+    <div class="etcode">
+      <div class="codeframe etcode__src">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>Card.vue · template</span>
+        </div>
+<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
+  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
+<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
+      </div>
+      <div class="etcode__legend" aria-hidden="true">
+        <span><i class="et-sw is-static"></i>Block · static</span>
+        <span><i class="et-sw is-hole"></i>Block · hole</span>
+      </div>
+      <div class="codeframe etcode__out">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>compiler output</span>
+        </div>
+<pre><span class="code-fn">registerElementTemplate</span>(
+  <span class="code-str">"__vlx-tpl:rflz…"</span>,
+  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
+  <span class="code-key">function</span> (P) {
+    <span class="code-com">…straight-line PAPI…</span>
+    <span class="code-key">return</span> [e0, e3, e5]
+  },
+)</pre>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Vue already ships <b>compiler-hinted VDOM</b> — a Block marks static
+      structure vs dynamic holes. That hint is what we lower into
+      <code>create()</code>.
+    </p>
     <aside class="notes">
-      <p><strong>The second lever.</strong> IFR moves the paint earlier;
-      enabling it turns on Element Templates by default. They make the render
-      itself an order of magnitude cheaper — and shrink the cross-thread protocol
-      for <em>every</em> update, not just the first frame. Watch the next two
-      slides: the shared data-flow between BTS and MTS collapses from five
-      steps to three.</p>
+      <p><strong>Enter Element Templates — via Vue's Block.</strong> Hydrate
+      still joins two fat paths. Vue's compiler already partitions a template
+      into a Block: static nodes vs dynamic holes
+      (<code>patchFlag</code> / dynamicChildren). Element Templates reuse that
+      structure — bake the static shell into
+      <code>registerElementTemplate(id, holes, create)</code>, leave only the
+      holes on the vnode path. Eligible = plain Lynx elements with value/text
+      dynamics; components, slots, <code>v-if</code>/<code>v-for</code> hosts,
+      <code>&lt;list&gt;</code>, ref/id stay on the normal path (their plain
+      bodies can still lower). Next: the sparse trees on each thread, and what
+      actually crosses the wire.</p>
+    </aside>
+  </section>
+
+  <!-- IFR8 — dual-thread trees + what syncs (was IFR6b) -->
+  <section class="slide stage" data-bg="clean">
+    <div class="archflow">
+      <div class="node">
+        <span class="node__label"><i></i>Background · BTS</span>
+        <h3 class="node__title">VDOM · sparse</h3>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="BTS sparse tree: static nodes ghosted, only holes named">
+          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
+          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
+          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
+          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
+        </svg>
+        <span class="node__cap">static ghosted · only <b>holes</b> named</span>
+      </div>
+      <div class="xwire">
+        <div class="xwire__op">
+          <span class="xwire__name">INSTANTIATE_TEMPLATE</span>
+          <span class="xstruct"><i></i><i></i><i></i></span>
+          <span class="xwire__line"></span>
+          <span class="xwire__count">tpl id · not the tree</span>
+        </div>
+        <div class="xwire__op">
+          <span class="xwire__name">SET_* holes</span>
+          <span class="xwire__line is-multi"></span>
+          <span class="xwire__count">values only · e.g. h0</span>
+        </div>
+        <div class="xwire__op">
+          <span class="xwire__name">hydrate join</span>
+          <span class="xwire__line"></span>
+          <span class="xwire__count">ops vs recording</span>
+        </div>
+      </div>
+      <div class="node node--main">
+        <span class="node__label"><i></i>Main IFR · MTS</span>
+        <h3 class="node__title">native · create()</h3>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="MTS native tree from create(), same sparse hole ids">
+          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
+          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
+          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
+          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
+        </svg>
+        <span class="node__cap">create() builds · <b>same hole ids</b></span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Structure never crosses — both bundles already share <code>create()</code>.
+      The wire carries the <b>tpl id</b> and <b>hole values</b>; hydrate joins those ops.
+    </p>
+    <aside class="notes">
+      <p><strong>What each side's tree is.</strong> BTS keeps a sparse VDOM /
+      ShadowElement view: static nodes exist for Vue's sync reads but are
+      protocol-invisible (ghosted). Only holes get names (<code>h0</code>…).
+      MTS IFR materializes the same shape via the compiled
+      <code>create()</code> — a native element tree with the same sparse hole
+      ids. That sparsity is exactly the Block the previous slide compiled.</p>
+      <p><strong>What syncs.</strong> Unlike Vapor's <code>REGISTER_TREE</code>,
+      ET does not send structure: <code>registerElementTemplate</code> already
+      shipped <code>create()</code> in both bundles. Across the wire:
+      <code>INSTANTIATE_TEMPLATE(tplId)</code> (once per instance) +
+      <code>SET_*</code> for hole values only. On IFR, MTS recorded those ops
+      at first paint; BTS's first batches hydrate against that recording —
+      skip / patch / rebuild, same join as Straightforward IFR. Next: without ET, both threads still walk the fat five-step path.</p>
     </aside>
   </section>
 
@@ -2289,181 +2417,23 @@ app.<span class="code-fn">use</span>(router)</pre>
       <code>INSTANTIATE_TEMPLATE</code> chip; VDOM and PAPI/<code>create()</code>
       stay put (magic-move). BTS still starts from a VDOM tree, but the static
       block is one vnode that emits INSTANTIATE + hole SET_*s. MTS IFR's
-      interpreter calls the baked <code>create()</code>. Next: why Vue can do
-      this — compiler-hinted VDOM already carries Block structure.</p>
+      interpreter calls the baked <code>create()</code>. Next: the one-line summary — IFR changes
+      <em>when</em>; Element Templates change how much.</p>
     </aside>
   </section>
 
-  <!-- IFR7 — compiler: Block-hinted VDOM → element template -->
+  <!-- IFR4 — Element Templates: the pivot (when vs how-much) -->
   <section class="slide stage">
-    <div class="etcode">
-      <div class="codeframe etcode__src">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>Card.vue · template</span>
-        </div>
-<pre><span class="et-static">&lt;<span class="code-tag">view</span> <span class="code-attr">class</span>=<span class="code-str">"card"</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">image</span> <span class="code-attr">class</span>=<span class="code-str">"icon"</span> /&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">text</span> <span class="code-attr">class</span>=<span class="code-str">"title"</span>&gt;</span><span class="et-hole">{{ title }}</span><span class="et-static">&lt;/<span class="code-tag">text</span>&gt;</span>
-  <span class="et-static">&lt;<span class="code-tag">view</span> <span class="et-hole">:class</span>=<span class="et-hole">"badge"</span>&gt;…&lt;/<span class="code-tag">view</span>&gt;</span>
-<span class="et-static">&lt;/<span class="code-tag">view</span>&gt;</span></pre>
-      </div>
-      <div class="etcode__legend" aria-hidden="true">
-        <span><i class="et-sw is-static"></i>Block · static</span>
-        <span><i class="et-sw is-hole"></i>Block · hole</span>
-      </div>
-      <div class="codeframe etcode__out">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>compiler output</span>
-        </div>
-<pre><span class="code-fn">registerElementTemplate</span>(
-  <span class="code-str">"__vlx-tpl:rflz…"</span>,
-  [<span class="code-str">"#text"</span>, <span class="code-str">"class"</span>], <span class="code-com">// holes</span>
-  <span class="code-key">function</span> (P) {
-    <span class="code-com">…straight-line PAPI…</span>
-    <span class="code-key">return</span> [e0, e3, e5]
-  },
-)</pre>
-      </div>
-    </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Vue already ships <b>compiler-hinted VDOM</b> — a Block marks static
-      structure vs dynamic holes. That hint is what we lower into
-      <code>create()</code>.
-    </p>
+    <h2 class="h-section" style="text-align:center;max-width:24ch">
+      IFR changes <em class="ifr-em">when</em> the frame renders.<br/>
+      <span class="brand-text">Element Templates</span> change how much work it does.
+    </h2>
     <aside class="notes">
-      <p><strong>Why Vue can do this.</strong> Vue's compiler already partitions
-      a template into a Block: static nodes vs dynamic holes
-      (<code>patchFlag</code> / dynamicChildren). Element Templates reuse that
-      structure information — bake the static shell into
-      <code>registerElementTemplate(id, holes, create)</code>, leave only the
-      holes on the vnode path. Eligible = plain Lynx elements with value/text
-      dynamics; components, slots, <code>v-if</code>/<code>v-for</code> hosts,
-      <code>&lt;list&gt;</code>, ref/id stay on the normal path (their plain
-      bodies can still lower). Next: the sparse trees on each thread, and what
-      actually crosses the wire.</p>
-    </aside>
-  </section>
-
-  <!-- IFR8 — dual-thread trees + what syncs (was IFR6b) -->
-  <section class="slide stage" data-bg="clean">
-    <div class="archflow">
-      <div class="node">
-        <span class="node__label"><i></i>Background · BTS</span>
-        <h3 class="node__title">VDOM · sparse</h3>
-        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="BTS sparse tree: static nodes ghosted, only holes named">
-          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
-          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
-          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
-          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
-          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
-          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
-          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
-          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
-          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
-          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
-          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
-        </svg>
-        <span class="node__cap">static ghosted · only <b>holes</b> named</span>
-      </div>
-      <div class="xwire">
-        <div class="xwire__op">
-          <span class="xwire__name">INSTANTIATE_TEMPLATE</span>
-          <span class="xstruct"><i></i><i></i><i></i></span>
-          <span class="xwire__line"></span>
-          <span class="xwire__count">tpl id · not the tree</span>
-        </div>
-        <div class="xwire__op">
-          <span class="xwire__name">SET_* holes</span>
-          <span class="xwire__line is-multi"></span>
-          <span class="xwire__count">values only · e.g. h0</span>
-        </div>
-        <div class="xwire__op">
-          <span class="xwire__name">hydrate join</span>
-          <span class="xwire__line"></span>
-          <span class="xwire__count">ops vs recording</span>
-        </div>
-      </div>
-      <div class="node node--main">
-        <span class="node__label"><i></i>Main IFR · MTS</span>
-        <h3 class="node__title">native · create()</h3>
-        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="MTS native tree from create(), same sparse hole ids">
-          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
-          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
-          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
-          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
-          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
-          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
-          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
-          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
-          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
-          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
-          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
-        </svg>
-        <span class="node__cap">create() builds · <b>same hole ids</b></span>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      Structure never crosses — both bundles already share <code>create()</code>.
-      The wire carries the <b>tpl id</b> and <b>hole values</b>; hydrate joins those ops.
-    </p>
-    <aside class="notes">
-      <p><strong>What each side's tree is.</strong> BTS keeps a sparse VDOM /
-      ShadowElement view: static nodes exist for Vue's sync reads but are
-      protocol-invisible (ghosted). Only holes get names (<code>h0</code>…).
-      MTS IFR materializes the same shape via the compiled
-      <code>create()</code> — a native element tree with the same sparse hole
-      ids. That sparsity is exactly the Block the previous slide compiled.</p>
-      <p><strong>What syncs.</strong> Unlike Vapor's <code>REGISTER_TREE</code>,
-      ET does not send structure: <code>registerElementTemplate</code> already
-      shipped <code>create()</code> in both bundles. Across the wire:
-      <code>INSTANTIATE_TEMPLATE(tplId)</code> (once per instance) +
-      <code>SET_*</code> for hole values only. On IFR, MTS recorded those ops
-      at first paint; BTS's first batches hydrate against that recording —
-      skip / patch / rebuild, same join as Straightforward IFR.</p>
-    </aside>
-  </section>
-
-  <!-- IFR9 — benchmark table (proof) -->
-  <section class="slide stage">
-    <table class="bench-table">
-      <thead>
-        <tr><th>configuration</th><th>FCP</th><th>render cost</th><th>TTI proxy</th><th>bundle gzip</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="bench-cfg">No IFR</td>
-          <td>96.6 ms</td><td>9.4 ms</td><td>1.00&times;</td><td>1.00&times;</td>
-        </tr>
-        <tr class="bench-row--hero">
-          <td class="bench-cfg">IFR + ET <span class="chip chip--brand">recommended</span></td>
-          <td class="is-good">75.4 ms <small>&minus;22%</small></td>
-          <td class="is-good">1.3 ms</td>
-          <td>~1.36&times;</td>
-          <td class="is-cost">~2.26&times;</td>
-        </tr>
-        <tr>
-          <td class="bench-cfg">IFR without ET</td>
-          <td>75.8 ms <small>&minus;22%</small></td>
-          <td>8.4 ms</td>
-          <td>~1.36&times;</td>
-          <td class="is-cost">~2.26&times;</td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="lead arch-cap" data-mm-fade>
-      FCP across a real Web Worker + IPC (Lynx for Web) — suite median
-      &minus;12% to &minus;19%, ReactLynx control &minus;23%. ET stays flat on
-      FCP; its win is render cost (~1,000 el, jitless) and ops payload.
-    </p>
-    <aside class="notes">
-      <p>Separate campaigns, not one trace. The FCP win (median &minus;12…&minus;19%,
-      ReactLynx control &minus;23%) comes from removing background boot + IPC —
-      it needs a real thread boundary, and both IFR rows share it (ET is flat on
-      web FCP). Element Templates' own win is render cost 9.4&nbsp;ms →
-      <strong>1.3&nbsp;ms</strong> (~6&ndash;15&times; across reruns) and the ops
-      payload — the reason ET is on by default. Cost: ~2.26&times; gzip.</p>
+      <p><strong>The two levers, in one line.</strong> You just watched the shared
+      BTS↔MTS data-flow collapse from five steps to three. IFR moves the paint
+      earlier; Element Templates make the render itself an order of magnitude
+      cheaper — and shrink the cross-thread protocol for <em>every</em> update,
+      not just the first frame. Next: the numbers.</p>
     </aside>
   </section>
 
@@ -2515,6 +2485,27 @@ app.<span class="code-fn">use</span>(router)</pre>
       for a static-heavy screen drops ~78&nbsp;KB → 69&nbsp;bytes. PAPI call
       counts only drop 5&ndash;20% — native element work is a shared floor; what
       lowers away is the framework JS and the protocol around it.</p>
+    </aside>
+  </section>
+
+  <!-- IFR9 — FCP punchline (−22%) -->
+  <section class="slide stage">
+    <div class="mega" style="font-size:clamp(72px,12cqw,168px);line-height:0.92">
+      <span class="brand-text">&minus;22%</span>
+    </div>
+    <p class="lead" style="text-align:center;max-width:28ch;margin-inline:auto" data-mm-fade>
+      FCP with IFR · Lynx for Web
+    </p>
+    <p class="lead arch-cap" data-mm-fade>
+      Suite median &minus;12% to &minus;19%. ReactLynx control &minus;23%.
+      ET stays flat on FCP — its win is the render cost and ops payload you just saw.
+    </p>
+    <aside class="notes">
+      <p><strong>The headline number.</strong> FCP across a real Web Worker + IPC
+      (Lynx for Web): this row &minus;22%, suite median &minus;12…&minus;19%,
+      ReactLynx control &minus;23%. The win is removing background boot + IPC —
+      both IFR rows share it. ET is flat on web FCP; you already saw its own win
+      on render cost and ops payload. Cost: ~2.26&times; gzip, TTI proxy ~1.36&times;.</p>
     </aside>
   </section>
 
