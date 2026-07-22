@@ -205,4 +205,95 @@ describe('element templates (route b protocol)', () => {
     expect(container.querySelector('.card')).toBeNull();
     expect(container.textContent).toContain('gone');
   });
+
+  it('mounts element-slot content into a wrapper via slot-index ops', async () => {
+    // Skeleton: card > image, slot-wrapper, title-text
+    // holes: ['#slot', '#text']
+    const tpl = registerElementTemplate(
+      't-slot',
+      ['#slot', '#text'],
+      (P: number) => {
+        const e0 = __CreateView(P);
+        __SetCSSId([e0], 0);
+        const e1 = __CreateImage(P);
+        __SetCSSId([e1], 0);
+        __SetClasses(e1, 'icon');
+        __SetAttribute(e1, 'src', 'a.png');
+        __AppendElement(e0, e1);
+        const e2 = __CreateWrapperElement(P);
+        __AppendElement(e0, e2);
+        const e3 = __CreateText(P);
+        __SetCSSId([e3], 0);
+        __SetClasses(e3, 'title');
+        __AppendElement(e0, e3);
+        return [e0, e2, e3];
+      },
+    );
+
+    const show = ref(true);
+    const title = ref('Hello');
+    const Comp = defineComponent({
+      render() {
+        return h(`__vlx-tpl:${tpl}`, {
+          class: 'card',
+          __h0: show.value
+            ? h('view', { class: 'cond' }, [h('text', null, 'visible')])
+            : null,
+          __h1: title.value,
+        });
+      },
+    });
+
+    const { container } = render(Comp);
+    expect(container.querySelector('.icon')).not.toBeNull();
+    expect(container.querySelector('.cond')?.textContent).toBe('visible');
+    expect(container.querySelector('.title')?.textContent).toBe('Hello');
+    // Slot content lives under the wrapper placeholder.
+    expect(container.querySelector('wrapper .cond')).not.toBeNull();
+
+    show.value = false;
+    title.value = 'Bye';
+    await nextTick();
+    expect(container.querySelector('.cond')).toBeNull();
+    expect(container.querySelector('.title')?.textContent).toBe('Bye');
+
+    show.value = true;
+    await nextTick();
+    expect(container.querySelector('.cond')?.textContent).toBe('visible');
+  });
+
+  it('mounts multiple children into an element slot (v-for-like fragment)', async () => {
+    const tpl = registerElementTemplate('t-list-slot', ['#slot'], (P: number) => {
+      const e0 = __CreateView(P);
+      __SetCSSId([e0], 0);
+      __SetClasses(e0, 'list');
+      const e1 = __CreateWrapperElement(P);
+      __AppendElement(e0, e1);
+      return [e0, e1];
+    });
+
+    const items = ref(['a', 'b']);
+    const Comp = defineComponent({
+      render() {
+        return h(`__vlx-tpl:${tpl}`, {
+          __h0: items.value.map((label) =>
+            h('view', { class: 'row', key: label }, [
+              h('text', { class: 'label' }, label),
+            ])
+          ),
+        });
+      },
+    });
+
+    const { container } = render(Comp);
+    let labels = [...container.querySelectorAll('.label')].map((n) =>
+      n.textContent
+    );
+    expect(labels).toEqual(['a', 'b']);
+
+    items.value = ['b', 'c', 'a'];
+    await nextTick();
+    labels = [...container.querySelectorAll('.label')].map((n) => n.textContent);
+    expect(labels).toEqual(['b', 'c', 'a']);
+  });
 });

@@ -148,6 +148,60 @@ function ensureTextCreated(node: ShadowElement): void {
   node._mtCreated = true;
 }
 
+/** Emit INSERT or INSERT_TEMPLATE_SLOT depending on the parent. */
+function pushInsertOp(
+  parent: ShadowElement,
+  child: ShadowElement,
+  anchorUid: number,
+): void {
+  if (
+    parent._tplSlotIndex !== undefined && parent._tplRoot !== undefined
+  ) {
+    // Element-slot wrapper: address by (templateRoot, slotIndex) so sparse
+    // ET can keep the slot parent anonymous.
+    pushOp(
+      OP.INSERT_TEMPLATE_SLOT,
+      parent._tplRoot.uid,
+      parent._tplSlotIndex,
+      child.uid,
+      anchorUid,
+    );
+  } else {
+    pushOp(OP.INSERT, parent.uid, child.uid, anchorUid);
+  }
+}
+
+/** Emit REMOVE or REMOVE_TEMPLATE_SLOT depending on the parent. */
+function pushRemoveOp(parent: ShadowElement, child: ShadowElement): void {
+  if (
+    parent._tplSlotIndex !== undefined && parent._tplRoot !== undefined
+  ) {
+    pushOp(
+      OP.REMOVE_TEMPLATE_SLOT,
+      parent._tplRoot.uid,
+      parent._tplSlotIndex,
+      child.uid,
+    );
+  } else {
+    pushOp(OP.REMOVE, parent.uid, child.uid);
+  }
+}
+
+/**
+ * Optional hook: tear down element-slot Vue trees before a template root is
+ * removed. Installed from node-ops to avoid a tree-ops ↔ slot-host cycle.
+ */
+let teardownTemplateSlotsHook:
+  | ((el: ShadowElement) => void)
+  | null = null;
+
+/** @internal */
+export function setTeardownTemplateSlotsHook(
+  fn: ((el: ShadowElement) => void) | null,
+): void {
+  teardownTemplateSlotsHook = fn;
+}
+
 /**
  * Set a #text node's character data, materialising or dematerialising its
  * Main Thread element as the content appears / disappears. Shared by the
@@ -158,7 +212,7 @@ export function setTextNode(node: ShadowElement, text: string): void {
 
   if (!text) {
     if (node._mtInserted && node.parent) {
-      pushOp(OP.REMOVE, node.parent.uid, node.uid);
+      pushRemoveOp(node.parent, node);
       node._mtInserted = false;
       scheduleFlush();
     }
@@ -173,7 +227,7 @@ export function setTextNode(node: ShadowElement, text: string): void {
   const parent = node.parent;
   if (!node._mtInserted && parent && parent.tag !== 'list') {
     const anchor = resolveMainThreadAnchor(node.next);
-    pushOp(OP.INSERT, parent.uid, node.uid, anchor ? anchor.uid : -1);
+    pushInsertOp(parent, node, anchor ? anchor.uid : -1);
     node._mtInserted = true;
   }
   scheduleFlush();
@@ -201,7 +255,7 @@ export function insertNode(
   // Reparent: if child is moving to a different parent (e.g. KeepAlive move),
   // emit REMOVE from old parent so MT correctly detaches first.
   if (child.parent && child.parent !== parent && isMaterialized(child)) {
-    pushOp(OP.REMOVE, child.parent.uid, child.uid);
+    pushRemoveOp(child.parent, child);
     if (child.tag === '#text') child._mtInserted = false;
     scheduleFlush();
   }
@@ -218,7 +272,11 @@ export function insertNode(
   if (child.tag === '#text') ensureTextCreated(child);
 
   const resolvedAnchor = resolveMainThreadAnchor(anchor);
-  pushOp(OP.INSERT, parent.uid, child.uid, resolvedAnchor ? resolvedAnchor.uid : -1);
+  pushInsertOp(
+    parent,
+    child,
+    resolvedAnchor ? resolvedAnchor.uid : -1,
+  );
   if (child.tag === '#text') child._mtInserted = true;
   scheduleFlush();
 }
@@ -242,12 +300,15 @@ export function removeNode(child: ShadowElement): void {
   // Those children were never mounted, so `vnode.el` is undefined — null
   // guard is required here, not just for the `!parent` case.
   if (child?.parent) {
-    const parentUid = child.parent.uid;
+    const parent = child.parent;
     const materialized = isMaterialized(child);
-    child.parent._unlink(child);
+    // Tear down element-slot Vue trees before removing a template root so
+    // component instances inside slots get proper unmount lifecycles.
+    if (child._tplSlots) teardownTemplateSlotsHook?.(child);
+    parent._unlink(child);
     releaseSubtree(child);
     if (materialized) {
-      pushOp(OP.REMOVE, parentUid, child.uid);
+      pushRemoveOp(parent, child);
       scheduleFlush();
     }
     if (child.tag === '#text') child._mtInserted = false;
