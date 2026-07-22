@@ -73,6 +73,42 @@ mechanisms is the Lynx-engine realization of something Vue already names:
 | SSR **hydration** | adopt pre-existing output | **IFR hydration** (the ephemeral MTS copy is adopted frame-by-frame or replaced by full replay) |
 | static hoisting / partial evaluation | static folding | the residual itself (`λ holes. tree` partially evaluated at compile time) |
 
+### 1.3c Optimization-flag notation (the benchmark's attribution grammar)
+
+Benchmark cells are named `render [+b[:staging]] [+ifr[:paint]]` — a
+baseline times a stack of optimizations, matching factor attribution
+one-to-one:
+
+- **baseline** (bare `vdom` / `vapor`) — per-node addressing: plainest
+  and safest; every node named, no metadata, no validation.
+- **`+b`** — *block templates*: use the block's parts information for
+  block naming (`base+offset`) and template materialization. The staging
+  parameter defaults to the render model's natural rung:
+  `vdom +b` ≡ `+b:c` (code, baked `create()`); `vapor +b` ≡ `+b:t`
+  (tree — Split topology forces the residual across the thread boundary
+  as data). The two `+b` factors are therefore **not comparable across
+  render models**; information source also differs (vdom intrinsic via
+  Vue's Block, vapor recovered via `__vlxAddressing`).
+- **`+b:e`** — staging raised to the engine rung for the **persistent**
+  tree (`__CreateElementTemplate` family). N/A on Lynx-for-Web.
+  `+b:c` for vapor is M3a (unimplemented).
+- **`+ifr`** — ephemeral first-frame copy painted by the MTS, adopted or
+  replayed on hydration. Paint parameter defaults to inheriting the
+  persistent staging.
+- **`+ifr:e`** / **`+ifr:c`** — ONLY the first-frame copy is painted at
+  the engine / code rung (legacy names engine-et / disposable-et). The
+  persistent tree is untouched — this is what distinguishes `+ifr:e`
+  from `+b:e`.
+
+Cell roster (data files keep legacy keys):
+`vdom` (=`vdom`) · `vdom +b` (=`vdom-et`) · `vdom +ifr` · `vdom +b +ifr`
+(=`vdom-ifr-et`) · `vapor` (=`vapor-dense` ⚠️ bare name flipped: the
+baseline, not the product default) · `vapor +b` (=`vapor`, product
+default) · `vapor +ifr` (=`vapor-ifr-dense`) · `vapor +b +ifr`
+(=`vapor-ifr`, alias `vapor-ifr-sparse`) · `vapor +b:e` (=`vapor-engine`,
+N/A) · `vapor +b +ifr:e` (=`vapor-ifr-engine-et`, N/A) · `rl` (=`react`,
+reference).
+
 ### 1.4 Placement table (current world → coordinates)
 
 | Mechanism | Staging | Naming | Addressing | Provider | Lifetime | Term |

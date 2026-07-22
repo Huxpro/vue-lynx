@@ -68,11 +68,11 @@ export function copy(lang) {
       ? '同款 sfc-probe（~1004 元素）：仅切换 <code>enableSparseNaming</code>。Native ET 仍 stub；稀疏仍全量建 native 树。详见 <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>。'
       : 'Same-source sfc-probe (~1004 els): only <code>enableSparseNaming</code> flips. Native ET still stub; sparse still builds the full native tree. See <code>ifr-bench/GRAPH-ENG-MATRIX.md</code>.',
     hGraphEngFactors: zh
-      ? '五轴矩阵 — 全排列 create/update 与因子分解'
-      : 'Five-axis matrix — all-permutation create/update + factor decomposition',
+      ? '优化 flag 矩阵 — 全排列 create/update 与因子归因'
+      : 'Optimization-flag matrix — all-permutation create/update + factor attribution',
     subGraphEngFactors: zh
-      ? '统一 table app（真实点击、双线程），全部合法 flag 排列组合（staging <code>ops|tree|code|native</code> × naming <code>node|block</code> × <code>enableIFR</code> × <code>ifrPaint</code>）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
-      : 'Unified table app (real clicks, dual-thread), every legal flag permutation (staging <code>ops|tree|code|native</code> × naming <code>node|block</code> × <code>enableIFR</code> × <code>ifrPaint</code>), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+      ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
+      : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -81,24 +81,25 @@ export function copy(lang) {
     geoMean: zh ? '慢速几何平均' : 'slowdown geometric mean',
     scale: zh ? '规模' : 'scale',
     colLabels: {
-      // Terminology v2: render · staging·naming (+IFR). Legacy bench ids
-      // stay as data keys; labels use the canonical vocabulary.
-      vapor: 'Vapor tree·block',
-      'vapor-dense': zh ? 'Vapor tree·node（Named Tree）' : 'Vapor tree·node (Named Tree)',
-      'vapor-engine': zh ? 'Vapor native·block（N/A）' : 'Vapor native·block (N/A)',
-      'vapor-ifr': 'Vapor tree·block +IFR',
-      'vapor-ifr-dense': 'Vapor tree·node +IFR',
+      // V4 flag notation: `render [+b[:staging]] [+ifr[:paint]]`. Bare +b
+      // uses the render model's natural staging (vdom→:c, vapor→:t).
+      // Legacy bench ids stay as data keys (see the flag legend).
+      vapor: 'vapor +b',
+      'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
+      'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
+      'vapor-ifr': 'vapor +b +ifr',
+      'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
-        ? 'Vapor tree·block +IFR（alias）'
-        : 'Vapor tree·block +IFR (alias)',
+        ? 'vapor +b +ifr（alias）'
+        : 'vapor +b +ifr (alias)',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor +IFR native-paint（N/A）'
-        : 'Vapor +IFR native-paint (N/A)',
-      vdom: 'VDOM ops·node',
-      'vdom-et': 'VDOM code·block',
-      'vdom-ifr': 'VDOM ops·node +IFR',
-      'vdom-ifr-et': 'VDOM code·block +IFR',
-      react: zh ? 'ReactLynx code·block（memo）' : 'ReactLynx code·block (memo)',
+        ? 'vapor +b +ifr:e（N/A）'
+        : 'vapor +b +ifr:e (N/A)',
+      vdom: zh ? 'vdom（基线）' : 'vdom (baseline)',
+      'vdom-et': 'vdom +b',
+      'vdom-ifr': 'vdom +ifr',
+      'vdom-ifr-et': 'vdom +b +ifr',
+      react: zh ? 'rl（Snapshot+IFR+memo）' : 'rl (Snapshot+IFR+memo)',
     },
     stormRowLabels: zh
       ? {
@@ -129,22 +130,22 @@ export function copy(lang) {
         },
     fcpScale: (s) => (zh ? `${s} 元素` : `${s} elements`),
     fcpArchLabels: {
-      react: 'ReactLynx code·block',
-      vdom: 'VDOM ops·node',
-      'vdom-et': 'VDOM code·block',
-      'vdom-ifr': 'VDOM ops·node +IFR',
-      'vdom-ifr-et': 'VDOM code·block +IFR',
-      vapor: 'Vapor tree·block',
-      'vapor-dense': 'Vapor tree·node',
-      'vapor-engine': zh ? 'Vapor native·block（N/A）' : 'Vapor native·block (N/A)',
-      'vapor-ifr': 'Vapor tree·block +IFR',
-      'vapor-ifr-dense': 'Vapor tree·node +IFR',
+      react: 'rl',
+      vdom: zh ? 'vdom（基线）' : 'vdom (baseline)',
+      'vdom-et': 'vdom +b',
+      'vdom-ifr': 'vdom +ifr',
+      'vdom-ifr-et': 'vdom +b +ifr',
+      vapor: 'vapor +b',
+      'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
+      'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
+      'vapor-ifr': 'vapor +b +ifr',
+      'vapor-ifr-dense': 'vapor +ifr',
       'vapor-ifr-sparse': zh
-        ? 'Vapor tree·block +IFR（alias）'
-        : 'Vapor tree·block +IFR (alias)',
+        ? 'vapor +b +ifr（alias）'
+        : 'vapor +b +ifr (alias)',
       'vapor-ifr-engine-et': zh
-        ? 'Vapor +IFR native-paint（N/A）'
-        : 'Vapor +IFR native-paint (N/A)',
+        ? 'vapor +b +ifr:e（N/A）'
+        : 'vapor +b +ifr:e (N/A)',
     },
     charts: {
       selectStorm: {

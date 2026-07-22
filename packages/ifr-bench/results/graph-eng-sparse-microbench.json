@@ -7,14 +7,14 @@
     "mode": "dense",
     "shadows": 49,
     "mtNamed": 25,
-    "cloneMs": 0.1729,
+    "cloneMs": 0.0363,
     "addressedCount": 25
   },
   "sparse": {
     "mode": "sparse",
     "shadows": 1,
     "mtNamed": 1,
-    "cloneMs": 0.0139,
+    "cloneMs": 0.0075,
     "addressedCount": 1
   },
   "savings": {
