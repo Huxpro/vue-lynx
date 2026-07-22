@@ -84,6 +84,26 @@ const FOUR_AXIS_CELLS = [
     label: 'Vapor dense',
   },
   {
+    id: 'vue-vapor-bang',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'off',
+    // `+b!` (#338): delivery column flipped alone — structure AST baked into
+    // the MT bundle, REGISTER_TREE_BUNDLE (hash only) on the wire.
+    flags: { vapor: true, enableIFR: false, templateDelivery: 'bundle', benchCell: 'bundle' },
+    label: 'Vapor +b! (bundle)',
+  },
+  {
+    id: 'vue-vapor-code',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'off',
+    // `+b:c` (#337): code staging — build-time-parsed create() in the MT
+    // bundle, INSTANTIATE_TEMPLATE(id) on the wire.
+    flags: { vapor: true, enableIFR: false, templateStaging: 'code', benchCell: 'code' },
+    label: 'Vapor +b:c (code)',
+  },
+  {
     id: 'vue-vapor-engine',
     framework: 'vue',
     renderer: 'vapor',

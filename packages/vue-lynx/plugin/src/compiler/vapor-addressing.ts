@@ -55,6 +55,7 @@ import {
 } from 'vue-lynx/internal/ops';
 
 import { structureSlotsFromHtml } from './vapor-structure-from-html.js';
+import { templateNodeFromHtml } from './vapor-template-node.js';
 
 export { VAPOR_ADDRESSING_KEY };
 
@@ -73,6 +74,12 @@ export interface VaporAddressingResult {
 export interface AnalyzeVaporAddressingOptions {
   bindingMetadata?: BindingMetadata;
   isNativeTag?: (tag: string) => boolean;
+  /**
+   * Mirrors the plugin's `autoPixelUnit` option for the build-time structure
+   * hash (#337/#338) — inline-style normalization must match the runtime
+   * define or the fingerprint fail-safe (correctly) rejects the bake.
+   */
+  autoPixelUnit?: boolean;
 }
 
 function getBaseTransformPreset(): [
@@ -293,6 +300,19 @@ export function analyzeVaporAddressing(
           : [];
         const addressedTags = addressed.map((s) => tags[s] ?? '');
 
+        // Structure fingerprint for the bundle-delivery / code-staging cells
+        // (#337/#338). Best-effort: a failed build parse just omits the hash
+        // and those cells fall back to the wire data path for this template.
+        let hash: string | undefined;
+        try {
+          const built = templateNodeFromHtml(content, {
+            autoPixelUnit: options.autoPixelUnit,
+          });
+          if (built && built.slotCount === slotCount) hash = built.hash;
+        } catch {
+          // hash stays undefined — runtime keeps today's delivery.
+        }
+
         templates.push({
           templateIndex: d.template,
           content,
@@ -300,6 +320,7 @@ export function analyzeVaporAddressing(
           holes,
           addressed,
           tags: addressedTags,
+          ...(hash !== undefined ? { hash } : {}),
         });
       }
 
@@ -365,6 +386,7 @@ function stringifyAddressing(meta: VaporTemplateAddressing): string {
     addressed: meta.addressed,
     slotCount: meta.slotCount,
     tags: meta.tags,
+    ...(meta.hash !== undefined ? { hash: meta.hash } : {}),
   });
 }
 

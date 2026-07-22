@@ -94,6 +94,8 @@ const COLUMN_KEYS = [
   'vdom-ifr-et',
   'vapor-dense',
   'vapor',
+  'vapor-bang',
+  'vapor-code',
   'vapor-ifr-dense',
   'vapor-ifr',
   'vapor-engine',
@@ -122,6 +124,8 @@ const FCP_ARCH_KEYS = [
   { key: 'vdom-ifr-et', color: '#7c3aed' },
   { key: 'vapor-dense', color: '#66c2a4' },
   { key: 'vapor', color: '#059669' },
+  { key: 'vapor-bang', color: '#14b8a6' },
+  { key: 'vapor-code', color: '#0891b2' },
   { key: 'vapor-ifr-dense', color: '#f0b429' },
   { key: 'vapor-ifr', color: '#d97706' },
   { key: 'vapor-engine', color: '#0d8a5f' },
@@ -837,6 +841,8 @@ function graphEngFactorsSection(t) {
     '+b effect (vdom, with +ifr)': ['vdom-ifr', 'vdom-ifr-et'],
     '+b effect (vapor, no ifr)': ['vapor-dense', 'vapor'],
     '+b effect (vapor, with +ifr)': ['vapor-ifr-dense', 'vapor-ifr'],
+    '+b! delivery effect (vapor)': ['vapor', 'vapor-bang'],
+    '+b:d→c effect (vapor)': ['vapor', 'vapor-code'],
     '+b:d→e effect (vapor, N/A)': ['vapor', 'vapor-engine'],
     '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
     '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
@@ -949,16 +955,20 @@ function graphEngFactorsSection(t) {
       ? [
         ['<code>基线</code>', 'per-node addressing —— 最朴素、最安全：每个节点独立命名，无需元数据、无需校验。<code>vdom</code> = op stream；<code>vapor</code> = named tree。'],
         ['<code>+b</code>', '<b>block templates</b>：用模板块的 parts 信息做块式命名（<code>base+offset</code>）并物化模板。staging 参数缺省为该 render model 的自然档位 —— <code>vdom +b</code> ≡ <code>+b:c</code>（code，baked <code>create()</code>）；<code>vapor +b</code> ≡ <code>+b:d</code>（data：序列化树在<b>运行期</b>作为数据过线——REGISTER_TREE 每模板一次——由 MT 解释；Split 拓扑所致）。注意：两个 render model 的 <code>+b</code> 因子因此<b>不可互比</b>。信息来源也不同：vdom 是 intrinsic（Vue Block 声明），vapor 是 recovered（编译期恢复，带指纹 fail-safe）。'],
-        ['<code>+b:e</code>', 'staging 升到 <b>engine</b> 档：模板常驻引擎（<code>__CreateElementTemplate</code> 家族），native clone。作用于 <b>persistent 本体树</b>。本环境（Lynx for Web）无该 PAPI → N/A。<code>+b:c</code>（vapor 的 code 档，M3a）未实现。'],
-        ['<i>delivery</i>', '（第六列性质，暂无独立 flag）residual 何时到 MT：<code>runtime</code> = 运行期过线（vapor 的 data/native 现状）；<code>bundle</code> = 构建期编进 MT bundle（vdom 的 code、RL Snapshot）。构建期交付 data 的格（候选记法 <code>+b!</code>）尚未实现——可砍掉 BG 解析/序列化/wire/register 四笔 create 期成本。'],
+        ['<code>+b:c</code>', 'vapor 的 staging 升到 <b>code</b> 档（#337）：构建期解析 <code>template()</code> HTML，直线 PAPI <code>create()</code> 编进 MT bundle，实例化只过一条 <code>INSTANTIATE_TEMPLATE(id)</code>——residual 运行期完全不过线。命名沿用 <code>base+offset</code> 前序，update 路径零改动；构建期解析与运行期解析的结构指纹不合时<b>静默回退</b> REGISTER_TREE 数据路径。'],
+        ['<code>+b!</code>', '<b>delivery 列单独翻转</b>（#338）：staging 仍为 data，但序列化树在<b>构建期</b>烧进 MT bundle（<code>registerVaporStructure(hash, ast)</code>）；BG 只发指纹哈希（REGISTER_TREE_BUNDLE），结构字节 0 过线。解释、命名、update 路径与 <code>vapor +b</code> 逐字节一致；哈希不合时静默回退完整 REGISTER_TREE。'],
+        ['<code>+b:e</code>', 'staging 升到 <b>engine</b> 档：模板常驻引擎（<code>__CreateElementTemplate</code> 家族），native clone。作用于 <b>persistent 本体树</b>。本环境（Lynx for Web）无该 PAPI → N/A。'],
+        ['<i>delivery</i>', '（第六列性质）residual 何时到 MT：<code>runtime</code> = 运行期过线（vapor +b 的 data 现状与 native）；<code>bundle</code> = 构建期编进 MT bundle（vdom 的 code、RL Snapshot、vapor 的 <code>+b!</code> 与 <code>+b:c</code>）。<code>+b!</code> 是唯一在其他五列全部不动的前提下单独翻转 delivery 的格——纯 delivery 因子的单列读数。'],
         ['<code>+ifr</code>', 'IFR：MTS 抢跑 <b>ephemeral</b> 首帧副本，BG 启动后 hydration 采纳或整体重放。paint 参数缺省 = 首帧继承本体 staging。'],
         ['<code>+ifr:e</code>', '仅<b>首帧副本</b>用 engine 档画（旧名 engine-et）；本体树照常。区别于 <code>+b:e</code>（全程）。本环境 N/A。同理 <code>+ifr:c</code>（旧名 disposable-et）。'],
       ]
       : [
         ['<code>baseline</code>', 'per-node addressing — plainest and safest: every node named independently, no metadata, no validation. <code>vdom</code> = op stream; <code>vapor</code> = named tree.'],
         ['<code>+b</code>', '<b>block templates</b>: use the template block\'s parts information for block naming (<code>base+offset</code>) and template materialization. The staging parameter defaults to the render model\'s natural rung — <code>vdom +b</code> ≡ <code>+b:c</code> (code: baked <code>create()</code>); <code>vapor +b</code> ≡ <code>+b:d</code> (data: the serialized tree crosses the thread boundary as data at RUNTIME — REGISTER_TREE once per template — interpreted on the MT; forced by the Split topology). The two <code>+b</code> factors are therefore <b>not comparable across render models</b>. The information source differs too: intrinsic for vdom (declared by Vue\'s Block), recovered for vapor (compile-time analysis, hence the fingerprint fail-safe).'],
-        ['<code>+b:e</code>', 'staging raised to the <b>engine</b> rung: templates live in the engine (<code>__CreateElementTemplate</code> family), native clone. Applies to the <b>persistent tree</b>. N/A on this host (Lynx for Web has no such PAPI). <code>+b:c</code> for vapor (M3a) is unimplemented.'],
-        ['<i>delivery</i>', '(sixth property column, no standalone flag yet) when the residual reaches the MT: <code>runtime</code> = shipped over the wire (vapor\'s data/native today); <code>bundle</code> = compiled into the MT bundle at build (vdom\'s code, RL Snapshot). The bundle-delivered-data cell (tentative notation <code>+b!</code>) is unbuilt — it would cut the BG parse/serialize/wire/register create-time costs.'],
+        ['<code>+b:c</code>', 'vapor staging raised to the <b>code</b> rung (#337): the plugin parses each <code>template()</code> HTML string at build time, bakes a straight-line-PAPI <code>create()</code> into the MT bundle, and instantiation crosses as a single <code>INSTANTIATE_TEMPLATE(id)</code> — the residual never crosses at runtime. Naming keeps the <code>base+offset</code> preorder, the update path is untouched; a build↔runtime structure-fingerprint mismatch <b>silently falls back</b> to the REGISTER_TREE data path.'],
+        ['<code>+b!</code>', '<b>the Delivery column flipped alone</b> (#338): staging stays data, but the serialized tree is baked into the MT bundle at BUILD time (<code>registerVaporStructure(hash, ast)</code>); the BG sends only the fingerprint hash (REGISTER_TREE_BUNDLE) — zero structure bytes cross. Interpretation, naming, and the update path are byte-identical to <code>vapor +b</code>; on hash mismatch it silently falls back to the full REGISTER_TREE.'],
+        ['<code>+b:e</code>', 'staging raised to the <b>engine</b> rung: templates live in the engine (<code>__CreateElementTemplate</code> family), native clone. Applies to the <b>persistent tree</b>. N/A on this host (Lynx for Web has no such PAPI).'],
+        ['<i>delivery</i>', '(sixth property column) when the residual reaches the MT: <code>runtime</code> = shipped over the wire (vapor +b\'s data today, and native); <code>bundle</code> = compiled into the MT bundle at build (vdom\'s code, RL Snapshot, vapor\'s <code>+b!</code> and <code>+b:c</code>). <code>+b!</code> is the one cell that flips Delivery with every other column held fixed — the pure single-column delivery read.'],
         ['<code>+ifr</code>', 'IFR: the MTS paints an <b>ephemeral</b> first-frame copy; on BG boot, hydration adopts it or replays in full. The paint parameter defaults to inheriting the persistent tree\'s staging.'],
         ['<code>+ifr:e</code>', 'ONLY the first-frame copy is painted at the engine rung (legacy name engine-et); the persistent tree is unchanged. Distinct from <code>+b:e</code> (whole lifetime). N/A on this host. Likewise <code>+ifr:c</code> (legacy disposable-et).'],
       ];
@@ -973,8 +983,8 @@ function graphEngFactorsSection(t) {
     html += '</tbody></table>';
     html += `<p class="sub" style="margin-top:8px">${
       zhT
-        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b（默认）、<code>vapor-dense</code>=vapor 基线、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e）。<code>vapor-ifr-sparse</code> 是 vapor +b +ifr 的同坐标复测样本，已从显示中省略（数据保留在 JSON）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
-        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b (default), <code>vapor-dense</code>=vapor baseline, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e). <code>vapor-ifr-sparse</code> is a same-coordinate replicate of vapor +b +ifr, omitted from display (data retained in JSON). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
+        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b（默认）、<code>vapor-dense</code>=vapor 基线、<code>vapor-bang</code>=vapor +b!、<code>vapor-code</code>=vapor +b:c、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e）。<code>vapor-ifr-sparse</code> 是 vapor +b +ifr 的同坐标复测样本，已从显示中省略（数据保留在 JSON）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
+        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b (default), <code>vapor-dense</code>=vapor baseline, <code>vapor-bang</code>=vapor +b!, <code>vapor-code</code>=vapor +b:c, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e). <code>vapor-ifr-sparse</code> is a same-coordinate replicate of vapor +b +ifr, omitted from display (data retained in JSON). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
     }</p>`;
     return html;
   };

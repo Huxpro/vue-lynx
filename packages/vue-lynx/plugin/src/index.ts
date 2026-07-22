@@ -22,6 +22,7 @@
 
 import {
   IFR_PAINT_GLOBAL,
+  TEMPLATE_DELIVERY_GLOBAL,
   TEMPLATE_STAGING_GLOBAL,
   normalizeIfrPaint,
   normalizeNaming,
@@ -180,9 +181,13 @@ export interface PluginVueLynxOptions {
    *   MT interpreter (`REGISTER_TREE`/`CLONE_TREE`; Vapor default →
    *   Data-Template).
    * - `'code'` (compiled) — per-template compiled `create()` closure, no
-   *   interpreter (`INSTANTIATE_TEMPLATE` → Code-Template). Not
-   *   implemented for Vapor (M3a optional) — falls back to `'data'` with a
-   *   warning.
+   *   interpreter (`INSTANTIATE_TEMPLATE` → Code-Template). For Vapor
+   *   (#337, `+b:c`): the plugin parses each `template()` HTML string at
+   *   build time, bakes a straight-line-PAPI `create()` into the MT bundle,
+   *   and instantiation crosses the wire as a single
+   *   `INSTANTIATE_TEMPLATE(id)`. Guarded by the structure-fingerprint
+   *   fail-safe — any build↔runtime parse disagreement silently falls back
+   *   to the `'data'` path per template.
    * - `'native'` (compiled) — host-resident **Engine-Template**: the MT
    *   executor routes instantiation through the `__CreateElementTemplate`
    *   PAPI family when the engine provides it, and falls back to
@@ -203,6 +208,26 @@ export interface PluginVueLynxOptions {
     | 'opstream'
     | 'tree'
     | 'engine';
+
+  /**
+   * Delivery — **when the template residual reaches the main thread**
+   * (the sixth coordinate column; #338, `+b!`).
+   *
+   * - `'runtime'` — today's default: Vapor structures ship over the wire
+   *   once per template (`REGISTER_TREE`).
+   * - `'bundle'` — the build-time-parsed structure AST is baked into the MT
+   *   bundle (`registerVaporStructure(hash, ast)`); the BG sends only the
+   *   fingerprint hash (`REGISTER_TREE_BUNDLE`) when its runtime parse
+   *   hashes identically, and falls back to the full `REGISTER_TREE`
+   *   otherwise. Flips ONLY the delivery column: interpretation, naming and
+   *   the whole update path are byte-identical to the `'runtime'` cell.
+   *
+   * Only meaningful for Vapor `'data'` staging (`'code'` staging always
+   * rides the bundle; VDOM code templates already do).
+   *
+   * @defaultValue 'runtime'
+   */
+  templateDelivery?: 'runtime' | 'bundle';
 
   /**
    * Axis D — **IFR paint mode**: how the ephemeral first-frame copy
@@ -361,20 +386,30 @@ export function pluginVueLynx(
     );
     templateStaging = 'data';
   }
-  if (vapor && templateStaging === 'code') {
-    console.warn(
-      '[vue-lynx] templateStaging:\'code\' (Vapor Code-Template, M3a) is '
-        + 'not implemented — using \'data\'. The matrix reports this cell '
-        + 'as stub.',
-    );
-    templateStaging = 'data';
-  }
   if (!vapor && templateStaging === 'data') {
     console.warn(
       '[vue-lynx] templateStaging:\'data\' is not a VDOM cell (no '
         + 'CLONE_TREE protocol) — using the default.',
     );
     templateStaging = enableElementTemplates ? 'code' : 'ops';
+  }
+
+  // Delivery (#338): bundle-baked data residual is a Vapor data-staging
+  // refinement; code staging intrinsically rides the bundle already.
+  let templateDelivery = options.templateDelivery ?? 'runtime';
+  if (templateDelivery === 'bundle' && (!vapor || templateStaging !== 'data')) {
+    if (!vapor) {
+      console.warn(
+        '[vue-lynx] templateDelivery:\'bundle\' only applies to Vapor data '
+          + 'staging (VDOM code templates are bundle-delivered already) — '
+          + 'ignoring.',
+      );
+      templateDelivery = 'runtime';
+    }
+    // vapor + staging 'code'/'native': code is bundle-delivered by
+    // definition; keep the define at 'runtime' so the data fallback path
+    // stays byte-identical to today's wire protocol.
+    if (vapor && templateStaging !== 'data') templateDelivery = 'runtime';
   }
   // Define VALUES keep the legacy spelling for compatibility with built
   // bundles and runtime checks (both spellings accepted at read sites).
@@ -453,6 +488,7 @@ export function pluginVueLynx(
                   templateNaming === 'block',
                 ),
                 [TEMPLATE_STAGING_GLOBAL]: JSON.stringify(stagingDefine),
+                [TEMPLATE_DELIVERY_GLOBAL]: JSON.stringify(templateDelivery),
                 [IFR_PAINT_GLOBAL]: JSON.stringify(paintDefine),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
@@ -522,12 +558,30 @@ export function pluginVueLynx(
 
             // Prod inlineTemplate path never hits the template loader — stamp
             // `__vlxAddressing` on the compiled script so sparse A2 activates
-            // in probe/benchmark bundles (#301).
-            if (templateNaming === 'block') {
+            // in probe/benchmark bundles (#301). Bundle delivery (#338) and
+            // code staging (#337) also need the stamp (their fingerprint
+            // fail-safe reads `hash` from it).
+            //
+            // Matching note: with `experimentalInlineMatchResource`, rule
+            // conditions evaluate against the MATCH resource (`App.vue.ts`,
+            // no query) — a `/\.vue$/` + resourceQuery rule silently never
+            // fires, so prod bundles ran dense while the runtime fail-safe
+            // hid it. Match the script-ish extension instead and let the
+            // loader's own cheap guards (`template(` present, descriptor is
+            // a vapor SFC) skip everything else.
+            if (
+              templateNaming === 'block'
+              || templateDelivery === 'bundle'
+              || templateStaging === 'code'
+            ) {
               chain.module
                 .rule('vue-lynx:vapor-addressing-script')
-                .test(/\.vue$/)
-                .resourceQuery(/type=script/)
+                .test(/\.(?:vue|[cm]?[jt]sx?)$/)
+                .exclude.add(/node_modules/)
+                // Workspace-resolved vue-lynx runtime/bootstrap dists carry
+                // `template(` calls of their own — never SFC modules.
+                .add(/vue-lynx[\\/](?:runtime|main-thread|internal)[\\/]dist[\\/]/)
+                .end()
                 .use('vue-lynx:vapor-addressing-script')
                 .loader(
                   path.resolve(
@@ -535,7 +589,7 @@ export function pluginVueLynx(
                     './loaders/vapor-addressing-script-loader.js',
                   ),
                 )
-                .options({ enabled: true })
+                .options({ enabled: true, autoPixelUnit })
                 .end();
             }
           }
@@ -576,6 +630,14 @@ export function pluginVueLynx(
           enableElementTemplates,
           includeWorkletPackages,
           vapor,
+          vaporBundle: vapor
+              && (templateDelivery === 'bundle' || templateStaging === 'code')
+            ? {
+              structures: templateDelivery === 'bundle',
+              codeTemplates: templateStaging === 'code',
+              autoPixelUnit,
+            }
+            : undefined,
         });
       },
     },
