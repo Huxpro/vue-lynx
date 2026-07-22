@@ -9,6 +9,8 @@
  *   - results/latest.json (instrumented VDOM vs Vapor)
  *   - results/web-baseline-latest.json (bare DOM)
  *   - ../ifr-bench/results/browser-results-scale-*.json (FCP ladder)
+ *   - ../ifr-bench/results/browser-results-graph-eng-dense-sparse*.json (#301 naming)
+ *   - ../ifr-bench/results/sfc-probe-sizes-graph-eng.json (#301 bundle flags)
  *   - ../ifr-bench/results/results.json (node-jitless strategy)
  *
  * Writes:
@@ -280,18 +282,100 @@ function median(xs) {
 
 function parseIfrName(name) {
   if (!name) return {};
-  // vdom@10k / vdom-ifr-et@30k / react@30k / content-vdom-ifr
-  const m = String(name)
-    .replace(/\.web\.bundle$/, '')
-    .match(
-      /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)@(1k|3k|5k|10k|20k|30k)$/,
-    );
-  if (m) return { arch: m[1], scale: m[2] };
-  const m2 = String(name).match(
-    /^(?:content-)?(vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react)$/,
+  // Longer arch ids first (vapor-ifr-dense before vapor-ifr before vapor).
+  const archAlt =
+    'vapor-ifr-dense|vapor-ifr-sparse|vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react';
+  // Strip bundle suffix once so both @scale and fixed-size forms match
+  // (graph-eng FCP rows use `bundle: content-vapor-ifr-dense.web.bundle`).
+  const base = String(name).replace(/\.web\.bundle$/, '');
+  // vdom@10k / vapor-ifr-sparse@1k / content-vapor-ifr-dense
+  const m = base.match(
+    new RegExp(`^(?:content-)?(${archAlt})@(1k|3k|5k|10k|20k|30k)$`),
   );
+  if (m) return { arch: m[1], scale: m[2] };
+  const m2 = base.match(new RegExp(`^(?:content-)?(${archAlt})$`));
+  // Fixed-size sfc-probe (~1004 els) maps to the 1k ladder rung.
   if (m2) return { arch: m2[1], scale: '1k' };
   return {};
+}
+
+/**
+ * Graph-eng naming-density cells (#301): vapor-ifr-dense vs vapor-ifr-sparse
+ * same-source FCP + bundle sizes. Native ET remains stub.
+ */
+function ingestGraphEngNaming(unified) {
+  for (const [file, cpu] of [
+    ['browser-results-graph-eng-dense-sparse.json', 1],
+    ['browser-results-graph-eng-dense-sparse-x4.json', 4],
+  ]) {
+    const p = path.join(ifrRoot, 'results', file);
+    const data = readJson(p);
+    if (!data) continue;
+    unified.sources.push({ kind: 'graph-eng-naming-fcp', path: p, cpu });
+    for (const e of normalizeIfrBrowserResults(data)) {
+      const { arch, scale } = parseIfrName(e.name);
+      // Only naming-density A/B cells — don't shadow the main vapor-ifr ladder.
+      if (arch !== 'vapor-ifr-dense' && arch !== 'vapor-ifr-sparse') continue;
+      if (!scale) continue;
+      if (e.fcp != null) {
+        unified.cells.push({
+          schemaVersion: SCHEMA_VERSION,
+          environment: 'lynx-web',
+          architecture: arch,
+          workload: 'content-probe',
+          scale,
+          cpuThrottle: cpu,
+          metric: 'fcp',
+          unit: 'ms',
+          median: e.fcp,
+          campaign: 'graph-eng-naming',
+        });
+      }
+      if (e.settled != null) {
+        unified.cells.push({
+          schemaVersion: SCHEMA_VERSION,
+          environment: 'lynx-web',
+          architecture: arch,
+          workload: 'content-probe',
+          scale,
+          cpuThrottle: cpu,
+          metric: 'settled',
+          unit: 'ms',
+          median: e.settled,
+          campaign: 'graph-eng-naming',
+        });
+      }
+    }
+  }
+
+  const sizesPath = path.join(
+    ifrRoot,
+    'results/sfc-probe-sizes-graph-eng.json',
+  );
+  const sizes = readJson(sizesPath);
+  if (!sizes?.cells) return;
+  unified.sources.push({ kind: 'graph-eng-bundle-sizes', path: sizesPath });
+  for (const row of sizes.cells) {
+    const { arch } = parseIfrName(row.cell);
+    if (arch !== 'vapor-ifr-dense' && arch !== 'vapor-ifr-sparse' && arch !== 'vapor-ifr') {
+      continue;
+    }
+    const gz = row.webBundle?.gzip;
+    if (gz == null) continue;
+    unified.cells.push({
+      schemaVersion: SCHEMA_VERSION,
+      environment: 'lynx-web',
+      architecture: arch,
+      workload: 'content-probe',
+      scale: '1k',
+      cpuThrottle: 1,
+      metric: 'bundle_web_gzip',
+      unit: 'bytes',
+      median: gz,
+      flags: row.flags ?? null,
+      campaign: 'graph-eng-naming',
+    });
+  }
 }
 
 function ingestStrategy(unified) {
@@ -786,6 +870,7 @@ function renderAnalysis(unified, verdicts) {
   md += `## Headline tables (same environment only)\n\n`;
   md += renderStormTable(unified);
   md += renderFcpTable(unified);
+  md += renderGraphEngNamingTable(unified);
   md += `\n## Sources ingested\n\n`;
   for (const s of unified.sources) {
     md += `- ${s.kind}: \`${s.path}\`\n`;
@@ -921,6 +1006,97 @@ function renderFcpTable(unified) {
   return any ? md : '';
 }
 
+function renderGraphEngNamingTable(unified) {
+  const modes = ['vapor-ifr-dense', 'vapor-ifr-sparse', 'vapor-ifr'];
+  const has = modes.some(
+    (m) =>
+      cell(unified, {
+        architecture: m,
+        workload: 'content-probe',
+        metric: 'fcp',
+        scale: '1k',
+        cpuThrottle: 1,
+        campaign: 'graph-eng-naming',
+      }) != null
+      || cell(unified, {
+        architecture: m,
+        workload: 'content-probe',
+        metric: 'fcp',
+        scale: '1k',
+        cpuThrottle: 1,
+      }) != null,
+  );
+  if (!has) return '';
+
+  const fcp = (m, cpu) =>
+    cell(unified, {
+      architecture: m,
+      workload: 'content-probe',
+      metric: 'fcp',
+      scale: '1k',
+      cpuThrottle: cpu,
+      campaign: 'graph-eng-naming',
+    })?.median
+    ?? cell(unified, {
+      architecture: m,
+      workload: 'content-probe',
+      metric: 'fcp',
+      scale: '1k',
+      cpuThrottle: cpu,
+    })?.median;
+
+  const gz = (m) =>
+    cell(unified, {
+      architecture: m,
+      workload: 'content-probe',
+      metric: 'bundle_web_gzip',
+      scale: '1k',
+      campaign: 'graph-eng-naming',
+    })?.median;
+
+  const dense1 = fcp('vapor-ifr-dense', 1);
+  const sparse1 = fcp('vapor-ifr-sparse', 1);
+  const dense4 = fcp('vapor-ifr-dense', 4);
+  const sparse4 = fcp('vapor-ifr-sparse', 4);
+
+  let md = `### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2\n\n`;
+  md += `Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the full native skeleton.\n\n`;
+  md += `| cell | naming | web gzip | FCP ×1 | Δ vs dense | FCP ×4 | Δ vs dense |\n`;
+  md += `|---|---|---:|---:|---:|---:|---:|\n`;
+  for (const m of modes) {
+    const d1 = fcp(m, 1);
+    const d4 = fcp(m, 4);
+    const naming =
+      m === 'vapor-ifr-dense' ? 'dense' : m === 'vapor-ifr-sparse' || m === 'vapor-ifr'
+        ? 'sparse'
+        : '?';
+    const delta = (v, base) =>
+      v == null || base == null || base === 0
+        ? '—'
+        : `${pctDelta(v, base).toFixed(1)}%`;
+    md += `| ${m} | ${naming} | ${gz(m) ?? '—'} | ${
+      d1 == null ? '—' : d1.toFixed(1)
+    } | ${delta(d1, dense1)} | ${
+      d4 == null ? '—' : d4.toFixed(1)
+    } | ${delta(d4, dense4)} |\n`;
+  }
+  md += `\n`;
+  if (dense1 != null && sparse1 != null) {
+    md += `×1 sparse/dense = ${(sparse1 / dense1).toFixed(3)}× (${
+      pctDelta(sparse1, dense1).toFixed(1)
+    }%). `;
+  }
+  if (dense4 != null && sparse4 != null) {
+    md += `×4 sparse/dense = ${(sparse4 / dense4).toFixed(3)}× (${
+      pctDelta(sparse4, dense4).toFixed(1)
+    }%) — treat as noise / inconclusive for scale hedge.\n\n`;
+  } else {
+    md += `\n\n`;
+  }
+  md += `Full write-up: \`packages/ifr-bench/GRAPH-ENG-MATRIX.md\`.\n\n`;
+  return md;
+}
+
 function main() {
   let sha = 'unknown';
   try {
@@ -946,6 +1122,7 @@ function main() {
   ingestTableStorms(unified);
   ingestInstrumented(unified);
   ingestIfrScaleFcp(unified);
+  ingestGraphEngNaming(unified);
   ingestStrategy(unified);
   ingestWebBaseline(unified);
 
