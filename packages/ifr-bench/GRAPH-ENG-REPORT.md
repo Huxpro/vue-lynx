@@ -16,12 +16,18 @@ frontier of the subtree). Every "template mechanism" in every framework is
 just a choice of *representation* for that residual and a choice of *which
 sub-terms get names*. That gives four orthogonal axes:
 
-| Axis | Question | Levels |
+| Column | Question | Levels (terminology v2) |
 |---|---|---|
-| **A. Staging** | what form does the residual exist in? | `OpStream` → `Data` → `Code` → `Engine` |
-| **B. Naming** | which sub-terms are let-named for cross-thread mutation? | `Dense` / `Sparse` |
-| **C. Provenance** | how is the hole set known? | `intrinsic` / `recovered` / `—` |
-| **D. Deployment** | thread topology × lifetime | `Split`/`Fused` × `Durable`/`Ephemeral` |
+| **Staging** | what form does the residual exist in? | `ops (interp)` → `tree (interp)` → `code (compiled)` → `native (compiled)` — the interp/compiled split is the Futamura boundary |
+| **Naming** | what is the UNIT of cross-thread identity? | `node` (every node named) / `block` (one base id + offsets per template block) |
+| **Addressing** | how are named nodes located? | `random-access` / `traversal` / `traversal+recover` |
+| **Provider** | who materializes the residual? | `BTS` / `MTS` / `Engine` |
+| **Lifetime** | how long does the materialization live? | `persistent` / `ephemeral` (browser-fused case: `thread=local`) |
+
+Legacy vocabulary maps 1:1 and stays accepted by every flag: staging
+`opstream`≡ops, `data`≡tree, `engine`≡native; naming `dense`≡node,
+`sparse`≡block; provenance `intrinsic`≈random-access,
+`recovered`≈traversal+recover; deployment split into Provider × Lifetime.
 
 ### 1.2 Data vs Code vs Engine — the Futamura reading
 
@@ -52,18 +58,35 @@ runtime work per rung: first the JS *interpretation*, then JS *itself*.
   "sparse A2" ≡ recovered Data-Template; "JS ET" ≡ intrinsic
   Code-Template.
 
+### 1.3b Upstream-Vue ↔ Lynx concept bridge
+
+Where a name can borrow an upstream Vue concept, it does — each of our
+mechanisms is the Lynx-engine realization of something Vue already names:
+
+| Upstream Vue concept | Information it carries | Lynx-side counterpart (v2 term) |
+|---|---|---|
+| **Block** (openBlock / patchFlag / dynamicChildren) | intrinsic mutation frontier of a subtree | **block naming** + random-access addressing — the Code-Template's hole list IS the Block's dynamicChildren |
+| Vapor `template()` string | the static residual | **Tree-Template** residual (`REGISTER_TREE` serialized tree) |
+| Vapor navigation (child/next/nthChild) | positional addressing | **traversal** addressing (BG walks the ShadowElement facade; MT walks anonymous natives) |
+| `__vlxAddressing` (ours) | *recovered* mutation frontier | block naming for the Tree-Template (traversal+recover) — Vue's Block generalized to a no-vdom render model: VDOM declares it intrinsically, Vapor recovers the equivalent by compile-time analysis (hence the tag-fingerprint fail-safe: recovered info can be wrong, declared info cannot) |
+| Vapor-Web `cloneNode` | native prototype clone | **Engine-Template** (native staging, *thread=local*) |
+| SSR **hydration** | adopt pre-existing output | **IFR hydration** (the ephemeral MTS copy is adopted frame-by-frame or replaced by full replay) |
+| static hoisting / partial evaluation | static folding | the residual itself (`λ holes. tree` partially evaluated at compile time) |
+
 ### 1.4 Placement table (current world → coordinates)
 
-| Mechanism | A / B / C / D | Term |
-|---|---|---|
-| VDOM ops | OpStream / Dense / intrinsic / Split·Durable | Op Stream |
-| VDOM Block (openBlock/patchFlag) | — provenance source, not a materialization | — |
-| Vapor A1 dense `CLONE_TREE` | Data / Dense / — / Split·Durable | **Named Tree** |
-| Vapor A2 (#309) | Data / Sparse / recovered / Split·Durable | **recovered Data-Template** |
-| VDOM JS ET (`INSTANTIATE_TEMPLATE`) | Code / Sparse / intrinsic / Split·Durable or Ephemeral | **intrinsic Code-Template** |
-| ReactLynx Snapshot | Code / Sparse / intrinsic / Split·Durable | **intrinsic Code-Template** |
-| Native ET (`__CreateElementTemplate`) | Engine / Sparse / intrinsic(slots) / Split·Durable | **Engine-Template** |
-| Vapor-Web `cloneNode` | Engine / Sparse / navigated / Fused·Durable | browser Engine-Template |
+| Mechanism | Staging | Naming | Addressing | Provider | Lifetime | Term |
+|---|---|---|---|---|---|---|
+| VDOM ops | ops | node | random-access | BTS | persistent | Op Stream |
+| Vapor A1 | tree | node | traversal | BTS | persistent | **Named Tree** |
+| Vapor A2 (#309) | tree | **block** | traversal+recover | BTS | persistent | **Tree-Template** |
+| VDOM JS ET (`INSTANTIATE_TEMPLATE`) | code | block | random-access | BTS / MTS(IFR) | persistent / **ephemeral** | **Code-Template** |
+| ReactLynx Snapshot | code | block | random-access | MTS(first frame)/BTS(updates) | persistent | **Code-Template** |
+| Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | **Engine-Template** |
+| Vapor-Web `cloneNode` | native | block | traversal | Engine | persistent · *thread=local* | browser Engine-Template |
+
+(VDOM Block/openBlock+patchFlag is an addressing/provenance *source*, not
+a materialization mechanism — it stays off the table.)
 
 Three hard conclusions the table forces:
 

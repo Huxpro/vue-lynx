@@ -24,19 +24,23 @@ const outStem = process.argv[3]
 const data = JSON.parse(fs.readFileSync(inFile, 'utf8'));
 const perOp = data.perOp;
 
-/** Four-axis coordinates per unified cell id. */
+/**
+ * Five-axis coordinates (terminology v2) per legacy bench id.
+ * canonical = the vue-lynx/internal/matrix legalCells() id.
+ * Coordinate columns: staging/naming/addressing/provider/lifetime.
+ */
 const CELLS = {
-  'vdom': { coord: 'OpStream/Dense/intrinsic/Split·Durable', term: 'Op Stream' },
-  'vdom-ifr': { coord: 'OpStream/Dense/intrinsic/Split·Durable+Ephemeral', term: 'Op Stream + IFR' },
-  'vdom-et': { coord: 'Code/Sparse/intrinsic/Split·Durable', term: 'Code-Template' },
-  'vdom-ifr-et': { coord: 'Code/Sparse/intrinsic/Split·Durable+Ephemeral', term: 'Code-Template + IFR' },
-  'vapor': { coord: 'Data/Sparse/recovered/Split·Durable', term: 'Data-Template' },
-  'vapor-dense': { coord: 'Data/Dense/—/Split·Durable', term: 'Named Tree' },
-  'vapor-engine': { coord: 'Engine/Sparse/recovered/Split·Durable (STUB on web)', term: 'Engine-Template (stub)' },
-  'vapor-ifr': { coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral', term: 'Data-Template + IFR' },
-  'vapor-ifr-dense': { coord: 'Data/Dense/—/Split·Durable+Ephemeral', term: 'Named Tree + IFR' },
-  'vapor-ifr-sparse': { coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral', term: 'Data-Template + IFR' },
-  'vapor-ifr-engine-et': { coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et)', term: 'Data-Template + IFR engine-et paint (stub)' },
+  'vdom': { canonical: 'vdom-ops-node', coord: 'ops/node/random-access/BTS/persistent', term: 'Op Stream' },
+  'vdom-ifr': { canonical: 'vdom-ops-node-ifr', coord: 'ops/node/random-access/BTS+MTS/persistent+ephemeral', term: 'Op Stream + IFR' },
+  'vdom-et': { canonical: 'vdom-code-block', coord: 'code/block/random-access/BTS/persistent', term: 'Code-Template' },
+  'vdom-ifr-et': { canonical: 'vdom-code-block-ifr', coord: 'code/block/random-access/BTS+MTS/persistent+ephemeral', term: 'Code-Template + IFR' },
+  'vapor': { canonical: 'vapor-tree-block', coord: 'tree/block/traversal+recover/BTS/persistent', term: 'Tree-Template' },
+  'vapor-dense': { canonical: 'vapor-tree-node', coord: 'tree/node/traversal/BTS/persistent', term: 'Named Tree' },
+  'vapor-engine': { canonical: 'vapor-native-block', coord: 'native/block/traversal+recover/Engine/persistent (N/A on web)', term: 'Engine-Template (N/A)' },
+  'vapor-ifr': { canonical: 'vapor-tree-block-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR' },
+  'vapor-ifr-dense': { canonical: 'vapor-tree-node-ifr', coord: 'tree/node/traversal/BTS+MTS/persistent+ephemeral', term: 'Named Tree + IFR' },
+  'vapor-ifr-sparse': { canonical: 'vapor-tree-block-ifr', aliasOf: 'vapor-ifr', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral', term: 'Tree-Template + IFR (alias)' },
+  'vapor-ifr-engine-et': { canonical: 'vapor-tree-block-ifr-native-paint', coord: 'tree/block/traversal+recover/BTS+MTS/persistent+ephemeral(native-paint) (N/A on web)', term: 'Tree-Template + IFR native-paint (N/A)' },
 };
 
 const modes = Object.keys(perOp).filter((m) => CELLS[m]);
@@ -64,14 +68,14 @@ const perCell = modes.map((m) => {
 // Factor pairs — one axis moved at a time.
 const PAIRS = {
   'render vdom→vapor (no-IFR)': ['vdom', 'vapor'],
-  'staging opstream→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
-  'staging opstream→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
-  'naming dense→sparse (vapor, no-IFR)': ['vapor-dense', 'vapor'],
-  'naming dense→sparse (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr-sparse'],
-  'staging data→engine (vapor, STUB on web)': ['vapor', 'vapor-engine'],
+  'staging ops→code (vdom, no-IFR)': ['vdom', 'vdom-et'],
+  'staging ops→code (vdom, +IFR)': ['vdom-ifr', 'vdom-ifr-et'],
+  'naming node→block (vapor, no-IFR)': ['vapor-dense', 'vapor'],
+  'naming node→block (vapor, +IFR)': ['vapor-ifr-dense', 'vapor-ifr-sparse'],
+  'staging tree→native (vapor, N/A on web)': ['vapor', 'vapor-engine'],
   'ifr off→on (vdom)': ['vdom', 'vdom-ifr'],
-  'ifr off→on (vapor sparse)': ['vapor', 'vapor-ifr'],
-  'ifrPaint plain→engine-et (vapor, STUB on web)': [
+  'ifr off→on (vapor block)': ['vapor', 'vapor-ifr'],
+  'ifrPaint plain→native-paint (N/A on web)': [
     'vapor-ifr-sparse',
     'vapor-ifr-engine-et',
   ],
@@ -112,7 +116,7 @@ fs.mkdirSync(path.dirname(outStem), { recursive: true });
 fs.writeFileSync(`${outStem}.json`, `${JSON.stringify(out, null, 2)}\n`);
 
 // Markdown.
-let md = '# Unified benchmark — four-axis per-cell create/update + factors (generated)\n\n';
+let md = '# Unified benchmark — five-axis per-cell create/update + factors (generated)\n\n';
 md += `source: \`${path.basename(inFile)}\` (${data.meta?.date ?? ''}, reps=${data.meta?.stormReps})\n\n`;
 for (const size of sizes) {
   md += `## Per-cell @${size} (median ms)\n\n`;
