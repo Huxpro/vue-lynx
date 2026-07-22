@@ -42,6 +42,7 @@ const ifrStorms = readJson('results/cross-storms-unified-ifr.json');
 const reactStorms = readJson('results/cross-storms-unified-react.json');
 const scale6 = readJson('results/cross-storms-scale6.json');
 const graphEngFactors = readJson('results/unified/graph-eng-unified-factors.json');
+const graphEng4axisStorms = readJson('results/cross-storms-graph-eng-4axis.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -59,12 +60,18 @@ function mergePerOp(...sources) {
   return out;
 }
 
-const perOp = mergePerOp(scale6, ifrStorms, reactStorms);
+const perOp = mergePerOp(scale6, ifrStorms, reactStorms, graphEng4axisStorms);
 
 const COLUMN_KEYS = [
   'vapor',
+  'vapor-dense',
+  'vapor-engine',
   'vapor-ifr',
+  'vapor-ifr-dense',
+  'vapor-ifr-sparse',
+  'vapor-ifr-engine-et',
   'vdom',
+  'vdom-et',
   'vdom-ifr',
   'vdom-ifr-et',
   'react',
@@ -87,10 +94,14 @@ const STORM_ROW_KEYS = [
 const FCP_ARCH_KEYS = [
   { key: 'react', color: '#eda100' },
   { key: 'vdom', color: '#6b7280' },
+  { key: 'vdom-et', color: '#374151' },
   { key: 'vdom-ifr', color: '#2563eb' },
   { key: 'vdom-ifr-et', color: '#7c3aed' },
   { key: 'vapor', color: '#059669' },
+  { key: 'vapor-dense', color: '#66c2a4' },
+  { key: 'vapor-engine', color: '#0d8a5f' },
   { key: 'vapor-ifr', color: '#d97706' },
+  { key: 'vapor-ifr-engine-et', color: '#92400e' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
@@ -309,7 +320,13 @@ ${marks}
 
 function stormSeries(op, t, ticks = 1) {
   const cols = columnsFor(t);
-  const colors = ['#2a78d6', '#d97706', '#1baf7a', '#2563eb', '#7c3aed', '#eda100'];
+  const colors = [
+    '#1baf7a', '#0d8a5f', '#66c2a4', // vapor family (greens)
+    '#d97706', '#b45309', '#f59e0b', '#92400e', // vapor-ifr family (ambers)
+    '#6b7280', '#374151', // vdom, vdom-et (grays)
+    '#2563eb', '#7c3aed', // vdom-ifr, vdom-ifr-et
+    '#eda100', // react
+  ];
   return cols
     .map((c, i) => {
       const pts = ['1k', '10k', '30k']
@@ -336,7 +353,9 @@ function fcpSeries(cpu, t) {
         return { x: SIZE_N[scale], y: v, label: scale };
       }).filter(Boolean),
     }))
-    .filter((s) => s.pts.length);
+    // Fixed-size 4axis cells exist only at the 1k rung — keep the line
+    // charts to series that actually form a line (the table shows all).
+    .filter((s) => s.pts.length >= 2);
 }
 
 function g(arch, scale, metric, workload = 'table', cpu = 1) {
@@ -500,6 +519,76 @@ function graphEngFactorsSection(t) {
     return `${html}</tbody></table>`;
   };
 
+  /**
+   * Diverging horizontal bar chart of marginal factor deltas: one row per
+   * factor, one bar per op (create / update10th / updateStorm). Negative
+   * (faster) bars grow left in green; positive in red. Pure inline SVG —
+   * same self-contained constraint as the line charts.
+   */
+  const factorBars = (size) => {
+    const OPSB = [
+      { op: 'create', color: 'var(--s1)' },
+      { op: 'update10th', color: 'var(--s2)' },
+      { op: 'updateStorm', color: 'var(--s5)' },
+    ];
+    const entries = Object.entries(graphEngFactors.factors ?? {})
+      .map(([name, f]) => ({
+        name,
+        vals: OPSB.map(({ op }) => f[`${op}@${size}`]?.deltaPct ?? null),
+      }))
+      .filter((e) => e.vals.some((v) => v != null));
+    if (!entries.length) return '';
+
+    const maxAbs = Math.max(
+      10,
+      ...entries.flatMap((e) => e.vals.filter((v) => v != null).map(Math.abs)),
+    );
+    const W = 760;
+    const LABEL_W = 300;
+    const rowH = 16;
+    const groupGap = 12;
+    const groupH = OPSB.length * rowH + groupGap;
+    const MT2 = 26;
+    const H = MT2 + entries.length * groupH + 24;
+    const plotW = W - LABEL_W - 60;
+    const x0 = LABEL_W + plotW / 2;
+    const px = (v) => (v / maxAbs) * (plotW / 2);
+
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" style="max-width:${W}px;width:100%">`;
+    // center axis + reference gridlines
+    svg += `<line x1="${x0}" y1="${MT2 - 8}" x2="${x0}" y2="${H - 18}" stroke="var(--line)" stroke-width="1.5"/>`;
+    for (const gpct of [-Math.round(maxAbs), Math.round(maxAbs)]) {
+      const gx = x0 + px(gpct);
+      svg += `<line x1="${gx}" y1="${MT2 - 4}" x2="${gx}" y2="${H - 18}" stroke="var(--line)" stroke-dasharray="3 4"/>`
+        + `<text x="${gx}" y="${H - 4}" font-size="10" fill="var(--ink-2)" text-anchor="middle">${gpct > 0 ? '+' : ''}${gpct}%</text>`;
+    }
+    svg += `<text x="${x0}" y="${H - 4}" font-size="10" fill="var(--ink-2)" text-anchor="middle">0</text>`;
+
+    let y = MT2;
+    for (const e of entries) {
+      svg += `<text x="${LABEL_W - 8}" y="${y + (OPSB.length * rowH) / 2 + 4}" font-size="11" fill="var(--ink)" text-anchor="end">${escapeHtml(e.name)}</text>`;
+      OPSB.forEach(({ color }, i) => {
+        const v = e.vals[i];
+        if (v == null) return;
+        const w = Math.abs(px(v));
+        const bx = v < 0 ? x0 - w : x0;
+        const by = y + i * rowH + 2;
+        svg += `<rect x="${bx}" y="${by}" width="${Math.max(w, 0.5)}" height="${rowH - 5}" fill="${color}" opacity="0.85" rx="2"/>`
+          + `<text x="${v < 0 ? bx - 4 : bx + w + 4}" y="${by + rowH - 8}" font-size="9.5" fill="var(--ink-2)" text-anchor="${v < 0 ? 'end' : 'start'}">${v > 0 ? '+' : ''}${v}%</text>`;
+      });
+      y += groupH;
+    }
+    svg += '</svg>';
+
+    const legend = OPSB.map(({ op, color }) =>
+      `<span><i style="background:${color};opacity:.85"></i>${escapeHtml(op)}</span>`,
+    ).join(' ');
+    const zhT = t.lang.startsWith('zh');
+    return `<div class="chart"><h3 style="font-size:13px;margin:0 0 2px">${
+      zhT ? `主效应 @${size}（Δ% — 左/负 = 更快）` : `Main effects @${size} (Δ% — left/negative = faster)`
+    }</h3><div class="legend" style="margin:2px 0 6px">${legend}</div>${svg}</div>`;
+  };
+
   return `
 <h2>${escapeHtml(t.hGraphEngFactors)}</h2>
 <p class="sub">${t.subGraphEngFactors}</p>
@@ -507,9 +596,12 @@ function graphEngFactorsSection(t) {
 <div class="scroll" style="margin-top:10px">${cellTable('10k')}</div>
 <p class="sub" style="margin-top:14px">${
     t.lang.startsWith('zh')
-      ? '主效应（每次只动一根轴）：'
-      : 'Main effects (one axis moved at a time):'
+      ? '主效应（每次只动一根轴）。图：柱向左（负）= 该轴让该操作更快;±10% 内视为噪声（reps=2）。engine 因子在 web 上是 stub 探测开销。'
+      : 'Main effects (one axis moved at a time). Charts: bars left (negative) = the axis makes that op faster; read ±10% as noise (reps=2). Engine factors are stub probe overhead on web.'
   }</p>
+<div class="charts">
+  ${sizes.map((sz) => factorBars(sz)).join('')}
+</div>
 ${sizes.map((sz) => `<div class="scroll" style="margin-top:10px">${factorTable(sz)}</div>`).join('')}
 `;
 }

@@ -286,7 +286,7 @@ function parseIfrName(name) {
   if (!name) return {};
   // Longer arch ids first (vapor-ifr-dense before vapor-ifr before vapor).
   const archAlt =
-    'vapor-ifr-dense|vapor-ifr-sparse|vdom-ifr-et|vdom-ifr|vdom|vapor-ifr|vapor|react';
+    'vapor-ifr-engine-et|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
   // Strip bundle suffix once so both @scale and fixed-size forms match
   // (graph-eng FCP rows use `bundle: content-vapor-ifr-dense.web.bundle`).
   const base = String(name).replace(/\.web\.bundle$/, '');
@@ -305,10 +305,22 @@ function parseIfrName(name) {
  * Graph-eng naming-density cells (#301): vapor-ifr-dense vs vapor-ifr-sparse
  * same-source FCP + bundle sizes. Native ET remains stub.
  */
+/** Archs whose FCP exists only as fixed-size sfc-probe cells (1k rung). */
+const GRAPH_ENG_4AXIS_ARCHS = new Set([
+  'vdom-et',
+  'vapor-dense',
+  'vapor-engine',
+  'vapor-ifr-engine-et',
+]);
+
 function ingestGraphEngNaming(unified) {
-  for (const [file, cpu] of [
-    ['browser-results-graph-eng-dense-sparse.json', 1],
-    ['browser-results-graph-eng-dense-sparse-x4.json', 4],
+  for (const [file, cpu, archFilter] of [
+    ['browser-results-graph-eng-dense-sparse.json', 1, null],
+    ['browser-results-graph-eng-dense-sparse-x4.json', 4, null],
+    // Four-axis permutation run (#325): ingest ONLY the new archs so the
+    // pre-existing ladder cells are not shadowed by a different-day run.
+    ['browser-results-graph-eng-4axis.json', 1, GRAPH_ENG_4AXIS_ARCHS],
+    ['browser-results-graph-eng-4axis-x4.json', 4, GRAPH_ENG_4AXIS_ARCHS],
   ]) {
     const p = path.join(ifrRoot, 'results', file);
     const data = readJson(p);
@@ -316,8 +328,13 @@ function ingestGraphEngNaming(unified) {
     unified.sources.push({ kind: 'graph-eng-naming-fcp', path: p, cpu });
     for (const e of normalizeIfrBrowserResults(data)) {
       const { arch, scale } = parseIfrName(e.name);
-      // Only naming-density A/B cells — don't shadow the main vapor-ifr ladder.
-      if (arch !== 'vapor-ifr-dense' && arch !== 'vapor-ifr-sparse') continue;
+      // Default: only naming-density A/B cells — don't shadow the main
+      // vapor-ifr ladder. 4axis files: only the new archs.
+      if (archFilter) {
+        if (!archFilter.has(arch)) continue;
+      } else if (arch !== 'vapor-ifr-dense' && arch !== 'vapor-ifr-sparse') {
+        continue;
+      }
       if (!scale) continue;
       if (e.fcp != null) {
         unified.cells.push({
@@ -350,16 +367,19 @@ function ingestGraphEngNaming(unified) {
     }
   }
 
-  const sizesPath = path.join(
-    ifrRoot,
-    'results/sfc-probe-sizes-graph-eng.json',
-  );
+  for (const [sizesFile, archOk] of [
+    ['results/sfc-probe-sizes-graph-eng.json',
+      (a) => a === 'vapor-ifr-dense' || a === 'vapor-ifr-sparse' || a === 'vapor-ifr'],
+    ['results/sfc-probe-sizes-graph-eng-4axis.json',
+      (a) => GRAPH_ENG_4AXIS_ARCHS.has(a)],
+  ]) {
+  const sizesPath = path.join(ifrRoot, sizesFile);
   const sizes = readJson(sizesPath);
-  if (!sizes?.cells) return;
+  if (!sizes?.cells) continue;
   unified.sources.push({ kind: 'graph-eng-bundle-sizes', path: sizesPath });
   for (const row of sizes.cells) {
     const { arch } = parseIfrName(row.cell);
-    if (arch !== 'vapor-ifr-dense' && arch !== 'vapor-ifr-sparse' && arch !== 'vapor-ifr') {
+    if (!archOk(arch)) {
       continue;
     }
     const gz = row.webBundle?.gzip;
@@ -377,6 +397,7 @@ function ingestGraphEngNaming(unified) {
       flags: row.flags ?? null,
       campaign: 'graph-eng-naming',
     });
+  }
   }
 }
 

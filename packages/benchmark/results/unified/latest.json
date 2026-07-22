@@ -1,10 +1,10 @@
 {
   "meta": {
-    "date": "2026-07-22T13:47:54.670Z",
-    "sha": "22dc540",
+    "date": "2026-07-22T15:58:26.085Z",
+    "sha": "4c79530",
     "node": "v22.22.2",
     "cpus": 4,
-    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.80GHz",
     "schemaVersion": 1
   },
   "environments": {
@@ -295,8 +295,22 @@
       "cpu": 4
     },
     {
+      "kind": "graph-eng-naming-fcp",
+      "path": "/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis.json",
+      "cpu": 1
+    },
+    {
+      "kind": "graph-eng-naming-fcp",
+      "path": "/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis-x4.json",
+      "cpu": 4
+    },
+    {
       "kind": "graph-eng-bundle-sizes",
       "path": "/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json"
+    },
+    {
+      "kind": "graph-eng-bundle-sizes",
+      "path": "/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng-4axis.json"
     },
     {
       "kind": "strategy-node-jitless",
@@ -6470,6 +6484,198 @@
     {
       "schemaVersion": 1,
       "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 313.29999999981374,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 315.0999999998603,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 261.29999999981374,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 262,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 222.29999999981374,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 222.9000000001397,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 213.5,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 213.80000000004657,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 863.3999999999069,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 867.8000000000466,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 831.1000000000931,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 835.3000000000466,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 909,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 952.5999999998603,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 808.8999999999069,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 842.2999999998137,
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
       "architecture": "vapor-ifr",
       "workload": "content-probe",
       "scale": "1k",
@@ -6526,6 +6732,102 @@
         "enableSparseNaming": true,
         "slots": "off",
         "naming": "sparse",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vdom-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 77535,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": true,
+        "templateNaming": "sparse",
+        "templateStaging": "code",
+        "ifrPaint": null,
+        "slots": "on",
+        "naming": "n/a",
+        "coordinate": "Code/Sparse/intrinsic/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-dense",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 46794,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "dense",
+        "templateStaging": "data",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "dense",
+        "coordinate": "Data/Dense/—/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-engine",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 47641,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "engine",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Engine/Sparse/recovered/Split·Durable (stub-capable)",
+        "nativeEt": "probe(stub-on-web)"
+      },
+      "campaign": "graph-eng-naming"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-engine-et",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "bundle_web_gzip",
+      "unit": "bytes",
+      "median": 90813,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "data",
+        "ifrPaint": "engine-et",
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et paint)",
         "nativeEt": "stub"
       },
       "campaign": "graph-eng-naming"
