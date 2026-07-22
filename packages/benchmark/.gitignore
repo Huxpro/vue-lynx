@@ -20,3 +20,6 @@ apps/ui-react/dist-content/
 
 # scale-proof outputs (one-cell capability checks, not datasets)
 results/unified-proof*
+
+# diagnostic capability checks (not datasets)
+results/unified-diag*
