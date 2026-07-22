@@ -1,0 +1,743 @@
+{
+  "source": "cross-storms-graph-eng-4axis.json",
+  "meta": {
+    "date": "2026-07-22T13:31:54.554Z",
+    "sha": "1fa35bf",
+    "node": "v22.22.2",
+    "playwright": "1.61.1",
+    "reactLynxVersion": "0.122.1",
+    "vueVersion": "3.6.0-beta.17",
+    "webCoreVersion": "0.22.1",
+    "cpus": 4,
+    "cpuModel": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "stormReps": 2
+  },
+  "note": "Real mouse-click-driven unified table app on dual-thread Lynx-for-Web. create = Create N rows; update = update10th / updateStorm (50 ticks); engine cells run with __VUE_LYNX_ENGINE_ET_STATUS__ = stub (family absent on web) — their deltas are probe overhead, not engine wins.",
+  "perCell": [
+    {
+      "cell": "vdom",
+      "coord": "OpStream/Dense/intrinsic/Split·Durable",
+      "term": "Op Stream",
+      "create@1k": 144.8,
+      "update10th@1k": 20.3,
+      "select@1k": 30.3,
+      "updateStorm@1k": 117.1,
+      "selectStorm@1k": 54.9,
+      "create@10k": 1472.7,
+      "update10th@10k": 93.4,
+      "select@10k": 68.4,
+      "updateStorm@10k": 1463.7,
+      "selectStorm@10k": 743.4
+    },
+    {
+      "cell": "vdom-ifr",
+      "coord": "OpStream/Dense/intrinsic/Split·Durable+Ephemeral",
+      "term": "Op Stream + IFR",
+      "create@1k": 160,
+      "update10th@1k": 23.9,
+      "select@1k": 30.3,
+      "updateStorm@1k": 108.4,
+      "selectStorm@1k": 62.8,
+      "create@10k": 1477.5,
+      "update10th@10k": 99,
+      "select@10k": 60.5,
+      "updateStorm@10k": 1403.2,
+      "selectStorm@10k": 643.4
+    },
+    {
+      "cell": "vdom-ifr-et",
+      "coord": "Code/Sparse/intrinsic/Split·Durable+Ephemeral",
+      "term": "Code-Template + IFR",
+      "create@1k": 149.8,
+      "update10th@1k": 18.8,
+      "select@1k": 29.6,
+      "updateStorm@1k": 112.1,
+      "selectStorm@1k": 60.7,
+      "create@10k": 1460,
+      "update10th@10k": 103.3,
+      "select@10k": 62.1,
+      "updateStorm@10k": 1405.4,
+      "selectStorm@10k": 674.5
+    },
+    {
+      "cell": "vdom-et",
+      "coord": "Code/Sparse/intrinsic/Split·Durable",
+      "term": "Code-Template",
+      "create@1k": 152.7,
+      "update10th@1k": 19.8,
+      "select@1k": 30,
+      "updateStorm@1k": 114.8,
+      "selectStorm@1k": 62.2,
+      "create@10k": 1555.6,
+      "update10th@10k": 88.9,
+      "select@10k": 66.7,
+      "updateStorm@10k": 1340.4,
+      "selectStorm@10k": 712.9
+    },
+    {
+      "cell": "vapor",
+      "coord": "Data/Sparse/recovered/Split·Durable",
+      "term": "Data-Template",
+      "create@1k": 161.1,
+      "update10th@1k": 17.2,
+      "select@1k": 29.5,
+      "updateStorm@1k": 53.8,
+      "selectStorm@1k": 21.5,
+      "create@10k": 1441.5,
+      "update10th@10k": 64.2,
+      "select@10k": 38.2,
+      "updateStorm@10k": 663.6,
+      "selectStorm@10k": 59.2
+    },
+    {
+      "cell": "vapor-dense",
+      "coord": "Data/Dense/—/Split·Durable",
+      "term": "Named Tree",
+      "create@1k": 166.6,
+      "update10th@1k": 20.3,
+      "select@1k": 30.1,
+      "updateStorm@1k": 40.7,
+      "selectStorm@1k": 24.5,
+      "create@10k": 1498.1,
+      "update10th@10k": 62,
+      "select@10k": 34.8,
+      "updateStorm@10k": 739.5,
+      "selectStorm@10k": 70.6
+    },
+    {
+      "cell": "vapor-engine",
+      "coord": "Engine/Sparse/recovered/Split·Durable (STUB on web)",
+      "term": "Engine-Template (stub)",
+      "create@1k": 165,
+      "update10th@1k": 17.3,
+      "select@1k": 20.7,
+      "updateStorm@1k": 46.8,
+      "selectStorm@1k": 18.4,
+      "create@10k": 1415.9,
+      "update10th@10k": 57.2,
+      "select@10k": 36.6,
+      "updateStorm@10k": 658.2,
+      "selectStorm@10k": 57.7
+    },
+    {
+      "cell": "vapor-ifr",
+      "coord": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+      "term": "Data-Template + IFR",
+      "create@1k": 176,
+      "update10th@1k": 19.9,
+      "select@1k": 28.5,
+      "updateStorm@1k": 40.9,
+      "selectStorm@1k": 20.5,
+      "create@10k": 1500.8,
+      "update10th@10k": 62.6,
+      "select@10k": 35.1,
+      "updateStorm@10k": 701.4,
+      "selectStorm@10k": 57.1
+    },
+    {
+      "cell": "vapor-ifr-dense",
+      "coord": "Data/Dense/—/Split·Durable+Ephemeral",
+      "term": "Named Tree + IFR",
+      "create@1k": 172.7,
+      "update10th@1k": 20,
+      "select@1k": 29.4,
+      "updateStorm@1k": 41.4,
+      "selectStorm@1k": 20,
+      "create@10k": 1422.6,
+      "update10th@10k": 61.8,
+      "select@10k": 41,
+      "updateStorm@10k": 729.9,
+      "selectStorm@10k": 74.7
+    },
+    {
+      "cell": "vapor-ifr-sparse",
+      "coord": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+      "term": "Data-Template + IFR",
+      "create@1k": 168.2,
+      "update10th@1k": 16.8,
+      "select@1k": 29.8,
+      "updateStorm@1k": 41.6,
+      "selectStorm@1k": 18.2,
+      "create@10k": 1572.3,
+      "update10th@10k": 69.8,
+      "select@10k": 45.1,
+      "updateStorm@10k": 798.6,
+      "selectStorm@10k": 68.2
+    },
+    {
+      "cell": "vapor-ifr-engine-et",
+      "coord": "Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et)",
+      "term": "Data-Template + IFR engine-et paint (stub)",
+      "create@1k": 173.3,
+      "update10th@1k": 17.1,
+      "select@1k": 30,
+      "updateStorm@1k": 41.3,
+      "selectStorm@1k": 19.8,
+      "create@10k": 1488.2,
+      "update10th@10k": 67.6,
+      "select@10k": 33.4,
+      "updateStorm@10k": 765.4,
+      "selectStorm@10k": 69.1
+    }
+  ],
+  "factors": {
+    "render vdom→vapor (no-IFR)": {
+      "create@1k": {
+        "from": 144.8,
+        "to": 161.1,
+        "deltaMs": 16.3,
+        "deltaPct": 11.3
+      },
+      "update10th@1k": {
+        "from": 20.3,
+        "to": 17.2,
+        "deltaMs": -3.1,
+        "deltaPct": -15.3
+      },
+      "select@1k": {
+        "from": 30.3,
+        "to": 29.5,
+        "deltaMs": -0.8,
+        "deltaPct": -2.6
+      },
+      "updateStorm@1k": {
+        "from": 117.1,
+        "to": 53.8,
+        "deltaMs": -63.3,
+        "deltaPct": -54.1
+      },
+      "selectStorm@1k": {
+        "from": 54.9,
+        "to": 21.5,
+        "deltaMs": -33.4,
+        "deltaPct": -60.8
+      },
+      "create@10k": {
+        "from": 1472.7,
+        "to": 1441.5,
+        "deltaMs": -31.2,
+        "deltaPct": -2.1
+      },
+      "update10th@10k": {
+        "from": 93.4,
+        "to": 64.2,
+        "deltaMs": -29.2,
+        "deltaPct": -31.3
+      },
+      "select@10k": {
+        "from": 68.4,
+        "to": 38.2,
+        "deltaMs": -30.2,
+        "deltaPct": -44.2
+      },
+      "updateStorm@10k": {
+        "from": 1463.7,
+        "to": 663.6,
+        "deltaMs": -800.1,
+        "deltaPct": -54.7
+      },
+      "selectStorm@10k": {
+        "from": 743.4,
+        "to": 59.2,
+        "deltaMs": -684.2,
+        "deltaPct": -92
+      }
+    },
+    "staging opstream→code (vdom, no-IFR)": {
+      "create@1k": {
+        "from": 144.8,
+        "to": 152.7,
+        "deltaMs": 7.9,
+        "deltaPct": 5.5
+      },
+      "update10th@1k": {
+        "from": 20.3,
+        "to": 19.8,
+        "deltaMs": -0.5,
+        "deltaPct": -2.5
+      },
+      "select@1k": {
+        "from": 30.3,
+        "to": 30,
+        "deltaMs": -0.3,
+        "deltaPct": -1
+      },
+      "updateStorm@1k": {
+        "from": 117.1,
+        "to": 114.8,
+        "deltaMs": -2.3,
+        "deltaPct": -2
+      },
+      "selectStorm@1k": {
+        "from": 54.9,
+        "to": 62.2,
+        "deltaMs": 7.3,
+        "deltaPct": 13.3
+      },
+      "create@10k": {
+        "from": 1472.7,
+        "to": 1555.6,
+        "deltaMs": 82.9,
+        "deltaPct": 5.6
+      },
+      "update10th@10k": {
+        "from": 93.4,
+        "to": 88.9,
+        "deltaMs": -4.5,
+        "deltaPct": -4.8
+      },
+      "select@10k": {
+        "from": 68.4,
+        "to": 66.7,
+        "deltaMs": -1.7,
+        "deltaPct": -2.5
+      },
+      "updateStorm@10k": {
+        "from": 1463.7,
+        "to": 1340.4,
+        "deltaMs": -123.3,
+        "deltaPct": -8.4
+      },
+      "selectStorm@10k": {
+        "from": 743.4,
+        "to": 712.9,
+        "deltaMs": -30.5,
+        "deltaPct": -4.1
+      }
+    },
+    "staging opstream→code (vdom, +IFR)": {
+      "create@1k": {
+        "from": 160,
+        "to": 149.8,
+        "deltaMs": -10.2,
+        "deltaPct": -6.4
+      },
+      "update10th@1k": {
+        "from": 23.9,
+        "to": 18.8,
+        "deltaMs": -5.1,
+        "deltaPct": -21.3
+      },
+      "select@1k": {
+        "from": 30.3,
+        "to": 29.6,
+        "deltaMs": -0.7,
+        "deltaPct": -2.3
+      },
+      "updateStorm@1k": {
+        "from": 108.4,
+        "to": 112.1,
+        "deltaMs": 3.7,
+        "deltaPct": 3.4
+      },
+      "selectStorm@1k": {
+        "from": 62.8,
+        "to": 60.7,
+        "deltaMs": -2.1,
+        "deltaPct": -3.3
+      },
+      "create@10k": {
+        "from": 1477.5,
+        "to": 1460,
+        "deltaMs": -17.5,
+        "deltaPct": -1.2
+      },
+      "update10th@10k": {
+        "from": 99,
+        "to": 103.3,
+        "deltaMs": 4.3,
+        "deltaPct": 4.3
+      },
+      "select@10k": {
+        "from": 60.5,
+        "to": 62.1,
+        "deltaMs": 1.6,
+        "deltaPct": 2.6
+      },
+      "updateStorm@10k": {
+        "from": 1403.2,
+        "to": 1405.4,
+        "deltaMs": 2.2,
+        "deltaPct": 0.2
+      },
+      "selectStorm@10k": {
+        "from": 643.4,
+        "to": 674.5,
+        "deltaMs": 31.1,
+        "deltaPct": 4.8
+      }
+    },
+    "naming dense→sparse (vapor, no-IFR)": {
+      "create@1k": {
+        "from": 166.6,
+        "to": 161.1,
+        "deltaMs": -5.5,
+        "deltaPct": -3.3
+      },
+      "update10th@1k": {
+        "from": 20.3,
+        "to": 17.2,
+        "deltaMs": -3.1,
+        "deltaPct": -15.3
+      },
+      "select@1k": {
+        "from": 30.1,
+        "to": 29.5,
+        "deltaMs": -0.6,
+        "deltaPct": -2
+      },
+      "updateStorm@1k": {
+        "from": 40.7,
+        "to": 53.8,
+        "deltaMs": 13.1,
+        "deltaPct": 32.2
+      },
+      "selectStorm@1k": {
+        "from": 24.5,
+        "to": 21.5,
+        "deltaMs": -3,
+        "deltaPct": -12.2
+      },
+      "create@10k": {
+        "from": 1498.1,
+        "to": 1441.5,
+        "deltaMs": -56.6,
+        "deltaPct": -3.8
+      },
+      "update10th@10k": {
+        "from": 62,
+        "to": 64.2,
+        "deltaMs": 2.2,
+        "deltaPct": 3.5
+      },
+      "select@10k": {
+        "from": 34.8,
+        "to": 38.2,
+        "deltaMs": 3.4,
+        "deltaPct": 9.8
+      },
+      "updateStorm@10k": {
+        "from": 739.5,
+        "to": 663.6,
+        "deltaMs": -75.9,
+        "deltaPct": -10.3
+      },
+      "selectStorm@10k": {
+        "from": 70.6,
+        "to": 59.2,
+        "deltaMs": -11.4,
+        "deltaPct": -16.1
+      }
+    },
+    "naming dense→sparse (vapor, +IFR)": {
+      "create@1k": {
+        "from": 172.7,
+        "to": 168.2,
+        "deltaMs": -4.5,
+        "deltaPct": -2.6
+      },
+      "update10th@1k": {
+        "from": 20,
+        "to": 16.8,
+        "deltaMs": -3.2,
+        "deltaPct": -16
+      },
+      "select@1k": {
+        "from": 29.4,
+        "to": 29.8,
+        "deltaMs": 0.4,
+        "deltaPct": 1.4
+      },
+      "updateStorm@1k": {
+        "from": 41.4,
+        "to": 41.6,
+        "deltaMs": 0.2,
+        "deltaPct": 0.5
+      },
+      "selectStorm@1k": {
+        "from": 20,
+        "to": 18.2,
+        "deltaMs": -1.8,
+        "deltaPct": -9
+      },
+      "create@10k": {
+        "from": 1422.6,
+        "to": 1572.3,
+        "deltaMs": 149.7,
+        "deltaPct": 10.5
+      },
+      "update10th@10k": {
+        "from": 61.8,
+        "to": 69.8,
+        "deltaMs": 8,
+        "deltaPct": 12.9
+      },
+      "select@10k": {
+        "from": 41,
+        "to": 45.1,
+        "deltaMs": 4.1,
+        "deltaPct": 10
+      },
+      "updateStorm@10k": {
+        "from": 729.9,
+        "to": 798.6,
+        "deltaMs": 68.7,
+        "deltaPct": 9.4
+      },
+      "selectStorm@10k": {
+        "from": 74.7,
+        "to": 68.2,
+        "deltaMs": -6.5,
+        "deltaPct": -8.7
+      }
+    },
+    "staging data→engine (vapor, STUB on web)": {
+      "create@1k": {
+        "from": 161.1,
+        "to": 165,
+        "deltaMs": 3.9,
+        "deltaPct": 2.4
+      },
+      "update10th@1k": {
+        "from": 17.2,
+        "to": 17.3,
+        "deltaMs": 0.1,
+        "deltaPct": 0.6
+      },
+      "select@1k": {
+        "from": 29.5,
+        "to": 20.7,
+        "deltaMs": -8.8,
+        "deltaPct": -29.8
+      },
+      "updateStorm@1k": {
+        "from": 53.8,
+        "to": 46.8,
+        "deltaMs": -7,
+        "deltaPct": -13
+      },
+      "selectStorm@1k": {
+        "from": 21.5,
+        "to": 18.4,
+        "deltaMs": -3.1,
+        "deltaPct": -14.4
+      },
+      "create@10k": {
+        "from": 1441.5,
+        "to": 1415.9,
+        "deltaMs": -25.6,
+        "deltaPct": -1.8
+      },
+      "update10th@10k": {
+        "from": 64.2,
+        "to": 57.2,
+        "deltaMs": -7,
+        "deltaPct": -10.9
+      },
+      "select@10k": {
+        "from": 38.2,
+        "to": 36.6,
+        "deltaMs": -1.6,
+        "deltaPct": -4.2
+      },
+      "updateStorm@10k": {
+        "from": 663.6,
+        "to": 658.2,
+        "deltaMs": -5.4,
+        "deltaPct": -0.8
+      },
+      "selectStorm@10k": {
+        "from": 59.2,
+        "to": 57.7,
+        "deltaMs": -1.5,
+        "deltaPct": -2.5
+      }
+    },
+    "ifr off→on (vdom)": {
+      "create@1k": {
+        "from": 144.8,
+        "to": 160,
+        "deltaMs": 15.2,
+        "deltaPct": 10.5
+      },
+      "update10th@1k": {
+        "from": 20.3,
+        "to": 23.9,
+        "deltaMs": 3.6,
+        "deltaPct": 17.7
+      },
+      "select@1k": {
+        "from": 30.3,
+        "to": 30.3,
+        "deltaMs": 0,
+        "deltaPct": 0
+      },
+      "updateStorm@1k": {
+        "from": 117.1,
+        "to": 108.4,
+        "deltaMs": -8.7,
+        "deltaPct": -7.4
+      },
+      "selectStorm@1k": {
+        "from": 54.9,
+        "to": 62.8,
+        "deltaMs": 7.9,
+        "deltaPct": 14.4
+      },
+      "create@10k": {
+        "from": 1472.7,
+        "to": 1477.5,
+        "deltaMs": 4.8,
+        "deltaPct": 0.3
+      },
+      "update10th@10k": {
+        "from": 93.4,
+        "to": 99,
+        "deltaMs": 5.6,
+        "deltaPct": 6
+      },
+      "select@10k": {
+        "from": 68.4,
+        "to": 60.5,
+        "deltaMs": -7.9,
+        "deltaPct": -11.5
+      },
+      "updateStorm@10k": {
+        "from": 1463.7,
+        "to": 1403.2,
+        "deltaMs": -60.5,
+        "deltaPct": -4.1
+      },
+      "selectStorm@10k": {
+        "from": 743.4,
+        "to": 643.4,
+        "deltaMs": -100,
+        "deltaPct": -13.5
+      }
+    },
+    "ifr off→on (vapor sparse)": {
+      "create@1k": {
+        "from": 161.1,
+        "to": 176,
+        "deltaMs": 14.9,
+        "deltaPct": 9.2
+      },
+      "update10th@1k": {
+        "from": 17.2,
+        "to": 19.9,
+        "deltaMs": 2.7,
+        "deltaPct": 15.7
+      },
+      "select@1k": {
+        "from": 29.5,
+        "to": 28.5,
+        "deltaMs": -1,
+        "deltaPct": -3.4
+      },
+      "updateStorm@1k": {
+        "from": 53.8,
+        "to": 40.9,
+        "deltaMs": -12.9,
+        "deltaPct": -24
+      },
+      "selectStorm@1k": {
+        "from": 21.5,
+        "to": 20.5,
+        "deltaMs": -1,
+        "deltaPct": -4.7
+      },
+      "create@10k": {
+        "from": 1441.5,
+        "to": 1500.8,
+        "deltaMs": 59.3,
+        "deltaPct": 4.1
+      },
+      "update10th@10k": {
+        "from": 64.2,
+        "to": 62.6,
+        "deltaMs": -1.6,
+        "deltaPct": -2.5
+      },
+      "select@10k": {
+        "from": 38.2,
+        "to": 35.1,
+        "deltaMs": -3.1,
+        "deltaPct": -8.1
+      },
+      "updateStorm@10k": {
+        "from": 663.6,
+        "to": 701.4,
+        "deltaMs": 37.8,
+        "deltaPct": 5.7
+      },
+      "selectStorm@10k": {
+        "from": 59.2,
+        "to": 57.1,
+        "deltaMs": -2.1,
+        "deltaPct": -3.5
+      }
+    },
+    "ifrPaint plain→engine-et (vapor, STUB on web)": {
+      "create@1k": {
+        "from": 168.2,
+        "to": 173.3,
+        "deltaMs": 5.1,
+        "deltaPct": 3
+      },
+      "update10th@1k": {
+        "from": 16.8,
+        "to": 17.1,
+        "deltaMs": 0.3,
+        "deltaPct": 1.8
+      },
+      "select@1k": {
+        "from": 29.8,
+        "to": 30,
+        "deltaMs": 0.2,
+        "deltaPct": 0.7
+      },
+      "updateStorm@1k": {
+        "from": 41.6,
+        "to": 41.3,
+        "deltaMs": -0.3,
+        "deltaPct": -0.7
+      },
+      "selectStorm@1k": {
+        "from": 18.2,
+        "to": 19.8,
+        "deltaMs": 1.6,
+        "deltaPct": 8.8
+      },
+      "create@10k": {
+        "from": 1572.3,
+        "to": 1488.2,
+        "deltaMs": -84.1,
+        "deltaPct": -5.3
+      },
+      "update10th@10k": {
+        "from": 69.8,
+        "to": 67.6,
+        "deltaMs": -2.2,
+        "deltaPct": -3.2
+      },
+      "select@10k": {
+        "from": 45.1,
+        "to": 33.4,
+        "deltaMs": -11.7,
+        "deltaPct": -25.9
+      },
+      "updateStorm@10k": {
+        "from": 798.6,
+        "to": 765.4,
+        "deltaMs": -33.2,
+        "deltaPct": -4.2
+      },
+      "selectStorm@10k": {
+        "from": 68.2,
+        "to": 69.1,
+        "deltaMs": 0.9,
+        "deltaPct": 1.3
+      }
+    }
+  }
+}
