@@ -151,9 +151,17 @@ const BENCH_HTML = `<!doctype html>
     const container = rows();
     if (!container) return [];
     const out = [];
-    for (const child of container.children) {
-      if (hasClass(child, 'row')) out.push(child);
-    }
+    // Element templates mount v-for content into layout-transparent
+    // <wrapper> placeholders (element slots, #308) — rows are then
+    // grandchildren of the container. Descend through wrapper tags only,
+    // so per-frame polling stays a shallow walk.
+    const walk = (parent) => {
+      for (const child of parent.children) {
+        if (hasClass(child, 'row')) out.push(child);
+        else if (/wrapper/i.test(child.tagName || '')) walk(child);
+      }
+    };
+    walk(container);
     return out;
   };
 
@@ -578,6 +586,15 @@ async function loadApp(browser, mode) {
   await cdp.send('Performance.enable').catch(() => {});
   const errors = [];
   page.on('pageerror', (err) => errors.push(String(err)));
+  // Console errors from the page AND its workers (the BG thread runs in a
+  // Worker — its crashes surface here, not as pageerror). Benign resource
+  // 404s (favicon) are skipped to keep the per-rep error report meaningful.
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    if (text.startsWith('Failed to load resource')) return;
+    errors.push(`[console.error] ${text}`);
+  });
 
   await page.goto(`http://127.0.0.1:${PORT}/bench.html`, { waitUntil: 'load' });
   await page.evaluate(
@@ -699,10 +716,19 @@ async function runStormRep(browser, mode, sizeKey) {
 
   try {
     await driver.settle();
-    record(
-      'create',
-      await driver.measureButton(size.button, { type: 'rowCount', value: size.rows }),
-    );
+    try {
+      record(
+        'create',
+        await driver.measureButton(size.button, { type: 'rowCount', value: size.rows }),
+      );
+    } catch (err) {
+      // Surface collected page/worker errors before rethrowing — a silent
+      // rowCount=0 timeout is almost always a crashed cell, not a slow one.
+      if (errors.length) {
+        console.error(`[storms] ${mode} page/worker errors:`, errors.slice(0, 6));
+      }
+      throw err;
+    }
     await driver.settle();
 
     // one-shot update10th ×3
