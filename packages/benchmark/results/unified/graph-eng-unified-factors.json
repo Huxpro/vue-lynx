@@ -16,6 +16,7 @@
   "perCell": [
     {
       "cell": "vdom",
+      "flag": "vdom",
       "canonical": "vdom-ops-node",
       "coord": "ops/node/random-access/BTS/persistent",
       "term": "Op Stream",
@@ -37,6 +38,7 @@
     },
     {
       "cell": "vdom-et",
+      "flag": "vdom +b",
       "canonical": "vdom-code-block",
       "coord": "code/block/random-access/BTS/persistent",
       "term": "Code-Template",
@@ -58,6 +60,7 @@
     },
     {
       "cell": "vdom-ifr",
+      "flag": "vdom +ifr",
       "canonical": "vdom-ops-node-ifr",
       "coord": "ops/node/random-access/BTS+MTS/persistent+ephemeral",
       "term": "Op Stream + IFR",
@@ -79,6 +82,7 @@
     },
     {
       "cell": "vdom-ifr-et",
+      "flag": "vdom +b +ifr",
       "canonical": "vdom-code-block-ifr",
       "coord": "code/block/random-access/BTS+MTS/persistent+ephemeral",
       "term": "Code-Template + IFR",
@@ -100,6 +104,7 @@
     },
     {
       "cell": "vapor",
+      "flag": "vapor +b",
       "canonical": "vapor-tree-block",
       "coord": "tree/block/traversal+recover/BTS/persistent",
       "term": "Tree-Template",
@@ -121,6 +126,7 @@
     },
     {
       "cell": "vapor-dense",
+      "flag": "vapor",
       "canonical": "vapor-tree-node",
       "coord": "tree/node/traversal/BTS/persistent",
       "term": "Named Tree",
@@ -142,6 +148,7 @@
     },
     {
       "cell": "vapor-engine",
+      "flag": "vapor +b:e",
       "canonical": "vapor-native-block",
       "coord": "native/block/traversal+recover/Engine/persistent (N/A on web)",
       "term": "Engine-Template (N/A)",
@@ -163,6 +170,7 @@
     },
     {
       "cell": "vapor-ifr",
+      "flag": "vapor +b +ifr",
       "canonical": "vapor-tree-block-ifr",
       "coord": "tree/block/traversal+recover/BTS+MTS/persistent+ephemeral",
       "term": "Tree-Template + IFR",
@@ -184,6 +192,7 @@
     },
     {
       "cell": "vapor-ifr-dense",
+      "flag": "vapor +ifr",
       "canonical": "vapor-tree-node-ifr",
       "coord": "tree/node/traversal/BTS+MTS/persistent+ephemeral",
       "term": "Named Tree + IFR",
@@ -205,6 +214,7 @@
     },
     {
       "cell": "vapor-ifr-sparse",
+      "flag": "vapor +b +ifr (alias)",
       "canonical": "vapor-tree-block-ifr",
       "aliasOf": "vapor-ifr",
       "coord": "tree/block/traversal+recover/BTS+MTS/persistent+ephemeral",
@@ -227,6 +237,7 @@
     },
     {
       "cell": "vapor-ifr-engine-et",
+      "flag": "vapor +b +ifr:e",
       "canonical": "vapor-tree-block-ifr-native-paint",
       "coord": "tree/block/traversal+recover/BTS+MTS/persistent+ephemeral(native-paint) (N/A on web)",
       "term": "Tree-Template + IFR native-paint (N/A)",
@@ -248,99 +259,99 @@
     }
   ],
   "factors": {
-    "render vdom→vapor (no-IFR)": {
+    "render effect (vdom → vapor, baselines)": {
       "create@1k": {
         "from": 256.8,
-        "to": 236.8,
-        "deltaMs": -20,
-        "deltaPct": -7.8
+        "to": 225.9,
+        "deltaMs": -30.9,
+        "deltaPct": -12
       },
       "update10th@1k": {
         "from": 26.4,
-        "to": 24.7,
-        "deltaMs": -1.7,
-        "deltaPct": -6.4
+        "to": 25.3,
+        "deltaMs": -1.1,
+        "deltaPct": -4.2
       },
       "select@1k": {
         "from": 23.6,
-        "to": 24.4,
-        "deltaMs": 0.8,
-        "deltaPct": 3.4
+        "to": 24.8,
+        "deltaMs": 1.2,
+        "deltaPct": 5.1
       },
       "updateStorm@1k": {
         "from": 171.4,
-        "to": 83.1,
-        "deltaMs": -88.3,
-        "deltaPct": -51.5
+        "to": 80.2,
+        "deltaMs": -91.2,
+        "deltaPct": -53.2
       },
       "selectStorm@1k": {
         "from": 77.8,
-        "to": 25.7,
-        "deltaMs": -52.1,
-        "deltaPct": -67
+        "to": 24.3,
+        "deltaMs": -53.5,
+        "deltaPct": -68.8
       },
       "create@10k": {
         "from": 2017.2,
-        "to": 2145.7,
-        "deltaMs": 128.5,
-        "deltaPct": 6.4
+        "to": 2257.9,
+        "deltaMs": 240.7,
+        "deltaPct": 11.9
       },
       "update10th@10k": {
         "from": 173.5,
-        "to": 126.8,
-        "deltaMs": -46.7,
-        "deltaPct": -26.9
+        "to": 133.6,
+        "deltaMs": -39.9,
+        "deltaPct": -23
       },
       "select@10k": {
         "from": 107.2,
-        "to": 124.1,
-        "deltaMs": 16.9,
-        "deltaPct": 15.8
+        "to": 89.9,
+        "deltaMs": -17.3,
+        "deltaPct": -16.1
       },
       "updateStorm@10k": {
         "from": 2585.2,
-        "to": 1225.5,
-        "deltaMs": -1359.7,
-        "deltaPct": -52.6
+        "to": 1186.7,
+        "deltaMs": -1398.5,
+        "deltaPct": -54.1
       },
       "selectStorm@10k": {
         "from": 1329.6,
-        "to": 161.2,
-        "deltaMs": -1168.4,
-        "deltaPct": -87.9
+        "to": 167.8,
+        "deltaMs": -1161.8,
+        "deltaPct": -87.4
       },
       "create@30k": {
         "from": 6428,
-        "to": 6759.3,
-        "deltaMs": 331.3,
-        "deltaPct": 5.2
+        "to": 6849,
+        "deltaMs": 421,
+        "deltaPct": 6.5
       },
       "update10th@30k": {
         "from": 532,
-        "to": 370.2,
-        "deltaMs": -161.8,
-        "deltaPct": -30.4
+        "to": 380.3,
+        "deltaMs": -151.7,
+        "deltaPct": -28.5
       },
       "select@30k": {
         "from": 543.5,
-        "to": 324.6,
-        "deltaMs": -218.9,
-        "deltaPct": -40.3
+        "to": 321,
+        "deltaMs": -222.5,
+        "deltaPct": -40.9
       },
       "updateStorm@30k": {
         "from": 12452,
-        "to": 11999,
-        "deltaMs": -453,
-        "deltaPct": -3.6
+        "to": 12113.9,
+        "deltaMs": -338.1,
+        "deltaPct": -2.7
       },
       "selectStorm@30k": {
         "from": 4786.3,
-        "to": 451.4,
-        "deltaMs": -4334.9,
-        "deltaPct": -90.6
+        "to": 408.6,
+        "deltaMs": -4377.7,
+        "deltaPct": -91.5
       }
     },
-    "staging ops→code (vdom, no-IFR)": {
+    "+b effect (vdom, no ifr)": {
       "create@1k": {
         "from": 256.8,
         "to": 216.1,
@@ -432,7 +443,7 @@
         "deltaPct": 8.4
       }
     },
-    "staging ops→code (vdom, +IFR)": {
+    "+b effect (vdom, with +ifr)": {
       "create@1k": {
         "from": 228.4,
         "to": 234.3,
@@ -524,7 +535,7 @@
         "deltaPct": -4.6
       }
     },
-    "naming node→block (vapor, no-IFR)": {
+    "+b effect (vapor, no ifr)": {
       "create@1k": {
         "from": 225.9,
         "to": 236.8,
@@ -616,7 +627,7 @@
         "deltaPct": 10.5
       }
     },
-    "naming node→block (vapor, +IFR)": {
+    "+b effect (vapor, with +ifr)": {
       "create@1k": {
         "from": 250,
         "to": 245.6,
@@ -708,7 +719,7 @@
         "deltaPct": 0.9
       }
     },
-    "staging tree→native (vapor, N/A on web)": {
+    "+b:t→e effect (vapor, N/A on web)": {
       "create@1k": {
         "from": 236.8,
         "to": 250.9,
@@ -800,7 +811,7 @@
         "deltaPct": -3.6
       }
     },
-    "ifr off→on (vdom)": {
+    "+ifr effect (vdom)": {
       "create@1k": {
         "from": 256.8,
         "to": 228.4,
@@ -892,7 +903,7 @@
         "deltaPct": 7.2
       }
     },
-    "ifr off→on (vapor block)": {
+    "+ifr effect (vapor +b)": {
       "create@1k": {
         "from": 236.8,
         "to": 241.6,
@@ -984,7 +995,7 @@
         "deltaPct": -4.4
       }
     },
-    "ifrPaint plain→native-paint (N/A on web)": {
+    "+ifr:e paint effect (N/A on web)": {
       "create@1k": {
         "from": 245.6,
         "to": 252.8,

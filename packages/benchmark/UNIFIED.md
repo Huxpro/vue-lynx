@@ -23,11 +23,20 @@ architecture × environment × workload × scale × cpu → metrics
 
 Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 
-### Architectures
+### Architectures (V4 flag notation; legacy data keys in parens)
 
-`vdom` · `vdom-ifr` · `vdom-et` · `vdom-ifr-et` · `vapor` · `vapor-dense` ·
-`vapor-engine` · `vapor-ifr` · `vapor-ifr-dense` · `vapor-ifr-sparse` ·
-`vapor-ifr-engine-et` · `react`
+`vdom` · `vdom +ifr` (`vdom-ifr`) · `vdom +b` (`vdom-et`) ·
+`vdom +b +ifr` (`vdom-ifr-et`) · `vapor +b` (`vapor`) · `vapor` baseline
+(`vapor-dense`) · `vapor +b:e` (`vapor-engine`, N/A on web) ·
+`vapor +b +ifr` (`vapor-ifr`; alias `vapor-ifr-sparse`) ·
+`vapor +ifr` (`vapor-ifr-dense`) · `vapor +b +ifr:e`
+(`vapor-ifr-engine-et`, N/A) · `rl` (`react`)
+
+Notation: `render [+b[:t|c|e]] [+ifr[:c|e]]` — baseline (per-node,
+plainest/safest) × stacked optimizations; `+b` = block templates (staging
+defaults per model: vdom→:c, vapor→:t), `+b:e` = engine staging
+(persistent tree), `+ifr:e` = engine-painted first frame only. Legend in
+the unified report page and `ifr-bench/GRAPH-ENG-REPORT.md` §1.3c.
 
 The 11 Vue cells are the complete legal flag-permutation set of the
 four-axis template matrix (#321/#325 — `templateNaming` ×
