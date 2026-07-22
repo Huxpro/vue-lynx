@@ -301,84 +301,173 @@ function logTicks(lo, hi) {
   return ticks.length ? ticks : [lo, hi];
 }
 
-function renderLineChart({
-  title,
-  sub,
-  series,
-  xLabel,
-  yLabel,
-  yFmt = (tick) => (tick >= 1000 ? `${tick / 1000}s` : `${tick}ms`),
-  w = 560,
-  h = 380,
-  logY = false,
-  wide = false,
-}) {
-  const all = series.flatMap((s) => s.pts);
-  if (!all.length) return '';
-  const xs = all.map((p) => p.x);
-  const ys = all.map((p) => p.y).filter((v) => !logY || v > 0);
-  const xmin = 0;
-  const xmax = Math.max(...xs) * 1.08;
-  const rawMin = Math.min(...ys);
+// Static SVG (no-JS fallback + print). Labels are placed in TRUE endpoint-y
+// order (top→bottom, min-gap) so the legend order always matches the visual
+// line order — the interactive layer (LINE_CHART_JS) redraws identically with
+// hover + scale. Rendered over an explicit x-window [0, xmax] with y auto-fit
+// to the visible points.
+function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
+  const yFmt = (t) => (t >= 1000 ? `${t / 1000}s` : `${Math.round(t)}ms`);
+  const vis = series
+    .map((s) => ({ ...s, pts: s.pts.filter((p) => p.x <= xmax + 1) }))
+    .filter((s) => s.pts.length);
+  const ys = vis.flatMap((s) => s.pts.map((p) => p.y)).filter((v) => !logY || v > 0);
+  if (!ys.length) return '';
   const rawMax = Math.max(...ys);
-  // log axis: pad to enclosing decades so every series separates vertically
-  const ymin = logY ? 10 ** Math.floor(Math.log10(rawMin)) : 0;
+  const ymin = logY ? 10 ** Math.floor(Math.log10(Math.min(...ys))) : 0;
   const ymax = logY ? 10 ** Math.ceil(Math.log10(rawMax)) : rawMax * 1.08;
-  const W = w;
-  const H = h;
-  const ML = 56;
-  const MR = 132;
-  const MT = 16;
-  const MB = 44;
   const l0 = logY ? Math.log10(ymin) : 0;
   const l1 = logY ? Math.log10(ymax) : 0;
-  const px = (v) => ML + ((v - xmin) / (xmax - xmin || 1)) * (W - ML - MR);
+  const px = (v) => ML + (v / (xmax || 1)) * (W - ML - MR);
   const py = (v) =>
     logY
       ? H - MB - ((Math.log10(Math.max(v, ymin)) - l0) / (l1 - l0 || 1)) * (H - MT - MB)
       : H - MB - ((v - ymin) / (ymax - ymin || 1)) * (H - MT - MB);
 
   let g = '';
-  for (const tick of niceLinearTicks(xmin, xmax)) {
+  for (const tick of niceLinearTicks(0, xmax)) {
     g += `<line x1="${px(tick)}" y1="${MT}" x2="${px(tick)}" y2="${H - MB}" class="grid"/>`
       + `<text x="${px(tick)}" y="${H - MB + 16}" class="tick" text-anchor="middle">${
         tick >= 1000 ? `${tick / 1000}k` : tick
       }</text>`;
   }
-  const yticks = logY ? logTicks(ymin, ymax) : niceLinearTicks(ymin, ymax);
-  for (const tick of yticks) {
+  for (const tick of logY ? logTicks(ymin, ymax) : niceLinearTicks(ymin, ymax)) {
     g += `<line x1="${ML}" y1="${py(tick)}" x2="${W - MR}" y2="${py(tick)}" class="grid"/>`
       + `<text x="${ML - 6}" y="${py(tick) + 3.5}" class="tick" text-anchor="end">${yFmt(tick)}</text>`;
   }
 
   let marks = '';
-  const labelYs = [];
-  for (const [i, s] of series.entries()) {
-    if (!s.pts.length) continue;
-    const cls = `s${(i % 6) + 1}`;
-    const d = s.pts
-      .map((p, k) => `${k ? 'L' : 'M'}${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`)
-      .join('');
-    marks += `<path d="${d}" class="line ${cls}" style="stroke:${s.color}"/>`;
+  for (const s of vis) {
+    const d = s.pts.map((p, k) => `${k ? 'L' : 'M'}${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`).join('');
+    marks += `<path d="${d}" class="line" style="stroke:${s.color}"/>`;
     for (const p of s.pts) {
-      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" class="dot ${cls}" style="fill:${s.color}">`
-        + `<title>${escapeHtml(s.label)} · ${p.label}\n${escapeHtml(yLabel)}: ${fmtMs(p.y)}</title></circle>`;
+      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" class="dot" style="fill:${s.color}"/>`;
     }
-    const last = s.pts[s.pts.length - 1];
-    let ly = py(last.y) + 4;
-    while (labelYs.some((v) => Math.abs(v - ly) < 13)) ly += 13;
-    labelYs.push(ly);
-    marks += `<text x="${(px(last.x) + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${s.color}">${escapeHtml(s.label)}</text>`;
   }
+  // labels in endpoint-y order
+  const ends = vis
+    .map((s) => ({ s, x: px(s.pts.at(-1).x), y: py(s.pts.at(-1).y) }))
+    .sort((a, b) => a.y - b.y);
+  let prevY = -Infinity;
+  for (const e of ends) {
+    const ly = Math.max(e.y + 4, prevY + 13);
+    prevY = ly;
+    marks += `<text x="${(e.x + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${e.s.color}">${escapeHtml(e.s.label)}</text>`;
+  }
+  return g + marks;
+}
 
-  return `<div class="chart${wide ? ' wide' : ''}"><h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
+let CHART_SEQ = 0;
+function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wide = false }) {
+  const all = series.flatMap((s) => s.pts);
+  if (!all.length) return '';
+  const W = wide ? 900 : 620;
+  const H = wide ? 480 : 400;
+  const ML = 56, MR = 148, MT = 16, MB = 44;
+  const xmaxFull = Math.max(...all.map((p) => p.x)) * 1.06;
+  const id = `ch${++CHART_SEQ}`;
+  // rung x-values for the scale slider (snap points)
+  const rungs = [...new Set(all.map((p) => p.x))].sort((a, b) => a - b);
+  const cfg = {
+    W, H, ML, MR, MT, MB, logY,
+    xl: xLabel, yl: yLabel, rungs,
+    s: series
+      .filter((s) => s.pts.length)
+      .map((s) => ({ l: s.label, c: s.color, p: s.pts.map((p) => [p.x, p.y]) })),
+  };
+  const slider = rungs.length > 2
+    ? `<div class="cctl"><label>${escapeHtml(xLabel)} ≤ <b class="xmaxlbl">${
+        rungs.at(-1) >= 1000 ? `${Math.round(rungs.at(-1) / 1000)}k` : Math.round(rungs.at(-1))
+      }</b></label><input type="range" class="xslider" min="2" max="${rungs.length}" value="${rungs.length}" step="1"><span class="chint">拖动 / 滚轮缩放 · hover 高亮</span></div>`
+    : '';
+  return `<figure class="chart ichart${wide ? ' wide' : ''}" id="${id}">
+<h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
+${slider}
+<div class="ccanvas" data-chart='${escapeAttr(JSON.stringify(cfg))}'>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
-${g}
+${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull })}
 <text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${escapeHtml(xLabel)}</text>
 <text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${escapeHtml(yLabel)}</text>
-${marks}
-</svg></div>`;
+</svg></div></figure>`;
 }
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+}
+
+// Client-side interactive layer for the line charts. Reads each .ccanvas's
+// data-chart JSON, redraws the SVG (labels in true endpoint order), and wires:
+//   • hover → highlight that series, dim the rest
+//   • x-range slider + wheel/trackpad → zoom the N window (y auto-refits so
+//     small-N clusters spread out and become readable)
+const LINE_CHART_JS = String.raw`(() => {
+  const qq = (s, r = document) => [...r.querySelectorAll(s)];
+  const fmtY = (t) => (t >= 1000 ? (t / 1000) + 's' : Math.round(t) + 'ms');
+  const fmtX = (t) => (t >= 1000 ? Math.round(t / 1000) + 'k' : t);
+  function linTicks(lo, hi, max = 6) {
+    if (!(hi > lo)) return [lo];
+    const step0 = (hi - lo) / (max - 1), mag = 10 ** Math.floor(Math.log10(step0)), r = step0 / mag;
+    const step = r <= 1.5 ? mag : r <= 3 ? 2 * mag : r <= 7 ? 5 * mag : 10 * mag;
+    const out = []; for (let t = Math.ceil(lo / step) * step; t <= hi + step * 1e-6; t += step) out.push(t); return out;
+  }
+  function logTicks(lo, hi) {
+    const out = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) { const t = 10 ** e; if (t >= lo * 0.999 && t <= hi * 1.001) out.push(t); } return out.length ? out : [lo, hi];
+  }
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  function draw(canvas, cfg, xmax) {
+    const { W, H, ML, MR, MT, MB, logY } = cfg;
+    const vis = cfg.s.map((s) => ({ ...s, p: s.p.filter((pt) => pt[0] <= xmax + 1) })).filter((s) => s.p.length);
+    const ys = vis.flatMap((s) => s.p.map((p) => p[1])).filter((v) => !logY || v > 0);
+    if (!ys.length) return;
+    const ymin = logY ? 10 ** Math.floor(Math.log10(Math.min(...ys))) : 0;
+    const ymax = logY ? 10 ** Math.ceil(Math.log10(Math.max(...ys))) : Math.max(...ys) * 1.08;
+    const l0 = logY ? Math.log10(ymin) : 0, l1 = logY ? Math.log10(ymax) : 0;
+    const px = (v) => ML + (v / (xmax || 1)) * (W - ML - MR);
+    const py = (v) => logY ? H - MB - ((Math.log10(Math.max(v, ymin)) - l0) / ((l1 - l0) || 1)) * (H - MT - MB)
+                           : H - MB - ((v - ymin) / ((ymax - ymin) || 1)) * (H - MT - MB);
+    let g = '';
+    for (const t of linTicks(0, xmax)) g += '<line x1="' + px(t) + '" y1="' + MT + '" x2="' + px(t) + '" y2="' + (H - MB) + '" class="grid"/><text x="' + px(t) + '" y="' + (H - MB + 16) + '" class="tick" text-anchor="middle">' + fmtX(t) + '</text>';
+    for (const t of (logY ? logTicks(ymin, ymax) : linTicks(ymin, ymax))) g += '<line x1="' + ML + '" y1="' + py(t) + '" x2="' + (W - MR) + '" y2="' + py(t) + '" class="grid"/><text x="' + (ML - 6) + '" y="' + (py(t) + 3.5) + '" class="tick" text-anchor="end">' + fmtY(t) + '</text>';
+    let m = '';
+    vis.forEach((s, i) => {
+      const d = s.p.map((p, k) => (k ? 'L' : 'M') + px(p[0]).toFixed(1) + ',' + py(p[1]).toFixed(1)).join('');
+      m += '<path d="' + d + '" class="line" data-i="' + i + '" style="stroke:' + s.c + '"/>';
+      m += '<path d="' + d + '" class="hit" data-i="' + i + '"/>';
+      for (const p of s.p) m += '<circle cx="' + px(p[0]).toFixed(1) + '" cy="' + py(p[1]).toFixed(1) + '" r="4.5" class="dot" data-i="' + i + '" style="fill:' + s.c + '"><title>' + esc(s.l) + ' · ' + fmtX(p[0]) + '\n' + fmtY(p[1]) + '</title></circle>';
+    });
+    const ends = vis.map((s, i) => ({ i, l: s.l, c: s.c, x: px(s.p[s.p.length - 1][0]), y: py(s.p[s.p.length - 1][1]) })).sort((a, b) => a.y - b.y);
+    let prev = -1e9;
+    for (const e of ends) { const ly = Math.max(e.y + 4, prev + 13); prev = ly; m += '<text x="' + (e.x + 9).toFixed(1) + '" y="' + ly.toFixed(1) + '" class="slabel" data-i="' + e.i + '" fill="' + e.c + '">' + esc(e.l) + '</text>'; }
+    const ax = '<text x="' + (ML + (W - ML - MR) / 2) + '" y="' + (H - 6) + '" class="axis" text-anchor="middle">' + esc(cfg.xl) + '</text>'
+      + '<text x="14" y="' + (MT + (H - MT - MB) / 2) + '" class="axis" text-anchor="middle" transform="rotate(-90 14 ' + (MT + (H - MT - MB) / 2) + ')">' + esc(cfg.yl) + '</text>';
+    const svg = canvas.querySelector('svg');
+    svg.innerHTML = g + ax + m;
+    const set = (i, on) => {
+      canvas.classList.toggle('hovering', on);
+      qq('[data-i]', svg).forEach((el) => el.classList.toggle('hl', on && +el.dataset.i === i));
+    };
+    qq('.hit,.dot,.slabel', svg).forEach((el) => {
+      el.addEventListener('pointerenter', () => set(+el.dataset.i, true));
+      el.addEventListener('pointerleave', () => set(+el.dataset.i, false));
+    });
+  }
+  qq('.ccanvas').forEach((canvas) => {
+    let cfg; try { cfg = JSON.parse(canvas.getAttribute('data-chart')); } catch (e) { return; }
+    if (!cfg || !cfg.s) return;
+    const rungs = cfg.rungs, fig = canvas.closest('.ichart');
+    let idx = rungs.length - 1;
+    const lbl = fig && fig.querySelector('.xmaxlbl'), slider = fig && fig.querySelector('.xslider');
+    const apply = () => { idx = Math.max(1, Math.min(rungs.length - 1, idx)); if (lbl) lbl.textContent = fmtX(rungs[idx]); draw(canvas, cfg, rungs[idx] * 1.06); };
+    if (slider) slider.addEventListener('input', () => { idx = +slider.value - 1; apply(); });
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      idx += (e.deltaY > 0 ? 1 : -1);
+      if (slider) slider.value = Math.max(2, Math.min(rungs.length, idx + 1));
+      apply();
+    }, { passive: false });
+    apply();
+  });
+})()`;
 
 function stormSeries(op, t, ticks = 1, pred = null) {
   const cols = columnsFor(t);
@@ -977,15 +1066,27 @@ function renderReport(lang, outPath) {
   .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .charts { display: flex; flex-wrap: wrap; gap: 18px; }
   .chart { flex: 1 1 420px; max-width: 600px; }
+  figure.chart { margin: 0; }
   .chart.wide { flex: 1 1 100%; max-width: 100%; }
   .chart h3 { font-size: 13.5px; margin: 8px 0 2px; }
   .chart svg { width: 100%; height: auto; }
   .grid { stroke: var(--line); stroke-width: 1; }
   .tick, .axis { fill: var(--ink-2); font-size: 10.5px; }
   .axis { font-size: 11px; }
-  .line { fill: none; stroke-width: 2.4; }
-  .dot { stroke: var(--surface); stroke-width: 2; }
-  .slabel { font-size: 11px; font-weight: 600; }
+  .line { fill: none; stroke-width: 2.4; transition: opacity .12s, stroke-width .12s; }
+  .dot { stroke: var(--surface); stroke-width: 2; transition: opacity .12s; }
+  .slabel { font-size: 11px; font-weight: 600; transition: opacity .12s; cursor: default; }
+  /* hover highlight: dim the rest, thicken the hovered series */
+  .ccanvas.hovering .line, .ccanvas.hovering .dot, .ccanvas.hovering .slabel { opacity: .18; }
+  .ccanvas .line.hl { opacity: 1; stroke-width: 3.6; }
+  .ccanvas .dot.hl, .ccanvas .slabel.hl { opacity: 1; }
+  .ccanvas .slabel.hl { font-size: 12.5px; }
+  .ccanvas .hit { stroke: transparent; stroke-width: 14; fill: none; cursor: pointer; }
+  .cctl { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; font-size: 12px; color: var(--ink-2); flex-wrap: wrap; }
+  .cctl label { white-space: nowrap; }
+  .cctl .xmaxlbl { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cctl .xslider { flex: 0 1 240px; accent-color: var(--s4, #2563eb); }
+  .cctl .chint { color: var(--ink-3, var(--ink-2)); font-size: 11px; opacity: .8; }
   .verdicts {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 12px; margin: 8px 0 18px;
@@ -1142,6 +1243,7 @@ ${graphEngFactorsSection(t)}
   </ul>
 </div>
 <script>${THEME_BRIDGE_SCRIPT}</script>
+<script>${LINE_CHART_JS}</script>
 </body>
 </html>
 `;
