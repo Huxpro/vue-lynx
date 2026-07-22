@@ -104,6 +104,14 @@ pnpm --filter vue-lynx-benchmark run bench:unified:full
 
 Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html,report.zh.html}`.
 
+**Multi-host provenance** — archived full sweeps live in
+`results/runs/` with a roster in `results/runs/manifest.json`. The
+unified HTML report stacks **two runs in the same storms / FCP tables**:
+bold **B** = primary (faster-CPU re-run); secondary **A** = prior #330
+Xeon@2.80GHz single-host sweep. Tint, geo-mean, and charts follow **B**;
+each cell’s `(n.nn)` factor is vs that run’s own row best. Absolute ms
+must not be ratioed across runs.
+
 **Human-facing report** (playground-style tinted tables + charts):
 
 ```bash

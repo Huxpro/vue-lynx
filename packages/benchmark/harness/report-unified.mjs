@@ -48,6 +48,7 @@ const graphEng4axisFullStorms = readJson('results/cross-storms-graph-eng-4axis-f
 // new cells re-measured in ONE same-host session; newest-date merge below
 // makes it supersede the earlier per-key samples for the cells it covers.
 const graphEngB2Storms = readJson('results/cross-storms-graph-eng-b2.json');
+const runsManifest = readJson('results/runs/manifest.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -65,16 +66,117 @@ function mergePerOp(...sources) {
   return out;
 }
 
-// Newest-date merge: the single-host full sweep (all modes × 1k/10k/30k)
-// supersedes every earlier per-key sample when present.
-const perOp = mergePerOp(
-  scale6,
-  ifrStorms,
-  reactStorms,
-  graphEng4axisStorms,
-  graphEng4axisFullStorms,
-  graphEngB2Storms,
-);
+function loadStormRuns() {
+  const section = runsManifest?.storms;
+  if (!section?.runs?.length) {
+    const fallback = mergePerOp(
+      scale6,
+      ifrStorms,
+      reactStorms,
+      graphEng4axisStorms,
+      graphEng4axisFullStorms,
+      graphEngB2Storms,
+    );
+    return {
+      primaryId: 'latest',
+      runs: [
+        {
+          id: 'latest',
+          short: '•',
+          primary: true,
+          label: { en: 'Latest', zh: '最新' },
+          source: { en: 'merged storms', zh: '合并 storms' },
+          meta: graphEngB2Storms?.meta ?? graphEng4axisFullStorms?.meta ?? {},
+          perOp: fallback,
+        },
+      ],
+    };
+  }
+  const runs = section.runs.map((r) => {
+    const data = readJson(`results/runs/${r.file}`);
+    return {
+      ...r,
+      primary: r.id === section.primary,
+      meta: data?.meta ?? {},
+      perOp: data?.perOp ?? {},
+    };
+  }).filter((r) => Object.keys(r.perOp).length);
+  // Primary first for stable dual-cell order (bold first).
+  runs.sort((a, b) => Number(b.primary) - Number(a.primary));
+  return { primaryId: section.primary, runs };
+}
+
+const FCP_ARCH_BY_CELL = {
+  'vue-vdom-off': 'vdom',
+  'vue-vdom-ifr': 'vdom-ifr',
+  'vue-vdom-ifr-et': 'vdom-ifr-et',
+  'vue-vapor-off': 'vapor',
+  'vue-vapor-ifr': 'vapor-ifr',
+  'vue-vdom-et': 'vdom-et',
+  'vue-vapor-dense': 'vapor-dense',
+  'vue-vapor-engine': 'vapor-engine',
+  'vue-vapor-ifr-dense': 'vapor-ifr-dense',
+  'vue-vapor-ifr-sparse': 'vapor-ifr-sparse',
+  'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
+  'vue-vapor-code': 'vapor-code',
+  'vue-vapor-bang': 'vapor-bang',
+  react: 'react',
+};
+
+function fcpPointsFromFile(rel) {
+  const data = readJson(rel);
+  if (!data?.cells) return null;
+  const byArch = {};
+  for (const [cellId, cell] of Object.entries(data.cells)) {
+    const arch = FCP_ARCH_BY_CELL[cellId];
+    if (!arch) continue;
+    byArch[arch] = Object.fromEntries(
+      (cell.points ?? [])
+        .filter((p) => p.fcp != null)
+        .map((p) => [p.rung, p.fcp]),
+    );
+  }
+  return { meta: data.meta ?? {}, byArch };
+}
+
+function loadFcpRuns() {
+  const section = runsManifest?.fcp;
+  if (!section?.runs?.length) {
+    return { primaryId: null, runs: [] };
+  }
+  const runs = section.runs.map((r) => {
+    const x1 = fcpPointsFromFile(`results/runs/${r.x1}`);
+    const x4 = fcpPointsFromFile(`results/runs/${r.x4}`);
+    return {
+      ...r,
+      primary: r.id === section.primary,
+      meta: x1?.meta ?? x4?.meta ?? {},
+      byCpu: {
+        1: x1?.byArch ?? {},
+        4: x4?.byArch ?? {},
+      },
+    };
+  }).filter((r) => Object.keys(r.byCpu[1]).length || Object.keys(r.byCpu[4]).length);
+  runs.sort((a, b) => Number(b.primary) - Number(a.primary));
+  return { primaryId: section.primary, runs };
+}
+
+const stormRuns = loadStormRuns();
+const fcpRuns = loadFcpRuns();
+
+// Charts / geo tint / conclusions follow the primary run's perOp.
+// When no dual-run manifest is present, fall back to newest-date merge
+// (includes b2 +b!/+b:c same-host sweep).
+const primaryStorm = stormRuns.runs.find((r) => r.primary) ?? stormRuns.runs[0];
+const perOp = primaryStorm?.perOp
+  ?? mergePerOp(
+    scale6,
+    ifrStorms,
+    reactStorms,
+    graphEng4axisStorms,
+    graphEng4axisFullStorms,
+    graphEngB2Storms,
+  );
 
 /**
  * Engine-staging cells are N/A on Lynx-for-Web: the engine ET PAPI family
@@ -203,37 +305,135 @@ function fcpArchsFor(t) {
   }));
 }
 
+function langPick(obj, lang) {
+  if (!obj) return '';
+  if (typeof obj === 'string') return obj;
+  return lang === 'zh' ? (obj.zh ?? obj.en ?? '') : (obj.en ?? obj.zh ?? '');
+}
+
+function runMetaLine(run, lang) {
+  const m = run.meta ?? {};
+  const host = m.cpuModel
+    ? `${m.cpus ?? '?'}× ${m.cpuModel}`
+    : '';
+  const sha = m.sha ? `git ${m.sha}` : '';
+  const date = m.date ? String(m.date).slice(0, 10) : '';
+  const bits = [date, sha, host].filter(Boolean).join(' · ');
+  return bits;
+}
+
+function renderRunsBanner(kind, t, lang) {
+  const pack = kind === 'fcp' ? fcpRuns : stormRuns;
+  if (!pack.runs.length) return '';
+  let html = `<div class="runs-banner" data-kind="${kind}">`
+    + `<div class="runs-title">${escapeHtml(t.runsHeading)}</div>`
+    + `<p class="runs-hint">${t.runsHint}</p><ul class="runs-list">`;
+  for (const run of pack.runs) {
+    const role = run.primary ? t.runsPrimary : t.runsSecondary;
+    const label = langPick(run.label, lang);
+    const source = langPick(run.source, lang);
+    const meta = runMetaLine(run, lang);
+    const links = [];
+    if (run.prUrl) {
+      links.push(
+        `<a href="${escapeHtml(run.prUrl)}" target="_blank" rel="noopener">PR #${escapeHtml(String(run.pr ?? ''))}</a>`,
+      );
+    }
+    if (run.agentUrl) {
+      links.push(
+        `<a href="${escapeHtml(run.agentUrl)}" target="_blank" rel="noopener">${
+          lang === 'zh' ? 'Cloud Agent run' : 'Cloud Agent run'
+        }</a>`,
+      );
+    }
+    html += `<li class="${run.primary ? 'primary' : 'secondary'}">`
+      + `<span class="run-tag">${escapeHtml(run.short)}</span> `
+      + `<strong>${escapeHtml(label)}</strong>`
+      + ` <span class="run-role">— ${escapeHtml(role)}</span>`
+      + `<div class="run-meta">${escapeHtml(meta)}</div>`
+      + `<div class="run-source">${escapeHtml(source)}`
+      + (links.length ? ` · ${links.join(' · ')}` : '')
+      + `</div></li>`;
+  }
+  html += `</ul><p class="runs-hint charts-note">${escapeHtml(t.chartsPrimaryNote)}</p></div>`;
+  return html;
+}
+
+function dualCellHtml(lines, tintFactor) {
+  // lines: [{ short, median, factor, primary, dnf }]
+  if (!lines.length) return `<td class="c na">—</td>`;
+  if (lines.every((l) => l.dnf)) return `<td class="c dnf">DNF</td>`;
+  const cls = tintFactor != null ? bucketClass(tintFactor) : 'plain';
+  let inner = '<div class="dual">';
+  for (const line of lines) {
+    if (line.dnf) {
+      inner += `<div class="run-line ${line.primary ? 'primary' : 'secondary'}">`
+        + `<span class="run-tag">${escapeHtml(line.short)}</span>DNF</div>`;
+      continue;
+    }
+    if (line.median == null) {
+      inner += `<div class="run-line ${line.primary ? 'primary' : 'secondary'}">`
+        + `<span class="run-tag">${escapeHtml(line.short)}</span>—</div>`;
+      continue;
+    }
+    const body = line.primary
+      ? `<b>${fmtMs(line.median)}</b>`
+      : fmtMs(line.median);
+    const factor = line.factor != null
+      ? `<span class="f">(${line.factor.toFixed(2)})</span>`
+      : '';
+    inner += `<div class="run-line ${line.primary ? 'primary' : 'secondary'}">`
+      + `<span class="run-tag">${escapeHtml(line.short)}</span>${body}${factor}</div>`;
+  }
+  inner += '</div>';
+  return `<td class="c ${cls}">${inner}</td>`;
+}
+
 function renderTable(rows, columns, t) {
+  const runs = stormRuns.runs;
   const factorsByCol = Object.fromEntries(columns.map((c) => [c.key, []]));
-  let html = `<table><thead><tr><th>${escapeHtml(t.scenario)}</th>`;
+  let html = `<table class="dual-runs"><thead><tr><th>${escapeHtml(t.scenario)}</th>`;
   for (const c of columns) html += `<th>${escapeHtml(c.label)}</th>`;
   html += '</tr></thead><tbody>';
 
   for (const row of rows) {
-    const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
-    const nums = cells
-      .filter((s, i) => s?.median != null && !isEngineNa(columns[i].key))
-      .map((s) => s.median);
-    const best = nums.length ? Math.min(...nums) : null;
+    // Per-run row bests (only non-engine cols).
+    const bestByRun = new Map();
+    for (const run of runs) {
+      const nums = columns
+        .map((c) => run.perOp?.[c.key]?.[row.key]?.median)
+        .filter((v) => v != null);
+      bestByRun.set(run.id, nums.length ? Math.min(...nums) : null);
+    }
     html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
-    for (const [i, s] of cells.entries()) {
-      if (isEngineNa(columns[i].key)) {
+    for (const c of columns) {
+      if (isEngineNa(c.key)) {
         html += `<td class="c na engine-na">N/A</td>`;
-      } else if (s?.median != null && best != null) {
-        const factor = s.median / best;
-        factorsByCol[columns[i].key].push(factor);
-        html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(s.median)}</b>`
-          + `<span class="f">(${factor.toFixed(2)})</span></td>`;
-      } else if (s?.dnf) {
-        html += `<td class="c dnf">DNF</td>`;
-      } else {
-        html += `<td class="c na">—</td>`;
+        continue;
       }
+      const lines = runs.map((run) => {
+        const s = run.perOp?.[c.key]?.[row.key] ?? null;
+        const best = bestByRun.get(run.id);
+        const median = s?.median ?? null;
+        return {
+          short: run.short,
+          primary: !!run.primary,
+          dnf: !!s?.dnf && median == null,
+          median,
+          factor: median != null && best != null ? median / best : null,
+        };
+      });
+      const primaryLine = lines.find((l) => l.primary) ?? lines[0];
+      if (primaryLine?.factor != null) {
+        factorsByCol[c.key].push(primaryLine.factor);
+      }
+      html += dualCellHtml(lines, primaryLine?.factor ?? null);
     }
     html += '</tr>';
   }
 
-  html += `<tr class="geo"><td class="op">${escapeHtml(t.geoMean)}</td>`;
+  html += `<tr class="geo"><td class="op">${escapeHtml(t.geoMean)}`
+    + ` <span class="run-tag">${escapeHtml(primaryStorm?.short ?? 'B')}</span></td>`;
   for (const c of columns) {
     if (isEngineNa(c.key)) {
       html += `<td class="c na engine-na">N/A</td>`;
@@ -255,31 +455,78 @@ function fcpScalesFor(cpu) {
   return cpu === 4 ? FCP_SCALES_X4 : FCP_SCALES;
 }
 
+function fcpValue(run, arch, scale, cpu) {
+  return run.byCpu?.[cpu]?.[arch]?.[scale] ?? null;
+}
+
 function renderFcpTable(cpu, t) {
   const archs = fcpArchsFor(t);
   const scales = fcpScalesFor(cpu);
-  let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
+  const runs = fcpRuns.runs.length
+    ? fcpRuns.runs
+    : null;
+
+  // Fallback: single-source from synthesized cells (legacy).
+  if (!runs) {
+    let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
+    for (const a of archs) {
+      html += `<th${isEngineNa(a.key) ? ' class="engine-na"' : ''}>${escapeHtml(a.label)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+    for (const scale of scales) {
+      const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
+      const nums = vals.filter((v, i) => v != null && !isEngineNa(archs[i].key));
+      const best = nums.length ? Math.min(...nums) : null;
+      html += `<tr><td class="op">${escapeHtml(t.fcpScale(scale))}</td>`;
+      for (const [i, v] of vals.entries()) {
+        if (isEngineNa(archs[i].key)) {
+          html += `<td class="c na engine-na">N/A</td>`;
+        } else if (v == null || best == null) {
+          html += `<td class="c na">—</td>`;
+        } else {
+          const factor = v / best;
+          html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(v)}</b>`
+            + `<span class="f">(${factor.toFixed(2)})</span></td>`;
+        }
+      }
+      html += '</tr>';
+    }
+    return `${html}</tbody></table>`;
+  }
+
+  let html = `<table class="dual-runs"><thead><tr><th>${escapeHtml(t.scale)}</th>`;
   for (const a of archs) {
     html += `<th${isEngineNa(a.key) ? ' class="engine-na"' : ''}>${escapeHtml(a.label)}</th>`;
   }
   html += '</tr></thead><tbody>';
   for (const scale of scales) {
-    const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
-    const nums = vals.filter(
-      (v, i) => v != null && !isEngineNa(archs[i].key),
-    );
-    const best = nums.length ? Math.min(...nums) : null;
+    const bestByRun = new Map();
+    for (const run of runs) {
+      const nums = archs
+        .filter((a) => !isEngineNa(a.key))
+        .map((a) => fcpValue(run, a.key, scale, cpu))
+        .filter((v) => v != null);
+      bestByRun.set(run.id, nums.length ? Math.min(...nums) : null);
+    }
     html += `<tr><td class="op">${escapeHtml(t.fcpScale(scale))}</td>`;
-    for (const [i, v] of vals.entries()) {
-      if (isEngineNa(archs[i].key)) {
+    for (const a of archs) {
+      if (isEngineNa(a.key)) {
         html += `<td class="c na engine-na">N/A</td>`;
-      } else if (v == null || best == null) {
-        html += `<td class="c na">—</td>`;
-      } else {
-        const factor = v / best;
-        html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(v)}</b>`
-          + `<span class="f">(${factor.toFixed(2)})</span></td>`;
+        continue;
       }
+      const lines = runs.map((run) => {
+        const median = fcpValue(run, a.key, scale, cpu);
+        const best = bestByRun.get(run.id);
+        return {
+          short: run.short,
+          primary: !!run.primary,
+          dnf: false,
+          median,
+          factor: median != null && best != null ? median / best : null,
+        };
+      });
+      const primaryLine = lines.find((l) => l.primary) ?? lines[0];
+      html += dualCellHtml(lines, primaryLine?.factor ?? null);
     }
     html += '</tr>';
   }
@@ -1283,6 +1530,35 @@ function renderReport(lang, outPath) {
     font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
     padding: 4px 10px; color: var(--ink-2);
   }
+  .runs-banner {
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin: 8px 0 14px;
+    background: color-mix(in srgb, var(--surface) 88%, var(--ink-2));
+  }
+  .runs-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .runs-hint { font-size: 12px; color: var(--ink-2); margin: 0 0 8px; line-height: 1.45; }
+  .runs-hint.charts-note { margin: 8px 0 0; }
+  .runs-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  .runs-list li {
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    background: var(--surface);
+  }
+  .runs-list li.primary { border-left: 4px solid var(--good); }
+  .runs-list li.secondary { border-left: 4px solid var(--ink-2); opacity: 0.95; }
+  .run-role { font-size: 12px; color: var(--ink-2); font-weight: 500; }
+  .run-meta, .run-source { font-size: 11.5px; color: var(--ink-2); margin-top: 2px; line-height: 1.4; }
+  .run-tag {
+    display: inline-block; min-width: 1.25em; text-align: center;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.02em;
+    border: 1px solid var(--line); border-radius: 4px; padding: 0 4px;
+    margin-right: 4px; color: var(--ink-2); background: color-mix(in srgb, var(--surface) 70%, var(--ink-2));
+  }
+  .dual { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .run-line { font-size: 12px; line-height: 1.25; white-space: nowrap; }
+  .run-line.primary { font-size: 12.5px; }
+  .run-line.secondary { opacity: 0.72; font-size: 11px; }
+  .run-line .f { margin-left: 3px; }
+  table.dual-runs td.c { vertical-align: top; padding-top: 8px; padding-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -1310,6 +1586,7 @@ ${conclusionsHtml}
 
 <h2>${escapeHtml(t.hStorms)}</h2>
 <p class="sub">${t.subStorms}</p>
+${renderRunsBanner('storms', t, lang)}
 <div class="scroll">${renderTable(rows, cols, t)}</div>
 <div class="legend">
   <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
@@ -1368,6 +1645,7 @@ ${conclusionsHtml}
 
 <h2>${escapeHtml(t.hFcp)}</h2>
 <p class="sub">${t.subFcp}</p>
+${renderRunsBanner('fcp', t, lang)}
 <div class="scroll">${renderFcpTable(1, t)}</div>
 <p class="sub" style="margin-top:16px">${escapeHtml(t.subFcp4)}</p>
 <div class="scroll">${renderFcpTable(4, t)}</div>

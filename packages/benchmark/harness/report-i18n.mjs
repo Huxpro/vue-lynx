@@ -42,13 +42,17 @@ export function copy(lang) {
       : { href: 'unified.zh.html', label: '中文' },
     hStorms: zh ? '交互 Storms — IFR × 框架矩阵' : 'Table storms — IFR × framework matrix',
     subStorms: zh
-      ? '黑盒协议：真实点击 → 合成 DOM 终态。单机全量测量（四轴全排列 + ReactLynx × 1k/10k/30k 一次跑完；同 key 以最新单机跑为准）。'
-        + '<b>Select = 点状更新</b>（每次只动选中态/少量 class）；'
-        + '<b>Update = 批量更新</b>（每轮改很多行）。'
+      ? '黑盒协议：真实点击 → 合成 DOM 终态。同一表格叠两份单机全量（四轴全排列 + ReactLynx × 1k/10k/30k）：'
+        + '<b>粗体 = 主 run（更快 CPU）</b>，着色 / 几何平均 / 曲线以它为准；'
+        + '次行是对照主机。绝对毫秒随主机变，<b>只比同一 run 内的比率</b>。'
+        + '<b>Select = 点状更新</b>；<b>Update = 批量更新</b>。'
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR（始终开启）+ 手动 memo/useCallback。'
-      : 'Black-box: real clicks → composed-DOM end state. Single-host full sweep (all four-axis permutations + ReactLynx × 1k/10k/30k in one run; per-key newest single-host samples win). '
-        + '<b>Select = point update</b> (selection / a few classes per tick); '
-        + '<b>Update = batch update</b> (many rows touched each pass). '
+      : 'Black-box: real clicks → composed-DOM end state. One table holds two single-host full sweeps '
+        + '(all four-axis permutations + ReactLynx × 1k/10k/30k): '
+        + '<b>bold = primary run (faster CPU)</b> — tint / geo-mean / charts follow it; '
+        + 'the secondary line is the reference host. Absolute ms are host-bound — '
+        + '<b>compare ratios within a run</b>. '
+        + '<b>Select = point update</b>; <b>Update = batch update</b>. '
         + '<b>ReactLynx (memo)</b> = Snapshot + IFR (always on) + manual memo/useCallback.',
     hStormScale: zh ? 'Storm 随规模变化（1k → 30k）' : 'Storm scaling (1k → 30k)',
     subStormScale: zh
@@ -56,11 +60,24 @@ export function copy(lang) {
       : 'Linear axes, zero baseline — absolute gaps, not log-compressed shape. Select charts = point updates; Update charts = batch throughput.',
     hFcp: zh ? '首帧 FCP — 架构阶梯' : 'Content-probe FCP (architecture ladder)',
     subFcp: zh
-      ? '相同卡片密度（约 1k→30k 元素）：全部四轴排列 + ReactLynx Snapshot+IFR，单机一次跑完（sfc-probe 规模阶梯）。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。下表 CPU ×1，全部 cells 覆盖 1k→30k（×4 覆盖到 10k）。'
-      : 'Same card density (~1k→30k els): every four-axis permutation + ReactLynx Snapshot+IFR, one single-host sweep (sfc-probe scale ladder). This is the <b>first-frame</b> scale — not comparable to storm ms above. Table below: CPU ×1; every cell covers 1k→30k (×4 covers through 10k).',
+      ? '相同卡片密度（约 1k→30k 元素）：全部四轴排列 + ReactLynx Snapshot+IFR。这是<strong>首帧</strong>量纲，不能和上面的 storm 毫秒直接比。'
+        + '表格同样叠两份主机数据（粗体 = 主 run）。CPU ×1 覆盖 1k→30k；×4 到 10k。'
+      : 'Same card density (~1k→30k els): every four-axis permutation + ReactLynx Snapshot+IFR. '
+        + 'This is the <b>first-frame</b> scale — not comparable to storm ms above. '
+        + 'Table stacks both hosts (bold = primary). CPU ×1 covers 1k→30k; ×4 through 10k.',
     subFcp4: zh
       ? 'CPU ×4（同矩阵，阶梯截到 10k——×4 侧只有到 10k 的完整覆盖）。'
       : 'CPU ×4 (same matrix; ladder clipped to 10k — full ×4 coverage only through 10k).',
+    runsHeading: zh ? '数据来源（runs）' : 'Data provenance (runs)',
+    runsPrimary: zh ? '主 run（着色 / 曲线）' : 'Primary (tint / charts)',
+    runsSecondary: zh ? '对照 run' : 'Reference run',
+    runsHint: zh
+      ? '格子里 <b>B</b> 粗体是更快 CPU 的复测；<b>A</b> 是先前 #330 单机。括号倍数相对该 run 自己那一行的最优。'
+      : 'In each cell, bold <b>B</b> is the faster-CPU re-run; <b>A</b> is the prior #330 single-host sweep. '
+        + 'The (n.nn) factor is slowdown vs that run’s own row best.',
+    chartsPrimaryNote: zh
+      ? '曲线只画主 run（更快 CPU）。表格可同时对照两份绝对毫秒。'
+      : 'Charts plot the primary (faster-CPU) run only. Tables keep both absolute-ms lines for comparison.',
     hGraphEng: zh
       ? 'Graph-eng 命名单位 — node（Named Tree）vs block（Tree-Template）'
       : 'Graph-eng naming unit — node (Named Tree) vs block (Tree-Template)',
@@ -199,15 +216,17 @@ export function copy(lang) {
     notes: zh
       ? [
           '<b>量纲不能混。</b> Instrumented BG/e2e、黑盒 click→DOM、lynx-web FCP、node --jitless 暖渲染共用 1k→30k 标签，但不是同一把尺子。',
-          '<b>着色怎么读：</b>与 playground 相同——颜色是相对该行最优的慢速倍数；数字本身才是权威。',
+          '<b>双 run 表格：</b>主 run（更快 CPU，#334）粗体着色；对照 run（#330 Xeon 2.80GHz）次行。勿跨 run 比绝对毫秒。',
+          '<b>着色怎么读：</b>与 playground 相同——颜色是相对<strong>主 run</strong>该行最优的慢速倍数；数字本身才是权威。',
           '<b>CPU ×4 展示：</b>阶梯截到 10k（该 throttle 下完整覆盖范围）。',
-          '<b>复现：</b><code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code>',
+          '<b>复现：</b><code>pnpm --filter vue-lynx-benchmark bench:unified:single-host</code>（或 storms + unified-content + synthesize + report）。Run 清单见 <code>results/runs/manifest.json</code>。',
         ]
       : [
           '<b>Environments are not interchangeable.</b> Instrumented BG/e2e, black-box click→DOM, lynx-web FCP, and node --jitless share ladder labels but not a metric scale.',
-          '<b>How to read the tint:</b> same as the playground — color is slowdown vs row best; the number is authoritative.',
+          '<b>Dual-run tables:</b> primary (faster CPU, #334) is bold + tinted; reference (#330 Xeon 2.80GHz) is the secondary line. Do not ratio absolute ms across runs.',
+          '<b>How to read the tint:</b> same as the playground — color is slowdown vs the <b>primary</b> row best; the number is authoritative.',
           '<b>CPU ×4 display:</b> ladder clipped to 10k (full coverage at that throttle).',
-          '<b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified && bench:synthesize && bench:report</code>',
+          '<b>Reproduce:</b> <code>pnpm --filter vue-lynx-benchmark bench:unified:single-host</code> (or storms + unified-content + synthesize + report). Run roster: <code>results/runs/manifest.json</code>.',
         ],
   };
 }

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "note": "Multi-host provenance for the unified report. Absolute ms are host-bound; ratios within a run are the portable claim. Tint / geo-mean / charts use the primary run.",
+  "storms": {
+    "primary": "host-b",
+    "runs": [
+      {
+        "id": "host-a",
+        "short": "A",
+        "label": {
+          "en": "Host A · Xeon @ 2.80GHz",
+          "zh": "主机 A · Xeon @ 2.80GHz"
+        },
+        "file": "storms-4axis-full-host-a-2.80ghz.json",
+        "source": {
+          "en": "#330 single-host full sweep (warmup-fixed)",
+          "zh": "#330 单机全量 sweep（含 warmup 修复）"
+        },
+        "pr": 330,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/330"
+      },
+      {
+        "id": "host-b",
+        "short": "B",
+        "label": {
+          "en": "Host B · faster CPU (re-run)",
+          "zh": "主机 B · 更快 CPU（复测）"
+        },
+        "file": "storms-4axis-full-host-b-faster.json",
+        "source": {
+          "en": "#334 trend re-verify · cursor/unified-benchmark-rerun-9633",
+          "zh": "#334 趋势复验 · cursor/unified-benchmark-rerun-9633"
+        },
+        "pr": 334,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
+        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633"
+      }
+    ]
+  },
+  "fcp": {
+    "primary": "host-b",
+    "runs": [
+      {
+        "id": "host-a",
+        "short": "A",
+        "label": {
+          "en": "Host A · Xeon @ 2.10GHz",
+          "zh": "主机 A · Xeon @ 2.10GHz"
+        },
+        "x1": "content-fcp-x1-host-a.json",
+        "x4": "content-fcp-x4-host-a.json",
+        "source": {
+          "en": "#330 / #269 single-provenance content FCP ladder",
+          "zh": "#330 / #269 单 provenance content FCP 阶梯"
+        },
+        "pr": 330,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/330"
+      },
+      {
+        "id": "host-b",
+        "short": "B",
+        "label": {
+          "en": "Host B · faster CPU (re-run)",
+          "zh": "主机 B · 更快 CPU（复测）"
+        },
+        "x1": "content-fcp-x1-host-b.json",
+        "x4": "content-fcp-x4-host-b.json",
+        "source": {
+          "en": "#334 trend re-verify · cursor/unified-benchmark-rerun-9633",
+          "zh": "#334 趋势复验 · cursor/unified-benchmark-rerun-9633"
+        },
+        "pr": 334,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
+        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633"
+      }
+    ]
+  }
+}
