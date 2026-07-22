@@ -38,6 +38,11 @@
 1. **结论** — 好消化的产品选择；数字用来核对。
 2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。
 3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
+4. **四轴矩阵** — 全部 11 个合法 flag 排列组合（`templateNaming` ×
+   `templateStaging` × `enableIFR` × `ifrPaint`）逐格测 create/update，
+   外加单轴 marginal 因子分解。engine cells 在 web 上以 `stub` 诚实运行。
+   形式化与完整分析见
+   [`GRAPH-ENG-REPORT.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/GRAPH-ENG-REPORT.md)。
 
 ## 环境规则
 
