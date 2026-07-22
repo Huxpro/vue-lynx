@@ -70,6 +70,8 @@ function ingestTableStorms(unified) {
     'results/cross-storms-latest.json',
     'results/cross-storms-unified-ifr.json',
     'results/cross-storms-unified-react.json',
+    // Four-axis flag-permutation run (#325): all 11 Vue cells, 1k/10k.
+    'results/cross-storms-graph-eng-4axis.json',
   ];
   const seen = new Map();
   for (const rel of files) {
