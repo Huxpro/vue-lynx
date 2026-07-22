@@ -37,7 +37,9 @@ export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
   description: 'Vue 3 framework for building Lynx apps',
-  icon: '/favicon.png',
+  icon: '/favicon.svg',
+  logo: '/assets/brand/vue-lynx-logo.svg',
+  logoText: 'Vue Lynx',
   lang: 'en',
   locales: [
     {
@@ -233,6 +235,12 @@ export default defineConfig({
     },
     html: {
       tags: [
+        // App icons + PWA manifest — favicon is handled by `icon` above
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }, append: false },
+        { tag: 'link', attrs: { rel: 'alternate icon', type: 'image/png', href: '/favicon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' }, append: false },
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#42B883' }, append: false },
         // OG tags — RSPress head[] doesn't inject into static HTML, so use Rsbuild html.tags
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
         { tag: 'meta', attrs: { property: 'og:url', content: 'https://vue.lynxjs.org' }, append: false },
