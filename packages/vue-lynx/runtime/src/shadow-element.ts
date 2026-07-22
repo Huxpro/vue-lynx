@@ -1357,8 +1357,10 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
   if (!registeredTemplateIds.has(cache.id)) {
     registeredTemplateIds.add(cache.id);
     if (cache.codeTplId !== undefined) {
-      // Code staging: no tree registration at all — instantiation is a
-      // per-clone INSTANTIATE_TEMPLATE against the bundle-baked create().
+      // Code staging: bind the numeric tree id to the bundle-baked create()
+      // once — the (long) content-hash id crosses exactly once, and every
+      // instantiation frame stays as small as a CLONE_TREE frame.
+      pushOp(OP.BIND_VAPOR_TEMPLATE, cache.id, cache.codeTplId);
     } else if (cache.bundleHash !== undefined) {
       // Bundle delivery: the structure lives in the MT bundle; only the
       // fingerprint and the (tiny) naming list cross the wire.
@@ -1409,10 +1411,11 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
       // Code staging (#337): the MT executes the bundle-baked create() and
       // names base + indexInAddressed — handles are returned in addressed
       // order, so the op-15 `rootId + k` contract IS the sparse uid block.
+      // The numeric id was bound to the create() by BIND_VAPOR_TEMPLATE.
       pushOp(
         OP.INSTANTIATE_TEMPLATE,
         base,
-        cache.codeTplId,
+        cache.id,
         addressed.length - 1,
       );
     } else {

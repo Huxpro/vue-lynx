@@ -161,12 +161,11 @@ describe('vapor +b:c code staging (#337)', () => {
     G['__VUE_LYNX_TEMPLATE_STAGING__'] = 'code';
     const id = seedCodeTemplate(HTML, ADDRESSED);
     const code = cloneOnce(HTML, metaFor(HTML, ADDRESSED));
-    // Wire: exactly one INSTANTIATE_TEMPLATE, nothing else.
+    // Wire: one binding (string id crosses ONCE) + one numeric-id
+    // instantiation — the per-instance frame is CLONE_TREE-sized.
     expect(code.ops).toEqual([
-      OP.INSTANTIATE_TEMPLATE,
-      code.root.uid,
-      id,
-      ADDRESSED.length - 1,
+      OP.BIND_VAPOR_TEMPLATE, 1, id,
+      OP.INSTANTIATE_TEMPLATE, code.root.uid, 1, ADDRESSED.length - 1,
     ]);
 
     resetMainThreadState();
@@ -207,8 +206,9 @@ describe('vapor +b:c code staging (#337)', () => {
     setPendingVaporAddressing(undefined);
     const ops = takeOps();
     expect(ops).toEqual([
-      OP.INSTANTIATE_TEMPLATE, first.uid, id, ADDRESSED.length - 1,
-      OP.INSTANTIATE_TEMPLATE, second.uid, id, ADDRESSED.length - 1,
+      OP.BIND_VAPOR_TEMPLATE, 1, id,
+      OP.INSTANTIATE_TEMPLATE, first.uid, 1, ADDRESSED.length - 1,
+      OP.INSTANTIATE_TEMPLATE, second.uid, 1, ADDRESSED.length - 1,
     ]);
     applyOps(ops);
     expect(elements.has(first.uid)).toBe(true);
@@ -344,10 +344,8 @@ describe('fuzz: create() codegen ≡ sparse interpreter', () => {
       const id = seedCodeTemplate(html, addressed);
       const code = cloneOnce(html, metaFor(html, addressed));
       expect(code.ops).toEqual([
-        OP.INSTANTIATE_TEMPLATE,
-        code.root.uid,
-        id,
-        addressed.length - 1,
+        OP.BIND_VAPOR_TEMPLATE, 1, id,
+        OP.INSTANTIATE_TEMPLATE, code.root.uid, 1, addressed.length - 1,
       ]);
       applyOps(code.ops);
       expect(namedMtSnapshot(code.root.uid, addressed.length)).toEqual(dataMt);
