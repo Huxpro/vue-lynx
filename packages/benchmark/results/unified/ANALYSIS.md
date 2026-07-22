@@ -1,7 +1,7 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-22T13:47:54.670Z @ 22dc540
-> Host: 4× Intel(R) Xeon(R) Processor @ 2.10GHz
+> Generated 2026-07-22T15:58:26.085Z @ 4c79530
+> Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
 
 ## Why unify?
 
@@ -34,10 +34,10 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vapor-ifr | ✓ | ✓ | — | — |
 | vapor-ifr-dense | ✓ | ✓ | — | — |
 | vapor-ifr-sparse | ✓ | ✓ | — | — |
-| vdom-et | ✓ | — | — | — |
-| vapor-dense | ✓ | — | — | — |
-| vapor-engine | ✓ | — | — | — |
-| vapor-ifr-engine-et | ✓ | — | — | — |
+| vdom-et | ✓ | ✓ | — | — |
+| vapor-dense | ✓ | ✓ | — | — |
+| vapor-engine | ✓ | ✓ | — | — |
+| vapor-ifr-engine-et | ✓ | ✓ | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -164,7 +164,10 @@ Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 - ifr-scale-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-scale-react-x4.json`
 - graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse.json`
 - graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse-x4.json`
+- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis.json`
+- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis-x4.json`
 - graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json`
+- graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng-4axis.json`
 - strategy-node-jitless: `/home/user/vue-lynx/packages/ifr-bench/results/results.json`
 - bare-dom: `/home/user/vue-lynx/packages/benchmark/results/web-baseline-latest.json`
 
