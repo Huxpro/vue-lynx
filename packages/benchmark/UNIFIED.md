@@ -25,10 +25,11 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 
 ### Architectures
 
-`vdom` · `vdom-ifr` · `vdom-ifr-et` · `vapor` · `vapor-ifr` · `react`
+`vdom` · `vdom-ifr` · `vdom-ifr-et` · `vapor` · `vapor-ifr` · `vapor-ifr-dense` · `vapor-ifr-sparse` · `react`
 
-(`react` = ReactLynx Snapshot+IFR + manual memo. Vapor has no Element Templates
-path. `react-naive` / `react-compiler` are not part of the published matrix.)
+(`react` = ReactLynx Snapshot+IFR + manual memo. Vapor has no VDOM Element Templates
+path; `vapor-ifr-dense` / `vapor-ifr-sparse` are graph-eng naming-density cells (#301).
+`react-naive` / `react-compiler` are not part of the published matrix.)
 
 ### Environments (not interchangeable)
 

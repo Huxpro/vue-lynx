@@ -365,6 +365,10 @@ function conclusionNumbers() {
     fcpIfr: g('vdom-ifr', '10k', 'fcp', 'content-probe'),
     fcpIfr1k: g('vdom-ifr', '1k', 'fcp', 'content-probe'),
     fcpOff1k: g('vdom', '1k', 'fcp', 'content-probe'),
+    fcpVaporIfrDense: g('vapor-ifr-dense', '1k', 'fcp', 'content-probe'),
+    fcpVaporIfrSparse: g('vapor-ifr-sparse', '1k', 'fcp', 'content-probe'),
+    fcpVaporIfrDense4: g('vapor-ifr-dense', '1k', 'fcp', 'content-probe', 4),
+    fcpVaporIfrSparse4: g('vapor-ifr-sparse', '1k', 'fcp', 'content-probe', 4),
     bgSelectV: unified.cells.find(
       (c) => c.architecture === 'vapor' && c.metric === 'select_bg' && c.instrumented,
     )?.median,
@@ -409,6 +413,43 @@ function coverageTable(t) {
       + `<td class="c plain">${bg ? '✓' : '—'}</td></tr>`;
   }
   return `${html}</tbody></table>`;
+}
+
+function graphEngNamingTable(t) {
+  const modes = ['vapor-ifr-dense', 'vapor-ifr-sparse', 'vapor-ifr'];
+  const has = modes.some((m) => g(m, '1k', 'fcp', 'content-probe', 1) != null);
+  if (!has) return '';
+
+  const dense1 = g('vapor-ifr-dense', '1k', 'fcp', 'content-probe', 1);
+  const dense4 = g('vapor-ifr-dense', '1k', 'fcp', 'content-probe', 4);
+  const pct = (v, base) => {
+    if (v == null || base == null || base === 0) return '—';
+    const d = ((v - base) / base) * 100;
+    return `${d >= 0 ? '+' : ''}${d.toFixed(1)}%`;
+  };
+  const naming = (m) => (m === 'vapor-ifr-dense' ? 'dense' : 'sparse');
+
+  let html =
+    '<table><thead><tr>'
+    + `<th>${escapeHtml(t.scenario)}</th>`
+    + '<th>naming</th><th>web gzip</th>'
+    + '<th>FCP ×1</th><th>Δ</th><th>FCP ×4</th><th>Δ</th>'
+    + '</tr></thead><tbody>';
+  for (const m of modes) {
+    const f1 = g(m, '1k', 'fcp', 'content-probe', 1);
+    const f4 = g(m, '1k', 'fcp', 'content-probe', 4);
+    const gz = g(m, '1k', 'bundle_web_gzip', 'content-probe', 1);
+    const label = t.colLabels[m] ?? t.fcpArchLabels[m] ?? m;
+    html += `<tr><td class="op">${escapeHtml(label)} <code>${escapeHtml(m)}</code></td>`
+      + `<td class="c plain">${naming(m)}</td>`
+      + `<td class="c plain">${gz == null ? '—' : gz.toLocaleString()}</td>`
+      + `<td class="c plain">${f1 == null ? '—' : fmtMs(f1)}</td>`
+      + `<td class="c plain">${pct(f1, dense1)}</td>`
+      + `<td class="c plain">${f4 == null ? '—' : fmtMs(f4)}</td>`
+      + `<td class="c plain">${pct(f4, dense4)}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  return html;
 }
 
 function siblingHref(outBase, lang, published) {
@@ -612,6 +653,10 @@ ${conclusionsHtml}
     yLabel: ch.fcp4.y,
   })}
 </div>
+
+<h2>${escapeHtml(t.hGraphEng)}</h2>
+<p class="sub">${t.subGraphEng}</p>
+<div class="scroll">${graphEngNamingTable(t)}</div>
 
 <h2>${escapeHtml(t.hCoverage)}</h2>
 <p class="sub">${escapeHtml(t.subCoverage)}</p>
