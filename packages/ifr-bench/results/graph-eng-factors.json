@@ -1,0 +1,326 @@
+{
+  "generated": "graph-eng-factors.mjs",
+  "runs": {
+    "x1": "browser-results-graph-eng-4axis.json",
+    "x4": "…-x4.json"
+  },
+  "note": "Engine/engine-et cells run with the native ET PAPI family ABSENT on Lynx-for-Web: __VUE_LYNX_ENGINE_ET_STATUS__ = stub, interpretation fallback. Their deltas measure probe/flag overhead only — NOT an engine win. Ops-level create/update factorial: see graph-eng-create-update.json.",
+  "perCell": [
+    {
+      "cell": "content-vdom",
+      "coordinate": "OpStream/Dense/intrinsic/Split·Durable",
+      "naming": "sparse",
+      "staging": "opstream",
+      "ifr": false,
+      "ifrPaint": null,
+      "nativeEt": "stub",
+      "webGzip": 36943,
+      "fcpX1": 249.69999999995343,
+      "fcpX4": 955.8999999999069
+    },
+    {
+      "cell": "content-vdom-ifr",
+      "coordinate": "OpStream/Dense/intrinsic/Split·Durable+Ephemeral",
+      "naming": "sparse",
+      "staging": "opstream",
+      "ifr": true,
+      "ifrPaint": "plain",
+      "nativeEt": "stub",
+      "webGzip": 66010,
+      "fcpX1": 212.10000000009313,
+      "fcpX4": 825.1999999999534
+    },
+    {
+      "cell": "content-vdom-ifr-et",
+      "coordinate": "Code/Sparse/intrinsic/Split·Durable+Ephemeral",
+      "naming": "sparse",
+      "staging": "code",
+      "ifr": true,
+      "ifrPaint": "plain",
+      "nativeEt": "stub",
+      "webGzip": 108660,
+      "fcpX1": 173.30000000004657,
+      "fcpX4": 793.3000000000466
+    },
+    {
+      "cell": "content-vdom-et",
+      "coordinate": "Code/Sparse/intrinsic/Split·Durable",
+      "naming": "sparse",
+      "staging": "code",
+      "ifr": false,
+      "ifrPaint": null,
+      "nativeEt": "stub",
+      "webGzip": 77535,
+      "fcpX1": 213.5,
+      "fcpX4": 808.8999999999069
+    },
+    {
+      "cell": "content-vapor",
+      "coordinate": "Data/Sparse/recovered/Split·Durable",
+      "naming": "sparse",
+      "staging": "data",
+      "ifr": false,
+      "ifrPaint": null,
+      "nativeEt": "stub",
+      "webGzip": 46933,
+      "fcpX1": 239.29999999981374,
+      "fcpX4": 876
+    },
+    {
+      "cell": "content-vapor-dense",
+      "coordinate": "Data/Dense/—/Split·Durable",
+      "naming": "dense",
+      "staging": "data",
+      "ifr": false,
+      "ifrPaint": null,
+      "nativeEt": "stub",
+      "webGzip": 46794,
+      "fcpX1": 313.29999999981374,
+      "fcpX4": 863.3999999999069
+    },
+    {
+      "cell": "content-vapor-ifr",
+      "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+      "naming": "sparse",
+      "staging": "data",
+      "ifr": true,
+      "ifrPaint": "plain",
+      "nativeEt": "stub",
+      "webGzip": 90079,
+      "fcpX1": 208.30000000004657,
+      "fcpX4": 941
+    },
+    {
+      "cell": "content-vapor-ifr-dense",
+      "coordinate": "Data/Dense/—/Split·Durable+Ephemeral",
+      "naming": "dense",
+      "staging": "data",
+      "ifr": true,
+      "ifrPaint": "plain",
+      "nativeEt": "stub",
+      "webGzip": 89791,
+      "fcpX1": 211.70000000018626,
+      "fcpX4": 967.8999999999069
+    },
+    {
+      "cell": "content-vapor-ifr-sparse",
+      "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+      "naming": "sparse",
+      "staging": "data",
+      "ifr": true,
+      "ifrPaint": "plain",
+      "nativeEt": "stub",
+      "webGzip": 90079,
+      "fcpX1": 209.39999999990687,
+      "fcpX4": 894
+    },
+    {
+      "cell": "content-vapor-engine",
+      "coordinate": "Engine/Sparse/recovered/Split·Durable (stub-capable)",
+      "naming": "sparse",
+      "staging": "engine",
+      "ifr": false,
+      "ifrPaint": null,
+      "nativeEt": "probe(stub-on-web)",
+      "webGzip": 47641,
+      "fcpX1": 261.29999999981374,
+      "fcpX4": 831.1000000000931
+    },
+    {
+      "cell": "content-vapor-ifr-engine-et",
+      "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et paint)",
+      "naming": "sparse",
+      "staging": "data",
+      "ifr": true,
+      "ifrPaint": "engine-et",
+      "nativeEt": "stub",
+      "webGzip": 90813,
+      "fcpX1": 222.29999999981374,
+      "fcpX4": 909
+    }
+  ],
+  "factors": {
+    "render vdom→vapor (no-IFR)": {
+      "x1": {
+        "from": "content-vdom",
+        "to": "content-vapor",
+        "fcpX1From": 249.7,
+        "fcpX1To": 239.3,
+        "deltaMs": -10.4,
+        "deltaPct": -4.2
+      },
+      "x4": {
+        "from": "content-vdom",
+        "to": "content-vapor",
+        "fcpX4From": 955.9,
+        "fcpX4To": 876,
+        "deltaMs": -79.9,
+        "deltaPct": -8.4
+      }
+    },
+    "naming dense→sparse (vapor+IFR)": {
+      "x1": {
+        "from": "content-vapor-ifr-dense",
+        "to": "content-vapor-ifr-sparse",
+        "fcpX1From": 211.7,
+        "fcpX1To": 209.4,
+        "deltaMs": -2.3,
+        "deltaPct": -1.1
+      },
+      "x4": {
+        "from": "content-vapor-ifr-dense",
+        "to": "content-vapor-ifr-sparse",
+        "fcpX4From": 967.9,
+        "fcpX4To": 894,
+        "deltaMs": -73.9,
+        "deltaPct": -7.6
+      }
+    },
+    "naming dense→sparse (vapor no-IFR)": {
+      "x1": {
+        "from": "content-vapor-dense",
+        "to": "content-vapor",
+        "fcpX1From": 313.3,
+        "fcpX1To": 239.3,
+        "deltaMs": -74,
+        "deltaPct": -23.6
+      },
+      "x4": {
+        "from": "content-vapor-dense",
+        "to": "content-vapor",
+        "fcpX4From": 863.4,
+        "fcpX4To": 876,
+        "deltaMs": 12.6,
+        "deltaPct": 1.5
+      }
+    },
+    "staging opstream→code (vdom no-IFR)": {
+      "x1": {
+        "from": "content-vdom",
+        "to": "content-vdom-et",
+        "fcpX1From": 249.7,
+        "fcpX1To": 213.5,
+        "deltaMs": -36.2,
+        "deltaPct": -14.5
+      },
+      "x4": {
+        "from": "content-vdom",
+        "to": "content-vdom-et",
+        "fcpX4From": 955.9,
+        "fcpX4To": 808.9,
+        "deltaMs": -147,
+        "deltaPct": -15.4
+      }
+    },
+    "staging opstream→code (vdom+IFR)": {
+      "x1": {
+        "from": "content-vdom-ifr",
+        "to": "content-vdom-ifr-et",
+        "fcpX1From": 212.1,
+        "fcpX1To": 173.3,
+        "deltaMs": -38.8,
+        "deltaPct": -18.3
+      },
+      "x4": {
+        "from": "content-vdom-ifr",
+        "to": "content-vdom-ifr-et",
+        "fcpX4From": 825.2,
+        "fcpX4To": 793.3,
+        "deltaMs": -31.9,
+        "deltaPct": -3.9
+      }
+    },
+    "staging data→engine (vapor, STUB on web)": {
+      "x1": {
+        "from": "content-vapor",
+        "to": "content-vapor-engine",
+        "fcpX1From": 239.3,
+        "fcpX1To": 261.3,
+        "deltaMs": 22,
+        "deltaPct": 9.2
+      },
+      "x4": {
+        "from": "content-vapor",
+        "to": "content-vapor-engine",
+        "fcpX4From": 876,
+        "fcpX4To": 831.1,
+        "deltaMs": -44.9,
+        "deltaPct": -5.1
+      }
+    },
+    "ifr off→on (vdom)": {
+      "x1": {
+        "from": "content-vdom",
+        "to": "content-vdom-ifr",
+        "fcpX1From": 249.7,
+        "fcpX1To": 212.1,
+        "deltaMs": -37.6,
+        "deltaPct": -15.1
+      },
+      "x4": {
+        "from": "content-vdom",
+        "to": "content-vdom-ifr",
+        "fcpX4From": 955.9,
+        "fcpX4To": 825.2,
+        "deltaMs": -130.7,
+        "deltaPct": -13.7
+      }
+    },
+    "ifr off→on (vapor sparse)": {
+      "x1": {
+        "from": "content-vapor",
+        "to": "content-vapor-ifr",
+        "fcpX1From": 239.3,
+        "fcpX1To": 208.3,
+        "deltaMs": -31,
+        "deltaPct": -13
+      },
+      "x4": {
+        "from": "content-vapor",
+        "to": "content-vapor-ifr",
+        "fcpX4From": 876,
+        "fcpX4To": 941,
+        "deltaMs": 65,
+        "deltaPct": 7.4
+      }
+    },
+    "ifrPaint plain→engine-et (vapor, STUB on web)": {
+      "x1": {
+        "from": "content-vapor-ifr-sparse",
+        "to": "content-vapor-ifr-engine-et",
+        "fcpX1From": 209.4,
+        "fcpX1To": 222.3,
+        "deltaMs": 12.9,
+        "deltaPct": 6.2
+      },
+      "x4": {
+        "from": "content-vapor-ifr-sparse",
+        "to": "content-vapor-ifr-engine-et",
+        "fcpX4From": 894,
+        "fcpX4To": 909,
+        "deltaMs": 15,
+        "deltaPct": 1.7
+      }
+    }
+  },
+  "opsFactorial": {
+    "naming dense→sparse (staging=data)": {
+      "mtNamed": -1200,
+      "shadowsPerInstance": -48,
+      "nativeCallsCreate": -1200,
+      "nativeCallsUpdate": 0
+    },
+    "staging data→engine (naming=dense, mock)": {
+      "mtNamed": 0,
+      "shadowsPerInstance": 0,
+      "nativeCallsCreate": -1300,
+      "nativeCallsUpdate": 0
+    },
+    "staging data→engine (naming=sparse, mock)": {
+      "mtNamed": 0,
+      "shadowsPerInstance": 0,
+      "nativeCallsCreate": -1300,
+      "nativeCallsUpdate": 0
+    }
+  }
+}
