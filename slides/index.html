@@ -2175,109 +2175,122 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- IFR5 — without ET: dual-thread + lit 5-step data-flow bridge -->
+  <!-- IFR5 — without ET: original dual-thread cols + 5 linked steps -->
   <section class="slide stage">
-    <div class="etbridge">
-      <div class="etbridge__side" data-flip="et-col-bg" style="--c:#5dd5a8">
-        <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
-        <span class="ifrjoin__role" data-mm-fade>VDOM tree &rarr; opcodes</span>
-        <p class="etbridge__blurb" data-mm-fade>Walks ShadowElement, emits a long flat stream.</p>
-      </div>
-      <div class="etbridge__flow">
-        <div class="etb-row">
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" data-flip="etp-vdom" style="--c:#42b883">VDOM<small>one vnode / node</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+          <span class="ifrjoin__role" data-mm-fade>VDOM tree &rarr; opcodes</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="et-bg-1">VDOM</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>ShadowElement</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-idle" data-mm-fade>stream &rarr;</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-idle" data-mm-fade>awaits hydrate</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>many ops / node</span>
         </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row" data-mm-fade>
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" style="--c:#E8B44A">Shadow<small>one node</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead" data-mm-fade>5 steps</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link" data-flip="etp-vdom" style="--c:#42b883"><b>1</b> VDOM</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#E8B44A"><b>2</b> Shadow</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#4FB8F0"><b>3</b> ops</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#56b8f0"><b>4</b> interp</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-flip="etp-papi" style="--c:#F27A9E"><b>5</b> PAPI</span>
+          </div>
         </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row" data-mm-fade>
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" style="--c:#4FB8F0">ops<small>several frames</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+          <span class="ifrjoin__role" data-mm-fade>same chain, local apply</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="et-mt-1">VDOM</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>record ops</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-fat" data-mm-fade>CREATE · SET · APPEND &hellip;</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>applyOps</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-flip="et-mt-5">PAPI &rarr; paint</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>applyOps &rarr; PAPI &rarr; paint</span>
         </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row" data-mm-fade>
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" style="--c:#56b8f0">interp<small>a switch loop</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
-        </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row">
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" data-flip="etp-papi" style="--c:#F27A9E">PAPI<small>__CreateView</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
-        </div>
-        <span class="etbridge__tag" data-mm-fade>&times; every static node</span>
-      </div>
-      <div class="etbridge__side" data-flip="et-col-mt" style="--c:#56b8f0">
-        <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
-        <span class="ifrjoin__role" data-mm-fade>same chain, local apply</span>
-        <p class="etbridge__blurb" data-mm-fade>Records ops, applyOps &rarr; paint on-thread.</p>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
       Without ET, BTS and MTS IFR both pay the fat
-      <b>5-step</b> data-flow — linked across the thread boundary.
+      <b>VDOM &rarr; opcode</b> chain — five linked steps across the boundary.
     </p>
     <aside class="notes">
-      <p><strong>Same code, two threads, still expensive.</strong> The lit chain
-      in the middle is the shared protocol: VDOM → Shadow → ops → interp →
-      PAPI, once per static node. BTS emits it; MTS IFR records and applies it
-      locally. IFR moved <em>when</em> paint happens — the next slide collapses
-      <em>how much</em> work the chain does.</p>
+      <p><strong>Same code, two threads, still expensive.</strong> Same dual-thread
+      columns as before — the numbered chips in the middle light up the shared
+      5-step protocol: VDOM → Shadow → ops → interp → PAPI. BTS emits the
+      stream; MTS IFR records and applies it locally. IFR moved <em>when</em>
+      paint happens — next slide collapses those five links to three.</p>
     </aside>
   </section>
 
-  <!-- IFR6 — with ET: bridge collapses 5 → 3 (magic-move) -->
+  <!-- IFR6 — with ET: same dual-thread cols, links collapse 5 → 3 -->
   <section class="slide stage">
-    <div class="etbridge">
-      <div class="etbridge__side" data-flip="et-col-bg" style="--c:#5dd5a8">
-        <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
-        <span class="ifrjoin__role" data-mm-fade>VDOM &rarr; one template op</span>
-        <p class="etbridge__blurb" data-mm-fade>Emits INSTANTIATE_TEMPLATE + hole SET_*.</p>
-      </div>
-      <div class="etbridge__flow">
-        <div class="etb-row">
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" data-flip="etp-vdom" style="--c:#42b883">one vnode<small>__vlx-tpl:…</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="et-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="et-lab-bg"><i></i>Background · BTS</span>
+          <span class="ifrjoin__role" data-mm-fade>VDOM &rarr; one template op</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="et-bg-1">VDOM · __vlx-tpl</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>SET_* holes only</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>one op · whole subtree</span>
         </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row" data-mm-fade>
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb is-hero" style="--c:#5dd5a8">INSTANTIATE_TEMPLATE<small>one op · whole subtree</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead" data-mm-fade>3 steps</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link" data-flip="etp-vdom" style="--c:#42b883"><b>1</b> vnode</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link is-hero" data-mm-fade style="--c:#5dd5a8"><b>2</b> INSTANTIATE</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-flip="etp-papi" style="--c:#F27A9E"><b>3</b> create()</span>
+          </div>
         </div>
-        <span class="etb-arr" data-mm-fade>&darr;</span>
-        <div class="etb-row">
-          <i class="etb-tick etb-tick--l" aria-hidden="true"></i>
-          <div class="etb" data-flip="etp-papi" style="--c:#F27A9E">create()<small>straight-line PAPI</small></div>
-          <i class="etb-tick etb-tick--r" aria-hidden="true"></i>
+        <div class="ifrjoin__col" data-flip="et-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
+          <span class="ifrjoin__role" data-mm-fade>opcode &rarr; create() PAPI</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="et-mt-1">VDOM · __vlx-tpl</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-mm-fade>INSTANTIATE_TEMPLATE</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-flip="et-mt-5">create() &rarr; PAPI</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>straight-line PAPI &rarr; paint</span>
         </div>
-        <span class="etbridge__tag" data-mm-fade>holes update via ordinary <b>SET_*</b> ops</span>
-      </div>
-      <div class="etbridge__side" data-flip="et-col-mt" style="--c:#56b8f0">
-        <span class="ifrjoin__label" data-flip="et-lab-mt"><i></i>Main IFR · MTS</span>
-        <span class="ifrjoin__role" data-mm-fade>opcode &rarr; create() PAPI</span>
-        <p class="etbridge__blurb" data-mm-fade>Interpreter runs create() &rarr; paint.</p>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade>
-      ET collapses the bridge to <b>3 steps</b> — BTS sends one op; MTS IFR
-      runs the compiled <code>create()</code> as straight-line PAPI.
+      ET collapses the same dual-thread picture to <b>3 linked steps</b> —
+      BTS sends one op; MTS IFR runs <code>create()</code> as straight-line PAPI.
     </p>
     <aside class="notes">
-      <p><strong>Watch the middle collapse.</strong> VDOM and PAPI stay put
-      (magic-move); Shadow / ops / interp fold into one
-      <code>INSTANTIATE_TEMPLATE</code>. Framework templates — typed Element
-      PAPI, not Lynx binary engine templates. Next: why Vue can do this —
-      compiler-hinted VDOM already carries Block structure.</p>
+      <p><strong>Same figure, fewer links.</strong> Watch steps 2–4 fold into one
+      <code>INSTANTIATE_TEMPLATE</code> chip; VDOM and PAPI/<code>create()</code>
+      stay put (magic-move). BTS still starts from a VDOM tree, but the static
+      block is one vnode that emits INSTANTIATE + hole SET_*s. MTS IFR's
+      interpreter calls the baked <code>create()</code>. Next: why Vue can do
+      this — compiler-hinted VDOM already carries Block structure.</p>
     </aside>
   </section>
 
