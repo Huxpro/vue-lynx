@@ -16,15 +16,18 @@ import {
   type BaseTransitionProps,
   type FunctionalComponent,
   h,
-  queuePostFlushCb,
 } from '@vue/runtime-core';
 
-import { waitForFlush } from './flush.js';
-import { resolveClass } from './node-ops.js';
-import { OP, pushOp } from './ops.js';
-import { register, unregister } from './event-registry.js';
-import { scheduleFlush } from './flush.js';
 import type { ShadowElement } from './shadow-element.js';
+import {
+  addTransitionClass,
+  callHook,
+  hasExplicitDuration,
+  nextFrame,
+  normalizeDuration,
+  removeTransitionClass,
+  whenTransitionEnds,
+} from './transition-shared.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,131 +59,6 @@ export interface TransitionProps extends BaseTransitionProps<ShadowElement> {
   onAppear?: (el: ShadowElement, done: () => void) => void;
   onAfterAppear?: (el: ShadowElement) => void;
   onAppearCancelled?: (el: ShadowElement) => void;
-}
-
-// ---------------------------------------------------------------------------
-// Transition class helpers
-// ---------------------------------------------------------------------------
-
-function addTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.add(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
-  scheduleFlush();
-}
-
-function removeTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.delete(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
-  scheduleFlush();
-}
-
-// ---------------------------------------------------------------------------
-// nextFrame — waits for MT to apply the current ops batch before proceeding.
-//
-// In DOM land, Vue uses double-rAF to ensure the browser has rendered the
-// enter-from state before switching to enter-to.  In our dual-thread model
-// we need two things:
-//
-// 1. Wait for doFlush() to run (it's a post-flush callback queued by
-//    scheduleFlush).  We use queuePostFlushCb so our callback runs AFTER
-//    doFlush in the same post-flush cycle.
-//
-// 2. Wait for the MT ack (waitForFlush) — ensures the first batch of ops
-//    (enter-from / leave-from classes) has been applied on the Main Thread.
-//
-// 3. On web/dev, use the same double-rAF boundary as Vue DOM so the browser
-//    paints the initial state before we apply the next.  On native BG thread,
-//    requestAnimationFrame is not generally available, and the MT ack only
-//    confirms that the ops were applied — it does not guarantee a rendered
-//    frame.  Defer one timer tick there instead of switching classes
-//    immediately.
-// ---------------------------------------------------------------------------
-
-function nextFrame(cb: () => void): void {
-  // Step 1: run after doFlush has taken the current ops and sent them to MT
-  queuePostFlushCb(() => {
-    // Step 2: wait for MT to acknowledge it applied the ops
-    waitForFlush().then(() => {
-      // Step 3: ensure the initial state reaches a rendered frame.
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(cb);
-        });
-      }
-      else {
-        setTimeout(cb, 16);
-      }
-    });
-  });
-}
-
-// ---------------------------------------------------------------------------
-// whenTransitionEnds — listens for transitionend/animationend on the element.
-//
-// Because we can't call getComputedStyle() from the BG thread, we rely on
-// either the actual event or an explicit `duration` prop as a timeout fallback.
-// ---------------------------------------------------------------------------
-
-function whenTransitionEnds(
-  el: ShadowElement,
-  expectedType: 'transition' | 'animation' | undefined,
-  done: () => void,
-): void {
-  const eventName =
-    expectedType === 'animation' ? 'animationend' : 'transitionend';
-
-  let settled = false;
-  const finish = () => {
-    if (settled) return;
-    settled = true;
-    unregister(sign);
-    pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', eventName);
-    scheduleFlush();
-    done();
-  };
-
-  const sign = register((_data: unknown) => {
-    finish();
-  });
-
-  pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
-  scheduleFlush();
-}
-
-// ---------------------------------------------------------------------------
-// Duration normalization
-// ---------------------------------------------------------------------------
-
-interface NormalizedDuration {
-  enter: number;
-  leave: number;
-}
-
-function normalizeDuration(
-  duration: TransitionProps['duration'],
-): NormalizedDuration {
-  if (typeof duration === 'number') {
-    return { enter: duration, leave: duration };
-  }
-  if (duration && typeof duration === 'object') {
-    return { enter: duration.enter, leave: duration.leave };
-  }
-  return { enter: 0, leave: 0 };
-}
-
-function hasExplicitDuration(props: TransitionProps): boolean {
-  return props.duration != null;
-}
-
-// ---------------------------------------------------------------------------
-// Hook helpers
-// ---------------------------------------------------------------------------
-
-// biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
-function callHook(hook: ((...args: any[]) => void) | undefined, args: unknown[]): void {
-  if (hook) {
-    hook(...args);
-  }
 }
 
 // ---------------------------------------------------------------------------
