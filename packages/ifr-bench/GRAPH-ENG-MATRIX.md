@@ -1,4 +1,4 @@
-# Graph-eng template matrix — four-axis edition (#301 / #321)
+# Graph-eng template matrix — five-axis edition, terminology v2 (#301 / #321)
 
 **Issues:** [#301](https://github.com/Huxpro/vue-lynx/issues/301) matrix ·
 [#321](https://github.com/Huxpro/vue-lynx/issues/321) terminology ·
@@ -14,35 +14,43 @@ compiler partially evaluates it: static parts fold into a **residual**
 materialization mechanism is a point on four axes
 (`vue-lynx/internal/matrix` is the code authority):
 
-| Axis | Meaning | Levels |
+| Column | Meaning | Levels (terminology v2) |
 |------|---------|--------|
-| **A. Staging** | what form the residual exists in | `opstream` → `data` (lazy AST + one generic interpreter) → `code` (per-template compiled closure) → `engine` (host-resident, native clone) |
-| **B. Naming** | which slots get cross-thread identities | `dense` (all) / `sparse` (holes + nav closure) |
-| **C. Provenance** | how the hole set is known | `intrinsic` (render/vnode declares) / `recovered` (compile-time analysis) / `—` (dense) |
-| **D. Deployment** | thread topology × lifetime | `split`/`fused` × `durable`/`ephemeral` (IFR scout copy) |
+| **Staging** | what form the residual exists in | `ops (interp)` → `tree (interp)` → `code (compiled)` → `native (compiled)` |
+| **Naming** | the UNIT of cross-thread identity | `node` (per-node) / `block` (base id + offsets per template block) |
+| **Addressing** | how named nodes are located | `random-access` / `traversal` / `traversal+recover` |
+| **Provider** | who materializes the residual | `BTS` / `MTS` / `Engine` |
+| **Lifetime** | materialization lifetime | `persistent` / `ephemeral` |
+
+Legacy flag spellings remain accepted (`opstream|data|engine` ≡
+`ops|tree|native`; `dense|sparse` ≡ `node|block`).
 
 **Terminology** (the only names code and report use):
 
-- dense mechanism → **Named Tree**; sparse mechanism → **Template**,
-  qualified by staging: **Data-Template / Code-Template / Engine-Template**.
+- node-named tree mechanism → **Named Tree**; block-named mechanisms →
+  **Template**, qualified by staging: **Tree-Template / Code-Template /
+  Engine-Template** (axis level `native`, mechanism name Engine-Template).
 - `Data → Code` is the first Futamura projection (specialize the
   interpreter to one template); `Code → Engine` compiles away JS itself.
-- Legacy aliases: "dense tree"/"A1" ≡ Named Tree; "sparse A2" ≡ recovered
-  Data-Template; "JS ET" ≡ intrinsic Code-Template; "disposable" is not a
-  mechanism — it is axis-D `ephemeral`.
+- Legacy aliases: "dense tree"/"A1" ≡ Named Tree; "sparse A2"/"Data-Template" ≡ Tree-Template; "JS ET" ≡ Code-Template;
+  "disposable" is not a mechanism — it is the lifetime value `ephemeral`.
 
 ## Placement table (current mechanisms → coordinates)
 
-| Mechanism | A / B / C / D | Term |
-|---|---|---|
-| VDOM ops | OpStream / Dense / intrinsic / Split·Durable | Op Stream |
-| VDOM Block (openBlock/patchFlag) | — (provenance source for intrinsic sparse, not a materialization) | — |
-| Vapor `CLONE_TREE` dense (A1) | Data / Dense / — / Split·Durable | **Named Tree** |
-| Vapor sparse (#309) | Data / Sparse / recovered / Split·Durable | **recovered Data-Template** |
-| VDOM `INSTANTIATE_TEMPLATE` | Code / Sparse / intrinsic / Split·Durable or Ephemeral (IFR) | **intrinsic Code-Template** |
-| ReactLynx Snapshot | Code / Sparse / intrinsic / Split·Durable | **intrinsic Code-Template** (≡ our VDOM ET, differs only in deployment) |
-| Native ET (`__CreateElementTemplate`) | Engine / Sparse / intrinsic(slots) / Split·Durable | **Engine-Template** |
-| Vapor-Web `cloneNode` | Engine / Sparse / navigated / Fused·Durable | browser Engine-Template |
+| Mechanism | Staging | Naming | Addressing | Provider | Lifetime | Term |
+|---|---|---|---|---|---|---|
+| VDOM ops | ops | node | random-access | BTS | persistent | Op Stream |
+| Vapor A1 | tree | node | traversal | BTS | persistent | **Named Tree** |
+| Vapor A2 (#309) | tree | **block** | traversal+recover | BTS | persistent | **Tree-Template** |
+| VDOM `INSTANTIATE_TEMPLATE` | code | block | random-access | BTS / MTS(IFR) | persistent / ephemeral | **Code-Template** |
+| ReactLynx Snapshot | code | block | random-access | MTS(first frame)/BTS(updates) | persistent | **Code-Template** |
+| Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | **Engine-Template** |
+| Vapor-Web `cloneNode` | native | block | traversal | Engine | persistent · *thread=local* | browser Engine-Template |
+
+(VDOM Block/openBlock+patchFlag is the intrinsic SOURCE of block-naming
+information, not a materialization mechanism — the Code-Template's hole
+list is its dynamicChildren. Vapor's `__vlxAddressing` recovers the
+equivalent information by compile-time analysis.)
 
 ## Terminology ↔ file/symbol index
 
@@ -58,9 +66,9 @@ materialization mechanism is a point on four axes
 | Data-Template interpreter (MT) | `main-thread/src/ops-apply.ts` · `instantiateTemplateSparse` |
 | intrinsic Code-Template | `internal/src/ops.ts` · `INSTANTIATE_TEMPLATE`; `main-thread/src/element-templates.ts` · `registerTemplate` |
 | Engine-Template (M3b) | `main-thread/src/engine-template.ts` · `probeEngineTemplates`, `EngineTemplateDescriptor` |
-| Axis-B flag | `plugin/src/index.ts` · `templateNaming: 'dense' \| 'sparse'` (deprecated alias `enableSparseNaming`) |
-| Axis-A flag | `plugin/src/index.ts` · `templateStaging: 'opstream' \| 'data' \| 'code' \| 'engine'` |
-| Axis-D flags | `plugin/src/index.ts` · `enableIFR`, `ifrPaint: 'plain' \| 'disposable-et' \| 'engine-et'` |
+| Naming flag | `plugin/src/index.ts` · `templateNaming: 'node' \| 'block'` (legacy `dense\|sparse`, deprecated alias `enableSparseNaming`) |
+| Staging flag | `plugin/src/index.ts` · `templateStaging: 'ops' \| 'tree' \| 'code' \| 'native'` (legacy `opstream\|data\|engine`) |
+| Provider/Lifetime flags | `plugin/src/index.ts` · `enableIFR`, `ifrPaint: 'plain' \| 'code-paint' \| 'native-paint'` (legacy `disposable-et\|engine-et`) |
 | ephemeral paint (IFR) | `main-thread/src/ifr.ts` · `runIfrRender` / `interceptPatchUpdate` |
 
 ## Measured results (2026-07-22, #313)
