@@ -86,6 +86,54 @@ export const ARCHITECTURES = [
     tableApp: 'ui-vapor',
   },
   {
+    // Four-axis matrix (#321/#325): intrinsic Code-Template WITHOUT IFR —
+    // the create-benefit cell (staging opstream→code, deployment durable).
+    id: 'vdom-et',
+    family: 'vue-vdom',
+    ifr: false,
+    et: true,
+    label: 'Vue VDOM+ET (no IFR)',
+    tableDist: 'ui-vdom/dist-et',
+    tableApp: 'ui-vdom',
+  },
+  {
+    // Named Tree without IFR — naming main-effect anchor (#321/#325).
+    id: 'vapor-dense',
+    family: 'vue-vapor',
+    ifr: false,
+    et: false,
+    sparse: false,
+    label: 'Vue Vapor dense (Named Tree, no IFR)',
+    tableDist: 'ui-vapor/dist-dense',
+    tableApp: 'ui-vapor',
+  },
+  {
+    // templateStaging 'engine' probe cell (#323). On Lynx-for-Web the
+    // engine ET PAPI family is absent → runs stub (interpretation
+    // fallback); measures probe/flag overhead honestly, never a fake win.
+    id: 'vapor-engine',
+    family: 'vue-vapor',
+    ifr: false,
+    et: false,
+    sparse: true,
+    engine: 'probe-stub-on-web',
+    label: 'Vue Vapor engine-staging (STUB on web)',
+    tableDist: 'ui-vapor/dist-engine',
+    tableApp: 'ui-vapor',
+  },
+  {
+    // ifrPaint 'engine-et' (#324) — stub fallback on web.
+    id: 'vapor-ifr-engine-et',
+    family: 'vue-vapor',
+    ifr: true,
+    et: false,
+    sparse: true,
+    engine: 'probe-stub-on-web',
+    label: 'Vue Vapor+IFR engine-et paint (STUB on web)',
+    tableDist: 'ui-vapor/dist-ifr-engine-et',
+    tableApp: 'ui-vapor',
+  },
+  {
     id: 'react',
     family: 'reactlynx',
     ifr: null,
