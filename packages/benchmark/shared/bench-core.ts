@@ -17,7 +17,7 @@
 
 import { nextTick as bgNextTick } from '@vue/runtime-core';
 import { nextTick as e2eNextTick } from 'vue-lynx';
-import { OP } from 'vue-lynx/internal/ops';
+import { OP_ARITY } from 'vue-lynx/internal/ops';
 
 // ---------------------------------------------------------------------------
 // time
@@ -31,28 +31,9 @@ const now: () => number = typeof performance !== 'undefined' && performance.now
 // ops-stream instrumentation
 // ---------------------------------------------------------------------------
 
-const OP_ARITY: Record<number, number> = {
-  [OP.CREATE]: 2,
-  [OP.CREATE_TEXT]: 1,
-  [OP.INSERT]: 3,
-  [OP.REMOVE]: 2,
-  [OP.SET_PROP]: 3,
-  [OP.SET_TEXT]: 2,
-  [OP.SET_EVENT]: 4,
-  [OP.REMOVE_EVENT]: 3,
-  [OP.SET_STYLE]: 2,
-  [OP.SET_CLASS]: 2,
-  [OP.SET_ID]: 2,
-  [OP.SET_WORKLET_EVENT]: 4,
-  [OP.SET_MT_REF]: 2,
-  [OP.INIT_MT_REF]: 2,
-  [OP.INSTANTIATE_TEMPLATE]: 3,
-  [OP.REGISTER_TREE]: 3,
-  [OP.CLONE_TREE]: 2,
-  [OP.INSERT_TEMPLATE_SLOT]: 4,
-  [OP.REMOVE_TEMPLATE_SLOT]: 3,
-};
-
+// Arity table is single-sourced from the protocol package — a local copy
+// silently under-counted when new opcodes (REGISTER_TREE_BUNDLE / BIND /
+// INSTANTIATE_BOUND_TEMPLATE, #337/#338) landed.
 function countOps(flat: unknown[]): number {
   let count = 0;
   let i = 0;
