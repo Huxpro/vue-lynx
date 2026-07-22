@@ -52,31 +52,66 @@ Each axis is independently switchable for A/B measurement. Sparse naming default
 | **ReactLynx native ET** | on | Snapshot | on (exp.) | engine flag — not measured here |
 | **Frontier (vue-lynx)** | on + sparse holes | sparse A2 | **native** | needs #299/#300 |
 
-## What sparse A2 measures today (not FCP yet)
+## Measured results (2026-07-22, #313)
+
+Artifacts under `packages/ifr-bench/results/`:
+
+| Artifact | What |
+|--|--|
+| `graph-eng-sparse-microbench.json` | ShadowElement + MT named counts |
+| `graph-eng-web-bundles/sfc-probe-sizes.json` | 7-cell bundle sizes + flag tags |
+| `browser-results-graph-eng-dense-sparse.json` | Lynx-for-Web FCP ×1 (5 runs) |
+| `browser-results-graph-eng-dense-sparse-x4.json` | same ×4 CPU |
+
+### Microbench (`static-heavy-24-leaves`, root-only sparse)
+
+| | shadows | mtNamed | cloneMs |
+|--|--------:|--------:|--------:|
+| dense A1 | 49 | 25 | ~0.06 |
+| sparse A2 | 1 | 1 | ~0.006 |
+| savings | −98% | −96% | — |
+
+Native skeleton still fully built either way.
+
+### Bundle sizes (nCards=125, web gzip)
+
+| cell | slots | naming | web gz |
+|--|--|--|--:|
+| content-vdom | off | n/a | 36 855 |
+| content-vdom-ifr | off | n/a | 65 931 |
+| content-vdom-ifr-et | on | n/a | 108 592 |
+| content-vapor | off | sparse | 46 851 |
+| content-vapor-ifr | off | sparse | 90 007 |
+| content-vapor-ifr-dense | off | dense | 89 720 |
+| content-vapor-ifr-sparse | off | sparse | 90 007 |
+
+Dense is slightly smaller (no `__vlxAddressing` stamp in prod script). Sparse ≈ product `vapor-ifr`.
+
+### Browser FCP (1 004 nodes, median of 5 runs)
+
+| cell | ×1 FCP | Δ vs dense | ×4 FCP | Δ vs dense |
+|--|--:|--:|--:|--:|
+| content-vapor-ifr-dense | 102.2 ms | — | 302.9 ms | — |
+| content-vapor-ifr-sparse | 91.5 ms | **−10.5%** | 310.7 ms | +2.6% |
+| content-vapor-ifr (sparse alias) | 95.8 ms | −6.3% | 306.6 ms | +1.2% |
+
+Read carefully: ×1 shows a real sparse win on this host; ×4 is within noise / slightly worse — **not** a consistent scale hedge. Native ET (#300) and/or #290 IFR×ET paint remain the FCP levers at throttle.
+
+## What sparse A2 saves today
 
 Sparse A2 still builds the **full native skeleton** on MT (`instantiateTemplateSparse`). Savings are:
 
 1. **BG** — fewer `ShadowElement` shells (only addressed slots)
 2. **MT** — smaller `elements` map + fewer selector attrs for named nodes
 
-Real FCP / native-call wins land with **#300 native ET**. Do not treat sparse microbench % as an FCP claim.
+Do not equate microbench % with FCP. The ×1 FCP delta above is encouraging but host-specific; treat ×4 as inconclusive.
 
-### Microbench artifact
+### Microbench command
 
 ```bash
 pnpm --filter vue-lynx-testing-library exec vitest run src/__tests__/graph-eng-sparse-microbench.test.ts
 # → packages/ifr-bench/results/graph-eng-sparse-microbench.json
 ```
-
-Checked-in sample (`static-heavy-24-leaves`, root-only sparse):
-
-| | shadows | mtNamed |
-|--|--------:|--------:|
-| dense A1 | 49 | 25 |
-| sparse A2 | 1 | 1 |
-| savings | −98% | −96% |
-
-Native skeleton still fully built either way; FCP win needs #300.
 
 ## How to run the flag matrix
 
