@@ -449,6 +449,8 @@ export const ZH = {
     '<span class="codenote">①</span> 模板注册一次 · <span class="codenote">②</span> 每个实例克隆一份 · <span class="codenote">③</span> 一个 effect 只更新一个节点。',
   'First question on Lynx: where does the template shape live on Main? Not baked into MTS — the first t0() ships this structure once.':
     'Lynx 上的第一个疑问:模板形状在 Main 上住哪儿?<em>不是</em>打进 MTS 产物 —— 第一次 <code>t0()</code> 把这份 <code>structure</code> 传过去,只传一次。',
+  'Why not deliver the tree at build time? History, not essence: upstream Vapor codegen only emits an HTML string — BG parse + serialize was the cheapest path.':
+    '为什么不在构建期交付这棵树?历史原因,而非本质:上游 Vapor 的 codegen 只给出 HTML 字符串 —— BG runtime 顺手 parse + 序列化,是最省事的路。',
   'That structure from the first t0() is cached on Main as an inert prototype. Both sides walk the same pre-order — same uids, no id map.':
     '第一次 <code>t0()</code> 传来的那份 <code>structure</code>,在 Main 上缓存成惰性原型。两侧走同一趟前序 —— 相同 uid,从不传 id 映射。',
   'structure AST · first clone only': 'structure AST · 仅第一次 clone',
@@ -804,7 +806,7 @@ export const ZH_NOTES = [
   // 40b 代码复用 · Lynx 拆到 BG | MT
   `<p><strong>同一组层,双线程安家。</strong>compiled / alias / runtime / shims / ShadowElement 留在后台线程;<code>ops stream → native</code> 落在主线程。两枚绿标:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答那些 DOM 调用 —— 它们变成 vdom 已经在用的同一条 ops 流。</p>`,
   // 39 Vapor 产物 · 第一个疑问:structure 第一次传过去
-  `<p><strong>第一个疑问 —— Main 到底收到什么?</strong>Vapor 编译成 <code>template()</code> + <code>t0()</code> 克隆。在 Web 上那次克隆就是浏览器 DOM。在 Lynx 上,形状<em>不会</em>预先打进 MTS/Lepus 产物(那是 Element Templates 的 baked <code>create()</code>)。</p><p>第一次 <code>t0()</code> 时,BG 把惰性 ShadowElement 原型走成 <code>TemplateNode</code> AST —— <code>[tag, props|0, children[]]</code> —— 并只推一次 <code>REGISTER_TREE</code>:<code>[16, treeId, structure, 0]</code>。Main 只缓存 <code>{ structure }</code>;原生节点要等后面的 <code>CLONE_TREE</code>。下一页:为什么 <code>child(n0)</code> 的活指针仍然过不了边界。</p>`,
+  `<p><strong>第一个疑问 —— Main 到底收到什么?</strong>Vapor 编译成 <code>template()</code> + <code>t0()</code> 克隆。在 Web 上那次克隆就是浏览器 DOM。在 Lynx 上,形状<em>不会</em>预先打进 MTS/Lepus 产物(那是 Element Templates 的 baked <code>create()</code>)。</p><p>第一次 <code>t0()</code> 时,BG 把惰性 ShadowElement 原型走成 <code>TemplateNode</code> AST —— <code>[tag, props|0, children[]]</code> —— 并只推一次 <code>REGISTER_TREE</code>:<code>[16, treeId, structure, 0]</code>。Main 只缓存 <code>{ structure }</code>;原生节点要等后面的 <code>CLONE_TREE</code>。</p><p><strong>为什么不在构建期 bake?</strong>历史原因,而非本质。上游 Vapor 的 codegen 只给你一段 HTML 字符串(<code>template('&lt;view&gt;…&lt;/view&gt;')</code>)。Lynx 上最省事的路就是:BG runtime 把字符串 parse 成 ShadowElement,再把同一棵树序列化进 <code>REGISTER_TREE</code>。构建期残差(ET 那种)仍然在桌面上 —— 只是还没为那套 codegen 买单。下一页:为什么 <code>child(n0)</code> 的活指针仍然过不了边界。</p>`,
   // 90pre-a E20pre-a · 问题:需要指针,指针过不了
   `<p><strong>用两拍把问题说清。</strong>Vapor 编译出来的代码,像操作 HTML DOM 一样走树、改树:<code>child(n0)</code> 返回活指针;<code>setText(n1, …)</code> 通过它写入。细粒度更新的故事全靠这个 —— 产物<em>依赖</em>一棵可寻址的树。</p><p><strong>为什么不直接走 engine tree?</strong>从 BG 看,engine element tree 是 write/ops 形的 —— 没有同步的 <code>firstChild</code> walk。所以 Vapor 改走 <em>BG shadow tree</em>(<code>ShadowElement</code>)。这些活指针照样过不了 MT —— 下一页:握着名字的那棵 MT addressable tree。</p>`,
   // 90pre-b E20pre-b · BG shadow vs MT addressable

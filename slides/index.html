@@ -3188,9 +3188,15 @@ app.<span class="code-fn">use</span>(router)</pre>
       First question on Lynx: where does the template shape live on Main?
       <em>Not</em> baked into MTS — the first <code>t0()</code> ships this <code>structure</code> once.
     </p>
+    <p class="lead lead--sub" data-mm-fade style="margin-top:clamp(6px,1cqh,12px);font-size:clamp(14px,1.55cqw,20px)">
+      Why not deliver the tree at build time? History, not essence: upstream
+      Vapor codegen only emits an HTML string — BG parse + serialize was the
+      cheapest path.
+    </p>
     <aside class="notes">
       <p><strong>First question — what does Main actually receive?</strong> Vapor compiles to <code>template()</code> + <code>t0()</code> clone. On the Web that clone is the browser DOM. On Lynx the shape is <em>not</em> pre-placed in the MTS/Lepus bundle (unlike Element Templates&rsquo; baked <code>create()</code>).</p>
-      <p>On the <em>first</em> <code>t0()</code>, BG walks the inert ShadowElement prototype into a <code>TemplateNode</code> AST — <code>[tag, props|0, children[]]</code> — and pushes <code>REGISTER_TREE</code> once: <code>[16, treeId, structure, 0]</code>. Main only caches <code>{ structure }</code>; natives appear later on <code>CLONE_TREE</code>. Next: why the live pointers from <code>child(n0)</code> still can&rsquo;t cross the boundary.</p>
+      <p>On the <em>first</em> <code>t0()</code>, BG walks the inert ShadowElement prototype into a <code>TemplateNode</code> AST — <code>[tag, props|0, children[]]</code> — and pushes <code>REGISTER_TREE</code> once: <code>[16, treeId, structure, 0]</code>. Main only caches <code>{ structure }</code>; natives appear later on <code>CLONE_TREE</code>.</p>
+      <p><strong>Why not bake it at build time?</strong> Historical, not essential. Upstream Vapor&rsquo;s codegen only hands you an HTML string (<code>template('&lt;view&gt;…&lt;/view&gt;')</code>). The cheapest Lynx path was: BG runtime parses that string into ShadowElement, then serializes the same tree for <code>REGISTER_TREE</code>. A compile-time residual (ET-style) is still on the table — we just haven&rsquo;t paid for that codegen yet. Next: why the live pointers from <code>child(n0)</code> still can&rsquo;t cross the boundary.</p>
     </aside>
   </section>
 
