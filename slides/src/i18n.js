@@ -239,6 +239,16 @@ export const ZH = {
   'applyOps → PAPI → paint': 'applyOps → PAPI → paint',
   'one op · whole subtree': '一个 op · 整棵子树',
   'straight-line PAPI → paint': '直线 PAPI → paint',
+  // IFR6b · trees + sync wire
+  'VDOM · sparse': 'VDOM · 稀疏',
+  'native · create()': 'native · create()',
+  'static ghosted · only holes named': '静态变灰 · 只有 <b>holes</b> 有名',
+  'create() builds · same hole ids': 'create() 建树 · <b>同一套 hole id</b>',
+  'tpl id · not the tree': 'tpl id · 不是整棵树',
+  'values only · e.g. h0': '只有值 · 如 h0',
+  'ops vs recording': 'ops 对账录制',
+  'Structure never crosses — both bundles already share create(). The wire carries the tpl id and hole values; hydrate joins those ops.':
+    '结构从不跨线 —— 两边产物里已经共享 <code>create()</code>。线上走的是 <b>tpl id</b> 和 <b>hole 值</b>;hydrate 把这些 ops join 起来。',
   'FCP across a real Web Worker + IPC (Lynx for Web) — suite median −12% to −19%, ReactLynx control −23%. ET stays flat on FCP; its win is render cost (~1,000 el, jitless) and ops payload.':
     'FCP:跨真实 Web Worker + IPC(Lynx for Web)—— 全套中位数 −12% 到 −19%,ReactLynx 对照 −23%。ET 对 FCP 基本持平;它的收益在渲染开销(约 1,000 元素,jitless)和 ops 负载。',
   'Element Templates shrink the recorded ops payload 3–1000× — and that protocol shrink helps every update, not just the first frame.':
@@ -606,7 +616,9 @@ export const ZH_NOTES = [
   // IFR5 · 双线程无 ET：肥胖 VDOM→opcode
   `<p><strong>同一份代码,两条线程,仍然很贵。</strong>BTS 把 VDOM 走进 ShadowElement,吐出一长串扁平 opcode。MTS IFR 在 <code>loadTemplate</code> 期间跑同一份 Vue + <code>nodeOps</code>,录下同形状的 ops,本地 apply 出画面。IFR 改的是<em>何时</em> paint —— 还没把活变少。</p>`,
   // IFR6 · 双线程有 ET：INSTANTIATE → create()
-  `<p><strong>ET 怎么落到两条线程。</strong>编译器把静态壳下沉成 <code>registerElementTemplate(id, holes, create)</code>。BTS 仍从 VDOM 起步,但静态块变成一个 vnode,只发 <code>INSTANTIATE_TEMPLATE</code> 加空洞 <code>SET_*</code> —— 不再逐节点 <code>CREATE</code>。MTS IFR 上同一个 opcode 进本地解释器,调用烘焙好的 <code>create()</code> —— 一串直线 Element PAPI。下一页看源码 → 编译产物。</p>`,
+  `<p><strong>ET 怎么落到两条线程。</strong>编译器把静态壳下沉成 <code>registerElementTemplate(id, holes, create)</code>。BTS 仍从 VDOM 起步,但静态块变成一个 vnode,只发 <code>INSTANTIATE_TEMPLATE</code> 加空洞 <code>SET_*</code> —— 不再逐节点 <code>CREATE</code>。MTS IFR 上同一个 opcode 进本地解释器,调用烘焙好的 <code>create()</code> —— 一串直线 Element PAPI。下一页:两边的树长什么样,以及线上到底同步了什么。</p>`,
+  // IFR6b · 双线程树 + 同步内容
+  `<p><strong>两边的树分别是什么。</strong>BTS 侧是稀疏的 VDOM / ShadowElement:静态节点仍在(满足 Vue 的同步读取),但对协议隐形(变灰);只有 hole 有名字(<code>h0</code>…)。MTS IFR 用编译好的 <code>create()</code> 物化同一形状 —— 一棵原生元素树,hole id 对齐。</p><p><strong>同步了什么。</strong>和 Vapor 的 <code>REGISTER_TREE</code> 不同,ET 不传结构:<code>registerElementTemplate</code> 已经把 <code>create()</code> 打进两边产物。跨线只有 <code>INSTANTIATE_TEMPLATE(tplId)</code>(每个实例一次)+ hole 的 <code>SET_*</code> 值。IFR 下 MTS 首屏已录下这些 ops;BTS 最初几批拿去和录制对账 —— 仍是 skip / patch / rebuild 那次 join。</p>`,
   // IFR7 · 骨架 + 空洞
   `<p>可下沉 = 每个节点都是纯 Lynx 元素、只有值或文本动态。组件、插槽、<code>v-if</code>/<code>v-for</code> 宿主、<code>&lt;list&gt;</code>、带 ref/id 的节点留在普通 vnode 路径;它们的纯元素子体仍可下沉。scoped-CSS 的 scope id 会被烘焙进去。</p>`,
   // IFR8 · 基准测试表
