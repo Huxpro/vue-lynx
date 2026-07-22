@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-17T22:55:16.556Z @ fac8b548
+> Generated 2026-07-22T10:41:49.687Z @ 08bc6d71
 > Host: 4× Intel(R) Xeon(R) Processor
 
 ## Why unify?
@@ -32,6 +32,8 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vdom-ifr-et | ✓ | ✓ | — | — |
 | vapor | ✓ | ✓ | ✓ | — |
 | vapor-ifr | ✓ | ✓ | — | — |
+| vapor-ifr-dense | — | ✓ | — | — |
+| vapor-ifr-sparse | — | ✓ | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -129,6 +131,20 @@ create@10k react/vdom = 0.86×; selectStorm@10k react/vapor = 22.9×.
 | 20k | 434 | 587 | 695 | 526 | 692 | 637 |
 | 30k | 631 | 842 | 1010 | 771 | 1010 | 906 |
 
+### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2
+
+Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the full native skeleton.
+
+| cell | naming | web gzip | FCP ×1 | Δ vs dense | FCP ×4 | Δ vs dense |
+|---|---|---:|---:|---:|---:|---:|
+| vapor-ifr-dense | dense | 89720 | 102.2 | 0.0% | 302.9 | 0.0% |
+| vapor-ifr-sparse | sparse | 90007 | 91.5 | -10.5% | 310.7 | 2.6% |
+| vapor-ifr | sparse | 90007 | 86.9 | -15.0% | 289.6 | -4.4% |
+
+×1 sparse/dense = 0.895× (-10.5%). ×4 sparse/dense = 1.026× (2.6%) — treat as noise / inconclusive for scale hedge.
+
+Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
+
 
 ## Sources ingested
 
@@ -141,6 +157,9 @@ create@10k react/vdom = 0.86×; selectStorm@10k react/vapor = 22.9×.
 - ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-x4.json`
 - ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-react-x1.json`
 - ifr-scale-fcp: `/workspace/packages/ifr-bench/results/browser-results-scale-react-x4.json`
+- graph-eng-naming-fcp: `/workspace/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse.json`
+- graph-eng-naming-fcp: `/workspace/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse-x4.json`
+- graph-eng-bundle-sizes: `/workspace/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json`
 - strategy-node-jitless: `/workspace/packages/ifr-bench/results/results.json`
 - bare-dom: `/workspace/packages/benchmark/results/web-baseline-latest.json`
 
