@@ -24,6 +24,8 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+import { analyzeAndAnnotateVaporCode } from '../compiler/vapor-addressing.js';
+
 const require = createRequire(import.meta.url);
 
 // ---------------------------------------------------------------------------
@@ -204,5 +206,26 @@ export default function vaporTemplateLoader(
     }
   }
 
-  loaderContext.callback(null, compiled.code, compiled.map);
+  let code = compiled.code;
+  // Compile-time addressing metadata for Vapor templates (#297): stamp
+  // `__vlxAddressing` onto each `tN` factory. Runtime ignores it until the
+  // sparse A1→A2 path (#298) consumes the hole / addressed sets.
+  if (descriptor.vapor && code) {
+    try {
+      code = analyzeAndAnnotateVaporCode(src, code, {
+        // script.bindings is BindingMetadata from compiler-sfc; cast through
+        // unknown so the loader stays decoupled from which compiler copy
+        // rspack-vue-loader resolved.
+        bindingMetadata: script?.bindings as
+          | import('@vue/compiler-dom').BindingMetadata
+          | undefined,
+        isNativeTag: () => true,
+      }).code;
+    } catch {
+      // Analysis must never break the compile — sparse naming can fall back
+      // to dense CLONE_TREE when metadata is absent.
+    }
+  }
+
+  loaderContext.callback(null, code, compiled.map);
 }

@@ -158,6 +158,28 @@ export interface TemplateNodeProps {
 /** [tag, props|0, children] */
 export type TemplateNode = [string, TemplateNodeProps | 0, TemplateNode[]];
 
+/**
+ * Property stamped onto vapor `template()` factories by compile-time
+ * addressing analysis (#297). Runtime sparse A2 (#298) reads this.
+ */
+export const VAPOR_ADDRESSING_KEY = '__vlxAddressing';
+
+/**
+ * Sparse naming metadata for one vapor template (REGISTER_TREE preorder
+ * slots). `addressed` is what receives uids under A2; `holes` ⊆ `addressed`
+ * are write / insert-host targets.
+ *
+ * `tags` fingerprints `addressed.map(slot => structure[slot].tag)` so
+ * runtime can fail-safe to dense A1 on IR↔runtime preorder skew (#298).
+ */
+export interface VaporTreeAddressing {
+  holes: number[];
+  addressed: number[];
+  slotCount: number;
+  /** Tags at each addressed slot, parallel to `addressed`. */
+  tags: string[];
+}
+
 // Global names bridging the vapor build plugin and the runtime DOM shim:
 // the plugin's DefinePlugin rewrites free `document`/`window` identifiers to
 // `globalThis.<name>`, and vapor/dom-shim.ts installs the shims under the
