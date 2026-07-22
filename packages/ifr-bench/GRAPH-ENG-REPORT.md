@@ -92,8 +92,17 @@ one-to-one:
   Vue's Block, vapor recovered via `__vlxAddressing`).
 - **`+b:e`** — staging raised to the engine rung for the **persistent**
   tree (`__CreateElementTemplate` family). N/A on Lynx-for-Web.
-  `+b:c` for vapor is M3a (unimplemented); bundle-delivered data
-  (tentative `+b!`) is likewise unbuilt — see the Delivery column.
+- **`+b:c`** (vapor, #337) — staging raised to the code rung: the plugin
+  parses each `template()` HTML string at build time, bakes a
+  straight-line-PAPI `create()` into the MT bundle, and instantiation
+  crosses as one `INSTANTIATE_TEMPLATE(id)`. Structure-fingerprint
+  fail-safe: any build↔runtime parse disagreement silently falls back to
+  the `+b:d` wire path per template.
+- **`+b!`** (vapor, #338) — the Delivery column flipped alone: staging
+  stays data, but the serialized `TemplateNode` is baked into the MT
+  bundle (`registerVaporStructure(hash, ast)`); the BG sends only the
+  fingerprint hash (`REGISTER_TREE_BUNDLE`). Interpretation, naming and
+  the update path are byte-identical to `vapor +b`.
 - **`+ifr`** — ephemeral first-frame copy painted by the MTS, adopted or
   replayed on hydration. Paint parameter defaults to inheriting the
   persistent staging.
@@ -123,16 +132,17 @@ reference).
 | Native ET (`__CreateElementTemplate`) | native | block | random-access(slots) | **Engine** | persistent | bundle (ideal); our probe path proves runtime works | **Engine-Template** |
 | Vapor-Web `cloneNode` | native | block | traversal | Engine | persistent · *thread=local* | bundle (HTML string) | browser Engine-Template |
 
-**Unbuilt cells the Delivery column exposes** (theoretical, tracked for
-the roadmap): `vapor +b!` — bundle-delivered data (compiler emits the
-`TemplateNode` into the MT bundle; kills BG parse + serialize + wire +
-runtime-register, staging stays data — "M3a-lite"); `vapor +b:c` (M3a,
-bundle-delivered code); `vdom +b:e` (needs the compiler to emit a data
-descriptor — the native rung forces the residual back into data form).
+**Cells the Delivery column exposes** — now built (#337/#338): `vapor
++b!` — bundle-delivered data (the plugin emits the `TemplateNode` into
+the MT bundle; kills BG serialize + wire + runtime-register on the
+create path, staging stays data — "M3a-lite"); `vapor +b:c` (M3a,
+bundle-delivered code — the residual never crosses at runtime). Still
+unbuilt: `vdom +b:e` (needs the compiler to emit a data descriptor —
+the native rung forces the residual back into data form).
 
 **Factor cleanliness under the six columns**: vapor's ladder decomposes
-into single-column factors — `+b` moves Naming only, the future `+b!`
-moves Delivery only, `:c`/`:e` move Staging only. vdom's `+b` is a
+into single-column factors — `+b` moves Naming only, `+b!` (#338)
+moves Delivery only, `:c` (#337) / `:e` move Staging only. vdom's `+b` is a
 three-column bundle (Staging+Naming+Delivery at once) — which is why the
 two `+b` factor rows must not be compared across render models.
 

@@ -29,7 +29,7 @@ interface LoaderContext {
     content?: string | Buffer,
     sourceMap?: unknown,
   ) => void;
-  getOptions(): { enabled?: boolean };
+  getOptions(): { enabled?: boolean; autoPixelUnit?: boolean };
   addDependency(file: string): void;
 }
 
@@ -106,6 +106,7 @@ export default function vaporAddressingScriptLoader(
           | import('@vue/compiler-dom').BindingMetadata
           | undefined,
         isNativeTag: () => true,
+        autoPixelUnit: opts.autoPixelUnit,
       },
     ).code;
     callback(null, annotated);
