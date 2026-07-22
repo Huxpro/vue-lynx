@@ -3143,53 +3143,54 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- V·5 — The Vapor output (compiled code) -->
+  <!-- V·5 — Compiled output + first question: structure ships once (not baked into MTS) -->
   <section class="slide stage" data-bg="clean">
-    <div style="display:flex;align-items:center;gap:clamp(14px,2.2cqw,36px);width:100%;justify-content:center">
-      <div class="codeframe" style="text-align:left;flex:0 0 auto">
-        <div class="codeframe__head">
-          <span class="dots"><span></span><span></span><span></span></span>
-          <span>Counter.vue</span>
-        </div>
-<pre><span class="code-tag">&lt;script setup vapor&gt;</span>
-<span class="code-key">const</span> count <span class="code-key">=</span> <span class="code-fn">ref</span>(<span class="code-str">0</span>)
-<span class="code-tag">&lt;/script&gt;</span>
-
-<span class="code-tag">&lt;template&gt;</span>
-  <span class="code-tag">&lt;view</span> <span class="code-attr">@tap</span>=<span class="code-str">"count++"</span><span class="code-tag">&gt;</span>
-    <span class="code-tag">&lt;text&gt;</span>Count: {{ count }}<span class="code-tag">&lt;/text&gt;</span>
-  <span class="code-tag">&lt;/view&gt;</span>
-<span class="code-tag">&lt;/template&gt;</span></pre>
-      </div>
-      <span class="vflow__arr is-brand" style="font-size:clamp(22px,2.6cqw,34px)">&rarr;</span>
-      <div class="codeframe" style="text-align:left;flex:0 1 auto">
+    <div style="display:flex;align-items:stretch;gap:clamp(10px,1.6cqw,24px);width:100%;justify-content:center;max-width:1180px">
+      <div class="codeframe" style="text-align:left;flex:0 1 34%;min-width:0">
         <div class="codeframe__head">
           <span class="dots"><span></span><span></span><span></span></span>
           <span>compiled · vapor</span>
         </div>
-<pre><span class="code-key">import</span> { <span class="code-fn">template</span>, <span class="code-fn">child</span>, <span class="code-fn">renderEffect</span>, <span class="code-fn">setText</span>, <span class="code-fn">on</span> } <span class="code-key">from</span> <span class="code-str">'vue'</span>
-
-<span class="code-com">// <span class="codenote">&#9312;</span> register the static shape — once</span>
-<span class="code-key">const</span> t0 <span class="code-key">=</span> <span class="code-fn">template</span>(<span class="code-str">'&lt;view&gt;&lt;text/&gt;&lt;/view&gt;'</span>)
+<pre><span class="code-key">const</span> t0 <span class="code-key">=</span> <span class="code-fn">template</span>(
+  <span class="code-str">'&lt;view&gt;&lt;text/&gt;&lt;/view&gt;'</span>
+)
 
 <span class="code-key">function</span> <span class="code-fn">render</span>(_ctx) {
-  <span class="code-key">const</span> n0 <span class="code-key">=</span> <span class="code-fn">t0</span>()            <span class="code-com">// <span class="codenote">&#9313;</span> clone it</span>
+  <span class="code-key">const</span> n0 <span class="code-key">=</span> <span class="code-fn">t0</span>()  <span class="code-com">// first clone</span>
   <span class="code-key">const</span> n1 <span class="code-key">=</span> <span class="code-fn">child</span>(n0)
   <span class="code-fn">on</span>(n0, <span class="code-str">'tap'</span>, () <span class="code-key">=&gt;</span> _ctx.count<span class="code-key">++</span>)
-  <span class="code-fn">renderEffect</span>(() <span class="code-key">=&gt;</span>       <span class="code-com">// <span class="codenote">&#9314;</span> fine-grained</span>
+  <span class="code-fn">renderEffect</span>(() <span class="code-key">=&gt;</span>
     <span class="code-fn">setText</span>(n1, <span class="code-str">'Count: '</span>, _ctx.count))
   <span class="code-key">return</span> n0
 }</pre>
       </div>
+      <span class="vflow__arr is-brand" style="font-size:clamp(20px,2.4cqw,32px);align-self:center">&rarr;</span>
+      <div class="codeframe" style="text-align:left;flex:1 1 58%;min-width:0">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>REGISTER_TREE · first t0() only</span>
+        </div>
+<pre><span class="code-com">// not pre-baked into the MTS bundle —</span>
+<span class="code-com">// BG ships a data AST on the first clone</span>
+<span class="code-fn">pushOp</span>(OP.<span class="code-fn">REGISTER_TREE</span>, treeId, structure, <span class="code-str">0</span>)
+<span class="code-com">// wire: [16, treeId, structure, addressedOr0]</span>
+
+<span class="code-key">const</span> structure <span class="code-key">=</span> [                   <span class="code-com">// TemplateNode</span>
+  <span class="code-str">'view'</span>, <span class="code-str">0</span>, [
+    [<span class="code-str">'text'</span>, <span class="code-str">0</span>, []]
+  ]
+]
+<span class="code-com">// MT: templates.set(treeId, { structure })</span>
+<span class="code-com">//     — cache only; no native elements yet</span></pre>
+      </div>
     </div>
     <p class="lead" data-mm-fade>
-      <span class="codenote">&#9312;</span> a template registered once ·
-      <span class="codenote">&#9313;</span> cloned per instance ·
-      <span class="codenote">&#9314;</span> one effect that updates a single node.
+      First question on Lynx: where does the template shape live on Main?
+      <em>Not</em> baked into MTS — the first <code>t0()</code> ships this <code>structure</code> once.
     </p>
     <aside class="notes">
-      <p><strong>Read the right panel.</strong> Three moves: <code>template()</code> declares the static shape once; <code>t0()</code> clones it; <code>renderEffect()</code> is the only thing that re-runs — and it touches exactly one text node.</p>
-      <p>Note <code>from 'vue'</code> — the component doesn't know it's on Lynx. Next: why those live pointers are a problem across threads.</p>
+      <p><strong>First question — what does Main actually receive?</strong> Vapor compiles to <code>template()</code> + <code>t0()</code> clone. On the Web that clone is the browser DOM. On Lynx the shape is <em>not</em> pre-placed in the MTS/Lepus bundle (unlike Element Templates&rsquo; baked <code>create()</code>).</p>
+      <p>On the <em>first</em> <code>t0()</code>, BG walks the inert ShadowElement prototype into a <code>TemplateNode</code> AST — <code>[tag, props|0, children[]]</code> — and pushes <code>REGISTER_TREE</code> once: <code>[16, treeId, structure, 0]</code>. Main only caches <code>{ structure }</code>; natives appear later on <code>CLONE_TREE</code>. Next: why the live pointers from <code>child(n0)</code> still can&rsquo;t cross the boundary.</p>
     </aside>
   </section>
 
@@ -3326,9 +3327,9 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="xwire">
         <div class="xwire__op">
           <span class="xwire__name">REGISTER_TREE</span>
-          <span class="xstruct"><i></i><i></i><i></i></span>
+          <span class="xwire__payload" data-mm-fade><code>[16, id, structure, 0]</code></span>
           <span class="xwire__line"></span>
-          <span class="xwire__count">once per template</span>
+          <span class="xwire__count">structure AST · first clone only</span>
         </div>
       </div>
       <div class="node node--main" data-flip="vx-mt">
@@ -3351,11 +3352,12 @@ app.<span class="code-fn">use</span>(router)</pre>
       </div>
     </div>
     <p class="lead" data-mm-fade>
-      Pointers can&rsquo;t cross the boundary — so both sides <em>walk the same pre-order</em> and name every node alike. No id map is ever sent.
+      That <code>structure</code> from the first <code>t0()</code> is cached on Main as an inert prototype.
+      Both sides walk the same pre-order — same uids, no id map.
     </p>
     <aside class="notes">
-      <p><strong>Names on the wire — step one.</strong> We just established Vapor needs addressable slots across threads. Sending every clone as create/append ops would make traffic <em>worse</em> than vdom.</p>
-      <p>Fix: send the structure once with <code>REGISTER_TREE</code>. Both threads assign element uids by walking it in the same pre-order — so no id map is ever transferred.</p>
+      <p><strong>Names on the wire — step one.</strong> We already saw the payload: a <code>TemplateNode</code> AST shipped once on the first clone — <em>not</em> baked into MTS. Main caches it as an inert prototype (still no natives).</p>
+      <p>Both threads assign element uids by walking that structure in the same pre-order — so no id map is ever transferred. Next beat: each instance is one <code>CLONE_TREE(base)</code>.</p>
     </aside>
   </section>
 

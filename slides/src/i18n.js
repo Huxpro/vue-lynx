@@ -447,6 +447,13 @@ export const ZH = {
 
   '① a template registered once · ② cloned per instance · ③ one effect that updates a single node.':
     '<span class="codenote">①</span> 模板注册一次 · <span class="codenote">②</span> 每个实例克隆一份 · <span class="codenote">③</span> 一个 effect 只更新一个节点。',
+  'First question on Lynx: where does the template shape live on Main? Not baked into MTS — the first t0() ships this structure once.':
+    'Lynx 上的第一个疑问:模板形状在 Main 上住哪儿?<em>不是</em>打进 MTS 产物 —— 第一次 <code>t0()</code> 把这份 <code>structure</code> 传过去,只传一次。',
+  'That structure from the first t0() is cached on Main as an inert prototype. Both sides walk the same pre-order — same uids, no id map.':
+    '第一次 <code>t0()</code> 传来的那份 <code>structure</code>,在 Main 上缓存成惰性原型。两侧走同一趟前序 —— 相同 uid,从不传 id 映射。',
+  'structure AST · first clone only': 'structure AST · 仅第一次 clone',
+  'REGISTER_TREE · first t0() only': '<code>REGISTER_TREE</code> · 仅第一次 <code>t0()</code>',
+  '[16, id, structure, 0]': '<code>[16, id, structure, 0]</code>',
 
   "Vapor drives the browser DOM directly. We make the background thread's tree look like the DOM — so upstream Vapor runs untouched.":
     'Vapor 直接驱动浏览器 DOM。我们让后台线程的那棵树“长得像”DOM —— 于是上游 Vapor 原封不动地跑起来。',
@@ -796,14 +803,14 @@ export const ZH_NOTES = [
   `<p><strong>Web 上的复用故事。</strong>两枚绿标就是全部要点:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为底下那层 DOM 兼容表面会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。在 Web 上,那层表面<em>就是</em>浏览器 DOM。</p>`,
   // 40b 代码复用 · Lynx 拆到 BG | MT
   `<p><strong>同一组层,双线程安家。</strong>compiled / alias / runtime / shims / ShadowElement 留在后台线程;<code>ops stream → native</code> 落在主线程。两枚绿标:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答那些 DOM 调用 —— 它们变成 vdom 已经在用的同一条 ops 流。</p>`,
-  // 39 Vapor 产物
-  `<p><strong>看右边这一版。</strong>三步:<code>template()</code> 一次性声明静态结构;<code>t0()</code> 克隆它;<code>renderEffect()</code> 是唯一会重跑的东西 —— 而它只碰一个文本节点。</p><p>注意 <code>from 'vue'</code> —— 组件并不知道自己在 Lynx 上。下一页:这些活指针为什么过不了线程边界。</p>`,
+  // 39 Vapor 产物 · 第一个疑问:structure 第一次传过去
+  `<p><strong>第一个疑问 —— Main 到底收到什么?</strong>Vapor 编译成 <code>template()</code> + <code>t0()</code> 克隆。在 Web 上那次克隆就是浏览器 DOM。在 Lynx 上,形状<em>不会</em>预先打进 MTS/Lepus 产物(那是 Element Templates 的 baked <code>create()</code>)。</p><p>第一次 <code>t0()</code> 时,BG 把惰性 ShadowElement 原型走成 <code>TemplateNode</code> AST —— <code>[tag, props|0, children[]]</code> —— 并只推一次 <code>REGISTER_TREE</code>:<code>[16, treeId, structure, 0]</code>。Main 只缓存 <code>{ structure }</code>;原生节点要等后面的 <code>CLONE_TREE</code>。下一页:为什么 <code>child(n0)</code> 的活指针仍然过不了边界。</p>`,
   // 90pre-a E20pre-a · 问题:需要指针,指针过不了
   `<p><strong>用两拍把问题说清。</strong>Vapor 编译出来的代码,像操作 HTML DOM 一样走树、改树:<code>child(n0)</code> 返回活指针;<code>setText(n1, …)</code> 通过它写入。细粒度更新的故事全靠这个 —— 产物<em>依赖</em>一棵可寻址的树。</p><p><strong>为什么不直接走 engine tree?</strong>从 BG 看,engine element tree 是 write/ops 形的 —— 没有同步的 <code>firstChild</code> walk。所以 Vapor 改走 <em>BG shadow tree</em>(<code>ShadowElement</code>)。这些活指针照样过不了 MT —— 下一页:握着名字的那棵 MT addressable tree。</p>`,
   // 90pre-b E20pre-b · BG shadow vs MT addressable
   `<p><strong>两棵树,一分为二。</strong><em>BG shadow tree</em>(<code>ShadowElement</code>)才是 Vapor 真正在走的 —— 活指针、DOM 形、retained —— 于是 <code>child(n0)</code> / <code>setText(n1)</code> 能像在 HTML DOM 上一样工作。从 BG 看,MT 上的 engine element tree 是 write/ops 形,没法靠 walk 去寻址。</p><p><em>MT addressable tree</em> 是另一半:一次性注册的惰性原型,每个槽位按同一趟前序稠密命名(<code>uid = base + slot</code>)。Vue 从不握住这些节点 —— 解释器握着,于是 <code>CLONE_TREE</code> / <code>SET_TEXT(6, …)</code> 才能落地。和 shadow tree 同构,节点种类不同。下一页:把这些名字送过线的协议 —— <code>REGISTER_TREE</code>,然后 <code>CLONE_TREE</code>。</p>`,
   // 41 跨线程 · 注册
-  `<p><strong>名字上线 —— 第一步。</strong>前面刚说清 Vapor 需要跨线程可寻址的槽位。若每个克隆都当 create/append 发,流量会比 vdom <em>更差</em>。</p><p>修复:用 <code>REGISTER_TREE</code> 把结构只发一次。两条线程各自以相同的前序遍历分配 uid —— 于是根本不用传任何 id 映射。</p>`,
+  `<p><strong>名字上线 —— 第一步。</strong>载荷我们已经见过:第一次 clone 时传过去的 <code>TemplateNode</code> AST —— <em>不是</em>打进 MTS。Main 把它缓存成惰性原型(还没有原生节点)。</p><p>两条线程按同一趟前序给这份 structure 分配 uid —— 于是根本不用传任何 id 映射。下一拍:每个实例一条 <code>CLONE_TREE(base)</code>。</p>`,
   // 42 跨线程 · 克隆（为什么要 clone）
   `<p><strong>为什么要 clone?</strong>Vapor 的蓝图是静态的(<code>template()</code> 一次);每个组件实例仍要<em>自己的</em>节点给 effect、文本和事件 —— 和 DOM <code>cloneNode(true)</code> 同一套心智。宿主契约就是:克隆模板 + 命令式 setter。</p><p><strong>为什么 Lynx 上是 <code>CLONE_TREE</code>?</strong>指针过不了线程。若 BG 的 clone 变成逐节点 create/append,create-1k 流量会比 vdom 更差。<code>REGISTER_TREE</code> 之后,每个实例一条 <code>CLONE_TREE(base)</code> —— Main 从该 base uid 重走缓存原型并物化原生元素。自有 opcode;解释器在同一产物里。结果:−59% ops、−51% 字节。</p>`,
   // 90pre-c E20pre-c · ShadowElement (VDOM & Vapor) vs AddressableNode
