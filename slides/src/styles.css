@@ -4409,6 +4409,16 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   color: var(--ink-mute);
 }
 .xwire__count b { color: var(--vue-green); }
+.xwire__payload {
+  font-family: var(--mono);
+  font-size: clamp(9px, 0.95cqw, 11px);
+  color: var(--ink-mute);
+  letter-spacing: 0.02em;
+}
+.xwire__payload code {
+  color: var(--vue-green);
+  font-size: inherit;
+}
 /* structure glyph — a tiny nested-block tree that "crosses once" */
 .xstruct { display: inline-flex; gap: 3px; align-items: center; }
 .xstruct i {
