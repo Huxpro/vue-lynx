@@ -2934,113 +2934,102 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
-  <!-- V·6a — Code reuse as dual-thread cols (BG DOM-shaped · MT ops) -->
-  <section class="slide stage">
-    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
-      <div class="ifrjoin__cols">
-        <div class="ifrjoin__col" data-flip="vr-col-bg" style="--c:#5dd5a8">
-          <span class="ifrjoin__label" data-flip="vr-lab-bg"><i></i>Background · Vapor</span>
-          <span class="ifrjoin__role" data-mm-fade>DOM-shaped stack</span>
-          <div class="ifrjoin__stack">
-            <code class="ifrjoin__op" data-flip="vr-bg-1">compiled · import 'vue'</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-mm-fade>alias → vue-lynx/vapor</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-mm-fade>@vue/runtime-vapor</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-mm-fade>document · Node · Element</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-flip="vr-bg-5">ShadowElement</code>
+  <!-- V·6a — original pipe layers, split across BG | MT -->
+  <section class="slide stage" data-bg="clean">
+    <div class="pipesplit">
+      <div class="pipesplit__side" data-flip="vr-col-bg">
+        <p class="pipesplit__lab" data-flip="vr-lab-bg"><i></i>Background · Vapor</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer" data-flip="vr-l1">
+            <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
           </div>
-          <span class="ifrjoin__hint" data-mm-fade>looks like the DOM</span>
-        </div>
-        <div class="ifrjoin__links">
-          <span class="ifrjoin__linkhead" data-mm-fade>5 steps</span>
-          <div class="ifrjoin__stack">
-            <span class="ifrjoin__link" data-flip="vrp-1" style="--c:#42b883"><b>1</b> compile</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link" data-mm-fade style="--c:#E8B44A"><b>2</b> alias</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link" data-mm-fade style="--c:#4FB8F0"><b>3</b> runtime</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link" data-mm-fade style="--c:#9E86F0"><b>4</b> shims</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link" data-flip="vrp-5" style="--c:#F27A9E"><b>5</b> ops</span>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l2">
+            <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l3">
+            <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l4">
+            <span class="k">shims</span><span class="t">document · Node · Element</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l5">
+            <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
           </div>
         </div>
-        <div class="ifrjoin__col" data-flip="vr-col-mt" style="--c:#56b8f0">
-          <span class="ifrjoin__label" data-flip="vr-lab-mt"><i></i>Main · interpreter</span>
-          <span class="ifrjoin__role" data-mm-fade>write / ops only</span>
-          <div class="ifrjoin__stack">
-            <code class="ifrjoin__op is-idle" data-flip="vr-mt-1">awaits stream</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-idle" data-mm-fade>…</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-idle" data-mm-fade>…</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-mm-fade>ops stream</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op" data-flip="vr-mt-5">applyOps → native</code>
+      </div>
+      <div class="pipesplit__rail" aria-hidden="true" data-mm-fade>
+        <span class="pipesplit__arrow">&rarr;</span>
+        <span class="pipesplit__cap">ops</span>
+      </div>
+      <div class="pipesplit__side" data-flip="vr-col-mt">
+        <p class="pipesplit__lab" data-flip="vr-lab-mt"><i></i>Main · interpreter</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
+            <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
           </div>
-          <span class="ifrjoin__hint" data-mm-fade>no sync DOM walk from BG</span>
         </div>
       </div>
     </div>
-    <p class="lead arch-cap" data-mm-fade>
-      Vapor expects a browser DOM. Split across threads: BG gets a
-      DOM-<em>shaped</em> tree; MT only ever sees the ops stream.
+    <p class="lead" data-mm-fade>
+      Same layers as before — BG holds the DOM-shaped stack; MT only sees the ops stream.
     </p>
     <aside class="notes">
-      <p><strong>Same dual-thread columns as the IFR arc — read left, then right.</strong> Background: compiled Vapor still says <code>import 'vue'</code>, aliases into <code>vue-lynx/vapor</code>, and runs <code>@vue/runtime-vapor</code> over DOM shims onto <code>ShadowElement</code>. Main: write/ops only — no sync <code>firstChild</code> walk from BG. Five linked steps cross the boundary. Next slide folds the reuse punchline into those columns.</p>
+      <p><strong>Just relocate the pipe.</strong> The six layers didn&rsquo;t change — compiled / alias / runtime / shims / ShadowElement sit on the background thread; <code>ops stream → native</code> sits on Main. Next beat: light up the two reuse layers.</p>
     </aside>
   </section>
 
-  <!-- V·6b — reuse punchline: unmodified runtime + shared ops (magic-move) -->
-  <section class="slide stage">
-    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
-      <div class="ifrjoin__cols">
-        <div class="ifrjoin__col" data-flip="vr-col-bg" style="--c:#5dd5a8">
-          <span class="ifrjoin__label" data-flip="vr-lab-bg"><i></i>Background · Vapor</span>
-          <span class="ifrjoin__role" data-mm-fade>upstream runs untouched</span>
-          <div class="ifrjoin__stack">
-            <code class="ifrjoin__op" data-flip="vr-bg-1">compiled · import 'vue'</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-hero" data-mm-fade>@vue/runtime-vapor · unmodified</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-hero" data-flip="vr-bg-5">ShadowElement · the trick</code>
+  <!-- V·6b — same split; highlight unmodified + the trick (magic-move) -->
+  <section class="slide stage" data-bg="clean">
+    <div class="pipesplit">
+      <div class="pipesplit__side" data-flip="vr-col-bg">
+        <p class="pipesplit__lab" data-flip="vr-lab-bg"><i></i>Background · Vapor</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer" data-flip="vr-l1">
+            <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
           </div>
-          <span class="ifrjoin__hint" data-mm-fade>cloneNode · insertBefore · setAttribute</span>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l2">
+            <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer pipe__layer--key" data-flip="vr-l3">
+            <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
+            <span class="pipe__reuse" data-mm-fade>unmodified</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer" data-flip="vr-l4">
+            <span class="k">shims</span><span class="t">document · Node · Element</span>
+          </div>
+          <div class="pipe__arr">&#9660;</div>
+          <div class="pipe__layer pipe__layer--key" data-flip="vr-l5">
+            <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
+            <span class="pipe__reuse" data-mm-fade>the trick</span>
+          </div>
         </div>
-        <div class="ifrjoin__links">
-          <span class="ifrjoin__linkhead" data-mm-fade>3 steps</span>
-          <div class="ifrjoin__stack">
-            <span class="ifrjoin__link" data-flip="vrp-1" style="--c:#42b883"><b>1</b> vapor</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link is-hero" data-mm-fade style="--c:#5dd5a8"><b>2</b> Shadow</span>
-            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
-            <span class="ifrjoin__link" data-flip="vrp-5" style="--c:#F27A9E"><b>3</b> ops</span>
+      </div>
+      <div class="pipesplit__rail" aria-hidden="true" data-mm-fade>
+        <span class="pipesplit__arrow">&rarr;</span>
+        <span class="pipesplit__cap">ops</span>
+      </div>
+      <div class="pipesplit__side" data-flip="vr-col-mt">
+        <p class="pipesplit__lab" data-flip="vr-lab-mt"><i></i>Main · interpreter</p>
+        <div class="pipe pipe--side">
+          <div class="pipe__layer pipe__layer--main" data-flip="vr-l6">
+            <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
           </div>
-        </div>
-        <div class="ifrjoin__col" data-flip="vr-col-mt" style="--c:#56b8f0">
-          <span class="ifrjoin__label" data-flip="vr-lab-mt"><i></i>Main · interpreter</span>
-          <span class="ifrjoin__role" data-mm-fade>same ops stream as vdom</span>
-          <div class="ifrjoin__stack">
-            <code class="ifrjoin__op" data-flip="vr-mt-1">DOM calls → ops</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-hero" data-mm-fade>ops stream</code>
-            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
-            <code class="ifrjoin__op is-hero" data-flip="vr-mt-5">applyOps → native</code>
-          </div>
-          <span class="ifrjoin__hint" data-mm-fade>shared with vdom mode</span>
         </div>
       </div>
     </div>
-    <p class="lead arch-cap" data-mm-fade>
+    <p class="lead" data-mm-fade>
       Make BG <em>look like</em> the DOM — <code>@vue/runtime-vapor</code> ships
       unmodified; those calls become the same ops vdom already uses.
     </p>
     <aside class="notes">
-      <p><strong>Same figure, fewer links — the reuse punchline.</strong> Watch steps 2–4 fold into <code>ShadowElement</code>: <code>@vue/runtime-vapor</code> stays <em>unmodified</em> because the surface answers <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>. Those calls serialize into the ops stream Main already knows from vdom mode. Contract fit, not a fork.</p>
+      <p><strong>The reuse story, still the same layers.</strong> Two green badges light up on the BG stack: <code>@vue/runtime-vapor</code> is <em>unmodified</em> because ShadowElement answers <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>. Those calls become the ops stream on Main — the same one vdom mode already uses.</p>
     </aside>
   </section>
 

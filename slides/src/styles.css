@@ -4300,6 +4300,66 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   line-height: 0.5;
 }
 
+/* Original pipe layers, parked on BG | MT (V·6a/b) */
+.pipesplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 0.85fr);
+  align-items: center;
+  gap: clamp(12px, 1.8cqw, 28px);
+  width: min(100%, 1080px);
+  margin: 0 auto;
+}
+.pipesplit__side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.pipesplit__lab {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pipesplit__lab i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--vue-green);
+  display: inline-block;
+}
+.pipesplit__side:last-child .pipesplit__lab i {
+  background: #56b8f0;
+}
+.pipe--side {
+  width: 100%;
+  margin: 0;
+}
+.pipesplit__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 28px;
+}
+.pipesplit__arrow {
+  font-family: var(--mono);
+  font-size: clamp(22px, 2.4cqw, 32px);
+  color: var(--vue-green);
+  line-height: 1;
+}
+.pipesplit__cap {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
 /* ---- Cross-thread template wire (sits in the .archflow middle) ---- */
 .xwire {
   align-self: center;

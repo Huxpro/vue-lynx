@@ -556,6 +556,9 @@ export const ZH = {
   "Vapor’s host contract is clone-a-template — each instance needs its own tree. Naively that’s create×N across the wire (worse than vdom). CLONE_TREE(base) makes it one named op per instance: 17k · 327 KB → 7k · 160 KB.":
     'Vapor 的宿主契约<em>就是</em>克隆模板 —— 每个实例要有自己的树。天真做法是跨线 create×N(比 vdom 更差)。<code>CLONE_TREE(base)</code> 把它收成每个实例 <b class="brand-text">一条命名 op</b>:<span style="color:var(--ink-mute);text-decoration:line-through">17k · 327 KB</span> → <b class="brand-text">7k · 160 KB</b>。',
 
+  'Same layers as before — BG holds the DOM-shaped stack; MT only sees the ops stream.':
+    '还是原来那些层 —— BG 握着 DOM 形的栈;MT 只看见 ops 流。',
+
 };
 
 // Speaker-view chrome labels.
@@ -776,10 +779,10 @@ export const ZH_NOTES = [
   `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p><strong>同一份源码 —— 拨一下开关。</strong>按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
   // 43+44 Benchmark · 更新柱状图 + 账本（合并）
   `<p><strong>核心结果 —— 再看诚实的成绩单。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现(5.8–9.8×)。端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样。</p><p>别夸大:创建是打平的;代价是产物 +26%(Vapor 运行时 + DOM 兼容垫片)。首屏差异在噪声范围内。绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
-  // 40a 代码复用 · 双线程列（BG DOM 形 · MT ops）
-  `<p><strong>和 IFR 那章一样的双线程栏 —— 先左后右。</strong>Background:编译后的 Vapor 仍写 <code>import 'vue'</code>,alias 进 <code>vue-lynx/vapor</code>,在 DOM shim 上跑 <code>@vue/runtime-vapor</code>,落到 <code>ShadowElement</code>。Main:只写/只有 ops —— BG 侧没有同步的 <code>firstChild</code> walk。中间五步过线。下一页把复用的 punchline 折进这两栏。</p>`,
-  // 40b 代码复用 · punchline（magic-move）
-  `<p><strong>同一张图,更少的环节 —— 复用 punchline。</strong>看 2–4 步折进 <code>ShadowElement</code>:<code>@vue/runtime-vapor</code> 保持<em>原封不动</em>,因为表面会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。这些调用序列化成 Main 在 vdom 模式里已经认识的 ops 流。是契约契合,不是 fork。</p>`,
+  // 40a 代码复用 · 原管线拆到 BG | MT
+  `<p><strong>只是把管线挪个家。</strong>六层没变 —— compiled / alias / runtime / shims / ShadowElement 落在后台线程;<code>ops stream → native</code> 落在主线程。下一拍点亮两层复用。</p>`,
+  // 40b 代码复用 · 点亮 unmodified + the trick
+  `<p><strong>复用故事,还是同一组层。</strong>BG 栈上两枚绿标亮起:<code>@vue/runtime-vapor</code> <em>原封不动</em>,因为 ShadowElement 会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。这些调用变成 Main 上的 ops 流 —— 与 vdom 模式已经在用的同一条。</p>`,
   // 45 工作流 · 一份源码两个渲染器
   `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
   // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
