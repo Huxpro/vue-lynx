@@ -840,6 +840,7 @@ const I18N_SELECTOR = [
   '.demo__caption', '.videopair figcaption',
   '.tile', '.wlab', '.wattr', '.wg b',
   '.ifrjoin__label', '.ifrjoin__role', '.ifrjoin__pill', '.ifrjoin__out',
+  '.hostcmp__pill', '.hostmtx__col',
   '.ifrjoin__hint', '.ifrjoin__linkhead', '.ifrjoin__link',
   '.node__cap', '.xwire__count',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';

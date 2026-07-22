@@ -3462,6 +3462,121 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
 .node__cap { display: block; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-top: 2px; }
 .node__cap b { color: var(--ds-name); font-weight: 600; }
 
+/* d.ts surface comparison (E20pre-c) */
+.dtsgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(10px, 1.4cqw, 18px) clamp(14px, 2cqw, 28px);
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+.dtsgrid--duo { max-width: 1000px; gap: clamp(18px, 2.4cqw, 36px); }
+.dtsgrid--duo .codeframe { font-size: 13px; }
+.dtsgrid--duo .codeframe pre { padding: 16px 18px; line-height: 1.55; }
+.dtsgrid .codeframe { font-size: 11.5px; text-align: left; }
+.dtsgrid .codeframe pre { padding: 12px 14px; line-height: 1.5; }
+.dtsgrid__tag {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  text-align: center;
+}
+.dtsgrid__tag b { color: var(--ink); font-weight: 600; }
+.dtsgrid__tag .hot { color: var(--ds-name); }
+
+/* E20pre-c — VDOM vs Vapor host-surface checklist */
+.hostcmp {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink-faint) 70%, transparent);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  padding: 12px;
+  text-align: left;
+}
+.hostcmp__data {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+  background: color-mix(in srgb, var(--ink-faint) 40%, transparent);
+}
+.hostcmp__data code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+.hostcmp__pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  flex: 0 0 auto;
+}
+.hostcmp__pill--both {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 22%, transparent);
+  background: color-mix(in srgb, var(--ink-faint) 55%, transparent);
+}
+.hostmtx {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 64px;
+  gap: 0;
+  font-family: var(--mono);
+}
+.hostmtx__h,
+.hostmtx__r {
+  display: contents;
+}
+.hostmtx__h > * {
+  padding: 4px 6px 8px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-faint) 80%, transparent);
+}
+.hostmtx__col--vdom { color: #6FA8FF; text-align: center; }
+.hostmtx__col--vapor { color: #42b883; text-align: center; }
+.hostmtx__r > * {
+  padding: 6px 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink-faint) 45%, transparent);
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+.hostmtx__r:last-child > * { border-bottom: 0; }
+.hostmtx__api {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+.hostmtx__y,
+.hostmtx__n {
+  text-align: center;
+  font-weight: 600;
+}
+.hostmtx__y { color: var(--ink); }
+.hostmtx__y--vdom { color: #6FA8FF; }
+.hostmtx__y--vapor { color: #42b883; }
+.hostmtx__n { color: color-mix(in srgb, var(--ink-mute) 70%, transparent); font-weight: 500; }
+.hostmtx__r--share > * {
+  background: color-mix(in srgb, var(--ink-faint) 35%, transparent);
+}
+
+
 /* =========================================================
    IV · Instant First-Frame Rendering + Element Templates.
    Reuses the runtime chapter's .flow / .fb / .farr / .fcenter
@@ -4282,6 +4397,37 @@ vl-media.snap.is-missing .vl-ph__kind { color: rgba(15, 18, 22, 0.65); }
   color: var(--vue-green);
   min-width: 3.2ch;
   text-align: right;
+}
+
+/* Merged bench + ledger on one slide */
+.bench--compact {
+  gap: clamp(6px, 1cqh, 10px);
+  margin-bottom: clamp(8px, 1.4cqh, 14px);
+}
+.bench--compact .bench__row {
+  gap: clamp(8px, 1.2cqw, 14px);
+}
+.bench--compact .bench__name {
+  font-size: clamp(11px, 1.1cqw, 13px);
+}
+.bench--compact .bench__track {
+  height: clamp(12px, 1.8cqh, 18px);
+}
+.bench--compact .bench__val {
+  font-size: clamp(14px, 1.6cqw, 22px);
+}
+.btable--compact {
+  width: min(100%, 860px);
+}
+.btable--compact th,
+.btable--compact td {
+  padding: clamp(5px, 0.85cqh, 9px) clamp(10px, 1.2cqw, 16px);
+}
+.btable--compact tbody td {
+  font-size: clamp(12px, 1.2cqw, 15px);
+}
+.btable--compact thead th {
+  font-size: 10px;
 }
 
 /* ---- Benchmark data table ---- */

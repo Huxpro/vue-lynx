@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 129</span>
+    <span data-counter>01 / 132</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2871,6 +2871,247 @@ app.<span class="code-fn">use</span>(router)</pre>
     </aside>
   </section>
 
+  <!-- V·8+9 — Benchmark: update speedup + ledger (merged) -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(24px,2.8cqw,40px);max-width:28ch;margin-bottom:clamp(8px,1.2cqh,14px)">
+      Where Vapor pulls away: <span class="brand-text">5.8–9.8&times;</span>.
+    </h2>
+    <div class="bench bench--compact">
+      <div class="bench__row">
+        <div class="bench__name">select row<small>2.95 &rarr; 0.30 ms</small></div>
+        <div class="bench__track"><div class="bench__fill" style="width:98%"></div></div>
+        <div class="bench__val">9.8&times;</div>
+      </div>
+      <div class="bench__row">
+        <div class="bench__name">remove row<small>2.85 &rarr; 0.40 ms</small></div>
+        <div class="bench__track"><div class="bench__fill" style="width:72%"></div></div>
+        <div class="bench__val">7.1&times;</div>
+      </div>
+      <div class="bench__row">
+        <div class="bench__name">swap rows<small>3.90 &rarr; 0.65 ms</small></div>
+        <div class="bench__track"><div class="bench__fill" style="width:61%"></div></div>
+        <div class="bench__val">6.0&times;</div>
+      </div>
+      <div class="bench__row">
+        <div class="bench__name">update every 10th<small>3.20 &rarr; 0.55 ms</small></div>
+        <div class="bench__track"><div class="bench__fill" style="width:59%"></div></div>
+        <div class="bench__val">5.8&times;</div>
+      </div>
+    </div>
+    <table class="btable btable--compact">
+      <thead>
+        <tr><th>metric · create-1k unless noted</th><th>vdom</th><th>vapor</th><th>delta</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="metric">create 1,000 rows · e2e</td>
+          <td>125.7 ms</td><td>144.5 ms</td>
+          <td class="flat">&asymp; parity</td>
+        </tr>
+        <tr>
+          <td class="metric">cross-thread ops / bytes</td>
+          <td>17k / 327 KB</td><td>7k / 160 KB</td>
+          <td class="win">&minus;59% / &minus;51%</td>
+        </tr>
+        <tr>
+          <td class="metric">bundle · gzip</td>
+          <td>39.2 KB</td><td>49.3 KB</td>
+          <td class="cost">+26%</td>
+        </tr>
+        <tr>
+          <td class="metric">first screen</td>
+          <td>121.7 ms</td><td>125.8 ms</td>
+          <td class="cost">+3%</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="lead" data-mm-fade>
+      Big wins on updates and traffic; creation at parity; you pay in bundle size.
+    </p>
+    <aside class="notes">
+      <p><strong>The core result — then the honest scorecard.</strong> Vue&rsquo;s official benchmark, ported to Lynx, same app in both modes. Background-thread cost = reactivity + render + ops serialization — Vapor&rsquo;s structural win shows up unfiltered here (5.8–9.8×). End-to-end multipliers are smaller (2.1–6.3×) because both modes emit near-identical ops.</p>
+      <p>Don&rsquo;t oversell: creation is parity; the cost is a +26% bundle (Vapor runtime + DOM-compat shim). First screen is within noise. Green = win, pink = cost. Numbers: headless Chromium, Lynx for Web, medians with 95% CIs.</p>
+    </aside>
+  </section>
+
+  <!-- V·6a — Code reuse as dual-thread cols (BG DOM-shaped · MT ops) -->
+  <section class="slide stage">
+    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="vr-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="vr-lab-bg"><i></i>Background · Vapor</span>
+          <span class="ifrjoin__role" data-mm-fade>DOM-shaped stack</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="vr-bg-1">compiled · import 'vue'</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>alias → vue-lynx/vapor</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>@vue/runtime-vapor</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>document · Node · Element</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-flip="vr-bg-5">ShadowElement</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>looks like the DOM</span>
+        </div>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead" data-mm-fade>5 steps</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link" data-flip="vrp-1" style="--c:#42b883"><b>1</b> compile</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#E8B44A"><b>2</b> alias</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#4FB8F0"><b>3</b> runtime</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-mm-fade style="--c:#9E86F0"><b>4</b> shims</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-flip="vrp-5" style="--c:#F27A9E"><b>5</b> ops</span>
+          </div>
+        </div>
+        <div class="ifrjoin__col" data-flip="vr-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="vr-lab-mt"><i></i>Main · interpreter</span>
+          <span class="ifrjoin__role" data-mm-fade>write / ops only</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op is-idle" data-flip="vr-mt-1">awaits stream</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-idle" data-mm-fade>…</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-idle" data-mm-fade>…</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-mm-fade>ops stream</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op" data-flip="vr-mt-5">applyOps → native</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>no sync DOM walk from BG</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Vapor expects a browser DOM. Split across threads: BG gets a
+      DOM-<em>shaped</em> tree; MT only ever sees the ops stream.
+    </p>
+    <aside class="notes">
+      <p><strong>Same dual-thread columns as the IFR arc — read left, then right.</strong> Background: compiled Vapor still says <code>import 'vue'</code>, aliases into <code>vue-lynx/vapor</code>, and runs <code>@vue/runtime-vapor</code> over DOM shims onto <code>ShadowElement</code>. Main: write/ops only — no sync <code>firstChild</code> walk from BG. Five linked steps cross the boundary. Next slide folds the reuse punchline into those columns.</p>
+    </aside>
+  </section>
+
+  <!-- V·6b — reuse punchline: unmodified runtime + shared ops (magic-move) -->
+  <section class="slide stage">
+    <div class="ifrjoin ifrjoin--pipe ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" data-flip="vr-col-bg" style="--c:#5dd5a8">
+          <span class="ifrjoin__label" data-flip="vr-lab-bg"><i></i>Background · Vapor</span>
+          <span class="ifrjoin__role" data-mm-fade>upstream runs untouched</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="vr-bg-1">compiled · import 'vue'</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-mm-fade>@vue/runtime-vapor · unmodified</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-flip="vr-bg-5">ShadowElement · the trick</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>cloneNode · insertBefore · setAttribute</span>
+        </div>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead" data-mm-fade>3 steps</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link" data-flip="vrp-1" style="--c:#42b883"><b>1</b> vapor</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link is-hero" data-mm-fade style="--c:#5dd5a8"><b>2</b> Shadow</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" data-flip="vrp-5" style="--c:#F27A9E"><b>3</b> ops</span>
+          </div>
+        </div>
+        <div class="ifrjoin__col" data-flip="vr-col-mt" style="--c:#56b8f0">
+          <span class="ifrjoin__label" data-flip="vr-lab-mt"><i></i>Main · interpreter</span>
+          <span class="ifrjoin__role" data-mm-fade>same ops stream as vdom</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op" data-flip="vr-mt-1">DOM calls → ops</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-mm-fade>ops stream</code>
+            <span class="ifrjoin__arr" data-mm-fade>&darr;</span>
+            <code class="ifrjoin__op is-hero" data-flip="vr-mt-5">applyOps → native</code>
+          </div>
+          <span class="ifrjoin__hint" data-mm-fade>shared with vdom mode</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade>
+      Make BG <em>look like</em> the DOM — <code>@vue/runtime-vapor</code> ships
+      unmodified; those calls become the same ops vdom already uses.
+    </p>
+    <aside class="notes">
+      <p><strong>Same figure, fewer links — the reuse punchline.</strong> Watch steps 2–4 fold into <code>ShadowElement</code>: <code>@vue/runtime-vapor</code> stays <em>unmodified</em> because the surface answers <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>. Those calls serialize into the ops stream Main already knows from vdom mode. Contract fit, not a fork.</p>
+    </aside>
+  </section>
+
+  <!-- V·10 — Workflow: one source, two renderers, verified -->
+  <section class="slide stage" data-bg="clean">
+    <div class="vsplit">
+      <div class="vsource">
+        <span class="node__label" style="color:var(--ink)">App.vue</span>
+        <span class="vrender__meta">byte-identical source<br/>+ one <code>vapor</code> attr</span>
+      </div>
+      <span class="vflow__arr is-brand" style="font-size:clamp(22px,2.6cqw,34px)">&rarr;</span>
+      <div class="vsplit__fork">
+        <div class="vrender vrender--teal">
+          <span class="vrender__name">VDOM</span>
+          <span class="vrender__meta">48 / 48 examples pass</span>
+        </div>
+        <div class="vrender vrender--vue">
+          <span class="vrender__name">Vapor</span>
+          <span class="vrender__meta">36 supported · <b>0.000%</b> visual diff</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Every example built &amp; driven in both modes through Lynx for Web.
+      The support matrix is generated from the run — it can't drift from what
+      actually passed.
+    </p>
+    <aside class="notes">
+      <p><strong>How we trust it.</strong> The Vapor app is <em>generated from the vdom source</em> — the only difference is the <code>vapor</code> attribute, so the workload is byte-for-byte identical. 36/36 supported examples hit 0.000% pixel diff against their vdom twin.</p>
+      <p>The matrix (<code>examples/vapor-support.json</code>, with per-entry source hashes) generates the docs table — it can't drift from the verification output.</p>
+    </aside>
+  </section>
+
+  <!-- V·10b — Upstream Vapor tests + host-fit (styled like the VDOM proof slide A7) -->
+  <section class="slide stage" data-bg="clean">
+    <div class="mega" style="font-size:clamp(52px,9cqw,140px)">
+      <span class="brand-text">545</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 671 run · 0 fail</small>
+    </div>
+    <div class="skipbar">
+      <div class="skipbar__track">
+        <span class="skipbar__seg" style="flex:37;background:#F27A9E"></span>
+        <span class="skipbar__seg" style="flex:24;background:#4FB8F0"></span>
+        <span class="skipbar__seg" style="flex:20;background:#9E86F0"></span>
+        <span class="skipbar__seg" style="flex:18;background:#3deae7"></span>
+        <span class="skipbar__seg" style="flex:1;background:#8b93a3"></span>
+      </div>
+      <div class="skipbar__legend">
+        <span><i style="background:#F27A9E"></i><b>37%</b> SSR / hydration</span>
+        <span><i style="background:#4FB8F0"></i><b>24%</b> browser-only</span>
+        <span><i style="background:#9E86F0"></i><b>20%</b> vdom↔vapor interop</span>
+        <span><i style="background:#3deae7"></i><b>18%</b> Lynx diffs</span>
+        <span><i style="background:#8b93a3"></i><b>&lt;1%</b> test-infra</span>
+      </div>
+    </div>
+    <div class="affinity">
+      <span><b>81%</b> Vapor</span>
+      <span class="vs">vs</span>
+      <span class="aff-vdom"><b>57%</b> VDOM</span>
+    </div>
+    <p class="lead" data-mm-fade>
+      Vapor's own suite — <b>unmodified</b> on ShadowElement. It passes the
+      element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.
+    </p>
+    <aside class="notes">
+      <p><strong>Vapor gets its own upstream suite (PR #232).</strong> 30 <code>runtime-vapor</code> spec files run against the real <code>vue-lynx/vapor</code> surface and ShadowElement tree: <strong>545 pass, 120 skip, 0 fail</strong>. The skiplist is a <em>closed inventory</em> — every excluded test carries a reason, config load fails on anything unclassified.</p>
+      <p><strong>The skips aren't a broken list.</strong> SSR/hydration + vdom↔vapor interop are 57% of everything that doesn't run — neither is a Lynx-compatibility signal (no SSR surface exists; interop is deliberately unsupported). Browser-only platform is another 24%. Test-infra is under 1% — vs vdom's dominant 59% — because the raw-bundle re-export trick killed the private-import problem. The port even found a real bug (ShadowElement was reactivity-proxyable; <code>__v_skip</code> fixed it).</p>
+      <p><strong>The affinity point.</strong> On the tests that touch the actual element surface, Vapor passes 81% vs vdom's 57% — and needs <em>zero behavioral shims</em>: production <code>@vue/runtime-vapor</code> runs unmodified over ShadowElement, where vdom mode needed 1,074 LOC of simulation in the execution path. Vapor's host contract — clone a template + imperative setters — is just a closer fit to Lynx. (Contract fit, not speed.)</p>
+      <p><strong>The mic-drop number — 7× VDOM.</strong> Cross-framework suite (ReactLynx vs Vue VDOM vs Vue Vapor), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor 7.0× VDOM on the 10k select storm, 1.9× on update storm — same app, same bundle, one attribute apart.</p>
+    </aside>
+  </section>
+
   <!-- V·3 — Virtual DOM update path (concept, magic-move A) -->
   <section class="slide stage" data-bg="clean">
     <div class="vflow">
@@ -2969,45 +3210,116 @@ app.<span class="code-fn">use</span>(router)</pre>
     </p>
     <aside class="notes">
       <p><strong>Read the right panel.</strong> Three moves: <code>template()</code> declares the static shape once; <code>t0()</code> clones it; <code>renderEffect()</code> is the only thing that re-runs — and it touches exactly one text node.</p>
-      <p>Note <code>from 'vue'</code> — the component doesn't know it's on Lynx. That's the next slide.</p>
+      <p>Note <code>from 'vue'</code> — the component doesn't know it's on Lynx. Next: why those live pointers are a problem across threads.</p>
     </aside>
   </section>
 
-  <!-- V·6 — Code reuse: unmodified runtime-vapor on a DOM-shaped surface -->
-  <section class="slide stage" data-bg="clean">
-    <div class="pipe">
-      <div class="pipe__layer">
-        <span class="k">compiled</span><span class="t">vapor component — <b>import 'vue'</b></span>
+  <!-- E20pre-a — problem: Vapor needs DOM pointers; pointers can't cross -->
+  <section class="slide stage dspace" data-bg="clean">
+    <div style="display:flex;align-items:stretch;gap:clamp(16px,2.4cqw,40px);width:100%;justify-content:center;max-width:1080px">
+      <div class="codeframe" style="text-align:left;flex:1 1 0;min-width:0">
+        <div class="codeframe__head">
+          <span class="dots"><span></span><span></span><span></span></span>
+          <span>compiled · vapor</span>
+        </div>
+<pre><span class="code-key">const</span> n0 <span class="code-key">=</span> <span class="code-fn">t0</span>()
+<span class="code-key">const</span> n1 <span class="code-key">=</span> <span class="code-fn">child</span>(n0)     <span class="code-com">// walk → live pointer</span>
+<span class="code-fn">renderEffect</span>(() <span class="code-key">=&gt;</span>
+  <span class="code-fn">setText</span>(n1, <span class="code-str">'Count: '</span>, count))
+
+<span class="code-com">// HTML DOM does this walk too —</span>
+<span class="code-com">// firstChild / nextSibling</span></pre>
       </div>
-      <div class="pipe__arr">&#9660;</div>
-      <div class="pipe__layer">
-        <span class="k">alias</span><span class="t">'vue' &rarr; vue-lynx/vapor</span>
-      </div>
-      <div class="pipe__arr">&#9660;</div>
-      <div class="pipe__layer pipe__layer--key">
-        <span class="k">runtime</span><span class="t">@vue/runtime-vapor</span>
-        <span class="pipe__reuse">unmodified</span>
-      </div>
-      <div class="pipe__arr">&#9660;</div>
-      <div class="pipe__layer">
-        <span class="k">shims</span><span class="t">document · Node · Element</span>
-      </div>
-      <div class="pipe__arr">&#9660;</div>
-      <div class="pipe__layer pipe__layer--key">
-        <span class="k">surface</span><span class="t">ShadowElement — DOM-compatible</span>
-        <span class="pipe__reuse">the trick</span>
-      </div>
-      <div class="pipe__arr">&#9660;</div>
-      <div class="pipe__layer pipe__layer--main">
-        <span class="k">main</span><span class="t">ops stream &rarr; native elements</span>
+      <div class="dschem" style="flex:1 1 0;min-width:0;margin:0;display:flex;align-items:center">
+        <svg viewBox="0 0 420 220" role="img" aria-label="Pointers cannot cross the BG/MT thread boundary.">
+          <defs>
+            <marker id="dsArrowOk" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+              <path d="M0,0 L9,4.5 L0,9 Z" fill="#5dd5a8"/>
+            </marker>
+          </defs>
+          <rect class="box" x="8" y="36" width="150" height="148" rx="12"/>
+          <text class="lane" x="28" y="64">BG · shadow</text>
+          <text class="chip-t" x="28" y="108">holds <tspan fill="#a78fff" font-weight="700">n1</tspan></text>
+          <text class="chip-s" x="28" y="132">ShadowElement</text>
+          <text class="chip-s" x="28" y="152">live pointer</text>
+
+          <line class="wall" x1="210" y1="28" x2="210" y2="192"/>
+          <text class="walltag" x="210" y="110" transform="rotate(90 210 110)" text-anchor="middle">thread boundary</text>
+
+          <path class="flow-no" d="M160 112 L196 112"/>
+          <text class="no" x="202" y="117" font-size="16">✗</text>
+          <text class="chip-s" x="148" y="96" text-anchor="middle">n1</text>
+
+          <rect class="box" x="262" y="36" width="150" height="148" rx="12"/>
+          <text class="lane" x="282" y="64">MT · engine</text>
+          <text class="chip-t" x="282" y="108">write / ops only</text>
+          <text class="chip-s" x="282" y="132">no sync walk</text>
+          <text class="chip-s" x="282" y="152">from BG</text>
+        </svg>
       </div>
     </div>
     <p class="lead" data-mm-fade>
-      Vapor drives the browser DOM directly. We make the background thread's tree
-      <em>look like</em> the DOM — so upstream Vapor runs untouched.
+      <span class="codenote">&#9312;</span> Vapor&rsquo;s output needs <em>addressable</em> DOM pointers.
+      <span class="codenote">&#9313;</span> Those addresses <em>can&rsquo;t cross</em> threads.
     </p>
     <aside class="notes">
-      <p><strong>The reuse story.</strong> Two green layers are the whole idea: <code>@vue/runtime-vapor</code> ships <em>unmodified</em>, because underneath it the ShadowElement tree answers standard DOM calls — <code>insertBefore</code>, <code>cloneNode</code>, <code>setAttribute</code>. Those calls become the same ops stream vdom mode already uses.</p>
+      <p><strong>State the problem in two beats.</strong> Vapor compiles to code that walks and mutates a tree the way the HTML DOM does: <code>child(n0)</code> returns a live pointer; <code>setText(n1, …)</code> writes through it. That is the whole fine-grained story — the output <em>depends</em> on an addressable tree.</p>
+      <p><strong>Why not walk the engine tree?</strong> From BG, the engine element tree is write/ops-shaped — no sync <code>firstChild</code> walk. So Vapor walks a <em>BG shadow tree</em> (<code>ShadowElement</code>) instead. Those live pointers still can&rsquo;t cross to MT — next slide: the MT addressable tree that holds the names.</p>
+    </aside>
+  </section>
+
+  <!-- E20pre-b — BG shadow tree vs MT addressable tree -->
+  <section class="slide stage dspace" data-bg="clean">
+    <div class="dtrees" style="max-width:1080px">
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 10px">
+          <b style="color:var(--ink)">BG · shadow tree</b> — walk &amp; hold pointers
+        </p>
+        <div class="codeframe" style="text-align:left;width:100%">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>ShadowElement</span>
+          </div>
+<pre><span class="code-key">const</span> n0 <span class="code-key">=</span> <span class="code-fn">t0</span>()
+<span class="code-key">const</span> n1 <span class="code-key">=</span> <span class="code-fn">child</span>(n0)   <span class="code-com">// live pointer</span>
+<span class="code-fn">renderEffect</span>(() <span class="code-key">=&gt;</span>
+  <span class="code-fn">setText</span>(n1, <span class="code-str">'Count: '</span>, count))
+
+<span class="code-com">// for Vapor — sync walk + mutate</span>
+<span class="code-com">// DOM-shaped retained nodes</span></pre>
+        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:8px 0 0">
+          retained · Vue holds <code>n1</code>
+        </p>
+      </figure>
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 10px">
+          <b style="color:var(--ink)">MT · addressable tree</b> — <span style="color:var(--ds-name)">named</span> / <span style="color:var(--ds-name)">dense</span>
+        </p>
+        <div class="codeframe" style="text-align:left;width:100%">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>inert prototype · by uid</span>
+          </div>
+<pre><span class="code-fn">CLONE_TREE</span>(base <span class="code-key">=</span> 2)
+<span class="code-com">// uid = base + slot</span>
+<span class="code-fn">SET_TEXT</span>(6, <span class="code-str">'Count: '</span> <span class="code-key">+</span> count)
+
+<span class="code-com">// for the protocol — same topology,</span>
+<span class="code-com">// every slot already has a name</span></pre>
+        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:8px 0 0">
+          structural · ops address by name
+        </p>
+      </figure>
+    </div>
+    <p class="lead" data-mm-fade>
+      <span class="codenote">&#9314;</span> Same topology — <em>different nodes</em>.
+      BG walks to hold pointers; MT holds <b style="color:var(--ds-name)">names</b> so writes can land.
+    </p>
+    <aside class="notes">
+      <p><strong>Two trees, one job split in half.</strong> The <em>BG shadow tree</em> (<code>ShadowElement</code>) is what Vapor actually walks — live pointers, DOM-shaped, retained — so <code>child(n0)</code> / <code>setText(n1)</code> work like on HTML DOM. The engine element tree on MT is write/ops-shaped from BG&rsquo;s point of view, so Vapor cannot address it by walking.</p>
+      <p>The <em>MT addressable tree</em> is the other half: an inert prototype registered once, every slot named densely by the same pre-order walk (<code>uid = base + slot</code>). Vue never holds those nodes — the interpreter does, so <code>CLONE_TREE</code> / <code>SET_TEXT(6, …)</code> can land. Same shape as the shadow tree; different kind of node. Next: the wire protocol that ships those names — <code>REGISTER_TREE</code>, then <code>CLONE_TREE</code>.</p>
     </aside>
   </section>
 
@@ -3063,8 +3375,8 @@ app.<span class="code-fn">use</span>(router)</pre>
       Pointers can&rsquo;t cross the boundary — so both sides <em>walk the same pre-order</em> and name every node alike. No id map is ever sent.
     </p>
     <aside class="notes">
-      <p><strong>The problem first.</strong> Vapor's primitive is "clone a template, then bind." Naively, every cloned element would be its own create/append op — Vapor's cross-thread traffic would be <em>worse</em> than vdom's.</p>
-      <p>Fix, step one: send the structure once with <code>REGISTER_TREE</code>. Both threads assign element uids by walking it in the same pre-order — so no id map is ever transferred.</p>
+      <p><strong>Names on the wire — step one.</strong> We just established Vapor needs addressable slots across threads. Sending every clone as create/append ops would make traffic <em>worse</em> than vdom.</p>
+      <p>Fix: send the structure once with <code>REGISTER_TREE</code>. Both threads assign element uids by walking it in the same pre-order — so no id map is ever transferred.</p>
     </aside>
   </section>
 
@@ -3121,162 +3433,106 @@ app.<span class="code-fn">use</span>(router)</pre>
       </div>
     </div>
     <p class="lead" data-mm-fade>
-      create-1k across the boundary:
-      <span style="color:var(--ink-mute);text-decoration:line-through">17,000 ops · 327 KB</span>
-      &rarr; <b class="brand-text">7,000 ops · 160 KB</b>
+      Vapor&rsquo;s host contract <em>is</em> clone-a-template — each instance needs its own tree.
+      Naively that&rsquo;s create×N across the wire (worse than vdom).
+      <code>CLONE_TREE(base)</code> makes it <b class="brand-text">one named op</b> per instance:
+      <span style="color:var(--ink-mute);text-decoration:line-through">17k · 327 KB</span>
+      &rarr; <b class="brand-text">7k · 160 KB</b>.
     </p>
     <aside class="notes">
-      <p><strong>Fix, step two.</strong> Each instance is a single <code>CLONE_TREE(base)</code> — the Main Thread re-walks the cached structure from that base uid and materializes native elements.</p>
-      <p>These are Vue Lynx's own opcodes; the interpreter ships in the same bundle, so no Lynx engine change was needed. Result: −59% ops, −51% bytes on create-1k.</p>
+      <p><strong>Why clone at all?</strong> Vapor&rsquo;s blueprint is static (<code>template()</code> once); each component instance still needs its <em>own</em> nodes for effects, text, and events — same idea as DOM <code>cloneNode(true)</code>. That&rsquo;s the host contract: clone template + imperative setters.</p>
+      <p><strong>Why <code>CLONE_TREE</code> on Lynx?</strong> Pointers can&rsquo;t cross threads. If BG&rsquo;s clone became create/append per node, create-1k traffic would beat vdom. After <code>REGISTER_TREE</code>, each instance is one <code>CLONE_TREE(base)</code> — Main re-walks the cached prototype from that base uid and materializes native elements. Own opcodes; interpreter in the same bundle. Result: −59% ops, −51% bytes.</p>
     </aside>
   </section>
 
-  <!-- V·8 — Benchmark: update-path speedup (bar chart) -->
-  <section class="slide stage" data-bg="clean">
-    <h2 class="h-section" style="text-align:center;font-size:clamp(28px,3.4cqw,50px);max-width:24ch">
-      Where Vapor pulls away: <span class="brand-text">5.8–9.8&times;</span>.
-    </h2>
-    <div class="bench">
-      <div class="bench__row">
-        <div class="bench__name">select row<small>2.95 &rarr; 0.30 ms</small></div>
-        <div class="bench__track"><div class="bench__fill" style="width:98%"></div></div>
-        <div class="bench__val">9.8&times;</div>
-      </div>
-      <div class="bench__row">
-        <div class="bench__name">remove row<small>2.85 &rarr; 0.40 ms</small></div>
-        <div class="bench__track"><div class="bench__fill" style="width:72%"></div></div>
-        <div class="bench__val">7.1&times;</div>
-      </div>
-      <div class="bench__row">
-        <div class="bench__name">swap rows<small>3.90 &rarr; 0.65 ms</small></div>
-        <div class="bench__track"><div class="bench__fill" style="width:61%"></div></div>
-        <div class="bench__val">6.0&times;</div>
-      </div>
-      <div class="bench__row">
-        <div class="bench__name">update every 10th<small>3.20 &rarr; 0.55 ms</small></div>
-        <div class="bench__track"><div class="bench__fill" style="width:59%"></div></div>
-        <div class="bench__val">5.8&times;</div>
-      </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      The entire delta is Vue work on the thread you share with your app logic —
-      lower background cost means more headroom before dropped frames.
-    </p>
-    <aside class="notes">
-      <p><strong>The core result.</strong> Vue's official benchmark, ported to Lynx, same app in both modes. Background-thread cost = reactivity + render + ops serialization — Vapor's structural win shows up unfiltered here.</p>
-      <p>End-to-end multipliers are smaller (2.1–6.3×) because both modes emit near-identical ops; the Main-Thread cost is shared.</p>
-    </aside>
-  </section>
-
-  <!-- V·9 — Benchmark: the whole ledger (table) -->
-  <section class="slide stage" data-bg="clean">
-    <table class="btable">
-      <thead>
-        <tr><th>metric · create-1k unless noted</th><th>vdom</th><th>vapor</th><th>delta</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="metric">update / select / swap / remove · bg</td>
-          <td>3.2 / 3.0 / 3.9 / 2.9 ms</td>
-          <td>0.6 / 0.3 / 0.7 / 0.4 ms</td>
-          <td class="win">5.8–9.8&times; faster</td>
-        </tr>
-        <tr>
-          <td class="metric">create 1,000 rows · e2e</td>
-          <td>125.7 ms</td><td>144.5 ms</td>
-          <td class="flat">&asymp; parity</td>
-        </tr>
-        <tr>
-          <td class="metric">cross-thread ops / bytes</td>
-          <td>17k / 327 KB</td><td>7k / 160 KB</td>
-          <td class="win">&minus;59% / &minus;51%</td>
-        </tr>
-        <tr>
-          <td class="metric">bundle · gzip</td>
-          <td>39.2 KB</td><td>49.3 KB</td>
-          <td class="cost">+26%</td>
-        </tr>
-        <tr>
-          <td class="metric">first screen</td>
-          <td>121.7 ms</td><td>125.8 ms</td>
-          <td class="cost">+3%</td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="lead" data-mm-fade>
-      Big wins on updates and traffic; creation at parity; you pay in bundle size.
-    </p>
-    <aside class="notes">
-      <p><strong>The honest scorecard.</strong> Don't oversell — creation is parity (it started 1.9× slower; ops telemetry drove it to even). The cost is a +26% bundle: the Vapor runtime plus the DOM-compat shim. First screen is within noise.</p>
-      <p>Green = win, pink = cost. Numbers: headless Chromium, Lynx for Web, medians with 95% CIs.</p>
-    </aside>
-  </section>
-
-  <!-- V·10 — Workflow: one source, two renderers, verified -->
-  <section class="slide stage" data-bg="clean">
-    <div class="vsplit">
-      <div class="vsource">
-        <span class="node__label" style="color:var(--ink)">App.vue</span>
-        <span class="vrender__meta">byte-identical source<br/>+ one <code>vapor</code> attr</span>
-      </div>
-      <span class="vflow__arr is-brand" style="font-size:clamp(22px,2.6cqw,34px)">&rarr;</span>
-      <div class="vsplit__fork">
-        <div class="vrender vrender--teal">
-          <span class="vrender__name">VDOM</span>
-          <span class="vrender__meta">48 / 48 examples pass</span>
+  <!-- E20pre-c — ShadowElement (VDOM & Vapor) vs Vapor AddressableNode -->
+  <section class="slide stage dspace" data-bg="clean">
+    <div class="dtsgrid dtsgrid--duo">
+      <div>
+        <p class="dtsgrid__tag"><b>VDOM &amp; Vapor</b> · <code>ShadowElement</code></p>
+        <div class="hostcmp">
+          <div class="hostcmp__data">
+            <span class="hostcmp__pill hostcmp__pill--both">shared data</span>
+            <code>ShadowElement { id · type · parent · firstChild · next }</code>
+          </div>
+          <div class="hostmtx" role="table" aria-label="VDOM vs Vapor host surface">
+            <div class="hostmtx__h" role="row">
+              <span class="hostmtx__api" role="columnheader"></span>
+              <span class="hostmtx__col hostmtx__col--vdom" role="columnheader">VDOM</span>
+              <span class="hostmtx__col hostmtx__col--vapor" role="columnheader">Vapor</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">createElement</code>
+              <span class="hostmtx__y hostmtx__y--vdom" role="cell">●</span>
+              <span class="hostmtx__n" role="cell">—</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">insert · remove</code>
+              <span class="hostmtx__y hostmtx__y--vdom" role="cell">●</span>
+              <span class="hostmtx__n" role="cell">—</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">parentNode · nextSibling</code>
+              <span class="hostmtx__y hostmtx__y--vdom" role="cell">●</span>
+              <span class="hostmtx__n" role="cell">—</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">patchProp</code>
+              <span class="hostmtx__y hostmtx__y--vdom" role="cell">●</span>
+              <span class="hostmtx__n" role="cell">—</span>
+            </div>
+            <div class="hostmtx__r hostmtx__r--share" role="row">
+              <code class="hostmtx__api">setText</code>
+              <span class="hostmtx__y hostmtx__y--vdom" role="cell">●</span>
+              <span class="hostmtx__y hostmtx__y--vapor" role="cell">●</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">template</code>
+              <span class="hostmtx__n" role="cell">—</span>
+              <span class="hostmtx__y hostmtx__y--vapor" role="cell">●</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">child</code>
+              <span class="hostmtx__n" role="cell">—</span>
+              <span class="hostmtx__y hostmtx__y--vapor" role="cell">●</span>
+            </div>
+            <div class="hostmtx__r" role="row">
+              <code class="hostmtx__api">on</code>
+              <span class="hostmtx__n" role="cell">—</span>
+              <span class="hostmtx__y hostmtx__y--vapor" role="cell">●</span>
+            </div>
+          </div>
         </div>
-        <div class="vrender vrender--vue">
-          <span class="vrender__name">Vapor</span>
-          <span class="vrender__meta">36 supported · <b>0.000%</b> visual diff</span>
-        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:10px 0 0">
+          same tree · each column is what that renderer drives it with
+        </p>
       </div>
-    </div>
-    <p class="lead" data-mm-fade>
-      Every example built &amp; driven in both modes through Lynx for Web.
-      The support matrix is generated from the run — it can't drift from what
-      actually passed.
-    </p>
-    <aside class="notes">
-      <p><strong>How we trust it.</strong> The Vapor app is <em>generated from the vdom source</em> — the only difference is the <code>vapor</code> attribute, so the workload is byte-for-byte identical. 36/36 supported examples hit 0.000% pixel diff against their vdom twin.</p>
-      <p>The matrix (<code>examples/vapor-support.json</code>, with per-entry source hashes) generates the docs table — it can't drift from the verification output.</p>
-    </aside>
-  </section>
+      <div>
+        <p class="dtsgrid__tag"><b>Vapor</b> · <span style="color:var(--ds-name)">AddressableNode</span></p>
+        <div class="codeframe">
+          <div class="codeframe__head">
+            <span class="dots"><span></span><span></span><span></span></span>
+            <span>conceptual · MT dense names</span>
+          </div>
+<pre><span class="code-key">interface</span> <span class="code-fn">AddressableNode</span> {
+  uid: <span class="code-fn">number</span>   <span class="code-com">// = base + slot</span>
+  tag: <span class="code-fn">string</span>
+}
 
-  <!-- V·10b — Upstream Vapor tests + host-fit (styled like the VDOM proof slide A7) -->
-  <section class="slide stage" data-bg="clean">
-    <div class="mega" style="font-size:clamp(52px,9cqw,140px)">
-      <span class="brand-text">545</span><small style="font-size:0.4em;color:var(--ink-mute)"> / 671 run · 0 fail</small>
-    </div>
-    <div class="skipbar">
-      <div class="skipbar__track">
-        <span class="skipbar__seg" style="flex:37;background:#F27A9E"></span>
-        <span class="skipbar__seg" style="flex:24;background:#4FB8F0"></span>
-        <span class="skipbar__seg" style="flex:20;background:#9E86F0"></span>
-        <span class="skipbar__seg" style="flex:18;background:#3deae7"></span>
-        <span class="skipbar__seg" style="flex:1;background:#8b93a3"></span>
+<span class="code-com">// that&rsquo;s it — a name, not a pointer</span></pre>
+        </div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--ink-mute);text-align:center;margin:10px 0 0">
+          simple on purpose — just enough to address across threads
+        </p>
       </div>
-      <div class="skipbar__legend">
-        <span><i style="background:#F27A9E"></i><b>37%</b> SSR / hydration</span>
-        <span><i style="background:#4FB8F0"></i><b>24%</b> browser-only</span>
-        <span><i style="background:#9E86F0"></i><b>20%</b> vdom↔vapor interop</span>
-        <span><i style="background:#3deae7"></i><b>18%</b> Lynx diffs</span>
-        <span><i style="background:#8b93a3"></i><b>&lt;1%</b> test-infra</span>
-      </div>
-    </div>
-    <div class="affinity">
-      <span><b>81%</b> Vapor</span>
-      <span class="vs">vs</span>
-      <span class="aff-vdom"><b>57%</b> VDOM</span>
     </div>
     <p class="lead" data-mm-fade>
-      Vapor's own suite — <b>unmodified</b> on ShadowElement. It passes the
-      element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.
+      Same BG tree for both renderers; Vapor only needs a slice of it.
+      Across the wire, Vapor adds one more thing: a <b style="color:var(--ds-name)">name</b> per slot.
     </p>
     <aside class="notes">
-      <p><strong>Vapor gets its own upstream suite (PR #232).</strong> 30 <code>runtime-vapor</code> spec files run against the real <code>vue-lynx/vapor</code> surface and ShadowElement tree: <strong>545 pass, 120 skip, 0 fail</strong>. The skiplist is a <em>closed inventory</em> — every excluded test carries a reason, config load fails on anything unclassified.</p>
-      <p><strong>The skips aren't a broken list.</strong> SSR/hydration + vdom↔vapor interop are 57% of everything that doesn't run — neither is a Lynx-compatibility signal (no SSR surface exists; interop is deliberately unsupported). Browser-only platform is another 24%. Test-infra is under 1% — vs vdom's dominant 59% — because the raw-bundle re-export trick killed the private-import problem. The port even found a real bug (ShadowElement was reactivity-proxyable; <code>__v_skip</code> fixed it).</p>
-      <p><strong>The affinity point.</strong> On the tests that touch the actual element surface, Vapor passes 81% vs vdom's 57% — and needs <em>zero behavioral shims</em>: production <code>@vue/runtime-vapor</code> runs unmodified over ShadowElement, where vdom mode needed 1,074 LOC of simulation in the execution path. Vapor's host contract — clone a template + imperative setters — is just a closer fit to Lynx. (Contract fit, not speed.)</p>
-      <p><strong>The mic-drop number — 7× VDOM.</strong> Cross-framework suite (ReactLynx vs Vue VDOM vs Vue Vapor), real clicks to composed-DOM end state. The Vue-vs-Vue headline: Vapor 7.0× VDOM on the 10k select storm, 1.9× on update storm — same app, same bundle, one attribute apart.</p>
+      <p><strong>Left is a checklist, read by columns.</strong> Shared data first: both hold the same <code>ShadowElement</code>. Then the matrix — each row is an API, each column is a renderer. VDOM&rsquo;s column is the full <code>nodeOps</code> create/walk/diff surface plus <code>setText</code>. Vapor&rsquo;s column skips those (—) and instead drives the same tree via compiled <code>template</code> / <code>child</code> / <code>on</code>, overlapping only on <code>setText</code>.</p>
+      <p>Right: Vapor&rsquo;s MT <code>AddressableNode</code> is deliberately tiny — <code>uid</code> + <code>tag</code>. Not a second ShadowElement; just a name so writes can land.</p>
     </aside>
   </section>
 

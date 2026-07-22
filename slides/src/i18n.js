@@ -486,7 +486,77 @@ export const ZH = {
   "Vapor's own suite — unmodified on ShadowElement. It passes the element-surface tests at 81% vs vdom's 57%: the closer fit to Lynx.":
     'Vapor 自己的上游测试 —— 在 ShadowElement 上<b>原封不动</b>地跑。触及元素表面的那些测试,它以 81% 对 vdom 的 57% 通过:与 Lynx 更亲近的契合。',
 
-  };
+  
+  '① Vapor’s output needs addressable DOM pointers. ② Those addresses can’t cross threads.':
+    '<span class="codenote">①</span> Vapor 的产物需要<em>可寻址</em>的 DOM 指针。<span class="codenote">②</span> 这些地址<em>过不了</em>线程。',
+  'BG · shadow tree — walk & hold pointers':
+    '<b style="color:var(--ink)">BG · shadow tree</b> —— walk &amp; 握指针',
+  'MT · addressable tree — named / dense':
+    '<b style="color:var(--ink)">MT · addressable tree</b> —— <span style="color:var(--ds-name)">named</span> / <span style="color:var(--ds-name)">dense</span>',
+  'retained · Vue holds n1': 'retained · Vue 握着 <code>n1</code>',
+  'structural · ops address by name': '结构型 · ops 按名寻址',
+  '③ Same topology — different nodes. BG walks to hold pointers; MT holds names so writes can land.':
+    '<span class="codenote">③</span> 同一套拓扑 —— <em>不同的节点</em>。BG walk 是为了握指针;MT 握着 <b style="color:var(--ds-name)">名字</b>,写操作才能落地。',
+  'BG · ShadowNode — data (walkable)':
+    '<b>BG · ShadowNode</b> —— 数据(可 walk)',
+  'MT · AddressableNode — named / dense':
+    '<b>MT · AddressableNode</b> —— <span class="hot">named</span> / dense',
+  'VaporHost ⊆ VdomHost — ops on ShadowNode':
+    '<b>VaporHost</b> ⊆ <b>VdomHost</b> —— 作用在 ShadowNode 上的 ops',
+  'EngineFromBg — write / ops only':
+    '<b>EngineFromBg</b> —— 只写 / 只有 ops',
+  "Expressiveness, left to right: walk+mutate → names → write-only. Vapor’s host ops are a subset of VDOM’s on the same ShadowNode.":
+    '表达力从左到右:walk+mutate → <span style="color:var(--ds-name)">名字</span> → 只写。Vapor 的 host ops 是同一棵 ShadowNode 上 VDOM 的<em>子集</em>。',
+  'ShadowElement — shadow-element.ts':
+    '<b>ShadowElement</b> —— <code>shadow-element.ts</code>',
+  'AddressableNode — conceptual · dense':
+    '<b>AddressableNode</b> —— <span style="color:var(--ds-name)">概念</span> · dense',
+  'vapor imports ⊆ nodeOps — same ShadowElement':
+    '<b>vapor imports</b> ⊆ <b>nodeOps</b> —— 同一棵 ShadowElement',
+  'OP — internal/ops.ts · write by id':
+    '<b>OP</b> —— <code>internal/ops.ts</code> · 按 id 写',
+  "Three panels quote real code; only AddressableNode is a talk sketch. Vapor’s imports are a subset of nodeOps on the same ShadowElement.":
+    '三格摘自真实代码;只有 <b style="color:var(--ds-name)">AddressableNode</b> 是讲稿素描。Vapor 的 import 是同一棵 <code>ShadowElement</code> 上 <code>nodeOps</code> 的<em>子集</em>。',
+  'VDOM & Vapor · ShadowElement':
+    '<b>VDOM &amp; Vapor</b> · <code>ShadowElement</code>',
+  'Vapor · AddressableNode':
+    '<b>Vapor</b> · <span style="color:var(--ds-name)">AddressableNode</span>',
+  'Vapor uses a subset of what VDOM needs on this tree':
+    'Vapor 用的是 VDOM 在这棵树上需求的<em>子集</em>',
+  'same tree · Vapor skips the create / diff surface':
+    '同一棵树 · Vapor 跳过 create / diff 那一层',
+  'Vapor ⊂ VDOM on the same tree — top unused, bottom added':
+    '同一棵树上 Vapor ⊂ VDOM —— 上面不用,下面另加',
+  'same tree · each column is what that renderer drives it with':
+    '同一棵树 · 每列是该渲染器用什么驱动它',
+  'shared data': '共用数据',
+  'VDOM only': '仅 VDOM',
+  'both · ∩': '共用 · ∩',
+  'Vapor only': '仅 Vapor',
+  'create / walk / diff surface': 'create / walk / diff 那一层',
+  'same BG tree · shared write': '同一棵 BG 树 · 共用写入',
+  'compiled host — no create / insert / remove / patchProp':
+    '编译产物宿主 —— 没有 create / insert / remove / patchProp',
+  'simple on purpose — just enough to address across threads':
+    '刻意简单 —— 只够跨线程寻址',
+  'Same BG tree for both renderers; Vapor only needs a slice of it. Across the wire, Vapor adds one more thing: a name per slot.':
+    '两个渲染器共用同一棵 BG 树;Vapor 只要其中一块。过线时 Vapor 多一样东西:每个槽位一个 <b style="color:var(--ds-name)">名字</b>。',
+
+    'DOM-shaped stack': 'DOM 形的栈',
+  'write / ops only': '只写 / 只有 ops',
+  'looks like the DOM': '长得像 DOM',
+  'no sync DOM walk from BG': 'BG 侧没有同步 DOM walk',
+  'upstream runs untouched': '上游原封不动跑',
+  'same ops stream as vdom': '与 vdom 同一条 ops 流',
+  'shared with vdom mode': '与 vdom 模式共用',
+  'Vapor expects a browser DOM. Split across threads: BG gets a DOM-shaped tree; MT only ever sees the ops stream.':
+    'Vapor 期望的是浏览器 DOM。拆到双线程:BG 拿到一棵 DOM<em>形</em>的树;MT 永远只看见 ops 流。',
+  'Make BG look like the DOM — @vue/runtime-vapor ships unmodified; those calls become the same ops vdom already uses.':
+    '让 BG <em>长得像</em> DOM —— <code>@vue/runtime-vapor</code> 原封不动发布;那些调用变成 vdom 已经在用的同一串 ops。',
+  "Vapor’s host contract is clone-a-template — each instance needs its own tree. Naively that’s create×N across the wire (worse than vdom). CLONE_TREE(base) makes it one named op per instance: 17k · 327 KB → 7k · 160 KB.":
+    'Vapor 的宿主契约<em>就是</em>克隆模板 —— 每个实例要有自己的树。天真做法是跨线 create×N(比 vdom 更差)。<code>CLONE_TREE(base)</code> 把它收成每个实例 <b class="brand-text">一条命名 op</b>:<span style="color:var(--ink-mute);text-decoration:line-through">17k · 327 KB</span> → <b class="brand-text">7k · 160 KB</b>。',
+
+};
 
 // Speaker-view chrome labels.
 export const SPEAKER_LABELS = {
@@ -510,8 +580,6 @@ export const SPEAKER_LABELS = {
   },
 };
 
-// Speaker notes, indexed by slide order (matches the <section.slide>
-// sequence). null → keep the English source for that slide.
 export const ZH_NOTES = [
   // 0 纯黑开场 · 只有 beam
   `<p><strong>纯黑开场 —— 只有背景的光。</strong>先在黑暗里停一拍,再让第一个 logo 落下。</p>`,
@@ -706,26 +774,32 @@ export const ZH_NOTES = [
   // ---- One more thing · Vue Vapor deep dive (12 slides) ----
   // 36 Vapor 标题 + 开关代码（原“拨一下开关”并入）
   `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p><strong>同一份源码 —— 拨一下开关。</strong>按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
+  // 43+44 Benchmark · 更新柱状图 + 账本（合并）
+  `<p><strong>核心结果 —— 再看诚实的成绩单。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现(5.8–9.8×)。端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样。</p><p>别夸大:创建是打平的;代价是产物 +26%(Vapor 运行时 + DOM 兼容垫片)。首屏差异在噪声范围内。绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
+  // 40a 代码复用 · 双线程列（BG DOM 形 · MT ops）
+  `<p><strong>和 IFR 那章一样的双线程栏 —— 先左后右。</strong>Background:编译后的 Vapor 仍写 <code>import 'vue'</code>,alias 进 <code>vue-lynx/vapor</code>,在 DOM shim 上跑 <code>@vue/runtime-vapor</code>,落到 <code>ShadowElement</code>。Main:只写/只有 ops —— BG 侧没有同步的 <code>firstChild</code> walk。中间五步过线。下一页把复用的 punchline 折进这两栏。</p>`,
+  // 40b 代码复用 · punchline（magic-move）
+  `<p><strong>同一张图,更少的环节 —— 复用 punchline。</strong>看 2–4 步折进 <code>ShadowElement</code>:<code>@vue/runtime-vapor</code> 保持<em>原封不动</em>,因为表面会应答 <code>insertBefore</code> / <code>cloneNode</code> / <code>setAttribute</code>。这些调用序列化成 Main 在 vdom 模式里已经认识的 ops 流。是契约契合,不是 fork。</p>`,
+  // 45 工作流 · 一份源码两个渲染器
+  `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
+  // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
+  `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p><p><strong>压轴数字 —— 7× VDOM。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9× —— 同一个应用、同一个产物,只差一个属性。</p>`,
   // 37 虚拟 DOM 更新路径
   `<p><strong>先立对比。</strong>从左到右过一遍五个方块。中间三个虚线的就是税:重跑、分配、diff —— 每次更新都要交,无论变了多少。</p><p>下一页用一次 magic move 把中间这段收掉。</p>`,
   // 38 Vapor 更新路径
   `<p><strong>morph 的回报。</strong>中间三个方块刚刚消失了。状态和目标节点原地不动,一个响应式 effect 把它们连起来。</p><p>这就是全部要点:细粒度更新,而不是整树 diff。</p>`,
   // 39 Vapor 产物
-  `<p><strong>看右边这一版。</strong>三步:<code>template()</code> 一次性声明静态结构;<code>t0()</code> 克隆它;<code>renderEffect()</code> 是唯一会重跑的东西 —— 而它只碰一个文本节点。</p><p>注意 <code>from 'vue'</code> —— 组件并不知道自己在 Lynx 上。这正是下一页。</p>`,
-  // 40 代码复用 · 管线
-  `<p><strong>复用的故事。</strong>两条绿色的层就是全部诀窍:<code>@vue/runtime-vapor</code> <em>原封不动</em>发布,因为它底下的 ShadowElement 树会响应标准 DOM 调用 —— <code>insertBefore</code>、<code>cloneNode</code>、<code>setAttribute</code>。这些调用变成 vdom 模式已经在用的同一串 ops。</p>`,
+  `<p><strong>看右边这一版。</strong>三步:<code>template()</code> 一次性声明静态结构;<code>t0()</code> 克隆它;<code>renderEffect()</code> 是唯一会重跑的东西 —— 而它只碰一个文本节点。</p><p>注意 <code>from 'vue'</code> —— 组件并不知道自己在 Lynx 上。下一页:这些活指针为什么过不了线程边界。</p>`,
+  // 90pre-a E20pre-a · 问题:需要指针,指针过不了
+  `<p><strong>用两拍把问题说清。</strong>Vapor 编译出来的代码,像操作 HTML DOM 一样走树、改树:<code>child(n0)</code> 返回活指针;<code>setText(n1, …)</code> 通过它写入。细粒度更新的故事全靠这个 —— 产物<em>依赖</em>一棵可寻址的树。</p><p><strong>为什么不直接走 engine tree?</strong>从 BG 看,engine element tree 是 write/ops 形的 —— 没有同步的 <code>firstChild</code> walk。所以 Vapor 改走 <em>BG shadow tree</em>(<code>ShadowElement</code>)。这些活指针照样过不了 MT —— 下一页:握着名字的那棵 MT addressable tree。</p>`,
+  // 90pre-b E20pre-b · BG shadow vs MT addressable
+  `<p><strong>两棵树,一分为二。</strong><em>BG shadow tree</em>(<code>ShadowElement</code>)才是 Vapor 真正在走的 —— 活指针、DOM 形、retained —— 于是 <code>child(n0)</code> / <code>setText(n1)</code> 能像在 HTML DOM 上一样工作。从 BG 看,MT 上的 engine element tree 是 write/ops 形,没法靠 walk 去寻址。</p><p><em>MT addressable tree</em> 是另一半:一次性注册的惰性原型,每个槽位按同一趟前序稠密命名(<code>uid = base + slot</code>)。Vue 从不握住这些节点 —— 解释器握着,于是 <code>CLONE_TREE</code> / <code>SET_TEXT(6, …)</code> 才能落地。和 shadow tree 同构,节点种类不同。下一页:把这些名字送过线的协议 —— <code>REGISTER_TREE</code>,然后 <code>CLONE_TREE</code>。</p>`,
   // 41 跨线程 · 注册
-  `<p><strong>先讲问题。</strong>Vapor 的原语是“克隆模板,再绑定”。天真做法下,每个克隆出的元素都是一条 create/append op —— Vapor 的跨线程流量会比 vdom <em>更差</em>。</p><p>修复第一步:用 <code>REGISTER_TREE</code> 把结构只发一次。两条线程各自以相同的前序遍历分配 uid —— 于是根本不用传任何 id 映射。</p>`,
-  // 42 跨线程 · 克隆
-  `<p><strong>修复第二步。</strong>每个实例就是一条 <code>CLONE_TREE(base)</code> —— 主线程从这个 base uid 重走缓存好的结构,生成原生元素。</p><p>这些是 Vue Lynx 自己的 opcode;解释器和后台代码在同一个产物里,所以无需改 Lynx 引擎。结果:create-1k 上 −59% ops、−51% 字节。</p>`,
-  // 43 Benchmark · 更新柱状图
-  `<p><strong>核心结果。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现。</p><p>端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样;主线程开销是共享的。</p>`,
-  // 44 Benchmark · 账本
-  `<p><strong>诚实的成绩单。</strong>别夸大 —— 创建是打平的(一开始慢 1.9×;是 ops 遥测把它推到持平)。代价是产物 +26%:Vapor 运行时加上 DOM 兼容垫片。首屏差异在噪声范围内。</p><p>绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
-  // 45 工作流 · 一份源码两个渲染器
-  `<p><strong>凭什么信它。</strong>Vapor 应用是<em>从 vdom 源码生成的</em> —— 唯一差别是 <code>vapor</code> 属性,所以负载逐字节相同。36/36 个受支持示例与其 vdom 孪生体做到 0.000% 像素差。</p><p>矩阵(<code>examples/vapor-support.json</code>,带每条目源码哈希)生成文档表格 —— 不会与验证输出发生漂移。</p>`,
-  // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
-  `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p><p><strong>压轴数字 —— 7× VDOM。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9× —— 同一个应用、同一个产物,只差一个属性。</p>`,
+  `<p><strong>名字上线 —— 第一步。</strong>前面刚说清 Vapor 需要跨线程可寻址的槽位。若每个克隆都当 create/append 发,流量会比 vdom <em>更差</em>。</p><p>修复:用 <code>REGISTER_TREE</code> 把结构只发一次。两条线程各自以相同的前序遍历分配 uid —— 于是根本不用传任何 id 映射。</p>`,
+  // 42 跨线程 · 克隆（为什么要 clone）
+  `<p><strong>为什么要 clone?</strong>Vapor 的蓝图是静态的(<code>template()</code> 一次);每个组件实例仍要<em>自己的</em>节点给 effect、文本和事件 —— 和 DOM <code>cloneNode(true)</code> 同一套心智。宿主契约就是:克隆模板 + 命令式 setter。</p><p><strong>为什么 Lynx 上是 <code>CLONE_TREE</code>?</strong>指针过不了线程。若 BG 的 clone 变成逐节点 create/append,create-1k 流量会比 vdom 更差。<code>REGISTER_TREE</code> 之后,每个实例一条 <code>CLONE_TREE(base)</code> —— Main 从该 base uid 重走缓存原型并物化原生元素。自有 opcode;解释器在同一产物里。结果:−59% ops、−51% 字节。</p>`,
+  // 90pre-c E20pre-c · ShadowElement (VDOM & Vapor) vs AddressableNode
+  `<p><strong>左边是一张对照表,按列读。</strong>先看共用数据:两边握同一份 <code>ShadowElement</code>。再看矩阵 —— 每行一个 API,每列一个渲染器。VDOM 列是完整 <code>nodeOps</code> 的 create/walk/diff,外加 <code>setText</code>。Vapor 列把那些标成 — ,改用编译出来的 <code>template</code> / <code>child</code> / <code>on</code> 驱动同一棵树,重叠点只有 <code>setText</code>。</p><p>右边:Vapor 的 MT <code>AddressableNode</code> 故意很瘦 —— <code>uid</code> + <code>tag</code>。不是第二棵 ShadowElement;只是一个名字,好让写入落地。</p>`,
   // 90a E20a · 稠密 vs 稀疏 (Vapor tree vs ET)
   `<p><strong>指针过不去,名字就得接管 —— 而发名字有两种发法。</strong>Vapor <em>稠密</em>地发:一趟前序遍历给每个节点一个 uid(2–7)。两条线程跑的是同一趟遍历,于是无需传一个字节就能对齐每个名字 —— 可寻址集合是开放的(任何节点都可能被 effect、事件或 ref 摸到)。</p><p>Element Templates <em>稀疏</em>地发:VDOM 编译器早已证明了一个封闭的动态点集合(holes),diff 又保证静态节点永远不会被寻址 —— 于是只有 hole 拿到名字,灰色节点对协议完全隐形。稀疏不是省出来的,是<em>证出来的</em>。同一份模板,设计空间上的两个坐标。</p>`,
   // 90b E20b · 动静光谱 · retained → write-only
@@ -772,5 +846,4 @@ export const ZH_NOTES = [
   `<p><strong>个人的证据。</strong>这一年我回头把 10 年前的自己想做的项目全都翻新了一遍:十年没动过的个人网站(hux.pro);我的第一个 Vue 项目,Vue 0.12;还有这套 deck —— 手 vibe 的 HTML,底下没有任何 slide 库,正是当年那个 slides 编辑器的直系后代。</p><p><strong>转折 —— 可我做的,还是前端。</strong>那我整天在做什么呢,从敲代码变成 prompt?我只是又换了一门语言 —— 汇编到 C 到 JS 到……自然语言。源变了,工作没变:我仍然在把人的意图,翻译成人能看见、能触摸的东西。这从来就是这份工作。这<em>就是</em>前端。</p>`,
   // 97 E27 · 前端永生
   `<p><strong>真正的收尾。</strong>小字划掉:前端已死。大字:前端永生。谢谢 —— 这次是真的 —— 然后留在这页做 Q&amp;A。</p><p>Q&amp;A 弹药:"能上生产吗?" —— pre-alpha,架构稳,已覆盖的部分测试充分。"Android?" —— 同一份产物,两端都跑。"AI 会取代 Vue 吗?" —— 你刚看完整个答案。</p>`,
-
 ];
