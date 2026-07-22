@@ -23,6 +23,14 @@ declare global {
    * even if `__vlxAddressing` is stamped (graph-eng matrix kill-switch).
    */
   const __VUE_LYNX_SPARSE_NAMING__: boolean;
+  /**
+   * Axis-A staging request ('opstream'|'data'|'code'|'engine'), from
+   * `templateStaging` (#321). Guard reads with typeof — older bundles and
+   * test realms may not define it.
+   */
+  const __VUE_LYNX_TEMPLATE_STAGING__: string;
+  /** Axis-D IFR paint mode ('plain'|'disposable-et'|'engine-et'). */
+  const __VUE_LYNX_IFR_PAINT__: string;
 
   /** Injected by entry-background.ts; called by Lynx Native on event fire */
   function publishEvent(sign: string, data: unknown): void;
