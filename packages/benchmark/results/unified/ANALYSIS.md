@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-22T15:58:26.085Z @ 4c79530
+> Generated 2026-07-22T19:05:07.367Z @ 4ee7239
 > Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
 
 ## Why unify?
@@ -56,17 +56,17 @@ Instrumented BG select still ~9.8×. Black-box selectStorm@10k reproduces ~12.6�
 
 create@10k vapor/vdom=0.98×. React still leads create@10k (react/vdom=0.47×). 
 
-### `ifr-fcp-minus-19` — **falsified-as-universal**
+### `ifr-fcp-minus-19` — **holds-locally**
 
 > Default IFR wins median −19% FCP on real threads (content scene).
 
-−19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -10%. @10k ×1: 22%. @30k ×1: 20%. @1k ×4: -2%. IFR+ET@30k ×1: -8%. 
+Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 4%. IFR+ET@30k ×1: 36%. 
 
 ### `et-is-inflection` — **holds**
 
 > Element Templates are the render-cost inflection; IFR without ET is dangerous at scale.
 
-IFR-sans-ET slower than off at 10k, 20k, 30k. IFR+ET best at 1k, 3k, 5k, 10k, 20k, 30k. Caveat: on tiny real examples (hello-world), IFR alone can beat IFR+ET on web FCP — ET tax before win.
+IFR-sans-ET slower than off at 10k, 20k, 30k. IFR+ET best at 1k, 3k, 5k, 10k, 20k. Caveat: on tiny real examples (hello-world), IFR alone can beat IFR+ET on web FCP — ET tax before win.
 
 ### `react-create-vue-update` — **holds**
 
@@ -128,12 +128,12 @@ create@10k react/vdom = 0.47×; selectStorm@10k react/vapor = 17.2×.
 
 | scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
 |---|---|---|---|---|---|---|
-| 1k | 61 | 87 | 78 | 70 | 93 | 87 |
-| 3k | 99 | 143 | 120 | 119 | 156 | 141 |
-| 5k | 141 | 188 | 163 | 161 | 210 | 193 |
-| 10k | 228 | 310 | 379 | 278 | 365 | 338 |
-| 20k | 434 | 587 | 695 | 526 | 692 | 637 |
-| 30k | 631 | 842 | 1010 | 771 | 1010 | 906 |
+| 1k | 74 | 128 | 102 | 98 | 146 | 132 |
+| 3k | 110 | 205 | 177 | 161 | 234 | 199 |
+| 5k | 152 | 259 | 252 | 221 | 341 | 283 |
+| 10k | 241 | 452 | 602 | 373 | 532 | 487 |
+| 20k | 458 | 839 | 1051 | 708 | 1011 | 901 |
+| 30k | 702 | 1170 | 1514 | 1588 | 1472 | 1303 |
 
 ### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2
 
@@ -141,11 +141,11 @@ Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the
 
 | cell | naming | web gzip | FCP ×1 | Δ vs dense | FCP ×4 | Δ vs dense |
 |---|---|---:|---:|---:|---:|---:|
-| vapor-ifr-dense | dense | 89720 | 102.2 | 0.0% | 302.9 | 0.0% |
-| vapor-ifr-sparse | sparse | 90007 | 91.5 | -10.5% | 310.7 | 2.6% |
-| vapor-ifr | sparse | 90007 | 86.9 | -15.0% | 289.6 | -4.4% |
+| vapor-ifr-dense | dense | 89720 | 127.0 | 0.0% | 302.9 | 0.0% |
+| vapor-ifr-sparse | sparse | 90007 | 121.8 | -4.1% | 310.7 | 2.6% |
+| vapor-ifr | sparse | 90007 | 132.2 | 4.1% | 422.3 | 39.4% |
 
-×1 sparse/dense = 0.895× (-10.5%). ×4 sparse/dense = 1.026× (2.6%) — treat as noise / inconclusive for scale hedge.
+×1 sparse/dense = 0.959× (-4.1%). ×4 sparse/dense = 1.026× (2.6%) — treat as noise / inconclusive for scale hedge.
 
 Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 
@@ -168,6 +168,8 @@ Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 - graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis-x4.json`
 - graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json`
 - graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng-4axis.json`
+- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-x1.json`
+- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-x4.json`
 - strategy-node-jitless: `/home/user/vue-lynx/packages/ifr-bench/results/results.json`
 - bare-dom: `/home/user/vue-lynx/packages/benchmark/results/web-baseline-latest.json`
 

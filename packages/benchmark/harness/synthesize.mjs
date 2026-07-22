@@ -401,6 +401,72 @@ function ingestGraphEngNaming(unified) {
   }
 }
 
+// Authoritative single-provenance content-probe FCP: the unified runner's own
+// sweep (results/unified-content-x{1,4}.json) measured every cell on ONE host
+// in ONE session, complete 1k→30k. It REPLACES the mixed ifr-bench / graph-eng
+// FCP sources (different-day runs whose four-axis 1k values were host
+// artifacts — dense/engine measured 3–5× off there, but ≈ baseline here).
+const UNIFIED_ARCH_BY_CELL = {
+  'vue-vdom-off': 'vdom',
+  'vue-vdom-ifr': 'vdom-ifr',
+  'vue-vdom-ifr-et': 'vdom-ifr-et',
+  'vue-vapor-off': 'vapor',
+  'vue-vapor-ifr': 'vapor-ifr',
+  'vue-vdom-et': 'vdom-et',
+  'vue-vapor-dense': 'vapor-dense',
+  'vue-vapor-engine': 'vapor-engine',
+  'vue-vapor-ifr-dense': 'vapor-ifr-dense',
+  'vue-vapor-ifr-sparse': 'vapor-ifr-sparse',
+  'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
+  react: 'react',
+};
+
+function ingestUnifiedContentFcp(unified) {
+  for (const [file, cpu] of [
+    ['results/unified-content-x1.json', 1],
+    ['results/unified-content-x4.json', 4],
+  ]) {
+    const p = pickNewest(file);
+    const data = readJson(p);
+    if (!data?.cells) continue;
+    unified.sources.push({ kind: 'unified-content-fcp', path: p, cpu });
+    // collect (arch, scale) mine covers at this cpu, so I can drop the stale
+    // cells first — mine becomes the single source of truth for those.
+    const mine = [];
+    for (const [cellId, cell] of Object.entries(data.cells)) {
+      const arch = UNIFIED_ARCH_BY_CELL[cellId];
+      if (!arch) continue;
+      for (const pt of cell.points ?? []) {
+        if (pt.fcp != null) mine.push({ arch, scale: pt.rung, metric: 'fcp', median: pt.fcp });
+        if (pt.settled != null) mine.push({ arch, scale: pt.rung, metric: 'settled', median: pt.settled });
+      }
+    }
+    const drop = new Set(mine.map((m) => `${m.arch}|${m.scale}|${m.metric}`));
+    unified.cells = unified.cells.filter(
+      (c) =>
+        !(
+          c.workload === 'content-probe'
+          && c.cpuThrottle === cpu
+          && drop.has(`${c.architecture}|${c.scale}|${c.metric}`)
+        ),
+    );
+    for (const m of mine) {
+      unified.cells.push({
+        schemaVersion: SCHEMA_VERSION,
+        environment: 'lynx-web',
+        architecture: m.arch,
+        workload: 'content-probe',
+        scale: m.scale,
+        cpuThrottle: cpu,
+        metric: m.metric,
+        unit: 'ms',
+        median: m.median,
+        campaign: 'unified-single-provenance',
+      });
+    }
+  }
+}
+
 function ingestStrategy(unified) {
   const p = path.join(ifrRoot, 'results/results.json');
   const data = readJson(p);
@@ -1146,6 +1212,9 @@ function main() {
   ingestInstrumented(unified);
   ingestIfrScaleFcp(unified);
   ingestGraphEngNaming(unified);
+  // Authoritative single-provenance content FCP — replaces the stale/artifact
+  // FCP cells from the two sources above for every cell it covers.
+  ingestUnifiedContentFcp(unified);
   ingestStrategy(unified);
   ingestWebBaseline(unified);
 
