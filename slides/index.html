@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 127</span>
+    <span data-counter>01 / 128</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2251,8 +2251,87 @@ app.<span class="code-fn">use</span>(router)</pre>
       emits <code>INSTANTIATE_TEMPLATE</code> plus hole <code>SET_*</code>s — not
       per-node <code>CREATE</code>s. On MTS IFR the same opcode hits the local
       interpreter, which calls the baked <code>create()</code> — a straight-line
-      sequence of Element PAPI. Next slide shows the source &rarr; compiler
-      output.</p>
+      sequence of Element PAPI. Next slide: what each side's tree looks like,
+      and what actually crosses the wire.</p>
+    </aside>
+  </section>
+
+  <!-- IFR6b — dual-thread trees + what syncs (learn from V·7a archflow) -->
+  <section class="slide stage" data-bg="clean">
+    <div class="archflow">
+      <div class="node">
+        <span class="node__label"><i></i>Background · BTS</span>
+        <h3 class="node__title">VDOM · sparse</h3>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="BTS sparse tree: static nodes ghosted, only holes named">
+          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
+          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
+          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
+          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
+        </svg>
+        <span class="node__cap">static ghosted · only <b>holes</b> named</span>
+      </div>
+      <div class="xwire">
+        <div class="xwire__op">
+          <span class="xwire__name">INSTANTIATE_TEMPLATE</span>
+          <span class="xstruct"><i></i><i></i><i></i></span>
+          <span class="xwire__line"></span>
+          <span class="xwire__count">tpl id · not the tree</span>
+        </div>
+        <div class="xwire__op">
+          <span class="xwire__name">SET_* holes</span>
+          <span class="xwire__line is-multi"></span>
+          <span class="xwire__count">values only · e.g. h0</span>
+        </div>
+        <div class="xwire__op">
+          <span class="xwire__name">hydrate join</span>
+          <span class="xwire__line"></span>
+          <span class="xwire__count">ops vs recording</span>
+        </div>
+      </div>
+      <div class="node node--main">
+        <span class="node__label"><i></i>Main IFR · MTS</span>
+        <h3 class="node__title">native · create()</h3>
+        <svg class="dtree" viewBox="0 0 300 170" role="img" aria-label="MTS native tree from create(), same sparse hole ids">
+          <line class="edge ghost" x1="150" y1="28" x2="46" y2="60"/>
+          <line class="edge" x1="150" y1="28" x2="212" y2="60"/>
+          <line class="edge" x1="212" y1="82" x2="156" y2="114"/>
+          <line class="edge ghost" x1="212" y1="82" x2="254" y2="114"/>
+          <line class="edge" x1="157" y1="136" x2="157" y2="148"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="128" y="21">card</text><rect class="uidbg" x="168" y="0" width="42" height="14" rx="6"/><text class="uid" x="172" y="11">root</text></g>
+          <g class="ghost"><rect class="nodebox" x="16" y="60" width="60" height="22" rx="5"/><text class="tag" x="30" y="75">icon</text></g>
+          <g class="ghost"><rect class="nodebox" x="182" y="60" width="60" height="22" rx="5"/><text class="tag" x="194" y="75">body</text></g>
+          <g><rect class="nodebox dy" x="126" y="114" width="60" height="22" rx="5"/><text class="tag" x="137" y="129">title</text><rect class="uidbg" x="164" y="108" width="42" height="14" rx="6"/><text class="uid" x="170" y="119">h0</text></g>
+          <g><rect class="nodebox dy" x="133" y="148" width="48" height="18" rx="5"/><text class="tag" x="140" y="161" style="font-size:9px">#text</text></g>
+          <g class="ghost"><rect class="nodebox" x="224" y="114" width="60" height="22" rx="5"/><text class="tag" x="236" y="129">desc</text></g>
+        </svg>
+        <span class="node__cap">create() builds · <b>same hole ids</b></span>
+      </div>
+    </div>
+    <p class="lead" data-mm-fade>
+      Structure never crosses — both bundles already share <code>create()</code>.
+      The wire carries the <b>tpl id</b> and <b>hole values</b>; hydrate joins those ops.
+    </p>
+    <aside class="notes">
+      <p><strong>What each side's tree is.</strong> BTS keeps a sparse VDOM /
+      ShadowElement view: static nodes exist for Vue's sync reads but are
+      protocol-invisible (ghosted). Only holes get names (<code>h0</code>…).
+      MTS IFR materializes the same shape via the compiled
+      <code>create()</code> — a native element tree with the same sparse hole
+      ids.</p>
+      <p><strong>What syncs.</strong> Unlike Vapor's <code>REGISTER_TREE</code>,
+      ET does not send structure: <code>registerElementTemplate</code> already
+      shipped <code>create()</code> in both bundles. Across the wire:
+      <code>INSTANTIATE_TEMPLATE(tplId)</code> (once per instance) +
+      <code>SET_*</code> for hole values only. On IFR, MTS recorded those ops
+      at first paint; BTS's first batches hydrate against that recording —
+      skip / patch / rebuild, same join as before.</p>
     </aside>
   </section>
 

@@ -2432,6 +2432,13 @@ body.is-blackout::after {
   background: currentColor;
   box-shadow: 0 0 10px currentColor;
 }
+.node__label i {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  display: inline-block;
+  flex: none;
+}
 .node__title {
   font-family: var(--display);
   font-weight: 600;
