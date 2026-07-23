@@ -27,6 +27,12 @@ import {
   registerEngineTemplate,
   resetEngineTemplatesForTesting,
 } from './engine-template.js';
+import type { CodeTemplateHost } from './code-template.js';
+import {
+  instantiateCodeTemplate,
+  registerCodeTemplate,
+  resetCodeTemplatesForTesting,
+} from './code-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
 import {
   createListElement,
@@ -105,6 +111,23 @@ function engineStagingRequested(): boolean {
     ? __VUE_LYNX_IFR_PAINT__
     : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
   return paint === 'engine-et'
+    && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
+}
+
+/**
+ * Axis-D ephemeral paint request for `code-paint` (#340; legacy value
+ * `disposable-et` — the build define keeps the legacy spelling, so accept
+ * both). True only while the IFR main thread is painting the throwaway first
+ * frame (`__VUE_LYNX_IFR_MT__`), so the persistent Data-Template tree and all
+ * non-ephemeral paths stay on the interpreter. Read from the build-time define
+ * when present (typeof-guarded for test realms), else from a same-named global
+ * so harnesses can flip it per run — matching engineStagingRequested().
+ */
+function codePaintRequested(): boolean {
+  const paint = typeof __VUE_LYNX_IFR_PAINT__ !== 'undefined'
+    ? __VUE_LYNX_IFR_PAINT__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
+  return (paint === 'code-paint' || paint === 'disposable-et')
     && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
 }
 
@@ -367,6 +390,49 @@ function tryEngineCloneTree(
   return true;
 }
 
+/**
+ * PAPI/registry sink handed to the Code-Template executor. Keeping the typed
+ * creators, static-prop writer, and (crucially) the IFR selector-attribute
+ * deferral here means the code-painted ephemeral tree lands in exactly the
+ * same registry state as the interpreter would have produced.
+ */
+const codeTemplateHost: CodeTemplateHost = {
+  createElement(isText: boolean, tag: string): LynxElement {
+    const el = isText
+      ? __CreateText(pageUniqueId)
+      : createTypedElement(tag, pageUniqueId);
+    __SetCSSId([el], 0);
+    return el;
+  },
+  applyStaticProps,
+  installSelectorAttribute,
+  appendChild(parent: LynxElement, child: LynxElement): void {
+    __AppendElement(parent, child);
+  },
+};
+
+/**
+ * **Code-Template** ephemeral paint (#340) — coordinate Data (durable) /
+ * runtime(code-paint): the throwaway IFR first-frame copy is materialized by a
+ * compiled Code-Template `create()` executor built from the SAME REGISTER_TREE
+ * residual, instead of inheriting the durable Data-Template interpretation.
+ * Unlike the engine path this actually runs on Lynx for Web (measurable).
+ * Returns false when code-paint is not requested or the tree was never
+ * compiled (→ caller tries engine, then interprets); the persistent tree is
+ * never touched, so hydration adopts/replays the ephemeral copy unchanged.
+ */
+function tryCodePaintCloneTree(
+  tplId: number,
+  entry: RegisteredTree,
+  baseUid: number,
+): boolean {
+  if (!codePaintRequested()) return false;
+  // Compile-once safety net: REGISTER_TREE already compiled this when the paint
+  // flag was set, but a flag flipped between register and clone still works.
+  registerCodeTemplate(tplId, entry.structure, entry.addressed);
+  return instantiateCodeTemplate(tplId, baseUid, codeTemplateHost);
+}
+
 function instantiateRegisteredTree(
   entry: RegisteredTree,
   baseUid: number,
@@ -533,6 +599,9 @@ export function applyOps(ops: unknown[], flush = true): void {
               addressed ?? [],
             ),
           );
+        } else if (codePaintRequested()) {
+          // code-paint: compile the ephemeral Code-Template create() once.
+          registerCodeTemplate(tplId, structure, addressed);
         }
         break;
       }
@@ -542,7 +611,13 @@ export function applyOps(ops: unknown[], flush = true): void {
         const baseUid = ops[i++] as number;
         const entry = templates.get(tplId);
         if (entry) {
-          if (!tryEngineCloneTree(tplId, entry, baseUid)) {
+          // Ephemeral code-paint first, then engine staging, else interpret.
+          // Each guard is a no-op unless its mode is requested, so plain and
+          // native-paint behavior is unchanged.
+          if (
+            !tryCodePaintCloneTree(tplId, entry, baseUid)
+            && !tryEngineCloneTree(tplId, entry, baseUid)
+          ) {
             instantiateRegisteredTree(entry, baseUid);
           }
         }
@@ -713,6 +788,7 @@ export function resetMainThreadState(): void {
   resetElementRegistry();
   templates.clear();
   resetEngineTemplatesForTesting();
+  resetCodeTemplatesForTesting();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();

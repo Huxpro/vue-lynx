@@ -95,6 +95,7 @@ export function copy(lang) {
       'vapor-ifr-engine-et': zh
         ? 'vapor +b +ifr:e（N/A）'
         : 'vapor +b +ifr:e (N/A)',
+      'vapor-ifr-code-paint': 'vapor +b +ifr:c',
       vdom: zh ? 'vdom（基线）' : 'vdom (baseline)',
       'vdom-et': 'vdom +b',
       'vdom-ifr': 'vdom +ifr',
@@ -146,6 +147,7 @@ export function copy(lang) {
       'vapor-ifr-engine-et': zh
         ? 'vapor +b +ifr:e（N/A）'
         : 'vapor +b +ifr:e (N/A)',
+      'vapor-ifr-code-paint': 'vapor +b +ifr:c',
     },
     charts: {
       selectStorm: {

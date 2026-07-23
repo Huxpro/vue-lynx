@@ -269,6 +269,18 @@ export function legalCells(): MatrixCell[] {
       ifr: true,
       ifrPaint: 'native-paint',
     }),
+    // code-paint (#340): durable tree stays data/block, but the ephemeral IFR
+    // first frame is painted via the compiled Code-Template create() — the
+    // web-MEASURABLE sibling of native-paint (NOT engineNaOnWeb).
+    C({
+      id: 'vapor-data-block-ifr-code-paint',
+      legacyId: 'vapor-ifr-code-paint',
+      render: 'vapor',
+      staging: 'data',
+      naming: 'block',
+      ifr: true,
+      ifrPaint: 'code-paint',
+    }),
     C({ id: 'vapor-code-block', legacyId: 'vapor-code', render: 'vapor', staging: 'code', naming: 'block' }),
     C({ id: 'vapor-native-block', legacyId: 'vapor-engine', render: 'vapor', staging: 'native', naming: 'block' }),
   ];

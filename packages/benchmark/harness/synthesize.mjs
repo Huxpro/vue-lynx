@@ -418,6 +418,7 @@ const UNIFIED_ARCH_BY_CELL = {
   'vue-vapor-ifr-dense': 'vapor-ifr-dense',
   'vue-vapor-ifr-sparse': 'vapor-ifr-sparse',
   'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
+  'vue-vapor-ifr-code-paint': 'vapor-ifr-code-paint',
   react: 'react',
 };
 
