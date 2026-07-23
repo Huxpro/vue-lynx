@@ -28,6 +28,7 @@ import { makeBenchHtml } from '../core/driver-client.mjs';
 import { NEUTRALIZE_LYNX_PROFILE } from '../core/neutralize.mjs';
 import { webBundleSections } from '../core/bundle.mjs';
 import { stats, slopeFit } from '../core/stats.mjs';
+import { resolveChromium } from './chromium.mjs';
 
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -210,7 +211,7 @@ async function main() {
   const { chromium } = require('playwright-core');
   const launch = () => chromium.launch({
     headless: !args.headed,
-    executablePath: '/opt/pw-browsers/chromium',
+    executablePath: resolveChromium(),
     args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding'],
   });
   // A fresh browser per cell bounds the blast radius of a chromium crash

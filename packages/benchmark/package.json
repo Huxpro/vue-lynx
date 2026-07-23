@@ -15,6 +15,7 @@
     "bench:unified": "node harness/unified.mjs --campaign focused",
     "bench:unified:smoke": "node harness/unified.mjs --campaign smoke",
     "bench:unified:full": "node harness/unified.mjs --campaign full",
+    "bench:unified:single-host": "node harness/run-full-single-host.mjs",
     "bench:synthesize": "node harness/synthesize.mjs",
     "bench:report": "node harness/report-unified.mjs"
   },

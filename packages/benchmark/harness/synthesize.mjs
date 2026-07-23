@@ -72,10 +72,13 @@ function ingestTableStorms(unified) {
     'results/cross-storms-unified-react.json',
     // Four-axis flag-permutation run (#325): all 11 Vue cells, 1k/10k.
     'results/cross-storms-graph-eng-4axis.json',
+    // Single-host full sweep (#325/#330): 12 modes × 1k/10k/30k.
     'results/cross-storms-graph-eng-4axis-full.json',
     // Build-time-parse sweep (#337 `+b:c` / #338 `+b!`): all vue cells +
     // vapor-code / vapor-bang, one same-host session, 1k/10k/30k.
     'results/cross-storms-graph-eng-b2.json',
+    // Re-run on flags-consolidation (+b!/+b:c + react), dual-run primary.
+    'results/cross-storms-graph-eng-flags-full.json',
   ];
   const seen = new Map();
   for (const rel of files) {
