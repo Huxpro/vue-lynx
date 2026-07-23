@@ -127,6 +127,21 @@ export const TEMPLATE_DELIVERY_GLOBAL = '__VUE_LYNX_TEMPLATE_DELIVERY__';
 /** Build-time define carrying the IFR paint mode (legacy value spelling). */
 export const IFR_PAINT_GLOBAL = '__VUE_LYNX_IFR_PAINT__';
 
+/**
+ * Cell lifecycle status — the retirement lever (one enum edit per cell):
+ *  - `product`: shipping configuration; benches keep it measured, flag
+ *    combinations resolve without warnings.
+ *  - `probe`: measurement-only cell (factor decomposition, N/A probes,
+ *    pending productization decisions). Not a supported product config.
+ *  - `retired`: combination rejected by data. Harnesses skip it, the
+ *    plugin warns when the option combination is requested, report rows go
+ *    historical. Once every cell touching an axis value is retired, the
+ *    runtime branches behind it (see runtime/src/flags.ts and
+ *    main-thread/src/flags.ts — one accessor per axis) are dead and
+ *    deletable.
+ */
+export type CellStatus = 'product' | 'probe' | 'retired';
+
 /** One legal cell (a "Vue mode") of the benchmark matrix. */
 export interface MatrixCell {
   /** Canonical id, e.g. `vapor-data-block-ifr`. */
@@ -144,6 +159,8 @@ export interface MatrixCell {
   ifrPaint: IfrPaintMode | null;
   /** When the residual reaches the MT; null for ops staging. */
   delivery: TemplateDelivery | null;
+  /** Lifecycle status; new cells default to `probe` until promoted. */
+  status: CellStatus;
   /** Six-column coordinate, e.g. `data/block/traversal+recover/BTS/persistent/runtime`. */
   coordinate: string;
   /** Mechanism name in the unified terminology. */
@@ -197,6 +214,8 @@ interface CellSpec {
    * the `+b!` cell (#338) bakes the same data residual into the MT bundle.
    */
   delivery?: TemplateDelivery;
+  /** Lifecycle status; omitted = `probe` (promotion is an explicit act). */
+  status?: CellStatus;
 }
 
 function makeCell(spec: CellSpec): MatrixCell {
@@ -210,6 +229,7 @@ function makeCell(spec: CellSpec): MatrixCell {
     ifrPaint,
     aliasOf,
     delivery: deliveryOverride,
+    status = 'probe',
   } = spec;
   const addressing = addressingOf(render, staging, naming);
   const providers: TemplateProvider[] =
@@ -240,6 +260,7 @@ function makeCell(spec: CellSpec): MatrixCell {
     lifetimes,
     ifr,
     ifrPaint: ifr ? (ifrPaint ?? 'plain') : null,
+    status,
     delivery,
     coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}/${delivery ?? '—'}${
       ifr && ifrPaint && ifrPaint !== 'plain' ? `(${ifrPaint})` : ''
@@ -267,18 +288,21 @@ export function legalCells(): MatrixCell[] {
   const C = (spec: CellSpec) => makeCell(spec);
   return [
     // --- VDOM ---------------------------------------------------------------
-    C({ id: 'vdom-ops-node', legacyId: 'vdom', render: 'vdom', staging: 'ops', naming: 'node' }),
-    C({ id: 'vdom-ops-node-ifr', legacyId: 'vdom-ifr', render: 'vdom', staging: 'ops', naming: 'node', ifr: true }),
-    C({ id: 'vdom-code-block', legacyId: 'vdom-et', render: 'vdom', staging: 'code', naming: 'block' }),
+    C({ id: 'vdom-ops-node', legacyId: 'vdom', render: 'vdom', staging: 'ops', naming: 'node', status: 'product' }),
+    C({ id: 'vdom-ops-node-ifr', legacyId: 'vdom-ifr', render: 'vdom', staging: 'ops', naming: 'node', ifr: true, status: 'product' }),
+    C({ id: 'vdom-code-block', legacyId: 'vdom-et', render: 'vdom', staging: 'code', naming: 'block', status: 'product' }),
     // First-class now (was only reachable as a paint variant before):
     // Code staging on BOTH the durable tree and the ephemeral first frame.
-    C({ id: 'vdom-code-block-ifr', legacyId: 'vdom-ifr-et', render: 'vdom', staging: 'code', naming: 'block', ifr: true }),
+    C({ id: 'vdom-code-block-ifr', legacyId: 'vdom-ifr-et', render: 'vdom', staging: 'code', naming: 'block', ifr: true, status: 'product' }),
+    // Engine rung: N/A on Lynx for Web (stub probe); real read needs the
+    // native `__CreateElementTemplate` family.
     C({ id: 'vdom-native-block', legacyId: 'vdom-engine', render: 'vdom', staging: 'native', naming: 'block' }),
 
     // --- Vapor --------------------------------------------------------------
-    C({ id: 'vapor-data-block', legacyId: 'vapor', render: 'vapor', staging: 'data', naming: 'block' }),
+    C({ id: 'vapor-data-block', legacyId: 'vapor', render: 'vapor', staging: 'data', naming: 'block', status: 'product' }),
+    // Naming main-effect anchor (dense A1) — measurement-only.
     C({ id: 'vapor-data-node', legacyId: 'vapor-dense', render: 'vapor', staging: 'data', naming: 'node' }),
-    C({ id: 'vapor-data-block-ifr', legacyId: 'vapor-ifr', render: 'vapor', staging: 'data', naming: 'block', ifr: true }),
+    C({ id: 'vapor-data-block-ifr', legacyId: 'vapor-ifr', render: 'vapor', staging: 'data', naming: 'block', ifr: true, status: 'product' }),
     C({ id: 'vapor-data-node-ifr', legacyId: 'vapor-ifr-dense', render: 'vapor', staging: 'data', naming: 'node', ifr: true }),
     C({
       id: 'vapor-data-block-ifr-native-paint',
@@ -291,6 +315,8 @@ export function legalCells(): MatrixCell[] {
     }),
     // `+b!` (#338): identical to vapor-data-block except the Delivery column
     // — the structure AST is baked into the MT bundle (REGISTER_TREE_BUNDLE).
+    // Probe pending a productization decision (b2 sweep: create −5.8…+2.1%,
+    // structure wire −100%; candidate for template-size-gated default).
     C({
       id: 'vapor-data-block-bundle',
       legacyId: 'vapor-bang',
@@ -300,7 +326,10 @@ export function legalCells(): MatrixCell[] {
       delivery: 'bundle',
     }),
     // `+b:c` (#337): build-time-compiled create() in both bundles,
-    // INSTANTIATE_TEMPLATE(id) on the wire, hash fail-safe to the data path.
+    // INSTANTIATE_BOUND_TEMPLATE on the wire, hash fail-safe to the data
+    // path. Probe on web (b2 sweep: latency-neutral on the table app, FCP
+    // regression + large MTS growth on mega-templates); kept as the
+    // descriptor source for the future engine rung.
     C({ id: 'vapor-code-block', legacyId: 'vapor-code', render: 'vapor', staging: 'code', naming: 'block' }),
     C({ id: 'vapor-code-block-ifr', legacyId: 'vapor-ifr-code', render: 'vapor', staging: 'code', naming: 'block', ifr: true }),
     C({ id: 'vapor-native-block', legacyId: 'vapor-engine', render: 'vapor', staging: 'native', naming: 'block' }),

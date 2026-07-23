@@ -73,11 +73,19 @@ describe('legalCells (terminology v2)', () => {
     expect(getCell('vapor-data-block-bundle')?.delivery).toBe('bundle');
     expect(getCell('vapor-code-block')?.delivery).toBe('bundle');
     expect(getCell('vapor-native-block')?.delivery).toBe('runtime');
-    // `+b!` differs from vapor-data-block in the delivery column ONLY.
+    // `+b!` differs from vapor-data-block in the delivery column ONLY
+    // (status is lifecycle metadata, not a coordinate).
     const bang = getCell('vapor-data-block-bundle')!;
     const base = getCell('vapor-data-block')!;
-    expect({ ...bang, id: '', legacyId: '', delivery: '', coordinate: '' })
-      .toEqual({ ...base, id: '', legacyId: '', delivery: '', coordinate: '' });
+    expect({ ...bang, id: '', legacyId: '', delivery: '', coordinate: '', status: '' })
+      .toEqual({ ...base, id: '', legacyId: '', delivery: '', coordinate: '', status: '' });
+    // Lifecycle status: product defaults are explicit; new/experimental
+    // cells default to probe until promoted.
+    expect(base.status).toBe('product');
+    expect(bang.status).toBe('probe');
+    expect(getCell('vapor-code')?.status).toBe('probe');
+    expect(getCell('vdom-et')?.status).toBe('product');
+    expect(getCell('vapor-engine')?.status).toBe('probe');
     // Engine staging cannot be measured on hosts without the engine PAPI.
     expect(getCell('vapor-native-block')?.engineNaOnWeb).toBe(true);
     expect(
