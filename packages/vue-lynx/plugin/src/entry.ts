@@ -219,6 +219,15 @@ export interface ApplyEntryOptions {
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
   /** Use the pure Vapor runtime entry in generated worklet imports. */
   vapor?: boolean;
+  /**
+   * Vapor build-time-parse MT registrations (#337 `+b:c` / #338 `+b!`):
+   * `{ structures, codeTemplates, autoPixelUnit }` for worklet-loader-mt.
+   */
+  vaporBundle?: {
+    structures?: boolean;
+    codeTemplates?: boolean;
+    autoPixelUnit?: boolean;
+  };
 }
 
 export function applyEntry(
@@ -376,6 +385,7 @@ export function applyEntry(
       ifr: opts.enableIFR,
       elementTemplates: opts.enableElementTemplates,
       vapor: opts.vapor ?? false,
+      vaporBundle: opts.vaporBundle,
     };
     const isBootstrapModule = (resource: string): boolean => {
       const resolvedResource = path.resolve(resource);

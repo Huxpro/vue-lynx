@@ -29,6 +29,12 @@ declare global {
    * test realms may not define it.
    */
   const __VUE_LYNX_TEMPLATE_STAGING__: string;
+  /**
+   * Delivery request ('runtime'|'bundle') from `templateDelivery` (#338).
+   * Guard reads with typeof — older bundles and test realms may not define
+   * it.
+   */
+  const __VUE_LYNX_TEMPLATE_DELIVERY__: string;
   /** Axis-D IFR paint mode ('plain'|'disposable-et'|'engine-et'). */
   const __VUE_LYNX_IFR_PAINT__: string;
 

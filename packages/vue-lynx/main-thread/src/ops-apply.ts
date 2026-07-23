@@ -29,6 +29,14 @@ import {
 } from './engine-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
 import {
+  bindVaporTemplateId,
+  getBoundVaporTemplate,
+  getVaporStructure,
+  getVaporTemplate,
+  hasVaporTemplateBinding,
+  resetVaporTemplateBindings,
+} from './vapor-templates.js';
+import {
   createListElement,
   flushListUpdates,
   insertListItem,
@@ -173,10 +181,13 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     ) {
       return elements.has(ops[cursor + 1] as number);
     }
-    if (code === OP.REGISTER_TREE) {
+    if (code === OP.REGISTER_TREE || code === OP.REGISTER_TREE_BUNDLE) {
       return templates.has(ops[cursor + 1] as number);
     }
-    if (code === OP.CLONE_TREE) {
+    if (code === OP.BIND_VAPOR_TEMPLATE) {
+      return hasVaporTemplateBinding(ops[cursor + 1] as number);
+    }
+    if (code === OP.CLONE_TREE || code === OP.INSTANTIATE_BOUND_TEMPLATE) {
       return elements.has(ops[cursor + 2] as number);
     }
 
@@ -367,6 +378,33 @@ function tryEngineCloneTree(
   return true;
 }
 
+/**
+ * Vapor Code-Template instantiation (`+b:c`, #337): run the bundle-baked
+ * create() and name `base + indexInAddressed` — handles come back in
+ * addressed order (null for BG-only anchors), so naming, selector
+ * attributes, and insert tracking mirror `instantiateTemplateSparse`
+ * exactly and the update path cannot tell the difference.
+ */
+function instantiateVaporCodeTemplate(
+  ventry: import('./vapor-templates.js').VaporTemplateEntry,
+  baseUid: number,
+  maxHandles: number,
+): void {
+  const handles = ventry.create(pageUniqueId);
+  const limit = Math.min(handles.length, maxHandles);
+  for (let k = 0; k < limit; k++) {
+    const el = handles[k];
+    if (!el) continue;
+    const uid = baseUid + k;
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    const parentIdx = ventry.namedParents[k] ?? -1;
+    if (parentIdx >= 0 && handles[parentIdx]) {
+      trackInsert(baseUid + parentIdx, uid);
+    }
+  }
+}
+
 function instantiateRegisteredTree(
   entry: RegisteredTree,
   baseUid: number,
@@ -514,6 +552,44 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.BIND_VAPOR_TEMPLATE: {
+        // `+b:c` (#337): bind the BG's numeric tree id to a bundle-baked
+        // create() so per-instance INSTANTIATE_TEMPLATE frames stay numeric.
+        const treeId = ops[i++] as number;
+        const codeId = ops[i++] as string;
+        bindVaporTemplateId(treeId, codeId);
+        if (!getVaporTemplate(codeId)) {
+          console.error(
+            `[vue-lynx] BIND_VAPOR_TEMPLATE: no bundle-registered create() for id "${codeId}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
+      case OP.REGISTER_TREE_BUNDLE: {
+        // `+b!` (#338): the structure was baked into this bundle at build
+        // time — only the fingerprint hash crossed the wire. The BG emits
+        // this op ONLY after verifying its runtime parse hashes identically
+        // to the build parse, so a registry miss can only mean mismatched
+        // BG/MT bundles; nothing to interpret without the structure, so the
+        // batch entry is dropped loudly.
+        const tplId = ops[i++] as number;
+        const hash = ops[i++] as string;
+        const addressedOr0 = ops[i++] as number[] | 0;
+        const structure = getVaporStructure(hash);
+        if (structure) {
+          templates.set(tplId, {
+            structure,
+            addressed: Array.isArray(addressedOr0) ? addressedOr0 : undefined,
+          });
+        } else {
+          console.error(
+            `[vue-lynx] REGISTER_TREE_BUNDLE: no bundle-registered structure for hash "${hash}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
       case OP.REGISTER_TREE: {
         const tplId = ops[i++] as number;
         const structure = ops[i++] as TemplateNode;
@@ -640,10 +716,39 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.INSTANTIATE_BOUND_TEMPLATE: {
+        // `+b:c` (#337) per-instance frame — CLONE_TREE-shaped, executes
+        // the bound bundle-baked create() instead of interpreting.
+        const tplId = ops[i++] as number;
+        const baseUid = ops[i++] as number;
+        const ventry = getBoundVaporTemplate(tplId);
+        if (ventry) {
+          instantiateVaporCodeTemplate(
+            ventry,
+            baseUid,
+            ventry.namedParents.length || Number.MAX_SAFE_INTEGER,
+          );
+        } else {
+          console.error(
+            `[vue-lynx] INSTANTIATE_BOUND_TEMPLATE: no binding for tree id ${tplId} — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
       case OP.INSTANTIATE_TEMPLATE: {
         const rootId = ops[i++] as number;
         const tplId = ops[i++] as string;
         const holeCount = ops[i++] as number;
+
+        // Vapor Code-Template by string registry id (direct form; the
+        // product path uses BIND_VAPOR_TEMPLATE + op 22 instead).
+        const ventry = getVaporTemplate(tplId);
+        if (ventry) {
+          instantiateVaporCodeTemplate(ventry, rootId, holeCount + 1);
+          break;
+        }
+
         const entry = getTemplate(tplId);
         let handles: LynxElement[];
         if (entry) {
@@ -717,4 +822,7 @@ export function resetMainThreadState(): void {
   resetListState();
   resetWorkletState();
   resetTemplateInstanceSlots();
+  // Per-realm numeric → bundle-id bindings are wire state (the bundle
+  // registries themselves persist like the element-template registry).
+  resetVaporTemplateBindings();
 }

@@ -86,6 +86,8 @@ export function copy(lang) {
       // Legacy bench ids stay as data keys (see the flag legend).
       vapor: zh ? 'vapor +b（默认）' : 'vapor +b (default)',
       'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
+      'vapor-bang': zh ? 'vapor +b!（bundle 交付）' : 'vapor +b! (bundle delivery)',
+      'vapor-code': zh ? 'vapor +b:c（code 档）' : 'vapor +b:c (code staging)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
       'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
       'vapor-ifr-dense': 'vapor +ifr',
@@ -137,6 +139,8 @@ export function copy(lang) {
       'vdom-ifr-et': 'vdom +b +ifr',
       vapor: zh ? 'vapor +b（默认）' : 'vapor +b (default)',
       'vapor-dense': zh ? 'vapor（基线）' : 'vapor (baseline)',
+      'vapor-bang': zh ? 'vapor +b!（bundle 交付）' : 'vapor +b! (bundle delivery)',
+      'vapor-code': zh ? 'vapor +b:c（code 档）' : 'vapor +b:c (code staging)',
       'vapor-engine': zh ? 'vapor +b:e（N/A）' : 'vapor +b:e (N/A)',
       'vapor-ifr': zh ? 'vapor +b +ifr（默认+ifr）' : 'vapor +b +ifr (default +ifr)',
       'vapor-ifr-dense': 'vapor +ifr',

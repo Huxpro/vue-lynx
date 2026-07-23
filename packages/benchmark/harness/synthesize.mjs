@@ -72,6 +72,10 @@ function ingestTableStorms(unified) {
     'results/cross-storms-unified-react.json',
     // Four-axis flag-permutation run (#325): all 11 Vue cells, 1k/10k.
     'results/cross-storms-graph-eng-4axis.json',
+    'results/cross-storms-graph-eng-4axis-full.json',
+    // Build-time-parse sweep (#337 `+b:c` / #338 `+b!`): all vue cells +
+    // vapor-code / vapor-bang, one same-host session, 1k/10k/30k.
+    'results/cross-storms-graph-eng-b2.json',
   ];
   const seen = new Map();
   for (const rel of files) {
@@ -179,6 +183,10 @@ function ingestIfrScaleFcp(unified) {
     ['browser-results-scale-x4.json', 4],
     ['browser-results-scale-react-x1.json', 1],
     ['browser-results-scale-react-x4.json', 4],
+    // Build-time-parse cells (#337 `+b:c` / #338 `+b!`) + same-host vapor
+    // control, 1k/10k/30k rungs.
+    ['browser-results-b2-x1.json', 1],
+    ['browser-results-b2-x4.json', 4],
   ]) {
     const p = path.join(ifrRoot, 'results', file);
     const data = readJson(p);
@@ -286,7 +294,7 @@ function parseIfrName(name) {
   if (!name) return {};
   // Longer arch ids first (vapor-ifr-dense before vapor-ifr before vapor).
   const archAlt =
-    'vapor-ifr-engine-et|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
+    'vapor-ifr-engine-et|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vapor-bang|vapor-code|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
   // Strip bundle suffix once so both @scale and fixed-size forms match
   // (graph-eng FCP rows use `bundle: content-vapor-ifr-dense.web.bundle`).
   const base = String(name).replace(/\.web\.bundle$/, '');
@@ -414,6 +422,8 @@ const UNIFIED_ARCH_BY_CELL = {
   'vue-vapor-ifr': 'vapor-ifr',
   'vue-vdom-et': 'vdom-et',
   'vue-vapor-dense': 'vapor-dense',
+  'vue-vapor-bang': 'vapor-bang',
+  'vue-vapor-code': 'vapor-code',
   'vue-vapor-engine': 'vapor-engine',
   'vue-vapor-ifr-dense': 'vapor-ifr-dense',
   'vue-vapor-ifr-sparse': 'vapor-ifr-sparse',
@@ -425,6 +435,12 @@ function ingestUnifiedContentFcp(unified) {
   for (const [file, cpu] of [
     ['results/unified-content-x1.json', 1],
     ['results/unified-content-x4.json', 4],
+    // Same-host vapor-family re-sweep incl. the build-time-parse cells
+    // (#337 `+b:c` / #338 `+b!`). Ingested after the main files, so its
+    // drop-then-insert makes the vapor-family FCP single-provenance on the
+    // b2 host at every rung it covers.
+    ['results/unified-content-b2-x1.json', 1],
+    ['results/unified-content-b2-x4.json', 4],
   ]) {
     const p = pickNewest(file);
     const data = readJson(p);

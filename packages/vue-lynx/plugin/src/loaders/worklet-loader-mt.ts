@@ -40,6 +40,8 @@ import {
   stripSharedImportAttributes,
   stripStyleImports,
 } from './worklet-utils.js';
+import { emitVaporBundleRegistrations } from './vapor-bundle-registrations.js';
+import type { VaporBundleEmitOptions } from './vapor-bundle-registrations.js';
 
 export interface WorkletLoaderMTOptions {
   /**
@@ -58,6 +60,11 @@ export interface WorkletLoaderMTOptions {
   elementTemplates?: boolean;
   /** Use the pure Vapor runtime entry for generated worklet imports. */
   vapor?: boolean;
+  /**
+   * Vapor build-time-parse registrations baked into the MT bundle
+   * (#337 `+b:c` / #338 `+b!`): emitted for vapor SFC script sub-modules.
+   */
+  vaporBundle?: VaporBundleEmitOptions;
 }
 
 export default function workletLoaderMT(
@@ -102,7 +109,7 @@ async function transformModule(
   options: WorkletLoaderMTOptions,
 ): Promise<string> {
   if (options.ifr === true) {
-    return ifrTransform(ctx, source, options.vapor === true);
+    return ifrTransform(ctx, source, options.vapor === true, options);
   }
 
   const keepTpl = options.elementTemplates === true;
@@ -127,8 +134,16 @@ async function transformModule(
       keepTpl,
     );
 
+    // Vapor bundle-delivery / code-staging registrations (#337/#338) —
+    // derived from the SFC descriptor, appended to the stripped module so
+    // they evaluate at MT bundle-evaluation time (after entry-main installs
+    // the registry globals).
+    const vaporRegistrations = options.vapor === true && options.vaporBundle
+      ? emitVaporBundleRegistrations(ctx, options.vaporBundle)
+      : '';
+
     const scriptStub = () =>
-      [localImports, tplRegistrations, 'export default {};']
+      [localImports, tplRegistrations, vaporRegistrations, 'export default {};']
         .filter(Boolean)
         .join('\n');
 
@@ -148,6 +163,7 @@ async function transformModule(
       localImports,
       registrations,
       tplRegistrations,
+      vaporRegistrations,
       'export default {};',
     ].filter(Boolean);
     return parts.join('\n');
@@ -240,20 +256,33 @@ function ifrTransform(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
   vapor: boolean,
+  options: WorkletLoaderMTOptions,
 ): string {
   const isVueSubModule = ctx.resourceQuery?.includes('vue')
     && ctx.resourceQuery.includes('type=');
+
+  // Vapor bundle registrations (#337/#338) ride the kept script sub-module
+  // under IFR — the MT evaluates the full app, and the local first-frame
+  // applyOps resolves bundle-delivered ids from the same registries.
+  const vaporRegistrations = vapor
+      && options.vaporBundle
+      && ctx.resourceQuery?.includes('vue')
+      && ctx.resourceQuery.includes('type=script')
+    ? emitVaporBundleRegistrations(ctx, options.vaporBundle)
+    : '';
+  const withVapor = (code: string): string =>
+    vaporRegistrations ? `${code}\n${vaporRegistrations}` : code;
 
   if (ctx.resourcePath.endsWith('.vue') && !isVueSubModule) {
     return stripSharedImportAttributes(stripStyleImports(source));
   }
 
   if (!hasMainThreadDirective(source)) {
-    return stripSharedImportAttributes(source);
+    return withVapor(stripSharedImportAttributes(source));
   }
 
   // Use the original source for both transforms. Pre-stripping shared import
   // attributes here would change the transform input and therefore _wkltId.
   const transformed = runLepusTransform(ctx, source, vapor);
-  return stripSharedImportAttributes(transformed ?? source);
+  return withVapor(stripSharedImportAttributes(transformed ?? source));
 }

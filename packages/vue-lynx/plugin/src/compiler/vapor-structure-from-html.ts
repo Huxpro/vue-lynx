@@ -62,7 +62,18 @@ function parseHtmlTree(html: string): HtmlNode | null {
       }
       if (html[i + 1] === '/') {
         const gt = html.indexOf('>', i + 2);
-        if (stack.length > 1) stack.pop();
+        // Pop until the MATCHING open tag (implicitly closing unclosed inner
+        // tags) — the runtime parser's semantics. Popping a single level
+        // yields the same flat preorder but a WRONG parent/children tree for
+        // compiler-minimized HTML (`<text> </view>`), which silently skews
+        // ancestor/prefix-sibling closures.
+        const name = html.slice(i + 2, gt === -1 ? len : gt).trim().toLowerCase();
+        for (let d = stack.length - 1; d >= 1; d--) {
+          if (stack[d]!.tag === name) {
+            stack.length = d;
+            break;
+          }
+        }
         i = gt === -1 ? len : gt + 1;
         continue;
       }

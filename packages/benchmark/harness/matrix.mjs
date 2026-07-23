@@ -108,6 +108,30 @@ export const ARCHITECTURES = [
     tableApp: 'ui-vapor',
   },
   {
+    // `+b:c` (#337): vapor Code-Template — build-time-parsed create() baked
+    // into the MT bundle, INSTANTIATE_TEMPLATE(id) on the wire.
+    id: 'vapor-code',
+    family: 'vue-vapor',
+    ifr: false,
+    et: false,
+    sparse: true,
+    label: 'Vue Vapor code-staging (+b:c)',
+    tableDist: 'ui-vapor/dist-code',
+    tableApp: 'ui-vapor',
+  },
+  {
+    // `+b!` (#338): bundle-delivered data residual — structure AST baked
+    // into the MT bundle; only the fingerprint hash crosses the wire.
+    id: 'vapor-bang',
+    family: 'vue-vapor',
+    ifr: false,
+    et: false,
+    sparse: true,
+    label: 'Vue Vapor bundle-delivery (+b!)',
+    tableDist: 'ui-vapor/dist-bundle',
+    tableApp: 'ui-vapor',
+  },
+  {
     // templateStaging 'engine' probe cell (#323). On Lynx-for-Web the
     // engine ET PAPI family is absent → runs stub (interpretation
     // fallback); measures probe/flag overhead honestly, never a fake win.
