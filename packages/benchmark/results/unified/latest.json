@@ -1,7 +1,7 @@
 {
   "meta": {
-    "date": "2026-07-22T19:15:19.263Z",
-    "sha": "ded6b84",
+    "date": "2026-07-23T01:58:12.986Z",
+    "sha": "e52eaf2",
     "node": "v22.22.2",
     "cpus": 4,
     "cpuModel": "Intel(R) Xeon(R) Processor @ 2.80GHz",
@@ -5675,7 +5675,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 145.70000000018626,
+      "median": 179.40000000002328,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5687,7 +5687,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 145.70000000018626,
+      "median": 179.40000000002328,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5699,7 +5699,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 234.0999999998603,
+      "median": 317.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5711,7 +5711,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 234.0999999998603,
+      "median": 317.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5723,7 +5723,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 340.5,
+      "median": 378.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5735,7 +5735,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 340.5,
+      "median": 378.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5747,7 +5747,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 531.8000000000466,
+      "median": 653.7999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5759,7 +5759,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 531.8000000000466,
+      "median": 653.7999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5771,7 +5771,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1010.7999999998137,
+      "median": 1243.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5783,7 +5783,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1010.7999999998137,
+      "median": 1243.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5795,7 +5795,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1472.2999999998137,
+      "median": 1740.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5807,7 +5807,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1472.2999999998137,
+      "median": 1740.8999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5819,7 +5819,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 132.19999999995343,
+      "median": 139.70000000006985,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5831,7 +5831,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 132.19999999995343,
+      "median": 139.70000000006985,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5843,7 +5843,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 198.80000000004657,
+      "median": 265.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5855,7 +5855,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 198.80000000004657,
+      "median": 265.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5867,7 +5867,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 282.79999999981374,
+      "median": 321.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5879,7 +5879,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 282.79999999981374,
+      "median": 321.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5891,7 +5891,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 486.5999999998603,
+      "median": 574.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5903,7 +5903,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 486.5999999998603,
+      "median": 574.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5915,7 +5915,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 900.8000000000466,
+      "median": 1108.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5927,7 +5927,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 900.8000000000466,
+      "median": 1108.5999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5939,7 +5939,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1303.1999999999534,
+      "median": 1690.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -5951,7 +5951,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1303.1999999999534,
+      "median": 1690.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6251,7 +6251,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 148.19999999995343,
+      "median": 158.09999999997672,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6263,7 +6263,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 148.19999999995343,
+      "median": 158.09999999997672,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6275,7 +6275,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 228.69999999995343,
+      "median": 321.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6287,7 +6287,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 228.69999999995343,
+      "median": 321.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6299,7 +6299,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 307.69999999995343,
+      "median": 438.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6311,7 +6311,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 307.69999999995343,
+      "median": 438.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6323,7 +6323,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 522.0999999998603,
+      "median": 591.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6335,7 +6335,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 522.0999999998603,
+      "median": 591.3000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6347,7 +6347,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1005.1999999999534,
+      "median": 1228.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6359,7 +6359,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1005.1999999999534,
+      "median": 1228.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6371,7 +6371,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1490.8000000000466,
+      "median": 1871.6000000000931,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6383,7 +6383,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1490.8000000000466,
+      "median": 1871.6000000000931,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6539,7 +6539,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 127,
+      "median": 140.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6551,7 +6551,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 127,
+      "median": 140.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6563,7 +6563,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 199.60000000009313,
+      "median": 241.40000000002328,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6575,7 +6575,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 199.60000000009313,
+      "median": 241.40000000002328,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6587,7 +6587,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 277.60000000009313,
+      "median": 362.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6599,7 +6599,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 277.60000000009313,
+      "median": 362.30000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6611,7 +6611,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 474.89999999990687,
+      "median": 586.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6623,7 +6623,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 474.89999999990687,
+      "median": 586.2999999999302,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6635,7 +6635,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 896.8999999999069,
+      "median": 1025.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6647,7 +6647,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 896.8999999999069,
+      "median": 1025.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6659,7 +6659,7 @@
       "cpuThrottle": 1,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1287.8999999999069,
+      "median": 1486.3999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6671,7 +6671,7 @@
       "cpuThrottle": 1,
       "metric": "settled",
       "unit": "ms",
-      "median": 1287.8999999999069,
+      "median": 1486.3999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -6960,6 +6960,150 @@
       "metric": "settled",
       "unit": "ms",
       "median": 1283.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 161.10000000009313,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 161.10000000009313,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 230.30000000004657,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 230.30000000004657,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 339.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 339.5,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 594.5999999999767,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 594.5999999999767,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1080.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "20k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1080.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 1,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1608.0999999999767,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "30k",
+      "cpuThrottle": 1,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1608.0999999999767,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7259,7 +7403,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 627.7999999999302,
+      "median": 499.80000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7271,7 +7415,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 627.7999999999302,
+      "median": 499.80000000004657,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7283,7 +7427,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1184.3000000000466,
+      "median": 969.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7295,7 +7439,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1184.3000000000466,
+      "median": 969.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7307,7 +7451,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1690.0999999999767,
+      "median": 1243.3999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7319,7 +7463,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1690.0999999999767,
+      "median": 1243.3999999999069,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7331,7 +7475,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 2761.20000000007,
+      "median": 2373.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7343,7 +7487,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 2761.20000000007,
+      "median": 2373.1999999999534,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7355,7 +7499,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 658.8999999999069,
+      "median": 556.0999999998603,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7367,7 +7511,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 658.8999999999069,
+      "median": 556.0999999998603,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7379,7 +7523,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1345.8000000000466,
+      "median": 1116.2999999998137,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7391,7 +7535,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1345.8000000000466,
+      "median": 1116.2999999998137,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7403,7 +7547,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1789.6999999999534,
+      "median": 1505.0999999998603,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7415,7 +7559,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1789.6999999999534,
+      "median": 1505.0999999998603,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7427,7 +7571,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 3320.0999999999767,
+      "median": 2600.899999999907,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7439,7 +7583,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 3320.0999999999767,
+      "median": 2600.899999999907,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7643,7 +7787,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 700.5,
+      "median": 510.9000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7655,7 +7799,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 700.5,
+      "median": 510.9000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7667,7 +7811,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1123.5,
+      "median": 871,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7679,7 +7823,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1123.5,
+      "median": 871,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7691,7 +7835,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1589,
+      "median": 1472.9000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7703,7 +7847,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1589,
+      "median": 1472.9000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7715,7 +7859,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 2837.9000000000233,
+      "median": 2434.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7727,7 +7871,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 2837.9000000000233,
+      "median": 2434.4000000000233,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7835,7 +7979,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 590.1999999999534,
+      "median": 558.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7847,7 +7991,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 590.1999999999534,
+      "median": 558.5,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7859,7 +8003,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1281.9000000000233,
+      "median": 1070.2999999998137,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7871,7 +8015,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1281.9000000000233,
+      "median": 1070.2999999998137,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7883,7 +8027,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 1947.9000000000233,
+      "median": 1641,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7895,7 +8039,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 1947.9000000000233,
+      "median": 1641,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7907,7 +8051,7 @@
       "cpuThrottle": 4,
       "metric": "fcp",
       "unit": "ms",
-      "median": 3243.8000000000466,
+      "median": 2676.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -7919,7 +8063,7 @@
       "cpuThrottle": 4,
       "metric": "settled",
       "unit": "ms",
-      "median": 3243.8000000000466,
+      "median": 2676.8000000000466,
       "campaign": "unified-single-provenance"
     },
     {
@@ -8112,6 +8256,102 @@
       "metric": "settled",
       "unit": "ms",
       "median": 3404.899999999907,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 580.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "1k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 580.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1080.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "3k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1080.6999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 1678.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "5k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 1678.1999999999534,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "fcp",
+      "unit": "ms",
+      "median": 2698.600000000093,
+      "campaign": "unified-single-provenance"
+    },
+    {
+      "schemaVersion": 1,
+      "environment": "lynx-web",
+      "architecture": "vapor-ifr-code-paint",
+      "workload": "content-probe",
+      "scale": "10k",
+      "cpuThrottle": 4,
+      "metric": "settled",
+      "unit": "ms",
+      "median": 2698.600000000093,
       "campaign": "unified-single-provenance"
     },
     {

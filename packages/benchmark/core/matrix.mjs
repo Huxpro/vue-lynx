@@ -115,6 +115,17 @@ const FOUR_AXIS_CELLS = [
     flags: { vapor: true, enableIFR: true, ifrPaint: 'engine-et', benchCell: 'ifr-engine-et' },
     label: 'Vapor+IFR engine-et (stub)',
   },
+  {
+    // ifrPaint 'code-paint' (#340) — the ephemeral first frame is painted via
+    // the compiled Code-Template create() executor. Unlike engine-et this runs
+    // on web, so it produces a REAL number (not a stub yardstick).
+    id: 'vue-vapor-ifr-code-paint',
+    framework: 'vue',
+    renderer: 'vapor',
+    ifr: 'ifr',
+    flags: { vapor: true, enableIFR: true, ifrPaint: 'code-paint', benchCell: 'ifr-code-paint' },
+    label: 'Vapor+IFR code-paint',
+  },
 ];
 
 const REACT_CELLS = [

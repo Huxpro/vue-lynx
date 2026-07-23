@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-22T19:15:19.263Z @ ded6b84
+> Generated 2026-07-23T01:58:12.986Z @ e52eaf2
 > Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
 
 ## Why unify?
@@ -128,12 +128,12 @@ create@10k react/vdom = 0.47×; selectStorm@10k react/vapor = 17.2×.
 
 | scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
 |---|---|---|---|---|---|---|
-| 1k | 74 | 128 | 102 | 98 | 146 | 132 |
-| 3k | 110 | 205 | 177 | 161 | 234 | 199 |
-| 5k | 152 | 259 | 252 | 221 | 341 | 283 |
-| 10k | 241 | 452 | 602 | 373 | 532 | 487 |
-| 20k | 458 | 839 | 1051 | 708 | 1011 | 901 |
-| 30k | 702 | 1170 | 1514 | 1588 | 1472 | 1303 |
+| 1k | 74 | 128 | 102 | 98 | 179 | 140 |
+| 3k | 110 | 205 | 177 | 161 | 318 | 266 |
+| 5k | 152 | 259 | 252 | 221 | 378 | 321 |
+| 10k | 241 | 452 | 602 | 373 | 654 | 574 |
+| 20k | 458 | 839 | 1051 | 708 | 1244 | 1109 |
+| 30k | 702 | 1170 | 1514 | 1588 | 1741 | 1690 |
 
 ### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2
 
@@ -141,11 +141,11 @@ Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the
 
 | cell | naming | web gzip | FCP ×1 | Δ vs dense | FCP ×4 | Δ vs dense |
 |---|---|---:|---:|---:|---:|---:|
-| vapor-ifr-dense | dense | 89720 | 127.0 | 0.0% | 590.2 | 0.0% |
-| vapor-ifr-sparse | sparse | 90007 | 121.8 | -4.1% | 670.2 | 13.6% |
-| vapor-ifr | sparse | 90007 | 132.2 | 4.1% | 658.9 | 11.6% |
+| vapor-ifr-dense | dense | 89720 | 140.3 | 0.0% | 558.5 | 0.0% |
+| vapor-ifr-sparse | sparse | 90007 | 121.8 | -13.2% | 670.2 | 20.0% |
+| vapor-ifr | sparse | 90007 | 139.7 | -0.4% | 556.1 | -0.4% |
 
-×1 sparse/dense = 0.959× (-4.1%). ×4 sparse/dense = 1.136× (13.6%) — treat as noise / inconclusive for scale hedge.
+×1 sparse/dense = 0.868× (-13.2%). ×4 sparse/dense = 1.200× (20.0%) — treat as noise / inconclusive for scale hedge.
 
 Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 
