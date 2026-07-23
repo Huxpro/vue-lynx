@@ -141,8 +141,8 @@ export function hasExplicitDuration(props: {
   return props.duration != null;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
 export function callHook(
+  // biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
   hook: ((...args: any[]) => void) | undefined,
   args: unknown[],
 ): void {
