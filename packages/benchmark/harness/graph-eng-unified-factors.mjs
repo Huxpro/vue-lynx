@@ -17,10 +17,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const defaultFlags = path.join(root, 'results/cross-storms-graph-eng-flags-full.json');
+const defaultB2 = path.join(root, 'results/cross-storms-graph-eng-b2.json');
 const defaultFull = path.join(root, 'results/cross-storms-graph-eng-4axis-full.json');
 const defaultPartial = path.join(root, 'results/cross-storms-graph-eng-4axis.json');
 const inFile = process.argv[2]
-  ?? (fs.existsSync(defaultFull) ? defaultFull : defaultPartial);
+  ?? (fs.existsSync(defaultFlags)
+    ? defaultFlags
+    : fs.existsSync(defaultB2)
+      ? defaultB2
+      : fs.existsSync(defaultFull)
+        ? defaultFull
+        : defaultPartial);
 const outStem = process.argv[3]
   ?? path.join(root, 'results/unified/graph-eng-unified-factors');
 

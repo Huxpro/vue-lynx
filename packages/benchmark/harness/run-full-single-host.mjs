@@ -1,12 +1,13 @@
 /**
- * Authoritative single-host full sweep (#325/#330):
- *   - table storms: 12 modes × 1k/10k/30k (warmup discarded in cross.mjs)
+ * Authoritative single-host full sweep on the flags-consolidation matrix:
+ *   - table storms: all published modes (incl. vapor-bang / vapor-code + react)
+ *     × 1k/10k/30k (warmup discarded in cross.mjs)
  *   - content FCP ladder via unified-content.mjs (single provenance):
- *       ×1 across 1k→30k, ×4 through 10k, all 12 matrix cells
+ *       ×1 across 1k→30k, ×4 through 10k
  *   - factor decomposition + synthesize + unified report
  *
  *   node harness/run-full-single-host.mjs [--skip-build] [--skip-storms]
- *     [--skip-fcp] [--synthesize-only]
+ *     [--skip-fcp] [--skip-fcp-build] [--synthesize-only]
  */
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -17,6 +18,9 @@ import { parseArgs } from 'node:util';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = path.resolve(root, '../..');
 
+/** Label for the storms JSON written by cross.mjs. */
+const STORMS_LABEL = 'graph-eng-flags-full';
+
 const STORM_MODES = [
   'vdom',
   'vdom-et',
@@ -24,6 +28,8 @@ const STORM_MODES = [
   'vdom-ifr-et',
   'vapor',
   'vapor-dense',
+  'vapor-bang',
+  'vapor-code',
   'vapor-engine',
   'vapor-ifr',
   'vapor-ifr-dense',
@@ -39,6 +45,8 @@ const FCP_CELLS = [
   'vue-vdom-ifr-et',
   'vue-vapor-off',
   'vue-vapor-dense',
+  'vue-vapor-bang',
+  'vue-vapor-code',
   'vue-vapor-engine',
   'vue-vapor-ifr',
   'vue-vapor-ifr-dense',
@@ -72,7 +80,7 @@ fs.mkdirSync(path.join(root, 'results/unified'), { recursive: true });
 
 if (args['synthesize-only']) {
   run(
-    'node harness/graph-eng-unified-factors.mjs results/cross-storms-graph-eng-4axis-full.json',
+    `node harness/graph-eng-unified-factors.mjs results/cross-storms-${STORMS_LABEL}.json`,
   );
   run('node harness/synthesize.mjs');
   run('node harness/report-unified.mjs');
@@ -86,7 +94,7 @@ if (!args['skip-build']) {
 
 if (!args['skip-storms']) {
   run(
-    `node harness/cross.mjs --skip-build --storms --modes ${STORM_MODES} --storm-sizes 1k,10k,30k --storm-reps 2 --label graph-eng-4axis-full`,
+    `node harness/cross.mjs --skip-build --storms --modes ${STORM_MODES} --storm-sizes 1k,10k,30k --storm-reps 2 --label ${STORMS_LABEL}`,
   );
 }
 
@@ -112,7 +120,7 @@ if (!args['skip-fcp']) {
 }
 
 run(
-  'node harness/graph-eng-unified-factors.mjs results/cross-storms-graph-eng-4axis-full.json',
+  `node harness/graph-eng-unified-factors.mjs results/cross-storms-${STORMS_LABEL}.json`,
 );
 run('node harness/synthesize.mjs');
 run('node harness/report-unified.mjs');

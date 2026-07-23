@@ -1,77 +1,43 @@
 {
   "schemaVersion": 1,
-  "note": "Multi-host provenance for the unified report. Absolute ms are host-bound; ratios within a run are the portable claim. Tint / geo-mean / charts use the primary run.",
+  "note": "Multi-host provenance for the unified report on flags-consolidation. Absolute ms are host-bound; ratios within a run are the portable claim. Tint / geo-mean / charts use the primary run.",
   "storms": {
-    "primary": "host-b",
+    "primary": "host-a",
     "runs": [
       {
         "id": "host-a",
         "short": "A",
         "label": {
-          "en": "Host A · Xeon @ 2.80GHz",
-          "zh": "主机 A · Xeon @ 2.80GHz"
+          "en": "Host A · Xeon @ 2.80GHz (b2)",
+          "zh": "主机 A · Xeon @ 2.80GHz（b2）"
         },
-        "file": "storms-4axis-full-host-a-2.80ghz.json",
+        "file": "storms-flags-b2-host-a.json",
         "source": {
-          "en": "#330 single-host full sweep (warmup-fixed)",
-          "zh": "#330 单机全量 sweep（含 warmup 修复）"
+          "en": "flags-consolidation b2 sweep (#337 +b:c / #338 +b!) · git 605d93c",
+          "zh": "flags-consolidation b2 sweep（#337 +b:c / #338 +b!）· git 605d93c"
         },
-        "pr": 330,
-        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/330"
-      },
-      {
-        "id": "host-b",
-        "short": "B",
-        "label": {
-          "en": "Host B · faster CPU (re-run)",
-          "zh": "主机 B · 更快 CPU（复测）"
-        },
-        "file": "storms-4axis-full-host-b-faster.json",
-        "source": {
-          "en": "#334 trend re-verify · cursor/unified-benchmark-rerun-9633",
-          "zh": "#334 趋势复验 · cursor/unified-benchmark-rerun-9633"
-        },
-        "pr": 334,
-        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
-        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633"
+        "pr": null,
+        "branch": "claude/vue-lynx-flags-consolidation"
       }
     ]
   },
   "fcp": {
-    "primary": "host-b",
+    "primary": "host-a",
     "runs": [
       {
         "id": "host-a",
         "short": "A",
         "label": {
-          "en": "Host A · Xeon @ 2.10GHz",
-          "zh": "主机 A · Xeon @ 2.10GHz"
+          "en": "Host A · Xeon @ 2.80GHz (b2 vapor-family)",
+          "zh": "主机 A · Xeon @ 2.80GHz（b2 vapor 家族）"
         },
         "x1": "content-fcp-x1-host-a.json",
         "x4": "content-fcp-x4-host-a.json",
         "source": {
-          "en": "#330 / #269 single-provenance content FCP ladder",
-          "zh": "#330 / #269 单 provenance content FCP 阶梯"
+          "en": "b2 unified-content ladder (6 vapor-family cells) · git 605d93c",
+          "zh": "b2 unified-content 阶梯（6 个 vapor 家族 cell）· git 605d93c"
         },
-        "pr": 330,
-        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/330"
-      },
-      {
-        "id": "host-b",
-        "short": "B",
-        "label": {
-          "en": "Host B · faster CPU (re-run)",
-          "zh": "主机 B · 更快 CPU（复测）"
-        },
-        "x1": "content-fcp-x1-host-b.json",
-        "x4": "content-fcp-x4-host-b.json",
-        "source": {
-          "en": "#334 trend re-verify · cursor/unified-benchmark-rerun-9633",
-          "zh": "#334 趋势复验 · cursor/unified-benchmark-rerun-9633"
-        },
-        "pr": 334,
-        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
-        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633"
+        "branch": "claude/vue-lynx-flags-consolidation"
       }
     ]
   }
