@@ -28,6 +28,7 @@ import {
   resetEngineTemplatesForTesting,
 } from './engine-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
+import { engineStagingRequested } from './flags.js';
 import {
   bindVaporTemplateId,
   getBoundVaporTemplate,
@@ -94,27 +95,6 @@ interface RegisteredTree {
 }
 
 const templates = new Map<number, RegisteredTree>();
-
-/**
- * Axis-A staging request for template instantiation (#321/#323).
- * `'engine'` routes REGISTER_TREE/CLONE_TREE through the native
- * Engine-Template family when the engine provides it. Read from the
- * build-time define when present (typeof-guarded for test realms), else
- * from a same-named global so harnesses can flip it per run.
- */
-function engineStagingRequested(): boolean {
-  const staging = typeof __VUE_LYNX_TEMPLATE_STAGING__ !== 'undefined'
-    ? __VUE_LYNX_TEMPLATE_STAGING__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_STAGING__'];
-  if (staging === 'engine') return true;
-  // Axis-D ephemeral paint may independently request engine routing for the
-  // IFR first frame (`ifrPaint: 'engine-et'`).
-  const paint = typeof __VUE_LYNX_IFR_PAINT__ !== 'undefined'
-    ? __VUE_LYNX_IFR_PAINT__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
-  return paint === 'engine-et'
-    && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
-}
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
