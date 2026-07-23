@@ -2,8 +2,25 @@
   "schemaVersion": 1,
   "note": "Multi-host provenance for the unified report on flags-consolidation. Absolute ms are host-bound; ratios within a run are the portable claim. Tint / geo-mean / charts use the primary run.",
   "storms": {
-    "primary": "host-a",
+    "primary": "host-b",
     "runs": [
+      {
+        "id": "host-b",
+        "short": "B",
+        "label": {
+          "en": "Host B · faster CPU (flags re-run)",
+          "zh": "主机 B · 更快 CPU（flags 复测）"
+        },
+        "file": "storms-flags-full-host-b.json",
+        "source": {
+          "en": "#334 rebased onto claude/vue-lynx-flags-consolidation · 14 modes incl. +b!/+b:c · git 53a70db7",
+          "zh": "#334 rebase 到 claude/vue-lynx-flags-consolidation · 14 modes（含 +b!/+b:c）· git 53a70db7"
+        },
+        "pr": 334,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
+        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633",
+        "branch": "cursor/unified-benchmark-rerun-9633"
+      },
       {
         "id": "host-a",
         "short": "A",
@@ -16,14 +33,31 @@
           "en": "flags-consolidation b2 sweep (#337 +b:c / #338 +b!) · git 605d93c",
           "zh": "flags-consolidation b2 sweep（#337 +b:c / #338 +b!）· git 605d93c"
         },
-        "pr": null,
         "branch": "claude/vue-lynx-flags-consolidation"
       }
     ]
   },
   "fcp": {
-    "primary": "host-a",
+    "primary": "host-b",
     "runs": [
+      {
+        "id": "host-b",
+        "short": "B",
+        "label": {
+          "en": "Host B · faster CPU (flags re-run, full matrix)",
+          "zh": "主机 B · 更快 CPU（flags 复测，全矩阵）"
+        },
+        "x1": "content-fcp-x1-host-b.json",
+        "x4": "content-fcp-x4-host-b.json",
+        "source": {
+          "en": "#334 flags re-run unified-content full matrix · PR #334",
+          "zh": "#334 flags 复测 unified-content 全矩阵 · PR #334"
+        },
+        "pr": 334,
+        "prUrl": "https://github.com/Huxpro/vue-lynx/pull/334",
+        "agentUrl": "https://cursor.com/agents/bc-019f8b97-533f-7a61-bc59-91f2e8eb9633",
+        "branch": "cursor/unified-benchmark-rerun-9633"
+      },
       {
         "id": "host-a",
         "short": "A",
