@@ -33,6 +33,7 @@ import {
   registerCodeTemplate,
   resetCodeTemplatesForTesting,
 } from './code-template.js';
+import { codePaintRequested, engineStagingRequested } from './template-flags.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
 import {
   createListElement,
@@ -93,43 +94,9 @@ interface RegisteredTree {
 
 const templates = new Map<number, RegisteredTree>();
 
-/**
- * Axis-A staging request for template instantiation (#321/#323).
- * `'engine'` routes REGISTER_TREE/CLONE_TREE through the native
- * Engine-Template family when the engine provides it. Read from the
- * build-time define when present (typeof-guarded for test realms), else
- * from a same-named global so harnesses can flip it per run.
- */
-function engineStagingRequested(): boolean {
-  const staging = typeof __VUE_LYNX_TEMPLATE_STAGING__ !== 'undefined'
-    ? __VUE_LYNX_TEMPLATE_STAGING__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_STAGING__'];
-  if (staging === 'engine') return true;
-  // Axis-D ephemeral paint may independently request engine routing for the
-  // IFR first frame (`ifrPaint: 'engine-et'`).
-  const paint = typeof __VUE_LYNX_IFR_PAINT__ !== 'undefined'
-    ? __VUE_LYNX_IFR_PAINT__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
-  return paint === 'engine-et'
-    && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
-}
-
-/**
- * Axis-D ephemeral paint request for `code-paint` (#340; legacy value
- * `disposable-et` — the build define keeps the legacy spelling, so accept
- * both). True only while the IFR main thread is painting the throwaway first
- * frame (`__VUE_LYNX_IFR_MT__`), so the persistent Data-Template tree and all
- * non-ephemeral paths stay on the interpreter. Read from the build-time define
- * when present (typeof-guarded for test realms), else from a same-named global
- * so harnesses can flip it per run — matching engineStagingRequested().
- */
-function codePaintRequested(): boolean {
-  const paint = typeof __VUE_LYNX_IFR_PAINT__ !== 'undefined'
-    ? __VUE_LYNX_IFR_PAINT__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_PAINT__'];
-  return (paint === 'code-paint' || paint === 'disposable-et')
-    && (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;
-}
+// Staging strategy flag reads live in ./template-flags (engineStagingRequested,
+// codePaintRequested). The strategy table that dispatches on them is defined
+// below, next to the clone helpers it wires together (STAGING_STRATEGIES).
 
 const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
@@ -453,6 +420,63 @@ function instantiateRegisteredTree(
   }
 }
 
+/**
+ * Optional staging strategies for REGISTER_TREE / CLONE_TREE, in CLONE-priority
+ * order. The Data-Template interpreter (`instantiateRegisteredTree`) is the
+ * always-on default and is deliberately NOT in this table — these are the
+ * experimental graph-eng axes stacked on top of it.
+ *
+ * They are mutually exclusive in every real build (the plugin bakes one
+ * staging/paint value), so `register` runs for each active strategy and
+ * `tryClone` is attempted in order until one paints — first success wins, else
+ * the interpreter runs. Each `tryClone` self-guards on its own `active()`.
+ *
+ * TO RETIRE AN AXIS once the experiment concludes: delete its entry here,
+ * delete its module (`engine-template.ts` / `code-template.ts`) and its
+ * `template-flags` reader, and drop its build define + plugin option. Nothing
+ * else in this file hard-codes the axis.
+ */
+interface StagingStrategy {
+  /** True when this strategy should materialize (reads ./template-flags). */
+  readonly active: () => boolean;
+  /** Build any per-template resource at REGISTER_TREE (engine needs this). */
+  readonly register: (
+    tplId: number,
+    structure: TemplateNode,
+    addressed: number[] | undefined,
+  ) => void;
+  /** Paint a clone; true if painted, false to fall through. Self-guards. */
+  readonly tryClone: (
+    tplId: number,
+    entry: RegisteredTree,
+    baseUid: number,
+  ) => boolean;
+  /** Clear module state (tests / reload). */
+  readonly reset: () => void;
+}
+
+const STAGING_STRATEGIES: readonly StagingStrategy[] = [
+  // [code] Code-Template ephemeral paint — #340. Tried first at CLONE.
+  {
+    active: codePaintRequested,
+    register: (tplId, structure, addressed) =>
+      registerCodeTemplate(tplId, structure, addressed),
+    tryClone: tryCodePaintCloneTree,
+    reset: resetCodeTemplatesForTesting,
+  },
+  // [engine] Engine-Template — #323 (durable) / #324 (native-paint); web stub.
+  {
+    active: engineStagingRequested,
+    register: (tplId, structure, addressed) =>
+      registerEngineTemplate(
+        tplId,
+        buildEngineTemplateDescriptor(structure, addressed ?? [], addressed ?? []),
+      ),
+    tryClone: tryEngineCloneTree,
+    reset: resetEngineTemplatesForTesting,
+  },
+];
+
 export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
@@ -588,20 +612,12 @@ export function applyOps(ops: unknown[], flush = true): void {
           ? addressedOr0
           : undefined;
         templates.set(tplId, { structure, addressed });
-        // Engine staging: build the host-resident prototype once (fail-safe
-        // no-op when the engine family is absent — the cell reports stub).
-        if (engineStagingRequested()) {
-          registerEngineTemplate(
-            tplId,
-            buildEngineTemplateDescriptor(
-              structure,
-              addressed ?? [],
-              addressed ?? [],
-            ),
-          );
-        } else if (codePaintRequested()) {
-          // code-paint: compile the ephemeral Code-Template create() once.
-          registerCodeTemplate(tplId, structure, addressed);
+        // Build any per-template resource for the active staging strategy
+        // (engine host-resident prototype, code-template compiled plan). The
+        // Data-Template default needs none. Fail-safe: engine register is a
+        // no-op when the family is absent (the cell reports stub).
+        for (const strategy of STAGING_STRATEGIES) {
+          if (strategy.active()) strategy.register(tplId, structure, addressed);
         }
         break;
       }
@@ -611,15 +627,18 @@ export function applyOps(ops: unknown[], flush = true): void {
         const baseUid = ops[i++] as number;
         const entry = templates.get(tplId);
         if (entry) {
-          // Ephemeral code-paint first, then engine staging, else interpret.
-          // Each guard is a no-op unless its mode is requested, so plain and
-          // native-paint behavior is unchanged.
-          if (
-            !tryCodePaintCloneTree(tplId, entry, baseUid)
-            && !tryEngineCloneTree(tplId, entry, baseUid)
-          ) {
-            instantiateRegisteredTree(entry, baseUid);
+          // Try each optional staging strategy in priority order; the
+          // Data-Template interpreter is the always-on default fallback. Plain
+          // and native-paint behavior is unchanged (their tryClone self-guards
+          // and returns false).
+          let painted = false;
+          for (const strategy of STAGING_STRATEGIES) {
+            if (strategy.tryClone(tplId, entry, baseUid)) {
+              painted = true;
+              break;
+            }
           }
+          if (!painted) instantiateRegisteredTree(entry, baseUid);
         }
         break;
       }
@@ -787,8 +806,7 @@ export function resetMainThreadState(): void {
   clearIfrSelectorAttributeDeferral();
   resetElementRegistry();
   templates.clear();
-  resetEngineTemplatesForTesting();
-  resetCodeTemplatesForTesting();
+  for (const strategy of STAGING_STRATEGIES) strategy.reset();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
