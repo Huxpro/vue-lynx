@@ -97,7 +97,13 @@ export function mountMeteors(canvas, { gridSize = 120, meteorCount = 3 } = {}) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return () => undefined;
 
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Coarse-pointer / phone: keep the backing store small — the full-bleed
+  // canvas otherwise mirrors devicePixelRatio×viewport into GPU memory on
+  // every frame, which compounds with slide media on iOS Safari.
+  const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  const dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.25 : 2);
+  const count = coarse ? Math.min(meteorCount, 2) : meteorCount;
+
   const resize = () => {
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
@@ -109,7 +115,7 @@ export function mountMeteors(canvas, { gridSize = 120, meteorCount = 3 } = {}) {
   window.addEventListener('resize', resize);
 
   const meteors = Array.from(
-    { length: meteorCount },
+    { length: count },
     () =>
       new Meteor(gridSize, {
         get width() { return canvas.width / dpr; },
@@ -117,8 +123,25 @@ export function mountMeteors(canvas, { gridSize = 120, meteorCount = 3 } = {}) {
       }),
   );
 
-  let raf;
+  let raf = 0;
+  let running = false;
+
+  // Skip the RAF loop when the canvas is fully faded (data-bg=clean) or the
+  // tab is hidden — opacity:0 still composites a full-size layer every frame.
+  const shouldRun = () => {
+    if (document.hidden) return false;
+    const deck = canvas.closest('.deck') || document.querySelector('.deck');
+    if (deck?.dataset?.bg === 'clean') return false;
+    const op = Number.parseFloat(getComputedStyle(canvas).opacity);
+    return !(Number.isFinite(op) && op < 0.02);
+  };
+
   const tick = () => {
+    raf = 0;
+    if (!shouldRun()) {
+      running = false;
+      return;
+    }
     const w = canvas.width / dpr;
     const h = canvas.height / dpr;
     ctx.clearRect(0, 0, w, h);
@@ -145,10 +168,31 @@ export function mountMeteors(canvas, { gridSize = 120, meteorCount = 3 } = {}) {
     meteors.forEach((m) => { m.update(); m.draw(ctx); });
     raf = requestAnimationFrame(tick);
   };
-  tick();
+
+  const kick = () => {
+    if (running || !shouldRun()) return;
+    running = true;
+    raf = requestAnimationFrame(tick);
+  };
+
+  document.addEventListener('visibilitychange', kick);
+  document.addEventListener('deck:change', kick);
+  // dataset.bg flips via main.js applyChromeAndBg — observe so clean↔beam
+  // transitions restart/stop the loop without waiting for another navigate.
+  const deck = canvas.closest('.deck') || document.querySelector('.deck');
+  const bgObs = deck
+    ? new MutationObserver(kick)
+    : null;
+  bgObs?.observe(deck, { attributes: true, attributeFilter: ['data-bg'] });
+
+  kick();
 
   return () => {
-    cancelAnimationFrame(raf);
+    if (raf) cancelAnimationFrame(raf);
+    running = false;
     window.removeEventListener('resize', resize);
+    document.removeEventListener('visibilitychange', kick);
+    document.removeEventListener('deck:change', kick);
+    bgObs?.disconnect();
   };
 }

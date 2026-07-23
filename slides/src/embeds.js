@@ -9,9 +9,11 @@
 //     audio can never leak across pages) and autoplay when
 //     their slide becomes current — opt out per element with
 //     data-autoplay="false".
-//   · iframes are mounted only when their slide is at most
-//     one step away and unloaded again two steps out, so a
-//     heavy embedded page never taxes the rest of the talk.
+//   · images / videos mount within MEDIA_NEAR (±2) and unload
+//     at MEDIA_FAR (≥3); iframes stay at IFRAME_NEAR/FAR (±1/≥2).
+//     Eager decode of every embed used to blow past iOS Safari's
+//     WebContent memory budget (a single 4032×3024 PNG is ~49MB
+//     RGBA once decoded).
 //   · a missing file renders as a labeled placeholder frame
 //     showing the exact path to drop the asset at — author
 //     slides first, add media later.
@@ -26,6 +28,14 @@ import { attachDeviceControls } from './framework/device.js';
 
 const EXT_VIDEO = /\.(mp4|webm|mov|m4v)(\?|#|$)/i;
 const EXT_IMAGE = /\.(png|jpe?g|webp|gif|avif|svg)(\?|#|$)/i;
+
+// Images/videos: 2-slide neighborhood so FLIP neighbors are already
+// decoded before we arrive. Iframes stay at 1 — nested pages are heavier
+// than a bitmap and don't participate in FLIP sizing the same way.
+const MEDIA_NEAR = 2;
+const MEDIA_FAR = 3;
+const IFRAME_NEAR = 1;
+const IFRAME_FAR = 2;
 
 // Presets for embed frames, per data-embed kind. Named after the
 // stock device icons (monitor / tablet / smartphone) so the preset
@@ -54,6 +64,7 @@ class VlMedia extends HTMLElement {
     this.src = this.getAttribute('src') || '';
     this.kind = this.getAttribute('kind') || inferKind(this.src);
     this.autoplay = this.dataset.autoplay !== 'false';
+    this._live = false;
 
     const ph = document.createElement('div');
     ph.className = 'vl-ph';
@@ -67,8 +78,11 @@ class VlMedia extends HTMLElement {
       img.alt = this.getAttribute('alt') || '';
       img.addEventListener('error', () => this.classList.add('is-missing'));
       img.addEventListener('load', () => this.classList.remove('is-missing'));
-      img.src = this.src;
+      // Don't set src yet — wait for setDistance(). Placeholder stays up
+      // until the first successful load (and returns if we unload).
+      this.classList.add('is-missing');
       this.appendChild(img);
+      this._img = img;
     } else if (this.kind === 'video') {
       const v = document.createElement('video');
       v.playsInline = true;
@@ -78,11 +92,48 @@ class VlMedia extends HTMLElement {
       v.preload = 'metadata';
       v.addEventListener('error', () => this.classList.add('is-missing'));
       v.addEventListener('loadedmetadata', () => this.classList.remove('is-missing'));
-      v.src = this.src;
+      this.classList.add('is-missing');
       this.appendChild(v);
       this._video = v;
     }
     // iframes mount lazily in setDistance().
+  }
+
+  _mountImage() {
+    if (!this._img || this._live) return;
+    this._img.src = this.src;
+    this._live = true;
+    // Show the element immediately so layout (and FLIP rects) match the
+    // loaded state; is-missing returns only on error or unload.
+    this.classList.remove('is-missing');
+  }
+
+  _unmountImage() {
+    if (!this._img || !this._live) return;
+    // Drop the decoded bitmap without assigning src='' (that fires a
+    // spurious error event in some browsers). removeAttribute is enough
+    // once we also blank via load()-style teardown isn't available for img.
+    this._img.removeAttribute('src');
+    this._live = false;
+    this.classList.add('is-missing');
+  }
+
+  _mountVideo() {
+    if (!this._video || this._live) return;
+    this._video.src = this.src;
+    this._live = true;
+    this.classList.remove('is-missing');
+  }
+
+  _unmountVideo() {
+    if (!this._video || !this._live) return;
+    const v = this._video;
+    v.pause?.();
+    v.removeAttribute('src');
+    // Essential on iOS — releases the decoded frame buffer.
+    try { v.load(); } catch { /* ignore */ }
+    this._live = false;
+    this.classList.add('is-missing');
   }
 
   _mountFrame() {
@@ -103,25 +154,43 @@ class VlMedia extends HTMLElement {
     this.classList.remove('is-live');
   }
 
-  /** Called on every deck:change with (mySlide - currentSlide). */
+  /** Called on every deck:media-sync / deck:change with (mySlide - current). */
   setDistance(d, { still = false } = {}) {
+    if (this.kind === 'image') {
+      if (Math.abs(d) <= MEDIA_NEAR) this._mountImage();
+      else if (Math.abs(d) >= MEDIA_FAR) this._unmountImage();
+      return;
+    }
+
     if (this.kind === 'video' && this._video) {
+      if (Math.abs(d) <= MEDIA_NEAR) this._mountVideo();
+      else if (Math.abs(d) >= MEDIA_FAR) this._unmountVideo();
+
+      if (!this._live) return;
       const v = this._video;
       if (d === 0 && this.autoplay && !still) {
+        // Skip a no-op rewind+play when media-sync and deck:change both
+        // fire for the same arrival (setSlide dispatches both).
+        if (this._playingFor === 0) return;
+        this._playingFor = 0;
         try { v.currentTime = 0; } catch { /* not seekable yet */ }
         const p = v.play?.();
         if (p?.catch) p.catch(() => {});
       } else {
+        this._playingFor = d;
         v.pause?.();
         if (d !== 0) {
           try { v.currentTime = 0; } catch { /* not seekable yet */ }
         }
       }
-    } else if (this.kind === 'iframe') {
+      return;
+    }
+
+    if (this.kind === 'iframe') {
       // Live only in the immediate neighborhood; embed previews (the
       // speaker view's iframes) never mount nested third-party pages.
-      if (Math.abs(d) <= 1 && !still) this._mountFrame();
-      else if (Math.abs(d) >= 2) this._unmountFrame();
+      if (Math.abs(d) <= IFRAME_NEAR && !still) this._mountFrame();
+      else if (Math.abs(d) >= IFRAME_FAR) this._unmountFrame();
     }
   }
 }
@@ -139,10 +208,17 @@ export function initEmbeds({
   registerVlMedia();
   const still = reducedMotion || embed;
 
-  // Resizable embed frames — same chrome as the demo phones, with
-  // embed-shaped presets. Inline data-w/data-h re-apply after the
-  // initial preset so a slide can seed its own size (the cascade).
+  // Resizable embed frames — seed CSS vars now, wire grips lazily when the
+  // slide enters the neighborhood (avoids injecting 4 grips × N frames into
+  // every dormant overlay at boot).
   document.querySelectorAll('.phone--embed').forEach((frame) => {
+    if (frame.dataset.w) frame.style.setProperty('--phone-w', frame.dataset.w);
+    if (frame.dataset.h) frame.style.setProperty('--phone-h', frame.dataset.h);
+  });
+
+  function wireEmbedFrame(frame) {
+    if (frame.dataset.controlsWired) return;
+    frame.dataset.controlsWired = '1';
     const conf = EMBED_DEVICES[frame.dataset.embed] || EMBED_DEVICES.wide;
     const media = frame.querySelector('vl-media');
     attachDeviceControls(frame, {
@@ -158,9 +234,10 @@ export function initEmbeds({
           inferKind(media.getAttribute('src') || '') === 'iframe')
           ? media.getAttribute('src') : null),
     });
+    // Preset apply clears free-drag size — re-seed authoring hints after.
     if (frame.dataset.w) frame.style.setProperty('--phone-w', frame.dataset.w);
     if (frame.dataset.h) frame.style.setProperty('--phone-h', frame.dataset.h);
-  });
+  }
 
   // Drive media lifecycle from deck navigation. When the global media-embeds
   // flag is off, treat every element as far away so iframes unmount and
@@ -175,8 +252,14 @@ export function initEmbeds({
     medias.forEach((m) => {
       const d = enabled ? m.idx - index : 99;
       m.el.setDistance?.(d, { still: still || !enabled });
+      // Wire embed chrome once the slide is in the media neighborhood.
+      if (enabled && Math.abs(d) <= MEDIA_NEAR) {
+        const frame = m.el.closest('.phone--embed');
+        if (frame) wireEmbedFrame(frame);
+      }
     });
   }
+  document.addEventListener('deck:media-sync', (e) => sync(e.detail.index));
   document.addEventListener('deck:change', (e) => sync(e.detail.index));
   document.addEventListener('deck:media-embeds', (e) => {
     sync(typeof e.detail?.index === 'number'

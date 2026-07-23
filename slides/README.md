@@ -169,12 +169,14 @@ next slide.
   leak across pages) and autoplay when their slide becomes current; opt out
   with `data-autoplay="false"`, and use `unmuted` / `no-loop` / `controls`
   to override the muted-loop defaults.
-- **Iframes** mount when their slide is one step away and unload two steps
-  out, so a heavy embedded page (e.g. the live PWA-talk deck) never taxes
-  the rest of the talk.
+- **Images & videos** mount when their slide is two steps away and unload
+  three steps out; **iframes** stay at one / two. Eager decode of the
+  Germany photos alone was ~70MB RGBA and could crash iOS Safari on first
+  paint.
 - **Missing files** render as a labeled placeholder showing the exact path to
   drop the asset at — author slides first, add media later. Expected files
-  are listed in `public/media/embeds/README.md`.
+  are listed in `public/media/embeds/README.md`. Author photos at ≤1280px on
+  the long edge; Safari decodes full pixel dimensions into GPU memory.
 
 For a **resizable** frame, wrap the `<vl-media>` in
 `.phone.phone--embed.no-deck-scroll` with `data-embed="wide|portrait|browser"`

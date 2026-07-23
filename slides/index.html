@@ -1105,7 +1105,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="phone">
         <div class="phone__inner">
           <video class="native-clip" src="/media/ai-chat/native-first-send.mp4"
-            autoplay muted loop playsinline preload="auto"></video>
+            muted loop playsinline preload="none"></video>
         </div>
       </div>
       <p class="demo__caption" data-mm-fade>
@@ -1187,7 +1187,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="phone">
         <div class="phone__inner">
           <video class="native-clip" src="/media/ai-chat/native-keyboard-follow.mp4"
-            autoplay muted loop playsinline preload="auto"></video>
+            muted loop playsinline preload="none"></video>
         </div>
       </div>
       <p class="demo__caption" data-mm-fade>
@@ -1206,7 +1206,7 @@ app.<span class="code-fn">use</span>(router)</pre>
       <div class="phone">
         <div class="phone__inner">
           <video class="native-clip" src="/media/ai-chat/native-second-send.mp4"
-            autoplay muted loop playsinline preload="auto"></video>
+            muted loop playsinline preload="none"></video>
         </div>
       </div>
       <p class="demo__caption" data-mm-fade>
@@ -4039,8 +4039,10 @@ app.<span class="code-fn">use</span>(router)</pre>
       fraction. +ifr only moves <em>when</em> the first frame paints.
     </p>
     <p class="lead" data-mm-fade style="margin-top:clamp(4px,0.8cqh,10px);font-size:clamp(13px,1.4cqw,17px)">
+      <!-- TODO(talk): revert href to https://vue.lynxjs.org/guide/benchmark-unified
+           once vapor ships to production — preview URLs can expire. -->
       Full tables &amp; charts — 1k/10k/30k, storms, FCP ladders:
-      <a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>.
+      <a href="https://vue-lynx-git-vapor-huxpros-projects.vercel.app/guide/benchmark-unified" style="color:var(--vue-green)">vue-lynx-git-vapor-huxpros-projects.vercel.app/guide/benchmark-unified</a>.
     </p>
     <aside class="notes">
       <p><strong>Marginal effects — move one axis, hold the rest.</strong> Row one is the headline: switching the render model halves update storms and collapses select storms; it costs ~12% on create (Vapor's clone protocol). The template rows hover in single digits at this cell mix — <em>update and select are template-blind</em>: we verified identical op frames and native call counts across template cells; templates pay off on create and on protocol bytes, scaling with the static fraction (this app is dynamic-heavy, so the deck's 1000× ops-payload slide is the other end of that curve).</p>

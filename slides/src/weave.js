@@ -217,6 +217,12 @@ export function initWeave(frame, { getScale, reducedMotion = false, embed = fals
   if (!ctx) return { setScene: () => {}, destroy: () => {} };
 
   const still = reducedMotion || embed;
+  // Phones: smaller backing store + skip the additive glow pass. The glow
+  // doubles every stroke; together with a 3× DPR canvas it was a steady
+  // GPU tax on iOS Safari during the epilogue.
+  const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  const maxQ = coarse ? 1.25 : 2.4;
+  const glow = !coarse;
 
   // Per-thread motion constants (never tweened).
   const motion = Array.from({ length: POOL_N }, (_, i) => ({
@@ -247,7 +253,7 @@ export function initWeave(frame, { getScale, reducedMotion = false, embed = fals
 
   function resize() {
     const scale = Math.max(0.4, getScale?.() || 1);
-    const q = Math.min(2.4, (window.devicePixelRatio || 1) * scale);
+    const q = Math.min(maxQ, (window.devicePixelRatio || 1) * scale);
     canvas.width = Math.round(W * q);
     canvas.height = Math.round(H * q);
     ctx.setTransform(q, 0, 0, q, 0, 0);
@@ -326,8 +332,8 @@ export function initWeave(frame, { getScale, reducedMotion = false, embed = fals
       grad.addColorStop(1, `rgba(${dc},${th.aR})`);
       ctx.strokeStyle = grad;
 
-      if (!light) {
-        // Additive glow pass, dark theme only.
+      if (glow && !light) {
+        // Additive glow pass, dark theme only (skipped on coarse/mobile).
         ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha = a * 0.14;
         ctx.lineWidth = th.width * 3.6;

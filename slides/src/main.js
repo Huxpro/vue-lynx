@@ -62,23 +62,62 @@ const mm = createMagicMove({
   embed: embedMode,
 });
 
-// The epilogue's "fabrics" canvas — one persistent layer under the
-// slides; scenes are declared per-slide via data-weave and tweened
-// across navigations (see src/weave.js). Embed iframes render a
-// single static frame so speaker previews stay cheap.
-const weave = initWeave(frame, {
-  getScale: stage.getScale,
-  reducedMotion: REDUCED_MOTION,
-  embed: embedMode,
-});
+// Coarse pointer (phones) — keep the first-paint budget tiny. iOS Safari
+// kills the WebContent process once compositor/DOM memory crosses a hard
+// ceiling; the full 132-slide tree + meteors + QRs was enough to trip it.
+const COARSE =
+  window.matchMedia?.('(pointer: coarse)').matches ?? false;
+
+// The epilogue's "fabrics" canvas — deferred until the first weave slide
+// so boot doesn't allocate a full-stage HiDPI canvas on phones.
+let weave = null;
+function ensureWeave() {
+  if (weave) return weave;
+  weave = initWeave(frame, {
+    getScale: stage.getScale,
+    reducedMotion: REDUCED_MOTION || COARSE,
+    embed: embedMode,
+  });
+  return weave;
+}
 document.addEventListener('deck:change', (e) => {
   // Overlay slides float above their base slide (see setSlide) — unless
   // they declare their own scene, they inherit the base's weave so the
   // canvas doesn't blink out under a media layer.
   let i = e.detail.index;
   while (i > 0 && slides[i].classList.contains('overlay') && !slides[i].dataset.weave) i--;
-  weave.setScene(slides[i]?.dataset.weave || null);
+  const scene = slides[i]?.dataset.weave || null;
+  if (scene) ensureWeave().setScene(scene);
+  else weave?.setScene(null);
 });
+
+// Keep only a small neighborhood of slides in the render tree. Far slides
+// get `.is-dormant` → `display:none` (see styles.css).
+const DORMANT_RADIUS = 1;
+function syncDormant(index, under = -1) {
+  // Overview on desktop needs every tile. On coarse pointers we refuse the
+  // zoom-grid (CSS) and keep dormancy so opening overview can't OOM Safari.
+  if (deck.classList.contains('overview') && !COARSE) {
+    slides.forEach((s, i) => {
+      const was = s.classList.contains('is-dormant');
+      s.classList.remove('is-dormant');
+      if (was) translateSlide?.(s, i);
+    });
+    return;
+  }
+  slides.forEach((s, i) => {
+    const keep =
+      i === index ||
+      i === under ||
+      Math.abs(i - index) <= DORMANT_RADIUS;
+    const wasDormant = s.classList.contains('is-dormant');
+    s.classList.toggle('is-dormant', !keep);
+    // Freshly woken slides still hold authored English — translate now.
+    if (wasDormant && keep) translateSlide?.(s, i);
+    // Drop generated arch DOM while asleep so it isn't retained in memory.
+    if (!keep) s.querySelectorAll('.arch-mount').forEach((m) => m.replaceChildren());
+  });
+}
 
 let current = 0;
 let speakerWindow = null;
@@ -233,13 +272,33 @@ function ensureOverviewEditor() {
 }
 
 function setOverview(on) {
+  // Phones: overview would materialize every dormant slide. Keep the
+  // palette entry as a no-op that snaps dormancy back to the current page.
+  if (COARSE && on) {
+    syncDormant(current, slides[current]?.classList.contains('overlay')
+      ? (() => {
+          let u = current - 1;
+          while (u >= 0 && slides[u].classList.contains('overlay')) u--;
+          return u;
+        })()
+      : -1);
+    return false;
+  }
   deck.classList.toggle('overview', on);
   if (on) {
+    syncDormant(current, -1); // wakes all tiles (non-coarse only)
     ensureOverviewEditor();
     ovBar?.classList.add('is-visible');
     requestAnimationFrame(fitOverview);
   } else {
     ovBar?.classList.remove('is-visible');
+    // Re-apply dormancy for the current neighborhood.
+    let under = -1;
+    if (slides[current]?.classList.contains('overlay')) {
+      under = current - 1;
+      while (under >= 0 && slides[under].classList.contains('overlay')) under--;
+    }
+    syncDormant(current, under);
   }
   return on;
 }
@@ -355,12 +414,25 @@ function setSlide(index, opts = {}) {
     under = current - 1;
     while (under >= 0 && slides[under].classList.contains('overlay')) under--;
   }
+  // Wake the destination neighborhood *before* measuring FLIP rects or
+  // toggling active — a dormant (display:none) slide has no box.
+  syncDormant(current, under);
   slides.forEach((s, i) => {
     s.classList.toggle('is-active', i === current);
     s.classList.toggle('is-under', i === under);
     s.classList.toggle('is-prev', i < current && i !== under);
   });
   applyChromeAndBg(flags);
+  ensurePhoneControlsNear(current, under);
+
+  // Proximity-mount media before FLIP measures rects (images/videos are no
+  // longer eager). Keep the public deck:change event after the morph kick-off
+  // so weave/meteors listeners don't thrash layout mid-measure.
+  preloadDemosNear(current);
+  syncSlideMedia(current);
+  document.dispatchEvent(new CustomEvent('deck:media-sync', {
+    detail: { index: current, total: slides.length },
+  }));
 
   if (flags.transition === 'magic' && adjacent && !opts.jump) {
     mm.magicMove(slides[prev], slides[current]);
@@ -380,8 +452,6 @@ function setSlide(index, opts = {}) {
   if (!opts.skipHash) {
     history.replaceState(null, '', `#${current + 1}`);
   }
-  preloadDemosNear(current);
-  syncSlideMedia(current);
 
   if (!opts.fromChannel) {
     broadcastState();
@@ -402,19 +472,35 @@ function preloadDemosNear(index) {
   }
 }
 
-// Native recording clips (<video>) only play on the current slide — every
-// other clip is paused and rewound so the deck stays quiet and cheap. When
-// reduced-motion is set we leave the poster frame up instead of autoplaying.
+// Native recording clips (<video.native-clip>) only decode + play on the
+// current slide. Eager preload="auto" across every clip used to pin
+// multi‑MB decoded frames in iOS Safari for the whole talk — move the
+// authored `src` into `data-src` and only attach it while on-slide.
 function syncSlideMedia(index) {
   document.querySelectorAll('video.native-clip').forEach((v) => {
+    if (!v.dataset.src) {
+      const src = v.getAttribute('src') || '';
+      if (src) {
+        v.dataset.src = src;
+        v.removeAttribute('src');
+        v.preload = 'none';
+        try { v.load(); } catch { /* ignore */ }
+      }
+    }
     const onCurrent = slides[index] && slides[index].contains(v);
-    if (onCurrent && !REDUCED_MOTION && !embedMode) {
-      const p = v.play?.();
-      if (p && typeof p.catch === 'function') p.catch(() => {});
+    if (onCurrent) {
+      if (v.dataset.src && v.getAttribute('src') !== v.dataset.src) {
+        v.src = v.dataset.src;
+      }
+      if (!REDUCED_MOTION && !embedMode) {
+        const p = v.play?.();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+      }
     } else {
       v.pause?.();
-      if (!onCurrent) {
-        try { v.currentTime = 0; } catch { /* not seekable yet */ }
+      if (v.getAttribute('src')) {
+        v.removeAttribute('src');
+        try { v.load(); } catch { /* release iOS buffer */ }
       }
     }
   });
@@ -733,41 +819,49 @@ if (!embedMode) {
 }
 
 const canvas = document.querySelector('.meteors');
-if (canvas) mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
+if (canvas) {
+  // Full-viewport RAF canvas on a phone is pure tax — cover still reads
+  // fine without the meteor field.
+  if (COARSE) canvas.remove();
+  else mountMeteors(canvas, { gridSize: 120, meteorCount: 3 });
+}
 
-// Render the Web + Lynx-App QR pair onto each demo slide.
-initQRCodes();
+// QR pairs — generate only for the live neighborhood (each demo slide's
+// QR SVGs are tens of KB of path data × ~20 demos).
+initQRCodes({ getIndex: () => current, slides });
+document.addEventListener('deck:change', (e) => {
+  initQRCodes({ getIndex: () => e.detail.index, slides, syncOnly: true });
+});
 
 // =========================================================
 // Device mockups — free drag-to-resize + preset switcher.
-// A corner grip resizes width/height independently (no aspect
-// lock). Three preset buttons (phone / vertical tablet / desktop)
-// snap the frame to a canonical aspect ratio and size. Pointer
-// deltas are divided by the stage scale so the grip tracks the
-// cursor inside the scaled .frame. Double-click resets.
+// Wired lazily per neighborhood so boot doesn't attach 4 grips ×
+// N phones across dormant slides.
 // =========================================================
-// Shared device-frame controls (preset switcher + drag grip) — see
-// framework/device.js. The play page reuses the same component.
-function initPhoneControls() {
+function ensurePhoneControlsNear(index, under = -1) {
   if (embedMode) return;
-  // (embed frames wire their own controls in initEmbeds, with
-  // embed-shaped presets — skip them here)
-  document.querySelectorAll('.phone:not(.phone--embed)').forEach((phone) =>
-    attachDeviceControls(phone, {
-      getScale: stage.getScale,
-      presets: DECK_PRESETS,
-      // Deck frames float over the slide (absolutely centred), so all four
-      // corners resize symmetrically about the middle.
-      corners: ['nw', 'ne', 'sw', 'se'],
-      anchor: 'center',
-      // Embedded in the deck: offer a jump to the standalone play page.
-      externalUrl: (el) => {
-        const bundle = el.querySelector('vl-demo')?.getAttribute('bundle');
-        return bundle ? `${import.meta.env.BASE_URL}play.html?bundle=${bundle}` : null;
-      },
-    }));
+  const want = new Set();
+  for (let i = index - DORMANT_RADIUS; i <= index + DORMANT_RADIUS; i++) {
+    if (i >= 0 && i < slides.length) want.add(i);
+  }
+  if (under >= 0) want.add(under);
+  want.forEach((i) => {
+    slides[i].querySelectorAll('.phone:not(.phone--embed)').forEach((phone) => {
+      if (phone.dataset.controlsWired) return;
+      phone.dataset.controlsWired = '1';
+      attachDeviceControls(phone, {
+        getScale: stage.getScale,
+        presets: DECK_PRESETS,
+        corners: ['nw', 'ne', 'sw', 'se'],
+        anchor: 'center',
+        externalUrl: (el) => {
+          const bundle = el.querySelector('vl-demo')?.getAttribute('bundle');
+          return bundle ? `${import.meta.env.BASE_URL}play.html?bundle=${bundle}` : null;
+        },
+      });
+    });
+  });
 }
-initPhoneControls();
 
 // =========================================================
 // Cycling cover verb — swaps word list with the language.
@@ -854,7 +948,10 @@ function initI18n() {
     if (el.querySelector('[data-cover-verb]')) return; // cycling verb line
     i18nEls.push({ el, en: el.innerHTML, key: normalizeKey(el.textContent) });
   });
-  // Speaker notes, keyed by slide order (ZH_NOTES[i]).
+  // Speaker notes — one aside per slide, indexed by document order.
+  // AGENTS.md invariant: every <section class="slide"> has an <aside class="notes">,
+  // so noteEls[i] lines up with slides[i]. A future notes-less slide would make
+  // notes after it silently stay English in zh (slide.contains guard), not corrupt.
   noteEls = [...document.querySelectorAll('.slide aside.notes')].map((el) => ({
     el,
     en: el.innerHTML,
@@ -862,18 +959,39 @@ function initI18n() {
 }
 
 let currentLang = 'en';
-function applyLang(lang, opts = {}) {
-  currentLang = lang === 'zh' ? 'zh' : 'en';
-  document.documentElement.setAttribute('data-lang', currentLang);
+
+/** Translate one slide's visible text + notes (skips dormant cost on boot). */
+function translateSlide(slide, slideIndex) {
+  if (!slide || !i18nEls.length) return;
   i18nEls.forEach(({ el, en, key }) => {
+    if (!slide.contains(el)) return;
     const zh = ZH[key];
     el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
   });
-  noteEls.forEach(({ el, en }, i) => {
-    const zh = ZH_NOTES[i];
+  const note = noteEls[slideIndex];
+  if (note && slide.contains(note.el)) {
+    const zh = ZH_NOTES[slideIndex];
+    note.el.innerHTML = currentLang === 'zh' && zh != null ? zh : note.en;
+  }
+  if (slide.querySelector('.arch-mount')) initArch(currentLang, slide);
+}
+
+function applyLang(lang, opts = {}) {
+  currentLang = lang === 'zh' ? 'zh' : 'en';
+  document.documentElement.setAttribute('data-lang', currentLang);
+  // Only rewrite awake slides — dormant trees stay in their authored English
+  // until syncDormant wakes them (see translateSlide). Full-deck innerHTML
+  // on boot was a multi‑MB DOM rewrite on every phone visit.
+  slides.forEach((slide, i) => {
+    if (slide.classList.contains('is-dormant')) return;
+    translateSlide(slide, i);
+  });
+  // Gate-legend lives outside slides.
+  i18nEls.forEach(({ el, en, key }) => {
+    if (el.closest('.slide')) return;
+    const zh = ZH[key];
     el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
   });
-  initArch(currentLang);
   setVerbLang(currentLang);
 
   // Refresh speaker-view metadata (titles + notes) in the new language.

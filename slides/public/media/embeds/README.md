@@ -11,9 +11,9 @@ Names are anchored to the slide numbers used while authoring.
 | `02-image.png` | the snapshot that completes the cascade | photo, ~960×1198 |
 | `88-meme.png` | the "getting metaphysical" / 雪碧 roast intermission | ~1024×610 |
 | `79-vibe-coding.png` | the Karpathy vibe-coding tweet over the ∞ divider | ONE full-height screenshot (~860×1024) — the slide crops top half, then pans to the bottom half |
-| `103-photo-1.png` | Germany three-up, left snapshot | portrait-ish |
+| `103-photo-1.png` | Germany three-up, left snapshot | portrait, ≤1280 long edge |
 | `103-video-portrait.mp4` | Germany three-up, center | vertical (9:16), muted loop |
-| `103-photo-2.png` | Germany three-up, right snapshot | portrait-ish |
+| `103-photo-2.png` | Germany three-up, right snapshot | ≤1280 long edge (decoded RGBA = W×H×4 — keep small) |
 | `103-video-wide.mp4` | the Pokémon clip, full width | landscape, muted loop |
 
 The PWA-talk slide embeds `https://huangxuan.me/pwa-qcon2016/#/` live — no

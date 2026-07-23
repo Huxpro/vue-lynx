@@ -4,7 +4,9 @@
    Vue green #42b883, brand teal #00ddff, bridge emerald #34d399.
    ----------------------------------------------------------- */
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
+/* Trimmed weights — six Geist axes were a large first-paint download on
+   mobile Safari for little typographic gain on the stage. */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
   /* ---- Dark is the default theme (Keynote-style near-black stage) ---- */
@@ -152,6 +154,13 @@ html, body {
               transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
   transform: translateY(20px);
   z-index: 1;
+}
+
+/* Far slides — drop them out of the render tree. opacity:0 still keeps
+   every SVG/backdrop-filter/phone chrome in Safari's compositor budget
+   across all 132 slides and was crashing iPhone WebContent on boot. */
+.slide.is-dormant {
+  display: none !important;
 }
 
 .slide.is-active {
