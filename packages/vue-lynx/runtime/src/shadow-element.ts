@@ -33,6 +33,11 @@ import {
   type VaporTreeAddressing,
 } from 'vue-lynx/internal/ops';
 import { patchEventProp } from './event-props.js';
+import {
+  bundleDeliveryRequested,
+  codeStagingRequested,
+  sparseNamingEnabled,
+} from './flags.js';
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
@@ -1022,25 +1027,8 @@ interface TemplateCache {
   codeTplId?: string;
 }
 
-/**
- * Delivery request from the build ('runtime' | 'bundle', #338). Reads the
- * define when present, else a same-named global so tests/harnesses can flip
- * it per run.
- */
-function bundleDeliveryRequested(): boolean {
-  const v = typeof __VUE_LYNX_TEMPLATE_DELIVERY__ !== 'undefined'
-    ? __VUE_LYNX_TEMPLATE_DELIVERY__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_DELIVERY__'];
-  return v === 'bundle';
-}
-
-/** Staging request 'code' (`+b:c`, #337) — define or global, like above. */
-function codeStagingRequested(): boolean {
-  const v = typeof __VUE_LYNX_TEMPLATE_STAGING__ !== 'undefined'
-    ? __VUE_LYNX_TEMPLATE_STAGING__
-    : (globalThis as Record<string, unknown>)['__VUE_LYNX_TEMPLATE_STAGING__'];
-  return v === 'code';
-}
+// Delivery / staging / naming flag reads live in flags.ts — the one
+// decision point per axis (removability + DCE + test flippability).
 
 let nextTemplateId = 1;
 const registeredTemplateIds = new Set<number>();
@@ -1065,10 +1053,7 @@ function isValidAddressing(
   structure: TemplateNode,
 ): meta is VaporTreeAddressing {
   // Graph-eng matrix kill-switch (#301): force dense A1.
-  if (
-    typeof __VUE_LYNX_SPARSE_NAMING__ !== 'undefined'
-    && __VUE_LYNX_SPARSE_NAMING__ === false
-  ) {
+  if (!sparseNamingEnabled()) {
     return false;
   }
   if (!meta) return false;
