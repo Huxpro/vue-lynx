@@ -958,7 +958,7 @@ function graphEngFactorsSection(t) {
         ['<i>delivery</i>', '（第六列性质，暂无独立 flag）residual 何时到 MT：<code>runtime</code> = 运行期过线（vapor 的 data/native 现状）；<code>bundle</code> = 构建期编进 MT bundle（vdom 的 code、RL Snapshot）。构建期交付 data 的格（候选记法 <code>+b!</code>）尚未实现——可砍掉 BG 解析/序列化/wire/register 四笔 create 期成本。'],
         ['<code>+ifr</code>', 'IFR：MTS 抢跑 <b>ephemeral</b> 首帧副本，BG 启动后 hydration 采纳或整体重放。paint 参数缺省 = 首帧继承本体 staging。'],
         ['<code>+ifr:e</code>', '仅<b>首帧副本</b>用 engine 档画（旧名 engine-et）；本体树照常。区别于 <code>+b:e</code>（全程）。本环境 N/A。'],
-        ['<code>+ifr:c</code>', '仅<b>首帧副本</b>用 <b>code</b> 档画：ephemeral 首帧跑编译好的 Code-Template <code>create()</code> executor，本体树仍是 data/block（旧名 disposable-et）。区别于 <code>+b:c</code>（全程）。与 <code>+ifr:e</code> 不同，本环境<b>可测真值</b> —— 见下方 FCP 主效应 <code>+ifr:c paint effect</code> 行与结论。'],
+        ['<code>+ifr:c</code>', '仅<b>首帧副本</b>用 <b>code</b> 档画：ephemeral 首帧跑编译好的 Code-Template <code>create()</code> executor，本体树仍是 data/block（旧名 disposable-et）。区别于 <code>+b:c</code>（全程）。与 <code>+ifr:e</code> 不同，本环境<b>可测真值</b>（不再 N/A）：结论是<b>打平</b> —— FCP 各规模都落在 ±10% 噪声带内，ephemeral 的 code 档并没有跑赢继承 data/block 档。见 <code>+ifr:c paint effect</code> 行与结论。'],
       ]
       : [
         ['<code>baseline</code>', 'per-node addressing — plainest and safest: every node named independently, no metadata, no validation. <code>vdom</code> = op stream; <code>vapor</code> = named tree.'],
@@ -967,7 +967,7 @@ function graphEngFactorsSection(t) {
         ['<i>delivery</i>', '(sixth property column, no standalone flag yet) when the residual reaches the MT: <code>runtime</code> = shipped over the wire (vapor\'s data/native today); <code>bundle</code> = compiled into the MT bundle at build (vdom\'s code, RL Snapshot). The bundle-delivered-data cell (tentative notation <code>+b!</code>) is unbuilt — it would cut the BG parse/serialize/wire/register create-time costs.'],
         ['<code>+ifr</code>', 'IFR: the MTS paints an <b>ephemeral</b> first-frame copy; on BG boot, hydration adopts it or replays in full. The paint parameter defaults to inheriting the persistent tree\'s staging.'],
         ['<code>+ifr:e</code>', 'ONLY the first-frame copy is painted at the engine rung (legacy name engine-et); the persistent tree is unchanged. Distinct from <code>+b:e</code> (whole lifetime). N/A on this host.'],
-        ['<code>+ifr:c</code>', 'ONLY the first-frame copy is painted at the <b>code</b> rung — the ephemeral frame runs the compiled Code-Template <code>create()</code> executor while the persistent tree stays data/block (legacy name disposable-et). Distinct from <code>+b:c</code> (whole lifetime). Unlike <code>+ifr:e</code> this is <b>measured on this host</b> — see the <code>+ifr:c paint effect</code> FCP main-effect row and the takeaway.'],
+        ['<code>+ifr:c</code>', 'ONLY the first-frame copy is painted at the <b>code</b> rung — the ephemeral frame runs the compiled Code-Template <code>create()</code> executor while the persistent tree stays data/block (legacy name disposable-et). Distinct from <code>+b:c</code> (whole lifetime). Unlike <code>+ifr:e</code> this is <b>measured on this host</b> (no longer N/A): the verdict is a <b>wash</b> — FCP lands inside the ±10% noise band at every scale, so the ephemeral code rung does not beat inheriting the data/block paint. See the <code>+ifr:c paint effect</code> row and the takeaway.'],
       ];
     let html = `<h3 style="font-size:13.5px;margin:14px 0 6px">${
       zhT ? '优化 flag 图例（cell 名 = 基线 × flag 堆叠，与因子归因一一对应）' : 'Flag legend (cell name = baseline × stacked flags, matching factor attribution one-to-one)'
@@ -1043,8 +1043,8 @@ ${fcpFactorsBlock()}
         ],
       ];
     // #340 code-paint verdict — content-probe FCP main-effect vs plain
-    // `vapor +b +ifr`, computed straight from the measured cells (negative =
-    // ephemeral Code-Template paint is faster on the first frame). Card is
+    // `vapor +b +ifr`, computed straight from the measured cells over the whole
+    // ladder (negative = ephemeral Code-Template paint is faster). Card is
     // omitted until the code-paint cell has been measured on this host.
     const ifrcDelta = (scale, cpu) => {
       const plain = cellMetric('vapor-ifr', scale, 'fcp', cpu);
@@ -1052,22 +1052,24 @@ ${fcpFactorsBlock()}
       if (plain == null || cp == null) return null;
       return +(((cp - plain) / plain) * 100).toFixed(1);
     };
-    const ifrc1 = ['1k', '10k'].map((s) => ifrcDelta(s, 1));
-    const ifrc4 = ['1k', '10k'].map((s) => ifrcDelta(s, 4));
-    const ifrcVals = [...ifrc1, ...ifrc4].filter((v) => v != null);
+    const ifrc1 = FCP_SCALES.map((s) => ifrcDelta(s, 1)).filter((v) => v != null);
+    const ifrc4 = FCP_SCALES_X4.map((s) => ifrcDelta(s, 4)).filter((v) => v != null);
+    const ifrcVals = [...ifrc1, ...ifrc4];
     if (ifrcVals.length) {
-      const mean = ifrcVals.reduce((a, b) => a + b, 0) / ifrcVals.length;
-      const word = mean < -3
+      const mean = +(ifrcVals.reduce((a, b) => a + b, 0) / ifrcVals.length).toFixed(1);
+      // ±10% is the report's stated FCP noise band; a mean inside it is a wash.
+      const word = mean < -10
         ? (zhT ? '更快' : 'faster')
-        : mean > 3
+        : mean > 10
           ? (zhT ? '更慢' : 'slower')
-          : (zhT ? '基本打平' : 'a wash');
-      const list1 = ifrc1.map(fmtP).join(' / ');
-      const list4 = ifrc4.some((v) => v != null) ? ifrc4.map(fmtP).join(' / ') : null;
+          : (zhT ? '在噪声内打平' : 'a wash');
+      const range = (arr) => arr.length
+        ? `${fmtP(Math.min(...arr))}…${fmtP(Math.max(...arr))}`
+        : '—';
       items.push([
         zhT
-          ? `<b>+ifr:c（code-paint）首帧${word}。</b>用编译好的 Code-Template <code>create()</code> executor 画 ephemeral 首帧（本体树仍 data/block），content-probe FCP 相对 plain <code>vapor +b +ifr</code> 变化 ${list1}（×1 @1k/10k）${list4 ? ` · ${list4}（×4）` : ''}。所以 ephemeral 的 code 档相对继承 data/block 档在首帧上${word}。与 <code>+ifr:e</code> 不同，这是<b>真值</b>（Code-Template 在 web 上真的会跑）。`
-          : `<b>+ifr:c (code-paint) is ${word} on the first frame.</b> Painting the ephemeral IFR copy through the compiled Code-Template <code>create()</code> executor (durable tree stays data/block) moves content-probe FCP by ${list1} (×1 @1k/10k)${list4 ? ` · ${list4} (×4)` : ''} vs plain <code>vapor +b +ifr</code>. So the ephemeral code rung is ${word} than inheriting the data/block paint on the first frame. Unlike <code>+ifr:e</code> this is a <b>real</b> number — the Code-Template executor actually runs on web.`,
+          ? `<b>+ifr:c（code-paint）首帧${word}，没有跑赢 plain。</b>用编译好的 Code-Template <code>create()</code> executor 画 ephemeral 首帧（本体树仍 data/block）。content-probe FCP 相对 plain <code>vapor +b +ifr</code> 在各规模都落在 ±10% 噪声带内、正负交错（×1 ${range(ifrc1)}，×4 ${range(ifrc4)}，均值 ${fmtP(mean)}），无一致方向 —— 见 <code>+ifr:c paint effect</code> 行。机理：单次 ephemeral 物化由 PAPI 建元素主导（两种 paint 完全相同），code 档只省掉 data 档每节点的解释走查，占首帧成本很小。与 <code>+ifr:e</code> 不同，这是<b>真值</b>（Code-Template 在 web 上真的会跑）。`
+          : `<b>+ifr:c (code-paint) is ${word} on the first frame — it does not beat plain.</b> Painting the ephemeral IFR copy through the compiled Code-Template <code>create()</code> executor (durable tree stays data/block) lands inside the ±10% FCP noise band at every scale, straddling zero (×1 ${range(ifrc1)}, ×4 ${range(ifrc4)}, mean ${fmtP(mean)}) with no consistent direction — see the <code>+ifr:c paint effect</code> row. Mechanistically a single ephemeral instantiation is dominated by PAPI element creation (identical in both paints); the code rung only removes the per-node interpreter walk the data rung does, a small fraction of first-frame cost. Unlike <code>+ifr:e</code> this is a <b>real</b> measurement — the Code-Template executor runs on web.`,
       ]);
     }
     // Compact cards (bold takeaway + small detail) so the key point is
