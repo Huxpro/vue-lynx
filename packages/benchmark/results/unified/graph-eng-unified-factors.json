@@ -1,8 +1,8 @@
 {
-  "source": "cross-storms-graph-eng-4axis-full.json",
+  "source": "cross-storms-graph-eng-b2.json",
   "meta": {
-    "date": "2026-07-22T19:01:59.794Z",
-    "sha": "3145e54",
+    "date": "2026-07-23T00:05:26.333Z",
+    "sha": "605d93c",
     "node": "v22.22.2",
     "playwright": "1.61.1",
     "reactLynxVersion": "0.122.1",
@@ -13,6 +13,168 @@
     "stormReps": 2
   },
   "note": "Real mouse-click-driven unified table app on dual-thread Lynx-for-Web. create = Create N rows; update = update10th / updateStorm (50 ticks); engine cells run with __VUE_LYNX_ENGINE_ET_STATUS__ = stub (family absent on web) — their deltas are probe overhead, not engine wins.",
+  "wireBytes": {
+    "meta": {
+      "date": "2026-07-22T23:33:45.826Z",
+      "sha": "605d93c",
+      "node": "v22.22.2",
+      "cpus": 4,
+      "cpuModel": "Intel(R) Xeon(R) Processor @ 2.80GHz",
+      "note": "Serialized vuePatchUpdate buffer bytes per op (BG flush hook), instrumented vapor app; cells: off=runtime REGISTER_TREE, bundle=+b! (REGISTER_TREE_BUNDLE hash only), code=+b:c (INSTANTIATE_TEMPLATE only)."
+    },
+    "perCell": {
+      "vapor": {
+        "create1k": {
+          "bytes": 159529,
+          "ops": 7000,
+          "bg": 34.59999999962747,
+          "e2e": 117.64999999990687
+        },
+        "update10th": {
+          "bytes": 5192,
+          "ops": 100,
+          "bg": 0.5500000002793968,
+          "e2e": 1.8999999999068677
+        },
+        "select": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.19999999925494194,
+          "e2e": 2.1499999999068677
+        },
+        "swap": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.6000000005587935,
+          "e2e": 0.9500000001862645
+        },
+        "remove": {
+          "bytes": 13,
+          "ops": 1,
+          "bg": 0.4500000001862645,
+          "e2e": 0.7999999998137355
+        },
+        "append1k": {
+          "bytes": 171030,
+          "ops": 7000,
+          "bg": 31.549999999813735,
+          "e2e": 164.65000000037253
+        },
+        "create10k": {
+          "bytes": 1689303,
+          "ops": 70000,
+          "bg": 348,
+          "e2e": 1381.9000000003725
+        },
+        "clear10k": {
+          "bytes": 120009,
+          "ops": 10001,
+          "bg": 34.80000000074506,
+          "e2e": 1201.2000000001863
+        }
+      },
+      "vapor-bang": {
+        "create1k": {
+          "bytes": 159531,
+          "ops": 7000,
+          "bg": 36.75,
+          "e2e": 118.25
+        },
+        "update10th": {
+          "bytes": 5194,
+          "ops": 100,
+          "bg": 0.5,
+          "e2e": 1.7999999998137355
+        },
+        "select": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.20000000018626451,
+          "e2e": 1.8000000002793968
+        },
+        "swap": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.7000000001862645,
+          "e2e": 1.150000000372529
+        },
+        "remove": {
+          "bytes": 13,
+          "ops": 1,
+          "bg": 0.5,
+          "e2e": 0.8999999999068677
+        },
+        "append1k": {
+          "bytes": 170948,
+          "ops": 7000,
+          "bg": 32.25,
+          "e2e": 157.1999999997206
+        },
+        "create10k": {
+          "bytes": 1689690,
+          "ops": 70000,
+          "bg": 365.59999999962747,
+          "e2e": 1418.9000000003725
+        },
+        "clear10k": {
+          "bytes": 120009,
+          "ops": 10001,
+          "bg": 36.200000000186265,
+          "e2e": 1256.5999999996275
+        }
+      },
+      "vapor-code": {
+        "create1k": {
+          "bytes": 159480,
+          "ops": 7000,
+          "bg": 37.34999999962747,
+          "e2e": 116.49999999953434
+        },
+        "update10th": {
+          "bytes": 5281,
+          "ops": 100,
+          "bg": 0.6000000005587935,
+          "e2e": 2.25
+        },
+        "select": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.20000000018626451,
+          "e2e": 0.8500000000931323
+        },
+        "swap": {
+          "bytes": 39,
+          "ops": 2,
+          "bg": 0.900000000372529,
+          "e2e": 1.3999999994412065
+        },
+        "remove": {
+          "bytes": 13,
+          "ops": 1,
+          "bg": 0.5,
+          "e2e": 1
+        },
+        "append1k": {
+          "bytes": 170962.5,
+          "ops": 7000,
+          "bg": 34.4499999997206,
+          "e2e": 158
+        },
+        "create10k": {
+          "bytes": 1689562,
+          "ops": 70000,
+          "bg": 360,
+          "e2e": 1348.5
+        },
+        "clear10k": {
+          "bytes": 120009,
+          "ops": 10001,
+          "bg": 38.40000000037253,
+          "e2e": 1376.4000000003725
+        }
+      }
+    }
+  },
   "perCell": [
     {
       "cell": "vdom",
@@ -20,21 +182,21 @@
       "canonical": "vdom-ops-node",
       "coord": "ops/node/random-access/BTS/persistent/—",
       "term": "Op Stream",
-      "create@1k": 256.8,
-      "update10th@1k": 26.4,
-      "select@1k": 23.6,
-      "updateStorm@1k": 171.4,
-      "selectStorm@1k": 77.8,
-      "create@10k": 2017.2,
-      "update10th@10k": 173.5,
-      "select@10k": 107.2,
-      "updateStorm@10k": 2585.2,
-      "selectStorm@10k": 1329.6,
-      "create@30k": 6428,
-      "update10th@30k": 532,
-      "select@30k": 543.5,
-      "updateStorm@30k": 12452,
-      "selectStorm@30k": 4786.3
+      "create@1k": 202.3,
+      "update10th@1k": 24.7,
+      "select@1k": 26.6,
+      "updateStorm@1k": 127.4,
+      "selectStorm@1k": 70.9,
+      "create@10k": 1736.1,
+      "update10th@10k": 114.8,
+      "select@10k": 79.5,
+      "updateStorm@10k": 1857.7,
+      "selectStorm@10k": 984.1,
+      "create@30k": 5278.8,
+      "update10th@30k": 478.3,
+      "select@30k": 308.4,
+      "updateStorm@30k": 10937.1,
+      "selectStorm@30k": 3569.8
     },
     {
       "cell": "vdom-et",
@@ -42,21 +204,21 @@
       "canonical": "vdom-code-block",
       "coord": "code/block/random-access/BTS/persistent/bundle",
       "term": "Code-Template",
-      "create@1k": 216.1,
-      "update10th@1k": 24.5,
-      "select@1k": 25.1,
-      "updateStorm@1k": 132.6,
-      "selectStorm@1k": 73.9,
-      "create@10k": 2161.3,
-      "update10th@10k": 194.7,
-      "select@10k": 123.1,
-      "updateStorm@10k": 2885.3,
-      "selectStorm@10k": 1508.7,
-      "create@30k": 6316.8,
-      "update10th@30k": 547.5,
-      "select@30k": 559.1,
-      "updateStorm@30k": 12495.5,
-      "selectStorm@30k": 5188.3
+      "create@1k": 201.9,
+      "update10th@1k": 24.8,
+      "select@1k": 26.1,
+      "updateStorm@1k": 126.1,
+      "selectStorm@1k": 64.6,
+      "create@10k": 1598.9,
+      "update10th@10k": 115.4,
+      "select@10k": 77.7,
+      "updateStorm@10k": 1941.9,
+      "selectStorm@10k": 1040.3,
+      "create@30k": 4849.5,
+      "update10th@30k": 355.9,
+      "select@30k": 248.6,
+      "updateStorm@30k": 7205.4,
+      "selectStorm@30k": 3227.2
     },
     {
       "cell": "vdom-ifr",
@@ -64,21 +226,21 @@
       "canonical": "vdom-ops-node-ifr",
       "coord": "ops/node/random-access/BTS+MTS/persistent+ephemeral/—",
       "term": "Op Stream + IFR",
-      "create@1k": 228.4,
-      "update10th@1k": 24.2,
-      "select@1k": 25.5,
-      "updateStorm@1k": 147.3,
-      "selectStorm@1k": 74.9,
-      "create@10k": 2042.7,
-      "update10th@10k": 167.8,
-      "select@10k": 107.9,
-      "updateStorm@10k": 2653.2,
-      "selectStorm@10k": 1370.9,
-      "create@30k": 6476.6,
-      "update10th@30k": 524,
-      "select@30k": 499.7,
-      "updateStorm@30k": 12963.4,
-      "selectStorm@30k": 5128.6
+      "create@1k": 199.7,
+      "update10th@1k": 23.2,
+      "select@1k": 26.5,
+      "updateStorm@1k": 124.6,
+      "selectStorm@1k": 67.5,
+      "create@10k": 1661.5,
+      "update10th@10k": 117.1,
+      "select@10k": 81.7,
+      "updateStorm@10k": 1970.3,
+      "selectStorm@10k": 994.6,
+      "create@30k": 4834.1,
+      "update10th@30k": 370,
+      "select@30k": 306.8,
+      "updateStorm@30k": 7336.3,
+      "selectStorm@30k": 3329.1
     },
     {
       "cell": "vdom-ifr-et",
@@ -86,43 +248,21 @@
       "canonical": "vdom-code-block-ifr",
       "coord": "code/block/random-access/BTS+MTS/persistent+ephemeral/bundle",
       "term": "Code-Template + IFR",
-      "create@1k": 234.3,
-      "update10th@1k": 23.4,
-      "select@1k": 24.3,
-      "updateStorm@1k": 139.3,
-      "selectStorm@1k": 74.5,
-      "create@10k": 2059.7,
-      "update10th@10k": 187.1,
-      "select@10k": 119.5,
-      "updateStorm@10k": 2816,
-      "selectStorm@10k": 1448.9,
-      "create@30k": 6709,
-      "update10th@30k": 563.8,
-      "select@30k": 496.9,
-      "updateStorm@30k": 14629.6,
-      "selectStorm@30k": 4893.9
-    },
-    {
-      "cell": "vapor",
-      "flag": "vapor +b",
-      "canonical": "vapor-data-block",
-      "coord": "data/block/traversal+recover/BTS/persistent/runtime",
-      "term": "Data-Template",
-      "create@1k": 236.8,
-      "update10th@1k": 24.7,
-      "select@1k": 24.4,
-      "updateStorm@1k": 83.1,
-      "selectStorm@1k": 25.7,
-      "create@10k": 2145.7,
-      "update10th@10k": 126.8,
-      "select@10k": 124.1,
-      "updateStorm@10k": 1225.5,
-      "selectStorm@10k": 161.2,
-      "create@30k": 6759.3,
-      "update10th@30k": 370.2,
-      "select@30k": 324.6,
-      "updateStorm@30k": 11999,
-      "selectStorm@30k": 451.4
+      "create@1k": 217,
+      "update10th@1k": 26.9,
+      "select@1k": 26,
+      "updateStorm@1k": 132.6,
+      "selectStorm@1k": 65.1,
+      "create@10k": 1683.1,
+      "update10th@10k": 117.2,
+      "select@10k": 81.1,
+      "updateStorm@10k": 1894.1,
+      "selectStorm@10k": 967.9,
+      "create@30k": 5402,
+      "update10th@30k": 369.9,
+      "select@30k": 242.3,
+      "updateStorm@30k": 7512.7,
+      "selectStorm@30k": 3173.6
     },
     {
       "cell": "vapor-dense",
@@ -130,65 +270,87 @@
       "canonical": "vapor-data-node",
       "coord": "data/node/traversal/BTS/persistent/runtime",
       "term": "Named Tree",
-      "create@1k": 225.9,
-      "update10th@1k": 25.3,
-      "select@1k": 24.8,
-      "updateStorm@1k": 80.2,
-      "selectStorm@1k": 24.3,
-      "create@10k": 2257.9,
-      "update10th@10k": 133.6,
-      "select@10k": 89.9,
-      "updateStorm@10k": 1186.7,
-      "selectStorm@10k": 167.8,
-      "create@30k": 6849,
-      "update10th@30k": 380.3,
-      "select@30k": 321,
-      "updateStorm@30k": 12113.9,
-      "selectStorm@30k": 408.6
+      "create@1k": 190.8,
+      "update10th@1k": 26.3,
+      "select@1k": 27,
+      "updateStorm@1k": 66.5,
+      "selectStorm@1k": 19.5,
+      "create@10k": 1645.2,
+      "update10th@10k": 91.6,
+      "select@10k": 57.8,
+      "updateStorm@10k": 729.8,
+      "selectStorm@10k": 106,
+      "create@30k": 5132,
+      "update10th@30k": 253.8,
+      "select@30k": 268.7,
+      "updateStorm@30k": 6737.2,
+      "selectStorm@30k": 306.1
     },
     {
-      "cell": "vapor-engine",
-      "flag": "vapor +b:e",
-      "canonical": "vapor-native-block",
-      "coord": "native/block/traversal+recover/Engine/persistent/runtime (N/A on web)",
-      "term": "Engine-Template (N/A)",
-      "create@1k": 250.9,
-      "update10th@1k": 22.4,
-      "select@1k": 25.2,
-      "updateStorm@1k": 95.2,
-      "selectStorm@1k": 23.6,
-      "create@10k": 2138.3,
-      "update10th@10k": 125.6,
-      "select@10k": 103.9,
-      "updateStorm@10k": 1191,
-      "selectStorm@10k": 162.9,
-      "create@30k": 7247.5,
-      "update10th@30k": 362.2,
-      "select@30k": 276.6,
-      "updateStorm@30k": 12137.5,
-      "selectStorm@30k": 435.3
+      "cell": "vapor",
+      "flag": "vapor +b",
+      "canonical": "vapor-data-block",
+      "coord": "data/block/traversal+recover/BTS/persistent/runtime",
+      "term": "Data-Template",
+      "create@1k": 213.5,
+      "update10th@1k": 26.9,
+      "select@1k": 27,
+      "updateStorm@1k": 67.4,
+      "selectStorm@1k": 20.5,
+      "create@10k": 1731.9,
+      "update10th@10k": 88.8,
+      "select@10k": 66.7,
+      "updateStorm@10k": 887.6,
+      "selectStorm@10k": 118.6,
+      "create@30k": 5363.1,
+      "update10th@30k": 266.2,
+      "select@30k": 236.8,
+      "updateStorm@30k": 7220.6,
+      "selectStorm@30k": 275.2
     },
     {
-      "cell": "vapor-ifr",
-      "flag": "vapor +b +ifr",
-      "canonical": "vapor-data-block-ifr",
-      "coord": "data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime",
-      "term": "Data-Template + IFR",
-      "create@1k": 241.6,
-      "update10th@1k": 23.6,
-      "select@1k": 25.6,
-      "updateStorm@1k": 89.5,
-      "selectStorm@1k": 24.7,
-      "create@10k": 2244,
-      "update10th@10k": 133.1,
-      "select@10k": 120,
-      "updateStorm@10k": 1078.4,
-      "selectStorm@10k": 162.2,
-      "create@30k": 7041.7,
-      "update10th@30k": 361.1,
-      "select@30k": 337,
-      "updateStorm@30k": 11175.9,
-      "selectStorm@30k": 431.7
+      "cell": "vapor-bang",
+      "flag": "vapor +b!",
+      "canonical": "vapor-data-block-bundle",
+      "coord": "data/block/traversal+recover/BTS/persistent/bundle",
+      "term": "Data-Template (bundle-delivered)",
+      "create@1k": 201.2,
+      "update10th@1k": 24.5,
+      "select@1k": 26.1,
+      "updateStorm@1k": 66.4,
+      "selectStorm@1k": 20.1,
+      "create@10k": 1768.1,
+      "update10th@10k": 87.4,
+      "select@10k": 72.9,
+      "updateStorm@10k": 918.2,
+      "selectStorm@10k": 106.8,
+      "create@30k": 5054.1,
+      "update10th@30k": 250.4,
+      "select@30k": 275.4,
+      "updateStorm@30k": 6114.2,
+      "selectStorm@30k": 332.6
+    },
+    {
+      "cell": "vapor-code",
+      "flag": "vapor +b:c",
+      "canonical": "vapor-code-block",
+      "coord": "code/block/traversal+recover/BTS/persistent/bundle",
+      "term": "Code-Template (vapor)",
+      "create@1k": 196.8,
+      "update10th@1k": 25.5,
+      "select@1k": 27.1,
+      "updateStorm@1k": 61.7,
+      "selectStorm@1k": 13.2,
+      "create@10k": 1758.3,
+      "update10th@10k": 95.1,
+      "select@10k": 57.7,
+      "updateStorm@10k": 759.7,
+      "selectStorm@10k": 115.7,
+      "create@30k": 5040.8,
+      "update10th@30k": 257.2,
+      "select@30k": 291.3,
+      "updateStorm@30k": 7294.5,
+      "selectStorm@30k": 309.7
     },
     {
       "cell": "vapor-ifr-dense",
@@ -196,44 +358,65 @@
       "canonical": "vapor-data-node-ifr",
       "coord": "data/node/traversal/BTS+MTS/persistent+ephemeral/runtime",
       "term": "Named Tree + IFR",
-      "create@1k": 250,
-      "update10th@1k": 24.5,
-      "select@1k": 25,
-      "updateStorm@1k": 93.8,
-      "selectStorm@1k": 25.5,
-      "create@10k": 2315.9,
-      "update10th@10k": 136.5,
-      "select@10k": 105,
-      "updateStorm@10k": 1278.1,
-      "selectStorm@10k": 173.8,
-      "create@30k": 6590.9,
-      "update10th@30k": 360.3,
-      "select@30k": 359.2,
-      "updateStorm@30k": 13178.3,
-      "selectStorm@30k": 427.6
+      "create@1k": 210.3,
+      "update10th@1k": 21.3,
+      "select@1k": 25.8,
+      "updateStorm@1k": 68.3,
+      "selectStorm@1k": 13.8,
+      "create@10k": 1651.2,
+      "update10th@10k": 89.6,
+      "select@10k": 48.4,
+      "updateStorm@10k": 699.6,
+      "selectStorm@10k": 92.9,
+      "create@30k": 5133.9,
+      "update10th@30k": 242.9,
+      "select@30k": 272.1,
+      "updateStorm@30k": 6325.8,
+      "selectStorm@30k": 322.3
     },
     {
-      "cell": "vapor-ifr-sparse",
-      "flag": "vapor +b +ifr (alias)",
+      "cell": "vapor-ifr",
+      "flag": "vapor +b +ifr",
       "canonical": "vapor-data-block-ifr",
-      "aliasOf": "vapor-ifr",
       "coord": "data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime",
-      "term": "Data-Template + IFR (alias)",
-      "create@1k": 245.6,
-      "update10th@1k": 25.1,
-      "select@1k": 24.4,
-      "updateStorm@1k": 92.4,
-      "selectStorm@1k": 25.1,
-      "create@10k": 2176.5,
-      "update10th@10k": 131.9,
-      "select@10k": 105.6,
-      "updateStorm@10k": 1252.2,
-      "selectStorm@10k": 167.6,
-      "create@30k": 6813.4,
-      "update10th@30k": 354.7,
-      "select@30k": 372,
-      "updateStorm@30k": 10912.4,
-      "selectStorm@30k": 431.5
+      "term": "Data-Template + IFR",
+      "create@1k": 201.9,
+      "update10th@1k": 27,
+      "select@1k": 17,
+      "updateStorm@1k": 68.8,
+      "selectStorm@1k": 19.2,
+      "create@10k": 1726,
+      "update10th@10k": 95.3,
+      "select@10k": 56.9,
+      "updateStorm@10k": 740.5,
+      "selectStorm@10k": 124.7,
+      "create@30k": 5180.4,
+      "update10th@30k": 250.6,
+      "select@30k": 288.9,
+      "updateStorm@30k": 7069.6,
+      "selectStorm@30k": 362.9
+    },
+    {
+      "cell": "vapor-engine",
+      "flag": "vapor +b:e",
+      "canonical": "vapor-native-block",
+      "coord": "native/block/traversal+recover/Engine/persistent/runtime (N/A on web)",
+      "term": "Engine-Template (N/A)",
+      "create@1k": 205.5,
+      "update10th@1k": 15.3,
+      "select@1k": 9.5,
+      "updateStorm@1k": 68.8,
+      "selectStorm@1k": 15.6,
+      "create@10k": 1735.2,
+      "update10th@10k": 92.9,
+      "select@10k": 55.6,
+      "updateStorm@10k": 678.3,
+      "selectStorm@10k": 96.8,
+      "create@30k": 5146.7,
+      "update10th@30k": 246.6,
+      "select@30k": 275.6,
+      "updateStorm@30k": 6830.6,
+      "selectStorm@30k": 333.8
     },
     {
       "cell": "vapor-ifr-engine-et",
@@ -241,850 +424,1034 @@
       "canonical": "vapor-data-block-ifr-native-paint",
       "coord": "data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime(native-paint) (N/A on web)",
       "term": "Data-Template + IFR native-paint (N/A)",
-      "create@1k": 252.8,
-      "update10th@1k": 24.3,
-      "select@1k": 22.9,
-      "updateStorm@1k": 109.1,
-      "selectStorm@1k": 19.9,
-      "create@10k": 2260.5,
-      "update10th@10k": 132.2,
-      "select@10k": 112.5,
-      "updateStorm@10k": 1221,
-      "selectStorm@10k": 175.9,
-      "create@30k": 6685.1,
-      "update10th@30k": 346.9,
-      "select@30k": 306.2,
-      "updateStorm@30k": 9983.1,
-      "selectStorm@30k": 400.8
+      "create@1k": 210.1,
+      "update10th@1k": 20.6,
+      "select@1k": 26.2,
+      "updateStorm@1k": 70,
+      "selectStorm@1k": 13.7,
+      "create@10k": 1697.7,
+      "update10th@10k": 92,
+      "select@10k": 67.5,
+      "updateStorm@10k": 795,
+      "selectStorm@10k": 107.7,
+      "create@30k": 5381.8,
+      "update10th@30k": 252.1,
+      "select@30k": 279.9,
+      "updateStorm@30k": 7075.9,
+      "selectStorm@30k": 340.1
     }
   ],
   "factors": {
     "render effect (vdom → vapor, baselines)": {
       "create@1k": {
-        "from": 256.8,
-        "to": 225.9,
-        "deltaMs": -30.9,
-        "deltaPct": -12
+        "from": 202.3,
+        "to": 190.8,
+        "deltaMs": -11.5,
+        "deltaPct": -5.7
       },
       "update10th@1k": {
-        "from": 26.4,
-        "to": 25.3,
-        "deltaMs": -1.1,
-        "deltaPct": -4.2
-      },
-      "select@1k": {
-        "from": 23.6,
-        "to": 24.8,
-        "deltaMs": 1.2,
-        "deltaPct": 5.1
-      },
-      "updateStorm@1k": {
-        "from": 171.4,
-        "to": 80.2,
-        "deltaMs": -91.2,
-        "deltaPct": -53.2
-      },
-      "selectStorm@1k": {
-        "from": 77.8,
-        "to": 24.3,
-        "deltaMs": -53.5,
-        "deltaPct": -68.8
-      },
-      "create@10k": {
-        "from": 2017.2,
-        "to": 2257.9,
-        "deltaMs": 240.7,
-        "deltaPct": 11.9
-      },
-      "update10th@10k": {
-        "from": 173.5,
-        "to": 133.6,
-        "deltaMs": -39.9,
-        "deltaPct": -23
-      },
-      "select@10k": {
-        "from": 107.2,
-        "to": 89.9,
-        "deltaMs": -17.3,
-        "deltaPct": -16.1
-      },
-      "updateStorm@10k": {
-        "from": 2585.2,
-        "to": 1186.7,
-        "deltaMs": -1398.5,
-        "deltaPct": -54.1
-      },
-      "selectStorm@10k": {
-        "from": 1329.6,
-        "to": 167.8,
-        "deltaMs": -1161.8,
-        "deltaPct": -87.4
-      },
-      "create@30k": {
-        "from": 6428,
-        "to": 6849,
-        "deltaMs": 421,
+        "from": 24.7,
+        "to": 26.3,
+        "deltaMs": 1.6,
         "deltaPct": 6.5
       },
+      "select@1k": {
+        "from": 26.6,
+        "to": 27,
+        "deltaMs": 0.4,
+        "deltaPct": 1.5
+      },
+      "updateStorm@1k": {
+        "from": 127.4,
+        "to": 66.5,
+        "deltaMs": -60.9,
+        "deltaPct": -47.8
+      },
+      "selectStorm@1k": {
+        "from": 70.9,
+        "to": 19.5,
+        "deltaMs": -51.4,
+        "deltaPct": -72.5
+      },
+      "create@10k": {
+        "from": 1736.1,
+        "to": 1645.2,
+        "deltaMs": -90.9,
+        "deltaPct": -5.2
+      },
+      "update10th@10k": {
+        "from": 114.8,
+        "to": 91.6,
+        "deltaMs": -23.2,
+        "deltaPct": -20.2
+      },
+      "select@10k": {
+        "from": 79.5,
+        "to": 57.8,
+        "deltaMs": -21.7,
+        "deltaPct": -27.3
+      },
+      "updateStorm@10k": {
+        "from": 1857.7,
+        "to": 729.8,
+        "deltaMs": -1127.9,
+        "deltaPct": -60.7
+      },
+      "selectStorm@10k": {
+        "from": 984.1,
+        "to": 106,
+        "deltaMs": -878.1,
+        "deltaPct": -89.2
+      },
+      "create@30k": {
+        "from": 5278.8,
+        "to": 5132,
+        "deltaMs": -146.8,
+        "deltaPct": -2.8
+      },
       "update10th@30k": {
-        "from": 532,
-        "to": 380.3,
-        "deltaMs": -151.7,
-        "deltaPct": -28.5
+        "from": 478.3,
+        "to": 253.8,
+        "deltaMs": -224.5,
+        "deltaPct": -46.9
       },
       "select@30k": {
-        "from": 543.5,
-        "to": 321,
-        "deltaMs": -222.5,
-        "deltaPct": -40.9
+        "from": 308.4,
+        "to": 268.7,
+        "deltaMs": -39.7,
+        "deltaPct": -12.9
       },
       "updateStorm@30k": {
-        "from": 12452,
-        "to": 12113.9,
-        "deltaMs": -338.1,
-        "deltaPct": -2.7
+        "from": 10937.1,
+        "to": 6737.2,
+        "deltaMs": -4199.9,
+        "deltaPct": -38.4
       },
       "selectStorm@30k": {
-        "from": 4786.3,
-        "to": 408.6,
-        "deltaMs": -4377.7,
-        "deltaPct": -91.5
+        "from": 3569.8,
+        "to": 306.1,
+        "deltaMs": -3263.7,
+        "deltaPct": -91.4
       }
     },
     "+b effect (vdom, no ifr)": {
       "create@1k": {
-        "from": 256.8,
-        "to": 216.1,
-        "deltaMs": -40.7,
-        "deltaPct": -15.8
+        "from": 202.3,
+        "to": 201.9,
+        "deltaMs": -0.4,
+        "deltaPct": -0.2
       },
       "update10th@1k": {
-        "from": 26.4,
-        "to": 24.5,
-        "deltaMs": -1.9,
-        "deltaPct": -7.2
+        "from": 24.7,
+        "to": 24.8,
+        "deltaMs": 0.1,
+        "deltaPct": 0.4
       },
       "select@1k": {
-        "from": 23.6,
-        "to": 25.1,
-        "deltaMs": 1.5,
-        "deltaPct": 6.4
+        "from": 26.6,
+        "to": 26.1,
+        "deltaMs": -0.5,
+        "deltaPct": -1.9
       },
       "updateStorm@1k": {
-        "from": 171.4,
-        "to": 132.6,
-        "deltaMs": -38.8,
-        "deltaPct": -22.6
+        "from": 127.4,
+        "to": 126.1,
+        "deltaMs": -1.3,
+        "deltaPct": -1
       },
       "selectStorm@1k": {
-        "from": 77.8,
-        "to": 73.9,
-        "deltaMs": -3.9,
-        "deltaPct": -5
+        "from": 70.9,
+        "to": 64.6,
+        "deltaMs": -6.3,
+        "deltaPct": -8.9
       },
       "create@10k": {
-        "from": 2017.2,
-        "to": 2161.3,
-        "deltaMs": 144.1,
-        "deltaPct": 7.1
+        "from": 1736.1,
+        "to": 1598.9,
+        "deltaMs": -137.2,
+        "deltaPct": -7.9
       },
       "update10th@10k": {
-        "from": 173.5,
-        "to": 194.7,
-        "deltaMs": 21.2,
-        "deltaPct": 12.2
+        "from": 114.8,
+        "to": 115.4,
+        "deltaMs": 0.6,
+        "deltaPct": 0.5
       },
       "select@10k": {
-        "from": 107.2,
-        "to": 123.1,
-        "deltaMs": 15.9,
-        "deltaPct": 14.8
+        "from": 79.5,
+        "to": 77.7,
+        "deltaMs": -1.8,
+        "deltaPct": -2.3
       },
       "updateStorm@10k": {
-        "from": 2585.2,
-        "to": 2885.3,
-        "deltaMs": 300.1,
-        "deltaPct": 11.6
+        "from": 1857.7,
+        "to": 1941.9,
+        "deltaMs": 84.2,
+        "deltaPct": 4.5
       },
       "selectStorm@10k": {
-        "from": 1329.6,
-        "to": 1508.7,
-        "deltaMs": 179.1,
-        "deltaPct": 13.5
+        "from": 984.1,
+        "to": 1040.3,
+        "deltaMs": 56.2,
+        "deltaPct": 5.7
       },
       "create@30k": {
-        "from": 6428,
-        "to": 6316.8,
-        "deltaMs": -111.2,
-        "deltaPct": -1.7
+        "from": 5278.8,
+        "to": 4849.5,
+        "deltaMs": -429.3,
+        "deltaPct": -8.1
       },
       "update10th@30k": {
-        "from": 532,
-        "to": 547.5,
-        "deltaMs": 15.5,
-        "deltaPct": 2.9
+        "from": 478.3,
+        "to": 355.9,
+        "deltaMs": -122.4,
+        "deltaPct": -25.6
       },
       "select@30k": {
-        "from": 543.5,
-        "to": 559.1,
-        "deltaMs": 15.6,
-        "deltaPct": 2.9
+        "from": 308.4,
+        "to": 248.6,
+        "deltaMs": -59.8,
+        "deltaPct": -19.4
       },
       "updateStorm@30k": {
-        "from": 12452,
-        "to": 12495.5,
-        "deltaMs": 43.5,
-        "deltaPct": 0.3
+        "from": 10937.1,
+        "to": 7205.4,
+        "deltaMs": -3731.7,
+        "deltaPct": -34.1
       },
       "selectStorm@30k": {
-        "from": 4786.3,
-        "to": 5188.3,
-        "deltaMs": 402,
-        "deltaPct": 8.4
+        "from": 3569.8,
+        "to": 3227.2,
+        "deltaMs": -342.6,
+        "deltaPct": -9.6
       }
     },
     "+b effect (vdom, with +ifr)": {
       "create@1k": {
-        "from": 228.4,
-        "to": 234.3,
-        "deltaMs": 5.9,
-        "deltaPct": 2.6
+        "from": 199.7,
+        "to": 217,
+        "deltaMs": 17.3,
+        "deltaPct": 8.7
       },
       "update10th@1k": {
-        "from": 24.2,
-        "to": 23.4,
-        "deltaMs": -0.8,
-        "deltaPct": -3.3
+        "from": 23.2,
+        "to": 26.9,
+        "deltaMs": 3.7,
+        "deltaPct": 15.9
       },
       "select@1k": {
-        "from": 25.5,
-        "to": 24.3,
-        "deltaMs": -1.2,
-        "deltaPct": -4.7
+        "from": 26.5,
+        "to": 26,
+        "deltaMs": -0.5,
+        "deltaPct": -1.9
       },
       "updateStorm@1k": {
-        "from": 147.3,
-        "to": 139.3,
-        "deltaMs": -8,
-        "deltaPct": -5.4
+        "from": 124.6,
+        "to": 132.6,
+        "deltaMs": 8,
+        "deltaPct": 6.4
       },
       "selectStorm@1k": {
-        "from": 74.9,
-        "to": 74.5,
-        "deltaMs": -0.4,
-        "deltaPct": -0.5
+        "from": 67.5,
+        "to": 65.1,
+        "deltaMs": -2.4,
+        "deltaPct": -3.6
       },
       "create@10k": {
-        "from": 2042.7,
-        "to": 2059.7,
-        "deltaMs": 17,
-        "deltaPct": 0.8
+        "from": 1661.5,
+        "to": 1683.1,
+        "deltaMs": 21.6,
+        "deltaPct": 1.3
       },
       "update10th@10k": {
-        "from": 167.8,
-        "to": 187.1,
-        "deltaMs": 19.3,
-        "deltaPct": 11.5
+        "from": 117.1,
+        "to": 117.2,
+        "deltaMs": 0.1,
+        "deltaPct": 0.1
       },
       "select@10k": {
-        "from": 107.9,
-        "to": 119.5,
-        "deltaMs": 11.6,
-        "deltaPct": 10.8
+        "from": 81.7,
+        "to": 81.1,
+        "deltaMs": -0.6,
+        "deltaPct": -0.7
       },
       "updateStorm@10k": {
-        "from": 2653.2,
-        "to": 2816,
-        "deltaMs": 162.8,
-        "deltaPct": 6.1
+        "from": 1970.3,
+        "to": 1894.1,
+        "deltaMs": -76.2,
+        "deltaPct": -3.9
       },
       "selectStorm@10k": {
-        "from": 1370.9,
-        "to": 1448.9,
-        "deltaMs": 78,
-        "deltaPct": 5.7
+        "from": 994.6,
+        "to": 967.9,
+        "deltaMs": -26.7,
+        "deltaPct": -2.7
       },
       "create@30k": {
-        "from": 6476.6,
-        "to": 6709,
-        "deltaMs": 232.4,
-        "deltaPct": 3.6
+        "from": 4834.1,
+        "to": 5402,
+        "deltaMs": 567.9,
+        "deltaPct": 11.7
       },
       "update10th@30k": {
-        "from": 524,
-        "to": 563.8,
-        "deltaMs": 39.8,
-        "deltaPct": 7.6
+        "from": 370,
+        "to": 369.9,
+        "deltaMs": -0.1,
+        "deltaPct": 0
       },
       "select@30k": {
-        "from": 499.7,
-        "to": 496.9,
-        "deltaMs": -2.8,
-        "deltaPct": -0.6
+        "from": 306.8,
+        "to": 242.3,
+        "deltaMs": -64.5,
+        "deltaPct": -21
       },
       "updateStorm@30k": {
-        "from": 12963.4,
-        "to": 14629.6,
-        "deltaMs": 1666.2,
-        "deltaPct": 12.9
+        "from": 7336.3,
+        "to": 7512.7,
+        "deltaMs": 176.4,
+        "deltaPct": 2.4
       },
       "selectStorm@30k": {
-        "from": 5128.6,
-        "to": 4893.9,
-        "deltaMs": -234.7,
-        "deltaPct": -4.6
+        "from": 3329.1,
+        "to": 3173.6,
+        "deltaMs": -155.5,
+        "deltaPct": -4.7
       }
     },
     "+b effect (vapor, no ifr)": {
       "create@1k": {
-        "from": 225.9,
-        "to": 236.8,
-        "deltaMs": 10.9,
-        "deltaPct": 4.8
+        "from": 190.8,
+        "to": 213.5,
+        "deltaMs": 22.7,
+        "deltaPct": 11.9
       },
       "update10th@1k": {
-        "from": 25.3,
-        "to": 24.7,
-        "deltaMs": -0.6,
-        "deltaPct": -2.4
+        "from": 26.3,
+        "to": 26.9,
+        "deltaMs": 0.6,
+        "deltaPct": 2.3
       },
       "select@1k": {
-        "from": 24.8,
-        "to": 24.4,
-        "deltaMs": -0.4,
-        "deltaPct": -1.6
+        "from": 27,
+        "to": 27,
+        "deltaMs": 0,
+        "deltaPct": 0
       },
       "updateStorm@1k": {
-        "from": 80.2,
-        "to": 83.1,
-        "deltaMs": 2.9,
-        "deltaPct": 3.6
+        "from": 66.5,
+        "to": 67.4,
+        "deltaMs": 0.9,
+        "deltaPct": 1.4
       },
       "selectStorm@1k": {
-        "from": 24.3,
-        "to": 25.7,
-        "deltaMs": 1.4,
-        "deltaPct": 5.8
+        "from": 19.5,
+        "to": 20.5,
+        "deltaMs": 1,
+        "deltaPct": 5.1
       },
       "create@10k": {
-        "from": 2257.9,
-        "to": 2145.7,
-        "deltaMs": -112.2,
-        "deltaPct": -5
+        "from": 1645.2,
+        "to": 1731.9,
+        "deltaMs": 86.7,
+        "deltaPct": 5.3
       },
       "update10th@10k": {
-        "from": 133.6,
-        "to": 126.8,
-        "deltaMs": -6.8,
-        "deltaPct": -5.1
+        "from": 91.6,
+        "to": 88.8,
+        "deltaMs": -2.8,
+        "deltaPct": -3.1
       },
       "select@10k": {
-        "from": 89.9,
-        "to": 124.1,
-        "deltaMs": 34.2,
-        "deltaPct": 38
+        "from": 57.8,
+        "to": 66.7,
+        "deltaMs": 8.9,
+        "deltaPct": 15.4
       },
       "updateStorm@10k": {
-        "from": 1186.7,
-        "to": 1225.5,
-        "deltaMs": 38.8,
-        "deltaPct": 3.3
+        "from": 729.8,
+        "to": 887.6,
+        "deltaMs": 157.8,
+        "deltaPct": 21.6
       },
       "selectStorm@10k": {
-        "from": 167.8,
-        "to": 161.2,
-        "deltaMs": -6.6,
-        "deltaPct": -3.9
+        "from": 106,
+        "to": 118.6,
+        "deltaMs": 12.6,
+        "deltaPct": 11.9
       },
       "create@30k": {
-        "from": 6849,
-        "to": 6759.3,
-        "deltaMs": -89.7,
-        "deltaPct": -1.3
+        "from": 5132,
+        "to": 5363.1,
+        "deltaMs": 231.1,
+        "deltaPct": 4.5
       },
       "update10th@30k": {
-        "from": 380.3,
-        "to": 370.2,
-        "deltaMs": -10.1,
-        "deltaPct": -2.7
+        "from": 253.8,
+        "to": 266.2,
+        "deltaMs": 12.4,
+        "deltaPct": 4.9
       },
       "select@30k": {
-        "from": 321,
-        "to": 324.6,
-        "deltaMs": 3.6,
-        "deltaPct": 1.1
+        "from": 268.7,
+        "to": 236.8,
+        "deltaMs": -31.9,
+        "deltaPct": -11.9
       },
       "updateStorm@30k": {
-        "from": 12113.9,
-        "to": 11999,
-        "deltaMs": -114.9,
-        "deltaPct": -0.9
+        "from": 6737.2,
+        "to": 7220.6,
+        "deltaMs": 483.4,
+        "deltaPct": 7.2
       },
       "selectStorm@30k": {
-        "from": 408.6,
-        "to": 451.4,
-        "deltaMs": 42.8,
-        "deltaPct": 10.5
+        "from": 306.1,
+        "to": 275.2,
+        "deltaMs": -30.9,
+        "deltaPct": -10.1
       }
     },
     "+b effect (vapor, with +ifr)": {
       "create@1k": {
-        "from": 250,
-        "to": 241.6,
+        "from": 210.3,
+        "to": 201.9,
         "deltaMs": -8.4,
-        "deltaPct": -3.4
+        "deltaPct": -4
       },
       "update10th@1k": {
-        "from": 24.5,
-        "to": 23.6,
-        "deltaMs": -0.9,
-        "deltaPct": -3.7
+        "from": 21.3,
+        "to": 27,
+        "deltaMs": 5.7,
+        "deltaPct": 26.8
       },
       "select@1k": {
-        "from": 25,
-        "to": 25.6,
-        "deltaMs": 0.6,
-        "deltaPct": 2.4
+        "from": 25.8,
+        "to": 17,
+        "deltaMs": -8.8,
+        "deltaPct": -34.1
       },
       "updateStorm@1k": {
-        "from": 93.8,
-        "to": 89.5,
-        "deltaMs": -4.3,
-        "deltaPct": -4.6
+        "from": 68.3,
+        "to": 68.8,
+        "deltaMs": 0.5,
+        "deltaPct": 0.7
       },
       "selectStorm@1k": {
-        "from": 25.5,
-        "to": 24.7,
-        "deltaMs": -0.8,
-        "deltaPct": -3.1
+        "from": 13.8,
+        "to": 19.2,
+        "deltaMs": 5.4,
+        "deltaPct": 39.1
       },
       "create@10k": {
-        "from": 2315.9,
-        "to": 2244,
-        "deltaMs": -71.9,
-        "deltaPct": -3.1
+        "from": 1651.2,
+        "to": 1726,
+        "deltaMs": 74.8,
+        "deltaPct": 4.5
       },
       "update10th@10k": {
-        "from": 136.5,
-        "to": 133.1,
-        "deltaMs": -3.4,
-        "deltaPct": -2.5
+        "from": 89.6,
+        "to": 95.3,
+        "deltaMs": 5.7,
+        "deltaPct": 6.4
       },
       "select@10k": {
-        "from": 105,
-        "to": 120,
-        "deltaMs": 15,
-        "deltaPct": 14.3
+        "from": 48.4,
+        "to": 56.9,
+        "deltaMs": 8.5,
+        "deltaPct": 17.6
       },
       "updateStorm@10k": {
-        "from": 1278.1,
-        "to": 1078.4,
-        "deltaMs": -199.7,
-        "deltaPct": -15.6
+        "from": 699.6,
+        "to": 740.5,
+        "deltaMs": 40.9,
+        "deltaPct": 5.8
       },
       "selectStorm@10k": {
-        "from": 173.8,
-        "to": 162.2,
-        "deltaMs": -11.6,
-        "deltaPct": -6.7
+        "from": 92.9,
+        "to": 124.7,
+        "deltaMs": 31.8,
+        "deltaPct": 34.2
       },
       "create@30k": {
-        "from": 6590.9,
-        "to": 7041.7,
-        "deltaMs": 450.8,
-        "deltaPct": 6.8
+        "from": 5133.9,
+        "to": 5180.4,
+        "deltaMs": 46.5,
+        "deltaPct": 0.9
       },
       "update10th@30k": {
-        "from": 360.3,
-        "to": 361.1,
-        "deltaMs": 0.8,
-        "deltaPct": 0.2
+        "from": 242.9,
+        "to": 250.6,
+        "deltaMs": 7.7,
+        "deltaPct": 3.2
       },
       "select@30k": {
-        "from": 359.2,
-        "to": 337,
-        "deltaMs": -22.2,
-        "deltaPct": -6.2
+        "from": 272.1,
+        "to": 288.9,
+        "deltaMs": 16.8,
+        "deltaPct": 6.2
       },
       "updateStorm@30k": {
-        "from": 13178.3,
-        "to": 11175.9,
-        "deltaMs": -2002.4,
-        "deltaPct": -15.2
+        "from": 6325.8,
+        "to": 7069.6,
+        "deltaMs": 743.8,
+        "deltaPct": 11.8
       },
       "selectStorm@30k": {
-        "from": 427.6,
-        "to": 431.7,
-        "deltaMs": 4.1,
+        "from": 322.3,
+        "to": 362.9,
+        "deltaMs": 40.6,
+        "deltaPct": 12.6
+      }
+    },
+    "+b! delivery effect (vapor)": {
+      "create@1k": {
+        "from": 213.5,
+        "to": 201.2,
+        "deltaMs": -12.3,
+        "deltaPct": -5.8
+      },
+      "update10th@1k": {
+        "from": 26.9,
+        "to": 24.5,
+        "deltaMs": -2.4,
+        "deltaPct": -8.9
+      },
+      "select@1k": {
+        "from": 27,
+        "to": 26.1,
+        "deltaMs": -0.9,
+        "deltaPct": -3.3
+      },
+      "updateStorm@1k": {
+        "from": 67.4,
+        "to": 66.4,
+        "deltaMs": -1,
+        "deltaPct": -1.5
+      },
+      "selectStorm@1k": {
+        "from": 20.5,
+        "to": 20.1,
+        "deltaMs": -0.4,
+        "deltaPct": -2
+      },
+      "create@10k": {
+        "from": 1731.9,
+        "to": 1768.1,
+        "deltaMs": 36.2,
+        "deltaPct": 2.1
+      },
+      "update10th@10k": {
+        "from": 88.8,
+        "to": 87.4,
+        "deltaMs": -1.4,
+        "deltaPct": -1.6
+      },
+      "select@10k": {
+        "from": 66.7,
+        "to": 72.9,
+        "deltaMs": 6.2,
+        "deltaPct": 9.3
+      },
+      "updateStorm@10k": {
+        "from": 887.6,
+        "to": 918.2,
+        "deltaMs": 30.6,
+        "deltaPct": 3.4
+      },
+      "selectStorm@10k": {
+        "from": 118.6,
+        "to": 106.8,
+        "deltaMs": -11.8,
+        "deltaPct": -9.9
+      },
+      "create@30k": {
+        "from": 5363.1,
+        "to": 5054.1,
+        "deltaMs": -309,
+        "deltaPct": -5.8
+      },
+      "update10th@30k": {
+        "from": 266.2,
+        "to": 250.4,
+        "deltaMs": -15.8,
+        "deltaPct": -5.9
+      },
+      "select@30k": {
+        "from": 236.8,
+        "to": 275.4,
+        "deltaMs": 38.6,
+        "deltaPct": 16.3
+      },
+      "updateStorm@30k": {
+        "from": 7220.6,
+        "to": 6114.2,
+        "deltaMs": -1106.4,
+        "deltaPct": -15.3
+      },
+      "selectStorm@30k": {
+        "from": 275.2,
+        "to": 332.6,
+        "deltaMs": 57.4,
+        "deltaPct": 20.9
+      }
+    },
+    "+b:d→c effect (vapor)": {
+      "create@1k": {
+        "from": 213.5,
+        "to": 196.8,
+        "deltaMs": -16.7,
+        "deltaPct": -7.8
+      },
+      "update10th@1k": {
+        "from": 26.9,
+        "to": 25.5,
+        "deltaMs": -1.4,
+        "deltaPct": -5.2
+      },
+      "select@1k": {
+        "from": 27,
+        "to": 27.1,
+        "deltaMs": 0.1,
+        "deltaPct": 0.4
+      },
+      "updateStorm@1k": {
+        "from": 67.4,
+        "to": 61.7,
+        "deltaMs": -5.7,
+        "deltaPct": -8.5
+      },
+      "selectStorm@1k": {
+        "from": 20.5,
+        "to": 13.2,
+        "deltaMs": -7.3,
+        "deltaPct": -35.6
+      },
+      "create@10k": {
+        "from": 1731.9,
+        "to": 1758.3,
+        "deltaMs": 26.4,
+        "deltaPct": 1.5
+      },
+      "update10th@10k": {
+        "from": 88.8,
+        "to": 95.1,
+        "deltaMs": 6.3,
+        "deltaPct": 7.1
+      },
+      "select@10k": {
+        "from": 66.7,
+        "to": 57.7,
+        "deltaMs": -9,
+        "deltaPct": -13.5
+      },
+      "updateStorm@10k": {
+        "from": 887.6,
+        "to": 759.7,
+        "deltaMs": -127.9,
+        "deltaPct": -14.4
+      },
+      "selectStorm@10k": {
+        "from": 118.6,
+        "to": 115.7,
+        "deltaMs": -2.9,
+        "deltaPct": -2.4
+      },
+      "create@30k": {
+        "from": 5363.1,
+        "to": 5040.8,
+        "deltaMs": -322.3,
+        "deltaPct": -6
+      },
+      "update10th@30k": {
+        "from": 266.2,
+        "to": 257.2,
+        "deltaMs": -9,
+        "deltaPct": -3.4
+      },
+      "select@30k": {
+        "from": 236.8,
+        "to": 291.3,
+        "deltaMs": 54.5,
+        "deltaPct": 23
+      },
+      "updateStorm@30k": {
+        "from": 7220.6,
+        "to": 7294.5,
+        "deltaMs": 73.9,
         "deltaPct": 1
+      },
+      "selectStorm@30k": {
+        "from": 275.2,
+        "to": 309.7,
+        "deltaMs": 34.5,
+        "deltaPct": 12.5
       }
     },
     "+b:d→e effect (vapor, N/A on web)": {
       "create@1k": {
-        "from": 236.8,
-        "to": 250.9,
-        "deltaMs": 14.1,
-        "deltaPct": 6
+        "from": 213.5,
+        "to": 205.5,
+        "deltaMs": -8,
+        "deltaPct": -3.7
       },
       "update10th@1k": {
-        "from": 24.7,
-        "to": 22.4,
-        "deltaMs": -2.3,
-        "deltaPct": -9.3
+        "from": 26.9,
+        "to": 15.3,
+        "deltaMs": -11.6,
+        "deltaPct": -43.1
       },
       "select@1k": {
-        "from": 24.4,
-        "to": 25.2,
-        "deltaMs": 0.8,
-        "deltaPct": 3.3
+        "from": 27,
+        "to": 9.5,
+        "deltaMs": -17.5,
+        "deltaPct": -64.8
       },
       "updateStorm@1k": {
-        "from": 83.1,
-        "to": 95.2,
-        "deltaMs": 12.1,
-        "deltaPct": 14.6
+        "from": 67.4,
+        "to": 68.8,
+        "deltaMs": 1.4,
+        "deltaPct": 2.1
       },
       "selectStorm@1k": {
-        "from": 25.7,
-        "to": 23.6,
-        "deltaMs": -2.1,
-        "deltaPct": -8.2
+        "from": 20.5,
+        "to": 15.6,
+        "deltaMs": -4.9,
+        "deltaPct": -23.9
       },
       "create@10k": {
-        "from": 2145.7,
-        "to": 2138.3,
-        "deltaMs": -7.4,
-        "deltaPct": -0.3
+        "from": 1731.9,
+        "to": 1735.2,
+        "deltaMs": 3.3,
+        "deltaPct": 0.2
       },
       "update10th@10k": {
-        "from": 126.8,
-        "to": 125.6,
-        "deltaMs": -1.2,
-        "deltaPct": -0.9
+        "from": 88.8,
+        "to": 92.9,
+        "deltaMs": 4.1,
+        "deltaPct": 4.6
       },
       "select@10k": {
-        "from": 124.1,
-        "to": 103.9,
-        "deltaMs": -20.2,
-        "deltaPct": -16.3
+        "from": 66.7,
+        "to": 55.6,
+        "deltaMs": -11.1,
+        "deltaPct": -16.6
       },
       "updateStorm@10k": {
-        "from": 1225.5,
-        "to": 1191,
-        "deltaMs": -34.5,
-        "deltaPct": -2.8
+        "from": 887.6,
+        "to": 678.3,
+        "deltaMs": -209.3,
+        "deltaPct": -23.6
       },
       "selectStorm@10k": {
-        "from": 161.2,
-        "to": 162.9,
-        "deltaMs": 1.7,
-        "deltaPct": 1.1
+        "from": 118.6,
+        "to": 96.8,
+        "deltaMs": -21.8,
+        "deltaPct": -18.4
       },
       "create@30k": {
-        "from": 6759.3,
-        "to": 7247.5,
-        "deltaMs": 488.2,
-        "deltaPct": 7.2
+        "from": 5363.1,
+        "to": 5146.7,
+        "deltaMs": -216.4,
+        "deltaPct": -4
       },
       "update10th@30k": {
-        "from": 370.2,
-        "to": 362.2,
-        "deltaMs": -8,
-        "deltaPct": -2.2
+        "from": 266.2,
+        "to": 246.6,
+        "deltaMs": -19.6,
+        "deltaPct": -7.4
       },
       "select@30k": {
-        "from": 324.6,
-        "to": 276.6,
-        "deltaMs": -48,
-        "deltaPct": -14.8
+        "from": 236.8,
+        "to": 275.6,
+        "deltaMs": 38.8,
+        "deltaPct": 16.4
       },
       "updateStorm@30k": {
-        "from": 11999,
-        "to": 12137.5,
-        "deltaMs": 138.5,
-        "deltaPct": 1.2
+        "from": 7220.6,
+        "to": 6830.6,
+        "deltaMs": -390,
+        "deltaPct": -5.4
       },
       "selectStorm@30k": {
-        "from": 451.4,
-        "to": 435.3,
-        "deltaMs": -16.1,
-        "deltaPct": -3.6
+        "from": 275.2,
+        "to": 333.8,
+        "deltaMs": 58.6,
+        "deltaPct": 21.3
       }
     },
     "+ifr effect (vdom)": {
       "create@1k": {
-        "from": 256.8,
-        "to": 228.4,
-        "deltaMs": -28.4,
-        "deltaPct": -11.1
+        "from": 202.3,
+        "to": 199.7,
+        "deltaMs": -2.6,
+        "deltaPct": -1.3
       },
       "update10th@1k": {
-        "from": 26.4,
-        "to": 24.2,
-        "deltaMs": -2.2,
-        "deltaPct": -8.3
+        "from": 24.7,
+        "to": 23.2,
+        "deltaMs": -1.5,
+        "deltaPct": -6.1
       },
       "select@1k": {
-        "from": 23.6,
-        "to": 25.5,
-        "deltaMs": 1.9,
-        "deltaPct": 8.1
+        "from": 26.6,
+        "to": 26.5,
+        "deltaMs": -0.1,
+        "deltaPct": -0.4
       },
       "updateStorm@1k": {
-        "from": 171.4,
-        "to": 147.3,
-        "deltaMs": -24.1,
-        "deltaPct": -14.1
+        "from": 127.4,
+        "to": 124.6,
+        "deltaMs": -2.8,
+        "deltaPct": -2.2
       },
       "selectStorm@1k": {
-        "from": 77.8,
-        "to": 74.9,
-        "deltaMs": -2.9,
-        "deltaPct": -3.7
+        "from": 70.9,
+        "to": 67.5,
+        "deltaMs": -3.4,
+        "deltaPct": -4.8
       },
       "create@10k": {
-        "from": 2017.2,
-        "to": 2042.7,
-        "deltaMs": 25.5,
-        "deltaPct": 1.3
+        "from": 1736.1,
+        "to": 1661.5,
+        "deltaMs": -74.6,
+        "deltaPct": -4.3
       },
       "update10th@10k": {
-        "from": 173.5,
-        "to": 167.8,
-        "deltaMs": -5.7,
-        "deltaPct": -3.3
+        "from": 114.8,
+        "to": 117.1,
+        "deltaMs": 2.3,
+        "deltaPct": 2
       },
       "select@10k": {
-        "from": 107.2,
-        "to": 107.9,
-        "deltaMs": 0.7,
-        "deltaPct": 0.7
+        "from": 79.5,
+        "to": 81.7,
+        "deltaMs": 2.2,
+        "deltaPct": 2.8
       },
       "updateStorm@10k": {
-        "from": 2585.2,
-        "to": 2653.2,
-        "deltaMs": 68,
-        "deltaPct": 2.6
+        "from": 1857.7,
+        "to": 1970.3,
+        "deltaMs": 112.6,
+        "deltaPct": 6.1
       },
       "selectStorm@10k": {
-        "from": 1329.6,
-        "to": 1370.9,
-        "deltaMs": 41.3,
-        "deltaPct": 3.1
+        "from": 984.1,
+        "to": 994.6,
+        "deltaMs": 10.5,
+        "deltaPct": 1.1
       },
       "create@30k": {
-        "from": 6428,
-        "to": 6476.6,
-        "deltaMs": 48.6,
-        "deltaPct": 0.8
+        "from": 5278.8,
+        "to": 4834.1,
+        "deltaMs": -444.7,
+        "deltaPct": -8.4
       },
       "update10th@30k": {
-        "from": 532,
-        "to": 524,
-        "deltaMs": -8,
-        "deltaPct": -1.5
+        "from": 478.3,
+        "to": 370,
+        "deltaMs": -108.3,
+        "deltaPct": -22.6
       },
       "select@30k": {
-        "from": 543.5,
-        "to": 499.7,
-        "deltaMs": -43.8,
-        "deltaPct": -8.1
+        "from": 308.4,
+        "to": 306.8,
+        "deltaMs": -1.6,
+        "deltaPct": -0.5
       },
       "updateStorm@30k": {
-        "from": 12452,
-        "to": 12963.4,
-        "deltaMs": 511.4,
-        "deltaPct": 4.1
+        "from": 10937.1,
+        "to": 7336.3,
+        "deltaMs": -3600.8,
+        "deltaPct": -32.9
       },
       "selectStorm@30k": {
-        "from": 4786.3,
-        "to": 5128.6,
-        "deltaMs": 342.3,
-        "deltaPct": 7.2
+        "from": 3569.8,
+        "to": 3329.1,
+        "deltaMs": -240.7,
+        "deltaPct": -6.7
       }
     },
     "+ifr effect (vapor +b)": {
       "create@1k": {
-        "from": 236.8,
-        "to": 241.6,
-        "deltaMs": 4.8,
-        "deltaPct": 2
+        "from": 213.5,
+        "to": 201.9,
+        "deltaMs": -11.6,
+        "deltaPct": -5.4
       },
       "update10th@1k": {
-        "from": 24.7,
-        "to": 23.6,
-        "deltaMs": -1.1,
-        "deltaPct": -4.5
+        "from": 26.9,
+        "to": 27,
+        "deltaMs": 0.1,
+        "deltaPct": 0.4
       },
       "select@1k": {
-        "from": 24.4,
-        "to": 25.6,
-        "deltaMs": 1.2,
-        "deltaPct": 4.9
+        "from": 27,
+        "to": 17,
+        "deltaMs": -10,
+        "deltaPct": -37
       },
       "updateStorm@1k": {
-        "from": 83.1,
-        "to": 89.5,
-        "deltaMs": 6.4,
-        "deltaPct": 7.7
+        "from": 67.4,
+        "to": 68.8,
+        "deltaMs": 1.4,
+        "deltaPct": 2.1
       },
       "selectStorm@1k": {
-        "from": 25.7,
-        "to": 24.7,
-        "deltaMs": -1,
-        "deltaPct": -3.9
+        "from": 20.5,
+        "to": 19.2,
+        "deltaMs": -1.3,
+        "deltaPct": -6.3
       },
       "create@10k": {
-        "from": 2145.7,
-        "to": 2244,
-        "deltaMs": 98.3,
-        "deltaPct": 4.6
+        "from": 1731.9,
+        "to": 1726,
+        "deltaMs": -5.9,
+        "deltaPct": -0.3
       },
       "update10th@10k": {
-        "from": 126.8,
-        "to": 133.1,
-        "deltaMs": 6.3,
-        "deltaPct": 5
+        "from": 88.8,
+        "to": 95.3,
+        "deltaMs": 6.5,
+        "deltaPct": 7.3
       },
       "select@10k": {
-        "from": 124.1,
-        "to": 120,
-        "deltaMs": -4.1,
-        "deltaPct": -3.3
+        "from": 66.7,
+        "to": 56.9,
+        "deltaMs": -9.8,
+        "deltaPct": -14.7
       },
       "updateStorm@10k": {
-        "from": 1225.5,
-        "to": 1078.4,
+        "from": 887.6,
+        "to": 740.5,
         "deltaMs": -147.1,
-        "deltaPct": -12
+        "deltaPct": -16.6
       },
       "selectStorm@10k": {
-        "from": 161.2,
-        "to": 162.2,
-        "deltaMs": 1,
-        "deltaPct": 0.6
+        "from": 118.6,
+        "to": 124.7,
+        "deltaMs": 6.1,
+        "deltaPct": 5.1
       },
       "create@30k": {
-        "from": 6759.3,
-        "to": 7041.7,
-        "deltaMs": 282.4,
-        "deltaPct": 4.2
+        "from": 5363.1,
+        "to": 5180.4,
+        "deltaMs": -182.7,
+        "deltaPct": -3.4
       },
       "update10th@30k": {
-        "from": 370.2,
-        "to": 361.1,
-        "deltaMs": -9.1,
-        "deltaPct": -2.5
+        "from": 266.2,
+        "to": 250.6,
+        "deltaMs": -15.6,
+        "deltaPct": -5.9
       },
       "select@30k": {
-        "from": 324.6,
-        "to": 337,
-        "deltaMs": 12.4,
-        "deltaPct": 3.8
+        "from": 236.8,
+        "to": 288.9,
+        "deltaMs": 52.1,
+        "deltaPct": 22
       },
       "updateStorm@30k": {
-        "from": 11999,
-        "to": 11175.9,
-        "deltaMs": -823.1,
-        "deltaPct": -6.9
+        "from": 7220.6,
+        "to": 7069.6,
+        "deltaMs": -151,
+        "deltaPct": -2.1
       },
       "selectStorm@30k": {
-        "from": 451.4,
-        "to": 431.7,
-        "deltaMs": -19.7,
-        "deltaPct": -4.4
+        "from": 275.2,
+        "to": 362.9,
+        "deltaMs": 87.7,
+        "deltaPct": 31.9
       }
     },
     "+ifr:e paint effect (N/A on web)": {
       "create@1k": {
-        "from": 241.6,
-        "to": 252.8,
-        "deltaMs": 11.2,
-        "deltaPct": 4.6
+        "from": 201.9,
+        "to": 210.1,
+        "deltaMs": 8.2,
+        "deltaPct": 4.1
       },
       "update10th@1k": {
-        "from": 23.6,
-        "to": 24.3,
-        "deltaMs": 0.7,
-        "deltaPct": 3
+        "from": 27,
+        "to": 20.6,
+        "deltaMs": -6.4,
+        "deltaPct": -23.7
       },
       "select@1k": {
-        "from": 25.6,
-        "to": 22.9,
-        "deltaMs": -2.7,
-        "deltaPct": -10.5
+        "from": 17,
+        "to": 26.2,
+        "deltaMs": 9.2,
+        "deltaPct": 54.1
       },
       "updateStorm@1k": {
-        "from": 89.5,
-        "to": 109.1,
-        "deltaMs": 19.6,
-        "deltaPct": 21.9
+        "from": 68.8,
+        "to": 70,
+        "deltaMs": 1.2,
+        "deltaPct": 1.7
       },
       "selectStorm@1k": {
-        "from": 24.7,
-        "to": 19.9,
-        "deltaMs": -4.8,
-        "deltaPct": -19.4
+        "from": 19.2,
+        "to": 13.7,
+        "deltaMs": -5.5,
+        "deltaPct": -28.6
       },
       "create@10k": {
-        "from": 2244,
-        "to": 2260.5,
-        "deltaMs": 16.5,
-        "deltaPct": 0.7
+        "from": 1726,
+        "to": 1697.7,
+        "deltaMs": -28.3,
+        "deltaPct": -1.6
       },
       "update10th@10k": {
-        "from": 133.1,
-        "to": 132.2,
-        "deltaMs": -0.9,
-        "deltaPct": -0.7
+        "from": 95.3,
+        "to": 92,
+        "deltaMs": -3.3,
+        "deltaPct": -3.5
       },
       "select@10k": {
-        "from": 120,
-        "to": 112.5,
-        "deltaMs": -7.5,
-        "deltaPct": -6.3
+        "from": 56.9,
+        "to": 67.5,
+        "deltaMs": 10.6,
+        "deltaPct": 18.6
       },
       "updateStorm@10k": {
-        "from": 1078.4,
-        "to": 1221,
-        "deltaMs": 142.6,
-        "deltaPct": 13.2
+        "from": 740.5,
+        "to": 795,
+        "deltaMs": 54.5,
+        "deltaPct": 7.4
       },
       "selectStorm@10k": {
-        "from": 162.2,
-        "to": 175.9,
-        "deltaMs": 13.7,
-        "deltaPct": 8.4
+        "from": 124.7,
+        "to": 107.7,
+        "deltaMs": -17,
+        "deltaPct": -13.6
       },
       "create@30k": {
-        "from": 7041.7,
-        "to": 6685.1,
-        "deltaMs": -356.6,
-        "deltaPct": -5.1
+        "from": 5180.4,
+        "to": 5381.8,
+        "deltaMs": 201.4,
+        "deltaPct": 3.9
       },
       "update10th@30k": {
-        "from": 361.1,
-        "to": 346.9,
-        "deltaMs": -14.2,
-        "deltaPct": -3.9
+        "from": 250.6,
+        "to": 252.1,
+        "deltaMs": 1.5,
+        "deltaPct": 0.6
       },
       "select@30k": {
-        "from": 337,
-        "to": 306.2,
-        "deltaMs": -30.8,
-        "deltaPct": -9.1
+        "from": 288.9,
+        "to": 279.9,
+        "deltaMs": -9,
+        "deltaPct": -3.1
       },
       "updateStorm@30k": {
-        "from": 11175.9,
-        "to": 9983.1,
-        "deltaMs": -1192.8,
-        "deltaPct": -10.7
+        "from": 7069.6,
+        "to": 7075.9,
+        "deltaMs": 6.3,
+        "deltaPct": 0.1
       },
       "selectStorm@30k": {
-        "from": 431.7,
-        "to": 400.8,
-        "deltaMs": -30.9,
-        "deltaPct": -7.2
+        "from": 362.9,
+        "to": 340.1,
+        "deltaMs": -22.8,
+        "deltaPct": -6.3
       }
     }
   }
