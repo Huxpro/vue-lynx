@@ -463,8 +463,8 @@ export const ZH = {
     '唯一能把三根实测杠杆全叠上的未建格 —— vapor 的更新优势、code 档的 create、IFR 尺寸的录制。大概率是整张棋盘上上限最高的一格。',
   'The catch: upstream hands us the residual only as a runtime string — we must parse it at build time and prove both parses equal, until declared codegen (#332) dissolves the gap.':
     '困境:上游只把残差装在运行时字符串里给我们 —— 我们得在构建期自己解析,并证明两次解析相等,直到声明式 codegen(#332)把这道鸿沟整个溶解。',
-  'Full tables & charts — 1k/10k/30k, storms, FCP ladders: vue.lynxjs.org/guide/benchmark-unified.':
-    '完整表格与图表 —— 1k/10k/30k、storms、FCP 阶梯:<a href="https://vue.lynxjs.org/guide/benchmark-unified" style="color:var(--vue-green)">vue.lynxjs.org/guide/benchmark-unified</a>。',
+  'Full tables & charts — 1k/10k/30k, storms, FCP ladders: vue-lynx-git-vapor-huxpros-projects.vercel.app/guide/benchmark-unified.':
+    '完整表格与图表 —— 1k/10k/30k、storms、FCP 阶梯:<a href="https://vue-lynx-git-vapor-huxpros-projects.vercel.app/guide/benchmark-unified" style="color:var(--vue-green)">vue-lynx-git-vapor-huxpros-projects.vercel.app/guide/benchmark-unified</a>。',
   'One axis at a time.':
     '一次只动<span class="brand-text">一根轴</span>。',
   'The render axis is the update lever. The template axes barely touch update — they are a create-and-protocol lever, and the win grows with the static fraction. +ifr only moves when the first frame paints.':
