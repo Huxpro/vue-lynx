@@ -1,10 +1,11 @@
 # Study: ReactLynx Snapshot → Native Element Template, and Vue Lynx IFR+ET Path
 
-**Date**: 2026-07-20
-**Status**: Learning / design notes (no implementation)
+**Date**: 2026-07-20 (addendum 2026-07-23 vs `origin/vapor`)
+**Status**: Learning / design notes — §§1–7 written against main-line ET; **§8 rebases the Vue picture onto vapor head**
 **Sources**:
 - `lynx-family/lynx-stack` `main` (sparse clone): `packages/react/runtime/src/{snapshot,element-template}`, `packages/react/transform/crates/swc_plugin_{snapshot,element_template}`, `packages/webpack/react-webpack-plugin`
-- Vue Lynx: `plans/0711-2-element-templates.md`, `website/docs/guide/ifr.mdx`, current ET/IFR runtime
+- Vue Lynx (main-era): `plans/0711-2-element-templates.md`, `website/docs/guide/ifr.mdx`
+- Vue Lynx (**vapor head**, 793f4cc7): `docs/plans/graph-eng-goal.md`, `packages/vue-lynx/internal/src/matrix.ts`, `main-thread/src/engine-template.ts`, `packages/ifr-bench/GRAPH-ENG-{MATRIX,REPORT}.md`
 
 ---
 
@@ -12,9 +13,9 @@
 
 ReactLynx treated **Snapshot** and **Element Template (ET)** as two mutually exclusive **runtime backends** that share the same dual-thread product shape (MT Instant First Render → serialize → BG hydrate → patch). The evolution is not “add templates on top of Snapshot”; it is **replace the JS-authored PAPI create/update surface with Lynx engine Element Template PAPIs**, while moving the static tree out of LEPUS source into a **declarative Template Definition** packed into the Lynx template binary.
 
-Vue Lynx’s current “Element Templates” are closer to **Snapshot’s insight** (compile-time bake of static structure into straight-line PAPI) than to ReactLynx’s **native ET backend**. Adopting native ET is feasible and valuable, but it requires changing more than the `INSTANTIATE_TEMPLATE` executor: the **hole / update addressing model** must move from “expose FiberElement handles + ordinary `SET_*` ops” to “attr-slot / element-slot indexed native APIs”.
+Vue Lynx’s shipping “Element Templates” are closer to **Snapshot’s insight** (compile-time bake of static structure into straight-line PAPI) than to ReactLynx’s **native ET backend**. On **vapor**, that insight is now formalized as a **staging ladder** (`ops → data → code → native`) with orthogonal naming/addressing/deployment axes; Engine-Template is scaffolded as a **probe + stub fallback** on the Vapor `CLONE_TREE` path, but **does not yet** match ReactLynx’s real PAPI signatures or `encodeData.elementTemplate` packaging. Closing that gap still requires migrating hole updates toward slot-indexed native APIs (and aligning the probe contract with RL).
 
-**Important API naming note.** Vue Lynx docs/plans mention a future `__ElementFromBinary` / binary `elementTemplates` section. ReactLynx’s current ET path on `main` uses a **different, higher-level PAPI family**: `__CreateElementTemplate`, `__SetAttributeOfElementTemplate`, `__InsertNodeToElementTemplate`, `__RemoveNodeFromElementTemplate`, `__SerializeElementTemplate`, plus `__CreateTypedElementTemplate` for hosts like `page` / `list`. `__ElementFromBinary` / `__GetTemplateParts` do **not** appear in the ET runtime; `__GetTemplateParts` remains Snapshot SSR-only. Any Vue migration should target the **ReactLynx-era APIs**, not the older binary-loader names alone.
+**Important API naming note.** Vue Lynx docs/plans mention a future `__ElementFromBinary` / binary `elementTemplates` section. ReactLynx’s current ET path on `main` uses a **different, higher-level PAPI family**: `__CreateElementTemplate`, `__SetAttributeOfElementTemplate`, `__InsertNodeToElementTemplate`, `__RemoveNodeFromElementTemplate`, `__SerializeElementTemplate`, plus `__CreateTypedElementTemplate` for hosts like `page` / `list`. `__ElementFromBinary` / `__GetTemplateParts` do **not** appear in the ET runtime; `__GetTemplateParts` remains Snapshot SSR-only. Any Vue migration should target the **ReactLynx-era APIs**, not the older binary-loader names alone — and vapor’s current engine probe must be **re-signed** to match (see §8.3).
 
 ---
 
@@ -435,3 +436,115 @@ Eligibility rules from `0711-2` can remain; only the **emitted backend** changes
 3. **Native ET for Vue** should be an **ET backend upgrade**, not an IFR redesign: emit Template Definitions, pack them at encode time, instantiate with `__CreateElementTemplate`, and migrate hole updates to attr slots — while retaining ShadowElement, flat ops, and ops-stream IFR hydration, with JS create as fallback.
 
 Primary design hinge: **give up contiguous hole FiberElement ids** (or accept a permanent shim) so the update path matches what the native engine actually optimizes.
+
+> **§8 updates this conclusion against vapor head:** the hinge still holds for VDOM Code-Template → Engine; vapor already climbed Data-Template + Engine *stub*, but the stub’s invented signatures diverge from ReactLynx and must be reconciled before claiming a real Engine-Template cell.
+
+---
+
+## 8. Addendum — vapor head audit (2026-07-23)
+
+Rebased this study branch onto `origin/vapor` (`793f4cc7`) and re-read the shipping graph-eng stack. §§4–6 above describe the **main-era** VDOM Code-Template. Vapor has since formalized the ladder and landed several rungs — **without yet closing the ReactLynx-native gap**.
+
+### 8.1 What vapor actually ships
+
+Ground truth (`docs/plans/graph-eng-goal.md`, `internal/src/matrix.ts`): a UI subtree is `λ holes. tree`. Five columns locate every materialization:
+
+| Axis | Levels (normalized) |
+|------|---------------------|
+| **Staging** | `ops` → `data` (tree+interp) → `code` (per-template `create()`) → `native` (engine clone) |
+| **Naming** | `node` (dense) / `block` (sparse: base + offset) |
+| **Addressing** | `random-access` / `traversal` / `traversal+recover` |
+| **Provider** | `bts` / `mts` / `engine` |
+| **Lifetime** | `persistent` / `ephemeral` (+ delivery `runtime` \| `bundle`) |
+
+Mechanism names on that ladder:
+
+| Mechanism | Coordinate (typical) | Status on vapor |
+|-----------|----------------------|-----------------|
+| Op Stream | staging=`ops` | VDOM default without ET |
+| Named Tree | staging=`data`, naming=`node` | Vapor dense `CLONE_TREE` |
+| **Data-Template** | staging=`data`, naming=`block`, recovered | Vapor sparse A2 (**shipping**, default naming) |
+| **Code-Template** | staging=`code`, naming=`block`, intrinsic | VDOM JS ET (`INSTANTIATE_TEMPLATE`) — **shipping**; Vapor Code path **skipped** (M3a) |
+| **Engine-Template** | staging=`native` | **Probe + stub** on Vapor `REGISTER_TREE`/`CLONE_TREE` only; Lynx-for-Web always stub |
+
+Also landed beyond the original study:
+
+- **Element slots** (`#slot`, ops `INSERT/REMOVE_TEMPLATE_SLOT` 18/19) — structural hosts can live *inside* a Code-Template as wrapper holes (`element-template-transform.ts`, `element-templates.ts`).
+- **Recovered sparse addressing** — `__vlxAddressing` + tag-fingerprint fail-safe densify (`vapor-addressing.ts`, `buildShadowCloneSparse`).
+- **Four-axis flags** — `templateStaging`, `templateNaming`, `ifrPaint`; `legalCells` in `matrix.ts`.
+- **GRAPH-ENG factor report** — engine cells honestly marked N/A/stub on web.
+
+### 8.2 Create paths today (vapor)
+
+```
+VDOM + ET:   __vlx-tpl → INSTANTIATE_TEMPLATE → JS create() PAPIs
+             holes = contiguous FiberElements at rootId+1…N (+ #slot wrappers)
+             updates = ordinary SET_* / events on hole ids
+
+Vapor:       template() → REGISTER_TREE → CLONE_TREE
+             naming=block → sparse uid = base + indexInAddressed
+             optional templateStaging=native → tryEngineCloneTree → else interpreter
+
+Engine stub: runtime-build prototype from wire TemplateNode, then
+             hoped-for native instantiate — Delivery still `runtime`, not `bundle`
+```
+
+**VDOM `INSTANTIATE_TEMPLATE` never calls `engine-template.ts`.** Engine staging is wired only into the Vapor Data residual.
+
+### 8.3 Critical finding: probe signatures ≠ ReactLynx
+
+`main-thread/src/engine-template.ts` documents an **invented / unconfirmed** family:
+
+| Vue vapor probe | ReactLynx real ET (this study §3.4) |
+|-----------------|--------------------------------------|
+| `__CreateElementTemplate(tag, slot)` | `__CreateElementTemplate(templateKey, bundleUrl, attributeSlots, elementSlots, uid)` |
+| `__InstantiateElementTemplate(handle, pageUniqueId, namedSlots)` | *(no separate instantiate — create returns root)* |
+| `__SetAttributeOfElementTemplate(node, key, value)` | `__SetAttributeOfElementTemplate(element, attrSlotIndex, value)` |
+| `__InsertNodeToElementTemplate(parent, child)` | `__InsertNodeToElementTemplate(parent, elementSlotIndex, child, reference)` |
+| *(none)* | `__RemoveNodeFromElementTemplate`, `__SerializeElementTemplate` |
+| *(none)* | `encodeData.elementTemplate` Template Definition JSON |
+
+So vapor’s “Engine-Template” cell currently proves **routing + honesty (stub fallback)**, not compatibility with the Lynx/ReactLynx native contract. On measured Lynx-for-Web hosts, status is always `'stub'`.
+
+### 8.4 Hole / slot model vs study hinge
+
+| Question | Vapor answer |
+|----------|--------------|
+| Contiguous hole FiberElement ids (`rootId+k`)? | **Yes, still** for VDOM Code-Template |
+| Attr-slot indexed updates (`SET_TEMPLATE_ATTR`)? | **No** |
+| Logical-only holes (no MT id)? | **Not started** |
+| Structural element holes? | **Partial** — `#slot` + ops 18/19 on FiberElement wrappers (closer to RL elementSlots, still handle-based) |
+| IFR × sparse densify? | **Not needed** — ops-stream hydrate; `ifr-sparse-hydration.test.ts` pins frame equality |
+| IFR teardown of `rootId..+holeCount`? | Largely **superseded** — teardown walks recorded inserts under page root |
+
+The study’s primary hinge (**give up contiguous hole ids for attr slots**) remains the open work for a true Engine-Template on the **VDOM Code** residual. Sparse naming on Vapor is a **bookkeeping** axis (fewer BG shells / named map entries); it does not by itself move staging to native.
+
+### 8.5 Study phases (§5.6) vs graph-eng milestones
+
+| Study phase | Vs vapor |
+|-------------|----------|
+| 1. Spike real `__CreateElementTemplate` + encode | **Partial / misaligned** — probe exists with non-RL signatures; no encode |
+| 2. Compiler dual-emit JSON Template Definition | **Not started** |
+| 3. Encode `elementTemplate` | **Not started** |
+| 4. `SET_TEMPLATE_ATTR` + native instantiate on VDOM | **Not started** (have 18/19; engine only on Vapor CLONE) |
+| 5. Logical holes + IFR teardown | Holes **not started**; IFR teardown already root-based |
+| 6. Events/worklets attr-plan | **Not started** |
+| 7. Correctness suites | **Done** for framework + stub paths |
+| 8. Perf / defaults | **Done** as matrix; product defaults unchanged; engine = stub/N/A |
+
+Parallel vapor work **beyond** the study (done): element slots, recovered sparse A2, flag matrix, engine stub ladder, factor report. M3a (Vapor Code-Template) explicitly skipped; M3c (compiler-direct IFR paint) is flag-only.
+
+### 8.6 Revised recommendation (after rebase)
+
+Keep the ReactLynx learning (§§2–3) and the Vue backend-upgrade framing (§5), but sequence against vapor’s matrix:
+
+1. **Align Engine probe with ReactLynx PAPIs** before investing further in `engine-template.ts` inventiveness. Treat current signatures as placeholders; rebind to `templateKey` + attr/element slot arrays + uid.
+2. **Prefer `bundle` delivery for native** (Template Definition JSON → `encodeData.elementTemplate`) as the RL-shaped optimum; keep today’s `runtime` REGISTER_TREE→engine path as a **proof** that staging=`native` need not wait on encode — useful for Vapor, insufficient for VDOM Code→Engine parity with RL.
+3. **Climb VDOM Code → Engine** as the study originally proposed: dual-emit defs, pack at encode, `INSTANTIATE_TEMPLATE` → `__CreateElementTemplate(key,…)`, migrate hole `SET_*` → attr-slot ops. Element slots (#308) already give structural holes a home.
+4. **Do not conflate sparse naming with Engine staging** — GRAPH-ENG-REPORT already shows naming is bookkeeping; FCP wins need staging moves (and real native, not stub).
+5. **Keep ops-stream IFR** — vapor confirmed IFR×sparse needs no densify; `__SerializeElementTemplate` remains optional.
+6. **Update docs** (`ifr.mdx` `__ElementFromBinary` wording; engine-template header) once signatures are RL-aligned.
+
+### 8.7 One-line status after rebase
+
+> On vapor we have **formalized** the Snapshot→ET ladder and **ship** Data-Template + Code-Template + an Engine **stub**; we still do **not** speak ReactLynx’s native Element Template dialect (key/bundleUrl/attrSlots/elementSlots + encode packing). That dialect alignment is the next concrete step if the goal is true Engine-Template, not another invented PAPI façade.
