@@ -948,7 +948,10 @@ function initI18n() {
     if (el.querySelector('[data-cover-verb]')) return; // cycling verb line
     i18nEls.push({ el, en: el.innerHTML, key: normalizeKey(el.textContent) });
   });
-  // Speaker notes, keyed by slide order (ZH_NOTES[i]).
+  // Speaker notes — one aside per slide, indexed by document order.
+  // AGENTS.md invariant: every <section class="slide"> has an <aside class="notes">,
+  // so noteEls[i] lines up with slides[i]. A future notes-less slide would make
+  // notes after it silently stay English in zh (slide.contains guard), not corrupt.
   noteEls = [...document.querySelectorAll('.slide aside.notes')].map((el) => ({
     el,
     en: el.innerHTML,

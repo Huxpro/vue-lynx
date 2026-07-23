@@ -9,11 +9,11 @@
 //     audio can never leak across pages) and autoplay when
 //     their slide becomes current — opt out per element with
 //     data-autoplay="false".
-//   · images / videos / iframes are mounted only when their
-//     slide is at most one step away and unloaded again two
-//     steps out. Eager decode of every embed used to blow
-//     past iOS Safari's WebContent memory budget (a single
-//     4032×3024 PNG is ~49MB RGBA once decoded).
+//   · images / videos mount within MEDIA_NEAR (±2) and unload
+//     at MEDIA_FAR (≥3); iframes stay at IFRAME_NEAR/FAR (±1/≥2).
+//     Eager decode of every embed used to blow past iOS Safari's
+//     WebContent memory budget (a single 4032×3024 PNG is ~49MB
+//     RGBA once decoded).
 //   · a missing file renders as a labeled placeholder frame
 //     showing the exact path to drop the asset at — author
 //     slides first, add media later.
@@ -110,10 +110,10 @@ class VlMedia extends HTMLElement {
 
   _unmountImage() {
     if (!this._img || !this._live) return;
+    // Drop the decoded bitmap without assigning src='' (that fires a
+    // spurious error event in some browsers). removeAttribute is enough
+    // once we also blank via load()-style teardown isn't available for img.
     this._img.removeAttribute('src');
-    // Force the decoder to drop the bitmap (removeAttribute alone can leave
-    // a decoded frame in Safari's image cache for the element).
-    try { this._img.src = ''; } catch { /* ignore */ }
     this._live = false;
     this.classList.add('is-missing');
   }
@@ -154,7 +154,7 @@ class VlMedia extends HTMLElement {
     this.classList.remove('is-live');
   }
 
-  /** Called on every deck:change with (mySlide - currentSlide). */
+  /** Called on every deck:media-sync / deck:change with (mySlide - current). */
   setDistance(d, { still = false } = {}) {
     if (this.kind === 'image') {
       if (Math.abs(d) <= MEDIA_NEAR) this._mountImage();
@@ -169,10 +169,15 @@ class VlMedia extends HTMLElement {
       if (!this._live) return;
       const v = this._video;
       if (d === 0 && this.autoplay && !still) {
+        // Skip a no-op rewind+play when media-sync and deck:change both
+        // fire for the same arrival (setSlide dispatches both).
+        if (this._playingFor === 0) return;
+        this._playingFor = 0;
         try { v.currentTime = 0; } catch { /* not seekable yet */ }
         const p = v.play?.();
         if (p?.catch) p.catch(() => {});
       } else {
+        this._playingFor = d;
         v.pause?.();
         if (d !== 0) {
           try { v.currentTime = 0; } catch { /* not seekable yet */ }
@@ -248,8 +253,9 @@ export function initEmbeds({
       const d = enabled ? m.idx - index : 99;
       m.el.setDistance?.(d, { still: still || !enabled });
       // Wire embed chrome once the slide is in the media neighborhood.
-      if (enabled && Math.abs(d) <= 2) {
-        m.el.closest('.phone--embed') && wireEmbedFrame(m.el.closest('.phone--embed'));
+      if (enabled && Math.abs(d) <= MEDIA_NEAR) {
+        const frame = m.el.closest('.phone--embed');
+        if (frame) wireEmbedFrame(frame);
       }
     });
   }
