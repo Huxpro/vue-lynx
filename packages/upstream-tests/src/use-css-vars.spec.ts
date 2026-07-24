@@ -402,3 +402,79 @@ describe('useCssVars — reactivity', () => {
     expect(cssVarOp).toBeUndefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// 7. Root-only stamping
+// ---------------------------------------------------------------------------
+
+describe('useCssVars — root-only stamping', () => {
+  it('stamps CSS vars only on the root element, not on descendants', async () => {
+    const color = ref('red');
+
+    // Structure: view (root) > view (mid) > text (leaf)
+    // This test only verifies the BG-runtime contract: useCssVars stamps the
+    // root and emits no redundant SET_STYLE for descendants. Whether the
+    // native engine actually cascades the var to descendants is NOT covered
+    // here — that is engine behavior (lynx-family/lynx#5912, first in the
+    // 3.9.0 tag) and is verified manually via the css-features example.
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep1': color.value }));
+        return () =>
+          h('view', null, [
+            h('view', null, [
+              h('text'),
+            ]),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep1'] !== undefined,
+    );
+
+    // Only the root view should be stamped — not mid or leaf. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep1']).toBe('red');
+  });
+
+  it('stamps updated CSS var only on the root when reactive source changes', async () => {
+    const color = ref('red');
+
+    const App = defineComponent({
+      setup() {
+        useCssVars((_ctx: unknown) => ({ 'deep2': color.value }));
+        return () =>
+          h('view', null, [
+            h('text'),
+          ]);
+      },
+    });
+
+    createApp(App).mount();
+    await nextTick();
+    collectFlushedOps(); // drain mount ops
+
+    color.value = 'blue';
+    await nextTick();
+
+    const ops = collectFlushedOps();
+    const styleOps = parseSetStyleOps(ops);
+
+    const cssVarOps = styleOps.filter(
+      (op) => (op.style as Record<string, unknown>)['--deep2'] !== undefined,
+    );
+
+    // Only the root view is stamped; the child text is not. (Descendant
+    // cascade is the engine's job and is not asserted by this test.)
+    expect(cssVarOps.length).toBe(1);
+    expect((cssVarOps[0].style as Record<string, unknown>)['--deep2']).toBe('blue');
+  });
+});

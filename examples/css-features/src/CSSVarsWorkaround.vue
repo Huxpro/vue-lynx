@@ -30,7 +30,7 @@ function toggle() {
 <template>
   <view :style="cardStyle">
     <text :style="{ fontSize: '15px', fontWeight: 'bold', color: '#333', marginBottom: '4px' }">
-      Workaround: Reactive inline :style
+      Workaround: Reactive inline :style (CSSVarsWorkaround.vue)
     </text>
     <text :style="{ fontSize: '12px', color: '#555', marginBottom: '8px' }">
       Use computed() + :style bindings instead of v-bind() in CSS.
