@@ -16,7 +16,12 @@ const modeLabel =
     : cell === 'et'
     ? 'vdom-et'
     : 'vdom-ifr-et';
-const distRoot =
+// Mount-create ladder: BENCH_AUTOROWS=N builds a variant whose table is
+// already populated at mount. Each N gets its own dist so cells never collide.
+const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0') || 0;
+const autoSuffix = autoRows > 0 ? `-rows${autoRows}` : '';
+
+const distRootBase =
   cell === 'off'
     ? 'dist'
     : cell === 'ifr'
@@ -24,6 +29,7 @@ const distRoot =
     : cell === 'et'
     ? 'dist-et'
     : 'dist-ifr-et';
+const distRoot = distRootBase + autoSuffix;
 
 export default defineConfig({
   environments: {
@@ -41,6 +47,7 @@ export default defineConfig({
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [

@@ -30,6 +30,31 @@ const nouns = [
   'sandwich', 'burger', 'pizza', 'mouse', 'keyboard',
 ];
 
+/**
+ * Deterministic variant used by the mount-create ladder (`BENCH_AUTOROWS`).
+ * That workload renders rows during the FIRST screen, which under IFR means
+ * the main thread and the background thread each build the data themselves —
+ * `Math.random()` would hand them different labels and turn every row into a
+ * hydration mismatch. Index-derived labels keep both threads in agreement
+ * while preserving the label length distribution.
+ */
+export function buildDataSeeded(count = 1000): RowData[] {
+  const data: RowData[] = [];
+  for (let i = 0; i < count; i++) {
+    data.push({
+      id: ID++,
+      label: shallowRef(
+        adjectives[i % adjectives.length]
+          + ' '
+          + colours[(i * 7) % colours.length]
+          + ' '
+          + nouns[(i * 13) % nouns.length],
+      ),
+    });
+  }
+  return data;
+}
+
 export function buildData(count = 1000): RowData[] {
   const data: RowData[] = [];
   for (let i = 0; i < count; i++) {

@@ -54,7 +54,11 @@ export function buildVueMatrix(filter = null) {
       recursive: true,
       force: true,
     });
-    const distName = c.cell === 'off' ? 'dist' : `dist-${c.cell}`;
+    // Mount-create ladder variants get their own dist — clearing the base
+    // `dist` here would delete a cell this run is not rebuilding.
+    const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0') || 0;
+    const distName = (c.cell === 'off' ? 'dist' : `dist-${c.cell}`)
+      + (autoRows > 0 ? `-rows${autoRows}` : '');
     fs.rmSync(path.join(cwd, distName), { recursive: true, force: true });
     console.log(`[unified-build] ${c.id} (apps/${c.app} BENCH_CELL=${c.cell})`);
     execSync('npx rspeedy build', {

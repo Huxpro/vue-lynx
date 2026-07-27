@@ -7,13 +7,20 @@
 // by hand. The React variant (apps/ui-react) mirrors these operations with
 // idiomatic React state.
 import { ref, shallowRef, triggerRef } from 'vue'
-import { buildData } from '../../../shared/data'
+import { buildData, buildDataSeeded } from '../../../shared/data'
 import type { RowData } from '../../../shared/data'
 
 const MODE = __BENCH_MODE__
 
+// Mount-create ladder: when built with BENCH_AUTOROWS=N the table starts
+// already populated, so `create N rows` can be measured on frameworks whose
+// native tap delivery is not wired up. Deterministic data keeps the MT and BG
+// first-screen renders identical under IFR.
+const INITIAL_ROWS: RowData[] =
+  __BENCH_AUTOROWS__ > 0 ? buildDataSeeded(__BENCH_AUTOROWS__) : []
+
 const selected = shallowRef<number | undefined>(undefined)
-const rows = shallowRef<RowData[]>([])
+const rows = shallowRef<RowData[]>(INITIAL_ROWS)
 const ready = ref('ready')
 
 function run() {

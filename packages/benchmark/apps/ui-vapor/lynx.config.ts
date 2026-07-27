@@ -40,7 +40,10 @@ const ifrPaint = cell === 'ifr-engine-et'
   ? 'code-paint' as const
   : undefined;
 const modeLabel = cell === 'off' ? 'vapor' : `vapor-${cell}`;
-const distRoot = cell === 'off' ? 'dist' : `dist-${cell}`;
+// Mount-create ladder — see apps/ui-vdom/lynx.config.ts.
+const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0') || 0;
+const autoSuffix = autoRows > 0 ? `-rows${autoRows}` : '';
+const distRoot = (cell === 'off' ? 'dist' : `dist-${cell}`) + autoSuffix;
 
 export default defineConfig({
   environments: {
@@ -58,6 +61,7 @@ export default defineConfig({
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [
