@@ -545,6 +545,9 @@ export const ZH = {
 
   'Where Vapor pulls away: 5.8–9.8×.':
     'Vapor 拉开差距的地方:<span class="brand-text">5.8–9.8×</span>。',
+  'One more thing · select storm × scale': '还有一件事 · select 风暴 × 规模',
+  "Same select storm, black-box wall-clock as rows grow: VDOM and ReactLynx climb linearly; Vapor stays near the floor — 128 ms at 30k vs VDOM's 1.46 s. The gap widens with scale.":
+    '同一个 select 风暴,随行数增长的黑盒墙钟时间:VDOM 和 ReactLynx 线性攀升;Vapor 几乎贴着地板 —— <b class="brand-text">30k 时 128 ms</b>,而 VDOM 是 1.46 s。差距随规模拉大。',
   'The entire delta is Vue work on the thread you share with your app logic — lower background cost means more headroom before dropped frames.':
     '整个差距都是 Vue 在那条你与应用逻辑共享的线程上的开销 —— 后台开销越低,离掉帧就越远。',
 
@@ -853,6 +856,8 @@ export const ZH_NOTES = [
   `<p><strong>Vapor 是什么 —— 没有虚拟 DOM。</strong>Vue 3.6 基于编译的渲染器:没有 vnode 树,没有逐组件 diff。预发布状态 —— 锁定在 <code>vue@3.6.0-beta.17</code>。</p><p><strong>同一份源码 —— 拨一下开关。</strong>按应用、构建期的开关:插件选项、入口 import、<code>vapor</code> 属性。两个纯入口 —— <code>vue-lynx</code> 与 <code>vue-lynx/vapor</code> —— 于是 vdom 专属 API 在 Vapor 应用里会在构建期报错,而不是在运行时出乱子。</p><p>我们要用数据支撑的主张:同样的 Vue,更新路径的开销小得多。</p>`,
   // 43+44 Benchmark · 更新柱状图 + 账本（合并）
   `<p><strong>核心结果 —— 再看诚实的成绩单。</strong>Vue 官方基准移植到 Lynx,同一个应用跑两种模式。后台线程开销 = 响应式 + 渲染 + ops 序列化 —— Vapor 的结构性优势在这里毫无遮掩地显现(5.8–9.8×)。端到端的倍数要小些(2.1–6.3×),因为两种模式发出的 ops 几乎一样。</p><p>别夸大:创建是打平的;代价是产物 +26%(Vapor 运行时 + DOM 兼容垫片)。首屏差异在噪声范围内。绿 = 赢,粉 = 代价。数据:headless Chromium、Lynx for Web、中位数带 95% 置信区间。</p>`,
+  // 44b select 风暴 × 规模（统一基准 #266）
+  `<p><strong>规模画面(统一基准,PR #266)。</strong>刚才那 5.8–9.8× 是后台线程的微观数字;这是随列表增长、用户可见的墙钟时间。selectStorm 跨 1k → 10k → 30k,每个 tick 只重选一行。VDOM 每轮重跑 render 并 diff 整张列表,曲线随 N 上扬;ReactLynx 在此之上再加自己的开销。Vapor 的响应式 effect 只碰变化的那个节点,曲线几乎压平 —— 对 VDOM 的差距 1k 1.7× → 10k 8.2× → 30k 11.4×。绝对 ms 与机器绑定;比值才是可移植的结论。</p>`,
   // 45b Vapor 上游测试 + 亲近性 + 7× mic-drop
   `<p><strong>Vapor 也有了自己的上游测试(PR #232)。</strong>30 个 <code>runtime-vapor</code> spec 文件跑在真实的 <code>vue-lynx/vapor</code> 表面和 ShadowElement 树上:<strong>545 通过、120 skip、0 失败</strong>。skiplist 是一个<em>封闭清单</em> —— 每个被排除的测试都有理由,任何未归类项都会让配置加载直接失败。</p><p><strong>这些 skip 不是一堆坏掉的东西。</strong>SSR/hydration 加 vdom↔vapor 互操作占了不跑项的 57% —— 两者都不是 Lynx 兼容性信号(没有 SSR 表面;互操作是刻意不支持的)。浏览器专属平台再占 24%。测试设施只占不到 1%(对比 vdom 那边高达 59%),因为“原始 bundle 再导出”这招几乎消灭了私有 import 问题。这个移植还顺手抓到一个真 bug(ShadowElement 会被响应式代理;<code>__v_skip</code> 修掉了)。</p><p><strong>亲近性这一点。</strong>在真正触及元素表面的测试上,Vapor 以 81% 对 vdom 的 57% 通过 —— 而且<em>零行为级垫片</em>:生产版 <code>@vue/runtime-vapor</code> 原封不动跑在 ShadowElement 上,而 vdom 模式需要 1,074 行在执行路径里的模拟。Vapor 的宿主契约 —— 克隆模板 + 对节点的命令式 setter —— 天生就与 Lynx 更契合。(是契合度,不是速度。)</p><p><strong>压轴数字 —— 7× VDOM。</strong>跨框架套件(ReactLynx vs Vue VDOM vs Vue Vapor),真实点击到 composed-DOM 终态。Vue 对 Vue 的头条:10k select 风暴上 Vapor 7.0× VDOM,update 风暴 1.9× —— 同一个应用、同一个产物,只差一个属性。</p>`,
   // 45 工作流 · 一份源码两个渲染器
