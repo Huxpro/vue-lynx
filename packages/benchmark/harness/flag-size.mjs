@@ -46,6 +46,7 @@ const FLAG_PAIRS = [
   { flag: '+b:c (vapor code staging)', from: 'vapor', to: 'vapor-code' },
   { flag: '+b:e (vapor engine staging, stub on web)', from: 'vapor', to: 'vapor-engine' },
   { flag: '+ifr (vapor)', from: 'vapor', to: 'vapor-ifr' },
+  { flag: '+ifr:c (vapor code-paint)', from: 'vapor-ifr', to: 'vapor-ifr-code-paint' },
   { flag: '+b (vdom element templates)', from: 'vdom', to: 'vdom-et' },
   { flag: '+ifr (vdom)', from: 'vdom', to: 'vdom-ifr' },
   { flag: '+b on top of +ifr (vdom)', from: 'vdom-ifr', to: 'vdom-ifr-et' },
@@ -60,6 +61,7 @@ const CODE_SURFACE_SYMBOLS = {
   'delivery bundle (+b!)': ['bundleDeliveryRequested', 'RegisterVaporStructure', 'REGISTER_TREE_BUNDLE'],
   'staging engine (+b:e)': ['engineStagingRequested', 'EngineTemplate', '__VUE_LYNX_ENGINE_ET_STATUS__'],
   'ifr paint': ['__VUE_LYNX_IFR_PAINT__', 'ifrPaint'],
+  'ifr paint code (+ifr:c)': ['codePaintRequested', 'CodeTemplate', 'registerCodeTemplate', 'instantiateCodeTemplate'],
 };
 
 function distFor(cellId) {

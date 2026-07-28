@@ -27,8 +27,14 @@ import {
   registerEngineTemplate,
   resetEngineTemplatesForTesting,
 } from './engine-template.js';
+import type { CodeTemplateHost } from './code-template.js';
+import {
+  instantiateCodeTemplate,
+  registerCodeTemplate,
+  resetCodeTemplatesForTesting,
+} from './code-template.js';
 import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
-import { engineStagingRequested } from './flags.js';
+import { codePaintRequested, engineStagingRequested } from './flags.js';
 import {
   bindVaporTemplateId,
   getBoundVaporTemplate,
@@ -360,6 +366,117 @@ function tryEngineCloneTree(
 }
 
 /**
+ * PAPI/registry sink handed to the ephemeral Code-Template executor
+ * (`+ifr:c`, #340). Keeping the typed creators, static-prop writer, and
+ * (crucially) the IFR selector-attribute deferral here means the
+ * code-painted ephemeral tree lands in exactly the same registry state as
+ * the interpreter would have produced.
+ */
+const codeTemplateHost: CodeTemplateHost = {
+  createElement(isText: boolean, tag: string): LynxElement {
+    const el = isText
+      ? __CreateText(pageUniqueId)
+      : createTypedElement(tag, pageUniqueId);
+    __SetCSSId([el], 0);
+    return el;
+  },
+  applyStaticProps,
+  installSelectorAttribute,
+  appendChild(parent: LynxElement, child: LynxElement): void {
+    __AppendElement(parent, child);
+  },
+};
+
+/**
+ * **Code-Template** ephemeral paint (`+ifr:c`, #340): the throwaway IFR
+ * first-frame copy is materialized by a create() executor compiled ON THIS
+ * THREAD from the SAME registered residual, instead of inheriting the
+ * durable Data-Template interpretation. Unlike the engine path this runs on
+ * Lynx for Web (measurable — verdict in the unified report: a wash).
+ * Returns false when code-paint is not requested (→ caller tries engine,
+ * then interprets); the persistent tree is never touched, so hydration
+ * adopts/replays the ephemeral copy unchanged.
+ */
+function tryCodePaintCloneTree(
+  tplId: number,
+  entry: RegisteredTree,
+  baseUid: number,
+): boolean {
+  if (!codePaintRequested()) return false;
+  // Compile-once safety net: REGISTER_TREE already compiled this when the
+  // paint flag was set, but a flag flipped between register and clone still
+  // works.
+  registerCodeTemplate(tplId, entry.structure, entry.addressed);
+  return instantiateCodeTemplate(tplId, baseUid, codeTemplateHost);
+}
+
+/**
+ * Optional staging strategies for REGISTER_TREE(_BUNDLE) / CLONE_TREE, in
+ * CLONE-priority order. The Data-Template interpreter
+ * (`instantiateRegisteredTree`) is the always-on default and is
+ * deliberately NOT in this table — these are the experimental graph-eng
+ * axes stacked on top of it. They are mutually exclusive in every real
+ * build (the plugin bakes one staging/paint value); each `tryClone`
+ * self-guards on its own flag.
+ *
+ * TO RETIRE AN AXIS once the experiment concludes: delete its entry here,
+ * delete its module (`engine-template.ts` / `code-template.ts`) and its
+ * reader in ./flags.ts, and drop its build define + plugin option. Nothing
+ * else in this file hard-codes the axis.
+ */
+interface StagingStrategy {
+  /** True when this strategy should materialize (reads ./flags). */
+  readonly active: () => boolean;
+  /** Build any per-template resource at REGISTER_TREE(_BUNDLE). */
+  readonly register: (
+    tplId: number,
+    structure: TemplateNode,
+    addressed: number[] | undefined,
+  ) => void;
+  /** Paint a clone; true if painted, false to fall through. Self-guards. */
+  readonly tryClone: (
+    tplId: number,
+    entry: RegisteredTree,
+    baseUid: number,
+  ) => boolean;
+  /** Clear module state (tests / reload). */
+  readonly reset: () => void;
+}
+
+const STAGING_STRATEGIES: readonly StagingStrategy[] = [
+  // [code-paint] ephemeral Code-Template — #340. Tried first at CLONE.
+  {
+    active: codePaintRequested,
+    register: (tplId, structure, addressed) =>
+      registerCodeTemplate(tplId, structure, addressed),
+    tryClone: tryCodePaintCloneTree,
+    reset: resetCodeTemplatesForTesting,
+  },
+  // [engine] Engine-Template — #323 (durable) / #324 (native-paint); web stub.
+  {
+    active: engineStagingRequested,
+    register: (tplId, structure, addressed) =>
+      registerEngineTemplate(
+        tplId,
+        buildEngineTemplateDescriptor(structure, addressed ?? [], addressed ?? []),
+      ),
+    tryClone: tryEngineCloneTree,
+    reset: resetEngineTemplatesForTesting,
+  },
+];
+
+/** Run the active strategies' per-template registration hooks. */
+function registerStagingStrategies(
+  tplId: number,
+  structure: TemplateNode,
+  addressed: number[] | undefined,
+): void {
+  for (const strategy of STAGING_STRATEGIES) {
+    if (strategy.active()) strategy.register(tplId, structure, addressed);
+  }
+}
+
+/**
  * Vapor Code-Template instantiation (`+b:c`, #337): run the bundle-baked
  * create() and name `base + indexInAddressed` — handles come back in
  * addressed order (null for BG-only anchors), so naming, selector
@@ -564,10 +681,14 @@ export function applyOps(ops: unknown[], flush = true): void {
         const addressedOr0 = ops[i++] as number[] | 0;
         const structure = getVaporStructure(hash);
         if (structure) {
-          templates.set(tplId, {
-            structure,
-            addressed: Array.isArray(addressedOr0) ? addressedOr0 : undefined,
-          });
+          const addressed = Array.isArray(addressedOr0)
+            ? addressedOr0
+            : undefined;
+          templates.set(tplId, { structure, addressed });
+          // Bundle-delivered structures feed the active staging strategy the
+          // same way wire-delivered ones do (engine prototype / compiled
+          // ephemeral plan).
+          registerStagingStrategies(tplId, structure, addressed);
         } else {
           console.error(
             `[vue-lynx] REGISTER_TREE_BUNDLE: no bundle-registered structure for hash "${hash}" — mismatched bundles?`,
@@ -584,18 +705,11 @@ export function applyOps(ops: unknown[], flush = true): void {
           ? addressedOr0
           : undefined;
         templates.set(tplId, { structure, addressed });
-        // Engine staging: build the host-resident prototype once (fail-safe
-        // no-op when the engine family is absent — the cell reports stub).
-        if (engineStagingRequested()) {
-          registerEngineTemplate(
-            tplId,
-            buildEngineTemplateDescriptor(
-              structure,
-              addressed ?? [],
-              addressed ?? [],
-            ),
-          );
-        }
+        // Build any per-template resource for the active staging strategy
+        // (engine host-resident prototype, compiled ephemeral plan). The
+        // Data-Template default needs none. Fail-safe: engine register is a
+        // no-op when the family is absent (the cell reports stub).
+        registerStagingStrategies(tplId, structure, addressed);
         break;
       }
 
@@ -604,9 +718,18 @@ export function applyOps(ops: unknown[], flush = true): void {
         const baseUid = ops[i++] as number;
         const entry = templates.get(tplId);
         if (entry) {
-          if (!tryEngineCloneTree(tplId, entry, baseUid)) {
-            instantiateRegisteredTree(entry, baseUid);
+          // Try each optional staging strategy in priority order; the
+          // Data-Template interpreter is the always-on default fallback.
+          // Plain and native-paint behavior is unchanged (their tryClone
+          // self-guards and returns false).
+          let painted = false;
+          for (const strategy of STAGING_STRATEGIES) {
+            if (strategy.tryClone(tplId, entry, baseUid)) {
+              painted = true;
+              break;
+            }
           }
+          if (!painted) instantiateRegisteredTree(entry, baseUid);
         }
         break;
       }
@@ -803,7 +926,7 @@ export function resetMainThreadState(): void {
   clearIfrSelectorAttributeDeferral();
   resetElementRegistry();
   templates.clear();
-  resetEngineTemplatesForTesting();
+  for (const strategy of STAGING_STRATEGIES) strategy.reset();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();

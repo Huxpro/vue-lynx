@@ -40,6 +40,11 @@ describe('legalCells (terminology v2)', () => {
     expect(getCell('vapor-ifr-engine-et')?.id).toBe(
       'vapor-data-block-ifr-native-paint',
     );
+    // code-paint (#340) is a first-class cell with its own legacy id.
+    expect(ids).toContain('vapor-data-block-ifr-code-paint');
+    expect(getCell('vapor-ifr-code-paint')?.id).toBe(
+      'vapor-data-block-ifr-code-paint',
+    );
     // Explicit-coordinate duplicate is an alias, not a distinct cell.
     expect(getCell('vapor-ifr-sparse')?.aliasOf).toBe('vapor-data-block-ifr');
   });
@@ -91,6 +96,26 @@ describe('legalCells (terminology v2)', () => {
     expect(
       getCell('vapor-data-block-ifr-native-paint')?.engineNaOnWeb,
     ).toBe(true);
+  });
+
+  it('marks code-paint measurable (not engine-N/A) unlike native-paint', () => {
+    const codePaint = getCell('vapor-data-block-ifr-code-paint');
+    const nativePaint = getCell('vapor-data-block-ifr-native-paint');
+    // native-paint is the engine rung — N/A on web; code-paint runs here.
+    expect(nativePaint?.engineNaOnWeb).toBe(true);
+    expect(codePaint?.engineNaOnWeb).toBeFalsy();
+    // Durable tree stays data/block; only the ephemeral paint differs.
+    expect(codePaint?.staging).toBe('data');
+    expect(codePaint?.naming).toBe('block');
+    expect(codePaint?.term).toBe('Data-Template');
+    expect(codePaint?.ifrPaint).toBe('code-paint');
+    expect(codePaint?.providers).toEqual(['bts', 'mts']);
+    expect(codePaint?.lifetimes).toEqual(['persistent', 'ephemeral']);
+    expect(codePaint?.delivery).toBe('runtime');
+    expect(codePaint?.status).toBe('probe');
+    expect(codePaint?.coordinate).toBe(
+      'data/block/traversal+recover/BTS+MTS/persistent+ephemeral/runtime(code-paint)',
+    );
   });
 
   it('uses the unified mechanism terms', () => {

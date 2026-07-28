@@ -135,6 +135,8 @@ const FCP_ARCH_KEYS = [
   { key: 'vapor-ifr', color: '#d97706' },
   { key: 'vapor-engine', color: '#0d8a5f' },
   { key: 'vapor-ifr-engine-et', color: '#92400e' },
+  // code-paint (#340) renders a real measured number, unlike the engine cells.
+  { key: 'vapor-ifr-code-paint', color: '#db2777' },
   { key: 'react', color: '#eda100' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
@@ -852,6 +854,9 @@ function graphEngFactorsSection(t) {
     '+ifr effect (vdom)': ['vdom', 'vdom-ifr'],
     '+ifr effect (vapor +b)': ['vapor', 'vapor-ifr'],
     '+ifr:e paint effect (N/A)': ['vapor-ifr', 'vapor-ifr-engine-et'],
+    // #340: ephemeral Code-Template paint vs inherited data/block paint. This
+    // one is measured (no engine/native in the name → NOT filtered out).
+    '+ifr:c paint effect': ['vapor-ifr', 'vapor-ifr-code-paint'],
   };
 
   const fcpDelta = (a, b, scale, cpu) => {
@@ -965,7 +970,8 @@ function graphEngFactorsSection(t) {
         ['<code>+b:e</code>', 'staging 升到 <b>engine</b> 档：模板常驻引擎（<code>__CreateElementTemplate</code> 家族），native clone。作用于 <b>persistent 本体树</b>。本环境（Lynx for Web）无该 PAPI → N/A。'],
         ['<i>delivery</i>', '（第六列性质）residual 何时到 MT：<code>runtime</code> = 运行期过线（vapor +b 的 data 现状与 native）；<code>bundle</code> = 构建期编进 MT bundle（vdom 的 code、RL Snapshot、vapor 的 <code>+b!</code> 与 <code>+b:c</code>）。<code>+b!</code> 是唯一在其他五列全部不动的前提下单独翻转 delivery 的格——纯 delivery 因子的单列读数。'],
         ['<code>+ifr</code>', 'IFR：MTS 抢跑 <b>ephemeral</b> 首帧副本，BG 启动后 hydration 采纳或整体重放。paint 参数缺省 = 首帧继承本体 staging。'],
-        ['<code>+ifr:e</code>', '仅<b>首帧副本</b>用 engine 档画（旧名 engine-et）；本体树照常。区别于 <code>+b:e</code>（全程）。本环境 N/A。同理 <code>+ifr:c</code>（旧名 disposable-et）。'],
+        ['<code>+ifr:e</code>', '仅<b>首帧副本</b>用 engine 档画（旧名 engine-et）；本体树照常。区别于 <code>+b:e</code>（全程）。本环境 N/A。'],
+        ['<code>+ifr:c</code>', '仅<b>首帧副本</b>用 <b>code</b> 档画（#340）：ephemeral 首帧跑运行期编译的 Code-Template <code>create()</code> executor，本体树仍是 data/block（旧名 disposable-et）。区别于 <code>+b:c</code>（全程、构建期烘焙）。与 <code>+ifr:e</code> 不同，本环境<b>可测真值</b>（不再 N/A）——读数见 <code>+ifr:c paint effect</code> 行与对应结论卡。'],
       ]
       : [
         ['<code>baseline</code>', 'per-node addressing — plainest and safest: every node named independently, no metadata, no validation. <code>vdom</code> = op stream; <code>vapor</code> = named tree.'],
@@ -975,7 +981,8 @@ function graphEngFactorsSection(t) {
         ['<code>+b:e</code>', 'staging raised to the <b>engine</b> rung: templates live in the engine (<code>__CreateElementTemplate</code> family), native clone. Applies to the <b>persistent tree</b>. N/A on this host (Lynx for Web has no such PAPI).'],
         ['<i>delivery</i>', '(sixth property column) when the residual reaches the MT: <code>runtime</code> = shipped over the wire (vapor +b\'s data today, and native); <code>bundle</code> = compiled into the MT bundle at build (vdom\'s code, RL Snapshot, vapor\'s <code>+b!</code> and <code>+b:c</code>). <code>+b!</code> is the one cell that flips Delivery with every other column held fixed — the pure single-column delivery read.'],
         ['<code>+ifr</code>', 'IFR: the MTS paints an <b>ephemeral</b> first-frame copy; on BG boot, hydration adopts it or replays in full. The paint parameter defaults to inheriting the persistent tree\'s staging.'],
-        ['<code>+ifr:e</code>', 'ONLY the first-frame copy is painted at the engine rung (legacy name engine-et); the persistent tree is unchanged. Distinct from <code>+b:e</code> (whole lifetime). N/A on this host. Likewise <code>+ifr:c</code> (legacy disposable-et).'],
+        ['<code>+ifr:e</code>', 'ONLY the first-frame copy is painted at the engine rung (legacy name engine-et); the persistent tree is unchanged. Distinct from <code>+b:e</code> (whole lifetime). N/A on this host.'],
+        ['<code>+ifr:c</code>', 'ONLY the first-frame copy is painted at the <b>code</b> rung (#340): the ephemeral frame runs a Code-Template <code>create()</code> executor compiled at RUNTIME on the MT, while the persistent tree stays data/block (legacy name disposable-et). Distinct from <code>+b:c</code> (whole lifetime, baked at build). Unlike <code>+ifr:e</code> this is <b>measured on this host</b> (no longer N/A) — see the <code>+ifr:c paint effect</code> row and its takeaway card.'],
       ];
     let html = `<h3 style="font-size:13.5px;margin:14px 0 6px">${
       zhT ? '优化 flag 图例（cell 名 = 基线 × flag 堆叠，与因子归因一一对应）' : 'Flag legend (cell name = baseline × stacked flags, matching factor attribution one-to-one)'
@@ -988,8 +995,8 @@ function graphEngFactorsSection(t) {
     html += '</tbody></table>';
     html += `<p class="sub" style="margin-top:8px">${
       zhT
-        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b（默认）、<code>vapor-dense</code>=vapor 基线、<code>vapor-bang</code>=vapor +b!、<code>vapor-code</code>=vapor +b:c、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e）。<code>vapor-ifr-sparse</code> 是 vapor +b +ifr 的同坐标复测样本，已从显示中省略（数据保留在 JSON）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
-        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b (default), <code>vapor-dense</code>=vapor baseline, <code>vapor-bang</code>=vapor +b!, <code>vapor-code</code>=vapor +b:c, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e). <code>vapor-ifr-sparse</code> is a same-coordinate replicate of vapor +b +ifr, omitted from display (data retained in JSON). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
+        ? '数据文件仍使用 legacy key（映射：<code>vdom-et</code>=vdom +b、<code>vapor</code>=vapor +b（默认）、<code>vapor-dense</code>=vapor 基线、<code>vapor-bang</code>=vapor +b!、<code>vapor-code</code>=vapor +b:c、<code>vapor-ifr-dense</code>=vapor +ifr、<code>vapor-engine</code>=+b:e、<code>vapor-ifr-engine-et</code>=+ifr:e、<code>vapor-ifr-code-paint</code>=+ifr:c）。<code>vapor-ifr-sparse</code> 是 vapor +b +ifr 的同坐标复测样本，已从显示中省略（数据保留在 JSON）。机制层术语（Named Tree / Tree-Template / Code-Template / Engine-Template）与五轴坐标见 GRAPH-ENG-REPORT.md。'
+        : 'Data files keep legacy keys (mapping: <code>vdom-et</code>=vdom +b, <code>vapor</code>=vapor +b (default), <code>vapor-dense</code>=vapor baseline, <code>vapor-bang</code>=vapor +b!, <code>vapor-code</code>=vapor +b:c, <code>vapor-ifr-dense</code>=vapor +ifr, <code>vapor-engine</code>=+b:e, <code>vapor-ifr-engine-et</code>=+ifr:e, <code>vapor-ifr-code-paint</code>=+ifr:c). <code>vapor-ifr-sparse</code> is a same-coordinate replicate of vapor +b +ifr, omitted from display (data retained in JSON). Mechanism terms (Named Tree / Tree-Template / Code-Template / Engine-Template) and the five-axis coordinates live in GRAPH-ENG-REPORT.md.'
     }</p>`;
     return html;
   };
@@ -1065,6 +1072,36 @@ ${fcpFactorsBlock()}
           ]]
           : []),
       ];
+    // #340 code-paint verdict — content-probe FCP main-effect vs plain
+    // `vapor +b +ifr`, computed straight from the measured cells over the
+    // whole ladder (negative = ephemeral Code-Template paint is faster). The
+    // card self-activates once the code-paint cell has data on this host.
+    const ifrcDelta = (scale, cpu) => {
+      const plain = cellMetric('vapor-ifr', scale, 'fcp', cpu);
+      const cp = cellMetric('vapor-ifr-code-paint', scale, 'fcp', cpu);
+      if (plain == null || cp == null) return null;
+      return +(((cp - plain) / plain) * 100).toFixed(1);
+    };
+    const ifrc1 = FCP_SCALES.map((s) => ifrcDelta(s, 1)).filter((v) => v != null);
+    const ifrc4 = FCP_SCALES_X4.map((s) => ifrcDelta(s, 4)).filter((v) => v != null);
+    const ifrcVals = [...ifrc1, ...ifrc4];
+    if (ifrcVals.length) {
+      const mean = +(ifrcVals.reduce((a, b) => a + b, 0) / ifrcVals.length).toFixed(1);
+      // ±10% is the report's stated FCP noise band; a mean inside it is a wash.
+      const word = mean < -10
+        ? (zhT ? '更快' : 'faster')
+        : mean > 10
+          ? (zhT ? '更慢' : 'slower')
+          : (zhT ? '在噪声内打平' : 'a wash');
+      const range = (arr) => arr.length
+        ? `${fmtP(Math.min(...arr))}…${fmtP(Math.max(...arr))}`
+        : '—';
+      items.push([
+        zhT
+          ? `<b>+ifr:c（code-paint，#340）首帧${word}。</b>用运行期编译的 Code-Template <code>create()</code> executor 画 ephemeral 首帧（本体树仍 data/block）。content-probe FCP 相对 plain <code>vapor +b +ifr</code>：×1 ${range(ifrc1)}，×4 ${range(ifrc4)}，均值 ${fmtP(mean)}——见 <code>+ifr:c paint effect</code> 行。机理与 +b:c 的 storms 结论一致：单次 ephemeral 物化由 PAPI 建元素主导（两种 paint 完全相同），code 档只省掉 data 档每节点的解释走查，占首帧成本很小。与 <code>+ifr:e</code> 不同，这是<b>真值</b>（Code-Template 在 web 上真的会跑）。`
+          : `<b>+ifr:c (code-paint, #340) is ${word} on the first frame.</b> Painting the ephemeral IFR copy through a runtime-compiled Code-Template <code>create()</code> executor (durable tree stays data/block) moves content-probe FCP vs plain <code>vapor +b +ifr</code> by ×1 ${range(ifrc1)}, ×4 ${range(ifrc4)}, mean ${fmtP(mean)} — see the <code>+ifr:c paint effect</code> row. The mechanism matches the +b:c storms verdict: a single ephemeral instantiation is dominated by PAPI element creation (identical in both paints); the code rung only removes the per-node interpreter walk, a small fraction of first-frame cost. Unlike <code>+ifr:e</code> this is a <b>real</b> measurement — the Code-Template executor runs on web.`,
+      ]);
+    }
     // Compact cards (bold takeaway + small detail) so the key point is
     // scannable and sits next to the factor charts, not in one far-away wall.
     const cards = items.map(([html]) => {
