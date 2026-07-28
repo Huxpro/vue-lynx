@@ -62,63 +62,78 @@ comparators are the **`+IFR` cells**, not the plain ones.
 
 ## Results
 
-Chromium (Playwright) + `@lynx-js/web-core`, medians; startup n=9,
-mount-create n=7. Measured on this branch's base (`vapor` @ `41c894a`) —
-the Vue cells were re-measured after that branch's rebase, so every number
-below comes from one run on one host.
+Chromium (Playwright) + `@lynx-js/web-core`, medians; startup n=11,
+mount-create n=9, mode order rotated per rep. Measured on this branch's base
+(`vapor` @ `7fe932b`) — the Vue cells were re-measured after each of that
+branch's moves, so every number below comes from one run on one host.
 
 ### Startup — empty app, attach → first content
 
-| cell | median |
-|---|---|
-| **octane** | **92.6 ms** |
-| vapor +ifr | 101.0 ms |
-| vdom +ifr | 111.0 ms |
-| vdom | 115.3 ms |
-| vapor | 121.5 ms |
+| cell | median | min–max |
+|---|---|---|
+| **octane** | **84.9 ms** | 71.9–103.0 |
+| vdom +ifr | 97.0 ms | 84.0–104.6 |
+| vapor +ifr | 97.0 ms | 79.5–118.6 |
+| vapor | 111.5 ms | 100.8–125.1 |
+| vdom | 113.2 ms | 100.6–122.2 |
+
+**Read this one with care.** The per-sample ranges overlap, and across the
+four runs this branch went through, Octane placed first three times and
+third once (behind both `+IFR` cells). The honest statement is that Octane
+is *at the front of the `+IFR` band* on an empty first screen, not that it
+beats it by a fixed margin. The run that placed it third used a
+mode-major loop; the runner now rotates mode order per rep, like the
+scenario loop already did.
 
 ### Mount-create — attach → N rows painted (includes framework boot)
 
 | cell | 1k | 10k |
 |---|---|---|
-| vdom | 284 ms | 1956 ms |
-| vdom +ifr | 247 ms | 2287 ms |
-| vapor | 334 ms | 2027 ms |
-| vapor +ifr | 276 ms | 2495 ms |
-| **octane** | **455 ms** | **3333 ms** |
+| vdom | 301 ms | 1919 ms |
+| vdom +ifr | 254 ms | 2226 ms |
+| vapor | 313 ms | 2096 ms |
+| vapor +ifr | 270 ms | 2415 ms |
+| **octane** | **471 ms** | **3460 ms** |
+
+This one is not close and did not move across any run: Octane is
+1.5–1.9× the Vue cells at 1k and 1.4–1.8× at 10k.
 
 ### Bundle size (raw / gzip)
 
 | cell | web | lynx (MT) |
 |---|---|---|
-| vdom | 111.9K / 39.1K | 115.1K / 47.1K |
-| vapor | 135.0K / 46.1K | 138.0K / 53.9K |
-| vdom +ifr | 226.3K / 78.7K | 255.9K / 110.5K |
-| vapor +ifr | 255.3K / 86.9K | 290.4K / 127.0K |
+| vdom | 114.4K / 39.9K | 118.3K / 48.4K |
+| vapor | 137.5K / 46.9K | 141.1K / 55.3K |
+| vdom +ifr | 228.7K / 79.4K | 259.0K / 111.9K |
+| vapor +ifr | 257.7K / 87.7K | 293.5K / 128.4K |
 | **octane** | **359.7K / 95.9K** | **357.1K / 117.9K** |
 
 The base branch has since grown faster staging cells (`+b:c` /
-`vapor-code`, `+b!` / `vapor-bang`). They are not in the table above — the
-comparison is deliberately held to the cells Octane can be read against
-without extra flags, and adding them only widens the gap.
+`vapor-code`, `+b!` / `vapor-bang`, `+ifr:c` / `vapor-ifr-code-paint`).
+They are not in the tables above — the comparison is deliberately held to
+the cells Octane can be read against without extra flags, and adding them
+only widens the gap.
 
 ## Reading
 
-- **Empty first screen is Octane's best result.** It beats every Vue cell
-  including `+IFR`, which is what its architecture predicts: the main-thread
+- **Empty first screen is Octane's best result** — it lands at the front of
+  the `+IFR` band, which is what its architecture predicts: the main-thread
   bundle carries a purpose-built render-only renderer (`main-renderer.ts`)
-  instead of a second copy of the framework runtime.
+  instead of a second copy of the framework runtime. The margin over the Vue
+  `+IFR` cells is small enough to move between runs (see the caveat above);
+  the margin over the *non*-IFR cells is not.
 - **That advantage inverts as soon as the first screen has content.** At 1k
-  rows Octane is 1.4–1.8× the Vue cells; at 10k, 1.3–1.7×. The per-node object
+  rows Octane is 1.5–1.9× the Vue cells; at 10k, 1.4–1.8× — a gap that held
+  across every run, unlike the startup ordering. The per-node object
   command protocol (`{op,id,type,props}` through structured clone) has no
   template/tree registration to amortize it, where the Vue cells collapse
   repeated structure into `INSTANTIATE_TEMPLATE` / `REGISTER_TREE`+`CLONE_TREE`.
 - **Note the Vue IFR crossover**: `+IFR` wins at 1k and *loses* at 10k
-  (2287/2495 vs 1956/2027). Painting twice stops paying off once the first
+  (2226/2415 vs 1919/2096). Painting twice stops paying off once the first
   screen is large — the same double-render Octane performs unconditionally.
 - **Bundle**: one Octane bundle carries both graphs, so it is roughly the size
   of a Vue `+IFR` build and ~3× a plain Vue build. Gzipped it is actually
   slightly *better* than `vapor +ifr` on the main-thread side (117.9K vs
-  127.0K).
+  128.4K).
 
 Interaction numbers cannot be added until Octane closes its native event loop.

@@ -977,13 +977,17 @@ async function runMountCreateSuite(browser) {
   for (const n of sizes) {
     DIST_SUFFIX = `-rows${n}`;
     out[n] = {};
-    for (const mode of MODES) {
-      const samples = [];
-      for (let i = 0; i < reps; i++) {
+    const bySize = Object.fromEntries(MODES.map((m) => [m, []]));
+    for (let i = 0; i < reps; i++) {
+      for (let k = 0; k < MODES.length; k++) {
+        const mode = MODES[(k + i) % MODES.length];
         const { ms, errors } = await runMountCreate(browser, mode, n);
-        samples.push(ms);
+        bySize[mode].push(ms);
         if (errors.length) console.log(`[mount-create] ${mode} errors:`, errors.slice(0, 2));
       }
+    }
+    for (const mode of MODES) {
+      const samples = bySize[mode];
       out[n][mode] = { ...stats(samples), samples };
       console.log(
         `[mount-create] rows=${n} ${mode}: median ${stats(samples).median.toFixed(1)}ms`
@@ -1001,12 +1005,19 @@ async function runMountCreateSuite(browser) {
 }
 
 async function runStartupOnly(browser) {
+  const samplesByMode = Object.fromEntries(MODES.map((m) => [m, []]));
+  // Rotate mode order across reps so thermal / JIT drift is spread evenly
+  // instead of landing entirely on whichever mode runs last — same reason
+  // the scenario loop below rotates.
+  for (let i = 0; i < STARTUP_COUNT; i++) {
+    for (let k = 0; k < MODES.length; k++) {
+      const mode = MODES[(k + i) % MODES.length];
+      samplesByMode[mode].push(await runStartupLoad(browser, mode));
+    }
+  }
   const out = {};
   for (const mode of MODES) {
-    const samples = [];
-    for (let i = 0; i < STARTUP_COUNT; i++) {
-      samples.push(await runStartupLoad(browser, mode));
-    }
+    const samples = samplesByMode[mode];
     out[mode] = { ...stats(samples), samples };
     console.log(`[startup] ${mode}: median ${stats(samples).median.toFixed(1)}ms`);
   }
