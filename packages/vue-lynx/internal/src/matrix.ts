@@ -313,6 +313,20 @@ export function legalCells(): MatrixCell[] {
       ifr: true,
       ifrPaint: 'native-paint',
     }),
+    // `+ifr:c` code-paint (#340): durable tree stays data/block, but the
+    // ephemeral IFR first frame is painted via a runtime-compiled
+    // Code-Template create() — the web-MEASURABLE sibling of native-paint
+    // (NOT engineNaOnWeb). Probe: educational negative result expected on
+    // web (create is PAPI-bound, not interpretation-bound).
+    C({
+      id: 'vapor-data-block-ifr-code-paint',
+      legacyId: 'vapor-ifr-code-paint',
+      render: 'vapor',
+      staging: 'data',
+      naming: 'block',
+      ifr: true,
+      ifrPaint: 'code-paint',
+    }),
     // `+b!` (#338): identical to vapor-data-block except the Delivery column
     // — the structure AST is baked into the MT bundle (REGISTER_TREE_BUNDLE).
     // Probe pending a productization decision (b2 sweep: create −5.8…+2.1%,

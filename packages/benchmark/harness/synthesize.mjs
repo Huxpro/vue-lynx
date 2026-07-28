@@ -294,7 +294,7 @@ function parseIfrName(name) {
   if (!name) return {};
   // Longer arch ids first (vapor-ifr-dense before vapor-ifr before vapor).
   const archAlt =
-    'vapor-ifr-engine-et|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vapor-bang|vapor-code|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
+    'vapor-ifr-engine-et|vapor-ifr-code-paint|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vapor-bang|vapor-code|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
   // Strip bundle suffix once so both @scale and fixed-size forms match
   // (graph-eng FCP rows use `bundle: content-vapor-ifr-dense.web.bundle`).
   const base = String(name).replace(/\.web\.bundle$/, '');
@@ -428,6 +428,7 @@ const UNIFIED_ARCH_BY_CELL = {
   'vue-vapor-ifr-dense': 'vapor-ifr-dense',
   'vue-vapor-ifr-sparse': 'vapor-ifr-sparse',
   'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
+  'vue-vapor-ifr-code-paint': 'vapor-ifr-code-paint',
   react: 'react',
 };
 

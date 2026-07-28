@@ -158,6 +158,18 @@ export const ARCHITECTURES = [
     tableApp: 'ui-vapor',
   },
   {
+    // ifrPaint 'code-paint' (#340) — compiled Code-Template ephemeral paint;
+    // runs for real on web, unlike the engine-et stub.
+    id: 'vapor-ifr-code-paint',
+    family: 'vue-vapor',
+    ifr: true,
+    et: false,
+    sparse: true,
+    label: 'Vue Vapor+IFR code-paint',
+    tableDist: 'ui-vapor/dist-ifr-code-paint',
+    tableApp: 'ui-vapor',
+  },
+  {
     id: 'react',
     family: 'reactlynx',
     ifr: null,

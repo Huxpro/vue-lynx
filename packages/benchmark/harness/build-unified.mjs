@@ -41,6 +41,7 @@ const VUE_CELLS = [
   { id: 'vapor-ifr-dense', app: 'ui-vapor', cell: 'ifr-dense' },
   { id: 'vapor-ifr-sparse', app: 'ui-vapor', cell: 'ifr-sparse' },
   { id: 'vapor-ifr-engine-et', app: 'ui-vapor', cell: 'ifr-engine-et' },
+  { id: 'vapor-ifr-code-paint', app: 'ui-vapor', cell: 'ifr-code-paint' },
 ];
 
 export function buildVueMatrix(filter = null) {
