@@ -1,10 +1,11 @@
 /* ---------------------------------------------------------------------------
- * Vapor mode nav teaser — a petite VDOM/Vapor switch that is really a link to
- * the Vapor preview build, plus a ⓘ popover explaining where Vapor lives.
- * Mirrors the switch shipped in the `vapor` branch site's nav.
+ * Vapor mode nav pointer — a gradient-outlined pill that opens the Vapor
+ * preview build in a new tab, plus a ⓘ popover explaining where Vapor lives.
+ * Intentionally not switch-shaped: Vapor is a separate deployment, not an
+ * in-place mode, so the affordance reads as "leave for another site".
  * ------------------------------------------------------------------------- */
 
-/* Homepage brand gradient, reused for the "flipped to Vapor" preview state. */
+/* Homepage brand gradient, used for the pill's outline and its hover fill. */
 @mixin vapor-nav-gradient {
   background-image: linear-gradient(
     270deg,
@@ -32,116 +33,112 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: var(--rp-c-text-2);
-  font-size: 12px;
   line-height: 1;
   white-space: nowrap;
 }
 
-.vapor-nav-link__switch {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.vapor-nav-link__switch:focus-visible {
-  outline: 2px solid var(--rp-c-brand);
-  outline-offset: 2px;
-  border-radius: 999px;
-}
-
-.vapor-nav-link__track {
+/* The pill itself. The gradient lives on the element and is masked down to a
+   1px ring, so the resting state is an outline and hover fills it in. */
+.vapor-nav-link__pill {
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 62px;
-  height: 22px;
-  flex: none;
+  gap: 5px;
+  padding: 5px 9px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
-  box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
-  transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
+  /* Keeps the hover-fill pseudo-element (z-index: -1) behind the pill's own
+     content but in front of whatever the nav paints underneath. */
+  isolation: isolate;
+  color: color-mix(in srgb, var(--major-brand-color) 82%, var(--rp-c-text-1));
+  text-decoration: none;
+  transition: color 200ms ease-out, transform 200ms ease-out;
 }
 
-/* Mode names sit in the free half of the track and cross-fade, so the knob's
-   motion and the label swap can never nudge the surrounding nav layout. */
-.vapor-nav-link__mode {
+/* Gradient ring, drawn as a masked pseudo-element so it can animate and
+   thicken independently of the pill's own background. */
+.vapor-nav-link__pill::before {
+  content: '';
   position: absolute;
-  top: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: opacity 200ms ease-out, color 200ms ease-out;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  opacity: 0.75;
+  transition: opacity 200ms ease-out;
+
+  @include vapor-nav-gradient;
 }
 
-.vapor-nav-link__mode--off {
-  right: 11px;
-  left: 27px;
-  color: var(--rp-c-text-2);
-}
-
-.vapor-nav-link__mode--on {
-  right: 27px;
-  left: 11px;
-  color: #fff;
+/* Hover/focus fills the pill — a small "you're heading somewhere else" beat. */
+.vapor-nav-link__pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
   opacity: 0;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
+  transition: opacity 200ms ease-out;
+
+  @include vapor-nav-gradient;
 }
 
-.vapor-nav-link__knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 25%);
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+.vapor-nav-link__pill:hover,
+.vapor-nav-link__pill:focus-visible {
+  color: #fff;
 }
 
-/* Hover/focus previews the flip: the switch slides to Vapor and lights up
-   with the brand gradient — a hint of what the destination site looks like. */
-@mixin vapor-nav-flipped {
-  .vapor-nav-link__track {
-    @include vapor-nav-gradient;
-
-    box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
-  }
-
-  .vapor-nav-link__mode--off {
-    opacity: 0;
-  }
-
-  .vapor-nav-link__mode--on {
-    opacity: 1;
-  }
-
-  .vapor-nav-link__knob {
-    transform: translateX(40px);
-  }
+.vapor-nav-link__pill:hover::before,
+.vapor-nav-link__pill:focus-visible::before {
+  opacity: 0;
 }
 
-@media (hover: hover) {
-  .vapor-nav-link__switch:hover {
-    @include vapor-nav-flipped;
-  }
+.vapor-nav-link__pill:hover::after,
+.vapor-nav-link__pill:focus-visible::after {
+  opacity: 1;
 }
 
-.vapor-nav-link__switch:focus-visible {
-  @include vapor-nav-flipped;
+.vapor-nav-link__pill:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+/* Two-line stack: the mode name, and under it the reminder that this is a
+   different deployment. */
+.vapor-nav-link__text {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vapor-nav-link__label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.vapor-nav-link__tag {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+/* The ↗ nudges outward on hover — the universal "opens elsewhere" cue. */
+.vapor-nav-link__arrow {
+  flex: none;
+  transition: transform 200ms ease-out;
+}
+
+.vapor-nav-link__pill:hover .vapor-nav-link__arrow,
+.vapor-nav-link__pill:focus-visible .vapor-nav-link__arrow {
+  transform: translate(1px, -1px);
 }
 
 /* ---------------------------------------------------------------------------
@@ -240,35 +237,34 @@
  * Responsive / input adjustments
  * ------------------------------------------------------------------------- */
 
-/* Touch: pad the hit area invisibly — the control stays petite. */
-@media (pointer: coarse) {
-  .vapor-nav-link__switch {
-    padding: 8px 2px;
-  }
-}
-
 /* Narrow viewports: the nav collapses into the hamburger menu, so drop the
-   teaser rather than crowding the logo. */
-@media (max-width: 640px) {
+   pointer rather than crowding the logo. */
+@media (max-width: 720px) {
   .vapor-nav-link {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vapor-nav-link__mode,
-  .vapor-nav-link__track,
-  .vapor-nav-link__knob {
+  .vapor-nav-link__pill,
+  .vapor-nav-link__pill::before,
+  .vapor-nav-link__pill::after,
+  .vapor-nav-link__arrow {
     transition: none;
   }
 
-  .vapor-nav-link__switch:hover .vapor-nav-link__track,
-  .vapor-nav-link__switch:focus-visible .vapor-nav-link__track {
+  .vapor-nav-link__pill::before,
+  .vapor-nav-link__pill::after {
     animation: none;
     background-image: linear-gradient(
       135deg,
       var(--major-brand-color),
       var(--gradient-brand-color)
     );
+  }
+
+  .vapor-nav-link__pill:hover .vapor-nav-link__arrow,
+  .vapor-nav-link__pill:focus-visible .vapor-nav-link__arrow {
+    transform: none;
   }
 }
