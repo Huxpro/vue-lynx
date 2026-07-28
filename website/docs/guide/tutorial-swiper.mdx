@@ -241,6 +241,12 @@ This is needed because Vue template attribute names don't support colons.
 
 Open LynxExplorer and preview `SwiperMTS` — drag the images and you'll find the swipe responds **instantly** with zero lag. See the complete code in the viewer above.
 
+> [!NOTE]
+> The `SwiperMTS` source in the viewer groups its three touch handlers in an
+> experimental [`<script main>` block](/guide/script-main) instead of
+> repeating the `'main thread'` directive in each one — the semantics are
+> identical; the block compiles into exactly the worklets described above.
+
 ::: details Use Main Thread Script Sparingly
 Only use main thread script when you encounter **latency issues with high-frequency events**. Overuse increases the main thread's burden and can cause jank.
 

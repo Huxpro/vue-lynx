@@ -267,57 +267,19 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 
 ## 实验性：`<script main>` 代码块
 
-给每个函数标注 `'main thread'` 指令虽然可行，但会让线程边界散落在组件各处。作为实验性的替代方案，你可以把组件的所有主线程代码集中到一个专用的 `<script main>` 代码块中：
+作为逐函数标注指令的实验性替代方案，你可以把组件的所有主线程代码集中到一个
+专用的 `<script main>` SFC 代码块中——其中每个顶层函数都会成为主线程函数，
+编译进本页描述的完全相同的 worklet 机制。
 
 ```vue
-<script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useMainThreadRef, runOnMainThread } from 'vue-lynx'
-
-const count = ref(0)
-const boxRef = useMainThreadRef(null)
-
-function incrementCount() {
-  count.value++
-}
-
-watch(count, () => {
-  runOnMainThread(applyColor)('red')
-})
-</script>
-
 <script main lang="ts">
-import { runOnBackground } from 'vue-lynx'
-
-const applyColor = (color: string) => {
-  boxRef.current?.setStyleProperty?.('background-color', color)
-}
-
 const onTap = () => {
-  runOnBackground(incrementCount)()
+  boxRef.current?.setStyleProperty?.('background-color', 'red')
 }
 </script>
 ```
 
-`<script main>` 中的每个顶层函数都会被编译为主线程函数——无需逐个添加指令。该代码块在编译期被降级（lower）为与 `'main thread'` 指令完全相同的 worklet 机制，因此上文所有语义（值捕获、`MainThreadRef`、跨线程调用、共享模块）均保持不变。
-
-代码块规则：
-
-- 顶层的函数声明、`const f = () => {}`、`const f = function () {}` 会成为主线程函数，可以自由引用 `<script setup>` 的绑定（按值捕获，与之前一致）。
-- import 会被合并进组件作用域；两个代码块中重复的 import 说明符会被去重。
-- 其他 `const`/`let` 声明会在**后台线程**求值并被捕获——主线程状态请继续使用 `useMainThreadRef()`。
-- 顶层副作用语句和 `export` 会产生编译错误。
-- 每个组件最多一个 `<script main>`，且其 `lang` 必须与 `<script setup>` 一致。
-
-<Go
-  example="main-thread"
-  defaultEntryFile="dist/script-main-block.lynx.bundle"
-  defaultFile="src/script-main-block/App.vue"
-  entry="src/script-main-block"
-/>
-
-> [!WARNING]
-> 该特性处于实验阶段。编辑器工具链（Volar）尚不理解 `<script main>` 代码块，具体语法也可能根据 [issue #314](https://github.com/Huxpro/vue-lynx/issues/314) 的反馈调整。
+完整语法、语义与迁移指南见 [`<script main>` 代码块](/zh/guide/script-main)。
 
 ## 跨线程共享模块
 

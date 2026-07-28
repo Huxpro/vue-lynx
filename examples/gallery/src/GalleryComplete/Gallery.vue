@@ -14,25 +14,6 @@ declare const SystemInfo: { pixelHeight: number; pixelRatio: number };
 const scrollbarThumbRef = useMainThreadRef(null);
 const listRef = useTemplateRef<ShadowElement>('listRef');
 
-// MTS scrollbar adjuster — runs directly on Main Thread, no thread crossings
-function adjustScrollbarMTS(
-  scrollTop: number,
-  scrollHeight: number,
-  ref: { current?: { setStyleProperty?(k: string, v: string): void } },
-) {
-  'main thread';
-  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48;
-  const scrollbarHeight = listHeight * (listHeight / scrollHeight);
-  const scrollbarTop = listHeight * (scrollTop / scrollHeight);
-  ref.current?.setStyleProperty?.('height', `${scrollbarHeight}px`);
-  ref.current?.setStyleProperty?.('top', `${scrollbarTop}px`);
-}
-
-const onScrollMTS = (event: { detail: { scrollTop: number; scrollHeight: number } }) => {
-  'main thread';
-  adjustScrollbarMTS(event.detail.scrollTop, event.detail.scrollHeight, scrollbarThumbRef);
-};
-
 onMounted(() => {
   nextTick(() => {
     listRef.value
@@ -43,6 +24,28 @@ onMounted(() => {
       .exec();
   });
 });
+</script>
+
+<!-- MTS scrollbar adjuster in the experimental `script main` block: both
+     functions run on the Main Thread (no thread crossings), and main thread
+     functions can call each other — onScrollMTS delegates to
+     adjustScrollbarMTS, exactly as with per-function directives. -->
+<script main lang="ts">
+function adjustScrollbarMTS(
+  scrollTop: number,
+  scrollHeight: number,
+  ref: { current?: { setStyleProperty?(k: string, v: string): void } },
+) {
+  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48;
+  const scrollbarHeight = listHeight * (listHeight / scrollHeight);
+  const scrollbarTop = listHeight * (scrollTop / scrollHeight);
+  ref.current?.setStyleProperty?.('height', `${scrollbarHeight}px`);
+  ref.current?.setStyleProperty?.('top', `${scrollbarTop}px`);
+}
+
+const onScrollMTS = (event: { detail: { scrollTop: number; scrollHeight: number } }) => {
+  adjustScrollbarMTS(event.detail.scrollTop, event.detail.scrollHeight, scrollbarThumbRef);
+};
 </script>
 
 <template>
