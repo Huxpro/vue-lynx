@@ -265,6 +265,75 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 </template>
 ```
 
+## Experimental: The `<script main>` Block
+
+Marking every function with a `'main thread'` directive works, but it scatters
+the thread boundary across the component. As an experimental alternative, you
+can group all main-thread code of a component into a dedicated `<script main>`
+block:
+
+```vue
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useMainThreadRef, runOnMainThread } from 'vue-lynx'
+
+const count = ref(0)
+const boxRef = useMainThreadRef(null)
+
+function incrementCount() {
+  count.value++
+}
+
+watch(count, () => {
+  runOnMainThread(applyColor)('red')
+})
+</script>
+
+<script main lang="ts">
+import { runOnBackground } from 'vue-lynx'
+
+const applyColor = (color: string) => {
+  boxRef.current?.setStyleProperty?.('background-color', color)
+}
+
+const onTap = () => {
+  runOnBackground(incrementCount)()
+}
+</script>
+```
+
+Every top-level function in `<script main>` is compiled as a main thread
+function — no per-function directive needed. The block is lowered at compile
+time into the exact same worklet machinery as the `'main thread'` directive,
+so all the semantics above (value capture, `MainThreadRef`, cross-thread
+calls, shared modules) apply unchanged.
+
+Rules of the block:
+
+- Function declarations, `const f = () => {}`, and `const f = function () {}`
+  at the top level become main thread functions. They may freely reference
+  `<script setup>` bindings (captured by value, as usual).
+- Imports are merged into the component scope; specifiers duplicated across
+  both blocks are deduplicated.
+- Other `const`/`let` declarations are evaluated on the **background** thread
+  and captured — use `useMainThreadRef()` for main-thread state, exactly as
+  before.
+- Top-level side effects and `export`s are compile errors.
+- At most one `<script main>` per component, and its `lang` must match
+  `<script setup>`.
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/script-main-block.lynx.bundle"
+  defaultFile="src/script-main-block/App.vue"
+  entry="src/script-main-block"
+/>
+
+> [!WARNING]
+> This feature is experimental. Editor tooling (Volar) does not yet understand
+> the `<script main>` block, and the exact syntax may change based on
+> feedback in [issue #314](https://github.com/Huxpro/vue-lynx/issues/314).
+
 ## Cross-Thread Shared Modules
 
 By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult.
