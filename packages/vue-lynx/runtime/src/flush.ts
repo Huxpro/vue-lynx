@@ -4,6 +4,8 @@
 
 import { queuePostFlushCb } from '@vue/runtime-core';
 
+import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
+
 import { isIfrEnabled, isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
 
@@ -119,7 +121,11 @@ export function createFlushAck(
     }
     fulfill();
   };
-  if (timeoutMs !== null) {
+  // Some realms have no timers (the IFR MT Lepus realm stubs them; minimal
+  // BG test realms omit them). Without setTimeout the fallback cannot be
+  // armed — acks then settle only via the engine callback or a test reset,
+  // which is the strict pre-fallback behavior.
+  if (timeoutMs !== null && typeof setTimeout === 'function') {
     timer = setTimeout(() => {
       if (settled) return;
       onTimeout?.();
@@ -151,6 +157,8 @@ export function resetFlushState(): void {
   pendingAckPromise = null;
   inFlightAcks = 0;
   initialRenderCompletionRequested = false;
+  engineAckObserved = false;
+  warnedAckFallback = false;
 }
 
 function doFlush(): void {
@@ -180,7 +188,7 @@ function doFlush(): void {
   // its ops locally; no IPC acknowledgement can exist on this path.
   if (isIfrMainThread()) {
     const applyLocal = (globalThis as Record<string, unknown>)[
-      '__vueLynxIfrApplyOps'
+      IFR_APPLY_OPS_GLOBAL
     ] as ((value: unknown[]) => void) | undefined;
     if (applyLocal) {
       applyLocal(ops);
@@ -191,20 +199,6 @@ function doFlush(): void {
     }
     deliverInitialRenderCompletion();
     return;
-  }
-
-  // IFR main-thread render: the Vue app is running *on* the main thread, so
-  // ops are applied locally and synchronously — no cross-thread call, no ack
-  // tracking needed.  The hook is installed by vue-lynx/main-thread's IFR
-  // bootstrap (enableIFR) before user code evaluates.
-  if (isIfrMainThread()) {
-    const applyLocal = (globalThis as Record<string, unknown>)[
-      IFR_APPLY_OPS_GLOBAL
-    ] as ((ops: unknown[]) => void) | undefined;
-    if (applyLocal) {
-      applyLocal(ops);
-      return;
-    }
   }
 
   // Create the ack promise BEFORE sending so that any `nextTick` call that
@@ -228,6 +222,7 @@ function doFlush(): void {
   );
   pendingAckPromise = ack.promise;
   pendingAckResolve = ack.resolve;
+  inFlightAcks++;
   ack.promise.then(() => {
     // A newer batch may already be in flight by the time an older fallback
     // settles. Only clear the state that belongs to this acknowledgement.
@@ -235,6 +230,12 @@ function doFlush(): void {
       pendingAckResolve = null;
       pendingAckPromise = null;
     }
+    // The in-flight count follows the acknowledgement settle (real callback
+    // OR fallback timer OR test reset), so the IFR initial-render completion
+    // signal can never stall behind an engine that drops callbacks. Clamp:
+    // resetFlushState() zeroes the counter before pending thens run.
+    inFlightAcks = Math.max(0, inFlightAcks - 1);
+    deliverInitialRenderCompletion();
   });
 
   // The local IFR path avoids serialization unless an observability hook
@@ -244,17 +245,15 @@ function doFlush(): void {
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
   // (vitest node env) referencing it directly would throw ReferenceError.
   const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
-  if (app?.callLepusMethod) inFlightAcks++;
   app?.callLepusMethod?.(
     'vuePatchUpdate',
     { data },
     () => {
-      // Main thread has finished applying the ops — resolve the promise.
-      pendingAckResolve?.();
-      pendingAckResolve = null;
-      pendingAckPromise = null;
-      inFlightAcks--;
-      deliverInitialRenderCompletion();
+      // Main thread has finished applying the ops — resolve the promise and
+      // latch that this engine delivers callbacks. State cleanup and the IFR
+      // completion signal run in the ack.promise.then above.
+      engineAckObserved = true;
+      ack.resolve();
     },
   );
 }

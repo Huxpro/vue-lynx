@@ -41,6 +41,7 @@ export default defineConfig({
     exclude: [
       // Requires the jsdom PAPI pipeline — runs under vitest.dom.config.ts.
       path.resolve(__dirname, 'src/mt/**'),
+      path.resolve(__dirname, 'src/page-root-dom.spec.ts'),
     ],
     alias: [
       // vue-lynx/internal/ops → source

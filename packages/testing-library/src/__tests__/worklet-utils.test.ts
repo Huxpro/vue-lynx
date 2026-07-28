@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractImportSpecifiers,
+  extractTemplateRegistrations,
   hasMainThreadDirective,
   stripSharedImportAttributes,
   stripStyleImports,

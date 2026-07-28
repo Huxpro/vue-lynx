@@ -84,15 +84,6 @@ function createTypedElement(
   }
 }
 
-function createCommentAnchor(): LynxElement {
-  const el = __CreateView(pageUniqueId);
-  __SetCSSId([el], 0);
-  // A zero-width node still participates in flex `gap`. Keep anchors fully
-  // out of layout while retaining a concrete node for insertBefore/remove.
-  __SetInlineStyles(el, { display: 'none' });
-  return el;
-}
-
 // ---------------------------------------------------------------------------
 // Template instantiation (Vapor fast path)
 // ---------------------------------------------------------------------------
@@ -184,7 +175,11 @@ function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
     const arity = ARITY[code];
     if (arity === undefined || cursor + arity >= ops.length) return false;
 
-    if (code === OP.CREATE || code === OP.CREATE_TEXT) {
+    if (
+      code === OP.CREATE
+      || code === OP.CREATE_TEXT
+      || code === OP.INSTANTIATE_TEMPLATE
+    ) {
       return elements.has(ops[cursor + 1] as number);
     }
     if (code === OP.REGISTER_TREE || code === OP.REGISTER_TREE_BUNDLE) {
@@ -233,20 +228,18 @@ function instantiateTemplateDense(
   node: TemplateNode,
   base: number,
   counter: { value: number },
-): { el: LynxElement; uid: number } {
+): { el: LynxElement; uid: number } | null {
   const uid = base + counter.value++;
   const [tag, props, children] = node;
 
-  let el: LynxElement;
-  if (tag === '#comment') {
-    el = createCommentAnchor();
-    elements.set(uid, el);
-    return { el, uid };
+  if (tag === '#comment') return null;
+  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
+    return null;
   }
+
+  let el: LynxElement;
   if (tag === '#text') {
     el = __CreateText(pageUniqueId);
-    textElements.add(el);
-    __SetInlineStyles(el, { display: 'none' });
   } else {
     el = createTypedElement(tag, pageUniqueId);
   }
@@ -456,11 +449,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const id = ops[i++] as number;
         const type = ops[i++] as string;
         let el: LynxElement;
-        if (type === '__comment') {
-          // Vue uses comment nodes as Fragment / v-if anchors.
-          // A hidden view remains addressable without affecting flex layout.
-          el = createCommentAnchor();
-        } else if (type === 'list') {
+        if (type === 'list') {
           el = createListElement(id);
         } else {
           // Use typed PAPI creators for known element types.
@@ -479,11 +468,9 @@ export function applyOps(ops: unknown[], flush = true): void {
 
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
+        // The BG thread only creates MT text elements for text with content
+        // (empty text nodes are BG-only anchors), so no hiding is needed.
         const el = __CreateText(pageUniqueId);
-        textElements.add(el);
-        // Vue also uses empty text nodes as Fragment / Teleport anchors.
-        // Hide by default; SET_TEXT makes real text nodes visible.
-        __SetInlineStyles(el, { display: 'none' });
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
@@ -661,12 +648,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const id = ops[i++] as number;
         const text = ops[i++] as string;
         const el = elements.get(id);
-        if (el) {
-          __SetAttribute(el, 'text', text);
-          if (textElements.has(el)) {
-            __SetInlineStyles(el, { display: text === '' ? 'none' : 'flex' });
-          }
-        }
+        if (el) __SetAttribute(el, 'text', text);
         break;
       }
 

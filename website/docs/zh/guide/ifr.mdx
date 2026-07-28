@@ -49,8 +49,8 @@ IFR 不是「任何 harness 里都更快的首帧」。它消掉的是**真实�
 | **怎么快？** | `loadTemplate` 里主线程先画；后台启动重叠。规模上要便宜的 create 路径（ET / Vapor 树）。 |
 | **代价** | 双 bundle · gzip 约 **2×** · 主线程同步工作——见 [IFR 性能数据](/zh/guide/ifr-benchmarks#代价是什么)。 |
 | **架构** | 只有真实线程边界造成的白屏，才能被 IFR 消掉。 |
-| **怎么开** | VDOM：**`enableIFR: true`**（自带 ET）。规模上别裸开 IFR。 |
-| **何时不开** | 响应前无物可画，或未实测就扛不住约 2× gzip。 |
+| **怎么开** | VDOM：**`enableIFR: true`**（自带 ET）。规模上别裸开 IFR。始终 **mount** 出真正外壳——挡住 fetch，不要跳过 `app.mount()`。 |
+| **何时不开** | 响应前无物可画；Web 上大 bundle + 重 CPU 节流（先实测）；或未实测就扛不住约 2× gzip。 |
 
 ---
 
@@ -60,6 +60,8 @@ IFR 不是「任何 harness 里都更快的首帧」。它消掉的是**真实�
 <span id="ifr-on-vapor" />
 <span id="element-templates" />
 <span id="hydration" />
+<span id="编写-ifr-友好的首屏" />
+<span id="writing-ifr-friendly-first-screens" />
 <span id="account-for-current-limitations" />
 
 ## 开启
@@ -82,9 +84,10 @@ export default defineConfig({
 | --- | --- |
 | **Hydration** | 两线程同一应用 + 相同初始数据；结构不一致会丢掉 IFR 收益（开发环境打 log），不影响正确性。 |
 | **首屏约束** | 渲染确定性；副作用放组合式 API 生命周期（主线程抑制）；Options API `mounted()` 尚未抑制。 |
+| **Shell IFR** | fetch 驱动页面仍应 **mount**，并在主线程画出有意义的外壳——用例如 `useQuery({ enabled: !isIfrMainThread() })` 关掉网络请求，而不是整段跳过 `app.mount()`。跳过 mount 只会留下更大的 IFR bundle，却拿不到首屏收益。 |
 | **二分 ET** | `enableIFR: true, enableElementTemplates: false` — 仅调试，不是性能旋钮。 |
 | **Vapor** | 实验性（Vue 3.6 预发布）。见 [Vapor 模式](/zh/guide/vapor-mode#current-limitations)。 |
 
-策略阶梯、代价空间、示例 gzip/TTI、native：
-**[IFR 性能数据](/zh/guide/ifr-benchmarks)** · 产品 FCP：
+策略阶梯、真实线程 FCP、代价空间、示例 gzip/TTI、native：
+**[IFR 性能数据](/zh/guide/ifr-benchmarks)** · 产品 FCP 矩阵：
 **[统一矩阵](/zh/guide/benchmark-unified)**。

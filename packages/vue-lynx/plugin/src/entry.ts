@@ -16,6 +16,10 @@ import {
 } from '@lynx-js/template-webpack-plugin';
 
 import { LAYERS } from './layers.js';
+import {
+  isWorkletPackage,
+  packageNameFromNodeModulesPath,
+} from './loaders/worklet-utils.js';
 import { vueScopeClassCSSPlugin } from './plugins/vue-scope-class-css-plugin.js';
 
 const PLUGIN_TEMPLATE = 'lynx:vue-template';
@@ -204,18 +208,15 @@ export interface ApplyEntryOptions {
   enableCSSInlineVariables?: boolean;
   debugInfoOutside?: boolean;
   /**
-   * IFR: main-thread bundle carries the full Vue runtime + app code.
+   * IFR: main-thread bundle carries the full Vue/Vapor runtime + app code.
    *
-   * Required (not optional): `pluginVueLynx` resolves the defaulting —
-   * including `enableElementTemplates ?? enableIFR` — exactly once; a second
-   * defaulting layer here could silently drift from that rule.
+   * Required: pluginVueLynx resolves defaults once, including
+   * `enableElementTemplates ?? enableIFR`.
    */
   enableIFR: boolean;
   /** Element templates: preserve template registrations on the MT layer. */
   enableElementTemplates: boolean;
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
-  /** IFR: main-thread bundle carries the full Vapor runtime and app code. */
-  enableIFR?: boolean;
   /** Use the pure Vapor runtime entry in generated worklet imports. */
   vapor?: boolean;
   /**
@@ -372,15 +373,29 @@ export function applyEntry(
     // These are sibling directories within the vue-lynx package root.
     const pkgRoot = vueLynxRoot;
     const mainThreadPkgDir = path.resolve(pkgRoot, 'main-thread');
-    const vueInternalPkgDir: string | undefined = path.resolve(pkgRoot, 'internal');
+    const vueInternalPkgDir = path.resolve(pkgRoot, 'internal');
     // IFR follows the full user graph, including vue-lynx/runtime. Library
     // code must pass through unchanged; pnpm resolves it outside node_modules.
-    const runtimePkgDir = path.resolve(pkgRoot, 'runtime');
+    // In non-IFR builds it must still be stripped like ordinary MT modules.
+    const runtimePkgDir = opts.enableIFR
+      ? path.resolve(pkgRoot, 'runtime')
+      : null;
     const workletMtOptions = {
       includeWorkletPackages,
-      ifr: opts.enableIFR ?? false,
+      ifr: opts.enableIFR,
+      elementTemplates: opts.enableElementTemplates,
       vapor: opts.vapor ?? false,
       vaporBundle: opts.vaporBundle,
+    };
+    const isBootstrapModule = (resource: string): boolean => {
+      const resolvedResource = path.resolve(resource);
+      return resolvedResource === mainThreadPkgDir
+        || resolvedResource.startsWith(`${mainThreadPkgDir}${path.sep}`)
+        || resolvedResource === vueInternalPkgDir
+        || resolvedResource.startsWith(`${vueInternalPkgDir}${path.sep}`)
+        || (runtimePkgDir !== null
+          && (resolvedResource === runtimePkgDir
+            || resolvedResource.startsWith(`${runtimePkgDir}${path.sep}`)));
     };
 
     // Vue SFC on MT: vue-loader processes .vue on all layers (no issuerLayer
@@ -411,11 +426,12 @@ export function applyEntry(
       .test(/\.[cm]?[jt]sx?$/)
       .exclude
       .add(nodeModulesExcludeWithAllowlist)
-      .add(mainThreadPkgDir)
-      .add(runtimePkgDir);
-    if (vueInternalPkgDir) {
-      workletMtExclude.add(vueInternalPkgDir);
-    }
+      // A string RuleSet condition is not consistently treated as a directory
+      // prefix across Rspack versions. Match explicitly so the library's
+      // bootstrap and runtime modules (entry-main, internal, and the full
+      // runtime that IFR pulls onto the MT) can never be stripped by
+      // worklet-loader-mt.
+      .add(isBootstrapModule);
     workletMtExclude.end()
       .use('worklet-loader-mt')
       .loader(path.resolve(_dirname, './loaders/worklet-loader-mt'))

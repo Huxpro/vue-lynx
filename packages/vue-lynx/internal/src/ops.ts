@@ -124,16 +124,9 @@ export const OP = {
   SET_WORKLET_EVENT: 11,
   SET_MT_REF: 12,
   INIT_MT_REF: 13,
-  // 14 retired (was SET_SCOPE_ID) — do not reuse. The pre-Vapor lineage
-  // still emits SET_SCOPE_ID=14; on this lineage scoped CSS rides on
-  // classes, and 14 stays retired after the lineages merge.
-  //
-  // 15 reserved for INSTANTIATE_TEMPLATE (VDOM element templates,
-  // enableElementTemplates on the claude/vue-lynx-ifr-optimization-hy6jmy
-  // branch, where it already carries number 15). It arrives via #216 and is
-  // NOT emitted on this lineage yet, so it is intentionally absent from OP
-  // and OP_ARITY here — the number is held so both protocols share one
-  // numbering once the lineages merge.
+  // 14 retired (was SET_SCOPE_ID) — do not reuse. Scoped CSS rides on
+  // classes (scope tokens merge into SET_CLASS / props.c).
+  INSTANTIATE_TEMPLATE: 15,
   REGISTER_TREE: 16,
   CLONE_TREE: 17,
   INSERT_TEMPLATE_SLOT: 18,

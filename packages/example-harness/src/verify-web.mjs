@@ -96,7 +96,12 @@ async function prepareWebsite(rootPath) {
     cwd: rootPath,
     stdio: "inherit",
   });
-  if (!(await exists(output))) {
+  // A stale doc_build silently verifies the WRONG site (it once green-lit a
+  // pre-upgrade go-web build and then red-flagged a healthy one). Reuse is
+  // opt-in only, for pipelines that just built the site themselves (CI does).
+  const reuse = process.env.VUE_LYNX_VERIFY_REUSE_SITE === "1"
+    && (await exists(output));
+  if (!reuse) {
     execFileSync("pnpm", ["--dir", "website", "build"], {
       cwd: rootPath,
       stdio: "inherit",
@@ -436,6 +441,10 @@ async function verifyEntry(browser, origin, row, mode, artifacts) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   const errors = [];
+  const scenario = scenarios[row.scenario];
+  if (!scenario) {
+    throw new Error(`No scenario defined for entry "${row.id}" (scenario key "${row.scenario}")`);
+  }
   page.on("console", (message) => {
     const text = message.text();
     if (
@@ -451,7 +460,10 @@ async function verifyEntry(browser, origin, row, mode, artifacts) {
   );
   page.on("requestfailed", (request) => {
     const errorText = request.failure()?.errorText ?? "unknown";
-    if (isActionableRequestFailure(errorText)) {
+    const allowed = scenario.allowedRequestFailures?.some((pattern) =>
+      pattern.test(request.url()),
+    );
+    if (isActionableRequestFailure(errorText) && !allowed) {
       errors.push(`requestfailed: ${request.url()} (${errorText})`);
     }
   });
@@ -486,7 +498,7 @@ async function verifyEntry(browser, origin, row, mode, artifacts) {
       null,
       { timeout: 20_000 },
     );
-    const checkpoints = await runScenario(page, scenarios[row.scenario]);
+    const checkpoints = await runScenario(page, scenario);
     if (errors.length > 0) throw new Error(errors.join("\n"));
     let visualCapture;
     if (row.vapor.disposition !== "unsupported") {

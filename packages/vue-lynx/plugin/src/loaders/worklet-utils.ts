@@ -4,6 +4,8 @@
 
 import { parse, type ParserPlugin } from '@babel/parser';
 
+import { TPL_REGISTER_GLOBAL } from 'vue-lynx/internal/ops';
+
 interface AstNode {
   end?: number | null;
   start?: number | null;
@@ -317,9 +319,7 @@ export function extractImportSpecifiers(
   source: string,
   /**
    * Keep `?vue&type=template` sub-module imports. Element templates hoist
-   * their registrations into the compiled template module (non-script-setup
-   * SFCs), so the dependency edge must survive on the MT layer for the
-   * loader to extract them.
+   * registrations into compiled template modules for non-script-setup SFCs.
    */
   keepTemplateSubModules = false,
 ): string[] {
@@ -409,23 +409,6 @@ export async function extractLocalImports(
  * TypeScript compilation still applies, so the shared module's code
  * is available as regular JS on the MT layer.
  */
-/** Quick check for the `'main thread'` worklet directive. */
-export function hasMainThreadDirective(source: string): boolean {
-  return source.includes('\'main thread\'')
-    || source.includes('"main thread"');
-}
-
-/**
- * One grammar for `import … from '…' with { … runtime: 'shared' … }`.
- * SWC may reformat the attribute block across multiple lines, hence the
- * [\s\S]*? tolerance. Capture groups: 1 = the plain import statement
- * (through the closing quote), 2 = specifiers, 3 = quote, 4 = module path.
- * Both consumers below derive from this single source so they cannot drift.
- */
-const SHARED_IMPORT_RE_SOURCE =
-  /(import\s+(.+?)\s+from\s+(['"])([^'"]+)\3)\s*with\s*\{[\s\S]*?runtime:\s*['"]shared['"][\s\S]*?\}\s*;?/
-    .source;
-
 export function extractSharedImports(source: string): string {
   const imports: string[] = [];
   for (const node of programBody(parseProgram(source))) {
@@ -544,7 +527,6 @@ export function extractRegistrations(lepusCode: string): string {
     const idx = lepusCode.indexOf(marker, searchFrom);
     if (idx === -1) break;
 
-    // Find the end of the registerWorkletInternal(...) call.
     const close = findBalancedEnd(lepusCode, idx + marker.length - 1);
     if (close === -1) break;
 
@@ -560,56 +542,17 @@ export function extractRegistrations(lepusCode: string): string {
 }
 
 /**
- * Strip `with { runtime: 'shared' }` import attributes, keeping the import.
- *
- * Used in IFR mode where the full module code is kept on the MT layer: the
- * shared-runtime escape hatch (which exists to bypass the stripping
- * loaders) is unnecessary, but the non-standard import attribute must not
- * reach the bundler's parser.
- */
-export function stripSharedImportAttributes(code: string): string {
-  // Cheap prefilter: virtually no module carries the attribute, and the
-  // backtracking regex below is run on every MT-layer module in IFR builds.
-  if (!code.includes('runtime:')) return code;
-  return code.replace(new RegExp(SHARED_IMPORT_RE_SOURCE, 'g'), '$1;');
-}
-
-/**
- * Remove imports of Vue SFC style sub-modules (`?vue&type=style`).
- *
- * Used in IFR mode on the `.vue` connector for the MT layer: the connector
- * passes through mostly untouched (script + template are needed to render
- * the first frame), but CSS is already extracted from the background layer —
- * processing style sub-modules again on the MT layer would duplicate it.
- *
- * CSS-Modules styles (`<style module>`) bind a default import that the
- * connector references (`cssModules["$style"] = style0`); dropping the
- * import must therefore leave a placeholder binding. The main-thread first
- * frame renders CSS-Modules class names as undefined and hydration patches
- * the real hashed names in — a known IFR limitation until the modules
- * mapping is routed to the MT layer.
- */
-export function stripStyleImports(code: string): string {
-  return code
-    .split('\n')
-    .map((line) => {
-      if (!(/^\s*import\b/.test(line) && line.includes('type=style'))) {
-        return line;
-      }
-      const bound = line.match(/^\s*import\s+(\w+)\s+from\b/);
-      return bound ? `const ${bound[1]} = {};` : null;
-    })
-    .filter((line) => line !== null)
-    .join('\n');
-}
-
-/**
  * Extract element-template registrations from a compiled render module.
  *
- * The compiler hoists calls of the form
- * `(globalThis.__vueLynxRegisterElementTemplate || function () {})(...)`.
- * Interpreter-only MT bundles strip the rest of the module, so these
- * self-contained registrations must be re-emitted verbatim.
+ * The element-template compiler transform hoists statements of the form
+ *   const _hoisted_N = (globalThis.__vueLynxRegisterElementTemplate ||
+ *     function () {})("<id>", [...], function(P){…})
+ * into the compiled script/template sub-module. On the interpreter-only
+ * (non-IFR) main thread the module is otherwise stripped, but these
+ * registrations must survive: the ops executor resolves create() functions
+ * through them. The calls are self-contained (they resolve the global at
+ * evaluation time; entry-main installs it before user code runs), so they
+ * are re-emitted verbatim.
  *
  * Matches inside line or block comments are skipped — documentation
  * examples of the registration shape (including the one in
@@ -628,6 +571,7 @@ export function extractTemplateRegistrations(source: string): string {
       searchFrom = idx + marker.length;
       continue;
     }
+    // The marker sits inside `(globalThis.… || function () {})(args…)`.
     const wrapperStart = source.lastIndexOf('(', idx);
     if (wrapperStart === -1) {
       searchFrom = idx + marker.length;
@@ -682,12 +626,10 @@ function isInsideComment(code: string, index: number): boolean {
 }
 
 /**
- * Given the index of a '(' in `code`, return the index of its matching ')'.
+ * Return the index of the closing parenthesis for `openIndex`.
  *
- * String/template literals are skipped so parens inside embedded text (e.g.
- * a baked `__SetAttribute(e, 'text', "call us :)")`) don't unbalance the
- * scan. Comments are not handled — the scanned sources are compiler output,
- * which never embeds parens in comments between call arguments.
+ * String/template literals are skipped so generated create() functions with
+ * text containing parentheses do not unbalance the scan.
  */
 function findBalancedEnd(code: string, openIndex: number): number {
   let depth = 0;

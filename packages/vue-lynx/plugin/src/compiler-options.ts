@@ -89,6 +89,10 @@ export const vueLynxCompilerOptions = {
   // Our ShadowElement custom renderer can't parse HTML strings, so we
   // disable hoisting entirely — the standard approach for non-DOM renderers.
   hoistStatic: false,
+  // Vapor only: compile events as per-element `on()` listeners instead of
+  // Solid-style document-level delegation — Lynx has no document to delegate
+  // to. Ignored by the vdom compiler.
+  eventDelegation: false,
 };
 
 /**
