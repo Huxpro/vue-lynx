@@ -64,6 +64,11 @@ export class ShadowElement {
   // ID for Teleport target resolution (idRegistry lookup).
   _id: string | undefined = undefined;
 
+  // Lynx CSS fragment this element belongs to (`__SetCSSId`), once one has
+  // been applied. Lynx allows exactly one per element, so node-ops keeps the
+  // first association and ignores the rest — see nodeOps.setScopeId.
+  _cssId: number | undefined = undefined;
+
   // Element-template instance state (only set on lowered template roots —
   // see element-template.ts). Hole shadows are allocated contiguously after
   // the root id so both threads agree on ids without shipping them.

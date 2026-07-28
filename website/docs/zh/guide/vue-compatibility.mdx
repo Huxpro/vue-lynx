@@ -31,6 +31,8 @@ Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个�
 
 :::warning `<style scoped>` 注意事项
 [`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors)、[`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors) 和 [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) 暂不支持（[#164](https://github.com/Huxpro/vue-lynx/issues/164)、[#165](https://github.com/Huxpro/vue-lynx/issues/165)）。
+
+作用域不会叠加。在 Web 上，Vue 会给子组件的根元素同时加上子组件和父组件的 `data-v-*` 属性，因此[父组件的 scoped 样式也能命中该根元素](https://vuejs.org/api/sfc-css-features.html#scoped-css)。Lynx 中每个元素只能关联一个 CSS 作用域，Vue Lynx 始终保留创建该元素的组件的作用域——组件自己的 scoped 规则总能作用于它的根节点。父组件若需要为子组件的根节点设置样式，可以传入一个由子组件自行应用的 class，或者自己加一层包裹元素。
 :::
 
 `<style>` 中的 `v-bind()` 需要两个配置选项，以便 Lynx 引擎识别内联样式中的 CSS 自定义属性并将其级联到后代元素：
