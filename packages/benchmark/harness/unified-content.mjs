@@ -103,7 +103,11 @@ function buildCellRung(cell, target) {
       ? 'code'
       : '',
     BENCH_DELIVERY: cell.flags.templateDelivery === 'bundle' ? 'bundle' : '',
-    BENCH_IFRPAINT: cell.flags.ifrPaint === 'engine-et' ? 'engine-et' : '',
+    // engine-et = web stub; code-paint (#340) = real compiled-Code-Template paint.
+    BENCH_IFRPAINT:
+      cell.flags.ifrPaint === 'engine-et' || cell.flags.ifrPaint === 'code-paint'
+        ? cell.flags.ifrPaint
+        : '',
   };
   console.log(`[build] ${cell.id} @ ${rungLabel(target)} (${nCards} cards, ~${elements} el)`);
   // large unrolled SFC (≥20k) overflows the default V8 stack at build time;
