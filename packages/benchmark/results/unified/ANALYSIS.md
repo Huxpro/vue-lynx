@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-23T00:22:51.222Z @ 605d93c
+> Generated 2026-07-28T12:27:34.537Z @ 346eccf
 > Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
 
 ## Why unify?
@@ -40,6 +40,7 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vapor-bang | ✓ | ✓ | — | — |
 | vapor-engine | ✓ | ✓ | — | — |
 | vapor-ifr-engine-et | ✓ | ✓ | — | — |
+| vapor-ifr-code-paint | — | ✓ | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -130,12 +131,12 @@ create@10k react/vdom = 0.96×; selectStorm@10k react/vapor = 22.2×.
 
 | scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
 |---|---|---|---|---|---|---|
-| 1k | 74 | 128 | 102 | 98 | 174 | 200 |
-| 3k | 110 | 205 | 177 | 161 | 269 | 399 |
-| 5k | 152 | 259 | 252 | 221 | 380 | 348 |
-| 10k | 241 | 452 | 602 | 373 | 626 | 637 |
-| 20k | 458 | 839 | 1051 | 708 | 1153 | 1146 |
-| 30k | 702 | 1170 | 1514 | 1588 | 1735 | 1662 |
+| 1k | 74 | 128 | 102 | 98 | 174 | 145 |
+| 3k | 110 | 205 | 177 | 161 | 269 | 233 |
+| 5k | 152 | 259 | 252 | 221 | 380 | 346 |
+| 10k | 241 | 452 | 602 | 373 | 626 | 577 |
+| 20k | 458 | 839 | 1051 | 708 | 1153 | 1055 |
+| 30k | 702 | 1170 | 1514 | 1588 | 1735 | 1656 |
 
 ### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2
 
@@ -145,7 +146,7 @@ Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the
 |---|---|---:|---:|---:|---:|---:|
 | vapor-ifr-dense | dense | 89720 | 152.9 | 0.0% | 596.0 | 0.0% |
 | vapor-ifr-sparse | sparse | 90007 | 121.8 | -20.3% | 670.2 | 12.4% |
-| vapor-ifr | sparse | 90007 | 200.2 | 30.9% | 564.4 | -5.3% |
+| vapor-ifr | sparse | 90007 | 144.8 | -5.3% | 564.4 | -5.3% |
 
 ×1 sparse/dense = 0.797× (-20.3%). ×4 sparse/dense = 1.124× (12.4%) — treat as noise / inconclusive for scale hedge.
 
