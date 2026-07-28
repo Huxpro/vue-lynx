@@ -1,18 +1,18 @@
 {
   "meta": {
-    "date": "2026-07-23T05:59:38.739Z",
-    "sha": "a927790",
+    "date": "2026-07-28T12:27:01.250Z",
+    "sha": "346eccf",
     "note": "Marginal bundle size of turning ONE flag on (same app, everything else fixed; table app apps/ui-*). web = whole .web.bundle; mt/bg = lepusCode.root / app-service sections. Flag-off builds carry no residual (all axis reads go through the per-package flags modules), so deltas are true per-flag costs."
   },
   "perCell": {
     "vapor-dense": {
       "web": {
-        "raw": 135658,
-        "gz": 46312
+        "raw": 138169,
+        "gz": 47104
       },
       "mt": {
-        "raw": 24318,
-        "gz": 8235
+        "raw": 26783,
+        "gz": 9043
       },
       "bg": {
         "raw": 107524,
@@ -21,12 +21,12 @@
     },
     "vapor": {
       "web": {
-        "raw": 136524,
-        "gz": 46593
+        "raw": 139035,
+        "gz": 47383
       },
       "mt": {
-        "raw": 24318,
-        "gz": 8236
+        "raw": 26783,
+        "gz": 9043
       },
       "bg": {
         "raw": 108346,
@@ -35,12 +35,12 @@
     },
     "vapor-bang": {
       "web": {
-        "raw": 137898,
-        "gz": 46841
+        "raw": 140409,
+        "gz": 47630
       },
       "mt": {
-        "raw": 25484,
-        "gz": 8449
+        "raw": 27949,
+        "gz": 9259
       },
       "bg": {
         "raw": 108398,
@@ -49,12 +49,12 @@
     },
     "vapor-code": {
       "web": {
-        "raw": 140276,
-        "gz": 47350
+        "raw": 142787,
+        "gz": 48152
       },
       "mt": {
-        "raw": 27850,
-        "gz": 8920
+        "raw": 30315,
+        "gz": 9728
       },
       "bg": {
         "raw": 108446,
@@ -63,12 +63,12 @@
     },
     "vapor-engine": {
       "web": {
-        "raw": 138937,
-        "gz": 47311
+        "raw": 139979,
+        "gz": 47645
       },
       "mt": {
-        "raw": 26674,
-        "gz": 8954
+        "raw": 27706,
+        "gz": 9298
       },
       "bg": {
         "raw": 108353,
@@ -77,26 +77,40 @@
     },
     "vapor-ifr": {
       "web": {
-        "raw": 259910,
-        "gz": 88432
+        "raw": 262393,
+        "gz": 89234
       },
       "mt": {
-        "raw": 133346,
-        "gz": 45719
+        "raw": 135783,
+        "gz": 46524
       },
       "bg": {
         "raw": 121062,
         "gz": 42039
       }
     },
-    "vdom": {
+    "vapor-ifr-code-paint": {
       "web": {
-        "raw": 112787,
-        "gz": 39398
+        "raw": 264226,
+        "gz": 89775
       },
       "mt": {
-        "raw": 24318,
-        "gz": 8236
+        "raw": 137581,
+        "gz": 47058
+      },
+      "bg": {
+        "raw": 121073,
+        "gz": 42047
+      }
+    },
+    "vdom": {
+      "web": {
+        "raw": 115298,
+        "gz": 40218
+      },
+      "mt": {
+        "raw": 26783,
+        "gz": 9043
       },
       "bg": {
         "raw": 84969,
@@ -105,12 +119,12 @@
     },
     "vdom-et": {
       "web": {
-        "raw": 118475,
-        "gz": 40414
+        "raw": 120986,
+        "gz": 41417
       },
       "mt": {
-        "raw": 27478,
-        "gz": 8834
+        "raw": 29943,
+        "gz": 9643
       },
       "bg": {
         "raw": 87335,
@@ -119,12 +133,12 @@
     },
     "vdom-ifr": {
       "web": {
-        "raw": 229988,
-        "gz": 79903
+        "raw": 232471,
+        "gz": 80709
       },
       "mt": {
-        "raw": 109962,
-        "gz": 38556
+        "raw": 112399,
+        "gz": 39357
       },
       "bg": {
         "raw": 115134,
@@ -133,12 +147,12 @@
     },
     "vdom-ifr-et": {
       "web": {
-        "raw": 234806,
-        "gz": 81262
+        "raw": 237289,
+        "gz": 82074
       },
       "mt": {
-        "raw": 112342,
-        "gz": 39226
+        "raw": 114779,
+        "gz": 40027
       },
       "bg": {
         "raw": 117512,
@@ -153,12 +167,12 @@
       "to": "vapor",
       "web": {
         "raw": 866,
-        "gz": 281,
+        "gz": 279,
         "gzPct": 0.6
       },
       "mt": {
         "raw": 0,
-        "gz": 1,
+        "gz": 0,
         "gzPct": 0
       },
       "bg": {
@@ -173,13 +187,13 @@
       "to": "vapor-bang",
       "web": {
         "raw": 1374,
-        "gz": 248,
+        "gz": 247,
         "gzPct": 0.5
       },
       "mt": {
         "raw": 1166,
-        "gz": 213,
-        "gzPct": 2.6
+        "gz": 216,
+        "gzPct": 2.4
       },
       "bg": {
         "raw": 52,
@@ -193,13 +207,13 @@
       "to": "vapor-code",
       "web": {
         "raw": 3752,
-        "gz": 757,
+        "gz": 769,
         "gzPct": 1.6
       },
       "mt": {
         "raw": 3532,
-        "gz": 684,
-        "gzPct": 8.3
+        "gz": 685,
+        "gzPct": 7.6
       },
       "bg": {
         "raw": 100,
@@ -212,14 +226,14 @@
       "from": "vapor",
       "to": "vapor-engine",
       "web": {
-        "raw": 2413,
-        "gz": 718,
-        "gzPct": 1.5
+        "raw": 944,
+        "gz": 262,
+        "gzPct": 0.6
       },
       "mt": {
-        "raw": 2356,
-        "gz": 718,
-        "gzPct": 8.7
+        "raw": 923,
+        "gz": 255,
+        "gzPct": 2.8
       },
       "bg": {
         "raw": 7,
@@ -232,14 +246,14 @@
       "from": "vapor",
       "to": "vapor-ifr",
       "web": {
-        "raw": 123386,
-        "gz": 41839,
-        "gzPct": 89.8
+        "raw": 123358,
+        "gz": 41851,
+        "gzPct": 88.3
       },
       "mt": {
-        "raw": 109028,
-        "gz": 37483,
-        "gzPct": 455.1
+        "raw": 109000,
+        "gz": 37481,
+        "gzPct": 414.5
       },
       "bg": {
         "raw": 12716,
@@ -248,18 +262,38 @@
       }
     },
     {
+      "flag": "+ifr:c (vapor code-paint)",
+      "from": "vapor-ifr",
+      "to": "vapor-ifr-code-paint",
+      "web": {
+        "raw": 1833,
+        "gz": 541,
+        "gzPct": 0.6
+      },
+      "mt": {
+        "raw": 1798,
+        "gz": 534,
+        "gzPct": 1.1
+      },
+      "bg": {
+        "raw": 11,
+        "gz": 8,
+        "gzPct": 0
+      }
+    },
+    {
       "flag": "+b (vdom element templates)",
       "from": "vdom",
       "to": "vdom-et",
       "web": {
         "raw": 5688,
-        "gz": 1016,
-        "gzPct": 2.6
+        "gz": 1199,
+        "gzPct": 3
       },
       "mt": {
         "raw": 3160,
-        "gz": 598,
-        "gzPct": 7.3
+        "gz": 600,
+        "gzPct": 6.6
       },
       "bg": {
         "raw": 2366,
@@ -272,14 +306,14 @@
       "from": "vdom",
       "to": "vdom-ifr",
       "web": {
-        "raw": 117201,
-        "gz": 40505,
-        "gzPct": 102.8
+        "raw": 117173,
+        "gz": 40491,
+        "gzPct": 100.7
       },
       "mt": {
-        "raw": 85644,
-        "gz": 30320,
-        "gzPct": 368.1
+        "raw": 85616,
+        "gz": 30314,
+        "gzPct": 335.2
       },
       "bg": {
         "raw": 30165,
@@ -293,7 +327,7 @@
       "to": "vdom-ifr-et",
       "web": {
         "raw": 4818,
-        "gz": 1359,
+        "gz": 1365,
         "gzPct": 1.7
       },
       "mt": {
@@ -351,11 +385,20 @@
       ]
     },
     "ifr paint": {
-      "occurrences": 19,
+      "occurrences": 20,
       "files": [
         "packages/vue-lynx/internal/src/matrix.ts",
         "packages/vue-lynx/main-thread/src/flags.ts",
         "packages/vue-lynx/plugin/src/index.ts"
+      ]
+    },
+    "ifr paint code (+ifr:c)": {
+      "occurrences": 38,
+      "files": [
+        "packages/vue-lynx/main-thread/src/code-template.ts",
+        "packages/vue-lynx/main-thread/src/flags.ts",
+        "packages/vue-lynx/main-thread/src/ops-apply.ts",
+        "packages/vue-lynx/plugin/src/loaders/vapor-bundle-registrations.ts"
       ]
     }
   }
