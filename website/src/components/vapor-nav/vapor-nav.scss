@@ -4,7 +4,7 @@
  * Mirrors the switch shipped in the `vapor` branch site's nav.
  * ------------------------------------------------------------------------- */
 
-/* Homepage brand gradient, reused for the "flipped to Vapor" preview state. */
+/* Homepage brand gradient, reused for the "flipped to Vapor preview" state. */
 @mixin vapor-nav-gradient {
   background-image: linear-gradient(
     270deg,
@@ -42,7 +42,11 @@
 .vapor-nav-link__switch {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  /* Fixed box, track right-aligned inside it: the track grows leftward into
+     the nav's empty space when flipped, so the ⓘ and everything right of it
+     never move. */
+  width: 112px;
+  justify-content: flex-end;
   padding: 4px 0;
   border: 0;
   background: transparent;
@@ -69,7 +73,10 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
-  transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
+  transition:
+    width 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 240ms ease-out,
+    box-shadow 240ms ease-out;
 }
 
 /* Mode names sit in the free half of the track and cross-fade, so the knob's
@@ -113,20 +120,15 @@
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Trailing ↗ — the switch leads to another deployment, not an in-place mode,
-   so it carries the same cue any external link would. */
-.vapor-nav-link__arrow {
-  flex: none;
-  color: var(--rp-c-text-3);
-  transition: transform 200ms ease-out, color 200ms ease-out;
-}
-
 /* Hover/focus previews the flip: the switch slides to Vapor and lights up
    with the brand gradient — a hint of what the destination site looks like. */
 @mixin vapor-nav-flipped {
+  /* Widen to fit the longer "Vapor preview" label — the destination is a
+     separate build, and the flipped label should say so. */
   .vapor-nav-link__track {
     @include vapor-nav-gradient;
 
+    width: 112px;
     box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
   }
 
@@ -139,12 +141,7 @@
   }
 
   .vapor-nav-link__knob {
-    transform: translateX(40px);
-  }
-
-  .vapor-nav-link__arrow {
-    color: var(--rp-c-text-1);
-    transform: translate(1px, -1px);
+    transform: translateX(90px);
   }
 }
 
@@ -269,6 +266,10 @@
     gap: 3px;
   }
 
+  .vapor-nav-link__switch {
+    width: 96px;
+  }
+
   .vapor-nav-link__track {
     width: 54px;
     height: 20px;
@@ -289,9 +290,14 @@
     height: 16px;
   }
 
+  .vapor-nav-link__switch:hover .vapor-nav-link__track,
+  .vapor-nav-link__switch:focus-visible .vapor-nav-link__track {
+    width: 96px;
+  }
+
   .vapor-nav-link__switch:hover .vapor-nav-link__knob,
   .vapor-nav-link__switch:focus-visible .vapor-nav-link__knob {
-    transform: translateX(34px);
+    transform: translateX(76px);
   }
 
   /* Stay right-anchored to the ⓘ (which sits well right of the logo) and let
@@ -304,14 +310,8 @@
 @media (prefers-reduced-motion: reduce) {
   .vapor-nav-link__mode,
   .vapor-nav-link__track,
-  .vapor-nav-link__knob,
-  .vapor-nav-link__arrow {
+  .vapor-nav-link__knob {
     transition: none;
-  }
-
-  .vapor-nav-link__switch:hover .vapor-nav-link__arrow,
-  .vapor-nav-link__switch:focus-visible .vapor-nav-link__arrow {
-    transform: none;
   }
 
   .vapor-nav-link__switch:hover .vapor-nav-link__track,
