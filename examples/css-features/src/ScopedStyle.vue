@@ -5,6 +5,7 @@
 //   1. Build-time: VueScopedCSSIdPlugin injects ?cssId=<N> so CSS is wrapped in @cssId
 //   2. Build-time: vueScopeStripCSSPlugin removes [data-v-xxx] attribute selectors
 //   3. Runtime: scope-bridge.ts converts __scopeId to numeric cssId via __SetCSSId
+import ScopedNestedChild from './ScopedNestedChild.vue'
 </script>
 
 <template>
@@ -17,6 +18,9 @@
     <view class="scoped-demo-box">
       <text class="scoped-demo-text">This text should be blue if scoped works</text>
     </view>
+    <!-- A scoped child rendered by a scoped parent: its root element must
+         keep its OWN scope, not inherit this component's. -->
+    <ScopedNestedChild />
   </view>
 </template>
 
@@ -44,6 +48,7 @@
   background-color: #fff;
   padding: 8px;
   border-radius: 4px;
+  margin-bottom: 8px;
 }
 .scoped-demo-text {
   font-size: 13px;
