@@ -171,6 +171,27 @@ export function resolveClass(el: ShadowElement): string {
 }
 
 // ---------------------------------------------------------------------------
+// Scoped CSS
+// ---------------------------------------------------------------------------
+
+/**
+ * Associate `el` with the Lynx CSS fragment of `scopeId`, replacing any
+ * previous association.
+ *
+ * Only for elements the Vue renderer does not own — today the native page
+ * root, which `<page>` wrappers claim and release explicitly (see Page.ts).
+ * Renderer-created elements go through `nodeOps.setScopeId`, which keeps the
+ * first scope they are given.
+ */
+export function applyScopeId(el: ShadowElement, scopeId: string): void {
+  const cssId = scopeIdToCssId(scopeId);
+  if (el._cssId === cssId) return;
+  el._cssId = cssId;
+  pushOp(OP.SET_SCOPE_ID, el.id, cssId);
+  scheduleFlush();
+}
+
+// ---------------------------------------------------------------------------
 // RendererOptions implementation
 // ---------------------------------------------------------------------------
 
@@ -531,10 +552,24 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   },
 
   // Called by Vue's renderer after createElement to apply scoped CSS.
-  // Vue calls this once per scope ID on the element (own scope, parent scope, etc.).
+  //
+  // Vue may call this several times for the same element: after the element's
+  // own scope it walks up and re-applies the scope of every ancestor component
+  // whose subtree root this element is, plus any `:slotted` scope ids. In the
+  // DOM each becomes an independent `data-v-*` attribute and they coexist —
+  // Lynx instead associates an element with exactly ONE CSS fragment, so a
+  // second `__SetCSSId` replaces the first.
+  //
+  // Letting the last call win moved a component's own root element into the
+  // *parent's* fragment, where the component's `<style scoped>` rules no
+  // longer match it: static class/style on a component root silently stopped
+  // working, and the usual workaround was an extra wrapper element (#317).
+  // Vue always emits the owning component's scope first, so keeping the first
+  // association leaves every element in the fragment of the component that
+  // authored it.
   setScopeId(el: ShadowElement, id: string): void {
-    pushOp(OP.SET_SCOPE_ID, el.id, scopeIdToCssId(id));
-    scheduleFlush();
+    if (el._cssId !== undefined) return;
+    applyScopeId(el, id);
   },
 
   parentNode(node: ShadowElement): ShadowElement | null {

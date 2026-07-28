@@ -31,6 +31,8 @@ Plain `<style>` blocks, imported `.css` files, [`<style module>`](https://vuejs.
 
 :::warning `<style scoped>` caveats
 [`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors), [`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors), and [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) are not yet supported ([#164](https://github.com/Huxpro/vue-lynx/issues/164), [#165](https://github.com/Huxpro/vue-lynx/issues/165)).
+
+Scopes do not stack. On the web, Vue gives a child component's root element the `data-v-*` attribute of *both* the child and its parent, so [a parent's scoped styles can also target that root element](https://vuejs.org/api/sfc-css-features.html#scoped-css). Lynx associates each element with exactly one CSS scope, and Vue Lynx always keeps the one of the component that authored the element — a component's own scoped rules always apply to its root. A parent that needs to style a child's root should pass a class the child applies itself, or add a wrapper element of its own.
 :::
 
 `v-bind()` in `<style>` requires two config options so the Lynx engine recognizes CSS custom properties in inline styles and cascades them to descendants:
