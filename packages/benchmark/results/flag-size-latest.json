@@ -1,0 +1,405 @@
+{
+  "meta": {
+    "date": "2026-07-28T12:27:01.250Z",
+    "sha": "346eccf",
+    "note": "Marginal bundle size of turning ONE flag on (same app, everything else fixed; table app apps/ui-*). web = whole .web.bundle; mt/bg = lepusCode.root / app-service sections. Flag-off builds carry no residual (all axis reads go through the per-package flags modules), so deltas are true per-flag costs."
+  },
+  "perCell": {
+    "vapor-dense": {
+      "web": {
+        "raw": 138169,
+        "gz": 47104
+      },
+      "mt": {
+        "raw": 26783,
+        "gz": 9043
+      },
+      "bg": {
+        "raw": 107524,
+        "gz": 37612
+      }
+    },
+    "vapor": {
+      "web": {
+        "raw": 139035,
+        "gz": 47383
+      },
+      "mt": {
+        "raw": 26783,
+        "gz": 9043
+      },
+      "bg": {
+        "raw": 108346,
+        "gz": 37899
+      }
+    },
+    "vapor-bang": {
+      "web": {
+        "raw": 140409,
+        "gz": 47630
+      },
+      "mt": {
+        "raw": 27949,
+        "gz": 9259
+      },
+      "bg": {
+        "raw": 108398,
+        "gz": 37922
+      }
+    },
+    "vapor-code": {
+      "web": {
+        "raw": 142787,
+        "gz": 48152
+      },
+      "mt": {
+        "raw": 30315,
+        "gz": 9728
+      },
+      "bg": {
+        "raw": 108446,
+        "gz": 37951
+      }
+    },
+    "vapor-engine": {
+      "web": {
+        "raw": 139979,
+        "gz": 47645
+      },
+      "mt": {
+        "raw": 27706,
+        "gz": 9298
+      },
+      "bg": {
+        "raw": 108353,
+        "gz": 37905
+      }
+    },
+    "vapor-ifr": {
+      "web": {
+        "raw": 262393,
+        "gz": 89234
+      },
+      "mt": {
+        "raw": 135783,
+        "gz": 46524
+      },
+      "bg": {
+        "raw": 121062,
+        "gz": 42039
+      }
+    },
+    "vapor-ifr-code-paint": {
+      "web": {
+        "raw": 264226,
+        "gz": 89775
+      },
+      "mt": {
+        "raw": 137581,
+        "gz": 47058
+      },
+      "bg": {
+        "raw": 121073,
+        "gz": 42047
+      }
+    },
+    "vdom": {
+      "web": {
+        "raw": 115298,
+        "gz": 40218
+      },
+      "mt": {
+        "raw": 26783,
+        "gz": 9043
+      },
+      "bg": {
+        "raw": 84969,
+        "gz": 30731
+      }
+    },
+    "vdom-et": {
+      "web": {
+        "raw": 120986,
+        "gz": 41417
+      },
+      "mt": {
+        "raw": 29943,
+        "gz": 9643
+      },
+      "bg": {
+        "raw": 87335,
+        "gz": 31380
+      }
+    },
+    "vdom-ifr": {
+      "web": {
+        "raw": 232471,
+        "gz": 80709
+      },
+      "mt": {
+        "raw": 112399,
+        "gz": 39357
+      },
+      "bg": {
+        "raw": 115134,
+        "gz": 40961
+      }
+    },
+    "vdom-ifr-et": {
+      "web": {
+        "raw": 237289,
+        "gz": 82074
+      },
+      "mt": {
+        "raw": 114779,
+        "gz": 40027
+      },
+      "bg": {
+        "raw": 117512,
+        "gz": 41613
+      }
+    }
+  },
+  "flags": [
+    {
+      "flag": "+b (vapor naming block)",
+      "from": "vapor-dense",
+      "to": "vapor",
+      "web": {
+        "raw": 866,
+        "gz": 279,
+        "gzPct": 0.6
+      },
+      "mt": {
+        "raw": 0,
+        "gz": 0,
+        "gzPct": 0
+      },
+      "bg": {
+        "raw": 822,
+        "gz": 287,
+        "gzPct": 0.8
+      }
+    },
+    {
+      "flag": "+b! (vapor bundle delivery)",
+      "from": "vapor",
+      "to": "vapor-bang",
+      "web": {
+        "raw": 1374,
+        "gz": 247,
+        "gzPct": 0.5
+      },
+      "mt": {
+        "raw": 1166,
+        "gz": 216,
+        "gzPct": 2.4
+      },
+      "bg": {
+        "raw": 52,
+        "gz": 23,
+        "gzPct": 0.1
+      }
+    },
+    {
+      "flag": "+b:c (vapor code staging)",
+      "from": "vapor",
+      "to": "vapor-code",
+      "web": {
+        "raw": 3752,
+        "gz": 769,
+        "gzPct": 1.6
+      },
+      "mt": {
+        "raw": 3532,
+        "gz": 685,
+        "gzPct": 7.6
+      },
+      "bg": {
+        "raw": 100,
+        "gz": 52,
+        "gzPct": 0.1
+      }
+    },
+    {
+      "flag": "+b:e (vapor engine staging, stub on web)",
+      "from": "vapor",
+      "to": "vapor-engine",
+      "web": {
+        "raw": 944,
+        "gz": 262,
+        "gzPct": 0.6
+      },
+      "mt": {
+        "raw": 923,
+        "gz": 255,
+        "gzPct": 2.8
+      },
+      "bg": {
+        "raw": 7,
+        "gz": 6,
+        "gzPct": 0
+      }
+    },
+    {
+      "flag": "+ifr (vapor)",
+      "from": "vapor",
+      "to": "vapor-ifr",
+      "web": {
+        "raw": 123358,
+        "gz": 41851,
+        "gzPct": 88.3
+      },
+      "mt": {
+        "raw": 109000,
+        "gz": 37481,
+        "gzPct": 414.5
+      },
+      "bg": {
+        "raw": 12716,
+        "gz": 4140,
+        "gzPct": 10.9
+      }
+    },
+    {
+      "flag": "+ifr:c (vapor code-paint)",
+      "from": "vapor-ifr",
+      "to": "vapor-ifr-code-paint",
+      "web": {
+        "raw": 1833,
+        "gz": 541,
+        "gzPct": 0.6
+      },
+      "mt": {
+        "raw": 1798,
+        "gz": 534,
+        "gzPct": 1.1
+      },
+      "bg": {
+        "raw": 11,
+        "gz": 8,
+        "gzPct": 0
+      }
+    },
+    {
+      "flag": "+b (vdom element templates)",
+      "from": "vdom",
+      "to": "vdom-et",
+      "web": {
+        "raw": 5688,
+        "gz": 1199,
+        "gzPct": 3
+      },
+      "mt": {
+        "raw": 3160,
+        "gz": 600,
+        "gzPct": 6.6
+      },
+      "bg": {
+        "raw": 2366,
+        "gz": 649,
+        "gzPct": 2.1
+      }
+    },
+    {
+      "flag": "+ifr (vdom)",
+      "from": "vdom",
+      "to": "vdom-ifr",
+      "web": {
+        "raw": 117173,
+        "gz": 40491,
+        "gzPct": 100.7
+      },
+      "mt": {
+        "raw": 85616,
+        "gz": 30314,
+        "gzPct": 335.2
+      },
+      "bg": {
+        "raw": 30165,
+        "gz": 10230,
+        "gzPct": 33.3
+      }
+    },
+    {
+      "flag": "+b on top of +ifr (vdom)",
+      "from": "vdom-ifr",
+      "to": "vdom-ifr-et",
+      "web": {
+        "raw": 4818,
+        "gz": 1365,
+        "gzPct": 1.7
+      },
+      "mt": {
+        "raw": 2380,
+        "gz": 670,
+        "gzPct": 1.7
+      },
+      "bg": {
+        "raw": 2378,
+        "gz": 652,
+        "gzPct": 1.6
+      }
+    }
+  ],
+  "codeSurface": {
+    "naming (sparse/dense)": {
+      "occurrences": 7,
+      "files": [
+        "packages/vue-lynx/internal/src/ops.ts",
+        "packages/vue-lynx/runtime/src/flags.ts",
+        "packages/vue-lynx/runtime/src/shadow-element.ts"
+      ]
+    },
+    "staging code (+b:c)": {
+      "occurrences": 24,
+      "files": [
+        "packages/vue-lynx/internal/src/matrix.ts",
+        "packages/vue-lynx/internal/src/ops.ts",
+        "packages/vue-lynx/main-thread/src/ops-apply.ts",
+        "packages/vue-lynx/main-thread/src/vapor-templates.ts",
+        "packages/vue-lynx/plugin/src/loaders/vapor-bundle-registrations.ts",
+        "packages/vue-lynx/runtime/src/flags.ts",
+        "packages/vue-lynx/runtime/src/shadow-element.ts"
+      ]
+    },
+    "delivery bundle (+b!)": {
+      "occurrences": 19,
+      "files": [
+        "packages/vue-lynx/internal/src/matrix.ts",
+        "packages/vue-lynx/internal/src/ops.ts",
+        "packages/vue-lynx/main-thread/src/ops-apply.ts",
+        "packages/vue-lynx/main-thread/src/vapor-templates.ts",
+        "packages/vue-lynx/plugin/src/index.ts",
+        "packages/vue-lynx/plugin/src/loaders/vapor-bundle-registrations.ts",
+        "packages/vue-lynx/runtime/src/flags.ts",
+        "packages/vue-lynx/runtime/src/shadow-element.ts"
+      ]
+    },
+    "staging engine (+b:e)": {
+      "occurrences": 29,
+      "files": [
+        "packages/vue-lynx/main-thread/src/engine-template.ts",
+        "packages/vue-lynx/main-thread/src/flags.ts",
+        "packages/vue-lynx/main-thread/src/ops-apply.ts"
+      ]
+    },
+    "ifr paint": {
+      "occurrences": 20,
+      "files": [
+        "packages/vue-lynx/internal/src/matrix.ts",
+        "packages/vue-lynx/main-thread/src/flags.ts",
+        "packages/vue-lynx/plugin/src/index.ts"
+      ]
+    },
+    "ifr paint code (+ifr:c)": {
+      "occurrences": 38,
+      "files": [
+        "packages/vue-lynx/main-thread/src/code-template.ts",
+        "packages/vue-lynx/main-thread/src/flags.ts",
+        "packages/vue-lynx/main-thread/src/ops-apply.ts",
+        "packages/vue-lynx/plugin/src/loaders/vapor-bundle-registrations.ts"
+      ]
+    }
+  }
+}

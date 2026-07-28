@@ -40,6 +40,8 @@ import {
   stripSharedImportAttributes,
   stripStyleImports,
 } from './worklet-utils.js';
+import { emitVaporBundleRegistrations } from './vapor-bundle-registrations.js';
+import type { VaporBundleEmitOptions } from './vapor-bundle-registrations.js';
 
 export interface WorkletLoaderMTOptions {
   /**
@@ -49,22 +51,20 @@ export interface WorkletLoaderMTOptions {
    * `node_modules`) are always followed and do not need to be listed.
    */
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
-  /**
-   * IFR mode: keep the full module code on the MT layer (the Vue app runs
-   * on the main thread for the first frame) instead of stripping everything
-   * except worklet registrations. Worklet functions are still transformed
-   * by the LEPUS pass — it rewrites them in place and appends the
-   * registerWorkletInternal() calls, leaving the rest of the module intact.
-   */
+  /** Keep complete application modules so Vapor can render the IFR frame. */
   ifr?: boolean;
   /**
-   * Element templates: additionally preserve the compiler-hoisted
-   * registration statements (and the template sub-module dependency edges
-   * they live in) so the interpreter-only main thread can resolve template
-   * create() functions. No-op when the app was compiled without the
-   * element-template transform.
+   * Element templates: additionally preserve compiler-hoisted registration
+   * statements and template submodule dependency edges.
    */
   elementTemplates?: boolean;
+  /** Use the pure Vapor runtime entry for generated worklet imports. */
+  vapor?: boolean;
+  /**
+   * Vapor build-time-parse registrations baked into the MT bundle
+   * (#337 `+b:c` / #338 `+b!`): emitted for vapor SFC script sub-modules.
+   */
+  vaporBundle?: VaporBundleEmitOptions;
 }
 
 export default function workletLoaderMT(
@@ -76,13 +76,7 @@ export default function workletLoaderMT(
   this.cacheable(true);
   const callback = this.async();
 
-  const options = this.getOptions() ?? {};
-  const includeWorkletPackages = options.includeWorkletPackages ?? [];
-
-  if (options.ifr === true) {
-    callback(null, ifrTransform(this, source));
-    return;
-  }
+  const options = this.getOptions?.() ?? {};
 
   // Resolve specifiers exactly as the importing module would (honours the
   // bundler's alias + tsconfig `paths`). Unresolvable specifiers resolve to
@@ -102,7 +96,7 @@ export default function workletLoaderMT(
     }
   };
 
-  transformModule(this, source, resolveImport, includeWorkletPackages).then(
+  transformModule(this, source, resolveImport, options).then(
     (result) => callback(null, result),
     (err) => callback(err instanceof Error ? err : new Error(String(err))),
   );
@@ -112,15 +106,17 @@ async function transformModule(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
   resolveImport: ResolveImport,
-  includeWorkletPackages: ReadonlyArray<string | RegExp>,
+  options: WorkletLoaderMTOptions,
 ): Promise<string> {
-  const keepTpl = ctx.getOptions()?.elementTemplates === true;
-  // Hoisted element-template registrations: script-setup SFCs inline the
-  // compiled template into the script sub-module; non-script-setup SFCs
-  // carry them in the compiled template sub-module.
+  if (options.ifr === true) {
+    return ifrTransform(ctx, source, options.vapor === true, options);
+  }
+
+  const keepTpl = options.elementTemplates === true;
   const tplRegistrations = keepTpl
     ? extractTemplateRegistrations(source)
     : '';
+  const includeWorkletPackages = options.includeWorkletPackages ?? [];
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
   // the proxy fails with ESModulesLinkingError. Instead, emit local imports
@@ -138,15 +134,27 @@ async function transformModule(
       keepTpl,
     );
 
+    // Vapor bundle-delivery / code-staging registrations (#337/#338) —
+    // derived from the SFC descriptor, appended to the stripped module so
+    // they evaluate at MT bundle-evaluation time (after entry-main installs
+    // the registry globals).
+    const vaporRegistrations = options.vapor === true && options.vaporBundle
+      ? emitVaporBundleRegistrations(ctx, options.vaporBundle)
+      : '';
+
     const scriptStub = () =>
-      [localImports, tplRegistrations, 'export default {};']
+      [localImports, tplRegistrations, vaporRegistrations, 'export default {};']
         .filter(Boolean)
         .join('\n');
 
-    if (!hasMainThreadDirective(source)) return scriptStub();
+    if (!hasMainThreadDirective(source)) {
+      return scriptStub();
+    }
 
-    const lepusCode = runLepusTransform(ctx, source);
-    if (lepusCode === null) return scriptStub();
+    const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
+    if (lepusCode === null) {
+      return scriptStub();
+    }
 
     const registrations = extractRegistrations(lepusCode);
     const sharedImports = extractSharedImports(lepusCode);
@@ -155,6 +163,7 @@ async function transformModule(
       localImports,
       registrations,
       tplRegistrations,
+      vaporRegistrations,
       'export default {};',
     ].filter(Boolean);
     return parts.join('\n');
@@ -181,7 +190,7 @@ async function transformModule(
       .join('\n');
   }
 
-  const lepusCode = runLepusTransform(ctx, source);
+  const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
   if (lepusCode === null) {
     return [localImports, tplRegistrations].filter(Boolean).join('\n');
   }
@@ -204,11 +213,11 @@ async function transformModule(
 function runLepusTransform(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
-  pluginName = 'vue:worklet-mt',
+  vapor: boolean,
 ): string | null {
   const resourcePath = ctx.resourcePath;
   const result = transformReactLynxSync(source, {
-    pluginName,
+    pluginName: 'vue:worklet-mt',
     filename: resourcePath,
     sourcemap: false,
     cssScope: false,
@@ -220,7 +229,7 @@ function runLepusTransform(
     worklet: {
       target: 'LEPUS',
       filename: resourcePath,
-      runtimePkg: 'vue-lynx',
+      runtimePkg: vapor ? 'vue-lynx/vapor' : 'vue-lynx',
     },
   });
 
@@ -237,47 +246,43 @@ function runLepusTransform(
 }
 
 /**
- * IFR mode: the main-thread bundle carries the full app, so modules pass
- * through (nearly) intact.
+ * IFR keeps complete application modules on the Main Thread.
  *
- *  - `.vue` connector: kept, minus style sub-module imports (CSS is
- *    extracted from the background layer; doing it again would duplicate it).
- *  - Files with `'main thread'` directives (script sub-modules or plain
- *    js/ts): full LEPUS transform output — worklet expressions become
- *    `{ _wkltId }` contexts in place and `registerWorkletInternal()` calls
- *    are appended, everything else is preserved.
- *  - Everything else: passed through unchanged.
- *
- * `with { runtime: 'shared' }` import attributes are stripped in all cases —
- * the shared-runtime escape hatch exists to bypass the *stripping* loaders,
- * which IFR mode doesn't do; the plain import must not reach the parser
- * with a non-standard attribute.
+ * Connector modules retain script/template edges and CSS-module bindings but
+ * drop ordinary style side effects. Directive-bearing modules are transformed
+ * from their original bytes so the LEPUS hash is identical to the BG JS pass.
  */
 function ifrTransform(
   ctx: Rspack.LoaderContext<WorkletLoaderMTOptions>,
   source: string,
+  vapor: boolean,
+  options: WorkletLoaderMTOptions,
 ): string {
   const isVueSubModule = ctx.resourceQuery?.includes('vue')
-    && ctx.resourceQuery?.includes('type=');
+    && ctx.resourceQuery.includes('type=');
 
-  // `.vue` connector (no sub-module query): script + template imports pass
-  // through so the MT bundle can render the component; style imports are
-  // dropped.
+  // Vapor bundle registrations (#337/#338) ride the kept script sub-module
+  // under IFR — the MT evaluates the full app, and the local first-frame
+  // applyOps resolves bundle-delivered ids from the same registries.
+  const vaporRegistrations = vapor
+      && options.vaporBundle
+      && ctx.resourceQuery?.includes('vue')
+      && ctx.resourceQuery.includes('type=script')
+    ? emitVaporBundleRegistrations(ctx, options.vaporBundle)
+    : '';
+  const withVapor = (code: string): string =>
+    vaporRegistrations ? `${code}\n${vaporRegistrations}` : code;
+
   if (ctx.resourcePath.endsWith('.vue') && !isVueSubModule) {
-    return stripStyleImports(source);
+    return stripSharedImportAttributes(stripStyleImports(source));
   }
 
   if (!hasMainThreadDirective(source)) {
-    return stripSharedImportAttributes(source);
+    return withVapor(stripSharedImportAttributes(source));
   }
 
-  // Transform the ORIGINAL source (not a pre-processed copy) so the content
-  // hash in _wkltId matches the BG layer's JS-target transform of the same
-  // content.
-  const lepusCode = runLepusTransform(ctx, source, 'vue:worklet-mt-ifr');
-  if (lepusCode === null) {
-    return stripSharedImportAttributes(source);
-  }
-
-  return stripSharedImportAttributes(lepusCode);
+  // Use the original source for both transforms. Pre-stripping shared import
+  // attributes here would change the transform input and therefore _wkltId.
+  const transformed = runLepusTransform(ctx, source, vapor);
+  return withVapor(stripSharedImportAttributes(transformed ?? source));
 }

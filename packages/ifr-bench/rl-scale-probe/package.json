@@ -1,0 +1,19 @@
+{
+  "name": "vue-lynx-ifr-bench-rl-scale-probe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ReactLynx same-density content probe for the 1k→30k FCP ladder (mirrors sfc-probe)",
+  "scripts": {
+    "build:scale": "node build-scale-matrix.mjs"
+  },
+  "dependencies": {
+    "@lynx-js/react": "^0.122.1"
+  },
+  "devDependencies": {
+    "@lynx-js/react-rsbuild-plugin": "^0.17.2",
+    "@lynx-js/rspeedy": "^0.15.2",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.0.0"
+  }
+}

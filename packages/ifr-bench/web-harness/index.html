@@ -106,20 +106,24 @@
     const CONTENT_THRESHOLD = 5;
     let settledCount = -1;
     let settleTimer = null;
+    // Large sync trees can take well over 400ms before the first content
+    // node appears. Never arm the settle timer until FCP fires, and never
+    // treat an empty tree as settled.
+    const SETTLE_IDLE_MS = 400;
+    const HARD_TIMEOUT_MS = 120_000;
 
     const tick = () => {
       const n = countContent(view);
       if (window.__fcp === undefined && n >= CONTENT_THRESHOLD) {
         window.__fcp = performance.now() - t0;
       }
-      if (n !== settledCount) {
+      if (window.__fcp !== undefined && n !== settledCount) {
         settledCount = n;
         clearTimeout(settleTimer);
         settleTimer = setTimeout(() => {
-          if (window.__fcp === undefined) window.__fcp = -1;
-          window.__settled = performance.now() - t0 - 400;
+          window.__settled = performance.now() - t0 - SETTLE_IDLE_MS;
           window.__finalCount = settledCount;
-        }, 400);
+        }, SETTLE_IDLE_MS);
       }
       if (window.__settled === undefined) requestAnimationFrame(tick);
     };
@@ -129,9 +133,9 @@
       if (window.__fcp === undefined) window.__fcp = -1;
       if (window.__settled === undefined) {
         window.__settled = -1;
-        window.__finalCount = settledCount;
+        window.__finalCount = Math.max(0, settledCount);
       }
-    }, 20000);
+    }, HARD_TIMEOUT_MS);
   </script>
 </body>
 </html>

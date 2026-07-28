@@ -17,26 +17,31 @@ import {
   PAGE_ROOT_ID,
   TPL_EXECUTOR_REGISTRY_GLOBAL,
   TPL_REGISTER_GLOBAL,
+  VAPOR_STRUCTURE_REGISTER_GLOBAL,
+  VAPOR_TPL_REGISTER_GLOBAL,
 } from 'vue-lynx/internal/ops';
 
 import { elements, setPageUniqueId } from './element-registry.js';
 import { registerTemplate } from './element-templates.js';
-import { interceptPatchUpdate, runIfrRender } from './ifr.js';
+import {
+  registerVaporStructure,
+  registerVaporTemplate,
+} from './vapor-templates.js';
+import {
+  completeIfrHydration,
+  interceptPatchUpdate,
+  runIfrRender,
+} from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
 
 const g = globalThis as Record<string, unknown>;
 
-// Expose SystemInfo on globalThis (the worklet-runtime reads it).
-// In React's main-thread bundle this is done by the generated snapshot code.
-// Never clobber an engine-provided SystemInfo global: some environments
-// (e.g. the Lynx testing environment's main-thread context) define
-// `SystemInfo` directly without mirroring it on `lynx.SystemInfo` — first
-// screen code that measures against screen dimensions depends on it.
-g['SystemInfo'] =
-  (typeof lynx !== 'undefined'
-    && (lynx as { SystemInfo?: unknown }).SystemInfo)
-    ?? g['SystemInfo'] ?? {};
+// Expose SystemInfo on globalThis (the worklet-runtime reads it). Preserve an
+// engine-provided global object: some hosts do not mirror it on lynx.
+if (g['SystemInfo'] == null) {
+  g['SystemInfo'] = (typeof lynx !== 'undefined' && lynx.SystemInfo) ?? {};
+}
 
 // Register runOnBackground as a global — extracted LEPUS worklet code calls it
 // as a bare identifier (the SWC transform generates `runOnBackground(_jsFnK)`).
@@ -52,12 +57,22 @@ g['runOnBackground'] = runOnBackground;
 //    at evaluation time — entry-main runs first, so they land in the
 //    create-only adapter
 g[TPL_EXECUTOR_REGISTRY_GLOBAL] = registerTemplate;
+
+// Vapor build-time-parse registries (#337 `+b:c` / #338 `+b!`): the plugin
+// bakes registration statements into this bundle; entry-main evaluates first,
+// so the hooks are installed before any of them run.
+g[VAPOR_STRUCTURE_REGISTER_GLOBAL] = registerVaporStructure;
+g[VAPOR_TPL_REGISTER_GLOBAL] = registerVaporTemplate;
 g[TPL_REGISTER_GLOBAL] = (
   id: string,
-  _holes: unknown,
+  holes: unknown,
   create: Parameters<typeof registerTemplate>[1],
 ): string => {
-  registerTemplate(id, create);
+  registerTemplate(
+    id,
+    create,
+    Array.isArray(holes) ? holes as string[] : [],
+  );
   return id;
 };
 
@@ -114,6 +129,10 @@ g['vuePatchUpdate'] = function({ data }: { data: string }): void {
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);
 };
+
+// Sent by the IFR Background entry after its complete initial op stream has
+// been applied. This disambiguates a valid split batch from a strict prefix.
+g['vueIfrHydrationComplete'] = completeIfrHydration;
 
 // Worklet registrations are included in this bundle via webpack's dependency
 // graph — user code on the MT layer is processed by worklet-loader-mt which

@@ -1,0 +1,813 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "7guis/cells",
+      "entry": "./src/cells/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/cells",
+      "verification": {
+        "sourceHash": "a2af22694394512a9dfb37f6363843635e5a1d58f6a2ad141137b23e874a6290",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/circle-drawer",
+      "entry": "./src/circle-drawer/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/circle-drawer",
+      "verification": {
+        "sourceHash": "dc33a71158207a1a8e2e744356578c47647d2c40e3ab01bd3d4177b0c7e7d7cc",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/counter",
+      "entry": "./src/counter/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/counter",
+      "verification": {
+        "sourceHash": "f2a37b95f4a8f31d7f37123d56cc8b83b4c4a62b3e22b3b3e4042c57dee7b51c",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/crud",
+      "entry": "./src/crud/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/crud",
+      "verification": {
+        "sourceHash": "f91bdc3009c1e72299937199eb80cfe5f3bb0ab59dd899d272e86482d6e7fb76",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/flight-booker",
+      "entry": "./src/flight-booker/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/flight-booker",
+      "verification": {
+        "sourceHash": "234a8ee1501ed048d230bb757ad168d6219e2fcbc3c7cebbbc443c3bc70dfcb1",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/temperature-converter",
+      "entry": "./src/temperature-converter/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/temperature-converter",
+      "verification": {
+        "sourceHash": "129090427d53202962ebde5bf3f6a3ce52fae62943ab7a93f00499dabea3865c",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "7guis/timer",
+      "entry": "./src/timer/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "7guis/timer",
+      "verification": {
+        "sourceHash": "0e508451021506a181c510607642d6eca8393fd82f828b21e30b0f1ad15841f4",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "ai-chat/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router",
+        "evidence": [
+          "examples/ai-chat/src/router.ts"
+        ]
+      },
+      "scenario": "ai-chat/main",
+      "verification": {
+        "sourceHash": "433fde61917d7d55faef97a091a5a4b832df9cce34ae5f0050905f5b9155083f",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "basic/h-counter",
+      "entry": "./src/h-counter.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "render-function",
+        "evidence": [
+          "examples/basic/src/h-counter.ts"
+        ]
+      },
+      "scenario": "basic/h-counter",
+      "verification": {
+        "sourceHash": "792969020abd2906cd73fb4eb9d231c4393bf9fc61ce234d282fd3fb44935441",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "basic/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "basic/main",
+      "verification": {
+        "sourceHash": "4466e8479a074aeae4713c869bd32089e9dc9ee6dde4738221d65c1f0e2140a7",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "css-features/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "css-features/main",
+      "verification": {
+        "sourceHash": "b8132559cd04ac4b62cd087f3e2f1641d95501ee202b2d8d4ab7c04c6b71c7ed",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "elk-viewpager/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/elk-viewpager/src/router.ts",
+          "examples/elk-viewpager/src/components/sheet/Sheet.vue"
+        ]
+      },
+      "scenario": "elk-viewpager/main",
+      "verification": {
+        "sourceHash": "68fe58361d93094841f346003403d3d20960e8786622e6895f1bdebd040a6050",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "elk/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/elk/src/router.ts",
+          "examples/elk/src/components/sheet/Sheet.vue"
+        ]
+      },
+      "scenario": "elk/main",
+      "verification": {
+        "sourceHash": "df7d21b17722672e5e5b7db2ca19155d3a03690273760ba798efcd3aa2b8aff5",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "event-modifiers/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "event-modifiers/main",
+      "verification": {
+        "sourceHash": "28b3920fb8c0914e7789520881f9e78737b1a9a87f8ec45f8cd3e338c143bc97",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/GalleryAutoScroll",
+      "entry": "./src/GalleryAutoScroll/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryAutoScroll",
+      "verification": {
+        "sourceHash": "37342c373ca5ffd1c64a63df7a490f96d1479e353649b5619a2884f3aee4c20d",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/GalleryComplete",
+      "entry": "./src/GalleryComplete/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryComplete",
+      "verification": {
+        "sourceHash": "648b2209324364c3a3ef64b2d4f8682700842773a2b29b4daab56d871f246a6c",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/GalleryList",
+      "entry": "./src/GalleryList/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryList",
+      "verification": {
+        "sourceHash": "d3b87ba0ce518b97e696d3dcef8f0ef509d4c7252bbf3eee2b7957ad95fd6cac",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/GalleryScrollbar",
+      "entry": "./src/GalleryScrollbar/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryScrollbar",
+      "verification": {
+        "sourceHash": "0bb7170d8453026d1b207482da581ebc5b7b1277b7258cec18b91c94845fa460",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/GalleryScrollbarCompare",
+      "entry": "./src/GalleryScrollbarCompare/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "gallery/GalleryScrollbarCompare",
+      "verification": {
+        "sourceHash": "1b960f8ffd4a6d52890cc3f7a9d9c38765eb87d44522ce35fa0e31cc65a3cc91",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/ImageCard",
+      "entry": "./src/ImageCard/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/ImageCard.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "gallery/ImageCard",
+      "verification": {
+        "sourceHash": "5b080bdfe6c9ae2443ee0e3ba5349994a5a3892dee946f2b17a614c33a0355e4",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "gallery/LikeCard",
+      "entry": "./src/LikeCard/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/LikeCard.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "gallery/LikeCard",
+      "verification": {
+        "sourceHash": "df0df0d6b442d80252437e3f930bcdbc2cec745276d5ff8f6384cd13a40729b7",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "hackernews-css/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/hackernews-css/src/App.vue",
+          "examples/hackernews-css/src/router.ts"
+        ]
+      },
+      "scenario": "hackernews-css/main",
+      "verification": {
+        "sourceHash": "cae6483b7a53afc0204892c2192b6c515fa1e14695a4060d1fc2b5d11152d25a",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "hackernews-tailwind/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router-and-transitions",
+        "evidence": [
+          "examples/hackernews-tailwind/src/App.vue",
+          "examples/hackernews-tailwind/src/router.ts"
+        ]
+      },
+      "scenario": "hackernews-tailwind/main",
+      "verification": {
+        "sourceHash": "c65e8f6fda8bbcca9ecd5db08dd08b7d3490fffa14891e099314bf35ff39e1fc",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "hello-world/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "hello-world/main",
+      "verification": {
+        "sourceHash": "06e20ff4e3ab635730c549f6da602b32620c1186064e2f8d5eeb73e7dd70a064",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "keep-alive/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "keep-alive",
+        "evidence": [
+          "examples/keep-alive/src/App.vue"
+        ]
+      },
+      "scenario": "keep-alive/main",
+      "verification": {
+        "sourceHash": "95a8276c78e1bded2781d39465cd86835b838c6d8e83d1a829f131670980b586",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "main-thread/background-draggable",
+      "entry": "./src/background-draggable/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/background-draggable",
+      "verification": {
+        "sourceHash": "c2b8e5d5e5577e773e927460a99a325cc1fa736164570ebb4adeb55f4f4957df",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "main-thread/cross-thread-calls",
+      "entry": "./src/cross-thread-calls/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/cross-thread-calls",
+      "verification": {
+        "sourceHash": "e1996bd2829086132569cf8d325624b5ad9ee3d0b4a608475f45f23549942d21",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "main-thread/main-thread-draggable",
+      "entry": "./src/main-thread-draggable/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/main-thread-draggable",
+      "verification": {
+        "sourceHash": "a34623fc496826a0f10428e138516f9cec347b0d6129e43c65addf65c332e22f",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "main-thread/main-thread-draggable-raw",
+      "entry": "./src/main-thread-draggable-raw/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/main-thread-draggable-raw",
+      "verification": {
+        "sourceHash": "d8582dec8a939c84dbbff1add3878364b18a2c5362c51b03603a1bba99792151",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "main-thread/shared-module",
+      "entry": "./src/shared-module/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "main-thread/shared-module",
+      "verification": {
+        "sourceHash": "9b74da80f5aff8fadc2df823a1b7bdccd392fa7b5f79ed32eb3e39cc51cff5e4",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "networking/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/index.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "networking/main",
+      "verification": {
+        "sourceHash": "56b1b365ac79be8d6c44d7f3702e51ca7d290dc263620e43a95b91ccae81437a",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "option-api/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "options-api",
+        "evidence": [
+          "examples/option-api/src/App.vue",
+          "examples/option-api/src/Counter.vue"
+        ]
+      },
+      "scenario": "option-api/main",
+      "verification": {
+        "sourceHash": "bac7aaaf60f721db615f60dc0121acf964fc2901c9064ca3e857d3452028d342",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "pinia/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "pinia/main",
+      "verification": {
+        "sourceHash": "5926d7b65cf74d379906ac7a480f44676ef9e7146273c6835263ca5217113a14",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "provide-inject/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "provide-inject/main",
+      "verification": {
+        "sourceHash": "bc603f69ca5bcf1941bb10fa94d0032d816b98f76dc473c72152ee57b9065d2a",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "reactivity/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "reactivity/main",
+      "verification": {
+        "sourceHash": "bc0bee171aacd48fe54be5e8eb1b109e4e11cf9c2bb83f39b147a9854e5e36d8",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "slots/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "slots/main",
+      "verification": {
+        "sourceHash": "e94a4247347186e049e131032273afc5038acd5a72828b60519d817fd5804ab8",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "suspense/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "suspense",
+        "evidence": [
+          "examples/suspense/src/App.vue"
+        ]
+      },
+      "scenario": "suspense/main",
+      "verification": {
+        "sourceHash": "fb361c3652157ae78650b8b6d9155ea8fccd7d3b54b31d68c9dab81c62f4fe87",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "swiper/Swiper",
+      "entry": "./src/Swiper/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/Swiper.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "swiper/Swiper",
+      "verification": {
+        "sourceHash": "a77efb8d5cef2444d9e8d8407f4bf93922ec8f9cc72d65db9b5851b138e20bb3",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "swiper/SwiperEmpty",
+      "entry": "./src/SwiperEmpty/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/SwiperEmpty.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "swiper/SwiperEmpty",
+      "verification": {
+        "sourceHash": "f4f938feef15e172a3758b8a6bdd3decb7cce194301c861d88ff7e173f025fd5",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "swiper/SwiperMTS",
+      "entry": "./src/SwiperMTS/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "vaporEntry": "./src/vapor-adapters/SwiperMTS.ts",
+        "strategy": "adapter"
+      },
+      "scenario": "swiper/SwiperMTS",
+      "verification": {
+        "sourceHash": "16e75207f6503ddd2f9425b0998e3aca22780a2e1cd42237762942cfe636b3b1",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "tailwindcss/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "tailwindcss/main",
+      "verification": {
+        "sourceHash": "9bb6519aa43d243dc4520bab78e30e50d321ea61f75aca379ba3ec7046aca275",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "teleport/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "teleport",
+        "evidence": [
+          "examples/teleport/src/App.vue"
+        ]
+      },
+      "scenario": "teleport/main",
+      "verification": {
+        "sourceHash": "7cd7ceca67c301b2f6a92fd48f34236a723064846179fe019075fc5735dcaf82",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "todomvc-codex/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router",
+        "evidence": [
+          "examples/todomvc-codex/src/router.ts"
+        ]
+      },
+      "scenario": "todomvc-codex/main",
+      "verification": {
+        "sourceHash": "1be07eb0ba303d27d4d9e0cf47b8e2a7e1b5c8a94ff6f580d33113d3fee223e3",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "todomvc-day1/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "todomvc-day1/main",
+      "verification": {
+        "sourceHash": "c038d55754fd6b5fa3b1c7ee65191854ceb2f2e3149320ab7b895147e187accb",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "todomvc/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "todomvc/main",
+      "verification": {
+        "sourceHash": "ea3009ef7950000053b485361ef6f8517553b75c2c6cd4d4eacb415bd9a5cab6",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "transition/transition",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "transition",
+        "evidence": [
+          "examples/transition/src/App.vue"
+        ]
+      },
+      "scenario": "transition/transition",
+      "verification": {
+        "sourceHash": "408977978f030cc9d1f0cf9b0d48f5e6a505d26a31f0bca99dd6d810228a00e5",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "v-model/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "v-model/main",
+      "verification": {
+        "sourceHash": "19d56ce83c942c2378429adf5f3ce36298cb4eaf216195250732e39a0ddadc7c",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "v-once-memo/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "v-once-memo/main",
+      "verification": {
+        "sourceHash": "3c52b382e9c14fe025aab3859cccf5f076921e4ce24c5a81b7c902a8424bbc97",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "vapor/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "vapor/main",
+      "verification": {
+        "sourceHash": "601d31c3244e25d6b565d78fe64e2c23a26dd9b358dc82f6f10f8ec7eadaec3f",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "vue-router/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "vue-router",
+        "evidence": [
+          "examples/vue-router/src/router.ts"
+        ]
+      },
+      "scenario": "vue-router/main",
+      "verification": {
+        "sourceHash": "8132651d2c4f5b508cc6fa120d47a0a5b5d8bdacf2e4e7b743d40d85aef08a51",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    }
+  ],
+  "results": {
+    "environment": "lynx-for-web/chromium",
+    "entries": 50,
+    "supported": 37,
+    "unsupported": 13,
+    "vdomPassed": 50,
+    "vaporPassed": 37
+  }
+}

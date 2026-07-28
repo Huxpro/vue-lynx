@@ -40,13 +40,13 @@ let endId = 0;
 
 export function addTransitionClass(el: ShadowElement, cls: string): void {
   el._transitionClasses.add(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }
 
 export function removeTransitionClass(el: ShadowElement, cls: string): void {
   el._transitionClasses.delete(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
+  pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }
 
@@ -102,7 +102,7 @@ export function whenTransitionEnds(
     // already re-registered its own listener must not rip that listener
     // out from under it.
     if (id === el._transitionEndId) {
-      pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', eventName);
+      pushOp(OP.REMOVE_EVENT, el.uid, 'bindEvent', eventName);
       scheduleFlush();
       done();
     }
@@ -112,7 +112,7 @@ export function whenTransitionEnds(
     finish();
   });
 
-  pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
+  pushOp(OP.SET_EVENT, el.uid, 'bindEvent', eventName, sign);
   scheduleFlush();
 
   setTimeout(finish, FALLBACK_TIMEOUT_MS);
@@ -141,8 +141,8 @@ export function hasExplicitDuration(props: {
   return props.duration != null;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
 export function callHook(
+  // biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
   hook: ((...args: any[]) => void) | undefined,
   args: unknown[],
 ): void {

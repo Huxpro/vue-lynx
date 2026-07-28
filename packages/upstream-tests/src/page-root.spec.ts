@@ -223,14 +223,21 @@ describe('explicit <page> root', () => {
     app.mount();
     await nextTick();
 
-    const scopeOps = findOps(collectFlushedOps(), OP.SET_SCOPE_ID, 3);
-    expect(scopeOps.some(op => op[1] === 1)).toBe(true);
+    // Scope ids are composable scope classes on this branch (see 0715-1):
+    // applying the SFC scope to the root surfaces as a SET_CLASS on uid 1
+    // carrying the data-v token.
+    const classOps = findOps(collectFlushedOps(), OP.SET_CLASS, 3);
+    expect(
+      classOps.some(op =>
+        op[1] === 1 && String(op[2]).includes('data-v-page-root')
+      ),
+    ).toBe(true);
 
     app.unmount();
   });
 
   it('forwards a component ref to the page root', async () => {
-    const pageRef = ref<{ id: number }>();
+    const pageRef = ref<{ uid: number }>();
     const App = defineComponent({
       setup() {
         return () => h('page', { ref: pageRef }, [h('view')]);
@@ -241,7 +248,7 @@ describe('explicit <page> root', () => {
     app.mount();
     await nextTick();
 
-    expect(pageRef.value?.id).toBe(1);
+    expect(pageRef.value?.uid).toBe(1);
     app.unmount();
   });
 
@@ -355,13 +362,20 @@ describe('explicit <page> root', () => {
     app.mount();
     await nextTick();
     expect(
-      findOps(collectFlushedOps(), OP.SET_SCOPE_ID, 3).some(op => op[1] === 1),
+      findOps(collectFlushedOps(), OP.SET_CLASS, 3).some(op =>
+        op[1] === 1 && String(op[2]).includes('data-v-1a2b3c4d')
+      ),
     ).toBe(true);
 
     show.value = false;
     await nextTick();
-    const clearOps = findOps(collectFlushedOps(), OP.SET_SCOPE_ID, 3);
-    expect(clearOps).toContainEqual([OP.SET_SCOPE_ID, 1, 0]);
+    // Releasing the root removes the scope token: the final SET_CLASS on
+    // uid 1 no longer carries it.
+    const rootClassOps = findOps(collectFlushedOps(), OP.SET_CLASS, 3)
+      .filter(op => op[1] === 1);
+    const lastRootClass = rootClassOps[rootClassOps.length - 1];
+    expect(lastRootClass).toBeDefined();
+    expect(String(lastRootClass?.[2])).not.toContain('data-v-1a2b3c4d');
 
     app.unmount();
   });
@@ -451,7 +465,7 @@ describe('explicit <page> root', () => {
       1,
       'root-target',
     ]);
-    expect(nodeOps.querySelector?.('#root-target')?.id).toBe(1);
+    expect(nodeOps.querySelector?.('#root-target')?.uid).toBe(1);
 
     app.unmount();
   });

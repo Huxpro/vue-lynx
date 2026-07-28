@@ -10,8 +10,12 @@
     "noUnusedParameters": false,
     "resolveJsonModule": true
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
-    { "path": "../internal/tsconfig.build.json" }
+    {
+      "path": "../internal/tsconfig.build.json"
+    }
   ]
 }

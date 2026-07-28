@@ -1,0 +1,25 @@
+{
+  "name": "vue-lynx-benchmark-ui-react",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ReactLynx app for the cross-framework black-box benchmark (own rspeedy toolchain \u2014 ReactLynx targets a newer rsbuild generation than the Vue apps)",
+  "type": "module",
+  "scripts": {
+    "build": "rspeedy build",
+    "build:naive": "rspeedy build --config lynx.naive.config.ts",
+    "build:compiler": "rspeedy build --config lynx.compiler.config.ts"
+  },
+  "dependencies": {
+    "@lynx-js/react": "^0.122.1",
+    "react-compiler-runtime": "^1.0.0"
+  },
+  "devDependencies": {
+    "@lynx-js/react-rsbuild-plugin": "^0.17.2",
+    "@lynx-js/rspeedy": "^0.15.2",
+    "@lynx-js/types": "^3.4.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.0.0",
+    "@rsbuild/plugin-babel": "^2.0.1",
+    "babel-plugin-react-compiler": "^1.0.0"
+  }
+}

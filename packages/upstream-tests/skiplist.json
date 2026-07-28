@@ -5,9 +5,7 @@
     "validator should not be able to mutate other props",
     "events should not be props when component updating",
     "config.throwUnhandledErrorInProduction",
-
     "isEmitListener",
-
     "basic usage",
     "should insert jobs in ascending order of job's id when flushing",
     "should dedupe queued jobs",
@@ -41,40 +39,26 @@
     "flushPreFlushCbs inside a post job",
     "nextTick should return promise",
     "nested flushPostFlushCbs",
-
-
     "handle error in watch & watchEffect",
     "should pause tracking in error handler",
     "errors in scheduler job with owner instance should be caught",
     "handle error in computed",
-
     "initSlots: should normalize object slots (when value is null, string, array)",
     "initSlots: should normalize object slots (when value is function)",
     "initSlots: instance.slots should be set correctly (when vnode.shapeFlag is not SLOTS_CHILDREN)",
     "updateSlots: instance.slots should be updated correctly (when slotType is null)",
     "updateSlots: instance.slots should be update correctly (when vnode.shapeFlag is not SLOTS_CHILDREN)",
-
-
-
     "should work",
     "should work with a function directive",
     "should work on component vnode",
-
     "normalizeVNode",
     "cloneVNode ref normalization",
     "cloneVNode ref merging",
     "error of slot function execution should not affect block tracking",
-
-
     "stopping the watcher (SSR)",
-
-
-
-
     "should release property Dep instance if it no longer has subscribers",
     "should remove the dep when the effect is stopped",
     "should only remove the dep when the last effect is stopped",
-
     "test with higher level APIs",
     "events: onTrack",
     "debug: the call sequence of onTrack",
@@ -83,21 +67,28 @@
     "nested effect should force track in untracked zone",
     "should remove the dep when it is no longer used by the effect",
     "should get called correctly",
-
     "$watch should always register its effects with its own instance",
     "should not track openBlock() when tracking is disabled",
     "toRef",
     "attempting to write plain value to a readonly ref nested in a reactive object should fail",
     "can not run an inactive scope",
-
     "handle error in async onActivated",
-
     "should work with SVG",
     "should work with block tree",
     "toggle sibling node inside target node",
     "unmount previous sibling node inside target node",
     "should be able to target content appearing later than the teleport with defer",
-    "defer mode should work inside suspense"
+    "defer mode should work inside suspense",
+    "move cached text nodes",
+    "should traverse comment node after updating in optimize mode",
+    "update before mounted with defer",
+    "should keep the mounted vnode as the patch base across deferred updates",
+    "should handle disabled teleport updates before deferred mount",
+    "should not mount discarded teleport after deferred updates",
+    "should not mount discarded teleport with component child after deferred updates",
+    "should not mount discarded disabled teleport after deferred updates",
+    "handle deferred teleport updates before and after mount",
+    "handle update and hmr rerender"
   ],
   "_categories": {
     "scheduler": "Tests internal scheduler API directly, not renderer contract",
@@ -110,7 +101,6 @@
     "apiInject": "runWithContext internal API",
     "componentProps": "Optimized mode, validator internals",
     "reactivity_internals": "Uses targetMap/getDepFromReactive — not in public @vue/reactivity API",
-    "reactivity_version_mismatch": "Tests from v3.5.12 source, installed vue is v3.5.30 — internal class names changed (ObjectRefImpl vs RefImpl), readonly/effectScope behavior differs",
     "apiExpose_ref_owner": "Adapter createApp().render() doesn't set proper ref owner context for template refs on exposed instances",
     "apiAsyncComponent_ref_forwarding": "Template ref forwarding on async wrapper components not supported by adapter",
     "scopeId_suspense": "Suspense content scopeId attachment requires internal Suspense implementation detail",

@@ -10,14 +10,39 @@
  * each operation using Lynx PAPI.
  */
 
-import { OP } from 'vue-lynx/internal/ops';
+import { OP, OP_ARITY } from 'vue-lynx/internal/ops';
+import type { TemplateNode } from 'vue-lynx/internal/ops';
 
 import {
   elements,
   pageUniqueId,
+  releaseSubtree,
+  resetElementRegistry,
   setPageUniqueId,
+  trackInsert,
 } from './element-registry.js';
-import { getTemplate } from './element-templates.js';
+import {
+  buildEngineTemplateDescriptor,
+  instantiateEngineTemplate,
+  registerEngineTemplate,
+  resetEngineTemplatesForTesting,
+} from './engine-template.js';
+import type { CodeTemplateHost } from './code-template.js';
+import {
+  instantiateCodeTemplate,
+  registerCodeTemplate,
+  resetCodeTemplatesForTesting,
+} from './code-template.js';
+import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
+import { codePaintRequested, engineStagingRequested } from './flags.js';
+import {
+  bindVaporTemplateId,
+  getBoundVaporTemplate,
+  getVaporStructure,
+  getVaporTemplate,
+  hasVaporTemplateBinding,
+  resetVaporTemplateBindings,
+} from './vapor-templates.js';
 import {
   createListElement,
   flushListUpdates,
@@ -66,32 +91,450 @@ function createTypedElement(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Template instantiation (Vapor fast path)
+// ---------------------------------------------------------------------------
+
+interface RegisteredTree {
+  structure: TemplateNode;
+  /** Sparse A2 naming list; undefined → dense A1. */
+  addressed?: number[];
+}
+
+const templates = new Map<number, RegisteredTree>();
+
+const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
+
+// NodesRef selector attributes are only consumed by the Background Thread.
+// IFR can paint without them, then install them immediately before BG adopts
+// the tree. Keeping this state here makes CREATE and CLONE_TREE follow the
+// same protocol and keeps normal/non-IFR applyOps behavior unchanged.
+let deferIfrSelectorAttributes = false;
+let deferredIfrSelectorIds: number[] = [];
+
+function installSelectorAttribute(id: number, el: LynxElement): void {
+  if (deferIfrSelectorAttributes) {
+    deferredIfrSelectorIds.push(id);
+    return;
+  }
+  __SetAttribute(el, `vue-ref-${id}`, 1);
+}
+
+/** Start one IFR first-frame window in which NodesRef selectors are deferred. */
+export function beginIfrSelectorAttributeDeferral(): void {
+  deferIfrSelectorAttributes = true;
+  deferredIfrSelectorIds = [];
+}
+
+/** Install every deferred selector before the Background Thread owns the tree. */
+export function commitIfrSelectorAttributes(): void {
+  const ids = deferredIfrSelectorIds;
+  deferredIfrSelectorIds = [];
+  deferIfrSelectorAttributes = false;
+
+  let installed = false;
+  for (const id of ids) {
+    const el = elements.get(id);
+    if (el) {
+      __SetAttribute(el, `vue-ref-${id}`, 1);
+      installed = true;
+    }
+  }
+  if (installed) __FlushElementTree();
+}
+
+/** Discard deferred MT selectors before teardown or normal BG replay. */
+export function clearIfrSelectorAttributeDeferral(): void {
+  deferIfrSelectorAttributes = false;
+  deferredIfrSelectorIds = [];
+}
+
 /**
- * Apply a flat ops batch through PAPI.
- *
- * @param flush - Present the result with `__FlushElementTree` afterwards.
- *   The IFR render passes `false` for batches applied synchronously inside
- *   `renderPage`, which presents the whole frame with a single flush at the
- *   end instead of one per batch.
+ * Detect a duplicate initial render even when value/ref frames precede its
+ * first allocator. Vapor can emit INIT_MT_REF or SET_TEXT before registering
+ * and cloning a template, so checking only ops[0] misses real duplicates.
  */
+function hasDuplicateFirstAllocator(ops: unknown[]): boolean {
+  let cursor = 0;
+  while (cursor < ops.length) {
+    const code = ops[cursor] as number;
+    const arity = ARITY[code];
+    if (arity === undefined || cursor + arity >= ops.length) return false;
+
+    if (
+      code === OP.CREATE
+      || code === OP.CREATE_TEXT
+      || code === OP.INSTANTIATE_TEMPLATE
+    ) {
+      return elements.has(ops[cursor + 1] as number);
+    }
+    if (code === OP.REGISTER_TREE || code === OP.REGISTER_TREE_BUNDLE) {
+      return templates.has(ops[cursor + 1] as number);
+    }
+    if (code === OP.BIND_VAPOR_TEMPLATE) {
+      return hasVaporTemplateBinding(ops[cursor + 1] as number);
+    }
+    if (code === OP.CLONE_TREE || code === OP.INSTANTIATE_BOUND_TEMPLATE) {
+      return elements.has(ops[cursor + 2] as number);
+    }
+
+    cursor += arity + 1;
+  }
+  return false;
+}
+
+function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
+  if (!props) return;
+  if (props.c !== undefined) __SetClasses(el, props.c);
+  if (props.s !== undefined) __SetInlineStyles(el, props.s);
+  if (props.a) {
+    for (const [key, value] of props.a) __SetAttribute(el, key, value);
+  }
+  if (props.i !== undefined) __SetID(el, props.i);
+  if (props.t !== undefined) {
+    __SetAttribute(el, 'text', props.t);
+  }
+}
+
+/**
+ * **Named Tree** interpreter (legacy "dense A1") — four-axis coordinate
+ * Data / Dense / — / Split (see vue-lynx/internal/matrix): the residual
+ * arrives as a lazy AST and this generic walk materializes it, naming
+ * every preorder slot.
+ *
+ * Element ids are assigned by pre-order traversal starting at baseUid —
+ * the exact allocation order the BG thread used for its shadow clone, so
+ * both sides agree without a transmitted map.
+ *
+ * Comment nodes and empty #text nodes are Background Thread anchors: the
+ * walk consumes their uid (keeping both sides' pre-order counters in
+ * lockstep) but creates no Main Thread element — returns null.
+ */
+function instantiateTemplateDense(
+  node: TemplateNode,
+  base: number,
+  counter: { value: number },
+): { el: LynxElement; uid: number } | null {
+  const uid = base + counter.value++;
+  const [tag, props, children] = node;
+
+  if (tag === '#comment') return null;
+  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
+    return null;
+  }
+
+  let el: LynxElement;
+  if (tag === '#text') {
+    el = __CreateText(pageUniqueId);
+  } else {
+    el = createTypedElement(tag, pageUniqueId);
+  }
+  __SetCSSId([el], 0);
+  elements.set(uid, el);
+  installSelectorAttribute(uid, el);
+  applyStaticProps(el, props);
+
+  for (const childNode of children) {
+    const child = instantiateTemplateDense(childNode, base, counter);
+    if (child) {
+      __AppendElement(el, child.el);
+      trackInsert(uid, child.uid);
+    }
+  }
+  return { el, uid };
+}
+
+/**
+ * **recovered Data-Template** interpreter (legacy "sparse A2") — four-axis
+ * coordinate Data / Sparse / recovered / Split: same lazy-AST residual and
+ * generic interpreter as the Named Tree, but only the compiler-recovered
+ * addressed closure receives identities (uid = base + indexInAddressed).
+ * Anonymous static nodes are write-only handles for `__AppendElement` —
+ * the full native skeleton is still built (why sparse alone is not an FCP
+ * win; Engine staging removes the per-node JS walk itself).
+ */
+function instantiateTemplateSparse(
+  node: TemplateNode,
+  base: number,
+  counter: { value: number },
+  slotToSparse: Map<number, number>,
+  parentUid: number | null,
+): { el: LynxElement; uid: number | null } | null {
+  const slot = counter.value++;
+  const [tag, props, children] = node;
+
+  if (tag === '#comment') return null;
+  if (tag === '#text' && (!props || props.t === undefined || props.t === '')) {
+    return null;
+  }
+
+  let el: LynxElement;
+  if (tag === '#text') {
+    el = __CreateText(pageUniqueId);
+  } else {
+    el = createTypedElement(tag, pageUniqueId);
+  }
+  __SetCSSId([el], 0);
+  applyStaticProps(el, props);
+
+  const sparseIdx = slotToSparse.get(slot);
+  const uid = sparseIdx !== undefined ? base + sparseIdx : null;
+  if (uid !== null) {
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    if (parentUid !== null) trackInsert(parentUid, uid);
+  }
+
+  for (const childNode of children) {
+    const child = instantiateTemplateSparse(
+      childNode,
+      base,
+      counter,
+      slotToSparse,
+      uid,
+    );
+    if (child) {
+      __AppendElement(el, child.el);
+    }
+  }
+  return { el, uid };
+}
+
+/**
+ * **Engine-Template** fast path (M3b, #323) — coordinate Engine / Sparse
+ * (or Dense) / — / Split: the engine clones a host-resident prototype;
+ * no per-node JS runs here. Returns false when the engine family is
+ * unavailable or instantiation fails (→ caller interprets; the cell is
+ * reported stub). Bookkeeping (elements map, selector attrs, insert
+ * tracking) matches the interpreters exactly so every later op works
+ * unchanged.
+ */
+function tryEngineCloneTree(
+  tplId: number,
+  entry: RegisteredTree,
+  baseUid: number,
+): boolean {
+  if (!engineStagingRequested()) return false;
+
+  // Preorder metadata from the structure: tag, materializability, and the
+  // nearest named ancestor for insert tracking.
+  const tags: string[] = [];
+  const props: TemplateNode[1][] = [];
+  const namedParentOf: (number | null)[] = [];
+  const addressedSet = entry.addressed ? new Set(entry.addressed) : null;
+  const walk = (node: TemplateNode, namedParent: number | null): void => {
+    const slot = tags.length;
+    tags.push(node[0]);
+    props.push(node[1]);
+    namedParentOf.push(namedParent);
+    const selfNamed = addressedSet ? addressedSet.has(slot) : true;
+    for (const child of node[2]) {
+      walk(child, selfNamed ? slot : namedParent);
+    }
+  };
+  walk(entry.structure, null);
+
+  const named = entry.addressed ?? tags.map((_, slot) => slot);
+  const materializable = (slot: number): boolean => {
+    const tag = tags[slot]!;
+    if (tag === '#comment') return false;
+    if (tag === '#text') {
+      const p = props[slot];
+      return !!p && p.t !== undefined && p.t !== '';
+    }
+    return true;
+  };
+
+  const wanted = named.filter(materializable);
+  const handles = instantiateEngineTemplate(tplId, wanted, pageUniqueId);
+  if (!handles) return false;
+
+  const slotToUid = new Map(named.map((s, i) => [s, baseUid + i] as const));
+  for (let i = 0; i < wanted.length; i++) {
+    const slot = wanted[i]!;
+    const uid = slotToUid.get(slot)!;
+    const el = handles[i]!;
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    const parentSlot = namedParentOf[slot];
+    if (parentSlot !== null) {
+      const parentUid = slotToUid.get(parentSlot);
+      if (parentUid !== undefined) trackInsert(parentUid, uid);
+    }
+  }
+  return true;
+}
+
+/**
+ * PAPI/registry sink handed to the ephemeral Code-Template executor
+ * (`+ifr:c`, #340). Keeping the typed creators, static-prop writer, and
+ * (crucially) the IFR selector-attribute deferral here means the
+ * code-painted ephemeral tree lands in exactly the same registry state as
+ * the interpreter would have produced.
+ */
+const codeTemplateHost: CodeTemplateHost = {
+  createElement(isText: boolean, tag: string): LynxElement {
+    const el = isText
+      ? __CreateText(pageUniqueId)
+      : createTypedElement(tag, pageUniqueId);
+    __SetCSSId([el], 0);
+    return el;
+  },
+  applyStaticProps,
+  installSelectorAttribute,
+  appendChild(parent: LynxElement, child: LynxElement): void {
+    __AppendElement(parent, child);
+  },
+};
+
+/**
+ * **Code-Template** ephemeral paint (`+ifr:c`, #340): the throwaway IFR
+ * first-frame copy is materialized by a create() executor compiled ON THIS
+ * THREAD from the SAME registered residual, instead of inheriting the
+ * durable Data-Template interpretation. Unlike the engine path this runs on
+ * Lynx for Web (measurable — verdict in the unified report: a wash).
+ * Returns false when code-paint is not requested (→ caller tries engine,
+ * then interprets); the persistent tree is never touched, so hydration
+ * adopts/replays the ephemeral copy unchanged.
+ */
+function tryCodePaintCloneTree(
+  tplId: number,
+  entry: RegisteredTree,
+  baseUid: number,
+): boolean {
+  if (!codePaintRequested()) return false;
+  // Compile-once safety net: REGISTER_TREE already compiled this when the
+  // paint flag was set, but a flag flipped between register and clone still
+  // works.
+  registerCodeTemplate(tplId, entry.structure, entry.addressed);
+  return instantiateCodeTemplate(tplId, baseUid, codeTemplateHost);
+}
+
+/**
+ * Optional staging strategies for REGISTER_TREE(_BUNDLE) / CLONE_TREE, in
+ * CLONE-priority order. The Data-Template interpreter
+ * (`instantiateRegisteredTree`) is the always-on default and is
+ * deliberately NOT in this table — these are the experimental graph-eng
+ * axes stacked on top of it. They are mutually exclusive in every real
+ * build (the plugin bakes one staging/paint value); each `tryClone`
+ * self-guards on its own flag.
+ *
+ * TO RETIRE AN AXIS once the experiment concludes: delete its entry here,
+ * delete its module (`engine-template.ts` / `code-template.ts`) and its
+ * reader in ./flags.ts, and drop its build define + plugin option. Nothing
+ * else in this file hard-codes the axis.
+ */
+interface StagingStrategy {
+  /** True when this strategy should materialize (reads ./flags). */
+  readonly active: () => boolean;
+  /** Build any per-template resource at REGISTER_TREE(_BUNDLE). */
+  readonly register: (
+    tplId: number,
+    structure: TemplateNode,
+    addressed: number[] | undefined,
+  ) => void;
+  /** Paint a clone; true if painted, false to fall through. Self-guards. */
+  readonly tryClone: (
+    tplId: number,
+    entry: RegisteredTree,
+    baseUid: number,
+  ) => boolean;
+  /** Clear module state (tests / reload). */
+  readonly reset: () => void;
+}
+
+const STAGING_STRATEGIES: readonly StagingStrategy[] = [
+  // [code-paint] ephemeral Code-Template — #340. Tried first at CLONE.
+  {
+    active: codePaintRequested,
+    register: (tplId, structure, addressed) =>
+      registerCodeTemplate(tplId, structure, addressed),
+    tryClone: tryCodePaintCloneTree,
+    reset: resetCodeTemplatesForTesting,
+  },
+  // [engine] Engine-Template — #323 (durable) / #324 (native-paint); web stub.
+  {
+    active: engineStagingRequested,
+    register: (tplId, structure, addressed) =>
+      registerEngineTemplate(
+        tplId,
+        buildEngineTemplateDescriptor(structure, addressed ?? [], addressed ?? []),
+      ),
+    tryClone: tryEngineCloneTree,
+    reset: resetEngineTemplatesForTesting,
+  },
+];
+
+/** Run the active strategies' per-template registration hooks. */
+function registerStagingStrategies(
+  tplId: number,
+  structure: TemplateNode,
+  addressed: number[] | undefined,
+): void {
+  for (const strategy of STAGING_STRATEGIES) {
+    if (strategy.active()) strategy.register(tplId, structure, addressed);
+  }
+}
+
+/**
+ * Vapor Code-Template instantiation (`+b:c`, #337): run the bundle-baked
+ * create() and name `base + indexInAddressed` — handles come back in
+ * addressed order (null for BG-only anchors), so naming, selector
+ * attributes, and insert tracking mirror `instantiateTemplateSparse`
+ * exactly and the update path cannot tell the difference.
+ */
+function instantiateVaporCodeTemplate(
+  ventry: import('./vapor-templates.js').VaporTemplateEntry,
+  baseUid: number,
+  maxHandles: number,
+): void {
+  const handles = ventry.create(pageUniqueId);
+  const limit = Math.min(handles.length, maxHandles);
+  for (let k = 0; k < limit; k++) {
+    const el = handles[k];
+    if (!el) continue;
+    const uid = baseUid + k;
+    elements.set(uid, el);
+    installSelectorAttribute(uid, el);
+    const parentIdx = ventry.namedParents[k] ?? -1;
+    if (parentIdx >= 0 && handles[parentIdx]) {
+      trackInsert(baseUid + parentIdx, uid);
+    }
+  }
+}
+
+function instantiateRegisteredTree(
+  entry: RegisteredTree,
+  baseUid: number,
+): void {
+  if (entry.addressed && entry.addressed.length > 0) {
+    const slotToSparse = new Map(
+      entry.addressed.map((s, i) => [s, i] as const),
+    );
+    instantiateTemplateSparse(
+      entry.structure,
+      baseUid,
+      { value: 0 },
+      slotToSparse,
+      null,
+    );
+  } else {
+    instantiateTemplateDense(entry.structure, baseUid, { value: 0 });
+  }
+}
+
 export function applyOps(ops: unknown[], flush = true): void {
   const len = ops.length;
   if (len === 0) return;
 
-  // Detect duplicate batch from double BG bundle evaluation.
-  // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
-  // ShadowElement.nextId resets to 2, producing the same element IDs.
-  // If the first CREATE/INSTANTIATE op targets an ID that already exists in
-  // our elements Map, this is a duplicate batch — skip it entirely.
-  if (
-    len >= 3
-    && (ops[0] === OP.CREATE || ops[0] === OP.INSTANTIATE_TEMPLATE)
-  ) {
-    const firstId = ops[1] as number;
-    if (elements.has(firstId)) {
-      return;
-    }
-  }
+  // Subtree roots removed in this batch. Moves (KeepAlive storage, Teleport)
+  // emit REMOVE followed by INSERT within the same batch, so registry release
+  // is deferred until the end of the batch and cancelled by a re-insert.
+  const removedRoots = new Set<number>();
+
+  // Detect duplicate batches from double BG bundle evaluation by locating
+  // the first allocator frame, rather than assuming it is the first frame.
+  if (hasDuplicateFirstAllocator(ops)) return;
 
   let i = 0;
 
@@ -103,11 +546,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const id = ops[i++] as number;
         const type = ops[i++] as string;
         let el: LynxElement;
-        if (type === '__comment') {
-          // Vue uses comment nodes as Fragment / v-if anchors.
-          // Create a zero-size text node as an invisible placeholder.
-          el = __CreateRawText('');
-        } else if (type === 'list') {
+        if (type === 'list') {
           el = createListElement(id);
         } else {
           // Use typed PAPI creators for known element types.
@@ -120,20 +559,19 @@ export function applyOps(ops: unknown[], flush = true): void {
         }
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries.
-        // Comment nodes (__CreateRawText) can't have attributes.
-        if (type !== '__comment') {
-          __SetAttribute(el, `vue-ref-${id}`, 1);
-        }
+        installSelectorAttribute(id, el);
         break;
       }
 
       case OP.CREATE_TEXT: {
         const id = ops[i++] as number;
+        // The BG thread only creates MT text elements for text with content
+        // (empty text nodes are BG-only anchors), so no hiding is needed.
         const el = __CreateText(pageUniqueId);
         __SetCSSId([el], 0);
         elements.set(id, el);
         // Set selector attribute for BG-thread NodesRef queries
-        __SetAttribute(el, `vue-ref-${id}`, 1);
+        installSelectorAttribute(id, el);
         break;
       }
 
@@ -144,6 +582,8 @@ export function applyOps(ops: unknown[], flush = true): void {
         const parent = elements.get(parentId);
         const child = elements.get(childId);
         if (parent && child) {
+          removedRoots.delete(childId);
+          trackInsert(parentId, childId);
           if (isListParent(parentId)) {
             insertListItem(parentId, child, childId, anchorId);
           } else if (anchorId === -1) {
@@ -151,6 +591,31 @@ export function applyOps(ops: unknown[], flush = true): void {
           } else {
             const anchor = elements.get(anchorId);
             if (anchor) __InsertElementBefore(parent, child, anchor);
+          }
+        }
+        break;
+      }
+
+      case OP.INSERT_TEMPLATE_SLOT: {
+        // Slot-index addressing: parent is the slotIndex-th element slot of
+        // the template rooted at rootId (see bindTemplateInstanceSlots).
+        const rootId = ops[i++] as number;
+        const slotIndex = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const anchorId = ops[i++] as number;
+        const parent = getTemplateSlotParent(rootId, slotIndex);
+        const child = elements.get(childId);
+        if (parent && child) {
+          removedRoots.delete(childId);
+          // Parent uid for trackInsert is the slot FiberElement's registry
+          // id (rootId + holeOffset); use child tracking only — the slot
+          // parent is already part of the template instance.
+          if (anchorId === -1) {
+            __AppendElement(parent, child);
+          } else {
+            const anchor = elements.get(anchorId);
+            if (anchor) __InsertElementBefore(parent, child, anchor);
+            else __AppendElement(parent, child);
           }
         }
         break;
@@ -168,6 +633,103 @@ export function applyOps(ops: unknown[], flush = true): void {
             removeListItem(parentId, childId);
           }
           __RemoveElement(parent, child);
+          removedRoots.add(childId);
+        }
+        // Best-effort: if this REMOVE tears down a template root, drop its
+        // slot-index table (holes share the contiguous id range and are not
+        // individually removed).
+        unbindTemplateInstanceSlots(childId);
+        break;
+      }
+
+      case OP.REMOVE_TEMPLATE_SLOT: {
+        const rootId = ops[i++] as number;
+        const slotIndex = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const parent = getTemplateSlotParent(rootId, slotIndex);
+        const child = elements.get(childId);
+        if (parent && child) {
+          __RemoveElement(parent, child);
+          removedRoots.add(childId);
+        }
+        break;
+      }
+
+      case OP.BIND_VAPOR_TEMPLATE: {
+        // `+b:c` (#337): bind the BG's numeric tree id to a bundle-baked
+        // create() so per-instance INSTANTIATE_TEMPLATE frames stay numeric.
+        const treeId = ops[i++] as number;
+        const codeId = ops[i++] as string;
+        bindVaporTemplateId(treeId, codeId);
+        if (!getVaporTemplate(codeId)) {
+          console.error(
+            `[vue-lynx] BIND_VAPOR_TEMPLATE: no bundle-registered create() for id "${codeId}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
+      case OP.REGISTER_TREE_BUNDLE: {
+        // `+b!` (#338): the structure was baked into this bundle at build
+        // time — only the fingerprint hash crossed the wire. The BG emits
+        // this op ONLY after verifying its runtime parse hashes identically
+        // to the build parse, so a registry miss can only mean mismatched
+        // BG/MT bundles; nothing to interpret without the structure, so the
+        // batch entry is dropped loudly.
+        const tplId = ops[i++] as number;
+        const hash = ops[i++] as string;
+        const addressedOr0 = ops[i++] as number[] | 0;
+        const structure = getVaporStructure(hash);
+        if (structure) {
+          const addressed = Array.isArray(addressedOr0)
+            ? addressedOr0
+            : undefined;
+          templates.set(tplId, { structure, addressed });
+          // Bundle-delivered structures feed the active staging strategy the
+          // same way wire-delivered ones do (engine prototype / compiled
+          // ephemeral plan).
+          registerStagingStrategies(tplId, structure, addressed);
+        } else {
+          console.error(
+            `[vue-lynx] REGISTER_TREE_BUNDLE: no bundle-registered structure for hash "${hash}" — mismatched bundles?`,
+          );
+        }
+        break;
+      }
+
+      case OP.REGISTER_TREE: {
+        const tplId = ops[i++] as number;
+        const structure = ops[i++] as TemplateNode;
+        const addressedOr0 = ops[i++] as number[] | 0;
+        const addressed = Array.isArray(addressedOr0)
+          ? addressedOr0
+          : undefined;
+        templates.set(tplId, { structure, addressed });
+        // Build any per-template resource for the active staging strategy
+        // (engine host-resident prototype, compiled ephemeral plan). The
+        // Data-Template default needs none. Fail-safe: engine register is a
+        // no-op when the family is absent (the cell reports stub).
+        registerStagingStrategies(tplId, structure, addressed);
+        break;
+      }
+
+      case OP.CLONE_TREE: {
+        const tplId = ops[i++] as number;
+        const baseUid = ops[i++] as number;
+        const entry = templates.get(tplId);
+        if (entry) {
+          // Try each optional staging strategy in priority order; the
+          // Data-Template interpreter is the always-on default fallback.
+          // Plain and native-paint behavior is unchanged (their tryClone
+          // self-guards and returns false).
+          let painted = false;
+          for (const strategy of STAGING_STRATEGIES) {
+            if (strategy.tryClone(tplId, entry, baseUid)) {
+              painted = true;
+              break;
+            }
+          }
+          if (!painted) instantiateRegisteredTree(entry, baseUid);
         }
         break;
       }
@@ -263,13 +825,22 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
-      case OP.SET_SCOPE_ID: {
-        const id = ops[i++] as number;
-        const cssId = ops[i++] as number;
-        const el = elements.get(id);
-        if (el) {
-          // Set the CSS scope ID for Lynx's CSS engine
-          __SetCSSId([el], cssId);
+      case OP.INSTANTIATE_BOUND_TEMPLATE: {
+        // `+b:c` (#337) per-instance frame — CLONE_TREE-shaped, executes
+        // the bound bundle-baked create() instead of interpreting.
+        const tplId = ops[i++] as number;
+        const baseUid = ops[i++] as number;
+        const ventry = getBoundVaporTemplate(tplId);
+        if (ventry) {
+          instantiateVaporCodeTemplate(
+            ventry,
+            baseUid,
+            ventry.namedParents.length || Number.MAX_SAFE_INTEGER,
+          );
+        } else {
+          console.error(
+            `[vue-lynx] INSTANTIATE_BOUND_TEMPLATE: no binding for tree id ${tplId} — mismatched bundles?`,
+          );
         }
         break;
       }
@@ -278,16 +849,22 @@ export function applyOps(ops: unknown[], flush = true): void {
         const rootId = ops[i++] as number;
         const tplId = ops[i++] as string;
         const holeCount = ops[i++] as number;
-        const create = getTemplate(tplId);
+
+        // Vapor Code-Template by string registry id (direct form; the
+        // product path uses BIND_VAPOR_TEMPLATE + op 22 instead).
+        const ventry = getVaporTemplate(tplId);
+        if (ventry) {
+          instantiateVaporCodeTemplate(ventry, rootId, holeCount + 1);
+          break;
+        }
+
+        const entry = getTemplate(tplId);
         let handles: LynxElement[];
-        if (create) {
+        if (entry) {
           // The create() function builds the whole lowered subtree with
           // straight-line PAPI calls and returns [root, hole0, hole1, …].
-          handles = create(pageUniqueId);
+          handles = entry.create(pageUniqueId);
         } else {
-          // Unregistered template (mismatched bundles / extraction failure).
-          // Render an empty view placeholder so the rest of the tree
-          // survives; hole ids alias the placeholder so SET ops don't crash.
           console.error(
             `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
           );
@@ -297,22 +874,45 @@ export function applyOps(ops: unknown[], flush = true): void {
         }
         const root = handles[0]!;
         elements.set(rootId, root);
-        // NodesRef selector parity for the root (it is a vnode.el on the
-        // BG thread); interior nodes are anonymous by design.
-        __SetAttribute(root, `vue-ref-${rootId}`, 1);
+        installSelectorAttribute(rootId, root);
         for (let k = 1; k <= holeCount; k++) {
           elements.set(rootId + k, handles[k] ?? root);
         }
+        // Bind element-slot handles for slot-index INSERT/REMOVE.
+        bindTemplateInstanceSlots(rootId, handles, entry);
         break;
       }
 
-      default:
-        // Unknown op – skip (future-compat)
+      default: {
+        // Unknown op: skip its payload by arity so one unimplemented opcode
+        // cannot desync the rest of the walk. Without an arity there is no
+        // safe resync point — stop consuming this batch (the tail below
+        // still flushes whatever applied).
+        const arity = ARITY[code];
+        if (arity === undefined) {
+          if (__DEV__) {
+            console.warn(
+              `[vue-lynx] applyOps: unknown opcode ${code}; `
+                + 'dropping the rest of the batch.',
+            );
+          }
+          i = len;
+          break;
+        }
+        i += arity;
         break;
+      }
     }
   }
 
   flushListUpdates();
+
+  // Elements removed and not re-inserted in this batch are gone for good —
+  // the BG thread never references them again. Release their subtrees so the
+  // registry does not retain unbounded detached trees.
+  for (const id of removedRoots) {
+    releaseSubtree(id);
+  }
 
   // Flush all pending PAPI changes to the native layer in one shot.
   if (flush) __FlushElementTree();
@@ -323,8 +923,15 @@ export { elements };
 
 /** Reset module state – for testing only. */
 export function resetMainThreadState(): void {
-  elements.clear();
+  clearIfrSelectorAttributeDeferral();
+  resetElementRegistry();
+  templates.clear();
+  for (const strategy of STAGING_STRATEGIES) strategy.reset();
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
+  resetTemplateInstanceSlots();
+  // Per-realm numeric → bundle-id bindings are wire state (the bundle
+  // registries themselves persist like the element-template registry).
+  resetVaporTemplateBindings();
 }

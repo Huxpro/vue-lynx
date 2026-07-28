@@ -1,0 +1,38 @@
+diff --git a/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js b/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js
+index 8eae1885ba58db769f5ade264528ab386e68f8ca..c7e51cfd9405160569ffd6fd1bfec9a63f88fe03 100644
+--- a/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js
++++ b/dist/client/background/background-apis/crossThreadHandlers/registerDisposeHandler.js
+@@ -2,7 +2,15 @@ import { disposeEndpoint } from '../../../endpoints.js';
+ export function registerDisposeHandler(rpc, nativeApp, destroyCard, callDestroyLifetimeFun) {
+     rpc.registerHandler(disposeEndpoint, () => {
+         const id = nativeApp.id;
+-        callDestroyLifetimeFun(id);
++        try {
++            callDestroyLifetimeFun(id);
++        }
++        catch (error) {
++            if (!(error instanceof TypeError
++                && error.message.includes('callDestroyLifetimeFun is not a function'))) {
++                throw error;
++            }
++        }
+         destroyCard(id);
+     });
+ }
+diff --git a/dist/client/mainthread/createIFrameRealm.js b/dist/client/mainthread/createIFrameRealm.js
+index bb7cfa29ab283a789b26a5aee5f7534300114523..bfa9d357fa44d556aee149bd87b2347d5774d958 100644
+--- a/dist/client/mainthread/createIFrameRealm.js
++++ b/dist/client/mainthread/createIFrameRealm.js
+@@ -29,6 +29,12 @@ export async function createIFrameRealm(parent) {
+     await iframeReadyPromise;
+     const iframeWindow = iframe.contentWindow;
+     const loadScript = async (url) => {
++        if (!iframe.isConnected || !iframe.contentDocument) {
++            // The hosting lynx-view was removed while main-thread scripts were
++            // still loading (e.g. a framework remount). The realm is dead;
++            // park the pending load instead of crashing on a null document.
++            return new Promise(() => { });
++        }
+         const script = iframe.contentDocument.createElement('script');
+         script.fetchPriority = 'high';
+         script.defer = true;

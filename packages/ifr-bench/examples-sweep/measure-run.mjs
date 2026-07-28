@@ -32,12 +32,62 @@ const require = createRequire(
 const { JSDOM } = require('jsdom');
 const { LynxTestingEnv } = require('@lynx-js/testing-environment');
 
+// LynxTestingEnv projects each simulated realm onto Node's shared global
+// object. It overwrites globals known to the target realm, but cannot remove
+// extra properties installed by code evaluated in the previous realm. Vapor
+// intentionally installs DOM constructor shims and IFR bridge state at module
+// evaluation time, so leaking the MT copies into BG makes the BG render reuse
+// MT-only ShadowElement classes/counters and produces an empty/invalid stream.
+// Capture the pristine BG values before MT evaluation and restore them at the
+// realm boundary, matching the isolated globals used by a real Lynx device.
+const VAPOR_REALM_GLOBALS = [
+  '__VUE_LYNX_DOCUMENT__',
+  '__VUE_LYNX_WINDOW__',
+  'document',
+  'window',
+  'Node',
+  'Element',
+  'Text',
+  'Comment',
+  'CharacterData',
+  'DocumentFragment',
+  'HTMLElement',
+  'SVGElement',
+  'MathMLElement',
+  'HTMLSlotElement',
+  'ShadowRoot',
+  '__VUE_LYNX_IFR_MT__',
+  '__VUE_LYNX_IFR_ENABLED__',
+  '__vueLynxIfrApplyOps',
+  '__vueLynxIfrMountApps',
+  '__vueLynxIfrSealOps',
+  '__VUE_LYNX_EVENT_REGISTRY__',
+];
+
+function captureRealmGlobals() {
+  return new Map(
+    VAPOR_REALM_GLOBALS.map((name) => [
+      name,
+      Object.getOwnPropertyDescriptor(globalThis, name),
+    ]),
+  );
+}
+
+function restoreRealmGlobals(snapshot) {
+  for (const [name, descriptor] of snapshot) {
+    if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+    else delete globalThis[name];
+  }
+}
+
 const bundlePath = process.argv[2];
 const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 const env = new LynxTestingEnv(jsdom);
 globalThis.lynxTestingEnv = env;
+// The constructor leaves the BG realm active.
+const backgroundRealmGlobals = captureRealmGlobals();
 
 const contentSize = () => {
   // Count element nodes beneath <page> — raw placeholder texts excluded.
@@ -70,11 +120,7 @@ globalThis.vuePatchUpdate = (params) => {
 };
 
 env.switchToBackgroundThread();
-// On a device each thread has its own globalThis; in this shared-global
-// harness the IFR main-thread flag must be cleared before background code
-// runs, so its flush takes the real cross-thread path (callLepusMethod →
-// vuePatchUpdate → hydration compare) instead of short-circuiting locally.
-delete globalThis.__VUE_LYNX_IFR_MT__;
+restoreRealmGlobals(backgroundRealmGlobals);
 // Post-first-frame APIs the minimal env lacks; apps touch them in onMounted.
 if (globalThis.lynx && !globalThis.lynx.createSelectorQuery) {
   globalThis.lynx.createSelectorQuery = () => {
@@ -84,7 +130,9 @@ if (globalThis.lynx && !globalThis.lynx.createSelectorQuery) {
       setNativeProps: () => chain,
       fields: () => chain,
       path: () => chain,
-      exec() {},
+      exec() {
+        // The fixture only exercises the selector chain's synchronous shape.
+      },
     };
     return chain;
   };

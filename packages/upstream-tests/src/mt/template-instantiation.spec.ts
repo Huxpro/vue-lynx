@@ -1,0 +1,324 @@
+/**
+ * Main Thread REGISTER_TREE / CLONE_TREE tests, running against the
+ * real ops-apply + jsdom PAPI pipeline.
+ *
+ * The uid contract under test: instantiation assigns ids by pre-order
+ * traversal of the registered structure starting at baseUid, matching the
+ * contiguous block the BG thread reserves for its shadow clone.
+ */
+
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { OP } from 'vue-lynx/internal/ops';
+// Same-process module state as the pipeline set up by runtime-dom-setup.ts.
+import { applyOps, elements } from '../../../vue-lynx/main-thread/src/ops-apply.js';
+
+let nextId = 200000; // far above ids used by other suites in this worker
+
+let ROOT = 0;
+beforeEach(() => {
+  ROOT = nextId++;
+  applyOps([OP.CREATE, ROOT, 'view']);
+});
+
+// <view class=row style=…><text class=cell>(text folded: "hi")</text><!></view>
+const TPL_ID_BASE = 900000;
+let nextTplId = TPL_ID_BASE;
+
+function structure() {
+  return [
+    'view',
+    { c: 'row', s: { height: '18px' }, a: [['custom', 'x']] },
+    [
+      ['text', { c: 'cell', t: 'hi' }, []],
+      ['#comment', 0, []],
+    ],
+  ];
+}
+
+describe('MT template instantiation', () => {
+  it('instantiates a registered template with pre-order uids', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 3;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure(), 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    const rootEl = elements.get(base) as Element;
+    const cellEl = elements.get(base + 1) as Element;
+    expect(rootEl).toBeTruthy();
+    expect(cellEl).toBeTruthy();
+
+    // Comment anchors are BG-only: the uid is consumed by the pre-order
+    // walk but no Main Thread element is created for it.
+    expect(elements.has(base + 2)).toBe(false);
+
+    // structure applied: class, attrs, folded text, child order
+    expect(rootEl.getAttribute('class')).toBe('row');
+    expect(rootEl.getAttribute('custom')).toBe('x');
+    expect(cellEl.getAttribute('class')).toBe('cell');
+    expect(cellEl.textContent).toBe('hi');
+    // instantiated subtree is attached under the root insert
+    const container = elements.get(ROOT) as Element;
+    expect(container.contains(rootEl)).toBe(true);
+    expect(rootEl.contains(cellEl)).toBe(true);
+    // no hidden anchor element pads the child list
+    expect(rootEl.childNodes).toHaveLength(1);
+  });
+
+  it('keeps template #text/#comment anchors off the Main Thread', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 4;
+
+    // <view><!>(empty #text)<text …>hi</text></view> — anchors first, so the
+    // materialized child would misplace if their uids were not consumed.
+    applyOps([
+      OP.REGISTER_TREE, tplId, [
+        'view',
+        0,
+        [
+          ['#comment', 0, []],
+          ['#text', 0, []],
+          ['text', { t: 'hi' }, []],
+        ],
+      ], 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    expect(elements.has(base + 1)).toBe(false); // comment anchor
+    expect(elements.has(base + 2)).toBe(false); // empty text anchor
+    const textEl = elements.get(base + 3) as Element;
+    expect(textEl).toBeTruthy();
+    expect(textEl.textContent).toBe('hi');
+    expect((elements.get(base) as Element).childNodes).toHaveLength(1);
+  });
+
+  it('clones the same template repeatedly with independent uid blocks', () => {
+    const tplId = nextTplId++;
+    const base1 = nextId;
+    nextId += 3;
+    const base2 = nextId;
+    nextId += 3;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure(), 0,
+      OP.CLONE_TREE, tplId, base1,
+      OP.INSERT, ROOT, base1, -1,
+      OP.CLONE_TREE, tplId, base2,
+      OP.INSERT, ROOT, base2, -1,
+    ]);
+
+    expect(elements.get(base1)).toBeTruthy();
+    expect(elements.get(base2)).toBeTruthy();
+    expect(elements.get(base1)).not.toBe(elements.get(base2));
+
+    // dynamic ops target instance uids independently
+    applyOps([OP.SET_TEXT, base1 + 1, 'one', OP.SET_TEXT, base2 + 1, 'two']);
+    expect((elements.get(base1 + 1) as Element).textContent).toBe('one');
+    expect((elements.get(base2 + 1) as Element).textContent).toBe('two');
+  });
+
+  it('releases instantiated subtrees through the registry cleanup', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 3;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure(), 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+    expect(elements.has(base + 1)).toBe(true);
+
+    applyOps([OP.REMOVE, ROOT, base]);
+    expect(elements.has(base)).toBe(false);
+    expect(elements.has(base + 1)).toBe(false);
+  });
+});
+
+describe('MT sparse A2 template instantiation (#298)', () => {
+  // Dense structure: view(0) > text-static(1) > text-hole(2) > image-static(3)
+  // Sparse addressed: [0, 2] — only root + hole named; static siblings anonymous.
+  function sparseStructure() {
+    return [
+      'view',
+      { c: 'card' },
+      [
+        ['text', { c: 'static', t: 'hi' }, []],
+        ['text', { c: 'hole', t: ' ' }, []],
+        ['image', { a: [['src', 'x.png']] }, []],
+      ],
+    ];
+  }
+
+  it('names only addressed slots; static skeleton stays anonymous', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 2; // only 2 addressed uids
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, sparseStructure(), [0, 2],
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    const rootEl = elements.get(base) as Element;
+    const holeEl = elements.get(base + 1) as Element; // sparse index 1 → slot 2
+    expect(rootEl).toBeTruthy();
+    expect(holeEl).toBeTruthy();
+    expect(holeEl.getAttribute('class')).toBe('hole');
+
+    // Static siblings (dense slots 1 and 3) are NOT in the elements map.
+    expect(elements.has(base + 2)).toBe(false);
+    expect(elements.has(base + 3)).toBe(false);
+
+    // Full native tree still exists under root (3 children).
+    expect(rootEl.childNodes).toHaveLength(3);
+    expect((rootEl.childNodes[0] as Element).getAttribute('class')).toBe(
+      'static',
+    );
+    expect((rootEl.childNodes[2] as Element).getAttribute('src')).toBe(
+      'x.png',
+    );
+
+    // Dynamic SET_* targets the sparse hole uid.
+    applyOps([OP.SET_TEXT, base + 1, 'title']);
+    expect(holeEl.textContent).toBe('title');
+  });
+
+  it('falls back to dense naming when addressedOr0 is 0', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 4;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, sparseStructure(), 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    expect(elements.has(base)).toBe(true);
+    expect(elements.has(base + 1)).toBe(true);
+    expect(elements.has(base + 2)).toBe(true);
+    expect(elements.has(base + 3)).toBe(true);
+  });
+
+  it('BG/MT named-uid parity across representative shapes', () => {
+    // For each shape: addressed list ↔ MT elements.set keys in [base, base+n).
+    // Comments in the structure consume preorder slots but never land in
+    // elements — they are excluded from the expected named set when not
+    // materialised (same as dense).
+    type Shape = {
+      structure: unknown;
+      addressed: number[];
+      /** Preorder slots that produce a real MT element when named. */
+      materialSlots: number[];
+    };
+
+    const shapes: Shape[] = [
+      {
+        structure: sparseStructure(),
+        addressed: [0, 2],
+        materialSlots: [0, 2],
+      },
+      {
+        structure: [
+          'view',
+          0,
+          [
+            ['text', { t: 'a' }, []],
+            ['#comment', 0, []],
+            ['text', { t: 'b' }, []],
+          ],
+        ],
+        // name root + both texts; comment addressed but not materialised
+        addressed: [0, 1, 2, 3],
+        materialSlots: [0, 1, 3],
+      },
+      {
+        structure: [
+          'view',
+          { c: 'only' },
+          [
+            ['text', { t: 'x' }, []],
+            ['image', { a: [['src', 'y']] }, []],
+          ],
+        ],
+        addressed: [0],
+        materialSlots: [0],
+      },
+    ];
+
+    for (const shape of shapes) {
+      const tplId = nextTplId++;
+      const base = nextId;
+      nextId += shape.addressed.length + 2;
+
+      applyOps([
+        OP.REGISTER_TREE, tplId, shape.structure, shape.addressed,
+        OP.CLONE_TREE, tplId, base,
+        OP.INSERT, ROOT, base, -1,
+      ]);
+
+      const expected = new Set(
+        shape.materialSlots.map((slot) => {
+          const sparseIdx = shape.addressed.indexOf(slot);
+          return base + sparseIdx;
+        }),
+      );
+      const named = new Set<number>();
+      for (let u = base; u < base + shape.addressed.length; u++) {
+        if (elements.has(u)) named.add(u);
+      }
+      expect(named).toEqual(expected);
+    }
+  });
+
+  it('inserts before a materialized sibling when a comment anchor is unnamed on MT', () => {
+    // Structure: view > hole-text(0+1) / #comment(2) / static-text(3)
+    // Sparse names [0, 1, 3] — comment has a preorder slot but no MT map entry
+    // (same as dense). Dynamic insert uses the static text as anchor.
+    const structure = [
+      'view',
+      0,
+      [
+        ['text', { c: 'hole', t: ' ' }, []],
+        ['#comment', 0, []],
+        ['text', { c: 'static', t: 'tail' }, []],
+      ],
+    ];
+    const addressed = [0, 1, 3];
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += addressed.length + 4;
+
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure, addressed,
+      OP.CLONE_TREE, tplId, base,
+      OP.INSERT, ROOT, base, -1,
+    ]);
+
+    const rootUid = base;
+    const staticUid = base + 2; // sparse index of slot 3
+    const childUid = nextId++;
+    applyOps([
+      OP.CREATE, childUid, 'view',
+      OP.SET_CLASS, childUid, 'dynamic',
+      // Insert before the static trailing text (materialized anchor).
+      OP.INSERT, rootUid, childUid, staticUid,
+    ]);
+
+    const rootEl = elements.get(rootUid) as Element;
+    const classes = [...rootEl.childNodes].map(
+      (n) => (n as Element).getAttribute?.('class'),
+    );
+    // hole, dynamic, static — comment never appears as a native child
+    expect(classes).toEqual(['hole', 'dynamic', 'static']);
+  });
+});

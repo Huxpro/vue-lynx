@@ -1,0 +1,538 @@
+/**
+ * End-to-end Vapor SFC tests: compile real `<script setup vapor>` SFC source
+ * with `@vue/compiler-sfc` (exactly like the build plugin does), execute the
+ * compiled module against the vue-lynx Vapor runtime, and assert on the ops
+ * stream and interaction behavior.
+ *
+ * This closes the compiler ↔ runtime contract loop: the runtime tests in
+ * vapor-runtime.spec.ts hand-write compiled-output-style code, while these
+ * tests run whatever the actual compiler emits today.
+ *
+ * Mechanism: compiled module code (which imports helpers from 'vue') is
+ * rewritten to import from 'vue-lynx/vapor', written to a gitignored
+ * .generated/ dir, and dynamically imported so vite resolves the imports
+ * through the same aliases as everything else.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { compileScript, parse } from '@vue/compiler-sfc';
+import { nextTick, resetForTesting } from 'vue-lynx';
+import { OP } from 'vue-lynx/internal/ops';
+import * as vaporSurface from 'vue-lynx/vapor';
+import { publishEvent } from '../../../vue-lynx/runtime/src/event-registry.js';
+import { collectFlushedOps, resetCapturedOps } from '../local-test-setup.js';
+import {
+  decodeOps,
+  expandOps,
+  opsOf,
+  resetTemplateExpander,
+} from './ops-test-utils.js';
+import type { DecodedOp } from './ops-test-utils.js';
+
+const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const generatedDir = path.join(_dirname, '.generated');
+
+// ---------------------------------------------------------------------------
+// Compile helpers — mirror pluginVueLynx's compiler configuration
+// ---------------------------------------------------------------------------
+
+interface CompiledFixture {
+  code: string;
+  importsFromVue: string[];
+}
+
+function compileVaporSfc(filename: string, source: string): CompiledFixture {
+  const { descriptor, errors } = parse(source, { filename });
+  expect(errors).toEqual([]);
+  expect(descriptor.vapor).toBe(true);
+
+  const result = compileScript(descriptor, {
+    id: filename.replace(/\W/g, ''),
+    inlineTemplate: true,
+    templateOptions: {
+      scoped: descriptor.styles.some((s) => s.scoped),
+      compilerOptions: {
+        isNativeTag: () => true,
+        whitespace: 'condense',
+        eventDelegation: false,
+      },
+    },
+  });
+
+  const importsFromVue: string[] = [];
+  const importRe = /import\s*\{([^}]*)\}\s*from\s*(['"])vue\2/g;
+  for (const match of result.content.matchAll(importRe)) {
+    for (const spec of match[1]!.split(',')) {
+      const name = spec.split(' as ')[0]!.trim();
+      if (name) importsFromVue.push(name);
+    }
+  }
+
+  const code = result.content.replace(
+    /from\s*(['"])vue\1/g,
+    "from 'vue-lynx/vapor'",
+  );
+  return { code, importsFromVue };
+}
+
+let fixtureCounter = 0;
+
+function writeCompiled(code: string): string {
+  fs.mkdirSync(generatedDir, { recursive: true });
+  const file = path.join(
+    generatedDir,
+    `fixture-${process.pid}-${fixtureCounter++}.mts`,
+  );
+  fs.writeFileSync(file, code);
+  return file;
+}
+
+async function importCompiled(code: string): Promise<{ default: unknown }> {
+  const file = writeCompiled(code);
+  return (await import(/* @vite-ignore */ `${file}?t=${Date.now()}`)) as {
+    default: unknown;
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Ops decoding (shared shape with vapor-runtime.spec.ts)
+// ---------------------------------------------------------------------------
+
+async function flushedOps(): Promise<DecodedOp[]> {
+  await nextTick();
+  return expandOps(decodeOps(collectFlushedOps()));
+}
+
+beforeEach(() => {
+  resetForTesting();
+  resetCapturedOps();
+  resetTemplateExpander();
+});
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+const COUNTER_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const count = ref(0)
+function inc() { count.value++ }
+</script>
+<template>
+  <view class="page">
+    <text class="label">Count: {{ count }}</text>
+    <view v-if="count > 0"><text>positive</text></view>
+    <view v-for="i in count" :key="i"><text>row {{ i }}</text></view>
+    <view class="btn" @tap="inc"><text>+1</text></view>
+  </view>
+</template>
+`;
+
+const KITCHEN_SINK_SFC = `
+<script setup vapor lang="ts">
+import { ref, computed } from 'vue'
+const show = ref(true)
+const items = ref(['a', 'b'])
+const msg = ref('hi')
+const cls = computed(() => ({ active: show.value }))
+const styleObj = computed(() => ({ height: '20px' }))
+function noop() {}
+</script>
+<template>
+  <view :class="cls" :style="styleObj" :custom-attr="msg" :id="msg">
+    <text v-show="show">shown</text>
+    <view v-if="show"><text>if</text></view>
+    <view v-else><text>else</text></view>
+    <view v-for="(item, i) in items" :key="item"><text>{{ i }}: {{ item }}</text></view>
+    <view @tap.stop="noop" @touchstart.once="noop"><text>events</text></view>
+    <input v-model.trim="msg" />
+  </view>
+</template>
+<style scoped>
+.active { color: red; }
+</style>
+`;
+
+const STATIC_INLINE_STYLE_SFC = `
+<script setup vapor lang="ts">
+const label = 'styled'
+</script>
+<template>
+  <view :style="{ padding: 16, marginBottom: 12, flex: 1, opacity: 0.5 }">
+    <text>{{ label }}</text>
+  </view>
+</template>
+`;
+
+const DYNAMIC_INLINE_STYLE_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#123456')
+</script>
+<template>
+  <view :style="{ padding: 16, marginBottom: 12, borderRadius: 8, opacity: 0.5, backgroundColor: color }">
+    <text>dynamic styled</text>
+  </view>
+</template>
+`;
+
+const CSS_MODULE_SFC = `
+<script setup vapor lang="ts">
+import { useCssModule } from 'vue'
+const classes = useCssModule()
+</script>
+<template>
+  <view :class="classes.card"><text :class="classes.title">module styled</text></view>
+</template>
+`;
+
+const CSS_VARS_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#1565c0')
+</script>
+<template><view><text class="label">css var styled</text></view></template>
+<style>.label { color: v-bind(color); }</style>
+`;
+
+// ReactLynx-style event props (:bindtap / :catchtap) compile to setAttr in
+// Vapor — the runtime must route them to event registration, exactly like
+// the vdom renderer's patchProp does (regression: examples/css-features
+// VBindCSS.vue buttons were dead in Vapor mode).
+const BINDTAP_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const count = ref(0)
+function inc() { count.value++ }
+function noopCatch() {}
+</script>
+<template>
+  <view>
+    <text class="label">Count: {{ count }}</text>
+    <view class="btn" :bindtap="inc"><text>+1</text></view>
+    <view class="stopper" :catchtap="noopCatch"><text>stop</text></view>
+  </view>
+</template>
+`;
+
+// Fallthrough: an event prop on a component tag must reach the child's root
+// element. runtime-vapor applies fallthrough attrs through its internal
+// setAttr (not the compiled import), so this exercises the
+// ShadowElement.setAttribute event routing specifically.
+const BINDTAP_CHILD_SFC = `
+<script setup vapor lang="ts">
+const label = 'child'
+</script>
+<template>
+  <view class="child-root"><text>{{ label }}</text></view>
+</template>
+`;
+
+const BINDTAP_PARENT_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+import Child from './Child.vue'
+const count = ref(0)
+function inc() { count.value++ }
+</script>
+<template>
+  <view>
+    <text class="label">Count: {{ count }}</text>
+    <Child :bindtap="inc" />
+  </view>
+</template>
+`;
+
+// CSS v-bind() must track updates: tapping changes the ref, and the root
+// block's inline style must re-emit with the new custom property value.
+const CSS_VARS_UPDATE_SFC = `
+<script setup vapor lang="ts">
+import { ref } from 'vue'
+const color = ref('#1565c0')
+function cycle() { color.value = '#c62828' }
+</script>
+<template>
+  <view :bindtap="cycle"><text class="label">css var styled</text></view>
+</template>
+<style>.label { color: v-bind(color); }</style>
+`;
+
+// ---------------------------------------------------------------------------
+// Contract: every helper the compiler emits exists on our export surface
+// ---------------------------------------------------------------------------
+
+describe('vapor SFC e2e: compiler ↔ runtime contract', () => {
+  it('exports every helper the vapor compiler imports from "vue"', () => {
+    for (const sfc of [COUNTER_SFC, KITCHEN_SINK_SFC]) {
+      const { importsFromVue } = compileVaporSfc('Contract.vue', sfc);
+      expect(importsFromVue.length).toBeGreaterThan(0);
+      const missing = importsFromVue.filter(
+        (name) => (vaporSurface as Record<string, unknown>)[name] === undefined,
+      );
+      expect(missing).toEqual([]);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Behavior: compile → execute → assert ops
+// ---------------------------------------------------------------------------
+
+describe('vapor SFC e2e: counter app', () => {
+  it('mounts real compiler output and reacts to events', async () => {
+    const { code } = compileVaporSfc('Counter.vue', COUNTER_SFC);
+    const mod = await importCompiled(code);
+    expect((mod.default as { __vapor?: boolean }).__vapor).toBe(true);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    // static classes from the template
+    const classes = opsOf(decoded, OP.SET_CLASS).map((c) => c.args[1]);
+    expect(classes).toContain('page');
+    expect(classes).toContain('label');
+    expect(classes).toContain('btn');
+    // interpolation
+    expect(opsOf(decoded, OP.SET_TEXT).some((t) => t.args[1] === 'Count: 0'))
+      .toBe(true);
+    // v-if off, v-for empty
+    expect(
+      opsOf(decoded, OP.SET_TEXT).some((t) => t.args[1] === 'positive'),
+    ).toBe(false);
+
+    // tap the +1 button through the Lynx event pipeline
+    const tap = opsOf(decoded, OP.SET_EVENT).find((e) => e.args[2] === 'tap')!;
+    publishEvent(tap.args[3] as string, {});
+
+    decoded = await flushedOps();
+    const texts = opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]);
+    expect(texts).toContain('Count: 1');
+    expect(texts).toContain('positive');
+    expect(texts).toContain('row 1');
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: kitchen sink', () => {
+  it('handles class/style/attr bindings, v-show, v-if/v-else, modifiers, v-model', async () => {
+    const { code } = compileVaporSfc('Sink.vue', KITCHEN_SINK_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const decoded = await flushedOps();
+
+    // :class object binding → normalized class string
+    const classes = opsOf(decoded, OP.SET_CLASS).map((c) => String(c.args[1]));
+    expect(classes.some((value) => value.split(' ').includes('active')))
+      .toBe(true);
+    // :style object binding through the style facade
+    expect(
+      opsOf(decoded, OP.SET_STYLE).some(
+        (s) => (s.args[1] as Record<string, unknown>)?.height === '20px',
+      ),
+    ).toBe(true);
+    // dynamic attr + :id
+    expect(
+      opsOf(decoded, OP.SET_PROP).some(
+        (p) => p.args[1] === 'custom-attr' && p.args[2] === 'hi',
+      ),
+    ).toBe(true);
+    expect(opsOf(decoded, OP.SET_ID).some((i) => i.args[1] === 'hi')).toBe(true);
+    // Scoped CSS tokens compose as classes; new bundles do not depend on
+    // native Lynx's single-valued cssId slot.
+    expect(classes.some((value) => value.split(' ').some((c) => c.startsWith('data-v-'))))
+      .toBe(true);
+    // v-if true branch only
+    const texts = opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]);
+    expect(texts).toContain('if');
+    expect(texts).not.toContain('else');
+    // v-for
+    expect(texts).toContain('0: a');
+    expect(texts).toContain('1: b');
+    // @tap.stop → catchEvent
+    const events = opsOf(decoded, OP.SET_EVENT);
+    expect(
+      events.some((e) => e.args[1] === 'catchEvent' && e.args[2] === 'tap'),
+    ).toBe(true);
+    // @touchstart.once still registers
+    expect(events.some((e) => e.args[2] === 'touchstart')).toBe(true);
+    // v-model wires the input event
+    expect(events.some((e) => e.args[2] === 'input')).toBe(true);
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: static inline styles', () => {
+  it('normalizes compiler-stringified styles like the VDOM renderer', async () => {
+    const { code } = compileVaporSfc('StaticStyles.vue', STATIC_INLINE_STYLE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_STYLE).map((operation) => operation.args[1]))
+      .toContainEqual({
+        padding: '16px',
+        marginBottom: '12px',
+        flex: '1',
+        opacity: '0.5',
+      });
+
+    app.unmount();
+  });
+
+  it('normalizes numeric values in style objects with dynamic fields', async () => {
+    const { code } = compileVaporSfc('DynamicStyles.vue', DYNAMIC_INLINE_STYLE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_STYLE).map((operation) => operation.args[1]))
+      .toContainEqual({
+        padding: '16px',
+        marginBottom: '12px',
+        borderRadius: '8px',
+        opacity: '0.5',
+        backgroundColor: '#123456',
+      });
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: CSS modules', () => {
+  it('resolves mappings attached to a compiled component before mount', async () => {
+    const { code } = compileVaporSfc('CssModule.vue', CSS_MODULE_SFC);
+    const mod = await importCompiled(code);
+    const component = mod.default as {
+      __cssModules?: Record<string, Record<string, string>>;
+    };
+    component.__cssModules = {
+      $style: { card: 'card_hash', title: 'title_hash' },
+    };
+
+    const app = vaporSurface.createApp(component as never);
+    app.mount();
+
+    const classes = opsOf(await flushedOps(), OP.SET_CLASS).map(
+      (operation) => operation.args[1],
+    );
+    expect(classes).toContain('card_hash');
+    expect(classes).toContain('title_hash');
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: Lynx event props', () => {
+  it('registers :bindtap / :catchtap as native Lynx events', async () => {
+    const { code } = compileVaporSfc('BindTap.vue', BINDTAP_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const events = opsOf(decoded, OP.SET_EVENT);
+    const bind = events.find((e) => e.args[1] === 'bindEvent' && e.args[2] === 'tap');
+    const catchEv = events.find((e) => e.args[1] === 'catchEvent' && e.args[2] === 'tap');
+    expect(bind).toBeDefined();
+    expect(catchEv).toBeDefined();
+    // The handler must NOT leak into the ops stream as a serialized prop.
+    expect(
+      opsOf(decoded, OP.SET_PROP).some((p) => p.args[1] === 'bindtap'),
+    ).toBe(false);
+
+    // Fire through the Lynx event pipeline: state updates flow back out.
+    publishEvent(bind!.args[3] as string, {});
+    decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]))
+      .toContain('Count: 1');
+
+    app.unmount();
+  });
+
+  it('routes :bindtap fallthrough onto a child component root', async () => {
+    const child = compileVaporSfc('Child.vue', BINDTAP_CHILD_SFC);
+    const childFile = writeCompiled(child.code);
+    const parent = compileVaporSfc('Parent.vue', BINDTAP_PARENT_SFC);
+    const mod = await importCompiled(
+      parent.code.replace('./Child.vue', childFile),
+    );
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const bind = opsOf(decoded, OP.SET_EVENT).find(
+      (e) => e.args[1] === 'bindEvent' && e.args[2] === 'tap',
+    );
+    expect(bind).toBeDefined();
+
+    publishEvent(bind!.args[3] as string, {});
+    decoded = await flushedOps();
+    expect(opsOf(decoded, OP.SET_TEXT).map((t) => t.args[1]))
+      .toContain('Count: 1');
+
+    app.unmount();
+  });
+});
+
+describe('vapor SFC e2e: CSS variables', () => {
+  it('applies SFC v-bind variables to the component root block', async () => {
+    const { code } = compileVaporSfc('CssVars.vue', CSS_VARS_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    const styles = opsOf(await flushedOps(), OP.SET_STYLE).map(
+      (operation) => operation.args[1] as Record<string, unknown>,
+    );
+    expect(styles.some((style) =>
+      Object.entries(style).some(
+        ([property, value]) => property.startsWith('--') && value === '#1565c0',
+      )
+    )).toBe(true);
+
+    app.unmount();
+  });
+
+  it('re-applies v-bind variables when the bound ref changes', async () => {
+    const { code } = compileVaporSfc('CssVarsUpdate.vue', CSS_VARS_UPDATE_SFC);
+    const mod = await importCompiled(code);
+
+    const app = vaporSurface.createApp(mod.default as never);
+    app.mount();
+
+    let decoded = await flushedOps();
+    const varOf = (ops: DecodedOp[]): unknown[] =>
+      opsOf(ops, OP.SET_STYLE).flatMap((operation) =>
+        Object.entries(operation.args[1] as Record<string, unknown>)
+          .filter(([property]) => property.startsWith('--'))
+          .map(([, value]) => value)
+      );
+    expect(varOf(decoded)).toContain('#1565c0');
+
+    const tap = opsOf(decoded, OP.SET_EVENT).find((e) => e.args[2] === 'tap')!;
+    publishEvent(tap.args[3] as string, {});
+
+    decoded = await flushedOps();
+    expect(varOf(decoded)).toContain('#c62828');
+
+    app.unmount();
+  });
+});
