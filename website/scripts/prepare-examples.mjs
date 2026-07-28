@@ -33,6 +33,17 @@ function loadVaporSupport() {
 const vaporSupport = loadVaporSupport();
 const vaporById = new Map(vaporSupport.entries.map((entry) => [entry.id, entry.vapor]));
 
+const PLUGIN_DIST = path.join(
+  REPO_ROOT,
+  'packages/vue-lynx/plugin/dist/index.js',
+);
+
+// On Vercel, pre-gzip *.lynx.bundle so QR/device fetches stay under LynxExplorer's
+// ~10s timeout. IFR roughly doubled uncompressed size; Vercel only auto-compresses
+// when the client sends Accept-Encoding, and some native fetchers do not.
+// vercel.json sets Content-Encoding: gzip for these paths.
+const PRE_GZIP_LYNX_BUNDLES = Boolean(process.env.VERCEL);
+
 // File extensions to skip (binary assets in src/)
 const BINARY_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.ico', '.svg',
@@ -43,7 +54,16 @@ const BINARY_EXTENSIONS = new Set([
 ]);
 
 // Directories to skip
-const SKIP_DIRS = new Set(['node_modules', 'dist', 'dist-vapor', '.vapor-generated', '.cache', '.git']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  'dist',
+  'dist-vapor',
+  '.vapor-generated',
+  '.cache',
+  '.git',
+  '.data',
+  '.rspeedy',
+]);
 
 /**
  * Walk a directory recursively and collect relative file paths.

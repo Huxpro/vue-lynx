@@ -319,9 +319,7 @@ export function extractImportSpecifiers(
   source: string,
   /**
    * Keep `?vue&type=template` sub-module imports. Element templates hoist
-   * their registrations into the compiled template module (non-script-setup
-   * SFCs), so the dependency edge must survive on the MT layer for the
-   * loader to extract them.
+   * registrations into compiled template modules for non-script-setup SFCs.
    */
   keepTemplateSubModules = false,
 ): string[] {
@@ -529,7 +527,6 @@ export function extractRegistrations(lepusCode: string): string {
     const idx = lepusCode.indexOf(marker, searchFrom);
     if (idx === -1) break;
 
-    // Find the end of the registerWorkletInternal(...) call.
     const close = findBalancedEnd(lepusCode, idx + marker.length - 1);
     if (close === -1) break;
 
@@ -547,10 +544,15 @@ export function extractRegistrations(lepusCode: string): string {
 /**
  * Extract element-template registrations from a compiled render module.
  *
- * The compiler hoists calls of the form
- * `(globalThis.__vueLynxRegisterElementTemplate || function () {})(...)`.
- * Interpreter-only MT bundles strip the rest of the module, so these
- * self-contained registrations must be re-emitted verbatim.
+ * The element-template compiler transform hoists statements of the form
+ *   const _hoisted_N = (globalThis.__vueLynxRegisterElementTemplate ||
+ *     function () {})("<id>", [...], function(P){…})
+ * into the compiled script/template sub-module. On the interpreter-only
+ * (non-IFR) main thread the module is otherwise stripped, but these
+ * registrations must survive: the ops executor resolves create() functions
+ * through them. The calls are self-contained (they resolve the global at
+ * evaluation time; entry-main installs it before user code runs), so they
+ * are re-emitted verbatim.
  *
  * Matches inside line or block comments are skipped — documentation
  * examples of the registration shape (including the one in
@@ -569,6 +571,7 @@ export function extractTemplateRegistrations(source: string): string {
       searchFrom = idx + marker.length;
       continue;
     }
+    // The marker sits inside `(globalThis.… || function () {})(args…)`.
     const wrapperStart = source.lastIndexOf('(', idx);
     if (wrapperStart === -1) {
       searchFrom = idx + marker.length;
@@ -623,7 +626,7 @@ function isInsideComment(code: string, index: number): boolean {
 }
 
 /**
- * Given the index of a '(' in `code`, return the index of its matching ')'.
+ * Return the index of the closing parenthesis for `openIndex`.
  *
  * String/template literals are skipped so parens inside embedded text (e.g.
  * a baked `__SetAttribute(e, 'text', "call us :)")`) don't unbalance the

@@ -263,29 +263,13 @@ export function insertNode(
   // Always update the shadow tree (Vue needs it for internal diffing).
   parent._link(child, anchor ?? null);
 
-  // Lynx's native <list> only accepts <list-item> children.
-  // Vue's v-for creates comment anchor nodes as fragment markers —
-  // skip sending them to the Main Thread to avoid NSInvalidArgumentException.
-  if (
-    parent.tag === 'list'
-    && (child.tag === '#comment' || child.tag === '#text')
-  ) {
+  // Shadow-only anchors: comments always, text while empty or under <list>.
+  if (child.tag === '#comment') return;
+  if (child.tag === '#text' && (!child._text || parent.tag === 'list')) {
     return;
   }
 
-  // If the anchor is a comment node inside a <list>, it was never inserted
-  // on the Main Thread. Walk forward to find the next real (non-comment)
-  // sibling so __InsertElementBefore has a valid reference.
-  let resolvedAnchor: ShadowElement | null = anchor ?? null;
-  if (parent.tag === 'list') {
-    while (
-      resolvedAnchor
-      && (resolvedAnchor.tag === '#comment'
-        || resolvedAnchor.tag === '#text')
-    ) {
-      resolvedAnchor = resolvedAnchor.next;
-    }
-  }
+  if (child.tag === '#text') ensureTextCreated(child);
 
   const resolvedAnchor = resolveMainThreadAnchor(anchor);
   pushInsertOp(
@@ -344,9 +328,11 @@ export function setElementTextContent(el: ShadowElement, text: string): void {
   // Remove all children from shadow tree
   while (el.firstChild) {
     const child = el.firstChild;
+    const materialized = isMaterialized(child);
     el._unlink(child);
     releaseSubtree(child);
-    pushOp(OP.REMOVE, el.uid, child.uid);
+    if (materialized) pushOp(OP.REMOVE, el.uid, child.uid);
+    if (child.tag === '#text') child._mtInserted = false;
   }
   // Set text content directly on the element
   pushOp(OP.SET_TEXT, el.uid, text);

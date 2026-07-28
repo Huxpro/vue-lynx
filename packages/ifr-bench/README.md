@@ -27,6 +27,7 @@ Vue Lynx, from the shipped pipeline down to compile-time snapshot lowering
 | `results/scale-trends-*.html` | Generated trend pages (also copied to `website/docs/public/benchmark/`) |
 | `web-harness/run-browser.mjs` | Real dual-thread browser FCP runs over a directory of `.web.bundle` files |
 | `web-harness/probe-ifr.mjs` | Single-bundle diagnostic: paint timeline + browser console (catches silent IFR fallbacks) |
+| `reeval/` | Focused 4-config rebuild + Lynx-for-Web FCP reevaluation (includes Elk / AI Chat) |
 
 ## Run
 

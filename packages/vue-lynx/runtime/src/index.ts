@@ -17,6 +17,7 @@
 
 import {
   createRenderer,
+  h as _vueH,
   onActivated as _onActivated,
   onBeforeMount as _onBeforeMount,
   onBeforeUnmount as _onBeforeUnmount,
@@ -66,7 +67,6 @@ import { runOnMainThread } from './cross-thread.js';
 import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush } from './flush.js';
 import { resetFunctionCallState } from './function-call.js';
-import { isIfrMainThread } from './ifr-env.js';
 import {
   ifrInert,
   isIfrMainThread,
@@ -204,6 +204,7 @@ export function createApp(
   rootProps?: Record<string, unknown>,
 ): VueLynxApp {
   const internalApp = ensureRenderer().createApp(rootComponent, rootProps);
+  internalApp.component(PAGE_COMPONENT_NAME, Page);
 
   const app: VueLynxApp = {
     get config() {
@@ -227,11 +228,17 @@ export function createApp(
       if (isIfrMainThread()) {
         registerMount(() => {
           const root = createPageRoot();
+          // Explicit <page> must reuse the native page root on the IFR
+          // main thread too — same context as the background mount below,
+          // so both renders resolve the identical root and stay
+          // deterministic across threads.
+          internalApp.provide(pageRootContextKey, { root, owner: null });
           internalApp.mount(root);
         });
         return;
       }
       const root = createPageRoot();
+      internalApp.provide(pageRootContextKey, { root, owner: null });
       internalApp.mount(root);
     },
 
@@ -246,6 +253,8 @@ export function createApp(
 // nextTick lives in next-tick.ts (shared with the Vapor entry).
 export { nextTick } from './next-tick.js';
 export { useCssModule } from './use-css-module.js';
+export { registerElementTemplate } from './element-template.js';
+export { isIfrMainThread } from './ifr-env.js';
 
 export {
   MainThreadRef,
@@ -494,24 +503,9 @@ export { markRaw } from '@vue/runtime-core';
 // ===========================================================================
 // Vue Core Re-exports — Lifecycle Hooks
 // ===========================================================================
-//
-// Lifecycle registration is a no-op during the IFR main-thread first-screen
-// render: user effects (data fetching, timers, subscriptions) must only run
-// on the background thread, mirroring ReactLynx where useEffect never fires
-// during the MTS render.  Everywhere else these behave exactly like Vue's.
-
-function ifrInert<T extends (...args: never[]) => unknown>(fn: T): T {
-  return ((...args: never[]) => {
-    if (isIfrMainThread()) return undefined;
-    return fn(...args);
-  }) as T;
-}
 
 /**
  * Registers a callback to be called after the component is mounted.
- *
- * In Vue Lynx, the callback only runs on the background thread — during an
- * IFR main-thread first-screen render, registration is a no-op.
  *
  * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onmounted | Vue docs}
  * @public
@@ -1221,7 +1215,10 @@ export const vModelText: ObjectDirective<ShadowElement> = {
     const strVal = value == null ? '' : String(value);
     if (strVal !== el._vModelValue) {
       el._vModelValue = strVal;
+      // SET_PROP drives web (live attribute reflection) and the initial value;
+      // setValue() drives native, where the post-mount value attribute is inert.
       pushOp(OP.SET_PROP, el.uid, 'value', strVal);
+      setNativeInputValue(el, strVal);
       scheduleFlush();
     }
   },
@@ -1264,52 +1261,6 @@ export { withKeys, withModifiers } from './event-modifiers.js';
 // compiler) or import `Page` explicitly; only `VueLynxPage` is registered
 // globally.
 export { Page, Transition, TransitionGroup };
-
-// ===========================================================================
-// @internal — IFR (Instant First-Frame Rendering) support
-// ===========================================================================
-
-/**
- * Register a compile-time-lowered element template.
- *
- * Called from compiler-generated code (a hoisted statement in the compiled
- * render module) — never directly by applications.
- *
- * @hidden
- */
-export { registerElementTemplate } from './element-template.js';
-
-/**
- * True while executing inside the IFR main-thread first-screen render.
- *
- * Apps whose first screen cannot render on the main thread (e.g. fully
- * network-driven) can gate their `app.mount()` on `!isIfrMainThread()` to
- * opt that screen out of IFR while keeping module evaluation — and with it
- * worklet/template registration — intact. Always `false` on the background
- * thread and in non-IFR builds.
- *
- * @public
- */
-export { isIfrMainThread } from './ifr-env.js';
-
-/**
- * Gate for LEPUS-transformed worklet registrations.
- *
- * The SWC worklet transform (target: LEPUS) emits
- * `import { loadWorkletRuntime } from "vue-lynx"` followed by
- * `loadWorkletRuntime(...) && registerWorkletInternal(...)` calls.  In IFR
- * builds the full LEPUS output is kept on the main thread, so this import
- * must resolve.  The worklet-runtime is bundled directly into main-thread.js
- * (it defines `registerWorkletInternal` on globalThis), so "loading" reduces
- * to checking that we are on a thread where it exists.
- *
- * @hidden
- */
-export function loadWorkletRuntime(_entry?: unknown): boolean {
-  return typeof (globalThis as Record<string, unknown>)[
-    'registerWorkletInternal'
-  ] === 'function';
-}
 
 // ===========================================================================
 // @internal — Testing utilities

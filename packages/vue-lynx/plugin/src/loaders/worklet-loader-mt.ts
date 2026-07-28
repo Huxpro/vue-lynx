@@ -35,6 +35,7 @@ import {
   extractLocalImports,
   extractRegistrations,
   extractSharedImports,
+  extractTemplateRegistrations,
   hasMainThreadDirective,
   stripSharedImportAttributes,
   stripStyleImports,
@@ -52,6 +53,11 @@ export interface WorkletLoaderMTOptions {
   includeWorkletPackages?: ReadonlyArray<string | RegExp>;
   /** Keep complete application modules so Vapor can render the IFR frame. */
   ifr?: boolean;
+  /**
+   * Element templates: additionally preserve compiler-hoisted registration
+   * statements and template submodule dependency edges.
+   */
+  elementTemplates?: boolean;
   /** Use the pure Vapor runtime entry for generated worklet imports. */
   vapor?: boolean;
   /**
@@ -106,6 +112,10 @@ async function transformModule(
     return ifrTransform(ctx, source, options.vapor === true, options);
   }
 
+  const keepTpl = options.elementTemplates === true;
+  const tplRegistrations = keepTpl
+    ? extractTemplateRegistrations(source)
+    : '';
   const includeWorkletPackages = options.includeWorkletPackages ?? [];
   // Vue script sub-modules: the inline match resource proxy re-exports
   // `export { default } from "...inline..."`. If we strip exports entirely,
@@ -138,12 +148,12 @@ async function transformModule(
         .join('\n');
 
     if (!hasMainThreadDirective(source)) {
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return scriptStub();
     }
 
     const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
     if (lepusCode === null) {
-      return (localImports ? localImports + '\n' : '') + 'export default {};';
+      return scriptStub();
     }
 
     const registrations = extractRegistrations(lepusCode);
@@ -181,7 +191,9 @@ async function transformModule(
   }
 
   const lepusCode = runLepusTransform(ctx, source, options.vapor === true);
-  if (lepusCode === null) return localImports;
+  if (lepusCode === null) {
+    return [localImports, tplRegistrations].filter(Boolean).join('\n');
+  }
 
   // Extract shared imports from the LEPUS output (SWC preserves them)
   const sharedImports = extractSharedImports(lepusCode);
@@ -205,7 +217,7 @@ function runLepusTransform(
 ): string | null {
   const resourcePath = ctx.resourcePath;
   const result = transformReactLynxSync(source, {
-    pluginName,
+    pluginName: 'vue:worklet-mt',
     filename: resourcePath,
     sourcemap: false,
     cssScope: false,

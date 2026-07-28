@@ -10,8 +10,10 @@ describe("browser scenario coverage", () => {
     const manifest = await loadManifest(root);
     const expected = manifest.entries.map(({ scenario }) => scenario).sort();
 
+    // The bijection with the manifest is the invariant; the count follows
+    // from it (and from the inventory check in inventory.spec.mjs).
     expect(Object.keys(scenarios).sort()).toEqual(expected);
-    expect(Object.keys(scenarios)).toHaveLength(45);
+    expect(Object.keys(scenarios)).toHaveLength(expected.length);
   });
 
   test("every scenario has a visible assertion and interactive rows have an action", () => {

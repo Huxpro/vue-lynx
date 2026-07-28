@@ -129,7 +129,10 @@ describe("Lynx-for-Web example host", () => {
     expect(themeSource).toContain("<GoModeNavIndicator");
     expect(themeSource).toContain("beforeNavMenu={");
     expect(modeStyles).not.toContain(".go-mode-toolbar");
-    expect(goWebPatch).toContain("+          key={src}");
+    // go-web ≥0.5 ships key={src} upstream; the patch carries the metadata
+    // preload + entry-change callback the mode store depends on.
+    expect(goWebPatch).toContain("exampleMetadata ?? fetchedExampleData");
+    expect(goWebPatch).toContain("onEntryChange?.(entryName)");
     expect(webCorePatch).toContain("callDestroyLifetimeFun is not a function");
     expect(storeSource).toContain("browser.history.replaceState(");
     expect(storeSource).not.toContain("location.assign(");

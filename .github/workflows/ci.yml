@@ -160,7 +160,11 @@ jobs:
         run: pnpm --filter './examples/*' --workspace-concurrency=2 run build
       - run: pnpm examples:build:vapor
       - run: pnpm --dir website build
+      # The site was just built two steps up — safe to reuse; verify-web
+      # rebuilds it otherwise (a stale doc_build verifies the wrong site).
       - run: pnpm examples:verify:web -- --mode all
+        env:
+          VUE_LYNX_VERIFY_REUSE_SITE: "1"
       - run: pnpm examples:verify:status
 
       - name: Upload browser diagnostics

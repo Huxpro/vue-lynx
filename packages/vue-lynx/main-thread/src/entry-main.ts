@@ -22,6 +22,7 @@ import {
 } from 'vue-lynx/internal/ops';
 
 import { elements, setPageUniqueId } from './element-registry.js';
+import { registerTemplate } from './element-templates.js';
 import {
   registerVaporStructure,
   registerVaporTemplate,
@@ -102,6 +103,10 @@ g['renderPage'] = function(_data: unknown): void {
   __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
+  // IFR: mount any Vue app that user code registered on this thread and
+  // paint the first frame synchronously.  No-op in non-IFR bundles (user
+  // code on the MT layer is stripped to worklet registrations, so no app
+  // ever registers).
   runIfrRender();
   __FlushElementTree(page);
 };
@@ -118,6 +123,8 @@ g['updateGlobalProps'] = function(_data: unknown): void {
 
 // Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
 g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+  // IFR hydration: the background thread's initial batches replay the
+  // main-thread first-screen render — skip/patch them instead of applying.
   if (interceptPatchUpdate(data)) return;
   const ops = JSON.parse(data) as unknown[];
   applyOps(ops);

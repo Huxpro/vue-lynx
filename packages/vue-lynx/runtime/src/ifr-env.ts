@@ -2,11 +2,12 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { IFR_MT_FLAG_GLOBAL } from 'vue-lynx/internal/ops';
+
 /** Return true only inside an IFR-enabled main-thread bundle. */
 export function isIfrMainThread(): boolean {
   return (
-    (globalThis as { __VUE_LYNX_IFR_MT__?: unknown }).__VUE_LYNX_IFR_MT__
-      === true
+    (globalThis as Record<string, unknown>)[IFR_MT_FLAG_GLOBAL] === true
   );
 }
 

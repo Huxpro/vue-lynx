@@ -5,13 +5,12 @@
 /**
  * Defers Vue app.mount() until Lynx's renderPage lifecycle fires.
  *
- * Used by IFR (Instant First-Frame Rendering): on the main thread the user's
- * `createApp(App).mount()` runs at bundle-evaluation time, *before* Lynx has
- * created the page (`renderPage`).  We store the mount function and expose a
- * `__vueLynxIfrMountApps` hook on globalThis; the main-thread bootstrap
- * (`vue-lynx/main-thread` ifr.ts) calls it from inside `renderPage` once the
- * page root exists.  If renderPage already fired we mount immediately.
+ * The user calls app.mount() at module evaluation time.  We store the mount
+ * function and call it when Lynx calls globalThis.renderPage().  If
+ * renderPage already fired (e.g., page reload) we mount immediately.
  */
+
+import { IFR_MOUNT_APPS_GLOBAL } from 'vue-lynx/internal/ops'
 
 import { completeIfrInitialRender } from './flush.js'
 
@@ -25,7 +24,7 @@ export function registerMount(fn: MountFn): void {
     fn()
   } else {
     pendingMounts.push(fn)
-    ;(globalThis as Record<string, unknown>)['__vueLynxIfrMountApps'] =
+    ;(globalThis as Record<string, unknown>)[IFR_MOUNT_APPS_GLOBAL] =
       triggerRenderPage
   }
 }
@@ -40,13 +39,6 @@ export function triggerRenderPage(): void {
 }
 
 /** Reset deferred-mount state between page/test realms. */
-export function resetAppRegistry(): void {
-  pendingMounts.length = 0
-  renderPageCalled = false
-  delete (globalThis as Record<string, unknown>)['__vueLynxIfrMountApps']
-}
-
-/** Reset module state – for testing only. */
 export function resetAppRegistry(): void {
   pendingMounts.length = 0
   renderPageCalled = false

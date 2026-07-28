@@ -335,21 +335,6 @@ export interface PluginVueLynxOptions {
    */
   vapor?: boolean;
 
-  /**
-   * Whether to enable IFR (Instant First-Frame Rendering).
-   *
-   * The main-thread bundle carries the full application and renders its
-   * first frame synchronously during `loadTemplate`. The normal Background
-   * render then hydrates that deterministic output. Works in both renderer
-   * modes: with `vapor: true` the main thread runs the pure Vapor pipeline
-   * (route c); without it, the vdom custom renderer replays (replay IFR).
-   *
-   * The initial render must be deterministic across threads. Lifecycle side
-   * effects are suppressed on the IFR Main Thread and run normally on BG.
-   *
-   * @defaultValue false
-   */
-  enableIFR?: boolean;
 }
 
 /**
@@ -373,6 +358,8 @@ export function pluginVueLynx(
     enableCSSInlineVariables = false,
     debugInfoOutside = true,
     autoPixelUnit = true,
+    enableIFR = false,
+    includeWorkletPackages = [],
     vapor = false,
     enableSparseNaming = true,
     ifrPaint = 'plain',
@@ -446,22 +433,11 @@ export function pluginVueLynx(
     pluginVue({
       vueLoaderOptions: {
         experimentalInlineMatchResource: true,
-        compilerOptions: {
-          // Lynx native tags (view, text, image, etc.) should not be resolved
-          // via resolveComponent — treat everything as native.
-          isNativeTag: () => true,
-          whitespace: 'condense',
-          // Disable static hoisting: @vue/compiler-dom's stringifyStatic
-          // transform converts runs of 5+ constant-prop siblings into a single
-          // HTML string VNode requiring insertStaticContent() in the renderer.
-          // Our ShadowElement custom renderer can't parse HTML strings, so we
-          // disable hoisting entirely — the standard approach for non-DOM renderers.
-          hoistStatic: false,
-          // Vapor only: compile events as per-element `on()` listeners
-          // instead of Solid-style document-level delegation — Lynx has no
-          // document to delegate to. Ignored by the vdom compiler.
-          eventDelegation: false,
-        },
+        // Element templates: lower eligible static-structure subtrees into
+        // main-thread element templates (single INSTANTIATE op + holes).
+        compilerOptions: resolveVueLynxCompilerOptions(
+          enableElementTemplates,
+        ),
       },
     }),
 
@@ -661,7 +637,6 @@ export function pluginVueLynx(
           enableIFR,
           enableElementTemplates,
           includeWorkletPackages,
-          enableIFR,
           vapor,
           vaporBundle: vapor
               && (templateDelivery === 'bundle' || templateStaging === 'code')

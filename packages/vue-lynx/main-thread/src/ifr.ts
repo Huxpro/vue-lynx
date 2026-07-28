@@ -143,12 +143,18 @@ export function enableIFR(): void {
 }
 
 function recordAndApply(ops: unknown[]): void {
+  // Drop once the first-screen snapshot is sealed or BG owns the tree.
+  // Setup-time async work (Suspense / defineAsyncComponent) must not extend
+  // the recorded stream: a structural mismatch would tear down IFR and apply
+  // only an incremental BG batch onto an empty page.
   if (phase === 'hydrated' || renderSealed) {
     if (__DEV__ && !warnedPostHydrationOps) {
       warnedPostHydrationOps = true;
       console.warn(
-        '[vue-lynx] IFR: dropping main-thread render ops produced after the '
-          + 'first-frame handoff; the background thread owns updates.',
+        '[vue-lynx] IFR: dropping main-thread render ops produced after '
+          + 'the first-screen snapshot. First-screen code must not keep '
+          + 'updating on the main thread (side effects belong in onMounted '
+          + '/ watchers, which only run on the background thread).',
       );
     }
     return;

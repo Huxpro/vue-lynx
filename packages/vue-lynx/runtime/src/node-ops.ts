@@ -55,15 +55,12 @@ function createTemplateInstance(type: string): ShadowElement {
   const holeKeys = getElementTemplateHoles(tplId);
   const el = new ShadowElement(type);
   if (!holeKeys) {
-    // Unregistered template (should not happen — registration is hoisted in
-    // the same module as the render fn). Degrade to an empty view so the
-    // surrounding tree still renders.
     if (__DEV__) {
       console.error(
         `[vue-lynx] element template "${tplId}" is not registered — rendering an empty view.`,
       );
     }
-    pushOp(OP.CREATE, el.id, 'view');
+    pushOp(OP.CREATE, el.uid, 'view');
     scheduleFlush();
     return el;
   }
@@ -144,24 +141,29 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
   createText(text: string): ShadowElement {
     const el = new ShadowElement('#text');
-    pushOp(OP.CREATE_TEXT, el.uid);
-    if (text) pushOp(OP.SET_TEXT, el.uid, text);
-    scheduleFlush();
+    el._text = text;
+    if (text) {
+      pushOp(OP.CREATE_TEXT, el.uid);
+      pushOp(OP.SET_TEXT, el.uid, text);
+      el._mtCreated = true;
+      scheduleFlush();
+    }
     return el;
   },
 
   // Comment nodes are used by Vue as position anchors for v-if / Fragment.
-  // Keep them in the Background Thread shadow tree only. Native Lynx gives an
-  // empty raw-text node a default line box, so materialising comments on the
-  // Main Thread adds visible height for every v-if branch and Fragment anchor.
-  createComment(_text: string): ShadowElement {
+  // They stay in the Background Thread shadow tree only — see tree-ops.ts.
+  createComment(text: string): ShadowElement {
     const el = new ShadowElement('#comment');
-    pushOp(OP.CREATE, el.uid, '__comment');
-    scheduleFlush();
+    el._text = text;
     return el;
   },
 
   setText(node: ShadowElement, text: string): void {
+    if (node.tag === '#text') {
+      setTextNode(node, text);
+      return;
+    }
     pushOp(OP.SET_TEXT, node.uid, text);
     scheduleFlush();
   },
@@ -186,14 +188,12 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   patchProp(
     el: ShadowElement,
     key: string,
-    prevValue: unknown,
+    _prevValue: unknown,
     nextValue: unknown,
   ): void {
-    // ------------------------------------------------------------------
-    // Element-template holes: a lowered template vnode carries its interior
-    // dynamic parts as __hN props. Delegate to the hole's ShadowElement with
-    // the original prop key so the full event/class/style logic is reused.
-    // ------------------------------------------------------------------
+    // Element-template holes: lowered template vnode props are named __hN.
+    // Delegate to the hole with its original prop key so event/class/style
+    // behavior stays identical to the normal renderer path.
     if (el._tplHoles !== undefined && key.startsWith(TPL_HOLE_PREFIX)) {
       const idx = Number(key.slice(TPL_HOLE_PREFIX.length));
       const holeKey = el._tplHoleKeys?.[idx];
@@ -208,12 +208,12 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         } else if (holeKey === '#text') {
           pushOp(
             OP.SET_TEXT,
-            holeEl.id,
+            holeEl.uid,
             nextValue == null ? '' : String(nextValue),
           );
           scheduleFlush();
         } else {
-          nodeOps.patchProp(holeEl, holeKey, prevValue, nextValue);
+          nodeOps.patchProp(holeEl, holeKey, undefined, nextValue);
         }
         return;
       }
