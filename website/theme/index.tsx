@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useLang } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
+  Layout as BaseLayout,
 } from '@rspress/core/theme-original';
 
 import './index.scss';
@@ -11,6 +13,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '../src/components/home-comps';
+import { VaporModeNavLink } from '../src/components/vapor-nav/VaporModeNavLink';
 
 import { AGENT_PROMPT } from './agent-prompt';
 
@@ -234,6 +237,27 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-export { HomeLayout };
+/**
+ * Site nav gets a Vapor mode teaser: a switch-shaped link over to the Vapor
+ * preview build, with an ⓘ explaining that Vapor is still an exploration on
+ * the `vapor` branch.
+ */
+function Layout({ beforeNavMenu, ...props }: Parameters<typeof BaseLayout>[0]) {
+  const locale = useLang().startsWith('zh') ? 'zh' : 'en';
+
+  return (
+    <BaseLayout
+      {...props}
+      beforeNavMenu={(
+        <>
+          <VaporModeNavLink locale={locale} />
+          {beforeNavMenu}
+        </>
+      )}
+    />
+  );
+}
+
+export { HomeLayout, Layout };
 
 export * from '@rspress/core/theme-original';
