@@ -12,7 +12,7 @@ const copy = {
     label: 'Switch to Vapor mode — opens the Vapor preview site',
     description: 'Vapor mode lives on a separate preview build',
     off: 'VDOM',
-    on: 'Vapor',
+    on: 'Vapor preview',
     infoLabel: 'About Vapor mode',
     infoBefore: 'Vapor mode is under active exploration on the ',
     infoAfter:
@@ -23,7 +23,7 @@ const copy = {
     label: '切换到 Vapor mode —— 打开 Vapor 预览站点',
     description: 'Vapor mode 位于独立的预览构建中',
     off: 'VDOM',
-    on: 'Vapor',
+    on: 'Vapor 预览',
     infoLabel: '关于 Vapor mode',
     infoBefore: 'Vapor mode 正在 ',
     infoAfter:
@@ -32,32 +32,13 @@ const copy = {
   },
 } as const;
 
-const ExternalArrow = () => (
-  <svg
-    className="vapor-nav-link__arrow"
-    width="9"
-    height="9"
-    viewBox="0 0 16 16"
-    fill="none"
-    aria-hidden="true"
-  >
-    <path
-      d="M5 11L11 5M11 5H6M11 5V10"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 /**
  * Nav-bar teaser for Vapor mode: the same petite switch the Vapor preview
  * site carries in its nav, rendered permanently "off" (VDOM). It is a link,
  * not a toggle — flipping it takes you to the Vapor build of this site,
- * where the real switch lives. The trailing ↗ marks it as a trip to another
- * site; the ⓘ chip spells out where Vapor actually lives before anyone
- * leaves the page.
+ * where the real switch lives — so the flipped label reads "Vapor preview",
+ * not just "Vapor". The ⓘ chip spells out where Vapor actually lives before
+ * anyone leaves the page.
  */
 export function VaporModeNavLink({ locale = 'en' }: VaporModeNavLinkProps) {
   const labels = copy[locale];
@@ -80,7 +61,6 @@ export function VaporModeNavLink({ locale = 'en' }: VaporModeNavLinkProps) {
           </span>
           <span className="vapor-nav-link__knob" />
         </span>
-        <ExternalArrow />
       </a>
       <InfoPopover label={labels.infoLabel} direction="down">
         <p>
