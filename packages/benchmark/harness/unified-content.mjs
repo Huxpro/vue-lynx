@@ -204,7 +204,13 @@ async function main() {
       built[cell.id] = {};
       for (const target of RUNGS) built[cell.id][rungLabel(target)] = buildCellRung(cell, target);
     }
-    fs.writeFileSync(path.join(bundlesDir, 'built.json'), JSON.stringify(built, null, 2));
+    // Merge into any prior build metadata for this label — a --cells-filtered
+    // build must not clobber the other cells' entries (later --skip-build
+    // re-measures of those cells read them back).
+    const builtPath = path.join(bundlesDir, 'built.json');
+    let priorBuilt = {};
+    try { priorBuilt = JSON.parse(fs.readFileSync(builtPath, 'utf8')); } catch {}
+    fs.writeFileSync(builtPath, JSON.stringify({ ...priorBuilt, ...built }, null, 2));
   } else {
     Object.assign(built, JSON.parse(fs.readFileSync(path.join(bundlesDir, 'built.json'), 'utf8')));
   }
