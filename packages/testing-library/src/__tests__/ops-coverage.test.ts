@@ -134,6 +134,272 @@ describe('native list element', () => {
     // List element should still exist after update
     expect(container.querySelector('list')).not.toBeNull();
   });
+
+  it('append-only flush reports new insertActions with growing positions', async () => {
+    const items = ref(['A']);
+
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h(
+            'list',
+            null,
+            items.value.map((item) =>
+              h('list-item', { key: item, 'item-key': item }, [
+                h('text', null, item),
+              ]),
+            ),
+          );
+      },
+    });
+
+    const { container } = render(Comp);
+    const listEl = container.querySelector('list')!;
+    expect(latestListInfo(listEl)?.insertAction.map((a) => a['item-key']))
+      .toEqual(['A']);
+
+    items.value = ['A', 'B', 'C'];
+    await nextTick();
+    await nextTick();
+
+    const info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([]);
+    expect(info.updateAction).toEqual([]);
+    expect(info.insertAction.map((a) => [a.position, a['item-key']])).toEqual([
+      [1, 'B'],
+      [2, 'C'],
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Native <list> mutations — prepend / reorder / remove / updateAction
+// Mirrors examples/scrolling ListPrepend | ListReorder | ListRemove | ListFilter
+// ---------------------------------------------------------------------------
+
+type ListInfo = {
+  insertAction: Array<Record<string, unknown>>;
+  removeAction: number[];
+  updateAction: Array<Record<string, unknown>>;
+};
+
+function allListInfos(listEl: Element): ListInfo[] {
+  const raw = listEl.getAttribute('update-list-info');
+  return raw ? (JSON.parse(raw) as ListInfo[]) : [];
+}
+
+function latestListInfo(listEl: Element): ListInfo | undefined {
+  const all = allListInfos(listEl);
+  return all[all.length - 1];
+}
+
+function mountKeyedList(items: { value: string[] }) {
+  return defineComponent({
+    setup() {
+      return () =>
+        h(
+          'list',
+          null,
+          items.value.map((item) =>
+            h('list-item', { key: item, 'item-key': item }, [
+              h('text', null, item),
+            ]),
+          ),
+        );
+    },
+  });
+}
+
+describe('native list element · mutations', () => {
+  it('prepend emits insertAction at position 0 (not a tail push)', async () => {
+    const items = ref(['A', 'B']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    items.value = ['Z', 'A', 'B'];
+    await nextTick();
+    await nextTick();
+
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.insertAction).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          position: 0,
+          'item-key': 'Z',
+          type: 'list-item',
+        }),
+      ]),
+    );
+    expect(
+      info.insertAction.some(
+        (a) => a['item-key'] === 'Z' && (a.position as number) >= 2,
+      ),
+    ).toBe(false);
+  });
+
+  it('reorder reverse keeps all item-keys across the diff', async () => {
+    const items = ref(['A', 'B', 'C']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    items.value = ['C', 'B', 'A'];
+    await nextTick();
+    await nextTick();
+
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    // Simulate applying remove+insert to the key list — no key may disappear.
+    let keys = ['A', 'B', 'C'];
+    for (const info of infos) {
+      for (const r of [...info.removeAction].sort((a, b) => b - a)) {
+        keys.splice(r, 1);
+      }
+      const inserts = [...info.insertAction].sort(
+        (a, b) => (a.position as number) - (b.position as number),
+      );
+      for (const action of inserts) {
+        keys.splice(action.position as number, 0, String(action['item-key']));
+      }
+    }
+    expect(keys).toEqual(['C', 'B', 'A']);
+  });
+
+  it('mixed remove middle then remove last across flushes', async () => {
+    const items = ref(['A', 'B', 'C', 'D', 'E', 'F']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+
+    // Remove middle (C)
+    items.value = ['A', 'B', 'D', 'E', 'F'];
+    await nextTick();
+    await nextTick();
+    let info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([2]);
+    expect(info.insertAction).toEqual([]);
+
+    // Remove last (F)
+    items.value = ['A', 'B', 'D', 'E'];
+    await nextTick();
+    await nextTick();
+    info = latestListInfo(listEl)!;
+    expect(info.removeAction).toEqual([4]);
+    expect(info.insertAction).toEqual([]);
+  });
+
+  it('remove middle emits removeAction', async () => {
+    const items = ref(['A', 'B', 'C']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    items.value = ['A', 'C'];
+    await nextTick();
+    await nextTick();
+
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.removeAction).toEqual([1]);
+    expect(info.insertAction).toEqual([]);
+  });
+
+  it('remove then restore same keys does not duplicate item-keys', async () => {
+    const items = ref(['A', 'B', 'C', 'D']);
+    const { container } = render(mountKeyedList(items));
+    const listEl = container.querySelector('list')!;
+
+    items.value = ['A'];
+    await nextTick();
+    await nextTick();
+    items.value = ['A', 'B', 'C', 'D'];
+    await nextTick();
+    await nextTick();
+
+    const keys = allListInfos(listEl).flatMap((info) =>
+      info.insertAction.map((a) => String(a['item-key'])),
+    );
+    const counts = keys.reduce<Record<string, number>>((acc, k) => {
+      acc[k] = (acc[k] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(counts['A']).toBe(1);
+    expect(counts['B']).toBe(2);
+    expect(counts['C']).toBe(2);
+    expect(counts['D']).toBe(2);
+    expect(
+      allListInfos(listEl).some((info) => info.removeAction.length > 0),
+    ).toBe(true);
+  });
+
+  it('filter-out then restore does not leave stale duplicate inserts', async () => {
+    const items = ref(['A', 'B', 'C', 'D']);
+    const { container } = render(mountKeyedList(items));
+
+    items.value = ['B', 'D'];
+    await nextTick();
+    await nextTick();
+    items.value = ['A', 'B', 'C', 'D'];
+    await nextTick();
+    await nextTick();
+
+    expect(container.querySelector('list')).not.toBeNull();
+    const keys = allListInfos(container.querySelector('list')!).flatMap(
+      (info) => info.insertAction.map((a) => String(a['item-key'])),
+    );
+    const counts = keys.reduce<Record<string, number>>((acc, k) => {
+      acc[k] = (acc[k] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(counts['A']).toBe(2);
+    expect(counts['B']).toBe(1);
+    expect(counts['C']).toBe(2);
+    expect(counts['D']).toBe(1);
+  });
+
+  it('updating platform info on an existing item emits updateAction', async () => {
+    const size = ref(100);
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h('list', null, [
+            h(
+              'list-item',
+              {
+                key: 'A',
+                'item-key': 'A',
+                'estimated-main-axis-size-px': size.value,
+              },
+              [h('text', null, 'A')],
+            ),
+          ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    size.value = 160;
+    await nextTick();
+    await nextTick();
+
+    const infos = allListInfos(listEl).slice(before);
+    expect(infos.length).toBeGreaterThan(0);
+    const info = infos[infos.length - 1]!;
+    expect(info.updateAction.length).toBeGreaterThan(0);
+    expect(info.updateAction[0]).toEqual(
+      expect.objectContaining({
+        from: 0,
+        to: 0,
+        'estimated-main-axis-size-px': 160,
+        'item-key': 'A',
+      }),
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

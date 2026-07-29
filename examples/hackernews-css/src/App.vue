@@ -30,30 +30,45 @@ function openVueReference() {
 
 <template>
   <page class="page">
-    <view class="header">
-      <view class="inner">
-        <view class="logo" @tap="goHome">
-          <image class="logo-image" :src="logoUrl" resize="cover" />
-        </view>
+    <!--
+      Layout lives on an inner <view>, not <page>.
+      On Lynx for Web, div[part=page] keeps flex-direction:row even when
+      .page sets column — the header then eats the width and .route-shell
+      collapses to 0 (stories exist in the DOM but are invisible).
+      Avoid position:fixed under scaled lynx-view as well.
+    -->
+    <view class="page-inner">
+      <view class="header">
+        <scroll-view
+          class="header-scroll"
+          scroll-x
+          scroll-orientation="horizontal"
+        >
+          <view class="inner">
+            <view class="logo" @tap="goHome">
+              <image class="logo-image" :src="logoUrl" resize="cover" />
+            </view>
 
-        <NavLink
-          v-for="key in feedKeys"
-          :key="key"
-          :to="`/${key}`"
-          :label="validFeeds[key].title"
-          :active="activeFeed === key"
-        />
+            <NavLink
+              v-for="key in feedKeys"
+              :key="key"
+              :to="`/${key}`"
+              :label="validFeeds[key].title"
+              :active="activeFeed === key"
+            />
 
-        <text class="github" @tap="openVueReference">Built with VueLynx</text>
+            <text class="github" @tap="openVueReference">Built with VueLynx</text>
+          </view>
+        </scroll-view>
       </view>
-    </view>
 
-    <view class="route-shell">
-      <RouterView v-slot="{ Component }">
-        <Transition name="fade" mode="out-in" :duration="200">
-          <component :is="Component" :key="transitionKey" />
-        </Transition>
-      </RouterView>
+      <view class="route-shell">
+        <RouterView v-slot="{ Component }">
+          <Transition name="fade" mode="out-in" :duration="200">
+            <component :is="Component" :key="transitionKey" />
+          </Transition>
+        </RouterView>
+      </view>
     </view>
   </page>
 </template>
@@ -68,20 +83,31 @@ function openVueReference() {
   color: #2e495e;
 }
 
+.page-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .header {
   background-color: #3eaf7c;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
+  flex-shrink: 0;
   height: 55px;
+  width: 100%;
+  z-index: 999;
+
+  .header-scroll {
+    width: 100%;
+    height: 100%;
+  }
 
   .inner {
-    max-width: 800px;
     box-sizing: border-box;
     margin: 0 auto;
     padding: 15px 5px;
+    height: 100%;
+    min-width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -110,7 +136,11 @@ function openVueReference() {
 }
 
 .route-shell {
-  padding-top: 55px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {

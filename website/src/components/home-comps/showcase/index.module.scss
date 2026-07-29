@@ -1,8 +1,7 @@
 .mobile-show-frame {
   padding: 5px;
   overflow: hidden;
-  width: 270px;
-  height: 590px;
+  // width/height set inline from phone-frame.ts (video-derived aspect)
   background: linear-gradient(160deg, #2a2a2a 0%, #1a1a1a 100%);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.1),
@@ -12,37 +11,68 @@
   margin-bottom: 24px;
   border-radius: 26px;
   position: relative;
-
-  // Notch
-  &::before {
-    content: '';
-    position: absolute;
-    top: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 22px;
-    background: #1a1a1a;
-    border-radius: 0 0 14px 14px;
-    z-index: 2;
-  }
+  flex-shrink: 0;
 
   .preview {
+    // Let go-web's @container (max-width: 600px) make .box height: 100%.
+    container-type: inline-size;
     opacity: 1;
     animation: fadeIn 0.8s ease-in;
-    width: calc(270px - 10px);
-    height: calc(590px - 10px);
+    // width/height set inline from phone-frame.ts
     border-radius: 22px;
     overflow: hidden;
+    position: relative;
+    background: var(--semi-color-bg-0, #fff);
 
-    video,
-    img {
+    // mode="preview" still paints Go chrome (tabs/footer/"Open in").
+    // Strip it so WebIframe's LoadingOverlay + lynx-view fill the phone —
+    // same spinner path as ultra, without ultra's fixed full-viewport shell.
+    //
+    // Use one :global(...) per selector — a comma list inside `:global { }`
+    // gets partially remapped by CSS modules (only the first keeps the hashed
+    // parent), which left preview-header / open-in visible.
+    :global([class*='box']) {
+      width: 100% !important;
+      height: 100% !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+    }
+
+    :global([class*='content']) {
+      padding: 0 !important;
+    }
+
+    :global([class*='footer']),
+    :global([class*='preview-header']),
+    :global([class*='open-in']) {
+      display: none !important;
+    }
+
+    :global([class*='preview-wrap']) {
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      height: 100% !important;
+    }
+
+    :global([class*='preview-wrap-content']),
+    :global([class*='preview-body']),
+    :global([class*='preview-panel']) {
+      height: 100% !important;
+    }
+
+    // Full-bleed media for PhoneVideo / static posters only.
+    // Do NOT target nested imgs — LoadingOverlay's 40×40 Lynx logo would
+    // otherwise stretch to fill the entire bezel on first paint.
+    > video,
+    > img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
 
-    img {
+    > img {
       object-position: top;
     }
   }
@@ -72,20 +102,46 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 40px;
-    margin-bottom: 60px;
+    margin-bottom: 48px;
+  }
+
+  .show-case-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+
+    & + .show-case-row {
+      margin-top: 56px;
+    }
+  }
+
+  .row-label {
+    color: var(--home-title-color);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 28px;
+    margin-bottom: 28px;
+    letter-spacing: 0.01em;
   }
 
   .show-case-list {
-    display: flex;
-    flex-direction: row;
-    gap: 86px;
+    // Data-driven list. Column count from --showcase-cols (≤4 → one row;
+    // 5+ → 3 so six phones read as 2×3). Narrow: horizontal scroll below.
+    display: grid;
+    grid-template-columns: repeat(var(--showcase-cols, 3), max-content);
+    justify-content: center;
+    gap: 48px 64px;
     padding: 0 20px 20px;
     list-style: none;
+    width: 100%;
+    box-sizing: border-box;
 
     .show-case-list-item {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      width: 290px;
 
       .item-title {
         color: var(--home-title-color);
@@ -101,7 +157,7 @@
         font-weight: 400;
         line-height: 24px;
         margin-bottom: 12px;
-        max-width: 270px;
+        max-width: 280px;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -144,14 +200,28 @@
       text-align: left;
       font-size: 16px;
       line-height: normal;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
+    }
+
+    .show-case-row {
+      align-items: flex-start;
+    }
+
+    .row-label {
+      margin-left: 40px;
     }
 
     .show-case-list {
+      // Below ~3 phones wide: horizontal scroll instead of a cramped grid.
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      max-width: none;
       padding: 0 40px 20px 40px;
       overflow-x: auto;
       width: 100%;
       box-sizing: border-box;
+      gap: 40px;
     }
   }
 }
@@ -176,4 +246,60 @@
   to {
     opacity: 1;
   }
+}
+
+// ── Scale-compare page ──────────────────────────────────────────────────────
+
+.scale-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 24px 0 64px;
+}
+
+.scale-compare-spec {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--home-desc-color, #666);
+  background: var(--rp-c-bg-mute, rgba(0, 0, 0, 0.03));
+  border-radius: 12px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.scale-compare-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.scale-compare-row-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--home-title-color, #213547);
+}
+
+.scale-compare-pair {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.scale-compare-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.scale-compare-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--home-features-item-desc-color, #888);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }

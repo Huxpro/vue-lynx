@@ -31,6 +31,8 @@ Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个�
 
 :::warning `<style scoped>` 注意事项
 [`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors)、[`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors) 和 [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) 暂不支持（[#164](https://github.com/Huxpro/vue-lynx/issues/164)、[#165](https://github.com/Huxpro/vue-lynx/issues/165)）。
+
+作用域不会叠加。在 Web 上，Vue 会给子组件的根元素同时加上子组件和父组件的 `data-v-*` 属性，因此[父组件的 scoped 样式也能命中该根元素](https://vuejs.org/api/sfc-css-features.html#scoped-css)。Lynx 中每个元素只能关联一个 CSS 作用域，Vue Lynx 始终保留创建该元素的组件的作用域——组件自己的 scoped 规则总能作用于它的根节点。父组件若需要为子组件的根节点设置样式，可以传入一个由子组件自行应用的 class，或者自己加一层包裹元素。
 :::
 
 `<style>` 中的 `v-bind()` 需要两个配置选项，以便 Lynx 引擎识别内联样式中的 CSS 自定义属性并将其级联到后代元素：
@@ -138,13 +140,17 @@ Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等�
 
 ## Transition
 
-Vue 的 `<Transition>` 和 `<TransitionGroup>` 组件在元素插入或移除时应用进入/离开动画。
+Vue 的 [`<Transition>`](https://cn.vuejs.org/guide/built-ins/transition.html) 和 [`<TransitionGroup>`](https://cn.vuejs.org/guide/built-ins/transition-group.html) 组件在元素插入或移除时应用进入/离开动画。
 
-从 [#248](https://github.com/Huxpro/vue-lynx/issues/248)（v0.5）开始，Transition 不再是实验性功能。Vue Lynx 遵循 Vue 对 `v-show` 持久化过渡的行为：每次可见性变化都会运行进入/离开钩子，并且只会在离场动画结束后应用 `display: none`。因此，drawer、sheet、popover 等需要保留内部状态的浮层模式，现在可以在 Web 和原生 Lynx 上表现得与 Vue 官方行为一致。
+`<Transition>` **已完整支持** —— CSS transition、CSS animation、`appear`、`mode`、JS hooks，以及带或不带显式 `:duration` prop 的过渡均可使用。从 [#248](https://github.com/Huxpro/vue-lynx/issues/248)（v0.5）开始，Vue Lynx 也遵循 Vue 对 `v-show` 持久化过渡的行为：每次可见性变化都会运行进入/离开钩子，并且只会在离场动画结束后应用 `display: none`。drawer、sheet、popover 等模式在 Web 和原生 Lynx 上均可与官方 Vue 表现一致。
 
-:::info Lynx 特有限制
-请始终传递显式的 `:duration` prop——因为后台线程无法使用 `getComputedStyle()`。`<TransitionGroup>` 支持进入和离开过渡，但不支持移动（FLIP）动画，因为 `getBoundingClientRect()` 不可用。
+不传 `:duration` 时，Vue Lynx 会等待真实的 `transitionend`/`animationend` 事件（与 Vue DOM 的主路径相同）。有界的回退清理（[#286](https://github.com/Huxpro/vue-lynx/issues/286)）会在过渡被打断、事件未到达时注销残留的处理器。
+
+:::info 剩余限制（仅 `<TransitionGroup>`）
+`<TransitionGroup>` 的移动（FLIP）动画尚不支持——后台线程无法使用 `getBoundingClientRect()`。列表项的进入/离开过渡仍然可用。
 :::
+
+在下面的示例中滚动到 **9. Registry cleanup**，可观察没有 `:duration` 的 `<Transition>` 在快速打断下的表现：hammer 时 event-registry 计数上升，停止后会回到 baseline。
 
 <Go
   example="transition"
@@ -227,5 +233,5 @@ Vue 的 [`<Teleport>`](https://cn.vuejs.org/guide/built-ins/teleport.html) 可�
 
 | 特性 | 原因 | 替代方案 |
 |---------|--------|-------------|
-| `<Transition>` 自动时长 | 后台线程无法使用 `getComputedStyle()` | 始终传递显式的 `:duration` prop |
+| `<TransitionGroup>` 移动（FLIP） | 后台线程无法使用 `getBoundingClientRect()` | 列表进入/离开过渡仍可用；布局变化可用 CSS 或主线程脚本实现 |
 | `withKeys` 按键修饰符 | 原生平台为 no-op —— Lynx 原生运行时在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`），iOS/Android 上的 `event.key` 始终为空。Web 预览在 [lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594) 后可正常使用。原生端支持有赖于上游运行时变更。 | 原生端在 `<input>` 上直接使用 `@confirm` |

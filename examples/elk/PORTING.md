@@ -75,10 +75,13 @@ classes — Lynx supports inline text nesting natively.
 ### Virtualized timeline
 
 Elk uses `virtua`'s DOM `WindowVirtualizer`. Lynx's native `<list>` is
-already a recycling virtualized scroller, so the port's timeline is a
-`<list>` with `estimated-main-axis-size-px` hints and
+already a recycling virtualized scroller, so the port's feeds are
+`<list>`s with `estimated-main-axis-size-px` hints and
 `lower-threshold-item-count` + `scrolltolower` driving `loadNext()` —
-*less* code than the DOM version.
+*less* code than the DOM version. Short finite pages (settings, compose,
+thread detail) stay on `<scroll-view>`; anything that paginates without
+bound (timelines, explore, profiles, search, notifications, follow lists)
+uses `<list>`.
 
 ### Navigation
 
@@ -103,6 +106,20 @@ access-token sign-in** in Settings. Multi-account storage
    exposes `globalThis.fetch`. `src/polyfills.ts` selects the callable one
    and mirrors it to both scopes before masto runs. Other free-identifier web
    constructors use targeted `source.define` rewrites (no masto patches).
+   **Pagination:** masto.js continues pages via the HTTP `Link` header
+   (`response.headers.get('link')`). Some native Lynx builds enumerate the
+   real mixed-case `Link` and `Content-Type` names but implement `.get()` as
+   case-sensitive, so masto's lowercase lookup sees no next page. The same
+   builds can expose a partial `URL` whose `.search` is missing. Together
+   these made the first page end early or made page 2 throw while Web kept
+   scrolling. `wrapFetchForMastoPagination` patches `.get()` in place with a
+   case-insensitive fallback, preserving the native Response and unread body
+   (see Lynx networking guide: Fetch is Web-compatible with subtle
+   differences). When `Link` is genuinely missing it buffers the body and
+   synthesizes `rel="next"` from `max_id` / `offset` without relying on the
+   host URL implementation. `polyfills.ts` also replaces incomplete URL
+   implementations, not just missing ones, because masto needs both
+   `.pathname` and `.search` from each Link URL.
 2. **No DOMParser anywhere** (worker or native). Elk's `tiny-decode`
    entity decoder uses DOMParser in its browser build — replaced with a
    30-line table+numeric decoder (`html-entities.ts`), sufficient for

@@ -27,6 +27,11 @@ const { sidebarOpen, close: closeSidebar } = useSidebarDrawer();
 const reducedMotion = useReducedMotion();
 const drawerRef = useTemplateRef<ShadowElement>('drawerRef');
 const DRAWER_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)';
+const DRAWER_CLOSED = 'translateX(-288px)';
+const DRAWER_OPEN = 'translateX(0px)';
+
+/** Drops stale open/close animations when the user toggles quickly. */
+let drawerMotionGeneration = 0;
 
 const themeClass = computed(() => `theme-${colorMode.value}`);
 const rootClass = computed(() => [
@@ -43,17 +48,67 @@ function handleSidebarShowChange(show: boolean) {
   if (!show) closeSidebar();
 }
 
+function nextPaint(): Promise<void> {
+  // Match Vue Transition / Elk Sheet: one committed frame at the current
+  // pose before flipping the transform under an armed CSS transition.
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    }
+    else {
+      setTimeout(resolve, 16);
+    }
+  });
+}
+
 async function syncDrawerSurface(open: boolean) {
   // Lynx UI's Sheet keeps horizontal movement on the main thread. Vue's
   // background style diff does not reliably update a previously translated
-  // native surface, so use the native UI method for the same direct mutation.
+  // native surface — and worse, a reactive style binding that always writes the closed transform
+  // re-applies the closed pose on unrelated re-renders (theme, fetches),
+  // fighting setNativeProps mid-enter and while open. Own transform only
+  // through setNativeProps; CSS holds the initial closed pose.
+  const generation = ++drawerMotionGeneration;
   await nextTick();
-  drawerRef.value
-    ?.setNativeProps({
-      transform: open ? 'translateX(0px)' : 'translateX(-288px)',
-      transition: reducedMotion.value ? 'none' : `transform 240ms ${DRAWER_EASING}`,
-    })
-    .exec();
+  if (generation !== drawerMotionGeneration) return;
+
+  const el = drawerRef.value;
+  if (!el) return;
+
+  const target = open ? DRAWER_OPEN : DRAWER_CLOSED;
+  if (reducedMotion.value) {
+    el.setNativeProps({
+      transform: target,
+      transition: 'none',
+    }).exec();
+    return;
+  }
+
+  // Two-phase: arm transition at the current pose, then set the target.
+  el.setNativeProps({
+    transition: `transform 240ms ${DRAWER_EASING}`,
+  }).exec();
+
+  await nextPaint();
+  if (generation !== drawerMotionGeneration) return;
+
+  el.setNativeProps({
+    transform: target,
+  }).exec();
+
+  // Drop the transition after settle so a later style patch cannot
+  // animate the sheet (Elk Sheet clears motion transitions the same way).
+  setTimeout(() => {
+    if (generation !== drawerMotionGeneration) return;
+    drawerRef.value
+      ?.setNativeProps({
+        transition: 'none',
+        transform: target,
+      })
+      .exec();
+  }, 240);
 }
 
 watch(sidebarOpen, (open) => void syncDrawerSurface(open));
@@ -86,18 +141,16 @@ onMounted(async () => {
       v-if="isMobile && sidebarOpen"
       class="absolute inset-0 drawer-backdrop"
       :event-through="false"
-      :style="{ opacity: sidebarOpen ? '1' : '0' }"
       @tap="handleSidebarShowChange(false)"
     />
-    <!-- Keep only the moving surface mounted so its transform can animate. -->
+    <!-- Keep only the moving surface mounted so its transform can animate.
+         Do not bind transform via :style — Vue style patches overwrite
+         setNativeProps and cause enter flicker / open-state snaps. -->
     <view
       v-if="isMobile"
       ref="drawerRef"
       class="absolute top-0 bottom-0 left-0 drawer-panel shadow-lg"
       :event-through="false"
-      :style="{
-        transform: 'translateX(-288px)',
-      }"
     >
       <Sidebar drawer />
     </view>
@@ -119,9 +172,11 @@ onMounted(async () => {
   z-index: 40;
   width: 288px;
   background-color: var(--ui-bg-sidebar);
+  transform: translateX(-288px);
 }
 .drawer-backdrop {
   z-index: 30;
-  transition: opacity 240ms cubic-bezier(0.25, 1, 0.5, 1);
+  /* Hit-test only — content dimming supplies the visible enter fade. */
+  opacity: 1;
 }
 </style>

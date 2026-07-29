@@ -62,7 +62,9 @@ test('sheet filters noisy velocity samples and integrates a stable spring step',
 });
 
 test('sheet worklets keep primitive defaults when detached from module scope', () => {
-  const claim = isolateWorklet(sheetGesture.shouldClaimSheetGesture);
+  const claim = isolateWorklet(sheetGesture.shouldClaimSheetGesture, {
+    SHEET_GESTURE_LOCK_DISTANCE: sheetGesture.SHEET_GESTURE_LOCK_DISTANCE,
+  });
   const resolveDrag = isolateWorklet(sheetGesture.resolveSheetDrag, {
     rubberEffect: sheetGesture.rubberEffect,
   });
@@ -90,7 +92,11 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /modelValue/);
   assert.match(source, /v-show="modelValue"/);
   assert.doesNotMatch(source, /v-if="modelValue"/);
-  assert.match(source, /<Transition name="sheet" @after-leave="handleAfterLeave">/);
+  assert.match(
+    source,
+    /<Transition[\s\S]*?name="sheet"[\s\S]*?persisted[\s\S]*?:duration="\{ enter: 250, leave: 188 \}"[\s\S]*?@before-enter="handleBeforeEnter"[\s\S]*?@after-leave="handleAfterLeave"/,
+    'v-show sheet enter must be persisted with explicit durations and a before-enter snap',
+  );
   assert.match(source, /class="sheet-backdrop"[^>]*:main-thread-ref="backdropRef"[^>]*@tap="requestClose"/s);
   assert.match(source, /class="sheet-surface"/);
   assert.match(
@@ -122,6 +128,16 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /setPanelScrollEnabled\(true\)/);
   assert.match(
     source,
+    /panelScrollEnabledRef\.current === enabled/,
+    'avoid redundant enable-scroll attribute writes on every gesture reset',
+  );
+  assert.match(
+    source,
+    /backdropOpacityRef/,
+    'quantize backdrop opacity writes during drag',
+  );
+  assert.match(
+    source,
     /\.sheet-rubber-fill\s*\{[^}]*background-color:\s*var\(--c-sheet-fill-bg\)/s,
     'over-drag fill must stay opaque above the backdrop',
   );
@@ -146,6 +162,7 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   assert.match(source, /animationGenerationRef/);
   assert.doesNotMatch(source, /watch\(\(\) => props\.modelValue/);
   assert.doesNotMatch(source, /prepareSheetForOpen/);
+  assert.match(source, /function handleBeforeEnter\(\)[\s\S]*?runOnMainThread\(resetSheetMotion\)/);
   assert.match(
     source,
     /class="sheet-surface-transition"[^>]*:style="surfaceStyle"/,
@@ -164,9 +181,46 @@ test('Vue Lynx Sheet keeps hybrid drag and settle work on the main thread', asyn
   );
   assert.doesNotMatch(source, /\.sheet-enter-from \.sheet-surface,/);
   assert.match(source, /function resetSheetMotion\(\)[\s\S]*?applySheetMotion\(0\)/);
+  assert.match(
+    source,
+    /function resetSheetMotion\(\)[\s\S]*?setMotionTransition\('none', 'none'\)[\s\S]*?applySheetMotion\(0\)/,
+    'reset must leave gesture nodes with transition none, not revive stylesheet transitions',
+  );
+  assert.doesNotMatch(
+    source,
+    /function resetSheetMotion\(\)[\s\S]*?setMotionTransition\('', ''\)/,
+  );
   assert.match(source, /runOnBackground\(requestClose\)/);
-  assert.match(source, /transition:\s*opacity/);
-  assert.match(source, /transition:\s*transform/);
+  assert.match(
+    source,
+    /\.sheet-enter-active,[\s\S]*?\.sheet-leave-active\s*\{[^}]*transition:\s*opacity/s,
+    'opacity interpolation must live on enter/leave-active only',
+  );
+  assert.match(
+    source,
+    /\.sheet-enter-active \.sheet-surface-transition,[\s\S]*?\.sheet-leave-active \.sheet-surface-transition\s*\{[^}]*transition:\s*transform/s,
+    'transform interpolation must live on enter/leave-active only',
+  );
+  assert.match(
+    source,
+    /\.sheet-enter-from,[\s\S]*?\.sheet-enter-from \.sheet-surface-transition\s*\{[^}]*transition:\s*none/s,
+    'enter-from must snap closed instead of reverse-animating into the closed pose',
+  );
+  for (const [selector, label] of [
+    ['.sheet-layer', 'layer'],
+    ['.sheet-backdrop', 'backdrop'],
+    ['.sheet-surface-transition', 'wrapper'],
+    ['.sheet-surface', 'gesture surface'],
+  ]) {
+    const escaped = selector.replace(/\./g, '\\.');
+    const block = source.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`));
+    assert.ok(block, `missing base ${label} rule`);
+    assert.doesNotMatch(
+      block[1],
+      /\btransition\s*:/,
+      `always-on ${label} transitions reverse-animate into enter-from on leave interrupt`,
+    );
+  }
   assert.doesNotMatch(source, /transition:\s*all/);
 });
 
@@ -277,6 +331,14 @@ test('native WebSocket remains wrapper-scoped for the Rspeedy dev transport', ()
   assert.equal(lynxConfig.source?.define?.WebSocket, undefined);
 });
 
+test('URL compatibility guard rejects incomplete native URL implementations', async () => {
+  const source = await readFile(new URL('../src/polyfills.ts', import.meta.url), 'utf8');
+  assert.match(source, /url\.search !== '\?a=1'/);
+  assert.match(source, /url\.searchParams\.set\('b', '2'\)/);
+  assert.match(source, /if \(!hasCompatibleURL\(g\.URL\)\)/);
+  assert.match(source, /this\._search = query \? `\?\$\{query\}` : ''/);
+});
+
 test('fetch compatibility prefers the native wrapper and falls back to the web global', () => {
   const nativeFetch = () => 'native';
   const webFetch = () => 'web';
@@ -285,6 +347,137 @@ test('fetch compatibility prefers the native wrapper and falls back to the web g
   assert.equal(fetchCompat.resolveFetch?.(webFetch, undefined), webFetch);
   assert.equal(fetchCompat.resolveFetch?.(undefined, undefined), undefined);
   assert.equal(lynxConfig.source?.define?.fetch, undefined);
+});
+
+test('fetch Link synthesis builds max_id next for status arrays when header missing', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/timelines/public?local=true&limit=30',
+    JSON.stringify([{ id: '111' }, { id: '100' }]),
+  );
+  assert.match(link ?? '', /rel="next"/);
+  assert.match(link ?? '', /max_id=100/);
+  assert.match(link ?? '', /local=true/);
+  assert.doesNotMatch(link ?? '', /limit=30\//);
+});
+
+test('fetch Link synthesis uses offset when entities have no id', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/trends/tags?limit=10&offset=0',
+    JSON.stringify([{ name: 'a' }, { name: 'b' }]),
+  );
+  assert.match(link ?? '', /offset=2/);
+});
+
+test('fetch Link synthesis stops when max_id would not advance', () => {
+  const link = fetchCompat.synthesizeNextLink?.(
+    'https://mas.to/api/v1/timelines/public?max_id=100',
+    JSON.stringify([{ id: '100' }]),
+  );
+  assert.equal(link, null);
+});
+
+test('wrapFetchForMastoPagination synthesizes Link when native headers omit it', async () => {
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    url: 'https://mas.to/api/v1/timelines/public?limit=2',
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'content-type' ? 'application/json' : null;
+      },
+    },
+    async text() {
+      return JSON.stringify([{ id: '2' }, { id: '1' }]);
+    },
+  }));
+  assert.equal(typeof wrapped, 'function');
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+  assert.match(res.headers.get('link') ?? '', /max_id=1/);
+  assert.match(res.headers.get('content-type') ?? '', /application\/json/);
+  const body = JSON.parse(await res.text());
+  assert.equal(body[1].id, '1');
+});
+
+test('wrapFetchForMastoPagination keeps Content-Type when headers are non-enumerable', async () => {
+  // Mimics Lynx native Headers: .get works, Object.entries is empty.
+  const nativeHeaders = {
+    get(name) {
+      return name.toLowerCase() === 'content-type' ? 'application/json; charset=utf-8' : null;
+    },
+  };
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => ({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: nativeHeaders,
+    async text() {
+      return JSON.stringify([{ id: '9' }]);
+    },
+  }));
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=1');
+  assert.match(res.headers.get('Content-Type') ?? '', /application\/json/);
+  assert.match(res.headers.get('link') ?? '', /max_id=9/);
+});
+
+test('wrapFetchForMastoPagination passes through when Link already exists', async () => {
+  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+  const original = {
+    ok: true,
+    status: 200,
+    headers: {
+      get(name) {
+        return name.toLowerCase() === 'link' ? existing : null;
+      },
+    },
+    async text() {
+      throw new Error('should not buffer when Link is present');
+    },
+  };
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => original);
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+  assert.equal(res, original);
+});
+
+test('wrapFetchForMastoPagination repairs case-sensitive native Headers.get in place', async () => {
+  const existing = '<https://mas.to/api/v1/timelines/public?max_id=9>; rel="next"';
+  const values = new Map([
+    ['Link', existing],
+    ['Content-Type', 'application/json; charset=utf-8'],
+  ]);
+  const nativeHeaders = {
+    get(name) {
+      return values.get(name) ?? null;
+    },
+    forEach(fn) {
+      for (const [name, value] of values)
+        fn(value, name);
+    },
+  };
+  const original = {
+    ok: true,
+    status: 200,
+    headers: nativeHeaders,
+    async text() {
+      throw new Error('native body must remain unread');
+    },
+  };
+  const wrapped = fetchCompat.wrapFetchForMastoPagination?.(async () => original);
+  const res = await wrapped('https://mas.to/api/v1/timelines/public?limit=2');
+
+  assert.equal(res, original);
+  assert.equal(res.headers, nativeHeaders);
+  assert.equal(res.headers.get('link'), existing);
+  assert.match(res.headers.get('content-type') ?? '', /application\/json/);
+});
+
+test('normalizeResponseHeaders seeds Content-Type via .get without enumeration', () => {
+  const headers = fetchCompat.normalizeResponseHeaders?.({
+    get(name) {
+      return name.toLowerCase() === 'content-type' ? 'application/json' : null;
+    },
+  });
+  assert.equal(headers?.get('content-type'), 'application/json');
 });
 
 test('DOMException compatibility preserves name, message and instanceof checks', () => {
@@ -497,6 +690,26 @@ test('tabs animate persistent indicators and Explore explains trending content',
   assert.match(explore, /explore-tab-underline-active/);
   assert.doesNotMatch(account, /v-if="tab === t\.key" class="account-tab-underline"/);
   assert.match(account, /account-tab-underline-active/);
+});
+
+test('long feeds use recycling list scrolltolower instead of scroll-view', async () => {
+  const [explore, account, search, timeline] = await Promise.all([
+    readFile(new URL('../src/pages/ExplorePage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/AccountPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/SearchPage.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/TimelinePaginator.vue', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(timeline, /@scrolltolower="loadNext"/);
+  assert.match(timeline, /lower-threshold-item-count/);
+  assert.match(explore, /TimelinePaginator/);
+  assert.match(explore, /@scrolltolower="loadMoreTags"/);
+  assert.match(explore, /@scrolltolower="loadMoreLinks"/);
+  assert.doesNotMatch(explore, /<scroll-view/);
+  assert.match(account, /TimelinePaginator/);
+  assert.doesNotMatch(account, /<scroll-view/);
+  assert.match(search, /@scrolltolower="loadMore"/);
+  assert.doesNotMatch(search, /<scroll-view/);
 });
 
 test('media preview motion mirrors Elk using only opacity and transform', async () => {

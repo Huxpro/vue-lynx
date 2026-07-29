@@ -40,7 +40,9 @@ export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
   description: 'Vue 3 framework for building Lynx apps',
-  icon: '/favicon.png',
+  icon: '/favicon.svg',
+  logo: '/assets/brand/vue-lynx-logo.svg',
+  logoText: 'Vue Lynx',
   lang: 'en',
   locales: [
     {
@@ -97,6 +99,10 @@ export default defineConfig({
       path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
       path.join(__dirname, 'src/components/BlogList.tsx'),
       path.join(__dirname, 'src/components/BlogHeader.tsx'),
+      path.join(
+        __dirname,
+        'src/components/home-comps/showcase/ScaleCompare.tsx',
+      ),
     ],
   },
   route: {
@@ -128,6 +134,7 @@ export default defineConfig({
         { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
+        { text: 'scroll-view vs list', link: '/guide/scroll-view-vs-list' },
         {
           dividerType: 'solid',
         },
@@ -173,6 +180,7 @@ export default defineConfig({
         { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
+        { text: 'scroll-view 与 list', link: '/zh/guide/scroll-view-vs-list' },
         {
           dividerType: 'solid',
         },
@@ -281,6 +289,12 @@ export default defineConfig({
     },
     html: {
       tags: [
+        // App icons + PWA manifest — favicon is handled by `icon` above
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }, append: false },
+        { tag: 'link', attrs: { rel: 'alternate icon', type: 'image/png', href: '/favicon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' }, append: false },
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#42B883' }, append: false },
         // OG tags — RSPress head[] doesn't inject into static HTML, so use Rsbuild html.tags
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
         { tag: 'meta', attrs: { property: 'og:url', content: 'https://vue.lynxjs.org' }, append: false },

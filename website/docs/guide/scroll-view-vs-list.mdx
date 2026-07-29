@@ -1,0 +1,303 @@
+# scroll-view vs list
+
+Lynx does not scroll arbitrary nodes the way the Web does. When content overflows a viewport you pick an explicit scroll container — almost always [`<scroll-view>`](https://lynxjs.org/api/elements/built-in/scroll-view) or [`<list>`](https://lynxjs.org/api/elements/built-in/list). This guide explains how Lynx documents the difference, how that differs from Web Vue, and the Vue Lynx patterns that fall out of those choices.
+
+For the platform reference, see [Managing Scrolling](https://lynxjs.org/guide/ui/scrolling) on lynxjs.org.
+
+## Lynx vs Web
+
+On the Web, almost any element can become a scrollport:
+
+```html
+<div style="overflow: auto; height: 100vh">
+  <!-- anything -->
+</div>
+```
+
+On Lynx, a plain `<view>` **does not** gain scrolling from `overflow: scroll` / `overflow: auto`. Only dedicated containers such as `<scroll-view>` and `<list>` scroll. That is the first design shift when you move a Vue app from DOM to Lynx: scrolling becomes a **structural** decision in the template, not a CSS property you sprinkle later.
+
+| | Web (Vue) | Lynx (Vue Lynx) |
+|---|---|---|
+| How scrolling starts | `overflow` on any node | Dedicated `<scroll-view>` / `<list>` |
+| Virtualization | Optional library (`vue-virtual-scroller`, Virtua, …) | Built into `<list>` |
+| Large feeds | You own windowing + recycled DOM | Native recycling + lazy create |
+| Complex grids | CSS Grid / masonry libs | `<list list-type="flow\|waterfall">` |
+
+Vue Lynx keeps Composition API, `v-for`, and SFCs — but your scroll trees look different from a typical Nuxt / Vite SPA.
+
+## What lynxjs.org says
+
+Lynx's scrolling guide draws a clean line between the two containers:
+
+1. **`<scroll-view>` for basic scrolling** — a fixed viewport; when children exceed it, set `scroll-orientation` to `vertical` or `horizontal`.
+2. **`<list>` for large / infinite data** — on-demand creation of visible items only.
+3. **`<list>` for complex layouts** — `scroll-view` is linear only; `list` adds `single`, `flow`, and `waterfall`.
+
+The [`<scroll-view>` API](https://lynxjs.org/api/elements/built-in/scroll-view) also warns:
+
+- Every child is created up front (can hurt first paint).
+- There is **no reuse**; too much content can exhaust memory.
+- Prefer `<list>` once content exceeds roughly **three screens**, or fake recycling with exposure events.
+
+Think of `<scroll-view>` as “a short page that happens to scroll,” and `<list>` as “a recycling feed.”
+
+## Choose with a table
+
+| Question | Prefer `<scroll-view>` | Prefer `<list>` |
+|---|---|---|
+| How much content? | A few screens or less | Many screens / unbounded |
+| Layout | Linear stack | Single / grid (`flow`) / waterfall |
+| Item shape | Mixed sections, sticky chrome | Homogeneous (or mostly) cells |
+| Memory | Eager, all children live | Recycled + lazy |
+| Infinite load | Possible, but risky | Native `@scrolltolower` |
+
+Rule of thumb from Lynx: **under ~3 screens → `scroll-view`; beyond that → `list`.**
+
+## `<scroll-view>` in Vue
+
+Use ordinary Vue children — `v-for`, nested SFCs, sticky siblings. Nothing special is required beyond wrapping them in `<scroll-view>`.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ScrollViewBasic/App.vue"
+  entry="src/ScrollViewBasic"
+  defaultEntryName="ScrollViewBasic"
+/>
+
+```vue
+<scroll-view scroll-orientation="vertical">
+  <view class="header">…</view>
+  <view v-for="card in cards" :key="card.id" class="card">
+    <text>{{ card.title }}</text>
+  </view>
+</scroll-view>
+```
+
+Good fits: settings screens, forms, article bodies, short result pages (see also the [Vue Query](/guide/data-fetching) and [TodoMVC](/guide/todomvc) examples).
+
+:::tip Nested layout tip
+Direct children of `<scroll-view>` only support linear / sticky layout. For richer CSS inside the scrollport, wrap content in a single child `<view>` and style that subtree — as recommended in the [scroll-view docs](https://lynxjs.org/api/elements/built-in/scroll-view).
+:::
+
+## `<list>` in Vue
+
+`<list>` expects **`<list-item>` children**. Each item needs:
+
+- Vue's `:key` — reconciliation identity for the VNode tree
+- Lynx's `:item-key` — identity for the native recycler (keep them equal)
+
+Missing or colliding keys is a common cause of blank / wrong cells.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListBasic/App.vue"
+  entry="src/ListBasic"
+  defaultEntryName="ListBasic"
+/>
+
+```vue
+<list list-type="single" scroll-orientation="vertical">
+  <list-item
+    v-for="card in cards"
+    :key="card.id"
+    :item-key="card.id"
+    :estimated-main-axis-size-px="96"
+  >
+    <view class="card">…</view>
+  </list-item>
+</list>
+```
+
+`estimated-main-axis-size-px` helps the engine size the scrollbar and jump before a cell has been measured — the [gallery tutorial](/guide/tutorial-gallery) relies on the same hint for waterfall images.
+
+### Waterfall / flow layouts
+
+This is the other half of the lynxjs.org distinction: `scroll-view` cannot do multi-column masonry; `list` can.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListWaterfall/App.vue"
+  entry="src/ListWaterfall"
+  defaultEntryName="ListWaterfall"
+/>
+
+```vue
+<list list-type="waterfall" :span-count="2" scroll-orientation="vertical">
+  <list-item
+    v-for="tile in tiles"
+    :key="tile.id"
+    :item-key="tile.id"
+    :estimated-main-axis-size-px="tile.height"
+  >
+    <view class="tile" :style="{ height: `${tile.height}px` }" />
+  </list-item>
+</list>
+```
+
+Each `list-item` can host a full Vue SFC — the gallery tutorial's `LikeImageCard` is the same pattern at product scale.
+
+## Vue design patterns that fall out of this
+
+Moving from Web Vue to Vue Lynx does not change reactivity — it changes **where** you put scrolling and **who** owns recycling.
+
+### 1. Explicit containers in the template
+
+Stop reaching for `overflow: auto` on a root `<view>`. Decide up front:
+
+```vue
+<!-- short, mixed page -->
+<scroll-view scroll-orientation="vertical">…</scroll-view>
+
+<!-- long homogeneous feed -->
+<list list-type="single" scroll-orientation="vertical">…</list>
+```
+
+That structural choice is the Lynx equivalent of picking a layout library on the Web.
+
+### 2. Dual identity: `:key` + `:item-key`
+
+Web `v-for` only needs `:key`. Lynx lists need both. Treat them as one stable business id:
+
+```vue
+<list-item
+  v-for="status in items"
+  :key="status.id"
+  :item-key="status.id"
+/>
+```
+
+The [Elk](/guide/elk) port follows exactly this contract for Mastodon statuses.
+
+### 3. Composable owns pages; `<list>` owns recycling
+
+On the Web, infinite feeds usually mean:
+
+`useInfiniteQuery` / custom composable **+** a virtualizer **+** an intersection sentinel.
+
+On Lynx, drop the virtualizer. A composable appends to a `ref` array; `@scrolltolower` (and `lower-threshold-item-count`) asks for the next page. Native recycling keeps memory flat.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListInfinite/App.vue"
+  entry="src/ListInfinite"
+  defaultEntryName="ListInfinite"
+/>
+
+```ts
+// shared/useInfiniteFeed.ts
+export function useInfiniteFeed(pageSize = 20) {
+  const items = ref(makeCards(pageSize))
+  const loading = ref(false)
+  // loadMore() appends another page…
+  return { items, loading, loadMore }
+}
+```
+
+```vue
+<list
+  :lower-threshold-item-count="3"
+  @scrolltolower="loadMore"
+>
+  <list-item
+    v-for="item in items"
+    :key="item.id"
+    :item-key="item.id"
+  >
+    …
+  </list-item>
+</list>
+```
+
+This is the same shape as Elk's `TimelinePaginator`: masto.js pagination in a composable, `<list>` for the viewport.
+
+:::tip List diffs
+Vue Lynx's Main Thread list adapter flushes `insertAction` / `removeAction` / `updateAction` by diffing the last-flushed snapshot against the live `listItems` array (LIS move detection, same idea as ReactLynx's remove+insert moves). Covers append, prepend, mid-list insert, remove, same-list reorder, and platform-info updates. Still open: framework-side cell recycling and refreshing `__UpdateListCallbacks` each flush — [#302](https://github.com/Huxpro/vue-lynx/issues/302), [#303](https://github.com/Huxpro/vue-lynx/issues/303).
+:::
+
+### 4. Prefer `list` over third-party virtual scrollers
+
+Libraries that measure DOM nodes (`getBoundingClientRect`, absolute positioning of windows) do not map cleanly onto Lynx's dual-thread + native elements model. Prefer the built-in recycler unless you have a rare layout `<list>` cannot express.
+
+### 5. Keep cells as Vue components
+
+Recycling is a **native** concern; composition stays a **Vue** concern. Put presentational SFCs inside `list-item` — do not flatten everything into one mega-template just because the parent is a list.
+
+```vue
+<list-item :key="pic.id" :item-key="pic.id">
+  <LikeImageCard :picture="pic" />
+</list-item>
+```
+
+## Mutation demos
+
+| Entry | Mutation | Status |
+|---|---|---|
+| `ListPrepend` | unshift vs append | Fixed — INSERT respects anchor |
+| `ListReorder` | Yellow→top / reverse | Fixed — same-list move = detach + insert |
+| `ListRemove` | splice + Reset same keys | Fixed — `removeAction` (was 2202) |
+| `ListFilter` | even-only toggle | OK |
+
+### Prepend
+
+Tap **Prepend** once. The TOP list cell must turn red (`NEW …`). **Append** lands at the bottom.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListPrepend/App.vue"
+  entry="src/ListPrepend"
+  defaultEntryName="ListPrepend"
+/>
+
+### Reorder
+
+Four full-bleed colors. The top strip is plain `<view>`s (Vue truth). The `<list>` below must show the **same order** after **Yellow → top** or **Reverse**.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListReorder/App.vue"
+  entry="src/ListReorder"
+  defaultEntryName="ListReorder"
+/>
+
+### Remove + filter
+
+**Remove**: delete rows, then **Reset same keys** — must not toast duplicated item-key (2202). Filter toggle is a lighter regression tap.
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListRemove/App.vue"
+  entry="src/ListRemove"
+  defaultEntryName="ListRemove"
+/>
+
+<Go
+  example="scrolling"
+  defaultFile="src/ListFilter/App.vue"
+  entry="src/ListFilter"
+  defaultEntryName="ListFilter"
+/>
+
+### Still open
+
+- Framework-side cell recycling (`enqueueComponent` / recycle pool) — [#302](https://github.com/Huxpro/vue-lynx/issues/302)
+- Refreshing `__UpdateListCallbacks` on every list flush — [#303](https://github.com/Huxpro/vue-lynx/issues/303)
+
+Automated coverage: `packages/testing-library` → **native list element · mutations**.
+
+## Decision checklist
+
+1. Is the page mostly one linear document under ~3 screens? → **`<scroll-view>`**
+2. Are you rendering dozens / hundreds of similar rows? → **`<list>`**
+3. Do you need waterfall or multi-column flow? → **`<list list-type="…">`**
+4. Will the dataset grow without bound? → **`<list>` + composable + `@scrolltolower`**
+5. Did you set matching `:key` / `:item-key`? → required for correct recycling
+6. Prepend / reorder / remove? → supported via `update-list-info` diffs
+
+## See also
+
+- [Managing Scrolling (Lynx)](https://lynxjs.org/guide/ui/scrolling)
+- [`<scroll-view>` API](https://lynxjs.org/api/elements/built-in/scroll-view)
+- [`<list>` API](https://lynxjs.org/api/elements/built-in/list)
+- [Tutorial: Product Gallery](/guide/tutorial-gallery) — waterfall `<list>` in a full app
+- [Elk (Mastodon Client)](/guide/elk) — replacing Virtua with native `<list>`
+- [Main Thread Script](/guide/main-thread-script) — scroll-linked worklets on `<scroll-view>` / `<list>`

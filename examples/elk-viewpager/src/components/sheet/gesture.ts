@@ -23,8 +23,8 @@ export function shouldClaimSheetGesture(
   scrollTop: number,
 ): boolean {
   'main thread';
-  const displacement = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-  if (displacement < 8)
+  // Compare squared distance to avoid Math.sqrt on every touchmove sample.
+  if (deltaX * deltaX + deltaY * deltaY < SHEET_GESTURE_LOCK_DISTANCE * SHEET_GESTURE_LOCK_DISTANCE)
     return false;
 
   if (Math.abs(deltaY) <= Math.abs(deltaX))

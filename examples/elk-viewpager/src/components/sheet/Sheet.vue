@@ -73,6 +73,8 @@ const gestureLockedRef = useMainThreadRef(false);
 const gestureRejectedRef = useMainThreadRef(false);
 const settleTimerRef = useMainThreadRef(0);
 const animationGenerationRef = useMainThreadRef(0);
+const panelScrollEnabledRef = useMainThreadRef(true);
+const backdropOpacityRef = useMainThreadRef(-1);
 
 const layerStyle = computed(() => ({ bottom: `${props.bottomInset}px` }));
 const surfaceStyle = computed(() => ({
@@ -101,6 +103,9 @@ function setMotionTransition(surfaceValue: string, backdropValue: string) {
 
 function setPanelScrollEnabled(enabled: boolean) {
   'main thread';
+  if (panelScrollEnabledRef.current === enabled)
+    return;
+  panelScrollEnabledRef.current = enabled;
   panelRef.current?.setAttribute?.('enable-scroll', enabled);
 }
 
@@ -110,13 +115,18 @@ function applySheetMotion(translation: number) {
     ? surfaceHeightRef.current
     : 640;
   const progress = sheetOpenProgress(translation, sheetSize);
+  // Quantize opacity writes; transform stays full-precision for drag feel.
+  const opacity = Math.round(progress * 100) / 100;
 
   translationRef.current = translation;
   surfaceRef.current?.setStyleProperty?.(
     'transform',
     `translateY(${translation}px)`,
   );
-  backdropRef.current?.setStyleProperty?.('opacity', String(progress));
+  if (opacity !== backdropOpacityRef.current) {
+    backdropOpacityRef.current = opacity;
+    backdropRef.current?.setStyleProperty?.('opacity', String(opacity));
+  }
 }
 
 function cancelSettle() {
@@ -150,7 +160,7 @@ function finishSettle(target: number, dismiss: boolean, generation: number) {
     runOnBackground(requestClose)();
   }
   else {
-    setMotionTransition('', '');
+    setMotionTransition('none', 'none');
   }
 }
 
@@ -239,10 +249,7 @@ function handleTouchMove(event: SheetTouchEvent) {
       setPanelScrollEnabled(false);
       gestureLockedRef.current = true;
     }
-    else if (
-      Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-      >= 8
-    ) {
+    else if (deltaX * deltaX + deltaY * deltaY >= 64) {
       gestureRejectedRef.current = true;
       return;
     }
@@ -305,11 +312,28 @@ function handleTouchCancel() {
 
 function resetSheetMotion() {
   'main thread';
+  // Keep transition disabled on gesture-owned nodes. Clearing to '' would
+  // revive any stylesheet transition and let later patches animate unexpectedly.
+  if (
+    settleTimerRef.current === 0
+    && Math.abs(translationRef.current) < 0.5
+    && !gestureLockedRef.current
+  ) {
+    setMotionTransition('none', 'none');
+    setPanelScrollEnabled(true);
+    return;
+  }
+
   cancelSettle();
   setMotionTransition('none', 'none');
   applySheetMotion(0);
   resetGestureState();
-  setMotionTransition('', '');
+}
+
+function handleBeforeEnter() {
+  // Snap residual main-thread gesture transforms before CSS enter classes
+  // paint, so the wrapper transition is the only enter motion.
+  runOnMainThread(resetSheetMotion)();
 }
 
 function handleAfterLeave() {
@@ -318,7 +342,13 @@ function handleAfterLeave() {
 </script>
 
 <template>
-  <Transition name="sheet" @after-leave="handleAfterLeave">
+  <Transition
+    name="sheet"
+    persisted
+    :duration="{ enter: 250, leave: 188 }"
+    @before-enter="handleBeforeEnter"
+    @after-leave="handleAfterLeave"
+  >
     <view v-show="modelValue" class="sheet-layer" :style="layerStyle">
       <view
         class="sheet-backdrop"
@@ -372,7 +402,6 @@ function handleAfterLeave() {
   justify-content: flex-end;
   overflow: hidden;
   opacity: 1;
-  transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .sheet-backdrop {
@@ -383,7 +412,6 @@ function handleAfterLeave() {
   left: 0;
   background-color: rgba(0, 0, 0, 0.5);
   opacity: 1;
-  transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .sheet-surface-transition {
@@ -393,7 +421,6 @@ function handleAfterLeave() {
   flex-direction: column;
   width: 100%;
   transform: translateY(0);
-  transition: transform 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .sheet-surface {
@@ -407,7 +434,6 @@ function handleAfterLeave() {
   border-top-right-radius: 8px;
   background-color: var(--c-sheet-bg);
   transform: translateY(0);
-  transition: transform 250ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .sheet-rubber-fill {
@@ -448,6 +474,27 @@ function handleAfterLeave() {
   background-color: var(--c-sheet-bg);
 }
 
+/*
+ * Vue-canonical transitions: only -enter-active / -leave-active enable
+ * interpolation. Always-on base transitions reverse-animate into enter-from
+ * when a leave is interrupted (sheet slides down, then pops open).
+ */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity 250ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sheet-enter-active .sheet-surface-transition,
+.sheet-leave-active .sheet-surface-transition {
+  transition: transform 250ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Snap closed while enter-from is present; animate only after it is removed. */
+.sheet-enter-from,
+.sheet-enter-from .sheet-surface-transition {
+  transition: none;
+}
+
 .sheet-enter-from,
 .sheet-leave-to {
   opacity: 0;
@@ -459,11 +506,6 @@ function handleAfterLeave() {
 }
 
 .sheet-leave-active {
-  transition-duration: 188ms;
-  transition-timing-function: ease-in;
-}
-
-.sheet-leave-active .sheet-backdrop {
   transition-duration: 188ms;
   transition-timing-function: ease-in;
 }

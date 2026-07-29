@@ -16,105 +16,23 @@ import {
   defineComponent,
   getCurrentInstance,
   h,
-  queuePostFlushCb,
   resolveTransitionHooks,
   setTransitionHooks,
   useTransitionState,
   getTransitionRawChildren,
 } from '@vue/runtime-core';
 
-import { waitForFlush } from './flush.js';
-import { resolveClass } from './node-ops.js';
-import { OP, pushOp } from './ops.js';
-import { register, unregister } from './event-registry.js';
-import { scheduleFlush } from './flush.js';
 import type { ShadowElement } from './shadow-element.js';
 import type { TransitionProps } from './Transition.js';
-
-// ---------------------------------------------------------------------------
-// Transition class helpers (same as Transition.ts)
-// ---------------------------------------------------------------------------
-
-function addTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.add(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
-  scheduleFlush();
-}
-
-function removeTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.delete(cls);
-  pushOp(OP.SET_CLASS, el.id, resolveClass(el));
-  scheduleFlush();
-}
-
-function nextFrame(cb: () => void): void {
-  queuePostFlushCb(() => {
-    waitForFlush().then(() => {
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(cb);
-        });
-      }
-      else {
-        setTimeout(cb, 16);
-      }
-    });
-  });
-}
-
-function whenTransitionEnds(
-  el: ShadowElement,
-  expectedType: 'transition' | 'animation' | undefined,
-  done: () => void,
-): void {
-  const eventName =
-    expectedType === 'animation' ? 'animationend' : 'transitionend';
-
-  let settled = false;
-  const finish = () => {
-    if (settled) return;
-    settled = true;
-    unregister(sign);
-    pushOp(OP.REMOVE_EVENT, el.id, 'bindEvent', eventName);
-    scheduleFlush();
-    done();
-  };
-
-  const sign = register((_data: unknown) => {
-    finish();
-  });
-
-  pushOp(OP.SET_EVENT, el.id, 'bindEvent', eventName, sign);
-  scheduleFlush();
-}
-
-interface NormalizedDuration {
-  enter: number;
-  leave: number;
-}
-
-function normalizeDuration(
-  duration: TransitionProps['duration'],
-): NormalizedDuration {
-  if (typeof duration === 'number') {
-    return { enter: duration, leave: duration };
-  }
-  if (duration && typeof duration === 'object') {
-    return { enter: duration.enter, leave: duration.leave };
-  }
-  return { enter: 0, leave: 0 };
-}
-
-function hasExplicitDuration(props: TransitionProps): boolean {
-  return props.duration != null;
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: hooks have varying signatures
-function callHook(hook: ((...args: any[]) => void) | undefined, args: unknown[]): void {
-  if (hook) {
-    hook(...args);
-  }
-}
+import {
+  addTransitionClass,
+  callHook,
+  hasExplicitDuration,
+  nextFrame,
+  normalizeDuration,
+  removeTransitionClass,
+  whenTransitionEnds,
+} from './transition-shared.js';
 
 // ---------------------------------------------------------------------------
 // TransitionGroup Props (extends TransitionProps with tag)

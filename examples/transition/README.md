@@ -14,8 +14,9 @@ See `src/App.vue`:
 6. Explicit `:duration` prop
 7. `<TransitionGroup>` — list enter/leave
 8. JS hooks (`onBeforeEnter` / `onEnter` / `onLeave`)
+9. Registry cleanup — no-`duration` Transition + hammer toggle ([#286](https://github.com/Huxpro/vue-lynx/issues/286))
 
 ## Caveats
 
-- Always set `:duration` — `getComputedStyle()` is unavailable from the background thread
-- Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable
+- `<Transition>` has no Lynx-specific limitations — CSS transitions/animations work with or without `:duration` (event + bounded fallback cleanup).
+- Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable from the background thread
