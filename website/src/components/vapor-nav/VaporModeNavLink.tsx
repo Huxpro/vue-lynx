@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { InfoPopover } from './InfoPopover';
 
 /** Short production path that redirects to the `vapor` branch preview build. */
@@ -9,66 +11,62 @@ interface VaporModeNavLinkProps {
 
 const copy = {
   en: {
-    label: 'Switch to Vapor mode — opens the Vapor preview site',
+    label: 'Open the Vapor preview site',
     description: 'Vapor mode lives on a separate preview build',
-    off: 'VDOM',
-    on: 'Vapor preview',
     infoLabel: 'About Vapor mode',
-    infoBefore: 'Vapor mode is under active exploration on the ',
-    infoAfter:
-      ' branch. Its docs and live examples ship as a separate preview build — this site always renders with the VDOM runtime.',
+    infoBody:
+      'Vapor mode is under active exploration on the vapor branch. Its docs and live examples ship as a separate preview build — this site always renders with the VDOM runtime.',
     infoLink: 'Open the Vapor preview',
   },
   zh: {
-    label: '切换到 Vapor mode —— 打开 Vapor 预览站点',
+    label: '打开 Vapor 预览站点',
     description: 'Vapor mode 位于独立的预览构建中',
-    off: 'VDOM',
-    on: 'Vapor 预览',
     infoLabel: '关于 Vapor mode',
-    infoBefore: 'Vapor mode 正在 ',
-    infoAfter:
-      ' 分支上探索中，其文档与可运行示例发布在独立的预览构建里 —— 本站始终使用 VDOM 运行时渲染。',
+    infoBody:
+      'Vapor mode 正在 vapor 分支上探索中，其文档与可运行示例发布在独立的预览构建里 —— 本站始终使用 VDOM 运行时渲染。',
     infoLink: '打开 Vapor 预览站点',
   },
 } as const;
 
 /**
- * Nav-bar teaser for Vapor mode: the same petite switch the Vapor preview
- * site carries in its nav, rendered permanently "off" (VDOM). It is a link,
- * not a toggle — flipping it takes you to the Vapor build of this site,
- * where the real switch lives — so the flipped label reads "Vapor preview",
- * not just "Vapor". The ⓘ chip spells out where Vapor actually lives before
- * anyone leaves the page.
+ * The `vapor` branch site's nav switch, markup and styles taken as-is. The
+ * only change is what it does: there is nothing to toggle here, so the switch
+ * is a link to the Vapor build. Pointer hover / keyboard focus previews the
+ * flip; activating it opens the preview site in a new tab.
  */
 export function VaporModeNavLink({ locale = 'en' }: VaporModeNavLinkProps) {
   const labels = copy[locale];
+  // Preview the flip on mouse/keyboard only — a tap on touch would leave the
+  // switch stuck in the Vapor state with nothing to flip it back.
+  const [on, setOn] = useState(false);
 
   return (
-    <div className="vapor-nav-link" title={labels.description}>
+    <div
+      className="go-mode-nav-control"
+      data-mode={on ? 'vapor' : 'vdom'}
+      title={labels.description}
+    >
       <a
-        className="vapor-nav-link__switch"
+        className="go-mode-nav-control__switch"
         href={VAPOR_SITE_HREF}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={labels.label}
+        onMouseEnter={() => setOn(true)}
+        onMouseLeave={() => setOn(false)}
+        onFocus={() => setOn(true)}
+        onBlur={() => setOn(false)}
       >
-        <span className="vapor-nav-link__track" aria-hidden="true">
-          <span className="vapor-nav-link__mode vapor-nav-link__mode--off">
-            {labels.off}
+        <span className="go-mode-nav-control__track" aria-hidden="true">
+          <span className="go-mode-nav-control__mode">
+            {on ? 'Vapor' : 'VDOM'}
           </span>
-          <span className="vapor-nav-link__mode vapor-nav-link__mode--on">
-            {labels.on}
-          </span>
-          <span className="vapor-nav-link__knob" />
+          <span className="go-mode-nav-control__knob" />
         </span>
       </a>
       <InfoPopover label={labels.infoLabel} direction="down">
-        <p>
-          {labels.infoBefore}
-          <code className="vapor-nav-link__branch">vapor</code>
-          {labels.infoAfter}
-        </p>
-        <a href={VAPOR_SITE_HREF} target="_blank" rel="noreferrer">
+        <p>{labels.infoBody}</p>
+        <a href={VAPOR_SITE_HREF} target="_blank" rel="noopener noreferrer">
           {labels.infoLink} →
         </a>
       </InfoPopover>
