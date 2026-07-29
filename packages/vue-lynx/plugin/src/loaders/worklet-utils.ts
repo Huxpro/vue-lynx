@@ -486,8 +486,11 @@ function isInsideComment(code: string, index: number): boolean {
  *
  * String/template literals are skipped so parens inside embedded text (e.g.
  * a baked `__SetAttribute(e, 'text', "call us :)")`) don't unbalance the
- * scan. Comments are not handled — the scanned sources are compiler output,
- * which never embeds parens in comments between call arguments.
+ * scan. Comments are skipped too: the LEPUS transform preserves user
+ * comments inside worklet bodies, so an apostrophe or paren in a comment
+ * (`// the finger's position (x)`) must not derail the literal-skipper —
+ * before this, one such comment silently dropped every registration after
+ * it in the module.
  */
 function findBalancedEnd(code: string, openIndex: number): number {
   let depth = 0;
@@ -498,6 +501,14 @@ function findBalancedEnd(code: string, openIndex: number): number {
         if (code[i] === '\\') i++;
         else if (code[i] === ch) break;
       }
+    } else if (ch === '/' && code[i + 1] === '/') {
+      const end = code.indexOf('\n', i + 2);
+      if (end === -1) return -1;
+      i = end;
+    } else if (ch === '/' && code[i + 1] === '*') {
+      const end = code.indexOf('*/', i + 2);
+      if (end === -1) return -1;
+      i = end + 1;
     } else if (ch === '(') {
       depth++;
     } else if (ch === ')') {
