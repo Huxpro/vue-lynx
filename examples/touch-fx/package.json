@@ -1,0 +1,38 @@
+{
+  "name": "@vue-lynx-example/touch-fx",
+  "version": "0.2.9",
+  "private": false,
+  "description": "Vue-Lynx touch playground — a green orb that chases your finger, with water ripples and firework sparks driven entirely on the Main Thread",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huxpro/vue-lynx",
+    "directory": "examples/touch-fx"
+  },
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev",
+    "web:serve": "node harness/serve.mjs",
+    "web:verify": "node harness/verify.mjs"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*"
+  },
+  "devDependencies": {
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/web-core": "^0.22.1",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "playwright": "^1.49.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
