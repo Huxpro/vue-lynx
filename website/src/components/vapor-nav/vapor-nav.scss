@@ -1,11 +1,11 @@
 /* ---------------------------------------------------------------------------
- * Vapor mode nav teaser — a petite VDOM/Vapor switch that is really a link to
- * the Vapor preview build, plus a ⓘ popover explaining where Vapor lives.
- * Mirrors the switch shipped in the `vapor` branch site's nav.
+ * VDOM/Vapor segmented control (site nav) — petite pill with a sliding
+ * thumb. In Vapor state the thumb fills with the homepage's moving brand
+ * gradient (same stops + drift as the hero `.brand` text and badge hover).
  * ------------------------------------------------------------------------- */
 
-/* Homepage brand gradient, reused for the "flipped to Vapor preview" state. */
-@mixin vapor-nav-gradient {
+/* Homepage brand gradient, shared by the toggle thumb and the Vapor badge. */
+@mixin vapor-gradient {
   background-image: linear-gradient(
     270deg,
     var(--major-brand-color),
@@ -15,10 +15,10 @@
     var(--major-brand-color)
   );
   background-size: 220% 100%;
-  animation: vapor-nav-gradient-drift 6s linear infinite;
+  animation: vapor-gradient-drift 6s linear infinite;
 }
 
-@keyframes vapor-nav-gradient-drift {
+@keyframes vapor-gradient-drift {
   0% {
     background-position: 0% 50%;
   }
@@ -28,7 +28,7 @@
   }
 }
 
-.vapor-nav-link {
+.go-mode-nav-control {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -39,14 +39,12 @@
   white-space: nowrap;
 }
 
-.vapor-nav-link__switch {
+/* A single labeled switch: VDOM is simply "off". The mode name lives in
+   the track's empty space — "VDOM" right of the knob when off, "Vapor" left
+   of it (on the moving gradient) when on. */
+.go-mode-nav-control__switch {
   display: inline-flex;
   align-items: center;
-  /* Fixed box, track right-aligned inside it: the track grows leftward into
-     the nav's empty space when flipped, so the ⓘ and everything right of it
-     never move. */
-  width: 112px;
-  justify-content: flex-end;
   padding: 4px 0;
   border: 0;
   background: transparent;
@@ -54,16 +52,26 @@
   cursor: pointer;
   font: inherit;
   line-height: 1;
-  text-decoration: none;
 }
 
-.vapor-nav-link__switch:focus-visible {
+.go-mode-nav-control__switch:focus-visible {
   outline: 2px solid var(--rp-c-brand);
   outline-offset: 2px;
   border-radius: 999px;
 }
 
-.vapor-nav-link__track {
+/* Pages with nothing to switch keep the control, dimmed — no pop-in/out. */
+.go-mode-nav-control[data-dormant] {
+  opacity: 0.45;
+  transition: opacity 200ms ease-out;
+}
+
+.go-mode-nav-control[data-dormant]:hover,
+.go-mode-nav-control[data-dormant]:focus-within {
+  opacity: 1;
+}
+
+.go-mode-nav-control__track {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -73,42 +81,47 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--rp-c-text-3) 26%, transparent);
   box-shadow: inset 0 1px 2px rgb(0 0 0 / 8%);
-  transition:
-    width 240ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 240ms ease-out,
-    box-shadow 240ms ease-out;
+  transition: background-color 240ms ease-out, box-shadow 240ms ease-out;
 }
 
-/* Mode names sit in the free half of the track and cross-fade, so the knob's
-   motion and the label swap can never nudge the surrounding nav layout. */
-.vapor-nav-link__mode {
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track {
+  @include vapor-gradient;
+
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
+}
+
+/* Mode name in the free half of the track. Absolute so the knob's motion
+   and the label swap can't nudge the layout. */
+.go-mode-nav-control__mode {
   position: absolute;
   top: 0;
+  right: 11px;
+  left: 27px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: 100%;
+  color: var(--rp-c-text-2);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  transition: opacity 200ms ease-out, color 200ms ease-out;
+  transition: color 200ms ease-out;
 }
 
-.vapor-nav-link__mode--off {
-  right: 11px;
-  left: 27px;
-  color: var(--rp-c-text-2);
+@media (hover: hover) {
+  .go-mode-nav-control__switch:hover .go-mode-nav-control__mode {
+    color: var(--rp-c-text-1);
+  }
 }
 
-.vapor-nav-link__mode--on {
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__mode {
   right: 27px;
   left: 11px;
   color: #fff;
-  opacity: 0;
   text-shadow: 0 1px 1px rgb(0 0 0 / 22%);
 }
 
-.vapor-nav-link__knob {
+.go-mode-nav-control__knob {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -120,43 +133,12 @@
   transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Hover/focus previews the flip: the switch slides to Vapor and lights up
-   with the brand gradient — a hint of what the destination site looks like. */
-@mixin vapor-nav-flipped {
-  /* Widen to fit the longer "Vapor preview" label — the destination is a
-     separate build, and the flipped label should say so. */
-  .vapor-nav-link__track {
-    @include vapor-nav-gradient;
-
-    width: 112px;
-    box-shadow: 0 1px 6px color-mix(in srgb, var(--major-brand-color) 45%, transparent);
-  }
-
-  .vapor-nav-link__mode--off {
-    opacity: 0;
-  }
-
-  .vapor-nav-link__mode--on {
-    opacity: 1;
-  }
-
-  .vapor-nav-link__knob {
-    transform: translateX(90px);
-  }
-}
-
-@media (hover: hover) {
-  .vapor-nav-link__switch:hover {
-    @include vapor-nav-flipped;
-  }
-}
-
-.vapor-nav-link__switch:focus-visible {
-  @include vapor-nav-flipped;
+.go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__knob {
+  transform: translateX(40px);
 }
 
 /* ---------------------------------------------------------------------------
- * ⓘ popover
+ * Shared ⓘ popover (nav scope explainer, coverage chip, badge reasons).
  * ------------------------------------------------------------------------- */
 
 .info-popover {
@@ -168,6 +150,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   min-width: 18px;
   min-height: 18px;
   padding: 0;
@@ -238,84 +221,25 @@
   text-decoration: underline;
 }
 
-.vapor-nav-link__branch {
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--rp-c-text-3) 16%, transparent);
-  color: var(--rp-c-text-1);
-  font-family: var(--rp-font-family-mono, monospace);
-  font-size: 0.92em;
-}
-
 /* ---------------------------------------------------------------------------
- * Responsive / input adjustments
+ * Responsive / input adjustments — verbatim from the `vapor` branch.
  * ------------------------------------------------------------------------- */
 
-/* Touch: pad the hit area invisibly — the control stays petite. */
+/* Touch: pad the switch's hit area invisibly — the control stays petite. */
 @media (pointer: coarse) {
-  .vapor-nav-link__switch {
+  .go-mode-nav-control__switch {
     padding: 8px 2px;
   }
 }
 
-/* Narrow viewports: the nav collapses to logo + hamburger, which leaves room
-   for the teaser — keep it, just tighter. Shrinking the track (and the knob's
-   travel with it) keeps the proportions rather than squashing them. */
-@media (max-width: 640px) {
-  .vapor-nav-link {
-    gap: 3px;
-  }
-
-  .vapor-nav-link__switch {
-    width: 96px;
-  }
-
-  .vapor-nav-link__track {
-    width: 54px;
-    height: 20px;
-  }
-
-  .vapor-nav-link__mode--off {
-    right: 9px;
-    left: 24px;
-  }
-
-  .vapor-nav-link__mode--on {
-    right: 24px;
-    left: 9px;
-  }
-
-  .vapor-nav-link__knob {
-    width: 16px;
-    height: 16px;
-  }
-
-  .vapor-nav-link__switch:hover .vapor-nav-link__track,
-  .vapor-nav-link__switch:focus-visible .vapor-nav-link__track {
-    width: 96px;
-  }
-
-  .vapor-nav-link__switch:hover .vapor-nav-link__knob,
-  .vapor-nav-link__switch:focus-visible .vapor-nav-link__knob {
-    transform: translateX(76px);
-  }
-
-  /* Stay right-anchored to the ⓘ (which sits well right of the logo) and let
-     the panel shrink to the viewport rather than running off either edge. */
-  .info-popover__panel {
-    width: min(252px, calc(100vw - 24px));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .vapor-nav-link__mode,
-  .vapor-nav-link__track,
-  .vapor-nav-link__knob {
+  .go-mode-nav-control__mode,
+  .go-mode-nav-control__track,
+  .go-mode-nav-control__knob {
     transition: none;
   }
 
-  .vapor-nav-link__switch:hover .vapor-nav-link__track,
-  .vapor-nav-link__switch:focus-visible .vapor-nav-link__track {
+  .go-mode-nav-control[data-mode='vapor'] .go-mode-nav-control__track {
     animation: none;
     background-image: linear-gradient(
       135deg,

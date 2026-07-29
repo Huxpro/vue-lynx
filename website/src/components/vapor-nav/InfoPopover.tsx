@@ -6,18 +6,23 @@ interface InfoPopoverProps {
   label: string;
   /** Where the panel opens relative to the trigger. */
   direction?: 'down' | 'up';
+  /** Extra content rendered inside the trigger before the ⓘ glyph. */
+  trigger?: ReactNode;
   /** Panel contents. */
   children: ReactNode;
   className?: string;
 }
 
 /**
- * Small ⓘ affordance that toggles an explanatory popover. Closes on outside
- * pointerdown and Escape. Works on touch, where `title` tooltips don't exist.
+ * Shared ⓘ affordance: a small trigger (optionally carrying extra content,
+ * e.g. the coverage count) that toggles an explanatory popover. Closes on
+ * outside pointerdown and Escape. Works on touch, where `title` tooltips
+ * don't exist.
  */
 export function InfoPopover({
   label,
   direction = 'down',
+  trigger,
   children,
   className,
 }: InfoPopoverProps) {
@@ -53,6 +58,7 @@ export function InfoPopover({
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
+        {trigger}
         <svg
           className="info-popover__glyph"
           width="12"
