@@ -11,7 +11,7 @@
   srcZh="/benchmark/unified.zh.html"
   title="Unified benchmark matrix"
   titleZh="统一基准矩阵"
-  height={2400}
+  height={2600}
 />
 
 ## 这页是什么
@@ -36,11 +36,13 @@
 ## 怎么读
 
 1. **结论** — 好消化的产品选择；数字用来核对。
-2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。
-3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
-4. **首屏** — 无交互的那一半：`startup`（attach → 首个内容绘出，空应用）与
-   `mount-create`（应用在*构建时*就带满 N 行）。第三个框架家族
-   [Octane](https://github.com/octanejs/octane) 只出现在这一栏，见下。
+2. **首屏** — 无交互的那一半：`startup`（attach → 首个内容绘出，空应用）与
+   `mount-create` 阶梯（应用在*构建时*就带满 N 行，1k→30k）。两条曲线：绝对
+   毫秒，以及同一份数据归一到 `vdom` 基线（抵掉机器漂移）。第三个框架家族
+   [Octane](https://github.com/octanejs/octane) 出现在这里，见下。
+3. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。Octane 在这张表里
+   也有一列，显示为可 hover 的 `N/A`。
+4. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
 5. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
    全部合法组合（基线 = per-node；`+b` = block templates；`+b:e` =
    engine 档，web 上 N/A 且已省略；`+ifr:e` = 仅首帧引擎绘制），逐格测
@@ -57,9 +59,11 @@ octane 自己的测试里被调用。点击因此落不到任何地方，**所�
 Octane 不可测**，它只出现在「首屏」那一栏。
 
 Octane 无条件在主线程画首屏、且没有关掉的开关，所以公平的 Vue 对照是 `+ifr`
-那两行。空首屏时它处在该带的最前面；一旦首屏有内容就明显落后（1k 行约
-1.5–1.9×，10k 约 1.4–1.8×）——它的 per-node 对象命令协议没有 template/tree
-注册可以摊销。
+那两行。**空首屏是平手**——领先的几格彼此只差几毫秒、样本区间几乎完全重叠。
+一旦首屏有内容，它在整条 1k→30k 阶梯上稳定是 `vdom` 基线的 **1.6–1.8×**：
+这是每节点的常数因子，不是只在某个规模才冒出来的开销。它的 per-node 对象命令
+协议没有 template/tree 注册可以摊销，而 Vue 各格会把重复结构折叠成
+`INSTANTIATE_TEMPLATE` / `REGISTER_TREE`+`CLONE_TREE`。
 
 方法、注意事项与完整解读：
 [`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md)。

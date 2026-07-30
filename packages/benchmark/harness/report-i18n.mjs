@@ -110,6 +110,13 @@ export function copy(lang) {
         + 'So every click-driven metric (create / update10th / select / storms) is unmeasurable for Octane, consistent with octane’s README '
         + 'listing the “native event/reload contracts” as an open gate. Method and reading: <code>packages/benchmark/OCTANE.md</code>. '
         + '<b>Read the startup column with care</b> — the per-sample ranges overlap, and across the four runs this branch went through Octane placed first three times and third once.',
+    noEventTitle: zh
+      ? 'Octane 的 runtime 收不到原生事件（host driver 只注册了一个字符串 token，'
+        + '唯一的解码入口只在 octane 自己的测试里被调用），所以点击驱动的指标无法测量。'
+        + '详见 packages/benchmark/OCTANE.md。'
+      : 'Octane’s runtime never receives native events (its host driver registers a string '
+        + 'token whose only decoder is called from octane’s own tests), so no click-driven '
+        + 'metric can be measured. See packages/benchmark/OCTANE.md.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -194,6 +201,30 @@ export function copy(lang) {
       octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     charts: {
+      mount: {
+        title: zh
+          ? 'mount-create vs 行数（含 Octane）'
+          : 'mount-create vs table size (incl. Octane)',
+        sub: zh
+          ? '应用构建时就带满 N 行：attach → N 行全部绘出，因此包含框架启动。'
+            + '这是 Octane 唯一能进的规模曲线——它没有可用的原生事件，storm 曲线里进不来。'
+          : 'The app is built with N rows already in it: attach → all N rows painted, so this includes framework boot. '
+            + 'It is the only scale curve Octane can appear on — with no usable native events it cannot enter the storm charts.',
+        x: zh ? '行数 N — 线性' : 'rows N — linear',
+        y: zh ? 'mount-create — ms' : 'mount-create — ms',
+      },
+      mountNorm: {
+        title: zh
+          ? 'mount-create，归一到 vdom 基线'
+          : 'mount-create, normalized to the vdom baseline',
+        sub: zh
+          ? '同一份数据除以 vdom 自己的曲线。绝对毫秒会随机器漂移，比率不会——'
+            + '看曲线是随规模张开还是收敛，而不是看谁在某个点上快几毫秒。'
+          : 'The same data divided by vdom’s own curve. Absolute ms drift with the host; ratios do not — '
+            + 'read whether a curve opens up or converges with scale, not who is a few ms faster at one rung.',
+        x: zh ? '行数 N — 线性' : 'rows N — linear',
+        y: zh ? '相对 vdom 的倍数' : 'slowdown vs vdom',
+      },
       selectStorm: {
         title: zh ? 'Select storm（点状）vs 行数' : 'select storm (point) vs table size',
         sub: zh
@@ -287,6 +318,13 @@ export function buildConclusions(d, lang) {
     fcpVaporIfrSparse4,
     bgSelectV,
     bgSelectD,
+    fsStartupOctane,
+    fsStartupVdomIfr,
+    fsStartupVdom,
+    fsMountOctane1k,
+    fsMountVdom1k,
+    fsMountOctaneMax,
+    fsMountVdomMax,
   } = d;
 
   const out = [];
@@ -402,6 +440,46 @@ export function buildConclusions(d, lang) {
           + (d4 != null
             ? ` · ×4 ${d4 >= 0 ? '+' : ''}${d4.toFixed(0)}%`
             : ''),
+    });
+  }
+
+  if (fsStartupOctane != null && fsMountOctane1k != null && fsMountVdom1k != null) {
+    const mount1k = fsMountOctane1k / fsMountVdom1k;
+    const big =
+      fsMountOctaneMax && fsMountVdomMax && fsMountVdomMax.ms
+        ? fsMountOctaneMax.ms / fsMountVdomMax.ms
+        : null;
+    const vsIfr =
+      fsStartupVdomIfr != null ? fsStartupOctane / fsStartupVdomIfr : null;
+    out.push({
+      tone: 'warn',
+      title: zh
+        ? `Octane：空首屏与 +ifr 打平，一有内容就整条阶梯落后 ${mount1k.toFixed(1)}×`
+        : `Octane: ties the +ifr band on an empty first screen, ${
+          mount1k.toFixed(1)
+        }× behind at every rung once it has content`,
+      why: zh
+        ? '它的主线程包带的是专用只渲染 renderer，不是第二份框架运行时——所以空首屏便宜；'
+          + '但 per-node 对象命令协议没有 template/tree 注册可摊销，首屏一有内容就付回去。'
+          + '归一曲线上这是一条几乎水平的线：每节点的常数因子，不是被摊销掉的固定开销。'
+          + '点击驱动的指标全部不可测（原生事件回路没接通）。'
+        : 'Its main-thread bundle carries a purpose-built render-only renderer instead of a second copy of the '
+          + 'framework runtime, which is why the empty first screen is cheap; but its per-node object command '
+          + 'protocol has no template/tree registration to amortize, so it pays that back as soon as the first '
+          + 'screen has content. On the normalized curve that reads as a near-flat line: a constant per-node '
+          + 'factor, not a fixed overhead being amortized away. Every click-driven metric is unmeasurable '
+          + '(native event loop not wired).',
+      evidence: zh
+        ? `启动 ${fsStartupOctane.toFixed(0)} ms（vdom +ifr ${
+          fsStartupVdomIfr?.toFixed(0) ?? '—'
+        }${vsIfr != null ? `，${vsIfr.toFixed(2)}×` : ''}，区间重叠）· `
+          + `mount-create 1k ${mount1k.toFixed(2)}× vdom`
+          + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : '')
+        : `startup ${fsStartupOctane.toFixed(0)} ms (vdom +ifr ${
+          fsStartupVdomIfr?.toFixed(0) ?? '—'
+        }${vsIfr != null ? `, ${vsIfr.toFixed(2)}×` : ''}; ranges overlap) · `
+          + `mount-create 1k ${mount1k.toFixed(2)}× vdom`
+          + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : ''),
     });
   }
 

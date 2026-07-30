@@ -12,7 +12,7 @@ compare those two curves as if they were the same workload.
   srcZh="/benchmark/unified.zh.html"
   title="Unified benchmark matrix"
   titleZh="统一基准矩阵"
-  height={2400}
+  height={2600}
 />
 
 ## What this page is
@@ -38,12 +38,15 @@ Sibling pages keep only what this matrix does **not** cover:
 ## How to read it
 
 1. **Conclusions** — digestible product guidance; numbers are for checking.
-2. **Storm table / charts** — point (select) vs batch (update) latency.
-3. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
-4. **First screen** — the interaction-free half: `startup` (attach → first
-   content, empty app) and `mount-create` (the app is *built* with N rows
-   already in the table). This is where the third framework family,
+2. **First screen** — the interaction-free half: `startup` (attach → first
+   content, empty app) and the `mount-create` ladder (the app is *built*
+   with N rows already in the table, 1k→30k). Two curves: absolute ms, and
+   the same data normalized to the `vdom` baseline so host drift cancels.
+   This is where the third framework family,
    [Octane](https://github.com/octanejs/octane), appears — see below.
+3. **Storm table / charts** — point (select) vs batch (update) latency.
+   Octane is a column there too, rendered as a hoverable `N/A`.
+4. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
 5. **Optimization-flag matrix** — every legal combination in V4 notation
    `render [+b[:d|c|e]] [+ifr[:c|e]]` (baseline = per-node; `+b` = block
    templates; `+b:e` = engine staging, N/A on web and omitted; `+ifr:e` =
@@ -62,10 +65,14 @@ tests. Taps therefore reach nothing, so **every click-driven metric is
 unmeasurable for Octane** and it appears in the *First screen* section only.
 
 Octane always paints the first screen on the main thread with no opt-out, so
-the fair Vue comparators are the `+ifr` rows. It sits at the front of that
-band on an empty first screen and loses decisively once the first screen has
-content (~1.5–1.9× at 1k rows, ~1.4–1.8× at 10k) — its per-node object
-command protocol has no template/tree registration to amortize.
+the fair Vue comparators are the `+ifr` rows. On an *empty* first screen it
+lands inside that band (a tie — the leaders are within a few ms and the
+sample ranges overlap). Once the first screen has content it is a flat
+**1.6–1.8× the `vdom` baseline across the entire 1k→30k ladder** — a constant
+per-node factor, not a penalty that only shows up at one size. Its per-node
+object command protocol has no template/tree registration to amortize, where
+the Vue cells collapse repeated structure into `INSTANTIATE_TEMPLATE` /
+`REGISTER_TREE`+`CLONE_TREE`.
 
 Method, caveats and the full reading:
 [`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md).

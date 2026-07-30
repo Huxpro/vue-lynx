@@ -88,6 +88,16 @@ const ENGINE_NA_ARCHS = new Set(['vapor-engine', 'vapor-ifr-engine-et']);
 const REPLICATE_ARCHS = new Set(['vapor-ifr-sparse']);
 const isEngineNa = (key) =>
   ENGINE_NA_ARCHS.has(key) || REPLICATE_ARCHS.has(key);
+/**
+ * Architectures whose runtime never receives native events, so no
+ * click-driven metric can exist for them. Unlike the engine cells these are
+ * *kept* as a column and rendered as an explicit N/A — a reader comparing
+ * frameworks should see that the cell was attempted, not silently absent.
+ * See `OCTANE.md`.
+ */
+const NO_EVENT_ARCHS = new Set(['octane']);
+/** Excluded from row-best / geometric mean (no comparable number exists). */
+const isUnscored = (key) => isEngineNa(key) || NO_EVENT_ARCHS.has(key);
 
 // Order follows the approved V4 roster: baseline → +b → +ifr → +b +ifr
 // per render model (vdom, then vapor), reference last. The replicate
@@ -106,6 +116,8 @@ const COLUMN_KEYS = [
   'vapor-engine',
   'vapor-ifr-engine-et',
   'react',
+  // Third framework family — N/A here by measurement, not by filtering.
+  'octane',
 ];
 
 const STORM_ROW_KEYS = [
@@ -214,13 +226,17 @@ function renderTable(rows, columns, t) {
   for (const row of rows) {
     const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
     const nums = cells
-      .filter((s, i) => s?.median != null && !isEngineNa(columns[i].key))
+      .filter((s, i) => s?.median != null && !isUnscored(columns[i].key))
       .map((s) => s.median);
     const best = nums.length ? Math.min(...nums) : null;
     html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
     for (const [i, s] of cells.entries()) {
       if (isEngineNa(columns[i].key)) {
         html += `<td class="c na engine-na">N/A</td>`;
+      } else if (NO_EVENT_ARCHS.has(columns[i].key)) {
+        html += `<td class="c na noevt" title="${
+          escapeAttr(t.noEventTitle)
+        }">N/A</td>`;
       } else if (s?.median != null && best != null) {
         const factor = s.median / best;
         factorsByCol[columns[i].key].push(factor);
@@ -239,6 +255,10 @@ function renderTable(rows, columns, t) {
   for (const c of columns) {
     if (isEngineNa(c.key)) {
       html += `<td class="c na engine-na">N/A</td>`;
+      continue;
+    }
+    if (NO_EVENT_ARCHS.has(c.key)) {
+      html += `<td class="c na noevt">N/A</td>`;
       continue;
     }
     const f = factorsByCol[c.key];
@@ -317,8 +337,13 @@ function logTicks(lo, hi) {
 // line order — the interactive layer (LINE_CHART_JS) redraws identically with
 // hover + scale. Rendered over an explicit x-window [0, xmax] with y auto-fit
 // to the visible points.
-function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
-  const yFmt = (t) => (t >= 1000 ? `${t / 1000}s` : `${Math.round(t)}ms`);
+function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax, yUnit = 'ms' }) {
+  const yFmt = (t) =>
+    yUnit === 'x'
+      ? `${t.toFixed(t < 10 ? 1 : 0)}×`
+      : t >= 1000
+        ? `${t / 1000}s`
+        : `${Math.round(t)}ms`;
   const vis = series
     .map((s) => ({ ...s, pts: s.pts.filter((p) => p.x <= xmax + 1) }))
     .filter((s) => s.pts.length);
@@ -370,7 +395,16 @@ function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
 
 let CHART_SEQ = 0;
 let REPORT_LANG = 'en';
-function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wide = false }) {
+function renderLineChart({
+  title,
+  sub,
+  series,
+  xLabel,
+  yLabel,
+  logY = false,
+  wide = false,
+  yUnit = 'ms',
+}) {
   const all = series.flatMap((s) => s.pts);
   if (!all.length) return '';
   const W = wide ? 900 : 620;
@@ -380,6 +414,7 @@ function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wid
   const id = `ch${++CHART_SEQ}`;
   const cfg = {
     W, H, ML, MR, MT, MB, logY,
+    yu: yUnit,
     xl: xLabel, yl: yLabel,
     s: series
       .filter((s) => s.pts.length)
@@ -396,7 +431,7 @@ function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wid
 ${ctl}
 <div class="ccanvas" data-chart='${escapeAttr(JSON.stringify(cfg))}'>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
-${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull })}
+${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull, yUnit })}
 <text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${escapeHtml(xLabel)}</text>
 <text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${escapeHtml(yLabel)}</text>
 </svg></div></figure>`;
@@ -414,7 +449,9 @@ function escapeAttr(s) {
 const LINE_CHART_JS = String.raw`(() => {
   const qq = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const fmtY = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 's' : Math.round(t) + 'ms');
+  const fmtY = (t) => cfg.yu === 'x'
+    ? t.toFixed(t < 10 ? 1 : 0) + '\u00d7'
+    : (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 's' : Math.round(t) + 'ms');
   const fmtX = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 'k' : Math.round(t));
   function linTicks(lo, hi, max = 6) {
     if (!(hi > lo)) return [lo];
@@ -555,7 +592,7 @@ function stormSeries(op, t, ticks = 1, pred = null) {
     '#eda100', // react
   ];
   return cols
-    .filter((c) => !isEngineNa(c.key) && (!pred || pred(c.key)))
+    .filter((c) => !isUnscored(c.key) && (!pred || pred(c.key)))
     .map((c, i) => {
       const pts = ['1k', '10k', '30k']
         .map((size) => {
@@ -624,7 +661,25 @@ function conclusionNumbers() {
     bgSelectD: unified.cells.find(
       (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
     )?.median,
+    // First screen (the only workload octane can be measured on).
+    fsStartupOctane: g('octane', 'empty', 'startup_ms', 'first-screen'),
+    fsStartupVdomIfr: g('vdom-ifr', 'empty', 'startup_ms', 'first-screen'),
+    fsStartupVdom: g('vdom', 'empty', 'startup_ms', 'first-screen'),
+    fsMountOctane1k: g('octane', '1k', 'mount_create_ms', 'first-screen'),
+    fsMountVdom1k: g('vdom', '1k', 'mount_create_ms', 'first-screen'),
+    fsMountOctaneMax: mountCreateMax('octane'),
+    fsMountVdomMax: mountCreateMax('vdom'),
   };
+}
+
+/** Largest ladder rung this architecture has a mount-create number for. */
+function mountCreateMax(arch) {
+  const scales = mountCreateScales();
+  for (const scale of [...scales].reverse()) {
+    const v = g(arch, scale, 'mount_create_ms', 'first-screen');
+    if (v != null) return { scale, ms: v };
+  }
+  return null;
 }
 
 function renderConclusions(lang, t, published) {
@@ -673,6 +728,59 @@ function fsCell(arch, scale, metric) {
 }
 
 const fmtKb = (v) => (v == null ? '—' : `${(v / 1024).toFixed(1)}K`);
+
+/**
+ * Reference cell the normalized mount-create chart divides by. Plain `vdom`
+ * is the plainest, oldest, least flag-dependent cell in the matrix, which
+ * makes it the stable denominator: ratios against it survive a re-run on
+ * another host even when every absolute median moves.
+ */
+const MOUNT_BASELINE = 'vdom';
+
+/** Line colours for the first-screen charts — one per architecture. */
+const FIRST_SCREEN_COLORS = {
+  vdom: '#6b7280',
+  'vdom-ifr': '#2563eb',
+  vapor: '#1baf7a',
+  'vapor-ifr': '#d97706',
+  octane: '#db2777',
+};
+
+function mountCreateScales() {
+  return [...new Set(
+    unified.cells
+      .filter((c) => c.workload === 'first-screen' && c.metric === 'mount_create_ms')
+      .map((c) => c.scale),
+  )].sort((a, b) => (SIZE_N[a] ?? 0) - (SIZE_N[b] ?? 0));
+}
+
+/**
+ * mount-create over the ladder. `baseline` normalizes every series by that
+ * architecture's own curve, which cancels host drift — the shape survives a
+ * re-run on a different machine even when the absolute ms do not.
+ */
+function mountCreateSeries(t, { baseline = null } = {}) {
+  const scales = mountCreateScales();
+  const label = (a) => t.colLabels?.[a] ?? t.fcpArchLabels?.[a] ?? a;
+  const at = (arch, scale) => fsCell(arch, scale, 'mount_create_ms')?.median ?? null;
+  return firstScreenRows()
+    .map((arch) => ({
+      // The y-axis already names the denominator — don't repeat it per line.
+      label: label(arch),
+      color: FIRST_SCREEN_COLORS[arch] ?? '#6b7280',
+      pts: scales
+        .map((scale) => {
+          const v = at(arch, scale);
+          if (v == null) return null;
+          if (!baseline) return { x: SIZE_N[scale], y: v, label: scale };
+          const b = at(baseline, scale);
+          if (b == null || b === 0) return null;
+          return { x: SIZE_N[scale], y: v / b, label: scale };
+        })
+        .filter(Boolean),
+    }))
+    .filter((s) => s.pts.length >= 2);
+}
 
 function firstScreenSection(t) {
   const archs = firstScreenRows();
@@ -1355,6 +1463,8 @@ function renderReport(lang, outPath) {
   td.op code { font-size: 11px; opacity: 0.75; }
   td.c b { font-weight: 600; }
   td.c .f { display: block; font-size: 11px; color: var(--ink-2); }
+  /* N/A by measurement (no native events) — hoverable reason, unlike a blank. */
+  td.c.noevt { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }
   td.good     { background: color-mix(in srgb, var(--good) var(--tint), var(--surface)); }
   td.warn     { background: color-mix(in srgb, var(--warn) var(--tint), var(--surface)); }
   td.serious  { background: color-mix(in srgb, var(--serious) var(--tint), var(--surface)); }
@@ -1447,6 +1557,33 @@ function renderReport(lang, outPath) {
 <p class="sub">${escapeHtml(t.subConclusions)}</p>
 ${conclusionsHtml}
 
+${
+  firstScreenHtml
+    ? `<h2>${escapeHtml(t.hFirstScreen)}</h2>
+<p class="sub">${t.subFirstScreen}</p>
+<div class="scroll">${firstScreenHtml}</div>
+<p class="sub" style="margin-top:10px">${t.noteOctane}</p>
+<div class="charts" style="margin-top:14px">
+  ${renderLineChart({
+    title: ch.mount.title,
+    sub: ch.mount.sub,
+    series: mountCreateSeries(t),
+    xLabel: ch.mount.x,
+    yLabel: ch.mount.y,
+  })}
+  ${renderLineChart({
+    title: ch.mountNorm.title,
+    sub: ch.mountNorm.sub,
+    series: mountCreateSeries(t, { baseline: MOUNT_BASELINE }),
+    xLabel: ch.mountNorm.x,
+    yLabel: ch.mountNorm.y,
+    yUnit: 'x',
+  })}
+</div>`
+    : ''
+}
+
+
 <h2>${escapeHtml(t.hStorms)}</h2>
 <p class="sub">${t.subStorms}</p>
 <div class="scroll">${renderTable(rows, cols, t)}</div>
@@ -1538,14 +1675,6 @@ ${conclusionsHtml}
 <div class="scroll">${graphEngNamingTable(t)}</div>
 ${graphEngFactorsSection(t)}
 
-${
-  firstScreenHtml
-    ? `<h2>${escapeHtml(t.hFirstScreen)}</h2>
-<p class="sub">${t.subFirstScreen}</p>
-<div class="scroll">${firstScreenHtml}</div>
-<p class="sub" style="margin-top:10px">${t.noteOctane}</p>`
-    : ''
-}
 
 <h2>${escapeHtml(t.hCoverage)}</h2>
 <p class="sub">${escapeHtml(t.subCoverage)}</p>

@@ -84,14 +84,15 @@ node harness/synthesize.mjs && node harness/report-unified.mjs
 | `table` | create / update / select / storms / startup / bundles |
 | `content-probe` | FCP / settled / MT gzip (from `ifr-bench` sfc-probe) |
 | `strategy-scenes` | warm/cold render ms, ops payload (`node-jitless`) |
-| `first-screen` | `startup_ms` (empty), `mount_create_ms` (1k/10k), bundle raw/gzip |
+| `first-screen` | `startup_ms` (empty), `mount_create_ms` (1k→30k), bundle raw/gzip |
 
 `first-screen` is the interaction-free workload — `cross.mjs --startup-only`
 and `cross.mjs --mount-create=N` (the app is *built* with the table already
-populated, via `BENCH_AUTOROWS=N`). It is the only workload the `octane`
-family can be measured on, and its rows are comparable only within the
-workload: `mount_create_ms` includes framework boot, so it is not a
-`create@1k` storm number.
+populated, via `BENCH_AUTOROWS=N`), the latter over the full 1k→30k ladder.
+It is the only workload the `octane` family can be measured on, and its rows
+are comparable only within the workload: `mount_create_ms` includes framework
+boot, so it is not a `create@1k` storm number. The report plots it twice —
+absolute ms, and normalized to the `vdom` baseline so host drift cancels.
 
 ### Scale ladder
 
