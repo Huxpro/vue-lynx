@@ -28,6 +28,14 @@ event/reload contracts" as an open gate before public stabilization.
 `update10th_ms`, `select_ms`, both storms — is unmeasurable for Octane. The
 cells below are the ones that need no interaction.
 
+## Where this lands in the unified report
+
+Both measurements are ingested by `harness/synthesize.mjs` as the
+`first-screen` workload (`ingestFirstScreen`) and rendered as the **First
+screen** section of `results/unified/report.html` — i.e. the published
+`/guide/benchmark-unified` page, not a side document. Octane also gets a row
+in that report's Coverage table, with `✓` under *first screen* only.
+
 ## Measurable cells
 
 Two harness modes were added for this (both are framework-neutral and work for
@@ -43,6 +51,9 @@ BENCH_AUTOROWS=1000 node harness/build-unified.mjs --skip-react --only=vdom,vapo
 BENCH_AUTOROWS=1000 OCTANE_REPO=… node harness/build-octane.mjs
 node harness/cross.mjs --skip-build --mount-create=1000,10000 --mount-reps 7 \
   --modes vdom,vdom-ifr,vapor,vapor-ifr,octane
+
+# fold both into results/unified/latest.json + report.html / report.zh.html
+node harness/synthesize.mjs
 ```
 
 `BENCH_AUTOROWS` builds use `buildDataSeeded` (index-derived labels): the rows

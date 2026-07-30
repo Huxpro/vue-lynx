@@ -49,6 +49,15 @@ engine-staging probe (honest `stub` on web —
 ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 `react-naive` / `react-compiler` are not part of the published matrix.)
 
+### Third framework family: `octane`
+
+`octane` is not a Vue cell and not a flag permutation — it is
+[octanejs/octane](https://github.com/octanejs/octane)'s private Lynx
+renderer, measured black-box like the react cells. Its native event loop is
+not wired upstream, so it can only be measured on the interaction-free
+**`first-screen`** workload (below); it is absent from every storm and FCP
+table by data, not by filtering. Method and reading: **[OCTANE.md](./OCTANE.md)**.
+
 Run the all-permutation create/update sweep + factor decomposition:
 
 ```bash
@@ -75,6 +84,14 @@ node harness/synthesize.mjs && node harness/report-unified.mjs
 | `table` | create / update / select / storms / startup / bundles |
 | `content-probe` | FCP / settled / MT gzip (from `ifr-bench` sfc-probe) |
 | `strategy-scenes` | warm/cold render ms, ops payload (`node-jitless`) |
+| `first-screen` | `startup_ms` (empty), `mount_create_ms` (1k/10k), bundle raw/gzip |
+
+`first-screen` is the interaction-free workload — `cross.mjs --startup-only`
+and `cross.mjs --mount-create=N` (the app is *built* with the table already
+populated, via `BENCH_AUTOROWS=N`). It is the only workload the `octane`
+family can be measured on, and its rows are comparable only within the
+workload: `mount_create_ms` includes framework boot, so it is not a
+`create@1k` storm number.
 
 ### Scale ladder
 

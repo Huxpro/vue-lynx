@@ -640,14 +640,110 @@ function renderConclusions(lang, t, published) {
   return { html: `${html}</div>`, count: conclusions.length };
 }
 
+/**
+ * First-screen workload — the interaction-free half of the matrix, and the
+ * only place the `octane` family appears (its host driver never receives
+ * native events; see `OCTANE.md`). Rows are architectures, ordered
+ * baseline → +ifr per family, third-party families last.
+ */
+const FIRST_SCREEN_ARCH_KEYS = [
+  'vdom',
+  'vdom-ifr',
+  'vapor',
+  'vapor-ifr',
+  'octane',
+];
+
+function firstScreenRows() {
+  const has = (arch) =>
+    unified.cells.some(
+      (c) => c.architecture === arch && c.workload === 'first-screen',
+    );
+  return FIRST_SCREEN_ARCH_KEYS.filter(has);
+}
+
+function fsCell(arch, scale, metric) {
+  return unified.cells.find(
+    (c) =>
+      c.architecture === arch
+      && c.workload === 'first-screen'
+      && c.scale === scale
+      && c.metric === metric,
+  );
+}
+
+const fmtKb = (v) => (v == null ? '—' : `${(v / 1024).toFixed(1)}K`);
+
+function firstScreenSection(t) {
+  const archs = firstScreenRows();
+  if (archs.length === 0) return '';
+  const label = (a) => t.colLabels?.[a] ?? t.fcpArchLabels?.[a] ?? a;
+  const mountScales = [...new Set(
+    unified.cells
+      .filter((c) => c.workload === 'first-screen' && c.metric === 'mount_create_ms')
+      .map((c) => c.scale),
+  )].sort((a, b) => (SIZE_N[a] ?? 0) - (SIZE_N[b] ?? 0));
+
+  // Tint is relative to the column's best, same convention as the storm table.
+  const best = (vals) => {
+    const nums = vals.filter((v) => v != null);
+    return nums.length ? Math.min(...nums) : null;
+  };
+  const tinted = (v, b) => {
+    if (v == null) return '<td class="c plain">—</td>';
+    if (b == null || b === 0) return `<td class="c plain">${fmtMs(v)}</td>`;
+    const f = v / b;
+    const extra = f > 1.02 ? ` <span class="f">(${f.toFixed(2)})</span>` : '';
+    return `<td class="c ${bucketClass(f)}">${fmtMs(v)}${extra}</td>`;
+  };
+
+  const startupVals = archs.map((a) => fsCell(a, 'empty', 'startup_ms')?.median ?? null);
+  const startupBest = best(startupVals);
+  const mountBest = Object.fromEntries(
+    mountScales.map((s) => [
+      s,
+      best(archs.map((a) => fsCell(a, s, 'mount_create_ms')?.median ?? null)),
+    ]),
+  );
+
+  let html = '<table><thead><tr>'
+    + `<th>${escapeHtml(t.fsHeaders.arch)}</th>`
+    + `<th>${escapeHtml(t.fsHeaders.startup)}</th>`
+    + `<th>${escapeHtml(t.fsHeaders.range)}</th>`
+    + mountScales.map((s) => `<th>${escapeHtml(t.fsHeaders.mount(s))}</th>`).join('')
+    + `<th>${escapeHtml(t.fsHeaders.web)}</th>`
+    + `<th>${escapeHtml(t.fsHeaders.lynx)}</th>`
+    + '</tr></thead><tbody>';
+
+  for (const [i, a] of archs.entries()) {
+    const s = fsCell(a, 'empty', 'startup_ms');
+    const gzWeb = fsCell(a, 'empty', 'bundle_web_gzip')?.median ?? null;
+    const gzLynx = fsCell(a, 'empty', 'bundle_lynx_gzip')?.median ?? null;
+    html += `<tr><td class="op">${escapeHtml(label(a))} <code>${escapeHtml(a)}</code></td>`
+      + tinted(startupVals[i], startupBest)
+      + `<td class="c plain">${
+        s?.min == null || s?.max == null
+          ? '—'
+          : `${s.min.toFixed(0)}–${s.max.toFixed(0)}`
+      }</td>`
+      + mountScales
+        .map((sc) => tinted(fsCell(a, sc, 'mount_create_ms')?.median ?? null, mountBest[sc]))
+        .join('')
+      + `<td class="c plain">${fmtKb(gzWeb)}</td>`
+      + `<td class="c plain">${fmtKb(gzLynx)}</td></tr>`;
+  }
+  return `${html}</tbody></table>`;
+}
+
 function coverageTable(t) {
   const archs = (unified.architectures ?? []).filter(
     (a) => !isEngineNa(a.id),
   );
-  const [h0, h1, h2, h3] = t.coverageHeaders;
+  const [h0, h1, h2, h3, h4] = t.coverageHeaders;
   let html =
     `<table><thead><tr><th>${escapeHtml(h0)}</th><th>${escapeHtml(h1)}</th>`
-    + `<th>${escapeHtml(h2)}</th><th>${escapeHtml(h3)}</th></tr></thead><tbody>`;
+    + `<th>${escapeHtml(h2)}</th><th>${escapeHtml(h3)}</th>`
+    + `<th>${escapeHtml(h4)}</th></tr></thead><tbody>`;
   for (const a of archs) {
     const storm = unified.cells.some(
       (c) => c.architecture === a.id && c.metric === 'selectStorm',
@@ -658,11 +754,15 @@ function coverageTable(t) {
     const bg = unified.cells.some(
       (c) => c.architecture === a.id && c.instrumented,
     );
+    const firstScreen = unified.cells.some(
+      (c) => c.architecture === a.id && c.workload === 'first-screen',
+    );
     const v4 = t.colLabels?.[a.id] ?? t.fcpArchLabels?.[a.id] ?? a.label;
     html += `<tr><td class="op">${escapeHtml(v4)} <code>${escapeHtml(a.id)}</code></td>`
       + `<td class="c plain">${storm ? '✓' : '—'}</td>`
       + `<td class="c plain">${fcp ? '✓' : '—'}</td>`
-      + `<td class="c plain">${bg ? '✓' : '—'}</td></tr>`;
+      + `<td class="c plain">${bg ? '✓' : '—'}</td>`
+      + `<td class="c plain">${firstScreen ? '✓' : '—'}</td></tr>`;
   }
   return `${html}</tbody></table>`;
 }
@@ -1196,6 +1296,8 @@ function renderReport(lang, outPath) {
   const cols = columnsFor(t);
   const rows = stormRowsFor(t);
   const ch = t.charts;
+  // Empty when no first-screen run has been ingested — drop the whole section.
+  const firstScreenHtml = firstScreenSection(t);
 
   return `<!doctype html>
 <html lang="${t.lang}">
@@ -1435,6 +1537,15 @@ ${conclusionsHtml}
 <p class="sub">${t.subGraphEng}</p>
 <div class="scroll">${graphEngNamingTable(t)}</div>
 ${graphEngFactorsSection(t)}
+
+${
+  firstScreenHtml
+    ? `<h2>${escapeHtml(t.hFirstScreen)}</h2>
+<p class="sub">${t.subFirstScreen}</p>
+<div class="scroll">${firstScreenHtml}</div>
+<p class="sub" style="margin-top:10px">${t.noteOctane}</p>`
+    : ''
+}
 
 <h2>${escapeHtml(t.hCoverage)}</h2>
 <p class="sub">${escapeHtml(t.subCoverage)}</p>

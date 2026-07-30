@@ -73,6 +73,43 @@ export function copy(lang) {
     subGraphEngFactors: zh
       ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
       : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+    hFirstScreen: zh
+      ? '首屏 — 无交互量纲（含 Octane）'
+      : 'First screen — the interaction-free scale (incl. Octane)',
+    subFirstScreen: zh
+      ? '同一 session、同一台机器、每次 rep 轮换 mode 顺序。<b>启动</b> = <code>&lt;lynx-view&gt;</code> attach → 首个内容绘出（空应用）；'
+        + '<b>mount-create</b> = 应用<strong>构建时</strong>就带满表格（<code>BENCH_AUTOROWS=N</code>），量 attach → N 行全部绘出，因此包含框架启动。'
+        + '这是首屏量纲，不能和上面的 storm 毫秒或 content-probe FCP 直接比。'
+        + 'Octane 的 Rspeedy 产物无条件在主线程画首屏（<code>installLynxMainThread({ firstScreen: true })</code>，插件没有关掉的选项），'
+        + '所以公平的 Vue 对照是 <code>+ifr</code> 那两格。'
+      : 'One session, one host, mode order rotated per rep. <b>startup</b> = <code>&lt;lynx-view&gt;</code> attach → first content painted (empty app); '
+        + '<b>mount-create</b> = the app is <strong>built</strong> with the table already populated (<code>BENCH_AUTOROWS=N</code>), measuring attach → all N rows painted, so it includes framework boot. '
+        + 'This is the first-frame scale — not comparable to the storm ms or the content-probe FCP above. '
+        + 'Octane’s Rspeedy output always paints the first screen on the main thread (<code>installLynxMainThread({ firstScreen: true })</code>, no plugin option to disable), '
+        + 'so the fair Vue comparators are the two <code>+ifr</code> rows.',
+    fsHeaders: {
+      arch: zh ? '架构' : 'architecture',
+      startup: zh ? '启动（空）' : 'startup (empty)',
+      range: zh ? '样本区间 ms' : 'min–max ms',
+      mount: (s) => (zh ? `mount-create ${s}` : `mount-create ${s}`),
+      web: zh ? 'web gzip' : 'web gzip',
+      lynx: zh ? 'lynx gzip' : 'lynx gzip',
+    },
+    noteOctane: zh
+      ? '<b>Octane 只有这一栏数据。</b>它的 host driver 给 <code>__AddEvent</code> 注册的是一个字符串 token '
+        + '（<code>octane:&lt;root&gt;:&lt;id&gt;:&lt;generation&gt;:&lt;listener&gt;</code>），能把 token 还原成事件的只有 '
+        + '<code>LynxMainThreadController.dispatchNativeEvent</code>，而它只在 <code>packages/lynx/tests/</code> 里被调用——'
+        + 'runtime 与 <code>@octanejs/rspeedy-plugin</code> 生成的主线程入口都没有接引擎回调。'
+        + '因此所有点击驱动的指标（create / update10th / select / storms）对 Octane 不可测；'
+        + '这与 octane README 把「native event/reload contracts」列为未完成关卡一致。方法与解读见 <code>packages/benchmark/OCTANE.md</code>。'
+        + '<b>启动那一列请谨慎读</b>：样本区间互相重叠，本分支跑过的四轮里 Octane 三次第一、一次第三。'
+      : '<b>Octane appears in this section only.</b> Its host driver registers a string token with <code>__AddEvent</code> '
+        + '(<code>octane:&lt;root&gt;:&lt;id&gt;:&lt;generation&gt;:&lt;listener&gt;</code>), and the only decoder is '
+        + '<code>LynxMainThreadController.dispatchNativeEvent</code>, called exclusively from <code>packages/lynx/tests/</code> — '
+        + 'neither the runtime nor <code>@octanejs/rspeedy-plugin</code>’s generated main-thread entry wires an engine callback into it. '
+        + 'So every click-driven metric (create / update10th / select / storms) is unmeasurable for Octane, consistent with octane’s README '
+        + 'listing the “native event/reload contracts” as an open gate. Method and reading: <code>packages/benchmark/OCTANE.md</code>. '
+        + '<b>Read the startup column with care</b> — the per-sample ranges overlap, and across the four runs this branch went through Octane placed first three times and third once.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -103,6 +140,8 @@ export function copy(lang) {
       'vdom-ifr': 'vdom +ifr',
       'vdom-ifr-et': 'vdom +b +ifr',
       react: zh ? 'rl（Snapshot+IFR+memo）' : 'rl (Snapshot+IFR+memo)',
+      // Third framework family — not a Vue flag permutation, so no V4 notation.
+      octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     stormRowLabels: zh
       ? {
@@ -152,6 +191,7 @@ export function copy(lang) {
         ? 'vapor +b +ifr:e（N/A）'
         : 'vapor +b +ifr:e (N/A)',
       'vapor-ifr-code-paint': 'vapor +b +ifr:c',
+      octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     charts: {
       selectStorm: {
@@ -196,8 +236,14 @@ export function copy(lang) {
       },
     },
     coverageHeaders: zh
-      ? ['架构', '交互 storms', '首帧 FCP', 'instrumented BG/e2e']
-      : ['architecture', 'table storms', 'content-probe FCP', 'instrumented BG/e2e'],
+      ? ['架构', '交互 storms', '首帧 FCP', 'instrumented BG/e2e', '首屏（无交互）']
+      : [
+          'architecture',
+          'table storms',
+          'content-probe FCP',
+          'instrumented BG/e2e',
+          'first screen',
+        ],
     notes: zh
       ? [
           '<b>量纲不能混。</b> Instrumented BG/e2e、黑盒 click→DOM、lynx-web FCP、node --jitless 暖渲染共用 1k→30k 标签，但不是同一把尺子。',

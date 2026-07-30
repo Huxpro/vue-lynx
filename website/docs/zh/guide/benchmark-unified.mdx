@@ -38,11 +38,31 @@
 1. **结论** — 好消化的产品选择；数字用来核对。
 2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。
 3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
-4. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
+4. **首屏** — 无交互的那一半：`startup`（attach → 首个内容绘出，空应用）与
+   `mount-create`（应用在*构建时*就带满 N 行）。第三个框架家族
+   [Octane](https://github.com/octanejs/octane) 只出现在这一栏，见下。
+5. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
    全部合法组合（基线 = per-node；`+b` = block templates；`+b:e` =
    engine 档，web 上 N/A 且已省略；`+ifr:e` = 仅首帧引擎绘制），逐格测
    create/update，附单 flag marginal 因子归因与页内完整图例。形式化见
    [`GRAPH-ENG-REPORT.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/GRAPH-ENG-REPORT.md) §1.3c。
+
+## Octane（第三个框架家族）
+
+[octanejs/octane](https://github.com/octanejs/octane) 自带一个私有的 Lynx
+renderer（`@octanejs/lynx`）。它的产物**确实能跑在 Lynx for Web 上**——和 Vue、
+React 各格共用同一份 `@lynx-js/web-core` 运行时——但它的原生事件回路没有接通：
+host driver 往 `__AddEvent` 注册的是一个字符串 token，而唯一的解码入口只在
+octane 自己的测试里被调用。点击因此落不到任何地方，**所有点击驱动的指标对
+Octane 不可测**，它只出现在「首屏」那一栏。
+
+Octane 无条件在主线程画首屏、且没有关掉的开关，所以公平的 Vue 对照是 `+ifr`
+那两行。空首屏时它处在该带的最前面；一旦首屏有内容就明显落后（1k 行约
+1.5–1.9×，10k 约 1.4–1.8×）——它的 per-node 对象命令协议没有 template/tree
+注册可以摊销。
+
+方法、注意事项与完整解读：
+[`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md)。
 
 ## 环境规则
 

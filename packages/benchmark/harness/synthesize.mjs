@@ -8,6 +8,8 @@
  *   - results/cross-storms-*.json (table / interaction)
  *   - results/latest.json (instrumented VDOM vs Vapor)
  *   - results/web-baseline-latest.json (bare DOM)
+ *   - results/startup-only.json + results/mount-create.json (first screen;
+ *     the only workload the `octane` family can be measured on)
  *   - ../ifr-bench/results/browser-results-scale-*.json (FCP ladder)
  *   - ../ifr-bench/results/browser-results-graph-eng-dense-sparse*.json (#301 naming)
  *   - ../ifr-bench/results/sfc-probe-sizes-graph-eng.json (#301 bundle flags)
@@ -532,6 +534,105 @@ function ingestWebBaseline(unified) {
         median: stats.median ?? null,
         ci95: stats.ci95 ?? null,
       });
+    }
+  }
+}
+
+/**
+ * First-screen workload (`cross.mjs --startup-only` / `--mount-create`).
+ *
+ * These are the only two measurements that need no interaction, which is what
+ * makes them the whole measurable surface for the `octane` family — its host
+ * driver never receives native events (see OCTANE.md). Framework-neutral: the
+ * Vue cells are measured by the same runners in the same session, so the rows
+ * are directly comparable inside this workload (and only inside it).
+ */
+function ingestFirstScreen(unified) {
+  /** dist dir in the results JSON → architecture id. */
+  const distToArch = new Map(
+    ARCHITECTURES.filter((a) => a.tableDist).map((a) => [a.tableDist, a.id]),
+  );
+
+  const startupPath = pickNewest('results/startup-only.json');
+  if (startupPath) {
+    const data = readJson(startupPath);
+    unified.sources.push({
+      kind: 'first-screen-startup',
+      path: startupPath,
+      meta: data.meta,
+    });
+    for (const [arch, s] of Object.entries(data.startup ?? {})) {
+      if (s?.median == null) continue;
+      unified.cells.push({
+        schemaVersion: SCHEMA_VERSION,
+        environment: 'lynx-web',
+        architecture: arch,
+        workload: 'first-screen',
+        scale: 'empty',
+        cpuThrottle: 1,
+        metric: 'startup_ms',
+        unit: 'ms',
+        median: s.median,
+        ci95: s.ci95 ?? null,
+        min: s.min ?? null,
+        max: s.max ?? null,
+        n: s.n ?? null,
+        sourceDate: data.meta?.date ?? null,
+      });
+    }
+    for (const [dist, files] of Object.entries(data.bundles ?? {})) {
+      const arch = distToArch.get(dist);
+      if (!arch) continue;
+      for (const [file, sizes] of Object.entries(files ?? {})) {
+        const side = file.includes('.lynx.') ? 'lynx' : 'web';
+        for (const kind of ['raw', 'gzip']) {
+          if (sizes?.[kind] == null) continue;
+          unified.cells.push({
+            schemaVersion: SCHEMA_VERSION,
+            environment: 'lynx-web',
+            architecture: arch,
+            workload: 'first-screen',
+            scale: 'empty',
+            cpuThrottle: 1,
+            metric: `bundle_${side}_${kind}`,
+            unit: 'bytes',
+            median: sizes[kind],
+          });
+        }
+      }
+    }
+  }
+
+  const mountPath = pickNewest('results/mount-create.json');
+  if (mountPath) {
+    const data = readJson(mountPath);
+    unified.sources.push({
+      kind: 'first-screen-mount-create',
+      path: mountPath,
+      meta: data.meta,
+    });
+    for (const [rows, byMode] of Object.entries(data.results ?? {})) {
+      const n = Number(rows);
+      const scale = n % 1000 === 0 ? `${n / 1000}k` : String(n);
+      for (const [arch, s] of Object.entries(byMode ?? {})) {
+        if (s?.median == null) continue;
+        unified.cells.push({
+          schemaVersion: SCHEMA_VERSION,
+          environment: 'lynx-web',
+          architecture: arch,
+          workload: 'first-screen',
+          scale,
+          cpuThrottle: 1,
+          metric: 'mount_create_ms',
+          unit: 'ms',
+          median: s.median,
+          ci95: s.ci95 ?? null,
+          min: s.min ?? null,
+          max: s.max ?? null,
+          n: s.n ?? null,
+          sourceDate: data.meta?.date ?? null,
+        });
+      }
     }
   }
 }
@@ -1234,6 +1335,7 @@ function main() {
   ingestUnifiedContentFcp(unified);
   ingestStrategy(unified);
   ingestWebBaseline(unified);
+  ingestFirstScreen(unified);
 
   const verdicts = reevaluateClaims(unified);
   unified.verdicts = verdicts;

@@ -40,12 +40,35 @@ Sibling pages keep only what this matrix does **not** cover:
 1. **Conclusions** — digestible product guidance; numbers are for checking.
 2. **Storm table / charts** — point (select) vs batch (update) latency.
 3. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
-4. **Optimization-flag matrix** — every legal combination in V4 notation
+4. **First screen** — the interaction-free half: `startup` (attach → first
+   content, empty app) and `mount-create` (the app is *built* with N rows
+   already in the table). This is where the third framework family,
+   [Octane](https://github.com/octanejs/octane), appears — see below.
+5. **Optimization-flag matrix** — every legal combination in V4 notation
    `render [+b[:d|c|e]] [+ifr[:c|e]]` (baseline = per-node; `+b` = block
    templates; `+b:e` = engine staging, N/A on web and omitted; `+ifr:e` =
    engine-painted first frame only), measured for create/update with
    per-flag marginal factor deltas and a full flag legend on the page.
    Formalization: [`GRAPH-ENG-REPORT.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/GRAPH-ENG-REPORT.md) §1.3c.
+
+## Octane (third framework family)
+
+[octanejs/octane](https://github.com/octanejs/octane) ships its own private
+Lynx renderer (`@octanejs/lynx`). Its bundles **do run on Lynx for Web** —
+same `@lynx-js/web-core` runtime as the Vue and React cells — but its native
+event loop is not wired: the host driver registers a string token with
+`__AddEvent`, and the only decoder is called exclusively from octane's own
+tests. Taps therefore reach nothing, so **every click-driven metric is
+unmeasurable for Octane** and it appears in the *First screen* section only.
+
+Octane always paints the first screen on the main thread with no opt-out, so
+the fair Vue comparators are the `+ifr` rows. It sits at the front of that
+band on an empty first screen and loses decisively once the first screen has
+content (~1.5–1.9× at 1k rows, ~1.4–1.8× at 10k) — its per-node object
+command protocol has no template/tree registration to amortize.
+
+Method, caveats and the full reading:
+[`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md).
 
 ## Environment rules
 

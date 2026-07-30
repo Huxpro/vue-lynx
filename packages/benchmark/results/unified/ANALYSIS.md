@@ -1,7 +1,7 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-28T12:27:34.537Z @ 346eccf
-> Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
+> Generated 2026-07-30T12:56:35.643Z @ 77f5108
+> Host: 4× Intel(R) Xeon(R) Processor @ 2.10GHz
 
 ## Why unify?
 
@@ -41,6 +41,7 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vapor-engine | ✓ | ✓ | — | — |
 | vapor-ifr-engine-et | ✓ | ✓ | — | — |
 | vapor-ifr-code-paint | — | ✓ | — | — |
+| octane | — | — | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -155,30 +156,32 @@ Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 
 ## Sources ingested
 
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-scale6.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-latest.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-unified-ifr.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-unified-react.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-graph-eng-4axis.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-graph-eng-4axis-full.json`
-- table-storms: `/home/user/vue-lynx/packages/benchmark/results/cross-storms-graph-eng-b2.json`
-- instrumented-vdom-vapor: `/home/user/vue-lynx/packages/benchmark/results/latest.json`
-- ifr-scale-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-scale-x1.json`
-- ifr-scale-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-scale-x4.json`
-- ifr-scale-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-scale-react-x1.json`
-- ifr-scale-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-scale-react-x4.json`
-- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse.json`
-- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse-x4.json`
-- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis.json`
-- graph-eng-naming-fcp: `/home/user/vue-lynx/packages/ifr-bench/results/browser-results-graph-eng-4axis-x4.json`
-- graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json`
-- graph-eng-bundle-sizes: `/home/user/vue-lynx/packages/ifr-bench/results/sfc-probe-sizes-graph-eng-4axis.json`
-- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-x1.json`
-- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-x4.json`
-- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-b2-x1.json`
-- unified-content-fcp: `/home/user/vue-lynx/packages/benchmark/results/unified-content-b2-x4.json`
-- strategy-node-jitless: `/home/user/vue-lynx/packages/ifr-bench/results/results.json`
-- bare-dom: `/home/user/vue-lynx/packages/benchmark/results/web-baseline-latest.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-scale6.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-latest.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-unified-ifr.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-unified-react.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-4axis.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-4axis-full.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-b2.json`
+- instrumented-vdom-vapor: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/latest.json`
+- ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-x1.json`
+- ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-x4.json`
+- ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-react-x1.json`
+- ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-react-x4.json`
+- graph-eng-naming-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse.json`
+- graph-eng-naming-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-graph-eng-dense-sparse-x4.json`
+- graph-eng-naming-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-graph-eng-4axis.json`
+- graph-eng-naming-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-graph-eng-4axis-x4.json`
+- graph-eng-bundle-sizes: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/sfc-probe-sizes-graph-eng.json`
+- graph-eng-bundle-sizes: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/sfc-probe-sizes-graph-eng-4axis.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-x1.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-x4.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-b2-x1.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-b2-x4.json`
+- strategy-node-jitless: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/results.json`
+- bare-dom: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/web-baseline-latest.json`
+- first-screen-startup: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/startup-only.json`
+- first-screen-mount-create: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/mount-create.json`
 
 ## How to reproduce
 
