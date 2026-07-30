@@ -28,7 +28,13 @@ type MTElement = {
   setStyleProperties(styles: Record<string, string>): void;
 };
 type MTRef<T> = { current: T };
-type LynxTouch = { clientX?: number; clientY?: number; x?: number; y?: number };
+type LynxTouch = {
+  identifier?: number;
+  clientX?: number;
+  clientY?: number;
+  x?: number;
+  y?: number;
+};
 type LynxTouchEvent = { touches?: LynxTouch[]; changedTouches?: LynxTouch[] };
 
 // ---------------------------------------------------------------------------
@@ -308,7 +314,25 @@ const onTouchMove = (e: LynxTouchEvent) => {
 const onTouchEnd = (e: LynxTouchEvent) => {
   'main thread';
   const st = getEngine() as Record<string, any>;
-  const remaining = e.touches ?? [];
+  // Platform discrepancy: on the Web, `touches` already excludes the lifted
+  // finger at touchend; on native Lynx it can still contain it. Subtract
+  // `changedTouches` (the lifted fingers) by identifier — correct under both
+  // semantics. Without this, native never sees an empty `touches`, the
+  // hand-over branch below re-grabs the orb, and it stays glued to the
+  // release point instead of springing home.
+  const touches = e.touches ?? [];
+  const ended = e.changedTouches ?? [];
+  const remaining: LynxTouch[] = [];
+  for (let i = 0; i < touches.length; i++) {
+    let lifted = false;
+    for (let j = 0; j < ended.length; j++) {
+      if (touches[i].identifier === ended[j].identifier) {
+        lifted = true;
+        break;
+      }
+    }
+    if (!lifted) remaining.push(touches[i]);
+  }
   if (remaining.length > 0) {
     // Another finger is still down — hand the orb over to it.
     st.fx = touchX(remaining[0]);
