@@ -90,5 +90,6 @@ export const scenarios = {
   "v-model/main": tap("Reset from parent", "v-model"),
   "v-once-memo/main": tap("Increment", "v-once"),
   "vapor/main": tap("+", "History:"),
+  "vapor/neon-toy": smoke("MOVE TO PLAY"),
   "vue-router/main": tap("Users", "Vue Router"),
 };

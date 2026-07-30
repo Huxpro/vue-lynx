@@ -2,7 +2,7 @@
   "name": "@vue-lynx-example/vapor",
   "version": "0.1.0",
   "private": false,
-  "description": "Vue-Lynx Vapor mode demo (Vue 3.6 beta, no Virtual DOM)",
+  "description": "Vue-Lynx Vapor mode demos (Vue 3.6 beta, no Virtual DOM)",
   "license": "Apache-2.0",
   "type": "module",
   "files": [

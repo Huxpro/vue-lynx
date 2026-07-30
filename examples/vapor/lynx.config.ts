@@ -25,6 +25,7 @@ export default defineConfig({
   source: {
     entry: {
       main: './src/index.ts',
+      'neon-toy': './src/neon-toy/index.ts',
     },
   },
   plugins: [
