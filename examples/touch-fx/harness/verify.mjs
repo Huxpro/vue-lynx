@@ -25,6 +25,8 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const PORT = Number(process.env.PORT || 8976);
 const W = 390;
 const H = 844;
+const PAGE_W = 520;
+const PAGE_H = 980;
 
 // --- static server -----------------------------------------------------------
 const server = spawn(process.execPath, [path.join(HARNESS, 'serve.mjs')], {
@@ -40,7 +42,9 @@ const browser = await chromium.launch({
   args: ['--no-sandbox', '--disable-dev-shm-usage'],
 });
 const ctx = await browser.newContext({
-  viewport: { width: W, height: H },
+  // Deliberately embed the LynxView away from the browser viewport origin.
+  // This catches accidental use of window-relative clientX/clientY.
+  viewport: { width: PAGE_W, height: PAGE_H },
   deviceScaleFactor: 1,
   hasTouch: true,
 });
@@ -95,20 +99,40 @@ async function stats(png, poi) {
 }
 
 async function shot(name, poi) {
-  const png = await page.screenshot({ clip: { x: 0, y: 0, width: W, height: H } });
+  const png = await page.screenshot({
+    clip: {
+      x: viewRect.left,
+      y: viewRect.top,
+      width: viewRect.width,
+      height: viewRect.height,
+    },
+  });
   fs.writeFileSync(path.join(SHOTS, name), png);
   return await stats(png, poi);
 }
 
 const cdp = await ctx.newCDPSession(page);
+let viewRect;
 const touch = (type, points) =>
   cdp.send('Input.dispatchTouchEvent', {
     type,
-    touchPoints: points.map(([x, y]) => ({ x, y })),
+    touchPoints: points.map(([x, y]) => ({
+      x: x + viewRect.left,
+      y: y + viewRect.top,
+    })),
   });
 
 // --- boot ---------------------------------------------------------------------
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'load' });
+viewRect = await page.locator('lynx-view').evaluate((view) => {
+  const rect = view.getBoundingClientRect();
+  return {
+    left: rect.left,
+    top: rect.top,
+    width: rect.width,
+    height: rect.height,
+  };
+});
 
 // Poll until the orb is painted (green pixels near the orb's home position).
 const HOME = { x: W / 2, y: H * 0.42, r: 170 };
@@ -126,6 +150,42 @@ const check = (name, ok, detail) => {
 };
 
 check('boot: orb visible at home', idle.near > 2000, `green near home=${idle.near}, total=${idle.total}`);
+
+// --- tap + embedded-coordinate regression -------------------------------------
+// The LynxView is intentionally offset within the browser viewport. A quick
+// tap near its top-left must paint at the same *local* point, not at the
+// window-relative client coordinates.
+const PROBE = { x: 52, y: 66 };
+await touch('touchStart', [[PROBE.x, PROBE.y]]);
+await page.waitForTimeout(32);
+const preciseTap = await shot('01-tap-precise.png', {
+  x: PROBE.x,
+  y: PROBE.y,
+  r: 34,
+});
+check(
+  'embedded coordinates: tap feedback is centered under the finger',
+  preciseTap.near > 120,
+  `green within 34px of finger=${preciseTap.near}`,
+);
+await touch('touchEnd', []);
+await page.waitForTimeout(1600);
+
+// A stationary tap on the orb must visibly compress it even without a move.
+await touch('touchStart', [[HOME.x, HOME.y]]);
+await page.waitForTimeout(32);
+const tappedTransform = await page.locator('lynx-view').evaluate((view) => {
+  return view.shadowRoot?.querySelector('.orb')?.style.transform ?? '';
+});
+const scaleX = Number(tappedTransform.match(/scaleX\(([^)]+)\)/)?.[1] ?? 1);
+const scaleY = Number(tappedTransform.match(/scaleY\(([^)]+)\)/)?.[1] ?? 1);
+check(
+  'tap without drag: orb visibly compresses',
+  Math.abs(scaleX - 1) > 0.04 || Math.abs(scaleY - 1) > 0.04,
+  `scaleX=${scaleX.toFixed(3)} scaleY=${scaleY.toFixed(3)}`,
+);
+await touch('touchEnd', []);
+await page.waitForTimeout(1600);
 
 // --- long circular drag (the continuity test) ----------------------------------
 // ~4s of continuous dragging around an ellipse; sample every ~600ms and

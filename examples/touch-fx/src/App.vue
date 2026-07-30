@@ -30,12 +30,21 @@ type MTElement = {
 type MTRef<T> = { current: T };
 type LynxTouch = {
   identifier?: number;
+  pageX?: number;
+  pageY?: number;
   clientX?: number;
   clientY?: number;
   x?: number;
   y?: number;
 };
-type LynxTouchEvent = { touches?: LynxTouch[]; changedTouches?: LynxTouch[] };
+type LynxTouchEvent = {
+  touches?: LynxTouch[];
+  changedTouches?: LynxTouch[];
+  detail?: {
+    x?: number;
+    y?: number;
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Main Thread engine
@@ -48,12 +57,27 @@ type LynxTouchEvent = { touches?: LynxTouch[]; changedTouches?: LynxTouch[] };
 
 const touchX = (t: LynxTouch): number => {
   'main thread';
-  return (t.clientX ?? t.x ?? 0) as number;
+  // pageX/pageY are relative to the current LynxView. clientX/clientY are
+  // window-relative in the website's embedded <Go> preview, which shifts
+  // every effect by the host view's screen position.
+  return (t.pageX ?? t.x ?? t.clientX ?? 0) as number;
 };
 
 const touchY = (t: LynxTouch): number => {
   'main thread';
-  return (t.clientY ?? t.y ?? 0) as number;
+  return (t.pageY ?? t.y ?? t.clientY ?? 0) as number;
+};
+
+const eventX = (e: LynxTouchEvent, t: LynxTouch): number => {
+  'main thread';
+  // TouchEvent.detail is normalized to the current LynxView even when the
+  // Web preview itself is offset or scaled inside the documentation page.
+  return (e.detail?.x ?? touchX(t)) as number;
+};
+
+const eventY = (e: LynxTouchEvent, t: LynxTouch): number => {
+  'main thread';
+  return (e.detail?.y ?? touchY(t)) as number;
 };
 
 const getEngine = () => {
@@ -92,6 +116,7 @@ const getEngine = () => {
     si: 0, // spark pool cursor
     frame: 0,
     sinceRipple: 1e9,
+    poke: 0,
     running: false,
   };
 
@@ -162,19 +187,27 @@ const getEngine = () => {
     const speed = Math.sqrt(st.vx * st.vx + st.vy * st.vy);
     // Squash & stretch along the velocity vector — the "alive blob" feel.
     const s = Math.min(speed * 0.012, 0.42);
+    const poke = st.poke;
+    st.poke *= 0.78;
+    if (st.poke < 0.01) st.poke = 0;
     const ang = Math.atan2(st.vy, st.vx) * (180 / Math.PI);
+    const scaleX = (1 + s) * (1 - poke * 0.14);
+    const scaleY = (1 - s * 0.6) * (1 + poke * 0.2);
     const orb = orbEl();
     if (orb) {
       orb.setStyleProperty(
         'transform',
         `translate(${st.ox - halfOrb}px, ${st.oy - halfOrb}px) `
-          + `rotate(${ang}deg) scaleX(${1 + s}) scaleY(${1 - s * 0.6}) rotate(${-ang}deg)`,
+          + `rotate(${ang}deg) scaleX(${scaleX}) scaleY(${scaleY}) rotate(${-ang}deg)`,
       );
     }
     const flare = flareEl();
     if (flare) {
       // Glow flares up with movement, breathes back down at rest.
-      flare.setStyleProperty('opacity', String(Math.min(0.25 + speed * 0.05, 1)));
+      flare.setStyleProperty(
+        'opacity',
+        String(Math.min(0.25 + speed * 0.05 + poke * 0.65, 1)),
+      );
     }
 
     // --- Ripples: expanding, fading rings ----------------------------------
@@ -236,7 +269,7 @@ const getEngine = () => {
 
     // Keep looping while touching, while particles live, or while the orb
     // still has meaningful momentum; park the loop when everything settles.
-    if (st.grabbed || alive > 0 || speed > 0.05) {
+    if (st.grabbed || alive > 0 || speed > 0.05 || st.poke > 0) {
       requestAnimationFrame(step);
     } else {
       st.running = false;
@@ -244,6 +277,7 @@ const getEngine = () => {
       st.oy = st.homeY;
       st.vx = 0;
       st.vy = 0;
+      st.poke = 0;
       if (orb) {
         orb.setStyleProperty(
           'transform',
@@ -269,8 +303,8 @@ const onTouchStart = (e: LynxTouchEvent) => {
   const st = getEngine() as Record<string, any>;
   const touches = e.touches ?? [];
   if (touches.length === 0) return;
-  const x = touchX(touches[0]);
-  const y = touchY(touches[0]);
+  const x = eventX(e, touches[0]);
+  const y = eventY(e, touches[0]);
   st.grabbed = true;
   st.tx = x;
   st.ty = y;
@@ -278,6 +312,7 @@ const onTouchStart = (e: LynxTouchEvent) => {
   st.fy = y;
   st.pfx = x;
   st.pfy = y;
+  st.poke = 1;
   st.spawnRipple(x, y, true);
   st.burst(x, y, 12, 5.5);
   // Extra fingers each get their own splash.
@@ -293,8 +328,8 @@ const onTouchMove = (e: LynxTouchEvent) => {
   const st = getEngine() as Record<string, any>;
   const touches = e.touches ?? [];
   if (touches.length === 0) return;
-  st.fx = touchX(touches[0]);
-  st.fy = touchY(touches[0]);
+  st.fx = eventX(e, touches[0]);
+  st.fy = eventY(e, touches[0]);
   st.tx = st.fx;
   st.ty = st.fy;
   // Secondary fingers sprinkle sparks too.
@@ -346,8 +381,8 @@ const onTouchEnd = (e: LynxTouchEvent) => {
   st.ty = st.homeY;
   // Goodbye firework at the release point.
   const last = (e.changedTouches ?? [])[0];
-  const x = last ? touchX(last) : st.fx;
-  const y = last ? touchY(last) : st.fy;
+  const x = last ? eventX(e, last) : st.fx;
+  const y = last ? eventY(e, last) : st.fy;
   st.spawnRipple(x, y, true);
   st.burst(x, y, 20, 7.5);
   st.wake();
