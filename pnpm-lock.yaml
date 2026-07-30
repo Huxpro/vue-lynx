@@ -582,6 +582,28 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  examples/touch-fx:
+    dependencies:
+      vue-lynx:
+        specifier: workspace:*
+        version: link:../../packages/vue-lynx
+    devDependencies:
+      '@lynx-js/rspeedy':
+        specifier: ^0.13.5
+        version: 0.13.5(@rspack/core@1.7.8(@swc/helpers@0.5.19))(typescript@5.9.3)(webpack@5.105.4)
+      '@lynx-js/web-core':
+        specifier: ^0.22.1
+        version: 0.22.1(tslib@2.8.1)
+      '@rsbuild/plugin-vue':
+        specifier: ^1.2.6
+        version: 1.2.7(@rsbuild/core@2.0.0-beta.6(core-js@3.47.0))(@rspack/core@1.7.8(@swc/helpers@0.5.19))
+      playwright:
+        specifier: ^1.49.0
+        version: 1.62.0
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   examples/transition:
     dependencies:
       vue-lynx:
@@ -3637,6 +3659,11 @@ packages:
     resolution: {integrity: sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==}
     engines: {node: '>=6 <7 || >=8'}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -4651,6 +4678,16 @@ packages:
   playwright-core@1.61.1:
     resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
     engines: {node: '>=18'}
+    hasBin: true
+
+  playwright-core@1.62.0:
+    resolution: {integrity: sha512-nsNRyq0r2zsG8AcRHWknc9QRA5XCueC7gWMrs+Gx2tlZn9hcl8zudfh00lhJPY1DE7NmZ6bDsT9g2yey8mXljA==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.62.0:
+    resolution: {integrity: sha512-Z14dG305dgaLu6foB1TXQagFiW8JfSUIUaUuPaKQ6NtBPKF1P/qXcqfh6c6K/icPqdy37JmjbiBXf6JNg6Sylw==}
+    engines: {node: '>=20'}
     hasBin: true
 
   possible-typed-array-names@1.1.0:
@@ -9489,6 +9526,9 @@ snapshots:
       jsonfile: 4.0.0
       universalify: 0.1.2
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -10839,6 +10879,14 @@ snapshots:
   pirates@4.0.7: {}
 
   playwright-core@1.61.1: {}
+
+  playwright-core@1.62.0: {}
+
+  playwright@1.62.0:
+    dependencies:
+      playwright-core: 1.62.0
+    optionalDependencies:
+      fsevents: 2.3.2
 
   possible-typed-array-names@1.1.0: {}
 

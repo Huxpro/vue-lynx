@@ -4,9 +4,32 @@
 
 import { describe, it, expect } from 'vitest';
 import {
+  extractRegistrations,
   extractTemplateRegistrations,
   stripStyleImports,
 } from '../../../vue-lynx/plugin/src/loaders/worklet-utils.js';
+
+describe('extractRegistrations', () => {
+  it('survives quotes, apostrophes, and parens inside worklet-body comments', () => {
+    // The LEPUS transform preserves user comments inside worklet bodies.
+    // An apostrophe (or stray quote/paren) in a comment must not derail the
+    // balanced-paren scan — it used to silently drop every registration
+    // after the offending one.
+    const src = [
+      'registerWorkletInternal("main-thread", "aa:bb:1", function() {',
+      "  // the finger's position (x) — note the \"unpaired paren :)",
+      '  /* block comment with an apostrophe: it\'s fine ( */',
+      '  return f(1, 2);',
+      '});',
+      'registerWorkletInternal("main-thread", "aa:bb:2", function() {',
+      '  return 2;',
+      '});',
+    ].join('\n');
+    const out = extractRegistrations(src);
+    expect(out).toContain('"aa:bb:1"');
+    expect(out).toContain('"aa:bb:2"');
+  });
+});
 
 describe('extractTemplateRegistrations', () => {
   it('re-emits real registrations and ignores JSDoc examples', () => {
