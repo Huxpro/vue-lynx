@@ -9,6 +9,12 @@
   imported with `with { runtime: 'shared' }` so both threads can use the
   same `getNextColor()` function — the Main Thread calls it directly in
   the tap handler, and the Background Thread calls it to display the name.
+
+  The tap handler lives in a `<script main>` block (the experimental MTS
+  syntax style): every top-level function of the block is a main thread
+  function, no per-function 'main thread' directive needed. The shared
+  import from `<script setup>` is visible there — both blocks compile
+  into one setup scope.
 -->
 <script setup lang="ts">
 import { ref, computed } from 'vue'
@@ -22,11 +28,15 @@ import { getNextColor, getColorCount } from './color-utils' with { runtime: 'sha
 const count = ref(0)
 const currentColor = computed(() => getNextColor(count.value))
 
-// --- Main Thread function ---
 const boxRef = useMainThreadRef(null)
 
+function incrementCount() {
+  count.value++
+}
+</script>
+
+<script main lang="ts">
 const onTap = () => {
-  'main thread'
   // Use shared function directly on the Main Thread to get color
   const idx = (boxRef as unknown as { current?: { __colorIdx?: number } }).current?.__colorIdx ?? 0
   const nextIdx = idx + 1
@@ -43,10 +53,6 @@ const onTap = () => {
 
   // Also update BG state so the text reflects the change
   runOnBackground(incrementCount)()
-}
-
-function incrementCount() {
-  count.value++
 }
 </script>
 

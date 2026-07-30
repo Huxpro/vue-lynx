@@ -265,6 +265,24 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 </template>
 ```
 
+## Experimental: The `<script main>` Block
+
+As an experimental alternative to per-function directives, you can group all
+of a component's main-thread code into a dedicated `<script main>` SFC block —
+every top-level function in it becomes a main thread function, compiled into
+the exact same worklet machinery described on this page.
+
+```vue
+<script main lang="ts">
+const onTap = () => {
+  boxRef.current?.setStyleProperty?.('background-color', 'red')
+}
+</script>
+```
+
+See [The `<script main>` Block](/guide/script-main) for the full syntax,
+semantics, and migration guide.
+
 ## Cross-Thread Shared Modules
 
 By default, main thread functions cannot directly call plain functions that do not have the `'main thread'` directive. This makes code reuse difficult.

@@ -16,16 +16,19 @@ const containerRef = useMainThreadRef<unknown>(null);
 const currentOffsetRef = useMainThreadRef<number>(0);
 const touchStartXRef = useMainThreadRef<number>(0);
 const touchStartOffsetRef = useMainThreadRef<number>(0);
+</script>
 
-// --- MTS touch handlers ---
+<!-- MTS touch handlers, grouped in the experimental `script main` block:
+     every top-level function here runs on the Main Thread — no per-function
+     'main thread' directives. The MainThreadRefs from `script setup` above
+     are captured as usual. -->
+<script main lang="ts">
 const handleTouchStart = (e: { touches: Array<{ clientX: number }> }) => {
-  'main thread';
   touchStartXRef.current = e.touches[0].clientX;
   touchStartOffsetRef.current = currentOffsetRef.current;
 };
 
 const handleTouchMove = (e: { touches: Array<{ clientX: number }> }) => {
-  'main thread';
   const delta = e.touches[0].clientX - touchStartXRef.current;
   const offset = touchStartOffsetRef.current + delta;
   currentOffsetRef.current = offset;
@@ -38,7 +41,6 @@ const handleTouchMove = (e: { touches: Array<{ clientX: number }> }) => {
 };
 
 const handleTouchEnd = () => {
-  'main thread';
   touchStartXRef.current = 0;
   touchStartOffsetRef.current = 0;
 };

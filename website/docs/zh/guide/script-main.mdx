@@ -1,0 +1,157 @@
+# `<script main>` 代码块
+
+> **实验性** — 该语法风格正在 [issue #314](https://github.com/Huxpro/vue-lynx/issues/314)
+> 中探索。编辑器工具链（Volar）尚未支持该代码块，细节可能变化。
+
+[主线程脚本](/zh/guide/main-thread-script)允许单个函数运行在 Lynx 主线程上，
+方式是在每个函数体第一行标注 `'main thread'` 指令。这可行，但会让线程边界
+散落在组件各处：读者必须逐个检查函数体才能知道它在哪个线程运行。
+
+`<script main>` 代码块是同一特性的另一种**语法风格**：组件的所有主线程代码
+集中在一个专用 SFC 代码块中，代码块的边界*就是*线程边界。
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useMainThreadRef } from 'vue-lynx'
+
+const count = ref(0)
+const boxRef = useMainThreadRef(null)
+
+function incrementCount() {
+  count.value++
+}
+</script>
+
+<script main lang="ts">
+import { runOnBackground } from 'vue-lynx'
+
+const onTap = () => {
+  boxRef.current?.setStyleProperty?.('background-color', 'red')
+  runOnBackground(incrementCount)()
+}
+</script>
+
+<template>
+  <view :main-thread-ref="boxRef" :main-thread-bindtap="onTap" />
+</template>
+```
+
+`<script main>` 中的每个顶层函数都会被编译为主线程函数——无需逐个添加指令。
+指令风格的所有知识都原样适用，因为该代码块在编译后**就是**指令风格：编译器把
+它降级（lower）为完全相同的 worklet 机制（值捕获、`MainThreadRef`、
+`runOnMainThread` / `runOnBackground`、[共享模块](/zh/guide/main-thread-script#跨线程共享模块)）。
+
+## 语义
+
+`<script main>` 代码块接受以下顶层语句：
+
+| 语句 | 含义 |
+| --- | --- |
+| `function f() {}` / `const f = () => {}` / `const f = function () {}` | 主线程函数（worklet）。可自由引用 `<script setup>` 的绑定——按值捕获，与指令风格完全一致。 |
+| `import { x } from '...'` | 合并进组件作用域。与 `<script setup>` 中完全重复的说明符（相同本地名、导入名、来源）会被去重。`with { runtime: 'shared' }` 导入在任一代码块中均可使用。 |
+| 其他 `const` / `let` 声明 | 在**后台线程**求值并被 worklet 捕获——主线程状态请继续使用 `useMainThreadRef()`。 |
+| TS 类型声明 | 原样通过。 |
+| 顶层副作用语句、`export` | **编译错误。**副作用会在后台线程静默执行；export 在 setup 作用域中没有意义。 |
+
+结构规则：
+
+- 每个组件最多一个 `<script main>`。
+- `lang` 必须与 `<script setup>` 一致（同为 `ts` 或同为普通 JS）。
+- `<script main setup>` 与 `<script main src="...">` 会被拒绝。
+- 代码块中的主线程函数可以互相调用，也可以在后台代码中传给
+  `runOnMainThread()`——与指令标注的函数一致。
+
+在底层，该代码块会在 Vue SFC 编译器运行*之前*被降级：每个顶层函数被注入
+`'main thread'` 指令，代码块合并进 `<script setup>`。两个线程编译完全相同的
+合并源码，因此把后台上下文对象与主线程注册关联起来的 worklet 内容哈希天然
+一致。
+
+## 从指令风格迁移
+
+迁移是机械式的——把主线程函数移入代码块并去掉指令：
+
+```vue
+<!-- 迁移前 -->
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const thumbRef = useMainThreadRef(null)
+
+function adjust(scrollTop: number) {
+  'main thread'
+  thumbRef.current?.setStyleProperty?.('top', `${scrollTop / 10}px`)
+}
+
+const onScroll = (e: { detail: { scrollTop: number } }) => {
+  'main thread'
+  adjust(e.detail.scrollTop)
+}
+</script>
+```
+
+```vue
+<!-- 迁移后 -->
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const thumbRef = useMainThreadRef(null)
+</script>
+
+<script main lang="ts">
+function adjust(scrollTop: number) {
+  thumbRef.current?.setStyleProperty?.('top', `${scrollTop / 10}px`)
+}
+
+const onScroll = (e: { detail: { scrollTop: number } }) => {
+  adjust(e.detail.scrollTop)
+}
+</script>
+```
+
+仓库中已有三个 MTS 示例采用此风格——均从指令风格迁移而来，且编译产物中的
+worklet 代码**完全一致**（通过对比两个版本产出的主线程注册代码、并在
+Lynx for Web 中驱动构建产物验证）：
+
+- **shared-module** — 主线程 tap 处理函数直接在主线程调用
+  `with { runtime: 'shared' }` 导入：
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.vue"
+  entry="src/shared-module"
+/>
+
+- **script-main-block** — [跨线程调用](/zh/guide/main-thread-script#跨线程函数调用)
+  的往返流程（`runOnBackground` + `runOnMainThread`），两个主线程函数集中在
+  一个代码块中：
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/script-main-block.lynx.bundle"
+  defaultFile="src/script-main-block/App.vue"
+  entry="src/script-main-block"
+/>
+
+- **Gallery（完整版）** — [画廊教程](/zh/guide/tutorial-gallery)最终版的 MTS
+  滚动条，代码块中包含 worklet 互调（`onScrollMTS` → `adjustScrollbarMTS`）；
+  以及[轮播教程](/zh/guide/tutorial-swiper)的 **SwiperMTS**，三个触摸处理函数
+  通过 `MainThreadRef` 在代码块内共享状态。
+
+## 何时选用哪种风格
+
+两种风格编译产物相同——差异纯粹在源码组织：
+
+- **`<script main>`** 适合组件拥有多个成组的主线程函数（手势处理函数组、
+  滚动驱动效果）：一眼即可看清哪些代码运行在主线程。
+- **`'main thread'` 指令**仍是以下场景的唯一选择：声明在普通 `.ts`/`.js`
+  模块（composables）中的 worklet、条件声明、Options API 组件——代码块是
+  SFC + `<script setup>` 特性。
+
+## 当前限制
+
+- 编辑器支持：Volar 会把 `<script main>` 当作 Options API 脚本块，IDE 中可能
+  出现误报的类型错误。构建不受影响。
+- 每组件一个代码块；`lang` 必须与 setup 块一致。
+- 代码块内字符串字面量中的 `</script>` 不受支持（块扫描基于标签）。

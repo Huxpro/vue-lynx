@@ -352,6 +352,11 @@ We remove the redundant scrollbar used for comparison, and our Gallery is now co
 
 <Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="GalleryComplete" />
 
+> [!NOTE]
+> The finished `GalleryComplete` source keeps its two main-thread functions in
+> an experimental [`<script main>` block](/guide/script-main) — same worklets,
+> no per-function `'main thread'` directives.
+
 Congratulations! You have successfully created a product gallery page! Throughout this tutorial, you've covered the basics of writing interactive UIs on the Lynx platform with Vue 3.
 
 ## React vs Vue Quick Reference

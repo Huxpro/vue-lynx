@@ -16,11 +16,13 @@ export default defineConfig({
       'loaders/worklet-loader-mt': './src/loaders/worklet-loader-mt.ts',
       'loaders/vue-sfc-script-extractor':
         './src/loaders/vue-sfc-script-extractor.ts',
+      'loaders/script-main-loader': './src/loaders/script-main-loader.ts',
     },
     tsconfigPath: './tsconfig.build.json',
   },
   output: {
     externals: [
+      '@babel/parser',
       '@rsbuild/core',
       '@rsbuild/plugin-vue',
       '@lynx-js/css-extract-webpack-plugin',

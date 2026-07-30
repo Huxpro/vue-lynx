@@ -307,6 +307,20 @@ export function pluginVueLynx(
         });
 
         api.modifyBundlerChain((chain) => {
+          // <script main> lowering (issue #314): a pre-loader on .vue files
+          // rewrites `<script main>` blocks into `'main thread'` worklet
+          // directives before vue-loader parses the SFC. Registered without
+          // an environment/layer constraint — it must run wherever vue-loader
+          // runs (BG, MT, web preview), and vue-loader would otherwise
+          // misparse `<script main>` as an Options API script block.
+          chain.module
+            .rule('vue:script-main')
+            .enforce('pre')
+            .test(/\.vue$/)
+            .use('script-main-loader')
+            .loader(path.resolve(_pluginDirname, './loaders/script-main-loader'))
+            .end();
+
           // "vue" → "vue-lynx" ensures template compiler output
           // imports from the same module instance (singleton shared state)
           chain.resolve.alias.set('vue', 'vue-lynx');

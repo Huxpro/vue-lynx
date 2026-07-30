@@ -265,6 +265,22 @@ const onScrollMainThread = async (event: { detail: { scrollTop: number } }) => {
 </template>
 ```
 
+## 实验性：`<script main>` 代码块
+
+作为逐函数标注指令的实验性替代方案，你可以把组件的所有主线程代码集中到一个
+专用的 `<script main>` SFC 代码块中——其中每个顶层函数都会成为主线程函数，
+编译进本页描述的完全相同的 worklet 机制。
+
+```vue
+<script main lang="ts">
+const onTap = () => {
+  boxRef.current?.setStyleProperty?.('background-color', 'red')
+}
+</script>
+```
+
+完整语法、语义与迁移指南见 [`<script main>` 代码块](/zh/guide/script-main)。
+
 ## 跨线程共享模块
 
 默认情况下，主线程函数不能直接调用没有 `'main thread'` 指令的普通函数。这使得代码复用变得困难。

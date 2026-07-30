@@ -1,0 +1,171 @@
+# The `<script main>` Block
+
+> **Experimental** — this syntax style is being explored in
+> [issue #314](https://github.com/Huxpro/vue-lynx/issues/314). Editor tooling
+> (Volar) does not understand the block yet, and details may change.
+
+[Main Thread Script](/guide/main-thread-script) lets individual functions run
+on the Lynx main thread by marking each one with a `'main thread'` directive.
+That works, but it scatters the thread boundary across the component: the
+reader has to inspect every function body to know where it runs.
+
+The `<script main>` block is an alternative **syntax style** for the same
+feature: all of a component's main-thread code lives in one dedicated SFC
+block, and the block boundary *is* the thread boundary.
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useMainThreadRef } from 'vue-lynx'
+
+const count = ref(0)
+const boxRef = useMainThreadRef(null)
+
+function incrementCount() {
+  count.value++
+}
+</script>
+
+<script main lang="ts">
+import { runOnBackground } from 'vue-lynx'
+
+const onTap = () => {
+  boxRef.current?.setStyleProperty?.('background-color', 'red')
+  runOnBackground(incrementCount)()
+}
+</script>
+
+<template>
+  <view :main-thread-ref="boxRef" :main-thread-bindtap="onTap" />
+</template>
+```
+
+Every top-level function in `<script main>` is compiled as a main thread
+function — no per-function directive. Everything you know from the directive
+style applies unchanged, because the block **is** the directive style after
+compilation: the compiler lowers the block into the exact same worklet
+machinery (value capture, `MainThreadRef`, `runOnMainThread` /
+`runOnBackground`, [shared modules](/guide/main-thread-script#cross-thread-shared-modules)).
+
+## Semantics
+
+A `<script main>` block accepts these top-level statements:
+
+| Statement | Meaning |
+| --- | --- |
+| `function f() {}` / `const f = () => {}` / `const f = function () {}` | Main thread function (worklet). May freely reference `<script setup>` bindings — captured by value, exactly like the directive style. |
+| `import { x } from '...'` | Merged into the component scope. A specifier that exactly duplicates a `<script setup>` import (same local name, imported name, and source) is deduplicated. `with { runtime: 'shared' }` imports work in either block. |
+| other `const` / `let` declarations | Evaluated on the **background** thread and captured by worklets — use `useMainThreadRef()` for main-thread state, as before. |
+| TS type declarations | Passed through. |
+| top-level side effects, `export` | **Compile error.** Side effects would silently run on the background thread; exports have no meaning in the setup scope. |
+
+Structural rules:
+
+- At most one `<script main>` per component.
+- `lang` must match `<script setup>` (both `ts`, or both plain).
+- `<script main setup>` and `<script main src="...">` are rejected.
+- Main thread functions in the block can call each other, and can be passed
+  to `runOnMainThread()` from background code — same as directive-marked
+  functions.
+
+Under the hood the block is lowered *before* the Vue SFC compiler runs: each
+top-level function gets the `'main thread'` directive injected and the block
+merges into `<script setup>`. Both threads compile the identical merged
+source, so the worklet content hashes that link the background context
+objects to the main-thread registrations agree by construction.
+
+## Migrating from the directive style
+
+Migration is mechanical — move main-thread functions into the block and drop
+their directives:
+
+```vue
+<!-- before -->
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const thumbRef = useMainThreadRef(null)
+
+function adjust(scrollTop: number) {
+  'main thread'
+  thumbRef.current?.setStyleProperty?.('top', `${scrollTop / 10}px`)
+}
+
+const onScroll = (e: { detail: { scrollTop: number } }) => {
+  'main thread'
+  adjust(e.detail.scrollTop)
+}
+</script>
+```
+
+```vue
+<!-- after -->
+<script setup lang="ts">
+import { useMainThreadRef } from 'vue-lynx'
+
+const thumbRef = useMainThreadRef(null)
+</script>
+
+<script main lang="ts">
+function adjust(scrollTop: number) {
+  thumbRef.current?.setStyleProperty?.('top', `${scrollTop / 10}px`)
+}
+
+const onScroll = (e: { detail: { scrollTop: number } }) => {
+  adjust(e.detail.scrollTop)
+}
+</script>
+```
+
+Three of the repository's MTS examples are written in this style — each was
+migrated from the directive style and compiles to **identical worklet code**
+(verified by diffing the emitted main-thread registrations of both versions,
+and by driving the built bundles in Lynx for Web):
+
+- **shared-module** — a main-thread tap handler calling a
+  `with { runtime: 'shared' }` import directly on the main thread:
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/shared-module.lynx.bundle"
+  defaultFile="src/shared-module/App.vue"
+  entry="src/shared-module"
+/>
+
+- **script-main-block** — the [cross-thread calls](/guide/main-thread-script#cross-thread-function-calls)
+  round trip (`runOnBackground` + `runOnMainThread`) with both main-thread
+  functions in one block:
+
+<Go
+  example="main-thread"
+  defaultEntryFile="dist/script-main-block.lynx.bundle"
+  defaultFile="src/script-main-block/App.vue"
+  entry="src/script-main-block"
+/>
+
+- **Gallery (complete)** — the [gallery tutorial](/guide/tutorial-gallery)'s
+  finished MTS scrollbar, with a worklet-calling-worklet pair in the block
+  (`onScrollMTS` → `adjustScrollbarMTS`), and **SwiperMTS** from the
+  [swiper tutorial](/guide/tutorial-swiper), whose three touch handlers share
+  `MainThreadRef` state across the block's functions.
+
+## When to prefer which style
+
+Both styles compile to the same output — this is purely about source
+organization:
+
+- **`<script main>`** shines when a component has several main-thread
+  functions that form a unit (gesture handler sets, scroll-driven effects):
+  one glance shows everything that runs on the main thread.
+- **`'main thread'` directives** remain the only option for worklets declared
+  in plain `.ts`/`.js` modules (composables), inside conditionals, or in
+  Options API components — the block is an SFC + `<script setup>` feature.
+
+## Current limitations
+
+- Editor support: Volar treats `<script main>` as an Options API script
+  block, so you may see spurious type errors in the IDE. Builds are
+  unaffected.
+- One block per component; `lang` must match the setup block.
+- A `</script>` inside a string literal of the block is not supported
+  (block scanning is tag-based).

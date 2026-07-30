@@ -352,6 +352,11 @@ Vue 中主线程脚本的关键概念：
 
 <Go example="gallery" defaultFile="src/GalleryComplete/Gallery.vue" entry="src/GalleryComplete" defaultEntryName="GalleryComplete" />
 
+> [!NOTE]
+> 最终版 `GalleryComplete` 源码把两个主线程函数集中在实验性的
+> [`<script main>` 代码块](/zh/guide/script-main)中——worklet 完全相同，
+> 只是不再需要逐函数的 `'main thread'` 指令。
+
 恭喜！你已经成功创建了一个商品画廊页面！在本教程中，你已经掌握了使用 Vue 3 在 Lynx 平台上编写交互式 UI 的基础知识。
 
 ## React 与 Vue 快速对照

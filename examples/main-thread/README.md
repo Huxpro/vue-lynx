@@ -17,6 +17,10 @@ Left half: scroll-view with large colored blocks. Right half: two boxes that tra
 
 Uses the `'main thread'` directive with SWC worklet transform.
 
+### script-main-block
+
+The same round trip as cross-thread-calls, but the main-thread code lives in an experimental `<script main>` SFC block instead of per-function `'main thread'` directives (issue #314). The plugin lowers the block into the regular worklet pipeline at compile time. The `shared-module` entry below (and `SwiperMTS` / `GalleryComplete` in the sibling examples) are also written in this style.
+
 ### main-thread-draggable-raw
 
 Same demo as above but using raw worklet context objects instead of the SWC transform. Requires matching `registerWorkletInternal()` calls in `entry-main.ts`. Compare with `main-thread-draggable/` for the transform-based version.
