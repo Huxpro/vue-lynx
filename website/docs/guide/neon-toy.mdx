@@ -1,0 +1,37 @@
+import { Badge } from '@theme';
+
+# Neon Toy <Badge text="Vapor" type="tip" />
+
+A touch-driven creature built for the fastest path from browser curiosity to
+native play. Press anywhere, then drag: the orb stretches toward your finger
+while recent samples become luminous trails, water ripples, and rotating
+firework bursts.
+
+The interaction runs in [Main Thread Script](/guide/main-thread-script), so
+every `touchmove` updates the visual state without a background-thread round
+trip. The app itself is compiled in [Vapor mode](/guide/vapor-mode).
+
+<Go
+  example="vapor"
+  defaultFile="src/neon-toy/App.vue"
+  entry="src/neon-toy"
+  defaultEntryName="neon-toy"
+/>
+
+## Try it on a phone
+
+Open **Native** in the playground above and scan the QR code with Lynx
+Explorer. The QR code loads `neon-toy.lynx.bundle`; the **Web** tab runs the
+matching `neon-toy.web.bundle`.
+
+For the best test, draw slow circles, reverse direction sharply, and make
+several gestures without waiting for the previous ripples to finish. The
+effect slots are recycled continuously, so each new sample can react while
+older trails remain visible.
+
+:::tip Local development
+
+Run `pnpm --filter @vue-lynx-example/vapor dev`, then use the printed
+`neon-toy.web.bundle` and `neon-toy.lynx.bundle` URLs.
+
+:::

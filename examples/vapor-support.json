@@ -777,7 +777,22 @@
       },
       "scenario": "vapor/main",
       "verification": {
-        "sourceHash": "601d31c3244e25d6b565d78fe64e2c23a26dd9b358dc82f6f10f8ec7eadaec3f",
+        "sourceHash": "5c503059b9eb9c026cb67e7902cc780cd574fa9cf06bf1de073c3615e2cc6115",
+        "vdomWeb": "passed",
+        "vaporWeb": "passed",
+        "parity": "passed"
+      }
+    },
+    {
+      "id": "vapor/neon-toy",
+      "entry": "./src/neon-toy/index.ts",
+      "vapor": {
+        "disposition": "supported",
+        "strategy": "direct"
+      },
+      "scenario": "vapor/neon-toy",
+      "verification": {
+        "sourceHash": "a37b8e3063d03b4e5ec37d96f2ea3068c409b964d62b543a05935b6b7cf79a87",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -804,10 +819,10 @@
   ],
   "results": {
     "environment": "lynx-for-web/chromium",
-    "entries": 50,
-    "supported": 37,
+    "entries": 51,
+    "supported": 38,
     "unsupported": 13,
-    "vdomPassed": 50,
-    "vaporPassed": 37
+    "vdomPassed": 51,
+    "vaporPassed": 38
   }
 }

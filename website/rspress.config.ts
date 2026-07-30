@@ -162,6 +162,7 @@ export default defineConfig({
         { text: 'HackerNews', link: '/guide/hackernews' },
         { text: 'AI Chat', link: '/guide/ai-chat' },
         { text: 'Elk (Mastodon Client)', link: '/guide/elk' },
+        { text: 'Neon Toy', link: '/guide/neon-toy', context: 'vapor' },
         {
           dividerType: 'solid',
         },
@@ -230,6 +231,11 @@ export default defineConfig({
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
         { text: 'AI Chat', link: '/zh/guide/ai-chat' },
         { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
+        {
+          text: '荧光互动玩具',
+          link: '/zh/guide/neon-toy',
+          context: 'vapor',
+        },
         {
           dividerType: 'solid',
         },

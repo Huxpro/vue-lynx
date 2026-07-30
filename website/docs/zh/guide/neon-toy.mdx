@@ -1,0 +1,33 @@
+import { Badge } from '@theme';
+
+# 荧光互动玩具 <Badge text="Vapor" type="tip" />
+
+这是一个从浏览器预览到手机试玩都很直接的触摸玩具。按住任意位置并拖动：
+绿色生命体会朝手指方向拉伸，最近的触摸采样则变成发光拖尾、水波和旋转烟花。
+
+交互运行在[主线程脚本](/zh/guide/main-thread-script)中，每次 `touchmove`
+都能直接更新视觉状态，不需要经过后台线程往返；应用本身使用
+[Vapor mode](/zh/guide/vapor-mode) 编译。
+
+<Go
+  example="vapor"
+  defaultFile="src/neon-toy/App.vue"
+  entry="src/neon-toy"
+  defaultEntryName="neon-toy"
+/>
+
+## 用手机试玩
+
+在上方 Playground 切换到 **Native**，用 Lynx Explorer 扫描二维码。
+二维码会加载 `neon-toy.lynx.bundle`；**Web** 标签运行与之对应的
+`neon-toy.web.bundle`。
+
+建议连续画慢圆、突然反向，并在旧波纹消失前重复多次手势。效果槽位会持续循环
+复用，因此新的触摸采样可以立即响应，同时保留前面的轨迹。
+
+:::tip 本地开发
+
+运行 `pnpm --filter @vue-lynx-example/vapor dev`，然后使用终端输出的
+`neon-toy.web.bundle` 和 `neon-toy.lynx.bundle` 地址。
+
+:::
