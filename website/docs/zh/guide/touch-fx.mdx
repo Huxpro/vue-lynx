@@ -1,0 +1,33 @@
+# 玩一玩：触摸特效
+
+黑色舞台、一颗发光的绿色光球，和你的手指。戳它、拖它、甩它——它像逗猫棒一样回应你：
+
+- **光球会追着手指跑**：阻尼弹簧物理，沿速度方向挤压拉伸（squash & stretch）。甩出去松手，它会晃晃悠悠地弹回原位。
+- **水波纹**在手指下持续泛开——整个拖动过程中每 ~150 ms 冒出一圈新涟漪，无限次触发。
+- **烟花火花**在按下和松开时炸开，拖动时还有一串火花尾迹跟着手指。支持多点触控：每根手指都有自己的水花。
+
+<Go example="touch-fx" defaultFile="src/App.vue" />
+
+:::tip 用手机真机测试
+这个演示的核心就是触摸延迟，真机手感最佳。把上面的预览切到 **二维码** 标签，用 [LynxExplorer](https://lynxjs.org/zh/guide/start/quick-start.html) 扫码——原生 `main.lynx.bundle` 就由本站直接下发。桌面端 Web 预览只响应触摸事件；请在浏览器 devtools 里开启触摸模拟（或直接用手机浏览器打开本页）。
+:::
+
+## 为什么手感是"零延迟"的
+
+页面上所有会动的东西——弹簧物理、涟漪圆环、两个粒子池（10 个涟漪 / 64 个火花）——全部运行在**主线程**上，由 [`'main thread'` 主线程脚本](/zh/guide/main-thread-script)和一个 `requestAnimationFrame` 循环驱动：
+
+- 触摸处理器（`main-thread-bindtouchstart/move/end`）在主线程执行，手指到像素之间**没有任何跨线程往返**。
+- 元素池由后台线程一次性预渲染；每个池化元素绑定一个 [`MainThreadRef`](/zh/guide/api/vue-lynx/Function.useMainThreadRef)，引擎用 `setStyleProperty` 直写样式循环复用它们（只改 `transform` 和 `opacity`，合成开销极低）。
+- 引擎状态存放在一个值类型的 `MainThreadRef` 里；光球归位、粒子全部熄灭后，rAF 循环会**自动停车**，下次触摸再被唤醒。
+
+最值得抄走的是"持续供给"这部分：手指按住期间，循环每帧生成尾迹火花、每 9 帧重新点一圈涟漪——所以无论你划多久、划多快，效果都不会中途断掉。
+
+## 无头浏览器验证
+
+示例自带 Lynx for Web 验证工具（`examples/touch-fx/harness/`），在无头 Chromium 里派发**真实 CDP 触摸事件**并做逐帧像素检查——包括一条连续性断言：4 秒拖动的*每一个*采样点上，特效像素都必须跟着当前手指位置：
+
+```bash
+cd examples/touch-fx
+pnpm build
+pnpm web:verify   # 7/7 检查：启动、水花、连续性、能量、烟花、回归、压力
+```

@@ -1,0 +1,33 @@
+# Playground: Touch FX
+
+A black stage, a glowing green orb, and your finger. Poke it, drag it, flick it — it reacts like a cat toy:
+
+- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Flick and release, and it wobbles back home.
+- **Water ripples** pulse continuously under your finger for the *entire* drag — a fresh ring every ~150 ms, endlessly re-triggerable.
+- **Firework sparks** burst on touch-down and release, and an ember trail follows every move. Multi-touch works too: each extra finger splashes on its own.
+
+<Go example="touch-fx" defaultFile="src/App.vue" />
+
+:::tip Test it on your phone
+This demo is all about touch latency, so it feels best on a real device. Switch the preview above to the **QR code** tab and scan it with [LynxExplorer](https://lynxjs.org/guide/start/quick-start.html) — the native `main.lynx.bundle` is served right from this site. On desktop, the Web preview responds to touch only; enable touch emulation in your browser devtools (or open this page on your phone's browser).
+:::
+
+## Why it feels instant
+
+Every animated thing on this page — the spring physics, the ripple rings, the two particle pools (10 ripples / 64 sparks) — runs **on the Main Thread**, driven by [`'main thread'` worklets](/guide/main-thread-script) and a single `requestAnimationFrame` loop:
+
+- Touch handlers (`main-thread-bindtouchstart/move/end`) run on the Main Thread, so there is **zero cross-thread round-trip** between your finger and the pixels.
+- Element pools are pre-rendered once by the Background Thread; each pooled element is bound to a [`MainThreadRef`](/guide/api/vue-lynx/Function.useMainThreadRef), and the engine recycles them with direct `setStyleProperty` writes (only `transform` and `opacity` — cheap to composite).
+- The engine state lives in a value-only `MainThreadRef`; the rAF loop **parks itself** when the orb settles and every particle has died, and wakes on the next touch.
+
+The continuous ripple feed is the part to steal for your own apps: on every frame while a finger is down, the loop spawns trail sparks and re-arms a ripple every 9 frames — which is why the effects never stop mid-drag, no matter how long or fast you scribble.
+
+## Verify it headlessly
+
+The example ships with a Lynx-for-Web harness (`examples/touch-fx/harness/`) that drives **real CDP touch events** through headless Chromium and pixel-checks the frames — including a continuity assertion that effect pixels track the finger at *every* sample of a 4-second drag:
+
+```bash
+cd examples/touch-fx
+pnpm build
+pnpm web:verify   # 7/7 checks: boot, splash, continuity, energy, firework, settle, stress
+```
