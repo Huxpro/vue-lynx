@@ -246,21 +246,114 @@ Driver = `build`, Lifetime = ephemeral.
   done entirely on the MT side; only I5 (SSR / id transplant) forces a BG-side
   contract.
 
-## 5. Suggested order
+## 5. The one structural decision underneath all of it
 
-1. **I1 cheap half** — structural/value frame split in `ifr.ts`. Removes
-   ordering-only teardowns. Prerequisite for everything else.
-2. **I1 real fix** — canonical tree fold at seal + subtree-local fallback.
-3. **I2 Vapor `mts-oneshot`** — one-shot `renderEffect` MT driver; measure MT
-   bundle size + FCP as a new `ifrDriver` factor row.
-4. **I3** — skip the ShadowElement tree during ephemeral paint; report
-   allocation count + FCP.
-5. **I4** — component-scoped rollback watermarks; defines Suspense/async
-   semantics for the first frame.
-6. **I2 VDOM `mts-oneshot`** via a `@vue/server-renderer` ops sink.
-7. **I5/I6** — id-free recording + swap table; unlocks the `build` driver cell
-   (prerendered first frame) and, later, real SSR.
+I1, I2 and I3 are not three independent changes. They are three faces of one
+decision:
 
-Steps 3–6 are all *Driver*-column moves. Our data already says the
-Staging column is exhausted for first paint (`+ifr:c` = a wash); this is where
-the remaining FCP is.
+> **The MT first frame's artifact becomes a *tree*, not an *op-stream
+> recording*.**
+
+Today `ifr.ts` stores `recordedOps` + `backgroundHistory`. Instead, store a
+**paint tree** — `id → { tag, parent, childOrder, values }` — built inside the
+same `recordAndApply` hook, at roughly the cost of the `push` it replaces.
+Hydration then becomes an **adopting ops interpreter**: the BG's first batches
+run through `applyOps` in an adopt mode rather than being compared to a
+recording.
+
+- `CREATE(bgId, type)` — do not allocate; hold pending.
+- `INSERT(parent, child, anchor)` — under the paint node corresponding to
+  `parent`, find the next unclaimed child with the same tag. Hit ⇒
+  `elements.set(bgId, paintElement)` (this map *is* RL's `swap` table, built on
+  our side of the boundary). Miss ⇒ really create and really insert.
+- `SET_*` — apply to the adopted element; skip when the value already matches.
+- End of the first stream — delete paint elements nobody claimed.
+
+This is precisely how Vue's own DOM SSR hydration walks siblings, and it is what
+RL buys with `hydrate()` + `options.swap`.
+
+Three consequences, and they are the point rather than side effects:
+
+1. **Determinism drops from a correctness requirement to a performance
+   optimization.** The constraint in `website/docs/guide/ifr.mdx` ("first-screen
+   render must be deterministic; divergence ⇒ full BG re-render") can be
+   deleted. Divergence costs the diverging nodes, nothing more.
+2. **`ifr.ts` gets smaller.** `recordedOps`, `backgroundHistory`,
+   `fallbackToBackground`, `teardownIfrTree`, `VALUE_OP`/`sameValue`/arity
+   walking — roughly 150 lines of machinery — are replaced by per-node adoption.
+3. **The same artifact is the SSR/prerender payload.** A paint tree serialized
+   without ids, stack-encoded, *is* RL's opcode array. I5 and I6 stop being
+   separate projects and become a serializer over a structure we already hold.
+
+## 6. What changes per existing mode
+
+| Mode | Change |
+|---|---|
+| every non-IFR cell (`vdom`, `vdom +b`, `vapor`, `vapor +b`, `+b!`, `+b:c`) | **none** — protocol, ops and staging untouched |
+| every `+ifr` cell | implementation changes (handover stream → tree); coordinate gains two labels (`driver=mts-runtime`, `handover=tree`). Cell identity unchanged. |
+| `+ifr:c` / `+ifr:e` (paint staging) | **orthogonal, kept** — paint still materializes through code/native, output still lands in the paint tree. But `+ifr:c` is already a wash; after D1 its only remaining value is as the descriptor source for the native rung, so it is a retirement candidate. |
+| `ifr.ts` frame walking | deleted (value comparison descends to per-node) |
+
+## 7. What gets added
+
+Two columns in `internal/src/matrix.ts`:
+
+- `driver: 'bts' | 'mts-runtime' | 'mts-oneshot' | 'build'`
+- `handover: 'none' | 'stream' | 'tree'`
+
+Two flags, read through the existing one-decision-point accessors in
+`runtime/src/flags.ts` / `main-thread/src/flags.ts` so they constant-fold and
+stay deletable:
+
+- `ifrHandover: 'stream' | 'tree'` → `__VUE_LYNX_IFR_HANDOVER__`
+- `ifrDriver: 'runtime' | 'oneshot' | 'prerender'` → `__VUE_LYNX_IFR_DRIVER__`
+
+Four new cells (report notation: `:h` = tree handover, `:1` = one-shot driver,
+`:p` = prerender; `:c` / `:e` keep meaning paint staging):
+
+1. `vapor-data-block-ifr-tree` — `vapor +b +ifr:h`
+2. `vapor-data-block-ifr-oneshot` — `vapor +b +ifr:h:1`
+3. `vdom-code-block-ifr-oneshot` — `vdom +b +ifr:h:1`
+4. `vapor-data-block-ifr-prerender` — `vapor +b +ifr:p` (Driver = `build`,
+   Lifetime = ephemeral)
+
+## 8. Rollout
+
+**D0 (optional insurance).** Structural/value frame split on the existing
+stream handover. Only worth doing if D1 slips; D1 deletes it.
+
+**D1 — paint tree + adopting hydration.** Behind `ifrHandover`, default
+`stream`. Acceptance: the 8 `ifr.test.ts` cases green; new deliberately
+non-deterministic cases (shuffled `v-for`, `Math.random()` class) prove only the
+diverging nodes are rebuilt; `test:dom` green; happy-path FCP no worse than
+stream. That last one is the only real regression risk — per-node adoption
+replaces a byte-equality fast path — which is exactly why it ships as a flag and
+both paths get benched before the default flips.
+
+**D2 — Vapor one-shot driver.** Alias `@vue/runtime-vapor` → a new
+`vue-lynx/vapor-oneshot` on the MT layer only (the `issuerLayer` routing already
+exists), implementing the same helper ABI without reactivity: `renderEffect(fn)`
+→ `fn()`, `createIf`/`createFor` evaluated once, `createComponent` = setup +
+render directly, no scheduler, no unmount, no keyed diff. Phase 1 keeps real
+`@vue/reactivity` (setup bodies use `ref`/`computed`) and strips only
+runtime-core/dom/vapor; phase 2 may swap in an SSR-semantics reactivity shim
+(watchers not run — Vue's established server behavior). Depends on D1: a
+one-shot driver does not emit a frame-comparable op stream. Acceptance: MT
+bundle size (the flag-size report already tracks this) + FCP as an `ifrDriver`
+factor row; IFR suite green under the new driver.
+
+**D3 — no ShadowElement during ephemeral paint.** Falls out of D2 (the one-shot
+driver writes the paint tree and PAPI directly). Reported separately as
+allocation count.
+
+**D4 — component-scoped rollback watermarks**, plus defined Suspense /
+`defineAsyncComponent` first-frame semantics.
+
+**D5 — VDOM one-shot** via a `@vue/server-renderer` sink writing the paint tree.
+
+**D6 — id-free stack serialization of the paint tree** → the `build` driver cell
+(prerendered first frame). Real SSR comes after, and only it forces a BG-side
+contract.
+
+Non-goals: no BG changes before D6 (adoption is entirely MT-side, the BG stays
+IFR-unaware); no runtime-core fork; no attempt to template the update path.

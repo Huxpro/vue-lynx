@@ -200,17 +200,98 @@ RL 保有两个 staged 产物并复合使用：*模板*级 residual（Snapshot `
   面、单一 hydration 点）。I1 可以全部在 MT 侧完成；只有 I5（SSR / id 移植）才逼出 BG
   侧契约。
 
-## 5. 建议顺序
+## 5. 底下只有一个结构性决定
 
-1. **I1 便宜的一半** —— `ifr.ts` 里 structural/value 分帧，消除"只是顺序不同"的 teardown。
-   是其余各条的前置。
-2. **I1 真修** —— seal 时折成规范树 + 子树级局部回退。
-3. **I2 Vapor `mts-oneshot`** —— 一次性 `renderEffect` 的 MT 驱动器；以新因子行
-   `ifrDriver` 出 MT bundle size + FCP。
-4. **I3** —— ephemeral 首屏跳过 ShadowElement 树；报分配数 + FCP。
-5. **I4** —— 组件级 rollback 水位；顺带定义首屏的 Suspense/async 语义。
-6. **I2 VDOM `mts-oneshot`** —— 给 `@vue/server-renderer` 接 ops sink。
-7. **I5/I6** —— 无 id 录制 + swap 表；解锁 `build` driver 格子（预渲染首屏），进而是真 SSR。
+I1、I2、I3 不是三个独立改动，是同一个决定的三个面：
 
-第 3–6 步全部是 *Driver* 列的动作。我们自己的数据已经说明 Staging 列对首屏见底
-（`+ifr:c` = a wash）；剩下的 FCP 在这一列里。
+> **MT 首屏的产物从「op 流录制」变成「树」。**
+
+今天 `ifr.ts` 存的是 `recordedOps` + `backgroundHistory`。改成存一棵 **paint tree**：
+`id → { tag, parent, childOrder, values }`，在同一个 `recordAndApply` 钩子里边应用边建，
+成本约等于它替掉的那次 `push`。hydration 随之变成一个 **adopting ops interpreter**：
+BG 的头几批 ops 不再与录制比对，而是在 `applyOps` 的 adopt 模式下执行：
+
+- `CREATE(bgId, type)` —— 不分配，挂起；
+- `INSERT(parent, child, anchor)` —— 在 paint tree 中 `parent` 对应节点下找**下一个未认领
+  且同 tag** 的孩子。命中 ⇒ `elements.set(bgId, paintElement)`（这张映射**就是** RL 的
+  `swap` 表，只不过建在我们这一侧）；未命中 ⇒ 真建、真插；
+- `SET_*` —— 落到已认领元素上，值相同则跳过；
+- 首屏流结束 —— 删掉没被认领的 paint 元素。
+
+这正是 Vue 自己的 DOM SSR hydration 遍历兄弟节点的方式，也正是 RL 用
+`hydrate()` + `options.swap` 买到的东西。
+
+三个后果——它们是目的，不是副作用：
+
+1. **确定性从「正确性要求」降级为「性能优化」。** `website/docs/guide/ifr.mdx` 里那条
+   "首屏渲染必须确定性，分歧 ⇒ 整份 BG 重渲"的约束可以删掉。分歧的代价只是分歧的那些
+   节点。
+2. **`ifr.ts` 变小。** `recordedOps`、`backgroundHistory`、`fallbackToBackground`、
+   `teardownIfrTree`、`VALUE_OP`/`sameValue`/逐帧 arity walk —— 约 150 行机制，被逐节点
+   认领取代。
+3. **同一个产物就是 SSR/预渲染的载荷。** 把 paint tree 去 id、栈式序列化，**就是** RL 的
+   opcode 数组。I5 与 I6 不再是独立项目，而是对一个我们已经持有的结构做序列化。
+
+## 6. 对现有模式的影响
+
+| 模式 | 变化 |
+|---|---|
+| 所有非 IFR cell（`vdom`、`vdom +b`、`vapor`、`vapor +b`、`+b!`、`+b:c`） | **零变化** —— 协议、ops、staging 全不动 |
+| 所有 `+ifr` cell | 实现变（handover：stream → tree）；坐标多两个标签（`driver=mts-runtime`、`handover=tree`）。cell 身份不变。 |
+| `+ifr:c` / `+ifr:e`（paint staging） | **正交保留** —— paint 仍走 code/native 物化，产物照样进 paint tree。但 `+ifr:c` 已判 a wash，D1 之后它仅剩"为 native rung 提供 descriptor"的价值，是 retire 候选。 |
+| `ifr.ts` 的逐帧 walk | 删除（值比较下沉到逐节点） |
+
+## 7. 新增的东西
+
+`internal/src/matrix.ts` 加两列：
+
+- `driver: 'bts' | 'mts-runtime' | 'mts-oneshot' | 'build'`
+- `handover: 'none' | 'stream' | 'tree'`
+
+两个 flag，照旧走 `runtime/src/flags.ts` / `main-thread/src/flags.ts` 的单决策点访问器
+（保证 constant-fold 与可删除性）：
+
+- `ifrHandover: 'stream' | 'tree'` → `__VUE_LYNX_IFR_HANDOVER__`
+- `ifrDriver: 'runtime' | 'oneshot' | 'prerender'` → `__VUE_LYNX_IFR_DRIVER__`
+
+四个新 cell（报告记号建议：`:h` = tree handover，`:1` = one-shot driver，`:p` = 预渲染；
+`:c` / `:e` 继续表示 paint staging）：
+
+1. `vapor-data-block-ifr-tree` —— `vapor +b +ifr:h`
+2. `vapor-data-block-ifr-oneshot` —— `vapor +b +ifr:h:1`
+3. `vdom-code-block-ifr-oneshot` —— `vdom +b +ifr:h:1`
+4. `vapor-data-block-ifr-prerender` —— `vapor +b +ifr:p`（Driver = `build`，
+   Lifetime = ephemeral）
+
+## 8. 推进顺序
+
+**D0（可选保险）。** 在现有 stream handover 上做 structural/value 分帧。只有 D1 排期有
+风险时才值得做；D1 落地即删。
+
+**D1 —— paint tree + adopting hydration。** 挂在 `ifrHandover` 后面，默认仍 `stream`。
+验收：`ifr.test.ts` 8 例全绿；新增**故意非确定性**用例（乱序 `v-for`、`Math.random()`
+class）证明只有分歧节点被重建；`test:dom` 绿；happy-path FCP 不劣于 stream。最后一条是
+唯一真实的回归风险——用逐节点认领换掉了字节全等快路径——所以它必须以 flag 形式落地，
+两条路都跑过基准再切默认。
+
+**D2 —— Vapor one-shot driver。** 只在 MT 层把 `@vue/runtime-vapor` alias 到新包
+`vue-lynx/vapor-oneshot`（`issuerLayer` 路由是现成的），实现同一套 helper ABI 但无响应式：
+`renderEffect(fn)` → `fn()`，`createIf`/`createFor` 只求值一次，`createComponent` = 直接
+setup + render，无调度器、无 unmount、无 keyed diff。第一阶段保留真 `@vue/reactivity`
+（setup 里要用 `ref`/`computed`），只砍 runtime-core/dom/vapor；第二阶段可换成 SSR 语义的
+reactivity shim（watcher 不跑 —— 这是 Vue 服务端既有语义）。依赖 D1：one-shot driver 产不出
+可逐帧比对的 op 流。验收：MT bundle 体积（flag-size 报告已在跟踪）+ FCP 作为 `ifrDriver`
+因子行；IFR 套件在该 driver 下绿。
+
+**D3 —— ephemeral 首屏不建 ShadowElement。** 随 D2 自然完成（one-shot driver 直接写
+paint tree 与 PAPI）。单独报 ShadowElement 分配数。
+
+**D4 —— 组件级 rollback 水位**，并定义 Suspense / `defineAsyncComponent` 的首屏语义。
+
+**D5 —— VDOM one-shot**：给 `@vue/server-renderer` 接一个写 paint tree 的 sink。
+
+**D6 —— paint tree 的无 id 栈式序列化** → `build` driver 格子（预渲染首屏）。真 SSR 排在
+其后，也只有它才逼出 BG 侧契约。
+
+非目标：D6 之前不动 BG（认领全在 MT 侧，BG 继续对 IFR 无感）；不 fork runtime-core；
+不把 update 路径也模板化。
