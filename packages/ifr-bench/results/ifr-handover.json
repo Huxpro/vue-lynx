@@ -1,0 +1,230 @@
+{
+  "cards": 60,
+  "staticLeavesPerCard": 24,
+  "note": "Wall times are single-shot on a shared CI host — read the native call counts as the load-independent signal.",
+  "rows": [
+    {
+      "scene": "ops",
+      "handover": "stream",
+      "variant": "identical",
+      "paintMs": 154.738,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 22.449,
+      "hydrateNativeCalls": 3060,
+      "finalCards": 60,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__SetAttribute": 3060
+      }
+    },
+    {
+      "scene": "ops",
+      "handover": "tree",
+      "variant": "identical",
+      "paintMs": 74.869,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 50.783,
+      "hydrateNativeCalls": 3060,
+      "finalCards": 60,
+      "claimed": 3060,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__SetAttribute": 3060
+      }
+    },
+    {
+      "scene": "ops",
+      "handover": "stream",
+      "variant": "append",
+      "paintMs": 55.443,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 24.535,
+      "hydrateNativeCalls": 3314,
+      "finalCards": 61,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__CreateView": 1,
+        "__SetCSSId": 51,
+        "__SetClasses": 25,
+        "__CreateText": 50,
+        "__SetAttribute": 3136,
+        "__AppendElement": 51
+      }
+    },
+    {
+      "scene": "ops",
+      "handover": "tree",
+      "variant": "append",
+      "paintMs": 69.591,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 29.273,
+      "hydrateNativeCalls": 3314,
+      "finalCards": 61,
+      "claimed": 3060,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__CreateView": 1,
+        "__SetCSSId": 51,
+        "__SetClasses": 25,
+        "__CreateText": 50,
+        "__SetAttribute": 3136,
+        "__AppendElement": 51
+      }
+    },
+    {
+      "scene": "ops",
+      "handover": "stream",
+      "variant": "middle",
+      "paintMs": 65.552,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 80.759,
+      "hydrateNativeCalls": 15300,
+      "finalCards": 60,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__RemoveElement": 60,
+        "__CreateView": 60,
+        "__SetCSSId": 3060,
+        "__SetAttribute": 4560,
+        "__SetClasses": 1500,
+        "__CreateText": 2999,
+        "__AppendElement": 3060,
+        "__CreateImage": 1
+      }
+    },
+    {
+      "scene": "ops",
+      "handover": "tree",
+      "variant": "middle",
+      "paintMs": 86.103,
+      "paintNativeCalls": 12181,
+      "hydrateMs": 33.878,
+      "hydrateNativeCalls": 3142,
+      "finalCards": 60,
+      "claimed": 3058,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__CreateImage": 1,
+        "__SetCSSId": 2,
+        "__CreateText": 1,
+        "__SetAttribute": 3087,
+        "__AppendElement": 26,
+        "__SetClasses": 24,
+        "__RemoveElement": 1
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "stream",
+      "variant": "identical",
+      "paintMs": 48.223,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 0.789,
+      "hydrateNativeCalls": 120,
+      "finalCards": 60,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__SetAttribute": 120
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "tree",
+      "variant": "identical",
+      "paintMs": 67.085,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 0.903,
+      "hydrateNativeCalls": 120,
+      "finalCards": 60,
+      "claimed": 60,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__SetAttribute": 120
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "stream",
+      "variant": "append",
+      "paintMs": 34.299,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 1.136,
+      "hydrateNativeCalls": 249,
+      "finalCards": 61,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__CreateView": 1,
+        "__SetCSSId": 26,
+        "__SetClasses": 25,
+        "__CreateText": 25,
+        "__AppendElement": 26,
+        "__SetAttribute": 146
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "tree",
+      "variant": "append",
+      "paintMs": 33.463,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 1.817,
+      "hydrateNativeCalls": 249,
+      "finalCards": 61,
+      "claimed": 60,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__CreateView": 1,
+        "__SetCSSId": 26,
+        "__SetClasses": 25,
+        "__CreateText": 25,
+        "__AppendElement": 26,
+        "__SetAttribute": 146
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "stream",
+      "variant": "middle",
+      "paintMs": 34.44,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 41.983,
+      "hydrateNativeCalls": 7804,
+      "finalCards": 60,
+      "claimed": 0,
+      "paintedRoots": 0,
+      "hydrateByName": {
+        "__RemoveElement": 60,
+        "__CreateView": 60,
+        "__SetCSSId": 1561,
+        "__SetClasses": 1500,
+        "__SetAttribute": 1561,
+        "__CreateText": 1500,
+        "__AppendElement": 1561,
+        "__CreateImage": 1
+      }
+    },
+    {
+      "scene": "template",
+      "handover": "tree",
+      "variant": "middle",
+      "paintMs": 36.374,
+      "paintNativeCalls": 7621,
+      "hydrateMs": 3.065,
+      "hydrateNativeCalls": 125,
+      "finalCards": 60,
+      "claimed": 60,
+      "paintedRoots": 60,
+      "hydrateByName": {
+        "__CreateImage": 1,
+        "__SetCSSId": 1,
+        "__AppendElement": 31,
+        "__SetAttribute": 92
+      }
+    }
+  ]
+}
