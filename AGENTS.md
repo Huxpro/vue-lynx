@@ -65,3 +65,11 @@ The `packages/upstream-tests/` directory re-runs selected Vue core test suites a
 - `worklet-loader-mt` must emit `export default {};` for vue script sub-modules (`?vue&type=script`) to satisfy the `experimentalInlineMatchResource` proxy re-export.
 - Bootstrap packages (`vue-lynx/main-thread`, `vue-lynx/internal/ops`) must be excluded from MT loaders — in pnpm workspaces they resolve via symlinks (not under `node_modules/`), so `/node_modules/` exclude alone is insufficient.
 - `VueMarkMainThreadPlugin` must add `RuntimeGlobals.startup` for MT entry chunks — without it, `chunkLoading: 'lynx'` prevents module factory execution.
+
+## Cursor Cloud specific instructions
+
+Environment already has Node 22 + pnpm 10, and the startup update script runs `pnpm install` and clones `vuejs/core@v3.5.12` into `packages/upstream-tests/core` (git-ignored, not a submodule — there is no `.gitmodules`). The upstream tests will fail to collect without that clone.
+
+- **Build before running examples or tests.** Run `pnpm build` (root) once per session before `pnpm test`, `pnpm test:upstream`, `pnpm test:dev-smoke`, or any `examples/*` dev server — examples and tests import the compiled `vue-lynx` package. The update script intentionally does not build. Standard commands are in the root `README.md` and root `package.json`.
+- **Running an example on the web (no device needed).** `cd examples/<name> && pnpm dev` starts Rspeedy on port 3000; open the Lynx-for-Web preview at `http://localhost:3000/__web_preview?casename=main.web.bundle`. This is enough for interactive E2E; LynxExplorer (native iOS/Android) is only needed for on-device testing.
+- **Web preview refresh gotcha.** A hard browser refresh (F5) can leave the `__web_preview` page blank/broken. Re-navigate by re-entering the URL in the address bar to reset it cleanly instead of pressing F5.
