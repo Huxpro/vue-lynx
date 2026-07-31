@@ -322,13 +322,36 @@ Four new cells (report notation: `:h` = tree handover, `:1` = one-shot driver,
 **D0 (optional insurance).** Structural/value frame split on the existing
 stream handover. Only worth doing if D1 slips; D1 deletes it.
 
-**D1 — paint tree + adopting hydration.** Behind `ifrHandover`, default
-`stream`. Acceptance: the 8 `ifr.test.ts` cases green; new deliberately
-non-deterministic cases (shuffled `v-for`, `Math.random()` class) prove only the
-diverging nodes are rebuilt; `test:dom` green; happy-path FCP no worse than
-stream. That last one is the only real regression risk — per-node adoption
-replaces a byte-equality fast path — which is exactly why it ships as a flag and
-both paths get benched before the default flips.
+**D1 — paint tree + adopting hydration. ✅ built and measured**
+(`main-thread/src/ifr-tree.ts`, flag `ifrHandover`, default still `stream`).
+Full results: [`packages/ifr-bench/D1-HANDOVER-REPORT.md`](../packages/ifr-bench/D1-HANDOVER-REPORT.md).
+
+Headlines:
+
+- **Mid-stream structural divergence stops being a page rebuild**: −79% native
+  calls on the VDOM op-stream scene, −98% on the Vapor template scene (wall
+  −56% / −90%). A one-step lookahead in `matchTrees` keeps the suffix after the
+  divergence instead of sacrificing it (3,058/3,060 and 60/60 nodes still
+  adopted).
+- **Stream handover already handled two of the three divergence classes** —
+  value-only diffs (patched in place) and pure suffix appends (a strict prefix
+  of the recorded stream). D1's win is the third class only. That is a
+  correction to the design note above, which implied stream handover tore down
+  on any deviation.
+- **No FCP effect** (+2.2%/+1.0% at ×1, −1.6%/−1.2% at ×4 — sign-inconsistent,
+  inside the spread). Expected: the paint precedes hydration.
+- **Naming × Handover is a real, large interaction.** Same handover, same
+  scene: post-paint cost is **46 ms with node naming vs +0.5 ms with block
+  naming** (×4 CPU, 1,004 elements). Block naming is what makes structural
+  hydration affordable — a third win for the Naming column, and the first
+  measured cross-column interaction in the matrix.
+- **Cost**: +2.5 KB gzip on the MT bundle (module is imported unconditionally;
+  making it define-shakable is a follow-up).
+
+Recommendation: default `tree` on block-named cells (`vapor +b`, `vdom +b`),
+keep `stream` on `vdom` op staging. Tests: 473 testing-library (incl. 11 new
+tree-handover cases + the microbench) and 130 upstream-local green; the
+vue-core-based suites could not run in this container.
 
 **D2 — Vapor one-shot driver.** Alias `@vue/runtime-vapor` → a new
 `vue-lynx/vapor-oneshot` on the MT layer only (the `issuerLayer` routing already

@@ -268,11 +268,30 @@ BG 的头几批 ops 不再与录制比对，而是在 `applyOps` 的 adopt 模�
 **D0（可选保险）。** 在现有 stream handover 上做 structural/value 分帧。只有 D1 排期有
 风险时才值得做；D1 落地即删。
 
-**D1 —— paint tree + adopting hydration。** 挂在 `ifrHandover` 后面，默认仍 `stream`。
-验收：`ifr.test.ts` 8 例全绿；新增**故意非确定性**用例（乱序 `v-for`、`Math.random()`
-class）证明只有分歧节点被重建；`test:dom` 绿；happy-path FCP 不劣于 stream。最后一条是
-唯一真实的回归风险——用逐节点认领换掉了字节全等快路径——所以它必须以 flag 形式落地，
-两条路都跑过基准再切默认。
+**D1 —— paint tree + adopting hydration。✅ 已实现并测得**
+（`main-thread/src/ifr-tree.ts`，flag `ifrHandover`，默认仍 `stream`）。
+完整结果见 [`packages/ifr-bench/D1-HANDOVER-REPORT.md`](../../packages/ifr-bench/D1-HANDOVER-REPORT.md)。
+
+要点：
+
+- **流中段的结构分歧不再是整页重建**：VDOM op-stream 场景 native 调用 −79%，Vapor
+  模板场景 −98%（墙钟 −56% / −90%）。`matchTrees` 里的一步 lookahead 让分歧点之后的
+  后缀仍被认领，而不是整段放弃（3,058/3,060 与 60/60 仍被认领）。
+- **stream handover 本来就能处理三类分歧中的两类** —— 纯值差异（原地 patch）与纯后缀
+  追加（是录制流的严格前缀）。D1 赢的只是第三类。这是对上文设计说明的一处修正：原文
+  暗示 stream 对任何偏差都会 teardown。
+- **对 FCP 无影响**（×1 +2.2%/+1.0%，×4 −1.6%/−1.2%，符号不一致且落在离散区间内）。
+  符合预期：绘制发生在 hydration 之前。
+- **Naming × Handover 是真实且巨大的交互项。** 同一 handover、同一场景：绘制后开销
+  **node naming 46 ms vs block naming +0.5 ms**（×4 CPU，1,004 元素）。block naming
+  正是让结构化 hydration 变得划算的因素——Naming 轴的第三条收益，也是矩阵里第一个被
+  测出来的跨列交互。
+- **代价**：MT bundle +2.5 KB gzip（模块被无条件 import；按 define 做 tree-shake 是
+  后续项）。
+
+建议：block-named cell（`vapor +b`、`vdom +b`）默认切 `tree`，`vdom` op staging 保持
+`stream`。测试：testing-library 473（含 11 个新的 tree-handover 用例 + 微基准）与
+upstream-local 130 全绿；依赖 vue core 检出的套件在本容器无法运行。
 
 **D2 —— Vapor one-shot driver。** 只在 MT 层把 `@vue/runtime-vapor` alias 到新包
 `vue-lynx/vapor-oneshot`（`issuerLayer` 路由是现成的），实现同一套 helper ABI 但无响应式：

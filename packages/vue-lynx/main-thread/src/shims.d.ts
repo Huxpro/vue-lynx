@@ -18,6 +18,8 @@ declare global {
   const __VUE_LYNX_TEMPLATE_STAGING__: string;
   /** Axis-D IFR paint define ('plain'|'disposable-et'|'engine-et'). */
   const __VUE_LYNX_IFR_PAINT__: string;
+  /** Axis-E IFR handover define ('stream'|'tree'). */
+  const __VUE_LYNX_IFR_HANDOVER__: string;
 
   /** Alias for ElementRef — keeps ops-apply.ts changes minimal. */
   type LynxElement = ElementRef;

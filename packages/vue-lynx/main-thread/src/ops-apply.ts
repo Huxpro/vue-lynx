@@ -523,7 +523,11 @@ function instantiateRegisteredTree(
   }
 }
 
-export function applyOps(ops: unknown[], flush = true): void {
+export function applyOps(
+  ops: unknown[],
+  flush = true,
+  skipDuplicateCheck = false,
+): void {
   const len = ops.length;
   if (len === 0) return;
 
@@ -534,7 +538,10 @@ export function applyOps(ops: unknown[], flush = true): void {
 
   // Detect duplicate batches from double BG bundle evaluation by locating
   // the first allocator frame, rather than assuming it is the first frame.
-  if (hasDuplicateFirstAllocator(ops)) return;
+  // IFR tree handover suppresses it: during hydration a background allocation
+  // id legitimately collides with a painted one (both realms count from 2),
+  // which is exactly what adoption resolves.
+  if (!skipDuplicateCheck && hasDuplicateFirstAllocator(ops)) return;
 
   let i = 0;
 

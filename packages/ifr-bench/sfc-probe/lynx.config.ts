@@ -9,6 +9,7 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 //   SFC_PROBE_STAGING=…     templateStaging override (e.g. 'engine' for the Engine-Template cell; #323; 'code' = vapor +b:c, #337)
 //   SFC_PROBE_DELIVERY=…    templateDelivery override ('bundle' = vapor +b!, #338)
 //   SFC_PROBE_IFR_PAINT=…   ifrPaint ('plain'|'disposable-et'|'engine-et'; #324)
+//   SFC_PROBE_IFR_HANDOVER= ifrHandover ('stream'|'tree' = +ifr:h, D1)
 const enableIFR = process.env.SFC_PROBE_IFR === '1';
 const enableElementTemplates = process.env.SFC_PROBE_ET === '1';
 const templateNaming = process.env.SFC_PROBE_SPARSE === '0' ? 'dense' as const : 'sparse' as const;
@@ -18,6 +19,8 @@ const templateDelivery = process.env.SFC_PROBE_DELIVERY as
   | 'runtime' | 'bundle' | undefined;
 const ifrPaint = process.env.SFC_PROBE_IFR_PAINT as
   | 'plain' | 'disposable-et' | 'engine-et' | undefined;
+const ifrHandover = process.env.SFC_PROBE_IFR_HANDOVER as
+  | 'stream' | 'tree' | undefined;
 
 export default defineConfig({
   environments: {
@@ -39,6 +42,7 @@ export default defineConfig({
       templateStaging,
       templateDelivery,
       ifrPaint,
+      ifrHandover,
     }),
   ],
 });
