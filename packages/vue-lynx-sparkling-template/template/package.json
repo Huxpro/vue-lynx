@@ -1,0 +1,31 @@
+{
+  "name": "{{appName}}",
+  "version": "1.0.0",
+  "description": "Vue Lynx app based on Sparkling",
+  "type": "module",
+  "scripts": {
+    "build": "sparkling-app-cli build --copy",
+    "dev": "sparkling-app-cli dev",
+    "autolink": "sparkling-app-cli autolink",
+    "run:android": "sparkling-app-cli run:android",
+    "run:ios": "sparkling-app-cli run:ios --copy"
+  },
+  "dependencies": {
+    "vue": "^3.5.0",
+    "vue-lynx": "^1.0.0",
+    "sparkling-navigation": "^2.0.1"
+  },
+  "devDependencies": {
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.4",
+    "@lynx-js/rspeedy": "^0.13.3",
+    "@lynx-js/types": "^3.6.0",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "sparkling-types": "~2.0.1",
+    "sparkling-app-cli": "~2.0.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": "^22 || ^24"
+  },
+  "private": true
+}

@@ -1,0 +1,86 @@
+:root {
+  background-color: #fff;
+  --color-text: #000;
+}
+
+.Background {
+  position: fixed;
+  background: radial-gradient(
+    71.43% 62.3% at 46.43% 36.43%,
+    rgba(18, 229, 229, 0) 15%,
+    rgba(239, 155, 255, 0.3) 56.35%,
+    #ff6448 100%
+  );
+  box-shadow: 0 12.93px 28.74px 0 #ffd28db2 inset;
+  border-radius: 50%;
+  width: 200vw;
+  height: 200vw;
+  top: -60vw;
+  left: -14.27vw;
+  transform: rotate(15.25deg);
+}
+
+.page {
+  background: linear-gradient(135deg, #eef7ff 0%, #fdf4ff 100%);
+  min-height: 100vh;
+}
+
+.App {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 50px 18px;
+  gap: 16px;
+}
+
+text {
+  color: var(--color-text);
+}
+
+.Banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  margin-bottom: 10px;
+  height: auto;
+}
+
+.Title {
+  margin-top: 50px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.Content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 480px;
+  padding: 0 12px 40px;
+  margin-top: 10px;
+  gap: 12px;
+}
+
+.Button {
+  background-color: #4879ff;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 4px 0;
+  text-align: center;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  max-width: 420px;
+  box-shadow: 0 8px 20px rgba(72, 121, 255, 0.18);
+}
