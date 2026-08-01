@@ -4,20 +4,28 @@
 `packages/lynx` (`@octanejs/lynx`, `private: true`). This adds it to the matrix
 as a third framework family alongside Vue and ReactLynx.
 
-## What is measured, and against which build
+It has **no bespoke workload**. Octane is measured through exactly the two
+instruments every other cell uses:
 
-**Everything.** Create, update, select, both storms, startup, the mount-create
-ladder and bundle sizes — the same coverage the Vue cells get.
+| workload | instrument | coverage |
+|---|---|---|
+| `table` | `harness/cross.mjs --storms` | create / update10th / select / updateStorm / selectStorm × 1k/10k/30k |
+| `content-probe` | `harness/unified-content.mjs` | FCP × 1k…30k at CPU ×1, 1k…10k at ×4 |
 
-That required an upstream fix. Measured against
-**[octanejs/octane#459](https://github.com/octanejs/octane/pull/459)**
-(`fix/lynx-web-cross-realm-messages`, on top of `0c191830`), which is not yet
-merged. Numbers must be re-taken once it lands, in case review changes it.
+`harness/verify-coverage.mjs --arch octane` asserts that, and reports
+`COMPLETE` (11/11 storm ops, 6/6 FCP ×1 rungs, 4/4 ×4 rungs).
 
-### The bug that blocked this, and why it matters for reading old numbers
+Building either needs `OCTANE_REPO` pointing at an octane checkout: the package
+is private and its toolchain pins a different Rspeedy major than ours, so the
+sources are staged there, built with octane's own toolchain, and only the
+produced bundles come back — `harness/build-octane.mjs` for the table app,
+`buildOctaneContentRung` in `harness/unified-content.mjs` for the content app.
 
-Before #459, Octane received **no native events at all** on Lynx for Web, and
-its background thread never committed anything.
+## Measured against octanejs/octane#459 — and what that retracts
+
+Before **[octanejs/octane#459](https://github.com/octanejs/octane/pull/459)**,
+Octane received no native events at all on Lynx for Web and its background
+thread never committed anything.
 
 The two Lynx threads are separate JavaScript realms on web — the background runs
 in an iframe — so an object sent from the background carries the *iframe's*
@@ -31,61 +39,29 @@ if (prototype !== Object.prototype && prototype !== null) {
 ```
 
 so the main thread rejected **every** message the background sent. The readiness
-handshake never completed, `root.render()` never settled, and no commit was ever
-dispatched. Two separate symptoms fell out of that one cause: a blank first
-screen in engine mode, and taps that reached Octane's receiver and then died.
+handshake never completed, `root.render()` never settled, no commit was ever
+dispatched.
 
-Consequence for anything published earlier: **the Octane mount-create figures
-this repo published before this run measured main-thread-only first-screen
-paint**, because the background contributed nothing. They are superseded by the
-tables below, and the startup ordering they reported is retracted (see below).
+**#459 is not merged.** These numbers were taken on that branch and must be
+re-taken if review changes it.
 
-Found by bisect + instrumented browser runs from here; diagnosed to the realm
-check and fixed upstream by a parallel session. A local harness that mounts a
-built bundle through `@lynx-js/web-core` and drives a real click is what made
-all of it observable — Octane's own event tests call `dispatchNativeEvent`
-directly, which bypasses the engine, the handshake and the validator alike.
-
-## Method
-
-```bash
-# storms: octane + its four Vue comparators, one same-host session
-node harness/cross.mjs --skip-build --storms --storm-sizes 1k,10k,30k \
-  --storm-reps 3 --label octane-web \
-  --modes vdom,vdom-ifr,vapor,vapor-ifr,octane
-
-# first screen: rebuild every rung, then measure
-for N in 1000 3000 5000 10000 20000 30000; do
-  BENCH_AUTOROWS=$N node harness/build-unified.mjs --skip-react \
-    --only=vdom,vdom-ifr,vapor,vapor-ifr
-  BENCH_AUTOROWS=$N OCTANE_REPO=… node harness/build-octane.mjs
-done
-node harness/cross.mjs --skip-build --mount-reps 7 \
-  --mount-create=1000,3000,5000,10000,20000,30000 \
-  --modes vdom,vdom-ifr,vapor,vapor-ifr,octane
-node harness/cross.mjs --skip-build --startup-only --startup-count 11 \
-  --modes vdom,vdom-ifr,vapor,vapor-ifr,octane
-
-node harness/synthesize.mjs      # → results/unified/{latest.json,report*.html}
-```
-
-`BENCH_AUTOROWS` builds use `buildDataSeeded` (index-derived labels): those rows
-render during the first screen, so under IFR both threads build the data
-themselves and `Math.random()` would make every row a hydration mismatch.
-
-Octane's shipped Rspeedy path always paints the first screen on the main thread
-(`installLynxMainThread({ firstScreen: true })`, no plugin option to disable),
-so the `+ifr` cells are the closest Vue comparators on the first-screen
-workload. Storms are post-mount and compare against everything.
+**Retractions.** Earlier revisions of this file reported a `startup` column and
+a `mount-create` ladder — measurements invented for Octane while it could not be
+driven. Both are withdrawn: they timed a first screen the background never
+contributed to, and the "Octane leads on startup" reading they produced was an
+artifact of Octane doing strictly less work. Those two runners and the
+`BENCH_AUTOROWS` build variants have been removed; the matrix carries no
+Octane-specific instrument.
 
 ## Results
 
-Chromium (Playwright) + `@lynx-js/web-core`, medians. Storms n=3 per rung,
-mount-create n=7 per rung, startup n=11, mode order rotated per rep. One host.
+Chromium (Playwright) + `@lynx-js/web-core`, one host, medians. Storms n=3 per
+rung; FCP n=3 per rung. Octane was measured in the same session as the four Vue
+comparators shown here, so each table is internally same-host.
 
-### Interaction — the headline
+### Interaction (`table` workload)
 
-Ratios against `vdom`, the plainest cell in the matrix:
+Ratios against `vdom`:
 
 | op | 10k | 30k |
 |---|---|---|
@@ -110,84 +86,68 @@ Absolute medians, ms:
 | updateStorm@10k | 1422 | 1334 | 655 | 702 | **1575** |
 | updateStorm@30k | 6801 | 6674 | 5018 | 3872 | **5865** |
 
-**The penalty is shape-dependent, not a flat factor.** Octane is an order of
-magnitude behind on *point* updates, ~2× on create, and at 30k batch updates it
-is **faster than vdom** (0.86×). Against `vapor` the point gap is wider still —
-22× on `select@10k` — which is what vapor's targeted updates predict.
+### First frame (`content-probe` FCP)
 
-### First screen — startup (empty app)
-
-| cell | median | min–max |
-|---|---|---|
-| vdom +ifr | 81.8 ms | 72–99 |
-| vapor +ifr | 87.2 ms | 78–95 |
-| vapor | 96.9 ms | 90–120 |
-| vdom | 97.5 ms | 86–131 |
-| **octane** | **108.7 ms** | 93–124 |
-
-**This retracts an earlier claim.** Before #459 this repo reported Octane at or
-near the front of this column. That was an artifact: the background never
-committed, so Octane was being timed doing strictly less work than every Vue
-cell. With the handshake actually completing, Octane is **last**. The ranges
-still overlap the two non-IFR Vue cells, so read it as "at the back of the
-pack", not as a precise margin.
-
-### First screen — mount-create ladder (attach → N rows painted, incl. boot)
+CPU ×1, ms:
 
 | cell | 1k | 3k | 5k | 10k | 20k | 30k |
 |---|---|---|---|---|---|---|
-| vdom | 250 ms | 541 ms | 856 ms | 1595 ms | 3031 ms | 4597 ms |
-| vdom +ifr | 213 ms | 597 ms | 978 ms | 1757 ms | 3383 ms | 5107 ms |
-| vapor | 275 ms | 549 ms | 888 ms | 1673 ms | 3124 ms | 4809 ms |
-| vapor +ifr | 221 ms | 510 ms | 1104 ms | 1965 ms | 3686 ms | 5652 ms |
-| **octane** | **436 ms** | **979 ms** | **1495 ms** | **2837 ms** | **5477 ms** | **8312 ms** |
+| vdom | 130 | 205 | 281 | 456 | 846 | 1292 |
+| vdom +ifr | 112 | 179 | 247 | 583 | 1082 | 1538 |
+| vapor | 134 | 220 | 325 | 553 | 1152 | 1536 |
+| vapor +ifr | 121 | 214 | 308 | 515 | 930 | 1329 |
+| **octane** | **179** | **285** | **437** | **679** | **1246** | **1590** |
 
-Normalized to `vdom` — the ratio survives a host change even when absolute ms do
-not:
+CPU ×4, ms:
 
-| cell | 1k | 3k | 5k | 10k | 20k | 30k |
-|---|---|---|---|---|---|---|
-| vdom +ifr | 0.85× | 1.10× | 1.14× | 1.10× | 1.12× | 1.11× |
-| vapor | 1.10× | 1.02× | 1.04× | 1.05× | 1.03× | 1.05× |
-| vapor +ifr | 0.88× | 0.94× | 1.29× | 1.23× | 1.22× | 1.23× |
-| **octane** | **1.74×** | **1.81×** | **1.75×** | **1.78×** | **1.81×** | **1.81×** |
+| cell | 1k | 3k | 5k | 10k |
+|---|---|---|---|---|
+| vdom | 436 | 689 | 1100 | 1966 |
+| vdom +ifr | 433 | 714 | 955 | 2104 |
+| vapor | 453 | 740 | 1061 | 1786 |
+| vapor +ifr | 436 | 800 | 1212 | 2115 |
+| **octane** | **514** | **1035** | **1606** | **2819** |
 
-Flat ~1.75–1.81× across the whole ladder: a constant per-node cost, not an
-overhead that amortizes. (The pre-#459 run showed the same flat shape at
-1.60–1.81×, which in hindsight was main-thread paint alone — the fix moved the
-absolute numbers, not the shape.)
+Octane / `vdom` at ×1: 1.37 · 1.39 · 1.55 · 1.49 · 1.47 · **1.23**. The gap
+*narrows* at the top of the ladder rather than widening.
 
-### Bundle size (raw / gzip)
+### Bundle (content probe, 1k rung)
 
-| cell | web | lynx (MT) |
+| cell | web raw / gzip |
+|---|---|
+| vdom | 159.2K / 39.7K |
+| **octane** | **355.0K / 94.9K** |
+
+## Reading — where the time actually goes
+
+The three results only look contradictory until you line them up by **how much
+of the tree changes per operation**:
+
+| operation | fraction of tree touched | octane vs vdom |
 |---|---|---|
-| vdom | 114.4K / 39.9K | 118.3K / 48.4K |
-| vapor | 137.5K / 46.9K | 141.1K / 55.3K |
-| vdom +ifr | 228.7K / 79.4K | 259.0K / 111.9K |
-| vapor +ifr | 257.7K / 87.7K | 293.5K / 128.4K |
-| **octane** | **368.1K / 99.0K** | **365.8K / 121.4K** |
+| `select` | one row | 13–19× |
+| `update10th` | every 10th row | 10–12× |
+| `create` / FCP | whole tree | 1.2–2.1× |
+| `updateStorm` | every row, repeatedly | 1.11× → 0.86× |
 
-## Reading
+**The penalty scales with the number of *operations*, not the number of nodes.**
+Touch one row and Octane is an order of magnitude behind; touch everything and it
+matches or wins. That is the signature of a fixed per-update cost, not of a slow
+renderer.
 
-- **Point updates are the weak axis, by an order of magnitude.** Octane's
-  per-node object command protocol (`{op,id,type,props}` through structured
-  clone) re-ships whole-node commands for every update. There is no equivalent
-  of the tiny op payload the Vue cells collapse a point update into, and nothing
-  to amortize when only one row changes.
+- **Point updates are the weak axis.** Octane's protocol is per-node object
+  commands (`{op, id, type, props}`) posted through structured clone. Changing
+  one row still ships that row's node commands as fresh objects, and the receiver
+  re-validates them. The Vue cells collapse the same edit into a handful of
+  numbers in a flat ops array. Same visual change, wildly different message.
 - **Batch updates are its strong axis** — `updateStorm@30k` is 0.86× `vdom`.
-  When every node is being touched anyway, per-node cost stops being overhead
-  and the protocol's directness pays. This is the one place Octane wins.
-- **Create and mount-create sit at a flat ~1.8×.** Same cause as the point-update
-  gap, but diluted: creation is per-node work for everyone, so the constant
-  factor shows up as a constant factor rather than an order of magnitude.
-- **Startup is now its worst first-screen result, not its best** — see the
-  retraction above. The main-thread bundle does carry a purpose-built
-  render-only renderer rather than a second framework runtime, which is a real
-  design advantage; it is just not worth what the background handshake and
-  adoption cost on this host.
-- **Bundle**: one Octane bundle carries both graphs — roughly a Vue `+ifr`
-  build, ~3× a plain Vue build, though gzipped it is still slightly better than
-  `vapor +ifr` on the main-thread side (121.4K vs 128.4K).
+  When every node is being rewritten anyway, per-node cost stops being overhead
+  and the protocol's directness pays: no diff, no template bookkeeping.
+- **Create and FCP sit in between (~1.2–2×)** because creation is per-node work
+  for everyone. The narrowing at 30k (1.23×) says Octane's fixed costs are being
+  amortized over more nodes, not that its per-node work is getting cheaper.
+- **Bundle**: ~2.2× `vdom` raw, ~2.4× gzipped on the content probe — one Octane
+  bundle carries both thread graphs.
 
 The base branch's faster staging cells (`+b:c`, `+b!`, `+ifr:c`) are left out of
 these tables deliberately — the comparison is held to the cells Octane can be

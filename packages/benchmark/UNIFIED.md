@@ -52,15 +52,21 @@ ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 ### Third framework family: `octane`
 
 `octane` is not a Vue cell and not a flag permutation — it is
-[octanejs/octane](https://github.com/octanejs/octane)'s private Lynx
-renderer, measured black-box like the react cells. It covers the full
-interaction matrix (storms + first screen) as of
-[octanejs/octane#459](https://github.com/octanejs/octane/pull/459), which fixed
-a realm-local `Object.prototype` check that made the main thread reject every
-message the background sent on Lynx for Web. It stays out of the
-`content-probe` FCP tables, which are built from `ifr-bench`'s Vue-only
-sfc-probe. Method, results and the retraction of the pre-#459 numbers:
-**[OCTANE.md](./OCTANE.md)**.
+[octanejs/octane](https://github.com/octanejs/octane)'s private Lynx renderer,
+measured black-box like the react cells and through **exactly the same two
+instruments**: `cross.mjs --storms` for the `table` workload and
+`harness/unified-content.mjs` for `content-probe` FCP. It carries no
+bespoke workload of its own.
+
+Both need `OCTANE_REPO` pointing at an octane checkout — the package is private
+and pins a different Rspeedy major, so its sources are staged there, built with
+octane's toolchain, and only the bundles come back
+(`harness/build-octane.mjs`, `buildOctaneContentRung`).
+
+Full coverage requires [octanejs/octane#459](https://github.com/octanejs/octane/pull/459),
+which fixed a realm-local `Object.prototype` check that made the main thread
+reject every message the background sent on Lynx for Web. Method, results and
+the retraction of the pre-#459 numbers: **[OCTANE.md](./OCTANE.md)**.
 
 Run the all-permutation create/update sweep + factor decomposition:
 
@@ -88,14 +94,6 @@ node harness/synthesize.mjs && node harness/report-unified.mjs
 | `table` | create / update / select / storms / startup / bundles |
 | `content-probe` | FCP / settled / MT gzip (from `ifr-bench` sfc-probe) |
 | `strategy-scenes` | warm/cold render ms, ops payload (`node-jitless`) |
-| `first-screen` | `startup_ms` (empty), `mount_create_ms` (1k→30k), bundle raw/gzip |
-
-`first-screen` is the interaction-free workload — `cross.mjs --startup-only`
-and `cross.mjs --mount-create=N` (the app is *built* with the table already
-populated, via `BENCH_AUTOROWS=N`), the latter over the full 1k→30k ladder.
-Its rows are comparable only within the workload: `mount_create_ms` includes
-framework boot, so it is not a `create@1k` storm number. The report plots it twice —
-absolute ms, and normalized to the `vdom` baseline so host drift cancels.
 
 ### Scale ladder
 

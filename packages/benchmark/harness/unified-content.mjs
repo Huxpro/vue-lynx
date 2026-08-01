@@ -24,6 +24,7 @@ import { selectCells, cellById } from '../core/matrix.mjs';
 import { cardsForElements, elementsForCards, rungLabel } from '../core/scale.mjs';
 import { generateContentApp } from '../core/workloads/content.mjs';
 import { generateReactContentApp } from '../core/workloads/content-react.mjs';
+import { generateOctaneContentApp } from '../core/workloads/content-octane.mjs';
 import { makeBenchHtml } from '../core/driver-client.mjs';
 import { NEUTRALIZE_LYNX_PROFILE } from '../core/neutralize.mjs';
 import { webBundleSections } from '../core/bundle.mjs';
@@ -56,6 +57,7 @@ const CELLS = args.cells
 const bundlesDir = path.join(root, 'unified-bundles', args.label);
 const contentAppDir = path.join(root, 'apps', 'ui-content');
 const reactAppDir = path.join(root, 'apps', 'ui-react');
+const octaneAppDir = path.join(root, 'apps', 'octane');
 
 // --- build -----------------------------------------------------------------
 
@@ -78,8 +80,75 @@ function buildReactContentRung(cell, target) {
   return { nCards, elements, sections: webBundleSections(path.join(dst, 'main.web.bundle')) };
 }
 
+/**
+ * `@octanejs/lynx` is private and pins a different Rspeedy major than ours, so
+ * the generated sources are staged into an octane checkout, built with
+ * octane's own toolchain, and only the produced bundle comes back — the same
+ * arrangement harness/build-octane.mjs uses for the table app.
+ */
+function buildOctaneContentRung(cell, target) {
+  const repo = process.env.OCTANE_REPO;
+  if (!repo) {
+    throw new Error(
+      'set OCTANE_REPO to an octanejs/octane checkout to build the octane content cell',
+    );
+  }
+  const pluginDir = path.join(repo, 'packages/rspeedy-plugin-octane');
+  const nCards = cardsForElements(target);
+  const stage = path.join(pluginDir, 'examples', 'vue-lynx-bench-content');
+  fs.rmSync(stage, { recursive: true, force: true });
+  fs.mkdirSync(path.join(stage, 'src'), { recursive: true });
+  const { elements } = generateOctaneContentApp(path.join(stage, 'src'), nCards);
+  // Config + the shared card CSS travel with the generated sources; entry is
+  // the content index, not the table app's.
+  fs.copyFileSync(
+    path.join(octaneAppDir, 'tsconfig.json'),
+    path.join(stage, 'tsconfig.json'),
+  );
+  fs.writeFileSync(
+    path.join(stage, 'lynx.config.mjs'),
+    `import { defineConfig } from '@lynx-js/rspeedy';
+import { pluginOctane } from '@octanejs/rspeedy-plugin';
+
+export default defineConfig({
+  mode: 'production',
+  environments: { web: {} },
+  output: {
+    cleanDistPath: true,
+    filename: { bundle: '[name].web.bundle' },
+    filenameHash: false,
+  },
+  source: { entry: { main: './src/index-content.ts' } },
+  splitChunks: false,
+  plugins: [pluginOctane({ dev: false, hmr: false })],
+});
+`,
+  );
+  console.log(
+    `[build] ${cell.id} @ ${rungLabel(target)} (${nCards} cards, ~${elements} el, Octane)`,
+  );
+  execFileSync('npx', ['rspeedy', 'build', '--root', 'examples/vue-lynx-bench-content'], {
+    cwd: pluginDir,
+    stdio: 'pipe',
+    env: { ...process.env, NODE_ENV: 'production' },
+  });
+  const dst = path.join(bundlesDir, `${cell.id}-${rungLabel(target)}`);
+  fs.mkdirSync(dst, { recursive: true });
+  fs.copyFileSync(
+    path.join(stage, 'dist', 'main.web.bundle'),
+    path.join(dst, 'main.web.bundle'),
+  );
+  fs.rmSync(stage, { recursive: true, force: true });
+  return {
+    nCards,
+    elements,
+    sections: webBundleSections(path.join(dst, 'main.web.bundle')),
+  };
+}
+
 function buildCellRung(cell, target) {
   if (cell.framework === 'reactlynx') return buildReactContentRung(cell, target);
+  if (cell.framework === 'octane') return buildOctaneContentRung(cell, target);
   const nCards = cardsForElements(target);
   const { elements } = generateContentApp(
     path.join(contentAppDir, 'src'),

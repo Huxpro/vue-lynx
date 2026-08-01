@@ -73,44 +73,6 @@ export function copy(lang) {
     subGraphEngFactors: zh
       ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
       : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
-    hFirstScreen: zh
-      ? '首屏 — 无交互量纲'
-      : 'First screen — the interaction-free scale',
-    subFirstScreen: zh
-      ? '同一 session、同一台机器、每次 rep 轮换 mode 顺序。<b>启动</b> = <code>&lt;lynx-view&gt;</code> attach → 首个内容绘出（空应用）；'
-        + '<b>mount-create</b> = 应用<strong>构建时</strong>就带满表格（<code>BENCH_AUTOROWS=N</code>），量 attach → N 行全部绘出，因此包含框架启动。'
-        + '这是首屏量纲，不能和上面的 storm 毫秒或 content-probe FCP 直接比。'
-        + 'Octane 的 Rspeedy 产物无条件在主线程画首屏（<code>installLynxMainThread({ firstScreen: true })</code>，插件没有关掉的选项），'
-        + '所以公平的 Vue 对照是 <code>+ifr</code> 那两格。'
-      : 'One session, one host, mode order rotated per rep. <b>startup</b> = <code>&lt;lynx-view&gt;</code> attach → first content painted (empty app); '
-        + '<b>mount-create</b> = the app is <strong>built</strong> with the table already populated (<code>BENCH_AUTOROWS=N</code>), measuring attach → all N rows painted, so it includes framework boot. '
-        + 'This is the first-frame scale — not comparable to the storm ms or the content-probe FCP above. '
-        + 'Octane’s Rspeedy output always paints the first screen on the main thread (<code>installLynxMainThread({ firstScreen: true })</code>, no plugin option to disable), '
-        + 'so the fair Vue comparators are the two <code>+ifr</code> rows.',
-    fsHeaders: {
-      arch: zh ? '架构' : 'architecture',
-      startup: zh ? '启动（空）' : 'startup (empty)',
-      range: zh ? '样本区间 ms' : 'min–max ms',
-      mount: (s) => (zh ? `mount-create ${s}` : `mount-create ${s}`),
-      web: zh ? 'web gzip' : 'web gzip',
-      lynx: zh ? 'lynx gzip' : 'lynx gzip',
-    },
-    noteOctane: zh
-      ? '<b>Octane 现在全矩阵可测。</b>在 <a href="https://github.com/octanejs/octane/pull/459">octanejs/octane#459</a> 之前，'
-        + '它在 Lynx for Web 上一个点击都收不到：两个线程是不同的 JS realm（背景在 iframe 里），'
-        + '而校验用的是 realm 本地的 <code>getPrototypeOf(v) === Object.prototype</code>，'
-        + '于是主线程把背景发来的每一条消息都判成「不是 plain object」而拒收——握手第一条就断，背景永远不提交。'
-        + '本页 Octane 的所有数字都在该修复之上测得；'
-        + '<b>本仓库更早发布过的 Octane mount-create 数字量的是纯主线程首屏</b>，已被本轮重测取代。'
-        + '方法与解读见 <code>packages/benchmark/OCTANE.md</code>。'
-      : '<b>Octane is now measurable across the whole matrix.</b> Before '
-        + '<a href="https://github.com/octanejs/octane/pull/459">octanejs/octane#459</a> it received no taps at all on '
-        + 'Lynx for Web: the two threads are separate JS realms (the background runs in an iframe), and the validators '
-        + 'used a realm-local <code>getPrototypeOf(v) === Object.prototype</code> check, so main rejected every message '
-        + 'the background sent as “not a plain object” — the handshake never completed and the background never committed. '
-        + 'Every Octane number on this page was measured on top of that fix; '
-        + '<b>the Octane mount-create figures this repo published earlier measured main-thread-only first screen</b> and are '
-        + 'superseded by this run. Method and reading: <code>packages/benchmark/OCTANE.md</code>.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -195,30 +157,6 @@ export function copy(lang) {
       octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     charts: {
-      mount: {
-        title: zh
-          ? 'mount-create vs 行数（含 Octane）'
-          : 'mount-create vs table size (incl. Octane)',
-        sub: zh
-          ? '应用构建时就带满 N 行：attach → N 行全部绘出，因此包含框架启动。'
-            + '这是 Octane 唯一能进的规模曲线——它没有可用的原生事件，storm 曲线里进不来。'
-          : 'The app is built with N rows already in it: attach → all N rows painted, so this includes framework boot. '
-            + 'It is the only scale curve Octane can appear on — with no usable native events it cannot enter the storm charts.',
-        x: zh ? '行数 N — 线性' : 'rows N — linear',
-        y: zh ? 'mount-create — ms' : 'mount-create — ms',
-      },
-      mountNorm: {
-        title: zh
-          ? 'mount-create，归一到 vdom 基线'
-          : 'mount-create, normalized to the vdom baseline',
-        sub: zh
-          ? '同一份数据除以 vdom 自己的曲线。绝对毫秒会随机器漂移，比率不会——'
-            + '看曲线是随规模张开还是收敛，而不是看谁在某个点上快几毫秒。'
-          : 'The same data divided by vdom’s own curve. Absolute ms drift with the host; ratios do not — '
-            + 'read whether a curve opens up or converges with scale, not who is a few ms faster at one rung.',
-        x: zh ? '行数 N — 线性' : 'rows N — linear',
-        y: zh ? '相对 vdom 的倍数' : 'slowdown vs vdom',
-      },
       selectStorm: {
         title: zh ? 'Select storm（点状）vs 行数' : 'select storm (point) vs table size',
         sub: zh
@@ -261,14 +199,8 @@ export function copy(lang) {
       },
     },
     coverageHeaders: zh
-      ? ['架构', '交互 storms', '首帧 FCP', 'instrumented BG/e2e', '首屏（无交互）']
-      : [
-          'architecture',
-          'table storms',
-          'content-probe FCP',
-          'instrumented BG/e2e',
-          'first screen',
-        ],
+      ? ['架构', '交互 storms', '首帧 FCP', 'instrumented BG/e2e']
+      : ['architecture', 'table storms', 'content-probe FCP', 'instrumented BG/e2e'],
     notes: zh
       ? [
           '<b>量纲不能混。</b> Instrumented BG/e2e、黑盒 click→DOM、lynx-web FCP、node --jitless 暖渲染共用 1k→30k 标签，但不是同一把尺子。',
@@ -312,13 +244,6 @@ export function buildConclusions(d, lang) {
     fcpVaporIfrSparse4,
     bgSelectV,
     bgSelectD,
-    fsStartupOctane,
-    fsStartupVdomIfr,
-    fsStartupVdom,
-    fsMountOctane1k,
-    fsMountVdom1k,
-    fsMountOctaneMax,
-    fsMountVdomMax,
     octSelect10k,
     octUpdate10th10k,
     octCreate10k,
@@ -479,36 +404,6 @@ export function buildConclusions(d, lang) {
           + (upd != null ? ` · update10th@10k ${upd.toFixed(1)}×` : '')
           + (cre != null ? ` · create@10k ${cre.toFixed(2)}×` : '')
           + (batch != null ? ` · updateStorm@30k ${batch.toFixed(2)}×` : ''),
-    });
-  }
-
-  if (fsStartupOctane != null && fsMountOctane1k != null && fsMountVdom1k != null) {
-    const mount1k = fsMountOctane1k / fsMountVdom1k;
-    const big =
-      fsMountOctaneMax && fsMountVdomMax && fsMountVdomMax.ms
-        ? fsMountOctaneMax.ms / fsMountVdomMax.ms
-        : null;
-    out.push({
-      tone: 'warn',
-      title: zh
-        ? `Octane 首屏：整条阶梯稳定 ${mount1k.toFixed(1)}× vdom，空屏启动也垫底`
-        : `Octane first screen: a flat ${mount1k.toFixed(1)}× vdom across the ladder, and last on empty startup`,
-      why: zh
-        ? '同一个 per-node 常数因子，从 1k 到 30k 几乎不变——是每节点的固定成本，不是能被摊销掉的开销。'
-          + '主线程包确实带的是专用只渲染 renderer 而不是第二份框架运行时，这是真实的设计优势；'
-          + '只是在本环境下抵不过背景握手与 adoption 的代价。'
-        : 'One per-node constant factor, near-flat from 1k to 30k — a fixed cost per node rather than an overhead that '
-          + 'amortizes. The main-thread bundle does carry a purpose-built render-only renderer instead of a second copy '
-          + 'of the framework runtime, which is a real design advantage; it just does not pay for the background '
-          + 'handshake and adoption on this host.',
-      evidence: zh
-        ? `启动 ${fsStartupOctane.toFixed(0)} ms vs vdom +ifr ${fsStartupVdomIfr?.toFixed(0) ?? '—'}（最慢一格）· `
-          + `mount-create 1k ${mount1k.toFixed(2)}× vdom`
-          + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : '')
-        : `startup ${fsStartupOctane.toFixed(0)} ms vs vdom +ifr ${
-          fsStartupVdomIfr?.toFixed(0) ?? '—'
-        } (slowest cell) · mount-create 1k ${mount1k.toFixed(2)}× vdom`
-          + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : ''),
     });
   }
 

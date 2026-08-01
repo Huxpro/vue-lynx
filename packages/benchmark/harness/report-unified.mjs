@@ -92,16 +92,6 @@ const ENGINE_NA_ARCHS = new Set(['vapor-engine', 'vapor-ifr-engine-et']);
 const REPLICATE_ARCHS = new Set(['vapor-ifr-sparse']);
 const isEngineNa = (key) =>
   ENGINE_NA_ARCHS.has(key) || REPLICATE_ARCHS.has(key);
-/**
- * Was `new Set(['octane'])` while Octane could not receive native events on
- * Lynx for Web. octanejs/octane#459 fixed that, so every click-driven metric
- * is now measured for it and the set is empty — kept because the *mechanism*
- * (a column present but explicitly N/A, rather than silently absent) is the
- * right way to show any future framework that cannot be driven here.
- */
-const NO_EVENT_ARCHS = new Set();
-/** Excluded from row-best / geometric mean (no comparable number exists). */
-const isUnscored = (key) => isEngineNa(key) || NO_EVENT_ARCHS.has(key);
 
 // Order follows the approved V4 roster: baseline → +b → +ifr → +b +ifr
 // per render model (vdom, then vapor), reference last. The replicate
@@ -154,6 +144,7 @@ const FCP_ARCH_KEYS = [
   // code-paint (#340) renders a real measured number, unlike the engine cells.
   { key: 'vapor-ifr-code-paint', color: '#db2777' },
   { key: 'react', color: '#eda100' },
+  { key: 'octane', color: '#db2777' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
@@ -230,17 +221,13 @@ function renderTable(rows, columns, t) {
   for (const row of rows) {
     const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
     const nums = cells
-      .filter((s, i) => s?.median != null && !isUnscored(columns[i].key))
+      .filter((s, i) => s?.median != null && !isEngineNa(columns[i].key))
       .map((s) => s.median);
     const best = nums.length ? Math.min(...nums) : null;
     html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
     for (const [i, s] of cells.entries()) {
       if (isEngineNa(columns[i].key)) {
         html += `<td class="c na engine-na">N/A</td>`;
-      } else if (NO_EVENT_ARCHS.has(columns[i].key)) {
-        html += `<td class="c na noevt" title="${
-          escapeAttr(t.noEventTitle)
-        }">N/A</td>`;
       } else if (s?.median != null && best != null) {
         const factor = s.median / best;
         factorsByCol[columns[i].key].push(factor);
@@ -259,10 +246,6 @@ function renderTable(rows, columns, t) {
   for (const c of columns) {
     if (isEngineNa(c.key)) {
       html += `<td class="c na engine-na">N/A</td>`;
-      continue;
-    }
-    if (NO_EVENT_ARCHS.has(c.key)) {
-      html += `<td class="c na noevt">N/A</td>`;
       continue;
     }
     const f = factorsByCol[c.key];
@@ -341,13 +324,8 @@ function logTicks(lo, hi) {
 // line order — the interactive layer (LINE_CHART_JS) redraws identically with
 // hover + scale. Rendered over an explicit x-window [0, xmax] with y auto-fit
 // to the visible points.
-function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax, yUnit = 'ms' }) {
-  const yFmt = (t) =>
-    yUnit === 'x'
-      ? `${t.toFixed(t < 10 ? 1 : 0)}×`
-      : t >= 1000
-        ? `${t / 1000}s`
-        : `${Math.round(t)}ms`;
+function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
+  const yFmt = (t) => (t >= 1000 ? `${t / 1000}s` : `${Math.round(t)}ms`);
   const vis = series
     .map((s) => ({ ...s, pts: s.pts.filter((p) => p.x <= xmax + 1) }))
     .filter((s) => s.pts.length);
@@ -399,16 +377,7 @@ function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax, yUnit = 'ms' 
 
 let CHART_SEQ = 0;
 let REPORT_LANG = 'en';
-function renderLineChart({
-  title,
-  sub,
-  series,
-  xLabel,
-  yLabel,
-  logY = false,
-  wide = false,
-  yUnit = 'ms',
-}) {
+function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wide = false }) {
   const all = series.flatMap((s) => s.pts);
   if (!all.length) return '';
   const W = wide ? 900 : 620;
@@ -418,7 +387,6 @@ function renderLineChart({
   const id = `ch${++CHART_SEQ}`;
   const cfg = {
     W, H, ML, MR, MT, MB, logY,
-    yu: yUnit,
     xl: xLabel, yl: yLabel,
     s: series
       .filter((s) => s.pts.length)
@@ -435,7 +403,7 @@ function renderLineChart({
 ${ctl}
 <div class="ccanvas" data-chart='${escapeAttr(JSON.stringify(cfg))}'>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
-${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull, yUnit })}
+${staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax: xmaxFull })}
 <text x="${(ML + (W - ML - MR) / 2).toFixed(0)}" y="${H - 6}" class="axis" text-anchor="middle">${escapeHtml(xLabel)}</text>
 <text x="14" y="${(MT + (H - MT - MB) / 2).toFixed(0)}" class="axis" text-anchor="middle" transform="rotate(-90 14 ${(MT + (H - MT - MB) / 2).toFixed(0)})">${escapeHtml(yLabel)}</text>
 </svg></div></figure>`;
@@ -453,9 +421,7 @@ function escapeAttr(s) {
 const LINE_CHART_JS = String.raw`(() => {
   const qq = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const fmtY = (t) => cfg.yu === 'x'
-    ? t.toFixed(t < 10 ? 1 : 0) + '\u00d7'
-    : (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 's' : Math.round(t) + 'ms');
+  const fmtY = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 's' : Math.round(t) + 'ms');
   const fmtX = (t) => (t >= 1000 ? (t / 1000).toFixed(t % 1000 ? 1 : 0) + 'k' : Math.round(t));
   function linTicks(lo, hi, max = 6) {
     if (!(hi > lo)) return [lo];
@@ -597,7 +563,7 @@ function stormSeries(op, t, ticks = 1, pred = null) {
     '#db2777', // octane — third framework family
   ];
   return cols
-    .filter((c) => !isUnscored(c.key) && (!pred || pred(c.key)))
+    .filter((c) => !isEngineNa(c.key) && (!pred || pred(c.key)))
     .map((c, i) => {
       const pts = ['1k', '10k', '30k']
         .map((size) => {
@@ -666,14 +632,6 @@ function conclusionNumbers() {
     bgSelectD: unified.cells.find(
       (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
     )?.median,
-    // First screen (the only workload octane can be measured on).
-    fsStartupOctane: g('octane', 'empty', 'startup_ms', 'first-screen'),
-    fsStartupVdomIfr: g('vdom-ifr', 'empty', 'startup_ms', 'first-screen'),
-    fsStartupVdom: g('vdom', 'empty', 'startup_ms', 'first-screen'),
-    fsMountOctane1k: g('octane', '1k', 'mount_create_ms', 'first-screen'),
-    fsMountVdom1k: g('vdom', '1k', 'mount_create_ms', 'first-screen'),
-    fsMountOctaneMax: mountCreateMax('octane'),
-    fsMountVdomMax: mountCreateMax('vdom'),
     // Octane interaction, measurable since octanejs/octane#459.
     octSelect10k: g('octane', '10k', 'select'),
     octUpdate10th10k: g('octane', '10k', 'update10th'),
@@ -684,16 +642,6 @@ function conclusionNumbers() {
     vdomCreate10k: g('vdom', '10k', 'create'),
     vdomUpdateStorm30k: g('vdom', '30k', 'updateStorm'),
   };
-}
-
-/** Largest ladder rung this architecture has a mount-create number for. */
-function mountCreateMax(arch) {
-  const scales = mountCreateScales();
-  for (const scale of [...scales].reverse()) {
-    const v = g(arch, scale, 'mount_create_ms', 'first-screen');
-    if (v != null) return { scale, ms: v };
-  }
-  return null;
 }
 
 function renderConclusions(lang, t, published) {
@@ -709,163 +657,14 @@ function renderConclusions(lang, t, published) {
   return { html: `${html}</div>`, count: conclusions.length };
 }
 
-/**
- * First-screen workload — the interaction-free half of the matrix, and the
- * only place the `octane` family appears (its host driver never receives
- * native events; see `OCTANE.md`). Rows are architectures, ordered
- * baseline → +ifr per family, third-party families last.
- */
-const FIRST_SCREEN_ARCH_KEYS = [
-  'vdom',
-  'vdom-ifr',
-  'vapor',
-  'vapor-ifr',
-  'octane',
-];
-
-function firstScreenRows() {
-  const has = (arch) =>
-    unified.cells.some(
-      (c) => c.architecture === arch && c.workload === 'first-screen',
-    );
-  return FIRST_SCREEN_ARCH_KEYS.filter(has);
-}
-
-function fsCell(arch, scale, metric) {
-  return unified.cells.find(
-    (c) =>
-      c.architecture === arch
-      && c.workload === 'first-screen'
-      && c.scale === scale
-      && c.metric === metric,
-  );
-}
-
-const fmtKb = (v) => (v == null ? '—' : `${(v / 1024).toFixed(1)}K`);
-
-/**
- * Reference cell the normalized mount-create chart divides by. Plain `vdom`
- * is the plainest, oldest, least flag-dependent cell in the matrix, which
- * makes it the stable denominator: ratios against it survive a re-run on
- * another host even when every absolute median moves.
- */
-const MOUNT_BASELINE = 'vdom';
-
-/** Line colours for the first-screen charts — one per architecture. */
-const FIRST_SCREEN_COLORS = {
-  vdom: '#6b7280',
-  'vdom-ifr': '#2563eb',
-  vapor: '#1baf7a',
-  'vapor-ifr': '#d97706',
-  octane: '#db2777',
-};
-
-function mountCreateScales() {
-  return [...new Set(
-    unified.cells
-      .filter((c) => c.workload === 'first-screen' && c.metric === 'mount_create_ms')
-      .map((c) => c.scale),
-  )].sort((a, b) => (SIZE_N[a] ?? 0) - (SIZE_N[b] ?? 0));
-}
-
-/**
- * mount-create over the ladder. `baseline` normalizes every series by that
- * architecture's own curve, which cancels host drift — the shape survives a
- * re-run on a different machine even when the absolute ms do not.
- */
-function mountCreateSeries(t, { baseline = null } = {}) {
-  const scales = mountCreateScales();
-  const label = (a) => t.colLabels?.[a] ?? t.fcpArchLabels?.[a] ?? a;
-  const at = (arch, scale) => fsCell(arch, scale, 'mount_create_ms')?.median ?? null;
-  return firstScreenRows()
-    .map((arch) => ({
-      // The y-axis already names the denominator — don't repeat it per line.
-      label: label(arch),
-      color: FIRST_SCREEN_COLORS[arch] ?? '#6b7280',
-      pts: scales
-        .map((scale) => {
-          const v = at(arch, scale);
-          if (v == null) return null;
-          if (!baseline) return { x: SIZE_N[scale], y: v, label: scale };
-          const b = at(baseline, scale);
-          if (b == null || b === 0) return null;
-          return { x: SIZE_N[scale], y: v / b, label: scale };
-        })
-        .filter(Boolean),
-    }))
-    .filter((s) => s.pts.length >= 2);
-}
-
-function firstScreenSection(t) {
-  const archs = firstScreenRows();
-  if (archs.length === 0) return '';
-  const label = (a) => t.colLabels?.[a] ?? t.fcpArchLabels?.[a] ?? a;
-  const mountScales = [...new Set(
-    unified.cells
-      .filter((c) => c.workload === 'first-screen' && c.metric === 'mount_create_ms')
-      .map((c) => c.scale),
-  )].sort((a, b) => (SIZE_N[a] ?? 0) - (SIZE_N[b] ?? 0));
-
-  // Tint is relative to the column's best, same convention as the storm table.
-  const best = (vals) => {
-    const nums = vals.filter((v) => v != null);
-    return nums.length ? Math.min(...nums) : null;
-  };
-  const tinted = (v, b) => {
-    if (v == null) return '<td class="c plain">—</td>';
-    if (b == null || b === 0) return `<td class="c plain">${fmtMs(v)}</td>`;
-    const f = v / b;
-    const extra = f > 1.02 ? ` <span class="f">(${f.toFixed(2)})</span>` : '';
-    return `<td class="c ${bucketClass(f)}">${fmtMs(v)}${extra}</td>`;
-  };
-
-  const startupVals = archs.map((a) => fsCell(a, 'empty', 'startup_ms')?.median ?? null);
-  const startupBest = best(startupVals);
-  const mountBest = Object.fromEntries(
-    mountScales.map((s) => [
-      s,
-      best(archs.map((a) => fsCell(a, s, 'mount_create_ms')?.median ?? null)),
-    ]),
-  );
-
-  let html = '<table><thead><tr>'
-    + `<th>${escapeHtml(t.fsHeaders.arch)}</th>`
-    + `<th>${escapeHtml(t.fsHeaders.startup)}</th>`
-    + `<th>${escapeHtml(t.fsHeaders.range)}</th>`
-    + mountScales.map((s) => `<th>${escapeHtml(t.fsHeaders.mount(s))}</th>`).join('')
-    + `<th>${escapeHtml(t.fsHeaders.web)}</th>`
-    + `<th>${escapeHtml(t.fsHeaders.lynx)}</th>`
-    + '</tr></thead><tbody>';
-
-  for (const [i, a] of archs.entries()) {
-    const s = fsCell(a, 'empty', 'startup_ms');
-    const gzWeb = fsCell(a, 'empty', 'bundle_web_gzip')?.median ?? null;
-    const gzLynx = fsCell(a, 'empty', 'bundle_lynx_gzip')?.median ?? null;
-    html += `<tr><td class="op">${escapeHtml(label(a))} <code>${escapeHtml(a)}</code></td>`
-      + tinted(startupVals[i], startupBest)
-      + `<td class="c plain">${
-        s?.min == null || s?.max == null
-          ? '—'
-          : `${s.min.toFixed(0)}–${s.max.toFixed(0)}`
-      }</td>`
-      + mountScales
-        .map((sc) => tinted(fsCell(a, sc, 'mount_create_ms')?.median ?? null, mountBest[sc]))
-        .join('')
-      + `<td class="c plain">${fmtKb(gzWeb)}</td>`
-      + `<td class="c plain">${fmtKb(gzLynx)}</td></tr>`;
-  }
-  return `${html}</tbody></table>`;
-}
-
 function coverageTable(t) {
   const archs = (unified.architectures ?? []).filter(
     (a) => !isEngineNa(a.id),
   );
-  const [h0, h1, h2, h3, h4] = t.coverageHeaders;
+  const [h0, h1, h2, h3] = t.coverageHeaders;
   let html =
     `<table><thead><tr><th>${escapeHtml(h0)}</th><th>${escapeHtml(h1)}</th>`
-    + `<th>${escapeHtml(h2)}</th><th>${escapeHtml(h3)}</th>`
-    + `<th>${escapeHtml(h4)}</th></tr></thead><tbody>`;
+    + `<th>${escapeHtml(h2)}</th><th>${escapeHtml(h3)}</th></tr></thead><tbody>`;
   for (const a of archs) {
     const storm = unified.cells.some(
       (c) => c.architecture === a.id && c.metric === 'selectStorm',
@@ -876,15 +675,11 @@ function coverageTable(t) {
     const bg = unified.cells.some(
       (c) => c.architecture === a.id && c.instrumented,
     );
-    const firstScreen = unified.cells.some(
-      (c) => c.architecture === a.id && c.workload === 'first-screen',
-    );
     const v4 = t.colLabels?.[a.id] ?? t.fcpArchLabels?.[a.id] ?? a.label;
     html += `<tr><td class="op">${escapeHtml(v4)} <code>${escapeHtml(a.id)}</code></td>`
       + `<td class="c plain">${storm ? '✓' : '—'}</td>`
       + `<td class="c plain">${fcp ? '✓' : '—'}</td>`
-      + `<td class="c plain">${bg ? '✓' : '—'}</td>`
-      + `<td class="c plain">${firstScreen ? '✓' : '—'}</td></tr>`;
+      + `<td class="c plain">${bg ? '✓' : '—'}</td></tr>`;
   }
   return `${html}</tbody></table>`;
 }
@@ -1418,8 +1213,6 @@ function renderReport(lang, outPath) {
   const cols = columnsFor(t);
   const rows = stormRowsFor(t);
   const ch = t.charts;
-  // Empty when no first-screen run has been ingested — drop the whole section.
-  const firstScreenHtml = firstScreenSection(t);
 
   return `<!doctype html>
 <html lang="${t.lang}">
@@ -1477,8 +1270,6 @@ function renderReport(lang, outPath) {
   td.op code { font-size: 11px; opacity: 0.75; }
   td.c b { font-weight: 600; }
   td.c .f { display: block; font-size: 11px; color: var(--ink-2); }
-  /* N/A by measurement (no native events) — hoverable reason, unlike a blank. */
-  td.c.noevt { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; }
   td.good     { background: color-mix(in srgb, var(--good) var(--tint), var(--surface)); }
   td.warn     { background: color-mix(in srgb, var(--warn) var(--tint), var(--surface)); }
   td.serious  { background: color-mix(in srgb, var(--serious) var(--tint), var(--surface)); }
@@ -1570,32 +1361,6 @@ function renderReport(lang, outPath) {
 <h2>${escapeHtml(t.hConclusions)}</h2>
 <p class="sub">${escapeHtml(t.subConclusions)}</p>
 ${conclusionsHtml}
-
-${
-  firstScreenHtml
-    ? `<h2>${escapeHtml(t.hFirstScreen)}</h2>
-<p class="sub">${t.subFirstScreen}</p>
-<div class="scroll">${firstScreenHtml}</div>
-<p class="sub" style="margin-top:10px">${t.noteOctane}</p>
-<div class="charts" style="margin-top:14px">
-  ${renderLineChart({
-    title: ch.mount.title,
-    sub: ch.mount.sub,
-    series: mountCreateSeries(t),
-    xLabel: ch.mount.x,
-    yLabel: ch.mount.y,
-  })}
-  ${renderLineChart({
-    title: ch.mountNorm.title,
-    sub: ch.mountNorm.sub,
-    series: mountCreateSeries(t, { baseline: MOUNT_BASELINE }),
-    xLabel: ch.mountNorm.x,
-    yLabel: ch.mountNorm.y,
-    yUnit: 'x',
-  })}
-</div>`
-    : ''
-}
 
 
 <h2>${escapeHtml(t.hStorms)}</h2>

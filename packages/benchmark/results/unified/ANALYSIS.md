@@ -1,6 +1,6 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-08-01T09:25:03.054Z @ 2e348fd
+> Generated 2026-08-01T10:03:53.169Z @ c51b4de
 > Host: 4× Intel(R) Xeon(R) Processor @ 2.10GHz
 
 ## Why unify?
@@ -41,7 +41,7 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vapor-engine | ✓ | ✓ | — | — |
 | vapor-ifr-engine-et | ✓ | ✓ | — | — |
 | vapor-ifr-code-paint | — | ✓ | — | — |
-| octane | ✓ | — | — | — |
+| octane | ✓ | ✓ | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -60,11 +60,11 @@ Instrumented BG select still ~9.8×. Black-box selectStorm@10k reproduces ~9.6×
 
 create@10k vapor/vdom=0.95×. 
 
-### `ifr-fcp-minus-19` — **holds-locally**
+### `ifr-fcp-minus-19` — **falsified-as-universal**
 
 > Default IFR wins median −19% FCP on real threads (content scene).
 
-Holds for ~1k ×1 content probe; fails as a scale/CPU-invariant claim. −19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -21%. @10k ×1: 33%. @30k ×1: 29%. @1k ×4: 12%. IFR+ET@30k ×1: 36%. 
+−19% is a mid-size ×1 content-scene result, not a universal constant. vdom-ifr@1k ×1: -14%. @10k ×1: 28%. @30k ×1: 19%. @1k ×4: -1%. IFR+ET@30k ×1: 23%. 
 
 ### `et-is-inflection` — **holds**
 
@@ -132,12 +132,12 @@ create@10k react/vdom = 1.18×; selectStorm@10k react/vapor = 40.4×.
 
 | scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
 |---|---|---|---|---|---|---|
-| 1k | 74 | 128 | 102 | 98 | 174 | 145 |
-| 3k | 110 | 205 | 177 | 161 | 269 | 233 |
-| 5k | 152 | 259 | 252 | 221 | 380 | 346 |
-| 10k | 241 | 452 | 602 | 373 | 626 | 577 |
-| 20k | 458 | 839 | 1051 | 708 | 1153 | 1055 |
-| 30k | 702 | 1170 | 1514 | 1588 | 1735 | 1656 |
+| 1k | 74 | 130 | 112 | 98 | 134 | 121 |
+| 3k | 110 | 205 | 179 | 161 | 220 | 214 |
+| 5k | 152 | 281 | 247 | 221 | 325 | 308 |
+| 10k | 241 | 456 | 583 | 373 | 553 | 515 |
+| 20k | 458 | 846 | 1082 | 708 | 1152 | 930 |
+| 30k | 702 | 1292 | 1538 | 1588 | 1536 | 1329 |
 
 ### Graph-eng naming density (#301) — vapor IFR dense A1 vs sparse A2
 
@@ -147,7 +147,7 @@ Same-source sfc-probe (~1004 els). Native ET still stub; sparse still builds the
 |---|---|---:|---:|---:|---:|---:|
 | vapor-ifr-dense | dense | 89720 | 152.9 | 0.0% | 596.0 | 0.0% |
 | vapor-ifr-sparse | sparse | 90007 | 121.8 | -20.3% | 670.2 | 12.4% |
-| vapor-ifr | sparse | 90007 | 144.8 | -5.3% | 564.4 | -5.3% |
+| vapor-ifr | sparse | 90007 | 120.5 | -21.2% | 436.1 | -26.8% |
 
 ×1 sparse/dense = 0.797× (-20.3%). ×4 sparse/dense = 1.124× (12.4%) — treat as noise / inconclusive for scale hedge.
 
@@ -179,10 +179,10 @@ Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 - unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-x4.json`
 - unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-b2-x1.json`
 - unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-content-b2-x4.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-octane-x1.json`
+- unified-content-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/unified-octane-x4.json`
 - strategy-node-jitless: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/results.json`
 - bare-dom: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/web-baseline-latest.json`
-- first-screen-startup: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/startup-only.json`
-- first-screen-mount-create: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/mount-create.json`
 
 ## How to reproduce
 

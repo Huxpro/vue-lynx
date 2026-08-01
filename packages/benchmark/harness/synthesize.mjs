@@ -8,7 +8,6 @@
  *   - results/cross-storms-*.json (table / interaction)
  *   - results/latest.json (instrumented VDOM vs Vapor)
  *   - results/web-baseline-latest.json (bare DOM)
- *   - results/startup-only.json + results/mount-create.json (first screen)
  *   - ../ifr-bench/results/browser-results-scale-*.json (FCP ladder)
  *   - ../ifr-bench/results/browser-results-graph-eng-dense-sparse*.json (#301 naming)
  *   - ../ifr-bench/results/sfc-probe-sizes-graph-eng.json (#301 bundle flags)
@@ -435,6 +434,7 @@ const UNIFIED_ARCH_BY_CELL = {
   'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
   'vue-vapor-ifr-code-paint': 'vapor-ifr-code-paint',
   react: 'react',
+  octane: 'octane',
 };
 
 function ingestUnifiedContentFcp(unified) {
@@ -447,6 +447,11 @@ function ingestUnifiedContentFcp(unified) {
     // b2 host at every rung it covers.
     ['results/unified-content-b2-x1.json', 1],
     ['results/unified-content-b2-x4.json', 4],
+    // Octane content cell + its four Vue comparators as same-session controls
+    // (octanejs/octane#459). Ingested last, so it is single-provenance for
+    // every (arch, scale) it covers.
+    ['results/unified-octane-x1.json', 1],
+    ['results/unified-octane-x4.json', 4],
   ]) {
     const p = pickNewest(file);
     const data = readJson(p);
@@ -537,104 +542,6 @@ function ingestWebBaseline(unified) {
         median: stats.median ?? null,
         ci95: stats.ci95 ?? null,
       });
-    }
-  }
-}
-
-/**
- * First-screen workload (`cross.mjs --startup-only` / `--mount-create`).
- *
- * The two measurements that need no interaction. Framework-neutral: every cell
- * is measured by the same runners in the same session, so the rows are directly
- * comparable inside this workload — and only inside it, since
- * `mount_create_ms` includes framework boot and is not a `create` storm.
- */
-function ingestFirstScreen(unified) {
-  /** dist dir in the results JSON → architecture id. */
-  const distToArch = new Map(
-    ARCHITECTURES.filter((a) => a.tableDist).map((a) => [a.tableDist, a.id]),
-  );
-
-  const startupPath = pickNewest('results/startup-only.json');
-  if (startupPath) {
-    const data = readJson(startupPath);
-    unified.sources.push({
-      kind: 'first-screen-startup',
-      path: startupPath,
-      meta: data.meta,
-    });
-    for (const [arch, s] of Object.entries(data.startup ?? {})) {
-      if (s?.median == null) continue;
-      unified.cells.push({
-        schemaVersion: SCHEMA_VERSION,
-        environment: 'lynx-web',
-        architecture: arch,
-        workload: 'first-screen',
-        scale: 'empty',
-        cpuThrottle: 1,
-        metric: 'startup_ms',
-        unit: 'ms',
-        median: s.median,
-        ci95: s.ci95 ?? null,
-        min: s.min ?? null,
-        max: s.max ?? null,
-        n: s.n ?? null,
-        sourceDate: data.meta?.date ?? null,
-      });
-    }
-    for (const [dist, files] of Object.entries(data.bundles ?? {})) {
-      const arch = distToArch.get(dist);
-      if (!arch) continue;
-      for (const [file, sizes] of Object.entries(files ?? {})) {
-        const side = file.includes('.lynx.') ? 'lynx' : 'web';
-        for (const kind of ['raw', 'gzip']) {
-          if (sizes?.[kind] == null) continue;
-          unified.cells.push({
-            schemaVersion: SCHEMA_VERSION,
-            environment: 'lynx-web',
-            architecture: arch,
-            workload: 'first-screen',
-            scale: 'empty',
-            cpuThrottle: 1,
-            metric: `bundle_${side}_${kind}`,
-            unit: 'bytes',
-            median: sizes[kind],
-          });
-        }
-      }
-    }
-  }
-
-  const mountPath = pickNewest('results/mount-create.json');
-  if (mountPath) {
-    const data = readJson(mountPath);
-    unified.sources.push({
-      kind: 'first-screen-mount-create',
-      path: mountPath,
-      meta: data.meta,
-    });
-    for (const [rows, byMode] of Object.entries(data.results ?? {})) {
-      const n = Number(rows);
-      const scale = n % 1000 === 0 ? `${n / 1000}k` : String(n);
-      for (const [arch, s] of Object.entries(byMode ?? {})) {
-        if (s?.median == null) continue;
-        unified.cells.push({
-          schemaVersion: SCHEMA_VERSION,
-          environment: 'lynx-web',
-          architecture: arch,
-          workload: 'first-screen',
-          scale,
-          cpuThrottle: 1,
-          metric: 'mount_create_ms',
-          unit: 'ms',
-          median: s.median,
-          ci95: s.ci95 ?? null,
-          min: s.min ?? null,
-          max: s.max ?? null,
-          n: s.n ?? null,
-          sourceDate: data.meta?.date ?? null,
-        });
-      }
     }
   }
 }
@@ -1337,7 +1244,6 @@ function main() {
   ingestUnifiedContentFcp(unified);
   ingestStrategy(unified);
   ingestWebBaseline(unified);
-  ingestFirstScreen(unified);
 
   const verdicts = reevaluateClaims(unified);
   unified.verdicts = verdicts;

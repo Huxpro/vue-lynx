@@ -36,14 +36,11 @@
 ## 怎么读
 
 1. **结论** — 好消化的产品选择；数字用来核对。
-2. **首屏** — 无交互的那一半：`startup`（attach → 首个内容绘出，空应用）与
-   `mount-create` 阶梯（应用在*构建时*就带满 N 行，1k→30k）。两条曲线：绝对
-   毫秒，以及同一份数据归一到 `vdom` 基线（抵掉机器漂移）。第三个框架家族
-   [Octane](https://github.com/octanejs/octane) 出现在这里，见下。
-3. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。Octane 在这张表里
-   是完整的一列，也是它差距最悬殊的地方，见下。
-4. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
-5. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
+2. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。第三个框架家族
+   [Octane](https://github.com/octanejs/octane) 在这张表里是完整的一列，
+   也是它差距最悬殊的地方，见下。
+3. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
+4. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
    全部合法组合（基线 = per-node；`+b` = block templates；`+b:e` =
    engine 档，web 上 N/A 且已省略；`+ifr:e` = 仅首帧引擎绘制），逐格测
    create/update，附单 flag marginal 因子归因与页内完整图例。形式化见
@@ -52,21 +49,30 @@
 ## Octane（第三个框架家族）
 
 [octanejs/octane](https://github.com/octanejs/octane) 自带一个私有的 Lynx
-renderer（`@octanejs/lynx`），这里按**完整矩阵**测量——storms 与首屏都有。
+renderer（`@octanejs/lynx`）。它出现在 storm 表和 FCP 阶梯里，用的是**和其它
+所有 cell 完全相同的两套仪器**——它没有自己专属的 workload。
 
 这依赖一个上游修复。在
 [octanejs/octane#459](https://github.com/octanejs/octane/pull/459) 之前，Octane
 在 Lynx for Web 上收不到任何点击，背景线程也从不提交：web 上两个 Lynx 线程是
 不同的 JS realm（背景在 iframe 里），而 Octane 的校验用的是 realm 本地的
 `getPrototypeOf(v) === Object.prototype`，于是主线程拒收了背景发来的每一条消息。
-**本站在该修复之前发布的 Octane 数字量的是纯主线程首屏，已被取代。**
+**本站在该修复之前发布的 Octane 数字已被取代**，其中那一节 startup/mount-create
+也已删除。
 
-结论是「因场景而异」，不是一个恒定倍数：**点状**更新落后一个数量级
-（`select@10k` 是 `vdom` 的 13×、`vapor` 的 22×），create 约 2×，
-mount-create 阶梯稳定 ~1.8×——而 30k 的**批量**更新反而比 `vdom` 更快（0.86×）。
-它的 per-node 对象命令协议每次更新都要通过 structured clone 重发整节点命令，
-没有 Vue 那种把点状更新压成极小 op 载荷的路径；批量更新时每节点成本被摊薄，
-差距就消失了。
+按「每次操作动了树的多大比例」排开，结论就很清楚：
+
+| 操作 | 动了多少树 | octane vs `vdom` |
+|---|---|---|
+| `select` | 一行 | 13–19× |
+| `update10th` | 每 10 行 | 10–12× |
+| `create` / FCP | 整棵树 | 1.2–2.1× |
+| `updateStorm` | 反复全量改 | 1.11× → **0.86×** |
+
+差距取决于**操作次数**，不是节点数量。Octane 的协议是 per-node 对象命令 +
+structured clone，改一行也要把那一行的节点命令当作新对象重发一遍；Vue 各格把
+同样的改动压成扁平 ops 数组里的几个数字。而当整棵树本来就要重写时，这份每节点
+成本不再是额外开销，Octane 的「直接」反而赢。
 
 方法、注意事项与完整解读：
 [`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md)。

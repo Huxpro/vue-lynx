@@ -48,9 +48,6 @@ const { values: args } = parseArgs({
     headed: { type: 'boolean', default: false },
     port: { type: 'string', default: '8319' },
     label: { type: 'string', default: '' },
-    'startup-only': { type: 'boolean', default: false },
-    'mount-create': { type: 'string', default: '' },
-    'mount-reps': { type: 'string', default: '5' },
   },
 });
 const LOADS = Number(args.loads);
@@ -66,12 +63,6 @@ const RESULT_LABEL = args.label;
 const APP_DIST = Object.fromEntries(
   ARCHITECTURES.map((a) => [a.id, a.tableDist]),
 );
-// Mount-create builds live in sibling dists (`…/dist-rows1000`). The server
-// and the bundle-size report resolve through this, so the ladder needs no
-// separate architecture entries.
-let DIST_SUFFIX = '';
-const distFor = (mode) => APP_DIST[mode] + DIST_SUFFIX;
-
 const MODES = args.modes.split(',').map((m) => m.trim()).filter(Boolean);
 for (const m of MODES) {
   if (!APP_DIST[m]) throw new Error(`unknown mode: ${m}`);
@@ -267,25 +258,6 @@ const BENCH_HTML = `<!doctype html>
       tick();
     });
 
-  // Mount-create: resolve at the first animation frame where the initially
-  // populated table is fully painted, measured from <lynx-view> attach.
-  x.mountRows = (n, timeoutMs = 180000) =>
-    new Promise((resolve, reject) => {
-      const deadline = performance.now() + timeoutMs;
-      const tick = () => {
-        if (x.rowCount() === n) {
-          resolve(performance.now() - x.viewAttachTime);
-          return;
-        }
-        if (performance.now() > deadline) {
-          reject(new Error('mountRows timeout: rowCount=' + x.rowCount()));
-          return;
-        }
-        requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-
   x.settle = (extraMs = 30) =>
     new Promise((resolve) =>
       requestAnimationFrame(() =>
@@ -315,7 +287,7 @@ function startServer() {
           filePath = path.join(
             root,
             'apps',
-            distFor(mode),
+            APP_DIST[mode],
             url.pathname.slice(prefix.length),
           );
           break;
@@ -941,100 +913,6 @@ async function runStormsSuite(browser) {
 }
 
 // ---------------------------------------------------------------------------
-// mount-create ladder: no clicks. The app is built with BENCH_AUTOROWS=N so
-// the table is populated by the first render; we measure <lynx-view> attach →
-// all N rows painted. This is the only create-side measurement available for
-// a framework whose native tap delivery is not wired up, and it is a strictly
-// colder number than the click-driven create (it includes framework boot).
-// ---------------------------------------------------------------------------
-
-async function runMountCreate(browser, mode, n) {
-  const page = await browser.newPage();
-  await page.addInitScript(NEUTRALIZE_LYNX_PROFILE);
-  page.on('worker', (w) => w.evaluate(NEUTRALIZE_LYNX_PROFILE).catch(() => {}));
-  const errors = [];
-  page.on('pageerror', (err) => errors.push(String(err)));
-  try {
-    await page.goto(`http://127.0.0.1:${PORT}/bench.html`, { waitUntil: 'load' });
-    await page.evaluate(
-      (url) => globalThis.__x.createView(url),
-      `http://127.0.0.1:${PORT}/${mode}/main.web.bundle`,
-    );
-    const ms = await page.evaluate((rows) => globalThis.__x.mountRows(rows), n);
-    return { ms, errors };
-  } finally {
-    await page.close();
-  }
-}
-
-async function runMountCreateSuite(browser) {
-  const sizes = args['mount-create']
-    .split(',')
-    .map((s) => Number(s.trim()))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  const reps = Number(args['mount-reps']);
-  const out = {};
-  for (const n of sizes) {
-    DIST_SUFFIX = `-rows${n}`;
-    out[n] = {};
-    const bySize = Object.fromEntries(MODES.map((m) => [m, []]));
-    for (let i = 0; i < reps; i++) {
-      for (let k = 0; k < MODES.length; k++) {
-        const mode = MODES[(k + i) % MODES.length];
-        const { ms, errors } = await runMountCreate(browser, mode, n);
-        bySize[mode].push(ms);
-        if (errors.length) console.log(`[mount-create] ${mode} errors:`, errors.slice(0, 2));
-      }
-    }
-    for (const mode of MODES) {
-      const samples = bySize[mode];
-      out[n][mode] = { ...stats(samples), samples };
-      console.log(
-        `[mount-create] rows=${n} ${mode}: median ${stats(samples).median.toFixed(1)}ms`
-          + ` (min ${Math.min(...samples).toFixed(1)})`,
-      );
-    }
-    out[n].__bundles = bundleSizes(MODES.map((m) => distFor(m)));
-  }
-  DIST_SUFFIX = '';
-  const outDir = path.join(root, 'results');
-  fs.mkdirSync(outDir, { recursive: true });
-  const file = path.join(outDir, 'mount-create.json');
-  fs.writeFileSync(file, JSON.stringify({ meta: { reps, sizes, modes: MODES }, results: out }, null, 2));
-  console.log(`[mount-create] wrote results/mount-create.json`);
-}
-
-async function runStartupOnly(browser) {
-  const samplesByMode = Object.fromEntries(MODES.map((m) => [m, []]));
-  // Rotate mode order across reps so thermal / JIT drift is spread evenly
-  // instead of landing entirely on whichever mode runs last — same reason
-  // the scenario loop below rotates.
-  for (let i = 0; i < STARTUP_COUNT; i++) {
-    for (let k = 0; k < MODES.length; k++) {
-      const mode = MODES[(k + i) % MODES.length];
-      samplesByMode[mode].push(await runStartupLoad(browser, mode));
-    }
-  }
-  const out = {};
-  for (const mode of MODES) {
-    const samples = samplesByMode[mode];
-    out[mode] = { ...stats(samples), samples };
-    console.log(`[startup] ${mode}: median ${stats(samples).median.toFixed(1)}ms`);
-  }
-  const outDir = path.join(root, 'results');
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(outDir, 'startup-only.json'),
-    JSON.stringify(
-      { meta: { count: STARTUP_COUNT, modes: MODES }, startup: out, bundles: bundleSizes(MODES.map(distFor)) },
-      null,
-      2,
-    ),
-  );
-  console.log('[startup] wrote results/startup-only.json');
-}
-
-// ---------------------------------------------------------------------------
 // smoke mode: load each app, click Create once, verify and screenshot
 // ---------------------------------------------------------------------------
 
@@ -1241,16 +1119,6 @@ async function main() {
       return;
     }
 
-    if (args['mount-create']) {
-      await runMountCreateSuite(browser);
-      return;
-    }
-
-    if (args['startup-only']) {
-      await runStartupOnly(browser);
-      return;
-    }
-
     if (args.storms) {
       await runStormsSuite(browser);
       return;
@@ -1343,7 +1211,7 @@ async function main() {
       memory: Object.fromEntries(
         MODES.map((m) => [m, loads[m].flatMap((l) => l.memory)]),
       ),
-      bundles: bundleSizes(MODES.map(distFor)),
+      bundles: bundleSizes(MODES.map((m) => APP_DIST[m])),
       raw: loads,
     };
 
