@@ -677,7 +677,7 @@ function coordinateTable(t) {
   if (rows.length === 0) return '';
   let html = '<table><thead><tr>'
     + `<th>${escapeHtml(t.scenario)}</th><th>mechanism</th>`
-    + '<th>staging</th><th>naming</th><th>addressing</th>'
+    + '<th>render</th><th>staging</th><th>naming</th><th>addressing</th>'
     + '<th>encoding</th><th>validation</th>'
     + '</tr></thead><tbody>';
   for (const key of rows) {
@@ -689,6 +689,7 @@ function coordinateTable(t) {
       v === def ? `<td class="c plain">${v}</td>` : `<td class="c warn"><b>${v}</b></td>`;
     html += `<tr><td class="op">${escapeHtml(label)} <code>${escapeHtml(key)}</code></td>`
       + `<td class="c plain">${escapeHtml(c.term)}</td>`
+      + `<td class="c plain">${c.render}</td>`
       + `<td class="c plain">${c.staging}</td>`
       + `<td class="c plain">${c.naming}</td>`
       + `<td class="c plain">${c.addressing}</td>`

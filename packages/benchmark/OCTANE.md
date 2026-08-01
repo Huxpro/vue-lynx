@@ -23,15 +23,19 @@ produced bundles come back — `harness/build-octane.mjs` for the table app,
 
 ## Where it sits in the matrix
 
-`plan-ops-node-ifr` (`externalCells()` in `vue-lynx/internal/matrix`):
+`vdom-ops-node-ifr-clone` (`externalCells()` in `vue-lynx/internal/matrix`):
 
 ```
 ops/node/random-access/BTS+MTS/persistent+ephemeral/—/object-clone/always
 ```
 
-It occupies a combination the Vue pruning rules exclude — a compiled render
-model that still streams per-node ops. The interesting part is the comparison
-with `vdom +ifr`:
+Its render model is `vdom`. Octane compiles, but it does not remove the diff:
+`universal-core.ts` builds a fresh `Blueprint*` tree on every render and
+reconciles it against the committed `LogicalRecord` children — keyed matching,
+`sameRecordShape`, topology detection, shallow prop compare
+(`createPreparedTransaction`). That is a virtual-DOM update model. So Octane
+does not occupy a new structural point; it lands on the coordinate `vdom +ifr`
+already holds:
 
 ```
 vdom +ifr  ops/node/random-access/BTS+MTS/persistent+ephemeral/—/numeric-flat/none

@@ -85,11 +85,20 @@ export type IfrPaintMode = 'plain' | 'code-paint' | 'native-paint';
 export type LegacyIfrPaintMode = 'disposable-et' | 'engine-et';
 
 /**
- * `plan` = compiled render model that is neither a vdom diff nor Vapor's
- * binding walk: the compiler emits an immutable host plan and the runtime
- * replays it (octanejs/octane). Vue never produces this value.
+ * Render model — how an update decides *what changed*:
+ *  - `vdom`: re-run the component to a fresh node tree, then diff that tree
+ *    against the committed one (keyed matching + shallow prop compare).
+ *  - `vapor`: no per-update tree; the compiler emits per-binding effects and
+ *    a state write runs only the effects that read it.
+ *
+ * There is no third value. `octanejs/octane` is `vdom` by this definition —
+ * `universal-core.ts` builds a `Blueprint*` tree each render and reconciles
+ * it against `LogicalRecord` children with keyed matching and
+ * `sameRecordShape` (see `createPreparedTransaction`). Compiled ≠ vdom-free:
+ * what separates Octane from our vdom cells is the wire, not the model, and
+ * the Encoding/Validation columns carry that.
  */
-export type RenderModel = 'vdom' | 'vapor' | 'plan';
+export type RenderModel = 'vdom' | 'vapor';
 
 /**
  * Wire encoding of one host command. Orthogonal to Staging — see the header.
@@ -230,8 +239,6 @@ function addressingOf(
   naming: TemplateNaming,
 ): TemplateAddressing {
   if (render === 'vdom') return 'random-access';
-  // A plan renderer addresses by the id it minted per node, like vdom.
-  if (render === 'plan') return 'random-access';
   // Vapor navigates; block naming requires the recovered closure.
   return naming === 'block' ? 'traversal+recover' : 'traversal';
 }
@@ -324,9 +331,9 @@ function makeCell(spec: CellSpec): MatrixCell {
 /**
  * The legal cell set ("Vue modes"), canonical ids, legacy ids preserved.
  * Pruning rules:
- *  - VDOM has no `tree` staging (no CLONE_TREE); Vapor no `ops` — a compiled
- *    render model that still streams per-node ops is not a Vue mode. It is a
- *    real point in the space though, and `externalCells()` occupies it.
+ *  - VDOM has no `tree` staging (no CLONE_TREE); Vapor no `ops` — Vapor's
+ *    whole point is that the residual is a reusable tree, so there is nothing
+ *    left to stream per instance. That corner stays empty.
  *  - `code`/`native` staging is definitionally block-named.
  *  - `ifrPaint` varies only under IFR.
  *  - `delivery: 'bundle'` on data staging (`+b!`, #338) varies only the
@@ -410,19 +417,21 @@ export function legalCells(): MatrixCell[] {
  * vocabulary as everything else, and so its coordinate can be quoted next to
  * its numbers.
  *
- * `octane` lands on `ops` staging with `node` naming under a compiled render
- * model — the combination the pruning rules above exclude for Vue. Its two
- * distinguishing columns are the new ones: it encodes each command as an
- * object through structured clone and re-validates every inbound message,
- * where every Vue cell ships a flat numeric array and validates nothing.
- * That pair, not the staging, is where its point-update cost lives.
+ * `octane` lands on exactly the structural coordinate `vdom-ops-node-ifr`
+ * already occupies — same render model, same staging, naming, addressing,
+ * providers and lifetimes. It is not a new point in the structural space, and
+ * that is the finding: the two cells differ only in the columns added for it.
+ * It encodes each command as an object through structured clone and
+ * re-validates every inbound message, where every Vue cell ships a flat
+ * numeric array and validates nothing. That pair is where its point-update
+ * cost lives — the architecture is the same one we already measure.
  */
 export function externalCells(): MatrixCell[] {
   return [
     makeCell({
-      id: 'plan-ops-node-ifr',
+      id: 'vdom-ops-node-ifr-clone',
       legacyId: 'octane',
-      render: 'plan',
+      render: 'vdom',
       staging: 'ops',
       naming: 'node',
       ifr: true,

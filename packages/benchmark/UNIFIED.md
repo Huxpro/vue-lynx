@@ -66,11 +66,13 @@ ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 
 ### Third framework family: `octane`
 
-`octane` has a formal coordinate: `plan-ops-node-ifr`, from
-`externalCells()` in `vue-lynx/internal/matrix`. It sits on the combination
-the Vue pruning rules exclude — a compiled render model (`plan`: the compiler
-emits an immutable host plan, no vdom diff and no binding walk) that still
-streams per-node ops. `externalCells()` is deliberately separate from
+`octane` has a formal coordinate: `vdom-ops-node-ifr-clone`, from
+`externalCells()` in `vue-lynx/internal/matrix`. Its render model is `vdom` —
+Octane compiles, but it still builds a fresh node tree per render and
+reconciles it against the committed one (`Blueprint*` vs `LogicalRecord` in
+`universal-core.ts`). So it does not open a new structural point: it lands on
+the coordinate `vdom +ifr` already occupies, and differs only in Encoding and
+Validation. `externalCells()` is deliberately separate from
 `legalCells()`: the per-flag factor decomposition varies one Vue flag at a
 time and would be meaningless across a different framework.
 
