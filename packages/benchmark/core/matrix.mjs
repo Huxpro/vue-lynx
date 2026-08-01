@@ -148,6 +148,22 @@ const FOUR_AXIS_CELLS = [
   },
 ];
 
+/**
+ * Third framework family. Not a Vue flag permutation and not ReactLynx —
+ * octanejs/octane's private Lynx renderer, built through its own toolchain
+ * (see buildOctaneContentRung in harness/unified-content.mjs).
+ */
+const OCTANE_CELLS = [
+  {
+    id: 'octane',
+    framework: 'octane',
+    renderer: null,
+    ifr: null,
+    flags: { variant: 'octane' },
+    label: 'Octane (universal core)',
+  },
+];
+
 const REACT_CELLS = [
   {
     id: 'react',
@@ -175,7 +191,12 @@ const REACT_CELLS = [
   },
 ];
 
-export const ALL_CELLS = [...VUE_CELLS, ...FOUR_AXIS_CELLS, ...REACT_CELLS];
+export const ALL_CELLS = [
+  ...VUE_CELLS,
+  ...FOUR_AXIS_CELLS,
+  ...REACT_CELLS,
+  ...OCTANE_CELLS,
+];
 
 /** Filter the matrix by axis. Each arg is a value or array; omit for "all". */
 export function selectCells({ framework, renderer, ifr, id } = {}) {
