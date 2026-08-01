@@ -21,6 +21,27 @@ sources are staged there, built with octane's own toolchain, and only the
 produced bundles come back — `harness/build-octane.mjs` for the table app,
 `buildOctaneContentRung` in `harness/unified-content.mjs` for the content app.
 
+## Where it sits in the matrix
+
+`plan-ops-node-ifr` (`externalCells()` in `vue-lynx/internal/matrix`):
+
+```
+ops/node/random-access/BTS+MTS/persistent+ephemeral/—/object-clone/always
+```
+
+It occupies a combination the Vue pruning rules exclude — a compiled render
+model that still streams per-node ops. The interesting part is the comparison
+with `vdom +ifr`:
+
+```
+vdom +ifr  ops/node/random-access/BTS+MTS/persistent+ephemeral/—/numeric-flat/none
+octane     ops/node/random-access/BTS+MTS/persistent+ephemeral/—/object-clone/always
+```
+
+**Identical in all six structural columns**, and 13× apart on `select@10k`
+(58 ms vs 753 ms). That is what motivated adding the Encoding and Validation
+columns: the whole difference lives in the transport, not the architecture.
+
 ## Measured against octanejs/octane#459 — and what that retracts
 
 Before **[octanejs/octane#459](https://github.com/octanejs/octane/pull/459)**,

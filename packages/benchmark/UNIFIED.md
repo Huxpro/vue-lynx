@@ -32,6 +32,21 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 `vapor +ifr` (`vapor-ifr-dense`) · `vapor +b +ifr:e`
 (`vapor-ifr-engine-et`, N/A) · `rl` (`react`)
 
+Since #343 the coordinate carries **eight** columns, not six: Staging ·
+Naming · Addressing · Provider · Lifetime · Delivery · **Encoding** ·
+**Validation**. The last two describe the transport rather than the residual —
+`numeric-flat` (opcode + operands in one array, what every Vue cell sends) vs
+`object-clone` (one object per command through structured clone), and whether
+the receiver re-validates each message. They were added because they explain a
+gap the structural columns cannot:
+
+```
+vdom +ifr  ops/node/random-access/BTS+MTS/persistent+ephemeral/—/numeric-flat/none
+octane     ops/node/random-access/BTS+MTS/persistent+ephemeral/—/object-clone/always
+```
+
+Identical in the first six columns, 13× apart on `select@10k`.
+
 Notation: `render [+b[:d|c|e]] [+ifr[:c|e]]` — baseline (per-node,
 plainest/safest) × stacked optimizations; `+b` = block templates (staging
 defaults per model: vdom→:c, vapor→:d), `+b:e` = engine staging
@@ -50,6 +65,14 @@ ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 `react-naive` / `react-compiler` are not part of the published matrix.)
 
 ### Third framework family: `octane`
+
+`octane` has a formal coordinate: `plan-ops-node-ifr`, from
+`externalCells()` in `vue-lynx/internal/matrix`. It sits on the combination
+the Vue pruning rules exclude — a compiled render model (`plan`: the compiler
+emits an immutable host plan, no vdom diff and no binding walk) that still
+streams per-node ops. `externalCells()` is deliberately separate from
+`legalCells()`: the per-flag factor decomposition varies one Vue flag at a
+time and would be meaningless across a different framework.
 
 `octane` is not a Vue cell and not a flag permutation — it is
 [octanejs/octane](https://github.com/octanejs/octane)'s private Lynx renderer,

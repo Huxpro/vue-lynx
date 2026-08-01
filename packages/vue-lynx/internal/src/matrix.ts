@@ -29,6 +29,15 @@
  *  - **Provider** — who materializes the residual: `bts` / `mts` / `engine`.
  *  - **Lifetime** — `persistent` vs `ephemeral` (IFR scout copy;
  *    browser-fused case additionally `thread=local`).
+ *  - **Encoding** — how a command is represented on the wire:
+ *      `numeric-flat` — opcode + operands in one flat array (vue-lynx sends
+ *        `JSON.stringify([9, 42, "row danger"])` for a class change);
+ *      `object-clone` — one object per command, structured-cloned.
+ *    Independent of Staging: two renderers can both stage `ops` and still
+ *    differ by an order of magnitude here.
+ *  - **Validation** — whether the receiver re-checks each message's shape:
+ *      `none` / `dev-only` / `always`. Cost scales with property count, so
+ *      it lands on point updates hardest.
  *
  * Mechanism terms (unchanged): **Op Stream / Named Tree / Data-Template /
  * Code-Template / Engine-Template** — the axis level is `native`, the
@@ -75,7 +84,23 @@ export type IfrPaintMode = 'plain' | 'code-paint' | 'native-paint';
 /** Legacy paint spellings. */
 export type LegacyIfrPaintMode = 'disposable-et' | 'engine-et';
 
-export type RenderModel = 'vdom' | 'vapor';
+/**
+ * `plan` = compiled render model that is neither a vdom diff nor Vapor's
+ * binding walk: the compiler emits an immutable host plan and the runtime
+ * replays it (octanejs/octane). Vue never produces this value.
+ */
+export type RenderModel = 'vdom' | 'vapor' | 'plan';
+
+/**
+ * Wire encoding of one host command. Orthogonal to Staging — see the header.
+ * `numeric-flat` is what every Vue cell uses (`internal/src/ops.ts` opcodes
+ * in a flat array); `object-clone` is one object per command through
+ * structured clone.
+ */
+export type WireEncoding = 'numeric-flat' | 'object-clone';
+
+/** Whether the receiving thread re-validates each inbound message's shape. */
+export type WireValidation = 'none' | 'dev-only' | 'always';
 
 export function normalizeStaging(
   v: TemplateStaging | LegacyTemplateStaging,
@@ -159,9 +184,18 @@ export interface MatrixCell {
   ifrPaint: IfrPaintMode | null;
   /** When the residual reaches the MT; null for ops staging. */
   delivery: TemplateDelivery | null;
+  /** How one command is represented on the wire. */
+  encoding: WireEncoding;
+  /** Whether the receiver re-validates each inbound message. */
+  validation: WireValidation;
+  /** True for reference cells outside the Vue flag-permutation set. */
+  external?: boolean;
   /** Lifecycle status; new cells default to `probe` until promoted. */
   status: CellStatus;
-  /** Six-column coordinate, e.g. `data/block/traversal+recover/BTS/persistent/runtime`. */
+  /**
+   * Full coordinate, e.g.
+   * `data/block/traversal+recover/BTS/persistent/runtime/numeric-flat/none`.
+   */
   coordinate: string;
   /** Mechanism name in the unified terminology. */
   term: string;
@@ -196,6 +230,8 @@ function addressingOf(
   naming: TemplateNaming,
 ): TemplateAddressing {
   if (render === 'vdom') return 'random-access';
+  // A plan renderer addresses by the id it minted per node, like vdom.
+  if (render === 'plan') return 'random-access';
   // Vapor navigates; block naming requires the recovered closure.
   return naming === 'block' ? 'traversal+recover' : 'traversal';
 }
@@ -216,6 +252,11 @@ interface CellSpec {
   delivery?: TemplateDelivery;
   /** Lifecycle status; omitted = `probe` (promotion is an explicit act). */
   status?: CellStatus;
+  /** Defaults to the Vue transport: a flat numeric ops array, unvalidated. */
+  encoding?: WireEncoding;
+  validation?: WireValidation;
+  /** Reference cell outside the Vue permutation set (see externalCells). */
+  external?: boolean;
 }
 
 function makeCell(spec: CellSpec): MatrixCell {
@@ -230,6 +271,9 @@ function makeCell(spec: CellSpec): MatrixCell {
     aliasOf,
     delivery: deliveryOverride,
     status = 'probe',
+    encoding = 'numeric-flat',
+    validation = 'none',
+    external = false,
   } = spec;
   const addressing = addressingOf(render, staging, naming);
   const providers: TemplateProvider[] =
@@ -262,12 +306,15 @@ function makeCell(spec: CellSpec): MatrixCell {
     ifrPaint: ifr ? (ifrPaint ?? 'plain') : null,
     status,
     delivery,
-    coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}/${delivery ?? '—'}${
+    encoding,
+    validation,
+    coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}/${delivery ?? '—'}/${encoding}/${validation}${
       ifr && ifrPaint && ifrPaint !== 'plain' ? `(${ifrPaint})` : ''
     }`,
     term: term(staging, naming),
   };
   if (aliasOf) cell.aliasOf = aliasOf;
+  if (external) cell.external = true;
   if (staging === 'native' || ifrPaint === 'native-paint') {
     cell.engineNaOnWeb = true;
   }
@@ -277,7 +324,9 @@ function makeCell(spec: CellSpec): MatrixCell {
 /**
  * The legal cell set ("Vue modes"), canonical ids, legacy ids preserved.
  * Pruning rules:
- *  - VDOM has no `tree` staging (no CLONE_TREE); Vapor no `ops`.
+ *  - VDOM has no `tree` staging (no CLONE_TREE); Vapor no `ops` — a compiled
+ *    render model that still streams per-node ops is not a Vue mode. It is a
+ *    real point in the space though, and `externalCells()` occupies it.
  *  - `code`/`native` staging is definitionally block-named.
  *  - `ifrPaint` varies only under IFR.
  *  - `delivery: 'bundle'` on data staging (`+b!`, #338) varies only the
@@ -351,6 +400,40 @@ export function legalCells(): MatrixCell[] {
 }
 
 /** Look up a cell by canonical id, legacy id, or known alias. */
+/**
+ * Reference cells outside the Vue flag-permutation set.
+ *
+ * These are *not* Vue modes and never enter `legalCells()` — the factor
+ * decomposition in `benchmark/harness/graph-eng-unified-factors.mjs` varies
+ * one Vue flag at a time and would be meaningless across a different
+ * framework. They exist so a third-party renderer can be located in the same
+ * vocabulary as everything else, and so its coordinate can be quoted next to
+ * its numbers.
+ *
+ * `octane` lands on `ops` staging with `node` naming under a compiled render
+ * model — the combination the pruning rules above exclude for Vue. Its two
+ * distinguishing columns are the new ones: it encodes each command as an
+ * object through structured clone and re-validates every inbound message,
+ * where every Vue cell ships a flat numeric array and validates nothing.
+ * That pair, not the staging, is where its point-update cost lives.
+ */
+export function externalCells(): MatrixCell[] {
+  return [
+    makeCell({
+      id: 'plan-ops-node-ifr',
+      legacyId: 'octane',
+      render: 'plan',
+      staging: 'ops',
+      naming: 'node',
+      ifr: true,
+      encoding: 'object-clone',
+      validation: 'always',
+      external: true,
+      status: 'probe',
+    }),
+  ];
+}
+
 export function getCell(id: string): MatrixCell | undefined {
   const cells = legalCells();
   const direct = cells.find((c) => c.id === id || c.legacyId === id);

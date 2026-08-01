@@ -73,6 +73,21 @@ export function copy(lang) {
     subGraphEngFactors: zh
       ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
       : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+    hCoordinates: zh
+      ? '坐标 — 每格在矩阵里的位置'
+      : 'Coordinates — where each cell sits in the matrix',
+    subCoordinates: zh
+      ? '八列坐标见 <code>vue-lynx/internal/matrix</code>。这里列出结构四列加上两列<strong>传输</strong>列'
+        + '（encoding / validation）——后者是本轮新加的，因为它们能解释结构列解释不了的差距：'
+        + '<code>vdom +ifr</code> 与 <code>octane</code> 在前六列<strong>完全相同</strong>，只差这两列，'
+        + '而 <code>select@10k</code> 差 13×。偏离 Vue 默认值的格子已高亮。'
+        + 'ReactLynx 不在这套词汇里（它不是 Vue 模式，也还没人把它定位到这个空间），故不列出。'
+      : 'Eight-column coordinates live in <code>vue-lynx/internal/matrix</code>. Shown here: the four structural '
+        + 'columns plus the two <strong>transport</strong> columns (encoding / validation) added in this round, '
+        + 'because they explain a gap the structural ones cannot — <code>vdom +ifr</code> and <code>octane</code> '
+        + 'are <strong>identical in the first six columns</strong> and differ only in these two, while '
+        + '<code>select@10k</code> differs by 13×. Cells departing from the Vue default are highlighted. '
+        + 'ReactLynx is absent: it is not a Vue mode and has not been located in this vocabulary.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
