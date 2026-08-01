@@ -3,9 +3,18 @@ import { ref, computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
 // WORKAROUND: lynx-stack web-platform's RuntimeWrapperWebpackPlugin shadows
-// `fetch` with an `undefined` parameter. Use `globalThis.fetch` to bypass.
+// `fetch` with an `undefined` parameter. Go through `globalThis` to bypass.
+//
+// Resolved lazily at request time: the IFR main-thread context has no fetch,
+// and a module-scope reference would crash bundle evaluation there.
+//
 // TODO: Remove once lynx-stack shims `fetch` on the `lynx` global.
-const _fetch: typeof fetch = globalThis.fetch ?? fetch
+function getFetch(): typeof fetch {
+  if (typeof globalThis.fetch === 'function') return globalThis.fetch
+  if (typeof fetch === 'function') return fetch
+
+  throw new Error('fetch is not available in this runtime')
+}
 
 // --- Types ---
 
@@ -39,7 +48,7 @@ const {
 } = useQuery({
   queryKey: ['users'],
   queryFn: async (): Promise<User[]> => {
-    const res = await _fetch('https://jsonplaceholder.typicode.com/users')
+    const res = await getFetch()('https://jsonplaceholder.typicode.com/users')
     if (!res.ok) throw new Error('Failed to fetch users')
     return res.json()
   },
@@ -65,7 +74,7 @@ const {
 } = useQuery({
   queryKey: computed(() => ['users', selectedUserId.value, 'posts']),
   queryFn: async (): Promise<Post[]> => {
-    const res = await _fetch(
+    const res = await getFetch()(
       `https://jsonplaceholder.typicode.com/users/${selectedUserId.value}/posts`,
     )
     if (!res.ok) throw new Error('Failed to fetch posts')
@@ -77,7 +86,7 @@ const {
 // 4. Mutation — optimistic delete with rollback
 const deleteMutation = useMutation({
   mutationFn: async (postId: number) => {
-    const res = await _fetch(
+    const res = await getFetch()(
       `https://jsonplaceholder.typicode.com/posts/${postId}`,
       { method: 'DELETE' },
     )
