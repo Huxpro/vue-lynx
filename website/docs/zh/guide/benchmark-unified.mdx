@@ -41,7 +41,7 @@
    毫秒，以及同一份数据归一到 `vdom` 基线（抵掉机器漂移）。第三个框架家族
    [Octane](https://github.com/octanejs/octane) 出现在这里，见下。
 3. **Storm 表 / 图** — 点状（select）vs 批量（update）延迟。Octane 在这张表里
-   也有一列，显示为可 hover 的 `N/A`。
+   是完整的一列，也是它差距最悬殊的地方，见下。
 4. **FCP 表 / 图** — content-probe 首帧阶梯（另一套仪器！）。
 5. **优化 flag 矩阵** — V4 记法 `render [+b[:d|c|e]] [+ifr[:c|e]]` 下的
    全部合法组合（基线 = per-node；`+b` = block templates；`+b:e` =
@@ -52,18 +52,21 @@
 ## Octane（第三个框架家族）
 
 [octanejs/octane](https://github.com/octanejs/octane) 自带一个私有的 Lynx
-renderer（`@octanejs/lynx`）。它的产物**确实能跑在 Lynx for Web 上**——和 Vue、
-React 各格共用同一份 `@lynx-js/web-core` 运行时——但它的原生事件回路没有接通：
-host driver 往 `__AddEvent` 注册的是一个字符串 token，而唯一的解码入口只在
-octane 自己的测试里被调用。点击因此落不到任何地方，**所有点击驱动的指标对
-Octane 不可测**，它只出现在「首屏」那一栏。
+renderer（`@octanejs/lynx`），这里按**完整矩阵**测量——storms 与首屏都有。
 
-Octane 无条件在主线程画首屏、且没有关掉的开关，所以公平的 Vue 对照是 `+ifr`
-那两行。**空首屏是平手**——领先的几格彼此只差几毫秒、样本区间几乎完全重叠。
-一旦首屏有内容，它在整条 1k→30k 阶梯上稳定是 `vdom` 基线的 **1.6–1.8×**：
-这是每节点的常数因子，不是只在某个规模才冒出来的开销。它的 per-node 对象命令
-协议没有 template/tree 注册可以摊销，而 Vue 各格会把重复结构折叠成
-`INSTANTIATE_TEMPLATE` / `REGISTER_TREE`+`CLONE_TREE`。
+这依赖一个上游修复。在
+[octanejs/octane#459](https://github.com/octanejs/octane/pull/459) 之前，Octane
+在 Lynx for Web 上收不到任何点击，背景线程也从不提交：web 上两个 Lynx 线程是
+不同的 JS realm（背景在 iframe 里），而 Octane 的校验用的是 realm 本地的
+`getPrototypeOf(v) === Object.prototype`，于是主线程拒收了背景发来的每一条消息。
+**本站在该修复之前发布的 Octane 数字量的是纯主线程首屏，已被取代。**
+
+结论是「因场景而异」，不是一个恒定倍数：**点状**更新落后一个数量级
+（`select@10k` 是 `vdom` 的 13×、`vapor` 的 22×），create 约 2×，
+mount-create 阶梯稳定 ~1.8×——而 30k 的**批量**更新反而比 `vdom` 更快（0.86×）。
+它的 per-node 对象命令协议每次更新都要通过 structured clone 重发整节点命令，
+没有 Vue 那种把点状更新压成极小 op 载荷的路径；批量更新时每节点成本被摊薄，
+差距就消失了。
 
 方法、注意事项与完整解读：
 [`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md)。

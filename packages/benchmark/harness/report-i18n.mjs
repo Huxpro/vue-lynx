@@ -74,8 +74,8 @@ export function copy(lang) {
       ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
       : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
     hFirstScreen: zh
-      ? '首屏 — 无交互量纲（含 Octane）'
-      : 'First screen — the interaction-free scale (incl. Octane)',
+      ? '首屏 — 无交互量纲'
+      : 'First screen — the interaction-free scale',
     subFirstScreen: zh
       ? '同一 session、同一台机器、每次 rep 轮换 mode 顺序。<b>启动</b> = <code>&lt;lynx-view&gt;</code> attach → 首个内容绘出（空应用）；'
         + '<b>mount-create</b> = 应用<strong>构建时</strong>就带满表格（<code>BENCH_AUTOROWS=N</code>），量 attach → N 行全部绘出，因此包含框架启动。'
@@ -96,27 +96,21 @@ export function copy(lang) {
       lynx: zh ? 'lynx gzip' : 'lynx gzip',
     },
     noteOctane: zh
-      ? '<b>Octane 只有这一栏数据。</b>它的 host driver 给 <code>__AddEvent</code> 注册的是一个字符串 token '
-        + '（<code>octane:&lt;root&gt;:&lt;id&gt;:&lt;generation&gt;:&lt;listener&gt;</code>），能把 token 还原成事件的只有 '
-        + '<code>LynxMainThreadController.dispatchNativeEvent</code>，而它只在 <code>packages/lynx/tests/</code> 里被调用——'
-        + 'runtime 与 <code>@octanejs/rspeedy-plugin</code> 生成的主线程入口都没有接引擎回调。'
-        + '因此所有点击驱动的指标（create / update10th / select / storms）对 Octane 不可测；'
-        + '这与 octane README 把「native event/reload contracts」列为未完成关卡一致。方法与解读见 <code>packages/benchmark/OCTANE.md</code>。'
-        + '<b>启动那一列请谨慎读</b>：样本区间互相重叠，本分支跑过的四轮里 Octane 三次第一、一次第三。'
-      : '<b>Octane appears in this section only.</b> Its host driver registers a string token with <code>__AddEvent</code> '
-        + '(<code>octane:&lt;root&gt;:&lt;id&gt;:&lt;generation&gt;:&lt;listener&gt;</code>), and the only decoder is '
-        + '<code>LynxMainThreadController.dispatchNativeEvent</code>, called exclusively from <code>packages/lynx/tests/</code> — '
-        + 'neither the runtime nor <code>@octanejs/rspeedy-plugin</code>’s generated main-thread entry wires an engine callback into it. '
-        + 'So every click-driven metric (create / update10th / select / storms) is unmeasurable for Octane, consistent with octane’s README '
-        + 'listing the “native event/reload contracts” as an open gate. Method and reading: <code>packages/benchmark/OCTANE.md</code>. '
-        + '<b>Read the startup column with care</b> — the per-sample ranges overlap, and across the four runs this branch went through Octane placed first three times and third once.',
-    noEventTitle: zh
-      ? 'Octane 的 runtime 收不到原生事件（host driver 只注册了一个字符串 token，'
-        + '唯一的解码入口只在 octane 自己的测试里被调用），所以点击驱动的指标无法测量。'
-        + '详见 packages/benchmark/OCTANE.md。'
-      : 'Octane’s runtime never receives native events (its host driver registers a string '
-        + 'token whose only decoder is called from octane’s own tests), so no click-driven '
-        + 'metric can be measured. See packages/benchmark/OCTANE.md.',
+      ? '<b>Octane 现在全矩阵可测。</b>在 <a href="https://github.com/octanejs/octane/pull/459">octanejs/octane#459</a> 之前，'
+        + '它在 Lynx for Web 上一个点击都收不到：两个线程是不同的 JS realm（背景在 iframe 里），'
+        + '而校验用的是 realm 本地的 <code>getPrototypeOf(v) === Object.prototype</code>，'
+        + '于是主线程把背景发来的每一条消息都判成「不是 plain object」而拒收——握手第一条就断，背景永远不提交。'
+        + '本页 Octane 的所有数字都在该修复之上测得；'
+        + '<b>本仓库更早发布过的 Octane mount-create 数字量的是纯主线程首屏</b>，已被本轮重测取代。'
+        + '方法与解读见 <code>packages/benchmark/OCTANE.md</code>。'
+      : '<b>Octane is now measurable across the whole matrix.</b> Before '
+        + '<a href="https://github.com/octanejs/octane/pull/459">octanejs/octane#459</a> it received no taps at all on '
+        + 'Lynx for Web: the two threads are separate JS realms (the background runs in an iframe), and the validators '
+        + 'used a realm-local <code>getPrototypeOf(v) === Object.prototype</code> check, so main rejected every message '
+        + 'the background sent as “not a plain object” — the handshake never completed and the background never committed. '
+        + 'Every Octane number on this page was measured on top of that fix; '
+        + '<b>the Octane mount-create figures this repo published earlier measured main-thread-only first screen</b> and are '
+        + 'superseded by this run. Method and reading: <code>packages/benchmark/OCTANE.md</code>.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -325,6 +319,14 @@ export function buildConclusions(d, lang) {
     fsMountVdom1k,
     fsMountOctaneMax,
     fsMountVdomMax,
+    octSelect10k,
+    octUpdate10th10k,
+    octCreate10k,
+    octUpdateStorm30k,
+    vdomSelect10k,
+    vdomUpdate10th10k,
+    vdomCreate10k,
+    vdomUpdateStorm30k,
   } = d;
 
   const out = [];
@@ -443,42 +445,69 @@ export function buildConclusions(d, lang) {
     });
   }
 
+  if (octSelect10k != null && vdomSelect10k != null) {
+    const sel = octSelect10k / vdomSelect10k;
+    const upd =
+      octUpdate10th10k != null && vdomUpdate10th10k != null
+        ? octUpdate10th10k / vdomUpdate10th10k
+        : null;
+    const cre =
+      octCreate10k != null && vdomCreate10k != null ? octCreate10k / vdomCreate10k : null;
+    const batch =
+      octUpdateStorm30k != null && vdomUpdateStorm30k != null
+        ? octUpdateStorm30k / vdomUpdateStorm30k
+        : null;
+    out.push({
+      tone: sel > 10 ? 'serious' : 'warn',
+      title: zh
+        ? `Octane：点状更新 ${sel.toFixed(0)}× vdom，批量与创建却接近持平`
+        : `Octane: ${sel.toFixed(0)}× vdom on point updates, yet level on batch and create`,
+      why: zh
+        ? '差距只出在“改一点点”的场景。它的 per-node 对象命令协议每次更新都要重发整节点命令并走 structured clone，'
+          + '没有 Vue 那种把点状更新压成极小 op 载荷的路径；批量更新时每节点成本被摊薄，差距就消失了。'
+          + '选型含义：Octane 适合首屏与整块重绘，不适合高频点状交互。'
+        : 'The gap is specific to touching a little. Its per-node object command protocol re-ships whole-node commands '
+          + 'through structured clone on every update, with no equivalent of the tiny op payload Vue collapses a point '
+          + 'update into; under batch updates the per-node cost amortizes and the gap closes. Product read: Octane suits '
+          + 'first screen and wholesale repaints, not high-frequency point interaction.',
+      evidence: zh
+        ? `select@10k ${octSelect10k.toFixed(0)} vs vdom ${vdomSelect10k.toFixed(0)} ms（${sel.toFixed(1)}×）`
+          + (upd != null ? ` · update10th@10k ${upd.toFixed(1)}×` : '')
+          + (cre != null ? ` · create@10k ${cre.toFixed(2)}×` : '')
+          + (batch != null ? ` · updateStorm@30k ${batch.toFixed(2)}×` : '')
+        : `select@10k ${octSelect10k.toFixed(0)} vs vdom ${vdomSelect10k.toFixed(0)} ms (${sel.toFixed(1)}×)`
+          + (upd != null ? ` · update10th@10k ${upd.toFixed(1)}×` : '')
+          + (cre != null ? ` · create@10k ${cre.toFixed(2)}×` : '')
+          + (batch != null ? ` · updateStorm@30k ${batch.toFixed(2)}×` : ''),
+    });
+  }
+
   if (fsStartupOctane != null && fsMountOctane1k != null && fsMountVdom1k != null) {
     const mount1k = fsMountOctane1k / fsMountVdom1k;
     const big =
       fsMountOctaneMax && fsMountVdomMax && fsMountVdomMax.ms
         ? fsMountOctaneMax.ms / fsMountVdomMax.ms
         : null;
-    const vsIfr =
-      fsStartupVdomIfr != null ? fsStartupOctane / fsStartupVdomIfr : null;
     out.push({
       tone: 'warn',
       title: zh
-        ? `Octane：空首屏与 +ifr 打平，一有内容就整条阶梯落后 ${mount1k.toFixed(1)}×`
-        : `Octane: ties the +ifr band on an empty first screen, ${
-          mount1k.toFixed(1)
-        }× behind at every rung once it has content`,
+        ? `Octane 首屏：整条阶梯稳定 ${mount1k.toFixed(1)}× vdom，空屏启动也垫底`
+        : `Octane first screen: a flat ${mount1k.toFixed(1)}× vdom across the ladder, and last on empty startup`,
       why: zh
-        ? '它的主线程包带的是专用只渲染 renderer，不是第二份框架运行时——所以空首屏便宜；'
-          + '但 per-node 对象命令协议没有 template/tree 注册可摊销，首屏一有内容就付回去。'
-          + '归一曲线上这是一条几乎水平的线：每节点的常数因子，不是被摊销掉的固定开销。'
-          + '点击驱动的指标全部不可测（原生事件回路没接通）。'
-        : 'Its main-thread bundle carries a purpose-built render-only renderer instead of a second copy of the '
-          + 'framework runtime, which is why the empty first screen is cheap; but its per-node object command '
-          + 'protocol has no template/tree registration to amortize, so it pays that back as soon as the first '
-          + 'screen has content. On the normalized curve that reads as a near-flat line: a constant per-node '
-          + 'factor, not a fixed overhead being amortized away. Every click-driven metric is unmeasurable '
-          + '(native event loop not wired).',
+        ? '同一个 per-node 常数因子，从 1k 到 30k 几乎不变——是每节点的固定成本，不是能被摊销掉的开销。'
+          + '主线程包确实带的是专用只渲染 renderer 而不是第二份框架运行时，这是真实的设计优势；'
+          + '只是在本环境下抵不过背景握手与 adoption 的代价。'
+        : 'One per-node constant factor, near-flat from 1k to 30k — a fixed cost per node rather than an overhead that '
+          + 'amortizes. The main-thread bundle does carry a purpose-built render-only renderer instead of a second copy '
+          + 'of the framework runtime, which is a real design advantage; it just does not pay for the background '
+          + 'handshake and adoption on this host.',
       evidence: zh
-        ? `启动 ${fsStartupOctane.toFixed(0)} ms（vdom +ifr ${
-          fsStartupVdomIfr?.toFixed(0) ?? '—'
-        }${vsIfr != null ? `，${vsIfr.toFixed(2)}×` : ''}，区间重叠）· `
+        ? `启动 ${fsStartupOctane.toFixed(0)} ms vs vdom +ifr ${fsStartupVdomIfr?.toFixed(0) ?? '—'}（最慢一格）· `
           + `mount-create 1k ${mount1k.toFixed(2)}× vdom`
           + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : '')
-        : `startup ${fsStartupOctane.toFixed(0)} ms (vdom +ifr ${
+        : `startup ${fsStartupOctane.toFixed(0)} ms vs vdom +ifr ${
           fsStartupVdomIfr?.toFixed(0) ?? '—'
-        }${vsIfr != null ? `, ${vsIfr.toFixed(2)}×` : ''}; ranges overlap) · `
-          + `mount-create 1k ${mount1k.toFixed(2)}× vdom`
+        } (slowest cell) · mount-create 1k ${mount1k.toFixed(2)}× vdom`
           + (big != null ? ` · ${fsMountOctaneMax.scale} ${big.toFixed(2)}× vdom` : ''),
     });
   }

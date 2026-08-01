@@ -53,10 +53,14 @@ ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 
 `octane` is not a Vue cell and not a flag permutation — it is
 [octanejs/octane](https://github.com/octanejs/octane)'s private Lynx
-renderer, measured black-box like the react cells. Its native event loop is
-not wired upstream, so it can only be measured on the interaction-free
-**`first-screen`** workload (below); it is absent from every storm and FCP
-table by data, not by filtering. Method and reading: **[OCTANE.md](./OCTANE.md)**.
+renderer, measured black-box like the react cells. It covers the full
+interaction matrix (storms + first screen) as of
+[octanejs/octane#459](https://github.com/octanejs/octane/pull/459), which fixed
+a realm-local `Object.prototype` check that made the main thread reject every
+message the background sent on Lynx for Web. It stays out of the
+`content-probe` FCP tables, which are built from `ifr-bench`'s Vue-only
+sfc-probe. Method, results and the retraction of the pre-#459 numbers:
+**[OCTANE.md](./OCTANE.md)**.
 
 Run the all-permutation create/update sweep + factor decomposition:
 
@@ -89,9 +93,8 @@ node harness/synthesize.mjs && node harness/report-unified.mjs
 `first-screen` is the interaction-free workload — `cross.mjs --startup-only`
 and `cross.mjs --mount-create=N` (the app is *built* with the table already
 populated, via `BENCH_AUTOROWS=N`), the latter over the full 1k→30k ladder.
-It is the only workload the `octane` family can be measured on, and its rows
-are comparable only within the workload: `mount_create_ms` includes framework
-boot, so it is not a `create@1k` storm number. The report plots it twice —
+Its rows are comparable only within the workload: `mount_create_ms` includes
+framework boot, so it is not a `create@1k` storm number. The report plots it twice —
 absolute ms, and normalized to the `vdom` baseline so host drift cancels.
 
 ### Scale ladder

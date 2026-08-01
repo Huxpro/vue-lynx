@@ -1,7 +1,7 @@
 # Unified Benchmark Analysis
 
-> Generated 2026-07-30T14:25:59.197Z @ d4235a9
-> Host: 4× Intel(R) Xeon(R) Processor @ 2.80GHz
+> Generated 2026-08-01T09:25:03.054Z @ 2e348fd
+> Host: 4× Intel(R) Xeon(R) Processor @ 2.10GHz
 
 ## Why unify?
 
@@ -41,7 +41,7 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 | vapor-engine | ✓ | ✓ | — | — |
 | vapor-ifr-engine-et | ✓ | ✓ | — | — |
 | vapor-ifr-code-paint | — | ✓ | — | — |
-| octane | — | — | — | — |
+| octane | ✓ | — | — | — |
 | react | ✓ | ✓ | — | — |
 | react-naive | ✓ | — | — | — |
 | react-compiler | ✓ | — | — | — |
@@ -52,13 +52,13 @@ Never compute `vapor_bg / ifr_fcp`. Same number-of-elements label ≠ same metri
 
 > Vapor wins update ops 5.8–9.8× on BG thread vs VDOM (instrumented).
 
-Instrumented BG select still ~9.8×. Black-box selectStorm@10k reproduces ~8.3×. One-shot select@10k is near parity (1.19×) — frame-floor masks BG wins. 
+Instrumented BG select still ~9.8×. Black-box selectStorm@10k reproduces ~9.6×. One-shot select@10k is near parity (1.72×) — frame-floor masks BG wins. 
 
 ### `vapor-create-parity` — **holds-with-caveat**
 
 > Vapor creation is roughly parity with VDOM (slightly slower e2e).
 
-create@10k vapor/vdom=1.00×. React still leads create@10k (react/vdom=0.96×). 
+create@10k vapor/vdom=0.95×. 
 
 ### `ifr-fcp-minus-19` — **holds-locally**
 
@@ -76,7 +76,7 @@ IFR-sans-ET slower than off at 10k, 20k, 30k. IFR+ET best at 1k, 3k, 5k, 10k, 20
 
 > React leads creation; Vue/Vapor lead sustained updates (storms).
 
-React leads create@10k. Vapor selectStorm@10k ≪ React (119 vs 2632 ms). vdom-ifr/vdom selectStorm@10k=1.01× (plain IFR ≈ off: OK). vdom-ifr-et/vdom selectStorm@10k=0.98×, create@10k=0.97×. 
+Vapor selectStorm@10k ≪ React (65 vs 2632 ms). vdom-ifr/vdom selectStorm@10k=1.00× (plain IFR ≈ off: OK). vdom-ifr-et/vdom selectStorm@10k=1.54×, create@10k=1.19×. 
 
 ### `single-process-flat-fcp` — **holds-as-negative-control**
 
@@ -100,15 +100,15 @@ Playground docs quote React selectStorm@10k ≈ 2544 ms from an earlier machine;
 
 ### 2. Vapor's update advantage is real at scale — but only storms show it
 
-selectStorm@10k: VDOM 984 ms → Vapor 119 ms (8.3×). One-shot select stays near the frame floor. Instrumented BG ratios remain the right *micro* story; storms are the right *user* story.
+selectStorm@10k: VDOM 628 ms → Vapor 65 ms (9.6×). One-shot select stays near the frame floor. Instrumented BG ratios remain the right *micro* story; storms are the right *user* story.
 
 ### 3. IFR without ET ≈ off for post-mount table ops
 
-selectStorm@10k vdom-ifr/vdom = 1.01×. Plain IFR is a first-frame / bundle-shape concern for this workload.
+selectStorm@10k vdom-ifr/vdom = 1.00×. Plain IFR is a first-frame / bundle-shape concern for this workload.
 
 ### 4. IFR+ET is NOT first-frame-only on this table
 
-selectStorm@10k vdom-ifr-et/vdom = 0.98×; create@10k = 0.97×. Element Templates clone repeated row structure after mount — a coverage hole the old IFR-only FCP campaigns never measured.
+selectStorm@10k vdom-ifr-et/vdom = 1.54×; create@10k = 1.19×. Element Templates clone repeated row structure after mount — a coverage hole the old IFR-only FCP campaigns never measured.
 
 ### 5. "−19% FCP" is not a constant
 
@@ -116,7 +116,7 @@ On the content-probe ladder, VDOM+IFR (no ET) wins at small N and **loses by ~20
 
 ### 6. React create lead / Vue update lead survives same-host recheck
 
-create@10k react/vdom = 0.96×; selectStorm@10k react/vapor = 22.2×.
+create@10k react/vdom = 1.18×; selectStorm@10k react/vapor = 40.4×.
 
 ## Headline tables (same environment only)
 
@@ -124,9 +124,9 @@ create@10k react/vdom = 0.96×; selectStorm@10k react/vapor = 22.2×.
 
 | scale | react | vdom | vdom-ifr | vdom-ifr-et | vapor | vapor-ifr |
 |---|---|---|---|---|---|---|
-| 1k | 225.5 | 70.9 | 67.5 | 65.1 | 20.5 | 19.2 |
-| 10k | 2632.4 | 984.1 | 994.6 | 967.9 | 118.6 | 124.7 |
-| 30k | 10259.5 | 3569.8 | 3329.1 | 3173.6 | 275.2 | 362.9 |
+| 1k | 225.5 | 66.5 | 56.3 | 65.1 | 19.2 | 20.2 |
+| 10k | 2632.4 | 628.3 | 627.8 | 967.9 | 65.2 | 59.9 |
+| 30k | 10259.5 | 2714.8 | 2694.0 | 3173.6 | 287.7 | 244.7 |
 
 ### Content-probe FCP (lynx-web ×1, ms median)
 
@@ -163,6 +163,7 @@ Full write-up: `packages/ifr-bench/GRAPH-ENG-MATRIX.md`.
 - table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-4axis.json`
 - table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-4axis-full.json`
 - table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-graph-eng-b2.json`
+- table-storms: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/cross-storms-octane-web.json`
 - instrumented-vdom-vapor: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/benchmark/results/latest.json`
 - ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-x1.json`
 - ifr-scale-fcp: `/tmp/claude-0/-home-user-vue-lynx/a0461733-e703-561e-88e8-cffd93bd3874/scratchpad/vapor/packages/ifr-bench/results/browser-results-scale-x4.json`

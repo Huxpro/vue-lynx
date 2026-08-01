@@ -48,6 +48,9 @@ const graphEng4axisFullStorms = readJson('results/cross-storms-graph-eng-4axis-f
 // new cells re-measured in ONE same-host session; newest-date merge below
 // makes it supersede the earlier per-key samples for the cells it covers.
 const graphEngB2Storms = readJson('results/cross-storms-graph-eng-b2.json');
+// Octane + its four Vue comparators in ONE same-host session, measurable at
+// all since octanejs/octane#459 closed the cross-realm gap (see OCTANE.md).
+const octaneStorms = readJson('results/cross-storms-octane-web.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -74,6 +77,7 @@ const perOp = mergePerOp(
   graphEng4axisStorms,
   graphEng4axisFullStorms,
   graphEngB2Storms,
+  octaneStorms,
 );
 
 /**
@@ -89,13 +93,13 @@ const REPLICATE_ARCHS = new Set(['vapor-ifr-sparse']);
 const isEngineNa = (key) =>
   ENGINE_NA_ARCHS.has(key) || REPLICATE_ARCHS.has(key);
 /**
- * Architectures whose runtime never receives native events, so no
- * click-driven metric can exist for them. Unlike the engine cells these are
- * *kept* as a column and rendered as an explicit N/A — a reader comparing
- * frameworks should see that the cell was attempted, not silently absent.
- * See `OCTANE.md`.
+ * Was `new Set(['octane'])` while Octane could not receive native events on
+ * Lynx for Web. octanejs/octane#459 fixed that, so every click-driven metric
+ * is now measured for it and the set is empty — kept because the *mechanism*
+ * (a column present but explicitly N/A, rather than silently absent) is the
+ * right way to show any future framework that cannot be driven here.
  */
-const NO_EVENT_ARCHS = new Set(['octane']);
+const NO_EVENT_ARCHS = new Set();
 /** Excluded from row-best / geometric mean (no comparable number exists). */
 const isUnscored = (key) => isEngineNa(key) || NO_EVENT_ARCHS.has(key);
 
@@ -590,6 +594,7 @@ function stormSeries(op, t, ticks = 1, pred = null) {
     '#6b7280', '#374151', // vdom, vdom-et (grays)
     '#2563eb', '#7c3aed', // vdom-ifr, vdom-ifr-et
     '#eda100', // react
+    '#db2777', // octane — third framework family
   ];
   return cols
     .filter((c) => !isUnscored(c.key) && (!pred || pred(c.key)))
@@ -669,6 +674,15 @@ function conclusionNumbers() {
     fsMountVdom1k: g('vdom', '1k', 'mount_create_ms', 'first-screen'),
     fsMountOctaneMax: mountCreateMax('octane'),
     fsMountVdomMax: mountCreateMax('vdom'),
+    // Octane interaction, measurable since octanejs/octane#459.
+    octSelect10k: g('octane', '10k', 'select'),
+    octUpdate10th10k: g('octane', '10k', 'update10th'),
+    octCreate10k: g('octane', '10k', 'create'),
+    octUpdateStorm30k: g('octane', '30k', 'updateStorm'),
+    vdomSelect10k: g('vdom', '10k', 'select'),
+    vdomUpdate10th10k: g('vdom', '10k', 'update10th'),
+    vdomCreate10k: g('vdom', '10k', 'create'),
+    vdomUpdateStorm30k: g('vdom', '30k', 'updateStorm'),
   };
 }
 

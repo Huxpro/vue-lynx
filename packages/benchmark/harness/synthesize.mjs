@@ -8,8 +8,7 @@
  *   - results/cross-storms-*.json (table / interaction)
  *   - results/latest.json (instrumented VDOM vs Vapor)
  *   - results/web-baseline-latest.json (bare DOM)
- *   - results/startup-only.json + results/mount-create.json (first screen;
- *     the only workload the `octane` family can be measured on)
+ *   - results/startup-only.json + results/mount-create.json (first screen)
  *   - ../ifr-bench/results/browser-results-scale-*.json (FCP ladder)
  *   - ../ifr-bench/results/browser-results-graph-eng-dense-sparse*.json (#301 naming)
  *   - ../ifr-bench/results/sfc-probe-sizes-graph-eng.json (#301 bundle flags)
@@ -78,6 +77,10 @@ function ingestTableStorms(unified) {
     // Build-time-parse sweep (#337 `+b:c` / #338 `+b!`): all vue cells +
     // vapor-code / vapor-bang, one same-host session, 1k/10k/30k.
     'results/cross-storms-graph-eng-b2.json',
+    // Octane vs its four Vue comparators, one same-host session, once
+    // octanejs/octane#459 closed the cross-realm gap that made every
+    // click-driven metric unmeasurable on Lynx for Web (see OCTANE.md).
+    'results/cross-storms-octane-web.json',
   ];
   const seen = new Map();
   for (const rel of files) {
@@ -541,11 +544,10 @@ function ingestWebBaseline(unified) {
 /**
  * First-screen workload (`cross.mjs --startup-only` / `--mount-create`).
  *
- * These are the only two measurements that need no interaction, which is what
- * makes them the whole measurable surface for the `octane` family — its host
- * driver never receives native events (see OCTANE.md). Framework-neutral: the
- * Vue cells are measured by the same runners in the same session, so the rows
- * are directly comparable inside this workload (and only inside it).
+ * The two measurements that need no interaction. Framework-neutral: every cell
+ * is measured by the same runners in the same session, so the rows are directly
+ * comparable inside this workload — and only inside it, since
+ * `mount_create_ms` includes framework boot and is not a `create` storm.
  */
 function ingestFirstScreen(unified) {
   /** dist dir in the results JSON → architecture id. */

@@ -45,7 +45,8 @@ Sibling pages keep only what this matrix does **not** cover:
    This is where the third framework family,
    [Octane](https://github.com/octanejs/octane), appears — see below.
 3. **Storm table / charts** — point (select) vs batch (update) latency.
-   Octane is a column there too, rendered as a hoverable `N/A`.
+   Octane is a full column there, and this is where its result is most
+   lopsided — see below.
 4. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
 5. **Optimization-flag matrix** — every legal combination in V4 notation
    `render [+b[:d|c|e]] [+ifr[:c|e]]` (baseline = per-node; `+b` = block
@@ -57,22 +58,25 @@ Sibling pages keep only what this matrix does **not** cover:
 ## Octane (third framework family)
 
 [octanejs/octane](https://github.com/octanejs/octane) ships its own private
-Lynx renderer (`@octanejs/lynx`). Its bundles **do run on Lynx for Web** —
-same `@lynx-js/web-core` runtime as the Vue and React cells — but its native
-event loop is not wired: the host driver registers a string token with
-`__AddEvent`, and the only decoder is called exclusively from octane's own
-tests. Taps therefore reach nothing, so **every click-driven metric is
-unmeasurable for Octane** and it appears in the *First screen* section only.
+Lynx renderer (`@octanejs/lynx`), measured here across the **full** matrix —
+storms and first screen alike.
 
-Octane always paints the first screen on the main thread with no opt-out, so
-the fair Vue comparators are the `+ifr` rows. On an *empty* first screen it
-lands inside that band (a tie — the leaders are within a few ms and the
-sample ranges overlap). Once the first screen has content it is a flat
-**1.6–1.8× the `vdom` baseline across the entire 1k→30k ladder** — a constant
-per-node factor, not a penalty that only shows up at one size. Its per-node
-object command protocol has no template/tree registration to amortize, where
-the Vue cells collapse repeated structure into `INSTANTIATE_TEMPLATE` /
-`REGISTER_TREE`+`CLONE_TREE`.
+That needed an upstream fix. Until
+[octanejs/octane#459](https://github.com/octanejs/octane/pull/459), Octane
+received no taps at all on Lynx for Web and its background thread never
+committed: the two Lynx threads are separate JS realms on web (the background
+runs in an iframe), and Octane's validators used a realm-local
+`getPrototypeOf(v) === Object.prototype` check, so main rejected every message
+the background sent. **Octane figures published here before that fix measured
+main-thread-only first-screen paint and are superseded.**
+
+The result is shape-dependent rather than a flat penalty. Octane is an order of
+magnitude behind on **point** updates (`select@10k` 13× `vdom`, 22× `vapor`),
+~2× on create, a flat ~1.8× on the mount-create ladder — and at 30k **batch**
+updates it is *faster* than `vdom` (0.86×). Its per-node object command
+protocol re-ships whole-node commands through structured clone on every update,
+with no equivalent of the tiny op payload the Vue cells collapse a point update
+into; under batch load that per-node cost amortizes and the gap closes.
 
 Method, caveats and the full reading:
 [`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md).
