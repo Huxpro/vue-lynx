@@ -121,13 +121,13 @@ g['updateGlobalProps'] = function(_data: unknown): void {
   // no-op
 };
 
-// Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
-g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+// Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data, pipelineOptions? }).
+g['vuePatchUpdate'] = function({ data, pipelineOptions }: { data: string; pipelineOptions?: Record<string, unknown> }): void {
   // IFR hydration: the background thread's initial batches replay the
   // main-thread first-screen render — skip/patch them instead of applying.
   if (interceptPatchUpdate(data)) return;
   const ops = JSON.parse(data) as unknown[];
-  applyOps(ops);
+  applyOps(ops, true, pipelineOptions);
 };
 
 // Sent by the IFR Background entry after its complete initial op stream has

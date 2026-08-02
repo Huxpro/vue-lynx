@@ -523,7 +523,7 @@ function instantiateRegisteredTree(
   }
 }
 
-export function applyOps(ops: unknown[], flush = true): void {
+export function applyOps(ops: unknown[], flush = true, pipelineOptions?: Record<string, unknown>): void {
   const len = ops.length;
   if (len === 0) return;
 
@@ -915,7 +915,13 @@ export function applyOps(ops: unknown[], flush = true): void {
   }
 
   // Flush all pending PAPI changes to the native layer in one shot.
-  if (flush) __FlushElementTree();
+  if (flush) {
+    if (pipelineOptions) {
+      __FlushElementTree(undefined, { pipelineOptions });
+    } else {
+      __FlushElementTree();
+    }
+  }
 }
 
 /** Expose elements map so entry-main.ts can seed the page-root entry. */

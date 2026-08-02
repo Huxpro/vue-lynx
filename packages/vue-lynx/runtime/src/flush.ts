@@ -8,6 +8,12 @@ import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
 
 import { isIfrEnabled, isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
+import {
+  beginPipeline,
+  markTiming,
+  resetPipelineContext,
+  takePipelineOptions,
+} from './performance.js';
 
 /**
  * Schedule a flush of the ops buffer via Vue's post-flush hook.
@@ -146,6 +152,7 @@ export function waitForFlush(): Promise<void> {
 export function scheduleFlush(): void {
   if (scheduled) return;
   scheduled = true;
+  beginPipeline('update');
   queuePostFlushCb(doFlush);
 }
 
@@ -159,6 +166,7 @@ export function resetFlushState(): void {
   initialRenderCompletionRequested = false;
   engineAckObserved = false;
   warnedAckFallback = false;
+  resetPipelineContext();
 }
 
 function doFlush(): void {
@@ -240,14 +248,24 @@ function doFlush(): void {
 
   // The local IFR path avoids serialization unless an observability hook
   // requested it. Background IPC still needs the wire payload.
+  markTiming('packChangesStart');
   if (data === undefined) data = JSON.stringify(ops);
+
+  // Take pipeline options before clearing context. Only flagged batches
+  // produce options — unflagged updates get undefined (no benchmark sample).
+  markTiming('packChangesEnd');
+  const plOpts = takePipelineOptions();
 
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
   // (vitest node env) referencing it directly would throw ReferenceError.
   const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
+
+  const payload: { data: string; pipelineOptions?: Record<string, unknown> } = { data };
+  if (plOpts) payload.pipelineOptions = plOpts;
+
   app?.callLepusMethod?.(
     'vuePatchUpdate',
-    { data },
+    payload,
     () => {
       // Main thread has finished applying the ops — resolve the promise and
       // latch that this engine delivers callbacks. State cleanup and the IFR
@@ -256,4 +274,7 @@ function doFlush(): void {
       ack.resolve();
     },
   );
+
+  // Pipeline context belongs to this batch; clear it regardless of delivery.
+  resetPipelineContext();
 }

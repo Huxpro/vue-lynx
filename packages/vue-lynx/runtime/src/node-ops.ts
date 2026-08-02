@@ -15,6 +15,7 @@ import {
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
+import { captureTimingFlag, TIMING_FLAG_PROP } from './performance.js';
 import { ShadowElement } from './shadow-element.js';
 import { renderTemplateSlot } from './slot-host.js';
 import { normalizeStyleObject } from './style-normalization.js';
@@ -217,6 +218,15 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
         }
         return;
       }
+    }
+
+    // ------------------------------------------------------------------
+    // Benchmark timing flag: capture into the current pipeline context.
+    // The prop still flows to native as SET_PROP (needed for engine-side
+    // recognition); we only intercept the value for pipeline binding.
+    // ------------------------------------------------------------------
+    if (key === TIMING_FLAG_PROP) {
+      captureTimingFlag(nextValue);
     }
 
     // ------------------------------------------------------------------
