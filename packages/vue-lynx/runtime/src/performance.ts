@@ -91,6 +91,9 @@ export function beginPipeline(stage: 'setup' | 'update'): void {
   (opts as Record<string, unknown>)['pipelineOrigin'] ??= 'vue';
   (opts as Record<string, unknown>)['dsl'] ??= 'vue';
   (opts as Record<string, unknown>)['stage'] ??= stage;
+
+  // Mark the start of Vue's render/patch phase
+  perf._markTiming?.(id, 'vueRenderStart');
 }
 
 /**

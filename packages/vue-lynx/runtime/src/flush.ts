@@ -174,8 +174,12 @@ function doFlush(): void {
   const ops = takeOps();
   if (ops.length === 0) {
     deliverInitialRenderCompletion();
+    resetPipelineContext();
     return;
   }
+
+  // All render effects and component patches have completed — mark the end.
+  markTiming('vueRenderEnd');
 
   // Optional observability hook (benchmarks, debugging): called with every
   // flushed batch before it is posted to the Main Thread.
