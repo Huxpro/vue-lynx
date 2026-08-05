@@ -116,3 +116,22 @@ pnpm test:morph   # after touching data-flip usage or the framework
 
 Plus a Playwright keyboard-walk over any slides you added (assert zero
 `pageerror`s) — see `README.md` for the deploy/preview URLs.
+
+## Sibling deck pages (compare.html)
+
+A second deck page can reuse the whole engine (`src/main.js` + `styles.css`)
+by copying `index.html`'s shell (chrome, `.frame`, progress) and registering
+itself as a rollup input in `vite.config.js`. Two `<html>`-level opt-outs keep
+it independent of the main deck:
+
+- `data-i18n-off` — the page is authored directly in its final language; the
+  EN→ZH swap and the `ZH_NOTES` slide-order mapping (both index.html-shaped)
+  are skipped entirely.
+- `data-deck-channel="…"` — its speaker/nav BroadcastChannel name, so the two
+  decks never sync into each other when both are open. (`speaker.html` still
+  hardcodes the main channel — speaker view for sibling decks is not wired.)
+
+The per-page `data-counter` total and the one-`<aside class="notes">`-per-slide
+invariant still apply. `compare.html` (frameworks-on-Lynx research deck) is the
+worked example; its page-specific CSS lives in its own `<style>` block, not in
+`styles.css`.

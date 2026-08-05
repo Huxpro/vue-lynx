@@ -119,7 +119,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 34</span>
+    <span data-counter>01 / 38</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
@@ -191,6 +191,38 @@
     </p>
     <aside class="notes">
       <p><strong>三个来源。</strong>ReactLynx 是 Lynx 官方框架（Preact 内核 + Rust/SWC 编译器）；Vue Lynx 是我们的 Vue 3 移植（vapor 分支上有完整的 11 格架构矩阵）；Octane 是 trueadm（Inferno/React 团队出身）的新框架，React API 兼容、自带编译器，packages/lynx 是它的私有 Lynx 渲染器 —— 2026 年 7 月下旬两周内建成，非常年轻。</p>
+    </aside>
+  </section>
+
+  <!-- 0b2 · four real apps -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(8px,1.2cqh,12px)">
+      一张考卷，四份<span class="brand-text">真实答卷</span>
+    </h2>
+    <div style="display:flex;gap:clamp(8px,1.2cqw,16px);justify-content:center;align-items:flex-start">
+      <figure style="margin:0;text-align:center">
+        <img src="/media/compare/app-react.png" alt="ReactLynx table app" style="width:21cqw;border-radius:10px;border:1px solid var(--line)"/>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9px,0.95cqw,12px);color:#61dafb;margin-top:4px">react</figcaption>
+      </figure>
+      <figure style="margin:0;text-align:center">
+        <img src="/media/compare/app-vdom.png" alt="Vue vdom table app" style="width:21cqw;border-radius:10px;border:1px solid var(--line)"/>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9px,0.95cqw,12px);color:#42b883;margin-top:4px">vue vdom</figcaption>
+      </figure>
+      <figure style="margin:0;text-align:center">
+        <img src="/media/compare/app-vapor.png" alt="Vue vapor table app" style="width:21cqw;border-radius:10px;border:1px solid var(--line)"/>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9px,0.95cqw,12px);color:#42b883;margin-top:4px">vue vapor</figcaption>
+      </figure>
+      <figure style="margin:0;text-align:center">
+        <img src="/media/compare/app-octane.png" alt="Octane table app" style="width:21cqw;border-radius:10px;border:1px solid var(--line)"/>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9px,0.95cqw,12px);color:#f2a15d;margin-top:4px">octane</figcaption>
+      </figure>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:60ch">
+      本 session 实拍：四个 bundle 装进 <code>&lt;lynx-view&gt;</code>（Lynx for Web · Chromium），
+      Playwright 真点 "Create 1,000 rows"，全部成功渲染并响应。
+    </p>
+    <aside class="notes">
+      <p><strong>眼见为实。</strong>四张截图是本 session 在同一个 harness 里逐个点出来的（appshot 脚本，公开在 PR 里）。它顺带证明了两件事：(1) Octane 在 #459 合并后的 upstream main 上端到端可用 —— 首屏、事件、更新都通；(2) 四份实现的 UI 语义逐像素对齐（同 class 结构、同数据生成器），黑盒对比才成立。</p>
     </aside>
   </section>
 
@@ -423,6 +455,55 @@
     </aside>
   </section>
 
+  <!-- I·5 — a setState's journey -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(8px,1.2cqh,12px)">
+      一次 <span class="brand-text">setState</span> 的旅程
+    </h2>
+    <div class="trio">
+      <div class="trio__col t-react">
+        <div class="trio__head"><span class="dot"></span><b>ReactLynx</b><i>BG diff → 补丁数组</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>组件级重渲染</span></div>
+<pre>setState
+ → Preact 重渲染该组件 (BG)
+ → diff 出 snapshot 补丁
+   [3, id, 槽位, 新值, …]
+ → callLepusMethod 过线
+ → MT 查 id → 跑编译好的
+   update[槽位]() → Flush</pre></div>
+      </div>
+      <div class="trio__col t-vue">
+        <div class="trio__head"><span class="dot"></span><b>Vue Lynx</b><i>两种粒度，同一条 wire</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>vdom 组件级 / vapor 绑定级</span></div>
+<pre>ref.value = x
+ vdom → 组件重渲染 + diff
+        → ops
+ vapor → 只跑依赖它的
+        renderEffect → ops
+ → 扁平数组过线
+ → MT switch 解释 → Flush</pre></div>
+      </div>
+      <div class="trio__col t-oct">
+        <div class="trio__head"><span class="dot"></span><b>Octane</b><i>owner 级重放 + 记录 diff</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>#578 后：最近组件 owner</span></div>
+<pre>setState
+ → 调度 owner（#578 前=整根）
+ → 重跑编译组件 → 新 blueprint
+ → 与 LogicalRecord diff
+ → 命令对象批 + 版本号过线
+ → MT 验证→应用→Flush→ack</pre></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
+      三条流水线尾部长得一样（查表 → 写 PAPI → Flush），头部是三种响应式：
+      组件级 diff / 绑定级 effect / owner 级重放。<b>头部决定 wire 上有多少东西，
+      尾部决定每条东西多贵。</b>
+    </p>
+    <aside class="notes">
+      <p><strong>把三家响应式压进一页。</strong>ReactLynx：setState 走 Preact，组件重渲染 + BackgroundSnapshotInstance 记录变化为扁平补丁数组（CreateElement=0/InsertBefore=1/SetAttribute=3…），JSON 过线，MT snapshotPatchApply 查 id 跑编译好的槽位更新器。Vue：vdom 与 RL 同粒度（组件 diff），vapor 只跑被改的 effect —— 但两者产出同一种 numeric ops。Octane：hooks 槽位标脏 → 调度最近可重放的组件 owner（#578 之前是整个根！）→ 重跑编译组件产出 blueprint 树 → 与保留记录 diff → 版本化命令批。注意"头/尾"的解耦：头部（响应式）决定生成多少变更，尾部（传输+应用）决定每条变更的单价 —— 第三章的数字正是这两个因子的乘积。</p>
+    </aside>
+  </section>
+
   <!-- ====================================================
        II · 坐标系
        ==================================================== -->
@@ -523,7 +604,7 @@
       差异全部住在传输层，不在架构里。
     </p>
     <aside class="notes">
-      <p><strong>PR #343 的核心发现，一页讲完。</strong>结构六列上 Octane 就是 vdom +ifr：同是 vdom 渲染模型（重建树 + diff）、同是 ops 级 streaming、同是每节点命名随机寻址、同有 MT 第一帧。它们在 select@10k 上差 13×。旧坐标系解释不了这个 gap —— 所以补两列：编码（一条扁平数字数组 vs 每命令一个对象过 structured clone）、验证（无 vs 每条消息两侧各验一遍）。这也是坐标系方法论的胜利：解释不了的差异，说明少了一根轴。</p>
+      <p><strong>PR #343 的核心发现，一页讲完。</strong>结构六列上 Octane 就是 vdom +ifr：同是 vdom 渲染模型（重建树 + diff）、同是 ops 级 streaming、同是每节点命名随机寻址、同有 MT 第一帧。它们在 select@10k 上差 13×（#343；本 session 在 #578 后复测仍差 8.1×）。旧坐标系解释不了这个 gap —— 所以补两列：编码（一条扁平数字数组 vs 每命令一个对象过 structured clone）、验证（无 vs 每条消息两侧各验一遍）。这也是坐标系方法论的胜利：解释不了的差异，说明少了一根轴。</p>
       <p>注意公平性：这里说的是"结构坐标同格"，不是"实现等价"—— Octane 的 commit→ack→complete 三段协议、per-changed-node 快照句柄等都折进这两根传输轴里读。</p>
     </aside>
   </section>
@@ -604,7 +685,7 @@
       位置写在坐标系里，代价写在毫秒里 —— 同一台机器，黑盒点击，中位数。
     </p>
     <aside class="notes">
-      <p>第三章：全部数字来自本 session 在同一台 Linux 容器（Chromium + @lynx-js/web-core，Playwright 驱动真实点击）的重新测量，Octane 用的是 2026-08-05 的 upstream main（含 #459 跨 realm 修复与 #578 scoped updates）。PR #343 的旧数字（7 月末、pre-#578）作为对照出现。绝对毫秒不可跨机器搬运，比值才是可移植的结论 —— 这是 vapor 分支 benchmark 的既定纪律。</p>
+      <p>第三章：全部数字来自本 session 在同一台 Linux 容器（Chromium + @lynx-js/web-core，Playwright 驱动真实点击）的重新测量，Octane 用的是 2026-08-05 的 upstream main @48e23979（含 #459 跨 realm 修复与 #578 scoped updates）。PR #343 的旧数字（7 月末、pre-#578）作为对照出现。绝对毫秒不可跨机器搬运，比值才是可移植的结论 —— 这是 vapor 分支 benchmark 的既定纪律。</p>
     </aside>
   </section>
 
@@ -635,23 +716,24 @@
     <div class="bench-viz">
       <div class="bench-chart">
         <h3 class="bench-chart__title">select <span>选中 1 行 @10k · ms</span></h3>
-        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:9%"></span></span><span class="bench-bar__val">FRESH_SEL_VDOM</span></div>
-        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:7%"></span></span><span class="bench-bar__val">FRESH_SEL_VAPOR</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:12%"></span></span><span class="bench-bar__val">FRESH_SEL_REACT</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">FRESH_SEL_OCT</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:12%"></span></span><span class="bench-bar__val">152</span></div>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:8%"></span></span><span class="bench-bar__val">96</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:12%"></span></span><span class="bench-bar__val">151</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">1226 · 8.1×</span></div>
       </div>
       <div class="bench-chart">
         <h3 class="bench-chart__title">update 10th <span>每 10 行改文本 @10k · ms</span></h3>
-        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:14%"></span></span><span class="bench-bar__val">FRESH_U10_VDOM</span></div>
-        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:10%"></span></span><span class="bench-bar__val">FRESH_U10_VAPOR</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:18%"></span></span><span class="bench-bar__val">FRESH_U10_REACT</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">FRESH_U10_OCT</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:13%"></span></span><span class="bench-bar__val">190</span></div>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:9%"></span></span><span class="bench-bar__val">133</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:18%"></span></span><span class="bench-bar__val">261</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">1413 · 7.4×</span></div>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade style="max-width:64ch">
-      FRESH_POINT_CAPTION
+      同机同批点击、n=3 中位数（ms）。#578（scoped updates）把 select 差距从 #343 的 13× 收窄到 8×（@30k 19→10×）—— 但数量级仍在：每次 commit 的传输税（clone + 双侧验证 + 三段往返）一分没少。
     </p>
     <aside class="notes">
+      <p>@30k 更极端：select 4688ms vs vdom 464ms（10.1×）—— 点更新代价仍随表规模涨：选中态经 props 流向每一行，最小可重放 owner 仍是整个列表。</p>
       <p><strong>结构同格、传输不同的直接后果。</strong>select 只翻两行的 class —— Vue 过线的是两条 SET_CLASS；Octane 过线的是带版本号的命令对象 + 三段协议 + 双侧验证 + ack 句柄快照。点得越轻，固定开销占比越大，差距越难看。update10th 一次 commit 改 1000 行，差距收窄但仍在整数倍。</p>
       <p>公平项：react 单发 select 也不快 —— 单发操作都贴着帧地板，风暴才能分出 BG 效率（下一页）。</p>
     </aside>
@@ -665,24 +747,49 @@
     <div class="bench-viz">
       <div class="bench-chart">
         <h3 class="bench-chart__title">update storm <span>50 tick @30k · ms</span></h3>
-        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span><span class="bench-bar__val">FRESH_US_REACT</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:80%"></span></span><span class="bench-bar__val">FRESH_US_VDOM</span></div>
-        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:55%"></span></span><span class="bench-bar__val">FRESH_US_VAPOR</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:70%;background:#f2a15d"></span></span><span class="bench-bar__val">FRESH_US_OCT</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span><span class="bench-bar__val">26451</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:56%"></span></span><span class="bench-bar__val">14899</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:47%"></span></span><span class="bench-bar__val">12393</span></div>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:27%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">7102 · 全场最快</span></div>
       </div>
       <div class="bench-chart">
         <h3 class="bench-chart__title">select storm <span>30 tick @30k · ms</span></h3>
-        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span><span class="bench-bar__val">FRESH_SS_REACT</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:52%"></span></span><span class="bench-bar__val">FRESH_SS_VDOM</span></div>
-        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:6%"></span></span><span class="bench-bar__val">FRESH_SS_VAPOR</span></div>
-        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:60%;background:#f2a15d"></span></span><span class="bench-bar__val">FRESH_SS_OCT</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%"></span></span><span class="bench-bar__val">12958</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:41%"></span></span><span class="bench-bar__val">5367</span></div>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:3.3%"></span></span><span class="bench-bar__val" style="white-space:nowrap">429 · 12.5×↓</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:59%;background:#f2a15d"></span></span><span class="bench-bar__val">7702</span></div>
       </div>
     </div>
     <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
-      FRESH_STORM_CAPTION
+      updateStorm@30k：Octane 7.1s 全场第一 —— 快过 vdom 2×，连 vapor 也被超过。批量把每 commit 的传输税摊到 1000 行上之后，编译产物重建 + LIS diff 的效率是真的。selectStorm 则是 vapor 的地盘：绑定级 effect 让 30 连击接近免费。
     </p>
     <aside class="notes">
       <p><strong>两条相反的结论同时成立。</strong>批量路径上（一次 commit 摊 1000 行变更），Octane 的传输固定开销被摊薄，重渲染 + diff 的效率并不差 —— #343 甚至测到它在 updateStorm@30k 反超 vdom（0.86×）。真正贵的是"每次交互一份"的固定成本，不是渲染器本身。同时 vapor 的 select storm 一骑绝尘：细粒度 effect 不重渲染组件，BG 端几乎零工作 —— 这是渲染模型轴的收益，跟传输轴无关。把两根轴分开读，是这套坐标系存在的意义。</p>
+    </aside>
+  </section>
+
+  <!-- III·3b — FCP -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      第一帧：<span class="brand-text">一遍式投影</span>赢麻了
+    </h2>
+    <div class="bench-viz">
+      <div class="bench-chart" style="max-width:64cqw">
+        <h3 class="bench-chart__title">content-probe FCP <span>~10k 元素 · ×1 CPU · ms 中位数</span></h3>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:42%"></span></span><span class="bench-bar__val" style="white-space:nowrap">459 · 0.58× vdom</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vapor +ifr</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:73%"></span></span><span class="bench-bar__val">794</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:73%"></span></span><span class="bench-bar__val">795</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom +ifr</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:85%"></span></span><span class="bench-bar__val">923</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:87%"></span></span><span class="bench-bar__val">949</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">1090 · 1.37×</span></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      RL 首帧几乎快出一半：code 残差（create() 直线 PAPI）+ 一遍式 MT 渲染，
+      两个轴的红利叠在第一帧上。Octane 的 1.37× 与 #343 一致 —— #578 不动首帧路径。
+    </p>
+    <aside class="notes">
+      <p><strong>FCP 是 Staging × Driver 的联合读数。</strong>content-probe（卡片流内容场景，非表格）：react 在 1k/5k/10k 全梯队领先（103/246/459），因为它的首帧是"编译好的 create() 在 MT 直跑"，没有解释器、没有完整框架启动。vue 四格挤在 794–949；vapor+ifr 在 10k 反超 vdom 首次成立（IFR 抵掉了 REGISTER_TREE 的启动税）。Octane 首帧最慢但斜率与大家相同（α≈0.63）——不是病理性慢，是 universal 运行时的常数大。数字：unified-compare-fcp-x1.json，n=3 中位。</p>
     </aside>
   </section>
 
@@ -734,10 +841,10 @@
         <tr><th>op（对 vdom 比值）</th><th>#343 · 7 月末<br/>pre-#578</th><th>本次 · 08-05 main<br/>post-#578</th><th>读法</th></tr>
       </thead>
       <tbody>
-        <tr><td>select@10k</td><td>13.1×</td><td>FRESH_R_SEL10</td><td rowspan="4">FRESH_DELTA_READING</td></tr>
-        <tr><td>update10th@10k</td><td>10.0×</td><td>FRESH_R_U10</td></tr>
-        <tr><td>create@10k</td><td>2.05×</td><td>FRESH_R_CREATE</td></tr>
-        <tr><td>updateStorm@30k</td><td>0.86×</td><td>FRESH_R_US30</td></tr>
+        <tr><td>select@10k</td><td>13.1×</td><td class="good">8.1×</td><td rowspan="4">点更新收窄 ~40% 但仍差一个数量级 —— #578 修的是重放范围，不是传输税。批量反超从 0.86× 扩大到 0.48×：scoped replay + 编译 diff 的真实力。create 纹丝不动：首建路径与 #578 无关。</td></tr>
+        <tr><td>update10th@10k</td><td>10.0×</td><td class="good">7.4×</td></tr>
+        <tr><td>create@10k</td><td>2.05×</td><td>2.19×</td></tr>
+        <tr><td>updateStorm@30k</td><td>0.86×</td><td class="good">0.48×</td></tr>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
@@ -747,6 +854,31 @@
     </p>
     <aside class="notes">
       <p><strong>回答"upstream 是否有更新"。</strong>有，而且关键：(1) #459 已合入 main，#343 的全部测量因此可在正版 upstream 上复现；(2) #578 才把"任何 state 更新 = 整根重放"换成"最近公共组件 owner 的 scoped 重放"——基线注释自己承认旧路径"hundreds of times slower"。本页的复测比值是对 #578 的第一次独立外部检验。(3) 8 月上旬还有 compiler/register（SSR/SSG）等——与 Lynx 性能无关。</p>
+    </aside>
+  </section>
+
+  <!-- III·6 — bundle size -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(24px,2.8cqw,40px);margin-bottom:clamp(8px,1.2cqh,14px)">
+      体积：Driver 轴写在 <span class="brand-text">KB</span> 里
+    </h2>
+    <div class="bench-viz">
+      <div class="bench-chart" style="max-width:64cqw">
+        <h3 class="bench-chart__title">同一个 table app <span>.web.bundle 双线程合计 · gzip KB</span></h3>
+        <div class="bench-bar bench-bar--hero"><span class="bench-bar__label">react</span><span class="bench-bar__track"><span class="bench-bar__fill is-brand" style="--w:31%"></span></span><span class="bench-bar__val" style="white-space:nowrap">31.9 · 一遍式+IFR 常开</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:40%"></span></span><span class="bench-bar__val" style="white-space:nowrap">40.7 · 无 IFR</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vapor</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:47%"></span></span><span class="bench-bar__val" style="white-space:nowrap">47.8 · 无 IFR</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vdom +ifr</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:79%"></span></span><span class="bench-bar__val" style="white-space:nowrap">81.3 · 框架×2</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">vapor +ifr</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:87%"></span></span><span class="bench-bar__val" style="white-space:nowrap">89.7 · 框架×2</span></div>
+        <div class="bench-bar"><span class="bench-bar__label">octane</span><span class="bench-bar__track"><span class="bench-bar__fill" style="--w:100%;background:#f2a15d"></span></span><span class="bench-bar__val" style="white-space:nowrap">102.8 · IFR 常开</span></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      RL 开着 IFR 只要 31.9KB —— 一遍式渲染器几乎白送。Vue 开 IFR 翻倍（40.7→81.3），
+      因为搬的是整个框架。Octane 的 one-shot 设计正确，但年轻的运行时本身就重。
+    </p>
+    <aside class="notes">
+      <p><strong>体积是 Driver 轴最直观的证词。</strong>RL：MT 切片只有编译产物（Snapshot create()）+ 一遍式渲染器，IFR 近乎零边际成本 —— 这就是它敢默认常开的原因。Vue：mts-runtime driver 意味着 MT bundle 里再放一份 Vue + 应用（hello-world 83→169KB 的老账，这里在真实 app 上复现为 +40KB gzip）。Octane：driver 选对了（一遍式），但 universal 运行时 + host-driver + transport + worklets 本身 ~100KB —— 它自己的 baseline 也承认 IFR 增量只有 3.5KB gzip，大头是运行时。数字都是本 session 构建产物实测（gzip -c | wc -c）。</p>
     </aside>
   </section>
 
@@ -850,7 +982,7 @@
   <section class="slide divider" data-bg="clean">
     <h2 class="divider__title">五 · 三次收敛<br/>= 一份清单</h2>
     <p class="divider__tag">
-      三个互不通气的团队重复建造了同六件东西 —— 这就是"在 Lynx 上做框架"的公分母。
+      三个互不通气的团队重复建造了同一批东西 —— 这就是"在 Lynx 上做框架"的公分母。
     </p>
     <aside class="notes">
       <p>第五章：从对比里提炼共性。判据很朴素：一件事如果三家都被迫各造一遍，它就不该是框架的作业，而是平台（或一个共享 lib）的作业。</p>
@@ -860,7 +992,7 @@
   <!-- V·1 — the six-piece kit -->
   <section class="slide stage" data-bg="clean" data-chrome="minimal">
     <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
-      每家都造了的<span class="brand-text">六件套</span>
+      每家都各造了一遍的<span class="brand-text">七件套</span>
     </h2>
     <table class="score">
       <thead>
@@ -873,14 +1005,15 @@
         <tr><td>交接/认领</td><td>hydrate + swap 表</td><td>stream 比对 → D1 树认领</td><td>快照逐节点认领 + repair</td></tr>
         <tr><td>list 回收</td><td>componentAtIndex + 复用池</td><td>同（vue 侧实现）</td><td>同 + LIS 最小增量</td></tr>
         <tr><td>事件路由</td><td>id 字符串 → BG 查表</td><td>eventMap + PAPI 注册</td><td>token（含优先级）→ BG 查表</td></tr>
+        <tr><td>主线程手势（worklet）</td><td>'main thread' 指令 + SWC 抽取</td><td>同（worklet-loader 双通道）</td><td>同（编译器抽取 + _wkltId 兼容 wire）</td></tr>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
-      六行没有一行是"React 的问题"或"Vue 的问题" —— 全是<b>平台形状</b>的问题。
+      七行没有一行是"React 的问题"或"Vue 的问题" —— 全是<b>平台形状</b>的问题。
       三份答案的分布，恰好给出每件的最优解都已存在于某一家手里。
     </p>
     <aside class="notes">
-      <p><strong>共性清单 + 择优表。</strong>逐行读最优解：身份 —— block 命名（Vue +b）最省 wire 与内存，且 D1 证明它让树级认领便宜（46ms→2ms 的跨列交互）；编码 —— numeric-flat（Vue）；第一帧驱动 —— 一遍式（RL/Octane）；交接 —— 树级认领（RL 首创，Vue D1、Octane 各自再发明）；列表 —— 三家同构（这件平台已经做对了：componentAtIndex 本来就是引擎 API！）；事件 —— Octane 的 token 带优先级是最讲究的。列表行是关键反例：<em>凡平台已提供的（list 回收），三家就不再分歧 —— 证明"提供了就会收敛"。</em></p>
+      <p><strong>共性清单 + 择优表。</strong>worklet 行是第三个"平台给了就收敛"的例子：三家的 main-thread 手势都编译到同一种 _wkltId wire 形状。逐行读最优解：身份 —— block 命名（Vue +b）最省 wire 与内存，且 D1 证明它让树级认领便宜（46ms→2ms 的跨列交互）；编码 —— numeric-flat（Vue）；第一帧驱动 —— 一遍式（RL/Octane）；交接 —— 树级认领（RL 首创，Vue D1、Octane 各自再发明）；列表 —— 三家同构（这件平台已经做对了：componentAtIndex 本来就是引擎 API！）；事件 —— Octane 的 token 带优先级是最讲究的。列表行是关键反例：<em>凡平台已提供的（list 回收），三家就不再分歧 —— 证明"提供了就会收敛"。</em></p>
     </aside>
   </section>
 
@@ -967,7 +1100,7 @@
         <div class="trio__head"><span class="dot"></span><b>Signal 在 Lynx 多赚的</b><i>vapor</i></div>
         <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>不重渲染 = 不重发</span></div>
 <pre><span class="code-com">· 点更新零 diff：selectStorm@30k</span>
-<span class="code-com">  vapor 430ms vs vdom 5300ms（12×）</span>
+<span class="code-com">  vapor 429ms vs vdom 5367ms（12.5×）</span>
 <span class="code-com">· 但代价前置：必须先建 Naming</span>
 <span class="code-com">  （effect 要能"指名"远端节点）</span>
 <span class="code-com">· web 上 signals 省 diff；</span>
@@ -1022,7 +1155,7 @@
         <tr><td>1 · 模型与位置</td><td>三家都是"编译期折残差 + 双切片"；RL = code/block/bundle 完全体，Octane 更新路径落在 ops/node（= vue vdom+ifr 同格），Vue 铺满 11 格做归因</td></tr>
         <tr><td>2 · 性能后果</td><td>结构同格下，传输两轴独立造成点更新数量级差距；批量摊薄后 Octane 渲染器并不慢；#578 后整树重放已修，传输税仍在（本次实测）</td></tr>
         <tr><td>3 · 好设计 / 弯路</td><td>抄 Octane：hooks 编译语义、事件优先级 token、__RenderPage 时机。抄 RL：一遍式 driver、树认领。抄 Vue：flat wire、BG 无感 IFR。弯路各一页，全有出处</td></tr>
-        <tr><td>4 · 共性 → 平台</td><td>六件套三度重复发明；四条 Lynx for Framework API 建议（标准 ops、认领原语、ET 共享靶、公共事件契约）</td></tr>
+        <tr><td>4 · 共性 → 平台</td><td>七件套三度重复发明；四条 Lynx for Framework API 建议（标准 ops、认领原语、ET 共享靶、公共事件契约）</td></tr>
         <tr><td>5 · 旧账 / 新账</td><td>render model 是 web 旧账可平移；六根新轴是双线程新账 —— signal 在 Lynx 有双重红利但要付 Naming 门票，vdom 拿到批量免费</td></tr>
       </tbody>
     </table>
