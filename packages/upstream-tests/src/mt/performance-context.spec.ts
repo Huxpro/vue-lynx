@@ -61,6 +61,27 @@ describe('performance pipeline context', () => {
       expect(getCurrentPipelineID()).toBe('pl-001');
     });
 
+    it('sets metadata BEFORE calling _onPipelineStart', () => {
+      let optsSnapshot: Record<string, unknown> | undefined;
+      perfStub._onPipelineStart.mockImplementation(
+        (_id: string, opts: Record<string, unknown>) => {
+          optsSnapshot = { ...opts };
+        },
+      );
+      perfStub._generatePipelineOptions.mockReturnValue({
+        pipelineID: 'pl-meta',
+        needTimestamps: false,
+      });
+
+      beginPipeline('setup');
+
+      expect(optsSnapshot).toMatchObject({
+        pipelineOrigin: 'vue',
+        dsl: 'vue',
+        stage: 'setup',
+      });
+    });
+
     it('is idempotent within a single batch', () => {
       perfStub._generatePipelineOptions.mockReturnValue({
         pipelineID: 'pl-002',
@@ -116,6 +137,30 @@ describe('performance pipeline context', () => {
         'pl-flag',
         'my-benchmark',
       );
+    });
+
+    it('retroactively binds flag captured BEFORE beginPipeline', () => {
+      resetPipelineContext();
+      perfStub._generatePipelineOptions.mockReturnValue({
+        pipelineID: 'pl-retro',
+        needTimestamps: false,
+      });
+
+      // Flag captured before pipeline (simulates patchProp before scheduleFlush)
+      captureTimingFlag('early-flag');
+      expect(perfStub._bindPipelineIdWithTimingFlag).not.toHaveBeenCalled();
+
+      // Pipeline starts later (scheduleFlush)
+      beginPipeline('update');
+
+      // Flag is retroactively bound
+      expect(perfStub._bindPipelineIdWithTimingFlag).toHaveBeenCalledWith(
+        'pl-retro',
+        'early-flag',
+      );
+      expect(hasTimingFlag()).toBe(true);
+      const opts = takePipelineOptions();
+      expect(opts!['needTimestamps']).toBe(true);
     });
 
     it('enables needTimestamps when flag is captured', () => {
@@ -176,13 +221,16 @@ describe('performance pipeline context', () => {
       expect(takePipelineOptions()).toBeUndefined();
     });
 
-    it('returns undefined when pipeline active but no flag captured', () => {
+    it('returns options when pipeline active even without flag (completes native pipeline)', () => {
       perfStub._generatePipelineOptions.mockReturnValue({
         pipelineID: 'pl-noflag',
         needTimestamps: false,
       });
       beginPipeline('update');
-      expect(takePipelineOptions()).toBeUndefined();
+      const opts = takePipelineOptions();
+      expect(opts).toBeTruthy();
+      expect(opts!['pipelineID']).toBe('pl-noflag');
+      expect(opts!['needTimestamps']).toBe(false);
     });
 
     it('returns options when pipeline + flag are present', () => {

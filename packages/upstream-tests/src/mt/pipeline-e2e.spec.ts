@@ -112,7 +112,7 @@ describe('end-to-end timing pipeline (BG + MT)', () => {
     (globalThis as any).__FlushElementTree = origFlush;
   });
 
-  it('unflagged update does NOT produce pipelineOptions', () => {
+  it('unflagged update still delivers pipelineOptions (but needTimestamps=false)', () => {
     perfStub._generatePipelineOptions.mockReturnValue({
       pipelineID: 'e2e-no-flag',
       needTimestamps: false,
@@ -121,15 +121,16 @@ describe('end-to-end timing pipeline (BG + MT)', () => {
     beginPipeline('update');
     // No captureTimingFlag call — update without timing flag
     const opts = takePipelineOptions();
-    expect(opts).toBeUndefined();
+    expect(opts).toBeTruthy();
+    expect(opts!['needTimestamps']).toBe(false);
 
-    // MT flush should be bare
+    // MT flush should receive pipelineOptions (completes the native pipeline)
     const flushSpy = vi.fn();
     const origFlush = (globalThis as any).__FlushElementTree;
     (globalThis as any).__FlushElementTree = flushSpy;
 
     applyOps([OP.CREATE, 600001, 'text'], true, opts);
-    expect(flushSpy).toHaveBeenCalledWith();
+    expect(flushSpy).toHaveBeenCalledWith(undefined, { pipelineOptions: opts });
 
     (globalThis as any).__FlushElementTree = origFlush;
     resetPipelineContext();
@@ -152,8 +153,8 @@ describe('end-to-end timing pipeline (BG + MT)', () => {
 
     // Stage should still be 'setup'
     const opts = takePipelineOptions();
-    // No flag captured, so undefined
-    expect(opts).toBeUndefined();
+    expect(opts).toBeTruthy();
+    expect(opts!['stage']).toBe('setup');
 
     resetPipelineContext();
   });

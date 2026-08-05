@@ -187,6 +187,7 @@ function doFlush(): void {
     __VUE_LYNX_FLUSH_HOOK__?: (ops: unknown[], serialized: string) => void;
   }).__VUE_LYNX_FLUSH_HOOK__;
   let data: string | undefined;
+  markTiming('packChangesStart');
   if (hook) {
     try {
       data = JSON.stringify(ops);
@@ -252,12 +253,10 @@ function doFlush(): void {
 
   // The local IFR path avoids serialization unless an observability hook
   // requested it. Background IPC still needs the wire payload.
-  markTiming('packChangesStart');
   if (data === undefined) data = JSON.stringify(ops);
-
-  // Take pipeline options before clearing context. Only flagged batches
-  // produce options — unflagged updates get undefined (no benchmark sample).
   markTiming('packChangesEnd');
+
+  // Take pipeline options — always present when a pipeline is active.
   const plOpts = takePipelineOptions();
 
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments

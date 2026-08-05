@@ -81,24 +81,34 @@ export function beginPipeline(stage: 'setup' | 'update'): void {
 
   pipelineID = id;
   pipelineOptions = opts;
-  timingFlag = undefined;
   flagBound = false;
   multipleFlags = false;
 
-  perf._onPipelineStart?.(id, opts);
-
-  // Store origin metadata matching ReactLynx semantics
+  // Set metadata BEFORE _onPipelineStart so native sees them immediately [P2]
   (opts as Record<string, unknown>)['pipelineOrigin'] ??= 'vue';
   (opts as Record<string, unknown>)['dsl'] ??= 'vue';
   (opts as Record<string, unknown>)['stage'] ??= stage;
 
+  perf._onPipelineStart?.(id, opts);
+
   // Mark the start of Vue's render/patch phase
   perf._markTiming?.(id, 'vueRenderStart');
+
+  // If a timing flag was captured before the pipeline started (e.g. from
+  // patchProp running before scheduleFlush), retroactively bind it now [P1]
+  if (timingFlag && !flagBound) {
+    flagBound = true;
+    perf._bindPipelineIdWithTimingFlag?.(id, timingFlag);
+    (opts as Record<string, unknown>)['needTimestamps'] = true;
+  }
 }
 
 /**
  * Capture a `__lynx_timing_flag` value observed during the current batch.
  * First non-empty flag wins; conflicting flags produce a dev-mode warning.
+ *
+ * May be called before beginPipeline (when patchProp fires before
+ * scheduleFlush); the flag is stashed and bound retroactively.
  */
 export function captureTimingFlag(value: unknown): void {
   if (value == null || value === '') return;
@@ -121,11 +131,12 @@ export function captureTimingFlag(value: unknown): void {
 
   timingFlag = flag;
 
+  // Bind immediately if the pipeline is already active; otherwise
+  // beginPipeline will pick it up retroactively.
   if (pipelineID && !flagBound) {
     flagBound = true;
     const perf = getPerf();
     perf?._bindPipelineIdWithTimingFlag?.(pipelineID, flag);
-    // Enable timestamp collection for flagged pipelines
     if (pipelineOptions) {
       (pipelineOptions as Record<string, unknown>)['needTimestamps'] = true;
     }
@@ -143,11 +154,13 @@ export function markTiming(key: string): void {
 
 /**
  * Take the pipeline options for inclusion in the flush payload.
- * Returns undefined if no pipeline is active or no flag was captured.
- * Only flagged pipelines produce benchmark-visible samples.
+ * Always returns options when a pipeline is active — even unflagged updates
+ * need to complete the native pipeline (start without flush = orphaned).
+ * `needTimestamps` is only true for flagged pipelines; unflagged pipelines
+ * complete silently without producing benchmark samples. [P1]
  */
 export function takePipelineOptions(): Record<string, unknown> | undefined {
-  if (!pipelineID || !timingFlag) return undefined;
+  if (!pipelineID) return undefined;
   return pipelineOptions;
 }
 
