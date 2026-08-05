@@ -86,6 +86,7 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         speaker: path.resolve(__dirname, 'speaker.html'),
         play: path.resolve(__dirname, 'play.html'),
+        compare: path.resolve(__dirname, 'compare.html'),
       },
     },
   },
